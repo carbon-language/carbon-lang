@@ -27,6 +27,15 @@
   <li><a href="#llvmir">LLVM IR Encoding</a>
     <ol>
     <li><a href="#basics">Basics</a></li>
+    <li><a href="#MODULE_BLOCK">MODULE_BLOCK Contents</a></li>
+    <li><a href="#PARAMATTR_BLOCK">PARAMATTR_BLOCK Contents</a></li>
+    <li><a href="#TYPE_BLOCK">TYPE_BLOCK Contents</a></li>
+    <li><a href="#CONSTANTS_BLOCK">CONSTANTS_BLOCK Contents</a></li>
+    <li><a href="#FUNCTION_BLOCK">FUNCTION_BLOCK Contents</a></li>
+    <li><a href="#TYPE_SYMTAB_BLOCK">TYPE_SYMTAB_BLOCK Contents</a></li>
+    <li><a href="#VALUE_SYMTAB_BLOCK">VALUE_SYMTAB_BLOCK Contents</a></li>
+    <li><a href="#METADATA_BLOCK">METADATA_BLOCK Contents</a></li>
+    <li><a href="#METADATA_ATTACHMENT">METADATA_ATTACHMENT Contents</a></li>
     </ol>
   </li>
 </ol>
@@ -220,7 +229,7 @@ A bitstream is a sequential series of <a href="#blocks">Blocks</a> and
 abbreviation ID encoded as a fixed-bitwidth field.  The width is specified by
 the current block, as described below.  The value of the abbreviation ID
 specifies either a builtin ID (which have special meanings, defined below) or
-one of the abbreviation IDs defined by the stream itself.
+one of the abbreviation IDs defined for the current block by the stream itself.
 </p>
 
 <p>
@@ -258,7 +267,7 @@ application specific. Nested blocks capture the hierarchical structure of the da
 encoded in it, and various properties are associated with blocks as the file is
 parsed.  Block definitions allow the reader to efficiently skip blocks
 in constant time if the reader wants a summary of blocks, or if it wants to
-efficiently skip data they do not understand.  The LLVM IR reader uses this
+efficiently skip data it does not understand.  The LLVM IR reader uses this
 mechanism to skip function bodies, lazily reading them on demand.
 </p>
 
@@ -268,7 +277,8 @@ block.  In particular, each block maintains:
 </p>
 
 <ol>
-<li>A current abbrev id width.  This value starts at 2, and is set every time a
+<li>A current abbrev id width.  This value starts at 2 at the beginning of
+    the stream, and is set every time a
     block record is entered.  The block entry specifies the abbrev id width for
     the body of the block.</li>
 
@@ -335,13 +345,14 @@ an even multiple of 32-bits.
 
 <div class="doc_text">
 <p>
-Data records consist of a record code and a number of (up to) 64-bit integer
-values.  The interpretation of the code and values is application specific and
-there are multiple different ways to encode a record (with an unabbrev record or
-with an abbreviation).  In the LLVM IR format, for example, there is a record
+Data records consist of a record code and a number of (up to) 64-bit
+integer values.  The interpretation of the code and values is
+application specific and may vary between different block types.
+Records can be encoded either using an unabbrev record, or with an
+abbreviation.  In the LLVM IR format, for example, there is a record
 which encodes the target triple of a module.  The code is
-<tt>MODULE_CODE_TRIPLE</tt>, and the values of the record are the ASCII codes
-for the characters in the string.
+<tt>MODULE_CODE_TRIPLE</tt>, and the values of the record are the
+ASCII codes for the characters in the string.
 </p>
 
 </div>
@@ -358,7 +369,7 @@ Encoding</a></div>
 <p>
 An <tt>UNABBREV_RECORD</tt> provides a default fallback encoding, which is both
 completely general and extremely inefficient.  It can describe an arbitrary
-record by emitting the code and operands as vbrs.
+record by emitting the code and operands as VBRs.
 </p>
 
 <p>
@@ -391,6 +402,11 @@ allows the files to be completely self describing.  The actual encoding of
 abbreviations is defined below.
 </p>
 
+<p>The record code, which is the first field of an abbreviated record,
+may be encoded in the abbreviation definition (as a literal
+operand) or supplied in the abbreviated record (as a Fixed or VBR
+operand value).</p>
+
 </div>
 
 <!-- ======================================================================= -->
@@ -409,8 +425,9 @@ emitted.
 <p>
 Abbreviations can be determined dynamically per client, per file. Because the
 abbreviations are stored in the bitstream itself, different streams of the same
-format can contain different sets of abbreviations if the specific stream does
-not need it.  As a concrete example, LLVM IR files usually emit an abbreviation
+format can contain different sets of abbreviations according to the needs
+of the specific stream.
+As a concrete example, LLVM IR files usually emit an abbreviation
 for binary operators.  If a specific LLVM module contained no or few binary
 operators, the abbreviation does not need to be emitted.
 </p>
@@ -431,7 +448,8 @@ defined abbreviations in the scope of this block.  This definition only exists
 inside this immediate block &mdash; it is not visible in subblocks or enclosing
 blocks.  Abbreviations are implicitly assigned IDs sequentially starting from 4
 (the first application-defined abbreviation ID).  Any abbreviations defined in a
-<tt>BLOCKINFO</tt> record receive IDs first, in order, followed by any
+<tt>BLOCKINFO</tt> record for the particular block type
+receive IDs first, in order, followed by any
 abbreviations defined within the block itself.  Abbreviated data records
 reference this ID to indicate what abbreviation they are invoking.
 </p>
@@ -461,31 +479,32 @@ emitted as their code, followed by the extra data.
 
 <p>The possible operand encodings are:</p>
 
-<ol>
-<li>Fixed: The field should be emitted as
+<ul>
+<li>Fixed (code 1): The field should be emitted as
     a <a href="#fixedwidth">fixed-width value</a>, whose width is specified by
     the operand's extra data.</li>
-<li>VBR: The field should be emitted as
+<li>VBR (code 2): The field should be emitted as
     a <a href="#variablewidth">variable-width value</a>, whose width is
     specified by the operand's extra data.</li>
-<li>Array: This field is an array of values.  The array operand
-    has no extra data, but expects another operand to follow it which indicates
+<li>Array (code 3): This field is an array of values.  The array operand
+    has no extra data, but expects another operand to follow it, indicating
     the element type of the array.  When reading an array in an abbreviated
     record, the first integer is a vbr6 that indicates the array length,
     followed by the encoded elements of the array.  An array may only occur as
     the last operand of an abbreviation (except for the one final operand that
     gives the array's type).</li>
-<li>Char6: This field should be emitted as
+<li>Char6 (code 4): This field should be emitted as
     a <a href="#char6">char6-encoded value</a>.  This operand type takes no
-    extra data.</li>
-<li>Blob: This field is emitted as a vbr6, followed by padding to a
+    extra data. Char6 encoding is normally used as an array element type.
+    </li>
+<li>Blob (code 5): This field is emitted as a vbr6, followed by padding to a
     32-bit boundary (for alignment) and an array of 8-bit objects.  The array of
     bytes is further followed by tail padding to ensure that its total length is
     a multiple of 4 bytes.  This makes it very efficient for the reader to
     decode the data without having to make a copy of it: it can use a pointer to
     the data in the mapped in file and poke directly at it.  A blob may only
     occur as the last operand of an abbreviation.</li>
-</ol>
+</ul>
 
 <p>
 For example, target triples in LLVM modules are encoded as a record of the
@@ -517,7 +536,7 @@ as:
 
 <ol>
 <li>The first value, 4, is the abbreviation ID for this abbreviation.</li>
-<li>The second value, 2, is the code for <tt>TRIPLE</tt> in LLVM IR files.</li>
+<li>The second value, 2, is the record code for <tt>TRIPLE</tt> records within LLVM IR file <tt>MODULE_BLOCK</tt> blocks.</li>
 <li>The third value, 4, is the length of the array.</li>
 <li>The rest of the values are the char6 encoded values
     for <tt>"abcd"</tt>.</li>
@@ -541,7 +560,7 @@ used for any other string value.
 
 <p>
 In addition to the basic block structure and record encodings, the bitstream
-also defines specific builtin block types.  These block types specify how the
+also defines specific built-in block types.  These block types specify how the
 stream is to be decoded or other metadata.  In the future, new standard blocks
 may be added.  Block IDs 0-7 are reserved for standard blocks.
 </p>
@@ -569,7 +588,7 @@ blocks.  The currently specified records are:
 </div>
 
 <p>
-The <tt>SETBID</tt> record indicates which block ID is being
+The <tt>SETBID</tt> record (code 1) indicates which block ID is being
 described.  <tt>SETBID</tt> records can occur multiple times throughout the
 block to change which block ID is being described.  There must be
 a <tt>SETBID</tt> record prior to any other records.
@@ -584,13 +603,13 @@ in <tt>BLOCKINFO</tt> blocks receive abbreviation IDs as described
 in <tt><a href="#DEFINE_ABBREV">DEFINE_ABBREV</a></tt>.
 </p>
 
-<p>The <tt>BLOCKNAME</tt> can optionally occur in this block.  The elements of
-the record are the bytes for the string name of the block.  llvm-bcanalyzer uses
+<p>The <tt>BLOCKNAME</tt> record (code 2) can optionally occur in this block.  The elements of
+the record are the bytes of the string name of the block.  llvm-bcanalyzer can use
 this to dump out bitcode files symbolically.</p>
 
-<p>The <tt>SETRECORDNAME</tt> record can optionally occur in this block.  The
-first entry is a record ID number and the rest of the elements of the record are
-the bytes for the string name of the record.  llvm-bcanalyzer uses
+<p>The <tt>SETRECORDNAME</tt> record (code 3) can also optionally occur in this block.  The
+first operand value is a record ID number, and the rest of the elements of the record are
+the bytes for the string name of the record.  llvm-bcanalyzer can use
 this to dump out bitcode files symbolically.</p>
 
 <p>
@@ -626,7 +645,7 @@ Each of the fields are 32-bit fields stored in little endian form (as with
 the rest of the bitcode file fields).  The Magic number is always
 <tt>0x0B17C0DE</tt> and the version is currently always <tt>0</tt>.  The Offset
 field is the offset in bytes to the start of the bitcode stream in the file, and
-the Size field is a size in bytes of the stream. CPUType is a target-specific
+the Size field is the size in bytes of the stream. CPUType is a target-specific
 value that can be used to encode the CPU of the target.
 </p>
 
@@ -681,26 +700,28 @@ When combined with the bitcode magic number and viewed as bytes, this is
 <div class="doc_text">
 
 <p>
-<a href="#variablewidth">Variable Width Integers</a> are an efficient way to
-encode arbitrary sized unsigned values, but is an extremely inefficient way to
-encode signed values (as signed values are otherwise treated as maximally large
-unsigned values).
+<a href="#variablewidth">Variable Width Integer</a> encoding is an efficient way to
+encode arbitrary sized unsigned values, but is an extremely inefficient for
+encoding signed values, as signed values are otherwise treated as maximally large
+unsigned values.
 </p>
 
 <p>
-As such, signed vbr values of a specific width are emitted as follows:
+As such, signed VBR values of a specific width are emitted as follows:
 </p>
 
 <ul>
-<li>Positive values are emitted as vbrs of the specified width, but with their
+<li>Positive values are emitted as VBRs of the specified width, but with their
     value shifted left by one.</li>
-<li>Negative values are emitted as vbrs of the specified width, but the negated
+<li>Negative values are emitted as VBRs of the specified width, but the negated
     value is shifted left by one, and the low bit is set.</li>
 </ul>
 
 <p>
-With this encoding, small positive and small negative values can both be emitted
-efficiently.
+With this encoding, small positive and small negative values can both
+be emitted efficiently. Signed VBR encoding is used in
+<tt>CST_CODE_INTEGER</tt> and <tt>CST_CODE_WIDE_INTEGER</tt> records
+within <tt>CONSTANTS_BLOCK</tt> blocks.
 </p>
 
 </div>
@@ -716,21 +737,23 @@ LLVM IR is defined with the following blocks:
 </p>
 
 <ul>
-<li>8  &mdash; <tt>MODULE_BLOCK</tt> &mdash; This is the top-level block that
+<li>8  &mdash; <a href="#MODULE_BLOCK"><tt>MODULE_BLOCK</tt></a> &mdash; This is the top-level block that
     contains the entire module, and describes a variety of per-module
     information.</li>
-<li>9  &mdash; <tt>PARAMATTR_BLOCK</tt> &mdash; This enumerates the parameter
+<li>9  &mdash; <a href="#PARAMATTR_BLOCK"><tt>PARAMATTR_BLOCK</tt></a> &mdash; This enumerates the parameter
     attributes.</li>
-<li>10 &mdash; <tt>TYPE_BLOCK</tt> &mdash; This describes all of the types in
+<li>10 &mdash; <a href="#TYPE_BLOCK"><tt>TYPE_BLOCK</tt></a> &mdash; This describes all of the types in
     the module.</li>
-<li>11 &mdash; <tt>CONSTANTS_BLOCK</tt> &mdash; This describes constants for a
+<li>11 &mdash; <a href="#CONSTANTS_BLOCK"><tt>CONSTANTS_BLOCK</tt></a> &mdash; This describes constants for a
     module or function.</li>
-<li>12 &mdash; <tt>FUNCTION_BLOCK</tt> &mdash; This describes a function
+<li>12 &mdash; <a href="#FUNCTION_BLOCK"><tt>FUNCTION_BLOCK</tt></a> &mdash; This describes a function
     body.</li>
-<li>13 &mdash; <tt>TYPE_SYMTAB_BLOCK</tt> &mdash; This describes the type symbol
+<li>13 &mdash; <a href="#TYPE_SYMTAB_BLOCK"><tt>TYPE_SYMTAB_BLOCK</tt></a> &mdash; This describes the type symbol
     table.</li>
-<li>14 &mdash; <tt>VALUE_SYMTAB_BLOCK</tt> &mdash; This describes a value symbol
+<li>14 &mdash; <a href="#VALUE_SYMTAB_BLOCK"><tt>VALUE_SYMTAB_BLOCK</tt></a> &mdash; This describes a value symbol
     table.</li>
+<li>15 &mdash; <a href="#METADATA_BLOCK"><tt>METADATA_BLOCK</tt></a> &mdash; This describes metadata items.</li>
+<li>16 &mdash; <a href="#METADATA_ATTACHMENT"><tt>METADATA_ATTACHMENT</tt></a> &mdash; This contains records associating metadata with function instruction values.</li>
 </ul>
 
 </div>
@@ -741,7 +764,387 @@ LLVM IR is defined with the following blocks:
 
 <div class="doc_text">
 
-<p>
+<p>The <tt>MODULE_BLOCK</tt> block (id 8) is the top-level block for LLVM
+bitcode files, and each bitcode file must contain exactly one. In
+addition to records (described below) containing information
+about the module, a <tt>MODULE_BLOCK</tt> block may contain the
+following sub-blocks:
+</p>
+
+<ul>
+<li><a href="#BLOCKINFO"><tt>BLOCKINFO</tt></a></li>
+<li><a href="#PARAMATTR_BLOCK"><tt>PARAMATTR_BLOCK</tt></a></li>
+<li><a href="#TYPE_BLOCK"><tt>TYPE_BLOCK</tt></a></li>
+<li><a href="#TYPE_SYMTAB_BLOCK"><tt>TYPE_SYMTAB_BLOCK</tt></a></li>
+<li><a href="#VALUE_SYMTAB_BLOCK"><tt>VALUE_SYMTAB_BLOCK</tt></a></li>
+<li><a href="#CONSTANTS_BLOCK"><tt>CONSTANTS_BLOCK</tt></a></li>
+<li><a href="#FUNCTION_BLOCK"><tt>FUNCTION_BLOCK</tt></a></li>
+<li><a href="#METADATA_BLOCK"><tt>METADATA_BLOCK</tt></a></li>
+</ul>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_VERSION">MODULE_CODE_VERSION Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[VERSION, version#]</tt></p>
+
+<p>The <tt>VERSION</tt> record (code 1) contains a single value
+indicating the format version. Only version 0 is supported at this
+time.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_TRIPLE">MODULE_CODE_TRIPLE Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[TRIPLE, ...string...]</tt></p>
+
+<p>The <tt>TRIPLE</tt> record (code 2) contains a variable number of
+values representing the bytes of the <tt>target triple</tt>
+specification string.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_DATALAYOUT">MODULE_CODE_DATALAYOUT Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[DATALAYOUT, ...string...]</tt></p>
+
+<p>The <tt>DATALAYOUT</tt> record (code 3) contains a variable number of
+values representing the bytes of the <tt>target datalayout</tt>
+specification string.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_ASM">MODULE_CODE_ASM Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[ASM, ...string...]</tt></p>
+
+<p>The <tt>ASM</tt> record (code 4) contains a variable number of
+values representing the bytes of <tt>module asm</tt> strings, with
+individual assembly blocks separated by newline (ASCII 10) characters.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_SECTIONNAME">MODULE_CODE_SECTIONNAME Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[SECTIONNAME, ...string...]</tt></p>
+
+<p>The <tt>SECTIONNAME</tt> record (code 5) contains a variable number
+of values representing the bytes of a single section name
+string. There should be one <tt>SECTIONNAME</tt> record for each
+section name referenced (e.g., in global variable or function
+<tt>section</tt> attributes) within the module. These records can be
+referenced by the 1-based index in the <i>section</i> fields of
+<tt>GLOBALVAR</tt> or <tt>FUNCTION</tt> records.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_DEPLIB">MODULE_CODE_DEPLIB Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[DEPLIB, ...string...]</tt></p>
+
+<p>The <tt>DEPLIB</tt> record (code 6) contains a variable number of
+values representing the bytes of a single dependent library name
+string, one of the libraries mentioned in a <tt>deplibs</tt>
+declaration.  There should be one <tt>DEPLIB</tt> record for each
+library name referenced.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_GLOBALVAR">MODULE_CODE_GLOBALVAR Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[GLOBALVAR, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal]</tt></p>
+
+<p>The <tt>GLOBALVAR</tt> record (code 7) marks the declaration or
+definition of a global variable. The operand fields are:</p>
+
+<ul>
+<li><i>pointer type</i>: The type index of the pointer type used to point to
+this global variable</li>
+
+<li><i>isconst</i>: Non-zero if the variable is treated as constant within
+the module, or zero if it is not</li>
+
+<li><i>initid</i>: If non-zero, the value index of the initializer for this
+variable, plus 1.</li>
+
+<li><a name="linkage"><i>linkage</i></a>: An encoding of the linkage
+type for this variable:
+  <ul>
+    <li><tt>external</tt>: code 0</li>
+    <li><tt>weak</tt>: code 1</li>
+    <li><tt>appending</tt>: code 2</li>
+    <li><tt>internal</tt>: code 3</li>
+    <li><tt>linkonce</tt>: code 4</li>
+    <li><tt>dllimport</tt>: code 5</li>
+    <li><tt>dllexport</tt>: code 6</li>
+    <li><tt>extern_weak</tt>: code 7</li>
+    <li><tt>common</tt>: code 8</li>
+    <li><tt>private</tt>: code 9</li>
+    <li><tt>weak_odr</tt>: code 10</li>
+    <li><tt>linkonce_odr</tt>: code 11</li>
+    <li><tt>available_externally</tt>: code 12</li>
+    <li><tt>linker_private</tt>: code 13</li>
+  </ul>
+</li>
+
+<li><i>alignment</i>: The logarithm base 2 of the variable's requested
+alignment, plus 1</li>
+
+<li><i>section</i>: If non-zero, the 1-based section index in the
+table of <a href="#MODULE_CODE_SECTIONNAME">MODULE_CODE_SECTIONNAME</a>
+entries.</li>
+
+<li><a name="visibility"><i>visibility</i></a>: If present, an
+encoding of the visibility of this variable:
+  <ul>
+    <li><tt>default</tt>: code 0</li>
+    <li><tt>hidden</tt>: code 1</li>
+    <li><tt>protected</tt>: code 2</li>
+  </ul>
+</li>
+
+<li><i>threadlocal</i>: If present and non-zero, indicates that the variable
+is <tt>thread_local</tt></li>
+
+</ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_FUNCTION">MODULE_CODE_FUNCTION Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc]</tt></p>
+
+<p>The <tt>FUNCTION</tt> record (code 8) marks the declaration or
+definition of a function. The operand fields are:</p>
+
+<ul>
+<li><i>type</i>: The type index of the function type describing this function</li>
+
+<li><i>callingconv</i>: The calling convention number:
+  <ul>
+    <li><tt>ccc</tt>: code 0</li>
+    <li><tt>fastcc</tt>: code 8</li>
+    <li><tt>coldcc</tt>: code 9</li>
+    <li><tt>x86_stdcallcc</tt>: code 64</li>
+    <li><tt>x86_fastcallcc</tt>: code 65</li>
+    <li><tt>arm_apcscc</tt>: code 66</li>
+    <li><tt>arm_aapcscc</tt>: code 67</li>
+    <li><tt>arm_aapcs_vfpcc</tt>: code 68</li>
+  </ul>
+</li>
+
+<li><i>isproto</i>: Non-zero if this entry represents a declaration
+rather than a definition</li>
+
+<li><i>linkage</i>: An encoding of the <a href="#linkage">linkage type</a>
+for this function</li>
+
+<li><i>paramattr</i>: If nonzero, the 1-based parameter attribute index
+into the table of <a href="#PARAMATTR_CODE_ENTRY">PARAMATTR_CODE_ENTRY</a>
+entries.</li>
+
+<li><i>alignment</i>: The logarithm base 2 of the function's requested
+alignment, plus 1</li>
+
+<li><i>section</i>: If non-zero, the 1-based section index in the
+table of <a href="#MODULE_CODE_SECTIONNAME">MODULE_CODE_SECTIONNAME</a>
+entries.</li>
+
+<li><i>visibility</i>: An encoding of the <a href="#visibility">visibility</a>
+    of this function</li>
+
+<li><i>gc</i>: If present and nonzero, the 1-based garbage collector
+index in the table of
+<a href="#MODULE_CODE_GCNAME">MODULE_CODE_GCNAME</a> entries.</li>
+</ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_ALIAS">MODULE_CODE_ALIAS Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[ALIAS, alias type, aliasee val#, linkage, visibility]</tt></p>
+
+<p>The <tt>ALIAS</tt> record (code 9) marks the definition of an
+alias. The operand fields are</p>
+
+<ul>
+<li><i>alias type</i>: The type index of the alias</li>
+
+<li><i>aliasee val#</i>: The value index of the aliased value</li>
+
+<li><i>linkage</i>: An encoding of the <a href="#linkage">linkage type</a>
+for this alias</li>
+
+<li><i>visibility</i>: If present, an encoding of the
+<a href="#visibility">visibility</a> of the alias</li>
+
+</ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_PURGEVALS">MODULE_CODE_PURGEVALS Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[PURGEVALS, numvals]</tt></p>
+
+<p>The <tt>PURGEVALS</tt> record (code 10) resets the module-level
+value list to the size given by the single operand value. Module-level
+value list items are added by <tt>GLOBALVAR</tt>, <tt>FUNCTION</tt>,
+and <tt>ALIAS</tt> records.  After a <tt>PURGEVALS</tt> record is seen,
+new value indices will start from the given <i>numvals</i> value.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="MODULE_CODE_GCNAME">MODULE_CODE_GCNAME Record</a>
+</div>
+
+<div class="doc_text">
+<p><tt>[GCNAME, ...string...]</tt></p>
+
+<p>The <tt>GCNAME</tt> record (code 11) contains a variable number of
+values representing the bytes of a single garbage collector name
+string. There should be one <tt>GCNAME</tt> record for each garbage
+collector name referenced in function <tt>gc</tt> attributes within
+the module. These records can be referenced by 1-based index in the <i>gc</i>
+fields of <tt>FUNCTION</tt> records.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="PARAMATTR_BLOCK">PARAMATTR_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>PARAMATTR_BLOCK</tt> block (id 9) ...
+</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="PARAMATTR_CODE_ENTRY">PARAMATTR_CODE_ENTRY Record</a>
+</div>
+
+<div class="doc_text">
+
+<p><tt>[ENTRY, paramidx0, attr0, paramidx1, attr1...]</tt></p>
+
+<p>The <tt>ENTRY</tt> record (code 1) ...
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="TYPE_BLOCK">TYPE_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>TYPE_BLOCK</tt> block (id 10) ...
+</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="CONSTANTS_BLOCK">CONSTANTS_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>CONSTANTS_BLOCK</tt> block (id 11) ...
+</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="FUNCTION_BLOCK">FUNCTION_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>FUNCTION_BLOCK</tt> block (id 12) ...
+</p>
+
+<p>In addition to the record types described below, a
+<tt>FUNCTION_BLOCK</tt> block may contain the following sub-blocks:
+</p>
+
+<ul>
+<li><a href="#CONSTANTS_BLOCK"><tt>CONSTANTS_BLOCK</tt></a></li>
+<li><a href="#VALUE_SYMTAB_BLOCK"><tt>VALUE_SYMTAB_BLOCK</tt></a></li>
+<li><a href="#METADATA_ATTACHMENT"><tt>METADATA_ATTACHMENT</tt></a></li>
+</ul>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="TYPE_SYMTAB_BLOCK">TYPE_SYMTAB_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>TYPE_SYMTAB_BLOCK</tt> block (id 13) ...
+</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="VALUE_SYMTAB_BLOCK">VALUE_SYMTAB_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>VALUE_SYMTAB_BLOCK</tt> block (id 14) ... 
+</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="METADATA_BLOCK">METADATA_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>METADATA_BLOCK</tt> block (id 15) ...
+</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="METADATA_ATTACHMENT">METADATA_ATTACHMENT Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>METADATA_ATTACHMENT</tt> block (id 16) ...
 </p>
 
 </div>
