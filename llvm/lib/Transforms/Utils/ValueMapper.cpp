@@ -13,11 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"  // For getNullValue(Type::Int32Ty)
 #include "llvm/Constants.h"
-#include "llvm/GlobalValue.h"
-#include "llvm/Instruction.h"
+#include "llvm/Function.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -92,8 +90,8 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
     return VM[V] = CE->getWithOperands(Ops);
   }
   
-  if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
-    for (User::op_iterator b = CP->op_begin(), i = b, e = CP->op_end();
+  if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
+    for (User::op_iterator b = CV->op_begin(), i = b, e = CV->op_end();
          i != e; ++i) {
       Value *MV = MapValue(*i, VM);
       if (MV != *i) {
@@ -101,7 +99,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
         // vector constant and return it.
         //
         std::vector<Constant*> Values;
-        Values.reserve(CP->getNumOperands());
+        Values.reserve(CV->getNumOperands());
         for (User::op_iterator j = b; j != i; ++j)
           Values.push_back(cast<Constant>(*j));
         Values.push_back(cast<Constant>(MV));
@@ -111,7 +109,12 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
       }
     }
     return VM[V] = C;
-    
+  }
+  
+  if (BlockAddress *BA = dyn_cast<BlockAddress>(C)) {
+    Function *F = cast<Function>(MapValue(BA->getFunction(), VM));
+    BasicBlock *BB = cast<BasicBlock>(MapValue(BA->getBasicBlock(), VM));
+    return VM[V] = BlockAddress::get(F, BB);
   }
   
   llvm_unreachable("Unknown type of constant!");
