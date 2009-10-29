@@ -11,6 +11,7 @@ static char *__inline_strcpy_chk (char *dest, const char *src) {
 
 char gbuf[63];
 char *gp;
+int gi, gj;
 
 void test1() {
   // CHECK:       movabsq $59, %rdx
@@ -45,17 +46,13 @@ void test4() {
 }
 
 void test5() {
+  // CHECK:       movb    $0, %al
+  // CHECK-NEXT   testb   %al, %al
   // CHECK:       call    ___inline_strcpy_chk
   strcpy(gp, "Hi there");
 }
 
 void test6() {
-  int i;
-  // CHECK:       call    ___inline_strcpy_chk
-  strcpy((++i, gbuf), "Hi there");
-}
-
-void test7() {
   char buf[57];
 
   // CHECK:       movabsq $53, %rdx
@@ -63,4 +60,31 @@ void test7() {
   // CHECK-NEXT:  movq    %rcx, %rsi
   // CHECK-NEXT:  call    ___strcpy_chk
   strcpy(&buf[4], "Hi there");
+}
+
+void test7() {
+  int i;
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy((++i, gbuf), "Hi there");
+}
+
+void test8() {
+  char *buf[50];
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(buf[++gi], "Hi there");
+}
+
+void test9() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy((char *)((++gi) + gj), "Hi there");
+}
+
+char **p;
+void test10() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(*(++p), "Hi there");
 }
