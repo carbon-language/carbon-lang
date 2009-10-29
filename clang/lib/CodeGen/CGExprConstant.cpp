@@ -228,7 +228,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     if (NumBytes > 1)
       Ty = llvm::ArrayType::get(Ty, NumBytes);
 
-    llvm::Constant *C = llvm::Constant::getNullValue(Ty);
+    llvm::Constant *C = llvm::UndefValue::get(Ty);
     Elements.push_back(C);
     assert(getAlignment(C) == 1 && "Padding must have 1 byte alignment!");
 
@@ -266,7 +266,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
         if (NumBytes > 1)
           Ty = llvm::ArrayType::get(Ty, NumBytes);
 
-        llvm::Constant *Padding = llvm::Constant::getNullValue(Ty);
+        llvm::Constant *Padding = llvm::UndefValue::get(Ty);
         PackedElements.push_back(Padding);
         ElementOffsetInBytes += getSizeInBytes(Padding);
       }
@@ -496,7 +496,7 @@ public:
         if (NumPadBytes > 1)
           Ty = llvm::ArrayType::get(Ty, NumPadBytes);
 
-        Elts.push_back(llvm::Constant::getNullValue(Ty));
+        Elts.push_back(llvm::UndefValue::get(Ty));
         Types.push_back(Ty);
       }
 
