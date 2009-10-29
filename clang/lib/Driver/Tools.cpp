@@ -757,7 +757,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
-  Args.AddAllArgs(CmdArgs, options::OPT_W_Group, options::OPT_pedantic_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_W_Group);
+  Args.AddLastArg(CmdArgs, options::OPT_pedantic);
+  Args.AddLastArg(CmdArgs, options::OPT_pedantic_errors);
   Args.AddLastArg(CmdArgs, options::OPT_w);
 
   // Handle -{std, ansi, trigraphs} -- take the last of -{std, ansi}
