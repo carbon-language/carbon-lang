@@ -899,7 +899,7 @@ static void HandleMacOSVersionMin(llvm::Triple &Triple) {
             "-mmacosx-version-min only valid for darwin (Mac OS X) targets\n");
     exit(1);
   }
-  
+
   // Validate that MacOSVersionMin is a 'version number', starting with 10.[3-9]
   if (MacOSVersionMin.size() < 4 ||
       MacOSVersionMin.substr(0, 3) != "10." ||
@@ -909,11 +909,11 @@ static void HandleMacOSVersionMin(llvm::Triple &Triple) {
             MacOSVersionMin.c_str());
     exit(1);
   }
-  
+
   unsigned VersionNum = MacOSVersionMin[3]-'0';
   llvm::SmallString<16> NewDarwinString;
   NewDarwinString += "darwin";
-  
+
   // Turn MacOSVersionMin into a darwin number: e.g. 10.3.9 is 3 -> darwin7.
   VersionNum += 4;
   if (VersionNum > 9) {
@@ -967,7 +967,7 @@ static void HandleIPhoneOSVersionMin(llvm::Triple &Triple) {
             IPhoneOSVersionMin.c_str());
     exit(1);
   }
-  
+
   // Turn IPhoneOSVersionMin into a darwin number: e.g. 2.0 is 2 -> 9.2.0
   llvm::SmallString<16> NewDarwinString;
   NewDarwinString += "darwin9.";
@@ -2073,25 +2073,25 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     if (InitializeSourceManager(PP, InFile))
       return;
   }
-  
+
   // If we have an ASTConsumer, run the parser with it.
   if (Consumer) {
     CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *) = 0;
     void *CreateCodeCompleterData = 0;
-    
+
     if (!CodeCompletionAt.FileName.empty()) {
       // Tell the source manager to chop off the given file at a specific
       // line and column.
-      if (const FileEntry *Entry 
+      if (const FileEntry *Entry
             = PP.getFileManager().getFile(CodeCompletionAt.FileName)) {
         // Truncate the named file at the given line/column.
         PP.getSourceManager().truncateFileAt(Entry, CodeCompletionAt.Line,
                                              CodeCompletionAt.Column);
-        
+
         // Set up the creation routine for code-completion.
         CreateCodeCompleter = BuildPrintingCodeCompleter;
       } else {
-        PP.getDiagnostics().Report(FullSourceLoc(), 
+        PP.getDiagnostics().Report(FullSourceLoc(),
                                    diag::err_fe_invalid_code_complete_file)
           << CodeCompletionAt.FileName;
       }
@@ -2340,7 +2340,7 @@ int main(int argc, char **argv) {
 
   // Get information about the target being compiled for.
   llvm::Triple Triple = CreateTargetTriple();
-  llvm::OwningPtr<TargetInfo> 
+  llvm::OwningPtr<TargetInfo>
   Target(TargetInfo::CreateTargetInfo(Triple.getTriple()));
 
   if (Target == 0) {
@@ -2381,8 +2381,8 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    /// Create a SourceManager object.  This tracks and owns all the file
-    /// buffers allocated to a translation unit.
+    // Create a SourceManager object.  This tracks and owns all the file
+    // buffers allocated to a translation unit.
     if (!SourceMgr)
       SourceMgr.reset(new SourceManager());
     else
