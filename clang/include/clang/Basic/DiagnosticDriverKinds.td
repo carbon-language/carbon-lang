@@ -55,6 +55,8 @@ def err_drv_command_signalled : Error<
   "%0 command failed due to signal %1 (use -v to see invocation)">;
 def err_drv_invalid_mfloat_abi : Error<
   "invalid float ABI '%0'">;
+def err_drv_I_dash_not_supported : Error<
+  "'%0' not supported, please use -iquote instead">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;

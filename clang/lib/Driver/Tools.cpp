@@ -204,6 +204,10 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   // those options. :(
   Args.AddAllArgValues(CmdArgs, options::OPT_Wp_COMMA,
                        options::OPT_Xpreprocessor);
+
+  // -I- is a deprecated GCC feature, reject it.
+  if (Arg *A = Args.getLastArg(options::OPT_I_))
+    D.Diag(clang::diag::err_drv_I_dash_not_supported) << A->getAsString(Args);
 }
 
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targetting.
