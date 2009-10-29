@@ -7,7 +7,8 @@ INCLUDE_DIRECTORIES(${CompilerRT_SOURCE_DIR}/lib)
 # add_library(${CompilerRT_LIBRARY} STATIC support.c cmdline.c)
 TARGET_LINK_LIBRARIES( ${CompilerRT_LIBRARY} )
 
-SET( TEST_TARGET_LIBRARIES ${CompilerRT_LIBRARY}-Common )
+# FIXME: We should check Optmized versions of CompilerRT-* here also.
+SET( TEST_TARGET_LIBRARIES ${CompilerRT_LIBRARY}-Generic )
 
 INCLUDE( MacroAddCheckTest )
 # create tests
