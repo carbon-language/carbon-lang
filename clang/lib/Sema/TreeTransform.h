@@ -290,7 +290,20 @@ public:
   /// declaration stored within the template argument and constructs a
   /// new template argument from the transformed result. Subclasses may
   /// override this function to provide alternate behavior.
-  TemplateArgument TransformTemplateArgument(const TemplateArgument &Arg);
+  ///
+  /// Returns true if there was an error.
+  bool TransformTemplateArgument(const TemplateArgumentLoc &Input,
+                                 TemplateArgumentLoc &Output);
+
+  /// \brief Fakes up a TemplateArgumentLoc for a given TemplateArgument.
+  void InventTemplateArgumentLoc(const TemplateArgument &Arg,
+                                 TemplateArgumentLoc &ArgLoc);
+
+  /// \brief Fakes up a DeclaratorInfo for a type.
+  DeclaratorInfo *InventDeclaratorInfo(QualType T) {
+    return SemaRef.Context.getTrivialDeclaratorInfo(T,
+                       getDerived().getBaseLocation());
+  }
 
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT)                                   \
@@ -299,6 +312,11 @@ public:
 
   QualType 
   TransformTemplateSpecializationType(const TemplateSpecializationType *T,
+                                      QualType ObjectType);
+
+  QualType
+  TransformTemplateSpecializationType(TypeLocBuilder &TLB,
+                                      TemplateSpecializationTypeLoc TL,
                                       QualType ObjectType);
   
   OwningStmtResult TransformCompoundStmt(CompoundStmt *S, bool IsStmtExpr);
@@ -478,8 +496,11 @@ public:
   /// specialization type. Subclasses may override this routine to provide
   /// different behavior.
   QualType RebuildTemplateSpecializationType(TemplateName Template,
-                                             const TemplateArgument *Args,
-                                             unsigned NumArgs);
+                                             SourceLocation TemplateLoc,
+                                             SourceLocation LAngleLoc,
+                                             const TemplateArgumentLoc *Args,
+                                             unsigned NumArgs,
+                                             SourceLocation RAngleLoc);
 
   /// \brief Build a new qualified name type.
   ///
@@ -509,9 +530,9 @@ public:
   /// (or qualified name type). Subclasses may override this routine to provide
   /// different behavior.
   QualType RebuildTypenameType(NestedNameSpecifier *NNS,
-                               const IdentifierInfo *Id) {
-    return SemaRef.CheckTypenameType(NNS, *Id,
-                                  SourceRange(getDerived().getBaseLocation()));
+                               const IdentifierInfo *Id,
+                               SourceRange SR) {
+    return SemaRef.CheckTypenameType(NNS, *Id, SR);
   }
 
   /// \brief Build a new nested-name-specifier given the prefix and an
@@ -1427,7 +1448,7 @@ public:
                                          TemplateName Template,
                                          SourceLocation TemplateLoc,
                                          SourceLocation LAngleLoc,
-                                         TemplateArgument *TemplateArgs,
+                                         TemplateArgumentLoc *TemplateArgs,
                                          unsigned NumTemplateArgs,
                                          SourceLocation RAngleLoc) {
     return getSema().BuildTemplateIdExpr(Qualifier, QualifierRange,
@@ -1530,7 +1551,7 @@ public:
                                                 SourceLocation TemplateNameLoc,
                                               NamedDecl *FirstQualifierInScope,
                                                   SourceLocation LAngleLoc,
-                                          const TemplateArgument *TemplateArgs,
+                                       const TemplateArgumentLoc *TemplateArgs,
                                                   unsigned NumTemplateArgs,
                                                   SourceLocation RAngleLoc) {
     OwningExprResult Base = move(BaseE);
@@ -1876,30 +1897,67 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
 }
 
 template<typename Derived>
-TemplateArgument
-TreeTransform<Derived>::TransformTemplateArgument(const TemplateArgument &Arg) {
+void TreeTransform<Derived>::InventTemplateArgumentLoc(
+                                         const TemplateArgument &Arg,
+                                         TemplateArgumentLoc &Output) {
+  SourceLocation Loc = getDerived().getBaseLocation();
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    llvm::llvm_unreachable("null template argument in TreeTransform");
+    break;
+
+  case TemplateArgument::Type:
+    Output = TemplateArgumentLoc(Arg,
+               SemaRef.Context.getTrivialDeclaratorInfo(Arg.getAsType(), Loc));
+                                            
+    break;
+
+  case TemplateArgument::Expression:
+    Output = TemplateArgumentLoc(Arg, Arg.getAsExpr());
+    break;
+
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Integral:
+  case TemplateArgument::Pack:
+    Output = TemplateArgumentLoc(Arg);
+    break;
+  }
+}
+
+template<typename Derived>
+bool TreeTransform<Derived>::TransformTemplateArgument(
+                                         const TemplateArgumentLoc &Input,
+                                         TemplateArgumentLoc &Output) {
+  const TemplateArgument &Arg = Input.getArgument();
   switch (Arg.getKind()) {
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
-    return Arg;
+    Output = Input;
+    return false;
 
   case TemplateArgument::Type: {
-    TemporaryBase Rebase(*this, Arg.getLocation(), DeclarationName());
-    QualType T = getDerived().TransformType(Arg.getAsType());
-    if (T.isNull())
-      return TemplateArgument();
-    return TemplateArgument(Arg.getLocation(), T);
+    DeclaratorInfo *DI = Input.getSourceDeclaratorInfo();
+    if (DI == NULL)
+      DI = InventDeclaratorInfo(Input.getArgument().getAsType());
+
+    DI = getDerived().TransformType(DI);
+    if (!DI) return true;
+
+    Output = TemplateArgumentLoc(TemplateArgument(DI->getType()), DI);
+    return false;
   }
 
   case TemplateArgument::Declaration: {
+    // FIXME: we should never have to transform one of these.
     DeclarationName Name;
     if (NamedDecl *ND = dyn_cast<NamedDecl>(Arg.getAsDecl()))
       Name = ND->getDeclName();
-    TemporaryBase Rebase(*this, Arg.getLocation(), Name);
+    TemporaryBase Rebase(*this, SourceLocation(), Name);
     Decl *D = getDerived().TransformDecl(Arg.getAsDecl());
-    if (!D)
-      return TemplateArgument();
-    return TemplateArgument(Arg.getLocation(), D);
+    if (!D) return true;
+
+    Output = TemplateArgumentLoc(TemplateArgument(D));
+    return false;
   }
 
   case TemplateArgument::Expression: {
@@ -1907,10 +1965,16 @@ TreeTransform<Derived>::TransformTemplateArgument(const TemplateArgument &Arg) {
     EnterExpressionEvaluationContext Unevaluated(getSema(),
                                                  Action::Unevaluated);
 
-    Sema::OwningExprResult E = getDerived().TransformExpr(Arg.getAsExpr());
-    if (E.isInvalid())
-      return TemplateArgument();
-    return TemplateArgument(E.takeAs<Expr>());
+    Expr *InputExpr = Input.getSourceExpression();
+    if (!InputExpr) InputExpr = Input.getArgument().getAsExpr();
+
+    Sema::OwningExprResult E
+      = getDerived().TransformExpr(InputExpr);
+    if (E.isInvalid()) return true;
+
+    Expr *ETaken = E.takeAs<Expr>();
+    Output = TemplateArgumentLoc(TemplateArgument(ETaken), ETaken);
+    return false;
   }
 
   case TemplateArgument::Pack: {
@@ -1919,21 +1983,28 @@ TreeTransform<Derived>::TransformTemplateArgument(const TemplateArgument &Arg) {
     for (TemplateArgument::pack_iterator A = Arg.pack_begin(),
                                       AEnd = Arg.pack_end();
          A != AEnd; ++A) {
-      TemplateArgument TA = getDerived().TransformTemplateArgument(*A);
-      if (TA.isNull())
-        return TA;
 
-      TransformedArgs.push_back(TA);
+      // FIXME: preserve source information here when we start
+      // caring about parameter packs.
+
+      TemplateArgumentLoc Input;
+      TemplateArgumentLoc Output;
+      getDerived().InventTemplateArgumentLoc(*A, Input);
+      if (getDerived().TransformTemplateArgument(Input, Output))
+        return true;
+
+      TransformedArgs.push_back(Output.getArgument());
     }
     TemplateArgument Result;
     Result.setArgumentPack(TransformedArgs.data(), TransformedArgs.size(),
                            true);
-    return Result;
+    Output = TemplateArgumentLoc(Result);
+    return false;
   }
   }
 
   // Work around bogus GCC warning
-  return TemplateArgument();
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2678,46 +2749,74 @@ inline QualType
 TreeTransform<Derived>::TransformTemplateSpecializationType(
                                           TypeLocBuilder &TLB,
                                           TemplateSpecializationTypeLoc TL) {
-  // TODO: figure out how make this work with an ObjectType.
-  QualType Result
-    = TransformTemplateSpecializationType(TL.getTypePtr(), QualType());
-  if (Result.isNull())
-    return QualType();
+  return TransformTemplateSpecializationType(TLB, TL, QualType());
+}
 
-  TemplateSpecializationTypeLoc NewTL
-    = TLB.push<TemplateSpecializationTypeLoc>(Result);
-  NewTL.setNameLoc(TL.getNameLoc());
+template<typename Derived>
+QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
+                                      const TemplateSpecializationType *TST,
+                                                        QualType ObjectType) {
+  // FIXME: this entire method is a temporary workaround; callers
+  // should be rewritten to provide real type locs.
 
-  return Result;
+  // Fake up a TemplateSpecializationTypeLoc.
+  TypeLocBuilder TLB;
+  TemplateSpecializationTypeLoc TL
+    = TLB.push<TemplateSpecializationTypeLoc>(QualType(TST, 0));
+
+  TL.setTemplateNameLoc(getDerived().getBaseLocation());
+  TL.setLAngleLoc(SourceLocation());
+  TL.setRAngleLoc(SourceLocation());
+  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
+    const TemplateArgument &TA = TST->getArg(i);
+    TemplateArgumentLoc TAL;
+    getDerived().InventTemplateArgumentLoc(TA, TAL);
+    TL.setArgLocInfo(i, TAL.getLocInfo());
+  }
+
+  TypeLocBuilder IgnoredTLB;
+  return TransformTemplateSpecializationType(IgnoredTLB, TL, ObjectType);
 }
   
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
-                                        const TemplateSpecializationType *T,
-                                                          QualType ObjectType) {
+                                                        TypeLocBuilder &TLB,
+                                           TemplateSpecializationTypeLoc TL,
+                                                        QualType ObjectType) {
+  const TemplateSpecializationType *T = TL.getTypePtr();
+
   TemplateName Template
     = getDerived().TransformTemplateName(T->getTemplateName(), ObjectType);
   if (Template.isNull())
     return QualType();
 
-  llvm::SmallVector<TemplateArgument, 4> NewTemplateArgs;
-  NewTemplateArgs.reserve(T->getNumArgs());
-  for (TemplateSpecializationType::iterator Arg = T->begin(), ArgEnd = T->end();
-       Arg != ArgEnd; ++Arg) {
-    TemplateArgument NewArg = getDerived().TransformTemplateArgument(*Arg);
-    if (NewArg.isNull())
+  llvm::SmallVector<TemplateArgumentLoc, 4> NewTemplateArgs(T->getNumArgs());
+  for (unsigned i = 0, e = T->getNumArgs(); i != e; ++i)
+    if (getDerived().TransformTemplateArgument(TL.getArgLoc(i),
+                                               NewTemplateArgs[i]))
       return QualType();
 
-    NewTemplateArgs.push_back(NewArg);
+  // FIXME: maybe don't rebuild if all the template arguments are the same.
+
+  QualType Result =
+    getDerived().RebuildTemplateSpecializationType(Template,
+                                                   TL.getTemplateNameLoc(),
+                                                   TL.getLAngleLoc(),
+                                                   NewTemplateArgs.data(),
+                                                   NewTemplateArgs.size(),
+                                                   TL.getRAngleLoc());
+
+  if (!Result.isNull()) {
+    TemplateSpecializationTypeLoc NewTL
+      = TLB.push<TemplateSpecializationTypeLoc>(Result);
+    NewTL.setTemplateNameLoc(TL.getTemplateNameLoc());
+    NewTL.setLAngleLoc(TL.getLAngleLoc());
+    NewTL.setRAngleLoc(TL.getRAngleLoc());
+    for (unsigned i = 0, e = NewTemplateArgs.size(); i != e; ++i)
+      NewTL.setArgLocInfo(i, NewTemplateArgs[i].getLocInfo());
   }
 
-  // FIXME: early abort if all of the template arguments and such are the
-  // same.
-
-  // FIXME: We're missing the locations of the template name, '<', and '>'.
-  return getDerived().RebuildTemplateSpecializationType(Template,
-                                                        NewTemplateArgs.data(),
-                                                        NewTemplateArgs.size());
+  return Result;
 }
 
 template<typename Derived>
@@ -2754,9 +2853,12 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformTypenameType(TypeLocBuilder &TLB,
                                                        TypenameTypeLoc TL) {
   TypenameType *T = TL.getTypePtr();
+
+  /* FIXME: preserve source information better than this */
+  SourceRange SR(TL.getNameLoc());
+
   NestedNameSpecifier *NNS
-    = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
-                        SourceRange(/*FIXME:*/getDerived().getBaseLocation()));
+    = getDerived().TransformNestedNameSpecifier(T->getQualifier(), SR);
   if (!NNS)
     return QualType();
 
@@ -2775,7 +2877,7 @@ QualType TreeTransform<Derived>::TransformTypenameType(TypeLocBuilder &TLB,
 
     Result = getDerived().RebuildTypenameType(NNS, NewTemplateId);
   } else {
-    Result = getDerived().RebuildTypenameType(NNS, T->getIdentifier());
+    Result = getDerived().RebuildTypenameType(NNS, T->getIdentifier(), SR);
   }
   if (Result.isNull())
     return QualType();
@@ -3287,14 +3389,11 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
 
   // FIXME: We're losing the explicit template arguments in this transformation.
 
-  llvm::SmallVector<TemplateArgument, 4> TransArgs;
+  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs(E->getNumTemplateArgs());
   for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    TemplateArgument TransArg
-      = getDerived().TransformTemplateArgument(E->getTemplateArgs()[I]);
-    if (TransArg.isNull())
+    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
+                                               TransArgs[I]))
       return SemaRef.ExprError();
-    
-    TransArgs.push_back(TransArg);
   }
   
   // FIXME: Pass the qualifier/qualifier range along.
@@ -4367,14 +4466,11 @@ TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E) {
       return SemaRef.ExprError();
   }
   
-  llvm::SmallVector<TemplateArgument, 4> TransArgs;
+  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs(E->getNumTemplateArgs());
   for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    TemplateArgument TransArg
-      = getDerived().TransformTemplateArgument(E->getTemplateArgs()[I]);
-    if (TransArg.isNull())
+    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
+                                               TransArgs[I]))
       return SemaRef.ExprError();
-
-    TransArgs.push_back(TransArg);
   }
 
   // FIXME: Would like to avoid rebuilding if nothing changed, but we can't
@@ -4627,14 +4723,11 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   if (Template.isNull())
     return SemaRef.ExprError();
 
-  llvm::SmallVector<TemplateArgument, 4> TransArgs;
+  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs(E->getNumTemplateArgs());
   for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    TemplateArgument TransArg
-    = getDerived().TransformTemplateArgument(E->getTemplateArgs()[I]);
-    if (TransArg.isNull())
+    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
+                                               TransArgs[I]))
       return SemaRef.ExprError();
-
-    TransArgs.push_back(TransArg);
   }
 
   return getDerived().RebuildCXXUnresolvedMemberExpr(move(Base),
@@ -4980,13 +5073,14 @@ QualType TreeTransform<Derived>::RebuildDecltypeType(ExprArg E) {
 
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildTemplateSpecializationType(
-                                                        TemplateName Template,
-                                                 const TemplateArgument *Args,
-                                                           unsigned NumArgs) {
-  // FIXME: Missing source locations for the template name, <, >.
-  return SemaRef.CheckTemplateIdType(Template, getDerived().getBaseLocation(),
-                                     SourceLocation(), Args, NumArgs,
-                                     SourceLocation());
+                                                      TemplateName Template,
+                                             SourceLocation TemplateNameLoc,
+                                                   SourceLocation LAngleLoc,
+                                            const TemplateArgumentLoc *Args,
+                                                           unsigned NumArgs,
+                                                   SourceLocation RAngleLoc) {
+  return SemaRef.CheckTemplateIdType(Template, TemplateNameLoc, LAngleLoc,
+                                     Args, NumArgs, RAngleLoc);
 }
 
 template<typename Derived>

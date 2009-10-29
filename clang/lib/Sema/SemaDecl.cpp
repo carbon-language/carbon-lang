@@ -2796,7 +2796,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // If the declarator is a template-id, translate the parser's template 
   // argument list into our AST format.
   bool HasExplicitTemplateArgs = false;
-  llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
+  llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
   SourceLocation LAngleLoc, RAngleLoc;
   if (D.getKind() == Declarator::DK_TemplateId) {
     TemplateIdAnnotation *TemplateId = D.getTemplateId();

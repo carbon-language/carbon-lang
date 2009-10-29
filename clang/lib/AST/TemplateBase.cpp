@@ -16,17 +16,13 @@
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/TypeLoc.h"
 
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
 // TemplateArgument Implementation
 //===----------------------------------------------------------------------===//
-
-TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
-  TypeOrValue = reinterpret_cast<uintptr_t>(E);
-  StartLoc = E->getSourceRange().getBegin();
-}
 
 /// \brief Construct a template argument pack.
 void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs,
@@ -76,4 +72,26 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
     for (unsigned I = 0; I != Args.NumArgs; ++I)
       Args.Args[I].Profile(ID, Context);
   }
+}
+
+//===----------------------------------------------------------------------===//
+// TemplateArgumentLoc Implementation
+//===----------------------------------------------------------------------===//
+
+SourceLocation TemplateArgumentLoc::getLocation() const {
+  switch (Argument.getKind()) {
+  case TemplateArgument::Expression:
+    return getSourceExpression()->getExprLoc();
+  case TemplateArgument::Type:
+    return getSourceDeclaratorInfo()->
+      getTypeLoc().getFullSourceRange().getBegin();
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Integral:
+  case TemplateArgument::Pack:
+  case TemplateArgument::Null:
+    return SourceLocation();
+  }
+
+  // Silence bonus gcc warning.
+  return SourceLocation();
 }

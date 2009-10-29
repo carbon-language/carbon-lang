@@ -368,7 +368,11 @@ void TypeLocWriter::VisitSubstTemplateTypeParmTypeLoc(
 }
 void TypeLocWriter::VisitTemplateSpecializationTypeLoc(
                                            TemplateSpecializationTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+  Writer.AddSourceLocation(TL.getTemplateNameLoc(), Record);
+  Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
+  Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
+  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
+    Writer.AddTemplateArgumentLoc(TL.getArgLoc(i), Record);
 }
 void TypeLocWriter::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
@@ -2103,6 +2107,23 @@ void PCHWriter::AddSelectorRef(const Selector SelRef, RecordData &Record) {
     SelVector.push_back(SelRef);
   }
   Record.push_back(SID);
+}
+
+void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
+                                       RecordData &Record) {
+  switch (Arg.getArgument().getKind()) {
+  case TemplateArgument::Expression:
+    AddStmt(Arg.getLocInfo().getAsExpr());
+    break;
+  case TemplateArgument::Type:
+    AddDeclaratorInfo(Arg.getLocInfo().getAsDeclaratorInfo(), Record);
+    break;
+  case TemplateArgument::Null:
+  case TemplateArgument::Integral:
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Pack:
+    break;
+  }
 }
 
 void PCHWriter::AddDeclaratorInfo(DeclaratorInfo *DInfo, RecordData &Record) {

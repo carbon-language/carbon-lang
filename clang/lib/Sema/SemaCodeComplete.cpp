@@ -1234,7 +1234,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   SourceRange QualifierRange;
   bool ArgumentDependentLookup;
   bool HasExplicitTemplateArgs;
-  const TemplateArgument *ExplicitTemplateArgs;
+  const TemplateArgumentLoc *ExplicitTemplateArgs;
   unsigned NumExplicitTemplateArgs;
   
   DeconstructCallFunction(Fn,

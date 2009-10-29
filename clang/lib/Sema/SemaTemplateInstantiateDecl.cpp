@@ -886,14 +886,13 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
   // FIXME: Do we actually want to perform substitution here? I don't think
   // we do.
   if (D->hasDefaultArgument()) {
-    QualType DefaultPattern = D->getDefaultArgument();
-    QualType DefaultInst
+    DeclaratorInfo *DefaultPattern = D->getDefaultArgumentInfo();
+    DeclaratorInfo *DefaultInst
       = SemaRef.SubstType(DefaultPattern, TemplateArgs,
                           D->getDefaultArgumentLoc(),
                           D->getDeclName());
 
     Inst->setDefaultArgument(DefaultInst,
-                             D->getDefaultArgumentLoc(),
                              D->defaultArgumentWasInherited() /* preserve? */);
   }
 
@@ -1026,16 +1025,15 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   
   // Substitute into the template arguments of the class template partial
   // specialization.
-  const TemplateArgumentList &PartialSpecTemplateArgs 
-    = PartialSpec->getTemplateInstantiationArgs();
-  llvm::SmallVector<TemplateArgument, 4> InstTemplateArgs;
-  for (unsigned I = 0, N = PartialSpecTemplateArgs.size(); I != N; ++I) {
-    TemplateArgument Inst = SemaRef.Subst(PartialSpecTemplateArgs[I], 
-                                          TemplateArgs);
-    if (Inst.isNull())
+  const TemplateArgumentLoc *PartialSpecTemplateArgs
+    = PartialSpec->getTemplateArgsAsWritten();
+  unsigned N = PartialSpec->getNumTemplateArgsAsWritten();
+
+  llvm::SmallVector<TemplateArgumentLoc, 4> InstTemplateArgs(N);
+  for (unsigned I = 0; I != N; ++I) {
+    if (SemaRef.Subst(PartialSpecTemplateArgs[I], InstTemplateArgs[I],
+                      TemplateArgs))
       return true;
-    
-    InstTemplateArgs.push_back(Inst);
   }
   
 
@@ -1116,6 +1114,8 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      InstParams,
                                                      ClassTemplate, 
                                                      Converted,
+                                                     InstTemplateArgs.data(),
+                                                     InstTemplateArgs.size(),
                                                      0);
   InstPartialSpec->setInstantiatedFromMember(PartialSpec);
   InstPartialSpec->setTypeAsWritten(WrittenTy);

@@ -2444,7 +2444,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
 void
 Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                  bool HasExplicitTemplateArgs,
-                                 const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                  unsigned NumExplicitTemplateArgs,
                                  Expr *Object, Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet,
@@ -2489,7 +2489,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
 void
 Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                    bool HasExplicitTemplateArgs,
-                                 const TemplateArgument *ExplicitTemplateArgs,
+                          const TemplateArgumentLoc *ExplicitTemplateArgs,
                                    unsigned NumExplicitTemplateArgs,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet& CandidateSet,
@@ -3886,7 +3886,7 @@ void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                            Expr **Args, unsigned NumArgs,
                                            bool HasExplicitTemplateArgs,
-                                const TemplateArgument *ExplicitTemplateArgs,
+                            const TemplateArgumentLoc *ExplicitTemplateArgs,
                                            unsigned NumExplicitTemplateArgs,                                            
                                            OverloadCandidateSet& CandidateSet,
                                            bool PartialOverloading) {
@@ -4278,7 +4278,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   bool HasExplicitTemplateArgs = false;
-  const TemplateArgument *ExplicitTemplateArgs = 0;
+  const TemplateArgumentLoc *ExplicitTemplateArgs = 0;
   unsigned NumExplicitTemplateArgs = 0;
   
   // Try to dig out the overloaded function.
@@ -4451,7 +4451,7 @@ static void AddOverloadedCallCandidate(Sema &S,
                                        AnyFunctionDecl Callee,
                                        bool &ArgumentDependentLookup,
                                        bool HasExplicitTemplateArgs,
-                                 const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                        unsigned NumExplicitTemplateArgs,
                                        Expr **Args, unsigned NumArgs,
                                        OverloadCandidateSet &CandidateSet,
@@ -4483,7 +4483,7 @@ void Sema::AddOverloadedCallCandidates(NamedDecl *Callee,
                                        DeclarationName &UnqualifiedName,
                                        bool &ArgumentDependentLookup,
                                        bool HasExplicitTemplateArgs,
-                                  const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                        unsigned NumExplicitTemplateArgs,
                                        Expr **Args, unsigned NumArgs,
                                        OverloadCandidateSet &CandidateSet,
@@ -4551,7 +4551,7 @@ void Sema::AddOverloadedCallCandidates(NamedDecl *Callee,
 FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
                                             DeclarationName UnqualifiedName,
                                             bool HasExplicitTemplateArgs,
-                                 const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                             unsigned NumExplicitTemplateArgs,
                                             SourceLocation LParenLoc,
                                             Expr **Args, unsigned NumArgs,

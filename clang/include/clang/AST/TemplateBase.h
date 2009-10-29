@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_TEMPLATEBASE_H
 
 #include "llvm/ADT/APSInt.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "clang/AST/Type.h"
 
 namespace llvm {
@@ -26,6 +27,7 @@ namespace clang {
 
 class Decl;
 class Expr;
+class DeclaratorInfo;
 
 /// \brief Represents a template argument within a class template
 /// specialization.
@@ -42,9 +44,6 @@ class TemplateArgument {
       bool CopyArgs;
     } Args;
   };
-
-  /// \brief Location of the beginning of this template argument.
-  SourceLocation StartLoc;
 
 public:
   /// \brief The type of template argument we're storing.
@@ -67,30 +66,26 @@ public:
   } Kind;
 
   /// \brief Construct an empty, invalid template argument.
-  TemplateArgument() : TypeOrValue(0), StartLoc(), Kind(Null) { }
+  TemplateArgument() : TypeOrValue(0), Kind(Null) { }
 
   /// \brief Construct a template type argument.
-  TemplateArgument(SourceLocation Loc, QualType T) : Kind(Type) {
+  TemplateArgument(QualType T) : Kind(Type) {
     TypeOrValue = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
-    StartLoc = Loc;
   }
 
   /// \brief Construct a template argument that refers to a
   /// declaration, which is either an external declaration or a
   /// template declaration.
-  TemplateArgument(SourceLocation Loc, Decl *D) : Kind(Declaration) {
+  TemplateArgument(Decl *D) : Kind(Declaration) {
     // FIXME: Need to be sure we have the "canonical" declaration!
     TypeOrValue = reinterpret_cast<uintptr_t>(D);
-    StartLoc = Loc;
   }
 
   /// \brief Construct an integral constant template argument.
-  TemplateArgument(SourceLocation Loc, const llvm::APSInt &Value,
-                   QualType Type)
+  TemplateArgument(const llvm::APSInt &Value, QualType Type)
   : Kind(Integral) {
     new (Integer.Value) llvm::APSInt(Value);
     Integer.Type = Type.getAsOpaquePtr();
-    StartLoc = Loc;
   }
 
   /// \brief Construct a template argument that is an expression.
@@ -98,7 +93,9 @@ public:
   /// This form of template argument only occurs in template argument
   /// lists used for dependent types and for expression; it will not
   /// occur in a non-dependent, canonical template argument list.
-  TemplateArgument(Expr *E);
+  TemplateArgument(Expr *E) : Kind(Expression) {
+    TypeOrValue = reinterpret_cast<uintptr_t>(E);
+  }
 
   /// \brief Copy constructor for a template argument.
   TemplateArgument(const TemplateArgument &Other) : Kind(Other.Kind) {
@@ -113,7 +110,6 @@ public:
     }
     else
       TypeOrValue = Other.TypeOrValue;
-    StartLoc = Other.StartLoc;
   }
 
   TemplateArgument& operator=(const TemplateArgument& Other) {
@@ -142,7 +138,6 @@ public:
       } else
         TypeOrValue = Other.TypeOrValue;
     }
-    StartLoc = Other.StartLoc;
 
     return *this;
   }
@@ -234,14 +229,128 @@ public:
     return Args.NumArgs;
   }
 
-  /// \brief Retrieve the location where the template argument starts.
-  SourceLocation getLocation() const { return StartLoc; }
-
   /// \brief Construct a template argument pack.
   void setArgumentPack(TemplateArgument *Args, unsigned NumArgs, bool CopyArgs);
 
   /// \brief Used to insert TemplateArguments into FoldingSets.
   void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context) const;
+};
+
+/// Location information for a TemplateArgument.
+struct TemplateArgumentLocInfo {
+private:
+  void *Union;
+
+#ifndef NDEBUG
+  enum Kind {
+    K_None,
+    K_DeclaratorInfo,
+    K_Expression
+  } Kind;
+#endif
+
+public:
+  TemplateArgumentLocInfo()
+    : Union(), Kind(K_None) {}
+  TemplateArgumentLocInfo(DeclaratorInfo *DInfo)
+    : Union(DInfo), Kind(K_DeclaratorInfo) {}
+  TemplateArgumentLocInfo(Expr *E)
+    : Union(E), Kind(K_Expression) {}
+
+  /// \brief Returns whether this 
+  bool empty() const {
+    return Union == NULL;
+  }
+
+  DeclaratorInfo *getAsDeclaratorInfo() const {
+    assert(Kind == K_DeclaratorInfo);
+    return reinterpret_cast<DeclaratorInfo*>(Union);
+  }
+
+  Expr *getAsExpr() const {
+    assert(Kind == K_Expression);
+    return reinterpret_cast<Expr*>(Union);
+  }
+
+#ifndef NDEBUG
+  void validateForArgument(const TemplateArgument &Arg) {
+    // We permit empty data.  This should be removed when source info
+    // is being uniformly preserved.
+    if (Kind == K_None) return;
+
+    switch (Arg.getKind()) {
+    case TemplateArgument::Type:
+      assert(Kind == K_DeclaratorInfo);
+      break;
+    case TemplateArgument::Expression:
+      assert(Kind == K_Expression);
+      break;
+    case TemplateArgument::Declaration:
+    case TemplateArgument::Integral:
+    case TemplateArgument::Pack:
+      assert(Kind == K_None);
+      break;
+    case TemplateArgument::Null:
+      llvm::llvm_unreachable("source info for null template argument?");
+    }
+  }
+#endif
+};
+
+/// Location wrapper for a TemplateArgument.  TemplateArgument is to
+/// TemplateArgumentLoc as Type is to TypeLoc.
+class TemplateArgumentLoc {
+  TemplateArgument Argument;
+  TemplateArgumentLocInfo LocInfo;
+
+  friend class TemplateSpecializationTypeLoc;
+  TemplateArgumentLoc(const TemplateArgument &Argument,
+                      TemplateArgumentLocInfo Opaque)
+    : Argument(Argument), LocInfo(Opaque) {
+  }
+
+public:
+  TemplateArgumentLoc() {}
+
+  TemplateArgumentLoc(const TemplateArgument &Argument, DeclaratorInfo *DInfo)
+    : Argument(Argument), LocInfo(DInfo) {
+    assert(Argument.getKind() == TemplateArgument::Type);
+  }
+
+  TemplateArgumentLoc(const TemplateArgument &Argument, Expr *E)
+    : Argument(Argument), LocInfo(E) {
+    assert(Argument.getKind() == TemplateArgument::Expression);
+  }
+
+  /// This is a temporary measure.
+  TemplateArgumentLoc(const TemplateArgument &Argument)
+    : Argument(Argument), LocInfo() {
+    assert(Argument.getKind() != TemplateArgument::Expression &&
+           Argument.getKind() != TemplateArgument::Type);
+  }
+
+  /// \brief - Fetches the start location of the argument, if possible.
+  SourceLocation getLocation() const;
+
+  const TemplateArgument &getArgument() const {
+    return Argument;
+  }
+
+  TemplateArgumentLocInfo getLocInfo() const {
+    return LocInfo;
+  }
+
+  DeclaratorInfo *getSourceDeclaratorInfo() const {
+    assert(Argument.getKind() == TemplateArgument::Type);
+    if (LocInfo.empty()) return 0;
+    return LocInfo.getAsDeclaratorInfo();
+  }
+
+  Expr *getSourceExpression() const {
+    assert(Argument.getKind() == TemplateArgument::Expression);
+    if (LocInfo.empty()) return 0;
+    return LocInfo.getAsExpr();
+  }
 };
 
 }

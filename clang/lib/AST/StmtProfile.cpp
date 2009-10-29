@@ -60,7 +60,10 @@ namespace {
 
     /// \brief Visit template arguments that occur within an expression or
     /// statement.
-    void VisitTemplateArguments(const TemplateArgument *Args, unsigned NumArgs);
+    void VisitTemplateArguments(const TemplateArgumentLoc *Args, unsigned NumArgs);
+
+    /// \brief Visit a single template argument.
+    void VisitTemplateArgument(const TemplateArgument &Arg);
   };
 }
 
@@ -674,39 +677,42 @@ void StmtProfiler::VisitTemplateName(TemplateName Name) {
   Name.Profile(ID);
 }
 
-void StmtProfiler::VisitTemplateArguments(const TemplateArgument *Args,
+void StmtProfiler::VisitTemplateArguments(const TemplateArgumentLoc *Args,
                                           unsigned NumArgs) {
   ID.AddInteger(NumArgs);
-  for (unsigned I = 0; I != NumArgs; ++I) {
-    const TemplateArgument &Arg = Args[I];
+  for (unsigned I = 0; I != NumArgs; ++I)
+    VisitTemplateArgument(Args[I].getArgument());
+}
 
-    // Mostly repetitive with TemplateArgument::Profile!
-    ID.AddInteger(Arg.getKind());
-    switch (Arg.getKind()) {
-      case TemplateArgument::Null:
-        break;
+void StmtProfiler::VisitTemplateArgument(const TemplateArgument &Arg) {
+  // Mostly repetitive with TemplateArgument::Profile!
+  ID.AddInteger(Arg.getKind());
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    break;
 
-      case TemplateArgument::Type:
-        VisitType(Arg.getAsType());
-        break;
+  case TemplateArgument::Type:
+    VisitType(Arg.getAsType());
+    break;
 
-      case TemplateArgument::Declaration:
-        VisitDecl(Arg.getAsDecl());
-        break;
+  case TemplateArgument::Declaration:
+    VisitDecl(Arg.getAsDecl());
+    break;
 
-      case TemplateArgument::Integral:
-        Arg.getAsIntegral()->Profile(ID);
-        VisitType(Arg.getIntegralType());
-        break;
+  case TemplateArgument::Integral:
+    Arg.getAsIntegral()->Profile(ID);
+    VisitType(Arg.getIntegralType());
+    break;
 
-      case TemplateArgument::Expression:
-        Visit(Arg.getAsExpr());
-        break;
+  case TemplateArgument::Expression:
+    Visit(Arg.getAsExpr());
+    break;
 
-      case TemplateArgument::Pack:
-        VisitTemplateArguments(Arg.pack_begin(), Arg.pack_size());
-        break;
-    }
+  case TemplateArgument::Pack:
+    const TemplateArgument *Pack = Arg.pack_begin();
+    for (unsigned i = 0, e = Arg.pack_size(); i != e; ++i)
+      VisitTemplateArgument(Pack[i]);
+    break;
   }
 }
 

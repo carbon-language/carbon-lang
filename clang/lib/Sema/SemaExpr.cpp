@@ -1959,7 +1959,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                DeclarationName MemberName,
                                bool HasExplicitTemplateArgs,
                                SourceLocation LAngleLoc,
-                               const TemplateArgument *ExplicitTemplateArgs,
+                               const TemplateArgumentLoc *ExplicitTemplateArgs,
                                unsigned NumExplicitTemplateArgs,
                                SourceLocation RAngleLoc,
                                DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS,
@@ -2711,7 +2711,7 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
                                    SourceRange &QualifierRange,
                                    bool &ArgumentDependentLookup,
                                    bool &HasExplicitTemplateArguments,
-                                 const TemplateArgument *&ExplicitTemplateArgs,
+                           const TemplateArgumentLoc *&ExplicitTemplateArgs,
                                    unsigned &NumExplicitTemplateArgs) {
   // Set defaults for all of the output parameters.
   Function = 0;
@@ -2892,7 +2892,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // lookup and whether there were any explicitly-specified template arguments.
   bool ADL = true;
   bool HasExplicitTemplateArgs = 0;
-  const TemplateArgument *ExplicitTemplateArgs = 0;
+  const TemplateArgumentLoc *ExplicitTemplateArgs = 0;
   unsigned NumExplicitTemplateArgs = 0;
   NestedNameSpecifier *Qualifier = 0;
   SourceRange QualifierRange;

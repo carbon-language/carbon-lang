@@ -35,7 +35,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
                          NamedDecl *D, SourceLocation NameLoc,
                          bool HasExplicitTemplateArgumentList,
                          SourceLocation LAngleLoc,
-                         const TemplateArgument *ExplicitTemplateArgs,
+                         const TemplateArgumentLoc *ExplicitTemplateArgs,
                          unsigned NumExplicitTemplateArgs,
                          SourceLocation RAngleLoc,
                          QualType T, bool TD, bool VD)
@@ -58,9 +58,9 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
     ETemplateArgs->RAngleLoc = RAngleLoc;
     ETemplateArgs->NumTemplateArgs = NumExplicitTemplateArgs;
     
-    TemplateArgument *TemplateArgs = ETemplateArgs->getTemplateArgs();
+    TemplateArgumentLoc *TemplateArgs = ETemplateArgs->getTemplateArgs();
     for (unsigned I = 0; I < NumExplicitTemplateArgs; ++I)
-      new (TemplateArgs + I) TemplateArgument(ExplicitTemplateArgs[I]);
+      new (TemplateArgs + I) TemplateArgumentLoc(ExplicitTemplateArgs[I]);
   }
 }
 
@@ -82,7 +82,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  SourceLocation NameLoc,
                                  bool HasExplicitTemplateArgumentList,
                                  SourceLocation LAngleLoc,
-                                 const TemplateArgument *ExplicitTemplateArgs,
+                                 const TemplateArgumentLoc *ExplicitTemplateArgs,
                                  unsigned NumExplicitTemplateArgs,
                                  SourceLocation RAngleLoc,
                                  QualType T, bool TD, bool VD) {
@@ -92,7 +92,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
   
   if (HasExplicitTemplateArgumentList)
     Size += sizeof(ExplicitTemplateArgumentList) +
-            sizeof(TemplateArgument) * NumExplicitTemplateArgs;
+            sizeof(TemplateArgumentLoc) * NumExplicitTemplateArgs;
   
   void *Mem = Context.Allocate(Size, llvm::alignof<DeclRefExpr>());
   return new (Mem) DeclRefExpr(Qualifier, QualifierRange, D, NameLoc,
@@ -428,7 +428,7 @@ MemberExpr::MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
                        SourceRange qualrange, NamedDecl *memberdecl,
                        SourceLocation l, bool has_explicit,
                        SourceLocation langle,
-                       const TemplateArgument *targs, unsigned numtargs,
+                       const TemplateArgumentLoc *targs, unsigned numtargs,
                        SourceLocation rangle, QualType ty)
   : Expr(MemberExprClass, ty,
          base->isTypeDependent() || (qual && qual->isDependent()),
@@ -450,9 +450,9 @@ MemberExpr::MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
     ETemplateArgs->RAngleLoc = rangle;
     ETemplateArgs->NumTemplateArgs = numtargs;
 
-    TemplateArgument *TemplateArgs = ETemplateArgs->getTemplateArgs();
+    TemplateArgumentLoc *TemplateArgs = ETemplateArgs->getTemplateArgs();
     for (unsigned I = 0; I < numtargs; ++I)
-      new (TemplateArgs + I) TemplateArgument(targs[I]);
+      new (TemplateArgs + I) TemplateArgumentLoc(targs[I]);
   }
 }
 
@@ -463,7 +463,7 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                SourceLocation l,
                                bool has_explicit,
                                SourceLocation langle,
-                               const TemplateArgument *targs,
+                               const TemplateArgumentLoc *targs,
                                unsigned numtargs,
                                SourceLocation rangle,
                                QualType ty) {
@@ -473,7 +473,7 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
 
   if (has_explicit)
     Size += sizeof(ExplicitTemplateArgumentList) +
-    sizeof(TemplateArgument) * numtargs;
+    sizeof(TemplateArgumentLoc) * numtargs;
 
   void *Mem = C.Allocate(Size, llvm::alignof<MemberExpr>());
   return new (Mem) MemberExpr(base, isarrow, qual, qualrange, memberdecl, l,

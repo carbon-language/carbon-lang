@@ -275,6 +275,10 @@ public:
   /// \brief Emits a reference to a declarator info.
   void AddDeclaratorInfo(DeclaratorInfo *DInfo, RecordData &Record);
 
+  /// \brief Emits a template argument location.
+  void AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
+                              RecordData &Record);
+
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordData &Record);
 

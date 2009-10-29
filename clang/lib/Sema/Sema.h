@@ -73,6 +73,7 @@ namespace clang {
   class TypedefDecl;
   class TemplateDecl;
   class TemplateArgument;
+  class TemplateArgumentLoc;
   class TemplateArgumentList;
   class TemplateParameterList;
   class TemplateTemplateParmDecl;
@@ -866,7 +867,7 @@ public:
                           bool ForceRValue = false);
   void AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                   bool HasExplicitTemplateArgs,
-                                  const TemplateArgument *ExplicitTemplateArgs,
+                              const TemplateArgumentLoc *ExplicitTemplateArgs,
                                   unsigned NumExplicitTemplateArgs,
                                   Expr *Object, Expr **Args, unsigned NumArgs,
                                   OverloadCandidateSet& CandidateSet,
@@ -874,7 +875,7 @@ public:
                                   bool ForceRValue = false);
   void AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                     bool HasExplicitTemplateArgs,
-                                  const TemplateArgument *ExplicitTemplateArgs,
+                           const TemplateArgumentLoc *ExplicitTemplateArgs,
                                     unsigned NumExplicitTemplateArgs,
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet,
@@ -912,7 +913,7 @@ public:
   void AddArgumentDependentLookupCandidates(DeclarationName Name,
                                             Expr **Args, unsigned NumArgs,
                                             bool HasExplicitTemplateArgs,
-                                  const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                             unsigned NumExplicitTemplateArgs,                                            
                                             OverloadCandidateSet& CandidateSet,
                                             bool PartialOverloading = false);
@@ -934,7 +935,7 @@ public:
                                    DeclarationName &UnqualifiedName,
                                    bool &ArgumentDependentLookup,
                                    bool HasExplicitTemplateArgs,
-                                   const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                    unsigned NumExplicitTemplateArgs,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet &CandidateSet,
@@ -943,7 +944,7 @@ public:
   FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
                                         DeclarationName UnqualifiedName,
                                         bool HasExplicitTemplateArgs,
-                                const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                         unsigned NumExplicitTemplateArgs,
                                         SourceLocation LParenLoc,
                                         Expr **Args, unsigned NumArgs,
@@ -1708,7 +1709,7 @@ public:
                                             DeclarationName MemberName,
                                             bool HasExplicitTemplateArgs,
                                             SourceLocation LAngleLoc,
-                                const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                             unsigned NumExplicitTemplateArgs,
                                             SourceLocation RAngleLoc,
                                             DeclPtrTy ImplDecl,
@@ -1741,7 +1742,7 @@ public:
                                SourceRange &QualifierRange,
                                bool &ArgumentDependentLookup,
                                bool &HasExplicitTemplateArguments,
-                               const TemplateArgument *&ExplicitTemplateArgs,
+                            const TemplateArgumentLoc *&ExplicitTemplateArgs,
                                unsigned &NumExplicitTemplateArgs);
     
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
@@ -2505,13 +2506,13 @@ public:
                                 AccessSpecifier AS);
 
   void translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
-                                  SourceLocation *TemplateArgLocs,
-                        llvm::SmallVector<TemplateArgument, 16> &TemplateArgs);
+                                  SourceLocation *TemplateArgLocsIn,
+                        llvm::SmallVector<TemplateArgumentLoc, 16> &TempArgs);
     
   QualType CheckTemplateIdType(TemplateName Template,
                                SourceLocation TemplateLoc,
                                SourceLocation LAngleLoc,
-                               const TemplateArgument *TemplateArgs,
+                               const TemplateArgumentLoc *TemplateArgs,
                                unsigned NumTemplateArgs,
                                SourceLocation RAngleLoc);
 
@@ -2532,7 +2533,7 @@ public:
                                        TemplateName Template,
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,
-                                       const TemplateArgument *TemplateArgs,
+                                       const TemplateArgumentLoc *TemplateArgs,
                                        unsigned NumTemplateArgs,
                                        SourceLocation RAngleLoc);
 
@@ -2587,7 +2588,7 @@ public:
   bool CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                            bool HasExplicitTemplateArgs,
                                            SourceLocation LAngleLoc,
-                                  const TemplateArgument *ExplicitTemplateArgs,
+                            const TemplateArgumentLoc *ExplicitTemplateArgs,
                                            unsigned NumExplicitTemplateArgs,
                                            SourceLocation RAngleLoc,
                                            NamedDecl *&PrevDecl);
@@ -2627,18 +2628,18 @@ public:
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation LAngleLoc,
-                                 const TemplateArgument *TemplateArgs,
+                                 const TemplateArgumentLoc *TemplateArgs,
                                  unsigned NumTemplateArgs,
                                  SourceLocation RAngleLoc,
                                  bool PartialTemplateArgs,
                                  TemplateArgumentListBuilder &Converted);
 
   bool CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
-                                 const TemplateArgument &Arg,
+                                 const TemplateArgumentLoc &Arg,
                                  TemplateArgumentListBuilder &Converted);
 
-  bool CheckTemplateArgument(TemplateTypeParmDecl *Param, QualType Arg,
-                             SourceLocation ArgLoc);
+  bool CheckTemplateArgument(TemplateTypeParmDecl *Param,
+                             DeclaratorInfo *Arg);
   bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
                                                       NamedDecl *&Entity);
   bool CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member);
@@ -2813,7 +2814,7 @@ public:
 
   TemplateDeductionResult
   SubstituteExplicitTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                                const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                       unsigned NumExplicitTemplateArgs,
                             llvm::SmallVectorImpl<TemplateArgument> &Deduced,
                                  llvm::SmallVectorImpl<QualType> &ParamTypes,
@@ -2829,7 +2830,7 @@ public:
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           bool HasExplicitTemplateArgs,
-                          const TemplateArgument *ExplicitTemplateArgs,
+                          const TemplateArgumentLoc *ExplicitTemplateArgs,
                           unsigned NumExplicitTemplateArgs,
                           Expr **Args, unsigned NumArgs,
                           FunctionDecl *&Specialization,
@@ -2838,7 +2839,7 @@ public:
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           bool HasExplicitTemplateArgs,
-                          const TemplateArgument *ExplicitTemplateArgs,
+                          const TemplateArgumentLoc *ExplicitTemplateArgs,
                           unsigned NumExplicitTemplateArgs,
                           QualType ArgFunctionType,
                           FunctionDecl *&Specialization,
@@ -3220,8 +3221,8 @@ public:
   TemplateName
   SubstTemplateName(TemplateName Name, SourceLocation Loc,
                     const MultiLevelTemplateArgumentList &TemplateArgs);
-  TemplateArgument Subst(TemplateArgument Arg,
-                         const MultiLevelTemplateArgumentList &TemplateArgs);
+  bool Subst(const TemplateArgumentLoc &Arg, TemplateArgumentLoc &Result,
+             const MultiLevelTemplateArgumentList &TemplateArgs);
 
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                      FunctionDecl *Function,

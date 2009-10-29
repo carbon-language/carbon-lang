@@ -1261,9 +1261,10 @@ Sema::SubstTemplateName(TemplateName Name, SourceLocation Loc,
   return Instantiator.TransformTemplateName(Name);
 }
 
-TemplateArgument Sema::Subst(TemplateArgument Arg,
-                         const MultiLevelTemplateArgumentList &TemplateArgs) {
+bool Sema::Subst(const TemplateArgumentLoc &Input, TemplateArgumentLoc &Output,
+                 const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateInstantiator Instantiator(*this, TemplateArgs, SourceLocation(),
                                     DeclarationName());
-  return Instantiator.TransformTemplateArgument(Arg);
+
+  return Instantiator.TransformTemplateArgument(Input, Output);
 }

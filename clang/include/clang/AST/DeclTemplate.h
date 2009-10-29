@@ -572,11 +572,8 @@ class TemplateTypeParmDecl : public TypeDecl {
   /// \brief Whether this is a parameter pack.
   bool ParameterPack : 1;
 
-  /// \brief The location of the default argument, if any.
-  SourceLocation DefaultArgumentLoc;
-
   /// \brief The default template argument, if any.
-  QualType DefaultArgument;
+  DeclaratorInfo *DefaultArgument;
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                        bool Typename, QualType Type, bool ParameterPack)
@@ -598,13 +595,16 @@ public:
 
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const { return !DefaultArgument.isNull(); }
+  bool hasDefaultArgument() const { return DefaultArgument != 0; }
 
   /// \brief Retrieve the default argument, if any.
-  QualType getDefaultArgument() const { return DefaultArgument; }
+  QualType getDefaultArgument() const { return DefaultArgument->getType(); }
 
-  /// \brief Retrieve the location of the default argument, if any.
-  SourceLocation getDefaultArgumentLoc() const { return DefaultArgumentLoc; }
+  /// \brief Retrieves the default argument's source information, if any.
+  DeclaratorInfo *getDefaultArgumentInfo() const { return DefaultArgument; }
+
+  /// \brief Retrieves the location of the default argument declaration.
+  SourceLocation getDefaultArgumentLoc() const;
 
   /// \brief Determines whether the default argument was inherited
   /// from a previous declaration of this template.
@@ -613,11 +613,15 @@ public:
   /// \brief Set the default argument for this template parameter, and
   /// whether that default argument was inherited from another
   /// declaration.
-  void setDefaultArgument(QualType DefArg, SourceLocation DefArgLoc,
-                          bool Inherited) {
+  void setDefaultArgument(DeclaratorInfo *DefArg, bool Inherited) {
     DefaultArgument = DefArg;
-    DefaultArgumentLoc = DefArgLoc;
     InheritedDefault = Inherited;
+  }
+
+  /// \brief Removes the default argument of this template parameter.
+  void removeDefaultArgument() {
+    DefaultArgument = 0;
+    InheritedDefault = false;
   }
 
   /// \brief Retrieve the depth of the template parameter.
@@ -917,6 +921,10 @@ class ClassTemplatePartialSpecializationDecl
   /// \brief The list of template parameters
   TemplateParameterList* TemplateParams;
 
+  /// \brief The source info for the template arguments as written.
+  TemplateArgumentLoc *ArgsAsWritten;
+  unsigned NumArgsAsWritten;
+
   /// \brief The class template partial specialization from which this 
   /// class template partial specialization was instantiated.
   ///
@@ -930,12 +938,15 @@ class ClassTemplatePartialSpecializationDecl
                                          TemplateParameterList *Params,
                                          ClassTemplateDecl *SpecializedTemplate,
                                          TemplateArgumentListBuilder &Builder,
+                                         TemplateArgumentLoc *ArgInfos,
+                                         unsigned NumArgInfos,
                                ClassTemplatePartialSpecializationDecl *PrevDecl)
     : ClassTemplateSpecializationDecl(Context,
                                       ClassTemplatePartialSpecialization,
                                       DC, L, SpecializedTemplate, Builder,
                                       PrevDecl),
-      TemplateParams(Params), InstantiatedFromMember(0, false) { }
+      TemplateParams(Params), ArgsAsWritten(ArgInfos),
+      NumArgsAsWritten(NumArgInfos), InstantiatedFromMember(0, false) { }
 
 public:
   static ClassTemplatePartialSpecializationDecl *
@@ -943,11 +954,23 @@ public:
          TemplateParameterList *Params,
          ClassTemplateDecl *SpecializedTemplate,
          TemplateArgumentListBuilder &Builder,
+         TemplateArgumentLoc *ArgInfos,
+         unsigned NumArgInfos,
          ClassTemplatePartialSpecializationDecl *PrevDecl);
 
   /// Get the list of template parameters
   TemplateParameterList *getTemplateParameters() const {
     return TemplateParams;
+  }
+
+  /// Get the template arguments as written.
+  TemplateArgumentLoc *getTemplateArgsAsWritten() const {
+    return ArgsAsWritten;
+  }
+
+  /// Get the number of template arguments as written.
+  unsigned getNumTemplateArgsAsWritten() const {
+    return NumArgsAsWritten;
   }
 
   /// \brief Retrieve the member class template partial specialization from

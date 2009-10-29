@@ -34,6 +34,7 @@ namespace clang {
   class BlockDecl;
   class CXXOperatorCallExpr;
   class CXXMemberCallExpr;
+  class TemplateArgumentLoc;
 
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -351,13 +352,13 @@ struct ExplicitTemplateArgumentList {
   unsigned NumTemplateArgs;
   
   /// \brief Retrieve the template arguments
-  TemplateArgument *getTemplateArgs() {
-    return reinterpret_cast<TemplateArgument *> (this + 1);
+  TemplateArgumentLoc *getTemplateArgs() {
+    return reinterpret_cast<TemplateArgumentLoc *> (this + 1);
   }
   
   /// \brief Retrieve the template arguments
-  const TemplateArgument *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgument *> (this + 1);
+  const TemplateArgumentLoc *getTemplateArgs() const {
+    return reinterpret_cast<const TemplateArgumentLoc *> (this + 1);
   }
 };
   
@@ -418,7 +419,7 @@ class DeclRefExpr : public Expr {
               NamedDecl *D, SourceLocation NameLoc,
               bool HasExplicitTemplateArgumentList,
               SourceLocation LAngleLoc,
-              const TemplateArgument *ExplicitTemplateArgs,
+              const TemplateArgumentLoc *ExplicitTemplateArgs,
               unsigned NumExplicitTemplateArgs,
               SourceLocation RAngleLoc,
               QualType T, bool TD, bool VD);
@@ -460,7 +461,7 @@ public:
                              SourceLocation NameLoc,
                              bool HasExplicitTemplateArgumentList,
                              SourceLocation LAngleLoc,
-                             const TemplateArgument *ExplicitTemplateArgs,
+                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                              unsigned NumExplicitTemplateArgs,
                              SourceLocation RAngleLoc,
                              QualType T, bool TD, bool VD);
@@ -513,7 +514,7 @@ public:
   
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
-  const TemplateArgument *getTemplateArgs() const {
+  const TemplateArgumentLoc *getTemplateArgs() const {
     if (!hasExplicitTemplateArgumentList())
       return 0;
     
@@ -1304,7 +1305,7 @@ class MemberExpr : public Expr {
   MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
              SourceRange qualrange, NamedDecl *memberdecl, SourceLocation l,
              bool has_explicit, SourceLocation langle,
-             const TemplateArgument *targs, unsigned numtargs,
+             const TemplateArgumentLoc *targs, unsigned numtargs,
              SourceLocation rangle, QualType ty);
 
 public:
@@ -1326,7 +1327,7 @@ public:
                             SourceLocation l,
                             bool has_explicit,
                             SourceLocation langle,
-                            const TemplateArgument *targs,
+                            const TemplateArgumentLoc *targs,
                             unsigned numtargs,
                             SourceLocation rangle,
                             QualType ty);
@@ -1383,7 +1384,7 @@ public:
 
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
-  const TemplateArgument *getTemplateArgs() const {
+  const TemplateArgumentLoc *getTemplateArgs() const {
     if (!HasExplicitTemplateArgumentList)
       return 0;
 

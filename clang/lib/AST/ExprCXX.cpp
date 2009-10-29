@@ -151,7 +151,7 @@ TemplateIdRefExpr::TemplateIdRefExpr(QualType T,
                                      TemplateName Template,
                                      SourceLocation TemplateNameLoc,
                                      SourceLocation LAngleLoc,
-                                     const TemplateArgument *TemplateArgs,
+                                     const TemplateArgumentLoc *TemplateArgs,
                                      unsigned NumTemplateArgs,
                                      SourceLocation RAngleLoc)
   : Expr(TemplateIdRefExprClass, T,
@@ -164,10 +164,10 @@ TemplateIdRefExpr::TemplateIdRefExpr(QualType T,
     Qualifier(Qualifier), QualifierRange(QualifierRange), Template(Template),
     TemplateNameLoc(TemplateNameLoc), LAngleLoc(LAngleLoc),
     RAngleLoc(RAngleLoc), NumTemplateArgs(NumTemplateArgs) {
-  TemplateArgument *StoredTemplateArgs
-    = reinterpret_cast<TemplateArgument *> (this+1);
+  TemplateArgumentLoc *StoredTemplateArgs
+    = reinterpret_cast<TemplateArgumentLoc *> (this+1);
   for (unsigned I = 0; I != NumTemplateArgs; ++I)
-    new (StoredTemplateArgs + I) TemplateArgument(TemplateArgs[I]);
+    new (StoredTemplateArgs + I) TemplateArgumentLoc(TemplateArgs[I]);
 }
 
 TemplateIdRefExpr *
@@ -176,19 +176,19 @@ TemplateIdRefExpr::Create(ASTContext &Context, QualType T,
                           SourceRange QualifierRange,
                           TemplateName Template, SourceLocation TemplateNameLoc,
                           SourceLocation LAngleLoc,
-                          const TemplateArgument *TemplateArgs,
+                          const TemplateArgumentLoc *TemplateArgs,
                           unsigned NumTemplateArgs, SourceLocation RAngleLoc) {
   void *Mem = Context.Allocate(sizeof(TemplateIdRefExpr) +
-                               sizeof(TemplateArgument) * NumTemplateArgs);
+                               sizeof(TemplateArgumentLoc) * NumTemplateArgs);
   return new (Mem) TemplateIdRefExpr(T, Qualifier, QualifierRange, Template,
                                      TemplateNameLoc, LAngleLoc, TemplateArgs,
                                      NumTemplateArgs, RAngleLoc);
 }
 
 void TemplateIdRefExpr::DoDestroy(ASTContext &Context) {
-  const TemplateArgument *TemplateArgs = getTemplateArgs();
+  const TemplateArgumentLoc *TemplateArgs = getTemplateArgs();
   for (unsigned I = 0; I != NumTemplateArgs; ++I)
-    if (Expr *E = TemplateArgs[I].getAsExpr())
+    if (Expr *E = TemplateArgs[I].getArgument().getAsExpr())
       E->Destroy(Context);
   this->~TemplateIdRefExpr();
   Context.Deallocate(this);
@@ -528,7 +528,7 @@ CXXUnresolvedMemberExpr::CXXUnresolvedMemberExpr(ASTContext &C,
                                                  SourceLocation MemberLoc,
                                                  bool HasExplicitTemplateArgs,
                                                  SourceLocation LAngleLoc,
-                                           const TemplateArgument *TemplateArgs,
+                                       const TemplateArgumentLoc *TemplateArgs,
                                                  unsigned NumTemplateArgs,
                                                  SourceLocation RAngleLoc)
   : Expr(CXXUnresolvedMemberExprClass, C.DependentTy, true, true),
@@ -545,9 +545,9 @@ CXXUnresolvedMemberExpr::CXXUnresolvedMemberExpr(ASTContext &C,
     ETemplateArgs->RAngleLoc = RAngleLoc;
     ETemplateArgs->NumTemplateArgs = NumTemplateArgs;
 
-    TemplateArgument *SavedTemplateArgs = ETemplateArgs->getTemplateArgs();
+    TemplateArgumentLoc *SavedTemplateArgs = ETemplateArgs->getTemplateArgs();
     for (unsigned I = 0; I < NumTemplateArgs; ++I)
-      new (SavedTemplateArgs + I) TemplateArgument(TemplateArgs[I]);
+      new (SavedTemplateArgs + I) TemplateArgumentLoc(TemplateArgs[I]);
   }
 }
 
@@ -562,7 +562,7 @@ CXXUnresolvedMemberExpr::Create(ASTContext &C,
                                 SourceLocation MemberLoc,
                                 bool HasExplicitTemplateArgs,
                                 SourceLocation LAngleLoc,
-                                const TemplateArgument *TemplateArgs,
+                                const TemplateArgumentLoc *TemplateArgs,
                                 unsigned NumTemplateArgs,
                                 SourceLocation RAngleLoc) {
   if (!HasExplicitTemplateArgs)
@@ -573,7 +573,7 @@ CXXUnresolvedMemberExpr::Create(ASTContext &C,
 
   void *Mem = C.Allocate(sizeof(CXXUnresolvedMemberExpr) +
                          sizeof(ExplicitTemplateArgumentList) +
-                         sizeof(TemplateArgument) * NumTemplateArgs,
+                         sizeof(TemplateArgumentLoc) * NumTemplateArgs,
                          llvm::alignof<CXXUnresolvedMemberExpr>());
   return new (Mem) CXXUnresolvedMemberExpr(C, Base, IsArrow, OperatorLoc,
                                            Qualifier, QualifierRange,

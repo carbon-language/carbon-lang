@@ -791,37 +791,45 @@ bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }
 
-bool
-TemplateSpecializationType::
-anyDependentTemplateArguments(const TemplateArgument *Args, unsigned NumArgs) {
-  for (unsigned Idx = 0; Idx < NumArgs; ++Idx) {
-    switch (Args[Idx].getKind()) {
-    case TemplateArgument::Null:
-      assert(false && "Should not have a NULL template argument");
-      break;
+static bool isDependent(const TemplateArgument &Arg) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    assert(false && "Should not have a NULL template argument");
+    return false;
 
-    case TemplateArgument::Type:
-      if (Args[Idx].getAsType()->isDependentType())
-        return true;
-      break;
+  case TemplateArgument::Type:
+    return Arg.getAsType()->isDependentType();
 
-    case TemplateArgument::Declaration:
-    case TemplateArgument::Integral:
-      // Never dependent
-      break;
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Integral:
+    // Never dependent
+    return false;
 
-    case TemplateArgument::Expression:
-      if (Args[Idx].getAsExpr()->isTypeDependent() ||
-          Args[Idx].getAsExpr()->isValueDependent())
-        return true;
-      break;
+  case TemplateArgument::Expression:
+    return (Arg.getAsExpr()->isTypeDependent() ||
+            Arg.getAsExpr()->isValueDependent());
 
-    case TemplateArgument::Pack:
-      assert(0 && "FIXME: Implement!");
-      break;
-    }
+  case TemplateArgument::Pack:
+    assert(0 && "FIXME: Implement!");
+    return false;
   }
 
+  return false;
+}
+
+bool TemplateSpecializationType::
+anyDependentTemplateArguments(const TemplateArgumentLoc *Args, unsigned N) {
+  for (unsigned i = 0; i != N; ++i)
+    if (isDependent(Args[i].getArgument()))
+      return true;
+  return false;
+}
+
+bool TemplateSpecializationType::
+anyDependentTemplateArguments(const TemplateArgument *Args, unsigned N) {
+  for (unsigned i = 0; i != N; ++i)
+    if (isDependent(Args[i]))
+      return true;
   return false;
 }
 
@@ -1260,6 +1268,38 @@ void SubstTemplateTypeParmType::getAsStringInternal(std::string &InnerString, co
   getReplacementType().getAsStringInternal(InnerString, Policy);
 }
 
+static void PrintTemplateArgument(std::string &Buffer,
+                                  const TemplateArgument &Arg,
+                                  const PrintingPolicy &Policy) {
+  switch (Arg.getKind()) {
+  case TemplateArgument::Null:
+    assert(false && "Null template argument");
+    break;
+    
+  case TemplateArgument::Type:
+    Arg.getAsType().getAsStringInternal(Buffer, Policy);
+    break;
+
+  case TemplateArgument::Declaration:
+    Buffer = cast<NamedDecl>(Arg.getAsDecl())->getNameAsString();
+    break;
+
+  case TemplateArgument::Integral:
+    Buffer = Arg.getAsIntegral()->toString(10, true);
+    break;
+
+  case TemplateArgument::Expression: {
+    llvm::raw_string_ostream s(Buffer);
+    Arg.getAsExpr()->printPretty(s, 0, Policy);
+    break;
+  }
+
+  case TemplateArgument::Pack:
+    assert(0 && "FIXME: Implement!");
+    break;
+  }
+}
+
 std::string
 TemplateSpecializationType::PrintTemplateArgumentList(
                                                   const TemplateArgument *Args,
@@ -1273,32 +1313,41 @@ TemplateSpecializationType::PrintTemplateArgumentList(
 
     // Print the argument into a string.
     std::string ArgString;
-    switch (Args[Arg].getKind()) {
-    case TemplateArgument::Null:
-      assert(false && "Null template argument");
-      break;
+    PrintTemplateArgument(ArgString, Args[Arg], Policy);
 
-    case TemplateArgument::Type:
-      Args[Arg].getAsType().getAsStringInternal(ArgString, Policy);
-      break;
+    // If this is the first argument and its string representation
+    // begins with the global scope specifier ('::foo'), add a space
+    // to avoid printing the diagraph '<:'.
+    if (!Arg && !ArgString.empty() && ArgString[0] == ':')
+      SpecString += ' ';
 
-    case TemplateArgument::Declaration:
-      ArgString = cast<NamedDecl>(Args[Arg].getAsDecl())->getNameAsString();
-      break;
+    SpecString += ArgString;
+  }
 
-    case TemplateArgument::Integral:
-      ArgString = Args[Arg].getAsIntegral()->toString(10, true);
-      break;
+  // If the last character of our string is '>', add another space to
+  // keep the two '>''s separate tokens. We don't *have* to do this in
+  // C++0x, but it's still good hygiene.
+  if (SpecString[SpecString.size() - 1] == '>')
+    SpecString += ' ';
 
-    case TemplateArgument::Expression: {
-      llvm::raw_string_ostream s(ArgString);
-      Args[Arg].getAsExpr()->printPretty(s, 0, Policy);
-      break;
-    }
-    case TemplateArgument::Pack:
-      assert(0 && "FIXME: Implement!");
-      break;
-    }
+  SpecString += '>';
+
+  return SpecString;
+}
+
+// Sadly, repeat all that with TemplateArgLoc.
+std::string TemplateSpecializationType::
+PrintTemplateArgumentList(const TemplateArgumentLoc *Args, unsigned NumArgs,
+                          const PrintingPolicy &Policy) {
+  std::string SpecString;
+  SpecString += '<';
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
+    if (Arg)
+      SpecString += ", ";
+
+    // Print the argument into a string.
+    std::string ArgString;
+    PrintTemplateArgument(ArgString, Args[Arg].getArgument(), Policy);
 
     // If this is the first argument and its string representation
     // begins with the global scope specifier ('::foo'), add a space

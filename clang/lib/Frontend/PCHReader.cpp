@@ -32,6 +32,7 @@
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <iterator>
 #include <cstdio>
@@ -2104,7 +2105,13 @@ void TypeLocReader::VisitSubstTemplateTypeParmTypeLoc(
 }
 void TypeLocReader::VisitTemplateSpecializationTypeLoc(
                                            TemplateSpecializationTypeLoc TL) {
-  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setTemplateNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
+    TL.setArgLocInfo(i,
+        Reader.GetTemplateArgumentLocInfo(TL.getTypePtr()->getArg(i).getKind(),
+                                          Record, Idx));
 }
 void TypeLocReader::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
@@ -2195,6 +2202,25 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]);
 
   return TypesLoaded[Index].withFastQualifiers(FastQuals);
+}
+
+TemplateArgumentLocInfo
+PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
+                                      const RecordData &Record,
+                                      unsigned &Index) {
+  switch (Kind) {
+  case TemplateArgument::Expression:
+    return ReadDeclExpr();
+  case TemplateArgument::Type:
+    return GetDeclaratorInfo(Record, Index);
+  case TemplateArgument::Null:
+  case TemplateArgument::Integral:
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Pack:
+    return TemplateArgumentLocInfo();
+  }
+  llvm::llvm_unreachable("unexpected template argument loc");
+  return TemplateArgumentLocInfo();
 }
 
 Decl *PCHReader::GetDecl(pch::DeclID ID) {

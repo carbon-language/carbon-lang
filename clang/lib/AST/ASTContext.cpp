@@ -1765,6 +1765,19 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
 
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
+                                          const TemplateArgumentLoc *Args,
+                                          unsigned NumArgs,
+                                          QualType Canon) {
+  llvm::SmallVector<TemplateArgument, 4> ArgVec;
+  ArgVec.reserve(NumArgs);
+  for (unsigned i = 0; i != NumArgs; ++i)
+    ArgVec.push_back(Args[i].getArgument());
+
+  return getTemplateSpecializationType(Template, ArgVec.data(), NumArgs, Canon);
+}
+
+QualType
+ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
                                           QualType Canon) {
@@ -2298,17 +2311,14 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) {
       return Arg;
 
     case TemplateArgument::Declaration:
-      return TemplateArgument(SourceLocation(),
-                              Arg.getAsDecl()->getCanonicalDecl());
+      return TemplateArgument(Arg.getAsDecl()->getCanonicalDecl());
 
     case TemplateArgument::Integral:
-      return TemplateArgument(SourceLocation(),
-                              *Arg.getAsIntegral(),
+      return TemplateArgument(*Arg.getAsIntegral(),
                               getCanonicalType(Arg.getIntegralType()));
 
     case TemplateArgument::Type:
-      return TemplateArgument(SourceLocation(),
-                              getCanonicalType(Arg.getAsType()));
+      return TemplateArgument(getCanonicalType(Arg.getAsType()));
 
     case TemplateArgument::Pack: {
       // FIXME: Allocate in ASTContext

@@ -2191,7 +2191,7 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                              TypeTy *T,
                              const CXXScopeSpec &SS,
                              bool HasTrailingLParen) {
-  QualType Type = QualType::getFromOpaquePtr(T);
+  QualType Type = GetTypeFromParser(T);
   CanQualType CanType = Context.getCanonicalType(Type);
   DeclarationName DtorName =
     Context.DeclarationNames.getCXXDestructorName(CanType);

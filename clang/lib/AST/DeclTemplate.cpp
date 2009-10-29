@@ -15,6 +15,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
@@ -209,8 +210,7 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
        Param != ParamEnd; ++Param) {
     if (isa<TemplateTypeParmDecl>(*Param)) {
       QualType ParamType = Context.getTypeDeclType(cast<TypeDecl>(*Param));
-      TemplateArgs.push_back(TemplateArgument((*Param)->getLocation(),
-                                              ParamType));
+      TemplateArgs.push_back(TemplateArgument(ParamType));
     } else if (NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       Expr *E = new (Context) DeclRefExpr(NTTP, NTTP->getType(),
@@ -220,7 +220,7 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
       TemplateArgs.push_back(TemplateArgument(E));
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
-      TemplateArgs.push_back(TemplateArgument(TTP->getLocation(), TTP));
+      TemplateArgs.push_back(TemplateArgument(TTP));
     }
   }
 
@@ -242,6 +242,10 @@ TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
                              bool ParameterPack) {
   QualType Type = C.getTemplateTypeParmType(D, P, ParameterPack, Id);
   return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type, ParameterPack);
+}
+
+SourceLocation TemplateTypeParmDecl::getDefaultArgumentLoc() const {
+  return DefaultArgument->getTypeLoc().getFullSourceRange().getBegin();
 }
 
 unsigned TemplateTypeParmDecl::getDepth() const {
@@ -454,12 +458,19 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
        TemplateParameterList *Params,
        ClassTemplateDecl *SpecializedTemplate,
        TemplateArgumentListBuilder &Builder,
+       TemplateArgumentLoc *ArgInfos, unsigned N,
        ClassTemplatePartialSpecializationDecl *PrevDecl) {
+  TemplateArgumentLoc *ClonedArgs = new (Context) TemplateArgumentLoc[N];
+  for (unsigned I = 0; I != N; ++I)
+    ClonedArgs[I] = ArgInfos[I];
+
   ClassTemplatePartialSpecializationDecl *Result
     = new (Context)ClassTemplatePartialSpecializationDecl(Context,
                                                           DC, L, Params,
                                                           SpecializedTemplate,
-                                                          Builder, PrevDecl);
+                                                          Builder,
+                                                          ClonedArgs, N,
+                                                          PrevDecl);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;

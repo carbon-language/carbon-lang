@@ -1161,7 +1161,7 @@ class TemplateIdRefExpr : public Expr {
                     NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
                     TemplateName Template, SourceLocation TemplateNameLoc,
                     SourceLocation LAngleLoc,
-                    const TemplateArgument *TemplateArgs,
+                    const TemplateArgumentLoc *TemplateArgs,
                     unsigned NumTemplateArgs,
                     SourceLocation RAngleLoc);
 
@@ -1172,7 +1172,7 @@ public:
   Create(ASTContext &Context, QualType T,
          NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
          TemplateName Template, SourceLocation TemplateNameLoc,
-         SourceLocation LAngleLoc, const TemplateArgument *TemplateArgs,
+         SourceLocation LAngleLoc, const TemplateArgumentLoc *TemplateArgs,
          unsigned NumTemplateArgs, SourceLocation RAngleLoc);
 
   /// \brief Retrieve the nested name specifier used to qualify the name of
@@ -1198,8 +1198,8 @@ public:
 
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
-  const TemplateArgument *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgument *>(this + 1);
+  const TemplateArgumentLoc *getTemplateArgs() const {
+    return reinterpret_cast<const TemplateArgumentLoc *>(this + 1);
   }
 
   /// \brief Retrieve the number of template arguments provided as part of this
@@ -1443,7 +1443,7 @@ class CXXUnresolvedMemberExpr : public Expr {
                           SourceLocation MemberLoc,
                           bool HasExplicitTemplateArgs,
                           SourceLocation LAngleLoc,
-                          const TemplateArgument *TemplateArgs,
+                          const TemplateArgumentLoc *TemplateArgs,
                           unsigned NumTemplateArgs,
                           SourceLocation RAngleLoc);
 
@@ -1474,7 +1474,7 @@ public:
          SourceLocation MemberLoc,
          bool HasExplicitTemplateArgs,
          SourceLocation LAngleLoc,
-         const TemplateArgument *TemplateArgs,
+         const TemplateArgumentLoc *TemplateArgs,
          unsigned NumTemplateArgs,
          SourceLocation RAngleLoc);
 
@@ -1542,7 +1542,7 @@ public:
 
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
-  const TemplateArgument *getTemplateArgs() const {
+  const TemplateArgumentLoc *getTemplateArgs() const {
     if (!HasExplicitTemplateArgumentList)
       return 0;
 

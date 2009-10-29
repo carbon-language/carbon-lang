@@ -1328,6 +1328,21 @@ namespace {
         Visit(TL.getBaseTypeLoc());
       }
     }
+    void VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
+      DeclaratorInfo *DInfo = 0;
+      Sema::GetTypeFromParser(DS.getTypeRep(), &DInfo);
+
+      // If we got no declarator info from previous Sema routines,
+      // just fill with the typespec loc.
+      if (!DInfo) {
+        TL.initialize(DS.getTypeSpecTypeLoc());
+        return;
+      }
+
+      TemplateSpecializationTypeLoc OldTL =
+        cast<TemplateSpecializationTypeLoc>(DInfo->getTypeLoc());
+      TL.copy(OldTL);
+    }
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.
       TL.initialize(DS.getTypeSpecTypeLoc());
