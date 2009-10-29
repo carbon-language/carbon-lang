@@ -1,11 +1,12 @@
-//===-- trampoline_setup_test.c - Test __trampoline_setup -----------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- trampoline_setup_test.c - Test __trampoline_setup -----------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 
 #include <stdio.h>
@@ -13,11 +14,17 @@
 #include <stdint.h>
 #include <sys/mman.h>
 
-//
-// Tests nested functions
-// The ppc compiler generates a call to __trampoline_setup
-// The i386 and x86_64 compilers generate a call to ___enable_execute_stack
-//
+/*
+ * Tests nested functions
+ * The ppc compiler generates a call to __trampoline_setup
+ * The i386 and x86_64 compilers generate a call to ___enable_execute_stack
+ */
+
+/*
+ * Note that, nested functions are not ISO C and are not supported in Clang.
+ */
+
+#ifdef __gcc__ && !__clang__
 
 typedef int (*nested_func_t)(int x);
 
@@ -25,18 +32,18 @@ nested_func_t proc;
 
 int main()
 {
-    // some locals
+    /* Some locals */
     int c = 10;
     int d = 7;
     
-    // define a nested function
+    /* Define a nested function: */
     int bar(int x) { return x*5 + c*d; };
 
-    // assign global to point to nested function
-    // (really points to trampoline)
+    /* Assign global to point to nested function
+     * (really points to trampoline). */
     proc = bar;
     
-    // invoke nested function
+    /* Invoke nested function: */
     c = 4;
     if ( (*proc)(3) != 43 )
         return 1;
@@ -44,6 +51,8 @@ int main()
     if ( (*proc)(4) != 40 )
         return 1;
 
-    // success
+    /* Success. */
     return 0;
 }
+
+#endif /* __clang__ */
