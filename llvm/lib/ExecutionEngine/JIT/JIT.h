@@ -130,6 +130,7 @@ public:
 
   void *getPointerToBasicBlock(BasicBlock *BB) {
     assert(0 && "JIT does not support address-of-label yet!");
+    return 0;
   }
   
   /// getOrEmitGlobalVariable - Return the address of the specified global
