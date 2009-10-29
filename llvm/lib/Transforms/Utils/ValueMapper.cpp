@@ -35,80 +35,86 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
   if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MetadataBase>(V))
     return VMSlot = const_cast<Value*>(V);
 
-  if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
-    if (isa<ConstantInt>(C) || isa<ConstantFP>(C) ||
-        isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
-        isa<UndefValue>(C) || isa<MDString>(C))
-      return VMSlot = C;           // Primitive constants map directly
-    else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
-      for (User::op_iterator b = CA->op_begin(), i = b, e = CA->op_end();
-           i != e; ++i) {
-        Value *MV = MapValue(*i, VM);
-        if (MV != *i) {
-          // This array must contain a reference to a global, make a new array
-          // and return it.
-          //
-          std::vector<Constant*> Values;
-          Values.reserve(CA->getNumOperands());
-          for (User::op_iterator j = b; j != i; ++j)
-            Values.push_back(cast<Constant>(*j));
-          Values.push_back(cast<Constant>(MV));
-          for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(*i, VM)));
-          return VM[V] = ConstantArray::get(CA->getType(), Values);
-        }
+  Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V));
+  if (C == 0) return 0;
+  
+  if (isa<ConstantInt>(C) || isa<ConstantFP>(C) ||
+      isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
+      isa<UndefValue>(C) || isa<MDString>(C))
+    return VMSlot = C;           // Primitive constants map directly
+  
+  if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
+    for (User::op_iterator b = CA->op_begin(), i = b, e = CA->op_end();
+         i != e; ++i) {
+      Value *MV = MapValue(*i, VM);
+      if (MV != *i) {
+        // This array must contain a reference to a global, make a new array
+        // and return it.
+        //
+        std::vector<Constant*> Values;
+        Values.reserve(CA->getNumOperands());
+        for (User::op_iterator j = b; j != i; ++j)
+          Values.push_back(cast<Constant>(*j));
+        Values.push_back(cast<Constant>(MV));
+        for (++i; i != e; ++i)
+          Values.push_back(cast<Constant>(MapValue(*i, VM)));
+        return VM[V] = ConstantArray::get(CA->getType(), Values);
       }
-      return VM[V] = C;
-
-    } else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-      for (User::op_iterator b = CS->op_begin(), i = b, e = CS->op_end();
-           i != e; ++i) {
-        Value *MV = MapValue(*i, VM);
-        if (MV != *i) {
-          // This struct must contain a reference to a global, make a new struct
-          // and return it.
-          //
-          std::vector<Constant*> Values;
-          Values.reserve(CS->getNumOperands());
-          for (User::op_iterator j = b; j != i; ++j)
-            Values.push_back(cast<Constant>(*j));
-          Values.push_back(cast<Constant>(MV));
-          for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(*i, VM)));
-          return VM[V] = ConstantStruct::get(CS->getType(), Values);
-        }
-      }
-      return VM[V] = C;
-
-    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      std::vector<Constant*> Ops;
-      for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
-        Ops.push_back(cast<Constant>(MapValue(*i, VM)));
-      return VM[V] = CE->getWithOperands(Ops);
-    } else if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
-      for (User::op_iterator b = CP->op_begin(), i = b, e = CP->op_end();
-           i != e; ++i) {
-        Value *MV = MapValue(*i, VM);
-        if (MV != *i) {
-          // This vector value must contain a reference to a global, make a new
-          // vector constant and return it.
-          //
-          std::vector<Constant*> Values;
-          Values.reserve(CP->getNumOperands());
-          for (User::op_iterator j = b; j != i; ++j)
-            Values.push_back(cast<Constant>(*j));
-          Values.push_back(cast<Constant>(MV));
-          for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(*i, VM)));
-          return VM[V] = ConstantVector::get(Values);
-        }
-      }
-      return VM[V] = C;
-      
-    } else {
-      llvm_unreachable("Unknown type of constant!");
     }
+    return VM[V] = C;
   }
+  
+  if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
+    for (User::op_iterator b = CS->op_begin(), i = b, e = CS->op_end();
+         i != e; ++i) {
+      Value *MV = MapValue(*i, VM);
+      if (MV != *i) {
+        // This struct must contain a reference to a global, make a new struct
+        // and return it.
+        //
+        std::vector<Constant*> Values;
+        Values.reserve(CS->getNumOperands());
+        for (User::op_iterator j = b; j != i; ++j)
+          Values.push_back(cast<Constant>(*j));
+        Values.push_back(cast<Constant>(MV));
+        for (++i; i != e; ++i)
+          Values.push_back(cast<Constant>(MapValue(*i, VM)));
+        return VM[V] = ConstantStruct::get(CS->getType(), Values);
+      }
+    }
+    return VM[V] = C;
+  }
+  
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    std::vector<Constant*> Ops;
+    for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
+      Ops.push_back(cast<Constant>(MapValue(*i, VM)));
+    return VM[V] = CE->getWithOperands(Ops);
+  }
+  
+  if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
+    for (User::op_iterator b = CP->op_begin(), i = b, e = CP->op_end();
+         i != e; ++i) {
+      Value *MV = MapValue(*i, VM);
+      if (MV != *i) {
+        // This vector value must contain a reference to a global, make a new
+        // vector constant and return it.
+        //
+        std::vector<Constant*> Values;
+        Values.reserve(CP->getNumOperands());
+        for (User::op_iterator j = b; j != i; ++j)
+          Values.push_back(cast<Constant>(*j));
+        Values.push_back(cast<Constant>(MV));
+        for (++i; i != e; ++i)
+          Values.push_back(cast<Constant>(MapValue(*i, VM)));
+        return VM[V] = ConstantVector::get(Values);
+      }
+    }
+    return VM[V] = C;
+    
+  }
+  
+  llvm_unreachable("Unknown type of constant!");
   return 0;
 }
 
