@@ -34,7 +34,7 @@ syn keyword llvmStatement phi call select shl lshr ashr va_arg
 syn keyword llvmStatement trunc zext sext
 syn keyword llvmStatement fptrunc fpext fptoui fptosi uitofp sitofp
 syn keyword llvmStatement ptrtoint inttoptr bitcast
-syn keyword llvmStatement ret br switch invoke unwind unreachable
+syn keyword llvmStatement ret br indirectbr switch invoke unwind unreachable
 syn keyword llvmStatement malloc alloca free load store getelementptr
 syn keyword llvmStatement extractelement insertelement shufflevector
 syn keyword llvmStatement extractvalue insertvalue
@@ -56,6 +56,7 @@ syn keyword llvmKeyword noredzone noimplicitfloat naked
 syn keyword llvmKeyword module asm align tail to
 syn keyword llvmKeyword addrspace section alias sideeffect c gc
 syn keyword llvmKeyword target datalayout triple
+syn keyword llvmKeyword blockaddress
 
 " Obsolete keywords.
 syn keyword llvmError  uninitialized implementation
