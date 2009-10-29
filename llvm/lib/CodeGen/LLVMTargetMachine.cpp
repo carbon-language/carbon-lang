@@ -239,11 +239,11 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   {
   case ExceptionHandling::SjLj:
     // SjLj piggy-backs on dwarf for this bit. The cleanups done apply to both
-    PM.add(createDwarfEHPass(getTargetLowering(), OptLevel==CodeGenOpt::None));
+    PM.add(createDwarfEHPass(getTargetLowering()));
     PM.add(createSjLjEHPass(getTargetLowering()));
     break;
   case ExceptionHandling::Dwarf:
-    PM.add(createDwarfEHPass(getTargetLowering(), OptLevel==CodeGenOpt::None));
+    PM.add(createDwarfEHPass(getTargetLowering()));
     break;
   case ExceptionHandling::None:
     PM.add(createLowerInvokePass(getTargetLowering()));

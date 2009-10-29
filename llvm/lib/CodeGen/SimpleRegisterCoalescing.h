@@ -201,11 +201,6 @@ namespace llvm {
     bool CanJoinInsertSubRegToPhysReg(unsigned DstReg, unsigned SrcReg,
                                       unsigned SubIdx, unsigned &RealDstReg);
 
-    /// ValueLiveAt - Return true if the LiveRange pointed to by the given
-    /// iterator, or any subsequent range with the same value number,
-    /// is live at the given point.
-    bool ValueLiveAt(LiveInterval::iterator LRItr, LiveIndex defPoint) const;
-
     /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
     /// the specified live interval is defined by a copy from the specified
     /// register.
