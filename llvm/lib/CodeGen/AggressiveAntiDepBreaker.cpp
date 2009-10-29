@@ -195,8 +195,14 @@ void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
                                      unsigned InsertPosIndex) {
   assert(Count < InsertPosIndex && "Instruction index out of expected range!");
 
+  std::set<unsigned> PassthruRegs;
+  GetPassthruRegs(MI, PassthruRegs);
+  PrescanInstruction(MI, Count, PassthruRegs);
+  ScanInstruction(MI, Count);
+
   DEBUG(errs() << "Observe: ");
   DEBUG(MI->dump());
+  DEBUG(errs() << "\tRegs:");
 
   unsigned *DefIndices = State->GetDefIndices();
   for (unsigned Reg = 0; Reg != TargetRegisterInfo::FirstVirtualRegister; ++Reg) {
@@ -215,11 +221,7 @@ void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
       DefIndices[Reg] = Count;
     }
   }
-
-  std::set<unsigned> PassthruRegs;
-  GetPassthruRegs(MI, PassthruRegs);
-  PrescanInstruction(MI, Count, PassthruRegs);
-  ScanInstruction(MI, Count);
+  DEBUG(errs() << '\n');
 
   // We're starting a new schedule region so forget any saved state.
   delete SavedState;
