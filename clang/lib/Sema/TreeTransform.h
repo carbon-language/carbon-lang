@@ -1752,6 +1752,7 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
 
   case NestedNameSpecifier::TypeSpecWithTemplate:
   case NestedNameSpecifier::TypeSpec: {
+    TemporaryBase Rebase(*this, Range.getBegin(), DeclarationName());
     QualType T = getDerived().TransformType(QualType(NNS->getAsType(), 0));
     if (T.isNull())
       return 0;
