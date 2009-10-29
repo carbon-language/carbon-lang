@@ -346,27 +346,15 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
 
-  unsigned IntMaxWidth;
-  const char *IntMaxSuffix;
-  if (TI.getIntMaxType() == TargetInfo::SignedLongLong) {
-    IntMaxWidth = TI.getLongLongWidth();
-    IntMaxSuffix = "LL";
-  } else if (TI.getIntMaxType() == TargetInfo::SignedLong) {
-    IntMaxWidth = TI.getLongWidth();
-    IntMaxSuffix = "L";
-  } else {
-    assert(TI.getIntMaxType() == TargetInfo::SignedInt);
-    IntMaxWidth = TI.getIntWidth();
-    IntMaxSuffix = "";
-  }
-
   DefineTypeSize("__SCHAR_MAX__", TI.getCharWidth(), "", true, Buf);
   DefineTypeSize("__SHRT_MAX__", TI.getShortWidth(), "", true, Buf);
   DefineTypeSize("__INT_MAX__", TI.getIntWidth(), "", true, Buf);
   DefineTypeSize("__LONG_MAX__", TI.getLongWidth(), "L", true, Buf);
   DefineTypeSize("__LONG_LONG_MAX__", TI.getLongLongWidth(), "LL", true, Buf);
   DefineTypeSize("__WCHAR_MAX__", TI.getWCharWidth(), "", true, Buf);
-  DefineTypeSize("__INTMAX_MAX__", IntMaxWidth, IntMaxSuffix, true, Buf);
+  TargetInfo::IntType IntMaxType = TI.getIntMaxType();
+  DefineTypeSize("__INTMAX_MAX__", TI.getTypeWidth(IntMaxType), 
+                 TI.getTypeConstantSuffix(IntMaxType), true, Buf);
 
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Buf);
   DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Buf);
