@@ -445,6 +445,36 @@ static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
     }
 }
 
+/// ProfitableToMerge - Check if two machine basic blocks have a common tail
+/// and decide if it would be profitable to merge those tails.  Return the
+/// length of the common tail and iterators to the first common instruction
+/// in each block.
+static bool ProfitableToMerge(MachineBasicBlock *MBB1,
+                              MachineBasicBlock *MBB2,
+                              unsigned minCommonTailLength,
+                              unsigned &CommonTailLen,
+                              MachineBasicBlock::iterator &I1,
+                              MachineBasicBlock::iterator &I2) {
+  CommonTailLen = ComputeCommonTailLength(MBB1, MBB2, I1, I2);
+  MachineFunction *MF = MBB1->getParent();
+
+  if (CommonTailLen >= minCommonTailLength)
+    return true;
+
+  if (CommonTailLen == 0)
+    return false;
+
+  // If we are optimizing for code size, 1 instruction in common is enough if
+  // we don't have to split a block.  At worst we will be replacing a
+  // fallthrough into the common tail with a branch, which at worst breaks
+  // even with falling through into the duplicated common tail.
+  if (MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
+      (I1 == MBB1->begin() || I2 == MBB2->begin()))
+    return true;
+
+  return false;
+}
+
 /// ComputeSameTails - Look through all the blocks in MergePotentials that have
 /// hash CurHash (guaranteed to match the last element).   Build the vector 
 /// SameTails of all those that have the (same) largest number of instructions
@@ -466,23 +496,9 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
        CurMPIter!=B && CurMPIter->first==CurHash;
        --CurMPIter) {
     for (MPIterator I = prior(CurMPIter); I->first==CurHash ; --I) {
-      unsigned CommonTailLen = ComputeCommonTailLength(CurMPIter->second,
-                                                       I->second,
-                                                       TrialBBI1, TrialBBI2);
-      // If we will have to split a block, there should be at least
-      // minCommonTailLength instructions in common.  Otherwise, if we are
-      // optimizing for code size, 1 instruction in common is enough.  At
-      // worst we will be replacing a fallthrough into the common tail with a
-      // branch, which at worst breaks even with falling through into the
-      // duplicated common tail.  We will always pick a block we do not have
-      // to split as the common tail if there is one.  (Empty blocks will get
-      // forwarded and need not be considered.)
-      MachineFunction *MF = CurMPIter->second->getParent();
-      if (CommonTailLen >= minCommonTailLength ||
-          (CommonTailLen > 0 &&
-           MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
-           (TrialBBI1 == CurMPIter->second->begin() ||
-            TrialBBI2 == I->second->begin()))) {
+      unsigned CommonTailLen;
+      if (ProfitableToMerge(CurMPIter->second, I->second, minCommonTailLength,
+                            CommonTailLen, TrialBBI1, TrialBBI2)) {
         if (CommonTailLen > maxCommonTailLength) {
           SameTails.clear();
           maxCommonTailLength = CommonTailLen;
