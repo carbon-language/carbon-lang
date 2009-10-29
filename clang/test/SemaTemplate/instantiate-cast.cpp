@@ -96,7 +96,6 @@ struct FunctionalCast1 {
 template struct FunctionalCast1<int, float>;
 template struct FunctionalCast1<A, int>; // expected-note{{instantiation}}
 
-#if 0
 // Generates temporaries, which we cannot handle yet.
 template<int N, long M>
 struct FunctionalCast2 {
@@ -106,4 +105,13 @@ struct FunctionalCast2 {
 };
 
 template struct FunctionalCast2<1, 3>;
-#endif
+
+// ---------------------------------------------------------------------
+// implicit casting
+// ---------------------------------------------------------------------
+template<typename T>
+struct Derived2 : public Base { };
+
+void test_derived_to_base(Base *&bp, Derived2<int> *dp) {
+  bp = dp;
+}
