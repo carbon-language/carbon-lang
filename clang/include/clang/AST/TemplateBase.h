@@ -251,11 +251,25 @@ private:
 
 public:
   TemplateArgumentLocInfo()
-    : Union(), Kind(K_None) {}
+    : Union()
+#ifndef NDEBUG
+      , Kind(K_None) 
+#endif
+    {}
+  
   TemplateArgumentLocInfo(DeclaratorInfo *DInfo)
-    : Union(DInfo), Kind(K_DeclaratorInfo) {}
+    : Union(DInfo)
+#ifndef NDEBUG
+      , Kind(K_DeclaratorInfo) 
+#endif
+    {}
+  
   TemplateArgumentLocInfo(Expr *E)
-    : Union(E), Kind(K_Expression) {}
+    : Union(E)
+#ifndef NDEBUG
+      , Kind(K_Expression) 
+#endif
+    {}
 
   /// \brief Returns whether this 
   bool empty() const {
