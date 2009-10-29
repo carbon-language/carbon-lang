@@ -235,6 +235,10 @@ public:
   /// keeping loop information consistent, use the SplitBlock utility function.
   ///
   BasicBlock *splitBasicBlock(iterator I, const Twine &BBName = "");
+
+  /// hasAddressTaken - returns true if there are any uses of this basic block
+  /// other than direct branches, switches, etc. to it.
+  bool hasAddressTaken() const;
 };
 
 } // End llvm namespace
