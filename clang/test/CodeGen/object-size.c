@@ -88,3 +88,33 @@ void test10() {
   // CHECK:       call    ___inline_strcpy_chk
   strcpy(*(++p), "Hi there");
 }
+
+void test11() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(gp = gbuf, "Hi there");
+}
+
+void test12() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(++gp, "Hi there");
+}
+
+void test13() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(gp++, "Hi there");
+}
+
+void test14() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(--gp, "Hi there");
+}
+
+void test15() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(gp--, "Hi there");
+}
