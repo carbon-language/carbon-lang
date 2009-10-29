@@ -58,7 +58,7 @@ Funcs_armv6 =	adddf3vfp.o addsf3vfp.o bswapdi2.o bswapsi2.o divdf3vfp.o \
 				muldf3vfp.o mulsf3vfp.o \
 				nedf2vfp.o negdf2vfp.o negsf2vfp.o nesf2vfp.o \
 				subdf3vfp.o subsf3vfp.o truncdfsf2vfp.o unorddf2vfp.o unordsf2vfp.o \
-				modsi3.o umodsi3.o udivsi3.o divsi3.o switch.o
+				modsi3.o umodsi3.o udivsi3.o divsi3.o switch.o save_restore_d8_d15.o
 
 
 # copies any public headers to DSTROOT
