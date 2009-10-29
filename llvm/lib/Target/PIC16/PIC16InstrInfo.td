@@ -467,9 +467,9 @@ def br_uncond: ControlFormat<0x0, (outs), (ins brtarget:$dst),
                           "goto $dst",
                           [(br bb:$dst)]>;
 
-// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
-// scheduler into a branch sequence.
-let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
+// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
+// instruction selection into a branch sequence.
+let usesCustomInserter = 1 in {   // Expanded after instruction selection.
   def SELECT_CC_Int_ICC
    : Pseudo<(outs GPR:$dst), (ins GPR:$T, GPR:$F, i8imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",

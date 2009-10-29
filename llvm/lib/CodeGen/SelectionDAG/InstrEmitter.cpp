@@ -556,7 +556,7 @@ void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     MI->setMemRefs(cast<MachineSDNode>(Node)->memoperands_begin(),
                    cast<MachineSDNode>(Node)->memoperands_end());
 
-    if (II.usesCustomDAGSchedInsertionHook()) {
+    if (II.usesCustomInsertionHook()) {
       // Insert this instruction into the basic block using a target
       // specific inserter which may returns a new basic block.
       MBB = TLI->EmitInstrWithCustomInserter(MI, MBB, EM);

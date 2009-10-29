@@ -158,7 +158,7 @@ def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
                   "add\t$dst, $rhs", []>;
 
 // Pseudo instruction that will expand into a tSUBspi + a copy.
-let usesCustomDAGSchedInserter = 1 in { // Expanded by the scheduler.
+let usesCustomInserter = 1 in { // Expanded after instruction selection.
 def tSUBspi_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
                NoItinerary, "@ sub\t$dst, $rhs * 4", []>;
 
@@ -168,7 +168,7 @@ def tADDspr_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
 let Defs = [CPSR] in
 def tANDsp : PseudoInst<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
              NoItinerary, "@ and\t$dst, $rhs", []>;
-} // usesCustomDAGSchedInserter
+} // usesCustomInserter
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
@@ -617,8 +617,8 @@ def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
 
 
 // Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC DAG operation.
-// Expanded by the scheduler into a branch sequence.
-let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
+// Expanded after instruction selection into a branch sequence.
+let usesCustomInserter = 1 in  // Expanded after instruction selection.
   def tMOVCCr_pseudo :
   PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc),
               NoItinerary, "@ tMOVCCr $cc",

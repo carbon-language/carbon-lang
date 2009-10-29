@@ -417,7 +417,7 @@ def CPRESTORE : MipsPseudo<(outs), (ins uimm16:$loc), ".cprestore\t$loc\n", []>;
 // operation. The solution is to create a Mips pseudo SELECT_CC instruction
 // (MipsSelectCC), use LowerSELECT_CC to generate this instruction and finally 
 // replace it for real supported nodes into EmitInstrWithCustomInserter
-let usesCustomDAGSchedInserter = 1 in {
+let usesCustomInserter = 1 in {
   class PseudoSelCC<RegisterClass RC, string asmstr>: 
     MipsPseudo<(outs RC:$dst), (ins CPURegs:$CmpRes, RC:$T, RC:$F), asmstr, 
     [(set RC:$dst, (MipsSelectCC CPURegs:$CmpRes, RC:$T, RC:$F))]>;

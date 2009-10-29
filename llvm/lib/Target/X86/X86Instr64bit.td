@@ -1541,7 +1541,7 @@ def LOCK_DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst),
 }
 // Atomic exchange, and, or, xor
 let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomDAGSchedInserter = 1 in {
+                  usesCustomInserter = 1 in {
 def ATOMAND64 : I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
                "#ATOMAND64 PSEUDO!", 
                [(set GR64:$dst, (atomic_load_and_64 addr:$ptr, GR64:$val))]>;

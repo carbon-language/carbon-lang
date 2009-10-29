@@ -97,7 +97,7 @@ namespace llvm {
     bool isTerminator;
     bool isReMaterializable;
     bool hasDelaySlot;
-    bool usesCustomDAGSchedInserter;
+    bool usesCustomInserter;
     bool isVariadic;
     bool hasCtrlDep;
     bool isNotDuplicable;

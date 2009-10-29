@@ -454,14 +454,14 @@ def t2SUBrSPs   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
 
 
 // Pseudo instruction that will expand into a t2SUBrSPi + a copy.
-let usesCustomDAGSchedInserter = 1 in { // Expanded by the scheduler.
+let usesCustomInserter = 1 in { // Expanded after instruction selection.
 def t2SUBrSPi_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
                    NoItinerary, "@ sub.w\t$dst, $sp, $imm", []>;
 def t2SUBrSPi12_ : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
                    NoItinerary, "@ subw\t$dst, $sp, $imm", []>;
 def t2SUBrSPs_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
                    NoItinerary, "@ sub\t$dst, $sp, $rhs", []>;
-} // usesCustomDAGSchedInserter
+} // usesCustomInserter
 
 
 //===----------------------------------------------------------------------===//

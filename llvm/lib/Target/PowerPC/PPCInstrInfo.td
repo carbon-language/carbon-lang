@@ -363,9 +363,9 @@ def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi),
                        [(set GPRC:$result,
                              (PPCdynalloc GPRC:$negsize, iaddr:$fpsi))]>;
                          
-// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
-// scheduler into a branch sequence.
-let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
+// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
+// instruction selection into a branch sequence.
+let usesCustomInserter = 1,    // Expanded after instruction selection.
     PPC970_Single = 1 in {
   def SELECT_CC_I4 : Pseudo<(outs GPRC:$dst), (ins CRRC:$cond, GPRC:$T, GPRC:$F,
                               i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
@@ -539,7 +539,7 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
                       PPC970_DGroup_Single;
 
 // Atomic operations
-let usesCustomDAGSchedInserter = 1 in {
+let usesCustomInserter = 1 in {
   let Uses = [CR0] in {
     def ATOMIC_LOAD_ADD_I8 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),

@@ -74,7 +74,7 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
                               "#ADJCALLSTACKUP",
                               [(SystemZcallseq_end timm:$amt1, timm:$amt2)]>;
 
-let Uses = [PSW], usesCustomDAGSchedInserter = 1 in {
+let Uses = [PSW], usesCustomInserter = 1 in {
   def Select32 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2, i8imm:$cc),
                         "# Select32 PSEUDO",
                         [(set GR32:$dst,

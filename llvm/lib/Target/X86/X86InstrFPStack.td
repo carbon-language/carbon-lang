@@ -69,7 +69,7 @@ def fpimmneg1 : PatLeaf<(fpimm), [{
 }]>;
 
 // Some 'special' instructions
-let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
+let usesCustomInserter = 1 in {  // Expanded after instruction selection.
   def FP32_TO_INT16_IN_MEM : I<0, Pseudo,
                               (outs), (ins i16mem:$dst, RFP32:$src),
                               "##FP32_TO_INT16_IN_MEM PSEUDO!",

@@ -238,10 +238,10 @@ let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
                       [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
 }
 
-// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
-// scheduler into a branch sequence.  This has to handle all permutations of
-// selection between i32/f32/f64 on ICC and FCC.
-let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
+// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
+// instruction selection into a branch sequence.  This has to handle all
+// permutations of selection between i32/f32/f64 on ICC and FCC.
+let usesCustomInserter = 1 in {   // Expanded after instruction selection.
   def SELECT_CC_Int_ICC
    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",

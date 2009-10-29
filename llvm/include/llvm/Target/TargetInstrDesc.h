@@ -109,7 +109,7 @@ namespace TID {
     UnmodeledSideEffects,
     Commutable,
     ConvertibleTo3Addr,
-    UsesCustomDAGSchedInserter,
+    UsesCustomInserter,
     Rematerializable,
     CheapAsAMove,
     ExtraSrcRegAllocReq,
@@ -416,7 +416,7 @@ public:
     return Flags & (1 << TID::ConvertibleTo3Addr);
   }
   
-  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
+  /// usesCustomInsertionHook - Return true if this instruction requires
   /// custom insertion support when the DAG scheduler is inserting it into a
   /// machine basic block.  If this is true for the instruction, it basically
   /// means that it is a pseudo instruction used at SelectionDAG time that is 
@@ -424,8 +424,8 @@ public:
   ///
   /// If this is true, the TargetLoweringInfo::InsertAtEndOfBasicBlock method
   /// is used to insert this into the MachineBasicBlock.
-  bool usesCustomDAGSchedInsertionHook() const {
-    return Flags & (1 << TID::UsesCustomDAGSchedInserter);
+  bool usesCustomInsertionHook() const {
+    return Flags & (1 << TID::UsesCustomInserter);
   }
   
   /// isRematerializable - Returns true if this instruction is a candidate for

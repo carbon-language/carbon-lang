@@ -706,10 +706,9 @@ def : Pat<(v2i32 (X86pcmpgtd VR64:$src1, VR64:$src2)),
 def : Pat<(v2i32 (X86pcmpgtd VR64:$src1, (bitconvert (load_mmx addr:$src2)))),
           (MMX_PCMPGTDrm VR64:$src1, addr:$src2)>;
 
-// CMOV* - Used to implement the SELECT DAG operation.  Expanded by the
-// scheduler into a branch sequence.
-// These are expanded by the scheduler.
-let Uses = [EFLAGS], usesCustomDAGSchedInserter = 1 in {
+// CMOV* - Used to implement the SELECT DAG operation.  Expanded after
+// instruction selection into a branch sequence.
+let Uses = [EFLAGS], usesCustomInserter = 1 in {
   def CMOV_V1I64 : I<0, Pseudo,
                     (outs VR64:$dst), (ins VR64:$t, VR64:$f, i8imm:$cond),
                     "#CMOV_V1I64 PSEUDO!",

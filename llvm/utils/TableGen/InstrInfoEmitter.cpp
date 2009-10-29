@@ -275,8 +275,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isReMaterializable) OS << "|(1<<TID::Rematerializable)";
   if (Inst.isNotDuplicable)    OS << "|(1<<TID::NotDuplicable)";
   if (Inst.hasOptionalDef)     OS << "|(1<<TID::HasOptionalDef)";
-  if (Inst.usesCustomDAGSchedInserter)
-    OS << "|(1<<TID::UsesCustomDAGSchedInserter)";
+  if (Inst.usesCustomInserter) OS << "|(1<<TID::UsesCustomInserter)";
   if (Inst.isVariadic)         OS << "|(1<<TID::Variadic)";
   if (Inst.hasSideEffects)     OS << "|(1<<TID::UnmodeledSideEffects)";
   if (Inst.isAsCheapAsAMove)   OS << "|(1<<TID::CheapAsAMove)";

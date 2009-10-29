@@ -108,7 +108,7 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins i16imm:$amt1, i16imm:$amt2),
                               [(MSP430callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
-let usesCustomDAGSchedInserter = 1 in {
+let usesCustomInserter = 1 in {
   def Select8  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2, i8imm:$cc),
                         "# Select8 PSEUDO",
                         [(set GR8:$dst,

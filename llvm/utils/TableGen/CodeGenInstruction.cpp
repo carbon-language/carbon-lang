@@ -94,7 +94,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isTerminator = R->getValueAsBit("isTerminator");
   isReMaterializable = R->getValueAsBit("isReMaterializable");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
-  usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
+  usesCustomInserter = R->getValueAsBit("usesCustomInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
   hasSideEffects = R->getValueAsBit("hasSideEffects");

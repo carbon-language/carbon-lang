@@ -127,7 +127,7 @@ def : Pat<(PPCnop),
           (NOP)>;
 
 // Atomic operations
-let usesCustomDAGSchedInserter = 1 in {
+let usesCustomInserter = 1 in {
   let Uses = [CR0] in {
     def ATOMIC_LOAD_ADD_I64 : Pseudo<
       (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),

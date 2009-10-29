@@ -164,7 +164,7 @@ def MEMLABEL : PseudoInstAlpha<(outs), (ins s64imm:$i, s64imm:$j, s64imm:$k, s64
          "LSMARKER$$$i$$$j$$$k$$$m:", [], s_pseudo>;
 
 
-let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
+let usesCustomInserter = 1 in {   // Expanded after instruction selection.
 def CAS32 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$cmp, GPRC:$swp), "",
       [(set GPRC:$dst, (atomic_cmp_swap_32 GPRC:$ptr, GPRC:$cmp, GPRC:$swp))], s_pseudo>;
 def CAS64 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$cmp, GPRC:$swp), "",

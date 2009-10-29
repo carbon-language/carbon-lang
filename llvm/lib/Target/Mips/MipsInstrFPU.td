@@ -253,7 +253,7 @@ let hasDelaySlot = 1, Defs=[FCR31] in {
 
 // For some explanation, see Select_CC at MipsInstrInfo.td. We also embedd a 
 // condiciton code to enable easy handling by the Custom Inserter.
-let usesCustomDAGSchedInserter = 1, Uses=[FCR31] in {
+let usesCustomInserter = 1, Uses=[FCR31] in {
   class PseudoFPSelCC<RegisterClass RC, string asmstr> : 
     MipsPseudo<(outs RC:$dst), 
                (ins CPURegs:$CmpRes, RC:$T, RC:$F, condcode:$cc), asmstr, 

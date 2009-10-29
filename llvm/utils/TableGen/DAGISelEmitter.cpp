@@ -114,7 +114,7 @@ static unsigned getResultPatternCost(TreePatternNode *P,
   if (Op->isSubClassOf("Instruction")) {
     Cost++;
     CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op->getName());
-    if (II.usesCustomDAGSchedInserter)
+    if (II.usesCustomInserter)
       Cost += 10;
   }
   for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)

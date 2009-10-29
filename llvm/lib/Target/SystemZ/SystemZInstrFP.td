@@ -25,7 +25,7 @@ def fpimmneg0 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(-0.0);
 }]>;
 
-let Uses = [PSW], usesCustomDAGSchedInserter = 1 in {
+let Uses = [PSW], usesCustomInserter = 1 in {
   def SelectF32 : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2, i8imm:$cc),
                         "# SelectF32 PSEUDO",
                         [(set FP32:$dst,
