@@ -549,7 +549,10 @@ const char *clang_getDeclSpelling(CXDecl AnonDecl)
   
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND)) {
     return OMD->getSelector().getAsString().c_str();
-  }    
+  }
+  if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
+    return CIMP->getCategoryClass()->getName().data();
+    
   if (ND->getIdentifier())
     return ND->getIdentifier()->getNameStart();
   else 
