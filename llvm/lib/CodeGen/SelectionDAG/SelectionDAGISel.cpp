@@ -44,6 +44,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1293,5 +1294,56 @@ bool SelectionDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   return !isNonImmUse(Root, N, U);
 }
 
+SDNode *SelectionDAGISel::Select_INLINEASM(SDValue N) {
+  std::vector<SDValue> Ops(N.getNode()->op_begin(), N.getNode()->op_end());
+  SelectInlineAsmMemoryOperands(Ops);
+    
+  std::vector<EVT> VTs;
+  VTs.push_back(MVT::Other);
+  VTs.push_back(MVT::Flag);
+  SDValue New = CurDAG->getNode(ISD::INLINEASM, N.getDebugLoc(),
+                                VTs, &Ops[0], Ops.size());
+  return New.getNode();
+}
+
+SDNode *SelectionDAGISel::Select_UNDEF(const SDValue &N) {
+  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::IMPLICIT_DEF,
+                              N.getValueType());
+}
+
+SDNode *SelectionDAGISel::Select_DBG_LABEL(const SDValue &N) {
+  SDValue Chain = N.getOperand(0);
+  unsigned C = cast<LabelSDNode>(N)->getLabelID();
+  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);
+  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DBG_LABEL,
+                              MVT::Other, Tmp, Chain);
+}
+
+SDNode *SelectionDAGISel::Select_EH_LABEL(const SDValue &N) {
+  SDValue Chain = N.getOperand(0);
+  unsigned C = cast<LabelSDNode>(N)->getLabelID();
+  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);
+  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EH_LABEL,
+                              MVT::Other, Tmp, Chain);
+}
+
+void SelectionDAGISel::CannotYetSelect(SDValue N) {
+  std::string msg;
+  raw_string_ostream Msg(msg);
+  Msg << "Cannot yet select: ";
+  N.getNode()->print(Msg, CurDAG);
+  llvm_report_error(Msg.str());
+}
+
+void SelectionDAGISel::CannotYetSelectIntrinsic(SDValue N) {
+  errs() << "Cannot yet select: ";
+  unsigned iid =
+    cast<ConstantSDNode>(N.getOperand(N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();
+  if (iid < Intrinsic::num_intrinsics)
+    llvm_report_error("Cannot yet select: intrinsic %" + Intrinsic::getName((Intrinsic::ID)iid));
+  else if (const TargetIntrinsicInfo *tii = TM.getIntrinsicInfo())
+    llvm_report_error(Twine("Cannot yet select: target intrinsic %") +
+                      tii->getName(iid));
+}
 
 char SelectionDAGISel::ID = 0;

@@ -1917,40 +1917,6 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
     }
   }
   
-  // Emit boilerplate.
-  OS << "SDNode *Select_INLINEASM(SDValue N) {\n"
-     << "  std::vector<SDValue> Ops(N.getNode()->op_begin(), N.getNode()->op_end());\n"
-     << "  SelectInlineAsmMemoryOperands(Ops);\n\n"
-    
-     << "  std::vector<EVT> VTs;\n"
-     << "  VTs.push_back(MVT::Other);\n"
-     << "  VTs.push_back(MVT::Flag);\n"
-     << "  SDValue New = CurDAG->getNode(ISD::INLINEASM, N.getDebugLoc(), "
-                 "VTs, &Ops[0], Ops.size());\n"
-     << "  return New.getNode();\n"
-     << "}\n\n";
-
-  OS << "SDNode *Select_UNDEF(const SDValue &N) {\n"
-     << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::IMPLICIT_DEF,\n"
-     << "                              N.getValueType());\n"
-     << "}\n\n";
-
-  OS << "SDNode *Select_DBG_LABEL(const SDValue &N) {\n"
-     << "  SDValue Chain = N.getOperand(0);\n"
-     << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
-     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DBG_LABEL,\n"
-     << "                              MVT::Other, Tmp, Chain);\n"
-     << "}\n\n";
-
-  OS << "SDNode *Select_EH_LABEL(const SDValue &N) {\n"
-     << "  SDValue Chain = N.getOperand(0);\n"
-     << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
-     << "  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
-     << "  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EH_LABEL,\n"
-     << "                              MVT::Other, Tmp, Chain);\n"
-     << "}\n\n";
-
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDValue N) {\n"
      << "  MVT::SimpleValueType NVT = N.getNode()->getValueType(0).getSimpleVT().SimpleTy;\n"
@@ -2053,30 +2019,6 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "    CannotYetSelectIntrinsic(N);\n"
      << "  }\n"
      << "  return NULL;\n"
-     << "}\n\n";
-
-  OS << "void CannotYetSelect(SDValue N) DISABLE_INLINE {\n"
-     << "  std::string msg;\n"
-     << "  raw_string_ostream Msg(msg);\n"
-     << "  Msg << \"Cannot yet select: \";\n"
-     << "  N.getNode()->print(Msg, CurDAG);\n"
-     << "  llvm_report_error(Msg.str());\n"
-     << "}\n\n";
-
-  OS << "void CannotYetSelectIntrinsic(SDValue N) DISABLE_INLINE {\n"
-     << "  errs() << \"Cannot yet select: \";\n"
-     << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
-     << "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
-     << "  if (iid < Intrinsic::num_intrinsics)\n"
-     << "    llvm_report_error(\"Cannot yet select: intrinsic %\" + "
-     << "Intrinsic::getName((Intrinsic::ID)iid));\n";
-  if (CGP.hasTargetIntrinsics()) {
-    OS << "  else if (const TargetIntrinsicInfo *tii = TM.getIntrinsicInfo())\n"
-       << "    llvm_report_error(Twine(\"Cannot yet select: target intrinsic "
-       << "%\") + tii->getName(iid));\n";
-  }
-  OS << "  else\n"
-     << "    llvm_report_error(\"Cannot yet select: invalid intrinsic\");\n"
      << "}\n\n";
 }
 
