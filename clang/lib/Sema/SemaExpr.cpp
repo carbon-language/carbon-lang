@@ -1600,103 +1600,18 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
        LHSExp->getType()->isEnumeralType() ||
        RHSExp->getType()->isRecordType() ||
        RHSExp->getType()->isEnumeralType())) {
-    // Add the appropriate overloaded operators (C++ [over.match.oper])
-    // to the candidate set.
-    OverloadCandidateSet CandidateSet;
-    Expr *Args[2] = { LHSExp, RHSExp };
-    AddOperatorCandidates(OO_Subscript, S, LLoc, Args, 2, CandidateSet,
-                          SourceRange(LLoc, RLoc));
-
-    // Perform overload resolution.
-    OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, LLoc, Best)) {
-    case OR_Success: {
-      // We found a built-in operator or an overloaded operator.
-      FunctionDecl *FnDecl = Best->Function;
-
-      if (FnDecl) {
-        // We matched an overloaded operator. Build a call to that
-        // operator.
-
-        // Convert the arguments.
-        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
-          if (PerformObjectArgumentInitialization(LHSExp, Method) ||
-              PerformCopyInitialization(RHSExp,
-                                        FnDecl->getParamDecl(0)->getType(),
-                                        "passing"))
-            return ExprError();
-        } else {
-          // Convert the arguments.
-          if (PerformCopyInitialization(LHSExp,
-                                        FnDecl->getParamDecl(0)->getType(),
-                                        "passing") ||
-              PerformCopyInitialization(RHSExp,
-                                        FnDecl->getParamDecl(1)->getType(),
-                                        "passing"))
-            return ExprError();
-        }
-
-        // Determine the result type
-        QualType ResultTy = FnDecl->getResultType().getNonReferenceType();
-
-        // Build the actual expression node.
-        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                                 SourceLocation());
-        UsualUnaryConversions(FnExpr);
-
-        Base.release();
-        Idx.release();
-        Args[0] = LHSExp;
-        Args[1] = RHSExp;
-        
-        ExprOwningPtr<CXXOperatorCallExpr> 
-          TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Subscript, 
-                                                          FnExpr, Args, 2, 
-                                                          ResultTy, RLoc));
-        if (CheckCallReturnType(FnDecl->getResultType(), LLoc, TheCall.get(), 
-                                FnDecl))
-          return ExprError();
-
-        return Owned(TheCall.release());
-      } else {
-        // We matched a built-in operator. Convert the arguments, then
-        // break out so that we will build the appropriate built-in
-        // operator node.
-        if (PerformCopyInitialization(LHSExp, Best->BuiltinTypes.ParamTypes[0],
-                                      "passing") ||
-            PerformCopyInitialization(RHSExp, Best->BuiltinTypes.ParamTypes[1],
-                                      "passing"))
-          return ExprError();
-
-        break;
-      }
-    }
-
-    case OR_No_Viable_Function:
-      // No viable function; fall through to handling this as a
-      // built-in operator, which will produce an error message for us.
-      break;
-
-    case OR_Ambiguous:
-      Diag(LLoc,  diag::err_ovl_ambiguous_oper)
-          << "[]"
-          << LHSExp->getSourceRange() << RHSExp->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return ExprError();
-
-    case OR_Deleted:
-      Diag(LLoc, diag::err_ovl_deleted_oper)
-        << Best->Function->isDeleted()
-        << "[]"
-        << LHSExp->getSourceRange() << RHSExp->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return ExprError();
-    }
-
-    // Either we found no viable overloaded operator or we matched a
-    // built-in operator. In either case, fall through to trying to
-    // build a built-in operation.
+    return CreateOverloadedArraySubscriptExpr(LLoc, RLoc, move(Base),move(Idx));
   }
+
+  return CreateBuiltinArraySubscriptExpr(move(Base), LLoc, move(Idx), RLoc);
+}
+
+
+Action::OwningExprResult
+Sema::CreateBuiltinArraySubscriptExpr(ExprArg Base, SourceLocation LLoc,
+                                     ExprArg Idx, SourceLocation RLoc) {
+  Expr *LHSExp = static_cast<Expr*>(Base.get());
+  Expr *RHSExp = static_cast<Expr*>(Idx.get());
 
   // Perform default conversions.
   DefaultFunctionArrayConversion(LHSExp);

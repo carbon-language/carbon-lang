@@ -6,7 +6,7 @@ struct Sub0 {
 };
 
 struct Sub1 {
-  long &operator[](long);
+  long &operator[](long); // expected-note{{candidate function}}
 };
 
 struct ConvertibleToInt {
@@ -24,3 +24,18 @@ template struct Subscript0<int*, int, int&>;
 template struct Subscript0<Sub0, int, int&>;
 template struct Subscript0<Sub1, ConvertibleToInt, long&>;
 template struct Subscript0<Sub1, Sub0, long&>; // expected-note{{instantiation}}
+
+// PR5345
+template <typename T>
+struct S {
+  bool operator[](int n) const { return true; }
+};
+
+template <typename T>
+void Foo(const S<int>& s, T x) {
+  if (s[0]) {}
+}
+
+void Bar() {
+  Foo(S<int>(), 0);
+}

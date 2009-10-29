@@ -5188,10 +5188,18 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
                                                    ExprArg Second) {
   Expr *FirstExpr = (Expr *)First.get();
   Expr *SecondExpr = (Expr *)Second.get();
+  DeclRefExpr *DRE
+    = cast<DeclRefExpr>(((Expr *)Callee.get())->IgnoreParenCasts());
   bool isPostIncDec = SecondExpr && (Op == OO_PlusPlus || Op == OO_MinusMinus);
 
   // Determine whether this should be a builtin operation.
-  if (SecondExpr == 0 || isPostIncDec) {
+  if (Op == OO_Subscript) {
+    if (!FirstExpr->getType()->isOverloadableType() &&
+        !SecondExpr->getType()->isOverloadableType())
+      return getSema().CreateBuiltinArraySubscriptExpr(move(First),
+                                                       DRE->getLocStart(),
+                                                       move(Second), OpLoc);
+  } else if (SecondExpr == 0 || isPostIncDec) {
     if (!FirstExpr->getType()->isOverloadableType()) {
       // The argument is not of overloadable type, so try to create a
       // built-in unary operation.
@@ -5221,9 +5229,6 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
   // used during overload resolution.
   Sema::FunctionSet Functions;
 
-  DeclRefExpr *DRE
-    = cast<DeclRefExpr>(((Expr *)Callee.get())->IgnoreParenCasts());
-
   // FIXME: Do we have to check
   // IsAcceptableNonMemberOperatorCandidate for each of these?
   for (OverloadIterator F(DRE->getDecl()), FEnd; F != FEnd; ++F)
@@ -5243,6 +5248,10 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
       = UnaryOperator::getOverloadedOpcode(Op, isPostIncDec);
     return SemaRef.CreateOverloadedUnaryOp(OpLoc, Opc, Functions, move(First));
   }
+
+  if (Op == OO_Subscript)
+    return SemaRef.CreateOverloadedArraySubscriptExpr(DRE->getLocStart(), OpLoc,
+                                                      move(First),move(Second));
 
   // Create the overloaded operator invocation for binary operators.
   BinaryOperator::Opcode Opc =

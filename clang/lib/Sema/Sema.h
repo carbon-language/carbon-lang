@@ -962,6 +962,10 @@ public:
                                          FunctionSet &Functions,
                                          Expr *LHS, Expr *RHS);
 
+  OwningExprResult CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
+                                                      SourceLocation RLoc,
+                                                      ExprArg Base,ExprArg Idx);
+
   ExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
                             SourceLocation LParenLoc, Expr **Args,
@@ -1681,6 +1685,10 @@ public:
                                                ExprArg Input);
 
   virtual OwningExprResult ActOnArraySubscriptExpr(Scope *S, ExprArg Base,
+                                                   SourceLocation LLoc,
+                                                   ExprArg Idx,
+                                                   SourceLocation RLoc);
+  OwningExprResult CreateBuiltinArraySubscriptExpr(ExprArg Base,
                                                    SourceLocation LLoc,
                                                    ExprArg Idx,
                                                    SourceLocation RLoc);

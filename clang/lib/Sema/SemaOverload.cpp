@@ -4942,6 +4942,134 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 }
 
+Action::OwningExprResult
+Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
+                                         SourceLocation RLoc,
+                                         ExprArg Base, ExprArg Idx) {
+  Expr *Args[2] = { static_cast<Expr*>(Base.get()),
+                    static_cast<Expr*>(Idx.get()) };
+  DeclarationName OpName =
+      Context.DeclarationNames.getCXXOperatorName(OO_Subscript);
+
+  // If either side is type-dependent, create an appropriate dependent
+  // expression.
+  if (Args[0]->isTypeDependent() || Args[1]->isTypeDependent()) {
+
+    OverloadedFunctionDecl *Overloads
+      = OverloadedFunctionDecl::Create(Context, CurContext, OpName);
+
+    DeclRefExpr *Fn = new (Context) DeclRefExpr(Overloads, Context.OverloadTy,
+                                                LLoc, false, false);
+
+    Base.release();
+    Idx.release();
+    return Owned(new (Context) CXXOperatorCallExpr(Context, OO_Subscript, Fn,
+                                                   Args, 2,
+                                                   Context.DependentTy,
+                                                   RLoc));
+  }
+
+  // Build an empty overload set.
+  OverloadCandidateSet CandidateSet;
+
+  // Subscript can only be overloaded as a member function.
+
+  // Add operator candidates that are member functions.
+  AddMemberOperatorCandidates(OO_Subscript, LLoc, Args, 2, CandidateSet);
+
+  // Add builtin operator candidates.
+  AddBuiltinOperatorCandidates(OO_Subscript, LLoc, Args, 2, CandidateSet);
+
+  // Perform overload resolution.
+  OverloadCandidateSet::iterator Best;
+  switch (BestViableFunction(CandidateSet, LLoc, Best)) {
+    case OR_Success: {
+      // We found a built-in operator or an overloaded operator.
+      FunctionDecl *FnDecl = Best->Function;
+
+      if (FnDecl) {
+        // We matched an overloaded operator. Build a call to that
+        // operator.
+
+        // Convert the arguments.
+        CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
+        if (PerformObjectArgumentInitialization(Args[0], Method) ||
+            PerformCopyInitialization(Args[1],
+                                      FnDecl->getParamDecl(0)->getType(),
+                                      "passing"))
+          return ExprError();
+
+        // Determine the result type
+        QualType ResultTy
+          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
+        ResultTy = ResultTy.getNonReferenceType();
+
+        // Build the actual expression node.
+        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
+                                                 LLoc);
+        UsualUnaryConversions(FnExpr);
+
+        Base.release();
+        Idx.release();
+        ExprOwningPtr<CXXOperatorCallExpr>
+          TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Subscript,
+                                                          FnExpr, Args, 2,
+                                                          ResultTy, RLoc));
+
+        if (CheckCallReturnType(FnDecl->getResultType(), LLoc, TheCall.get(),
+                                FnDecl))
+          return ExprError();
+
+        return MaybeBindToTemporary(TheCall.release());
+      } else {
+        // We matched a built-in operator. Convert the arguments, then
+        // break out so that we will build the appropriate built-in
+        // operator node.
+        if (PerformImplicitConversion(Args[0], Best->BuiltinTypes.ParamTypes[0],
+                                      Best->Conversions[0], "passing") ||
+            PerformImplicitConversion(Args[1], Best->BuiltinTypes.ParamTypes[1],
+                                      Best->Conversions[1], "passing"))
+          return ExprError();
+
+        break;
+      }
+    }
+
+    case OR_No_Viable_Function: {
+      // No viable function; try to create a built-in operation, which will
+      // produce an error. Then, show the non-viable candidates.
+      OwningExprResult Result =
+          CreateBuiltinArraySubscriptExpr(move(Base), LLoc, move(Idx), RLoc);
+      assert(Result.isInvalid() && 
+             "C++ subscript operator overloading is missing candidates!");
+      if (Result.isInvalid())
+        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false,
+                                "[]", LLoc);
+      return move(Result);
+    }
+
+    case OR_Ambiguous:
+      Diag(LLoc,  diag::err_ovl_ambiguous_oper)
+          << "[]" << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true,
+                              "[]", LLoc);
+      return ExprError();
+
+    case OR_Deleted:
+      Diag(LLoc, diag::err_ovl_deleted_oper)
+        << Best->Function->isDeleted() << "[]"
+        << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      return ExprError();
+    }
+
+  // We matched a built-in operator; build it.
+  Base.release();
+  Idx.release();
+  return CreateBuiltinArraySubscriptExpr(Owned(Args[0]), LLoc,
+                                         Owned(Args[1]), RLoc);
+}
+
 /// BuildCallToMemberFunction - Build a call to a member
 /// function. MemExpr is the expression that refers to the member
 /// function (and includes the object parameter), Args/NumArgs are the
