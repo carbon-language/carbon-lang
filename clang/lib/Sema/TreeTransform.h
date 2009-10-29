@@ -4453,6 +4453,8 @@ TreeTransform<Derived>::TransformUnresolvedDeclRefExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E) {
+  TemporaryBase Rebase(*this, E->getTemplateNameLoc(), DeclarationName());
+  
   TemplateName Template
     = getDerived().TransformTemplateName(E->getTemplateName());
   if (Template.isNull())
