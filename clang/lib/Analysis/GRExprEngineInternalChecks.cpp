@@ -15,6 +15,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
+#include "clang/Analysis/PathSensitive/NullDerefChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -40,10 +41,8 @@ ExplodedNode* GetNode(GRExprEngine::undef_arg_iterator I) {
 //===----------------------------------------------------------------------===//
 // Bug Descriptions.
 //===----------------------------------------------------------------------===//
-
-namespace {
-
-class VISIBILITY_HIDDEN BuiltinBugReport : public RangedBugReport {
+namespace clang {
+class BuiltinBugReport : public RangedBugReport {
 public:
   BuiltinBugReport(BugType& bt, const char* desc,
                    ExplodedNode *n)
@@ -57,57 +56,21 @@ public:
                                const ExplodedNode* N);
 };
 
-class VISIBILITY_HIDDEN BuiltinBug : public BugType {
-  GRExprEngine &Eng;
-protected:
-  const std::string desc;
-public:
-  BuiltinBug(GRExprEngine *eng, const char* n, const char* d)
-    : BugType(n, "Logic errors"), Eng(*eng), desc(d) {}
-
-  BuiltinBug(GRExprEngine *eng, const char* n)
-    : BugType(n, "Logic errors"), Eng(*eng), desc(n) {}
-
-  const std::string &getDescription() const { return desc; }
-
-  virtual void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {}
-
-  void FlushReports(BugReporter& BR) { FlushReportsImpl(BR, Eng); }
-
-  virtual void registerInitialVisitors(BugReporterContext& BRC,
-                                       const ExplodedNode* N,
-                                       BuiltinBugReport *R) {}
-
-  template <typename ITER> void Emit(BugReporter& BR, ITER I, ITER E);
-};
-
+void BuiltinBugReport::registerInitialVisitors(BugReporterContext& BRC,
+                                               const ExplodedNode* N) {
+  static_cast<BuiltinBug&>(getBugType()).registerInitialVisitors(BRC, N, this);
+}
 
 template <typename ITER>
 void BuiltinBug::Emit(BugReporter& BR, ITER I, ITER E) {
   for (; I != E; ++I) BR.EmitReport(new BuiltinBugReport(*this, desc.c_str(),
                                                          GetNode(I)));
 }
-
-void BuiltinBugReport::registerInitialVisitors(BugReporterContext& BRC,
-                                               const ExplodedNode* N) {
-  static_cast<BuiltinBug&>(getBugType()).registerInitialVisitors(BRC, N, this);
+void NullDeref::registerInitialVisitors(BugReporterContext& BRC,
+                                        const ExplodedNode* N,
+                                        BuiltinBugReport *R) {
+  registerTrackNullOrUndefValue(BRC, bugreporter::GetDerefExpr(N), N);
 }
-
-class VISIBILITY_HIDDEN NullDeref : public BuiltinBug {
-public:
-  NullDeref(GRExprEngine* eng)
-    : BuiltinBug(eng,"Null dereference", "Dereference of null pointer") {}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    Emit(BR, Eng.null_derefs_begin(), Eng.null_derefs_end());
-  }
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, GetDerefExpr(N), N);
-  }
-};
 
 class VISIBILITY_HIDDEN NilReceiverStructRet : public BuiltinBug {
 public:
@@ -175,14 +138,12 @@ public:
   }
 };
 
+
+
 class VISIBILITY_HIDDEN UndefinedDeref : public BuiltinBug {
 public:
-  UndefinedDeref(GRExprEngine* eng)
-    : BuiltinBug(eng,"Dereference of undefined pointer value") {}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    Emit(BR, Eng.undef_derefs_begin(), Eng.undef_derefs_end());
-  }
+  UndefinedDeref() 
+    : BuiltinBug(0, "Dereference of undefined pointer value") {}
 
   void registerInitialVisitors(BugReporterContext& BRC,
                                const ExplodedNode* N,
@@ -595,7 +556,7 @@ public:
   CheckAttrNonNull() : BT(0) {}
   ~CheckAttrNonNull() {}
 
-  const void *getTag() {
+  static void *getTag() {
     static int x = 0;
     return &x;
   }
@@ -676,10 +637,9 @@ public:
       C.addTransition(C.GenerateNode(CE, state));
   }
 };
-} // end anonymous namespace
 
 // Undefined arguments checking.
-namespace {
+
 class VISIBILITY_HIDDEN CheckUndefinedArg
   : public CheckerVisitor<CheckUndefinedArg> {
 
@@ -689,7 +649,7 @@ public:
   CheckUndefinedArg() : BT(0) {}
   ~CheckUndefinedArg() {}
 
-  const void *getTag() {
+  static void *getTag() {
     static int x = 0;
     return &x;
   }
@@ -721,7 +681,7 @@ public:
   CheckBadCall() : BT(0) {}
   ~CheckBadCall() {}
 
-  const void *getTag() {
+  static void *getTag() {
     static int x = 0;
     return &x;
   }
@@ -748,7 +708,7 @@ public:
   CheckDivZero() : BT(0) {}
   ~CheckDivZero() {}
 
-  const void *getTag() {
+  static void *getTag() {
     static int x;
     return &x;
   }
@@ -797,7 +757,85 @@ void CheckDivZero::PreVisitBinaryOperator(CheckerContext &C,
   if (stateNotZero != C.getState())
     C.addTransition(C.GenerateNode(B, stateNotZero));
 }
+
+class VISIBILITY_HIDDEN CheckUndefDeref : public Checker {
+  UndefinedDeref *BT;
+public:
+  CheckUndefDeref() : BT(0) {}
+
+  ExplodedNode *CheckSVal(const Stmt *S, ExplodedNode *Pred,
+                          const GRState *state, SVal V, GRExprEngine &Eng);
+
+  static void *getTag() {
+    static int x = 0;
+    return &x;
+  }
+};
+
+ExplodedNode *CheckUndefDeref::CheckSVal(const Stmt *S, ExplodedNode *Pred,
+                                         const GRState *state, SVal V,
+                                         GRExprEngine &Eng) {
+  GRStmtNodeBuilder &Builder = Eng.getBuilder();
+  BugReporter &BR = Eng.getBugReporter();
+
+  if (V.isUndef()) {
+    ExplodedNode *N = Builder.generateNode(S, state, Pred, 
+                               ProgramPoint::PostUndefLocationCheckFailedKind);
+    if (N) {
+      if (!BT)
+        BT = new UndefinedDeref();
+
+      N->markAsSink();
+      BR.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
+    }
+    return 0;
+  }
+
+  return Pred;
 }
+
+ExplodedNode *NullDerefChecker::CheckLocation(const Stmt *S, ExplodedNode *Pred,
+                                        const GRState *state, SVal V,
+                                        GRExprEngine &Eng) {
+  Loc *LV = dyn_cast<Loc>(&V);
+
+  // If the value is not a location, don't touch the node.
+  if (!LV)
+    return Pred;
+
+  const GRState *NotNullState = state->Assume(*LV, true);
+  const GRState *NullState = state->Assume(*LV, false);
+
+  GRStmtNodeBuilder &Builder = Eng.getBuilder();
+  BugReporter &BR = Eng.getBugReporter();
+
+  // The explicit NULL case.
+  if (NullState) {
+    // Use the GDM to mark in the state what lval was null.
+    const SVal *PersistentLV = Eng.getBasicVals().getPersistentSVal(*LV);
+    NullState = NullState->set<GRState::NullDerefTag>(PersistentLV);
+
+    ExplodedNode *N = Builder.generateNode(S, NullState, Pred,
+                                         ProgramPoint::PostNullCheckFailedKind);
+    if (N) {
+      N->markAsSink();
+      
+      if (!NotNullState) { // Explicit null case.
+        if (!BT)
+          BT = new NullDeref();
+        BR.EmitReport(new BuiltinBugReport(*BT,BT->getDescription().c_str(),N));
+        return 0;
+      } else // Implicit null case.
+        ImplicitNullDerefNodes.push_back(N);
+    }
+  }
+
+  if (!NotNullState)
+    return 0;
+  return Builder.generateNode(S, NotNullState, Pred, 
+                              ProgramPoint::PostLocationChecksSucceedKind);
+}
+} // end clang namespace
 //===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
@@ -808,8 +846,6 @@ void GRExprEngine::RegisterInternalChecks() {
   // create BugReports on-the-fly but instead wait until GRExprEngine finishes
   // analyzing a function.  Generation of BugReport objects is done via a call
   // to 'FlushReports' from BugReporter.
-  BR.Register(new NullDeref(this));
-  BR.Register(new UndefinedDeref(this));
   BR.Register(new UndefBranch(this));
   BR.Register(new UndefResult(this));
   BR.Register(new RetStack(this));
@@ -826,8 +862,10 @@ void GRExprEngine::RegisterInternalChecks() {
   // their associated BugType will get registered with the BugReporter
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.
-  registerCheck(new CheckAttrNonNull());
-  registerCheck(new CheckUndefinedArg());
-  registerCheck(new CheckBadCall());
-  registerCheck(new CheckDivZero());
+  registerCheck<CheckAttrNonNull>(new CheckAttrNonNull());
+  registerCheck<CheckUndefinedArg>(new CheckUndefinedArg());
+  registerCheck<CheckBadCall>(new CheckBadCall());
+  registerCheck<CheckDivZero>(new CheckDivZero());
+  registerCheck<CheckUndefDeref>(new CheckUndefDeref());
+  registerCheck<NullDerefChecker>(new NullDerefChecker());
 }

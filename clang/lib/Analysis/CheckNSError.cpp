@@ -18,6 +18,7 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Analysis/PathSensitive/NullDerefChecker.h"
 #include "BasicObjCFoundationChecks.h"
 #include "llvm/Support/Compiler.h"
 #include "clang/AST/DeclObjC.h"
@@ -208,8 +209,9 @@ void NSErrorCheck::CheckParamDeref(const VarDecl *Param,
     return;
 
   // Iterate over the implicit-null dereferences.
-  for (GRExprEngine::null_deref_iterator I=Eng.implicit_null_derefs_begin(),
-       E=Eng.implicit_null_derefs_end(); I!=E; ++I) {
+  NullDerefChecker *Checker = Eng.getChecker<NullDerefChecker>();
+  for (NullDerefChecker::iterator I = Checker->implicit_nodes_begin(),
+         E = Checker->implicit_nodes_end(); I != E; ++I) {
 
     const GRState *state = (*I)->getState();
     const SVal* X = state->get<GRState::NullDerefTag>();

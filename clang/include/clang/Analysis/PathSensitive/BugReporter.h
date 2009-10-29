@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
+#include "clang/Analysis/PathSensitive/BugType.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -183,38 +184,6 @@ public:
   const_iterator end() const { return const_iterator(Reports.end()); }
 };
 
-class BugType {
-private:
-  const std::string Name;
-  const std::string Category;
-  llvm::FoldingSet<BugReportEquivClass> EQClasses;
-  friend class BugReporter;
-  bool SuppressonSink;
-public:
-  BugType(const char *name, const char* cat)
-    : Name(name), Category(cat), SuppressonSink(false) {}
-  virtual ~BugType();
-
-  // FIXME: Should these be made strings as well?
-  const std::string& getName() const { return Name; }
-  const std::string& getCategory() const { return Category; }
-  
-  /// isSuppressOnSink - Returns true if bug reports associated with this bug
-  ///  type should be suppressed if the end node of the report is post-dominated
-  ///  by a sink node.
-  bool isSuppressOnSink() const { return SuppressonSink; }
-  void setSuppressOnSink(bool x) { SuppressonSink = x; }
-
-  virtual void FlushReports(BugReporter& BR);
-
-  typedef llvm::FoldingSet<BugReportEquivClass>::iterator iterator;
-  iterator begin() { return EQClasses.begin(); }
-  iterator end() { return EQClasses.end(); }
-
-  typedef llvm::FoldingSet<BugReportEquivClass>::const_iterator const_iterator;
-  const_iterator begin() const { return EQClasses.begin(); }
-  const_iterator end() const { return EQClasses.end(); }
-};
 
 //===----------------------------------------------------------------------===//
 // Specialized subclasses of BugReport.

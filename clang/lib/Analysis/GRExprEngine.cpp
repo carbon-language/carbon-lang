@@ -118,17 +118,20 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
 
-  for (std::vector<Checker*>::iterator I = Checkers.begin(), E = Checkers.end();
-       I != E; ++I) {
+  for (llvm::DenseMap<void*, Checker*>::iterator I = Checkers.begin(), 
+         E = Checkers.end(); I != E; ++I) {
 
-    ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst
+    llvm::DenseMap<void*, Checker*>::iterator X = I;
+
+    ExplodedNodeSet *CurrSet = (++X == E) ? &Dst
                                           : (PrevSet == &Tmp) ? &Src : &Tmp;
     CurrSet->clear();
-    Checker *checker = *I;
+    void *tag = I->first;
+    Checker *checker = I->second;
 
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
          NI != NE; ++NI)
-      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, isPrevisit);
+      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag, isPrevisit);
 
     // Update which NodeSet is the current one.
     PrevSet = CurrSet;
@@ -136,6 +139,21 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
 
   // Don't autotransition.  The CheckerContext objects should do this
   // automatically.
+}
+
+ExplodedNode *GRExprEngine::CheckerVisitLocation(Stmt *S, ExplodedNode *Pred, 
+                                                const GRState *state, SVal V) {
+  if (Checkers.empty())
+    return Pred;
+
+  for (llvm::DenseMap<void*, Checker*>::iterator I = Checkers.begin(), 
+         E = Checkers.end(); I != E; ++I) {
+    Pred = I->second->CheckLocation(S, Pred, state, V, *this);
+    if (!Pred)
+      break;
+  }
+
+  return Pred;
 }
 
 //===----------------------------------------------------------------------===//
@@ -166,9 +184,9 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr)
 GRExprEngine::~GRExprEngine() {
   BR.FlushReports();
   delete [] NSExceptionInstanceRaiseSelectors;
-  for (std::vector<Checker*>::iterator I=Checkers.begin(), E=Checkers.end();
-       I!=E; ++I)
-    delete *I;
+  for (llvm::DenseMap<void*, Checker*>::iterator I=Checkers.begin(), 
+         E=Checkers.end(); I!=E; ++I)
+    delete I->second;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1188,58 +1206,11 @@ ExplodedNode* GRExprEngine::EvalLocation(Stmt* Ex, ExplodedNode* Pred,
   SaveAndRestore<const void*> OldTag(Builder->Tag);
   Builder->Tag = tag;
 
-  // Check for loads/stores from/to undefined values.
-  if (location.isUndef()) {
-    ExplodedNode* N =
-      Builder->generateNode(Ex, state, Pred,
-                            ProgramPoint::PostUndefLocationCheckFailedKind);
-
-    if (N) {
-      N->markAsSink();
-      UndefDeref.insert(N);
-    }
-
-    return 0;
-  }
-
-  // Check for loads/stores from/to unknown locations.  Treat as No-Ops.
   if (location.isUnknown())
     return Pred;
 
-  // During a load, one of two possible situations arise:
-  //  (1) A crash, because the location (pointer) was NULL.
-  //  (2) The location (pointer) is not NULL, and the dereference works.
-  //
-  // We add these assumptions.
+  return CheckerVisitLocation(Ex, Pred, state, location);
 
-  Loc LV = cast<Loc>(location);
-
-  // "Assume" that the pointer is not NULL.
-  const GRState *StNotNull = state->Assume(LV, true);
-
-  // "Assume" that the pointer is NULL.
-  const GRState *StNull = state->Assume(LV, false);
-
-  if (StNull) {
-    // Use the Generic Data Map to mark in the state what lval was null.
-    const SVal* PersistentLV = getBasicVals().getPersistentSVal(LV);
-    StNull = StNull->set<GRState::NullDerefTag>(PersistentLV);
-
-    // We don't use "MakeNode" here because the node will be a sink
-    // and we have no intention of processing it later.
-    ExplodedNode* NullNode =
-      Builder->generateNode(Ex, StNull, Pred,
-                            ProgramPoint::PostNullCheckFailedKind);
-
-    if (NullNode) {
-      NullNode->markAsSink();
-      if (StNotNull) ImplicitNullDeref.insert(NullNode);
-      else ExplicitNullDeref.insert(NullNode);
-    }
-  }
-
-  if (!StNotNull)
-    return NULL;
 
   // FIXME: Temporarily disable out-of-bounds checking until we make
   // the logic reflect recent changes to CastRegion and friends.
@@ -1282,10 +1253,6 @@ ExplodedNode* GRExprEngine::EvalLocation(Stmt* Ex, ExplodedNode* Pred,
     }
   }
 #endif
-
-  // Generate a new node indicating the checks succeed.
-  return Builder->generateNode(Ex, StNotNull, Pred,
-                               ProgramPoint::PostLocationChecksSucceedKind);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2895,7 +2862,8 @@ namespace llvm {
 template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
   public DefaultDOTGraphTraits {
-
+  // FIXME: Since we do not cache error nodes in GRExprEngine now, this does not
+  // work.
   static std::string getNodeAttributes(const ExplodedNode* N, void*) {
 
     if (GraphPrintCheckerState->isImplicitNullDeref(N) ||
