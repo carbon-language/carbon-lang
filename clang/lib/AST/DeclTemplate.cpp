@@ -67,6 +67,21 @@ unsigned TemplateParameterList::getMinRequiredArguments() const {
   return NumRequiredArgs;
 }
 
+unsigned TemplateParameterList::getDepth() const {
+  if (size() == 0)
+    return 0;
+  
+  const NamedDecl *FirstParm = getParam(0);
+  if (const TemplateTypeParmDecl *TTP
+        = dyn_cast<TemplateTypeParmDecl>(FirstParm))
+    return TTP->getDepth();
+  else if (const NonTypeTemplateParmDecl *NTTP 
+             = dyn_cast<NonTypeTemplateParmDecl>(FirstParm))
+    return NTTP->getDepth();
+  else
+    return cast<TemplateTemplateParmDecl>(FirstParm)->getDepth();
+}
+
 //===----------------------------------------------------------------------===//
 // TemplateDecl Implementation
 //===----------------------------------------------------------------------===//
@@ -227,6 +242,14 @@ TemplateTypeParmDecl::Create(ASTContext &C, DeclContext *DC,
                              bool ParameterPack) {
   QualType Type = C.getTemplateTypeParmType(D, P, ParameterPack, Id);
   return new (C) TemplateTypeParmDecl(DC, L, Id, Typename, Type, ParameterPack);
+}
+
+unsigned TemplateTypeParmDecl::getDepth() const {
+  return TypeForDecl->getAs<TemplateTypeParmType>()->getDepth();
+}
+
+unsigned TemplateTypeParmDecl::getIndex() const {
+  return TypeForDecl->getAs<TemplateTypeParmType>()->getIndex();
 }
 
 //===----------------------------------------------------------------------===//

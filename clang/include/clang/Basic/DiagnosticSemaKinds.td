@@ -1014,7 +1014,11 @@ def note_partial_spec_unused_parameter : Note<
 def err_partial_spec_ordering_ambiguous : Error<
     "ambiguous partial specializations of %0">;
 def note_partial_spec_match : Note<"partial specialization matches %0">;
-
+def err_partial_spec_redeclared : Error<
+  "class template partial specialization %0 cannot be redeclared">;
+def note_prev_partial_spec_here : Note<
+  "previous declaration of class template partial specialization %0 is here">;
+  
 // C++ Function template specializations
 def err_function_template_spec_no_match : Error<
     "no function template matches function template specialization %0">;

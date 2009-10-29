@@ -2880,8 +2880,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                   Converted.flatSize());
 
     // Create a new class template partial specialization declaration node.
-    TemplateParameterList *TemplateParams
-      = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
     ClassTemplatePartialSpecializationDecl *PrevPartial
       = cast_or_null<ClassTemplatePartialSpecializationDecl>(PrevDecl);
     ClassTemplatePartialSpecializationDecl *Partial
@@ -2901,6 +2899,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     }
     Specialization = Partial;
 
+    // If we are providing an explicit specialization of a member class 
+    // template specialization, make a note of that.
+    if (PrevPartial && PrevPartial->getInstantiatedFromMember())
+      PrevPartial->setMemberSpecialization();
+    
     // Check that all of the template parameters of the class template
     // partial specialization are deducible from the template
     // arguments. If not, this class template partial specialization
@@ -2908,6 +2911,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     llvm::SmallVector<bool, 8> DeducibleParams;
     DeducibleParams.resize(TemplateParams->size());
     MarkUsedTemplateParameters(Partial->getTemplateArgs(), true, 
+                               TemplateParams->getDepth(),
                                DeducibleParams);
     unsigned NumNonDeducible = 0;
     for (unsigned I = 0, N = DeducibleParams.size(); I != N; ++I)

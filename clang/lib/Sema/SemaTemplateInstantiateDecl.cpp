@@ -82,6 +82,10 @@ namespace {
 
     TemplateParameterList *
       SubstTemplateParams(TemplateParameterList *List);
+      
+    bool InstantiateClassTemplatePartialSpecialization(
+                                              ClassTemplateDecl *ClassTemplate,
+                           ClassTemplatePartialSpecializationDecl *PartialSpec);
   };
 }
 
@@ -389,6 +393,21 @@ Decl *TemplateDeclInstantiator::VisitEnumConstantDecl(EnumConstantDecl *D) {
   return 0;
 }
 
+namespace {
+  class SortDeclByLocation {
+    SourceManager &SourceMgr;
+    
+  public:
+    explicit SortDeclByLocation(SourceManager &SourceMgr) 
+      : SourceMgr(SourceMgr) { }
+    
+    bool operator()(const Decl *X, const Decl *Y) const {
+      return SourceMgr.isBeforeInTranslationUnit(X->getLocation(),
+                                                 Y->getLocation());
+    }
+  };
+}
+
 Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
@@ -413,13 +432,52 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   SemaRef.Context.getTypeDeclType(RecordInst);
   
   Owner->addDecl(Inst);
+  
+  // First, we sort the partial specializations by location, so 
+  // that we instantiate them in the order they were declared.
+  llvm::SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
+  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
+         P = D->getPartialSpecializations().begin(), 
+         PEnd = D->getPartialSpecializations().end();
+       P != PEnd; ++P)
+    PartialSpecs.push_back(&*P);
+  std::sort(PartialSpecs.begin(), PartialSpecs.end(),
+            SortDeclByLocation(SemaRef.SourceMgr));
+  
+  // Instantiate all of the partial specializations of this member class 
+  // template.
+  for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I)
+    InstantiateClassTemplatePartialSpecialization(Inst, PartialSpecs[I]);
+  
   return Inst;
 }
 
 Decl *
 TemplateDeclInstantiator::VisitClassTemplatePartialSpecializationDecl(
                                    ClassTemplatePartialSpecializationDecl *D) {
-  assert(false &&"Partial specializations of member templates are unsupported");
+  ClassTemplateDecl *ClassTemplate = D->getSpecializedTemplate();
+  
+  // Lookup the already-instantiated declaration in the instantiation
+  // of the class template and return that.
+  DeclContext::lookup_result Found
+    = Owner->lookup(ClassTemplate->getDeclName());
+  if (Found.first == Found.second)
+    return 0;
+  
+  ClassTemplateDecl *InstClassTemplate
+    = dyn_cast<ClassTemplateDecl>(*Found.first);
+  if (!InstClassTemplate)
+    return 0;
+  
+  Decl *DCanon = D->getCanonicalDecl();
+  for (llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
+            P = InstClassTemplate->getPartialSpecializations().begin(),
+         PEnd = InstClassTemplate->getPartialSpecializations().end();
+       P != PEnd; ++P) {
+    if (P->getInstantiatedFromMember()->getCanonicalDecl() == DCanon)
+      return &*P;
+  }
+  
   return 0;
 }
 
@@ -431,7 +489,7 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams)
     return NULL;
-
+  
   FunctionDecl *Instantiated = 0;
   if (CXXMethodDecl *DMethod = dyn_cast<CXXMethodDecl>(D->getTemplatedDecl()))
     Instantiated = cast_or_null<FunctionDecl>(VisitCXXMethodDecl(DMethod, 
@@ -945,6 +1003,130 @@ TemplateDeclInstantiator::SubstTemplateParams(TemplateParameterList *L) {
   return InstL;
 }
 
+/// \brief Instantiate the declaration of a class template partial 
+/// specialization.
+///
+/// \param ClassTemplate the (instantiated) class template that is partially
+// specialized by the instantiation of \p PartialSpec.
+///
+/// \param PartialSpec the (uninstantiated) class template partial 
+/// specialization that we are instantiating.
+///
+/// \returns true if there was an error, false otherwise.
+bool 
+TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
+                                            ClassTemplateDecl *ClassTemplate,
+                          ClassTemplatePartialSpecializationDecl *PartialSpec) {
+  // Substitute into the template parameters of the class template partial
+  // specialization.
+  TemplateParameterList *TempParams = PartialSpec->getTemplateParameters();
+  TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
+  if (!InstParams)
+    return true;
+  
+  // Substitute into the template arguments of the class template partial
+  // specialization.
+  const TemplateArgumentList &PartialSpecTemplateArgs 
+    = PartialSpec->getTemplateInstantiationArgs();
+  llvm::SmallVector<TemplateArgument, 4> InstTemplateArgs;
+  for (unsigned I = 0, N = PartialSpecTemplateArgs.size(); I != N; ++I) {
+    TemplateArgument Inst = SemaRef.Subst(PartialSpecTemplateArgs[I], 
+                                          TemplateArgs);
+    if (Inst.isNull())
+      return true;
+    
+    InstTemplateArgs.push_back(Inst);
+  }
+  
+
+  // Check that the template argument list is well-formed for this
+  // class template.
+  TemplateArgumentListBuilder Converted(ClassTemplate->getTemplateParameters(), 
+                                        InstTemplateArgs.size());
+  if (SemaRef.CheckTemplateArgumentList(ClassTemplate, 
+                                        PartialSpec->getLocation(),
+                                        /*FIXME:*/PartialSpec->getLocation(),
+                                        InstTemplateArgs.data(), 
+                                        InstTemplateArgs.size(),
+                                        /*FIXME:*/PartialSpec->getLocation(), 
+                                        false,
+                                        Converted))
+    return true;
+
+  // Figure out where to insert this class template partial specialization
+  // in the member template's set of class template partial specializations.
+  llvm::FoldingSetNodeID ID;
+  ClassTemplatePartialSpecializationDecl::Profile(ID,
+                                                  Converted.getFlatArguments(),
+                                                  Converted.flatSize(),
+                                                  SemaRef.Context);
+  void *InsertPos = 0;
+  ClassTemplateSpecializationDecl *PrevDecl
+    = ClassTemplate->getPartialSpecializations().FindNodeOrInsertPos(ID,
+                                                                     InsertPos);
+  
+  // Build the canonical type that describes the converted template
+  // arguments of the class template partial specialization.
+  QualType CanonType 
+    = SemaRef.Context.getTemplateSpecializationType(TemplateName(ClassTemplate),
+                                                  Converted.getFlatArguments(),
+                                                    Converted.flatSize());
+
+  // Build the fully-sugared type for this class template
+  // specialization as the user wrote in the specialization
+  // itself. This means that we'll pretty-print the type retrieved
+  // from the specialization's declaration the way that the user
+  // actually wrote the specialization, rather than formatting the
+  // name based on the "canonical" representation used to store the
+  // template arguments in the specialization.
+  QualType WrittenTy
+    = SemaRef.Context.getTemplateSpecializationType(TemplateName(ClassTemplate),
+                                                    InstTemplateArgs.data(),
+                                                    InstTemplateArgs.size(),
+                                                    CanonType);
+  
+  if (PrevDecl) {
+    // We've already seen a partial specialization with the same template
+    // parameters and template arguments. This can happen, for example, when
+    // substituting the outer template arguments ends up causing two
+    // class template partial specializations of a member class template
+    // to have identical forms, e.g.,
+    //
+    //   template<typename T, typename U>
+    //   struct Outer {
+    //     template<typename X, typename Y> struct Inner;
+    //     template<typename Y> struct Inner<T, Y>;
+    //     template<typename Y> struct Inner<U, Y>;
+    //   };
+    //
+    //   Outer<int, int> outer; // error: the partial specializations of Inner
+    //                          // have the same signature.
+    SemaRef.Diag(PartialSpec->getLocation(), diag::err_partial_spec_redeclared)
+      << WrittenTy;
+    SemaRef.Diag(PrevDecl->getLocation(), diag::note_prev_partial_spec_here)
+      << SemaRef.Context.getTypeDeclType(PrevDecl);
+    return true;
+  }
+  
+  
+  // Create the class template partial specialization declaration.
+  ClassTemplatePartialSpecializationDecl *InstPartialSpec
+    = ClassTemplatePartialSpecializationDecl::Create(SemaRef.Context, Owner, 
+                                                     PartialSpec->getLocation(), 
+                                                     InstParams,
+                                                     ClassTemplate, 
+                                                     Converted,
+                                                     0);
+  InstPartialSpec->setInstantiatedFromMember(PartialSpec);
+  InstPartialSpec->setTypeAsWritten(WrittenTy);
+  
+  // Add this partial specialization to the set of class template partial
+  // specializations.
+  ClassTemplate->getPartialSpecializations().InsertNode(InstPartialSpec,
+                                                        InsertPos);
+  return false;
+}
+
 /// \brief Does substitution on the type of the given function, including
 /// all of the function parameters.
 ///
@@ -1391,6 +1573,22 @@ static bool isInstantiationOf(FunctionTemplateDecl *Pattern,
   return false;
 }
 
+static bool 
+isInstantiationOf(ClassTemplatePartialSpecializationDecl *Pattern,
+                  ClassTemplatePartialSpecializationDecl *Instance) {
+  Pattern 
+    = cast<ClassTemplatePartialSpecializationDecl>(Pattern->getCanonicalDecl());
+  do {
+    Instance = cast<ClassTemplatePartialSpecializationDecl>(
+                                                Instance->getCanonicalDecl());
+    if (Pattern == Instance)
+      return true;
+    Instance = Instance->getInstantiatedFromMember();
+  } while (Instance);
+  
+  return false;
+}
+
 static bool isInstantiationOf(CXXRecordDecl *Pattern,
                               CXXRecordDecl *Instance) {
   Pattern = Pattern->getCanonicalDecl();
@@ -1480,6 +1678,11 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
 
   if (FunctionTemplateDecl *Temp = dyn_cast<FunctionTemplateDecl>(Other))
     return isInstantiationOf(cast<FunctionTemplateDecl>(D), Temp);
+
+  if (ClassTemplatePartialSpecializationDecl *PartialSpec
+        = dyn_cast<ClassTemplatePartialSpecializationDecl>(Other))
+    return isInstantiationOf(cast<ClassTemplatePartialSpecializationDecl>(D),
+                             PartialSpec);
 
   if (FieldDecl *Field = dyn_cast<FieldDecl>(Other)) {
     if (!Field->getDeclName()) {

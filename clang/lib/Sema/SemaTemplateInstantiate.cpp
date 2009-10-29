@@ -981,61 +981,72 @@ Sema::InstantiateClassTemplateSpecialization(
     }
   }
 
-  if (Matched.size() == 1) {
-    //   -- If exactly one matching specialization is found, the
-    //      instantiation is generated from that specialization.
-    Pattern = Matched[0].first;
-    ClassTemplateSpec->setInstantiationOf(Matched[0].first, Matched[0].second);
-  } else if (Matched.size() > 1) {
-    //   -- If more than one matching specialization is found, the
-    //      partial order rules (14.5.4.2) are used to determine
-    //      whether one of the specializations is more specialized
-    //      than the others. If none of the specializations is more
-    //      specialized than all of the other matching
-    //      specializations, then the use of the class template is
-    //      ambiguous and the program is ill-formed.
+  if (Matched.size() >= 1) {
     llvm::SmallVector<MatchResult, 4>::iterator Best = Matched.begin();
-    for (llvm::SmallVector<MatchResult, 4>::iterator P = Best + 1,
-                                                  PEnd = Matched.end();
-         P != PEnd; ++P) {
-      if (getMoreSpecializedPartialSpecialization(P->first, Best->first) 
-            == P->first)
-        Best = P;
-    }
-    
-    // Determine if the best partial specialization is more specialized than
-    // the others.
-    bool Ambiguous = false;
-    for (llvm::SmallVector<MatchResult, 4>::iterator P = Matched.begin(),
-                                                  PEnd = Matched.end();
-         P != PEnd; ++P) {
-      if (P != Best &&
-          getMoreSpecializedPartialSpecialization(P->first, Best->first)
-            != Best->first) {
-        Ambiguous = true;
-        break;
+    if (Matched.size() == 1) {
+      //   -- If exactly one matching specialization is found, the
+      //      instantiation is generated from that specialization.
+      // We don't need to do anything for this.
+    } else {
+      //   -- If more than one matching specialization is found, the
+      //      partial order rules (14.5.4.2) are used to determine
+      //      whether one of the specializations is more specialized
+      //      than the others. If none of the specializations is more
+      //      specialized than all of the other matching
+      //      specializations, then the use of the class template is
+      //      ambiguous and the program is ill-formed.
+      for (llvm::SmallVector<MatchResult, 4>::iterator P = Best + 1,
+                                                    PEnd = Matched.end();
+           P != PEnd; ++P) {
+        if (getMoreSpecializedPartialSpecialization(P->first, Best->first) 
+              == P->first)
+          Best = P;
       }
-    }
-     
-    if (Ambiguous) {
-      // Partial ordering did not produce a clear winner. Complain.
-      ClassTemplateSpec->setInvalidDecl();
-      Diag(PointOfInstantiation, diag::err_partial_spec_ordering_ambiguous)
-        << ClassTemplateSpec;
       
-      // Print the matching partial specializations.
+      // Determine if the best partial specialization is more specialized than
+      // the others.
+      bool Ambiguous = false;
       for (llvm::SmallVector<MatchResult, 4>::iterator P = Matched.begin(),
                                                     PEnd = Matched.end();
-           P != PEnd; ++P)
-        Diag(P->first->getLocation(), diag::note_partial_spec_match)
-          << getTemplateArgumentBindingsText(P->first->getTemplateParameters(),
-                                             *P->second);
+           P != PEnd; ++P) {
+        if (P != Best &&
+            getMoreSpecializedPartialSpecialization(P->first, Best->first)
+              != Best->first) {
+          Ambiguous = true;
+          break;
+        }
+      }
+       
+      if (Ambiguous) {
+        // Partial ordering did not produce a clear winner. Complain.
+        ClassTemplateSpec->setInvalidDecl();
+        Diag(PointOfInstantiation, diag::err_partial_spec_ordering_ambiguous)
+          << ClassTemplateSpec;
+        
+        // Print the matching partial specializations.
+        for (llvm::SmallVector<MatchResult, 4>::iterator P = Matched.begin(),
+                                                      PEnd = Matched.end();
+             P != PEnd; ++P)
+          Diag(P->first->getLocation(), diag::note_partial_spec_match)
+            << getTemplateArgumentBindingsText(P->first->getTemplateParameters(),
+                                               *P->second);
 
-      return true;
+        return true;
+      }
     }
     
     // Instantiate using the best class template partial specialization.
-    Pattern = Best->first;
+    ClassTemplatePartialSpecializationDecl *OrigPartialSpec = Best->first;
+    while (OrigPartialSpec->getInstantiatedFromMember()) {
+      // If we've found an explicit specialization of this class template,
+      // stop here and use that as the pattern.
+      if (OrigPartialSpec->isMemberSpecialization())
+        break;
+      
+      OrigPartialSpec = OrigPartialSpec->getInstantiatedFromMember();
+    }
+    
+    Pattern = OrigPartialSpec;
     ClassTemplateSpec->setInstantiationOf(Best->first, Best->second);
   } else {
     //   -- If no matches are found, the instantiation is generated

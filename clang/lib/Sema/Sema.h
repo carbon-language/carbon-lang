@@ -2869,6 +2869,7 @@ public:
   
   void MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                   bool OnlyDeduced,
+                                  unsigned Depth,
                                   llvm::SmallVectorImpl<bool> &Used);
   void MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
                                      llvm::SmallVectorImpl<bool> &Deduced);

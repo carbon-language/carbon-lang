@@ -91,6 +91,13 @@ public:
   /// arguments or if there is a parameter pack.
   unsigned getMinRequiredArguments() const;
 
+  /// \brief Get the depth of this template parameter list in the set of
+  /// template parameter lists.
+  ///
+  /// The first template parameter list in a declaration will have depth 0,
+  /// the second template parameter list will have depth 1, etc.
+  unsigned getDepth() const;
+  
   SourceLocation getTemplateLoc() const { return TemplateLoc; }
   SourceLocation getLAngleLoc() const { return LAngleLoc; }
   SourceLocation getRAngleLoc() const { return RAngleLoc; }
@@ -859,6 +866,12 @@ public:
     InheritedDefault = Inherited;
   }
 
+  /// \brief Retrieve the depth of the template parameter.
+  unsigned getDepth() const;
+  
+  /// \brief Retrieve the index of the template parameter.
+  unsigned getIndex() const;
+
   /// \brief Returns whether this is a parameter pack.
   bool isParameterPack() const { return ParameterPack; }
 
@@ -1150,6 +1163,14 @@ class ClassTemplatePartialSpecializationDecl
   /// \brief The list of template parameters
   TemplateParameterList* TemplateParams;
 
+  /// \brief The class template partial specialization from which this 
+  /// class template partial specialization was instantiated.
+  ///
+  /// The boolean value will be true to indicate that this class template
+  /// partial specialization was specialized at this level.
+  llvm::PointerIntPair<ClassTemplatePartialSpecializationDecl *, 1, bool>
+      InstantiatedFromMember;
+    
   ClassTemplatePartialSpecializationDecl(ASTContext &Context,
                                          DeclContext *DC, SourceLocation L,
                                          TemplateParameterList *Params,
@@ -1160,7 +1181,7 @@ class ClassTemplatePartialSpecializationDecl
                                       ClassTemplatePartialSpecialization,
                                       DC, L, SpecializedTemplate, Builder,
                                       PrevDecl),
-      TemplateParams(Params) { }
+      TemplateParams(Params), InstantiatedFromMember(0, false) { }
 
 public:
   static ClassTemplatePartialSpecializationDecl *
@@ -1175,6 +1196,70 @@ public:
     return TemplateParams;
   }
 
+  /// \brief Retrieve the member class template partial specialization from
+  /// which this particular class template partial specialization was
+  /// instantiated.
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct Outer {
+  ///   template<typename U> struct Inner;
+  ///   template<typename U> struct Inner<U*> { }; // #1
+  /// };
+  ///
+  /// Outer<float>::Inner<int*> ii;
+  /// \endcode
+  ///
+  /// In this example, the instantiation of \c Outer<float>::Inner<int*> will
+  /// end up instantiating the partial specialization 
+  /// \c Outer<float>::Inner<U*>, which itself was instantiated from the class 
+  /// template partial specialization \c Outer<T>::Inner<U*>. Given 
+  /// \c Outer<float>::Inner<U*>, this function would return
+  /// \c Outer<T>::Inner<U*>.
+  ClassTemplatePartialSpecializationDecl *getInstantiatedFromMember() {
+    ClassTemplatePartialSpecializationDecl *First
+      = cast<ClassTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    return First->InstantiatedFromMember.getPointer();
+  }
+  
+  void setInstantiatedFromMember(
+                          ClassTemplatePartialSpecializationDecl *PartialSpec) {
+    ClassTemplatePartialSpecializationDecl *First
+      = cast<ClassTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    First->InstantiatedFromMember.setPointer(PartialSpec);
+  }
+    
+  /// \brief Determines whether this class template partial specialization 
+  /// template was a specialization of a member partial specialization.
+  ///
+  /// In the following example, the member template partial specialization
+  /// \c X<int>::Inner<T*> is a member specialization.
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   template<typename U> struct Inner;
+  ///   template<typename U> struct Inner<U*>;
+  /// };
+  ///
+  /// template<> template<typename T>
+  /// struct X<int>::Inner<T*> { /* ... */ };
+  /// \endcode
+  bool isMemberSpecialization() {
+    ClassTemplatePartialSpecializationDecl *First
+      = cast<ClassTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    return First->InstantiatedFromMember.getInt();
+  }
+  
+  /// \brief Note that this member template is a specialization.
+  void setMemberSpecialization() {
+    ClassTemplatePartialSpecializationDecl *First
+      = cast<ClassTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    assert(First->InstantiatedFromMember.getPointer() &&
+           "Only member templates can be member template specializations");
+    return First->InstantiatedFromMember.setInt(true);
+  }
+    
   // FIXME: Add Profile support!
 
   static bool classof(const Decl *D) {
