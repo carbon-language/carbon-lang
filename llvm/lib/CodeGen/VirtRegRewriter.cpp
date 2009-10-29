@@ -1432,7 +1432,7 @@ private:
 
     MachineBasicBlock::iterator oldNextMII = next(MII);
     TII->storeRegToStackSlot(MBB, next(MII), PhysReg, true, StackSlot, RC);
-    MachineInstr *StoreMI = next(MII);
+    MachineInstr *StoreMI = prior(oldNextMII);
     VRM.addSpillSlotUse(StackSlot, StoreMI);
     DEBUG(errs() << "Store:\t" << *StoreMI);
 
@@ -1751,8 +1751,9 @@ private:
           const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
           unsigned Phys = VRM.getPhys(VirtReg);
           int StackSlot = VRM.getStackSlot(VirtReg);
+          MachineBasicBlock::iterator oldNextMII = next(MII);
           TII->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
-          MachineInstr *StoreMI = next(MII);
+          MachineInstr *StoreMI = prior(oldNextMII);
           VRM.addSpillSlotUse(StackSlot, StoreMI);
           DEBUG(errs() << "Store:\t" << *StoreMI);
           VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
