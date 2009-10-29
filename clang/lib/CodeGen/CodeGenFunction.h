@@ -183,11 +183,7 @@ public:
   void PopConditionalTempDestruction();
 
 private:
-#ifndef USEINDIRECTBRANCH
-  CGDebugInfo* DebugInfo;
-#else
   CGDebugInfo *DebugInfo;
-#endif
 
 #ifndef USEINDIRECTBRANCH
   /// LabelIDs - Track arbitrary ids assigned to labels for use in implementing
