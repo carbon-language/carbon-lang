@@ -12,8 +12,8 @@
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
-#include "clang/Driver/Driver.h" // FIXME: Remove?
-#include "clang/Driver/DriverDiagnostic.h" // FIXME: Remove?
+#include "clang/Driver/Driver.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Job.h"
 #include "clang/Driver/HostInfo.h"
@@ -415,8 +415,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
 void Clang::AddX86TargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
-  // FIXME: This needs to change to use a clang-cc option, and set the attribute
-  // on functions.
   if (!Args.hasFlag(options::OPT_mred_zone,
                     options::OPT_mno_red_zone,
                     true) ||
@@ -424,8 +422,6 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
       Args.hasArg(options::OPT_fapple_kext))
     CmdArgs.push_back("--disable-red-zone");
 
-  // FIXME: This needs to change to use a clang-cc option, and set the attribute
-  // on functions.
   if (Args.hasFlag(options::OPT_msoft_float,
                    options::OPT_mno_soft_float,
                    false))
@@ -604,9 +600,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // issue is that llvm-gcc translates these options based on
   // the values in cc1, whereas we are processing based on
   // the driver arguments.
-  //
-  // FIXME: This is currently broken for -f flags when -fno
-  // variants are present.
 
   // This comes from the default translation the driver + cc1
   // would do to enable flag_pic.
@@ -659,8 +652,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--debug-pass=Structure");
   if (Args.hasArg(options::OPT_fdebug_pass_arguments))
     CmdArgs.push_back("--debug-pass=Arguments");
-  // FIXME: set --inline-threshhold=50 if (optimize_size || optimize
-  // < 3)
 
   // This is a coarse approximation of what llvm-gcc actually does, both
   // -fasynchronous-unwind-tables and -fnon-call-exceptions interact in more
@@ -711,9 +702,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--limit-float-precision");
     CmdArgs.push_back(A->getValue(Args));
   }
-
-  // FIXME: Add --stack-protector-buffer-size=<xxx> on
-  // -fstack-protect.
 
   Arg *Unsupported;
   if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
@@ -871,9 +859,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fsigned-char=0");
   }
 
-  // -fno-pascal-strings is default, only pass non-default. If the
-  // -tool chain happened to translate to -mpascal-strings, we want to
-  // -back translate here.
+  // -fno-pascal-strings is default, only pass non-default. If the tool chain
+  // happened to translate to -mpascal-strings, we want to back translate here.
   //
   // FIXME: This is gross; that translation should be pulled from the
   // tool chain.
