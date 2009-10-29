@@ -763,7 +763,7 @@ class VISIBILITY_HIDDEN CheckUndefDeref : public Checker {
 public:
   CheckUndefDeref() : BT(0) {}
 
-  ExplodedNode *CheckSVal(const Stmt *S, ExplodedNode *Pred,
+  ExplodedNode *CheckLocation(const Stmt *S, ExplodedNode *Pred,
                           const GRState *state, SVal V, GRExprEngine &Eng);
 
   static void *getTag() {
@@ -772,7 +772,7 @@ public:
   }
 };
 
-ExplodedNode *CheckUndefDeref::CheckSVal(const Stmt *S, ExplodedNode *Pred,
+ExplodedNode *CheckUndefDeref::CheckLocation(const Stmt *S, ExplodedNode *Pred,
                                          const GRState *state, SVal V,
                                          GRExprEngine &Eng) {
   GRStmtNodeBuilder &Builder = Eng.getBuilder();

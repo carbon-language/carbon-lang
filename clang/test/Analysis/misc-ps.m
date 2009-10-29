@@ -154,6 +154,12 @@ void handle_sizeof_void(unsigned flag) {
   *p = 1; // no-warning
 }
 
+// check deference of undefined values
+void check_deref_undef(void) {
+  int *p;
+  *p = 0xDEADBEEF; // expected-warning{{Dereference of undefined pointer value}}
+}
+
 // PR 3422
 void pr3422_helper(char *p);
 void pr3422() {
