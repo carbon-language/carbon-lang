@@ -189,7 +189,10 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context,
     //   A user-declared copy assignment operator is a non-static non-template
     //   member function of class X with exactly one parameter of type X, X&,
     //   const X&, volatile X& or const volatile X&.
-    const CXXMethodDecl* Method = cast<CXXMethodDecl>(*Op);
+    const CXXMethodDecl* Method = dyn_cast<CXXMethodDecl>(*Op);
+    if (!Method)
+      continue;
+
     if (Method->isStatic())
       continue;
     if (Method->getPrimaryTemplate())

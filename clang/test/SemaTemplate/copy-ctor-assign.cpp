@@ -34,3 +34,19 @@ void test3(X<int> &x, X<int> xi, X<long> xl, X<int Y::*> xmptr) {
   x = xl;
   x = xmptr; // expected-note{{instantiation}}
 }
+
+struct X1 {
+  X1 &operator=(const X1&);
+};
+
+template<typename T>
+struct X2 : X1 {
+  template<typename U> X2 &operator=(const U&);
+};
+
+struct X3 : X2<int> {
+};
+
+void test_X2(X3 &to, X3 from) {
+  to = from;
+}
