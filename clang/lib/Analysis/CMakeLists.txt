@@ -28,6 +28,7 @@ add_clang_library(clangAnalysis
   GRState.cpp
   LiveVariables.cpp
   MemRegion.cpp
+  NullDerefChecker.cpp
   PathDiagnostic.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp

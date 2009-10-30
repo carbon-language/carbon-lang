@@ -66,11 +66,6 @@ void BuiltinBug::Emit(BugReporter& BR, ITER I, ITER E) {
   for (; I != E; ++I) BR.EmitReport(new BuiltinBugReport(*this, desc.c_str(),
                                                          GetNode(I)));
 }
-void NullDeref::registerInitialVisitors(BugReporterContext& BRC,
-                                        const ExplodedNode* N,
-                                        BuiltinBugReport *R) {
-  registerTrackNullOrUndefValue(BRC, bugreporter::GetDerefExpr(N), N);
-}
 
 class VISIBILITY_HIDDEN NilReceiverStructRet : public BuiltinBug {
 public:
@@ -794,48 +789,8 @@ ExplodedNode *CheckUndefDeref::CheckLocation(const Stmt *S, ExplodedNode *Pred,
   return Pred;
 }
 
-ExplodedNode *NullDerefChecker::CheckLocation(const Stmt *S, ExplodedNode *Pred,
-                                        const GRState *state, SVal V,
-                                        GRExprEngine &Eng) {
-  Loc *LV = dyn_cast<Loc>(&V);
-
-  // If the value is not a location, don't touch the node.
-  if (!LV)
-    return Pred;
-
-  const GRState *NotNullState = state->Assume(*LV, true);
-  const GRState *NullState = state->Assume(*LV, false);
-
-  GRStmtNodeBuilder &Builder = Eng.getBuilder();
-  BugReporter &BR = Eng.getBugReporter();
-
-  // The explicit NULL case.
-  if (NullState) {
-    // Use the GDM to mark in the state what lval was null.
-    const SVal *PersistentLV = Eng.getBasicVals().getPersistentSVal(*LV);
-    NullState = NullState->set<GRState::NullDerefTag>(PersistentLV);
-
-    ExplodedNode *N = Builder.generateNode(S, NullState, Pred,
-                                         ProgramPoint::PostNullCheckFailedKind);
-    if (N) {
-      N->markAsSink();
-      
-      if (!NotNullState) { // Explicit null case.
-        if (!BT)
-          BT = new NullDeref();
-        BR.EmitReport(new BuiltinBugReport(*BT,BT->getDescription().c_str(),N));
-        return 0;
-      } else // Implicit null case.
-        ImplicitNullDerefNodes.push_back(N);
-    }
-  }
-
-  if (!NotNullState)
-    return 0;
-  return Builder.generateNode(S, NotNullState, Pred, 
-                              ProgramPoint::PostLocationChecksSucceedKind);
-}
 } // end clang namespace
+
 //===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
