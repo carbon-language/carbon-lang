@@ -398,10 +398,10 @@ bool DIVariable::Verify() const {
 /// getOriginalTypeSize - If this type is derived from a base type then
 /// return base type size.
 uint64_t DIDerivedType::getOriginalTypeSize() const {
-  if (getTag() != dwarf::DW_TAG_member)
-    return getSizeInBits();
   DIType BT = getTypeDerivedFrom();
-  if (BT.getTag() != dwarf::DW_TAG_base_type)
+  if (!BT.isNull() && BT.isDerivedType())
+    return DIDerivedType(BT.getNode()).getOriginalTypeSize();
+  if (BT.isNull())
     return getSizeInBits();
   return BT.getSizeInBits();
 }
