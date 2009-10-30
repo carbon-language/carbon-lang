@@ -1629,13 +1629,12 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
     unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
     unsigned VARegSize = (4 - NumGPRs) * 4;
     unsigned VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
-    unsigned ArgOffset = 0;
+    unsigned ArgOffset = CCInfo.getNextStackOffset();
     if (VARegSaveSize) {
       // If this function is vararg, store any remaining integer argument regs
       // to their spots on the stack so that they may be loaded by deferencing
       // the result of va_next.
       AFI->setVarArgsRegSaveSize(VARegSaveSize);
-      ArgOffset = CCInfo.getNextStackOffset();
       VarArgsFrameIndex = MFI->CreateFixedObject(VARegSaveSize, ArgOffset +
                                                  VARegSaveSize - VARegSize);
       SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
