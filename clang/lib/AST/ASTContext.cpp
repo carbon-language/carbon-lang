@@ -2305,7 +2305,7 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
                                           DSAT->getSizeExpr()->Retain() : 0,
                                         DSAT->getSizeModifier(),
                                         DSAT->getIndexTypeCVRQualifiers(),
-                                        DSAT->getBracketsRange()));
+                        DSAT->getBracketsRange())->getCanonicalTypeInternal());
 
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
   return CanQualType::CreateUnsafe(getVariableArrayType(NewEltTy,
