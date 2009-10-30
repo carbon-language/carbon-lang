@@ -59,6 +59,9 @@ echo DARWIN_VERS = $DARWIN_VERS
 if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
     DT_HOME=$DEST_DIR/Developer/Platforms/iPhoneOS.platform/Developer/usr
     DEST_ROOT="/Developer/Platforms/iPhoneOS.platform/Developer$DEST_ROOT"
+elif [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
+    DT_HOME=$DEST_DIR/usr
+    DEST_ROOT="/Developer$DEST_ROOT"
 else
     DT_HOME=$DEST_DIR/Developer/usr
     DEST_ROOT="/Developer$DEST_ROOT"
@@ -91,24 +94,69 @@ sed -e '/[Aa]pple-style/d' -e '/include.*GNUmakefile/d' $ORIG_SRC_DIR/Makefile >
 mkdir -p $DIR/obj-llvm || exit 1
 cd $DIR/obj-llvm || exit 1
 
-# If the user has set CC or CXX, respect their wishes.  If not,
-# compile with LLVM-GCC/LLVM-G++ if available; if LLVM is not
-# available, fall back to usual GCC/G++ default.
-savedPATH=$PATH ; PATH="$PATH:/Developer/usr/bin"
-XTMPCC=$(which llvm-gcc)
-if [ x$CC  = x -a x$XTMPCC != x ] ; then export CC=$XTMPCC  ; fi
-XTMPCC=$(which llvm-g++)
-if [ x$CXX = x -a x$XTMPCC != x ] ; then export CXX=$XTMPCC ; fi
-PATH=$savedPATH
-unset XTMPCC savedPATH
 
-if [ \! -f Makefile.config ]; then
-    $SRC_DIR/configure --prefix=$DT_HOME/local \
-        --enable-targets=arm,x86,powerpc,cbe \
-        --enable-assertions=$LLVM_ASSERTIONS \
-        --enable-optimized=$LLVM_OPTIMIZED \
-        --disable-bindings \
-        || exit 1
+if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
+  # The cross-tools' build process expects to find an existing cross toolchain
+  # under names like 'arm-apple-darwin$DARWIN_VERS-as'; so make them.
+  rm -rf $DIR/bin || exit 1
+  mkdir $DIR/bin || exit 1
+  for prog in ar nm ranlib strip lipo ld as ; do
+    P=$DIR/bin/arm-apple-darwin$DARWIN_VERS-${prog}
+    T=`xcrun -sdk $SDKROOT -find ${prog}`
+    echo '#!/bin/sh' > $P || exit 1
+    echo 'exec '$T' "$@"' >> $P || exit 1
+    chmod a+x $P || exit 1
+  done
+  # Try to use the platform llvm-gcc. Fall back to gcc if it's not available.
+  for prog in gcc g++ ; do
+    P=$DIR/bin/arm-apple-darwin$DARWIN_VERS-${prog}
+# FIXME: Uncomment once llvm-gcc works for this
+#    T=`xcrun -find llvm-${prog}`
+#    if [ "x$T" = "x" ] ; then
+      T=`xcrun -sdk $SDKROOT -find ${prog}`
+#    fi
+    echo '#!/bin/sh' > $P || exit 1
+    echo 'exec '$T' -arch armv6 -isysroot '${SDKROOT}' "$@"' >> $P || exit 1
+    chmod a+x $P || exit 1
+  done
+
+  PATH=$DIR/bin:$PATH
+# otherwise, try to use llvm-gcc if it's available
+else
+  # If the user has set CC or CXX, respect their wishes.  If not,
+  # compile with LLVM-GCC/LLVM-G++ if available; if LLVM is not
+  # available, fall back to usual GCC/G++ default.
+  savedPATH=$PATH ; PATH="$PATH:/Developer/usr/bin"
+  XTMPCC=$(which llvm-gcc)
+  if [ x$CC  = x -a x$XTMPCC != x ] ; then export CC=$XTMPCC  ; fi
+  XTMPCC=$(which llvm-g++)
+  if [ x$CXX = x -a x$XTMPCC != x ] ; then export CXX=$XTMPCC ; fi
+  PATH=$savedPATH
+  unset XTMPCC savedPATH
+fi
+
+
+if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
+  if [ \! -f Makefile.config ]; then
+      $SRC_DIR/configure --prefix=$DT_HOME \
+          --enable-targets=arm \
+          --host=arm-apple-darwin10 \
+          --target=arm-apple-darwin10 \
+          --build=i686-apple-darwin10 \
+          --enable-assertions=$LLVM_ASSERTIONS \
+          --enable-optimized=$LLVM_OPTIMIZED \
+          --disable-bindings \
+          || exit 1
+  fi
+else
+  if [ \! -f Makefile.config ]; then
+      $SRC_DIR/configure --prefix=$DT_HOME/local \
+          --enable-targets=arm,x86,powerpc,cbe \
+          --enable-assertions=$LLVM_ASSERTIONS \
+          --enable-optimized=$LLVM_OPTIMIZED \
+          --disable-bindings \
+          || exit 1
+  fi
 fi
 
 SUBVERSION=`echo $RC_ProjectSourceVersion | sed -e 's/[^.]*\.\([0-9]*\).*/\1/'`
@@ -158,6 +206,7 @@ if [ "x$MAJ_VER" != "x4" -o "x$MIN_VER" != "x0" ]; then
 fi
 
 make $JOBS_FLAG $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
+    UNIVERSAL_SDK_PATH=$SDKROOT \
     NO_RUNTIME_LIBS=1 \
     LLVM_SUBMIT_VERSION=$LLVM_SUBMIT_VERSION \
     LLVM_SUBMIT_SUBVERSION=$LLVM_SUBMIT_SUBVERSION \
