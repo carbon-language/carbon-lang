@@ -108,13 +108,6 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addMetadata(MDNode *N,
-                                         int64_t Offset = 0,
-                                         unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateMDNode(N, Offset, TargetFlags));
-    return *this;
-  }
-
   const MachineInstrBuilder &addExternalSymbol(const char *FnName,
                                           unsigned char TargetFlags = 0) const {
     MI->addOperand(MachineOperand::CreateES(FnName, TargetFlags));
