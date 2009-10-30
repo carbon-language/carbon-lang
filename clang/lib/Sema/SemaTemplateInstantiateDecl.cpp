@@ -434,9 +434,10 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   // Trigger creation of the type for the instantiation.
   SemaRef.Context.getTypeDeclType(RecordInst);
   
-  // We're done with friends now.
-  if (Inst->getFriendObjectKind())
+  // Finish handling of friends.
+  if (Inst->getFriendObjectKind()) {
     return Inst;
+  }
   
   Owner->addDecl(Inst);
   

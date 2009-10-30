@@ -613,10 +613,18 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       SemanticContext = PrevDecl->getDeclContext();
     } else {
       // Declarations in outer scopes don't matter. However, the outermost
-      // context we computed is the semntic context for our new 
+      // context we computed is the semantic context for our new 
       // declaration.
       PrevDecl = 0;
       SemanticContext = OutermostContext;
+    }
+    
+    if (CurContext->isDependentContext()) {
+      // If this is a dependent context, we don't want to link the friend
+      // class template to the template in scope, because that would perform
+      // checking of the template parameter lists that can't be performed
+      // until the outer context is instantiated.
+      PrevDecl = 0;
     }
   } else if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
     PrevDecl = 0;
