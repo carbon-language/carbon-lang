@@ -2721,11 +2721,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           RightV = ValMgr.getConjuredSymbolVal(NULL, B->getRHS(), Count);
         }
 
-        SVal ExprVal;
-        if (asLValue)
-          ExprVal = LeftV;
-        else
-          ExprVal = RightV;
+        SVal ExprVal = asLValue ? LeftV : RightV;
 
         // Simulate the effects of a "store":  bind the value of the RHS
         // to the L-Value represented by the LHS.
