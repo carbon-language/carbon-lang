@@ -919,6 +919,8 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     default:
       llvm_unreachable("Unsupported operator!");
     }
+  } else if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV)) {
+    GetBlockAddressSymbol(BA)->print(O, MAI);
   } else {
     llvm_unreachable("Unknown constant value!");
   }
