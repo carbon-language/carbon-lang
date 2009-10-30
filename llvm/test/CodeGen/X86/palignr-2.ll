@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse3 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+ssse3 | FileCheck %s
 ; rdar://7341330
 
 @a = global [4 x i32] [i32 4, i32 5, i32 6, i32 7], align 16 ; <[4 x i32]*> [#uses=1]
