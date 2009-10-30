@@ -54,6 +54,7 @@ struct X1 {
 template<typename U> void f2(U);
 
 X1<int> x1i;
+X0<int*> x0ip;
 
 template<> void f2(int);
 
@@ -62,3 +63,12 @@ template<> void f2(int);
 template<typename U> void f3(U);
 
 template<> void f3(int);
+
+// PR5332
+template <typename T>
+class Foo {
+  template <typename U>
+  friend class Foo;
+};
+
+Foo<int> foo;

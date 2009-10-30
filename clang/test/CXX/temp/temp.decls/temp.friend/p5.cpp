@@ -9,3 +9,5 @@ class B {
   template <class T> friend class A<T>::Member;
 };
 
+A<int> a;
+B b;

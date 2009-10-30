@@ -425,11 +425,18 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     = ClassTemplateDecl::Create(SemaRef.Context, Owner, D->getLocation(),
                                 D->getIdentifier(), InstParams, RecordInst, 0);
   RecordInst->setDescribedClassTemplate(Inst);
-  Inst->setAccess(D->getAccess());
+  if (D->getFriendObjectKind())
+    Inst->setObjectOfFriendDecl(true);
+  else
+    Inst->setAccess(D->getAccess());
   Inst->setInstantiatedFromMemberTemplate(D);
   
   // Trigger creation of the type for the instantiation.
   SemaRef.Context.getTypeDeclType(RecordInst);
+  
+  // We're done with friends now.
+  if (Inst->getFriendObjectKind())
+    return Inst;
   
   Owner->addDecl(Inst);
   
