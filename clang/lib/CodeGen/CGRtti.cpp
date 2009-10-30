@@ -23,8 +23,7 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
 
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleCXXRtti(getMangleContext(), 
-                Context.getTagDeclType(RD).getTypePtr(), Out);
+  mangleCXXRtti(getMangleContext(), Context.getTagDeclType(RD), Out);
   
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
