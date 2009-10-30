@@ -388,11 +388,11 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
       if (AMgr.shouldEagerlyAssume() && (B->isRelationalOp() || B->isEqualityOp())) {
         ExplodedNodeSet Tmp;
-        VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Tmp);
+        VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Tmp, false);
         EvalEagerlyAssume(Dst, Tmp, cast<Expr>(S));
       }
       else
-        VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+        VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst, false);
 
       break;
     }
@@ -414,7 +414,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     }
 
     case Stmt::CompoundAssignOperatorClass:
-      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst, false);
       break;
 
     case Stmt::CompoundLiteralExprClass:
@@ -581,6 +581,11 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V));
       return;
     }
+
+    case Stmt::BinaryOperatorClass:
+    case Stmt::CompoundAssignOperatorClass:
+      VisitBinaryOperator(cast<BinaryOperator>(Ex), Pred, Dst, true);
+      return;
 
     default:
       // Arbitrary subexpressions can return aggregate temporaries that
@@ -1092,26 +1097,12 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
     // FIXME: Should we insert some assumption logic in here to determine
     // if "Base" is a valid piece of memory?  Before we put this assumption
     // later when using FieldOffset lvals (which we no longer have).
-    SVal BaseV = state->getSVal(Base);
-    
-    if (nonloc::LazyCompoundVal *LVC=dyn_cast<nonloc::LazyCompoundVal>(&BaseV)){
-      const LazyCompoundValData *D = LVC->getCVData();
-      const FieldRegion * FR =
-        getStateManager().getRegionManager().getFieldRegion(Field,
-                                                            D->getRegion());
+    SVal L = state->getLValue(Field, state->getSVal(Base));
 
-      SVal V = D->getState()->getSVal(loc::MemRegionVal(FR));
-      MakeNode(Dst, M, *I, state->BindExpr(M, V));
-    }
-    else {
-      SVal L = state->getLValue(Field, BaseV);
-
-      if (asLValue)
-        MakeNode(Dst, M, *I, state->BindExpr(M, L),
-                 ProgramPoint::PostLValueKind);
-      else
-        EvalLoad(Dst, M, *I, state, L);
-    }
+    if (asLValue)
+      MakeNode(Dst, M, *I, state->BindExpr(M, L), ProgramPoint::PostLValueKind);
+    else
+      EvalLoad(Dst, M, *I, state, L);
   }
 }
 
@@ -2686,7 +2677,7 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, ExplodedNode* Pred,
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                                        ExplodedNode* Pred,
-                                       ExplodedNodeSet& Dst) {
+                                       ExplodedNodeSet& Dst, bool asLValue) {
 
   ExplodedNodeSet Tmp1;
   Expr* LHS = B->getLHS()->IgnoreParens();
@@ -2732,10 +2723,16 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           unsigned Count = Builder->getCurrentBlockCount();
           RightV = ValMgr.getConjuredSymbolVal(NULL, B->getRHS(), Count);
         }
-        
+
+        SVal ExprVal;
+        if (asLValue)
+          ExprVal = LeftV;
+        else
+          ExprVal = RightV;
+
         // Simulate the effects of a "store":  bind the value of the RHS
         // to the L-Value represented by the LHS.
-        EvalStore(Dst, B, LHS, *I2, state->BindExpr(B, RightV), LeftV, RightV);
+        EvalStore(Dst, B, LHS, *I2, state->BindExpr(B, ExprVal), LeftV, RightV);
         continue;
       }
       

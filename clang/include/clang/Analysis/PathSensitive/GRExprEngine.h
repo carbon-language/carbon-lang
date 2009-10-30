@@ -433,7 +433,8 @@ protected:
                                 ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
   /// VisitBinaryOperator - Transfer function logic for binary operators.
-  void VisitBinaryOperator(BinaryOperator* B, ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  void VisitBinaryOperator(BinaryOperator* B, ExplodedNode* Pred, 
+                           ExplodedNodeSet& Dst, bool asLValue);
 
 
   /// VisitCall - Transfer function for function calls.
