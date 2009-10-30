@@ -3789,6 +3789,7 @@ def : Pat<(i32 (X86Wrapper tjumptable  :$dst)), (MOV32ri tjumptable  :$dst)>;
 def : Pat<(i32 (X86Wrapper tglobaltlsaddr:$dst)),(MOV32ri tglobaltlsaddr:$dst)>;
 def : Pat<(i32 (X86Wrapper tglobaladdr :$dst)), (MOV32ri tglobaladdr :$dst)>;
 def : Pat<(i32 (X86Wrapper texternalsym:$dst)), (MOV32ri texternalsym:$dst)>;
+def : Pat<(i32 (X86Wrapper tblockaddress:$dst)), (MOV32ri tblockaddress:$dst)>;
 
 def : Pat<(add GR32:$src1, (X86Wrapper tconstpool:$src2)),
           (ADD32ri GR32:$src1, tconstpool:$src2)>;
@@ -3798,11 +3799,15 @@ def : Pat<(add GR32:$src1, (X86Wrapper tglobaladdr :$src2)),
           (ADD32ri GR32:$src1, tglobaladdr:$src2)>;
 def : Pat<(add GR32:$src1, (X86Wrapper texternalsym:$src2)),
           (ADD32ri GR32:$src1, texternalsym:$src2)>;
+def : Pat<(add GR32:$src1, (X86Wrapper tblockaddress:$src2)),
+          (ADD32ri GR32:$src1, tblockaddress:$src2)>;
 
 def : Pat<(store (i32 (X86Wrapper tglobaladdr:$src)), addr:$dst),
           (MOV32mi addr:$dst, tglobaladdr:$src)>;
 def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV32mi addr:$dst, texternalsym:$src)>;
+def : Pat<(store (i32 (X86Wrapper tblockaddress:$src)), addr:$dst),
+          (MOV32mi addr:$dst, tblockaddress:$src)>;
 
 // Calls
 // tailcall stuff

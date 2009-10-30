@@ -328,11 +328,13 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->is64Bit())
     setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   setOperationAction(ISD::ExternalSymbol  , MVT::i32  , Custom);
+  setOperationAction(ISD::BlockAddress    , MVT::i32  , Custom);
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::ConstantPool  , MVT::i64  , Custom);
     setOperationAction(ISD::JumpTable     , MVT::i64  , Custom);
     setOperationAction(ISD::GlobalAddress , MVT::i64  , Custom);
     setOperationAction(ISD::ExternalSymbol, MVT::i64  , Custom);
+    setOperationAction(ISD::BlockAddress  , MVT::i64  , Custom);
   }
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
   setOperationAction(ISD::SHL_PARTS       , MVT::i32  , Custom);
@@ -4693,6 +4695,24 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue
+X86TargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
+  unsigned WrapperKind = X86ISD::Wrapper;
+  CodeModel::Model M = getTargetMachine().getCodeModel();
+  if (Subtarget->isPICStyleRIPRel() &&
+      (M == CodeModel::Small || M == CodeModel::Kernel))
+    WrapperKind = X86ISD::WrapperRIP;
+
+  DebugLoc DL = Op.getDebugLoc();
+
+  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  SDValue Result = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
+
+  Result = DAG.getNode(WrapperKind, DL, getPointerTy(), Result);
+
+  return Result;
+}
+
+SDValue
 X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
                                       int64_t Offset,
                                       SelectionDAG &DAG) const {
@@ -7019,6 +7039,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::ExternalSymbol:     return LowerExternalSymbol(Op, DAG);
+  case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:          return LowerShift(Op, DAG);

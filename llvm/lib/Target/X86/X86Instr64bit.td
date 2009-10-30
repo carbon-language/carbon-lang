@@ -1595,6 +1595,8 @@ def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
           (MOV64ri tglobaladdr :$dst)>, Requires<[FarData]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri texternalsym:$dst)>, Requires<[FarData]>;
+def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
+          (MOV64ri tblockaddress:$dst)>, Requires<[FarData]>;
 
 // In static codegen with small code model, we can get the address of a label
 // into a register with 'movl'.  FIXME: This is a hack, the 'imm' predicate of
@@ -1607,6 +1609,8 @@ def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
           (MOV64ri64i32 tglobaladdr :$dst)>, Requires<[SmallCode]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri64i32 texternalsym:$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
+          (MOV64ri64i32 tblockaddress:$dst)>, Requires<[SmallCode]>;
 
 // In kernel code model, we can get the address of a label
 // into a register with 'movq'.  FIXME: This is a hack, the 'imm' predicate of
@@ -1619,6 +1623,8 @@ def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
           (MOV64ri32 tglobaladdr :$dst)>, Requires<[KernelCode]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri32 texternalsym:$dst)>, Requires<[KernelCode]>;
+def : Pat<(i64 (X86Wrapper tblockaddress:$dst)),
+          (MOV64ri32 tblockaddress:$dst)>, Requires<[KernelCode]>;
 
 // If we have small model and -static mode, it is safe to store global addresses
 // directly as immediates.  FIXME: This is really a hack, the 'imm' predicate
@@ -1634,6 +1640,9 @@ def : Pat<(store (i64 (X86Wrapper tglobaladdr:$src)), addr:$dst),
           Requires<[NearData, IsStatic]>;
 def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, texternalsym:$src)>,
+          Requires<[NearData, IsStatic]>;
+def : Pat<(store (i64 (X86Wrapper tblockaddress:$src)), addr:$dst),
+          (MOV64mi32 addr:$dst, tblockaddress:$src)>,
           Requires<[NearData, IsStatic]>;
 
 // Calls
