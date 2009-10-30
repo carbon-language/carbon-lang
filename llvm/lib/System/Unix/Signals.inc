@@ -209,7 +209,7 @@ static void PrintStackTrace(void *) {
     Dl_info dlinfo;
     dladdr(StackTrace[i], &dlinfo);
 
-    fprintf(stderr, "%-3d", i);
+    fprintf(stderr, "%-2d", i);
 
     const char* name = strrchr(dlinfo.dli_fname, '/');
     if (name == NULL) fprintf(stderr, " %-*s", width, dlinfo.dli_fname);
