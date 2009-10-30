@@ -775,6 +775,10 @@ public:
     getLocalData()->RBracketLoc = Loc;
   }
 
+  SourceRange getBracketsRange() const {
+    return SourceRange(getLBracketLoc(), getRBracketLoc());
+  }
+
   Expr *getSizeExpr() const {
     return getLocalData()->Size;
   }

@@ -310,6 +310,8 @@ public:
   QualType Transform##CLASS##Type(TypeLocBuilder &TLB, CLASS##TypeLoc T);
 #include "clang/AST/TypeLocNodes.def"
 
+  QualType TransformReferenceType(TypeLocBuilder &TLB, ReferenceTypeLoc TL);
+
   QualType 
   TransformTemplateSpecializationType(const TemplateSpecializationType *T,
                                       QualType ObjectType);
@@ -332,35 +334,37 @@ public:
   ///
   /// By default, performs semantic analysis when building the pointer type.
   /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildPointerType(QualType PointeeType);
+  QualType RebuildPointerType(QualType PointeeType, SourceLocation Sigil);
 
   /// \brief Build a new block pointer type given its pointee type.
   ///
   /// By default, performs semantic analysis when building the block pointer
   /// type. Subclasses may override this routine to provide different behavior.
-  QualType RebuildBlockPointerType(QualType PointeeType);
+  QualType RebuildBlockPointerType(QualType PointeeType, SourceLocation Sigil);
 
-  /// \brief Build a new lvalue reference type given the type it references.
+  /// \brief Build a new reference type given the type it references.
   ///
-  /// By default, performs semantic analysis when building the lvalue reference
-  /// type. Subclasses may override this routine to provide different behavior.
-  QualType RebuildLValueReferenceType(QualType ReferentType);
-
-  /// \brief Build a new rvalue reference type given the type it references.
+  /// By default, performs semantic analysis when building the
+  /// reference type. Subclasses may override this routine to provide
+  /// different behavior.
   ///
-  /// By default, performs semantic analysis when building the rvalue reference
-  /// type. Subclasses may override this routine to provide different behavior.
-  QualType RebuildRValueReferenceType(QualType ReferentType);
+  /// \param LValue whether the type was written with an lvalue sigil
+  /// or an rvalue sigil.
+  QualType RebuildReferenceType(QualType ReferentType,
+                                bool LValue,
+                                SourceLocation Sigil);
 
   /// \brief Build a new member pointer type given the pointee type and the
   /// class type it refers into.
   ///
   /// By default, performs semantic analysis when building the member pointer
   /// type. Subclasses may override this routine to provide different behavior.
-  QualType RebuildMemberPointerType(QualType PointeeType, QualType ClassType);
+  QualType RebuildMemberPointerType(QualType PointeeType, QualType ClassType,
+                                    SourceLocation Sigil);
 
   /// \brief Build a new Objective C object pointer type.
-  QualType RebuildObjCObjectPointerType(QualType PointeeType);
+  QualType RebuildObjCObjectPointerType(QualType PointeeType,
+                                        SourceLocation Sigil);
 
   /// \brief Build a new array type given the element type, size
   /// modifier, size of the array (if known), size expression, and index type
@@ -384,7 +388,8 @@ public:
   QualType RebuildConstantArrayType(QualType ElementType,
                                     ArrayType::ArraySizeModifier SizeMod,
                                     const llvm::APInt &Size,
-                                    unsigned IndexTypeQuals);
+                                    unsigned IndexTypeQuals,
+                                    SourceRange BracketsRange);
 
   /// \brief Build a new incomplete array type given the element type, size
   /// modifier, and index type qualifiers.
@@ -393,7 +398,8 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   QualType RebuildIncompleteArrayType(QualType ElementType,
                                       ArrayType::ArraySizeModifier SizeMod,
-                                      unsigned IndexTypeQuals);
+                                      unsigned IndexTypeQuals,
+                                      SourceRange BracketsRange);
 
   /// \brief Build a new variable-length array type given the element type,
   /// size modifier, size expression, and index type qualifiers.
@@ -2124,7 +2130,8 @@ QualType TransformTypeSpecType(TypeLocBuilder &TLB, TyLoc T) {
   QualType Result = TL.getType();                            \
   if (getDerived().AlwaysRebuild() ||                        \
       PointeeType != TL.getPointeeLoc().getType()) {         \
-    Result = getDerived().Rebuild##TypeClass(PointeeType);   \
+    Result = getDerived().Rebuild##TypeClass(PointeeType,    \
+                                          TL.getSigilLoc()); \
     if (Result.isNull())                                     \
       return QualType();                                     \
   }                                                          \
@@ -2134,35 +2141,6 @@ QualType TransformTypeSpecType(TypeLocBuilder &TLB, TyLoc T) {
                                                              \
   return Result;                                             \
 } while(0)
-
-// Reference collapsing forces us to transform reference types
-// differently from the other pointer-like types.
-#define TransformReferenceType(TypeClass) do { \
-  QualType PointeeType                                       \
-    = getDerived().TransformType(TLB, TL.getPointeeLoc());   \
-  if (PointeeType.isNull())                                  \
-    return QualType();                                       \
-                                                             \
-  QualType Result = TL.getType();                            \
-  if (getDerived().AlwaysRebuild() ||                        \
-      PointeeType != TL.getPointeeLoc().getType()) {         \
-    Result = getDerived().Rebuild##TypeClass(PointeeType);   \
-    if (Result.isNull())                                     \
-      return QualType();                                     \
-  }                                                          \
-                                                             \
-  /* Workaround: rebuild doesn't always change the type */   \
-  /* FIXME: avoid losing this location information. */       \
-  if (Result == PointeeType)                                 \
-    return Result;                                           \
-  ReferenceTypeLoc NewTL;                                    \
-  if (isa<LValueReferenceType>(Result))                      \
-    NewTL = TLB.push<LValueReferenceTypeLoc>(Result);        \
-  else                                                       \
-    NewTL = TLB.push<RValueReferenceTypeLoc>(Result);        \
-  NewTL.setSigilLoc(TL.getSigilLoc());                       \
-  return Result;                                             \
-} while (0)
 
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformBuiltinType(TypeLocBuilder &TLB,
@@ -2197,18 +2175,54 @@ TreeTransform<Derived>::TransformBlockPointerType(TypeLocBuilder &TLB,
   TransformPointerLikeType(BlockPointerType);
 }
 
+/// Transforms a reference type.  Note that somewhat paradoxically we
+/// don't care whether the type itself is an l-value type or an r-value
+/// type;  we only care if the type was *written* as an l-value type
+/// or an r-value type.
+template<typename Derived>
+QualType
+TreeTransform<Derived>::TransformReferenceType(TypeLocBuilder &TLB,
+                                               ReferenceTypeLoc TL) {
+  const ReferenceType *T = TL.getTypePtr();
+
+  // Note that this works with the pointee-as-written.
+  QualType PointeeType = getDerived().TransformType(TLB, TL.getPointeeLoc());
+  if (PointeeType.isNull())
+    return QualType();
+
+  QualType Result = TL.getType();
+  if (getDerived().AlwaysRebuild() ||
+      PointeeType != T->getPointeeTypeAsWritten()) {
+    Result = getDerived().RebuildReferenceType(PointeeType,
+                                               T->isSpelledAsLValue(),
+                                               TL.getSigilLoc());
+    if (Result.isNull())
+      return QualType();
+  }
+
+  // r-value references can be rebuilt as l-value references.
+  ReferenceTypeLoc NewTL;
+  if (isa<LValueReferenceType>(Result))
+    NewTL = TLB.push<LValueReferenceTypeLoc>(Result);
+  else
+    NewTL = TLB.push<RValueReferenceTypeLoc>(Result);
+  NewTL.setSigilLoc(TL.getSigilLoc());
+
+  return Result;
+}
+
 template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformLValueReferenceType(TypeLocBuilder &TLB,
                                                  LValueReferenceTypeLoc TL) {
-  TransformReferenceType(LValueReferenceType);
+  return TransformReferenceType(TLB, TL);
 }
 
 template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformRValueReferenceType(TypeLocBuilder &TLB,
                                                  RValueReferenceTypeLoc TL) {
-  TransformReferenceType(RValueReferenceType);
+  return TransformReferenceType(TLB, TL);
 }
 
 template<typename Derived>
@@ -2231,7 +2245,8 @@ TreeTransform<Derived>::TransformMemberPointerType(TypeLocBuilder &TLB,
   if (getDerived().AlwaysRebuild() ||
       PointeeType != T->getPointeeType() ||
       ClassType != QualType(T->getClass(), 0)) {
-    Result = getDerived().RebuildMemberPointerType(PointeeType, ClassType);
+    Result = getDerived().RebuildMemberPointerType(PointeeType, ClassType,
+                                                   TL.getStarLoc());
     if (Result.isNull())
       return QualType();
   }
@@ -2257,7 +2272,8 @@ TreeTransform<Derived>::TransformConstantArrayType(TypeLocBuilder &TLB,
     Result = getDerived().RebuildConstantArrayType(ElementType,
                                                    T->getSizeModifier(),
                                                    T->getSize(),
-                                             T->getIndexTypeCVRQualifiers());
+                                             T->getIndexTypeCVRQualifiers(),
+                                                   TL.getBracketsRange());
     if (Result.isNull())
       return QualType();
   }
@@ -2290,7 +2306,8 @@ QualType TreeTransform<Derived>::TransformIncompleteArrayType(
       ElementType != T->getElementType()) {
     Result = getDerived().RebuildIncompleteArrayType(ElementType,
                                                      T->getSizeModifier(),
-                                             T->getIndexTypeCVRQualifiers());
+                                           T->getIndexTypeCVRQualifiers(),
+                                                     TL.getBracketsRange());
     if (Result.isNull())
       return QualType();
   }
@@ -2330,7 +2347,7 @@ TreeTransform<Derived>::TransformVariableArrayType(TypeLocBuilder &TLB,
                                                    T->getSizeModifier(),
                                                    move(SizeResult),
                                              T->getIndexTypeCVRQualifiers(),
-                                                   T->getBracketsRange());
+                                                   TL.getBracketsRange());
     if (Result.isNull())
       return QualType();
   }
@@ -2371,7 +2388,7 @@ TreeTransform<Derived>::TransformDependentSizedArrayType(TypeLocBuilder &TLB,
                                                          T->getSizeModifier(),
                                                          move(SizeResult),
                                                 T->getIndexTypeCVRQualifiers(),
-                                                        T->getBracketsRange());
+                                                        TL.getBracketsRange());
     if (Result.isNull())
       return QualType();
   }
@@ -4907,48 +4924,42 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
 //===----------------------------------------------------------------------===//
 
 template<typename Derived>
-QualType TreeTransform<Derived>::RebuildPointerType(QualType PointeeType) {
-  return SemaRef.BuildPointerType(PointeeType, Qualifiers(),
-                                  getDerived().getBaseLocation(),
+QualType TreeTransform<Derived>::RebuildPointerType(QualType PointeeType,
+                                                    SourceLocation Star) {
+  return SemaRef.BuildPointerType(PointeeType, Qualifiers(), Star,
                                   getDerived().getBaseEntity());
 }
 
 template<typename Derived>
-QualType TreeTransform<Derived>::RebuildBlockPointerType(QualType PointeeType) {
-  return SemaRef.BuildBlockPointerType(PointeeType, Qualifiers(),
-                                       getDerived().getBaseLocation(),
+QualType TreeTransform<Derived>::RebuildBlockPointerType(QualType PointeeType,
+                                                         SourceLocation Star) {
+  return SemaRef.BuildBlockPointerType(PointeeType, Qualifiers(), Star,
                                        getDerived().getBaseEntity());
 }
 
 template<typename Derived>
 QualType
-TreeTransform<Derived>::RebuildLValueReferenceType(QualType ReferentType) {
-  return SemaRef.BuildReferenceType(ReferentType, true, Qualifiers(),
-                                    getDerived().getBaseLocation(),
-                                    getDerived().getBaseEntity());
+TreeTransform<Derived>::RebuildReferenceType(QualType ReferentType,
+                                             bool WrittenAsLValue,
+                                             SourceLocation Sigil) {
+  return SemaRef.BuildReferenceType(ReferentType, WrittenAsLValue, Qualifiers(),
+                                    Sigil, getDerived().getBaseEntity());
 }
 
 template<typename Derived>
 QualType
-TreeTransform<Derived>::RebuildRValueReferenceType(QualType ReferentType) {
-  return SemaRef.BuildReferenceType(ReferentType, false, Qualifiers(),
-                                    getDerived().getBaseLocation(),
-                                    getDerived().getBaseEntity());
-}
-
-template<typename Derived>
-QualType TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
-                                                          QualType ClassType) {
+TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
+                                                 QualType ClassType,
+                                                 SourceLocation Sigil) {
   return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Qualifiers(),
-                                        getDerived().getBaseLocation(),
-                                        getDerived().getBaseEntity());
+                                        Sigil, getDerived().getBaseEntity());
 }
 
 template<typename Derived>
 QualType
-TreeTransform<Derived>::RebuildObjCObjectPointerType(QualType PointeeType) {
-  return SemaRef.BuildPointerType(PointeeType, Qualifiers(),
-                                  getDerived().getBaseLocation(),
+TreeTransform<Derived>::RebuildObjCObjectPointerType(QualType PointeeType,
+                                                     SourceLocation Sigil) {
+  return SemaRef.BuildPointerType(PointeeType, Qualifiers(), Sigil,
                                   getDerived().getBaseEntity());
 }
 
@@ -4992,18 +5003,20 @@ QualType
 TreeTransform<Derived>::RebuildConstantArrayType(QualType ElementType,
                                                  ArrayType::ArraySizeModifier SizeMod,
                                                  const llvm::APInt &Size,
-                                                 unsigned IndexTypeQuals) {
+                                                 unsigned IndexTypeQuals,
+                                                 SourceRange BracketsRange) {
   return getDerived().RebuildArrayType(ElementType, SizeMod, &Size, 0,
-                                        IndexTypeQuals, SourceRange());
+                                        IndexTypeQuals, BracketsRange);
 }
 
 template<typename Derived>
 QualType
 TreeTransform<Derived>::RebuildIncompleteArrayType(QualType ElementType,
                                           ArrayType::ArraySizeModifier SizeMod,
-                                                 unsigned IndexTypeQuals) {
+                                                 unsigned IndexTypeQuals,
+                                                   SourceRange BracketsRange) {
   return getDerived().RebuildArrayType(ElementType, SizeMod, 0, 0,
-                                       IndexTypeQuals, SourceRange());
+                                       IndexTypeQuals, BracketsRange);
 }
 
 template<typename Derived>
