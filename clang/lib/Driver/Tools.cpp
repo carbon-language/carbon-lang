@@ -501,6 +501,57 @@ static bool needsExceptions(const ArgList &Args,  types::ID InputType,
   }
 }
 
+/// getEffectiveClangTriple - Get the "effective" target triple, which is the
+/// triple for the target but with the OS version potentially modified for
+/// Darwin's -mmacosx-version-min.
+static std::string getEffectiveClangTriple(const Driver &D,
+                                           const ToolChain &TC,
+                                           const ArgList &Args) {
+  llvm::Triple Triple(getLLVMTriple(TC, Args));
+
+  if (Triple.getOS() != llvm::Triple::Darwin) {
+    // Diagnose use of -mmacosx-version-min and -miphoneos-version-min on
+    // non-Darwin.
+    if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ,
+                                 options::OPT_miphoneos_version_min_EQ))
+      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+    return Triple.getTriple();
+  }
+
+  // If -mmacosx-version-min=10.3.9 is specified, change the effective triple
+  // from being something like powerpc-apple-darwin9 to powerpc-apple-darwin7.
+  if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {
+    unsigned Major, Minor, Micro;
+    bool HadExtra;
+    if (!Driver::GetReleaseVersion(A->getValue(Args), Major, Minor, Micro,
+                                   HadExtra) || HadExtra ||
+        Major != 10)
+      D.Diag(clang::diag::err_drv_invalid_version_number)
+        << A->getAsString(Args);
+
+    // Mangle the MacOS version min number into the Darwin number: e.g. 10.3.9
+    // is darwin7.9.
+    llvm::SmallString<16> Str;
+    llvm::raw_svector_ostream(Str) << "darwin" << Minor + 4 << "." << Micro;
+    Triple.setOSName(Str.str());
+  } else if (Arg *A = Args.getLastArg(options::OPT_miphoneos_version_min_EQ)) {
+    unsigned Major, Minor, Micro;
+    bool HadExtra;
+    if (!Driver::GetReleaseVersion(A->getValue(Args), Major, Minor, Micro,
+                                   HadExtra) || HadExtra)
+      D.Diag(clang::diag::err_drv_invalid_version_number)
+        << A->getAsString(Args);
+
+    // Mangle the iPhoneOS version number into the Darwin number: e.g. 2.0 is 2
+    // -> 9.2.0.
+    llvm::SmallString<16> Str;
+    llvm::raw_svector_ostream(Str) << "darwin9." << Major << "." << Minor;
+    Triple.setOSName(Str.str());
+  }
+
+  return Triple.getTriple();
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          Job &Dest,
                          const InputInfo &Output,
@@ -512,12 +563,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
 
+  // Add the "effective" target triple.
   CmdArgs.push_back("-triple");
+  std::string TripleStr = getEffectiveClangTriple(D, getToolChain(), Args);
+  CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
-  const char *TripleStr =
-    Args.MakeArgString(getLLVMTriple(getToolChain(), Args));
-  CmdArgs.push_back(TripleStr);
-
+  // Select the appropriate action.
   if (isa<AnalyzeJobAction>(JA)) {
     assert(JA.getType() == types::TY_Plist && "Invalid output type.");
     CmdArgs.push_back("-analyze");
@@ -712,8 +763,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
   Args.AddLastArg(CmdArgs, options::OPT_P);
-  Args.AddLastArg(CmdArgs, options::OPT_mmacosx_version_min_EQ);
-  Args.AddLastArg(CmdArgs, options::OPT_miphoneos_version_min_EQ);
   Args.AddLastArg(CmdArgs, options::OPT_print_ivar_layout);
 
   // Special case debug options to only pass -g to clang. This is
