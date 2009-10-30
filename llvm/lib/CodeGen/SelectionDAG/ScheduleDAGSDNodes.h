@@ -58,6 +58,7 @@ namespace llvm {
       if (isa<ConstantPoolSDNode>(Node))   return true;
       if (isa<JumpTableSDNode>(Node))      return true;
       if (isa<ExternalSymbolSDNode>(Node)) return true;
+      if (isa<BlockAddressSDNode>(Node))   return true;
       if (Node->getOpcode() == ISD::EntryToken) return true;
       return false;
     }

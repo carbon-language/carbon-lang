@@ -97,7 +97,7 @@ namespace ISD {
     BasicBlock, VALUETYPE, CONDCODE, Register,
     Constant, ConstantFP,
     GlobalAddress, GlobalTLSAddress, FrameIndex,
-    JumpTable, ConstantPool, ExternalSymbol,
+    JumpTable, ConstantPool, ExternalSymbol, BlockAddress,
 
     // The address of the GOT
     GLOBAL_OFFSET_TABLE,
@@ -146,6 +146,7 @@ namespace ISD {
     TargetJumpTable,
     TargetConstantPool,
     TargetExternalSymbol,
+    TargetBlockAddress,
 
     /// RESULT = INTRINSIC_WO_CHAIN(INTRINSICID, arg1, arg2, ...)
     /// This node represents a target intrinsic function with no side effects.
@@ -2026,11 +2027,27 @@ public:
   }
 };
 
+class BlockAddressSDNode : public SDNode {
+  BlockAddress *BA;
+  friend class SelectionDAG;
+  BlockAddressSDNode(unsigned NodeTy, DebugLoc dl, EVT VT, BlockAddress *ba)
+    : SDNode(NodeTy, dl, getSDVTList(VT)), BA(ba) {
+  }
+public:
+  BlockAddress *getBlockAddress() const { return BA; }
+
+  static bool classof(const BlockAddressSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::BlockAddress ||
+           N->getOpcode() == ISD::TargetBlockAddress;
+  }
+};
+
 class LabelSDNode : public SDNode {
   SDUse Chain;
   unsigned LabelID;
   friend class SelectionDAG;
-LabelSDNode(unsigned NodeTy, DebugLoc dl, SDValue ch, unsigned id)
+  LabelSDNode(unsigned NodeTy, DebugLoc dl, SDValue ch, unsigned id)
     : SDNode(NodeTy, dl, getSDVTList(MVT::Other)), LabelID(id) {
     InitOperands(&Chain, ch);
   }

@@ -460,6 +460,11 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
       ID.AddInteger(SVN->getMaskElt(i));
     break;
   }
+  case ISD::TargetBlockAddress:
+  case ISD::BlockAddress: {
+    ID.AddPointer(cast<BlockAddressSDNode>(N));
+    break;
+  }
   } // end switch (N->getOpcode())
 }
 
@@ -1312,6 +1317,23 @@ SDValue SelectionDAG::getLabel(unsigned Opcode, DebugLoc dl,
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<LabelSDNode>();
   new (N) LabelSDNode(Opcode, dl, Root, LabelID);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDValue(N, 0);
+}
+
+SDValue SelectionDAG::getBlockAddress(BlockAddress *BA, DebugLoc DL,
+                                      bool isTarget) {
+  unsigned Opc = isTarget ? ISD::TargetBlockAddress : ISD::BlockAddress;
+
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, Opc, getVTList(TLI.getPointerTy()), 0, 0);
+  ID.AddPointer(BA);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDValue(E, 0);
+  SDNode *N = NodeAllocator.Allocate<BlockAddressSDNode>();
+  new (N) BlockAddressSDNode(Opc, DL, TLI.getPointerTy(), BA);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -5400,6 +5422,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::EH_RETURN: return "EH_RETURN";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
+  case ISD::BlockAddress:  return "BlockAddress";
   case ISD::INTRINSIC_WO_CHAIN:
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN: {
@@ -5421,6 +5444,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TargetJumpTable:  return "TargetJumpTable";
   case ISD::TargetConstantPool:  return "TargetConstantPool";
   case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
+  case ISD::TargetBlockAddress: return "TargetBlockAddress";
 
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
@@ -5778,6 +5802,13 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     OS << ">";
   } else if (const MemSDNode* M = dyn_cast<MemSDNode>(this)) {
     OS << "<" << *M->getMemOperand() << ">";
+  } else if (const BlockAddressSDNode *BA =
+               dyn_cast<BlockAddressSDNode>(this)) {
+    OS << "<";
+    WriteAsOperand(OS, BA->getBlockAddress()->getFunction(), false);
+    OS << ", ";
+    WriteAsOperand(OS, BA->getBlockAddress()->getBasicBlock(), false);
+    OS << ">";
   }
 }
 

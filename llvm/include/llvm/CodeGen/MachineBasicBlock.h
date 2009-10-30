@@ -76,6 +76,10 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   /// exception handler.
   bool IsLandingPad;
 
+  /// AddressTaken - Indicate that this basic block is potentially the
+  /// target of an indirect branch.
+  bool AddressTaken;
+
   // Intrusive list support
   MachineBasicBlock() {}
 
@@ -91,6 +95,14 @@ public:
   /// corresponded to originally.
   ///
   const BasicBlock *getBasicBlock() const { return BB; }
+
+  /// hasAddressTaken - Test whether this block is potentially the target
+  /// of an indirect branch.
+  bool hasAddressTaken() const { return AddressTaken; }
+
+  /// setHasAddressTaken - Set this block to reflect that it potentially
+  /// is the target of an indirect branch.
+  void setHasAddressTaken() { AddressTaken = true; }
 
   /// getParent - Return the MachineFunction containing this basic block.
   ///

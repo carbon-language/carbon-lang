@@ -326,6 +326,8 @@ public:
                           unsigned Line, unsigned Col, MDNode *CU);
   SDValue getLabel(unsigned Opcode, DebugLoc dl, SDValue Root,
                    unsigned LabelID);
+  SDValue getBlockAddress(BlockAddress *BA, DebugLoc dl,
+                          bool isTarget = false);
 
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N) {
     return getNode(ISD::CopyToReg, dl, MVT::Other, Chain,

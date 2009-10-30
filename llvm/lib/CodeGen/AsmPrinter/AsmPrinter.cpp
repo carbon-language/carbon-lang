@@ -1613,6 +1613,22 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   return true;
 }
 
+MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BlockAddress *BA) const {
+  return GetBlockAddressSymbol(BA->getFunction(), BA->getBasicBlock());
+}
+
+MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
+                                            const BasicBlock *BB) const {
+  assert(BB->hasName() &&
+         "Address of anonymous basic block not supported yet!");
+
+  std::string Mangled =
+    Mang->getMangledName(F, Mang->makeNameProper(BB->getName()).c_str(),
+                         /*ForcePrivate=*/true);
+
+  return OutContext.GetOrCreateSymbol(StringRef(Mangled));
+}
+
 MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "BB"
@@ -1628,6 +1644,17 @@ MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
 void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   if (unsigned Align = MBB->getAlignment())
     EmitAlignment(Log2_32(Align));
+
+  if (MBB->hasAddressTaken()) {
+    GetBlockAddressSymbol(MBB->getBasicBlock()->getParent(),
+                          MBB->getBasicBlock())->print(O, MAI);
+    O << ':';
+    if (VerboseAsm) {
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " Address Taken";
+    }
+    O << '\n';
+  }
 
   if (MBB->pred_empty() || MBB->isOnlyReachableByFallthrough()) {
     if (VerboseAsm)

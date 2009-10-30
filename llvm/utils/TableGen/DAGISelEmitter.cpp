@@ -1933,6 +1933,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "  case ISD::TargetConstantPool:\n"
      << "  case ISD::TargetFrameIndex:\n"
      << "  case ISD::TargetExternalSymbol:\n"
+     << "  case ISD::TargetBlockAddress:\n"
      << "  case ISD::TargetJumpTable:\n"
      << "  case ISD::TargetGlobalTLSAddress:\n"
      << "  case ISD::TargetGlobalAddress:\n"

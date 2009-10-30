@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Constants.h"
+#include "llvm/Function.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Value.h"
 #include "llvm/Assembly/Writer.h"
@@ -180,6 +181,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   case MachineOperand::MO_ExternalSymbol:
     return !strcmp(getSymbolName(), Other.getSymbolName()) &&
            getOffset() == Other.getOffset();
+  case MachineOperand::MO_BlockAddress:
+    return getBlockAddress() == Other.getBlockAddress();
   }
 }
 
@@ -271,6 +274,13 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
   case MachineOperand::MO_ExternalSymbol:
     OS << "<es:" << getSymbolName();
     if (getOffset()) OS << "+" << getOffset();
+    OS << '>';
+    break;
+  case MachineOperand::MO_BlockAddress:
+    OS << "<blockaddress: ";
+    WriteAsOperand(OS, getBlockAddress()->getFunction(), /*PrintType=*/false);
+    OS << ", ";
+    WriteAsOperand(OS, getBlockAddress()->getBasicBlock(), /*PrintType=*/false);
     OS << '>';
     break;
   default:
