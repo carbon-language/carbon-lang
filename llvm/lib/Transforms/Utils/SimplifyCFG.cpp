@@ -1753,8 +1753,13 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
 /// nodes in this block. This doesn't try to be clever about PHI nodes
 /// which differ only in the order of the incoming values, but instcombine
 /// orders them so it usually won't matter.
+///
 static bool EliminateDuplicatePHINodes(BasicBlock *BB) {
   bool Changed = false;
+  
+  // This implementation doesn't currently consider undef operands
+  // specially. Theroetically, two phis which are identical except for
+  // one having an undef where the other doesn't could be collapsed.
 
   // Map from PHI hash values to PHI nodes. If multiple PHIs have
   // the same hash value, the element is the first PHI in the
