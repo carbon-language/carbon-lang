@@ -101,6 +101,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
   // (and retrieves the outer template parameter list from its
   // context).
   bool isSpecialization = true;
+  bool LastParamListWasEmpty = false;
   TemplateParameterLists ParamLists;
   TemplateParameterDepthCounter Depth(TemplateParameterDepth);
   do {
@@ -140,13 +141,16 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     if (!TemplateParams.empty()) {
       isSpecialization = false;
       ++Depth;
+    } else {
+      LastParamListWasEmpty = true;
     }
   } while (Tok.is(tok::kw_export) || Tok.is(tok::kw_template));
 
   // Parse the actual template declaration.
   return ParseSingleDeclarationAfterTemplate(Context,
                                              ParsedTemplateInfo(&ParamLists,
-                                                             isSpecialization),
+                                                             isSpecialization,
+                                                         LastParamListWasEmpty),
                                              DeclEnd, AS);
 }
 

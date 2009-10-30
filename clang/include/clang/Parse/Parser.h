@@ -603,14 +603,17 @@ private:
       : Kind(NonTemplate), TemplateParams(0), TemplateLoc() { }
 
     ParsedTemplateInfo(TemplateParameterLists *TemplateParams,
-                       bool isSpecialization)
+                       bool isSpecialization,
+                       bool lastParameterListWasEmpty = false)
       : Kind(isSpecialization? ExplicitSpecialization : Template),
-        TemplateParams(TemplateParams) { }
+        TemplateParams(TemplateParams), 
+        LastParameterListWasEmpty(lastParameterListWasEmpty) { }
 
     explicit ParsedTemplateInfo(SourceLocation ExternLoc,
                                 SourceLocation TemplateLoc)
       : Kind(ExplicitInstantiation), TemplateParams(0),
-        ExternLoc(ExternLoc), TemplateLoc(TemplateLoc) { }
+        ExternLoc(ExternLoc), TemplateLoc(TemplateLoc),
+        LastParameterListWasEmpty(false){ }
 
     /// \brief The kind of template we are parsing.
     enum {
@@ -635,6 +638,9 @@ private:
     /// \brief The location of the 'template' keyword, for an explicit
     /// instantiation.
     SourceLocation TemplateLoc;
+    
+    /// \brief Whether the last template parameter list was empty.
+    bool LastParameterListWasEmpty;
   };
 
   void PushParsingClass(DeclPtrTy TagOrTemplate, bool TopLevelClass);

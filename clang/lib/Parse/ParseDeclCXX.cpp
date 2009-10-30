@@ -617,21 +617,35 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       }
       
       Diag(NameLoc, diag::err_explicit_spec_non_template)
+        << (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation)
         << (TagType == DeclSpec::TST_class? 0
             : TagType == DeclSpec::TST_struct? 1
             : 2)
         << Name
         << SourceRange(LAngleLoc, RAngleLoc);
       
-      // If this is an explicit specialization, strip off the last template
-      // parameter list, since we've removed its template arguments.
-      if (TemplateParams && TemplateParams->size() > 1) {
-        TemplateParams->pop_back();
-      } else {
+      // Strip off the last template parameter list if it was empty, since 
+      // we've removed its template argument list.
+      if (TemplateParams && TemplateInfo.LastParameterListWasEmpty) {
+        if (TemplateParams && TemplateParams->size() > 1) {
+          TemplateParams->pop_back();
+        } else {
+          TemplateParams = 0;
+          const_cast<ParsedTemplateInfo&>(TemplateInfo).Kind 
+            = ParsedTemplateInfo::NonTemplate;
+        }
+      } else if (TemplateInfo.Kind
+                                == ParsedTemplateInfo::ExplicitInstantiation) {
+        // Pretend this is just a forward declaration.
         TemplateParams = 0;
         const_cast<ParsedTemplateInfo&>(TemplateInfo).Kind 
           = ParsedTemplateInfo::NonTemplate;
+        const_cast<ParsedTemplateInfo&>(TemplateInfo).TemplateLoc 
+          = SourceLocation();
+        const_cast<ParsedTemplateInfo&>(TemplateInfo).ExternLoc
+          = SourceLocation();
       }
+        
       
     }
   } else if (Tok.is(tok::annot_template_id)) {

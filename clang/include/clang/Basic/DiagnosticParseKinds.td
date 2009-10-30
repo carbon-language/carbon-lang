@@ -283,7 +283,8 @@ def err_typename_refers_to_non_type_template : Error<
 def err_expected_type_name_after_typename : Error<
   "expected an identifier or template-id after '::'">;
 def err_explicit_spec_non_template : Error<
-  "explicit specialization of non-template %select{class|struct|union}0 %1">;
+  "explicit %select{specialization|instantiation}0 of non-template "
+  "%select{class|struct|union}1 %2">;
 
 def err_variadic_templates : Error<
   "variadic templates are only allowed in C++0x">;
