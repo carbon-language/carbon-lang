@@ -657,6 +657,10 @@ static llvm::cl::opt<std::string>
 TargetABI("target-abi",
           llvm::cl::desc("Target a particular ABI type"));
 
+static llvm::cl::opt<std::string>
+TargetTriple("triple",
+  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
+
 
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
@@ -873,123 +877,6 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
-}
-
-//===----------------------------------------------------------------------===//
-// Target Triple Processing.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<std::string>
-TargetTriple("triple",
-  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
-
-static llvm::cl::opt<std::string>
-MacOSVersionMin("mmacosx-version-min",
-                llvm::cl::desc("Specify target Mac OS X version (e.g. 10.5)"));
-
-// If -mmacosx-version-min=10.3.9 is specified, change the triple from being
-// something like powerpc-apple-darwin9 to powerpc-apple-darwin7
-
-// FIXME: We should have the driver do this instead.
-static void HandleMacOSVersionMin(llvm::Triple &Triple) {
-  if (Triple.getOS() != llvm::Triple::Darwin) {
-    fprintf(stderr,
-            "-mmacosx-version-min only valid for darwin (Mac OS X) targets\n");
-    exit(1);
-  }
-
-  // Validate that MacOSVersionMin is a 'version number', starting with 10.[3-9]
-  if (MacOSVersionMin.size() < 4 ||
-      MacOSVersionMin.substr(0, 3) != "10." ||
-      !isdigit(MacOSVersionMin[3])) {
-    fprintf(stderr,
-        "-mmacosx-version-min=%s is invalid, expected something like '10.4'.\n",
-            MacOSVersionMin.c_str());
-    exit(1);
-  }
-
-  unsigned VersionNum = MacOSVersionMin[3]-'0';
-  llvm::SmallString<16> NewDarwinString;
-  NewDarwinString += "darwin";
-
-  // Turn MacOSVersionMin into a darwin number: e.g. 10.3.9 is 3 -> darwin7.
-  VersionNum += 4;
-  if (VersionNum > 9) {
-    NewDarwinString += '1';
-    VersionNum -= 10;
-  }
-  NewDarwinString += (VersionNum+'0');
-
-  if (MacOSVersionMin.size() == 4) {
-    // "10.4" is ok.
-  } else if (MacOSVersionMin.size() == 6 &&
-             MacOSVersionMin[4] == '.' &&
-             isdigit(MacOSVersionMin[5])) {   // 10.4.7 is ok.
-    // Add the period piece (.7) to the end of the triple.  This gives us
-    // something like ...-darwin8.7
-    NewDarwinString += '.';
-    NewDarwinString += MacOSVersionMin[5];
-  } else { // "10.4" is ok.  10.4x is not.
-    fprintf(stderr,
-        "-mmacosx-version-min=%s is invalid, expected something like '10.4'.\n",
-            MacOSVersionMin.c_str());
-    exit(1);
-  }
-
-  Triple.setOSName(NewDarwinString.str());
-}
-
-static llvm::cl::opt<std::string>
-IPhoneOSVersionMin("miphoneos-version-min",
-                llvm::cl::desc("Specify target iPhone OS version (e.g. 2.0)"));
-
-// If -miphoneos-version-min=2.2 is specified, change the triple from being
-// something like armv6-apple-darwin10 to armv6-apple-darwin9.2.2. We use
-// 9 as the default major Darwin number, and encode the iPhone OS version
-// number in the minor version and revision.
-
-// FIXME: We should have the driver do this instead.
-static void HandleIPhoneOSVersionMin(llvm::Triple &Triple) {
-  if (Triple.getOS() != llvm::Triple::Darwin) {
-    fprintf(stderr,
-           "-miphoneos-version-min only valid for darwin (Mac OS X) targets\n");
-    exit(1);
-  }
-
-  // Validate that IPhoneOSVersionMin is a 'version number', starting with
-  // [2-9].[0-9]
-  if (IPhoneOSVersionMin.size() != 3 || !isdigit(IPhoneOSVersionMin[0]) ||
-      IPhoneOSVersionMin[1] != '.' || !isdigit(IPhoneOSVersionMin[2])) {
-    fprintf(stderr,
-       "-miphoneos-version-min=%s is invalid, expected something like '2.0'.\n",
-            IPhoneOSVersionMin.c_str());
-    exit(1);
-  }
-
-  // Turn IPhoneOSVersionMin into a darwin number: e.g. 2.0 is 2 -> 9.2.0
-  llvm::SmallString<16> NewDarwinString;
-  NewDarwinString += "darwin9.";
-  NewDarwinString += IPhoneOSVersionMin;
-  Triple.setOSName(NewDarwinString.str());
-}
-
-/// CreateTargetTriple - Process the various options that affect the target
-/// triple and build a final aggregate triple that we are compiling for.
-static llvm::Triple CreateTargetTriple() {
-  // Initialize base triple.  If a -triple option has been specified, use
-  // that triple.  Otherwise, default to the host triple.
-  llvm::Triple Triple(TargetTriple);
-  if (Triple.getTriple().empty())
-    Triple = llvm::Triple(llvm::sys::getHostTriple());
-
-  // If -mmacosx-version-min=10.3.9 is specified, change the triple from being
-  // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
-  if (!MacOSVersionMin.empty())
-    HandleMacOSVersionMin(Triple);
-  else if (!IPhoneOSVersionMin.empty())
-    HandleIPhoneOSVersionMin(Triple);
-
-  return Triple;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2323,8 +2210,13 @@ int main(int argc, char **argv) {
   llvm::llvm_install_error_handler(LLVMErrorHandler,
                                    static_cast<void*>(&Diags));
 
+  // Initialize base triple.  If a -triple option has been specified, use
+  // that triple.  Otherwise, default to the host triple.
+  llvm::Triple Triple(TargetTriple);
+  if (Triple.getTriple().empty())
+    Triple = llvm::Triple(llvm::sys::getHostTriple());
+
   // Get information about the target being compiled for.
-  llvm::Triple Triple = CreateTargetTriple();
   llvm::OwningPtr<TargetInfo>
   Target(TargetInfo::CreateTargetInfo(Triple.getTriple()));
 
