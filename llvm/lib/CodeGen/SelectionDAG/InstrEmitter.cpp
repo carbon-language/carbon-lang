@@ -573,7 +573,11 @@ void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
         unsigned Reg = II.getImplicitDefs()[i - II.getNumDefs()];
         if (Node->hasAnyUseOfValue(i))
           EmitCopyFromReg(Node, i, IsClone, IsCloned, Reg, VRBaseMap);
-        else
+        // If there are no uses, mark the register as dead now, so that
+        // MachineLICM/Sink can see that it's dead. Don't do this if the
+        // node has a Flag value, for the benefit of targets still using
+        // Flag for values in physregs.
+        else if (Node->getValueType(Node->getNumValues()-1) != MVT::Flag)
           MI->addRegisterDead(Reg, TRI);
       }
     }
