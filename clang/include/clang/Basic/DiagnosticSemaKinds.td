@@ -1330,17 +1330,17 @@ def err_flexible_array_init_nonempty : Error<
 def err_flexible_array_init_needs_braces : Error<
   "flexible array requires brace-enclosed initializer">;
 def err_illegal_decl_array_of_functions : Error<
-  "'%0' declared as array of functions">;
+  "'%0' declared as array of functions of type %1">;
 def err_illegal_decl_array_incomplete_type : Error<
   "array has incomplete element type %0">;
 def err_illegal_decl_array_of_references : Error<
-  "'%0' declared as array of references">;
+  "'%0' declared as array of references of type %1">;
 def err_array_star_outside_prototype : Error<
   "star modifier used outside of function prototype">;
 def err_illegal_decl_pointer_to_reference : Error<
-  "'%0' declared as a pointer to a reference">;
+  "'%0' declared as a pointer to a reference of type %1">;
 def err_illegal_decl_mempointer_to_reference : Error<
-  "'%0' declared as a member pointer to a reference">;
+  "'%0' declared as a member pointer to a reference of type %1">;
 def err_illegal_decl_mempointer_to_void : Error<
   "'%0' declared as a member pointer to void">;
 def err_illegal_decl_mempointer_in_nonclass : Error<

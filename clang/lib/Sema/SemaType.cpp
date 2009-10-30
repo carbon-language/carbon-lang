@@ -472,7 +472,7 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
   if (T->isReferenceType()) {
     // C++ 8.3.2p4: There shall be no ... pointers to references ...
     Diag(Loc, diag::err_illegal_decl_pointer_to_reference)
-      << getPrintableNameForEntity(Entity);
+      << getPrintableNameForEntity(Entity) << T;
     return QualType();
   }
 
@@ -600,14 +600,14 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
 
   if (T->isFunctionType()) {
     Diag(Loc, diag::err_illegal_decl_array_of_functions)
-      << getPrintableNameForEntity(Entity);
+      << getPrintableNameForEntity(Entity) << T;
     return QualType();
   }
 
   // C++ 8.3.2p4: There shall be no ... arrays of references ...
   if (T->isReferenceType()) {
     Diag(Loc, diag::err_illegal_decl_array_of_references)
-      << getPrintableNameForEntity(Entity);
+      << getPrintableNameForEntity(Entity) << T;
     return QualType();
   }
 
@@ -811,7 +811,7 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   //   with reference type, or "cv void."
   if (T->isReferenceType()) {
     Diag(Loc, diag::err_illegal_decl_mempointer_to_reference)
-      << (Entity? Entity.getAsString() : "type name");
+      << (Entity? Entity.getAsString() : "type name") << T;
     return QualType();
   }
 
