@@ -83,7 +83,8 @@ static TryCastResult TryStaticDowncast(Sema &Self, QualType SrcType,
 static TryCastResult TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType,
                                                   QualType DestType,bool CStyle,
                                                   const SourceRange &OpRange,
-                                                  unsigned &msg);
+                                                  unsigned &msg,
+                                                  CastExpr::CastKind &Kind);
 static TryCastResult TryStaticImplicitCast(Sema &Self, Expr *SrcExpr,
                                            QualType DestType, bool CStyle,
                                            const SourceRange &OpRange,
@@ -480,7 +481,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
   // conversion. C++ 5.2.9p9 has additional information.
   // DR54's access restrictions apply here also.
   tcr = TryStaticMemberPointerUpcast(Self, SrcType, DestType, CStyle,
-                                     OpRange, msg);
+                                     OpRange, msg, Kind);
   if (tcr != TC_NotApplicable)
     return tcr;
 
@@ -706,7 +707,7 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
 TryCastResult
 TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
                              bool CStyle, const SourceRange &OpRange,
-                             unsigned &msg) {
+                             unsigned &msg, CastExpr::CastKind &Kind) {
   const MemberPointerType *DestMemPtr = DestType->getAs<MemberPointerType>();
   if (!DestMemPtr)
     return TC_NotApplicable;
@@ -760,6 +761,7 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
     return TC_Failed;
   }
 
+  Kind = CastExpr::CK_DerivedToBaseMemberPointer;
   return TC_Success;
 }
 

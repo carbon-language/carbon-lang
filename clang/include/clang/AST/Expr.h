@@ -1532,6 +1532,10 @@ public:
     /// member pointer in derived class.
     CK_BaseToDerivedMemberPointer,
 
+    /// CK_DerivedToBaseMemberPointer - Member pointer in derived class to
+    /// member pointer in base class.
+    CK_DerivedToBaseMemberPointer,
+    
     /// CK_UserDefinedConversion - Conversion using a user defined type
     /// conversion function.
     CK_UserDefinedConversion,

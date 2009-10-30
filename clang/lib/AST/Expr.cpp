@@ -503,6 +503,8 @@ const char *CastExpr::getCastKindName() const {
     return "NullToMemberPointer";
   case CastExpr::CK_BaseToDerivedMemberPointer:
     return "BaseToDerivedMemberPointer";
+  case CastExpr::CK_DerivedToBaseMemberPointer:
+    return "DerivedToBaseMemberPointer";
   case CastExpr::CK_UserDefinedConversion:
     return "UserDefinedConversion";
   case CastExpr::CK_ConstructorConversion:
