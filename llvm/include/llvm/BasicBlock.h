@@ -23,6 +23,7 @@ namespace llvm {
 
 class TerminatorInst;
 class LLVMContext;
+class BlockAddress;
 
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock> {
@@ -66,7 +67,7 @@ private:
 /// @brief LLVM Basic Block Representation
 class BasicBlock : public Value, // Basic blocks are data objects also
                    public ilist_node<BasicBlock> {
-
+  friend class BlockAddress;
 public:
   typedef iplist<Instruction> InstListType;
 private:
@@ -238,7 +239,15 @@ public:
 
   /// hasAddressTaken - returns true if there are any uses of this basic block
   /// other than direct branches, switches, etc. to it.
-  bool hasAddressTaken() const;
+  bool hasAddressTaken() const { return SubclassData != 0; }
+private:
+  /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress
+  /// objects using it.  This is almost always 0, sometimes one, possibly but
+  /// almost never 2, and inconceivably 3 or more.
+  void AdjustBlockAddressRefCount(int Amt) {
+    SubclassData += Amt;
+    assert((int)(char)SubclassData >= 0 && "Refcount wrap-around");
+  }
 };
 
 } // End llvm namespace

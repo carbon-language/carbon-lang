@@ -44,7 +44,7 @@ using namespace llvm;
 
 // Constructor to create a '0' constant of arbitrary type...
 static const uint64_t zero[2] = {0, 0};
-Constant* Constant::getNullValue(const Type* Ty) {
+Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
@@ -72,7 +72,7 @@ Constant* Constant::getNullValue(const Type* Ty) {
   }
 }
 
-Constant* Constant::getIntegerValue(const Type* Ty, const APInt &V) {
+Constant* Constant::getIntegerValue(const Type *Ty, const APInt &V) {
   const Type *ScalarTy = Ty->getScalarType();
 
   // Create the base integer constant.
@@ -89,13 +89,13 @@ Constant* Constant::getIntegerValue(const Type* Ty, const APInt &V) {
   return C;
 }
 
-Constant* Constant::getAllOnesValue(const Type* Ty) {
-  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
+Constant* Constant::getAllOnesValue(const Type *Ty) {
+  if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty))
     return ConstantInt::get(Ty->getContext(),
                             APInt::getAllOnesValue(ITy->getBitWidth()));
   
   std::vector<Constant*> Elts;
-  const VectorType* VTy = cast<VectorType>(Ty);
+  const VectorType *VTy = cast<VectorType>(Ty);
   Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
   assert(Elts[0] && "Not a vector integer type!");
   return cast<ConstantVector>(ConstantVector::get(Elts));
@@ -1045,6 +1045,7 @@ BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
            &Op<0>(), 2) {
   Op<0>() = F;
   Op<1>() = BB;
+  BB->AdjustBlockAddressRefCount(1);
 }
 
 
@@ -1053,6 +1054,7 @@ BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
 void BlockAddress::destroyConstant() {
   getFunction()->getType()->getContext().pImpl
     ->BlockAddresses.erase(std::make_pair(getFunction(), getBasicBlock()));
+  getBasicBlock()->AdjustBlockAddressRefCount(-1);
   destroyConstantImpl();
 }
 

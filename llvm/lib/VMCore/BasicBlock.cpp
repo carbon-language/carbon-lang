@@ -278,11 +278,3 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const Twine &BBName) {
   return New;
 }
 
-/// hasAddressTaken - returns true if there are any uses of this basic block
-/// other than direct branches, switches, etc. to it.
-bool BasicBlock::hasAddressTaken() const {
-  for (Value::use_const_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if (isa<BlockAddress>(*I))
-      return true;
-  return false;
-}
