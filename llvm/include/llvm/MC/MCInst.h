@@ -43,7 +43,6 @@ class MCOperand {
 public:
   
   MCOperand() : Kind(kInvalid) {}
-  MCOperand(const MCOperand &RHS) { *this = RHS; }
 
   bool isValid() const { return Kind != kInvalid; }
   bool isReg() const { return Kind == kRegister; }
