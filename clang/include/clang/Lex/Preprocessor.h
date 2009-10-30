@@ -244,7 +244,12 @@ public:
     return CurPPLexer == L;
   }
 
-  /// getCurrentLexer - Return the current file lexer being lexed from.  Note
+  /// getCurrentLexer - Return the current lexer being lexed from.  Note
+  /// that this ignores any potentially active macro expansions and _Pragma
+  /// expansions going on at the time.
+  PreprocessorLexer *getCurrentLexer() const { return CurPPLexer; }
+
+  /// getCurrentFileLexer - Return the current file lexer being lexed from.  Note
   /// that this ignores any potentially active macro expansions and _Pragma
   /// expansions going on at the time.
   PreprocessorLexer *getCurrentFileLexer() const;
@@ -622,6 +627,43 @@ public:
   ///  SourceLocation.
   MacroInfo* AllocateMacroInfo(SourceLocation L);
 
+  /// GetIncludeFilenameSpelling - Turn the specified lexer token into a fully
+  /// checked and spelled filename, e.g. as an operand of #include. This returns
+  /// true if the input filename was in <>'s or false if it were in ""'s.  The
+  /// caller is expected to provide a buffer that is large enough to hold the
+  /// spelling of the filename, but is also expected to handle the case when
+  /// this method decides to use a different buffer.
+  bool GetIncludeFilenameSpelling(SourceLocation Loc,
+                                  const char *&BufStart, const char *&BufEnd);
+
+  /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
+  /// return null on failure.  isAngled indicates whether the file reference is
+  /// for system #include's or not (i.e. using <> instead of "").
+  const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
+                              bool isAngled, const DirectoryLookup *FromDir,
+                              const DirectoryLookup *&CurDir);
+
+  /// GetCurLookup - The DirectoryLookup structure used to find the current
+  /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
+  /// implement #include_next and find directory-specific properties.
+  const DirectoryLookup *GetCurDirLookup() { return CurDirLookup; }
+
+  /// isInPrimaryFile - Return true if we're in the top-level file, not in a
+  /// #include.
+  bool isInPrimaryFile() const;
+
+  /// ConcatenateIncludeName - Handle cases where the #include name is expanded
+  /// from a macro as multiple tokens, which need to be glued together.  This
+  /// occurs for code like:
+  ///    #define FOO <a/b.h>
+  ///    #include FOO
+  /// because in this case, "<a/b.h>" is returned as 7 tokens, not one.
+  ///
+  /// This code concatenates and consumes tokens up to the '>' token.  It returns
+  /// false if the > was found, otherwise it returns true if it finds and consumes
+  /// the EOM marker.
+  bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer);
+
 private:
 
   void PushIncludeMacroStack() {
@@ -645,10 +687,6 @@ private:
   /// ReleaseMacroInfo - Release the specified MacroInfo.  This memory will
   ///  be reused for allocating new MacroInfo objects.
   void ReleaseMacroInfo(MacroInfo* MI);
-
-  /// isInPrimaryFile - Return true if we're in the top-level file, not in a
-  /// #include.
-  bool isInPrimaryFile() const;
 
   /// ReadMacroName - Lex and validate a macro name, which occurs after a
   /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
@@ -721,24 +759,6 @@ private:
   /// EnterSourceFileWithPTH - Add a lexer to the top of the include stack and
   /// start getting tokens from it using the PTH cache.
   void EnterSourceFileWithPTH(PTHLexer *PL, const DirectoryLookup *Dir);
-
-  /// GetIncludeFilenameSpelling - Turn the specified lexer token into a fully
-  /// checked and spelled filename, e.g. as an operand of #include. This returns
-  /// true if the input filename was in <>'s or false if it were in ""'s.  The
-  /// caller is expected to provide a buffer that is large enough to hold the
-  /// spelling of the filename, but is also expected to handle the case when
-  /// this method decides to use a different buffer.
-  bool GetIncludeFilenameSpelling(SourceLocation Loc,
-                                  const char *&BufStart, const char *&BufEnd);
-
-  /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
-  /// return null on failure.  isAngled indicates whether the file reference is
-  /// for system #include's or not (i.e. using <> instead of "").
-  const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
-                              bool isAngled, const DirectoryLookup *FromDir,
-                              const DirectoryLookup *&CurDir);
-
-
 
   /// IsFileLexer - Returns true if we are lexing from a file and not a
   ///  pragma or a macro.

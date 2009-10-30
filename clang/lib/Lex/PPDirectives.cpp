@@ -974,11 +974,11 @@ bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
 /// This code concatenates and consumes tokens up to the '>' token.  It returns
 /// false if the > was found, otherwise it returns true if it finds and consumes
 /// the EOM marker.
-static bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer,
-                                   Preprocessor &PP) {
+bool Preprocessor::ConcatenateIncludeName(
+  llvm::SmallVector<char, 128> &FilenameBuffer) {
   Token CurTok;
 
-  PP.Lex(CurTok);
+  Lex(CurTok);
   while (CurTok.isNot(tok::eom)) {
     // Append the spelling of this token to the buffer. If there was a space
     // before it, add it now.
@@ -990,7 +990,7 @@ static bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer,
     FilenameBuffer.resize(PreAppendSize+CurTok.getLength());
 
     const char *BufPtr = &FilenameBuffer[PreAppendSize];
-    unsigned ActualLen = PP.getSpelling(CurTok, BufPtr);
+    unsigned ActualLen = getSpelling(CurTok, BufPtr);
 
     // If the token was spelled somewhere else, copy it into FilenameBuffer.
     if (BufPtr != &FilenameBuffer[PreAppendSize])
@@ -1004,12 +1004,12 @@ static bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer,
     if (CurTok.is(tok::greater))
       return false;
 
-    PP.Lex(CurTok);
+    Lex(CurTok);
   }
 
   // If we hit the eom marker, emit an error and return true so that the caller
   // knows the EOM has been read.
-  PP.Diag(CurTok.getLocation(), diag::err_pp_expects_filename);
+  Diag(CurTok.getLocation(), diag::err_pp_expects_filename);
   return true;
 }
 
@@ -1047,7 +1047,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     // This could be a <foo/bar.h> file coming from a macro expansion.  In this
     // case, glue the tokens together into FilenameBuffer and interpret those.
     FilenameBuffer.push_back('<');
-    if (ConcatenateIncludeName(FilenameBuffer, *this))
+    if (ConcatenateIncludeName(FilenameBuffer))
       return;   // Found <eom> but no ">"?  Diagnostic already emitted.
     FilenameStart = FilenameBuffer.data();
     FilenameEnd = FilenameStart + FilenameBuffer.size();

@@ -71,6 +71,61 @@ struct DefinedTracker {
   IdentifierInfo *TheMacro;
 };
 
+/// EvaluateDefined - Process a 'defined(sym)' expression.
+static bool EvaluateDefined(PPValue &Result, Token &PeekTok,
+        DefinedTracker &DT, bool ValueLive, Preprocessor &PP) {
+  IdentifierInfo *II;
+  Result.setBegin(PeekTok.getLocation());
+
+  // Get the next token, don't expand it.
+  PP.LexUnexpandedToken(PeekTok);
+
+  // Two options, it can either be a pp-identifier or a (.
+  SourceLocation LParenLoc;
+  if (PeekTok.is(tok::l_paren)) {
+    // Found a paren, remember we saw it and skip it.
+    LParenLoc = PeekTok.getLocation();
+    PP.LexUnexpandedToken(PeekTok);
+  }
+
+  // If we don't have a pp-identifier now, this is an error.
+  if ((II = PeekTok.getIdentifierInfo()) == 0) {
+    PP.Diag(PeekTok, diag::err_pp_defined_requires_identifier);
+    return true;
+  }
+
+  // Otherwise, we got an identifier, is it defined to something?
+  Result.Val = II->hasMacroDefinition();
+  Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
+
+  // If there is a macro, mark it used.
+  if (Result.Val != 0 && ValueLive) {
+    MacroInfo *Macro = PP.getMacroInfo(II);
+    Macro->setIsUsed(true);
+  }
+
+  // Consume identifier.
+  Result.setEnd(PeekTok.getLocation());
+  PP.LexNonComment(PeekTok);
+
+  // If we are in parens, ensure we have a trailing ).
+  if (LParenLoc.isValid()) {
+    if (PeekTok.isNot(tok::r_paren)) {
+      PP.Diag(PeekTok.getLocation(), diag::err_pp_missing_rparen) << "defined";
+      PP.Diag(LParenLoc, diag::note_matching) << "(";
+      return true;
+    }
+    // Consume the ).
+    Result.setEnd(PeekTok.getLocation());
+    PP.LexNonComment(PeekTok);
+  }
+
+  // Success, remember that we saw defined(X).
+  DT.State = DefinedTracker::DefinedMacro;
+  DT.TheMacro = II;
+  return false;
+}
+
 /// EvaluateValue - Evaluate the token PeekTok (and any others needed) and
 /// return the computed value in Result.  Return true if there was an error
 /// parsing.  This function also returns information about the form of the
@@ -87,10 +142,14 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   // 'defined' or if it is a macro.  Note that we check here because many
   // keywords are pp-identifiers, so we can't check the kind.
   if (IdentifierInfo *II = PeekTok.getIdentifierInfo()) {
-    // If this identifier isn't 'defined' and it wasn't macro expanded, it turns
-    // into a simple 0, unless it is the C++ keyword "true", in which case it
-    // turns into "1".
-    if (!II->isStr("defined")) {
+    if (II->isStr("defined")) {
+      // Handle "defined X" and "defined(X)".
+      return(EvaluateDefined(Result, PeekTok, DT, ValueLive, PP));
+    } else {
+      // If this identifier isn't 'defined' or one of the special
+      // preprocessor keywords and it wasn't macro expanded, it turns
+      // into a simple 0, unless it is the C++ keyword "true", in which case it
+      // turns into "1".
       if (ValueLive)
         PP.Diag(PeekTok, diag::warn_pp_undef_identifier) << II;
       Result.Val = II->getTokenID() == tok::kw_true;
@@ -99,57 +158,6 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       PP.LexNonComment(PeekTok);
       return false;
     }
-
-    // Handle "defined X" and "defined(X)".
-    Result.setBegin(PeekTok.getLocation());
-
-    // Get the next token, don't expand it.
-    PP.LexUnexpandedToken(PeekTok);
-
-    // Two options, it can either be a pp-identifier or a (.
-    SourceLocation LParenLoc;
-    if (PeekTok.is(tok::l_paren)) {
-      // Found a paren, remember we saw it and skip it.
-      LParenLoc = PeekTok.getLocation();
-      PP.LexUnexpandedToken(PeekTok);
-    }
-
-    // If we don't have a pp-identifier now, this is an error.
-    if ((II = PeekTok.getIdentifierInfo()) == 0) {
-      PP.Diag(PeekTok, diag::err_pp_defined_requires_identifier);
-      return true;
-    }
-
-    // Otherwise, we got an identifier, is it defined to something?
-    Result.Val = II->hasMacroDefinition();
-    Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
-
-    // If there is a macro, mark it used.
-    if (Result.Val != 0 && ValueLive) {
-      MacroInfo *Macro = PP.getMacroInfo(II);
-      Macro->setIsUsed(true);
-    }
-
-    // Consume identifier.
-    Result.setEnd(PeekTok.getLocation());
-    PP.LexNonComment(PeekTok);
-
-    // If we are in parens, ensure we have a trailing ).
-    if (LParenLoc.isValid()) {
-      if (PeekTok.isNot(tok::r_paren)) {
-        PP.Diag(PeekTok.getLocation(), diag::err_pp_missing_rparen);
-        PP.Diag(LParenLoc, diag::note_matching) << "(";
-        return true;
-      }
-      // Consume the ).
-      Result.setEnd(PeekTok.getLocation());
-      PP.LexNonComment(PeekTok);
-    }
-
-    // Success, remember that we saw defined(X).
-    DT.State = DefinedTracker::DefinedMacro;
-    DT.TheMacro = II;
-    return false;
   }
 
   switch (PeekTok.getKind()) {
