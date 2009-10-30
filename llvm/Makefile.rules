@@ -566,6 +566,8 @@ endif
 ifeq ($(TARGET_OS),Darwin)
   ifneq ($(ARCH),ARM)
     TargetCommonOpts += -mmacosx-version-min=$(DARWIN_VERSION)
+  else
+    TargetCommonOpts += -marm
   endif
 endif
 
