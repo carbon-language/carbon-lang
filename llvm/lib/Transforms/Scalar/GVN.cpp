@@ -669,9 +669,10 @@ namespace {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid
-    GVN() : FunctionPass(&ID) { }
+    GVN(bool nopre = false) : FunctionPass(&ID), NoPRE(nopre) { }
 
   private:
+    bool NoPRE;
     MemoryDependenceAnalysis *MD;
     DominatorTree *DT;
 
@@ -710,7 +711,7 @@ namespace {
 }
 
 // createGVNPass - The public interface to this file...
-FunctionPass *llvm::createGVNPass() { return new GVN(); }
+FunctionPass *llvm::createGVNPass(bool NoPRE) { return new GVN(NoPRE); }
 
 static RegisterPass<GVN> X("gvn",
                            "Global Value Numbering");
