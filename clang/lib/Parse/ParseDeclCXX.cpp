@@ -589,6 +589,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
       Diag(Tok, diag::err_expected_ident);
 
+  TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
+
   // Parse the (optional) class name or simple-template-id.
   IdentifierInfo *Name = 0;
   SourceLocation NameLoc;
@@ -596,6 +598,42 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (Tok.is(tok::identifier)) {
     Name = Tok.getIdentifierInfo();
     NameLoc = ConsumeToken();
+    
+    if (Tok.is(tok::less)) {
+      // The name was supposed to refer to a template, but didn't. 
+      // Eat the template argument list and try to continue parsing this as
+      // a class (or template thereof).
+      TemplateArgList TemplateArgs;
+      TemplateArgIsTypeList TemplateArgIsType;
+      TemplateArgLocationList TemplateArgLocations;
+      SourceLocation LAngleLoc, RAngleLoc;
+      if (ParseTemplateIdAfterTemplateName(TemplateTy(), NameLoc, &SS, 
+                                           true, LAngleLoc,
+                                           TemplateArgs, TemplateArgIsType,
+                                           TemplateArgLocations, RAngleLoc)) {
+        // We couldn't parse the template argument list at all, so don't
+        // try to give any location information for the list.
+        LAngleLoc = RAngleLoc = SourceLocation();
+      }
+      
+      Diag(NameLoc, diag::err_explicit_spec_non_template)
+        << (TagType == DeclSpec::TST_class? 0
+            : TagType == DeclSpec::TST_struct? 1
+            : 2)
+        << Name
+        << SourceRange(LAngleLoc, RAngleLoc);
+      
+      // If this is an explicit specialization, strip off the last template
+      // parameter list, since we've removed its template arguments.
+      if (TemplateParams && TemplateParams->size() > 1) {
+        TemplateParams->pop_back();
+      } else {
+        TemplateParams = 0;
+        const_cast<ParsedTemplateInfo&>(TemplateInfo).Kind 
+          = ParsedTemplateInfo::NonTemplate;
+      }
+      
+    }
   } else if (Tok.is(tok::annot_template_id)) {
     TemplateId = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
     NameLoc = ConsumeToken();
@@ -660,7 +698,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // Create the tag portion of the class or class template.
   Action::DeclResult TagOrTempResult = true; // invalid
   Action::TypeResult TypeResult = true; // invalid
-  TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
 
   // FIXME: When TUK == TUK_Reference and we have a template-id, we need
   // to turn that template-id into a type.

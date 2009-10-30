@@ -6,8 +6,7 @@ namespace N {
   };
 }
 
-// FIXME: poor diagnostic
-template class Z<int>; // expected-error{{unqualified-id}}
+template class Z<int>; // expected-error{{non-template class 'Z'}}
 
 // FIXME: This example from the standard is wrong; note posted to CWG reflector
 // on 10/27/2009

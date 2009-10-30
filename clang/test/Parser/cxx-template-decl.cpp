@@ -92,3 +92,7 @@ void f2() {
   int x;
   A< typeof(x>1) > a;
 }
+
+
+// PR3844
+template <> struct S<int> { }; // expected-error{{explicit specialization of non-template struct 'S'}}

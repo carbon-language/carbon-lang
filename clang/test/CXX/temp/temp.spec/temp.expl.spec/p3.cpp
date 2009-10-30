@@ -4,8 +4,7 @@ namespace N {
   template<class T> class X;
 }
 
-// FIXME: this diagnostic is terrible (PR3844).
-template<> class X<int> { /* ... */ };	// expected-error {{unqualified-id}}
+template<> class X<int> { /* ... */ };	// expected-error {{non-template class 'X'}}
 
 namespace N {
   
