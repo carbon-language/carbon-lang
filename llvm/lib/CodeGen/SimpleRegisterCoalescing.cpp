@@ -1866,8 +1866,10 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
 /// iterator, or any subsequent range with the same value number,
 /// is live at the given point.
 bool SimpleRegisterCoalescing::ValueLiveAt(LiveInterval::iterator LRItr,
+                                           LiveInterval::iterator LREnd,
                                            LiveIndex defPoint) const {
-  for (const VNInfo *valno = LRItr->valno; LRItr->valno == valno; ++LRItr) {
+  for (const VNInfo *valno = LRItr->valno;
+       (LRItr != LREnd) && (LRItr->valno == valno); ++LRItr) {
     if (LRItr->contains(defPoint))
       return true;
   }
@@ -1922,7 +1924,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
         if (!RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg))
           return false;    // Nope, bail out.
 
-        if (ValueLiveAt(LHSIt, RHSIt->valno->def))
+        if (ValueLiveAt(LHSIt, LHS.end(), RHSIt->valno->def))
           // Here is an interesting situation:
           // BB1:
           //   vr1025 = copy vr1024
@@ -1960,7 +1962,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
           // Otherwise, if this is a copy from the RHS, mark it as being merged
           // in.
           if (RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg)) {
-            if (ValueLiveAt(LHSIt, RHSIt->valno->def))
+            if (ValueLiveAt(LHSIt, LHS.end(), RHSIt->valno->def))
               // Here is an interesting situation:
               // BB1:
               //   vr1025 = copy vr1024
