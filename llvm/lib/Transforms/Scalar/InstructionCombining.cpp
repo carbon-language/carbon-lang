@@ -10981,22 +10981,24 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     }
   }
 
-  // Sort the PHI node operands to match the pred iterator order. This will
-  // help identical PHIs be eliminated by other passes. Other passes shouldn't
-  // depend on this for correctness however.
-  unsigned i = 0;
-  for (pred_iterator PI = pred_begin(PN.getParent()),
-       PE = pred_end(PN.getParent()); PI != PE; ++PI, ++i)
-    if (PN.getIncomingBlock(i) != *PI) {
-      unsigned j = PN.getBasicBlockIndex(*PI);
-      Value *VA = PN.getIncomingValue(i);
+  // If there are multiple PHIs, sort their operands so that they all list
+  // the blocks in the same order. This will help identical PHIs be eliminated
+  // by other passes. Other passes shouldn't depend on this for correctness
+  // however.
+  PHINode *FirstPN = cast<PHINode>(PN.getParent()->begin());
+  if (&PN != FirstPN)
+    for (unsigned i = 0, e = FirstPN->getNumIncomingValues(); i != e; ++i) {
       BasicBlock *BBA = PN.getIncomingBlock(i);
-      Value *VB = PN.getIncomingValue(j);
-      BasicBlock *BBB = PN.getIncomingBlock(j);
-      PN.setIncomingBlock(i, BBB);
-      PN.setIncomingValue(i, VB);
-      PN.setIncomingBlock(j, BBA);
-      PN.setIncomingValue(j, VA);
+      BasicBlock *BBB = FirstPN->getIncomingBlock(i);
+      if (BBA != BBB) {
+        Value *VA = PN.getIncomingValue(i);
+        unsigned j = FirstPN->getBasicBlockIndex(BBA);
+        Value *VB = PN.getIncomingValue(j);
+        PN.setIncomingBlock(i, BBB);
+        PN.setIncomingValue(i, VB);
+        PN.setIncomingBlock(j, BBA);
+        PN.setIncomingValue(j, VA);
+      }
     }
 
   return 0;
