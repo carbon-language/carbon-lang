@@ -277,7 +277,12 @@ public:
   Value *VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E) {
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
-    
+
+  Value *VisitCXXThrowExpr(const CXXThrowExpr *E) {
+    CGF.EmitCXXThrowExpr(E);
+    return 0;
+  }
+
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
     if (CGF.getContext().getLangOptions().OverflowChecking

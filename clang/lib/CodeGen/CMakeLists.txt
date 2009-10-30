@@ -10,6 +10,7 @@ add_clang_library(clangCodeGen
   CGCall.cpp
   CGDebugInfo.cpp
   CGDecl.cpp
+  CGException.cpp
   CGExpr.cpp
   CGExprAgg.cpp
   CGExprComplex.cpp

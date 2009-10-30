@@ -1014,6 +1014,8 @@ public:
                                     bool IsAggLocVolatile = false,
                                     bool IsInitializer = false);
 
+  void EmitCXXThrowExpr(const CXXThrowExpr *E);
+  
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//
