@@ -128,7 +128,7 @@ namespace llvm {
     PM->add(createReassociatePass());           // Reassociate expressions
     PM->add(createLoopRotatePass());            // Rotate Loop
     PM->add(createLICMPass());                  // Hoist loop invariants
-    PM->add(createLoopUnswitchPass(OptimizeSize));
+    PM->add(createLoopUnswitchPass(OptimizeSize || OptimizationLevel < 3));
     PM->add(createInstructionCombiningPass());  
     PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
     PM->add(createLoopDeletionPass());          // Delete dead loops
