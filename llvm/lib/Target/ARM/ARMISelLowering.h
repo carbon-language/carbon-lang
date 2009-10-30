@@ -268,6 +268,7 @@ namespace llvm {
                              ISD::ArgFlagsTy Flags);
     SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG);
     SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressDarwin(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalAddressELF(SDValue Op, SelectionDAG &DAG);
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);

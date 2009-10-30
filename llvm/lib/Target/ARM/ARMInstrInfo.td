@@ -1607,6 +1607,7 @@ let Defs =
 // ConstantPool, GlobalAddress, and JumpTable
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>;
 def : ARMPat<(ARMWrapper  tconstpool  :$dst), (LEApcrel tconstpool  :$dst)>;
+def : ARMPat<(ARMWrapper  tblockaddress:$dst), (LEApcrel tblockaddress:$dst)>;
 def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
              (LEApcrelJT tjumptable:$dst, imm:$id)>;
 

@@ -363,6 +363,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
   setOperationAction(ISD::GLOBAL_OFFSET_TABLE, MVT::i32, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
+  setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
 
   // Use the default implementation.
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
@@ -1183,12 +1184,12 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   return result;
 }
 
-// ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
-// their target counterpart wrapped in the ARMISD::Wrapper node. Suppose N is
-// one of the above mentioned nodes. It has to be wrapped because otherwise
-// Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
-// be used to form addressing mode. These wrapped nodes will be selected
-// into MOVi.
+// ConstantPool, BlockAddress, JumpTable, GlobalAddress, and ExternalSymbol are
+// lowered as their target counterpart wrapped in the ARMISD::Wrapper
+// node. Suppose N is one of the above mentioned nodes. It has to be wrapped
+// because otherwise Select(N) returns N. So the raw TargetGlobalAddress
+// nodes, etc. can only be used to form addressing mode. These wrapped nodes
+// will be selected into MOVi.
 static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   EVT PtrVT = Op.getValueType();
   // FIXME there is no actual debug info here
@@ -1202,6 +1203,13 @@ static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
     Res = DAG.getTargetConstantPool(CP->getConstVal(), PtrVT,
                                     CP->getAlignment());
   return DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, Res);
+}
+
+SDValue ARMTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc DL = Op.getDebugLoc();
+  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  SDValue Result = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
+  return DAG.getNode(ARMISD::Wrapper, DL, getPointerTy(), Result);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model
@@ -2744,6 +2752,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Don't know how to custom lower this!");
   case ISD::ConstantPool:  return LowerConstantPool(Op, DAG);
+  case ISD::BlockAddress:  return LowerBlockAddress(Op, DAG);
   case ISD::GlobalAddress:
     return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
       LowerGlobalAddressELF(Op, DAG);
