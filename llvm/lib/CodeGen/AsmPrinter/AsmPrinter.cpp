@@ -1622,6 +1622,8 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
   assert(BB->hasName() &&
          "Address of anonymous basic block not supported yet!");
 
+  // FIXME: This isn't guaranteed to produce a unique name even if the
+  // block and function have a name.
   std::string Mangled =
     Mang->getMangledName(F, Mang->makeNameProper(BB->getName()).c_str(),
                          /*ForcePrivate=*/true);
