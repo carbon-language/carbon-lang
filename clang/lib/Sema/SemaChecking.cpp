@@ -1272,10 +1272,15 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
     // Skip over implicit cast expressions when checking for block expressions.
     RetValExp = RetValExp->IgnoreParenCasts();
 
-    if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(RetValExp))
+    if (BlockExpr *C = dyn_cast<BlockExpr>(RetValExp))
       if (C->hasBlockDeclRefExprs())
         Diag(C->getLocStart(), diag::err_ret_local_block)
           << C->getSourceRange();
+    
+    if (AddrLabelExpr *ALE = dyn_cast<AddrLabelExpr>(RetValExp))
+      Diag(ALE->getLocStart(), diag::warn_ret_addr_label)
+        << ALE->getSourceRange();
+    
   } else if (lhsType->isReferenceType()) {
     // Perform checking for stack values returned by reference.
     // Check for a reference to the stack

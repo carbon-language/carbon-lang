@@ -27,3 +27,9 @@ int test8[({10;})]; // expected-error {{statement expression not allowed at file
 void test9(const void *P) {
   __builtin_prefetch(P);
 }
+
+
+void *test10() { 
+bar:
+  return &&bar;  // expected-warning {{returning address of label, which is local}}
+}

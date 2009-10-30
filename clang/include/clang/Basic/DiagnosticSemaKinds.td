@@ -2140,6 +2140,10 @@ def warn_ret_stack_addr : Warning<
   "address of stack memory associated with local variable %0 returned">;
 def warn_ret_stack_ref : Warning<
   "reference to stack memory associated with local variable %0 returned">;
+def warn_ret_addr_label : Warning<
+  "returning address of label, which is local">;
+def err_ret_local_block : Error<
+  "returning block that lives on the local stack">;
 
 
 // For non-floating point, expressions of the form x == x or x != x
@@ -2163,8 +2167,6 @@ def err_return_in_block_expression : Error<
 def err_block_returns_array : Error<
   "block declared as returning an array">;
 
-def err_ret_local_block : Error<
-  "returning block that lives on the local stack">;
 
 // CFString checking
 def err_cfstring_literal_not_string_constant : Error<
