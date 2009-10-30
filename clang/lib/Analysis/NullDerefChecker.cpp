@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/NullDerefChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/NullDerefChecker.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 

@@ -15,7 +15,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
-#include "clang/Analysis/PathSensitive/NullDerefChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/NullDerefChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"

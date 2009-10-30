@@ -18,7 +18,7 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
-#include "clang/Analysis/PathSensitive/NullDerefChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/NullDerefChecker.h"
 #include "BasicObjCFoundationChecks.h"
 #include "llvm/Support/Compiler.h"
 #include "clang/AST/DeclObjC.h"
