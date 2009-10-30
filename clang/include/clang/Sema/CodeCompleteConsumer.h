@@ -26,6 +26,7 @@ namespace clang {
 class FunctionDecl;
 class FunctionType;
 class FunctionTemplateDecl;
+class IdentifierInfo;
 class NamedDecl;
 class NestedNameSpecifier;
 class Sema;
@@ -150,7 +151,8 @@ public:
     /// \brief Describes the kind of result generated.
     enum ResultKind {
       RK_Declaration = 0, //< Refers to a declaration
-      RK_Keyword          //< Refers to a keyword or symbol.
+      RK_Keyword,         //< Refers to a keyword or symbol.
+      RK_Macro            //< Refers to a macro
     };
     
     /// \brief The kind of result stored here.
@@ -164,6 +166,9 @@ public:
       /// \brief When Kind == RK_Keyword, the string representing the keyword 
       /// or symbol's spelling.
       const char *Keyword;
+      
+      /// \brief When Kind == RK_Macro, the identifier that refers to a macro.
+      IdentifierInfo *Macro;
     };
     
     /// \brief Describes how good this result is, with zero being the best
@@ -198,6 +203,12 @@ public:
       : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), Hidden(false),
         QualifierIsInformative(0), StartsNestedNameSpecifier(false), 
         Qualifier(0) { }
+    
+    /// \brief Build a result that refers to a macro.
+    Result(IdentifierInfo *Macro, unsigned Rank)
+     : Kind(RK_Macro), Macro(Macro), Rank(Rank), Hidden(false), 
+       QualifierIsInformative(0), StartsNestedNameSpecifier(false),
+       Qualifier(0) { }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {

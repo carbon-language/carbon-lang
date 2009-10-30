@@ -13,6 +13,8 @@
 #include "Sema.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include <list>
@@ -801,9 +803,45 @@ void AddQualifierToCompletionString(CodeCompletionString *Result,
 /// result is all that is needed.
 CodeCompletionString *
 CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
-  if (Kind != RK_Declaration)
+  if (Kind == RK_Keyword)
     return 0;
   
+  if (Kind == RK_Macro) {
+    MacroInfo *MI = S.PP.getMacroInfo(Macro);
+    if (!MI || !MI->isFunctionLike())
+      return 0;
+    
+    // Format a function-like macro with placeholders for the arguments.
+    CodeCompletionString *Result = new CodeCompletionString;
+    Result->AddTextChunk(Macro->getName().str().c_str());
+    Result->AddTextChunk("(");
+    for (MacroInfo::arg_iterator A = MI->arg_begin(), AEnd = MI->arg_end();
+         A != AEnd; ++A) {
+      if (A != MI->arg_begin())
+        Result->AddTextChunk(", ");
+      
+      if (!MI->isVariadic() || A != AEnd - 1) {
+        // Non-variadic argument.
+        Result->AddPlaceholderChunk((*A)->getName().str().c_str());
+        continue;
+      }
+      
+      // Variadic argument; cope with the different between GNU and C99
+      // variadic macros, providing a single placeholder for the rest of the
+      // arguments.
+      if ((*A)->isStr("__VA_ARGS__"))
+        Result->AddPlaceholderChunk("...");
+      else {
+        std::string Arg = (*A)->getName();
+        Arg += "...";
+        Result->AddPlaceholderChunk(Arg.c_str());
+      }
+    }
+    Result->AddTextChunk(")");
+    return Result;
+  }
+  
+  assert(Kind == RK_Declaration && "Missed a macro kind?");
   NamedDecl *ND = Declaration;
   
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
@@ -999,12 +1037,26 @@ namespace {
           
         case Result::RK_Keyword:
           return strcmp(X.Keyword, Y.Keyword) < 0;
+          
+        case Result::RK_Macro:
+          return llvm::LowercaseString(X.Macro->getName()) < 
+                   llvm::LowercaseString(Y.Macro->getName());
       }
       
       // Silence GCC warning.
       return false;
     }
   };
+}
+
+// Add all of the known macros as code-completion results.
+static void AddMacroResults(Preprocessor &PP, unsigned Rank, 
+                            ResultBuilder &Results) {
+  Results.EnterNewScope();
+  for (Preprocessor::macro_iterator M = PP.macro_begin(), MEnd = PP.macro_end();
+       M != MEnd; ++M)
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(M->first, Rank));
+  Results.ExitScope();
 }
 
 static void HandleCodeCompleteResults(CodeCompleteConsumer *CodeCompleter,
@@ -1019,8 +1071,9 @@ static void HandleCodeCompleteResults(CodeCompleteConsumer *CodeCompleter,
 
 void Sema::CodeCompleteOrdinaryName(Scope *S) {
   ResultBuilder Results(*this, &ResultBuilder::IsOrdinaryName);
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, CurContext, 
-                       Results);
+  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
+                                           0, CurContext, Results);
+  AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1076,6 +1129,9 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
                            CurContext, Results);
     }
     
+    // Add macros
+    AddMacroResults(PP, NextRank, Results);
+    
     // Hand off the results found for code completion.
     HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
     
@@ -1117,10 +1173,11 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
     // We could have the start of a nested-name-specifier. Add those
     // results as well.
     Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-    CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank, 
-                         CurContext, Results);
+    NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
+                                    NextRank, CurContext, Results);
   }
   
+  AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1198,6 +1255,7 @@ void Sema::CodeCompleteCase(Scope *S) {
   }
   Results.ExitScope();
   
+  AddMacroResults(PP, 1, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1292,6 +1350,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
   if (!Results.empty() && NNS->isDependent())
     Results.MaybeAddResult(CodeCompleteConsumer::Result("template", NextRank));
   
+  AddMacroResults(PP, NextRank + 1, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1308,10 +1367,11 @@ void Sema::CodeCompleteUsing(Scope *S) {
   
   // After "using", we can see anything that would start a 
   // nested-name-specifier.
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, 
-                       CurContext, Results);
+  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
+                                           0, CurContext, Results);
   Results.ExitScope();
   
+  AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1323,9 +1383,10 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   // alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
   Results.EnterNewScope();
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, CurContext,
-                       Results);
+  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
+                                           0, CurContext, Results);
   Results.ExitScope();
+  AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1360,6 +1421,7 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     Results.ExitScope();
   }
   
+  AddMacroResults(PP, 1, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1369,8 +1431,9 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
   
   // After "namespace", we expect to see a namespace or alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, CurContext,
-                       Results);
+  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
+                                           0, CurContext, Results);
+  AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1397,10 +1460,11 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   
   // Add any nested-name-specifiers
   Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank + 1, 
-                       CurContext, Results);
+  NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
+                                  NextRank + 1, CurContext, Results);
   Results.ExitScope();
   
+  AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 

@@ -156,6 +156,17 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results,
     case Result::RK_Keyword:
       OS << Results[I].Keyword << " : " << Results[I].Rank << '\n';
       break;
+        
+    case Result::RK_Macro: {
+      OS << Results[I].Macro->getName() << " : " << Results[I].Rank;
+      if (CodeCompletionString *CCS 
+          = Results[I].CreateCodeCompletionString(SemaRef)) {
+        OS << " : " << CCS->getAsString();
+        delete CCS;
+      }
+      OS << '\n';
+      break;
+    }
     }
   }
   
