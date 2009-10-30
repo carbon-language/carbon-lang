@@ -1642,9 +1642,15 @@ MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
 /// MachineBasicBlock, an alignment (if present) and a comment describing
 /// it if appropriate.
 void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
+  // Emit an alignment directive for this block, if needed.
   if (unsigned Align = MBB->getAlignment())
     EmitAlignment(Log2_32(Align));
 
+  // If the block has its address taken, emit a special label to satisfy
+  // references to the block. This is done so that we don't need to
+  // remember the number of this label, and so that we can make
+  // forward references to labels without knowing what their numbers
+  // will be.
   if (MBB->hasAddressTaken()) {
     GetBlockAddressSymbol(MBB->getBasicBlock()->getParent(),
                           MBB->getBasicBlock())->print(O, MAI);
@@ -1656,6 +1662,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
     O << '\n';
   }
 
+  // Print the main label for the block.
   if (MBB->pred_empty() || MBB->isOnlyReachableByFallthrough()) {
     if (VerboseAsm)
       O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
@@ -1666,6 +1673,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       O << '\n';
   }
   
+  // Print some comments to accompany the label.
   if (VerboseAsm) {
     if (const BasicBlock *BB = MBB->getBasicBlock())
       if (BB->hasName()) {
