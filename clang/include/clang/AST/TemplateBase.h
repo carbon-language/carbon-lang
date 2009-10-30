@@ -254,8 +254,9 @@ private:
 
 public:
   TemplateArgumentLocInfo()
+    : Expression(0)
 #ifndef NDEBUG
-    : Kind(K_None) 
+      , Kind(K_None) 
 #endif
     {}
   
