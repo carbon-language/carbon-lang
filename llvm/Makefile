@@ -24,7 +24,6 @@ LEVEL := .
 # "llvmCore", then this is an "Apple-style" build; search for
 # "Apple-style" in the comments for more info.  Anything else is a
 # normal build.
-#ifneq ($(RC_ProjectName),llvmCore)  # Normal build (not "Apple-style").
 ifneq ($(findstring llvmCore, $(RC_ProjectName)),llvmCore)  # Normal build (not "Apple-style").
 
 ifeq ($(BUILD_DIRS_ONLY),1)
