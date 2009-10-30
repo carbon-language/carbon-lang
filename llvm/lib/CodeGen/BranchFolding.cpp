@@ -881,8 +881,9 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   
   // If this block is empty, make everyone use its fall-through, not the block
   // explicitly.  Landing pads should not do this since the landing-pad table
-  // points to this block.
-  if (MBB->empty() && !MBB->isLandingPad()) {
+  // points to this block.  Blocks with their addresses taken shouldn't be
+  // optimized away.
+  if (MBB->empty() && !MBB->isLandingPad() && !MBB->hasAddressTaken()) {
     // Dead block?  Leave for cleanup later.
     if (MBB->pred_empty()) return MadeChange;
     
