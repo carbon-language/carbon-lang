@@ -837,6 +837,8 @@ public:
                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
   unsigned CountSynthesizedIvars(const ObjCInterfaceDecl *OI);
   unsigned CountProtocolSynthesizedIvars(const ObjCProtocolDecl *PD);
+  void CollectInheritedProtocols(const Decl *CDecl,
+                          llvm::SmallVectorImpl<ObjCProtocolDecl*> &Protocols);
 
   //===--------------------------------------------------------------------===//
   //                            Type Operators
