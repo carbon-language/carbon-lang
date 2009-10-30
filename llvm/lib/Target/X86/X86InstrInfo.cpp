@@ -2621,7 +2621,8 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
 }
 
 unsigned X86InstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
-                                      bool UnfoldLoad, bool UnfoldStore) const {
+                                      bool UnfoldLoad, bool UnfoldStore,
+                                      unsigned *LoadRegIndex) const {
   DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
     MemOp2RegOpTable.find((unsigned*)Opc);
   if (I == MemOp2RegOpTable.end())
@@ -2632,6 +2633,8 @@ unsigned X86InstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
     return 0;
   if (UnfoldStore && !FoldedStore)
     return 0;
+  if (LoadRegIndex)
+    *LoadRegIndex = I->second.second & 0xf;
   return I->second.first;
 }
 

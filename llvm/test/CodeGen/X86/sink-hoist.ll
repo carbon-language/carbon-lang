@@ -120,3 +120,29 @@ return:                                           ; preds = %bb60
 declare <4 x float> @llvm.x86.sse.cmp.ps(<4 x float>, <4 x float>, i8) nounwind readnone
 
 declare <4 x float> @llvm.x86.sse2.cvtdq2ps(<4 x i32>) nounwind readnone
+
+; CodeGen should use the correct register class when extracting
+; a load from a zero-extending load for hoisting.
+
+; CHECK: default_get_pch_validity:
+; CHECK: movl cl_options_count(%rip), %ecx
+
+@cl_options_count = external constant i32         ; <i32*> [#uses=2]
+
+define void @default_get_pch_validity() nounwind {
+entry:
+  %tmp4 = load i32* @cl_options_count, align 4    ; <i32> [#uses=1]
+  %tmp5 = icmp eq i32 %tmp4, 0                    ; <i1> [#uses=1]
+  br i1 %tmp5, label %bb6, label %bb2
+
+bb2:                                              ; preds = %bb2, %entry
+  %i.019 = phi i64 [ 0, %entry ], [ %tmp25, %bb2 ] ; <i64> [#uses=1]
+  %tmp25 = add i64 %i.019, 1                      ; <i64> [#uses=2]
+  %tmp11 = load i32* @cl_options_count, align 4   ; <i32> [#uses=1]
+  %tmp12 = zext i32 %tmp11 to i64                 ; <i64> [#uses=1]
+  %tmp13 = icmp ugt i64 %tmp12, %tmp25            ; <i1> [#uses=1]
+  br i1 %tmp13, label %bb2, label %bb6
+
+bb6:                                              ; preds = %bb2, %entry
+  ret void
+}

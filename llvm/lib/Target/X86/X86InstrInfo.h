@@ -560,9 +560,12 @@ public:
   /// getOpcodeAfterMemoryUnfold - Returns the opcode of the would be new
   /// instruction after load / store are unfolded from an instruction of the
   /// specified opcode. It returns zero if the specified unfolding is not
-  /// possible.
+  /// possible. If LoadRegIndex is non-null, it is filled in with the operand
+  /// index of the operand which will hold the register holding the loaded
+  /// value.
   virtual unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
-                                      bool UnfoldLoad, bool UnfoldStore) const;
+                                      bool UnfoldLoad, bool UnfoldStore,
+                                      unsigned *LoadRegIndex = 0) const;
   
   virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   virtual
