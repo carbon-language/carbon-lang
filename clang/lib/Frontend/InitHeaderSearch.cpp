@@ -406,6 +406,17 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
         "i686-pc-linux-gnu",
         "i686-pc-linux-gnu",
         triple);
+    // Exherbo (2009-10-26)
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/include/c++/4.4.2",
+        "x86_64-pc-linux-gnu/32",
+        "x86_64-pc-linux-gnu",
+        triple);
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/include/c++/4.4.2",
+        "i686-pc-linux-gnu",
+        "i686-pc-linux-gnu",
+        triple);
     break;
   case llvm::Triple::FreeBSD:
     // DragonFly
