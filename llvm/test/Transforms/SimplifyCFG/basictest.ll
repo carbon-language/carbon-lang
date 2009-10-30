@@ -21,5 +21,10 @@ BB1:            ; preds = %0, %0
 }
 
 
-
-
+define void @test4() {
+entry:
+ br label %return
+return:
+ ret void
+}
+@test4g = global i8* blockaddress(@test4, %return)
