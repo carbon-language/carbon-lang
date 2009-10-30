@@ -84,8 +84,11 @@ DIDescriptor::getStringField(unsigned Elt) const {
     return NULL;
 
   if (Elt < DbgNode->getNumElements())
-    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt)))
+    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt))) {
+      if (MDS->getLength() == 0)
+        return NULL;
       return MDS->getString().data();
+    }
 
   return NULL;
 }
