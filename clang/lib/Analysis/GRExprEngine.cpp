@@ -1092,13 +1092,26 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
     // FIXME: Should we insert some assumption logic in here to determine
     // if "Base" is a valid piece of memory?  Before we put this assumption
     // later when using FieldOffset lvals (which we no longer have).
-    SVal L = state->getLValue(Field, state->getSVal(Base));
+    SVal BaseV = state->getSVal(Base);
+    
+    if (nonloc::LazyCompoundVal *LVC=dyn_cast<nonloc::LazyCompoundVal>(&BaseV)){
+      const LazyCompoundValData *D = LVC->getCVData();
+      const FieldRegion * FR =
+        getStateManager().getRegionManager().getFieldRegion(Field,
+                                                            D->getRegion());
 
-    if (asLValue)
-      MakeNode(Dst, M, *I, state->BindExpr(M, L),
-               ProgramPoint::PostLValueKind);
-    else
-      EvalLoad(Dst, M, *I, state, L);
+      SVal V = D->getState()->getSVal(loc::MemRegionVal(FR));
+      MakeNode(Dst, M, *I, state->BindExpr(M, V));
+    }
+    else {
+      SVal L = state->getLValue(Field, BaseV);
+
+      if (asLValue)
+        MakeNode(Dst, M, *I, state->BindExpr(M, L),
+                 ProgramPoint::PostLValueKind);
+      else
+        EvalLoad(Dst, M, *I, state, L);
+    }
   }
 }
 

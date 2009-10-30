@@ -415,3 +415,19 @@ int rdar7347252(rdar7347252_SSL1 *s) {
  }
  return 0;
 }
+
+//===----------------------------------------------------------------------===//
+// PR 5316 - "crash when accessing field of lazy compound value"
+//  Previously this caused a crash at the MemberExpr '.chr' when loading
+//  a field value from a LazyCompoundVal
+//===----------------------------------------------------------------------===//
+
+typedef unsigned int pr5316_wint_t;
+typedef pr5316_wint_t pr5316_REFRESH_CHAR;
+typedef struct {
+  pr5316_REFRESH_CHAR chr;
+}
+pr5316_REFRESH_ELEMENT;
+static void pr5316(pr5316_REFRESH_ELEMENT *dst, const pr5316_REFRESH_ELEMENT *src) {
+  while ((*dst++ = *src++).chr != L'\0')  ;
+}
