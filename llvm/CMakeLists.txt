@@ -322,6 +322,7 @@ endif ()
 install(DIRECTORY include/
   DESTINATION include
   FILES_MATCHING
+  PATTERN "*.def"
   PATTERN "*.h"
   PATTERN "*.td"
   PATTERN "*.inc"
