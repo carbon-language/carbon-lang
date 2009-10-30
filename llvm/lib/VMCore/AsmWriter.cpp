@@ -1859,8 +1859,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     // Special case indirectbr instruction to get formatting nice and correct.
     Out << ' ';
     writeOperand(Operand, true);
-    Out << ", ";
-    Out << " [";
+    Out << ", [";
     
     for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
       if (i != 1)
