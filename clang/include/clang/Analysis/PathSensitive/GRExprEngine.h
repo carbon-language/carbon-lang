@@ -76,7 +76,11 @@ class GRExprEngine : public GRSubEngine {
 
   llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
 
-  llvm::DenseMap<void *, Checker*> Checkers;
+  typedef llvm::DenseMap<void *, unsigned> CheckerMap;
+  CheckerMap CheckerM;
+  
+  typedef std::vector<std::pair<void *, Checker*> >CheckersOrdered;
+  CheckersOrdered Checkers;
 
   /// BR - The BugReporter associated with this engine.  It is important that
   //   this object be placed at the very end of member variables so that its
@@ -205,13 +209,18 @@ public:
   void RegisterInternalChecks();
 
   template <typename CHECKER>
-  void registerCheck(Checker *check) {
-    Checkers[CHECKER::getTag()] = check;
+  void registerCheck(CHECKER *check) {
+    unsigned entry = Checkers.size();
+    void *tag = CHECKER::getTag();
+    Checkers.push_back(std::make_pair(tag, check));
+    CheckerM[tag] = entry;
   }
+  
+  Checker *lookupChecker(void *tag) const;
 
   template <typename CHECKER>
-  CHECKER *getChecker() {
-     return static_cast<CHECKER*>(Checkers[CHECKER::getTag()]);
+  CHECKER *getChecker() const {
+     return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
   }
 
   bool isRetStackAddr(const ExplodedNode* N) const {

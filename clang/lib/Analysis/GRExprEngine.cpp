@@ -118,13 +118,11 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
 
-  for (llvm::DenseMap<void*, Checker*>::iterator I = Checkers.begin(), 
-         E = Checkers.end(); I != E; ++I) {
-
-    llvm::DenseMap<void*, Checker*>::iterator X = I;
-
-    ExplodedNodeSet *CurrSet = (++X == E) ? &Dst
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
+  {
+    ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst 
                                           : (PrevSet == &Tmp) ? &Src : &Tmp;
+
     CurrSet->clear();
     void *tag = I->first;
     Checker *checker = I->second;
@@ -146,7 +144,7 @@ ExplodedNode *GRExprEngine::CheckerVisitLocation(Stmt *S, ExplodedNode *Pred,
   if (Checkers.empty())
     return Pred;
 
-  for (llvm::DenseMap<void*, Checker*>::iterator I = Checkers.begin(), 
+  for (CheckersOrdered::iterator I = Checkers.begin(), 
          E = Checkers.end(); I != E; ++I) {
     Pred = I->second->CheckLocation(S, Pred, state, V, *this);
     if (!Pred)
@@ -184,8 +182,7 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr)
 GRExprEngine::~GRExprEngine() {
   BR.FlushReports();
   delete [] NSExceptionInstanceRaiseSelectors;
-  for (llvm::DenseMap<void*, Checker*>::iterator I=Checkers.begin(), 
-         E=Checkers.end(); I!=E; ++I)
+  for (CheckersOrdered::iterator I=Checkers.begin(), E=Checkers.end(); I!=E;++I)
     delete I->second;
 }
 
@@ -2858,6 +2855,15 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
       }
     }
   }
+}
+
+//===----------------------------------------------------------------------===//
+// Checker registration/lookup.
+//===----------------------------------------------------------------------===//
+
+Checker *GRExprEngine::lookupChecker(void *tag) const {
+  CheckerMap::iterator I = CheckerM.find(tag);
+  return (I == CheckerM.end()) ? NULL : Checkers[I->second].second;
 }
 
 //===----------------------------------------------------------------------===//
