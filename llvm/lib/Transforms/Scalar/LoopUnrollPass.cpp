@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "loop-unroll"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
