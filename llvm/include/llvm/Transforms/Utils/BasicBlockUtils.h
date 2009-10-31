@@ -116,8 +116,8 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
 /// split the critical edge.  This will update DominatorTree and
 /// DominatorFrontier information if it is available, thus calling this pass
-/// will not invalidate either of them. This returns true if the edge was split,
-/// false otherwise.  
+/// will not invalidate either of them. This returns the new block if the edge
+/// was split, null otherwise.
 ///
 /// If MergeIdenticalEdges is true (not the default), *all* edges from TI to the
 /// specified successor will be merged into the same critical edge block.  
@@ -126,10 +126,16 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// dest go to one block instead of each going to a different block, but isn't 
 /// the standard definition of a "critical edge".
 ///
+/// It is invalid to call this function on a critical edge that starts at an
+/// IndirectBrInst.  Splitting these edges will almost always create an invalid
+/// program because the addr of the new block won't be the one that is jumped
+/// to.
+///
 BasicBlock *SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
                               Pass *P = 0, bool MergeIdenticalEdges = false);
 
-inline BasicBlock *SplitCriticalEdge(BasicBlock *BB, succ_iterator SI, Pass *P = 0) {
+inline BasicBlock *SplitCriticalEdge(BasicBlock *BB, succ_iterator SI,
+                                     Pass *P = 0) {
   return SplitCriticalEdge(BB->getTerminator(), SI.getSuccessorIndex(), P);
 }
 

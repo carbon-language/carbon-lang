@@ -69,7 +69,7 @@ bool BreakCriticalEdges::runOnFunction(Function &F) {
   bool Changed = false;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     TerminatorInst *TI = I->getTerminator();
-    if (TI->getNumSuccessors() > 1)
+    if (TI->getNumSuccessors() > 1 && !isa<IndirectBrInst>(TI))
       for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
         if (SplitCriticalEdge(TI, i, this)) {
           ++NumBroken;
@@ -150,14 +150,29 @@ static void CreatePHIsForSplitLoopExit(SmallVectorImpl<BasicBlock *> &Preds,
 
 /// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
 /// split the critical edge.  This will update DominatorTree and
-/// DominatorFrontier  information if it is available, thus calling this pass
-/// will not invalidate  any of them.  This returns true if the edge was split,
-/// false otherwise.  This ensures that all edges to that dest go to one block
-/// instead of each going to a different block.
-//
+/// DominatorFrontier information if it is available, thus calling this pass
+/// will not invalidate either of them. This returns the new block if the edge
+/// was split, null otherwise.
+///
+/// If MergeIdenticalEdges is true (not the default), *all* edges from TI to the
+/// specified successor will be merged into the same critical edge block.  
+/// This is most commonly interesting with switch instructions, which may 
+/// have many edges to any one destination.  This ensures that all edges to that
+/// dest go to one block instead of each going to a different block, but isn't 
+/// the standard definition of a "critical edge".
+///
+/// It is invalid to call this function on a critical edge that starts at an
+/// IndirectBrInst.  Splitting these edges will almost always create an invalid
+/// program because the addr of the new block won't be the one that is jumped
+/// to.
+///
 BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
                                     Pass *P, bool MergeIdenticalEdges) {
   if (!isCriticalEdge(TI, SuccNum, MergeIdenticalEdges)) return 0;
+  
+  assert(!isa<IndirectBrInst>(TI) &&
+         "Cannot split critical edge from IndirectBrInst");
+  
   BasicBlock *TIBB = TI->getParent();
   BasicBlock *DestBB = TI->getSuccessor(SuccNum);
 
