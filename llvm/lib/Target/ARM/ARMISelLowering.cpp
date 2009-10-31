@@ -331,7 +331,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::MULHS, MVT::i32, Expand);
   }
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);
-  setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
+  setOperationAction(ISD::SRA_PARTS, MVT::i32, Custom);
   setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
   setOperationAction(ISD::SRL,       MVT::i64, Custom);
   setOperationAction(ISD::SRA,       MVT::i64, Custom);
@@ -2096,6 +2096,40 @@ static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vec);
 }
 
+/// LowerShiftRightParts - Lower SRA_PARTS, which returns two
+/// i32 values and take a 2 x i32 value to shift plus a shift amount.
+static SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG,
+                                   const ARMSubtarget *ST) {
+  assert(Op.getNumOperands() == 3 && "Not a double-shift!");
+  EVT VT = Op.getValueType();
+  unsigned VTBits = VT.getSizeInBits();
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue ShOpLo = Op.getOperand(0);
+  SDValue ShOpHi = Op.getOperand(1);
+  SDValue ShAmt  = Op.getOperand(2);
+  SDValue ARMCC;
+
+  assert(Op.getOpcode() == ISD::SRA_PARTS);
+  SDValue RevShAmt = DAG.getNode(ISD::SUB, dl, MVT::i32,
+                                 DAG.getConstant(VTBits, MVT::i32), ShAmt);
+  SDValue Tmp1 = DAG.getNode(ISD::SRL, dl, VT, ShOpLo, ShAmt);
+  SDValue ExtraShAmt = DAG.getNode(ISD::SUB, dl, MVT::i32, ShAmt,
+                                   DAG.getConstant(VTBits, MVT::i32));
+  SDValue Tmp2 = DAG.getNode(ISD::SHL, dl, VT, ShOpHi, RevShAmt);
+  SDValue FalseVal = DAG.getNode(ISD::OR, dl, VT, Tmp1, Tmp2);
+  SDValue TrueVal = DAG.getNode(ISD::SRA, dl, VT, ShOpHi, ExtraShAmt);
+
+  SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
+  SDValue Cmp = getARMCmp(ExtraShAmt, DAG.getConstant(0, MVT::i32), ISD::SETGE,
+                          ARMCC, DAG, ST->isThumb1Only(), dl);
+  SDValue Hi = DAG.getNode(ISD::SRA, dl, VT, ShOpHi, ShAmt);
+  SDValue Lo = DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMCC,
+                           CCR, Cmp);
+
+  SDValue Ops[2] = { Lo, Hi };
+  return DAG.getMergeValues(Ops, 2, dl);
+}
+
 /// LowerShiftLeftParts - Lower SHL_PARTS, which returns two
 /// i32 values and take a 2 x i32 value to shift plus a shift amount.
 static SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG,
@@ -2823,6 +2857,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SRL:
   case ISD::SRA:           return LowerShift(Op.getNode(), DAG, Subtarget);
   case ISD::SHL_PARTS:     return LowerShiftLeftParts(Op, DAG, Subtarget);
+  case ISD::SRA_PARTS:     return LowerShiftRightParts(Op, DAG, Subtarget);
   case ISD::VSETCC:        return LowerVSETCC(Op, DAG);
   case ISD::BUILD_VECTOR:  return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);

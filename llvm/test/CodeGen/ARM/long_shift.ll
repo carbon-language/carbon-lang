@@ -19,7 +19,7 @@ define i32 @f1(i64 %x, i64 %y) {
 
 define i32 @f2(i64 %x, i64 %y) {
 ; CHECK: f2
-; CHECK: __ashrdi3
+; CHECK: movge r0, r1, asr r2
 	%a = ashr i64 %x, %y
 	%b = trunc i64 %a to i32
 	ret i32 %b
