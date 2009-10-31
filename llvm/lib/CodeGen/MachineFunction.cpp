@@ -612,7 +612,8 @@ static bool CanShareConstantPoolEntry(Constant *A, Constant *B,
       if (AV->getType()->getNumElements() != BV->getType()->getNumElements())
         return false;
       for (unsigned i = 0, e = AV->getType()->getNumElements(); i != e; ++i)
-        if (!CanShareConstantPoolEntry(AV->getOperand(i), BV->getOperand(i), TD))
+        if (!CanShareConstantPoolEntry(AV->getOperand(i),
+                                       BV->getOperand(i), TD))
           return false;
       return true;
     }
