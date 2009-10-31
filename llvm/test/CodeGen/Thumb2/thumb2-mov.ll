@@ -164,3 +164,103 @@ define i32 @t2_const_var3_4_ok_1(i32 %lhs) {
     %ret = add i32 %lhs, 4026531840 ; 0xF0000000
     ret i32 %ret
 }
+
+define i32 @t2MOVTi16_ok_1(i32 %a) {
+; CHECK: t2MOVTi16_ok_1:
+; CHECK: movt r0, #1234
+    %1 = and i32 %a, 65535
+    %2 = shl i32 1234, 16
+    %3 = or  i32 %1, %2
+
+    ret i32 %3
+}
+
+define i32 @t2MOVTi16_test_1(i32 %a) {
+; CHECK: t2MOVTi16_test_1:
+; CHECK: movt r0, #1234
+    %1 = shl i32  255,   8
+    %2 = shl i32 1234,   8
+    %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
+    %4 = shl i32   %2,   8  ; This gives us (1234 << 16) in %4
+    %5 = and i32   %a,  %3
+    %6 = or  i32   %4,  %5
+
+    ret i32 %6
+}
+
+define i32 @t2MOVTi16_test_2(i32 %a) {
+; CHECK: t2MOVTi16_test_2:
+; CHECK: movt r0, #1234
+    %1 = shl i32  255,   8
+    %2 = shl i32 1234,   8
+    %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
+    %4 = shl i32   %2,   6
+    %5 = and i32   %a,  %3
+    %6 = shl i32   %4,   2  ; This gives us (1234 << 16) in %6
+    %7 = or  i32   %5,  %6
+
+    ret i32 %7
+}
+
+define i32 @t2MOVTi16_test_3(i32 %a) {
+; CHECK: t2MOVTi16_test_3:
+; CHECK: movt r0, #1234
+    %1 = shl i32  255,   8
+    %2 = shl i32 1234,   8
+    %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
+    %4 = shl i32   %2,   6
+    %5 = and i32   %a,  %3
+    %6 = shl i32   %4,   2  ; This gives us (1234 << 16) in %6
+    %7 = lshr i32  %6,   6
+    %8 = shl i32   %7,   6
+    %9 = or  i32   %5,  %8
+
+    ret i32 %8
+}
+
+; 171 = 0x000000ab
+define i32 @f1(i32 %a) {
+; CHECK: f1:
+; CHECK: movs r0, #171
+    %tmp = add i32 0, 171
+    ret i32 %tmp
+}
+
+; 1179666 = 0x00120012
+define i32 @f2(i32 %a) {
+; CHECK: f2:
+; CHECK: mov.w r0, #1179666
+    %tmp = add i32 0, 1179666
+    ret i32 %tmp
+}
+
+; 872428544 = 0x34003400
+define i32 @f3(i32 %a) {
+; CHECK: f3:
+; CHECK: mov.w r0, #872428544
+    %tmp = add i32 0, 872428544
+    ret i32 %tmp
+}
+
+; 1448498774 = 0x56565656
+define i32 @f4(i32 %a) {
+; CHECK: f4:
+; CHECK: mov.w r0, #1448498774
+    %tmp = add i32 0, 1448498774
+    ret i32 %tmp
+}
+
+; 66846720 = 0x03fc0000
+define i32 @f5(i32 %a) {
+; CHECK: f5:
+; CHECK: mov.w r0, #66846720
+    %tmp = add i32 0, 66846720
+    ret i32 %tmp
+}
+
+define i32 @f6(i32 %a) {
+;CHECK: f6
+;CHECK: movw    r0, #65535
+    %tmp = add i32 0, 65535
+    ret i32 %tmp
+}
