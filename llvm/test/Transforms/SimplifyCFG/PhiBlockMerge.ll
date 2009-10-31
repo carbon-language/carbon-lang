@@ -9,6 +9,7 @@ define i32 @test(i1 %a, i1 %b) {
 O:              ; preds = %0
         br i1 %b, label %N, label %Q
 Q:              ; preds = %O
+        call void @foo()
         br label %N
 N:              ; preds = %Q, %O
         ; This block should be foldable into M
@@ -20,3 +21,4 @@ M:              ; preds = %N, %0
         ret i32 %R
 }
 
+declare void @foo()

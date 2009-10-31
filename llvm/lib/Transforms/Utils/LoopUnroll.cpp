@@ -49,52 +49,6 @@ static inline void RemapInstruction(Instruction *I,
   }
 }
 
-/// FoldBlockIntoPredecessor - Folds a basic block into its predecessor if it
-/// only has one predecessor, and that predecessor only has one successor.
-/// The LoopInfo Analysis that is passed will be kept consistent.
-/// Returns the new combined block.
-static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
-  // Merge basic blocks into their predecessor if there is only one distinct
-  // pred, and if there is only one distinct successor of the predecessor, and
-  // if there are no PHI nodes.
-  BasicBlock *OnlyPred = BB->getSinglePredecessor();
-  if (!OnlyPred) return 0;
-
-  if (OnlyPred->getTerminator()->getNumSuccessors() != 1)
-    return 0;
-
-  DEBUG(errs() << "Merging: " << *BB << "into: " << *OnlyPred);
-
-  // Resolve any PHI nodes at the start of the block.  They are all
-  // guaranteed to have exactly one entry if they exist, unless there are
-  // multiple duplicate (but guaranteed to be equal) entries for the
-  // incoming edges.  This occurs when there are multiple edges from
-  // OnlyPred to OnlySucc.
-  FoldSingleEntryPHINodes(BB);
-
-  // Delete the unconditional branch from the predecessor...
-  OnlyPred->getInstList().pop_back();
-
-  // Move all definitions in the successor to the predecessor...
-  OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
-
-  // Make all PHI nodes that referred to BB now refer to Pred as their
-  // source...
-  BB->replaceAllUsesWith(OnlyPred);
-
-  std::string OldName = BB->getName();
-
-  // Erase basic block from the function...
-  LI->removeBlock(BB);
-  BB->eraseFromParent();
-
-  // Inherit predecessor's name if it exists...
-  if (!OldName.empty() && !OnlyPred->hasName())
-    OnlyPred->setName(OldName);
-
-  return OnlyPred;
-}
-
 /// Unroll the given loop by Count. The loop must be in LCSSA form. Returns true
 /// if unrolling was succesful, or false if the loop was unmodified. Unrolling
 /// can only fail when the loop's latch block is not terminated by a conditional
@@ -333,7 +287,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
     } else {
       Term->setUnconditionalDest(Dest);
       // Merge adjacent basic blocks, if possible.
-      if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI)) {
+      if (BasicBlock *Fold = MergeBlockIntoPredecessor(Dest, LI)) {
         std::replace(Latches.begin(), Latches.end(), Dest, Fold);
         std::replace(Headers.begin(), Headers.end(), Dest, Fold);
       }
