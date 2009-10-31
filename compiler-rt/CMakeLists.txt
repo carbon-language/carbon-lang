@@ -49,6 +49,6 @@ ENDIF( BUILD_BLOCKS_RUNTIME )
  
 ADD_SUBDIRECTORY( lib )
 
-# Tests are being ignored for until the very basics are working.
+# Enable Test Suit:
 INCLUDE( MacroAddCheckTest )
 ADD_SUBDIRECTORY( test )
