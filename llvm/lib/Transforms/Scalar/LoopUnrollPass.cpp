@@ -16,6 +16,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/InlineCost.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -76,37 +77,11 @@ Pass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L) {
-  unsigned Size = 0;
+  CodeMetrics Metrics;
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I) {
-    BasicBlock *BB = *I;
-    Instruction *Term = BB->getTerminator();
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      if (isa<PHINode>(I) && BB == L->getHeader()) {
-        // Ignore PHI nodes in the header.
-      } else if (I->hasOneUse() && I->use_back() == Term) {
-        // Ignore instructions only used by the loop terminator.
-      } else if (isa<DbgInfoIntrinsic>(I)) {
-        // Ignore debug instructions
-      } else if (isa<GetElementPtrInst>(I) && I->hasOneUse()) {
-        // Ignore GEP as they generally are subsumed into a load or store.
-      } else if (isa<CallInst>(I)) {
-        // Estimate size overhead introduced by call instructions which
-        // is higher than other instructions. Here 3 and 10 are magic
-        // numbers that help one isolated test case from PR2067 without
-        // negatively impacting measured benchmarks.
-        Size += isa<IntrinsicInst>(I) ? 3 : 10;
-      } else {
-        ++Size;
-      }
-
-      // TODO: Ignore expressions derived from PHI and constants if inval of phi
-      // is a constant, or if operation is associative.  This will get induction
-      // variables.
-    }
-  }
-
-  return Size;
+       I != E; ++I)
+    Metrics.analyzeBasicBlock(*I);
+  return Metrics.NumInsts;
 }
 
 bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
