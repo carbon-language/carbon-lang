@@ -16,6 +16,7 @@
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/PathSensitive/Checkers/NullDerefChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/UndefDerefChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -130,20 +131,6 @@ public:
                                const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
-  }
-};
-
-
-
-class VISIBILITY_HIDDEN UndefinedDeref : public BuiltinBug {
-public:
-  UndefinedDeref() 
-    : BuiltinBug(0, "Dereference of undefined pointer value") {}
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, GetDerefExpr(N), N);
   }
 };
 
@@ -753,41 +740,6 @@ void CheckDivZero::PreVisitBinaryOperator(CheckerContext &C,
     C.addTransition(C.GenerateNode(B, stateNotZero));
 }
 
-class VISIBILITY_HIDDEN CheckUndefDeref : public Checker {
-  UndefinedDeref *BT;
-public:
-  CheckUndefDeref() : BT(0) {}
-
-  ExplodedNode *CheckLocation(const Stmt *S, ExplodedNode *Pred,
-                          const GRState *state, SVal V, GRExprEngine &Eng);
-
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-};
-
-ExplodedNode *CheckUndefDeref::CheckLocation(const Stmt *S, ExplodedNode *Pred,
-                                         const GRState *state, SVal V,
-                                         GRExprEngine &Eng) {
-  GRStmtNodeBuilder &Builder = Eng.getBuilder();
-  BugReporter &BR = Eng.getBugReporter();
-
-  if (V.isUndef()) {
-    ExplodedNode *N = Builder.generateNode(S, state, Pred, 
-                               ProgramPoint::PostUndefLocationCheckFailedKind);
-    if (N) {
-      if (!BT)
-        BT = new UndefinedDeref();
-
-      N->markAsSink();
-      BR.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
-    }
-    return 0;
-  }
-
-  return Pred;
-}
 
 } // end clang namespace
 
@@ -821,6 +773,6 @@ void GRExprEngine::RegisterInternalChecks() {
   registerCheck<CheckUndefinedArg>(new CheckUndefinedArg());
   registerCheck<CheckBadCall>(new CheckBadCall());
   registerCheck<CheckDivZero>(new CheckDivZero());
-  registerCheck<CheckUndefDeref>(new CheckUndefDeref());
+  registerCheck<UndefDerefChecker>(new UndefDerefChecker());
   registerCheck<NullDerefChecker>(new NullDerefChecker());
 }
