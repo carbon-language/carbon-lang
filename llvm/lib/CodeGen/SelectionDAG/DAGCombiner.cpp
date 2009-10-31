@@ -5730,9 +5730,9 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
 
       // If this is an EXTLOAD, the VT's must match.
       if (LLD->getMemoryVT() == RLD->getMemoryVT()) {
-        // FIXME: this conflates two src values, discarding one.  This is not
-        // the right thing to do, but nothing uses srcvalues now.  When they do,
-        // turn SrcValue into a list of locations.
+        // FIXME: this discards src value information.  This is
+        // over-conservative. It would be beneficial to be able to remember
+        // both potential memory locations.
         SDValue Addr;
         if (TheSelect->getOpcode() == ISD::SELECT) {
           // Check that the condition doesn't reach either load.  If so, folding
@@ -5770,16 +5770,14 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
             Load = DAG.getLoad(TheSelect->getValueType(0),
                                TheSelect->getDebugLoc(),
                                LLD->getChain(),
-                               Addr,LLD->getSrcValue(),
-                               LLD->getSrcValueOffset(),
+                               Addr, 0, 0,
                                LLD->isVolatile(),
                                LLD->getAlignment());
           } else {
             Load = DAG.getExtLoad(LLD->getExtensionType(),
                                   TheSelect->getDebugLoc(),
                                   TheSelect->getValueType(0),
-                                  LLD->getChain(), Addr, LLD->getSrcValue(),
-                                  LLD->getSrcValueOffset(),
+                                  LLD->getChain(), Addr, 0, 0,
                                   LLD->getMemoryVT(),
                                   LLD->isVolatile(),
                                   LLD->getAlignment());
