@@ -5754,9 +5754,9 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
     if (G && R->getReg() &&
         TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
-      OS << " " << G->getTarget().getRegisterInfo()->getName(R->getReg());
+      OS << " %" << G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
-      OS << " #" << R->getReg();
+      OS << " %reg" << R->getReg();
     }
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {

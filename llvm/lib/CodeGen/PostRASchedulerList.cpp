@@ -258,7 +258,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       if (bbcnt++ % DebugDiv != DebugMod)
         continue;
       errs() << "*** DEBUG scheduling " << Fn.getFunction()->getNameStr() <<
-        ":MBB ID#" << MBB->getNumber() << " ***\n";
+        ":BB#" << MBB->getNumber() << " ***\n";
     }
 #endif
 
@@ -453,7 +453,7 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
 /// incorrect by instruction reordering.
 ///
 void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
-  DEBUG(errs() << "Fixup kills for BB ID#" << MBB->getNumber() << '\n');
+  DEBUG(errs() << "Fixup kills for BB#" << MBB->getNumber() << '\n');
 
   std::set<unsigned> killedRegs;
   BitVector ReservedRegs = TRI->getReservedRegs(MF);
