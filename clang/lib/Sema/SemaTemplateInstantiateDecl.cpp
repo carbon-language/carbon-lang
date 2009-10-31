@@ -409,6 +409,9 @@ namespace {
 }
 
 Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
+  // Create a local instantiation scope for this class template, which
+  // will contain the instantiations of the template parameters.
+  Sema::LocalInstantiationScope Scope(SemaRef);
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams)
@@ -491,8 +494,12 @@ TemplateDeclInstantiator::VisitClassTemplatePartialSpecializationDecl(
 
 Decl *
 TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
-  // FIXME: Dig out the out-of-line definition of this function template?
-
+  // Create a local instantiation scope for this function template, which
+  // will contain the instantiations of the template parameters and then get
+  // merged with the local instantiation scope for the function template 
+  // itself.
+  Sema::LocalInstantiationScope Scope(SemaRef);
+  
   TemplateParameterList *TempParams = D->getTemplateParameters();
   TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
   if (!InstParams)
@@ -582,7 +589,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
       return Info->Function;
   }
 
-  Sema::LocalInstantiationScope Scope(SemaRef);
+  Sema::LocalInstantiationScope Scope(SemaRef, TemplateParams != 0);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = SubstFunctionType(D, Params);
@@ -711,7 +718,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       return Info->Function;
   }
 
-  Sema::LocalInstantiationScope Scope(SemaRef);
+  Sema::LocalInstantiationScope Scope(SemaRef, TemplateParams != 0);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = SubstFunctionType(D, Params);
@@ -886,7 +893,7 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
 
   TemplateTypeParmDecl *Inst =
     TemplateTypeParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                 TTPT->getDepth(), TTPT->getIndex(),
+                                 TTPT->getDepth() - 1, TTPT->getIndex(),
                                  TTPT->getName(),
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
@@ -904,6 +911,10 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                              D->defaultArgumentWasInherited() /* preserve? */);
   }
 
+  // Introduce this template parameter's instantiation into the instantiation 
+  // scope.
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Inst);
+  
   return Inst;
 }
 
@@ -940,6 +951,10 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
     Param->setInvalidDecl();
   
   Param->setDefaultArgument(D->getDefaultArgument());
+  
+  // Introduce this template parameter's instantiation into the instantiation 
+  // scope.
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
   return Param;
 }
 
@@ -1024,6 +1039,11 @@ bool
 TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                             ClassTemplateDecl *ClassTemplate,
                           ClassTemplatePartialSpecializationDecl *PartialSpec) {
+  // Create a local instantiation scope for this class template partial
+  // specialization, which will contain the instantiations of the template
+  // parameters.
+  Sema::LocalInstantiationScope Scope(SemaRef);
+  
   // Substitute into the template parameters of the class template partial
   // specialization.
   TemplateParameterList *TempParams = PartialSpec->getTemplateParameters();
@@ -1773,7 +1793,9 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
   }
 
   DeclContext *ParentDC = D->getDeclContext();
-  if (isa<ParmVarDecl>(D) || ParentDC->isFunctionOrMethod()) {
+  if (isa<ParmVarDecl>(D) || isa<NonTypeTemplateParmDecl>(D) ||
+      isa<TemplateTypeParmDecl>(D) || isa<TemplateTypeParmDecl>(D) ||
+      ParentDC->isFunctionOrMethod()) {
     // D is a local of some kind. Look into the map of local
     // declarations to their instantiations.
     return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));

@@ -562,58 +562,59 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   // FIXME: Clean this up a bit
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
-    if (NTTP->getDepth() >= TemplateArgs.getNumLevels()) {
-      assert(false && "Cannot reduce non-type template parameter depth yet");
-      return getSema().ExprError();
-    }
+    if (NTTP->getDepth() < TemplateArgs.getNumLevels()) {
+      
+      // If the corresponding template argument is NULL or non-existent, it's
+      // because we are performing instantiation from explicitly-specified
+      // template arguments in a function template, but there were some
+      // arguments left unspecified.
+      if (!TemplateArgs.hasTemplateArgument(NTTP->getDepth(),
+                                            NTTP->getPosition()))
+        return SemaRef.Owned(E->Retain());
 
-    // If the corresponding template argument is NULL or non-existent, it's
-    // because we are performing instantiation from explicitly-specified
-    // template arguments in a function template, but there were some
-    // arguments left unspecified.
-    if (!TemplateArgs.hasTemplateArgument(NTTP->getDepth(),
-                                          NTTP->getPosition()))
-      return SemaRef.Owned(E->Retain());
+      const TemplateArgument &Arg = TemplateArgs(NTTP->getDepth(),
+                                                 NTTP->getPosition());
 
-    const TemplateArgument &Arg = TemplateArgs(NTTP->getDepth(),
-                                               NTTP->getPosition());
+      // The template argument itself might be an expression, in which
+      // case we just return that expression.
+      if (Arg.getKind() == TemplateArgument::Expression)
+        return SemaRef.Owned(Arg.getAsExpr()->Retain());
 
-    // The template argument itself might be an expression, in which
-    // case we just return that expression.
-    if (Arg.getKind() == TemplateArgument::Expression)
-      return SemaRef.Owned(Arg.getAsExpr()->Retain());
+      if (Arg.getKind() == TemplateArgument::Declaration) {
+        ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
 
-    if (Arg.getKind() == TemplateArgument::Declaration) {
-      ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
+        VD = cast_or_null<ValueDecl>(
+                                getSema().FindInstantiatedDecl(VD, TemplateArgs));
+        if (!VD)
+          return SemaRef.ExprError();
 
-      VD = cast_or_null<ValueDecl>(
-                              getSema().FindInstantiatedDecl(VD, TemplateArgs));
-      if (!VD)
-        return SemaRef.ExprError();
+        return SemaRef.BuildDeclRefExpr(VD, VD->getType(), E->getLocation(),
+                                        /*FIXME:*/false, /*FIXME:*/false);
+      }
 
-      return SemaRef.BuildDeclRefExpr(VD, VD->getType(), E->getLocation(),
-                                      /*FIXME:*/false, /*FIXME:*/false);
-    }
-
-    assert(Arg.getKind() == TemplateArgument::Integral);
-    QualType T = Arg.getIntegralType();
-    if (T->isCharType() || T->isWideCharType())
-      return SemaRef.Owned(new (SemaRef.Context) CharacterLiteral(
-                                            Arg.getAsIntegral()->getZExtValue(),
-                                            T->isWideCharType(),
-                                            T,
-                                            E->getSourceRange().getBegin()));
-    if (T->isBooleanType())
-      return SemaRef.Owned(new (SemaRef.Context) CXXBoolLiteralExpr(
-                                          Arg.getAsIntegral()->getBoolValue(),
-                                          T,
-                                          E->getSourceRange().getBegin()));
-
-    assert(Arg.getAsIntegral()->getBitWidth() == SemaRef.Context.getIntWidth(T));
-    return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
-                                              *Arg.getAsIntegral(),
+      assert(Arg.getKind() == TemplateArgument::Integral);
+      QualType T = Arg.getIntegralType();
+      if (T->isCharType() || T->isWideCharType())
+        return SemaRef.Owned(new (SemaRef.Context) CharacterLiteral(
+                                              Arg.getAsIntegral()->getZExtValue(),
+                                              T->isWideCharType(),
                                               T,
                                               E->getSourceRange().getBegin()));
+      if (T->isBooleanType())
+        return SemaRef.Owned(new (SemaRef.Context) CXXBoolLiteralExpr(
+                                            Arg.getAsIntegral()->getBoolValue(),
+                                            T,
+                                            E->getSourceRange().getBegin()));
+
+      assert(Arg.getAsIntegral()->getBitWidth() == SemaRef.Context.getIntWidth(T));
+      return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
+                                                *Arg.getAsIntegral(),
+                                                T,
+                                                E->getSourceRange().getBegin()));
+    }
+    
+    // We have a non-type template parameter that isn't fully substituted;
+    // FindInstantiatedDecl will find it in the local instantiation scope.
   }
 
   NamedDecl *InstD = SemaRef.FindInstantiatedDecl(D, TemplateArgs);

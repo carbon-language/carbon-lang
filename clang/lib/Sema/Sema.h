@@ -3117,7 +3117,7 @@ public:
     llvm::DenseMap<const Decl *, Decl *> LocalDecls;
 
     /// \brief The outer scope, in which contains local variable
-    /// definitions from some other instantiation (that is not
+    /// definitions from some other instantiation (that may not be
     /// relevant to this particular scope).
     LocalInstantiationScope *Outer;
 
@@ -3126,9 +3126,13 @@ public:
     LocalInstantiationScope &operator=(const LocalInstantiationScope &);
 
   public:
-    LocalInstantiationScope(Sema &SemaRef)
+    LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
       : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope) {
-      SemaRef.CurrentInstantiationScope = this;
+      if (!CombineWithOuterScope)
+        SemaRef.CurrentInstantiationScope = this;
+      else
+        assert(SemaRef.CurrentInstantiationScope && 
+               "No outer instantiation scope?");
     }
 
     ~LocalInstantiationScope() {
@@ -3149,6 +3153,11 @@ public:
       return cast<ParmVarDecl>(getInstantiationOf(cast<Decl>(Var)));
     }
 
+    NonTypeTemplateParmDecl *getInstantiationOf(
+                                          const NonTypeTemplateParmDecl *Var) {
+      return cast<NonTypeTemplateParmDecl>(getInstantiationOf(cast<Decl>(Var)));
+    }
+    
     void InstantiatedLocal(const Decl *D, Decl *Inst) {
       Decl *&Stored = LocalDecls[D];
       assert(!Stored && "Already instantiated this local");

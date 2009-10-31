@@ -75,3 +75,21 @@ void test_X1(X1 x1) {
   float* (*fp7)(int) = X1::f2<>;
   float* (*fp8)(float) = X1::f2<float>;  
 }
+
+template<int A> struct X2 { 
+  int m;
+};
+
+template<typename T>
+struct X3 : T { };
+
+template<typename T>
+struct X4 {
+  template<typename U>
+  void f(X2<sizeof(X3<U>().U::m)>);
+};
+
+void f(X4<X3<int> > x4i) {
+  X2<sizeof(int)> x2;
+  x4i.f<X2<sizeof(int)> >(x2);
+}
