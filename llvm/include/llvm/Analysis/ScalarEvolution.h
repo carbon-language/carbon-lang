@@ -563,11 +563,10 @@ namespace llvm {
     /// has an analyzable loop-invariant backedge-taken count.
     bool hasLoopInvariantBackedgeTakenCount(const Loop *L);
 
-    /// forgetLoopBackedgeTakenCount - This method should be called by the
-    /// client when it has changed a loop in a way that may effect
-    /// ScalarEvolution's ability to compute a trip count, or if the loop
-    /// is deleted.
-    void forgetLoopBackedgeTakenCount(const Loop *L);
+    /// forgetLoop - This method should be called by the client when it has
+    /// changed a loop in a way that may effect ScalarEvolution's ability to
+    /// compute a trip count, or if the loop is deleted.
+    void forgetLoop(const Loop *L);
 
     /// GetMinTrailingZeros - Determine the minimum number of zero bits that S
     /// is guaranteed to end in (at every loop iteration).  It is, at the same

@@ -161,7 +161,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // Tell ScalarEvolution that the loop is deleted. Do this before
   // deleting the loop so that ScalarEvolution can look at the loop
   // to determine what it needs to clean up.
-  SE.forgetLoopBackedgeTakenCount(L);
+  SE.forgetLoop(L);
 
   // Connect the preheader directly to the exit block.
   TerminatorInst* TI = preheader->getTerminator();

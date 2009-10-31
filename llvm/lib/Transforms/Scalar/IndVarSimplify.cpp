@@ -322,7 +322,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
   // may not have been able to compute a trip count. Now that we've done some
   // re-writing, the trip count may be computable.
   if (Changed)
-    SE->forgetLoopBackedgeTakenCount(L);
+    SE->forgetLoop(L);
 }
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {

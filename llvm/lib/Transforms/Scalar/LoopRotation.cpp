@@ -157,7 +157,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // Anything ScalarEvolution may know about this loop or the PHI nodes
   // in its header will soon be invalidated.
   if (ScalarEvolution *SE = getAnalysisIfAvailable<ScalarEvolution>())
-    SE->forgetLoopBackedgeTakenCount(L);
+    SE->forgetLoop(L);
 
   // Find new Loop header. NewHeader is a Header's one and only successor
   // that is inside loop.  Header's other successor is outside the
