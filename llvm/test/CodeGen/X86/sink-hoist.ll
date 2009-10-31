@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -asm-verbose=false | FileCheck %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false -mtriple=x86_64-unknown-linux-gnu | FileCheck %s
 
 ; Currently, floating-point selects are lowered to CFG triangles.
 ; This means that one side of the select is always unconditionally
