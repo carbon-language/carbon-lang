@@ -17,7 +17,7 @@ add_llvm_library(LLVMScalarOpts
   LoopIndexSplit.cpp
   LoopRotation.cpp
   LoopStrengthReduce.cpp
-  LoopUnroll.cpp
+  LoopUnrollPass.cpp
   LoopUnswitch.cpp
   MemCpyOptimizer.cpp
   Reassociate.cpp

@@ -21,7 +21,7 @@ add_llvm_library(LLVMTransformUtils
   SSI.cpp
   SimplifyCFG.cpp
   UnifyFunctionExitNodes.cpp
-  UnrollLoop.cpp
+  LoopUnroll.cpp
   ValueMapper.cpp
   )
 
