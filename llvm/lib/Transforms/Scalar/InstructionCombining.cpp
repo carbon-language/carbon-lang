@@ -10998,6 +10998,10 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
         PN.setIncomingValue(i, VB);
         PN.setIncomingBlock(j, BBA);
         PN.setIncomingValue(j, VA);
+        // NOTE: Instcombine normally would want us to "return &PN" if we
+        // modified any of the operands of an instruction.  However, since we
+        // aren't adding or removing uses (just rearranging them) we don't do
+        // this in this case.
       }
     }
 
