@@ -1810,7 +1810,7 @@ bool GVN::processBlock(BasicBlock *BB) {
 
 /// performPRE - Perform a purely local form of PRE that looks for diamond
 /// control flow patterns and attempts to perform simple PRE at the join point.
-bool GVN::performPRE(Function& F) {
+bool GVN::performPRE(Function &F) {
   bool Changed = false;
   SmallVector<std::pair<TerminatorInst*, unsigned>, 4> toSplit;
   DenseMap<BasicBlock*, Value*> predMap;
@@ -1874,6 +1874,10 @@ bool GVN::performPRE(Function& F) {
       // Don't do PRE when it might increase code size, i.e. when
       // we would need to insert instructions in more than one pred.
       if (NumWithout != 1 || NumWith == 0)
+        continue;
+      
+      // Don't do PRE across indirect branch.
+      if (isa<IndirectBrInst>(PREPred->getTerminator()))
         continue;
 
       // We can't do PRE safely on a critical edge, so instead we schedule
