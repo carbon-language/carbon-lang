@@ -39,8 +39,6 @@ static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
     cl::desc("Dump emitter generated instructions as assembly"));
 static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
     cl::desc("Dump garbage collector data"));
-static cl::opt<bool> HoistConstants("hoist-constants", cl::Hidden,
-    cl::desc("Hoist constants out of loops"));
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
@@ -255,11 +253,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (OptLevel != CodeGenOpt::None) {
-    if (HoistConstants)
-      PM.add(createCodeGenLICMPass());
+  if (OptLevel != CodeGenOpt::None)
     PM.add(createCodeGenPreparePass(getTargetLowering()));
-  }
 
   PM.add(createStackProtectorPass(getTargetLowering()));
 

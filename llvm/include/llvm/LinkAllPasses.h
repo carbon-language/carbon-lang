@@ -123,7 +123,6 @@ namespace {
       (void) llvm::createNullProfilerRSPass();
       (void) llvm::createRSProfilingPass();
       (void) llvm::createInstCountPass();
-      (void) llvm::createCodeGenLICMPass();
       (void) llvm::createCodeGenPreparePass();
       (void) llvm::createGVNPass();
       (void) llvm::createMemCpyOptPass();
