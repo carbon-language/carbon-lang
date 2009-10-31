@@ -53,9 +53,9 @@ struct D {
 };
 
 void f4() {
-  // CHECK call void @_ZN1DC1Ev
-  // CHECK call void @_ZN1DD1Ev
-  // CHECK call void @_ZN1DD1Ev
+  // CHECK: call void @_ZN1DC1Ev
+  // CHECK: call void @_ZN1DD1Ev
+  // CHECK: call void @_ZN1DD1Ev
   D()();
 }
 
