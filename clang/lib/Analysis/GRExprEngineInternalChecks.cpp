@@ -17,6 +17,7 @@
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/PathSensitive/Checkers/NullDerefChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefDerefChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/DivZeroChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -131,18 +132,6 @@ public:
                                const ExplodedNode* N,
                                BuiltinBugReport *R) {
     registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
-  }
-};
-
-class VISIBILITY_HIDDEN DivZero : public BuiltinBug {
-public:
-  DivZero(GRExprEngine* eng = 0)
-    : BuiltinBug(eng,"Division by zero") {}
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, GetDenomExpr(N), N);
   }
 };
 
@@ -684,63 +673,6 @@ void CheckBadCall::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
-class VISIBILITY_HIDDEN CheckDivZero : public CheckerVisitor<CheckDivZero> {
-  DivZero *BT;
-public:
-  CheckDivZero() : BT(0) {}
-  ~CheckDivZero() {}
-
-  static void *getTag() {
-    static int x;
-    return &x;
-  }
-
-  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
-};
-
-void CheckDivZero::PreVisitBinaryOperator(CheckerContext &C,
-                                          const BinaryOperator *B) {
-  BinaryOperator::Opcode Op = B->getOpcode();
-  if (Op != BinaryOperator::Div &&
-      Op != BinaryOperator::Rem &&
-      Op != BinaryOperator::DivAssign &&
-      Op != BinaryOperator::RemAssign)
-    return;
-
-  if (!B->getRHS()->getType()->isIntegerType() ||
-      !B->getRHS()->getType()->isScalarType())
-    return;
-
-  SVal Denom = C.getState()->getSVal(B->getRHS());
-  const DefinedSVal *DV = dyn_cast<DefinedSVal>(&Denom);
-
-  // Divide-by-undefined handled in the generic checking for uses of
-  // undefined values.
-  if (!DV)
-    return;
-
-  // Check for divide by zero.
-  ConstraintManager &CM = C.getConstraintManager();
-  const GRState *stateNotZero, *stateZero;
-  llvm::tie(stateNotZero, stateZero) = CM.AssumeDual(C.getState(), *DV);
-
-  if (stateZero && !stateNotZero) {
-    if (ExplodedNode *N = C.GenerateNode(B, stateZero, true)) {
-      if (!BT)
-        BT = new DivZero();
-
-      C.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
-    }
-    return;
-  }
-
-  // If we get here, then the denom should not be zero. We abandon the implicit
-  // zero denom case for now.
-  if (stateNotZero != C.getState())
-    C.addTransition(C.GenerateNode(B, stateNotZero));
-}
-
-
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//
@@ -772,7 +704,7 @@ void GRExprEngine::RegisterInternalChecks() {
   registerCheck<CheckAttrNonNull>(new CheckAttrNonNull());
   registerCheck<CheckUndefinedArg>(new CheckUndefinedArg());
   registerCheck<CheckBadCall>(new CheckBadCall());
-  registerCheck<CheckDivZero>(new CheckDivZero());
+  registerCheck<DivZeroChecker>(new DivZeroChecker());
   registerCheck<UndefDerefChecker>(new UndefDerefChecker());
   registerCheck<NullDerefChecker>(new NullDerefChecker());
 }
