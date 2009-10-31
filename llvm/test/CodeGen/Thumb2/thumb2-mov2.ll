@@ -55,10 +55,10 @@ define i32 @t2MOVTi16_test_3(i32 %a) {
 
 define i32 @t2MOVTi16_test_nomatch_1(i32 %a) {
 ; CHECK: t2MOVTi16_test_nomatch_1:
-; CHECK:      #8388608
+; CHECK:      orr     r0, r0, #8388608
 ; CHECK:      movw r1, #65535
 ; CHECK-NEXT: movt r1, #154
-; CHECK:      #1720320
+; CHECK:      orr     r0, r0, #1720320
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
