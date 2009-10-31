@@ -2345,8 +2345,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         Value *Val = getVal(Values, IBI->getAddress())->stripPointerCasts();
         if (BlockAddress *BA = dyn_cast<BlockAddress>(Val))
           NewBB = BA->getBasicBlock();
-        else
-          return false;  // Cannot determine.
+        if (NewBB == 0) return false;  // Cannot determine.
       } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
         if (RI->getNumOperands())
           RetVal = getVal(Values, RI->getOperand(0));
