@@ -19,6 +19,7 @@ add_clang_library(clangAnalysis
   CheckObjCInstMethSignature.cpp
   CheckObjCUnusedIVars.cpp
   CheckSecuritySyntaxOnly.cpp
+  DivZeroChecker.cpp
   Environment.cpp
   ExplodedGraph.cpp
   GRBlockCounter.cpp
@@ -38,6 +39,7 @@ add_clang_library(clangAnalysis
   SimpleSValuator.cpp
   Store.cpp
   SymbolManager.cpp
+  UndefDerefChecker.cpp
   UninitializedValues.cpp
   ValueManager.cpp
   )

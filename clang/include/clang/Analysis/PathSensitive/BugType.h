@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines BugType, a class representing a bug tpye.
+//  This file defines BugType, a class representing a bug type.
 //
 //===----------------------------------------------------------------------===//
 
