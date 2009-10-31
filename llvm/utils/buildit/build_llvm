@@ -62,6 +62,7 @@ if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
 elif [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
     DT_HOME=$DEST_DIR/usr
     DEST_ROOT="/Developer$DEST_ROOT"
+    HOST_SDKROOT=$SDKROOT
 else
     DT_HOME=$DEST_DIR/Developer/usr
     DEST_ROOT="/Developer$DEST_ROOT"
