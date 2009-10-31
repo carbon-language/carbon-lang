@@ -48,3 +48,5 @@ extern int f();
 int h0 = __builtin_types_compatible_p(int, float);
 //int h1 = __builtin_choose_expr(1, 10, f());
 //int h2 = __builtin_expect(0, 0);
+extern long int bi0;
+extern __typeof__(__builtin_expect(0, 0)) bi0;
