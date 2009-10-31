@@ -15,7 +15,7 @@ define i32 @t2MOVTi16_test_1(i32 %a) {
 ; CHECK: movt r0, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
-    %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
+    %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
     %4 = shl i32   %2,   8  ; This gives us (1234 << 16) in %4
     %5 = and i32   %a,  %3
     %6 = or  i32   %4,  %5
@@ -28,7 +28,7 @@ define i32 @t2MOVTi16_test_2(i32 %a) {
 ; CHECK: movt r0, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
-    %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
+    %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
     %4 = shl i32   %2,   6
     %5 = and i32   %a,  %3
     %6 = shl i32   %4,   2  ; This gives us (1234 << 16) in %6
@@ -42,7 +42,7 @@ define i32 @t2MOVTi16_test_3(i32 %a) {
 ; CHECK: movt r0, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
-    %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
+    %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
     %4 = shl i32   %2,   6
     %5 = and i32   %a,  %3
     %6 = shl i32   %4,   2  ; This gives us (1234 << 16) in %6
@@ -61,7 +61,7 @@ define i32 @t2MOVTi16_test_nomatch_1(i32 %a) {
 ; CHECK:      #1720320
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
-    %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
+    %3 = or  i32   %1, 255  ; This gives us 0xFFFF in %3
     %4 = shl i32   %2,   6
     %5 = and i32   %a,  %3
     %6 = shl i32   %4,   2  ; This gives us (1234 << 16) in %6
