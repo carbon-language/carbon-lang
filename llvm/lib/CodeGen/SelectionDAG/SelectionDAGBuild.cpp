@@ -4233,7 +4233,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     EVT Ty = Arg.getValueType();
 
     if (CI->getZExtValue() < 2)
-      setValue(&I, DAG.getConstant(-1, Ty));
+      setValue(&I, DAG.getConstant(-1U, Ty));
     else
       setValue(&I, DAG.getConstant(0, Ty));
     return 0;
