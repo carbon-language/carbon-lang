@@ -278,6 +278,15 @@ let isBranch = 1, isTerminator = 1 in
                  "b$cc\t$target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
 
+// Compare and branch on zero / non-zero
+let isBranch = 1, isTerminator = 1 in {
+  def tCBZ  : T1I<(outs), (ins tGPR:$cmp, brtarget:$target), IIC_Br,
+                  "cbz\t$cmp, $target", []>;
+
+  def tCBNZ : T1I<(outs), (ins tGPR:$cmp, brtarget:$target), IIC_Br,
+                  "cbnz\t$cmp, $target", []>;
+}
+
 //===----------------------------------------------------------------------===//
 //  Load Store Instructions.
 //

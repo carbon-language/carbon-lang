@@ -41,6 +41,7 @@ STATISTIC(NumUBrFixed,   "Number of uncond branches fixed");
 STATISTIC(NumTBs,        "Number of table branches generated");
 STATISTIC(NumT2CPShrunk, "Number of Thumb2 constantpool instructions shrunk");
 STATISTIC(NumT2BrShrunk, "Number of Thumb2 immediate branches shrunk");
+STATISTIC(NumCBZ,        "Number of CBZ / CBNZ formed");
 
 namespace {
   /// ARMConstantIslands - Due to limited PC-relative displacements, ARM
@@ -1486,24 +1487,65 @@ bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
       Bits = 11;
       Scale = 2;
       break;
-    case ARM::t2Bcc:
+    case ARM::t2Bcc: {
       NewOpc = ARM::tBcc;
       Bits = 8;
-      Scale = 2;      
+      Scale = 2;
       break;
     }
-    if (!NewOpc)
+    }
+    if (NewOpc) {
+      unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
+      MachineBasicBlock *DestBB = Br.MI->getOperand(0).getMBB();
+      if (BBIsInRange(Br.MI, DestBB, MaxOffs)) {
+        Br.MI->setDesc(TII->get(NewOpc));
+        MachineBasicBlock *MBB = Br.MI->getParent();
+        BBSizes[MBB->getNumber()] -= 2;
+        AdjustBBOffsetsAfter(MBB, -2);
+        ++NumT2BrShrunk;
+        MadeChange = true;
+      }
+    }
+
+    Opcode = Br.MI->getOpcode();
+    if (Opcode != ARM::tBcc)
       continue;
 
-    unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
+    NewOpc = 0;
+    unsigned PredReg = 0;
+    ARMCC::CondCodes Pred = llvm::getInstrPredicate(Br.MI, PredReg);
+    if (Pred == ARMCC::EQ)
+      NewOpc = ARM::tCBZ;
+    else if (Pred == ARMCC::NE)
+      NewOpc = ARM::tCBNZ;
+    if (!NewOpc)
+      continue;
     MachineBasicBlock *DestBB = Br.MI->getOperand(0).getMBB();
-    if (BBIsInRange(Br.MI, DestBB, MaxOffs)) {
-      Br.MI->setDesc(TII->get(NewOpc));
-      MachineBasicBlock *MBB = Br.MI->getParent();
-      BBSizes[MBB->getNumber()] -= 2;
-      AdjustBBOffsetsAfter(MBB, -2);
-      ++NumT2BrShrunk;
-      MadeChange = true;
+    // Check if the distance is within 126. Subtract starting offset by 2
+    // because the cmp will be eliminated.
+    unsigned BrOffset = GetOffsetOf(Br.MI) + 4 - 2;
+    unsigned DestOffset = BBOffsets[DestBB->getNumber()];
+    if (BrOffset < DestOffset && (DestOffset - BrOffset) <= 126) {
+      MachineBasicBlock::iterator CmpMI = Br.MI; --CmpMI;
+      if (CmpMI->getOpcode() == ARM::tCMPzi8) {
+        unsigned Reg = CmpMI->getOperand(0).getReg();
+        Pred = llvm::getInstrPredicate(CmpMI, PredReg);
+        if (Pred == ARMCC::AL &&
+            CmpMI->getOperand(1).getImm() == 0 &&
+            isARMLowRegister(Reg)) {
+          MachineBasicBlock *MBB = Br.MI->getParent();
+          MachineInstr *NewBR =
+            BuildMI(*MBB, CmpMI, Br.MI->getDebugLoc(), TII->get(NewOpc))
+            .addReg(Reg).addMBB(DestBB, Br.MI->getOperand(0).getTargetFlags());
+          CmpMI->eraseFromParent();
+          Br.MI->eraseFromParent();
+          Br.MI = NewBR;
+          BBSizes[MBB->getNumber()] -= 2;
+          AdjustBBOffsetsAfter(MBB, -2);
+          ++NumCBZ;
+          MadeChange = true;
+        }
+      }
     }
   }
 
