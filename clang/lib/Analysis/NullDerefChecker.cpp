@@ -45,7 +45,7 @@ ExplodedNode *NullDerefChecker::CheckLocation(const Stmt *S, ExplodedNode *Pred,
     NullState = NullState->set<GRState::NullDerefTag>(PersistentLV);
     
     ExplodedNode *N = Builder.generateNode(S, NullState, Pred,
-                                           ProgramPoint::PostNullCheckFailedKind);
+                                         ProgramPoint::PostNullCheckFailedKind);
     if (N) {
       N->markAsSink();
       
