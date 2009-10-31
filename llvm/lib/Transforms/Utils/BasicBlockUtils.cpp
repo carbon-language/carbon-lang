@@ -271,6 +271,8 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
 /// SplitEdge -  Split the edge connecting specified block. Pass P must 
 /// not be NULL. 
 BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
+  assert(!isa<IndirectBrInst>(BB->getTerminator()) &&
+         "Cannot split an edge from an IndirectBrInst");
   TerminatorInst *LatchTerm = BB->getTerminator();
   unsigned SuccNum = 0;
 #ifndef NDEBUG
