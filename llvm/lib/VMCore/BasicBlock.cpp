@@ -63,15 +63,13 @@ BasicBlock::~BasicBlock() {
   // hanging off the block, or an undefined use of the block (source code
   // expecting the address of a label to keep the block alive even though there
   // is no indirect branch).  Handle these cases by zapping the BlockAddress
-  // nodes.  There are no other possible uses at this point.
+  // nodes, replacing them with BlockAddress(F, NULL).  There are no other
+  // possible uses at this point.
   if (hasAddressTaken()) {
     assert(!use_empty() && "There should be at least one blockaddress!");
-    Constant *Replacement =
-      ConstantInt::get(llvm::Type::getInt32Ty(getContext()), 1);
     while (!use_empty()) {
       BlockAddress *BA = cast<BlockAddress>(use_back());
-      BA->replaceAllUsesWith(ConstantExpr::getIntToPtr(Replacement,
-                                                       BA->getType()));
+      BA->replaceAllUsesWith(BlockAddress::get(BA->getFunction(), 0));
       BA->destroyConstant();
     }
   }

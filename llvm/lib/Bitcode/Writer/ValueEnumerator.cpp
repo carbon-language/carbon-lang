@@ -265,6 +265,8 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       // Do not enumerate the initializers for an array of simple characters.
       // The initializers just polute the value table, and we emit the strings
       // specially.
+    } else if (isa<BlockAddress>(C)) {
+      // Don't enumerate function or block.
     } else if (C->getNumOperands()) {
       // If a constant has operands, enumerate them.  This makes sure that if a
       // constant has uses (for example an array of const ints), that they are
@@ -276,8 +278,7 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       // graph that don't go through a global variable.
       for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
            I != E; ++I)
-        if (!isa<BasicBlock>(*I)) // Don't enumerate BB operand to BlockAddress.
-          EnumerateValue(*I);
+        EnumerateValue(*I);
 
       // Finally, add the value.  Doing this could make the ValueID reference be
       // dangling, don't reuse it.
@@ -417,9 +418,10 @@ static void IncorporateFunctionInfoGlobalBBIDs(const Function *F,
 /// specified basic block.  This is relatively expensive information, so it
 /// should only be used by rare constructs such as address-of-label.
 unsigned ValueEnumerator::getGlobalBasicBlockID(const BasicBlock *BB) const {
+  if (BB == 0) return 0;
   unsigned &Idx = GlobalBasicBlockIDs[BB];
   if (Idx != 0)
-    return Idx-1;
+    return Idx;
 
   IncorporateFunctionInfoGlobalBBIDs(BB->getParent(), GlobalBasicBlockIDs);
   return getGlobalBasicBlockID(BB);

@@ -123,20 +123,25 @@ bool LLParser::ResolveForwardRefBlockAddresses(Function *TheFn,
   // Loop over all the references, resolving them.
   for (unsigned i = 0, e = Refs.size(); i != e; ++i) {
     BasicBlock *Res;
-    if (PFS) {
+    if (Refs[i].first.Kind == ValID::t_Null)
+      Res = 0;
+    else if (PFS) {
       if (Refs[i].first.Kind == ValID::t_LocalName)
         Res = PFS->GetBB(Refs[i].first.StrVal, Refs[i].first.Loc);
-      else
+      else {
+        assert(Refs[i].first.Kind == ValID::t_LocalID);
         Res = PFS->GetBB(Refs[i].first.UIntVal, Refs[i].first.Loc);
+      }
     } else if (Refs[i].first.Kind == ValID::t_LocalID) {
       return Error(Refs[i].first.Loc,
        "cannot take address of numeric label after it the function is defined");
     } else {
+      assert(Refs[i].first.Kind == ValID::t_LocalName);
       Res = dyn_cast_or_null<BasicBlock>(
                      TheFn->getValueSymbolTable().lookup(Refs[i].first.StrVal));
     }
     
-    if (Res == 0)
+    if (Res == 0 && Refs[i].first.Kind != ValID::t_Null)
       return Error(Refs[i].first.Loc,
                    "referenced value is not a basic block");
     
@@ -2055,10 +2060,11 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseValID(Label) ||
         ParseToken(lltok::rparen, "expected ')' in block address expression"))
       return true;
-    
+      
     if (Fn.Kind != ValID::t_GlobalID && Fn.Kind != ValID::t_GlobalName)
       return Error(Fn.Loc, "expected function name in blockaddress");
-    if (Label.Kind != ValID::t_LocalID && Label.Kind != ValID::t_LocalName)
+    if (Label.Kind != ValID::t_LocalID && Label.Kind != ValID::t_LocalName &&
+        Label.Kind != ValID::t_Null)
       return Error(Label.Loc, "expected basic block name in blockaddress");
     
     // Make a global variable as a placeholder for this reference.
