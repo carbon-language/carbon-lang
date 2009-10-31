@@ -2710,7 +2710,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
 
     if (Args.hasArg(options::OPT_pthread))
-      CmdArgs.push_back("-lthread_xu");
+      CmdArgs.push_back("-lpthread");
 
     if (!Args.hasArg(options::OPT_nolibc)) {
       CmdArgs.push_back("-lc");
