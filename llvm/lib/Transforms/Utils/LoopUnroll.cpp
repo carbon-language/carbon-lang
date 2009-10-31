@@ -44,8 +44,8 @@ static inline void RemapInstruction(Instruction *I,
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
     DenseMap<const Value *, Value*>::iterator It = ValueMap.find(Op);
-    if (It != ValueMap.end()) Op = It->second;
-    I->setOperand(op, Op);
+    if (It != ValueMap.end())
+      I->setOperand(op, It->second);
   }
 }
 
