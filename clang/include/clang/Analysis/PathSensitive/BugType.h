@@ -1,8 +1,20 @@
-#ifndef LLVM_CLANG_BUGTYPE
-#define LLVM_CLANG_BUGTYPE
+//===---  BugType.h - Bug Information Desciption ----------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines BugType, a class representing a bug tpye.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_CLANG_ANALYSIS_BUGTYPE
+#define LLVM_CLANG_ANALYSIS_BUGTYPE
 
 #include <llvm/ADT/FoldingSet.h>
-
 #include <string>
 
 namespace clang {
