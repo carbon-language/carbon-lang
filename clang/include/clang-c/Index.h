@@ -246,8 +246,8 @@ CINDEX_LINKAGE void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
 /*
  * CXFile Operations.
  */
-const char *clang_getFileName(CXFile SFile);
-time_t clang_getFileTime(CXFile SFile);
+CINDEX_LINKAGE const char *clang_getFileName(CXFile SFile);
+CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
 
 /*
  * CXEntity Operations.
