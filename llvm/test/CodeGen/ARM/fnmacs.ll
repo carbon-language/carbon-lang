@@ -7,8 +7,10 @@ entry:
 ; VFP2: fnmacs
 ; NEON: fnmacs
 
-; NEONFP:     vmls
+; NEONFP-NOT: vmls
 ; NEONFP-NOT: fcpys
+; NEONFP:     vmul.f32
+; NEONFP:     vsub.f32
 ; NEONFP:     fmrs
 
 	%0 = fmul float %a, %b

@@ -2841,13 +2841,16 @@ def VMULfd_sfp : N3VDs<1, 0, 0b00, 0b1101, 1, "vmul.f32", v2f32, v2f32, fmul,1>;
 def : N3VDsPat<fmul, VMULfd_sfp>;
 
 // Vector Multiply-Accumulate/Subtract used for single-precision FP
-let neverHasSideEffects = 1 in
-def VMLAfd_sfp : N3VDMulOps<0, 0, 0b00, 0b1101, 1, IIC_VMACD, "vmla.f32", v2f32,fmul,fadd>;
-def : N3VDMulOpsPat<fmul, fadd, VMLAfd_sfp>;
+// vml[as].f32 can cause 4-8 cycle stalls in following ASIMD instructions, so
+// we want to avoid them for now. e.g., alternating vmla/vadd instructions.
 
-let neverHasSideEffects = 1 in
-def VMLSfd_sfp : N3VDMulOps<0, 0, 0b10, 0b1101, 1, IIC_VMACD, "vmls.f32", v2f32,fmul,fsub>;
-def : N3VDMulOpsPat<fmul, fsub, VMLSfd_sfp>;
+//let neverHasSideEffects = 1 in
+//def VMLAfd_sfp : N3VDMulOps<0, 0, 0b00, 0b1101, 1, IIC_VMACD, "vmla.f32", v2f32,fmul,fadd>;
+//def : N3VDMulOpsPat<fmul, fadd, VMLAfd_sfp>;
+
+//let neverHasSideEffects = 1 in
+//def VMLSfd_sfp : N3VDMulOps<0, 0, 0b10, 0b1101, 1, IIC_VMACD, "vmls.f32", v2f32,fmul,fsub>;
+//def : N3VDMulOpsPat<fmul, fsub, VMLSfd_sfp>;
 
 // Vector Absolute used for single-precision FP
 let neverHasSideEffects = 1 in
