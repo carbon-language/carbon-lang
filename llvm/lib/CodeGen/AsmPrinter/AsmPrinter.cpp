@@ -1368,6 +1368,7 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
 	  unsigned L = DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
 	  				    CurDLT.Scope);
           printLabel(L);
+          O << '\n';
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
           DW->SetDbgScopeBeginLabels(MI, L);
 #endif
