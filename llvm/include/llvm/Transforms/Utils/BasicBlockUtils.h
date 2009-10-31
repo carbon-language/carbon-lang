@@ -43,11 +43,9 @@ void FoldSingleEntryPHINodes(BasicBlock *BB);
 /// it is ultimately unused or if it reaches an unused cycle.
 void DeleteDeadPHIs(BasicBlock *BB);
 
-/// MergeBlockIntoPredecessor - Folds a basic block into its predecessor if it
-/// only has one predecessor, and that predecessor only has one successor.
-/// If a Pass is given, the LoopInfo and DominatorTree analyses will be kept
-/// current. Returns the combined block, or null if no merging was performed.
-BasicBlock *MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P = 0);
+/// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
+/// if possible.  The return value indicates success or failure.
+bool MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P = 0);
 
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.

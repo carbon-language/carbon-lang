@@ -92,28 +92,54 @@ void llvm::DeleteDeadPHIs(BasicBlock *BB) {
       RecursivelyDeleteDeadPHINode(PN);
 }
 
-/// MergeBlockIntoPredecessor - Folds a basic block into its predecessor if it
-/// only has one predecessor, and that predecessor only has one successor.
-/// If a Pass is given, the LoopInfo and DominatorTree analyses will be kept
-/// current. Returns the combined block, or null if no merging was performed.
-BasicBlock *llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
-  // Don't merge if the block has multiple predecessors.
-  BasicBlock *PredBB = BB->getSinglePredecessor();
-  if (!PredBB) return 0;
-  // Don't merge if the predecessor has multiple successors.
-  if (PredBB->getTerminator()->getNumSuccessors() != 1) return 0;
-  // Don't break self-loops.
-  if (PredBB == BB) return 0;
-  // Don't break invokes.
-  if (isa<InvokeInst>(PredBB->getTerminator())) return 0;
+/// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
+/// if possible.  The return value indicates success or failure.
+bool llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
+  pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
+  // Can't merge the entry block.
+  if (pred_begin(BB) == pred_end(BB)) return false;
   
-  // Resolve any PHI nodes at the start of the block.  They are all
-  // guaranteed to have exactly one entry if they exist, unless there are
-  // multiple duplicate (but guaranteed to be equal) entries for the
-  // incoming edges.  This occurs when there are multiple edges from
-  // PredBB to BB.
-  FoldSingleEntryPHINodes(BB);
+  BasicBlock *PredBB = *PI++;
+  for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
+    if (*PI != PredBB) {
+      PredBB = 0;       // There are multiple different predecessors...
+      break;
+    }
+  
+  // Can't merge if there are multiple predecessors.
+  if (!PredBB) return false;
+  // Don't break self-loops.
+  if (PredBB == BB) return false;
+  // Don't break invokes.
+  if (isa<InvokeInst>(PredBB->getTerminator())) return false;
+  
+  succ_iterator SI(succ_begin(PredBB)), SE(succ_end(PredBB));
+  BasicBlock* OnlySucc = BB;
+  for (; SI != SE; ++SI)
+    if (*SI != OnlySucc) {
+      OnlySucc = 0;     // There are multiple distinct successors!
+      break;
+    }
+  
+  // Can't merge if there are multiple successors.
+  if (!OnlySucc) return false;
 
+  // Can't merge if there is PHI loop.
+  for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (PN->getIncomingValue(i) == PN)
+          return false;
+    } else
+      break;
+  }
+
+  // Begin by getting rid of unneeded PHIs.
+  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+    PN->replaceAllUsesWith(PN->getIncomingValue(0));
+    BB->getInstList().pop_front();  // Delete the phi node...
+  }
+  
   // Delete the unconditional branch from the predecessor...
   PredBB->getInstList().pop_back();
   
@@ -124,7 +150,7 @@ BasicBlock *llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
   // source...
   BB->replaceAllUsesWith(PredBB);
   
-  // If the predecessor doesn't have a name, take the successor's name.
+  // Inherit predecessors name if it exists.
   if (!PredBB->hasName())
     PredBB->takeName(BB);
   
@@ -143,14 +169,12 @@ BasicBlock *llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
         DT->eraseNode(BB);
       }
     }
-    // Notify LoopInfo that the block is removed.
-    if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
-      LI->removeBlock(BB);
   }
   
   BB->eraseFromParent();
   
-  return PredBB;
+  
+  return true;
 }
 
 /// ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
