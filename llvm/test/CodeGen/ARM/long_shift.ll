@@ -11,7 +11,7 @@ define i64 @f0(i64 %A, i64 %B) {
 
 define i32 @f1(i64 %x, i64 %y) {
 ; CHECK: f1
-; CHECK: __ashldi3
+; CHECK: mov r0, r0, lsl r2
 	%a = shl i64 %x, %y
 	%b = trunc i64 %a to i32
 	ret i32 %b
