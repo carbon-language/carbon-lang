@@ -2,7 +2,7 @@
 
 define i64 @f0(i64 %A, i64 %B) {
 ; CHECK: f0
-; CHECK rrx
+; CHECK: rrx
 	%tmp = bitcast i64 %A to i64
 	%tmp2 = lshr i64 %B, 1
 	%tmp3 = sub i64 %tmp, %tmp2
