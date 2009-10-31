@@ -362,7 +362,9 @@ multiclass T2I_ld<string opc, PatFrag opnode> {
                    [(set GPR:$dst, (opnode t2addrmode_so_reg:$addr))]>;
   def pci : T2Ipc <(outs GPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
                    opc, ".w\t$dst, $addr",
-                   [(set GPR:$dst, (opnode (ARMWrapper tconstpool:$addr)))]>;
+                   [(set GPR:$dst, (opnode (ARMWrapper tconstpool:$addr)))]> {
+    let isReMaterializable = 1;
+  }
 }
 
 /// T2I_st - Defines a set of (op r, {imm12|imm8|so_reg}) store patterns.
