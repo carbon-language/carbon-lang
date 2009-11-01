@@ -81,3 +81,20 @@ int *a(A0<int> &x0, A1<int> &x1) {
   int *y0 = x0;
   int *y1 = x1; // expected-error{{initializing}}
 }
+
+struct X0Base {
+  int &f();
+};
+
+template<typename T>
+struct X0 : X0Base {
+};
+
+template<typename U>
+struct X1 : X0<U> {
+  int &f2() { return X0Base::f(); }
+};
+
+void test_X1(X1<int> x1i) {
+  int &ir = x1i.f2();
+}

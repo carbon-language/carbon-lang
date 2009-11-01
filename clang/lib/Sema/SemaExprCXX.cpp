@@ -2395,6 +2395,12 @@ bool Sema::isImplicitMemberReference(const CXXScopeSpec *SS, NamedDecl *D,
   // Determine whether the declaration(s) we found are actually in a base 
   // class. If not, this isn't an implicit member reference.
   ThisType = MD->getThisType(Context);
+  
+  // If the type of "this" is dependent, we can't tell if the member is in a 
+  // base class or not, so treat this as a dependent implicit member reference.
+  if (ThisType->isDependentType())
+    return true;
+  
   QualType CtxType = Context.getTypeDeclType(cast<CXXRecordDecl>(Ctx));
   QualType ClassType
     = Context.getTypeDeclType(cast<CXXRecordDecl>(MD->getParent()));
