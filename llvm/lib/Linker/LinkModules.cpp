@@ -349,8 +349,7 @@ static void PrintMap(const std::map<const Value*, Value*> &M) {
 
 // RemapOperand - Use ValueMap to convert constants from one module to another.
 static Value *RemapOperand(const Value *In,
-                           std::map<const Value*, Value*> &ValueMap,
-                           LLVMContext &Context) {
+                           std::map<const Value*, Value*> &ValueMap) {
   std::map<const Value*,Value*>::const_iterator I = ValueMap.find(In);
   if (I != ValueMap.end())
     return I->second;
@@ -365,31 +364,29 @@ static Value *RemapOperand(const Value *In,
     if (const ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
       std::vector<Constant*> Operands(CPA->getNumOperands());
       for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
-        Operands[i] =cast<Constant>(RemapOperand(CPA->getOperand(i), ValueMap, 
-                                                 Context));
-      Result =
-          ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
+        Operands[i] =cast<Constant>(RemapOperand(CPA->getOperand(i), ValueMap));
+      Result = ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
     } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
       std::vector<Constant*> Operands(CPS->getNumOperands());
       for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
-        Operands[i] =cast<Constant>(RemapOperand(CPS->getOperand(i), ValueMap,
-                                                 Context));
-      Result =
-         ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
+        Operands[i] =cast<Constant>(RemapOperand(CPS->getOperand(i), ValueMap));
+      Result = ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV) || isa<UndefValue>(CPV)) {
       Result = const_cast<Constant*>(CPV);
     } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CPV)) {
       std::vector<Constant*> Operands(CP->getNumOperands());
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-        Operands[i] = cast<Constant>(RemapOperand(CP->getOperand(i), ValueMap,
-                                     Context));
+        Operands[i] = cast<Constant>(RemapOperand(CP->getOperand(i), ValueMap));
       Result = ConstantVector::get(Operands);
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
       std::vector<Constant*> Ops;
       for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
-        Ops.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),ValueMap,
-                                     Context)));
+        Ops.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),ValueMap)));
       Result = CE->getWithOperands(Ops);
+    } else if (const BlockAddress *CE = dyn_cast<BlockAddress>(CPV)) {
+      Result = BlockAddress::get(
+                 cast<Function>(RemapOperand(CE->getFunction(), ValueMap)),
+                                 CE->getBasicBlock());
     } else {
       assert(!isa<GlobalValue>(CPV) && "Unmapped global?");
       llvm_unreachable("Unknown type of derived type constant value!");
@@ -896,8 +893,7 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
     if (SGV->hasInitializer()) {      // Only process initialized GV's
       // Figure out what the initializer looks like in the dest module...
       Constant *SInit =
-        cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap,
-                       Dest->getContext()));
+        cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap));
       // Grab destination global variable or alias.
       GlobalValue *DGV = cast<GlobalValue>(ValueMap[SGV]->stripPointerCasts());
 
@@ -1084,7 +1080,7 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
       for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
            OI != OE; ++OI)
         if (!isa<Instruction>(*OI) && !isa<BasicBlock>(*OI))
-          *OI = RemapOperand(*OI, ValueMap, Dest->getContext());
+          *OI = RemapOperand(*OI, ValueMap);
 
   // There is no need to map the arguments anymore.
   for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();
