@@ -14,7 +14,6 @@
 
 #include "llvm/Value.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 template <class T>

@@ -27,8 +27,6 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/System/RWMutex.h"
-#include "llvm/System/Threading.h"
 #include "llvm/ADT/DenseMap.h"
 #include <algorithm>
 using namespace llvm;

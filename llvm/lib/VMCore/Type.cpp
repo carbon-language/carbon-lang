@@ -27,8 +27,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/RWMutex.h"
 #include "llvm/System/Threading.h"
 #include <algorithm>
 #include <cstdarg>
@@ -768,7 +766,6 @@ const IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
   
   // First, see if the type is already in the table, for which
   // a reader lock suffices.
-  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   ITy = pImpl->IntegerTypes.get(IVT);
     
   if (!ITy) {
@@ -810,7 +807,6 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   
   LLVMContextImpl *pImpl = ReturnType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   FT = pImpl->FunctionTypes.get(VT);
   
   if (!FT) {
@@ -835,7 +831,6 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 
   LLVMContextImpl *pImpl = ElementType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   AT = pImpl->ArrayTypes.get(AVT);
       
   if (!AT) {
@@ -861,7 +856,6 @@ VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   
   LLVMContextImpl *pImpl = ElementType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   PT = pImpl->VectorTypes.get(PVT);
     
   if (!PT) {
@@ -890,7 +884,6 @@ StructType *StructType::get(LLVMContext &Context,
   
   LLVMContextImpl *pImpl = Context.pImpl;
   
-  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   ST = pImpl->StructTypes.get(STV);
     
   if (!ST) {
@@ -938,7 +931,6 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   
   LLVMContextImpl *pImpl = ValueType->getContext().pImpl;
   
-  sys::SmartScopedLock<true> L(pImpl->TypeMapLock);
   PT = pImpl->PointerTypes.get(PVT);
   
   if (!PT) {
@@ -970,10 +962,7 @@ bool PointerType::isValidElementType(const Type *ElemTy) {
 // it.  This function is called primarily by the PATypeHandle class.
 void Type::addAbstractTypeUser(AbstractTypeUser *U) const {
   assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-  LLVMContextImpl *pImpl = getContext().pImpl;
-  pImpl->AbstractTypeUsersLock.acquire();
   AbstractTypeUsers.push_back(U);
-  pImpl->AbstractTypeUsersLock.release();
 }
 
 
@@ -983,8 +972,6 @@ void Type::addAbstractTypeUser(AbstractTypeUser *U) const {
 // is annihilated, because there is no way to get a reference to it ever again.
 //
 void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
-  LLVMContextImpl *pImpl = getContext().pImpl;
-  pImpl->AbstractTypeUsersLock.acquire();
   
   // Search from back to front because we will notify users from back to
   // front.  Also, it is likely that there will be a stack like behavior to
@@ -1013,7 +1000,6 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
   this->destroy();
   }
   
-  pImpl->AbstractTypeUsersLock.release();
 }
 
 // unlockedRefineAbstractTypeTo - This function is used when it is discovered
@@ -1065,7 +1051,6 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   // will not cause users to drop off of the use list.  If we resolve to ourself
   // we succeed!
   //
-  pImpl->AbstractTypeUsersLock.acquire();
   while (!AbstractTypeUsers.empty() && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
@@ -1081,7 +1066,6 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
     assert(AbstractTypeUsers.size() != OldSize &&
            "AbsTyUser did not remove self from user list!");
   }
-  pImpl->AbstractTypeUsersLock.release();
 
   // If we were successful removing all users from the type, 'this' will be
   // deleted when the last PATypeHolder is destroyed or updated from this type.
@@ -1095,7 +1079,6 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
 void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // All recursive calls will go through unlockedRefineAbstractTypeTo,
   // to avoid deadlock problems.
-  sys::SmartScopedLock<true> L(NewType->getContext().pImpl->TypeMapLock);
   unlockedRefineAbstractTypeTo(NewType);
 }
 
@@ -1107,9 +1090,6 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
   DEBUG(errs() << "typeIsREFINED type: " << (void*)this << " " << *this <<"\n");
 #endif
 
-  LLVMContextImpl *pImpl = getContext().pImpl;
-
-  pImpl->AbstractTypeUsersLock.acquire();
   unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
   while (!AbstractTypeUsers.empty()) {
     AbstractTypeUser *ATU = AbstractTypeUsers.back();
@@ -1118,7 +1098,6 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
     assert(AbstractTypeUsers.size() < OldSize-- &&
            "AbstractTypeUser did not remove itself from the use list!");
   }
-  pImpl->AbstractTypeUsersLock.release();
 }
 
 // refineAbstractType - Called when a contained type is found to be more

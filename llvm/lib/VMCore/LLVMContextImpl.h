@@ -22,8 +22,6 @@
 #include "llvm/Metadata.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/RWMutex.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -132,18 +130,8 @@ public:
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
   
-  // Lock used for guarding access to the leak detector
-  sys::SmartMutex<true> LLVMObjectsLock;
   LeakDetectorImpl<Value> LLVMObjects;
   
-  // Lock used for guarding access to the type maps.
-  sys::SmartMutex<true> TypeMapLock;
-  
-  // Recursive lock used for guarding access to AbstractTypeUsers.
-  // NOTE: The true template parameter means this will no-op when we're not in
-  // multithreaded mode.
-  sys::SmartMutex<true> AbstractTypeUsersLock;
-
   // Basic type instances.
   const Type VoidTy;
   const Type LabelTy;

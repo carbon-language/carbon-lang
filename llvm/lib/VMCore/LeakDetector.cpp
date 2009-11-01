@@ -36,7 +36,6 @@ void LeakDetector::addGarbageObjectImpl(void *Object) {
 
 void LeakDetector::addGarbageObjectImpl(const Value *Object) {
   LLVMContextImpl *pImpl = Object->getContext().pImpl;
-  sys::SmartScopedLock<true> Lock(pImpl->LLVMObjectsLock);
   pImpl->LLVMObjects.addGarbage(Object);
 }
 
@@ -47,7 +46,6 @@ void LeakDetector::removeGarbageObjectImpl(void *Object) {
 
 void LeakDetector::removeGarbageObjectImpl(const Value *Object) {
   LLVMContextImpl *pImpl = Object->getContext().pImpl;
-  sys::SmartScopedLock<true> Lock(pImpl->LLVMObjectsLock);
   pImpl->LLVMObjects.removeGarbage(Object);
 }
 
@@ -55,7 +53,6 @@ void LeakDetector::checkForGarbageImpl(LLVMContext &Context,
                                        const std::string &Message) {
   LLVMContextImpl *pImpl = Context.pImpl;
   sys::SmartScopedLock<true> Lock(*ObjectsLock);
-  sys::SmartScopedLock<true> CLock(pImpl->LLVMObjectsLock);
   
   Objects->setName("GENERIC");
   pImpl->LLVMObjects.setName("LLVM");

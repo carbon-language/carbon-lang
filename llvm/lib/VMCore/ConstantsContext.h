@@ -20,8 +20,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Mutex.h"
-#include "llvm/System/RWMutex.h"
 #include <map>
 
 namespace llvm {
@@ -529,12 +527,7 @@ private:
   ///
   AbstractTypeMapTy AbstractTypeMap;
     
-  /// ConstantUniqueMapLock - Mutex for this map.
-  sys::SmartMutex<true> ConstantUniqueMapLock;
-
 public:
-  // NOTE: This function is not locked.  It is the caller's responsibility
-  // to enforce proper synchronization.
   typename MapTy::iterator map_begin() { return Map.begin(); }
   typename MapTy::iterator map_end() { return Map.end(); }
 
@@ -551,8 +544,6 @@ public:
   /// entry and Exists=true.  If not, the iterator points to the newly
   /// inserted entry and returns Exists=false.  Newly inserted entries have
   /// I->second == 0, and should be filled in.
-  /// NOTE: This function is not locked.  It is the caller's responsibility
-  // to enforce proper synchronization.
   typename MapTy::iterator InsertOrGetItem(std::pair<MapKey, ConstantClass *>
                                  &InsertVal,
                                  bool &Exists) {
@@ -619,7 +610,6 @@ public:
   /// getOrCreate - Return the specified constant from the map, creating it if
   /// necessary.
   ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
-    sys::SmartScopedLock<true> Lock(ConstantUniqueMapLock);
     MapKey Lookup(Ty, V);
     ConstantClass* Result = 0;
     
@@ -674,7 +664,6 @@ public:
   }
 
   void remove(ConstantClass *CP) {
-    sys::SmartScopedLock<true> Lock(ConstantUniqueMapLock);
     typename MapTy::iterator I = FindExistingElement(CP);
     assert(I != Map.end() && "Constant not found in constant table!");
     assert(I->second == CP && "Didn't find correct element?");
@@ -694,8 +683,6 @@ public:
   /// MoveConstantToNewSlot - If we are about to change C to be the element
   /// specified by I, update our internal data structures to reflect this
   /// fact.
-  /// NOTE: This function is not locked. It is the responsibility of the
-  /// caller to enforce proper synchronization if using this method.
   void MoveConstantToNewSlot(ConstantClass *C, typename MapTy::iterator I) {
     // First, remove the old location of the specified constant in the map.
     typename MapTy::iterator OldI = FindExistingElement(C);
@@ -725,7 +712,6 @@ public:
   }
     
   void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    sys::SmartScopedLock<true> Lock(ConstantUniqueMapLock);
     typename AbstractTypeMapTy::iterator I = AbstractTypeMap.find(OldTy);
 
     assert(I != AbstractTypeMap.end() &&

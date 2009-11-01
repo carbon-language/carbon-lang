@@ -126,6 +126,9 @@ static bool MarkAliveBlocks(BasicBlock *BB,
         }
       }
       
+      // Store to undef and store to null are undefined and used to signal that
+      // they should be changed to unreachable by passes that can't modify the
+      // CFG.
       if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
         Value *Ptr = SI->getOperand(1);
         

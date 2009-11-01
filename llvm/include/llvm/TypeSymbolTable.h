@@ -15,6 +15,7 @@
 #define LLVM_TYPE_SYMBOL_TABLE_H
 
 #include "llvm/Type.h"
+#include "llvm/ADT/StringRef.h"
 #include <map>
 
 namespace llvm {
@@ -69,12 +70,16 @@ public:
   /// Lookup the type associated with name.
   /// @returns end() if the name is not found, or an iterator at the entry for
   /// Type.
-  iterator find(const StringRef &name);
+  iterator find(const StringRef &Name) {
+    return tmap.find(Name);
+  }
 
   /// Lookup the type associated with name.
   /// @returns end() if the name is not found, or an iterator at the entry for
   /// Type.
-  const_iterator find(const StringRef &name) const;
+  const_iterator find(const StringRef &Name) const {
+    return tmap.find(Name);
+  }
 
   /// @returns true iff the symbol table is empty.
   /// @brief Determine if the symbol table is empty

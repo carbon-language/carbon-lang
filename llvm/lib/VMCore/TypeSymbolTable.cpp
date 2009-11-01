@@ -17,15 +17,11 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/RWMutex.h"
-#include "llvm/System/Threading.h"
 #include <algorithm>
 using namespace llvm;
 
 #define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0
-
-static ManagedStatic<sys::SmartRWMutex<true> > TypeSymbolTableLock;
 
 TypeSymbolTable::~TypeSymbolTable() {
   // Drop all abstract type references in the type plane...
@@ -38,8 +34,6 @@ TypeSymbolTable::~TypeSymbolTable() {
 std::string TypeSymbolTable::getUniqueName(const StringRef &BaseName) const {
   std::string TryName = BaseName;
   
-  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
-  
   const_iterator End = tmap.end();
 
   // See if the name exists
@@ -50,8 +44,6 @@ std::string TypeSymbolTable::getUniqueName(const StringRef &BaseName) const {
 
 // lookup a type by name - returns null on failure
 Type* TypeSymbolTable::lookup(const StringRef &Name) const {
-  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
-  
   const_iterator TI = tmap.find(Name);
   Type* result = 0;
   if (TI != tmap.end())
@@ -59,21 +51,9 @@ Type* TypeSymbolTable::lookup(const StringRef &Name) const {
   return result;
 }
 
-TypeSymbolTable::iterator TypeSymbolTable::find(const StringRef &Name) {
-  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);  
-  return tmap.find(Name);
-}
-
-TypeSymbolTable::const_iterator
-TypeSymbolTable::find(const StringRef &Name) const {
-  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);  
-  return tmap.find(Name);
-}
 
 // remove - Remove a type from the symbol table...
 Type* TypeSymbolTable::remove(iterator Entry) {
-  TypeSymbolTableLock->writer_acquire();
-  
   assert(Entry != tmap.end() && "Invalid entry to remove!");
   const Type* Result = Entry->second;
 
@@ -84,8 +64,6 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 
   tmap.erase(Entry);
   
-  TypeSymbolTableLock->writer_release();
-
   // If we are removing an abstract type, remove the symbol table from it's use
   // list...
   if (Result->isAbstract()) {
@@ -104,8 +82,6 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 // insert - Insert a type into the symbol table with the specified name...
 void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
   assert(T && "Can't insert null type into symbol table!");
-
-  TypeSymbolTableLock->writer_acquire();
 
   if (tmap.insert(std::make_pair(Name, T)).second) {
     // Type inserted fine with no conflict.
@@ -132,8 +108,6 @@ void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
     tmap.insert(make_pair(UniqueName, T));
   }
   
-  TypeSymbolTableLock->writer_release();
-
   // If we are adding an abstract type, add the symbol table to it's use list.
   if (T->isAbstract()) {
     cast<DerivedType>(T)->addAbstractTypeUser(this);
@@ -146,8 +120,6 @@ void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
 // This function is called when one of the types in the type plane are refined
 void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
                                          const Type *NewType) {
-  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
-  
   // Loop over all of the types in the symbol table, replacing any references
   // to OldType with references to NewType.  Note that there may be multiple
   // occurrences, and although we only need to remove one at a time, it's
@@ -177,7 +149,6 @@ void TypeSymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
   // Loop over all of the types in the symbol table, dropping any abstract
   // type user entries for AbsTy which occur because there are names for the
   // type.
-  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   for (iterator TI = begin(), TE = end(); TI != TE; ++TI)
     if (TI->second == const_cast<Type*>(static_cast<const Type*>(AbsTy)))
       AbsTy->removeAbstractTypeUser(this);
@@ -191,8 +162,6 @@ static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
 
 void TypeSymbolTable::dump() const {
   errs() << "TypeSymbolPlane: ";
-  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   for_each(tmap.begin(), tmap.end(), DumpTypes);
 }
 
-// vim: sw=2 ai
