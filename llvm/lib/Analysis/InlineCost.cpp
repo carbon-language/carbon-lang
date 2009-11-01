@@ -159,6 +159,11 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   if (isa<ReturnInst>(BB->getTerminator()))
     ++NumRets;
   
+  // We never want to inline functions that contain an indirectbr.  This is
+  // incorrect because all the blockaddress's (e.g. in static global
+  // initializers would be referring to the original function, and this indirect
+  // jump would jump from the inlined copy of the function into the original
+  // function which is extremely undefined behavior.
   if (isa<IndirectBrInst>(BB->getTerminator()))
     NeverInline = true;
 }
