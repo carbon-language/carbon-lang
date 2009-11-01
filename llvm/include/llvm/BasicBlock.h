@@ -241,9 +241,6 @@ public:
   /// other than direct branches, switches, etc. to it.
   bool hasAddressTaken() const { return SubclassData != 0; }
                      
-  /// removeDeadBlockAddress - If there is a blockaddress node for this basic
-  /// block, try to remove it and any dead constant users of it.
-  void removeDeadBlockAddress();
 private:
   /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress
   /// objects using it.  This is almost always 0, sometimes one, possibly but

@@ -75,13 +75,6 @@ void GlobalValue::removeDeadConstantUsers() const {
   }
 }
 
-/// removeDeadBlockAddress - If there is a blockaddress node for this basic
-/// block, try to remove it and any dead constant users of it.
-void BasicBlock::removeDeadBlockAddress() {
-  if (!hasAddressTaken()) return;
-  removeDeadUsersOfConstant(BlockAddress::get(this));
-}
-
 
 /// Override destroyConstant to make sure it doesn't get called on
 /// GlobalValue's because they shouldn't be treated like other constants.

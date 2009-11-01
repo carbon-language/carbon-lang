@@ -661,8 +661,7 @@ void Verifier::visitFunction(Function &F) {
     
     // The address of the entry block cannot be taken, unless it is dead.
     if (Entry->hasAddressTaken()) {
-      Entry->removeDeadBlockAddress();
-      Assert1(!Entry->hasAddressTaken(),
+      Assert1(!BlockAddress::get(Entry)->isConstantUsed(),
               "blockaddress may not be used with the entry block!", Entry);
     }
   }

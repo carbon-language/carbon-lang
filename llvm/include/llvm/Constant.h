@@ -65,6 +65,10 @@ public:
   /// true for things like constant expressions that could divide by zero.
   bool canTrap() const;
 
+  /// isConstantUsed - Return true if the constant has users other than constant
+  /// exprs and other dangling things.
+  bool isConstantUsed() const;
+  
   enum PossibleRelocationsTy {
     NoRelocation = 0,
     LocalRelocation = 1,
