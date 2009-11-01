@@ -567,10 +567,6 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   
   Function *getFunction() const { return (Function*)Op<0>().get(); }
-  
-  /// getBasicBlock - This returns the block associated with this BlockAddress.
-  /// Note that this can return null if the block this originally referred to
-  /// was deleted.
   BasicBlock *getBasicBlock() const { return (BasicBlock*)Op<1>().get(); }
   
   /// isNullValue - Return true if this is the value that would be returned by

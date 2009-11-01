@@ -1065,10 +1065,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << "blockaddress(";
     WriteAsOperandInternal(Out, BA->getFunction(), &TypePrinter, Machine);
     Out << ", ";
-    if (BA->getBasicBlock())
-      WriteAsOperandInternal(Out, BA->getBasicBlock(), &TypePrinter, Machine);
-    else
-      Out << "null";
+    WriteAsOperandInternal(Out, BA->getBasicBlock(), &TypePrinter, Machine);
     Out << ")";
     return;
   }

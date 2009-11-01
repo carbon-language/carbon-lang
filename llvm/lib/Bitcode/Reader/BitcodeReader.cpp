@@ -2274,12 +2274,11 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     std::vector<BlockAddrRefTy> &RefList = BAFRI->second;
     for (unsigned i = 0, e = RefList.size(); i != e; ++i) {
       unsigned BlockIdx = RefList[i].first;
-      if (BlockIdx > FunctionBBs.size())
+      if (BlockIdx >= FunctionBBs.size())
         return Error("Invalid blockaddress block #");
     
       GlobalVariable *FwdRef = RefList[i].second;
-      BasicBlock *BB = BlockIdx == 0 ? 0 : FunctionBBs[BlockIdx-1];
-      FwdRef->replaceAllUsesWith(BlockAddress::get(F, BB));
+      FwdRef->replaceAllUsesWith(BlockAddress::get(F, FunctionBBs[BlockIdx]));
       FwdRef->eraseFromParent();
     }
     

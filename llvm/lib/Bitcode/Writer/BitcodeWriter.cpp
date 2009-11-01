@@ -854,8 +854,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         break;
       }
     } else if (const BlockAddress *BA = dyn_cast<BlockAddress>(C)) {
-      assert((!BA->getBasicBlock() ||
-              BA->getFunction() == BA->getBasicBlock()->getParent()) &&
+      assert(BA->getFunction() == BA->getBasicBlock()->getParent() &&
              "Malformed blockaddress");
       Code = bitc::CST_CODE_BLOCKADDRESS;
       Record.push_back(VE.getTypeID(BA->getFunction()->getType()));

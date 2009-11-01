@@ -1045,7 +1045,7 @@ BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
            &Op<0>(), 2) {
   Op<0>() = F;
   Op<1>() = BB;
-  if (BB) BB->AdjustBlockAddressRefCount(1);
+  BB->AdjustBlockAddressRefCount(1);
 }
 
 
@@ -1054,8 +1054,7 @@ BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
 void BlockAddress::destroyConstant() {
   getFunction()->getType()->getContext().pImpl
     ->BlockAddresses.erase(std::make_pair(getFunction(), getBasicBlock()));
-  if (BasicBlock *BB = getBasicBlock())
-    BB->AdjustBlockAddressRefCount(-1);
+  getBasicBlock()->AdjustBlockAddressRefCount(-1);
   destroyConstantImpl();
 }
 
