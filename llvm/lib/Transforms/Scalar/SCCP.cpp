@@ -1680,12 +1680,14 @@ static bool AddressIsTaken(GlobalValue *GV) {
         return true;  // Storing addr of GV.
     } else if (isa<InvokeInst>(*UI) || isa<CallInst>(*UI)) {
       // Make sure we are calling the function, not passing the address.
-      CallSite CS = CallSite::get(cast<Instruction>(*UI));
-      if (CS.hasArgument(GV))
+      if (UI.getOperandNo() != 0)
         return true;
     } else if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (LI->isVolatile())
         return true;
+    } else if (isa<BlockAddress>(*UI)) {
+      // blockaddress doesn't take the address of the function, it takes addr
+      // of label.
     } else {
       return true;
     }

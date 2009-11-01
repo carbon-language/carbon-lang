@@ -86,6 +86,9 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
 
   unsigned NumNonconstant = 0;
   for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
+    // Ignore blockaddress uses.
+    if (isa<BlockAddress>(*UI)) continue;
+    
     // Used by a non-instruction, or not the callee of a function, do not
     // transform.
     if (!isa<CallInst>(*UI) && !isa<InvokeInst>(*UI))
