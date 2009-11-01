@@ -18,6 +18,8 @@
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/ADT/SmallVector.h"
 #include "Thumb2InstrInfo.h"
 
@@ -90,9 +92,16 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (RC == ARM::GPRRegisterClass) {
+    MachineFunction &MF = *MBB.getParent();
+    MachineFrameInfo &MFI = *MF.getFrameInfo();
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
+                              MachineMemOperand::MOStore, 0,
+                              MFI.getObjectSize(FI),
+                              MFI.getObjectAlignment(FI));
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2STRi12))
                    .addReg(SrcReg, getKillRegState(isKill))
-                   .addFrameIndex(FI).addImm(0));
+                   .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
     return;
   }
 
@@ -107,8 +116,15 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (RC == ARM::GPRRegisterClass) {
+    MachineFunction &MF = *MBB.getParent();
+    MachineFrameInfo &MFI = *MF.getFrameInfo();
+    MachineMemOperand *MMO =
+      MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
+                              MachineMemOperand::MOLoad, 0,
+                              MFI.getObjectSize(FI),
+                              MFI.getObjectAlignment(FI));
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2LDRi12), DestReg)
-                   .addFrameIndex(FI).addImm(0));
+                   .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
     return;
   }
 
