@@ -10744,7 +10744,15 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // code size and simplifying code.
   Constant *ConstantOp = 0;
   const Type *CastSrcTy = 0;
+  
+  // When processing loads, we need to propagate two bits of information to the
+  // sunk load: whether it is volatile, and what its alignment is.  We currently
+  // don't sink loads when some have their alignment specified and some don't.
+  // visitLoadInst will propagate an alignment onto the load when TD is around,
+  // and if TD isn't around, we can't handle the mixed case.
   bool isVolatile = false;
+  unsigned LoadAlignment = 0;
+  
   if (isa<CastInst>(FirstInst)) {
     CastSrcTy = FirstInst->getOperand(0)->getType();
   } else if (isa<BinaryOperator>(FirstInst) || isa<CmpInst>(FirstInst)) {
@@ -10754,7 +10762,10 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     if (ConstantOp == 0)
       return FoldPHIArgBinOpIntoPHI(PN);
   } else if (LoadInst *LI = dyn_cast<LoadInst>(FirstInst)) {
+    
     isVolatile = LI->isVolatile();
+    LoadAlignment = LI->getAlignment();
+    
     // We can't sink the load if the loaded value could be modified between the
     // load and the PHI.
     if (LI->getParent() != PN.getIncomingBlock(0) ||
@@ -10790,6 +10801,13 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
           LI->getParent() != PN.getIncomingBlock(i) ||
           !isSafeAndProfitableToSinkLoad(LI))
         return 0;
+      
+      // If some of the loads have an alignment specified but not all of them,
+      // we can't do the transformation.
+      if ((LoadAlignment != 0) != (LI->getAlignment() != 0))
+        return 0;
+      
+      LoadAlignment = std::max(LoadAlignment, LI->getAlignment());
       
       // If the PHI is of volatile loads and the load block has multiple
       // successors, sinking it would remove a load of the volatile value from
@@ -10832,10 +10850,12 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   }
 
   // Insert and return the new operation.
-  if (CastInst* FirstCI = dyn_cast<CastInst>(FirstInst))
+  if (CastInst *FirstCI = dyn_cast<CastInst>(FirstInst))
     return CastInst::Create(FirstCI->getOpcode(), PhiVal, PN.getType());
+  
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::Create(BinOp->getOpcode(), PhiVal, ConstantOp);
+  
   if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
     return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
                            PhiVal, ConstantOp);
@@ -10847,8 +10867,8 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   if (isVolatile)
     for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
       cast<LoadInst>(PN.getIncomingValue(i))->setVolatile(false);
-  
-  return new LoadInst(PhiVal, "", isVolatile);
+
+  return new LoadInst(PhiVal, "", isVolatile, LoadAlignment);
 }
 
 /// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
@@ -11304,7 +11324,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 }
 
 Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
-  // Convert: malloc Ty, C - where C is a constant != 1 into: malloc [C x Ty], 1
+  // Convert: alloca Ty, C - where C is a constant != 1 into: alloca [C x Ty], 1
   if (AI.isArrayAllocation()) {  // Check C != 1
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       const Type *NewTy = 
