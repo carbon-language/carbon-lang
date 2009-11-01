@@ -99,7 +99,7 @@ namespace llvm {
     PM->add(createCFGSimplificationPass());     // Clean up disgusting code
     if (UnitAtATime) {
       PM->add(createGlobalOptimizerPass());     // Optimize out global vars
-      PM->add(createGlobalDCEPass());           // Remove unused fns and globs
+      
       PM->add(createIPSCCPPass());              // IP SCCP
       PM->add(createDeadArgEliminationPass());  // Dead argument elimination
     }
@@ -149,10 +149,15 @@ namespace llvm {
     if (UnitAtATime) {
       PM->add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
       PM->add(createDeadTypeEliminationPass()); // Eliminate dead types
-    }
 
-    if (OptimizationLevel > 1 && UnitAtATime)
-      PM->add(createConstantMergePass());       // Merge dup global constants
+      // GlobalOpt already deletes dead functions and globals, at -O3 try a
+      // late pass of GlobalDCE.  It is capable of deleting dead cycles.
+      if (OptimizationLevel > 2)
+        PM->add(createGlobalDCEPass());         // Remove dead fns and globals.
+    
+      if (OptimizationLevel > 1)
+        PM->add(createConstantMergePass());       // Merge dup global constants
+    }
   }
 
   static inline void addOnePass(PassManager *PM, Pass *P, bool AndVerify) {
