@@ -128,7 +128,7 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 ///
 /// It is invalid to call this function on a critical edge that starts at an
 /// IndirectBrInst.  Splitting these edges will almost always create an invalid
-/// program because the addr of the new block won't be the one that is jumped
+/// program because the address of the new block won't be the one that is jumped
 /// to.
 ///
 BasicBlock *SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
