@@ -146,19 +146,21 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
       if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) || 
           isa<PtrToIntInst>(CI))
         continue;
-    } else if (const GetElementPtrInst *GEPI =
-               dyn_cast<GetElementPtrInst>(II)) {
+    } else if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(II)){
       // If a GEP has all constant indices, it will probably be folded with
       // a load/store.
       if (GEPI->hasAllConstantIndices())
         continue;
     }
 
-    if (isa<ReturnInst>(II))
-      ++NumRets;
-    
     ++NumInsts;
   }
+  
+  if (isa<ReturnInst>(BB->getTerminator()))
+    ++NumRets;
+  
+  if (isa<IndirectBrInst>(BB->getTerminator()))
+    NeverInline = true;
 }
 
 /// analyzeFunction - Fill in the current structure with information gleaned
