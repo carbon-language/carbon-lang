@@ -64,6 +64,8 @@ namespace {
 
     virtual bool isAliased(const MachineFrameInfo *MFI) const;
 
+    virtual bool mayAlias(const MachineFrameInfo *) const;
+
     virtual void printCustom(raw_ostream &OS) const {
       OS << "FixedStack" << FI;
     }
@@ -100,6 +102,14 @@ bool PseudoSourceValue::isAliased(const MachineFrameInfo *MFI) const {
   return true;
 }
 
+bool PseudoSourceValue::mayAlias(const MachineFrameInfo *MFI) const {
+  if (this == getGOT() ||
+      this == getConstantPool() ||
+      this == getJumpTable())
+    return false;
+  return true;
+}
+
 bool FixedStackPseudoSourceValue::isConstant(const MachineFrameInfo *MFI) const{
   return MFI && MFI->isImmutableObjectIndex(FI);
 }
@@ -112,4 +122,11 @@ bool FixedStackPseudoSourceValue::isAliased(const MachineFrameInfo *MFI) const {
     return FI >= 0;
   // Spill slots should not alias others.
   return !MFI->isFixedObjectIndex(FI) && !MFI->isSpillSlotObjectIndex(FI);
+}
+
+bool FixedStackPseudoSourceValue::mayAlias(const MachineFrameInfo *MFI) const {
+  if (!MFI)
+    return true;
+  // Spill slots will not alias any LLVM IR value.
+  return !MFI->isSpillSlotObjectIndex(FI);
 }
