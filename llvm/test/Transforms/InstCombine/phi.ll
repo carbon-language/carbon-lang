@@ -186,6 +186,39 @@ bb2:
 ; CHECK-NEXT:        phi i32* [ %B, %bb ], [ %A, %bb1 ]
 ; CHECK-NEXT:   %E = load i32* %{{[^,]*}}, align 16
 ; CHECK-NEXT:   ret i32 %E
+}
 
+
+; PR1777
+declare i1 @test11a()
+
+define i1 @test11() {
+entry:
+  %a = alloca i32
+  %i = ptrtoint i32* %a to i32
+  %b = call i1 @test11a()
+  br i1 %b, label %one, label %two
+
+one:
+  %x = phi i32 [%i, %entry], [%y, %two]
+  %c = call i1 @test11a()
+  br i1 %c, label %two, label %end
+
+two:
+  %y = phi i32 [%i, %entry], [%x, %one]
+  %d = call i1 @test11a()
+  br i1 %d, label %one, label %end
+
+end:
+  %f = phi i32 [ %x, %one], [%y, %two]
+  ; Change the %f to %i, and the optimizer suddenly becomes a lot smarter
+  ; even though %f must equal %i at this point
+  %g = inttoptr i32 %f to i32*
+  store i32 10, i32* %g
+  %z = call i1 @test11a()
+  ret i1 %z
+; CHECK: @test11
+; CHECK-NOT: phi i32
+; CHECK: ret i1 %z
 }
 
