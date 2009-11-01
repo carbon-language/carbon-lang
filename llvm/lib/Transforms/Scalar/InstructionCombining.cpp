@@ -416,6 +416,7 @@ namespace {
     Instruction *FoldPHIArgOpIntoPHI(PHINode &PN);
     Instruction *FoldPHIArgBinOpIntoPHI(PHINode &PN);
     Instruction *FoldPHIArgGEPIntoPHI(PHINode &PN);
+    Instruction *FoldPHIArgLoadIntoPHI(PHINode &PN);
 
     
     Instruction *OptAndOp(Instruction *Op, ConstantInt *OpRHS,
@@ -10731,6 +10732,96 @@ static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {
   return true;
 }
 
+Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
+  LoadInst *FirstLI = cast<LoadInst>(PN.getIncomingValue(0));
+  
+  // When processing loads, we need to propagate two bits of information to the
+  // sunk load: whether it is volatile, and what its alignment is.  We currently
+  // don't sink loads when some have their alignment specified and some don't.
+  // visitLoadInst will propagate an alignment onto the load when TD is around,
+  // and if TD isn't around, we can't handle the mixed case.
+  bool isVolatile = FirstLI->isVolatile();
+  unsigned LoadAlignment = FirstLI->getAlignment();
+  
+  // We can't sink the load if the loaded value could be modified between the
+  // load and the PHI.
+  if (FirstLI->getParent() != PN.getIncomingBlock(0) ||
+      !isSafeAndProfitableToSinkLoad(FirstLI))
+    return 0;
+  
+  // If the PHI is of volatile loads and the load block has multiple
+  // successors, sinking it would remove a load of the volatile value from
+  // the path through the other successor.
+  if (isVolatile && 
+      FirstLI->getParent()->getTerminator()->getNumSuccessors() != 1)
+    return 0;
+  
+  // Check to see if all arguments are the same operation.
+  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+    LoadInst *LI = dyn_cast<LoadInst>(PN.getIncomingValue(i));
+    if (!LI || !LI->hasOneUse())
+      return 0;
+    
+    // We can't sink the load if the loaded value could be modified between 
+    // the load and the PHI.
+    if (LI->isVolatile() != isVolatile ||
+        LI->getParent() != PN.getIncomingBlock(i) ||
+        !isSafeAndProfitableToSinkLoad(LI))
+      return 0;
+      
+    // If some of the loads have an alignment specified but not all of them,
+    // we can't do the transformation.
+    if ((LoadAlignment != 0) != (LI->getAlignment() != 0))
+      return 0;
+    
+    LoadAlignment = std::max(LoadAlignment, LI->getAlignment());
+    
+    // If the PHI is of volatile loads and the load block has multiple
+    // successors, sinking it would remove a load of the volatile value from
+    // the path through the other successor.
+    if (isVolatile &&
+        LI->getParent()->getTerminator()->getNumSuccessors() != 1)
+      return 0;
+  }
+  
+  // Okay, they are all the same operation.  Create a new PHI node of the
+  // correct type, and PHI together all of the LHS's of the instructions.
+  PHINode *NewPN = PHINode::Create(FirstLI->getOperand(0)->getType(),
+                                   PN.getName()+".in");
+  NewPN->reserveOperandSpace(PN.getNumOperands()/2);
+  
+  Value *InVal = FirstLI->getOperand(0);
+  NewPN->addIncoming(InVal, PN.getIncomingBlock(0));
+  
+  // Add all operands to the new PHI.
+  for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
+    Value *NewInVal = cast<LoadInst>(PN.getIncomingValue(i))->getOperand(0);
+    if (NewInVal != InVal)
+      InVal = 0;
+    NewPN->addIncoming(NewInVal, PN.getIncomingBlock(i));
+  }
+  
+  Value *PhiVal;
+  if (InVal) {
+    // The new PHI unions all of the same values together.  This is really
+    // common, so we handle it intelligently here for compile-time speed.
+    PhiVal = InVal;
+    delete NewPN;
+  } else {
+    InsertNewInstBefore(NewPN, PN);
+    PhiVal = NewPN;
+  }
+  
+  // If this was a volatile load that we are merging, make sure to loop through
+  // and mark all the input loads as non-volatile.  If we don't do this, we will
+  // insert a new volatile load and the old ones will not be deletable.
+  if (isVolatile)
+    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+      cast<LoadInst>(PN.getIncomingValue(i))->setVolatile(false);
+  
+  return new LoadInst(PhiVal, "", isVolatile, LoadAlignment);
+}
+
 
 // FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
 // operator and they all are only used by the PHI, PHI together their
@@ -10738,20 +10829,17 @@ static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {
 Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
 
+  if (isa<GetElementPtrInst>(FirstInst))
+    return FoldPHIArgGEPIntoPHI(PN);
+  if (isa<LoadInst>(FirstInst))
+    return FoldPHIArgLoadIntoPHI(PN);
+  
   // Scan the instruction, looking for input operations that can be folded away.
   // If all input operands to the phi are the same instruction (e.g. a cast from
   // the same type or "+42") we can pull the operation through the PHI, reducing
   // code size and simplifying code.
   Constant *ConstantOp = 0;
   const Type *CastSrcTy = 0;
-  
-  // When processing loads, we need to propagate two bits of information to the
-  // sunk load: whether it is volatile, and what its alignment is.  We currently
-  // don't sink loads when some have their alignment specified and some don't.
-  // visitLoadInst will propagate an alignment onto the load when TD is around,
-  // and if TD isn't around, we can't handle the mixed case.
-  bool isVolatile = false;
-  unsigned LoadAlignment = 0;
   
   if (isa<CastInst>(FirstInst)) {
     CastSrcTy = FirstInst->getOperand(0)->getType();
@@ -10761,61 +10849,18 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     ConstantOp = dyn_cast<Constant>(FirstInst->getOperand(1));
     if (ConstantOp == 0)
       return FoldPHIArgBinOpIntoPHI(PN);
-  } else if (LoadInst *LI = dyn_cast<LoadInst>(FirstInst)) {
-    
-    isVolatile = LI->isVolatile();
-    LoadAlignment = LI->getAlignment();
-    
-    // We can't sink the load if the loaded value could be modified between the
-    // load and the PHI.
-    if (LI->getParent() != PN.getIncomingBlock(0) ||
-        !isSafeAndProfitableToSinkLoad(LI))
-      return 0;
-    
-    // If the PHI is of volatile loads and the load block has multiple
-    // successors, sinking it would remove a load of the volatile value from
-    // the path through the other successor.
-    if (isVolatile &&
-        LI->getParent()->getTerminator()->getNumSuccessors() != 1)
-      return 0;
-    
-  } else if (isa<GetElementPtrInst>(FirstInst)) {
-    return FoldPHIArgGEPIntoPHI(PN);
   } else {
     return 0;  // Cannot fold this operation.
   }
 
   // Check to see if all arguments are the same operation.
   for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i) {
-    if (!isa<Instruction>(PN.getIncomingValue(i))) return 0;
-    Instruction *I = cast<Instruction>(PN.getIncomingValue(i));
-    if (!I->hasOneUse() || !I->isSameOperationAs(FirstInst))
+    Instruction *I = dyn_cast<Instruction>(PN.getIncomingValue(i));
+    if (I == 0 || !I->hasOneUse() || !I->isSameOperationAs(FirstInst))
       return 0;
     if (CastSrcTy) {
       if (I->getOperand(0)->getType() != CastSrcTy)
         return 0;  // Cast operation must match.
-    } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-      // We can't sink the load if the loaded value could be modified between 
-      // the load and the PHI.
-      if (LI->isVolatile() != isVolatile ||
-          LI->getParent() != PN.getIncomingBlock(i) ||
-          !isSafeAndProfitableToSinkLoad(LI))
-        return 0;
-      
-      // If some of the loads have an alignment specified but not all of them,
-      // we can't do the transformation.
-      if ((LoadAlignment != 0) != (LI->getAlignment() != 0))
-        return 0;
-      
-      LoadAlignment = std::max(LoadAlignment, LI->getAlignment());
-      
-      // If the PHI is of volatile loads and the load block has multiple
-      // successors, sinking it would remove a load of the volatile value from
-      // the path through the other successor.
-      if (isVolatile &&
-          LI->getParent()->getTerminator()->getNumSuccessors() != 1)
-        return 0;
-      
     } else if (I->getOperand(1) != ConstantOp) {
       return 0;
     }
@@ -10856,19 +10901,9 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::Create(BinOp->getOpcode(), PhiVal, ConstantOp);
   
-  if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
-    return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
-                           PhiVal, ConstantOp);
-  assert(isa<LoadInst>(FirstInst) && "Unknown operation");
-  
-  // If this was a volatile load that we are merging, make sure to loop through
-  // and mark all the input loads as non-volatile.  If we don't do this, we will
-  // insert a new volatile load and the old ones will not be deletable.
-  if (isVolatile)
-    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-      cast<LoadInst>(PN.getIncomingValue(i))->setVolatile(false);
-
-  return new LoadInst(PhiVal, "", isVolatile, LoadAlignment);
+  CmpInst *CIOp = cast<CmpInst>(FirstInst);
+  return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
+                         PhiVal, ConstantOp);
 }
 
 /// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
