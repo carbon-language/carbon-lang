@@ -1115,6 +1115,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned FrameReg = ARM::SP;
   int FrameIndex = MI.getOperand(i).getIndex();
   int Offset = MFI->getObjectOffset(FrameIndex) + MFI->getStackSize() + SPAdj;
+  bool isFixed = MFI->isFixedObjectIndex(FrameIndex);
 
   // When doing dynamic stack realignment, all of these need to change(?)
   if (AFI->isGPRCalleeSavedArea1Frame(FrameIndex))
@@ -1127,7 +1128,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // When dynamically realigning the stack, use the frame pointer for
     // parameters, and the stack pointer for locals.
     assert (hasFP(MF) && "dynamic stack realignment without a FP!");
-    if (FrameIndex < 0) {
+    if (isFixed) {
       FrameReg = getFrameRegister(MF);
       Offset -= AFI->getFramePtrSpillOffset();
       // When referencing from the frame pointer, stack pointer adjustments
@@ -1136,13 +1137,22 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
   } else if (hasFP(MF) && AFI->hasStackFrame()) {
     assert(SPAdj == 0 && "Unexpected stack offset!");
-    // Use frame pointer to reference fixed objects unless this is a
-    // frameless function.
-    FrameReg = getFrameRegister(MF);
-    Offset -= AFI->getFramePtrSpillOffset();
+    if (isFixed || MFI->hasVarSizedObjects()) {
+      // Use frame pointer to reference fixed objects unless this is a
+      // frameless function.
+      FrameReg = getFrameRegister(MF);
+      Offset -= AFI->getFramePtrSpillOffset();
+    } else if (AFI->isThumb2Function()) {
+      // In Thumb2 mode, the negative offset is very limited.
+      int FPOffset = Offset - AFI->getFramePtrSpillOffset();
+      if (FPOffset >= -255 && FPOffset < 0) {
+        FrameReg = getFrameRegister(MF);
+        Offset = FPOffset;
+      }
+    }
   }
 
-  // modify MI as necessary to handle as much of 'Offset' as possible
+  // Modify MI as necessary to handle as much of 'Offset' as possible
   bool Done = false;
   if (!AFI->isThumbFunction())
     Done = rewriteARMFrameIndex(MI, i, FrameReg, Offset, TII);
