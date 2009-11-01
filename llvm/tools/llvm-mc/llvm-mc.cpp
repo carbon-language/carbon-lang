@@ -70,8 +70,8 @@ IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
 
 static cl::opt<std::string>
-TripleName("triple", cl::desc("Target triple to assemble for,"
-                          "see -version for available targets"),
+TripleName("triple", cl::desc("Target triple to assemble for, "
+                              "see -version for available targets"),
        cl::init(LLVM_HOSTTRIPLE));
 
 enum ActionType {
