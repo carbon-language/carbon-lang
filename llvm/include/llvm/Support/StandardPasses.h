@@ -96,7 +96,6 @@ namespace llvm {
       return;
     }
     
-    PM->add(createCFGSimplificationPass());     // Clean up disgusting code
     if (UnitAtATime) {
       PM->add(createGlobalOptimizerPass());     // Optimize out global vars
       
@@ -106,6 +105,8 @@ namespace llvm {
     }
     PM->add(createInstructionCombiningPass());  // Clean up after IPCP & DAE
     PM->add(createCFGSimplificationPass());     // Clean up after IPCP & DAE
+    
+    // Start of CallGraph SCC passes.
     if (UnitAtATime) {
       if (HaveExceptions)
         PM->add(createPruneEHPass());           // Remove dead EH info
@@ -115,13 +116,18 @@ namespace llvm {
       PM->add(InliningPass);
     if (OptimizationLevel > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
+    
+    // Start of function pass.
+    
+    PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
     if (SimplifyLibCalls)
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
-    PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
     PM->add(createInstructionCombiningPass());  // Combine silly seq's
+    
+    // FIXME: CondProp breaks critical edges, which is slow.
     PM->add(createCondPropagationPass());       // Propagate conditionals
     PM->add(createTailCallEliminationPass());   // Eliminate tail calls
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
