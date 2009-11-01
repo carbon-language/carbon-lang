@@ -196,18 +196,20 @@ void CondProp::SimplifyPredecessors(SwitchInst *SI) {
   // possible, and to avoid invalidating "i".
   for (unsigned i = PN->getNumIncomingValues(); i != 0; --i)
     if (ConstantInt *CI = dyn_cast<ConstantInt>(PN->getIncomingValue(i-1))) {
-      // If we have a constant, forward the edge from its current to its
-      // ultimate destination.
-      unsigned DestCase = SI->findCaseValue(CI);
-      RevectorBlockTo(PN->getIncomingBlock(i-1),
-                      SI->getSuccessor(DestCase));
-      ++NumSwThread;
+      BasicBlock *PredBB = PN->getIncomingBlock(i-1);
+      if (isa<BranchInst>(PredBB->getTerminator())) {
+        // If we have a constant, forward the edge from its current to its
+        // ultimate destination.
+        unsigned DestCase = SI->findCaseValue(CI);
+        RevectorBlockTo(PredBB, SI->getSuccessor(DestCase));
+        ++NumSwThread;
 
-      // If there were two predecessors before this simplification, or if the
-      // PHI node contained all the same value except for the one we just
-      // substituted, the PHI node may be deleted.  Don't iterate through it the
-      // last time.
-      if (SI->getCondition() != PN) return;
+        // If there were two predecessors before this simplification, or if the
+        // PHI node contained all the same value except for the one we just
+        // substituted, the PHI node may be deleted.  Don't iterate through it the
+        // last time.
+        if (SI->getCondition() != PN) return;
+      }
     }
 }
 
