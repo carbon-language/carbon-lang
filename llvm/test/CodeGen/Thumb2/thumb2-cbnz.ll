@@ -20,8 +20,8 @@ bb7:                                              ; preds = %bb3
   br i1 %a, label %bb11, label %bb9
 
 bb9:                                              ; preds = %bb7
-; CHECK: @ BB#3:
-; CHECK: cbnz
+; CHECK:      @ BB#2:
+; CHECK-NEXT: cbnz
   %0 = tail call arm_apcscc  double @floor(double %b) nounwind readnone ; <double> [#uses=0]
   br label %bb11
 
