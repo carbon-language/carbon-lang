@@ -157,9 +157,35 @@ bb1:
 bb2:
   %E = phi i32 [ %C, %bb ], [ %D, %bb1 ]
   ret i32 %E
+; CHECK: @test9
 ; CHECK:       bb2:
 ; CHECK-NEXT:        phi i32* [ %B, %bb ], [ %A, %bb1 ]
 ; CHECK-NEXT:   %E = load i32* %{{[^,]*}}, align 1
 ; CHECK-NEXT:   ret i32 %E
 
 }
+
+define i32 @test10(i32* %A, i32* %B) {
+entry:
+  %c = icmp eq i32* %A, null
+  br i1 %c, label %bb1, label %bb
+
+bb:
+  %C = load i32* %B, align 16
+  br label %bb2
+
+bb1:
+  %D = load i32* %A, align 32
+  br label %bb2
+
+bb2:
+  %E = phi i32 [ %C, %bb ], [ %D, %bb1 ]
+  ret i32 %E
+; CHECK: @test10
+; CHECK:       bb2:
+; CHECK-NEXT:        phi i32* [ %B, %bb ], [ %A, %bb1 ]
+; CHECK-NEXT:   %E = load i32* %{{[^,]*}}, align 16
+; CHECK-NEXT:   ret i32 %E
+
+}
+

@@ -10774,7 +10774,7 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
     if ((LoadAlignment != 0) != (LI->getAlignment() != 0))
       return 0;
     
-    LoadAlignment = std::max(LoadAlignment, LI->getAlignment());
+    LoadAlignment = std::min(LoadAlignment, LI->getAlignment());
     
     // If the PHI is of volatile loads and the load block has multiple
     // successors, sinking it would remove a load of the volatile value from
