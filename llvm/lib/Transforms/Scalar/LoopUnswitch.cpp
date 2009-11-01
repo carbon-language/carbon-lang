@@ -430,7 +430,8 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
     // large numbers of branches which cause loop unswitching to go crazy.
     // This is a very ad-hoc heuristic.
     if (Metrics.NumInsts > Threshold ||
-        Metrics.NumBlocks * 5 > Threshold) {
+        Metrics.NumBlocks * 5 > Threshold ||
+        Metrics.NeverInline) {
       DEBUG(errs() << "NOT unswitching loop %"
             << currentLoop->getHeader()->getName() << ", cost too high: "
             << currentLoop->getBlocks().size() << "\n");
