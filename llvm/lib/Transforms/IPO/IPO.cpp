@@ -14,7 +14,6 @@
 
 #include "llvm-c/Transforms/IPO.h"
 #include "llvm/PassManager.h"
-#include "llvm/Pass.h"
 #include "llvm/Transforms/IPO.h"
 
 using namespace llvm;

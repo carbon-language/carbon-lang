@@ -14,7 +14,6 @@
 #ifndef LLVM_PASSMANAGERS_H
 #define LLVM_PASSMANAGERS_H
 
-#include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"

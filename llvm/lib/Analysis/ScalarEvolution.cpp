@@ -5151,8 +5151,6 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //                   ScalarEvolution Class Implementation
 //===----------------------------------------------------------------------===//
 
-FunctionPass *createScalarEvolutionPass() { return new ScalarEvolution(); }
-
 ScalarEvolution::ScalarEvolution()
   : FunctionPass(&ID) {
 }
