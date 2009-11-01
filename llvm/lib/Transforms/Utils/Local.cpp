@@ -110,7 +110,9 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       // unconditional branch.
       BI->setUnconditionalDest(Destination);
       return true;
-    } else if (Dest2 == Dest1) {       // Conditional branch to same location?
+    }
+    
+    if (Dest2 == Dest1) {       // Conditional branch to same location?
       // This branch matches something like this:
       //     br bool %cond, label %Dest, label %Dest
       // and changes it into:  br label %Dest
@@ -123,7 +125,10 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       BI->setUnconditionalDest(Dest1);
       return true;
     }
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(T)) {
+    return false;
+  }
+  
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(T)) {
     // If we are switching on a constant, we can convert the switch into a
     // single branch instruction!
     ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition());
@@ -132,7 +137,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     assert(TheOnlyDest == SI->getDefaultDest() &&
            "Default destination is not successor #0?");
 
-    // Figure out which case it goes to...
+    // Figure out which case it goes to.
     for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
       // Found case matching a constant operand?
       if (SI->getSuccessorValue(i) == CI) {
@@ -143,7 +148,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       // Check to see if this branch is going to the same place as the default
       // dest.  If so, eliminate it as an explicit compare.
       if (SI->getSuccessor(i) == DefaultDest) {
-        // Remove this entry...
+        // Remove this entry.
         DefaultDest->removePredecessor(SI->getParent());
         SI->removeCase(i);
         --i; --e;  // Don't skip an entry...
@@ -165,7 +170,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     // If we found a single destination that we can fold the switch into, do so
     // now.
     if (TheOnlyDest) {
-      // Insert the new branch..
+      // Insert the new branch.
       BranchInst::Create(TheOnlyDest, SI);
       BasicBlock *BB = SI->getParent();
 
@@ -179,22 +184,54 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
           Succ->removePredecessor(BB);
       }
 
-      // Delete the old switch...
+      // Delete the old switch.
       BB->getInstList().erase(SI);
       return true;
-    } else if (SI->getNumSuccessors() == 2) {
+    }
+    
+    if (SI->getNumSuccessors() == 2) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
       Value *Cond = new ICmpInst(SI, ICmpInst::ICMP_EQ, SI->getCondition(),
                                  SI->getSuccessorValue(1), "cond");
-      // Insert the new branch...
+      // Insert the new branch.
       BranchInst::Create(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
 
-      // Delete the old switch...
+      // Delete the old switch.
       SI->eraseFromParent();
       return true;
     }
+    return false;
   }
+
+  if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(T)) {
+    // indirectbr blockaddress(@F, @BB) -> br label @BB
+    if (BlockAddress *BA =
+          dyn_cast<BlockAddress>(IBI->getAddress()->stripPointerCasts())) {
+      BasicBlock *TheOnlyDest = BA->getBasicBlock();
+      // Insert the new branch.
+      BranchInst::Create(TheOnlyDest, IBI);
+      
+      for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {
+        if (IBI->getDestination(i) == TheOnlyDest)
+          TheOnlyDest = 0;
+        else
+          IBI->getDestination(i)->removePredecessor(IBI->getParent());
+      }
+      IBI->eraseFromParent();
+      
+      // If we didn't find our destination in the IBI successor list, then we
+      // have undefined behavior.  Replace the unconditional branch with an
+      // 'unreachable' instruction.
+      if (TheOnlyDest) {
+        BB->getTerminator()->eraseFromParent();
+        new UnreachableInst(BB->getContext(), BB);
+      }
+      
+      return true;
+    }
+  }
+  
   return false;
 }
 
