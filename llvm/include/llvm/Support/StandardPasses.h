@@ -100,8 +100,7 @@ namespace llvm {
     if (UnitAtATime) {
       PM->add(createGlobalOptimizerPass());     // Optimize out global vars
       PM->add(createGlobalDCEPass());           // Remove unused fns and globs
-      // IP Constant Propagation
-      PM->add(createIPConstantPropagationPass());
+      PM->add(createIPSCCPPass());              // IP SCCP
       PM->add(createDeadArgEliminationPass());  // Dead argument elimination
     }
     PM->add(createInstructionCombiningPass());  // Clean up after IPCP & DAE
