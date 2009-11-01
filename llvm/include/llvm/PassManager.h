@@ -17,10 +17,9 @@
 #ifndef LLVM_PASSMANAGER_H
 #define LLVM_PASSMANAGER_H
 
-#include "llvm/Pass.h"
-
 namespace llvm {
 
+class Function;
 class Pass;
 class ModulePass;
 class Module;
