@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Constant* classes...
+// This file implements the Constant* classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -1043,8 +1043,8 @@ BlockAddress *BlockAddress::get(Function *F, BasicBlock *BB) {
 BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
 : Constant(Type::getInt8PtrTy(F->getContext()), Value::BlockAddressVal,
            &Op<0>(), 2) {
-  Op<0>() = F;
-  Op<1>() = BB;
+  setOperand(0, F);
+  setOperand(1, BB);
   BB->AdjustBlockAddressRefCount(1);
 }
 
@@ -1074,13 +1074,16 @@ void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
   BlockAddress *&NewBA =
     getContext().pImpl->BlockAddresses[std::make_pair(NewF, NewBB)];
   if (NewBA == 0) {
+    getBasicBlock()->AdjustBlockAddressRefCount(-1);
+    
     // Remove the old entry, this can't cause the map to rehash (just a
     // tombstone will get added).
     getContext().pImpl->BlockAddresses.erase(std::make_pair(getFunction(),
                                                             getBasicBlock()));
     NewBA = this;
-    Op<0>() = NewF;
-    Op<1>() = NewBB;
+    setOperand(0, NewF);
+    setOperand(1, NewBB);
+    getBasicBlock()->AdjustBlockAddressRefCount(1);
     return;
   }
 
