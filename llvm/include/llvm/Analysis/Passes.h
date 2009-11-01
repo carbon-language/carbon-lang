@@ -147,6 +147,13 @@ namespace llvm {
   //
   LoopPass *createLoopDependenceAnalysisPass();
   
+  //===--------------------------------------------------------------------===//
+  //
+  // createScalarEvolutionPass - This creates an instance of the
+  // ScalarEvolution pass.
+  //
+  FunctionPass *createScalarEvolutionPass();
+  
   // Minor pass prototypes, allowing us to expose them through bugpoint and
   // analyze.
   FunctionPass *createInstCountPass();
