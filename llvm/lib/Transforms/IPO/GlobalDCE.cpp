@@ -20,8 +20,8 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumAliases  , "Number of global aliases removed");
@@ -39,7 +39,7 @@ namespace {
     bool runOnModule(Module &M);
 
   private:
-    std::set<GlobalValue*> AliveGlobals;
+    SmallPtrSet<GlobalValue*, 32> AliveGlobals;
 
     /// GlobalIsNeeded - mark the specific global value as needed, and
     /// recursively mark anything that it uses as also needed.
@@ -91,7 +91,8 @@ bool GlobalDCE::runOnModule(Module &M) {
 
   // The first pass is to drop initializers of global variables which are dead.
   std::vector<GlobalVariable*> DeadGlobalVars;   // Keep track of dead globals
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
     if (!AliveGlobals.count(I)) {
       DeadGlobalVars.push_back(I);         // Keep track of dead globals
       I->setInitializer(0);
@@ -154,14 +155,10 @@ bool GlobalDCE::runOnModule(Module &M) {
 /// GlobalIsNeeded - the specific global value as needed, and
 /// recursively mark anything that it uses as also needed.
 void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
-  std::set<GlobalValue*>::iterator I = AliveGlobals.find(G);
-
   // If the global is already in the set, no need to reprocess it.
-  if (I != AliveGlobals.end()) return;
-
-  // Otherwise insert it now, so we do not infinitely recurse
-  AliveGlobals.insert(I, G);
-
+  if (!AliveGlobals.insert(G))
+    return;
+  
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G)) {
     // If this is a global variable, we must make sure to add any global values
     // referenced by the initializer to the alive set.
@@ -176,11 +173,9 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
     // operands.  Any operands of these types must be processed to ensure that
     // any globals used will be marked as needed.
     Function *F = cast<Function>(G);
-    // For all basic blocks...
+
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      // For all instructions...
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        // For all operands...
         for (User::op_iterator U = I->op_begin(), E = I->op_end(); U != E; ++U)
           if (GlobalValue *GV = dyn_cast<GlobalValue>(*U))
             GlobalIsNeeded(GV);
