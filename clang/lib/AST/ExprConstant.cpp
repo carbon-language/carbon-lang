@@ -270,8 +270,9 @@ APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
     if (!VD->getType()->isReferenceType())
       return APValue(E, 0);
     // FIXME: Check whether VD might be overridden!
-    if (VD->getInit())
-      return Visit(VD->getInit());
+    const VarDecl *Def = 0;
+    if (const Expr *Init = VD->getDefinition(Def))
+      return Visit(const_cast<Expr *>(Init));
   }
 
   return APValue();
@@ -855,11 +856,14 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
 
   // In C++, const, non-volatile integers initialized with ICEs are ICEs.
   // In C, they can also be folded, although they are not ICEs.
-  if (E->getType().getCVRQualifiers() == Qualifiers::Const) {
+  if (Info.Ctx.getCanonicalType(E->getType()).getCVRQualifiers() 
+                                                        == Qualifiers::Const) {
     if (const VarDecl *D = dyn_cast<VarDecl>(E->getDecl())) {
-      if (APValue *V = D->getEvaluatedValue())
-        return Success(V->getInt(), E);
-      if (const Expr *Init = D->getInit()) {
+      const VarDecl *Def = 0;
+      if (const Expr *Init = D->getDefinition(Def)) {
+        if (APValue *V = D->getEvaluatedValue())
+          return Success(V->getInt(), E);
+          
         if (Visit(const_cast<Expr*>(Init))) {
           // Cache the evaluated value in the variable declaration.
           D->setEvaluatedValue(Info.Ctx, Result);

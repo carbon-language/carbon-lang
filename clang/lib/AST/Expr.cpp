@@ -22,6 +22,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace clang;
@@ -1538,16 +1539,35 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       //   type initialized by an ICE can be used in ICEs.
       if (const VarDecl *Dcl =
               dyn_cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl())) {
-        if (Dcl->isInitKnownICE()) {
-          // We have already checked whether this subexpression is an
-          // integral constant expression.
-          if (Dcl->isInitICE())
-            return NoDiag();
-          else
-            return ICEDiag(2, E->getLocStart());
-        }
+        Qualifiers Quals = Ctx.getCanonicalType(Dcl->getType()).getQualifiers();
+        if (Quals.hasVolatile() || !Quals.hasConst())
+          return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
+        
+        // Look for the definition of this variable, which will actually have
+        // an initializer.
+        const VarDecl *Def = 0;
+        const Expr *Init = Dcl->getDefinition(Def);
+        if (Init) {
+          if (Def->isInitKnownICE()) {
+            // We have already checked whether this subexpression is an
+            // integral constant expression.
+            if (Def->isInitICE())
+              return NoDiag();
+            else
+              return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
+          }
 
-        if (const Expr *Init = Dcl->getInit()) {
+          // C++ [class.static.data]p4:
+          //   If a static data member is of const integral or const 
+          //   enumeration type, its declaration in the class definition can
+          //   specify a constant-initializer which shall be an integral 
+          //   constant expression (5.19). In that case, the member can appear
+          //   in integral constant expressions.
+          if (Def->isOutOfLine()) {
+            Dcl->setInitKnownICE(Ctx, false);
+            return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
+          }
+          
           ICEDiag Result = CheckICE(Init, Ctx);
           // Cache the result of the ICE test.
           Dcl->setInitKnownICE(Ctx, Result.Val == 0);
@@ -1750,7 +1770,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   }
   EvalResult EvalResult;
   if (!Evaluate(EvalResult, Ctx))
-    assert(0 && "ICE cannot be evaluated!");
+    llvm::llvm_unreachable("ICE cannot be evaluated!");
   assert(!EvalResult.HasSideEffects && "ICE with side effects!");
   assert(EvalResult.Val.isInt() && "ICE that isn't integer!");
   Result = EvalResult.Val.getInt();

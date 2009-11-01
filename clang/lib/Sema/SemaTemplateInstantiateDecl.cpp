@@ -165,7 +165,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // which they were instantiated.
   if (Var->isStaticDataMember())
     SemaRef.Context.setInstantiatedFromStaticDataMember(Var, D, 
-                                                        TSK_ImplicitInstantiation);
+                                                     TSK_ImplicitInstantiation);
   
   if (D->getInit()) {
     OwningExprResult Init
