@@ -609,3 +609,6 @@ default jump table implementation.  This might be useful sometime.  Several
 revisions of patches are on the mailing list, beginning at:
 http://lists.cs.uiuc.edu/pipermail/llvmdev/2009-June/022763.html
 
+//===---------------------------------------------------------------------===//
+
+Make use of the "rbit" instruction.
