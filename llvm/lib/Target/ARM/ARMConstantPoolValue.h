@@ -33,14 +33,14 @@ namespace ARMCP {
 }
 
 /// ARMConstantPoolValue - ARM specific constantpool value. This is used to
-/// represent PC relative displacement between the address of the load
+/// represent PC-relative displacement between the address of the load
 /// instruction and the constant being loaded, i.e. (&GV-(LPIC+8)).
 class ARMConstantPoolValue : public MachineConstantPoolValue {
   Constant *CVal;          // Constant being loaded.
   const char *S;           // ExtSymbol being loaded.
   unsigned LabelId;        // Label id of the load.
   ARMCP::ARMCPKind Kind;   // Kind of constant.
-  unsigned char PCAdjust;  // Extra adjustment if constantpool is pc relative.
+  unsigned char PCAdjust;  // Extra adjustment if constantpool is pc-relative.
                            // 8 for ARM, 4 for Thumb.
   const char *Modifier;    // GV modifier i.e. (&GV(modifier)-(LPIC+8))
   bool AddCurrentAddress;
@@ -85,7 +85,6 @@ public:
   void print(raw_ostream &O) const;
   void dump() const;
 };
-
 
 inline raw_ostream &operator<<(raw_ostream &O, const ARMConstantPoolValue &V) {
   V.print(O);
