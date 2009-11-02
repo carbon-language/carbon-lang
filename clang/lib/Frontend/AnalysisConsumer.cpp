@@ -29,7 +29,6 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
