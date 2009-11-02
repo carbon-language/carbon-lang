@@ -13,7 +13,6 @@
 
 #include "ARM.h"
 #include "ARMAddressingModes.h"
-#include "ARMConstantPoolValue.h"
 #include "ARMISelLowering.h"
 #include "ARMTargetMachine.h"
 #include "llvm/CallingConv.h"
