@@ -130,7 +130,7 @@ bool LLParser::ResolveForwardRefBlockAddresses(Function *TheFn,
         Res = PFS->GetBB(Refs[i].first.UIntVal, Refs[i].first.Loc);
     } else if (Refs[i].first.Kind == ValID::t_LocalID) {
       return Error(Refs[i].first.Loc,
-       "cannot take address of numeric label after it the function is defined");
+       "cannot take address of numeric label after the function is defined");
     } else {
       Res = dyn_cast_or_null<BasicBlock>(
                      TheFn->getValueSymbolTable().lookup(Refs[i].first.StrVal));
