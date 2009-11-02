@@ -56,7 +56,7 @@ private:
                             const MCExpr *&ShiftAmount,
                             const MCExpr *&Offset,
                             bool &OffsetIsReg,
-                            int OffsetRegNum);
+                            int &OffsetRegNum);
 
   bool ParseShift(enum ShiftType &St, const MCExpr *&ShiftAmount);
 
@@ -393,7 +393,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
                                         const MCExpr *&ShiftAmount,
                                         const MCExpr *&Offset,
                                         bool &OffsetIsReg,
-                                        int OffsetRegNum) {
+                                        int &OffsetRegNum) {
   ARMOperand Op;
   Negative = false;
   OffsetRegShifted = false;
