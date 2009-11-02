@@ -1209,9 +1209,26 @@ static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
 
 SDValue ARMTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
   DebugLoc DL = Op.getDebugLoc();
+  EVT PtrVT = getPointerTy();
   BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  SDValue Result = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
-  return DAG.getNode(ARMISD::Wrapper, DL, getPointerTy(), Result);
+  Reloc::Model RelocM = getTargetMachine().getRelocationModel();
+  SDValue CPAddr;
+  if (RelocM == Reloc::Static) {
+    CPAddr = DAG.getTargetConstantPool(BA, PtrVT, 4);
+  } else {
+    unsigned PCAdj = Subtarget->isThumb() ? 4 : 8;
+    ARMConstantPoolValue *CPV = new ARMConstantPoolValue(BA, ARMPCLabelIndex,
+                                                         ARMCP::CPBlockAddress,
+                                                         PCAdj);
+    CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 4);
+  }
+  CPAddr = DAG.getNode(ARMISD::Wrapper, DL, PtrVT, CPAddr);
+  SDValue Result = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), CPAddr,
+                               PseudoSourceValue::getConstantPool(), 0);
+  if (RelocM == Reloc::Static)
+    return Result;
+  SDValue PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
+  return DAG.getNode(ARMISD::PIC_ADD, DL, PtrVT, Result, PICLabel);
 }
 
 // Lower ISD::GlobalTLSAddress using the "general dynamic" model

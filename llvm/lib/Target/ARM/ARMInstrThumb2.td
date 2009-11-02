@@ -1169,7 +1169,6 @@ def : T2Pat<(sub GPR:$LHS, t2_so_imm2part:$RHS),
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>;
 def : T2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
-def : T2Pat<(ARMWrapper  tblockaddress:$dst), (t2LEApcrel tblockaddress:$dst)>;
 def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
             (t2LEApcrelJT tjumptable:$dst, imm:$id)>;
 
