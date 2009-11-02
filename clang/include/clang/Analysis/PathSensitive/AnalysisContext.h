@@ -102,7 +102,7 @@ public:
     return Ctx->getSelfDecl();
   }
 
-  void Profile(llvm::FoldingSetNodeID &ID) {
+  virtual void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Kind, Ctx, Parent);
   }
 
@@ -122,7 +122,7 @@ public:
 
   Stmt const *getCallSite() const { return CallSite; }
 
-  void Profile(llvm::FoldingSetNodeID &ID) {
+  virtual void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getAnalysisContext(), getParent(), CallSite);
   }
 
@@ -142,7 +142,7 @@ public:
                const Stmt *s)
     : LocationContext(Scope, ctx, parent), Enter(s) {}
 
-  void Profile(llvm::FoldingSetNodeID &ID) {
+  virtual void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getAnalysisContext(), getParent(), Enter);
   }
 
