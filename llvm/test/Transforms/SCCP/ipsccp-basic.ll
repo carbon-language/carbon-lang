@@ -149,3 +149,29 @@ define i64 @test6b() {
 ; CHECK: define i64 @test6b
 ; CHECK: ret i64 0
 
+;;======================== test7
+
+
+%T = type {i32,i32}
+
+define internal {i32, i32} @test7a(i32 %A) {
+  %X = add i32 1, %A
+  %mrv0 = insertvalue %T undef, i32 %X, 0
+  %mrv1 = insertvalue %T %mrv0, i32 %A, 1
+  ret %T %mrv1
+; CHECK: @test7a
+; CHECK-NEXT: %mrv0 = insertvalue %T undef, i32 18, 0
+; CHECK-NEXT: %mrv1 = insertvalue %T %mrv0, i32 17, 1
+}
+
+define i32 @test7b() {
+	%X = call {i32, i32} @test7a(i32 17)
+        %Y = extractvalue {i32, i32} %X, 0
+	%Z = add i32 %Y, %Y
+	ret i32 %Z
+; CHECK: define i32 @test7b
+; CHECK-NEXT: call %T @test7a(i32 17)
+; CHECK-NEXT: ret i32 36
+}
+
+
