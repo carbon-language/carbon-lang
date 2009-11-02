@@ -2735,6 +2735,9 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
 
   if (ShuffleVectorSDNode::isSplatMask(&ShuffleMask[0], VT)) {
     int Lane = SVN->getSplatIndex();
+    // If this is undef splat, generate it via "just" vdup, if possible.
+    if (Lane == -1) Lane = 0;
+
     if (Lane == 0 && V1.getOpcode() == ISD::SCALAR_TO_VECTOR) {
       return DAG.getNode(ARMISD::VDUP, dl, VT, V1.getOperand(0));
     }
