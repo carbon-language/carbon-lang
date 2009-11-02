@@ -52,6 +52,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer() const {
   if (!Buffer && Entry) {
     // FIXME: Should we support a way to not have to do this check over
     //   and over if we cannot open the file?
+    //   Yes, PR5371.
     Buffer = MemoryBuffer::getFile(Entry->getName(), 0, Entry->getSize());
     if (isTruncated())
       const_cast<ContentCache *>(this)->truncateAt(TruncateAtLine, 
