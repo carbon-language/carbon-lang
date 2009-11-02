@@ -129,6 +129,14 @@ public:
     return true;
   }
 
+  /// getConstantInt - If this is a constant with a ConstantInt value, return it
+  /// otherwise return null.
+  ConstantInt *getConstantInt() const {
+    if (isConstant())
+      return dyn_cast<ConstantInt>(getConstant());
+    return 0;
+  }
+  
   void markForcedConstant(Constant *V) {
     assert(isUndefined() && "Can't force a defined value!");
     Val.setInt(forcedconstant);
@@ -255,7 +263,7 @@ public:
     return TrackedGlobals;
   }
 
-  inline void markOverdefined(Value *V) {
+  void markOverdefined(Value *V) {
     markOverdefined(ValueState[V], V);
   }
 
@@ -307,7 +315,7 @@ private:
   }
   
   void mergeInValue(Value *V, LatticeVal &MergeWithV) {
-    return mergeInValue(ValueState[V], V, MergeWithV);
+    mergeInValue(ValueState[V], V, MergeWithV);
   }
 
 
@@ -321,17 +329,16 @@ private:
     std::map<Value*, LatticeVal>::iterator I = ValueState.find(V);
     if (I != ValueState.end()) return I->second;  // Common case, in the map
 
+    LatticeVal &LV = ValueState[V];
+
     if (Constant *C = dyn_cast<Constant>(V)) {
-      if (isa<UndefValue>(V)) {
-        // Nothing to do, remain undefined.
-      } else {
-        LatticeVal &LV = ValueState[C];
+      // Undef values remain undefined.
+      if (!isa<UndefValue>(V))
         LV.markConstant(C);          // Constants are constant
-        return LV;
-      }
     }
+    
     // All others are underdefined by default.
-    return ValueState[V];
+    return LV;
   }
 
   // markEdgeExecutable - Mark a basic block as executable, adding it to the BB
@@ -442,21 +449,21 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     }
     
     LatticeVal &BCValue = getValueState(BI->getCondition());
-    if (BCValue.isOverdefined() ||
-        (BCValue.isConstant() && !isa<ConstantInt>(BCValue.getConstant()))) {
+    ConstantInt *CI = BCValue.getConstantInt();
+    if (CI == 0) {
       // Overdefined condition variables, and branches on unfoldable constant
       // conditions, mean the branch could go either way.
-      Succs[0] = Succs[1] = true;
+      if (!BCValue.isUndefined())
+        Succs[0] = Succs[1] = true;
       return;
     }
     
     // Constant condition variables mean the branch can only go a single way.
-    if (BCValue.isConstant())
-      Succs[cast<ConstantInt>(BCValue.getConstant())->isZero()] = true;
+    Succs[CI->isZero()] = true;
     return;
   }
   
-  if (isa<InvokeInst>(&TI)) {
+  if (isa<InvokeInst>(TI)) {
     // Invoke instructions successors are always executable.
     Succs[0] = Succs[1] = true;
     return;
@@ -464,12 +471,16 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
   
   if (SwitchInst *SI = dyn_cast<SwitchInst>(&TI)) {
     LatticeVal &SCValue = getValueState(SI->getCondition());
-    if (SCValue.isOverdefined() ||   // Overdefined condition?
-        (SCValue.isConstant() && !isa<ConstantInt>(SCValue.getConstant()))) {
+    ConstantInt *CI = SCValue.getConstantInt();
+    
+    if (CI == 0) {   // Overdefined or undefined condition?
       // All destinations are executable!
-      Succs.assign(TI.getNumSuccessors(), true);
-    } else if (SCValue.isConstant())
-      Succs[SI->findCaseValue(cast<ConstantInt>(SCValue.getConstant()))] = true;
+      if (!SCValue.isUndefined())
+        Succs.assign(TI.getNumSuccessors(), true);
+      return;
+    }
+      
+    Succs[SI->findCaseValue(CI)] = true;
     return;
   }
   
@@ -506,15 +517,12 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 
     // Overdefined condition variables mean the branch could go either way,
     // undef conditions mean that neither edge is feasible yet.
-    if (!BCValue.isConstant())
-      return BCValue.isOverdefined();
+    ConstantInt *CI = BCValue.getConstantInt();
+    if (CI == 0)
+      return !BCValue.isUndefined();
     
-    // Not branching on an evaluatable constant?
-    if (!isa<ConstantInt>(BCValue.getConstant())) return true;
-
     // Constant condition variables mean the branch can only go a single way.
-    bool CondIsFalse = cast<ConstantInt>(BCValue.getConstant())->isZero();
-    return BI->getSuccessor(CondIsFalse) == To;
+    return BI->getSuccessor(CI->isZero()) == To;
   }
   
   // Invoke instructions successors are always executable.
@@ -523,24 +531,19 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
     LatticeVal &SCValue = getValueState(SI->getCondition());
-    if (SCValue.isOverdefined()) {  // Overdefined condition?
-      // All destinations are executable!
-      return true;
-    } else if (SCValue.isConstant()) {
-      Constant *CPV = SCValue.getConstant();
-      if (!isa<ConstantInt>(CPV))
-        return true;  // not a foldable constant?
+    ConstantInt *CI = SCValue.getConstantInt();
+    
+    if (CI == 0)
+      return !SCValue.isUndefined();
 
-      // Make sure to skip the "default value" which isn't a value
-      for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i)
-        if (SI->getSuccessorValue(i) == CPV) // Found the taken branch.
-          return SI->getSuccessor(i) == To;
+    // Make sure to skip the "default value" which isn't a value
+    for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i)
+      if (SI->getSuccessorValue(i) == CI) // Found the taken branch.
+        return SI->getSuccessor(i) == To;
 
-      // If the constant value is not equal to any of the branches, we must
-      // execute default branch.
-      return SI->getDefaultDest() == To;
-    }
-    return false;
+    // If the constant value is not equal to any of the branches, we must
+    // execute default branch.
+    return SI->getDefaultDest() == To;
   }
   
   // Just mark all destinations executable!
@@ -775,12 +778,11 @@ void SCCPSolver::visitSelectInst(SelectInst &I) {
   LatticeVal &CondValue = getValueState(I.getCondition());
   if (CondValue.isUndefined())
     return;
-  if (CondValue.isConstant()) {
-    if (ConstantInt *CondCB = dyn_cast<ConstantInt>(CondValue.getConstant())){
-      mergeInValue(&I, getValueState(CondCB->getZExtValue() ? I.getTrueValue()
+  
+  if (ConstantInt *CondCB = CondValue.getConstantInt()) {
+    mergeInValue(&I, getValueState(CondCB->getZExtValue() ? I.getTrueValue()
                                                           : I.getFalseValue()));
-      return;
-    }
+    return;
   }
   
   // Otherwise, the condition is overdefined or a constant we can't evaluate.
@@ -839,8 +841,7 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
             if (NonOverdefVal->getConstant()->isNullValue())
               return markConstant(IV, &I, NonOverdefVal->getConstant());
           } else {
-            if (ConstantInt *CI =
-                     dyn_cast<ConstantInt>(NonOverdefVal->getConstant()))
+            if (ConstantInt *CI = NonOverdefVal->getConstantInt())
               if (CI->isAllOnesValue())     // X or -1 = -1
                 return markConstant(IV, &I, NonOverdefVal->getConstant());
           }
