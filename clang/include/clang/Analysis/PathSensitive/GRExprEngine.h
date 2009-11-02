@@ -412,9 +412,6 @@ protected:
   void CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                     bool isPrevisit);
 
-  ExplodedNode *CheckerVisitLocation(Stmt *S, ExplodedNode *Pred, 
-                                     const GRState *state, SVal V);
-
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst);

@@ -139,21 +139,6 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
   // automatically.
 }
 
-ExplodedNode *GRExprEngine::CheckerVisitLocation(Stmt *S, ExplodedNode *Pred, 
-                                                const GRState *state, SVal V) {
-  if (Checkers.empty())
-    return Pred;
-
-  for (CheckersOrdered::iterator I = Checkers.begin(), 
-         E = Checkers.end(); I != E; ++I) {
-    Pred = I->second->CheckLocation(S, Pred, state, V, *this);
-    if (!Pred)
-      break;
-  }
-
-  return Pred;
-}
-
 //===----------------------------------------------------------------------===//
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
@@ -1207,11 +1192,18 @@ ExplodedNode* GRExprEngine::EvalLocation(Stmt* Ex, ExplodedNode* Pred,
   SaveAndRestore<const void*> OldTag(Builder->Tag);
   Builder->Tag = tag;
 
-  if (location.isUnknown())
+  if (location.isUnknown() || Checkers.empty())
     return Pred;
 
-  return CheckerVisitLocation(Ex, Pred, state, location);
-
+  
+  for (CheckersOrdered::iterator I=Checkers.begin(), E=Checkers.end(); I!=E;++I)
+  {
+    Pred = I->second->CheckLocation(Ex, Pred, state, location, *this);
+    if (!Pred)
+      break;
+  }
+  
+  return Pred;
 
   // FIXME: Temporarily disable out-of-bounds checking until we make
   // the logic reflect recent changes to CastRegion and friends.
