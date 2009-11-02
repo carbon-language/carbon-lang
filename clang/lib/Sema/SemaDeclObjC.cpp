@@ -2047,6 +2047,14 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getDeclName();
       return DeclPtrTy();
     }
+    if (const ObjCCategoryDecl *CD = 
+        dyn_cast<ObjCCategoryDecl>(property->getDeclContext())) {
+      if (CD->getIdentifier()) {
+        Diag(PropertyLoc, diag::error_category_property) << CD->getDeclName();
+        Diag(property->getLocation(), diag::note_category_property);
+        return DeclPtrTy();
+      }
+    }
   } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
     if (Synthesize) {
       Diag(AtLoc, diag::error_synthesize_category_decl);

@@ -271,6 +271,11 @@ def error_missing_property_context : Error<
   "missing context for property implementation declaration">;
 def error_bad_property_decl : Error<
   "property implementation must have its declaration in interface %0">;
+def error_category_property : Error<
+  "property declared in category %0 cannot be implemented in "
+  "class implementation">;
+def note_category_property : Note<
+  "property declared here">;
 def error_synthesize_category_decl : Error<
   "@synthesize not allowed in a category's implementation">;
 def error_missing_property_interface : Error<
