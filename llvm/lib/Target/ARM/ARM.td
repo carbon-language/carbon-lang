@@ -125,12 +125,16 @@ def ARMInstrInfo : InstrInfo {
                        "SizeFlag",
                        "IndexModeBits",
                        "Form",
-                       "isUnaryDataProc"];
+                       "isUnaryDataProc",
+                       "canXformTo16Bit",
+                       "Dom"];
   let TSFlagsShifts = [0,
                        4,
                        7,
                        9,
-                       15];
+                       15,
+                       16,
+                       17];
 }
 
 //===----------------------------------------------------------------------===//

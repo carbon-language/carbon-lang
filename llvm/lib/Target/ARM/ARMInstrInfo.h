@@ -25,7 +25,6 @@ namespace llvm {
 
 class ARMInstrInfo : public ARMBaseInstrInfo {
   ARMRegisterInfo RI;
-  const ARMSubtarget &Subtarget;
 public:
   explicit ARMInstrInfo(const ARMSubtarget &STI);
 

@@ -25,7 +25,7 @@
 using namespace llvm;
 
 ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
-  : RI(*this, STI), Subtarget(STI) {
+  : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
 
 unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {

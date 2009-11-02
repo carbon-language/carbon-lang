@@ -131,6 +131,14 @@ namespace ARMII {
     Xform16Bit    = 1 << 16,
 
     //===------------------------------------------------------------------===//
+    // Code domain.
+    DomainShift   = 17,
+    DomainMask    = 3 << DomainShift,
+    DomainGeneral = 0 << DomainShift,
+    DomainVFP     = 1 << DomainShift,
+    DomainNEON    = 2 << DomainShift,
+
+    //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating
     // machine instructions.
     M_BitShift     = 5,
@@ -157,9 +165,10 @@ namespace ARMII {
 }
 
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
+  const ARMSubtarget& Subtarget;
 protected:
   // Can be only subclassed.
-  explicit ARMBaseInstrInfo();
+  explicit ARMBaseInstrInfo(const ARMSubtarget &STI);
 public:
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.
@@ -173,6 +182,7 @@ public:
                                               LiveVariables *LV) const;
 
   virtual const ARMBaseRegisterInfo &getRegisterInfo() const =0;
+  const ARMSubtarget &getSubtarget() const { return Subtarget; }
 
   // Branch analysis.
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,

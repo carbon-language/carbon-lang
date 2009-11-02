@@ -16,15 +16,18 @@
 #include "ARMAddressingModes.h"
 #include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
+#include "ARMRegisterInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
@@ -32,8 +35,9 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
-ARMBaseInstrInfo::ARMBaseInstrInfo()
-  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)) {
+ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
+  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
+    Subtarget(STI) {
 }
 
 MachineInstr *
@@ -504,7 +508,7 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
   case ARM::FCPYS:
   case ARM::FCPYD:
   case ARM::VMOVD:
-  case  ARM::VMOVQ: {
+  case ARM::VMOVQ: {
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
     return true;
@@ -647,11 +651,45 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (DestRC == ARM::SPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYS), DestReg)
                    .addReg(SrcReg));
-  } else if ((DestRC == ARM::DPRRegisterClass) ||
-             (DestRC == ARM::DPR_VFP2RegisterClass) ||
-             (DestRC == ARM::DPR_8RegisterClass)) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
-                   .addReg(SrcReg));
+  } else if (DestRC == ARM::DPR_VFP2RegisterClass ||
+             DestRC == ARM::DPR_8RegisterClass ||
+             SrcRC == ARM::DPR_VFP2RegisterClass ||
+             SrcRC == ARM::DPR_8RegisterClass) {
+    // Always use neon reg-reg move if source or dest is NEON-only regclass.
+    BuildMI(MBB, I, DL, get(ARM::VMOVD), DestReg).addReg(SrcReg);
+  } else if (DestRC == ARM::DPRRegisterClass) {
+    const ARMBaseRegisterInfo* TRI = &getRegisterInfo();
+
+    // Find the Machine Instruction which defines SrcReg.
+    MachineBasicBlock::iterator J = (I == MBB.begin() ? I : prior(I));
+    while (J != MBB.begin()) {
+      if (J->modifiesRegister(SrcReg, TRI))
+        break;
+      --J;
+    }
+
+    unsigned Domain;
+    if (J->modifiesRegister(SrcReg, TRI)) {
+      Domain = J->getDesc().TSFlags & ARMII::DomainMask;
+      // Instructions in general domain are subreg accesses.
+      // Map them to NEON reg-reg moves.
+      if (Domain == ARMII::DomainGeneral)
+        Domain = ARMII::DomainNEON;
+    } else {
+      // We reached the beginning of the BB and found no instruction defining
+      // the reg. This means that register should be live-in for this BB.
+      // It's always to better to use NEON reg-reg moves.
+      Domain = ARMII::DomainNEON;
+    }
+
+    if ((Domain & ARMII::DomainNEON) && getSubtarget().hasNEON()) {
+      BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
+    } else {
+      assert((Domain & ARMII::DomainVFP ||
+              !getSubtarget().hasNEON()) && "Invalid domain!");
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
+                     .addReg(SrcReg));
+    }
   } else if (DestRC == ARM::QPRRegisterClass ||
              DestRC == ARM::QPR_VFP2RegisterClass) {
     BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
