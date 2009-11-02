@@ -23,7 +23,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -144,7 +143,6 @@ public:
 /// Constant Propagation.
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
-  LLVMContext *Context;
   DenseSet<BasicBlock*> BBExecutable;// The basic blocks that are executable
   std::map<Value*, LatticeVal> ValueState;  // The state each value is in.
 
@@ -184,7 +182,6 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   typedef std::pair<BasicBlock*, BasicBlock*> Edge;
   DenseSet<Edge> KnownFeasibleEdges;
 public:
-  void setContext(LLVMContext *C) { Context = C; }
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
@@ -439,18 +436,20 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
   if (BranchInst *BI = dyn_cast<BranchInst>(&TI)) {
     if (BI->isUnconditional()) {
       Succs[0] = true;
-    } else {
-      LatticeVal &BCValue = getValueState(BI->getCondition());
-      if (BCValue.isOverdefined() ||
-          (BCValue.isConstant() && !isa<ConstantInt>(BCValue.getConstant()))) {
-        // Overdefined condition variables, and branches on unfoldable constant
-        // conditions, mean the branch could go either way.
-        Succs[0] = Succs[1] = true;
-      } else if (BCValue.isConstant()) {
-        // Constant condition variables mean the branch can only go a single way
-        Succs[BCValue.getConstant() == ConstantInt::getFalse(*Context)] = true;
-      }
+      return;
     }
+    
+    LatticeVal &BCValue = getValueState(BI->getCondition());
+    if (BCValue.isOverdefined() ||
+        (BCValue.isConstant() && !isa<ConstantInt>(BCValue.getConstant()))) {
+      // Overdefined condition variables, and branches on unfoldable constant
+      // conditions, mean the branch could go either way.
+      Succs[0] = Succs[1] = true;
+      return;
+    }
+    
+    // Constant condition variables mean the branch can only go a single way.
+    Succs[cast<ConstantInt>(BCValue.getConstant())->isZero()] = true;
     return;
   }
   
@@ -501,18 +500,18 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
       return true;
     
     LatticeVal &BCValue = getValueState(BI->getCondition());
-    if (BCValue.isOverdefined()) {
-      // Overdefined condition variables mean the branch could go either way.
-      return true;
-    } else if (BCValue.isConstant()) {
-      // Not branching on an evaluatable constant?
-      if (!isa<ConstantInt>(BCValue.getConstant())) return true;
 
-      // Constant condition variables mean the branch can only go a single way
-      return BI->getSuccessor(BCValue.getConstant() ==
-                                     ConstantInt::getFalse(*Context)) == To;
-    }
-    return false;
+    // Overdefined condition variables mean the branch could go either way,
+    // undef conditions mean that neither edge is feasible yet.
+    if (!BCValue.isConstant())
+      return BCValue.isOverdefined();
+    
+    // Not branching on an evaluatable constant?
+    if (!isa<ConstantInt>(BCValue.getConstant())) return true;
+
+    // Constant condition variables mean the branch can only go a single way.
+    bool CondIsFalse = cast<ConstantInt>(BCValue.getConstant())->isZero();
+    return BI->getSuccessor(CondIsFalse) == To;
   }
   
   // Invoke instructions successors are always executable.
@@ -1496,7 +1495,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       if (!getValueState(BI->getCondition()).isUndefined())
         continue;
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-      if (SI->getNumSuccessors()<2)   // no cases
+      if (SI->getNumSuccessors() < 2)   // no cases
         continue;
       if (!getValueState(SI->getCondition()).isUndefined())
         continue;
@@ -1522,7 +1521,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
     // as undef, then further analysis could think the undef went another way
     // leading to an inconsistent set of conclusions.
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-      BI->setCondition(ConstantInt::getFalse(*Context));
+      BI->setCondition(ConstantInt::getFalse(BI->getContext()));
     } else {
       SwitchInst *SI = cast<SwitchInst>(TI);
       SI->setCondition(SI->getCaseValue(1));
@@ -1572,7 +1571,6 @@ FunctionPass *llvm::createSCCPPass() {
 bool SCCP::runOnFunction(Function &F) {
   DEBUG(errs() << "SCCP on function '" << F.getName() << "'\n");
   SCCPSolver Solver;
-  Solver.setContext(&F.getContext());
 
   // Mark the first block of the function as being executable.
   Solver.MarkBlockExecutable(F.begin());
@@ -1698,10 +1696,7 @@ static bool AddressIsTaken(GlobalValue *GV) {
 }
 
 bool IPSCCP::runOnModule(Module &M) {
-  LLVMContext *Context = &M.getContext();
-  
   SCCPSolver Solver;
-  Solver.setContext(Context);
 
   // Loop over all functions, marking arguments to those with their addresses
   // taken or that are external as overdefined.
