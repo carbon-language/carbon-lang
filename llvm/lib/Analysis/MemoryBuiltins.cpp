@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/Analysis/ConstantFolding.h"
 using namespace llvm;
 
@@ -156,15 +157,22 @@ static Value* isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
         return Op1;
     }
     if (Opcode == Instruction::Shl) {
-      ConstantInt* Op1Int = dyn_cast<ConstantInt>(Op1);
-      if (!Op1Int) return NULL;
-      Value* Op1Pow = ConstantInt::get(Op1->getType(), (uint64_t) 
-                                    pow(2.0, (double) Op1Int->getZExtValue()));
+      ConstantInt* Op1CI = dyn_cast<ConstantInt>(Op1);
+      if (!Op1CI) return NULL;
+      
+      APInt Op1Int = Op1CI->getValue();
+      unsigned Op1Width = Op1Int.getBitWidth();
+      // check for overflow
+      if (Op1Int.getActiveBits() > 64 || Op1Int.getZExtValue() > Op1Width)
+        return NULL;
+      Value* Op1Pow = ConstantInt::get(Context, 
+                                 APInt(Op1Width, 0).set(Op1Int.getZExtValue()));
+
       if (Op0 == ElementSize || (FoldedElementSize && Op0 == FoldedElementSize))
         // ArraySize << log2(ElementSize)
         return Op1Pow;
       if (Op1Pow == ElementSize ||
-        (FoldedElementSize && Op1Pow == FoldedElementSize))
+          (FoldedElementSize && Op1Pow == FoldedElementSize))
         // ElementSize << log2(ArraySize)
         return Op0;
     }
