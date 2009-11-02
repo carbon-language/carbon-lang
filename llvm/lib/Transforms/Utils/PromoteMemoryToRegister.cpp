@@ -749,7 +749,12 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
     }
     
     // Otherwise, we *can* safely rewrite this load.
-    LI->replaceAllUsesWith(OnlyStore->getOperand(0));
+    Value *ReplVal = OnlyStore->getOperand(0);
+    // If the replacement value is the load, this must occur in unreachable
+    // code.
+    if (ReplVal == LI)
+      ReplVal = UndefValue::get(LI->getType());
+    LI->replaceAllUsesWith(ReplVal);
     if (AST && isa<PointerType>(LI->getType()))
       AST->deleteValue(LI);
     LI->eraseFromParent();
