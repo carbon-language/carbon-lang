@@ -37,6 +37,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -156,7 +157,7 @@ namespace {
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
   const TargetData *TD;
-  DenseSet<BasicBlock*> BBExecutable;// The basic blocks that are executable
+  SmallPtrSet<BasicBlock*, 8> BBExecutable;// The BBs that are executable.
   DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
 
   /// GlobalValue - If we are tracking any values for the contents of a global
@@ -200,10 +201,13 @@ public:
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
-  void MarkBlockExecutable(BasicBlock *BB) {
+  ///
+  /// This returns true if the block was not considered live before.
+  bool MarkBlockExecutable(BasicBlock *BB) {
+    if (!BBExecutable.insert(BB)) return false;
     DEBUG(errs() << "Marking Block Executable: " << BB->getName() << "\n");
-    BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
+    return true;
   }
 
   /// TrackValueOfGlobalVariable - Clients can use this method to
@@ -348,18 +352,17 @@ private:
     if (!KnownFeasibleEdges.insert(Edge(Source, Dest)).second)
       return;  // This edge is already known to be executable!
 
-    if (BBExecutable.count(Dest)) {
+    if (!MarkBlockExecutable(Dest)) {
+      // If the destination is already executable, we just made an *edge*
+      // feasible that wasn't before.  Revisit the PHI nodes in the block
+      // because they have potentially new operands.
       DEBUG(errs() << "Marking Edge Executable: " << Source->getName()
             << " -> " << Dest->getName() << "\n");
 
-      // The destination is already executable, but we just made an edge
-      // feasible that wasn't before.  Revisit the PHI nodes in the block
-      // because they have potentially new operands.
-      for (BasicBlock::iterator I = Dest->begin(); isa<PHINode>(I); ++I)
-        visitPHINode(*cast<PHINode>(I));
-
-    } else {
-      MarkBlockExecutable(Dest);
+      PHINode *PN;
+      for (BasicBlock::iterator I = Dest->begin();
+           (PN = dyn_cast<PHINode>(I)); ++I)
+        visitPHINode(*PN);
     }
   }
 
@@ -1229,8 +1232,7 @@ CallOverdefined:
    
   // Finally, if this is the first call to the function hit, mark its entry
   // block executable.
-  if (!BBExecutable.count(F->begin()))
-    MarkBlockExecutable(F->begin());
+  MarkBlockExecutable(F->begin());
   
   // Propagate information from this call site into the callee.
   CallSite::arg_iterator CAI = CS.arg_begin();
