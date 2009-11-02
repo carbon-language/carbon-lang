@@ -752,11 +752,14 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
     CallArgs.push_back(std::make_pair(EmitCallArg(Arg, ArgType), ArgType));
   }
 
-  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-           Callee, CallArgs, MD);
+  RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+                       Callee, CallArgs, MD);
   if (nv_r || v_r) {
     // FIXME: Add return value adjustments.
   }
+
+  if (!ResultType->isVoidType())
+    EmitReturnOfRValue(RV, ResultType);
 
   FinishFunction();
   return Fn;
