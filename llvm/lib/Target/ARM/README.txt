@@ -8,11 +8,7 @@ Reimplement 'select' in terms of 'SEL'.
   add doesn't need to overflow between the two 16-bit chunks.
 
 * Implement pre/post increment support.  (e.g. PR935)
-* Coalesce stack slots!
 * Implement smarter constant generation for binops with large immediates.
-
-* Consider materializing FP constants like 0.0f and 1.0f using integer 
-  immediate instructions then copy to FPU.  Slower than load into FPU?
 
 //===---------------------------------------------------------------------===//
 
@@ -422,14 +418,6 @@ are not remembered when the same two values are compared twice.
 
 //===---------------------------------------------------------------------===//
 
-More register scavenging work:
-
-1. Use the register scavenger to track frame index materialized into registers
-   (those that do not fit in addressing modes) to allow reuse in the same BB.
-2. Finish scavenging for Thumb.
-
-//===---------------------------------------------------------------------===//
-
 More LSR enhancements possible:
 
 1. Teach LSR about pre- and post- indexed ops to allow iv increment be merged
@@ -540,10 +528,6 @@ while ARMConstantIslandPass only need to worry about LDR (literal).
 
 //===---------------------------------------------------------------------===//
 
-We need to fix constant isel for ARMv6t2 to use MOVT.
-
-//===---------------------------------------------------------------------===//
-
 Constant island pass should make use of full range SoImm values for LEApcrel.
 Be careful though as the last attempt caused infinite looping on lencod.
 
@@ -590,11 +574,6 @@ conditional move:
 	bx lr
 
 it saves an instruction and a register.
-
-//===---------------------------------------------------------------------===//
-
-add/sub/and/or + i32 imm can be simplified by folding part of the immediate
-into the operation.
 
 //===---------------------------------------------------------------------===//
 
