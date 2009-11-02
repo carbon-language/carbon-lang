@@ -1074,6 +1074,9 @@ class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{27-24} = opcod1;
   let Inst{21-20} = opcod2;
   let Inst{11-8}  = 0b1011;
+
+  // 64-bit loads & stores operate on both NEON and VFP pipelines.
+  let Dom = VFPNeonDomain.Value;
 }
 
 class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
@@ -1095,6 +1098,9 @@ class AXDI5<dag oops, dag iops, InstrItinClass itin,
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
   let Inst{11-8}  = 0b1011;
+
+  // 64-bit loads & stores operate on both NEON and VFP pipelines.
+  let Dom = VFPNeonDomain.Value;
 }
 
 class AXSI5<dag oops, dag iops, InstrItinClass itin,
