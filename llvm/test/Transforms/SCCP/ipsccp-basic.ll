@@ -134,3 +134,17 @@ define internal i64 @test5c({i64,i64} %a) {
   ret i64 %b
 }
 
+
+;;======================== test6
+
+define i64 @test6a() {
+  ret i64 0
+}
+
+define i64 @test6b() {
+  %a = call i64 @test6a()
+  ret i64 %a
+}
+; CHECK: define i64 @test6b
+; CHECK: ret i64 0
+
