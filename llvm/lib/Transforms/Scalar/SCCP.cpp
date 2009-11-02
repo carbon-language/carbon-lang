@@ -310,7 +310,7 @@ private:
 
   // getValueState - Return the LatticeVal object that corresponds to the value.
   // This function is necessary because not all values should start out in the
-  // underdefined state... Argument's should be overdefined, and
+  // underdefined state.  Argument's should be overdefined, and
   // constants should be marked as constants.  If a value is not known to be an
   // Instruction object, then use this accessor to get its value from the map.
   //
@@ -327,12 +327,12 @@ private:
         return LV;
       }
     }
-    // All others are underdefined by default...
+    // All others are underdefined by default.
     return ValueState[V];
   }
 
   // markEdgeExecutable - Mark a basic block as executable, adding it to the BB
-  // work list if it is not already executable...
+  // work list if it is not already executable.
   //
   void markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
     if (!KnownFeasibleEdges.insert(Edge(Source, Dest)).second)
@@ -359,12 +359,12 @@ private:
   void getFeasibleSuccessors(TerminatorInst &TI, SmallVector<bool, 16> &Succs);
 
   // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
-  // block to the 'To' basic block is currently feasible...
+  // block to the 'To' basic block is currently feasible.
   //
   bool isEdgeFeasible(BasicBlock *From, BasicBlock *To);
 
   // OperandChangedState - This method is invoked on all of the users of an
-  // instruction that was just changed state somehow....  Based on this
+  // instruction that was just changed state somehow.  Based on this
   // information, we need to update the specified user of this instruction.
   //
   void OperandChangedState(User *U) {
@@ -377,7 +377,7 @@ private:
 private:
   friend class InstVisitor<SCCPSolver>;
 
-  // visit implementations - Something changed in this instruction... Either an
+  // visit implementations - Something changed in this instruction.  Either an
   // operand made a transition, or the instruction is newly executable.  Change
   // the value type of I to reflect these changes if appropriate.
   //
@@ -397,7 +397,7 @@ private:
   void visitExtractValueInst(ExtractValueInst &EVI);
   void visitInsertValueInst(InsertValueInst &IVI);
 
-  // Instructions that cannot be folded away...
+  // Instructions that cannot be folded away.
   void visitStoreInst     (Instruction &I);
   void visitLoadInst      (LoadInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
@@ -418,7 +418,7 @@ private:
   void visitVAArgInst     (Instruction &I) { markOverdefined(&I); }
 
   void visitInstruction(Instruction &I) {
-    // If a new instruction is added to LLVM that we don't handle...
+    // If a new instruction is added to LLVM that we don't handle.
     errs() << "SCCP: Don't know how to handle: " << I;
     markOverdefined(&I);   // Just in case
   }
@@ -485,7 +485,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
 
 
 // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
-// block to the 'To' basic block is currently feasible...
+// block to the 'To' basic block is currently feasible.
 //
 bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   assert(BBExecutable.count(To) && "Dest should always be alive!");
@@ -493,7 +493,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   // Make sure the source basic block is executable!!
   if (!BBExecutable.count(From)) return false;
 
-  // Check to make sure this edge itself is actually feasible now...
+  // Check to make sure this edge itself is actually feasible now.
   TerminatorInst *TI = From->getTerminator();
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isUnconditional())
@@ -530,11 +530,11 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 
       // Make sure to skip the "default value" which isn't a value
       for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i)
-        if (SI->getSuccessorValue(i) == CPV) // Found the taken branch...
+        if (SI->getSuccessorValue(i) == CPV) // Found the taken branch.
           return SI->getSuccessor(i) == To;
 
-      // Constant value not equal to any of the branches... must execute
-      // default branch then...
+      // If the constant value is not equal to any of the branches, we must
+      // execute default branch.
       return SI->getDefaultDest() == To;
     }
     return false;
@@ -551,7 +551,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   llvm_unreachable(0);
 }
 
-// visit Implementations - Something changed in this instruction... Either an
+// visit Implementations - Something changed in this instruction, either an
 // operand made a transition, or the instruction is newly executable.  Change
 // the value type of I to reflect these changes if appropriate.  This method
 // makes sure to do the following actions:
@@ -612,14 +612,14 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
         return;
       }
 
-      if (OperandVal == 0) {   // Grab the first value...
+      if (OperandVal == 0) {   // Grab the first value.
         OperandVal = IV.getConstant();
       } else {                // Another value is being merged in!
         // There is already a reachable operand.  If we conflict with it,
         // then the PHI node becomes overdefined.  If we agree with it, we
         // can continue on.
 
-        // Check to see if there are two different constants merging...
+        // Check to see if there are two different constants merging.
         if (IV.getConstant() != OperandVal) {
           // Yes there is.  This means the PHI node is not constant.
           // You must be overdefined poor PHI.
@@ -687,7 +687,7 @@ void SCCPSolver::visitTerminatorInst(TerminatorInst &TI) {
 
   BasicBlock *BB = TI.getParent();
 
-  // Mark all feasible successors executable...
+  // Mark all feasible successors executable.
   for (unsigned i = 0, e = SuccFeasible.size(); i != e; ++i)
     if (SuccFeasible[i])
       markEdgeExecutable(BB, TI.getSuccessor(i));
@@ -819,7 +819,7 @@ void SCCPSolver::visitSelectInst(SelectInst &I) {
   }
 }
 
-// Handle BinaryOperators and Shift Instructions...
+// Handle BinaryOperators and Shift Instructions.
 void SCCPSolver::visitBinaryOperator(Instruction &I) {
   LatticeVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
@@ -946,7 +946,7 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
   }
 }
 
-// Handle ICmpInst instruction...
+// Handle ICmpInst instruction.
 void SCCPSolver::visitCmpInst(CmpInst &I) {
   LatticeVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
@@ -1104,7 +1104,7 @@ void SCCPSolver::visitShuffleVectorInst(ShuffleVectorInst &I) {
 #endif
 }
 
-// Handle getelementptr instructions... if all operands are constants then we
+// Handle getelementptr instructions.  If all operands are constants then we
 // can turn this into a getelementptr ConstantExpr.
 //
 void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
@@ -1117,8 +1117,9 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     LatticeVal &State = getValueState(I.getOperand(i));
     if (State.isUndefined())
-      return;  // Operands are not resolved yet...
-    else if (State.isOverdefined()) {
+      return;  // Operands are not resolved yet.
+    
+    if (State.isOverdefined()) {
       markOverdefined(IV, &I);
       return;
     }
@@ -1127,7 +1128,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   }
 
   Constant *Ptr = Operands[0];
-  Operands.erase(Operands.begin());  // Erase the pointer from idx list...
+  Operands.erase(Operands.begin());  // Erase the pointer from idx list.
 
   markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, &Operands[0],
                                                       Operands.size()));
@@ -1306,7 +1307,7 @@ void SCCPSolver::Solve() {
   // Process the work lists until they are empty!
   while (!BBWorkList.empty() || !InstWorkList.empty() ||
          !OverdefinedInstWorkList.empty()) {
-    // Process the instruction work list...
+    // Process the instruction work list.
     while (!OverdefinedInstWorkList.empty()) {
       Value *I = OverdefinedInstWorkList.back();
       OverdefinedInstWorkList.pop_back();
@@ -1318,13 +1319,14 @@ void SCCPSolver::Solve() {
       //
       // Anything on this worklist that is overdefined need not be visited
       // since all of its users will have already been marked as overdefined
-      // Update all of the users of this instruction's value...
+      // Update all of the users of this instruction's value.
       //
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
            UI != E; ++UI)
         OperandChangedState(*UI);
     }
-    // Process the instruction work list...
+    
+    // Process the instruction work list.
     while (!InstWorkList.empty()) {
       Value *I = InstWorkList.back();
       InstWorkList.pop_back();
@@ -1336,7 +1338,7 @@ void SCCPSolver::Solve() {
       //
       // Anything on this worklist that is overdefined need not be visited
       // since all of its users will have already been marked as overdefined.
-      // Update all of the users of this instruction's value...
+      // Update all of the users of this instruction's value.
       //
       if (!getValueState(I).isOverdefined())
         for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
@@ -1344,7 +1346,7 @@ void SCCPSolver::Solve() {
           OperandChangedState(*UI);
     }
 
-    // Process the basic block work list...
+    // Process the basic block work list.
     while (!BBWorkList.empty()) {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
@@ -1559,7 +1561,7 @@ char SCCP::ID = 0;
 static RegisterPass<SCCP>
 X("sccp", "Sparse Conditional Constant Propagation");
 
-// createSCCPPass - This is the public interface to this file...
+// createSCCPPass - This is the public interface to this file.
 FunctionPass *llvm::createSCCPPass() {
   return new SCCP();
 }
@@ -1664,7 +1666,7 @@ char IPSCCP::ID = 0;
 static RegisterPass<IPSCCP>
 Y("ipsccp", "Interprocedural Sparse Conditional Constant Propagation");
 
-// createIPSCCPPass - This is the public interface to this file...
+// createIPSCCPPass - This is the public interface to this file.
 ModulePass *llvm::createIPSCCPPass() {
   return new IPSCCP();
 }
