@@ -19,3 +19,48 @@ define void @test2(i32* %P) {
 ; CHECK-NEXT: ret void
 }
 
+;; Simple sinking tests
+
+; "if then else"
+define i32 @test3(i1 %C) {
+	%A = alloca i32
+        br i1 %C, label %Cond, label %Cond2
+
+Cond:
+        store i32 -987654321, i32* %A
+        br label %Cont
+
+Cond2:
+	store i32 47, i32* %A
+	br label %Cont
+
+Cont:
+	%V = load i32* %A
+	ret i32 %V
+; CHECK: @test3
+; CHECK-NOT: alloca
+; CHECK: Cont:
+; CHECK-NEXT:  %storemerge = phi i32 [ 47, %Cond2 ], [ -987654321, %Cond ]
+; CHECK-NEXT:  ret i32 %storemerge
+}
+
+; "if then"
+define i32 @test4(i1 %C) {
+	%A = alloca i32
+	store i32 47, i32* %A
+        br i1 %C, label %Cond, label %Cont
+
+Cond:
+        store i32 -987654321, i32* %A
+        br label %Cont
+
+Cont:
+	%V = load i32* %A
+	ret i32 %V
+; CHECK: @test4
+; CHECK-NOT: alloca
+; CHECK: Cont:
+; CHECK-NEXT:  %storemerge = phi i32 [ -987654321, %Cond ], [ 47, %0 ]
+; CHECK-NEXT:  ret i32 %storemerge
+}
+
