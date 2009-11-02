@@ -11943,9 +11943,11 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
         return false;
       --BBI;
     }
-    // If this isn't a store, or isn't a store to the same location, bail out.
+    // If this isn't a store, isn't a store to the same location, or if the
+    // alignments differ, bail out.
     OtherStore = dyn_cast<StoreInst>(BBI);
-    if (!OtherStore || OtherStore->getOperand(1) != SI.getOperand(1))
+    if (!OtherStore || OtherStore->getOperand(1) != SI.getOperand(1) ||
+        OtherStore->getAlignment() != SI.getAlignment())
       return false;
   } else {
     // Otherwise, the other block ended with a conditional branch. If one of the
@@ -11960,7 +11962,8 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
     for (;; --BBI) {
       // Check to see if we find the matching store.
       if ((OtherStore = dyn_cast<StoreInst>(BBI))) {
-        if (OtherStore->getOperand(1) != SI.getOperand(1))
+        if (OtherStore->getOperand(1) != SI.getOperand(1) ||
+            OtherStore->getAlignment() != SI.getAlignment())
           return false;
         break;
       }
@@ -11995,7 +11998,8 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   // insert it.
   BBI = DestBB->getFirstNonPHI();
   InsertNewInstBefore(new StoreInst(MergedVal, SI.getOperand(1),
-                                    OtherStore->isVolatile()), *BBI);
+                                    OtherStore->isVolatile(),
+                                    SI.getAlignment()), *BBI);
   
   // Nuke the old stores.
   EraseInstFromFunction(SI);

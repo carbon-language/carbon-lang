@@ -64,3 +64,21 @@ Cont:
 ; CHECK-NEXT:  ret i32 %storemerge
 }
 
+; "if then"
+define void @test5(i1 %C, i32* %P) {
+	store i32 47, i32* %P, align 1
+        br i1 %C, label %Cond, label %Cont
+
+Cond:
+        store i32 -987654321, i32* %P, align 1
+        br label %Cont
+
+Cont:
+	ret void
+; CHECK: @test5
+; CHECK: Cont:
+; CHECK-NEXT:  %storemerge = phi i32
+; CHECK-NEXT:  store i32 %storemerge, i32* %P, align 1
+; CHECK-NEXT:  ret void
+}
+
