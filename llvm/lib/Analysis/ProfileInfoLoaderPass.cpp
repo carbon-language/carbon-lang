@@ -60,7 +60,7 @@ namespace {
     // recurseBasicBlock() - Calculates the edge weights for as much basic
     // blocks as possbile.
     virtual void recurseBasicBlock(const BasicBlock *BB);
-    virtual void readEdgeOrRemember(Edge, Edge&, unsigned &, unsigned &);
+    virtual void readEdgeOrRemember(Edge, Edge&, unsigned &, double &);
     virtual void readEdge(ProfileInfo::Edge, std::vector<unsigned>&);
 
     /// run - Load the profile information from the specified file.
@@ -84,7 +84,7 @@ Pass *llvm::createProfileLoaderPass(const std::string &Filename) {
 }
 
 void LoaderPass::readEdgeOrRemember(Edge edge, Edge &tocalc, 
-                                    unsigned &uncalc, unsigned &count) {
+                                    unsigned &uncalc, double &count) {
   double w;
   if ((w = getEdgeWeight(edge)) == MissingValue) {
     tocalc = edge;
@@ -117,7 +117,7 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
 
   // collect weights of all incoming and outgoing edges, rememer edges that
   // have no value
-  unsigned incount = 0;
+  double incount = 0;
   SmallSet<const BasicBlock*,8> pred_visited;
   pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
   if (bbi==bbe) {
@@ -129,7 +129,7 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
     }
   }
 
-  unsigned outcount = 0;
+  double outcount = 0;
   SmallSet<const BasicBlock*,8> succ_visited;
   succ_const_iterator sbbi = succ_begin(BB), sbbe = succ_end(BB);
   if (sbbi==sbbe) {
