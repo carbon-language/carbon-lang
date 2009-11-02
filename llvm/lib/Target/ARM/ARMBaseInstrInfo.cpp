@@ -660,26 +660,27 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (DestRC == ARM::DPRRegisterClass) {
     const ARMBaseRegisterInfo* TRI = &getRegisterInfo();
 
+    // If we do not found an instruction defining the reg, this means the
+    // register should be live-in for this BB. It's always to better to use
+    // NEON reg-reg moves.
+    unsigned Domain = ARMII::DomainNEON;
+    
     // Find the Machine Instruction which defines SrcReg.
-    MachineBasicBlock::iterator J = (I == MBB.begin() ? I : prior(I));
-    while (J != MBB.begin()) {
-      if (J->modifiesRegister(SrcReg, TRI))
-        break;
-      --J;
-    }
+    if (!MBB.empty()) {
+      MachineBasicBlock::iterator J = (I == MBB.begin() ? I : prior(I));
+      while (J != MBB.begin()) {
+        if (J->modifiesRegister(SrcReg, TRI))
+          break;
+        --J;
+      }
 
-    unsigned Domain;
-    if (J->modifiesRegister(SrcReg, TRI)) {
-      Domain = J->getDesc().TSFlags & ARMII::DomainMask;
-      // Instructions in general domain are subreg accesses.
-      // Map them to NEON reg-reg moves.
-      if (Domain == ARMII::DomainGeneral)
-        Domain = ARMII::DomainNEON;
-    } else {
-      // We reached the beginning of the BB and found no instruction defining
-      // the reg. This means that register should be live-in for this BB.
-      // It's always to better to use NEON reg-reg moves.
-      Domain = ARMII::DomainNEON;
+      if (J->modifiesRegister(SrcReg, TRI)) {
+        Domain = J->getDesc().TSFlags & ARMII::DomainMask;
+        // Instructions in general domain are subreg accesses.
+        // Map them to NEON reg-reg moves.
+        if (Domain == ARMII::DomainGeneral)
+          Domain = ARMII::DomainNEON;
+      }
     }
 
     if ((Domain & ARMII::DomainNEON) && getSubtarget().hasNEON()) {
