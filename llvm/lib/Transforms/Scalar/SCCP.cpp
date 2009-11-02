@@ -386,6 +386,20 @@ private:
     if (BBExecutable.count(I.getParent()))   // Inst is executable?
       visit(I);
   }
+  
+  /// RemoveFromOverdefinedPHIs - If I has any entries in the
+  /// UsersOfOverdefinedPHIs map for PN, remove them now.
+  void RemoveFromOverdefinedPHIs(Instruction *I, PHINode *PN) {
+    if (UsersOfOverdefinedPHIs.empty()) return;
+    std::multimap<PHINode*, Instruction*>::iterator It, E;
+    tie(It, E) = UsersOfOverdefinedPHIs.equal_range(PN);
+    while (It != E) {
+      if (It->second == I)
+        UsersOfOverdefinedPHIs.erase(It++);
+      else
+        ++It;
+    }
+  }
 
 private:
   friend class InstVisitor<SCCPSolver>;
@@ -904,8 +918,8 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
         // added ourselves to the UsersOfOverdefinedPHIs list for the PHIs,
         // make sure to clean out any entries that we put there, for
         // efficiency.
-        UsersOfOverdefinedPHIs.erase(PN1);
-        UsersOfOverdefinedPHIs.erase(PN2);
+        RemoveFromOverdefinedPHIs(&I, PN1);
+        RemoveFromOverdefinedPHIs(&I, PN2);
       }
 
   markOverdefined(&I);
@@ -986,8 +1000,8 @@ void SCCPSolver::visitCmpInst(CmpInst &I) {
         // added ourselves to the UsersOfOverdefinedPHIs list for the PHIs,
         // make sure to clean out any entries that we put there, for
         // efficiency.
-        UsersOfOverdefinedPHIs.erase(PN1);
-        UsersOfOverdefinedPHIs.erase(PN2);
+        RemoveFromOverdefinedPHIs(&I, PN1);
+        RemoveFromOverdefinedPHIs(&I, PN2);
       }
 
   markOverdefined(&I);
