@@ -15,10 +15,6 @@
 //   * Proves values to be constant, and replaces them with constants
 //   * Proves conditional branches to be unconditional
 //
-// Notice that:
-//   * This pass has a habit of making definitions be dead.  It is a good idea
-//     to to run a DCE pass sometime after running this pass.
-//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sccp"
@@ -40,7 +36,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -61,7 +57,7 @@ namespace {
 /// an LLVM value may occupy.  It is a simple class with value semantics.
 ///
 class LatticeVal {
-  enum {
+  enum LatticeValueTy {
     /// undefined - This LLVM Value has no known value yet.
     undefined,
     
@@ -77,61 +73,68 @@ class LatticeVal {
     /// overdefined - This instruction is not known to be constant, and we know
     /// it has a value.
     overdefined
-  } LatticeValue;    // The current lattice position
+  };
+
+  /// Val: This stores the current lattice value along with the Constant* for
+  /// the constant if this is a 'constant' or 'forcedconstant' value.
+  PointerIntPair<Constant *, 2, LatticeValueTy> Val;
   
-  Constant *ConstantVal; // If Constant value, the current value
+  LatticeValueTy getLatticeValue() const {
+    return Val.getInt();
+  }
+  
 public:
-  inline LatticeVal() : LatticeValue(undefined), ConstantVal(0) {}
+  inline LatticeVal() : Val(0, undefined) {}
   
-  // markOverdefined - Return true if this is a new status to be in...
+  inline bool isUndefined() const { return getLatticeValue() == undefined; }
+  inline bool isConstant() const {
+    return getLatticeValue() == constant || getLatticeValue() == forcedconstant;
+  }
+  inline bool isOverdefined() const { return getLatticeValue() == overdefined; }
+  
+  inline Constant *getConstant() const {
+    assert(isConstant() && "Cannot get the constant of a non-constant!");
+    return Val.getPointer();
+  }
+  
+  /// markOverdefined - Return true if this is a change in status.
   inline bool markOverdefined() {
-    if (LatticeValue != overdefined) {
-      LatticeValue = overdefined;
-      return true;
-    }
-    return false;
+    if (isOverdefined())
+      return false;
+    
+    Val.setInt(overdefined);
+    return true;
   }
 
-  // markConstant - Return true if this is a new status for us.
+  /// markConstant - Return true if this is a change in status.
   inline bool markConstant(Constant *V) {
-    if (LatticeValue != constant) {
-      if (LatticeValue == undefined) {
-        LatticeValue = constant;
-        assert(V && "Marking constant with NULL");
-        ConstantVal = V;
-      } else {
-        assert(LatticeValue == forcedconstant && 
-               "Cannot move from overdefined to constant!");
-        // Stay at forcedconstant if the constant is the same.
-        if (V == ConstantVal) return false;
-        
-        // Otherwise, we go to overdefined.  Assumptions made based on the
-        // forced value are possibly wrong.  Assuming this is another constant
-        // could expose a contradiction.
-        LatticeValue = overdefined;
-      }
-      return true;
-    } else {
-      assert(ConstantVal == V && "Marking constant with different value");
+    if (isConstant()) {
+      assert(getConstant() == V && "Marking constant with different value");
+      return false;
     }
-    return false;
+    
+    if (isUndefined()) {
+      Val.setInt(constant);
+      assert(V && "Marking constant with NULL");
+      Val.setPointer(V);
+    } else {
+      assert(getLatticeValue() == forcedconstant && 
+             "Cannot move from overdefined to constant!");
+      // Stay at forcedconstant if the constant is the same.
+      if (V == getConstant()) return false;
+      
+      // Otherwise, we go to overdefined.  Assumptions made based on the
+      // forced value are possibly wrong.  Assuming this is another constant
+      // could expose a contradiction.
+      Val.setInt(overdefined);
+    }
+    return true;
   }
 
   inline void markForcedConstant(Constant *V) {
-    assert(LatticeValue == undefined && "Can't force a defined value!");
-    LatticeValue = forcedconstant;
-    ConstantVal = V;
-  }
-  
-  inline bool isUndefined() const { return LatticeValue == undefined; }
-  inline bool isConstant() const {
-    return LatticeValue == constant || LatticeValue == forcedconstant;
-  }
-  inline bool isOverdefined() const { return LatticeValue == overdefined; }
-
-  inline Constant *getConstant() const {
-    assert(isConstant() && "Cannot get the constant of a non-constant!");
-    return ConstantVal;
+    assert(isUndefined() && "Can't force a defined value!");
+    Val.setInt(forcedconstant);
+    Val.setPointer(V);
   }
 };
 
