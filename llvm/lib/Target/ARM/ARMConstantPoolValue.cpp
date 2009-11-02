@@ -13,19 +13,21 @@
 
 #include "ARMConstantPoolValue.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Type.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 using namespace llvm;
 
-ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
+ARMConstantPoolValue::ARMConstantPoolValue(Constant *cval, unsigned id,
                                            ARMCP::ARMCPKind K,
                                            unsigned char PCAdj,
                                            const char *Modif,
                                            bool AddCA)
-  : MachineConstantPoolValue((const Type*)gv->getType()),
-    GV(gv), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
+  : MachineConstantPoolValue((const Type*)cval->getType()),
+    CVal(cval), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
@@ -34,13 +36,21 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            const char *Modif,
                                            bool AddCA)
   : MachineConstantPoolValue((const Type*)Type::getInt32Ty(C)),
-    GV(NULL), S(strdup(s)), LabelId(id), Kind(ARMCP::CPValue), PCAdjust(PCAdj),
-    Modifier(Modif), AddCurrentAddress(AddCA) {}
+    CVal(NULL), S(strdup(s)), LabelId(id), Kind(ARMCP::CPExtSymbol),
+    PCAdjust(PCAdj), Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, const char *Modif)
   : MachineConstantPoolValue((const Type*)Type::getInt32Ty(gv->getContext())),
-    GV(gv), S(NULL), LabelId(0), Kind(ARMCP::CPValue), PCAdjust(0),
+    CVal(gv), S(NULL), LabelId(0), Kind(ARMCP::CPValue), PCAdjust(0),
     Modifier(Modif) {}
+
+GlobalValue *ARMConstantPoolValue::getGV() const {
+  return dyn_cast_or_null<GlobalValue>(CVal);
+}
+
+BlockAddress *ARMConstantPoolValue::getBlockAddress() const {
+  return dyn_cast_or_null<BlockAddress>(CVal);
+}
 
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
@@ -51,7 +61,7 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
         (Constants[i].getAlignment() & AlignMask) == 0) {
       ARMConstantPoolValue *CPV =
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
-      if (CPV->GV == GV &&
+      if (CPV->CVal == CVal &&
           CPV->S == S &&
           CPV->LabelId == LabelId &&
           CPV->PCAdjust == PCAdjust)
@@ -68,7 +78,7 @@ ARMConstantPoolValue::~ARMConstantPoolValue() {
 
 void
 ARMConstantPoolValue::AddSelectionDAGCSEId(FoldingSetNodeID &ID) {
-  ID.AddPointer(GV);
+  ID.AddPointer(CVal);
   ID.AddPointer(S);
   ID.AddInteger(LabelId);
   ID.AddInteger(PCAdjust);
@@ -80,8 +90,8 @@ void ARMConstantPoolValue::dump() const {
 
 
 void ARMConstantPoolValue::print(raw_ostream &O) const {
-  if (GV)
-    O << GV->getName();
+  if (CVal)
+    O << CVal->getName();
   else
     O << S;
   if (Modifier) O << "(" << Modifier << ")";

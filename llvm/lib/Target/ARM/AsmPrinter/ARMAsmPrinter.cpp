@@ -159,7 +159,6 @@ namespace {
       printDataDirective(MCPV->getType());
 
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
-      GlobalValue *GV = ACPV->getGV();
       std::string Name;
 
       if (ACPV->isLSDA()) {
@@ -167,7 +166,10 @@ namespace {
         raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
           "_LSDA_" << getFunctionNumber();
         Name = LSDAName.str();
-      } else if (GV) {
+      } else if (ACPV->isBlockAddress()) {
+        Name = GetBlockAddressSymbol(ACPV->getBlockAddress())->getName();
+      } else if (ACPV->isGlobalValue()) {
+        GlobalValue *GV = ACPV->getGV();
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
         if (!isIndirect)
@@ -188,8 +190,10 @@ namespace {
             StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
           }
         }
-      } else
+      } else {
+        assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
         Name = Mang->makeNameProper(ACPV->getSymbol());
+      }
       O << Name;
 
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";

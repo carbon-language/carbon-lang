@@ -428,6 +428,7 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
     DEBUG(errs() << "  ** ARM constant pool #" << CPI << " @ "
           << (void*)MCE.getCurrentPCValue() << " " << *ACPV << '\n');
 
+    assert(ACPV->isGlobalValue() && "unsupported constant pool value");
     GlobalValue *GV = ACPV->getGV();
     if (GV) {
       Reloc::Model RelocM = TM.getRelocationModel();
