@@ -236,10 +236,10 @@ public:
     return BBExecutable.count(BB);
   }
 
-  /// getValueMapping - Once we have solved for constants, return the mapping of
-  /// LLVM values to LatticeVals.
-  std::map<Value*, LatticeVal> &getValueMapping() {
-    return ValueState;
+  LatticeVal getLatticeValueFor(Value *V) const {
+    std::map<Value*, LatticeVal>::const_iterator I = ValueState.find(V);
+    assert(I != ValueState.end() && "V is not in valuemap!");
+    return I->second;
   }
 
   /// getTrackedRetVals - Get the inferred return value map.
@@ -1612,8 +1612,6 @@ bool SCCP::runOnFunction(Function &F) {
   // If we decided that there are basic blocks that are dead in this function,
   // delete their contents now.  Note that we cannot actually delete the blocks,
   // as we cannot modify the CFG of the function.
-  //
-  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (!Solver.isBlockExecutable(BB)) {
@@ -1630,8 +1628,8 @@ bool SCCP::runOnFunction(Function &F) {
       if (Inst->getType()->isVoidTy() || isa<TerminatorInst>(Inst))
         continue;
       
-      LatticeVal &IV = Values[Inst];
-      if (!IV.isConstant() && !IV.isUndefined())
+      LatticeVal IV = Solver.getLatticeValueFor(Inst);
+      if (IV.isOverdefined())
         continue;
       
       Constant *Const = IV.isConstant()
@@ -1743,24 +1741,24 @@ bool IPSCCP::runOnModule(Module &M) {
   // constants if we have found them to be of constant values.
   //
   SmallVector<BasicBlock*, 512> BlocksToErase;
-  std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
-         AI != E; ++AI)
-      if (!AI->use_empty()) {
-        LatticeVal &IV = Values[AI];
-        if (IV.isConstant() || IV.isUndefined()) {
-          Constant *CST = IV.isConstant() ?
-            IV.getConstant() : UndefValue::get(AI->getType());
-          DEBUG(errs() << "***  Arg " << *AI << " = " << *CST <<"\n");
-
-          // Replaces all of the uses of a variable with uses of the
-          // constant.
-          AI->replaceAllUsesWith(CST);
-          ++IPNumArgsElimed;
-        }
-      }
+         AI != E; ++AI) {
+      if (AI->use_empty()) continue;
+      
+      LatticeVal IV = Solver.getLatticeValueFor(AI);
+      if (IV.isOverdefined()) continue;
+      
+      Constant *CST = IV.isConstant() ?
+      IV.getConstant() : UndefValue::get(AI->getType());
+      DEBUG(errs() << "***  Arg " << *AI << " = " << *CST <<"\n");
+      
+      // Replaces all of the uses of a variable with uses of the
+      // constant.
+      AI->replaceAllUsesWith(CST);
+      ++IPNumArgsElimed;
+    }
 
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       if (!Solver.isBlockExecutable(BB)) {
@@ -1789,8 +1787,8 @@ bool IPSCCP::runOnModule(Module &M) {
         if (Inst->getType()->isVoidTy())
           continue;
         
-        LatticeVal &IV = Values[Inst];
-        if (!IV.isConstant() && !IV.isUndefined())
+        LatticeVal IV = Solver.getLatticeValueFor(Inst);
+        if (IV.isOverdefined())
           continue;
         
         Constant *Const = IV.isConstant()
