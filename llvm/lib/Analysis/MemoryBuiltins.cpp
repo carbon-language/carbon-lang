@@ -158,7 +158,7 @@ static Value* isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
     if (Opcode == Instruction::Shl) {
       ConstantInt* Op1Int = dyn_cast<ConstantInt>(Op1);
       if (!Op1Int) return NULL;
-      Value* Op1Pow = ConstantInt::get(Op1->getType(),
+      Value* Op1Pow = ConstantInt::get(Op1->getType(), (uint64_t) 
                                     pow(2.0, (double) Op1Int->getZExtValue()));
       if (Op0 == ElementSize || (FoldedElementSize && Op0 == FoldedElementSize))
         // ArraySize << log2(ElementSize)
