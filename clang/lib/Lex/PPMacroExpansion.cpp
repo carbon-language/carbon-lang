@@ -64,8 +64,10 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__TIMESTAMP__     = RegisterBuiltinMacro(*this, "__TIMESTAMP__");
 
   // Clang Extensions.
-  Ident__has_feature     = RegisterBuiltinMacro(*this, "__has_feature");
-  Ident__has_builtin     = RegisterBuiltinMacro(*this, "__has_builtin");
+  Ident__has_feature      = RegisterBuiltinMacro(*this, "__has_feature");
+  Ident__has_builtin      = RegisterBuiltinMacro(*this, "__has_builtin");
+  Ident__has_include      = RegisterBuiltinMacro(*this, "__has_include");
+  Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
 }
 
 /// isTrivialSingleTokenExpansion - Return true if MI, which has a single token
@@ -503,6 +505,117 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
   }
 }
 
+/// EvaluateHasIncludeCommon - Process a '__has_include("path")'
+/// or '__has_include_next("path")' expression.
+/// Returns true if successful.
+static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
+        IdentifierInfo *II, Preprocessor &PP,
+        const DirectoryLookup *LookupFrom) {
+  SourceLocation LParenLoc;
+
+  // Get '('.
+  PP.LexNonComment(Tok);
+
+  // Ensure we have a '('.
+  if (Tok.isNot(tok::l_paren)) {
+    PP.Diag(Tok.getLocation(), diag::err_pp_missing_lparen) << II->getName();
+    return false;
+  }
+
+  // Save '(' location for possible missing ')' message.
+  LParenLoc = Tok.getLocation();
+
+  // Get the file name.
+  PP.getCurrentLexer()->LexIncludeFilename(Tok);
+
+  // Reserve a buffer to get the spelling.
+  llvm::SmallVector<char, 128> FilenameBuffer;
+  const char *FilenameStart, *FilenameEnd;
+
+  switch (Tok.getKind()) {
+  case tok::eom:
+    // If the token kind is EOM, the error has already been diagnosed.
+    return false;
+
+  case tok::angle_string_literal:
+  case tok::string_literal: {
+    FilenameBuffer.resize(Tok.getLength());
+    FilenameStart = &FilenameBuffer[0];
+    unsigned Len = PP.getSpelling(Tok, FilenameStart);
+    FilenameEnd = FilenameStart+Len;
+    break;
+  }
+
+  case tok::less:
+    // This could be a <foo/bar.h> file coming from a macro expansion.  In this
+    // case, glue the tokens together into FilenameBuffer and interpret those.
+    FilenameBuffer.push_back('<');
+    if (PP.ConcatenateIncludeName(FilenameBuffer))
+      return false;   // Found <eom> but no ">"?  Diagnostic already emitted.
+    FilenameStart = FilenameBuffer.data();
+    FilenameEnd = FilenameStart + FilenameBuffer.size();
+    break;
+  default:
+    PP.Diag(Tok.getLocation(), diag::err_pp_expects_filename);
+    return false;
+  }
+
+  bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(),
+                                             FilenameStart, FilenameEnd);
+  // If GetIncludeFilenameSpelling set the start ptr to null, there was an
+  // error.
+  if (FilenameStart == 0) {
+    return false;
+  }
+
+  // Search include directories.
+  const DirectoryLookup *CurDir;
+  const FileEntry *File = PP.LookupFile(FilenameStart, FilenameEnd,
+                                     isAngled, LookupFrom, CurDir);
+
+  // Get the result value.  Result = true means the file exists.
+  Result = File != 0;
+
+  // Get ')'.
+  PP.LexNonComment(Tok);
+
+  // Ensure we have a trailing ).
+  if (Tok.isNot(tok::r_paren)) {
+    PP.Diag(Tok.getLocation(), diag::err_pp_missing_rparen) << II->getName();
+    PP.Diag(LParenLoc, diag::note_matching) << "(";
+    return false;
+  }
+
+  return true;
+}
+
+/// EvaluateHasInclude - Process a '__has_include("path")' expression.
+/// Returns true if successful.
+static bool EvaluateHasInclude(bool &Result, Token &Tok, IdentifierInfo *II,
+                               Preprocessor &PP) {
+  return(EvaluateHasIncludeCommon(Result, Tok, II, PP, NULL));
+}
+
+/// EvaluateHasIncludeNext - Process '__has_include_next("path")' expression.
+/// Returns true if successful.
+static bool EvaluateHasIncludeNext(bool &Result, Token &Tok,
+                                   IdentifierInfo *II, Preprocessor &PP) {
+  // __has_include_next is like __has_include, except that we start
+  // searching after the current found directory.  If we can't do this,
+  // issue a diagnostic.
+  const DirectoryLookup *Lookup = PP.GetCurDirLookup();
+  if (PP.isInPrimaryFile()) {
+    Lookup = 0;
+    PP.Diag(Tok, diag::pp_include_next_in_primary);
+  } else if (Lookup == 0) {
+    PP.Diag(Tok, diag::pp_include_next_absolute_path);
+  } else {
+    // Start looking up in the next directory.
+    ++Lookup;
+  }
+
+  return(EvaluateHasIncludeCommon(Result, Tok, II, PP, Lookup));
+}
 
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
 /// as a builtin macro, handle it and return the next token as 'Tok'.
@@ -668,6 +781,20 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Value = HasFeature(*this, FeatureII);
     }
 
+    sprintf(TmpBuffer, "%d", (int)Value);
+    Tok.setKind(tok::numeric_constant);
+    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
+  } else if (II == Ident__has_include ||
+             II == Ident__has_include_next) {
+    // The argument to these two builtins should be a parenthesized
+    // file name string literal using angle brackets (<>) or
+    // double-quotes ("").
+    bool Value = false;
+    bool IsValid;
+    if (II == Ident__has_include)
+      IsValid = EvaluateHasInclude(Value, Tok, II, *this);
+    else
+      IsValid = EvaluateHasIncludeNext(Value, Tok, II, *this);
     sprintf(TmpBuffer, "%d", (int)Value);
     Tok.setKind(tok::numeric_constant);
     CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());

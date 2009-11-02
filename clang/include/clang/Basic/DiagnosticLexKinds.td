@@ -194,6 +194,7 @@ def err_pp_expected_eol : Error<
   "expected end of line in preprocessor expression">;
 def err_pp_defined_requires_identifier : Error<
   "operator 'defined' requires an identifier">;
+def err_pp_missing_lparen : Error<"missing '(' after '%0'">;
 def err_pp_missing_rparen : Error<"missing ')' after '%0'">;
 def err_pp_colon_without_question : Error<"':' without preceding '?'">;
 def err_pp_division_by_zero : Error<

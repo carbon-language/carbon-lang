@@ -20,6 +20,7 @@ td {
 <ul>
 <li><a href="#intro">Introduction</a></li>
 <li><a href="#feature_check">Feature Checking Macros</a></li>
+<li><a href="#has_include">Include File Checking Macros</a></li>
 <li><a href="#builtinmacros">Builtin Macros</a></li>
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
 <li><a href="#blocks">Blocks</a></li>
@@ -112,6 +113,69 @@ can be used like this:</p>
 
 <p>The feature tag is described along with the language feature below.</p>
 
+<!-- ======================================================================= -->
+<h2 id="has_include">Include File Checking Macros</h2>
+<!-- ======================================================================= -->
+
+<p>Not all developments systems have the same include files.
+The <a href="#__has_include">__has_include</a> and
+<a href="#__has_include_next">__has_include_next</a> macros allow you to
+check for the existence of an include file before doing
+a possibly failing #include directive.</p>
+
+<!-- ======================================================================= -->
+<h3 id="__has_include">__has_include</h3>
+<!-- ======================================================================= -->
+
+<p>This function-like macro takes a single file name string argument that
+is the name of an include file.  It evaluates to 1 if the file can
+be found using the include paths, or 0 otherwise:</p>
+
+<blockquote>
+<pre>
+// Note the two possible file name string formats.
+#if __has_include("myinclude.h") && __has_include(&lt;stdint.h&gt;)
+# include "myinclude.h"
+#endif
+
+// To avoid problem with non-clang compilers not having this macro.
+#if defined(__has_include) && __has_include("myinclude.h")
+# include "myinclude.h"
+#endif
+</pre>
+</blockquote>
+
+<p>To test for this feature, use #if defined(__has_include).</p>
+
+<!-- ======================================================================= -->
+<h3 id="__has_include_next">__has_include_next</h3>
+<!-- ======================================================================= -->
+
+<p>This function-like macro takes a single file name string argument that
+is the name of an include file.  It is like __has_include except that it
+looks for the second instance of the given file found in the include
+paths.  It evaluates to 1 if the second instance of the file can
+be found using the include paths, or 0 otherwise:</p>
+
+<blockquote>
+<pre>
+// Note the two possible file name string formats.
+#if __has_include_next("myinclude.h") && __has_include_next(&lt;stdint.h&gt;)
+# include_next "myinclude.h"
+#endif
+
+// To avoid problem with non-clang compilers not having this macro.
+#if defined(__has_include_next) && __has_include_next("myinclude.h")
+# include_next "myinclude.h"
+#endif
+</pre>
+</blockquote>
+
+<p>Note that __has_include_next, like the GNU extension
+#include_next directive, is intended for use in headers only,
+and will issue a warning if used in the top-level compilation
+file.  A warning will also be issued if an absolute path
+is used in the file argument.</p>
 
 <!-- ======================================================================= -->
 <h2 id="builtinmacros">Builtin Macros</h2>
