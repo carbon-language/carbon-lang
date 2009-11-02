@@ -28,6 +28,7 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -154,6 +155,7 @@ namespace {
 /// Constant Propagation.
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
+  const TargetData *TD;
   DenseSet<BasicBlock*> BBExecutable;// The basic blocks that are executable
   DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
 
@@ -194,6 +196,7 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   typedef std::pair<BasicBlock*, BasicBlock*> Edge;
   DenseSet<Edge> KnownFeasibleEdges;
 public:
+  SCCPSolver(const TargetData *td) : TD(td) {}
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
@@ -1109,16 +1112,15 @@ void SCCPSolver::visitStoreInst(StoreInst &SI) {
 // global, we can replace the load with the loaded constant value!
 void SCCPSolver::visitLoadInst(LoadInst &I) {
   LatticeVal PtrVal = getValueState(I.getOperand(0));
+  if (PtrVal.isUndefined()) return;   // The pointer is not resolved yet!
   
   LatticeVal &IV = ValueState[&I];
   if (IV.isOverdefined()) return;
 
-  if (PtrVal.isUndefined()) return;   // The pointer is not resolved yet!
-  
   if (!PtrVal.isConstant() || I.isVolatile())
     return markOverdefined(IV, &I);
     
-  Value *Ptr = PtrVal.getConstant();
+  Constant *Ptr = PtrVal.getConstant();
 
   // load null -> null
   if (isa<ConstantPointerNull>(Ptr) && I.getPointerAddressSpace() == 0)
@@ -1126,11 +1128,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
   
   // Transform load (constant global) into the value loaded.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
-    if (GV->isConstant()) {
-      if (GV->hasDefinitiveInitializer())
-        return markConstant(IV, &I, GV->getInitializer());
-      
-    } else if (!TrackedGlobals.empty()) {
+    if (!TrackedGlobals.empty()) {
       // If we are tracking this global, merge in the known value for it.
       DenseMap<GlobalVariable*, LatticeVal>::iterator It =
         TrackedGlobals.find(GV);
@@ -1141,14 +1139,9 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     }
   }
 
-  // Transform load (constantexpr_GEP global, 0, ...) into the value loaded.
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-        if (GV->isConstant() && GV->hasDefinitiveInitializer())
-          if (Constant *V =
-              ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
-            return markConstant(IV, &I, V);
+  // Transform load from a constant into a constant if possible.
+  if (Constant *C = ConstantFoldLoadFromConstPtr(Ptr, TD))
+    return markConstant(IV, &I, C);
 
   // Otherwise we cannot say for certain what value this load will produce.
   // Bail out.
@@ -1530,7 +1523,7 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
 //
 bool SCCP::runOnFunction(Function &F) {
   DEBUG(errs() << "SCCP on function '" << F.getName() << "'\n");
-  SCCPSolver Solver;
+  SCCPSolver Solver(getAnalysisIfAvailable<TargetData>());
 
   // Mark the first block of the function as being executable.
   Solver.MarkBlockExecutable(F.begin());
@@ -1640,7 +1633,7 @@ static bool AddressIsTaken(GlobalValue *GV) {
 }
 
 bool IPSCCP::runOnModule(Module &M) {
-  SCCPSolver Solver;
+  SCCPSolver Solver(getAnalysisIfAvailable<TargetData>());
 
   // Loop over all functions, marking arguments to those with their addresses
   // taken or that are external as overdefined.
