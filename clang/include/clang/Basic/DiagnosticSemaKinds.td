@@ -264,7 +264,8 @@ def warn_objc_property_copy_missing_on_block : Warning<
     "'copy' attribute must be specified for the block property "
     "when -fobjc-gc-only is specified">;
 def err_use_continuation_class : Error<
-  "attribute of property in continuation class of %0 can only  be 'readwrite'">;
+  "property declaration in continuation class of %0 is to change a 'readonly' "
+  "property to 'readwrite'">;
 def err_continuation_class : Error<"continuation class has no primary class">;
 def err_property_type : Error<"property cannot have array or function type %0">;
 def error_missing_property_context : Error<
@@ -274,7 +275,7 @@ def error_bad_property_decl : Error<
 def error_category_property : Error<
   "property declared in category %0 cannot be implemented in "
   "class implementation">;
-def note_category_property : Note<
+def note_property_declare : Note<
   "property declared here">;
 def error_synthesize_category_decl : Error<
   "@synthesize not allowed in a category's implementation">;

@@ -1893,17 +1893,9 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       // handling.
       if ((CCPrimary = CDecl->getClassInterface())) {
         // Find the property in continuation class's primary class only.
-        ObjCPropertyDecl *PIDecl = 0;
         IdentifierInfo *PropertyId = FD.D.getIdentifier();
-        for (ObjCInterfaceDecl::prop_iterator
-               I = CCPrimary->prop_begin(), E = CCPrimary->prop_end();
-             I != E; ++I)
-          if ((*I)->getIdentifier() == PropertyId) {
-            PIDecl = *I;
-            break;
-          }
-
-        if (PIDecl) {
+        if (ObjCPropertyDecl *PIDecl = 
+              CCPrimary->FindPropertyVisibleInPrimaryClass(PropertyId)) {
           // property 'PIDecl's readonly attribute will be over-ridden
           // with continuation class's readwrite property attribute!
           unsigned PIkind = PIDecl->getPropertyAttributes();
@@ -1917,9 +1909,11 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
             if (Attributes & ObjCDeclSpec::DQ_PR_copy)
               PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
             PIDecl->setSetterName(SetterSel);
-          } else
+          } else {
             Diag(AtLoc, diag::err_use_continuation_class)
               << CCPrimary->getDeclName();
+            Diag(PIDecl->getLocation(), diag::note_property_declare);
+          }
           *isOverridingProperty = true;
           // Make sure setter decl is synthesized, and added to primary
           // class's list.
@@ -2051,7 +2045,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
         dyn_cast<ObjCCategoryDecl>(property->getDeclContext())) {
       if (CD->getIdentifier()) {
         Diag(PropertyLoc, diag::error_category_property) << CD->getDeclName();
-        Diag(property->getLocation(), diag::note_category_property);
+        Diag(property->getLocation(), diag::note_property_declare);
         return DeclPtrTy();
       }
     }

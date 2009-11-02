@@ -347,6 +347,8 @@ public:
   ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;
 
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
+  ObjCPropertyDecl *FindPropertyVisibleInPrimaryClass(
+                                            IdentifierInfo *PropertyId) const;
 
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
