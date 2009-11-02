@@ -465,16 +465,16 @@ def STORE32i_post: F1<(outs I:$ptr_wb), (ins D:$val, I:$ptr, M:$off),
 }
 
 def : Pat<(truncstorei16 D:$val, PI:$ptr),
-          (STORE16pi (EXTRACT_SUBREG (COPY_TO_REGCLASS D:$val, D),
+          (STORE16pi (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS D:$val, D)),
                                      bfin_subreg_lo16), PI:$ptr)>;
 
 def : Pat<(truncstorei16 (srl D:$val, (i16 16)), PI:$ptr),
-          (STORE16pi (EXTRACT_SUBREG (COPY_TO_REGCLASS D:$val, D),
+          (STORE16pi (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS D:$val, D)),
                                      bfin_subreg_hi16), PI:$ptr)>;
 
 def : Pat<(truncstorei8 D16L:$val, P:$ptr),
           (STORE8p (INSERT_SUBREG (i32 (IMPLICIT_DEF)),
-                                  (COPY_TO_REGCLASS D16L:$val, D16L),
+                                  (i16 (COPY_TO_REGCLASS D16L:$val, D16L)),
                                   bfin_subreg_lo16),
                    P:$ptr)>;
 
@@ -525,7 +525,7 @@ def : Pat<(and D:$src, 0xffff),
 
 def : Pat<(i32 (anyext D16L:$src)),
           (INSERT_SUBREG (i32 (IMPLICIT_DEF)),
-                         (COPY_TO_REGCLASS D16L:$src, D16L),
+                         (i16 (COPY_TO_REGCLASS D16L:$src, D16L)),
                          bfin_subreg_lo16)>;
 
 // TODO Dreg = Dreg_byte (X/Z)
@@ -870,4 +870,4 @@ def : Pat<(i16 (anyext JustCC:$cc)),
           (EXTRACT_SUBREG (MOVECC_zext JustCC:$cc), bfin_subreg_lo16)>;
 
 def : Pat<(i16 (trunc D:$src)),
-          (EXTRACT_SUBREG (COPY_TO_REGCLASS D:$src, D), bfin_subreg_lo16)>;
+          (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS D:$src, D)), bfin_subreg_lo16)>;
