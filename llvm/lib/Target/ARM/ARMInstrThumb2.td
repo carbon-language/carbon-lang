@@ -787,7 +787,7 @@ defm t2BIC  : T2I_bin_w_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 let Constraints = "$src = $dst" in
 def t2BFC : T2I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
-                IIC_iALUi, "bfc", "\t$dst, $imm",
+                IIC_iUNAsi, "bfc", "\t$dst, $imm",
                 [(set GPR:$dst, (and GPR:$src, bf_inv_mask_imm:$imm))]>;
 
 def t2SBFX : T2I<(outs GPR:$dst), (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),

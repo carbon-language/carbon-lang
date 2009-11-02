@@ -1205,7 +1205,7 @@ defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 def BFC    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iALUi,
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
                "bfc", "\t$dst, $imm", "$src = $dst",
                [(set GPR:$dst, (and GPR:$src, bf_inv_mask_imm:$imm))]>,
                Requires<[IsARM, HasV6T2]> {
