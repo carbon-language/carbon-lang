@@ -338,7 +338,7 @@
    IR's", allowing many source languages to be mapped to them).  By providing
    type information, LLVM can be used as the target of optimizations: for
    example, through pointer analysis, it can be proven that a C automatic
-   variable is never accessed outside of the current function... allowing it to
+   variable is never accessed outside of the current function, allowing it to
    be promoted to a simple SSA value instead of a memory location.</p>
 
 </div>
@@ -359,12 +359,12 @@
 </pre>
 </div>
 
-<p>...because the definition of <tt>%x</tt> does not dominate all of its
-   uses. The LLVM infrastructure provides a verification pass that may be used
-   to verify that an LLVM module is well formed.  This pass is automatically run
-   by the parser after parsing input assembly and by the optimizer before it
-   outputs bitcode.  The violations pointed out by the verifier pass indicate
-   bugs in transformation passes or input to the parser.</p>
+<p>because the definition of <tt>%x</tt> does not dominate all of its uses. The
+   LLVM infrastructure provides a verification pass that may be used to verify
+   that an LLVM module is well formed.  This pass is automatically run by the
+   parser after parsing input assembly and by the optimizer before it outputs
+   bitcode.  The violations pointed out by the verifier pass indicate bugs in
+   transformation passes or input to the parser.</p>
 
 </div>
 
@@ -457,7 +457,7 @@
   <li>Unnamed temporaries are numbered sequentially</li>
 </ol>
 
-<p>...and it also shows a convention that we follow in this document.  When
+<p>It also shows a convention that we follow in this document.  When
    demonstrating instructions, we will follow an instruction with a comment that
    defines the type and name of value produced.  Comments are shown in italic
    text.</p>
@@ -482,24 +482,21 @@
    the "hello world" module:</p>
 
 <div class="doc_code">
-<pre><i>; Declare the string constant as a global constant...</i>
-<a href="#identifiers">@.LC0</a> = <a href="#linkage_internal">internal</a> <a
- href="#globalvars">constant</a> <a href="#t_array">[13 x i8]</a> c"hello world\0A\00"          <i>; [13 x i8]*</i>
+<pre>
+<i>; Declare the string constant as a global constant.</i>
+<a href="#identifiers">@.LC0</a> = <a href="#linkage_internal">internal</a> <a href="#globalvars">constant</a> <a href="#t_array">[13 x i8]</a> c"hello world\0A\00"    <i>; [13 x i8]*</i>
 
 <i>; External declaration of the puts function</i>
-<a href="#functionstructure">declare</a> i32 @puts(i8 *)                                           <i>; i32(i8 *)* </i>
+<a href="#functionstructure">declare</a> i32 @puts(i8 *)                                     <i>; i32(i8 *)* </i>
 
 <i>; Definition of main function</i>
-define i32 @main() {                                              <i>; i32()* </i>
-        <i>; Convert [13 x i8]* to i8  *...</i>
-        %cast210 = <a
- href="#i_getelementptr">getelementptr</a> [13 x i8]* @.LC0, i64 0, i64 0   <i>; i8 *</i>
+define i32 @main() {                                        <i>; i32()* </i>
+  <i>; Convert [13 x i8]* to i8  *...</i>
+  %cast210 = <a href="#i_getelementptr">getelementptr</a> [13 x i8]* @.LC0, i64 0, i64 0   <i>; i8 *</i>
 
-        <i>; Call puts function to write out the string to stdout...</i>
-        <a
- href="#i_call">call</a> i32 @puts(i8 * %cast210)                             <i>; i32</i>
-        <a
- href="#i_ret">ret</a> i32 0<br>}<br>
+  <i>; Call puts function to write out the string to stdout.</i>
+  <a href="#i_call">call</a> i32 @puts(i8 * %cast210)                             <i>; i32</i>
+  <a href="#i_ret">ret</a> i32 0<br>}<br>
 </pre>
 </div>
 
@@ -527,7 +524,7 @@ define i32 @main() {                                              <i>; i32()* </
    linkage:</p>
 
 <dl>
-  <dt><tt><b><a name="linkage_private">private</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_private">private</a></b></tt></dt>
   <dd>Global values with private linkage are only directly accessible by objects
       in the current module.  In particular, linking code into a module with an
       private global value may cause the private to be renamed as necessary to
@@ -535,7 +532,7 @@ define i32 @main() {                                              <i>; i32()* </
       references can be updated. This doesn't show up in any symbol table in the
       object file.</dd>
 
-  <dt><tt><b><a name="linkage_linker_private">linker_private</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_linker_private">linker_private</a></b></tt></dt>
   <dd>Similar to private, but the symbol is passed through the assembler and
       removed by the linker after evaluation.  Note that (unlike private
       symbols) linker_private symbols are subject to coalescing by the linker:
@@ -543,12 +540,12 @@ define i32 @main() {                                              <i>; i32()* </
       normal strong symbols, they are removed by the linker from the final
       linked image (executable or dynamic library).</dd>
 
-  <dt><tt><b><a name="linkage_internal">internal</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_internal">internal</a></b></tt></dt>
   <dd>Similar to private, but the value shows as a local symbol
       (<tt>STB_LOCAL</tt> in the case of ELF) in the object file. This
       corresponds to the notion of the '<tt>static</tt>' keyword in C.</dd>
 
-  <dt><tt><b><a name="linkage_available_externally">available_externally</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_available_externally">available_externally</a></b></tt></dt>
   <dd>Globals with "<tt>available_externally</tt>" linkage are never emitted
       into the object file corresponding to the LLVM module.  They exist to
       allow inlining and other optimizations to take place given knowledge of
@@ -557,20 +554,20 @@ define i32 @main() {                                              <i>; i32()* </
       be discarded at will, and are otherwise the same as <tt>linkonce_odr</tt>.
       This linkage type is only allowed on definitions, not declarations.</dd>
 
-  <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt></dt>
   <dd>Globals with "<tt>linkonce</tt>" linkage are merged with other globals of
       the same name when linkage occurs.  This is typically used to implement
       inline functions, templates, or other code which must be generated in each
       translation unit that uses it.  Unreferenced <tt>linkonce</tt> globals are
       allowed to be discarded.</dd>
 
-  <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_weak">weak</a></b></tt></dt>
   <dd>"<tt>weak</tt>" linkage has the same merging semantics as
       <tt>linkonce</tt> linkage, except that unreferenced globals with
       <tt>weak</tt> linkage may not be discarded.  This is used for globals that
       are declared "weak" in C source code.</dd>
 
-  <dt><tt><b><a name="linkage_common">common</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_common">common</a></b></tt></dt>
   <dd>"<tt>common</tt>" linkage is most similar to "<tt>weak</tt>" linkage, but
       they are used for tentative definitions in C, such as "<tt>int X;</tt>" at
       global scope.
@@ -582,20 +579,20 @@ define i32 @main() {                                              <i>; i32()* </
       have common linkage.</dd>
 
 
-  <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_appending">appending</a></b></tt></dt>
   <dd>"<tt>appending</tt>" linkage may only be applied to global variables of
       pointer to array type.  When two global variables with appending linkage
       are linked together, the two global arrays are appended together.  This is
       the LLVM, typesafe, equivalent of having the system linker append together
       "sections" with identical names when .o files are linked.</dd>
 
-  <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt></dt>
   <dd>The semantics of this linkage follow the ELF object file model: the symbol
       is weak until linked, if not linked, the symbol becomes null instead of
       being an undefined reference.</dd>
 
-  <dt><tt><b><a name="linkage_linkonce_odr">linkonce_odr</a></b></tt>: </dt>
-  <dt><tt><b><a name="linkage_weak_odr">weak_odr</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_linkonce_odr">linkonce_odr</a></b></tt></dt>
+  <dt><tt><b><a name="linkage_weak_odr">weak_odr</a></b></tt></dt>
   <dd>Some languages allow differing globals to be merged, such as two functions
       with different semantics.  Other languages, such as <tt>C++</tt>, ensure
       that only equivalent globals are ever merged (the "one definition rule" -
@@ -615,14 +612,14 @@ define i32 @main() {                                              <i>; i32()* </
    DLLs (Dynamic Link Libraries).</p>
 
 <dl>
-  <dt><tt><b><a name="linkage_dllimport">dllimport</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_dllimport">dllimport</a></b></tt></dt>
   <dd>"<tt>dllimport</tt>" linkage causes the compiler to reference a function
       or variable via a global pointer to a pointer that is set up by the DLL
       exporting the symbol. On Microsoft Windows targets, the pointer name is
       formed by combining <code>__imp_</code> and the function or variable
       name.</dd>
 
-  <dt><tt><b><a name="linkage_dllexport">dllexport</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_dllexport">dllexport</a></b></tt></dt>
   <dd>"<tt>dllexport</tt>" linkage causes the compiler to provide a global
       pointer to a pointer in a DLL, so that it can be referenced with the
       <tt>dllimport</tt> attribute. On Microsoft Windows targets, the pointer
@@ -935,24 +932,24 @@ declare signext i8 @returns_signed_char()
 <p>Currently, only the following parameter attributes are defined:</p>
 
 <dl>
-  <dt><tt>zeroext</tt></dt>
+  <dt><tt><b>zeroext</b></tt></dt>
   <dd>This indicates to the code generator that the parameter or return value
       should be zero-extended to a 32-bit value by the caller (for a parameter)
       or the callee (for a return value).</dd>
 
-  <dt><tt>signext</tt></dt>
+  <dt><tt><b>signext</b></tt></dt>
   <dd>This indicates to the code generator that the parameter or return value
       should be sign-extended to a 32-bit value by the caller (for a parameter)
       or the callee (for a return value).</dd>
 
-  <dt><tt>inreg</tt></dt>
+  <dt><tt><b>inreg</b></tt></dt>
   <dd>This indicates that this parameter or return value should be treated in a
       special target-dependent fashion during while emitting code for a function
       call or return (usually, by putting it in a register as opposed to memory,
       though some targets use it to distinguish between two different kinds of
       registers).  Use of this attribute is target-specific.</dd>
 
-  <dt><tt><a name="byval">byval</a></tt></dt>
+  <dt><tt><b><a name="byval">byval</a></b></tt></dt>
   <dd>This indicates that the pointer parameter should really be passed by value
       to the function.  The attribute implies that a hidden copy of the pointee
       is made between the caller and the callee, so the callee is unable to
@@ -967,7 +964,7 @@ declare signext i8 @returns_signed_char()
       generator that usually indicates a desired alignment for the synthesized
       stack slot.</dd>
 
-  <dt><tt>sret</tt></dt>
+  <dt><tt><b>sret</b></tt></dt>
   <dd>This indicates that the pointer parameter specifies the address of a
       structure that is the return value of the function in the source program.
       This pointer must be guaranteed by the caller to be valid: loads and
@@ -975,7 +972,7 @@ declare signext i8 @returns_signed_char()
       may only be applied to the first parameter. This is not a valid attribute
       for return values. </dd>
 
-  <dt><tt>noalias</tt></dt>
+  <dt><tt><b>noalias</b></tt></dt>
   <dd>This indicates that the pointer does not alias any global or any other
       parameter.  The caller is responsible for ensuring that this is the
       case. On a function return value, <tt>noalias</tt> additionally indicates
@@ -985,12 +982,12 @@ declare signext i8 @returns_signed_char()
       <a href="http://llvm.org/docs/AliasAnalysis.html#MustMayNo">alias
       analysis</a>.</dd>
 
-  <dt><tt>nocapture</tt></dt>
+  <dt><tt><b>nocapture</b></tt></dt>
   <dd>This indicates that the callee does not make any copies of the pointer
       that outlive the callee itself. This is not a valid attribute for return
       values.</dd>
 
-  <dt><tt>nest</tt></dt>
+  <dt><tt><b>nest</b></tt></dt>
   <dd>This indicates that the pointer parameter can be excised using the
       <a href="#int_trampoline">trampoline intrinsics</a>. This is not a valid
       attribute for return values.</dd>
@@ -1010,7 +1007,7 @@ declare signext i8 @returns_signed_char()
 
 <div class="doc_code">
 <pre>
-define void @f() gc "name" { ...
+define void @f() gc "name" { ... }
 </pre>
 </div>
 
@@ -1040,42 +1037,42 @@ define void @f() gc "name" { ...
 define void @f() noinline { ... }
 define void @f() alwaysinline { ... }
 define void @f() alwaysinline optsize { ... }
-define void @f() optsize
+define void @f() optsize { ... }
 </pre>
 </div>
 
 <dl>
-  <dt><tt>alwaysinline</tt></dt>
+  <dt><tt><b>alwaysinline</b></tt></dt>
   <dd>This attribute indicates that the inliner should attempt to inline this
       function into callers whenever possible, ignoring any active inlining size
       threshold for this caller.</dd>
 
-  <dt><tt>inlinehint</tt></dt>
+  <dt><tt><b>inlinehint</b></tt></dt>
   <dd>This attribute indicates that the source code contained a hint that inlining
       this function is desirable (such as the "inline" keyword in C/C++).  It
       is just a hint; it imposes no requirements on the inliner.</dd>
 
-  <dt><tt>noinline</tt></dt>
+  <dt><tt><b>noinline</b></tt></dt>
   <dd>This attribute indicates that the inliner should never inline this
       function in any situation. This attribute may not be used together with
       the <tt>alwaysinline</tt> attribute.</dd>
 
-  <dt><tt>optsize</tt></dt>
+  <dt><tt><b>optsize</b></tt></dt>
   <dd>This attribute suggests that optimization passes and code generator passes
       make choices that keep the code size of this function low, and otherwise
       do optimizations specifically to reduce code size.</dd>
 
-  <dt><tt>noreturn</tt></dt>
+  <dt><tt><b>noreturn</b></tt></dt>
   <dd>This function attribute indicates that the function never returns
       normally.  This produces undefined behavior at runtime if the function
       ever does dynamically return.</dd>
 
-  <dt><tt>nounwind</tt></dt>
+  <dt><tt><b>nounwind</b></tt></dt>
   <dd>This function attribute indicates that the function never returns with an
       unwind or exceptional control flow.  If the function does unwind, its
       runtime behavior is undefined.</dd>
 
-  <dt><tt>readnone</tt></dt>
+  <dt><tt><b>readnone</b></tt></dt>
   <dd>This attribute indicates that the function computes its result (or decides
       to unwind an exception) based strictly on its arguments, without
       dereferencing any pointer arguments or otherwise accessing any mutable
@@ -1086,7 +1083,7 @@ define void @f() optsize
       exceptions by calling the <tt>C++</tt> exception throwing methods, but
       could use the <tt>unwind</tt> instruction.</dd>
 
-  <dt><tt><a name="readonly">readonly</a></tt></dt>
+  <dt><tt><b><a name="readonly">readonly</a></b></tt></dt>
   <dd>This attribute indicates that the function does not write through any
       pointer arguments (including <tt><a href="#byval">byval</a></tt>
       arguments) or otherwise modify any state (e.g. memory, control registers,
@@ -1097,7 +1094,7 @@ define void @f() optsize
       exception by calling the <tt>C++</tt> exception throwing methods, but may
       use the <tt>unwind</tt> instruction.</dd>
 
-  <dt><tt><a name="ssp">ssp</a></tt></dt>
+  <dt><tt><b><a name="ssp">ssp</a></b></tt></dt>
   <dd>This attribute indicates that the function should emit a stack smashing
       protector. It is in the form of a "canary"&mdash;a random value placed on
       the stack before the local variables that's checked upon return from the
@@ -1108,7 +1105,7 @@ define void @f() optsize
       function that doesn't have an <tt>ssp</tt> attribute, then the resulting
       function will have an <tt>ssp</tt> attribute.</dd>
 
-  <dt><tt>sspreq</tt></dt>
+  <dt><tt><b>sspreq</b></tt></dt>
   <dd>This attribute indicates that the function should <em>always</em> emit a
       stack smashing protector. This overrides
       the <tt><a href="#ssp">ssp</a></tt> function attribute.<br>
@@ -1118,14 +1115,14 @@ define void @f() optsize
       an <tt>ssp</tt> attribute, then the resulting function will have
       an <tt>sspreq</tt> attribute.</dd>
 
-  <dt><tt>noredzone</tt></dt>
+  <dt><tt><b>noredzone</b></tt></dt>
   <dd>This attribute indicates that the code generator should not use a red
       zone, even if the target-specific ABI normally permits it.</dd>
 
-  <dt><tt>noimplicitfloat</tt></dt>
+  <dt><tt><b>noimplicitfloat</b></tt></dt>
   <dd>This attributes disables implicit floating point instructions.</dd>
 
-  <dt><tt>naked</tt></dt>
+  <dt><tt><b>naked</b></tt></dt>
   <dd>This attribute disables prologue / epilogue emission for the function.
       This can have very system-specific consequences.</dd>
 </dl>
