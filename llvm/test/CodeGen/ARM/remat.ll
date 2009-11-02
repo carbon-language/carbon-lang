@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=arm-apple-darwin 
-; RUN: llc < %s -mtriple=arm-apple-darwin -stats -info-output-file - | grep "Number of re-materialization" | grep 5
+; RUN: llc < %s -mtriple=arm-apple-darwin -stats -info-output-file - | grep "Number of re-materialization" | grep 4
 
 	%struct.CONTENTBOX = type { i32, i32, i32, i32, i32 }
 	%struct.LOCBOX = type { i32, i32, i32, i32 }
