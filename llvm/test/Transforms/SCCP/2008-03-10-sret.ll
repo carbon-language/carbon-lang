@@ -4,6 +4,8 @@
 ; RUN: grep {%mrv1 = insertvalue %T %mrv, i32 17, 1} %t
 ; RUN: grep {ret %T %mrv1} %t
 
+; XFAIL: *
+
 %T = type {i32,i32}
 
 define internal {i32, i32} @bar(i32 %A) {

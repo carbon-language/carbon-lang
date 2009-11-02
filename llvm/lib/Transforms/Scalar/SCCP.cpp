@@ -1650,7 +1650,8 @@ bool IPSCCP::runOnModule(Module &M) {
     
     // If this is a strong or ODR definition of this function, then we can
     // propagate information about its result into callsites of it.
-    if (!F->mayBeOverridden())
+    if (!F->mayBeOverridden() &&
+        !isa<StructType>(F->getReturnType()))
       Solver.AddTrackedFunction(F);
     
     // If this function only has direct calls that we can see, we can track its
