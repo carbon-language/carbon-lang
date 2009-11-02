@@ -1079,8 +1079,7 @@ void SCCPSolver::visitShuffleVectorInst(ShuffleVectorInst &I) {
 // can turn this into a getelementptr ConstantExpr.
 //
 void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
-  LatticeVal &IV = ValueState[&I];
-  if (IV.isOverdefined()) return;
+  if (ValueState[&I].isOverdefined()) return;
 
   SmallVector<Constant*, 8> Operands;
   Operands.reserve(I.getNumOperands());
@@ -1091,7 +1090,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
       return;  // Operands are not resolved yet.
     
     if (State.isOverdefined())
-      return markOverdefined(IV, &I);
+      return markOverdefined(&I);
 
     assert(State.isConstant() && "Unknown state!");
     Operands.push_back(State.getConstant());
