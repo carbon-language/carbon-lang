@@ -1713,21 +1713,23 @@ bool IPSCCP::runOnModule(Module &M) {
   SmallVector<BasicBlock*, 512> BlocksToErase;
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
-         AI != E; ++AI) {
-      if (AI->use_empty()) continue;
-      
-      LatticeVal IV = Solver.getLatticeValueFor(AI);
-      if (IV.isOverdefined()) continue;
-      
-      Constant *CST = IV.isConstant() ?
-      IV.getConstant() : UndefValue::get(AI->getType());
-      DEBUG(errs() << "***  Arg " << *AI << " = " << *CST <<"\n");
-      
-      // Replaces all of the uses of a variable with uses of the
-      // constant.
-      AI->replaceAllUsesWith(CST);
-      ++IPNumArgsElimed;
+    if (Solver.isBlockExecutable(F->begin())) {
+      for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
+           AI != E; ++AI) {
+        if (AI->use_empty()) continue;
+        
+        LatticeVal IV = Solver.getLatticeValueFor(AI);
+        if (IV.isOverdefined()) continue;
+        
+        Constant *CST = IV.isConstant() ?
+        IV.getConstant() : UndefValue::get(AI->getType());
+        DEBUG(errs() << "***  Arg " << *AI << " = " << *CST <<"\n");
+        
+        // Replaces all of the uses of a variable with uses of the
+        // constant.
+        AI->replaceAllUsesWith(CST);
+        ++IPNumArgsElimed;
+      }
     }
 
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
