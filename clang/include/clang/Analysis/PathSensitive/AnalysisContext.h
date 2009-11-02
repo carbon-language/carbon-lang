@@ -80,6 +80,8 @@ protected:
     : Kind(k), Ctx(ctx), Parent(parent) {}
 
 public:
+  virtual ~LocationContext() {}
+  
   ContextKind getKind() const { return Kind; }
 
   AnalysisContext *getAnalysisContext() const { return Ctx; }
@@ -119,6 +121,9 @@ public:
   StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
                     const Stmt *s)
     : LocationContext(StackFrame, ctx, parent), CallSite(s) {}
+  
+  virtual ~StackFrameContext() {}
+
 
   Stmt const *getCallSite() const { return CallSite; }
 
@@ -141,6 +146,8 @@ public:
   ScopeContext(AnalysisContext *ctx, const LocationContext *parent,
                const Stmt *s)
     : LocationContext(Scope, ctx, parent), Enter(s) {}
+  
+  virtual ~ScopeContext() {}
 
   virtual void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getAnalysisContext(), getParent(), Enter);
