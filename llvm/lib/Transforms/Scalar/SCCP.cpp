@@ -661,16 +661,8 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
   }
   
   // Handle functions that return multiple values.
-  if (0 && !TrackedMultipleRetVals.empty() && I.getNumOperands() > 1) {
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
-      DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
-        It = TrackedMultipleRetVals.find(std::make_pair(F, i));
-      if (It == TrackedMultipleRetVals.end()) break;
-      mergeInValue(It->second, F, getValueState(I.getOperand(i)));
-    }
-  } else if (!TrackedMultipleRetVals.empty() &&
-             /*I.getNumOperands() == 1 &&*/
-             isa<StructType>(I.getOperand(0)->getType())) {
+  if (!TrackedMultipleRetVals.empty() &&
+      isa<StructType>(I.getOperand(0)->getType())) {
     for (unsigned i = 0, e = I.getOperand(0)->getType()->getNumContainedTypes();
          i != e; ++i) {
       DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
