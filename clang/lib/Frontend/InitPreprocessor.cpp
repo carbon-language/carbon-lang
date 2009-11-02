@@ -17,8 +17,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/System/Path.h"
-
-namespace clang {
+using namespace clang;
 
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
@@ -443,8 +442,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file. This returns true on error.
 ///
-bool InitializePreprocessor(Preprocessor &PP,
-                            const PreprocessorInitOptions& InitOpts) {
+bool clang::InitializePreprocessor(Preprocessor &PP,
+                                   const PreprocessorInitOptions &InitOpts) {
   std::vector<char> PredefineBuffer;
 
   const char *LineDirective = "# 1 \"<built-in>\" 3\n";
@@ -492,5 +491,3 @@ bool InitializePreprocessor(Preprocessor &PP,
   // Once we've read this, we're done.
   return false;
 }
-
-} // namespace clang
