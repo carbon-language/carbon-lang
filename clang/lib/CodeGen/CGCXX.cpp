@@ -702,32 +702,7 @@ llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                                const CXXMethodDecl *MD,
                                                bool Extern, int64_t nv,
                                                int64_t v) {
-  QualType R = MD->getType()->getAs<FunctionType>()->getResultType();
-
-  FunctionArgList Args;
-  ImplicitParamDecl *ThisDecl =
-    ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
-                              MD->getThisType(getContext()));
-  Args.push_back(std::make_pair(ThisDecl, ThisDecl->getType()));
-  for (FunctionDecl::param_const_iterator i = MD->param_begin(),
-         e = MD->param_end();
-       i != e; ++i) {
-    ParmVarDecl *D = *i;
-    Args.push_back(std::make_pair(D, D->getType()));
-  }
-  IdentifierInfo *II
-    = &CGM.getContext().Idents.get("__thunk_named_foo_");
-  FunctionDecl *FD = FunctionDecl::Create(getContext(),
-                                          getContext().getTranslationUnitDecl(),
-                                          SourceLocation(), II, R, 0,
-                                          Extern
-                                            ? FunctionDecl::Extern
-                                            : FunctionDecl::Static,
-                                          false, true);
-  StartFunction(FD, R, Fn, Args, SourceLocation());
-  // FIXME: generate body
-  FinishFunction();
-  return Fn;
+  return GenerateCovariantThunk(Fn, MD, Extern, nv, v, 0, 0);
 }
 
 llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
@@ -737,7 +712,7 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
                                                         int64_t v_t,
                                                         int64_t nv_r,
                                                         int64_t v_r) {
-  QualType R = MD->getType()->getAs<FunctionType>()->getResultType();
+  QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
 
   FunctionArgList Args;
   ImplicitParamDecl *ThisDecl =
@@ -754,13 +729,35 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
     = &CGM.getContext().Idents.get("__thunk_named_foo_");
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
-                                          SourceLocation(), II, R, 0,
+                                          SourceLocation(), II, ResultType, 0,
                                           Extern
                                             ? FunctionDecl::Extern
                                             : FunctionDecl::Static,
                                           false, true);
-  StartFunction(FD, R, Fn, Args, SourceLocation());
-  // FIXME: generate body
+  StartFunction(FD, ResultType, Fn, Args, SourceLocation());
+
+  // generate body
+  llvm::Value *Callee = CGM.GetAddrOfFunction(MD);
+  CallArgList CallArgs;
+
+  for (FunctionDecl::param_const_iterator i = MD->param_begin(),
+         e = MD->param_end();
+       i != e; ++i) {
+    ParmVarDecl *D = *i;
+    QualType ArgType = D->getType();
+
+    // llvm::Value *Arg = CGF.GetAddrOfLocalVar(Dst);
+    Expr *Arg = new (getContext()) DeclRefExpr(D, ArgType, SourceLocation());
+    // FIXME: Add this adjustments
+    CallArgs.push_back(std::make_pair(EmitCallArg(Arg, ArgType), ArgType));
+  }
+
+  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+           Callee, CallArgs, MD);
+  if (nv_r || v_r) {
+    // FIXME: Add return value adjustments.
+  }
+
   FinishFunction();
   return Fn;
 }
