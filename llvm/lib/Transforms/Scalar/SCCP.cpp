@@ -451,7 +451,8 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     }
     
     // Constant condition variables mean the branch can only go a single way.
-    Succs[cast<ConstantInt>(BCValue.getConstant())->isZero()] = true;
+    if (BCValue.isConstant())
+      Succs[cast<ConstantInt>(BCValue.getConstant())->isZero()] = true;
     return;
   }
   
