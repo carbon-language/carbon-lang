@@ -47,7 +47,6 @@ STATISTIC(NumInstRemoved, "Number of instructions removed");
 STATISTIC(NumDeadBlocks , "Number of basic blocks unreachable");
 
 STATISTIC(IPNumInstRemoved, "Number of instructions removed by IPSCCP");
-STATISTIC(IPNumDeadBlocks , "Number of basic blocks unreachable by IPSCCP");
 STATISTIC(IPNumArgsElimed ,"Number of arguments constant propagated by IPSCCP");
 STATISTIC(IPNumGlobalConst, "Number of globals found to be constant by IPSCCP");
 
@@ -136,6 +135,10 @@ public:
     Val.setPointer(V);
   }
 };
+} // end anonymous namespace.
+
+
+namespace {
 
 //===----------------------------------------------------------------------===//
 //
@@ -380,7 +383,6 @@ private:
   // visit implementations - Something changed in this instruction.  Either an
   // operand made a transition, or the instruction is newly executable.  Change
   // the value type of I to reflect these changes if appropriate.
-  //
   void visitPHINode(PHINode &I);
 
   // Terminators
@@ -1566,6 +1568,21 @@ FunctionPass *llvm::createSCCPPass() {
   return new SCCP();
 }
 
+static void DeleteInstructionInBlock(BasicBlock *BB) {
+  DEBUG(errs() << "  BasicBlock Dead:" << *BB);
+  ++NumDeadBlocks;
+  
+  // Delete the instructions backwards, as it has a reduced likelihood of
+  // having to update as many def-use and use-def chains.
+  while (!isa<TerminatorInst>(BB->begin())) {
+    Instruction *I = --BasicBlock::iterator(BB->getTerminator());
+    
+    if (!I->use_empty())
+      I->replaceAllUsesWith(UndefValue::get(I->getType()));
+    BB->getInstList().erase(I);
+    ++NumInstRemoved;
+  }
+}
 
 // runOnFunction() - Run the Sparse Conditional Constant Propagation algorithm,
 // and return true if the function was modified.
@@ -1595,56 +1612,42 @@ bool SCCP::runOnFunction(Function &F) {
   // delete their contents now.  Note that we cannot actually delete the blocks,
   // as we cannot modify the CFG of the function.
   //
-  SmallVector<Instruction*, 512> Insts;
   std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (!Solver.isBlockExecutable(BB)) {
-      DEBUG(errs() << "  BasicBlock Dead:" << *BB);
-      ++NumDeadBlocks;
-
-      // Delete the instructions backwards, as it has a reduced likelihood of
-      // having to update as many def-use and use-def chains.
-      for (BasicBlock::iterator I = BB->begin(), E = BB->getTerminator();
-           I != E; ++I)
-        Insts.push_back(I);
-      while (!Insts.empty()) {
-        Instruction *I = Insts.back();
-        Insts.pop_back();
-        if (!I->use_empty())
-          I->replaceAllUsesWith(UndefValue::get(I->getType()));
-        BB->getInstList().erase(I);
-        MadeChanges = true;
-        ++NumInstRemoved;
-      }
-    } else {
-      // Iterate over all of the instructions in a function, replacing them with
-      // constants if we have found them to be of constant values.
-      //
-      for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
-        Instruction *Inst = BI++;
-        if (Inst->getType()->isVoidTy() || isa<TerminatorInst>(Inst))
-          continue;
-        
-        LatticeVal &IV = Values[Inst];
-        if (!IV.isConstant() && !IV.isUndefined())
-          continue;
-        
-        Constant *Const = IV.isConstant()
-          ? IV.getConstant() : UndefValue::get(Inst->getType());
-        DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
-
-        // Replaces all of the uses of a variable with uses of the constant.
-        Inst->replaceAllUsesWith(Const);
-        
-        // Delete the instruction.
-        Inst->eraseFromParent();
-        
-        // Hey, we just changed something!
-        MadeChanges = true;
-        ++NumInstRemoved;
-      }
+      DeleteInstructionInBlock(BB);
+      MadeChanges = true;
+      continue;
     }
+  
+    // Iterate over all of the instructions in a function, replacing them with
+    // constants if we have found them to be of constant values.
+    //
+    for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
+      Instruction *Inst = BI++;
+      if (Inst->getType()->isVoidTy() || isa<TerminatorInst>(Inst))
+        continue;
+      
+      LatticeVal &IV = Values[Inst];
+      if (!IV.isConstant() && !IV.isUndefined())
+        continue;
+      
+      Constant *Const = IV.isConstant()
+        ? IV.getConstant() : UndefValue::get(Inst->getType());
+      DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
+
+      // Replaces all of the uses of a variable with uses of the constant.
+      Inst->replaceAllUsesWith(Const);
+      
+      // Delete the instruction.
+      Inst->eraseFromParent();
+      
+      // Hey, we just changed something!
+      MadeChanges = true;
+      ++NumInstRemoved;
+    }
+  }
 
   return MadeChanges;
 }
@@ -1738,7 +1741,6 @@ bool IPSCCP::runOnModule(Module &M) {
   // Iterate over all of the instructions in the module, replacing them with
   // constants if we have found them to be of constant values.
   //
-  SmallVector<Instruction*, 512> Insts;
   SmallVector<BasicBlock*, 512> BlocksToErase;
   std::map<Value*, LatticeVal> &Values = Solver.getValueMapping();
 
@@ -1759,27 +1761,12 @@ bool IPSCCP::runOnModule(Module &M) {
         }
       }
 
-    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       if (!Solver.isBlockExecutable(BB)) {
-        DEBUG(errs() << "  BasicBlock Dead:" << *BB);
-        ++IPNumDeadBlocks;
+        DeleteInstructionInBlock(BB);
+        MadeChanges = true;
 
-        // Delete the instructions backwards, as it has a reduced likelihood of
-        // having to update as many def-use and use-def chains.
         TerminatorInst *TI = BB->getTerminator();
-        for (BasicBlock::iterator I = BB->begin(), E = TI; I != E; ++I)
-          Insts.push_back(I);
-
-        while (!Insts.empty()) {
-          Instruction *I = Insts.back();
-          Insts.pop_back();
-          if (!I->use_empty())
-            I->replaceAllUsesWith(UndefValue::get(I->getType()));
-          BB->getInstList().erase(I);
-          MadeChanges = true;
-          ++IPNumInstRemoved;
-        }
-
         for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
           BasicBlock *Succ = TI->getSuccessor(i);
           if (!Succ->empty() && isa<PHINode>(Succ->begin()))
@@ -1787,40 +1774,41 @@ bool IPSCCP::runOnModule(Module &M) {
         }
         if (!TI->use_empty())
           TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
-        BB->getInstList().erase(TI);
+        TI->eraseFromParent();
 
         if (&*BB != &F->front())
           BlocksToErase.push_back(BB);
         else
           new UnreachableInst(M.getContext(), BB);
-
-      } else {
-        for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
-          Instruction *Inst = BI++;
-          if (Inst->getType()->isVoidTy())
-            continue;
-          
-          LatticeVal &IV = Values[Inst];
-          if (!IV.isConstant() && !IV.isUndefined())
-            continue;
-          
-          Constant *Const = IV.isConstant()
-            ? IV.getConstant() : UndefValue::get(Inst->getType());
-          DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
-
-          // Replaces all of the uses of a variable with uses of the
-          // constant.
-          Inst->replaceAllUsesWith(Const);
-          
-          // Delete the instruction.
-          if (!isa<CallInst>(Inst) && !isa<TerminatorInst>(Inst))
-            Inst->eraseFromParent();
-
-          // Hey, we just changed something!
-          MadeChanges = true;
-          ++IPNumInstRemoved;
-        }
+        continue;
       }
+      
+      for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
+        Instruction *Inst = BI++;
+        if (Inst->getType()->isVoidTy())
+          continue;
+        
+        LatticeVal &IV = Values[Inst];
+        if (!IV.isConstant() && !IV.isUndefined())
+          continue;
+        
+        Constant *Const = IV.isConstant()
+          ? IV.getConstant() : UndefValue::get(Inst->getType());
+        DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
+
+        // Replaces all of the uses of a variable with uses of the
+        // constant.
+        Inst->replaceAllUsesWith(Const);
+        
+        // Delete the instruction.
+        if (!isa<CallInst>(Inst) && !isa<TerminatorInst>(Inst))
+          Inst->eraseFromParent();
+
+        // Hey, we just changed something!
+        MadeChanges = true;
+        ++IPNumInstRemoved;
+      }
+    }
 
     // Now that all instructions in the function are constant folded, erase dead
     // blocks, because we can now use ConstantFoldTerminator to get rid of
