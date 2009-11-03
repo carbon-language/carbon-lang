@@ -107,13 +107,12 @@ namespace llvm {
     PM->add(createCFGSimplificationPass());     // Clean up after IPCP & DAE
     
     // Start of CallGraph SCC passes.
-    if (UnitAtATime) {
-      if (HaveExceptions)
-        PM->add(createPruneEHPass());           // Remove dead EH info
-      PM->add(createFunctionAttrsPass());       // Set readonly/readnone attrs
-    }
+    if (UnitAtATime && HaveExceptions)
+      PM->add(createPruneEHPass());           // Remove dead EH info
     if (InliningPass)
       PM->add(InliningPass);
+    if (UnitAtATime)
+      PM->add(createFunctionAttrsPass());       // Set readonly/readnone attrs
     if (OptimizationLevel > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
     
