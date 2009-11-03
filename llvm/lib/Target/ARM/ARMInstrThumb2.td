@@ -1082,7 +1082,7 @@ let Defs =
                                AddrModeNone, SizeSpecial, NoItinerary,
                                "str.w\tsp, [$src, #+8] @ eh_setjmp begin\n"
                                "\tadr\tr12, 0f\n"
-                               "\torr\tr12, #1\n"
+                               "\torr.w\tr12, r12, #1\n"
                                "\tstr.w\tr12, [$src, #+4]\n"
                                "\tmovs\tr0, #0\n"
                                "\tb\t1f\n"
