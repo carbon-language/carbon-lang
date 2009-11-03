@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Instructions.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/SmallSet.h"
@@ -49,9 +48,6 @@ bool llvm::PointerMayBeCaptured(const Value *V, bool ReturnCaptures) {
 
     switch (I->getOpcode()) {
     case Instruction::Call:
-      if (isFreeCall(I))
-        // Freeing a pointer does not cause it to be captured.
-        break;
     case Instruction::Invoke: {
       CallSite CS = CallSite::get(I);
       // Not captured if the callee is readonly, doesn't return a copy through
