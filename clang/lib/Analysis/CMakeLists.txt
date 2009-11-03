@@ -15,7 +15,6 @@ add_clang_library(clangAnalysis
   CallGraph.cpp
   CallInliner.cpp
   CheckDeadStores.cpp
-  CheckNSError.cpp
   CheckObjCDealloc.cpp
   CheckObjCInstMethSignature.cpp
   CheckObjCUnusedIVars.cpp
@@ -30,6 +29,7 @@ add_clang_library(clangAnalysis
   GRState.cpp
   LiveVariables.cpp
   MemRegion.cpp
+  NSErrorChecker.cpp
   NullDerefChecker.cpp
   PathDiagnostic.cpp
   RangeConstraintManager.cpp

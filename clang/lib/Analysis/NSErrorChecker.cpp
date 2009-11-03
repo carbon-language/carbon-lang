@@ -1,4 +1,4 @@
-//=- CheckNSError.cpp - Coding conventions for uses of NSError ---*- C++ -*-==//
+//=- NSErrorCheckerer.cpp - Coding conventions for uses of NSError -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -28,7 +28,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN NSErrorCheck : public BugType {
+class VISIBILITY_HIDDEN NSErrorChecker : public BugType {
   const Decl &CodeDecl;
   const bool isNSErrorWarning;
   IdentifierInfo * const II;
@@ -49,7 +49,7 @@ class VISIBILITY_HIDDEN NSErrorCheck : public BugType {
   void EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl);
 
 public:
-  NSErrorCheck(const Decl &D, bool isNSError, GRExprEngine& eng)
+  NSErrorChecker(const Decl &D, bool isNSError, GRExprEngine& eng)
     : BugType(isNSError ? "NSError** null dereference"
                         : "CFErrorRef* null dereference",
               "Coding conventions (Apple)"),
@@ -65,11 +65,11 @@ public:
 
 void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng,
                                   const Decl &D) {
-  BR.Register(new NSErrorCheck(D, true, Eng));
-  BR.Register(new NSErrorCheck(D, false, Eng));
+  BR.Register(new NSErrorChecker(D, true, Eng));
+  BR.Register(new NSErrorChecker(D, false, Eng));
 }
 
-void NSErrorCheck::FlushReports(BugReporter& BR) {
+void NSErrorChecker::FlushReports(BugReporter& BR) {
   // Get the analysis engine and the exploded analysis graph.
   ExplodedGraph& G = Eng.getGraph();
 
@@ -100,7 +100,7 @@ void NSErrorCheck::FlushReports(BugReporter& BR) {
   }
 }
 
-void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl) {
+void NSErrorChecker::EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl) {
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
 
@@ -122,7 +122,7 @@ void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl) {
 }
 
 void
-NSErrorCheck::CheckSignature(const ObjCMethodDecl& M, QualType& ResultTy,
+NSErrorChecker::CheckSignature(const ObjCMethodDecl& M, QualType& ResultTy,
                              llvm::SmallVectorImpl<VarDecl*>& ErrorParams) {
 
   ResultTy = M.getResultType();
@@ -141,7 +141,7 @@ NSErrorCheck::CheckSignature(const ObjCMethodDecl& M, QualType& ResultTy,
 }
 
 void
-NSErrorCheck::CheckSignature(const FunctionDecl& F, QualType& ResultTy,
+NSErrorChecker::CheckSignature(const FunctionDecl& F, QualType& ResultTy,
                              llvm::SmallVectorImpl<VarDecl*>& ErrorParams) {
 
   ResultTy = F.getResultType();
@@ -160,7 +160,7 @@ NSErrorCheck::CheckSignature(const FunctionDecl& F, QualType& ResultTy,
 }
 
 
-bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy) {
+bool NSErrorChecker::CheckNSErrorArgument(QualType ArgTy) {
 
   const PointerType* PPT = ArgTy->getAs<PointerType>();
   if (!PPT)
@@ -181,7 +181,7 @@ bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy) {
   return false;
 }
 
-bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {
+bool NSErrorChecker::CheckCFErrorArgument(QualType ArgTy) {
 
   const PointerType* PPT = ArgTy->getAs<PointerType>();
   if (!PPT) return false;
@@ -192,7 +192,7 @@ bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {
   return TT->getDecl()->getIdentifier() == II;
 }
 
-void NSErrorCheck::CheckParamDeref(const VarDecl *Param,
+void NSErrorChecker::CheckParamDeref(const VarDecl *Param,
                                    const LocationContext *LC,
                                    const GRState *rootState,
                                    BugReporter& BR) {
