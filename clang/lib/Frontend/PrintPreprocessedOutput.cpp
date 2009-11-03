@@ -66,7 +66,7 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
       OS << ' ';
 
     // Make sure we have enough space in the spelling buffer.
-    if (I->getLength() < SpellingBuffer.size())
+    if (I->getLength() > SpellingBuffer.size())
       SpellingBuffer.resize(I->getLength());
     const char *Buffer = SpellingBuffer.data();
     unsigned SpellingLen = PP.getSpelling(*I, Buffer);
