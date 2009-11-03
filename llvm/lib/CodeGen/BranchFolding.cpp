@@ -1050,7 +1050,8 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
     if (CurTBB && CurCond.empty() && CurFBB == 0 && 
-        MBB->begin()->getDesc().isBranch() && CurTBB != MBB) {
+        MBB->begin()->getDesc().isBranch() && CurTBB != MBB &&
+        !MBB->hasAddressTaken()) {
       // This block may contain just an unconditional branch.  Because there can
       // be 'non-branch terminators' in the block, try removing the branch and
       // then seeing if the block is empty.
