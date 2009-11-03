@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathSensitive/Checkers/UndefDerefChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/DivZeroChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/UndefinedArgChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -596,42 +597,6 @@ public:
   }
 };
 
-// Undefined arguments checking.
-
-class VISIBILITY_HIDDEN CheckUndefinedArg
-  : public CheckerVisitor<CheckUndefinedArg> {
-
-  BadArg *BT;
-
-public:
-  CheckUndefinedArg() : BT(0) {}
-  ~CheckUndefinedArg() {}
-
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
-};
-
-void CheckUndefinedArg::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE){
-  for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-       I != E; ++I) {
-    if (C.getState()->getSVal(*I).isUndef()) {
-      if (ExplodedNode *ErrorNode = C.GenerateNode(CE, true)) {
-        if (!BT)
-          BT = new BadArg();
-        // Generate a report for this bug.
-        ArgReport *Report = new ArgReport(*BT, BT->getDescription().c_str(),
-                                          ErrorNode, *I);
-        Report->addRange((*I)->getSourceRange());
-        C.EmitReport(Report);
-      }
-    }
-  }
-}
-
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//
@@ -661,7 +626,7 @@ void GRExprEngine::RegisterInternalChecks() {
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.
   registerCheck<CheckAttrNonNull>(new CheckAttrNonNull());
-  registerCheck<CheckUndefinedArg>(new CheckUndefinedArg());
+  registerCheck<UndefinedArgChecker>(new UndefinedArgChecker());
   registerCheck<BadCallChecker>(new BadCallChecker());
   registerCheck<DivZeroChecker>(new DivZeroChecker());
   registerCheck<UndefDerefChecker>(new UndefDerefChecker());

@@ -81,5 +81,6 @@ public:
 
   template <typename ITER> void Emit(BugReporter& BR, ITER I, ITER E);
 };
+
 } // end clang namespace
 #endif
