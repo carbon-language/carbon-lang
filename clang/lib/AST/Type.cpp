@@ -224,6 +224,8 @@ QualType Type::getPointeeType() const {
     return OPT->getPointeeType();
   if (const BlockPointerType *BPT = getAs<BlockPointerType>())
     return BPT->getPointeeType();
+  if (const ReferenceType *RT = getAs<ReferenceType>())
+    return RT->getPointeeType();
   return QualType();
 }
 

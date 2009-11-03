@@ -1113,6 +1113,38 @@ class test17_D : public test17_B2 {
 // CHECK-LP64-NEXT: .quad __ZN9test17_B13barEv
 
 
+struct test18_NV1 {
+  virtual void fooNV1() { }
+virtual void foo_NV1() { }
+  int i;
+};
+
+struct test18_NV2 {
+  virtual test18_NV2& foo1() { return *this; }
+virtual void foo_NV2() { }
+virtual void foo_NV2b() { }
+  int i;
+};
+
+struct test18_B : public test18_NV1, test18_NV2 {
+  virtual test18_B& foo1() { return *this; }
+  virtual test18_B *foo2() { return 0; }
+  virtual test18_B *foo3() { return 0; }
+virtual void foo_B() { }
+  int i;
+};
+
+struct test18_B2 : test18_NV1, virtual test18_B {
+  virtual test18_B2& foo1() { return *this; }
+  virtual test18_B2 *foo2() { return 0; }
+virtual void foo_B2() { }
+  int i;
+};
+
+struct test18_D : test18_NV1, virtual test18_B2 {
+  virtual test18_D& foo1() { return *this; }
+} d;
+
 
 // CHECK-LP64: __ZTV1B:
 // CHECK-LP64-NEXT: .space 8

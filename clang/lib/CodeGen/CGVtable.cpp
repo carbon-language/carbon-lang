@@ -159,8 +159,8 @@ public:
   /// getNVOffset - Returns the non-virtual offset for the given (B) base of the
   /// derived class D.
   Index_t getNVOffset(QualType qB, QualType qD) {
-    qD = qD->getAs<PointerType>()->getPointeeType();
-    qB = qB->getAs<PointerType>()->getPointeeType();
+    qD = qD->getPointeeType();
+    qB = qB->getPointeeType();
     CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
     CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
     int64_t o = getNVOffset_1(D, B);
@@ -174,8 +174,8 @@ public:
   /// getVbaseOffset - Returns the index into the vtable for the virtual base
   /// offset for the given (B) virtual base of the derived class D.
   Index_t getVbaseOffset(QualType qB, QualType qD) {
-    qD = qD->getAs<PointerType>()->getPointeeType();
-    qB = qB->getAs<PointerType>()->getPointeeType();
+    qD = qD->getPointeeType();
+    qB = qB->getPointeeType();
     CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
     CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
     if (D != Class)
