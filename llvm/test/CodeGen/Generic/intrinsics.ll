@@ -14,9 +14,9 @@ define double @test_sqrt(float %F) {
 
 
 ; SIN
-declare float @sinf(float)
+declare float @sinf(float) readonly
 
-declare double @sin(double)
+declare double @sin(double) readonly
 
 define double @test_sin(float %F) {
         %G = call float @sinf( float %F )               ; <float> [#uses=1]
@@ -27,9 +27,9 @@ define double @test_sin(float %F) {
 
 
 ; COS
-declare float @cosf(float)
+declare float @cosf(float) readonly
 
-declare double @cos(double)
+declare double @cos(double) readonly
 
 define double @test_cos(float %F) {
         %G = call float @cosf( float %F )               ; <float> [#uses=1]
