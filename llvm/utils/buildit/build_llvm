@@ -123,7 +123,7 @@ if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
 
   PATH=$DIR/bin:$PATH
 # otherwise, try to use llvm-gcc if it's available
-else
+elif [ $DARWIN_VERS -gt 9 ]; then
   # If the user has set CC or CXX, respect their wishes.  If not,
   # compile with LLVM-GCC/LLVM-G++ if available; if LLVM is not
   # available, fall back to usual GCC/G++ default.
