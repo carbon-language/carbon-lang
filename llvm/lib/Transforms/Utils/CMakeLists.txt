@@ -13,6 +13,7 @@ add_llvm_library(LLVMTransformUtils
   LCSSA.cpp
   Local.cpp
   LoopSimplify.cpp
+  LoopUnroll.cpp
   LowerInvoke.cpp
   LowerSwitch.cpp
   Mem2Reg.cpp
@@ -21,7 +22,6 @@ add_llvm_library(LLVMTransformUtils
   SSI.cpp
   SimplifyCFG.cpp
   UnifyFunctionExitNodes.cpp
-  LoopUnroll.cpp
   ValueMapper.cpp
   )
 
