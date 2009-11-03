@@ -980,7 +980,7 @@ void ARMAsmPrinter::printNoHashImmediate(const MachineInstr *MI, int OpNum) {
 
 void ARMAsmPrinter::printVFPf32ImmOperand(const MachineInstr *MI, int OpNum) {
   const ConstantFP *FP = MI->getOperand(OpNum).getFPImm();
-  O << ARM::getVFPf32Imm(FP->getValueAPF());
+  O << '#' << ARM::getVFPf32Imm(FP->getValueAPF());
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
@@ -990,7 +990,7 @@ void ARMAsmPrinter::printVFPf32ImmOperand(const MachineInstr *MI, int OpNum) {
 
 void ARMAsmPrinter::printVFPf64ImmOperand(const MachineInstr *MI, int OpNum) {
   const ConstantFP *FP = MI->getOperand(OpNum).getFPImm();
-  O << ARM::getVFPf64Imm(FP->getValueAPF());
+  O << '#' << ARM::getVFPf64Imm(FP->getValueAPF());
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
