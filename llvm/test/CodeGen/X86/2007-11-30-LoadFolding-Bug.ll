@@ -1,6 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -stats |& \
-; RUN:   grep {1 .*folded into instructions}
-; Increment in loop bb.128.i adjusted to 2, to prevent loop reversal from
+; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
+; Increment in loop bb.i28.i adjusted to 2, to prevent loop reversal from
 ; kicking in.
 
 declare fastcc void @rdft(i32, i32, double*, i32*, double*)
@@ -34,6 +33,9 @@ cond_next36.i:		; preds = %cond_next.i
 	br label %bb.i28.i
 
 bb.i28.i:		; preds = %bb.i28.i, %cond_next36.i
+; CHECK: %bb.i28.i
+; CHECK: addl $2
+; CHECK: addl $2
 	%j.0.reg2mem.0.i16.i = phi i32 [ 0, %cond_next36.i ], [ %indvar.next39.i, %bb.i28.i ]		; <i32> [#uses=2]
 	%din_addr.1.reg2mem.0.i17.i = phi double [ 0.000000e+00, %cond_next36.i ], [ %tmp16.i25.i, %bb.i28.i ]		; <double> [#uses=1]
 	%tmp1.i18.i = fptosi double %din_addr.1.reg2mem.0.i17.i to i32		; <i32> [#uses=2]

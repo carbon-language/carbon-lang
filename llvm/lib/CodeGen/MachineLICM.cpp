@@ -56,12 +56,12 @@ namespace {
 
     // State that is updated as we process loops
     bool         Changed;          // True if a loop is changed.
+    bool         FirstInLoop;      // True if it's the first LICM in the loop.
     MachineLoop *CurLoop;          // The current loop we are working on.
     MachineBasicBlock *CurPreheader; // The preheader for CurLoop.
 
-    // For each BB and opcode pair, keep a list of hoisted instructions.
-    DenseMap<std::pair<unsigned, unsigned>,
-      std::vector<const MachineInstr*> > CSEMap;
+    // For each opcode, keep a list of potentail CSE instructions.
+    DenseMap<unsigned, std::vector<const MachineInstr*> > CSEMap;
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineLICM() : MachineFunctionPass(&ID) {}
@@ -115,6 +115,11 @@ namespace {
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
     void Hoist(MachineInstr *MI);
+
+    /// InitCSEMap - Initialize the CSE map with instructions that are in the
+    /// current loop preheader that may become duplicates of instructions that
+    /// are hoisted out of the loop.
+    void InitCSEMap(MachineBasicBlock *BB);
   };
 } // end anonymous namespace
 
@@ -140,7 +145,7 @@ static bool LoopIsOuterMostWithPreheader(MachineLoop *CurLoop) {
 bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(errs() << "******** Machine LICM ********\n");
 
-  Changed = false;
+  Changed = FirstInLoop = false;
   TM = &MF.getTarget();
   TII = TM->getInstrInfo();
   TRI = TM->getRegisterInfo();
@@ -152,8 +157,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   DT = &getAnalysis<MachineDominatorTree>();
   AA = &getAnalysis<AliasAnalysis>();
 
-  for (MachineLoopInfo::iterator
-         I = LI->begin(), E = LI->end(); I != E; ++I) {
+  for (MachineLoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
     CurLoop = *I;
 
     // Only visit outer-most preheader-sporting loops.
@@ -170,7 +174,11 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     if (!CurPreheader)
       continue;
 
+    // CSEMap is initialized for loop header when the first instruction is
+    // being hoisted.
+    FirstInLoop = true;
     HoistRegion(DT->getNode(CurLoop->getHeader()));
+    CSEMap.clear();
   }
 
   return Changed;
@@ -191,10 +199,7 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
   for (MachineBasicBlock::iterator
          MII = BB->begin(), E = BB->end(); MII != E; ) {
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
-    MachineInstr &MI = *MII;
-
-    Hoist(&MI);
-
+    Hoist(&*MII);
     MII = NextMII;
   }
 
@@ -430,6 +435,27 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   return NewMIs[0];
 }
 
+void MachineLICM::InitCSEMap(MachineBasicBlock *BB) {
+  for (MachineBasicBlock::iterator I = BB->begin(),E = BB->end(); I != E; ++I) {
+    const MachineInstr *MI = &*I;
+    // FIXME: For now, only hoist re-materilizable instructions. LICM will
+    // increase register pressure. We want to make sure it doesn't increase
+    // spilling.
+    if (TII->isTriviallyReMaterializable(MI, AA)) {
+      unsigned Opcode = MI->getOpcode();
+      DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator
+        CI = CSEMap.find(Opcode);
+      if (CI != CSEMap.end())
+        CI->second.push_back(MI);
+      else {
+        std::vector<const MachineInstr*> CSEMIs;
+        CSEMIs.push_back(MI);
+        CSEMap.insert(std::make_pair(Opcode, CSEMIs));
+      }
+    }
+  }
+}
+
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
@@ -454,11 +480,14 @@ void MachineLICM::Hoist(MachineInstr *MI) {
       errs() << "\n";
     });
 
+  // If this is the first instruction being hoisted to the preheader,
+  // initialize the CSE map with potential common expressions.
+  InitCSEMap(CurPreheader);
+
   // Look for opportunity to CSE the hoisted instruction.
-  std::pair<unsigned, unsigned> BBOpcPair =
-    std::make_pair(CurPreheader->getNumber(), MI->getOpcode());
-  DenseMap<std::pair<unsigned, unsigned>,
-    std::vector<const MachineInstr*> >::iterator CI = CSEMap.find(BBOpcPair);
+  unsigned Opcode = MI->getOpcode();
+  DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator
+    CI = CSEMap.find(Opcode);
   bool DoneCSE = false;
   if (CI != CSEMap.end()) {
     const MachineInstr *Dup = LookForDuplicate(MI, CI->second, RegInfo);
@@ -477,15 +506,15 @@ void MachineLICM::Hoist(MachineInstr *MI) {
 
   // Otherwise, splice the instruction to the preheader.
   if (!DoneCSE) {
-    CurPreheader->splice(CurPreheader->getFirstTerminator(),
-                         MI->getParent(), MI);
+    CurPreheader->splice(CurPreheader->getFirstTerminator(),MI->getParent(),MI);
+
     // Add to the CSE map.
     if (CI != CSEMap.end())
       CI->second.push_back(MI);
     else {
       std::vector<const MachineInstr*> CSEMIs;
       CSEMIs.push_back(MI);
-      CSEMap.insert(std::make_pair(BBOpcPair, CSEMIs));
+      CSEMap.insert(std::make_pair(Opcode, CSEMIs));
     }
   }
 
