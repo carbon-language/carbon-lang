@@ -1036,6 +1036,17 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
                                    DoNothing);
         }
         break;
+        
+      case 29:
+        if (!memcmp(FName, "CGBitmapContextCreateWithData", 29)) {
+          // FIXES: <rdar://problem/7358899>
+          // Eventually this can be improved by recognizing that 'releaseInfo'
+          // passed to CGBitmapContextCreateWithData is released via
+          // a callback and doing full IPA to make sure this is done correctly.
+          ScratchArgs = AF.Add(ScratchArgs, 8, StopTracking);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,DoNothing);          
+        }
+        break;
 
       case 32:
         if (!memcmp(FName, "IOServiceAddMatchingNotification", 32)) {
