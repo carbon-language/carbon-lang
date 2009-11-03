@@ -44,6 +44,6 @@ lit.site.cfg: FORCE
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 
 clean::
-	@ rm -rf Output/
+	@ find -name Output | xargs rm -fr
 
 .PHONY: all report clean
