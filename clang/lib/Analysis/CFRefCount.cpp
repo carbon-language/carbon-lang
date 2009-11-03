@@ -193,20 +193,6 @@ public:
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// Selector creation functions.
-//===----------------------------------------------------------------------===//
-
-static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
-  IdentifierInfo* II = &Ctx.Idents.get(name);
-  return Ctx.Selectors.getSelector(0, &II);
-}
-
-static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
-  IdentifierInfo* II = &Ctx.Idents.get(name);
-  return Ctx.Selectors.getSelector(1, &II);
-}
-
-//===----------------------------------------------------------------------===//
 // Type querying functions.
 //===----------------------------------------------------------------------===//
 
