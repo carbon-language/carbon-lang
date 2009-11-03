@@ -107,7 +107,7 @@ public:
 
   /// markConstant - Return true if this is a change in status.
   bool markConstant(Constant *V) {
-    if (isConstant()) {
+    if (getLatticeValue() == constant) { // Constant but not forcedconstant.
       assert(getConstant() == V && "Marking constant with different value");
       return false;
     }
