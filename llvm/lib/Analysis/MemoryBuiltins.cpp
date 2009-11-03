@@ -33,16 +33,14 @@ static bool isMallocCall(const CallInst *CI) {
   if (!CI)
     return false;
 
-  const Module *M = CI->getParent()->getParent()->getParent();
-  Function *MallocFunc = M->getFunction("malloc");
-
-  if (CI->getOperand(0) != MallocFunc)
+  Function *Callee = CI->getCalledFunction();
+  if (Callee == 0 || !Callee->isDeclaration() || Callee->getName() != "malloc")
     return false;
 
   // Check malloc prototype.
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
   // attribute will exist.
-  const FunctionType *FTy = MallocFunc->getFunctionType();
+  const FunctionType *FTy = Callee->getFunctionType();
   if (FTy->getNumParams() != 1)
     return false;
   if (IntegerType *ITy = dyn_cast<IntegerType>(FTy->param_begin()->get())) {
@@ -260,22 +258,19 @@ bool llvm::isFreeCall(const Value *I) {
   const CallInst *CI = dyn_cast<CallInst>(I);
   if (!CI)
     return false;
-
-  const Module *M = CI->getParent()->getParent()->getParent();
-  Function *FreeFunc = M->getFunction("free");
-
-  if (CI->getOperand(0) != FreeFunc)
+  Function *Callee = CI->getCalledFunction();
+  if (Callee == 0 || !Callee->isDeclaration() || Callee->getName() != "free")
     return false;
 
   // Check free prototype.
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
   // attribute will exist.
-  const FunctionType *FTy = FreeFunc->getFunctionType();
-  if (FTy->getReturnType() != Type::getVoidTy(M->getContext()))
+  const FunctionType *FTy = Callee->getFunctionType();
+  if (!FTy->getReturnType()->isVoidTy())
     return false;
   if (FTy->getNumParams() != 1)
     return false;
-  if (FTy->param_begin()->get() != Type::getInt8PtrTy(M->getContext()))
+  if (FTy->param_begin()->get() != Type::getInt8PtrTy(Callee->getContext()))
     return false;
 
   return true;

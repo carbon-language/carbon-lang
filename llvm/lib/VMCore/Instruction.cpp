@@ -303,32 +303,6 @@ bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
   return false;
 }
 
-// Code here matches isFreeCall from MemoryBuiltins, which is not in VMCore.
-static bool isFreeCall(const Value* I) {
-  const CallInst *CI = dyn_cast<CallInst>(I);
-  if (!CI)
-    return false;
-
-  const Module* M = CI->getParent()->getParent()->getParent();
-  Function *FreeFunc = M->getFunction("free");
-
-  if (CI->getOperand(0) != FreeFunc)
-    return false;
-
-  // Check free prototype.
-  // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
-  // attribute will exist.
-  const FunctionType *FTy = FreeFunc->getFunctionType();
-  if (FTy->getReturnType() != Type::getVoidTy(M->getContext()))
-    return false;
-  if (FTy->getNumParams() != 1)
-    return false;
-  if (FTy->param_begin()->get() != Type::getInt8PtrTy(M->getContext()))
-    return false;
-
-  return true;
-}
-
 /// mayReadFromMemory - Return true if this instruction may read memory.
 ///
 bool Instruction::mayReadFromMemory() const {
@@ -338,8 +312,6 @@ bool Instruction::mayReadFromMemory() const {
   case Instruction::Load:
     return true;
   case Instruction::Call:
-    if (isFreeCall(this))
-      return true;
     return !cast<CallInst>(this)->doesNotAccessMemory();
   case Instruction::Invoke:
     return !cast<InvokeInst>(this)->doesNotAccessMemory();
@@ -357,8 +329,6 @@ bool Instruction::mayWriteToMemory() const {
   case Instruction::VAArg:
     return true;
   case Instruction::Call:
-    if (isFreeCall(this))
-      return true;
     return !cast<CallInst>(this)->onlyReadsMemory();
   case Instruction::Invoke:
     return !cast<InvokeInst>(this)->onlyReadsMemory();
@@ -418,18 +388,16 @@ static bool isMalloc(const Value* I) {
     CI = dyn_cast<CallInst>(BCI->getOperand(0));
   }
 
-  if (!CI) return false;
-
-  const Module* M = CI->getParent()->getParent()->getParent();
-  Constant *MallocFunc = M->getFunction("malloc");
-
-  if (CI->getOperand(0) != MallocFunc)
+  if (!CI)
+    return false;
+  Function *Callee = CI->getCalledFunction();
+  if (Callee == 0 || !Callee->isDeclaration() || Callee->getName() != "malloc")
     return false;
 
   // Check malloc prototype.
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
   // attribute will exist.
-  const FunctionType *FTy = cast<Function>(MallocFunc)->getFunctionType();
+  const FunctionType *FTy = Callee->getFunctionType();
   if (FTy->getNumParams() != 1)
     return false;
   if (IntegerType *ITy = dyn_cast<IntegerType>(FTy->param_begin()->get())) {
