@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mcpu=cortex-a8 | grep fcpys | count 4
-; XFAIL: *
 
 define arm_apcscc void @fht(float* nocapture %fz, i16 signext %n) nounwind {
 entry:
