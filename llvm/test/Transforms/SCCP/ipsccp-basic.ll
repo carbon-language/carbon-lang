@@ -200,7 +200,7 @@ define void @test8b(i32* %P) {
 define void @test9() {
 entry:
         %local_foo = alloca {  }
-        load {  }* @current_foo
+        load {  }* @test9g
         store {  } %0, {  }* %local_foo
         ret void
 }
