@@ -25,7 +25,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
@@ -227,7 +226,6 @@ public:
   /// and out of the specified function (which cannot have its address taken),
   /// this method must be called.
   void AddTrackedFunction(Function *F) {
-    assert(F->hasLocalLinkage() && "Can only track internal functions!");
     // Add an entry, F -> undef.
     if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
@@ -380,11 +378,9 @@ private:
   // instruction that was just changed state somehow.  Based on this
   // information, we need to update the specified user of this instruction.
   //
-  void OperandChangedState(User *U) {
-    // Only instructions use other variable values!
-    Instruction &I = cast<Instruction>(*U);
-    if (BBExecutable.count(I.getParent()))   // Inst is executable?
-      visit(I);
+  void OperandChangedState(Instruction *I) {
+    if (BBExecutable.count(I->getParent()))   // Inst is executable?
+      visit(*I);
   }
   
   /// RemoveFromOverdefinedPHIs - If I has any entries in the
@@ -428,8 +424,6 @@ private:
   void visitLoadInst      (LoadInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitCallInst      (CallInst &I) {
-    if (isFreeCall(&I))
-      return;
     visitCallSite(CallSite::get(&I));
   }
   void visitInvokeInst    (InvokeInst &II) {
@@ -656,19 +650,19 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
     markConstant(&PN, OperandVal);      // Acquire operand value
 }
 
+
+
+
 void SCCPSolver::visitReturnInst(ReturnInst &I) {
   if (I.getNumOperands() == 0) return;  // ret void
 
   Function *F = I.getParent()->getParent();
+  
   // If we are tracking the return value of this function, merge it in.
-  if (!F->hasLocalLinkage())
-    return;
-
   if (!TrackedRetVals.empty()) {
     DenseMap<Function*, LatticeVal>::iterator TFRVI =
       TrackedRetVals.find(F);
-    if (TFRVI != TrackedRetVals.end() &&
-        !TFRVI->second.isOverdefined()) {
+    if (TFRVI != TrackedRetVals.end()) {
       mergeInValue(TFRVI->second, F, getValueState(I.getOperand(0)));
       return;
     }
@@ -1163,14 +1157,14 @@ void SCCPSolver::visitCallSite(CallSite CS) {
   // The common case is that we aren't tracking the callee, either because we
   // are not doing interprocedural analysis or the callee is indirect, or is
   // external.  Handle these cases first.
-  if (F == 0 || !F->hasLocalLinkage()) {
+  if (F == 0 || F->isDeclaration()) {
 CallOverdefined:
     // Void return and not tracking callee, just bail.
     if (I->getType()->isVoidTy()) return;
     
     // Otherwise, if we have a single return value case, and if the function is
     // a declaration, maybe we can constant fold it.
-    if (!isa<StructType>(I->getType()) && F && F->isDeclaration() && 
+    if (F && F->isDeclaration() && !isa<StructType>(I->getType()) &&
         canConstantFoldCallTo(F)) {
       
       SmallVector<Constant*, 8> Operands;
@@ -1234,7 +1228,7 @@ CallOverdefined:
     // common path above.
     goto CallOverdefined;
   }
-   
+  
   // Finally, if this is the first call to the function hit, mark its entry
   // block executable.
   MarkBlockExecutable(F->begin());
@@ -1243,6 +1237,8 @@ CallOverdefined:
   CallSite::arg_iterator CAI = CS.arg_begin();
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
        AI != E; ++AI, ++CAI) {
+    // If this argument is byval, and if the function is not readonly, there
+    // will be an implicit copy formed of the input aggregate.
     if (AI->hasByValAttr() && !F->onlyReadsMemory()) {
       markOverdefined(AI);
       continue;
@@ -1272,7 +1268,8 @@ void SCCPSolver::Solve() {
       //
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
            UI != E; ++UI)
-        OperandChangedState(*UI);
+        if (Instruction *I = dyn_cast<Instruction>(*UI))
+          OperandChangedState(I);
     }
     
     // Process the instruction work list.
@@ -1291,7 +1288,8 @@ void SCCPSolver::Solve() {
       if (!getValueState(I).isOverdefined())
         for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
              UI != E; ++UI)
-          OperandChangedState(*UI);
+          if (Instruction *I = dyn_cast<Instruction>(*UI))
+            OperandChangedState(I);
     }
 
     // Process the basic block work list.
@@ -1649,14 +1647,25 @@ bool IPSCCP::runOnModule(Module &M) {
     if (F->isDeclaration())
       continue;
     
-    if (!F->hasLocalLinkage() || AddressIsTaken(F)) {
-      Solver.MarkBlockExecutable(F->begin());
-      for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
-           AI != E; ++AI)
-        Solver.markOverdefined(AI);
-    } else {
+    // If this is a strong or ODR definition of this function, then we can
+    // propagate information about its result into callsites of it.
+    if (!F->mayBeOverridden() &&
+        !isa<StructType>(F->getReturnType()))
       Solver.AddTrackedFunction(F);
-    }
+    
+    // If this function only has direct calls that we can see, we can track its
+    // arguments and return value aggressively, and can assume it is not called
+    // unless we see evidence to the contrary.
+    if (F->hasLocalLinkage() && !AddressIsTaken(F))
+      continue;
+
+    // Assume the function is called.
+    Solver.MarkBlockExecutable(F->begin());
+    
+    // Assume nothing about the incoming arguments.
+    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
+         AI != E; ++AI)
+      Solver.markOverdefined(AI);
   }
 
   // Loop over global variables.  We inform the solver about any internal global
@@ -1804,16 +1813,21 @@ bool IPSCCP::runOnModule(Module &M) {
   // TODO: Process multiple value ret instructions also.
   const DenseMap<Function*, LatticeVal> &RV = Solver.getTrackedRetVals();
   for (DenseMap<Function*, LatticeVal>::const_iterator I = RV.begin(),
-         E = RV.end(); I != E; ++I)
-    if (!I->second.isOverdefined() &&
-        !I->first->getReturnType()->isVoidTy()) {
-      Function *F = I->first;
-      for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-        if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
-          if (!isa<UndefValue>(RI->getOperand(0)))
-            RI->setOperand(0, UndefValue::get(F->getReturnType()));
-    }
-
+       E = RV.end(); I != E; ++I) {
+    Function *F = I->first;
+    if (I->second.isOverdefined() || F->getReturnType()->isVoidTy())
+      continue;
+  
+    // We can only do this if we know that nothing else can call the function.
+    if (!F->hasLocalLinkage() || AddressIsTaken(F))
+      continue;
+    
+    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+      if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
+        if (!isa<UndefValue>(RI->getOperand(0)))
+          RI->setOperand(0, UndefValue::get(F->getReturnType()));
+  }
+    
   // If we infered constant or undef values for globals variables, we can delete
   // the global and any stores that remain to it.
   const DenseMap<GlobalVariable*, LatticeVal> &TG = Solver.getTrackedGlobals();

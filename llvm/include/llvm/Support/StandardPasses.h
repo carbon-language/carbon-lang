@@ -99,7 +99,6 @@ namespace llvm {
     if (UnitAtATime) {
       PM->add(createGlobalOptimizerPass());     // Optimize out global vars
       
-      PM->add(createIPConstantPropagationPass());              // IP CP
       PM->add(createIPSCCPPass());              // IP SCCP
       PM->add(createDeadArgEliminationPass());  // Dead argument elimination
     }
