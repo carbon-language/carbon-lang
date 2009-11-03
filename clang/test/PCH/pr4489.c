@@ -1,5 +1,6 @@
 // RUN: clang -x c-header -o %t.pch %s &&
-// RUN: clang -include %t -x c /dev/null -emit-llvm -S -o -
+// RUN: echo > %t.empty.c &&
+// RUN: clang -include %t -x c %t.empty.c -emit-llvm -S -o -
 // PR 4489: Crash with PCH
 // PR 4492: Crash with PCH (round two)
 // PR 4509: Crash with PCH (round three)
