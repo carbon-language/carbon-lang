@@ -1098,7 +1098,8 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
     //    - a constant with integral or enumeration type and is
     //      initialized with an expression that is value-dependent
     else if (const VarDecl *Dcl = dyn_cast<VarDecl>(VD)) {
-      if (Dcl->getType().getCVRQualifiers() == Qualifiers::Const &&
+      if (Context.getCanonicalType(Dcl->getType()).getCVRQualifiers()
+          == Qualifiers::Const &&
           Dcl->getInit()) {
         ValueDependent = Dcl->getInit()->isValueDependent();
       }
