@@ -1,5 +1,4 @@
 ; RUN: opt < %s -ipsccp -S | FileCheck %s
-; XFAIL: *
 
 ;;======================== test1
 
@@ -128,7 +127,7 @@ B:
 ; CHECK: define i64 @test5b()
 ; CHECK:     A:
 ; CHECK-NEXT:  %c = call i64 @test5c(%0 %a)
-; CHECK-NEXT:  ret i64 %c
+; CHECK-NEXT:  ret i64 5
 
 define internal i64 @test5c({i64,i64} %a) {
   %b = extractvalue {i64,i64} %a, 0
