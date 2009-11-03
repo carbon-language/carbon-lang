@@ -253,24 +253,11 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
 ///         unqualified-id
 ///         qualified-id
 ///
-///       unqualified-id:
-///         identifier
-///         operator-function-id
-///         conversion-function-id                [TODO]
-///         '~' class-name                        [TODO]
-///         template-id
-///
 ///       qualified-id:
 ///         '::'[opt] nested-name-specifier 'template'[opt] unqualified-id
 ///         '::' identifier
 ///         '::' operator-function-id
 ///         '::' template-id
-///
-///       nested-name-specifier:
-///         type-name '::'
-///         namespace-name '::'
-///         nested-name-specifier identifier '::'
-///         nested-name-specifier 'template'[opt] simple-template-id '::' [TODO]
 ///
 /// NOTE: The standard specifies that, for qualified-id, the parser does not
 /// expect:
@@ -734,6 +721,9 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
 /// \param EnteringContext whether we're entering the scope of the 
 /// nested-name-specifier.
 ///
+/// \param ObjectType if this unqualified-id occurs within a member access
+/// expression, the type of the base object whose member is being accessed.
+///
 /// \param Id as input, describes the template-name or operator-function-id
 /// that precedes the '<'. If template arguments were parsed successfully,
 /// will be updated with the template-id.
@@ -921,6 +911,9 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
 /// \param AllowDestructorName whether we allow parsing of a destructor name.
 ///
 /// \param AllowConstructorName whether we allow parsing a constructor name.
+///
+/// \param ObjectType if this unqualified-id occurs within a member access
+/// expression, the type of the base object whose member is being accessed.
 ///
 /// \param Result on a successful parse, contains the parsed unqualified-id.
 ///
