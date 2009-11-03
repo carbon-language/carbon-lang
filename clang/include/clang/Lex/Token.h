@@ -17,6 +17,7 @@
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/OperatorKinds.h"
 #include <cstdlib>
 
 namespace clang {
@@ -261,6 +262,9 @@ struct TemplateIdAnnotation {
   /// FIXME: Temporarily stores the name of a specialization
   IdentifierInfo *Name;
 
+  /// FIXME: Temporarily stores the overloaded operator kind.
+  OverloadedOperatorKind Operator;
+  
   /// The declaration of the template corresponding to the
   /// template-name. This is an Action::DeclTy*.
   void *Template;

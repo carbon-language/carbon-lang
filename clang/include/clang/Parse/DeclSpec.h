@@ -561,9 +561,9 @@ public:
   ///
   /// \param Id the parsed identifier.
   /// \param IdLoc the location of the parsed identifier.
-  void setIdentifier(IdentifierInfo *Id, SourceLocation IdLoc) {
+  void setIdentifier(const IdentifierInfo *Id, SourceLocation IdLoc) {
     Kind = IK_Identifier;
-    Identifier = Id;
+    Identifier = const_cast<IdentifierInfo *>(Id);
     StartLocation = EndLocation = IdLoc;
   }
   

@@ -935,9 +935,10 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     // If this is a template-id, annotate with a template-id or type token.
     if (NextToken().is(tok::less)) {
       TemplateTy Template;
+      UnqualifiedId TemplateName;
+      TemplateName.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
       if (TemplateNameKind TNK
-            = Actions.isTemplateName(CurScope, *Tok.getIdentifierInfo(),
-                                     Tok.getLocation(), &SS,
+            = Actions.isTemplateName(CurScope, SS, TemplateName, 
                                      /*ObjectType=*/0, EnteringContext,
                                      Template))
         if (AnnotateTemplateIdToken(Template, TNK, &SS)) {

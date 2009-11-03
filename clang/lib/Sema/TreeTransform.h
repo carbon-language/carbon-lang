@@ -5184,11 +5184,12 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
   CXXScopeSpec SS;
   SS.setRange(SourceRange(getDerived().getBaseLocation()));
   SS.setScopeRep(Qualifier);
+  UnqualifiedId Name;
+  Name.setIdentifier(&II, /*FIXME:*/getDerived().getBaseLocation());
   return getSema().ActOnDependentTemplateName(
                                       /*FIXME:*/getDerived().getBaseLocation(),
-                                              II,
-                                      /*FIXME:*/getDerived().getBaseLocation(),
                                               SS,
+                                              Name,
                                               ObjectType.getAsOpaquePtr())
            .template getAsVal<TemplateName>();
 }

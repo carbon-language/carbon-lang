@@ -2397,9 +2397,8 @@ public:
   // C++ Templates [C++ 14]
   //
   virtual TemplateNameKind isTemplateName(Scope *S,
-                                          const IdentifierInfo &II,
-                                          SourceLocation IdLoc,
-                                          const CXXScopeSpec *SS,
+                                          const CXXScopeSpec &SS,
+                                          UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
                                           TemplateTy &Template);
@@ -2499,9 +2498,8 @@ public:
                                        SourceLocation RAngleLoc);
 
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
-                                                const IdentifierInfo &Name,
-                                                SourceLocation NameLoc,
                                                 const CXXScopeSpec &SS,
+                                                UnqualifiedId &Name,
                                                 TypeTy *ObjectType);
 
   bool CheckClassTemplatePartialSpecializationArgs(

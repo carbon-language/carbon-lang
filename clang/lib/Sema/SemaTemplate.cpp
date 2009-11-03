@@ -98,29 +98,43 @@ static NamedDecl *isAcceptableTemplateName(ASTContext &Context, NamedDecl *D) {
 }
 
 TemplateNameKind Sema::isTemplateName(Scope *S,
-                                      const IdentifierInfo &II,
-                                      SourceLocation IdLoc,
-                                      const CXXScopeSpec *SS,
+                                      const CXXScopeSpec &SS,
+                                      UnqualifiedId &Name,
                                       TypeTy *ObjectTypePtr,
                                       bool EnteringContext,
                                       TemplateTy &TemplateResult) {
+  DeclarationName TName;
+  
+  switch (Name.getKind()) {
+  case UnqualifiedId::IK_Identifier:
+    TName = DeclarationName(Name.Identifier);
+    break;
+      
+  case UnqualifiedId::IK_OperatorFunctionId:
+    TName = Context.DeclarationNames.getCXXOperatorName(
+                                              Name.OperatorFunctionId.Operator);
+    break;
+
+  default:
+    return TNK_Non_template;
+  }
+  
   // Determine where to perform name lookup
   DeclContext *LookupCtx = 0;
   bool isDependent = false;
   if (ObjectTypePtr) {
     // This nested-name-specifier occurs in a member access expression, e.g.,
     // x->B::f, and we are looking into the type of the object.
-    assert((!SS || !SS->isSet()) &&
-           "ObjectType and scope specifier cannot coexist");
+    assert(!SS.isSet() && "ObjectType and scope specifier cannot coexist");
     QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
     LookupCtx = computeDeclContext(ObjectType);
     isDependent = ObjectType->isDependentType();
-  } else if (SS && SS->isSet()) {
+  } else if (SS.isSet()) {
     // This nested-name-specifier occurs after another nested-name-specifier,
     // so long into the context associated with the prior nested-name-specifier.
 
-    LookupCtx = computeDeclContext(*SS, EnteringContext);
-    isDependent = isDependentScopeSpecifier(*SS);
+    LookupCtx = computeDeclContext(SS, EnteringContext);
+    isDependent = isDependentScopeSpecifier(SS);
   }
 
   LookupResult Found;
@@ -132,10 +146,10 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     // nested-name-specifier.
 
     // The declaration context must be complete.
-    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(*SS))
+    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
       return TNK_Non_template;
 
-    LookupQualifiedName(Found, LookupCtx, &II, LookupOrdinaryName);
+    LookupQualifiedName(Found, LookupCtx, TName, LookupOrdinaryName);
 
     if (ObjectTypePtr && Found.getKind() == LookupResult::NotFound) {
       // C++ [basic.lookup.classref]p1:
@@ -150,7 +164,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
       //
       // FIXME: When we're instantiating a template, do we actually have to
       // look in the scope of the template? Seems fishy...
-      LookupName(Found, S, &II, LookupOrdinaryName);
+      LookupName(Found, S, TName, LookupOrdinaryName);
       ObjectTypeSearchedInScope = true;
     }
   } else if (isDependent) {
@@ -158,7 +172,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     return TNK_Non_template;
   } else {
     // Perform unqualified name lookup in the current scope.
-    LookupName(Found, S, &II, LookupOrdinaryName);
+    LookupName(Found, S, TName, LookupOrdinaryName);
   }
 
   // FIXME: Cope with ambiguous name-lookup results.
@@ -177,7 +191,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     //   postfix-expression and [...]
     //
     LookupResult FoundOuter;
-    LookupName(FoundOuter, S, &II, LookupOrdinaryName);
+    LookupName(FoundOuter, S, TName, LookupOrdinaryName);
     // FIXME: Handle ambiguities in this lookup better
     NamedDecl *OuterTemplate
       = isAcceptableTemplateName(Context, FoundOuter.getAsSingleDecl(Context));
@@ -194,8 +208,10 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
       //     entity as the one found in the class of the object expression,
       //     otherwise the program is ill-formed.
       if (OuterTemplate->getCanonicalDecl() != Template->getCanonicalDecl()) {
-        Diag(IdLoc, diag::err_nested_name_member_ref_lookup_ambiguous)
-          << &II;
+        Diag(Name.getSourceRange().getBegin(), 
+             diag::err_nested_name_member_ref_lookup_ambiguous)
+          << TName
+          << Name.getSourceRange();
         Diag(Template->getLocation(), diag::note_ambig_member_ref_object_type)
           << QualType::getFromOpaquePtr(ObjectTypePtr);
         Diag(OuterTemplate->getLocation(), diag::note_ambig_member_ref_scope);
@@ -206,9 +222,9 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     }
   }
 
-  if (SS && SS->isSet() && !SS->isInvalid()) {
+  if (SS.isSet() && !SS.isInvalid()) {
     NestedNameSpecifier *Qualifier
-      = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
+      = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
     if (OverloadedFunctionDecl *Ovl
           = dyn_cast<OverloadedFunctionDecl>(Template))
       TemplateResult
@@ -1345,9 +1361,8 @@ Sema::OwningExprResult Sema::ActOnTemplateIdExpr(const CXXScopeSpec &SS,
 /// of the "template" keyword, and "apply" is the \p Name.
 Sema::TemplateTy
 Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
-                                 const IdentifierInfo &Name,
-                                 SourceLocation NameLoc,
                                  const CXXScopeSpec &SS,
+                                 UnqualifiedId &Name,
                                  TypeTy *ObjectType) {
   if ((ObjectType &&
        computeDeclContext(QualType::getFromOpaquePtr(ObjectType))) ||
@@ -1369,11 +1384,13 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     // "template" keyword is now permitted). We follow the C++0x
     // rules, even in C++03 mode, retroactively applying the DR.
     TemplateTy Template;
-    TemplateNameKind TNK = isTemplateName(0, Name, NameLoc, &SS, ObjectType,
+    TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
                                           false, Template);
     if (TNK == TNK_Non_template) {
-      Diag(NameLoc, diag::err_template_kw_refers_to_non_template)
-        << &Name;
+      Diag(Name.getSourceRange().getBegin(), 
+           diag::err_template_kw_refers_to_non_template)
+        << GetNameFromUnqualifiedId(Name)
+        << Name.getSourceRange();
       return TemplateTy();
     }
 
@@ -1382,7 +1399,21 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
 
   NestedNameSpecifier *Qualifier
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-  return TemplateTy::make(Context.getDependentTemplateName(Qualifier, &Name));
+  
+  switch (Name.getKind()) {
+  case UnqualifiedId::IK_Identifier:
+    return TemplateTy::make(Context.getDependentTemplateName(Qualifier, 
+                                                             Name.Identifier));
+    
+  default:
+    break;
+  }
+  
+  Diag(Name.getSourceRange().getBegin(), 
+       diag::err_template_kw_refers_to_non_template)
+    << GetNameFromUnqualifiedId(Name)
+    << Name.getSourceRange();
+  return TemplateTy();
 }
 
 bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,

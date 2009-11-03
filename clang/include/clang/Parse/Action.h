@@ -236,30 +236,36 @@ public:
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,
                                   const CXXScopeSpec *SS = 0) = 0;
 
-  /// \brief Determine whether the given identifier refers to the name of a
+  /// \brief Determine whether the given name refers to a template.
+  ///
+  /// This callback is used by the parser after it has seen a '<' to determine
+  /// whether the given name refers to a template and, if so, what kind of 
   /// template.
   ///
-  /// \param S the scope in which name lookup occurs
+  /// \param S the scope in which the name occurs.
   ///
-  /// \param II the identifier that we are querying to determine whether it
-  /// is a template.
+  /// \param SS the C++ nested-name-specifier that precedes the template name,
+  /// if any.
   ///
-  /// \param IdLoc the source location of the identifier
+  /// \param Name the name that we are querying to determine whether it is
+  /// a template.
   ///
-  /// \param SS the C++ scope specifier that precedes the template name, if
-  /// any.
+  /// \param ObjectType if we are determining whether the given name is a 
+  /// template name in the context of a member access expression (e.g., 
+  /// \c p->X<int>), this is the type of the object referred to by the
+  /// member access (e.g., \c p).
   ///
   /// \param EnteringContext whether we are potentially entering the context
-  /// referred to by the scope specifier \p SS
+  /// referred to by the nested-name-specifier \p SS, which allows semantic
+  /// analysis to look into uninstantiated templates.
   ///
   /// \param Template if the name does refer to a template, the declaration
   /// of the template that the name refers to.
   ///
   /// \returns the kind of template that this name refers to.
   virtual TemplateNameKind isTemplateName(Scope *S,
-                                          const IdentifierInfo &II,
-                                          SourceLocation IdLoc,
-                                          const CXXScopeSpec *SS,
+                                          const CXXScopeSpec &SS,
+                                          UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
                                           TemplateTy &Template) = 0;
@@ -1616,22 +1622,19 @@ public:
   ///
   /// \param TemplateKWLoc the location of the "template" keyword (if any).
   ///
-  /// \param Name the name of the template (an identifier)
-  ///
-  /// \param NameLoc the location of the identifier
-  ///
   /// \param SS the nested-name-specifier that precedes the "template" keyword
-  /// or the template name. FIXME: If the dependent template name occurs in
+  /// or the template name. If the dependent template name occurs in
   /// a member access expression, e.g., "x.template f<T>", this
   /// nested-name-specifier will be empty.
+  ///
+  /// \param Name the name of the template.
   ///
   /// \param ObjectType if this dependent template name occurs in the
   /// context of a member access expression, the type of the object being
   /// accessed.
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
-                                                const IdentifierInfo &Name,
-                                                SourceLocation NameLoc,
                                                 const CXXScopeSpec &SS,
+                                                UnqualifiedId &Name,
                                                 TypeTy *ObjectType) {
     return TemplateTy();
   }
@@ -2333,13 +2336,12 @@ public:
                                   const CXXScopeSpec *SS);
 
   virtual TemplateNameKind isTemplateName(Scope *S,
-                                          const IdentifierInfo &II,
-                                          SourceLocation IdLoc,
-                                          const CXXScopeSpec *SS,
+                                          const CXXScopeSpec &SS,
+                                          UnqualifiedId &Name,
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
                                           TemplateTy &Template);
-
+  
   /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
   /// popped.

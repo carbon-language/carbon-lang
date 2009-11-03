@@ -125,10 +125,10 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         break;
       }
 
+      UnqualifiedId TemplateName;
+      TemplateName.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
       TemplateTy Template
-        = Actions.ActOnDependentTemplateName(TemplateKWLoc,
-                                             *Tok.getIdentifierInfo(),
-                                             Tok.getLocation(), SS,
+        = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, TemplateName,
                                              ObjectType);
       if (!Template)
         break;
@@ -220,9 +220,10 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     //   type-name '<'
     if (Next.is(tok::less)) {
       TemplateTy Template;
-      if (TemplateNameKind TNK = Actions.isTemplateName(CurScope, II,
-                                                        Tok.getLocation(),
-                                                        &SS,
+      UnqualifiedId TemplateName;
+      TemplateName.setIdentifier(&II, Tok.getLocation());
+      if (TemplateNameKind TNK = Actions.isTemplateName(CurScope, SS, 
+                                                        TemplateName,
                                                         ObjectType,
                                                         EnteringContext,
                                                         Template)) {
@@ -741,45 +742,30 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   TemplateNameKind TNK = TNK_Non_template;
   switch (Id.getKind()) {
   case UnqualifiedId::IK_Identifier:
-    TNK = Actions.isTemplateName(CurScope, *Id.Identifier, Id.StartLocation, 
-                                 &SS, ObjectType, EnteringContext, Template);
+  case UnqualifiedId::IK_OperatorFunctionId:
+    TNK = Actions.isTemplateName(CurScope, SS, Id, ObjectType, EnteringContext, 
+                                 Template);
     break;
       
-  case UnqualifiedId::IK_OperatorFunctionId: {
-    // FIXME: Temporary hack: warn that we are completely ignoring the 
-    // template arguments for now.
-    // Parse the enclosed template argument list and throw it away.
-    SourceLocation LAngleLoc, RAngleLoc;
-    TemplateArgList TemplateArgs;
-    TemplateArgIsTypeList TemplateArgIsType;
-    TemplateArgLocationList TemplateArgLocations;
-    if (ParseTemplateIdAfterTemplateName(Template, Id.StartLocation,
-                                         &SS, true, LAngleLoc,
-                                         TemplateArgs,
-                                         TemplateArgIsType,
-                                         TemplateArgLocations,
-                                         RAngleLoc))
-      return true;
-    
-    Diag(Id.StartLocation, diag::warn_operator_template_id_ignores_args)
-      << SourceRange(LAngleLoc, RAngleLoc);
+  case UnqualifiedId::IK_ConstructorName: {
+    UnqualifiedId TemplateName;
+    TemplateName.setIdentifier(Name, NameLoc);
+    TNK = Actions.isTemplateName(CurScope, SS, TemplateName, ObjectType, 
+                                 EnteringContext, Template);
     break;
   }
       
-  case UnqualifiedId::IK_ConstructorName:
-    TNK = Actions.isTemplateName(CurScope, *Name, NameLoc, &SS, ObjectType, 
-                                 EnteringContext, Template);
-    break;
-      
-  case UnqualifiedId::IK_DestructorName:
+  case UnqualifiedId::IK_DestructorName: {
+    UnqualifiedId TemplateName;
+    TemplateName.setIdentifier(Name, NameLoc);
     if (ObjectType) {
-      Template = Actions.ActOnDependentTemplateName(SourceLocation(), *Name, 
-                                                    NameLoc, SS, ObjectType);
+      Template = Actions.ActOnDependentTemplateName(SourceLocation(), SS, 
+                                                    TemplateName, ObjectType);
       TNK = TNK_Dependent_template_name;
       if (!Template.get())
         return true;
     } else {
-      TNK = Actions.isTemplateName(CurScope, *Name, NameLoc, &SS, ObjectType, 
+      TNK = Actions.isTemplateName(CurScope, SS, TemplateName, ObjectType, 
                                    EnteringContext, Template);
       
       if (TNK == TNK_Non_template && Id.DestructorName == 0) {
@@ -794,6 +780,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
       }
     }
     break;
+  }
       
   default:
     return false;
@@ -824,9 +811,12 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
 
     if (Id.getKind() == UnqualifiedId::IK_Identifier) {
       TemplateId->Name = Id.Identifier;
+      TemplateId->Operator = OO_None;
       TemplateId->TemplateNameLoc = Id.StartLocation;
     } else {
-      // FIXME: Handle IK_OperatorFunctionId
+      TemplateId->Name = 0;
+      TemplateId->Operator = Id.OperatorFunctionId.Operator;
+      TemplateId->TemplateNameLoc = Id.StartLocation;
     }
 
     TemplateId->Template = Template.getAs<void*>();

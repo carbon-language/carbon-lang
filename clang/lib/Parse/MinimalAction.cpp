@@ -161,9 +161,8 @@ bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
 
 TemplateNameKind
 MinimalAction::isTemplateName(Scope *S,
-                              const IdentifierInfo &II,
-                              SourceLocation IdLoc,
-                              const CXXScopeSpec *SS,
+                              const CXXScopeSpec &SS,
+                              UnqualifiedId &Name,
                               TypeTy *ObjectType,
                               bool EnteringScope,
                               TemplateTy &TemplateDecl) {
