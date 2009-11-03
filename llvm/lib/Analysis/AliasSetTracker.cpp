@@ -13,7 +13,6 @@
 
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
@@ -305,13 +304,6 @@ bool AliasSetTracker::add(VAArgInst *VAAI) {
 
 
 bool AliasSetTracker::add(CallSite CS) {
-  Instruction* Inst = CS.getInstruction();
-  if (isFreeCall(Inst)) {
-    bool NewPtr;
-    addPointer(Inst->getOperand(1), ~0, AliasSet::Mods, NewPtr);
-    return NewPtr;
-  }
-  
   if (isa<DbgInfoIntrinsic>(CS.getInstruction())) 
     return true; // Ignore DbgInfo Intrinsics.
   if (AA.doesNotAccessMemory(CS))
@@ -435,14 +427,6 @@ bool AliasSetTracker::remove(VAArgInst *VAAI) {
 }
 
 bool AliasSetTracker::remove(CallSite CS) {
-  Instruction* Inst = CS.getInstruction();
-  if (isFreeCall(Inst)) {
-    AliasSet *AS = findAliasSetForPointer(Inst->getOperand(1), ~0);
-    if (!AS) return false;
-    remove(*AS);
-    return true;
-  }
-
   if (AA.doesNotAccessMemory(CS))
     return false; // doesn't alias anything
 
