@@ -115,7 +115,8 @@ bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None) {
     if (!Subtarget.isThumb1Only())
       PM.add(createIfConverterPass());
-    PM.add(createNEONMoveFixPass());
+    if (Subtarget.hasNEON())
+      PM.add(createNEONMoveFixPass());
   }
 
   if (Subtarget.isThumb2()) {

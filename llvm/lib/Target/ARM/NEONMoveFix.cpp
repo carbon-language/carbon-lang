@@ -35,7 +35,6 @@ namespace {
   private:
     const TargetRegisterInfo *TRI;
     const ARMBaseInstrInfo *TII;
-    const ARMSubtarget *Subtarget;
 
     typedef DenseMap<unsigned, const MachineInstr*> RegMap;
 
@@ -71,7 +70,7 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
           Domain = ARMII::DomainNEON;
       }
 
-      if ((Domain & ARMII::DomainNEON) && Subtarget->hasNEON()) {
+      if (Domain & ARMII::DomainNEON) {
         // Convert FCPYD to VMOVD.
         unsigned DestReg = MI->getOperand(0).getReg();
 
@@ -93,8 +92,7 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
         Modified = true;
         ++NumVMovs;
       } else {
-        assert((Domain & ARMII::DomainVFP ||
-                !Subtarget->hasNEON()) && "Invalid domain!");
+        assert((Domain & ARMII::DomainVFP) && "Invalid domain!");
         // Do nothing.
       }
     }
@@ -124,7 +122,6 @@ bool NEONMoveFixPass::runOnMachineFunction(MachineFunction &Fn) {
     return false;
 
   TRI = TM.getRegisterInfo();
-  Subtarget = &TM.getSubtarget<ARMSubtarget>();
   TII = static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo());
 
   bool Modified = false;
