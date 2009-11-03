@@ -126,6 +126,13 @@ public:
                                       GRExprEngine &Eng) {
     return Pred;
   }
+
+  virtual ExplodedNode *CheckType(QualType T, ExplodedNode *Pred, 
+                                  const GRState *state, Stmt *S, 
+                                  GRExprEngine &Eng) {
+    return Pred;
+  }
+
 };
 
 } // end clang namespace

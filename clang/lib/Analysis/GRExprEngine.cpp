@@ -2058,45 +2058,25 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
     Tmp.Add(Pred);
 
   for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-    const GRState* state = GetState(*I);
-    unsigned Count = Builder->getCurrentBlockCount();
+    ExplodedNode *N = *I;
+    const GRState *state;
 
-    // Check if 'VD' is a VLA and if so check if has a non-zero size.
-    QualType T = getContext().getCanonicalType(VD->getType());
-    if (VariableArrayType* VLA = dyn_cast<VariableArrayType>(T)) {
-      // FIXME: Handle multi-dimensional VLAs.
-
-      Expr* SE = VLA->getSizeExpr();
-      SVal Size_untested = state->getSVal(SE);
-
-      if (Size_untested.isUndef()) {
-        if (ExplodedNode* N = Builder->generateNode(DS, state, Pred)) {
-          N->markAsSink();
-          ExplicitBadSizedVLA.insert(N);
-        }
-        continue;
-      }
-
-      DefinedOrUnknownSVal Size = cast<DefinedOrUnknownSVal>(Size_untested);
-      const GRState *zeroState =  state->Assume(Size, false);
-      state = state->Assume(Size, true);
-
-      if (zeroState) {
-        if (ExplodedNode* N = Builder->generateNode(DS, zeroState, Pred)) {
-          N->markAsSink();
-          if (state)
-            ImplicitBadSizedVLA.insert(N);
-          else
-            ExplicitBadSizedVLA.insert(N);
-        }
-      }
-
-      if (!state)
-        continue;
+    for (CheckersOrdered::iterator CI = Checkers.begin(), CE = Checkers.end(); 
+         CI != CE; ++CI) {
+      state = GetState(N);
+      N = CI->second->CheckType(getContext().getCanonicalType(VD->getType()),
+                                N, state, DS, *this);
+      if (!N)
+        break;
     }
 
+    if (!N)
+      continue;
+
+    state = GetState(N);
+
     // Decls without InitExpr are not initialized explicitly.
-    const LocationContext *LC = (*I)->getLocationContext();
+    const LocationContext *LC = N->getLocationContext();
 
     if (InitEx) {
       SVal InitVal = state->getSVal(InitEx);
@@ -2106,7 +2086,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
       // UnknownVal.
       if (InitVal.isUnknown() ||
           !getConstraintManager().canReasonAbout(InitVal)) {
-        InitVal = ValMgr.getConjuredSymbolVal(NULL, InitEx, Count);
+        InitVal = ValMgr.getConjuredSymbolVal(NULL, InitEx, 
+                                               Builder->getCurrentBlockCount());
       }
 
       state = state->bindDecl(VD, LC, InitVal);

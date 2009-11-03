@@ -21,6 +21,8 @@
 #include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedArgChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/AttrNonNullChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/UndefSizedVLAChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/ZeroSizedVLAChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -449,66 +451,6 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN BadSizeVLA : public BuiltinBug {
-public:
-  BadSizeVLA(GRExprEngine* eng) :
-    BuiltinBug(eng, "Bad variable-length array (VLA) size") {}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    for (GRExprEngine::ErrorNodes::iterator
-          I = Eng.ExplicitBadSizedVLA.begin(),
-          E = Eng.ExplicitBadSizedVLA.end(); I!=E; ++I) {
-
-      // Determine whether this was a 'zero-sized' VLA or a VLA with an
-      // undefined size.
-      ExplodedNode* N = *I;
-      PostStmt PS = cast<PostStmt>(N->getLocation());
-      const DeclStmt *DS = cast<DeclStmt>(PS.getStmt());
-      VarDecl* VD = cast<VarDecl>(*DS->decl_begin());
-      QualType T = Eng.getContext().getCanonicalType(VD->getType());
-      VariableArrayType* VT = cast<VariableArrayType>(T);
-      Expr* SizeExpr = VT->getSizeExpr();
-
-      std::string buf;
-      llvm::raw_string_ostream os(buf);
-      os << "The expression used to specify the number of elements in the "
-            "variable-length array (VLA) '"
-         << VD->getNameAsString() << "' evaluates to ";
-
-      bool isUndefined = N->getState()->getSVal(SizeExpr).isUndef();
-
-      if (isUndefined)
-        os << "an undefined or garbage value.";
-      else
-        os << "0. VLAs with no elements have undefined behavior.";
-
-      std::string shortBuf;
-      llvm::raw_string_ostream os_short(shortBuf);
-      os_short << "Variable-length array '" << VD->getNameAsString() << "' "
-               << (isUndefined ? "garbage value for array size"
-                   : "has zero elements (undefined behavior)");
-
-      ArgReport *report = new ArgReport(*this, os_short.str().c_str(),
-                                        os.str().c_str(), N, SizeExpr);
-
-      report->addRange(SizeExpr->getSourceRange());
-      BR.EmitReport(report);
-    }
-  }
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, static_cast<ArgReport*>(R)->getArg(),
-                                  N);
-  }
-};
-
-//===----------------------------------------------------------------------===//
-// __attribute__(nonnull) checking
-
-
-
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//
@@ -528,7 +470,6 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new BadMsgExprArg(this));
   BR.Register(new BadReceiver(this));
   BR.Register(new OutOfBoundMemoryAccess(this));
-  BR.Register(new BadSizeVLA(this));
   BR.Register(new NilReceiverStructRet(this));
   BR.Register(new NilReceiverLargerThanVoidPtrRet(this));
 
@@ -543,4 +484,6 @@ void GRExprEngine::RegisterInternalChecks() {
   registerCheck<DivZeroChecker>(new DivZeroChecker());
   registerCheck<UndefDerefChecker>(new UndefDerefChecker());
   registerCheck<NullDerefChecker>(new NullDerefChecker());
+  registerCheck<UndefSizedVLAChecker>(new UndefSizedVLAChecker());
+  registerCheck<ZeroSizedVLAChecker>(new ZeroSizedVLAChecker());
 }
