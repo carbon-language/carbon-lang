@@ -1,7 +1,7 @@
 // FIXME: This crashes, disable it until fixed.
 // RN: clang-cc -verify -emit-llvm -o - %s
 // RUN: false
-// XFAIL
+// XFAIL: *
 
 // Test reference binding.
 

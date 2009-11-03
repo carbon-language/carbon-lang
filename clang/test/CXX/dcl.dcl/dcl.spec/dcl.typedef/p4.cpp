@@ -1,5 +1,5 @@
 // RUN: clang-cc -verify %s
-// XFAIL
+// XFAIL: *
 
 struct S {
   typedef struct A {} A; // expected-note {{previous definition is here}}

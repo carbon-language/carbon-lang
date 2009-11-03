@@ -1,7 +1,7 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
 // Failing currently due to Obj-C type representation changes. 2009-09-17
-// XFAIL
+// XFAIL: *
 
 typedef struct objc_object {
   struct objc_class *isa;

@@ -1,5 +1,5 @@
 // RUN: clang-cc -verify %s
-// XFAIL
+// XFAIL: *
 
 class A {
 public:

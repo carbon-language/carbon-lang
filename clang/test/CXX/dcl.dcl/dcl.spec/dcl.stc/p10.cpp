@@ -1,5 +1,5 @@
 // RUN: clang-cc -verify %s
-// XFAIL
+// XFAIL: *
 
 typedef const int T0;
 typedef int& T1;

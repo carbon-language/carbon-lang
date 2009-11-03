@@ -1,5 +1,5 @@
 // RUN: clang-cc -verify %s
-// XFAIL
+// XFAIL: *
 
 void f0(void) {
   inline void f1(); // expected-error {{'inline' is not allowed on block scope function declaration}}

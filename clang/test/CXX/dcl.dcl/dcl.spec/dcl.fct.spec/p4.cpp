@@ -1,5 +1,5 @@
 // RUN: clang-cc -verify %s
-// XFAIL
+// XFAIL: *
 
 void f0() {
 }

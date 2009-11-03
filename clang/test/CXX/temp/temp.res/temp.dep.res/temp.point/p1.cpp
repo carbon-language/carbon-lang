@@ -1,5 +1,5 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-// XFAIL
+// XFAIL: *
 
 // Note: we fail this test because we perform template instantiation
 // at the end of the translation unit, so argument-dependent lookup

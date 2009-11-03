@@ -3,7 +3,7 @@
 //
 // This test is actually just making sure we can generate the debug info for the
 // return type from im0 without crashing.
-// XFAIL
+// XFAIL: *
 
 @interface I0 {
   I0 *_iv0;
