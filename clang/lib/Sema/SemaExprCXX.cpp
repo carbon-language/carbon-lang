@@ -253,20 +253,6 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
       << FullRange);
 
   assert(NumExprs == 0 && "Expected 0 expressions");
-  
-  if (const RecordType *Record = Ty->getAs<RecordType>()) {
-    if (!Record->getDecl()->isUnion()) {
-    // As clarified in C++ DR302, generate constructor for 
-    // value-initialization cases, even if the implementation technique 
-    // doesn't call the constructor at that point.
-      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-      (void)PerformInitializationByConstructor(Ty, MultiExprArg(*this, 0, 0), 
-                                               TypeRange.getBegin(), 
-                                               TypeRange, DeclarationName(),
-                                               IK_Default, ConstructorArgs);
-    }
-  }
-                                           
   // C++ [expr.type.conv]p2:
   // The expression T(), where T is a simple-type-specifier for a non-array
   // complete object type or the (possibly cv-qualified) void type, creates an
@@ -467,21 +453,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
         return ExprError(Diag(StartLoc, diag::err_new_uninitialized_const)
                            << TypeRange);
     } else if (NumConsArgs == 0) {
-      // Object is value-initialized. 
-      if (const RecordType *Record = AllocType->getAs<RecordType>()) {
-        if (!Record->getDecl()->isUnion()) {
-        // As clarified in C++ DR302, generate constructor for 
-        // value-initialization cases, even if the implementation technique 
-        // doesn't call the constructor at that point.
-          ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-          (void)PerformInitializationByConstructor(AllocType, 
-                                                   MultiExprArg(*this, 0, 0), 
-                                                   TypeRange.getBegin(), 
-                                                   TypeRange, DeclarationName(),
-                                                   IK_Default, 
-                                                   ConstructorArgs);
-        }
-      }
+      // Object is value-initialized. Do nothing.
     } else if (NumConsArgs == 1) {
       // Object is direct-initialized.
       // FIXME: What DeclarationName do we pass in here?
