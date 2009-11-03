@@ -658,39 +658,8 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     // Always use neon reg-reg move if source or dest is NEON-only regclass.
     BuildMI(MBB, I, DL, get(ARM::VMOVD), DestReg).addReg(SrcReg);
   } else if (DestRC == ARM::DPRRegisterClass) {
-    const ARMBaseRegisterInfo* TRI = &getRegisterInfo();
-
-    // If we do not found an instruction defining the reg, this means the
-    // register should be live-in for this BB. It's always to better to use
-    // NEON reg-reg moves.
-    unsigned Domain = ARMII::DomainNEON;
-    
-    // Find the Machine Instruction which defines SrcReg.
-    if (!MBB.empty()) {
-      MachineBasicBlock::iterator J = (I == MBB.begin() ? I : prior(I));
-      while (J != MBB.begin()) {
-        if (J->modifiesRegister(SrcReg, TRI))
-          break;
-        --J;
-      }
-
-      if (J->modifiesRegister(SrcReg, TRI)) {
-        Domain = J->getDesc().TSFlags & ARMII::DomainMask;
-        // Instructions in general domain are subreg accesses.
-        // Map them to NEON reg-reg moves.
-        if (Domain == ARMII::DomainGeneral)
-          Domain = ARMII::DomainNEON;
-      }
-    }
-
-    if ((Domain & ARMII::DomainNEON) && getSubtarget().hasNEON()) {
-      BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
-    } else {
-      assert((Domain & ARMII::DomainVFP ||
-              !getSubtarget().hasNEON()) && "Invalid domain!");
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
-                     .addReg(SrcReg));
-    }
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
+                   .addReg(SrcReg));
   } else if (DestRC == ARM::QPRRegisterClass ||
              DestRC == ARM::QPR_VFP2RegisterClass) {
     BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
