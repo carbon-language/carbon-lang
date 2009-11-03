@@ -968,6 +968,21 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         ConsumeToken();
       }
       
+      UnqualifiedId Name;
+      if (ParseUnqualifiedId(SS, 
+                             /*EnteringContext=*/false, 
+                             /*AllowDestructorName=*/true,
+                             /*AllowConstructorName=*/false, 
+                             ObjectType,
+                             Name))
+        return ExprError();
+      
+      if (!LHS.isInvalid())
+        LHS = Actions.ActOnMemberAccessExpr(CurScope, move(LHS), OpLoc, OpKind,
+                                            SS, Name, ObjCImpDecl,
+                                            Tok.is(tok::l_paren));
+      
+#if 0
       if (Tok.is(tok::identifier)) {
         if (!LHS.isInvalid())
           LHS = Actions.ActOnMemberReferenceExpr(CurScope, move(LHS), OpLoc,
@@ -1072,6 +1087,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         Diag(Tok, diag::err_expected_ident);
         return ExprError();
       }
+#endif
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'

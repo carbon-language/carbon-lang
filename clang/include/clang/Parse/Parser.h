@@ -1216,10 +1216,12 @@ private:
                                     IdentifierInfo *Name,
                                     SourceLocation NameLoc,
                                     bool EnteringContext,
+                                    TypeTy *ObjectType,
                                     UnqualifiedId &Id);
   bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                           bool AllowDestructorName,
                           bool AllowConstructorName,
+                          TypeTy *ObjectType,
                           UnqualifiedId &Result);
     
   //===--------------------------------------------------------------------===//

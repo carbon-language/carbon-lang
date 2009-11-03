@@ -2479,13 +2479,72 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   return ExprError();
 }
 
-Action::OwningExprResult
-Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
-                               tok::TokenKind OpKind, SourceLocation MemberLoc,
-                               IdentifierInfo &Member,
-                               DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS) {
-  return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, MemberLoc,
-                                  DeclarationName(&Member), ObjCImpDecl, SS);
+Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg Base,
+                                                   SourceLocation OpLoc,
+                                                   tok::TokenKind OpKind,
+                                                   const CXXScopeSpec &SS,
+                                                   UnqualifiedId &Member,
+                                                   DeclPtrTy ObjCImpDecl,
+                                                   bool HasTrailingLParen) {
+  if (Member.getKind() == UnqualifiedId::IK_TemplateId) {
+    TemplateName Template
+      = TemplateName::getFromVoidPointer(Member.TemplateId->Template);
+    
+    // FIXME: We're going to end up looking up the template based on its name,
+    // twice!
+    DeclarationName Name;
+    if (TemplateDecl *ActualTemplate = Template.getAsTemplateDecl())
+      Name = ActualTemplate->getDeclName();
+    else if (OverloadedFunctionDecl *Ovl = Template.getAsOverloadedFunctionDecl())
+      Name = Ovl->getDeclName();
+    else
+      Name = Template.getAsDependentTemplateName()->getName();
+    
+    // Translate the parser's template argument list in our AST format.
+    ASTTemplateArgsPtr TemplateArgsPtr(*this,
+                                       Member.TemplateId->getTemplateArgs(),
+                                       Member.TemplateId->getTemplateArgIsType(),
+                                       Member.TemplateId->NumArgs);
+    
+    llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
+    translateTemplateArguments(TemplateArgsPtr, 
+                               Member.TemplateId->getTemplateArgLocations(),
+                               TemplateArgs);
+    TemplateArgsPtr.release();
+    
+    // Do we have the save the actual template name? We might need it...
+    return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, 
+                                    Member.TemplateId->TemplateNameLoc,
+                                    Name, true, Member.TemplateId->LAngleLoc,
+                                    TemplateArgs.data(), TemplateArgs.size(),
+                                    Member.TemplateId->RAngleLoc, DeclPtrTy(),
+                                    &SS);
+  }
+  
+  // FIXME: We lose a lot of source information by mapping directly to the
+  // DeclarationName.
+  OwningExprResult Result
+    = BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind,
+                               Member.getSourceRange().getBegin(),
+                               GetNameFromUnqualifiedId(Member),
+                               ObjCImpDecl, &SS);
+  
+  if (Result.isInvalid() || HasTrailingLParen || 
+      Member.getKind() != UnqualifiedId::IK_DestructorName)
+    return move(Result);
+  
+  // The only way a reference to a destructor can be used is to
+  // immediately call them. Since the next token is not a '(', produce a
+  // diagnostic and build the call now.
+  Expr *E = (Expr *)Result.get();
+  SourceLocation ExpectedLParenLoc
+    = PP.getLocForEndOfToken(Member.getSourceRange().getEnd());
+  Diag(E->getLocStart(), diag::err_dtor_expr_without_call)
+    << isa<CXXPseudoDestructorExpr>(E)
+    << CodeModificationHint::CreateInsertion(ExpectedLParenLoc, "()");
+  
+  return ActOnCallExpr(0, move(Result), ExpectedLParenLoc,
+                       MultiExprArg(*this, 0, 0), 0, ExpectedLParenLoc);
 }
 
 Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,

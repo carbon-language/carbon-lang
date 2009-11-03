@@ -1336,41 +1336,6 @@ Sema::OwningExprResult Sema::ActOnTemplateIdExpr(const CXXScopeSpec &SS,
                              RAngleLoc);
 }
 
-Sema::OwningExprResult
-Sema::ActOnMemberTemplateIdReferenceExpr(Scope *S, ExprArg Base,
-                                         SourceLocation OpLoc,
-                                         tok::TokenKind OpKind,
-                                         const CXXScopeSpec &SS,
-                                         TemplateTy TemplateD,
-                                         SourceLocation TemplateNameLoc,
-                                         SourceLocation LAngleLoc,
-                                         ASTTemplateArgsPtr TemplateArgsIn,
-                                         SourceLocation *TemplateArgLocs,
-                                         SourceLocation RAngleLoc) {
-  TemplateName Template = TemplateD.getAsVal<TemplateName>();
-
-  // FIXME: We're going to end up looking up the template based on its name,
-  // twice!
-  DeclarationName Name;
-  if (TemplateDecl *ActualTemplate = Template.getAsTemplateDecl())
-    Name = ActualTemplate->getDeclName();
-  else if (OverloadedFunctionDecl *Ovl = Template.getAsOverloadedFunctionDecl())
-    Name = Ovl->getDeclName();
-  else
-    Name = Template.getAsDependentTemplateName()->getName();
-
-  // Translate the parser's template argument list in our AST format.
-  llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-  translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
-  TemplateArgsIn.release();
-
-  // Do we have the save the actual template name? We might need it...
-  return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, TemplateNameLoc,
-                                  Name, true, LAngleLoc,
-                                  TemplateArgs.data(), TemplateArgs.size(),
-                                  RAngleLoc, DeclPtrTy(), &SS);
-}
-
 /// \brief Form a dependent template name.
 ///
 /// This action forms a dependent template name given the template

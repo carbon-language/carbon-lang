@@ -2314,6 +2314,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
                              /*EnteringContext=*/true, 
                              /*AllowDestructorName=*/true, 
                    /*AllowConstructorName=*/!D.getDeclSpec().hasTypeSpecifier(), 
+                             /*ObjectType=*/0,
                              D.getName())) {
         D.SetIdentifier(0, Tok.getLocation());
         D.setInvalidType(true);
@@ -2348,7 +2349,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       Diag(Tok, diag::err_expected_member_name_or_semi)
         << D.getDeclSpec().getSourceRange();
     else if (getLang().CPlusPlus)
-      Diag(Tok, diag::err_expected_unqualified_id);
+      Diag(Tok, diag::err_expected_unqualified_id) << getLang().CPlusPlus;
     else
       Diag(Tok, diag::err_expected_ident_lparen);
     D.SetIdentifier(0, Tok.getLocation());

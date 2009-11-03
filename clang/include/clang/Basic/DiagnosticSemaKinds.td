@@ -1725,8 +1725,6 @@ def err_throw_incomplete_ptr : Error<
 def err_return_in_constructor_handler : Error<
   "return in the catch of a function try block of a constructor is illegal">;
 
-def err_ident_in_pseudo_dtor_not_a_type : Error<
-  "identifier %0 in pseudo-destructor expression does not name a type">;
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
 def err_pseudo_dtor_base_not_scalar : Error<

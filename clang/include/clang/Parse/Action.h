@@ -922,16 +922,42 @@ public:
                                                    SourceLocation RLoc) {
     return ExprEmpty();
   }
-  virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
-                                                    SourceLocation OpLoc,
-                                                    tok::TokenKind OpKind,
-                                                    SourceLocation MemberLoc,
-                                                    IdentifierInfo &Member,
-                                                    DeclPtrTy ObjCImpDecl,
-                                                const CXXScopeSpec *SS = 0) {
+  
+  /// \brief Parsed a member access expresion (C99 6.5.2.3, C++ [expr.ref])
+  /// of the form \c x.m or \c p->m.
+  ///
+  /// \param S the scope in which the member access expression occurs.
+  ///
+  /// \param Base the class or pointer to class into which this member
+  /// access expression refers, e.g., \c x in \c x.m.
+  ///
+  /// \param OpLoc the location of the "." or "->" operator.
+  ///
+  /// \param OpKind the kind of member access operator, which will be either
+  /// tok::arrow ("->") or tok::period (".").
+  ///
+  /// \param SS in C++, the nested-name-specifier that precedes the member
+  /// name, if any.
+  ///
+  /// \param Member the name of the member that we are referring to. In C,
+  /// this will always store an identifier; in C++, we may also have operator
+  /// names, conversion function names, destructors, and template names.
+  ///
+  /// \param ObjCImpDecl the Objective-C implementation declaration.
+  /// FIXME: Do we really need this?
+  ///
+  /// \param HasTrailingLParen whether this member name is immediately followed
+  /// by a left parentheses ('(').
+  virtual OwningExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
+                                                 SourceLocation OpLoc,
+                                                 tok::TokenKind OpKind,
+                                                 const CXXScopeSpec &SS,
+                                                 UnqualifiedId &Member,
+                                                 DeclPtrTy ObjCImpDecl,
+                                                 bool HasTrailingLParen) {
     return ExprEmpty();
   }
-
+                                                 
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.  There are guaranteed to be one fewer commas than arguments,
@@ -1358,123 +1384,6 @@ public:
                                                         SourceLocation OpLoc,
                                                         tok::TokenKind OpKind,
                                                         TypeTy *&ObjectType) {
-    return ExprEmpty();
-  }
-
-  /// ActOnDestructorReferenceExpr - Parsed a destructor reference, for example:
-  ///
-  /// t->~T();
-  virtual OwningExprResult
-  ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
-                               SourceLocation OpLoc,
-                               tok::TokenKind OpKind,
-                               SourceLocation ClassNameLoc,
-                               IdentifierInfo *ClassName,
-                               const CXXScopeSpec &SS,
-                               bool HasTrailingLParen) {
-    return ExprEmpty();
-  }
-
-  /// \brief Parsed a C++ destructor reference that refers to a type.
-  ///
-  /// This action is used when parsing a destructor reference that uses a 
-  /// template-id, e.g.,
-  ///
-  /// \code
-  /// t->~Tmpl<T1, T2>
-  /// \endcode
-  ///
-  /// \param S the scope in which the destructor reference occurs.
-  /// \param Base the base object of the destructor reference expression.
-  /// \param OpLoc the location of the operator ('.' or '->').
-  /// \param OpKind the kind of the destructor reference operator ('.' or '->').
-  /// \param TypeRange the source range that covers the destructor type.
-  /// \param Type the type that is being destroyed.
-  /// \param SS the scope specifier that precedes the destructor name.
-  /// \param HasTrailingLParen whether the destructor name is followed by a '('.
-  virtual OwningExprResult
-  ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
-                               SourceLocation OpLoc,
-                               tok::TokenKind OpKind,
-                               SourceRange TypeRange,
-                               TypeTy *Type,
-                               const CXXScopeSpec &SS,
-                               bool HasTrailingLParen) {
-    return ExprEmpty();
-  }
-  
-  /// ActOnOverloadedOperatorReferenceExpr - Parsed an overloaded operator
-  /// reference, for example:
-  ///
-  /// t.operator++();
-  virtual OwningExprResult
-  ActOnOverloadedOperatorReferenceExpr(Scope *S, ExprArg Base,
-                                       SourceLocation OpLoc,
-                                       tok::TokenKind OpKind,
-                                       SourceLocation ClassNameLoc,
-                                       OverloadedOperatorKind OverOpKind,
-                                       const CXXScopeSpec *SS = 0) {
-    return ExprEmpty();
-  }
-
-  /// ActOnConversionOperatorReferenceExpr - Parsed an overloaded conversion
-  /// function reference, for example:
-  ///
-  /// t.operator int();
-  virtual OwningExprResult
-  ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
-                                       SourceLocation OpLoc,
-                                       tok::TokenKind OpKind,
-                                       SourceLocation ClassNameLoc,
-                                       TypeTy *Ty,
-                                       const CXXScopeSpec *SS = 0) {
-    return ExprEmpty();
-  }
-
-  /// \brief Parsed a reference to a member template-id.
-  ///
-  /// This callback will occur instead of ActOnMemberReferenceExpr() when the
-  /// member in question is a template for which the code provides an
-  /// explicitly-specified template argument list, e.g.,
-  ///
-  /// \code
-  /// x.f<int>()
-  /// \endcode
-  ///
-  /// \param S the scope in which the member reference expression occurs
-  ///
-  /// \param Base the expression to the left of the "." or "->".
-  ///
-  /// \param OpLoc the location of the "." or "->".
-  ///
-  /// \param OpKind the kind of operator, which will be "." or "->".
-  ///
-  /// \param SS the scope specifier that precedes the template-id in, e.g.,
-  /// \c x.Base::f<int>().
-  ///
-  /// \param Template the declaration of the template that is being referenced.
-  ///
-  /// \param TemplateNameLoc the location of the template name referred to by
-  /// \p Template.
-  ///
-  /// \param LAngleLoc the location of the left angle bracket ('<')
-  ///
-  /// \param TemplateArgs the (possibly-empty) template argument list provided
-  /// as part of the member reference.
-  ///
-  /// \param RAngleLoc the location of the right angle bracket ('>')
-  virtual OwningExprResult
-  ActOnMemberTemplateIdReferenceExpr(Scope *S, ExprArg Base,
-                                     SourceLocation OpLoc,
-                                     tok::TokenKind OpKind,
-                                     const CXXScopeSpec &SS,
-                                     // FIXME: "template" keyword?
-                                     TemplateTy Template,
-                                     SourceLocation TemplateNameLoc,
-                                     SourceLocation LAngleLoc,
-                                     ASTTemplateArgsPtr TemplateArgs,
-                                     SourceLocation *TemplateArgLocs,
-                                     SourceLocation RAngleLoc) {
     return ExprEmpty();
   }
 

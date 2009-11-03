@@ -216,7 +216,8 @@ def err_declaration_does_not_declare_param : Error<
 def err_no_matching_param : Error<"parameter named %0 is missing">;
 
 /// C++ parser diagnostics
-def err_expected_unqualified_id : Error<"expected unqualified-id">;
+def err_expected_unqualified_id : Error<
+  "expected %select{identifier|unqualified-id}0">;
 def err_func_def_no_params : Error<
   "function definition does not declare parameters">;
 def err_expected_lparen_after_type : Error<
@@ -233,6 +234,8 @@ def err_expected_catch : Error<"expected catch">;
 def err_expected_lbrace_or_comma : Error<"expected '{' or ','">;
 def err_using_namespace_in_class : Error<
   "'using namespace' in class not allowed">;
+def err_ident_in_pseudo_dtor_not_a_type : Error<
+  "identifier %0 in pseudo-destructor expression does not name a type">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;

@@ -1714,13 +1714,14 @@ public:
                                             const CXXScopeSpec *SS,
                                           NamedDecl *FirstQualifierInScope = 0);
 
-  virtual OwningExprResult ActOnMemberReferenceExpr(Scope *S, ExprArg Base,
-                                                    SourceLocation OpLoc,
-                                                    tok::TokenKind OpKind,
-                                                    SourceLocation MemberLoc,
-                                                    IdentifierInfo &Member,
-                                                    DeclPtrTy ImplDecl,
-                                                    const CXXScopeSpec *SS = 0);
+  virtual OwningExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
+                                                 SourceLocation OpLoc,
+                                                 tok::TokenKind OpKind,
+                                                 const CXXScopeSpec &SS,
+                                                 UnqualifiedId &Member,
+                                                 DeclPtrTy ObjCImpDecl,
+                                                 bool HasTrailingLParen);
+    
   virtual void ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl);
   bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                                FunctionDecl *FDecl,
@@ -2095,52 +2096,6 @@ public:
                                                         SourceLocation OpLoc,
                                                         tok::TokenKind OpKind,
                                                         TypeTy *&ObjectType);
-
-  virtual OwningExprResult
-  ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
-                               SourceLocation OpLoc,
-                               tok::TokenKind OpKind,
-                               SourceLocation ClassNameLoc,
-                               IdentifierInfo *ClassName,
-                               const CXXScopeSpec &SS,
-                               bool HasTrailingLParen);
-
-  virtual OwningExprResult
-  ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
-                               SourceLocation OpLoc,
-                               tok::TokenKind OpKind,
-                               SourceRange TypeRange,
-                               TypeTy *Type,
-                               const CXXScopeSpec &SS,
-                               bool HasTrailingLParen);
-    
-  virtual OwningExprResult
-  ActOnOverloadedOperatorReferenceExpr(Scope *S, ExprArg Base,
-                                       SourceLocation OpLoc,
-                                       tok::TokenKind OpKind,
-                                       SourceLocation ClassNameLoc,
-                                       OverloadedOperatorKind OverOpKind,
-                                       const CXXScopeSpec *SS = 0);
-  virtual OwningExprResult
-  ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
-                                       SourceLocation OpLoc,
-                                       tok::TokenKind OpKind,
-                                       SourceLocation ClassNameLoc,
-                                       TypeTy *Ty,
-                                       const CXXScopeSpec *SS = 0);
-
-  virtual OwningExprResult
-  ActOnMemberTemplateIdReferenceExpr(Scope *S, ExprArg Base,
-                                     SourceLocation OpLoc,
-                                     tok::TokenKind OpKind,
-                                     const CXXScopeSpec &SS,
-                                     // FIXME: "template" keyword?
-                                     TemplateTy Template,
-                                     SourceLocation TemplateNameLoc,
-                                     SourceLocation LAngleLoc,
-                                     ASTTemplateArgsPtr TemplateArgs,
-                                     SourceLocation *TemplateArgLocs,
-                                     SourceLocation RAngleLoc);
 
   /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is
   /// non-empty, will create a new CXXExprWithTemporaries expression.

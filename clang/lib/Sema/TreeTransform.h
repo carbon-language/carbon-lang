@@ -1034,9 +1034,9 @@ public:
                                                SourceLocation OpLoc,
                                                SourceLocation AccessorLoc,
                                                IdentifierInfo &Accessor) {
-    return getSema().ActOnMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
+    return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
                                               tok::period, AccessorLoc,
-                                              Accessor,
+                                              DeclarationName(&Accessor),
                                      /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
   }
 
@@ -1568,7 +1568,7 @@ public:
     SS.setScopeRep(Qualifier);
 
     // FIXME: We're going to end up looking up the template based on its name,
-    // twice! Also, duplicates part of Sema::ActOnMemberTemplateIdReferenceExpr.
+    // twice! Also, duplicates part of Sema::BuildMemberAccessExpr.
     DeclarationName Name;
     if (TemplateDecl *ActualTemplate = Template.getAsTemplateDecl())
       Name = ActualTemplate->getDeclName();
