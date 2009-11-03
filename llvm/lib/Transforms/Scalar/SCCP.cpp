@@ -174,7 +174,9 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   /// that return multiple values.
   DenseMap<std::pair<Function*, unsigned>, LatticeVal> TrackedMultipleRetVals;
 
-  /// TrackingIncomingArguments - This is the set of functions that are 
+  /// TrackingIncomingArguments - This is the set of functions for whose
+  /// arguments we make optimistic assumptions about and try to prove as
+  /// constants.
   SmallPtrSet<Function*, 16> TrackingIncomingArguments;
   
   /// The reason for two worklists is that overdefined is the lowest state
