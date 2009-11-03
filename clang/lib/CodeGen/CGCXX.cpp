@@ -737,8 +737,37 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
   StartFunction(FD, ResultType, Fn, Args, SourceLocation());
 
   // generate body
-  llvm::Value *Callee = CGM.GetAddrOfFunction(MD);
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  const llvm::Type *Ty =
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                   FPT->isVariadic());
+  llvm::Value *Callee = CGM.GetAddrOfFunction(MD, Ty);
   CallArgList CallArgs;
+
+  QualType ArgType = MD->getThisType(getContext());
+  llvm::Value *Arg = Builder.CreateLoad(LocalDeclMap[ThisDecl], "this");
+  if (v_t) {
+    const llvm::Type *OrigTy = Arg->getType();
+    // FIXME: Add this adjustments
+    const llvm::Type *PtrDiffTy = 
+      ConvertType(getContext().getPointerDiffType());
+    llvm::Type *Ptr8Ty, *PtrPtr8Ty, *PtrPtrDiffTy;
+    Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
+    PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
+    PtrPtrDiffTy = llvm::PointerType::get(PtrDiffTy, 0);
+    llvm::Value *ThisVal = Builder.CreateBitCast(Arg, Ptr8Ty);
+    Arg = Builder.CreateBitCast(Arg, PtrPtrDiffTy->getPointerTo());
+    Arg = Builder.CreateLoad(Arg, "vtable");
+    llvm::Value *VTablePtr = Arg;
+    assert(v_t % (LLVMPointerWidth/8) == 0 && "vtable entry unaligned");
+    v_t /= LLVMPointerWidth/8;
+    Arg = Builder.CreateConstInBoundsGEP1_64(VTablePtr, v_t);
+    Arg = Builder.CreateLoad(Arg);
+    Arg = Builder.CreateGEP(ThisVal, Arg);
+    Arg = Builder.CreateBitCast(Arg, OrigTy);
+  }
+  // FIXME: Add this non-virtual adjustment
+  CallArgs.push_back(std::make_pair(RValue::get(Arg), ArgType));
 
   for (FunctionDecl::param_const_iterator i = MD->param_begin(),
          e = MD->param_end();
@@ -748,7 +777,6 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 
     // llvm::Value *Arg = CGF.GetAddrOfLocalVar(Dst);
     Expr *Arg = new (getContext()) DeclRefExpr(D, ArgType, SourceLocation());
-    // FIXME: Add this adjustments
     CallArgs.push_back(std::make_pair(EmitCallArg(Arg, ArgType), ArgType));
   }
 
