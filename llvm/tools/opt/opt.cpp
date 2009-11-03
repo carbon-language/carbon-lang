@@ -132,10 +132,6 @@ DefaultDataLayout("default-data-layout",
           cl::desc("data layout string to use if not specified by module"),
           cl::value_desc("layout-string"), cl::init(""));
 
-static cl::opt<bool>
-NoDefaultDataLayout("no-default-data-layout",
-  cl::desc("no data layout assumptions unless module specifies data layout"));
-
 // ---------- Define Printers for module and function passes ------------
 namespace {
 
@@ -401,7 +397,7 @@ int main(int argc, char **argv) {
   const std::string &ModuleDataLayout = M.get()->getDataLayout();
   if (!ModuleDataLayout.empty())
     TD = new TargetData(ModuleDataLayout);
-  else if (!NoDefaultDataLayout)
+  else if (!DefaultDataLayout.empty())
     TD = new TargetData(DefaultDataLayout);
 
   if (TD)

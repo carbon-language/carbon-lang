@@ -1,4 +1,5 @@
 ; RUN: opt < %s -S -memcpyopt | FileCheck %s
+target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
 
 ; The resulting memset is only 4-byte aligned, despite containing
 ; a 16-byte alignmed store in the middle.
