@@ -1031,6 +1031,8 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
           // Eventually this can be improved by recognizing that the pixel
           // buffer passed to CVPixelBufferCreateWithBytes is released via
           // a callback and doing full IPA to make sure this is done correctly.
+          // FIXME: This function has an out parameter that returns an
+          // allocated object.
           ScratchArgs = AF.Add(ScratchArgs, 7, StopTracking);
           S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
                                    DoNothing);
@@ -1044,7 +1046,8 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
           // passed to CGBitmapContextCreateWithData is released via
           // a callback and doing full IPA to make sure this is done correctly.
           ScratchArgs = AF.Add(ScratchArgs, 8, StopTracking);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,DoNothing);          
+          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
+                                   DoNothing,DoNothing);          
         }
         break;
 

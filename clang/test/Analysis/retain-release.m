@@ -1119,7 +1119,7 @@ void rdar_7358899(void *data,
     // this is freed later by the callback.
     NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
 
-  CGBitmapContextCreateWithData(data, width, height, bitsPerComponent,
+  CGBitmapContextCreateWithData(data, width, height, bitsPerComponent, // expected-warning{{leak}}
     bytesPerRow, space, bitmapInfo, releaseCallback, number);
 }
 
