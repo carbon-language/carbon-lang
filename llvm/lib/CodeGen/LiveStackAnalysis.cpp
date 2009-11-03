@@ -27,15 +27,10 @@ using namespace llvm;
 char LiveStacks::ID = 0;
 static RegisterPass<LiveStacks> X("livestacks", "Live Stack Slot Analysis");
 
-void LiveStacks::scaleNumbering(int factor) {
-  // Scale the intervals.
-  for (iterator LI = begin(), LE = end(); LI != LE; ++LI) {
-    LI->second.scaleNumbering(factor);
-  }
-}
-
 void LiveStacks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
+  AU.addPreserved<SlotIndexes>();
+  AU.addRequiredTransitive<SlotIndexes>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 

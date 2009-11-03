@@ -98,6 +98,8 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<SlotIndexes>();
+      AU.addPreserved<SlotIndexes>();
       AU.addRequired<LiveStacks>();
       AU.addRequired<VirtRegMap>();
       AU.addPreserved<VirtRegMap>();      

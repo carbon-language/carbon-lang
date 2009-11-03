@@ -56,7 +56,7 @@ bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   TII = mf.getTarget().getInstrInfo();
   TRI = mf.getTarget().getRegisterInfo();
   MF = &mf;
-  
+
   ReMatId = MAX_STACK_SLOT+1;
   LowSpillSlot = HighSpillSlot = NO_STACK_SLOT;
   

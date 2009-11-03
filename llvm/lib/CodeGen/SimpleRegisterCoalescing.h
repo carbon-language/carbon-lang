@@ -146,7 +146,7 @@ namespace llvm {
     /// TrimLiveIntervalToLastUse - If there is a last use in the same basic
     /// block as the copy instruction, trim the ive interval to the last use
     /// and return true.
-    bool TrimLiveIntervalToLastUse(LiveIndex CopyIdx,
+    bool TrimLiveIntervalToLastUse(SlotIndex CopyIdx,
                                    MachineBasicBlock *CopyMBB,
                                    LiveInterval &li, const LiveRange *LR);
 
@@ -205,7 +205,7 @@ namespace llvm {
     /// iterator, or any subsequent range with the same value number,
     /// is live at the given point.
     bool ValueLiveAt(LiveInterval::iterator LRItr, LiveInterval::iterator LREnd, 
-                     LiveIndex defPoint) const;                                  
+                     SlotIndex defPoint) const;                                  
 
     /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
     /// the specified live interval is defined by a copy from the specified
@@ -241,9 +241,8 @@ namespace llvm {
 
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End or NULL if there are no uses.
-    MachineOperand *lastRegisterUse(LiveIndex Start,
-                                    LiveIndex End, unsigned Reg,
-                                    LiveIndex &LastUseIdx) const;
+    MachineOperand *lastRegisterUse(SlotIndex Start, SlotIndex End,
+                                    unsigned Reg, SlotIndex &LastUseIdx) const;
 
     /// CalculateSpillWeights - Compute spill weights for all virtual register
     /// live intervals.

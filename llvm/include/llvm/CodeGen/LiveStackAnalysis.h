@@ -48,8 +48,6 @@ namespace llvm {
     iterator begin() { return S2IMap.begin(); }
     iterator end() { return S2IMap.end(); }
 
-    void scaleNumbering(int factor);
-
     unsigned getNumIntervals() const { return (unsigned)S2IMap.size(); }
 
     LiveInterval &getOrCreateInterval(int Slot, const TargetRegisterClass *RC) {
