@@ -16,7 +16,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/Analysis/ConstantFolding.h"
 using namespace llvm;
 
@@ -26,7 +25,7 @@ using namespace llvm;
 
 /// isMalloc - Returns true if the the value is either a malloc call or a
 /// bitcast of the result of a malloc call.
-bool llvm::isMalloc(const Value* I) {
+bool llvm::isMalloc(const Value *I) {
   return extractMallocCall(I) || extractMallocCallFromBitCast(I);
 }
 
@@ -34,7 +33,7 @@ static bool isMallocCall(const CallInst *CI) {
   if (!CI)
     return false;
 
-  const Module* M = CI->getParent()->getParent()->getParent();
+  const Module *M = CI->getParent()->getParent()->getParent();
   Function *MallocFunc = M->getFunction("malloc");
 
   if (CI->getOperand(0) != MallocFunc)
@@ -58,17 +57,17 @@ static bool isMallocCall(const CallInst *CI) {
 /// extractMallocCall - Returns the corresponding CallInst if the instruction
 /// is a malloc call.  Since CallInst::CreateMalloc() only creates calls, we
 /// ignore InvokeInst here.
-const CallInst* llvm::extractMallocCall(const Value* I) {
+const CallInst *llvm::extractMallocCall(const Value *I) {
   const CallInst *CI = dyn_cast<CallInst>(I);
   return (isMallocCall(CI)) ? CI : NULL;
 }
 
-CallInst* llvm::extractMallocCall(Value* I) {
+CallInst *llvm::extractMallocCall(Value *I) {
   CallInst *CI = dyn_cast<CallInst>(I);
   return (isMallocCall(CI)) ? CI : NULL;
 }
 
-static bool isBitCastOfMallocCall(const BitCastInst* BCI) {
+static bool isBitCastOfMallocCall(const BitCastInst *BCI) {
   if (!BCI)
     return false;
     
@@ -77,13 +76,13 @@ static bool isBitCastOfMallocCall(const BitCastInst* BCI) {
 
 /// extractMallocCallFromBitCast - Returns the corresponding CallInst if the
 /// instruction is a bitcast of the result of a malloc call.
-CallInst* llvm::extractMallocCallFromBitCast(Value* I) {
+CallInst *llvm::extractMallocCallFromBitCast(Value *I) {
   BitCastInst *BCI = dyn_cast<BitCastInst>(I);
   return (isBitCastOfMallocCall(BCI)) ? cast<CallInst>(BCI->getOperand(0))
                                       : NULL;
 }
 
-const CallInst* llvm::extractMallocCallFromBitCast(const Value* I) {
+const CallInst *llvm::extractMallocCallFromBitCast(const Value *I) {
   const BitCastInst *BCI = dyn_cast<BitCastInst>(I);
   return (isBitCastOfMallocCall(BCI)) ? cast<CallInst>(BCI->getOperand(0))
                                       : NULL;
@@ -94,21 +93,21 @@ static bool isConstantOne(Value *val) {
   return isa<ConstantInt>(val) && cast<ConstantInt>(val)->isOne();
 }
 
-static Value* isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
-                                  const TargetData* TD) {
+static Value *isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
+                                  const TargetData *TD) {
   if (!CI)
     return NULL;
 
   // Type must be known to determine array size.
-  const Type* T = getMallocAllocatedType(CI);
+  const Type *T = getMallocAllocatedType(CI);
   if (!T)
     return NULL;
 
-  Value* MallocArg = CI->getOperand(1);
-  ConstantExpr* CO = dyn_cast<ConstantExpr>(MallocArg);
-  BinaryOperator* BO = dyn_cast<BinaryOperator>(MallocArg);
+  Value *MallocArg = CI->getOperand(1);
+  ConstantExpr *CO = dyn_cast<ConstantExpr>(MallocArg);
+  BinaryOperator *BO = dyn_cast<BinaryOperator>(MallocArg);
 
-  Constant* ElementSize = ConstantExpr::getSizeOf(T);
+  Constant *ElementSize = ConstantExpr::getSizeOf(T);
   ElementSize = ConstantExpr::getTruncOrBitCast(ElementSize, 
                                                 MallocArg->getType());
   Constant *FoldedElementSize =
@@ -128,8 +127,8 @@ static Value* isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
   if (!CO && !BO)
     return NULL;
 
-  Value* Op0 = NULL;
-  Value* Op1 = NULL;
+  Value *Op0 = NULL;
+  Value *Op1 = NULL;
   unsigned Opcode = 0;
   if (CO && ((CO->getOpcode() == Instruction::Mul) || 
              (CO->getOpcode() == Instruction::Shl))) {
@@ -157,17 +156,13 @@ static Value* isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
         return Op1;
     }
     if (Opcode == Instruction::Shl) {
-      ConstantInt* Op1CI = dyn_cast<ConstantInt>(Op1);
+      ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1);
       if (!Op1CI) return NULL;
       
       APInt Op1Int = Op1CI->getValue();
-      unsigned Op1Width = Op1Int.getBitWidth();
-      // check for overflow
-      if (Op1Int.getActiveBits() > 64 || Op1Int.getZExtValue() > Op1Width)
-        return NULL;
-      Value* Op1Pow = ConstantInt::get(Context, 
-                                 APInt(Op1Width, 0).set(Op1Int.getZExtValue()));
-
+      uint64_t BitToSet = Op1Int.getLimitedValue(Op1Int.getBitWidth() - 1);
+      Value *Op1Pow = ConstantInt::get(Context, 
+                                  APInt(Op1Int.getBitWidth(), 0).set(BitToSet));
       if (Op0 == ElementSize || (FoldedElementSize && Op0 == FoldedElementSize))
         // ArraySize << log2(ElementSize)
         return Op1Pow;
@@ -185,10 +180,10 @@ static Value* isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction 
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
-CallInst* llvm::isArrayMalloc(Value* I, LLVMContext &Context,
-                              const TargetData* TD) {
+CallInst *llvm::isArrayMalloc(Value *I, LLVMContext &Context,
+                              const TargetData *TD) {
   CallInst *CI = extractMallocCall(I);
-  Value* ArraySize = isArrayMallocHelper(CI, Context, TD);
+  Value *ArraySize = isArrayMallocHelper(CI, Context, TD);
 
   if (ArraySize &&
       ArraySize != ConstantInt::get(CI->getOperand(1)->getType(), 1))
@@ -198,10 +193,10 @@ CallInst* llvm::isArrayMalloc(Value* I, LLVMContext &Context,
   return NULL;
 }
 
-const CallInst* llvm::isArrayMalloc(const Value* I, LLVMContext &Context,
-                                    const TargetData* TD) {
+const CallInst *llvm::isArrayMalloc(const Value *I, LLVMContext &Context,
+                                    const TargetData *TD) {
   const CallInst *CI = extractMallocCall(I);
-  Value* ArraySize = isArrayMallocHelper(CI, Context, TD);
+  Value *ArraySize = isArrayMallocHelper(CI, Context, TD);
 
   if (ArraySize &&
       ArraySize != ConstantInt::get(CI->getOperand(1)->getType(), 1))
@@ -214,10 +209,10 @@ const CallInst* llvm::isArrayMalloc(const Value* I, LLVMContext &Context,
 /// getMallocType - Returns the PointerType resulting from the malloc call.
 /// This PointerType is the result type of the call's only bitcast use.
 /// If there is no unique bitcast use, then return NULL.
-const PointerType* llvm::getMallocType(const CallInst* CI) {
+const PointerType *llvm::getMallocType(const CallInst *CI) {
   assert(isMalloc(CI) && "GetMallocType and not malloc call");
   
-  const BitCastInst* BCI = NULL;
+  const BitCastInst *BCI = NULL;
   
   // Determine if CallInst has a bitcast use.
   for (Value::use_const_iterator UI = CI->use_begin(), E = CI->use_end();
@@ -241,8 +236,8 @@ const PointerType* llvm::getMallocType(const CallInst* CI) {
 /// getMallocAllocatedType - Returns the Type allocated by malloc call. This
 /// Type is the result type of the call's only bitcast use. If there is no
 /// unique bitcast use, then return NULL.
-const Type* llvm::getMallocAllocatedType(const CallInst* CI) {
-  const PointerType* PT = getMallocType(CI);
+const Type *llvm::getMallocAllocatedType(const CallInst *CI) {
+  const PointerType *PT = getMallocType(CI);
   return PT ? PT->getElementType() : NULL;
 }
 
@@ -251,8 +246,8 @@ const Type* llvm::getMallocAllocatedType(const CallInst* CI) {
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
-Value* llvm::getMallocArraySize(CallInst* CI, LLVMContext &Context,
-                                const TargetData* TD) {
+Value *llvm::getMallocArraySize(CallInst *CI, LLVMContext &Context,
+                                const TargetData *TD) {
   return isArrayMallocHelper(CI, Context, TD);
 }
 
@@ -261,12 +256,12 @@ Value* llvm::getMallocArraySize(CallInst* CI, LLVMContext &Context,
 //
 
 /// isFreeCall - Returns true if the the value is a call to the builtin free()
-bool llvm::isFreeCall(const Value* I) {
+bool llvm::isFreeCall(const Value *I) {
   const CallInst *CI = dyn_cast<CallInst>(I);
   if (!CI)
     return false;
 
-  const Module* M = CI->getParent()->getParent()->getParent();
+  const Module *M = CI->getParent()->getParent()->getParent();
   Function *FreeFunc = M->getFunction("free");
 
   if (CI->getOperand(0) != FreeFunc)
