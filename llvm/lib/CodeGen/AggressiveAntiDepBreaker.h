@@ -131,6 +131,9 @@ namespace llvm {
     /// dependencies may be exposed, so multiple passes are required.
     unsigned GetMaxTrials();
 
+    /// NeedCandidates - Candidates required.
+    bool NeedCandidates() { return true; }
+
     /// Start - Initialize anti-dep breaking for a new basic block.
     void StartBlock(MachineBasicBlock *BB);
 
@@ -138,6 +141,7 @@ namespace llvm {
     /// of the ScheduleDAG and break them by renaming registers.
     ///
     unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
+                                   CandidateMap& Candidates,
                                    MachineBasicBlock::iterator& Begin,
                                    MachineBasicBlock::iterator& End,
                                    unsigned InsertPosIndex);

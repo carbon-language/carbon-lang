@@ -183,8 +183,8 @@ void SUnit::setHeightDirty() {
 /// setDepthToAtLeast - Update this node's successors to reflect the
 /// fact that this node's depth just increased.
 ///
-void SUnit::setDepthToAtLeast(unsigned NewDepth) {
-  if (NewDepth <= getDepth())
+void SUnit::setDepthToAtLeast(unsigned NewDepth, bool IgnoreAntiDep) {
+  if (NewDepth <= getDepth(IgnoreAntiDep))
     return;
   setDepthDirty();
   Depth = NewDepth;
@@ -194,8 +194,8 @@ void SUnit::setDepthToAtLeast(unsigned NewDepth) {
 /// setHeightToAtLeast - Update this node's predecessors to reflect the
 /// fact that this node's height just increased.
 ///
-void SUnit::setHeightToAtLeast(unsigned NewHeight) {
-  if (NewHeight <= getHeight())
+void SUnit::setHeightToAtLeast(unsigned NewHeight, bool IgnoreAntiDep) {
+  if (NewHeight <= getHeight(IgnoreAntiDep))
     return;
   setHeightDirty();
   Height = NewHeight;
@@ -204,7 +204,7 @@ void SUnit::setHeightToAtLeast(unsigned NewHeight) {
 
 /// ComputeDepth - Calculate the maximal path from the node to the exit.
 ///
-void SUnit::ComputeDepth() {
+void SUnit::ComputeDepth(bool IgnoreAntiDep) {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
   do {
@@ -214,6 +214,7 @@ void SUnit::ComputeDepth() {
     unsigned MaxPredDepth = 0;
     for (SUnit::const_pred_iterator I = Cur->Preds.begin(),
          E = Cur->Preds.end(); I != E; ++I) {
+      if (IgnoreAntiDep && (I->getKind() == SDep::Anti)) continue;
       SUnit *PredSU = I->getSUnit();
       if (PredSU->isDepthCurrent)
         MaxPredDepth = std::max(MaxPredDepth,
@@ -237,7 +238,7 @@ void SUnit::ComputeDepth() {
 
 /// ComputeHeight - Calculate the maximal path from the node to the entry.
 ///
-void SUnit::ComputeHeight() {
+void SUnit::ComputeHeight(bool IgnoreAntiDep) {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
   do {
@@ -247,6 +248,7 @@ void SUnit::ComputeHeight() {
     unsigned MaxSuccHeight = 0;
     for (SUnit::const_succ_iterator I = Cur->Succs.begin(),
          E = Cur->Succs.end(); I != E; ++I) {
+      if (IgnoreAntiDep && (I->getKind() == SDep::Anti)) continue;
       SUnit *SuccSU = I->getSUnit();
       if (SuccSU->isHeightCurrent)
         MaxSuccHeight = std::max(MaxSuccHeight,
@@ -346,7 +348,7 @@ void ScheduleDAG::VerifySchedule(bool isBottomUp) {
       AnyNotSched = true;
     }
     if (SUnits[i].isScheduled &&
-        (isBottomUp ? SUnits[i].getHeight() : SUnits[i].getHeight()) >
+        (isBottomUp ? SUnits[i].getHeight() : SUnits[i].getDepth()) >
           unsigned(INT_MAX)) {
       if (!AnyNotSched)
         errs() << "*** Scheduling failed! ***\n";

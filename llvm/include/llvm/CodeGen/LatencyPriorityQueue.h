@@ -39,12 +39,21 @@ namespace llvm {
     /// predecessor for.  This is used as a tie-breaker heuristic for better
     /// mobility.
     std::vector<unsigned> NumNodesSolelyBlocking;
-
-    PriorityQueue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
-public:
-    LatencyPriorityQueue() : Queue(latency_sort(this)) {
-    }
     
+    /// IgnoreAntiDep - Ignore anti-dependencies
+    bool IgnoreAntiDep;
+    
+    /// Queue - The queue.
+    PriorityQueue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
+
+public:
+  LatencyPriorityQueue() : IgnoreAntiDep(false), Queue(latency_sort(this)) {
+    }
+
+    void setIgnoreAntiDep(bool ignore) {
+      IgnoreAntiDep = ignore;
+    }
+
     void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       NumNodesSolelyBlocking.resize(SUnits->size(), 0);
@@ -63,7 +72,7 @@ public:
     
     unsigned getLatency(unsigned NodeNum) const {
       assert(NodeNum < (*SUnits).size());
-      return (*SUnits)[NodeNum].getHeight();
+      return (*SUnits)[NodeNum].getHeight(IgnoreAntiDep);
     }
     
     unsigned getNumSolelyBlockNodes(unsigned NodeNum) const {

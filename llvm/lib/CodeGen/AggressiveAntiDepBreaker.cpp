@@ -14,7 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "aggressive-antidep"
+#define DEBUG_TYPE "post-RA-sched"
 #include "AggressiveAntiDepBreaker.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -31,7 +31,7 @@ using namespace llvm;
 static cl::opt<int>
 AntiDepTrials("agg-antidep-trials",
               cl::desc("Maximum number of anti-dependency breaking passes"),
-              cl::init(2), cl::Hidden);
+              cl::init(1), cl::Hidden);
 
 AggressiveAntiDepState::AggressiveAntiDepState(MachineBasicBlock *BB) :
   GroupNodes(TargetRegisterInfo::FirstVirtualRegister, 0) {
@@ -265,18 +265,24 @@ void AggressiveAntiDepBreaker::GetPassthruRegs(MachineInstr *MI,
 }
 
 /// AntiDepPathStep - Return SUnit that SU has an anti-dependence on.
-static void AntiDepPathStep(SUnit *SU, std::vector<SDep*>& Edges) {
-  SmallSet<unsigned, 8> Dups;
+static void AntiDepPathStep(SUnit *SU, AntiDepBreaker::AntiDepRegVector& Regs,
+                            std::vector<SDep*>& Edges) {
+  AntiDepBreaker::AntiDepRegSet RegSet;
+  for (unsigned i = 0, e = Regs.size(); i < e; ++i)
+    RegSet.insert(Regs[i]);
+
   for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
        P != PE; ++P) {
     if (P->getKind() == SDep::Anti) {
       unsigned Reg = P->getReg();
-      if (Dups.count(Reg) == 0) {
+      if (RegSet.count(Reg) != 0) {
         Edges.push_back(&*P);
-        Dups.insert(Reg);
+        RegSet.erase(Reg);
       }
     }
   }
+
+  assert(RegSet.empty() && "Expected all antidep registers to be found");
 }
 
 void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
@@ -593,6 +599,7 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
 ///
 unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
                               std::vector<SUnit>& SUnits,
+                              CandidateMap& Candidates,
                               MachineBasicBlock::iterator& Begin,
                               MachineBasicBlock::iterator& End,
                               unsigned InsertPosIndex) {
@@ -601,9 +608,15 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>& 
     RegRefs = State->GetRegRefs();
 
+  // Nothing to do if no candidates.
+  if (Candidates.empty()) {
+    DEBUG(errs() << "\n===== No anti-dependency candidates\n");
+    return 0;
+  }
+
   // The code below assumes that there is at least one instruction,
   // so just duck out immediately if the block is empty.
-  if (SUnits.empty()) return false;
+  if (SUnits.empty()) return 0;
   
   // Manage saved state to enable multiple passes...
   if (AntiDepTrials > 1) {
@@ -618,7 +631,8 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
   // ...need a map from MI to SUnit.
   std::map<MachineInstr *, SUnit *> MISUnitMap;
 
-  DEBUG(errs() << "Breaking all anti-dependencies\n");
+  DEBUG(errs() << "\n===== Attempting to break " << Candidates.size() << 
+        " anti-dependencies\n");
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     SUnit *SU = &SUnits[i];
     MISUnitMap.insert(std::pair<MachineInstr *, SUnit *>(SU->getInstr(), SU));
@@ -655,8 +669,10 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
 
     std::vector<SDep*> Edges;
     SUnit *PathSU = MISUnitMap[MI];
-    if (PathSU) 
-      AntiDepPathStep(PathSU, Edges);
+    AntiDepBreaker::CandidateMap::iterator 
+      citer = Candidates.find(PathSU);
+    if (citer != Candidates.end())
+      AntiDepPathStep(PathSU, citer->second, Edges);
       
     // Ignore KILL instructions (they form a group in ScanInstruction
     // but don't cause any anti-dependence breaking themselves)

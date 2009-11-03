@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "critical-antidep"
+#define DEBUG_TYPE "post-RA-sched"
 #include "CriticalAntiDepBreaker.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -316,6 +316,7 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(unsigned AntiDepReg,
 
 unsigned CriticalAntiDepBreaker::
 BreakAntiDependencies(std::vector<SUnit>& SUnits,
+                      CandidateMap& Candidates,
                       MachineBasicBlock::iterator& Begin,
                       MachineBasicBlock::iterator& End,
                       unsigned InsertPosIndex) {

@@ -21,6 +21,8 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -29,11 +31,19 @@ namespace llvm {
 /// anti-dependencies.
 class AntiDepBreaker {
 public:
+  typedef SmallSet<unsigned, 4> AntiDepRegSet;
+  typedef SmallVector<unsigned, 4> AntiDepRegVector;
+  typedef std::map<SUnit *, AntiDepRegVector> CandidateMap;
+
   virtual ~AntiDepBreaker();
 
   /// GetMaxTrials - Return the maximum number of anti-dependence
   /// breaking attempts that will be made for a block.
   virtual unsigned GetMaxTrials() =0;
+
+  /// NeedCandidates - Return true if the schedule must provide
+  /// candidates with BreakAntiDependencies().
+  virtual bool NeedCandidates() =0;
 
   /// Start - Initialize anti-dep breaking for a new basic block.
   virtual void StartBlock(MachineBasicBlock *BB) =0;
@@ -43,9 +53,10 @@ public:
   /// the number of anti-dependencies broken.
   ///
   virtual unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
-                                         MachineBasicBlock::iterator& Begin,
-                                         MachineBasicBlock::iterator& End,
-                                         unsigned InsertPosIndex) =0;
+                                CandidateMap& Candidates,
+                                MachineBasicBlock::iterator& Begin,
+                                MachineBasicBlock::iterator& End,
+                                unsigned InsertPosIndex) =0;
   
   /// Observe - Update liveness information to account for the current
   /// instruction, which will not be scheduled.

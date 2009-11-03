@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "exact-hazards"
+#define DEBUG_TYPE "post-RA-sched"
 #include "ExactHazardRecognizer.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/Support/Debug.h"
