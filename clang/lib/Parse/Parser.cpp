@@ -1019,3 +1019,10 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   PP.AnnotateCachedTokens(Tok);
   return true;
 }
+
+// Anchor the Parser::FieldCallback vtable to this translation unit.
+// We use a spurious method instead of the destructor because
+// destroying FieldCallbacks can actually be slightly
+// performance-sensitive.
+void Parser::FieldCallback::_anchor() {
+}

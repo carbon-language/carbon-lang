@@ -983,6 +983,10 @@ private:
 
   struct FieldCallback {
     virtual DeclPtrTy invoke(FieldDeclarator &Field) = 0;
+    virtual ~FieldCallback() {}
+
+  private:
+    virtual void _anchor();
   };
 
   void ParseStructDeclaration(DeclSpec &DS, FieldCallback &Callback);
