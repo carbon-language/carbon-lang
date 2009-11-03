@@ -257,6 +257,7 @@ const TargetRegisterClass *
 ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
                                               const TargetRegisterClass *B,
                                               unsigned SubIdx) const {
+#if 0
   switch (SubIdx) {
   default: return 0;
   case 1:
@@ -277,6 +278,7 @@ ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
     // D sub-registers.
     return A;
   }
+#endif
   return 0;
 }
 
