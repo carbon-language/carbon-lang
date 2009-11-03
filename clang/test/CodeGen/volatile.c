@@ -1,8 +1,8 @@
 // RUN: clang-cc -emit-llvm < %s -o %t &&
-// RUN: grep volatile %t | count 25 &&
+// RUN: grep volatile %t | count 29 &&
 // RUN: grep memcpy %t | count 7
 
-// The number 25 comes from the current codegen for volatile loads;
+// The number 29 comes from the current codegen for volatile loads;
 // if this number changes, it's not necessarily something wrong, but
 // something has changed to affect volatile load/store codegen
 
@@ -38,6 +38,9 @@ volatile extv4 vVE;
 
 volatile struct {int x;} aggFct(void);
 
+typedef volatile int volatile_int;
+volatile_int vtS;
+
 int main() {
   int i;
 
@@ -62,6 +65,7 @@ int main() {
   i=VE.yx[1];
   i=vVE.zy[1];
   i = aggFct().x;
+  i=vtS;
 
 
   // store
@@ -81,12 +85,14 @@ int main() {
   vBF.x=i;
   V[3]=i;
   vV[3]=i;
+  vtS=i;
 
   // other ops:
   ++S;
   ++vS;
   i+=S;
   i+=vS;
+  ++vtS;
   (void)vF2;
   vF2 = vF2;
   vF2 = vF2 = vF2;
