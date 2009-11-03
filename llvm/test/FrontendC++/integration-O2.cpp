@@ -1,4 +1,5 @@
 // RUN: %llvmgxx %s -O2 -S -o - | FileCheck %s
+// XFAIL: *
 
 // This test verifies that we get expected codegen out of the -O2 optimization
 // level from the full optimizer.
