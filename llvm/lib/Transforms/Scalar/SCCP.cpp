@@ -174,6 +174,9 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   /// that return multiple values.
   DenseMap<std::pair<Function*, unsigned>, LatticeVal> TrackedMultipleRetVals;
 
+  /// TrackingIncomingArguments - This is the set of functions that are 
+  SmallPtrSet<Function*, 16> TrackingIncomingArguments;
+  
   /// The reason for two worklists is that overdefined is the lowest state
   /// on the lattice, and moving things to overdefined as fast as possible
   /// makes SCCP converge much faster.
@@ -235,6 +238,10 @@ public:
       TrackedRetVals.insert(std::make_pair(F, LatticeVal()));
   }
 
+  void AddArgumentTrackedFunction(Function *F) {
+    TrackingIncomingArguments.insert(F);
+  }
+  
   /// Solve - Solve for constants and executable blocks.
   ///
   void Solve();
@@ -1190,6 +1197,27 @@ CallOverdefined:
     return markOverdefined(I);
   }
 
+  // If this is a local function that doesn't have its address taken, mark its
+  // entry block executable and merge in the actual arguments to the call into
+  // the formal arguments of the function.
+  if (!TrackingIncomingArguments.empty() && TrackingIncomingArguments.count(F)){
+    MarkBlockExecutable(F->begin());
+    
+    // Propagate information from this call site into the callee.
+    CallSite::arg_iterator CAI = CS.arg_begin();
+    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
+         AI != E; ++AI, ++CAI) {
+      // If this argument is byval, and if the function is not readonly, there
+      // will be an implicit copy formed of the input aggregate.
+      if (AI->hasByValAttr() && !F->onlyReadsMemory()) {
+        markOverdefined(AI);
+        continue;
+      }
+      
+      mergeInValue(AI, getValueState(*CAI));
+    }
+  }
+  
   // If this is a single/zero retval case, see if we're tracking the function.
   DenseMap<Function*, LatticeVal>::iterator TFRVI = TrackedRetVals.find(F);
   if (TFRVI != TrackedRetVals.end()) {
@@ -1227,24 +1255,6 @@ CallOverdefined:
     // Otherwise we're not tracking this callee, so handle it in the
     // common path above.
     goto CallOverdefined;
-  }
-  
-  // Finally, if this is the first call to the function hit, mark its entry
-  // block executable.
-  MarkBlockExecutable(F->begin());
-  
-  // Propagate information from this call site into the callee.
-  CallSite::arg_iterator CAI = CS.arg_begin();
-  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
-       AI != E; ++AI, ++CAI) {
-    // If this argument is byval, and if the function is not readonly, there
-    // will be an implicit copy formed of the input aggregate.
-    if (AI->hasByValAttr() && !F->onlyReadsMemory()) {
-      markOverdefined(AI);
-      continue;
-    }
-    
-    mergeInValue(AI, getValueState(*CAI));
   }
 }
 
@@ -1656,8 +1666,10 @@ bool IPSCCP::runOnModule(Module &M) {
     // If this function only has direct calls that we can see, we can track its
     // arguments and return value aggressively, and can assume it is not called
     // unless we see evidence to the contrary.
-    if (F->hasLocalLinkage() && !AddressIsTaken(F))
+    if (F->hasLocalLinkage() && !AddressIsTaken(F)) {
+      Solver.AddArgumentTrackedFunction(F);
       continue;
+    }
 
     // Assume the function is called.
     Solver.MarkBlockExecutable(F->begin());

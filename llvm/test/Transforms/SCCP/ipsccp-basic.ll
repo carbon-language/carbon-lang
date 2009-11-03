@@ -174,4 +174,24 @@ define i32 @test7b() {
 ; CHECK-NEXT: ret i32 36
 }
 
+;;======================== test8
+
+
+define internal {} @test8a(i32 %A, i32* %P) {
+  store i32 %A, i32* %P
+  ret {} {}
+; CHECK: @test8a
+; CHECK-NEXT: store i32 5, 
+; CHECK-NEXT: ret 
+}
+
+define void @test8b(i32* %P) {
+    %X = call {} @test8a(i32 5, i32* %P)
+    ret void
+; CHECK: define void @test8b
+; CHECK-NEXT: call {} @test8a
+; CHECK-NEXT: ret void
+}
+
+
 
