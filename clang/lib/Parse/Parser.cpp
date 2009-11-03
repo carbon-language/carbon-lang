@@ -548,6 +548,7 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
       SkipUntil(tok::semi); // FIXME: better skip?
       return DeclGroupPtrTy();
     }
+
     const char *PrevSpec = 0;
     unsigned DiagID;
     if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec, DiagID))
@@ -571,54 +572,7 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
-  // Parse the first declarator.
-  Declarator DeclaratorInfo(DS, Declarator::FileContext);
-  ParseDeclarator(DeclaratorInfo);
-  // Error parsing the declarator?
-  if (!DeclaratorInfo.hasName()) {
-    // If so, skip until the semi-colon or a }.
-    SkipUntil(tok::r_brace, true, true);
-    if (Tok.is(tok::semi))
-      ConsumeToken();
-    return DeclGroupPtrTy();
-  }
-
-  // If we have a declaration or declarator list, handle it.
-  if (isDeclarationAfterDeclarator()) {
-    // Parse the init-declarator-list for a normal declaration.
-    DeclGroupPtrTy DG =
-      ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
-    // Eat the semi colon after the declaration.
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
-    return DG;
-  }
-
-  if (DeclaratorInfo.isFunctionDeclarator() &&
-      isStartOfFunctionDefinition()) {
-    if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
-      Diag(Tok, diag::err_function_declared_typedef);
-
-      if (Tok.is(tok::l_brace)) {
-        // This recovery skips the entire function body. It would be nice
-        // to simply call ParseFunctionDefinition() below, however Sema
-        // assumes the declarator represents a function, not a typedef.
-        ConsumeBrace();
-        SkipUntil(tok::r_brace, true);
-      } else {
-        SkipUntil(tok::semi);
-      }
-      return DeclGroupPtrTy();
-    }
-    DeclPtrTy TheDecl = ParseFunctionDefinition(DeclaratorInfo);
-    return Actions.ConvertDeclToDeclGroup(TheDecl);
-  }
-
-  if (DeclaratorInfo.isFunctionDeclarator())
-    Diag(Tok, diag::err_expected_fn_body);
-  else
-    Diag(Tok, diag::err_invalid_token_after_toplevel_declarator);
-  SkipUntil(tok::semi);
-  return DeclGroupPtrTy();
+  return ParseDeclGroup(DS, Declarator::FileContext, true);
 }
 
 /// ParseFunctionDefinition - We parsed and verified that the specified

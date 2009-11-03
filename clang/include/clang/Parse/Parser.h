@@ -950,11 +950,12 @@ private:
 
   DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd);
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
-                                        SourceLocation &DeclEnd,
-                                        bool RequireSemi = true);
+                                        SourceLocation &DeclEnd);
+  DeclGroupPtrTy ParseDeclGroup(DeclSpec &DS, unsigned Context,
+                                bool AllowFunctionDefinitions,
+                                SourceLocation *DeclEnd = 0);
   DeclPtrTy ParseDeclarationAfterDeclarator(Declarator &D,
                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
-  DeclGroupPtrTy ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   DeclPtrTy ParseFunctionStatementBody(DeclPtrTy Decl);
   DeclPtrTy ParseFunctionTryBlock(DeclPtrTy Decl);
 

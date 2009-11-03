@@ -10,8 +10,7 @@ int a() {
   int r[x()];  // expected-error {{size of array has non-integer type 'void'}}
 
   static y ?; // expected-error{{unknown type name 'y'}} \
-                 expected-error{{expected identifier or '('}} \
-                 expected-error{{expected ';' at end of declaration}}
+                 expected-error{{expected identifier or '('}}
 }
 
 int; // expected-error {{declaration does not declare anything}}

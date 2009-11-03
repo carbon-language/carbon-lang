@@ -938,8 +938,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
-    DeclGroupPtrTy DG = ParseSimpleDeclaration(Declarator::ForContext, DeclEnd,
-                                               false);
+    DeclGroupPtrTy DG = ParseSimpleDeclaration(Declarator::ForContext, DeclEnd);
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
 
     if (Tok.is(tok::semi)) {  // for (int x = 4;

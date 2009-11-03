@@ -336,8 +336,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
 /// If RequireSemi is false, this does not check for a ';' at the end of the
 /// declaration.
 Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
-                                                      SourceLocation &DeclEnd,
-                                                      bool RequireSemi) {
+                                                      SourceLocation &DeclEnd) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
@@ -350,29 +349,102 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
-  Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
-  ParseDeclarator(DeclaratorInfo);
+  DeclGroupPtrTy DG = ParseDeclGroup(DS, Context, /*FunctionDefs=*/ false,
+                                     &DeclEnd);
+  return DG;
+}
 
-  DeclGroupPtrTy DG =
-    ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+/// ParseDeclGroup - Having concluded that this is either a function
+/// definition or a group of object declarations, actually parse the
+/// result.
+Parser::DeclGroupPtrTy Parser::ParseDeclGroup(DeclSpec &DS, unsigned Context,
+                                              bool AllowFunctionDefinitions,
+                                              SourceLocation *DeclEnd) {
+  // Parse the first declarator.
+  Declarator D(DS, static_cast<Declarator::TheContext>(Context));
+  ParseDeclarator(D);
 
-  DeclEnd = Tok.getLocation();
-
-  // If the client wants to check what comes after the declaration, just return
-  // immediately without checking anything!
-  if (!RequireSemi) return DG;
-
-  if (Tok.is(tok::semi)) {
-    ConsumeToken();
-    return DG;
+  // Bail out if the first declarator didn't seem well-formed.
+  if (!D.hasName() && !D.mayOmitIdentifier()) {
+    // Skip until ; or }.
+    SkipUntil(tok::r_brace, true, true);
+    if (Tok.is(tok::semi))
+      ConsumeToken();
+    return DeclGroupPtrTy();
   }
 
-  Diag(Tok, diag::err_expected_semi_declaration);
-  // Skip to end of block or statement
-  SkipUntil(tok::r_brace, true, true);
-  if (Tok.is(tok::semi))
+  if (AllowFunctionDefinitions && D.isFunctionDeclarator()) {
+    if (isDeclarationAfterDeclarator()) {
+      // Fall though.  We have to check this first, though, because
+      // __attribute__ might be the start of a function definition in
+      // (extended) K&R C.
+    } else if (isStartOfFunctionDefinition()) {
+      if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
+        Diag(Tok, diag::err_function_declared_typedef);
+
+        // Recover by treating the 'typedef' as spurious.
+        DS.ClearStorageClassSpecs();
+      }
+
+      DeclPtrTy TheDecl = ParseFunctionDefinition(D);
+      return Actions.ConvertDeclToDeclGroup(TheDecl);
+    } else {
+      Diag(Tok, diag::err_expected_fn_body);
+      SkipUntil(tok::semi);
+      return DeclGroupPtrTy();
+    }
+  }
+
+  llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
+  DeclPtrTy FirstDecl = ParseDeclarationAfterDeclarator(D);
+  if (FirstDecl.get())
+    DeclsInGroup.push_back(FirstDecl);
+
+  // If we don't have a comma, it is either the end of the list (a ';') or an
+  // error, bail out.
+  while (Tok.is(tok::comma)) {
+    // Consume the comma.
     ConsumeToken();
-  return DG;
+
+    // Parse the next declarator.
+    D.clear();
+
+    // Accept attributes in an init-declarator.  In the first declarator in a
+    // declaration, these would be part of the declspec.  In subsequent
+    // declarators, they become part of the declarator itself, so that they
+    // don't apply to declarators after *this* one.  Examples:
+    //    short __attribute__((common)) var;    -> declspec
+    //    short var __attribute__((common));    -> declarator
+    //    short x, __attribute__((common)) var;    -> declarator
+    if (Tok.is(tok::kw___attribute)) {
+      SourceLocation Loc;
+      AttributeList *AttrList = ParseAttributes(&Loc);
+      D.AddAttributes(AttrList, Loc);
+    }
+
+    ParseDeclarator(D);
+
+    DeclPtrTy ThisDecl = ParseDeclarationAfterDeclarator(D);
+    if (ThisDecl.get())
+      DeclsInGroup.push_back(ThisDecl);    
+  }
+
+  if (DeclEnd)
+    *DeclEnd = Tok.getLocation();
+
+  if (Context != Declarator::ForContext &&
+      ExpectAndConsume(tok::semi,
+                       Context == Declarator::FileContext
+                         ? diag::err_invalid_token_after_toplevel_declarator
+                         : diag::err_expected_semi_declaration)) {
+    SkipUntil(tok::r_brace, true, true);
+    if (Tok.is(tok::semi))
+      ConsumeToken();
+  }
+
+  return Actions.FinalizeDeclaratorGroup(CurScope, DS,
+                                         DeclsInGroup.data(),
+                                         DeclsInGroup.size());
 }
 
 /// \brief Parse 'declaration' after parsing 'declaration-specifiers
@@ -496,63 +568,6 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   }
 
   return ThisDecl;
-}
-
-/// ParseInitDeclaratorListAfterFirstDeclarator - Parse 'declaration' after
-/// parsing 'declaration-specifiers declarator'.  This method is split out this
-/// way to handle the ambiguity between top-level function-definitions and
-/// declarations.
-///
-///       init-declarator-list: [C99 6.7]
-///         init-declarator
-///         init-declarator-list ',' init-declarator
-///
-/// According to the standard grammar, =default and =delete are function
-/// definitions, but that definitely doesn't fit with the parser here.
-///
-Parser::DeclGroupPtrTy Parser::
-ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
-  // Declarators may be grouped together ("int X, *Y, Z();"). Remember the decls
-  // that we parse together here.
-  llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
-
-  // At this point, we know that it is not a function definition.  Parse the
-  // rest of the init-declarator-list.
-  while (1) {
-    DeclPtrTy ThisDecl = ParseDeclarationAfterDeclarator(D);
-    if (ThisDecl.get())
-      DeclsInGroup.push_back(ThisDecl);
-
-    // If we don't have a comma, it is either the end of the list (a ';') or an
-    // error, bail out.
-    if (Tok.isNot(tok::comma))
-      break;
-
-    // Consume the comma.
-    ConsumeToken();
-
-    // Parse the next declarator.
-    D.clear();
-
-    // Accept attributes in an init-declarator.  In the first declarator in a
-    // declaration, these would be part of the declspec.  In subsequent
-    // declarators, they become part of the declarator itself, so that they
-    // don't apply to declarators after *this* one.  Examples:
-    //    short __attribute__((common)) var;    -> declspec
-    //    short var __attribute__((common));    -> declarator
-    //    short x, __attribute__((common)) var;    -> declarator
-    if (Tok.is(tok::kw___attribute)) {
-      SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
-      D.AddAttributes(AttrList, Loc);
-    }
-
-    ParseDeclarator(D);
-  }
-
-  return Actions.FinalizeDeclaratorGroup(CurScope, D.getDeclSpec(),
-                                         DeclsInGroup.data(),
-                                         DeclsInGroup.size());
 }
 
 /// ParseSpecifierQualifierList
@@ -2118,7 +2133,6 @@ void Parser::ParseDeclarator(Declarator &D) {
 ///         '::'[opt] nested-name-specifier '*' cv-qualifier-seq[opt]
 void Parser::ParseDeclaratorInternal(Declarator &D,
                                      DirectDeclParseFunction DirectDeclParser) {
-
   if (Diags.hasAllExtensionsSilenced())
     D.setExtension();
   // C++ member pointers start with a '::' or a nested-name.
