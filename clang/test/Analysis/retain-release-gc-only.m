@@ -92,6 +92,7 @@ typedef struct _NSZone NSZone;
 + (id)allocWithZone:(NSZone *)zone;
 + (id)alloc;
 - (void)dealloc;
+- (void)release;
 @end
 @interface NSObject (NSCoderMethods)
 - (id)awakeAfterUsingCoder:(NSCoder *)aDecoder;
@@ -319,6 +320,16 @@ void rdar_7174400(QCView *view, QCRenderer *renderer, CIContext *context,
   [renderer createSnapshotImageOfType:str]; // no-warning
   [context createCGImage:img fromRect:rect]; // expected-warning{{leak}}
   [context createCGImage:img fromRect:rect format:form colorSpace:cs]; // expected-warning{{leak}}
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/6250216> Warn against using -[NSAutoreleasePool release] in 
+//  GC mode
+//===----------------------------------------------------------------------===//
+
+void rdar_6250216(void) {
+    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+    [pool release]; // expected-warning{{Use -drain instead of -release when using NSAutoreleasePool and garbage collection}}
 }
 
 //===----------------------------------------------------------------------===//

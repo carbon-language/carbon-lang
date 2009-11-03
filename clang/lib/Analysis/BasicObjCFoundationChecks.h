@@ -42,6 +42,7 @@ GRSimpleAPICheck *CreateAuditCFRetainRelease(ASTContext& Ctx,
                                              BugReporter& BR);
 
 void RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng, const Decl &D);
+void RegisterNSAutoreleasePoolChecks(GRExprEngine &Eng);
 
 } // end clang namespace
 

@@ -30,6 +30,7 @@ add_clang_library(clangAnalysis
   GRState.cpp
   LiveVariables.cpp
   MemRegion.cpp
+  NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
   NullDerefChecker.cpp
   PathDiagnostic.cpp

@@ -535,4 +535,5 @@ void clang::RegisterAppleChecks(GRExprEngine& Eng, const Decl &D) {
   Eng.AddCheck(CreateAuditCFRetainRelease(Ctx, BR), Stmt::CallExprClass);
 
   RegisterNSErrorChecks(BR, Eng, D);
+  RegisterNSAutoreleasePoolChecks(Eng);
 }

@@ -1956,24 +1956,27 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     }
   }
 
+  // Handle previsits checks.
+  ExplodedNodeSet Src, DstTmp;
+  Src.Add(Pred);  
+  CheckerVisit(ME, DstTmp, Src, true);
+  
   // Check if we raise an exception.  For now treat these as sinks.  Eventually
   // we will want to handle exceptions properly.
-
   SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-
   if (RaisesException)
     Builder->BuildSinks = true;
 
   // Dispatch to plug-in transfer function.
-
   unsigned size = Dst.size();
   SaveOr OldHasGen(Builder->HasGeneratedNode);
-
-  EvalObjCMessageExpr(Dst, ME, Pred);
+  
+  for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
+       DI!=DE; ++DI)
+    EvalObjCMessageExpr(Dst, ME, *DI);
 
   // Handle the case where no nodes where generated.  Auto-generate that
   // contains the updated state if we aren't generating sinks.
-
   if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
     MakeNode(Dst, ME, Pred, state);
 }

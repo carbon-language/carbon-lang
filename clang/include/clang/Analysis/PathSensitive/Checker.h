@@ -72,6 +72,10 @@ public:
   ASTContext &getASTContext() {
     return Eng.getContext();
   }
+  
+  BugReporter &getBugReporter() {
+    return Eng.getBugReporter();
+  }
 
   ExplodedNode *GenerateNode(const Stmt *S, bool markAsSink = false) {
     return GenerateNode(S, getState(), markAsSink);
