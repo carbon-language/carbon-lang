@@ -24,7 +24,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/DebugInfo.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -60,8 +59,8 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
 
     // If we see a free or a call which may write to memory (i.e. which might do
     // a free) the pointer could be marked invalid.
-    if (isFreeCall(BBI) || (isa<CallInst>(BBI) && BBI->mayWriteToMemory() &&
-                            !isa<DbgInfoIntrinsic>(BBI)))
+    if (isa<CallInst>(BBI) && BBI->mayWriteToMemory() &&
+        !isa<DbgInfoIntrinsic>(BBI))
       return false;
 
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
