@@ -1091,7 +1091,7 @@ class test17_B2 : public test17_B1 {
 
 class test17_D : public test17_B2 {
   void bar() { }
-} test17_d;
+};
 
 
 // CHECK-LP64:__ZTV8test17_D:
@@ -1143,7 +1143,85 @@ virtual void foo_B2() { }
 
 struct test18_D : test18_NV1, virtual test18_B2 {
   virtual test18_D& foo1() { return *this; }
-} d;
+};
+
+
+struct test19_VB1 { };
+struct test19_B1 : public virtual test19_VB1 {
+  virtual void fB1() { }
+  virtual void foB1B2() { }
+  virtual void foB1B3() { }
+  virtual void foB1B4() { }
+};
+
+struct test19_VB2 { };
+struct test19_B2: public test19_B1, public virtual test19_VB2 {
+  virtual void foB1B2() { }
+  virtual void foB1B3() { }
+  virtual void foB1B4() { }
+
+  virtual void fB2() { }
+  virtual void foB2B3() { }
+  virtual void foB2B4() { }
+};
+
+struct test19_VB3 { };
+struct test19_B3: virtual public test19_B2, public virtual test19_VB3 {
+  virtual void foB1B3() { }
+  virtual void foB1B4() { }
+
+  virtual void foB2B3() { }
+  virtual void foB2B4() { }
+
+  virtual void fB3() { }
+  virtual void foB3B4() { }
+};
+
+struct test19_VB4 { };
+struct test19_B4: public test19_B3, public virtual test19_VB4 {
+  virtual void foB1B4() { }
+
+  virtual void foB2B4() { }
+
+  virtual void foB3B4() { }
+
+  virtual void fB4() { }
+};
+
+struct test19_D : virtual test19_B4 {
+};
+
+
+// CHECK-LP64: __ZTV8test19_D:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI8test19_D
+// CHECK-LP64-NEXT .quad __ZN9test19_B13fB1Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B26foB1B2Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B36foB1B3Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B46foB1B4Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B23fB2Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B36foB2B3Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B46foB2B4Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B33fB3Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B46foB3B4Ev
+// CHECK-LP64-NEXT .quad __ZN9test19_B43fB4Ev
+
 
 
 // CHECK-LP64: __ZTV1B:
@@ -1224,6 +1302,9 @@ struct test18_D : test18_NV1, virtual test18_B2 {
 // CHECK-LP64-NEXT: .quad __ZN2D14bar4Ev
 // CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
 
+test19_D d19;
+test18_D d18;
+test17_D d17;
 test16_D d16;
 test15_D d15;
 test13_D d13;
