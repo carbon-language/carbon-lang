@@ -2270,97 +2270,46 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 void Parser::ParseDirectDeclarator(Declarator &D) {
   DeclaratorScopeObj DeclScopeObj(*this, D.getCXXScopeSpec());
 
-  if (getLang().CPlusPlus) {
-    if (D.mayHaveIdentifier()) {
-      // ParseDeclaratorInternal might already have parsed the scope.
-      bool afterCXXScope = D.getCXXScopeSpec().isSet() ||
-        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0,
-                                       true);
-      if (afterCXXScope) {
-        // Change the declaration context for name lookup, until this function
-        // is exited (and the declarator has been parsed).
-        DeclScopeObj.EnterDeclaratorScope();
-      }
-
-      if (Tok.is(tok::identifier)) {
-        assert(Tok.getIdentifierInfo() && "Not an identifier?");
-
-        // If this identifier is the name of the current class, it's a
-        // constructor name.
-        if (!D.getDeclSpec().hasTypeSpecifier() &&
-            Actions.isCurrentClassName(*Tok.getIdentifierInfo(),CurScope)) {
-          CXXScopeSpec *SS = afterCXXScope? &D.getCXXScopeSpec() : 0;
-          D.setConstructor(Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                               Tok.getLocation(), CurScope, SS),
-                           Tok.getLocation());
-        // This is a normal identifier.
-        } else
-          D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
-        ConsumeToken();
-        goto PastIdentifier;
-      } else if (Tok.is(tok::annot_template_id)) {
-        TemplateIdAnnotation *TemplateId
-          = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-
-        D.setTemplateId(TemplateId);
-        ConsumeToken();
-        goto PastIdentifier;
-      } else if (Tok.is(tok::kw_operator)) {
-        SourceLocation OperatorLoc = Tok.getLocation();
-        SourceLocation EndLoc;
-
-        // First try the name of an overloaded operator
-        if (OverloadedOperatorKind Op = TryParseOperatorFunctionId(&EndLoc)) {
-          D.setOverloadedOperator(Op, OperatorLoc, EndLoc);
-        } else {
-          // This must be a conversion function (C++ [class.conv.fct]).
-          if (TypeTy *ConvType = ParseConversionFunctionId(&EndLoc))
-            D.setConversionFunction(ConvType, OperatorLoc, EndLoc);
-          else {
-            D.SetIdentifier(0, Tok.getLocation());
-          }
-        }
-        goto PastIdentifier;
-      } else if (Tok.is(tok::tilde)) {
-        // This should be a C++ destructor.
-        SourceLocation TildeLoc = ConsumeToken();
-        if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id)) {
-          // FIXME: Inaccurate.
-          SourceLocation NameLoc = Tok.getLocation();
-          SourceLocation EndLoc;
-          CXXScopeSpec *SS = afterCXXScope? &D.getCXXScopeSpec() : 0;
-          TypeResult Type = ParseClassName(EndLoc, SS, true);
-          if (Type.isInvalid())
-            D.SetIdentifier(0, TildeLoc);
-          else
-            D.setDestructor(Type.get(), TildeLoc, NameLoc);
-        } else {
-          Diag(Tok, diag::err_destructor_class_name);
-          D.SetIdentifier(0, TildeLoc);
-        }
-        goto PastIdentifier;
-      }
-
-      // If we reached this point, token is not identifier and not '~'.
-
-      if (afterCXXScope) {
-        Diag(Tok, diag::err_expected_unqualified_id);
+  if (getLang().CPlusPlus && D.mayHaveIdentifier()) {
+    // ParseDeclaratorInternal might already have parsed the scope.
+    bool afterCXXScope = D.getCXXScopeSpec().isSet() ||
+      ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0,
+                                     true);
+    if (afterCXXScope) {
+      // Change the declaration context for name lookup, until this function
+      // is exited (and the declarator has been parsed).
+      DeclScopeObj.EnterDeclaratorScope();
+    } 
+    
+    if (Tok.is(tok::identifier) || Tok.is(tok::kw_operator) ||
+        Tok.is(tok::annot_template_id) || Tok.is(tok::tilde)) {
+      // We found something that indicates the start of an unqualified-id.
+      // Parse that unqualified-id.
+      if (ParseUnqualifiedId(D.getCXXScopeSpec(), 
+                             /*EnteringContext=*/true, 
+                             /*AllowDestructorName=*/true, 
+                   /*AllowConstructorName=*/!D.getDeclSpec().hasTypeSpecifier(), 
+                             D.getName())) {
         D.SetIdentifier(0, Tok.getLocation());
         D.setInvalidType(true);
-        goto PastIdentifier;
+      } else {
+        // Parsed the unqualified-id; update range information and move along.
+        if (D.getSourceRange().getBegin().isInvalid())
+          D.SetRangeBegin(D.getName().getSourceRange().getBegin());
+        D.SetRangeEnd(D.getName().getSourceRange().getEnd());
       }
+      goto PastIdentifier;
     }
-  }
-
-  // If we reached this point, we are either in C/ObjC or the token didn't
-  // satisfy any of the C++-specific checks.
-  if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
+  } else if (Tok.is(tok::identifier) && D.mayHaveIdentifier()) {
     assert(!getLang().CPlusPlus &&
            "There's a C++-specific check for tok::identifier above");
     assert(Tok.getIdentifierInfo() && "Not an identifier?");
     D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
     ConsumeToken();
-  } else if (Tok.is(tok::l_paren)) {
+    goto PastIdentifier;
+  }
+    
+  if (Tok.is(tok::l_paren)) {
     // direct-declarator: '(' declarator ')'
     // direct-declarator: '(' attributes declarator ')'
     // Example: 'char (*X)'   or 'int (*XX)(void)'

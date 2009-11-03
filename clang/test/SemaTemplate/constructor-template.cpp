@@ -51,3 +51,4 @@ void test_X1(X1<int> xi) {
 template<class C> struct A {};
 template <> struct A<int>{A(const A<int>&);};
 struct B { A<int> x; B(B& a) : x(a.x) {} };
+

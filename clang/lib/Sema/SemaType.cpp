@@ -870,6 +870,11 @@ QualType Sema::BuildBlockPointerType(QualType T, unsigned CVR,
 
 QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
   QualType QT = QualType::getFromOpaquePtr(Ty);
+  if (QT.isNull()) {
+    if (DInfo) *DInfo = 0;
+    return QualType();
+  }
+
   DeclaratorInfo *DI = 0;
   if (LocInfoType *LIT = dyn_cast<LocInfoType>(QT)) {
     QT = LIT->getType();
@@ -893,20 +898,19 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // have a type.
   QualType T;
 
-  switch (D.getKind()) {
-  case Declarator::DK_Abstract:
-  case Declarator::DK_Normal:
-  case Declarator::DK_Operator:
-  case Declarator::DK_TemplateId:
+  switch (D.getName().getKind()) {
+  case UnqualifiedId::IK_Identifier:
+  case UnqualifiedId::IK_OperatorFunctionId:
+  case UnqualifiedId::IK_TemplateId:
     T = ConvertDeclSpecToType(D, *this);
     
     if (!D.isInvalidType() && OwnedDecl && D.getDeclSpec().isTypeSpecOwned())
       *OwnedDecl = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
     break;
 
-  case Declarator::DK_Constructor:
-  case Declarator::DK_Destructor:
-  case Declarator::DK_Conversion:
+  case UnqualifiedId::IK_ConstructorName:
+  case UnqualifiedId::IK_DestructorName:
+  case UnqualifiedId::IK_ConversionFunctionId:
     // Constructors and destructors don't have return types. Use
     // "void" instead. Conversion operators will check their return
     // types separately.

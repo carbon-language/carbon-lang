@@ -323,6 +323,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
       SkipUntil(tok::semi);
       return DeclPtrTy();
     }
+    // FIXME: what about conversion functions?
   } else if (Tok.is(tok::identifier)) {
     // Parse identifier.
     TargetName = Tok.getIdentifierInfo();

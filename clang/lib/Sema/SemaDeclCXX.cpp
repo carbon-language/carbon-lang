@@ -2295,7 +2295,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   //   (7.1.3); however, a typedef-name that names a class shall not
   //   be used as the identifier in the declarator for a destructor
   //   declaration.
-  QualType DeclaratorType = GetTypeFromParser(D.getDeclaratorIdType());
+  QualType DeclaratorType = GetTypeFromParser(D.getName().DestructorName);
   if (isa<TypedefType>(DeclaratorType)) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_typedef_name)
       << DeclaratorType;
@@ -2421,7 +2421,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // C++ [class.conv.fct]p4:
   //   The conversion-type-id shall not represent a function type nor
   //   an array type.
-  QualType ConvType = GetTypeFromParser(D.getDeclaratorIdType());
+  QualType ConvType = GetTypeFromParser(D.getName().ConversionFunctionId);
   if (ConvType->isArrayType()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_to_array);
     ConvType = Context.getPointerType(ConvType);
@@ -4515,12 +4515,12 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
 
   if (DC->isFileContext()) {
     // This implies that it has to be an operator or function.
-    if (D.getKind() == Declarator::DK_Constructor ||
-        D.getKind() == Declarator::DK_Destructor ||
-        D.getKind() == Declarator::DK_Conversion) {
+    if (D.getName().getKind() == UnqualifiedId::IK_ConstructorName ||
+        D.getName().getKind() == UnqualifiedId::IK_DestructorName ||
+        D.getName().getKind() == UnqualifiedId::IK_ConversionFunctionId) {
       Diag(Loc, diag::err_introducing_special_friend) <<
-        (D.getKind() == Declarator::DK_Constructor ? 0 :
-         D.getKind() == Declarator::DK_Destructor ? 1 : 2);
+        (D.getName().getKind() == UnqualifiedId::IK_ConstructorName ? 0 :
+         D.getName().getKind() == UnqualifiedId::IK_DestructorName ? 1 : 2);
       return DeclPtrTy();
     }
   }

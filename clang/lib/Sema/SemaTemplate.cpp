@@ -4043,8 +4043,8 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   // argument list into our AST format.
   bool HasExplicitTemplateArgs = false;
   llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-  if (D.getKind() == Declarator::DK_TemplateId) {
-    TemplateIdAnnotation *TemplateId = D.getTemplateId();
+  if (D.getName().getKind() == UnqualifiedId::IK_TemplateId) {
+    TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        TemplateId->getTemplateArgs(),
                                        TemplateId->getTemplateArgIsType(),
@@ -4147,7 +4147,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   //
   // C++98 has the same restriction, just worded differently.
   FunctionTemplateDecl *FunTmpl = Specialization->getPrimaryTemplate();
-  if (D.getKind() != Declarator::DK_TemplateId && !FunTmpl &&
+  if (D.getName().getKind() != UnqualifiedId::IK_TemplateId && !FunTmpl &&
       D.getCXXScopeSpec().isSet() && 
       !ScopeSpecifierHasTemplateId(D.getCXXScopeSpec()))
     Diag(D.getIdentifierLoc(), 

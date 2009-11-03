@@ -1606,45 +1606,48 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 /// GetNameForDeclarator - Determine the full declaration name for the
 /// given Declarator.
 DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
-  switch (D.getKind()) {
-  case Declarator::DK_Abstract:
-    assert(D.getIdentifier() == 0 && "abstract declarators have no name");
-    return DeclarationName();
+  UnqualifiedId &Name = D.getName();
+  switch (Name.getKind()) {
+  case UnqualifiedId::IK_Identifier:
+    return DeclarationName(Name.Identifier);
 
-  case Declarator::DK_Normal:
-    assert (D.getIdentifier() != 0 && "normal declarators have an identifier");
-    return DeclarationName(D.getIdentifier());
+  case UnqualifiedId::IK_OperatorFunctionId:
+    return Context.DeclarationNames.getCXXOperatorName(
+                                              Name.OperatorFunctionId.Operator);
 
-  case Declarator::DK_Constructor: {
-    QualType Ty = GetTypeFromParser(D.getDeclaratorIdType());
+  case UnqualifiedId::IK_ConversionFunctionId: {
+    QualType Ty = GetTypeFromParser(Name.ConversionFunctionId);
+    if (Ty.isNull())
+      return DeclarationName();
+    
+    return Context.DeclarationNames.getCXXConversionFunctionName(
+                                                  Context.getCanonicalType(Ty));
+  }
+      
+  case UnqualifiedId::IK_ConstructorName: {
+    QualType Ty = GetTypeFromParser(Name.ConstructorName);
+    if (Ty.isNull())
+      return DeclarationName();
+    
     return Context.DeclarationNames.getCXXConstructorName(
                                                 Context.getCanonicalType(Ty));
   }
-
-  case Declarator::DK_Destructor: {
-    QualType Ty = GetTypeFromParser(D.getDeclaratorIdType());
+      
+  case UnqualifiedId::IK_DestructorName: {
+    QualType Ty = GetTypeFromParser(Name.DestructorName);
+    if (Ty.isNull())
+      return DeclarationName();
+    
     return Context.DeclarationNames.getCXXDestructorName(
                                                 Context.getCanonicalType(Ty));
   }
-
-  case Declarator::DK_Conversion: {
-    // FIXME: We'd like to keep the non-canonical type for diagnostics!
-    QualType Ty = GetTypeFromParser(D.getDeclaratorIdType());
-    return Context.DeclarationNames.getCXXConversionFunctionName(
-                                                Context.getCanonicalType(Ty));
-  }
-
-  case Declarator::DK_Operator:
-    assert(D.getIdentifier() == 0 && "operator names have no identifier");
-    return Context.DeclarationNames.getCXXOperatorName(
-                                                D.getOverloadedOperator());
       
-  case Declarator::DK_TemplateId: {
-    TemplateName Name
-      = TemplateName::getFromVoidPointer(D.getTemplateId()->Template);    
-    if (TemplateDecl *Template = Name.getAsTemplateDecl())
+  case UnqualifiedId::IK_TemplateId: {
+    TemplateName TName
+      = TemplateName::getFromVoidPointer(Name.TemplateId->Template);    
+    if (TemplateDecl *Template = TName.getAsTemplateDecl())
       return Template->getDeclName();
-    if (OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl())
+    if (OverloadedFunctionDecl *Ovl = TName.getAsOverloadedFunctionDecl())
       return Ovl->getDeclName();
     
     return DeclarationName();
@@ -2517,7 +2520,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     isInline |= IsFunctionDefinition;
   }
 
-  if (D.getKind() == Declarator::DK_Constructor) {
+  if (Name.getNameKind() == DeclarationName::CXXConstructorName) {
     // This is a C++ constructor declaration.
     assert(DC->isRecord() &&
            "Constructors can only be declared in a member context");
@@ -2530,7 +2533,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                        D.getIdentifierLoc(), Name, R, DInfo,
                                        isExplicit, isInline,
                                        /*isImplicitlyDeclared=*/false);
-  } else if (D.getKind() == Declarator::DK_Destructor) {
+  } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
     // This is a C++ destructor declaration.
     if (DC->isRecord()) {
       R = CheckDestructorDeclarator(D, SC);
@@ -2552,7 +2555,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                    /*hasPrototype=*/true);
       D.setInvalidType();
     }
-  } else if (D.getKind() == Declarator::DK_Conversion) {
+  } else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
     if (!DC->isRecord()) {
       Diag(D.getIdentifierLoc(),
            diag::err_conv_function_not_member);
@@ -2798,8 +2801,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool HasExplicitTemplateArgs = false;
   llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
   SourceLocation LAngleLoc, RAngleLoc;
-  if (D.getKind() == Declarator::DK_TemplateId) {
-    TemplateIdAnnotation *TemplateId = D.getTemplateId();
+  if (D.getName().getKind() == UnqualifiedId::IK_TemplateId) {
+    TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        TemplateId->getTemplateArgs(),
                                        TemplateId->getTemplateArgIsType(),

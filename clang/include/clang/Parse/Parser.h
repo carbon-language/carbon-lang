@@ -1203,6 +1203,16 @@ private:
   BaseResult ParseBaseSpecifier(DeclPtrTy ClassDecl);
   AccessSpecifier getAccessSpecifierIfPresent() const;
 
+  bool ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS, 
+                                    IdentifierInfo *Name,
+                                    SourceLocation NameLoc,
+                                    bool EnteringContext,
+                                    UnqualifiedId &Id);
+  bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
+                          bool IsExpressionContext,
+                          bool IsDeclarator,
+                          UnqualifiedId &Result);
+    
   //===--------------------------------------------------------------------===//
   // C++ 13.5: Overloaded operators [over.oper]
   // EndLoc, if non-NULL, is filled with the location of the last token of

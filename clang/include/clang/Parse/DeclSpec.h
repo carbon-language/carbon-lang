@@ -459,6 +459,193 @@ public:
   }
 };
 
+/// \brief Represents a C++ unqualified-id that has been parsed. 
+class UnqualifiedId {
+private:
+  const UnqualifiedId &operator=(const UnqualifiedId &); // DO NOT IMPLEMENT
+  
+public:
+  /// \brief Describes the kind of unqualified-id parsed.
+  enum IdKind {
+    /// \brief An identifier.
+    IK_Identifier,
+    /// \brief An overloaded operator name, e.g., operator+.
+    IK_OperatorFunctionId,
+    /// \brief A conversion function name, e.g., operator int.
+    IK_ConversionFunctionId,
+    /// \brief A constructor name.
+    IK_ConstructorName,
+    /// \brief A destructor name.
+    IK_DestructorName,
+    /// \brief A template-id, e.g., f<int>.
+    IK_TemplateId
+  } Kind;
+
+  /// \brief Anonymous union that holds extra data associated with the
+  /// parsed unqualified-id.
+  union {
+    /// \brief When Kind == IK_Identifier, the parsed identifier.
+    IdentifierInfo *Identifier;
+    
+    /// \brief When Kind == IK_OperatorFunctionId, the overloaded operator
+    /// that we parsed.
+    struct {
+      /// \brief The kind of overloaded operator.
+      OverloadedOperatorKind Operator;
+      
+      /// \brief The source locations of the individual tokens that name
+      /// the operator, e.g., the "new", "[", and "]" tokens in 
+      /// operator new []. 
+      ///
+      /// Different operators have different numbers of tokens in their name,
+      /// up to three. Any remaining source locations in this array will be
+      /// set to an invalid value for operators with fewer than three tokens.
+      unsigned SymbolLocations[3];
+    } OperatorFunctionId;
+    
+    /// \brief When Kind == IK_ConversionFunctionId, the type that the 
+    /// conversion function names.
+    ActionBase::TypeTy *ConversionFunctionId;
+
+    /// \brief When Kind == IK_ConstructorName, the class-name of the type
+    /// whose constructor is being referenced.
+    ActionBase::TypeTy *ConstructorName;
+    
+    /// \brief When Kind == IK_DestructorName, the type referred to by the
+    /// class-name.
+    ActionBase::TypeTy *DestructorName;
+    
+    /// \brief When Kind == IK_TemplateId, the template-id annotation that
+    /// contains the template name and template arguments.
+    TemplateIdAnnotation *TemplateId;
+  };
+  
+  /// \brief The location of the first token that describes this unqualified-id,
+  /// which will be the location of the identifier, "operator" keyword,
+  /// tilde (for a destructor), or the template name of a template-id.
+  SourceLocation StartLocation;
+  
+  /// \brief The location of the last token that describes this unqualified-id.
+  SourceLocation EndLocation;
+  
+  UnqualifiedId() : Kind(IK_Identifier), Identifier(0) { }
+  
+  /// \brief Do not use this copy constructor. It is temporary, and only
+  /// exists because we are holding FieldDeclarators in a SmallVector when we
+  /// don't actually need them.
+  ///
+  /// FIXME: Kill this copy constructor.
+  UnqualifiedId(const UnqualifiedId &Other) 
+    : Kind(IK_Identifier), Identifier(Other.Identifier), 
+      StartLocation(Other.StartLocation), EndLocation(Other.EndLocation) {
+    assert(Other.Kind == IK_Identifier && "Cannot copy non-identifiers");
+  }
+
+  /// \brief Destroy this unqualified-id.
+  ~UnqualifiedId() { clear(); }
+  
+  /// \brief Clear out this unqualified-id, setting it to default (invalid) 
+  /// state.
+  void clear();
+  
+  /// \brief Determine whether this unqualified-id refers to a valid name.
+  bool isValid() const { return StartLocation.isValid(); }
+
+  /// \brief Determine whether this unqualified-id refers to an invalid name.
+  bool isInvalid() const { return !isValid(); }
+  
+  /// \brief Determine what kind of name we have.
+  IdKind getKind() const { return Kind; }
+  
+  /// \brief Specify that this unqualified-id was parsed as an identifier.
+  ///
+  /// \param Id the parsed identifier.
+  /// \param IdLoc the location of the parsed identifier.
+  void setIdentifier(IdentifierInfo *Id, SourceLocation IdLoc) {
+    Kind = IK_Identifier;
+    Identifier = Id;
+    StartLocation = EndLocation = IdLoc;
+  }
+  
+  /// \brief Specify that this unqualified-id was parsed as an 
+  /// operator-function-id.
+  ///
+  /// \param OperatorLoc the location of the 'operator' keyword.
+  ///
+  /// \param Op the overloaded operator.
+  ///
+  /// \param SymbolLocations the locations of the individual operator symbols
+  /// in the operator.
+  void setOperatorFunctionId(SourceLocation OperatorLoc, 
+                             OverloadedOperatorKind Op,
+                             SourceLocation SymbolLocations[3]);
+  
+  /// \brief Specify that this unqualified-id was parsed as a 
+  /// conversion-function-id.
+  ///
+  /// \param OperatorLoc the location of the 'operator' keyword.
+  ///
+  /// \param Ty the type to which this conversion function is converting.
+  ///
+  /// \param EndLoc the location of the last token that makes up the type name.
+  void setConversionFunctionId(SourceLocation OperatorLoc, 
+                               ActionBase::TypeTy *Ty,
+                               SourceLocation EndLoc) {
+    Kind = IK_ConversionFunctionId;
+    StartLocation = OperatorLoc;
+    EndLocation = EndLoc;
+    ConversionFunctionId = Ty;
+  }
+  
+  /// \brief Specify that this unqualified-id was parsed as a constructor name.
+  ///
+  /// \param ClassType the class type referred to by the constructor name.
+  ///
+  /// \param ClassNameLoc the location of the class name.
+  ///
+  /// \param EndLoc the location of the last token that makes up the type name.
+  void setConstructorName(ActionBase::TypeTy *ClassType, 
+                          SourceLocation ClassNameLoc,
+                          SourceLocation EndLoc) {
+    Kind = IK_ConstructorName;
+    StartLocation = ClassNameLoc;
+    EndLocation = EndLoc;
+    ConstructorName = ClassType;
+  }
+
+  /// \brief Specify that this unqualified-id was parsed as a destructor name.
+  ///
+  /// \param TildeLoc the location of the '~' that introduces the destructor
+  /// name.
+  ///
+  /// \param ClassType the name of the class referred to by the destructor name.
+  void setDestructorName(SourceLocation TildeLoc, ActionBase::TypeTy *ClassType,
+                         SourceLocation EndLoc) {
+    Kind = IK_DestructorName;
+    StartLocation = TildeLoc;
+    EndLocation = EndLoc;
+    DestructorName = ClassType;
+  }
+  
+  /// \brief Specify that this unqualified-id was parsed as a template-id.
+  ///
+  /// \param TemplateId the template-id annotation that describes the parsed
+  /// template-id. This UnqualifiedId instance will take ownership of the
+  /// \p TemplateId and will free it on destruction.
+  void setTemplateId(TemplateIdAnnotation *TemplateId) {
+    assert(TemplateId && "NULL template-id annotation?");
+    Kind = IK_TemplateId;
+    this->TemplateId = TemplateId;
+    StartLocation = TemplateId->TemplateNameLoc;
+    EndLocation = TemplateId->RAngleLoc;
+  }
+
+  /// \brief Return the source range that covers this unqualified-id.
+  SourceRange getSourceRange() const { 
+    return SourceRange(StartLocation, EndLocation); 
+  }
+};
+  
 /// CachedTokens - A set of tokens that has been cached for later
 /// parsing.
 typedef llvm::SmallVector<Token, 4> CachedTokens;
@@ -793,32 +980,15 @@ public:
     BlockLiteralContext  // Block literal declarator.
   };
 
-  /// DeclaratorKind - The kind of declarator this represents.
-  enum DeclaratorKind {
-    DK_Abstract,         // An abstract declarator (has no identifier)
-    DK_Normal,           // A normal declarator (has an identifier).
-    DK_Constructor,      // A C++ constructor (identifier is the class name)
-    DK_Destructor,       // A C++ destructor  (identifier is ~class name)
-    DK_Operator,         // A C++ overloaded operator name
-    DK_Conversion,       // A C++ conversion function (identifier is
-                         // "operator " then the type name)
-    DK_TemplateId        // A C++ template-id naming a function template
-                         // specialization.
-  };
-
 private:
   const DeclSpec &DS;
   CXXScopeSpec SS;
-  IdentifierInfo *Identifier;
-  SourceLocation IdentifierLoc;
+  UnqualifiedId Name;
   SourceRange Range;
 
   /// Context - Where we are parsing this declarator.
   ///
   TheContext Context;
-
-  /// Kind - What kind of declarator this is.
-  DeclaratorKind Kind;
 
   /// DeclTypeInfo - This holds each type that the declarator includes as it is
   /// parsed.  This is pushed from the identifier out, which means that element
@@ -838,21 +1008,6 @@ private:
   /// AsmLabel - The asm label, if specified.
   ActionBase::ExprTy *AsmLabel;
 
-  union {
-    // When Kind is DK_Constructor, DK_Destructor, or DK_Conversion, the
-    // type associated with the constructor, destructor, or conversion
-    // operator.
-    ActionBase::TypeTy *Type;
-
-    /// When Kind is DK_Operator, this is the actual overloaded
-    /// operator that this declarator names.
-    OverloadedOperatorKind OperatorKind;
-    
-    /// When Kind is DK_TemplateId, this is the template-id annotation that
-    /// contains the template and its template arguments.
-    TemplateIdAnnotation *TemplateId;
-  };
-
   /// InlineParams - This is a local array used for the first function decl
   /// chunk to avoid going to the heap for the common case when we have one
   /// function chunk in the declarator.
@@ -866,10 +1021,9 @@ private:
 
 public:
   Declarator(const DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Range(ds.getSourceRange()), Context(C),
-      Kind(DK_Abstract),
+    : DS(ds), Range(ds.getSourceRange()), Context(C),
       InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
-      GroupingParens(false), AttrList(0), AsmLabel(0), Type(0),
+      GroupingParens(false), AttrList(0), AsmLabel(0),
       InlineParamsUsed(false), Extension(false) {
   }
 
@@ -893,8 +1047,10 @@ public:
   const CXXScopeSpec &getCXXScopeSpec() const { return SS; }
   CXXScopeSpec &getCXXScopeSpec() { return SS; }
 
+  /// \brief Retrieve the name specified by this declarator.
+  UnqualifiedId &getName() { return Name; }
+  
   TheContext getContext() const { return Context; }
-  DeclaratorKind getKind() const { return Kind; }
 
   /// getSourceRange - Get the source range that spans this declarator.
   const SourceRange &getSourceRange() const { return Range; }
@@ -925,22 +1081,15 @@ public:
   /// clear - Reset the contents of this Declarator.
   void clear() {
     SS.clear();
-    Identifier = 0;
-    IdentifierLoc = SourceLocation();
+    Name.clear();
     Range = DS.getSourceRange();
     
-    if (Kind == DK_TemplateId)
-      TemplateId->Destroy();
-    
-    Kind = DK_Abstract;
-
     for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
       DeclTypeInfo[i].destroy();
     DeclTypeInfo.clear();
     delete AttrList;
     AttrList = 0;
     AsmLabel = 0;
-    Type = 0;
     InlineParamsUsed = false;
   }
 
@@ -971,84 +1120,28 @@ public:
 
   /// isPastIdentifier - Return true if we have parsed beyond the point where
   /// the
-  bool isPastIdentifier() const { return IdentifierLoc.isValid(); }
+  bool isPastIdentifier() const { return Name.isValid(); }
 
   /// hasName - Whether this declarator has a name, which might be an
   /// identifier (accessible via getIdentifier()) or some kind of
   /// special C++ name (constructor, destructor, etc.).
-  bool hasName() const { return getKind() != DK_Abstract; }
-
-  IdentifierInfo *getIdentifier() const { return Identifier; }
-  SourceLocation getIdentifierLoc() const { return IdentifierLoc; }
-
-  void SetIdentifier(IdentifierInfo *ID, SourceLocation Loc) {
-    Identifier = ID;
-    IdentifierLoc = Loc;
-    if (ID)
-      Kind = DK_Normal;
-    else
-      Kind = DK_Abstract;
-    SetRangeEnd(Loc);
+  bool hasName() const { 
+    return Name.getKind() != UnqualifiedId::IK_Identifier || Name.Identifier;
   }
 
-  /// setConstructor - Set this declarator to be a C++ constructor
-  /// declarator. Also extends the range.
-  void setConstructor(ActionBase::TypeTy *Ty, SourceLocation Loc) {
-    IdentifierLoc = Loc;
-    Kind = DK_Constructor;
-    Type = Ty;
-    SetRangeEnd(Loc);
+  IdentifierInfo *getIdentifier() const { 
+    if (Name.getKind() == UnqualifiedId::IK_Identifier)
+      return Name.Identifier;
+    
+    return 0;
   }
+  SourceLocation getIdentifierLoc() const { return Name.StartLocation; }
 
-  /// setDestructor - Set this declarator to be a C++ destructor
-  /// declarator. Also extends the range to End, which should be the identifier
-  /// token.
-  void setDestructor(ActionBase::TypeTy *Ty, SourceLocation Loc,
-                     SourceLocation EndLoc) {
-    IdentifierLoc = Loc;
-    Kind = DK_Destructor;
-    Type = Ty;
-    if (!EndLoc.isInvalid())
-      SetRangeEnd(EndLoc);
+  /// \brief Set the name of this declarator to be the given identifier.
+  void SetIdentifier(IdentifierInfo *Id, SourceLocation IdLoc) {
+    Name.setIdentifier(Id, IdLoc);
   }
-
-  /// setConversionFunction - Set this declarator to be a C++
-  /// conversion function declarator (e.g., @c operator int const *).
-  /// Also extends the range to EndLoc, which should be the last token of the
-  /// type name.
-  void setConversionFunction(ActionBase::TypeTy *Ty, SourceLocation Loc,
-                             SourceLocation EndLoc) {
-    Identifier = 0;
-    IdentifierLoc = Loc;
-    Kind = DK_Conversion;
-    Type = Ty;
-    if (!EndLoc.isInvalid())
-      SetRangeEnd(EndLoc);
-  }
-
-  /// setOverloadedOperator - Set this declaration to be a C++
-  /// overloaded operator declarator (e.g., @c operator+).
-  /// Also extends the range to EndLoc, which should be the last token of the
-  /// operator.
-  void setOverloadedOperator(OverloadedOperatorKind Op, SourceLocation Loc,
-                             SourceLocation EndLoc) {
-    IdentifierLoc = Loc;
-    Kind = DK_Operator;
-    OperatorKind = Op;
-    if (!EndLoc.isInvalid())
-      SetRangeEnd(EndLoc);
-  }
-
-  /// \brief Set this declaration to be a C++ template-id, which includes the
-  /// template (or set of function templates) along with template arguments.
-  void setTemplateId(TemplateIdAnnotation *TemplateId) {
-    assert(TemplateId && "NULL template-id provided to declarator?");
-    IdentifierLoc = TemplateId->TemplateNameLoc;
-    Kind = DK_TemplateId;
-    SetRangeEnd(TemplateId->RAngleLoc);
-    this->TemplateId = TemplateId;
-  }
-                     
+  
   /// AddTypeInfo - Add a chunk to this declarator. Also extend the range to
   /// EndLoc, which should be the last token of the chunk.
   void AddTypeInfo(const DeclaratorChunk &TI, SourceLocation EndLoc) {
@@ -1118,22 +1211,6 @@ public:
   void setExtension(bool Val = true) { Extension = Val; }
   bool getExtension() const { return Extension; }
 
-  ActionBase::TypeTy *getDeclaratorIdType() const { 
-    assert((Kind == DK_Constructor || Kind == DK_Destructor || 
-            Kind == DK_Conversion) && "Declarator kind does not have a type");
-    return Type; 
-  }
-
-  OverloadedOperatorKind getOverloadedOperator() const { 
-    assert(Kind == DK_Operator && "Declarator is not an overloaded operator");
-    return OperatorKind; 
-  }
-
-  TemplateIdAnnotation *getTemplateId() { 
-    assert(Kind == DK_TemplateId && "Declarator is not a template-id");
-    return TemplateId;
-  }
-  
   void setInvalidType(bool Val = true) { InvalidType = Val; }
   bool isInvalidType() const {
     return InvalidType || DS.getTypeSpecType() == DeclSpec::TST_error;
@@ -1152,7 +1229,7 @@ struct FieldDeclarator {
     BitfieldSize = 0;
   }
 };
-
+  
 } // end namespace clang
 
 #endif

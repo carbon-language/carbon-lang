@@ -446,3 +446,28 @@ bool DeclSpec::isMissingDeclaratorOk() {
        || tst == TST_enum
           ) && getTypeRep() != 0 && StorageClassSpec != DeclSpec::SCS_typedef;
 }
+
+void UnqualifiedId::clear() {
+  if (Kind == IK_TemplateId)
+    TemplateId->Destroy();
+  
+  Kind = IK_Identifier;
+  Identifier = 0;
+  StartLocation = SourceLocation();
+  EndLocation = SourceLocation();
+}
+
+void UnqualifiedId::setOperatorFunctionId(SourceLocation OperatorLoc, 
+                                          OverloadedOperatorKind Op,
+                                          SourceLocation SymbolLocations[3]) {
+  Kind = IK_OperatorFunctionId;
+  StartLocation = OperatorLoc;
+  EndLocation = OperatorLoc;
+  OperatorFunctionId.Operator = Op;
+  for (unsigned I = 0; I != 3; ++I) {
+    OperatorFunctionId.SymbolLocations[I] = SymbolLocations[I].getRawEncoding();
+    
+    if (SymbolLocations[I].isValid())
+      EndLocation = SymbolLocations[I];
+  }
+}

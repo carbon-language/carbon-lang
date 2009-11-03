@@ -292,7 +292,9 @@ def err_variadic_templates : Error<
 // C++ declarations
 def err_friend_decl_defines_class : Error<
   "cannot define a type in a friend declaration">;
-
+def warn_operator_template_id_ignores_args : Error<
+  "clang bug: ignoring template arguments provided for operator">;
+  
 // Language specific pragmas
 // - Generic warnings
 def warn_pragma_expected_lparen : Warning<

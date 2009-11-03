@@ -13,9 +13,9 @@ template<typename> struct X1; // expected-note 5{{declared here}}
 
 // FIXME: Repeated diagnostics here!
 template void X0::f0<int>(int); // expected-error 2{{incomplete type}} \
-  // expected-error{{invalid token after}}
+  // expected-error{{does not refer}}
 template void X1<int>::f0<int>(int); // expected-error 2{{implicit instantiation of undefined template}} \
-  // expected-error{{invalid token}}
+  // expected-error{{does not refer}}
 
 // A definition of a class template or class member template shall be in scope 
 // at the point of the explicit instantiation of the class template or class 
