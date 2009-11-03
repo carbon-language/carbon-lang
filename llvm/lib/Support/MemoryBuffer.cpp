@@ -226,7 +226,7 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
   size_t BytesLeft = FileSize;
   while (BytesLeft) {
     ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
-    if (NumRead != -1) {
+    if (NumRead > 0) {
       BytesLeft -= NumRead;
       BufPtr += NumRead;
     } else if (errno == EINTR) {
