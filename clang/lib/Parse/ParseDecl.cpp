@@ -1468,8 +1468,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 /// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
 ///
 void Parser::
-ParseStructDeclaration(DeclSpec &DS,
-                       llvm::SmallVectorImpl<FieldDeclarator> &Fields) {
+ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
   if (Tok.is(tok::kw___extension__)) {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
@@ -1489,9 +1488,16 @@ ParseStructDeclaration(DeclSpec &DS,
   }
 
   // Read struct-declarators until we find the semicolon.
-  Fields.push_back(FieldDeclarator(DS));
+  bool FirstDeclarator = true;
   while (1) {
-    FieldDeclarator &DeclaratorInfo = Fields.back();
+    FieldDeclarator DeclaratorInfo(DS);
+
+    // Attributes are only allowed here on successive declarators.
+    if (!FirstDeclarator && Tok.is(tok::kw___attribute)) {
+      SourceLocation Loc;
+      AttributeList *AttrList = ParseAttributes(&Loc);
+      DeclaratorInfo.D.AddAttributes(AttrList, Loc);
+    }
 
     /// struct-declarator: declarator
     /// struct-declarator: declarator[opt] ':' constant-expression
@@ -1514,6 +1520,9 @@ ParseStructDeclaration(DeclSpec &DS,
       DeclaratorInfo.D.AddAttributes(AttrList, Loc);
     }
 
+    // We're done with this declarator;  invoke the callback.
+    (void) Fields.invoke(DeclaratorInfo);
+
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
     if (Tok.isNot(tok::comma))
@@ -1522,15 +1531,7 @@ ParseStructDeclaration(DeclSpec &DS,
     // Consume the comma.
     ConsumeToken();
 
-    // Parse the next declarator.
-    Fields.push_back(FieldDeclarator(DS));
-
-    // Attributes are only allowed on the second declarator.
-    if (Tok.is(tok::kw___attribute)) {
-      SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
-      Fields.back().D.AddAttributes(AttrList, Loc);
-    }
+    FirstDeclarator = false;
   }
 }
 
@@ -1562,7 +1563,6 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       << DeclSpec::getSpecifierName((DeclSpec::TST)TagType);
 
   llvm::SmallVector<DeclPtrTy, 32> FieldDecls;
-  llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
 
   // While we still have something to read, read the declarations in the struct.
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
@@ -1578,28 +1578,39 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 
     // Parse all the comma separated declarators.
     DeclSpec DS;
-    FieldDeclarators.clear();
-    if (!Tok.is(tok::at)) {
-      ParseStructDeclaration(DS, FieldDeclarators);
 
-      // Convert them all to fields.
-      for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
-        FieldDeclarator &FD = FieldDeclarators[i];
-        DeclPtrTy Field;
-        // Install the declarator into the current TagDecl.
-        if (FD.D.getExtension()) {
-          // Silences extension warnings
-          ExtensionRAIIObject O(Diags);
-          Field = Actions.ActOnField(CurScope, TagDecl,
-                                     DS.getSourceRange().getBegin(),
-                                     FD.D, FD.BitfieldSize);
-        } else {
-          Field = Actions.ActOnField(CurScope, TagDecl,
-                                     DS.getSourceRange().getBegin(),
-                                     FD.D, FD.BitfieldSize);
+    if (!Tok.is(tok::at)) {
+      struct CFieldCallback : FieldCallback {
+        Parser &P;
+        DeclPtrTy TagDecl;
+        llvm::SmallVectorImpl<DeclPtrTy> &FieldDecls;
+
+        CFieldCallback(Parser &P, DeclPtrTy TagDecl,
+                       llvm::SmallVectorImpl<DeclPtrTy> &FieldDecls) :
+          P(P), TagDecl(TagDecl), FieldDecls(FieldDecls) {}
+
+        virtual DeclPtrTy invoke(FieldDeclarator &FD) {
+          const DeclSpec &DS = FD.D.getDeclSpec();
+          DeclPtrTy Field;
+
+          // Install the declarator into the current TagDecl.
+          if (FD.D.getExtension()) {
+            // Silences extension warnings
+            ExtensionRAIIObject O(P.Diags);
+            Field = P.Actions.ActOnField(P.CurScope, TagDecl,
+                                         DS.getSourceRange().getBegin(),
+                                         FD.D, FD.BitfieldSize);
+          } else {
+            Field = P.Actions.ActOnField(P.CurScope, TagDecl,
+                                         DS.getSourceRange().getBegin(),
+                                         FD.D, FD.BitfieldSize);
+          }
+          FieldDecls.push_back(Field);
+          return Field;
         }
-        FieldDecls.push_back(Field);
-      }
+      } Callback(*this, TagDecl, FieldDecls);
+
+      ParseStructDeclaration(DS, Callback);
     } else { // Handle @defs
       ConsumeToken();
       if (!Tok.isObjCAtKeyword(tok::objc_defs)) {

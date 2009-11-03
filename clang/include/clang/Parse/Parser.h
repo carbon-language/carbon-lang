@@ -979,8 +979,12 @@ private:
   void ParseEnumBody(SourceLocation StartLoc, DeclPtrTy TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclPtrTy TagDecl);
-  void ParseStructDeclaration(DeclSpec &DS,
-                              llvm::SmallVectorImpl<FieldDeclarator> &Fields);
+
+  struct FieldCallback {
+    virtual DeclPtrTy invoke(FieldDeclarator &Field) = 0;
+  };
+
+  void ParseStructDeclaration(DeclSpec &DS, FieldCallback &Callback);
 
   bool isDeclarationSpecifier();
   bool isTypeSpecifierQualifier();

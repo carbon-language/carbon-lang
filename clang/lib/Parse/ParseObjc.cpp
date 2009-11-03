@@ -305,51 +305,68 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
       if (Tok.is(tok::l_paren))
         ParseObjCPropertyAttribute(OCDS);
 
+      struct ObjCPropertyCallback : FieldCallback {
+        Parser &P;
+        DeclPtrTy IDecl;
+        llvm::SmallVectorImpl<DeclPtrTy> &Props;
+        ObjCDeclSpec &OCDS;
+        SourceLocation AtLoc;
+        tok::ObjCKeywordKind MethodImplKind;
+        
+        ObjCPropertyCallback(Parser &P, DeclPtrTy IDecl,
+                             llvm::SmallVectorImpl<DeclPtrTy> &Props,
+                             ObjCDeclSpec &OCDS, SourceLocation AtLoc,
+                             tok::ObjCKeywordKind MethodImplKind) :
+          P(P), IDecl(IDecl), Props(Props), OCDS(OCDS), AtLoc(AtLoc),
+          MethodImplKind(MethodImplKind) {
+        }
+
+        DeclPtrTy invoke(FieldDeclarator &FD) {
+          if (FD.D.getIdentifier() == 0) {
+            P.Diag(AtLoc, diag::err_objc_property_requires_field_name)
+              << FD.D.getSourceRange();
+            return DeclPtrTy();
+          }
+          if (FD.BitfieldSize) {
+            P.Diag(AtLoc, diag::err_objc_property_bitfield)
+              << FD.D.getSourceRange();
+            return DeclPtrTy();
+          }
+
+          // Install the property declarator into interfaceDecl.
+          IdentifierInfo *SelName =
+            OCDS.getGetterName() ? OCDS.getGetterName() : FD.D.getIdentifier();
+
+          Selector GetterSel =
+            P.PP.getSelectorTable().getNullarySelector(SelName);
+          IdentifierInfo *SetterName = OCDS.getSetterName();
+          Selector SetterSel;
+          if (SetterName)
+            SetterSel = P.PP.getSelectorTable().getSelector(1, &SetterName);
+          else
+            SetterSel = SelectorTable::constructSetterName(P.PP.getIdentifierTable(),
+                                                           P.PP.getSelectorTable(),
+                                                           FD.D.getIdentifier());
+          bool isOverridingProperty = false;
+          DeclPtrTy Property =
+            P.Actions.ActOnProperty(P.CurScope, AtLoc, FD, OCDS,
+                                    GetterSel, SetterSel, IDecl,
+                                    &isOverridingProperty,
+                                    MethodImplKind);
+          if (!isOverridingProperty)
+            Props.push_back(Property);
+
+          return Property;
+        }
+      } Callback(*this, interfaceDecl, allProperties,
+                 OCDS, AtLoc, MethodImplKind);
+
       // Parse all the comma separated declarators.
       DeclSpec DS;
-      llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
-      ParseStructDeclaration(DS, FieldDeclarators);
+      ParseStructDeclaration(DS, Callback);
 
       ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list, "",
                        tok::at);
-
-      // Convert them all to property declarations.
-      for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
-        FieldDeclarator &FD = FieldDeclarators[i];
-        if (FD.D.getIdentifier() == 0) {
-          Diag(AtLoc, diag::err_objc_property_requires_field_name)
-            << FD.D.getSourceRange();
-          continue;
-        }
-        if (FD.BitfieldSize) {
-          Diag(AtLoc, diag::err_objc_property_bitfield)
-            << FD.D.getSourceRange();
-          continue;
-        }
-
-        // Install the property declarator into interfaceDecl.
-        IdentifierInfo *SelName =
-          OCDS.getGetterName() ? OCDS.getGetterName() : FD.D.getIdentifier();
-
-        Selector GetterSel =
-          PP.getSelectorTable().getNullarySelector(SelName);
-        IdentifierInfo *SetterName = OCDS.getSetterName();
-        Selector SetterSel;
-        if (SetterName)
-          SetterSel = PP.getSelectorTable().getSelector(1, &SetterName);
-        else
-          SetterSel = SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                                         PP.getSelectorTable(),
-                                                         FD.D.getIdentifier());
-        bool isOverridingProperty = false;
-        DeclPtrTy Property = Actions.ActOnProperty(CurScope, AtLoc, FD, OCDS,
-                                                   GetterSel, SetterSel,
-                                                   interfaceDecl,
-                                                   &isOverridingProperty,
-                                                   MethodImplKind);
-        if (!isOverridingProperty)
-          allProperties.push_back(Property);
-      }
       break;
     }
   }
@@ -858,7 +875,6 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
                                              SourceLocation atLoc) {
   assert(Tok.is(tok::l_brace) && "expected {");
   llvm::SmallVector<DeclPtrTy, 32> AllIvarDecls;
-  llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
 
   ParseScope ClassScope(this, Scope::DeclScope|Scope::ClassScope);
 
@@ -893,21 +909,31 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
       }
     }
 
+    struct ObjCIvarCallback : FieldCallback {
+      Parser &P;
+      DeclPtrTy IDecl;
+      tok::ObjCKeywordKind visibility;
+      llvm::SmallVectorImpl<DeclPtrTy> &AllIvarDecls;
+
+      ObjCIvarCallback(Parser &P, DeclPtrTy IDecl, tok::ObjCKeywordKind V,
+                       llvm::SmallVectorImpl<DeclPtrTy> &AllIvarDecls) :
+        P(P), IDecl(IDecl), visibility(V), AllIvarDecls(AllIvarDecls) {
+      }
+
+      DeclPtrTy invoke(FieldDeclarator &FD) {
+        // Install the declarator into the interface decl.
+        DeclPtrTy Field
+          = P.Actions.ActOnIvar(P.CurScope,
+                                FD.D.getDeclSpec().getSourceRange().getBegin(),
+                                IDecl, FD.D, FD.BitfieldSize, visibility);
+        AllIvarDecls.push_back(Field);
+        return Field;
+      }
+    } Callback(*this, interfaceDecl, visibility, AllIvarDecls);
+
     // Parse all the comma separated declarators.
     DeclSpec DS;
-    FieldDeclarators.clear();
-    ParseStructDeclaration(DS, FieldDeclarators);
-
-    // Convert them all to fields.
-    for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
-      FieldDeclarator &FD = FieldDeclarators[i];
-      // Install the declarator into interfaceDecl.
-      DeclPtrTy Field = Actions.ActOnIvar(CurScope,
-                                          DS.getSourceRange().getBegin(),
-                                          interfaceDecl,
-                                          FD.D, FD.BitfieldSize, visibility);
-      AllIvarDecls.push_back(Field);
-    }
+    ParseStructDeclaration(DS, Callback);
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
