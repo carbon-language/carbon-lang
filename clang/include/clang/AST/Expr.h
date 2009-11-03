@@ -135,7 +135,7 @@ public:
   /// with location to warn on and the source range[s] to report with the
   /// warning.
   bool isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
-                              SourceRange &R2) const;
+                              SourceRange &R2, ASTContext &Ctx) const;
 
   /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
   /// incomplete type other than void. Nonarray expressions that can be lvalues:

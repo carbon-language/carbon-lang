@@ -71,16 +71,17 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
 
   const Expr *Init = D.getInit();
   QualType T = D.getType();
+  bool isVolatile = getContext().getCanonicalType(T).isVolatileQualified();
 
   if (T->isReferenceType()) {
     ErrorUnsupported(Init, "global variable that binds to a reference");
   } else if (!hasAggregateLLVMType(T)) {
     llvm::Value *V = EmitScalarExpr(Init);
-    EmitStoreOfScalar(V, DeclPtr, T.isVolatileQualified(), T);
+    EmitStoreOfScalar(V, DeclPtr, isVolatile, T);
   } else if (T->isAnyComplexType()) {
-    EmitComplexExprIntoAddr(Init, DeclPtr, T.isVolatileQualified());
+    EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
   } else {
-    EmitAggExpr(Init, DeclPtr, T.isVolatileQualified());
+    EmitAggExpr(Init, DeclPtr, isVolatile);
 
     if (const RecordType *RT = T->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());

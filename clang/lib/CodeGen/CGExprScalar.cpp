@@ -1648,9 +1648,10 @@ Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
 /// expression is cheap enough and side-effect-free enough to evaluate
 /// unconditionally instead of conditionally.  This is used to convert control
 /// flow into selects in some cases.
-static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E) {
+static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E,
+                                                   CodeGenFunction &CGF) {
   if (const ParenExpr *PE = dyn_cast<ParenExpr>(E))
-    return isCheapEnoughToEvaluateUnconditionally(PE->getSubExpr());
+    return isCheapEnoughToEvaluateUnconditionally(PE->getSubExpr(), CGF);
 
   // TODO: Allow anything we can constant fold to an integer or fp constant.
   if (isa<IntegerLiteral>(E) || isa<CharacterLiteral>(E) ||
@@ -1661,7 +1662,9 @@ static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E) {
   // X and Y are local variables.
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
     if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
-      if (VD->hasLocalStorage() && !VD->getType().isVolatileQualified())
+      if (VD->hasLocalStorage() && !(CGF.getContext()
+                                     .getCanonicalType(VD->getType())
+                                     .isVolatileQualified()))
         return true;
 
   return false;
@@ -1690,8 +1693,9 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   // If this is a really simple expression (like x ? 4 : 5), emit this as a
   // select instead of as control flow.  We can only do this if it is cheap and
   // safe to evaluate the LHS and RHS unconditionally.
-  if (E->getLHS() && isCheapEnoughToEvaluateUnconditionally(E->getLHS()) &&
-      isCheapEnoughToEvaluateUnconditionally(E->getRHS())) {
+  if (E->getLHS() && isCheapEnoughToEvaluateUnconditionally(E->getLHS(),
+                                                            CGF) &&
+      isCheapEnoughToEvaluateUnconditionally(E->getRHS(), CGF)) {
     llvm::Value *CondV = CGF.EvaluateExprAsBool(E->getCond());
     llvm::Value *LHS = Visit(E->getLHS());
     llvm::Value *RHS = Visit(E->getRHS());

@@ -517,7 +517,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   Qualifiers MakeQualifiers(QualType T) {
-    Qualifiers Quals = T.getQualifiers();
+    Qualifiers Quals = getContext().getCanonicalType(T).getQualifiers();
     Quals.setObjCGCAttr(getContext().getObjCGCAttrKind(T));
     return Quals;
   }

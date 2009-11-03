@@ -417,17 +417,18 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
                                     D.getNameAsString());
 
+    bool isVolatile = (getContext().getCanonicalType(D.getType())
+                       .isVolatileQualified());
     if (Ty->isReferenceType()) {
       RValue RV = EmitReferenceBindingToExpr(Init, Ty, /*IsInitializer=*/true);
       EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
     } else if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified(),
-                        D.getType());
+      EmitStoreOfScalar(V, Loc, isVolatile, D.getType());
     } else if (Init->getType()->isAnyComplexType()) {
-      EmitComplexExprIntoAddr(Init, Loc, D.getType().isVolatileQualified());
+      EmitComplexExprIntoAddr(Init, Loc, isVolatile);
     } else {
-      EmitAggExpr(Init, Loc, D.getType().isVolatileQualified());
+      EmitAggExpr(Init, Loc, isVolatile);
     }
   }
 
@@ -556,6 +557,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   assert((isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)) &&
          "Invalid argument to EmitParmDecl");
   QualType Ty = D.getType();
+  CanQualType CTy = getContext().getCanonicalType(Ty);
 
   llvm::Value *DeclPtr;
   if (!Ty->isConstantSizeType()) {
@@ -572,7 +574,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
       DeclPtr->setName(Name.c_str());
 
       // Store the initial value into the alloca.
-      EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified(), Ty);
+      EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Ty);
     } else {
       // Otherwise, if this is an aggregate, just use the input pointer.
       DeclPtr = Arg;

@@ -167,7 +167,7 @@ public:
 
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
   bool VisitDeclRefExpr(DeclRefExpr *E) {
-    if (E->getType().isVolatileQualified())
+    if (Info.Ctx.getCanonicalType(E->getType()).isVolatileQualified())
       return true;
     return false;
   }
@@ -197,7 +197,7 @@ public:
   bool VisitUnaryPreDec(UnaryOperator *E) { return true; }
   bool VisitUnaryPostDec(UnaryOperator *E) { return true; }
   bool VisitUnaryDeref(UnaryOperator *E) {
-    if (E->getType().isVolatileQualified())
+    if (Info.Ctx.getCanonicalType(E->getType()).isVolatileQualified())
       return true;
     return Visit(E->getSubExpr());
   }
