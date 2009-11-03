@@ -41,6 +41,7 @@ add_clang_library(clangAnalysis
   Store.cpp
   SymbolManager.cpp
   UndefDerefChecker.cpp
+  UndefinedArgChecker.cpp
   UninitializedValues.cpp
   ValueManager.cpp
   )
