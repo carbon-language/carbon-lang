@@ -966,7 +966,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
     if (HasSideEffects(E->getArg(0), Info.Ctx)) {
       if (E->getArg(1)->EvaluateAsInt(Info.Ctx).getZExtValue() < 2)
-        return Success(-1, E);
+        return Success(-1ULL, E);
       return Success(0, E);
     }
 
