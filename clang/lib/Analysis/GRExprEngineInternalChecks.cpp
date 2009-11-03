@@ -18,6 +18,7 @@
 #include "clang/Analysis/PathSensitive/Checkers/NullDerefChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefDerefChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/DivZeroChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -210,20 +211,6 @@ public:
     registerTrackNullOrUndefValue(BRC, X, N);
   }
 };
-
-class VISIBILITY_HIDDEN BadCall : public BuiltinBug {
-public:
-  BadCall(GRExprEngine *eng = 0)
-  : BuiltinBug(eng, "Invalid function call",
-        "Called function pointer is a null or undefined pointer value") {}
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, GetCalleeExpr(N), N);
-  }
-};
-
 
 class VISIBILITY_HIDDEN ArgReport : public BuiltinBugReport {
   const Stmt *Arg;
@@ -645,34 +632,6 @@ void CheckUndefinedArg::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE){
   }
 }
 
-class VISIBILITY_HIDDEN CheckBadCall : public CheckerVisitor<CheckBadCall> {
-  BadCall *BT;
-
-public:
-  CheckBadCall() : BT(0) {}
-  ~CheckBadCall() {}
-
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
-};
-
-void CheckBadCall::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
-  const Expr *Callee = CE->getCallee()->IgnoreParens();
-  SVal L = C.getState()->getSVal(Callee);
-
-  if (L.isUndef() || isa<loc::ConcreteInt>(L)) {
-    if (ExplodedNode *N = C.GenerateNode(CE, true)) {
-      if (!BT)
-        BT = new BadCall();
-      C.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
-    }
-  }
-}
-
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//
@@ -703,7 +662,7 @@ void GRExprEngine::RegisterInternalChecks() {
   // object.
   registerCheck<CheckAttrNonNull>(new CheckAttrNonNull());
   registerCheck<CheckUndefinedArg>(new CheckUndefinedArg());
-  registerCheck<CheckBadCall>(new CheckBadCall());
+  registerCheck<BadCallChecker>(new BadCallChecker());
   registerCheck<DivZeroChecker>(new DivZeroChecker());
   registerCheck<UndefDerefChecker>(new UndefDerefChecker());
   registerCheck<NullDerefChecker>(new NullDerefChecker());
