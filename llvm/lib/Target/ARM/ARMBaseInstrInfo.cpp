@@ -620,28 +620,12 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (DestRC != SrcRC) {
-    // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies
-    // Allow QPR / QPR_VFP2 cross-class copies
-    if (DestRC == ARM::DPRRegisterClass) {
-      if (SrcRC == ARM::DPR_VFP2RegisterClass ||
-          SrcRC == ARM::DPR_8RegisterClass) {
-      } else
-        return false;
-    } else if (DestRC == ARM::DPR_VFP2RegisterClass) {
-      if (SrcRC == ARM::DPRRegisterClass ||
-          SrcRC == ARM::DPR_8RegisterClass) {
-      } else
-        return false;
-    } else if (DestRC == ARM::DPR_8RegisterClass) {
-      if (SrcRC == ARM::DPRRegisterClass ||
-          SrcRC == ARM::DPR_VFP2RegisterClass) {
-      } else
-        return false;
-    } else if ((DestRC == ARM::QPRRegisterClass &&
-                SrcRC == ARM::QPR_VFP2RegisterClass) ||
-               (DestRC == ARM::QPR_VFP2RegisterClass &&
-                SrcRC == ARM::QPRRegisterClass)) {
-    } else
+    if (DestRC->getSize() != SrcRC->getSize())
+      return false;
+
+    // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies.
+    // Allow QPR / QPR_VFP2 / QPR_8 cross-class copies.
+    if (DestRC->getSize() != 8 && DestRC->getSize() != 16)
       return false;
   }
 
@@ -651,17 +635,18 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (DestRC == ARM::SPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYS), DestReg)
                    .addReg(SrcReg));
+  } else if (DestRC == ARM::DPRRegisterClass) {
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
+                   .addReg(SrcReg));
   } else if (DestRC == ARM::DPR_VFP2RegisterClass ||
              DestRC == ARM::DPR_8RegisterClass ||
              SrcRC == ARM::DPR_VFP2RegisterClass ||
              SrcRC == ARM::DPR_8RegisterClass) {
     // Always use neon reg-reg move if source or dest is NEON-only regclass.
     BuildMI(MBB, I, DL, get(ARM::VMOVD), DestReg).addReg(SrcReg);
-  } else if (DestRC == ARM::DPRRegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
-                   .addReg(SrcReg));
   } else if (DestRC == ARM::QPRRegisterClass ||
-             DestRC == ARM::QPR_VFP2RegisterClass) {
+             DestRC == ARM::QPR_VFP2RegisterClass ||
+             DestRC == ARM::QPR_8RegisterClass) {
     BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
   } else {
     return false;
@@ -736,7 +721,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
   } else {
     assert((RC == ARM::QPRRegisterClass ||
-            RC == ARM::QPR_VFP2RegisterClass) && "Unknown regclass!");
+            RC == ARM::QPR_VFP2RegisterClass ||
+            RC == ARM::QPR_8RegisterClass) && "Unknown regclass!");
     // FIXME: Neon instructions should support predicates
     BuildMI(MBB, I, DL, get(ARM::VLDRQ), DestReg).addFrameIndex(FI).addImm(0).
       addMemOperand(MMO);
