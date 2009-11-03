@@ -20,6 +20,7 @@
 #include "clang/Analysis/PathSensitive/Checkers/DivZeroChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedArgChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/AttrNonNullChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -506,96 +507,7 @@ public:
 //===----------------------------------------------------------------------===//
 // __attribute__(nonnull) checking
 
-class VISIBILITY_HIDDEN CheckAttrNonNull :
-    public CheckerVisitor<CheckAttrNonNull> {
 
-  BugType *BT;
-
-public:
-  CheckAttrNonNull() : BT(0) {}
-  ~CheckAttrNonNull() {}
-
-  static void *getTag() {
-    static int x = 0;
-    return &x;
-  }
-
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
-    const GRState *state = C.getState();
-    const GRState *originalState = state;
-
-    // Check if the callee has a 'nonnull' attribute.
-    SVal X = state->getSVal(CE->getCallee());
-
-    const FunctionDecl* FD = X.getAsFunctionDecl();
-    if (!FD)
-      return;
-
-    const NonNullAttr* Att = FD->getAttr<NonNullAttr>();
-    if (!Att)
-      return;
-
-    // Iterate through the arguments of CE and check them for null.
-    unsigned idx = 0;
-
-    for (CallExpr::const_arg_iterator I=CE->arg_begin(), E=CE->arg_end(); I!=E;
-         ++I, ++idx) {
-
-      if (!Att->isNonNull(idx))
-        continue;
-
-      const SVal &V = state->getSVal(*I);
-      const DefinedSVal *DV = dyn_cast<DefinedSVal>(&V);
-
-      if (!DV)
-        continue;
-
-      ConstraintManager &CM = C.getConstraintManager();
-      const GRState *stateNotNull, *stateNull;
-      llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
-
-      if (stateNull && !stateNotNull) {
-        // Generate an error node.  Check for a null node in case
-        // we cache out.
-        if (ExplodedNode *errorNode = C.GenerateNode(CE, stateNull, true)) {
-
-          // Lazily allocate the BugType object if it hasn't already been
-          // created. Ownership is transferred to the BugReporter object once
-          // the BugReport is passed to 'EmitWarning'.
-          if (!BT)
-            BT = new BugType("Argument with 'nonnull' attribute passed null",
-                             "API");
-
-          EnhancedBugReport *R =
-            new EnhancedBugReport(*BT,
-                                  "Null pointer passed as an argument to a "
-                                  "'nonnull' parameter", errorNode);
-
-          // Highlight the range of the argument that was null.
-          const Expr *arg = *I;
-          R->addRange(arg->getSourceRange());
-          R->addVisitorCreator(registerTrackNullOrUndefValue, arg);
-
-          // Emit the bug report.
-          C.EmitReport(R);
-        }
-
-        // Always return.  Either we cached out or we just emitted an error.
-        return;
-      }
-
-      // If a pointer value passed the check we should assume that it is
-      // indeed not null from this point forward.
-      assert(stateNotNull);
-      state = stateNotNull;
-    }
-
-    // If we reach here all of the arguments passed the nonnull check.
-    // If 'state' has been updated generated a new node.
-    if (state != originalState)
-      C.addTransition(C.GenerateNode(CE, state));
-  }
-};
 
 } // end clang namespace
 
@@ -625,7 +537,7 @@ void GRExprEngine::RegisterInternalChecks() {
   // their associated BugType will get registered with the BugReporter
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.
-  registerCheck<CheckAttrNonNull>(new CheckAttrNonNull());
+  registerCheck<AttrNonNullChecker>(new AttrNonNullChecker());
   registerCheck<UndefinedArgChecker>(new UndefinedArgChecker());
   registerCheck<BadCallChecker>(new BadCallChecker());
   registerCheck<DivZeroChecker>(new DivZeroChecker());
