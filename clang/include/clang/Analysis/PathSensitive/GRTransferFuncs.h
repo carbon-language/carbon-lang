@@ -23,7 +23,6 @@
 namespace clang {
 
 class GRExprEngine;
-class BugReporter;
 class ObjCMessageExpr;
 class GRStmtNodeBuilderRef;
 
@@ -33,7 +32,7 @@ public:
   virtual ~GRTransferFuncs() {}
 
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {}
-  virtual void RegisterChecks(BugReporter& BR) {}
+  virtual void RegisterChecks(GRExprEngine& Eng) {}
 
 
   // Calls.
@@ -78,7 +77,7 @@ public:
   virtual const GRState* EvalAssume(const GRState *state,
                                     SVal Cond, bool Assumption) {
     return state;
-  }
+  }  
 };
 
 GRTransferFuncs *CreateCallInliner(ASTContext &ctx);

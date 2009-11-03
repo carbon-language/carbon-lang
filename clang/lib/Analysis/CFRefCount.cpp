@@ -1899,7 +1899,7 @@ public:
 
   virtual ~CFRefCount() {}
 
-  void RegisterChecks(BugReporter &BR);
+  void RegisterChecks(GRExprEngine &Eng);
 
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {
     Printers.push_back(new BindingsPrinter());
@@ -2193,7 +2193,9 @@ namespace {
   };
 } // end anonymous namespace
 
-void CFRefCount::RegisterChecks(BugReporter& BR) {
+void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
+  BugReporter &BR = Eng.getBugReporter();
+  
   useAfterRelease = new UseAfterRelease(this);
   BR.Register(useAfterRelease);
 

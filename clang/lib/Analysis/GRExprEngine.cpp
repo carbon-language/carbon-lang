@@ -178,7 +178,7 @@ GRExprEngine::~GRExprEngine() {
 
 void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
   StateMgr.TF = tf;
-  tf->RegisterChecks(getBugReporter());
+  tf->RegisterChecks(*this);
   tf->RegisterPrinters(getStateManager().Printers);
 }
 
