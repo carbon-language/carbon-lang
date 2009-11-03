@@ -47,7 +47,7 @@ public:
 
   bool isVolatileQualified() const { return Volatile; }
 
-  /// getScalar() - Return the Value* of this scalar value.
+  /// getScalarVal() - Return the Value* of this scalar value.
   llvm::Value *getScalarVal() const {
     assert(isScalar() && "Not a scalar!");
     return V1;
