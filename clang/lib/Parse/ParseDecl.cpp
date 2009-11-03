@@ -1605,21 +1605,10 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
           P(P), TagDecl(TagDecl), FieldDecls(FieldDecls) {}
 
         virtual DeclPtrTy invoke(FieldDeclarator &FD) {
-          const DeclSpec &DS = FD.D.getDeclSpec();
-          DeclPtrTy Field;
-
           // Install the declarator into the current TagDecl.
-          if (FD.D.getExtension()) {
-            // Silences extension warnings
-            ExtensionRAIIObject O(P.Diags);
-            Field = P.Actions.ActOnField(P.CurScope, TagDecl,
-                                         DS.getSourceRange().getBegin(),
-                                         FD.D, FD.BitfieldSize);
-          } else {
-            Field = P.Actions.ActOnField(P.CurScope, TagDecl,
-                                         DS.getSourceRange().getBegin(),
-                                         FD.D, FD.BitfieldSize);
-          }
+          DeclPtrTy Field = P.Actions.ActOnField(P.CurScope, TagDecl,
+                              FD.D.getDeclSpec().getSourceRange().getBegin(),
+                                                 FD.D, FD.BitfieldSize);
           FieldDecls.push_back(Field);
           return Field;
         }
