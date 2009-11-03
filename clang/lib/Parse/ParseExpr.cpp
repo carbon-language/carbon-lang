@@ -651,7 +651,11 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // Function designators are allowed to be undeclared (C99 6.5.1p2), so we
     // need to know whether or not this identifier is a function designator or
     // not.
-    Res = Actions.ActOnIdentifierExpr(CurScope, ILoc, II, Tok.is(tok::l_paren));
+    UnqualifiedId Name;
+    CXXScopeSpec ScopeSpec;
+    Name.setIdentifier(&II, ILoc);
+    Res = Actions.ActOnIdExpression(CurScope, ScopeSpec, Name, 
+                                    Tok.is(tok::l_paren), false);
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(move(Res));
   }

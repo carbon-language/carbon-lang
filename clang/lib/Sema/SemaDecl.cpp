@@ -1606,56 +1606,60 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 /// GetNameForDeclarator - Determine the full declaration name for the
 /// given Declarator.
 DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
-  UnqualifiedId &Name = D.getName();
+  return GetNameFromUnqualifiedId(D.getName());
+}
+
+/// \brief Retrieves the canonicalized name from a parsed unqualified-id.
+DeclarationName Sema::GetNameFromUnqualifiedId(UnqualifiedId &Name) {
   switch (Name.getKind()) {
-  case UnqualifiedId::IK_Identifier:
-    return DeclarationName(Name.Identifier);
-
-  case UnqualifiedId::IK_OperatorFunctionId:
-    return Context.DeclarationNames.getCXXOperatorName(
-                                              Name.OperatorFunctionId.Operator);
-
-  case UnqualifiedId::IK_ConversionFunctionId: {
-    QualType Ty = GetTypeFromParser(Name.ConversionFunctionId);
-    if (Ty.isNull())
-      return DeclarationName();
-    
-    return Context.DeclarationNames.getCXXConversionFunctionName(
-                                                  Context.getCanonicalType(Ty));
-  }
+    case UnqualifiedId::IK_Identifier:
+      return DeclarationName(Name.Identifier);
       
-  case UnqualifiedId::IK_ConstructorName: {
-    QualType Ty = GetTypeFromParser(Name.ConstructorName);
-    if (Ty.isNull())
-      return DeclarationName();
-    
-    return Context.DeclarationNames.getCXXConstructorName(
-                                                Context.getCanonicalType(Ty));
-  }
+    case UnqualifiedId::IK_OperatorFunctionId:
+      return Context.DeclarationNames.getCXXOperatorName(
+                                                         Name.OperatorFunctionId.Operator);
       
-  case UnqualifiedId::IK_DestructorName: {
-    QualType Ty = GetTypeFromParser(Name.DestructorName);
-    if (Ty.isNull())
-      return DeclarationName();
-    
-    return Context.DeclarationNames.getCXXDestructorName(
-                                                Context.getCanonicalType(Ty));
-  }
+    case UnqualifiedId::IK_ConversionFunctionId: {
+      QualType Ty = GetTypeFromParser(Name.ConversionFunctionId);
+      if (Ty.isNull())
+        return DeclarationName();
       
-  case UnqualifiedId::IK_TemplateId: {
-    TemplateName TName
+      return Context.DeclarationNames.getCXXConversionFunctionName(
+                                                                   Context.getCanonicalType(Ty));
+    }
+      
+    case UnqualifiedId::IK_ConstructorName: {
+      QualType Ty = GetTypeFromParser(Name.ConstructorName);
+      if (Ty.isNull())
+        return DeclarationName();
+      
+      return Context.DeclarationNames.getCXXConstructorName(
+                                                            Context.getCanonicalType(Ty));
+    }
+      
+    case UnqualifiedId::IK_DestructorName: {
+      QualType Ty = GetTypeFromParser(Name.DestructorName);
+      if (Ty.isNull())
+        return DeclarationName();
+      
+      return Context.DeclarationNames.getCXXDestructorName(
+                                                           Context.getCanonicalType(Ty));
+    }
+      
+    case UnqualifiedId::IK_TemplateId: {
+      TemplateName TName
       = TemplateName::getFromVoidPointer(Name.TemplateId->Template);    
-    if (TemplateDecl *Template = TName.getAsTemplateDecl())
-      return Template->getDeclName();
-    if (OverloadedFunctionDecl *Ovl = TName.getAsOverloadedFunctionDecl())
-      return Ovl->getDeclName();
-    
-    return DeclarationName();
+      if (TemplateDecl *Template = TName.getAsTemplateDecl())
+        return Template->getDeclName();
+      if (OverloadedFunctionDecl *Ovl = TName.getAsOverloadedFunctionDecl())
+        return Ovl->getDeclName();
+      
+      return DeclarationName();
+    }
   }
-  }
-
+  
   assert(false && "Unknown name kind");
-  return DeclarationName();
+  return DeclarationName();  
 }
 
 /// isNearlyMatchingFunction - Determine whether the C++ functions

@@ -854,47 +854,33 @@ public:
   virtual SourceRange getExprRange(ExprTy *E) const {
     return SourceRange();
   }
-
-  /// ActOnIdentifierExpr - Parse an identifier in expression context.
-  /// 'HasTrailingLParen' indicates whether or not the identifier has a '('
-  /// token immediately after it.
-  /// An optional CXXScopeSpec can be passed to indicate the C++ scope (class or
-  /// namespace) that the identifier must be a member of.
-  /// i.e. for "foo::bar", 'II' will be "bar" and 'SS' will be "foo::".
-  virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
-                                               IdentifierInfo &II,
-                                               bool HasTrailingLParen,
-                                               const CXXScopeSpec *SS = 0,
-                                               bool isAddressOfOperand = false){
+  
+  /// \brief Parsed an id-expression (C++) or identifier (C) in expression
+  /// context, e.g., the expression "x" that refers to a variable named "x".
+  ///
+  /// \param S the scope in which this id-expression or identifier occurs.
+  ///
+  /// \param SS the C++ nested-name-specifier that qualifies the name of the
+  /// value, e.g., "std::" in "std::sort".
+  ///
+  /// \param Name the name to which the id-expression refers. In C, this will
+  /// always be an identifier. In C++, it may also be an overloaded operator,
+  /// destructor name (if there is a nested-name-specifier), or template-id.
+  ///
+  /// \param HasTrailingLParen whether the next token following the 
+  /// id-expression or identifier is a left parentheses ('(').
+  ///
+  /// \param IsAddressOfOperand whether the token that precedes this 
+  /// id-expression or identifier was an ampersand ('&'), indicating that 
+  /// we will be taking the address of this expression.
+  virtual OwningExprResult ActOnIdExpression(Scope *S,
+                                             const CXXScopeSpec &SS,
+                                             UnqualifiedId &Name,
+                                             bool HasTrailingLParen,
+                                             bool IsAddressOfOperand) {
     return ExprEmpty();
   }
-
-  /// ActOnOperatorFunctionIdExpr - Parse a C++ overloaded operator
-  /// name (e.g., @c operator+ ) as an expression. This is very
-  /// similar to ActOnIdentifierExpr, except that instead of providing
-  /// an identifier the parser provides the kind of overloaded
-  /// operator that was parsed.
-  virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(
-                             Scope *S, SourceLocation OperatorLoc,
-                             OverloadedOperatorKind Op,
-                             bool HasTrailingLParen, const CXXScopeSpec &SS,
-                             bool isAddressOfOperand = false) {
-    return ExprEmpty();
-  }
-
-  /// ActOnCXXConversionFunctionExpr - Parse a C++ conversion function
-  /// name (e.g., @c operator void const *) as an expression. This is
-  /// very similar to ActOnIdentifierExpr, except that instead of
-  /// providing an identifier the parser provides the type of the
-  /// conversion function.
-  virtual OwningExprResult ActOnCXXConversionFunctionExpr(
-                             Scope *S, SourceLocation OperatorLoc,
-                             TypeTy *Type, bool HasTrailingLParen,
-                             const CXXScopeSpec &SS,
-                             bool isAddressOfOperand = false) {
-    return ExprEmpty();
-  }
-
+  
   virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                                tok::TokenKind Kind) {
     return ExprEmpty();
@@ -1709,40 +1695,6 @@ public:
                                             DeclSpec::TST TagSpec,
                                             SourceLocation TagLoc) {
     return TypeResult();
-  }
-
-  /// \brief Form a reference to a template-id (that will refer to a function)
-  /// from a template and a list of template arguments.
-  ///
-  /// This action forms an expression that references the given template-id,
-  /// possibly checking well-formedness of the template arguments. It does not
-  /// imply the declaration of any entity.
-  ///
-  /// \param SS  The scope specifier that may precede the template name.
-  ///
-  /// \param Template  A template whose specialization results in a
-  /// function or a dependent template.
-  ///
-  /// \param TemplateNameLoc The location of the template name.
-  /// 
-  /// \param LAngleLoc The location of the left angle bracket ('<') that starts 
-  /// the template argument list.
-  ///
-  /// \param TemplateArgs The template arguments in the template argument list,
-  /// which may be empty.
-  ///
-  /// \param TemplateArgLocs The locations of the template arguments.
-  ///
-  /// \param RAngleLoc The location of the right angle bracket ('>') that 
-  /// closes the template argument list.
-  virtual OwningExprResult ActOnTemplateIdExpr(const CXXScopeSpec &SS,
-                                               TemplateTy Template,
-                                               SourceLocation TemplateNameLoc,
-                                               SourceLocation LAngleLoc,
-                                               ASTTemplateArgsPtr TemplateArgs,
-                                               SourceLocation *TemplateArgLocs,
-                                               SourceLocation RAngleLoc) {
-    return ExprError();
   }
 
   /// \brief Form a dependent template name.

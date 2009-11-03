@@ -22,41 +22,6 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
-/// ActOnCXXConversionFunctionExpr - Parse a C++ conversion function
-/// name (e.g., operator void const *) as an expression. This is
-/// very similar to ActOnIdentifierExpr, except that instead of
-/// providing an identifier the parser provides the type of the
-/// conversion function.
-Sema::OwningExprResult
-Sema::ActOnCXXConversionFunctionExpr(Scope *S, SourceLocation OperatorLoc,
-                                     TypeTy *Ty, bool HasTrailingLParen,
-                                     const CXXScopeSpec &SS,
-                                     bool isAddressOfOperand) {
-  //FIXME: Preserve type source info.
-  QualType ConvType = GetTypeFromParser(Ty);
-  CanQualType ConvTypeCanon = Context.getCanonicalType(ConvType);
-  DeclarationName ConvName
-    = Context.DeclarationNames.getCXXConversionFunctionName(ConvTypeCanon);
-  return ActOnDeclarationNameExpr(S, OperatorLoc, ConvName, HasTrailingLParen,
-                                  &SS, isAddressOfOperand);
-}
-
-/// ActOnCXXOperatorFunctionIdExpr - Parse a C++ overloaded operator
-/// name (e.g., @c operator+ ) as an expression. This is very
-/// similar to ActOnIdentifierExpr, except that instead of providing
-/// an identifier the parser provides the kind of overloaded
-/// operator that was parsed.
-Sema::OwningExprResult
-Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
-                                     OverloadedOperatorKind Op,
-                                     bool HasTrailingLParen,
-                                     const CXXScopeSpec &SS,
-                                     bool isAddressOfOperand) {
-  DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(Op);
-  return ActOnDeclarationNameExpr(S, OperatorLoc, Name, HasTrailingLParen, &SS,
-                                  isAddressOfOperand);
-}
-
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
 Action::OwningExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,

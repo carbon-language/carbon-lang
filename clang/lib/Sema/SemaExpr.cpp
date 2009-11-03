@@ -436,20 +436,6 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 
 
 
-/// ActOnIdentifierExpr - The parser read an identifier in expression context,
-/// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
-/// identifier is used in a function call context.
-/// SS is only used for a C++ qualified-id (foo::bar) to indicate the
-/// class or namespace that the identifier must be a member of.
-Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
-                                                 IdentifierInfo &II,
-                                                 bool HasTrailingLParen,
-                                                 const CXXScopeSpec *SS,
-                                                 bool isAddressOfOperand) {
-  return ActOnDeclarationNameExpr(S, Loc, &II, HasTrailingLParen, SS,
-                                  isAddressOfOperand);
-}
-
 /// BuildDeclRefExpr - Build a DeclRefExpr.
 Sema::OwningExprResult
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
@@ -654,15 +640,43 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   return Owned(Result);
 }
 
+Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
+                                               const CXXScopeSpec &SS,
+                                               UnqualifiedId &Name,
+                                               bool HasTrailingLParen,
+                                               bool IsAddressOfOperand) {
+  if (Name.getKind() == UnqualifiedId::IK_TemplateId) {
+    ASTTemplateArgsPtr TemplateArgsPtr(*this,
+                                       Name.TemplateId->getTemplateArgs(),
+                                       Name.TemplateId->getTemplateArgIsType(),
+                                       Name.TemplateId->NumArgs);
+    return ActOnTemplateIdExpr(SS, 
+                               TemplateTy::make(Name.TemplateId->Template), 
+                               Name.TemplateId->TemplateNameLoc,
+                               Name.TemplateId->LAngleLoc,
+                               TemplateArgsPtr,
+                               Name.TemplateId->getTemplateArgLocations(),
+                               Name.TemplateId->RAngleLoc);
+  }
+  
+  // FIXME: We lose a bunch of source information by doing this. Later,
+  // we'll want to merge ActOnDeclarationNameExpr's logic into 
+  // ActOnIdExpression.
+  return ActOnDeclarationNameExpr(S, 
+                                  Name.StartLocation,
+                                  GetNameFromUnqualifiedId(Name),
+                                  HasTrailingLParen,
+                                  &SS,
+                                  IsAddressOfOperand);
+}
+
 /// ActOnDeclarationNameExpr - The parser has read some kind of name
 /// (e.g., a C++ id-expression (C++ [expr.prim]p1)). This routine
 /// performs lookup on that name and returns an expression that refers
 /// to that name. This routine isn't directly called from the parser,
 /// because the parser doesn't know about DeclarationName. Rather,
-/// this routine is called by ActOnIdentifierExpr,
-/// ActOnOperatorFunctionIdExpr, and ActOnConversionFunctionExpr,
-/// which form the DeclarationName from the corresponding syntactic
-/// forms.
+/// this routine is called by ActOnIdExpression, which contains a
+/// parsed UnqualifiedId.
 ///
 /// HasTrailingLParen indicates whether this identifier is used in a
 /// function call context.  LookupCtx is only used for a C++
@@ -743,8 +757,11 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // FIXME: This should use a new expr for a direct reference, don't
           // turn this into Self->ivar, just return a BareIVarExpr or something.
           IdentifierInfo &II = Context.Idents.get("self");
-          OwningExprResult SelfExpr = ActOnIdentifierExpr(S, SourceLocation(),
-                                                          II, false);
+          UnqualifiedId SelfName;
+          SelfName.setIdentifier(&II, SourceLocation());          
+          CXXScopeSpec SelfScopeSpec;
+          OwningExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec,
+                                                        SelfName, false, false);
           MarkDeclarationReferenced(Loc, IV);
           return Owned(new (Context)
                        ObjCIvarRefExpr(IV, IV->getType(), Loc,
@@ -3985,7 +4002,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
 
   // This check seems unnatural, however it is necessary to ensure the proper
   // conversion of functions/arrays. If the conversion were done for all
-  // DeclExpr's (created by ActOnIdentifierExpr), it would mess up the unary
+  // DeclExpr's (created by ActOnIdExpression), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
   //
   // Suppress this for references: C++ 8.5.3p5.

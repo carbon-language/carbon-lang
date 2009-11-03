@@ -474,6 +474,7 @@ public:
   /// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
   QualType CreateLocInfoType(QualType T, DeclaratorInfo *DInfo);
   DeclarationName GetNameForDeclarator(Declarator &D);
+  DeclarationName GetNameFromUnqualifiedId(UnqualifiedId &Name);
   static QualType GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo = 0);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
@@ -1608,23 +1609,12 @@ public:
   // Primary Expressions.
   virtual SourceRange getExprRange(ExprTy *E) const;
 
-  virtual OwningExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
-                                               IdentifierInfo &II,
-                                               bool HasTrailingLParen,
-                                               const CXXScopeSpec *SS = 0,
-                                               bool isAddressOfOperand = false);
-  virtual OwningExprResult ActOnCXXOperatorFunctionIdExpr(Scope *S,
-                                                    SourceLocation OperatorLoc,
-                                                    OverloadedOperatorKind Op,
-                                                    bool HasTrailingLParen,
-                                                    const CXXScopeSpec &SS,
-                                                    bool isAddressOfOperand);
-  virtual OwningExprResult ActOnCXXConversionFunctionExpr(Scope *S,
-                                                    SourceLocation OperatorLoc,
-                                                    TypeTy *Ty,
-                                                    bool HasTrailingLParen,
-                                                    const CXXScopeSpec &SS,
-                                                    bool isAddressOfOperand);
+  virtual OwningExprResult ActOnIdExpression(Scope *S,
+                                             const CXXScopeSpec &SS,
+                                             UnqualifiedId &Name,
+                                             bool HasTrailingLParen,
+                                             bool IsAddressOfOperand);
+  
   OwningExprResult BuildDeclRefExpr(NamedDecl *D, QualType Ty,
                                     SourceLocation Loc, bool TypeDependent,
                                     bool ValueDependent,
@@ -2545,13 +2535,13 @@ public:
                                        unsigned NumTemplateArgs,
                                        SourceLocation RAngleLoc);
 
-  virtual OwningExprResult ActOnTemplateIdExpr(const CXXScopeSpec &SS,
-                                               TemplateTy Template,
-                                               SourceLocation TemplateNameLoc,
-                                               SourceLocation LAngleLoc,
-                                               ASTTemplateArgsPtr TemplateArgs,
-                                               SourceLocation *TemplateArgLocs,
-                                               SourceLocation RAngleLoc);
+  OwningExprResult ActOnTemplateIdExpr(const CXXScopeSpec &SS,
+                                       TemplateTy Template,
+                                       SourceLocation TemplateNameLoc,
+                                       SourceLocation LAngleLoc,
+                                       ASTTemplateArgsPtr TemplateArgs,
+                                       SourceLocation *TemplateArgLocs,
+                                       SourceLocation RAngleLoc);
 
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                                 const IdentifierInfo &Name,

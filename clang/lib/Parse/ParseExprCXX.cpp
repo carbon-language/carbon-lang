@@ -309,7 +309,19 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   //
   CXXScopeSpec SS;
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
-
+  
+  UnqualifiedId Name;
+  if (ParseUnqualifiedId(SS, 
+                         /*EnteringContext=*/false, 
+                         /*AllowDestructorName=*/false, 
+                         /*AllowConstructorName=*/false, 
+                         Name))
+    return ExprError();
+  
+  return Actions.ActOnIdExpression(CurScope, SS, Name, Tok.is(tok::l_paren),
+                                   isAddressOfOperand);
+  
+#if 0
   // unqualified-id:
   //   identifier
   //   operator-function-id
@@ -372,6 +384,7 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   } // switch.
 
   assert(0 && "The switch was supposed to take care everything.");
+#endif
 }
 
 /// ParseCXXCasts - This handles the various ways to cast expressions to another

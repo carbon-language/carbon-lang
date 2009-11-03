@@ -1213,8 +1213,8 @@ private:
                                     bool EnteringContext,
                                     UnqualifiedId &Id);
   bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
-                          bool IsExpressionContext,
-                          bool IsDeclarator,
+                          bool AllowDestructorName,
+                          bool AllowConstructorName,
                           UnqualifiedId &Result);
     
   //===--------------------------------------------------------------------===//
