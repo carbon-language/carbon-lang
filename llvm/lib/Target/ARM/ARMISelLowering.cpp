@@ -1186,12 +1186,12 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   return result;
 }
 
-// ConstantPool, BlockAddress, JumpTable, GlobalAddress, and ExternalSymbol are
-// lowered as their target counterpart wrapped in the ARMISD::Wrapper
-// node. Suppose N is one of the above mentioned nodes. It has to be wrapped
-// because otherwise Select(N) returns N. So the raw TargetGlobalAddress
-// nodes, etc. can only be used to form addressing mode. These wrapped nodes
-// will be selected into MOVi.
+// ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
+// their target counterpart wrapped in the ARMISD::Wrapper node. Suppose N is
+// one of the above mentioned nodes. It has to be wrapped because otherwise
+// Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
+// be used to form addressing mode. These wrapped nodes will be selected
+// into MOVi.
 static SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   EVT PtrVT = Op.getValueType();
   // FIXME there is no actual debug info here
