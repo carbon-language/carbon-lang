@@ -932,6 +932,9 @@ static bool InitializeSourceManager(Preprocessor &PP,
 //   -A...    - Play with #assertions
 //   -undef   - Undefine all predefined macros
 
+static llvm::cl::opt<bool>
+undef_macros("undef", llvm::cl::value_desc("macro"), llvm::cl::desc("undef all system defines"));
+
 static llvm::cl::list<std::string>
 D_macros("D", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
        llvm::cl::desc("Predefine the specified macro"));
@@ -1243,7 +1246,7 @@ public:
 
     PreprocessorInitOptions InitOpts;
     InitializePreprocessorInitOptions(InitOpts);
-    if (InitializePreprocessor(*PP, InitOpts))
+    if (InitializePreprocessor(*PP, InitOpts, undef_macros))
       return 0;
 
     return PP.take();

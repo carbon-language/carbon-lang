@@ -1015,6 +1015,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       II.getInputArg().renderAsInput(Args, CmdArgs);
   }
 
+  Args.AddAllArgs(CmdArgs, options::OPT_undef);
+
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "clang-cc"));
   Dest.addCommand(new Command(JA, Exec, CmdArgs));

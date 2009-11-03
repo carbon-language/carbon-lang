@@ -63,7 +63,8 @@ public:
 /// environment ready to process a single file. This returns true on error.
 ///
 bool InitializePreprocessor(Preprocessor &PP,
-                            const PreprocessorInitOptions& InitOptions);
+                            const PreprocessorInitOptions& InitOptions,
+                            bool undef_macros);
 
 } // end namespace clang
 
