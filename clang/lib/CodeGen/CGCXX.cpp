@@ -705,6 +705,38 @@ llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   return GenerateCovariantThunk(Fn, MD, Extern, nv, v, 0, 0);
 }
 
+llvm::Value *CodeGenFunction::DynamicTypeAdjust(llvm::Value *V, int64_t nv,
+                                                int64_t v) {
+  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),
+                                              0);
+  const llvm::Type *OrigTy = V->getType();
+  if (nv) {
+    // Do the non-virtual adjustment
+    V = Builder.CreateBitCast(V, Ptr8Ty);
+    V = Builder.CreateConstInBoundsGEP1_64(V, nv);
+    V = Builder.CreateBitCast(V, OrigTy);
+  }
+  if (v) {
+    // Do the virtual this adjustment
+    const llvm::Type *PtrDiffTy = 
+      ConvertType(getContext().getPointerDiffType());
+    llvm::Type *PtrPtr8Ty, *PtrPtrDiffTy;
+    PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
+    PtrPtrDiffTy = llvm::PointerType::get(PtrDiffTy, 0);
+    llvm::Value *ThisVal = Builder.CreateBitCast(V, Ptr8Ty);
+    V = Builder.CreateBitCast(V, PtrPtrDiffTy->getPointerTo());
+    V = Builder.CreateLoad(V, "vtable");
+    llvm::Value *VTablePtr = V;
+    assert(v % (LLVMPointerWidth/8) == 0 && "vtable entry unaligned");
+    v /= LLVMPointerWidth/8;
+    V = Builder.CreateConstInBoundsGEP1_64(VTablePtr, v);
+    V = Builder.CreateLoad(V);
+    V = Builder.CreateGEP(ThisVal, V);
+    V = Builder.CreateBitCast(V, OrigTy);
+  }
+  return V;
+}
+
 llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
                                                         const CXXMethodDecl *MD,
                                                         bool Extern,
@@ -746,33 +778,9 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 
   QualType ArgType = MD->getThisType(getContext());
   llvm::Value *Arg = Builder.CreateLoad(LocalDeclMap[ThisDecl], "this");
-  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),
-                                              0);
-  const llvm::Type *OrigTy = Arg->getType();
-  if (nv_t) {
-    // Do the non-virtual this adjustment
-    Arg = Builder.CreateBitCast(Arg, Ptr8Ty);
-    Arg = Builder.CreateConstInBoundsGEP1_64(Arg, nv_t);
-    Arg = Builder.CreateBitCast(Arg, OrigTy);
-  }
-  if (v_t) {
-    // Do the virtual this adjustment
-    const llvm::Type *PtrDiffTy = 
-      ConvertType(getContext().getPointerDiffType());
-    llvm::Type *PtrPtr8Ty, *PtrPtrDiffTy;
-    PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
-    PtrPtrDiffTy = llvm::PointerType::get(PtrDiffTy, 0);
-    llvm::Value *ThisVal = Builder.CreateBitCast(Arg, Ptr8Ty);
-    Arg = Builder.CreateBitCast(Arg, PtrPtrDiffTy->getPointerTo());
-    Arg = Builder.CreateLoad(Arg, "vtable");
-    llvm::Value *VTablePtr = Arg;
-    assert(v_t % (LLVMPointerWidth/8) == 0 && "vtable entry unaligned");
-    v_t /= LLVMPointerWidth/8;
-    Arg = Builder.CreateConstInBoundsGEP1_64(VTablePtr, v_t);
-    Arg = Builder.CreateLoad(Arg);
-    Arg = Builder.CreateGEP(ThisVal, Arg);
-    Arg = Builder.CreateBitCast(Arg, OrigTy);
-  }
+  if (nv_t || v_t)
+    // Do the this adjustment.
+    Arg = DynamicTypeAdjust(Arg, nv_t, v_t);
   CallArgs.push_back(std::make_pair(RValue::get(Arg), ArgType));
 
   for (FunctionDecl::param_const_iterator i = MD->param_begin(),
@@ -790,7 +798,8 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
   RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
                        Callee, CallArgs, MD);
   if (nv_r || v_r) {
-    // FIXME: Add return value adjustments.
+    // Do the return result adjustment.
+    RV = RValue::get(DynamicTypeAdjust(RV.getScalarVal(), nv_r, v_r));
   }
 
   if (!ResultType->isVoidType())

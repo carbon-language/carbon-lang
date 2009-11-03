@@ -91,6 +91,36 @@ int main() {
 // CHECK-LP64: movl $1, 12(%rax)
 // CHECK-LP64: movl $2, 8(%rax)
 
+// FIXME: This is the wrong thunk, but until these issues are fixed, better
+// than nothing.
+// CHECK-LP64:     __ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev27:
+// CHECK-LP64-NEXT:Leh_func_begin33:
+// CHECK-LP64-NEXT:    subq    $24, %rsp
+// CHECK-LP64-NEXT:Llabel33:
+// CHECK-LP64-NEXT:    movq    %rdi, %rax
+// CHECK-LP64-NEXT:    movq    %rax, 8(%rsp)
+// CHECK-LP64-NEXT:    movq    8(%rsp), %rax
+// CHECK-LP64-NEXT:    movq    %rax, %rcx
+// CHECK-LP64-NEXT:    movabsq $-16, %rdx
+// CHECK-LP64-NEXT:    addq    %rdx, %rcx
+// CHECK-LP64-NEXT:    movq    -16(%rax), %rax
+// CHECK-LP64-NEXT:    movq    -72(%rax), %rax
+// CHECK-LP64-NEXT:    addq    %rax, %rcx
+// CHECK-LP64-NEXT:    movq    %rcx, %rax
+// CHECK-LP64-NEXT:    movq    %rax, %rdi
+// CHECK-LP64-NEXT:    call    __ZN8test16_D4foo1Ev
+// CHECK-LP64-NEXT:    movq    %rax, %rcx
+// CHECK-LP64-NEXT:    movabsq $16, %rdx
+// CHECK-LP64-NEXT:    addq    %rdx, %rcx
+// CHECK-LP64-NEXT:    movq    16(%rax), %rax
+// CHECK-LP64-NEXT:    movq    -32(%rax), %rax
+// CHECK-LP64-NEXT:    addq    %rax, %rcx
+// CHECK-LP64-NEXT:    movq    %rcx, %rax
+// CHECK-LP64-NEXT:    movq    %rax, 16(%rsp)
+// CHECK-LP64-NEXT:    movq    16(%rsp), %rax
+// CHECK-LP64-NEXT:    addq    $24, %rsp
+// CHECK-LP64-NEXT:    ret
+
 struct test12_A {
   virtual void foo0() { }
   virtual void foo();
