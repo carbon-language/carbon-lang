@@ -746,13 +746,20 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 
   QualType ArgType = MD->getThisType(getContext());
   llvm::Value *Arg = Builder.CreateLoad(LocalDeclMap[ThisDecl], "this");
+  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),
+                                              0);
+  const llvm::Type *OrigTy = Arg->getType();
+  if (nv_t) {
+    // Do the non-virtual this adjustment
+    Arg = Builder.CreateBitCast(Arg, Ptr8Ty);
+    Arg = Builder.CreateConstInBoundsGEP1_64(Arg, nv_t);
+    Arg = Builder.CreateBitCast(Arg, OrigTy);
+  }
   if (v_t) {
-    const llvm::Type *OrigTy = Arg->getType();
-    // FIXME: Add this adjustments
+    // Do the virtual this adjustment
     const llvm::Type *PtrDiffTy = 
       ConvertType(getContext().getPointerDiffType());
-    llvm::Type *Ptr8Ty, *PtrPtr8Ty, *PtrPtrDiffTy;
-    Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
+    llvm::Type *PtrPtr8Ty, *PtrPtrDiffTy;
     PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
     PtrPtrDiffTy = llvm::PointerType::get(PtrDiffTy, 0);
     llvm::Value *ThisVal = Builder.CreateBitCast(Arg, Ptr8Ty);
@@ -766,7 +773,6 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
     Arg = Builder.CreateGEP(ThisVal, Arg);
     Arg = Builder.CreateBitCast(Arg, OrigTy);
   }
-  // FIXME: Add this non-virtual adjustment
   CallArgs.push_back(std::make_pair(RValue::get(Arg), ArgType));
 
   for (FunctionDecl::param_const_iterator i = MD->param_begin(),
@@ -780,6 +786,7 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
     CallArgs.push_back(std::make_pair(EmitCallArg(Arg, ArgType), ArgType));
   }
 
+  // FIXME: be sure to call the right function when we thunk to a thunk
   RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
                        Callee, CallArgs, MD);
   if (nv_r || v_r) {
