@@ -252,6 +252,7 @@ public:
                                 AttrListPtr AttributeList,
                                 const Type *RetTy, ...)  END_WITH_NULL;
 
+  /// getOrInsertFunction - Same as above, but without the attributes.
   Constant *getOrInsertFunction(const StringRef &Name, const Type *RetTy, ...)
     END_WITH_NULL;
 
