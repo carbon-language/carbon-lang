@@ -20,6 +20,7 @@ add_clang_library(clangAnalysis
   CheckObjCInstMethSignature.cpp
   CheckObjCUnusedIVars.cpp
   CheckSecuritySyntaxOnly.cpp
+  DereferenceChecker.cpp
   DivZeroChecker.cpp
   Environment.cpp
   ExplodedGraph.cpp
@@ -32,7 +33,6 @@ add_clang_library(clangAnalysis
   MemRegion.cpp
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
-  NullDerefChecker.cpp
   PathDiagnostic.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
@@ -42,7 +42,6 @@ add_clang_library(clangAnalysis
   SimpleSValuator.cpp
   Store.cpp
   SymbolManager.cpp
-  UndefDerefChecker.cpp
   UndefSizedVLAChecker.cpp
   UndefinedArgChecker.cpp
   UninitializedValues.cpp
