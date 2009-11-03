@@ -1249,6 +1249,9 @@ CompileUnit &DwarfDebug::FindCompileUnit(DICompileUnit Unit) const {
 DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
   // Get the descriptor.
   const DIVariable &VD = DV->getVariable();
+  const char *Name = VD.getName();
+  if (!Name)
+    return NULL;
 
   // Translate tag to proper Dwarf tag.  The result variable is dropped for
   // now.
@@ -1267,7 +1270,6 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
 
   // Define variable debug information entry.
   DIE *VariableDie = new DIE(Tag);
-  const char *Name = VD.getName();
   AddString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
   // Add source line info if available.
