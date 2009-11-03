@@ -40,6 +40,7 @@ lit.site.cfg: FORCE
 	     -e "s#@LLVM_LIBS_DIR@#$(LibDir)#g" \
 	     -e "s#@CLANG_SOURCE_DIR@#$(PROJ_SRC_DIR)/..#g" \
 	     -e "s#@CLANG_BINARY_DIR@#$(PROJ_OBJ_DIR)/..#g" \
+	     -e "s#@TARGET_TRIPLE@#$(TARGET_TRIPLE)#g" \
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 
 clean::
