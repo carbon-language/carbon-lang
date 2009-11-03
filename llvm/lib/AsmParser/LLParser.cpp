@@ -1137,6 +1137,8 @@ bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
     return TokError("expected ',' as start of index list");
 
   while (EatIfPresent(lltok::comma)) {
+    if (Lex.getKind() == lltok::NamedOrCustomMD)
+      break;
     unsigned Idx;
     if (ParseUInt32(Idx)) return true;
     Indices.push_back(Idx);
@@ -2111,6 +2113,9 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseIndexList(Indices) ||
         ParseToken(lltok::rparen, "expected ')' in extractvalue constantexpr"))
       return true;
+    if (Lex.getKind() == lltok::NamedOrCustomMD)
+      if (ParseOptionalCustomMetadata()) return true;
+
     if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
       return Error(ID.Loc, "extractvalue operand must be array or struct");
     if (!ExtractValueInst::getIndexedType(Val->getType(), Indices.begin(),
@@ -2132,6 +2137,8 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseIndexList(Indices) ||
         ParseToken(lltok::rparen, "expected ')' in insertvalue constantexpr"))
       return true;
+    if (Lex.getKind() == lltok::NamedOrCustomMD)
+      if (ParseOptionalCustomMetadata()) return true;
     if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
       return Error(ID.Loc, "extractvalue operand must be array or struct");
     if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
@@ -3737,6 +3744,8 @@ bool LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
   if (ParseTypeAndValue(Val, Loc, PFS) ||
       ParseIndexList(Indices))
     return true;
+  if (Lex.getKind() == lltok::NamedOrCustomMD)
+    if (ParseOptionalCustomMetadata()) return true;
 
   if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
     return Error(Loc, "extractvalue operand must be array or struct");
@@ -3758,6 +3767,8 @@ bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
       ParseTypeAndValue(Val1, Loc1, PFS) ||
       ParseIndexList(Indices))
     return true;
+  if (Lex.getKind() == lltok::NamedOrCustomMD)
+    if (ParseOptionalCustomMetadata()) return true;
 
   if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
     return Error(Loc0, "extractvalue operand must be array or struct");
