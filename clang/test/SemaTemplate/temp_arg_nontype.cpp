@@ -122,3 +122,17 @@ extern FuncPtr0<&func0> *fp0;
 int func0(int, int);
 extern FuncPtr0<&func0> *fp0;
 
+// PR5350
+namespace ns {
+  template <typename T>
+  struct Foo {
+    static const bool value = true;
+  };
+  
+  template <bool b>
+  struct Bar {};
+  
+  const bool value = false;
+  
+  Bar<bool(ns::Foo<int>::value)> x;
+}

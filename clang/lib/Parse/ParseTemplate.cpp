@@ -809,12 +809,11 @@ void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
   Tok.setAnnotationValue(Type.isInvalid()? 0 : Type.get());
   if (SS && SS->isNotEmpty()) // it was a C++ qualified type name.
     Tok.setLocation(SS->getBeginLoc());
+  Tok.setAnnotationEndLoc(TemplateId->TemplateNameLoc);
 
-  // We might be backtracking, in which case we need to replace the
-  // template-id annotation token with the type annotation within the
-  // set of cached tokens. That way, we won't try to form the same
-  // class template specialization again.
-  PP.ReplaceLastTokenWithAnnotation(Tok);
+  // Replace the template-id annotation token, and possible the scope-specifier
+  // that precedes it, with the typename annotation token.
+  PP.AnnotateCachedTokens(Tok);
   TemplateId->Destroy();
 }
 
