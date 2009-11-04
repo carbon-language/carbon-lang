@@ -217,6 +217,7 @@ namespace {
     //
     Instruction *visitAdd(BinaryOperator &I);
     Instruction *visitFAdd(BinaryOperator &I);
+    Value *OptimizePointerDifference(Value *LHS, Value *RHS, const Type *Ty);
     Instruction *visitSub(BinaryOperator &I);
     Instruction *visitFSub(BinaryOperator &I);
     Instruction *visitMul(BinaryOperator &I);
@@ -2510,7 +2511,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
                                    RHSConv->getOperand(0))) {
         // Insert the new integer add.
         Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
-                                              RHSConv->getOperand(0), "addconv");
+                                              RHSConv->getOperand(0),"addconv");
         return new SIToFPInst(NewAdd, I.getType());
       }
     }
@@ -2519,13 +2520,210 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+
+/// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
+/// code necessary to compute the offset from the base pointer (without adding
+/// in the base pointer).  Return the result as a signed integer of intptr size.
+static Value *EmitGEPOffset(User *GEP, InstCombiner &IC) {
+  TargetData &TD = *IC.getTargetData();
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  const Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
+  Value *Result = Constant::getNullValue(IntPtrTy);
+
+  // Build a mask for high order bits.
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
+
+  for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;
+       ++i, ++GTI) {
+    Value *Op = *i;
+    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
+    if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
+      if (OpC->isZero()) continue;
+      
+      // Handle a struct index, which adds its field offset to the pointer.
+      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+        Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+        
+        Result = IC.Builder->CreateAdd(Result,
+                                       ConstantInt::get(IntPtrTy, Size),
+                                       GEP->getName()+".offs");
+        continue;
+      }
+      
+      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
+      Constant *OC =
+              ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
+      Scale = ConstantExpr::getMul(OC, Scale);
+      // Emit an add instruction.
+      Result = IC.Builder->CreateAdd(Result, Scale, GEP->getName()+".offs");
+      continue;
+    }
+    // Convert to correct type.
+    if (Op->getType() != IntPtrTy)
+      Op = IC.Builder->CreateIntCast(Op, IntPtrTy, true, Op->getName()+".c");
+    if (Size != 1) {
+      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
+      // We'll let instcombine(mul) convert this to a shl if possible.
+      Op = IC.Builder->CreateMul(Op, Scale, GEP->getName()+".idx");
+    }
+
+    // Emit an add instruction.
+    Result = IC.Builder->CreateAdd(Op, Result, GEP->getName()+".offs");
+  }
+  return Result;
+}
+
+
+/// EvaluateGEPOffsetExpression - Return a value that can be used to compare
+/// the *offset* implied by a GEP to zero.  For example, if we have &A[i], we
+/// want to return 'i' for "icmp ne i, 0".  Note that, in general, indices can
+/// be complex, and scales are involved.  The above expression would also be
+/// legal to codegen as "icmp ne (i*4), 0" (assuming A is a pointer to i32).
+/// This later form is less amenable to optimization though, and we are allowed
+/// to generate the first by knowing that pointer arithmetic doesn't overflow.
+///
+/// If we can't emit an optimized form for this expression, this returns null.
+/// 
+static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
+                                          InstCombiner &IC) {
+  TargetData &TD = *IC.getTargetData();
+  gep_type_iterator GTI = gep_type_begin(GEP);
+
+  // Check to see if this gep only has a single variable index.  If so, and if
+  // any constant indices are a multiple of its scale, then we can compute this
+  // in terms of the scale of the variable index.  For example, if the GEP
+  // implies an offset of "12 + i*4", then we can codegen this as "3 + i",
+  // because the expression will cross zero at the same point.
+  unsigned i, e = GEP->getNumOperands();
+  int64_t Offset = 0;
+  for (i = 1; i != e; ++i, ++GTI) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i))) {
+      // Compute the aggregate offset of constant indices.
+      if (CI->isZero()) continue;
+
+      // Handle a struct index, which adds its field offset to the pointer.
+      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+        Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
+      } else {
+        uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
+        Offset += Size*CI->getSExtValue();
+      }
+    } else {
+      // Found our variable index.
+      break;
+    }
+  }
+  
+  // If there are no variable indices, we must have a constant offset, just
+  // evaluate it the general way.
+  if (i == e) return 0;
+  
+  Value *VariableIdx = GEP->getOperand(i);
+  // Determine the scale factor of the variable element.  For example, this is
+  // 4 if the variable index is into an array of i32.
+  uint64_t VariableScale = TD.getTypeAllocSize(GTI.getIndexedType());
+  
+  // Verify that there are no other variable indices.  If so, emit the hard way.
+  for (++i, ++GTI; i != e; ++i, ++GTI) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i));
+    if (!CI) return 0;
+   
+    // Compute the aggregate offset of constant indices.
+    if (CI->isZero()) continue;
+    
+    // Handle a struct index, which adds its field offset to the pointer.
+    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
+    } else {
+      uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
+      Offset += Size*CI->getSExtValue();
+    }
+  }
+  
+  // Okay, we know we have a single variable index, which must be a
+  // pointer/array/vector index.  If there is no offset, life is simple, return
+  // the index.
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  if (Offset == 0) {
+    // Cast to intptrty in case a truncation occurs.  If an extension is needed,
+    // we don't need to bother extending: the extension won't affect where the
+    // computation crosses zero.
+    if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth)
+      VariableIdx = new TruncInst(VariableIdx, 
+                                  TD.getIntPtrType(VariableIdx->getContext()),
+                                  VariableIdx->getName(), &I);
+    return VariableIdx;
+  }
+  
+  // Otherwise, there is an index.  The computation we will do will be modulo
+  // the pointer size, so get it.
+  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
+  
+  Offset &= PtrSizeMask;
+  VariableScale &= PtrSizeMask;
+
+  // To do this transformation, any constant index must be a multiple of the
+  // variable scale factor.  For example, we can evaluate "12 + 4*i" as "3 + i",
+  // but we can't evaluate "10 + 3*i" in terms of i.  Check that the offset is a
+  // multiple of the variable scale.
+  int64_t NewOffs = Offset / (int64_t)VariableScale;
+  if (Offset != NewOffs*(int64_t)VariableScale)
+    return 0;
+
+  // Okay, we can do this evaluation.  Start by converting the index to intptr.
+  const Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
+  if (VariableIdx->getType() != IntPtrTy)
+    VariableIdx = CastInst::CreateIntegerCast(VariableIdx, IntPtrTy,
+                                              true /*SExt*/, 
+                                              VariableIdx->getName(), &I);
+  Constant *OffsetVal = ConstantInt::get(IntPtrTy, NewOffs);
+  return BinaryOperator::CreateAdd(VariableIdx, OffsetVal, "offset", &I);
+}
+
+
+/// Optimize pointer differences into the same array into a size.  Consider:
+///  &A[10] - &A[0]: we should compile this to "10".  LHS/RHS are the pointer
+/// operands to the ptrtoint instructions for the LHS/RHS of the subtract.
+///
+Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
+                                               const Type *Ty) {
+  assert(TD && "Must have target data info for this");
+  
+  // If LHS is a gep based on RHS or RHS is a gep based on LHS, we can optimize
+  // this.
+  bool Swapped;
+  GetElementPtrInst *GEP;
+  
+  if ((GEP = dyn_cast<GetElementPtrInst>(LHS)) &&
+      GEP->getOperand(0) == RHS)
+    Swapped = false;
+  else if ((GEP = dyn_cast<GetElementPtrInst>(RHS)) &&
+           GEP->getOperand(0) == LHS)
+    Swapped = true;
+  else
+    return 0;
+  
+  // TODO: Could also optimize &A[i] - &A[j] -> "i-j".
+  
+  // Emit the offset of the GEP and an intptr_t.
+  Value *Result = EmitGEPOffset(GEP, *this);
+
+  // If we have p - gep(p, ...)  then we have to negate the result.
+  if (Swapped)
+    Result = Builder->CreateNeg(Result, "diff.neg");
+
+  return Builder->CreateIntCast(Result, Ty, true);
+}
+
+
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (Op0 == Op1)                        // sub X, X  -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  // If this is a 'B = x-(-A)', change to B = x+A...
+  // If this is a 'B = x-(-A)', change to B = x+A.
   if (Value *V = dyn_castNegVal(Op1))
     return BinaryOperator::CreateAdd(Op0, V);
 
@@ -2533,9 +2731,11 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op0);    // undef - X -> undef
   if (isa<UndefValue>(Op1))
     return ReplaceInstUsesWith(I, Op1);    // X - undef -> undef
-
+  if (I.getType() == Type::getInt1Ty(*Context))
+    return BinaryOperator::CreateXor(Op0, Op1);
+  
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
-    // Replace (-1 - A) with (~A)...
+    // Replace (-1 - A) with (~A).
     if (C->isAllOnesValue())
       return BinaryOperator::CreateNot(Op1);
 
@@ -2558,8 +2758,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                                           SI->getOperand(0), CU, SI->getName());
             }
           }
-        }
-        else if (SI->getOpcode() == Instruction::AShr) {
+        } else if (SI->getOpcode() == Instruction::AShr) {
           if (ConstantInt *CU = dyn_cast<ConstantInt>(SI->getOperand(1))) {
             // Check to see if we are shifting out everything but the sign bit.
             if (CU->getLimitedValue(SI->getType()->getPrimitiveSizeInBits()) ==
@@ -2583,9 +2782,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       if (ZI->getSrcTy() == Type::getInt1Ty(*Context))
         return SelectInst::Create(ZI->getOperand(0), SubOne(C), C);
   }
-
-  if (I.getType() == Type::getInt1Ty(*Context))
-    return BinaryOperator::CreateXor(Op0, Op1);
 
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
     if (Op1I->getOpcode() == Instruction::Add) {
@@ -2668,6 +2864,28 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (X == dyn_castFoldableMul(Op1, C2))
       return BinaryOperator::CreateMul(X, ConstantExpr::getSub(C1, C2));
   }
+  
+  // Optimize pointer differences into the same array into a size.  Consider:
+  //  &A[10] - &A[0]: we should compile this to "10".
+  if (TD) {
+    if (PtrToIntInst *LHS = dyn_cast<PtrToIntInst>(Op0))
+      if (PtrToIntInst *RHS = dyn_cast<PtrToIntInst>(Op1))
+        if (Value *Res = OptimizePointerDifference(LHS->getOperand(0),
+                                                   RHS->getOperand(0),
+                                                   I.getType()))
+          return ReplaceInstUsesWith(I, Res);
+    
+    // trunc(p)-trunc(q) -> trunc(p-q)
+    if (TruncInst *LHST = dyn_cast<TruncInst>(Op0))
+      if (TruncInst *RHST = dyn_cast<TruncInst>(Op1))
+        if (PtrToIntInst *LHS = dyn_cast<PtrToIntInst>(LHST->getOperand(0)))
+          if (PtrToIntInst *RHS = dyn_cast<PtrToIntInst>(RHST->getOperand(0)))
+            if (Value *Res = OptimizePointerDifference(LHS->getOperand(0),
+                                                       RHS->getOperand(0),
+                                                       I.getType()))
+              return ReplaceInstUsesWith(I, Res);
+  }
+  
   return 0;
 }
 
@@ -5417,166 +5635,6 @@ static bool SubWithOverflow(Constant *&Result, Constant *In1,
                         IsSigned);
 }
 
-/// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
-/// code necessary to compute the offset from the base pointer (without adding
-/// in the base pointer).  Return the result as a signed integer of intptr size.
-static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
-  TargetData &TD = *IC.getTargetData();
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  const Type *IntPtrTy = TD.getIntPtrType(I.getContext());
-  Value *Result = Constant::getNullValue(IntPtrTy);
-
-  // Build a mask for high order bits.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
-  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
-
-  for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;
-       ++i, ++GTI) {
-    Value *Op = *i;
-    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
-    if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
-      if (OpC->isZero()) continue;
-      
-      // Handle a struct index, which adds its field offset to the pointer.
-      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
-        Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
-        
-        Result = IC.Builder->CreateAdd(Result,
-                                       ConstantInt::get(IntPtrTy, Size),
-                                       GEP->getName()+".offs");
-        continue;
-      }
-      
-      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
-      Constant *OC =
-              ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
-      Scale = ConstantExpr::getMul(OC, Scale);
-      // Emit an add instruction.
-      Result = IC.Builder->CreateAdd(Result, Scale, GEP->getName()+".offs");
-      continue;
-    }
-    // Convert to correct type.
-    if (Op->getType() != IntPtrTy)
-      Op = IC.Builder->CreateIntCast(Op, IntPtrTy, true, Op->getName()+".c");
-    if (Size != 1) {
-      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
-      // We'll let instcombine(mul) convert this to a shl if possible.
-      Op = IC.Builder->CreateMul(Op, Scale, GEP->getName()+".idx");
-    }
-
-    // Emit an add instruction.
-    Result = IC.Builder->CreateAdd(Op, Result, GEP->getName()+".offs");
-  }
-  return Result;
-}
-
-
-/// EvaluateGEPOffsetExpression - Return a value that can be used to compare
-/// the *offset* implied by a GEP to zero.  For example, if we have &A[i], we
-/// want to return 'i' for "icmp ne i, 0".  Note that, in general, indices can
-/// be complex, and scales are involved.  The above expression would also be
-/// legal to codegen as "icmp ne (i*4), 0" (assuming A is a pointer to i32).
-/// This later form is less amenable to optimization though, and we are allowed
-/// to generate the first by knowing that pointer arithmetic doesn't overflow.
-///
-/// If we can't emit an optimized form for this expression, this returns null.
-/// 
-static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
-                                          InstCombiner &IC) {
-  TargetData &TD = *IC.getTargetData();
-  gep_type_iterator GTI = gep_type_begin(GEP);
-
-  // Check to see if this gep only has a single variable index.  If so, and if
-  // any constant indices are a multiple of its scale, then we can compute this
-  // in terms of the scale of the variable index.  For example, if the GEP
-  // implies an offset of "12 + i*4", then we can codegen this as "3 + i",
-  // because the expression will cross zero at the same point.
-  unsigned i, e = GEP->getNumOperands();
-  int64_t Offset = 0;
-  for (i = 1; i != e; ++i, ++GTI) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i))) {
-      // Compute the aggregate offset of constant indices.
-      if (CI->isZero()) continue;
-
-      // Handle a struct index, which adds its field offset to the pointer.
-      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
-        Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
-      } else {
-        uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
-        Offset += Size*CI->getSExtValue();
-      }
-    } else {
-      // Found our variable index.
-      break;
-    }
-  }
-  
-  // If there are no variable indices, we must have a constant offset, just
-  // evaluate it the general way.
-  if (i == e) return 0;
-  
-  Value *VariableIdx = GEP->getOperand(i);
-  // Determine the scale factor of the variable element.  For example, this is
-  // 4 if the variable index is into an array of i32.
-  uint64_t VariableScale = TD.getTypeAllocSize(GTI.getIndexedType());
-  
-  // Verify that there are no other variable indices.  If so, emit the hard way.
-  for (++i, ++GTI; i != e; ++i, ++GTI) {
-    ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i));
-    if (!CI) return 0;
-   
-    // Compute the aggregate offset of constant indices.
-    if (CI->isZero()) continue;
-    
-    // Handle a struct index, which adds its field offset to the pointer.
-    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
-      Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
-    } else {
-      uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
-      Offset += Size*CI->getSExtValue();
-    }
-  }
-  
-  // Okay, we know we have a single variable index, which must be a
-  // pointer/array/vector index.  If there is no offset, life is simple, return
-  // the index.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
-  if (Offset == 0) {
-    // Cast to intptrty in case a truncation occurs.  If an extension is needed,
-    // we don't need to bother extending: the extension won't affect where the
-    // computation crosses zero.
-    if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth)
-      VariableIdx = new TruncInst(VariableIdx, 
-                                  TD.getIntPtrType(VariableIdx->getContext()),
-                                  VariableIdx->getName(), &I);
-    return VariableIdx;
-  }
-  
-  // Otherwise, there is an index.  The computation we will do will be modulo
-  // the pointer size, so get it.
-  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
-  
-  Offset &= PtrSizeMask;
-  VariableScale &= PtrSizeMask;
-
-  // To do this transformation, any constant index must be a multiple of the
-  // variable scale factor.  For example, we can evaluate "12 + 4*i" as "3 + i",
-  // but we can't evaluate "10 + 3*i" in terms of i.  Check that the offset is a
-  // multiple of the variable scale.
-  int64_t NewOffs = Offset / (int64_t)VariableScale;
-  if (Offset != NewOffs*(int64_t)VariableScale)
-    return 0;
-
-  // Okay, we can do this evaluation.  Start by converting the index to intptr.
-  const Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
-  if (VariableIdx->getType() != IntPtrTy)
-    VariableIdx = CastInst::CreateIntegerCast(VariableIdx, IntPtrTy,
-                                              true /*SExt*/, 
-                                              VariableIdx->getName(), &I);
-  Constant *OffsetVal = ConstantInt::get(IntPtrTy, NewOffs);
-  return BinaryOperator::CreateAdd(VariableIdx, OffsetVal, "offset", &I);
-}
-
 
 /// FoldGEPICmp - Fold comparisons between a GEP instruction and something
 /// else.  At this point we know that the GEP is on the LHS of the comparison.
@@ -5597,7 +5655,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
     
     // If not, synthesize the offset the hard way.
     if (Offset == 0)
-      Offset = EmitGEPOffset(GEPLHS, I, *this);
+      Offset = EmitGEPOffset(GEPLHS, *this);
     return new ICmpInst(ICmpInst::getSignedPredicate(Cond), Offset,
                         Constant::getNullValue(Offset->getType()));
   } else if (GEPOperator *GEPRHS = dyn_cast<GEPOperator>(RHS)) {
@@ -5683,8 +5741,8 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
         (isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) &&
         (isa<ConstantExpr>(GEPRHS) || GEPRHS->hasOneUse())) {
       // ((gep Ptr, OFFSET1) cmp (gep Ptr, OFFSET2)  --->  (OFFSET1 cmp OFFSET2)
-      Value *L = EmitGEPOffset(GEPLHS, I, *this);
-      Value *R = EmitGEPOffset(GEPRHS, I, *this);
+      Value *L = EmitGEPOffset(GEPLHS, *this);
+      Value *R = EmitGEPOffset(GEPRHS, *this);
       return new ICmpInst(ICmpInst::getSignedPredicate(Cond), L, R);
     }
   }
@@ -8201,8 +8259,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     if (TD && GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0))) {
       if (GEP->hasAllConstantIndices()) {
         // We are guaranteed to get a constant from EmitGEPOffset.
-        ConstantInt *OffsetV =
-                      cast<ConstantInt>(EmitGEPOffset(GEP, CI, *this));
+        ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(GEP, *this));
         int64_t Offset = OffsetV->getSExtValue();
         
         // Get the base pointer input of the bitcast, and the type it points to.
@@ -11310,8 +11367,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         !isa<BitCastInst>(BCI->getOperand(0)) && GEP.hasAllConstantIndices()) {
       // Determine how much the GEP moves the pointer.  We are guaranteed to get
       // a constant back from EmitGEPOffset.
-      ConstantInt *OffsetV =
-                    cast<ConstantInt>(EmitGEPOffset(&GEP, GEP, *this));
+      ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(&GEP, *this));
       int64_t Offset = OffsetV->getSExtValue();
       
       // If this GEP instruction doesn't move the pointer, just replace the GEP

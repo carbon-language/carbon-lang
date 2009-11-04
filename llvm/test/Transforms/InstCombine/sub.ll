@@ -1,4 +1,6 @@
-; This test makes sure that these instructions are properly eliminated.
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
+
+; Optimize subtracts.
 ;
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
@@ -209,5 +211,40 @@ define i1 @test22(i32 %a, i32 %b) zeroext nounwind  {
 ; CHECK: @test22
 ; CHECK: %tmp5 = icmp eq i32 %a, %b
 ; CHECK: ret i1 %tmp5
+}
+
+; rdar://7362831
+define i32 @test23(i8* %P, i64 %A){
+  %B = getelementptr inbounds i8* %P, i64 %A
+  %C = ptrtoint i8* %B to i64
+  %D = trunc i64 %C to i32
+  %E = ptrtoint i8* %P to i64
+  %F = trunc i64 %E to i32
+  %G = sub i32 %D, %F
+  ret i32 %G
+; CHECK: @test23
+; CHECK: %A1 = trunc i64 %A to i32
+; CHECK: ret i32 %A1
+}
+
+define i64 @test24(i8* %P, i64 %A){
+  %B = getelementptr inbounds i8* %P, i64 %A
+  %C = ptrtoint i8* %B to i64
+  %E = ptrtoint i8* %P to i64
+  %G = sub i64 %C, %E
+  ret i64 %G
+; CHECK: @test24
+; CHECK-NEXT: ret i64 %A
+}
+
+define i64 @test24a(i8* %P, i64 %A){
+  %B = getelementptr inbounds i8* %P, i64 %A
+  %C = ptrtoint i8* %B to i64
+  %E = ptrtoint i8* %P to i64
+  %G = sub i64 %E, %C
+  ret i64 %G
+; CHECK: @test24a
+; CHECK-NEXT: sub i64 0, %A
+; CHECK-NEXT: ret i64 
 }
 
