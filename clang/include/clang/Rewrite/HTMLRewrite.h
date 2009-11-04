@@ -23,7 +23,6 @@ namespace clang {
 class Rewriter;
 class RewriteBuffer;
 class Preprocessor;
-class PreprocessorFactory;
 
 namespace html {
 
@@ -75,7 +74,7 @@ namespace html {
   /// macro expansions.  This won't be perfectly perfect, but it will be
   /// reasonably close.
   void HighlightMacros(Rewriter &R, FileID FID, Preprocessor &PP);
-  void HighlightMacros(Rewriter &R, FileID FID, PreprocessorFactory &PPF);
+
 } // end html namespace
 } // end clang namespace
 

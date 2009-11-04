@@ -13,13 +13,14 @@
 
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/AST/ASTConsumer.h"
-#include "clang/AST/Decl.h"
-#include "clang/Rewrite/Rewriter.h"
-#include "clang/Rewrite/HTMLRewrite.h"
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Rewrite/HTMLRewrite.h"
+#include "clang/Rewrite/Rewriter.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -32,13 +33,14 @@ namespace {
   class HTMLPrinter : public ASTConsumer {
     Rewriter R;
     llvm::raw_ostream *Out;
-    Diagnostic &Diags;
-    Preprocessor *PP;
-    PreprocessorFactory *PPF;
+    Preprocessor &PP;
+    bool SyntaxHighlight, HighlightMacros;
+
   public:
-    HTMLPrinter(llvm::raw_ostream *OS, Diagnostic &D, Preprocessor *pp,
-                PreprocessorFactory* ppf)
-      : Out(OS), Diags(D), PP(pp), PPF(ppf) {}
+    HTMLPrinter(llvm::raw_ostream *OS, Preprocessor &pp,
+                bool _SyntaxHighlight, bool _HighlightMacros)
+      : Out(OS), PP(pp), SyntaxHighlight(_SyntaxHighlight),
+        HighlightMacros(_HighlightMacros) {}
     virtual ~HTMLPrinter();
 
     void Initialize(ASTContext &context);
@@ -46,10 +48,10 @@ namespace {
 }
 
 ASTConsumer* clang::CreateHTMLPrinter(llvm::raw_ostream *OS,
-                                      Diagnostic &D, Preprocessor *PP,
-                                      PreprocessorFactory* PPF) {
-
-  return new HTMLPrinter(OS, D, PP, PPF);
+                                      Preprocessor &PP,
+                                      bool SyntaxHighlight,
+                                      bool HighlightMacros) {
+  return new HTMLPrinter(OS, PP, SyntaxHighlight, HighlightMacros);
 }
 
 void HTMLPrinter::Initialize(ASTContext &context) {
@@ -57,7 +59,7 @@ void HTMLPrinter::Initialize(ASTContext &context) {
 }
 
 HTMLPrinter::~HTMLPrinter() {
-  if (Diags.hasErrorOccurred())
+  if (PP.getDiagnostics().hasErrorOccurred())
     return;
 
   // Format the file.
@@ -79,8 +81,8 @@ HTMLPrinter::~HTMLPrinter() {
   // We might not have a preprocessor if we come from a deserialized AST file,
   // for example.
 
-  if (PP) html::SyntaxHighlight(R, FID, *PP);
-  if (PPF) html::HighlightMacros(R, FID, *PP);
+  if (SyntaxHighlight) html::SyntaxHighlight(R, FID, PP);
+  if (HighlightMacros) html::HighlightMacros(R, FID, PP);
   html::EscapeText(R, FID, false, true);
 
   // Emit the HTML.

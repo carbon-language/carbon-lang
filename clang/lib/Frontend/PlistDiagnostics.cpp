@@ -29,7 +29,6 @@ typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 
 namespace clang {
   class Preprocessor;
-  class PreprocessorFactory;
 }
 
 namespace {
@@ -63,8 +62,7 @@ PlistDiagnostics::PlistDiagnostics(const std::string& output,
 }
 
 PathDiagnosticClient*
-clang::CreatePlistDiagnosticClient(const std::string& s,
-                                   Preprocessor *PP, PreprocessorFactory*,
+clang::CreatePlistDiagnosticClient(const std::string& s, Preprocessor *PP,
                                    PathDiagnosticClientFactory *PF) {
   return new PlistDiagnostics(s, PP->getLangOptions(), PF);
 }

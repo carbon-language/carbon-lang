@@ -77,7 +77,6 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp,
 
 PathDiagnosticClient*
 clang::CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP,
-                                  PreprocessorFactory*,
                                   llvm::SmallVectorImpl<std::string>* FilesMade)
 {
   return new HTMLDiagnostics(prefix, PP, FilesMade);
@@ -111,8 +110,7 @@ public:
 
 PathDiagnosticClientFactory*
 clang::CreateHTMLDiagnosticClientFactory(const std::string& prefix,
-                                         Preprocessor* PP,
-                                         PreprocessorFactory*) {
+                                         Preprocessor* PP) {
   return new HTMLDiagnosticsFactory(prefix, PP);
 }
 
@@ -216,12 +214,6 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   // for example.
 
   if (PP) html::SyntaxHighlight(R, FID, *PP);
-
-  // FIXME: We eventually want to use PPF to create a fresh Preprocessor,
-  //  once we have worked out the bugs.
-  //
-  // if (PPF) html::HighlightMacros(R, FID, *PPF);
-  //
   if (PP) html::HighlightMacros(R, FID, *PP);
 
   // Get the full directory name of the analyzed file.

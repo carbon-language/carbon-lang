@@ -1195,67 +1195,48 @@ void InitializePreprocessorInitOptions(PreprocessorInitOptions &InitOpts) {
 }
 
 //===----------------------------------------------------------------------===//
-// Driver PreprocessorFactory - For lazily generating preprocessors ...
+// Preprocessor construction
 //===----------------------------------------------------------------------===//
 
-namespace {
-class VISIBILITY_HIDDEN DriverPreprocessorFactory : public PreprocessorFactory {
-  Diagnostic        &Diags;
-  const LangOptions &LangInfo;
-  TargetInfo        &Target;
-  SourceManager     &SourceMgr;
-  HeaderSearch      &HeaderInfo;
-
-public:
-  DriverPreprocessorFactory(Diagnostic &diags, const LangOptions &opts,
-                            TargetInfo &target, SourceManager &SM,
-                            HeaderSearch &Headers)
-  : Diags(diags), LangInfo(opts), Target(target),
-    SourceMgr(SM), HeaderInfo(Headers) {}
-
-
-  virtual ~DriverPreprocessorFactory() {}
-
-  virtual Preprocessor* CreatePreprocessor() {
-    llvm::OwningPtr<PTHManager> PTHMgr;
-
-    if (!TokenCache.empty() && !ImplicitIncludePTH.empty()) {
-      fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
-                      "options\n");
-      exit(1);
-    }
-
-    // Use PTH?
-    if (!TokenCache.empty() || !ImplicitIncludePTH.empty()) {
-      const std::string& x = TokenCache.empty() ? ImplicitIncludePTH:TokenCache;
-      PTHMgr.reset(PTHManager::Create(x, &Diags,
-                                      TokenCache.empty() ? Diagnostic::Error
-                                                        : Diagnostic::Warning));
-    }
-
-    if (Diags.hasErrorOccurred())
-      exit(1);
-
-    // Create the Preprocessor.
-    llvm::OwningPtr<Preprocessor> PP(new Preprocessor(Diags, LangInfo, Target,
-                                                      SourceMgr, HeaderInfo,
-                                                      PTHMgr.get()));
-
-    // Note that this is different then passing PTHMgr to Preprocessor's ctor.
-    // That argument is used as the IdentifierInfoLookup argument to
-    // IdentifierTable's ctor.
-    if (PTHMgr) {
-      PTHMgr->setPreprocessor(PP.get());
-      PP->setPTHManager(PTHMgr.take());
-    }
-
-    PreprocessorInitOptions InitOpts;
-    InitializePreprocessorInitOptions(InitOpts);
-    InitializePreprocessor(*PP, InitOpts);
-
-    return PP.take();
+static Preprocessor *
+CreatePreprocessor(Diagnostic &Diags,const LangOptions &LangInfo,
+                   TargetInfo &Target, SourceManager &SourceMgr,
+                   HeaderSearch &HeaderInfo) {
+  PTHManager *PTHMgr = 0;
+  if (!TokenCache.empty() && !ImplicitIncludePTH.empty()) {
+    fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
+            "options\n");
+    exit(1);
   }
-};
+
+  // Use PTH?
+  if (!TokenCache.empty() || !ImplicitIncludePTH.empty()) {
+    const std::string& x = TokenCache.empty() ? ImplicitIncludePTH:TokenCache;
+    PTHMgr = PTHManager::Create(x, &Diags,
+                                TokenCache.empty() ? Diagnostic::Error
+                                : Diagnostic::Warning);
+  }
+
+  if (Diags.hasErrorOccurred())
+    exit(1);
+
+  // Create the Preprocessor.
+  Preprocessor *PP = new Preprocessor(Diags, LangInfo, Target,
+                                      SourceMgr, HeaderInfo, PTHMgr);
+
+  // Note that this is different then passing PTHMgr to Preprocessor's ctor.
+  // That argument is used as the IdentifierInfoLookup argument to
+  // IdentifierTable's ctor.
+  if (PTHMgr) {
+    PTHMgr->setPreprocessor(PP);
+    PP->setPTHManager(PTHMgr);
+  }
+
+  PreprocessorInitOptions InitOpts;
+  InitializePreprocessorInitOptions(InitOpts);
+  InitializePreprocessor(*PP, InitOpts);
+
+  return PP;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1723,8 +1704,8 @@ static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
 
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
-static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
-                             const std::string &InFile, ProgActions PA,
+static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
+                             ProgActions PA,
                              const llvm::StringMap<bool> &Features,
                              llvm::LLVMContext& Context) {
   llvm::OwningPtr<llvm::raw_ostream> OS;
@@ -1749,11 +1730,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
   case EmitHTML:
     OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
-    Consumer.reset(CreateHTMLPrinter(OS.get(), PP.getDiagnostics(), &PP, &PPF));
+    Consumer.reset(CreateHTMLPrinter(OS.get(), PP));
     break;
 
   case RunAnalysis:
-    Consumer.reset(CreateAnalysisConsumer(PP.getDiagnostics(), &PP, &PPF,
+    Consumer.reset(CreateAnalysisConsumer(PP.getDiagnostics(), &PP,
                                           PP.getLangOptions(), OutputFile,
                                           ReadAnalyzerOptions()));
     break;
@@ -2284,10 +2265,9 @@ int main(int argc, char **argv) {
     InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo, Triple);
 
     // Set up the preprocessor with these options.
-    DriverPreprocessorFactory PPFactory(Diags, LangInfo, *Target,
-                                        *SourceMgr.get(), HeaderInfo);
-
-    llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
+    llvm::OwningPtr<Preprocessor> PP(CreatePreprocessor(Diags, LangInfo,
+                                                        *Target, *SourceMgr,
+                                                        HeaderInfo));
     if (!PP)
       continue;
 
@@ -2324,7 +2304,7 @@ int main(int argc, char **argv) {
       ((PathDiagnosticClient*)DiagClient.get())->SetPreprocessor(PP.get());
 
     // Process the source file.
-    ProcessInputFile(*PP, PPFactory, InFile, ProgAction, Features, Context);
+    ProcessInputFile(*PP, InFile, ProgAction, Features, Context);
 
     HeaderInfo.ClearFileInfo();
     DiagClient->setLangOptions(0);

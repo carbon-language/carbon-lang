@@ -52,12 +52,11 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 static PathDiagnosticClient*
-CreatePlistHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP,
-                            PreprocessorFactory* PPF) {
+CreatePlistHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP) {
   llvm::sys::Path F(prefix);
   PathDiagnosticClientFactory *PF =
-    CreateHTMLDiagnosticClientFactory(F.getDirname(), PP, PPF);
-  return CreatePlistDiagnosticClient(prefix, PP, PPF, PF);
+    CreateHTMLDiagnosticClientFactory(F.getDirname(), PP);
+  return CreatePlistDiagnosticClient(prefix, PP, PF);
 }
 
 //===----------------------------------------------------------------------===//
@@ -78,7 +77,6 @@ namespace {
     Diagnostic &Diags;
     ASTContext* Ctx;
     Preprocessor* PP;
-    PreprocessorFactory* PPF;
     const std::string OutDir;
     AnalyzerOptions Opts;
 
@@ -92,13 +90,11 @@ namespace {
     llvm::OwningPtr<AnalysisManager> Mgr;
 
     AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
-                     PreprocessorFactory* ppf,
                      const LangOptions& lopts,
                      const std::string& outdir,
                      const AnalyzerOptions& opts)
-      : LOpts(lopts), Diags(diags),
-        Ctx(0), PP(pp), PPF(ppf),
-        OutDir(outdir), Opts(opts), PD(0) {
+      : LOpts(lopts), Diags(diags), Ctx(0), PP(pp), OutDir(outdir),
+        Opts(opts), PD(0) {
       DigestAnalyzerOptions();
     }
 
@@ -108,7 +104,7 @@ namespace {
         switch (Opts.AnalysisDiagOpt) {
         default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
-          case PD_##NAME: PD = CREATEFN(OutDir, PP, PPF); break;
+          case PD_##NAME: PD = CREATEFN(OutDir, PP); break;
 #include "clang/Frontend/Analyses.def"
         }
       }
@@ -444,12 +440,11 @@ static void ActionInlineCall(AnalysisManager &mgr, Decl *D) {
 //===----------------------------------------------------------------------===//
 
 ASTConsumer* clang::CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
-                                           PreprocessorFactory* ppf,
                                            const LangOptions& lopts,
                                            const std::string& OutDir,
                                            const AnalyzerOptions& Opts) {
 
-  llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(diags, pp, ppf,
+  llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(diags, pp,
                                                            lopts, OutDir,
                                                            Opts));
 

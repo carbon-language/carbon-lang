@@ -30,7 +30,6 @@ class Diagnostic;
 class ASTConsumer;
 class IdentifierTable;
 class SourceManager;
-class PreprocessorFactory;
 class LangOptions;
 class Decl;
 class Stmt;

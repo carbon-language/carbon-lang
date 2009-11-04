@@ -831,14 +831,6 @@ public:
   void HandleComment(SourceRange Comment);
 };
 
-/// PreprocessorFactory - A generic factory interface for lazily creating
-///  Preprocessor objects on-demand when they are needed.
-class PreprocessorFactory {
-public:
-  virtual ~PreprocessorFactory();
-  virtual Preprocessor* CreatePreprocessor() = 0;
-};
-
 /// \brief Abstract base class that describes a handler that will receive
 /// source ranges for each of the comments encountered in the source file.
 class CommentHandler {

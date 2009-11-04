@@ -564,10 +564,3 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
   // Restore diagnostics object back to its own thing.
   PP.setDiagnostics(*OldDiags);
 }
-
-void html::HighlightMacros(Rewriter &R, FileID FID,
-                           PreprocessorFactory &PPF) {
-
-  llvm::OwningPtr<Preprocessor> PP(PPF.CreatePreprocessor());
-  HighlightMacros(R, FID, *PP);
-}

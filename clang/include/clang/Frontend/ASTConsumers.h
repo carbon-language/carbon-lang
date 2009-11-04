@@ -28,7 +28,6 @@ class ASTConsumer;
 class Diagnostic;
 class FileManager;
 class Preprocessor;
-class PreprocessorFactory;
 class CompileOptions;
 class LangOptions;
 
@@ -86,10 +85,11 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    llvm::raw_ostream *OS,
                                    llvm::LLVMContext& C);
 
-// HTML printer: uses the rewriter to convert source code to HTML with
-// syntax highlighting suitable for viewing in a web-browser.
-ASTConsumer* CreateHTMLPrinter(llvm::raw_ostream *OS, Diagnostic &D,
-                               Preprocessor *PP, PreprocessorFactory *PPF);
+/// CreateHTMLPrinter - Create an AST consumer which rewrites source code to
+/// HTML with syntax highlighting suitable for viewing in a web-browser.
+ASTConsumer *CreateHTMLPrinter(llvm::raw_ostream *OS, Preprocessor &PP,
+                               bool SyntaxHighlight = true,
+                               bool HighlightMacros = true);
 
 // PCH generator: generates a precompiled header file; this file can be
 // used later with the PCHReader (clang-cc option -include-pch)

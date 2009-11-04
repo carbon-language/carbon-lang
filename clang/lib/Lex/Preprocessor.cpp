@@ -43,8 +43,6 @@ using namespace clang;
 
 //===----------------------------------------------------------------------===//
 
-PreprocessorFactory::~PreprocessorFactory() {}
-
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            TargetInfo &target, SourceManager &SM,
                            HeaderSearch &Headers,
