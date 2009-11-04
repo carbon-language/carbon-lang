@@ -15,7 +15,7 @@ entry:
 
 bb.nph:                                           ; preds = %entry
 ; CHECK: BB#1
-; CHECK: ldr r{{[0-9]+}}, LCPI1_0
+; CHECK: ldr{{.*}} r{{[0-9]+}}, LCPI1_0
 ; CHECK: ldr{{.*}} r{{[0-9]+}}, LCPI1_1
   %.pre = load i32* @GV, align 4                  ; <i32> [#uses=1]
   br label %bb
