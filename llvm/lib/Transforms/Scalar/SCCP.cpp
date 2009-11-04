@@ -1280,9 +1280,10 @@ CallOverdefined:
       }
       
       if (const StructType *STy = dyn_cast<StructType>(AI->getType())) {
-        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-          mergeInValue(getStructValueState(AI, i), AI,
-                       getStructValueState(*CAI, i));
+        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+          LatticeVal CallArg = getStructValueState(*CAI, i);
+          mergeInValue(getStructValueState(AI, i), AI, CallArg);
+        }
       } else {
         mergeInValue(AI, getValueState(*CAI));
       }
