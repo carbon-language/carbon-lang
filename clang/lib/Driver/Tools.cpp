@@ -26,6 +26,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Process.h"
 
 #include "InputInfo.h"
 #include "ToolChains.h"
@@ -839,13 +840,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  // Pass -fmessage-length=.
+  if (Arg *A = Args.getLastArg(options::OPT_fmessage_length_EQ)) {
+    A->render(Args, CmdArgs);
+  } else {
+    // If -fmessage-length=N was not specified, determine whether this is a
+    // terminal and, if so, implicitly define -fmessage-length appropriately.
+    unsigned N = llvm::sys::Process::StandardErrColumns();
+    CmdArgs.push_back("-fmessage-length");
+    CmdArgs.push_back(Args.MakeArgString(llvm::Twine(N)));
+  }
+
   // Forward -f options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_ffreestanding);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_fgnu_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_flax_vector_conversions);
-  Args.AddLastArg(CmdArgs, options::OPT_fmessage_length_EQ);
   Args.AddLastArg(CmdArgs, options::OPT_fms_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_fnext_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_fno_caret_diagnostics);

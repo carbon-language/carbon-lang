@@ -2153,12 +2153,6 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
 
-  // If -fmessage-length=N was not specified, determine whether this
-  // is a terminal and, if so, implicitly define -fmessage-length
-  // appropriately.
-  if (MessageLength.getNumOccurrences() == 0)
-    MessageLength.setValue(llvm::sys::Process::StandardErrColumns());
-
   // Initialize the diagnostic options.
   DiagOpts.ShowColumn = !NoShowColumn;
   DiagOpts.ShowLocation = !NoShowLocation;
