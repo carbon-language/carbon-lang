@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_UNDEFARGCHECKER
+#define LLVM_CLANG_UNDEFARGCHECKER
+
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 
 namespace clang {
@@ -28,3 +31,4 @@ public:
 };
 
 }
+#endif
