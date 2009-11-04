@@ -16,8 +16,8 @@
 
 using namespace llvm;
 
-std::auto_ptr<IndexListEntry> SlotIndex::emptyKeyPtr(0),
-                              SlotIndex::tombstoneKeyPtr(0);
+std::auto_ptr<IndexListEntry> IndexListEntry::emptyKeyEntry,
+                              IndexListEntry::tombstoneKeyEntry;
 
 char SlotIndexes::ID = 0;
 static RegisterPass<SlotIndexes> X("slotindexes", "Slot index numbering");

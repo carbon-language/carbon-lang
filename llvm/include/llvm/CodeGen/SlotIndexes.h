@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -38,14 +39,35 @@ namespace llvm {
   class IndexListEntry {
   private:
 
+    static std::auto_ptr<IndexListEntry> emptyKeyEntry,
+                                         tombstoneKeyEntry;
+    typedef enum { EMPTY_KEY, TOMBSTONE_KEY } ReservedEntryType;
+    static const unsigned EMPTY_KEY_INDEX = ~0U & ~3U,
+                          TOMBSTONE_KEY_INDEX = ~0U & ~7U;
+
     IndexListEntry *next, *prev;
     MachineInstr *mi;
     unsigned index;
 
+    // This constructor is only to be used by getEmptyKeyEntry
+    // & getTombstoneKeyEntry. It sets index to the given
+    // value and mi to zero.
+    IndexListEntry(ReservedEntryType r) : mi(0) {
+      switch(r) {
+        case EMPTY_KEY: index = EMPTY_KEY_INDEX; break;
+        case TOMBSTONE_KEY: index = TOMBSTONE_KEY_INDEX; break;
+        default: assert(false && "Invalid value for constructor."); 
+      }
+    }
+
   public:
 
-    IndexListEntry(MachineInstr *mi, unsigned index)
-      : mi(mi), index(index) {}
+    IndexListEntry(MachineInstr *mi, unsigned index) : mi(mi), index(index) {
+      if (index == EMPTY_KEY_INDEX || index == TOMBSTONE_KEY_INDEX) {
+        llvm_report_error("Attempt to create invalid index. "
+                          "Available indexes may have been exhausted?.");
+      }
+    }
 
     MachineInstr* getInstr() const { return mi; }
     void setInstr(MachineInstr *mi) { this->mi = mi; }
@@ -60,6 +82,24 @@ namespace llvm {
     IndexListEntry* getPrev() { return prev; }
     const IndexListEntry* getPrev() const { return prev; }
     void setPrev(IndexListEntry *prev) { this->prev = prev; }
+
+    // This function returns the index list entry that is to be used for empty
+    // SlotIndex keys.
+    static IndexListEntry* getEmptyKeyEntry() {
+      if (emptyKeyEntry.get() == 0) {
+        emptyKeyEntry.reset(new IndexListEntry(EMPTY_KEY));
+      }
+      return emptyKeyEntry.get();
+    }
+
+    // This function returns the index list entry that is to be used for
+    // tombstone SlotIndex keys.
+    static IndexListEntry* getTombstoneKeyEntry() {
+      if (tombstoneKeyEntry.get() == 0) {
+        tombstoneKeyEntry.reset(new IndexListEntry(TOMBSTONE_KEY));
+      }
+      return tombstoneKeyEntry.get();
+    } 
   };
 
   // Specialize PointerLikeTypeTraits for IndexListEntry.
@@ -81,10 +121,6 @@ namespace llvm {
     friend class DenseMapInfo<SlotIndex>;
 
   private:
-
-    // FIXME: Is there any way to statically allocate these things and have
-    // them 8-byte aligned?
-    static std::auto_ptr<IndexListEntry> emptyKeyPtr, tombstoneKeyPtr;
     static const unsigned PHI_BIT = 1 << 2;
 
     PointerIntPair<IndexListEntry*, 3, unsigned> lie;
@@ -116,21 +152,11 @@ namespace llvm {
     enum Slot { LOAD, USE, DEF, STORE, NUM };
 
     static inline SlotIndex getEmptyKey() {
-      // FIXME: How do we guarantee these numbers don't get allocated to
-      // legit indexes?
-      if (emptyKeyPtr.get() == 0)
-        emptyKeyPtr.reset(new IndexListEntry(0, ~0U & ~3U));
-
-      return SlotIndex(emptyKeyPtr.get(), 0);
+      return SlotIndex(IndexListEntry::getEmptyKeyEntry(), 0);
     }
 
     static inline SlotIndex getTombstoneKey() {
-      // FIXME: How do we guarantee these numbers don't get allocated to
-      // legit indexes?
-      if (tombstoneKeyPtr.get() == 0)
-        tombstoneKeyPtr.reset(new IndexListEntry(0, ~0U & ~7U));
-
-      return SlotIndex(tombstoneKeyPtr.get(), 0);
+      return SlotIndex(IndexListEntry::getTombstoneKeyEntry(), 0);
     }
     
     /// Construct an invalid index.
