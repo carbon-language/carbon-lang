@@ -1321,13 +1321,6 @@ private:
                           UnqualifiedId &Result);
     
   //===--------------------------------------------------------------------===//
-  // C++ 13.5: Overloaded operators [over.oper]
-  // EndLoc, if non-NULL, is filled with the location of the last token of
-  // the ID.
-  OverloadedOperatorKind TryParseOperatorFunctionId(SourceLocation *EndLoc = 0);
-  TypeTy *ParseConversionFunctionId(SourceLocation *EndLoc = 0);
-
-  //===--------------------------------------------------------------------===//
   // C++ 14: Templates [temp]
   typedef llvm::SmallVector<DeclPtrTy, 4> TemplateParameterList;
 
