@@ -139,6 +139,41 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
   // automatically.
 }
 
+// FIXME: This is largely copy-paste from CheckerVisit().  Need to 
+// unify.
+void GRExprEngine::CheckerVisitBind(Stmt *S, ExplodedNodeSet &Dst,
+                                    ExplodedNodeSet &Src,
+                                    SVal location, SVal val, bool isPrevisit) {
+  
+  if (Checkers.empty()) {
+    Dst = Src;
+    return;
+  }
+  
+  ExplodedNodeSet Tmp;
+  ExplodedNodeSet *PrevSet = &Src;
+  
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
+  {
+    ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst 
+    : (PrevSet == &Tmp) ? &Src : &Tmp;
+    
+    CurrSet->clear();
+    void *tag = I->first;
+    Checker *checker = I->second;
+    
+    for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
+         NI != NE; ++NI)
+      checker->GR_VisitBind(*CurrSet, *Builder, *this, S, *NI, tag, location,
+                            val, isPrevisit);
+    
+    // Update which NodeSet is the current one.
+    PrevSet = CurrSet;
+  }
+  
+  // Don't autotransition.  The CheckerContext objects should do this
+  // automatically.
+}
 //===----------------------------------------------------------------------===//
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
@@ -1093,36 +1128,49 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
 void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
                             const GRState* state, SVal location, SVal Val,
                             bool atDeclInit) {
+  
+  
+  // Do a previsit of the bind.
+  ExplodedNodeSet CheckedSet, Src;
+  Src.Add(Pred);
+  CheckerVisitBind(Ex, CheckedSet, Src, location, Val, true);
+  
+  for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
+       I!=E; ++I) {
+    
+    if (Pred != *I)
+      state = GetState(*I);
+    
+    const GRState* newState = 0;
 
-  const GRState* newState = 0;
+    if (atDeclInit) {
+      const VarRegion *VR =
+        cast<VarRegion>(cast<loc::MemRegionVal>(location).getRegion());
 
-  if (atDeclInit) {
-    const VarRegion *VR =
-      cast<VarRegion>(cast<loc::MemRegionVal>(location).getRegion());
-
-    newState = state->bindDecl(VR, Val);
-  }
-  else {
-    if (location.isUnknown()) {
-      // We know that the new state will be the same as the old state since
-      // the location of the binding is "unknown".  Consequently, there
-      // is no reason to just create a new node.
-      newState = state;
+      newState = state->bindDecl(VR, Val);
     }
     else {
-      // We are binding to a value other than 'unknown'.  Perform the binding
-      // using the StoreManager.
-      newState = state->bindLoc(cast<Loc>(location), Val);
+      if (location.isUnknown()) {
+        // We know that the new state will be the same as the old state since
+        // the location of the binding is "unknown".  Consequently, there
+        // is no reason to just create a new node.
+        newState = state;
+      }
+      else {
+        // We are binding to a value other than 'unknown'.  Perform the binding
+        // using the StoreManager.
+        newState = state->bindLoc(cast<Loc>(location), Val);
+      }
     }
+
+    // The next thing to do is check if the GRTransferFuncs object wants to
+    // update the state based on the new binding.  If the GRTransferFunc object
+    // doesn't do anything, just auto-propagate the current state.
+    GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, Ex,
+                                    newState != state);
+
+    getTF().EvalBind(BuilderRef, location, Val);
   }
-
-  // The next thing to do is check if the GRTransferFuncs object wants to
-  // update the state based on the new binding.  If the GRTransferFunc object
-  // doesn't do anything, just auto-propagate the current state.
-  GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, Pred, newState, Ex,
-                                  newState != state);
-
-  getTF().EvalBind(BuilderRef, location, Val);
 }
 
 /// EvalStore - Handle the semantics of a store via an assignment.

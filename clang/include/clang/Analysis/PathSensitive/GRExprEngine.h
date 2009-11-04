@@ -411,6 +411,10 @@ protected:
   ///  at specific statements.
   void CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                     bool isPrevisit);
+  
+  void CheckerVisitBind(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
+                        SVal location, SVal val, bool isPrevisit);
+
 
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.

@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathSensitive/Checkers/DivZeroChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedArgChecker.h"
+#include "clang/Analysis/PathSensitive/Checkers/UndefinedAssignmentChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/AttrNonNullChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/VLASizeChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
@@ -476,12 +477,13 @@ void GRExprEngine::RegisterInternalChecks() {
   // their associated BugType will get registered with the BugReporter
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.
-  registerCheck<AttrNonNullChecker>(new AttrNonNullChecker());
-  registerCheck<UndefinedArgChecker>(new UndefinedArgChecker());
-  registerCheck<BadCallChecker>(new BadCallChecker());
-  registerCheck<DivZeroChecker>(new DivZeroChecker());
-  registerCheck<UndefDerefChecker>(new UndefDerefChecker());
-  registerCheck<NullDerefChecker>(new NullDerefChecker());
-  registerCheck<UndefSizedVLAChecker>(new UndefSizedVLAChecker());
-  registerCheck<ZeroSizedVLAChecker>(new ZeroSizedVLAChecker());
+  registerCheck(new AttrNonNullChecker());
+  registerCheck(new UndefinedArgChecker());
+  registerCheck(new UndefinedAssignmentChecker());
+  registerCheck(new BadCallChecker());
+  registerCheck(new DivZeroChecker());
+  registerCheck(new UndefDerefChecker());
+  registerCheck(new NullDerefChecker());
+  registerCheck(new UndefSizedVLAChecker());
+  registerCheck(new ZeroSizedVLAChecker());
 }
