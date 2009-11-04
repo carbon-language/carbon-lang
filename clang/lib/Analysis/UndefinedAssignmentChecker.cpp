@@ -42,6 +42,8 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
   EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName().c_str(), N);
   const Expr *ex = 0;
 
+  // FIXME: This check needs to be done on the expression doing the
+  // assignment, not the "store" expression.
   if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S))
     ex = B->getRHS();
   else if (const DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
