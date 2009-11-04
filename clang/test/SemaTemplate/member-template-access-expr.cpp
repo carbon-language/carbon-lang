@@ -93,3 +93,13 @@ void f(X4<X3<int> > x4i) {
   X2<sizeof(int)> x2;
   x4i.f<X2<sizeof(int)> >(x2);
 }
+
+template<typename T>
+struct X5 {
+  template<typename U>
+  void f();
+  
+  void g() {
+    this->f<T*>();
+  }
+};

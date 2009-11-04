@@ -2030,7 +2030,13 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
   QualType BaseType = BaseExpr->getType();
   if (BaseType->isDependentType()) {
-    // FIXME: member of the current instantiation
+    // If we have a pointer to a dependent type and are using the -> operator,
+    // the object type is the type that the pointer points to. We might still
+    // have enough information about that type to do something useful.
+    if (OpKind == tok::arrow)
+      if (const PointerType *Ptr = BaseType->getAs<PointerType>())
+        BaseType = Ptr->getPointeeType();
+    
     ObjectType = BaseType.getAsOpaquePtr();
     return move(Base);
   }
