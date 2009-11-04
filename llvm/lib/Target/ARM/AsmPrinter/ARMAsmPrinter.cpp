@@ -1346,6 +1346,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     printLabel(MI);
     return;
   case TargetInstrInfo::KILL:
+    printKill(MI);
     return;
   case TargetInstrInfo::INLINEASM:
     O << '\t';

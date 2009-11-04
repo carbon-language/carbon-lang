@@ -1590,6 +1590,17 @@ void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
     << TRI->getName(MI->getOperand(0).getReg());
 }
 
+void AsmPrinter::printKill(const MachineInstr *MI) const {
+  if (!VerboseAsm) return;
+  O.PadToColumn(MAI->getCommentColumn());
+  O << MAI->getCommentString() << " kill:";
+  for (unsigned n = 0, e = MI->getNumOperands(); n != e; ++n) {
+    const MachineOperand &op = MI->getOperand(n);
+    assert(op.isReg() && "KILL instruction must have only register operands");
+    O << ' ' << TRI->getName(op.getReg()) << (op.isDef() ? "<def>" : "<kill>");
+  }
+}
+
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
 void AsmPrinter::printLabel(const MachineInstr *MI) const {

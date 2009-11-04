@@ -412,6 +412,7 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     printImplicitDef(MI);
     return;
   case TargetInstrInfo::KILL:
+    printKill(MI);
     return;
   case X86::MOVPC32r: {
     MCInst TmpInst;
