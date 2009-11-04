@@ -605,7 +605,17 @@ public:
                                    const IdentifierInfo &II,
                                    QualType ObjectType);
 
-
+  /// \brief Build a new template name given a nested name specifier and the
+  /// overloaded operator name that is referred to as a template.
+  ///
+  /// By default, performs semantic analysis to determine whether the name can
+  /// be resolved to a specific template, then builds the appropriate kind of
+  /// template name. Subclasses may override this routine to provide different
+  /// behavior.
+  TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                   OverloadedOperatorKind Operator,
+                                   QualType ObjectType);
+  
   /// \brief Build a new compound statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -1575,9 +1585,14 @@ public:
     else if (OverloadedFunctionDecl *Ovl
                = Template.getAsOverloadedFunctionDecl())
       Name = Ovl->getDeclName();
-    else
-      Name = Template.getAsDependentTemplateName()->getName();
-
+    else {
+      DependentTemplateName *DTN = Template.getAsDependentTemplateName();
+      if (DTN->isIdentifier())
+        Name = DTN->getIdentifier();
+      else
+        Name = SemaRef.Context.DeclarationNames.getCXXOperatorName(
+                                                          DTN->getOperator());
+    }
       return SemaRef.BuildMemberReferenceExpr(/*Scope=*/0, move(Base),
                                               OperatorLoc, OpKind,
                                               TemplateNameLoc, Name, true,
@@ -1873,7 +1888,12 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
         ObjectType.isNull())
       return Name;
 
-    return getDerived().RebuildTemplateName(NNS, *DTN->getName(), ObjectType);
+    if (DTN->isIdentifier())
+      return getDerived().RebuildTemplateName(NNS, *DTN->getIdentifier(), 
+                                              ObjectType);
+    
+    return getDerived().RebuildTemplateName(NNS, DTN->getOperator(), 
+                                            ObjectType);
   }
 
   if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
@@ -4749,9 +4769,14 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
 
   // FIXME: This is an ugly hack, which forces the same template name to
   // be looked up multiple times. Yuck!
-  // FIXME: This also won't work for, e.g., x->template operator+<int>
-  TemplateName OrigTemplateName
-    = SemaRef.Context.getDependentTemplateName(0, Name.getAsIdentifierInfo());
+  TemporaryBase Rebase(*this, E->getMemberLoc(), DeclarationName());
+  TemplateName OrigTemplateName;
+  if (const IdentifierInfo *II = Name.getAsIdentifierInfo())
+    OrigTemplateName = SemaRef.Context.getDependentTemplateName(0, II);
+  else
+    OrigTemplateName 
+      = SemaRef.Context.getDependentTemplateName(0, 
+                                               Name.getCXXOverloadedOperator());
 
   TemplateName Template
     = getDerived().TransformTemplateName(OrigTemplateName,
@@ -5194,6 +5219,26 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
            .template getAsVal<TemplateName>();
 }
 
+template<typename Derived>
+TemplateName
+TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
+                                            OverloadedOperatorKind Operator,
+                                            QualType ObjectType) {
+  CXXScopeSpec SS;
+  SS.setRange(SourceRange(getDerived().getBaseLocation()));
+  SS.setScopeRep(Qualifier);
+  UnqualifiedId Name;
+  SourceLocation SymbolLocations[3]; // FIXME: Bogus location information.
+  Name.setOperatorFunctionId(/*FIXME:*/getDerived().getBaseLocation(),
+                             Operator, SymbolLocations);
+  return getSema().ActOnDependentTemplateName(
+                                       /*FIXME:*/getDerived().getBaseLocation(),
+                                              SS,
+                                              Name,
+                                              ObjectType.getAsOpaquePtr())
+           .template getAsVal<TemplateName>();
+}
+  
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,

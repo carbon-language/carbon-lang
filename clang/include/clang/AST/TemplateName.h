@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "clang/Basic/OperatorKinds.h"
 
 namespace llvm {
   class raw_ostream;
@@ -224,10 +225,24 @@ public:
 class DependentTemplateName : public llvm::FoldingSetNode {
   /// \brief The nested name specifier that qualifies the template
   /// name.
-  NestedNameSpecifier *Qualifier;
+  ///
+  /// The bit stored in this qualifier describes whether the \c Name field
+  /// is interpreted as an IdentifierInfo pointer (when clear) or as an
+  /// overloaded operator kind (when set).
+  llvm::PointerIntPair<NestedNameSpecifier *, 1, bool> Qualifier;
 
   /// \brief The dependent template name.
-  const IdentifierInfo *Name;
+  union {
+    /// \brief The identifier template name.
+    ///
+    /// Only valid when the bit on \c Qualifier is clear.
+    const IdentifierInfo *Identifier;
+    
+    /// \brief The overloaded operator name.
+    ///
+    /// Only valid when the bit on \c Qualifier is set.
+    OverloadedOperatorKind Operator;
+  };
 
   /// \brief The canonical template name to which this dependent
   /// template name refers.
@@ -240,30 +255,70 @@ class DependentTemplateName : public llvm::FoldingSetNode {
   friend class ASTContext;
 
   DependentTemplateName(NestedNameSpecifier *Qualifier,
-                        const IdentifierInfo *Name)
-    : Qualifier(Qualifier), Name(Name), CanonicalTemplateName(this) { }
+                        const IdentifierInfo *Identifier)
+    : Qualifier(Qualifier, false), Identifier(Identifier), 
+      CanonicalTemplateName(this) { }
 
   DependentTemplateName(NestedNameSpecifier *Qualifier,
-                        const IdentifierInfo *Name,
+                        const IdentifierInfo *Identifier,
                         TemplateName Canon)
-    : Qualifier(Qualifier), Name(Name), CanonicalTemplateName(Canon) { }
+    : Qualifier(Qualifier, false), Identifier(Identifier), 
+      CanonicalTemplateName(Canon) { }
 
+  DependentTemplateName(NestedNameSpecifier *Qualifier,
+                        OverloadedOperatorKind Operator)
+  : Qualifier(Qualifier, true), Operator(Operator), 
+    CanonicalTemplateName(this) { }
+  
+  DependentTemplateName(NestedNameSpecifier *Qualifier,
+                        OverloadedOperatorKind Operator,
+                        TemplateName Canon)
+  : Qualifier(Qualifier, true), Operator(Operator), 
+    CanonicalTemplateName(Canon) { }
+  
 public:
   /// \brief Return the nested name specifier that qualifies this name.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+  NestedNameSpecifier *getQualifier() const { return Qualifier.getPointer(); }
 
-  /// \brief Return the name to which this dependent template name
-  /// refers.
-  const IdentifierInfo *getName() const { return Name; }
+  /// \brief Determine whether this template name refers to an identifier.
+  bool isIdentifier() const { return !Qualifier.getInt(); }
 
+  /// \brief Returns the identifier to which this template name refers.
+  const IdentifierInfo *getIdentifier() const { 
+    assert(isIdentifier() && "Template name isn't an identifier?");
+    return Identifier;
+  }
+  
+  /// \brief Determine whether this template name refers to an overloaded
+  /// operator.
+  bool isOverloadedOperator() const { return Qualifier.getInt(); }
+  
+  /// \brief Return the overloaded operator to which this template name refers.
+  OverloadedOperatorKind getOperator() const { 
+    assert(isOverloadedOperator() &&
+           "Template name isn't an overloaded operator?");
+    return Operator; 
+  }
+  
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getQualifier(), getName());
+    if (isIdentifier())
+      Profile(ID, getQualifier(), getIdentifier());
+    else
+      Profile(ID, getQualifier(), getOperator());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
-                      const IdentifierInfo *Name) {
+                      const IdentifierInfo *Identifier) {
     ID.AddPointer(NNS);
-    ID.AddPointer(Name);
+    ID.AddBoolean(false);
+    ID.AddPointer(Identifier);
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
+                      OverloadedOperatorKind Operator) {
+    ID.AddPointer(NNS);
+    ID.AddBoolean(true);
+    ID.AddInteger(Operator);
   }
 };
 

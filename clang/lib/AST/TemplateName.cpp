@@ -56,7 +56,7 @@ void
 TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
                     bool SuppressNNS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
-    OS << Template->getIdentifier()->getName();
+    OS << Template->getNameAsString();
   else if (OverloadedFunctionDecl *Ovl
              = Storage.dyn_cast<OverloadedFunctionDecl *>())
     OS << Ovl->getNameAsString();
@@ -70,8 +70,11 @@ TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
     if (!SuppressNNS && DTN->getQualifier())
       DTN->getQualifier()->print(OS, Policy);
     OS << "template ";
-    // FIXME: Shouldn't we have a more general kind of name?
-    OS << DTN->getName()->getName();
+    
+    if (DTN->isIdentifier())
+      OS << DTN->getIdentifier()->getName();
+    else
+      OS << "operator " << getOperatorSpelling(DTN->getOperator());
   }
 }
 

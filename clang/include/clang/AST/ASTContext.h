@@ -16,6 +16,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/OperatorKinds.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
@@ -739,6 +740,8 @@ public:
 
   TemplateName getDependentTemplateName(NestedNameSpecifier *NNS,
                                         const IdentifierInfo *Name);
+  TemplateName getDependentTemplateName(NestedNameSpecifier *NNS,
+                                        OverloadedOperatorKind Operator);
 
   enum GetBuiltinTypeError {
     GE_None,              //< No error

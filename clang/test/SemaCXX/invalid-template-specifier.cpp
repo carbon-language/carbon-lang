@@ -8,5 +8,5 @@ const template basic_istream<char>; // expected-error {{expected unqualified-id}
 namespace S {}
 template <class X> class Y {
   void x() { S::template y<char>(1); } // expected-error {{does not refer to a template}} \
-                                       // expected-error {{no member named 'y'}}
+                                       // expected-error {{unqualified-id}}
 };

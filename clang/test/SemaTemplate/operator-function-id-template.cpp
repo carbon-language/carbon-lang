@@ -19,9 +19,10 @@ void test_op(A<int> a, int i) {
 
 template<typename T>
 void test_op_template(A<T> at, T x) {
-  // FIXME: Not yet implemented.
-  //  const A<T> &atr = at.template operator+<T>(x);
-  //  const A<T> &atr2 = at.A<T>::template operator+<T>(x);
+  const A<T> &atr = at.template operator+<T>(x);
+  const A<T> &atr2 = at.A::template operator+<T>(x);
+  // FIXME: unrelated template-name instantiation issue
+  //  const A<T> &atr3 = at.template A<T>::template operator+<T>(x);
 }
 
 template void test_op_template<float>(A<float>, float);

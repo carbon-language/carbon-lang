@@ -1218,6 +1218,9 @@ private:
                                     bool EnteringContext,
                                     TypeTy *ObjectType,
                                     UnqualifiedId &Id);
+  bool ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
+                                  TypeTy *ObjectType,
+                                  UnqualifiedId &Result);
   bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                           bool AllowDestructorName,
                           bool AllowConstructorName,
@@ -1274,6 +1277,7 @@ private:
 
   bool AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                const CXXScopeSpec *SS,
+                               UnqualifiedId &TemplateName,
                                SourceLocation TemplateKWLoc = SourceLocation(),
                                bool AllowTypeAnnotation = true);
   void AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS = 0);

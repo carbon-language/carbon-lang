@@ -381,3 +381,17 @@ SelectorTable::~SelectorTable() {
   delete &getSelectorTableImpl(Impl);
 }
 
+const char *clang::getOperatorSpelling(OverloadedOperatorKind Operator) {
+  switch (Operator) {
+  case OO_None:
+  case NUM_OVERLOADED_OPERATORS:
+    return 0;
+      
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+  case OO_##Name: return Spelling;
+#include "clang/Basic/OperatorKinds.def"
+  }
+  
+  return 0;
+}
+

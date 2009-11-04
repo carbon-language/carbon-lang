@@ -3662,6 +3662,36 @@ TemplateName ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
   return TemplateName(QTN);
 }
 
+/// \brief Retrieve the template name that represents a dependent
+/// template name such as \c MetaFun::template operator+.
+TemplateName 
+ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
+                                     OverloadedOperatorKind Operator) {
+  assert((!NNS || NNS->isDependent()) &&
+         "Nested name specifier must be dependent");
+  
+  llvm::FoldingSetNodeID ID;
+  DependentTemplateName::Profile(ID, NNS, Operator);
+  
+  void *InsertPos = 0;
+  DependentTemplateName *QTN =
+  DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
+  
+  if (QTN)
+    return TemplateName(QTN);
+  
+  NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
+  if (CanonNNS == NNS) {
+    QTN = new (*this,4) DependentTemplateName(NNS, Operator);
+  } else {
+    TemplateName Canon = getDependentTemplateName(CanonNNS, Operator);
+    QTN = new (*this,4) DependentTemplateName(NNS, Operator, Canon);
+  }
+  
+  DependentTemplateNames.InsertNode(QTN, InsertPos);
+  return TemplateName(QTN);
+}
+
 /// getFromTargetType - Given one of the integer types provided by
 /// TargetInfo, produce the corresponding type. The unsigned @p Type
 /// is actually a value of type @c TargetInfo::IntType.

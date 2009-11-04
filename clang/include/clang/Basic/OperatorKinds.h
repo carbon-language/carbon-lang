@@ -26,7 +26,10 @@ enum OverloadedOperatorKind {
   NUM_OVERLOADED_OPERATORS
 };
 
-
+/// \brief Retrieve the spelling of the given overloaded operator, without 
+/// the preceding "operator" keyword.
+const char *getOperatorSpelling(OverloadedOperatorKind Operator);
+  
 } // end namespace clang
 
 #endif

@@ -940,13 +940,16 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       if (TemplateNameKind TNK
             = Actions.isTemplateName(CurScope, SS, TemplateName, 
                                      /*ObjectType=*/0, EnteringContext,
-                                     Template))
-        if (AnnotateTemplateIdToken(Template, TNK, &SS)) {
+                                     Template)) {
+        // Consume the identifier.
+        ConsumeToken();
+        if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName)) {
           // If an unrecoverable error occurred, we need to return true here,
           // because the token stream is in a damaged state.  We may not return
           // a valid identifier.
           return Tok.isNot(tok::identifier);
         }
+      }
     }
 
     // The current token, which is either an identifier or a

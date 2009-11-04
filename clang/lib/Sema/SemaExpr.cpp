@@ -2498,8 +2498,13 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg Base,
       Name = ActualTemplate->getDeclName();
     else if (OverloadedFunctionDecl *Ovl = Template.getAsOverloadedFunctionDecl())
       Name = Ovl->getDeclName();
-    else
-      Name = Template.getAsDependentTemplateName()->getName();
+    else {
+      DependentTemplateName *DTN = Template.getAsDependentTemplateName();
+      if (DTN->isIdentifier())
+        Name = DTN->getIdentifier();
+      else
+        Name = Context.DeclarationNames.getCXXOperatorName(DTN->getOperator());
+    }
     
     // Translate the parser's template argument list in our AST format.
     ASTTemplateArgsPtr TemplateArgsPtr(*this,

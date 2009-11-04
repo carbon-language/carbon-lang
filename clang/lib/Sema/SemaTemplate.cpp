@@ -1405,6 +1405,10 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     return TemplateTy::make(Context.getDependentTemplateName(Qualifier, 
                                                              Name.Identifier));
     
+  case UnqualifiedId::IK_OperatorFunctionId:
+    return TemplateTy::make(Context.getDependentTemplateName(Qualifier,
+                                             Name.OperatorFunctionId.Operator));
+      
   default:
     break;
   }
