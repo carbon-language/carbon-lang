@@ -1378,6 +1378,8 @@ def err_alignof_incomplete_type : Error<
   "invalid application of '__alignof' to an incomplete type %0">;
 def err_sizeof_alignof_bitfield : Error<
   "invalid application of '%select{sizeof|__alignof}0' to bit-field">;
+def err_offsetof_incomplete_type : Error<
+  "offsetof of incomplete type %0">;
 def err_offsetof_record_type : Error<
   "offsetof requires struct, union, or class type, %0 invalid">;
 def err_offsetof_array_type : Error<"offsetof requires array type, %0 invalid">;

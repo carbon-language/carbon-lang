@@ -48,3 +48,9 @@ int a[__builtin_offsetof(struct sockaddr_un, sun_path[len+1])];
 // PR4079
 union x {struct {int x;};};
 int x[__builtin_offsetof(union x, x)];
+
+// rdar://problem/7222956
+struct incomplete; // expected-note 2 {{forward declaration of 'struct incomplete'}}
+int test1[__builtin_offsetof(struct incomplete, foo)]; // expected-error {{offsetof of incomplete type 'struct incomplete'}}
+
+int test1[__builtin_offsetof(struct incomplete[10], [4].foo)]; // expected-error {{array has incomplete element type 'struct incomplete'}}

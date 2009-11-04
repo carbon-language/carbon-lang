@@ -5707,6 +5707,10 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
   if (!Dependent) {
     bool DidWarnAboutNonPOD = false;
 
+    if (RequireCompleteType(TypeLoc, Res->getType(),
+                            diag::err_offsetof_incomplete_type))
+      return ExprError();
+
     // FIXME: Dependent case loses a lot of information here. And probably
     // leaks like a sieve.
     for (unsigned i = 0; i != NumComponents; ++i) {
