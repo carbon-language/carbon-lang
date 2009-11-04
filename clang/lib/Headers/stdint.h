@@ -42,28 +42,23 @@
  * Since we only support pow-2 targets, these map directly to exact width types.
  */
 
-#ifndef __int8_t_defined  /* glibc does weird things with sys/types.h */
-#define __int8_t_defined
-typedef signed __INT8_TYPE__ int8_t;
-typedef __INT16_TYPE__ int16_t;
-typedef __INT32_TYPE__ int32_t;
+/* Some 16-bit targets do not have a 64-bit datatype.  Only define the 64-bit
+ * typedefs if there is something to typedef them to.
+ */
 #ifdef __INT64_TYPE__
+#ifndef __int8_t_defined  /* glibc does weird things with sys/types.h */
 typedef __INT64_TYPE__ int64_t;
 #endif
+typedef unsigned __INT64_TYPE__ uint64_t;
+typedef int64_t   int_least64_t;
+typedef uint64_t uint_least64_t;
+typedef int64_t   int_fast64_t;
+typedef uint64_t uint_fast64_t;
 #endif
 
-typedef unsigned __INT8_TYPE__ uint8_t;
-typedef int8_t     int_least8_t;
-typedef uint8_t   uint_least8_t;
-typedef int8_t     int_fast8_t;
-typedef uint8_t   uint_fast8_t;
-
-typedef unsigned __INT16_TYPE__ uint16_t;
-typedef int16_t   int_least16_t;
-typedef uint16_t uint_least16_t;
-typedef int16_t   int_fast16_t;
-typedef uint16_t uint_fast16_t;
-
+#ifndef __int8_t_defined  /* glibc does weird things with sys/types.h */
+typedef __INT32_TYPE__ int32_t;
+#endif
 #ifndef __uint32_t_defined  /* more glibc compatibility */
 #define __uint32_t_defined
 typedef unsigned __INT32_TYPE__ uint32_t;
@@ -73,17 +68,30 @@ typedef uint32_t uint_least32_t;
 typedef int32_t   int_fast32_t;
 typedef uint32_t uint_fast32_t;
 
-/* Some 16-bit targets do not have a 64-bit datatype.  Only define the 64-bit
- * typedefs if there is something to typedef them to.
- */
-#ifdef __INT64_TYPE__
-typedef unsigned __INT64_TYPE__ uint64_t;
-typedef int64_t   int_least64_t;
-typedef uint64_t uint_least64_t;
-typedef int64_t   int_fast64_t;
-typedef uint64_t uint_fast64_t;
-#endif
 
+#ifndef __int8_t_defined  /* glibc does weird things with sys/types.h */
+typedef __INT16_TYPE__ int16_t;
+#endif
+typedef unsigned __INT16_TYPE__ uint16_t;
+typedef int16_t   int_least16_t;
+typedef uint16_t uint_least16_t;
+typedef int16_t   int_fast16_t;
+typedef uint16_t uint_fast16_t;
+
+
+#ifndef __int8_t_defined  /* glibc does weird things with sys/types.h */
+typedef signed __INT8_TYPE__ int8_t;
+#endif
+typedef unsigned __INT8_TYPE__ uint8_t;
+typedef int8_t     int_least8_t;
+typedef uint8_t   uint_least8_t;
+typedef int8_t     int_fast8_t;
+typedef uint8_t   uint_fast8_t;
+
+/* prevent glibc sys/types.h from defining conflicting types */
+#ifndef __int8_t_defined  
+# define __int8_t_defined
+#endif /* __int8_t_defined */
 
 /* C99 7.18.1.4 Integer types capable of holding object pointers.
  */
@@ -98,6 +106,25 @@ typedef unsigned __INTPTR_TYPE__ uintptr_t;
 typedef __INTMAX_TYPE__   intmax_t;
 typedef __UINTMAX_TYPE__ uintmax_t;
 
+/* C99 7.18.4 Macros for minimum-width integer constants.
+ *
+ * Note that C++ should not check __STDC_CONSTANT_MACROS here, contrary to the
+ * claims of the C standard (see C++ 18.3.1p2, [cstdint.syn]).
+ */
+
+/* Only define the 64-bit size macros if we have 64-bit support. */
+#ifdef __INT64_TYPE__
+#define INT64_C(v)  (v##LL)
+#define UINT64_C(v) (v##ULL)
+#endif
+
+#define INT32_C(v)  (v)
+#define UINT32_C(v) (v##U)
+#define INT16_C(v)  (v)
+#define UINT16_C(v) (v##U)
+#define INT8_C(v)   (v)
+#define UINT8_C(v)  (v##U)
+
 /* C99 7.18.2.1 Limits of exact-width integer types. 
  * Fixed sized values have fixed size max/min.
  * C99 7.18.2.2 Limits of minimum-width integer types.
@@ -107,36 +134,6 @@ typedef __UINTMAX_TYPE__ uintmax_t;
  * Note that C++ should not check __STDC_LIMIT_MACROS here, contrary to the
  * claims of the C standard (see C++ 18.3.1p2, [cstdint.syn]).
  */
-
-#define INT8_MAX    127
-#define INT8_MIN  (-128)
-#define UINT8_MAX   255
-#define INT_LEAST8_MIN   INT8_MIN
-#define INT_LEAST8_MAX   INT8_MAX
-#define UINT_LEAST8_MAX UINT8_MAX
-#define INT_FAST8_MIN    INT8_MIN
-#define INT_FAST8_MAX    INT8_MAX
-#define UINT_FAST8_MAX  UINT8_MAX
-
-#define INT16_MAX    32767
-#define INT16_MIN  (-32768)
-#define UINT16_MAX   65535
-#define INT_LEAST16_MIN   INT16_MIN
-#define INT_LEAST16_MAX   INT16_MAX
-#define UINT_LEAST16_MAX UINT16_MAX
-#define INT_FAST16_MIN    INT16_MIN
-#define INT_FAST16_MAX    INT16_MAX
-#define UINT_FAST16_MAX  UINT16_MAX
-
-#define INT32_MAX         2147483647
-#define INT32_MIN        (-2147483647-1)
-#define UINT32_MAX        4294967295U
-#define INT_LEAST32_MIN  INT32_MIN
-#define INT_LEAST32_MAX  INT32_MAX
-#define UINT_LEAST32_MAX UINT32_MAX
-#define INT_FAST32_MIN   INT32_MIN
-#define INT_FAST32_MAX   INT32_MAX
-#define UINT_FAST32_MAX  UINT32_MAX
 
 /* If we do not have 64-bit support, don't define the 64-bit size macros. */
 #ifdef __INT64_TYPE__
@@ -150,6 +147,36 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #define INT_FAST64_MAX    INT64_MAX
 #define UINT_FAST64_MAX  UINT64_MAX
 #endif
+
+#define INT32_MAX         2147483647
+#define INT32_MIN        (-2147483647-1)
+#define UINT32_MAX        4294967295U
+#define INT_LEAST32_MIN  INT32_MIN
+#define INT_LEAST32_MAX  INT32_MAX
+#define UINT_LEAST32_MAX UINT32_MAX
+#define INT_FAST32_MIN   INT32_MIN
+#define INT_FAST32_MAX   INT32_MAX
+#define UINT_FAST32_MAX  UINT32_MAX
+
+#define INT16_MAX    32767
+#define INT16_MIN  (-32768)
+#define UINT16_MAX   65535
+#define INT_LEAST16_MIN   INT16_MIN
+#define INT_LEAST16_MAX   INT16_MAX
+#define UINT_LEAST16_MAX UINT16_MAX
+#define INT_FAST16_MIN    INT16_MIN
+#define INT_FAST16_MAX    INT16_MAX
+#define UINT_FAST16_MAX  UINT16_MAX
+
+#define INT8_MAX    127
+#define INT8_MIN  (-128)
+#define UINT8_MAX   255
+#define INT_LEAST8_MIN   INT8_MIN
+#define INT_LEAST8_MAX   INT8_MAX
+#define UINT_LEAST8_MAX UINT8_MAX
+#define INT_FAST8_MIN    INT8_MIN
+#define INT_FAST8_MAX    INT8_MAX
+#define UINT_FAST8_MAX  UINT8_MAX
 
 /* C99 7.18.2.4 Limits of integer types capable of holding object pointers. */
 /* C99 7.18.3 Limits of other integer types. */
@@ -204,25 +231,6 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #endif
 #ifndef WCHAR_MIN
 #define WCHAR_MIN (-__WCHAR_MAX__-1)
-#endif
-
-/* C99 7.18.4 Macros for minimum-width integer constants.
- *
- * Note that C++ should not check __STDC_CONSTANT_MACROS here, contrary to the
- * claims of the C standard (see C++ 18.3.1p2, [cstdint.syn]).
- */
-
-#define INT8_C(v)   (v)
-#define UINT8_C(v)  (v##U)
-#define INT16_C(v)  (v)
-#define UINT16_C(v) (v##U)
-#define INT32_C(v)  (v)
-#define UINT32_C(v) (v##U)
-
-/* Only define the 64-bit size macros if we have 64-bit support. */
-#ifdef __INT64_TYPE__
-#define INT64_C(v)  (v##LL)
-#define UINT64_C(v) (v##ULL)
 #endif
 
 /* 7.18.4.2 Macros for greatest-width integer constants. */
