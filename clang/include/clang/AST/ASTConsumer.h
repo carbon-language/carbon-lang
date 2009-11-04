@@ -38,17 +38,17 @@ public:
   virtual ~ASTConsumer() {}
 
   /// Initialize - This is called to initialize the consumer, providing the
-  /// ASTContext and the Action.
+  /// ASTContext.
   virtual void Initialize(ASTContext &Context) {}
 
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
-  ///  called by the parser to process every top-level Decl*. Note that D can
-  ///  be the head of a chain of Decls (e.g. for `int a, b` the chain will have
-  ///  two elements). Use Decl::getNextDeclarator() to walk the chain.
+  /// called by the parser to process every top-level Decl*. Note that D can be
+  /// the head of a chain of Decls (e.g. for `int a, b` the chain will have two
+  /// elements). Use Decl::getNextDeclarator() to walk the chain.
   virtual void HandleTopLevelDecl(DeclGroupRef D);
 
   /// HandleTranslationUnit - This method is called when the ASTs for entire
-  ///  translation unit have been parsed.
+  /// translation unit have been parsed.
   virtual void HandleTranslationUnit(ASTContext &Ctx) {}
 
   /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
@@ -57,9 +57,9 @@ public:
   /// can be defined in declspecs).
   virtual void HandleTagDeclDefinition(TagDecl *D) {}
 
-  /// \brief Callback invoked at the end of a translation unit to
-  /// notify the consumer that the given tentative definition should
-  /// be completed.
+  /// CompleteTentativeDefinition - Callback invoked at the end of a translation
+  /// unit to notify the consumer that the given tentative definition should be
+  /// completed.
   ///
   /// The variable declaration itself will be a tentative
   /// definition. If it had an incomplete array type, its type will
@@ -69,8 +69,7 @@ public:
   virtual void CompleteTentativeDefinition(VarDecl *D) {}
 
   /// PrintStats - If desired, print any statistics.
-  virtual void PrintStats() {
-  }
+  virtual void PrintStats() {}
 
   // Support isa/cast/dyn_cast
   static bool classof(const ASTConsumer *) { return true; }
