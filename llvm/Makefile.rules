@@ -312,16 +312,6 @@ endif
 #--------------------------------------------------------------------
 
 CPP.Defines :=
-# OPTIMIZE_OPTION - The optimization level option we want to build LLVM with
-# this can be overridden on the make command line.
-ifndef OPTIMIZE_OPTION
-  ifneq ($(HOST_OS),MingW)
-    OPTIMIZE_OPTION := -O3
-  else
-    OPTIMIZE_OPTION := -O2
-  endif
-endif
-
 ifeq ($(ENABLE_OPTIMIZED),1)
   BuildMode := Release
   # Don't use -fomit-frame-pointer on Darwin or FreeBSD.

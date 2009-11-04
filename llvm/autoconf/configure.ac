@@ -607,6 +607,23 @@ if test -n "$LLVMGXX" && test -z "$LLVMGCC"; then
    AC_MSG_ERROR([Invalid llvm-gcc. Use --with-llvmgcc when --with-llvmgxx is used]);
 fi
 
+dnl Override the option to use for optimized builds.
+AC_ARG_WITH(optimize-option,
+  AS_HELP_STRING([--with-optimize-option],
+                 [Select the compiler options to use for optimized builds]),,
+                 withval=default)
+AC_MSG_CHECKING([optimization flags])
+case "$withval" in
+  default)
+    case "$llvm_cv_os_type" in
+    MingW) optimize_option=-O3 ;;
+    *)     optimize_option=-O2 ;;
+    esac ;;
+  *) optimize_option="$withval" ;;
+esac
+AC_SUBST(OPTIMIZE_OPTION,$optimize_option)
+AC_MSG_RESULT([$optimize_option])
+
 dnl Specify extra build options
 AC_ARG_WITH(extra-options,
   AS_HELP_STRING([--with-extra-options],
