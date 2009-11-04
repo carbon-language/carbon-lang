@@ -70,7 +70,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
-#include "llvm/System/Process.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetSelect.h"
@@ -284,10 +283,9 @@ MessageLength("fmessage-length",
               llvm::cl::value_desc("N"));
 
 static llvm::cl::opt<bool>
-NoColorDiagnostic("fno-color-diagnostics",
-                  llvm::cl::desc("Don't use colors when showing diagnostics "
-                             "(automatically turned off if output is not a "
-                             "terminal)."));
+PrintColorDiagnostic("fcolor-diagnostics",
+                     llvm::cl::desc("Use colors in diagnostics"));
+
 //===----------------------------------------------------------------------===//
 // C++ Visualization.
 //===----------------------------------------------------------------------===//
@@ -2160,8 +2158,7 @@ int main(int argc, char **argv) {
   DiagOpts.ShowFixits = !NoDiagnosticsFixIt;
   DiagOpts.ShowSourceRanges = PrintSourceRangeInfo;
   DiagOpts.ShowOptionNames = PrintDiagnosticOption;
-  DiagOpts.ShowColors = (!NoColorDiagnostic &&
-                         llvm::sys::Process::StandardErrHasColors());
+  DiagOpts.ShowColors = PrintColorDiagnostic;
   DiagOpts.MessageLength = MessageLength;
 
   // Create the diagnostic client for reporting errors or for
