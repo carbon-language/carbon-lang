@@ -514,6 +514,7 @@ needsStackRealignment(const MachineFunction &MF) const {
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   return (RealignStack &&
           !AFI->isThumb1OnlyFunction() &&
+          AFI->hasStackFrame() &&
           (MFI->getMaxAlignment() > StackAlign) &&
           !MFI->hasVarSizedObjects());
 }
