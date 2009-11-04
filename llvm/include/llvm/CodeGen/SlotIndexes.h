@@ -36,8 +36,6 @@ namespace llvm {
   /// SlotIndex & SlotIndexes classes for the public interface to this
   /// information.
   class IndexListEntry {
-    friend class SlotIndex;
-
   private:
 
     IndexListEntry *next, *prev;
