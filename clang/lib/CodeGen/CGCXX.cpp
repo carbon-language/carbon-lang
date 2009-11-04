@@ -779,9 +779,17 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 
   QualType ArgType = MD->getThisType(getContext());
   llvm::Value *Arg = Builder.CreateLoad(LocalDeclMap[ThisDecl], "this");
-  if (nv_t || v_t)
+  if (nv_t || v_t) {
     // Do the this adjustment.
+    const llvm::Type *OrigTy = Callee->getType();
     Arg = DynamicTypeAdjust(Arg, nv_t, v_t);
+    if (nv_r || v_r) {
+      Callee = CGM.BuildCovariantThunk(MD, Extern, 0, 0, nv_r, v_r);
+      Callee = Builder.CreateBitCast(Callee, OrigTy);
+      nv_r = v_r = 0;
+    }
+  }    
+
   CallArgs.push_back(std::make_pair(RValue::get(Arg), ArgType));
 
   for (FunctionDecl::param_const_iterator i = MD->param_begin(),
@@ -795,7 +803,6 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
     CallArgs.push_back(std::make_pair(EmitCallArg(Arg, ArgType), ArgType));
   }
 
-  // FIXME: be sure to call the right function when we thunk to a thunk
   RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
                        Callee, CallArgs, MD);
   if (nv_r || v_r) {

@@ -93,10 +93,10 @@ int main() {
 
 // FIXME: This is the wrong thunk, but until these issues are fixed, better
 // than nothing.
-// CHECK-LP64:     __ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev27:
-// CHECK-LP64-NEXT:Leh_func_begin33:
+// CHECK-LP64:     __ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev:
+// CHECK-LP64-NEXT:Leh_func_begin43:
 // CHECK-LP64-NEXT:    subq    $24, %rsp
-// CHECK-LP64-NEXT:Llabel33:
+// CHECK-LP64-NEXT:Llabel43:
 // CHECK-LP64-NEXT:    movq    %rdi, %rax
 // CHECK-LP64-NEXT:    movq    %rax, 8(%rsp)
 // CHECK-LP64-NEXT:    movq    8(%rsp), %rax
@@ -107,6 +107,20 @@ int main() {
 // CHECK-LP64-NEXT:    movq    -72(%rax), %rax
 // CHECK-LP64-NEXT:    addq    %rax, %rcx
 // CHECK-LP64-NEXT:    movq    %rcx, %rax
+// CHECK-LP64-NEXT:    movq    %rax, %rdi
+// CHECK-LP64-NEXT:    call    __ZTch0_v16_n32_N8test16_D4foo1Ev
+// CHECK-LP64-NEXT:    movq    %rax, 16(%rsp)
+// CHECK-LP64-NEXT:    movq    16(%rsp), %rax
+// CHECK-LP64-NEXT:    addq    $24, %rsp
+// CHECK-LP64-NEXT:    ret
+
+// CHECK-LP64:     __ZTch0_v16_n32_N8test16_D4foo1Ev:
+// CHECK-LP64-NEXT:Leh_func_begin44:
+// CHECK-LP64-NEXT:    subq    $24, %rsp
+// CHECK-LP64-NEXT:Llabel44:
+// CHECK-LP64-NEXT:    movq    %rdi, %rax
+// CHECK-LP64-NEXT:    movq    %rax, 8(%rsp)
+// CHECK-LP64-NEXT:    movq    8(%rsp), %rax
 // CHECK-LP64-NEXT:    movq    %rax, %rdi
 // CHECK-LP64-NEXT:    call    __ZN8test16_D4foo1Ev
 // CHECK-LP64-NEXT:    movq    %rax, %rcx
