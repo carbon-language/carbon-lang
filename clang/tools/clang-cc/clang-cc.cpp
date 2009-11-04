@@ -1989,7 +1989,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
              CreateCodeCompleter, CreateCodeCompleterData);
   }
 
-  if (PA == RunPreprocessorOnly) {    // Just lex as fast as we can, no output.
+  // Perform post processing actions and actions which don't use a consumer.
+  switch (PA) {
+  default: break;
+
+  case RunPreprocessorOnly: {    // Just lex as fast as we can, no output.
     llvm::TimeRegion Timer(ClangFrontendTimer);
     Token Tok;
     // Start parsing the specified input file.
@@ -1998,11 +2002,17 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       PP.Lex(Tok);
     } while (Tok.isNot(tok::eof));
     ClearSourceMgr = true;
-  } else if (PA == ParseNoop) {                  // -parse-noop
+    break;
+  }
+
+  case ParseNoop: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
     ParseFile(PP, new MinimalAction(PP));
     ClearSourceMgr = true;
-  } else if (PA == PrintPreprocessedInput){  // -E mode.
+    break;
+  }
+
+  case PrintPreprocessedInput: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
     if (DumpMacros)
       DoPrintMacros(PP, OS.get());
@@ -2011,6 +2021,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                EnableMacroCommentOutput,
                                DisableLineMarkers, DumpDefines);
     ClearSourceMgr = true;
+  }
+
   }
 
   if (FixItRewrite)
