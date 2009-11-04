@@ -1251,8 +1251,7 @@ public:
 
     PreprocessorInitOptions InitOpts;
     InitializePreprocessorInitOptions(InitOpts);
-    if (InitializePreprocessor(*PP, InitOpts))
-      return 0;
+    InitializePreprocessor(*PP, InitOpts);
 
     return PP.take();
   }

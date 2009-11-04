@@ -442,7 +442,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file. This returns true on error.
 ///
-bool clang::InitializePreprocessor(Preprocessor &PP,
+void clang::InitializePreprocessor(Preprocessor &PP,
                                    const PreprocessorInitOptions &InitOpts) {
   std::vector<char> PredefineBuffer;
 
@@ -488,7 +488,4 @@ bool clang::InitializePreprocessor(Preprocessor &PP,
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
   PP.setPredefines(&PredefineBuffer[0]);
-
-  // Once we've read this, we're done.
-  return false;
 }
