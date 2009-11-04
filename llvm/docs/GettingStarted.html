@@ -1154,7 +1154,7 @@ first command may not be required if you are already using the module):</p>
 <div class="doc_code">
 <pre>
 $ mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
-$ echo ':llvm:M::llvm::/path/to/lli:' &gt; /proc/sys/fs/binfmt_misc/register
+$ echo ':llvm:M::BC::/path/to/lli:' &gt; /proc/sys/fs/binfmt_misc/register
 $ chmod u+x hello.bc   (if needed)
 $ ./hello.bc
 </pre>
