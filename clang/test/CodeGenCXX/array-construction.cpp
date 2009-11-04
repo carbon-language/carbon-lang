@@ -17,12 +17,9 @@ public:
   int i;
   float f;
 
-/**
-  NYI
   ~xpto() {
     printf("xpto::~xpto()\n");
   }
-*/
 };
 
 int main() {

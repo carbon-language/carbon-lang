@@ -665,8 +665,9 @@ llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {
   return EmitLValue(E).getAddress();
 }
 
-void CodeGenFunction::PushCleanupBlock(llvm::BasicBlock *CleanupBlock) {
-  CleanupEntries.push_back(CleanupEntry(CleanupBlock));
+void CodeGenFunction::PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock,
+                                       llvm::BasicBlock *CleanupExitBlock) {
+  CleanupEntries.push_back(CleanupEntry(CleanupEntryBlock, CleanupExitBlock));
 }
 
 void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize) {
@@ -680,7 +681,7 @@ void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize) {
 CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
   CleanupEntry &CE = CleanupEntries.back();
 
-  llvm::BasicBlock *CleanupBlock = CE.CleanupBlock;
+  llvm::BasicBlock *CleanupEntryBlock = CE.CleanupEntryBlock;
 
   std::vector<llvm::BasicBlock *> Blocks;
   std::swap(Blocks, CE.Blocks);
@@ -711,10 +712,11 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
     }
   }
 
-  llvm::BasicBlock *SwitchBlock = 0;
+  llvm::BasicBlock *SwitchBlock = CE.CleanupExitBlock;
   llvm::BasicBlock *EndBlock = 0;
   if (!BranchFixups.empty()) {
-    SwitchBlock = createBasicBlock("cleanup.switch");
+    if (!SwitchBlock)
+      SwitchBlock = createBasicBlock("cleanup.switch");
     EndBlock = createBasicBlock("cleanup.end");
 
     llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
@@ -745,7 +747,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
       llvm::BasicBlock *Dest = BI->getSuccessor(0);
 
       // Fixup the branch instruction to point to the cleanup block.
-      BI->setSuccessor(0, CleanupBlock);
+      BI->setSuccessor(0, CleanupEntryBlock);
 
       if (CleanupEntries.empty()) {
         llvm::ConstantInt *ID;
@@ -802,7 +804,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
     BlockScopes.erase(Blocks[i]);
   }
 
-  return CleanupBlockInfo(CleanupBlock, SwitchBlock, EndBlock);
+  return CleanupBlockInfo(CleanupEntryBlock, SwitchBlock, EndBlock);
 }
 
 void CodeGenFunction::EmitCleanupBlock() {

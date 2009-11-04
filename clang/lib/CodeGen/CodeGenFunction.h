@@ -108,11 +108,12 @@ public:
 
   /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
   /// passed in block as the cleanup block.
-  void PushCleanupBlock(llvm::BasicBlock *CleanupBlock);
+  void PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock,
+                        llvm::BasicBlock *CleanupExitBlock = 0);
 
   /// CleanupBlockInfo - A struct representing a popped cleanup block.
   struct CleanupBlockInfo {
-    /// CleanupBlock - the cleanup block
+    /// CleanupEntryBlock - the cleanup entry block
     llvm::BasicBlock *CleanupBlock;
 
     /// SwitchBlock - the block (if any) containing the switch instruction used
@@ -138,17 +139,24 @@ public:
   class CleanupScope {
     CodeGenFunction& CGF;
     llvm::BasicBlock *CurBB;
-    llvm::BasicBlock *CleanupBB;
-
+    llvm::BasicBlock *CleanupEntryBB;
+    llvm::BasicBlock *CleanupExitBB;
+    
   public:
     CleanupScope(CodeGenFunction &cgf)
-      : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()) {
-      CleanupBB = CGF.createBasicBlock("cleanup");
-      CGF.Builder.SetInsertPoint(CleanupBB);
+      : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()),
+      CleanupEntryBB(CGF.createBasicBlock("cleanup")), CleanupExitBB(0) {
+      CGF.Builder.SetInsertPoint(CleanupEntryBB);
     }
 
+    llvm::BasicBlock *getCleanupExitBlock() {
+      if (!CleanupExitBB)
+        CleanupExitBB = CGF.createBasicBlock("cleanup.exit");
+      return CleanupExitBB;
+    }
+    
     ~CleanupScope() {
-      CGF.PushCleanupBlock(CleanupBB);
+      CGF.PushCleanupBlock(CleanupEntryBB, CleanupExitBB);
       // FIXME: This is silly, move this into the builder.
       if (CurBB)
         CGF.Builder.SetInsertPoint(CurBB);
@@ -250,9 +258,12 @@ private:
   bool DidCallStackSave;
 
   struct CleanupEntry {
-    /// CleanupBlock - The block of code that does the actual cleanup.
-    llvm::BasicBlock *CleanupBlock;
+    /// CleanupEntryBlock - The block of code that does the actual cleanup.
+    llvm::BasicBlock *CleanupEntryBlock;
 
+    /// CleanupExitBlock - The cleanup exit block.
+    llvm::BasicBlock *CleanupExitBlock;
+    
     /// Blocks - Basic blocks that were emitted in the current cleanup scope.
     std::vector<llvm::BasicBlock *> Blocks;
 
@@ -260,8 +271,10 @@ private:
     /// inserted into the current function yet.
     std::vector<llvm::BranchInst *> BranchFixups;
 
-    explicit CleanupEntry(llvm::BasicBlock *cb)
-      : CleanupBlock(cb) {}
+    explicit CleanupEntry(llvm::BasicBlock *CleanupEntryBlock,
+                          llvm::BasicBlock *CleanupExitBlock)
+      : CleanupEntryBlock(CleanupEntryBlock), 
+      CleanupExitBlock(CleanupExitBlock) {}
   };
 
   /// CleanupEntries - Stack of cleanup entries.

@@ -515,18 +515,22 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         const CXXDestructorDecl *D = ClassDecl->getDestructor(getContext());
         assert(D && "EmitLocalBlockVarDecl - destructor is nul");
         
-        CleanupScope scope(*this);
         if (const ConstantArrayType *Array = 
               getContext().getAsConstantArrayType(Ty)) {
+          CleanupScope Scope(*this);
           QualType BaseElementTy = getContext().getBaseElementType(Array);
           const llvm::Type *BasePtr = ConvertType(BaseElementTy);
           BasePtr = llvm::PointerType::getUnqual(BasePtr);
           llvm::Value *BaseAddrPtr =
             Builder.CreateBitCast(DeclPtr, BasePtr);
           EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
-        }
-        else
+          
+          // Make sure to jump to the exit block.
+          EmitBranch(Scope.getCleanupExitBlock());
+        } else {
+          CleanupScope Scope(*this);
           EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
+        }
       }
   }
 
