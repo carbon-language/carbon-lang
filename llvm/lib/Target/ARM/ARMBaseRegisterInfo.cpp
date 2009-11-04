@@ -1212,7 +1212,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   return ScratchReg;
 }
 
-/// Move iterator pass the next bunch of callee save load / store ops for
+/// Move iterator past the next bunch of callee save load / store ops for
 /// the particular spill area (1: integer area 1, 2: integer area 2,
 /// 3: fp area, 0: don't care).
 static void movePastCSLoadStoreOps(MachineBasicBlock &MBB,
