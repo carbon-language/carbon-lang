@@ -1137,6 +1137,9 @@ DIE *DwarfDebug::CreateMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT){
 
   AddSourceLine(MemberDie, &DT);
 
+  DIEBlock *MemLocationDie = new DIEBlock();
+  AddUInt(MemLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+
   uint64_t Size = DT.getSizeInBits();
   uint64_t FieldSize = Size;
   if (DT.getTypeDerivedFrom().getTag() != dwarf::DW_TAG_array_type)
@@ -1157,12 +1160,16 @@ DIE *DwarfDebug::CreateMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT){
     // Maybe we need to work from the other end.
     if (TD->isLittleEndian()) Offset = FieldSize - (Offset + Size);
     AddUInt(MemberDie, dwarf::DW_AT_bit_offset, 0, Offset);
-  }
 
-  DIEBlock *Block = new DIEBlock();
-  AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-  AddUInt(Block, 0, dwarf::DW_FORM_udata, DT.getOffsetInBits() >> 3);
-  AddBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, Block);
+    // Here WD_AT_data_member_location points to the anonymous
+    // field that includes this bit field.
+    AddUInt(MemLocationDie, 0, dwarf::DW_FORM_udata, FieldOffset >> 3);
+
+  } else
+    // This is not a bitfield.
+    AddUInt(MemLocationDie, 0, dwarf::DW_FORM_udata, DT.getOffsetInBits() >> 3);
+
+  AddBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, MemLocationDie);
 
   if (DT.isProtected())
     AddUInt(MemberDie, dwarf::DW_AT_accessibility, 0,
