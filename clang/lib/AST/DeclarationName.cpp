@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/TypeOrdering.h"
 #include "clang/AST/Decl.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
@@ -49,11 +50,50 @@ public:
 };
 
 bool operator<(DeclarationName LHS, DeclarationName RHS) {
-  if (IdentifierInfo *LhsId = LHS.getAsIdentifierInfo())
-    if (IdentifierInfo *RhsId = RHS.getAsIdentifierInfo())
-      return LhsId->getName() < RhsId->getName();
+  if (LHS.getNameKind() != RHS.getNameKind())
+    return LHS.getNameKind() < RHS.getNameKind();
+  
+  switch (LHS.getNameKind()) {
+  case DeclarationName::Identifier:
+    return LHS.getAsIdentifierInfo()->getName() < 
+                                         RHS.getAsIdentifierInfo()->getName();
 
-  return LHS.getAsOpaqueInteger() < RHS.getAsOpaqueInteger();
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector: {
+    Selector LHSSelector = LHS.getObjCSelector();
+    Selector RHSSelector = RHS.getObjCSelector();
+    for (unsigned I = 0, 
+               N = std::min(LHSSelector.getNumArgs(), RHSSelector.getNumArgs());
+         I != N; ++I) {
+      IdentifierInfo *LHSId = LHSSelector.getIdentifierInfoForSlot(I);
+      IdentifierInfo *RHSId = RHSSelector.getIdentifierInfoForSlot(I);
+      if (!LHSId || !RHSId)
+        return LHSId && !RHSId;
+        
+      switch (LHSId->getName().compare(RHSId->getName())) {
+      case -1: return true;
+      case 1: return false;
+      default: break;
+      }
+    }
+    
+    return LHSSelector.getNumArgs() < RHSSelector.getNumArgs();
+  }
+  
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    return QualTypeOrdering()(LHS.getCXXNameType(), RHS.getCXXNameType());
+              
+  case DeclarationName::CXXOperatorName:
+    return LHS.getCXXOverloadedOperator() < RHS.getCXXOverloadedOperator();
+              
+  case DeclarationName::CXXUsingDirective:
+    return false;
+  }
+              
+  return false;
 }
 
 } // end namespace clang
