@@ -1369,7 +1369,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     if (SrcSubIdx)
       SrcSubRC = SrcRC->getSubRegisterRegClass(SrcSubIdx);
     assert(SrcSubRC && "Illegal subregister index");
-    if (!SrcSubRC->contains(DstReg)) {
+    if (!SrcSubRC->contains(DstSubReg)) {
       DEBUG(errs() << "\tIncompatible source regclass: "
                    << tri_->getName(DstSubReg) << " not in "
                    << SrcSubRC->getName() << ".\n");
@@ -1834,6 +1834,25 @@ static bool InVector(VNInfo *Val, const SmallVector<VNInfo*, 8> &V) {
   return std::find(V.begin(), V.end(), Val) != V.end();
 }
 
+static bool isValNoDefMove(const MachineInstr *MI, unsigned DR, unsigned SR,
+                           const TargetInstrInfo *TII,
+                           const TargetRegisterInfo *TRI) {
+  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
+    ;
+  else if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+    DstReg = MI->getOperand(0).getReg();
+    SrcReg = MI->getOperand(1).getReg();
+  } else if (MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
+             MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
+    DstReg = MI->getOperand(0).getReg();
+    SrcReg = MI->getOperand(2).getReg();
+  } else
+    return false;
+  return (SrcReg == SR || TRI->isSuperRegister(SR, SrcReg)) &&
+         (DstReg == DR || TRI->isSuperRegister(DR, DstReg));
+}
+
 /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
 /// the specified live interval is defined by a copy from the specified
 /// register.
@@ -1850,12 +1869,9 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
     // It's a sub-register live interval, we may not have precise information.
     // Re-compute it.
     MachineInstr *DefMI = li_->getInstructionFromIndex(LR->start);
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (DefMI &&
-        tii_->isMoveInstr(*DefMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-        DstReg == li.reg && SrcReg == Reg) {
+    if (DefMI && isValNoDefMove(DefMI, li.reg, Reg, tii_, tri_)) {
       // Cache computed info.
-      LR->valno->def  = LR->start;
+      LR->valno->def = LR->start;
       LR->valno->setCopy(DefMI);
       return true;
     }
