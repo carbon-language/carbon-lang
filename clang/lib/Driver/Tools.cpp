@@ -810,9 +810,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *Std = Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi)) {
     if (Std->getOption().matches(options::OPT_ansi))
       if (types::isCXX(InputType))
-          CmdArgs.push_back("-std=c++98");
+        CmdArgs.push_back("-std=c++98");
       else
-          CmdArgs.push_back("-std=c89");
+        CmdArgs.push_back("-std=c89");
     else
       Std->render(Args, CmdArgs);
 
@@ -834,10 +834,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT__relocatable_pch, true))
     CmdArgs.push_back("--relocatable-pch");
 
-   if (Arg *A = Args.getLastArg(options::OPT_fconstant_string_class_EQ)) {
-     CmdArgs.push_back("-fconstant-string-class");
-     CmdArgs.push_back(A->getValue(Args));
-   }
+  if (Arg *A = Args.getLastArg(options::OPT_fconstant_string_class_EQ)) {
+    CmdArgs.push_back("-fconstant-string-class");
+    CmdArgs.push_back(A->getValue(Args));
+  }
 
   // Forward -f options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
@@ -1897,7 +1897,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   // Adding all arguments doesn't make sense here but this is what
   // gcc does.
   Args.AddAllArgsTranslated(CmdArgs, options::OPT_mmacosx_version_min_EQ,
-                              "-macosx_version_min");
+                            "-macosx_version_min");
   Args.AddAllArgsTranslated(CmdArgs, options::OPT_miphoneos_version_min_EQ,
                             "-iphoneos_version_min");
   Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);
@@ -2173,10 +2173,10 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
 }
 
 void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
-                                     Job &Dest, const InputInfo &Output,
-                                     const InputInfoList &Inputs,
-                                     const ArgList &Args,
-                                     const char *LinkingOutput) const {
+                                      Job &Dest, const InputInfo &Output,
+                                      const InputInfoList &Inputs,
+                                      const ArgList &Args,
+                                      const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -2203,15 +2203,15 @@ void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 }
 
 void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
-                                 Job &Dest, const InputInfo &Output,
-                                 const InputInfoList &Inputs,
-                                 const ArgList &Args,
-                                 const char *LinkingOutput) const {
+                                  Job &Dest, const InputInfo &Output,
+                                  const InputInfoList &Inputs,
+                                  const ArgList &Args,
+                                  const char *LinkingOutput) const {
   const Driver &D = getToolChain().getHost().getDriver();
   ArgStringList CmdArgs;
 
   if ((!Args.hasArg(options::OPT_nostdlib)) &&
-     (!Args.hasArg(options::OPT_shared))) {
+      (!Args.hasArg(options::OPT_shared))) {
     CmdArgs.push_back("-e");
     CmdArgs.push_back("_start");
   }
@@ -2252,8 +2252,8 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
   }
 
-  CmdArgs.push_back(Args.MakeArgString("-L/opt/gcc4/lib/gcc/" 
-                                       + getToolChain().getTripleString() 
+  CmdArgs.push_back(Args.MakeArgString("-L/opt/gcc4/lib/gcc/"
+                                       + getToolChain().getTripleString()
                                        + "/4.2.4"));
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
@@ -2342,7 +2342,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
 
   if ((!Args.hasArg(options::OPT_nostdlib)) &&
-     (!Args.hasArg(options::OPT_shared))) {
+      (!Args.hasArg(options::OPT_shared))) {
     CmdArgs.push_back("-e");
     CmdArgs.push_back("__start");
   }
@@ -2382,7 +2382,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   std::string Triple = getToolChain().getTripleString();
   if (Triple.substr(0, 6) == "x86_64")
-	Triple.replace(0, 6, "amd64");
+    Triple.replace(0, 6, "amd64");
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc-lib/" + Triple +
                                        "/3.3.5"));
 
@@ -2584,10 +2584,10 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 // For now, DragonFly Assemble does just about the same as for
 // FreeBSD, but this may change soon.
 void dragonfly::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
-                                     Job &Dest, const InputInfo &Output,
-                                     const InputInfoList &Inputs,
-                                     const ArgList &Args,
-                                     const char *LinkingOutput) const {
+                                       Job &Dest, const InputInfo &Output,
+                                       const InputInfoList &Inputs,
+                                       const ArgList &Args,
+                                       const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
   // When building 32-bit code on DragonFly/pc64, we have to explicitly
