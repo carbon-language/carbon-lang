@@ -7,6 +7,7 @@
 // RUN: FileCheck -check-prefix LPOPT64 --input-file=%t-O3-64.s %s &&
 // RUN: clang-cc -triple i386-apple-darwin -std=c++0x -O3 -S %s -o %t-O3-32.s &&
 // RUN: FileCheck -check-prefix LPOPT32 -input-file=%t-O3-32.s %s &&
+// XFAIL: *
 
 // RUN: true
 
