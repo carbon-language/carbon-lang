@@ -285,6 +285,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
   bool IsTypeName;
 
   // Ignore optional 'typename'.
+  // FIXME: This is wrong; we should parse this as a typename-specifier.
   if (Tok.is(tok::kw_typename)) {
     ConsumeToken();
     IsTypeName = true;
@@ -302,41 +303,21 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
     SkipUntil(tok::semi);
     return DeclPtrTy();
   }
-  if (Tok.is(tok::annot_template_id)) {
-    // C++0x N2914 [namespace.udecl]p5:
-    // A using-declaration shall not name a template-id.
-    Diag(Tok, diag::err_using_decl_can_not_refer_to_template_spec);
+
+  // Parse the unqualified-id. We allow parsing of both constructor and 
+  // destructor names and allow the action module to diagnose any semantic
+  // errors.
+  UnqualifiedId Name;
+  if (ParseUnqualifiedId(SS, 
+                         /*EnteringContext=*/false,
+                         /*AllowDestructorName=*/true,
+                         /*AllowConstructorName=*/true, 
+                         /*ObjectType=*/0, 
+                         Name)) {
     SkipUntil(tok::semi);
     return DeclPtrTy();
   }
-
-  IdentifierInfo *TargetName = 0;
-  OverloadedOperatorKind Op = OO_None;
-  SourceLocation IdentLoc;
-
-  if (Tok.is(tok::kw_operator)) {
-    IdentLoc = Tok.getLocation();
-
-    Op = TryParseOperatorFunctionId();
-    if (!Op) {
-      // If there was an invalid operator, skip to end of decl, and eat ';'.
-      SkipUntil(tok::semi);
-      return DeclPtrTy();
-    }
-    // FIXME: what about conversion functions?
-  } else if (Tok.is(tok::identifier)) {
-    // Parse identifier.
-    TargetName = Tok.getIdentifierInfo();
-    IdentLoc = ConsumeToken();
-  } else {
-    // FIXME: Use a better diagnostic here.
-    Diag(Tok, diag::err_expected_ident_in_using);
-
-    // If there was invalid identifier, skip to end of decl, and eat ';'.
-    SkipUntil(tok::semi);
-    return DeclPtrTy();
-  }
-
+  
   // Parse (optional) attributes (most likely GNU strong-using extension).
   if (Tok.is(tok::kw___attribute))
     AttrList = ParseAttributes();
@@ -344,10 +325,10 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
   // Eat ';'.
   DeclEnd = Tok.getLocation();
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
-                   AttrList ? "attributes list" : "namespace name", tok::semi);
+                   AttrList ? "attributes list" : "using declaration", 
+                   tok::semi);
 
-  return Actions.ActOnUsingDeclaration(CurScope, AS, UsingLoc, SS,
-                                       IdentLoc, TargetName, Op,
+  return Actions.ActOnUsingDeclaration(CurScope, AS, UsingLoc, SS, Name,
                                        AttrList, IsTypeName);
 }
 

@@ -2700,22 +2700,37 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
                                             AccessSpecifier AS,
                                             SourceLocation UsingLoc,
                                             const CXXScopeSpec &SS,
-                                            SourceLocation IdentLoc,
-                                            IdentifierInfo *TargetName,
-                                            OverloadedOperatorKind Op,
+                                            UnqualifiedId &Name,
                                             AttributeList *AttrList,
                                             bool IsTypeName) {
-  assert((TargetName || Op) && "Invalid TargetName.");
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
-  DeclarationName Name;
-  if (TargetName)
-    Name = TargetName;
-  else
-    Name = Context.DeclarationNames.getCXXOperatorName(Op);
-
-  NamedDecl *UD = BuildUsingDeclaration(UsingLoc, SS, IdentLoc,
-                                        Name, AttrList, IsTypeName);
+  switch (Name.getKind()) {
+  case UnqualifiedId::IK_Identifier:
+  case UnqualifiedId::IK_OperatorFunctionId:
+  case UnqualifiedId::IK_ConversionFunctionId:
+    break;
+      
+  case UnqualifiedId::IK_ConstructorName:
+    Diag(Name.getSourceRange().getBegin(), diag::err_using_decl_constructor)
+      << SS.getRange();
+    return DeclPtrTy();
+      
+  case UnqualifiedId::IK_DestructorName:
+    Diag(Name.getSourceRange().getBegin(), diag::err_using_decl_destructor)
+      << SS.getRange();
+    return DeclPtrTy();
+      
+  case UnqualifiedId::IK_TemplateId:
+    Diag(Name.getSourceRange().getBegin(), diag::err_using_decl_template_id)
+      << SourceRange(Name.TemplateId->LAngleLoc, Name.TemplateId->RAngleLoc);
+    return DeclPtrTy();
+  }
+  
+  DeclarationName TargetName = GetNameFromUnqualifiedId(Name);
+  NamedDecl *UD = BuildUsingDeclaration(UsingLoc, SS, 
+                                        Name.getSourceRange().getBegin(),
+                                        TargetName, AttrList, IsTypeName);
   if (UD) {
     PushOnScopeChains(UD, S);
     UD->setAccess(AS);

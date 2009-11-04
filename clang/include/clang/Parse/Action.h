@@ -1174,14 +1174,41 @@ public:
     return DeclPtrTy();
   }
 
-  /// ActOnUsingDirective - This is called when using-directive is parsed.
+  /// \brief Parsed a C++ using-declaration.
+  ///
+  /// This callback will be invoked when the parser has parsed a C++
+  /// using-declaration, e.g.,
+  ///
+  /// \code
+  /// namespace std {
+  ///   template<typename T, typename Alloc> class vector;
+  /// }
+  ///
+  /// using std::vector; // using-declaration here
+  /// \endcode
+  ///
+  /// \param CurScope the scope in which this using declaration was parsed.
+  ///
+  /// \param AS the currently-active access specifier.
+  ///
+  /// \param UsingLoc the location of the 'using' keyword.
+  ///
+  /// \param SS the nested-name-specifier that precedes the name.
+  ///
+  /// \param Name the name to which the using declaration refers.
+  ///
+  /// \param AttrList attributes applied to this using declaration, if any.
+  ///
+  /// \param IsTypeName whether this using declaration started with the 
+  /// 'typename' keyword. FIXME: This will eventually be split into a 
+  /// separate action.
+  ///
+  /// \returns a representation of the using declaration.
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
                                           AccessSpecifier AS,
                                           SourceLocation UsingLoc,
                                           const CXXScopeSpec &SS,
-                                          SourceLocation IdentLoc,
-                                          IdentifierInfo *TargetName,
-                                          OverloadedOperatorKind Op,
+                                          UnqualifiedId &Name,
                                           AttributeList *AttrList,
                                           bool IsTypeName);
 

@@ -107,8 +107,14 @@ def err_using_decl_nested_name_specifier_is_not_a_base_class : Error<
   "using declaration refers into '%0', which is not a base class of %1">;
 def err_using_decl_can_not_refer_to_class_member : Error<
   "using declaration can not refer to class member">;
- def err_using_decl_can_not_refer_to_namespace : Error<
+def err_using_decl_can_not_refer_to_namespace : Error<
   "using declaration can not refer to namespace">;
+def err_using_decl_constructor : Error<
+  "using declaration can not refer to a constructor">;
+def err_using_decl_destructor : Error<
+  "using declaration can not refer to a destructor">;
+def err_using_decl_template_id : Error<
+  "using declaration can not refer to a template specialization">;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;

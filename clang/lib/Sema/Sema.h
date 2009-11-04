@@ -1893,9 +1893,7 @@ public:
                                           AccessSpecifier AS,
                                           SourceLocation UsingLoc,
                                           const CXXScopeSpec &SS,
-                                          SourceLocation IdentLoc,
-                                          IdentifierInfo *TargetName,
-                                          OverloadedOperatorKind Op,
+                                          UnqualifiedId &Name,
                                           AttributeList *AttrList,
                                           bool IsTypeName);
 

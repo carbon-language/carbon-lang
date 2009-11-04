@@ -42,14 +42,12 @@ Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
   return DeclPtrTy();
 }
 
-// Defined out-of-line here because of dependecy on AttributeList
+// Defined out-of-line here because of dependency on AttributeList
 Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
                                                 AccessSpecifier AS,
                                                 SourceLocation UsingLoc,
                                                 const CXXScopeSpec &SS,
-                                                SourceLocation IdentLoc,
-                                                IdentifierInfo *TargetName,
-                                                OverloadedOperatorKind Op,
+                                                UnqualifiedId &Name,
                                                 AttributeList *AttrList,
                                                 bool IsTypeName) {
 

@@ -7,6 +7,6 @@ struct A {
 };
 
 struct B : A {
-  using A::f<double>; // expected-error{{using declaration can not refer to template specialization}}
-  using A::X<int>; // expected-error{{using declaration can not refer to template specialization}}
+  using A::f<double>; // expected-error{{using declaration can not refer to a template specialization}}
+  using A::X<int>; // expected-error{{using declaration can not refer to a template specialization}}
 };
