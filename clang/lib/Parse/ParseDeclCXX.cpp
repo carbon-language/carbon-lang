@@ -1099,7 +1099,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   SourceLocation DSStart = Tok.getLocation();
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
-  DeclSpec DS;
+  ParsingDeclSpec DS(*this);
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class);
 
   Action::MultiTemplateParamsArg TemplateParams(Actions,
@@ -1112,7 +1112,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     return;
   }
 
-  Declarator DeclaratorInfo(DS, Declarator::MemberContext);
+  ParsingDeclarator DeclaratorInfo(*this, DS, Declarator::MemberContext);
 
   if (Tok.isNot(tok::colon)) {
     // Parse the first declarator.
@@ -1230,6 +1230,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
           != DeclSpec::SCS_typedef) {
       HandleMemberFunctionDefaultArgs(DeclaratorInfo, ThisDecl);
     }
+
+    DeclaratorInfo.complete(ThisDecl);
 
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.

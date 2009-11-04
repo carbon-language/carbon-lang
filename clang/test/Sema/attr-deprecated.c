@@ -55,3 +55,48 @@ struct bar_dep *test3;   // expected-warning {{'bar_dep' is deprecated}}
 foo_dep *test4 __attribute__((deprecated));
 struct bar_dep *test5 __attribute__((deprecated));
 
+typedef foo_dep test6(struct bar_dep*); // expected-warning {{'foo_dep' is deprecated}} \
+                                        // expected-warning {{'bar_dep' is deprecated}}
+typedef foo_dep test7(struct bar_dep*) __attribute__((deprecated));
+
+int test8(char *p) {
+  p += sizeof(foo_dep); // expected-warning {{'foo_dep' is deprecated}}
+
+  foo_dep *ptr;         // expected-warning {{'foo_dep' is deprecated}}
+  ptr = (foo_dep*) p;   // expected-warning {{'foo_dep' is deprecated}}
+
+  int func(foo_dep *foo); // expected-warning {{'foo_dep' is deprecated}}
+  return func(ptr);
+}
+
+foo_dep *test9(void) __attribute__((deprecated));
+foo_dep *test9(void) {
+  void* myalloc(unsigned long);
+
+  foo_dep *ptr
+    = (foo_dep*)
+        myalloc(sizeof(foo_dep));
+  return ptr;
+}
+
+void test10(void) __attribute__((deprecated));
+void test10(void) {
+  if (sizeof(foo_dep) == sizeof(void*)) {
+  }
+  foo_dep *localfunc(void);
+  foo_dep localvar;
+}
+
+char test11[sizeof(foo_dep)] __attribute__((deprecated));
+char test12[sizeof(foo_dep)]; // expected-warning {{'foo_dep' is deprecated}}
+
+int test13(foo_dep *foo) __attribute__((deprecated));
+int test14(foo_dep *foo); // expected-warning {{'foo_dep' is deprecated}}
+
+unsigned long test15 = sizeof(foo_dep); // expected-warning {{'foo_dep' is deprecated}}
+unsigned long test16 __attribute__((deprecated))
+  = sizeof(foo_dep);
+
+foo_dep test17, // expected-warning {{'foo_dep' is deprecated}}
+        test18 __attribute__((deprecated)),
+        test19;

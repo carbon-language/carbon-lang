@@ -272,6 +272,15 @@ public:
   llvm::DenseMap<DeclarationName, VarDecl *> TentativeDefinitions;
   std::vector<DeclarationName> TentativeDefinitionList;
 
+  /// \brief The collection of delayed deprecation warnings.
+  llvm::SmallVector<std::pair<SourceLocation,NamedDecl*>, 8>
+    DelayedDeprecationWarnings;
+
+  /// \brief The depth of the current ParsingDeclaration stack.
+  /// If nonzero, we are currently parsing a declaration (and
+  /// hence should delay deprecation warnings).
+  unsigned ParsingDeclDepth;
+
   /// WeakUndeclaredIdentifiers - Identifiers contained in
   /// #pragma weak before declared. rare. may alias another
   /// identifier, declared or undeclared
@@ -1586,11 +1595,14 @@ public:
   /// whose result is unused, warn.
   void DiagnoseUnusedExprResult(const Stmt *S);
 
+  ParsingDeclStackState PushParsingDeclaration();
+  void PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy D);
+  void EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc);
+
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
-  bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
-                         bool IgnoreDeprecated = false);
+  bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc);
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD,
                                         ObjCMethodDecl *Getter,
                                         SourceLocation Loc);

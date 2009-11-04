@@ -161,6 +161,23 @@ public:
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
 
+  typedef uintptr_t ParsingDeclStackState;
+
+  /// PushParsingDeclaration - Notes that the parser has begun
+  /// processing a declaration of some sort.  Guaranteed to be matched
+  /// by a call to PopParsingDeclaration with the value returned by
+  /// this method.
+  virtual ParsingDeclStackState PushParsingDeclaration() {
+    return ParsingDeclStackState();
+  }
+
+  /// PopParsingDeclaration - Notes that the parser has completed
+  /// processing a declaration of some sort.  The decl will be empty
+  /// if the declaration didn't correspond to a full declaration (or
+  /// if the actions module returned an empty decl for it).
+  virtual void PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy D) {
+  }
+
   /// ConvertDeclToDeclGroup - If the parser has one decl in a context where it
   /// needs a decl group, it calls this to convert between the two
   /// representations.

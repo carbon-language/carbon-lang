@@ -1748,6 +1748,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   if (AttrList)
     ProcessDeclAttributeList(TUScope, ObjCMethod, AttrList);
 
+  const ObjCMethodDecl *InterfaceMD = 0;
+
   // For implementations (which can be very "coarse grain"), we add the
   // method now. This allows the AST to implement lookup methods that work
   // incrementally (without waiting until we parse the @end). It also allows
@@ -1761,6 +1763,8 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       PrevMethod = ImpDecl->getClassMethod(Sel);
       ImpDecl->addClassMethod(ObjCMethod);
     }
+    InterfaceMD = ImpDecl->getClassInterface()->getMethod(Sel,
+                                                   MethodType == tok::minus);
     if (AttrList)
       Diag(EndLoc, diag::warn_attribute_method_def);
   } else if (ObjCCategoryImplDecl *CatImpDecl =
@@ -1781,6 +1785,12 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
       << ObjCMethod->getDeclName();
     Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
   }
+
+  // If the interface declared this method, and it was deprecated there,
+  // mark it deprecated here.
+  if (InterfaceMD && InterfaceMD->hasAttr<DeprecatedAttr>())
+    ObjCMethod->addAttr(::new (Context) DeprecatedAttr());
+
   return DeclPtrTy::make(ObjCMethod);
 }
 

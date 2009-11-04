@@ -698,6 +698,8 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                               tok::TokenKind mType,
                                               DeclPtrTy IDecl,
                                           tok::ObjCKeywordKind MethodImplKind) {
+  ParsingDeclRAIIObject PD(*this);
+
   // Parse the return type if present.
   TypeTy *ReturnType = 0;
   ObjCDeclSpec DSRet;
@@ -724,10 +726,13 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       MethodAttrs = ParseAttributes();
 
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
-    return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
+    DeclPtrTy Result
+         = Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                           mType, IDecl, DSRet, ReturnType, Sel,
                                           0, CargNames, MethodAttrs,
                                           MethodImplKind);
+    PD.complete(Result);
+    return Result;
   }
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
@@ -800,10 +805,13 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     return DeclPtrTy();
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
-  return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
+  DeclPtrTy Result
+       = Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel,
                                         &ArgInfos[0], CargNames, MethodAttrs,
                                         MethodImplKind, isVariadic);
+  PD.complete(Result);
+  return Result;
 }
 
 ///   objc-protocol-refs:

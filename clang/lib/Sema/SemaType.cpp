@@ -67,16 +67,6 @@ static bool isOmittedBlockReturnType(const Declarator &D) {
   return false;
 }
 
-/// isDeclaratorDeprecated - Return true if the declarator is deprecated.
-/// We do not want to warn about use of deprecated types (e.g. typedefs) when
-/// defining a declaration that is itself deprecated.
-static bool isDeclaratorDeprecated(const Declarator &D) {
-  for (const AttributeList *AL = D.getAttributes(); AL; AL = AL->getNext())
-    if (AL->getKind() == AttributeList::AT_deprecated)
-      return true;
-  return false;
-}
-
 /// \brief Convert the specified declspec to the appropriate type
 /// object.
 /// \param D  the declarator containing the declaration specifier.
@@ -247,8 +237,7 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
     }
 
     // If the type is deprecated or unavailable, diagnose it.
-    TheSema.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeLoc(),
-                              isDeclaratorDeprecated(TheDeclarator));
+    TheSema.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeLoc());
     
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 && "No qualifiers on tag names!");
@@ -302,27 +291,6 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
         TheDeclarator.setInvalidType(true);
       }
     }
-
-    // If this is a reference to an invalid typedef, propagate the invalidity.
-    if (TypedefType *TDT = dyn_cast<TypedefType>(Result)) {
-      if (TDT->getDecl()->isInvalidDecl())
-        TheDeclarator.setInvalidType(true);
-      
-      // If the type is deprecated or unavailable, diagnose it.
-      TheSema.DiagnoseUseOfDecl(TDT->getDecl(), DS.getTypeSpecTypeLoc(),
-                                isDeclaratorDeprecated(TheDeclarator));
-    } else if (ObjCInterfaceType *OIT = dyn_cast<ObjCInterfaceType>(Result)) {
-      // If the type is deprecated or unavailable, diagnose it.
-      TheSema.DiagnoseUseOfDecl(OIT->getDecl(), DS.getTypeSpecTypeLoc(),
-                                isDeclaratorDeprecated(TheDeclarator));
-    } else if (ObjCObjectPointerType *DPT =
-                 dyn_cast<ObjCObjectPointerType>(Result)) {
-      // If the type is deprecated or unavailable, diagnose it.
-      if (ObjCInterfaceDecl *D = DPT->getInterfaceDecl())
-        TheSema.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeLoc(),
-                                  isDeclaratorDeprecated(TheDeclarator));
-    }
-
 
     // TypeQuals handled by caller.
     break;

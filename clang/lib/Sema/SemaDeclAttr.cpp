@@ -1949,3 +1949,62 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
   if (const AttributeList *Attrs = PD.getAttributes())
     ProcessDeclAttributeList(S, D, Attrs);
 }
+
+/// PushParsingDeclaration - Enter a new "scope" of deprecation
+/// warnings.
+///
+/// The state token we use is the start index of this scope
+/// on the warning stack.
+Action::ParsingDeclStackState Sema::PushParsingDeclaration() {
+  ParsingDeclDepth++;
+  return (ParsingDeclStackState) DelayedDeprecationWarnings.size();
+}
+
+static bool isDeclDeprecated(Decl *D) {
+  do {
+    if (D->hasAttr<DeprecatedAttr>())
+      return true;
+  } while ((D = cast_or_null<Decl>(D->getDeclContext())));
+  return false;
+}
+
+void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
+  assert(ParsingDeclDepth > 0 && "empty ParsingDeclaration stack");
+  ParsingDeclDepth--;
+
+  if (DelayedDeprecationWarnings.empty())
+    return;
+
+  unsigned SavedIndex = (unsigned) S;
+  assert(SavedIndex <= DelayedDeprecationWarnings.size() &&
+         "saved index is out of bounds");
+
+  if (Ctx && !isDeclDeprecated(Ctx.getAs<Decl>())) {
+    for (unsigned I = 0, E = DelayedDeprecationWarnings.size(); I != E; ++I) {
+      SourceLocation Loc = DelayedDeprecationWarnings[I].first;
+      NamedDecl *&ND = DelayedDeprecationWarnings[I].second;
+      if (ND) {
+        Diag(Loc, diag::warn_deprecated) << ND->getDeclName();
+
+        // Prevent this from triggering multiple times.
+        ND = 0;
+      }
+    }
+  }
+
+  DelayedDeprecationWarnings.set_size(SavedIndex);
+}
+
+void Sema::EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc) {
+  // Delay if we're currently parsing a declaration.
+  if (ParsingDeclDepth) {
+    DelayedDeprecationWarnings.push_back(std::make_pair(Loc, D));
+    return;
+  }
+
+  // Otherwise, don't warn if our current context is deprecated.
+  if (isDeclDeprecated(cast<Decl>(CurContext)))
+    return;
+
+  Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+}

@@ -526,7 +526,7 @@ bool Parser::isStartOfFunctionDefinition() {
 Parser::DeclGroupPtrTy
 Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
   // Parse the common declaration-specifiers piece.
-  DeclSpec DS;
+  ParsingDeclSpec DS(*this);
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
@@ -534,6 +534,7 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
   if (Tok.is(tok::semi)) {
     ConsumeToken();
     DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DS.complete(TheDecl);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
@@ -548,6 +549,8 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
       SkipUntil(tok::semi); // FIXME: better skip?
       return DeclGroupPtrTy();
     }
+
+    DS.abort();
 
     const char *PrevSpec = 0;
     unsigned DiagID;
@@ -568,6 +571,7 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
   if (Tok.is(tok::string_literal) && getLang().CPlusPlus &&
       DS.getStorageClassSpec() == DeclSpec::SCS_extern &&
       DS.getParsedSpecifiers() == DeclSpec::PQ_StorageClassSpecifier) {
+    DS.abort();
     DeclPtrTy TheDecl = ParseLinkage(Declarator::FileContext);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
@@ -589,7 +593,7 @@ Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
 /// [C++] function-definition: [C++ 8.4]
 ///         decl-specifier-seq[opt] declarator function-try-block
 ///
-Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D,
+Parser::DeclPtrTy Parser::ParseFunctionDefinition(ParsingDeclarator &D,
                                      const ParsedTemplateInfo &TemplateInfo) {
   const DeclaratorChunk &FnTypeInfo = D.getTypeObject(0);
   assert(FnTypeInfo.Kind == DeclaratorChunk::Function &&
@@ -640,6 +644,13 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D,
                                          TemplateInfo.TemplateParams->size()),
                                               D)
     : Actions.ActOnStartOfFunctionDef(CurScope, D);
+
+  // Break out of the ParsingDeclarator context before we parse the body.
+  D.complete(Res);
+  
+  // Break out of the ParsingDeclSpec context, too.  This const_cast is
+  // safe because we're always the sole owner.
+  D.getMutableDeclSpec().abort();
 
   if (Tok.is(tok::kw_try))
     return ParseFunctionTryBlock(Res);

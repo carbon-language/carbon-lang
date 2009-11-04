@@ -190,16 +190,18 @@ Parser::ParseSingleDeclarationAfterTemplate(
   }
 
   // Parse the declaration specifiers.
-  DeclSpec DS;
+  ParsingDeclSpec DS(*this);
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS);
 
   if (Tok.is(tok::semi)) {
     DeclEnd = ConsumeToken();
-    return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DeclPtrTy Decl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DS.complete(Decl);
+    return Decl;
   }
 
   // Parse the declarator.
-  Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
+  ParsingDeclarator DeclaratorInfo(*this, DS, (Declarator::TheContext)Context);
   ParseDeclarator(DeclaratorInfo);
   // Error parsing the declarator?
   if (!DeclaratorInfo.hasName()) {
@@ -225,6 +227,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
     // Eat the semi colon after the declaration.
     ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
+    DS.complete(ThisDecl);
     return ThisDecl;
   }
 

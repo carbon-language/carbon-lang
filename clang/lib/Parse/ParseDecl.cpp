@@ -338,7 +338,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
 Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
                                                       SourceLocation &DeclEnd) {
   // Parse the common declaration-specifiers piece.
-  DeclSpec DS;
+  ParsingDeclSpec DS(*this);
   ParseDeclarationSpecifiers(DS);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
@@ -346,6 +346,7 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   if (Tok.is(tok::semi)) {
     ConsumeToken();
     DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+    DS.complete(TheDecl);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
@@ -357,11 +358,12 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
 /// ParseDeclGroup - Having concluded that this is either a function
 /// definition or a group of object declarations, actually parse the
 /// result.
-Parser::DeclGroupPtrTy Parser::ParseDeclGroup(DeclSpec &DS, unsigned Context,
+Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
+                                              unsigned Context,
                                               bool AllowFunctionDefinitions,
                                               SourceLocation *DeclEnd) {
   // Parse the first declarator.
-  Declarator D(DS, static_cast<Declarator::TheContext>(Context));
+  ParsingDeclarator D(*this, DS, static_cast<Declarator::TheContext>(Context));
   ParseDeclarator(D);
 
   // Bail out if the first declarator didn't seem well-formed.
@@ -397,6 +399,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(DeclSpec &DS, unsigned Context,
 
   llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
   DeclPtrTy FirstDecl = ParseDeclarationAfterDeclarator(D);
+  D.complete(FirstDecl);
   if (FirstDecl.get())
     DeclsInGroup.push_back(FirstDecl);
 
@@ -425,6 +428,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(DeclSpec &DS, unsigned Context,
     ParseDeclarator(D);
 
     DeclPtrTy ThisDecl = ParseDeclarationAfterDeclarator(D);
+    D.complete(ThisDecl);
     if (ThisDecl.get())
       DeclsInGroup.push_back(ThisDecl);    
   }
@@ -1505,6 +1509,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
   // Read struct-declarators until we find the semicolon.
   bool FirstDeclarator = true;
   while (1) {
+    ParsingDeclRAIIObject PD(*this);
     FieldDeclarator DeclaratorInfo(DS);
 
     // Attributes are only allowed here on successive declarators.
@@ -1536,7 +1541,8 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
     }
 
     // We're done with this declarator;  invoke the callback.
-    (void) Fields.invoke(DeclaratorInfo);
+    DeclPtrTy D = Fields.invoke(DeclaratorInfo);
+    PD.complete(D);
 
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
@@ -2587,6 +2593,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     SourceLocation DSStart = Tok.getLocation();
 
     // Parse the declaration-specifiers.
+    // Just use the ParsingDeclaration "scope" of the declarator.
     DeclSpec DS;
 
     // If the caller parsed attributes for the first argument, add them now.

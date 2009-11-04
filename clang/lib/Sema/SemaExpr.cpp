@@ -43,36 +43,10 @@ using namespace clang;
 /// \returns true if there was an error (this declaration cannot be
 /// referenced), false otherwise.
 ///
-bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
-                             bool IgnoreDeprecated) {
+bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
   // See if the decl is deprecated.
   if (D->getAttr<DeprecatedAttr>()) {
-    // Implementing deprecated stuff requires referencing deprecated
-    // stuff. Don't warn if we are implementing a deprecated construct.
-    bool isSilenced = IgnoreDeprecated;
-
-    if (NamedDecl *ND = getCurFunctionOrMethodDecl()) {
-      // If this reference happens *in* a deprecated function or method, don't
-      // warn.
-      isSilenced |= ND->getAttr<DeprecatedAttr>() != 0;
-
-      // If this is an Objective-C method implementation, check to see if the
-      // method was deprecated on the declaration, not the definition.
-      if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ND)) {
-        // The semantic decl context of a ObjCMethodDecl is the
-        // ObjCImplementationDecl.
-        if (ObjCImplementationDecl *Impl
-              = dyn_cast<ObjCImplementationDecl>(MD->getParent())) {
-
-          MD = Impl->getClassInterface()->getMethod(MD->getSelector(),
-                                                    MD->isInstanceMethod());
-          isSilenced |= MD && MD->getAttr<DeprecatedAttr>();
-        }
-      }
-    }
-
-    if (!isSilenced)
-      Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+    EmitDeprecationWarning(D, Loc);
   }
 
   // See if the decl is unavailable

@@ -138,9 +138,11 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   }
 
   assert(IIDecl && "Didn't find decl");
-  
+
   QualType T;
   if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
+    DiagnoseUseOfDecl(IIDecl, NameLoc);
+  
     // C++ [temp.local]p2:
     //   Within the scope of a class template specialization or
     //   partial specialization, when the injected-class-name is
@@ -160,6 +162,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       T = getQualifiedNameType(*SS, T);
     
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
+    DiagnoseUseOfDecl(IIDecl, NameLoc);
     T = Context.getObjCInterfaceType(IDecl);
   } else
     return 0;

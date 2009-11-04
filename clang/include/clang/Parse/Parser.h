@@ -571,6 +571,99 @@ private:
     return *ClassStack.top();
   }
 
+  /// \brief RAII object used to inform the actions that we're
+  /// currently parsing a declaration.  This is active when parsing a
+  /// variable's initializer, but not when parsing the body of a
+  /// class or function definition.
+  class ParsingDeclRAIIObject {
+    Action &Actions;
+    Action::ParsingDeclStackState State;
+    bool Popped;
+    
+  public:
+    ParsingDeclRAIIObject(Parser &P) : Actions(P.Actions) {
+      push();
+    }
+
+    ~ParsingDeclRAIIObject() {
+      abort();
+    }
+
+    /// Resets the RAII object for a new declaration.
+    void reset() {
+      abort();
+      push();
+    }
+
+    /// Signals that the context was completed without an appropriate
+    /// declaration being parsed.
+    void abort() {
+      pop(DeclPtrTy());
+    }
+
+    void complete(DeclPtrTy D) {
+      assert(!Popped && "ParsingDeclaration has already been popped!");
+      pop(D);
+    }
+
+  private:
+    void push() {
+      State = Actions.PushParsingDeclaration();
+      Popped = false;
+    }
+
+    void pop(DeclPtrTy D) {
+      if (!Popped) {
+        Actions.PopParsingDeclaration(State, D);
+        Popped = true;
+      }
+    }
+  };
+
+  /// A class for parsing a DeclSpec.
+  class ParsingDeclSpec : public DeclSpec {
+    ParsingDeclRAIIObject ParsingRAII;
+
+  public:
+    ParsingDeclSpec(Parser &P) : ParsingRAII(P) {
+    }
+
+    void complete(DeclPtrTy D) {
+      ParsingRAII.complete(D);
+    }
+
+    void abort() {
+      ParsingRAII.abort();
+    }
+  };
+
+  /// A class for parsing a declarator.
+  class ParsingDeclarator : public Declarator {
+    ParsingDeclRAIIObject ParsingRAII;
+
+  public:
+    ParsingDeclarator(Parser &P, const ParsingDeclSpec &DS, TheContext C)
+      : Declarator(DS, C), ParsingRAII(P) {
+    }
+
+    const ParsingDeclSpec &getDeclSpec() const {
+      return static_cast<const ParsingDeclSpec&>(Declarator::getDeclSpec());
+    }
+
+    ParsingDeclSpec &getMutableDeclSpec() const {
+      return const_cast<ParsingDeclSpec&>(getDeclSpec());
+    }
+
+    void clear() {
+      Declarator::clear();
+      ParsingRAII.reset();
+    }
+
+    void complete(DeclPtrTy D) {
+      ParsingRAII.complete(D);
+    }
+  };
+
   /// \brief RAII object used to
   class ParsingClassDefinition {
     Parser &P;
@@ -664,7 +757,7 @@ private:
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(
             AccessSpecifier AS = AS_none);
 
-  DeclPtrTy ParseFunctionDefinition(Declarator &D,
+  DeclPtrTy ParseFunctionDefinition(ParsingDeclarator &D,
                  const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   void ParseKNRParamDeclarations(Declarator &D);
   // EndLoc, if non-NULL, is filled with the location of the last token of
@@ -951,7 +1044,7 @@ private:
   DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd);
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
                                         SourceLocation &DeclEnd);
-  DeclGroupPtrTy ParseDeclGroup(DeclSpec &DS, unsigned Context,
+  DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,
                                 bool AllowFunctionDefinitions,
                                 SourceLocation *DeclEnd = 0);
   DeclPtrTy ParseDeclarationAfterDeclarator(Declarator &D,
