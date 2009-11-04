@@ -136,3 +136,19 @@ namespace ns {
   
   Bar<bool(ns::Foo<int>::value)> x;
 }
+
+// PR5349
+namespace ns {
+  enum E { k };
+  
+  template <E e>
+  struct Baz  {};
+  
+  Baz<k> f1;  // This works.
+  Baz<E(0)> f2;  // This too.
+  Baz<static_cast<E>(0)> f3;  // And this.
+  
+  Baz<ns::E(0)> b1;  // This doesn't work.
+  Baz<static_cast<ns::E>(0)> b2;  // This neither.  
+}
+

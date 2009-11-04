@@ -1995,7 +1995,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       ArgType = Context.getCanonicalType(ArgType).getUnqualifiedType();
 
     // Try to convert the argument to the parameter's type.
-    if (ParamType == ArgType) {
+    if (Context.hasSameType(ParamType, ArgType)) {
       // Okay: no conversion necessary
     } else if (IsIntegralPromotion(Arg, ArgType, ParamType) ||
                !ParamType->isEnumeralType()) {
