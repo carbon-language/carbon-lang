@@ -1032,6 +1032,22 @@ static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) StdCallAttr());
 }
 
+/// Diagnose the use of a non-standard calling convention on the given
+/// function.
+static void DiagnoseCConv(FunctionDecl *D, const char *CConv,
+                          SourceLocation Loc, Sema &S) {
+  if (!D->hasPrototype()) {
+    S.Diag(Loc, diag::err_cconv_knr) << CConv;
+    return;
+  }
+
+  const FunctionProtoType *T = D->getType()->getAs<FunctionProtoType>();
+  if (T->isVariadic()) {
+    S.Diag(Loc, diag::err_cconv_varargs) << CConv;
+    return;
+  }
+}
+
 static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // Attribute has no arguments.
   if (Attr.getNumArgs() != 0) {
@@ -1044,6 +1060,8 @@ static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << 0 /*function*/;
     return;
   }
+
+  DiagnoseCConv(cast<FunctionDecl>(d), "fastcall", Attr.getLoc(), S);
 
   // stdcall and fastcall attributes are mutually incompatible.
   if (d->getAttr<StdCallAttr>()) {

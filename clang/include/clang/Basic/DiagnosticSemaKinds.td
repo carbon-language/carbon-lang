@@ -619,6 +619,10 @@ def warn_attribute_wrong_decl_type : Warning<
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;
+def err_cconv_knr : Error<
+  "function with no prototype cannot use '%0' calling convention">;
+def err_cconv_varargs : Error<
+  "variadic function cannot use '%0' calling convention">;
 
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;
