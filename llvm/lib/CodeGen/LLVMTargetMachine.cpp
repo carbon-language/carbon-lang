@@ -31,6 +31,22 @@ namespace llvm {
   bool EnableFastISel;
 }
 
+static cl::opt<bool> DisablePostRA("disable-post-ra", cl::Hidden,
+    cl::desc("Disable Post Regalloc"));
+static cl::opt<bool> DisableBranchFold("disable-branch-fold", cl::Hidden,
+    cl::desc("Disable branch folding"));
+static cl::opt<bool> DisableCodePlace("disable-code-place", cl::Hidden,
+    cl::desc("Disable code placement"));
+static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
+    cl::desc("Disable Stack Slot Coloring"));
+static cl::opt<bool> DisableMachineLICM("disable-machine-licm", cl::Hidden,
+    cl::desc("Disable Machine LICM"));
+static cl::opt<bool> DisableMachineSink("disable-machine-sink", cl::Hidden,
+    cl::desc("Disable Machine Sinking"));
+static cl::opt<bool> DisableLSR("disable-lsr", cl::Hidden,
+    cl::desc("Disable Loop Strength Reduction Pass"));
+static cl::opt<bool> DisableCGP("disable-cgp", cl::Hidden,
+    cl::desc("Disable Codegen Prepare"));
 static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
     cl::desc("Print LLVM IR produced by the loop-reduce pass"));
 static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
@@ -208,7 +224,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Standard LLVM-Level Passes.
 
   // Run loop strength reduction before anything else.
-  if (OptLevel != CodeGenOpt::None) {
+  if (OptLevel != CodeGenOpt::None && !DisableLSR) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
       PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &errs()));
@@ -236,7 +252,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (OptLevel != CodeGenOpt::None)
+  if (OptLevel != CodeGenOpt::None && !DisableCGP)
     PM.add(createCodeGenPreparePass(getTargetLowering()));
 
   PM.add(createStackProtectorPass(getTargetLowering()));
@@ -265,8 +281,10 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
                  /* allowDoubleDefs= */ true);
 
   if (OptLevel != CodeGenOpt::None) {
-    PM.add(createMachineLICMPass());
-    PM.add(createMachineSinkingPass());
+    if (!DisableMachineLICM)
+      PM.add(createMachineLICMPass());
+    if (!DisableMachineSink)
+      PM.add(createMachineSinkingPass());
     printAndVerify(PM, "After MachineLICM and MachineSinking",
                    /* allowDoubleDefs= */ true);
   }
@@ -281,7 +299,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   printAndVerify(PM, "After Register Allocation");
 
   // Perform stack slot coloring.
-  if (OptLevel != CodeGenOpt::None) {
+  if (OptLevel != CodeGenOpt::None && !DisableSSC) {
     // FIXME: Re-enable coloring with register when it's capable of adding
     // kill markers.
     PM.add(createStackSlotColoringPass(false));
@@ -304,13 +322,13 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     printAndVerify(PM, "After PreSched2 passes");
 
   // Second pass scheduler.
-  if (OptLevel != CodeGenOpt::None) {
+  if (OptLevel != CodeGenOpt::None && !DisablePostRA) {
     PM.add(createPostRAScheduler(OptLevel));
     printAndVerify(PM, "After PostRAScheduler");
   }
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
-  if (OptLevel != CodeGenOpt::None) {
+  if (OptLevel != CodeGenOpt::None && !DisableBranchFold) {
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
     printAndVerify(PM, "After BranchFolding");
   }
@@ -327,7 +345,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (addPreEmitPass(PM, OptLevel))
     printAndVerify(PM, "After PreEmit passes");
 
-  if (OptLevel != CodeGenOpt::None) {
+  if (OptLevel != CodeGenOpt::None && !DisableCodePlace) {
     PM.add(createCodePlacementOptPass());
     printAndVerify(PM, "After CodePlacementOpt");
   }
