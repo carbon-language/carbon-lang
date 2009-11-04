@@ -78,6 +78,21 @@ static RegisterPass<DSE> X("dse", "Dead Store Elimination");
 
 FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 
+/// isValueAtLeastAsBigAs - Return true if V1 is greater than or equal to the
+/// stored size of V2.  This returns false if we don't know.
+///
+static bool isValueAtLeastAsBigAs(Value *V1, Value *V2, const TargetData *TD) {
+  const Type *V1Ty = V1->getType(), *V2Ty = V2->getType();
+  
+  // Exactly the same type, must have exactly the same size.
+  if (V1Ty == V2Ty) return true;
+  
+  // If we don't have target data, we don't know.
+  if (TD == 0) return false;
+  
+  return TD->getTypeStoreSize(V1Ty) >= TD->getTypeStoreSize(V2Ty);
+}
+
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   TD = getAnalysisIfAvailable<TargetData>();
@@ -118,9 +133,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // If this is a store-store dependence, then the previous store is dead so
     // long as this store is at least as big as it.
     if (StoreInst *DepStore = dyn_cast<StoreInst>(InstDep.getInst()))
-      if (TD &&
-          TD->getTypeStoreSize(DepStore->getOperand(0)->getType()) <=
-          TD->getTypeStoreSize(SI->getOperand(0)->getType())) {
+      if (isValueAtLeastAsBigAs(SI->getOperand(0), DepStore->getOperand(0),TD)){
         // Delete the store and now-dead instructions that feed it.
         DeleteDeadInstruction(DepStore);
         NumFastStores++;

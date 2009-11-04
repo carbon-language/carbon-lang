@@ -68,9 +68,6 @@ namespace {
     static char ID; // Pass identification
     JumpThreading() : FunctionPass(&ID) {}
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    }
-
     bool runOnFunction(Function &F);
     void FindLoopHeaders(Function &F);
     
