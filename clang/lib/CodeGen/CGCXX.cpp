@@ -1421,6 +1421,8 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
       if (FieldType->isReferenceType())
         RHS = EmitReferenceBindingToExpr(RhsExpr, FieldType,
                                         /*IsInitializer=*/true);
+      else if (FieldType->isMemberFunctionPointerType())
+        RHS = RValue::get(CGM.EmitConstantExpr(RhsExpr, FieldType, this));
       else
         RHS = RValue::get(EmitScalarExpr(RhsExpr, true));
       EmitStoreThroughLValue(RHS, LHS, FieldType);
