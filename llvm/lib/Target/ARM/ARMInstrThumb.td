@@ -326,9 +326,10 @@ def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoadi,
                     "ldr", "\t$dst, $addr", []>;
 
 // Load tconstpool
+// FIXME: Use ldr.n to work around a Darwin assembler bug.
 let canFoldAsLoad = 1 in
 def tLDRpci : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
-                  "ldr", "\t$dst, $addr",
+                  "ldr.n", "\t$dst, $addr",
                   [(set tGPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
