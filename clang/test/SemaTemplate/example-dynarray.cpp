@@ -1,4 +1,4 @@
-// RUN: clang %s -o %t
+// RUN: clang-cc -emit-llvm-only %s
 #include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
