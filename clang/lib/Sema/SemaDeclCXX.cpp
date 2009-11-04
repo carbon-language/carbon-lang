@@ -1021,6 +1021,7 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   // Diagnose value-uses of fields to initialize themselves, e.g.
   //   foo(foo)
   // where foo is not also a parameter to the constructor.
+  // TODO: implement -Wuninitialized and fold this into that framework.
   for (unsigned i = 0; i < NumArgs; ++i) {
     SourceLocation L;
     if (InitExprContainsUninitializedFields(Args[i], Member, &L)) {
@@ -1044,7 +1045,9 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
     FieldType = Array->getElementType();
   if (FieldType->isDependentType()) {
     // Can't check init for dependent type.
-  } else if (FieldType->getAs<RecordType>()) {
+  } else if (FieldType->isRecordType()) {
+    // Member is a record (struct/union/class), so pass the initializer
+    // arguments down to the record's constructor.
     if (!HasDependentArg) {
       ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
 
@@ -1064,6 +1067,8 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
       }
     }
   } else if (NumArgs != 1 && NumArgs != 0) {
+    // The member type is not a record type (or an array of record
+    // types), so it can be only be default- or copy-initialized.
     return Diag(IdLoc, diag::err_mem_initializer_mismatch)
                 << Member->getDeclName() << SourceRange(IdLoc, RParenLoc);
   } else if (!HasDependentArg) {
@@ -1217,7 +1222,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     // On seeing one dependent type, we should essentially exit this routine
     // while preserving user-declared initializer list. When this routine is
     // called during instantiatiation process, this routine will rebuild the
-    // oderdered initializer list correctly.
+    // ordered initializer list correctly.
 
     // If we have a dependent base initialization, we can't determine the
     // association between initializers and bases; just dump the known
@@ -1473,6 +1478,7 @@ static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member,
   return GetKeyForBase(QualType(Member->getBaseClass(), 0));
 }
 
+/// ActOnMemInitializers - Handle the member initializers for a constructor.
 void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                                 SourceLocation ColonLoc,
                                 MemInitTy **MemInits, unsigned NumMemInits) {
