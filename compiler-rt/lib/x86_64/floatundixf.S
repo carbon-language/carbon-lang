@@ -7,7 +7,9 @@
 
 #ifdef __x86_64__
 
+#ifndef __ELF__
 .const
+#endif
 .align 4
 twop64: .quad 0x43f0000000000000
 

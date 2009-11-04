@@ -51,8 +51,12 @@ DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 
 #ifdef __i386__
 
+#ifndef __ELF__
 .const
 .align 3
+#else
+.align 8
+#endif
 twop52: .quad 0x4330000000000000
 		.quad 0x0000000000000fff
 sticky: .quad 0x0000000000000000
