@@ -390,15 +390,21 @@ public:
     return Insert(BinaryOperator::CreateAShr(LHS, RHS), Name);
   }
   Value *CreateAnd(Value *LHS, Value *RHS, const Twine &Name = "") {
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      if (Constant *RC = dyn_cast<Constant>(RHS))
+    if (Constant *RC = dyn_cast<Constant>(RHS)) {
+      if (isa<ConstantInt>(RC) && cast<ConstantInt>(RC)->isAllOnesValue())
+        return LHS;  // LHS & -1 -> LHS
+      if (Constant *LC = dyn_cast<Constant>(LHS))
         return Folder.CreateAnd(LC, RC);
+    }
     return Insert(BinaryOperator::CreateAnd(LHS, RHS), Name);
   }
   Value *CreateOr(Value *LHS, Value *RHS, const Twine &Name = "") {
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      if (Constant *RC = dyn_cast<Constant>(RHS))
+    if (Constant *RC = dyn_cast<Constant>(RHS)) {
+      if (RC->isNullValue())
+        return LHS;  // LHS | 0 -> LHS
+      if (Constant *LC = dyn_cast<Constant>(LHS))
         return Folder.CreateOr(LC, RC);
+    }
     return Insert(BinaryOperator::CreateOr(LHS, RHS), Name);
   }
   Value *CreateXor(Value *LHS, Value *RHS, const Twine &Name = "") {
