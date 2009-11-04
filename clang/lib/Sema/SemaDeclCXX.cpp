@@ -1293,11 +1293,16 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       continue;
     }
 
+    if ((*Field)->getType()->isDependentType()) {
+      Fields.push_back(*Field);
+      continue;
+    }
+    
     QualType FT = Context.getBaseElementType((*Field)->getType());
     if (const RecordType* RT = FT->getAs<RecordType>()) {
       CXXConstructorDecl *Ctor =
         cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(Context);
-      if (!Ctor && !FT->isDependentType()) {
+      if (!Ctor) {
         Fields.push_back(*Field);
         continue;
       }
@@ -1357,12 +1362,16 @@ Sema::BuildBaseOrMemberInitializers(ASTContext &C,
 
   SetBaseOrMemberInitializers(Constructor,
                               Initializers, NumInitializers, Bases, Members);
-  for (unsigned int i = 0; i < Bases.size(); i++)
-    Diag(Bases[i]->getSourceRange().getBegin(),
-         diag::err_missing_default_constructor) << 0 << Bases[i]->getType();
-  for (unsigned int i = 0; i < Members.size(); i++)
-    Diag(Members[i]->getLocation(), diag::err_missing_default_constructor)
-          << 1 << Members[i]->getType();
+  for (unsigned int i = 0; i < Bases.size(); i++) {
+    if (!Bases[i]->getType()->isDependentType())
+      Diag(Bases[i]->getSourceRange().getBegin(),
+           diag::err_missing_default_constructor) << 0 << Bases[i]->getType();
+  }
+  for (unsigned int i = 0; i < Members.size(); i++) {
+    if (!Members[i]->getType()->isDependentType())
+      Diag(Members[i]->getLocation(), diag::err_missing_default_constructor)
+        << 1 << Members[i]->getType();
+  }
 }
 
 static void *GetKeyForTopLevelField(FieldDecl *Field) {

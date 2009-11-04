@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -Wall -verify %s
-
 template<typename a> struct A {
   template <typename b> struct B {
     template <typename c> struct C {
@@ -20,3 +19,18 @@ template<typename a> struct A {
 };
 
 A<int>::B<int>::C<int>::D<int>::E<int> global;
+
+// PR5352
+template <typename T>
+class Foo {
+public:
+  Foo() {}
+  
+  struct Bar {
+    T value;
+  };
+  
+  Bar u;
+};
+
+template class Foo<int>;
