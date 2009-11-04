@@ -69,3 +69,21 @@ namespace N2 {
 
 template struct N2::Outer2::Inner<float>;
 template struct N2::Outer2::Inner<int*, float*>; // expected-note{{instantiation}}
+
+// Test dependent pointer-to-member expressions.
+template<typename T>
+struct smart_ptr {
+  struct safe_bool {
+    int member;
+  };
+  
+  operator int safe_bool::*() const { 
+    return ptr? &safe_bool::member : 0;
+  }
+  
+  T* ptr;
+};
+
+void test_smart_ptr(smart_ptr<int> p) {
+  if (p) { }
+}

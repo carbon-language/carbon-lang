@@ -422,8 +422,10 @@ namespace {
     /// elaborated type.
     QualType RebuildElaboratedType(QualType T, ElaboratedType::TagKind Tag);
 
-    Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E);
-    Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
+    Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E,
+                                                   bool isAddressOfOperand);
+    Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E,
+                                                bool isAddressOfOperand);
 
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
@@ -535,7 +537,8 @@ TemplateInstantiator::RebuildElaboratedType(QualType T,
 }
 
 Sema::OwningExprResult 
-TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
+TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E,
+                                              bool isAddressOfOperand) {
   if (!E->isTypeDependent())
     return SemaRef.Owned(E->Retain());
 
@@ -558,7 +561,8 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
 }
 
 Sema::OwningExprResult
-TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
+TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
+                                           bool isAddressOfOperand) {
   // FIXME: Clean this up a bit
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
@@ -584,7 +588,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
         ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
 
         VD = cast_or_null<ValueDecl>(
-                                getSema().FindInstantiatedDecl(VD, TemplateArgs));
+                              getSema().FindInstantiatedDecl(VD, TemplateArgs));
         if (!VD)
           return SemaRef.ExprError();
 
@@ -641,7 +645,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   return SemaRef.BuildDeclarationNameExpr(E->getLocation(), InstD,
                                           /*FIXME:*/false,
                                           &SS,
-                                          /*FIXME:*/false);
+                                          isAddressOfOperand);
 }
 
 QualType
