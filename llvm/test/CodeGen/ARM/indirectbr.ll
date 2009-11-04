@@ -47,10 +47,10 @@ L1:                                               ; preds = %L2, %bb2
 ; ARM: ldr r1, LCPI1_2
 ; ARM: add r1, pc, r1
 ; ARM: str r1
-; THUMB: ldr r2, LCPI1_4
+; THUMB: ldr.n r2, LCPI1_4
 ; THUMB: add r2, pc
 ; THUMB: str r2
-; THUMB2: ldr r2, LCPI1_2
+; THUMB2: ldr.n r2, LCPI1_2
 ; THUMB2-NEXT: str r2
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3
