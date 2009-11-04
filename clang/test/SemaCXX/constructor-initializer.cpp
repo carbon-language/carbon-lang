@@ -122,3 +122,36 @@ struct Q {
 
   float *pf;
 };
+
+// A silly class used to demonstrate field-is-uninitialized in constructors with
+// multiple params.
+class TwoInOne { TwoInOne(TwoInOne a, TwoInOne b) {} };
+class InitializeUsingSelfTest {
+  bool A;
+  char* B;
+  int C;
+  TwoInOne D;
+  InitializeUsingSelfTest(int E)
+      : A(A),  // expected-warning {{field is uninitialized when used here}}
+        B((((B)))),  // expected-warning {{field is uninitialized when used here}}
+        C(A && InitializeUsingSelfTest::C),  // expected-warning {{field is uninitialized when used here}}
+        D(D,  // expected-warning {{field is uninitialized when used here}}
+          D) {}  // expected-warning {{field is uninitialized when used here}}
+};
+
+int IntWrapper(int i) { return 0; };
+class InitializeUsingSelfExceptions {
+  int A;
+  int B;
+  InitializeUsingSelfExceptions(int B)
+      : A(IntWrapper(A)),  // Due to a conservative implementation, we do not report warnings inside function/ctor calls even though it is possible to do so.
+        B(B) {}  // Not a warning; B is a local variable.
+};
+
+class CopyConstructorTest {
+  bool A, B, C;
+  CopyConstructorTest(const CopyConstructorTest& rhs)
+      : A(rhs.A),
+        B(B),  // expected-warning {{field is uninitialized when used here}}
+        C(rhs.C || C) { }  // expected-warning {{field is uninitialized when used here}}
+};

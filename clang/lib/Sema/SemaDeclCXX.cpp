@@ -971,10 +971,69 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
                               RParenLoc, ClassDecl);
 }
 
+/// Checks an initializer expression for use of uninitialized fields, such as
+/// containing the field that is being initialized. Returns true if there is an
+/// uninitialized field was used an updates the SourceLocation parameter; false
+/// otherwise.
+static bool InitExprContainsUninitializedFields(const Stmt* S,
+                                                const FieldDecl* LhsField,
+                                                SourceLocation* L) {
+  const MemberExpr* ME = dyn_cast<MemberExpr>(S);
+  if (ME) {
+    const NamedDecl* RhsField = ME->getMemberDecl();
+    if (RhsField == LhsField) {
+      // Initializing a field with itself. Throw a warning.
+      // But wait; there are exceptions!
+      // Exception #1:  The field may not belong to this record.
+      // e.g. Foo(const Foo& rhs) : A(rhs.A) {}
+      const Expr* base = ME->getBase();
+      if (base != NULL && !isa<CXXThisExpr>(base->IgnoreParenCasts())) {
+        // Even though the field matches, it does not belong to this record.
+        return false;
+      }
+      // None of the exceptions triggered; return true to indicate an
+      // uninitialized field was used.
+      *L = ME->getMemberLoc();
+      return true;
+    }
+  }
+  bool found = false;
+  for (Stmt::const_child_iterator it = S->child_begin();
+       it != S->child_end() && found == false;
+       ++it) {
+    if (isa<CallExpr>(S)) {
+      // Do not descend into function calls or constructors, as the use
+      // of an uninitialized field may be valid. One would have to inspect
+      // the contents of the function/ctor to determine if it is safe or not.
+      // i.e. Pass-by-value is never safe, but pass-by-reference and pointers
+      // may be safe, depending on what the function/ctor does.
+      continue;
+    }
+    found = InitExprContainsUninitializedFields(*it, LhsField, L);
+  }
+  return found;
+}
+
 Sema::MemInitResult
 Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                              unsigned NumArgs, SourceLocation IdLoc,
                              SourceLocation RParenLoc) {
+  // Diagnose value-uses of fields to initialize themselves, e.g.
+  //   foo(foo)
+  // where foo is not also a parameter to the constructor.
+  for (unsigned i = 0; i < NumArgs; ++i) {
+    SourceLocation L;
+    if (InitExprContainsUninitializedFields(Args[i], Member, &L)) {
+      // FIXME: Return true in the case when other fields are used before being
+      // uninitialized. For example, let this field be the i'th field. When
+      // initializing the i'th field, throw a warning if any of the >= i'th
+      // fields are used, as they are not yet initialized.
+      // Right now we are only handling the case where the i'th field uses
+      // itself in its initializer.
+      Diag(L, diag::warn_field_is_uninit);
+    }
+  }
+
   bool HasDependentArg = false;
   for (unsigned i = 0; i < NumArgs; i++)
     HasDependentArg |= Args[i]->isTypeDependent();

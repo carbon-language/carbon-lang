@@ -518,6 +518,8 @@ def err_init_reference_member_uninitialized : Error<
   "reference member of type %0 uninitialized">;
 def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
+def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
+  InGroup<DiagGroup<"uninitialized">>;
 
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
