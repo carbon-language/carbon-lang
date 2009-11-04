@@ -884,9 +884,10 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildSizeOfAlignOf(QualType T, SourceLocation OpLoc,
+  OwningExprResult RebuildSizeOfAlignOf(DeclaratorInfo *DInfo,
+                                        SourceLocation OpLoc,
                                         bool isSizeOf, SourceRange R) {
-    return getSema().CreateSizeOfAlignOfExpr(T, OpLoc, isSizeOf, R);
+    return getSema().CreateSizeOfAlignOfExpr(DInfo, OpLoc, isSizeOf, R);
   }
 
   /// \brief Build a new sizeof or alignof expression with an expression
@@ -3532,16 +3533,16 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
                                                    bool isAddressOfOperand) {
   if (E->isArgumentType()) {
-    TemporaryBase Rebase(*this, E->getOperatorLoc(), DeclarationName());
+    DeclaratorInfo *OldT = E->getArgumentTypeInfo();
 
-    QualType T = getDerived().TransformType(E->getArgumentType());
-    if (T.isNull())
+    DeclaratorInfo *NewT = getDerived().TransformType(OldT);
+    if (!NewT)
       return SemaRef.ExprError();
 
-    if (!getDerived().AlwaysRebuild() && T == E->getArgumentType())
+    if (!getDerived().AlwaysRebuild() && OldT == NewT)
       return SemaRef.Owned(E->Retain());
 
-    return getDerived().RebuildSizeOfAlignOf(T, E->getOperatorLoc(),
+    return getDerived().RebuildSizeOfAlignOf(NewT, E->getOperatorLoc(),
                                              E->isSizeOf(),
                                              E->getSourceRange());
   }

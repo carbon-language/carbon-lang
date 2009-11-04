@@ -424,7 +424,7 @@ unsigned PCHStmtReader::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     E->setArgument(cast<Expr>(StmtStack.back()));
     ++Idx;
   } else {
-    E->setArgument(Reader.GetType(Record[Idx++]));
+    E->setArgument(Reader.GetDeclaratorInfo(Record, Idx));
   }
   E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

@@ -976,7 +976,7 @@ class SizeOfAlignOfExpr : public Expr {
   bool isSizeof : 1;  // true if sizeof, false if alignof.
   bool isType : 1;    // true if operand is a type, false if an expression
   union {
-    void *Ty;
+    DeclaratorInfo *Ty;
     Stmt *Ex;
   } Argument;
   SourceLocation OpLoc, RParenLoc;
@@ -985,15 +985,15 @@ protected:
   virtual void DoDestroy(ASTContext& C);
 
 public:
-  SizeOfAlignOfExpr(bool issizeof, QualType T,
+  SizeOfAlignOfExpr(bool issizeof, DeclaratorInfo *DInfo,
                     QualType resultType, SourceLocation op,
                     SourceLocation rp) :
       Expr(SizeOfAlignOfExprClass, resultType,
            false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
-           T->isDependentType()),
+           DInfo->getType()->isDependentType()),
       isSizeof(issizeof), isType(true), OpLoc(op), RParenLoc(rp) {
-    Argument.Ty = T.getAsOpaquePtr();
+    Argument.Ty = DInfo;
   }
 
   SizeOfAlignOfExpr(bool issizeof, Expr *E,
@@ -1016,8 +1016,11 @@ public:
 
   bool isArgumentType() const { return isType; }
   QualType getArgumentType() const {
+    return getArgumentTypeInfo()->getType();
+  }
+  DeclaratorInfo *getArgumentTypeInfo() const {
     assert(isArgumentType() && "calling getArgumentType() when arg is expr");
-    return QualType::getFromOpaquePtr(Argument.Ty);
+    return Argument.Ty;
   }
   Expr *getArgumentExpr() {
     assert(!isArgumentType() && "calling getArgumentExpr() when arg is type");
@@ -1028,8 +1031,8 @@ public:
   }
 
   void setArgument(Expr *E) { Argument.Ex = E; isType = false; }
-  void setArgument(QualType T) {
-    Argument.Ty = T.getAsOpaquePtr();
+  void setArgument(DeclaratorInfo *DInfo) {
+    Argument.Ty = DInfo;
     isType = true;
   }
 

@@ -1670,7 +1670,8 @@ public:
   virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                         tok::TokenKind Op, ExprArg Input);
 
-  OwningExprResult CreateSizeOfAlignOfExpr(QualType T, SourceLocation OpLoc,
+  OwningExprResult CreateSizeOfAlignOfExpr(DeclaratorInfo *T,
+                                           SourceLocation OpLoc,
                                            bool isSizeOf, SourceRange R);
   OwningExprResult CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
                                            bool isSizeOf, SourceRange R);

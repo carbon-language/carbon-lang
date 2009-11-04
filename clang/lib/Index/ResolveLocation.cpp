@@ -92,6 +92,7 @@ public:
   StmtLocResolver(ASTContext &ctx, SourceLocation loc, Decl *parent)
     : LocResolverBase(ctx, loc), Parent(parent) {}
 
+  ASTLocation VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node);
   ASTLocation VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node);
   ASTLocation VisitDeclStmt(DeclStmt *Node);
   ASTLocation VisitStmt(Stmt *Node);
@@ -134,6 +135,25 @@ public:
 };
 
 } // anonymous namespace
+
+ASTLocation
+StmtLocResolver::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
+  assert(ContainsLocation(Node) &&
+         "Should visit only after verifying that loc is in range");
+
+  if (Node->isArgumentType()) {
+    DeclaratorInfo *DInfo = Node->getArgumentTypeInfo();
+    if (ContainsLocation(DInfo))
+      return ResolveInDeclarator(Parent, Node, DInfo);
+  } else {
+    Expr *SubNode = Node->getArgumentExpr();
+    if (ContainsLocation(SubNode))
+      return Visit(SubNode);
+  }
+
+  return ASTLocation(Parent, Node);
+}
+
 
 ASTLocation
 StmtLocResolver::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
