@@ -196,10 +196,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // appropriate instructions to materialize the address.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
+  setOperationAction(ISD::BlockAddress,  MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
   setOperationAction(ISD::JumpTable,     MVT::i32, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
+  setOperationAction(ISD::BlockAddress,  MVT::i64, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i64, Custom);
   setOperationAction(ISD::JumpTable,     MVT::i64, Custom);
 
@@ -1165,6 +1167,36 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
                                                    SelectionDAG &DAG) {
   llvm_unreachable("TLS not implemented for PPC.");
   return SDValue(); // Not reached
+}
+
+SDValue PPCTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
+  EVT PtrVT = Op.getValueType();
+  DebugLoc DL = Op.getDebugLoc();
+
+  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  SDValue TgtBA = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
+  SDValue Zero = DAG.getConstant(0, PtrVT);
+  SDValue Hi = DAG.getNode(PPCISD::Hi, DL, PtrVT, TgtBA, Zero);
+  SDValue Lo = DAG.getNode(PPCISD::Lo, DL, PtrVT, TgtBA, Zero);
+
+  // If this is a non-darwin platform, we don't support non-static relo models
+  // yet.
+  const TargetMachine &TM = DAG.getTarget();
+  if (TM.getRelocationModel() == Reloc::Static ||
+      !TM.getSubtarget<PPCSubtarget>().isDarwin()) {
+    // Generate non-pic code that has direct accesses to globals.
+    // The address of the global is just (hi(&g)+lo(&g)).
+    return DAG.getNode(ISD::ADD, DL, PtrVT, Hi, Lo);
+  }
+
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    // With PIC, the first instruction is actually "GR+hi(&G)".
+    Hi = DAG.getNode(ISD::ADD, DL, PtrVT,
+                     DAG.getNode(PPCISD::GlobalBaseReg,
+                                 DebugLoc::getUnknownLoc(), PtrVT), Hi);
+  }
+
+  return DAG.getNode(ISD::ADD, DL, PtrVT, Hi, Lo);
 }
 
 SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
@@ -4181,6 +4213,7 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Wasn't expecting to be able to lower this!");
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
+  case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);

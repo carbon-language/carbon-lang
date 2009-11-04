@@ -414,6 +414,9 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     return;
+  case MachineOperand::MO_BlockAddress:
+    GetBlockAddressSymbol(MO.getBlockAddress())->print(O, MAI);
+    return;
   case MachineOperand::MO_ExternalSymbol: {
     // Computing the address of an external symbol, not calling it.
     std::string Name(MAI->getGlobalPrefix());

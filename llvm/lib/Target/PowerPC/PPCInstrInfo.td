@@ -1436,12 +1436,16 @@ def : Pat<(PPChi tconstpool:$in, 0), (LIS tconstpool:$in)>;
 def : Pat<(PPClo tconstpool:$in, 0), (LI tconstpool:$in)>;
 def : Pat<(PPChi tjumptable:$in, 0), (LIS tjumptable:$in)>;
 def : Pat<(PPClo tjumptable:$in, 0), (LI tjumptable:$in)>;
+def : Pat<(PPChi tblockaddress:$in, 0), (LIS tblockaddress:$in)>;
+def : Pat<(PPClo tblockaddress:$in, 0), (LI tblockaddress:$in)>;
 def : Pat<(add GPRC:$in, (PPChi tglobaladdr:$g, 0)),
           (ADDIS GPRC:$in, tglobaladdr:$g)>;
 def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),
           (ADDIS GPRC:$in, tconstpool:$g)>;
 def : Pat<(add GPRC:$in, (PPChi tjumptable:$g, 0)),
           (ADDIS GPRC:$in, tjumptable:$g)>;
+def : Pat<(add GPRC:$in, (PPChi tblockaddress:$g, 0)),
+          (ADDIS GPRC:$in, tblockaddress:$g)>;
 
 // Fused negative multiply subtract, alternate pattern
 def : Pat<(fsub F8RC:$B, (fmul F8RC:$A, F8RC:$C)),
