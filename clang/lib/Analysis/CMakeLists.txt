@@ -42,11 +42,10 @@ add_clang_library(clangAnalysis
   SimpleSValuator.cpp
   Store.cpp
   SymbolManager.cpp
-  UndefSizedVLAChecker.cpp
   UndefinedArgChecker.cpp
   UninitializedValues.cpp
   ValueManager.cpp
-  ZeroSizedVLAChecker.cpp
+  VLASizeChecker.cpp
   )
 
 add_dependencies(clangAnalysis ClangDiagnosticAnalysis)
