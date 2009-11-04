@@ -22,6 +22,7 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
 /// \brief Perform adjustment on the parameter type of a function.
@@ -1162,15 +1163,29 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       }
       // The scope spec must refer to a class, or be dependent.
       QualType ClsType;
-      if (isDependentScopeSpecifier(DeclType.Mem.Scope())) {
+      if (isDependentScopeSpecifier(DeclType.Mem.Scope())
+            || dyn_cast_or_null<CXXRecordDecl>(
+                                   computeDeclContext(DeclType.Mem.Scope()))) {
         NestedNameSpecifier *NNS
           = (NestedNameSpecifier *)DeclType.Mem.Scope().getScopeRep();
-        assert(NNS->getAsType() && "Nested-name-specifier must name a type");
-        ClsType = QualType(NNS->getAsType(), 0);
-      } else if (CXXRecordDecl *RD
-                   = dyn_cast_or_null<CXXRecordDecl>(
-                                    computeDeclContext(DeclType.Mem.Scope()))) {
-        ClsType = Context.getTagDeclType(RD);
+        NestedNameSpecifier *NNSPrefix = NNS->getPrefix();
+        switch (NNS->getKind()) {
+        case NestedNameSpecifier::Identifier:
+          ClsType = Context.getTypenameType(NNSPrefix, NNS->getAsIdentifier());
+          break;
+
+        case NestedNameSpecifier::Namespace:
+        case NestedNameSpecifier::Global:
+          llvm::llvm_unreachable("Nested-name-specifier must name a type");
+          break;
+            
+        case NestedNameSpecifier::TypeSpec:
+        case NestedNameSpecifier::TypeSpecWithTemplate:
+          ClsType = QualType(NNS->getAsType(), 0);
+          if (NNSPrefix)
+            ClsType = Context.getQualifiedNameType(NNSPrefix, ClsType);
+          break;
+        }
       } else {
         Diag(DeclType.Mem.Scope().getBeginLoc(),
              diag::err_illegal_decl_mempointer_in_nonclass)

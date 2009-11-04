@@ -32,6 +32,15 @@ public:
   F Af;
 }; 
 
+template <typename T> struct TT {
+  int T::t::*pti;
+};
+
+struct I {
+  typedef I t;
+  int x;
+};
+
 void pr(const F& b) {
   printf(" %d %f\n", b.iF, b.fF);
 }
@@ -69,9 +78,12 @@ void test_aggr_pdata_1(A* pa) {
 int main() 
 {
   A a1;
+  TT<I> tt;
+  I i;
   int A::* pa = &A::Ai;
   float A::* pf = &A::f;
   double A::* pd = &A::d;
+  tt.pti = &I::x;
   printf("%d %d %d\n", &A::Ai, &A::f, &A::d);
   printf("%d\n", &A::B::iB);
   printf("%d\n", &A::B1::iB1);
@@ -81,6 +93,7 @@ int main()
   printf("%d\n", &A::B::V::iV);
   printf("%d\n", &A::B1::V::iV);
   printf("%d, %f, %f  \n", a1.*pa, a1.*pf, a1.*pd);
+  printf("%d\n", i.*tt.pti);
   test_aggr_pdata(a1);
   test_aggr_pdata_1(&a1);
 }

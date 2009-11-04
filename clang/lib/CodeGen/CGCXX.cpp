@@ -291,7 +291,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
   const FunctionProtoType *FPT = 
     MPT->getPointeeType()->getAs<FunctionProtoType>();
   const CXXRecordDecl *RD = 
-    cast<CXXRecordDecl>(cast<RecordType>(MPT->getClass())->getDecl());
+    cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
 
   const llvm::FunctionType *FTy = 
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
