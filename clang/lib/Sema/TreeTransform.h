@@ -941,7 +941,13 @@ public:
                                      NestedNameSpecifier *Qualifier,
                                      SourceRange QualifierRange,
                                      SourceLocation MemberLoc,
-                                     NamedDecl *Member) {
+                                     NamedDecl *Member,
+                                     bool HasExplicitTemplateArgs,
+                                     SourceLocation LAngleLoc,
+                              const TemplateArgumentLoc *ExplicitTemplateArgs,
+                                     unsigned NumExplicitTemplateArgs,
+                                     SourceLocation RAngleLoc,
+                                     NamedDecl *FirstQualifierInScope) {
     if (!Member->getDeclName()) {
       // We have a reference to an unnamed field.
       assert(!Qualifier && "Can't have an unnamed field with a qualifier!");
@@ -963,8 +969,14 @@ public:
                                               isArrow? tok::arrow : tok::period,
                                               MemberLoc,
                                               Member->getDeclName(),
+                                              HasExplicitTemplateArgs,
+                                              LAngleLoc,
+                                              ExplicitTemplateArgs,
+                                              NumExplicitTemplateArgs,
+                                              RAngleLoc,
                                      /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
-                                              &SS);
+                                              &SS,
+                                              FirstQualifierInScope);
   }
 
   /// \brief Build a new binary operator expression.
@@ -3656,9 +3668,20 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E,
   if (!getDerived().AlwaysRebuild() &&
       Base.get() == E->getBase() &&
       Qualifier == E->getQualifier() &&
-      Member == E->getMemberDecl())
+      Member == E->getMemberDecl() &&
+      !E->hasExplicitTemplateArgumentList())
     return SemaRef.Owned(E->Retain());
 
+  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs;
+  if (E->hasExplicitTemplateArgumentList()) {
+    TransArgs.resize(E->getNumTemplateArgs());
+    for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
+      if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
+                                                 TransArgs[I]))
+        return SemaRef.ExprError();
+    }
+  }
+  
   // FIXME: Bogus source location for the operator
   SourceLocation FakeOperatorLoc
     = SemaRef.PP.getLocForEndOfToken(E->getBase()->getSourceRange().getEnd());
@@ -3668,7 +3691,13 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E,
                                         Qualifier,
                                         E->getQualifierRange(),
                                         E->getMemberLoc(),
-                                        Member);
+                                        Member,
+                                        E->hasExplicitTemplateArgumentList(),
+                                        E->getLAngleLoc(),
+                                        TransArgs.data(),
+                                        TransArgs.size(),
+                                        E->getRAngleLoc(),
+                                        0);
 }
 
 template<typename Derived>
