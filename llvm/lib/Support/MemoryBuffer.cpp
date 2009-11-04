@@ -229,7 +229,7 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
     if (NumRead > 0) {
       BytesLeft -= NumRead;
       BufPtr += NumRead;
-    } else if (errno == EINTR) {
+    } else if (NumRead == -1 && errno == EINTR) {
       // try again
     } else {
       // error reading.
