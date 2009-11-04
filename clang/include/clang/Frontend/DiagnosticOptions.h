@@ -21,7 +21,7 @@ class DiagnosticOptions {
 public:
   unsigned ShowColumn : 1;       /// Show column number on diagnostics.
   unsigned ShowLocation : 1;     /// Show source location information.
-  unsigned ShowCarets : 1;       /// Show source location information.
+  unsigned ShowCarets : 1;       /// Show carets in diagnostics.
   unsigned ShowFixits : 1;       /// Show fixit information.
   unsigned ShowSourceRanges : 1; /// Show source ranges in numeric form.
   unsigned ShowOptionNames : 1;  /// Show the diagnostic name for mappable
