@@ -703,6 +703,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--debug-pass=Structure");
   if (Args.hasArg(options::OPT_fdebug_pass_arguments))
     CmdArgs.push_back("--debug-pass=Arguments");
+  if (!Args.hasFlag(options::OPT_fmerge_all_constants,
+                    options::OPT_fno_merge_all_constants))
+    CmdArgs.push_back("--no-merge-all-constants");
 
   // This is a coarse approximation of what llvm-gcc actually does, both
   // -fasynchronous-unwind-tables and -fnon-call-exceptions interact in more

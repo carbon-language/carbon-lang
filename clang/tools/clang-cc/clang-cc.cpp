@@ -653,6 +653,10 @@ static llvm::cl::opt<bool>
 NoElideConstructors("fno-elide-constructors",
                     llvm::cl::desc("Disable C++ copy constructor elision"));
 
+static llvm::cl::opt<bool>
+NoMergeConstants("fno-merge-all-constants",
+                       llvm::cl::desc("Disallow merging of constants."));
+
 static llvm::cl::opt<std::string>
 TargetABI("target-abi",
           llvm::cl::desc("Target a particular ABI type"));
@@ -1372,6 +1376,8 @@ static void InitializeCompileOptions(CompileOptions &Opts,
 
   Opts.DisableRedZone = DisableRedZone;
   Opts.NoImplicitFloat = NoImplicitFloat;
+  
+  Opts.MergeAllConstants = !NoMergeConstants;
 }
 
 //===----------------------------------------------------------------------===//
