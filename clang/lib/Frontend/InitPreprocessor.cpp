@@ -443,8 +443,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 /// environment ready to process a single file. This returns true on error.
 ///
 bool clang::InitializePreprocessor(Preprocessor &PP,
-                                   const PreprocessorInitOptions &InitOpts,
-                                   bool undef_macros) {
+                                   const PreprocessorInitOptions &InitOpts) {
   std::vector<char> PredefineBuffer;
 
   const char *LineDirective = "# 1 \"<built-in>\" 3\n";
@@ -452,7 +451,7 @@ bool clang::InitializePreprocessor(Preprocessor &PP,
                          LineDirective, LineDirective+strlen(LineDirective));
 
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
-  if (!undef_macros)
+  if (InitOpts.getUsePredefines())
     InitializePredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
                                PredefineBuffer);
 

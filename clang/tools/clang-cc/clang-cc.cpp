@@ -933,12 +933,9 @@ static bool InitializeSourceManager(Preprocessor &PP,
 // Preprocessor Initialization
 //===----------------------------------------------------------------------===//
 
-// FIXME: Preprocessor builtins to support.
-//   -A...    - Play with #assertions
-//   -undef   - Undefine all predefined macros
-
 static llvm::cl::opt<bool>
-undef_macros("undef", llvm::cl::value_desc("macro"), llvm::cl::desc("undef all system defines"));
+UndefMacros("undef", llvm::cl::value_desc("macro"),
+            llvm::cl::desc("undef all system defines"));
 
 static llvm::cl::list<std::string>
 D_macros("D", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
@@ -1137,6 +1134,9 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 }
 
 void InitializePreprocessorInitOptions(PreprocessorInitOptions &InitOpts) {
+  // Use predefines?
+  InitOpts.setUsePredefines(!UndefMacros);
+
   // Add macros from the command line.
   unsigned d = 0, D = D_macros.size();
   unsigned u = 0, U = U_macros.size();
@@ -1251,7 +1251,7 @@ public:
 
     PreprocessorInitOptions InitOpts;
     InitializePreprocessorInitOptions(InitOpts);
-    if (InitializePreprocessor(*PP, InitOpts, undef_macros))
+    if (InitializePreprocessor(*PP, InitOpts))
       return 0;
 
     return PP.take();
