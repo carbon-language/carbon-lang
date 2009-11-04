@@ -26,6 +26,7 @@
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/InitHeaderSearch.h"
@@ -237,6 +238,8 @@ TokenCache("token-cache", llvm::cl::value_desc("path"),
 //===----------------------------------------------------------------------===//
 // Diagnostic Options
 //===----------------------------------------------------------------------===//
+
+static DiagnosticOptions DiagOpts;
 
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
@@ -1566,14 +1569,7 @@ public:
     // Output diags both where requested...
     Chain1.reset(Normal);
     // .. and to our log file.
-    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile,
-                                           !NoShowColumn,
-                                           !NoCaretDiagnostics,
-                                           !NoShowLocation,
-                                           PrintSourceRangeInfo,
-                                           PrintDiagnosticOption,
-                                           !NoDiagnosticsFixIt,
-                                           MessageLength));
+    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile, DiagOpts));
   }
 
   virtual void setLangOptions(const LangOptions *LO) {
@@ -2157,6 +2153,23 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
 
+  // If -fmessage-length=N was not specified, determine whether this
+  // is a terminal and, if so, implicitly define -fmessage-length
+  // appropriately.
+  if (MessageLength.getNumOccurrences() == 0)
+    MessageLength.setValue(llvm::sys::Process::StandardErrColumns());
+
+  // Initialize the diagnostic options.
+  DiagOpts.ShowColumn = !NoShowColumn;
+  DiagOpts.ShowLocation = !NoShowLocation;
+  DiagOpts.ShowCarets = !NoCaretDiagnostics;
+  DiagOpts.ShowFixits = !NoDiagnosticsFixIt;
+  DiagOpts.ShowSourceRanges = PrintSourceRangeInfo;
+  DiagOpts.ShowOptionNames = PrintDiagnosticOption;
+  DiagOpts.ShowColors = (!NoColorDiagnostic &&
+                         llvm::sys::Process::StandardErrHasColors());
+  DiagOpts.MessageLength = MessageLength;
+
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
   llvm::OwningPtr<DiagnosticClient> DiagClient;
@@ -2173,26 +2186,7 @@ int main(int argc, char **argv) {
     }
   } else if (HTMLDiag.empty()) {
     // Print diagnostics to stderr by default.
-
-    // If -fmessage-length=N was not specified, determine whether this
-    // is a terminal and, if so, implicitly define -fmessage-length
-    // appropriately.
-    if (MessageLength.getNumOccurrences() == 0)
-      MessageLength.setValue(llvm::sys::Process::StandardErrColumns());
-
-    // Disable color diagnostics if not supported on stderr.
-    if (!NoColorDiagnostic && !llvm::sys::Process::StandardErrHasColors())
-      NoColorDiagnostic.setValue(true);
-
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
-                                               !NoShowColumn,
-                                               !NoCaretDiagnostics,
-                                               !NoShowLocation,
-                                               PrintSourceRangeInfo,
-                                               PrintDiagnosticOption,
-                                               !NoDiagnosticsFixIt,
-                                               MessageLength,
-                                               !NoColorDiagnostic));
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), DiagOpts));
   } else {
     DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
   }

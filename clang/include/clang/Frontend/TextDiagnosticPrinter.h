@@ -23,42 +23,21 @@ namespace llvm {
 }
 
 namespace clang {
-class SourceManager;
+class DiagnosticOptions;
 class LangOptions;
+class SourceManager;
 
 class TextDiagnosticPrinter : public DiagnosticClient {
   llvm::raw_ostream &OS;
   const LangOptions *LangOpts;
+  const DiagnosticOptions *DiagOpts;
+
   SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;
   bool LastCaretDiagnosticWasNote;
 
-  bool ShowColumn;
-  bool CaretDiagnostics;
-  bool ShowLocation;
-  bool PrintRangeInfo;
-  bool PrintDiagnosticOption;
-  bool PrintFixItInfo;
-  unsigned MessageLength;
-  bool UseColors;
-
 public:
-  TextDiagnosticPrinter(llvm::raw_ostream &os,
-                        bool showColumn = true,
-                        bool caretDiagnistics = true, bool showLocation = true,
-                        bool printRangeInfo = true,
-                        bool printDiagnosticOption = true,
-                        bool printFixItInfo = true,
-                        unsigned messageLength = 0,
-                        bool useColors = false)
-    : OS(os), LangOpts(0),
-      LastCaretDiagnosticWasNote(false), ShowColumn(showColumn),
-      CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation),
-      PrintRangeInfo(printRangeInfo),
-      PrintDiagnosticOption(printDiagnosticOption),
-      PrintFixItInfo(printFixItInfo),
-      MessageLength(messageLength),
-      UseColors(useColors) {}
+  TextDiagnosticPrinter(llvm::raw_ostream &os, const DiagnosticOptions &diags);
 
   void setLangOptions(const LangOptions *LO) {
     LangOpts = LO;

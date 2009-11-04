@@ -13,6 +13,7 @@
 
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -37,6 +38,12 @@ static const enum llvm::raw_ostream::Colors savedColor =
 /// \brief Number of spaces to indent when word-wrapping.
 const unsigned WordWrapIndentation = 6;
 
+TextDiagnosticPrinter::TextDiagnosticPrinter(llvm::raw_ostream &os,
+                                             const DiagnosticOptions &diags)
+  : OS(os), LangOpts(0), DiagOpts(&diags),
+    LastCaretDiagnosticWasNote(false) {
+}
+
 void TextDiagnosticPrinter::
 PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
   if (Loc.isInvalid()) return;
@@ -46,7 +53,7 @@ PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
   // Print out the other include frames first.
   PrintIncludeStack(PLoc.getIncludeLoc(), SM);
 
-  if (ShowLocation)
+  if (DiagOpts->ShowLocation)
     OS << "In file included from " << PLoc.getFilename()
        << ':' << PLoc.getLine() << ":\n";
   else
@@ -281,13 +288,13 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       Ranges[i] = SourceRange(S, E);
     }
 
-    if (ShowLocation) {
+    if (DiagOpts->ShowLocation) {
       std::pair<FileID, unsigned> IInfo = SM.getDecomposedInstantiationLoc(Loc);
 
       // Emit the file/line/column that this expansion came from.
       OS << SM.getBuffer(IInfo.first)->getBufferIdentifier() << ':'
          << SM.getLineNumber(IInfo.first, IInfo.second) << ':';
-      if (ShowColumn)
+      if (DiagOpts->ShowColumn)
         OS << SM.getColumnNumber(IInfo.first, IInfo.second) << ':';
       OS << ' ';
     }
@@ -370,13 +377,13 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // produce easily machine parsable output.  Add a space before the source line
   // and the caret to make it trivial to tell the main diagnostic line from what
   // the user is intended to see.
-  if (PrintRangeInfo) {
+  if (DiagOpts->ShowSourceRanges) {
     SourceLine = ' ' + SourceLine;
     CaretLine = ' ' + CaretLine;
   }
 
   std::string FixItInsertionLine;
-  if (NumHints && PrintFixItInfo) {
+  if (NumHints && DiagOpts->ShowFixits) {
     for (const CodeModificationHint *Hint = Hints, *LastHint = Hints + NumHints;
          Hint != LastHint; ++Hint) {
       if (Hint->InsertionLoc.isValid()) {
@@ -417,20 +424,20 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   // Emit what we have computed.
   OS << SourceLine << '\n';
 
-  if (UseColors)
+  if (DiagOpts->ShowColors)
     OS.changeColor(caretColor, true);
   OS << CaretLine << '\n';
-  if (UseColors)
+  if (DiagOpts->ShowColors)
     OS.resetColor();
 
   if (!FixItInsertionLine.empty()) {
-    if (UseColors)
+    if (DiagOpts->ShowColors)
       // Print fixit line in color
       OS.changeColor(fixitColor, false);
-    if (PrintRangeInfo)
+    if (DiagOpts->ShowSourceRanges)
       OS << ' ';
     OS << FixItInsertionLine << '\n';
-    if (UseColors)
+    if (DiagOpts->ShowColors)
       OS.resetColor();
   }
 }
@@ -627,15 +634,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     }
 
     // Compute the column number.
-    if (ShowLocation) {
-      if (UseColors)
+    if (DiagOpts->ShowLocation) {
+      if (DiagOpts->ShowColors)
         OS.changeColor(savedColor, true);
       OS << PLoc.getFilename() << ':' << LineNo << ':';
-      if (ShowColumn)
+      if (DiagOpts->ShowColumn)
         if (unsigned ColNo = PLoc.getColumn())
           OS << ColNo << ':';
 
-      if (PrintRangeInfo && Info.getNumRanges()) {
+      if (DiagOpts->ShowSourceRanges && Info.getNumRanges()) {
         FileID CaretFileID =
           SM.getFileID(SM.getInstantiationLoc(Info.getLocation()));
         bool PrintedRange = false;
@@ -679,12 +686,12 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
           OS << ':';
       }
       OS << ' ';
-      if (UseColors)
+      if (DiagOpts->ShowColors)
         OS.resetColor();
     }
   }
 
-  if (UseColors) {
+  if (DiagOpts->ShowColors) {
     // Print diagnostic category in bold and color
     switch (Level) {
     case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
@@ -703,20 +710,20 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   case Diagnostic::Fatal:   OS << "fatal error: "; break;
   }
 
-  if (UseColors)
+  if (DiagOpts->ShowColors)
     OS.resetColor();
 
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
-  if (PrintDiagnosticOption)
+  if (DiagOpts->ShowOptionNames)
     if (const char *Opt = Diagnostic::getWarningOptionForDiag(Info.getID())) {
       OutStr += " [-W";
       OutStr += Opt;
       OutStr += ']';
     }
 
-  if (UseColors) {
+  if (DiagOpts->ShowColors) {
     // Print warnings, errors and fatal errors in bold, no color
     switch (Level) {
     case Diagnostic::Warning: OS.changeColor(savedColor, true); break;
@@ -726,17 +733,17 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     }
   }
 
-  if (MessageLength) {
+  if (DiagOpts->MessageLength) {
     // We will be word-wrapping the error message, so compute the
     // column number where we currently are (after printing the
     // location information).
     unsigned Column = OS.tell() - StartOfLocationInfo;
-    PrintWordWrapped(OS, OutStr, MessageLength, Column);
+    PrintWordWrapped(OS, OutStr, DiagOpts->MessageLength, Column);
   } else {
     OS.write(OutStr.begin(), OutStr.size());
   }
   OS << '\n';
-  if (UseColors)
+  if (DiagOpts->ShowColors)
     OS.resetColor();
 
   // If caret diagnostics are enabled and we have location, we want to
@@ -745,7 +752,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // was part of a different warning or error diagnostic, or if the
   // diagnostic has ranges.  We don't want to emit the same caret
   // multiple times if one loc has multiple diagnostics.
-  if (CaretDiagnostics && Info.getLocation().isValid() &&
+  if (DiagOpts->ShowCarets && Info.getLocation().isValid() &&
       ((LastLoc != Info.getLocation()) || Info.getNumRanges() ||
        (LastCaretDiagnosticWasNote && Level != Diagnostic::Note) ||
        Info.getNumCodeModificationHints())) {
@@ -772,7 +779,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
                         Info.getCodeModificationHints(),
                         Info.getNumCodeModificationHints(),
-                        MessageLength);
+                        DiagOpts->MessageLength);
   }
 
   OS.flush();
