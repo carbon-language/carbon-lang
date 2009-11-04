@@ -37,7 +37,6 @@ namespace llvm {
   /// information.
   class IndexListEntry {
     friend class SlotIndex;
-    friend class SlotIndexes;
 
   private:
 
@@ -63,38 +62,6 @@ namespace llvm {
     IndexListEntry* getPrev() { return prev; }
     const IndexListEntry* getPrev() const { return prev; }
     void setPrev(IndexListEntry *prev) { this->prev = prev; }
-
-    /*
-    bool operator==(const IndexListEntry &other) const {
-      assert(getIndex() != other.getIndex() || this == &other &&
-             "Non-equal index list entries compare equal.");
-      return getIndex() == other.getIndex();
-    }
-
-    bool operator!=(const IndexListEntry &other) const {
-      return getIndex() != other.getIndex();
-    }
-
-    bool operator<(const IndexListEntry &other) const {
-      return getIndex() < other.getIndex();
-    }
- 
-    bool operator<=(const IndexListEntry &other) const {
-      return getIndex() <= other.getIndex();
-    }
-
-    bool operator>(const IndexListEntry &other) const {
-      return getIndex() > other.getIndex();
-    }
-
-    bool operator>=(const IndexListEntry &other) const {
-      return getIndex() >= other.getIndex();
-    }
-
-    int distance(const IndexListEntry &other) const {
-      return other.getIndex() - getIndex();
-    }
-    */
   };
 
   // Specialize PointerLikeTypeTraits for IndexListEntry.
