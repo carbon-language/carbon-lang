@@ -96,8 +96,9 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   if (CXXGlobalInits.empty())
     return;
 
-  const llvm::FunctionType *FTy = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                                                          false);
+  const llvm::FunctionType *FTy
+    = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
+                              false);
 
   // Create our global initialization function.
   // FIXME: Should this be tweakable by targets?
@@ -140,18 +141,20 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   // Create the guard variable.
   llvm::GlobalValue *GuardV =
-    new llvm::GlobalVariable(CGM.getModule(), llvm::Type::getInt64Ty(VMContext), false,
-                             GV->getLinkage(),
-                             llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext)),
+    new llvm::GlobalVariable(CGM.getModule(), llvm::Type::getInt64Ty(VMContext),
+                             false, GV->getLinkage(),
+                llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext)),
                              GuardVName.str());
 
   // Load the first byte of the guard variable.
-  const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
+  const llvm::Type *PtrTy
+    = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   llvm::Value *V = Builder.CreateLoad(Builder.CreateBitCast(GuardV, PtrTy),
                                       "tmp");
 
   // Compare it against 0.
-  llvm::Value *nullValue = llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext));
+  llvm::Value *nullValue
+    = llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext));
   llvm::Value *ICmp = Builder.CreateICmpEQ(V, nullValue , "tobool");
 
   llvm::BasicBlock *InitBlock = createBasicBlock("init");
@@ -164,7 +167,8 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   EmitCXXGlobalVarDeclInit(D, GV);
 
-  Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 1),
+  Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext),
+                                             1),
                       Builder.CreateBitCast(GuardV, PtrTy));
 
   EmitBlock(EndBlock);
@@ -879,7 +883,7 @@ CodeGenFunction::GetVirtualCXXBaseClassOffset(llvm::Value *This,
     CGM.getVtableInfo().getVirtualBaseOffsetIndex(ClassDecl, BaseClassDecl);
   
   llvm::Value *VBaseOffsetPtr = 
-    Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetIndex, "vbase.offset.ptr");  
+    Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetIndex, "vbase.offset.ptr");
   const llvm::Type *PtrDiffTy = 
     ConvertType(getContext().getPointerDiffType());
   
@@ -963,7 +967,7 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
 
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                      BaseCopyCtor->getParamDecl(0)->getType()));
+                                     BaseCopyCtor->getParamDecl(0)->getType()));
     QualType ResultType =
       BaseCopyCtor->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
@@ -1163,11 +1167,11 @@ CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *Ctor,
   FinishFunction();
 }
 
-/// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a copy
-/// constructor, in accordance with section 12.8 (p7 and p8) of C++03
+/// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a
+/// copy constructor, in accordance with section 12.8 (p7 and p8) of C++03
 /// The implicitly-defined copy constructor for class X performs a memberwise
-/// copy of its subobjects. The order of copying is the same as the order
-/// of initialization of bases and members in a user-defined constructor
+/// copy of its subobjects. The order of copying is the same as the order of
+/// initialization of bases and members in a user-defined constructor
 /// Each subobject is copied in the manner appropriate to its type:
 ///  if the subobject is of class type, the copy constructor for the class is
 ///  used;
@@ -1185,7 +1189,7 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
                                               const FunctionArgList &Args) {
   const CXXRecordDecl *ClassDecl = Ctor->getParent();
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
-         "SynthesizeCXXCopyConstructor - copy constructor has definition already");
+      "SynthesizeCXXCopyConstructor - copy constructor has definition already");
   StartFunction(GlobalDecl(Ctor, Type), Ctor->getResultType(), Fn, Args, 
                 SourceLocation());
 
