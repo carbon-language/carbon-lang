@@ -1090,21 +1090,30 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
 
 /// EvalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by EvalStore and (soon) VisitDeclStmt, and others.
-void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
-                            const GRState* state, SVal location, SVal Val) {
+void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
+                            const GRState* state, SVal location, SVal Val,
+                            bool atDeclInit) {
 
   const GRState* newState = 0;
 
-  if (location.isUnknown()) {
-    // We know that the new state will be the same as the old state since
-    // the location of the binding is "unknown".  Consequently, there
-    // is no reason to just create a new node.
-    newState = state;
+  if (atDeclInit) {
+    const VarRegion *VR =
+      cast<VarRegion>(cast<loc::MemRegionVal>(location).getRegion());
+
+    newState = state->bindDecl(VR, Val);
   }
   else {
-    // We are binding to a value other than 'unknown'.  Perform the binding
-    // using the StoreManager.
-    newState = state->bindLoc(cast<Loc>(location), Val);
+    if (location.isUnknown()) {
+      // We know that the new state will be the same as the old state since
+      // the location of the binding is "unknown".  Consequently, there
+      // is no reason to just create a new node.
+      newState = state;
+    }
+    else {
+      // We are binding to a value other than 'unknown'.  Perform the binding
+      // using the StoreManager.
+      newState = state->bindLoc(cast<Loc>(location), Val);
+    }
   }
 
   // The next thing to do is check if the GRTransferFuncs object wants to
@@ -2089,18 +2098,12 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
         InitVal = ValMgr.getConjuredSymbolVal(NULL, InitEx, 
                                                Builder->getCurrentBlockCount());
       }
-
-      state = state->bindDecl(VD, LC, InitVal);
-
-      // The next thing to do is check if the GRTransferFuncs object wants to
-      // update the state based on the new binding.  If the GRTransferFunc
-      // object doesn't do anything, just auto-propagate the current state.
-      GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, state, DS,true);
-      getTF().EvalBind(BuilderRef, loc::MemRegionVal(state->getRegion(VD, LC)),
-                       InitVal);
+      
+      EvalBind(Dst, DS, *I, state, loc::MemRegionVal(state->getRegion(VD, LC)),
+               InitVal, true);                                                     
     }
     else {
-      state = state->bindDeclWithNoInit(VD, LC);
+      state = state->bindDeclWithNoInit(state->getRegion(VD, LC));
       MakeNode(Dst, DS, *I, state);
     }
   }

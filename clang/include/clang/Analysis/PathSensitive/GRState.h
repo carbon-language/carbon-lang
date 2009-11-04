@@ -219,11 +219,9 @@ public:
 
   const GRState *BindExpr(const Stmt *S, SVal V, bool Invalidate = true) const;
 
-  const GRState *bindDecl(const VarDecl *VD, const LocationContext *LC,
-                          SVal V) const;
+  const GRState *bindDecl(const VarRegion *VR, SVal V) const;
 
-  const GRState *bindDeclWithNoInit(const VarDecl *VD,
-                                    const LocationContext *LC) const;
+  const GRState *bindDeclWithNoInit(const VarRegion *VR) const;
 
   const GRState *bindLoc(Loc location, SVal V) const;
 
@@ -602,15 +600,12 @@ inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL
   return getStateManager().StoreMgr->BindCompoundLiteral(this, CL, V);
 }
 
-inline const GRState *GRState::bindDecl(const VarDecl* VD,
-                                        const LocationContext *LC,
-                                        SVal IVal) const {
-  return getStateManager().StoreMgr->BindDecl(this, VD, LC, IVal);
+inline const GRState *GRState::bindDecl(const VarRegion* VR, SVal IVal) const {
+  return getStateManager().StoreMgr->BindDecl(this, VR, IVal);
 }
 
-inline const GRState *GRState::bindDeclWithNoInit(const VarDecl* VD,
-                                                  const LocationContext *LC) const {
-  return getStateManager().StoreMgr->BindDeclWithNoInit(this, VD, LC);
+inline const GRState *GRState::bindDeclWithNoInit(const VarRegion* VR) const {
+  return getStateManager().StoreMgr->BindDeclWithNoInit(this, VR);
 }
 
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {

@@ -275,11 +275,11 @@ public:
   const GRState *BindCompoundLiteral(const GRState *state,
                                      const CompoundLiteralExpr* CL, SVal V);
 
-  const GRState *BindDecl(const GRState *ST, const VarDecl *VD,
-                          const LocationContext *LC, SVal InitVal);
+  const GRState *BindDecl(const GRState *ST, const VarRegion *VR,
+                          SVal InitVal);
 
-  const GRState *BindDeclWithNoInit(const GRState *state, const VarDecl*,
-                                    const LocationContext *) {
+  const GRState *BindDeclWithNoInit(const GRState *state, 
+                                    const VarRegion *) {
     return state;
   }
 
@@ -1409,12 +1409,10 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
 }
 
 const GRState *RegionStoreManager::BindDecl(const GRState *ST,
-                                            const VarDecl *VD,
-                                            const LocationContext *LC,
+                                            const VarRegion *VR, 
                                             SVal InitVal) {
 
-  QualType T = VD->getType();
-  VarRegion* VR = MRMgr.getVarRegion(VD, LC);
+  QualType T = VR->getDecl()->getType();
 
   if (T->isArrayType())
     return BindArray(ST, VR, InitVal);

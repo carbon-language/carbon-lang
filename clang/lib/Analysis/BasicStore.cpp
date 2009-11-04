@@ -92,19 +92,17 @@ public:
 
   void iterBindings(Store store, BindingsHandler& f);
 
-  const GRState *BindDecl(const GRState *state, const VarDecl *VD,
-                          const LocationContext *LC, SVal InitVal) {
-    return state->makeWithStore(BindDeclInternal(state->getStore(),VD, LC,
+  const GRState *BindDecl(const GRState *state, const VarRegion *VR,
+                          SVal InitVal) {
+    return state->makeWithStore(BindDeclInternal(state->getStore(), VR,
                                                  &InitVal));
   }
 
-  const GRState *BindDeclWithNoInit(const GRState *state, const VarDecl *VD,
-                                    const LocationContext *LC) {
-    return state->makeWithStore(BindDeclInternal(state->getStore(), VD, LC, 0));
+  const GRState *BindDeclWithNoInit(const GRState *state, const VarRegion *VR) {
+    return state->makeWithStore(BindDeclInternal(state->getStore(), VR, 0));
   }
 
-  Store BindDeclInternal(Store store, const VarDecl *VD,
-                         const LocationContext *LC, SVal *InitVal);
+  Store BindDeclInternal(Store store, const VarRegion *VR, SVal *InitVal);
 
   static inline BindingsTy GetBindings(Store store) {
     return BindingsTy(static_cast<const BindingsTy::TreeTy*>(store));
@@ -532,11 +530,11 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
   return St;
 }
 
-Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
-                                          const LocationContext *LC,
+Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
                                           SVal* InitVal) {
 
   BasicValueFactory& BasicVals = StateMgr.getBasicVals();
+  const VarDecl *VD = VR->getDecl();
 
   // BasicStore does not model arrays and structs.
   if (VD->getType()->isArrayType() || VD->getType()->isStructureType())
@@ -564,16 +562,16 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
       if (!InitVal) {
         QualType T = VD->getType();
         if (Loc::IsLocType(T))
-          store = BindInternal(store, getLoc(VD, LC),
+          store = BindInternal(store, loc::MemRegionVal(VR),
                        loc::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = BindInternal(store, getLoc(VD, LC),
+          store = BindInternal(store, loc::MemRegionVal(VR),
                        nonloc::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = BindInternal(store, getLoc(VD, LC), *InitVal);
+        store = BindInternal(store, loc::MemRegionVal(VR), *InitVal);
       }
     }
   } else {
@@ -581,7 +579,7 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
     QualType T = VD->getType();
     if (ValMgr.getSymbolManager().canSymbolicate(T)) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
-      store = BindInternal(store, getLoc(VD, LC), V);
+      store = BindInternal(store, loc::MemRegionVal(VR), V);
     }
   }
 

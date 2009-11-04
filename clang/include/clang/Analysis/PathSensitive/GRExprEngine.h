@@ -562,8 +562,9 @@ protected:
 
   /// EvalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by EvalStore, VisitDeclStmt, and others.
-  void EvalBind(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
-                const GRState* St, SVal location, SVal Val);
+  void EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
+                const GRState* St, SVal location, SVal Val,
+                bool atDeclInit = false);
 
 public:
   void EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,

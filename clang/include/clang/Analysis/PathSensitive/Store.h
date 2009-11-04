@@ -134,12 +134,11 @@ public:
                                   SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
-  virtual const GRState *BindDecl(const GRState *ST, const VarDecl *VD,
-                                  const LocationContext *LC, SVal initVal) = 0;
+  virtual const GRState *BindDecl(const GRState *ST, const VarRegion *VR,
+                                  SVal initVal) = 0;
 
   virtual const GRState *BindDeclWithNoInit(const GRState *ST,
-                                            const VarDecl *VD,
-                                            const LocationContext *LC) = 0;
+                                            const VarRegion *VR) = 0;
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   
