@@ -26,6 +26,10 @@ const char *getClangSubversionPath() {
   if (End)
     *End = 0;
   
+  End = strstr(URL, "/clang/tools/clang");
+  if (End)
+    *End = 0;
+  
   char *Begin = strstr(URL, "cfe/");
   if (Begin) {
     Path = Begin + 4;
