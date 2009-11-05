@@ -45,6 +45,7 @@ if(PYTHONINTERP_FOUND)
                   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
       COMMAND ${PYTHON_EXECUTABLE}
                   ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                  --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                   -sv ${CLANG_TEST_EXTRA_ARGS}
                   ${CMAKE_CURRENT_BINARY_DIR}/${testdir}
                   DEPENDS clang clang-cc index-test c-index-test
@@ -63,6 +64,7 @@ if(PYTHONINTERP_FOUND)
                 ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 DEPENDS clang clang-cc index-test c-index-test
@@ -80,6 +82,7 @@ if(PYTHONINTERP_FOUND)
                 ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_SOURCE_DIR}/../utils/C++Tests
                 DEPENDS clang clang-cc index-test c-index-test
