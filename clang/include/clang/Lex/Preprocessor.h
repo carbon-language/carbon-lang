@@ -96,7 +96,7 @@ class Preprocessor {
 
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
-  IdentifierTable Identifiers;
+  mutable IdentifierTable Identifiers;
 
   /// Selectors - This table contains all the selectors in the program. Unlike
   /// IdentifierTable above, this table *isn't* populated by the preprocessor.
@@ -296,7 +296,7 @@ public:
   /// pointers is preferred unless the identifier is already available as a
   /// string (this avoids allocation and copying of memory to construct an
   /// std::string).
-  IdentifierInfo *getIdentifierInfo(llvm::StringRef Name) {
+  IdentifierInfo *getIdentifierInfo(llvm::StringRef Name) const {
     return &Identifiers.get(Name);
   }
 
@@ -579,7 +579,7 @@ public:
   /// LookUpIdentifierInfo - Given a tok::identifier token, look up the
   /// identifier information for the token and install it into the token.
   IdentifierInfo *LookUpIdentifierInfo(Token &Identifier,
-                                       const char *BufPtr = 0);
+                                       const char *BufPtr = 0) const;
 
   /// HandleIdentifier - This callback is invoked when the lexer reads an
   /// identifier and has filled in the tokens IdentifierInfo member.  This

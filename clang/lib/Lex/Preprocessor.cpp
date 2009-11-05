@@ -401,7 +401,7 @@ void Preprocessor::EnterMainSourceFile() {
 /// LookUpIdentifierInfo - Given a tok::identifier token, look up the
 /// identifier information for the token and install it into the token.
 IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
-                                                   const char *BufPtr) {
+                                                   const char *BufPtr) const {
   assert(Identifier.is(tok::identifier) && "Not an identifier!");
   assert(Identifier.getIdentifierInfo() == 0 && "Identinfo already exists!");
 
