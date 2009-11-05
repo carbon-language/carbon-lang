@@ -103,11 +103,13 @@ class SyntaxCheckTest:
     # FIXME: Refactor into generic test for running some command on a directory
     # of inputs.
 
-    def __init__(self, compiler, dir, recursive, pattern, extra_cxx_args=[]):
+    def __init__(self, compiler, dir, recursive, pattern, excludes=[], 
+                 extra_cxx_args=[]):
         self.compiler = str(compiler)
         self.dir = str(dir)
         self.recursive = bool(recursive)
         self.pattern = re.compile(pattern)
+        self.excludes = list(excludes)
         self.extra_cxx_args = list(extra_cxx_args)
 
     def getTestsInDirectory(self, testSuite, path_in_suite,
@@ -116,9 +118,22 @@ class SyntaxCheckTest:
             if not self.recursive:
                 subdirs[:] = []
 
+            if dirname.__contains__('.svn'):
+                continue
+                
             for filename in filenames:
                 if (not self.pattern.match(filename) or
                     filename in localConfig.excludes):
+                    continue
+                
+                # Skip any files that were specifically excluded.
+                excluded = False
+                for exclude in self.excludes:
+                    if filename.__contains__(exclude):
+                      excluded = True
+                      break
+                      
+                if excluded:
                     continue
 
                 path = os.path.join(dirname,filename)
