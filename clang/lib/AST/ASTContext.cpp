@@ -1395,7 +1395,8 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
                                           const llvm::APInt &ArySizeIn,
                                           ArrayType::ArraySizeModifier ASM,
                                           unsigned EltTypeQuals) {
-  assert((EltTy->isDependentType() || EltTy->isConstantSizeType()) &&
+  assert((EltTy->isDependentType() ||
+          EltTy->isIncompleteType() || EltTy->isConstantSizeType()) &&
          "Constant array of VLAs is illegal!");
 
   // Convert the array size into a canonical width matching the pointer size for

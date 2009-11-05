@@ -550,6 +550,12 @@ bool Type::isIncompleteType() const {
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
     return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
+  case ConstantArray:
+    // An array is incomplete if its element type is incomplete
+    // (C++ [dcl.array]p1).
+    // We don't handle variable arrays (they're not allowed in C++) or
+    // dependent-sized arrays (dependent types are never treated as incomplete).
+    return cast<ArrayType>(CanonicalType)->getElementType()->isIncompleteType();
   case IncompleteArray:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
     return true;

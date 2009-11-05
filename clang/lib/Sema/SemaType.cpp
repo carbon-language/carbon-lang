@@ -563,9 +563,17 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   SourceLocation Loc = Brackets.getBegin();
   // C99 6.7.5.2p1: If the element type is an incomplete or function type,
   // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
-  if (RequireCompleteType(Loc, T,
-                             diag::err_illegal_decl_array_incomplete_type))
-    return QualType();
+  // Not in C++, though. There we only dislike void.
+  if (getLangOptions().CPlusPlus) {
+    if (T->isVoidType()) {
+      Diag(Loc, diag::err_illegal_decl_array_incomplete_type) << T;
+      return QualType();
+    }
+  } else {
+    if (RequireCompleteType(Loc, T,
+                            diag::err_illegal_decl_array_incomplete_type))
+      return QualType();
+  }
 
   if (T->isFunctionType()) {
     Diag(Loc, diag::err_illegal_decl_array_of_functions)
@@ -613,24 +621,24 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   } else if (ArraySize->isValueDependent()) {
     T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals, Brackets);
   } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
-             (!T->isDependentType() && !T->isConstantSizeType())) {
+             (!T->isDependentType() && !T->isIncompleteType() &&
+              !T->isConstantSizeType())) {
     // Per C99, a variable array is an array with either a non-constant
     // size or an element type that has a non-constant-size
     T = Context.getVariableArrayType(T, ArraySize, ASM, Quals, Brackets);
   } else {
     // C99 6.7.5.2p1: If the expression is a constant expression, it shall
     // have a value greater than zero.
-    if (ConstVal.isSigned()) {
-      if (ConstVal.isNegative()) {
-        Diag(ArraySize->getLocStart(),
-             diag::err_typecheck_negative_array_size)
-          << ArraySize->getSourceRange();
-        return QualType();
-      } else if (ConstVal == 0) {
-        // GCC accepts zero sized static arrays.
-        Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size)
-          << ArraySize->getSourceRange();
-      }
+    if (ConstVal.isSigned() && ConstVal.isNegative()) {
+      Diag(ArraySize->getLocStart(),
+           diag::err_typecheck_negative_array_size)
+        << ArraySize->getSourceRange();
+      return QualType();
+    }
+    if (ConstVal == 0) {
+      // GCC accepts zero sized static arrays.
+      Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size)
+        << ArraySize->getSourceRange();
     }
     T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
   }
@@ -1692,8 +1700,12 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
     return false;
 
   // If we have a class template specialization or a class member of a
-  // class template specialization, try to instantiate it.
-  if (const RecordType *Record = T->getAs<RecordType>()) {
+  // class template specialization, or an array with known size of such,
+  // try to instantiate it.
+  QualType MaybeTemplate = T;
+  if (const ConstantArrayType *Array = T->getAs<ConstantArrayType>())
+    MaybeTemplate = Array->getElementType();
+  if (const RecordType *Record = MaybeTemplate->getAs<RecordType>()) {
     if (ClassTemplateSpecializationDecl *ClassTemplateSpec
           = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
       if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared)
