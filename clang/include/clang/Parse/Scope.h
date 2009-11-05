@@ -275,7 +275,8 @@ public:
     AnyParent = Parent;
     Depth = AnyParent ? AnyParent->Depth+1 : 0;
     Flags = ScopeFlags;
-
+    WithinElse = false;
+    
     if (AnyParent) {
       FnParent       = AnyParent->FnParent;
       BreakParent    = AnyParent->BreakParent;
@@ -283,13 +284,10 @@ public:
       ControlParent = AnyParent->ControlParent;
       BlockParent  = AnyParent->BlockParent;
       TemplateParamParent = AnyParent->TemplateParamParent;
-      WithinElse = AnyParent->WithinElse;
-
     } else {
       FnParent = BreakParent = ContinueParent = BlockParent = 0;
       ControlParent = 0;
       TemplateParamParent = 0;
-      WithinElse = false;
     }
 
     // If this scope is a function or contains breaks/continues, remember it.

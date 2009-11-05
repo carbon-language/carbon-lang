@@ -814,22 +814,18 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // information to check this property.
     if (Var->isDeclaredInCondition() && Var->getType()->isScalarType()) {
       Scope *CheckS = S;
-      while (CheckS) {
+      while (CheckS && CheckS->getControlParent()) {
         if (CheckS->isWithinElse() &&
             CheckS->getControlParent()->isDeclScope(DeclPtrTy::make(Var))) {
-          if (Var->getType()->isBooleanType())
-            ExprError(Diag(Loc, diag::warn_value_always_false)
-                      << Var->getDeclName());
-          else
-            ExprError(Diag(Loc, diag::warn_value_always_zero)
-                      << Var->getDeclName());
+          ExprError(Diag(Loc, diag::warn_value_always_zero)
+            << Var->getDeclName()
+            << (Var->getType()->isPointerType()? 2 :
+                Var->getType()->isBooleanType()? 1 : 0));
           break;
         }
 
-        // Move up one more control parent to check again.
-        CheckS = CheckS->getControlParent();
-        if (CheckS)
-          CheckS = CheckS->getParent();
+        // Move to the parent of this scope.
+        CheckS = CheckS->getParent();
       }
     }
   } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {

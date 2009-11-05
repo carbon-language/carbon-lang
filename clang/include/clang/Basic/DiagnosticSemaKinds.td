@@ -1787,8 +1787,8 @@ def warn_condition_is_assignment : Warning<"using the result of an "
   "assignment as a condition without parentheses">,
   InGroup<Parentheses>;
 
-def warn_value_always_zero : Warning<"%0 is always zero in this context">;
-def warn_value_always_false : Warning<"%0 is always false in this context">;
+def warn_value_always_zero : Warning<
+  "%0 is always %select{zero|false|NULL}1 in this context">;
 
 // assignment related diagnostics (also for argument passing, returning, etc).
 // FIXME: %2 is an english string here.
