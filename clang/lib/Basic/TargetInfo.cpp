@@ -96,14 +96,30 @@ const char *TargetInfo::getTypeConstantSuffix(IntType T) {
 unsigned TargetInfo::getTypeWidth(IntType T) const {
   switch (T) {
   default: assert(0 && "not an integer!");
-  case SignedShort:      return getShortWidth();
+  case SignedShort:
   case UnsignedShort:    return getShortWidth();
-  case SignedInt:        return getIntWidth();
+  case SignedInt:
   case UnsignedInt:      return getIntWidth();
-  case SignedLong:       return getLongWidth();
+  case SignedLong:
   case UnsignedLong:     return getLongWidth();
-  case SignedLongLong:   return getLongLongWidth();
+  case SignedLongLong:
   case UnsignedLongLong: return getLongLongWidth();
+  };
+}
+
+/// getTypeAlign - Return the alignment (in bits) of the specified integer type 
+/// enum. For example, SignedInt -> getIntAlign().
+unsigned TargetInfo::getTypeAlign(IntType T) const {
+  switch (T) {
+  default: assert(0 && "not an integer!");
+  case SignedShort:
+  case UnsignedShort:    return getShortAlign();
+  case SignedInt:
+  case UnsignedInt:      return getIntAlign();
+  case SignedLong:
+  case UnsignedLong:     return getLongAlign();
+  case SignedLongLong:
+  case UnsignedLongLong: return getLongLongAlign();
   };
 }
 

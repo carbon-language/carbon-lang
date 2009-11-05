@@ -323,8 +323,8 @@
 //
 // RUN: clang-cc -E -ffreestanding -triple=msp430-none-none %s | FileCheck -check-prefix MSP430 %s &&
 //
-// MSP430:typedef long long int32_t;
-// MSP430:typedef unsigned long long uint32_t;
+// MSP430:typedef long long int int32_t;
+// MSP430:typedef unsigned long long int uint32_t;
 // MSP430:typedef int32_t int_least32_t;
 // MSP430:typedef uint32_t uint_least32_t;
 // MSP430:typedef int32_t int_fast32_t;
@@ -423,8 +423,8 @@
 //
 // RUN: clang-cc -E -ffreestanding -triple=pic16-none-none %s | FileCheck -check-prefix PIC16 %s &&
 // 
-// PIC16:typedef long long int32_t;
-// PIC16:typedef unsigned long long uint32_t;
+// PIC16:typedef long long int int32_t;
+// PIC16:typedef unsigned long long int uint32_t;
 // PIC16:typedef int32_t int_least32_t;
 // PIC16:typedef uint32_t uint_least32_t;
 // PIC16:typedef int32_t int_fast32_t;

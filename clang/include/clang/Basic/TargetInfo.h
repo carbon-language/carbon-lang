@@ -103,6 +103,10 @@ public:
   /// enum. For example, SignedInt -> getIntWidth().
   unsigned getTypeWidth(IntType T) const;
 
+  /// getTypeAlign - Return the alignment (in bits) of the specified integer
+  /// type enum. For example, SignedInt -> getIntAlign().
+  unsigned getTypeAlign(IntType T) const;
+
   /// isTypeSigned - Return whether an integer types is signed. Returns true if
   /// the type is signed; false otherwise.
   bool isTypeSigned(IntType T) const;

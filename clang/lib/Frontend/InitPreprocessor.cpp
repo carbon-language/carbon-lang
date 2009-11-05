@@ -216,6 +216,14 @@ static void DefineTypeSize(const char *MacroName, unsigned TypeWidth,
   DefineBuiltinMacro(Buf, MacroBuf);
 }
 
+/// DefineTypeSize - An overloaded helper that uses TargetInfo to determine
+/// the width, suffix, and signedness of the given type
+static void DefineTypeSize(const char *MacroName, TargetInfo::IntType Ty,
+                           const TargetInfo &TI, std::vector<char> &Buf) {
+  DefineTypeSize(MacroName, TI.getTypeWidth(Ty), TI.getTypeConstantSuffix(Ty), 
+                 TI.isTypeSigned(Ty), Buf);
+}
+
 static void DefineType(const char *MacroName, TargetInfo::IntType Ty,
                        std::vector<char> &Buf) {
   char MacroBuf[60];
@@ -346,14 +354,16 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
 
   DefineTypeSize("__SCHAR_MAX__", TI.getCharWidth(), "", true, Buf);
-  DefineTypeSize("__SHRT_MAX__", TI.getShortWidth(), "", true, Buf);
-  DefineTypeSize("__INT_MAX__", TI.getIntWidth(), "", true, Buf);
-  DefineTypeSize("__LONG_MAX__", TI.getLongWidth(), "L", true, Buf);
-  DefineTypeSize("__LONG_LONG_MAX__", TI.getLongLongWidth(), "LL", true, Buf);
+  DefineTypeSize("__SHRT_MAX__", TargetInfo::SignedShort, TI, Buf);
+  DefineTypeSize("__INT_MAX__", TargetInfo::SignedInt, TI, Buf);
+  DefineTypeSize("__LONG_MAX__", TargetInfo::SignedLong, TI, Buf);
+  DefineTypeSize("__LONG_LONG_MAX__", TargetInfo::SignedLongLong, TI, Buf);
+  // FIXME: TI.getWCharWidth() and TI.getTypeWidth(TI.getWCharType()) return
+  // different values on PIC16 and MSP430. TargetInfo needs to be corrected 
+  // and the following line substituted for the one below it.
+  // DefineTypeSize("__WCHAR_MAX__", TI.getWCharType(), TI, Buf);
   DefineTypeSize("__WCHAR_MAX__", TI.getWCharWidth(), "", true, Buf);
-  TargetInfo::IntType IntMaxType = TI.getIntMaxType();
-  DefineTypeSize("__INTMAX_MAX__", TI.getTypeWidth(IntMaxType), 
-                 TI.getTypeConstantSuffix(IntMaxType), true, Buf);
+  DefineTypeSize("__INTMAX_MAX__", TI.getIntMaxType(), TI, Buf);
 
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Buf);
   DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Buf);
@@ -378,14 +388,16 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   assert(TI.getCharWidth() == 8 && "unsupported target types");
   assert(TI.getShortWidth() == 16 && "unsupported target types");
   DefineBuiltinMacro(Buf, "__INT8_TYPE__=char");
-  DefineBuiltinMacro(Buf, "__INT16_TYPE__=short");
+  DefineType("__INT16_TYPE__", TargetInfo::SignedShort, Buf);
 
+  TargetInfo::IntType Int32Type;
   if (TI.getIntWidth() == 32)
-    DefineBuiltinMacro(Buf, "__INT32_TYPE__=int");
+    Int32Type = TargetInfo::SignedInt;
   else {
     assert(TI.getLongLongWidth() == 32 && "unsupported target types");
-    DefineBuiltinMacro(Buf, "__INT32_TYPE__=long long");
+    Int32Type = TargetInfo::SignedLongLong;
   }
+  DefineType("__INT32_TYPE__", Int32Type, Buf);
 
   // 16-bit targets doesn't necessarily have a 64-bit type.
   if (TI.getLongLongWidth() == 64)
