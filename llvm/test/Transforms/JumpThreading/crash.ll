@@ -89,3 +89,84 @@ D:
 E:
   ret i32 412
 }
+
+
+define i32 @test2() nounwind {
+entry:
+        br i1 true, label %decDivideOp.exit, label %bb7.i
+
+bb7.i:          ; preds = %bb7.i, %entry
+        br label %bb7.i
+
+decDivideOp.exit:               ; preds = %entry
+        ret i32 undef
+}
+
+
+; PR3298
+
+define i32 @test3(i32 %p_79, i32 %p_80) nounwind {
+entry:
+	br label %bb7
+
+bb1:		; preds = %bb2
+	br label %bb2
+
+bb2:		; preds = %bb7, %bb1
+	%l_82.0 = phi i8 [ 0, %bb1 ], [ %l_82.1, %bb7 ]		; <i8> [#uses=3]
+	br i1 true, label %bb3, label %bb1
+
+bb3:		; preds = %bb2
+	%0 = icmp eq i32 %p_80_addr.1, 0		; <i1> [#uses=1]
+	br i1 %0, label %bb7, label %bb6
+
+bb5:		; preds = %bb6
+	%1 = icmp eq i8 %l_82.0, 0		; <i1> [#uses=1]
+	br i1 %1, label %bb1.i, label %bb.i
+
+bb.i:		; preds = %bb5
+	br label %safe_div_func_char_s_s.exit
+
+bb1.i:		; preds = %bb5
+	br label %safe_div_func_char_s_s.exit
+
+safe_div_func_char_s_s.exit:		; preds = %bb1.i, %bb.i
+	br label %bb6
+
+bb6:		; preds = %safe_div_func_char_s_s.exit, %bb3
+	%p_80_addr.0 = phi i32 [ %p_80_addr.1, %bb3 ], [ 1, %safe_div_func_char_s_s.exit ]		; <i32> [#uses=2]
+	%2 = icmp eq i32 %p_80_addr.0, 0		; <i1> [#uses=1]
+	br i1 %2, label %bb7, label %bb5
+
+bb7:		; preds = %bb6, %bb3, %entry
+	%l_82.1 = phi i8 [ 1, %entry ], [ %l_82.0, %bb3 ], [ %l_82.0, %bb6 ]		; <i8> [#uses=2]
+	%p_80_addr.1 = phi i32 [ 0, %entry ], [ %p_80_addr.1, %bb3 ], [ %p_80_addr.0, %bb6 ]		; <i32> [#uses=4]
+	%3 = icmp eq i32 %p_80_addr.1, 0		; <i1> [#uses=1]
+	br i1 %3, label %bb8, label %bb2
+
+bb8:		; preds = %bb7
+	%4 = sext i8 %l_82.1 to i32		; <i32> [#uses=0]
+	ret i32 0
+}
+
+
+; PR3353
+
+define i32 @test4(i8 %X) {
+entry:
+        %Y = add i8 %X, 1
+        %Z = add i8 %Y, 1
+        br label %bb33.i
+
+bb33.i:         ; preds = %bb33.i, %bb32.i
+        switch i8 %Y, label %bb32.i [
+                i8 39, label %bb35.split.i
+                i8 13, label %bb33.i
+        ]
+
+bb35.split.i:
+        ret i32 5
+bb32.i:
+        ret i32 1
+}
+
