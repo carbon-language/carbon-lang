@@ -769,17 +769,28 @@ class DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
 
-  /// setLangOptions - This is set by clients of diagnostics when they know the
-  /// language parameters of the diagnostics that may be sent through.  Note
-  /// that this can change over time if a DiagClient has multiple languages sent
-  /// through it.  It may also be set to null (e.g. when processing command line
-  /// options).
-  virtual void setLangOptions(const LangOptions *LO) {}
+  /// BeginSourceFile - Callback to inform the diagnostic client that processing
+  /// of a source file is beginning.
+  ///
+  /// Note that diagnostics may be emitted outside the processing of a source
+  /// file, for example during the parsing of command line options. However,
+  /// diagnostics with source range information are required to only be emitted
+  /// in between BeginSourceFile() and EndSourceFile().
+  ///
+  /// \arg LO - The language options for the source file being processed.
+  /// \arg PP - The preprocessor object being used for the source; this optional
+  /// and may not be present, for example when processing AST source files.
+  virtual void BeginSourceFile(const LangOptions &LangOpts) {}
+
+  /// EndSourceFile - Callback to inform the diagnostic client that processing
+  /// of a source file has ended. The diagnostic client should assume that any
+  /// objects made available via \see BeginSourceFile() are inaccessible.
+  virtual void EndSourceFile() {}
 
   /// IncludeInDiagnosticCounts - This method (whose default implementation
-  ///  returns true) indicates whether the diagnostics handled by this
-  ///  DiagnosticClient should be included in the number of diagnostics
-  ///  reported by Diagnostic.
+  /// returns true) indicates whether the diagnostics handled by this
+  /// DiagnosticClient should be included in the number of diagnostics reported
+  /// by Diagnostic.
   virtual bool IncludeInDiagnosticCounts() const;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or

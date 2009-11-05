@@ -39,8 +39,12 @@ class TextDiagnosticPrinter : public DiagnosticClient {
 public:
   TextDiagnosticPrinter(llvm::raw_ostream &os, const DiagnosticOptions &diags);
 
-  void setLangOptions(const LangOptions *LO) {
-    LangOpts = LO;
+  void BeginSourceFile(const LangOptions &LO) {
+    LangOpts = &LO;
+  }
+
+  void EndSourceFile() {
+    LangOpts = 0;
   }
 
   void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);

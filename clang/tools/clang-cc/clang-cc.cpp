@@ -1545,9 +1545,14 @@ public:
     Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile, DiagOpts));
   }
 
-  virtual void setLangOptions(const LangOptions *LO) {
-    Chain1->setLangOptions(LO);
-    Chain2->setLangOptions(LO);
+  virtual void BeginSourceFile(const LangOptions &LO) {
+    Chain1->BeginSourceFile(LO);
+    Chain2->BeginSourceFile(LO);
+  }
+
+  virtual void EndSourceFile() {
+    Chain1->EndSourceFile();
+    Chain2->EndSourceFile();
   }
 
   virtual bool IncludeInDiagnosticCounts() const {
@@ -2080,7 +2085,9 @@ static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
   AST->getSourceManager().createMainFileIDForMemBuffer(SB);
 
   // Stream the input AST to the consumer.
+  Diags.getClient()->BeginSourceFile(PP.getLangOptions());
   ParseAST(PP, Consumer.get(), AST->getASTContext(), Stats);
+  Diags.getClient()->EndSourceFile();
 
   // Release the consumer and the AST, in that order since the consumer may
   // perform actions in its destructor which require the context.
@@ -2230,7 +2237,6 @@ int main(int argc, char **argv) {
 
     // Initialize language options, inferring file types from input filenames.
     LangOptions LangInfo;
-    DiagClient->setLangOptions(&LangInfo);
 
     InitializeLangOptions(LangInfo, LK);
     InitializeLanguageStandard(LangInfo, LK, Target.get(), Features);
@@ -2276,10 +2282,11 @@ int main(int argc, char **argv) {
     }
 
     // Process the source file.
+    DiagClient->BeginSourceFile(LangInfo);
     ProcessInputFile(*PP, InFile, ProgAction, Features, Context);
+    DiagClient->EndSourceFile();
 
     HeaderInfo.ClearFileInfo();
-    DiagClient->setLangOptions(0);
   }
 
   if (!NoCaretDiagnostics)

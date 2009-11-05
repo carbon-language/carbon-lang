@@ -268,6 +268,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                           const CodeModificationHint *Hints,
                                                 unsigned NumHints,
                                                 unsigned Columns) {
+  assert(LangOpts && "Unexpected diagnostic outside source file processing");
   assert(!Loc.isInvalid() && "must have a valid source location here");
 
   // If this is a macro ID, first emit information about where this was
