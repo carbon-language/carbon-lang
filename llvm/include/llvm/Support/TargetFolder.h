@@ -20,7 +20,6 @@
 #define LLVM_SUPPORT_TARGETFOLDER_H
 
 #include "llvm/Constants.h"
-#include "llvm/Instruction.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Analysis/ConstantFolding.h"
 
