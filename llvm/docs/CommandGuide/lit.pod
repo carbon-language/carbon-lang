@@ -54,6 +54,12 @@ number of detected available CPUs.
 Search for I<NAME.cfg> and I<NAME.site.cfg> when searching for test suites,
 instead I<lit.cfg> and I<lit.site.cfg>.
 
+=item B<--param> I<NAME>, B<--param> I<NAME>=I<VALUE>
+
+Add a user defined parameter I<NAME> with the given I<VALUE> (or the empty
+string if not given). The meaning and use of these parameters is test suite
+dependent.
+
 =back 
 
 =head1 OUTPUT OPTIONS

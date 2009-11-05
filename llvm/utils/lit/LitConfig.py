@@ -17,7 +17,8 @@ class LitConfig:
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindArgs,
                  useTclAsSh,
-                 noExecute, debug, isWindows):
+                 noExecute, debug, isWindows,
+                 params):
         # The name of the test runner.
         self.progname = progname
         # The items to add to the PATH environment variable.
@@ -29,6 +30,7 @@ class LitConfig:
         self.noExecute = noExecute
         self.debug = debug
         self.isWindows = bool(isWindows)
+        self.params = dict(params)
         self.bashPath = None
 
         self.numErrors = 0

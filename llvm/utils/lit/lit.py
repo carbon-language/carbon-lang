@@ -321,6 +321,10 @@ def main():
     parser.add_option("", "--config-prefix", dest="configPrefix",
                       metavar="NAME", help="Prefix for 'lit' config files",
                       action="store", default=None)
+    parser.add_option("", "--param", dest="userParameters",
+                      metavar="NAME=VAL",
+                      help="Add 'NAME' = 'VAL' to the user defined parameters",
+                      type=str, action="append", default=[])
 
     group = OptionGroup(parser, "Output Format")
     # FIXME: I find these names very confusing, although I like the
@@ -396,6 +400,15 @@ def main():
 
     inputs = args
 
+    # Create the user defined parameters.
+    userParams = {}
+    for entry in opts.userParameters:
+        if '=' not in entry:
+            name,val = entry,''
+        else:
+            name,val = entry.split('=', 1)
+        userParams[name] = val
+
     # Create the global config object.
     litConfig = LitConfig.LitConfig(progname = os.path.basename(sys.argv[0]),
                                     path = opts.path,
@@ -405,7 +418,8 @@ def main():
                                     useTclAsSh = opts.useTclAsSh,
                                     noExecute = opts.noExecute,
                                     debug = opts.debug,
-                                    isWindows = (platform.system()=='Windows'))
+                                    isWindows = (platform.system()=='Windows'),
+                                    params = userParams)
 
     # Load the tests from the inputs.
     tests = []
