@@ -367,6 +367,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         for (unsigned i = 0, e = I->second.size(); i != e; ++i)
           I->second[i]->addPred(SDep(SU, SDep::Order, TrueMemOrderLatency));
         I->second.clear();
+        I->second.push_back(SU);
       }
       // See if it is known to just have a single memory reference.
       MachineInstr *ChainMI = Chain->getInstr();
@@ -413,7 +414,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
           if (Chain)
             Chain->addPred(SDep(SU, SDep::Order, /*Latency=*/0));
         }
-      } else if (MayAlias) {
+      } else {
         // Treat all other stores conservatively.
         goto new_chain;
       }
@@ -439,7 +440,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         // Treat volatile loads conservatively. Note that this includes
         // cases where memoperand information is unavailable.
         goto new_chain;
-      } else if (MayAlias) {
+      } else {
         // A "MayAlias" load. Depend on the general chain, as well as on
         // all stores. In the absense of MachineMemOperand information,
         // we can't even assume that the load doesn't alias well-behaved
