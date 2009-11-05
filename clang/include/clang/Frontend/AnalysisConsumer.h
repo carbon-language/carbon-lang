@@ -68,8 +68,7 @@ struct AnalyzerOptions {
 /// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
 /// analysis passes.  (The set of analyses run is controlled by command-line
 /// options.)
-ASTConsumer* CreateAnalysisConsumer(Diagnostic &diags, Preprocessor *pp,
-                                    const LangOptions &lopts,
+ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
                                     const std::string &output,
                                     const AnalyzerOptions& Opts);
 

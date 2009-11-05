@@ -12,23 +12,24 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/AnalysisConsumer.h"
-#include "clang/Frontend/PathDiagnosticClients.h"
-#include "clang/Frontend/ManagerRegistry.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Analysis/CFG.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/PathDiagnostic.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/CFG.h"
+#include "clang/Analysis/LocalCheckers.h"
+#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/PathSensitive/AnalysisManager.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/LocalCheckers.h"
-#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/ManagerRegistry.h"
+#include "clang/Frontend/PathDiagnosticClients.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -52,7 +53,8 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 static PathDiagnosticClient*
-CreatePlistHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP) {
+CreatePlistHTMLDiagnosticClient(const std::string& prefix,
+                                const Preprocessor &PP) {
   llvm::sys::Path F(prefix);
   PathDiagnosticClient *PD = CreateHTMLDiagnosticClient(F.getDirname(), PP);
   return CreatePlistDiagnosticClient(prefix, PP, PD);
@@ -72,10 +74,8 @@ namespace {
     Actions TranslationUnitActions;
 
   public:
-    const LangOptions& LOpts;
-    Diagnostic &Diags;
     ASTContext* Ctx;
-    Preprocessor* PP;
+    const Preprocessor &PP;
     const std::string OutDir;
     AnalyzerOptions Opts;
 
@@ -88,11 +88,10 @@ namespace {
 
     llvm::OwningPtr<AnalysisManager> Mgr;
 
-    AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
-                     const LangOptions& lopts,
+    AnalysisConsumer(const Preprocessor& pp,
                      const std::string& outdir,
                      const AnalyzerOptions& opts)
-      : LOpts(lopts), Diags(diags), Ctx(0), PP(pp), OutDir(outdir),
+      : Ctx(0), PP(pp), OutDir(outdir),
         Opts(opts), PD(0) {
       DigestAnalyzerOptions();
     }
@@ -150,7 +149,8 @@ namespace {
 
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
-      Mgr.reset(new AnalysisManager(*Ctx, Diags, LOpts, PD,
+      Mgr.reset(new AnalysisManager(*Ctx, PP.getDiagnostics(),
+                                    PP.getLangOptions(), PD,
                                     CreateStoreMgr, CreateConstraintMgr,
                                     Opts.AnalyzerDisplayProgress,
                                     Opts.VisualizeEGDot, Opts.VisualizeEGUbi,
@@ -258,7 +258,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 void AnalysisConsumer::HandleCode(Decl *D, Stmt* Body, Actions& actions) {
 
   // Don't run the actions if an error has occured with parsing the file.
-  if (Diags.hasErrorOccurred())
+  if (PP.getDiagnostics().hasErrorOccurred())
     return;
 
   // Don't run the actions on declarations in header files unless
@@ -438,14 +438,10 @@ static void ActionInlineCall(AnalysisManager &mgr, Decl *D) {
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
 
-ASTConsumer* clang::CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
-                                           const LangOptions& lopts,
+ASTConsumer* clang::CreateAnalysisConsumer(const Preprocessor& pp,
                                            const std::string& OutDir,
                                            const AnalyzerOptions& Opts) {
-
-  llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(diags, pp,
-                                                           lopts, OutDir,
-                                                           Opts));
+  llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(pp, OutDir, Opts));
 
   for (unsigned i = 0; i < Opts.AnalysisList.size(); ++i)
     switch (Opts.AnalysisList[i]) {
@@ -458,7 +454,7 @@ ASTConsumer* clang::CreateAnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
     }
 
   // Last, disable the effects of '-Werror' when using the AnalysisConsumer.
-  diags.setWarningsAsErrors(false);
+  pp.getDiagnostics().setWarningsAsErrors(false);
 
   return C.take();
 }

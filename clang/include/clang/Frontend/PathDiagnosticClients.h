@@ -24,10 +24,10 @@ class PathDiagnosticClient;
 class Preprocessor;
 
 PathDiagnosticClient*
-CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP = 0);
+CreateHTMLDiagnosticClient(const std::string& prefix, const Preprocessor &PP);
 
 PathDiagnosticClient*
-CreatePlistDiagnosticClient(const std::string& prefix, Preprocessor* PP,
+CreatePlistDiagnosticClient(const std::string& prefix, const Preprocessor &PP,
                             PathDiagnosticClient *SubPD = 0);
 
 } // end clang namespace

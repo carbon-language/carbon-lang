@@ -37,10 +37,10 @@ namespace {
 class VISIBILITY_HIDDEN HTMLDiagnostics : public PathDiagnosticClient {
   llvm::sys::Path Directory, FilePrefix;
   bool createdDir, noDir;
-  Preprocessor* PP;
+  const Preprocessor &PP;
   std::vector<const PathDiagnostic*> BatchedDiags;
 public:
-  HTMLDiagnostics(const std::string& prefix, Preprocessor* pp);
+  HTMLDiagnostics(const std::string& prefix, const Preprocessor &pp);
   
   virtual ~HTMLDiagnostics() { FlushDiagnostics(NULL); }
   
@@ -69,7 +69,8 @@ public:
 
 } // end anonymous namespace
 
-HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp)
+HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix,
+                                 const Preprocessor &pp)
   : Directory(prefix), FilePrefix(prefix), createdDir(false), noDir(false),
     PP(pp) {
   // All html files begin with "report"
@@ -77,7 +78,8 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp)
 }
 
 PathDiagnosticClient*
-clang::CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP) {
+clang::CreateHTMLDiagnosticClient(const std::string& prefix,
+                                  const Preprocessor &PP) {
   return new HTMLDiagnostics(prefix, PP);
 }
 
@@ -163,7 +165,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     return; // FIXME: Emit a warning?
 
   // Create a new rewriter to generate HTML.
-  Rewriter R(const_cast<SourceManager&>(SMgr), PP->getLangOptions());
+  Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOptions());
 
   // Process the path.
   unsigned n = D.size();
@@ -183,8 +185,8 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   // We might not have a preprocessor if we come from a deserialized AST file,
   // for example.
 
-  if (PP) html::SyntaxHighlight(R, FID, *PP);
-  if (PP) html::HighlightMacros(R, FID, *PP);
+  html::SyntaxHighlight(R, FID, PP);
+  html::HighlightMacros(R, FID, PP);
 
   // Get the full directory name of the analyzed file.
 
@@ -438,7 +440,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
       assert(L.isFileID());
       std::pair<const char*, const char*> BufferInfo = L.getBufferData();
       const char* MacroName = L.getDecomposedLoc().second + BufferInfo.first;
-      Lexer rawLexer(L, PP->getLangOptions(), BufferInfo.first,
+      Lexer rawLexer(L, PP.getLangOptions(), BufferInfo.first,
                      MacroName, BufferInfo.second);
 
       Token TheTok;

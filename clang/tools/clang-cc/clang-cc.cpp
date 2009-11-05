@@ -1729,8 +1729,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
     break;
 
   case RunAnalysis:
-    Consumer.reset(CreateAnalysisConsumer(PP.getDiagnostics(), &PP,
-                                          PP.getLangOptions(), OutputFile,
+    Consumer.reset(CreateAnalysisConsumer(PP, OutputFile,
                                           ReadAnalyzerOptions()));
     break;
 

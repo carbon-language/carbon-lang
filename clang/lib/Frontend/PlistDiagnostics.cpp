@@ -64,9 +64,9 @@ PlistDiagnostics::PlistDiagnostics(const std::string& output,
   : OutputFile(output), LangOpts(LO), SubPD(subPD) {}
 
 PathDiagnosticClient*
-clang::CreatePlistDiagnosticClient(const std::string& s, Preprocessor *PP,
+clang::CreatePlistDiagnosticClient(const std::string& s, const Preprocessor &PP,
                                    PathDiagnosticClient *subPD) {
-  return new PlistDiagnostics(s, PP->getLangOptions(), subPD);
+  return new PlistDiagnostics(s, PP.getLangOptions(), subPD);
 }
 
 PathDiagnosticClient::PathGenerationScheme
