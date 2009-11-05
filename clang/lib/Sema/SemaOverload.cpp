@@ -3052,6 +3052,10 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   // We don't care about qualifiers on the type.
   Ty = Ty.getUnqualifiedType();
 
+  // If we're dealing with an array type, decay to the pointer.
+  if (Ty->isArrayType())
+    Ty = SemaRef.Context.getArrayDecayedType(Ty);
+
   if (const PointerType *PointerTy = Ty->getAs<PointerType>()) {
     QualType PointeeTy = PointerTy->getPointeeType();
 
