@@ -66,6 +66,8 @@ public:
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim) {}
   
+  ~AnalysisManager() { FlushDiagnostics(); }
+  
   void ClearContexts() {
     LocCtxMgr.clear();
     AnaCtxMgr.clear();
@@ -97,6 +99,11 @@ public:
 
   virtual PathDiagnosticClient *getPathDiagnosticClient() {
     return PD.get();
+  }
+  
+  void FlushDiagnostics() {
+    if (PD.get())
+      PD->FlushDiagnostics();
   }
 
   bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }
