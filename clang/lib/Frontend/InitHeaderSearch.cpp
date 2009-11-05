@@ -329,6 +329,11 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
 				"x86_64-linux-gnu/32",
 				"x86_64-linux-gnu",
 				triple);
+    // Ubuntu 9.10
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.1",
+				"x86_64-linux-gnu/32",
+				"x86_64-linux-gnu",
+				triple);
     // Fedora 8
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.2",
 				"i386-redhat-linux",
