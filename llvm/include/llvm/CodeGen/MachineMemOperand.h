@@ -16,6 +16,8 @@
 #ifndef LLVM_CODEGEN_MACHINEMEMOPERAND_H
 #define LLVM_CODEGEN_MACHINEMEMOPERAND_H
 
+#include "llvm/System/DataTypes.h"
+
 namespace llvm {
 
 class Value;

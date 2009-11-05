@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_PRIORITY_QUEUE_H
 #define LLVM_ADT_PRIORITY_QUEUE_H
 
+#include <algorithm>
 #include <queue>
 
 namespace llvm {

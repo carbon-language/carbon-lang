@@ -102,8 +102,8 @@ public:
     }
 
   private:
-    Factory(const Factory& RHS) {};
-    void operator=(const Factory& RHS) {};
+    Factory(const Factory& RHS); // DO NOT IMPLEMENT
+    void operator=(const Factory& RHS); // DO NOT IMPLEMENT
   };
 
   friend class Factory;

@@ -15,6 +15,7 @@
 #ifndef LLVM_CODEGEN_BINARYOBJECT_H
 #define LLVM_CODEGEN_BINARYOBJECT_H
 
+#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/System/DataTypes.h"
 
 #include <string>
@@ -22,7 +23,6 @@
 
 namespace llvm {
 
-class MachineRelocation;
 typedef std::vector<uint8_t> BinaryData;
 
 class BinaryObject {

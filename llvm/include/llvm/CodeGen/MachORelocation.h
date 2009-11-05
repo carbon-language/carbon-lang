@@ -15,6 +15,8 @@
 #ifndef LLVM_CODEGEN_MACHO_RELOCATION_H
 #define LLVM_CODEGEN_MACHO_RELOCATION_H
 
+#include "llvm/System/DataTypes.h"
+
 namespace llvm {
 
   /// MachORelocation - This struct contains information about each relocation

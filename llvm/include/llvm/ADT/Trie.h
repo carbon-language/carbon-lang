@@ -18,6 +18,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Support/DOTGraphTraits.h"
 
+#include <cassert>
 #include <vector>
 
 namespace llvm {

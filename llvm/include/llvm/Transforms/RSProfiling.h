@@ -15,7 +15,11 @@
 #ifndef LLVM_TRANSFORMS_RSPROFILING_H
 #define LLVM_TRANSFORMS_RSPROFILING_H
 
+#include "llvm/Pass.h"
+
 namespace llvm {
+  class Value;
+  
   //===--------------------------------------------------------------------===//
   /// RSProfilers - The basic Random Sampling Profiler Interface  Any profiler 
   /// that implements this interface can be transformed by the random sampling

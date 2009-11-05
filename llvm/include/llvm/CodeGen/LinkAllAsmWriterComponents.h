@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_LINKALLASMWRITERCOMPONENTS_H
 
 #include "llvm/CodeGen/GCs.h"
+#include <cstdlib>
 
 namespace {
   struct ForceAsmWriterLinking {

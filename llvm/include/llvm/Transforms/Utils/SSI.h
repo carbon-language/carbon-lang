@@ -22,6 +22,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_SSI_H
 #define LLVM_TRANSFORMS_UTILS_SSI_H
 
+#include "llvm/InstrTypes.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
