@@ -1076,10 +1076,14 @@ void test16_D::bar() { }
 // CHECK-LPOPT64-NEXT:    subq    $8, %rsp
 // CHECK-LPOPT64-NEXT:Llabel
 // CHECK-LPOPT64-NEXT:    call    __ZN8test16_D4foo1Ev
-// FIXME: We need a == 0 check here
+// CHECK-LPOPT64-NEXT:    testq   %rax, %rax
+// CHECK-LPOPT64-NEXT:    je      LBB102_2
 // CHECK-LPOPT64-NEXT:    movq    16(%rax), %rcx
 // CHECK-LPOPT64-NEXT:    movq    -32(%rcx), %rcx
 // CHECK-LPOPT64-NEXT:    leaq    16(%rcx,%rax), %rax
+// CHECK-LPOPT64-NEXT:    addq    $8, %rsp
+// CHECK-LPOPT64-NEXT:    ret
+// CHECK-LPOPT64-NEXT:LBB102_2:
 // CHECK-LPOPT64-NEXT:    addq    $8, %rsp
 // CHECK-LPOPT64-NEXT:    ret
 

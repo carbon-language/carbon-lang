@@ -811,7 +811,25 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
                        Callee, CallArgs, MD);
   if (nv_r || v_r) {
     // Do the return result adjustment.
-    RV = RValue::get(DynamicTypeAdjust(RV.getScalarVal(), nv_r, v_r));
+    llvm::BasicBlock *NonZeroBlock = createBasicBlock();
+    llvm::BasicBlock *ZeroBlock = createBasicBlock();
+    llvm::BasicBlock *ContBlock = createBasicBlock();
+
+    const llvm::Type *Ty = RV.getScalarVal()->getType();
+    llvm::Value *Zero = llvm::Constant::getNullValue(Ty);
+    Builder.CreateCondBr(Builder.CreateICmpNE(RV.getScalarVal(), Zero),
+                         NonZeroBlock, ZeroBlock);
+    EmitBlock(NonZeroBlock);
+    llvm::Value *NZ = DynamicTypeAdjust(RV.getScalarVal(), nv_r, v_r);
+    EmitBranch(ContBlock);
+    EmitBlock(ZeroBlock);
+    llvm::Value *Z = RV.getScalarVal();
+    EmitBlock(ContBlock);
+    llvm::PHINode *RVOrZero = Builder.CreatePHI(Ty);
+    RVOrZero->reserveOperandSpace(2);
+    RVOrZero->addIncoming(NZ, NonZeroBlock);
+    RVOrZero->addIncoming(Z, ZeroBlock);
+    RV = RValue::get(RVOrZero);
   }
 
   if (!ResultType->isVoidType())
