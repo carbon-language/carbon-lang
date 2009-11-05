@@ -286,12 +286,14 @@ bool Loop::isLCSSAForm() const {
 /// the LoopSimplify form transforms loops to, which is sometimes called
 /// normal form.
 bool Loop::isLoopSimplifyForm() const {
-  // Normal-form loops have a preheader.
-  if (!getLoopPreheader())
-    return false;
-  // Normal-form loops have a single backedge.
-  if (!getLoopLatch())
-    return false;
+  // Normal-form loops have a preheader, a single backedge, and all of their
+  // exits have all their predecessors inside the loop.
+  return getLoopPreheader() && getLoopLatch() && hasDedicatedExits();
+}
+
+/// hasDedicatedExits - Return true if no exit block for the loop
+/// has a predecessor that is outside the loop.
+bool Loop::hasDedicatedExits() const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
   SmallPtrSet<BasicBlock *, 16> LoopBBs(block_begin(), block_end());

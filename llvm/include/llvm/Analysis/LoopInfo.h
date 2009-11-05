@@ -572,6 +572,10 @@ public:
   /// normal form.
   bool isLoopSimplifyForm() const;
 
+  /// hasDedicatedExits - Return true if no exit block for the loop
+  /// has a predecessor that is outside the loop.
+  bool hasDedicatedExits() const;
+
   /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
   /// These are the blocks _outside of the current loop_ which are branched to.
   /// This assumes that loop is in canonical form.
