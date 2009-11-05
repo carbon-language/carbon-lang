@@ -1603,6 +1603,8 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (LHS->isTypeDependent() || RHS->isTypeDependent())
     return Context.DependentTy;
 
+  CheckSignCompare(LHS, RHS, QuestionLoc, diag::warn_mixed_sign_conditional);
+
   // C++0x 5.16p2
   //   If either the second or the third operand has type (cv) void, ...
   QualType LTy = LHS->getType();

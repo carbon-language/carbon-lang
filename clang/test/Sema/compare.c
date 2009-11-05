@@ -13,6 +13,18 @@ int ints(long a, unsigned long b) {
          ((short)a == b) + // expected-warning {{comparison of integers of different signs}}
          (a == (unsigned int) b) +  // expected-warning {{comparison of integers of different signs}}
          (a == (unsigned short) b); // expected-warning {{comparison of integers of different signs}}
+
+  enum Enum {B};
+  return (a == B) +
+         ((int)a == B) +
+         ((short)a == B) +
+         (a == (unsigned int) B) +  // expected-warning {{comparison of integers of different signs}}
+         (a == (unsigned short) B); // expected-warning {{comparison of integers of different signs}}         
+
+  // Should be able to prove all of these are non-negative.
+  return (b == (long) B) +
+         (b == (int) B) +
+         (b == (short) B);
 }
 
 int equal(char *a, const char *b) {

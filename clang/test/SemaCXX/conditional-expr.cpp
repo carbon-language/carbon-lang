@@ -156,8 +156,8 @@ void test()
   i1 = i1 ? i1 : ir1;
   int *pi1 = i1 ? &i1 : 0;
   pi1 = i1 ? 0 : &i1;
-  i1 = i1 ? i1 : EVal;
-  i1 = i1 ? EVal : i1;
+  i1 = i1 ? i1 : EVal; // expected-warning {{operands of ? are integers of different signs}} ??
+  i1 = i1 ? EVal : i1; // expected-warning {{operands of ? are integers of different signs}} ??
   d1 = i1 ? 'c' : 4.0;
   d1 = i1 ? 4.0 : 'c';
   Base *pb = i1 ? (Base*)0 : (Derived*)0;
@@ -177,6 +177,24 @@ void test()
   (void)&(i1 ? flds.b1 : flds.i1); // expected-error {{address of bit-field requested}}
   (void)&(i1 ? flds.i1 : flds.b1); // expected-error {{address of bit-field requested}}
   
+
+  unsigned long test0 = 5;
+  test0 = test0 ? (long) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? (int) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? (short) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (long) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (short) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (long) 10;
+  test0 = test0 ? test0 : (int) 10;
+  test0 = test0 ? test0 : (short) 10;
+  test0 = test0 ? (long) 10 : test0;
+  test0 = test0 ? (int) 10 : test0;
+  test0 = test0 ? (short) 10 : test0;
+
+  test0 = test0 ? EVal : test0;
+  test0 = test0 ? EVal : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
+
   // Note the thing that this does not test: since DR446, various situations
   // *must* create a separate temporary copy of class objects. This can only
   // be properly tested at runtime, though.

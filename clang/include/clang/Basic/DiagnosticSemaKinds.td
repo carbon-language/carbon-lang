@@ -1540,6 +1540,9 @@ def err_stmtexpr_file_scope : Error<
 def warn_mixed_sign_comparison : Warning<
   "comparison of integers of different signs: %0 and %1">,
   InGroup<DiagGroup<"sign-compare">>;
+def warn_mixed_sign_conditional : Warning<
+  "operands of ? are integers of different signs: %0 and %1">,
+  InGroup<DiagGroup<"sign-compare">>;
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a nonstatic member function">;

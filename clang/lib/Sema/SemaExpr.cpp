@@ -3340,6 +3340,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (getLangOptions().CPlusPlus)
     return CXXCheckConditionalOperands(Cond, LHS, RHS, QuestionLoc);
 
+  CheckSignCompare(LHS, RHS, QuestionLoc, diag::warn_mixed_sign_conditional);
+
   UsualUnaryConversions(Cond);
   UsualUnaryConversions(LHS);
   UsualUnaryConversions(RHS);
@@ -4428,8 +4430,8 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 }
 
 /// Implements -Wsign-compare.
-static void DiagnoseSignCompare(Sema &S, Expr *lex, Expr *rex,
-                                BinaryOperator::Opcode Opc, SourceLocation OpLoc) {
+void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
+                            const PartialDiagnostic &PD) {
   QualType lt = lex->getType(), rt = rex->getType();
 
   // Only warn if both operands are integral.
@@ -4450,14 +4452,14 @@ static void DiagnoseSignCompare(Sema &S, Expr *lex, Expr *rex,
   // If the value is a non-negative integer constant, then the
   // signed->unsigned conversion won't change it.
   llvm::APSInt value;
-  if (signedOperand->isIntegerConstantExpr(value, S.Context)) {
+  if (signedOperand->isIntegerConstantExpr(value, Context)) {
     assert(value.isSigned() && "result of signed expression not signed");
 
     if (value.isNonNegative())
       return;
   }
 
-  S.Diag(OpLoc, diag::warn_mixed_sign_comparison)
+  Diag(OpLoc, PD)
     << lex->getType() << rex->getType()
     << lex->getSourceRange() << rex->getSourceRange();
 }
@@ -4470,7 +4472,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
 
-  DiagnoseSignCompare(*this, lex, rex, Opc, Loc);
+  CheckSignCompare(lex, rex, Loc, diag::warn_mixed_sign_comparison);
 
   // C99 6.5.8p3 / C99 6.5.9p4
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())

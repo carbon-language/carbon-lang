@@ -34,6 +34,25 @@ void foo() {
 
   typedef void *asdf;
   *(0 ? (asdf) 0 : &x) = 10;
+
+  unsigned long test0 = 5;
+  test0 = test0 ? (long) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? (int) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? (short) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (long) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (short) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? test0 : (long) 10;
+  test0 = test0 ? test0 : (int) 10;
+  test0 = test0 ? test0 : (short) 10;
+  test0 = test0 ? (long) 10 : test0;
+  test0 = test0 ? (int) 10 : test0;
+  test0 = test0 ? (short) 10 : test0;
+
+  enum Enum { EVal };
+  test0 = test0 ? EVal : test0;
+  test0 = test0 ? EVal : (int) test0; // okay: EVal is an int
+  test0 = test0 ? (unsigned) EVal : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
 }
 
 int Postgresql() {
