@@ -491,8 +491,9 @@ BitVector AggressiveAntiDepBreaker::GetRenameRegisters(unsigned Reg) {
 }  
 
 bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
-                          unsigned AntiDepGroupIndex,
-                          std::map<unsigned, unsigned> &RenameMap) {
+                                unsigned AntiDepGroupIndex,
+                                RenameOrderType& RenameOrder,
+                                std::map<unsigned, unsigned> &RenameMap) {
   unsigned *KillIndices = State->GetKillIndices();
   unsigned *DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>& 
@@ -547,22 +548,41 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
   if (Regs.size() > 1)
     return false;
 
-  // Check each possible rename register for SuperReg. If that register
-  // is available, and the corresponding registers are available for
-  // the other group subregisters, then we can use those registers to
-  // rename.
-  DEBUG(errs() << "\tFind Register:");
+  // Check each possible rename register for SuperReg in round-robin
+  // order. If that register is available, and the corresponding
+  // registers are available for the other group subregisters, then we
+  // can use those registers to rename.
   BitVector SuperBV = RenameRegisterMap[SuperReg];
-  for (int r = SuperBV.find_first(); r != -1; r = SuperBV.find_next(r)) {
-    const unsigned Reg = (unsigned)r;
+  const TargetRegisterClass *SuperRC = 
+    TRI->getPhysicalRegisterRegClass(SuperReg, MVT::Other);
+  
+  const TargetRegisterClass::iterator RB = SuperRC->allocation_order_begin(MF);
+  const TargetRegisterClass::iterator RE = SuperRC->allocation_order_end(MF);
+  if (RB == RE) {
+    DEBUG(errs() << "\tEmpty Regclass!!\n");
+    return false;
+  }
+
+  if (RenameOrder.count(SuperRC) == 0)
+    RenameOrder.insert(RenameOrderType::value_type(SuperRC, RE));
+
+  DEBUG(errs() << "\tFind Register:");
+
+  const TargetRegisterClass::iterator OrigR = RenameOrder.at(SuperRC);
+  const TargetRegisterClass::iterator EndR = ((OrigR == RE) ? RB : OrigR);
+  TargetRegisterClass::iterator R = OrigR;
+  do {
+    if (R == RB) R = RE;
+    --R;
+    const unsigned Reg = *R;
     // Don't replace a register with itself.
     if (Reg == SuperReg) continue;
-
+    
     DEBUG(errs() << " " << TRI->getName(Reg));
-      
+    
     // If Reg is dead and Reg's most recent def is not before
-    // SuperRegs's kill, it's safe to replace SuperReg with
-    // Reg. We must also check all subregisters of Reg.
+    // SuperRegs's kill, it's safe to replace SuperReg with Reg. We
+    // must also check all subregisters of Reg.
     if (State->IsLive(Reg) || (KillIndices[SuperReg] > DefIndices[Reg])) {
       DEBUG(errs() << "(live)");
       continue;
@@ -580,13 +600,15 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
       if (found)
         continue;
     }
-      
+    
     if (Reg != 0) { 
       DEBUG(errs() << '\n');
+      RenameOrder.erase(SuperRC);
+      RenameOrder.insert(RenameOrderType::value_type(SuperRC, R));
       RenameMap.insert(std::pair<unsigned, unsigned>(SuperReg, Reg));
       return true;
     }
-  }
+  } while (R != EndR);
 
   DEBUG(errs() << '\n');
 
@@ -627,6 +649,9 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
       State = new AggressiveAntiDepState(*SavedState);
     }
   }
+  
+  // For each regclass the next register to use for renaming.
+  RenameOrderType RenameOrder;
 
   // ...need a map from MI to SUnit.
   std::map<MachineInstr *, SUnit *> MISUnitMap;
@@ -738,7 +763,7 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
         
         // Look for a suitable register to use to break the anti-dependence.
         std::map<unsigned, unsigned> RenameMap;
-        if (FindSuitableFreeRegisters(GroupIndex, RenameMap)) {
+        if (FindSuitableFreeRegisters(GroupIndex, RenameOrder, RenameMap)) {
           DEBUG(errs() << "\tBreaking anti-dependence edge on "
                 << TRI->getName(AntiDepReg) << ":");
           

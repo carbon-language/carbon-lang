@@ -155,6 +155,9 @@ namespace llvm {
     void FinishBlock();
 
   private:
+    typedef std::map<const TargetRegisterClass *,
+                     TargetRegisterClass::const_iterator> RenameOrderType;
+
     /// IsImplicitDefUse - Return true if MO represents a register
     /// that is both implicitly used and defined in MI
     bool IsImplicitDefUse(MachineInstr *MI, MachineOperand& MO);
@@ -169,6 +172,7 @@ namespace llvm {
     void ScanInstruction(MachineInstr *MI, unsigned Count);
     BitVector GetRenameRegisters(unsigned Reg);
     bool FindSuitableFreeRegisters(unsigned AntiDepGroupIndex,
+                                   RenameOrderType& RenameOrder,
                                    std::map<unsigned, unsigned> &RenameMap);
   };
 }

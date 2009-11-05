@@ -770,7 +770,8 @@ void SchedulePostRATDList::ListScheduleTopDown(
         // just advance the current cycle and try again.
         DEBUG(errs() << "*** Stall in cycle " << CurCycle << '\n');
         HazardRec->AdvanceCycle();
-        ++NumStalls;
+        if (!IgnoreAntiDep)
+          ++NumStalls;
       } else {
         // Otherwise, we have no instructions to issue and we have instructions
         // that will fault if we don't do this right.  This is the case for
@@ -778,7 +779,8 @@ void SchedulePostRATDList::ListScheduleTopDown(
         DEBUG(errs() << "*** Emitting noop in cycle " << CurCycle << '\n');
         HazardRec->EmitNoop();
         Sequence.push_back(0);   // NULL here means noop
-        ++NumNoops;
+        if (!IgnoreAntiDep)
+          ++NumNoops;
       }
 
       ++CurCycle;
