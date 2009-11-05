@@ -54,3 +54,15 @@ void test(X x, const X xc, X* xp, const X* xcp, volatile X xv, volatile X* xvp) 
   
   X::h(0); // expected-error{{call to non-static member function without an object argument}}
 }
+
+struct X1 {
+  int& member();
+  float& member() const;
+};
+
+struct X2 : X1 { };
+
+void test_X2(X2 *x2p, const X2 *cx2p) {
+  int &ir = x2p->member();
+  float &fr = cx2p->member();
+}

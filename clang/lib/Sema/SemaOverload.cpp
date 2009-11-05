@@ -2097,8 +2097,8 @@ Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
   // First check the qualifiers. We don't care about lvalue-vs-rvalue
   // with the implicit object parameter (C++ [over.match.funcs]p5).
   QualType FromTypeCanon = Context.getCanonicalType(FromType);
-  if (ImplicitParamType.getCVRQualifiers() != FromType.getCVRQualifiers() &&
-      !ImplicitParamType.isAtLeastAsQualifiedAs(FromType))
+  if (ImplicitParamType.getCVRQualifiers() != FromTypeCanon.getCVRQualifiers() &&
+      !ImplicitParamType.isAtLeastAsQualifiedAs(FromTypeCanon))
     return ICS;
 
   // Check that we have either the same type or a derived type. It
