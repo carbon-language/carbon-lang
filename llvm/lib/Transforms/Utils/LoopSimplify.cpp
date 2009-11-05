@@ -23,6 +23,11 @@
 //
 // This pass also guarantees that loops will have exactly one backedge.
 //
+// Indirectbr instructions introduce several complications. If the loop
+// contains or is entered by an indirectbr instruction, it may not be possible
+// to transform the loop and make these guarantees. Client code should check
+// that these conditions are true before relying on them.
+//
 // Note that the simplifycfg pass will clean up blocks which are split out but
 // end up being unnecessary, so usage of this pass should not pessimize
 // generated code.
@@ -81,17 +86,15 @@ namespace {
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
     }
 
-    /// verifyAnalysis() - Verify loop nest.
-    void verifyAnalysis() const {
-      assert(L->isLoopSimplifyForm() && "LoopSimplify form not preserved!");
-    }
+    /// verifyAnalysis() - Verify LoopSimplifyForm's guarantees.
+    void verifyAnalysis() const;
 
   private:
     bool ProcessLoop(Loop *L, LPPassManager &LPM);
     BasicBlock *RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
     BasicBlock *InsertPreheaderForLoop(Loop *L);
     Loop *SeparateNestedLoop(Loop *L, LPPassManager &LPM);
-    void InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader);
+    BasicBlock *InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader);
     void PlaceSplitBlockCarefully(BasicBlock *NewBB,
                                   SmallVectorImpl<BasicBlock*> &SplitPreds,
                                   Loop *L);
@@ -160,8 +163,10 @@ ReprocessLoop:
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
     Preheader = InsertPreheaderForLoop(L);
-    NumInserted++;
-    Changed = true;
+    if (Preheader) {
+      NumInserted++;
+      Changed = true;
+    }
   }
 
   // Next, check to make sure that all exit nodes of the loop only have
@@ -180,21 +185,22 @@ ReprocessLoop:
       // Must be exactly this loop: no subloops, parent loops, or non-loop preds
       // allowed.
       if (!L->contains(*PI)) {
-        RewriteLoopExitBlock(L, ExitBlock);
-        NumInserted++;
-        Changed = true;
+        if (RewriteLoopExitBlock(L, ExitBlock)) {
+          NumInserted++;
+          Changed = true;
+        }
         break;
       }
   }
 
   // If the header has more than two predecessors at this point (from the
   // preheader and from multiple backedges), we must adjust the loop.
-  unsigned NumBackedges = L->getNumBackEdges();
-  if (NumBackedges != 1) {
+  BasicBlock *LoopLatch = L->getLoopLatch();
+  if (!LoopLatch) {
     // If this is really a nested loop, rip it out into a child loop.  Don't do
     // this for loops with a giant number of backedges, just factor them into a
     // common backedge instead.
-    if (NumBackedges < 8) {
+    if (L->getNumBackEdges() < 8) {
       if (SeparateNestedLoop(L, LPM)) {
         ++NumNested;
         // This is a big restructuring change, reprocess the whole loop.
@@ -207,9 +213,11 @@ ReprocessLoop:
     // If we either couldn't, or didn't want to, identify nesting of the loops,
     // insert a new block that all backedges target, then make it jump to the
     // loop header.
-    InsertUniqueBackedgeBlock(L, Preheader);
-    NumInserted++;
-    Changed = true;
+    LoopLatch = InsertUniqueBackedgeBlock(L, Preheader);
+    if (LoopLatch) {
+      NumInserted++;
+      Changed = true;
+    }
   }
 
   // Scan over the PHI nodes in the loop header.  Since they now have only two
@@ -251,7 +259,8 @@ ReprocessLoop:
         Instruction *Inst = I++;
         if (Inst == CI)
           continue;
-        if (!L->makeLoopInvariant(Inst, Changed, Preheader->getTerminator())) {
+        if (!L->makeLoopInvariant(Inst, Changed,
+                                  Preheader ? Preheader->getTerminator() : 0)) {
           AllInvariant = false;
           break;
         }
@@ -303,8 +312,15 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   SmallVector<BasicBlock*, 8> OutsideBlocks;
   for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
        PI != PE; ++PI)
-    if (!L->contains(*PI))           // Coming in from outside the loop?
-      OutsideBlocks.push_back(*PI);  // Keep track of it...
+    if (!L->contains(*PI)) {         // Coming in from outside the loop?
+      // If the loop is branched to from an indirect branch, we won't
+      // be able to fully transform the loop, because it prohibits
+      // edge splitting.
+      if (isa<IndirectBrInst>((*PI)->getTerminator())) return 0;
+
+      // Keep track of it.
+      OutsideBlocks.push_back(*PI);
+    }
 
   // Split out the loop pre-header.
   BasicBlock *NewBB =
@@ -324,8 +340,12 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   SmallVector<BasicBlock*, 8> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I)
-    if (L->contains(*I))
+    if (L->contains(*I)) {
+      // Don't do this if the loop is exited via an indirect branch.
+      if (isa<IndirectBrInst>((*I)->getTerminator())) return 0;
+
       LoopBlocks.push_back(*I);
+    }
 
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
   BasicBlock *NewBB = SplitBlockPredecessors(Exit, &LoopBlocks[0], 
@@ -519,12 +539,17 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM) {
 /// backedges to target a new basic block and have that block branch to the loop
 /// header.  This ensures that loops have exactly one backedge.
 ///
-void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
+BasicBlock *
+LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
   assert(L->getNumBackEdges() > 1 && "Must have > 1 backedge!");
 
   // Get information about the loop
   BasicBlock *Header = L->getHeader();
   Function *F = Header->getParent();
+
+  // Unique backedge insertion currently depends on having a preheader.
+  if (!Preheader)
+    return 0;
 
   // Figure out which basic blocks contain back-edges to the loop header.
   std::vector<BasicBlock*> BackedgeBlocks;
@@ -612,4 +637,40 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
   DT->splitBlock(BEBlock);
   if (DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>())
     DF->splitBlock(BEBlock);
+
+  return BEBlock;
+}
+
+void LoopSimplify::verifyAnalysis() const {
+  // It used to be possible to just assert L->isLoopSimplifyForm(), however
+  // with the introduction of indirectbr, there are now cases where it's
+  // not possible to transform a loop as necessary. We can at least check
+  // that there is an indirectbr near any time there's trouble.
+
+  // Indirectbr can interfere with preheader and unique backedge insertion.
+  if (!L->getLoopPreheader() || !L->getLoopLatch()) {
+    bool HasIndBrPred = false;
+    for (pred_iterator PI = pred_begin(L->getHeader()),
+         PE = pred_end(L->getHeader()); PI != PE; ++PI)
+      if (isa<IndirectBrInst>((*PI)->getTerminator())) {
+        HasIndBrPred = true;
+        break;
+      }
+    assert(HasIndBrPred &&
+           "LoopSimplify has no excuse for missing loop header info!");
+  }
+
+  // Indirectbr can interfere with exit block canonicalization.
+  if (!L->hasDedicatedExits()) {
+    bool HasIndBrExiting = false;
+    SmallVector<BasicBlock*, 8> ExitingBlocks;
+    L->getExitingBlocks(ExitingBlocks);
+    for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i)
+      if (isa<IndirectBrInst>((ExitingBlocks[i])->getTerminator())) {
+        HasIndBrExiting = true;
+        break;
+      }
+    assert(HasIndBrExiting &&
+           "LoopSimplify has no excuse for missing exit block info!");
+  }
 }
