@@ -568,7 +568,7 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
 
   DEBUG(errs() << "\tFind Register:");
 
-  const TargetRegisterClass::iterator OrigR = RenameOrder.at(SuperRC);
+  const TargetRegisterClass::iterator OrigR = RenameOrder[SuperRC];
   const TargetRegisterClass::iterator EndR = ((OrigR == RE) ? RB : OrigR);
   TargetRegisterClass::iterator R = OrigR;
   do {
