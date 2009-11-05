@@ -630,12 +630,6 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>& 
     RegRefs = State->GetRegRefs();
 
-  // Nothing to do if no candidates.
-  if (Candidates.empty()) {
-    DEBUG(errs() << "\n===== No anti-dependency candidates\n");
-    return 0;
-  }
-
   // The code below assumes that there is at least one instruction,
   // so just duck out immediately if the block is empty.
   if (SUnits.empty()) return 0;
@@ -655,16 +649,19 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
 
   // ...need a map from MI to SUnit.
   std::map<MachineInstr *, SUnit *> MISUnitMap;
-
-  DEBUG(errs() << "\n===== Attempting to break " << Candidates.size() << 
-        " anti-dependencies\n");
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     SUnit *SU = &SUnits[i];
     MISUnitMap.insert(std::pair<MachineInstr *, SUnit *>(SU->getInstr(), SU));
   }
 
+  // Even if there are no anti-dependencies we still need to go
+  // through the instructions to update Def, Kills, etc.
 #ifndef NDEBUG 
-  {
+  if (Candidates.empty()) {
+    DEBUG(errs() << "\n===== No anti-dependency candidates\n");
+  } else {
+    DEBUG(errs() << "\n===== Attempting to break " << Candidates.size() << 
+          " anti-dependencies\n");
     DEBUG(errs() << "Available regs:");
     for (unsigned Reg = 0; Reg < TRI->getNumRegs(); ++Reg) {
       if (!State->IsLive(Reg))
