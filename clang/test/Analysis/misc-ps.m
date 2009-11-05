@@ -121,12 +121,12 @@ void check_zero_sized_VLA(int x) {
   if (x)
     return;
 
-  int vla[x]; // expected-warning{{Declare variable-length array (VLA) of zero size}}
+  int vla[x]; // expected-warning{{Declared variable-length array (VLA) has zero size}}
 }
 
 void check_uninit_sized_VLA() {
   int x;
-  int vla[x]; // expected-warning{{Declare variable-length array (VLA) of undefined size}}
+  int vla[x]; // expected-warning{{Declared variable-length array (VLA) uses a garbage value as its size}}
 }
 
 // sizeof(void)

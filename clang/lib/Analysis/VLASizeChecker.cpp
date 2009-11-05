@@ -38,8 +38,8 @@ ExplodedNode *UndefSizedVLAChecker::CheckType(QualType T, ExplodedNode *Pred,
       if (ExplodedNode* N = Builder.generateNode(S, state, Pred)) {
         N->markAsSink();
         if (!BT)
-          BT = new BugType("Declare variable-length array (VLA) of undefined "
-                            "size", "Logic error");
+          BT = new BugType("Declared variable-length array (VLA) uses a garbage"
+                           " value as its size", "Logic error");
 
         EnhancedBugReport *R =
                           new EnhancedBugReport(*BT, BT->getName().c_str(), N);
@@ -81,7 +81,7 @@ ExplodedNode *ZeroSizedVLAChecker::CheckType(QualType T, ExplodedNode *Pred,
       if (ExplodedNode* N = Builder.generateNode(S, zeroState, Pred)) {
         N->markAsSink();
         if (!BT)
-          BT = new BugType("Declare variable-length array (VLA) of zero size",
+          BT = new BugType("Declared variable-length array (VLA) has zero size",
                             "Logic error");
 
         EnhancedBugReport *R =

@@ -64,10 +64,10 @@ protected:
   const std::string desc;
 public:
   BuiltinBug(GRExprEngine *eng, const char* n, const char* d)
-    : BugType(n, "Logic errors"), Eng(*eng), desc(d) {}
+    : BugType(n, "Logic error"), Eng(*eng), desc(d) {}
 
   BuiltinBug(GRExprEngine *eng, const char* n)
-    : BugType(n, "Logic errors"), Eng(*eng), desc(n) {}
+    : BugType(n, "Logic error"), Eng(*eng), desc(n) {}
 
   const std::string &getDescription() const { return desc; }
 
