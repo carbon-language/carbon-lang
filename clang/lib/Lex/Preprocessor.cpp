@@ -409,14 +409,14 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
   IdentifierInfo *II;
   if (BufPtr && !Identifier.needsCleaning()) {
     // No cleaning needed, just use the characters from the lexed buffer.
-    II = getIdentifierInfo(BufPtr, BufPtr+Identifier.getLength());
+    II = getIdentifierInfo(llvm::StringRef(BufPtr, Identifier.getLength()));
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
     llvm::SmallVector<char, 64> IdentifierBuffer;
     IdentifierBuffer.resize(Identifier.getLength());
     const char *TmpBuf = &IdentifierBuffer[0];
     unsigned Size = getSpelling(Identifier, TmpBuf);
-    II = getIdentifierInfo(TmpBuf, TmpBuf+Size);
+    II = getIdentifierInfo(llvm::StringRef(TmpBuf, Size));
   }
   Identifier.setIdentifierInfo(II);
   return II;

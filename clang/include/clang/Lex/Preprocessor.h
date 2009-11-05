@@ -296,12 +296,8 @@ public:
   /// pointers is preferred unless the identifier is already available as a
   /// string (this avoids allocation and copying of memory to construct an
   /// std::string).
-  IdentifierInfo *getIdentifierInfo(const char *NameStart,
-                                    const char *NameEnd) {
-    return &Identifiers.get(NameStart, NameEnd);
-  }
-  IdentifierInfo *getIdentifierInfo(const char *NameStr) {
-    return getIdentifierInfo(NameStr, NameStr+strlen(NameStr));
+  IdentifierInfo *getIdentifierInfo(llvm::StringRef Name) {
+    return &Identifiers.get(Name);
   }
 
   /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
