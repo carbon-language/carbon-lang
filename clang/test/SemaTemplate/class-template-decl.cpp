@@ -41,15 +41,11 @@ struct test {}; // expected-note{{previous definition}}
 template<typename T>
 struct test : T {}; // expected-error{{redefinition}}
 
-#if 0
-// FIXME: parse template declarations in these scopes, so that we can
-// complain about the one at function scope.
 class X {
 public:
   template<typename T> class C;
 };
 
 void f() {
-  template<typename T> class X;
+  template<typename T> class X; // expected-error{{expression}}
 }
-#endif
