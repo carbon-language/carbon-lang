@@ -817,8 +817,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     Options.Blocks = EnableBlocks;
   if (CharIsSigned.getPosition())
     Options.CharIsSigned = CharIsSigned;
-	if (ShortWChar.getPosition())
-		Options.ShortWChar = ShortWChar;
+  if (ShortWChar.getPosition())
+    Options.ShortWChar = ShortWChar;
 
   if (!AllowBuiltins)
     Options.NoBuiltin = 1;
@@ -884,7 +884,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
 
-	Target->setForcedLangOptions(Options);
+  Target->setForcedLangOptions(Options);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1041,7 +1041,7 @@ void AddClangIncludePaths(const char *Argv0, InitHeaderSearch *Init) {
   // We pass true to ignore sysroot so that we *always* look for clang headers
   // relative to our executable, never relative to -isysroot.
   Init->AddPath(MainExecutablePath.c_str(), InitHeaderSearch::System,
-		false, false, false, true /*ignore sysroot*/);
+    false, false, false, true /*ignore sysroot*/);
 }
 
 /// InitializeIncludePaths - Process the -I options and set them in the

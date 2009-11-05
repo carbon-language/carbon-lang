@@ -160,7 +160,7 @@ public:
     NoInline = 0;
 
     CharIsSigned = 1;
-	ShortWChar = 0;
+    ShortWChar = 0;
 
     MainFileName = 0;
   }
