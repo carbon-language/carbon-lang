@@ -2268,8 +2268,6 @@ int main(int argc, char **argv) {
     llvm::OwningPtr<Preprocessor> PP(CreatePreprocessor(Diags, LangInfo,
                                                         *Target, *SourceMgr,
                                                         HeaderInfo));
-    if (!PP)
-      continue;
 
     // Handle generating dependencies, if requested.
     if (!DependencyFile.empty()) {
