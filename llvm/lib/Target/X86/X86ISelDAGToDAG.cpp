@@ -1949,14 +1949,12 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                             0);
           // We just did a 32-bit clear, insert it into a 64-bit register to
           // clear the whole 64-bit reg.
-          SDValue Undef =
-            SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
-                                           dl, MVT::i64), 0);
+          SDValue Zero = CurDAG->getTargetConstant(0, MVT::i64);
           SDValue SubRegNo =
             CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
           ClrNode =
-            SDValue(CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl,
-                                           MVT::i64, Undef, ClrNode, SubRegNo),
+            SDValue(CurDAG->getMachineNode(TargetInstrInfo::SUBREG_TO_REG, dl,
+                                           MVT::i64, Zero, ClrNode, SubRegNo),
                     0);
         } else {
           ClrNode = SDValue(CurDAG->getMachineNode(ClrOpcode, dl, NVT), 0);
