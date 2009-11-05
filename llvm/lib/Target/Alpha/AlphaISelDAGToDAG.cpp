@@ -225,8 +225,6 @@ SDNode *AlphaDAGToDAGISel::getGlobalRetAddr() {
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void AlphaDAGToDAGISel::InstructionSelect() {
-  DEBUG(BB->dump());
-  
   // Select target instructions for the DAG.
   SelectRoot(*CurDAG);
   CurDAG->RemoveDeadNodes();

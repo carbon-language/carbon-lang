@@ -75,7 +75,6 @@ private:
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void SparcDAGToDAGISel::InstructionSelect() {
-  DEBUG(BB->dump());
   CurBB = BB;
   // Select target instructions for the DAG.
   SelectRoot(*CurDAG);

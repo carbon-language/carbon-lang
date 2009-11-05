@@ -187,8 +187,6 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
 
 
 void ARMDAGToDAGISel::InstructionSelect() {
-  DEBUG(BB->dump());
-
   SelectRoot(*CurDAG);
   CurDAG->RemoveDeadNodes();
 }

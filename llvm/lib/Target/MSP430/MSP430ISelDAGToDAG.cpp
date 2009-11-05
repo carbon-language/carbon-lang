@@ -438,8 +438,6 @@ void MSP430DAGToDAGISel::InstructionSelect() {
   DEBUG(errs() << "Selection DAG after RMW preprocessing:\n");
   DEBUG(CurDAG->dump());
 
-  DEBUG(BB->dump());
-
   // Codegen the basic block.
   DEBUG(errs() << "===== Instruction selection begins:\n");
   DEBUG(Indent = 0);

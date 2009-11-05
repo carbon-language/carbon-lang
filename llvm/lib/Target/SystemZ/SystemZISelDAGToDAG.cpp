@@ -603,8 +603,6 @@ bool SystemZDAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void SystemZDAGToDAGISel::InstructionSelect() {
-  DEBUG(BB->dump());
-
   // Codegen the basic block.
   DEBUG(errs() << "===== Instruction selection begins:\n");
   DEBUG(Indent = 0);

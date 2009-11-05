@@ -108,7 +108,6 @@ private:
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void MipsDAGToDAGISel::InstructionSelect() {
-  DEBUG(BB->dump());
   // Codegen the basic block.
   DEBUG(errs() << "===== Instruction selection begins:\n");
   DEBUG(Indent = 0);

@@ -417,8 +417,6 @@ namespace {
 void
 SPUDAGToDAGISel::InstructionSelect()
 {
-  DEBUG(BB->dump());
-
   // Select target instructions for the DAG.
   SelectRoot(*CurDAG);
   CurDAG->RemoveDeadNodes();

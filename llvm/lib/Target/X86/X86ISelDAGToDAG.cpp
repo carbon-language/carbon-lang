@@ -661,7 +661,6 @@ void X86DAGToDAGISel::InstructionSelect() {
   const Function *F = MF->getFunction();
   OptForSize = F->hasFnAttr(Attribute::OptimizeForSize);
 
-  DEBUG(BB->dump());
   if (OptLevel != CodeGenOpt::None)
     PreprocessForRMW();
 

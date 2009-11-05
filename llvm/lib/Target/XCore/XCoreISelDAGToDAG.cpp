@@ -149,10 +149,7 @@ bool XCoreDAGToDAGISel::SelectADDRcpii(SDValue Op, SDValue Addr,
 
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void XCoreDAGToDAGISel::
-InstructionSelect() {
-  DEBUG(BB->dump());
-
+void XCoreDAGToDAGISel::InstructionSelect() {
   // Select target instructions for the DAG.
   SelectRoot(*CurDAG);
   
