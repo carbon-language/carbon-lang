@@ -31,6 +31,7 @@ entry:
 }
 
 declare i32 @bar(i8*)
+declare i32 @bar2(i64*)
 
 define i32 @foo1(i32 %n) nounwind {
 entry:
@@ -60,11 +61,16 @@ entry:
 	ret i32 %add16
 }
 
-define i32 @foo2(i32 %n) nounwind {
+define i32 @foo2(i64 %n) nounwind {
 entry:
-	%call = malloc i8, i32 %n		; <i8*> [#uses=1]
+	%call = tail call i8* @malloc(i64 %n)  ; <i8*> [#uses=1]
 ; CHECK: %call =
 ; CHECK: ==> %n elements, %n bytes allocated
+	%mallocsize = mul i64 %n, 8                     ; <i64> [#uses=1]
+	%malloccall = tail call i8* @malloc(i64 %mallocsize) ; <i8*> [#uses=1]
+	%call3 = bitcast i8* %malloccall to i64*        ; <i64*> [#uses=1]
+; CHECK: %malloccall =
+; CHECK: ==> (8 * %n) elements, (8 * %n) bytes allocated
 	%call2 = tail call i8* @calloc(i64 2, i64 4) nounwind		; <i8*> [#uses=1]
 ; CHECK: %call2 =
 ; CHECK: ==> 8 elements, 8 bytes allocated
@@ -72,12 +78,16 @@ entry:
 ; CHECK: %call4 =
 ; CHECK: ==> 16 elements, 16 bytes allocated
 	%call6 = tail call i32 @bar(i8* %call) nounwind		; <i32> [#uses=1]
+	%call7 = tail call i32 @bar2(i64* %call3) nounwind ; <i32> [#uses=1]
 	%call8 = tail call i32 @bar(i8* %call2) nounwind		; <i32> [#uses=1]
 	%call10 = tail call i32 @bar(i8* %call4) nounwind		; <i32> [#uses=1]
-	%add = add i32 %call8, %call6		; <i32> [#uses=1]
-	%add11 = add i32 %add, %call10		; <i32> [#uses=1]
+	%add = add i32 %call8, %call6                   ; <i32> [#uses=1]
+	%add10 = add i32 %add, %call7                   ; <i32> [#uses=1]
+	%add11 = add i32 %add10, %call10                ; <i32> [#uses=1]
 	ret i32 %add11
 }
+
+declare noalias i8* @malloc(i64) nounwind
 
 declare noalias i8* @calloc(i64, i64) nounwind
 

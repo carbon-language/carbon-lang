@@ -81,8 +81,11 @@ void BrainF::header(LLVMContext& C) {
   ConstantInt *val_mem = ConstantInt::get(C, APInt(32, memtotal));
   BasicBlock* BB = builder->GetInsertBlock();
   const Type* IntPtrTy = IntegerType::getInt32Ty(C);
-  ptr_arr = CallInst::CreateMalloc(BB, IntPtrTy, IntegerType::getInt8Ty(C),
-                                   val_mem, NULL, "arr");
+  const Type* Int8Ty = IntegerType::getInt8Ty(C);
+  Constant* allocsize = ConstantExpr::getSizeOf(Int8Ty);
+  allocsize = ConstantExpr::getTruncOrBitCast(allocsize, IntPtrTy);
+  ptr_arr = CallInst::CreateMalloc(BB, IntPtrTy, Int8Ty, allocsize, val_mem, 
+                                   NULL, "arr");
   BB->getInstList().push_back(cast<Instruction>(ptr_arr));
 
   //call void @llvm.memset.i32(i8 *%arr, i8 0, i32 %d, i32 1)
