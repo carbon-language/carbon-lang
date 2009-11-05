@@ -3604,14 +3604,15 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
 /// type, and the first type (T1) is the pointee type of the reference
 /// type being initialized.
 Sema::ReferenceCompareResult
-Sema::CompareReferenceRelationship(QualType T1, QualType T2,
+Sema::CompareReferenceRelationship(SourceLocation Loc, 
+                                   QualType OrigT1, QualType OrigT2,
                                    bool& DerivedToBase) {
-  assert(!T1->isReferenceType() &&
+  assert(!OrigT1->isReferenceType() &&
     "T1 must be the pointee type of the reference type");
-  assert(!T2->isReferenceType() && "T2 cannot be a reference type");
+  assert(!OrigT2->isReferenceType() && "T2 cannot be a reference type");
 
-  T1 = Context.getCanonicalType(T1);
-  T2 = Context.getCanonicalType(T2);
+  QualType T1 = Context.getCanonicalType(OrigT1);
+  QualType T2 = Context.getCanonicalType(OrigT2);
   QualType UnqualT1 = T1.getUnqualifiedType();
   QualType UnqualT2 = T2.getUnqualifiedType();
 
@@ -3621,7 +3622,9 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
   //   T1 is a base class of T2.
   if (UnqualT1 == UnqualT2)
     DerivedToBase = false;
-  else if (IsDerivedFrom(UnqualT2, UnqualT1))
+  else if (!RequireCompleteType(Loc, OrigT1, PDiag()) &&
+           !RequireCompleteType(Loc, OrigT2, PDiag()) &&
+           IsDerivedFrom(UnqualT2, UnqualT1))
     DerivedToBase = true;
   else
     return Ref_Incompatible;
@@ -3697,7 +3700,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   Expr::isLvalueResult InitLvalue = ForceRValue ? Expr::LV_InvalidExpression :
                                                   Init->isLvalue(Context);
   ReferenceCompareResult RefRelationship
-    = CompareReferenceRelationship(T1, T2, DerivedToBase);
+    = CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase);
 
   // Most paths end in a failed conversion.
   if (ICS)

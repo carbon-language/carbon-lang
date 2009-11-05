@@ -3651,7 +3651,8 @@ public:
     Ref_Compatible
   };
 
-  ReferenceCompareResult CompareReferenceRelationship(QualType T1, QualType T2,
+  ReferenceCompareResult CompareReferenceRelationship(SourceLocation Loc,
+                                                      QualType T1, QualType T2,
                                                       bool& DerivedToBase);
 
   bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType declType,

@@ -1387,8 +1387,10 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
                                    bool AllowExplicit, bool ForceRValue,
                                    bool UserCast) {
   if (const RecordType *ToRecordType = ToType->getAs<RecordType>()) {
-    if (CXXRecordDecl *ToRecordDecl
-          = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
+    if (RequireCompleteType(From->getLocStart(), ToType, PDiag())) {
+      // We're not going to find any constructors.
+    } else if (CXXRecordDecl *ToRecordDecl
+                 = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
       // C++ [over.match.ctor]p1:
       //   When objects of class type are direct-initialized (8.5), or
       //   copy-initialized from an expression of the same or a

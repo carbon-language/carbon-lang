@@ -45,3 +45,24 @@ void test_memptr(X<long> *p1, long X<long>::*pm1,
   (void)(p1->*pm1);
   (void)((p2->*pm2)(0));
 }
+
+// Reference binding to a base
+template<typename T>
+struct X1 { };
+
+template<typename T>
+struct X2 : public T { };
+
+void refbind_base(X2<X1<int> > &x2) {
+  X1<int> &x1 = x2;
+}
+
+// Enumerate constructors for user-defined conversion.
+template<typename T>
+struct X3 {
+  X3(T);
+};
+
+void enum_constructors(X1<float> &x1) {
+  X3<X1<float> > x3 = x1;
+}
