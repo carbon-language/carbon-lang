@@ -23,6 +23,7 @@
 #ifndef LLVM_SUPPORT_FORMAT_H
 #define LLVM_SUPPORT_FORMAT_H
 
+#include <cassert>
 #include <cstdio>
 #ifdef WIN32
 #define snprintf _snprintf

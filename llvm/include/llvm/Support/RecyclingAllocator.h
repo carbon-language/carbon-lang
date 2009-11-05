@@ -41,7 +41,7 @@ public:
   /// SubClass. The storage may be either newly allocated or recycled.
   ///
   template<class SubClass>
-  SubClass *Allocate() { return Base.Allocate<SubClass>(Allocator); }
+  SubClass *Allocate() { return Base.template Allocate<SubClass>(Allocator); }
 
   T *Allocate() { return Base.Allocate(Allocator); }
 

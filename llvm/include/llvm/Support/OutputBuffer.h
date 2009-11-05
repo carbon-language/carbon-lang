@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_OUTPUTBUFFER_H
 #define LLVM_SUPPORT_OUTPUTBUFFER_H
 
+#include <cassert>
 #include <string>
 #include <vector>
 

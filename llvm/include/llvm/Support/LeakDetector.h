@@ -26,6 +26,7 @@
 
 namespace llvm {
 
+class LLVMContext;
 class Value;
 
 struct LeakDetector {
