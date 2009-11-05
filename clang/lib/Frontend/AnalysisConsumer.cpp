@@ -54,9 +54,8 @@ namespace {
 static PathDiagnosticClient*
 CreatePlistHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP) {
   llvm::sys::Path F(prefix);
-  PathDiagnosticClientFactory *PF =
-    CreateHTMLDiagnosticClientFactory(F.getDirname(), PP);
-  return CreatePlistDiagnosticClient(prefix, PP, PF);
+  PathDiagnosticClient *PD = CreateHTMLDiagnosticClient(F.getDirname(), PP);
+  return CreatePlistDiagnosticClient(prefix, PP, PD);
 }
 
 //===----------------------------------------------------------------------===//

@@ -36,14 +36,20 @@ namespace {
     std::vector<const PathDiagnostic*> BatchedDiags;
     const std::string OutputFile;
     const LangOptions &LangOpts;
-    llvm::OwningPtr<PathDiagnosticClientFactory> PF;
-    llvm::OwningPtr<PathDiagnosticClient> SubPDC;
-    llvm::SmallVector<std::string, 1> FilesMade;
+    llvm::OwningPtr<PathDiagnosticClient> SubPD;
   public:
     PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
-                     PathDiagnosticClientFactory *pf);
-    ~PlistDiagnostics();
+                     PathDiagnosticClient *subPD);
+
+    ~PlistDiagnostics() { FlushDiagnostics(NULL); }
+
+    void FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade);
+    
     void HandlePathDiagnostic(const PathDiagnostic* D);
+    
+    virtual llvm::StringRef getName() const {
+      return "PlistDiagnostics";
+    }
 
     PathGenerationScheme getGenerationScheme() const;
     bool supportsLogicalOpControlFlow() const { return true; }
@@ -54,22 +60,18 @@ namespace {
 
 PlistDiagnostics::PlistDiagnostics(const std::string& output,
                                    const LangOptions &LO,
-                                   PathDiagnosticClientFactory *pf)
-  : OutputFile(output), LangOpts(LO), PF(pf) {
-
-  if (PF)
-    SubPDC.reset(PF->createPathDiagnosticClient(&FilesMade));
-}
+                                   PathDiagnosticClient *subPD)
+  : OutputFile(output), LangOpts(LO), SubPD(subPD) {}
 
 PathDiagnosticClient*
 clang::CreatePlistDiagnosticClient(const std::string& s, Preprocessor *PP,
-                                   PathDiagnosticClientFactory *PF) {
-  return new PlistDiagnostics(s, PP->getLangOptions(), PF);
+                                   PathDiagnosticClient *subPD) {
+  return new PlistDiagnostics(s, PP->getLangOptions(), subPD);
 }
 
 PathDiagnosticClient::PathGenerationScheme
 PlistDiagnostics::getGenerationScheme() const {
-  if (const PathDiagnosticClient *PD = SubPDC.get())
+  if (const PathDiagnosticClient *PD = SubPD.get())
     return PD->getGenerationScheme();
 
   return Extensive;
@@ -306,7 +308,8 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
   BatchedDiags.push_back(D);
 }
 
-PlistDiagnostics::~PlistDiagnostics() {
+void PlistDiagnostics::FlushDiagnostics(llvm::SmallVectorImpl<std::string>
+                                        *FilesMade) {
 
   // Build up a set of FIDs that we use by scanning the locations and
   // ranges of the diagnostics.
@@ -395,19 +398,16 @@ PlistDiagnostics::~PlistDiagnostics() {
     EmitLocation(o, *SM, LangOpts, D->getLocation(), FM, 2);
 
     // Output the diagnostic to the sub-diagnostic client, if any.
-    if (PF) {
-      if (!SubPDC.get())
-        SubPDC.reset(PF->createPathDiagnosticClient(&FilesMade));
+    if (SubPD) {
+      SubPD->HandlePathDiagnostic(OwnedD.take());
+      llvm::SmallVector<std::string, 1> SubFilesMade;
+      SubPD->FlushDiagnostics(SubFilesMade);
 
-      FilesMade.clear();
-      SubPDC->HandlePathDiagnostic(OwnedD.take());
-      SubPDC.reset(0);
-
-      if (!FilesMade.empty()) {
-        o << "  <key>" << PF->getName() << "_files</key>\n";
+      if (!SubFilesMade.empty()) {
+        o << "  <key>" << SubPD->getName() << "_files</key>\n";
         o << "  <array>\n";
-        for (size_t i = 0, n = FilesMade.size(); i < n ; ++i)
-          o << "   <string>" << FilesMade[i] << "</string>\n";
+        for (size_t i = 0, n = SubFilesMade.size(); i < n ; ++i)
+          o << "   <string>" << SubFilesMade[i] << "</string>\n";
         o << "  </array>\n";
       }
     }
@@ -420,4 +420,7 @@ PlistDiagnostics::~PlistDiagnostics() {
 
   // Finish.
   o << "</dict>\n</plist>";
+  
+  if (FilesMade)
+    FilesMade->push_back(OutputFile);
 }
