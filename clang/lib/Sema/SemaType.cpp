@@ -229,7 +229,8 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
   case DeclSpec::TST_enum:
   case DeclSpec::TST_union:
   case DeclSpec::TST_struct: {
-    TypeDecl *D = cast_or_null<TypeDecl>(static_cast<Decl *>(DS.getTypeRep()));
+    TypeDecl *D 
+      = dyn_cast_or_null<TypeDecl>(static_cast<Decl *>(DS.getTypeRep()));
     if (!D) {
       // This can happen in C++ with ambiguous lookups.
       Result = Context.IntTy;

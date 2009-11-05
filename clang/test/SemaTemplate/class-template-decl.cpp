@@ -49,3 +49,5 @@ public:
 void f() {
   template<typename T> class X; // expected-error{{expression}}
 }
+
+template<typename T> class X1 { } var; // expected-error{{declared as a template}}
