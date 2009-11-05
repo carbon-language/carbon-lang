@@ -108,8 +108,19 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
 bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM) {
   assert(L->isLCSSAForm());
 
-  BasicBlock *Header = L->getHeader();
+  BasicBlock *Preheader = L->getLoopPreheader();
+  if (!Preheader) {
+    DEBUG(errs() << "  Can't unroll; loop preheader-insertion failed.\n");
+    return false;
+  }
+
   BasicBlock *LatchBlock = L->getLoopLatch();
+  if (!LatchBlock) {
+    DEBUG(errs() << "  Can't unroll; loop exit-block-insertion failed.\n");
+    return false;
+  }
+
+  BasicBlock *Header = L->getHeader();
   BranchInst *BI = dyn_cast<BranchInst>(LatchBlock->getTerminator());
   
   if (!BI || BI->isUnconditional()) {
