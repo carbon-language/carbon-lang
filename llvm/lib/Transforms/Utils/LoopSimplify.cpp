@@ -241,7 +241,14 @@ ReprocessLoop:
   // loop-invariant instructions out of the way to open up more
   // opportunities, and the disadvantage of having the responsibility
   // to preserve dominator information.
-  if (ExitBlocks.size() > 1 && L->getUniqueExitBlock()) {
+  bool UniqueExit = true;
+  if (!ExitBlocks.empty())
+    for (unsigned i = 1, e = ExitBlocks.size(); i != e; ++i)
+      if (ExitBlocks[i] != ExitBlocks[0]) {
+        UniqueExit = false;
+        break;
+      }
+  if (UniqueExit) {
     SmallVector<BasicBlock*, 8> ExitingBlocks;
     L->getExitingBlocks(ExitingBlocks);
     for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
