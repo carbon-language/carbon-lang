@@ -536,8 +536,10 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
   BasicBlock *ExitBlock = L->getExitBlock();
   if (!ExitBlock) return;
 
-  Instruction *InsertPt = ExitBlock->getFirstNonPHI();
   BasicBlock *Preheader = L->getLoopPreheader();
+  if (!Preheader) return;
+
+  Instruction *InsertPt = ExitBlock->getFirstNonPHI();
   BasicBlock::iterator I = Preheader->getTerminator();
   while (I != Preheader->begin()) {
     --I;

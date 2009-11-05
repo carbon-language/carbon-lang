@@ -75,6 +75,10 @@ bool LoopExtractor::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (L->getParentLoop())
     return false;
 
+  // If LoopSimplify form is not available, stay out of trouble.
+  if (!L->isLoopSimplifyForm())
+    return false;
+
   DominatorTree &DT = getAnalysis<DominatorTree>();
   bool Changed = false;
 

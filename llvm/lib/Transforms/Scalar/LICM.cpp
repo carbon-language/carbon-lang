@@ -263,7 +263,6 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Get the preheader block to move instructions into...
   Preheader = L->getLoopPreheader();
-  assert(Preheader&&"Preheader insertion pass guarantees we have a preheader!");
 
   // Loop over the body of this loop, looking for calls, invokes, and stores.
   // Because subloops have already been incorporated into AST, we skip blocks in
@@ -286,12 +285,14 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   // us to sink instructions in one pass, without iteration.  After sinking
   // instructions, we perform another pass to hoist them out of the loop.
   //
-  SinkRegion(DT->getNode(L->getHeader()));
-  HoistRegion(DT->getNode(L->getHeader()));
+  if (L->hasDedicatedExits())
+    SinkRegion(DT->getNode(L->getHeader()));
+  if (Preheader)
+    HoistRegion(DT->getNode(L->getHeader()));
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can...
-  if (!DisablePromotion)
+  if (!DisablePromotion && Preheader && L->hasDedicatedExits())
     PromoteValuesInLoop();
 
   // Clear out loops state information for the next iteration

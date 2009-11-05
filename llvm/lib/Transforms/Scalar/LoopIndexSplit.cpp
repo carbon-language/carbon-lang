@@ -209,6 +209,10 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   L = IncomingLoop;
   LPM = &LPM_Ref;
 
+  // If LoopSimplify form is not available, stay out of trouble.
+  if (!L->isLoopSimplifyForm())
+    return false;
+
   // FIXME - Nested loops make dominator info updates tricky. 
   if (!L->getSubLoops().empty())
     return false;

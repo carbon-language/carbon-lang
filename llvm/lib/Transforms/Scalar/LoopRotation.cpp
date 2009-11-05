@@ -104,16 +104,17 @@ bool LoopRotate::runOnLoop(Loop *Lp, LPPassManager &LPM) {
 bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   L = Lp;
 
-  OrigHeader =  L->getHeader();
   OrigPreHeader = L->getLoopPreheader();
+  if (!OrigPreHeader) return false;
+
   OrigLatch = L->getLoopLatch();
+  if (!OrigLatch) return false;
+
+  OrigHeader =  L->getHeader();
 
   // If the loop has only one block then there is not much to rotate.
   if (L->getBlocks().size() == 1)
     return false;
-
-  assert(OrigHeader && OrigLatch && OrigPreHeader &&
-         "Loop is not in canonical form");
 
   // If the loop header is not one of the loop exiting blocks then
   // either this loop is already rotated or it is not

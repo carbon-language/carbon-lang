@@ -2528,6 +2528,10 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   SE = &getAnalysis<ScalarEvolution>();
   Changed = false;
 
+  // If LoopSimplify form is not available, stay out of trouble.
+  if (!L->getLoopPreheader() || !L->getLoopLatch())
+    return false;
+
   if (!IU->IVUsesByStride.empty()) {
     DEBUG(errs() << "\nLSR on \"" << L->getHeader()->getParent()->getName()
           << "\" ";
