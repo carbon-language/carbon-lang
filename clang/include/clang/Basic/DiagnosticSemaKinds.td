@@ -1488,6 +1488,9 @@ def err_tentative_def_incomplete_type_arr : Error<
   "tentative definition has array of type %0 that is never completed">;
 def warn_tentative_incomplete_array : Warning<
   "tentative array definition assumed to have one element">;
+def err_typecheck_incomplete_array_needs_initializer : Error<
+  "definition of variable with array type needs an explicit size "
+  "or an initializer">;
 
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
 def err_typecheck_sclass_fscope : Error<

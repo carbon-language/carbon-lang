@@ -20,7 +20,7 @@ int ar6[-1]; // expected-error {{array size is negative}}
 int ar7[0u]; // expected-warning {{zero size arrays are an extension}}
 
 // An array with unknown bound is incomplete.
-int ar8[]; // FIXME: This needs to fail!
+int ar8[]; // expected-error {{needs an explicit size or an initializer}}
 // So is an array with an incomplete element type.
 struct Incomplete; // expected-note {{forward declaration}}
 Incomplete ar9[10]; // expected-error {{incomplete type}}

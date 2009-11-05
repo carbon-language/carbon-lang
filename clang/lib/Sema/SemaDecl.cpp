@@ -3433,6 +3433,16 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       return;
     }
 
+    // An array without size is an incomplete type, and there are no special
+    // rules in C++ to make such a definition acceptable.
+    if (getLangOptions().CPlusPlus && Type->isIncompleteArrayType() &&
+        !Var->hasExternalStorage()) {
+      Diag(Var->getLocation(),
+           diag::err_typecheck_incomplete_array_needs_initializer);
+      Var->setInvalidDecl();
+      return;
+    }
+
     // C++ [temp.expl.spec]p15:
     //   An explicit specialization of a static data member of a template is a
     //   definition if the declaration includes an initializer; otherwise, it 
