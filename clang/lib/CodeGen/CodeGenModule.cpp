@@ -543,10 +543,15 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
       
   // Static data may be deferred, but out-of-line static data members
   // cannot be.
-  // FIXME: What if the initializer has side effects?
-  return VD->isInAnonymousNamespace() ||
-         (VD->getStorageClass() == VarDecl::Static &&
-          !(VD->isStaticDataMember() && VD->isOutOfLine()));
+  if (VD->isInAnonymousNamespace())
+    return true;
+  if (VD->getStorageClass() == VarDecl::Static) {
+    // Initializer has side effects?
+    if (VD->getInit() && VD->getInit()->HasSideEffects(Context))
+      return false;
+    return !(VD->isStaticDataMember() && VD->isOutOfLine());
+  }
+  return false;
 }
 
 void CodeGenModule::EmitGlobal(GlobalDecl GD) {

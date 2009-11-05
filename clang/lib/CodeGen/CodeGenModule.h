@@ -499,7 +499,7 @@ private:
 
   /// EmitCXXGlobalInitFunc - Emit a function that initializes C++ globals.
   void EmitCXXGlobalInitFunc();
-
+  
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function *Ctor, int Priority=65535);
   void AddGlobalDtor(llvm::Function *Dtor, int Priority=65535);
