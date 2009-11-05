@@ -275,8 +275,6 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
 /// SplitEdge -  Split the edge connecting specified block. Pass P must 
 /// not be NULL. 
 BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
-  assert(!isa<IndirectBrInst>(BB->getTerminator()) &&
-         "Cannot split an edge from an IndirectBrInst");
   TerminatorInst *LatchTerm = BB->getTerminator();
   unsigned SuccNum = 0;
 #ifndef NDEBUG
@@ -386,6 +384,12 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   bool IsLoopEntry = !!L;
   bool SplitMakesNewLoopHeader = false;
   for (unsigned i = 0; i != NumPreds; ++i) {
+    // This is slightly more strict than necessary; the minimum requirement
+    // is that there be no more than one indirectbr branching to BB. And
+    // all BlockAddress uses would need to be updated.
+    assert(!isa<IndirectBrInst>(Preds[i]->getTerminator()) &&
+           "Cannot split an edge from an IndirectBrInst");
+
     Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
 
     if (LI) {
