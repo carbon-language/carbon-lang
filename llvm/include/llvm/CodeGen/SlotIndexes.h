@@ -131,7 +131,6 @@ namespace llvm {
     }
 
     IndexListEntry& entry() const {
-      assert(lie.getPointer() != 0 && "Use of invalid index.");
       return *lie.getPointer();
     }
 
