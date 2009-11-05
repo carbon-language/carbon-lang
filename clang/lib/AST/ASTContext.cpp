@@ -4394,7 +4394,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 //===----------------------------------------------------------------------===//
 
 unsigned ASTContext::getIntWidth(QualType T) {
-  if (T == BoolTy)
+  if (T->isBooleanType())
     return 1;
   if (FixedWidthIntType *FWIT = dyn_cast<FixedWidthIntType>(T)) {
     return FWIT->getWidth();

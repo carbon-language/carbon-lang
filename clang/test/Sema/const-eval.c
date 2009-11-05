@@ -68,3 +68,8 @@ EVAL_EXPR(32, (int*)0 != (int*)0 ? -1 : 1)
 EVAL_EXPR(33, (void*)0 - (void*)0 == 0 ? 1 : -1)
 void foo(void) {}
 EVAL_EXPR(34, (foo == (void *)0) ? -1 : 1)
+
+// No PR. Mismatched bitwidths lead to a crash on second evaluation.
+const _Bool constbool = 0;
+EVAL_EXPR(35, constbool)
+EVAL_EXPR(36, constbool)
