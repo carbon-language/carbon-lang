@@ -2224,7 +2224,8 @@ int main(int argc, char **argv) {
   if (!InheritanceViewCls.empty())  // C++ visualization?
     ProgAction = InheritanceView;
 
-  llvm::OwningPtr<SourceManager> SourceMgr;
+  // Create the source manager.
+  SourceManager SourceMgr;
 
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
@@ -2244,12 +2245,9 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    // Create a SourceManager object.  This tracks and owns all the file
-    // buffers allocated to a translation unit.
-    if (!SourceMgr)
-      SourceMgr.reset(new SourceManager());
-    else
-      SourceMgr->clearIDTables();
+    // Reset the ID tables if we are reusing the SourceManager.
+    if (i)
+      SourceMgr.clearIDTables();
 
     // Initialize language options, inferring file types from input filenames.
     LangOptions LangInfo;
@@ -2266,7 +2264,7 @@ int main(int argc, char **argv) {
 
     // Set up the preprocessor with these options.
     llvm::OwningPtr<Preprocessor> PP(CreatePreprocessor(Diags, LangInfo,
-                                                        *Target, *SourceMgr,
+                                                        *Target, SourceMgr,
                                                         HeaderInfo));
 
     // Handle generating dependencies, if requested.
