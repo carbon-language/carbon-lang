@@ -141,7 +141,8 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
 
 // FIXME: This is largely copy-paste from CheckerVisit().  Need to 
 // unify.
-void GRExprEngine::CheckerVisitBind(Stmt *S, ExplodedNodeSet &Dst,
+void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
+                                    ExplodedNodeSet &Dst,
                                     ExplodedNodeSet &Src,
                                     SVal location, SVal val, bool isPrevisit) {
   
@@ -164,8 +165,8 @@ void GRExprEngine::CheckerVisitBind(Stmt *S, ExplodedNodeSet &Dst,
     
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
          NI != NE; ++NI)
-      checker->GR_VisitBind(*CurrSet, *Builder, *this, S, *NI, tag, location,
-                            val, isPrevisit);
+      checker->GR_VisitBind(*CurrSet, *Builder, *this, AssignE, StoreE,
+                            *NI, tag, location, val, isPrevisit);
     
     // Update which NodeSet is the current one.
     PrevSet = CurrSet;
@@ -1125,7 +1126,8 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
 
 /// EvalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by EvalStore and (soon) VisitDeclStmt, and others.
-void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
+void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt *AssignE,
+                            Stmt* StoreE, ExplodedNode* Pred,
                             const GRState* state, SVal location, SVal Val,
                             bool atDeclInit) {
   
@@ -1133,7 +1135,7 @@ void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
   // Do a previsit of the bind.
   ExplodedNodeSet CheckedSet, Src;
   Src.Add(Pred);
-  CheckerVisitBind(Ex, CheckedSet, Src, location, Val, true);
+  CheckerVisitBind(AssignE, StoreE, CheckedSet, Src, location, Val, true);
   
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
@@ -1166,7 +1168,7 @@ void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
     // The next thing to do is check if the GRTransferFuncs object wants to
     // update the state based on the new binding.  If the GRTransferFunc object
     // doesn't do anything, just auto-propagate the current state.
-    GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, Ex,
+    GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, StoreE,
                                     newState != state);
 
     getTF().EvalBind(BuilderRef, location, Val);
@@ -1179,14 +1181,16 @@ void GRExprEngine::EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
 ///  @param state The current simulation state
 ///  @param location The location to store the value
 ///  @param Val The value to be stored
-void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
+void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr *AssignE,
+                             Expr* StoreE,
+                             ExplodedNode* Pred,
                              const GRState* state, SVal location, SVal Val,
                              const void *tag) {
 
-  assert (Builder && "GRStmtNodeBuilder must be defined.");
+  assert(Builder && "GRStmtNodeBuilder must be defined.");
 
   // Evaluate the location (checks for bad dereferences).
-  Pred = EvalLocation(Ex, Pred, state, location, tag);
+  Pred = EvalLocation(StoreE, Pred, state, location, tag);
 
   if (!Pred)
     return;
@@ -1199,7 +1203,7 @@ void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
   SaveAndRestore<const void*> OldTag(Builder->Tag);
   Builder->PointKind = ProgramPoint::PostStoreKind;
   Builder->Tag = tag;
-  EvalBind(Dst, Ex, Pred, state, location, Val);
+  EvalBind(Dst, AssignE, StoreE, Pred, state, location, Val);
 }
 
 void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
@@ -1229,17 +1233,6 @@ void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
     SVal V = state->getSVal(cast<Loc>(location), Ex->getType());
     MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V), K, tag);
   }
-}
-
-void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr* Ex, Expr* StoreE,
-                             ExplodedNode* Pred, const GRState* state,
-                             SVal location, SVal Val, const void *tag) {
-
-  ExplodedNodeSet TmpDst;
-  EvalStore(TmpDst, StoreE, Pred, state, location, Val, tag);
-
-  for (ExplodedNodeSet::iterator I=TmpDst.begin(), E=TmpDst.end(); I!=E; ++I)
-    MakeNode(Dst, Ex, *I, (*I)->getState(), ProgramPoint::PostStmtKind, tag);
 }
 
 ExplodedNode* GRExprEngine::EvalLocation(Stmt* Ex, ExplodedNode* Pred,
@@ -1402,7 +1395,7 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
                                                 newValueExpr->getType());
       }
 
-      Engine.EvalStore(TmpStore, theValueExpr, N, stateEqual, location,
+      Engine.EvalStore(TmpStore, NULL, theValueExpr, N, stateEqual, location,
                        val, OSAtomicStoreTag);
 
       // Now bind the result of the comparison.
@@ -2147,8 +2140,8 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
                                                Builder->getCurrentBlockCount());
       }
       
-      EvalBind(Dst, DS, *I, state, loc::MemRegionVal(state->getRegion(VD, LC)),
-               InitVal, true);                                                     
+      EvalBind(Dst, DS, DS, *I, state,
+               loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);                                                     
     }
     else {
       state = state->bindDeclWithNoInit(state->getRegion(VD, LC));
@@ -2570,7 +2563,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
       state = state->BindExpr(U, U->isPostfix() ? V2 : Result);
 
       // Perform the store.
-      EvalStore(Dst, U, *I2, state, V1, Result);
+      EvalStore(Dst, NULL, U, *I2, state, V1, Result);
     }
   }
 }

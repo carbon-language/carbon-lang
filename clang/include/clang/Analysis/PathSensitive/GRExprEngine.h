@@ -412,7 +412,8 @@ protected:
   void CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                     bool isPrevisit);
   
-  void CheckerVisitBind(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
+  void CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
+                        ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                         SVal location, SVal val, bool isPrevisit);
 
 
@@ -566,7 +567,8 @@ protected:
 
   /// EvalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by EvalStore, VisitDeclStmt, and others.
-  void EvalBind(ExplodedNodeSet& Dst, Stmt* Ex, ExplodedNode* Pred,
+  void EvalBind(ExplodedNodeSet& Dst, Stmt *AssignE,
+                Stmt* StoreE, ExplodedNode* Pred,
                 const GRState* St, SVal location, SVal Val,
                 bool atDeclInit = false);
 
@@ -578,14 +580,10 @@ public:
                        const GRState* St, SVal location,
                        const void *tag = 0);
 
-
-  void EvalStore(ExplodedNodeSet& Dst, Expr* E, ExplodedNode* Pred, const GRState* St,
-                 SVal TargetLV, SVal Val, const void *tag = 0);
-
-  void EvalStore(ExplodedNodeSet& Dst, Expr* E, Expr* StoreE, ExplodedNode* Pred,
+  void EvalStore(ExplodedNodeSet& Dst, Expr* AssignE, Expr* StoreE,
+                 ExplodedNode* Pred,
                  const GRState* St, SVal TargetLV, SVal Val,
                  const void *tag = 0);
-
 };
 
 } // end clang namespace

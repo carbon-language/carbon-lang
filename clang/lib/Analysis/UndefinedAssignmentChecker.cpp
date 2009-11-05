@@ -22,14 +22,15 @@ void *UndefinedAssignmentChecker::getTag() {
   return &x;
 }
 
-void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C, 
-                                              const Stmt *S,
+void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
+                                              const Stmt *AssignE,
+                                              const Stmt *StoreE,
                                               SVal location,
                                               SVal val) {
   if (!val.isUndef())
     return;
 
-  ExplodedNode *N = C.GenerateNode(S, true);
+  ExplodedNode *N = C.GenerateNode(StoreE, true);
 
   if (!N)
     return;
@@ -40,20 +41,20 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
 
   // Generate a report for this bug.
   EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName().c_str(), N);
-  const Expr *ex = 0;
 
-  // FIXME: This check needs to be done on the expression doing the
-  // assignment, not the "store" expression.
-  if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S))
-    ex = B->getRHS();
-  else if (const DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
-    const VarDecl* VD = dyn_cast<VarDecl>(DS->getSingleDecl());
-    ex = VD->getInit();
-  }
+  if (AssignE) {
+    const Expr *ex = 0;
 
-  if (ex) {
-    R->addRange(ex->getSourceRange());
-    R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, ex);
+    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(AssignE))
+      ex = B->getRHS();
+    else if (const DeclStmt *DS = dyn_cast<DeclStmt>(AssignE)) {
+      const VarDecl* VD = dyn_cast<VarDecl>(DS->getSingleDecl());
+      ex = VD->getInit();
+    }
+    if (ex) {
+      R->addRange(ex->getSourceRange());
+      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, ex);
+    }
   }
 
   C.EmitReport(R);

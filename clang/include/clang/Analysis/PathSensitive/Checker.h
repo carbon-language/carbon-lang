@@ -116,12 +116,13 @@ private:
 
   void GR_VisitBind(ExplodedNodeSet &Dst,
                     GRStmtNodeBuilder &Builder, GRExprEngine &Eng,
-                    const Stmt *stmt, ExplodedNode *Pred, void *tag, 
+                    const Stmt *AssignE,
+                    const Stmt *StoreE, ExplodedNode *Pred, void *tag, 
                     SVal location, SVal val,
                     bool isPrevisit) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, isPrevisit);
     assert(isPrevisit && "Only previsit supported for now.");
-    PreVisitBind(C, stmt, location, val);
+    PreVisitBind(C, AssignE, StoreE, location, val);
   }
 
 public:
@@ -135,7 +136,8 @@ public:
     return Pred;
   }
   
-  virtual void PreVisitBind(CheckerContext &C, const Stmt *ST, 
+  virtual void PreVisitBind(CheckerContext &C,
+                            const Stmt *AssignE, const Stmt *StoreE, 
                             SVal location, SVal val) {}
 
   virtual ExplodedNode *CheckType(QualType T, ExplodedNode *Pred, 

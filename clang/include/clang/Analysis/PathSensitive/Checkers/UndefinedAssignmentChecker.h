@@ -24,7 +24,8 @@ class UndefinedAssignmentChecker
 public:
   UndefinedAssignmentChecker() : BT(0) {}
   static void *getTag();
-  virtual void PreVisitBind(CheckerContext &C, const Stmt *S, SVal location,
+  virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
+                            const Stmt *StoreE, SVal location,
                             SVal val);
 };
 }
