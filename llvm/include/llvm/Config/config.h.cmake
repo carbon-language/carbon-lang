@@ -80,7 +80,7 @@
 #undef HAVE_DOT
 
 /* Define if the dotty program is available */
-#undef HAVE_DOTTY
+#cmakedefine HAVE_DOTTY ${HAVE_DOTTY}
 
 /* Define if you have the _dyld_func_lookup function. */
 #undef HAVE_DYLD
@@ -471,7 +471,7 @@
 #undef LLVM_PATH_DOT
 
 /* Define to path to dotty program if found or 'echo dotty' otherwise */
-#undef LLVM_PATH_DOTTY
+#cmakedefine LLVM_PATH_DOTTY "${LLVM_PATH_DOTTY}"
 
 /* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
 #undef LLVM_PATH_GRAPHVIZ

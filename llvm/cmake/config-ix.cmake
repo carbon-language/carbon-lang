@@ -126,6 +126,15 @@ endif()
 check_type_exists(uint64_t "${headers}" HAVE_UINT64_T)
 check_type_exists(u_int64_t "${headers}" HAVE_U_INT64_T)
 
+# available programs checks
+find_program(DOTTY_EXECUTABLE dotty)
+if(DOTTY_EXECUTABLE)
+  set(HAVE_DOTTY 1)
+  set(LLVM_PATH_DOTTY ${DOTTY_EXECUTABLE})
+  mark_as_advanced(HAVE_DOTTY)
+  mark_as_advanced(LLVM_PATH_DOTTY)
+endif()
+
 # Define LLVM_MULTITHREADED if gcc atomic builtins exists.
 include(CheckAtomic)
 
