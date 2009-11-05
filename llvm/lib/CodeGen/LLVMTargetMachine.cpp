@@ -342,13 +342,13 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   PM.add(createDebugLabelFoldingPass());
   printAndVerify(PM, "After DebugLabelFolding");
 
-  if (addPreEmitPass(PM, OptLevel))
-    printAndVerify(PM, "After PreEmit passes");
-
   if (OptLevel != CodeGenOpt::None && !DisableCodePlace) {
     PM.add(createCodePlacementOptPass());
     printAndVerify(PM, "After CodePlacementOpt");
   }
+
+  if (addPreEmitPass(PM, OptLevel))
+    printAndVerify(PM, "After PreEmit passes");
 
   return false;
 }
