@@ -115,6 +115,10 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   if (!preheader)
     return false;
   
+  // If LoopSimplify form is not available, stay out of trouble.
+  if (!L->hasDedicatedExits())
+    return false;
+
   // We can't remove loops that contain subloops.  If the subloops were dead,
   // they would already have been removed in earlier executions of this pass.
   if (L->begin() != L->end())
