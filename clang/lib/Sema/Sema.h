@@ -1667,6 +1667,8 @@ public:
   OwningExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                         unsigned OpcIn,
                                         ExprArg InputArg);
+  OwningExprResult BuildUnaryOp(Scope *S, SourceLocation OpLoc,
+                                UnaryOperator::Opcode Opc, ExprArg input);
   virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                         tok::TokenKind Op, ExprArg Input);
 
@@ -1792,6 +1794,9 @@ public:
   virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                       tok::TokenKind Kind,
                                       ExprArg LHS, ExprArg RHS);
+  OwningExprResult BuildBinOp(Scope *S, SourceLocation OpLoc,
+                              BinaryOperator::Opcode Opc,
+                              Expr *lhs, Expr *rhs);
   OwningExprResult CreateBuiltinBinOp(SourceLocation TokLoc,
                                       unsigned Opc, Expr *lhs, Expr *rhs);
 

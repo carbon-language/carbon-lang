@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 template<int I, int J>
 struct Bitfields {
   int simple : I; // expected-error{{bit-field 'simple' has zero width}}
@@ -68,4 +67,30 @@ void test_BitfieldNeg() {
   (void)sizeof(BitfieldNeg<5>); // expected-note{{in instantiation of template class 'struct BitfieldNeg<5>' requested here}}
   (void)sizeof(BitfieldNeg2<int, -5>); // okay
   (void)sizeof(BitfieldNeg2<int, 5>); // expected-note{{in instantiation of template class 'struct BitfieldNeg2<int, 5>' requested here}}
+}
+
+template<typename T>
+void increment(T &x) {
+  (void)++x;
+}
+
+struct Incrementable {
+  Incrementable &operator++();
+};
+
+void test_increment(Incrementable inc) {
+  increment(inc);
+}
+
+template<typename T>
+void add(const T &x) {
+  (void)(x + x);
+}
+
+struct Addable {
+  Addable operator+(const Addable&) const;
+};
+
+void test_add(Addable &a) {
+  add(a);
 }

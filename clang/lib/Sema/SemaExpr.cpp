@@ -5509,6 +5509,12 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
   // Emit warnings for tricky precedence issues, e.g. "bitfield & 0x4 == 0"
   DiagnoseBinOpPrecedence(*this, Opc, TokLoc, lhs, rhs);
 
+  return BuildBinOp(S, TokLoc, Opc, lhs, rhs);
+}
+
+Action::OwningExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
+                                          BinaryOperator::Opcode Opc,
+                                          Expr *lhs, Expr *rhs) {
   if (getLangOptions().CPlusPlus &&
       (lhs->getType()->isOverloadableType() ||
        rhs->getType()->isOverloadableType())) {
@@ -5519,21 +5525,22 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
     FunctionSet Functions;
     OverloadedOperatorKind OverOp = BinaryOperator::getOverloadedOperator(Opc);
     if (OverOp != OO_None) {
-      LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
-                                   Functions);
+      if (S)
+        LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
+                                     Functions);
       Expr *Args[2] = { lhs, rhs };
       DeclarationName OpName
         = Context.DeclarationNames.getCXXOperatorName(OverOp);
       ArgumentDependentLookup(OpName, /*Operator*/true, Args, 2, Functions);
     }
-
+    
     // Build the (potentially-overloaded, potentially-dependent)
     // binary operation.
-    return CreateOverloadedBinOp(TokLoc, Opc, Functions, lhs, rhs);
+    return CreateOverloadedBinOp(OpLoc, Opc, Functions, lhs, rhs);
   }
-
+  
   // Build a built-in binary operation.
-  return CreateBuiltinBinOp(TokLoc, Opc, lhs, rhs);
+  return CreateBuiltinBinOp(OpLoc, Opc, lhs, rhs);
 }
 
 Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
@@ -5624,12 +5631,10 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   return Owned(new (Context) UnaryOperator(Input, Opc, resultType, OpLoc));
 }
 
-// Unary Operators.  'Tok' is the token for the operator.
-Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
-                                            tok::TokenKind Op, ExprArg input) {
+Action::OwningExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
+                                            UnaryOperator::Opcode Opc,
+                                            ExprArg input) {
   Expr *Input = (Expr*)input.get();
-  UnaryOperator::Opcode Opc = ConvertTokenKindToUnaryOpcode(Op);
-
   if (getLangOptions().CPlusPlus && Input->getType()->isOverloadableType()) {
     // Find all of the overloaded operators visible from this
     // point. We perform both an operator-name lookup from the local
@@ -5638,17 +5643,24 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
     FunctionSet Functions;
     OverloadedOperatorKind OverOp = UnaryOperator::getOverloadedOperator(Opc);
     if (OverOp != OO_None) {
-      LookupOverloadedOperatorName(OverOp, S, Input->getType(), QualType(),
-                                   Functions);
+      if (S)
+        LookupOverloadedOperatorName(OverOp, S, Input->getType(), QualType(),
+                                     Functions);
       DeclarationName OpName
         = Context.DeclarationNames.getCXXOperatorName(OverOp);
       ArgumentDependentLookup(OpName, /*Operator*/true, &Input, 1, Functions);
     }
-
+    
     return CreateOverloadedUnaryOp(OpLoc, Opc, Functions, move(input));
   }
-
+  
   return CreateBuiltinUnaryOp(OpLoc, Opc, move(input));
+}
+
+// Unary Operators.  'Tok' is the token for the operator.
+Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
+                                            tok::TokenKind Op, ExprArg input) {
+  return BuildUnaryOp(S, OpLoc, ConvertTokenKindToUnaryOpcode(Op), move(input));
 }
 
 /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".

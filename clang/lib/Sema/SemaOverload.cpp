@@ -4787,11 +4787,20 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   // If either side is type-dependent, create an appropriate dependent
   // expression.
   if (Args[0]->isTypeDependent() || Args[1]->isTypeDependent()) {
-    // .* cannot be overloaded.
-    if (Opc == BinaryOperator::PtrMemD)
-      return Owned(new (Context) BinaryOperator(Args[0], Args[1], Opc,
-                                                Context.DependentTy, OpLoc));
-
+    if (Functions.empty()) {
+      // If there are no functions to store, just build a dependent 
+      // BinaryOperator or CompoundAssignment.
+      if (Opc <= BinaryOperator::Assign || Opc > BinaryOperator::OrAssign)
+        return Owned(new (Context) BinaryOperator(Args[0], Args[1], Opc,
+                                                  Context.DependentTy, OpLoc));
+      
+      return Owned(new (Context) CompoundAssignOperator(Args[0], Args[1], Opc,
+                                                        Context.DependentTy,
+                                                        Context.DependentTy,
+                                                        Context.DependentTy,
+                                                        OpLoc));
+    }
+    
     OverloadedFunctionDecl *Overloads
       = OverloadedFunctionDecl::Create(Context, CurContext, OpName);
     for (FunctionSet::iterator Func = Functions.begin(),

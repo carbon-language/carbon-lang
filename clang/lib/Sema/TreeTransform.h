@@ -877,7 +877,7 @@ public:
   OwningExprResult RebuildUnaryOperator(SourceLocation OpLoc,
                                         UnaryOperator::Opcode Opc,
                                         ExprArg SubExpr) {
-    return getSema().CreateBuiltinUnaryOp(OpLoc, Opc, move(SubExpr));
+    return getSema().BuildUnaryOp(/*Scope=*/0, OpLoc, Opc, move(SubExpr));
   }
 
   /// \brief Build a new sizeof or alignof expression with a type argument.
@@ -986,15 +986,8 @@ public:
   OwningExprResult RebuildBinaryOperator(SourceLocation OpLoc,
                                          BinaryOperator::Opcode Opc,
                                          ExprArg LHS, ExprArg RHS) {
-    OwningExprResult Result
-      = getSema().CreateBuiltinBinOp(OpLoc, Opc, (Expr *)LHS.get(),
-                                     (Expr *)RHS.get());
-    if (Result.isInvalid())
-      return SemaRef.ExprError();
-
-    LHS.release();
-    RHS.release();
-    return move(Result);
+    return getSema().BuildBinOp(/*Scope=*/0, OpLoc, Opc, 
+                                LHS.takeAs<Expr>(), RHS.takeAs<Expr>());
   }
 
   /// \brief Build a new conditional operator expression.
