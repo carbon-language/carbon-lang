@@ -151,6 +151,8 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   if (L->contains(User->getParent())) return false;
 
   BasicBlock *LatchBlock = L->getLoopLatch();
+  if (!LatchBlock)
+    return false;
 
   // Ok, the user is outside of the loop.  If it is dominated by the latch
   // block, use the post-inc value.
