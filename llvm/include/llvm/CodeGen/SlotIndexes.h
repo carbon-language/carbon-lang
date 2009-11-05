@@ -159,7 +159,7 @@ namespace llvm {
     }
     
     /// Construct an invalid index.
-    SlotIndex() : lie(&getEmptyKey().entry(), 0) {}
+    SlotIndex() : lie(IndexListEntry::getEmptyKeyEntry(), 0) {}
 
     // Construct a new slot index from the given one, set the phi flag on the
     // new index to the value of the phi parameter.
