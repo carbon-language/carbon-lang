@@ -2,7 +2,7 @@
 
 int f (int z)
 { 
-   if (z > sizeof (enum {a, b}))
+  if (z > (int) sizeof (enum {a, b}))
       return a;
    return b;
 } 

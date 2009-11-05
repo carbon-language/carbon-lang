@@ -1537,6 +1537,9 @@ def err_typecheck_vector_comparison : Error<
 def err_typecheck_assign_const : Error<"read-only variable is not assignable">;
 def err_stmtexpr_file_scope : Error<
   "statement expression not allowed at file scope">;
+def warn_mixed_sign_comparison : Warning<
+  "comparison of integers of different signs: %0 and %1">,
+  InGroup<DiagGroup<"sign-compare">>;
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a nonstatic member function">;

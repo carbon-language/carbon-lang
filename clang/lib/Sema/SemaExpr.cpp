@@ -4427,6 +4427,41 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   return LHSTy;
 }
 
+/// Implements -Wsign-compare.
+static void DiagnoseSignCompare(Sema &S, Expr *lex, Expr *rex,
+                                BinaryOperator::Opcode Opc, SourceLocation OpLoc) {
+  QualType lt = lex->getType(), rt = rex->getType();
+
+  // Only warn if both operands are integral.
+  if (!lt->isIntegerType() || !rt->isIntegerType())
+    return;
+
+  // The rule is that the signed operand becomes unsigned, so isolate the
+  // signed operand.
+  Expr *signedOperand;
+  if (lt->isSignedIntegerType()) {
+    if (rt->isSignedIntegerType()) return;
+    signedOperand = lex;
+  } else {
+    if (!rt->isSignedIntegerType()) return;
+    signedOperand = rex;
+  }
+
+  // If the value is a non-negative integer constant, then the
+  // signed->unsigned conversion won't change it.
+  llvm::APSInt value;
+  if (signedOperand->isIntegerConstantExpr(value, S.Context)) {
+    assert(value.isSigned() && "result of signed expression not signed");
+
+    if (value.isNonNegative())
+      return;
+  }
+
+  S.Diag(OpLoc, diag::warn_mixed_sign_comparison)
+    << lex->getType() << rex->getType()
+    << lex->getSourceRange() << rex->getSourceRange();
+}
+
 // C99 6.5.8, C++ [expr.rel]
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     unsigned OpaqueOpc, bool isRelational) {
@@ -4434,6 +4469,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
+
+  DiagnoseSignCompare(*this, lex, rex, Opc, Loc);
 
   // C99 6.5.8p3 / C99 6.5.9p4
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())

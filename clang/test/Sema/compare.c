@@ -7,6 +7,14 @@ int test(char *C) { // nothing here should warn.
   return C != 1;  // expected-warning {{comparison between pointer and integer ('char *' and 'int')}}
 }
 
+int ints(long a, unsigned long b) {
+  return (a == b) +        // expected-warning {{comparison of integers of different signs}}
+         ((int)a == b) +   // expected-warning {{comparison of integers of different signs}}
+         ((short)a == b) + // expected-warning {{comparison of integers of different signs}}
+         (a == (unsigned int) b) +  // expected-warning {{comparison of integers of different signs}}
+         (a == (unsigned short) b); // expected-warning {{comparison of integers of different signs}}
+}
+
 int equal(char *a, const char *b) {
     return a == b;
 }
