@@ -1,6 +1,6 @@
-; RUN: llc < %s -relocation-model=pic -march=arm | FileCheck %s -check-prefix=ARM
-; RUN: llc < %s -relocation-model=pic -march=thumb | FileCheck %s -check-prefix=THUMB
-; RUN: llc < %s -relocation-model=static -march=thumb -mattr=+thumb2 | FileCheck %s -check-prefix=THUMB2
+; RUN: llc < %s -relocation-model=pic -mtriple=arm-apple-darwin | FileCheck %s -check-prefix=ARM
+; RUN: llc < %s -relocation-model=pic -mtriple=thumb-apple-darwin | FileCheck %s -check-prefix=THUMB
+; RUN: llc < %s -relocation-model=static -mtriple=thumbv7-apple-darwin | FileCheck %s -check-prefix=THUMB2
 
 @nextaddr = global i8* null                       ; <i8**> [#uses=2]
 @C.0.2070 = private constant [5 x i8*] [i8* blockaddress(@foo, %L1), i8* blockaddress(@foo, %L2), i8* blockaddress(@foo, %L3), i8* blockaddress(@foo, %L4), i8* blockaddress(@foo, %L5)] ; <[5 x i8*]*> [#uses=1]
@@ -44,20 +44,17 @@ L2:                                               ; preds = %L3, %bb2
 
 L1:                                               ; preds = %L2, %bb2
   %res.3 = phi i32 [ %phitmp, %L2 ], [ 2, %bb2 ]  ; <i32> [#uses=1]
-; ARM: ldr r1, LCPI1_2
+; ARM: ldr r1, LCPI
 ; ARM: add r1, pc, r1
 ; ARM: str r1
-; THUMB: ldr.n r2, LCPI1_4
+; THUMB: ldr.n r2, LCPI
 ; THUMB: add r2, pc
 ; THUMB: str r2
-; THUMB2: ldr.n r2, LCPI1_2
+; THUMB2: ldr.n r2, LCPI
 ; THUMB2-NEXT: str r2
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3
 }
-; ARM: LCPI1_2:
-; ARM-NEXT: .long L_foo_L5-(LPC2+8)
-; THUMB: LCPI1_4:
-; THUMB-NEXT: .long L_foo_L5-(LPC2+4)
-; THUMB2: LCPI1_2:
-; THUMB2-NEXT: .long L_foo_L5
+; ARM: .long L_foo_L5-(LPC{{.*}}+8)
+; THUMB: .long L_foo_L5-(LPC{{.*}}+4)
+; THUMB2: .long L_foo_L5
