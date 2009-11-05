@@ -46,8 +46,6 @@ public:
   
   virtual void FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade);
 
-  virtual void SetPreprocessor(Preprocessor *pp) { PP = pp; }
-
   virtual void HandlePathDiagnostic(const PathDiagnostic* D);
   
   virtual llvm::StringRef getName() const {

@@ -55,7 +55,6 @@ public:
   
   virtual llvm::StringRef getName() const = 0;
   
-  virtual void SetPreprocessor(Preprocessor *PP) {}
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
   virtual void HandlePathDiagnostic(const PathDiagnostic* D) = 0;
