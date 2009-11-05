@@ -111,6 +111,13 @@ namespace {
     /// be hoistable.
     MachineInstr *ExtractHoistableLoad(MachineInstr *MI);
 
+    /// EliminateCSE - Given a LICM'ed instruction, look for an instruction on
+    /// the preheader that compute the same value. If it's found, do a RAU on
+    /// with the definition of the existing instruction rather than hoisting
+    /// the instruction to the preheader.
+    bool EliminateCSE(MachineInstr *MI,
+           DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator &CI);
+
     /// Hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
@@ -349,37 +356,6 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   return true;
 }
 
-static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
-                                      std::vector<const MachineInstr*> &PrevMIs,
-                                      MachineRegisterInfo *RegInfo) {
-  unsigned NumOps = MI->getNumOperands();
-  for (unsigned i = 0, e = PrevMIs.size(); i != e; ++i) {
-    const MachineInstr *PrevMI = PrevMIs[i];
-    unsigned NumOps2 = PrevMI->getNumOperands();
-    if (NumOps != NumOps2)
-      continue;
-    bool IsSame = true;
-    for (unsigned j = 0; j != NumOps; ++j) {
-      const MachineOperand &MO = MI->getOperand(j);
-      if (MO.isReg() && MO.isDef()) {
-        if (RegInfo->getRegClass(MO.getReg()) !=
-            RegInfo->getRegClass(PrevMI->getOperand(j).getReg())) {
-          IsSame = false;
-          break;
-        }
-        continue;
-      }
-      if (!MO.isIdenticalTo(PrevMI->getOperand(j))) {
-        IsSame = false;
-        break;
-      }
-    }
-    if (IsSame)
-      return PrevMI;
-  }
-  return 0;
-}
-
 MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   // If not, we may be able to unfold a load and hoist that.
   // First test whether the instruction is loading from an amenable
@@ -456,6 +432,55 @@ void MachineLICM::InitCSEMap(MachineBasicBlock *BB) {
   }
 }
 
+static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
+                                      std::vector<const MachineInstr*> &PrevMIs,
+                                      MachineRegisterInfo *RegInfo) {
+  unsigned NumOps = MI->getNumOperands();
+  for (unsigned i = 0, e = PrevMIs.size(); i != e; ++i) {
+    const MachineInstr *PrevMI = PrevMIs[i];
+    unsigned NumOps2 = PrevMI->getNumOperands();
+    if (NumOps != NumOps2)
+      continue;
+    bool IsSame = true;
+    for (unsigned j = 0; j != NumOps; ++j) {
+      const MachineOperand &MO = MI->getOperand(j);
+      if (MO.isReg() && MO.isDef()) {
+        if (RegInfo->getRegClass(MO.getReg()) !=
+            RegInfo->getRegClass(PrevMI->getOperand(j).getReg())) {
+          IsSame = false;
+          break;
+        }
+        continue;
+      }
+      if (!MO.isIdenticalTo(PrevMI->getOperand(j))) {
+        IsSame = false;
+        break;
+      }
+    }
+    if (IsSame)
+      return PrevMI;
+  }
+  return 0;
+}
+
+bool MachineLICM::EliminateCSE(MachineInstr *MI,
+          DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator &CI) {
+  if (CI != CSEMap.end()) {
+    if (const MachineInstr *Dup = LookForDuplicate(MI, CI->second, RegInfo)) {
+      DEBUG(errs() << "CSEing " << *MI << " with " << *Dup);
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &MO = MI->getOperand(i);
+        if (MO.isReg() && MO.isDef())
+          RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
+      }
+      MI->eraseFromParent();
+      ++NumCSEed;
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
@@ -488,24 +513,8 @@ void MachineLICM::Hoist(MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator
     CI = CSEMap.find(Opcode);
-  bool DoneCSE = false;
-  if (CI != CSEMap.end()) {
-    const MachineInstr *Dup = LookForDuplicate(MI, CI->second, RegInfo);
-    if (Dup) {
-      DEBUG(errs() << "CSEing " << *MI << " with " << *Dup);
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.isDef())
-          RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
-      }
-      MI->eraseFromParent();
-      DoneCSE = true;
-      ++NumCSEed;
-    }
-  }
-
-  // Otherwise, splice the instruction to the preheader.
-  if (!DoneCSE) {
+  if (!EliminateCSE(MI, CI)) {
+    // Otherwise, splice the instruction to the preheader.
     CurPreheader->splice(CurPreheader->getFirstTerminator(),MI->getParent(),MI);
 
     // Add to the CSE map.
