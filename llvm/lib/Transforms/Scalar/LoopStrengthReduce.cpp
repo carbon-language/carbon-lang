@@ -490,6 +490,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
         // is the canonical backedge for this loop, as this can make some
         // inserted code be in an illegal position.
         if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
+            !isa<IndirectBrInst>(PHIPred->getTerminator()) &&
             (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
 
           // First step, split the critical edge.
