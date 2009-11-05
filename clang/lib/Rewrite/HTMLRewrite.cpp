@@ -349,7 +349,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
 /// information about keywords, macro expansions etc.  This uses the macro
 /// table state from the end of the file, so it won't be perfectly perfect,
 /// but it will be reasonably close.
-void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
+void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
   RewriteBuffer &RB = R.getEditBuffer(FID);
 
   const SourceManager &SM = PP.getSourceManager();
@@ -375,7 +375,8 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
     case tok::identifier: {
       // Fill in Result.IdentifierInfo, looking up the identifier in the
       // identifier table.
-      IdentifierInfo *II = PP.LookUpIdentifierInfo(Tok, BufferStart+TokOffs);
+      const IdentifierInfo *II =
+        PP.LookUpIdentifierInfo(Tok, BufferStart+TokOffs);
 
       // If this is a pp-identifier, for a keyword, highlight it as such.
       if (II->getTokenID() != tok::identifier)
@@ -438,7 +439,7 @@ class IgnoringDiagClient : public DiagnosticClient {
 /// file, to re-expand macros and insert (into the HTML) information about the
 /// macro expansions.  This won't be perfectly perfect, but it will be
 /// reasonably close.
-void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
+void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
   // Re-lex the raw token stream into a token buffer.
   const SourceManager &SM = PP.getSourceManager();
   std::vector<Token> TokenStream;
@@ -481,25 +482,29 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
   IgnoringDiagClient TmpDC;
   Diagnostic TmpDiags(&TmpDC);
 
-  Diagnostic *OldDiags = &PP.getDiagnostics();
-  PP.setDiagnostics(TmpDiags);
+  // FIXME: This is a huge hack; we reuse the input preprocessor because we want
+  // its state, but we aren't actually changing it (we hope). This should really
+  // construct a copy of the preprocessor.
+  Preprocessor &TmpPP = const_cast<Preprocessor&>(PP);
+  Diagnostic *OldDiags = &TmpPP.getDiagnostics();
+  TmpPP.setDiagnostics(TmpDiags);
 
   // Inform the preprocessor that we don't want comments.
-  PP.SetCommentRetentionState(false, false);
+  TmpPP.SetCommentRetentionState(false, false);
 
   // Enter the tokens we just lexed.  This will cause them to be macro expanded
   // but won't enter sub-files (because we removed #'s).
-  PP.EnterTokenStream(&TokenStream[0], TokenStream.size(), false, false);
+  TmpPP.EnterTokenStream(&TokenStream[0], TokenStream.size(), false, false);
 
-  TokenConcatenation ConcatInfo(PP);
+  TokenConcatenation ConcatInfo(TmpPP);
 
   // Lex all the tokens.
   Token Tok;
-  PP.Lex(Tok);
+  TmpPP.Lex(Tok);
   while (Tok.isNot(tok::eof)) {
     // Ignore non-macro tokens.
     if (!Tok.getLocation().isMacroID()) {
-      PP.Lex(Tok);
+      TmpPP.Lex(Tok);
       continue;
     }
 
@@ -511,19 +516,19 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
 
     // Ignore tokens whose instantiation location was not the main file.
     if (SM.getFileID(LLoc.first) != FID) {
-      PP.Lex(Tok);
+      TmpPP.Lex(Tok);
       continue;
     }
 
     assert(SM.getFileID(LLoc.second) == FID &&
            "Start and end of expansion must be in the same ultimate file!");
 
-    std::string Expansion = EscapeText(PP.getSpelling(Tok));
+    std::string Expansion = EscapeText(TmpPP.getSpelling(Tok));
     unsigned LineLen = Expansion.size();
 
     Token PrevTok = Tok;
     // Okay, eat this token, getting the next one.
-    PP.Lex(Tok);
+    TmpPP.Lex(Tok);
 
     // Skip all the rest of the tokens that are part of this macro
     // instantiation.  It would be really nice to pop up a window with all the
@@ -545,11 +550,11 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
         Expansion += ' ';
 
       // Escape any special characters in the token text.
-      Expansion += EscapeText(PP.getSpelling(Tok));
+      Expansion += EscapeText(TmpPP.getSpelling(Tok));
       LineLen += Expansion.size();
 
       PrevTok = Tok;
-      PP.Lex(Tok);
+      TmpPP.Lex(Tok);
     }
 
 
@@ -562,5 +567,5 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
   }
 
   // Restore diagnostics object back to its own thing.
-  PP.setDiagnostics(*OldDiags);
+  TmpPP.setDiagnostics(*OldDiags);
 }
