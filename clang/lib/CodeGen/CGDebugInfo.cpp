@@ -1362,13 +1362,6 @@ void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      const VarDecl *Decl) {
 
-  // Do not emit variable debug information while generating optimized code.
-  // The llvm optimizer and code generator are not yet ready to support
-  // optimized code debugging.
-  const CompileOptions &CO = M->getCompileOpts();
-  if (CO.OptimizationLevel)
-    return;
-
   // Create global variable debug descriptor.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
   SourceManager &SM = M->getContext().getSourceManager();
