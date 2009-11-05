@@ -19,8 +19,12 @@ namespace llvm {
 
   class BlackfinIntrinsicInfo : public TargetIntrinsicInfo {
   public:
-    const char *getName(unsigned IntrID) const;
+    std::string getName(unsigned IntrID, const Type **Tys = 0,
+                        unsigned numTys = 0) const;
     unsigned lookupName(const char *Name, unsigned Len) const;
+    bool isOverloaded(unsigned IID) const;
+    Function *getDeclaration(Module *M, unsigned ID, const Type **Tys = 0,
+                             unsigned numTys = 0) const;
   };
 
 }
