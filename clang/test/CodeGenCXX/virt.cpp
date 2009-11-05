@@ -1228,6 +1228,33 @@ struct test19_D : virtual test19_B4 {
 // CHECK-LP64-NEXT .quad __ZN9test19_B43fB4Ev
 
 
+class test20_V {
+  virtual void foo1();
+};
+class test20_V1 {
+  virtual void foo2();
+};
+class test20_B : virtual test20_V {
+} b;
+class test20_B1 : virtual test20_V1 {
+};
+class test20_D : public test20_B, public test20_B1 {
+} d;
+
+// CHECK-LP64: __ZTV8test20_D:
+// CHECK-LP64-NEXT: .quad 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI8test20_D
+// CHECK-LP64-NEXT: .quad __ZN8test20_V4foo1Ev
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad 18446744073709551608
+// CHECK-LP64-NEXT: .quad __ZTI8test20_D
+// CHECK-LP64-NEXT: .quad __ZN9test20_V14foo2Ev
+
+
 
 // CHECK-LP64: __ZTV1B:
 // CHECK-LP64-NEXT: .space 8
