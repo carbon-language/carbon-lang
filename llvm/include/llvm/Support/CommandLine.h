@@ -495,7 +495,8 @@ public:
 //--------------------------------------------------
 // basic_parser - Super class of parsers to provide boilerplate code
 //
-struct basic_parser_impl {  // non-template implementation of basic_parser<t>
+class basic_parser_impl {  // non-template implementation of basic_parser<t>
+public:
   virtual ~basic_parser_impl() {}
 
   enum ValueExpected getValueExpectedFlagDefault() const {
@@ -525,7 +526,8 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
 // a typedef for the provided data type.
 //
 template<class DataType>
-struct basic_parser : public basic_parser_impl {
+class basic_parser : public basic_parser_impl {
+public:
   typedef DataType parser_data_type;
 };
 
