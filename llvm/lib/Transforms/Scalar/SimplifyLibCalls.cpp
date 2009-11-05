@@ -955,6 +955,17 @@ struct MemCmpOpt : public LibCallOptimization {
       return B.CreateZExt(B.CreateXor(LHSV, RHSV, "shortdiff"), CI->getType());
     }
 
+    // Constant folding: memcmp(x, y, l) -> cnst (all arguments are constant)
+    std::string LHSStr, RHSStr;
+    if (GetConstantStringInfo(LHS, LHSStr) &&
+        GetConstantStringInfo(RHS, RHSStr)) {
+      // Make sure we're not reading out-of-bounds memory.
+      if (Len > LHSStr.length() || Len > RHSStr.length())
+        return 0;
+      uint64_t Ret = memcmp(LHSStr.data(), RHSStr.data(), Len);
+      return ConstantInt::get(CI->getType(), Ret);
+    }
+
     return 0;
   }
 };
@@ -2478,10 +2489,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //
 // lround, lroundf, lroundl:
 //   * lround(cnst) -> cnst'
-//
-// memcmp:
-//   * memcmp(x,y,l)   -> cnst
-//      (if all arguments are constant and strlen(x) <= l and strlen(y) <= l)
 //
 // pow, powf, powl:
 //   * pow(exp(x),y)  -> exp(x*y)
