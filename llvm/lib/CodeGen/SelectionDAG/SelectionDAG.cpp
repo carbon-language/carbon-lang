@@ -5814,9 +5814,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
 
 void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
   print_types(OS, G);
-  OS << " ";
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    if (i) OS << ", ";
+    if (i) OS << ", "; else OS << " ";
     OS << (void*)getOperand(i).getNode();
     if (unsigned RN = getOperand(i).getResNo())
       OS << ":" << RN;
