@@ -244,11 +244,6 @@ static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
                   llvm::cl::desc("Verify emitted diagnostics and warnings"));
 
-static llvm::cl::opt<std::string>
-HTMLDiag("html-diags",
-         llvm::cl::desc("Generate HTML to report diagnostics"),
-         llvm::cl::value_desc("HTML directory"));
-
 static llvm::cl::opt<bool>
 NoShowColumn("fno-show-column",
              llvm::cl::desc("Do not include column number on diagnostics"));
@@ -2163,27 +2158,12 @@ int main(int argc, char **argv) {
       fprintf(stderr, "-verify only works on single input files for now.\n");
       return 1;
     }
-    if (!HTMLDiag.empty()) {
-      fprintf(stderr, "-verify and -html-diags don't work together\n");
-      return 1;
-    }
-  } else if (HTMLDiag.empty()) {
-    // Print diagnostics to stderr by default.
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), DiagOpts));
   } else {
-    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), DiagOpts));
   }
 
-  if (!DumpBuildInformation.empty()) {
-    if (!HTMLDiag.empty()) {
-      fprintf(stderr,
-              "-dump-build-information and -html-diags don't work together\n");
-      return 1;
-    }
-
+  if (!DumpBuildInformation.empty())
     SetUpBuildDumpLog(argc, argv, DiagClient);
-  }
-
 
   // Configure our handling of diagnostics.
   Diagnostic Diags(DiagClient.get());
@@ -2295,9 +2275,6 @@ int main(int argc, char **argv) {
       PP->getBuiltinInfo().InitializeBuiltins(PP->getIdentifierTable(),
                                               PP->getLangOptions().NoBuiltin);
     }
-
-    if (!HTMLDiag.empty())
-      ((PathDiagnosticClient*)DiagClient.get())->SetPreprocessor(PP.get());
 
     // Process the source file.
     ProcessInputFile(*PP, InFile, ProgAction, Features, Context);
