@@ -1636,13 +1636,17 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
   assert(BB->hasName() &&
          "Address of anonymous basic block not supported yet!");
 
-  // FIXME: This isn't guaranteed to produce a unique name even if the
-  // block and function have a name.
-  std::string Mangled =
-    Mang->getMangledName(F, Mang->makeNameProper(BB->getName()).c_str(),
-                         /*ForcePrivate=*/true);
+  // This code must use the function name itself, and not the function number,
+  // since it must be possible to generate the label name from within other
+  // functions.
+  std::string FuncName = Mang->getMangledName(F);
 
-  return OutContext.GetOrCreateSymbol(StringRef(Mangled));
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "BA"
+    << FuncName.size() << '_' << FuncName << '_'
+    << Mang->makeNameProper(BB->getName());
+
+  return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
