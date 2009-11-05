@@ -99,9 +99,9 @@ class ASTRecordLayoutBuilder {
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
   void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
   void LayoutVirtualBase(const CXXRecordDecl *RD);
-  void LayoutVirtualBases(const CXXRecordDecl *RD, const CXXRecordDecl *PB,
-                          int64_t Offset,
-                                 llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
+  void LayoutVirtualBases(const CXXRecordDecl *Class, const CXXRecordDecl *RD,
+                          const CXXRecordDecl *PB, uint64_t Offset, 
+                          llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
 
   /// canPlaceRecordAtOffset - Return whether a record (either a base class
@@ -124,6 +124,9 @@ class ASTRecordLayoutBuilder {
   /// given offset.
   void UpdateEmptyClassOffsets(const FieldDecl *FD, uint64_t Offset);
   
+  /// getBaseOffset - Get the offset of a direct base class.
+  uint64_t getBaseOffset(const CXXRecordDecl *Base);
+
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.
   void FinishLayout();
