@@ -4434,6 +4434,11 @@ void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
   if (!lt->isIntegerType() || !rt->isIntegerType())
     return;
 
+  // If either expression is value-dependent, don't warn. We'll get another
+  // chance at instantiation time.
+  if (lex->isValueDependent() || rex->isValueDependent())
+    return;
+
   // The rule is that the signed operand becomes unsigned, so isolate the
   // signed operand.
   Expr *signedOperand;
