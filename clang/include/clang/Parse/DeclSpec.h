@@ -131,6 +131,9 @@ private:
   // friend-specifier
   bool Friend_specified : 1;
 
+  // constexpr-specifier
+  bool Constexpr_specified : 1;
+
   /// TypeRep - This contains action-specific information about a specific TST.
   /// For example, for a typedef or struct, it might contain the declaration for
   /// these.
@@ -155,7 +158,7 @@ private:
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
-  SourceLocation FriendLoc;
+  SourceLocation FriendLoc, ConstexprLoc;
 
   DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
   void operator=(const DeclSpec&); // DO NOT IMPLEMENT
@@ -174,6 +177,7 @@ public:
       FS_virtual_specified(false),
       FS_explicit_specified(false),
       Friend_specified(false),
+      Constexpr_specified(false),
       TypeRep(0),
       AttrList(0),
       ProtocolQualifiers(0),
@@ -309,8 +313,14 @@ public:
   bool SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
                      unsigned &DiagID);
 
+  bool SetConstexprSpec(SourceLocation Loc, const char *&PrevSpec,
+                        unsigned &DiagID);
+
   bool isFriendSpecified() const { return Friend_specified; }
   SourceLocation getFriendSpecLoc() const { return FriendLoc; }
+
+  bool isConstexprSpecified() const { return Constexpr_specified; }
+  SourceLocation getConstexprSpecLoc() const { return ConstexprLoc; }
 
   /// AddAttributes - contatenates two attribute lists.
   /// The GCC attribute syntax allows for the following:

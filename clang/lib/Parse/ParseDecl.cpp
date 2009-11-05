@@ -769,6 +769,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 /// [C++]   'virtual'
 /// [C++]   'explicit'
 ///       'friend': [C++ dcl.friend]
+///       'constexpr': [C++0x dcl.constexpr]
 
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
@@ -1068,6 +1069,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         DiagID = diag::err_friend_invalid_in_context;
         isInvalid = true;
       }
+      break;
+
+    // constexpr
+    case tok::kw_constexpr:
+      isInvalid = DS.SetConstexprSpec(Loc, PrevSpec, DiagID);
       break;
 
     // type-specifier

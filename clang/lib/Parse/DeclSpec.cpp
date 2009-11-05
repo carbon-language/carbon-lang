@@ -334,6 +334,14 @@ bool DeclSpec::SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
   return false;
 }
 
+bool DeclSpec::SetConstexprSpec(SourceLocation Loc, const char *&PrevSpec,
+                                unsigned &DiagID) {
+  // 'constexpr constexpr' is ok.
+  Constexpr_specified = true;
+  ConstexprLoc = Loc;
+  return false;
+}
+
 void DeclSpec::setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos,
                                      unsigned NP,
                                      SourceLocation *ProtoLocs,

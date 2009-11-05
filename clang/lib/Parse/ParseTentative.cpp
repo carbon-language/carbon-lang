@@ -503,6 +503,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 ///           function-specifier
 ///           'friend'
 ///           'typedef'
+/// [C++0x]   'constexpr'
 /// [GNU]     attributes declaration-specifiers[opt]
 ///
 ///         storage-class-specifier:
@@ -615,9 +616,11 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     //   function-specifier
     //   'friend'
     //   'typedef'
+    //   'constexpr'
 
   case tok::kw_friend:
   case tok::kw_typedef:
+  case tok::kw_constexpr:
     // storage-class-specifier
   case tok::kw_register:
   case tok::kw_static:
