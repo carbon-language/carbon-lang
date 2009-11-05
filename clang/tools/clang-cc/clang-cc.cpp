@@ -611,6 +611,10 @@ static llvm::cl::opt<bool>
 CharIsSigned("fsigned-char",
     llvm::cl::desc("Force char to be a signed/unsigned type"));
 
+static llvm::cl::opt<bool>
+ShortWChar("fshort-wchar",
+    llvm::cl::desc("Force wchar_t to be a short unsigned int"));
+
 
 static llvm::cl::opt<bool>
 Trigraphs("trigraphs", llvm::cl::desc("Process trigraph sequences"));
@@ -813,6 +817,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
     Options.Blocks = EnableBlocks;
   if (CharIsSigned.getPosition())
     Options.CharIsSigned = CharIsSigned;
+	if (ShortWChar.getPosition())
+		Options.ShortWChar = ShortWChar;
 
   if (!AllowBuiltins)
     Options.NoBuiltin = 1;
@@ -877,6 +883,8 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
+
+	Target->setForcedLangOptions(Options);
 }
 
 //===----------------------------------------------------------------------===//

@@ -104,6 +104,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(NoInline, diag::warn_pch_no_inline);
   PARSE_LANGOPT_IMPORTANT(AccessControl, diag::warn_pch_access_control);
   PARSE_LANGOPT_IMPORTANT(CharIsSigned, diag::warn_pch_char_signed);
+  PARSE_LANGOPT_IMPORTANT(ShortWChar, diag::warn_pch_short_wchar);
   if ((PPLangOpts.getGCMode() != 0) != (LangOpts.getGCMode() != 0)) {
     Reader.Diag(diag::warn_pch_gc_mode)
       << LangOpts.getGCMode() << PPLangOpts.getGCMode();
@@ -1741,6 +1742,7 @@ bool PCHReader::ParseLanguageOptions(
     PARSE_LANGOPT(NoInline);
     PARSE_LANGOPT(AccessControl);
     PARSE_LANGOPT(CharIsSigned);
+    PARSE_LANGOPT(ShortWChar);
     LangOpts.setGCMode((LangOptions::GCMode)Record[Idx]);
     ++Idx;
     LangOpts.setVisibilityMode((LangOptions::VisibilityMode)Record[Idx]);

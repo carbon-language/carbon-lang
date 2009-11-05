@@ -346,6 +346,11 @@ public:
   /// options.
   virtual void getDefaultLangOptions(LangOptions &Opts) {}
 
+  /// setForcedLangOptions - Set forced language options.
+  /// Apply changes to the target information with respect to certain
+  /// language options which change the target configuration.
+  virtual void setForcedLangOptions(LangOptions &Opts);
+
   /// getDefaultFeatures - Get the default set of target features for
   /// the \args CPU; this should include all legal feature strings on
   /// the target.

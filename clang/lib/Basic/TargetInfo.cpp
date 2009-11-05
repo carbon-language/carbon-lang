@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
@@ -124,6 +125,15 @@ bool TargetInfo::isTypeSigned(IntType T) const {
   };
 }
 
+/// setForcedLangOptions - Set forced language options.
+/// Apply changes to the target information with respect to certain
+/// language options which change the target configuration.
+void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
+	if (Opts.ShortWChar) {
+    WCharType = UnsignedShort;
+    WCharWidth = WCharAlign = 16;
+	}
+}
 
 //===----------------------------------------------------------------------===//
 

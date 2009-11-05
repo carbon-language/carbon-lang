@@ -922,6 +922,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fsigned-char=0");
   }
 
+  // -fshort-wchar default varies depending on platform; only
+  // pass if specified.
+  if (Arg *A = Args.getLastArg(options::OPT_fshort_wchar)) {
+    if (A->getOption().matches(options::OPT_fshort_wchar))
+      CmdArgs.push_back("-fshort-wchar");
+  }
+
   // -fno-pascal-strings is default, only pass non-default. If the tool chain
   // happened to translate to -mpascal-strings, we want to back translate here.
   //

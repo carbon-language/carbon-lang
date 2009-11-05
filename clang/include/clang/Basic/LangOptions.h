@@ -83,6 +83,7 @@ public:
   unsigned AccessControl     : 1; // Whether C++ access control should
                                   // be enabled.
   unsigned CharIsSigned      : 1; // Whether char is a signed or unsigned type
+  unsigned ShortWChar        : 1; // Force wchar_t to be unsigned short int.
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
 
@@ -159,6 +160,7 @@ public:
     NoInline = 0;
 
     CharIsSigned = 1;
+	ShortWChar = 0;
 
     MainFileName = 0;
   }
