@@ -781,6 +781,8 @@ public:
 
   DataType &getValue() { check(); return *Location; }
   const DataType &getValue() const { check(); return *Location; }
+  
+  operator DataType() const { return this->getValue(); }
 };
 
 
@@ -815,6 +817,8 @@ public:
   void setValue(const T &V) { Value = V; }
   DataType &getValue() { return Value; }
   DataType getValue() const { return Value; }
+
+  operator DataType() const { return getValue(); }
 
   // If the datatype is a pointer, support -> on it.
   DataType operator->() const { return Value; }
@@ -864,8 +868,6 @@ public:
   void setInitialValue(const DataType &V) { this->setValue(V); }
 
   ParserClass &getParser() { return Parser; }
-
-  operator DataType() const { return this->getValue(); }
 
   template<class T>
   DataType &operator=(const T &Val) {
