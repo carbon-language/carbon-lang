@@ -11,6 +11,9 @@ endif
 # 'lit' wants objdir paths, so it will pick up the lit.site.cfg.
 TESTDIRS := $(TESTDIRS:$(PROJ_SRC_DIR)%=$(PROJ_OBJ_DIR)%)
 
+# Allow EXTRA_TESTDIRS to provide additional test directories.
+TESTDIRS += $(EXTRA_TESTDIRS)
+
 ifndef TESTARGS
 ifdef VERBOSE
 TESTARGS = -v
