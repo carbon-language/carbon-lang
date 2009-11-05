@@ -1229,6 +1229,40 @@ GCC PR33344 is a similar case.
 
 //===---------------------------------------------------------------------===//
 
+[PHI TRANSLATE INDEXED GEPs]  PR5313
+
+Load redundancy elimination for simple loop.  This loop:
+
+void append_text(const char* text,unsigned char * const  io) {
+  while(*text)
+    *io=*text++;
+}
+
+Compiles to have a fully redundant load in the loop (%2):
+
+define void @append_text(i8* nocapture %text, i8* nocapture %io) nounwind {
+entry:
+  %0 = load i8* %text, align 1                    ; <i8> [#uses=1]
+  %1 = icmp eq i8 %0, 0                           ; <i1> [#uses=1]
+  br i1 %1, label %return, label %bb
+
+bb:                                               ; preds = %bb, %entry
+  %indvar = phi i32 [ 0, %entry ], [ %tmp, %bb ]  ; <i32> [#uses=2]
+  %text_addr.04 = getelementptr i8* %text, i32 %indvar ; <i8*> [#uses=1]
+  %2 = load i8* %text_addr.04, align 1            ; <i8> [#uses=1]
+  store i8 %2, i8* %io, align 1
+  %tmp = add i32 %indvar, 1                       ; <i32> [#uses=2]
+  %scevgep = getelementptr i8* %text, i32 %tmp    ; <i8*> [#uses=1]
+  %3 = load i8* %scevgep, align 1                 ; <i8> [#uses=1]
+  %4 = icmp eq i8 %3, 0                           ; <i1> [#uses=1]
+  br i1 %4, label %return, label %bb
+
+return:                                           ; preds = %bb, %entry
+  ret void
+}
+
+//===---------------------------------------------------------------------===//
+
 There are many load PRE testcases in testsuite/gcc.dg/tree-ssa/loadpre* in the
 GCC testsuite.  There are many pre testcases as ssa-pre-*.c
 
