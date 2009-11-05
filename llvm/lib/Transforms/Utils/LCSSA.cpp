@@ -50,7 +50,6 @@ namespace {
     LCSSA() : LoopPass(&ID) {}
 
     // Cached analysis information for the current function.
-    LoopInfo *LI;
     DominatorTree *DT;
     std::vector<BasicBlock*> LoopBlocks;
     PredIteratorCache PredCache;
@@ -121,7 +120,6 @@ static bool BlockDominatesAnExit(BasicBlock *BB,
 bool LCSSA::runOnLoop(Loop *TheLoop, LPPassManager &LPM) {
   L = TheLoop;
   
-  LI = &LPM.getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
 
   // Get the set of exiting blocks.
