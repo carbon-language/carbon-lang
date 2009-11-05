@@ -7,7 +7,6 @@
 // RUN: FileCheck -check-prefix LPOPT64 --input-file=%t-O3-64.s %s &&
 // RUN: clang-cc -triple i386-apple-darwin -std=c++0x -O3 -S %s -o %t-O3-32.s &&
 // RUN: FileCheck -check-prefix LPOPT32 -input-file=%t-O3-32.s %s &&
-// XFAIL: *
 
 // RUN: true
 
@@ -49,9 +48,11 @@ public:
 void F::foo() { }
 
 int j;
+void *vp;
 void test2() {
   F f;
   static int sz = (char *)(&f.f) - (char *)(&f);
+  vp = &sz;
   j = sz;
   // FIXME: These should result in a frontend constant a la fold, no run time
   // initializer
@@ -91,50 +92,6 @@ int main() {
 // CHECK-LP64: main:
 // CHECK-LP64: movl $1, 12(%rax)
 // CHECK-LP64: movl $2, 8(%rax)
-
-// FIXME: This is the wrong thunk, but until these issues are fixed, better
-// than nothing.
-// CHECK-LP64:     __ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev:
-// CHECK-LP64-NEXT:Leh_func_begin43:
-// CHECK-LP64-NEXT:    subq    $24, %rsp
-// CHECK-LP64-NEXT:Llabel43:
-// CHECK-LP64-NEXT:    movq    %rdi, %rax
-// CHECK-LP64-NEXT:    movq    %rax, 8(%rsp)
-// CHECK-LP64-NEXT:    movq    8(%rsp), %rax
-// CHECK-LP64-NEXT:    movq    %rax, %rcx
-// CHECK-LP64-NEXT:    movabsq $-16, %rdx
-// CHECK-LP64-NEXT:    addq    %rdx, %rcx
-// CHECK-LP64-NEXT:    movq    -16(%rax), %rax
-// CHECK-LP64-NEXT:    movq    -72(%rax), %rax
-// CHECK-LP64-NEXT:    addq    %rax, %rcx
-// CHECK-LP64-NEXT:    movq    %rcx, %rax
-// CHECK-LP64-NEXT:    movq    %rax, %rdi
-// CHECK-LP64-NEXT:    call    __ZTch0_v16_n32_N8test16_D4foo1Ev
-// CHECK-LP64-NEXT:    movq    %rax, 16(%rsp)
-// CHECK-LP64-NEXT:    movq    16(%rsp), %rax
-// CHECK-LP64-NEXT:    addq    $24, %rsp
-// CHECK-LP64-NEXT:    ret
-
-// CHECK-LP64:     __ZTch0_v16_n32_N8test16_D4foo1Ev:
-// CHECK-LP64-NEXT:Leh_func_begin44:
-// CHECK-LP64-NEXT:    subq    $24, %rsp
-// CHECK-LP64-NEXT:Llabel44:
-// CHECK-LP64-NEXT:    movq    %rdi, %rax
-// CHECK-LP64-NEXT:    movq    %rax, 8(%rsp)
-// CHECK-LP64-NEXT:    movq    8(%rsp), %rax
-// CHECK-LP64-NEXT:    movq    %rax, %rdi
-// CHECK-LP64-NEXT:    call    __ZN8test16_D4foo1Ev
-// CHECK-LP64-NEXT:    movq    %rax, %rcx
-// CHECK-LP64-NEXT:    movabsq $16, %rdx
-// CHECK-LP64-NEXT:    addq    %rdx, %rcx
-// CHECK-LP64-NEXT:    movq    16(%rax), %rax
-// CHECK-LP64-NEXT:    movq    -32(%rax), %rax
-// CHECK-LP64-NEXT:    addq    %rax, %rcx
-// CHECK-LP64-NEXT:    movq    %rcx, %rax
-// CHECK-LP64-NEXT:    movq    %rax, 16(%rsp)
-// CHECK-LP64-NEXT:    movq    16(%rsp), %rax
-// CHECK-LP64-NEXT:    addq    $24, %rsp
-// CHECK-LP64-NEXT:    ret
 
 struct test12_A {
   virtual void foo0() { }
@@ -207,6 +164,7 @@ void test12_foo() {
 // CHECK-LPOPT64-NEXT: call *8(%rax)
 // CHECK-LPOPT64-NEXT: movq _test12_pa(%rip), %rdi
 // CHECK-LPOPT64-NEXT: call __ZN8test12_A3fooEv
+
 
 struct test6_B2 { virtual void funcB2(); char b[1000]; };
 struct test6_B1 : virtual test6_B2 { virtual void funcB1(); };
@@ -1004,8 +962,11 @@ virtual void foo_B2() { }
 };
 
 struct test16_D : test16_NV1, virtual test16_B2 {
-  virtual test16_D *foo1() { return 0; }
+  virtual void bar();
+  virtual test16_D *foo1();
 };
+
+void test16_D::bar() { }
 
 // CHECK-LP64: __ZTV8test16_D:
 // CHECK-LP64-NEXT: .quad 32
@@ -1014,6 +975,7 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP64-NEXT: .quad __ZTI8test16_D
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV16fooNV1Ev
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV17foo_NV1Ev
+// CHECK-LP64-NEXT: .quad __ZN8test16_D3barEv
 // CHECK-LP64-NEXT: .quad __ZN8test16_D4foo1Ev
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
@@ -1057,6 +1019,7 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP32-NEXT: .long __ZTI8test16_D
 // CHECK-LP32-NEXT: .long __ZN10test16_NV16fooNV1Ev
 // CHECK-LP32-NEXT: .long __ZN10test16_NV17foo_NV1Ev
+// CHECK-LP32-NEXT: .long __ZN8test16_D3barEv
 // CHECK-LP32-NEXT: .long __ZN8test16_D4foo1Ev
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32-NEXT: .space 4
@@ -1092,6 +1055,33 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP32-NEXT .long __ZTcvn8_n20_v8_n16_N8test16_D4foo1Ev
 // CHECK-LP32: .long __ZN10test16_NV27foo_NV2Ev
 // CHECK-LP32-NEXT: .long __ZN10test16_NV28foo_NV2bEv
+
+
+// FIXME: This is the wrong thunk, but until these issues are fixed, better
+// than nothing.
+// CHECK-LPOPT64:     __ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev:
+// CHECK-LPOPT64-NEXT:Leh_func_begin
+// CHECK-LPOPT64-NEXT:    subq    $8, %rsp
+// CHECK-LPOPT64-NEXT:Llabel
+// CHECK-LPOPT64-NEXT:    movq    -16(%rdi), %rax
+// CHECK-LPOPT64-NEXT:    movq    -72(%rax), %rax
+// CHECK-LPOPT64-NEXT:    leaq    -16(%rax,%rdi), %rdi
+// FIXME: We want a tail call here
+// CHECK-LPOPT64-NEXT:    call    __ZTch0_v16_n32_N8test16_D4foo1Ev
+// CHECK-LPOPT64-NEXT:    addq    $8, %rsp
+// CHECK-LPOPT64-NEXT:    ret
+
+// CHECK-LPOPT64:     __ZTch0_v16_n32_N8test16_D4foo1Ev:
+// CHECK-LPOPT64-NEXT:Leh_func_begin
+// CHECK-LPOPT64-NEXT:    subq    $8, %rsp
+// CHECK-LPOPT64-NEXT:Llabel
+// CHECK-LPOPT64-NEXT:    call    __ZN8test16_D4foo1Ev
+// FIXME: We need a == 0 check here
+// CHECK-LPOPT64-NEXT:    movq    16(%rax), %rcx
+// CHECK-LPOPT64-NEXT:    movq    -32(%rcx), %rcx
+// CHECK-LPOPT64-NEXT:    leaq    16(%rcx,%rax), %rax
+// CHECK-LPOPT64-NEXT:    addq    $8, %rsp
+// CHECK-LPOPT64-NEXT:    ret
 
 
 class test17_B1 {
