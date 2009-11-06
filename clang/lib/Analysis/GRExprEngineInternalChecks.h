@@ -19,9 +19,10 @@ namespace clang {
 
 class GRExprEngine;
 
-void RegisterReturnStackAddressChecker(GRExprEngine &Eng);
-void RegisterReturnUndefChecker(GRExprEngine &Eng);
+void RegisterDivZeroChecker(GRExprEngine &Eng);
 void RegisterReturnPointerRangeChecker(GRExprEngine &Eng);
+void RegisterReturnStackAddressChecker(GRExprEngine &Eng);  
+void RegisterReturnUndefChecker(GRExprEngine &Eng);
   
 } // end clang namespace
 #endif

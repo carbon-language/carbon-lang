@@ -12,9 +12,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/Checkers/DivZeroChecker.h"
+#include "clang/Analysis/PathSensitive/CheckerVisitor.h"
+#include "GRExprEngineInternalChecks.h"
 
 using namespace clang;
+
+namespace {
+class VISIBILITY_HIDDEN DivZeroChecker : public CheckerVisitor<DivZeroChecker> {
+  BuiltinBug *BT;
+public:
+  DivZeroChecker() : BT(0) {}  
+  static void *getTag();
+  void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
+};  
+} // end anonymous namespace
+
+void clang::RegisterDivZeroChecker(GRExprEngine &Eng) {
+  Eng.registerCheck(new DivZeroChecker());
+}
 
 void *DivZeroChecker::getTag() {
   static int x;
