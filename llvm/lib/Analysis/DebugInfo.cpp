@@ -409,6 +409,10 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
       Tag == dwarf::DW_TAG_const_type || Tag == dwarf::DW_TAG_volatile_type ||
       Tag == dwarf::DW_TAG_restrict_type) {
     DIType BaseType = getTypeDerivedFrom();
+    // If this type is not derived from any type then take conservative 
+    // approach.
+    if (BaseType.isNull())
+      return getSizeInBits();
     if (BaseType.isDerivedType())
       return DIDerivedType(BaseType.getNode()).getOriginalTypeSize();
     else
