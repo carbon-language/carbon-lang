@@ -13064,7 +13064,7 @@ bool InstCombiner::runOnFunction(Function &F) {
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.
   IRBuilder<true, TargetFolder, InstCombineIRInserter> 
-    TheBuilder(F.getContext(), TargetFolder(TD, F.getContext()),
+    TheBuilder(F.getContext(), TargetFolder(TD),
                InstCombineIRInserter(Worklist));
   Builder = &TheBuilder;
   

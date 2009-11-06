@@ -40,8 +40,7 @@ class TargetFolder {
   }
 
 public:
-  explicit TargetFolder(const TargetData *TheTD, LLVMContext &C) :
-    TD(TheTD) {}
+  explicit TargetFolder(const TargetData *TheTD) : TD(TheTD) {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators
