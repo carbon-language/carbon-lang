@@ -242,15 +242,13 @@ public:
             idx = VCalls.size()+1;
             VCalls.push_back(0);
             D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
-                      MD->getNameAsCString(),
-                      (int)-VCalls.size()-3, (int)VCallOffset[MD],
+                      MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
                       Class->getNameAsCString()));
           } else {
             VCallOffset[MD] = VCallOffset[OMD];
             VCalls[idx-1] = -VCallOffset[OMD] + OverrideOffset/8;
             D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
-                      MD->getNameAsCString(),
-                      (int)-VCalls.size()-3, (int)VCallOffset[MD],
+                      MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
                       Class->getNameAsCString()));
           }
           VCall[MD] = idx;
@@ -271,6 +269,16 @@ public:
         // FIXME: finish off
         int64_t O = VCallOffset[OMD] - OverrideOffset/8;
         // int64_t O = CurrentVBaseOffset/8 - OverrideOffset/8;
+
+        if (VCall.count(OMD)) {
+          VCallOffset[MD] = VCallOffset[OMD];
+          Index_t idx = VCall[OMD];
+          VCalls[idx-1] = -VCallOffset[OMD] + OverrideOffset/8;
+          D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
+                    MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
+                    Class->getNameAsCString()));
+          VCall[MD] = idx;
+        }        
         if (O || ReturnOffset.first || ReturnOffset.second) {
           CallOffset ThisOffset = std::make_pair(O, 0);
           
@@ -374,8 +382,7 @@ public:
         idx = VCalls.size()+1;
         VCalls.push_back(0);
         D1(printf("  vcall for %s at %d with delta %d\n",
-                  MD->getNameAsCString(), (int)-VCalls.size()-3,
-                  (int)VCallOffset[MD]));
+                  MD->getNameAsCString(), (int)-VCalls.size()-3, 0));
       }
     }
   }

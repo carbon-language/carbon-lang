@@ -895,7 +895,7 @@ class test20_B : virtual test20_V {
 class test20_B1 : virtual test20_V1 {
 };
 class test20_D : public test20_B, public test20_B1 {
-} d;
+};
 
 // CHECK-LP64: __ZTV8test20_D:
 // CHECK-LP64-NEXT: .quad 8
@@ -909,6 +909,34 @@ class test20_D : public test20_B, public test20_B1 {
 // CHECK-LP64-NEXT: .quad 18446744073709551608
 // CHECK-LP64-NEXT: .quad __ZTI8test20_D
 // CHECK-LP64-NEXT: .quad __ZN9test20_V14foo2Ev
+
+
+class test21_V {
+  virtual void foo();
+};
+class test21_V1 {
+  virtual void foo();
+};
+class test21_B : virtual test21_V {
+};
+class test21_B1 : virtual test21_V1 {
+};
+class test21_D : public test21_B, public test21_B1 {
+  void foo() { }
+};
+
+// CHECK-LP64: __ZTV8test21_D:
+// CHECK-LP64-NEXT: .quad 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI8test21_D
+// CHECK-LP64-NEXT: .quad __ZN8test21_D3fooEv
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad 18446744073709551608
+// CHECK-LP64-NEXT: .quad 18446744073709551608
+// CHECK-LP64-NEXT: .quad __ZTI8test21_D
+// CHECK-LP64-NEXT .quad __ZTv0_n24_N8test21_D3fooEv
 
 
 
@@ -951,6 +979,8 @@ class test20_D : public test20_B, public test20_B1 {
 // CHECK-LP64-NEXT: .quad __ZN2D14bar4Ev
 // CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
 
+test21_D d21;
+test20_D d20;
 test19_D d19;
 test18_D d18;
 test17_D d17;
