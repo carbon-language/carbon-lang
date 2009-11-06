@@ -39,3 +39,21 @@ void test5(NSNumber *x) {
     .x [x METH2]    // expected-error {{expected '=' or another designator}}
   };
 }
+
+// rdar://7370882
+@interface SemicolonsAppDelegate 
+{
+  id i;
+}
+@property (assign) id window;
+@end
+
+@implementation SemicolonsAppDelegate
+{
+  id i;
+}
+  @synthesize window;
+@end
+
+
+

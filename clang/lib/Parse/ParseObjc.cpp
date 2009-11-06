@@ -1202,6 +1202,8 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
   }
   if (Tok.isNot(tok::semi))
     Diag(Tok, diag::err_expected_semi_after) << "@synthesize";
+  else
+    ConsumeToken(); // consume ';'
   return DeclPtrTy();
 }
 
