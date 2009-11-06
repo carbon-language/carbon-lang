@@ -7,11 +7,13 @@
 }
 @property(readonly) id object;	// expected-note {{property declared here}}
 @property(readwrite, assign) id object1; // expected-note {{property declared here}}
+@property (readonly) int indentLevel;
 @end
 
 @interface ReadOnly ()
 @property(readwrite, copy) id object;	// expected-warning {{property attribute in continuation class does not match the primary class}}
 @property(readonly) id object1; // expected-error {{property declaration in continuation class of 'ReadOnly' is to change a 'readonly' property to 'readwrite'}}
+@property (readwrite, assign) int indentLevel; // OK. assign the the default in any case.
 @end
 
 @protocol Proto

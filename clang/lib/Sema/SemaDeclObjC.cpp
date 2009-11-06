@@ -1911,8 +1911,7 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
           unsigned PIkind = PIDecl->getPropertyAttributes();
           if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
             unsigned assignRetainCopyNonatomic = 
-              (ObjCPropertyDecl::OBJC_PR_assign |
-               ObjCPropertyDecl::OBJC_PR_retain |
+              (ObjCPropertyDecl::OBJC_PR_retain |
                ObjCPropertyDecl::OBJC_PR_copy |
                ObjCPropertyDecl::OBJC_PR_nonatomic);
             if ((Attributes & assignRetainCopyNonatomic) !=
