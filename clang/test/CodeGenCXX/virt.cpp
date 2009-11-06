@@ -667,7 +667,7 @@ void test16_D::bar() { }
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64: .quad 18446744073709551600
-// CHECK-LP64: .quad 18446744073709551584
+// CHECK-LP64-NEXT: .quad 18446744073709551584
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .quad 18446744073709551584
@@ -872,16 +872,16 @@ struct test19_D : virtual test19_B4 {
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .quad __ZTI8test19_D
-// CHECK-LP64-NEXT .quad __ZN9test19_B13fB1Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B26foB1B2Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B36foB1B3Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B46foB1B4Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B23fB2Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B36foB2B3Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B46foB2B4Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B33fB3Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B46foB3B4Ev
-// CHECK-LP64-NEXT .quad __ZN9test19_B43fB4Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B13fB1Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B26foB1B2Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B36foB1B3Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B46foB1B4Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B23fB2Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B36foB2B3Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B46foB2B4Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B33fB3Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B46foB3B4Ev
+// CHECK-LP64-NEXT: .quad __ZN9test19_B43fB4Ev
 
 
 class test20_V {
@@ -936,7 +936,7 @@ class test21_D : public test21_B, public test21_B1 {
 // CHECK-LP64-NEXT: .quad 18446744073709551608
 // CHECK-LP64-NEXT: .quad 18446744073709551608
 // CHECK-LP64-NEXT: .quad __ZTI8test21_D
-// CHECK-LP64-NEXT .quad __ZTv0_n24_N8test21_D3fooEv
+// CHECK-LP64-NEXT: .quad __ZTv0_n24_N8test21_D3fooEv
 
 
 

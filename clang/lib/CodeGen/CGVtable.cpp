@@ -42,6 +42,8 @@ private:
   llvm::DenseMap<const CXXMethodDecl *, Index_t> Index;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCallOffset;
+  // This is the offset to the nearest virtual base
+  llvm::DenseMap<const CXXMethodDecl *, Index_t> NonVirtualOffset;
   llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
 
   typedef llvm::DenseMap<const CXXMethodDecl *, int> Pures_t;
@@ -59,7 +61,6 @@ private:
   const bool Extern;
   const uint32_t LLVMPointerWidth;
   Index_t extra;
-  int CurrentVBaseOffset;
   typedef std::vector<std::pair<const CXXRecordDecl *, int64_t> > Path_t;
   llvm::Constant *cxa_pure;
 public:
@@ -69,8 +70,7 @@ public:
     : methods(meth), Class(c), BLayout(cgm.getContext().getASTRecordLayout(c)),
       rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), Extern(true),
-      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)),
-      CurrentVBaseOffset(0) {
+      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
 
     // Calculate pointer for ___cxa_pure_virtual.
@@ -191,7 +191,7 @@ public:
 
   bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
                       bool MorallyVirtual, Index_t OverrideOffset,
-                      Index_t Offset) {
+                      Index_t Offset, int64_t CurrentVBaseOffset) {
     const bool isPure = MD->isPure();
     typedef CXXMethodDecl::method_iterator meth_iter;
     // FIXME: Should OverrideOffset's be Offset?
@@ -235,9 +235,10 @@ public:
           Pures[MD] = 1;
         Pures.erase(OMD);
         Thunks.erase(OMD);
-        if (MorallyVirtual) {
+        if (MorallyVirtual || VCall.count(OMD)) {
           Index_t &idx = VCall[OMD];
           if (idx == 0) {
+            NonVirtualOffset[MD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
             VCallOffset[MD] = OverrideOffset/8;
             idx = VCalls.size()+1;
             VCalls.push_back(0);
@@ -245,6 +246,7 @@ public:
                       MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
                       Class->getNameAsCString()));
           } else {
+            NonVirtualOffset[MD] = NonVirtualOffset[OMD];
             VCallOffset[MD] = VCallOffset[OMD];
             VCalls[idx-1] = -VCallOffset[OMD] + OverrideOffset/8;
             D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
@@ -252,33 +254,26 @@ public:
                       Class->getNameAsCString()));
           }
           VCall[MD] = idx;
-          CallOffset ThisOffset;
-          ThisOffset = std::make_pair(CurrentVBaseOffset/8 - Offset/8,
-                                      -((idx+extra+2)*LLVMPointerWidth/8));
+          int64_t O = NonVirtualOffset[MD];
+          int v = -((idx+extra+2)*LLVMPointerWidth/8);
+          // Optimize out virtual adjustments of 0.
+          if (VCalls[idx-1] == 0)
+            v = 0;
+          CallOffset ThisOffset = std::make_pair(O, v);
           // FIXME: Do we always have to build a covariant thunk to save oret,
           // which is the containing virtual base class?
           if (ReturnOffset.first || ReturnOffset.second)
             CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
                                                  oret);
-          else if (!isPure)
+          else if (!isPure && (ThisOffset.first || ThisOffset.second))
             Thunks[MD] = ThisOffset;
           return true;
         }
 
         // FIXME: finish off
         int64_t O = VCallOffset[OMD] - OverrideOffset/8;
-        // int64_t O = CurrentVBaseOffset/8 - OverrideOffset/8;
 
-        if (VCall.count(OMD)) {
-          VCallOffset[MD] = VCallOffset[OMD];
-          Index_t idx = VCall[OMD];
-          VCalls[idx-1] = -VCallOffset[OMD] + OverrideOffset/8;
-          D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
-                    MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
-                    Class->getNameAsCString()));
-          VCall[MD] = idx;
-        }        
         if (O || ReturnOffset.first || ReturnOffset.second) {
           CallOffset ThisOffset = std::make_pair(O, 0);
           
@@ -343,7 +338,8 @@ public:
     return wrap(CGM.GetAddrOfFunction(MD, Ty));
   }
 
-  void OverrideMethods(Path_t *Path, bool MorallyVirtual, int64_t Offset) {
+  void OverrideMethods(Path_t *Path, bool MorallyVirtual, int64_t Offset,
+                       int64_t CurrentVBaseOffset) {
     for (Path_t::reverse_iterator i = Path->rbegin(),
            e = Path->rend(); i != e; ++i) {
       const CXXRecordDecl *RD = i->first;
@@ -355,17 +351,19 @@ public:
 
         const CXXMethodDecl *MD = *mi;
         llvm::Constant *m = WrapAddrOf(MD);
-        OverrideMethod(MD, m, MorallyVirtual, OverrideOffset, Offset);
+        OverrideMethod(MD, m, MorallyVirtual, OverrideOffset, Offset,
+                       CurrentVBaseOffset);
       }
     }
   }
 
   void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset,
-    bool ForVirtualBase) {
+                 bool ForVirtualBase, int64_t CurrentVBaseOffset) {
     llvm::Constant *m = WrapAddrOf(MD);
 
     // If we can find a previously allocated slot for this, reuse it.
-    if (OverrideMethod(MD, m, MorallyVirtual, Offset, Offset))
+    if (OverrideMethod(MD, m, MorallyVirtual, Offset, Offset,
+                       CurrentVBaseOffset))
       return;
 
     // else allocate a new slot.
@@ -379,6 +377,7 @@ public:
       Index_t &idx = VCall[MD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
+        NonVirtualOffset[MD] = CurrentVBaseOffset/8 - Offset/8;
         idx = VCalls.size()+1;
         VCalls.push_back(0);
         D1(printf("  vcall for %s at %d with delta %d\n",
@@ -388,17 +387,20 @@ public:
   }
 
   void AddMethods(const CXXRecordDecl *RD, bool MorallyVirtual,
-                  Index_t Offset, bool RDisVirtualBase) {
+                  Index_t Offset, bool RDisVirtualBase,
+                  int64_t CurrentVBaseOffset) {
     for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi)
       if (mi->isVirtual())
-        AddMethod(*mi, MorallyVirtual, Offset, RDisVirtualBase);
+        AddMethod(*mi, MorallyVirtual, Offset, RDisVirtualBase,
+                  CurrentVBaseOffset);
   }
 
   void NonVirtualBases(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
                        const CXXRecordDecl *PrimaryBase,
                        bool PrimaryBaseWasVirtual, bool MorallyVirtual,
-                       int64_t Offset, Path_t *Path) {
+                       int64_t Offset, int64_t CurrentVBaseOffset,
+                       Path_t *Path) {
     Path->push_back(std::make_pair(RD, Offset));
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
@@ -409,8 +411,8 @@ public:
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
-        CurrentVBaseOffset = Offset;
-        GenerateVtableForBase(Base, MorallyVirtual, o, false, Path);
+        GenerateVtableForBase(Base, MorallyVirtual, o, false,
+                              CurrentVBaseOffset, Path);
       }
     }
     Path->pop_back();
@@ -436,6 +438,7 @@ public:
   Index_t end(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
               const CXXRecordDecl *PrimaryBase, bool PrimaryBaseWasVirtual,
               bool MorallyVirtual, int64_t Offset, bool ForVirtualBase,
+              int64_t CurrentVBaseOffset,
               Path_t *Path) {
     bool alloc = false;
     if (Path == 0) {
@@ -464,7 +467,7 @@ public:
 
     // and then the non-virtual bases.
     NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
-                    MorallyVirtual, Offset, Path);
+                    MorallyVirtual, Offset, CurrentVBaseOffset, Path);
 
     if (ForVirtualBase) {
       insertVCalls(VCallInsertionPoint);
@@ -479,7 +482,7 @@ public:
 
   void Primaries(const CXXRecordDecl *RD, bool MorallyVirtual, int64_t Offset,
                  bool updateVBIndex, Index_t current_vbindex,
-                 bool RDisVirtualBase) {
+                 bool RDisVirtualBase, int64_t CurrentVBaseOffset) {
     if (!RD->isDynamicClass())
       return;
 
@@ -492,21 +495,27 @@ public:
       D1(printf(" doing primaries for %s most derived %s\n",
                 RD->getNameAsCString(), Class->getNameAsCString()));
       
+      int BaseCurrentVBaseOffset = CurrentVBaseOffset;
+      if (PrimaryBaseWasVirtual)
+        BaseCurrentVBaseOffset = BLayout.getVBaseClassOffset(PrimaryBase);
+        
       if (!PrimaryBaseWasVirtual)
         Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
-                  updateVBIndex, current_vbindex, PrimaryBaseWasVirtual);
+                  updateVBIndex, current_vbindex, PrimaryBaseWasVirtual,
+                  BaseCurrentVBaseOffset);
     }
 
     D1(printf(" doing vcall entries for %s most derived %s\n",
               RD->getNameAsCString(), Class->getNameAsCString()));
 
     // And add the virtuals for the class to the primary vtable.
-    AddMethods(RD, MorallyVirtual, Offset, RDisVirtualBase);
+    AddMethods(RD, MorallyVirtual, Offset, RDisVirtualBase, CurrentVBaseOffset);
   }
 
   void VBPrimaries(const CXXRecordDecl *RD, bool MorallyVirtual, int64_t Offset,
                    bool updateVBIndex, Index_t current_vbindex,
-                   bool RDisVirtualBase, bool bottom=false) {
+                   bool RDisVirtualBase, int64_t CurrentVBaseOffset,
+                   bool bottom=false) {
     if (!RD->isDynamicClass())
       return;
 
@@ -516,14 +525,18 @@ public:
 
     // vtables are composed from the chain of primaries.
     if (PrimaryBase) {
-      if (PrimaryBaseWasVirtual)
+      int BaseCurrentVBaseOffset = CurrentVBaseOffset;
+      if (PrimaryBaseWasVirtual) {
         IndirectPrimary.insert(PrimaryBase);
+        BaseCurrentVBaseOffset = BLayout.getVBaseClassOffset(PrimaryBase);
+      }
 
       D1(printf(" doing primaries for %s most derived %s\n",
                 RD->getNameAsCString(), Class->getNameAsCString()));
       
       VBPrimaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
-                  updateVBIndex, current_vbindex, PrimaryBaseWasVirtual);
+                  updateVBIndex, current_vbindex, PrimaryBaseWasVirtual,
+                  BaseCurrentVBaseOffset);
     }
 
     D1(printf(" doing vbase entries for %s most derived %s\n",
@@ -532,13 +545,14 @@ public:
 
     if (RDisVirtualBase || bottom) {
       Primaries(RD, MorallyVirtual, Offset, updateVBIndex, current_vbindex,
-                RDisVirtualBase);
+                RDisVirtualBase, CurrentVBaseOffset);
     }
   }
 
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
                                 bool MorallyVirtual = false, int64_t Offset = 0,
                                 bool ForVirtualBase = false,
+                                int CurrentVBaseOffset = 0,
                                 Path_t *Path = 0) {
     if (!RD->isDynamicClass())
       return 0;
@@ -555,13 +569,13 @@ public:
       extra = VCalls.size();
 
     VBPrimaries(RD, MorallyVirtual, Offset, !ForVirtualBase, 0, ForVirtualBase,
-                true);
+                CurrentVBaseOffset, true);
 
     if (Path)
-      OverrideMethods(Path, MorallyVirtual, Offset);
+      OverrideMethods(Path, MorallyVirtual, Offset, CurrentVBaseOffset);
 
     return end(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual, MorallyVirtual,
-               Offset, ForVirtualBase, Path);
+               Offset, ForVirtualBase, CurrentVBaseOffset, Path);
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
@@ -585,16 +599,16 @@ public:
         StartNewTable();
         VCall.clear();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        CurrentVBaseOffset = BaseOffset;
+        int64_t CurrentVBaseOffset = BaseOffset;
         D1(printf("vtable %s virtual base %s\n",
                   Class->getNameAsCString(), Base->getNameAsCString()));
-        GenerateVtableForBase(Base, true, BaseOffset, true, Path);
+        GenerateVtableForBase(Base, true, BaseOffset, true, CurrentVBaseOffset,
+                              Path);
       }
       int64_t BaseOffset = Offset;
       if (i->isVirtual())
         BaseOffset = BLayout.getVBaseClassOffset(Base);
       if (Base->getNumVBases()) {
-        CurrentVBaseOffset = BaseOffset;
         GenerateVtableForVBases(Base, BaseOffset, Path);
       }
     }
