@@ -70,7 +70,7 @@ def ReturnType : DiagGroup<"return-type">;
 def : DiagGroup<"sequence-point">;
 def : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
-def : DiagGroup<"sign-compare">;
+def SignCompare : DiagGroup<"sign-compare">;
 
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;
@@ -129,6 +129,7 @@ def Format2 : DiagGroup<"format=2",
 
 
 def Extra : DiagGroup<"extra", [
+    SignCompare,
     UnusedParameter
   ]>;
 

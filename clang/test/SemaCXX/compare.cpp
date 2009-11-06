@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -pedantic -verify %s
+// RUN: clang-cc -fsyntax-only -pedantic -verify -Wsign-compare %s
 
 int test0(long a, unsigned long b) {
   enum Enum {B};

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -pedantic -verify %s
+// RUN: clang-cc -fsyntax-only -pedantic -verify -Wsign-compare %s
 
 int test(char *C) { // nothing here should warn.
   return C != ((void*)0);
