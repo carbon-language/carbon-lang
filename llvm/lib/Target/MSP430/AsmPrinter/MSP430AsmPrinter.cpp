@@ -309,7 +309,6 @@ void MSP430AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI)
     printKill(MI);
     return;
   case TargetInstrInfo::INLINEASM:
-    O << '\t';
     printInlineAsm(MI);
     return;
   case TargetInstrInfo::IMPLICIT_DEF:

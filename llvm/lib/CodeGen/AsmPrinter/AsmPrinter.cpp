@@ -1399,6 +1399,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   // Disassemble the AsmStr, printing out the literal pieces, the operands, etc.
   const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
 
+  O << '\t';
+
   // If this asmstr is empty, just print the #APP/#NOAPP markers.
   // These are useful to see where empty asm's wound up.
   if (AsmStr[0] == 0) {

@@ -405,7 +405,6 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     printLabel(MI);
     return;
   case TargetInstrInfo::INLINEASM:
-    O << '\t';
     printInlineAsm(MI);
     return;
   case TargetInstrInfo::IMPLICIT_DEF:
