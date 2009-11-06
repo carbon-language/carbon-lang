@@ -512,7 +512,7 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 //===----------------------------------------------------------------------===//
 /// LEB 128 number encoding.
 
-/// PrintULEB128 - Print a series of hexidecimal values (separated by commas)
+/// PrintULEB128 - Print a series of hexadecimal values (separated by commas)
 /// representing an unsigned leb128 value.
 void AsmPrinter::PrintULEB128(unsigned Value) const {
   char Buffer[20];
@@ -525,7 +525,7 @@ void AsmPrinter::PrintULEB128(unsigned Value) const {
   } while (Value);
 }
 
-/// PrintSLEB128 - Print a series of hexidecimal values (separated by commas)
+/// PrintSLEB128 - Print a series of hexadecimal values (separated by commas)
 /// representing a signed leb128 value.
 void AsmPrinter::PrintSLEB128(int Value) const {
   int Sign = Value >> (8 * sizeof(Value) - 1);
@@ -546,7 +546,7 @@ void AsmPrinter::PrintSLEB128(int Value) const {
 // Emission and print routines
 //
 
-/// PrintHex - Print a value as a hexidecimal value.
+/// PrintHex - Print a value as a hexadecimal value.
 ///
 void AsmPrinter::PrintHex(int Value) const { 
   char Buffer[20];
