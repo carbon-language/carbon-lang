@@ -40,14 +40,14 @@ define i32 @test1() {
 
 ; DarwinPIC: _test1:
 ; DarwinPIC: 	ldr r0, LCPI1_0
-; DarwinPIC: LPC0:
+; DarwinPIC: LPC1_0:
 ; DarwinPIC:    ldr r0, [pc, +r0]
 ; DarwinPIC:    ldr r0, [r0]
 ; DarwinPIC:    bx lr
 
 ; DarwinPIC: 	.align	2
 ; DarwinPIC: LCPI1_0:
-; DarwinPIC: 	.long	L_G$non_lazy_ptr-(LPC0+8)
+; DarwinPIC: 	.long	L_G$non_lazy_ptr-(LPC1_0+8)
 
 ; DarwinPIC: 	.section __DATA,__nl_symbol_ptr,non_lazy_symbol_pointers
 ; DarwinPIC:	.align	2
@@ -61,7 +61,7 @@ define i32 @test1() {
 ; LinuxPIC: 	ldr r0, .LCPI1_0
 ; LinuxPIC: 	ldr r1, .LCPI1_1
 	
-; LinuxPIC: .LPC0:
+; LinuxPIC: .LPC1_0:
 ; LinuxPIC: 	add r0, pc, r0
 ; LinuxPIC: 	ldr r0, [r1, +r0]
 ; LinuxPIC: 	ldr r0, [r0]
@@ -69,7 +69,7 @@ define i32 @test1() {
 
 ; LinuxPIC: .align 2
 ; LinuxPIC: .LCPI1_0:
-; LinuxPIC:     .long _GLOBAL_OFFSET_TABLE_-(.LPC0+8)
+; LinuxPIC:     .long _GLOBAL_OFFSET_TABLE_-(.LPC1_0+8)
 ; LinuxPIC: .align 2
 ; LinuxPIC: .LCPI1_1:
 ; LinuxPIC:     .long	G(GOT)

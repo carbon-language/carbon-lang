@@ -199,7 +199,7 @@ namespace {
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
       if (ACPV->getPCAdjustment() != 0) {
         O << "-(" << MAI->getPrivateGlobalPrefix() << "PC"
-          << ACPV->getLabelId()
+          << getFunctionNumber() << "_"  << ACPV->getLabelId()
           << "+" << (unsigned)ACPV->getPCAdjustment();
          if (ACPV->mustAddCurrentAddress())
            O << "-.";
@@ -844,7 +844,8 @@ void ARMAsmPrinter::printSBitModifierOperand(const MachineInstr *MI, int OpNum){
 
 void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int OpNum) {
   int Id = (int)MI->getOperand(OpNum).getImm();
-  O << MAI->getPrivateGlobalPrefix() << "PC" << Id;
+  O << MAI->getPrivateGlobalPrefix()
+    << "PC" << getFunctionNumber() << "_" << Id;
 }
 
 void ARMAsmPrinter::printRegisterList(const MachineInstr *MI, int OpNum) {
@@ -1364,7 +1365,8 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // FIXME: MOVE TO SHARED PLACE.
     unsigned Id = (unsigned)MI->getOperand(2).getImm();
     const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)+"PC"+Twine(Id));
+    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)
+                         + "PC" + Twine(getFunctionNumber()) + "_" + Twine(Id));
     OutStreamer.EmitLabel(Label);
     
     
