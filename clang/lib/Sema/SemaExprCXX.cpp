@@ -1096,7 +1096,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       else
         assert(0 && "Unknown conversion function kind!");
       // Whatch out for elipsis conversion.
-      if (!BeforeToType.isNull()) {
+      if (!ICS.UserDefined.EllipsisConversion) {
         if (PerformImplicitConversion(From, BeforeToType, 
                                       ICS.UserDefined.Before, "converting"))
           return true;
