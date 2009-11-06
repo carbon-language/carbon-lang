@@ -841,6 +841,10 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 #include "clang/AST/TypeNodes.def"
     assert(false && "Dependent types cannot show up in debug information");
 
+  // FIXME: Handle these.
+  case Type::ExtVector:
+  case Type::Vector:
+    return llvm::DIType();
   default:
     assert(false && "Unhandled type class!");
     return llvm::DIType();
