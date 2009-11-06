@@ -4454,6 +4454,10 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 ///   suppresses the warning in some cases
 void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
                             const PartialDiagnostic &PD, bool Equality) {
+  // Don't warn if we're in an unevaluated context.
+  if (ExprEvalContext == Unevaluated)
+    return;
+
   QualType lt = lex->getType(), rt = rex->getType();
 
   // Only warn if both operands are integral.

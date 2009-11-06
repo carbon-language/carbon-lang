@@ -160,6 +160,6 @@ def : DiagGroup<"", [Extra]>;  // -W = -Wextra
 def : DiagGroup<"endif-labels", [ExtraTokens]>; // endif-labels = endif-tokens
 
 // A warning group for warnings that we want to have on by default in clang,
-// but which aren't no by default in GCC.
+// but which aren't on by default in GCC.
 def NonGCC : DiagGroup<"non-gcc",
     [SignCompare]>;
