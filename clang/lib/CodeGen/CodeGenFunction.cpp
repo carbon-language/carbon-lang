@@ -264,6 +264,11 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
     if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
       EmitCtorPrologue(CD, GD.getCtorType());
       EmitStmt(S);
+      
+      // If any of the member initializers are temporaries bound to references
+      // make sure to emit their destructors.
+      EmitCleanupBlocks(0);
+      
     } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
       llvm::BasicBlock *DtorEpilogue  = createBasicBlock("dtor.epilogue");
       PushCleanupBlock(DtorEpilogue);

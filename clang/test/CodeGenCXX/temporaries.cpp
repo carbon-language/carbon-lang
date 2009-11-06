@@ -131,6 +131,7 @@ struct B {
   int a1;
   int a2;
   B();
+  ~B();
 };
 
 B::B()
@@ -147,4 +148,20 @@ B::B()
   f();
 }
   
+struct C {
+  C();
+  
+  const B& b;
+};
+
+C::C() 
+  // CHECK: call void @_ZN6PR50771BC1Ev
+  : b(B()) {
+  // CHECK: call void @_ZN6PR50771fEv
+  f();
+  
+  // CHECK: call void @_ZN6PR50771BD1Ev
+}
+
+
 }
