@@ -284,9 +284,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
 
 
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
-  // Emit initial switch which will be patched up later by
-  // EmitIndirectSwitches(). We need a default dest, so we use the
-  // current BB, but this is overwritten.
+  // Ensure that we have an i8* for our PHI node.
   llvm::Value *V = Builder.CreateBitCast(EmitScalarExpr(S.getTarget()),
                                          llvm::Type::getInt8PtrTy(VMContext),
                                           "addr");
