@@ -362,8 +362,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
 
       if (isInstructionTriviallyDead(Inst))
         (*BB)->getInstList().erase(Inst);
-      else if (Constant *C = ConstantFoldInstruction(Inst, 
-                                                     Header->getContext())) {
+      else if (Constant *C = ConstantFoldInstruction(Inst)) {
         Inst->replaceAllUsesWith(C);
         (*BB)->getInstList().erase(Inst);
       }

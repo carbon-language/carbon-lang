@@ -32,7 +32,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -961,7 +960,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     Worklist.pop_back();
     
     // Simple constant folding.
-    if (Constant *C = ConstantFoldInstruction(I, I->getContext())) {
+    if (Constant *C = ConstantFoldInstruction(I)) {
       ReplaceUsesOfWith(I, C, Worklist, L, LPM);
       continue;
     }

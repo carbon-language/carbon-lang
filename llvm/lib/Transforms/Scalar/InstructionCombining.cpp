@@ -12824,7 +12824,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
       
       // ConstantProp instruction if trivially constant.
       if (!Inst->use_empty() && isa<Constant>(Inst->getOperand(0)))
-        if (Constant *C = ConstantFoldInstruction(Inst, BB->getContext(), TD)) {
+        if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
           DEBUG(errs() << "IC: ConstFold to: " << *C << " from: "
                        << *Inst << '\n');
           Inst->replaceAllUsesWith(C);
@@ -12846,8 +12846,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
           if (!FoldedConstants.insert(CE))
             continue;
           
-          Constant *NewC =
-            ConstantFoldConstantExpression(CE, BB->getContext(), TD);
+          Constant *NewC = ConstantFoldConstantExpression(CE, TD);
           if (NewC && NewC != CE) {
             *i = NewC;
             MadeIRChange = true;
@@ -12954,7 +12953,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
     // Instruction isn't dead, see if we can constant propagate it.
     if (!I->use_empty() && isa<Constant>(I->getOperand(0)))
-      if (Constant *C = ConstantFoldInstruction(I, F.getContext(), TD)) {
+      if (Constant *C = ConstantFoldInstruction(I, TD)) {
         DEBUG(errs() << "IC: ConstFold to: " << *C << " from: " << *I << '\n');
 
         // Add operands to the worklist.

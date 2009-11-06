@@ -3816,7 +3816,6 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
   if (Constant *C = dyn_cast<Constant>(V)) return C;
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
   Instruction *I = cast<Instruction>(V);
-  LLVMContext &Context = I->getParent()->getContext();
 
   std::vector<Constant*> Operands;
   Operands.resize(I->getNumOperands());
@@ -3828,12 +3827,10 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                           &Operands[0], Operands.size(),
-                                           Context);
+                                           &Operands[0], Operands.size());
   else
     return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                    &Operands[0], Operands.size(),
-                                    Context);
+                                    &Operands[0], Operands.size());
 }
 
 /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
@@ -4040,12 +4037,10 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
         Constant *C;
         if (const CmpInst *CI = dyn_cast<CmpInst>(I))
           C = ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                              &Operands[0], Operands.size(),
-                                              getContext());
+                                              &Operands[0], Operands.size());
         else
           C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                       &Operands[0], Operands.size(),
-                                       getContext());
+                                       &Operands[0], Operands.size());
         return getSCEV(C);
       }
     }

@@ -28,7 +28,6 @@ namespace llvm {
 
 class Module;
 class Constant;
-class LLVMContext;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
@@ -50,8 +49,7 @@ public:
   }
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.
-  GlobalVariable(LLVMContext &Context, const Type *Ty, bool isConstant,
-                 LinkageTypes Linkage,
+  GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer = 0, const Twine &Name = "",
                  bool ThreadLocal = false, unsigned AddressSpace = 0);
   /// GlobalVariable ctor - This creates a global and inserts it before the

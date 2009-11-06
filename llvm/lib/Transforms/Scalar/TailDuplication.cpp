@@ -359,8 +359,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
       Instruction *Inst = BI++;
       if (isInstructionTriviallyDead(Inst))
         Inst->eraseFromParent();
-      else if (Constant *C = ConstantFoldInstruction(Inst,
-                                                     Inst->getContext())) {
+      else if (Constant *C = ConstantFoldInstruction(Inst)) {
         Inst->replaceAllUsesWith(C);
         Inst->eraseFromParent();
       }

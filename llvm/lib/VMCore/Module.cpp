@@ -31,8 +31,7 @@ using namespace llvm;
 //
 
 GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
-  GlobalVariable *Ret = new GlobalVariable(getGlobalContext(), 
-                                           Type::getInt32Ty(getGlobalContext()),
+  GlobalVariable *Ret = new GlobalVariable(Type::getInt32Ty(getGlobalContext()),
                                            false, GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);

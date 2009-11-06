@@ -16,7 +16,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -95,8 +94,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
-                               bool constant, LinkageTypes Link,
+GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
                                Constant *InitVal, const Twine &Name,
                                bool ThreadLocal, unsigned AddressSpace)
   : GlobalValue(PointerType::get(Ty, AddressSpace), 

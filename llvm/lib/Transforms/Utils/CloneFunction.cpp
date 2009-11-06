@@ -322,8 +322,6 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
 /// mapping its operands through ValueMap if they are available.
 Constant *PruningFunctionCloner::
 ConstantFoldMappedInstruction(const Instruction *I) {
-  LLVMContext &Context = I->getContext();
-  
   SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (Constant *Op = dyn_cast_or_null<Constant>(MapValue(I->getOperand(i),
@@ -334,8 +332,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                           &Ops[0], Ops.size(), 
-                                           Context, TD);
+                                           &Ops[0], Ops.size(), TD);
 
   if (const LoadInst *LI = dyn_cast<LoadInst>(I))
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
@@ -346,7 +343,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
                                                           CE);
 
   return ConstantFoldInstOperands(I->getOpcode(), I->getType(), &Ops[0],
-                                  Ops.size(), Context, TD);
+                                  Ops.size(), TD);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,

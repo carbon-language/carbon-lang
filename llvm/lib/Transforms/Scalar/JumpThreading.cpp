@@ -1044,7 +1044,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
   BI = NewBB->begin();
   for (BasicBlock::iterator E = NewBB->end(); BI != E; ) {
     Instruction *Inst = BI++;
-    if (Constant *C = ConstantFoldInstruction(Inst, BB->getContext(), TD)) {
+    if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
       Inst->replaceAllUsesWith(C);
       Inst->eraseFromParent();
       continue;

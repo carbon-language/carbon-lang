@@ -91,8 +91,7 @@ static bool isConstantOne(Value *val) {
   return isa<ConstantInt>(val) && cast<ConstantInt>(val)->isOne();
 }
 
-static Value *isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
-                                  const TargetData *TD) {
+static Value *isArrayMallocHelper(const CallInst *CI, const TargetData *TD) {
   if (!CI)
     return NULL;
 
@@ -109,7 +108,7 @@ static Value *isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
   ElementSize = ConstantExpr::getTruncOrBitCast(ElementSize, 
                                                 MallocArg->getType());
   Constant *FoldedElementSize =
-   ConstantFoldConstantExpression(cast<ConstantExpr>(ElementSize), Context, TD);
+   ConstantFoldConstantExpression(cast<ConstantExpr>(ElementSize), TD);
 
   // First, check if CI is a non-array malloc.
   if (CO && ((CO == ElementSize) ||
@@ -159,7 +158,7 @@ static Value *isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
       
       APInt Op1Int = Op1CI->getValue();
       uint64_t BitToSet = Op1Int.getLimitedValue(Op1Int.getBitWidth() - 1);
-      Value *Op1Pow = ConstantInt::get(Context, 
+      Value *Op1Pow = ConstantInt::get(Op1CI->getContext(), 
                                   APInt(Op1Int.getBitWidth(), 0).set(BitToSet));
       if (Op0 == ElementSize || (FoldedElementSize && Op0 == FoldedElementSize))
         // ArraySize << log2(ElementSize)
@@ -178,10 +177,9 @@ static Value *isArrayMallocHelper(const CallInst *CI, LLVMContext &Context,
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction 
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
-CallInst *llvm::isArrayMalloc(Value *I, LLVMContext &Context,
-                              const TargetData *TD) {
+CallInst *llvm::isArrayMalloc(Value *I, const TargetData *TD) {
   CallInst *CI = extractMallocCall(I);
-  Value *ArraySize = isArrayMallocHelper(CI, Context, TD);
+  Value *ArraySize = isArrayMallocHelper(CI, TD);
 
   if (ArraySize &&
       ArraySize != ConstantInt::get(CI->getOperand(1)->getType(), 1))
@@ -191,10 +189,9 @@ CallInst *llvm::isArrayMalloc(Value *I, LLVMContext &Context,
   return NULL;
 }
 
-const CallInst *llvm::isArrayMalloc(const Value *I, LLVMContext &Context,
-                                    const TargetData *TD) {
+const CallInst *llvm::isArrayMalloc(const Value *I, const TargetData *TD) {
   const CallInst *CI = extractMallocCall(I);
-  Value *ArraySize = isArrayMallocHelper(CI, Context, TD);
+  Value *ArraySize = isArrayMallocHelper(CI, TD);
 
   if (ArraySize &&
       ArraySize != ConstantInt::get(CI->getOperand(1)->getType(), 1))
@@ -244,9 +241,8 @@ const Type *llvm::getMallocAllocatedType(const CallInst *CI) {
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
-Value *llvm::getMallocArraySize(CallInst *CI, LLVMContext &Context,
-                                const TargetData *TD) {
-  return isArrayMallocHelper(CI, Context, TD);
+Value *llvm::getMallocArraySize(CallInst *CI, const TargetData *TD) {
+  return isArrayMallocHelper(CI, TD);
 }
 
 //===----------------------------------------------------------------------===//

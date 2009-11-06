@@ -1217,7 +1217,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
           }
           
           // Check for trivial simplification.
-          if (Constant *C = ConstantFoldInstruction(N, BB->getContext())) {
+          if (Constant *C = ConstantFoldInstruction(N)) {
             TranslateMap[BBI] = C;
             delete N;   // Constant folded away, don't need actual inst
           } else {
