@@ -381,13 +381,7 @@ Parser::OwningExprResult Parser::ParseCXXCasts() {
   OwningExprResult Result = ParseExpression();
 
   // Match the ')'.
-  if (Result.isInvalid())
-    SkipUntil(tok::r_paren);
-
-  if (Tok.is(tok::r_paren))
-    RParenLoc = ConsumeParen();
-  else
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
   if (!Result.isInvalid() && !CastTy.isInvalid())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
