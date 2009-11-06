@@ -373,10 +373,10 @@ namespace llvm {
 
     /// printImplicitDef - This method prints the specified machine instruction
     /// that is an implicit def.
-    virtual void printImplicitDef(const MachineInstr *MI) const;
+    void printImplicitDef(const MachineInstr *MI) const;
 
     /// printKill - This method prints the specified kill machine instruction.
-    virtual void printKill(const MachineInstr *MI) const;
+    void printKill(const MachineInstr *MI) const;
 
     /// printPICJumpTableSetLabel - This method prints a set label for the
     /// specified MachineBasicBlock for a jumptable entry.
