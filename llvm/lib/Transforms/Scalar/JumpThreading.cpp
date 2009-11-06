@@ -1005,47 +1005,10 @@ bool JumpThreading::ProcessThreadableEdges(Instruction *CondInst,
 bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   BasicBlock *BB = PN->getParent();
   
-  // See if the phi node has any constant integer or undef values.  If so, we
-  // can determine where the corresponding predecessor will branch.
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-    Value *PredVal = PN->getIncomingValue(i);
-    
-    // Check to see if this input is a constant integer.  If so, the direction
-    // of the branch is predictable.
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(PredVal)) {
-      // Merge any common predecessors that will act the same.
-      BasicBlock *PredBB = FactorCommonPHIPreds(PN, CI);
-      
-      BasicBlock *SuccBB;
-      if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-        SuccBB = BI->getSuccessor(CI->isZero());
-      else {
-        SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
-        SuccBB = SI->getSuccessor(SI->findCaseValue(CI));
-      }
-      
-      // Ok, try to thread it!
-      return ThreadEdge(BB, PredBB, SuccBB);
-    }
-    
-    // If the input is an undef, then it doesn't matter which way it will go.
-    // Pick an arbitrary dest and thread the edge.
-    if (UndefValue *UV = dyn_cast<UndefValue>(PredVal)) {
-      // Merge any common predecessors that will act the same.
-      BasicBlock *PredBB = FactorCommonPHIPreds(PN, UV);
-      BasicBlock *SuccBB =
-        BB->getTerminator()->getSuccessor(GetBestDestForJumpOnUndef(BB));
-      
-      // Ok, try to thread it!
-      return ThreadEdge(BB, PredBB, SuccBB);
-    }
-  }
-  
-  // If the incoming values are all variables, we don't know the destination of
-  // any predecessors.  However, if any of the predecessor blocks end in an
-  // unconditional branch, we can *duplicate* the jump into that block in order
-  // to further encourage jump threading and to eliminate cases where we have
-  // branch on a phi of an icmp (branch on icmp is much better).
+  // If any of the predecessor blocks end in an unconditional branch, we can
+  // *duplicate* the jump into that block in order to further encourage jump
+  // threading and to eliminate cases where we have branch on a phi of an icmp
+  // (branch on icmp is much better).
 
   // We don't want to do this tranformation for switches, because we don't
   // really want to duplicate a switch.
