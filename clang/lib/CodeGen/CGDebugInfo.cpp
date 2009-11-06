@@ -879,6 +879,17 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
     return getOrCreateType(cast<TypeOfType>(Ty)->getUnderlyingType(), Unit);
   case Type::Decltype:
     return getOrCreateType(cast<DecltypeType>(Ty)->getUnderlyingType(), Unit);
+
+  case Type::QualifiedName: {
+    const QualifiedNameType *T = cast<QualifiedNameType>(Ty);
+    return CreateTypeNode(T->getNamedType(), Unit);
+  }
+
+  case Type::SubstTemplateTypeParm: {
+    const SubstTemplateTypeParmType *T = cast<SubstTemplateTypeParmType>(Ty);
+    return CreateTypeNode(T->getReplacementType(), Unit);
+  }
+
   }
 }
 
