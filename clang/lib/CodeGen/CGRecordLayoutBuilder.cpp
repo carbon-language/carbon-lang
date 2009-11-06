@@ -208,7 +208,11 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
       Align = 1;
     }
   }
-
+  if (!Align) {
+    assert((D->field_begin() == D->field_end()) && "LayoutUnion - Align 0");
+    Align = 1;
+  }
+  
   // Append tail padding.
   if (Layout.getSize() / 8 > Size)
     AppendPadding(Layout.getSize() / 8, Align);
