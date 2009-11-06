@@ -388,7 +388,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
-  if (!DestType->isLValueReferenceType())
+  if (!DestType->isLValueReferenceType() && !DestType->isRecordType())
     Self.DefaultFunctionArrayConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
@@ -1104,7 +1104,7 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   if (CastTy->isDependentType() || CastExpr->isTypeDependent())
     return false;
 
-  if (!CastTy->isLValueReferenceType())
+  if (!CastTy->isLValueReferenceType() && !CastTy->isRecordType())
     DefaultFunctionArrayConversion(CastExpr);
 
   // C++ [expr.cast]p5: The conversions performed by
