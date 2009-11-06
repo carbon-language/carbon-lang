@@ -115,3 +115,36 @@ void f7() {
   // CHECK: call void @_ZN1GD1Ev
   a(G());
 }
+
+namespace PR5077 {
+
+struct A {
+  A();
+  ~A();
+  int f();
+};
+
+void f();
+int g(const A&);
+
+struct B {
+  int a1;
+  int a2;
+  B();
+};
+
+B::B()
+  // CHECK: call void @_ZN6PR50771AC1Ev
+  // CHECK: call i32 @_ZN6PR50771A1fEv
+  // CHECK: call void @_ZN6PR50771AD1Ev
+  : a1(A().f())
+  // CHECK: call void @_ZN6PR50771AC1Ev
+  // CHECK: call i32 @_ZN6PR50771gERKNS_1AE
+  // CHECK: call void @_ZN6PR50771AD1Ev
+  , a2(g(A()))
+{
+  // CHECK: call void @_ZN6PR50771fEv
+  f();
+}
+  
+}

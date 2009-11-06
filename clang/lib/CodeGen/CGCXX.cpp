@@ -1468,10 +1468,17 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
        B != E; ++B) {
     CXXBaseOrMemberInitializer *Member = (*B);
     
+    assert(LiveTemporaries.empty() &&
+           "Should not have any live temporaries at initializer start!");
+
     if (Member->isBaseInitializer())
       EmitBaseInitializer(*this, ClassDecl, Member, CtorType);
     else
       EmitMemberInitializer(*this, ClassDecl, Member);
+
+    // Pop any live temporaries that the initializers might have pushed.
+    while (!LiveTemporaries.empty())
+      PopCXXTemporary();
   }
 
   if (!CD->getNumBaseOrMemberInitializers() && !CD->isTrivial()) {
