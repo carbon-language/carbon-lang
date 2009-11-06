@@ -5362,21 +5362,25 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
 
   llvm::APSInt EnumVal(32);
   QualType EltTy;
-  if (Val && !Val->isTypeDependent()) {
-    // Make sure to promote the operand type to int.
-    UsualUnaryConversions(Val);
-    if (Val != val.get()) {
-      val.release();
-      val = Val;
-    }
+  if (Val) {
+    if (Val->isTypeDependent())
+      EltTy = Context.DependentTy;
+    else {
+      // Make sure to promote the operand type to int.
+      UsualUnaryConversions(Val);
+      if (Val != val.get()) {
+        val.release();
+        val = Val;
+      }
 
-    // C99 6.7.2.2p2: Make sure we have an integer constant expression.
-    SourceLocation ExpLoc;
-    if (!Val->isValueDependent() &&
-        VerifyIntegerConstantExpression(Val, &EnumVal)) {
-      Val = 0;
-    } else {
-      EltTy = Val->getType();
+      // C99 6.7.2.2p2: Make sure we have an integer constant expression.
+      SourceLocation ExpLoc;
+      if (!Val->isValueDependent() &&
+          VerifyIntegerConstantExpression(Val, &EnumVal)) {
+        Val = 0;
+      } else {
+        EltTy = Val->getType();
+      }
     }
   }
 
@@ -5398,6 +5402,8 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
     }
   }
 
+  assert(!EltTy.isNull() && "Enum constant with NULL type");
+  
   val.release();
   return EnumConstantDecl::Create(Context, Enum, IdLoc, Id, EltTy,
                                   Val, EnumVal);
