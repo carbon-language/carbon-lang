@@ -1295,6 +1295,16 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ImpCastExprToType(From, Context.BoolTy, CastExpr::CK_Unknown);
     break;
 
+  case ICK_Derived_To_Base:
+    if (CheckDerivedToBaseConversion(From->getType(), 
+                                     ToType.getNonReferenceType(),
+                                     From->getLocStart(),
+                                     From->getSourceRange()))
+      return true;
+    ImpCastExprToType(From, ToType.getNonReferenceType(), 
+                      CastExpr::CK_DerivedToBase);
+    break;
+      
   default:
     assert(false && "Improper second standard conversion");
     break;
@@ -1312,7 +1322,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                       CastExpr::CK_NoOp,
                       ToType->isLValueReferenceType());
     break;
-
+      
   default:
     assert(false && "Improper second standard conversion");
     break;

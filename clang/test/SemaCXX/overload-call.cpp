@@ -278,3 +278,16 @@ float& db_rebind(Z&);
 void db_rebind_test(Z2 z2) {
   float& f1 = db_rebind(z2);
 }
+
+class string { };
+class opt : public string { };
+
+struct SR {
+  SR(const string&);
+};
+
+void f(SR) { }
+
+void g(opt o) {
+  f(o);
+}
