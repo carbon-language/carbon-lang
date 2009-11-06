@@ -116,13 +116,6 @@ $TestSVNURL    = 'http://llvm.org/svn/llvm-project' unless $TestSVNURL;
 my $BuildDir   = $ENV{'BUILDDIR'};
 my $WebDir     = $ENV{'WEBDIR'};
 
-my $LLVMSrcDir   = $ENV{'LLVMSRCDIR'};
-$LLVMSrcDir    = "$BuildDir/llvm" unless $LLVMSrcDir;
-my $LLVMObjDir   = $ENV{'LLVMOBJDIR'};
-$LLVMObjDir    = "$BuildDir/llvm" unless $LLVMObjDir;
-my $LLVMTestDir   = $ENV{'LLVMTESTDIR'};
-$LLVMTestDir    = "$BuildDir/llvm/projects/llvm-test" unless $LLVMTestDir;
-
 ##############################################################
 #
 # Calculate the date prefix...
@@ -268,6 +261,13 @@ if ($nickname eq "") {
   die ("Please invoke NewNightlyTest.pl with command line option " .
        "\"-nickname <nickname>\"");
 }
+
+my $LLVMSrcDir   = $ENV{'LLVMSRCDIR'};
+$LLVMSrcDir    = "$BuildDir/llvm" unless $LLVMSrcDir;
+my $LLVMObjDir   = $ENV{'LLVMOBJDIR'};
+$LLVMObjDir    = "$BuildDir/llvm" unless $LLVMObjDir;
+my $LLVMTestDir   = $ENV{'LLVMTESTDIR'};
+$LLVMTestDir    = "$BuildDir/llvm/projects/llvm-test" unless $LLVMTestDir;
 
 ##############################################################
 #
