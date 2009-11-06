@@ -4,3 +4,5 @@ template<typename T> struct Identity {
 };
 
 void f(Identity<int>::Type a) {}
+void f(Identity<int> a) {}
+void f(int& a) { }

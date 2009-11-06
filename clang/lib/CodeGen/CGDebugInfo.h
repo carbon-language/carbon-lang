@@ -73,7 +73,11 @@ class CGDebugInfo {
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const EnumType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const LValueReferenceType *Ty, llvm::DICompileUnit U);
 
+  llvm::DIType CreatePointerLikeType(unsigned Tag,
+                                     const Type *Ty, QualType PointeeTy,
+                                     llvm::DICompileUnit U);
 public:
   CGDebugInfo(CodeGenModule *m);
   ~CGDebugInfo();

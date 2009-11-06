@@ -242,32 +242,37 @@ llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DICompileUnit U
 
 llvm::DIType CGDebugInfo::CreateType(const ObjCObjectPointerType *Ty,
                                      llvm::DICompileUnit Unit) {
-  llvm::DIType EltTy = getOrCreateType(Ty->getPointeeType(), Unit);
-
-  // Bit size, align and offset of the type.
-  uint64_t Size = M->getContext().getTypeSize(Ty);
-  uint64_t Align = M->getContext().getTypeAlign(Ty);
-
   llvm::DIType DbgTy =
-    DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
-                                   "", llvm::DICompileUnit(),
-                                   0, Size, Align, 0, 0, EltTy);
+    CreatePointerLikeType(llvm::dwarf::DW_TAG_pointer_type, Ty, 
+                          Ty->getPointeeType(), Unit);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
                                      llvm::DICompileUnit Unit) {
-  llvm::DIType EltTy = getOrCreateType(Ty->getPointeeType(), Unit);
+  return CreatePointerLikeType(llvm::dwarf::DW_TAG_pointer_type, Ty, 
+                               Ty->getPointeeType(), Unit);
+}
+
+llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
+                                                const Type *Ty, 
+                                                QualType PointeeTy,
+                                                llvm::DICompileUnit Unit) {
+  llvm::DIType EltTy = getOrCreateType(PointeeTy, Unit);
 
   // Bit size, align and offset of the type.
-  uint64_t Size = M->getContext().getTypeSize(Ty);
+  
+  // Size is always the size of a pointer. We can't use getTypeSize here
+  // because that does not return the correct value for references.
+  uint64_t Size = 
+    M->getContext().Target.getPointerWidth(PointeeTy.getAddressSpace());
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
   return
-    DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
-                                   "", llvm::DICompileUnit(),
+    DebugFactory.CreateDerivedType(Tag, Unit, "", llvm::DICompileUnit(),
                                    0, Size, Align, 0, 0, EltTy);
+  
 }
 
 llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
@@ -802,6 +807,11 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   return DbgTy;
 }
 
+llvm::DIType CGDebugInfo::CreateType(const LValueReferenceType *Ty, 
+                                     llvm::DICompileUnit Unit) {
+  return CreatePointerLikeType(llvm::dwarf::DW_TAG_reference_type, 
+                               Ty, Ty->getPointeeType(), Unit);
+}
 
 /// getOrCreateType - Get the type from the cache or create a new
 /// one if necessary.
@@ -889,6 +899,14 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
     const SubstTemplateTypeParmType *T = cast<SubstTemplateTypeParmType>(Ty);
     return CreateTypeNode(T->getReplacementType(), Unit);
   }
+
+  case Type::TemplateSpecialization: {
+    const TemplateSpecializationType *T = cast<TemplateSpecializationType>(Ty);
+    return CreateTypeNode(T->desugar(), Unit);
+  }
+
+  case Type::LValueReference:
+    return CreateType(cast<LValueReferenceType>(Ty), Unit);
 
   }
 }
