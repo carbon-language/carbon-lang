@@ -4445,9 +4445,15 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   return LHSTy;
 }
 
-/// Implements -Wsign-compare.
+/// \brief Implements -Wsign-compare.
+///
+/// \param lex the left-hand expression
+/// \param rex the right-hand expression
+/// \param OpLoc the location of the joining operator
+/// \param Equality whether this is an "equality-like" join;
+///   this suppresses the warning in some cases
 void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
-                            const PartialDiagnostic &PD) {
+                            const PartialDiagnostic &PD, bool Equality) {
   QualType lt = lex->getType(), rt = rex->getType();
 
   // Only warn if both operands are integral.
@@ -4461,14 +4467,24 @@ void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
 
   // The rule is that the signed operand becomes unsigned, so isolate the
   // signed operand.
-  Expr *signedOperand;
+  Expr *signedOperand, *unsignedOperand;
   if (lt->isSignedIntegerType()) {
     if (rt->isSignedIntegerType()) return;
     signedOperand = lex;
+    unsignedOperand = rex;
   } else {
     if (!rt->isSignedIntegerType()) return;
     signedOperand = rex;
+    unsignedOperand = lex;
   }
+
+  // If the unsigned type is strictly smaller than the signed type,
+  // then (1) the result type will be signed and (2) the unsigned type
+  // will fight losslessly within the signed type, and so the result
+  // of the comparison will be exact.
+  if (Context.getIntWidth(signedOperand->getType()) >
+      Context.getIntWidth(unsignedOperand->getType()))
+    return;
 
   // If the value is a non-negative integer constant, then the
   // signed->unsigned conversion won't change it.
@@ -4478,6 +4494,20 @@ void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
 
     if (value.isNonNegative())
       return;
+  }
+
+  if (Equality) {
+    // For (in)equality comparisons, if the unsigned operand is a
+    // constant no greater than the maximum signed operand, then
+    // reinterpreting the signed operand as unsigned will not change
+    // the result of the comparison.
+    if (unsignedOperand->isIntegerConstantExpr(value, Context)) {
+      assert(!value.isSigned() && "result of unsigned expression is signed");
+
+      // 2's complement:  test the top bit.
+      if (value.isNonNegative())
+        return;
+    }
   }
 
   Diag(OpLoc, PD)
@@ -4493,7 +4523,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
 
-  CheckSignCompare(lex, rex, Loc, diag::warn_mixed_sign_comparison);
+  CheckSignCompare(lex, rex, Loc, diag::warn_mixed_sign_comparison,
+                   (Opc == BinaryOperator::EQ || Opc == BinaryOperator::NE));
 
   // C99 6.5.8p3 / C99 6.5.9p4
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())

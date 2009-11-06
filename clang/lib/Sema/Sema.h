@@ -1610,7 +1610,8 @@ public:
                              Expr **Args, unsigned NumArgs);
 
   void CheckSignCompare(Expr *LHS, Expr *RHS, SourceLocation Loc,
-                        const PartialDiagnostic &PD);
+                        const PartialDiagnostic &PD,
+                        bool Equality = false);
 
   virtual ExpressionEvaluationContext
   PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext);
