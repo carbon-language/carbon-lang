@@ -51,9 +51,12 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
 
   const ElementRegion *ER = dyn_cast_or_null<ElementRegion>(R);
   if (!ER)
-    return;  
+    return;
 
   DefinedOrUnknownSVal &Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
+
+  // FIXME: All of this out-of-bounds checking should eventually be refactored into a
+  // common place.
 
   // Zero index is always in bound, this also passes ElementRegions created for
   // pointer casts.
@@ -72,15 +75,21 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
     if (!N)
       return;
   
+    // FIXME: This bug correspond to CWE-466.  Eventually we should have bug types explicitly
+    // reference such exploit categories (when applicable).
     if (!BT)
-      BT = new BuiltinBug("Return of Pointer Value Outside of Expected Range");
-  
+      BT = new BuiltinBug("Return of pointer value outside of expected range",
+           "Returned pointer value points outside the original object (potential buffer overflow)");
+
+    // FIXME: It would be nice to eventually make this diagnostic more clear, e.g., by referencing
+    // the original declaration or by saying *why* this reference is outside the range.
+
     // Generate a report for this bug.
     RangedBugReport *report = 
       new RangedBugReport(*BT, BT->getDescription().c_str(), N);
 
-    report->addRange(RS->getSourceRange());
-  
+    report->addRange(RetE->getSourceRange());
+
     C.EmitReport(report);
   }
 }

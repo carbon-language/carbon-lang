@@ -431,3 +431,26 @@ pr5316_REFRESH_ELEMENT;
 static void pr5316(pr5316_REFRESH_ELEMENT *dst, const pr5316_REFRESH_ELEMENT *src) {
   while ((*dst++ = *src++).chr != L'\0')  ;
 }
+
+//===----------------------------------------------------------------------===//
+// Exercise creating ElementRegion with symbolic super region.
+//===----------------------------------------------------------------------===//
+void element_region_with_symbolic_superregion(int* p) {
+  int *x;
+  int a;
+  if (p[0] == 1)
+    x = &a;
+  if (p[0] == 1)
+    (void)*x; // no-warning
+}
+
+//===----------------------------------------------------------------------===//
+// Test returning an out-of-bounds pointer (CWE-466)
+//===----------------------------------------------------------------------===//
+
+static int test_cwe466_return_outofbounds_pointer_a[10];
+int *test_cwe466_return_outofbounds_pointer() {
+  int *p = test_cwe466_return_outofbounds_pointer_a+10;
+  return p; // expected-warning{{Returned pointer value points outside the original object}}
+}
+
