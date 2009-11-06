@@ -1366,12 +1366,100 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
   FinishFunction();
 }
 
+static void EmitBaseInitializer(CodeGenFunction &CGF, 
+                                const CXXRecordDecl *ClassDecl,
+                                CXXBaseOrMemberInitializer *BaseInit,
+                                CXXCtorType CtorType) {
+  assert(BaseInit->isBaseInitializer() &&
+         "Must have base initializer!");
+
+  llvm::Value *ThisPtr = CGF.LoadCXXThis();
+  
+  const Type *BaseType = BaseInit->getBaseClass();
+  CXXRecordDecl *BaseClassDecl =
+    cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
+  llvm::Value *V = CGF.GetAddressCXXOfBaseClass(ThisPtr, ClassDecl,
+                                                BaseClassDecl,
+                                                /*NullCheckValue=*/false);
+  CGF.EmitCXXConstructorCall(BaseInit->getConstructor(),
+                             CtorType, V,
+                             BaseInit->const_arg_begin(),
+                             BaseInit->const_arg_end());
+}
+
+static void EmitMemberInitializer(CodeGenFunction &CGF,
+                                  const CXXRecordDecl *ClassDecl,
+                                  CXXBaseOrMemberInitializer *MemberInit) {
+  assert(MemberInit->isMemberInitializer() &&
+         "Must have member initializer!");
+  
+  // non-static data member initializers.
+  FieldDecl *Field = MemberInit->getMember();
+  QualType FieldType = CGF.getContext().getCanonicalType((Field)->getType());
+  const ConstantArrayType *Array =
+    CGF.getContext().getAsConstantArrayType(FieldType);
+  if (Array)
+    FieldType = CGF.getContext().getBaseElementType(FieldType);
+
+  llvm::Value *ThisPtr = CGF.LoadCXXThis();
+  LValue LHS;
+  if (FieldType->isReferenceType()) {
+    // FIXME: This is really ugly; should be refactored somehow
+    unsigned idx = CGF.CGM.getTypes().getLLVMFieldNo(Field);
+    llvm::Value *V = CGF.Builder.CreateStructGEP(ThisPtr, idx, "tmp");
+    assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
+    LHS = LValue::MakeAddr(V, CGF.MakeQualifiers(FieldType));
+  } else {
+    LHS = CGF.EmitLValueForField(ThisPtr, Field, false, 0);
+  }
+  if (FieldType->getAs<RecordType>()) {
+    if (!Field->isAnonymousStructOrUnion()) {
+      assert(MemberInit->getConstructor() &&
+             "EmitCtorPrologue - no constructor to initialize member");
+      if (Array) {
+        const llvm::Type *BasePtr = CGF.ConvertType(FieldType);
+        BasePtr = llvm::PointerType::getUnqual(BasePtr);
+        llvm::Value *BaseAddrPtr =
+          CGF.Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+        CGF.EmitCXXAggrConstructorCall(MemberInit->getConstructor(),
+                                       Array, BaseAddrPtr);
+      }
+      else
+        CGF.EmitCXXConstructorCall(MemberInit->getConstructor(),
+                                   Ctor_Complete, LHS.getAddress(),
+                                   MemberInit->const_arg_begin(),
+                                   MemberInit->const_arg_end());
+      return;
+    }
+    else {
+      // Initializing an anonymous union data member.
+      FieldDecl *anonMember = MemberInit->getAnonUnionMember();
+      LHS = CGF.EmitLValueForField(LHS.getAddress(), anonMember,
+                                   /*IsUnion=*/true, 0);
+      FieldType = anonMember->getType();
+    }
+  }
+
+  assert(MemberInit->getNumArgs() == 1 && "Initializer count must be 1 only");
+  Expr *RhsExpr = *MemberInit->arg_begin();
+  RValue RHS;
+  if (FieldType->isReferenceType())
+    RHS = CGF.EmitReferenceBindingToExpr(RhsExpr, FieldType,
+                                    /*IsInitializer=*/true);
+  else if (FieldType->isMemberFunctionPointerType())
+    RHS = RValue::get(CGF.CGM.EmitConstantExpr(RhsExpr, FieldType, &CGF));
+  else
+    RHS = RValue::get(CGF.EmitScalarExpr(RhsExpr, true));
+  CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
+}
+
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 /// FIXME: This needs to take a CXXCtorType.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
                                        CXXCtorType CtorType) {
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  const CXXRecordDecl *ClassDecl = CD->getParent();
+  
   // FIXME: Add vbase initialization
   llvm::Value *LoadOfThis = 0;
 
@@ -1379,78 +1467,11 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
        E = CD->init_end();
        B != E; ++B) {
     CXXBaseOrMemberInitializer *Member = (*B);
-    if (Member->isBaseInitializer()) {
-      LoadOfThis = LoadCXXThis();
-      Type *BaseType = Member->getBaseClass();
-      CXXRecordDecl *BaseClassDecl =
-        cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
-      llvm::Value *V = GetAddressCXXOfBaseClass(LoadOfThis, ClassDecl,
-                                                BaseClassDecl,
-                                                /*NullCheckValue=*/false);
-      EmitCXXConstructorCall(Member->getConstructor(),
-                             CtorType, V,
-                             Member->const_arg_begin(),
-                             Member->const_arg_end());
-    } else {
-      // non-static data member initilaizers.
-      FieldDecl *Field = Member->getMember();
-      QualType FieldType = getContext().getCanonicalType((Field)->getType());
-      const ConstantArrayType *Array =
-        getContext().getAsConstantArrayType(FieldType);
-      if (Array)
-        FieldType = getContext().getBaseElementType(FieldType);
-
-      LoadOfThis = LoadCXXThis();
-      LValue LHS;
-      if (FieldType->isReferenceType()) {
-        // FIXME: This is really ugly; should be refactored somehow
-        unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
-        llvm::Value *V = Builder.CreateStructGEP(LoadOfThis, idx, "tmp");
-        assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
-        LHS = LValue::MakeAddr(V, MakeQualifiers(FieldType));
-      } else {
-        LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
-      }
-      if (FieldType->getAs<RecordType>()) {
-        if (!Field->isAnonymousStructOrUnion()) {
-          assert(Member->getConstructor() &&
-                 "EmitCtorPrologue - no constructor to initialize member");
-          if (Array) {
-            const llvm::Type *BasePtr = ConvertType(FieldType);
-            BasePtr = llvm::PointerType::getUnqual(BasePtr);
-            llvm::Value *BaseAddrPtr =
-            Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-            EmitCXXAggrConstructorCall(Member->getConstructor(),
-                                       Array, BaseAddrPtr);
-          }
-          else
-            EmitCXXConstructorCall(Member->getConstructor(),
-                                   Ctor_Complete, LHS.getAddress(),
-                                   Member->const_arg_begin(),
-                                   Member->const_arg_end());
-          continue;
-        }
-        else {
-          // Initializing an anonymous union data member.
-          FieldDecl *anonMember = Member->getAnonUnionMember();
-          LHS = EmitLValueForField(LHS.getAddress(), anonMember,
-                                   /*IsUnion=*/true, 0);
-          FieldType = anonMember->getType();
-        }
-      }
-
-      assert(Member->getNumArgs() == 1 && "Initializer count must be 1 only");
-      Expr *RhsExpr = *Member->arg_begin();
-      RValue RHS;
-      if (FieldType->isReferenceType())
-        RHS = EmitReferenceBindingToExpr(RhsExpr, FieldType,
-                                        /*IsInitializer=*/true);
-      else if (FieldType->isMemberFunctionPointerType())
-        RHS = RValue::get(CGM.EmitConstantExpr(RhsExpr, FieldType, this));
-      else
-        RHS = RValue::get(EmitScalarExpr(RhsExpr, true));
-      EmitStoreThroughLValue(RHS, LHS, FieldType);
-    }
+    
+    if (Member->isBaseInitializer())
+      EmitBaseInitializer(*this, ClassDecl, Member, CtorType);
+    else
+      EmitMemberInitializer(*this, ClassDecl, Member);
   }
 
   if (!CD->getNumBaseOrMemberInitializers() && !CD->isTrivial()) {
