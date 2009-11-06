@@ -25,7 +25,7 @@ MCSection::~MCSection() {
 //===----------------------------------------------------------------------===//
 
 MCSectionCOFF *MCSectionCOFF::
-Create(const StringRef &Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
+Create(StringRef Name, bool IsDirective, SectionKind K, MCContext &Ctx) {
   return new (Ctx) MCSectionCOFF(Name, IsDirective, K);
 }
 

@@ -55,7 +55,7 @@ template class SymbolTableListTraits<GlobalAlias, Module>;
 // Primitive Module methods.
 //
 
-Module::Module(const StringRef &MID, LLVMContext& C)
+Module::Module(StringRef MID, LLVMContext& C)
   : Context(C), ModuleID(MID), DataLayout("")  {
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
@@ -114,7 +114,7 @@ Module::PointerSize Module::getPointerSize() const {
 /// getNamedValue - Return the first global value in the module with
 /// the specified name, of arbitrary type.  This method returns null
 /// if a global with the specified name is not found.
-GlobalValue *Module::getNamedValue(const StringRef &Name) const {
+GlobalValue *Module::getNamedValue(StringRef Name) const {
   return cast_or_null<GlobalValue>(getValueSymbolTable().lookup(Name));
 }
 
@@ -127,7 +127,7 @@ GlobalValue *Module::getNamedValue(const StringRef &Name) const {
 // it.  This is nice because it allows most passes to get away with not handling
 // the symbol table directly for this common task.
 //
-Constant *Module::getOrInsertFunction(const StringRef &Name,
+Constant *Module::getOrInsertFunction(StringRef Name,
                                       const FunctionType *Ty,
                                       AttrListPtr AttributeList) {
   // See if we have a definition for the specified function already.
@@ -160,7 +160,7 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
   return F;  
 }
 
-Constant *Module::getOrInsertTargetIntrinsic(const StringRef &Name,
+Constant *Module::getOrInsertTargetIntrinsic(StringRef Name,
                                              const FunctionType *Ty,
                                              AttrListPtr AttributeList) {
   // See if we have a definition for the specified function already.
@@ -177,7 +177,7 @@ Constant *Module::getOrInsertTargetIntrinsic(const StringRef &Name,
   return F;  
 }
 
-Constant *Module::getOrInsertFunction(const StringRef &Name,
+Constant *Module::getOrInsertFunction(StringRef Name,
                                       const FunctionType *Ty) {
   AttrListPtr AttributeList = AttrListPtr::get((AttributeWithIndex *)0, 0);
   return getOrInsertFunction(Name, Ty, AttributeList);
@@ -188,7 +188,7 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
 // This version of the method takes a null terminated list of function
 // arguments, which makes it easier for clients to use.
 //
-Constant *Module::getOrInsertFunction(const StringRef &Name,
+Constant *Module::getOrInsertFunction(StringRef Name,
                                       AttrListPtr AttributeList,
                                       const Type *RetTy, ...) {
   va_list Args;
@@ -207,7 +207,7 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
                              AttributeList);
 }
 
-Constant *Module::getOrInsertFunction(const StringRef &Name,
+Constant *Module::getOrInsertFunction(StringRef Name,
                                       const Type *RetTy, ...) {
   va_list Args;
   va_start(Args, RetTy);
@@ -228,7 +228,7 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
 // getFunction - Look up the specified function in the module symbol table.
 // If it does not exist, return null.
 //
-Function *Module::getFunction(const StringRef &Name) const {
+Function *Module::getFunction(StringRef Name) const {
   return dyn_cast_or_null<Function>(getNamedValue(Name));
 }
 
@@ -243,7 +243,7 @@ Function *Module::getFunction(const StringRef &Name) const {
 /// If AllowLocal is set to true, this function will return types that
 /// have an local. By default, these types are not returned.
 ///
-GlobalVariable *Module::getGlobalVariable(const StringRef &Name,
+GlobalVariable *Module::getGlobalVariable(StringRef Name,
                                           bool AllowLocal) const {
   if (GlobalVariable *Result = 
       dyn_cast_or_null<GlobalVariable>(getNamedValue(Name)))
@@ -258,7 +258,7 @@ GlobalVariable *Module::getGlobalVariable(const StringRef &Name,
 ///      with a constantexpr cast to the right type.
 ///   3. Finally, if the existing global is the correct delclaration, return the
 ///      existing global.
-Constant *Module::getOrInsertGlobal(const StringRef &Name, const Type *Ty) {
+Constant *Module::getOrInsertGlobal(StringRef Name, const Type *Ty) {
   // See if we have a definition for the specified global already.
   GlobalVariable *GV = dyn_cast_or_null<GlobalVariable>(getNamedValue(Name));
   if (GV == 0) {
@@ -285,21 +285,21 @@ Constant *Module::getOrInsertGlobal(const StringRef &Name, const Type *Ty) {
 // getNamedAlias - Look up the specified global in the module symbol table.
 // If it does not exist, return null.
 //
-GlobalAlias *Module::getNamedAlias(const StringRef &Name) const {
+GlobalAlias *Module::getNamedAlias(StringRef Name) const {
   return dyn_cast_or_null<GlobalAlias>(getNamedValue(Name));
 }
 
 /// getNamedMetadata - Return the first NamedMDNode in the module with the
 /// specified name. This method returns null if a NamedMDNode with the 
 //// specified name is not found.
-NamedMDNode *Module::getNamedMetadata(const StringRef &Name) const {
+NamedMDNode *Module::getNamedMetadata(StringRef Name) const {
   return dyn_cast_or_null<NamedMDNode>(getValueSymbolTable().lookup(Name));
 }
 
 /// getOrInsertNamedMetadata - Return the first named MDNode in the module 
 /// with the specified name. This method returns a new NamedMDNode if a 
 /// NamedMDNode with the specified name is not found.
-NamedMDNode *Module::getOrInsertNamedMetadata(const StringRef &Name) {
+NamedMDNode *Module::getOrInsertNamedMetadata(StringRef Name) {
   NamedMDNode *NMD =
     dyn_cast_or_null<NamedMDNode>(getValueSymbolTable().lookup(Name));
   if (!NMD)
@@ -316,7 +316,7 @@ NamedMDNode *Module::getOrInsertNamedMetadata(const StringRef &Name) {
 // there is already an entry for this name, true is returned and the symbol
 // table is not modified.
 //
-bool Module::addTypeName(const StringRef &Name, const Type *Ty) {
+bool Module::addTypeName(StringRef Name, const Type *Ty) {
   TypeSymbolTable &ST = getTypeSymbolTable();
 
   if (ST.lookup(Name)) return true;  // Already in symtab...
@@ -330,7 +330,7 @@ bool Module::addTypeName(const StringRef &Name, const Type *Ty) {
 
 /// getTypeByName - Return the type with the specified name in this module, or
 /// null if there is none by that name.
-const Type *Module::getTypeByName(const StringRef &Name) const {
+const Type *Module::getTypeByName(StringRef Name) const {
   const TypeSymbolTable &ST = getTypeSymbolTable();
   return cast_or_null<Type>(ST.lookup(Name));
 }
@@ -376,14 +376,14 @@ void Module::dropAllReferences() {
     I->dropAllReferences();
 }
 
-void Module::addLibrary(const StringRef& Lib) {
+void Module::addLibrary(StringRef Lib) {
   for (Module::lib_iterator I = lib_begin(), E = lib_end(); I != E; ++I)
     if (*I == Lib)
       return;
   LibraryList.push_back(Lib);
 }
 
-void Module::removeLibrary(const StringRef& Lib) {
+void Module::removeLibrary(StringRef Lib) {
   LibraryListType::iterator I = LibraryList.begin();
   LibraryListType::iterator E = LibraryList.end();
   for (;I != E; ++I)

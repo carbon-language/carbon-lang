@@ -167,7 +167,7 @@ public:
 
   // lookupPassInfo - Return the pass info object for the pass with the given
   // argument string, or null if it is not known.
-  static const PassInfo *lookupPassInfo(const StringRef &Arg);
+  static const PassInfo *lookupPassInfo(StringRef Arg);
 
   /// getAnalysisIfAvailable<AnalysisType>() - Subclasses use this function to
   /// get analysis information that might be around, for example to update it.

@@ -155,7 +155,7 @@ namespace llvm {
     ///
     /// This is used to implement assembler directives such as .byte, .ascii,
     /// etc.
-    virtual void EmitBytes(const StringRef &Data) = 0;
+    virtual void EmitBytes(StringRef Data) = 0;
 
     /// EmitValue - Emit the expression @param Value into the output as a native
     /// integer of the given @param Size bytes.

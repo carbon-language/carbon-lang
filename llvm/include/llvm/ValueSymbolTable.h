@@ -69,7 +69,7 @@ public:
   /// the symbol table. 
   /// @returns the value associated with the \p Name
   /// @brief Lookup a named Value.
-  Value *lookup(const StringRef &Name) const { return vmap.lookup(Name); }
+  Value *lookup(StringRef Name) const { return vmap.lookup(Name); }
 
   /// @returns true iff the symbol table is empty
   /// @brief Determine if the symbol table is empty
@@ -112,7 +112,7 @@ private:
   /// createValueName - This method attempts to create a value name and insert
   /// it into the symbol table with the specified name.  If it conflicts, it
   /// auto-renames the name and returns that instead.
-  ValueName *createValueName(const StringRef &Name, Value *V);
+  ValueName *createValueName(StringRef Name, Value *V);
   
   /// This method removes a value from the symbol table.  It leaves the
   /// ValueName attached to the value, but it is no longer inserted in the

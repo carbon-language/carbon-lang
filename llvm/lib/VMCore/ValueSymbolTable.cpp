@@ -77,7 +77,7 @@ void ValueSymbolTable::removeValueName(ValueName *V) {
 /// createValueName - This method attempts to create a value name and insert
 /// it into the symbol table with the specified name.  If it conflicts, it
 /// auto-renames the name and returns that instead.
-ValueName *ValueSymbolTable::createValueName(const StringRef &Name, Value *V) {
+ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
   // In the common case, the name is not already in the symbol table.
   ValueName &Entry = vmap.GetOrCreateValue(Name);
   if (Entry.getValue() == 0) {

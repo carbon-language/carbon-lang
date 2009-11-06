@@ -294,7 +294,7 @@ private:
   /// known to exist at the end of the the record.
   template<typename uintty>
   void EmitRecordWithAbbrevImpl(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
-                                const StringRef &Blob) {
+                                StringRef Blob) {
     const char *BlobData = Blob.data();
     unsigned BlobLen = (unsigned) Blob.size();
     unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
@@ -422,7 +422,7 @@ public:
   /// of the record.
   template<typename uintty>
   void EmitRecordWithBlob(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
-                          const StringRef &Blob) {
+                          StringRef Blob) {
     EmitRecordWithAbbrevImpl(Abbrev, Vals, Blob);
   }
   template<typename uintty>
@@ -435,7 +435,7 @@ public:
   /// that end with an array.
   template<typename uintty>
   void EmitRecordWithArray(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
-                          const StringRef &Array) {
+                          StringRef Array) {
     EmitRecordWithAbbrevImpl(Abbrev, Vals, Array);
   }
   template<typename uintty>

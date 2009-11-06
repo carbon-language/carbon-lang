@@ -26,16 +26,16 @@ InlineAsm::~InlineAsm() {
 // NOTE: when memoizing the function type, we have to be careful to handle the
 // case when the type gets refined.
 
-InlineAsm *InlineAsm::get(const FunctionType *Ty, const StringRef &AsmString,
-                          const StringRef &Constraints, bool hasSideEffects,
+InlineAsm *InlineAsm::get(const FunctionType *Ty, StringRef AsmString,
+                          StringRef Constraints, bool hasSideEffects,
                           bool isAlignStack) {
   // FIXME: memoize!
   return new InlineAsm(Ty, AsmString, Constraints, hasSideEffects, 
                        isAlignStack);
 }
 
-InlineAsm::InlineAsm(const FunctionType *Ty, const StringRef &asmString,
-                     const StringRef &constraints, bool hasSideEffects,
+InlineAsm::InlineAsm(const FunctionType *Ty, StringRef asmString,
+                     StringRef constraints, bool hasSideEffects,
                      bool isAlignStack)
   : Value(PointerType::getUnqual(Ty), 
           Value::InlineAsmVal), 
@@ -54,7 +54,7 @@ const FunctionType *InlineAsm::getFunctionType() const {
 /// Parse - Analyze the specified string (e.g. "==&{eax}") and fill in the
 /// fields in this structure.  If the constraint string is not understood,
 /// return true, otherwise return false.
-bool InlineAsm::ConstraintInfo::Parse(const StringRef &Str,
+bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
                      std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar) {
   StringRef::iterator I = Str.begin(), E = Str.end();
   
@@ -149,7 +149,7 @@ bool InlineAsm::ConstraintInfo::Parse(const StringRef &Str,
 }
 
 std::vector<InlineAsm::ConstraintInfo>
-InlineAsm::ParseConstraints(const StringRef &Constraints) {
+InlineAsm::ParseConstraints(StringRef Constraints) {
   std::vector<ConstraintInfo> Result;
   
   // Scan the constraints string.
@@ -183,7 +183,7 @@ InlineAsm::ParseConstraints(const StringRef &Constraints) {
 
 /// Verify - Verify that the specified constraint string is reasonable for the
 /// specified function type, and otherwise validate the constraint string.
-bool InlineAsm::Verify(const FunctionType *Ty, const StringRef &ConstStr) {
+bool InlineAsm::Verify(const FunctionType *Ty, StringRef ConstStr) {
   if (Ty->isVarArg()) return false;
   
   std::vector<ConstraintInfo> Constraints = ParseConstraints(ConstStr);

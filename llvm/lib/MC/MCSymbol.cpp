@@ -35,7 +35,7 @@ static void MangleLetter(raw_ostream &OS, unsigned char C) {
 
 /// NameNeedsEscaping - Return true if the identifier \arg Str needs quotes
 /// for this assembler.
-static bool NameNeedsEscaping(const StringRef &Str, const MCAsmInfo &MAI) {
+static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
   assert(!Str.empty() && "Cannot create an empty MCSymbol");
   
   // If the first character is a number and the target does not allow this, we

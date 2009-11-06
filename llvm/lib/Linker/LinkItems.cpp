@@ -70,7 +70,7 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
 
 /// LinkInLibrary - links one library into the HeadModule.
 ///
-bool Linker::LinkInLibrary(const StringRef &Lib, bool& is_native) {
+bool Linker::LinkInLibrary(StringRef Lib, bool& is_native) {
   is_native = false;
   // Determine where this library lives.
   sys::Path Pathname = FindLib(Lib);

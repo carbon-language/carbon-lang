@@ -169,7 +169,7 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(const StringRef &Str) {
+  raw_ostream &operator<<(StringRef Str) {
     // Inline fast path, particularly for strings with a known length.
     size_t Size = Str.size();
 

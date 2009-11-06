@@ -90,7 +90,7 @@ public:
   
   bool hasSection() const { return !Section.empty(); }
   const std::string &getSection() const { return Section; }
-  void setSection(const StringRef &S) { Section = S; }
+  void setSection(StringRef S) { Section = S; }
   
   /// If the usage is empty (except transitively dead constants), then this
   /// global value can can be safely deleted since the destructor will

@@ -92,14 +92,14 @@ namespace llvm {
 
     /// equals - Check for string equality, this is more efficient than
     /// compare() when the relative ordering of inequal strings isn't needed.
-    bool equals(const StringRef &RHS) const {
+    bool equals(StringRef RHS) const {
       return (Length == RHS.Length &&
               memcmp(Data, RHS.Data, RHS.Length) == 0);
     }
 
     /// compare - Compare two strings; the result is -1, 0, or 1 if this string
     /// is lexicographically less than, equal to, or greater than the \arg RHS.
-    int compare(const StringRef &RHS) const {
+    int compare(StringRef RHS) const {
       // Check the prefix for a mismatch.
       if (int Res = memcmp(Data, RHS.Data, std::min(Length, RHS.Length)))
         return Res < 0 ? -1 : 1;
@@ -135,12 +135,12 @@ namespace llvm {
     /// @{
 
     /// startswith - Check if this string starts with the given \arg Prefix.
-    bool startswith(const StringRef &Prefix) const {
+    bool startswith(StringRef Prefix) const {
       return substr(0, Prefix.Length).equals(Prefix);
     }
 
     /// endswith - Check if this string ends with the given \arg Suffix.
-    bool endswith(const StringRef &Suffix) const {
+    bool endswith(StringRef Suffix) const {
       return slice(size() - Suffix.Length, size()).equals(Suffix);
     }
 
@@ -163,7 +163,7 @@ namespace llvm {
     ///
     /// \return - The index of the first occurence of \arg Str, or npos if not
     /// found.
-    size_t find(const StringRef &Str) const;
+    size_t find(StringRef Str) const;
 
     /// rfind - Search for the last character \arg C in the string.
     ///
@@ -184,7 +184,7 @@ namespace llvm {
     ///
     /// \return - The index of the last occurence of \arg Str, or npos if not
     /// found.
-    size_t rfind(const StringRef &Str) const;
+    size_t rfind(StringRef Str) const;
 
     /// find_first_of - Find the first instance of the specified character or
     /// return npos if not in string.  Same as find.
@@ -213,7 +213,7 @@ namespace llvm {
 
     /// count - Return the number of non-overlapped occurrences of \arg Str in
     /// the string.
-    size_t count(const StringRef &Str) const;
+    size_t count(StringRef Str) const;
 
     /// getAsInteger - Parse the current string as an integer of the specified
     /// radix.  If Radix is specified as zero, this does radix autosensing using
@@ -304,27 +304,27 @@ namespace llvm {
   /// @name StringRef Comparison Operators
   /// @{
 
-  inline bool operator==(const StringRef &LHS, const StringRef &RHS) {
+  inline bool operator==(StringRef LHS, StringRef RHS) {
     return LHS.equals(RHS);
   }
 
-  inline bool operator!=(const StringRef &LHS, const StringRef &RHS) {
+  inline bool operator!=(StringRef LHS, StringRef RHS) {
     return !(LHS == RHS);
   }
 
-  inline bool operator<(const StringRef &LHS, const StringRef &RHS) {
+  inline bool operator<(StringRef LHS, StringRef RHS) {
     return LHS.compare(RHS) == -1;
   }
 
-  inline bool operator<=(const StringRef &LHS, const StringRef &RHS) {
+  inline bool operator<=(StringRef LHS, StringRef RHS) {
     return LHS.compare(RHS) != 1;
   }
 
-  inline bool operator>(const StringRef &LHS, const StringRef &RHS) {
+  inline bool operator>(StringRef LHS, StringRef RHS) {
     return LHS.compare(RHS) == 1;
   }
 
-  inline bool operator>=(const StringRef &LHS, const StringRef &RHS) {
+  inline bool operator>=(StringRef LHS, StringRef RHS) {
     return LHS.compare(RHS) != -1;
   }
 

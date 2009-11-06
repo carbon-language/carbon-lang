@@ -318,7 +318,7 @@ Constant* ConstantInt::get(const Type* Ty, const APInt& V) {
   return C;
 }
 
-ConstantInt* ConstantInt::get(const IntegerType* Ty, const StringRef& Str,
+ConstantInt* ConstantInt::get(const IntegerType* Ty, StringRef Str,
                               uint8_t radix) {
   return get(Ty->getContext(), APInt(Ty->getBitWidth(), Str, radix));
 }
@@ -362,7 +362,7 @@ Constant* ConstantFP::get(const Type* Ty, double V) {
 }
 
 
-Constant* ConstantFP::get(const Type* Ty, const StringRef& Str) {
+Constant* ConstantFP::get(const Type* Ty, StringRef Str) {
   LLVMContext &Context = Ty->getContext();
 
   APFloat FV(*TypeToFloatSemantics(Ty->getScalarType()), Str);
@@ -508,7 +508,7 @@ Constant* ConstantArray::get(const ArrayType* T, Constant* const* Vals,
 /// Otherwise, the length parameter specifies how much of the string to use 
 /// and it won't be null terminated.
 ///
-Constant* ConstantArray::get(LLVMContext &Context, const StringRef &Str,
+Constant* ConstantArray::get(LLVMContext &Context, StringRef Str,
                              bool AddNull) {
   std::vector<Constant*> ElementVals;
   for (unsigned i = 0; i < Str.size(); ++i)

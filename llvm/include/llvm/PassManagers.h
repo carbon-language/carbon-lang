@@ -284,11 +284,11 @@ public:
   void removeNotPreservedAnalysis(Pass *P);
   
   /// Remove dead passes used by P.
-  void removeDeadPasses(Pass *P, const StringRef &Msg, 
+  void removeDeadPasses(Pass *P, StringRef Msg, 
                         enum PassDebuggingString);
 
   /// Remove P.
-  void freePass(Pass *P, const StringRef &Msg, 
+  void freePass(Pass *P, StringRef Msg, 
                 enum PassDebuggingString);
 
   /// Add pass P into the PassVector. Update 
@@ -344,7 +344,7 @@ public:
   void dumpLastUses(Pass *P, unsigned Offset) const;
   void dumpPassArguments() const;
   void dumpPassInfo(Pass *P, enum PassDebuggingString S1,
-                    enum PassDebuggingString S2, const StringRef &Msg);
+                    enum PassDebuggingString S2, StringRef Msg);
   void dumpRequiredSet(const Pass *P) const;
   void dumpPreservedSet(const Pass *P) const;
 
@@ -388,8 +388,8 @@ protected:
   bool isPassDebuggingExecutionsOrMore() const;
   
 private:
-  void dumpAnalysisUsage(const StringRef &Msg, const Pass *P,
-                           const AnalysisUsage::VectorType &Set) const;
+  void dumpAnalysisUsage(StringRef Msg, const Pass *P,
+                         const AnalysisUsage::VectorType &Set) const;
 
   // Set of available Analysis. This information is used while scheduling 
   // pass. If a pass requires an analysis which is not not available then 

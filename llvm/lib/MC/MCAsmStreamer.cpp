@@ -58,7 +58,7 @@ public:
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
 
-  virtual void EmitBytes(const StringRef &Data);
+  virtual void EmitBytes(StringRef Data);
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size);
 
@@ -186,7 +186,7 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   OS << '\n';
 }
 
-void MCAsmStreamer::EmitBytes(const StringRef &Data) {
+void MCAsmStreamer::EmitBytes(StringRef Data) {
   assert(CurSection && "Cannot emit contents before setting section!");
   for (unsigned i = 0, e = Data.size(); i != e; ++i)
     OS << ".byte " << (unsigned) (unsigned char) Data[i] << '\n';

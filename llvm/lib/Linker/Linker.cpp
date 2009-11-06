@@ -20,8 +20,8 @@
 #include "llvm/Config/config.h"
 using namespace llvm;
 
-Linker::Linker(const StringRef &progname, const StringRef &modname,
-               LLVMContext& C, unsigned flags): 
+Linker::Linker(StringRef progname, StringRef modname,
+               LLVMContext& C, unsigned flags):
   Context(C),
   Composite(new Module(modname, C)),
   LibPaths(),
@@ -29,7 +29,7 @@ Linker::Linker(const StringRef &progname, const StringRef &modname,
   Error(),
   ProgramName(progname) { }
 
-Linker::Linker(const StringRef &progname, Module* aModule, unsigned flags) : 
+Linker::Linker(StringRef progname, Module* aModule, unsigned flags) :
   Context(aModule->getContext()),
   Composite(aModule),
   LibPaths(),
@@ -42,7 +42,7 @@ Linker::~Linker() {
 }
 
 bool
-Linker::error(const StringRef &message) {
+Linker::error(StringRef message) {
   Error = message;
   if (!(Flags&QuietErrors))
     errs() << ProgramName << ": error: " << message << "\n";
@@ -50,7 +50,7 @@ Linker::error(const StringRef &message) {
 }
 
 bool
-Linker::warning(const StringRef &message) {
+Linker::warning(StringRef message) {
   Error = message;
   if (!(Flags&QuietWarnings))
     errs() << ProgramName << ": warning: " << message << "\n";
@@ -58,7 +58,7 @@ Linker::warning(const StringRef &message) {
 }
 
 void
-Linker::verbose(const StringRef &message) {
+Linker::verbose(StringRef message) {
   if (Flags&Verbose)
     errs() << "  " << message << "\n";
 }
@@ -114,7 +114,7 @@ Linker::LoadObject(const sys::Path &FN) {
 
 // IsLibrary - Determine if "Name" is a library in "Directory". Return
 // a non-empty sys::Path if its found, an empty one otherwise.
-static inline sys::Path IsLibrary(const StringRef &Name,
+static inline sys::Path IsLibrary(StringRef Name,
                                   const sys::Path &Directory) {
 
   sys::Path FullPath(Directory);
@@ -153,7 +153,7 @@ static inline sys::Path IsLibrary(const StringRef &Name,
 /// Path if no matching file can be found.
 ///
 sys::Path
-Linker::FindLib(const StringRef &Filename) {
+Linker::FindLib(StringRef Filename) {
   // Determine if the pathname can be found as it stands.
   sys::Path FilePath(Filename);
   if (FilePath.canRead() &&

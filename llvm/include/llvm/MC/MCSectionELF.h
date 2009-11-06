@@ -35,13 +35,13 @@ class MCSectionELF : public MCSection {
   bool IsExplicit;
   
 protected:
-  MCSectionELF(const StringRef &Section, unsigned type, unsigned flags,
+  MCSectionELF(StringRef Section, unsigned type, unsigned flags,
                SectionKind K, bool isExplicit)
     : MCSection(K), SectionName(Section.str()), Type(type), Flags(flags), 
       IsExplicit(isExplicit) {}
 public:
   
-  static MCSectionELF *Create(const StringRef &Section, unsigned Type, 
+  static MCSectionELF *Create(StringRef Section, unsigned Type, 
                               unsigned Flags, SectionKind K, bool isExplicit,
                               MCContext &Ctx);
 

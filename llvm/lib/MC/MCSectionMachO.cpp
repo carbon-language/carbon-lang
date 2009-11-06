@@ -66,7 +66,7 @@ ENTRY(0 /*FIXME*/,           S_ATTR_LOC_RELOC)
 
 
 MCSectionMachO *MCSectionMachO::
-Create(const StringRef &Segment, const StringRef &Section,
+Create(StringRef Segment, StringRef Section,
        unsigned TypeAndAttributes, unsigned Reserved2,
        SectionKind K, MCContext &Ctx) {
   // S_SYMBOL_STUBS must be set for Reserved2 to be non-zero.

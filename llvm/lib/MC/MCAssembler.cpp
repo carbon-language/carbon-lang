@@ -180,7 +180,7 @@ public:
     OS << StringRef(Zeros, N % 16);
   }
 
-  void WriteString(const StringRef &Str, unsigned ZeroFillSize = 0) {
+  void WriteString(StringRef Str, unsigned ZeroFillSize = 0) {
     OS << Str;
     if (ZeroFillSize)
       WriteZeros(ZeroFillSize - Str.size());

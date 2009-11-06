@@ -49,7 +49,7 @@ namespace llvm {
     /// CreateSymbol - Create a new symbol with the specified @param Name.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
-    MCSymbol *CreateSymbol(const StringRef &Name);
+    MCSymbol *CreateSymbol(StringRef Name);
 
     /// GetOrCreateSymbol - Lookup the symbol inside with the specified
     /// @param Name.  If it exists, return it.  If not, create a forward
@@ -58,7 +58,7 @@ namespace llvm {
     /// @param Name - The symbol name, which must be unique across all symbols.
     /// @param IsTemporary - Whether this symbol is an assembler temporary,
     /// which should not survive into the symbol table for the translation unit.
-    MCSymbol *GetOrCreateSymbol(const StringRef &Name);
+    MCSymbol *GetOrCreateSymbol(StringRef Name);
     MCSymbol *GetOrCreateSymbol(const Twine &Name);
 
     /// CreateTemporarySymbol - Create a new temporary symbol with the specified
@@ -67,10 +67,10 @@ namespace llvm {
     /// @param Name - The symbol name, for debugging purposes only, temporary
     /// symbols do not surive assembly. If non-empty the name must be unique
     /// across all symbols.
-    MCSymbol *CreateTemporarySymbol(const StringRef &Name = "");
+    MCSymbol *CreateTemporarySymbol(StringRef Name = "");
 
     /// LookupSymbol - Get the symbol for @param Name, or null.
-    MCSymbol *LookupSymbol(const StringRef &Name) const;
+    MCSymbol *LookupSymbol(StringRef Name) const;
 
     /// @}
 

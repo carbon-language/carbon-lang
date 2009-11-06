@@ -86,7 +86,7 @@ public:
 
   /// Return a ConstantInt constructed from the string strStart with the given
   /// radix. 
-  static ConstantInt *get(const IntegerType *Ty, const StringRef &Str,
+  static ConstantInt *get(const IntegerType *Ty, StringRef Str,
                           uint8_t radix);
   
   /// If Ty is a vector type, return a Constant with a splat of the given
@@ -255,7 +255,7 @@ public:
   /// only be used for simple constant values like 2.0/1.0 etc, that are
   /// known-valid both as host double and as the target format.
   static Constant *get(const Type* Ty, double V);
-  static Constant *get(const Type* Ty, const StringRef &Str);
+  static Constant *get(const Type* Ty, StringRef Str);
   static ConstantFP *get(LLVMContext &Context, const APFloat &V);
   static ConstantFP *getNegativeZero(const Type* Ty);
   static ConstantFP *getInfinity(const Type *Ty, bool Negative = false);
@@ -353,7 +353,7 @@ public:
   /// of the array by one (you've been warned).  However, in some situations 
   /// this is not desired so if AddNull==false then the string is copied without
   /// null termination.
-  static Constant *get(LLVMContext &Context, const StringRef &Initializer,
+  static Constant *get(LLVMContext &Context, StringRef Initializer,
                        bool AddNull = true);
   
   /// Transparently provide more efficient getOperand methods.

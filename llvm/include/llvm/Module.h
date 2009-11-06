@@ -154,7 +154,7 @@ private:
 public:
   /// The Module constructor. Note that there is no default constructor. You
   /// must provide a name for the module upon construction.
-  explicit Module(const StringRef &ModuleID, LLVMContext& C);
+  explicit Module(StringRef ModuleID, LLVMContext& C);
   /// The module destructor. This will dropAllReferences.
   ~Module();
 
@@ -196,20 +196,20 @@ public:
 public:
 
   /// Set the module identifier.
-  void setModuleIdentifier(const StringRef &ID) { ModuleID = ID; }
+  void setModuleIdentifier(StringRef ID) { ModuleID = ID; }
 
   /// Set the data layout
-  void setDataLayout(const StringRef &DL) { DataLayout = DL; }
+  void setDataLayout(StringRef DL) { DataLayout = DL; }
 
   /// Set the target triple.
-  void setTargetTriple(const StringRef &T) { TargetTriple = T; }
+  void setTargetTriple(StringRef T) { TargetTriple = T; }
 
   /// Set the module-scope inline assembly blocks.
-  void setModuleInlineAsm(const StringRef &Asm) { GlobalScopeAsm = Asm; }
+  void setModuleInlineAsm(StringRef Asm) { GlobalScopeAsm = Asm; }
 
   /// Append to the module-scope inline assembly blocks, automatically
   /// appending a newline to the end.
-  void appendModuleInlineAsm(const StringRef &Asm) {
+  void appendModuleInlineAsm(StringRef Asm) {
     GlobalScopeAsm += Asm;
     GlobalScopeAsm += '\n';
   }
@@ -221,7 +221,7 @@ public:
   /// getNamedValue - Return the first global value in the module with
   /// the specified name, of arbitrary type.  This method returns null
   /// if a global with the specified name is not found.
-  GlobalValue *getNamedValue(const StringRef &Name) const;
+  GlobalValue *getNamedValue(StringRef Name) const;
 
 /// @}
 /// @name Function Accessors
@@ -236,10 +236,10 @@ public:
   ///      the existing function.
   ///   4. Finally, the function exists but has the wrong prototype: return the
   ///      function with a constantexpr cast to the right prototype.
-  Constant *getOrInsertFunction(const StringRef &Name, const FunctionType *T,
+  Constant *getOrInsertFunction(StringRef Name, const FunctionType *T,
                                 AttrListPtr AttributeList);
 
-  Constant *getOrInsertFunction(const StringRef &Name, const FunctionType *T);
+  Constant *getOrInsertFunction(StringRef Name, const FunctionType *T);
 
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  If it does not exist, add a prototype for the function and return
@@ -248,21 +248,21 @@ public:
   /// named function has a different type.  This version of the method takes a
   /// null terminated list of function arguments, which makes it easier for
   /// clients to use.
-  Constant *getOrInsertFunction(const StringRef &Name,
+  Constant *getOrInsertFunction(StringRef Name,
                                 AttrListPtr AttributeList,
                                 const Type *RetTy, ...)  END_WITH_NULL;
 
   /// getOrInsertFunction - Same as above, but without the attributes.
-  Constant *getOrInsertFunction(const StringRef &Name, const Type *RetTy, ...)
+  Constant *getOrInsertFunction(StringRef Name, const Type *RetTy, ...)
     END_WITH_NULL;
 
-  Constant *getOrInsertTargetIntrinsic(const StringRef &Name,
+  Constant *getOrInsertTargetIntrinsic(StringRef Name,
                                        const FunctionType *Ty,
                                        AttrListPtr AttributeList);
   
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
-  Function *getFunction(const StringRef &Name) const;
+  Function *getFunction(StringRef Name) const;
 
 /// @}
 /// @name Global Variable Accessors
@@ -272,13 +272,13 @@ public:
   /// symbol table.  If it does not exist, return null. If AllowInternal is set
   /// to true, this function will return types that have InternalLinkage. By
   /// default, these types are not returned.
-  GlobalVariable *getGlobalVariable(const StringRef &Name,
+  GlobalVariable *getGlobalVariable(StringRef Name,
                                     bool AllowInternal = false) const;
 
   /// getNamedGlobal - Return the first global variable in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
-  GlobalVariable *getNamedGlobal(const StringRef &Name) const {
+  GlobalVariable *getNamedGlobal(StringRef Name) const {
     return getGlobalVariable(Name, true);
   }
 
@@ -289,7 +289,7 @@ public:
   ///      with a constantexpr cast to the right type.
   ///   3. Finally, if the existing global is the correct delclaration, return
   ///      the existing global.
-  Constant *getOrInsertGlobal(const StringRef &Name, const Type *Ty);
+  Constant *getOrInsertGlobal(StringRef Name, const Type *Ty);
 
 /// @}
 /// @name Global Alias Accessors
@@ -298,7 +298,7 @@ public:
   /// getNamedAlias - Return the first global alias in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
-  GlobalAlias *getNamedAlias(const StringRef &Name) const;
+  GlobalAlias *getNamedAlias(StringRef Name) const;
 
 /// @}
 /// @name Named Metadata Accessors
@@ -307,12 +307,12 @@ public:
   /// getNamedMetadata - Return the first NamedMDNode in the module with the
   /// specified name. This method returns null if a NamedMDNode with the 
   /// specified name is not found.
-  NamedMDNode *getNamedMetadata(const StringRef &Name) const;
+  NamedMDNode *getNamedMetadata(StringRef Name) const;
 
   /// getOrInsertNamedMetadata - Return the first named MDNode in the module 
   /// with the specified name. This method returns a new NamedMDNode if a 
   /// NamedMDNode with the specified name is not found.
-  NamedMDNode *getOrInsertNamedMetadata(const StringRef &Name);
+  NamedMDNode *getOrInsertNamedMetadata(StringRef Name);
 
 /// @}
 /// @name Type Accessors
@@ -321,7 +321,7 @@ public:
   /// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
   /// there is already an entry for this name, true is returned and the symbol
   /// table is not modified.
-  bool addTypeName(const StringRef &Name, const Type *Ty);
+  bool addTypeName(StringRef Name, const Type *Ty);
 
   /// getTypeName - If there is at least one entry in the symbol table for the
   /// specified type, return it.
@@ -329,7 +329,7 @@ public:
 
   /// getTypeByName - Return the type with the specified name in this module, or
   /// null if there is none by that name.
-  const Type *getTypeByName(const StringRef &Name) const;
+  const Type *getTypeByName(StringRef Name) const;
 
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table
@@ -415,9 +415,9 @@ public:
   /// @brief Returns the number of items in the list of libraries.
   inline size_t       lib_size()  const { return LibraryList.size();  }
   /// @brief Add a library to the list of dependent libraries
-  void addLibrary(const StringRef &Lib);
+  void addLibrary(StringRef Lib);
   /// @brief Remove a library from the list of dependent libraries
-  void removeLibrary(const StringRef &Lib);
+  void removeLibrary(StringRef Lib);
   /// @brief Get all the libraries
   inline const LibraryListType& getLibraries() const { return LibraryList; }
 

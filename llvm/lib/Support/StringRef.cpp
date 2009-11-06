@@ -24,7 +24,7 @@ const size_t StringRef::npos;
 ///
 /// \return - The index of the first occurence of \arg Str, or npos if not
 /// found.
-size_t StringRef::find(const StringRef &Str) const {
+size_t StringRef::find(StringRef Str) const {
   size_t N = Str.size();
   if (N > Length)
     return npos;
@@ -38,7 +38,7 @@ size_t StringRef::find(const StringRef &Str) const {
 ///
 /// \return - The index of the last occurence of \arg Str, or npos if not
 /// found.
-size_t StringRef::rfind(const StringRef &Str) const {
+size_t StringRef::rfind(StringRef Str) const {
   size_t N = Str.size();
   if (N > Length)
     return npos;
@@ -75,7 +75,7 @@ StringRef::size_type StringRef::find_first_not_of(StringRef Chars) const {
 
 /// count - Return the number of non-overlapped occurrences of \arg Str in
 /// the string.
-size_t StringRef::count(const StringRef &Str) const {
+size_t StringRef::count(StringRef Str) const {
   size_t Count = 0;
   size_t N = Str.size();
   if (N > Length)

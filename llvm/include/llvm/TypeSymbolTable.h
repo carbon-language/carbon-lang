@@ -58,26 +58,26 @@ public:
   /// incrementing an integer and appending it to the name, if necessary
   /// @returns the unique name
   /// @brief Get a unique name for a type
-  std::string getUniqueName(const StringRef &BaseName) const;
+  std::string getUniqueName(StringRef BaseName) const;
 
   /// This method finds the type with the given \p name in the type map
   /// and returns it.
   /// @returns null if the name is not found, otherwise the Type
   /// associated with the \p name.
   /// @brief Lookup a type by name.
-  Type *lookup(const StringRef &name) const;
+  Type *lookup(StringRef name) const;
 
   /// Lookup the type associated with name.
   /// @returns end() if the name is not found, or an iterator at the entry for
   /// Type.
-  iterator find(const StringRef &Name) {
+  iterator find(StringRef Name) {
     return tmap.find(Name);
   }
 
   /// Lookup the type associated with name.
   /// @returns end() if the name is not found, or an iterator at the entry for
   /// Type.
-  const_iterator find(const StringRef &Name) const {
+  const_iterator find(StringRef Name) const {
     return tmap.find(Name);
   }
 
@@ -119,7 +119,7 @@ public:
   /// a many-to-one mapping between names and types. This method allows a type
   /// with an existing entry in the symbol table to get a new name.
   /// @brief Insert a type under a new name.
-  void insert(const StringRef &Name, const Type *Typ);
+  void insert(StringRef Name, const Type *Typ);
 
   /// Remove a type at the specified position in the symbol table.
   /// @returns the removed Type.

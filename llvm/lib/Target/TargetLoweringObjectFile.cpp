@@ -671,7 +671,7 @@ TargetLoweringObjectFileMachO::~TargetLoweringObjectFileMachO() {
 
 
 const MCSectionMachO *TargetLoweringObjectFileMachO::
-getMachOSection(const StringRef &Segment, const StringRef &Section,
+getMachOSection(StringRef Segment, StringRef Section,
                 unsigned TypeAndAttributes,
                 unsigned Reserved2, SectionKind Kind) const {
   // We unique sections by their segment/section pair.  The returned section

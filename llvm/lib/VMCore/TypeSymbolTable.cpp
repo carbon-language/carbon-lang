@@ -31,7 +31,7 @@ TypeSymbolTable::~TypeSymbolTable() {
   }
 }
 
-std::string TypeSymbolTable::getUniqueName(const StringRef &BaseName) const {
+std::string TypeSymbolTable::getUniqueName(StringRef BaseName) const {
   std::string TryName = BaseName;
   
   const_iterator End = tmap.end();
@@ -43,14 +43,13 @@ std::string TypeSymbolTable::getUniqueName(const StringRef &BaseName) const {
 }
 
 // lookup a type by name - returns null on failure
-Type* TypeSymbolTable::lookup(const StringRef &Name) const {
+Type* TypeSymbolTable::lookup(StringRef Name) const {
   const_iterator TI = tmap.find(Name);
   Type* result = 0;
   if (TI != tmap.end())
     result = const_cast<Type*>(TI->second);
   return result;
 }
-
 
 // remove - Remove a type from the symbol table...
 Type* TypeSymbolTable::remove(iterator Entry) {
@@ -80,7 +79,7 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 
 
 // insert - Insert a type into the symbol table with the specified name...
-void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
+void TypeSymbolTable::insert(StringRef Name, const Type* T) {
   assert(T && "Can't insert null type into symbol table!");
 
   if (tmap.insert(std::make_pair(Name, T)).second) {

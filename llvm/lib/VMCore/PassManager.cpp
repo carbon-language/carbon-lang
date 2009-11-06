@@ -746,7 +746,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Remove analysis passes that are not used any longer
-void PMDataManager::removeDeadPasses(Pass *P, const StringRef &Msg,
+void PMDataManager::removeDeadPasses(Pass *P, StringRef Msg,
                                      enum PassDebuggingString DBG_STR) {
 
   SmallVector<Pass *, 12> DeadPasses;
@@ -768,7 +768,7 @@ void PMDataManager::removeDeadPasses(Pass *P, const StringRef &Msg,
     freePass(*I, Msg, DBG_STR);
 }
 
-void PMDataManager::freePass(Pass *P, const StringRef &Msg,
+void PMDataManager::freePass(Pass *P, StringRef Msg,
                              enum PassDebuggingString DBG_STR) {
   dumpPassInfo(P, FREEING_MSG, DBG_STR, Msg);
 
@@ -972,7 +972,7 @@ void PMDataManager::dumpPassArguments() const {
 
 void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
                                  enum PassDebuggingString S2,
-                                 const StringRef &Msg) {
+                                 StringRef Msg) {
   if (PassDebugging < Executions)
     return;
   errs() << (void*)this << std::string(getDepth()*2+1, ' ');
@@ -1028,7 +1028,7 @@ void PMDataManager::dumpPreservedSet(const Pass *P) const {
   dumpAnalysisUsage("Preserved", P, analysisUsage.getPreservedSet());
 }
 
-void PMDataManager::dumpAnalysisUsage(const StringRef &Msg, const Pass *P,
+void PMDataManager::dumpAnalysisUsage(StringRef Msg, const Pass *P,
                                    const AnalysisUsage::VectorType &Set) const {
   assert(PassDebugging >= Details);
   if (Set.empty())

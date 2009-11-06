@@ -20,8 +20,7 @@
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
-static const MCAsmInfo *createMCAsmInfo(const Target &T,
-                                                const StringRef &TT) {
+static const MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
   bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
   if (TheTriple.getOS() == Triple::Darwin)

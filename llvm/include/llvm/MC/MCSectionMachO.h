@@ -33,7 +33,7 @@ class MCSectionMachO : public MCSection {
   /// size of stubs, for example.
   unsigned Reserved2;
   
-  MCSectionMachO(const StringRef &Segment, const StringRef &Section,
+  MCSectionMachO(StringRef Segment, StringRef Section,
                  unsigned TAA, unsigned reserved2, SectionKind K)
     : MCSection(K), TypeAndAttributes(TAA), Reserved2(reserved2) {
     assert(Segment.size() <= 16 && Section.size() <= 16 &&
@@ -52,8 +52,8 @@ class MCSectionMachO : public MCSection {
   }
 public:
   
-  static MCSectionMachO *Create(const StringRef &Segment,
-                                const StringRef &Section,
+  static MCSectionMachO *Create(StringRef Segment,
+                                StringRef Section,
                                 unsigned TypeAndAttributes,
                                 unsigned Reserved2,
                                 SectionKind K, MCContext &Ctx);

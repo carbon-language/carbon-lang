@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 #define LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/SectionKind.h"
 
 namespace llvm {
@@ -26,7 +27,6 @@ namespace llvm {
   class MCSectionMachO;
   class MCContext;
   class GlobalValue;
-  class StringRef;
   class TargetMachine;
   
 class TargetLoweringObjectFile {
@@ -288,14 +288,14 @@ public:
 
   /// getMachOSection - Return the MCSection for the specified mach-o section.
   /// This requires the operands to be valid.
-  const MCSectionMachO *getMachOSection(const StringRef &Segment,
-                                        const StringRef &Section,
+  const MCSectionMachO *getMachOSection(StringRef Segment,
+                                        StringRef Section,
                                         unsigned TypeAndAttributes,
                                         SectionKind K) const {
     return getMachOSection(Segment, Section, TypeAndAttributes, 0, K);
   }
-  const MCSectionMachO *getMachOSection(const StringRef &Segment,
-                                        const StringRef &Section,
+  const MCSectionMachO *getMachOSection(StringRef Segment,
+                                        StringRef Section,
                                         unsigned TypeAndAttributes,
                                         unsigned Reserved2,
                                         SectionKind K) const;

@@ -52,7 +52,7 @@ void StringMapImpl::init(unsigned InitSize) {
 /// specified bucket will be non-null.  Otherwise, it will be null.  In either
 /// case, the FullHashValue field of the bucket will be set to the hash value
 /// of the string.
-unsigned StringMapImpl::LookupBucketFor(const StringRef &Name) {
+unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
   unsigned HTSize = NumBuckets;
   if (HTSize == 0) {  // Hash table unallocated so far?
     init(16);
@@ -110,7 +110,7 @@ unsigned StringMapImpl::LookupBucketFor(const StringRef &Name) {
 /// FindKey - Look up the bucket that contains the specified key. If it exists
 /// in the map, return the bucket number of the key.  Otherwise return -1.
 /// This does not modify the map.
-int StringMapImpl::FindKey(const StringRef &Key) const {
+int StringMapImpl::FindKey(StringRef Key) const {
   unsigned HTSize = NumBuckets;
   if (HTSize == 0) return -1;  // Really empty table?
   unsigned FullHashValue = HashString(Key);
@@ -161,7 +161,7 @@ void StringMapImpl::RemoveKey(StringMapEntryBase *V) {
 
 /// RemoveKey - Remove the StringMapEntry for the specified key from the
 /// table, returning it.  If the key is not in the table, this returns null.
-StringMapEntryBase *StringMapImpl::RemoveKey(const StringRef &Key) {
+StringMapEntryBase *StringMapImpl::RemoveKey(StringRef Key) {
   int Bucket = FindKey(Key);
   if (Bucket == -1) return 0;
   

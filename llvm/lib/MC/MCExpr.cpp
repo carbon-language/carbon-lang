@@ -133,8 +133,7 @@ const MCSymbolRefExpr *MCSymbolRefExpr::Create(const MCSymbol *Sym,
   return new (Ctx) MCSymbolRefExpr(Sym);
 }
 
-const MCSymbolRefExpr *MCSymbolRefExpr::Create(const StringRef &Name,
-                                               MCContext &Ctx) {
+const MCSymbolRefExpr *MCSymbolRefExpr::Create(StringRef Name, MCContext &Ctx) {
   return Create(Ctx.GetOrCreateSymbol(Name), Ctx);
 }
 

@@ -51,13 +51,13 @@ namespace llvm {
     /// of a syntactic one.
     bool IsDirective;
     
-    MCSectionCOFF(const StringRef &name, bool isDirective, SectionKind K)
+    MCSectionCOFF(StringRef name, bool isDirective, SectionKind K)
       : MCSection(K), Name(name), IsDirective(isDirective) {
     }
   public:
     
-    static MCSectionCOFF *Create(const StringRef &Name, bool IsDirective, 
-                                   SectionKind K, MCContext &Ctx);
+    static MCSectionCOFF *Create(StringRef Name, bool IsDirective, 
+                                 SectionKind K, MCContext &Ctx);
 
     const std::string &getName() const { return Name; }
     bool isDirective() const { return IsDirective; }

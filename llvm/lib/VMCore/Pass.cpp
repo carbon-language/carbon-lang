@@ -149,7 +149,7 @@ public:
     return I != PassInfoMap.end() ? I->second : 0;
   }
   
-  const PassInfo *GetPassInfo(const StringRef &Arg) const {
+  const PassInfo *GetPassInfo(StringRef Arg) const {
     StringMapType::const_iterator I = PassInfoStringMap.find(Arg);
     return I != PassInfoStringMap.end() ? I->second : 0;
   }
@@ -238,7 +238,7 @@ const PassInfo *Pass::lookupPassInfo(intptr_t TI) {
   return getPassRegistrar()->GetPassInfo(TI);
 }
 
-const PassInfo *Pass::lookupPassInfo(const StringRef &Arg) {
+const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
   return getPassRegistrar()->GetPassInfo(Arg);
 }
 

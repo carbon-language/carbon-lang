@@ -22,6 +22,7 @@
 #include <vector>
 #include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 
@@ -95,7 +96,7 @@ public:
   // This can be useful when a pass is trivially preserved, but may not be
   // linked in. Be careful about spelling!
   //
-  AnalysisUsage &addPreserved(const StringRef &Arg) {
+  AnalysisUsage &addPreserved(StringRef Arg) {
     const PassInfo *PI = Pass::lookupPassInfo(Arg);
     // If the pass exists, preserve it. Otherwise silently do nothing.
     if (PI) Preserved.push_back(PI);

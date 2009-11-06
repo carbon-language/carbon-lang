@@ -15,7 +15,7 @@
 using namespace llvm;
 
 MCSectionELF *MCSectionELF::
-Create(const StringRef &Section, unsigned Type, unsigned Flags,
+Create(StringRef Section, unsigned Type, unsigned Flags,
        SectionKind K, bool isExplicit, MCContext &Ctx) {
   return new (Ctx) MCSectionELF(Section, Type, Flags, K, isExplicit);
 }

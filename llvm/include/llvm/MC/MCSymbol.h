@@ -56,7 +56,7 @@ namespace llvm {
 
   private:  // MCContext creates and uniques these.
     friend class MCContext;
-    MCSymbol(const StringRef &_Name, bool _IsTemporary)
+    MCSymbol(StringRef _Name, bool _IsTemporary)
       : Name(_Name), Section(0), Value(0), IsTemporary(_IsTemporary) {}
 
     MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
