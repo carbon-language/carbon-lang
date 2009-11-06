@@ -454,3 +454,19 @@ int *test_cwe466_return_outofbounds_pointer() {
   return p; // expected-warning{{Returned pointer value points outside the original object}}
 }
 
+//===----------------------------------------------------------------------===//
+// PR 3135 - Test case that shows that a variable may get invalidated when its
+// address is included in a structure that is passed-by-value to an unknown function.
+//===----------------------------------------------------------------------===//
+
+typedef struct { int *a; } pr3135_structure;
+int pr3135_bar(pr3135_structure *x);
+int pr3135() {
+  int x;
+  pr3135_structure y = { &x };
+  // the call to pr3135_bar may initialize x
+  if (pr3135_bar(&y) && x) // no-warning
+    return 1;
+  return 0;
+}
+
