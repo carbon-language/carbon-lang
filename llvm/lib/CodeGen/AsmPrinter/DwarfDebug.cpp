@@ -1097,6 +1097,10 @@ DIE *DwarfDebug::ConstructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
 /// CreateGlobalVariableDIE - Create new DIE using GV.
 DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
                                          const DIGlobalVariable &GV) {
+  // If the global variable was optmized out then no need to create debug info entry.
+  if (!GV.getGlobal())
+    return NULL;
+
   DIE *GVDie = new DIE(dwarf::DW_TAG_variable);
   AddString(GVDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, 
             GV.getDisplayName());
@@ -1518,7 +1522,8 @@ void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope,
     DIGlobalVariable GV(N);
     if (GV.getContext().getNode() == RootScope->getDesc().getNode()) {
       DIE *ScopedGVDie = CreateGlobalVariableDIE(ModuleCU, GV);
-      SPDie->AddChild(ScopedGVDie);
+      if (ScopedGVDie)
+        SPDie->AddChild(ScopedGVDie);
     }
   }
 }
