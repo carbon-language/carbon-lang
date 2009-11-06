@@ -267,7 +267,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
     ConstantInt *CI = dyn_cast<ConstantInt>(V);
     Result.resize(TheFirstPHI->getNumIncomingValues());
     for (unsigned i = 0, e = Result.size(); i != e; ++i)
-      Result.push_back(std::make_pair(CI, TheFirstPHI->getIncomingBlock(i)));
+      Result[i] = std::make_pair(CI, TheFirstPHI->getIncomingBlock(i));
     return true;
   }
   
