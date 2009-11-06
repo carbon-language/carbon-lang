@@ -36,6 +36,8 @@ add_clang_library(clangAnalysis
   PathDiagnostic.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
+  ReturnStackAddressChecker.cpp
+  ReturnUndefChecker.cpp
   SVals.cpp
   SValuator.cpp
   SimpleConstraintManager.cpp
@@ -45,8 +47,8 @@ add_clang_library(clangAnalysis
   UndefinedArgChecker.cpp
   UndefinedAssignmentChecker.cpp
   UninitializedValues.cpp
-  ValueManager.cpp
   VLASizeChecker.cpp
+  ValueManager.cpp
   )
 
 add_dependencies(clangAnalysis ClangDiagnosticAnalysis)

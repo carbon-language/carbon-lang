@@ -76,6 +76,10 @@ public:
   BugReporter &getBugReporter() {
     return Eng.getBugReporter();
   }
+  
+  SourceManager &getSourceManager() {
+    return getBugReporter().getSourceManager();
+  }
 
   ExplodedNode *GenerateNode(const Stmt *S, bool markAsSink = false) {
     return GenerateNode(S, getState(), markAsSink);

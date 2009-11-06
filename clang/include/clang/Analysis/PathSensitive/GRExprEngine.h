@@ -223,10 +223,6 @@ public:
      return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
   }
 
-  bool isRetStackAddr(const ExplodedNode* N) const {
-    return N->isSink() && RetsStackAddr.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
   bool isUndefControlFlow(const ExplodedNode* N) const {
     return N->isSink() && UndefBranches.count(const_cast<ExplodedNode*>(N)) != 0;
   }
@@ -266,14 +262,6 @@ public:
   bool isUndefReceiver(const ExplodedNode* N) const {
     return N->isSink() && UndefReceivers.count(const_cast<ExplodedNode*>(N)) != 0;
   }
-
-  typedef ErrorNodes::iterator ret_stackaddr_iterator;
-  ret_stackaddr_iterator ret_stackaddr_begin() { return RetsStackAddr.begin(); }
-  ret_stackaddr_iterator ret_stackaddr_end() { return RetsStackAddr.end(); }
-
-  typedef ErrorNodes::iterator ret_undef_iterator;
-  ret_undef_iterator ret_undef_begin() { return RetsUndef.begin(); }
-  ret_undef_iterator ret_undef_end() { return RetsUndef.end(); }
 
   typedef ErrorNodes::iterator undef_branch_iterator;
   undef_branch_iterator undef_branches_begin() { return UndefBranches.begin(); }
@@ -559,8 +547,6 @@ protected:
     assert (Builder && "GRStmtNodeBuilder must be defined.");
     getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
-
-  void EvalReturn(ExplodedNodeSet& Dst, ReturnStmt* s, ExplodedNode* Pred);
 
   const GRState* MarkBranch(const GRState* St, Stmt* Terminator,
                             bool branchTaken);

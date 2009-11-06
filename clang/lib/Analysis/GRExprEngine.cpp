@@ -2628,63 +2628,37 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
     VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
 }
 
-void GRExprEngine::EvalReturn(ExplodedNodeSet& Dst, ReturnStmt* S,
-                              ExplodedNode* Pred) {
-  assert (Builder && "GRStmtNodeBuilder must be defined.");
-
-  unsigned size = Dst.size();
-
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-  SaveOr OldHasGen(Builder->HasGeneratedNode);
-
-  getTF().EvalReturn(Dst, *this, *Builder, S, Pred);
-
-  // Handle the case where no nodes where generated.
-
-  if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
-    MakeNode(Dst, S, Pred, GetState(Pred));
-}
-
-void GRExprEngine::VisitReturnStmt(ReturnStmt* S, ExplodedNode* Pred,
-                                   ExplodedNodeSet& Dst) {
-
-  Expr* R = S->getRetValue();
-
-  if (!R) {
-    EvalReturn(Dst, S, Pred);
-    return;
+void GRExprEngine::VisitReturnStmt(ReturnStmt *RS, ExplodedNode *Pred,
+                                   ExplodedNodeSet &Dst) {
+  
+  ExplodedNodeSet Src;
+  if (Expr *RetE = RS->getRetValue()) {
+    Visit(RetE, Pred, Src);
   }
+  else {
+    Src.Add(Pred);
+  }
+  
+  ExplodedNodeSet CheckedSet;
+  CheckerVisit(RS, CheckedSet, Src, true);
+  
+  for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
+       I != E; ++I) {
 
-  ExplodedNodeSet Tmp;
-  Visit(R, Pred, Tmp);
-
-  for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
-    SVal X = (*I)->getState()->getSVal(R);
-
-    // Check if we return the address of a stack variable.
-    if (isa<loc::MemRegionVal>(X)) {
-      // Determine if the value is on the stack.
-      const MemRegion* R = cast<loc::MemRegionVal>(&X)->getRegion();
-
-      if (R && R->hasStackStorage()) {
-        // Create a special node representing the error.
-        if (ExplodedNode* N = Builder->generateNode(S, GetState(*I), *I)) {
-          N->markAsSink();
-          RetsStackAddr.insert(N);
-        }
-        continue;
-      }
-    }
-    // Check if we return an undefined value.
-    else if (X.isUndef()) {
-      if (ExplodedNode* N = Builder->generateNode(S, GetState(*I), *I)) {
-        N->markAsSink();
-        RetsUndef.insert(N);
-      }
-      continue;
-    }
-
-    EvalReturn(Dst, S, *I);
+    assert(Builder && "GRStmtNodeBuilder must be defined.");
+    
+    Pred = *I;
+    unsigned size = Dst.size();
+    
+    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+    SaveOr OldHasGen(Builder->HasGeneratedNode);
+    
+    getTF().EvalReturn(Dst, *this, *Builder, RS, Pred);
+    
+    // Handle the case where no nodes where generated.    
+    if (!Builder->BuildSinks && Dst.size() == size && 
+        !Builder->HasGeneratedNode)
+      MakeNode(Dst, RS, Pred, GetState(Pred));
   }
 }
 
