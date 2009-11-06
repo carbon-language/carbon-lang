@@ -1015,6 +1015,11 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 	//              ::= <expr-primary>
   switch (E->getStmtClass()) {
   default: assert(false && "Unhandled expression kind!");
+
+  case Expr::ParenExprClass:
+    mangleExpression(cast<ParenExpr>(E)->getSubExpr());
+    break;
+
   case Expr::DeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(E)->getDecl();
     

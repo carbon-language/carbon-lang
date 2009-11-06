@@ -221,3 +221,9 @@ struct S7 {
 // CHECK: @"_ZN2S73$_0C1Ev"
 S7::S7() {}
 
+// PR5063
+template<typename T> typename __enable_if<(__is_scalar<T>::__value), void>::__type ft8() { }
+// CHECK: @_Z3ft8IiEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
+template void ft8<int>();
+// CHECK: @_Z3ft8IPvEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
+template void ft8<void*>();
