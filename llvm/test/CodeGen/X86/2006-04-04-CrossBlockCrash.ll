@@ -11,7 +11,7 @@ target triple = "i686-apple-darwin8.6.1"
 
 declare <4 x float> @llvm.x86.sse.cmp.ps(<4 x float>, <4 x float>, i8)
 
-declare <4 x i32> @llvm.x86.sse2.packssdw.128(<4 x i32>, <4 x i32>)
+declare <8 x i16> @llvm.x86.sse2.packssdw.128(<4 x i32>, <4 x i32>)
 
 declare i32 @llvm.x86.sse2.pmovmskb.128(<16 x i8>)
 
@@ -33,8 +33,8 @@ cond_false183:		; preds = %cond_false, %entry
 	%tmp337 = bitcast <4 x i32> %tmp336 to <4 x float>		; <<4 x float>> [#uses=1]
 	%tmp378 = tail call <4 x float> @llvm.x86.sse.cmp.ps( <4 x float> %tmp337, <4 x float> zeroinitializer, i8 1 )		; <<4 x float>> [#uses=1]
 	%tmp379 = bitcast <4 x float> %tmp378 to <4 x i32>		; <<4 x i32>> [#uses=1]
-	%tmp388 = tail call <4 x i32> @llvm.x86.sse2.packssdw.128( <4 x i32> zeroinitializer, <4 x i32> %tmp379 )		; <<4 x i32>> [#uses=1]
-	%tmp392 = bitcast <4 x i32> %tmp388 to <8 x i16>		; <<8 x i16>> [#uses=1]
+	%tmp388 = tail call <8 x i16> @llvm.x86.sse2.packssdw.128( <4 x i32> zeroinitializer, <4 x i32> %tmp379 )		; <<4 x i32>> [#uses=1]
+	%tmp392 = bitcast <8 x i16> %tmp388 to <8 x i16>		; <<8 x i16>> [#uses=1]
 	%tmp399 = extractelement <8 x i16> %tmp392, i32 7		; <i16> [#uses=1]
 	%tmp423 = insertelement <8 x i16> zeroinitializer, i16 %tmp399, i32 7		; <<8 x i16>> [#uses=1]
 	%tmp427 = bitcast <8 x i16> %tmp423 to <16 x i8>		; <<16 x i8>> [#uses=1]

@@ -12,8 +12,8 @@ bb4743:		; preds = %bb1664
 	%tmp5257 = sub <8 x i16> %tmp5256, zeroinitializer		; <<8 x i16>> [#uses=1]
 	%tmp5258 = bitcast <8 x i16> %tmp5257 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	%tmp5265 = bitcast <2 x i64> %tmp5258 to <8 x i16>		; <<8 x i16>> [#uses=1]
-	%tmp5266 = call <8 x i16> @llvm.x86.sse2.packuswb.128( <8 x i16> %tmp5265, <8 x i16> zeroinitializer ) nounwind readnone 		; <<8 x i16>> [#uses=1]
-	%tmp5267 = bitcast <8 x i16> %tmp5266 to <2 x i64>		; <<2 x i64>> [#uses=1]
+	%tmp5266 = call <16 x i8> @llvm.x86.sse2.packuswb.128( <8 x i16> %tmp5265, <8 x i16> zeroinitializer ) nounwind readnone 		; <<8 x i16>> [#uses=1]
+	%tmp5267 = bitcast <16 x i8> %tmp5266 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	%tmp5294 = and <2 x i64> zeroinitializer, %tmp5267		; <<2 x i64>> [#uses=1]
 	br label %bb5310
 bb5310:		; preds = %bb4743, %bb1664
@@ -21,4 +21,4 @@ bb5310:		; preds = %bb4743, %bb1664
 	ret i32 0
 }
 
-declare <8 x i16> @llvm.x86.sse2.packuswb.128(<8 x i16>, <8 x i16>) nounwind readnone 
+declare <16 x i8> @llvm.x86.sse2.packuswb.128(<8 x i16>, <8 x i16>) nounwind readnone

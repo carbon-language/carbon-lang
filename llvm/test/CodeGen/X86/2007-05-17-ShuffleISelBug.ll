@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep punpckhwd
 
-declare <8 x i16> @llvm.x86.sse2.packuswb.128(<8 x i16>, <8 x i16>)
+declare <16 x i8> @llvm.x86.sse2.packuswb.128(<8 x i16>, <8 x i16>)
 
 declare <8 x i16> @llvm.x86.sse2.psrl.w(<8 x i16>, <8 x i16>)
 
@@ -13,8 +13,8 @@ define fastcc void @test(i32* %src, i32 %sbpr, i32* %dst, i32 %dbpr, i32 %w, i32
 	%tmp805 = add <4 x i32> %tmp777, zeroinitializer
 	%tmp832 = bitcast <4 x i32> %tmp805 to <8 x i16>
 	%tmp838 = tail call <8 x i16> @llvm.x86.sse2.psrl.w( <8 x i16> %tmp832, <8 x i16> < i16 8, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef > )
-	%tmp1020 = tail call <8 x i16> @llvm.x86.sse2.packuswb.128( <8 x i16> zeroinitializer, <8 x i16> %tmp838 )
-	%tmp1030 = bitcast <8 x i16> %tmp1020 to <4 x i32>
+	%tmp1020 = tail call <16 x i8> @llvm.x86.sse2.packuswb.128( <8 x i16> zeroinitializer, <8 x i16> %tmp838 )
+	%tmp1030 = bitcast <16 x i8> %tmp1020 to <4 x i32>
 	%tmp1033 = add <4 x i32> zeroinitializer, %tmp1030
 	%tmp1048 = bitcast <4 x i32> %tmp1033 to <2 x i64>
 	%tmp1049 = or <2 x i64> %tmp1048, zeroinitializer
