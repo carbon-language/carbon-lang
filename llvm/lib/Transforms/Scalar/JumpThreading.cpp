@@ -89,7 +89,6 @@ namespace {
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
 
     bool ProcessJumpOnPHI(PHINode *PN);
-    bool ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB);
     
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
   };
@@ -480,34 +479,25 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       return ProcessJumpOnPHI(PN);
   
   if (CmpInst *CondCmp = dyn_cast<CmpInst>(CondInst)) {
-    if (isa<PHINode>(CondCmp->getOperand(0))) {
-      // If we have "br (phi != 42)" and the phi node has any constant values
-      // as operands, we can thread through this block.
-      // 
-      // If we have "br (cmp phi, x)" and the phi node contains x such that the
-      // comparison uniquely identifies the branch target, we can thread
-      // through this block.
-
-      if (ProcessBranchOnCompare(CondCmp, BB))
-        return true;      
-    }
-    
-    // If we have a comparison, loop over the predecessors to see if there is
-    // a condition with a lexically identical value.
-    pred_iterator PI = pred_begin(BB), E = pred_end(BB);
-    for (; PI != E; ++PI)
-      if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
-        if (PBI->isConditional() && *PI != BB) {
-          if (CmpInst *CI = dyn_cast<CmpInst>(PBI->getCondition())) {
-            if (CI->getOperand(0) == CondCmp->getOperand(0) &&
-                CI->getOperand(1) == CondCmp->getOperand(1) &&
-                CI->getPredicate() == CondCmp->getPredicate()) {
-              // TODO: Could handle things like (x != 4) --> (x == 17)
-              if (ProcessBranchOnDuplicateCond(*PI, BB))
-                return true;
+    if (!isa<PHINode>(CondCmp->getOperand(0)) ||
+        cast<PHINode>(CondCmp->getOperand(0))->getParent() != BB) {
+      // If we have a comparison, loop over the predecessors to see if there is
+      // a condition with a lexically identical value.
+      pred_iterator PI = pred_begin(BB), E = pred_end(BB);
+      for (; PI != E; ++PI)
+        if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+          if (PBI->isConditional() && *PI != BB) {
+            if (CmpInst *CI = dyn_cast<CmpInst>(PBI->getCondition())) {
+              if (CI->getOperand(0) == CondCmp->getOperand(0) &&
+                  CI->getOperand(1) == CondCmp->getOperand(1) &&
+                  CI->getPredicate() == CondCmp->getPredicate()) {
+                // TODO: Could handle things like (x != 4) --> (x == 17)
+                if (ProcessBranchOnDuplicateCond(*PI, BB))
+                  return true;
+              }
             }
           }
-        }
+    }
   }
 
   // Check for some cases that are worth simplifying.  Right now we want to look
@@ -1026,62 +1016,6 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   }
 
   return false;
-}
-
-/// ProcessBranchOnCompare - We found a branch on a comparison between a phi
-/// node and a value.  If we can identify when the comparison is true between
-/// the phi inputs and the value, we can fold the compare for that edge and
-/// thread through it.
-bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
-  PHINode *PN = cast<PHINode>(Cmp->getOperand(0));
-  Value *RHS = Cmp->getOperand(1);
-  
-  // If the phi isn't in the current block, an incoming edge to this block
-  // doesn't control the destination.
-  if (PN->getParent() != BB)
-    return false;
-  
-  // We can do this simplification if any comparisons fold to true or false.
-  // See if any do.
-  Value *PredVal = 0;
-  bool TrueDirection = false;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-    PredVal = PN->getIncomingValue(i);
-    
-    Constant *Res = GetResultOfComparison(Cmp->getPredicate(), PredVal, RHS);
-    if (!Res) {
-      PredVal = 0;
-      continue;
-    }
-    
-    // If this folded to a constant expr, we can't do anything.
-    if (ConstantInt *ResC = dyn_cast<ConstantInt>(Res)) {
-      TrueDirection = ResC->getZExtValue();
-      break;
-    }
-    // If this folded to undef, just go the false way.
-    if (isa<UndefValue>(Res)) {
-      TrueDirection = false;
-      break;
-    }
-    
-    // Otherwise, we can't fold this input.
-    PredVal = 0;
-  }
-  
-  // If no match, bail out.
-  if (PredVal == 0)
-    return false;
-  
-  // If so, we can actually do this threading.  Merge any common predecessors
-  // that will act the same.
-  BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredVal);
-  
-  // Next, get our successor.
-  BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(!TrueDirection);
-  
-  // Ok, try to thread it!
-  return ThreadEdge(BB, PredBB, SuccBB);
 }
 
 
