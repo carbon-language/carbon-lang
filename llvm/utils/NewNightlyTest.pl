@@ -122,8 +122,9 @@ my $WebDir     = $ENV{'WEBDIR'};
 # Calculate the date prefix...
 #
 ##############################################################
+use POSIX;
 @TIME = localtime;
-my $DATE = sprintf "%4d-%02d-%02d_%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3], $TIME[1], $TIME[0];
+my $DATE = strftime("%Y-%m-%d_%H-%M-%S", localtime());
 
 ##############################################################
 #
