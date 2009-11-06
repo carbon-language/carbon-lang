@@ -4450,8 +4450,8 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 /// \param lex the left-hand expression
 /// \param rex the right-hand expression
 /// \param OpLoc the location of the joining operator
-/// \param Equality whether this is an "equality-like" join;
-///   this suppresses the warning in some cases
+/// \param Equality whether this is an "equality-like" join, which
+///   suppresses the warning in some cases
 void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
                             const PartialDiagnostic &PD, bool Equality) {
   QualType lt = lex->getType(), rt = rex->getType();
@@ -4479,8 +4479,8 @@ void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
   }
 
   // If the unsigned type is strictly smaller than the signed type,
-  // then (1) the result type will be signed and (2) the unsigned type
-  // will fight losslessly within the signed type, and so the result
+  // then (1) the result type will be signed and (2) the unsigned
+  // value will fit fully within the signed type, and thus the result
   // of the comparison will be exact.
   if (Context.getIntWidth(signedOperand->getType()) >
       Context.getIntWidth(unsignedOperand->getType()))
@@ -4498,9 +4498,9 @@ void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
 
   if (Equality) {
     // For (in)equality comparisons, if the unsigned operand is a
-    // constant no greater than the maximum signed operand, then
-    // reinterpreting the signed operand as unsigned will not change
-    // the result of the comparison.
+    // constant which cannot collide with a overflowed signed operand,
+    // then reinterpreting the signed operand as unsigned will not
+    // change the result of the comparison.
     if (unsignedOperand->isIntegerConstantExpr(value, Context)) {
       assert(!value.isSigned() && "result of unsigned expression is signed");
 
