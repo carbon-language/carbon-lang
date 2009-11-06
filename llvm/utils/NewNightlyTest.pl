@@ -53,6 +53,7 @@ use Socket;
 #                   building LLVM.
 #  -use-gmake       Use gmake instead of the default make command to build
 #                   llvm and run tests.
+#  -llvmgccdir      Next argument specifies the llvm-gcc install prefix.
 #
 # TESTING OPTIONS:
 #  -notest          Do not even attempt to run the test programs.
@@ -147,6 +148,14 @@ $SUBMIT = 1;
 $PARALLELJOBS = "2";
 my $TESTFLAGS="";
 
+if ($ENV{'LLVMGCCDIR'}) {
+  $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
+  $LLVMGCCPATH = $ENV{'LLVMGCCDIR'} . '/bin';
+}
+else {
+  $LLVMGCCPATH = "";
+}
+
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
   last if /^--$/;  # Stop processing arguments on --
@@ -211,6 +220,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-test-cxxflags/)   { $TESTFLAGS = "$TESTFLAGS CXXFLAGS=\'$ARGV[0]\'";
                              shift; next; }
   if (/^-compileflags/)    { $MAKEOPTS = "$MAKEOPTS $ARGV[0]"; shift; next; }
+  if (/^-llvmgccdir/)      { $CONFIGUREARGS .= " --with-llvmgccdir=\'$ARGV[0]\'";
+                             $LLVMGCCPATH = $ARGV[0] . '/bin';
+                             shift; next;}
+  if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
   if (/^-use-gmake/)       { $MAKECMD = "gmake"; shift; next; }
   if (/^-extraflags/)      { $CONFIGUREARGS .=
                              " --with-extra-options=\'$ARGV[0]\'"; shift; next;}
@@ -218,14 +231,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
   if (/^-nobuild$/)        { $NOBUILD = 1; next; }
   print "Unknown option: $_ : ignoring!\n";
-}
-
-if ($ENV{'LLVMGCCDIR'}) {
-  $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
-  $LLVMGCCPATH = $ENV{'LLVMGCCDIR'} . '/bin';
-}
-else {
-  $LLVMGCCPATH = "";
 }
 
 if ($CONFIGUREARGS !~ /--disable-jit/) {
@@ -758,6 +763,8 @@ if ($GCCPATH ne "") {
 my $gcc_version = (split '\n', $gcc_version_long)[0];
 
 # Get llvm-gcc target triple.
+#
+# FIXME: This shouldn't be hardwired to llvm-gcc.
 my $llvmgcc_version_long = "";
 if ($LLVMGCCPATH ne "") {
   $llvmgcc_version_long = `$LLVMGCCPATH/llvm-gcc -v 2>&1`;
