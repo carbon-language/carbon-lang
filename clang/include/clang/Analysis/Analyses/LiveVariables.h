@@ -88,11 +88,11 @@ public:
 
   /// dumpLiveness - Print to stderr the liveness information encoded
   ///  by a specified bitvector.
-  void dumpLiveness(const ValTy& V, SourceManager& M) const;
+  void dumpLiveness(const ValTy& V, const SourceManager& M) const;
 
   /// dumpBlockLiveness - Print to stderr the liveness information
   ///  associated with each basic block.
-  void dumpBlockLiveness(SourceManager& M) const;
+  void dumpBlockLiveness(const SourceManager& M) const;
 
   /// getNumDecls - Return the number of variables (declarations) that
   ///  whose liveness status is being tracked by the dataflow

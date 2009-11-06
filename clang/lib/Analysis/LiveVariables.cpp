@@ -333,7 +333,7 @@ bool LiveVariables::isLive(const Stmt* Loc, const VarDecl* D) const {
 // printing liveness state for debugging
 //
 
-void LiveVariables::dumpLiveness(const ValTy& V, SourceManager& SM) const {
+void LiveVariables::dumpLiveness(const ValTy& V, const SourceManager& SM) const {
   const AnalysisDataTy& AD = getAnalysisData();
 
   for (AnalysisDataTy::decl_iterator I = AD.begin_decl(),
@@ -345,7 +345,7 @@ void LiveVariables::dumpLiveness(const ValTy& V, SourceManager& SM) const {
     }
 }
 
-void LiveVariables::dumpBlockLiveness(SourceManager& M) const {
+void LiveVariables::dumpBlockLiveness(const SourceManager& M) const {
   for (BlockDataMapTy::iterator I = getBlockDataMap().begin(),
        E = getBlockDataMap().end(); I!=E; ++I) {
     llvm::errs() << "\n[ B" << I->first->getBlockID()
