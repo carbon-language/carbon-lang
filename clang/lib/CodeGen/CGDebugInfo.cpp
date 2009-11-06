@@ -842,15 +842,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
     assert(false && "Dependent types cannot show up in debug information");
 
   default:
-  case Type::LValueReference:
-  case Type::RValueReference:
-  case Type::Vector:
-  case Type::ExtVector:
-  case Type::FixedWidthInt:
-  case Type::MemberPointer:
-  case Type::TemplateSpecialization:
-  case Type::QualifiedName:
-    // Unsupported types
+    assert(false && "Unhandled type class!");
     return llvm::DIType();
   case Type::ObjCObjectPointer:
     return CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
