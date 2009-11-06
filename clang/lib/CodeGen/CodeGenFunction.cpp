@@ -260,19 +260,16 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
   // FIXME: Support CXXTryStmt here, too.
   if (const CompoundStmt *S = FD->getCompoundBody()) {
     StartFunction(GD, FD->getResultType(), Fn, Args, S->getLBracLoc());
-    const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD);
-    llvm::BasicBlock *DtorEpilogue = 0;
-    if (DD) {
-      DtorEpilogue = createBasicBlock("dtor.epilogue");
-    
-      PushCleanupBlock(DtorEpilogue);
-    }
-    
-    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
+
+    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
       EmitCtorPrologue(CD, GD.getCtorType());
-    EmitStmt(S);
+      EmitStmt(S);
+    } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
+      llvm::BasicBlock *DtorEpilogue  = createBasicBlock("dtor.epilogue");
+      PushCleanupBlock(DtorEpilogue);
+
+      EmitStmt(S);
       
-    if (DD) {
       CleanupBlockInfo Info = PopCleanupBlock();
 
       assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
@@ -283,7 +280,11 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
         EmitBlock(Info.SwitchBlock);
       if (Info.EndBlock)
         EmitBlock(Info.EndBlock);
+    } else {
+      // Just a regular function, emit its body.
+      EmitStmt(S);
     }
+    
     FinishFunction(S->getRBracLoc());
   } else if (FD->isImplicit()) {
     const CXXRecordDecl *ClassDecl =
