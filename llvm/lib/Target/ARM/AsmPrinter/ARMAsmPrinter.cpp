@@ -43,6 +43,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -137,6 +138,19 @@ namespace {
     void printNoHashImmediate(const MachineInstr *MI, int OpNum);
     void printVFPf32ImmOperand(const MachineInstr *MI, int OpNum);
     void printVFPf64ImmOperand(const MachineInstr *MI, int OpNum);
+
+    void printHex8ImmOperand(const MachineInstr *MI, int OpNum) {
+      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xff);
+    }
+    void printHex16ImmOperand(const MachineInstr *MI, int OpNum) {
+      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffff);
+    }
+    void printHex32ImmOperand(const MachineInstr *MI, int OpNum) {
+      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm() & 0xffffffff);
+    }
+    void printHex64ImmOperand(const MachineInstr *MI, int OpNum) {
+      O << "#0x" << utohexstr(MI->getOperand(OpNum).getImm());
+    }
 
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                  unsigned AsmVariant, const char *ExtraCode);

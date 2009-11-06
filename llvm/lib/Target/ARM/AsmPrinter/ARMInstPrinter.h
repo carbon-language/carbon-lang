@@ -80,6 +80,10 @@ public:
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum);
   void printVFPf32ImmOperand(const MCInst *MI, int OpNum) {}
   void printVFPf64ImmOperand(const MCInst *MI, int OpNum) {}
+  void printHex8ImmOperand(const MCInst *MI, int OpNum) {}
+  void printHex16ImmOperand(const MCInst *MI, int OpNum) {}
+  void printHex32ImmOperand(const MCInst *MI, int OpNum) {}
+  void printHex64ImmOperand(const MCInst *MI, int OpNum) {}
 
   void printPCLabel(const MCInst *MI, unsigned OpNum);  
   // FIXME: Implement.

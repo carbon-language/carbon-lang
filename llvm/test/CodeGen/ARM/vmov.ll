@@ -134,6 +134,26 @@ define <2 x i64> @v_movQi64() nounwind {
 	ret <2 x i64> < i64 18374687574888349695, i64 18374687574888349695 >
 }
 
+; Check for correct assembler printing for immediate values.
+%struct.int8x8_t = type { <8 x i8> }
+define arm_apcscc void @vdupn128(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
+entry:
+;CHECK: vdupn128:
+;CHECK: vmov.i8 d0, #0x80
+  %0 = getelementptr inbounds %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
+  store <8 x i8> <i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128>, <8 x i8>* %0, align 8
+  ret void
+}
+
+define arm_apcscc void @vdupnneg75(%struct.int8x8_t* noalias nocapture sret %agg.result) nounwind {
+entry:
+;CHECK: vdupnneg75:
+;CHECK: vmov.i8 d0, #0xB5
+  %0 = getelementptr inbounds %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
+  store <8 x i8> <i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75>, <8 x i8>* %0, align 8
+  ret void
+}
+
 define <8 x i16> @vmovls8(<8 x i8>* %A) nounwind {
 ;CHECK: vmovls8:
 ;CHECK: vmovl.s8
