@@ -940,8 +940,17 @@ bool JumpThreading::ProcessThreadableEdges(Instruction *CondInst,
   // predecessors that will jump to it into a single predecessor.
   SmallVector<BasicBlock*, 16> PredsToFactor;
   for (unsigned i = 0, e = PredToDestList.size(); i != e; ++i)
-    if (PredToDestList[i].second == MostPopularDest)
-      PredsToFactor.push_back(PredToDestList[i].first);
+    if (PredToDestList[i].second == MostPopularDest) {
+      BasicBlock *Pred = PredToDestList[i].first;
+      
+      // This predecessor may be a switch or something else that has multiple
+      // edges to the block.  Factor each of these edges by listing them
+      // according to # occurrences in PredsToFactor.
+      TerminatorInst *PredTI = Pred->getTerminator();
+      for (unsigned i = 0, e = PredTI->getNumSuccessors(); i != e; ++i)
+        if (PredTI->getSuccessor(i) == BB)
+          PredsToFactor.push_back(Pred);
+    }
 
   BasicBlock *PredToThread;
   if (PredsToFactor.size() == 1)
