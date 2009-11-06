@@ -21,7 +21,6 @@
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedArgChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedAssignmentChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/AttrNonNullChecker.h"
-#include "clang/Analysis/PathSensitive/Checkers/VLASizeChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -397,13 +396,6 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new NilReceiverStructRet(this));
   BR.Register(new NilReceiverLargerThanVoidPtrRet(this));
 
-  RegisterDivZeroChecker(*this);
-  RegisterReturnStackAddressChecker(*this);
-  RegisterReturnUndefChecker(*this);
-  
-  // Note that this must be registered after ReturnStackAddressChecker.
-  RegisterReturnPointerRangeChecker(*this);
-
   // The following checks do not need to have their associated BugTypes
   // explicitly registered with the BugReporter.  If they issue any BugReports,
   // their associated BugType will get registered with the BugReporter
@@ -415,6 +407,12 @@ void GRExprEngine::RegisterInternalChecks() {
   registerCheck(new BadCallChecker());
   registerCheck(new UndefDerefChecker());
   registerCheck(new NullDerefChecker());
-  registerCheck(new UndefSizedVLAChecker());
-  registerCheck(new ZeroSizedVLAChecker());
+  
+  RegisterVLASizeChecker(*this);
+  RegisterDivZeroChecker(*this);
+  RegisterReturnStackAddressChecker(*this);
+  RegisterReturnUndefChecker(*this);
+
+  // Note that this must be registered after ReturnStackAddressChecker.
+  RegisterReturnPointerRangeChecker(*this);
 }

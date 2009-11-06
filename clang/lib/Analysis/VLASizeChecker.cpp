@@ -12,11 +12,39 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/Checkers/VLASizeChecker.h"
+#include "GRExprEngineInternalChecks.h"
+#include "clang/Analysis/PathSensitive/Checker.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 
 using namespace clang;
+
+namespace {
+class VISIBILITY_HIDDEN UndefSizedVLAChecker : public Checker {
+  BugType *BT;
+  
+public:
+  UndefSizedVLAChecker() : BT(0) {}
+  static void *getTag();
+  ExplodedNode *CheckType(QualType T, ExplodedNode *Pred, 
+                          const GRState *state, Stmt *S, GRExprEngine &Eng);
+};
+
+class VISIBILITY_HIDDEN ZeroSizedVLAChecker : public Checker {
+  BugType *BT;
+  
+public:
+  ZeroSizedVLAChecker() : BT(0) {}
+  static void *getTag();
+  ExplodedNode *CheckType(QualType T, ExplodedNode *Pred, 
+                          const GRState *state, Stmt *S, GRExprEngine &Eng);
+};
+} // end anonymous namespace
+
+void clang::RegisterVLASizeChecker(GRExprEngine &Eng) {
+  Eng.registerCheck(new UndefSizedVLAChecker());
+  Eng.registerCheck(new ZeroSizedVLAChecker());
+}
 
 void *UndefSizedVLAChecker::getTag() {
   static int x = 0;

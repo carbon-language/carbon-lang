@@ -23,6 +23,7 @@ void RegisterDivZeroChecker(GRExprEngine &Eng);
 void RegisterReturnPointerRangeChecker(GRExprEngine &Eng);
 void RegisterReturnStackAddressChecker(GRExprEngine &Eng);  
 void RegisterReturnUndefChecker(GRExprEngine &Eng);
+void RegisterVLASizeChecker(GRExprEngine &Eng);
   
 } // end clang namespace
 #endif
