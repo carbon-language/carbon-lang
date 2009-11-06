@@ -3827,6 +3827,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         ICS->UserDefined.Before = Best->Conversions[0].Standard;
         ICS->UserDefined.After = Best->FinalConversion;
         ICS->UserDefined.ConversionFunction = Best->Function;
+        ICS->UserDefined.EllipsisConversion = false;
         assert(ICS->UserDefined.After.ReferenceBinding &&
                ICS->UserDefined.After.DirectBinding &&
                "Expected a direct reference binding!");

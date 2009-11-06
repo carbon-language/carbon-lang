@@ -1481,9 +1481,14 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
         //   sequence converts the source type to the type required by
         //   the argument of the constructor.
         //
-        // FIXME: What about ellipsis conversions?
         QualType ThisType = Constructor->getThisType(Context);
-        User.Before = Best->Conversions[0].Standard;
+        if (Best->Conversions[0].ConversionKind == 
+            ImplicitConversionSequence::EllipsisConversion)
+          User.EllipsisConversion = true;
+        else {
+          User.Before = Best->Conversions[0].Standard;
+          User.EllipsisConversion = false;
+        }
         User.ConversionFunction = Constructor;
         User.After.setAsIdentityConversion();
         User.After.FromTypePtr
@@ -1500,6 +1505,7 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
         //   implicit object parameter of the conversion function.
         User.Before = Best->Conversions[0].Standard;
         User.ConversionFunction = Conversion;
+        User.EllipsisConversion = false;
 
         // C++ [over.ics.user]p2:
         //   The second standard conversion sequence converts the
@@ -2693,6 +2699,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   Candidate.Conversions[0].ConversionKind
     = ImplicitConversionSequence::UserDefinedConversion;
   Candidate.Conversions[0].UserDefined.Before = ObjectInit.Standard;
+  Candidate.Conversions[0].UserDefined.EllipsisConversion = false;
   Candidate.Conversions[0].UserDefined.ConversionFunction = Conversion;
   Candidate.Conversions[0].UserDefined.After
     = Candidate.Conversions[0].UserDefined.Before;
