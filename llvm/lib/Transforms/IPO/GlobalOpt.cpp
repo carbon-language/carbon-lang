@@ -822,42 +822,32 @@ static void ConstantPropUsersOf(Value *V, LLVMContext &Context) {
 /// malloc into a global, and any loads of GV as uses of the new global.
 static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      CallInst *CI,
-                                                     const Type *AllocTy,
+                                                     BitCastInst *BCI,
                                                      Value* NElems,
                                                      LLVMContext &Context,
                                                      TargetData* TD) {
-  DEBUG(errs() << "PROMOTING GLOBAL: " << *GV << "  CALL = " << *CI << '\n');
+  DEBUG(errs() << "PROMOTING MALLOC GLOBAL: " << *GV
+               << "  CALL = " << *CI << "  BCI = " << *BCI << '\n');
 
   const Type *IntPtrTy = TD->getIntPtrType(Context);
   
-  // CI has either 0 or 1 bitcast uses (getMallocType() would otherwise have
-  // returned NULL and we would not be here).
-  BitCastInst *BCI = NULL;
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); UI != E; )
-    if ((BCI = dyn_cast<BitCastInst>(cast<Instruction>(*UI++))))
-      break;
-
   ConstantInt *NElements = cast<ConstantInt>(NElems);
   if (NElements->getZExtValue() != 1) {
     // If we have an array allocation, transform it to a single element
     // allocation to make the code below simpler.
-    Type *NewTy = ArrayType::get(AllocTy, NElements->getZExtValue());
-    unsigned TypeSize = TD->getTypeAllocSize(NewTy);
-    if (const StructType *ST = dyn_cast<StructType>(NewTy))
-      TypeSize = TD->getStructLayout(ST)->getSizeInBytes();
-    Instruction *NewCI = CallInst::CreateMalloc(CI, IntPtrTy, NewTy,
-                                         ConstantInt::get(IntPtrTy, TypeSize));
+    Type *NewTy = ArrayType::get(getMallocAllocatedType(CI),
+                                 NElements->getZExtValue());
+    Value* NewM = CallInst::CreateMalloc(CI, IntPtrTy, NewTy);
+    Instruction* NewMI = cast<Instruction>(NewM);
     Value* Indices[2];
     Indices[0] = Indices[1] = Constant::getNullValue(IntPtrTy);
-    Value *NewGEP = GetElementPtrInst::Create(NewCI, Indices, Indices + 2,
-                                              NewCI->getName()+".el0", CI);
-    Value *Cast = new BitCastInst(NewGEP, CI->getType(), "el0", CI);
-    if (BCI) BCI->replaceAllUsesWith(NewGEP);
-    CI->replaceAllUsesWith(Cast);
-    if (BCI) BCI->eraseFromParent();
+    Value *NewGEP = GetElementPtrInst::Create(NewMI, Indices, Indices + 2,
+                                              NewMI->getName()+".el0", CI);
+    BCI->replaceAllUsesWith(NewGEP);
+    BCI->eraseFromParent();
     CI->eraseFromParent();
-    BCI = dyn_cast<BitCastInst>(NewCI);
-    CI = BCI ? extractMallocCallFromBitCast(BCI) : cast<CallInst>(NewCI);
+    BCI = cast<BitCastInst>(NewMI);
+    CI = extractMallocCallFromBitCast(NewMI);
   }
 
   // Create the new global variable.  The contents of the malloc'd memory is
@@ -871,9 +861,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                              GV,
                                              GV->isThreadLocal());
   
-  // Anything that used the malloc or its bitcast now uses the global directly.
-  if (BCI) BCI->replaceAllUsesWith(NewGV);
-  CI->replaceAllUsesWith(new BitCastInst(NewGV, CI->getType(), "newgv", CI));
+  // Anything that used the malloc now uses the global directly.
+  BCI->replaceAllUsesWith(NewGV);
 
   Constant *RepValue = NewGV;
   if (NewGV->getType() != GV->getType()->getElementType())
@@ -941,9 +930,9 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     GV->getParent()->getGlobalList().insert(GV, InitBool);
 
 
-  // Now the GV is dead, nuke it and the malloc (both CI and BCI).
+  // Now the GV is dead, nuke it and the malloc.
   GV->eraseFromParent();
-  if (BCI) BCI->eraseFromParent();
+  BCI->eraseFromParent();
   CI->eraseFromParent();
 
   // To further other optimizations, loop over all users of NewGV and try to
@@ -1284,10 +1273,13 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
 
 /// PerformHeapAllocSRoA - CI is an allocation of an array of structures.  Break
 /// it up into multiple allocations of arrays of the fields.
-static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
-                                            Value* NElems, LLVMContext &Context,
+static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV,
+                                            CallInst *CI, BitCastInst* BCI,
+                                            Value* NElems,
+                                            LLVMContext &Context,
                                             TargetData *TD) {
-  DEBUG(errs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *CI << '\n');
+  DEBUG(errs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC CALL = " << *CI 
+               << " BITCAST = " << *BCI << '\n');
   const Type* MAT = getMallocAllocatedType(CI);
   const StructType *STy = cast<StructType>(MAT);
 
@@ -1295,8 +1287,8 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
   // it into GV).  If there are other uses, change them to be uses of
   // the global to simplify later code.  This also deletes the store
   // into GV.
-  ReplaceUsesOfMallocWithGlobal(CI, GV);
-
+  ReplaceUsesOfMallocWithGlobal(BCI, GV);
+  
   // Okay, at this point, there are no users of the malloc.  Insert N
   // new mallocs at the same place as CI, and N globals.
   std::vector<Value*> FieldGlobals;
@@ -1314,16 +1306,11 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
                          GV->isThreadLocal());
     FieldGlobals.push_back(NGV);
     
-    unsigned TypeSize = TD->getTypeAllocSize(FieldTy);
-    if (const StructType* ST = dyn_cast<StructType>(FieldTy))
-      TypeSize = TD->getStructLayout(ST)->getSizeInBytes();
-    const Type* IntPtrTy = TD->getIntPtrType(Context);
-    Value *NMI = CallInst::CreateMalloc(CI, IntPtrTy, FieldTy,
-                                        ConstantInt::get(IntPtrTy, TypeSize),
-                                        NElems,
-                                        CI->getName() + ".f" + Twine(FieldNo));
+    Value *NMI = CallInst::CreateMalloc(CI, TD->getIntPtrType(Context),
+                                        FieldTy, NElems,
+                                        BCI->getName() + ".f" + Twine(FieldNo));
     FieldMallocs.push_back(NMI);
-    new StoreInst(NMI, NGV, CI);
+    new StoreInst(NMI, NGV, BCI);
   }
   
   // The tricky aspect of this transformation is handling the case when malloc
@@ -1340,18 +1327,18 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
   //    }
   Value *RunningOr = 0;
   for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
-    Value *Cond = new ICmpInst(CI, ICmpInst::ICMP_EQ, FieldMallocs[i],
-                             Constant::getNullValue(FieldMallocs[i]->getType()),
-                               "isnull");
+    Value *Cond = new ICmpInst(BCI, ICmpInst::ICMP_EQ, FieldMallocs[i],
+                              Constant::getNullValue(FieldMallocs[i]->getType()),
+                                  "isnull");
     if (!RunningOr)
       RunningOr = Cond;   // First seteq
     else
-      RunningOr = BinaryOperator::CreateOr(RunningOr, Cond, "tmp", CI);
+      RunningOr = BinaryOperator::CreateOr(RunningOr, Cond, "tmp", BCI);
   }
 
   // Split the basic block at the old malloc.
-  BasicBlock *OrigBB = CI->getParent();
-  BasicBlock *ContBB = OrigBB->splitBasicBlock(CI, "malloc_cont");
+  BasicBlock *OrigBB = BCI->getParent();
+  BasicBlock *ContBB = OrigBB->splitBasicBlock(BCI, "malloc_cont");
   
   // Create the block to check the first condition.  Put all these blocks at the
   // end of the function as they are unlikely to be executed.
@@ -1387,8 +1374,9 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
   }
   
   BranchInst::Create(ContBB, NullPtrBlock);
-
-  // CI is no longer needed, remove it.
+  
+  // CI and BCI are no longer needed, remove them.
+  BCI->eraseFromParent();
   CI->eraseFromParent();
 
   /// InsertedScalarizedLoads - As we process loads, if we can't immediately
@@ -1475,10 +1463,14 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
 /// cast of malloc.
 static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                                                CallInst *CI,
-                                               const Type *AllocTy,
+                                               BitCastInst *BCI,
                                                Module::global_iterator &GVI,
                                                TargetData *TD,
                                                LLVMContext &Context) {
+  // If we can't figure out the type being malloced, then we can't optimize.
+  const Type *AllocTy = getMallocAllocatedType(CI);
+  assert(AllocTy);
+
   // If this is a malloc of an abstract type, don't touch it.
   if (!AllocTy->isSized())
     return false;
@@ -1499,7 +1491,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // for.
   {
     SmallPtrSet<PHINode*, 8> PHIs;
-    if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(CI, GV, PHIs))
+    if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(BCI, GV, PHIs))
       return false;
   }  
 
@@ -1507,16 +1499,16 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // transform the program to use global memory instead of malloc'd memory.
   // This eliminates dynamic allocation, avoids an indirection accessing the
   // data, and exposes the resultant global to further GlobalOpt.
+  Value *NElems = getMallocArraySize(CI, Context, TD);
   // We cannot optimize the malloc if we cannot determine malloc array size.
-  if (Value *NElems = getMallocArraySize(CI, Context, TD)) {
+  if (NElems) {
     if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
       // Restrict this transformation to only working on small allocations
       // (2048 bytes currently), as we don't want to introduce a 16M global or
       // something.
       if (TD && 
           NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
-        GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElems,
-                                            Context, TD);
+        GVI = OptimizeGlobalAddressOfMalloc(GV, CI, BCI, NElems, Context, TD);
         return true;
       }
   
@@ -1534,29 +1526,26 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
       // This the structure has an unreasonable number of fields, leave it
       // alone.
       if (AllocSTy->getNumElements() <= 16 && AllocSTy->getNumElements() != 0 &&
-          AllGlobalLoadUsesSimpleEnoughForHeapSRA(GV, CI)) {
+          AllGlobalLoadUsesSimpleEnoughForHeapSRA(GV, BCI)) {
 
         // If this is a fixed size array, transform the Malloc to be an alloc of
         // structs.  malloc [100 x struct],1 -> malloc struct, 100
         if (const ArrayType *AT =
                               dyn_cast<ArrayType>(getMallocAllocatedType(CI))) {
-          const Type *IntPtrTy = TD->getIntPtrType(Context);
-          unsigned TypeSize = TD->getStructLayout(AllocSTy)->getSizeInBytes();
-          Value *AllocSize = ConstantInt::get(IntPtrTy, TypeSize);
-          Value *NumElements = ConstantInt::get(IntPtrTy, AT->getNumElements());
-          Instruction *Malloc = CallInst::CreateMalloc(CI, IntPtrTy, AllocSTy,
-                                                       AllocSize, NumElements,
-                                                       CI->getName());
-          Instruction *Cast = new BitCastInst(Malloc, CI->getType(), "tmp", CI);
-          CI->replaceAllUsesWith(Cast);
+          Value* NumElements = ConstantInt::get(Type::getInt32Ty(Context),
+                                                AT->getNumElements());
+          Value* NewMI = CallInst::CreateMalloc(CI, TD->getIntPtrType(Context),
+                                                AllocSTy, NumElements,
+                                                BCI->getName());
+          Value *Cast = new BitCastInst(NewMI, getMallocType(CI), "tmp", CI);
+          BCI->replaceAllUsesWith(Cast);
+          BCI->eraseFromParent();
           CI->eraseFromParent();
-          CI = dyn_cast<BitCastInst>(Malloc) ?
-               extractMallocCallFromBitCast(Malloc):
-               cast<CallInst>(Malloc);
+          BCI = cast<BitCastInst>(NewMI);
+          CI = extractMallocCallFromBitCast(NewMI);
         }
       
-        GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, Context, TD), 
-                                   Context, TD);
+        GVI = PerformHeapAllocSRoA(GV, CI, BCI, NElems, Context, TD);
         return true;
       }
     }
@@ -1588,10 +1577,15 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC, Context))
         return true;
     } else if (CallInst *CI = extractMallocCall(StoredOnceVal)) {
-      const Type* MallocType = getMallocAllocatedType(CI);
-      if (MallocType && TryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType, 
-                                                           GVI, TD, Context))
-        return true;
+      if (getMallocAllocatedType(CI)) {
+        BitCastInst* BCI = NULL;
+        for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
+             UI != E; )
+          BCI = dyn_cast<BitCastInst>(cast<Instruction>(*UI++));
+        if (BCI &&
+            TryToOptimizeStoreOfMallocToGlobal(GV, CI, BCI, GVI, TD, Context))
+          return true;
+      }
     }
   }
 

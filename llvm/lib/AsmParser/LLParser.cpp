@@ -3619,14 +3619,12 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
   // Autoupgrade old malloc instruction to malloc call.
   // FIXME: Remove in LLVM 3.0.
   const Type *IntPtrTy = Type::getInt32Ty(Context);
-  Constant *AllocSize = ConstantExpr::getSizeOf(Ty);
-  AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, IntPtrTy);
   if (!MallocF)
     // Prototype malloc as "void *(int32)".
     // This function is renamed as "malloc" in ValidateEndOfModule().
     MallocF = cast<Function>(
        M->getOrInsertFunction("", Type::getInt8PtrTy(Context), IntPtrTy, NULL));
-  Inst = CallInst::CreateMalloc(BB, IntPtrTy, Ty, AllocSize, Size, MallocF);
+  Inst = CallInst::CreateMalloc(BB, IntPtrTy, Ty, Size, MallocF);
   return false;
 }
 

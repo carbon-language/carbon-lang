@@ -2101,10 +2101,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (!Ty || !Size) return Error("Invalid MALLOC record");
       if (!CurBB) return Error("Invalid malloc instruction with no BB");
       const Type *Int32Ty = IntegerType::getInt32Ty(CurBB->getContext());
-      Constant *AllocSize = ConstantExpr::getSizeOf(Ty->getElementType());
-      AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, Int32Ty);
       I = CallInst::CreateMalloc(CurBB, Int32Ty, Ty->getElementType(),
-                                 AllocSize, Size, NULL);
+                                 Size, NULL);
       InstructionList.push_back(I);
       break;
     }
