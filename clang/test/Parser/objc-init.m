@@ -52,7 +52,7 @@ void test5(NSNumber *x) {
 {
   id i;
 }
-  @synthesize window;
+  @synthesize window=i;
 @end
 
 
