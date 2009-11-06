@@ -366,6 +366,9 @@ bool DIGlobalVariable::Verify() const {
   if (isNull())
     return false;
 
+  if (!getDisplayName())
+    return false;
+
   if (getContext().isNull())
     return false;
 

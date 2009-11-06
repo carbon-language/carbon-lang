@@ -1098,8 +1098,8 @@ DIE *DwarfDebug::ConstructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
 DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
                                          const DIGlobalVariable &GV) {
   // If the global variable was optmized out then no need to create debug info entry.
-  if (!GV.getGlobal())
-    return NULL;
+  if (!GV.getGlobal()) return NULL;
+  if (!GV.getDisplayName()) return NULL;
 
   DIE *GVDie = new DIE(dwarf::DW_TAG_variable);
   AddString(GVDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, 
