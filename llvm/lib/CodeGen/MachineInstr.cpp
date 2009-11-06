@@ -265,7 +265,8 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << "<jt#" << getIndex() << '>';
     break;
   case MachineOperand::MO_GlobalAddress:
-    OS << "<ga:" << ((Value*)getGlobal())->getName();
+    OS << "<ga:";
+    WriteAsOperand(OS, getGlobal(), /*PrintType=*/false);
     if (getOffset()) OS << "+" << getOffset();
     OS << '>';
     break;
