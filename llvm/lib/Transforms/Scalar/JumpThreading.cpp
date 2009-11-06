@@ -75,8 +75,16 @@ namespace {
     bool ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
     bool DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
                                           BasicBlock *PredBB);
-
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Value *Val);
+    
+    typedef SmallVectorImpl<std::pair<ConstantInt*,
+                                      BasicBlock*> > PredValueInfo;
+    
+    bool ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,
+                                         PredValueInfo &Result);
+    bool ProcessThreadableEdges(Instruction *CondInst, BasicBlock *BB);
+    
+    
     bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
 
@@ -220,7 +228,133 @@ BasicBlock *JumpThreading::FactorCommonPHIPreds(PHINode *PN, Value *Val) {
                                 &CommonPreds[0], CommonPreds.size(),
                                 ".thr_comm", this);
 }
+
+/// GetResultOfComparison - Given an icmp/fcmp predicate and the left and right
+/// hand sides of the compare instruction, try to determine the result. If the
+/// result can not be determined, a null pointer is returned.
+static Constant *GetResultOfComparison(CmpInst::Predicate pred,
+                                       Value *LHS, Value *RHS) {
+  if (Constant *CLHS = dyn_cast<Constant>(LHS))
+    if (Constant *CRHS = dyn_cast<Constant>(RHS))
+      return ConstantExpr::getCompare(pred, CLHS, CRHS);
   
+  if (LHS == RHS)
+    if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType()))
+      if (ICmpInst::isTrueWhenEqual(pred))
+        return ConstantInt::getTrue(LHS->getContext());
+      else
+        return ConstantInt::getFalse(LHS->getContext());
+  return 0;
+}
+
+
+/// ComputeValueKnownInPredecessors - Given a basic block BB and a value V, see
+/// if we can infer that the value is a known ConstantInt in any of our
+/// predecessors.  If so, return the known the list of value and pred BB in the
+/// result vector.  If a value is known to be undef, it is returned as null.
+///
+/// The BB basic block is known to start with a PHI node.
+///
+/// This returns true if there were any known values.
+///
+///
+/// TODO: Per PR2563, we could infer value range information about a predecessor
+/// based on its terminator.
+bool JumpThreading::
+ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
+  PHINode *TheFirstPHI = cast<PHINode>(BB->begin());
+  
+  // If V is a constantint, then it is known in all predecessors.
+  if (isa<ConstantInt>(V) || isa<UndefValue>(V)) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(V);
+    Result.resize(TheFirstPHI->getNumIncomingValues());
+    for (unsigned i = 0, e = Result.size(); i != e; ++i)
+      Result.push_back(std::make_pair(CI, TheFirstPHI->getIncomingBlock(i)));
+    return true;
+  }
+  
+  // If V is a non-instruction value, or an instruction in a different block,
+  // then it can't be derived from a PHI.
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0 || I->getParent() != BB)
+    return false;
+  
+  /// If I is a PHI node, then we know the incoming values for any constants.
+  if (PHINode *PN = dyn_cast<PHINode>(I)) {
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      Value *InVal = PN->getIncomingValue(i);
+      if (isa<ConstantInt>(InVal) || isa<UndefValue>(InVal)) {
+        ConstantInt *CI = dyn_cast<ConstantInt>(InVal);
+        Result.push_back(std::make_pair(CI, PN->getIncomingBlock(i)));
+      }
+    }
+    return !Result.empty();
+  }
+  
+  SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> LHSVals, RHSVals;
+
+  // Handle some boolean conditions.
+  if (I->getType()->getPrimitiveSizeInBits() == 1) { 
+    // X | true -> true
+    // X & false -> false
+    if (I->getOpcode() == Instruction::Or ||
+        I->getOpcode() == Instruction::And) {
+      ComputeValueKnownInPredecessors(I->getOperand(0), BB, LHSVals);
+      ComputeValueKnownInPredecessors(I->getOperand(1), BB, RHSVals);
+      
+      if (LHSVals.empty() && RHSVals.empty())
+        return false;
+      
+      ConstantInt *InterestingVal;
+      if (I->getOpcode() == Instruction::Or)
+        InterestingVal = ConstantInt::getTrue(I->getContext());
+      else
+        InterestingVal = ConstantInt::getFalse(I->getContext());
+      
+      // Scan for the sentinel.
+      for (unsigned i = 0, e = LHSVals.size(); i != e; ++i)
+        if (LHSVals[i].first == InterestingVal || LHSVals[i].first == 0)
+          Result.push_back(LHSVals[i]);
+      for (unsigned i = 0, e = RHSVals.size(); i != e; ++i)
+        if (RHSVals[i].first == InterestingVal || RHSVals[i].first == 0)
+          Result.push_back(RHSVals[i]);
+      return !Result.empty();
+    }
+    
+    // TODO: Should handle the NOT form of XOR.
+    
+  }
+  
+  // Handle compare with phi operand, where the PHI is defined in this block.
+  if (CmpInst *Cmp = dyn_cast<CmpInst>(I)) {
+    PHINode *PN = dyn_cast<PHINode>(Cmp->getOperand(0));
+    if (PN && PN->getParent() == BB) {
+      // We can do this simplification if any comparisons fold to true or false.
+      // See if any do.
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        BasicBlock *PredBB = PN->getIncomingBlock(i);
+        Value *LHS = PN->getIncomingValue(i);
+        Value *RHS = Cmp->getOperand(1)->DoPHITranslation(BB, PredBB);
+        
+        Constant *Res = GetResultOfComparison(Cmp->getPredicate(), LHS, RHS);
+        if (Res == 0) continue;
+        
+        if (isa<UndefValue>(Res))
+          Result.push_back(std::make_pair((ConstantInt*)0, PredBB));
+        else if (ConstantInt *CI = dyn_cast<ConstantInt>(Res))
+          Result.push_back(std::make_pair(CI, PredBB));
+      }
+      
+      return !Result.empty();
+    }
+    
+    // TODO: We could also recurse to see if we can determine constants another
+    // way.
+  }
+  return false;
+}
+
+
 
 /// GetBestDestForBranchOnUndef - If we determine that the specified block ends
 /// in an undefined jump, decide which block is best to revector to.
@@ -251,7 +385,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // successor, merge the blocks.  This encourages recursive jump threading
   // because now the condition in this block can be threaded through
   // predecessors of our predecessor block.
-  if (BasicBlock *SinglePred = BB->getSinglePredecessor())
+  if (BasicBlock *SinglePred = BB->getSinglePredecessor()) {
     if (SinglePred->getTerminator()->getNumSuccessors() == 1 &&
         SinglePred != BB) {
       // If SinglePred was a loop header, BB becomes one.
@@ -267,10 +401,10 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
         BB->moveBefore(&BB->getParent()->getEntryBlock());
       return true;
     }
-  
-  // See if this block ends with a branch or switch.  If so, see if the
-  // condition is a phi node.  If so, and if an entry of the phi node is a
-  // constant, we can thread the block.
+  }
+
+  // Look to see if the terminator is a branch of switch, if not we can't thread
+  // it.
   Value *Condition;
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     // Can't thread an unconditional jump.
@@ -369,7 +503,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     }
     
     // If we have a comparison, loop over the predecessors to see if there is
-    // a condition with the same value.
+    // a condition with a lexically identical value.
     pred_iterator PI = pred_begin(BB), E = pred_end(BB);
     for (; PI != E; ++PI)
       if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
@@ -401,6 +535,19 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   if (LoadInst *LI = dyn_cast<LoadInst>(SimplifyValue))
     if (SimplifyPartiallyRedundantLoad(LI))
       return true;
+  
+  
+  // Handle a variety of cases where we are branching on something derived from
+  // a PHI node in the current block.  If we can prove that any predecessors
+  // compute a predictable value based on a PHI node, thread those predecessors.
+  //
+  // We only bother doing this if the current block has a PHI node and if the
+  // conditional instruction lives in the current block.  If either condition
+  // fail, this won't be a computable value anyway.
+  if (CondInst->getParent() == BB && isa<PHINode>(BB->front()))
+    if (ProcessThreadableEdges(CondInst, BB))
+      return true;
+  
   
   // TODO: If we have: "br (X > 0)"  and we have a predecessor where we know
   // "(X == 4)" thread through this block.
@@ -690,6 +837,176 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   return true;
 }
 
+/// FindMostPopularDest - The specified list contains multiple possible
+/// threadable destinations.  Pick the one that occurs the most frequently in
+/// the list.
+static BasicBlock *
+FindMostPopularDest(BasicBlock *BB,
+                    const SmallVectorImpl<std::pair<BasicBlock*,
+                                  BasicBlock*> > &PredToDestList) {
+  assert(!PredToDestList.empty());
+  
+  // Determine popularity.  If there are multiple possible destinations, we
+  // explicitly choose to ignore 'undef' destinations.  We prefer to thread
+  // blocks with known and real destinations to threading undef.  We'll handle
+  // them later if interesting.
+  DenseMap<BasicBlock*, unsigned> DestPopularity;
+  for (unsigned i = 0, e = PredToDestList.size(); i != e; ++i)
+    if (PredToDestList[i].second)
+      DestPopularity[PredToDestList[i].second]++;
+  
+  // Find the most popular dest.
+  DenseMap<BasicBlock*, unsigned>::iterator DPI = DestPopularity.begin();
+  BasicBlock *MostPopularDest = DPI->first;
+  unsigned Popularity = DPI->second;
+  SmallVector<BasicBlock*, 4> SamePopularity;
+  
+  for (++DPI; DPI != DestPopularity.end(); ++DPI) {
+    // If the popularity of this entry isn't higher than the popularity we've
+    // seen so far, ignore it.
+    if (DPI->second < Popularity)
+      ; // ignore.
+    else if (DPI->second == Popularity) {
+      // If it is the same as what we've seen so far, keep track of it.
+      SamePopularity.push_back(DPI->first);
+    } else {
+      // If it is more popular, remember it.
+      SamePopularity.clear();
+      MostPopularDest = DPI->first;
+      Popularity = DPI->second;
+    }      
+  }
+  
+  // Okay, now we know the most popular destination.  If there is more than
+  // destination, we need to determine one.  This is arbitrary, but we need
+  // to make a deterministic decision.  Pick the first one that appears in the
+  // successor list.
+  if (!SamePopularity.empty()) {
+    SamePopularity.push_back(MostPopularDest);
+    TerminatorInst *TI = BB->getTerminator();
+    for (unsigned i = 0; ; ++i) {
+      assert(i != TI->getNumSuccessors() && "Didn't find any successor!");
+      
+      if (std::find(SamePopularity.begin(), SamePopularity.end(),
+                    TI->getSuccessor(i)) == SamePopularity.end())
+        continue;
+      
+      MostPopularDest = TI->getSuccessor(i);
+      break;
+    }
+  }
+  
+  // Okay, we have finally picked the most popular destination.
+  return MostPopularDest;
+}
+
+bool JumpThreading::ProcessThreadableEdges(Instruction *CondInst,
+                                           BasicBlock *BB) {
+  // If threading this would thread across a loop header, don't even try to
+  // thread the edge.
+  if (LoopHeaders.count(BB))
+    return false;
+  
+  
+  
+  SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> PredValues;
+  if (!ComputeValueKnownInPredecessors(CondInst, BB, PredValues))
+    return false;
+  assert(!PredValues.empty() &&
+         "ComputeValueKnownInPredecessors returned true with no values");
+
+  DEBUG(errs() << "IN BB: " << *BB;
+        for (unsigned i = 0, e = PredValues.size(); i != e; ++i) {
+          errs() << "  BB '" << BB->getName() << "': FOUND condition = ";
+          if (PredValues[i].first)
+            errs() << *PredValues[i].first;
+          else
+            errs() << "UNDEF";
+          errs() << " for pred '" << PredValues[i].second->getName()
+          << "'.\n";
+        });
+  
+  // Decide what we want to thread through.  Convert our list of known values to
+  // a list of known destinations for each pred.  This also discards duplicate
+  // predecessors and keeps track of the undefined inputs (which are represented
+  // as a null dest in the PredToDestList.
+  SmallPtrSet<BasicBlock*, 16> SeenPreds;
+  SmallVector<std::pair<BasicBlock*, BasicBlock*>, 16> PredToDestList;
+  
+  BasicBlock *OnlyDest = 0;
+  BasicBlock *MultipleDestSentinel = (BasicBlock*)(intptr_t)~0ULL;
+  
+  for (unsigned i = 0, e = PredValues.size(); i != e; ++i) {
+    BasicBlock *Pred = PredValues[i].second;
+    if (!SeenPreds.insert(Pred))
+      continue;  // Duplicate predecessor entry.
+    
+    // If the predecessor ends with an indirect goto, we can't change its
+    // destination.
+    if (isa<IndirectBrInst>(Pred->getTerminator()))
+      continue;
+    
+    ConstantInt *Val = PredValues[i].first;
+    
+    BasicBlock *DestBB;
+    if (Val == 0)      // Undef.
+      DestBB = 0;
+    else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
+      DestBB = BI->getSuccessor(Val->isZero());
+    else {
+      SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
+      DestBB = SI->getSuccessor(SI->findCaseValue(Val));
+    }
+
+    // If we have exactly one destination, remember it for efficiency below.
+    if (i == 0)
+      OnlyDest = DestBB;
+    else if (OnlyDest != DestBB)
+      OnlyDest = MultipleDestSentinel;
+    
+    PredToDestList.push_back(std::make_pair(Pred, DestBB));
+  }
+  
+  // If all edges were unthreadable, we fail.
+  if (PredToDestList.empty())
+    return false;
+  
+  // Determine which is the most common successor.  If we have many inputs and
+  // this block is a switch, we want to start by threading the batch that goes
+  // to the most popular destination first.  If we only know about one
+  // threadable destination (the common case) we can avoid this.
+  BasicBlock *MostPopularDest = OnlyDest;
+  
+  if (MostPopularDest == MultipleDestSentinel)
+    MostPopularDest = FindMostPopularDest(BB, PredToDestList);
+  
+  // Now that we know what the most popular destination is, factor all
+  // predecessors that will jump to it into a single predecessor.
+  SmallVector<BasicBlock*, 16> PredsToFactor;
+  for (unsigned i = 0, e = PredToDestList.size(); i != e; ++i)
+    if (PredToDestList[i].second == MostPopularDest)
+      PredsToFactor.push_back(PredToDestList[i].first);
+
+  BasicBlock *PredToThread;
+  if (PredsToFactor.size() == 1)
+    PredToThread = PredsToFactor[0];
+  else {
+    DEBUG(errs() << "  Factoring out " << PredsToFactor.size()
+                 << " common predecessors.\n");
+    PredToThread = SplitBlockPredecessors(BB, &PredsToFactor[0],
+                                          PredsToFactor.size(),
+                                          ".thr_comm", this);
+  }
+  
+  // If the threadable edges are branching on an undefined value, we get to pick
+  // the destination that these predecessors should get to.
+  if (MostPopularDest == 0)
+    MostPopularDest = BB->getTerminator()->
+                            getSuccessor(GetBestDestForJumpOnUndef(BB));
+        
+  // Ok, try to thread it!
+  return ThreadEdge(BB, PredToThread, MostPopularDest);
+}
 
 /// ProcessJumpOnPHI - We have a conditional branch or switch on a PHI node in
 /// the current block.  See if there are any simplifications we can do based on
@@ -814,24 +1131,6 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   return ThreadEdge(BB, PredBB, SuccBB);
 }
 
-/// GetResultOfComparison - Given an icmp/fcmp predicate and the left and right
-/// hand sides of the compare instruction, try to determine the result. If the
-/// result can not be determined, a null pointer is returned.
-static Constant *GetResultOfComparison(CmpInst::Predicate pred,
-                                       Value *LHS, Value *RHS,
-                                       LLVMContext &Context) {
-  if (Constant *CLHS = dyn_cast<Constant>(LHS))
-    if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      return ConstantExpr::getCompare(pred, CLHS, CRHS);
-
-  if (LHS == RHS)
-    if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType()))
-      return ICmpInst::isTrueWhenEqual(pred) ? 
-                 ConstantInt::getTrue(Context) : ConstantInt::getFalse(Context);
-
-  return 0;
-}
-
 /// ProcessBranchOnCompare - We found a branch on a comparison between a phi
 /// node and a value.  If we can identify when the comparison is true between
 /// the phi inputs and the value, we can fold the compare for that edge and
@@ -852,8 +1151,7 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     PredVal = PN->getIncomingValue(i);
     
-    Constant *Res = GetResultOfComparison(Cmp->getPredicate(), PredVal,
-                                          RHS, Cmp->getContext());
+    Constant *Res = GetResultOfComparison(Cmp->getPredicate(), PredVal, RHS);
     if (!Res) {
       PredVal = 0;
       continue;
