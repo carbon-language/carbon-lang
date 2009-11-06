@@ -51,12 +51,11 @@ ExplodedNode *NullDerefChecker::CheckLocation(const Stmt *S, ExplodedNode *Pred,
       
       if (!NotNullState) { // Explicit null case.
         if (!BT)
-          BT = new BuiltinBug(NULL, "Null dereference",
-                              "Dereference of null pointer");
+          BT = new BuiltinBug("Null dereference","Dereference of null pointer");
 
         EnhancedBugReport *R =
           new EnhancedBugReport(*BT, BT->getDescription().c_str(), N);
-        
+
         R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                              bugreporter::GetDerefExpr(N));
         

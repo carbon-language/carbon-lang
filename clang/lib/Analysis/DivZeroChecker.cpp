@@ -50,7 +50,7 @@ void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
   if (stateZero && !stateNotZero) {
     if (ExplodedNode *N = C.GenerateNode(B, stateZero, true)) {
       if (!BT)
-        BT = new BuiltinBug(0, "Division by zero");
+        BT = new BuiltinBug("Division by zero");
 
       EnhancedBugReport *R = 
         new EnhancedBugReport(*BT, BT->getDescription().c_str(), N);

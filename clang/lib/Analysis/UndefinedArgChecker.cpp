@@ -29,8 +29,8 @@ void UndefinedArgChecker::PreVisitCallExpr(CheckerContext &C,
     if (C.getState()->getSVal(*I).isUndef()) {
       if (ExplodedNode *N = C.GenerateNode(CE, true)) {
         if (!BT)
-          BT = new BugType("Pass-by-value argument in function call is "
-                           "undefined", "Logic error");
+          BT = new BuiltinBug("Pass-by-value argument in function call is "
+                              "undefined");
         // Generate a report for this bug.
         EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName().c_str(),
                                                      N);

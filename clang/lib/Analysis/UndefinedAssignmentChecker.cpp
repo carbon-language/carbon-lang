@@ -36,8 +36,7 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
     return;
 
   if (!BT)
-    BT = new BugType("Assigned value is garbage or undefined",
-                     "Logic error");
+    BT = new BuiltinBug("Assigned value is garbage or undefined");
 
   // Generate a report for this bug.
   EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName().c_str(), N);

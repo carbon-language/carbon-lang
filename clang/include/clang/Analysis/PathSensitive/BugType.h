@@ -59,21 +59,27 @@ public:
 };
 
 class BuiltinBug : public BugType {
-  GRExprEngine &Eng;
+  GRExprEngine *Eng;
 protected:
   const std::string desc;
 public:
+  BuiltinBug(const char *name, const char *description)
+    : BugType(name, "Logic error"), Eng(0), desc(description) {}
+  
+  BuiltinBug(const char *name)
+    : BugType(name, "Logic error"), Eng(0), desc(name) {}
+  
   BuiltinBug(GRExprEngine *eng, const char* n, const char* d)
-    : BugType(n, "Logic error"), Eng(*eng), desc(d) {}
+    : BugType(n, "Logic error"), Eng(eng), desc(d) {}
 
   BuiltinBug(GRExprEngine *eng, const char* n)
-    : BugType(n, "Logic error"), Eng(*eng), desc(n) {}
+    : BugType(n, "Logic error"), Eng(eng), desc(n) {}
 
   const std::string &getDescription() const { return desc; }
 
   virtual void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {}
 
-  void FlushReports(BugReporter& BR) { FlushReportsImpl(BR, Eng); }
+  void FlushReports(BugReporter& BR) { FlushReportsImpl(BR, *Eng); }
 
   virtual void registerInitialVisitors(BugReporterContext& BRC,
                                        const ExplodedNode* N,

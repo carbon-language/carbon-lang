@@ -38,8 +38,8 @@ ExplodedNode *UndefSizedVLAChecker::CheckType(QualType T, ExplodedNode *Pred,
       if (ExplodedNode* N = Builder.generateNode(S, state, Pred)) {
         N->markAsSink();
         if (!BT)
-          BT = new BugType("Declared variable-length array (VLA) uses a garbage"
-                           " value as its size", "Logic error");
+          BT = new BuiltinBug("Declared variable-length array (VLA) uses a "
+                              "garbage value as its size");
 
         EnhancedBugReport *R =
                           new EnhancedBugReport(*BT, BT->getName().c_str(), N);
