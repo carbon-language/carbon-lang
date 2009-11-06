@@ -43,6 +43,7 @@ use Socket;
 #                   the source tree.
 #  -noremove        Do not remove the BUILDDIR after it has been built.
 #  -noremoveresults Do not remove the WEBDIR after it has been built.
+#  -noclean         Do not run 'make clean' before building.
 #  -nobuild         Do not build llvm. If tests are enabled perform them
 #                   on the llvm build specified in the build directory
 #  -release         Build an LLVM Release version
@@ -156,6 +157,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   # List command line options here...
   if (/^-config$/)         { $CONFIG_PATH = "$ARGV[0]"; shift; next; }
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
+  if (/^-noclean$/)        { $NOCLEAN = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE = 1; next; }
   if (/^-noremoveatend$/)  { $NOREMOVEATEND = 1; next; }
   if (/^-noremoveresults$/){ $NOREMOVERESULTS = 1; next; }
@@ -528,7 +530,9 @@ sub BuildLLVM {
   RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
                    $ConfigureLog, "CONFIGURE");
   # Build the entire tree, capturing the output into $BuildLog
-  RunAppendingLoggedCommand("($NICE $MAKECMD $MAKEOPTS clean)", $BuildLog, "BUILD CLEAN");
+  if (!$NOCLEAN) {
+      RunAppendingLoggedCommand("($NICE $MAKECMD $MAKEOPTS clean)", $BuildLog, "BUILD CLEAN");
+  }
   RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
 
   if (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
@@ -562,11 +566,9 @@ sub TestDirectory {
 
   my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
 
-  # Make sure to clean things if in non-config mode.
-  if ($ConfigMode == 1) {
-    RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS clean $TESTFLAGS",
-                     $ProgramTestLog, "TEST DIRECTORY $SubDir");
-  }
+  # Make sure to clean the test results.
+  RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS clean $TESTFLAGS",
+                   $ProgramTestLog, "TEST DIRECTORY $SubDir");
 
   # Run the programs tests... creating a report.nightly.csv file.
   my $LLCBetaOpts = "";
