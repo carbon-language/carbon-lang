@@ -740,3 +740,13 @@ def : T1Pat<(i32 thumb_immshifted:$src),
 
 def : T1Pat<(i32 imm0_255_comp:$src),
             (tMVN (tMOVi8 (imm_comp_XFORM imm:$src)))>;
+
+// Pseudo instruction that combines ldr from constpool and add pc. This should
+// be expanded into two instructions late to allow if-conversion and
+// scheduling.
+let isReMaterializable = 1 in
+def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
+                   NoItinerary, "@ ldr.n\t$dst, $addr\n$cp:\n\tadd\t$dst, pc",
+               [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
+                                           imm:$cp))]>,
+               Requires<[IsThumb1Only]>;

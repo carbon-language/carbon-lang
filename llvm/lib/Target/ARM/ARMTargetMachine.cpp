@@ -105,6 +105,10 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass());
 
+  // Expand some pseudo instructions into multiple instructions to allow
+  // proper scheduling.
+  PM.add(createARMExpandPseudoPass());
+
   return true;
 }
 

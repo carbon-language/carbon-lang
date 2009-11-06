@@ -35,15 +35,15 @@ public:
   // Return true if the block does not fall through.
   bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
 
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, unsigned SubIdx,
+                     const MachineInstr *Orig) const;
+
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
   const ARMRegisterInfo &getRegisterInfo() const { return RI; }
-
-  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, unsigned SubIdx,
-                     const MachineInstr *Orig) const;
 };
 
 }

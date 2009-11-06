@@ -85,17 +85,24 @@ reMaterialize(MachineBasicBlock &MBB,
               unsigned DestReg, unsigned SubIdx,
               const MachineInstr *Orig) const {
   DebugLoc dl = Orig->getDebugLoc();
-  if (Orig->getOpcode() == ARM::MOVi2pieces) {
+  unsigned Opcode = Orig->getOpcode();
+  switch (Opcode) {
+  default: {
+    MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
+    MI->getOperand(0).setReg(DestReg);
+    MBB.insert(I, MI);
+    break;
+  }
+  case ARM::MOVi2pieces:
     RI.emitLoadConstPool(MBB, I, dl,
                          DestReg, SubIdx,
                          Orig->getOperand(1).getImm(),
                          (ARMCC::CondCodes)Orig->getOperand(2).getImm(),
                          Orig->getOperand(3).getReg());
-    return;
+    break;
   }
 
-  MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
-  MI->getOperand(0).setReg(DestReg);
-  MBB.insert(I, MI);
+  MachineInstr *NewMI = prior(I);
+  NewMI->getOperand(0).setSubReg(SubIdx);
 }
 

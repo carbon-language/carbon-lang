@@ -261,9 +261,8 @@ public:
 
   virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                               MachineInstr* MI,
-                                              const SmallVectorImpl<unsigned> &Ops,
+                                           const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const;
-
 };
 
 static inline

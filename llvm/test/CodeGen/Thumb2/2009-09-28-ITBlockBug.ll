@@ -6,10 +6,8 @@
 
 define arm_apcscc void @t() nounwind {
 ; CHECK: t:
-; CHECK:      ittt eq
-; CHECK-NEXT: addeq
-; CHECK-NEXT: movweq
-; CHECK-NEXT: movteq
+; CHECK:      it eq
+; CHECK-NEXT: cmpeq
 entry:
   %pix_a.i294 = alloca [4 x %struct.pix_pos], align 4 ; <[4 x %struct.pix_pos]*> [#uses=2]
   br i1 undef, label %land.rhs, label %lor.end

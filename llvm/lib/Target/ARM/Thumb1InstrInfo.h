@@ -76,6 +76,10 @@ public:
                                       MachineInstr* LoadMI) const {
     return 0;
   }
+
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, unsigned SubIdx,
+                     const MachineInstr *Orig) const;
 };
 }
 

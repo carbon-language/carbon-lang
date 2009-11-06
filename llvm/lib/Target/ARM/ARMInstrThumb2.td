@@ -1179,3 +1179,13 @@ let isReMaterializable = 1 in
 def t2MOVi32imm : T2Ix2<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVi,
                    "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
                      [(set GPR:$dst, (i32 imm:$src))]>;
+
+// Pseudo instruction that combines ldr from constpool and add pc. This should
+// be expanded into two instructions late to allow if-conversion and
+// scheduling.
+let isReMaterializable = 1 in
+def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
+                   NoItinerary, "@ ldr.w\t$dst, $addr\n$cp:\n\tadd\t$dst, pc",
+               [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
+                                           imm:$cp))]>,
+               Requires<[IsThumb2]>;

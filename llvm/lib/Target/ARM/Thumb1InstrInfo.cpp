@@ -11,10 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMInstrInfo.h"
+#include "Thumb1InstrInfo.h"
 #include "ARM.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
+#include "llvm/GlobalValue.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
@@ -263,3 +266,44 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
 
   return NewMI;
 }
+
+void Thumb1InstrInfo::reMaterialize(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator I,
+                                    unsigned DestReg, unsigned SubIdx,
+                                    const MachineInstr *Orig) const {
+  DebugLoc dl = Orig->getDebugLoc();
+  unsigned Opcode = Orig->getOpcode();
+  switch (Opcode) {
+  default: {
+    MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
+    MI->getOperand(0).setReg(DestReg);
+    MBB.insert(I, MI);
+    break;
+  }
+  case ARM::tLDRpci_pic: {
+    MachineFunction &MF = *MBB.getParent();
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    MachineConstantPool *MCP = MF.getConstantPool();
+    unsigned CPI = Orig->getOperand(1).getIndex();
+    const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPI];
+    assert(MCPE.isMachineConstantPoolEntry() &&
+           "Expecting a machine constantpool entry!");
+    ARMConstantPoolValue *ACPV =
+      static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
+    assert(ACPV->isGlobalValue() && "Expecting a GV!");
+    unsigned PCLabelId = AFI->createConstPoolEntryUId();
+    ARMConstantPoolValue *NewCPV =
+      new ARMConstantPoolValue(ACPV->getGV(), PCLabelId, ARMCP::CPValue, 4);
+    CPI = MCP->getConstantPoolIndex(NewCPV, MCPE.getAlignment());
+    MachineInstrBuilder MIB = BuildMI(MBB, I, Orig->getDebugLoc(), get(Opcode),
+                                      DestReg)
+      .addConstantPoolIndex(CPI).addImm(PCLabelId);
+    (*MIB).setMemRefs(Orig->memoperands_begin(), Orig->memoperands_end());
+    break;
+  }
+  }
+
+  MachineInstr *NewMI = prior(I);
+  NewMI->getOperand(0).setSubReg(SubIdx);
+}
+
