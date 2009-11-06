@@ -127,12 +127,10 @@
   <h3 id="testingWindows">Testing using Visual Studio on Windows</h3>
   <!--=====================================================================-->
 
-  <p>The cmake build tool is set up to create Visual Studio project files
-  for running the tests, "clang-test" being the root.
-  Unfortunately, the test runner scripts presently don't work on Windows.
-  This will be fixed during the test runner revision in progress.</p>
+  <p>The Clang test suite can be run from either Visual Studio or
+  the command line.</p>
   
-  <p>Note that the current and coming revised test runner is based on
+  <p>Note that the test runner is based on
   Python, which must be installed.  Find Python at:
   <a href="http://www.python.org/download">http://www.python.org/download</a>.
   Download the latest stable version (2.6.2 at the time of this writing).</p>
@@ -143,6 +141,62 @@
   grep does work in this case.)
   Get them from <a href="http://getgnuwin32.sourceforge.net">
   http://getgnuwin32.sourceforge.net</a>.</p>
+  
+  <p>The cmake build tool is set up to create Visual Studio project files
+  for running the tests, "clang-test" being the root.  Therefore, to
+  run the test from Visual Studio, right-click the clang-test project
+  and select "Build".</p>
+  
+  <p>To run all the tests from the command line, execute a command like
+  the following:</p>
+  
+  <tt>
+  python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
+ (path to llvm)/llvm/tools/clang/test
+  </tt>
+
+  <p>To run a single test:</p>
+  
+  <tt>
+  python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
+ (path to llvm)/llvm/tools/clang/test/(dir)/(test)
+  </tt>
+
+  <p>For example:</p>
+  
+  <tt>
+  python C:/Tools/llvm/utils/lit/lit.py -sv --no-progress-bar
+  C:/Tools/llvm/tools/clang/test/Sema/wchar.c
+  </tt>
+
+  <p>The -sv option above tells the runner to show the test output if
+  any tests failed, to help you determine the cause of failure.</p>
+
+  <p>Note that a few tests currently fail on Windows.  We are working to
+  correct this. Therefore your output might look something like this:</p>
+
+<tt><pre>lit.py: lit.cfg:152: note: using clang: 'C:/Tools/llvm/bin/Debug\\clang.EXE'
+lit.py: lit.cfg:157: note: using clang-cc: 'C:/Tools/llvm/bin/Debug/clang-cc.exe'
+-- Testing: 1723 tests, 2 threads --
+FAIL: Clang::(test path) (659 of 1723)
+******************** TEST 'Clang::(test path)' FAILED ********************
+Script:
+  (commands run)
+Command Output (stdout):
+  (output here)
+Command Output (stderr):
+  (output here)
+********************
+Testing Time: 83.66s
+********************
+Failing Tests (1):
+    Clang::(test path)
+  Expected Passes    : 1704
+  Expected Failures  : 18
+  Unexpected Failures: 1
+</pre></tt>  
+
+  <p>The last statistic, "Unexpected Failures", is the important one.</p>
 
   <!--=====================================================================-->
   <h2 id="patches">Creating Patch Files</h2>

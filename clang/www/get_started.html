@@ -168,7 +168,8 @@ Visual Studio:</p>
   <li>Run cmake to generate the Visual Studio solution and project files:</li>
   <ul>
     <li><tt>cd ..</tt>  (Change directory back to the llvm top.)</li>
-    <li><tt>cmake .</tt></li>
+    <li>If you are using Visual Studio 2005:  <tt>cmake .</tt></li>
+    <li>Or if you are using Visual Studio 2008:  <tt>cmake -G "Visual Studio 9 2008" .</tt></li>
     <li>The above, if successful, will have created an LLVM.sln file in the
        llvm directory.
   </ul>
