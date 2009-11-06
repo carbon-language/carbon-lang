@@ -193,28 +193,12 @@ public:
 private:
   CGDebugInfo *DebugInfo;
 
-#ifndef USEINDIRECTBRANCH
-  /// LabelIDs - Track arbitrary ids assigned to labels for use in implementing
-  /// the GCC address-of-label extension and indirect goto. IDs are assigned to
-  /// labels inside getIDForAddrOfLabel().
-  std::map<const LabelStmt*, unsigned> LabelIDs;
-#else
   /// IndirectBranch - The first time an indirect goto is seen we create a
   /// block with an indirect branch.  Every time we see the address of a label
   /// taken, we add the label to the indirect goto.  Every subsequent indirect
   /// goto is codegen'd as a jump to the IndirectBranch's basic block.
   llvm::IndirectBrInst *IndirectBranch;
-#endif
 
-#ifndef USEINDIRECTBRANCH
-  /// IndirectGotoSwitch - The first time an indirect goto is seen we create a
-  /// block with the switch for the indirect gotos.  Every time we see the
-  /// address of a label taken, we add the label to the indirect goto.  Every
-  /// subsequent indirect goto is codegen'd as a jump to the
-  /// IndirectGotoSwitch's basic block.
-  llvm::SwitchInst *IndirectGotoSwitch;
-
-#endif
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
@@ -586,11 +570,7 @@ public:
   /// the input field number being accessed.
   static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
 
-#ifndef USEINDIRECTBRANCH
-  unsigned GetIDForAddrOfLabel(const LabelStmt *L);
-#else
   llvm::BlockAddress *GetAddrOfLabel(const LabelStmt *L);
-#endif
   llvm::BasicBlock *GetIndirectGotoBlock();
 
   /// EmitMemSetToZero - Generate code to memset a value of the given type to 0.

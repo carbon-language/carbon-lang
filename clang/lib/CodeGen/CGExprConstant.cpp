@@ -776,17 +776,9 @@ public:
     }
     case Expr::AddrLabelExprClass: {
       assert(CGF && "Invalid address of label expression outside function.");
-#ifndef USEINDIRECTBRANCH
-      unsigned id =
-          CGF->GetIDForAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
-      llvm::Constant *C =
-            llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), id);
-      return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
-#else
       llvm::Constant *Ptr =
         CGF->GetAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
       return llvm::ConstantExpr::getBitCast(Ptr, ConvertType(E->getType()));
-#endif
     }
     case Expr::CallExprClass: {
       CallExpr* CE = cast<CallExpr>(E);
