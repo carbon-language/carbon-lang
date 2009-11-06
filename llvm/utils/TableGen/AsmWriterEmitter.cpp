@@ -695,7 +695,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   O << "\n#ifndef NO_ASM_WRITER_BOILERPLATE\n";
   
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
-    << "    O << \"\\t\";\n"
     << "    printInlineAsm(MI);\n"
     << "    return;\n"
     << "  } else if (MI->isLabel()) {\n"
@@ -705,6 +704,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     << "    printImplicitDef(MI);\n"
     << "    return;\n"
     << "  } else if (MI->getOpcode() == TargetInstrInfo::KILL) {\n"
+    << "    printKill(MI);\n"
     << "    return;\n"
     << "  }\n\n";
 
@@ -786,7 +786,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     O << "  return;\n";
   }
 
-  O << "  return;\n";
   O << "}\n";
 }
 
