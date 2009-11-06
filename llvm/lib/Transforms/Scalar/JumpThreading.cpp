@@ -75,7 +75,6 @@ namespace {
     bool ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
     bool DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
                                           BasicBlock *PredBB);
-    BasicBlock *FactorCommonPHIPreds(PHINode *PN, Value *Val);
     
     typedef SmallVectorImpl<std::pair<ConstantInt*,
                                       BasicBlock*> > PredValueInfo;
@@ -202,29 +201,6 @@ void JumpThreading::FindLoopHeaders(Function &F) {
   
   for (unsigned i = 0, e = Edges.size(); i != e; ++i)
     LoopHeaders.insert(const_cast<BasicBlock*>(Edges[i].second));
-}
-
-
-/// FactorCommonPHIPreds - If there are multiple preds with the same incoming
-/// value for the PHI, factor them together so we get one block to thread for
-/// the whole group.
-/// This is important for things like "phi i1 [true, true, false, true, x]"
-/// where we only need to clone the block for the true blocks once.
-///
-BasicBlock *JumpThreading::FactorCommonPHIPreds(PHINode *PN, Value *Val) {
-  SmallVector<BasicBlock*, 16> CommonPreds;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if (PN->getIncomingValue(i) == Val)
-      CommonPreds.push_back(PN->getIncomingBlock(i));
-  
-  if (CommonPreds.size() == 1)
-    return CommonPreds[0];
-    
-  DEBUG(errs() << "  Factoring out " << CommonPreds.size()
-        << " common predecessors.\n");
-  return SplitBlockPredecessors(PN->getParent(),
-                                &CommonPreds[0], CommonPreds.size(),
-                                ".thr_comm", this);
 }
 
 /// GetResultOfComparison - Given an icmp/fcmp predicate and the left and right
