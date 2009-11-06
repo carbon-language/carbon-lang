@@ -8,3 +8,13 @@
 struct s; // expected-note{{previous use is here}}
 
 union s *s1; // expected-error{{use of 's' with tag type that does not match previous declaration}}
+
+struct Point {
+  float x, y, z;
+};
+
+struct Point *get_origin();
+
+void test_point() {
+  (void)get_origin->x;
+}

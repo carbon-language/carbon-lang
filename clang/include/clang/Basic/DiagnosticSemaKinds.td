@@ -1447,8 +1447,9 @@ def err_typecheck_member_reference_type : Error<
   "cannot refer to type member %0 with '%select{.|->}1'">;
 def err_typecheck_member_reference_unknown : Error<
   "cannot refer to member %0 with '%select{.|->}1'">;
-def note_member_reference_needs_call : Note<
-  "perhaps you meant to call this function with '()'?">;
+def err_member_reference_needs_call : Error<
+  "base of member reference has function type %0; perhaps you meant to call "
+  "this function with '()'?">;
 def warn_subscript_is_char : Warning<"array subscript is of type 'char'">,
   InGroup<CharSubscript>, DefaultIgnore;
 

@@ -1882,6 +1882,38 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   DefaultFunctionArrayConversion(BaseExpr);
 
   QualType BaseType = BaseExpr->getType();
+
+  // If the user is trying to apply -> or . to a function pointer
+  // type, it's probably because the forgot parentheses to call that
+  // function. Suggest the addition of those parentheses, build the
+  // call, and continue on.
+  if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
+    if (const FunctionProtoType *Fun
+          = Ptr->getPointeeType()->getAs<FunctionProtoType>()) {
+      QualType ResultTy = Fun->getResultType();
+      if (Fun->getNumArgs() == 0 &&
+          ((OpKind == tok::period && ResultTy->isRecordType()) ||
+           (OpKind == tok::arrow && ResultTy->isPointerType() &&
+            ResultTy->getAs<PointerType>()->getPointeeType()
+                                                          ->isRecordType()))) {
+        SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
+        Diag(Loc, diag::err_member_reference_needs_call)
+          << QualType(Fun, 0)
+          << CodeModificationHint::CreateInsertion(Loc, "()");
+        
+        OwningExprResult NewBase
+          = ActOnCallExpr(S, ExprArg(*this, BaseExpr), Loc, 
+                          MultiExprArg(*this, 0, 0), 0, Loc);
+        if (NewBase.isInvalid())
+          return move(NewBase);
+        
+        BaseExpr = NewBase.takeAs<Expr>();
+        DefaultFunctionArrayConversion(BaseExpr);
+        BaseType = BaseExpr->getType();
+      }
+    }
+  }
+
   // If this is an Objective-C pseudo-builtin and a definition is provided then
   // use that.
   if (BaseType->isObjCIdType()) {
@@ -2436,18 +2468,6 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
   Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
     << BaseType << BaseExpr->getSourceRange();
-
-  // If the user is trying to apply -> or . to a function or function
-  // pointer, it's probably because they forgot parentheses to call
-  // the function. Suggest the addition of those parentheses.
-  if (BaseType == Context.OverloadTy ||
-      BaseType->isFunctionType() ||
-      (BaseType->isPointerType() &&
-       BaseType->getAs<PointerType>()->isFunctionType())) {
-    SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
-    Diag(Loc, diag::note_member_reference_needs_call)
-      << CodeModificationHint::CreateInsertion(Loc, "()");
-  }
 
   return ExprError();
 }
