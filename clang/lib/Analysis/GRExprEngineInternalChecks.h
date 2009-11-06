@@ -21,6 +21,7 @@ class GRExprEngine;
 
 void RegisterReturnStackAddressChecker(GRExprEngine &Eng);
 void RegisterReturnUndefChecker(GRExprEngine &Eng);
+void RegisterReturnPointerRangeChecker(GRExprEngine &Eng);
   
 } // end clang namespace
 #endif

@@ -36,6 +36,7 @@ add_clang_library(clangAnalysis
   PathDiagnostic.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
+  ReturnPointerRangeChecker.cpp
   ReturnStackAddressChecker.cpp
   ReturnUndefChecker.cpp
   SVals.cpp

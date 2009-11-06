@@ -64,6 +64,11 @@ public:
   ConstraintManager &getConstraintManager() {
       return Eng.getConstraintManager();
   }
+
+  StoreManager &getStoreManager() {
+    return Eng.getStoreManager();
+  }
+
   ExplodedNodeSet &getNodeSet() { return Dst; }
   GRStmtNodeBuilder &getNodeBuilder() { return B; }
   ExplodedNode *&getPredecessor() { return Pred; }

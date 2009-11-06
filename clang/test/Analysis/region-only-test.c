@@ -11,3 +11,10 @@ void foo(int* p) {
   if (p[0] == 1)
     (void)*x; // no-warning
 }
+
+int a[10];
+
+int *f0() {
+  int *p = a+10;
+  return p; // expected-warning{{Return of Pointer Value Outside of Expected Range}}
+}

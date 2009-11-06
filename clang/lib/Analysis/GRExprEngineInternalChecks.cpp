@@ -405,6 +405,7 @@ void GRExprEngine::RegisterInternalChecks() {
   // object.
   RegisterReturnStackAddressChecker(*this);
   RegisterReturnUndefChecker(*this);
+  RegisterReturnPointerRangeChecker(*this);
   registerCheck(new AttrNonNullChecker());
   registerCheck(new UndefinedArgChecker());
   registerCheck(new UndefinedAssignmentChecker());
