@@ -89,7 +89,6 @@ namespace {
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
 
     bool ProcessJumpOnPHI(PHINode *PN);
-    bool ProcessBranchOnLogical(Value *V, BasicBlock *BB, bool isAnd);
     bool ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB);
     
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
@@ -479,15 +478,6 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   if (PHINode *PN = dyn_cast<PHINode>(CondInst))
     if (PN->getParent() == BB)
       return ProcessJumpOnPHI(PN);
-  
-  // If this is a conditional branch whose condition is and/or of a phi, try to
-  // simplify it.
-  if ((CondInst->getOpcode() == Instruction::And || 
-       CondInst->getOpcode() == Instruction::Or) &&
-      isa<BranchInst>(BB->getTerminator()) &&
-      ProcessBranchOnLogical(CondInst, BB,
-                             CondInst->getOpcode() == Instruction::And))
-    return true;
   
   if (CmpInst *CondCmp = dyn_cast<CmpInst>(CondInst)) {
     if (isa<PHINode>(CondCmp->getOperand(0))) {
@@ -1073,62 +1063,6 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   }
 
   return false;
-}
-
-
-/// ProcessJumpOnLogicalPHI - PN's basic block contains a conditional branch
-/// whose condition is an AND/OR where one side is PN.  If PN has constant
-/// operands that permit us to evaluate the condition for some operand, thread
-/// through the block.  For example with:
-///   br (and X, phi(Y, Z, false))
-/// the predecessor corresponding to the 'false' will always jump to the false
-/// destination of the branch.
-///
-bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
-                                           bool isAnd) {
-  // If this is a binary operator tree of the same AND/OR opcode, check the
-  // LHS/RHS.
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
-    if ((isAnd && BO->getOpcode() == Instruction::And) ||
-        (!isAnd && BO->getOpcode() == Instruction::Or)) {
-      if (ProcessBranchOnLogical(BO->getOperand(0), BB, isAnd))
-        return true;
-      if (ProcessBranchOnLogical(BO->getOperand(1), BB, isAnd))
-        return true;
-    }
-      
-  // If this isn't a PHI node, we can't handle it.
-  PHINode *PN = dyn_cast<PHINode>(V);
-  if (!PN || PN->getParent() != BB) return false;
-                                             
-  // We can only do the simplification for phi nodes of 'false' with AND or
-  // 'true' with OR.  See if we have any entries in the phi for this.
-  unsigned PredNo = ~0U;
-  ConstantInt *PredCst = ConstantInt::get(Type::getInt1Ty(BB->getContext()),
-                                          !isAnd);
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-    if (PN->getIncomingValue(i) == PredCst) {
-      PredNo = i;
-      break;
-    }
-  }
-  
-  // If no match, bail out.
-  if (PredNo == ~0U)
-    return false;
-  
-  // If so, we can actually do this threading.  Merge any common predecessors
-  // that will act the same.
-  BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
-  
-  // Next, figure out which successor we are threading to.  If this was an AND,
-  // the constant must be FALSE, and we must be targeting the 'false' block.
-  // If this is an OR, the constant must be TRUE, and we must be targeting the
-  // 'true' block.
-  BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(isAnd);
-  
-  // Ok, try to thread it!
-  return ThreadEdge(BB, PredBB, SuccBB);
 }
 
 /// ProcessBranchOnCompare - We found a branch on a comparison between a phi
