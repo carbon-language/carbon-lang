@@ -229,7 +229,7 @@ class ComplexPattern {
   unsigned Properties; // Node properties
   unsigned Attributes; // Pattern attributes
 public:
-  ComplexPattern() : NumOperands(0) {};
+  ComplexPattern() : NumOperands(0) {}
   ComplexPattern(Record *R);
 
   MVT::SimpleValueType getValueType() const { return Ty; }
