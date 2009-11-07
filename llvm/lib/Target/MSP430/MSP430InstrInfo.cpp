@@ -35,15 +35,23 @@ void MSP430InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                     const TargetRegisterClass *RC) const {
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
+  MachineFunction &MF = *MBB.getParent();
+  MachineFrameInfo &MFI = *MF.getFrameInfo();
+
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
+                            MachineMemOperand::MOStore, 0,
+                            MFI.getObjectSize(FrameIdx),
+                            MFI.getObjectAlignment(FrameIdx));
 
   if (RC == &MSP430::GR16RegClass)
     BuildMI(MBB, MI, DL, get(MSP430::MOV16mr))
       .addFrameIndex(FrameIdx).addImm(0)
-      .addReg(SrcReg, getKillRegState(isKill));
+      .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   else if (RC == &MSP430::GR8RegClass)
     BuildMI(MBB, MI, DL, get(MSP430::MOV8mr))
       .addFrameIndex(FrameIdx).addImm(0)
-      .addReg(SrcReg, getKillRegState(isKill));
+      .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   else
     llvm_unreachable("Cannot store this register to stack slot!");
 }
@@ -54,13 +62,21 @@ void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            const TargetRegisterClass *RC) const{
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
+  MachineFunction &MF = *MBB.getParent();
+  MachineFrameInfo &MFI = *MF.getFrameInfo();
+
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
+                            MachineMemOperand::MOLoad, 0,
+                            MFI.getObjectSize(FrameIdx),
+                            MFI.getObjectAlignment(FrameIdx));
 
   if (RC == &MSP430::GR16RegClass)
     BuildMI(MBB, MI, DL, get(MSP430::MOV16rm))
-      .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0);
+      .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0).addMemOperand(MMO);
   else if (RC == &MSP430::GR8RegClass)
     BuildMI(MBB, MI, DL, get(MSP430::MOV8rm))
-      .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0);
+      .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0).addMemOperand(MMO);
   else
     llvm_unreachable("Cannot store this register to stack slot!");
 }
