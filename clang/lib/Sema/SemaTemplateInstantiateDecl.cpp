@@ -28,6 +28,8 @@ namespace {
     DeclContext *Owner;
     const MultiLevelTemplateArgumentList &TemplateArgs;
 
+    void InstantiateAttrs(Decl *Tmpl, Decl *New);
+      
   public:
     typedef Sema::OwningExprResult OwningExprResult;
 
@@ -87,6 +89,18 @@ namespace {
                                               ClassTemplateDecl *ClassTemplate,
                            ClassTemplatePartialSpecializationDecl *PartialSpec);
   };
+}
+
+// FIXME: Is this too simple?
+void TemplateDeclInstantiator::InstantiateAttrs(Decl *Tmpl, Decl *New) {
+  for (const Attr *TmplAttr = Tmpl->getAttrs(); TmplAttr; 
+       TmplAttr = TmplAttr->getNext()) {
+    
+    // FIXME: Is cloning correct for all attributes?
+    Attr *NewAttr = TmplAttr->clone(SemaRef.Context);
+    
+    New->addAttr(NewAttr);
+  }
 }
 
 Decl *
@@ -258,6 +272,8 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     return 0;
   }
 
+  InstantiateAttrs(D, Field);
+  
   if (Invalid)
     Field->setInvalidDecl();
 
