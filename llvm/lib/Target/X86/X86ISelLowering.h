@@ -286,7 +286,7 @@ namespace llvm {
     /// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for MOVHP{S|D}.
     /// as well as MOVLHPS.
-    bool isMOVHPMask(ShuffleVectorSDNode *N);
+    bool isMOVLHPSMask(ShuffleVectorSDNode *N);
 
     /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to UNPCKL.

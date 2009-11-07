@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 -o %t
 ; RUN: grep movlhps %t | count 1
-; RUN: grep movhps %t | count 1
+; RUN: grep movhlps %t | count 1
 
 define <4 x float> @test1(<4 x float>* %x, <4 x float>* %y) {
         %tmp = load <4 x float>* %y             ; <<4 x float>> [#uses=2]

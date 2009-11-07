@@ -2528,6 +2528,21 @@ bool X86::isMOVHLPSMask(ShuffleVectorSDNode *N) {
          isUndefOrEqual(N->getMaskElt(3), 3);
 }
 
+/// isMOVHLPS_v_undef_Mask - Special case of isMOVHLPSMask for canonical form
+/// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
+/// <2, 3, 2, 3>
+bool X86::isMOVHLPS_v_undef_Mask(ShuffleVectorSDNode *N) {
+  unsigned NumElems = N->getValueType(0).getVectorNumElements();
+  
+  if (NumElems != 4)
+    return false;
+  
+  return isUndefOrEqual(N->getMaskElt(0), 2) &&
+  isUndefOrEqual(N->getMaskElt(1), 3) &&
+  isUndefOrEqual(N->getMaskElt(2), 2) &&
+  isUndefOrEqual(N->getMaskElt(3), 3);
+}
+
 /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVLP{S|D}.
 bool X86::isMOVLPMask(ShuffleVectorSDNode *N) {
@@ -2547,10 +2562,9 @@ bool X86::isMOVLPMask(ShuffleVectorSDNode *N) {
   return true;
 }
 
-/// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}
-/// and MOVLHPS.
-bool X86::isMOVHPMask(ShuffleVectorSDNode *N) {
+/// isMOVLHPSMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to MOVLHPS.
+bool X86::isMOVLHPSMask(ShuffleVectorSDNode *N) {
   unsigned NumElems = N->getValueType(0).getVectorNumElements();
 
   if (NumElems != 2 && NumElems != 4)
@@ -2565,21 +2579,6 @@ bool X86::isMOVHPMask(ShuffleVectorSDNode *N) {
       return false;
 
   return true;
-}
-
-/// isMOVHLPS_v_undef_Mask - Special case of isMOVHLPSMask for canonical form
-/// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
-/// <2, 3, 2, 3>
-bool X86::isMOVHLPS_v_undef_Mask(ShuffleVectorSDNode *N) {
-  unsigned NumElems = N->getValueType(0).getVectorNumElements();
-
-  if (NumElems != 4)
-    return false;
-
-  return isUndefOrEqual(N->getMaskElt(0), 2) &&
-         isUndefOrEqual(N->getMaskElt(1), 3) &&
-         isUndefOrEqual(N->getMaskElt(2), 2) &&
-         isUndefOrEqual(N->getMaskElt(3), 3);
 }
 
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -4275,7 +4274,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   if (!isMMX && (X86::isMOVSHDUPMask(SVOp) ||
                  X86::isMOVSLDUPMask(SVOp) ||
                  X86::isMOVHLPSMask(SVOp) ||
-                 X86::isMOVHPMask(SVOp) ||
+                 X86::isMOVLHPSMask(SVOp) ||
                  X86::isMOVLPMask(SVOp)))
     return Op;
 

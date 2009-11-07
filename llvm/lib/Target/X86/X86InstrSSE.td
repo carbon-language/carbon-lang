@@ -225,9 +225,9 @@ def movhlps_undef : PatFrag<(ops node:$lhs, node:$rhs),
   return X86::isMOVHLPS_v_undef_Mask(cast<ShuffleVectorSDNode>(N));
 }]>;
 
-def movhp : PatFrag<(ops node:$lhs, node:$rhs),
-                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isMOVHPMask(cast<ShuffleVectorSDNode>(N));
+def movlhps : PatFrag<(ops node:$lhs, node:$rhs),
+                      (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isMOVLHPSMask(cast<ShuffleVectorSDNode>(N));
 }]>;
 
 def movlp : PatFrag<(ops node:$lhs, node:$rhs),
@@ -735,7 +735,7 @@ let Constraints = "$src1 = $dst" in {
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movhps\t{$src2, $dst|$dst, $src2}",
        [(set VR128:$dst,
-         (movhp VR128:$src1,
+         (movlhps VR128:$src1,
                 (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
@@ -760,7 +760,7 @@ def MOVLHPSrr : PSI<0x16, MRMSrcReg, (outs VR128:$dst),
                                      (ins VR128:$src1, VR128:$src2),
                     "movlhps\t{$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
-                      (v4f32 (movhp VR128:$src1, VR128:$src2)))]>;
+                      (v4f32 (movlhps VR128:$src1, VR128:$src2)))]>;
 
 def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst),
                                      (ins VR128:$src1, VR128:$src2),
@@ -1494,7 +1494,7 @@ let Constraints = "$src1 = $dst" in {
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movhpd\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst,
-                         (v2f64 (movhp VR128:$src1,
+                         (v2f64 (movlhps VR128:$src1,
                                  (scalar_to_vector (loadf64 addr:$src2)))))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
@@ -3035,7 +3035,7 @@ def : Pat<(v4i32 (unpckh_undef VR128:$src, (undef))),
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
-def : Pat<(v4i32 (movhp VR128:$src1, VR128:$src2)),
+def : Pat<(v4i32 (movlhps VR128:$src1, VR128:$src2)),
           (MOVLHPSrr VR128:$src1, VR128:$src2)>;
 
 // vector_shuffle v1, v2 <6, 7, 2, 3> using MOVHLPS
@@ -3051,48 +3051,26 @@ def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
-// vector_shuffle v1, (load v2) <6, 7, 2, 3> using MOVHPS
 def : Pat<(v4f32 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
 def : Pat<(v2f64 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v4f32 (movhlps (load addr:$src1), VR128:$src2)),
-          (MOVHPSrm VR128:$src2, addr:$src1)>, Requires<[HasSSE1]>;
-def : Pat<(v2f64 (movhlps (load addr:$src1), VR128:$src2)),
-          (MOVHPDrm VR128:$src2, addr:$src1)>, Requires<[HasSSE2]>;
-
 def : Pat<(v4i32 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (movhp VR128:$src1, (load addr:$src2))),
-          (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(v2i64 (movhp VR128:$src1, (load addr:$src2))),
-          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 }
 
 // (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
-// (store (vector_shuffle (load addr), v2, <0, 1, 4, 5>), addr) using MOVHPS
 def : Pat<(store (v4f32 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
 def : Pat<(store (v2f64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(store (v4f32 (movhlps (load addr:$src1), VR128:$src2)), addr:$src1),
-          (MOVHPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(store (v2f64 (movhlps (load addr:$src1), VR128:$src2)), addr:$src1),
-          (MOVHPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-
 def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)),
                  addr:$src1),
           (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
 def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(store (v4i32 (movhp (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)),
-                 addr:$src1),
-          (MOVHPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(store (v2i64 (movhp (load addr:$src1), VR128:$src2)), addr:$src1),
-          (MOVHPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-
 
 let AddedComplexity = 15 in {
 // Setting the lowest element in the vector.
