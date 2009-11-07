@@ -193,9 +193,9 @@ class SelectionDAGLowering {
     Case() : Low(0), High(0), BB(0) { }
     Case(Constant* low, Constant* high, MachineBasicBlock* bb) :
       Low(low), High(high), BB(bb) { }
-    uint64_t size() const {
-      uint64_t rHigh = cast<ConstantInt>(High)->getSExtValue();
-      uint64_t rLow  = cast<ConstantInt>(Low)->getSExtValue();
+    APInt size() const {
+      const APInt &rHigh = cast<ConstantInt>(High)->getValue();
+      const APInt &rLow  = cast<ConstantInt>(Low)->getValue();
       return (rHigh - rLow + 1ULL);
     }
   };

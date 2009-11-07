@@ -1,8 +1,22 @@
 ; RUN: llc < %s
+
+
+; PR5421
+define void @test1() {
+entry:
+  switch i128 undef, label %exit [
+    i128 55340232221128654848, label %exit
+    i128 92233720368547758080, label %exit
+    i128 73786976294838206464, label %exit
+    i128 147573952589676412928, label %exit
+  ]
+exit:
+  unreachable
+}
+
+
 ; PR1197
-
-
-define void @exp_attr__expand_n_attribute_reference() {
+define void @test2() {
 entry:
 	br i1 false, label %cond_next954, label %cond_true924
 

@@ -1743,19 +1743,19 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
 
-  const APInt& First = cast<ConstantInt>(FrontCase.Low)->getValue();
-  const APInt& Last  = cast<ConstantInt>(BackCase.High)->getValue();
+  const APInt &First = cast<ConstantInt>(FrontCase.Low)->getValue();
+  const APInt &Last  = cast<ConstantInt>(BackCase.High)->getValue();
 
-  size_t TSize = 0;
+  APInt TSize(First.getBitWidth(), 0);
   for (CaseItr I = CR.Range.first, E = CR.Range.second;
        I!=E; ++I)
     TSize += I->size();
 
-  if (!areJTsAllowed(TLI) || TSize <= 3)
+  if (!areJTsAllowed(TLI) || TSize.ult(APInt(First.getBitWidth(), 4)))
     return false;
 
   APInt Range = ComputeRange(First, Last);
-  double Density = (double)TSize / Range.roundToDouble();
+  double Density = TSize.roundToDouble() / Range.roundToDouble();
   if (Density < 0.4)
     return false;
 
@@ -1849,32 +1849,34 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
   // Size is the number of Cases represented by this range.
   unsigned Size = CR.Range.second - CR.Range.first;
 
-  const APInt& First = cast<ConstantInt>(FrontCase.Low)->getValue();
-  const APInt& Last  = cast<ConstantInt>(BackCase.High)->getValue();
+  const APInt &First = cast<ConstantInt>(FrontCase.Low)->getValue();
+  const APInt &Last  = cast<ConstantInt>(BackCase.High)->getValue();
   double FMetric = 0;
   CaseItr Pivot = CR.Range.first + Size/2;
 
   // Select optimal pivot, maximizing sum density of LHS and RHS. This will
   // (heuristically) allow us to emit JumpTable's later.
-  size_t TSize = 0;
+  APInt TSize(First.getBitWidth(), 0);
   for (CaseItr I = CR.Range.first, E = CR.Range.second;
        I!=E; ++I)
     TSize += I->size();
 
-  size_t LSize = FrontCase.size();
-  size_t RSize = TSize-LSize;
+  APInt LSize = FrontCase.size();
+  APInt RSize = TSize-LSize;
   DEBUG(errs() << "Selecting best pivot: \n"
                << "First: " << First << ", Last: " << Last <<'\n'
                << "LSize: " << LSize << ", RSize: " << RSize << '\n');
   for (CaseItr I = CR.Range.first, J=I+1, E = CR.Range.second;
        J!=E; ++I, ++J) {
-    const APInt& LEnd = cast<ConstantInt>(I->High)->getValue();
-    const APInt& RBegin = cast<ConstantInt>(J->Low)->getValue();
+    const APInt &LEnd = cast<ConstantInt>(I->High)->getValue();
+    const APInt &RBegin = cast<ConstantInt>(J->Low)->getValue();
     APInt Range = ComputeRange(LEnd, RBegin);
     assert((Range - 2ULL).isNonNegative() &&
            "Invalid case distance");
-    double LDensity = (double)LSize / (LEnd - First + 1ULL).roundToDouble();
-    double RDensity = (double)RSize / (Last - RBegin + 1ULL).roundToDouble();
+    double LDensity = (double)LSize.roundToDouble() / 
+                           (LEnd - First + 1ULL).roundToDouble();
+    double RDensity = (double)RSize.roundToDouble() /
+                           (Last - RBegin + 1ULL).roundToDouble();
     double Metric = Range.logBase2()*(LDensity+RDensity);
     // Should always split in some non-trivial place
     DEBUG(errs() <<"=>Step\n"
