@@ -23,6 +23,7 @@
 namespace clang {
 
 class HeaderSearch;
+class HeaderSearchOptions;
 class LangOptions;
 
 /// InitHeaderSearch - This class makes it easier to set the search paths of
@@ -85,6 +86,10 @@ public:
   /// HeaderSearch.
   void Realize();
 };
+
+void ApplyHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
+                              HeaderSearch &HS, const LangOptions &Lang,
+                              const llvm::Triple &triple);
 
 } // end namespace clang
 

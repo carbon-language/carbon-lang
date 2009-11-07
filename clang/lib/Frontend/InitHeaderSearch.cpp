@@ -12,9 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/InitHeaderSearch.h"
-#include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Frontend/HeaderSearchOptions.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/raw_ostream.h"
@@ -579,4 +580,33 @@ void InitHeaderSearch::Realize() {
     }
     fprintf(stderr, "End of search list.\n");
   }
+}
+
+void clang::ApplyHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
+                                     HeaderSearch &HS, const LangOptions &Lang,
+                                     const llvm::Triple &Triple) {
+  InitHeaderSearch Init(HS, HSOpts.Verbose, HSOpts.Sysroot);
+
+  // Add the user defined entries.
+  for (unsigned i = 0, e = HSOpts.UserEntries.size(); i != e; ++i) {
+    const HeaderSearchOptions::Entry &E = HSOpts.UserEntries[i];
+    Init.AddPath(E.Path, E.Group, E.IsCXXAware, E.IsUserSupplied, E.IsFramework,
+                 E.IgnoreSysRoot);
+  }
+
+  // Add entries from CPATH and friends.
+  Init.AddDelimitedPaths(HSOpts.EnvIncPath.c_str());
+  Init.AddDelimitedPaths(HSOpts.LangEnvIncPath.c_str());
+
+  if (!HSOpts.BuiltinIncludePath.empty()) {
+    // Ignore the sys root, we *always* look for clang headers relative to
+    // supplied path.
+    Init.AddPath(HSOpts.BuiltinIncludePath, InitHeaderSearch::System,
+                 false, false, false, /*IgnoreSysRoot=*/ true);
+  }
+
+  if (!HSOpts.UseStandardIncludes)
+    Init.AddDefaultSystemIncludePaths(Lang, Triple);
+
+  Init.Realize();
 }
