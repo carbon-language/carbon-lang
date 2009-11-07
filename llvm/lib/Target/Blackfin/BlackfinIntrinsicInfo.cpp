@@ -62,7 +62,6 @@ BlackfinIntrinsicInfo::lookupName(const char *Name, unsigned Len) const {
 bool BlackfinIntrinsicInfo::isOverloaded(unsigned IntrID) const {
   // Overload Table
   const bool OTable[] = {
-    false,  // illegal intrinsic
 #define GET_INTRINSIC_OVERLOAD_TABLE
 #include "BlackfinGenIntrinsics.inc"
 #undef GET_INTRINSIC_OVERLOAD_TABLE
