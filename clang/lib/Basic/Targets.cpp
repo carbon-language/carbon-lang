@@ -568,7 +568,7 @@ class PPC32TargetInfo : public PPCTargetInfo {
 public:
   PPC32TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {
     DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
+                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32";
   }
 };
 } // end anonymous namespace.
@@ -582,7 +582,7 @@ public:
     UIntMaxType = UnsignedLong;
     Int64Type = SignedLong;
     DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
+                        "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32:64";
   }
 };
 } // end anonymous namespace.
@@ -902,7 +902,7 @@ public:
     LongDoubleAlign = 32;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
-                        "a0:0:64-f80:32:32";
+                        "a0:0:64-f80:32:32-n8:16:32";
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
     IntPtrType = SignedInt;
@@ -943,7 +943,7 @@ public:
     IntPtrType = SignedLong;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
-                        "a0:0:64-f80:128:128";
+                        "a0:0:64-f80:128:128-n8:16:32";
   }
 
 };
@@ -961,7 +961,7 @@ public:
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
-                        "a0:0:64-f80:32:32";
+                        "a0:0:64-f80:32:32-n8:16:32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -1032,7 +1032,7 @@ public:
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
-                        "a0:0:64-f80:32:32";
+                        "a0:0:64-f80:32:32-n8:16:32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -1059,7 +1059,7 @@ public:
 
     DescriptionString = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
-                        "a0:0:64-s0:64:64-f80:128:128";
+                        "a0:0:64-s0:64:64-f80:128:128-n8:16:32:64";
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef struct __va_list_tag {"
@@ -1208,11 +1208,11 @@ public:
     if (IsThumb) {
       DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                            "i64:64:64-f32:32:32-f64:64:64-"
-                           "v64:64:64-v128:128:128-a0:0:32");
+                           "v64:64:64-v128:128:128-a0:0:32-n32");
     } else {
       DescriptionString = ("e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                            "i64:64:64-f32:32:32-f64:64:64-"
-                           "v64:64:64-v128:128:128-a0:0:64");
+                           "v64:64:64-v128:128:128-a0:0:64-n32");
     }
   }
   virtual const char *getABI() const { return ABI.c_str(); }
@@ -1230,11 +1230,11 @@ public:
       if (IsThumb) {
         DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                              "i64:32:32-f32:32:32-f64:32:32-"
-                             "v64:64:64-v128:128:128-a0:0:32");
+                             "v64:64:64-v128:128:128-a0:0:32-n32");
       } else {
         DescriptionString = ("e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                              "i64:32:32-f32:32:32-f64:32:32-"
-                             "v64:64:64-v128:128:128-a0:0:64");
+                             "v64:64:64-v128:128:128-a0:0:64-n32");
       }
 
       // FIXME: Override "preferred align" for double and long long.
@@ -1391,7 +1391,7 @@ public:
   SparcV8TargetInfo(const std::string& triple) : TargetInfo(triple) {
     // FIXME: Support Sparc quad-precision long double?
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64";
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
@@ -1521,7 +1521,7 @@ namespace {
       FloatFormat = &llvm::APFloat::IEEEsingle;
       DoubleFormat = &llvm::APFloat::IEEEsingle;
       LongDoubleFormat = &llvm::APFloat::IEEEsingle;
-      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-f32:32:32";
+      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-f32:32:32-n8";
 
     }
     virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
@@ -1580,7 +1580,7 @@ namespace {
       UIntMaxType = UnsignedLong;
       IntPtrType = SignedShort;
       PtrDiffType = SignedInt;
-      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8";
+      DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-n8:16";
    }
     virtual void getTargetDefines(const LangOptions &Opts,
                                  std::vector<char> &Defines) const {
@@ -1639,7 +1639,8 @@ namespace {
       IntWidth = IntAlign = 32;
       LongWidth = LongLongWidth = LongAlign = LongLongAlign = 64;
       PointerWidth = PointerAlign = 64;
-      DescriptionString = "E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-a0:16:16";
+      DescriptionString = "E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-"
+      "i64:64:64-f32:32:32-f64:64:64-f128:128:128-a0:16:16-n32:64";
    }
     virtual void getTargetDefines(const LangOptions &Opts,
                                  std::vector<char> &Defines) const {
@@ -1702,7 +1703,7 @@ namespace {
       DoubleAlign = 32;
       LongLongAlign = 32;
       LongDoubleAlign = 32;
-      DescriptionString = "e-p:32:32-i64:32-f64:32";
+      DescriptionString = "e-p:32:32-i64:32-f64:32-n32";
     }
 
     virtual void getTargetDefines(const LangOptions &Opts,
@@ -1804,7 +1805,7 @@ namespace {
       LongDoubleFormat = &llvm::APFloat::IEEEsingle;
       DescriptionString = "E-p:32:32:32-a0:32:32"
                           "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64"
-                          "-f32:32:32-f64:32:64";
+                          "-f32:32:32-f64:32:64-n32";
     }
 
     virtual void getTargetDefines(const LangOptions &Opts,
