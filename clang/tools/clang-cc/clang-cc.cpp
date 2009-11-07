@@ -1052,26 +1052,23 @@ isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
 // Finally, implement the code that groks the options above.
 
 // Add the clang headers, which are relative to the clang binary.
-void AddClangIncludePaths(const char *Argv0, InitHeaderSearch *Init) {
-  llvm::sys::Path MainExecutablePath =
-     llvm::sys::Path::GetMainExecutable(Argv0,
-                                    (void*)(intptr_t)AddClangIncludePaths);
-  if (MainExecutablePath.isEmpty())
-    return;
+std::string GetBuiltinIncludePath(const char *Argv0) {
+  llvm::sys::Path P =
+    llvm::sys::Path::GetMainExecutable(Argv0,
+                                       (void*)(intptr_t) GetBuiltinIncludePath);
 
-  MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
-  MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
+  if (!P.isEmpty()) {
+    P.eraseComponent();  // Remove /clang from foo/bin/clang
+    P.eraseComponent();  // Remove /bin   from foo/bin
 
-  // Get foo/lib/clang/<version>/include
-  MainExecutablePath.appendComponent("lib");
-  MainExecutablePath.appendComponent("clang");
-  MainExecutablePath.appendComponent(CLANG_VERSION_STRING);
-  MainExecutablePath.appendComponent("include");
+    // Get foo/lib/clang/<version>/include
+    P.appendComponent("lib");
+    P.appendComponent("clang");
+    P.appendComponent(CLANG_VERSION_STRING);
+    P.appendComponent("include");
+  }
 
-  // We pass true to ignore sysroot so that we *always* look for clang headers
-  // relative to our executable, never relative to -isysroot.
-  Init->AddPath(MainExecutablePath.c_str(), InitHeaderSearch::System,
-    false, false, false, true /*ignore sysroot*/);
+  return P.str();
 }
 
 /// InitializeIncludePaths - Process the -I options and set them in the
@@ -1154,8 +1151,16 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
   Init.AddDefaultEnvVarPaths(Lang);
 
-  if (!nobuiltininc)
-    AddClangIncludePaths(Argv0, &Init);
+  if (!nobuiltininc) {
+    std::string P = GetBuiltinIncludePath(Argv0);
+
+    if (!P.empty()) {
+      // We pass true to ignore sysroot so that we *always* look for clang
+      // headers relative to our executable, never relative to -isysroot.
+      Init.AddPath(P, InitHeaderSearch::System,
+                   false, false, false, true /*ignore sysroot*/);
+    }
+  }
 
   if (!nostdinc)
     Init.AddDefaultSystemIncludePaths(Lang, triple);
