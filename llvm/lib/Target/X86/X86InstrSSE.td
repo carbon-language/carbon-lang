@@ -2085,7 +2085,7 @@ def PSHUFDmi : PDIi8<0x70, MRMSrcMem,
                      [(set VR128:$dst, (v4i32 (pshufd:$src2
                                              (bc_v4i32(memopv2i64 addr:$src1)),
                                              (undef))))]>;
-}                                             
+}
 
 // SSE2 with ImmT == Imm8 and XS prefix.
 def PSHUFHWri : Ii8<0x70, MRMSrcReg,
@@ -2874,7 +2874,7 @@ def : Pat<(v16i8 (palign:$src3 VR128:$src1, VR128:$src2)),
           (PALIGNR128rr VR128:$src2, VR128:$src1,
                         (SHUFFLE_get_palign_imm VR128:$src3))>,
       Requires<[HasSSSE3]>;
-}      
+}
 
 def : Pat<(X86pshufb VR128:$src, VR128:$mask),
           (PSHUFBrr128 VR128:$src, VR128:$mask)>, Requires<[HasSSSE3]>;
@@ -3051,15 +3051,15 @@ def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
-// vector_shuffle v1, (load v2) <0, 1, 4, 5> using MOVHPS
+// vector_shuffle v1, (load v2) <6, 7, 2, 3> using MOVHPS
 def : Pat<(v4f32 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
 def : Pat<(v2f64 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v4f32 (movhp VR128:$src1, (load addr:$src2))),
-          (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(v2f64 (movhp VR128:$src1, (load addr:$src2))),
-          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v4f32 (movhlps (load addr:$src1), VR128:$src2)),
+          (MOVHPSrm VR128:$src2, addr:$src1)>, Requires<[HasSSE1]>;
+def : Pat<(v2f64 (movhlps (load addr:$src1), VR128:$src2)),
+          (MOVHPDrm VR128:$src2, addr:$src1)>, Requires<[HasSSE2]>;
 
 def : Pat<(v4i32 (movlp VR128:$src1, (load addr:$src2))),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
@@ -3077,9 +3077,9 @@ def : Pat<(store (v4f32 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
 def : Pat<(store (v2f64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(store (v4f32 (movhp (load addr:$src1), VR128:$src2)), addr:$src1),
+def : Pat<(store (v4f32 (movhlps (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVHPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
-def : Pat<(store (v2f64 (movhp (load addr:$src1), VR128:$src2)), addr:$src1),
+def : Pat<(store (v2f64 (movhlps (load addr:$src1), VR128:$src2)), addr:$src1),
           (MOVHPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 
 def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)),

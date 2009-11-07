@@ -145,7 +145,9 @@ define void @t9(<4 x float>* %r, <2 x i32>* %A) nounwind {
 	ret void
 ; X64: 	t9:
 ; X64: 		movsd	(%rsi), %xmm0
-; X64: 		movhps	%xmm0, (%rdi)
+; X64:	        movaps  (%rdi), %xmm1
+; X64:	        movlhps %xmm0, %xmm1
+; X64:	        movaps  %xmm1, (%rdi)
 ; X64: 		ret
 }
 
