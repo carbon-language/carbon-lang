@@ -1215,6 +1215,13 @@ target datalayout = "<i>layout specification</i>"
   <dt><tt>s<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
   <dd>This specifies the alignment for a stack object of a given bit
       <i>size</i>.</dd>
+
+  <dt><tt>n<i>size1</i>:<i>size2</i>:<i>size3</i>...</tt></dt>
+  <dd>This specifies a set of native integer widths for the target CPU
+      in bits.  For example, it might contain "n32" for 32-bit PowerPC,
+      "n32:64" for PowerPC 64, or "n8:16:32:64" for X86-64.  Elements of
+      this set are considered to support most general arithmetic 
+      operations efficiently.</dd>
 </dl>
 
 <p>When constructing the data layout for a given target, LLVM starts with a

@@ -70,6 +70,8 @@ private:
   unsigned char PointerABIAlign;       ///< Pointer ABI alignment
   unsigned char PointerPrefAlign;      ///< Pointer preferred alignment
 
+  SmallVector<unsigned char, 8> LegalIntWidths; ///< Legal Integers.
+  
   /// Alignments- Where the primitive type alignment data is stored.
   ///
   /// @sa init().
@@ -78,12 +80,8 @@ private:
   /// we don't.
   SmallVector<TargetAlignElem, 16> Alignments;
   
-  
-  
-  /*!
-    This member is a signal that a requested alignment type and bit width were
-    not found in the SmallVector.
-   */
+  /// InvalidAlignmentElem - This member is a signal that a requested alignment
+  /// type and bit width were not found in the SmallVector.
   static const TargetAlignElem InvalidAlignmentElem;
 
   // Opaque pointer for the StructType -> StructLayout map.
@@ -127,6 +125,7 @@ public:
     PointerMemSize(TD.PointerMemSize),
     PointerABIAlign(TD.PointerABIAlign),
     PointerPrefAlign(TD.PointerPrefAlign),
+    LegalIntWidths(TD.LegalIntWidths),
     Alignments(TD.Alignments),
     LayoutMap(0)
   { }
@@ -137,13 +136,33 @@ public:
   void init(StringRef TargetDescription);
 
   /// Target endianness...
-  bool          isLittleEndian()       const { return     LittleEndian; }
-  bool          isBigEndian()          const { return    !LittleEndian; }
+  bool isLittleEndian() const { return LittleEndian; }
+  bool isBigEndian() const { return !LittleEndian; }
 
   /// getStringRepresentation - Return the string representation of the
   /// TargetData.  This representation is in the same format accepted by the
   /// string constructor above.
   std::string getStringRepresentation() const;
+  
+  
+  /// isIllegalInteger - This function returns true if the specified type is
+  /// known to not be a native integer type supported by the CPU.  For example,
+  /// i64 is not native on most 32-bit CPUs and i37 is not native on any known
+  /// one.  This returns false if the integer width is legal or we don't know.
+  ///
+  /// The width is specified in bits.
+  ///
+  bool isIllegalInteger(unsigned Width) const {
+    // If we don't have information about legal integer types, don't claim the
+    // type is illegal.
+    if (LegalIntWidths.empty()) return false;
+    
+    for (unsigned i = 0, e = LegalIntWidths.size(); i != e; ++i)
+      if (LegalIntWidths[i] == Width)
+        return false;
+    return true;
+  }
+  
   /// Target pointer alignment
   unsigned char getPointerABIAlignment() const { return PointerABIAlign; }
   /// Return target's alignment for stack-based pointers

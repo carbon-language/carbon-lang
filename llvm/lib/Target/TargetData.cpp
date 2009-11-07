@@ -139,45 +139,7 @@ static unsigned getInt(StringRef R) {
   return Result;
 }
 
-/*!
- A TargetDescription string consists of a sequence of hyphen-delimited
- specifiers for target endianness, pointer size and alignments, and various
- primitive type sizes and alignments. A typical string looks something like:
- <br><br>
- "E-p:32:32:32-i1:8:8-i8:8:8-i32:32:32-i64:32:64-f32:32:32-f64:32:64"
- <br><br>
- (note: this string is not fully specified and is only an example.)
- \p
- Alignments come in two flavors: ABI and preferred. ABI alignment (abi_align,
- below) dictates how a type will be aligned within an aggregate and when used
- as an argument.  Preferred alignment (pref_align, below) determines a type's
- alignment when emitted as a global.
- \p
- Specifier string details:
- <br><br>
- <i>[E|e]</i>: Endianness. "E" specifies a big-endian target data model, "e"
- specifies a little-endian target data model.
- <br><br>
- <i>p:@verbatim<size>:<abi_align>:<pref_align>@endverbatim</i>: Pointer size, 
- ABI and preferred alignment.
- <br><br>
- <i>@verbatim<type><size>:<abi_align>:<pref_align>@endverbatim</i>: Numeric type
- alignment. Type is
- one of <i>i|f|v|a</i>, corresponding to integer, floating point, vector, or
- aggregate.  Size indicates the size, e.g., 32 or 64 bits.
- \p
- The default string, fully specified, is:
- <br><br>
- "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64"
- "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64"
- "-v64:64:64-v128:128:128"
- <br><br>
- Note that in the case of aggregates, 0 is the default ABI and preferred
- alignment. This is a special case, where the aggregate's computed worst-case
- alignment will be used.
- */ 
 void TargetData::init(StringRef Desc) {
-  
   LayoutMap = 0;
   LittleEndian = false;
   PointerMemSize = 8;
@@ -210,7 +172,7 @@ void TargetData::init(StringRef Desc) {
     
     assert(!Specifier.empty() && "Can't be empty here");
     
-    switch(Specifier[0]) {
+    switch (Specifier[0]) {
     case 'E':
       LittleEndian = false;
       break;
@@ -252,6 +214,17 @@ void TargetData::init(StringRef Desc) {
       setAlignment(AlignType, ABIAlign, PrefAlign, Size);
       break;
     }
+    case 'n':  // Native integer types.
+      Specifier = Specifier.substr(1);
+      do {
+        if (unsigned Width = getInt(Specifier))
+          LegalIntWidths.push_back(Width);
+        Split = Token.split(':');
+        Specifier = Split.first;
+        Token = Split.second;
+      } while (!Specifier.empty() || !Token.empty());
+      break;
+        
     default:
       break;
     }
