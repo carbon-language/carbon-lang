@@ -24,9 +24,9 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cstdlib>
 using namespace llvm;
@@ -132,6 +132,13 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
 //                       TargetData Class Implementation
 //===----------------------------------------------------------------------===//
 
+/// getInt - Get an integer ignoring errors.
+static unsigned getInt(StringRef R) {
+  unsigned Result = 0;
+  R.getAsInteger(10, Result);
+  return Result;
+}
+
 /*!
  A TargetDescription string consists of a sequence of hyphen-delimited
  specifiers for target endianness, pointer size and alignments, and various
@@ -169,13 +176,12 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
  alignment. This is a special case, where the aggregate's computed worst-case
  alignment will be used.
  */ 
-void TargetData::init(const std::string &TargetDescription) {
-  std::string temp = TargetDescription;
+void TargetData::init(StringRef Desc) {
   
   LayoutMap = 0;
   LittleEndian = false;
   PointerMemSize = 8;
-  PointerABIAlign   = 8;
+  PointerABIAlign = 8;
   PointerPrefAlign = PointerABIAlign;
 
   // Default alignments
@@ -190,11 +196,21 @@ void TargetData::init(const std::string &TargetDescription) {
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct
 
-  while (!temp.empty()) {
-    std::string token = getToken(temp, "-");
-    std::string arg0 = getToken(token, ":");
-    const char *p = arg0.c_str();
-    switch(*p) {
+  while (!Desc.empty()) {
+    std::pair<StringRef, StringRef> Split = Desc.split('-');
+    StringRef Token = Split.first;
+    Desc = Split.second;
+    
+    if (Token.empty())
+      continue;
+    
+    Split = Token.split(':');
+    StringRef Specifier = Split.first;
+    Token = Split.second;
+    
+    assert(!Specifier.empty() && "Can't be empty here");
+    
+    switch(Specifier[0]) {
     case 'E':
       LittleEndian = false;
       break;
@@ -202,9 +218,12 @@ void TargetData::init(const std::string &TargetDescription) {
       LittleEndian = true;
       break;
     case 'p':
-      PointerMemSize = atoi(getToken(token,":").c_str()) / 8;
-      PointerABIAlign = atoi(getToken(token,":").c_str()) / 8;
-      PointerPrefAlign = atoi(getToken(token,":").c_str()) / 8;
+      Split = Token.split(':');
+      PointerMemSize = getInt(Split.first) / 8;
+      Split = Split.second.split(':');
+      PointerABIAlign = getInt(Split.first) / 8;
+      Split = Split.second.split(':');
+      PointerPrefAlign = getInt(Split.first) / 8;
       if (PointerPrefAlign == 0)
         PointerPrefAlign = PointerABIAlign;
       break;
@@ -213,20 +232,24 @@ void TargetData::init(const std::string &TargetDescription) {
     case 'f':
     case 'a':
     case 's': {
-      AlignTypeEnum align_type = STACK_ALIGN; // Dummy init, silence warning
-      switch(*p) {
-        case 'i': align_type = INTEGER_ALIGN; break;
-        case 'v': align_type = VECTOR_ALIGN; break;
-        case 'f': align_type = FLOAT_ALIGN; break;
-        case 'a': align_type = AGGREGATE_ALIGN; break;
-        case 's': align_type = STACK_ALIGN; break;
+      AlignTypeEnum AlignType;
+      switch (Specifier[0]) {
+      default:
+      case 'i': AlignType = INTEGER_ALIGN; break;
+      case 'v': AlignType = VECTOR_ALIGN; break;
+      case 'f': AlignType = FLOAT_ALIGN; break;
+      case 'a': AlignType = AGGREGATE_ALIGN; break;
+      case 's': AlignType = STACK_ALIGN; break;
       }
-      uint32_t size = (uint32_t) atoi(++p);
-      unsigned char abi_align = atoi(getToken(token, ":").c_str()) / 8;
-      unsigned char pref_align = atoi(getToken(token, ":").c_str()) / 8;
-      if (pref_align == 0)
-        pref_align = abi_align;
-      setAlignment(align_type, abi_align, pref_align, size);
+      unsigned Size = getInt(Specifier.substr(1));
+      Split = Token.split(':');
+      unsigned char ABIAlign = getInt(Split.first) / 8;
+      
+      Split = Split.second.split(':');
+      unsigned char PrefAlign = getInt(Split.first) / 8;
+      if (PrefAlign == 0)
+        PrefAlign = ABIAlign;
+      setAlignment(AlignType, ABIAlign, PrefAlign, Size);
       break;
     }
     default:
@@ -376,20 +399,17 @@ void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
 
 
 std::string TargetData::getStringRepresentation() const {
-  std::string repr;
-  repr.append(LittleEndian ? "e" : "E");
-  repr.append("-p:").append(itostr((int64_t) (PointerMemSize * 8))).
-      append(":").append(itostr((int64_t) (PointerABIAlign * 8))).
-      append(":").append(itostr((int64_t) (PointerPrefAlign * 8)));
-  for (align_const_iterator I = Alignments.begin();
-       I != Alignments.end();
-       ++I) {
-    repr.append("-").append(1, (char) I->AlignType).
-      append(utostr((int64_t) I->TypeBitWidth)).
-      append(":").append(utostr((uint64_t) (I->ABIAlign * 8))).
-      append(":").append(utostr((uint64_t) (I->PrefAlign * 8)));
-  }
-  return repr;
+  std::string Result;
+  raw_string_ostream OS(Result);
+  
+  OS << (LittleEndian ? "e" : "E")
+     << "-p:" << PointerMemSize*8 << ':' << PointerABIAlign*8
+     << ':' << PointerPrefAlign*8;
+  for (align_const_iterator I = Alignments.begin(), E = Alignments.end();
+       I != E; ++I)
+    OS << '-' << (char)I->AlignType << I->TypeBitWidth << ':'
+       << I->ABIAlign*8 << ':' << I->PrefAlign*8;
+  return OS.str();
 }
 
 

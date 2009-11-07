@@ -121,7 +121,7 @@ public:
   }
 
   /// Constructs a TargetData from a specification string. See init().
-  explicit TargetData(const std::string &TargetDescription)
+  explicit TargetData(StringRef TargetDescription)
     : ImmutablePass(&ID) {
     init(TargetDescription);
   }
@@ -142,7 +142,7 @@ public:
   ~TargetData();  // Not virtual, do not subclass this class
 
   //! Parse a target data layout string and initialize TargetData alignments.
-  void init(const std::string &TargetDescription);
+  void init(StringRef TargetDescription);
 
   /// Target endianness...
   bool          isLittleEndian()       const { return     LittleEndian; }
