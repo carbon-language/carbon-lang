@@ -65,7 +65,7 @@ class MachineRelocation {
 
   unsigned TargetReloType : 6; // The target relocation ID
   AddressType AddrType    : 4; // The field of Target to use
-  bool NeedStub           : 1; // True if this relocation requires a stub
+  bool MayNeedFarStub     : 1; // True if this relocation may require a far-stub
   bool GOTRelative        : 1; // Should this relocation be relative to the GOT?
   bool TargetResolve      : 1; // True if target should resolve the address
 
@@ -81,7 +81,7 @@ public:
   ///
   static MachineRelocation getGV(uintptr_t offset, unsigned RelocationType, 
                                  GlobalValue *GV, intptr_t cst = 0,
-                                 bool NeedStub = 0,
+                                 bool MayNeedFarStub = 0,
                                  bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
@@ -89,7 +89,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isGV;
-    Result.NeedStub = NeedStub;
+    Result.MayNeedFarStub = MayNeedFarStub;
     Result.GOTRelative = GOTrelative;
     Result.TargetResolve = false;
     Result.Target.GV = GV;
@@ -101,7 +101,7 @@ public:
   static MachineRelocation getIndirectSymbol(uintptr_t offset,
                                              unsigned RelocationType, 
                                              GlobalValue *GV, intptr_t cst = 0,
-                                             bool NeedStub = 0,
+                                             bool MayNeedFarStub = 0,
                                              bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
@@ -109,7 +109,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isIndirectSym;
-    Result.NeedStub = NeedStub;
+    Result.MayNeedFarStub = MayNeedFarStub;
     Result.GOTRelative = GOTrelative;
     Result.TargetResolve = false;
     Result.Target.GV = GV;
@@ -126,7 +126,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isBB;
-    Result.NeedStub = false;
+    Result.MayNeedFarStub = false;
     Result.GOTRelative = false;
     Result.TargetResolve = false;
     Result.Target.MBB = MBB;
@@ -145,7 +145,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isExtSym;
-    Result.NeedStub = true;
+    Result.MayNeedFarStub = true;
     Result.GOTRelative = GOTrelative;
     Result.TargetResolve = false;
     Result.Target.ExtSym = ES;
@@ -164,7 +164,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isConstPool;
-    Result.NeedStub = false;
+    Result.MayNeedFarStub = false;
     Result.GOTRelative = false;
     Result.TargetResolve = letTargetResolve;
     Result.Target.Index = CPI;
@@ -183,7 +183,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isJumpTable;
-    Result.NeedStub = false;
+    Result.MayNeedFarStub = false;
     Result.GOTRelative = false;
     Result.TargetResolve = letTargetResolve;
     Result.Target.Index = JTI;
@@ -258,12 +258,14 @@ public:
     return GOTRelative;
   }
 
-  /// doesntNeedStub - This function returns true if the JIT for this target
-  /// target is capable of directly handling the relocated GlobalValue reference
-  /// without using either a stub function or issuing an extra load to get the
-  /// GV address.
-  bool doesntNeedStub() const {
-    return !NeedStub;
+  /// mayNeedFarStub - This function returns true if the JIT for this target may
+  /// need either a stub function or an indirect global-variable load to handle
+  /// the relocated GlobalValue reference.  For example, the x86-64 call
+  /// instruction can only call functions within +/-2GB of the call site.
+  /// Anything farther away needs a longer mov+call sequence, which can't just
+  /// be written on top of the existing call.
+  bool mayNeedFarStub() const {
+    return MayNeedFarStub;
   }
 
   /// letTargetResolve - Return true if the target JITInfo is usually

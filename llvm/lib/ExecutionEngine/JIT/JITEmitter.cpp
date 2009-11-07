@@ -491,9 +491,9 @@ namespace {
     JITMemoryManager *getMemMgr() const { return MemMgr; }
 
   private:
-    void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
-    void *getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
-                                    bool NoNeedStub);
+    void *getPointerToGlobal(GlobalValue *GV, void *Reference,
+                             bool MayNeedFarStub);
+    void *getPointerToGVIndirectSym(GlobalValue *V, void *Reference);
     unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
     unsigned addSizeOfGlobalsInConstantVal(const Constant *C, unsigned Size);
     unsigned addSizeOfGlobalsInInitializer(const Constant *Init, unsigned Size);
@@ -737,7 +737,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 // JITEmitter code.
 //
 void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
-                                     bool DoesntNeedStub) {
+                                     bool MayNeedFarStub) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return TheJIT->getOrEmitGlobalVariable(GV);
 
@@ -747,7 +747,7 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   // If we have already compiled the function, return a pointer to its body.
   Function *F = cast<Function>(V);
   void *ResultPtr;
-  if (!DoesntNeedStub) {
+  if (MayNeedFarStub) {
     // Return the function stub if it's already created.
     ResultPtr = Resolver.getFunctionStubIfAvailable(F);
     if (ResultPtr)
@@ -761,14 +761,14 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   // 'compile' it, which really just adds it to the map.  In dlsym mode, 
   // external functions are forced through a stub, regardless of reloc type.
   if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode() &&
-      DoesntNeedStub && !TheJIT->areDlsymStubsEnabled())
+      !MayNeedFarStub && !TheJIT->areDlsymStubsEnabled())
     return TheJIT->getPointerToFunction(F);
 
   // Okay, the function has not been compiled yet, if the target callback
   // mechanism is capable of rewriting the instruction directly, prefer to do
   // that instead of emitting a stub.  This uses the lazy resolver, so is not
   // legal if lazy compilation is disabled.
-  if (DoesntNeedStub && TheJIT->isCompilingLazily())
+  if (!MayNeedFarStub && TheJIT->isCompilingLazily())
     return Resolver.AddCallbackAtLocation(F, Reference);
 
   // Otherwise, we have to emit a stub.
@@ -784,11 +784,10 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   return StubAddr;
 }
 
-void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
-                                            bool NoNeedStub) {
+void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference) {
   // Make sure GV is emitted first, and create a stub containing the fully
   // resolved address.
-  void *GVAddress = getPointerToGlobal(V, Reference, true);
+  void *GVAddress = getPointerToGlobal(V, Reference, false);
   void *StubAddr = Resolver.getGlobalValueIndirectSym(V, GVAddress);
   
   // Add the stub to the current function's list of referenced stubs, so we can
@@ -1112,7 +1111,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                        << ResultPtr << "]\n"); 
 
           // If the target REALLY wants a stub for this function, emit it now.
-          if (!MR.doesntNeedStub()) {
+          if (MR.mayNeedFarStub()) {
             if (!TheJIT->areDlsymStubsEnabled()) {
               ResultPtr = Resolver.getExternalFunctionStub(ResultPtr);
             } else {
@@ -1127,11 +1126,10 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
         } else if (MR.isGlobalValue()) {
           ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                          BufferBegin+MR.getMachineCodeOffset(),
-                                         MR.doesntNeedStub());
+                                         MR.mayNeedFarStub());
         } else if (MR.isIndirectSymbol()) {
-          ResultPtr = getPointerToGVIndirectSym(MR.getGlobalValue(),
-                                          BufferBegin+MR.getMachineCodeOffset(),
-                                          MR.doesntNeedStub());
+          ResultPtr = getPointerToGVIndirectSym(
+              MR.getGlobalValue(), BufferBegin+MR.getMachineCodeOffset());
         } else if (MR.isBasicBlock()) {
           ResultPtr = (void*)getMachineBasicBlockAddress(MR.getBasicBlock());
         } else if (MR.isConstantPoolIndex()) {
