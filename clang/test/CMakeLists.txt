@@ -22,11 +22,22 @@ set(CLANG_TEST_DIRECTORIES
   "SemaObjCXX"
   "SemaTemplate")
 
+get_target_property(LLVM_TOOLS_PATH clang RUNTIME_OUTPUT_DIRECTORY)
+get_target_property(LLVM_LIBS_PATH clang LIBRARY_OUTPUT_DIRECTORY)
+
+set(LLVM_SOURCE_DIR "${LLVM_MAIN_SRC_DIR}")
+set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}")
+set(LLVM_TOOLS_DIR "${LLVM_TOOLS_PATH}/%(build_config)s")
+set(LLVM_LIBS_DIR "${LLVM_LIBS_PATH}/%(build_config)s")
+set(CLANG_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(CLANG_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/..")
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
+
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
-  get_target_triple(TARGET_TRIPLE)
-  get_target_property(LLVM_TOOLS_PATH clang RUNTIME_OUTPUT_DIRECTORY)
-  get_target_property(LLVM_LIBS_PATH clang LIBRARY_OUTPUT_DIRECTORY)
   set(CLANG_TEST_EXTRA_ARGS)
   if (MSVC OR XCODE)
     set(CLANG_TEST_EXTRA_ARGS "--no-progress-bar")
@@ -34,18 +45,10 @@ if(PYTHONINTERP_FOUND)
 
   foreach(testdir ${CLANG_TEST_DIRECTORIES})
     add_custom_target(clang-test-${testdir}
-      COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
-                  -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
-                  -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
-                  -e "s#\@LLVM_LIBS_DIR\@#${LLVM_LIBS_PATH}/${CMAKE_CFG_INTDIR}#"
-                  -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
-                  -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
-                  -e "s#\@TARGET_TRIPLE\@#${TARGET_TRIPLE}#"
-                  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
-                  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
       COMMAND ${PYTHON_EXECUTABLE}
                   ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                   --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+                  --param build_config=${CMAKE_CFG_INTDIR}
                   -sv ${CLANG_TEST_EXTRA_ARGS}
                   ${CMAKE_CURRENT_BINARY_DIR}/${testdir}
                   DEPENDS clang clang-cc index-test c-index-test
@@ -53,36 +56,20 @@ if(PYTHONINTERP_FOUND)
   endforeach()
 
   add_custom_target(clang-test
-    COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
-                -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
-                -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
-                -e "s#\@LLVM_LIBS_DIR\@#${LLVM_LIBS_PATH}/${CMAKE_CFG_INTDIR}#"
-                -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
-                -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
-                -e "s#\@TARGET_TRIPLE\@#${TARGET_TRIPLE}#"
-                ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
-                ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+                --param build_config=${CMAKE_CFG_INTDIR}
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 DEPENDS clang clang-cc index-test c-index-test
                 COMMENT "Running Clang regression tests")
 
   add_custom_target(clang-c++tests
-    COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
-                -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
-                -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
-                -e "s#\@LLVM_LIBS_DIR\@#${LLVM_LIBS_PATH}/${CMAKE_CFG_INTDIR}#"
-                -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
-                -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
-                -e "s#\@TARGET_TRIPLE\@#${TARGET_TRIPLE}#"
-                ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
-                ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+                --param build_config=${CMAKE_CFG_INTDIR}
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_SOURCE_DIR}/../utils/C++Tests
                 DEPENDS clang clang-cc index-test c-index-test
