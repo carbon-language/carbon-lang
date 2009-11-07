@@ -1,4 +1,4 @@
-//===--- InitPreprocessor.h - InitializePreprocessor function. --*- C++ -*-===//
+//===--- PreprocessorOptionms.h ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,13 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the clang::InitializePreprocessor function.
-//
-//===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_INIT_PREPROCESSOR_H_
-#define LLVM_CLANG_FRONTEND_INIT_PREPROCESSOR_H_
+#ifndef LLVM_CLANG_FRONTEND_PREPROCESSOROPTIONS_H_
+#define LLVM_CLANG_FRONTEND_PREPROCESSOROPTIONS_H_
 
 #include <string>
 #include <vector>
@@ -22,9 +18,9 @@ namespace clang {
 class Preprocessor;
 class LangOptions;
 
-/// PreprocessorInitOptions - This class is used for passing the various
-/// options used in preprocessor initialization to InitializePreprocessor().
-class PreprocessorInitOptions {
+/// PreprocessorOptions - This class is used for passing the various options
+/// used in preprocessor initialization to InitializePreprocessor().
+class PreprocessorOptions {
   std::vector<std::pair<std::string, bool/*isUndef*/> > Macros;
   std::vector<std::pair<std::string, bool/*isPTH*/> > Includes;
   std::vector<std::string> MacroIncludes;
@@ -33,7 +29,7 @@ class PreprocessorInitOptions {
                               /// and target specific predefines.
 
 public:
-  PreprocessorInitOptions() : UsePredefines(true) {}
+  PreprocessorOptions() : UsePredefines(true) {}
 
   bool getUsePredefines() const { return UsePredefines; }
   void setUsePredefines(bool Value) {
@@ -67,12 +63,6 @@ public:
   imacro_iterator imacro_begin() const { return MacroIncludes.begin(); }
   imacro_iterator imacro_end() const { return MacroIncludes.end(); }
 };
-
-/// InitializePreprocessor - Initialize the preprocessor getting it and the
-/// environment ready to process a single file.
-///
-void InitializePreprocessor(Preprocessor &PP,
-                            const PreprocessorInitOptions& InitOptions);
 
 } // end namespace clang
 

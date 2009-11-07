@@ -11,8 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/InitPreprocessor.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
@@ -455,7 +456,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 /// environment ready to process a single file. This returns true on error.
 ///
 void clang::InitializePreprocessor(Preprocessor &PP,
-                                   const PreprocessorInitOptions &InitOpts) {
+                                   const PreprocessorOptions &InitOpts) {
   std::vector<char> PredefineBuffer;
 
   const char *LineDirective = "# 1 \"<built-in>\" 3\n";
@@ -474,7 +475,7 @@ void clang::InitializePreprocessor(Preprocessor &PP,
                          LineDirective, LineDirective+strlen(LineDirective));
 
   // Process #define's and #undef's in the order they are given.
-  for (PreprocessorInitOptions::macro_iterator I = InitOpts.macro_begin(),
+  for (PreprocessorOptions::macro_iterator I = InitOpts.macro_begin(),
        E = InitOpts.macro_end(); I != E; ++I) {
     if (I->second)  // isUndef
       UndefineBuiltinMacro(PredefineBuffer, I->first.c_str());
@@ -484,12 +485,12 @@ void clang::InitializePreprocessor(Preprocessor &PP,
 
   // If -imacros are specified, include them now.  These are processed before
   // any -include directives.
-  for (PreprocessorInitOptions::imacro_iterator I = InitOpts.imacro_begin(),
+  for (PreprocessorOptions::imacro_iterator I = InitOpts.imacro_begin(),
        E = InitOpts.imacro_end(); I != E; ++I)
     AddImplicitIncludeMacros(PredefineBuffer, *I);
 
   // Process -include directives.
-  for (PreprocessorInitOptions::include_iterator I = InitOpts.include_begin(),
+  for (PreprocessorOptions::include_iterator I = InitOpts.include_begin(),
        E = InitOpts.include_end(); I != E; ++I) {
     if (I->second) // isPTH
       AddImplicitIncludePTH(PredefineBuffer, PP, I->first);

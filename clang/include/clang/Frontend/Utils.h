@@ -23,16 +23,23 @@ class raw_fd_ostream;
 }
 
 namespace clang {
-class Preprocessor;
-class MinimalAction;
-class TargetInfo;
-class Diagnostic;
 class ASTConsumer;
-class IdentifierTable;
-class SourceManager;
-class LangOptions;
 class Decl;
+class Diagnostic;
+class IdentifierTable;
+class LangOptions;
+class MinimalAction;
+class Preprocessor;
+class PreprocessorOptions;
+class SourceManager;
 class Stmt;
+class TargetInfo;
+
+/// InitializePreprocessor - Initialize the preprocessor getting it and the
+/// environment ready to process a single file.
+///
+void InitializePreprocessor(Preprocessor &PP,
+                            const PreprocessorOptions &PPOpts);
 
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.

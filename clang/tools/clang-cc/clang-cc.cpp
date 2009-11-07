@@ -30,9 +30,9 @@
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/InitHeaderSearch.h"
-#include "clang/Frontend/InitPreprocessor.h"
-#include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/PCHReader.h"
+#include "clang/Frontend/PathDiagnosticClients.h"
+#include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
@@ -1171,7 +1171,7 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
   Init.Realize();
 }
 
-void InitializePreprocessorInitOptions(PreprocessorInitOptions &InitOpts) {
+void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
   // Use predefines?
   InitOpts.setUsePredefines(!UndefMacros);
 
@@ -1270,8 +1270,8 @@ CreatePreprocessor(Diagnostic &Diags,const LangOptions &LangInfo,
     PP->setPTHManager(PTHMgr);
   }
 
-  PreprocessorInitOptions InitOpts;
-  InitializePreprocessorInitOptions(InitOpts);
+  PreprocessorOptions InitOpts;
+  InitializePreprocessorOptions(InitOpts);
   InitializePreprocessor(*PP, InitOpts);
 
   return PP;
