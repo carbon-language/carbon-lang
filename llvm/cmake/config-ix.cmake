@@ -147,7 +147,6 @@ endif()
 
 include(GetTargetTriple)
 get_target_triple(LLVM_HOSTTRIPLE)
-message(STATUS "LLVM_HOSTTRIPLE: ${LLVM_HOSTTRIPLE}")
 
 # FIXME: We don't distinguish the target and the host. :(
 set(TARGET_TRIPLE "${LLVM_HOSTTRIPLE}")
