@@ -605,7 +605,7 @@ void clang::ApplyHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
                  false, false, false, /*IgnoreSysRoot=*/ true);
   }
 
-  if (!HSOpts.UseStandardIncludes)
+  if (HSOpts.UseStandardIncludes)
     Init.AddDefaultSystemIncludePaths(Lang, Triple);
 
   Init.Realize();

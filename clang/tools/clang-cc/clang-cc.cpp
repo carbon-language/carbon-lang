@@ -29,6 +29,7 @@
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/InitHeaderSearch.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
@@ -1076,38 +1077,40 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
                             FileManager &FM, const LangOptions &Lang,
                             llvm::Triple &triple) {
-  InitHeaderSearch Init(Headers, Verbose, isysroot);
+  HeaderSearchOptions Opts(isysroot);
+
+  Opts.Verbose = Verbose;
 
   // Handle -I... and -F... options, walking the lists in parallel.
   unsigned Iidx = 0, Fidx = 0;
   while (Iidx < I_dirs.size() && Fidx < F_dirs.size()) {
     if (I_dirs.getPosition(Iidx) < F_dirs.getPosition(Fidx)) {
-      Init.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
+      Opts.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
       ++Iidx;
     } else {
-      Init.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
+      Opts.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
       ++Fidx;
     }
   }
 
   // Consume what's left from whatever list was longer.
   for (; Iidx != I_dirs.size(); ++Iidx)
-    Init.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
+    Opts.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
   for (; Fidx != F_dirs.size(); ++Fidx)
-    Init.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
+    Opts.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
 
   // Handle -idirafter... options.
   for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
-    Init.AddPath(idirafter_dirs[i], InitHeaderSearch::After,
+    Opts.AddPath(idirafter_dirs[i], InitHeaderSearch::After,
         false, true, false);
 
   // Handle -iquote... options.
   for (unsigned i = 0, e = iquote_dirs.size(); i != e; ++i)
-    Init.AddPath(iquote_dirs[i], InitHeaderSearch::Quoted, false, true, false);
+    Opts.AddPath(iquote_dirs[i], InitHeaderSearch::Quoted, false, true, false);
 
   // Handle -isystem... options.
   for (unsigned i = 0, e = isystem_dirs.size(); i != e; ++i)
-    Init.AddPath(isystem_dirs[i], InitHeaderSearch::System, false, true, false);
+    Opts.AddPath(isystem_dirs[i], InitHeaderSearch::System, false, true, false);
 
   // Walk the -iprefix/-iwithprefix/-iwithprefixbefore argument lists in
   // parallel, processing the values in order of occurance to get the right
@@ -1135,12 +1138,12 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
                  (iwithprefixbefore_done ||
                   iwithprefix_vals.getPosition(iwithprefix_idx) <
                   iwithprefixbefore_vals.getPosition(iwithprefixbefore_idx))) {
-        Init.AddPath(Prefix+iwithprefix_vals[iwithprefix_idx],
+        Opts.AddPath(Prefix+iwithprefix_vals[iwithprefix_idx],
                 InitHeaderSearch::System, false, false, false);
         ++iwithprefix_idx;
         iwithprefix_done = iwithprefix_idx == iwithprefix_vals.size();
       } else {
-        Init.AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx],
+        Opts.AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx],
                 InitHeaderSearch::Angled, false, false, false);
         ++iwithprefixbefore_idx;
         iwithprefixbefore_done =
@@ -1151,41 +1154,30 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
   // Add CPATH environment paths.
   if (const char *Env = getenv("CPATH"))
-    Init.AddDelimitedPaths(Env);
+    Opts.EnvIncPath = Env;
 
   // Add language specific environment paths.
   if (Lang.CPlusPlus && Lang.ObjC1) {
     if (const char *Env = getenv("OBJCPLUS_INCLUDE_PATH"))
-      Init.AddDelimitedPaths(Env);
+      Opts.LangEnvIncPath = Env;
   } else if (Lang.CPlusPlus) {
     if (const char *Env = getenv("CPLUS_INCLUDE_PATH"))
-      Init.AddDelimitedPaths(Env);
+      Opts.LangEnvIncPath = Env;
   } else if (Lang.ObjC1) {
     if (const char *Env = getenv("OBJC_INCLUDE_PATH"))
-      Init.AddDelimitedPaths(Env);
+      Opts.LangEnvIncPath = Env;
   } else {
     if (const char *Env = getenv("C_INCLUDE_PATH"))
-      Init.AddDelimitedPaths(Env);
+      Opts.LangEnvIncPath = Env;
   }
 
-  if (!nobuiltininc) {
-    std::string P = GetBuiltinIncludePath(Argv0);
+  if (!nobuiltininc)
+    Opts.BuiltinIncludePath = GetBuiltinIncludePath(Argv0);
 
-    if (!P.empty()) {
-      // We pass true to ignore sysroot so that we *always* look for clang
-      // headers relative to our executable, never relative to -isysroot.
-      Init.AddPath(P, InitHeaderSearch::System,
-                   false, false, false, true /*ignore sysroot*/);
-    }
-  }
+  Opts.UseStandardIncludes = !nostdinc;
 
-  if (!nostdinc)
-    Init.AddDefaultSystemIncludePaths(Lang, triple);
-
-  // Now that we have collected all of the include paths, merge them all
-  // together and tell the preprocessor about them.
-
-  Init.Realize();
+  // Apply all the options to the header search object.
+  ApplyHeaderSearchOptions(Opts, Headers, Lang, triple);
 }
 
 void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
