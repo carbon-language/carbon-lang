@@ -385,8 +385,22 @@ bool Sema::isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S) {
 }
 
 static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
-  return (!D->isUsed() && !D->hasAttr<UnusedAttr>() && isa<VarDecl>(D) && 
-          !isa<ParmVarDecl>(D) && !isa<ImplicitParamDecl>(D) && 
+  if (D->isUsed() || D->hasAttr<UnusedAttr>())
+    return false;
+  
+  if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+    if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
+      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+        if (!RD->hasTrivialConstructor())
+          return false;
+        if (!RD->hasTrivialDestructor())
+          return false;
+      }
+    }
+  }
+  
+  return (isa<VarDecl>(D) && !isa<ParmVarDecl>(D) && 
+          !isa<ImplicitParamDecl>(D) && 
           D->getDeclContext()->isFunctionOrMethod());
 }
 
