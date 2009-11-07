@@ -18,6 +18,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
+#include "clang/Analysis/Support/SaveAndRestore.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
@@ -301,10 +302,9 @@ void LiveVariables::runOnAllBlocks(const CFG& cfg,
                                    LiveVariables::ObserverTy* Obs,
                                    bool recordStmtValues) {
   Solver S(*this);
-  ObserverTy* OldObserver = getAnalysisData().Observer;
-  getAnalysisData().Observer = Obs;
+  SaveAndRestore<LiveVariables::ObserverTy*> SRObs(getAnalysisData().Observer,
+                                                   Obs);
   S.runOnAllBlocks(cfg, recordStmtValues);
-  getAnalysisData().Observer = OldObserver;
 }
 
 //===----------------------------------------------------------------------===//

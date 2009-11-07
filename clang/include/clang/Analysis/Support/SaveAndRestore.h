@@ -22,6 +22,9 @@ namespace clang {
 template<typename T>
 struct SaveAndRestore {
   SaveAndRestore(T& x) : X(x), old_value(x) {}
+  SaveAndRestore(T& x, const T &new_value) : X(x), old_value(x) {
+    X = new_value;
+  }
   ~SaveAndRestore() { X = old_value; }
   T get() { return old_value; }
 private:
