@@ -91,6 +91,15 @@ FunctionPass *llvm::createTailCallEliminationPass() {
   return new TailCallElim();
 }
 
+/// AllocaMightEscapeToCalls - Return true if this alloca may be accessed by
+/// callees of this function.  We only do very simple analysis right now, this
+/// could be expanded in the future to use mod/ref information for particular
+/// call sites if desired.
+static bool AllocaMightEscapeToCalls(AllocaInst *AI) {
+  // FIXME: do simple 'address taken' analysis.
+  return true;
+}
+
 /// CheckForEscapingAllocas - Scan the specified basic block for alloca
 /// instructions.  If it contains any that might be accessed by calls, return
 /// true.
@@ -99,7 +108,7 @@ static bool CheckForEscapingAllocas(BasicBlock *BB,
   bool RetVal = false;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-      RetVal |= PointerMayBeCaptured(AI, true);
+      RetVal |= AllocaMightEscapeToCalls(AI);
 
       // If this alloca is in the body of the function, or if it is a variable
       // sized allocation, we cannot tail call eliminate calls marked 'tail'
@@ -145,7 +154,6 @@ bool TailCallElim::runOnFunction(Function &F) {
   /// happen.  This bug is PR962.
   if (FunctionContainsEscapingAllocas)
     return false;
-  
 
   // Second pass, change any tail calls to loops.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
