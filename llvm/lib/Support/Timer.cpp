@@ -66,7 +66,7 @@ static TimerGroup *getDefaultTimerGroup() {
     }
     llvm_release_global_lock();
   }
-  
+
   return tmp;
 }
 
@@ -182,13 +182,13 @@ void Timer::sum(const Timer &T) {
     Lock.acquire();
     T.Lock.acquire();
   }
-  
+
   Elapsed    += T.Elapsed;
   UserTime   += T.UserTime;
   SystemTime += T.SystemTime;
   MemUsed    += T.MemUsed;
   PeakMem    += T.PeakMem;
-  
+
   if (&T < this) {
     T.Lock.release();
     Lock.release();
@@ -287,7 +287,7 @@ void Timer::print(const Timer &Total, raw_ostream &OS) {
     Lock.acquire();
     Total.Lock.acquire();
   }
-  
+
   if (Total.UserTime)
     printVal(UserTime, Total.UserTime, OS);
   if (Total.SystemTime)
@@ -310,7 +310,7 @@ void Timer::print(const Timer &Total, raw_ostream &OS) {
   OS << Name << "\n";
 
   Started = false;  // Once printed, don't print again
-  
+
   if (&Total < this) {
     Total.Lock.release();
     Lock.release();
@@ -329,13 +329,13 @@ llvm::GetLibSupportInfoOutputFile() {
   if (LibSupportInfoOutputFilename == "-")
     return &outs();
 
-  
+
   std::string Error;
   raw_ostream *Result = new raw_fd_ostream(LibSupportInfoOutputFilename.c_str(),
                                            Error, raw_fd_ostream::F_Append);
   if (Error.empty())
     return Result;
-  
+
   errs() << "Error opening info-output-file '"
          << LibSupportInfoOutputFilename << " for appending!\n";
   delete Result;
