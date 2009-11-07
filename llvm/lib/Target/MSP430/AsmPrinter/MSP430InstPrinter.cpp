@@ -25,11 +25,9 @@ using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
 #define MachineInstr MCInst
-#define MSP430AsmPrinter MSP430InstPrinter  // FIXME: REMOVE.
 #define NO_ASM_WRITER_BOILERPLATE
 #include "MSP430GenAsmWriter.inc"
 #undef MachineInstr
-#undef MSP430AsmPrinter
 
 void MSP430InstPrinter::printInst(const MCInst *MI) {
   printInstruction(MI);
