@@ -295,22 +295,23 @@ void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
   const MachineOperand &Base = MI->getOperand(OpNum);
   const MachineOperand &Disp = MI->getOperand(OpNum+1);
 
-  if (Base.isGlobal())
-    printOperand(MI, OpNum, "mem");
-  else if (Disp.isImm() && !Base.getReg())
+  // Print displacement first
+  if (!Disp.isImm()) {
+    printOperand(MI, OpNum+1, "mem");
+  } else {
+    if (!Base.getReg())
+      O << '&';
+
+    printOperand(MI, OpNum+1, "nohash");
+  }
+
+
+  // Print register base field
+  if (Base.getReg()) {
+    O << '(';
     printOperand(MI, OpNum);
-  else if (Base.getReg()) {
-    if (Disp.getImm()) {
-      printOperand(MI, OpNum + 1, "nohash");
-      O << '(';
-      printOperand(MI, OpNum);
-      O << ')';
-    } else {
-      O << '@';
-      printOperand(MI, OpNum);
-    }
-  } else
-    llvm_unreachable("Unsupported memory operand");
+    O << ')';
+  }
 }
 
 void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {

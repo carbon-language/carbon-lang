@@ -63,25 +63,22 @@ void MSP430InstPrinter::printSrcMemOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Base = MI->getOperand(OpNo);
   const MCOperand &Disp = MI->getOperand(OpNo+1);
 
-  // FIXME: move global to displacement field!
-  if (Base.isExpr()) {
+  // Print displacement first
+  if (Disp.isExpr()) {
     O << '&';
-    Base.getExpr()->print(O, &MAI);
-  } else if (Disp.isImm() && !Base.isReg())
-    printOperand(MI, OpNo);
-  else if (Base.isReg()) {
-    if (Disp.getImm()) {
-      O << Disp.getImm() << '(';
-      printOperand(MI, OpNo);
-      O << ')';
-    } else {
-      O << '@';
-      printOperand(MI, OpNo);
-    }
+    Disp.getExpr()->print(O, &MAI);
   } else {
-    Base.dump();
-    Disp.dump();
-    llvm_unreachable("Unsupported memory operand");
+    assert(Disp.isImm() && "Expected immediate in displacement field");
+    if (!Base.getReg())
+      O << '&';
+
+    O << Disp.getImm();
+  }
+
+
+  // Print register base field
+  if (Base.getReg()) {
+    O << '(' << getRegisterName(Base.getReg()) << ')';
   }
 }
 

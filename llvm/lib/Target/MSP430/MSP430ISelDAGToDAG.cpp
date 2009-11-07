@@ -45,6 +45,70 @@ static const bool ViewRMWDAGs = false;
 
 STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 
+
+namespace {
+  struct MSP430ISelAddressMode {
+    enum {
+      RegBase,
+      FrameIndexBase
+    } BaseType;
+
+    struct {            // This is really a union, discriminated by BaseType!
+      SDValue Reg;
+      int FrameIndex;
+    } Base;
+
+    int16_t Disp;
+    GlobalValue *GV;
+    Constant *CP;
+    BlockAddress *BlockAddr;
+    const char *ES;
+    int JT;
+    unsigned Align;    // CP alignment.
+
+    MSP430ISelAddressMode()
+      : BaseType(RegBase), Disp(0), GV(0), CP(0), BlockAddr(0),
+        ES(0), JT(-1), Align(0) {
+    }
+
+    bool hasSymbolicDisplacement() const {
+      return GV != 0 || CP != 0 || ES != 0 || JT != -1;
+    }
+
+    bool hasBaseReg() const {
+      return Base.Reg.getNode() != 0;
+    }
+
+    void setBaseReg(SDValue Reg) {
+      BaseType = RegBase;
+      Base.Reg = Reg;
+    }
+
+    void dump() {
+      errs() << "MSP430ISelAddressMode " << this << '\n';
+      if (Base.Reg.getNode() != 0) {
+        errs() << "Base.Reg ";
+        Base.Reg.getNode()->dump();
+      } else {
+        errs() << " Base.FrameIndex " << Base.FrameIndex << '\n';
+      }
+      errs() << " Disp " << Disp << '\n';
+      if (GV) {
+        errs() << "GV ";
+        GV->dump();
+      } else if (CP) {
+        errs() << " CP ";
+        CP->dump();
+        errs() << " Align" << Align << '\n';
+      } else if (ES) {
+        errs() << "ES ";
+        errs() << ES << '\n';
+      } else if (JT != -1)
+        errs() << " JT" << JT << " Align" << Align << '\n';
+    }
+  };
+}
+
 /// MSP430DAGToDAGISel - MSP430 specific code to select MSP430 machine
 /// instructions for SelectionDAG operations.
 ///
@@ -64,6 +128,10 @@ namespace {
     virtual const char *getPassName() const {
       return "MSP430 DAG->DAG Pattern Instruction Selection";
     }
+
+    bool MatchAddress(SDValue N, MSP430ISelAddressMode &AM);
+    bool MatchWrapper(SDValue N, MSP430ISelAddressMode &AM);
+    bool MatchAddressBase(SDValue N, MSP430ISelAddressMode &AM);
 
     bool IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
                                     SDNode *Root) const;
@@ -95,50 +163,155 @@ FunctionPass *llvm::createMSP430ISelDag(MSP430TargetMachine &TM,
   return new MSP430DAGToDAGISel(TM, OptLevel);
 }
 
-// FIXME: This is pretty dummy routine and needs to be rewritten in the future.
-bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
-                                    SDValue &Base, SDValue &Disp) {
-  // Try to match frame address first.
-  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i16);
-    Disp = CurDAG->getTargetConstant(0, MVT::i16);
+
+/// MatchWrapper - Try to match MSP430ISD::Wrapper node into an addressing mode.
+/// These wrap things that will resolve down into a symbol reference.  If no
+/// match is possible, this returns true, otherwise it returns false.
+bool MSP430DAGToDAGISel::MatchWrapper(SDValue N, MSP430ISelAddressMode &AM) {
+  // If the addressing mode already has a symbol as the displacement, we can
+  // never match another symbol.
+  if (AM.hasSymbolicDisplacement())
+    return true;
+
+  SDValue N0 = N.getOperand(0);
+
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
+    AM.GV = G->getGlobal();
+    AM.Disp += G->getOffset();
+    //AM.SymbolFlags = G->getTargetFlags();
+  } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
+    AM.CP = CP->getConstVal();
+    AM.Align = CP->getAlignment();
+    AM.Disp += CP->getOffset();
+    //AM.SymbolFlags = CP->getTargetFlags();
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(N0)) {
+    AM.ES = S->getSymbol();
+    //AM.SymbolFlags = S->getTargetFlags();
+  } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
+    AM.JT = J->getIndex();
+    //AM.SymbolFlags = J->getTargetFlags();
+  } else {
+    AM.BlockAddr = cast<BlockAddressSDNode>(N0)->getBlockAddress();
+    //AM.SymbolFlags = cast<BlockAddressSDNode>(N0)->getTargetFlags();
+  }
+  return false;
+}
+
+/// MatchAddressBase - Helper for MatchAddress. Add the specified node to the
+/// specified addressing mode without any further recursion.
+bool MSP430DAGToDAGISel::MatchAddressBase(SDValue N, MSP430ISelAddressMode &AM) {
+  // Is the base register already occupied?
+  if (AM.BaseType != MSP430ISelAddressMode::RegBase || AM.Base.Reg.getNode()) {
+    // If so, we cannot select it.
     return true;
   }
 
-  switch (Addr.getOpcode()) {
-  case ISD::ADD:
-   // Operand is a result from ADD with constant operand which fits into i16.
-   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
-      uint64_t CVal = CN->getZExtValue();
-      // Offset should fit into 16 bits.
-      if (((CVal << 48) >> 48) == CVal) {
-        SDValue N0 = Addr.getOperand(0);
-        if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0))
-          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i16);
-        else
-          Base = N0;
+  // Default, generate it as a register.
+  AM.BaseType = MSP430ISelAddressMode::RegBase;
+  AM.Base.Reg = N;
+  return false;
+}
 
-        Disp = CurDAG->getTargetConstant(CVal, MVT::i16);
-        return true;
-      }
-    }
-    break;
+bool MSP430DAGToDAGISel::MatchAddress(SDValue N, MSP430ISelAddressMode &AM) {
+  DebugLoc dl = N.getDebugLoc();
+  DEBUG({
+      errs() << "MatchAddress: ";
+      AM.dump();
+    });
+
+  switch (N.getOpcode()) {
+  default: break;
+  case ISD::Constant: {
+    uint64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
+    AM.Disp += Val;
+    return false;
+  }
+
   case MSP430ISD::Wrapper:
-    SDValue N0 = Addr.getOperand(0);
-    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
-      Base = CurDAG->getTargetGlobalAddress(G->getGlobal(),
-                                            MVT::i16, G->getOffset());
-      Disp = CurDAG->getTargetConstant(0, MVT::i16);
-      return true;
-    } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(N0)) {
-      Base = CurDAG->getTargetExternalSymbol(E->getSymbol(), MVT::i16);
-      Disp = CurDAG->getTargetConstant(0, MVT::i16);
+    if (!MatchWrapper(N, AM))
+      return false;
+    break;
+
+  case ISD::FrameIndex:
+    if (AM.BaseType == MSP430ISelAddressMode::RegBase
+        && AM.Base.Reg.getNode() == 0) {
+      AM.BaseType = MSP430ISelAddressMode::FrameIndexBase;
+      AM.Base.FrameIndex = cast<FrameIndexSDNode>(N)->getIndex();
+      return false;
     }
     break;
-  };
 
-  Base = Addr;
-  Disp = CurDAG->getTargetConstant(0, MVT::i16);
+  case ISD::ADD: {
+    MSP430ISelAddressMode Backup = AM;
+    if (!MatchAddress(N.getNode()->getOperand(0), AM) &&
+        !MatchAddress(N.getNode()->getOperand(1), AM))
+      return false;
+    AM = Backup;
+    if (!MatchAddress(N.getNode()->getOperand(1), AM) &&
+        !MatchAddress(N.getNode()->getOperand(0), AM))
+      return false;
+    AM = Backup;
+
+    break;
+  }
+
+  case ISD::OR:
+    // Handle "X | C" as "X + C" iff X is known to have C bits clear.
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      MSP430ISelAddressMode Backup = AM;
+      uint64_t Offset = CN->getSExtValue();
+      // Start with the LHS as an addr mode.
+      if (!MatchAddress(N.getOperand(0), AM) &&
+          // Address could not have picked a GV address for the displacement.
+          AM.GV == NULL &&
+          // Check to see if the LHS & C is zero.
+          CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
+        AM.Disp += Offset;
+        return false;
+      }
+      AM = Backup;
+    }
+    break;
+  }
+
+  return MatchAddressBase(N, AM);
+}
+
+/// SelectAddr - returns true if it is able pattern match an addressing mode.
+/// It returns the operands which make up the maximal addressing mode it can
+/// match by reference.
+bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue N,
+                                    SDValue &Base, SDValue &Disp) {
+  MSP430ISelAddressMode AM;
+
+  if (MatchAddress(N, AM))
+    return false;
+
+  EVT VT = N.getValueType();
+  if (AM.BaseType == MSP430ISelAddressMode::RegBase) {
+    if (!AM.Base.Reg.getNode())
+      AM.Base.Reg = CurDAG->getRegister(0, VT);
+  }
+
+  Base  = (AM.BaseType == MSP430ISelAddressMode::FrameIndexBase) ?
+    CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI.getPointerTy()) :
+    AM.Base.Reg;
+
+  if (AM.GV)
+    Disp = CurDAG->getTargetGlobalAddress(AM.GV, MVT::i16, AM.Disp,
+                                          0/*AM.SymbolFlags*/);
+  else if (AM.CP)
+    Disp = CurDAG->getTargetConstantPool(AM.CP, MVT::i16,
+                                         AM.Align, AM.Disp, 0/*AM.SymbolFlags*/);
+  else if (AM.ES)
+    Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i16, 0/*AM.SymbolFlags*/);
+  else if (AM.JT != -1)
+    Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i16, 0/*AM.SymbolFlags*/);
+  else if (AM.BlockAddr)
+    Disp = CurDAG->getBlockAddress(AM.BlockAddr, DebugLoc()/*MVT::i32*/,
+                                   true /*AM.SymbolFlags*/);
+  else
+    Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i16);
 
   return true;
 }

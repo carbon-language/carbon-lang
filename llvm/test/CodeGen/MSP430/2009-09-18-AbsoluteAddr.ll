@@ -3,7 +3,7 @@
 target datalayout = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"
 target triple = "msp430-unknown-unknown"
 
-@"\010x0021" = common global i8 0, align 1        ; <i8*> [#uses=2]
+@"\010x0021" = external global i8, align 1        ; <i8*> [#uses=2]
 
 define zeroext i8 @foo(i8 zeroext %x) nounwind {
 entry:
