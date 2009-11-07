@@ -234,7 +234,7 @@ bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
 // We currently handle static constants and arguments that are not modified as
 // part of the recursion.
 //
-static bool isDynamicConstant(Value *V, CallInst *CI) {
+static bool isDynamicConstant(Value *V, CallInst *CI, ReturnInst *RI) {
   if (isa<Constant>(V)) return true; // Static constants are always dyn consts
 
   // Check to see if this is an immutable argument, if so, the value
@@ -252,6 +252,15 @@ static bool isDynamicConstant(Value *V, CallInst *CI) {
     if (CI->getOperand(ArgNo+1) == Arg)
       return true;
   }
+
+  // Switch cases are always constant integers. If the value is being switched
+  // on and the return is only reachable from one of its cases, it's
+  // effectively constant.
+  if (BasicBlock *UniquePred = RI->getParent()->getUniquePredecessor())
+    if (SwitchInst *SI = dyn_cast<SwitchInst>(UniquePred->getTerminator()))
+      if (SI->getCondition() == V)
+        return SI->getDefaultDest() != RI->getParent();
+
   // Not a constant or immutable argument, we can't safely transform.
   return false;
 }
@@ -273,7 +282,7 @@ static Value *getCommonReturnValue(ReturnInst *TheRI, CallInst *CI) {
         // evaluatable at the start of the initial invocation of the function,
         // instead of at the end of the evaluation.
         //
-        if (!isDynamicConstant(RetOp, CI))
+        if (!isDynamicConstant(RetOp, CI, RI))
           return 0;
 
         if (ReturnedValue && RetOp != ReturnedValue)
