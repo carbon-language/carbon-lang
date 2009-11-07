@@ -1087,6 +1087,17 @@ unsigned X86TargetLowering::getFunctionAlignment(const Function *F) const {
 
 #include "X86GenCallingConv.inc"
 
+bool 
+X86TargetLowering::CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
+                        const SmallVectorImpl<EVT> &OutTys,
+                        const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+                        SelectionDAG &DAG) {
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
+                 RVLocs, *DAG.getContext());
+  return CCInfo.CheckReturn(OutTys, ArgsFlags, RetCC_X86);
+}
+
 SDValue
 X86TargetLowering::LowerReturn(SDValue Chain,
                                CallingConv::ID CallConv, bool isVarArg,

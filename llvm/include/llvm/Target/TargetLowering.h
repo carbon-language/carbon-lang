@@ -1167,6 +1167,18 @@ public:
     return SDValue();    // this is here to silence compiler errors
   }
 
+  /// CanLowerReturn - This hook should be implemented to check whether the
+  /// return values described by the Outs array can fit into the return
+  /// registers.  If false is returned, an sret-demotion is performed.
+  ///
+  virtual bool CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
+               const SmallVectorImpl<EVT> &OutTys,
+               const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+               SelectionDAG &DAG)
+  {
+    // Return true by default to get preexisting behavior.
+    return true;
+  }
   /// LowerReturn - This hook must be implemented to lower outgoing
   /// return values, described by the Outs array, into the specified
   /// DAG. The implementation should return the resulting token chain

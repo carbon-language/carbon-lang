@@ -183,6 +183,13 @@ public:
   void AnalyzeReturn(const SmallVectorImpl<ISD::OutputArg> &Outs,
                      CCAssignFn Fn);
 
+  /// CheckReturn - Analyze the return values of a function, returning
+  /// true if the return can be performed without sret-demotion, and
+  /// false otherwise.
+  bool CheckReturn(const SmallVectorImpl<EVT> &OutTys,
+                   const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+                   CCAssignFn Fn);
+
   /// AnalyzeCallOperands - Analyze the outgoing arguments to a call,
   /// incorporating info about the passed values into this state.
   void AnalyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
