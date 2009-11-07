@@ -59,3 +59,11 @@ template void ft3<int>(S1<int>, S1<char>);
 // CHECK: @_Z1fPKcS0_
 void f(const char*, const char*) {}
 
+namespace NS {
+  class C;
+}
+
+namespace NS {
+  // CHECK: @_ZN2NS1fERNS_1CE
+  void f(C&) { } 
+}

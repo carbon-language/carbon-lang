@@ -65,6 +65,8 @@ namespace {
     bool mangleStandardSubstitution(const NamedDecl *ND);
     
     void addSubstitution(const NamedDecl *ND) {
+      ND = cast<NamedDecl>(ND->getCanonicalDecl());
+
       addSubstitution(reinterpret_cast<uintptr_t>(ND));
     }
     void addSubstitution(QualType T);
@@ -1174,6 +1176,7 @@ bool CXXNameMangler::mangleSubstitution(const NamedDecl *ND) {
   if (mangleStandardSubstitution(ND))
     return true;
   
+  ND = cast<NamedDecl>(ND->getCanonicalDecl());
   return mangleSubstitution(reinterpret_cast<uintptr_t>(ND));
 }
 
