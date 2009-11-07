@@ -157,7 +157,7 @@ namespace llvm {
   /// SlotIndex - An opaque wrapper around machine indexes.
   class SlotIndex {
     friend class SlotIndexes;
-    friend class DenseMapInfo<SlotIndex>;
+    friend struct DenseMapInfo<SlotIndex>;
 
   private:
     static const unsigned PHI_BIT = 1 << 2;
