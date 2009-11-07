@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
-
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)

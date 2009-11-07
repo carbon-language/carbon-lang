@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -151,7 +152,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     // relocation, then we may have to drop this into a wriable data section
     // even though it is marked const.
     switch (C->getRelocationInfo()) {
-    default: llvm_unreachable("unknown relocation info kind");
+    default: assert(0 && "unknown relocation info kind");
     case Constant::NoRelocation:
       // If initializer is a null-terminated string, put it in a "cstring"
       // section of the right width.
@@ -219,7 +220,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     return SectionKind::getDataNoRel();
 
   switch (C->getRelocationInfo()) {
-  default: llvm_unreachable("unknown relocation info kind");
+  default: assert(0 && "unknown relocation info kind");
   case Constant::NoRelocation:
     return SectionKind::getDataNoRel();
   case Constant::LocalRelocation:
