@@ -3,7 +3,7 @@ set(SHARED_LIBRARY TRUE)
 set(LLVM_NO_RTTI 1)
 
 set(LLVM_USED_LIBS
-  clangFrontend clangIndex clangSema clangAST clangLex clangBasic)
+  clangFrontend clangIndex clangSema clangAnalysis clangAST clangParse clangLex clangBasic)
 
 set( LLVM_LINK_COMPONENTS
   MC
