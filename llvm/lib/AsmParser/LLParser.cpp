@@ -2039,7 +2039,7 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseToken(lltok::StringConstant, "expected constraint string"))
       return true;
     ID.StrVal2 = Lex.getStrVal();
-    ID.UIntVal = HasSideEffect | ((unsigned)AlignStack<<1);
+    ID.UIntVal = unsigned(HasSideEffect) | (unsigned(AlignStack)<<1);
     ID.Kind = ValID::t_InlineAsm;
     return false;
   }
