@@ -1,4 +1,4 @@
-//===-- Thumb2ITBlockPass.cpp - Insert Thumb IT blocks -----------*- C++ -*-===//
+//===-- Thumb2ITBlockPass.cpp - Insert Thumb IT blocks ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

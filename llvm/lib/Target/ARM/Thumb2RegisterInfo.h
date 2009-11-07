@@ -1,4 +1,4 @@
-//===- Thumb2RegisterInfo.h - Thumb-2 Register Information Impl ----*- C++ -*-===//
+//===- Thumb2RegisterInfo.h - Thumb-2 Register Information Impl -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Thumb-2 implementation of the TargetRegisterInfo class.
+// This file contains the Thumb-2 implementation of the TargetRegisterInfo
+// class.
 //
 //===----------------------------------------------------------------------===//
 

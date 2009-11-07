@@ -1,4 +1,4 @@
-//===- ARMBaseInstrInfo.h - ARM Base Instruction Information -------------*- C++ -*-===//
+//===- ARMBaseInstrInfo.h - ARM Base Instruction Information ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
