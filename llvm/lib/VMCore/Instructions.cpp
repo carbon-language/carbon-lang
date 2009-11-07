@@ -465,9 +465,11 @@ static Instruction *createMalloc(Instruction *InsertBefore,
     ArraySize = ConstantInt::get(IntPtrTy, 1);
   else if (ArraySize->getType() != IntPtrTy) {
     if (InsertBefore)
-      ArraySize = CastInst::CreateIntegerCast(ArraySize, IntPtrTy, false, "", InsertBefore);
+      ArraySize = CastInst::CreateIntegerCast(ArraySize, IntPtrTy, false,
+                                              "", InsertBefore);
     else
-      ArraySize = CastInst::CreateIntegerCast(ArraySize, IntPtrTy, false, "", InsertAtEnd);
+      ArraySize = CastInst::CreateIntegerCast(ArraySize, IntPtrTy, false,
+                                              "", InsertAtEnd);
   }
 
   if (!IsConstantOne(ArraySize)) {
