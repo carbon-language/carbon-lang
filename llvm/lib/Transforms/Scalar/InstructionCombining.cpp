@@ -8289,23 +8289,6 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
   return commonCastTransforms(CI);
 }
 
-/// isSafeIntegerType - Return true if this is a basic integer type, not a crazy
-/// type like i42.  We don't want to introduce operations on random non-legal
-/// integer types where they don't already exist in the code.  In the future,
-/// we should consider making this based off target-data, so that 32-bit targets
-/// won't get i64 operations etc.
-static bool isSafeIntegerType(const Type *Ty) {
-  switch (Ty->getPrimitiveSizeInBits()) {
-  case 8:
-  case 16:
-  case 32:
-  case 64:
-    return true;
-  default: 
-    return false;
-  }
-}
-
 /// commonIntCastTransforms - This function implements the common transforms
 /// for trunc, zext, and sext.
 Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
@@ -8334,8 +8317,10 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   // Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
-  if ((isSafeIntegerType(DestTy->getScalarType()) ||
-       !isSafeIntegerType(SrcI->getType()->getScalarType())) &&
+  if (TD &&
+      (TD->isLegalInteger(DestTy->getScalarType()->getPrimitiveSizeInBits()) ||
+       !TD->isLegalInteger((SrcI->getType()->getScalarType()
+                            ->getPrimitiveSizeInBits()))) &&
       CanEvaluateInDifferentType(SrcI, DestTy,
                                  CI.getOpcode(), NumCastsRemoved)) {
     // If this cast is a truncate, evaluting in a different type always
@@ -8356,6 +8341,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       break;
     case Instruction::ZExt: {
       DoXForm = NumCastsRemoved >= 1;
+      
       if (!DoXForm && 0) {
         // If it's unnecessary to issue an AND to clear the high bits, it's
         // always profitable to do this xform.
