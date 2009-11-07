@@ -144,23 +144,22 @@ public:
   /// string constructor above.
   std::string getStringRepresentation() const;
   
-  
-  /// isIllegalInteger - This function returns true if the specified type is
-  /// known to not be a native integer type supported by the CPU.  For example,
+  /// isLegalInteger - This function returns true if the specified type is
+  /// known tobe a native integer type supported by the CPU.  For example,
   /// i64 is not native on most 32-bit CPUs and i37 is not native on any known
-  /// one.  This returns false if the integer width is legal or we don't know.
+  /// one.  This returns false if the integer width is not legal.
   ///
   /// The width is specified in bits.
   ///
-  bool isIllegalInteger(unsigned Width) const {
-    // If we don't have information about legal integer types, don't claim the
-    // type is illegal.
-    if (LegalIntWidths.empty()) return false;
-    
+  bool isLegalInteger(unsigned Width) const {
     for (unsigned i = 0, e = LegalIntWidths.size(); i != e; ++i)
       if (LegalIntWidths[i] == Width)
-        return false;
-    return true;
+        return true;
+    return false;
+  }
+  
+  bool isIllegalInteger(unsigned Width) const {
+    return !isLegalInteger(Width);
   }
   
   /// Target pointer alignment
