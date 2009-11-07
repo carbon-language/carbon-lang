@@ -16,12 +16,15 @@
 #include "clang/Index/Indexer.h"
 #include "clang/Index/ASTLocation.h"
 #include "clang/Index/Utils.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -31,6 +34,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <sstream>
 
 #ifdef LLVM_ON_WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -993,5 +997,316 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   *endColumn = SM.getSpellingColumnNumber(Body->getRBracLoc());
 }
 
+enum CXCompletionChunkKind 
+clang_getCompletionChunkKind(CXCompletionString completion_string,
+                             unsigned chunk_number) {
+  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  if (!CCStr || chunk_number >= CCStr->size())
+    return CXCompletionChunk_Text;
+  
+  switch ((*CCStr)[chunk_number].Kind) {
+  case CodeCompletionString::CK_TypedText:
+    return CXCompletionChunk_TypedText;
+  case CodeCompletionString::CK_Text:
+    return CXCompletionChunk_Text;
+  case CodeCompletionString::CK_Optional:
+    return CXCompletionChunk_Optional; 
+  case CodeCompletionString::CK_Placeholder:
+    return CXCompletionChunk_Placeholder;
+  case CodeCompletionString::CK_Informative:
+    return CXCompletionChunk_Informative;
+  case CodeCompletionString::CK_CurrentParameter:
+    return CXCompletionChunk_CurrentParameter;
+  case CodeCompletionString::CK_LeftParen:
+    return CXCompletionChunk_LeftParen;
+  case CodeCompletionString::CK_RightParen:
+    return CXCompletionChunk_RightParen;
+  case CodeCompletionString::CK_LeftBracket:
+    return CXCompletionChunk_LeftBracket;
+  case CodeCompletionString::CK_RightBracket:
+    return CXCompletionChunk_RightBracket;
+  case CodeCompletionString::CK_LeftBrace:
+    return CXCompletionChunk_LeftBrace;
+  case CodeCompletionString::CK_RightBrace:
+    return CXCompletionChunk_RightBrace;
+  case CodeCompletionString::CK_LeftAngle:
+    return CXCompletionChunk_LeftAngle;
+  case CodeCompletionString::CK_RightAngle:
+    return CXCompletionChunk_RightAngle;
+  case CodeCompletionString::CK_Comma:
+    return CXCompletionChunk_Comma;
+  }
+  
+  // Should be unreachable, but let's be careful.
+  return CXCompletionChunk_Text;
+}
+  
+const char *clang_getCompletionChunkText(CXCompletionString completion_string,
+                                         unsigned chunk_number) {
+  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  if (!CCStr || chunk_number >= CCStr->size())
+    return 0;
+  
+  switch ((*CCStr)[chunk_number].Kind) {
+  case CodeCompletionString::CK_TypedText:
+  case CodeCompletionString::CK_Text:
+  case CodeCompletionString::CK_Placeholder:
+  case CodeCompletionString::CK_CurrentParameter:
+  case CodeCompletionString::CK_Informative:
+  case CodeCompletionString::CK_LeftParen:
+  case CodeCompletionString::CK_RightParen:
+  case CodeCompletionString::CK_LeftBracket:
+  case CodeCompletionString::CK_RightBracket:
+  case CodeCompletionString::CK_LeftBrace:
+  case CodeCompletionString::CK_RightBrace:
+  case CodeCompletionString::CK_LeftAngle:
+  case CodeCompletionString::CK_RightAngle:
+  case CodeCompletionString::CK_Comma:
+    return (*CCStr)[chunk_number].Text;
+      
+  case CodeCompletionString::CK_Optional:
+    // Note: treated as an empty text block.
+    return 0;
+  }
+  
+  // Should be unreachable, but let's be careful.
+  return 0;
+}
+  
+CXCompletionString
+clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
+                                         unsigned chunk_number) {
+  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  if (!CCStr || chunk_number >= CCStr->size())
+    return 0;
+  
+  switch ((*CCStr)[chunk_number].Kind) {
+  case CodeCompletionString::CK_TypedText:
+  case CodeCompletionString::CK_Text:
+  case CodeCompletionString::CK_Placeholder:
+  case CodeCompletionString::CK_CurrentParameter:
+  case CodeCompletionString::CK_Informative:
+  case CodeCompletionString::CK_LeftParen:
+  case CodeCompletionString::CK_RightParen:
+  case CodeCompletionString::CK_LeftBracket:
+  case CodeCompletionString::CK_RightBracket:
+  case CodeCompletionString::CK_LeftBrace:
+  case CodeCompletionString::CK_RightBrace:
+  case CodeCompletionString::CK_LeftAngle:
+  case CodeCompletionString::CK_RightAngle:
+  case CodeCompletionString::CK_Comma:
+    return 0;
+    
+  case CodeCompletionString::CK_Optional:
+    // Note: treated as an empty text block.
+    return (*CCStr)[chunk_number].Optional;
+  }
+  
+  // Should be unreachable, but let's be careful.
+  return 0;
+}
+  
+unsigned clang_getNumCompletionChunks(CXCompletionString completion_string) {
+  CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
+  return CCStr? CCStr->size() : 0;
+}
 
+static CXCursorKind parseResultKind(llvm::StringRef Str) {
+  return llvm::StringSwitch<CXCursorKind>(Str)
+    .Case("Typedef", CXCursor_TypedefDecl)
+    .Case("Struct", CXCursor_StructDecl)
+    .Case("Union", CXCursor_UnionDecl)
+    .Case("Class", CXCursor_ClassDecl)
+    .Case("Field", CXCursor_FieldDecl)
+    .Case("EnumConstant", CXCursor_EnumConstantDecl)
+    .Case("Function", CXCursor_FunctionDecl)
+    // FIXME: Hacks here to make C++ member functions look like C functions    
+    .Case("CXXMethod", CXCursor_FunctionDecl)
+    .Case("CXXConstructor", CXCursor_FunctionDecl)
+    .Case("CXXDestructor", CXCursor_FunctionDecl)
+    .Case("CXXConversion", CXCursor_FunctionDecl)
+    .Case("Var", CXCursor_VarDecl)
+    .Case("ParmVar", CXCursor_ParmDecl)
+    .Case("ObjCInterface", CXCursor_ObjCInterfaceDecl)
+    .Case("ObjCCategory", CXCursor_ObjCCategoryDecl)
+    .Case("ObjCProtocol", CXCursor_ObjCProtocolDecl)
+    .Case("ObjCProperty", CXCursor_ObjCPropertyDecl)
+    .Case("ObjCIvar", CXCursor_ObjCIvarDecl)
+    .Case("ObjCInstanceMethod", CXCursor_ObjCInstanceMethodDecl)
+    .Case("ObjCClassMethod", CXCursor_ObjCClassMethodDecl)
+    .Default(CXCursor_NotImplemented);
+}
+  
+void clang_codeComplete(CXIndex CIdx, 
+                        const char *source_filename,
+                        int num_command_line_args, 
+                        const char **command_line_args,
+                        const char *complete_filename,
+                        unsigned complete_line,
+                        unsigned complete_column,
+                        CXCompletionIterator completion_iterator,
+                        CXClientData client_data)  {
+  // The indexer, which is mainly used to determine where diagnostics go.
+  CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+  
+  // Build up the arguments for invoking 'clang'.
+  std::vector<const char *> argv;
+  
+  // First add the complete path to the 'clang' executable.
+  llvm::sys::Path ClangPath = CXXIdx->getClangPath();
+  argv.push_back(ClangPath.c_str());
+  
+  // Add the '-fsyntax-only' argument so that we only perform a basic 
+  // syntax check of the code.
+  argv.push_back("-fsyntax-only");
+
+  // Add the appropriate '-code-completion-at=file:line:column' argument
+  // to perform code completion, with an "-Xclang" preceding it.
+  std::string code_complete_at;
+  code_complete_at += "-code-completion-at=";
+  code_complete_at += complete_filename;
+  code_complete_at += ":";
+  code_complete_at += llvm::utostr(complete_line);
+  code_complete_at += ":";
+  code_complete_at += llvm::utostr(complete_column);
+  argv.push_back("-Xclang");
+  argv.push_back(code_complete_at.c_str());
+  argv.push_back("-Xclang");
+  argv.push_back("-code-completion-printer=cindex");
+  
+  // Add the source file name (FIXME: later, we'll want to build temporary
+  // file from the buffer, or just feed the source text via standard input).
+  argv.push_back(source_filename);  
+  
+  // Process the compiler options, stripping off '-o', '-c', '-fsyntax-only'.
+  for (int i = 0; i < num_command_line_args; ++i)
+    if (const char *arg = command_line_args[i]) {
+      if (strcmp(arg, "-o") == 0) {
+        ++i; // Also skip the matching argument.
+        continue;
+      }
+      if (strcmp(arg, "-emit-ast") == 0 ||
+          strcmp(arg, "-c") == 0 ||
+          strcmp(arg, "-fsyntax-only") == 0) {
+        continue;
+      }
+      
+      // Keep the argument.
+      argv.push_back(arg);
+    }
+  
+  // Add the null terminator.
+  argv.push_back(NULL);
+  
+  // Generate a temporary name for the AST file.
+  char tmpFile[L_tmpnam];
+  char *tmpFileName = tmpnam(tmpFile);
+  llvm::sys::Path ResultsFile(tmpFileName);
+  
+  // Invoke 'clang'.
+  llvm::sys::Path DevNull; // leave empty, causes redirection to /dev/null
+                           // on Unix or NUL (Windows).
+  std::string ErrMsg;
+  const llvm::sys::Path *Redirects[] = { &DevNull, &ResultsFile, &DevNull, 0 };
+  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], /* env */ NULL,
+                                     /* redirects */ &Redirects[0],
+                                     /* secondsToWait */ 0, 
+                                     /* memoryLimits */ 0, &ErrMsg);
+  
+  if (!ErrMsg.empty()) {
+    llvm::errs() << "clang_codeComplete: " << ErrMsg 
+    << '\n' << "Arguments: \n";
+    for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
+         I!=E; ++I) {
+      if (*I)
+        llvm::errs() << ' ' << *I << '\n';
+    }
+    llvm::errs() << '\n';
+  }
+
+  // Parse the resulting source file to find code-completion results.
+  using llvm::MemoryBuffer;
+  using llvm::StringRef;
+  if (MemoryBuffer *F = MemoryBuffer::getFile(ResultsFile.c_str())) {
+    StringRef Buffer = F->getBuffer();
+    do {
+      StringRef::size_type CompletionIdx = Buffer.find("COMPLETION:");
+      StringRef::size_type OverloadIdx = Buffer.find("OVERLOAD:");
+      if (CompletionIdx == StringRef::npos && OverloadIdx == StringRef::npos)
+        break;
+      
+      if (OverloadIdx < CompletionIdx) {
+        // Parse an overload result.
+        Buffer = Buffer.substr(OverloadIdx);
+        
+        // Skip past the OVERLOAD:
+        Buffer = Buffer.substr(Buffer.find(':') + 1);
+        
+        // Find the entire completion string.
+        StringRef::size_type EOL = Buffer.find_first_of("\n\r");
+        if (EOL == StringRef::npos)
+          continue;
+        
+        StringRef Line = Buffer.substr(0, EOL);
+        Buffer = Buffer.substr(EOL + 1);
+        CodeCompletionString *CCStr = CodeCompletionString::Deserialize(Line);
+        if (!CCStr || CCStr->empty())
+          continue;
+        
+        // Vend the code-completion result to the caller.
+        CXCompletionResult Result;
+        Result.CursorKind = CXCursor_NotImplemented;
+        Result.CompletionString = CCStr;
+        if (completion_iterator)
+          completion_iterator(&Result, client_data);
+        delete CCStr;
+        
+        continue;
+      }
+      
+      // Parse a completion result.
+      Buffer = Buffer.substr(CompletionIdx);
+      
+      // Skip past the COMPLETION:
+      Buffer = Buffer.substr(Buffer.find(':') + 1);
+      
+      // Get the rank
+      unsigned Rank = 0;
+      StringRef::size_type AfterRank = Buffer.find(':');
+      Buffer.substr(0, AfterRank).getAsInteger(10, Rank);
+      Buffer = Buffer.substr(AfterRank + 1);
+      
+      // Get the kind of result.
+      StringRef::size_type AfterKind = Buffer.find(':');
+      StringRef Kind = Buffer.substr(0, AfterKind);
+      Buffer = Buffer.substr(AfterKind + 1);
+      
+      // Skip over any whitespace.
+      Buffer = Buffer.substr(Buffer.find_first_not_of(" \t"));
+      
+      // Find the entire completion string.
+      StringRef::size_type EOL = Buffer.find_first_of("\n\r");
+      if (EOL == StringRef::npos)
+        continue;
+      
+      StringRef Line = Buffer.substr(0, EOL);
+      Buffer = Buffer.substr(EOL + 1);
+      CodeCompletionString *CCStr = CodeCompletionString::Deserialize(Line);
+      if (!CCStr || CCStr->empty())
+        continue;
+          
+      // Vend the code-completion result to the caller.
+      CXCompletionResult Result;
+      Result.CursorKind = parseResultKind(Kind);
+      Result.CompletionString = CCStr;
+      if (completion_iterator)
+        completion_iterator(&Result, client_data);
+      delete CCStr;
+    } while (true);
+    delete F;
+  }  
+  
+  ResultsFile.eraseFromDisk();
+}
+  
 } // end extern "C"

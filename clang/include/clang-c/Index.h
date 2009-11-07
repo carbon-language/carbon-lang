@@ -305,6 +305,327 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
  */
 CINDEX_LINKAGE CXDecl clang_getCursorDecl(CXCursor);
 
+/**
+ * \brief A semantic string that describes a code-completion result.
+ *
+ * A semantic string that describes the formatting of a code-completion
+ * result as a single "template" of text that should be inserted into the
+ * source buffer when a particular code-completion result is selected.
+ * Each semantic string is made up of some number of "chunks", each of which
+ * contains some text along with a description of what that text means, e.g.,
+ * the name of the entity being referenced, whether the text chunk is part of
+ * the template, or whether it is a "placeholder" that the user should replace
+ * with actual code,of a specific kind. See \c CXCompletionChunkKind for a
+ * description of the different kinds of chunks. 
+ */
+typedef void *CXCompletionString;
+  
+/**
+ * \brief A single result of code completion.
+ */
+typedef struct {
+  /**
+   * \brief The kind of entity that this completion refers to. 
+   *
+   * The cursor kind will be a macro, keyword, or a declaration (one of the 
+   * *Decl cursor kinds), describing the entity that the completion is
+   * referring to.
+   *
+   * \todo In the future, we would like to provide a full cursor, to allow
+   * the client to extract additional information from declaration.
+   */
+  enum CXCursorKind CursorKind;
+  
+  /** 
+   * \brief The code-completion string that describes how to insert this
+   * code-completion result into the editing buffer.
+   */
+  CXCompletionString CompletionString;
+} CXCompletionResult;
+
+/**
+ * \brief Describes a single piece of text within a code-completion string.
+ *
+ * Each "chunk" within a code-completion string (\c CXCompletionString) is 
+ * either a piece of text with a specific "kind" that describes how that text 
+ * should be interpreted by the client or is another completion string.
+ */
+enum CXCompletionChunkKind {
+  /**
+   * \brief A code-completion string that describes "optional" text that
+   * could be a part of the template (but is not required).
+   *
+   * The Optional chunk is the only kind of chunk that has a code-completion
+   * string for its representation, which is accessible via 
+   * \c clang_getCompletionChunkCompletionString(). The code-completion string
+   * describes an additional part of the template that is completely optional.
+   * For example, optional chunks can be used to describe the placeholders for
+   * arguments that match up with defaulted function parameters, e.g. given:
+   *
+   * \code
+   * void f(int x, float y = 3.14, double z = 2.71828);
+   * \endcode
+   *
+   * The code-completion string for this function would contain:
+   *   - a TypedText chunk for "f".
+   *   - a LeftParen chunk for "(".
+   *   - a Placeholder chunk for "int x"
+   *   - an Optional chunk containing the remaining defaulted arguments, e.g.,
+   *       - a Comma chunk for ","
+   *       - a Placeholder chunk for "float x"
+   *       - an Optional chunk containing the last defaulted argument:
+   *           - a Comma chunk for ","
+   *           - a Placeholder chunk for "double z"
+   *   - a RightParen chunk for ")"
+   *
+   * There are many ways two handle Optional chunks. Two simple approaches are:
+   *   - Completely ignore optional chunks, in which case the template for the
+   *     function "f" would only include the first parameter ("int x").
+   *   - Fully expand all optional chunks, in which case the template for the
+   *     function "f" would have all of the parameters.
+   */
+  CXCompletionChunk_Optional,
+  /**
+   * \brief Text that a user would be expected to type to get this
+   * code-completion result. 
+   *
+   * There will be exactly one "typed text" chunk in a semantic string, which 
+   * will typically provide the spelling of a keyword or the name of a 
+   * declaration that could be used at the current code point. Clients are
+   * expected to filter the code-completion results based on the text in this
+   * chunk.
+   */
+  CXCompletionChunk_TypedText,
+  /**
+   * \brief Text that should be inserted as part of a code-completion result.
+   *
+   * A "text" chunk represents text that is part of the template to be
+   * inserted into user code should this particular code-completion result
+   * be selected.
+   */
+  CXCompletionChunk_Text,
+  /**
+   * \brief Placeholder text that should be replaced by the user.
+   *
+   * A "placeholder" chunk marks a place where the user should insert text
+   * into the code-completion template. For example, placeholders might mark
+   * the function parameters for a function declaration, to indicate that the
+   * user should provide arguments for each of those parameters. The actual
+   * text in a placeholder is a suggestion for the text to display before
+   * the user replaces the placeholder with real code.
+   */
+  CXCompletionChunk_Placeholder,
+  /**
+   * \brief Informative text that should be displayed but never inserted as
+   * part of the template.
+   * 
+   * An "informative" chunk contains annotations that can be displayed to
+   * help the user decide whether a particular code-completion result is the
+   * right option, but which is not part of the actual template to be inserted
+   * by code completion.
+   */
+  CXCompletionChunk_Informative,
+  /**
+   * \brief Text that describes the current parameter when code-completion is
+   * referring to function call, message send, or template specialization.
+   *
+   * A "current parameter" chunk occurs when code-completion is providing
+   * information about a parameter corresponding to the argument at the
+   * code-completion point. For example, given a function
+   *
+   * \code
+   * int add(int x, int y);
+   * \endcode
+   *
+   * and the source code \c add(, where the code-completion point is after the
+   * "(", the code-completion string will contain a "current parameter" chunk
+   * for "int x", indicating that the current argument will initialize that
+   * parameter. After typing further, to \c add(17, (where the code-completion
+   * point is after the ","), the code-completion string will contain a 
+   * "current paremeter" chunk to "int y".
+   */
+  CXCompletionChunk_CurrentParameter,
+  /**
+   * \brief A left parenthesis ('('), used to initiate a function call or
+   * signal the beginning of a function parameter list.
+   */
+  CXCompletionChunk_LeftParen,
+  /**
+   * \brief A right parenthesis (')'), used to finish a function call or
+   * signal the end of a function parameter list.
+   */
+  CXCompletionChunk_RightParen,
+  /**
+   * \brief A left bracket ('[').
+   */
+  CXCompletionChunk_LeftBracket,
+  /**
+   * \brief A right bracket (']').
+   */
+  CXCompletionChunk_RightBracket,
+  /**
+   * \brief A left brace ('{').
+   */
+  CXCompletionChunk_LeftBrace,
+  /**
+   * \brief A right brace ('}').
+   */
+  CXCompletionChunk_RightBrace,
+  /**
+   * \brief A left angle bracket ('<').
+   */
+  CXCompletionChunk_LeftAngle,
+  /**
+   * \brief A right angle bracket ('>').
+   */
+  CXCompletionChunk_RightAngle,
+  /**
+   * \brief A comma separator (',').
+   */
+  CXCompletionChunk_Comma
+};
+
+/**
+ * \brief Callback function that receives a single code-completion result.
+ *
+ * This callback will be invoked by \c clang_codeComplete() for each
+ * code-completion result.
+ *
+ * \param completion_result a pointer to the current code-completion result,
+ * providing one possible completion. The pointer itself is only valid
+ * during the execution of the completion callback.
+ *
+ * \param client_data the client data provided to \c clang_codeComplete().
+ */
+typedef void (*CXCompletionIterator)(CXCompletionResult *completion_result,
+                                     CXClientData client_data);
+  
+/**
+ * \brief Determine the kind of a particular chunk within a completion string.
+ *
+ * \param completion_string the completion string to query.
+ *
+ * \param chunk_number the 0-based index of the chunk in the completion string.
+ *
+ * \returns the kind of the chunk at the index \c chunk_number.
+ */
+CINDEX_LINKAGE enum CXCompletionChunkKind 
+clang_getCompletionChunkKind(CXCompletionString completion_string,
+                             unsigned chunk_number);
+  
+/**
+ * \brief Retrieve the text associated with a particular chunk within a 
+ * completion string.
+ *
+ * \param completion_string the completion string to query.
+ *
+ * \param chunk_number the 0-based index of the chunk in the completion string.
+ *
+ * \returns the text associated with the chunk at index \c chunk_number.
+ */
+CINDEX_LINKAGE const char *
+clang_getCompletionChunkText(CXCompletionString completion_string,
+                             unsigned chunk_number);
+
+/**
+ * \brief Retrieve the completion string associated with a particular chunk 
+ * within a completion string.
+ *
+ * \param completion_string the completion string to query.
+ *
+ * \param chunk_number the 0-based index of the chunk in the completion string.
+ *
+ * \returns the completion string associated with the chunk at index
+ * \c chunk_number, or NULL if that chunk is not represented by a completion
+ * string.
+ */
+CINDEX_LINKAGE CXCompletionString
+clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
+                                         unsigned chunk_number);
+  
+/**
+ * \brief Retrieve the number of chunks in the given code-completion string.
+ */
+CINDEX_LINKAGE unsigned
+clang_getNumCompletionChunks(CXCompletionString completion_string);
+
+/**
+ * \brief Perform code completion at a given location in a source file.
+ *
+ * This function performs code completion at a particular file, line, and
+ * column within source code, providing results that suggest potential
+ * code snippets based on the context of the completion. The basic model
+ * for code completion is that Clang will parse a complete source file,
+ * performing syntax checking up to the location where code-completion has
+ * been requested. At that point, a special code-completion token is passed
+ * to the parser, which recognizes this token and determines, based on the
+ * current location in the C/Objective-C/C++ grammar and the state of 
+ * semantic analysis, what completions to provide. These completions are
+ * enumerated through a callback interface to the client.
+ *
+ * Code completion itself is meant to be triggered by the client when the
+ * user types punctuation characters or whitespace, at which point the 
+ * code-completion location will coincide with the cursor. For example, if \c p
+ * is a pointer, code-completion might be triggered after the "-" and then
+ * after the ">" in \c p->. When the code-completion location is afer the ">",
+ * the completion results will provide, e.g., the members of the struct that
+ * "p" points to. The client is responsible for placing the cursor at the
+ * beginning of the token currently being typed, then filtering the results
+ * based on the contents of the token. For example, when code-completing for
+ * the expression \c p->get, the client should provide the location just after
+ * the ">" (e.g., pointing at the "g") to this code-completion hook. Then, the
+ * client can filter the results based on the current token text ("get"), only
+ * showing those results that start with "get". The intent of this interface
+ * is to separate the relatively high-latency acquisition of code-competion
+ * results from the filtering of results on a per-character basis, which must
+ * have a lower latency.
+ *
+ * \param CIdx the \c CXIndex instance that will be used to perform code
+ * completion.
+ *
+ * \param source_filename the name of the source file that should be parsed
+ * to perform code-completion. This source file must be the same as or
+ * include the filename described by \p complete_filename, or no code-completion
+ * results will be produced.
+ *
+ * \param num_command_line_args the number of command-line arguments stored in
+ * \p command_line_args.
+ *
+ * \param command_line_args the command-line arguments to pass to the Clang
+ * compiler to build the given source file. This should include all of the 
+ * necessary include paths, language-dialect switches, precompiled header
+ * includes, etc., but should not include any information specific to 
+ * code completion.
+ *
+ * \param complete_filename the name of the source file where code completion
+ * should be performed. In many cases, this name will be the same as the
+ * source filename. However, the completion filename may also be a file 
+ * included by the source file, which is required when producing 
+ * code-completion results for a header.
+ *
+ * \param complete_line the line at which code-completion should occur.
+ *
+ * \param complete_column the column at which code-completion should occur. 
+ * Note that the column should point just after the syntactic construct that
+ * initiated code completion, and not in the middle of a lexical token.
+ *
+ * \param completion_iterator a callback function that will receive 
+ * code-completion results.
+ *
+ * \param client_data client-specific data that will be passed back via the
+ * code-completion callback function.
+ */
+CINDEX_LINKAGE void clang_codeComplete(CXIndex CIdx, 
+                                       const char *source_filename,
+                                       int num_command_line_args, 
+                                       const char **command_line_args,
+                                       const char *complete_filename,
+                                       unsigned complete_line,
+                                       unsigned complete_column,
+                                       CXCompletionIterator completion_iterator,
+                                       CXClientData client_data);
+    
+  
 #ifdef __cplusplus
 }
 #endif

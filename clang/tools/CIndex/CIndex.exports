@@ -1,8 +1,11 @@
+_clang_codeComplete
 _clang_createIndex
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
 _clang_disposeIndex
 _clang_disposeTranslationUnit
+_clang_getCompletionChunkKind
+_clang_getCompletionChunkText
 _clang_getCursor
 _clang_getCursorColumn
 _clang_getCursorDecl
@@ -24,6 +27,7 @@ _clang_getEntity
 _clang_getEntityFromDecl
 _clang_getFileName
 _clang_getFileTime
+_clang_getNumCompletionChunks
 _clang_getTranslationUnitSpelling
 _clang_getURI
 _clang_isDeclaration

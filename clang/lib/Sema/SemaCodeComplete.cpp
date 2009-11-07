@@ -187,8 +187,7 @@ getRequiredQualification(ASTContext &Context,
                                      Context.getTypeDeclType(TD).getTypePtr());
     else
       assert(Parent->isTranslationUnit());
-  }
-  
+  }  
   return Result;
 }
 
@@ -674,6 +673,8 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts, unsigned Rank,
 static void AddFunctionParameterChunks(ASTContext &Context,
                                        FunctionDecl *Function,
                                        CodeCompletionString *Result) {
+  typedef CodeCompletionString::Chunk Chunk;
+  
   CodeCompletionString *CCStr = Result;
   
   for (unsigned P = 0, N = Function->getNumParams(); P != N; ++P) {
@@ -688,7 +689,7 @@ static void AddFunctionParameterChunks(ASTContext &Context,
     }
     
     if (P != 0)
-      CCStr->AddTextChunk(", ");
+      CCStr->AddChunk(Chunk(CodeCompletionString::CK_Comma));
     
     // Format the placeholder string.
     std::string PlaceholderStr;
@@ -713,6 +714,8 @@ static void AddTemplateParameterChunks(ASTContext &Context,
                                        TemplateDecl *Template,
                                        CodeCompletionString *Result,
                                        unsigned MaxParameters = 0) {
+  typedef CodeCompletionString::Chunk Chunk;
+  
   CodeCompletionString *CCStr = Result;
   bool FirstParameter = true;
   
@@ -768,7 +771,7 @@ static void AddTemplateParameterChunks(ASTContext &Context,
     if (FirstParameter)
       FirstParameter = false;
     else
-      CCStr->AddTextChunk(", ");
+      CCStr->AddChunk(Chunk(CodeCompletionString::CK_Comma));
     
     // Add the placeholder string.
     CCStr->AddPlaceholderChunk(PlaceholderStr.c_str());
@@ -803,6 +806,8 @@ void AddQualifierToCompletionString(CodeCompletionString *Result,
 /// result is all that is needed.
 CodeCompletionString *
 CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
+  typedef CodeCompletionString::Chunk Chunk;
+  
   if (Kind == RK_Keyword)
     return 0;
   
@@ -813,12 +818,12 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     
     // Format a function-like macro with placeholders for the arguments.
     CodeCompletionString *Result = new CodeCompletionString;
-    Result->AddTextChunk(Macro->getName().str().c_str());
-    Result->AddTextChunk("(");
+    Result->AddTypedTextChunk(Macro->getName().str().c_str());
+    Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     for (MacroInfo::arg_iterator A = MI->arg_begin(), AEnd = MI->arg_end();
          A != AEnd; ++A) {
       if (A != MI->arg_begin())
-        Result->AddTextChunk(", ");
+        Result->AddChunk(Chunk(CodeCompletionString::CK_Comma));
       
       if (!MI->isVariadic() || A != AEnd - 1) {
         // Non-variadic argument.
@@ -837,21 +842,28 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
         Result->AddPlaceholderChunk(Arg.c_str());
       }
     }
-    Result->AddTextChunk(")");
+    Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
     return Result;
   }
   
   assert(Kind == RK_Declaration && "Missed a macro kind?");
   NamedDecl *ND = Declaration;
   
+  if (StartsNestedNameSpecifier) {
+    CodeCompletionString *Result = new CodeCompletionString;
+    Result->AddTypedTextChunk(ND->getNameAsString().c_str());
+    Result->AddTextChunk("::");
+    return Result;
+  }
+  
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTextChunk(Function->getNameAsString().c_str());
-    Result->AddTextChunk("(");
+    Result->AddTypedTextChunk(Function->getNameAsString().c_str());
+    Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     AddFunctionParameterChunks(S.Context, Function, Result);
-    Result->AddTextChunk(")");
+    Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
     return Result;
   }
   
@@ -860,7 +872,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
-    Result->AddTextChunk(Function->getNameAsString().c_str());
+    Result->AddTypedTextChunk(Function->getNameAsString().c_str());
     
     // Figure out which template parameters are deduced (or have default
     // arguments).
@@ -884,7 +896,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
         else {
           assert(isa<TemplateTemplateParmDecl>(Param));
           HasDefaultArg 
-          = cast<TemplateTemplateParmDecl>(Param)->hasDefaultArgument();
+            = cast<TemplateTemplateParmDecl>(Param)->hasDefaultArgument();
         }
         
         if (!HasDefaultArg)
@@ -896,16 +908,16 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
       // Some of the function template arguments cannot be deduced from a
       // function call, so we introduce an explicit template argument list
       // containing all of the arguments up to the first deducible argument.
-      Result->AddTextChunk("<");
+      Result->AddChunk(Chunk(CodeCompletionString::CK_LeftAngle));
       AddTemplateParameterChunks(S.Context, FunTmpl, Result, 
                                  LastDeducibleArgument);
-      Result->AddTextChunk(">");
+      Result->AddChunk(Chunk(CodeCompletionString::CK_RightAngle));
     }
     
     // Add the function parameters
-    Result->AddTextChunk("(");
+    Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     AddFunctionParameterChunks(S.Context, Function, Result);
-    Result->AddTextChunk(")");
+    Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
     return Result;
   }
   
@@ -913,20 +925,18 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTextChunk(Template->getNameAsString().c_str());
-    Result->AddTextChunk("<");
+    Result->AddTypedTextChunk(Template->getNameAsString().c_str());
+    Result->AddChunk(Chunk(CodeCompletionString::CK_LeftAngle));
     AddTemplateParameterChunks(S.Context, Template, Result);
-    Result->AddTextChunk(">");
+    Result->AddChunk(Chunk(CodeCompletionString::CK_RightAngle));
     return Result;
   }
   
-  if (Qualifier || StartsNestedNameSpecifier) {
+  if (Qualifier) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTextChunk(ND->getNameAsString().c_str());
-    if (StartsNestedNameSpecifier)
-      Result->AddTextChunk("::");
+    Result->AddTypedTextChunk(ND->getNameAsString().c_str());
     return Result;
   }
   
@@ -937,6 +947,8 @@ CodeCompletionString *
 CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
                                                           unsigned CurrentArg,
                                                                Sema &S) const {
+  typedef CodeCompletionString::Chunk Chunk;
+  
   CodeCompletionString *Result = new CodeCompletionString;
   FunctionDecl *FDecl = getFunction();
   const FunctionProtoType *Proto 
@@ -947,9 +959,9 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
     const FunctionType *FT = getFunctionType();
     Result->AddTextChunk(
             FT->getResultType().getAsString(S.Context.PrintingPolicy).c_str());
-    Result->AddTextChunk("(");
-    Result->AddPlaceholderChunk("...");
-    Result->AddTextChunk("(");    
+    Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
+    Result->AddChunk(Chunk(CodeCompletionString::CK_CurrentParameter, "..."));
+    Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
     return Result;
   }
   
@@ -959,11 +971,11 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
     Result->AddTextChunk(
          Proto->getResultType().getAsString(S.Context.PrintingPolicy).c_str());
   
-  Result->AddTextChunk("(");
+  Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
   unsigned NumParams = FDecl? FDecl->getNumParams() : Proto->getNumArgs();
   for (unsigned I = 0; I != NumParams; ++I) {
     if (I)
-      Result->AddTextChunk(", ");
+      Result->AddChunk(Chunk(CodeCompletionString::CK_Comma));
     
     std::string ArgString;
     QualType ArgType;
@@ -978,19 +990,20 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
     ArgType.getAsStringInternal(ArgString, S.Context.PrintingPolicy);
     
     if (I == CurrentArg)
-      Result->AddPlaceholderChunk(ArgString.c_str());
+      Result->AddChunk(Chunk(CodeCompletionString::CK_CurrentParameter, 
+                             ArgString.c_str()));
     else
       Result->AddTextChunk(ArgString.c_str());
   }
   
   if (Proto && Proto->isVariadic()) {
-    Result->AddTextChunk(", ");
+    Result->AddChunk(Chunk(CodeCompletionString::CK_Comma));
     if (CurrentArg < NumParams)
       Result->AddTextChunk("...");
     else
-      Result->AddPlaceholderChunk("...");
+      Result->AddChunk(Chunk(CodeCompletionString::CK_CurrentParameter, "..."));
   }
-  Result->AddTextChunk(")");
+  Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
   
   return Result;
 }
@@ -1049,11 +1062,11 @@ namespace {
   };
 }
 
-// Add all of the known macros as code-completion results.
 static void AddMacroResults(Preprocessor &PP, unsigned Rank, 
                             ResultBuilder &Results) {
   Results.EnterNewScope();
-  for (Preprocessor::macro_iterator M = PP.macro_begin(), MEnd = PP.macro_end();
+  for (Preprocessor::macro_iterator M = PP.macro_begin(), 
+                                 MEnd = PP.macro_end();
        M != MEnd; ++M)
     Results.MaybeAddResult(CodeCompleteConsumer::Result(M->first, Rank));
   Results.ExitScope();
@@ -1073,7 +1086,8 @@ void Sema::CodeCompleteOrdinaryName(Scope *S) {
   ResultBuilder Results(*this, &ResultBuilder::IsOrdinaryName);
   unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
                                            0, CurContext, Results);
-  AddMacroResults(PP, NextRank, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1130,7 +1144,8 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
     }
     
     // Add macros
-    AddMacroResults(PP, NextRank, Results);
+    if (CodeCompleter->includeMacros())
+      AddMacroResults(PP, NextRank, Results);
     
     // Hand off the results found for code completion.
     HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
@@ -1177,7 +1192,8 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
                                     NextRank, CurContext, Results);
   }
   
-  AddMacroResults(PP, NextRank, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1255,7 +1271,8 @@ void Sema::CodeCompleteCase(Scope *S) {
   }
   Results.ExitScope();
   
-  AddMacroResults(PP, 1, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, 1, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1350,7 +1367,8 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
   if (!Results.empty() && NNS->isDependent())
     Results.MaybeAddResult(CodeCompleteConsumer::Result("template", NextRank));
   
-  AddMacroResults(PP, NextRank + 1, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank + 1, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1371,7 +1389,8 @@ void Sema::CodeCompleteUsing(Scope *S) {
                                            0, CurContext, Results);
   Results.ExitScope();
   
-  AddMacroResults(PP, NextRank, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
@@ -1386,7 +1405,8 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
                                            0, CurContext, Results);
   Results.ExitScope();
-  AddMacroResults(PP, NextRank, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1421,7 +1441,8 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     Results.ExitScope();
   }
   
-  AddMacroResults(PP, 1, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, 1, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1433,7 +1454,8 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
   unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
                                            0, CurContext, Results);
-  AddMacroResults(PP, NextRank, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1464,7 +1486,8 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
                                   NextRank + 1, CurContext, Results);
   Results.ExitScope();
   
-  AddMacroResults(PP, NextRank, Results);
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 

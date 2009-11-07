@@ -215,15 +215,45 @@ OutputFile("o",
  llvm::cl::desc("Specify output file"));
 
 
+enum CodeCompletionPrinter {
+  CCP_Debug,
+  CCP_CIndex
+};
+
 static llvm::cl::opt<ParsedSourceLocation>
 CodeCompletionAt("code-completion-at",
                  llvm::cl::value_desc("file:line:column"),
               llvm::cl::desc("Dump code-completion information at a location"));
 
+static llvm::cl::opt<CodeCompletionPrinter>
+CodeCompletionPrinter("code-completion-printer",
+                      llvm::cl::desc("Choose output type:"),
+                      llvm::cl::init(CCP_Debug),
+                      llvm::cl::values(
+                        clEnumValN(CCP_Debug, "debug",
+                          "Debug code-completion results"),
+                        clEnumValN(CCP_CIndex, "cindex",
+                          "Code-completion results for the CIndex library"),
+                        clEnumValEnd));
+
+static llvm::cl::opt<bool>
+CodeCompletionWantsMacros("code-completion-macros",
+                 llvm::cl::desc("Include macros in code-completion results"));
+
 /// \brief Buld a new code-completion consumer that prints the results of
 /// code completion to standard output.
 static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S, void *) {
-  return new PrintingCodeCompleteConsumer(S, llvm::outs());
+  switch (CodeCompletionPrinter.getValue()) {
+  case CCP_Debug:
+    return new PrintingCodeCompleteConsumer(S, CodeCompletionWantsMacros, 
+                                            llvm::outs());
+      
+  case CCP_CIndex:
+    return new CIndexCodeCompleteConsumer(S, CodeCompletionWantsMacros,
+                                          llvm::outs());
+  };
+  
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//

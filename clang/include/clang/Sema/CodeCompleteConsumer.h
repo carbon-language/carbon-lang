@@ -14,6 +14,7 @@
 #define LLVM_CLANG_SEMA_CODECOMPLETECONSUMER_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include <memory>
 #include <string>
 
@@ -43,6 +44,10 @@ public:
   /// \brief The different kinds of "chunks" that can occur within a code
   /// completion string.
   enum ChunkKind {
+    /// \brief The piece of text that the user is expected to type to
+    /// match the code-completion string, typically a keyword or the name of a
+    /// declarator or macro.
+    CK_TypedText,
     /// \brief A piece of text that should be placed in the buffer, e.g.,
     /// parentheses or a comma in a function call.
     CK_Text,
@@ -55,7 +60,29 @@ public:
     CK_Placeholder,
     /// \brief A piece of text that describes something about the result but
     /// should not be inserted into the buffer.
-    CK_Informative
+    CK_Informative,
+    /// \brief A piece of text that describes the parameter that corresponds
+    /// to the code-completion location within a function call, message send,
+    /// macro invocation, etc.
+    CK_CurrentParameter,
+    /// \brief A left parenthesis ('(').
+    CK_LeftParen,
+    /// \brief A right parenthesis (')').
+    CK_RightParen,
+    /// \brief A left bracket ('[').
+    CK_LeftBracket,
+    /// \brief A right bracket (']').
+    CK_RightBracket,
+    /// \brief A left brace ('{').
+    CK_LeftBrace,
+    /// \brief A right brace ('}').
+    CK_RightBrace,
+    /// \brief A left angle bracket ('<').
+    CK_LeftAngle,
+    /// \brief A right angle bracket ('>').
+    CK_RightAngle,
+    /// \brief A comma separator (',').
+    CK_Comma
   };
   
   /// \brief One piece of the code completion string.
@@ -66,7 +93,7 @@ public:
     
     union {
       /// \brief The text string associated with a CK_Text, CK_Placeholder,
-      /// or CK_Informative chunk.
+      /// CK_Informative, or CK_Comma chunk.
       /// The string is owned by the chunk and will be deallocated 
       /// (with delete[]) when the chunk is destroyed.
       const char *Text;
@@ -79,10 +106,8 @@ public:
     
     Chunk() : Kind(CK_Text), Text(0) { }
     
-  private:
-    Chunk(ChunkKind Kind, const char *Text);
-          
-  public:
+    Chunk(ChunkKind Kind, llvm::StringRef Text = 0);
+    
     /// \brief Create a new text chunk.
     static Chunk CreateText(const char *Text);
 
@@ -94,6 +119,9 @@ public:
 
     /// \brief Create a new informative chunk.
     static Chunk CreateInformative(const char *Informative);
+
+    /// \brief Create a new current-parameter chunk.
+    static Chunk CreateCurrentParameter(const char *CurrentParameter);
 
     /// \brief Destroy this chunk, deallocating any memory it owns.
     void Destroy();
@@ -113,6 +141,24 @@ public:
   typedef llvm::SmallVector<Chunk, 4>::const_iterator iterator;
   iterator begin() const { return Chunks.begin(); }
   iterator end() const { return Chunks.end(); }
+  bool empty() const { return Chunks.empty(); }
+  unsigned size() const { return Chunks.size(); }
+  
+  Chunk &operator[](unsigned I) {
+    assert(I < size() && "Chunk index out-of-range");
+    return Chunks[I];
+  }
+
+  const Chunk &operator[](unsigned I) const {
+    assert(I < size() && "Chunk index out-of-range");
+    return Chunks[I];
+  }
+  
+  /// \brief Add a new typed-text chunk.
+  /// The text string will be copied.
+  void AddTypedTextChunk(const char *Text) { 
+    Chunks.push_back(Chunk(CK_TypedText, Text));
+  }
   
   /// \brief Add a new text chunk.
   /// The text string will be copied.
@@ -136,15 +182,37 @@ public:
   void AddInformativeChunk(const char *Text) {
     Chunks.push_back(Chunk::CreateInformative(Text));
   }
+
+  /// \brief Add a new current-parameter chunk.
+  /// The text will be copied.
+  void AddCurrentParameterChunk(const char *CurrentParameter) {
+    Chunks.push_back(Chunk::CreateCurrentParameter(CurrentParameter));
+  }
+  
+  /// \brief Add a new chunk.
+  void AddChunk(Chunk C) { Chunks.push_back(C); }
   
   /// \brief Retrieve a string representation of the code completion string,
   /// which is mainly useful for debugging.
-  std::string getAsString() const;
+  std::string getAsString() const; 
+  
+  /// \brief Serialize this code-completion string to the given stream.
+  void Serialize(llvm::raw_ostream &OS) const;
+  
+  /// \brief Deserialize a code-completion string from the given string.
+  static CodeCompletionString *Deserialize(llvm::StringRef &Str);
 };
   
+llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, 
+                              const CodeCompletionString &CCS);
+
 /// \brief Abstract interface for a consumer of code-completion 
 /// information.
 class CodeCompleteConsumer {
+protected:
+  /// \brief Whether to include macros in the code-completion results.
+  bool IncludeMacros;
+  
 public:
   /// \brief Captures a result of code completion.
   struct Result {
@@ -291,6 +359,14 @@ public:
                                                 Sema &S) const;    
   };
   
+  CodeCompleteConsumer() : IncludeMacros(false) { }
+  
+  explicit CodeCompleteConsumer(bool IncludeMacros)
+    : IncludeMacros(IncludeMacros) { }
+  
+  /// \brief Whether the code-completion consumer wants to see macros.
+  bool includeMacros() const { return IncludeMacros; }
+  
   /// \brief Deregisters and destroys this code-completion consumer.
   virtual ~CodeCompleteConsumer();
     
@@ -326,8 +402,35 @@ class PrintingCodeCompleteConsumer : public CodeCompleteConsumer {
 public:
   /// \brief Create a new printing code-completion consumer that prints its
   /// results to the given raw output stream.
-  PrintingCodeCompleteConsumer(Sema &S, llvm::raw_ostream &OS)
-    : SemaRef(S), OS(OS) { }
+  PrintingCodeCompleteConsumer(Sema &S, bool IncludeMacros, 
+                               llvm::raw_ostream &OS)
+    : CodeCompleteConsumer(IncludeMacros), SemaRef(S), OS(OS) { }
+  
+  /// \brief Prints the finalized code-completion results.
+  virtual void ProcessCodeCompleteResults(Result *Results, 
+                                          unsigned NumResults);
+  
+  virtual void ProcessOverloadCandidates(unsigned CurrentArg,
+                                         OverloadCandidate *Candidates,
+                                         unsigned NumCandidates);  
+};
+  
+/// \brief A code-completion consumer that prints the results it receives
+/// in a format that is parsable by the CIndex library.
+class CIndexCodeCompleteConsumer : public CodeCompleteConsumer {
+  /// \brief The semantic-analysis object to which this code-completion
+  /// consumer is attached.
+  Sema &SemaRef;
+  
+  /// \brief The raw output stream.
+  llvm::raw_ostream &OS;
+  
+public:
+  /// \brief Create a new CIndex code-completion consumer that prints its
+  /// results to the given raw output stream in a format readable to the CIndex
+  /// library.
+  CIndexCodeCompleteConsumer(Sema &S, bool IncludeMacros, llvm::raw_ostream &OS)
+    : CodeCompleteConsumer(IncludeMacros), SemaRef(S), OS(OS) { }
   
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Result *Results, 
