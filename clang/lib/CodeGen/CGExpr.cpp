@@ -814,12 +814,13 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
 }
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
-  const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
+  const NamedDecl *ND = E->getDecl();
 
-  if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
-        isa<ImplicitParamDecl>(VD))) {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
     LValue LV;
-    if (VD->hasExternalStorage()) {
+    
+    // Check if this is a global variable.
+    if (VD->hasExternalStorage() || VD->isFileVarDecl()) {
       llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
       if (VD->getType()->isReferenceType())
         V = Builder.CreateLoad(V, "tmp");
@@ -852,16 +853,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LV;
   }
   
-  if (VD && VD->isFileVarDecl()) {
-    llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
-    if (VD->getType()->isReferenceType())
-      V = Builder.CreateLoad(V, "tmp");
-    LValue LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-    setObjCGCLValueClass(getContext(), E, LV);
-    return LV;
-  }
-  
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
     llvm::Value* V = CGM.GetAddrOfFunction(FD);
     if (!FD->hasPrototype()) {
       if (const FunctionProtoType *Proto =
@@ -878,20 +870,15 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
   }
   
-  if (const ImplicitParamDecl *IPD = dyn_cast<ImplicitParamDecl>(E->getDecl())){
-    llvm::Value *V = LocalDeclMap[IPD];
-    assert(V && "BlockVarDecl not entered in LocalDeclMap?");
-    return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-  }
-  
   if (E->getQualifier()) {
     // FIXME: the qualifier check does not seem sufficient here
-    return EmitPointerToDataMemberLValue(cast<FieldDecl>(E->getDecl()));
+    return EmitPointerToDataMemberLValue(cast<FieldDecl>(ND));
   }
   
-  assert(0 && "Unimp declref");
-  //an invalid LValue, but the assert will
-  //ensure that this point is never reached.
+  assert(false && "Unhandled DeclRefExpr");
+  
+  // an invalid LValue, but the assert will
+  // ensure that this point is never reached.
   return LValue();
 }
 
