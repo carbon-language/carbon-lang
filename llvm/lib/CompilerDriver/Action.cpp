@@ -13,9 +13,13 @@
 
 #include "llvm/CompilerDriver/Action.h"
 #include "llvm/CompilerDriver/BuiltinOptions.h"
+
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Program.h"
+#include "llvm/System/TimeValue.h"
+
 #include <stdexcept>
+#include <string>
 
 using namespace llvm;
 using namespace llvmc;
@@ -60,14 +64,31 @@ namespace {
   }
 }
 
+namespace llvmc {
+  void AppendToGlobalTimeLog(const std::string& cmd, double time);
+}
+
 int llvmc::Action::Execute() const {
   if (DryRun || VerboseMode) {
     errs() << Command_ << " ";
     std::for_each(Args_.begin(), Args_.end(), print_string);
     errs() << '\n';
   }
-  if (DryRun)
-    return 0;
-  else
-    return ExecuteProgram(Command_, Args_);
+  if (!DryRun) {
+    if (Time) {
+      sys::TimeValue now = sys::TimeValue::now();
+      int ret = ExecuteProgram(Command_, Args_);
+      sys::TimeValue now2 = sys::TimeValue::now();
+      now2 -= now;
+      double elapsed = now2.seconds()  + now2.microseconds()  / 1000000.0;
+      AppendToGlobalTimeLog(Command_, elapsed);
+
+      return ret;
+    }
+    else {
+      return ExecuteProgram(Command_, Args_);
+    }
+  }
+
+  return 0;
 }

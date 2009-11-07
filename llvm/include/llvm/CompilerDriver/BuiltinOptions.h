@@ -25,10 +25,11 @@ extern llvm::cl::opt<std::string> OutputFilename;
 extern llvm::cl::opt<std::string> TempDirname;
 extern llvm::cl::list<std::string> Languages;
 extern llvm::cl::opt<bool> DryRun;
+extern llvm::cl::opt<bool> Time;
 extern llvm::cl::opt<bool> VerboseMode;
 extern llvm::cl::opt<bool> CheckGraph;
-extern llvm::cl::opt<bool> WriteGraph;
 extern llvm::cl::opt<bool> ViewGraph;
+extern llvm::cl::opt<bool> WriteGraph;
 extern llvm::cl::opt<SaveTempsEnum::Values> SaveTemps;
 
 #endif // LLVM_INCLUDE_COMPILER_DRIVER_BUILTIN_OPTIONS_H

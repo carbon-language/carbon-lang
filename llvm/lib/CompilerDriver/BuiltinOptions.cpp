@@ -30,8 +30,10 @@ cl::opt<std::string> TempDirname("temp-dir", cl::desc("Temp dir name"),
 cl::list<std::string> Languages("x",
           cl::desc("Specify the language of the following input files"),
           cl::ZeroOrMore);
+
 cl::opt<bool> DryRun("dry-run",
                      cl::desc("Only pretend to run commands"));
+cl::opt<bool> Time("time", cl::desc("Time individual commands"));
 cl::opt<bool> VerboseMode("v",
                           cl::desc("Enable verbose mode"));
 
