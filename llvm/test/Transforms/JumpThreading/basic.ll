@@ -170,5 +170,36 @@ BB4:
 }
 
 
+;; This tests that the branch in 'merge' can be cloned up into T1.
+;; rdar://7367025
+define i32 @test7(i1 %cond, i1 %cond2) {
+Entry:
+; CHECK: @test7
+	%v1 = call i32 @f1()
+	br i1 %cond, label %Merge, label %F1
 
+F1:
+	%v2 = call i32 @f2()
+	br label %Merge
+
+Merge:
+	%B = phi i32 [%v1, %Entry], [%v2, %F1]
+        %M = icmp ne i32 %B, %v1
+        %N = icmp eq i32 %B, 47
+        %O = and i1 %M, %N
+	br i1 %O, label %T2, label %F2
+
+; CHECK: Merge:
+; CHECK-NOT: phi
+; CHECK-NEXT:   %v2 = call i32 @f2()
+
+T2:
+	call void @f3()
+	ret i32 %B
+
+F2:
+	ret i32 %B
+; CHECK: F2:
+; CHECK-NEXT: phi i32
+}
 
