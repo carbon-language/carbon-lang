@@ -148,8 +148,11 @@ private:
   SDValue ExpandFPLibCall(SDNode *Node, RTLIB::Libcall Call_F32,
                           RTLIB::Libcall Call_F64, RTLIB::Libcall Call_F80,
                           RTLIB::Libcall Call_PPCF128);
-  SDValue ExpandIntLibCall(SDNode *Node, bool isSigned, RTLIB::Libcall Call_I16,
-                           RTLIB::Libcall Call_I32, RTLIB::Libcall Call_I64,
+  SDValue ExpandIntLibCall(SDNode *Node, bool isSigned,
+                           RTLIB::Libcall Call_I8,
+                           RTLIB::Libcall Call_I16,
+                           RTLIB::Libcall Call_I32,
+                           RTLIB::Libcall Call_I64,
                            RTLIB::Libcall Call_I128);
 
   SDValue EmitStackConvert(SDValue SrcOp, EVT SlotVT, EVT DestVT, DebugLoc dl);
@@ -1909,6 +1912,7 @@ SDValue SelectionDAGLegalize::ExpandFPLibCall(SDNode* Node,
 }
 
 SDValue SelectionDAGLegalize::ExpandIntLibCall(SDNode* Node, bool isSigned,
+                                               RTLIB::Libcall Call_I8,
                                                RTLIB::Libcall Call_I16,
                                                RTLIB::Libcall Call_I32,
                                                RTLIB::Libcall Call_I64,
@@ -1916,9 +1920,10 @@ SDValue SelectionDAGLegalize::ExpandIntLibCall(SDNode* Node, bool isSigned,
   RTLIB::Libcall LC;
   switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
   default: llvm_unreachable("Unexpected request for libcall!");
-  case MVT::i16: LC = Call_I16; break;
-  case MVT::i32: LC = Call_I32; break;
-  case MVT::i64: LC = Call_I64; break;
+  case MVT::i8:   LC = Call_I8; break;
+  case MVT::i16:  LC = Call_I16; break;
+  case MVT::i32:  LC = Call_I32; break;
+  case MVT::i64:  LC = Call_I64; break;
   case MVT::i128: LC = Call_I128; break;
   }
   return ExpandLibCall(LC, Node, isSigned);
@@ -2624,10 +2629,14 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       Tmp1 = DAG.getNode(ISD::MUL, dl, VT, Tmp1, Tmp3);
       Tmp1 = DAG.getNode(ISD::SUB, dl, VT, Tmp2, Tmp1);
     } else if (isSigned) {
-      Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SREM_I16, RTLIB::SREM_I32,
+      Tmp1 = ExpandIntLibCall(Node, true,
+                              RTLIB::SREM_I8,
+                              RTLIB::SREM_I16, RTLIB::SREM_I32,
                               RTLIB::SREM_I64, RTLIB::SREM_I128);
     } else {
-      Tmp1 = ExpandIntLibCall(Node, false, RTLIB::UREM_I16, RTLIB::UREM_I32,
+      Tmp1 = ExpandIntLibCall(Node, false,
+                              RTLIB::UREM_I8,
+                              RTLIB::UREM_I16, RTLIB::UREM_I32,
                               RTLIB::UREM_I64, RTLIB::UREM_I128);
     }
     Results.push_back(Tmp1);
@@ -2643,10 +2652,14 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Node->getOperand(0),
                          Node->getOperand(1));
     else if (isSigned)
-      Tmp1 = ExpandIntLibCall(Node, true, RTLIB::SDIV_I16, RTLIB::SDIV_I32,
+      Tmp1 = ExpandIntLibCall(Node, true,
+                              RTLIB::SDIV_I8,
+                              RTLIB::SDIV_I16, RTLIB::SDIV_I32,
                               RTLIB::SDIV_I64, RTLIB::SDIV_I128);
     else
-      Tmp1 = ExpandIntLibCall(Node, false, RTLIB::UDIV_I16, RTLIB::UDIV_I32,
+      Tmp1 = ExpandIntLibCall(Node, false,
+                              RTLIB::UDIV_I8,
+                              RTLIB::UDIV_I16, RTLIB::UDIV_I32,
                               RTLIB::UDIV_I64, RTLIB::UDIV_I128);
     Results.push_back(Tmp1);
     break;
@@ -2691,7 +2704,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                     Node->getOperand(1)));
       break;
     }
-    Tmp1 = ExpandIntLibCall(Node, false, RTLIB::MUL_I16, RTLIB::MUL_I32,
+    Tmp1 = ExpandIntLibCall(Node, false,
+                            RTLIB::MUL_I8,
+                            RTLIB::MUL_I16, RTLIB::MUL_I32,
                             RTLIB::MUL_I64, RTLIB::MUL_I128);
     Results.push_back(Tmp1);
     break;

@@ -115,12 +115,23 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,   Expand);
 
   // FIXME: Implement efficiently multiplication by a constant
+  setOperationAction(ISD::MUL,              MVT::i8,    Expand);
+  setOperationAction(ISD::MULHS,            MVT::i8,    Expand);
+  setOperationAction(ISD::MULHU,            MVT::i8,    Expand);
+  setOperationAction(ISD::SMUL_LOHI,        MVT::i8,    Expand);
+  setOperationAction(ISD::UMUL_LOHI,        MVT::i8,    Expand);
   setOperationAction(ISD::MUL,              MVT::i16,   Expand);
   setOperationAction(ISD::MULHS,            MVT::i16,   Expand);
   setOperationAction(ISD::MULHU,            MVT::i16,   Expand);
   setOperationAction(ISD::SMUL_LOHI,        MVT::i16,   Expand);
   setOperationAction(ISD::UMUL_LOHI,        MVT::i16,   Expand);
 
+  setOperationAction(ISD::UDIV,             MVT::i8,    Expand);
+  setOperationAction(ISD::UDIVREM,          MVT::i8,    Expand);
+  setOperationAction(ISD::UREM,             MVT::i8,    Expand);
+  setOperationAction(ISD::SDIV,             MVT::i8,    Expand);
+  setOperationAction(ISD::SDIVREM,          MVT::i8,    Expand);
+  setOperationAction(ISD::SREM,             MVT::i8,    Expand);
   setOperationAction(ISD::UDIV,             MVT::i16,   Expand);
   setOperationAction(ISD::UDIVREM,          MVT::i16,   Expand);
   setOperationAction(ISD::UREM,             MVT::i16,   Expand);
