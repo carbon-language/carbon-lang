@@ -819,14 +819,14 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
         isa<ImplicitParamDecl>(VD))) {
     LValue LV;
-    bool NonGCable = VD->hasLocalStorage() &&
-      !VD->hasAttr<BlocksAttr>();
     if (VD->hasExternalStorage()) {
       llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
       if (VD->getType()->isReferenceType())
         V = Builder.CreateLoad(V, "tmp");
       LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
     } else {
+      bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
+
       llvm::Value *V = LocalDeclMap[VD];
       assert(V && "DeclRefExpr not entered in LocalDeclMap?");
 
@@ -844,8 +844,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       if (VD->getType()->isReferenceType())
         V = Builder.CreateLoad(V, "tmp");
       LV = LValue::MakeAddr(V, Quals);
+      LValue::SetObjCNonGC(LV, NonGCable);
     }
-    LValue::SetObjCNonGC(LV, NonGCable);
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   }
