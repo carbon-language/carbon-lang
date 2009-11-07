@@ -13,6 +13,7 @@
 
 PREVISIT(BinaryOperator)
 PREVISIT(CallExpr)
+PREVISIT(DeclStmt)
 PREVISIT(ObjCMessageExpr)
 PREVISIT(ReturnStmt)
 

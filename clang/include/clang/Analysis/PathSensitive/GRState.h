@@ -195,6 +195,9 @@ public:
   //
 
   const GRState *Assume(DefinedOrUnknownSVal cond, bool assumption) const;
+  
+  std::pair<const GRState*, const GRState*>
+  Assume(DefinedOrUnknownSVal cond) const;
 
   const GRState *AssumeInBound(DefinedOrUnknownSVal idx,
                                DefinedOrUnknownSVal upperBound,
@@ -582,6 +585,15 @@ inline const GRState *GRState::Assume(DefinedOrUnknownSVal Cond,
   
   return getStateManager().ConstraintMgr->Assume(this, cast<DefinedSVal>(Cond),
                                                  Assumption);
+}
+  
+inline std::pair<const GRState*, const GRState*>
+GRState::Assume(DefinedOrUnknownSVal Cond) const {
+  if (Cond.isUnknown())
+    return std::make_pair(this, this);
+  
+  return getStateManager().ConstraintMgr->AssumeDual(this,
+                                                     cast<DefinedSVal>(Cond));
 }
 
 inline const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,

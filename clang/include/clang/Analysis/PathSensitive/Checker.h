@@ -148,13 +148,6 @@ public:
   virtual void PreVisitBind(CheckerContext &C,
                             const Stmt *AssignE, const Stmt *StoreE, 
                             SVal location, SVal val) {}
-
-  virtual ExplodedNode *CheckType(QualType T, ExplodedNode *Pred, 
-                                  const GRState *state, Stmt *S, 
-                                  GRExprEngine &Eng) {
-    return Pred;
-  }
-
 };
 
 } // end clang namespace

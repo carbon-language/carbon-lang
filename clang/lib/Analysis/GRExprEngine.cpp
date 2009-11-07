@@ -2107,23 +2107,12 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
   else
     Tmp.Add(Pred);
 
-  for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+  ExplodedNodeSet Tmp2;
+  CheckerVisit(DS, Tmp2, Tmp, true);
+  
+  for (ExplodedNodeSet::iterator I=Tmp2.begin(), E=Tmp2.end(); I!=E; ++I) {
     ExplodedNode *N = *I;
-    const GRState *state;
-
-    for (CheckersOrdered::iterator CI = Checkers.begin(), CE = Checkers.end(); 
-         CI != CE; ++CI) {
-      state = GetState(N);
-      N = CI->second->CheckType(getContext().getCanonicalType(VD->getType()),
-                                N, state, DS, *this);
-      if (!N)
-        break;
-    }
-
-    if (!N)
-      continue;
-
-    state = GetState(N);
+    const GRState *state = GetState(N);
 
     // Decls without InitExpr are not initialized explicitly.
     const LocationContext *LC = N->getLocationContext();
