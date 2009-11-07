@@ -82,9 +82,8 @@ void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
 }
 
 
-void InitHeaderSearch::AddEnvVarPaths(const char *Name) {
-  const char* at = getenv(Name);
-  if (!at || *at == 0) // Empty string should not add '.' path.
+void InitHeaderSearch::AddDelimitedPaths(const char *at) {
+  if (*at == 0) // Empty string should not add '.' path.
     return;
 
   const char* delim = strchr(at, llvm::sys::PathSeparator);
@@ -443,34 +442,19 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
   }
 }
 
-void InitHeaderSearch::AddDefaultFrameworkIncludePaths(const llvm::Triple &triple) {
-  llvm::Triple::OSType os = triple.getOS();
-  if (os != llvm::Triple::Darwin)
-    return;
-  AddPath("/System/Library/Frameworks", System, true, false, true);
-  AddPath("/Library/Frameworks", System, true, false, true);
-}
-
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                                     const llvm::Triple &triple) {
   AddDefaultCIncludePaths(triple);
-  AddDefaultFrameworkIncludePaths(triple);
+
+  // Add the default framework include paths on Darwin.
+  if (triple.getOS() == llvm::Triple::Darwin) {
+    AddPath("/System/Library/Frameworks", System, true, false, true);
+    AddPath("/Library/Frameworks", System, true, false, true);
+  }
+
   if (Lang.CPlusPlus)
     AddDefaultCPlusPlusIncludePaths(triple);
 }
-
-void InitHeaderSearch::AddDefaultEnvVarPaths(const LangOptions &Lang) {
-  AddEnvVarPaths("CPATH");
-  if (Lang.CPlusPlus && Lang.ObjC1)
-    AddEnvVarPaths("OBJCPLUS_INCLUDE_PATH");
-  else if (Lang.CPlusPlus)
-    AddEnvVarPaths("CPLUS_INCLUDE_PATH");
-  else if (Lang.ObjC1)
-    AddEnvVarPaths("OBJC_INCLUDE_PATH");
-  else
-    AddEnvVarPaths("C_INCLUDE_PATH");
-}
-
 
 /// RemoveDuplicates - If there are duplicate directory entries in the specified
 /// search list, remove the later (dead) ones.

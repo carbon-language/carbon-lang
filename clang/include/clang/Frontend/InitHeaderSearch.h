@@ -53,10 +53,6 @@ public:
                bool isCXXAware, bool isUserSupplied,
                bool isFramework, bool IgnoreSysRoot = false);
 
-  /// AddEnvVarPaths - Add a list of paths from an environment variable to a
-  ///  header search list.
-  void AddEnvVarPaths(const char *Name);
-
   /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to suport a gnu
   ///  libstdc++.
   void AddGnuCPlusPlusIncludePaths(const std::string &Base, const char *Dir32,
@@ -69,9 +65,9 @@ public:
                                      const char *Arch,
                                      const char *Version);
 
-  /// AddDefaultEnvVarPaths - Adds list of paths from default environment
-  ///  variables such as CPATH.
-  void AddDefaultEnvVarPaths(const LangOptions &Lang);
+  /// AddDelimitedPaths - Add a list of paths delimited by the system PATH
+  /// separator. The processing follows that of the CPATH variable for gcc.
+  void AddDelimitedPaths(const char *String);
 
   // AddDefaultCIncludePaths - Add paths that should always be searched.
   void AddDefaultCIncludePaths(const llvm::Triple &triple);
@@ -79,9 +75,6 @@ public:
   // AddDefaultCPlusPlusIncludePaths -  Add paths that should be searched when
   //  compiling c++.
   void AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple);
-
-  // AddDefaultFrameworkIncludePaths - Add the framework paths. Used on darwin.
-  void AddDefaultFrameworkIncludePaths(const llvm::Triple &triple);
 
   /// AddDefaultSystemIncludePaths - Adds the default system include paths so
   ///  that e.g. stdio.h is found.

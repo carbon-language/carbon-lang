@@ -1149,7 +1149,24 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     }
   }
 
-  Init.AddDefaultEnvVarPaths(Lang);
+  // Add CPATH environment paths.
+  if (const char *Env = getenv("CPATH"))
+    Init.AddDelimitedPaths(Env);
+
+  // Add language specific environment paths.
+  if (Lang.CPlusPlus && Lang.ObjC1) {
+    if (const char *Env = getenv("OBJCPLUS_INCLUDE_PATH"))
+      Init.AddDelimitedPaths(Env);
+  } else if (Lang.CPlusPlus) {
+    if (const char *Env = getenv("CPLUS_INCLUDE_PATH"))
+      Init.AddDelimitedPaths(Env);
+  } else if (Lang.ObjC1) {
+    if (const char *Env = getenv("OBJC_INCLUDE_PATH"))
+      Init.AddDelimitedPaths(Env);
+  } else {
+    if (const char *Env = getenv("C_INCLUDE_PATH"))
+      Init.AddDelimitedPaths(Env);
+  }
 
   if (!nobuiltininc) {
     std::string P = GetBuiltinIncludePath(Argv0);
