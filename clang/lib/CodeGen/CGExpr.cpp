@@ -1155,6 +1155,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     return LV;
   }
   
+  if (VarDecl *VD = dyn_cast<VarDecl>(ND))
+    return EmitGlobalVarDeclLValue(*this, E, VD);
+  
   assert(false && "Unhandled member declaration!");
   return LValue();
 }
