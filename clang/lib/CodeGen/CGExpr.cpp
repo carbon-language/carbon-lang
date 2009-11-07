@@ -884,7 +884,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   
   if (E->getQualifier()) {
     // FIXME: the qualifier check does not seem sufficient here
-    return EmitPointerToDataMemberLValue(E);
+    return EmitPointerToDataMemberLValue(cast<FieldDecl>(E->getDecl()));
   }
   
   assert(0 && "Unimp declref");
@@ -1526,8 +1526,7 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
 }
 
 
-LValue CodeGenFunction::EmitPointerToDataMemberLValue(const DeclRefExpr *E) {
-  const FieldDecl *Field = cast<FieldDecl>(E->getDecl());
+LValue CodeGenFunction::EmitPointerToDataMemberLValue(const FieldDecl *Field) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Field->getDeclContext());
   QualType NNSpecTy = 
     getContext().getCanonicalType(
@@ -1538,7 +1537,7 @@ LValue CodeGenFunction::EmitPointerToDataMemberLValue(const DeclRefExpr *E) {
                                        /*isUnion*/false, /*Qualifiers*/0);
   const llvm::Type *ResultType = ConvertType(getContext().getPointerDiffType());
   V = Builder.CreatePtrToInt(MemExpLV.getAddress(), ResultType, "datamember");
-  return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+  return LValue::MakeAddr(V, MakeQualifiers(Field->getType()));
 }
 
 RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,

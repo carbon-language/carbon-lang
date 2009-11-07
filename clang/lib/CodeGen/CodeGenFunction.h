@@ -831,7 +831,8 @@ public:
   LValue EmitConditionalOperatorLValue(const ConditionalOperator *E);
   LValue EmitCastLValue(const CastExpr *E);
   LValue EmitNullInitializationLValue(const CXXZeroInitValueExpr *E);
-  LValue EmitPointerToDataMemberLValue(const DeclRefExpr *E);
+  
+  LValue EmitPointerToDataMemberLValue(const FieldDecl *Field);
   
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);
