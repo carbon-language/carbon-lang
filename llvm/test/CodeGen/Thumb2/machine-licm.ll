@@ -15,11 +15,13 @@ entry:
 
 bb.nph:                                           ; preds = %entry
 ; CHECK: BB#1
-; CHECK: ldr{{.*}} r{{[0-9]+}}, LCPI1_0
-; CHECK: ldr{{.*}} r{{[0-9]+}}, LCPI1_1
-; CHECK: add r{{[0-9]+}}, pc
-; CHECK: add r{{[0-9]+}}, pc
+; CHECK: ldr.n r2, LCPI1_0
+; CHECK: add r2, pc
+; CHECK: ldr r{{[0-9]+}}, [r2]
 ; CHECK: LBB1_2
+; CHECK: LCPI1_0:
+; CHECK-NOT: LCPI1_1:
+; CHECK: .section
   %.pre = load i32* @GV, align 4                  ; <i32> [#uses=1]
   br label %bb
 

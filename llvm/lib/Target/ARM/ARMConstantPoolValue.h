@@ -81,6 +81,10 @@ public:
 
   virtual void AddSelectionDAGCSEId(FoldingSetNodeID &ID);
 
+  /// hasSameValue - Return true if this ARM constpool value
+  /// can share the same constantpool entry as another ARM constpool value.
+  bool hasSameValue(ARMConstantPoolValue *ACPV);
+
   void print(raw_ostream *O) const { if (O) print(*O); }
   void print(raw_ostream &O) const;
   void dump() const;

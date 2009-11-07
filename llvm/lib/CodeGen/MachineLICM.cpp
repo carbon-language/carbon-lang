@@ -22,6 +22,7 @@
 
 #define DEBUG_TYPE "machine-licm"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
@@ -43,6 +44,7 @@ STATISTIC(NumCSEed,   "Number of hoisted machine instructions CSEed");
 
 namespace {
   class MachineLICM : public MachineFunctionPass {
+    MachineConstantPool *MCP;
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
@@ -111,6 +113,11 @@ namespace {
     /// be hoistable.
     MachineInstr *ExtractHoistableLoad(MachineInstr *MI);
 
+    /// LookForDuplicate - Find an instruction amount PrevMIs that is a
+    /// duplicate of MI. Return this instruction if it's found.
+    const MachineInstr *LookForDuplicate(const MachineInstr *MI,
+                                     std::vector<const MachineInstr*> &PrevMIs);
+
     /// EliminateCSE - Given a LICM'ed instruction, look for an instruction on
     /// the preheader that compute the same value. If it's found, do a RAU on
     /// with the definition of the existing instruction rather than hoisting
@@ -153,6 +160,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(errs() << "******** Machine LICM ********\n");
 
   Changed = FirstInLoop = false;
+  MCP = MF.getConstantPool();
   TM = &MF.getTarget();
   TII = TM->getInstrInfo();
   TRI = TM->getRegisterInfo();
@@ -432,32 +440,12 @@ void MachineLICM::InitCSEMap(MachineBasicBlock *BB) {
   }
 }
 
-static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
-                                      std::vector<const MachineInstr*> &PrevMIs,
-                                      MachineRegisterInfo *RegInfo) {
-  unsigned NumOps = MI->getNumOperands();
+const MachineInstr*
+MachineLICM::LookForDuplicate(const MachineInstr *MI,
+                              std::vector<const MachineInstr*> &PrevMIs) {
   for (unsigned i = 0, e = PrevMIs.size(); i != e; ++i) {
     const MachineInstr *PrevMI = PrevMIs[i];
-    unsigned NumOps2 = PrevMI->getNumOperands();
-    if (NumOps != NumOps2)
-      continue;
-    bool IsSame = true;
-    for (unsigned j = 0; j != NumOps; ++j) {
-      const MachineOperand &MO = MI->getOperand(j);
-      if (MO.isReg() && MO.isDef()) {
-        if (RegInfo->getRegClass(MO.getReg()) !=
-            RegInfo->getRegClass(PrevMI->getOperand(j).getReg())) {
-          IsSame = false;
-          break;
-        }
-        continue;
-      }
-      if (!MO.isIdenticalTo(PrevMI->getOperand(j))) {
-        IsSame = false;
-        break;
-      }
-    }
-    if (IsSame)
+    if (TII->isIdentical(MI, PrevMI, RegInfo))
       return PrevMI;
   }
   return 0;
@@ -465,18 +453,19 @@ static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
 
 bool MachineLICM::EliminateCSE(MachineInstr *MI,
           DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator &CI) {
-  if (CI != CSEMap.end()) {
-    if (const MachineInstr *Dup = LookForDuplicate(MI, CI->second, RegInfo)) {
-      DEBUG(errs() << "CSEing " << *MI << " with " << *Dup);
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg() && MO.isDef())
-          RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
-      }
-      MI->eraseFromParent();
-      ++NumCSEed;
-      return true;
+  if (CI == CSEMap.end())
+    return false;
+
+  if (const MachineInstr *Dup = LookForDuplicate(MI, CI->second)) {
+    DEBUG(errs() << "CSEing " << *MI << " with " << *Dup);
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isDef())
+        RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
     }
+    MI->eraseFromParent();
+    ++NumCSEed;
+    return true;
   }
   return false;
 }

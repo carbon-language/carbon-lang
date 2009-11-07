@@ -175,6 +175,32 @@ void Thumb2InstrInfo::reMaterialize(MachineBasicBlock &MBB,
   NewMI->getOperand(0).setSubReg(SubIdx);
 }
 
+bool Thumb2InstrInfo::isIdentical(const MachineInstr *MI0,
+                                  const MachineInstr *MI1,
+                                  const MachineRegisterInfo *MRI) const {
+  unsigned Opcode = MI0->getOpcode();
+  if (Opcode == ARM::t2LDRpci_pic) {
+    const MachineOperand &MO0 = MI0->getOperand(1);
+    const MachineOperand &MO1 = MI1->getOperand(1);
+    if (MO0.getOffset() != MO1.getOffset())
+      return false;
+
+    const MachineFunction *MF = MI0->getParent()->getParent();
+    const MachineConstantPool *MCP = MF->getConstantPool();
+    int CPI0 = MO0.getIndex();
+    int CPI1 = MO1.getIndex();
+    const MachineConstantPoolEntry &MCPE0 = MCP->getConstants()[CPI0];
+    const MachineConstantPoolEntry &MCPE1 = MCP->getConstants()[CPI1];
+    ARMConstantPoolValue *ACPV0 =
+      static_cast<ARMConstantPoolValue*>(MCPE0.Val.MachineCPVal);
+    ARMConstantPoolValue *ACPV1 =
+      static_cast<ARMConstantPoolValue*>(MCPE1.Val.MachineCPVal);
+    return ACPV0->hasSameValue(ACPV1);
+  }
+
+  return TargetInstrInfoImpl::isIdentical(MI0, MI1, MRI);
+}
+
 void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator &MBBI, DebugLoc dl,
                                unsigned DestReg, unsigned BaseReg, int NumBytes,

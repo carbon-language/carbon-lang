@@ -62,9 +62,10 @@ int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
       ARMConstantPoolValue *CPV =
         (ARMConstantPoolValue *)Constants[i].Val.MachineCPVal;
       if (CPV->CVal == CVal &&
-          CPV->S == S &&
           CPV->LabelId == LabelId &&
-          CPV->PCAdjust == PCAdjust)
+          CPV->PCAdjust == PCAdjust &&
+          (CPV->S == S || strcmp(CPV->S, S) == 0) &&
+          (CPV->Modifier == Modifier || strcmp(CPV->Modifier, Modifier) == 0))
         return i;
     }
   }
@@ -82,6 +83,23 @@ ARMConstantPoolValue::AddSelectionDAGCSEId(FoldingSetNodeID &ID) {
   ID.AddPointer(S);
   ID.AddInteger(LabelId);
   ID.AddInteger(PCAdjust);
+}
+
+bool
+ARMConstantPoolValue::hasSameValue(ARMConstantPoolValue *ACPV) {
+  if (ACPV->Kind == Kind &&
+      ACPV->CVal == CVal &&
+      ACPV->PCAdjust == PCAdjust &&
+      (ACPV->S == S || strcmp(ACPV->S, S) == 0) &&
+      (ACPV->Modifier == Modifier || strcmp(ACPV->Modifier, Modifier) == 0)) {
+    if (ACPV->LabelId == LabelId)
+      return true;
+    // Two PC relative constpool entries containing the same GV address or
+    // external symbols. FIXME: What about blockaddress?
+    if (Kind == ARMCP::CPValue || Kind == ARMCP::CPExtSymbol)
+      return true;
+  }
+  return false;
 }
 
 void ARMConstantPoolValue::dump() const {
