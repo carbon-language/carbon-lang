@@ -65,8 +65,8 @@ namespace sys {
   /// @name Types
   /// @{
   public:
-    typedef int64_t SecondsType;        ///< Type used for representing seconds.
-    typedef int32_t NanoSecondsType;    ///< Type used for representing nanoseconds.
+    typedef int64_t SecondsType;    ///< Type used for representing seconds.
+    typedef int32_t NanoSecondsType;///< Type used for representing nanoseconds.
 
     enum TimeConversions {
       NANOSECONDS_PER_SECOND = 1000000000,  ///< One Billion
