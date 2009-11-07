@@ -24,8 +24,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Target/TargetData.h"
-
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
