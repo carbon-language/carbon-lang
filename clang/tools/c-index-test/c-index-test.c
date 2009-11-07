@@ -161,10 +161,11 @@ clang_getCompletionChunkKindSpelling(enum CXCompletionChunkKind Kind) {
 void print_completion_result(CXCompletionResult *completion_result,
                              CXClientData client_data) {
   FILE *file = (FILE *)client_data;
+  int I, N;
 
   fprintf(file, "%s:", 
           clang_getCursorKindSpelling(completion_result->CursorKind));
-  int I, N = clang_getNumCompletionChunks(completion_result->CompletionString);
+  N = clang_getNumCompletionChunks(completion_result->CompletionString);
   for (I = 0; I != N; ++I) {
     const char *text 
       = clang_getCompletionChunkText(completion_result->CompletionString, I);
@@ -183,11 +184,13 @@ void perform_code_completion(int argc, const char **argv) {
   char *filename = 0;
   unsigned line;
   unsigned column;
+  CXIndex CIdx;
+
   input += strlen("-code-completion-at=");
   if (parse_file_line_column(input, &filename, &line, &column))
     return;
 
-  CXIndex CIdx = clang_createIndex(0, 0);
+  CIdx = clang_createIndex(0, 0);
   clang_codeComplete(CIdx, argv[argc - 1], argc - 3, argv + 2, 
                      filename, line, column, &print_completion_result, stdout);
   clang_disposeIndex(CIdx);
