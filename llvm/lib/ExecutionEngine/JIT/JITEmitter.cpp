@@ -63,6 +63,7 @@ static JIT *TheJIT = 0;
 // JIT lazy compilation code.
 //
 namespace {
+  class JITEmitter;
   class JITResolverState;
 
   template<typename ValueTy>
@@ -213,9 +214,11 @@ namespace {
     std::map<void*, unsigned> revGOTMap;
     unsigned nextGOTIndex;
 
+    JITEmitter &JE;
+
     static JITResolver *TheJITResolver;
   public:
-    explicit JITResolver(JIT &jit) : nextGOTIndex(0) {
+    explicit JITResolver(JIT &jit, JITEmitter &je) : nextGOTIndex(0), JE(je) {
       TheJIT = &jit;
 
       LazyResolverFn = jit.getJITInfo().getLazyResolverFunction(JITCompilerFn);
@@ -269,6 +272,233 @@ namespace {
     /// been compiled, this function compiles it first.
     static void *JITCompilerFn(void *Stub);
   };
+
+  /// JITEmitter - The JIT implementation of the MachineCodeEmitter, which is
+  /// used to output functions to memory for execution.
+  class JITEmitter : public JITCodeEmitter {
+    JITMemoryManager *MemMgr;
+
+    // When outputting a function stub in the context of some other function, we
+    // save BufferBegin/BufferEnd/CurBufferPtr here.
+    uint8_t *SavedBufferBegin, *SavedBufferEnd, *SavedCurBufferPtr;
+
+    // When reattempting to JIT a function after running out of space, we store
+    // the estimated size of the function we're trying to JIT here, so we can
+    // ask the memory manager for at least this much space.  When we
+    // successfully emit the function, we reset this back to zero.
+    uintptr_t SizeEstimate;
+
+    /// Relocations - These are the relocations that the function needs, as
+    /// emitted.
+    std::vector<MachineRelocation> Relocations;
+    
+    /// MBBLocations - This vector is a mapping from MBB ID's to their address.
+    /// It is filled in by the StartMachineBasicBlock callback and queried by
+    /// the getMachineBasicBlockAddress callback.
+    std::vector<uintptr_t> MBBLocations;
+
+    /// ConstantPool - The constant pool for the current function.
+    ///
+    MachineConstantPool *ConstantPool;
+
+    /// ConstantPoolBase - A pointer to the first entry in the constant pool.
+    ///
+    void *ConstantPoolBase;
+
+    /// ConstPoolAddresses - Addresses of individual constant pool entries.
+    ///
+    SmallVector<uintptr_t, 8> ConstPoolAddresses;
+
+    /// JumpTable - The jump tables for the current function.
+    ///
+    MachineJumpTableInfo *JumpTable;
+    
+    /// JumpTableBase - A pointer to the first entry in the jump table.
+    ///
+    void *JumpTableBase;
+
+    /// Resolver - This contains info about the currently resolved functions.
+    JITResolver Resolver;
+
+    /// DE - The dwarf emitter for the jit.
+    OwningPtr<JITDwarfEmitter> DE;
+
+    /// DR - The debug registerer for the jit.
+    OwningPtr<JITDebugRegisterer> DR;
+
+    /// LabelLocations - This vector is a mapping from Label ID's to their 
+    /// address.
+    std::vector<uintptr_t> LabelLocations;
+
+    /// MMI - Machine module info for exception informations
+    MachineModuleInfo* MMI;
+
+    // GVSet - a set to keep track of which globals have been seen
+    SmallPtrSet<const GlobalVariable*, 8> GVSet;
+
+    // CurFn - The llvm function being emitted.  Only valid during 
+    // finishFunction().
+    const Function *CurFn;
+
+    /// Information about emitted code, which is passed to the
+    /// JITEventListeners.  This is reset in startFunction and used in
+    /// finishFunction.
+    JITEvent_EmittedFunctionDetails EmissionDetails;
+
+    struct EmittedCode {
+      void *FunctionBody;  // Beginning of the function's allocation.
+      void *Code;  // The address the function's code actually starts at.
+      void *ExceptionTable;
+      EmittedCode() : FunctionBody(0), Code(0), ExceptionTable(0) {}
+    };
+    struct EmittedFunctionConfig : public ValueMapConfig<const Function*> {
+      typedef JITEmitter *ExtraData;
+      static void onDelete(JITEmitter *, const Function*);
+      static void onRAUW(JITEmitter *, const Function*, const Function*);
+    };
+    ValueMap<const Function *, EmittedCode,
+             EmittedFunctionConfig> EmittedFunctions;
+
+    // CurFnStubUses - For a given Function, a vector of stubs that it
+    // references.  This facilitates the JIT detecting that a stub is no
+    // longer used, so that it may be deallocated.
+    DenseMap<AssertingVH<const Function>, SmallVector<void*, 1> > CurFnStubUses;
+
+    // StubFnRefs - For a given pointer to a stub, a set of Functions which
+    // reference the stub.  When the count of a stub's references drops to zero,
+    // the stub is unused.
+    DenseMap<void *, SmallPtrSet<const Function*, 1> > StubFnRefs;
+    
+    // ExtFnStubs - A map of external function names to stubs which have entries
+    // in the JITResolver's ExternalFnToStubMap.
+    StringMap<void *> ExtFnStubs;
+
+    DebugLocTuple PrevDLT;
+
+  public:
+    JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
+      : SizeEstimate(0), Resolver(jit, *this), MMI(0), CurFn(0),
+          EmittedFunctions(this) {
+      MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
+      if (jit.getJITInfo().needsGOT()) {
+        MemMgr->AllocateGOT();
+        DEBUG(errs() << "JIT is managing a GOT\n");
+      }
+
+      if (DwarfExceptionHandling || JITEmitDebugInfo) {
+        DE.reset(new JITDwarfEmitter(jit));
+      }
+      if (JITEmitDebugInfo) {
+        DR.reset(new JITDebugRegisterer(TM));
+      }
+    }
+    ~JITEmitter() { 
+      delete MemMgr;
+    }
+
+    /// classof - Methods for support type inquiry through isa, cast, and
+    /// dyn_cast:
+    ///
+    static inline bool classof(const JITEmitter*) { return true; }
+    static inline bool classof(const MachineCodeEmitter*) { return true; }
+    
+    JITResolver &getJITResolver() { return Resolver; }
+
+    virtual void startFunction(MachineFunction &F);
+    virtual bool finishFunction(MachineFunction &F);
+    
+    void emitConstantPool(MachineConstantPool *MCP);
+    void initJumpTableInfo(MachineJumpTableInfo *MJTI);
+    void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
+    
+    virtual void startGVStub(const GlobalValue* GV, unsigned StubSize,
+                                   unsigned Alignment = 1);
+    virtual void startGVStub(const GlobalValue* GV, void *Buffer,
+                             unsigned StubSize);
+    virtual void* finishGVStub(const GlobalValue *GV);
+
+    /// allocateSpace - Reserves space in the current block if any, or
+    /// allocate a new one of the given size.
+    virtual void *allocateSpace(uintptr_t Size, unsigned Alignment);
+
+    /// allocateGlobal - Allocate memory for a global.  Unlike allocateSpace,
+    /// this method does not allocate memory in the current output buffer,
+    /// because a global may live longer than the current function.
+    virtual void *allocateGlobal(uintptr_t Size, unsigned Alignment);
+
+    virtual void addRelocation(const MachineRelocation &MR) {
+      Relocations.push_back(MR);
+    }
+    
+    virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
+      if (MBBLocations.size() <= (unsigned)MBB->getNumber())
+        MBBLocations.resize((MBB->getNumber()+1)*2);
+      MBBLocations[MBB->getNumber()] = getCurrentPCValue();
+      DEBUG(errs() << "JIT: Emitting BB" << MBB->getNumber() << " at ["
+                   << (void*) getCurrentPCValue() << "]\n");
+    }
+
+    virtual uintptr_t getConstantPoolEntryAddress(unsigned Entry) const;
+    virtual uintptr_t getJumpTableEntryAddress(unsigned Entry) const;
+
+    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
+      assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
+             MBBLocations[MBB->getNumber()] && "MBB not emitted!");
+      return MBBLocations[MBB->getNumber()];
+    }
+
+    /// retryWithMoreMemory - Log a retry and deallocate all memory for the
+    /// given function.  Increase the minimum allocation size so that we get
+    /// more memory next time.
+    void retryWithMoreMemory(MachineFunction &F);
+
+    /// deallocateMemForFunction - Deallocate all memory for the specified
+    /// function body.
+    void deallocateMemForFunction(const Function *F);
+
+    /// AddStubToCurrentFunction - Mark the current function being JIT'd as
+    /// using the stub at the specified address. Allows
+    /// deallocateMemForFunction to also remove stubs no longer referenced.
+    void AddStubToCurrentFunction(void *Stub);
+    
+    /// getExternalFnStubs - Accessor for the JIT to find stubs emitted for
+    /// MachineRelocations that reference external functions by name.
+    const StringMap<void*> &getExternalFnStubs() const { return ExtFnStubs; }
+    
+    virtual void processDebugLoc(DebugLoc DL, bool BeforePrintingInsn);
+
+    virtual void emitLabel(uint64_t LabelID) {
+      if (LabelLocations.size() <= LabelID)
+        LabelLocations.resize((LabelID+1)*2);
+      LabelLocations[LabelID] = getCurrentPCValue();
+    }
+
+    virtual uintptr_t getLabelAddress(uint64_t LabelID) const {
+      assert(LabelLocations.size() > (unsigned)LabelID && 
+             LabelLocations[LabelID] && "Label not emitted!");
+      return LabelLocations[LabelID];
+    }
+ 
+    virtual void setModuleInfo(MachineModuleInfo* Info) {
+      MMI = Info;
+      if (DE.get()) DE->setModuleInfo(Info);
+    }
+
+    void setMemoryExecutable() {
+      MemMgr->setMemoryExecutable();
+    }
+    
+    JITMemoryManager *getMemMgr() const { return MemMgr; }
+
+  private:
+    void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
+    void *getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
+                                    bool NoNeedStub);
+    unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
+    unsigned addSizeOfGlobalsInConstantVal(const Constant *C, unsigned Size);
+    unsigned addSizeOfGlobalsInInitializer(const Constant *Init, unsigned Size);
+    unsigned GetSizeOfGlobalsInBytes(MachineFunction &MF);
+  };
 }
 
 JITResolver *JITResolver::TheJITResolver = 0;
@@ -314,8 +544,7 @@ void *JITResolver::getFunctionStub(Function *F) {
 
   // Codegen a new stub, calling the lazy resolver or the actual address of the
   // external function, if it was resolved.
-  Stub = TheJIT->getJITInfo().emitFunctionStub(F, Actual,
-                                               *TheJIT->getCodeEmitter());
+  Stub = TheJIT->getJITInfo().emitFunctionStub(F, Actual, JE);
 
   if (Actual != (void*)(intptr_t)LazyResolverFn) {
     // If we are getting the stub for an external function, we really want the
@@ -352,7 +581,7 @@ void *JITResolver::getGlobalValueIndirectSym(GlobalValue *GV, void *GVAddress) {
 
   // Otherwise, codegen a new indirect symbol.
   IndirectSym = TheJIT->getJITInfo().emitGlobalValueIndirectSym(GV, GVAddress,
-                                                     *TheJIT->getCodeEmitter());
+                                                                JE);
 
   DEBUG(errs() << "JIT: Indirect symbol emitted at [" << IndirectSym 
         << "] for GV '" << GV->getName() << "'\n");
@@ -367,8 +596,7 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   void *&Stub = ExternalFnToStubMap[FnAddr];
   if (Stub) return Stub;
 
-  Stub = TheJIT->getJITInfo().emitFunctionStub(0, FnAddr,
-                                               *TheJIT->getCodeEmitter());
+  Stub = TheJIT->getJITInfo().emitFunctionStub(0, FnAddr, JE);
 
   DEBUG(errs() << "JIT: Stub emitted at [" << Stub
                << "] for external function at '" << FnAddr << "'\n");
@@ -508,235 +736,6 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 //===----------------------------------------------------------------------===//
 // JITEmitter code.
 //
-namespace {
-  /// JITEmitter - The JIT implementation of the MachineCodeEmitter, which is
-  /// used to output functions to memory for execution.
-  class JITEmitter : public JITCodeEmitter {
-    JITMemoryManager *MemMgr;
-
-    // When outputting a function stub in the context of some other function, we
-    // save BufferBegin/BufferEnd/CurBufferPtr here.
-    uint8_t *SavedBufferBegin, *SavedBufferEnd, *SavedCurBufferPtr;
-
-    // When reattempting to JIT a function after running out of space, we store
-    // the estimated size of the function we're trying to JIT here, so we can
-    // ask the memory manager for at least this much space.  When we
-    // successfully emit the function, we reset this back to zero.
-    uintptr_t SizeEstimate;
-
-    /// Relocations - These are the relocations that the function needs, as
-    /// emitted.
-    std::vector<MachineRelocation> Relocations;
-    
-    /// MBBLocations - This vector is a mapping from MBB ID's to their address.
-    /// It is filled in by the StartMachineBasicBlock callback and queried by
-    /// the getMachineBasicBlockAddress callback.
-    std::vector<uintptr_t> MBBLocations;
-
-    /// ConstantPool - The constant pool for the current function.
-    ///
-    MachineConstantPool *ConstantPool;
-
-    /// ConstantPoolBase - A pointer to the first entry in the constant pool.
-    ///
-    void *ConstantPoolBase;
-
-    /// ConstPoolAddresses - Addresses of individual constant pool entries.
-    ///
-    SmallVector<uintptr_t, 8> ConstPoolAddresses;
-
-    /// JumpTable - The jump tables for the current function.
-    ///
-    MachineJumpTableInfo *JumpTable;
-    
-    /// JumpTableBase - A pointer to the first entry in the jump table.
-    ///
-    void *JumpTableBase;
-
-    /// Resolver - This contains info about the currently resolved functions.
-    JITResolver Resolver;
-
-    /// DE - The dwarf emitter for the jit.
-    OwningPtr<JITDwarfEmitter> DE;
-
-    /// DR - The debug registerer for the jit.
-    OwningPtr<JITDebugRegisterer> DR;
-
-    /// LabelLocations - This vector is a mapping from Label ID's to their 
-    /// address.
-    std::vector<uintptr_t> LabelLocations;
-
-    /// MMI - Machine module info for exception informations
-    MachineModuleInfo* MMI;
-
-    // GVSet - a set to keep track of which globals have been seen
-    SmallPtrSet<const GlobalVariable*, 8> GVSet;
-
-    // CurFn - The llvm function being emitted.  Only valid during 
-    // finishFunction().
-    const Function *CurFn;
-
-    /// Information about emitted code, which is passed to the
-    /// JITEventListeners.  This is reset in startFunction and used in
-    /// finishFunction.
-    JITEvent_EmittedFunctionDetails EmissionDetails;
-
-    struct EmittedCode {
-      void *FunctionBody;  // Beginning of the function's allocation.
-      void *Code;  // The address the function's code actually starts at.
-      void *ExceptionTable;
-      EmittedCode() : FunctionBody(0), Code(0), ExceptionTable(0) {}
-    };
-    struct EmittedFunctionConfig : public ValueMapConfig<const Function*> {
-      typedef JITEmitter *ExtraData;
-      static void onDelete(JITEmitter *, const Function*);
-      static void onRAUW(JITEmitter *, const Function*, const Function*);
-    };
-    ValueMap<const Function *, EmittedCode,
-             EmittedFunctionConfig> EmittedFunctions;
-
-    // CurFnStubUses - For a given Function, a vector of stubs that it
-    // references.  This facilitates the JIT detecting that a stub is no
-    // longer used, so that it may be deallocated.
-    DenseMap<AssertingVH<const Function>, SmallVector<void*, 1> > CurFnStubUses;
-
-    // StubFnRefs - For a given pointer to a stub, a set of Functions which
-    // reference the stub.  When the count of a stub's references drops to zero,
-    // the stub is unused.
-    DenseMap<void *, SmallPtrSet<const Function*, 1> > StubFnRefs;
-    
-    // ExtFnStubs - A map of external function names to stubs which have entries
-    // in the JITResolver's ExternalFnToStubMap.
-    StringMap<void *> ExtFnStubs;
-
-    DebugLocTuple PrevDLT;
-
-  public:
-    JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
-        : SizeEstimate(0), Resolver(jit), MMI(0), CurFn(0),
-          EmittedFunctions(this) {
-      MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
-      if (jit.getJITInfo().needsGOT()) {
-        MemMgr->AllocateGOT();
-        DEBUG(errs() << "JIT is managing a GOT\n");
-      }
-
-      if (DwarfExceptionHandling || JITEmitDebugInfo) {
-        DE.reset(new JITDwarfEmitter(jit));
-      }
-      if (JITEmitDebugInfo) {
-        DR.reset(new JITDebugRegisterer(TM));
-      }
-    }
-    ~JITEmitter() { 
-      delete MemMgr;
-    }
-
-    /// classof - Methods for support type inquiry through isa, cast, and
-    /// dyn_cast:
-    ///
-    static inline bool classof(const JITEmitter*) { return true; }
-    static inline bool classof(const MachineCodeEmitter*) { return true; }
-    
-    JITResolver &getJITResolver() { return Resolver; }
-
-    virtual void startFunction(MachineFunction &F);
-    virtual bool finishFunction(MachineFunction &F);
-    
-    void emitConstantPool(MachineConstantPool *MCP);
-    void initJumpTableInfo(MachineJumpTableInfo *MJTI);
-    void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
-    
-    virtual void startGVStub(const GlobalValue* GV, unsigned StubSize,
-                                   unsigned Alignment = 1);
-    virtual void startGVStub(const GlobalValue* GV, void *Buffer,
-                             unsigned StubSize);
-    virtual void* finishGVStub(const GlobalValue *GV);
-
-    /// allocateSpace - Reserves space in the current block if any, or
-    /// allocate a new one of the given size.
-    virtual void *allocateSpace(uintptr_t Size, unsigned Alignment);
-
-    /// allocateGlobal - Allocate memory for a global.  Unlike allocateSpace,
-    /// this method does not allocate memory in the current output buffer,
-    /// because a global may live longer than the current function.
-    virtual void *allocateGlobal(uintptr_t Size, unsigned Alignment);
-
-    virtual void addRelocation(const MachineRelocation &MR) {
-      Relocations.push_back(MR);
-    }
-    
-    virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
-      if (MBBLocations.size() <= (unsigned)MBB->getNumber())
-        MBBLocations.resize((MBB->getNumber()+1)*2);
-      MBBLocations[MBB->getNumber()] = getCurrentPCValue();
-      DEBUG(errs() << "JIT: Emitting BB" << MBB->getNumber() << " at ["
-                   << (void*) getCurrentPCValue() << "]\n");
-    }
-
-    virtual uintptr_t getConstantPoolEntryAddress(unsigned Entry) const;
-    virtual uintptr_t getJumpTableEntryAddress(unsigned Entry) const;
-
-    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
-      assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
-             MBBLocations[MBB->getNumber()] && "MBB not emitted!");
-      return MBBLocations[MBB->getNumber()];
-    }
-
-    /// retryWithMoreMemory - Log a retry and deallocate all memory for the
-    /// given function.  Increase the minimum allocation size so that we get
-    /// more memory next time.
-    void retryWithMoreMemory(MachineFunction &F);
-
-    /// deallocateMemForFunction - Deallocate all memory for the specified
-    /// function body.
-    void deallocateMemForFunction(const Function *F);
-
-    /// AddStubToCurrentFunction - Mark the current function being JIT'd as
-    /// using the stub at the specified address. Allows
-    /// deallocateMemForFunction to also remove stubs no longer referenced.
-    void AddStubToCurrentFunction(void *Stub);
-    
-    /// getExternalFnStubs - Accessor for the JIT to find stubs emitted for
-    /// MachineRelocations that reference external functions by name.
-    const StringMap<void*> &getExternalFnStubs() const { return ExtFnStubs; }
-    
-    virtual void processDebugLoc(DebugLoc DL, bool BeforePrintingInsn);
-
-    virtual void emitLabel(uint64_t LabelID) {
-      if (LabelLocations.size() <= LabelID)
-        LabelLocations.resize((LabelID+1)*2);
-      LabelLocations[LabelID] = getCurrentPCValue();
-    }
-
-    virtual uintptr_t getLabelAddress(uint64_t LabelID) const {
-      assert(LabelLocations.size() > (unsigned)LabelID && 
-             LabelLocations[LabelID] && "Label not emitted!");
-      return LabelLocations[LabelID];
-    }
- 
-    virtual void setModuleInfo(MachineModuleInfo* Info) {
-      MMI = Info;
-      if (DE.get()) DE->setModuleInfo(Info);
-    }
-
-    void setMemoryExecutable() {
-      MemMgr->setMemoryExecutable();
-    }
-    
-    JITMemoryManager *getMemMgr() const { return MemMgr; }
-
-  private:
-    void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
-    void *getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
-                                    bool NoNeedStub);
-    unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
-    unsigned addSizeOfGlobalsInConstantVal(const Constant *C, unsigned Size);
-    unsigned addSizeOfGlobalsInInitializer(const Constant *Init, unsigned Size);
-    unsigned GetSizeOfGlobalsInBytes(MachineFunction &MF);
-  };
-}
-
 void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
                                      bool DoesntNeedStub) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
