@@ -62,7 +62,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setBooleanContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(SchedulingForLatency);
 
-  // We have post-incremented loads / stores
+  // We have post-incremented loads / stores.
   setIndexedLoadAction(ISD::POST_INC, MVT::i8, Legal);
   setIndexedLoadAction(ISD::POST_INC, MVT::i16, Legal);
 

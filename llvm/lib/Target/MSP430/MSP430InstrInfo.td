@@ -287,6 +287,15 @@ def ADD16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
                      [(set GR16:$dst, (add GR16:$src1, (load addr:$src2))),
                       (implicit SRW)]>;
 
+let mayLoad = 1, hasExtraDefRegAllocReq = 1, 
+Constraints = "$base = $base_wb, $src1 = $dst" in {
+def ADD8rm_POST : Pseudo<(outs GR8:$dst, GR16:$base_wb), (ins GR8:$src1, GR16:$base),
+                          "add.b\t{@$base+, $dst}", []>;
+def ADD16rm_POST : Pseudo<(outs GR16:$dst, GR16:$base_wb), (ins GR16:$src1, GR16:$base),
+                          "add.w\t{@$base+, $dst}", []>;
+}
+
+
 def ADD8ri  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                      "add.b\t{$src2, $dst}",
                      [(set GR8:$dst, (add GR8:$src1, imm:$src2)),
