@@ -1,4 +1,5 @@
 ; RUN: opt < %s -globalopt
+target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
 
 	%struct.s_annealing_sched = type { i32, float, float, float, float }
 	%struct.s_bb = type { i32, i32, i32, i32 }
@@ -96,7 +97,9 @@ bb.i34:		; preds = %bb
 	unreachable
 
 bb1.i38:		; preds = %bb
-	%0 = malloc %struct.s_net, i32 undef		; <%struct.s_net*> [#uses=1]
+	%mallocsize = mul i64 28, undef                  ; <i64> [#uses=1]
+	%malloccall = tail call i8* @malloc(i64 %mallocsize)      ; <i8*> [#uses=1]
+	%0 = bitcast i8* %malloccall to %struct.s_net*  ; <%struct.s_net*> [#uses=1]
 	br i1 undef, label %bb.i1.i39, label %my_malloc.exit2.i
 
 bb.i1.i39:		; preds = %bb1.i38
@@ -115,3 +118,5 @@ my_malloc.exit8.i:		; preds = %my_malloc.exit2.i
 bb7:		; preds = %bb6.preheader
 	unreachable
 }
+
+declare noalias i8* @malloc(i64)
