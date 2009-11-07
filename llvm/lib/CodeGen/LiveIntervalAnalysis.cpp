@@ -646,17 +646,17 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
                           0, false, VNInfoAllocator);
   vni->setIsPHIDef(true);
   LiveRange LR(start, end, vni);
-  
+
   interval.addRange(LR);
   LR.valno->addKill(end);
   DEBUG(errs() << " +" << LR << '\n');
 }
 
-bool
-LiveIntervals::isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt,
-                                   SmallVector<MachineInstr*,16> &IdentCopies,
-                                   SmallVector<MachineInstr*,16> &OtherCopies) {
-  bool HaveConflict = false;
+bool LiveIntervals::
+isSafeAndProfitableToCoalesce(LiveInterval &DstInt,
+                              LiveInterval &SrcInt,
+                              SmallVector<MachineInstr*,16> &IdentCopies,
+                              SmallVector<MachineInstr*,16> &OtherCopies) {
   unsigned NumIdent = 0;
   for (MachineRegisterInfo::def_iterator ri = mri_->def_begin(SrcInt.reg),
          re = mri_->def_end(); ri != re; ++ri) {
@@ -665,16 +665,16 @@ LiveIntervals::isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt
     if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
       return false;
     if (SrcReg != DstInt.reg) {
+      // Non-identity copy - we cannot handle overlapping intervals
+      if (DstInt.liveAt(getInstructionIndex(MI)))
+        return false;
       OtherCopies.push_back(MI);
-      HaveConflict |= DstInt.liveAt(getInstructionIndex(MI));
     } else {
       IdentCopies.push_back(MI);
       ++NumIdent;
     }
   }
 
-  if (!HaveConflict)
-    return false; // Let coalescer handle it
   return IdentCopies.size() > OtherCopies.size();
 }
 
@@ -701,19 +701,21 @@ void LiveIntervals::performEarlyCoalescing() {
     LiveInterval &SrcInt = getInterval(PHISrc);
     SmallVector<MachineInstr*, 16> IdentCopies;
     SmallVector<MachineInstr*, 16> OtherCopies;
-    if (!isProfitableToCoalesce(DstInt, SrcInt, IdentCopies, OtherCopies))
+    if (!isSafeAndProfitableToCoalesce(DstInt, SrcInt,
+                                       IdentCopies, OtherCopies))
       continue;
 
     DEBUG(errs() << "PHI Join: " << *Join);
     assert(DstInt.containsOneValue() && "PHI join should have just one val#!");
+    assert(std::distance(mri_->use_begin(PHISrc), mri_->use_end()) == 1 &&
+           "PHI join src should not be used elsewhere");
     VNInfo *VNI = DstInt.getValNumInfo(0);
 
     // Change the non-identity copies to directly target the phi destination.
     for (unsigned i = 0, e = OtherCopies.size(); i != e; ++i) {
       MachineInstr *PHICopy = OtherCopies[i];
-      DEBUG(errs() << "Moving: " << *PHICopy);
-
       SlotIndex MIIndex = getInstructionIndex(PHICopy);
+      DEBUG(errs() << "Moving: " << MIIndex << ' ' << *PHICopy);
       SlotIndex DefIndex = MIIndex.getDefIndex();
       LiveRange *SLR = SrcInt.getLiveRangeContaining(DefIndex);
       SlotIndex StartIndex = SLR->start;
@@ -724,8 +726,7 @@ void LiveIntervals::performEarlyCoalescing() {
       SrcInt.removeValNo(SLR->valno);
       DEBUG(errs() << "  added range [" << StartIndex << ','
             << EndIndex << "] to reg" << DstInt.reg << '\n');
-      if (DstInt.liveAt(StartIndex))
-        DstInt.removeRange(StartIndex, EndIndex);
+      assert (!DstInt.liveAt(StartIndex) && "Cannot coalesce when dst live!");
       VNInfo *NewVNI = DstInt.getNextValue(DefIndex, PHICopy, true,
                                            VNInfoAllocator);
       NewVNI->setHasPHIKill(true);

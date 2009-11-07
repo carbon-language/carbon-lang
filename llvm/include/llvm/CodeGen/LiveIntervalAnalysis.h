@@ -290,9 +290,10 @@ namespace llvm {
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
 
-    bool isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt,
-                                SmallVector<MachineInstr*,16> &IdentCopies,
-                                SmallVector<MachineInstr*,16> &OtherCopies);
+    bool isSafeAndProfitableToCoalesce(LiveInterval &DstInt,
+                                       LiveInterval &SrcInt,
+                 SmallVector<MachineInstr*,16> &IdentCopies,
+                 SmallVector<MachineInstr*,16> &OtherCopies);
 
     void performEarlyCoalescing();
 
