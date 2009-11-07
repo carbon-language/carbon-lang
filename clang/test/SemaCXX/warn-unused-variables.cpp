@@ -5,9 +5,9 @@ template<typename T> void f() {
 	t = 17;
 }
 
+// PR5407
 struct A { A(); };
 struct B { ~B(); };
-
 void f() {
   A a;
   B b;
