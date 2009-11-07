@@ -541,13 +541,15 @@ namespace ARM_AM {
   //
   // This is used for NEON load / store instructions.
   //
-  // addrmode6 := reg with optional writeback
+  // addrmode6 := reg with optional writeback and alignment
   //
-  // This is stored in three operands [regaddr, regupdate, opc].  The first is
-  // the address register.  The second register holds the value of a post-access
-  // increment for writeback or reg0 if no writeback or if the writeback
-  // increment is the size of the memory access.  The third operand encodes
-  // whether there is writeback to the address register.
+  // This is stored in four operands [regaddr, regupdate, opc, align].  The
+  // first is the address register.  The second register holds the value of
+  // a post-access increment for writeback or reg0 if no writeback or if the
+  // writeback increment is the size of the memory access.  The third
+  // operand encodes whether there is writeback to the address register. The
+  // fourth operand is the value of the alignment specifier to use or zero if
+  // no explicit alignment.
 
   static inline unsigned getAM6Opc(bool WB = false) {
     return (int)WB;

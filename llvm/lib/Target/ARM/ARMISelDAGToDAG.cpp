@@ -81,7 +81,7 @@ public:
   bool SelectAddrMode5(SDValue Op, SDValue N, SDValue &Base,
                        SDValue &Offset);
   bool SelectAddrMode6(SDValue Op, SDValue N, SDValue &Addr, SDValue &Update,
-                       SDValue &Opc);
+                       SDValue &Opc, SDValue &Align);
 
   bool SelectAddrModePC(SDValue Op, SDValue N, SDValue &Offset,
                         SDValue &Label);
@@ -489,11 +489,13 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDValue Op, SDValue N,
 
 bool ARMDAGToDAGISel::SelectAddrMode6(SDValue Op, SDValue N,
                                       SDValue &Addr, SDValue &Update,
-                                      SDValue &Opc) {
+                                      SDValue &Opc, SDValue &Align) {
   Addr = N;
   // Default to no writeback.
   Update = CurDAG->getRegister(0, MVT::i32);
   Opc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(false), MVT::i32);
+  // Default to no alignment.
+  Align = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }
 
@@ -1008,8 +1010,8 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue MemAddr, MemUpdate, MemOpc;
-  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+  SDValue MemAddr, MemUpdate, MemOpc, Align;
+  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
@@ -1034,10 +1036,10 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
 
   if (is64BitVector) {
     unsigned Opc = DOpcodes[OpcodeIndex];
-    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Align, Chain };
     std::vector<EVT> ResTys(NumVecs, VT);
     ResTys.push_back(MVT::Other);
-    return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
+    return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
   }
 
   EVT RegVT = GetNEONSubregVT(VT);
@@ -1045,10 +1047,10 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
     // Quad registers are directly supported for VLD2,
     // loading 2 pairs of D regs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
-    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Align, Chain };
     std::vector<EVT> ResTys(4, VT);
     ResTys.push_back(MVT::Other);
-    SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
+    SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
     Chain = SDValue(VLd, 4);
 
     // Combine the even and odd subregs to produce the result.
@@ -1069,14 +1071,15 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
 
     // Load the even subregs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
-    const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Chain };
-    SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 4);
+    const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Align, Chain };
+    SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 5);
     Chain = SDValue(VLdA, NumVecs+1);
 
     // Load the odd subregs.
     Opc = QOpcodes1[OpcodeIndex];
-    const SDValue OpsB[] = { SDValue(VLdA, NumVecs), MemUpdate, MemOpc, Chain };
-    SDNode *VLdB = CurDAG->getMachineNode(Opc, dl, ResTys, OpsB, 4);
+    const SDValue OpsB[] = { SDValue(VLdA, NumVecs), MemUpdate, MemOpc,
+                             Align, Chain };
+    SDNode *VLdB = CurDAG->getMachineNode(Opc, dl, ResTys, OpsB, 5);
     Chain = SDValue(VLdB, NumVecs+1);
 
     // Combine the even and odd subregs to produce the result.
@@ -1096,8 +1099,8 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue MemAddr, MemUpdate, MemOpc;
-  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+  SDValue MemAddr, MemUpdate, MemOpc, Align;
+  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
@@ -1124,13 +1127,14 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
   Ops.push_back(MemAddr);
   Ops.push_back(MemUpdate);
   Ops.push_back(MemOpc);
+  Ops.push_back(Align);
 
   if (is64BitVector) {
     unsigned Opc = DOpcodes[OpcodeIndex];
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
       Ops.push_back(N->getOperand(Vec+3));
     Ops.push_back(Chain);
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+4);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+5);
   }
 
   EVT RegVT = GetNEONSubregVT(VT);
@@ -1145,7 +1149,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
                                                    N->getOperand(Vec+3)));
     }
     Ops.push_back(Chain);
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 8);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 9);
   }
 
   // Otherwise, quad registers are stored with two separate instructions,
@@ -1161,18 +1165,18 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
   Ops.push_back(Chain);
   unsigned Opc = QOpcodes0[OpcodeIndex];
   SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                        MVT::Other, Ops.data(), NumVecs+4);
+                                        MVT::Other, Ops.data(), NumVecs+5);
   Chain = SDValue(VStA, 1);
 
   // Store the odd subregs.
   Ops[0] = SDValue(VStA, 0); // MemAddr
   for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
-    Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+    Ops[Vec+4] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
                                                 N->getOperand(Vec+3));
-  Ops[NumVecs+3] = Chain;
+  Ops[NumVecs+4] = Chain;
   Opc = QOpcodes1[OpcodeIndex];
   SDNode *VStB = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                        MVT::Other, Ops.data(), NumVecs+4);
+                                        MVT::Other, Ops.data(), NumVecs+5);
   Chain = SDValue(VStB, 1);
   ReplaceUses(SDValue(N, 0), Chain);
   return NULL;
@@ -1186,8 +1190,8 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDValue Op, bool IsLoad,
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue MemAddr, MemUpdate, MemOpc;
-  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+  SDValue MemAddr, MemUpdate, MemOpc, Align;
+  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc, Align))
     return NULL;
 
   SDValue Chain = N->getOperand(0);
@@ -1224,6 +1228,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDValue Op, bool IsLoad,
   Ops.push_back(MemAddr);
   Ops.push_back(MemUpdate);
   Ops.push_back(MemOpc);
+  Ops.push_back(Align);
 
   unsigned Opc = 0;
   if (is64BitVector) {

@@ -638,9 +638,17 @@ void ARMAsmPrinter::printAddrMode6Operand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
   const MachineOperand &MO3 = MI->getOperand(Op+2);
+  const MachineOperand &MO4 = MI->getOperand(Op+3);
 
-  // FIXME: No support yet for specifying alignment.
-  O << "[" << getRegisterName(MO1.getReg()) << "]";
+  O << "[" << getRegisterName(MO1.getReg());
+  if (MO4.getImm()) {
+    if (Subtarget->isTargetDarwin())
+      O << ", :";
+    else
+      O << " @";
+    O << MO4.getImm();
+  }
+  O << "]";
 
   if (ARM_AM::getAM6WBFlag(MO3.getImm())) {
     if (MO2.getReg() == 0)
