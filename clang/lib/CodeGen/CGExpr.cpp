@@ -813,21 +813,27 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
   }
 }
 
+static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
+                                      const Expr *E, const VarDecl *VD) {
+  assert(VD->hasExternalStorage() || VD->isFileVarDecl() &&
+         "Var decl must have external storage or be a file var decl!");
+
+  llvm::Value *V = CGF.CGM.GetAddrOfGlobalVar(VD);
+  if (VD->getType()->isReferenceType())
+    V = CGF.Builder.CreateLoad(V, "tmp");
+  LValue LV = LValue::MakeAddr(V, CGF.MakeQualifiers(E->getType()));
+  setObjCGCLValueClass(CGF.getContext(), E, LV);
+  return LV;
+}
+
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const NamedDecl *ND = E->getDecl();
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
-    LValue LV;
     
     // Check if this is a global variable.
-    if (VD->hasExternalStorage() || VD->isFileVarDecl()) {
-      llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
-      if (VD->getType()->isReferenceType())
-        V = Builder.CreateLoad(V, "tmp");
-      LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-      setObjCGCLValueClass(getContext(), E, LV);
-      return LV;
-    }
+    if (VD->hasExternalStorage() || VD->isFileVarDecl()) 
+      return EmitGlobalVarDeclLValue(*this, E, VD);
 
     bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
 
@@ -847,7 +853,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     }
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
-    LV = LValue::MakeAddr(V, Quals);
+    LValue LV = LValue::MakeAddr(V, Quals);
     LValue::SetObjCNonGC(LV, NonGCable);
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
@@ -1140,14 +1146,17 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     BaseQuals = BaseTy.getQualifiers();
   }
 
-  FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
-  // FIXME: Handle non-field member expressions
-  assert(Field && "No code generation for non-field member references");
-  LValue MemExpLV = EmitLValueForField(BaseValue, Field, isUnion,
-                                       BaseQuals.getCVRQualifiers());
-  LValue::SetObjCNonGC(MemExpLV, isNonGC);
-  setObjCGCLValueClass(getContext(), E, MemExpLV);
-  return MemExpLV;
+  NamedDecl *ND = E->getMemberDecl();
+  if (FieldDecl *Field = dyn_cast<FieldDecl>(ND)) {
+    LValue LV = EmitLValueForField(BaseValue, Field, isUnion,
+                                   BaseQuals.getCVRQualifiers());
+    LValue::SetObjCNonGC(LV, isNonGC);
+    setObjCGCLValueClass(getContext(), E, LV);
+    return LV;
+  }
+  
+  assert(false && "Unhandled member declaration!");
+  return LValue();
 }
 
 LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
