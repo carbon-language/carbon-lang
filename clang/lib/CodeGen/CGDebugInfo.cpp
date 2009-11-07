@@ -1409,7 +1409,9 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   }
 
   DebugFactory.CreateGlobalVariable(getContext(Decl, Unit), 
-                                    Name, Name, Name, Unit, LineNo,
+                                    Decl->getNameAsString(), 
+                                    Decl->getNameAsString(), 
+                                    NULL, Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
