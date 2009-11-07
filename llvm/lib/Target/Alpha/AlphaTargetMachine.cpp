@@ -28,7 +28,7 @@ extern "C" void LLVMInitializeAlphaTarget() {
 AlphaTargetMachine::AlphaTargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS)
   : LLVMTargetMachine(T, TT),
-    DataLayout("e-f128:128:128"),
+    DataLayout("e-f128:128:128-n64"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
     Subtarget(TT, FS),

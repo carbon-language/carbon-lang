@@ -34,7 +34,7 @@ PIC16TargetMachine::PIC16TargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS, bool Trad)
 : LLVMTargetMachine(T, TT),
   Subtarget(TT, FS, Trad),
-  DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"), 
+  DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-n8"), 
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }
 
