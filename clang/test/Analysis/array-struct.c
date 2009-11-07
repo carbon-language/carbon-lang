@@ -120,7 +120,7 @@ struct s1 {
 // building: a->e, e->d. Only then 'a' could be added to live region roots.
 void f13(double timeout) {
   struct s1 a;
-  a.e.d = (long) timeout;
+  a.e.d = (int) timeout;
   if (a.e.d == 10)
     a.e.d = 4;
 }

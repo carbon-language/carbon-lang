@@ -14,6 +14,7 @@
 
 #include "Sema.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/APFloat.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -364,6 +365,225 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   PP.getDiagnostics().SetArgToStringFn(ConvertArgToStringFn, &Context);
 }
 
+/// Retrieves the width and signedness of the given integer type,
+/// or returns false if it is not an integer type.
+static bool getIntProperties(ASTContext &C, const Type *T,
+                             unsigned &BitWidth, bool &Signed) {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(T)) {
+    if (!BT->isInteger()) return false;
+
+    BitWidth = C.getIntWidth(QualType(T, 0));
+    Signed = BT->isSignedInteger();
+    return true;
+  }
+
+  if (const FixedWidthIntType *FWIT = dyn_cast<FixedWidthIntType>(T)) {
+    BitWidth = FWIT->getWidth();
+    Signed = FWIT->isSigned();
+    return true;
+  }
+
+  return false;
+}
+
+/// Checks whether the given value will have the same value if it it
+/// is truncated to the given width, then extended back to the
+/// original width.
+static bool IsSameIntAfterCast(const llvm::APSInt &value,
+                               unsigned SourceWidth, unsigned TargetWidth) {
+  assert(value.getBitWidth() == SourceWidth);
+  llvm::APSInt truncated = value;
+  truncated.trunc(TargetWidth);
+  truncated.extend(SourceWidth);
+  return (truncated == value);
+}
+
+/// Checks whether the given value will have the same value if it
+/// is truncated to the given width, then extended back to the original
+/// width.
+///
+/// The value might be a vector or a complex.
+static bool IsSameIntAfterCast(const APValue &value, unsigned Source,
+                               unsigned Target) {
+  if (value.isInt())
+    return IsSameIntAfterCast(value.getInt(), Source, Target);
+
+  if (value.isVector()) {
+    for (unsigned i = 0, e = value.getVectorLength(); i != e; ++i)
+      if (!IsSameIntAfterCast(value.getVectorElt(i), Source, Target))
+        return false;
+    return true;
+  }
+
+  assert(value.isComplexInt());
+  return IsSameIntAfterCast(value.getComplexIntReal(), Source, Target) &&
+         IsSameIntAfterCast(value.getComplexIntImag(), Source, Target);
+}
+                               
+
+/// Checks whether the given value, which currently has the given
+/// source semantics, has the same value when coerced through the
+/// target semantics.
+static bool IsSameFloatAfterCast(const llvm::APFloat &value,
+                                 const llvm::fltSemantics &Src,
+                                 const llvm::fltSemantics &Tgt) {
+  llvm::APFloat truncated = value;
+
+  bool ignored;
+  truncated.convert(Src, llvm::APFloat::rmNearestTiesToEven, &ignored);
+  truncated.convert(Tgt, llvm::APFloat::rmNearestTiesToEven, &ignored);
+
+  return truncated.bitwiseIsEqual(value);
+}
+
+/// Checks whether the given value, which currently has the given
+/// source semantics, has the same value when coerced through the
+/// target semantics.
+///
+/// The value might be a vector of floats (or a complex number).
+static bool IsSameFloatAfterCast(const APValue &value,
+                                 const llvm::fltSemantics &Src,
+                                 const llvm::fltSemantics &Tgt) {
+  if (value.isFloat())
+    return IsSameFloatAfterCast(value.getFloat(), Src, Tgt);
+
+  if (value.isVector()) {
+    for (unsigned i = 0, e = value.getVectorLength(); i != e; ++i)
+      if (!IsSameFloatAfterCast(value.getVectorElt(i), Src, Tgt))
+        return false;
+    return true;
+  }
+
+  assert(value.isComplexFloat());
+  return (IsSameFloatAfterCast(value.getComplexFloatReal(), Src, Tgt) &&
+          IsSameFloatAfterCast(value.getComplexFloatImag(), Src, Tgt));
+}
+
+/// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
+static void DiagnoseImpCast(Sema &S, Expr *E, QualType T, unsigned diag) {
+  S.Diag(E->getExprLoc(), diag) << E->getType() << T << E->getSourceRange();
+}
+
+/// Implements -Wconversion.
+static void CheckImplicitConversion(Sema &S, Expr *E, QualType T) {
+  // Don't diagnose in unevaluated contexts.
+  if (S.ExprEvalContext == Sema::Unevaluated)
+    return;
+
+  // Don't diagnose for value-dependent expressions.
+  if (E->isValueDependent())
+    return;
+
+  const Type *Source = S.Context.getCanonicalType(E->getType()).getTypePtr();
+  const Type *Target = S.Context.getCanonicalType(T).getTypePtr();
+
+  // Never diagnose implicit casts to bool.
+  if (Target->isSpecificBuiltinType(BuiltinType::Bool))
+    return;
+
+  // Strip vector types.
+  if (isa<VectorType>(Source)) {
+    if (!isa<VectorType>(Target))
+      return DiagnoseImpCast(S, E, T, diag::warn_impcast_vector_scalar);
+
+    Source = cast<VectorType>(Source)->getElementType().getTypePtr();
+    Target = cast<VectorType>(Target)->getElementType().getTypePtr();
+  }
+
+  // Strip complex types.
+  if (isa<ComplexType>(Source)) {
+    if (!isa<ComplexType>(Target))
+      return DiagnoseImpCast(S, E, T, diag::warn_impcast_complex_scalar);
+
+    Source = cast<ComplexType>(Source)->getElementType().getTypePtr();
+    Target = cast<ComplexType>(Target)->getElementType().getTypePtr();
+  }
+
+  const BuiltinType *SourceBT = dyn_cast<BuiltinType>(Source);
+  const BuiltinType *TargetBT = dyn_cast<BuiltinType>(Target);
+
+  // If the source is floating point...
+  if (SourceBT && SourceBT->isFloatingPoint()) {
+    // ...and the target is floating point...
+    if (TargetBT && TargetBT->isFloatingPoint()) {
+      // ...then warn if we're dropping FP rank.
+
+      // Builtin FP kinds are ordered by increasing FP rank.
+      if (SourceBT->getKind() > TargetBT->getKind()) {
+        // Don't warn about float constants that are precisely
+        // representable in the target type.
+        Expr::EvalResult result;
+        if (E->Evaluate(result, S.Context)) {
+          // Value might be a float, a float vector, or a float complex.
+          if (IsSameFloatAfterCast(result.Val,
+                     S.Context.getFloatTypeSemantics(QualType(TargetBT, 0)),
+                     S.Context.getFloatTypeSemantics(QualType(SourceBT, 0))))
+            return;
+        }
+
+        DiagnoseImpCast(S, E, T, diag::warn_impcast_float_precision);
+      }
+      return;
+    }
+
+    // If the target is integral, always warn.
+    if ((TargetBT && TargetBT->isInteger()) ||
+        isa<FixedWidthIntType>(Target))
+      // TODO: don't warn for integer values?
+      return DiagnoseImpCast(S, E, T, diag::warn_impcast_float_integer);
+
+    return;
+  }
+
+  unsigned SourceWidth, TargetWidth;
+  bool SourceSigned, TargetSigned;
+
+  if (!getIntProperties(S.Context, Source, SourceWidth, SourceSigned) ||
+      !getIntProperties(S.Context, Target, TargetWidth, TargetSigned))
+    return;
+
+  if (SourceWidth > TargetWidth) {
+    // Don't diagnose if the expression is an integer constant
+    // whose value in the target type is the same as it was
+    // in the original type.
+    Expr::EvalResult result;
+    if (E->Evaluate(result, S.Context))
+      if (IsSameIntAfterCast(result.Val, SourceWidth, TargetWidth))
+        return;
+
+    // Don't diagnose if the expression is a boolean expression.
+    if (Source == S.Context.IntTy.getTypePtr()) {
+      Expr *EIg = E->IgnoreParens();
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(EIg)) {
+        switch (BO->getOpcode()) {
+        case BinaryOperator::LAnd:
+        case BinaryOperator::LOr:
+        case BinaryOperator::LT:
+        case BinaryOperator::GT:
+        case BinaryOperator::LE:
+        case BinaryOperator::GE:
+        case BinaryOperator::EQ:
+        case BinaryOperator::NE:
+          return;
+        default:
+          break;
+        }
+      } else if (UnaryOperator *UO = dyn_cast<UnaryOperator>(EIg)) {
+        switch (UO->getOpcode()) {
+        case UnaryOperator::LNot:
+          return;
+        default:
+          break;
+        }
+      }
+    }
+
+    return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_precision);
+  }
+
+  return;
+}
+
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
 /// If there is already an implicit cast, merge into the existing one.
 /// If isLvalue, the result of the cast is an lvalue.
@@ -375,17 +595,16 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   if (ExprTy == TypeTy)
     return;
 
-  if (Expr->getType().getTypePtr()->isPointerType() &&
-      Ty.getTypePtr()->isPointerType()) {
-    QualType ExprBaseType =
-      cast<PointerType>(ExprTy.getUnqualifiedType())->getPointeeType();
-    QualType BaseType =
-      cast<PointerType>(TypeTy.getUnqualifiedType())->getPointeeType();
+  if (Expr->getType()->isPointerType() && Ty->isPointerType()) {
+    QualType ExprBaseType = cast<PointerType>(ExprTy)->getPointeeType();
+    QualType BaseType = cast<PointerType>(TypeTy)->getPointeeType();
     if (ExprBaseType.getAddressSpace() != BaseType.getAddressSpace()) {
       Diag(Expr->getExprLoc(), diag::err_implicit_pointer_address_space_cast)
         << Expr->getSourceRange();
     }
   }
+
+  CheckImplicitConversion(*this, Expr, Ty);
 
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
     if (ImpCast->getCastKind() == Kind) {

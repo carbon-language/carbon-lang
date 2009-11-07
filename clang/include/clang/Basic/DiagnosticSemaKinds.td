@@ -632,6 +632,22 @@ def err_cconv_knr : Error<
 def err_cconv_varargs : Error<
   "variadic function cannot use '%0' calling convention">;
 
+def warn_impcast_vector_scalar : Warning<
+  "implicit cast turns vector to scalar: %0 to %1">,
+  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+def warn_impcast_complex_scalar : Warning<
+  "implicit cast discards imaginary component: %0 to %1">,
+  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+def warn_impcast_float_precision : Warning<
+  "implicit cast loses floating-point precision: %0 to %1">,
+  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+def warn_impcast_float_integer : Warning<
+  "implicit cast turns floating-point number into integer: %0 to %1">,
+  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+def warn_impcast_integer_precision : Warning<
+  "implicit cast loses integer precision: %0 to %1">,
+  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;
 def warn_transparent_union_attribute_field_size_align : Warning<

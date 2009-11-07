@@ -963,6 +963,22 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
+  bool isInteger() const {
+    return TypeKind >= Bool && TypeKind <= Int128;
+  }
+
+  bool isSignedInteger() const {
+    return TypeKind >= Char_S && TypeKind <= Int128;
+  }
+
+  bool isUnsignedInteger() const {
+    return TypeKind >= Bool && TypeKind <= UInt128;
+  }
+
+  bool isFloatingPoint() const {
+    return TypeKind >= Float && TypeKind <= LongDouble;
+  }
+
   virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
