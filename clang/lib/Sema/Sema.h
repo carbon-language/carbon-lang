@@ -3485,6 +3485,12 @@ public:
     /// CompatiblePointerDiscardsQualifiers - The assignment discards
     /// c/v/r qualifiers, which we accept as an extension.
     CompatiblePointerDiscardsQualifiers,
+    
+    /// IncompatibleMultiPointerQualifiers - The assignment is between two
+    /// multi-level pointer types, and the qualifiers other than the first two
+    /// levels differ e.g. char ** -> const char **. We disallow this.
+    /// FIXME: GCC only warns for this - should we do the same?
+    IncompatibleMultiPointerQualifiers,
 
     /// IncompatibleVectors - The assignment is between two vector types that
     /// have the same size, which we accept as an extension.

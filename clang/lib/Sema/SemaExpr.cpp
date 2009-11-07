@@ -3747,6 +3747,24 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
         return ConvTy;
       return IncompatiblePointerSign;
     }
+    
+    // If we are a multi-level pointer, it's possible that our issue is simply
+    // one of qualification - e.g. char ** -> const char ** is not allowed. If
+    // the eventual target type is the same and the pointers have the same
+    // level of indirection, this must be the issue.
+    if (lhptee->isPointerType() && rhptee->isPointerType()) {
+      do {
+        lhptee = lhptee->getAs<PointerType>()->getPointeeType();
+        rhptee = rhptee->getAs<PointerType>()->getPointeeType();
+      
+        lhptee = Context.getCanonicalType(lhptee);
+        rhptee = Context.getCanonicalType(rhptee);
+      } while (lhptee->isPointerType() && rhptee->isPointerType());
+      
+      if (lhptee.getUnqualifiedType() == rhptee.getUnqualifiedType())
+        return IncompatibleMultiPointerQualifiers;
+    }
+    
     // General pointer incompatibility takes priority over qualifiers.
     return IncompatiblePointer;
   }
@@ -6222,6 +6240,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
         IsStringLiteralToNonConstPointerConversion(SrcExpr, DstType))
       return false;
     DiagKind = diag::ext_typecheck_convert_discards_qualifiers;
+    break;
+  case IncompatibleMultiPointerQualifiers:
+    DiagKind = diag::err_multi_pointer_qualifier_mismatch;
     break;
   case IntToBlockPointer:
     DiagKind = diag::err_int_to_block_pointer;
