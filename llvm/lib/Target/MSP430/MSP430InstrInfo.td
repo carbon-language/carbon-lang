@@ -215,6 +215,13 @@ def MOVZX16rm8 : Pseudo<(outs GR16:$dst), (ins memsrc:$src),
                 "mov.b\t{$src, $dst}",
                 [(set GR16:$dst, (zextloadi16i8 addr:$src))]>;
 
+let mayLoad = 1, hasExtraDefRegAllocReq = 1, Constraints = "$base = $base_wb" in {
+def MOV8rm_POST : Pseudo<(outs GR8:$dst, GR16:$base_wb), (ins GR16:$base),
+                          "mov.b\t{@$base+, $dst}", []>;
+def MOV16rm_POST : Pseudo<(outs GR16:$dst, GR16:$base_wb), (ins GR16:$base),
+                          "mov.w\t{@$base+, $dst}", []>;
+}
+
 // Any instruction that defines a 8-bit result leaves the high half of the
 // register. Truncate can be lowered to EXTRACT_SUBREG, and CopyFromReg may
 // be copying from a truncate, but any other 8-bit operation will zero-extend

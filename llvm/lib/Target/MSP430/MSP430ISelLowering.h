@@ -136,6 +136,12 @@ namespace llvm {
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   DebugLoc dl, SelectionDAG &DAG);
 
+    virtual bool getPostIndexedAddressParts(SDNode *N, SDNode *Op,
+                                            SDValue &Base,
+                                            SDValue &Offset,
+                                            ISD::MemIndexedMode &AM,
+                                            SelectionDAG &DAG) const;
+
     const MSP430Subtarget &Subtarget;
     const MSP430TargetMachine &TM;
   };

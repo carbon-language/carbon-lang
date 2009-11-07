@@ -62,10 +62,14 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setBooleanContents(ZeroOrOneBooleanContent);
   setSchedulingPreference(SchedulingForLatency);
 
-  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
+  // We have post-incremented loads / stores
+  setIndexedLoadAction(ISD::POST_INC, MVT::i8, Legal);
+  setIndexedLoadAction(ISD::POST_INC, MVT::i16, Legal);
+
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8,  Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
 
   // We don't have any truncstores
@@ -669,6 +673,42 @@ SDValue MSP430TargetLowering::LowerSIGN_EXTEND(SDValue Op,
                      DAG.getNode(ISD::ANY_EXTEND, dl, VT, Val),
                      DAG.getValueType(Val.getValueType()));
 }
+
+/// getPostIndexedAddressParts - returns true by value, base pointer and
+/// offset pointer and addressing mode by reference if this node can be
+/// combined with a load / store to form a post-indexed load / store.
+bool MSP430TargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
+                                                      SDValue &Base,
+                                                      SDValue &Offset,
+                                                      ISD::MemIndexedMode &AM,
+                                                      SelectionDAG &DAG) const {
+
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  if (LD->getExtensionType() != ISD::NON_EXTLOAD)
+    return false;
+
+  EVT VT = LD->getMemoryVT();
+  if (VT != MVT::i8 && VT != MVT::i16)
+    return false;
+
+  if (Op->getOpcode() != ISD::ADD)
+    return false;
+
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(Op->getOperand(1))) {
+    uint64_t RHSC = RHS->getZExtValue();
+    if ((VT == MVT::i16 && RHSC != 2) ||
+        (VT == MVT::i8 && RHSC != 1))
+      return false;
+
+    Base = Op->getOperand(0);
+    Offset = DAG.getConstant(RHSC, VT);
+    AM = ISD::POST_INC;
+    return true;
+  }
+
+  return false;
+}
+
 
 const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
