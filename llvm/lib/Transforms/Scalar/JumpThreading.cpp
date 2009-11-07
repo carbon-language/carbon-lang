@@ -213,11 +213,12 @@ static Constant *GetResultOfComparison(CmpInst::Predicate pred,
       return ConstantExpr::getCompare(pred, CLHS, CRHS);
   
   if (LHS == RHS)
-    if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType()))
+    if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType())) {
       if (ICmpInst::isTrueWhenEqual(pred))
         return ConstantInt::getTrue(LHS->getContext());
       else
         return ConstantInt::getFalse(LHS->getContext());
+    }
   return 0;
 }
 
