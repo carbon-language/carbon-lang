@@ -824,28 +824,30 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       if (VD->getType()->isReferenceType())
         V = Builder.CreateLoad(V, "tmp");
       LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-    } else {
-      bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
-
-      llvm::Value *V = LocalDeclMap[VD];
-      assert(V && "DeclRefExpr not entered in LocalDeclMap?");
-
-      Qualifiers Quals = MakeQualifiers(E->getType());
-      // local variables do not get their gc attribute set.
-      // local static?
-      if (NonGCable) Quals.removeObjCGCAttr();
-
-      if (VD->hasAttr<BlocksAttr>()) {
-        V = Builder.CreateStructGEP(V, 1, "forwarding");
-        V = Builder.CreateLoad(V, false);
-        V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD),
-                                    VD->getNameAsString());
-      }
-      if (VD->getType()->isReferenceType())
-        V = Builder.CreateLoad(V, "tmp");
-      LV = LValue::MakeAddr(V, Quals);
-      LValue::SetObjCNonGC(LV, NonGCable);
+      setObjCGCLValueClass(getContext(), E, LV);
+      return LV;
     }
+
+    bool NonGCable = VD->hasLocalStorage() && !VD->hasAttr<BlocksAttr>();
+
+    llvm::Value *V = LocalDeclMap[VD];
+    assert(V && "DeclRefExpr not entered in LocalDeclMap?");
+
+    Qualifiers Quals = MakeQualifiers(E->getType());
+    // local variables do not get their gc attribute set.
+    // local static?
+    if (NonGCable) Quals.removeObjCGCAttr();
+
+    if (VD->hasAttr<BlocksAttr>()) {
+      V = Builder.CreateStructGEP(V, 1, "forwarding");
+      V = Builder.CreateLoad(V, false);
+      V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD),
+                                  VD->getNameAsString());
+    }
+    if (VD->getType()->isReferenceType())
+      V = Builder.CreateLoad(V, "tmp");
+    LV = LValue::MakeAddr(V, Quals);
+    LValue::SetObjCNonGC(LV, NonGCable);
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   }
