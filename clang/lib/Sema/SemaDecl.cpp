@@ -384,6 +384,12 @@ bool Sema::isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S) {
   return IdResolver.isDeclInScope(D, Ctx, Context, S);
 }
 
+static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
+  return (!D->isUsed() && !D->hasAttr<UnusedAttr>() && isa<VarDecl>(D) && 
+          !isa<ParmVarDecl>(D) && !isa<ImplicitParamDecl>(D) && 
+          D->getDeclContext()->isFunctionOrMethod());
+}
+
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   if (S->decl_empty()) return;
   assert((S->getFlags() & (Scope::DeclScope | Scope::TemplateParamScope)) &&
@@ -400,10 +406,8 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     if (!D->getDeclName()) continue;
 
     // Diagnose unused variables in this scope.
-    if (!D->isUsed() && !D->hasAttr<UnusedAttr>() && isa<VarDecl>(D) && 
-        !isa<ParmVarDecl>(D) && !isa<ImplicitParamDecl>(D) && 
-        D->getDeclContext()->isFunctionOrMethod())
-	    Diag(D->getLocation(), diag::warn_unused_variable) << D->getDeclName();
+    if (ShouldDiagnoseUnusedDecl(D))
+      Diag(D->getLocation(), diag::warn_unused_variable) << D->getDeclName();
     
     // Remove this name from our lexical scope.
     IdResolver.RemoveDecl(D);
