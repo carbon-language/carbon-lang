@@ -367,8 +367,17 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 
 /// Retrieves the width and signedness of the given integer type,
 /// or returns false if it is not an integer type.
+///
+/// \param T must be canonical
 static bool getIntProperties(ASTContext &C, const Type *T,
                              unsigned &BitWidth, bool &Signed) {
+  assert(T->isCanonicalUnqualified());
+
+  if (const VectorType *VT = dyn_cast<VectorType>(T))
+    T = VT->getElementType().getTypePtr();
+  if (const ComplexType *CT = dyn_cast<ComplexType>(T))
+    T = CT->getElementType().getTypePtr();
+
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T)) {
     if (!BT->isInteger()) return false;
 
@@ -390,8 +399,8 @@ static bool getIntProperties(ASTContext &C, const Type *T,
 /// is truncated to the given width, then extended back to the
 /// original width.
 static bool IsSameIntAfterCast(const llvm::APSInt &value,
-                               unsigned SourceWidth, unsigned TargetWidth) {
-  assert(value.getBitWidth() == SourceWidth);
+                               unsigned TargetWidth) {
+  unsigned SourceWidth = value.getBitWidth();
   llvm::APSInt truncated = value;
   truncated.trunc(TargetWidth);
   truncated.extend(SourceWidth);
@@ -403,21 +412,20 @@ static bool IsSameIntAfterCast(const llvm::APSInt &value,
 /// width.
 ///
 /// The value might be a vector or a complex.
-static bool IsSameIntAfterCast(const APValue &value, unsigned Source,
-                               unsigned Target) {
+static bool IsSameIntAfterCast(const APValue &value, unsigned TargetWidth) {
   if (value.isInt())
-    return IsSameIntAfterCast(value.getInt(), Source, Target);
+    return IsSameIntAfterCast(value.getInt(), TargetWidth);
 
   if (value.isVector()) {
     for (unsigned i = 0, e = value.getVectorLength(); i != e; ++i)
-      if (!IsSameIntAfterCast(value.getVectorElt(i), Source, Target))
+      if (!IsSameIntAfterCast(value.getVectorElt(i), TargetWidth))
         return false;
     return true;
   }
 
   assert(value.isComplexInt());
-  return IsSameIntAfterCast(value.getComplexIntReal(), Source, Target) &&
-         IsSameIntAfterCast(value.getComplexIntImag(), Source, Target);
+  return IsSameIntAfterCast(value.getComplexIntReal(), TargetWidth) &&
+         IsSameIntAfterCast(value.getComplexIntImag(), TargetWidth);
 }
                                
 
@@ -457,6 +465,117 @@ static bool IsSameFloatAfterCast(const APValue &value,
   assert(value.isComplexFloat());
   return (IsSameFloatAfterCast(value.getComplexFloatReal(), Src, Tgt) &&
           IsSameFloatAfterCast(value.getComplexFloatImag(), Src, Tgt));
+}
+
+/// Determines if it's reasonable for the given expression to be truncated
+/// down to the given integer width.
+/// * Boolean expressions are automatically white-listed.
+/// * Arithmetic operations on implicitly-promoted operands of the
+///   target width or less are okay --- not because the results are
+///   actually guaranteed to fit within the width, but because the
+///   user is effectively pretending that the operations are closed
+///   within the implicitly-promoted type.
+static bool IsExprValueWithinWidth(ASTContext &C, Expr *E, unsigned Width) {
+  E = E->IgnoreParens();
+
+#ifndef NDEBUG
+  {
+    const Type *ETy = E->getType()->getCanonicalTypeInternal().getTypePtr();
+    unsigned EWidth;
+    bool ESigned;
+
+    if (!getIntProperties(C, ETy, EWidth, ESigned))
+      assert(0 && "expression not of integer type");
+
+    // The caller should never let this happen.
+    assert(EWidth > Width && "called on expr whose type is too small");
+  }
+#endif
+
+  // Strip implicit casts off.
+  while (isa<ImplicitCastExpr>(E)) {
+    E = cast<ImplicitCastExpr>(E)->getSubExpr();
+
+    const Type *ETy = E->getType()->getCanonicalTypeInternal().getTypePtr();
+
+    unsigned EWidth;
+    bool ESigned;
+    if (!getIntProperties(C, ETy, EWidth, ESigned))
+      return false;
+
+    if (EWidth <= Width)
+      return true;
+  }
+
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+    switch (BO->getOpcode()) {
+
+    // Boolean-valued operations are white-listed.
+    case BinaryOperator::LAnd:
+    case BinaryOperator::LOr:
+    case BinaryOperator::LT:
+    case BinaryOperator::GT:
+    case BinaryOperator::LE:
+    case BinaryOperator::GE:
+    case BinaryOperator::EQ:
+    case BinaryOperator::NE:
+      return true;
+
+    // Operations with opaque sources are black-listed.
+    case BinaryOperator::PtrMemD:
+    case BinaryOperator::PtrMemI:
+      return false;
+
+    // Left shift gets black-listed based on a judgement call.
+    case BinaryOperator::Shl:
+      return false;
+
+    // Various special cases.
+    case BinaryOperator::Shr:
+      return IsExprValueWithinWidth(C, BO->getLHS(), Width);
+    case BinaryOperator::Comma:
+      return IsExprValueWithinWidth(C, BO->getRHS(), Width);
+    case BinaryOperator::Sub:
+      if (BO->getLHS()->getType()->isPointerType())
+        return false;
+      // fallthrough
+      
+    // Any other operator is okay if the operands are
+    // promoted from expressions of appropriate size.
+    default:
+      return IsExprValueWithinWidth(C, BO->getLHS(), Width) &&
+             IsExprValueWithinWidth(C, BO->getRHS(), Width);
+    }
+  }
+
+  if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
+    switch (UO->getOpcode()) {
+    // Boolean-valued operations are white-listed.
+    case UnaryOperator::LNot:
+      return true;
+
+    // Operations with opaque sources are black-listed.
+    case UnaryOperator::Deref:
+    case UnaryOperator::AddrOf: // should be impossible
+      return false;
+
+    case UnaryOperator::OffsetOf:
+      return false;
+
+    default:
+      return IsExprValueWithinWidth(C, UO->getSubExpr(), Width);
+    }
+  }
+
+  // Don't diagnose if the expression is an integer constant
+  // whose value in the target type is the same as it was
+  // in the original type.
+  Expr::EvalResult result;
+  if (E->Evaluate(result, C))
+    if (IsSameIntAfterCast(result.Val, Width))
+      return true;
+
+  return false;
 }
 
 /// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
@@ -543,40 +662,8 @@ static void CheckImplicitConversion(Sema &S, Expr *E, QualType T) {
     return;
 
   if (SourceWidth > TargetWidth) {
-    // Don't diagnose if the expression is an integer constant
-    // whose value in the target type is the same as it was
-    // in the original type.
-    Expr::EvalResult result;
-    if (E->Evaluate(result, S.Context))
-      if (IsSameIntAfterCast(result.Val, SourceWidth, TargetWidth))
-        return;
-
-    // Don't diagnose if the expression is a boolean expression.
-    if (Source == S.Context.IntTy.getTypePtr()) {
-      Expr *EIg = E->IgnoreParens();
-      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(EIg)) {
-        switch (BO->getOpcode()) {
-        case BinaryOperator::LAnd:
-        case BinaryOperator::LOr:
-        case BinaryOperator::LT:
-        case BinaryOperator::GT:
-        case BinaryOperator::LE:
-        case BinaryOperator::GE:
-        case BinaryOperator::EQ:
-        case BinaryOperator::NE:
-          return;
-        default:
-          break;
-        }
-      } else if (UnaryOperator *UO = dyn_cast<UnaryOperator>(EIg)) {
-        switch (UO->getOpcode()) {
-        case UnaryOperator::LNot:
-          return;
-        default:
-          break;
-        }
-      }
-    }
+    if (IsExprValueWithinWidth(S.Context, E, TargetWidth))
+      return;
 
     return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_precision);
   }

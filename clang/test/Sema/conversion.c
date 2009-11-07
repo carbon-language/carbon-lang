@@ -224,3 +224,8 @@ void test14(long l) {
   c = ((l <= 4) && (l >= 0));
   c = ((l <= 4) && (l >= 0)) || (l > 20);
 }
+
+void test15(char c) {
+  c = c + 1 + c * 2;
+  c = (short) c + 1 + c * 2; // expected-warning {{implicit cast loses integer precision}}
+}
