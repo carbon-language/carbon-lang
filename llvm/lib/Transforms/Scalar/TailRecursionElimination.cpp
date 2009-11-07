@@ -25,7 +25,7 @@
 //     unlikely, that the return returns something else (like constant 0), and
 //     can still be TRE'd.  It can be TRE'd if ALL OTHER return instructions in
 //     the function return the exact same value.
-//  4. If it can prove that callees do not access theier caller stack frame,
+//  4. If it can prove that callees do not access their caller stack frame,
 //     they are marked as eligible for tail call elimination (by the code
 //     generator).
 //
@@ -58,6 +58,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -75,7 +76,7 @@ namespace {
   private:
     bool ProcessReturningBlock(ReturnInst *RI, BasicBlock *&OldEntry,
                                bool &TailCallsAreMarkedTail,
-                               std::vector<PHINode*> &ArgumentPHIs,
+                               SmallVector<PHINode*, 8> &ArgumentPHIs,
                                bool CannotTailCallElimCallsMarkedTail);
     bool CanMoveAboveCall(Instruction *I, CallInst *CI);
     Value *CanTransformAccumulatorRecursion(Instruction *I, CallInst *CI);
@@ -90,17 +91,7 @@ FunctionPass *llvm::createTailCallEliminationPass() {
   return new TailCallElim();
 }
 
-
-/// AllocaMightEscapeToCalls - Return true if this alloca may be accessed by
-/// callees of this function.  We only do very simple analysis right now, this
-/// could be expanded in the future to use mod/ref information for particular
-/// call sites if desired.
-static bool AllocaMightEscapeToCalls(AllocaInst *AI) {
-  // FIXME: do simple 'address taken' analysis.
-  return true;
-}
-
-/// FunctionContainsAllocas - Scan the specified basic block for alloca
+/// CheckForEscapingAllocas - Scan the specified basic block for alloca
 /// instructions.  If it contains any that might be accessed by calls, return
 /// true.
 static bool CheckForEscapingAllocas(BasicBlock *BB,
@@ -108,7 +99,7 @@ static bool CheckForEscapingAllocas(BasicBlock *BB,
   bool RetVal = false;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-      RetVal |= AllocaMightEscapeToCalls(AI);
+      RetVal |= PointerMayBeCaptured(AI, true);
 
       // If this alloca is in the body of the function, or if it is a variable
       // sized allocation, we cannot tail call eliminate calls marked 'tail'
@@ -127,7 +118,7 @@ bool TailCallElim::runOnFunction(Function &F) {
 
   BasicBlock *OldEntry = 0;
   bool TailCallsAreMarkedTail = false;
-  std::vector<PHINode*> ArgumentPHIs;
+  SmallVector<PHINode*, 8> ArgumentPHIs;
   bool MadeChange = false;
 
   bool FunctionContainsEscapingAllocas = false;
@@ -204,7 +195,7 @@ bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
   if (I->mayHaveSideEffects())  // This also handles volatile loads.
     return false;
   
-  if (LoadInst* L = dyn_cast<LoadInst>(I)) {
+  if (LoadInst *L = dyn_cast<LoadInst>(I)) {
     // Loads may always be moved above calls without side effects.
     if (CI->mayHaveSideEffects()) {
       // Non-volatile loads may be moved above a call with side effects if it
@@ -265,10 +256,6 @@ static Value *getCommonReturnValue(ReturnInst *TheRI, CallInst *CI) {
   Function *F = TheRI->getParent()->getParent();
   Value *ReturnedValue = 0;
 
-  // TODO: Handle multiple value ret instructions;
-  if (isa<StructType>(F->getReturnType()))
-      return 0;
-
   for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator()))
       if (RI != TheRI) {
@@ -315,7 +302,7 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
 
 bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
                                          bool &TailCallsAreMarkedTail,
-                                         std::vector<PHINode*> &ArgumentPHIs,
+                                         SmallVector<PHINode*, 8> &ArgumentPHIs,
                                        bool CannotTailCallElimCallsMarkedTail) {
   BasicBlock *BB = Ret->getParent();
   Function *F = BB->getParent();
