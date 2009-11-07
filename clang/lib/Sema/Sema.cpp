@@ -665,6 +665,10 @@ static void CheckImplicitConversion(Sema &S, Expr *E, QualType T) {
     if (IsExprValueWithinWidth(S.Context, E, TargetWidth))
       return;
 
+    // People want to build with -Wshorten-64-to-32 and not -Wconversion
+    // and by god we'll let them.
+    if (SourceWidth == 64 && TargetWidth == 32)
+      return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_64_32);
     return DiagnoseImpCast(S, E, T, diag::warn_impcast_integer_precision);
   }
 

@@ -647,6 +647,9 @@ def warn_impcast_float_integer : Warning<
 def warn_impcast_integer_precision : Warning<
   "implicit cast loses integer precision: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+def warn_impcast_integer_64_32 : Warning<
+  "implicit cast loses integer precision: %0 to %1">,
+  InGroup<DiagGroup<"shorten-64-to-32">>, DefaultIgnore;
 
 def warn_attribute_ignored_for_field_of_type : Warning<
   "%0 attribute ignored for field of type %1">;

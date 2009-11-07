@@ -28,7 +28,6 @@ def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;
-def Conversion : DiagGroup<"conversion">;
 def : DiagGroup<"declaration-after-statement">;
 def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
@@ -114,6 +113,10 @@ def CharSubscript : DiagGroup<"char-subscripts">;
 
 // Aggregation warning settings.
 
+// -Wconversion has its own warnings, but we split this one out for
+// legacy reasons.
+def Conversion : DiagGroup<"conversion",
+                           [DiagGroup<"shorten-64-to-32">]>;
 
 def Unused : DiagGroup<"unused",
                        [UnusedArgument, UnusedFunction, UnusedLabel,
