@@ -2329,6 +2329,26 @@ public:
   ///
   /// \param S the scope in which the operator keyword occurs.  
   virtual void CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) { }
+  
+  /// \brief Code completion for an ObjC factory method (from within a message 
+  /// expression).
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after the class name.
+  ///
+  /// \param S the scope in which the message expression occurs. 
+  /// \param FName the factory name. 
+  virtual void CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName){ }
+  
+  /// \brief Code completion for an ObjC instance method (from within a message 
+  /// expression).
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after the receiver expression.
+  ///
+  /// \param S the scope in which the operator keyword occurs.  
+  /// \param Receiver an expression for the receiver of the message. 
+  virtual void CodeCompleteObjCInstanceMethod(Scope *S, ExprTy *Receiver) { }
   //@}
 };
 

@@ -1549,6 +1549,13 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        SourceLocation NameLoc,
                                        IdentifierInfo *ReceiverName,
                                        ExprArg ReceiverExpr) {
+  if (Tok.is(tok::code_completion)) {
+    if (ReceiverName)
+      Actions.CodeCompleteObjCFactoryMethod(CurScope, ReceiverName);
+    else
+      Actions.CodeCompleteObjCInstanceMethod(CurScope, ReceiverExpr.release());
+    ConsumeToken();
+  }
   // Parse objc-selector
   SourceLocation Loc;
   IdentifierInfo *selIdent = ParseObjCSelectorPiece(Loc);
