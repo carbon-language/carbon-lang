@@ -1296,14 +1296,16 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
     FieldGlobals.push_back(NGV);
     
     unsigned TypeSize = TD->getTypeAllocSize(FieldTy);
-    if (const StructType* ST = dyn_cast<StructType>(FieldTy))
+    if (const StructType *ST = dyn_cast<StructType>(FieldTy))
       TypeSize = TD->getStructLayout(ST)->getSizeInBytes();
-    const Type* IntPtrTy = TD->getIntPtrType(CI->getContext());
+    const Type *IntPtrTy = TD->getIntPtrType(CI->getContext());
     Value *NMI = CallInst::CreateMalloc(CI, IntPtrTy, FieldTy,
                                         ConstantInt::get(IntPtrTy, TypeSize),
                                         NElems,
                                         CI->getName() + ".f" + Twine(FieldNo));
-    FieldMallocs.push_back(NMI);
+    CallInst *NCI = dyn_cast<BitCastInst>(NMI) ?
+                    extractMallocCallFromBitCast(NMI) : cast<CallInst>(NMI);
+    FieldMallocs.push_back(NCI);
     new StoreInst(NMI, NGV, CI);
   }
   
@@ -1530,8 +1532,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
           CI->replaceAllUsesWith(Cast);
           CI->eraseFromParent();
           CI = dyn_cast<BitCastInst>(Malloc) ?
-               extractMallocCallFromBitCast(Malloc):
-               cast<CallInst>(Malloc);
+               extractMallocCallFromBitCast(Malloc) : cast<CallInst>(Malloc);
         }
       
         GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD), TD);
@@ -1688,24 +1689,26 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
   if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
 #if 0
-    cerr << "Global: " << *GV;
-    cerr << "  isLoaded = " << GS.isLoaded << "\n";
-    cerr << "  StoredType = ";
+    DEBUG(errs() << "Global: " << *GV);
+    DEBUG(errs() << "  isLoaded = " << GS.isLoaded << "\n");
+    DEBUG(errs() << "  StoredType = ");
     switch (GS.StoredType) {
-    case GlobalStatus::NotStored: cerr << "NEVER STORED\n"; break;
-    case GlobalStatus::isInitializerStored: cerr << "INIT STORED\n"; break;
-    case GlobalStatus::isStoredOnce: cerr << "STORED ONCE\n"; break;
-    case GlobalStatus::isStored: cerr << "stored\n"; break;
+    case GlobalStatus::NotStored: DEBUG(errs() << "NEVER STORED\n"); break;
+    case GlobalStatus::isInitializerStored: DEBUG(errs() << "INIT STORED\n");
+                                            break;
+    case GlobalStatus::isStoredOnce: DEBUG(errs() << "STORED ONCE\n"); break;
+    case GlobalStatus::isStored: DEBUG(errs() << "stored\n"); break;
     }
     if (GS.StoredType == GlobalStatus::isStoredOnce && GS.StoredOnceValue)
-      cerr << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n";
+      DEBUG(errs() << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n");
     if (GS.AccessingFunction && !GS.HasMultipleAccessingFunctions)
-      cerr << "  AccessingFunction = " << GS.AccessingFunction->getName()
-                << "\n";
-    cerr << "  HasMultipleAccessingFunctions =  "
-              << GS.HasMultipleAccessingFunctions << "\n";
-    cerr << "  HasNonInstructionUser = " << GS.HasNonInstructionUser<<"\n";
-    cerr << "\n";
+      DEBUG(errs() << "  AccessingFunction = " << GS.AccessingFunction->getName()
+                  << "\n");
+    DEBUG(errs() << "  HasMultipleAccessingFunctions =  "
+                 << GS.HasMultipleAccessingFunctions << "\n");
+    DEBUG(errs() << "  HasNonInstructionUser = " 
+                 << GS.HasNonInstructionUser<<"\n");
+    DEBUG(errs() << "\n");
 #endif
     
     // If this is a first class global and has only one accessing function
