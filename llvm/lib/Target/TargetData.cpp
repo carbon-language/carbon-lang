@@ -258,6 +258,15 @@ void TargetData::init(StringRef Desc) {
   }
 }
 
+/// Default ctor.
+///
+/// @note This has to exist, because this is a pass, but it should never be
+/// used.
+TargetData::TargetData() : ImmutablePass(&ID) {
+  llvm_report_error("Bad TargetData ctor used.  "
+                    "Tool did not specify a TargetData to use?");
+}
+
 TargetData::TargetData(const Module *M) 
   : ImmutablePass(&ID) {
   init(M->getDataLayout());
@@ -405,10 +414,11 @@ std::string TargetData::getStringRepresentation() const {
   OS << (LittleEndian ? "e" : "E")
      << "-p:" << PointerMemSize*8 << ':' << PointerABIAlign*8
      << ':' << PointerPrefAlign*8;
-  for (align_const_iterator I = Alignments.begin(), E = Alignments.end();
-       I != E; ++I)
-    OS << '-' << (char)I->AlignType << I->TypeBitWidth << ':'
-       << I->ABIAlign*8 << ':' << I->PrefAlign*8;
+  for (unsigned i = 0, e = Alignments.size(); i != e; ++i) {
+    const TargetAlignElem &AI = Alignments[i];
+    OS << '-' << (char)AI.AlignType << AI.TypeBitWidth << ':'
+       << AI.ABIAlign*8 << ':' << AI.PrefAlign*8;
+  }
   return OS.str();
 }
 

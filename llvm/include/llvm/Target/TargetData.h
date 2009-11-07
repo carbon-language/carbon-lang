@@ -21,10 +21,7 @@
 #define LLVM_TARGET_TARGETDATA_H
 
 #include "llvm/Pass.h"
-#include "llvm/System/DataTypes.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallVector.h"
-#include <string>
 
 namespace llvm {
 
@@ -73,18 +70,16 @@ private:
   unsigned char PointerABIAlign;       ///< Pointer ABI alignment
   unsigned char PointerPrefAlign;      ///< Pointer preferred alignment
 
-  //! Where the primitive type alignment data is stored.
-  /*!
-   @sa init().
-   @note Could support multiple size pointer alignments, e.g., 32-bit pointers
-   vs. 64-bit pointers by extending TargetAlignment, but for now, we don't.
-   */
+  /// Alignments- Where the primitive type alignment data is stored.
+  ///
+  /// @sa init().
+  /// @note Could support multiple size pointer alignments, e.g., 32-bit
+  /// pointers vs. 64-bit pointers by extending TargetAlignment, but for now,
+  /// we don't.
   SmallVector<TargetAlignElem, 16> Alignments;
-  //! Alignment iterator shorthand
-  typedef SmallVector<TargetAlignElem, 16>::iterator align_iterator;
-  //! Constant alignment iterator shorthand
-  typedef SmallVector<TargetAlignElem, 16>::const_iterator align_const_iterator;
-  //! Invalid alignment.
+  
+  
+  
   /*!
     This member is a signal that a requested alignment type and bit width were
     not found in the SmallVector.
@@ -92,7 +87,7 @@ private:
   static const TargetAlignElem InvalidAlignmentElem;
 
   // Opaque pointer for the StructType -> StructLayout map.
-  mutable void* LayoutMap;
+  mutable void *LayoutMap;
 
   //! Set/initialize target alignments
   void setAlignment(AlignTypeEnum align_type, unsigned char abi_align,
@@ -106,8 +101,8 @@ private:
   ///
   /// Predicate that tests a TargetAlignElem reference returned by get() against
   /// InvalidAlignmentElem.
-  inline bool validAlignment(const TargetAlignElem &align) const {
-    return (&align != &InvalidAlignmentElem);
+  bool validAlignment(const TargetAlignElem &align) const {
+    return &align != &InvalidAlignmentElem;
   }
 
 public:
@@ -115,11 +110,8 @@ public:
   ///
   /// @note This has to exist, because this is a pass, but it should never be
   /// used.
-  TargetData() : ImmutablePass(&ID) {
-    llvm_report_error("Bad TargetData ctor used.  "
-                      "Tool did not specify a TargetData to use?");
-  }
-
+  TargetData();
+  
   /// Constructs a TargetData from a specification string. See init().
   explicit TargetData(StringRef TargetDescription)
     : ImmutablePass(&ID) {
