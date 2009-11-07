@@ -30,6 +30,7 @@
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 using namespace CodeGen;
 
