@@ -1270,11 +1270,12 @@ SDValue SelectionDAG::getConvertRndSat(EVT VT, DebugLoc dl,
     return Val;
 
   FoldingSetNodeID ID;
+  SDValue Ops[] = { Val, DTy, STy, Rnd, Sat };
+  AddNodeIDNode(ID, ISD::CONVERT_RNDSAT, getVTList(VT), &Ops[0], 5);
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   CvtRndSatSDNode *N = NodeAllocator.Allocate<CvtRndSatSDNode>();
-  SDValue Ops[] = { Val, DTy, STy, Rnd, Sat };
   new (N) CvtRndSatSDNode(VT, dl, Ops, 5, Code);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
