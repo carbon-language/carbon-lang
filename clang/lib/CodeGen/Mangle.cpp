@@ -129,8 +129,10 @@ static bool isInCLinkageSpecification(const Decl *D) {
 
 bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
   // Clang's "overloadable" attribute extension to C/C++ implies name mangling
-  // (always).
-  if (!FD->hasAttr<OverloadableAttr>()) {
+  // (always) as does passing a C++ member function and a function
+  // whose name is not a simple identifier.
+  if (!FD->hasAttr<OverloadableAttr>() && !isa<CXXMethodDecl>(FD) &&
+      FD->getDeclName().isIdentifier()) {
     // C functions are not mangled, and "main" is never mangled.
     if (!Context.getASTContext().getLangOptions().CPlusPlus || FD->isMain())
       return false;
@@ -142,7 +144,7 @@ bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
       return false;
 
     // No name mangling in a C linkage specification.
-    if (!isa<CXXMethodDecl>(FD) && isInCLinkageSpecification(FD))
+    if (isInCLinkageSpecification(FD))
       return false;
   }
 
