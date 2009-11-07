@@ -856,7 +856,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::Vector:
     return llvm::DIType();
   default:
-    assert(false && "Unhandled type class!");
     return llvm::DIType();
   case Type::ObjCObjectPointer:
     return CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
