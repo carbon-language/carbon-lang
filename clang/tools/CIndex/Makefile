@@ -22,7 +22,7 @@ LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
 LINK_COMPONENTS := MC support
-USEDLIBS = clangFrontend.a clangIndex.a clangSema.a clangAST.a clangLex.a clangBasic.a
+USEDLIBS = clangFrontend.a clangIndex.a clangSema.a clangAnalysis.a clangAST.a clangParse.a clangLex.a clangBasic.a
 
 include $(LEVEL)/Makefile.common
 
