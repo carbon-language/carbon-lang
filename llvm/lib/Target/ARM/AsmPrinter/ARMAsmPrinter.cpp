@@ -347,9 +347,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                                &ARM::DPR_VFP2RegClass);
       O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';
     } else {
-      if (unsigned SubReg = MO.getSubReg())
-        Reg = TRI->getSubReg(Reg, SubReg);
-
+      assert(!MO.getSubReg() && "Subregs should be eliminated!");
       O << getRegisterName(Reg);
     }
     break;
