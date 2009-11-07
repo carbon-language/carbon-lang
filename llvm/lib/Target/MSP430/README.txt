@@ -11,8 +11,6 @@ available pretty soon.
 Some things are incomplete / not implemented yet (this list surely is not
 complete as well):
 
-0. Implement asmprinting for variables :)
-
 1. Verify, how stuff is handling implicit zext with 8 bit operands (this might
 be modelled currently in improper way - should we need to mark the superreg as
 def for every 8 bit instruction?).

@@ -15,7 +15,12 @@
 using namespace llvm;
 
 MSP430MCAsmInfo::MSP430MCAsmInfo(const Target &T, const StringRef &TT) {
+  PrivateGlobalPrefix = ".L";
+  WeakRefDirective ="\t.weak\t";
+  SetDirective = "\t.set\t";
+  PCSymbol=".";
+
   AlignmentIsInBytes = false;
   AllowNameToStartWithDigit = true;
-  PrivateGlobalPrefix = ".L";
+  UsesELFSectionDirectiveForBSS = true;
 }
