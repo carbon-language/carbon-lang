@@ -35,13 +35,13 @@ class InitHeaderSearch {
   std::string isysroot;
 
 public:
-  /// InitHeaderSearch::IncludeDirGroup - Identifies the several search path
-  ///  lists stored internally.
+  /// IncludeDirGroup - Identifies the several search path
+  /// lists stored internally.
   enum IncludeDirGroup {
-    Quoted = 0,     //< `#include ""` paths. Thing `gcc -iquote`.
-    Angled,         //< Paths for both `#include ""` and `#include <>`. (`-I`)
-    System,         //< Like Angled, but marks system directories.
-    After           //< Like System, but searched after the system directories.
+    Quoted = 0,     ///< `#include ""` paths. Thing `gcc -iquote`.
+    Angled,         ///< Paths for both `#include ""` and `#include <>`. (`-I`)
+    System,         ///< Like Angled, but marks system directories.
+    After           ///< Like System, but searched after the system directories.
   };
 
   InitHeaderSearch(HeaderSearch &HS,

@@ -120,10 +120,10 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(const std::string &Base,
 void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(const std::string &Base,
                                                      const char *Arch,
                                                      const char *Version) {
-    std::string localBase = Base + "/" + Arch + "/" + Version + "/include";
-    AddPath(localBase, System, true, false, false);
-    AddPath(localBase + "/c++", System, true, false, false);
-    AddPath(localBase + "/c++/backward", System, true, false, false);
+  std::string localBase = Base + "/" + Arch + "/" + Version + "/include";
+  AddPath(localBase, System, true, false, false);
+  AddPath(localBase + "/c++", System, true, false, false);
+  AddPath(localBase + "/c++/backward", System, true, false, false);
 }
 
   // FIXME: This probably should goto to some platform utils place.
