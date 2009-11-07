@@ -49,3 +49,14 @@ void test_X_f0_explicit(X x, int i, long l) {
 // PR4608
 class A { template <class x> x a(x z) { return z+y; } int y; };
 
+// PR5419
+struct Functor {
+  template <typename T>
+  bool operator()(const T& v) const {
+    return true;
+  }
+};
+
+void test_Functor(Functor f) {
+  f(1);
+}

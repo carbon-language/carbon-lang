@@ -5235,9 +5235,17 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
   DeclContext::lookup_const_iterator Oper, OperEnd;
   for (llvm::tie(Oper, OperEnd) = Record->getDecl()->lookup(OpName);
-       Oper != OperEnd; ++Oper)
+       Oper != OperEnd; ++Oper) {
+    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*Oper)) {
+      AddMethodTemplateCandidate(FunTmpl, false, 0, 0, Object, Args, NumArgs,
+                                 CandidateSet, 
+                                 /*SuppressUserConversions=*/false);
+      continue;
+    }
+    
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Object, Args, NumArgs,
                        CandidateSet, /*SuppressUserConversions=*/false);
+  }
 
   if (RequireCompleteType(LParenLoc, Object->getType(), 
                           PartialDiagnostic(diag::err_incomplete_object_call)
