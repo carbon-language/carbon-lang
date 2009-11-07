@@ -29,8 +29,12 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ManagedStatic.h"
 
 namespace llvm {
+
+  class EmptyIndexListEntry;
+  class TombstoneIndexListEntry;
 
   /// This class represents an entry in the slot index list held in the
   /// SlotIndexes pass. It should not be used directly. See the
@@ -39,15 +43,21 @@ namespace llvm {
   class IndexListEntry {
   private:
 
-    static std::auto_ptr<IndexListEntry> emptyKeyEntry,
-                                         tombstoneKeyEntry;
-    typedef enum { EMPTY_KEY, TOMBSTONE_KEY } ReservedEntryType;
     static const unsigned EMPTY_KEY_INDEX = ~0U & ~3U,
                           TOMBSTONE_KEY_INDEX = ~0U & ~7U;
+
+    // The following statics are thread safe. They're read only, and you
+    // can't step from them to any other list entries.
+    static ManagedStatic<EmptyIndexListEntry> emptyKeyEntry;
+    static ManagedStatic<TombstoneIndexListEntry> tombstoneKeyEntry;
 
     IndexListEntry *next, *prev;
     MachineInstr *mi;
     unsigned index;
+
+  protected:
+
+    typedef enum { EMPTY_KEY, TOMBSTONE_KEY } ReservedEntryType;
 
     // This constructor is only to be used by getEmptyKeyEntry
     // & getTombstoneKeyEntry. It sets index to the given
@@ -58,6 +68,8 @@ namespace llvm {
         case TOMBSTONE_KEY: index = TOMBSTONE_KEY_INDEX; break;
         default: assert(false && "Invalid value for constructor."); 
       }
+      next = this;
+      prev = this;
     }
 
   public:
@@ -70,37 +82,64 @@ namespace llvm {
     }
 
     MachineInstr* getInstr() const { return mi; }
-    void setInstr(MachineInstr *mi) { this->mi = mi; }
+    void setInstr(MachineInstr *mi) {
+      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
+             "Attempt to modify reserved index.");
+      this->mi = mi;
+    }
 
     unsigned getIndex() const { return index; }
-    void setIndex(unsigned index) { this->index = index; }
+    void setIndex(unsigned index) {
+      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
+             "Attempt to set index to invalid value.");
+      assert(this->index != EMPTY_KEY_INDEX &&
+             this->index != TOMBSTONE_KEY_INDEX &&
+             "Attempt to reset reserved index value.");
+      this->index = index;
+    }
     
     IndexListEntry* getNext() { return next; }
     const IndexListEntry* getNext() const { return next; }
-    void setNext(IndexListEntry *next) { this->next = next; }
+    void setNext(IndexListEntry *next) {
+      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
+             "Attempt to modify reserved index.");
+      this->next = next;
+    }
 
     IndexListEntry* getPrev() { return prev; }
     const IndexListEntry* getPrev() const { return prev; }
-    void setPrev(IndexListEntry *prev) { this->prev = prev; }
+    void setPrev(IndexListEntry *prev) {
+      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
+             "Attempt to modify reserved index.");
+      this->prev = prev;
+    }
 
     // This function returns the index list entry that is to be used for empty
     // SlotIndex keys.
-    static IndexListEntry* getEmptyKeyEntry() {
-      if (emptyKeyEntry.get() == 0) {
-        emptyKeyEntry.reset(new IndexListEntry(EMPTY_KEY));
-      }
-      return emptyKeyEntry.get();
-    }
+    inline static IndexListEntry* getEmptyKeyEntry();
 
     // This function returns the index list entry that is to be used for
     // tombstone SlotIndex keys.
-    static IndexListEntry* getTombstoneKeyEntry() {
-      if (tombstoneKeyEntry.get() == 0) {
-        tombstoneKeyEntry.reset(new IndexListEntry(TOMBSTONE_KEY));
-      }
-      return tombstoneKeyEntry.get();
-    } 
+    inline static IndexListEntry* getTombstoneKeyEntry();
   };
+
+  class EmptyIndexListEntry : public IndexListEntry {
+  public:
+    EmptyIndexListEntry() : IndexListEntry(EMPTY_KEY) {}
+  };
+
+  class TombstoneIndexListEntry : public IndexListEntry {
+  public:
+    TombstoneIndexListEntry() : IndexListEntry(TOMBSTONE_KEY) {}
+  };
+
+  inline IndexListEntry* IndexListEntry::getEmptyKeyEntry() {
+    return &*emptyKeyEntry;
+  }
+
+  inline IndexListEntry* IndexListEntry::getTombstoneKeyEntry() {
+    return &*tombstoneKeyEntry;
+  }
 
   // Specialize PointerLikeTypeTraits for IndexListEntry.
   template <>

@@ -16,8 +16,10 @@
 
 using namespace llvm;
 
-std::auto_ptr<IndexListEntry> IndexListEntry::emptyKeyEntry,
-                              IndexListEntry::tombstoneKeyEntry;
+
+// Yep - these are thread safe. See the header for details. 
+ManagedStatic<EmptyIndexListEntry> IndexListEntry::emptyKeyEntry;
+ManagedStatic<TombstoneIndexListEntry> IndexListEntry::tombstoneKeyEntry;
 
 char SlotIndexes::ID = 0;
 static RegisterPass<SlotIndexes> X("slotindexes", "Slot index numbering");
