@@ -36,9 +36,6 @@ foreach(l ${LLVM_SYSTEM_LIBS_LIST})
   set(LLVM_SYSTEM_LIBS ${LLVM_SYSTEM_LIBS} "-l${l}")
 endforeach()
 
-include(GetTargetTriple)
-get_target_triple(target)
-
 foreach(c ${LLVM_TARGETS_TO_BUILD})
   set(TARGETS_BUILT "${TARGETS_BUILT} ${c}")
 endforeach(c)
