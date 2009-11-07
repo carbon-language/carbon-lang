@@ -280,6 +280,9 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
     return;
 
   // This is a copy assignment operator.
+  // Note on the decl that it is a copy assignment operator.
+  OpDecl->setCopyAssignment(true);
+
   // Suppress the implicit declaration of a copy constructor.
   UserDeclaredCopyAssignment = true;
 
