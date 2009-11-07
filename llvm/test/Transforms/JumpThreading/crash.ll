@@ -170,25 +170,3 @@ bb32.i:
         ret i32 1
 }
 
-
-define fastcc void @test5(i1 %tmp, i32 %tmp1) nounwind ssp {
-entry:
-  br i1 %tmp, label %bb12, label %bb13
-
-
-bb12:                                            
-  br label %bb13
-
-bb13:                                            
-  %.lcssa31 = phi i32 [ undef, %bb12 ], [ %tmp1, %entry ]
-  %A = and i1 undef, undef
-  br i1 %A, label %bb15, label %bb61
-
-bb15:                                            
-  ret void
-
-
-bb61:                                            
-  ret void
-}
-
