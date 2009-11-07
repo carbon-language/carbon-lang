@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s
 ; rdar://7353541
 ; rdar://7354376
 
@@ -10,7 +10,6 @@
 define arm_apcscc void @t(i32* nocapture %vals, i32 %c) nounwind {
 entry:
 ; CHECK: t:
-; CHECK: cbz
   %0 = icmp eq i32 %c, 0                          ; <i1> [#uses=1]
   br i1 %0, label %return, label %bb.nph
 

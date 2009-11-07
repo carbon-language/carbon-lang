@@ -54,10 +54,6 @@ public:
                      unsigned DestReg, unsigned SubIdx,
                      const MachineInstr *Orig) const;
 
-  bool isIdentical(const MachineInstr *MI,
-                   const MachineInstr *Other,
-                   const MachineRegisterInfo *MRI) const;
-
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).

@@ -263,6 +263,9 @@ public:
                                               MachineInstr* MI,
                                            const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const;
+
+  virtual bool isIdentical(const MachineInstr *MI, const MachineInstr *Other,
+                           const MachineRegisterInfo *MRI) const;
 };
 
 static inline

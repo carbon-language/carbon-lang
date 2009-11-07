@@ -591,3 +591,8 @@ http://lists.cs.uiuc.edu/pipermail/llvmdev/2009-June/022763.html
 //===---------------------------------------------------------------------===//
 
 Make use of the "rbit" instruction.
+
+//===---------------------------------------------------------------------===//
+
+Take a look at test/CodeGen/Thumb2/machine-licm.ll. ARM should be taught how
+to licm and cse the unnecessary load from cp#1.
