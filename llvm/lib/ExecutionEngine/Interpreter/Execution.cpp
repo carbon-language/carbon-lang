@@ -882,16 +882,6 @@ void Interpreter::visitCallSite(CallSite CS) {
          e = SF.Caller.arg_end(); i != e; ++i, ++pNum) {
     Value *V = *i;
     ArgVals.push_back(getOperandValue(V, SF));
-    // Promote all integral types whose size is < sizeof(i32) into i32.
-    // We do this by zero or sign extending the value as appropriate
-    // according to the parameter attributes
-    const Type *Ty = V->getType();
-    if (Ty->isInteger() && (ArgVals.back().IntVal.getBitWidth() < 32)) {
-      if (CS.paramHasAttr(pNum, Attribute::ZExt))
-        ArgVals.back().IntVal = ArgVals.back().IntVal.zext(32);
-      else if (CS.paramHasAttr(pNum, Attribute::SExt))
-        ArgVals.back().IntVal = ArgVals.back().IntVal.sext(32);
-    }
   }
 
   // To handle indirect calls, we must get the pointer value from the argument
