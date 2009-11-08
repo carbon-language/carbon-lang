@@ -1,4 +1,4 @@
-; RUN: lli -force-interpreter
+; RUN: llvm-as < %s | lli -force-interpreter
 ; Extending a value due to zeroext/signext will leave it the wrong size
 ; causing problems later, such as a crash if you try to extend it again.
 
