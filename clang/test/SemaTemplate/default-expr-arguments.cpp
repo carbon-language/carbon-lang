@@ -108,3 +108,26 @@ struct D {
 };
 D::D() { } // expected-note {{in instantiation of default function argument expression for 'A<int *>' required he}}
 }
+
+// PR5301
+namespace pr5301 {
+  void f(int, int = 0);
+
+  template <typename T>
+  void g(T, T = 0);
+
+  template <int I>
+  void i(int a = I);
+
+  template <typename T>
+  void h(T t) {
+    f(0);
+    g(1);
+    g(t);
+    i<2>();
+  }
+
+  void test() {
+    h(0);
+  }
+}

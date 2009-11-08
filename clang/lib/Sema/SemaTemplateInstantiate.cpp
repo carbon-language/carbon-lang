@@ -427,6 +427,9 @@ namespace {
     Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E,
                                                 bool isAddressOfOperand);
 
+    Sema::OwningExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E,
+                                                      bool isAddressOfOperand);
+
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(TypeLocBuilder &TLB,
@@ -647,6 +650,15 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
                                           &SS,
                                           isAddressOfOperand);
 }
+
+Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
+    CXXDefaultArgExpr *E, bool isAddressOfOperand) {
+  assert(!cast<FunctionDecl>(E->getParam()->getDeclContext())->
+             getDescribedFunctionTemplate() &&
+         "Default arg expressions are never formed in dependent cases.");
+  return SemaRef.Owned(E->Retain());
+}
+
 
 QualType
 TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
