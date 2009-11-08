@@ -2595,6 +2595,10 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
     CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
+    // FIXME: g++ is more complicated here, it tries to put -lstdc++
+    // before -lm, for example.
+    if (D.CCCIsCXX)
+      CmdArgs.push_back("-lstdc++");
   }
 
   const char *Exec =
