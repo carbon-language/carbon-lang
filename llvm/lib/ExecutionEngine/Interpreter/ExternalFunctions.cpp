@@ -468,8 +468,7 @@ static void ByteswapSCANFResults(LLVMContext &C,
           }
           break;
 
-        case 'e': case 'g': case 'E':
-        case 'f':
+        case 'e': case 'g': case 'E': case 'f':
           if (Long || LongLong) {
             Size = 8; Ty = Type::getDoubleTy(C);
           } else {
@@ -508,9 +507,6 @@ GenericValue lle_X_sscanf(const FunctionType *FT,
   GenericValue GV;
   GV.IntVal = APInt(32, sscanf(Args[0], Args[1], Args[2], Args[3], Args[4],
                         Args[5], Args[6], Args[7], Args[8], Args[9]));
-  ByteswapSCANFResults(FT->getContext(),
-                       Args[1], Args[2], Args[3], Args[4],
-                       Args[5], Args[6], Args[7], Args[8], Args[9], 0);
   return GV;
 }
 
@@ -526,9 +522,6 @@ GenericValue lle_X_scanf(const FunctionType *FT,
   GenericValue GV;
   GV.IntVal = APInt(32, scanf( Args[0], Args[1], Args[2], Args[3], Args[4],
                         Args[5], Args[6], Args[7], Args[8], Args[9]));
-  ByteswapSCANFResults(FT->getContext(),
-                       Args[0], Args[1], Args[2], Args[3], Args[4],
-                       Args[5], Args[6], Args[7], Args[8], Args[9]);
   return GV;
 }
 
