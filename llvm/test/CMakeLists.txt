@@ -3,6 +3,10 @@ foreach(c ${LLVM_TARGETS_TO_BUILD})
 endforeach(c)
 set(TARGETS_TO_BUILD ${TARGETS_BUILT})
 
+# FIXME: This won't work for project files, we need to use a --param.
+set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}")
+set(SHLIBEXT "${LTDL_SHLIB_EXT}")
+
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
   configure_file(
