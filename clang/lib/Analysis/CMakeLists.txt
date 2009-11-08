@@ -20,6 +20,7 @@ add_clang_library(clangAnalysis
   CheckObjCInstMethSignature.cpp
   CheckObjCUnusedIVars.cpp
   CheckSecuritySyntaxOnly.cpp
+  CheckSizeofPointer.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   Environment.cpp
