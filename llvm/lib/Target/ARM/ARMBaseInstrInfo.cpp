@@ -18,6 +18,9 @@
 #include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -895,6 +898,57 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   }
 
   return false;
+}
+
+void ARMBaseInstrInfo::
+reMaterialize(MachineBasicBlock &MBB,
+              MachineBasicBlock::iterator I,
+              unsigned DestReg, unsigned SubIdx,
+              const MachineInstr *Orig) const {
+  DebugLoc dl = Orig->getDebugLoc();
+  unsigned Opcode = Orig->getOpcode();
+  switch (Opcode) {
+  default: {
+    MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
+    MI->getOperand(0).setReg(DestReg);
+    MBB.insert(I, MI);
+    break;
+  }
+  case ARM::tLDRpci_pic:
+  case ARM::t2LDRpci_pic: {
+    MachineFunction &MF = *MBB.getParent();
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    MachineConstantPool *MCP = MF.getConstantPool();
+    unsigned CPI = Orig->getOperand(1).getIndex();
+    const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPI];
+    assert(MCPE.isMachineConstantPoolEntry() &&
+           "Expecting a machine constantpool entry!");
+    ARMConstantPoolValue *ACPV =
+      static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
+    unsigned PCLabelId = AFI->createConstPoolEntryUId();
+    ARMConstantPoolValue *NewCPV = 0;
+    if (ACPV->isGlobalValue())
+      NewCPV = new ARMConstantPoolValue(ACPV->getGV(), PCLabelId,
+                                        ARMCP::CPValue, 4);
+    else if (ACPV->isExtSymbol())
+      NewCPV = new ARMConstantPoolValue(MF.getFunction()->getContext(),
+                                        ACPV->getSymbol(), PCLabelId, 4);
+    else if (ACPV->isBlockAddress())
+      NewCPV = new ARMConstantPoolValue(ACPV->getBlockAddress(), PCLabelId,
+                                        ARMCP::CPBlockAddress, 4);
+    else
+      llvm_unreachable("Unexpected ARM constantpool value type!!");
+    CPI = MCP->getConstantPoolIndex(NewCPV, MCPE.getAlignment());
+    MachineInstrBuilder MIB = BuildMI(MBB, I, Orig->getDebugLoc(), get(Opcode),
+                                      DestReg)
+      .addConstantPoolIndex(CPI).addImm(PCLabelId);
+    (*MIB).setMemRefs(Orig->memoperands_begin(), Orig->memoperands_end());
+    break;
+  }
+  }
+
+  MachineInstr *NewMI = prior(I);
+  NewMI->getOperand(0).setSubReg(SubIdx);
 }
 
 bool ARMBaseInstrInfo::isIdentical(const MachineInstr *MI0,

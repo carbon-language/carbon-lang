@@ -264,6 +264,11 @@ public:
                                            const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const;
 
+  virtual void reMaterialize(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator MI,
+                             unsigned DestReg, unsigned SubIdx,
+                             const MachineInstr *Orig) const;
+
   virtual bool isIdentical(const MachineInstr *MI, const MachineInstr *Other,
                            const MachineRegisterInfo *MRI) const;
 };
