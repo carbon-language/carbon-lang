@@ -1839,17 +1839,22 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
     if (isa<TranslationUnitDecl>(DC)) {
       Diag(D.getIdentifierLoc(), diag::err_invalid_declarator_global_scope)
         << Name << D.getCXXScopeSpec().getRange();
-    } else if (!CurContext->Encloses(DC)) {
-      // The qualifying scope doesn't enclose the original declaration.
-      // Emit diagnostic based on current scope.
-      SourceLocation L = D.getIdentifierLoc();
-      SourceRange R = D.getCXXScopeSpec().getRange();
-      if (isa<FunctionDecl>(CurContext))
-        Diag(L, diag::err_invalid_declarator_in_function) << Name << R;
-      else
-        Diag(L, diag::err_invalid_declarator_scope)
-          << Name << cast<NamedDecl>(DC) << R;
-      D.setInvalidType();
+    } else {
+      DeclContext *Cur = CurContext;
+      while (isa<LinkageSpecDecl>(Cur))
+        Cur = Cur->getParent();
+      if (!Cur->Encloses(DC)) {
+        // The qualifying scope doesn't enclose the original declaration.
+        // Emit diagnostic based on current scope.
+        SourceLocation L = D.getIdentifierLoc();
+        SourceRange R = D.getCXXScopeSpec().getRange();
+        if (isa<FunctionDecl>(Cur))
+          Diag(L, diag::err_invalid_declarator_in_function) << Name << R;
+        else
+          Diag(L, diag::err_invalid_declarator_scope)
+            << Name << cast<NamedDecl>(DC) << R;
+        D.setInvalidType();
+      }
     }
   }
 

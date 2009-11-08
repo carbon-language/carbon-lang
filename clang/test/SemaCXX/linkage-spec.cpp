@@ -33,3 +33,10 @@ extern "C++" {
     };
   }
 }
+
+// PR5430
+namespace pr5430 {
+  extern "C" void func(void);
+}
+using namespace pr5430;
+extern "C" void pr5430::func(void) { }
