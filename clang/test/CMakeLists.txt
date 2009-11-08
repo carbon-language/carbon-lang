@@ -22,13 +22,10 @@ set(CLANG_TEST_DIRECTORIES
   "SemaObjCXX"
   "SemaTemplate")
 
-get_target_property(LLVM_TOOLS_PATH clang RUNTIME_OUTPUT_DIRECTORY)
-get_target_property(LLVM_LIBS_PATH clang LIBRARY_OUTPUT_DIRECTORY)
-
 set(LLVM_SOURCE_DIR "${LLVM_MAIN_SRC_DIR}")
 set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}")
-set(LLVM_TOOLS_DIR "${LLVM_TOOLS_PATH}/%(build_config)s")
-set(LLVM_LIBS_DIR "${LLVM_LIBS_PATH}/%(build_config)s")
+set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_config)s")
+set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/%(build_config)s")
 set(CLANG_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 set(CLANG_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/..")
 
