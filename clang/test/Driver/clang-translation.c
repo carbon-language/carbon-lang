@@ -13,4 +13,3 @@
 // RUN: grep '"--mcpu=yonah"' %t.log
 // RUN: clang -ccc-host-triple x86_64-apple-darwin9 -### -S %s -o %t.s 2> %t.log
 // RUN: grep '"--mcpu=core2"' %t.log
-// RUN: true

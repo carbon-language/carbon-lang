@@ -53,4 +53,3 @@
 // RUN: grep '"darwin::Assemble", inputs: \[".*\.s"\], output: ".*\.o"' %t
 // RUN: grep '"darwin::Link", inputs: \[".*\.o"\], output: "a.out"' %t
 
-// RUN: true

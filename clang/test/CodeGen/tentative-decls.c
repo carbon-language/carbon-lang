@@ -36,4 +36,3 @@ static int c5[];
 static int func() { return c5[0]; }
 int callfunc() { return func(); }
 
-// RUN: true

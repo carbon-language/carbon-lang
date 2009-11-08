@@ -8,7 +8,6 @@
 // RUN: grep -F '@"OBJC_IVAR_$_I0._y" = global i64 6, section "__DATA, __objc_const", align 8' %t
 // RUN: grep -F '@"OBJC_IVAR_$_I0._b4" = global i64 7, section "__DATA, __objc_const", align 8' %t
 // RUN: grep -F '@"OBJC_IVAR_$_I0." = global' %t | count 0
-// RUN: true
 
 @interface I0 {
   unsigned _b0:4;

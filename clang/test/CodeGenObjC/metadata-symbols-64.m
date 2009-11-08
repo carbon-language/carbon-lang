@@ -34,7 +34,6 @@
 // RUN: grep '@objc_msgSend_fixup(' %t
 // RUN: grep '@objc_msgSend_fpret(' %t
 
-// RUN: true
 
 /*
 

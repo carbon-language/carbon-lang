@@ -32,7 +32,6 @@
 // RUNX: grep '@"\\01l_OBJC_METACLASS_RO_$_C" = internal global .*, section "__DATA, __objc_const", align 8' %t &&
 // RUNX: grep '@"\\01l_OBJC_PROTOCOL_$_P" = weak hidden global .*, section "__DATA,__datacoal_nt,coalesced", align 8' %t &&
 
-// RUN: true
 
 @interface A @end
 @implementation A

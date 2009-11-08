@@ -29,7 +29,6 @@
 // RUN: grep '@"\\01l_OBJC_$_PROP_LIST_A" = internal global .*section "__OBJC,__property,regular,no_dead_strip", align 4' %t
 // RUN: grep "\.lazy_reference \.objc_class_name_J0" %t
 
-// RUN: true
 
 /*
 

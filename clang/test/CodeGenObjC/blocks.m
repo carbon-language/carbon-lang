@@ -33,4 +33,3 @@ void foo(T *P) {
 }
 @end
 
-// RUN: true

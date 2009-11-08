@@ -39,6 +39,5 @@
 // RUN: clang -ccc-host-triple i386-apple-darwin9 -### -arch i386 -arch x86_64 -g %s 2> %t.log
 // RUN: grep dsymutil %t.log | count 0
 
-// RUN: true
 
 

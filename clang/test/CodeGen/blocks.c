@@ -27,4 +27,3 @@ void (^test1)(void) = ^(void) {
   ^ { i = 1; }();
 };
 
-// RUN: true

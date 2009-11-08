@@ -22,7 +22,6 @@
 // RUN: grep 'declare void @f_ext()' %t
 // RUN: grep 'define internal void @f_deferred()' %t
 // RUN: grep 'define hidden i32 @f_def()' %t
-// RUN: true
 
 int g_com;
 int g_def = 0;

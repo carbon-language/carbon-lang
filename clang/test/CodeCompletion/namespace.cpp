@@ -11,5 +11,4 @@ namespace N2 {
   // RUN: clang-cc -fsyntax-only -code-completion-at=%s:10:12 %s -o - | FileCheck -check-prefix=CC1 %s
   // CHECK-CC1: I1 : 0
   // CHECK-CC1-NEXT: I5 : 0
-  // RUN: true
   

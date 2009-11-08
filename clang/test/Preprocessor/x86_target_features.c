@@ -30,6 +30,5 @@
 // RUN: grep '#define __SSE__ 1' %t
 // RUN: grep '#define __SSSE3__ 1' %t | count 0
 
-// RUN: true
 
 

@@ -15,4 +15,3 @@ void f() {
   // CHECK-CC1: Integer : 2
   // CHECK-CC1: T : 2
   // CHECK-CC1: N : 6
-  // RUN: true

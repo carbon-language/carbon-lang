@@ -19,4 +19,3 @@ void f0() {
   int b = g1_ext();
 }
 
-// RUN: true

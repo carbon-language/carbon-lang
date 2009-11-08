@@ -1,6 +1,6 @@
 // FIXME: Disabled, appears to have undefined behavior, and needs to be updated to match new warnings.
-// RUN: true
-// RUNX: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
+// XFAIL: *
 
 namespace A {
     int VA;

@@ -7,4 +7,3 @@ void f1(A a) { }
 // RUN: grep 'define void @_Z2f2v(.struct.A\* noalias sret .agg.result)' %t
 A f2() { return A(); }
 
-// RUN: true

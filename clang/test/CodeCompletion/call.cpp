@@ -24,5 +24,4 @@ void test() {
   // RUN: clang-cc -fsyntax-only -code-completion-at=%s:19:13 %s -o - | FileCheck -check-prefix=CC2 %s
   // CHECK-CC2-NOT: f(struct N::Y y, int ZZ)
   // CHECK-CC2: f(int i, int j, <#int k#>)
-  // RUN: true
 }

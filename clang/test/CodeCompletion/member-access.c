@@ -10,4 +10,3 @@ void test(struct Point *p) {
   // CHECK-CC1: x
   // CHECK-CC1: y
   // CHECK-CC1: z
-  // RUN: true

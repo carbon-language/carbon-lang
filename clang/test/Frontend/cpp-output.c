@@ -4,7 +4,6 @@
 // RUN: clang -E -o %t -CC %s
 // RUN: grep '^int x; // comment' %t
 // RUN: grep '^x /\* comment \*/ x /\* comment \*/' %t
-// RUN: true
 
 int x; // comment
 

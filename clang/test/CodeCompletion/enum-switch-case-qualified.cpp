@@ -22,7 +22,6 @@ void test(enum N::C::Color color) {
   switch (color) {
   case 
     // RUN: clang-cc -fsyntax-only -code-completion-at=%s:23:8 %s -o - | FileCheck -check-prefix=CC1 %s
-    // RUN: true
     // CHECK-CC1: Blue : 0 : N::C::Blue
     // CHECK-CC1-NEXT: Green : 0 : N::C::Green
     // CHECK-CC1-NEXT: Indigo : 0 : N::C::Indigo

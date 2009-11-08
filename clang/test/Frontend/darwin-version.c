@@ -20,4 +20,3 @@
 // RUN: grep '__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__' %t | grep '1050' | count 1
 // RUN: clang -ccc-host-triple i686-apple-darwin9 -mmacosx-version-min=10.6 -dM -E -o %t %s
 // RUN: grep '__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__' %t | grep '1060' | count 1
-// RUN: true

@@ -33,5 +33,4 @@ void test(struct Point *p) {
   // CC2: FOO
   // CC2: IDENTITY(<#X#>)
   // CC2: WIBBLE
-  // RUN: true
 }

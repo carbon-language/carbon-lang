@@ -9,4 +9,3 @@
 // RUN: grep -F '"--fmath-errno=0"' %t
 // RUN: grep -F '"-fno-show-source-location"' %t
 // RUN: grep -F '"-fshort-wchar"' %t
-// RUN: true

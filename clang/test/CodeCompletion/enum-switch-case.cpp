@@ -26,4 +26,3 @@ void test(enum N::Color color) {
     // CHECK-CC1-NEXT: Orange : 0 : N::Orange
     // CHECK-CC1-NEXT: Violet : 0 : N::Violet
     
-    // RUN: true

@@ -14,5 +14,4 @@ _Pragma("mark")
 // RUN: grep "//#pragma mark mark" %t
 #pragma mark mark
 
-// RUN: true
 

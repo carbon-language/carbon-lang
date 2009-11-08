@@ -10,7 +10,6 @@
 // RUN: grep 'ssp' %t
 // RUN: clang -fno-stack-protector -emit-llvm -S -o %t %s
 // RUN: not grep 'ssp' %t
-// RUN: true
 
 int printf(const char * _Format, ...);
 

@@ -7,4 +7,3 @@
 // RUN: clang -ccc-host-triple i386-unknown-unknown -fPIC -dM -E -o %t %s
 // RUN: grep '#define __PIC__ 2' %t | count 1
 // RUN: grep '#define __pic__ 2' %t | count 1
-// RUN: true

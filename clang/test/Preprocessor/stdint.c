@@ -1158,7 +1158,6 @@
 // X86_64:INTMAX_C_(0) (0LL)
 // X86_64:UINTMAX_C_(0) (0ULL)
 //
-// RUN: true
 
 #include <stdint.h>
 

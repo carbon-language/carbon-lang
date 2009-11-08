@@ -76,4 +76,3 @@
 // DARWIN2: 1: preprocessor, {0}, assembler
 // DARWIN2: 2: assembler, {1}, object
 
-// RUN: true

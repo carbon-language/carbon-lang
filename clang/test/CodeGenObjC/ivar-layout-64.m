@@ -4,7 +4,6 @@
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\11q\\10\\00"' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"!q\\00"' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_NAME_.*" = internal global .* c"\\01\\14\\00"' %t
-// RUN: true
 
 /*
 

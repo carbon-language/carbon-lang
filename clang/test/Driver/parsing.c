@@ -19,6 +19,5 @@
 // RUN: clang -ccc-print-options -Wally 2> %t
 // RUN: grep 'Option 0 - Name: "-W", Values: {"ally"}' %t
 
-// RUN: true
 
 

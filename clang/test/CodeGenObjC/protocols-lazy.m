@@ -45,4 +45,3 @@ void f2() { id x = @protocol(P5); } // This generates a forward
 @implementation I1 -im1 { return 0; }; @end
 void f3() { id x = @protocol(P6); }
 
-// RUN: true

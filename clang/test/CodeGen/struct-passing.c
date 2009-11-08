@@ -5,7 +5,6 @@
 // RUN: grep 'declare void @f3(.* noalias sret)$' %t
 // RUN: grep 'declare void @f4(.* byval)$' %t
 // RUN: grep 'declare void @f5(.* byval)$' %t
-// RUN: true
 // PR3835
 
 typedef int T0;

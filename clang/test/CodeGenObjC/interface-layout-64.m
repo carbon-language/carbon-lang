@@ -22,7 +22,6 @@
 // RUN: grep '_OBJC_CLASS_RO_$_I11" = internal global .* { i32 0, i32 5, i32 5, .*' %t
 // RUN: grep '_OBJC_CLASS_RO_$_I12" = internal global .* { i32 0, i32 8, i32 12, .*' %t
 
-// RUN: true
 
 /*
   Compare to:

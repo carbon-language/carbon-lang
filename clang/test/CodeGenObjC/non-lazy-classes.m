@@ -2,7 +2,6 @@
 // RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm -o %t %s
 // RUN: grep '@".01L_OBJC_LABEL_NONLAZY_CLASS_$" = internal global \[1 x .*\] .*@"OBJC_CLASS_$_A".*, section "__DATA, __objc_nlclslist, regular, no_dead_strip", align 8' %t
 // RUN: grep '@".01L_OBJC_LABEL_NONLAZY_CATEGORY_$" = internal global \[1 x .*\] .*@".01l_OBJC_$_CATEGORY_A_$_Cat".*, section "__DATA, __objc_nlcatlist, regular, no_dead_strip", align 8' %t
-// RUN: true
 
 @interface A @end
 @implementation A

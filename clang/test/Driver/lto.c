@@ -22,4 +22,3 @@
 // RUN: clang %s -emit-llvm -S -### 2> %t.log
 // RUN: grep '"-o" ".*lto\.s" "-x" "c" ".*lto\.c"' %t.log
 
-// RUN: true

@@ -96,4 +96,3 @@ void f17(float a, float b, float c, float d, float e, float f, float g, float h,
 struct f18_s0 { int f0; };
 void f18(int a, struct f18_s0 f18_arg1) { while (1) {} }
 
-// RUN: true

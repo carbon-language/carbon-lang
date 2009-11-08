@@ -72,4 +72,3 @@
 11: T11(b)
 // CHECK-Identifiers-True: 11: #0
 
-// RUN: true

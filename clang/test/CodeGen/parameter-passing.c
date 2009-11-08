@@ -13,7 +13,6 @@
 
 // RUN: clang-cc %s -triple powerpc-unknown-unknown -O3 -emit-llvm -o %t
 // RUN: not grep '@g0' %t
-// RUN: true
 
 typedef _Bool BoolTy;
 typedef int ScalarTy;

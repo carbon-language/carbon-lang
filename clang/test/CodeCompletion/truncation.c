@@ -9,4 +9,3 @@ struct
 // CHECK-CC2: X : 1
 // CHECK-CC2: Xa : 1
 // CHECK-CC2: Y : 1
-// RUN: true

@@ -202,4 +202,3 @@ void f50(struct s50 a0) { }
 struct s51 { vvbp f0; int f1; };
 void f51(struct s51 a0) { }
 
-// RUN: true

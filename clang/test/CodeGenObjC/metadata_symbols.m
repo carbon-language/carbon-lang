@@ -20,7 +20,6 @@
 // RUN: grep -F 'define internal void @"\01-[A im0]"' %t
 // RUN: grep -F 'define internal void @"\01-[A(Cat) im1]"' %t
 
-// RUN: true
 
 @interface A
 @end

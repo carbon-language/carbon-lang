@@ -2,7 +2,6 @@
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
 // RUN: clang-cc -fblocks -fobjc-gc -triple i386-apple-darwin -S %s -o %t-32.s
 // RUN: FileCheck -check-prefix LP32 --input-file=%t-32.s %s
-// RUN: true
 
 @interface NSObject 
 - copy;

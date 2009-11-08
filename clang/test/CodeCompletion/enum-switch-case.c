@@ -25,5 +25,4 @@ void test(enum Color color) {
     // CHECK-CC1-NEXT: Indigo : 0
     // CHECK-CC1-NEXT: Orange : 0
     // CHECK-CC1-NEXT: Violet : 0
-    // RUN: true
       
