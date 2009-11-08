@@ -114,7 +114,7 @@ def executeShCmd(cmd, cfg, cwd, results):
                         r[2] = open(r[0], r[1])
                     # Workaround a Win32 and/or subprocess bug when appending.
                     if r[1] == 'a':
-                        r[2].seek(0, os.SEEK_END)
+                        r[2].seek(0, 2)
                 result = r[2]
             final_redirects.append(result)
 
