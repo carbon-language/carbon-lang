@@ -1,4 +1,3 @@
-/* RUN: ignore */
 #include <stdio.h>
 
 /* Make this invalid C++ */

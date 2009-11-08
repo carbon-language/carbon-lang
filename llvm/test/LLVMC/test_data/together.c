@@ -1,7 +1,3 @@
-/*
- * RUN: ignore
- */
-
 #include <stdio.h>
 
 void test() {
