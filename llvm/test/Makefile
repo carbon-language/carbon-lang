@@ -98,19 +98,11 @@ endif
 
 check-local-lit:: lit.site.cfg Unit/lit.site.cfg
 	( $(ULIMIT) \
-	  $(LLVM_SRC_ROOT)/utils/lit/lit.py \
-		--path "$(LLVMToolDir)" \
-		--path "$(LLVM_SRC_ROOT)/test/Scripts" \
-		--path "$(LLVMGCCDIR)/bin" \
-		$(LIT_ARGS) $(LIT_TESTSUITE) )
+	  $(LLVM_SRC_ROOT)/utils/lit/lit.py $(LIT_ARGS) $(LIT_TESTSUITE) )
 
 check-local-all:: lit.site.cfg Unit/lit.site.cfg extra-lit-site-cfgs
 	( $(ULIMIT) \
-	  $(LLVM_SRC_ROOT)/utils/lit/lit.py \
-		--path "$(LLVMToolDir)" \
-		--path "$(LLVM_SRC_ROOT)/test/Scripts" \
-		--path "$(LLVMGCCDIR)/bin" \
-		$(LIT_ARGS) $(LIT_ALL_TESTSUITES) )
+	  $(LLVM_SRC_ROOT)/utils/lit/lit.py $(LIT_ARGS) $(LIT_ALL_TESTSUITES) )
 
 ifdef TESTONE
 CLEANED_TESTONE := $(patsubst %/,%,$(TESTONE))
