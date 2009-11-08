@@ -450,12 +450,16 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
 
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool requiresRealignment =
+    RealignStack && (MFI->getMaxAlignment() > StackAlign);
 
   // FIXME: Currently we don't support stack realignment for functions with
   //        variable-sized allocas
-  return (RealignStack &&
-          (MFI->getMaxAlignment() > StackAlign &&
-           !MFI->hasVarSizedObjects()));
+  if (requiresRealignment && MFI->hasVarSizedObjects())
+    llvm_report_error(
+      "Stack realignment in presense of dynamic allocas is not supported");
+
+  return requiresRealignment;
 }
 
 bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
