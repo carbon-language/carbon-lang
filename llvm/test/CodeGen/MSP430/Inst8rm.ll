@@ -19,13 +19,21 @@ define i8 @and(i8 %a) nounwind {
 	ret i8 %2
 }
 
-
 define i8 @bis(i8 %a) nounwind {
 ; CHECK: bis:
 ; CHECK: bis.b	&foo, r15
 	%1 = load i8* @foo
 	%2 = or i8 %a, %1
 	ret i8 %2
+}
+
+define i8  @bic(i8 %a) nounwind {
+; CHECK: bic:
+; CHECK: bic.b  &foo, r15
+        %1 = load i8* @foo
+        %2 = xor i8 %1, -1
+        %3 = and i8 %a, %2
+        ret i8 %3
 }
 
 define i8 @xor(i8 %a) nounwind {

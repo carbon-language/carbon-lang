@@ -37,6 +37,16 @@ define void @bis(i16 %a) nounwind {
 	ret void
 }
 
+define void @bic(i16 zeroext %m) nounwind {
+; CHECK: bic:
+; CHECK: bic.w   r15, &foo
+        %1 = xor i16 %m, -1
+        %2 = load i16* @foo
+        %3 = and i16 %2, %1
+        store i16 %3, i16* @foo
+        ret void
+}
+
 define void @xor(i16 %a) nounwind {
 ; CHECK: xor:
 ; CHECK: xor.w	r15, &foo

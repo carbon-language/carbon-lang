@@ -19,13 +19,21 @@ define i16 @and(i16 %a) nounwind {
 	ret i16 %2
 }
 
-
 define i16 @bis(i16 %a) nounwind {
 ; CHECK: bis:
 ; CHECK: bis.w	&foo, r15
 	%1 = load i16* @foo
 	%2 = or i16 %a, %1
 	ret i16 %2
+}
+
+define i16  @bic(i16 %a) nounwind {
+; CHECK: bic:
+; CHECK: bic.w	&foo, r15
+        %1 = load i16* @foo
+        %2 = xor i16 %1, -1
+        %3 = and i16 %a, %2
+        ret i16 %3
 }
 
 define i16 @xor(i16 %a) nounwind {

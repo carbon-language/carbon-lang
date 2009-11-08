@@ -462,7 +462,6 @@ def AND16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
                  (implicit SRW)]>;
 }
 
-
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
 def OR8rr  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                     "bis.b\t{$src2, $dst}",
@@ -517,6 +516,37 @@ def OR16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
                 "bis.w\t{$src, $dst}",
                  [(store (or (i16 (load addr:$dst)),
                              (i16 (load addr:$src))), addr:$dst)]>;
+}
+
+// bic does not modify condition codes
+def BIC8rr :  Pseudo<(outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
+                "bic.b\t{$src2, $dst}",
+                [(set GR8:$dst, (and GR8:$src1, (not GR8:$src2)))]>;
+def BIC16rr : Pseudo<(outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                "bic.w\t{$src2, $dst}",
+                [(set GR16:$dst, (and GR16:$src1, (not GR16:$src2)))]>;
+
+def BIC8rm :  Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
+                "bic.b\t{$src2, $dst}",
+                [(set GR8:$dst, (and GR8:$src1, (not (i8 (load addr:$src2)))))]>;
+def BIC16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
+                "bic.w\t{$src2, $dst}",
+                [(set GR16:$dst, (and GR16:$src1, (not (i16 (load addr:$src2)))))]>;
+
+let isTwoAddress = 0 in {
+def BIC8mr :  Pseudo<(outs), (ins memdst:$dst, GR8:$src),
+                "bic.b\t{$src, $dst}",
+                [(store (and (load addr:$dst), (not GR8:$src)), addr:$dst)]>;
+def BIC16mr : Pseudo<(outs), (ins memdst:$dst, GR16:$src),
+                "bic.w\t{$src, $dst}",
+                [(store (and (load addr:$dst), (not GR16:$src)), addr:$dst)]>;
+
+def BIC8mm :  Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
+                "bic.b\t{$src, $dst}",
+                [(store (and (load addr:$dst), (not (i8 (load addr:$src)))), addr:$dst)]>;
+def BIC16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
+                "bic.w\t{$src, $dst}",
+                [(store (and (load addr:$dst), (not (i16 (load addr:$src)))), addr:$dst)]>;
 }
 
 let isCommutable = 1 in { // X = XOR Y, Z  == X = XOR Z, Y

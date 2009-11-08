@@ -29,6 +29,14 @@ define i8 @bis(i8 %a, i8 %b) nounwind {
 	ret i8 %1
 }
 
+define i8 @bic(i8 %a, i8 %b) nounwind {
+; CHECK: bic:
+; CHECK: bic.b  r14, r15
+        %1 = xor i8 %b, -1
+        %2 = and i8 %a, %1
+        ret i8 %2
+}
+
 define i8 @xor(i8 %a, i8 %b) nounwind {
 ; CHECK: xor:
 ; CHECK: xor.w	r14, r15

@@ -29,6 +29,14 @@ define i16 @bis(i16 %a, i16 %b) nounwind {
 	ret i16 %1
 }
 
+define i16 @bic(i16 %a, i16 %b) nounwind {
+; CHECK: bic:
+; CHECK: bic.w	r14, r15
+        %1 = xor i16 %b, -1
+        %2 = and i16 %a, %1
+        ret i16 %2
+}
+
 define i16 @xor(i16 %a, i16 %b) nounwind {
 ; CHECK: xor:
 ; CHECK: xor.w	r14, r15

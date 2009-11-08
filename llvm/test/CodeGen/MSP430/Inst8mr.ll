@@ -37,6 +37,16 @@ define void @bis(i8 %a) nounwind {
 	ret void
 }
 
+define void @bic(i8 zeroext %m) nounwind {
+; CHECK: bic:
+; CHECK: bic.b   r15, &foo
+        %1 = xor i8 %m, -1
+        %2 = load i8* @foo
+        %3 = and i8 %2, %1
+        store i8 %3, i8* @foo
+        ret void
+}
+
 define void @xor(i8 %a) nounwind {
 ; CHECK: xor:
 ; CHECK: xor.b	r15, &foo
