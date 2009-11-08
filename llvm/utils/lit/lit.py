@@ -236,8 +236,8 @@ def getTests(path, litConfig, testSuiteCache, localConfigCache):
         litConfig.note('resolved input %r to %r::%r' % (path, ts.name,
                                                         path_in_suite))
 
-    return getTestsInSuite(ts, path_in_suite, litConfig,
-                           testSuiteCache, localConfigCache)
+    return ts, getTestsInSuite(ts, path_in_suite, litConfig,
+                               testSuiteCache, localConfigCache)
 
 def getTestsInSuite(ts, path_in_suite, litConfig,
                     testSuiteCache, localConfigCache):
@@ -277,19 +277,24 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
         # site configuration and then in the source path.
         file_execpath = ts.getExecPath(path_in_suite + (filename,))
         if dirContainsTestSuite(file_execpath):
-            subiter = getTests(file_execpath, litConfig,
-                               testSuiteCache, localConfigCache)
+            sub_ts, subiter = getTests(file_execpath, litConfig,
+                                       testSuiteCache, localConfigCache)
         elif dirContainsTestSuite(file_sourcepath):
-            subiter = getTests(file_sourcepath, litConfig,
-                               testSuiteCache, localConfigCache)
+            sub_ts, subiter = getTests(file_sourcepath, litConfig,
+                                       testSuiteCache, localConfigCache)
         else:
             # Otherwise, continue loading from inside this test suite.
             subiter = getTestsInSuite(ts, path_in_suite + (filename,),
                                       litConfig, testSuiteCache,
                                       localConfigCache)
+            sub_ts = None
 
+        N = 0
         for res in subiter:
+            N += 1
             yield res
+        if sub_ts and not N:
+            litConfig.warning('test suite %r contained no tests' % sub_ts.name)
 
 def runTests(numThreads, litConfig, provider, display):
     # If only using one testing thread, don't use threads at all; this lets us
@@ -428,7 +433,7 @@ def main():
     for input in inputs:
         prev = len(tests)
         tests.extend(getTests(input, litConfig,
-                              testSuiteCache, localConfigCache))
+                              testSuiteCache, localConfigCache)[1])
         if prev == len(tests):
             litConfig.warning('input %r contained no tests' % input)
 
