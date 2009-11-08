@@ -1839,8 +1839,8 @@ def ext_typecheck_convert_incompatible_pointer : ExtWarn<
   "incompatible pointer types %2 %1, expected %0">;
 def ext_typecheck_convert_discards_qualifiers : ExtWarn<
   "%2 %1 discards qualifiers, expected %0">;
-def err_multi_pointer_qualifier_mismatch : Error<
-  "%2, %0 and %1 have different qualifiers in a multi-level pointer chain">;
+def err_nested_pointer_qualifier_mismatch : Error<
+  "%2, %0 and %1 have different qualifiers in nested pointer types">;
 def warn_incompatible_vectors : Warning<
   "incompatible vector types %2 %1, expected %0">,
   InGroup<VectorConversions>, DefaultIgnore;

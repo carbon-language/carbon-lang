@@ -3762,7 +3762,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
       } while (lhptee->isPointerType() && rhptee->isPointerType());
       
       if (lhptee.getUnqualifiedType() == rhptee.getUnqualifiedType())
-        return IncompatibleMultiPointerQualifiers;
+        return IncompatibleNestedPointerQualifiers;
     }
     
     // General pointer incompatibility takes priority over qualifiers.
@@ -6241,8 +6241,8 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
       return false;
     DiagKind = diag::ext_typecheck_convert_discards_qualifiers;
     break;
-  case IncompatibleMultiPointerQualifiers:
-    DiagKind = diag::err_multi_pointer_qualifier_mismatch;
+  case IncompatibleNestedPointerQualifiers:
+    DiagKind = diag::err_nested_pointer_qualifier_mismatch;
     break;
   case IntToBlockPointer:
     DiagKind = diag::err_int_to_block_pointer;
