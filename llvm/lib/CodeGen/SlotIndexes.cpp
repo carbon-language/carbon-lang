@@ -13,16 +13,42 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 
 
 // Yep - these are thread safe. See the header for details. 
-ManagedStatic<EmptyIndexListEntry> IndexListEntry::emptyKeyEntry;
-ManagedStatic<TombstoneIndexListEntry> IndexListEntry::tombstoneKeyEntry;
+namespace {
+
+
+  class EmptyIndexListEntry : public IndexListEntry {
+  public:
+    EmptyIndexListEntry() : IndexListEntry(EMPTY_KEY) {}
+  };
+
+  class TombstoneIndexListEntry : public IndexListEntry {
+  public:
+    TombstoneIndexListEntry() : IndexListEntry(TOMBSTONE_KEY) {}
+  };
+
+  // The following statics are thread safe. They're read only, and you
+  // can't step from them to any other list entries.
+  ManagedStatic<EmptyIndexListEntry> IndexListEntryEmptyKey;
+  ManagedStatic<TombstoneIndexListEntry> IndexListEntryTombstoneKey;
+}
 
 char SlotIndexes::ID = 0;
 static RegisterPass<SlotIndexes> X("slotindexes", "Slot index numbering");
+
+IndexListEntry* IndexListEntry::getEmptyKeyEntry() {
+  return &*IndexListEntryEmptyKey;
+}
+
+IndexListEntry* IndexListEntry::getTombstoneKeyEntry() {
+  return &*IndexListEntryTombstoneKey;
+}
+
 
 void SlotIndexes::getAnalysisUsage(AnalysisUsage &au) const {
   au.setPreservesAll();

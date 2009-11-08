@@ -29,12 +29,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ManagedStatic.h"
 
 namespace llvm {
-
-  class EmptyIndexListEntry;
-  class TombstoneIndexListEntry;
 
   /// This class represents an entry in the slot index list held in the
   /// SlotIndexes pass. It should not be used directly. See the
@@ -45,11 +41,6 @@ namespace llvm {
 
     static const unsigned EMPTY_KEY_INDEX = ~0U & ~3U,
                           TOMBSTONE_KEY_INDEX = ~0U & ~7U;
-
-    // The following statics are thread safe. They're read only, and you
-    // can't step from them to any other list entries.
-    static ManagedStatic<EmptyIndexListEntry> emptyKeyEntry;
-    static ManagedStatic<TombstoneIndexListEntry> tombstoneKeyEntry;
 
     IndexListEntry *next, *prev;
     MachineInstr *mi;
@@ -116,30 +107,12 @@ namespace llvm {
 
     // This function returns the index list entry that is to be used for empty
     // SlotIndex keys.
-    inline static IndexListEntry* getEmptyKeyEntry();
+    static IndexListEntry* getEmptyKeyEntry();
 
     // This function returns the index list entry that is to be used for
     // tombstone SlotIndex keys.
-    inline static IndexListEntry* getTombstoneKeyEntry();
+    static IndexListEntry* getTombstoneKeyEntry();
   };
-
-  class EmptyIndexListEntry : public IndexListEntry {
-  public:
-    EmptyIndexListEntry() : IndexListEntry(EMPTY_KEY) {}
-  };
-
-  class TombstoneIndexListEntry : public IndexListEntry {
-  public:
-    TombstoneIndexListEntry() : IndexListEntry(TOMBSTONE_KEY) {}
-  };
-
-  inline IndexListEntry* IndexListEntry::getEmptyKeyEntry() {
-    return &*emptyKeyEntry;
-  }
-
-  inline IndexListEntry* IndexListEntry::getTombstoneKeyEntry() {
-    return &*tombstoneKeyEntry;
-  }
 
   // Specialize PointerLikeTypeTraits for IndexListEntry.
   template <>
