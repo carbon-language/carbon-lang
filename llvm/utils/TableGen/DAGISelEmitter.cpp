@@ -1359,7 +1359,7 @@ public:
       Pat->setTypes(Other->getExtTypes());
       // The top level node type is checked outside of the select function.
       if (!isRoot)
-        emitCheck(Prefix + ".getNode()->getValueType(0) == " +
+        emitCheck(Prefix + ".getValueType() == " +
                   getName(Pat->getTypeNum(0)));
       return true;
     }
