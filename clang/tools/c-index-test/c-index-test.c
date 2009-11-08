@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 #ifdef _MSC_VER
 char *basename(const char* path)
@@ -87,7 +86,7 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
             printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Ref)),
                                              curLine, curColumn);
             PrintCursor(Ref);
-			printf(" [Context:%s]\n", clang_getDeclSpelling(Ref.decl));
+            printf(" [Context:%s]\n", clang_getDeclSpelling(Ref.decl));
           }
           startBuf++;
         }
