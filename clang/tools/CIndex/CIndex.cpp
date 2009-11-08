@@ -552,7 +552,8 @@ const char *clang_getDeclSpelling(CXDecl AnonDecl)
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
   
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND)) {
-    return OMD->getSelector().getAsString().c_str();
+    // FIXME: Memory leak! We need to move to a CXString or other API.
+    return ::strdup(OMD->getSelector().getAsString().c_str());
   }
   if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
     // No, this isn't the same as the code below. getIdentifier() is non-virtual
@@ -650,7 +651,8 @@ const char *clang_getCursorSpelling(CXCursor C)
         ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(OME && "clang_getCursorLine(): Missing message expr");
-        return OME->getSelector().getAsString().c_str();
+        // FIXME: Memory leak! We need to move to a CXString or other API.
+        return ::strdup(OME->getSelector().getAsString().c_str());
       }
       case CXCursor_VarRef:
       case CXCursor_FunctionRef:
