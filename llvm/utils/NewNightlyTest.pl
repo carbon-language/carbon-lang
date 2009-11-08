@@ -224,7 +224,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-extraflags/)      { $CONFIGUREARGS .=
                              " --with-extra-options=\'$ARGV[0]\'"; shift; next;}
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
-  if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
+  if (/^-nodejagnu$/)      { next; }
   if (/^-nobuild$/)        { $NOBUILD = 1; next; }
   print "Unknown option: $_ : ignoring!\n";
 }
@@ -389,39 +389,6 @@ sub CopyFile { #filename, newfile
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# This function is meant to read in the dejagnu sum file and
-# return a string with only the results (i.e. PASS/FAIL/XPASS/
-# XFAIL).
-#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub GetDejagnuTestResults { # (filename, log)
-    my ($filename, $DejagnuLog) = @_;
-    my @lines;
-    $/ = "\n"; #Make sure we're going line at a time.
-
-    if( $VERBOSE) { print "DEJAGNU TEST RESULTS:\n"; }
-
-    if (open SRCHFILE, $filename) {
-        # Process test results
-        while ( <SRCHFILE> ) {
-            if ( length($_) > 1 ) {
-                chomp($_);
-                if ( m/^(PASS|XPASS|FAIL|XFAIL): .*\/llvm\/test\/(.*)$/ ) {
-                    push(@lines, "$1: test/$2");
-                }
-            }
-        }
-    }
-    close SRCHFILE;
-
-    my $content = join("\n", @lines);
-    return $content;
-}
-
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
 # This function acts as a mini web browswer submitting data
 # to our central server via the post method
 #
@@ -544,21 +511,6 @@ sub BuildLLVM {
   return 1;
 }
 
-# Running dejagnu tests and save results to log.
-sub RunDejaGNUTests {
-  die "Invalid call!" unless $ConfigMode == 0;
-  # Run the feature and regression tests, results are put into testrun.sum and
-  # the full log in testrun.log.
-  system "rm -f test/testrun.log test/testrun.sum";
-  RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $DejagnuLog, "DEJAGNU");
-
-  # Copy the testrun.log and testrun.sum to our webdir.
-  CopyFile("test/testrun.log", $DejagnuLog);
-  CopyFile("test/testrun.sum", $DejagnuSum);
-
-  return GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
-}
-
 # Run the named tests (i.e. "SingleSource" "MultiSource" "External")
 sub TestDirectory {
   my $SubDir = shift;
@@ -668,9 +620,6 @@ if ($CONFIG_PATH ne "") {
   $ConfigureLog = "$Prefix-Configure-Log.txt";
   $BuildLog = "$Prefix-Build-Log.txt";
   $COLog = "$Prefix-CVS-Log.txt";
-  $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
-  $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
-  $DejagnuLog = "$Prefix-DejagnuTests-Log.txt";
 }
 
 if ($VERBOSE) {
@@ -701,7 +650,6 @@ if ($VERBOSE) {
 $starttime = `date "+20%y-%m-%d %H:%M:%S"`;
 
 my $BuildError = 0, $BuildStatus = "OK";
-my $DejagnuTestResults = "Dejagnu skipped by user choice.";
 if ($ConfigMode == 0) {
   if (!$NOCHECKOUT) {
     CheckoutSource();
@@ -716,13 +664,7 @@ if ($ConfigMode == 0) {
       if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
       $BuildError = 1;
       $BuildStatus = "Error: compilation aborted";
-      $NODEJAGNU=1;
     }
-  }
-
-  # Run DejaGNU.
-  if (!$NODEJAGNU && !$BuildError) {
-    $DejagnuTestResults = RunDejaGNUTests();
   }
 }
 
@@ -778,11 +720,10 @@ if ($LLVMGCCPATH ne "") {
 my $targetTriple = $1;
 
 # Logs.
-my ($ConfigureLogData, $BuildLogData, $DejagnuLogData, $CheckoutLogData) = "";
+my ($ConfigureLogData, $BuildLogData, $CheckoutLogData) = "";
 if ($ConfigMode == 0) {
   $ConfigureLogData = ReadFile $ConfigureLog;
   $BuildLogData = ReadFile $BuildLog;
-  $DejagnuLogData = ReadFile $DejagnuLog;
   $CheckoutLogData = ReadFile $COLog;
 }
 
@@ -808,14 +749,6 @@ my $BuildWallTime = GetRegex "^real ([0-9.]+)", $BuildLogData;
 $BuildTime=-1 unless $BuildTime;
 $BuildWallTime=-1 unless $BuildWallTime;
 
-# DejaGNU info.
-my $DejagnuTimeU = GetRegex "^user ([0-9.]+)", $DejagnuLogData;
-my $DejagnuTimeS = GetRegex "^sys ([0-9.]+)", $DejagnuLogData;
-$DejagnuTime  = $DejagnuTimeU+$DejagnuTimeS;  # DejagnuTime = User+System
-$DejagnuWallTime = GetRegex "^real ([0-9.]+)", $DejagnuLogData;
-$DejagnuTime     = "0.0" unless $DejagnuTime;
-$DejagnuWallTime = "0.0" unless $DejagnuWallTime;
-
 if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 
 my %hash_of_data = (
@@ -823,8 +756,8 @@ my %hash_of_data = (
   'build_data' => $ConfigureLogData . $BuildLogData,
   'gcc_version' => $gcc_version,
   'nickname' => $nickname,
-  'dejagnutime_wall' => $DejagnuWallTime,
-  'dejagnutime_cpu' => $DejagnuTime,
+  'dejagnutime_wall' => "0.0",
+  'dejagnutime_cpu' => "0.0",
   'cvscheckouttime_wall' => $CheckoutTime_Wall,
   'cvscheckouttime_cpu' => $CheckoutTime_CPU,
   'configtime_wall' => $ConfigWallTime,
@@ -840,8 +773,8 @@ my %hash_of_data = (
   'expfail_tests' => $xfails,
   'unexpfail_tests' => $fails,
   'all_tests' => $all_tests,
-  'dejagnutests_results' => $DejagnuTestResults,
-  'dejagnutests_log' => $DejagnuLogData,
+  'dejagnutests_results' => "Dejagnu skipped by user choice.",
+  'dejagnutests_log' => "",
   'starttime' => $starttime,
   'endtime' => $endtime,
   'target_triple' => $targetTriple,
