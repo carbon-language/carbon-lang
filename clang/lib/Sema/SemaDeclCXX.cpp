@@ -1166,7 +1166,7 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
   CXXConstructorDecl *C = 0;
   if (!BaseType->isDependentType() && !HasDependentArg) {
     DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(
-                                            Context.getCanonicalType(BaseType));
+                      Context.getCanonicalType(BaseType).getUnqualifiedType());
     ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
 
     C = PerformInitializationByConstructor(BaseType, 
@@ -3450,7 +3450,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
   // Add constructors to the overload set.
   DeclarationName ConstructorName
     = Context.DeclarationNames.getCXXConstructorName(
-                       Context.getCanonicalType(ClassType.getUnqualifiedType()));
+                      Context.getCanonicalType(ClassType).getUnqualifiedType());
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
