@@ -690,6 +690,10 @@ def SEXT16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
 
 } // Defs = [SRW]
 
+def ZEXT16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
+                     "mov.b\t{$src, $dst}",
+                     [(set GR16:$dst, (zext (trunc GR16:$src)))]>;
+
 def SWPB16r : Pseudo<(outs GR16:$dst), (ins GR16:$src),
                      "swpb\t$dst",
                      [(set GR16:$dst, (bswap GR16:$src))]>;
@@ -899,3 +903,6 @@ def : Pat<(store (subc (load addr:$dst), GR8:$src), addr:$dst),
           (SUB8mr addr:$dst, GR8:$src)>;
 def : Pat<(store (subc (load addr:$dst), (i8 (load addr:$src))), addr:$dst),
           (SUB8mm addr:$dst, addr:$src)>;
+
+// peephole patterns
+def : Pat<(and GR16:$src, 255), (ZEXT16r GR16:$src)>;
