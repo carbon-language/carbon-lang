@@ -815,7 +815,7 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
 
 static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
                                       const Expr *E, const VarDecl *VD) {
-  assert(VD->hasExternalStorage() || VD->isFileVarDecl() &&
+  assert((VD->hasExternalStorage() || VD->isFileVarDecl()) &&
          "Var decl must have external storage or be a file var decl!");
 
   llvm::Value *V = CGF.CGM.GetAddrOfGlobalVar(VD);
