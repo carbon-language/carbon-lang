@@ -392,6 +392,13 @@ std::string TargetData::getStringRepresentation() const {
     OS << '-' << (char)AI.AlignType << AI.TypeBitWidth << ':'
        << AI.ABIAlign*8 << ':' << AI.PrefAlign*8;
   }
+  
+  if (!LegalIntWidths.empty()) {
+    OS << "-n" << (unsigned)LegalIntWidths[0];
+    
+    for (unsigned i = 1, e = LegalIntWidths.size(); i != e; ++i)
+      OS << ':' << (unsigned)LegalIntWidths[i];
+  }
   return OS.str();
 }
 
