@@ -81,14 +81,12 @@ class FileBasedTest(object):
                                     localConfig)
 
 class ShTest(FileBasedTest):
-    def __init__(self, execute_external = False, require_and_and = False):
+    def __init__(self, execute_external = False):
         self.execute_external = execute_external
-        self.require_and_and = require_and_and
 
     def execute(self, test, litConfig):
         return TestRunner.executeShTest(test, litConfig,
-                                        self.execute_external,
-                                        self.require_and_and)
+                                        self.execute_external)
 
 class TclTest(FileBasedTest):
     def execute(self, test, litConfig):

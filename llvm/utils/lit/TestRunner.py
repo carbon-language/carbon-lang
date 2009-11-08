@@ -353,7 +353,7 @@ def isExpectedFail(xfails, xtargets, target_triple):
 
     return True
 
-def parseIntegratedTestScript(test, requireAndAnd):
+def parseIntegratedTestScript(test):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'XTARGET'
     information. The RUN lines also will have variable substitution performed.
@@ -425,19 +425,6 @@ def parseIntegratedTestScript(test, requireAndAnd):
     if script[-1][-1] == '\\':
         return (Test.UNRESOLVED, "Test has unterminated run lines (with '\\')")
 
-    # Validate interior lines for '&&', a lovely historical artifact.
-    if requireAndAnd:
-        for i in range(len(script) - 1):
-            ln = script[i]
-
-            if not ln.endswith('&&'):
-                return (Test.FAIL,
-                        ("MISSING \'&&\': %s\n"  +
-                         "FOLLOWED BY   : %s\n") % (ln, script[i + 1]))
-
-            # Strip off '&&'
-            script[i] = ln[:-2]
-
     isXFail = isExpectedFail(xfails, xtargets, test.suite.config.target_triple)
     return script,isXFail,tmpBase,execdir
 
@@ -462,7 +449,7 @@ def executeTclTest(test, litConfig):
     if test.config.unsupported:
         return (Test.UNSUPPORTED, 'Test is unsupported')
 
-    res = parseIntegratedTestScript(test, False)
+    res = parseIntegratedTestScript(test)
     if len(res) == 2:
         return res
 
@@ -491,11 +478,11 @@ def executeTclTest(test, litConfig):
 
     return formatTestOutput(status, out, err, exitCode, script)
 
-def executeShTest(test, litConfig, useExternalSh, requireAndAnd):
+def executeShTest(test, litConfig, useExternalSh):
     if test.config.unsupported:
         return (Test.UNSUPPORTED, 'Test is unsupported')
 
-    res = parseIntegratedTestScript(test, requireAndAnd)
+    res = parseIntegratedTestScript(test)
     if len(res) == 2:
         return res
 
