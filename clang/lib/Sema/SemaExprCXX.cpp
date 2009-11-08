@@ -424,14 +424,13 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   Expr **ConsArgs = (Expr**)ConstructorArgs.get();
   const RecordType *RT;
   unsigned NumConsArgs = ConstructorArgs.size();
-  
+  ASTOwningVector<&ActionBase::DeleteExpr> ConvertedConstructorArgs(*this);
+
   if (AllocType->isDependentType() || 
       Expr::hasAnyTypeDependentArguments(ConsArgs, NumConsArgs)) {
     // Skip all the checks.
   } else if ((RT = AllocType->getAs<RecordType>()) &&
              !AllocType->isAggregateType()) {
-    ASTOwningVector<&ActionBase::DeleteExpr> ConvertedConstructorArgs(*this);
-
     Constructor = PerformInitializationByConstructor(
                       AllocType, move(ConstructorArgs),
                       TypeLoc,
