@@ -425,6 +425,14 @@ def AND16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
                      [(set GR16:$dst, (and GR16:$src1, (load addr:$src2))),
                       (implicit SRW)]>;
 
+let mayLoad = 1, hasExtraDefRegAllocReq = 1, 
+Constraints = "$base = $base_wb, $src1 = $dst" in {
+def AND8rm_POST : Pseudo<(outs GR8:$dst, GR16:$base_wb), (ins GR8:$src1, GR16:$base),
+                          "and.b\t{@$base+, $dst}", []>;
+def AND16rm_POST : Pseudo<(outs GR16:$dst, GR16:$base_wb), (ins GR16:$src1, GR16:$base),
+                          "and.w\t{@$base+, $dst}", []>;
+}
+
 let isTwoAddress = 0 in {
 def AND8mr  : Pseudo<(outs), (ins memdst:$dst, GR8:$src),
                 "and.b\t{$src, $dst}",
@@ -484,6 +492,14 @@ def XOR16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
                      [(set GR16:$dst, (xor GR16:$src1, (load addr:$src2))),
                       (implicit SRW)]>;
 
+let mayLoad = 1, hasExtraDefRegAllocReq = 1, 
+Constraints = "$base = $base_wb, $src1 = $dst" in {
+def XOR8rm_POST : Pseudo<(outs GR8:$dst, GR16:$base_wb), (ins GR8:$src1, GR16:$base),
+                          "xor.b\t{@$base+, $dst}", []>;
+def XOR16rm_POST : Pseudo<(outs GR16:$dst, GR16:$base_wb), (ins GR16:$src1, GR16:$base),
+                          "xor.w\t{@$base+, $dst}", []>;
+}
+
 let isTwoAddress = 0 in {
 def XOR8mr  : Pseudo<(outs), (ins memdst:$dst, GR8:$src),
                 "xor.b\t{$src, $dst}",
@@ -540,6 +556,14 @@ def SUB16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
                      "sub.w\t{$src2, $dst}",
                      [(set GR16:$dst, (sub GR16:$src1, (load addr:$src2))),
                       (implicit SRW)]>;
+
+let mayLoad = 1, hasExtraDefRegAllocReq = 1, 
+Constraints = "$base = $base_wb, $src1 = $dst" in {
+def SUB8rm_POST : Pseudo<(outs GR8:$dst, GR16:$base_wb), (ins GR8:$src1, GR16:$base),
+                          "sub.b\t{@$base+, $dst}", []>;
+def SUB16rm_POST : Pseudo<(outs GR16:$dst, GR16:$base_wb), (ins GR16:$src1, GR16:$base),
+                          "sub.w\t{@$base+, $dst}", []>;
+}
 
 let isTwoAddress = 0 in {
 def SUB8mr  : Pseudo<(outs), (ins memdst:$dst, GR8:$src),
@@ -692,6 +716,14 @@ def OR8rm  : Pseudo<(outs GR8:$dst), (ins GR8:$src1, memsrc:$src2),
 def OR16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
                     "bis.w\t{$src2, $dst}",
                     [(set GR16:$dst, (or GR16:$src1, (load addr:$src2)))]>;
+
+let mayLoad = 1, hasExtraDefRegAllocReq = 1, 
+Constraints = "$base = $base_wb, $src1 = $dst" in {
+def OR8rm_POST : Pseudo<(outs GR8:$dst, GR16:$base_wb), (ins GR8:$src1, GR16:$base),
+                        "bis.b\t{@$base+, $dst}", []>;
+def OR16rm_POST : Pseudo<(outs GR16:$dst, GR16:$base_wb), (ins GR16:$src1, GR16:$base),
+                         "bis.w\t{@$base+, $dst}", []>;
+}
 
 let isTwoAddress = 0 in {
 def OR8mr  : Pseudo<(outs), (ins memdst:$dst, GR8:$src),
