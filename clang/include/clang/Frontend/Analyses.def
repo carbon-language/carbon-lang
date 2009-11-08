@@ -48,6 +48,9 @@ ANALYSIS(WarnObjCUnusedIvars, "warn-objc-unused-ivars",
 ANALYSIS(CheckerCFRef, "checker-cfref",
          "Run the [Core] Foundation reference count checker", Code)
 
+ANALYSIS(WarnSizeofPointer, "warn-sizeof-pointer",
+         "Warn about unintended use of sizeof() on pointer expressions", Code)
+
 ANALYSIS(InlineCall, "inline-call",
          "Experimental transfer function inling callees when its definition"
          " is available.", TranslationUnit)

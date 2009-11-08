@@ -53,7 +53,7 @@ void RegisterAppleChecks(GRExprEngine& Eng, const Decl &D);
 
 void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 
-
+void CheckSizeofPointer(const Decl *D, BugReporter &BR);
 } // end namespace clang
 
 #endif

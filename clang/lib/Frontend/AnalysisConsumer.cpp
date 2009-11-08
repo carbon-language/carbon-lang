@@ -412,6 +412,11 @@ static void ActionWarnObjCMethSigs(AnalysisManager& mgr, Decl *D) {
   CheckObjCInstMethSignature(cast<ObjCImplementationDecl>(D), BR);
 }
 
+static void ActionWarnSizeofPointer(AnalysisManager &mgr, Decl *D) {
+  BugReporter BR(mgr);
+  CheckSizeofPointer(D, BR);
+}
+
 static void ActionInlineCall(AnalysisManager &mgr, Decl *D) {
   if (!D)
     return;
