@@ -10894,15 +10894,29 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   
   if (isa<CastInst>(FirstInst)) {
     CastSrcTy = FirstInst->getOperand(0)->getType();
+
+    // Be careful about transforming integer PHIs.  We don't want to pessimize
+    // the code by turning an i32 into an i1293.
+    if (isa<IntegerType>(PN.getType()) && isa<IntegerType>(CastSrcTy)) {
+      // If we don't have TD, we don't know if the original PHI was legal.
+      if (!TD) return 0;
+
+      unsigned PHIWidth = PN.getType()->getPrimitiveSizeInBits();
+      unsigned NewWidth = CastSrcTy->getPrimitiveSizeInBits();
+      bool PHILegal = TD->isLegalInteger(PHIWidth);
+      bool NewLegal = TD->isLegalInteger(NewWidth);
     
-    // If this is a legal integer PHI node, and pulling the operation through
-    // would cause it to be an illegal integer PHI, don't do the transformation.
-    if (!TD ||
-        (isa<IntegerType>(PN.getType()) &&
-         isa<IntegerType>(CastSrcTy) &&
-         TD->isLegalInteger(PN.getType()->getPrimitiveSizeInBits()) &&
-         !TD->isLegalInteger(CastSrcTy->getPrimitiveSizeInBits())))
-      return 0;
+      // If this is a legal integer PHI node, and pulling the operation through
+      // would cause it to be an illegal integer PHI, don't do the
+      // transformation.
+      if (PHILegal && !NewLegal)
+        return 0;
+      
+      // Otherwise, if both are illegal, do not increase the size of the PHI. We
+      // do allow things like i160 -> i64, but not i64 -> i160.
+      if (!PHILegal && !NewLegal && NewWidth > PHIWidth)
+        return 0;
+    }
   } else if (isa<BinaryOperator>(FirstInst) || isa<CmpInst>(FirstInst)) {
     // Can fold binop, compare or shift here if the RHS is a constant, 
     // otherwise call FoldPHIArgBinOpIntoPHI.
@@ -11075,6 +11089,7 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &PN) {
   // extracted out of it.  First, sort the users by their offset and size.
   array_pod_sort(PHIUsers.begin(), PHIUsers.end());
   
+  DEBUG(errs() << "SLICING UP PHI: " << PN << '\n');
   
   DenseMap<BasicBlock*, Value*> PredValues;
   
@@ -11088,6 +11103,8 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &PN) {
     // Create the new PHI node for this user.
     PHINode *EltPHI =
       PHINode::Create(Ty, PN.getName()+".off"+Twine(Offset), &PN);
+    assert(EltPHI->getType() != PN.getType() &&
+           "Truncate didn't shrink phi?");
     
     for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
       BasicBlock *Pred = PN.getIncomingBlock(i);
@@ -11117,6 +11134,9 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &PN) {
       EltPHI->addIncoming(PredVal, Pred);
     }
     PredValues.clear();
+    
+    DEBUG(errs() << "  Made element PHI for offset " << Offset << ": "
+                 << *EltPHI << '\n');
     
     // Now that we have a new PHI node, replace all uses of this piece of the
     // PHI with the one new PHI.
@@ -11241,7 +11261,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // it is only used by trunc or trunc(lshr) operations.  If so, we split the
   // PHI into the various pieces being extracted.  This sort of thing is
   // introduced when SROA promotes an aggregate to a single large integer type.
-  if (0 && isa<IntegerType>(PN.getType()) && TD &&
+  if (isa<IntegerType>(PN.getType()) && TD &&
       !TD->isLegalInteger(PN.getType()->getPrimitiveSizeInBits()))
     if (Instruction *Res = SliceUpIllegalIntegerPHI(PN))
       return Res;

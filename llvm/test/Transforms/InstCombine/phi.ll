@@ -245,12 +245,12 @@ end:
 
   %tmp2 = add i64 %tmp32, %tmp30
   ret i64 %tmp2
-; HECK: @test12
-; HECK-NOT: zext
-; HECK: end:
-; HECK-NEXT: phi i64 [ 0, %entry ], [ %Val, %two ]
-; HECK-NOT: phi
-; HECK: ret i64
+; CHECK: @test12
+; CHECK-NOT: zext
+; CHECK: end:
+; CHECK-NEXT: phi i64 [ 0, %entry ], [ %Val, %two ]
+; CHECK-NOT: phi
+; CHECK: ret i64
 }
 
 declare void @test13f(double, i32)
@@ -276,11 +276,44 @@ end:
   
   call void @test13f(double %tmp31, i32 %tmp32)
   ret void
-; HECK: @test13
-; HECK-NOT: zext
-; HECK: end:
-; HECK-NEXT: phi double [ 0.000000e+00, %entry ], [ %Vald, %two ]
-; HECK-NEXT: call void @test13f(double {{[^,]*}}, i32 %V1)
-; HECK: ret void
+; CHECK: @test13
+; CHECK-NOT: zext
+; CHECK: end:
+; CHECK-NEXT: phi double [ 0.000000e+00, %entry ], [ %Vald, %two ]
+; CHECK-NEXT: call void @test13f(double {{[^,]*}}, i32 %V1)
+; CHECK: ret void
 }
 
+define i640 @test14a(i320 %A, i320 %B, i1 %b1) {
+BB0:
+        %a = zext i320 %A to i640
+        %b = zext i320 %B to i640
+        br label %Loop
+
+Loop:
+        %C = phi i640 [ %a, %BB0 ], [ %b, %Loop ]             
+        br i1 %b1, label %Loop, label %Exit
+
+Exit:           ; preds = %Loop
+        ret i640 %C
+; CHECK: @test14a
+; CHECK: Loop:
+; CHECK-NEXT: phi i320
+}
+
+define i160 @test14b(i320 %A, i320 %B, i1 %b1) {
+BB0:
+        %a = trunc i320 %A to i160
+        %b = trunc i320 %B to i160
+        br label %Loop
+
+Loop:
+        %C = phi i160 [ %a, %BB0 ], [ %b, %Loop ]             
+        br i1 %b1, label %Loop, label %Exit
+
+Exit:           ; preds = %Loop
+        ret i160 %C
+; CHECK: @test14b
+; CHECK: Loop:
+; CHECK-NEXT: phi i160
+}
