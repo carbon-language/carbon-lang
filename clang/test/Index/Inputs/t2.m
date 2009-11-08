@@ -11,6 +11,3 @@ static void foo() {
 -(void) my_method: (int)param {
 }
 @end
-
-// Suppress 'no run line' failure.
-// RUN: true

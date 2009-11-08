@@ -9,6 +9,3 @@ void bar_func(void) {
   struct MyStruct *ms;
   ms->field_var = 10;
 }
-
-// Suppress 'no run line' failure.
-// RUN: true

@@ -26,6 +26,3 @@ void field_test(void) {
 }
 
 int (^CP)(int) = ^(int x) { return x * global_var; };
-
-// Suppress 'no run line' failure.
-// RUN: true
