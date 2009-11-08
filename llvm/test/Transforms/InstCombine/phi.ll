@@ -2,8 +2,6 @@
 ;
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128:n8:16:32:64"
-
 define i32 @test1(i32 %A, i1 %b) {
 BB0:
         br i1 %b, label %BB1, label %BB2
@@ -222,65 +220,5 @@ end:
 ; CHECK: @test11
 ; CHECK-NOT: phi i32
 ; CHECK: ret i1 %z
-}
-
-
-define i64 @test12(i1 %cond, i8* %Ptr, i64 %Val) {
-entry:
-  %tmp41 = ptrtoint i8* %Ptr to i64
-  %tmp42 = zext i64 %tmp41 to i128
-  br i1 %cond, label %end, label %two
-
-two:
-  %tmp36 = zext i64 %Val to i128            ; <i128> [#uses=1]
-  %tmp37 = shl i128 %tmp36, 64                    ; <i128> [#uses=1]
-  %ins39 = or i128 %tmp42, %tmp37                 ; <i128> [#uses=1]
-  br label %end
-
-end:
-  %tmp869.0 = phi i128 [ %tmp42, %entry ], [ %ins39, %two ]
-  %tmp32 = trunc i128 %tmp869.0 to i64            ; <i64> [#uses=1]
-  %tmp29 = lshr i128 %tmp869.0, 64                ; <i128> [#uses=1]
-  %tmp30 = trunc i128 %tmp29 to i64               ; <i64> [#uses=1]
-
-  %tmp2 = add i64 %tmp32, %tmp30
-  ret i64 %tmp2
-; CHECK: @test12
-; CHECK-NOT: zext
-; CHECK: end:
-; CHECK-NEXT: phi i64 [ 0, %entry ], [ %Val, %two ]
-; CHECK-NOT: phi
-; CHECK: ret i64
-}
-
-declare void @test13f(double, i32)
-
-define void @test13(i1 %cond, i32 %V1, double %Vald) {
-entry:
-  %tmp42 = zext i32 %V1 to i128
-  br i1 %cond, label %end, label %two
-
-two:
-  %Val = bitcast double %Vald to i64
-  %tmp36 = zext i64 %Val to i128            ; <i128> [#uses=1]
-  %tmp37 = shl i128 %tmp36, 64                    ; <i128> [#uses=1]
-  %ins39 = or i128 %tmp42, %tmp37                 ; <i128> [#uses=1]
-  br label %end
-
-end:
-  %tmp869.0 = phi i128 [ %tmp42, %entry ], [ %ins39, %two ]
-  %tmp32 = trunc i128 %tmp869.0 to i32
-  %tmp29 = lshr i128 %tmp869.0, 64                ; <i128> [#uses=1]
-  %tmp30 = trunc i128 %tmp29 to i64               ; <i64> [#uses=1]
-  %tmp31 = bitcast i64 %tmp30 to double
-  
-  call void @test13f(double %tmp31, i32 %tmp32)
-  ret void
-; CHECK: @test13
-; CHECK-NOT: zext
-; CHECK: end:
-; CHECK-NEXT: phi double [ 0.000000e+00, %entry ], [ %Vald, %two ]
-; CHECK-NEXT: call void @test13f(double {{[^,]*}}, i32 %V1)
-; CHECK: ret void
 }
 
