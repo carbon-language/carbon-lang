@@ -796,13 +796,15 @@ void ABCD::createConstraintSigInst(Instruction *I_op, BasicBlock *BB_succ_t,
     int32_t width = cast<IntegerType>((*SIG_op_t)->getType())->getBitWidth();
     inequality_graph.addEdge(I_op, *SIG_op_t, APInt(width, 0), true);
     inequality_graph.addEdge(*SIG_op_t, I_op, APInt(width, 0), false);
-    created.insert(*SIG_op_t);
+    if (created.insert(*SIG_op_t))
+      createConstraintPHINode(cast<PHINode>(*SIG_op_t));
   }
   if (*SIG_op_f) {
     int32_t width = cast<IntegerType>((*SIG_op_f)->getType())->getBitWidth();
     inequality_graph.addEdge(I_op, *SIG_op_f, APInt(width, 0), true);
     inequality_graph.addEdge(*SIG_op_f, I_op, APInt(width, 0), false);
-    created.insert(*SIG_op_f);
+    if (created.insert(*SIG_op_f))
+      createConstraintPHINode(cast<PHINode>(*SIG_op_f));
   }
 }
 
