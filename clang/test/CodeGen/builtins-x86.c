@@ -1,4 +1,4 @@
-// RUN: clang-cc -DUSE_64 -triple x86_64-unknown-unknown -emit-llvm -o %t %s &&
+// RUN: clang-cc -DUSE_64 -triple x86_64-unknown-unknown -emit-llvm -o %t %s
 // RUN: clang-cc -DUSE_ALL -triple x86_64-unknown-unknown -fsyntax-only -o %t %s
 
 #ifdef USE_ALL

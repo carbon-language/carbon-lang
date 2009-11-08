@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=basic -verify &&
+// RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=basic -verify
 // RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=region -verify
 
 unsigned foo();

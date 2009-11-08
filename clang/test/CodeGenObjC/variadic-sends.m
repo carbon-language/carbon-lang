@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -fnext-runtime -emit-llvm -o - %s | FileCheck -check-prefix=CHECK-X86-32 %s &&
+// RUN: clang-cc -triple i386-unknown-unknown -fnext-runtime -emit-llvm -o - %s | FileCheck -check-prefix=CHECK-X86-32 %s
 // RUN: clang-cc -triple x86_64-unknown-unknown -fnext-runtime -emit-llvm -o - %s | FileCheck -check-prefix=CHECK-X86-64 %s
 
 @interface A

@@ -1,6 +1,6 @@
-// RUN: clang-cc -E %s | grep 'noexp: foo y' &&
-// RUN: clang-cc -E %s | grep 'expand: abc' &&
-// RUN: clang-cc -E %s | grep 'noexp2: foo nonexp' &&
+// RUN: clang-cc -E %s | grep 'noexp: foo y'
+// RUN: clang-cc -E %s | grep 'expand: abc'
+// RUN: clang-cc -E %s | grep 'noexp2: foo nonexp'
 // RUN: clang-cc -E %s | grep 'expand2: abc'
 
 #define A foo

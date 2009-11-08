@@ -1,4 +1,4 @@
-// RUN: clang-cc -rewrite-objc %s -o - &&
+// RUN: clang-cc -rewrite-objc %s -o -
 // RUN: clang-cc -rewrite-objc %s -o - | grep 'newInv->_container'
 
 @interface NSMutableArray 

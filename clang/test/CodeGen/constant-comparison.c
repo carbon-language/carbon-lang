@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - 2>&1 | not grep warning &&
+// RUN: clang-cc -emit-llvm %s -o - 2>&1 | not grep warning
 // RUN: clang-cc -emit-llvm %s -o - | grep @b | count 1
 
 int a, b;

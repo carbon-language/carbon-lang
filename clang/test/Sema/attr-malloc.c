@@ -1,5 +1,5 @@
-// RUN: clang-cc -verify -fsyntax-only %s &&
-// RUN: clang-cc -emit-llvm -o %t %s &&
+// RUN: clang-cc -verify -fsyntax-only %s
+// RUN: clang-cc -emit-llvm -o %t %s
 
 #include <stdlib.h>
 
@@ -16,7 +16,7 @@ __attribute((malloc)) int (*g)(); // expected-warning{{'malloc' attribute only a
 
 __attribute((malloc))
 void * xalloc(unsigned n) { return malloc(n); } // no-warning
-// RUN: grep 'define noalias .* @xalloc(' %t &&
+// RUN: grep 'define noalias .* @xalloc(' %t
 
 #define malloc_like __attribute((__malloc__))
 void * xalloc2(unsigned) malloc_like;

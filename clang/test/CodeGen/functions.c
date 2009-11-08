@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t &&
+// RUN: clang-cc %s -emit-llvm -o %t
 
 int g();
 
@@ -19,15 +19,15 @@ void test3(T f) {
 int a(int);
 int a() {return 1;}
 
-// RUN: grep 'define void @f0()' %t &&
+// RUN: grep 'define void @f0()' %t
 void f0() {}
 
 void f1();
-// RUN: grep 'call void @f1()' %t &&
+// RUN: grep 'call void @f1()' %t
 void f2(void) {
   f1(1, 2, 3);
 }
-// RUN: grep 'define void @f1()' %t &&
+// RUN: grep 'define void @f1()' %t
 void f1() {}
 
 // RUN: grep 'define .* @f3' %t | not grep -F '...'

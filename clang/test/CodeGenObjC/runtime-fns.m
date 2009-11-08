@@ -1,6 +1,6 @@
-// RUN: clang-cc -fnext-runtime -emit-llvm -o %t %s &&
-// RUN: grep -e "^de.*objc_msgSend[0-9]*(" %t | count 1 &&
-// RUN: clang-cc -DWITHDEF -fnext-runtime -emit-llvm -o %t %s &&
+// RUN: clang-cc -fnext-runtime -emit-llvm -o %t %s
+// RUN: grep -e "^de.*objc_msgSend[0-9]*(" %t | count 1
+// RUN: clang-cc -DWITHDEF -fnext-runtime -emit-llvm -o %t %s
 // RUN: grep -e "^de.*objc_msgSend[0-9]*(" %t | count 1
 
 id objc_msgSend(int x);

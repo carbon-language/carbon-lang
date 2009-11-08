@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm %s -o %t &&
+// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm %s -o %t
 void t1(int len) {
   __asm__ volatile("" : "=&r"(len), "+&r"(len));
 }
@@ -28,12 +28,12 @@ void t6(void) {
   __asm__ volatile("" : : "i" (t6));
 }
 
-// RUN: grep "T7 NAMED: \$1" %t &&
+// RUN: grep "T7 NAMED: \$1" %t
 void t7(int a) {
   __asm__ volatile("T7 NAMED: %[input]" : "+r"(a): [input] "i" (4));
 }
 
-// RUN: grep "T8 NAMED MODIFIER: \${0:c}" %t &&
+// RUN: grep "T8 NAMED MODIFIER: \${0:c}" %t
 void t8() {
   __asm__ volatile("T8 NAMED MODIFIER: %c[input]" :: [input] "i" (4));
 }

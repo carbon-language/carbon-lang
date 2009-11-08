@@ -4,13 +4,13 @@
 /* Check that we get one load for each simple assign and two for the
    compound assign (load the old value before the add then load again
    to store back). Also check that our g0 pattern is good. */
-// RUN: clang-cc -triple i386-unknown-unknown -O0 -emit-llvm -o %t %s &&
-// RUN: grep 'load ' %t | count 5 &&
-// RUN: grep "@g0" %t | count 4 &&
+// RUN: clang-cc -triple i386-unknown-unknown -O0 -emit-llvm -o %t %s
+// RUN: grep 'load ' %t | count 5
+// RUN: grep "@g0" %t | count 4
 
 // Check that we got the right value.
-// RUN: clang-cc -triple i386-unknown-unknown -O3 -emit-llvm -o %t %s &&
-// RUN: grep 'load ' %t | count 0 &&
+// RUN: clang-cc -triple i386-unknown-unknown -O3 -emit-llvm -o %t %s
+// RUN: grep 'load ' %t | count 0
 // RUN: grep "@g0" %t | count 0
 
 struct s0 {

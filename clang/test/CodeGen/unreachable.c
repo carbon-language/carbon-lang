@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o %t %s &&
+// RUN: clang-cc -emit-llvm -o %t %s
 // RUN: grep '@unreachable' %t | count 0
 
 extern void abort() __attribute__((noreturn));

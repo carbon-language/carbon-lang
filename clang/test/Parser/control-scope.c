@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -std=c90 -verify &&
+// RUN: clang-cc %s -std=c90 -verify
 // RUN: clang-cc %s -std=c99
 
 int f (int z) { 

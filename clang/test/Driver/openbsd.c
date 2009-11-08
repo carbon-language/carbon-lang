@@ -1,4 +1,4 @@
-// RUN: clang -ccc-clang-archs "" -ccc-host-triple i686-pc-openbsd %s -### 2> %t.log &&
+// RUN: clang -ccc-clang-archs "" -ccc-host-triple i686-pc-openbsd %s -### 2> %t.log
 // RUN: FileCheck -input-file %t.log %s
 
 // CHECK: clang-cc{{.*}}" "-triple" "i686-pc-openbsd"

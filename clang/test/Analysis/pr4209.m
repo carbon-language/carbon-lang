@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang-cc -triple i386-apple-darwin9 -analyze -checker-cfref -analyzer-store=basic -verify %s
 // RUN: clang-cc -triple i386-apple-darwin9 -analyze -checker-cfref -analyzer-store=region -verify %s
 
 // This test case was crashing due to how CFRefCount.cpp resolved the

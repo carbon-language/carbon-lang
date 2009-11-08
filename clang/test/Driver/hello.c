@@ -1,9 +1,9 @@
-// RUN: clang -ccc-echo -o %t %s 2> %t.log &&
+// RUN: clang -ccc-echo -o %t %s 2> %t.log
 
 // Make sure we used clang.
-// RUN: grep 'clang-cc" .*hello.c' %t.log &&
+// RUN: grep 'clang-cc" .*hello.c' %t.log
 
-// RUN: %t > %t.out &&
+// RUN: %t > %t.out
 // RUN: grep "I'm a little driver, short and stout." %t.out
 
 // FIXME: We don't have a usable assembler on Windows, so we can't build real

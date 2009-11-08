@@ -1,4 +1,4 @@
-// RUN: clang-cc -std=gnu89 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix GNU89 %s &&
+// RUN: clang-cc -std=gnu89 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix GNU89 %s
 // RUN: clang-cc -std=c99 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix C99 %s
 
 // CHECK-GNU89: define i32 @f0()

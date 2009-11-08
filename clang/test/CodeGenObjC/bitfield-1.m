@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s &&
-// RUN: clang-cc -triple i386-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s
+// RUN: clang-cc -triple i386-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s
 // RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s
 
 @interface Object

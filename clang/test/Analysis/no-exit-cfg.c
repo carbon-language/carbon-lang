@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s 
 
 // This is a test case for the issue reported in PR 2819:

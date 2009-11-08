@@ -1,5 +1,5 @@
-// RUN: clang-cc -emit-llvm < %s -o %t &&
-// RUN: grep 'dllexport' %t | count 1 &&
+// RUN: clang-cc -emit-llvm < %s -o %t
+// RUN: grep 'dllexport' %t | count 1
 // RUN: not grep 'dllimport' %t
 
 void __attribute__((dllimport)) foo1();

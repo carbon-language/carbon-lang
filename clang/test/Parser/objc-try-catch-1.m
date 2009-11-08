@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s &&
+// RUN: clang-cc -fsyntax-only -verify %s
 // RUN: clang-cc -fsyntax-only -verify -x objective-c++ %s
 void * proc();
 

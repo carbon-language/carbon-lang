@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -E | grep "^  4" &&
+// RUN: clang-cc %s -E | grep "^  4"
 #define FOO __LINE__
 
   FOO

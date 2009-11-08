@@ -1,8 +1,8 @@
 // Test this without pch.
-// RUN: clang-cc -fblocks -include %S/types.h -fsyntax-only -verify %s &&
+// RUN: clang-cc -fblocks -include %S/types.h -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: clang-cc -emit-pch -fblocks -o %t %S/types.h &&
+// RUN: clang-cc -emit-pch -fblocks -o %t %S/types.h
 // RUN: clang-cc -fblocks -include-pch %t -fsyntax-only -verify %s 
 
 typedef int INT;

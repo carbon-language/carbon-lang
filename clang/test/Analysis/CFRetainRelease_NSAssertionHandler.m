@@ -1,6 +1,6 @@
-// RUN: clang-cc -analyze -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic &&
-// RUN: clang-cc -analyze -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic &&
-// RUN: clang-cc -analyze -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=region &&
+// RUN: clang-cc -analyze -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic
+// RUN: clang-cc -analyze -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic
+// RUN: clang-cc -analyze -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=region
 // RUN: clang-cc -analyze -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=region
 
 typedef struct objc_selector *SEL;

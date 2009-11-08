@@ -1,6 +1,6 @@
-// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic -analyzer-constraints=range -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic -analyzer-constraints=basic -verify %s
+// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic -analyzer-constraints=range -verify %s
+// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=region -analyzer-constraints=basic -verify %s
 // RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=region -analyzer-constraints=range -verify %s
 
 // These declarations were reduced using Delta-Debugging from Foundation.h

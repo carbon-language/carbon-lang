@@ -16,22 +16,22 @@ struct S {
 };
 
 
-// RUN: clang-cc -emit-pch %s -o %t.ast &&
-// RUN: index-test %t.ast -point-at %s:3:8 | grep top_var &&
-// RUN: index-test %t.ast -point-at %s:5:15 | grep top_func_decl &&
-// RUN: index-test %t.ast -point-at %s:5:25 | grep param1 &&
-// RUN: index-test %t.ast -point-at %s:7:17 | grep top_func_def &&
-// RUN: index-test %t.ast -point-at %s:7:23 | grep param2 &&
-// RUN: index-test %t.ast -point-at %s:8:10 | grep local_var1 &&
-// RUN: index-test %t.ast -point-at %s:9:15 | grep for_var &&
+// RUN: clang-cc -emit-pch %s -o %t.ast
+// RUN: index-test %t.ast -point-at %s:3:8 | grep top_var
+// RUN: index-test %t.ast -point-at %s:5:15 | grep top_func_decl
+// RUN: index-test %t.ast -point-at %s:5:25 | grep param1
+// RUN: index-test %t.ast -point-at %s:7:17 | grep top_func_def
+// RUN: index-test %t.ast -point-at %s:7:23 | grep param2
+// RUN: index-test %t.ast -point-at %s:8:10 | grep local_var1
+// RUN: index-test %t.ast -point-at %s:9:15 | grep for_var
 
-// RUN: index-test %t.ast -point-at %s:9:43 > %t &&
-// RUN: grep '++for_var' %t &&
+// RUN: index-test %t.ast -point-at %s:9:43 > %t
+// RUN: grep '++for_var' %t
 
-// RUN: index-test %t.ast -point-at %s:10:9 | grep local_var2 &&
+// RUN: index-test %t.ast -point-at %s:10:9 | grep local_var2
 
-// RUN: index-test %t.ast -point-at %s:10:30 > %t &&
-// RUN: grep 'for_var + 1' %t &&
+// RUN: index-test %t.ast -point-at %s:10:30 > %t
+// RUN: grep 'for_var + 1' %t
 
 // fields test.
 // RUN: index-test %t.ast -point-at %s:15:10 | grep field_var

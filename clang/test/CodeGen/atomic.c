@@ -1,14 +1,14 @@
-// RUN: clang-cc %s -emit-llvm -o - -triple=i686-apple-darwin9 > %t1 &&
-// RUN: grep @llvm.atomic.load.add.i32 %t1 | count 3 &&
-// RUN: grep @llvm.atomic.load.sub.i8 %t1 | count 2 &&
-// RUN: grep @llvm.atomic.load.min.i32 %t1 &&
-// RUN: grep @llvm.atomic.load.max.i32 %t1 &&
-// RUN: grep @llvm.atomic.load.umin.i32 %t1 &&
-// RUN: grep @llvm.atomic.load.umax.i32 %t1 &&
-// RUN: grep @llvm.atomic.swap.i32 %t1 &&
-// RUN: grep @llvm.atomic.cmp.swap.i32 %t1 | count 4 &&
-// RUN: grep @llvm.atomic.load.and.i32 %t1 | count 2 &&
-// RUN: grep @llvm.atomic.load.or.i8 %t1  &&
+// RUN: clang-cc %s -emit-llvm -o - -triple=i686-apple-darwin9 > %t1
+// RUN: grep @llvm.atomic.load.add.i32 %t1 | count 3
+// RUN: grep @llvm.atomic.load.sub.i8 %t1 | count 2
+// RUN: grep @llvm.atomic.load.min.i32 %t1
+// RUN: grep @llvm.atomic.load.max.i32 %t1
+// RUN: grep @llvm.atomic.load.umin.i32 %t1
+// RUN: grep @llvm.atomic.load.umax.i32 %t1
+// RUN: grep @llvm.atomic.swap.i32 %t1
+// RUN: grep @llvm.atomic.cmp.swap.i32 %t1 | count 4
+// RUN: grep @llvm.atomic.load.and.i32 %t1 | count 2
+// RUN: grep @llvm.atomic.load.or.i8 %t1
 // RUN: grep @llvm.atomic.load.xor.i8 %t1
 
 

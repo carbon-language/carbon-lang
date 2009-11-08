@@ -1,8 +1,8 @@
 // Test this without pch.
-// RUN: clang-cc -include %S/ext_vector.h -fsyntax-only -verify %s &&
+// RUN: clang-cc -include %S/ext_vector.h -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: clang-cc -emit-pch -o %t %S/ext_vector.h &&
+// RUN: clang-cc -emit-pch -o %t %S/ext_vector.h
 // RUN: clang-cc -include-pch %t -fsyntax-only -verify %s 
 
 int test(float4 f4) {

@@ -1,4 +1,4 @@
-// RUN: clang-cc -Wparentheses -fsyntax-only -verify %s &&
+// RUN: clang-cc -Wparentheses -fsyntax-only -verify %s
 // RUN: clang-cc -Wparentheses -fixit %s -o - | clang-cc -Wparentheses -Werror -
 
 // Test the various warnings under -Wparentheses

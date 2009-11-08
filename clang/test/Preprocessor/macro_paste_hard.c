@@ -1,5 +1,5 @@
-// RUN: clang-cc -E %s | grep '1: aaab 2' &&
-// RUN: clang-cc -E %s | grep '2: 2 baaa' &&
+// RUN: clang-cc -E %s | grep '1: aaab 2'
+// RUN: clang-cc -E %s | grep '2: 2 baaa'
 // RUN: clang-cc -E %s | grep '3: 2 xx'
 
 #define a(n) aaa ## n

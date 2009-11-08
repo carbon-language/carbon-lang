@@ -1,5 +1,5 @@
-// RUN: clang -ccc-clang-archs "" -ccc-host-triple powerpc64-pc-freebsd8 %s -### 2> %t.log &&
-// RUN: cat %t.log &&
+// RUN: clang -ccc-clang-archs "" -ccc-host-triple powerpc64-pc-freebsd8 %s -### 2> %t.log
+// RUN: cat %t.log
 // RUN: FileCheck -input-file %t.log %s
 
 // CHECK: clang-cc{{.*}}" "-triple" "powerpc64-pc-freebsd8"

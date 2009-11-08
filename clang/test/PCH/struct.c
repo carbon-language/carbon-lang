@@ -1,8 +1,8 @@
 // Test this without pch.
-// RUN: clang-cc -include %S/struct.h -fsyntax-only -verify %s &&
+// RUN: clang-cc -include %S/struct.h -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: clang-cc -emit-pch -o %t %S/struct.h &&
+// RUN: clang-cc -emit-pch -o %t %S/struct.h
 // RUN: clang-cc -include-pch %t -fsyntax-only -verify %s 
 
 struct Point *p1;

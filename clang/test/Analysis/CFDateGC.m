@@ -1,7 +1,7 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=basic %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=range %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc -disable-free %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify -fobjc-gc %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=basic %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=range %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc -disable-free %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify -fobjc-gc %s
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -fobjc-gc %s
 
 //===----------------------------------------------------------------------===//

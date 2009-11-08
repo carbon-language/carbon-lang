@@ -1,7 +1,7 @@
-// RUN: clang-cc -emit-llvm -o %t %s &&
-// RUN: grep -e "global_ctors.*@A" %t &&
-// RUN: grep -e "global_dtors.*@B" %t &&
-// RUN: grep -e "global_ctors.*@C" %t &&
+// RUN: clang-cc -emit-llvm -o %t %s
+// RUN: grep -e "global_ctors.*@A" %t
+// RUN: grep -e "global_dtors.*@B" %t
+// RUN: grep -e "global_ctors.*@C" %t
 // RUN: grep -e "global_dtors.*@D" %t
 
 #include <stdio.h>

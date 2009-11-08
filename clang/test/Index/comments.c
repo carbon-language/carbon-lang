@@ -19,16 +19,16 @@ void g(int);
 void h(int); ///< This is a member comment.
 
 
-// RUN: clang-cc -emit-pch -o %t.ast %s &&
+// RUN: clang-cc -emit-pch -o %t.ast %s
 
-// RUN: index-test %t.ast -point-at %s:11:6 > %t &&
-// RUN: grep "starts here" %t &&
-// RUN: grep "block comment" %t &&
+// RUN: index-test %t.ast -point-at %s:11:6 > %t
+// RUN: grep "starts here" %t
+// RUN: grep "block comment" %t
 
-// RUN: index-test %t.ast -point-at %s:17:6 > %t &&
-// RUN: grep "BCPL" %t &&
-// RUN: grep "But" %t &&
+// RUN: index-test %t.ast -point-at %s:17:6 > %t
+// RUN: grep "BCPL" %t
+// RUN: grep "But" %t
 
-// RUN: index-test %t.ast -point-at %s:19:6 > %t &&
-// RUN: grep "NOT" %t | count 0 &&
+// RUN: index-test %t.ast -point-at %s:19:6 > %t
+// RUN: grep "NOT" %t | count 0
 // RUN: grep "member" %t

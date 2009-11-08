@@ -13,9 +13,9 @@ struct Point {
 };
 
 void test(struct Point *p) {
-  // RUN: clang-cc -fsyntax-only -code-completion-macros -code-completion-at=%s:17:14 %s -o - | FileCheck -check-prefix=CC1 %s &&
+  // RUN: clang-cc -fsyntax-only -code-completion-macros -code-completion-at=%s:17:14 %s -o - | FileCheck -check-prefix=CC1 %s
   switch (p->IDENTITY(color)) {
-  // RUN: clang-cc -fsyntax-only -code-completion-macros -code-completion-at=%s:19:9 %s -o - | FileCheck -check-prefix=CC2 %s &&
+  // RUN: clang-cc -fsyntax-only -code-completion-macros -code-completion-at=%s:19:9 %s -o - | FileCheck -check-prefix=CC2 %s
     case 
   }
   // CC1: color

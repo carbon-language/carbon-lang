@@ -6,7 +6,7 @@
 }
 @property(copy) Foo *myprop;
 @property(retain, nonatomic) id xx;
-// RUN: clang-cc -fsyntax-only -code-completion-at=%s:7:11 %s -o - | FileCheck -check-prefix=CC1 %s &&
+// RUN: clang-cc -fsyntax-only -code-completion-at=%s:7:11 %s -o - | FileCheck -check-prefix=CC1 %s
 // CC1: assign
 // CC1-NEXT: copy
 // CC1-NEXT: getter

@@ -1,4 +1,4 @@
-// RUN: clang-cc -E %s | grep 'a: 2 + M_0(3)(4)(5);' &&
+// RUN: clang-cc -E %s | grep 'a: 2 + M_0(3)(4)(5);'
 // RUN: clang-cc -E %s | grep 'b: 4 + 4 + 3 + 2 + 1 + M_0(3)(2)(1);'
 
 #define M_0(x) M_ ## x 

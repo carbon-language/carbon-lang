@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 %s -emit-llvm -o - | FileCheck -check-prefix X32 %s &&
+// RUN: clang-cc -triple i386-apple-darwin9 %s -emit-llvm -o - | FileCheck -check-prefix X32 %s
 // CHECK-X32: %struct.menu = type <{ i8*, i8, i8 }>
 // CHECK-X32: %union.command = type <{ i8*, [2 x i8] }>
 

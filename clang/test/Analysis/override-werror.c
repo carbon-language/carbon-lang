@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -checker-cfref -Werror %s -analyzer-store=basic -verify &&
+// RUN: clang-cc -analyze -checker-cfref -Werror %s -analyzer-store=basic -verify
 // RUN: clang-cc -analyze -checker-cfref -Werror %s -analyzer-store=region -verify
 
 // This test case illustrates that using '-analyze' overrides the effect of

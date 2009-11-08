@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown --emit-llvm-bc -o - %s | opt -std-compile-opts | llvm-dis > %t &&
+// RUN: clang-cc -triple i386-unknown-unknown --emit-llvm-bc -o - %s | opt -std-compile-opts | llvm-dis > %t
 // RUN: grep "ret i32 %" %t
 
 // Make sure return is not constant (if empty range is skipped or miscompiled)

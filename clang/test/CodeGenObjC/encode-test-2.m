@@ -1,8 +1,8 @@
-// RUN: clang-cc -triple=i686-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s &&
-// RUN: grep -e "@\\\22<X>\\\22" %t  &&
-// RUN: grep -e "@\\\22<X><Y>\\\22" %t  &&
-// RUN: grep -e "@\\\22<X><Y><Z>\\\22" %t  &&
-// RUN: grep -e "@\\\22Foo<X><Y><Z>\\\22" %t  &&
+// RUN: clang-cc -triple=i686-apple-darwin9 -fnext-runtime -emit-llvm -o %t %s
+// RUN: grep -e "@\\\22<X>\\\22" %t
+// RUN: grep -e "@\\\22<X><Y>\\\22" %t
+// RUN: grep -e "@\\\22<X><Y><Z>\\\22" %t
+// RUN: grep -e "@\\\22Foo<X><Y><Z>\\\22" %t
 // RUN: grep -e "{Intf=@@@@#}" %t  
 
 @protocol X, Y, Z;

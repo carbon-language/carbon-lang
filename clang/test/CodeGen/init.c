@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm %s -o %t &&
+// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm %s -o %t
 
 void f1() {
   // Scalars in braces.
@@ -22,7 +22,7 @@ void f3() {
 }
 
 // Constants
-// RUN: grep '@g3 = constant i32 10' %t &&
+// RUN: grep '@g3 = constant i32 10' %t
 // RUN: grep '@f4.g4 = internal constant i32 12' %t
 const int g3 = 10;
 int f4() {

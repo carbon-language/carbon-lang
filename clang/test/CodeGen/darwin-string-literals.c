@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix LSB %s &&
+// RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix LSB %s
 
 // CHECK-LSB: @.str = private constant [8 x i8] c"string0\00"
 // CHECK-LSB: @.str1 = private constant [8 x i8] c"string1\00"

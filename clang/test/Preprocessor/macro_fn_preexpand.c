@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -E | grep 'pre: 1 1 X' &&
+// RUN: clang-cc %s -E | grep 'pre: 1 1 X'
 // RUN: clang-cc %s -E | grep 'nopre: 1A(X)'
 
 /* Preexpansion of argument. */

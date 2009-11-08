@@ -1,6 +1,6 @@
-// RUN: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s &&
-// RUN: clang-cc -DTEST_64 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: clang-cc -DTEST_64 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s
 // RUN: clang-cc -DTEST_64 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 // ==-- FIXME: -analyzer-store=basic fails on this file (false negatives). --==

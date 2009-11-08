@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-unknown-unknown %s -fsyntax-only -verify &&
+// RUN: clang-cc -triple x86_64-unknown-unknown %s -fsyntax-only -verify
 // RUN: clang-cc -triple i686-unknown-unknown %s -fsyntax-only -verify
 #include <stddef.h>
 

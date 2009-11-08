@@ -1,12 +1,12 @@
-// RUN: clang-cc < %s -emit-llvm > %t1 -triple=i686-apple-darwin9 &&
-// RUN: grep "STest1 = type { i32, \[4 x i16\], double }" %t1 &&
-// RUN: grep "STest2 = type { i16, i16, i32, i32 }" %t1 &&
-// RUN: grep "STest3 = type { i8, i16, i32 }" %t1 &&
-// RUN: grep "STestB1 = type { i8, i8 }" %t1 &&
-// RUN: grep "STestB2 = type { i8, i8, i8 }" %t1 &&
-// RUN: grep "STestB3 = type { i8, i8 }" %t1 &&
-// RUN: grep "STestB4 = type { i8, i8, i8, i8 }" %t1 &&
-// RUN: grep "STestB5 = type { i8, i8, \[2 x i8\], i8, i8 }" %t1 &&
+// RUN: clang-cc < %s -emit-llvm > %t1 -triple=i686-apple-darwin9
+// RUN: grep "STest1 = type { i32, \[4 x i16\], double }" %t1
+// RUN: grep "STest2 = type { i16, i16, i32, i32 }" %t1
+// RUN: grep "STest3 = type { i8, i16, i32 }" %t1
+// RUN: grep "STestB1 = type { i8, i8 }" %t1
+// RUN: grep "STestB2 = type { i8, i8, i8 }" %t1
+// RUN: grep "STestB3 = type { i8, i8 }" %t1
+// RUN: grep "STestB4 = type { i8, i8, i8, i8 }" %t1
+// RUN: grep "STestB5 = type { i8, i8, \[2 x i8\], i8, i8 }" %t1
 // RUN: grep "STestB6 = type { i8, i8, \[2 x i8\] }" %t1
 // Test struct layout for x86-darwin target
 

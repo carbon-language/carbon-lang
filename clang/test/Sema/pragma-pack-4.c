@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i686-apple-darwin9 %s -fsyntax-only -verify &&
+// RUN: clang-cc -triple i686-apple-darwin9 %s -fsyntax-only -verify
 // RUN: clang-cc -triple x86_64-apple-darwin9 %s -fsyntax-only -verify
 
 // rdar://problem/7095436

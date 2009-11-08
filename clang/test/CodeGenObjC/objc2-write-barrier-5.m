@@ -1,6 +1,6 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s &&
-// RUN: grep objc_assign_ivar %t | count 0 &&
-// RUN: grep objc_assign_strongCast %t | count 5 &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s
+// RUN: grep objc_assign_ivar %t | count 0
+// RUN: grep objc_assign_strongCast %t | count 5
 // RUN: true
 
 @interface TestUnarchiver 

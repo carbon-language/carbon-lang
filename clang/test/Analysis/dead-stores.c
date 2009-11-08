@@ -1,7 +1,7 @@
-// RUN: clang-cc -analyze -warn-dead-stores -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -warn-dead-stores -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -warn-dead-stores -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -warn-dead-stores -verify %s &&
+// RUN: clang-cc -analyze -warn-dead-stores -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -warn-dead-stores -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -warn-dead-stores -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -warn-dead-stores -verify %s
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -warn-dead-stores -verify %s
 
 void f1() {

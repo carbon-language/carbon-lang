@@ -1,7 +1,7 @@
-// RUN: clang-cc -emit-llvm -o %t %s &&
-// RUN: grep "hello" %t | count 3 &&
-// RUN: grep 'c"hello\\00"' %t | count 2 &&
-// RUN: grep 'c"hello\\00\\00\\00"' %t | count 1 &&
+// RUN: clang-cc -emit-llvm -o %t %s
+// RUN: grep "hello" %t | count 3
+// RUN: grep 'c"hello\\00"' %t | count 2
+// RUN: grep 'c"hello\\00\\00\\00"' %t | count 1
 // RUN: grep 'c"ola"' %t | count 1
 
 /* Should be 3 hello string, two global (of different sizes), the rest

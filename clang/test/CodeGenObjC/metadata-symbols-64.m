@@ -1,38 +1,38 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin9 -emit-llvm -o %t %s
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
 
-// RUN: grep '@"OBJC_CLASS_$_A" = global' %t &&
-// RUN: grep '@"OBJC_CLASS_$_B" = external global' %t &&
-// RUN: grep '@"OBJC_IVAR_$_A._ivar" = global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"OBJC_METACLASS_$_A" = global .* section "__DATA, __objc_data", align 8' %t &&
-// RUN: grep '@"\\01L_OBJC_CLASSLIST_REFERENCES_$_[0-9]*" = internal global .* section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8' %t &&
-// RUN: grep '@"\\01L_OBJC_CLASSLIST_SUP_REFS_$_[0-9]*" = internal global .* section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8' %t | count 2 &&
-// RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
-// RUN: grep '@"\\01L_OBJC_LABEL_CATEGORY_$" = internal global .* section "__DATA, __objc_catlist, regular, no_dead_strip", align 8' %t &&
-// RUN: grep '@"\\01L_OBJC_LABEL_CLASS_$" = internal global .* section "__DATA, __objc_classlist, regular, no_dead_strip", align 8' %t &&
-// RUN: grep '@"\\01L_OBJC_METH_VAR_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
-// RUN: grep '@"\\01L_OBJC_METH_VAR_TYPE_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
-// RUN: grep '@"\\01L_OBJC_PROP_NAME_ATTR_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t &&
-// RUN: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_*" = internal global .* section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"' %t &&
-// RUN: grep '@"\\01l_OBJC_$_CATEGORY_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_CATEGORY_CLASS_METHODS_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_CATEGORY_INSTANCE_METHODS_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_CLASS_METHODS_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_INSTANCE_METHODS_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_INSTANCE_VARIABLES_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_PROP_LIST_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_PROTOCOL_CLASS_METHODS_P" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_$_PROTOCOL_INSTANCE_METHODS_P" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_CLASS_PROTOCOLS_$_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_CLASS_RO_$_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_LABEL_PROTOCOL_$_P" = weak hidden global .* section "__DATA, __objc_protolist, coalesced, no_dead_strip", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_METACLASS_RO_$_A" = internal global .* section "__DATA, __objc_const", align 8' %t &&
-// RUN: grep '@"\\01l_OBJC_PROTOCOL_$_P" = weak hidden global .* section "__DATA,__datacoal_nt,coalesced", align 8' %t &&
-// RUN: grep '@"\\01l_objc_msgSend_fixup_alloc" = weak hidden global .* section "__DATA, __objc_msgrefs, coalesced", align 16' %t &&
-// RUN: grep '@_objc_empty_cache = external global' %t &&
-// RUN: grep '@_objc_empty_vtable = external global' %t &&
-// RUN: grep '@objc_msgSend_fixup(' %t &&
-// RUN: grep '@objc_msgSend_fpret(' %t &&
+// RUN: grep '@"OBJC_CLASS_$_A" = global' %t
+// RUN: grep '@"OBJC_CLASS_$_B" = external global' %t
+// RUN: grep '@"OBJC_IVAR_$_A._ivar" = global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"OBJC_METACLASS_$_A" = global .* section "__DATA, __objc_data", align 8' %t
+// RUN: grep '@"\\01L_OBJC_CLASSLIST_REFERENCES_$_[0-9]*" = internal global .* section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8' %t
+// RUN: grep '@"\\01L_OBJC_CLASSLIST_SUP_REFS_$_[0-9]*" = internal global .* section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8' %t | count 2
+// RUN: grep '@"\\01L_OBJC_CLASS_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_LABEL_CATEGORY_$" = internal global .* section "__DATA, __objc_catlist, regular, no_dead_strip", align 8' %t
+// RUN: grep '@"\\01L_OBJC_LABEL_CLASS_$" = internal global .* section "__DATA, __objc_classlist, regular, no_dead_strip", align 8' %t
+// RUN: grep '@"\\01L_OBJC_METH_VAR_NAME_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_METH_VAR_TYPE_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_PROP_NAME_ATTR_[0-9]*" = internal global .* section "__TEXT,__cstring,cstring_literals", align 1' %t
+// RUN: grep '@"\\01L_OBJC_SELECTOR_REFERENCES_*" = internal global .* section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"' %t
+// RUN: grep '@"\\01l_OBJC_$_CATEGORY_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_CATEGORY_CLASS_METHODS_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_CATEGORY_INSTANCE_METHODS_A_$_Cat" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_CLASS_METHODS_A" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_INSTANCE_METHODS_A" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_INSTANCE_VARIABLES_A" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_PROP_LIST_A" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_PROTOCOL_CLASS_METHODS_P" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_$_PROTOCOL_INSTANCE_METHODS_P" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_CLASS_PROTOCOLS_$_A" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_CLASS_RO_$_A" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_LABEL_PROTOCOL_$_P" = weak hidden global .* section "__DATA, __objc_protolist, coalesced, no_dead_strip", align 8' %t
+// RUN: grep '@"\\01l_OBJC_METACLASS_RO_$_A" = internal global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"\\01l_OBJC_PROTOCOL_$_P" = weak hidden global .* section "__DATA,__datacoal_nt,coalesced", align 8' %t
+// RUN: grep '@"\\01l_objc_msgSend_fixup_alloc" = weak hidden global .* section "__DATA, __objc_msgrefs, coalesced", align 16' %t
+// RUN: grep '@_objc_empty_cache = external global' %t
+// RUN: grep '@_objc_empty_vtable = external global' %t
+// RUN: grep '@objc_msgSend_fixup(' %t
+// RUN: grep '@objc_msgSend_fpret(' %t
 
 // RUN: true
 

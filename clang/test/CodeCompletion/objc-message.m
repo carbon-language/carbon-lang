@@ -23,7 +23,7 @@ void func() {
   Foo *obj = [Foo new];
   [obj xx];
 }
-// RUN: clang-cc -fsyntax-only -code-completion-at=%s:23:19 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s &&
+// RUN: clang-cc -fsyntax-only -code-completion-at=%s:23:19 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: categoryClassMethod : 0
 // CHECK-CC1: classMethod2 : 0
 // CHECK-CC1: new : 0

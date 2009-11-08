@@ -1,7 +1,7 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s &&
-// RUN: grep '@llvm.memset.i32' %t &&
-// RUN: grep '@llvm.memcpy.i32' %t &&
-// RUN: grep '@llvm.memmove.i32' %t &&
+// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s
+// RUN: grep '@llvm.memset.i32' %t
+// RUN: grep '@llvm.memcpy.i32' %t
+// RUN: grep '@llvm.memmove.i32' %t
 // RUN: grep __builtin %t | count 0
 
 int main(int argc, char **argv) {

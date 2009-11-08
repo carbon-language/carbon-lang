@@ -1,10 +1,10 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s &&
-// RUN: grep 'declare i32 @f0() readnone$' %t &&
-// RUN: grep 'declare i32 @f1() readonly$' %t &&
-// RUN: grep 'declare void @f2(.* noalias sret)$' %t &&
-// RUN: grep 'declare void @f3(.* noalias sret)$' %t &&
-// RUN: grep 'declare void @f4(.* byval)$' %t &&
-// RUN: grep 'declare void @f5(.* byval)$' %t &&
+// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s
+// RUN: grep 'declare i32 @f0() readnone$' %t
+// RUN: grep 'declare i32 @f1() readonly$' %t
+// RUN: grep 'declare void @f2(.* noalias sret)$' %t
+// RUN: grep 'declare void @f3(.* noalias sret)$' %t
+// RUN: grep 'declare void @f4(.* byval)$' %t
+// RUN: grep 'declare void @f5(.* byval)$' %t
 // RUN: true
 // PR3835
 

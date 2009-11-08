@@ -1,5 +1,5 @@
-// RUN: clang-cc -emit-llvm < %s -o %t &&
-// RUN: grep volatile %t | count 29 &&
+// RUN: clang-cc -emit-llvm < %s -o %t
+// RUN: grep volatile %t | count 29
 // RUN: grep memcpy %t | count 7
 
 // The number 29 comes from the current codegen for volatile loads;

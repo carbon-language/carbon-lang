@@ -1,6 +1,6 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm %s -o %t &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm %s -o %t
 
-// RUN: grep "struct._attrs = type <{ i32, i8 }>" %t &&
+// RUN: grep "struct._attrs = type <{ i32, i8 }>" %t
 typedef struct _attrs {
         unsigned file_attributes;
         unsigned char filename_length;

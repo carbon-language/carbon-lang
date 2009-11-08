@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep 'objc_assign' %t | count 0
 
 typedef struct {

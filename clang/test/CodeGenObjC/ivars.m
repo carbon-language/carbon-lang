@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -emit-llvm -o - %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin9 -emit-llvm -o - %s
 // RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm -o - %s
 
 // rdar://6800926

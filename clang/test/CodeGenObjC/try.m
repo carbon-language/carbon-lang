@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -S -o - -triple=i686-apple-darwin9 &&
+// RUN: clang-cc %s -S -o - -triple=i686-apple-darwin9
 // RUN: clang-cc %s -S -o - -triple=x86_64-apple-darwin9
 
 // rdar://6757213 - Don't crash if the internal proto for

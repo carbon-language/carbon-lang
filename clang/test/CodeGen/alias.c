@@ -1,8 +1,8 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s &&
-// RUN: grep '@g0 = common global i32 0' %t &&
-// RUN: grep '@f1 = alias void ()\* @f0' %t &&
-// RUN: grep '@g1 = alias i32\* @g0' %t &&
-// RUN: grep 'define void @f0() nounwind {' %t &&
+// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s
+// RUN: grep '@g0 = common global i32 0' %t
+// RUN: grep '@f1 = alias void ()\* @f0' %t
+// RUN: grep '@g1 = alias i32\* @g0' %t
+// RUN: grep 'define void @f0() nounwind {' %t
 
 void f0(void) { }
 extern void f1(void);
@@ -14,7 +14,7 @@ extern int g1 __attribute((alias("g0")));
 
 // Make sure that aliases cause referenced values to be emitted.
 // PR3200
-// RUN: grep 'define internal i32 @foo1()' %t &&
+// RUN: grep 'define internal i32 @foo1()' %t
 static inline int foo1() { return 0; }
 int foo() __attribute__((alias("foo1")));
 

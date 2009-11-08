@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify &&
+// RUN: clang-cc %s -fsyntax-only -verify
 // RUN: clang-cc %s -fsyntax-only -fshort-wchar -verify -DSHORT_WCHAR
  
 #include <wchar.h>

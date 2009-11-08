@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -triple i686-pc-linue-gnu -o %t %s &&
+// RUN: clang-cc -emit-llvm -triple i686-pc-linue-gnu -o %t %s
 // RUN: grep "define i32 @_ZNK4plusIillEclERKiRKl" %t | count 1
 
 template<typename T, typename U, typename Result>

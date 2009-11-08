@@ -1,5 +1,5 @@
-// RUN: clang-cc  -S %s -o %t-64.s &&
-// RUN: clang-cc  -S %s -o %t-32.s &&
+// RUN: clang-cc  -S %s -o %t-64.s
+// RUN: clang-cc  -S %s -o %t-32.s
 // RUN: true
 
 extern "C" int printf(...);

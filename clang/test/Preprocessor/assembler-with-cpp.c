@@ -1,4 +1,4 @@
-// RUN: clang-cc -x assembler-with-cpp -fdollars-in-identifiers=0 -E %s -o - | FileCheck -strict-whitespace -check-prefix=CHECK-Identifiers-False %s &&
+// RUN: clang-cc -x assembler-with-cpp -fdollars-in-identifiers=0 -E %s -o - | FileCheck -strict-whitespace -check-prefix=CHECK-Identifiers-False %s
 
 #ifndef __ASSEMBLER__
 #error "__ASSEMBLER__ not defined"
@@ -49,7 +49,7 @@
 6: FOO(blarg)
 // CHECK-Identifiers-False: 6: blarg $foo
 
-// RUN: clang-cc -x assembler-with-cpp -fdollars-in-identifiers=1 -E %s -o - | FileCheck -check-prefix=CHECK-Identifiers-True -strict-whitespace %s &&
+// RUN: clang-cc -x assembler-with-cpp -fdollars-in-identifiers=1 -E %s -o - | FileCheck -check-prefix=CHECK-Identifiers-True -strict-whitespace %s
 #define FOO(name)  name ## $foo
 7: FOO(blarg)
 // CHECK-Identifiers-True: 7: blarg$foo

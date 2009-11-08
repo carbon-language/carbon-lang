@@ -1,6 +1,6 @@
-// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -emit-ast %s 2> %t &&
-// RUN: echo 'END' >> %t &&
-// RUN: FileCheck -check-prefix EMIT-AST-PHASES -input-file %t %s &&
+// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -emit-ast %s 2> %t
+// RUN: echo 'END' >> %t
+// RUN: FileCheck -check-prefix EMIT-AST-PHASES -input-file %t %s
 
 // EMIT-AST-PHASES: 0: input,
 // EMIT-AST-PHASES: , c
@@ -9,9 +9,9 @@
 // EMIT-AST-PHASES-NOT: 3:
 // EMIT-AST-PHASES: END
 
-// RUN: touch %t.ast &&
-// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -c %t.ast 2> %t &&
-// RUN: echo 'END' >> %t &&
+// RUN: touch %t.ast
+// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -c %t.ast 2> %t
+// RUN: echo 'END' >> %t
 // RUN: FileCheck -check-prefix COMPILE-AST-PHASES -input-file %t %s
 
 // COMPILE-AST-PHASES: 0: input,

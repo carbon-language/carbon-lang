@@ -1,5 +1,5 @@
-// RUN: clang-cc -E %s | grep '^A: Y$' &&
-// RUN: clang-cc -E %s | grep '^B: f()$' &&
+// RUN: clang-cc -E %s | grep '^A: Y$'
+// RUN: clang-cc -E %s | grep '^B: f()$'
 // RUN: clang-cc -E %s | grep '^C: for()$'
 
 #define X() Y

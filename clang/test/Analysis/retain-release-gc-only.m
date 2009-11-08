@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc-only %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc-only %s
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -fobjc-gc-only -verify %s
 
 //===----------------------------------------------------------------------===//

@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -verify %s
 // RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -verify %s
 
 #if __has_feature(attribute_ns_returns_retained)

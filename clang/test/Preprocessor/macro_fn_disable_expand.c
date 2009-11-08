@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -E | grep 'bar foo (2)' &&
+// RUN: clang-cc %s -E | grep 'bar foo (2)'
 // RUN: clang-cc %s -E | grep 'm(ABCD)'
 
 #define foo(x) bar x

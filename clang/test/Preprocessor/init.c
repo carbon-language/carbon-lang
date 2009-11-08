@@ -1,15 +1,15 @@
-// RUN: clang-cc -E -dM -x=assembler-with-cpp < /dev/null | FileCheck -check-prefix ASM %s &&
+// RUN: clang-cc -E -dM -x=assembler-with-cpp < /dev/null | FileCheck -check-prefix ASM %s
 //
 // ASM:#define __ASSEMBLER__ 1
 //
 // 
-// RUN: clang-cc -fblocks -E -dM < /dev/null | FileCheck -check-prefix BLOCKS %s &&
+// RUN: clang-cc -fblocks -E -dM < /dev/null | FileCheck -check-prefix BLOCKS %s
 //
 // BLOCKS:#define __BLOCKS__ 1
 // BLOCKS:#define __block __attribute__((__blocks__(byref)))
 //
 // 
-// RUN: clang-cc -x=c++ -std=c++0x -E -dM < /dev/null | FileCheck -check-prefix CXX0X %s &&
+// RUN: clang-cc -x=c++ -std=c++0x -E -dM < /dev/null | FileCheck -check-prefix CXX0X %s
 //
 // CXX0X:#define _GNU_SOURCE 1
 // CXX0X:#define __DEPRECATED 1
@@ -20,7 +20,7 @@
 // CXX0X:#define __private_extern__ extern
 //
 // 
-// RUN: clang-cc -x=c++ -std=c++98 -E -dM < /dev/null | FileCheck -check-prefix CXX98 %s &&
+// RUN: clang-cc -x=c++ -std=c++98 -E -dM < /dev/null | FileCheck -check-prefix CXX98 %s
 // 
 // CXX98:#define _GNU_SOURCE 1
 // CXX98:#define __DEPRECATED 1
@@ -30,13 +30,13 @@
 // CXX98:#define __private_extern__ extern
 //
 // 
-// RUN: clang-cc -std=c99 -E -dM < /dev/null | FileCheck -check-prefix C99 %s &&
+// RUN: clang-cc -std=c99 -E -dM < /dev/null | FileCheck -check-prefix C99 %s
 //
 // C99:#define __STDC_VERSION__ 199901L
 // C99:#define __STRICT_ANSI__ 1
 //
 // 
-// RUN: clang-cc -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix COMMON %s &&
+// RUN: clang-cc -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix COMMON %s
 //
 // COMMON:#define __CONSTANT_CFSTRINGS__ 1
 // COMMON:#define __FINITE_MATH_ONLY__ 0
@@ -53,10 +53,10 @@
 // COMMON:#define __llvm__ 1
 //
 // 
-// RUN: clang-cc -ffreestanding -E -dM < /dev/null | FileCheck -check-prefix FREESTANDING %s &&
+// RUN: clang-cc -ffreestanding -E -dM < /dev/null | FileCheck -check-prefix FREESTANDING %s
 // FREESTANDING:#define __STDC_HOSTED__ 0
 // 
-// RUN: clang-cc -x=c++ -std=gnu++98 -E -dM < /dev/null | FileCheck -check-prefix GXX98 %s &&
+// RUN: clang-cc -x=c++ -std=gnu++98 -E -dM < /dev/null | FileCheck -check-prefix GXX98 %s
 //
 // GXX98:#define _GNU_SOURCE 1
 // GXX98:#define __DEPRECATED 1
@@ -66,12 +66,12 @@
 // GXX98:#define __private_extern__ extern
 //
 // 
-// RUN: clang-cc -std=iso9899:199409 -E -dM < /dev/null | FileCheck -check-prefix C94 %s &&
+// RUN: clang-cc -std=iso9899:199409 -E -dM < /dev/null | FileCheck -check-prefix C94 %s
 //
 // C94:#define __STDC_VERSION__ 199409L
 //
 // 
-// RUN: clang-cc -fms-extensions -E -dM < /dev/null | FileCheck -check-prefix MSEXT %s &&
+// RUN: clang-cc -fms-extensions -E -dM < /dev/null | FileCheck -check-prefix MSEXT %s
 //
 // MSEXT-NOT:#define __STDC__
 // MSEXT:#define __int16 __INT16_TYPE__
@@ -80,45 +80,45 @@
 // MSEXT:#define __int8 __INT8_TYPE__
 //
 // 
-// RUN: clang-cc -x=objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s &&
+// RUN: clang-cc -x=objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
 //
 // OBJC:#define OBJC_NEW_PROPERTIES 1
 // OBJC:#define __OBJC__ 1
 //
 // 
-// RUN: clang-cc -x=objective-c -fobjc-gc -E -dM < /dev/null | FileCheck -check-prefix OBJCGC %s &&
+// RUN: clang-cc -x=objective-c -fobjc-gc -E -dM < /dev/null | FileCheck -check-prefix OBJCGC %s
 //
 // OBJCGC:#define __OBJC_GC__ 1
 //
 // 
-// RUN: clang-cc -x=objective-c -fnext-runtime -E -dM < /dev/null | FileCheck -check-prefix NEXTRT %s &&
+// RUN: clang-cc -x=objective-c -fnext-runtime -E -dM < /dev/null | FileCheck -check-prefix NEXTRT %s
 //
 // NEXTRT:#define __NEXT_RUNTIME__ 1
 //
 // 
-// RUN: clang-cc -x=objective-c -fobjc-nonfragile-abi -E -dM < /dev/null | FileCheck -check-prefix NONFRAGILE %s &&
+// RUN: clang-cc -x=objective-c -fobjc-nonfragile-abi -E -dM < /dev/null | FileCheck -check-prefix NONFRAGILE %s
 //
 // NONFRAGILE:#define OBJC_ZEROCOST_EXCEPTIONS 1
 // NONFRAGILE:#define __OBJC2__ 1
 //
 // 
-// RUN: clang-cc -O1 -E -dM < /dev/null | FileCheck -check-prefix O1 %s &&
+// RUN: clang-cc -O1 -E -dM < /dev/null | FileCheck -check-prefix O1 %s
 //
 // O1:#define __OPTIMIZE__ 1
 //
 // 
-// RUN: clang-cc -fpascal-strings -E -dM < /dev/null | FileCheck -check-prefix PASCAL %s &&
+// RUN: clang-cc -fpascal-strings -E -dM < /dev/null | FileCheck -check-prefix PASCAL %s
 //
 // PASCAL:#define __PASCAL_STRINGS__ 1
 //
 // 
-// RUN: clang-cc -fsigned-char -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix SCHAR %s &&
+// RUN: clang-cc -fsigned-char -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix SCHAR %s
 // 
 // SCHAR:#define __STDC__ 1
 // SCHAR-NOT:#define __UNSIGNED_CHAR__
 // SCHAR:#define __clang__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=arm-none-none < /dev/null | FileCheck -check-prefix ARM %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=arm-none-none < /dev/null | FileCheck -check-prefix ARM %s
 //
 // ARM:#define __APCS_32__ 1
 // ARM:#define __ARMEL__ 1
@@ -193,7 +193,7 @@
 // ARM:#define __arm 1
 // ARM:#define __arm__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=bfin-none-none < /dev/null | FileCheck -check-prefix BFIN %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=bfin-none-none < /dev/null | FileCheck -check-prefix BFIN %s
 //
 // BFIN:#define BFIN 1
 // BFIN:#define __ADSPBLACKFIN__ 1
@@ -268,7 +268,7 @@
 // BFIN:#define __bfin__ 1
 // BFIN:#define bfin 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=i386-none-none < /dev/null | FileCheck -check-prefix I386 %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=i386-none-none < /dev/null | FileCheck -check-prefix I386 %s
 //
 // I386:#define __CHAR_BIT__ 8
 // I386:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -344,7 +344,7 @@
 // I386:#define __tune_nocona__ 1
 // I386:#define i386 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s
 //
 // MSP430:#define MSP430 1
 // MSP430:#define __CHAR_BIT__ 8
@@ -413,7 +413,7 @@
 // MSP430:#define __WINT_TYPE__ int
 // MSP430:#define __clang__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=pic16-none-none < /dev/null | FileCheck -check-prefix PIC16 %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=pic16-none-none < /dev/null | FileCheck -check-prefix PIC16 %s
 //
 // PIC16:#define _CONFIG(conf) asm("CONFIG "#conf)
 // PIC16:#define __CHAR_BIT__ 8
@@ -488,7 +488,7 @@
 // PIC16:#define ram __attribute__((address_space(0)))
 // PIC16:#define rom __attribute__((address_space(1)))
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc64-none-none < /dev/null | FileCheck -check-prefix PPC64 %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc64-none-none < /dev/null | FileCheck -check-prefix PPC64 %s
 //
 // PPC64:#define _ARCH_PPC 1
 // PPC64:#define _ARCH_PPC64 1
@@ -568,7 +568,7 @@
 // PPC64:#define __ppc64__ 1
 // PPC64:#define __ppc__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc-none-none < /dev/null | FileCheck -check-prefix PPC %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc-none-none < /dev/null | FileCheck -check-prefix PPC %s
 //
 // PPC:#define _ARCH_PPC 1
 // PPC:#define _BIG_ENDIAN 1
@@ -644,7 +644,7 @@
 // PPC:#define __WINT_TYPE__ int
 // PPC:#define __ppc__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=s390x-none-none < /dev/null | FileCheck -check-prefix S390X %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=s390x-none-none < /dev/null | FileCheck -check-prefix S390X %s
 //
 // S390X:#define __CHAR_BIT__ 8
 // S390X:#define __CHAR_UNSIGNED__ 1
@@ -714,7 +714,7 @@
 // S390X:#define __s390__ 1
 // S390X:#define __s390x__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=sparc-none-none < /dev/null | FileCheck -check-prefix SPARC %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=sparc-none-none < /dev/null | FileCheck -check-prefix SPARC %s
 //
 // SPARC:#define __CHAR_BIT__ 8
 // SPARC:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -787,7 +787,7 @@
 // SPARC:#define __sparcv8 1
 // SPARC:#define sparc 1
 // 
-// RUN: clang-cc -E -dM -ffreestanding -triple=tce-none-none < /dev/null | FileCheck -check-prefix TCE %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=tce-none-none < /dev/null | FileCheck -check-prefix TCE %s
 //
 // TCE:#define __CHAR_BIT__ 8
 // TCE:#define __DBL_DENORM_MIN__ 1.40129846e-45F
@@ -858,7 +858,7 @@
 // TCE:#define __tce__ 1
 // TCE:#define tce 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=x86_64-none-none < /dev/null | FileCheck -check-prefix X86_64 %s &&
+// RUN: clang-cc -E -dM -ffreestanding -triple=x86_64-none-none < /dev/null | FileCheck -check-prefix X86_64 %s
 //
 // X86_64:#define _LP64 1
 // X86_64:#define __CHAR_BIT__ 8

@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple=x86_64-apple-darwin9 -emit-llvm %s -o %t &&
+// RUN: clang-cc -triple=x86_64-apple-darwin9 -emit-llvm %s -o %t
 // RUN: grep "call i32 @_Z5func1i" %t | count 3
 
 extern "C" int printf(...);

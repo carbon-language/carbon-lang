@@ -1,4 +1,4 @@
-// RUN: clang-cc %s --triple=i686-apple-darwin9 &&
+// RUN: clang-cc %s --triple=i686-apple-darwin9
 // RUN: clang-cc %s -E --triple=i686-apple-darwin9
 #ifndef __has_feature
 #error Should have __has_feature

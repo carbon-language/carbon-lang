@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple i386-unknown-unknown --emit-llvm-bc -o - %s | opt --std-compile-opts | llvm-dis > %t &&
-// RUN: grep "ret i32" %t | count 2 &&
+// RUN: clang-cc -triple i386-unknown-unknown --emit-llvm-bc -o - %s | opt --std-compile-opts | llvm-dis > %t
+// RUN: grep "ret i32" %t | count 2
 // RUN: grep "ret i32 0" %t | count 2
 // <rdar://problem/6113085>
 

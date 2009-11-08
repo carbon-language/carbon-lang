@@ -27,7 +27,7 @@ public:
 
 void test(const Proxy &p) {
   p->
-  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:29:6 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s &&
+  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:29:6 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
   // CHECK-CC1: member1 : 0 : [#Base1::#]member1
   // CHECK-CC1: member1 : 0 : [#Base2::#]member1
   // CHECK-CC1: member2 : 0 : [#Base1::#]member2

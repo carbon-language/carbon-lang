@@ -1,4 +1,4 @@
-// RUN: clang -ccc-host-triple amd64-pc-dragonfly %s -### 2> %t.log &&
+// RUN: clang -ccc-host-triple amd64-pc-dragonfly %s -### 2> %t.log
 // RUN: FileCheck -input-file %t.log %s
 
 // CHECK: clang-cc{{.*}}" "-triple" "amd64-pc-dragonfly"

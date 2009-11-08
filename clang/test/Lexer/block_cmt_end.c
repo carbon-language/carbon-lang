@@ -1,8 +1,8 @@
 /*
-  RUN: clang-cc -E -trigraphs %s | grep bar &&
-  RUN: clang-cc -E -trigraphs %s | grep foo &&
-  RUN: clang-cc -E -trigraphs %s | not grep abc &&
-  RUN: clang-cc -E -trigraphs %s | not grep xyz &&
+  RUN: clang-cc -E -trigraphs %s | grep bar
+  RUN: clang-cc -E -trigraphs %s | grep foo
+  RUN: clang-cc -E -trigraphs %s | not grep abc
+  RUN: clang-cc -E -trigraphs %s | not grep xyz
   RUN: clang-cc -fsyntax-only -trigraphs -verify %s  
 */
 

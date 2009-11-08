@@ -1,6 +1,6 @@
-// RUN: clang-cc -emit-llvm -o %t %s &&
-// RUN: grep '@llvm.used = .*@g0' %t &&
-// RUN: grep '@llvm.used = .*@f0' %t &&
+// RUN: clang-cc -emit-llvm -o %t %s
+// RUN: grep '@llvm.used = .*@g0' %t
+// RUN: grep '@llvm.used = .*@f0' %t
 // RUN: grep '@llvm.used = .*@f1.l0' %t
 
 

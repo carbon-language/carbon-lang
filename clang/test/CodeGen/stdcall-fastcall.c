@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm < %s | grep 'fastcallcc' | count 4 &&
+// RUN: clang-cc -emit-llvm < %s | grep 'fastcallcc' | count 4
 // RUN: clang-cc -emit-llvm < %s | grep 'stdcallcc' | count 4
 
 void __attribute__((fastcall)) f1(void);

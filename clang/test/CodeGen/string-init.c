@@ -1,6 +1,6 @@
-// RUN: clang-cc -emit-llvm %s -o %t &&
-// RUN: grep 'private constant \[10 x i8\]' %t &&
-// RUN: not grep -F "[5 x i8]" %t &&
+// RUN: clang-cc -emit-llvm %s -o %t
+// RUN: grep 'private constant \[10 x i8\]' %t
+// RUN: not grep -F "[5 x i8]" %t
 // RUN: not grep "store " %t
 
 void test(void) {

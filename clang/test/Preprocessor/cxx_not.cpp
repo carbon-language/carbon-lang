@@ -1,4 +1,4 @@
-// RUN: clang-cc -DA=1 -E %s | grep 'int a = 927 == 927' &&
+// RUN: clang-cc -DA=1 -E %s | grep 'int a = 927 == 927'
 // RUN: clang-cc -E %s | grep 'int a = 37 == 37'
 #if not defined(A)
 #define X 37

@@ -1,8 +1,8 @@
 // Test this without pch.
-// RUN: clang-cc -include %S/method_pool.h -fsyntax-only -verify %s &&
+// RUN: clang-cc -include %S/method_pool.h -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: clang-cc -x=objective-c -emit-pch -o %t %S/method_pool.h &&
+// RUN: clang-cc -x=objective-c -emit-pch -o %t %S/method_pool.h
 // RUN: clang-cc -include-pch %t -fsyntax-only -verify %s 
 
 int message_id(id x) {

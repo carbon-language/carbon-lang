@@ -1,6 +1,6 @@
-// RUN: clang-cc -analyze -analyzer-constraints=basic -analyzer-store=basic -checker-cfref -fobjc-gc -verify %s &&
-// RUN: clang-cc -analyze -analyzer-constraints=range -analyzer-store=basic -checker-cfref -fobjc-gc -verify %s &&
-// RUN: clang-cc -analyze -analyzer-constraints=basic -analyzer-store=basic -checker-cfref -fobjc-gc -verify %s &&
+// RUN: clang-cc -analyze -analyzer-constraints=basic -analyzer-store=basic -checker-cfref -fobjc-gc -verify %s
+// RUN: clang-cc -analyze -analyzer-constraints=range -analyzer-store=basic -checker-cfref -fobjc-gc -verify %s
+// RUN: clang-cc -analyze -analyzer-constraints=basic -analyzer-store=basic -checker-cfref -fobjc-gc -verify %s
 // RUN: clang-cc -analyze -analyzer-constraints=range -analyzer-store=region -checker-cfref -fobjc-gc -verify %s
 
 typedef const void * CFTypeRef;

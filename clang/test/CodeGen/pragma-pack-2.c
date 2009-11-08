@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 %s -emit-llvm -o - | FileCheck -check-prefix X32 %s &&
+// RUN: clang-cc -triple i386-apple-darwin9 %s -emit-llvm -o - | FileCheck -check-prefix X32 %s
 // CHECK-X32: %struct.s0 = type { i64, i64, i32, [12 x i32] }
 // CHECK-X32: %struct.s1 = type { [15 x i32], %struct.s0 }
 

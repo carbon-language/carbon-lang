@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown %s -emit-llvm -o %t -fblocks &&
+// RUN: clang-cc -triple i386-unknown-unknown %s -emit-llvm -o %t -fblocks
 void (^f)(void) = ^{};
 
 // rdar://6768379
@@ -12,7 +12,7 @@ struct s0 {
   int a[64];
 };
 
-// RUN: grep 'internal void @__f2_block_invoke_(.struct.s0\* noalias sret .*, .*, .* byval .*)' %t &&
+// RUN: grep 'internal void @__f2_block_invoke_(.struct.s0\* noalias sret .*, .*, .* byval .*)' %t
 struct s0 f2(struct s0 a0) {
   return ^(struct s0 a1){ return a1; }(a0);
 }

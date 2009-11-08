@@ -1,4 +1,4 @@
-// RUN: clang-cc -E %s | grep 'ei_1 = (17 +1);' &&
+// RUN: clang-cc -E %s | grep 'ei_1 = (17 +1);'
 // RUN: clang-cc -E %s | grep 'ei_2 = (M1)(17);'
 
 #define M1(a) (a+1) 
