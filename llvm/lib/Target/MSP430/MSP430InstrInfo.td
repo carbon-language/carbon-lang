@@ -142,7 +142,7 @@ let isBarrier = 1 in
 // Conditional branches
 let Uses = [SRW] in
   def JCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
-                            "j$cc $dst",
+                            "j$cc\t$dst",
                             [(MSP430brcc bb:$dst, imm:$cc)]>;
 } // isBranch, isTerminator
 
