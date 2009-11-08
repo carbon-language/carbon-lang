@@ -283,6 +283,8 @@ namespace {
     Instruction *visitSelectInstWithICmp(SelectInst &SI, ICmpInst *ICI);
     Instruction *visitCallInst(CallInst &CI);
     Instruction *visitInvokeInst(InvokeInst &II);
+
+    Instruction *SliceUpIllegalIntegerPHI(PHINode &PN);
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
     Instruction *visitAllocaInst(AllocaInst &AI);
@@ -8083,8 +8085,7 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const Type *Ty,
 Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty, 
                                              bool isSigned) {
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getIntegerCast(C, Ty,
-                                               isSigned /*Sext or ZExt*/);
+    return ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
 
   // Otherwise, it must be an instruction.
   Instruction *I = cast<Instruction>(V);
@@ -8117,8 +8118,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
       return I->getOperand(0);
     
     // Otherwise, must be the same type of cast, so just reinsert a new one.
-    Res = CastInst::Create(cast<CastInst>(I)->getOpcode(), I->getOperand(0),
-                           Ty);
+    Res = CastInst::Create(cast<CastInst>(I)->getOpcode(), I->getOperand(0),Ty);
     break;
   case Instruction::Select: {
     Value *True = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
@@ -8167,9 +8167,17 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
       return NV;
 
   // If we are casting a PHI then fold the cast into the PHI
-  if (isa<PHINode>(Src))
-    if (Instruction *NV = FoldOpIntoPhi(CI))
-      return NV;
+  if (isa<PHINode>(Src)) {
+    // We don't do this if this would create a PHI node with an illegal type if
+    // it is currently legal.
+    if (!isa<IntegerType>(Src->getType()) ||
+        !isa<IntegerType>(CI.getType()) ||
+        (TD && TD->isLegalInteger(CI.getType()->getPrimitiveSizeInBits())) ||
+        (TD && !TD->isLegalInteger(Src->getType()->getPrimitiveSizeInBits())))
+      if (Instruction *NV = FoldOpIntoPhi(CI))
+        return NV;
+    
+  }
   
   return 0;
 }
@@ -8508,7 +8516,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
       return BinaryOperator::CreateLShr(V1, V2);
     }
   }
-  
+ 
   return 0;
 }
 
@@ -10886,6 +10894,15 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   
   if (isa<CastInst>(FirstInst)) {
     CastSrcTy = FirstInst->getOperand(0)->getType();
+    
+    // If this is a legal integer PHI node, and pulling the operation through
+    // would cause it to be an illegal integer PHI, don't do the transformation.
+    if (!TD ||
+        (isa<IntegerType>(PN.getType()) &&
+         isa<IntegerType>(CastSrcTy) &&
+         TD->isLegalInteger(PN.getType()->getPrimitiveSizeInBits()) &&
+         !TD->isLegalInteger(CastSrcTy->getPrimitiveSizeInBits())))
+      return 0;
   } else if (isa<BinaryOperator>(FirstInst) || isa<CmpInst>(FirstInst)) {
     // Can fold binop, compare or shift here if the RHS is a constant, 
     // otherwise call FoldPHIArgBinOpIntoPHI.
@@ -10998,6 +11015,123 @@ static bool PHIsEqualValue(PHINode *PN, Value *NonPhiInVal,
 }
 
 
+namespace {
+struct PHIUsageRecord {
+  unsigned Shift;     // The amount shifted.
+  Instruction *Inst;  // The trunc instruction.
+  
+  PHIUsageRecord(unsigned Sh, Instruction *User) : Shift(Sh), Inst(User) {}
+  
+  bool operator<(const PHIUsageRecord &RHS) const {
+    if (Shift < RHS.Shift) return true;
+    return Shift == RHS.Shift &&
+           Inst->getType()->getPrimitiveSizeInBits() <
+           RHS.Inst->getType()->getPrimitiveSizeInBits();
+  }
+};
+}
+
+
+/// SliceUpIllegalIntegerPHI - This is an integer PHI and we know that it has an
+/// illegal type: see if it is only used by trunc or trunc(lshr) operations.  If
+/// so, we split the PHI into the various pieces being extracted.  This sort of
+/// thing is introduced when SROA promotes an aggregate to large integer values.
+///
+/// TODO: The user of the trunc may be an bitcast to float/double/vector or an
+/// inttoptr.  We should produce new PHIs in the right type.
+///
+Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &PN) {
+  SmallVector<PHIUsageRecord, 16> PHIUsers;
+  
+  for (Value::use_iterator UI = PN.use_begin(), E = PN.use_end();
+       UI != E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    
+    // The PHI can use itself.
+    if (User == &PN)
+      continue;
+    
+    // Truncates are always ok.
+    if (isa<TruncInst>(User)) {
+      PHIUsers.push_back(PHIUsageRecord(0, User));
+      continue;
+    }
+    
+    // Otherwise it must be a lshr which can only be used by one trunc.
+    if (User->getOpcode() != Instruction::LShr ||
+        !User->hasOneUse() || !isa<TruncInst>(User->use_back()) ||
+        !isa<ConstantInt>(User->getOperand(1)))
+      return 0;
+    
+    unsigned Shift = cast<ConstantInt>(User->getOperand(1))->getZExtValue();
+    PHIUsers.push_back(PHIUsageRecord(Shift, User->use_back()));
+  }
+  
+  // If we have no users, they must be all self uses, just nuke the PHI.
+  if (PHIUsers.empty())
+    return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
+  
+  // If this phi node is transformable, create new PHIs for all the pieces
+  // extracted out of it.  First, sort the users by their offset and size.
+  array_pod_sort(PHIUsers.begin(), PHIUsers.end());
+  
+  
+  DenseMap<BasicBlock*, Value*> PredValues;
+  
+  unsigned UserI = 0, UserE = PHIUsers.size();
+  while (1) {
+    assert(UserI != UserE && "Iteration fail, loop below should catch this");
+    
+    unsigned Offset = PHIUsers[UserI].Shift;
+    const Type *Ty = PHIUsers[UserI].Inst->getType();
+
+    // Create the new PHI node for this user.
+    PHINode *EltPHI =
+      PHINode::Create(Ty, PN.getName()+".off"+Twine(Offset), &PN);
+    
+    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+      BasicBlock *Pred = PN.getIncomingBlock(i);
+      Value *&PredVal = PredValues[Pred];
+      
+      // If we already have a value for this predecessor, reuse it.
+      if (PredVal) {
+        EltPHI->addIncoming(PredVal, Pred);
+        continue;
+      }
+
+      // Handle the PHI self-reuse case.
+      Value *InVal = PN.getIncomingValue(i);
+      if (InVal == &PN) {
+        PredVal = EltPHI;
+        EltPHI->addIncoming(PredVal, Pred);
+        continue;
+      }
+      
+      // Otherwise, do an extract in the predecessor.
+      Builder->SetInsertPoint(Pred, Pred->getTerminator());
+      if (Offset)
+        InVal = Builder->CreateLShr(InVal, ConstantInt::get(InVal->getType(),
+                                                            Offset), "extract");
+      InVal = Builder->CreateTrunc(InVal, Ty, "extract.t");
+      PredVal = InVal;
+      EltPHI->addIncoming(PredVal, Pred);
+    }
+    PredValues.clear();
+    
+    // Now that we have a new PHI node, replace all uses of this piece of the
+    // PHI with the one new PHI.
+    while (PHIUsers[UserI].Shift == Offset &&
+           PHIUsers[UserI].Inst->getType() == Ty) {
+      ReplaceInstUsesWith(*PHIUsers[UserI].Inst, EltPHI);
+
+      // If we replaced the last PHI user, we're done.  Just replace all the
+      // remaining uses of the PHI (self uses and the lshrs with undefs.
+      if (++UserI == UserE)
+        return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
+    }
+  }
+}
+
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
@@ -11103,6 +11237,15 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
       }
     }
 
+  // If this is an integer PHI and we know that it has an illegal type, see if
+  // it is only used by trunc or trunc(lshr) operations.  If so, we split the
+  // PHI into the various pieces being extracted.  This sort of thing is
+  // introduced when SROA promotes an aggregate to a single large integer type.
+  if (0 && isa<IntegerType>(PN.getType()) && TD &&
+      !TD->isLegalInteger(PN.getType()->getPrimitiveSizeInBits()))
+    if (Instruction *Res = SliceUpIllegalIntegerPHI(PN))
+      return Res;
+  
   return 0;
 }
 
