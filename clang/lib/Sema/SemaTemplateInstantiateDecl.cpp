@@ -186,6 +186,15 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
       = SemaRef.SubstExpr(D->getInit(), TemplateArgs);
     if (Init.isInvalid())
       Var->setInvalidDecl();
+    else if (!D->getType()->isDependentType() &&
+             !D->getInit()->isTypeDependent() &&
+             !D->getInit()->isValueDependent()) {
+      // If neither the declaration's type nor its initializer are dependent,
+      // we don't want to redo all the checking, especially since the
+      // initializer might have been wrapped by a CXXConstructExpr since we did
+      // it the first time.
+      Var->setInit(SemaRef.Context, Init.takeAs<Expr>());
+    }
     else if (ParenListExpr *PLE = dyn_cast<ParenListExpr>((Expr *)Init.get())) {
       // FIXME: We're faking all of the comma locations, which is suboptimal.
       // Do we even need these comma locations?
