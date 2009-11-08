@@ -12,6 +12,7 @@ class TestingConfig:
             environment = {
                 'PATH' : os.pathsep.join(litConfig.path +
                                          [os.environ.get('PATH','')]),
+                'PATHEXT' : os.environ.get('PATHEXT',''),
                 'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
                 'LLVM_DISABLE_CRT_DEBUG' : '1',
                 }
