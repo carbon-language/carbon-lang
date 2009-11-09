@@ -28,6 +28,7 @@ def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;
+def : DiagGroup<"ctor-dtor-privacy">;
 def : DiagGroup<"declaration-after-statement">;
 def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
@@ -57,6 +58,7 @@ def MismatchedTags : DiagGroup<"mismatched-tags">;
 def : DiagGroup<"missing-field-initializers">;
 def NonNull : DiagGroup<"nonnull">;
 def : DiagGroup<"nonportable-cfstrings">;
+def : DiagGroup<"non-virtual-dtor">;
 def : DiagGroup<"old-style-definition">;
 def : DiagGroup<"overflow">;
 def : DiagGroup<"overloaded-virtual">;
@@ -70,6 +72,7 @@ def : DiagGroup<"sequence-point">;
 def : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
 def SignCompare : DiagGroup<"sign-compare">;
+def : DiagGroup<"synth">;
 
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;
