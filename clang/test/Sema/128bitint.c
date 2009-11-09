@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify -triple x86_64-apple-darwin9 %s
 typedef int i128 __attribute__((__mode__(TI)));
 typedef unsigned u128 __attribute__((__mode__(TI)));
 
