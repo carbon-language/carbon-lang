@@ -99,7 +99,9 @@ struct Current : Derived {
 
                         // FIXME. This is bad message!
 struct M {              // expected-note {{candidate function}} \
-                        // expected-note {{candidate function}}
+                        // expected-note {{candidate function}} \
+                        // expected-note {{declared here}} \
+                        // expected-note {{declared here}}
   M(int i, int j);      // expected-note {{candidate function}} \
                         // // expected-note {{candidate function}}
 };
@@ -110,9 +112,10 @@ struct N : M  {
   M m1;
 };
 
-struct P : M  { // expected-error {{default constructor for 'struct M' is missing in initialization of base class}}
-  P()  {  }
-  M m; // expected-error {{default constructor for 'struct M' is missing in initialization of member}}
+struct P : M  {
+  P()  {  } // expected-error {{base class 'struct M'}} \
+            // expected-error {{member 'm'}}
+  M m; // expected-note {{member is declared here}}
 };
 
 struct Q {

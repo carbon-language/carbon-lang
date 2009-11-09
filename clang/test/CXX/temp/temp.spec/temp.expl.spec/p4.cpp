@@ -12,7 +12,7 @@ struct X { // expected-note{{here}}
 
   void g() { }
   
-  struct Inner { 
+  struct Inner {  // expected-error{{implicit default}}
     T value; 	// expected-note {{member is declared here}}
   };
   
@@ -26,8 +26,7 @@ IntHolder &test_X_IntHolderInt(X<IntHolder, int> xih) {
   xih.g(); // okay
   xih.f(); // expected-note{{instantiation}}
   
-  // FIXME: diagnostic here has incorrect reason (PR5154)
-  X<IntHolder, int>::Inner inner; // expected-error{{implicit default}}
+  X<IntHolder, int>::Inner inner;
   
   return X<IntHolder, int>::value; // expected-note{{instantiation}}
 }

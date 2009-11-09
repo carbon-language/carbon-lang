@@ -9,18 +9,18 @@ struct X2  : X1 {  // expected-note {{'struct X2' declared here}} \
    X2(int);
 };
 
-struct X3 : public X2 {
+struct X3 : public X2 { // expected-error {{must explicitly initialize the base class 'struct X2'}}
 };
-X3 x3;  // expected-error {{cannot define the implicit default constructor for 'struct X3', because base class 'struct X2' does not have any default constructor}}
+X3 x3;
 
 
-struct X4 {
+struct X4 { // expected-error {{must explicitly initialize the member 'x2'}} \
+            // expected-error {{must explicitly initialize the reference member 'rx2'}}
   X2 x2; 	// expected-note {{member is declared here}}
   X2 & rx2; // expected-note {{declared at}}
 };
 
-X4 x4; // expected-error {{cannot define the implicit default constructor for 'struct X4', because member's type 'struct X2' does not have any default constructor}} \
-       // expected-error {{cannot define the implicit default constructor for 'struct X4', because reference member 'rx2' cannot be default-initialized}}
+X4 x4;
 
 
 struct Y1 { // has no implicit default constructor
@@ -45,12 +45,12 @@ Y4 y4;
 // More tests
 
 
-struct Z1 {
+struct Z1 { // expected-error {{must explicitly initialize the reference member 'z'}} \
+            // expected-error {{must explicitly initialize the const member 'c1'}}
   int& z;       // expected-note {{declared at}}
   const int c1; // expected-note {{declared at}}
   volatile int v1;
 };
 
-Z1 z1;  // expected-error {{cannot define the implicit default constructor for 'struct Z1', because reference member 'z' cannot be default-initialized}} \
-        // expected-error {{cannot define the implicit default constructor for 'struct Z1', because const member 'c1' cannot be default-initialized}}
+Z1 z1;
 

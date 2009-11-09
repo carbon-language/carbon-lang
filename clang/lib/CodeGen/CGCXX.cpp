@@ -1483,64 +1483,6 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
       PopCXXTemporary();
   }
 
-  if (!CD->getNumBaseOrMemberInitializers() && !CD->isTrivial()) {
-    // Nontrivial default constructor with no initializer list. It may still
-    // have bases classes and/or contain non-static data members which require
-    // construction.
-    for (CXXRecordDecl::base_class_const_iterator Base =
-          ClassDecl->bases_begin();
-          Base != ClassDecl->bases_end(); ++Base) {
-      // FIXME. copy assignment of virtual base NYI
-      if (Base->isVirtual())
-        continue;
-
-      CXXRecordDecl *BaseClassDecl
-        = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-      if (BaseClassDecl->hasTrivialConstructor())
-        continue;
-      if (CXXConstructorDecl *BaseCX =
-            BaseClassDecl->getDefaultConstructor(getContext())) {
-        LoadOfThis = LoadCXXThis();
-        llvm::Value *V = GetAddressCXXOfBaseClass(LoadOfThis, ClassDecl,
-                                                  BaseClassDecl,
-                                                  /*NullCheckValue=*/false);
-        EmitCXXConstructorCall(BaseCX, Ctor_Complete, V, 0, 0);
-      }
-    }
-
-    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-         FieldEnd = ClassDecl->field_end();
-         Field != FieldEnd; ++Field) {
-      QualType FieldType = getContext().getCanonicalType((*Field)->getType());
-      const ConstantArrayType *Array =
-        getContext().getAsConstantArrayType(FieldType);
-      if (Array)
-        FieldType = getContext().getBaseElementType(FieldType);
-      if (!FieldType->getAs<RecordType>() || Field->isAnonymousStructOrUnion())
-        continue;
-      const RecordType *ClassRec = FieldType->getAs<RecordType>();
-      CXXRecordDecl *MemberClassDecl =
-        dyn_cast<CXXRecordDecl>(ClassRec->getDecl());
-      if (!MemberClassDecl || MemberClassDecl->hasTrivialConstructor())
-        continue;
-      if (CXXConstructorDecl *MamberCX =
-            MemberClassDecl->getDefaultConstructor(getContext())) {
-        LoadOfThis = LoadCXXThis();
-        LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
-        if (Array) {
-          const llvm::Type *BasePtr = ConvertType(FieldType);
-          BasePtr = llvm::PointerType::getUnqual(BasePtr);
-          llvm::Value *BaseAddrPtr =
-            Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-          EmitCXXAggrConstructorCall(MamberCX, Array, BaseAddrPtr);
-        }
-        else
-          EmitCXXConstructorCall(MamberCX, Ctor_Complete, LHS.getAddress(),
-                                 0, 0);
-      }
-    }
-  }
-
   // Initialize the vtable pointer
   if (ClassDecl->isDynamicClass()) {
     if (!LoadOfThis)

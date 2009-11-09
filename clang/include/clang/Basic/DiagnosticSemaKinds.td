@@ -430,9 +430,13 @@ def err_implicit_object_parameter_init : Error<
   "cannot initialize object parameter of type %0 with an expression "
   "of type %1">;
 
-def err_missing_default_constructor : Error<
-  "default constructor for %1 is missing in initialization of "
-  "%select{base class|member}0">;
+def note_field_decl : Note<"member is declared here">;
+def note_previous_class_decl : Note<
+  "%0 declared here">;
+def err_missing_default_ctor : Error<
+  "%select{|implicit default }0constructor for %1 must explicitly initialize "
+  "the %select{base class|member}2 %3 which does not have a default "
+  "constructor">;
 def err_illegal_union_member : Error<
   "union member %0 has a non-trivial %select{constructor|"
   "copy constructor|copy assignment operator|destructor}1">;
@@ -763,27 +767,18 @@ def err_param_default_argument_member_template_redecl : Error<
   "default arguments cannot be added to an out-of-line definition of a member "
   "of a %select{class template|class template partial specialization|nested "
   "class in a template}0">;
-def note_field_decl : Note<"member is declared here">;
-def err_defining_default_ctor : Error<
-  "cannot define the implicit default constructor for %0, because %select{base class|member's type}1 "
-  "%2 does not have any default constructor">;
-def note_previous_class_decl : Note<
-  "%0 declared here">;
 def err_uninitialized_member_for_assign : Error<
   "cannot define the implicit default assignment operator for %0, because "
   "non-static %select{reference|const}1 member %2 can't use default "
   "assignment operator">;
 def note_first_required_here : Note<
   "synthesized method is first required here">;
-def err_unintialized_member : Error<
-  "cannot define the implicit default constructor for %0, because "
-  "%select{reference|const}1 member %2 cannot be default-initialized">;
 def err_null_intialized_reference_member : Error<
   "cannot initialize the member to null in default constructor because "
   "reference member %0 cannot be null-initialized">;
 def err_unintialized_member_in_ctor : Error<
-  "constructor for %0 must explicitly initialize the "
-  "%select{reference|const}1 member %2 ">;
+  "%select{|implicit default }0constructor for %1 must explicitly initialize "
+  "the %select{reference|const}2 member %3">;
 
 def err_use_of_default_argument_to_function_declared_later : Error<
   "use of default argument to function %0 that is declared later in class %1">;

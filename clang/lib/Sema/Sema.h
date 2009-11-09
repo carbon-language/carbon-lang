@@ -1747,11 +1747,6 @@ public:
                                const FunctionProtoType *Proto,
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc);
-  void BuildBaseOrMemberInitializers(ASTContext &C,
-                                 CXXConstructorDecl *Constructor,
-                                 CXXBaseOrMemberInitializer **Initializers,
-                                 unsigned NumInitializers
-                                 );
 
   void DeconstructCallFunction(Expr *FnExpr,
                                NamedDecl *&Function,
@@ -2280,8 +2275,7 @@ public:
   void SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                               CXXBaseOrMemberInitializer **Initializers,
                               unsigned NumInitializers,
-                              llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,
-                              llvm::SmallVectorImpl<FieldDecl *>&Members);
+                              bool IsImplicitConstructor);
 
   /// computeBaseOrMembersToDestroy - Compute information in current
   /// destructor decl's AST of bases and non-static data members which will be
