@@ -6242,7 +6242,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::ext_typecheck_convert_discards_qualifiers;
     break;
   case IncompatibleNestedPointerQualifiers:
-    DiagKind = diag::err_nested_pointer_qualifier_mismatch;
+    DiagKind = diag::ext_nested_pointer_qualifier_mismatch;
     break;
   case IntToBlockPointer:
     DiagKind = diag::err_int_to_block_pointer;
