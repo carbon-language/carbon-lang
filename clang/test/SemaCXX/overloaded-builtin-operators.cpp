@@ -175,3 +175,13 @@ void test_dr425(A a) {
   (void)(1.0f * a); // expected-error{{ambiguous}} \
                     // expected-note 81{{candidate}}
 }
+
+// pr5432
+enum e {X};
+
+const int a[][2] = {{1}};
+
+int test_pr5432() {
+  return a[X][X];
+}
+

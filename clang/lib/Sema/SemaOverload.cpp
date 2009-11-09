@@ -2982,6 +2982,8 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
 
   QualType PointeeTy = PointerTy->getPointeeType();
   unsigned BaseCVR = PointeeTy.getCVRQualifiers();
+  if (const ConstantArrayType *Array = PointeeTy->getAs<ConstantArrayType>())
+    BaseCVR = Array->getElementType().getCVRQualifiers();
   bool hasVolatile = VisibleQuals.hasVolatile();
   bool hasRestrict = VisibleQuals.hasRestrict();
   
