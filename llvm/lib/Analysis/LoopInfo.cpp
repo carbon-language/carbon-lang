@@ -263,14 +263,13 @@ bool Loop::isLCSSAForm() const {
   SmallPtrSet<BasicBlock *, 16> LoopBBs(block_begin(), block_end());
 
   for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
-    BasicBlock  *BB = *BI;
-    for (BasicBlock ::iterator I = BB->begin(), E = BB->end(); I != E;++I)
+    BasicBlock *BB = *BI;
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;++I)
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (PHINode *P = dyn_cast<PHINode>(*UI)) {
+        if (PHINode *P = dyn_cast<PHINode>(*UI))
           UserBB = P->getIncomingBlock(UI);
-        }
 
         // Check the current block, as a fast-path.  Most values are used in
         // the same block they are defined in.
