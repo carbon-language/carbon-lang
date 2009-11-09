@@ -71,17 +71,6 @@ public:
   /// return a pointer to its base.
   virtual uint8_t *getGOTBase() const = 0;
   
-  /// SetDlsymTable - If the JIT must be able to relocate stubs after they have
-  /// been emitted, potentially because they are being copied to a process
-  /// where external symbols live at different addresses than in the JITing
-  ///  process, allocate a table with sufficient information to do so.
-  virtual void SetDlsymTable(void *ptr) = 0;
-  
-  /// getDlsymTable - If this is managing a table of entries so that stubs to
-  /// external symbols can be later relocated, this method should return a
-  /// pointer to it.
-  virtual void *getDlsymTable() const = 0;
-  
   /// NeedsExactSize - If the memory manager requires to know the size of the
   /// objects to be emitted
   bool NeedsExactSize() const {

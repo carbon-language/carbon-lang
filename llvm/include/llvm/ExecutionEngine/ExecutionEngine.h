@@ -91,7 +91,6 @@ class ExecutionEngine {
   bool CompilingLazily;
   bool GVCompilationDisabled;
   bool SymbolSearchingDisabled;
-  bool DlsymStubsEnabled;
 
   friend class EngineBuilder;  // To allow access to JITCtor and InterpCtor.
 
@@ -369,15 +368,7 @@ public:
   bool isSymbolSearchingDisabled() const {
     return SymbolSearchingDisabled;
   }
-  
-  /// EnableDlsymStubs - 
-  void EnableDlsymStubs(bool Enabled = true) {
-    DlsymStubsEnabled = Enabled;
-  }
-  bool areDlsymStubsEnabled() const {
-    return DlsymStubsEnabled;
-  }
-  
+
   /// InstallLazyFunctionCreator - If an unknown function is needed, the
   /// specified function pointer is invoked to create it.  If it returns null,
   /// the JIT will abort.
