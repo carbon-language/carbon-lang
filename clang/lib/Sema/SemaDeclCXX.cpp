@@ -2957,10 +2957,6 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
           !Constructor->isUsed()) &&
     "DefineImplicitDefaultConstructor - call it for implicit default ctor");
 
-  CXXRecordDecl *ClassDecl
-    = cast<CXXRecordDecl>(Constructor->getDeclContext());
-  assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
-
   SetBaseOrMemberInitializers(Constructor, 0, 0, true);
 
   Constructor->setUsed();
