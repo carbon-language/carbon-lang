@@ -1449,6 +1449,102 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
   return false;
 }
 
+/// \brief Substitute template arguments into the default template argument for
+/// the given template type parameter.
+///
+/// \param SemaRef the semantic analysis object for which we are performing
+/// the substitution.
+///
+/// \param Template the template that we are synthesizing template arguments 
+/// for.
+///
+/// \param TemplateLoc the location of the template name that started the
+/// template-id we are checking.
+///
+/// \param RAngleLoc the location of the right angle bracket ('>') that
+/// terminates the template-id.
+///
+/// \param Param the template template parameter whose default we are
+/// substituting into.
+///
+/// \param Converted the list of template arguments provided for template
+/// parameters that precede \p Param in the template parameter list.
+///
+/// \returns the substituted template argument, or NULL if an error occurred.
+static DeclaratorInfo *
+SubstDefaultTemplateArgument(Sema &SemaRef,
+                             TemplateDecl *Template,
+                             SourceLocation TemplateLoc,
+                             SourceLocation RAngleLoc,
+                             TemplateTypeParmDecl *Param,
+                             TemplateArgumentListBuilder &Converted) {
+  DeclaratorInfo *ArgType = Param->getDefaultArgumentInfo();
+
+  // If the argument type is dependent, instantiate it now based
+  // on the previously-computed template arguments.
+  if (ArgType->getType()->isDependentType()) {
+    TemplateArgumentList TemplateArgs(SemaRef.Context, Converted,
+                                      /*TakeArgs=*/false);
+    
+    MultiLevelTemplateArgumentList AllTemplateArgs
+      = SemaRef.getTemplateInstantiationArgs(Template, &TemplateArgs);
+
+    Sema::InstantiatingTemplate Inst(SemaRef, TemplateLoc,
+                                     Template, Converted.getFlatArguments(),
+                                     Converted.flatSize(),
+                                     SourceRange(TemplateLoc, RAngleLoc));
+    
+    ArgType = SemaRef.SubstType(ArgType, AllTemplateArgs,
+                                Param->getDefaultArgumentLoc(),
+                                Param->getDeclName());
+  }
+
+  return ArgType;
+}
+
+/// \brief Substitute template arguments into the default template argument for
+/// the given non-type template parameter.
+///
+/// \param SemaRef the semantic analysis object for which we are performing
+/// the substitution.
+///
+/// \param Template the template that we are synthesizing template arguments 
+/// for.
+///
+/// \param TemplateLoc the location of the template name that started the
+/// template-id we are checking.
+///
+/// \param RAngleLoc the location of the right angle bracket ('>') that
+/// terminates the template-id.
+///
+/// \param Param the template template parameter whose default we are
+/// substituting into.
+///
+/// \param Converted the list of template arguments provided for template
+/// parameters that precede \p Param in the template parameter list.
+///
+/// \returns the substituted template argument, or NULL if an error occurred.
+static Sema::OwningExprResult
+SubstDefaultTemplateArgument(Sema &SemaRef,
+                             TemplateDecl *Template,
+                             SourceLocation TemplateLoc,
+                             SourceLocation RAngleLoc,
+                             NonTypeTemplateParmDecl *Param,
+                             TemplateArgumentListBuilder &Converted) {
+  TemplateArgumentList TemplateArgs(SemaRef.Context, Converted,
+                                    /*TakeArgs=*/false);
+    
+  MultiLevelTemplateArgumentList AllTemplateArgs
+    = SemaRef.getTemplateInstantiationArgs(Template, &TemplateArgs);
+    
+  Sema::InstantiatingTemplate Inst(SemaRef, TemplateLoc,
+                                   Template, Converted.getFlatArguments(),
+                                   Converted.flatSize(),
+                                   SourceRange(TemplateLoc, RAngleLoc));
+
+  return SemaRef.SubstExpr(Param->getDefaultArgument(), AllTemplateArgs);
+}
+
 /// \brief Check that the given template argument list is well-formed
 /// for specializing the given template.
 bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
@@ -1516,44 +1612,27 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         if (!TTP->hasDefaultArgument())
           break;
 
-        DeclaratorInfo *ArgType = TTP->getDefaultArgumentInfo();
-
-        // If the argument type is dependent, instantiate it now based
-        // on the previously-computed template arguments.
-        if (ArgType->getType()->isDependentType()) {
-          InstantiatingTemplate Inst(*this, TemplateLoc,
-                                     Template, Converted.getFlatArguments(),
-                                     Converted.flatSize(),
-                                     SourceRange(TemplateLoc, RAngleLoc));
-
-          TemplateArgumentList TemplateArgs(Context, Converted,
-                                            /*TakeArgs=*/false);
-          ArgType = SubstType(ArgType,
-                              MultiLevelTemplateArgumentList(TemplateArgs),
-                              TTP->getDefaultArgumentLoc(),
-                              TTP->getDeclName());
-        }
-
+        DeclaratorInfo *ArgType = SubstDefaultTemplateArgument(*this, 
+                                                               Template,
+                                                               TemplateLoc,
+                                                               RAngleLoc,
+                                                               TTP,
+                                                               Converted);
         if (!ArgType)
           return true;
-
-        Arg = TemplateArgumentLoc(TemplateArgument(ArgType->getType()), ArgType);
+                                                               
+        Arg = TemplateArgumentLoc(TemplateArgument(ArgType->getType()),
+                                  ArgType);
       } else if (NonTypeTemplateParmDecl *NTTP
                    = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
         if (!NTTP->hasDefaultArgument())
           break;
 
-        InstantiatingTemplate Inst(*this, TemplateLoc,
-                                   Template, Converted.getFlatArguments(),
-                                   Converted.flatSize(),
-                                   SourceRange(TemplateLoc, RAngleLoc));
-
-        TemplateArgumentList TemplateArgs(Context, Converted,
-                                          /*TakeArgs=*/false);
-
-        Sema::OwningExprResult E
-          = SubstExpr(NTTP->getDefaultArgument(),
-                      MultiLevelTemplateArgumentList(TemplateArgs));
+        Sema::OwningExprResult E = SubstDefaultTemplateArgument(*this, Template,
+                                                                TemplateLoc, 
+                                                                RAngleLoc, 
+                                                                NTTP, 
+                                                                Converted);
         if (E.isInvalid())
           return true;
 

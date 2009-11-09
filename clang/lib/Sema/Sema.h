@@ -2844,7 +2844,8 @@ public:
   // C++ Template Instantiation
   //
 
-  MultiLevelTemplateArgumentList getTemplateInstantiationArgs(NamedDecl *D);
+  MultiLevelTemplateArgumentList getTemplateInstantiationArgs(NamedDecl *D,
+                                     const TemplateArgumentList *Innermost = 0);
 
   /// \brief A template instantiation that is currently in progress.
   struct ActiveTemplateInstantiation {

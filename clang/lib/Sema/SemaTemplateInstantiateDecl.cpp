@@ -923,18 +923,8 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
 
-  // FIXME: Do we actually want to perform substitution here? I don't think
-  // we do.
-  if (D->hasDefaultArgument()) {
-    DeclaratorInfo *DefaultPattern = D->getDefaultArgumentInfo();
-    DeclaratorInfo *DefaultInst
-      = SemaRef.SubstType(DefaultPattern, TemplateArgs,
-                          D->getDefaultArgumentLoc(),
-                          D->getDeclName());
-
-    Inst->setDefaultArgument(DefaultInst,
-                             D->defaultArgumentWasInherited() /* preserve? */);
-  }
+  if (D->hasDefaultArgument())
+    Inst->setDefaultArgument(D->getDefaultArgumentInfo(), false);  
 
   // Introduce this template parameter's instantiation into the instantiation 
   // scope.

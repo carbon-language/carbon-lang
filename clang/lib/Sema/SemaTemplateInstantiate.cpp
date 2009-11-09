@@ -28,11 +28,20 @@ using namespace clang;
 
 /// \brief Retrieve the template argument list(s) that should be used to
 /// instantiate the definition of the given declaration.
+///
+/// \param D the declaration for which we are computing template instantiation
+/// arguments.
+///
+/// \param Innermost if non-NULL, the innermost template argument list.
 MultiLevelTemplateArgumentList
-Sema::getTemplateInstantiationArgs(NamedDecl *D) {
+Sema::getTemplateInstantiationArgs(NamedDecl *D, 
+                                   const TemplateArgumentList *Innermost) {
   // Accumulate the set of template argument lists in this structure.
   MultiLevelTemplateArgumentList Result;
 
+  if (Innermost)
+    Result.addOuterTemplateArguments(Innermost);
+  
   DeclContext *Ctx = dyn_cast<DeclContext>(D);
   if (!Ctx)
     Ctx = D->getDeclContext();
