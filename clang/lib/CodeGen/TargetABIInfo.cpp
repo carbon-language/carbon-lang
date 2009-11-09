@@ -168,8 +168,28 @@ static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
   return Size == 32 || Size == 64;
 }
 
-static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
-                                           ASTContext &Context) {
+/// canExpandIndirectArgument - Test whether an argument type which is to be
+/// passed indirectly (on the stack) would have the equivalent layout if it was
+/// expanded into separate arguments. If so, we prefer to do the latter to avoid
+/// inhibiting optimizations.
+///
+// FIXME: This predicate is missing many cases, currently it just follows
+// llvm-gcc (checks that all fields are 32-bit or 64-bit primitive types). We
+// should probably make this smarter, or better yet make the LLVM backend
+// capable of handling it.
+static bool canExpandIndirectArgument(QualType Ty, ASTContext &Context) {
+  // We can only expand structure types.
+  const RecordType *RT = Ty->getAs<RecordType>();
+  if (!RT)
+    return false;
+
+  // We can only expand (C) structures.
+  //
+  // FIXME: This needs to be generalized to handle classes as well.
+  const RecordDecl *RD = RT->getDecl();
+  if (!RD->isStruct() || isa<CXXRecordDecl>(RD))
+    return false;
+
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i) {
     const FieldDecl *FD = *i;
@@ -442,14 +462,13 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     if (Ty->isStructureType() && Context.getTypeSize(Ty) == 0)
       return ABIArgInfo::getIgnore();
 
-    // Expand structs with size <= 128-bits which consist only of
-    // basic types (int, long long, float, double, xxx*). This is
-    // non-recursive and does not ignore empty fields.
-    if (const RecordType *RT = Ty->getAsStructureType()) {
-      if (Context.getTypeSize(Ty) <= 4*32 &&
-          areAllFields32Or64BitBasicType(RT->getDecl(), Context))
-        return ABIArgInfo::getExpand();
-    }
+    // Expand small (<= 128-bit) record types when we know that the stack layout
+    // of those arguments will match the struct. This is important because the
+    // LLVM backend isn't smart enough to remove byval, which inhibits many
+    // optimizations.
+    if (Context.getTypeSize(Ty) <= 4*32 &&
+        canExpandIndirectArgument(Ty, Context))
+      return ABIArgInfo::getExpand();
 
     return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, Context));
   } else {
