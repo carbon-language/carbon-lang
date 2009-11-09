@@ -646,6 +646,15 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   const Value *O1 = V1->getUnderlyingObject();
   const Value *O2 = V2->getUnderlyingObject();
 
+  // Null values in the default address space don't point to any object, so they
+  // don't alias any other pointer.
+  if (const ConstantPointerNull *CPN = dyn_cast<ConstantPointerNull>(O1))
+    if (CPN->getType()->getAddressSpace() == 0)
+      return NoAlias;
+  if (const ConstantPointerNull *CPN = dyn_cast<ConstantPointerNull>(O2))
+    if (CPN->getType()->getAddressSpace() == 0)
+      return NoAlias;
+
   if (O1 != O2) {
     // If V1/V2 point to two different objects we know that we have no alias.
     if (isIdentifiedObject(O1) && isIdentifiedObject(O2))
