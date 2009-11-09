@@ -37,7 +37,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NodesCombined   , "Number of dag nodes combined");
