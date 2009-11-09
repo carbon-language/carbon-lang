@@ -433,6 +433,8 @@ def err_implicit_object_parameter_init : Error<
 def note_field_decl : Note<"member is declared here">;
 def note_previous_class_decl : Note<
   "%0 declared here">;
+def note_ctor_synthesized_at : Note<
+  "implicit default constructor for %0 first required here">;
 def err_missing_default_ctor : Error<
   "%select{|implicit default }0constructor for %1 must explicitly initialize "
   "the %select{base class|member}2 %3 which does not have a default "

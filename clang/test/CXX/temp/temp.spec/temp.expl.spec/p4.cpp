@@ -26,7 +26,7 @@ IntHolder &test_X_IntHolderInt(X<IntHolder, int> xih) {
   xih.g(); // okay
   xih.f(); // expected-note{{instantiation}}
   
-  X<IntHolder, int>::Inner inner;
+  X<IntHolder, int>::Inner inner; // expected-note {{first required here}}
   
   return X<IntHolder, int>::value; // expected-note{{instantiation}}
 }

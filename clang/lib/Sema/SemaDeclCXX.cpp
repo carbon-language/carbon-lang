@@ -1186,7 +1186,7 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
                                                   NumArgs, C, IdLoc, RParenLoc);
 }
 
-void
+bool
 Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                               CXXBaseOrMemberInitializer **Initializers,
                               unsigned NumInitializers,
@@ -1197,6 +1197,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
   llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
   llvm::DenseMap<const void *, CXXBaseOrMemberInitializer*> AllBaseFields;
   bool HasDependentBaseInit = false;
+  bool HadError = false;
 
   for (unsigned i = 0; i < NumInitializers; i++) {
     CXXBaseOrMemberInitializer *Member = Initializers[i];
@@ -1258,6 +1259,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
             << 0 << VBase->getType();
           Diag(VBaseDecl->getLocation(), diag::note_previous_class_decl)
             << Context.getTagDeclType(VBaseDecl);
+          HadError = true;
           continue;
         }
 
@@ -1307,6 +1309,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
             << 0 << Base->getType();
           Diag(BaseDecl->getLocation(), diag::note_previous_class_decl)
             << Context.getTagDeclType(BaseDecl);
+          HadError = true;
           continue;
         }
 
@@ -1378,6 +1381,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         Diag(Field->getLocation(), diag::note_field_decl);
         Diag(RT->getDecl()->getLocation(), diag::note_previous_class_decl)
           << Context.getTagDeclType(RT->getDecl());
+        HadError = true;
         continue;
       }
       
@@ -1399,6 +1403,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
           << 1 << (*Field)->getDeclName();
         Diag((*Field)->getLocation(), diag::note_declared_at);
+        HadError = true;
       }
     }
     else if (FT->isReferenceType()) {
@@ -1406,12 +1411,14 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
         << 0 << (*Field)->getDeclName();
       Diag((*Field)->getLocation(), diag::note_declared_at);
+      HadError = true;
     }
     else if (FT.isConstQualified()) {
       Diag(Constructor->getLocation(), diag::err_unintialized_member_in_ctor)
         << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
         << 1 << (*Field)->getDeclName();
       Diag((*Field)->getLocation(), diag::note_declared_at);
+      HadError = true;
     }
   }
 
@@ -1425,6 +1432,8 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     for (unsigned Idx = 0; Idx < NumInitializers; ++Idx)
       baseOrMemberInitializers[Idx] = AllToInit[Idx];
   }
+
+  return HadError;
 }
 
 static void *GetKeyForTopLevelField(FieldDecl *Field) {
@@ -2957,9 +2966,17 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
           !Constructor->isUsed()) &&
     "DefineImplicitDefaultConstructor - call it for implicit default ctor");
 
-  SetBaseOrMemberInitializers(Constructor, 0, 0, true);
+  CXXRecordDecl *ClassDecl
+    = cast<CXXRecordDecl>(Constructor->getDeclContext());
+  assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
 
-  Constructor->setUsed();
+  if (SetBaseOrMemberInitializers(Constructor, 0, 0, true)) {
+    Diag(CurrentLocation, diag::note_ctor_synthesized_at)
+      << Context.getTagDeclType(ClassDecl);
+    Constructor->setInvalidDecl();
+  } else {
+    Constructor->setUsed();
+  }
   return;
 }
 

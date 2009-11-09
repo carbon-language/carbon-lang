@@ -6,5 +6,5 @@ struct A { // expected-error {{implicit default constructor for 'struct A' must 
 };
 
 int main () {
-      (void)A();
+      (void)A(); // expected-note {{first required here}}
 }

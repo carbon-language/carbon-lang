@@ -11,7 +11,7 @@ struct X2  : X1 {  // expected-note {{'struct X2' declared here}} \
 
 struct X3 : public X2 { // expected-error {{must explicitly initialize the base class 'struct X2'}}
 };
-X3 x3;
+X3 x3; // expected-note {{first required here}}
 
 
 struct X4 { // expected-error {{must explicitly initialize the member 'x2'}} \
@@ -20,7 +20,7 @@ struct X4 { // expected-error {{must explicitly initialize the member 'x2'}} \
   X2 & rx2; // expected-note {{declared at}}
 };
 
-X4 x4;
+X4 x4; // expected-note {{first required here}}
 
 
 struct Y1 { // has no implicit default constructor
@@ -52,5 +52,5 @@ struct Z1 { // expected-error {{must explicitly initialize the reference member 
   volatile int v1;
 };
 
-Z1 z1;
+Z1 z1; // expected-note {{first required here}}
 
