@@ -11031,18 +11031,57 @@ static bool PHIsEqualValue(PHINode *PN, Value *NonPhiInVal,
 
 namespace {
 struct PHIUsageRecord {
+  unsigned PHIId;     // The ID # of the PHI (something determinstic to sort on)
   unsigned Shift;     // The amount shifted.
   Instruction *Inst;  // The trunc instruction.
   
-  PHIUsageRecord(unsigned Sh, Instruction *User) : Shift(Sh), Inst(User) {}
+  PHIUsageRecord(unsigned pn, unsigned Sh, Instruction *User)
+    : PHIId(pn), Shift(Sh), Inst(User) {}
   
   bool operator<(const PHIUsageRecord &RHS) const {
+    if (PHIId < RHS.PHIId) return true;
+    if (PHIId > RHS.PHIId) return false;
     if (Shift < RHS.Shift) return true;
-    return Shift == RHS.Shift &&
-           Inst->getType()->getPrimitiveSizeInBits() <
+    if (Shift > RHS.Shift) return false;
+    return Inst->getType()->getPrimitiveSizeInBits() <
            RHS.Inst->getType()->getPrimitiveSizeInBits();
   }
 };
+  
+struct LoweredPHIRecord {
+  PHINode *PN;        // The PHI that was lowered.
+  unsigned Shift;     // The amount shifted.
+  unsigned Width;     // The width extracted.
+  
+  LoweredPHIRecord(PHINode *pn, unsigned Sh, const Type *Ty)
+    : PN(pn), Shift(Sh), Width(Ty->getPrimitiveSizeInBits()) {}
+  
+  // Ctor form used by DenseMap.
+  LoweredPHIRecord(PHINode *pn, unsigned Sh)
+    : PN(pn), Shift(Sh), Width(0) {}
+};
+}
+
+namespace llvm {
+  template<>
+  struct DenseMapInfo<LoweredPHIRecord> {
+    static inline LoweredPHIRecord getEmptyKey() {
+      return LoweredPHIRecord(0, 0);
+    }
+    static inline LoweredPHIRecord getTombstoneKey() {
+      return LoweredPHIRecord(0, 1);
+    }
+    static unsigned getHashValue(const LoweredPHIRecord &Val) {
+      return DenseMapInfo<PHINode*>::getHashValue(Val.PN) ^ (Val.Shift>>3) ^
+             (Val.Width>>3);
+    }
+    static bool isEqual(const LoweredPHIRecord &LHS,
+                        const LoweredPHIRecord &RHS) {
+      return LHS.PN == RHS.PN && LHS.Shift == RHS.Shift &&
+             LHS.Width == RHS.Width;
+    }
+    static bool isPod() { return true; }
+  };
 }
 
 
@@ -11054,102 +11093,156 @@ struct PHIUsageRecord {
 /// TODO: The user of the trunc may be an bitcast to float/double/vector or an
 /// inttoptr.  We should produce new PHIs in the right type.
 ///
-Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &PN) {
+Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
+  // PHIUsers - Keep track of all of the truncated values extracted from a set
+  // of PHIs, along with their offset.  These are the things we want to rewrite.
   SmallVector<PHIUsageRecord, 16> PHIUsers;
   
-  for (Value::use_iterator UI = PN.use_begin(), E = PN.use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  // PHIs are often mutually cyclic, so we keep track of a whole set of PHI
+  // nodes which are extracted from. PHIsToSlice is a set we use to avoid
+  // revisiting PHIs, PHIsInspected is a ordered list of PHIs that we need to
+  // check the uses of (to ensure they are all extracts).
+  SmallVector<PHINode*, 8> PHIsToSlice;
+  SmallPtrSet<PHINode*, 8> PHIsInspected;
+  
+  PHIsToSlice.push_back(&FirstPhi);
+  PHIsInspected.insert(&FirstPhi);
+  
+  for (unsigned PHIId = 0; PHIId != PHIsToSlice.size(); ++PHIId) {
+    PHINode *PN = PHIsToSlice[PHIId];
     
-    // The PHI can use itself.
-    if (User == &PN)
-      continue;
-    
-    // Truncates are always ok.
-    if (isa<TruncInst>(User)) {
-      PHIUsers.push_back(PHIUsageRecord(0, User));
-      continue;
+    for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
+         UI != E; ++UI) {
+      Instruction *User = cast<Instruction>(*UI);
+      
+      // If the user is a PHI, inspect its uses recursively.
+      if (PHINode *UserPN = dyn_cast<PHINode>(User)) {
+        if (PHIsInspected.insert(UserPN))
+          PHIsToSlice.push_back(UserPN);
+        continue;
+      }
+      
+      // Truncates are always ok.
+      if (isa<TruncInst>(User)) {
+        PHIUsers.push_back(PHIUsageRecord(PHIId, 0, User));
+        continue;
+      }
+      
+      // Otherwise it must be a lshr which can only be used by one trunc.
+      if (User->getOpcode() != Instruction::LShr ||
+          !User->hasOneUse() || !isa<TruncInst>(User->use_back()) ||
+          !isa<ConstantInt>(User->getOperand(1)))
+        return 0;
+      
+      unsigned Shift = cast<ConstantInt>(User->getOperand(1))->getZExtValue();
+      PHIUsers.push_back(PHIUsageRecord(PHIId, Shift, User->use_back()));
     }
-    
-    // Otherwise it must be a lshr which can only be used by one trunc.
-    if (User->getOpcode() != Instruction::LShr ||
-        !User->hasOneUse() || !isa<TruncInst>(User->use_back()) ||
-        !isa<ConstantInt>(User->getOperand(1)))
-      return 0;
-    
-    unsigned Shift = cast<ConstantInt>(User->getOperand(1))->getZExtValue();
-    PHIUsers.push_back(PHIUsageRecord(Shift, User->use_back()));
   }
   
   // If we have no users, they must be all self uses, just nuke the PHI.
   if (PHIUsers.empty())
-    return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
+    return ReplaceInstUsesWith(FirstPhi, UndefValue::get(FirstPhi.getType()));
   
   // If this phi node is transformable, create new PHIs for all the pieces
   // extracted out of it.  First, sort the users by their offset and size.
   array_pod_sort(PHIUsers.begin(), PHIUsers.end());
   
-  DEBUG(errs() << "SLICING UP PHI: " << PN << '\n');
+  DEBUG(errs() << "SLICING UP PHI: " << FirstPhi << '\n';
+            for (unsigned i = 1, e = PHIsToSlice.size(); i != e; ++i)
+              errs() << "AND USER PHI #" << i << ": " << *PHIsToSlice[i] <<'\n';
+        );
   
+  // PredValues - This is a temporary used when rewriting PHI nodes.  It is
+  // hoisted out here to avoid construction/destruction thrashing.
   DenseMap<BasicBlock*, Value*> PredValues;
   
-  unsigned UserI = 0, UserE = PHIUsers.size();
-  while (1) {
-    assert(UserI != UserE && "Iteration fail, loop below should catch this");
-    
+  // ExtractedVals - Each new PHI we introduce is saved here so we don't
+  // introduce redundant PHIs.
+  DenseMap<LoweredPHIRecord, PHINode*> ExtractedVals;
+  
+  for (unsigned UserI = 0, UserE = PHIUsers.size(); UserI != UserE; ++UserI) {
+    unsigned PHIId = PHIUsers[UserI].PHIId;
+    PHINode *PN = PHIsToSlice[PHIId];
     unsigned Offset = PHIUsers[UserI].Shift;
     const Type *Ty = PHIUsers[UserI].Inst->getType();
-
-    // Create the new PHI node for this user.
-    PHINode *EltPHI =
-      PHINode::Create(Ty, PN.getName()+".off"+Twine(Offset), &PN);
-    assert(EltPHI->getType() != PN.getType() &&
-           "Truncate didn't shrink phi?");
     
-    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
-      BasicBlock *Pred = PN.getIncomingBlock(i);
-      Value *&PredVal = PredValues[Pred];
+    PHINode *EltPHI;
+    
+    // If we've already lowered a user like this, reuse the previously lowered
+    // value.
+    if ((EltPHI = ExtractedVals[LoweredPHIRecord(PN, Offset, Ty)]) == 0) {
       
-      // If we already have a value for this predecessor, reuse it.
-      if (PredVal) {
-        EltPHI->addIncoming(PredVal, Pred);
-        continue;
-      }
+      // Otherwise, Create the new PHI node for this user.
+      EltPHI = PHINode::Create(Ty, PN->getName()+".off"+Twine(Offset), PN);
+      assert(EltPHI->getType() != PN->getType() &&
+             "Truncate didn't shrink phi?");
+    
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        BasicBlock *Pred = PN->getIncomingBlock(i);
+        Value *&PredVal = PredValues[Pred];
+        
+        // If we already have a value for this predecessor, reuse it.
+        if (PredVal) {
+          EltPHI->addIncoming(PredVal, Pred);
+          continue;
+        }
 
-      // Handle the PHI self-reuse case.
-      Value *InVal = PN.getIncomingValue(i);
-      if (InVal == &PN) {
-        PredVal = EltPHI;
-        EltPHI->addIncoming(PredVal, Pred);
-        continue;
+        // Handle the PHI self-reuse case.
+        Value *InVal = PN->getIncomingValue(i);
+        if (InVal == PN) {
+          PredVal = EltPHI;
+          EltPHI->addIncoming(PredVal, Pred);
+          continue;
+        } else if (PHINode *InPHI = dyn_cast<PHINode>(PN)) {
+          // If the incoming value was a PHI, and if it was one of the PHIs we
+          // already rewrote it, just use the lowered value.
+          if (Value *Res = ExtractedVals[LoweredPHIRecord(InPHI, Offset, Ty)]) {
+            PredVal = Res;
+            EltPHI->addIncoming(PredVal, Pred);
+            continue;
+          }
+        }
+        
+        // Otherwise, do an extract in the predecessor.
+        Builder->SetInsertPoint(Pred, Pred->getTerminator());
+        Value *Res = InVal;
+        if (Offset)
+          Res = Builder->CreateLShr(Res, ConstantInt::get(InVal->getType(),
+                                                          Offset), "extract");
+        Res = Builder->CreateTrunc(Res, Ty, "extract.t");
+        PredVal = Res;
+        EltPHI->addIncoming(Res, Pred);
+        
+        // If the incoming value was a PHI, and if it was one of the PHIs we are
+        // rewriting, we will ultimately delete the code we inserted.  This
+        // means we need to revisit that PHI to make sure we extract out the
+        // needed piece.
+        if (PHINode *OldInVal = dyn_cast<PHINode>(PN->getIncomingValue(i)))
+          if (PHIsInspected.count(OldInVal)) {
+            unsigned RefPHIId = std::find(PHIsToSlice.begin(),PHIsToSlice.end(),
+                                          OldInVal)-PHIsToSlice.begin();
+            PHIUsers.push_back(PHIUsageRecord(RefPHIId, Offset, 
+                                              cast<Instruction>(Res)));
+            ++UserE;
+          }
       }
+      PredValues.clear();
       
-      // Otherwise, do an extract in the predecessor.
-      Builder->SetInsertPoint(Pred, Pred->getTerminator());
-      if (Offset)
-        InVal = Builder->CreateLShr(InVal, ConstantInt::get(InVal->getType(),
-                                                            Offset), "extract");
-      InVal = Builder->CreateTrunc(InVal, Ty, "extract.t");
-      PredVal = InVal;
-      EltPHI->addIncoming(PredVal, Pred);
+      DEBUG(errs() << "  Made element PHI for offset " << Offset << ": "
+                   << *EltPHI << '\n');
+      ExtractedVals[LoweredPHIRecord(PN, Offset, Ty)] = EltPHI;
     }
-    PredValues.clear();
     
-    DEBUG(errs() << "  Made element PHI for offset " << Offset << ": "
-                 << *EltPHI << '\n');
-    
-    // Now that we have a new PHI node, replace all uses of this piece of the
-    // PHI with the one new PHI.
-    while (PHIUsers[UserI].Shift == Offset &&
-           PHIUsers[UserI].Inst->getType() == Ty) {
-      ReplaceInstUsesWith(*PHIUsers[UserI].Inst, EltPHI);
-
-      // If we replaced the last PHI user, we're done.  Just replace all the
-      // remaining uses of the PHI (self uses and the lshrs with undefs.
-      if (++UserI == UserE)
-        return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
-    }
+    // Replace the use of this piece with the PHI node.
+    ReplaceInstUsesWith(*PHIUsers[UserI].Inst, EltPHI);
   }
+  
+  // Replace all the remaining uses of the PHI nodes (self uses and the lshrs)
+  // with undefs.
+  Value *Undef = UndefValue::get(FirstPhi.getType());
+  for (unsigned i = 1, e = PHIsToSlice.size(); i != e; ++i)
+    ReplaceInstUsesWith(*PHIsToSlice[i], Undef);
+  return ReplaceInstUsesWith(FirstPhi, Undef);
 }
 
 // PHINode simplification

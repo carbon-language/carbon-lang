@@ -317,3 +317,48 @@ Exit:           ; preds = %Loop
 ; CHECK: Loop:
 ; CHECK-NEXT: phi i160
 }
+
+declare i64 @test15a(i64)
+
+define i64 @test15b(i64 %A, i1 %b) {
+; CHECK: @test15b
+entry:
+  %i0 = zext i64 %A to i128
+  %i1 = shl i128 %i0, 64
+  %i = or i128 %i1, %i0
+  br i1 %b, label %one, label %two
+; CHECK: entry:
+; CHECK-NEXT: br i1 %b
+
+one:
+  %x = phi i128 [%i, %entry], [%y, %two]
+  %x1 = lshr i128 %x, 64
+  %x2 = trunc i128 %x1 to i64
+  %c = call i64 @test15a(i64 %x2)
+  %c1 = zext i64 %c to i128
+  br label %two
+
+; CHECK: one:
+; CHECK-NEXT: phi i64
+; CHECK-NEXT: %c = call i64 @test15a
+
+two:
+  %y = phi i128 [%i, %entry], [%c1, %one]
+  %y1 = lshr i128 %y, 64
+  %y2 = trunc i128 %y1 to i64
+  %d = call i64 @test15a(i64 %y2)
+  %d1 = trunc i64 %d to i1
+  br i1 %d1, label %one, label %end
+
+; CHECK: two:
+; CHECK-NEXT: phi i64
+; CHECK-NEXT: phi i64
+; CHECK-NEXT: %d = call i64 @test15a
+
+end:
+  %g = trunc i128 %y to i64
+  ret i64 %g
+; CHECK: end: 
+; CHECK-NEXT: ret i64
+}
+
