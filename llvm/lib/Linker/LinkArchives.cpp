@@ -172,10 +172,9 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
         verbose("  Linking in module: " + aModule->getModuleIdentifier());
 
         // Link it in
-        if (LinkInModule(aModule, &moduleErrorMsg)) {
+        if (LinkInModule(aModule, &moduleErrorMsg))
           return error("Cannot link in module '" +
                        aModule->getModuleIdentifier() + "': " + moduleErrorMsg);
-        }
       } 
     }
     
