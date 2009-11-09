@@ -286,7 +286,7 @@ struct WrappedStruct { unsigned z; };
 int test_handle_array_wrapper() {
   struct ArrayWrapper x;
   test_handle_array_wrapper(&x);
-  struct WrappedStruct *p = (struct WrappedStruct*) x.y;
+  struct WrappedStruct *p = (struct WrappedStruct*) x.y; // expected-warning{{Casting a non-structure type to a structure type and accessing a field can lead to memory access errors or data corruption.}}
   return p->z;  // no-warning
 }
 

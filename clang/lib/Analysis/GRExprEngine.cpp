@@ -2035,7 +2035,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 // Transfer functions: Miscellaneous statements.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred, ExplodedNodeSet& Dst){
+void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred, 
+                             ExplodedNodeSet& Dst){
   ExplodedNodeSet S1;
   QualType T = CastE->getType();
   QualType ExTy = Ex->getType();
@@ -2048,16 +2049,18 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred, Exploded
   else
     Visit(Ex, Pred, S1);
 
+  ExplodedNodeSet S2;
+  CheckerVisit(CastE, S2, S1, true);
+
   // Check for casting to "void".
   if (T->isVoidType()) {
-    for (ExplodedNodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1)
-      Dst.Add(*I1);
-
+    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I)
+      Dst.Add(*I);
     return;
   }
 
-  for (ExplodedNodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
-    ExplodedNode* N = *I1;
+  for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
+    ExplodedNode* N = *I;
     const GRState* state = GetState(N);
     SVal V = state->getSVal(Ex);
     const SValuator::CastResult &Res = SVator.EvalCast(V, state, T, ExTy);

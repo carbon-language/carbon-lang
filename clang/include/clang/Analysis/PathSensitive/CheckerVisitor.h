@@ -36,10 +36,19 @@ public:
       default:
         assert(false && "Unsupport statement.");
         return;
+
+      case Stmt::ImplicitCastExprClass:
+      case Stmt::ExplicitCastExprClass:
+      case Stmt::CStyleCastExprClass:
+        static_cast<ImplClass*>(this)->PreVisitCastExpr(C,
+                                               static_cast<const CastExpr*>(S));
+        break;
+
       case Stmt::CompoundAssignOperatorClass:
         static_cast<ImplClass*>(this)->PreVisitBinaryOperator(C,
                                          static_cast<const BinaryOperator*>(S));
         break;
+
 #define PREVISIT(NAME) \
 case Stmt::NAME ## Class:\
 static_cast<ImplClass*>(this)->PreVisit ## NAME(C,static_cast<const NAME*>(S));\

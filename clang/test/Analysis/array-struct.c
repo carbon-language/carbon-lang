@@ -153,7 +153,7 @@ struct s3 p[1];
 // an ElementRegion of type 'char'. Then load a nonloc::SymbolVal from it and
 // assigns to 'a'. 
 void f16(struct s3 *p) {
-  struct s3 a = *((struct s3*) ((char*) &p[0]));
+  struct s3 a = *((struct s3*) ((char*) &p[0])); // expected-warning{{Casting a non-structure type to a structure type and accessing a field can lead to memory access errors or data corruption.}}
 }
 
 void inv(struct s1 *);

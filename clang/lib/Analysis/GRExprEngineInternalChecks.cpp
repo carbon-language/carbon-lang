@@ -416,4 +416,6 @@ void GRExprEngine::RegisterInternalChecks() {
   RegisterFixedAddressChecker(*this);
   // Note that this must be registered after ReturnStackAddressChecker.
   RegisterReturnPointerRangeChecker(*this);
+
+  RegisterCastToStructChecker(*this);
 }
