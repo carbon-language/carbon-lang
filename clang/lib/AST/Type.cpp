@@ -425,7 +425,7 @@ bool Type::isSignedIntegerType() const {
 bool Type::isUnsignedIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::ULongLong;
+           BT->getKind() <= BuiltinType::UInt128;
   }
 
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
