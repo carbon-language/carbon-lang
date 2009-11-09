@@ -226,7 +226,7 @@ static Constant *GetResultOfComparison(CmpInst::Predicate pred,
 
 /// ComputeValueKnownInPredecessors - Given a basic block BB and a value V, see
 /// if we can infer that the value is a known ConstantInt in any of our
-/// predecessors.  If so, return the known the list of value and pred BB in the
+/// predecessors.  If so, return the known list of value and pred BB in the
 /// result vector.  If a value is known to be undef, it is returned as null.
 ///
 /// The BB basic block is known to start with a PHI node.
@@ -501,7 +501,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   //
   // We only bother doing this if the current block has a PHI node and if the
   // conditional instruction lives in the current block.  If either condition
-  // fail, this won't be a computable value anyway.
+  // fails, this won't be a computable value anyway.
   if (CondInst->getParent() == BB && isa<PHINode>(BB->front()))
     if (ProcessThreadableEdges(CondInst, BB))
       return true;
@@ -890,7 +890,7 @@ bool JumpThreading::ProcessThreadableEdges(Instruction *CondInst,
   // Decide what we want to thread through.  Convert our list of known values to
   // a list of known destinations for each pred.  This also discards duplicate
   // predecessors and keeps track of the undefined inputs (which are represented
-  // as a null dest in the PredToDestList.
+  // as a null dest in the PredToDestList).
   SmallPtrSet<BasicBlock*, 16> SeenPreds;
   SmallVector<std::pair<BasicBlock*, BasicBlock*>, 16> PredToDestList;
   
