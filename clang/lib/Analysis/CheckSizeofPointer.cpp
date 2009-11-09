@@ -47,7 +47,7 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     SourceRange R = E->getArgumentExpr()->getSourceRange();
     BR.EmitBasicReport("Potential unintended use of sizeof() on pointer type",
                        "Logic",
-                       "The code calls sizeof() on a malloced pointer type, which always returns the wordsize/8. This can produce an unexpected result if the programmer intended to determine how much memory has been allocated.",
+                       "The code calls sizeof() on a pointer type. This can produce an unexpected result.",
                        E->getLocStart(), &R, 1);
   }
 }
