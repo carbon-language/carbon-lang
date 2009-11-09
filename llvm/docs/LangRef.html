@@ -1576,13 +1576,12 @@ Classifications</a> </div>
   </tr>
 </table>
 
-<p>Except when the <tt>inbounds</tt> keyword is present, there is no limitation
-   on indexing beyond the end of the array implied by the static type (though
-   any loads or stores must of course be within the bounds of the allocated
-   object!). This means that single-dimension 'variable sized array' addressing
-   can be implemented in LLVM with a zero length array type. An implementation
-   of 'pascal style arrays' in LLVM could use the type
-   "<tt>{ i32, [0 x float]}</tt>", for example.</p>
+<p>There is no restriction on indexing beyond the end of the array implied by
+   a static type (though there are restrictions on indexing beyond the bounds
+   of an allocated object in some cases). This means that single-dimension
+   'variable sized array' addressing can be implemented in LLVM with a zero
+   length array type. An implementation of 'pascal style arrays' in LLVM could
+   use the type "<tt>{ i32, [0 x float]}</tt>", for example.</p>
 
 <p>Note that the code generator does not yet support large aggregate types to be
    used as function return types. The specific limit on how large an aggregate
