@@ -473,17 +473,24 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
   for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx; 
        CurCtx = CurCtx->getNextContext()) {
     for (DeclContext::decl_iterator D = CurCtx->decls_begin(), 
-         DEnd = CurCtx->decls_end();
+                                 DEnd = CurCtx->decls_end();
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
         Results.MaybeAddResult(Result(ND, Rank, 0, InBaseClass), CurContext);
+      
+      // Visit transparent contexts inside this context.
+      if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
+        if (InnerCtx->isTransparentContext())
+          CollectMemberLookupResults(InnerCtx, Rank, CurContext, Visited,
+                                     Results, InBaseClass);
+      }
     }
   }
   
   // Traverse the contexts of inherited classes.
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
     for (CXXRecordDecl::base_class_iterator B = Record->bases_begin(),
-         BEnd = Record->bases_end();
+                                         BEnd = Record->bases_end();
          B != BEnd; ++B) {
       QualType BaseType = B->getType();
       

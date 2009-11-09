@@ -1141,6 +1141,7 @@ static CXCursorKind parseResultKind(llvm::StringRef Str) {
     .Case("Struct", CXCursor_StructDecl)
     .Case("Union", CXCursor_UnionDecl)
     .Case("Class", CXCursor_ClassDecl)
+    .Case("Enum", CXCursor_EnumDecl)
     .Case("Field", CXCursor_FieldDecl)
     .Case("EnumConstant", CXCursor_EnumConstantDecl)
     .Case("Function", CXCursor_FunctionDecl)

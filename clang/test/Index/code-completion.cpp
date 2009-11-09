@@ -2,6 +2,8 @@
 #include "nonexistent_header.h"
 struct X {
   int member;
+  
+  enum E { Val1 };
 };
 
 struct Y {
@@ -17,7 +19,7 @@ struct Z : X, Y {
 struct Z get_Z();
 
 void test_Z() {
-  // RUN: c-index-test -code-completion-at=%s:21:11 %s | FileCheck -check-prefix=CHECK-MEMBER %s
+  // RUN: c-index-test -code-completion-at=%s:23:11 %s | FileCheck -check-prefix=CHECK-MEMBER %s
   get_Z().member = 17;
 }
 
@@ -27,12 +29,14 @@ double& overloaded(float f, int second);
 int& overloaded(Z z, int second);
                 
 void test_overloaded() {
-  // RUN: c-index-test -code-completion-at=%s:31:18 %s | FileCheck -check-prefix=CHECK-OVERLOAD %s
+  // RUN: c-index-test -code-completion-at=%s:33:18 %s | FileCheck -check-prefix=CHECK-OVERLOAD %s
   overloaded(Z(), 0);
 }
 
+// CHECK-MEMBER: EnumDecl:{Informative X::}{TypedText E}
 // CHECK-MEMBER: FieldDecl:{TypedText member}
 // CHECK-MEMBER: FunctionDecl:{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
+// CHECK-MEMBER: EnumConstantDecl:{Informative E::}{TypedText Val1}
 // CHECK-MEMBER: FunctionDecl:{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{TypedText operator int}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{TypedText operator=}{LeftParen (}{Placeholder struct Z const &}{RightParen )}
