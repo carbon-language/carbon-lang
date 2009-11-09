@@ -39,8 +39,10 @@
 using namespace llvm;
 
 static cl::opt<int> PreSplitLimit("pre-split-limit", cl::init(-1), cl::Hidden);
-static cl::opt<int> DeadSplitLimit("dead-split-limit", cl::init(-1), cl::Hidden);
-static cl::opt<int> RestoreFoldLimit("restore-fold-limit", cl::init(-1), cl::Hidden);
+static cl::opt<int> DeadSplitLimit("dead-split-limit", cl::init(-1),
+                                   cl::Hidden);
+static cl::opt<int> RestoreFoldLimit("restore-fold-limit", cl::init(-1),
+                                     cl::Hidden);
 
 STATISTIC(NumSplits, "Number of intervals split");
 STATISTIC(NumRemats, "Number of intervals split by rematerialization");
