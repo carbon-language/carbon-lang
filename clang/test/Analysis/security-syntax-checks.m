@@ -30,6 +30,13 @@ void test_gets() {
   gets(buff); // expected-warning{{Call to function 'gets' is extremely insecure as it can always result in a buffer overflow}}
 }
 
+int getpw(unsigned int uid, char *buf);
+
+void test_getpw() {
+  char buff[1024];
+  getpw(2, buff); // expected-warning{{The getpw() function is dangerous as it may overflow the provided buffer. It is obsoleted by getpwuid().}}
+}
+
 // <rdar://problem/6337132> CWE-273: Failure to Check Whether Privileges Were
 //  Dropped Successfully
 typedef unsigned int __uint32_t;

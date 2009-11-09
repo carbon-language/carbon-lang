@@ -23,6 +23,7 @@ namespace {
 class VISIBILITY_HIDDEN WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;
   IdentifierInfo *II_gets;
+  IdentifierInfo *II_getpw;
   enum { num_rands = 9 };
   IdentifierInfo *II_rand[num_rands];
   IdentifierInfo *II_random;
@@ -31,7 +32,7 @@ class VISIBILITY_HIDDEN WalkAST : public StmtVisitor<WalkAST> {
 
 public:
   WalkAST(BugReporter &br) : BR(br),
-    II_gets(0), II_rand(), II_random(0), II_setid() {}
+    II_gets(0), II_getpw(0), II_rand(), II_random(0), II_setid() {}
 
   // Statement visitor methods.
   void VisitCallExpr(CallExpr *CE);
@@ -47,6 +48,7 @@ public:
   // Checker-specific methods.
   void CheckLoopConditionForFloat(const ForStmt *FS);
   void CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD);
+  void CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_random(const CallExpr *CE, const FunctionDecl *FD);
   void CheckUncheckedReturnValue(CallExpr *CE);
@@ -77,6 +79,7 @@ void WalkAST::VisitChildren(Stmt *S) {
 void WalkAST::VisitCallExpr(CallExpr *CE) {
   if (const FunctionDecl *FD = CE->getDirectCallee()) {
     CheckCall_gets(CE, FD);
+    CheckCall_getpw(CE, FD);
     CheckCall_rand(CE, FD);
     CheckCall_random(CE, FD);
   }
@@ -222,16 +225,16 @@ void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
   if (FD->getIdentifier() != GetIdentifier(II_gets, "gets"))
     return;
 
-  const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FD->getType());
-  if (!FTP)
+  const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FD->getType());
+  if (!FPT)
     return;
 
   // Verify that the function takes a single argument.
-  if (FTP->getNumArgs() != 1)
+  if (FPT->getNumArgs() != 1)
     return;
 
   // Is the argument a 'char*'?
-  const PointerType *PT = dyn_cast<PointerType>(FTP->getArgType(0));
+  const PointerType *PT = dyn_cast<PointerType>(FPT->getArgType(0));
   if (!PT)
     return;
 
@@ -244,6 +247,44 @@ void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
                      "Security",
                      "Call to function 'gets' is extremely insecure as it can "
                      "always result in a buffer overflow",
+                     CE->getLocStart(), &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
+// Check: Any use of 'getpwd' is insecure.
+// CWE-477: Use of Obsolete Functions
+//===----------------------------------------------------------------------===//
+
+void WalkAST::CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
+  if (FD->getIdentifier() != GetIdentifier(II_getpw, "getpw"))
+    return;
+
+  const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FD->getType());
+  if (!FPT)
+    return;
+
+  // Verify that the function takes two arguments.
+  if (FPT->getNumArgs() != 2)
+    return;
+
+  // Verify the first argument type is integer.
+  if (!FPT->getArgType(0)->isIntegerType())
+    return;
+
+  // Verify the second argument type is char*.
+  const PointerType *PT = dyn_cast<PointerType>(FPT->getArgType(1));
+  if (!PT)
+    return;
+
+  if (PT->getPointeeType().getUnqualifiedType() != BR.getContext().CharTy)
+    return;
+
+  // Issue a warning.
+  SourceRange R = CE->getCallee()->getSourceRange();
+  BR.EmitBasicReport("Potential buffer overflow in call to 'getpw'",
+                     "Security",
+                     "The getpw() function is dangerous as it may overflow the "
+                     "provided buffer. It is obsoleted by getpwuid().",
                      CE->getLocStart(), &R, 1);
 }
 
