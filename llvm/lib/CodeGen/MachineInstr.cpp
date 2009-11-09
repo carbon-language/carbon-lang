@@ -189,19 +189,19 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
 /// print - Print the specified machine operand.
 ///
 void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
+  // If the instruction is embedded into a basic block, we can find the
+  // target info for the instruction.
+  if (!TM)
+    if (const MachineInstr *MI = getParent())
+      if (const MachineBasicBlock *MBB = MI->getParent())
+        if (const MachineFunction *MF = MBB->getParent())
+          TM = &MF->getTarget();
+
   switch (getType()) {
   case MachineOperand::MO_Register:
     if (getReg() == 0 || TargetRegisterInfo::isVirtualRegister(getReg())) {
       OS << "%reg" << getReg();
     } else {
-      // If the instruction is embedded into a basic block, we can find the
-      // target info for the instruction.
-      if (TM == 0)
-        if (const MachineInstr *MI = getParent())
-          if (const MachineBasicBlock *MBB = MI->getParent())
-            if (const MachineFunction *MF = MBB->getParent())
-              TM = &MF->getTarget();
-      
       if (TM)
         OS << "%" << TM->getRegisterInfo()->get(getReg()).Name;
       else
@@ -1061,9 +1061,16 @@ void MachineInstr::dump() const {
 }
 
 void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
-  unsigned StartOp = 0, e = getNumOperands();
+  // We can be a bit tidier if we know the TargetMachine and/or MachineFunction.
+  const MachineFunction *MF = 0;
+  if (const MachineBasicBlock *MBB = getParent()) {
+    MF = MBB->getParent();
+    if (!TM && MF)
+      TM = &MF->getTarget();
+  }
 
   // Print explicitly defined operands on the left of an assignment syntax.
+  unsigned StartOp = 0, e = getNumOperands();
   for (; StartOp < e && getOperand(StartOp).isReg() &&
          getOperand(StartOp).isDef() &&
          !getOperand(StartOp).isImplicit();
@@ -1079,11 +1086,45 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   OS << getDesc().getName();
 
   // Print the rest of the operands.
+  bool OmittedAnyCallClobbers = false;
+  bool FirstOp = true;
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
-    if (i != StartOp)
-      OS << ",";
+    const MachineOperand &MO = getOperand(i);
+
+    // Omit call-clobbered registers which aren't used anywhere. This makes
+    // call instructions much less noisy on targets where calls clobber lots
+    // of registers. Don't rely on MO.isDead() because we may be called before
+    // LiveVariables is run, or we may be looking at a non-allocatable reg.
+    if (MF && getDesc().isCall() &&
+        MO.isReg() && MO.isImplicit() && MO.isDef()) {
+      unsigned Reg = MO.getReg();
+      if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        const MachineRegisterInfo &MRI = MF->getRegInfo();
+        if (MRI.use_empty(Reg) && !MRI.isLiveOut(Reg)) {
+          bool HasAliasLive = false;
+          for (const unsigned *Alias = TM->getRegisterInfo()->getAliasSet(Reg);
+               unsigned AliasReg = *Alias; ++Alias)
+            if (!MRI.use_empty(AliasReg) || MRI.isLiveOut(AliasReg)) {
+              HasAliasLive = true;
+              break;
+            }
+          if (!HasAliasLive) {
+            OmittedAnyCallClobbers = true;
+            continue;
+          }
+        }
+      }
+    }
+
+    if (FirstOp) FirstOp = false; else OS << ",";
     OS << " ";
-    getOperand(i).print(OS, TM);
+    MO.print(OS, TM);
+  }
+
+  // Briefly indicate whether any call clobbers were omitted.
+  if (OmittedAnyCallClobbers) {
+    if (FirstOp) FirstOp = false; else OS << ",";
+    OS << " ...";
   }
 
   bool HaveSemi = false;
@@ -1099,12 +1140,11 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     }
   }
 
-  if (!debugLoc.isUnknown()) {
+  if (!debugLoc.isUnknown() && MF) {
     if (!HaveSemi) OS << ";"; HaveSemi = true;
 
     // TODO: print InlinedAtLoc information
 
-    const MachineFunction *MF = getParent()->getParent();
     DebugLocTuple DLT = MF->getDebugLocTuple(debugLoc);
     DICompileUnit CU(DLT.Scope);
     if (!CU.isNull())
