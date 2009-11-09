@@ -103,3 +103,16 @@ void test_X1(int *ip, int i, double *dp) {
   X1<int*>::Inner4<int>::value = 17;
   i = X1<int*>::Inner4<int&>::value; // expected-note{{instantiation}}
 }
+
+
+template<typename T>
+struct X2 {
+  template<T *Ptr> // expected-error{{pointer to a reference}}
+  struct Inner;
+  
+  template<T Value> // expected-error{{cannot have type 'float'}}
+  struct Inner2;
+};
+
+X2<int&> x2a; // expected-note{{instantiation}}
+X2<float> x2b; // expected-note{{instantiation}}
