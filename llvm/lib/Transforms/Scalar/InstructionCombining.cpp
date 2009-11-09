@@ -383,10 +383,6 @@ namespace {
     /// commutative operators.
     bool SimplifyCommutative(BinaryOperator &I);
 
-    /// SimplifyCompare - This reorders the operands of a CmpInst to get them in
-    /// most-complex to least-complex order.
-    bool SimplifyCompare(CmpInst &I);
-
     /// SimplifyDemandedUseBits - Attempts to replace V with a simpler value
     /// based on the demanded bits.
     Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask, 
@@ -585,17 +581,6 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
         }
     }
   return Changed;
-}
-
-/// SimplifyCompare - For a CmpInst this function just orders the operands
-/// so that theyare listed from right (least complex) to left (most complex).
-/// This puts constants before unary operators before binary operators.
-bool InstCombiner::SimplifyCompare(CmpInst &I) {
-  if (getComplexity(I.getOperand(0)) >= getComplexity(I.getOperand(1)))
-    return false;
-  I.swapOperands();
-  // Compare instructions are not associative so there's nothing else we can do.
-  return true;
 }
 
 // dyn_castNegVal - Given a 'sub' instruction, return the RHS of the instruction
@@ -5945,7 +5930,16 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
 }
 
 Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
-  bool Changed = SimplifyCompare(I);
+  bool Changed = false;
+  
+  /// Orders the operands of the compare so that they are listed from most
+  /// complex to least complex.  This puts constants before unary operators,
+  /// before binary operators.
+  if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1))) {
+    I.swapOperands();
+    Changed = true;
+  }
+
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // Fold trivial predicates.
@@ -6050,7 +6044,16 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
 }
 
 Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
-  bool Changed = SimplifyCompare(I);
+  bool Changed = false;
+  
+  /// Orders the operands of the compare so that they are listed from most
+  /// complex to least complex.  This puts constants before unary operators,
+  /// before binary operators.
+  if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1))) {
+    I.swapOperands();
+    Changed = true;
+  }
+  
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   const Type *Ty = Op0->getType();
 
