@@ -180,6 +180,68 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
 }
 
 
+//===----------------------------------------------------------------------===//
+
+
+/// RemovePredecessorAndSimplify - Like BasicBlock::removePredecessor, this
+/// method is called when we're about to delete Pred as a predecessor of BB.  If
+/// BB contains any PHI nodes, this drops the entries in the PHI nodes for Pred.
+///
+/// Unlike the removePredecessor method, this attempts to simplify uses of PHI
+/// nodes that collapse into identity values.  For example, if we have:
+///   x = phi(1, 0, 0, 0)
+///   y = and x, z
+///
+/// .. and delete the predecessor corresponding to the '1', this will attempt to
+/// recursively fold the and to 0.
+static void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
+                                         TargetData *TD) {
+  // This only adjusts blocks with PHI nodes.
+  if (!isa<PHINode>(BB->begin()))
+    return;
+  
+  // Remove the entries for Pred from the PHI nodes in BB, but do not simplify
+  // them down.  This will leave us with single entry phi nodes and other phis
+  // that can be removed.
+  //BB->removePredecessor(Pred, true);
+  BB->removePredecessor(Pred, true);
+  
+  WeakVH PhiIt = &BB->front();
+  while (PHINode *PN = dyn_cast<PHINode>(PhiIt)) {
+    PhiIt = &*++BasicBlock::iterator(cast<Instruction>(PhiIt));
+    
+    Value *PNV = PN->hasConstantValue();
+    if (PNV == 0) continue;
+    
+    assert(PNV != PN && "hasConstantValue broken");
+    
+    // If we're able to simplify the phi to a constant, simplify it into its
+    // uses.
+    while (!PN->use_empty()) {
+      // Update the instruction to use the new value.
+      Use &U = PN->use_begin().getUse();
+      Instruction *User = cast<Instruction>(U.getUser());
+      U = PNV;
+      
+      // See if we can simplify it (constant folding).
+      if (Constant *C = ConstantFoldInstruction(User, TD)) {
+        User->replaceAllUsesWith(C);
+        User->eraseFromParent();
+      }
+    }
+    
+    PN->replaceAllUsesWith(PNV);
+    PN->eraseFromParent();
+    
+    // If recursive simplification ended up deleting the next PHI node we would
+    // iterate to, then our iterator is invalid, restart scanning from the top
+    // of the block.
+    if (PhiIt == 0) PhiIt = &BB->front();
+  }
+}
+
+//===----------------------------------------------------------------------===//
+
 
 /// FindLoopHeaders - We do not want jump threading to turn proper loop
 /// structures into irreducible loops.  Doing this breaks up the loop nesting
@@ -411,7 +473,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     TerminatorInst *BBTerm = BB->getTerminator();
     for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i) {
       if (i == BestSucc) continue;
-      BBTerm->getSuccessor(i)->removePredecessor(BB);
+      RemovePredecessorAndSimplify(BBTerm->getSuccessor(i), BB, TD);
     }
     
     DEBUG(errs() << "  In block '" << BB->getName()
@@ -868,8 +930,6 @@ bool JumpThreading::ProcessThreadableEdges(Instruction *CondInst,
   if (LoopHeaders.count(BB))
     return false;
   
-  
-  
   SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> PredValues;
   if (!ComputeValueKnownInPredecessors(CondInst, BB, PredValues))
     return false;
@@ -1153,7 +1213,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   TerminatorInst *PredTerm = PredBB->getTerminator();
   for (unsigned i = 0, e = PredTerm->getNumSuccessors(); i != e; ++i)
     if (PredTerm->getSuccessor(i) == BB) {
-      BB->removePredecessor(PredBB);
+      RemovePredecessorAndSimplify(BB, PredBB, TD);
       PredTerm->setSuccessor(i, NewBB);
     }
   
@@ -1283,7 +1343,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   
   // PredBB no longer jumps to BB, remove entries in the PHI node for the edge
   // that we nuked.
-  BB->removePredecessor(PredBB);
+  RemovePredecessorAndSimplify(BB, PredBB, TD);
   
   // Remove the unconditional branch at the end of the PredBB block.
   OldPredBranch->eraseFromParent();
