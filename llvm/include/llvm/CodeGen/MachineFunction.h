@@ -115,6 +115,9 @@ class MachineFunction {
   // The alignment of the function.
   unsigned Alignment;
 
+  MachineFunction(const MachineFunction &); // intentionally unimplemented
+  void operator=(const MachineFunction&);   // intentionally unimplemented
+
 public:
   MachineFunction(Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
