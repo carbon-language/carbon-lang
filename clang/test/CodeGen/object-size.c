@@ -46,8 +46,8 @@ void test4() {
 }
 
 void test5() {
-  // CHECK:       movb    $0, %al
-  // CHECK-NEXT:  testb   %al, %al
+  // CHECK:       movq    $-1, %rax
+  // CHECK-NEXT:  cmpq    $-1, %rax
   // CHECK:       call    ___inline_strcpy_chk
   strcpy(gp, "Hi there");
 }

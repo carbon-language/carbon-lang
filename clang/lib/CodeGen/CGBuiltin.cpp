@@ -199,8 +199,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }
   case Builtin::BI__builtin_object_size: {
-    // FIXME: We're awaiting the llvm intrincis.
-#if 0
+#if 1
     // We pass this builtin onto the optimizer so that it can
     // figure out the object size in more complex cases.
     const llvm::Type *ResType[] = {
@@ -211,8 +210,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                            EmitScalarExpr(E->getArg(0)),
                                            EmitScalarExpr(E->getArg(1))));
 #else
-    // FIXME: Implement. For now we just always fail and pretend we
-    // don't know the object size.
+    // FIXME: Remove after testing.
     llvm::APSInt TypeArg = E->getArg(1)->EvaluateAsInt(CGM.getContext());
     const llvm::Type *ResType = ConvertType(E->getType());
     //    bool UseSubObject = TypeArg.getZExtValue() & 1;
