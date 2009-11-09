@@ -3484,7 +3484,6 @@ public:
     /// IncompatibleNestedPointerQualifiers - The assignment is between two
     /// nested pointer types, and the qualifiers other than the first two
     /// levels differ e.g. char ** -> const char **. We disallow this.
-    /// FIXME: GCC only warns for this - should we do the same?
     IncompatibleNestedPointerQualifiers,
 
     /// IncompatibleVectors - The assignment is between two vector types that
