@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv6-apple-darwin10 -mattr=+vfp2 | grep fcmpezd | count 13
+; RUN: llc < %s -mtriple=armv6-apple-darwin10 -mattr=+vfp2 | grep vcmpe | count 13
 
 	%struct.EDGE_PAIR = type { %struct.edge_rec*, %struct.edge_rec* }
 	%struct.VEC2 = type { double, double, double }

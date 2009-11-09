@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | \
-; RUN:   grep fcmpes
+; RUN:   grep vcmpe.f32
 
 define void @test3(float* %glob, i32 %X) {
 entry:

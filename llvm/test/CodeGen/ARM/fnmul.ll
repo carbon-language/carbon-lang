@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | grep fnmuld
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 -enable-sign-dependent-rounding-fp-math | grep fmul
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | grep vnmul.f64
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 -enable-sign-dependent-rounding-fp-math | grep vmul.f64
 
 
 define double @t1(double %a, double %b) {

@@ -259,12 +259,7 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
   
   if (Modifier && strcmp(Modifier, "submode") == 0) {
     ARM_AM::AMSubMode Mode = ARM_AM::getAM5SubMode(MO2.getImm());
-    if (MO1.getReg() == ARM::SP) {
-      bool isFLDM = (MI->getOpcode() == ARM::FLDMD ||
-                     MI->getOpcode() == ARM::FLDMS);
-      O << ARM_AM::getAMSubModeAltStr(Mode, isFLDM);
-    } else
-      O << ARM_AM::getAMSubModeStr(Mode);
+    O << ARM_AM::getAMSubModeStr(Mode);
     return;
   } else if (Modifier && strcmp(Modifier, "base") == 0) {
     // Used for FSTM{D|S} and LSTM{D|S} operations.

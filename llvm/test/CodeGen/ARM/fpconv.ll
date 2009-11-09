@@ -3,7 +3,7 @@
 
 define float @f1(double %x) {
 ;CHECK-VFP: f1:
-;CHECK-VFP: fcvtsd
+;CHECK-VFP: vcvt.f32.f64
 ;CHECK: f1:
 ;CHECK: truncdfsf2
 entry:
@@ -13,7 +13,7 @@ entry:
 
 define double @f2(float %x) {
 ;CHECK-VFP: f2:
-;CHECK-VFP: fcvtds
+;CHECK-VFP: vcvt.f64.f32
 ;CHECK: f2:
 ;CHECK: extendsfdf2
 entry:
@@ -23,7 +23,7 @@ entry:
 
 define i32 @f3(float %x) {
 ;CHECK-VFP: f3:
-;CHECK-VFP: ftosizs
+;CHECK-VFP: vcvt.s32.f32
 ;CHECK: f3:
 ;CHECK: fixsfsi
 entry:
@@ -33,7 +33,7 @@ entry:
 
 define i32 @f4(float %x) {
 ;CHECK-VFP: f4:
-;CHECK-VFP: ftouizs
+;CHECK-VFP: vcvt.u32.f32
 ;CHECK: f4:
 ;CHECK: fixunssfsi
 entry:
@@ -43,7 +43,7 @@ entry:
 
 define i32 @f5(double %x) {
 ;CHECK-VFP: f5:
-;CHECK-VFP: ftosizd
+;CHECK-VFP: vcvt.s32.f64
 ;CHECK: f5:
 ;CHECK: fixdfsi
 entry:
@@ -53,7 +53,7 @@ entry:
 
 define i32 @f6(double %x) {
 ;CHECK-VFP: f6:
-;CHECK-VFP: ftouizd
+;CHECK-VFP: vcvt.u32.f64
 ;CHECK: f6:
 ;CHECK: fixunsdfsi
 entry:
@@ -63,7 +63,7 @@ entry:
 
 define float @f7(i32 %a) {
 ;CHECK-VFP: f7:
-;CHECK-VFP: fsitos
+;CHECK-VFP: vcvt.f32.s32
 ;CHECK: f7:
 ;CHECK: floatsisf
 entry:
@@ -73,7 +73,7 @@ entry:
 
 define double @f8(i32 %a) {
 ;CHECK-VFP: f8:
-;CHECK-VFP: fsitod
+;CHECK-VFP: vcvt.f64.s32
 ;CHECK: f8:
 ;CHECK: floatsidf
 entry:
@@ -83,7 +83,7 @@ entry:
 
 define float @f9(i32 %a) {
 ;CHECK-VFP: f9:
-;CHECK-VFP: fuitos
+;CHECK-VFP: vcvt.f32.u32
 ;CHECK: f9:
 ;CHECK: floatunsisf
 entry:
@@ -93,7 +93,7 @@ entry:
 
 define double @f10(i32 %a) {
 ;CHECK-VFP: f10:
-;CHECK-VFP: fuitod
+;CHECK-VFP: vcvt.f64.u32
 ;CHECK: f10:
 ;CHECK: floatunsidf
 entry:

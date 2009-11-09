@@ -2,9 +2,9 @@
 
 define float @f(i32 %a) {
 ;CHECK: f:
-;CHECK: fmsr
-;CHECK-NEXT: fsitos
-;CHECK-NEXT: fmrs
+;CHECK: vmov
+;CHECK-NEXT: vcvt.f32.s32
+;CHECK-NEXT: vmov
 entry:
         %tmp = sitofp i32 %a to float           ; <float> [#uses=1]
         ret float %tmp
@@ -12,9 +12,9 @@ entry:
 
 define double @g(i32 %a) {
 ;CHECK: g:
-;CHECK: fmsr
-;CHECK-NEXT: fsitod
-;CHECK-NEXT: fmrrd
+;CHECK: vmov
+;CHECK-NEXT: vcvt.f64.s32
+;CHECK-NEXT: vmov
 entry:
         %tmp = sitofp i32 %a to double          ; <double> [#uses=1]
         ret double %tmp
@@ -22,9 +22,9 @@ entry:
 
 define double @uint_to_double(i32 %a) {
 ;CHECK: uint_to_double:
-;CHECK: fmsr
-;CHECK-NEXT: fuitod
-;CHECK-NEXT: fmrrd
+;CHECK: vmov
+;CHECK-NEXT: vcvt.f64.u32
+;CHECK-NEXT: vmov
 entry:
         %tmp = uitofp i32 %a to double          ; <double> [#uses=1]
         ret double %tmp
@@ -32,9 +32,9 @@ entry:
 
 define float @uint_to_float(i32 %a) {
 ;CHECK: uint_to_float:
-;CHECK: fmsr
-;CHECK-NEXT: fuitos
-;CHECK-NEXT: fmrs
+;CHECK: vmov
+;CHECK-NEXT: vcvt.f32.u32
+;CHECK-NEXT: vmov
 entry:
         %tmp = uitofp i32 %a to float           ; <float> [#uses=1]
         ret float %tmp
@@ -42,8 +42,8 @@ entry:
 
 define double @h(double* %v) {
 ;CHECK: h:
-;CHECK: fldd
-;CHECK-NEXT: fmrrd
+;CHECK: vldr.64 
+;CHECK-NEXT: vmov
 entry:
         %tmp = load double* %v          ; <double> [#uses=1]
         ret double %tmp
@@ -58,13 +58,13 @@ entry:
 
 define double @f2(double %a) {
 ;CHECK: f2:
-;CHECK-NOT: fmdrr
+;CHECK-NOT: vmov
         ret double %a
 }
 
 define void @f3() {
 ;CHECK: f3:
-;CHECK-NOT: fmdrr
+;CHECK-NOT: vmov
 ;CHECK: f4
 entry:
         %tmp = call double @f5( )               ; <double> [#uses=1]

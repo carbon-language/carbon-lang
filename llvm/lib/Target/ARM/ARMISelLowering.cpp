@@ -389,7 +389,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only())
-    // Turn f64->i64 into FMRRD, i64 -> f64 to FMDRR iff target supports vfp2.
+    // Turn f64->i64 into VMOVRRD, i64 -> f64 to VMOVDRR iff target supports vfp2.
     setOperationAction(ISD::BIT_CONVERT, MVT::i64, Custom);
 
   // We want to custom lower some of our intrinsics.
@@ -434,7 +434,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
 
   // We have target-specific dag combine patterns for the following nodes:
-  // ARMISD::FMRRD  - No need to call setTargetDAGCombine
+  // ARMISD::VMOVRRD  - No need to call setTargetDAGCombine
   setTargetDAGCombine(ISD::ADD);
   setTargetDAGCombine(ISD::SUB);
 
@@ -493,8 +493,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::SRA_FLAG:      return "ARMISD::SRA_FLAG";
   case ARMISD::RRX:           return "ARMISD::RRX";
 
-  case ARMISD::FMRRD:         return "ARMISD::FMRRD";
-  case ARMISD::FMDRR:         return "ARMISD::FMDRR";
+  case ARMISD::VMOVRRD:         return "ARMISD::VMOVRRD";
+  case ARMISD::VMOVDRR:         return "ARMISD::VMOVDRR";
 
   case ARMISD::EH_SJLJ_SETJMP: return "ARMISD::EH_SJLJ_SETJMP";
   case ARMISD::EH_SJLJ_LONGJMP:return "ARMISD::EH_SJLJ_LONGJMP";
@@ -790,7 +790,7 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                       InFlag);
       Chain = Hi.getValue(1);
       InFlag = Hi.getValue(2);
-      Val = DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, Lo, Hi);
+      Val = DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi);
 
       if (VA.getLocVT() == MVT::v2f64) {
         SDValue Vec = DAG.getNode(ISD::UNDEF, dl, MVT::v2f64);
@@ -805,7 +805,7 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
         Hi = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(), MVT::i32, InFlag);
         Chain = Hi.getValue(1);
         InFlag = Hi.getValue(2);
-        Val = DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, Lo, Hi);
+        Val = DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi);
         Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, MVT::v2f64, Vec, Val,
                           DAG.getConstant(1, MVT::i32));
       }
@@ -870,7 +870,7 @@ void ARMTargetLowering::PassF64ArgInRegs(DebugLoc dl, SelectionDAG &DAG,
                                          SmallVector<SDValue, 8> &MemOpChains,
                                          ISD::ArgFlagsTy Flags) {
 
-  SDValue fmrrd = DAG.getNode(ARMISD::FMRRD, dl,
+  SDValue fmrrd = DAG.getNode(ARMISD::VMOVRRD, dl,
                               DAG.getVTList(MVT::i32, MVT::i32), Arg);
   RegsToPass.push_back(std::make_pair(VA.getLocReg(), fmrrd));
 
@@ -1149,7 +1149,7 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
         // Extract the first half and return it in two registers.
         SDValue Half = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, Arg,
                                    DAG.getConstant(0, MVT::i32));
-        SDValue HalfGPRs = DAG.getNode(ARMISD::FMRRD, dl,
+        SDValue HalfGPRs = DAG.getNode(ARMISD::VMOVRRD, dl,
                                        DAG.getVTList(MVT::i32, MVT::i32), Half);
 
         Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), HalfGPRs, Flag);
@@ -1166,7 +1166,7 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
       }
       // Legalize ret f64 -> ret 2 x i32.  We always have fmrrd if f64 is
       // available.
-      SDValue fmrrd = DAG.getNode(ARMISD::FMRRD, dl,
+      SDValue fmrrd = DAG.getNode(ARMISD::VMOVRRD, dl,
                                   DAG.getVTList(MVT::i32, MVT::i32), &Arg, 1);
       Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), fmrrd, Flag);
       Flag = Chain.getValue(1);
@@ -1556,7 +1556,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
     ArgValue2 = DAG.getCopyFromReg(Root, dl, Reg, MVT::i32);
   }
 
-  return DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, ArgValue, ArgValue2);
+  return DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, ArgValue, ArgValue2);
 }
 
 SDValue
@@ -2072,16 +2072,16 @@ static SDValue ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
   SDValue Op = N->getOperand(0);
   DebugLoc dl = N->getDebugLoc();
   if (N->getValueType(0) == MVT::f64) {
-    // Turn i64->f64 into FMDRR.
+    // Turn i64->f64 into VMOVDRR.
     SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op,
                              DAG.getConstant(0, MVT::i32));
     SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Op,
                              DAG.getConstant(1, MVT::i32));
-    return DAG.getNode(ARMISD::FMDRR, dl, MVT::f64, Lo, Hi);
+    return DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, Lo, Hi);
   }
 
-  // Turn f64->i64 into FMRRD.
-  SDValue Cvt = DAG.getNode(ARMISD::FMRRD, dl,
+  // Turn f64->i64 into VMOVRRD.
+  SDValue Cvt = DAG.getNode(ARMISD::VMOVRRD, dl,
                             DAG.getVTList(MVT::i32, MVT::i32), &Op, 1);
 
   // Merge the pieces into a single i64 value.
@@ -3178,12 +3178,12 @@ static SDValue PerformSUBCombine(SDNode *N,
   return SDValue();
 }
 
-/// PerformFMRRDCombine - Target-specific dag combine xforms for ARMISD::FMRRD.
-static SDValue PerformFMRRDCombine(SDNode *N,
+/// PerformVMOVRRDCombine - Target-specific dag combine xforms for ARMISD::VMOVRRD.
+static SDValue PerformVMOVRRDCombine(SDNode *N,
                                    TargetLowering::DAGCombinerInfo &DCI) {
   // fmrrd(fmdrr x, y) -> x,y
   SDValue InDouble = N->getOperand(0);
-  if (InDouble.getOpcode() == ARMISD::FMDRR)
+  if (InDouble.getOpcode() == ARMISD::VMOVDRR)
     return DCI.CombineTo(N, InDouble.getOperand(0), InDouble.getOperand(1));
   return SDValue();
 }
@@ -3478,7 +3478,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::ADD:      return PerformADDCombine(N, DCI);
   case ISD::SUB:      return PerformSUBCombine(N, DCI);
-  case ARMISD::FMRRD: return PerformFMRRDCombine(N, DCI);
+  case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ISD::INTRINSIC_WO_CHAIN:
     return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:
@@ -3760,7 +3760,7 @@ static bool getARMIndexedAddressParts(SDNode *Ptr, EVT VT,
     return true;
   }
 
-  // FIXME: Use FLDM / FSTM to emulate indexed FP load / store.
+  // FIXME: Use VLDM / VSTM to emulate indexed FP load / store.
   return false;
 }
 

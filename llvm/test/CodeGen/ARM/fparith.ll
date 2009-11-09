@@ -2,7 +2,7 @@
 
 define float @f1(float %a, float %b) {
 ;CHECK: f1:
-;CHECK: fadds
+;CHECK: vadd.f32
 entry:
 	%tmp = fadd float %a, %b		; <float> [#uses=1]
 	ret float %tmp
@@ -10,7 +10,7 @@ entry:
 
 define double @f2(double %a, double %b) {
 ;CHECK: f2:
-;CHECK: faddd
+;CHECK: vadd.f64
 entry:
 	%tmp = fadd double %a, %b		; <double> [#uses=1]
 	ret double %tmp
@@ -18,7 +18,7 @@ entry:
 
 define float @f3(float %a, float %b) {
 ;CHECK: f3:
-;CHECK: fmuls
+;CHECK: vmul.f32
 entry:
 	%tmp = fmul float %a, %b		; <float> [#uses=1]
 	ret float %tmp
@@ -26,7 +26,7 @@ entry:
 
 define double @f4(double %a, double %b) {
 ;CHECK: f4:
-;CHECK: fmuld
+;CHECK: vmul.f64
 entry:
 	%tmp = fmul double %a, %b		; <double> [#uses=1]
 	ret double %tmp
@@ -34,7 +34,7 @@ entry:
 
 define float @f5(float %a, float %b) {
 ;CHECK: f5:
-;CHECK: fsubs
+;CHECK: vsub.f32
 entry:
 	%tmp = fsub float %a, %b		; <float> [#uses=1]
 	ret float %tmp
@@ -42,7 +42,7 @@ entry:
 
 define double @f6(double %a, double %b) {
 ;CHECK: f6:
-;CHECK: fsubd
+;CHECK: vsub.f64
 entry:
 	%tmp = fsub double %a, %b		; <double> [#uses=1]
 	ret double %tmp
@@ -58,7 +58,7 @@ entry:
 
 define double @f8(double %a) {
 ;CHECK: f8:
-;CHECK: fnegd
+;CHECK: vneg.f64
 entry:
 	%tmp1 = fsub double -0.000000e+00, %a		; <double> [#uses=1]
 	ret double %tmp1
@@ -66,7 +66,7 @@ entry:
 
 define float @f9(float %a, float %b) {
 ;CHECK: f9:
-;CHECK: fdivs
+;CHECK: vdiv.f32
 entry:
 	%tmp1 = fdiv float %a, %b		; <float> [#uses=1]
 	ret float %tmp1
@@ -74,7 +74,7 @@ entry:
 
 define double @f10(double %a, double %b) {
 ;CHECK: f10:
-;CHECK: fdivd
+;CHECK: vdiv.f64
 entry:
 	%tmp1 = fdiv double %a, %b		; <double> [#uses=1]
 	ret double %tmp1
@@ -92,7 +92,7 @@ declare float @fabsf(float)
 
 define double @f12(double %a) {
 ;CHECK: f12:
-;CHECK: fabsd
+;CHECK: vabs.f64
 entry:
 	%tmp1 = call double @fabs( double %a )		; <double> [#uses=1]
 	ret double %tmp1

@@ -321,7 +321,7 @@ time.
 4) Once we added support for multiple result patterns, write indexed loads
    patterns instead of C++ instruction selection code.
 
-5) Use FLDM / FSTM to emulate indexed FP load / store.
+5) Use VLDM / VSTM to emulate indexed FP load / store.
 
 //===---------------------------------------------------------------------===//
 

@@ -1346,7 +1346,7 @@ emitPrologue(MachineFunction &MF) const {
   AFI->setGPRCalleeSavedArea2Offset(GPRCS2Offset);
   AFI->setDPRCalleeSavedAreaOffset(DPRCSOffset);
 
-  movePastCSLoadStoreOps(MBB, MBBI, ARM::FSTD, 0, 3, STI);
+  movePastCSLoadStoreOps(MBB, MBBI, ARM::VSTRD, 0, 3, STI);
   NumBytes = DPRCSOffset;
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
@@ -1385,7 +1385,7 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII,
                         const unsigned *CSRegs) {
-  return ((MI->getOpcode() == (int)ARM::FLDD ||
+  return ((MI->getOpcode() == (int)ARM::VLDRD ||
            MI->getOpcode() == (int)ARM::LDR ||
            MI->getOpcode() == (int)ARM::t2LDRi12) &&
           MI->getOperand(1).isFI() &&
@@ -1411,7 +1411,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
     if (NumBytes != 0)
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
   } else {
-    // Unwind MBBI to point to first LDR / FLDD.
+    // Unwind MBBI to point to first LDR / VLDRD.
     const unsigned *CSRegs = getCalleeSavedRegs();
     if (MBBI != MBB.begin()) {
       do
@@ -1459,7 +1459,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
 
     // Move SP to start of integer callee save spill area 2.
-    movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 0, 3, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::VLDRD, 0, 3, STI);
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, AFI->getDPRCalleeSavedAreaSize());
 
     // Move SP to start of integer callee save spill area 1.

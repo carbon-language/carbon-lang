@@ -41,8 +41,8 @@ using namespace llvm;
 
 STATISTIC(NumLDMGened , "Number of ldm instructions generated");
 STATISTIC(NumSTMGened , "Number of stm instructions generated");
-STATISTIC(NumFLDMGened, "Number of fldm instructions generated");
-STATISTIC(NumFSTMGened, "Number of fstm instructions generated");
+STATISTIC(NumVLDMGened, "Number of vldm instructions generated");
+STATISTIC(NumVSTMGened, "Number of vstm instructions generated");
 STATISTIC(NumLdStMoved, "Number of load / store instructions moved");
 STATISTIC(NumLDRDFormed,"Number of ldrd created before allocation");
 STATISTIC(NumSTRDFormed,"Number of strd created before allocation");
@@ -127,18 +127,18 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
   case ARM::t2STRi12:
     NumSTMGened++;
     return ARM::t2STM;
-  case ARM::FLDS:
-    NumFLDMGened++;
-    return ARM::FLDMS;
-  case ARM::FSTS:
-    NumFSTMGened++;
-    return ARM::FSTMS;
-  case ARM::FLDD:
-    NumFLDMGened++;
-    return ARM::FLDMD;
-  case ARM::FSTD:
-    NumFSTMGened++;
-    return ARM::FSTMD;
+  case ARM::VLDRS:
+    NumVLDMGened++;
+    return ARM::VLDMS;
+  case ARM::VSTRS:
+    NumVSTMGened++;
+    return ARM::VSTMS;
+  case ARM::VLDRD:
+    NumVLDMGened++;
+    return ARM::VLDMD;
+  case ARM::VSTRD:
+    NumVSTMGened++;
+    return ARM::VSTMD;
   default: llvm_unreachable("Unhandled opcode!");
   }
   return 0;
@@ -229,8 +229,8 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
     BaseKill = true;  // New base is always killed right its use.
   }
 
-  bool isDPR = Opcode == ARM::FLDD || Opcode == ARM::FSTD;
-  bool isDef = isi32Load(Opcode) || Opcode == ARM::FLDS || Opcode == ARM::FLDD;
+  bool isDPR = Opcode == ARM::VLDRD || Opcode == ARM::VSTRD;
+  bool isDef = isi32Load(Opcode) || Opcode == ARM::VLDRS || Opcode == ARM::VLDRD;
   Opcode = getLoadStoreMultipleOpcode(Opcode);
   MachineInstrBuilder MIB = (isAM4)
     ? BuildMI(MBB, MBBI, dl, TII->get(Opcode))
@@ -373,27 +373,27 @@ static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
   case ARM::t2LDRi12:
   case ARM::t2STRi8:
   case ARM::t2STRi12:
-  case ARM::FLDS:
-  case ARM::FSTS:
+  case ARM::VLDRS:
+  case ARM::VSTRS:
     return 4;
-  case ARM::FLDD:
-  case ARM::FSTD:
+  case ARM::VLDRD:
+  case ARM::VSTRD:
     return 8;
   case ARM::LDM:
   case ARM::STM:
   case ARM::t2LDM:
   case ARM::t2STM:
     return (MI->getNumOperands() - 5) * 4;
-  case ARM::FLDMS:
-  case ARM::FSTMS:
-  case ARM::FLDMD:
-  case ARM::FSTMD:
+  case ARM::VLDMS:
+  case ARM::VSTMS:
+  case ARM::VLDMD:
+  case ARM::VSTMD:
     return ARM_AM::getAM5Offset(MI->getOperand(1).getImm()) * 4;
   }
 }
 
 /// MergeBaseUpdateLSMultiple - Fold proceeding/trailing inc/dec of base
-/// register into the LDM/STM/FLDM{D|S}/FSTM{D|S} op when possible:
+/// register into the LDM/STM/VLDM{D|S}/VSTM{D|S} op when possible:
 ///
 /// stmia rn, <ra, rb, rc>
 /// rn := rn + 4 * 3;
@@ -475,7 +475,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       }
     }
   } else {
-    // FLDM{D|S}, FSTM{D|S} addressing mode 5 ops.
+    // VLDM{D|S}, VSTM{D|S} addressing mode 5 ops.
     if (ARM_AM::getAM5WBFlag(MI->getOperand(1).getImm()))
       return false;
 
@@ -517,10 +517,10 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc) {
   switch (Opc) {
   case ARM::LDR: return ARM::LDR_PRE;
   case ARM::STR: return ARM::STR_PRE;
-  case ARM::FLDS: return ARM::FLDMS;
-  case ARM::FLDD: return ARM::FLDMD;
-  case ARM::FSTS: return ARM::FSTMS;
-  case ARM::FSTD: return ARM::FSTMD;
+  case ARM::VLDRS: return ARM::VLDMS;
+  case ARM::VLDRD: return ARM::VLDMD;
+  case ARM::VSTRS: return ARM::VSTMS;
+  case ARM::VSTRD: return ARM::VSTMD;
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
     return ARM::t2LDR_PRE;
@@ -536,10 +536,10 @@ static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc) {
   switch (Opc) {
   case ARM::LDR: return ARM::LDR_POST;
   case ARM::STR: return ARM::STR_POST;
-  case ARM::FLDS: return ARM::FLDMS;
-  case ARM::FLDD: return ARM::FLDMD;
-  case ARM::FSTS: return ARM::FSTMS;
-  case ARM::FSTD: return ARM::FSTMD;
+  case ARM::VLDRS: return ARM::VLDMS;
+  case ARM::VLDRD: return ARM::VLDMD;
+  case ARM::VSTRS: return ARM::VSTMS;
+  case ARM::VSTRD: return ARM::VSTMD;
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
     return ARM::t2LDR_POST;
@@ -564,8 +564,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   unsigned Bytes = getLSMultipleTransferSize(MI);
   int Opcode = MI->getOpcode();
   DebugLoc dl = MI->getDebugLoc();
-  bool isAM5 = Opcode == ARM::FLDD || Opcode == ARM::FLDS ||
-    Opcode == ARM::FSTD || Opcode == ARM::FSTS;
+  bool isAM5 = Opcode == ARM::VLDRD || Opcode == ARM::VLDRS ||
+    Opcode == ARM::VSTRD || Opcode == ARM::VSTRS;
   bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
   if (isAM2 && ARM_AM::getAM2Offset(MI->getOperand(3).getImm()) != 0)
     return false;
@@ -575,7 +575,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     if (MI->getOperand(2).getImm() != 0)
       return false;
 
-  bool isLd = isi32Load(Opcode) || Opcode == ARM::FLDS || Opcode == ARM::FLDD;
+  bool isLd = isi32Load(Opcode) || Opcode == ARM::VLDRS || Opcode == ARM::VLDRD;
   // Can't do the merge if the destination register is the same as the would-be
   // writeback register.
   if (isLd && MI->getOperand(0).getReg() == Base)
@@ -626,7 +626,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   if (!DoMerge)
     return false;
 
-  bool isDPR = NewOpc == ARM::FLDMD || NewOpc == ARM::FSTMD;
+  bool isDPR = NewOpc == ARM::VLDMD || NewOpc == ARM::VSTMD;
   unsigned Offset = 0;
   if (isAM5)
     Offset = ARM_AM::getAM5Opc((AddSub == ARM_AM::sub)
@@ -638,7 +638,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     Offset = AddSub == ARM_AM::sub ? -Bytes : Bytes;
   if (isLd) {
     if (isAM5)
-      // FLDMS, FLDMD
+      // VLDMS, VLDMD
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
         .addReg(Base, getKillRegState(BaseKill))
         .addImm(Offset).addImm(Pred).addReg(PredReg)
@@ -657,7 +657,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   } else {
     MachineOperand &MO = MI->getOperand(0);
     if (isAM5)
-      // FSTMS, FSTMD
+      // VSTMS, VSTMD
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc)).addReg(Base).addImm(Offset)
         .addImm(Pred).addReg(PredReg)
         .addReg(Base, getDefRegState(true)) // WB base register
@@ -687,11 +687,11 @@ static bool isMemoryOp(const MachineInstr *MI) {
   case ARM::LDR:
   case ARM::STR:
     return MI->getOperand(1).isReg() && MI->getOperand(2).getReg() == 0;
-  case ARM::FLDS:
-  case ARM::FSTS:
+  case ARM::VLDRS:
+  case ARM::VSTRS:
     return MI->getOperand(1).isReg();
-  case ARM::FLDD:
-  case ARM::FSTD:
+  case ARM::VLDRD:
+  case ARM::VSTRD:
     return MI->getOperand(1).isReg();
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
@@ -1214,7 +1214,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   if (!STI->hasV5TEOps())
     return false;
 
-  // FIXME: FLDS / FSTS -> FLDD / FSTD
+  // FIXME: VLDRS / VSTRS -> VLDRD / VSTRD
   unsigned Scale = 1;
   unsigned Opcode = Op0->getOpcode();
   if (Opcode == ARM::LDR)
@@ -1456,7 +1456,7 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
         continue;
 
       int Opc = MI->getOpcode();
-      bool isLd = isi32Load(Opc) || Opc == ARM::FLDS || Opc == ARM::FLDD;
+      bool isLd = isi32Load(Opc) || Opc == ARM::VLDRS || Opc == ARM::VLDRD;
       unsigned Base = MI->getOperand(1).getReg();
       int Offset = getMemoryOpOffset(MI);
 

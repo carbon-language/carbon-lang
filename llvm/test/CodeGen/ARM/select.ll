@@ -60,7 +60,7 @@ define double @f7(double %a, double %b) {
 ;CHECK: movlt
 ;CHECK: movlt
 ;CHECK-VFP: f7:
-;CHECK-VFP: fcpydmi
+;CHECK-VFP: vmovmi
     %tmp = fcmp olt double %a, 1.234e+00
     %tmp1 = select i1 %tmp, double -1.000e+00, double %b
     ret double %tmp1

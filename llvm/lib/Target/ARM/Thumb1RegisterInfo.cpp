@@ -795,7 +795,7 @@ void Thumb1RegisterInfo::emitEpilogue(MachineFunction &MF,
     if (NumBytes != 0)
       emitSPUpdate(MBB, MBBI, TII, dl, *this, NumBytes);
   } else {
-    // Unwind MBBI to point to first LDR / FLDD.
+    // Unwind MBBI to point to first LDR / VLDRD.
     const unsigned *CSRegs = getCalleeSavedRegs();
     if (MBBI != MBB.begin()) {
       do

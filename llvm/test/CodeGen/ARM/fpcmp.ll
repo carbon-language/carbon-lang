@@ -2,7 +2,7 @@
 
 define i32 @f1(float %a) {
 ;CHECK: f1:
-;CHECK: fcmpes
+;CHECK: vcmpe.f32
 ;CHECK: movmi
 entry:
         %tmp = fcmp olt float %a, 1.000000e+00          ; <i1> [#uses=1]
@@ -12,7 +12,7 @@ entry:
 
 define i32 @f2(float %a) {
 ;CHECK: f2:
-;CHECK: fcmpes
+;CHECK: vcmpe.f32
 ;CHECK: moveq
 entry:
         %tmp = fcmp oeq float %a, 1.000000e+00          ; <i1> [#uses=1]
@@ -22,7 +22,7 @@ entry:
 
 define i32 @f3(float %a) {
 ;CHECK: f3:
-;CHECK: fcmpes
+;CHECK: vcmpe.f32
 ;CHECK: movgt
 entry:
         %tmp = fcmp ogt float %a, 1.000000e+00          ; <i1> [#uses=1]
@@ -32,7 +32,7 @@ entry:
 
 define i32 @f4(float %a) {
 ;CHECK: f4:
-;CHECK: fcmpes
+;CHECK: vcmpe.f32
 ;CHECK: movge
 entry:
         %tmp = fcmp oge float %a, 1.000000e+00          ; <i1> [#uses=1]
@@ -42,7 +42,7 @@ entry:
 
 define i32 @f5(float %a) {
 ;CHECK: f5:
-;CHECK: fcmpes
+;CHECK: vcmpe.f32
 ;CHECK: movls
 entry:
         %tmp = fcmp ole float %a, 1.000000e+00          ; <i1> [#uses=1]
@@ -52,7 +52,7 @@ entry:
 
 define i32 @f6(float %a) {
 ;CHECK: f6:
-;CHECK: fcmpes
+;CHECK: vcmpe.f32
 ;CHECK: movne
 entry:
         %tmp = fcmp une float %a, 1.000000e+00          ; <i1> [#uses=1]
@@ -62,7 +62,7 @@ entry:
 
 define i32 @g1(double %a) {
 ;CHECK: g1:
-;CHECK: fcmped
+;CHECK: vcmpe.f64
 ;CHECK: movmi
 entry:
         %tmp = fcmp olt double %a, 1.000000e+00         ; <i1> [#uses=1]

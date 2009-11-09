@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | grep fmrs | count 1
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | grep -E {vmov\\W*r\[0-9\]+,\\W*s\[0-9\]+} | count 1
 ; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | not grep fmrrd
 
 @i = weak global i32 0		; <i32*> [#uses=2]

@@ -609,12 +609,7 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
 
   if (Modifier && strcmp(Modifier, "submode") == 0) {
     ARM_AM::AMSubMode Mode = ARM_AM::getAM5SubMode(MO2.getImm());
-    if (MO1.getReg() == ARM::SP) {
-      bool isFLDM = (MI->getOpcode() == ARM::FLDMD ||
-                     MI->getOpcode() == ARM::FLDMS);
-      O << ARM_AM::getAMSubModeAltStr(Mode, isFLDM);
-    } else
-      O << ARM_AM::getAMSubModeStr(Mode);
+    O << ARM_AM::getAMSubModeStr(Mode);
     return;
   } else if (Modifier && strcmp(Modifier, "base") == 0) {
     // Used for FSTM{D|S} and LSTM{D|S} operations.
@@ -1131,9 +1126,8 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
     }
   }
 
-  // Use unified assembler syntax mode for Thumb.
-  if (Subtarget->isThumb())
-    O << "\t.syntax unified\n";
+  // Use unified assembler syntax.
+  O << "\t.syntax unified\n";
 
   // Emit ARM Build Attributes
   if (Subtarget->isTargetELF()) {

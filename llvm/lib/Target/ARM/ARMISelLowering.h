@@ -62,8 +62,8 @@ namespace llvm {
       SRA_FLAG,     // V,Flag = sra_flag X -> sra X, 1 + save carry out.
       RRX,          // V = RRX X, Flag     -> srl X, 1 + shift in carry flag.
 
-      FMRRD,        // double to two gprs.
-      FMDRR,        // Two gprs to double.
+      VMOVRRD,      // double to two gprs.
+      VMOVDRR,      // Two gprs to double.
 
       EH_SJLJ_SETJMP,    // SjLj exception handling setjmp.
       EH_SJLJ_LONGJMP,   // SjLj exception handling longjmp.

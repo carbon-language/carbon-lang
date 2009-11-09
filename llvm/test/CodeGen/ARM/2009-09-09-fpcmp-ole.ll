@@ -9,7 +9,7 @@ define void @test(double* %x, double* %y) nounwind {
   br i1 %4, label %bb1, label %bb2
 
 bb1:
-;CHECK: fstdhi
+;CHECK: vstrhi.64
   store double %1, double* %y, align 4
   br label %bb2
 

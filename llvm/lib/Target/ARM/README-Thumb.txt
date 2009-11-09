@@ -37,7 +37,7 @@ LPCRELL0:
 	mov r1, #PCRELV0
 	add r1, pc
 	ldr r0, [r0, r1]
-	cpy pc, r0 
+	mov pc, r0 
 	.align	2
 LJTI1_0_0:
 	.long	 LBB1_3
@@ -51,7 +51,7 @@ We should be able to generate:
 LPCRELL0:
 	add r1, LJTI1_0_0
 	ldr r0, [r0, r1]
-	cpy pc, r0 
+	mov pc, r0 
 	.align	2
 LJTI1_0_0:
 	.long	 LBB1_3
@@ -206,8 +206,8 @@ LPC0:
 	add r5, pc
 	ldr r6, LCPI1_1
 	ldr r2, LCPI1_2
-	cpy r3, r6
-	cpy lr, pc
+	mov r3, r6
+	mov lr, pc
 	bx r5
 
 //===---------------------------------------------------------------------===//

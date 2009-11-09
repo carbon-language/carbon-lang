@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
 ; RUN:   grep cmpne | count 1
 ; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
-; RUN:   grep ldmhi | count 1
+; RUN:   grep ldmfdhi | count 1
 
 define void @foo(i32 %X, i32 %Y) {
 entry:

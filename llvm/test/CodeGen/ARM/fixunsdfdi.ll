@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2
-; RUN: llc < %s -march=arm -mattr=vfp2 | not grep fstd
+; RUN: llc < %s -march=arm -mattr=vfp2 | not grep vstr.64
 
 define hidden i64 @__fixunsdfdi(double %x) nounwind readnone {
 entry:

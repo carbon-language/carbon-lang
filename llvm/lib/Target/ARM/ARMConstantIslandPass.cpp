@@ -541,8 +541,8 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
             Scale = 4;  // +(offset_8*4)
             break;
 
-          case ARM::FLDD:
-          case ARM::FLDS:
+          case ARM::VLDRD:
+          case ARM::VLDRS:
             Bits = 8;
             Scale = 4;  // +-(offset_8*4)
             NegOk = true;

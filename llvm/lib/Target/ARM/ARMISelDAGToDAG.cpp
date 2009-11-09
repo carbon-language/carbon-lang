@@ -1466,8 +1466,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     }
     break;
   }
-  case ARMISD::FMRRD:
-    return CurDAG->getMachineNode(ARM::FMRRD, dl, MVT::i32, MVT::i32,
+  case ARMISD::VMOVRRD:
+    return CurDAG->getMachineNode(ARM::VMOVRRD, dl, MVT::i32, MVT::i32,
                                   Op.getOperand(0), getAL(CurDAG),
                                   CurDAG->getRegister(0, MVT::i32));
   case ISD::UMUL_LOHI: {
@@ -1656,10 +1656,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         : ARM::MOVCCr;
       break;
     case MVT::f32:
-      Opc = ARM::FCPYScc;
+      Opc = ARM::VMOVScc;
       break;
     case MVT::f64:
-      Opc = ARM::FCPYDcc;
+      Opc = ARM::VMOVDcc;
       break;
     }
     return CurDAG->SelectNodeTo(Op.getNode(), Opc, VT, Ops, 5);
@@ -1683,10 +1683,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     default: assert(false && "Illegal conditional move type!");
       break;
     case MVT::f32:
-      Opc = ARM::FNEGScc;
+      Opc = ARM::VNEGScc;
       break;
     case MVT::f64:
-      Opc = ARM::FNEGDcc;
+      Opc = ARM::VNEGDcc;
       break;
     }
     return CurDAG->SelectNodeTo(Op.getNode(), Opc, VT, Ops, 5);

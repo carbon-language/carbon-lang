@@ -54,10 +54,10 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
     NextMII = next(MII);
     MachineInstr *MI = &*MII;
 
-    if (MI->getOpcode() == ARM::FCPYD &&
+    if (MI->getOpcode() == ARM::VMOVD &&
         !TII->isPredicated(MI)) {
       unsigned SrcReg = MI->getOperand(1).getReg();
-      // If we do not found an instruction defining the reg, this means the
+      // If we do not find an instruction defining the reg, this means the
       // register should be live-in for this BB. It's always to better to use
       // NEON reg-reg moves.
       unsigned Domain = ARMII::DomainNEON;
@@ -71,7 +71,7 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
       }
 
       if (Domain & ARMII::DomainNEON) {
-        // Convert FCPYD to VMOVD.
+        // Convert VMOVD to VMOVDneon
         unsigned DestReg = MI->getOperand(0).getReg();
 
         DEBUG({errs() << "vmov convert: "; MI->dump();});
@@ -82,7 +82,7 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
         //  - The imp-defs / imp-uses are superregs only, we don't care about
         //    them.
         BuildMI(MBB, *MI, MI->getDebugLoc(),
-                TII->get(ARM::VMOVD), DestReg).addReg(SrcReg);
+                TII->get(ARM::VMOVDneon), DestReg).addReg(SrcReg);
         MBB.erase(MI);
         MachineBasicBlock::iterator I = prior(NextMII);
         MI = &*I;

@@ -520,8 +520,8 @@ namespace ARM_AM {
     return ((AM5Opc >> 8) & 1) ? sub : add;
   }
 
-  /// getAM5Opc - This function encodes the addrmode5 opc field for FLDM and
-  /// FSTM instructions.
+  /// getAM5Opc - This function encodes the addrmode5 opc field for VLDM and
+  /// VSTM instructions.
   static inline unsigned getAM5Opc(AMSubMode SubMode, bool WB,
                                    unsigned char Offset) {
     assert((SubMode == ia || SubMode == db) &&

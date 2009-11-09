@@ -2295,7 +2295,7 @@ def  VCNTq    : N2VQInt<0b11, 0b11, 0b00, 0b00, 0b01010, 0,
 
 //   VMOV     : Vector Move (Register)
 
-def  VMOVD    : N3V<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
+def  VMOVDneon: N3V<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
                     IIC_VMOVD, "vmov\t$dst, $src", "", []>;
 def  VMOVQ    : N3V<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
                     IIC_VMOVD, "vmov\t$dst, $src", "", []>;

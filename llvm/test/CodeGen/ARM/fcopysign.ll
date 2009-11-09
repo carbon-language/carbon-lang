@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=arm | grep bic | count 2
 ; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | \
-; RUN:   grep fneg | count 2
+; RUN:   grep vneg | count 2
 
 define float @test1(float %x, double %y) {
 	%tmp = fpext float %x to double
