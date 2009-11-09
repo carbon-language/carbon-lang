@@ -60,6 +60,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
@@ -436,28 +437,6 @@ static llvm::cl::opt<bool>
 PThread("pthread", llvm::cl::desc("Support POSIX threads in generated code"),
          llvm::cl::init(false));
 
-static LangKind GetLanguage(llvm::StringRef Filename) {
-  if (BaseLang != langkind_unspecified)
-    return BaseLang;
-
-  return llvm::StringSwitch<LangKind>(Filename.rsplit('.').second)
-    .Case("ast", langkind_ast)
-    .Case("c", langkind_c)
-    .Cases("S", "s", langkind_asm_cpp)
-    .Case("i", langkind_c_cpp)
-    .Case("ii", langkind_cxx_cpp)
-    .Case("m", langkind_objc)
-    .Case("mi", langkind_objc_cpp)
-    .Cases("mm", "M", langkind_objcxx)
-    .Case("mii", langkind_objcxx_cpp)
-    .Case("C", langkind_cxx)
-    .Cases("C", "cc", "cp", langkind_cxx)
-    .Cases("cpp", "CPP", "c++", "cxx", langkind_cxx)
-    .Case("cl", langkind_ocl)
-    .Default(langkind_c);
-}
-
-
 static void InitializeCOptions(LangOptions &Options) {
     // Do nothing.
 }
@@ -715,7 +694,7 @@ StackProtector("stack-protector",
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo *Target,
                                        const llvm::StringMap<bool> &Features) {
-  // Allow the target to set the default the langauge options as it sees fit.
+  // Allow the target to set the default the language options as it sees fit.
   Target->getDefaultLangOptions(Options);
 
   // Pass the map of target features to the target for validation and
@@ -1578,13 +1557,12 @@ class LoggingDiagnosticClient : public DiagnosticClient {
   llvm::OwningPtr<DiagnosticClient> Chain2;
 public:
 
-  LoggingDiagnosticClient(const CompilerInvocation &CompOpts,
+  LoggingDiagnosticClient(const DiagnosticOptions &DiagOpts,
                           DiagnosticClient *Normal) {
     // Output diags both where requested...
     Chain1.reset(Normal);
     // .. and to our log file.
-    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile,
-                                           CompOpts.getDiagnosticOpts()));
+    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile, DiagOpts));
   }
 
   virtual void BeginSourceFile(const LangOptions &LO) {
@@ -1609,7 +1587,7 @@ public:
 };
 } // end anonymous namespace.
 
-static void SetUpBuildDumpLog(const CompilerInvocation &CompOpts,
+static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, char **argv,
                               llvm::OwningPtr<DiagnosticClient> &DiagClient) {
 
@@ -1633,7 +1611,7 @@ static void SetUpBuildDumpLog(const CompilerInvocation &CompOpts,
 
   // LoggingDiagnosticClient - Insert a new logging diagnostic client in between
   // the diagnostic producers and the normal receiver.
-  DiagClient.reset(new LoggingDiagnosticClient(CompOpts, DiagClient.take()));
+  DiagClient.reset(new LoggingDiagnosticClient(DiagOpts, DiagClient.take()));
 }
 
 
@@ -2168,18 +2146,61 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
-static void ConstructCompilerInvocation(CompilerInvocation &Opts) {
-  Opts.getOutputFile() = OutputFile;
+static LangKind GetLanguage() {
+  // If -x was given, that's the language.
+  if (BaseLang != langkind_unspecified)
+    return BaseLang;
 
+  // Otherwise guess it from the input filenames;
+  LangKind LK = langkind_unspecified;
+  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
+    llvm::StringRef Name(InputFilenames[i]);
+    LangKind ThisKind =  llvm::StringSwitch<LangKind>(Name.rsplit('.').second)
+      .Case("ast", langkind_ast)
+      .Case("c", langkind_c)
+      .Cases("S", "s", langkind_asm_cpp)
+      .Case("i", langkind_c_cpp)
+      .Case("ii", langkind_cxx_cpp)
+      .Case("m", langkind_objc)
+      .Case("mi", langkind_objc_cpp)
+      .Cases("mm", "M", langkind_objcxx)
+      .Case("mii", langkind_objcxx_cpp)
+      .Case("C", langkind_cxx)
+      .Cases("C", "cc", "cp", langkind_cxx)
+      .Cases("cpp", "CPP", "c++", "cxx", langkind_cxx)
+      .Case("cl", langkind_ocl)
+      .Default(langkind_c);
+
+    if (LK != langkind_unspecified && ThisKind != LK) {
+      llvm::errs() << "error: cannot have multiple input files of distinct "
+                   << "language kinds without -x\n";
+      exit(1);
+    }
+
+    LK = ThisKind;
+  }
+
+  return LK;
+}
+
+static void ConstructDiagnosticOptions(DiagnosticOptions &Opts) {
   // Initialize the diagnostic options.
-  Opts.getDiagnosticOpts().ShowColumn = !NoShowColumn;
-  Opts.getDiagnosticOpts().ShowLocation = !NoShowLocation;
-  Opts.getDiagnosticOpts().ShowCarets = !NoCaretDiagnostics;
-  Opts.getDiagnosticOpts().ShowFixits = !NoDiagnosticsFixIt;
-  Opts.getDiagnosticOpts().ShowSourceRanges = PrintSourceRangeInfo;
-  Opts.getDiagnosticOpts().ShowOptionNames = PrintDiagnosticOption;
-  Opts.getDiagnosticOpts().ShowColors = PrintColorDiagnostic;
-  Opts.getDiagnosticOpts().MessageLength = MessageLength;
+  Opts.ShowColumn = !NoShowColumn;
+  Opts.ShowLocation = !NoShowLocation;
+  Opts.ShowCarets = !NoCaretDiagnostics;
+  Opts.ShowFixits = !NoDiagnosticsFixIt;
+  Opts.ShowSourceRanges = PrintSourceRangeInfo;
+  Opts.ShowOptionNames = PrintDiagnosticOption;
+  Opts.ShowColors = PrintColorDiagnostic;
+  Opts.MessageLength = MessageLength;
+}
+
+static void ConstructCompilerInvocation(CompilerInvocation &Opts,
+                                        const DiagnosticOptions &DiagOpts,
+                                        const TargetInfo &Target) {
+  Opts.getDiagnosticOpts() = DiagOpts;
+
+  Opts.getOutputFile() = OutputFile;
 }
 
 int main(int argc, char **argv) {
@@ -2206,8 +2227,10 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
 
-  CompilerInvocation CompOpts;
-  ConstructCompilerInvocation(CompOpts);
+  // Construct the diagnostic options first, which cannot fail, so that we can
+  // build a diagnostic client to use for any errors during option handling.
+  DiagnosticOptions DiagOpts;
+  ConstructDiagnosticOptions(DiagOpts);
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
@@ -2216,16 +2239,15 @@ int main(int argc, char **argv) {
     // When checking diagnostics, just buffer them up.
     DiagClient.reset(new TextDiagnosticBuffer());
     if (InputFilenames.size() != 1) {
-      fprintf(stderr, "-verify only works on single input files for now.\n");
+      fprintf(stderr, "-verify only works on single input files.\n");
       return 1;
     }
   } else {
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
-                                               CompOpts.getDiagnosticOpts()));
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), DiagOpts));
   }
 
   if (!DumpBuildInformation.empty())
-    SetUpBuildDumpLog(CompOpts, argc, argv, DiagClient);
+    SetUpBuildDumpLog(DiagOpts, argc, argv, DiagClient);
 
   // Configure our handling of diagnostics.
   Diagnostic Diags(DiagClient.get());
@@ -2266,6 +2288,17 @@ int main(int argc, char **argv) {
   if (!InheritanceViewCls.empty())  // C++ visualization?
     ProgAction = InheritanceView;
 
+  // Infer the input language.
+  //
+  // FIXME: We should move .ast inputs to taking a separate path, they are
+  // really quite different.
+  LangKind LK = GetLanguage();
+
+  // Now that we have initialized the diagnostics engine and the target, finish
+  // setting up the compiler invocation.
+  CompilerInvocation CompOpts;
+  ConstructCompilerInvocation(CompOpts, DiagOpts, *Target);
+
   // Create the source manager.
   SourceManager SourceMgr;
 
@@ -2279,7 +2312,6 @@ int main(int argc, char **argv) {
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
 
-    LangKind LK = GetLanguage(InFile);
     // AST inputs are handled specially.
     if (LK == langkind_ast) {
       ProcessASTInputFile(CompOpts, InFile, ProgAction, Features,
@@ -2293,7 +2325,6 @@ int main(int argc, char **argv) {
 
     // Initialize language options, inferring file types from input filenames.
     LangOptions LangInfo;
-
     InitializeLangOptions(LangInfo, LK);
     InitializeLanguageStandard(LangInfo, LK, Target.get(), Features);
 
@@ -2338,9 +2369,9 @@ int main(int argc, char **argv) {
     }
 
     // Process the source file.
-    DiagClient->BeginSourceFile(LangInfo);
+    Diags.getClient()->BeginSourceFile(LangInfo);
     ProcessInputFile(CompOpts, *PP, InFile, ProgAction, Features, Context);
-    DiagClient->EndSourceFile();
+    Diags.getClient()->EndSourceFile();
 
     HeaderInfo.ClearFileInfo();
   }
