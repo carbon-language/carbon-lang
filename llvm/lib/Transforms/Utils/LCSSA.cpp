@@ -63,6 +63,9 @@ namespace {
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+
+      // LCSSA doesn't actually require LoopSimplify, but the PassManager
+      // doesn't know how to schedule LoopSimplify by itself.
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredTransitive<LoopInfo>();
@@ -214,7 +217,7 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
   SSAUpdate.Initialize(Inst);
   
   // Insert the LCSSA phi's into all of the exit blocks dominated by the
-  // value., and add them to the Phi's map.
+  // value, and add them to the Phi's map.
   for (SmallVectorImpl<BasicBlock*>::const_iterator BBI = ExitBlocks.begin(),
       BBE = ExitBlocks.end(); BBI != BBE; ++BBI) {
     BasicBlock *ExitBB = *BBI;
@@ -228,8 +231,17 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     PN->reserveOperandSpace(PredCache.GetNumPreds(ExitBB));
 
     // Add inputs from inside the loop for this PHI.
-    for (BasicBlock **PI = PredCache.GetPreds(ExitBB); *PI; ++PI)
+    for (BasicBlock **PI = PredCache.GetPreds(ExitBB); *PI; ++PI) {
       PN->addIncoming(Inst, *PI);
+
+      // If the exit block has a predecessor not within the loop, arrange for
+      // the incomging value use corresponding to that predecessor to be
+      // rewritten in terms of a different LCSSA PHI.
+      if (!inLoop(*PI))
+        UsesToRewrite.push_back(
+          &PN->getOperandUse(
+            PN->getOperandNumForIncomingValue(PN->getNumIncomingValues()-1)));
+    }
     
     // Remember that this phi makes the value alive in this block.
     SSAUpdate.AddAvailableValue(ExitBB, PN);
