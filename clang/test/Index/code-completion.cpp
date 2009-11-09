@@ -1,5 +1,5 @@
 // Code-completion through the C interface
-
+#include "nonexistent_header.h"
 struct X {
   int member;
 };
