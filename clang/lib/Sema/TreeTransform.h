@@ -1063,8 +1063,18 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildInitList(SourceLocation LBraceLoc,
                                    MultiExprArg Inits,
-                                   SourceLocation RBraceLoc) {
-    return SemaRef.ActOnInitList(LBraceLoc, move(Inits), RBraceLoc);
+                                   SourceLocation RBraceLoc,
+                                   QualType ResultTy) {
+    OwningExprResult Result
+      = SemaRef.ActOnInitList(LBraceLoc, move(Inits), RBraceLoc);
+    if (Result.isInvalid() || ResultTy->isDependentType())
+      return move(Result);
+    
+    // Patch in the result type we were given, which may have been computed
+    // when the initial InitListExpr was built.
+    InitListExpr *ILE = cast<InitListExpr>((Expr *)Result.get());
+    ILE->setType(ResultTy);
+    return move(Result);
   }
 
   /// \brief Build a new designated initializer expression.
@@ -3893,7 +3903,7 @@ TreeTransform<Derived>::TransformInitListExpr(InitListExpr *E,
     return SemaRef.Owned(E->Retain());
 
   return getDerived().RebuildInitList(E->getLBraceLoc(), move_arg(Inits),
-                                      E->getRBraceLoc());
+                                      E->getRBraceLoc(), E->getType());
 }
 
 template<typename Derived>
