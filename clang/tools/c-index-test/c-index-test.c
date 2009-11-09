@@ -163,6 +163,7 @@ void print_completion_string(CXCompletionString completion_string, FILE *file) {
   
   N = clang_getNumCompletionChunks(completion_string);
   for (I = 0; I != N; ++I) {
+    const char *text = 0;
     enum CXCompletionChunkKind Kind
       = clang_getCompletionChunkKind(completion_string, I);
     
@@ -175,8 +176,7 @@ void print_completion_string(CXCompletionString completion_string, FILE *file) {
       continue;
     }
     
-    const char *text 
-      = clang_getCompletionChunkText(completion_string, I);
+    text = clang_getCompletionChunkText(completion_string, I);
     fprintf(file, "{%s %s}", 
             clang_getCompletionChunkKindSpelling(Kind),
             text? text : "");
