@@ -45,7 +45,7 @@ ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
 
 static cl::opt<bool>
-ARMDynamicStackAlign("arm-dynamic-stack-alignment", cl::Hidden, cl::init(false),
+ARMDynamicStackAlign("arm-dynamic-stack-alignment", cl::Hidden, cl::init(true),
           cl::desc("Dynamically re-align the stack as needed"));
 
 unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
