@@ -12452,6 +12452,47 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       return ExtractValueInst::Create(IV->getInsertedValueOperand(), 
                                       exti, exte);
   }
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Agg)) {
+    // We're extracting from an intrinsic, see if we're the only user, which
+    // allows us to simplify multiple result intrinsics to simpler things that
+    // just get one value..
+    if (II->hasOneUse()) {
+      // Check if we're grabbing the overflow bit or the result of a 'with
+      // overflow' intrinsic.  If it's the latter we can remove the intrinsic
+      // and replace it with a traditional binary instruction.
+      switch (II->getIntrinsicID()) {
+      case Intrinsic::uadd_with_overflow:
+      case Intrinsic::sadd_with_overflow:
+        if (*EV.idx_begin() == 0) {  // Normal result.
+          Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
+          II->replaceAllUsesWith(UndefValue::get(II->getType()));
+          EraseInstFromFunction(*II);
+          return BinaryOperator::CreateAdd(LHS, RHS);
+        }
+        break;
+      case Intrinsic::usub_with_overflow:
+      case Intrinsic::ssub_with_overflow:
+        if (*EV.idx_begin() == 0) {  // Normal result.
+          Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
+          II->replaceAllUsesWith(UndefValue::get(II->getType()));
+          EraseInstFromFunction(*II);
+          return BinaryOperator::CreateSub(LHS, RHS);
+        }
+        break;
+      case Intrinsic::umul_with_overflow:
+      case Intrinsic::smul_with_overflow:
+        if (*EV.idx_begin() == 0) {  // Normal result.
+          Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
+          II->replaceAllUsesWith(UndefValue::get(II->getType()));
+          EraseInstFromFunction(*II);
+          return BinaryOperator::CreateMul(LHS, RHS);
+        }
+        break;
+      default:
+        break;
+      }
+    }
+  }
   // Can't simplify extracts from other values. Note that nested extracts are
   // already simplified implicitely by the above (extract ( extract (insert) )
   // will be translated into extract ( insert ( extract ) ) first and then just
