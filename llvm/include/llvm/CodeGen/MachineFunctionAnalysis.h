@@ -31,7 +31,7 @@ private:
 
 public:
   static char ID;
-  explicit MachineFunctionAnalysis(TargetMachine &tm,
+  explicit MachineFunctionAnalysis(const TargetMachine &tm,
                                    CodeGenOpt::Level OL = CodeGenOpt::Default);
   ~MachineFunctionAnalysis();
 
