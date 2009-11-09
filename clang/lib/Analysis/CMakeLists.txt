@@ -25,6 +25,7 @@ add_clang_library(clangAnalysis
   DivZeroChecker.cpp
   Environment.cpp
   ExplodedGraph.cpp
+  FixedAddressChecker.cpp
   GRBlockCounter.cpp
   GRCoreEngine.cpp
   GRExprEngine.cpp
@@ -35,6 +36,7 @@ add_clang_library(clangAnalysis
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
   PathDiagnostic.cpp
+  PointerSubChecker.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
   ReturnPointerRangeChecker.cpp
