@@ -7,7 +7,7 @@
 // RUN: %llvmdsymutil %t.exe 
 // RUN: echo {break main\nrun\np Pubnames::pubname} > %t.in
 // RUN: gdb -q -batch -n -x %t.in %t.exe | tee %t.out | grep {\$1 = 10}
-// XFAIL: alpha|arm
+// XFAIL: alpha,arm
 struct Pubnames {
   static int pubname;
 };
