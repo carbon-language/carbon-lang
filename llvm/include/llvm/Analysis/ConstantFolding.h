@@ -55,7 +55,7 @@ Constant *ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
 /// returns a constant expression of the specified operands.
 ///
 Constant *ConstantFoldCompareInstOperands(unsigned Predicate,
-                                          Constant *const *Ops, unsigned NumOps,
+                                          Constant *LHS, Constant *RHS,
                                           const TargetData *TD = 0);
 
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would

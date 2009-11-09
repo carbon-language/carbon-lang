@@ -39,10 +39,8 @@ Value *llvm::SimplifyCompare(unsigned Predicate, Value *LHS, Value *RHS,
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
   
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
-    if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
-      Constant *COps[] = {CLHS, CRHS};
-      return ConstantFoldCompareInstOperands(Pred, COps, 2, TD);
-    }
+    if (Constant *CRHS = dyn_cast<Constant>(RHS))
+      return ConstantFoldCompareInstOperands(Pred, CLHS, CRHS, TD);
   
   // If this is an integer compare and the LHS and RHS are the same, fold it.
   if (LHS == RHS)

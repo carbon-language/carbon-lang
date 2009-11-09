@@ -331,8 +331,8 @@ ConstantFoldMappedInstruction(const Instruction *I) {
       return 0;  // All operands not constant!
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
-    return ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                           &Ops[0], Ops.size(), TD);
+    return ConstantFoldCompareInstOperands(CI->getPredicate(), Ops[0], Ops[1],
+                                           TD);
 
   if (const LoadInst *LI = dyn_cast<LoadInst>(I))
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))

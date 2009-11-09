@@ -655,8 +655,8 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
       return 0;  // All operands not constant!
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
-    return ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                           Ops.data(), Ops.size(), TD);
+    return ConstantFoldCompareInstOperands(CI->getPredicate(), Ops[0], Ops[1],
+                                           TD);
   
   if (const LoadInst *LI = dyn_cast<LoadInst>(I))
     return ConstantFoldLoadInst(LI, TD);
@@ -675,8 +675,8 @@ Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
     Ops.push_back(cast<Constant>(*i));
 
   if (CE->isCompare())
-    return ConstantFoldCompareInstOperands(CE->getPredicate(),
-                                           Ops.data(), Ops.size(), TD);
+    return ConstantFoldCompareInstOperands(CE->getPredicate(), Ops[0], Ops[1],
+                                           TD);
   return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(),
                                   Ops.data(), Ops.size(), TD);
 }
@@ -806,8 +806,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
 /// returns a constant expression of the specified operands.
 ///
 Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
-                                                Constant *const *Ops, 
-                                                unsigned NumOps,
+                                                Constant *Ops0, Constant *Ops1, 
                                                 const TargetData *TD) {
   // fold: icmp (inttoptr x), null         -> icmp x, 0
   // fold: icmp (ptrtoint x), 0            -> icmp x, null
@@ -816,16 +815,16 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
   //
   // ConstantExpr::getCompare cannot do this, because it doesn't have TD
   // around to know if bit truncation is happening.
-  if (ConstantExpr *CE0 = dyn_cast<ConstantExpr>(Ops[0])) {
-    if (TD && Ops[1]->isNullValue()) {
+  if (ConstantExpr *CE0 = dyn_cast<ConstantExpr>(Ops0)) {
+    if (TD && Ops1->isNullValue()) {
       const Type *IntPtrTy = TD->getIntPtrType(CE0->getContext());
       if (CE0->getOpcode() == Instruction::IntToPtr) {
         // Convert the integer value to the right size to ensure we get the
         // proper extension or truncation.
         Constant *C = ConstantExpr::getIntegerCast(CE0->getOperand(0),
                                                    IntPtrTy, false);
-        Constant *NewOps[] = { C, Constant::getNullValue(C->getType()) };
-        return ConstantFoldCompareInstOperands(Predicate, NewOps, 2, TD);
+        Constant *Null = Constant::getNullValue(C->getType());
+        return ConstantFoldCompareInstOperands(Predicate, C, Null, TD);
       }
       
       // Only do this transformation if the int is intptrty in size, otherwise
@@ -833,13 +832,12 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       if (CE0->getOpcode() == Instruction::PtrToInt && 
           CE0->getType() == IntPtrTy) {
         Constant *C = CE0->getOperand(0);
-        Constant *NewOps[] = { C, Constant::getNullValue(C->getType()) };
-        // FIXME!
-        return ConstantFoldCompareInstOperands(Predicate, NewOps, 2, TD);
+        Constant *Null = Constant::getNullValue(C->getType());
+        return ConstantFoldCompareInstOperands(Predicate, C, Null, TD);
       }
     }
     
-    if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(Ops[1])) {
+    if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(Ops1)) {
       if (TD && CE0->getOpcode() == CE1->getOpcode()) {
         const Type *IntPtrTy = TD->getIntPtrType(CE0->getContext());
 
@@ -850,24 +848,21 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
                                                       IntPtrTy, false);
           Constant *C1 = ConstantExpr::getIntegerCast(CE1->getOperand(0),
                                                       IntPtrTy, false);
-          Constant *NewOps[] = { C0, C1 };
-          return ConstantFoldCompareInstOperands(Predicate, NewOps, 2, TD);
+          return ConstantFoldCompareInstOperands(Predicate, C0, C1, TD);
         }
 
         // Only do this transformation if the int is intptrty in size, otherwise
         // there is a truncation or extension that we aren't modeling.
         if ((CE0->getOpcode() == Instruction::PtrToInt &&
              CE0->getType() == IntPtrTy &&
-             CE0->getOperand(0)->getType() == CE1->getOperand(0)->getType())) {
-          Constant *NewOps[] = { 
-            CE0->getOperand(0), CE1->getOperand(0) 
-          };
-          return ConstantFoldCompareInstOperands(Predicate, NewOps, 2, TD);
-        }
+             CE0->getOperand(0)->getType() == CE1->getOperand(0)->getType()))
+          return ConstantFoldCompareInstOperands(Predicate, CE0->getOperand(0),
+                                                 CE1->getOperand(0), TD);
       }
     }
   }
-  return ConstantExpr::getCompare(Predicate, Ops[0], Ops[1]);
+  
+  return ConstantExpr::getCompare(Predicate, Ops0, Ops1);
 }
 
 
