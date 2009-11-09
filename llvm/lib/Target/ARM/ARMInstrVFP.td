@@ -194,11 +194,11 @@ def VABSS  : ASuIn<0b11101011, 0b0000, 0b1100, (outs SPR:$dst), (ins SPR:$a),
 
 let Defs = [FPSCR] in {
 def VCMPEZD : ADuI<0b11101011, 0b0101, 0b1100, (outs), (ins DPR:$a),
-                  IIC_fpCMP64, "vcmpe", ".f64\t$a, #0.0",
+                  IIC_fpCMP64, "vcmpe", ".f64\t$a, #0",
                   [(arm_cmpfp0 DPR:$a)]>;
 
 def VCMPEZS : ASuI<0b11101011, 0b0101, 0b1100, (outs), (ins SPR:$a),
-                  IIC_fpCMP32, "vcmpe", ".f32\t$a, #0.0",
+                  IIC_fpCMP32, "vcmpe", ".f32\t$a, #0",
                   [(arm_cmpfp0 SPR:$a)]>;
 }
 
