@@ -919,12 +919,16 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     return LV;
   }
   case UnaryOperator::Real:
-  case UnaryOperator::Imag:
+  case UnaryOperator::Imag: {
     LValue LV = EmitLValue(E->getSubExpr());
     unsigned Idx = E->getOpcode() == UnaryOperator::Imag;
     return LValue::MakeAddr(Builder.CreateStructGEP(LV.getAddress(),
                                                     Idx, "idx"),
                             MakeQualifiers(ExprTy));
+  }
+  case UnaryOperator::PreInc:
+  case UnaryOperator::PreDec:
+    return EmitUnsupportedLValue(E, "pre-inc/dec expression");
   }
 }
 
