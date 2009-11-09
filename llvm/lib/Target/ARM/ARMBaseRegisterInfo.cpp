@@ -44,10 +44,6 @@ static cl::opt<bool>
 ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
 
-static cl::opt<bool>
-ARMDynamicStackAlign("arm-dynamic-stack-alignment", cl::Hidden, cl::init(true),
-          cl::desc("Dynamically re-align the stack as needed"));
-
 unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
                                                    bool *isSPVFP) {
   if (isSPVFP)
@@ -504,9 +500,6 @@ bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
 
 bool ARMBaseRegisterInfo::
 needsStackRealignment(const MachineFunction &MF) const {
-  if (!ARMDynamicStackAlign)
-    return false;
-
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
@@ -596,7 +589,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
-  if (ARMDynamicStackAlign) {
+  if (RealignStack) {
     unsigned MaxAlign = std::max(MFI->getMaxAlignment(),
                                  calculateMaxStackAlignment(MFI));
     MFI->setMaxAlignment(MaxAlign);
