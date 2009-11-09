@@ -412,6 +412,7 @@ void GRExprEngine::RegisterInternalChecks() {
   RegisterDivZeroChecker(*this);
   RegisterReturnStackAddressChecker(*this);
   RegisterReturnUndefChecker(*this);
+  RegisterPointerSubChecker(*this);
 
   // Note that this must be registered after ReturnStackAddressChecker.
   RegisterReturnPointerRangeChecker(*this);

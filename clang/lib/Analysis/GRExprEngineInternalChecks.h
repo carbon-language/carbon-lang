@@ -24,6 +24,6 @@ void RegisterReturnPointerRangeChecker(GRExprEngine &Eng);
 void RegisterReturnStackAddressChecker(GRExprEngine &Eng);  
 void RegisterReturnUndefChecker(GRExprEngine &Eng);
 void RegisterVLASizeChecker(GRExprEngine &Eng);
-  
+void RegisterPointerSubChecker(GRExprEngine &Eng);  
 } // end clang namespace
 #endif
