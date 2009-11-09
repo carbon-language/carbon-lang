@@ -58,7 +58,8 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
   if (ExplodedNode *N = C.GenerateNode(B)) {
     if (!BT)
       BT = new BuiltinBug("Pointer subtraction", 
-                          "Subtraction of two pointers that do not point to the same memory chunk may cause incorrect result.");
+                          "Subtraction of two pointers that do not point to "
+                          "the same memory chunk may cause incorrect result.");
     RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription().c_str(),
                                              N);
     R->addRange(B->getSourceRange());

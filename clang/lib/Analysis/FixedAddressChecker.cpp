@@ -56,7 +56,9 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
   if (ExplodedNode *N = C.GenerateNode(B)) {
     if (!BT)
       BT = new BuiltinBug("Use fixed address", 
-                          "Using a fixed address is not portable because that address will probably not be valid in all environments or platforms.");
+                          "Using a fixed address is not portable because that "
+                          "address will probably not be valid in all "
+                          "environments or platforms.");
     RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription().c_str(),
                                              N);
     R->addRange(B->getRHS()->getSourceRange());
