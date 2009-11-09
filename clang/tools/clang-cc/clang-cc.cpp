@@ -440,32 +440,21 @@ static LangKind GetLanguage(llvm::StringRef Filename) {
   if (BaseLang != langkind_unspecified)
     return BaseLang;
 
-  llvm::StringRef Ext = Filename.rsplit('.').second;
-  if (Ext == "ast")
-    return langkind_ast;
-  else if (Ext == "c")
-    return langkind_c;
-  else if (Ext == "S" || Ext == "s")
-    return langkind_asm_cpp;
-  else if (Ext == "i")
-    return langkind_c_cpp;
-  else if (Ext == "ii")
-    return langkind_cxx_cpp;
-  else if (Ext == "m")
-    return langkind_objc;
-  else if (Ext == "mi")
-    return langkind_objc_cpp;
-  else if (Ext == "mm" || Ext == "M")
-    return langkind_objcxx;
-  else if (Ext == "mii")
-    return langkind_objcxx_cpp;
-  else if (Ext == "C" || Ext == "cc" || Ext == "cpp" || Ext == "CPP" ||
-           Ext == "c++" || Ext == "cp" || Ext == "cxx")
-    return langkind_cxx;
-  else if (Ext == "cl")
-    return langkind_ocl;
-  else
-    return langkind_c;
+  return llvm::StringSwitch<LangKind>(Filename.rsplit('.').second)
+    .Case("ast", langkind_ast)
+    .Case("c", langkind_c)
+    .Cases("S", "s", langkind_asm_cpp)
+    .Case("i", langkind_c_cpp)
+    .Case("ii", langkind_cxx_cpp)
+    .Case("m", langkind_objc)
+    .Case("mi", langkind_objc_cpp)
+    .Cases("mm", "M", langkind_objcxx)
+    .Case("mii", langkind_objcxx_cpp)
+    .Case("C", langkind_cxx)
+    .Cases("C", "cc", "cp", langkind_cxx)
+    .Cases("cpp", "CPP", "c++", "cxx", langkind_cxx)
+    .Case("cl", langkind_ocl)
+    .Default(langkind_c);
 }
 
 
