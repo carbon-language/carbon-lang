@@ -645,6 +645,24 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     return llvm::ConstantExpr::getBitCast(Entry, PTy);
   }
 
+  // This function doesn't have a complete type (for example, the return
+  // type is an incomplete struct). Use a fake type instead, and make
+  // sure not to try to set attributes.
+  bool IsIncompleteFunction = false;
+  if (!isa<llvm::FunctionType>(Ty)) {
+    Ty = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
+                                 std::vector<const llvm::Type*>(), false);
+    IsIncompleteFunction = true;
+  }
+  llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty),
+                                             llvm::Function::ExternalLinkage,
+                                             "", &getModule());
+  F->setName(MangledName);
+  if (D.getDecl())
+    SetFunctionAttributes(cast<FunctionDecl>(D.getDecl()), F,
+                          IsIncompleteFunction);
+  Entry = F;
+
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
@@ -678,23 +696,6 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
              DeferredCopyAssignmentToEmit(D);
   }
 
-  // This function doesn't have a complete type (for example, the return
-  // type is an incomplete struct). Use a fake type instead, and make
-  // sure not to try to set attributes.
-  bool IsIncompleteFunction = false;
-  if (!isa<llvm::FunctionType>(Ty)) {
-    Ty = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                                 std::vector<const llvm::Type*>(), false);
-    IsIncompleteFunction = true;
-  }
-  llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty),
-                                             llvm::Function::ExternalLinkage,
-                                             "", &getModule());
-  F->setName(MangledName);
-  if (D.getDecl())
-    SetFunctionAttributes(cast<FunctionDecl>(D.getDecl()), F,
-                          IsIncompleteFunction);
-  Entry = F;
   return F;
 }
 
