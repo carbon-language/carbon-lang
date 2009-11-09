@@ -103,6 +103,7 @@ public:
   int getGPFI() const { return GPHolder.FI; }
   void setGPStackOffset(int Off) { GPHolder.SPOffset = Off; }
   void setGPFI(int FI) { GPHolder.FI = FI; }
+  bool needGPSaveRestore() const { return GPHolder.SPOffset != -1; }
 
   bool hasLoadArgs() const { return HasLoadArgs; }
   bool hasStoreVarArgs() const { return HasStoreVarArgs; } 

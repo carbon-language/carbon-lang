@@ -438,11 +438,10 @@ emitPrologue(MachineFunction &MF) const
       .addReg(Mips::SP).addReg(Mips::ZERO);
   }
 
-  // PIC speficic function prologue
-  if ((isPIC) && (MFI->hasCalls())) {
+  // Restore GP from the saved stack location
+  if (MipsFI->needGPSaveRestore())
     BuildMI(MBB, MBBI, dl, TII.get(Mips::CPRESTORE))
       .addImm(MipsFI->getGPStackOffset());
-  }
 }
 
 void MipsRegisterInfo::
@@ -489,13 +488,11 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
 
 void MipsRegisterInfo::
 processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
-  // Set the SPOffset on the FI where GP must be saved/loaded.
+  // Set the stack offset where GP must be saved/loaded from.
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool isPIC = (MF.getTarget().getRelocationModel() == Reloc::PIC_);
-  if (MFI->hasCalls() && isPIC) { 
-    MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  if (MipsFI->needGPSaveRestore())
     MFI->setObjectOffset(MipsFI->getGPFI(), MipsFI->getGPStackOffset());
-  }    
 }
 
 unsigned MipsRegisterInfo::
