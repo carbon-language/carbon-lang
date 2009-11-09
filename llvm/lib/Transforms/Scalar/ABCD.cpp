@@ -413,7 +413,7 @@ class ABCD : public FunctionPass {
   /// PN_op2 -> PN_op1 with value. In case any of them is NULL, replace
   /// with the respective V_op#, if V_op# is a ConstantInt.
   void createConstraintSigSig(PHINode *SIG_op1, PHINode *SIG_op2, 
-                              ConstantInt* V_op1, ConstantInt* V_op2,
+                              ConstantInt *V_op1, ConstantInt *V_op2,
                               APInt value);
 
   /// Returns the sigma representing the Instruction I in BasicBlock BB.
@@ -737,8 +737,8 @@ void ABCD::createConstraintCmpInst(ICmpInst *ICI, TerminatorInst *TI) {
   APInt Zero = APInt::getNullValue(width);
 
   CmpInst::Predicate Pred = ICI->getPredicate();
-  ConstantInt* CI1 = dyn_cast<ConstantInt>(V_op1);
-  ConstantInt* CI2 = dyn_cast<ConstantInt>(V_op2);
+  ConstantInt *CI1 = dyn_cast<ConstantInt>(V_op1);
+  ConstantInt *CI2 = dyn_cast<ConstantInt>(V_op2);
   switch (Pred) {
   case CmpInst::ICMP_SGT:  // signed greater than
     createConstraintSigSig(SIG_op2_t, SIG_op1_t, CI2, CI1, MinusOne);
@@ -804,15 +804,11 @@ void ABCD::createConstraintSigInst(Instruction *I_op, BasicBlock *BB_succ_t,
     int32_t width = cast<IntegerType>((*SIG_op_t)->getType())->getBitWidth();
     inequality_graph.addEdge(I_op, *SIG_op_t, APInt(width, 0), true);
     inequality_graph.addEdge(*SIG_op_t, I_op, APInt(width, 0), false);
-    //if (created.insert(*SIG_op_t))
-    //  createConstraintPHINode(cast<PHINode>(*SIG_op_t));
   }
   if (*SIG_op_f) {
     int32_t width = cast<IntegerType>((*SIG_op_f)->getType())->getBitWidth();
     inequality_graph.addEdge(I_op, *SIG_op_f, APInt(width, 0), true);
     inequality_graph.addEdge(*SIG_op_f, I_op, APInt(width, 0), false);
-    //if (created.insert(*SIG_op_f))
-    //  createConstraintPHINode(cast<PHINode>(*SIG_op_f));
   }
 }
 
@@ -820,7 +816,7 @@ void ABCD::createConstraintSigInst(Instruction *I_op, BasicBlock *BB_succ_t,
 /// PN_op2 -> PN_op1 with value. In case any of them is NULL, replace
 /// with the respective V_op#, if V_op# is a ConstantInt.
 void ABCD::createConstraintSigSig(PHINode *SIG_op1, PHINode *SIG_op2,
-                                  ConstantInt* V_op1, ConstantInt* V_op2,
+                                  ConstantInt *V_op1, ConstantInt *V_op2,
                                   APInt value) {
   if (SIG_op1 && SIG_op2) {
     inequality_graph.addEdge(SIG_op2, SIG_op1, value, true);
