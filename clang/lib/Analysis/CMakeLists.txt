@@ -16,6 +16,8 @@ add_clang_library(clangAnalysis
   CFRefCount.cpp
   CallGraph.cpp
   CallInliner.cpp
+  CastToStructChecker.cpp
+  CheckSizeofPointer.cpp
   CheckDeadStores.cpp
   CheckObjCDealloc.cpp
   CheckObjCInstMethSignature.cpp
