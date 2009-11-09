@@ -45,7 +45,7 @@ void f4() {
 void f5() {
   int x, y;
   int *p;
-  p = &x + 1;  // expected-warning{{Pointer arithmetic done on non array variables means reliance on memory layout, which is dangerous.}}
+  p = &x + 1;  // expected-warning{{Pointer arithmetic done on non-array variables means reliance on memory layout, which is dangerous.}}
 
   int a[10];
   p = a + 1; // no-warning
