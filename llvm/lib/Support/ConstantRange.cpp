@@ -492,6 +492,30 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
   return ConstantRange(L, U);
 }
 
+/// zextOrTrunc - make this range have the bit width given by \p DstTySize. The
+/// value is zero extended, truncated, or left alone to make it that width.
+ConstantRange ConstantRange::zextOrTrunc(uint32_t DstTySize) const {
+  unsigned SrcTySize = getBitWidth();
+  if (SrcTySize > DstTySize)
+    return truncate(DstTySize);
+  else if (SrcTySize < DstTySize)
+    return zeroExtend(DstTySize);
+  else
+    return *this;
+}
+
+/// sextOrTrunc - make this range have the bit width given by \p DstTySize. The
+/// value is sign extended, truncated, or left alone to make it that width.
+ConstantRange ConstantRange::sextOrTrunc(uint32_t DstTySize) const {
+  unsigned SrcTySize = getBitWidth();
+  if (SrcTySize > DstTySize)
+    return truncate(DstTySize);
+  else if (SrcTySize < DstTySize)
+    return signExtend(DstTySize);
+  else
+    return *this;
+}
+
 ConstantRange
 ConstantRange::add(const ConstantRange &Other) const {
   if (isEmptySet() || Other.isEmptySet())
