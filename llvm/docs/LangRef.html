@@ -1576,12 +1576,13 @@ Classifications</a> </div>
   </tr>
 </table>
 
-<p>Note that 'variable sized arrays' can be implemented in LLVM with a zero
-   length array.  Normally, accesses past the end of an array are undefined in
-   LLVM (e.g. it is illegal to access the 5th element of a 3 element array).  As
-   a special case, however, zero length arrays are recognized to be variable
-   length.  This allows implementation of 'pascal style arrays' with the LLVM
-   type "<tt>{ i32, [0 x float]}</tt>", for example.</p>
+<p>Except when the <tt>inbounds</tt> keyword is present, there is no limitation
+   on indexing beyond the end of the array implied by the static type (though
+   any loads or stores must of course be within the bounds of the allocated
+   object!). This means that single-dimension 'variable sized array' addressing
+   can be implemented in LLVM with a zero length array type. An implementation
+   of 'pascal style arrays' in LLVM could use the type
+   "<tt>{ i32, [0 x float]}</tt>", for example.</p>
 
 <p>Note that the code generator does not yet support large aggregate types to be
    used as function return types. The specific limit on how large an aggregate
