@@ -2272,7 +2272,7 @@ public:
                                      SourceLocation RParenLoc,
                                      CXXRecordDecl *ClassDecl);
 
-  void SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
+  bool SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                               CXXBaseOrMemberInitializer **Initializers,
                               unsigned NumInitializers,
                               bool IsImplicitConstructor);
