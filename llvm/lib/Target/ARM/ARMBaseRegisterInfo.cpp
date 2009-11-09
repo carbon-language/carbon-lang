@@ -476,11 +476,7 @@ ARMBaseRegisterInfo::UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
 }
 
 static unsigned calculateMaxStackAlignment(const MachineFrameInfo *FFI) {
-  // FIXME: For now, force at least 128-bit alignment. This will push the
-  // nightly tester harder for making sure things work correctly. When
-  // we're ready to enable this for real, this goes back to starting at zero.
-  unsigned MaxAlign = 16;
-//  unsigned MaxAlign = 0;
+  unsigned MaxAlign = 0;
 
   for (int i = FFI->getObjectIndexBegin(),
          e = FFI->getObjectIndexEnd(); i != e; ++i) {
@@ -508,19 +504,15 @@ bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
 
 bool ARMBaseRegisterInfo::
 needsStackRealignment(const MachineFunction &MF) const {
-  // Only do this for ARM if explicitly enabled
-  // FIXME: Once it's passing all the tests, enable by default
   if (!ARMDynamicStackAlign)
     return false;
 
-  // FIXME: To force more brutal testing, realign whether we need to or not.
-  // Change this to be more selective when we turn it on for real, of course.
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-//  unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
   return (RealignStack &&
           !AFI->isThumb1OnlyFunction() &&
-//          (MFI->getMaxAlignment() > StackAlign) &&
+          (MFI->getMaxAlignment() > StackAlign) &&
           !MFI->hasVarSizedObjects());
 }
 
