@@ -62,7 +62,7 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 /// option were specified.  Note that DebugFlag also needs to be set to true for
 /// debug output to be produced.
 ///
-void SetCurrentDebugType(const char *Type) {
+void llvm::SetCurrentDebugType(const char *Type) {
   CurrentDebugType = Type;
 }
 
