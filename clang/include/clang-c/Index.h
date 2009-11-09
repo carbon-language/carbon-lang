@@ -115,6 +115,26 @@ typedef struct {
 /* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
 typedef void *CXEntity;
 
+/**
+ * For functions returning a string that might or might not need
+ * to be internally allocated and freed.
+ * Use clang_getCString to access the C string value.
+ * Use clang_disposeString to free the value.
+ * Treat it as an opaque type.
+ */
+typedef struct {
+  const char *Spelling;
+  /* A 1 value indicates the clang_ indexing API needed to allocate the string
+     (and it must be freed by clang_disposeString()). */
+  int MustFreeString;
+} CXString;
+
+/* Get C string pointer from a CXString. */
+CINDEX_LINKAGE const char *clang_getCString(CXString string);
+
+/* Free CXString. */
+CINDEX_LINKAGE void clang_disposeString(CXString string);
+
 /**  
  * \brief clang_createIndex() provides a shared context for creating
  * translation units. It provides two options:
@@ -155,8 +175,7 @@ typedef void *CXEntity;
 CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics);
 CINDEX_LINKAGE void clang_disposeIndex(CXIndex);
-
-CINDEX_LINKAGE const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
+CINDEX_LINKAGE CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
 /* 
  * \brief Create a translation unit from an AST file (-emit-ast).
@@ -260,7 +279,7 @@ CINDEX_LINKAGE CXEntity clang_getEntity(const char *URI);
  */
 CINDEX_LINKAGE CXCursor clang_getCursorFromDecl(CXDecl);
 CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXDecl);
-CINDEX_LINKAGE const char *clang_getDeclSpelling(CXDecl);
+CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
 CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
@@ -284,7 +303,7 @@ CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 
 CINDEX_LINKAGE unsigned clang_getCursorLine(CXCursor);
 CINDEX_LINKAGE unsigned clang_getCursorColumn(CXCursor);
-CINDEX_LINKAGE const char *clang_getCursorSpelling(CXCursor);
+CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
 CINDEX_LINKAGE const char *clang_getCursorSource(CXCursor); /* deprecate */
 CINDEX_LINKAGE CXFile clang_getCursorSourceFile(CXCursor);
 

@@ -3,6 +3,7 @@ _clang_createIndex
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
 _clang_disposeIndex
+_clang_disposeString
 _clang_disposeTranslationUnit
 _clang_getCompletionChunkCompletionString
 _clang_getCompletionChunkKind
@@ -17,6 +18,7 @@ _clang_getCursorLine
 _clang_getCursorSource
 _clang_getCursorSourceFile
 _clang_getCursorSpelling
+_clang_getCString
 _clang_getDeclColumn
 _clang_getDeclLine
 _clang_getDeclSource

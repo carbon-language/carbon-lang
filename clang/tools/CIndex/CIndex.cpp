@@ -541,11 +541,14 @@ void clang_disposeTranslationUnit(
   delete static_cast<ASTUnit *>(CTUnit);
 }
   
-const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
+CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-  return CXXUnit->getOriginalSourceFileName().c_str();
+  CXString string;
+  string.Spelling = strdup(CXXUnit->getOriginalSourceFileName().c_str());
+  string.MustFreeString = 1;
+  return string;
 }
 
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit, 
@@ -610,25 +613,27 @@ CXEntity clang_getEntityFromDecl(CXDecl)
 {
   return 0;
 }
-const char *clang_getDeclSpelling(CXDecl AnonDecl)
+CXString clang_getDeclSpelling(CXDecl AnonDecl)
 {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  
+  CXString string;
+
+  string.MustFreeString = 0;
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND)) {
-    // FIXME: Memory leak! We need to move to a CXString or other API.
-    return ::strdup(OMD->getSelector().getAsString().c_str());
+    string.Spelling = strdup(OMD->getSelector().getAsString().c_str());
+    string.MustFreeString = 1;
   }
-  if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
+  else if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
     // No, this isn't the same as the code below. getIdentifier() is non-virtual
     // and returns different names. NamedDecl returns the class name and
     // ObjCCategoryImplDecl returns the category name.
-    return CIMP->getIdentifier()->getNameStart();
-    
-  if (ND->getIdentifier())
-    return ND->getIdentifier()->getNameStart();
+    string.Spelling = CIMP->getIdentifier()->getNameStart(); 
+  else if (ND->getIdentifier())
+    string.Spelling = ND->getIdentifier()->getNameStart();
   else 
-    return "";
+    string.Spelling = "";
+  return string;
 }
 
 unsigned clang_getDeclLine(CXDecl AnonDecl)
@@ -686,37 +691,44 @@ time_t clang_getFileTime(CXFile SFile) {
   return FEnt->getModificationTime();
 }
 
-const char *clang_getCursorSpelling(CXCursor C)
+CXString clang_getCursorSpelling(CXCursor C)
 {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
-  
+
   if (clang_isReference(C.kind)) {
+    CXString string;
+    string.MustFreeString = 0;
     switch (C.kind) {
       case CXCursor_ObjCSuperClassRef: {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
-        return OID->getSuperClass()->getIdentifier()->getNameStart();
+        string.Spelling = OID->getSuperClass()->getIdentifier()->getNameStart();
+        break;
       }
       case CXCursor_ObjCClassRef: {
         if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND)) {
-          return OID->getIdentifier()->getNameStart();
+          string.Spelling = OID->getIdentifier()->getNameStart();
+        } else {
+          ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(ND);
+          assert(OCD && "clang_getCursorLine(): Missing category decl");
+          string.Spelling = OCD->getClassInterface()->getIdentifier()->getNameStart();
         }
-        ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
-        assert(OID && "clang_getCursorLine(): Missing category decl");
-        return OID->getClassInterface()->getIdentifier()->getNameStart();
+        break;
       }
       case CXCursor_ObjCProtocolRef: {
         ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing protocol decl");
-        return OID->getIdentifier()->getNameStart();
+        string.Spelling = OID->getIdentifier()->getNameStart();
+        break;
       }
       case CXCursor_ObjCSelectorRef: {
         ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(OME && "clang_getCursorLine(): Missing message expr");
-        // FIXME: Memory leak! We need to move to a CXString or other API.
-        return ::strdup(OME->getSelector().getAsString().c_str());
+        string.Spelling = strdup(OME->getSelector().getAsString().c_str());
+        string.MustFreeString = 1;
+        break;
       }
       case CXCursor_VarRef:
       case CXCursor_FunctionRef:
@@ -724,11 +736,14 @@ const char *clang_getCursorSpelling(CXCursor C)
         DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
-        return DRE->getDecl()->getIdentifier()->getNameStart();
+        string.Spelling = DRE->getDecl()->getIdentifier()->getNameStart();
+        break;
       }
       default:
-        return "<not implemented>";
+        string.Spelling = "<not implemented>";
+        break;
     }
+    return string;
   }
   return clang_getDeclSpelling(C.decl);
 }
@@ -934,6 +949,22 @@ unsigned clang_getCursorLine(CXCursor C)
   
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getSpellingLineNumber(SLoc);
+}
+
+// Access string.
+const char *clang_getCString(CXString string) {
+  return string.Spelling;
+}
+ 
+// Free CXString.
+void clang_disposeString(CXString string) {
+  if (string.MustFreeString) {
+    if (string.Spelling) {
+      free((void *)string.Spelling);
+      string.Spelling = NULL;
+    }
+    string.MustFreeString = 0;
+  }
 }
 
 unsigned clang_getCursorColumn(CXCursor C)

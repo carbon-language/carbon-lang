@@ -28,8 +28,11 @@ static void PrintCursor(CXCursor Cursor) {
     printf("Invalid Cursor => %s\n", clang_getCursorKindSpelling(Cursor.kind));
   else {
     CXDecl DeclReferenced;
+    CXString string;
+    string = clang_getCursorSpelling(Cursor);
     printf("%s=%s", clang_getCursorKindSpelling(Cursor.kind),
-                      clang_getCursorSpelling(Cursor));
+                      clang_getCString(string));
+    clang_disposeString(string);
     DeclReferenced = clang_getCursorDecl(Cursor);
     if (DeclReferenced)
       printf(":%d:%d", clang_getDeclLine(DeclReferenced),
@@ -40,22 +43,29 @@ static void PrintCursor(CXCursor Cursor) {
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter)
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
+    CXString string;
     printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Cursor)),
                                  clang_getCursorLine(Cursor),
                                  clang_getCursorColumn(Cursor));
     PrintCursor(Cursor);
-    printf(" [Context=%s]\n", clang_getDeclSpelling(Dcl));
+    string = clang_getDeclSpelling(Dcl);
+    printf(" [Context=%s]\n", clang_getCString(string));
+    clang_disposeString(string);
   }
 }
 static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                    CXClientData Filter)
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
+    CXString string;
     printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Cursor)),
                                  clang_getCursorLine(Cursor),
                                  clang_getCursorColumn(Cursor));
     PrintCursor(Cursor);
-    printf(" [Context=%s]\n", basename(clang_getTranslationUnitSpelling(Unit)));
+    string = clang_getTranslationUnitSpelling(Unit);
+    printf(" [Context=%s]\n",
+          basename(clang_getCString(string)));
+    clang_disposeString(string);
 
     clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
 
@@ -83,10 +93,13 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
           if (Ref.kind == CXCursor_NoDeclFound) {
             /* Nothing found here; that's fine. */
           } else if (Ref.kind != CXCursor_FunctionDecl) {
+            CXString string;
             printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Ref)),
                                              curLine, curColumn);
             PrintCursor(Ref);
-            printf(" [Context:%s]\n", clang_getDeclSpelling(Ref.decl));
+            string = clang_getDeclSpelling(Ref.decl);
+            printf(" [Context:%s]\n", clang_getCString(string));
+            clang_disposeString(string);
           }
           startBuf++;
         }
