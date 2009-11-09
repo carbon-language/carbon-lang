@@ -38,6 +38,7 @@ add_clang_library(clangAnalysis
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
   PathDiagnostic.cpp
+  PointerArithChecker.cpp
   PointerSubChecker.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp

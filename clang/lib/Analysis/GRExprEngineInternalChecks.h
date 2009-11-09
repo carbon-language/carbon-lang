@@ -25,6 +25,7 @@ void RegisterReturnStackAddressChecker(GRExprEngine &Eng);
 void RegisterReturnUndefChecker(GRExprEngine &Eng);
 void RegisterVLASizeChecker(GRExprEngine &Eng);
 void RegisterPointerSubChecker(GRExprEngine &Eng);
+void RegisterPointerArithChecker(GRExprEngine &Eng);
 void RegisterFixedAddressChecker(GRExprEngine &Eng);
 void RegisterCastToStructChecker(GRExprEngine &Eng);
 } // end clang namespace
