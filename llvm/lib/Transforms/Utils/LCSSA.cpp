@@ -235,7 +235,7 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
       PN->addIncoming(Inst, *PI);
 
       // If the exit block has a predecessor not within the loop, arrange for
-      // the incomging value use corresponding to that predecessor to be
+      // the incoming value use corresponding to that predecessor to be
       // rewritten in terms of a different LCSSA PHI.
       if (!inLoop(*PI))
         UsesToRewrite.push_back(
