@@ -958,13 +958,8 @@ const char *clang_getCString(CXString string) {
  
 // Free CXString.
 void clang_disposeString(CXString string) {
-  if (string.MustFreeString) {
-    if (string.Spelling) {
-      free((void *)string.Spelling);
-      string.Spelling = NULL;
-    }
-    string.MustFreeString = 0;
-  }
+  if (string.MustFreeString)
+    free((void*)string.Spelling);
 }
 
 unsigned clang_getCursorColumn(CXCursor C)
