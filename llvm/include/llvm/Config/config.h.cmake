@@ -48,6 +48,9 @@
 /* Define to 1 if you have the `ceilf' function. */
 #cmakedefine HAVE_CEILF ${HAVE_CEILF}
 
+/* Define if the neat program is available */
+#cmakedefine HAVE_CIRCO ${HAVE_CIRCO}
+
 /* Define to 1 if you have the `closedir' function. */
 #undef HAVE_CLOSEDIR
 
@@ -77,7 +80,7 @@
 #cmakedefine HAVE_DL_H ${HAVE_DL_H}
 
 /* Define if the dot program is available */
-#undef HAVE_DOT
+#cmakedefine HAVE_DOT ${HAVE_DOT}
 
 /* Define if the dotty program is available */
 #cmakedefine HAVE_DOTTY ${HAVE_DOTTY}
@@ -96,6 +99,9 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #cmakedefine HAVE_FCNTL_H ${HAVE_FCNTL_H}
+
+/* Define if the neat program is available */
+#cmakedefine HAVE_FDP ${HAVE_FDP}
 
 /* Set to 1 if the finite function is found in <ieeefp.h> */
 #cmakedefine HAVE_FINITE_IN_IEEEFP_H ${HAVE_FINITE_IN_IEEEFP_H}
@@ -137,7 +143,7 @@
 #undef HAVE_GRAPHVIZ
 
 /* Define if the gv program is available */
-#undef HAVE_GV
+#cmakedefine HAVE_GV ${HAVE_GV}
 
 /* Define to 1 if you have the `index' function. */
 #undef HAVE_INDEX
@@ -248,6 +254,9 @@
 
 /* Define to 1 if you have the `nearbyintf' function. */
 #undef HAVE_NEARBYINTF
+
+/* Define if the neat program is available */
+#cmakedefine HAVE_NEATO ${HAVE_NEATO}
 
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
@@ -410,6 +419,9 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #cmakedefine HAVE_SYS_WAIT_H ${HAVE_SYS_WAIT_H}
 
+/* Define if the neat program is available */
+#cmakedefine HAVE_TWOPI ${HAVE_TWOPI}
+
 /* Define to 1 if the system has the type `uint64_t'. */
 #undef HAVE_UINT64_T
 
@@ -467,17 +479,29 @@
 /* Added by Kevin -- Maximum path length */
 #cmakedefine MAXPATHLEN ${MAXPATHLEN}
 
+/* Define to path to circo program if found or 'echo circo' otherwise */
+#cmakedefine LLVM_PATH_CIRCO "${LLVM_PATH_CIRCO}"
+
 /* Define to path to dot program if found or 'echo dot' otherwise */
-#undef LLVM_PATH_DOT
+#cmakedefine LLVM_PATH_DOT "${LLVM_PATH_DOT}"
 
 /* Define to path to dotty program if found or 'echo dotty' otherwise */
 #cmakedefine LLVM_PATH_DOTTY "${LLVM_PATH_DOTTY}"
+
+/* Define to path to fdp program if found or 'echo fdp' otherwise */
+#cmakedefine LLVM_PATH_FDP "${LLVM_PATH_FDP}"
 
 /* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
 #undef LLVM_PATH_GRAPHVIZ
 
 /* Define to path to gv program if found or 'echo gv' otherwise */
-#undef LLVM_PATH_GV
+#cmakedefine LLVM_PATH_GV "${LLVM_PATH_GV}"
+
+/* Define to path to neato program if found or 'echo neato' otherwise */
+#cmakedefine LLVM_PATH_NEATO "${LLVM_PATH_NEATO}"
+
+/* Define to path to twopi program if found or 'echo twopi' otherwise */
+#cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
 
 /* Installation prefix directory */
 #undef LLVM_PREFIX
