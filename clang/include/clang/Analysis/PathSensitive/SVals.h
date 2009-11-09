@@ -96,6 +96,8 @@ public:
     return getRawKind() > UnknownKind;
   }
 
+  bool isConstant() const;
+
   bool isZeroConstant() const;
 
   /// hasConjuredSymbol - If this SVal wraps a conjured symbol, return true;

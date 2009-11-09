@@ -173,6 +173,10 @@ nonloc::CompoundVal::iterator nonloc::CompoundVal::end() const {
 // Useful predicates.
 //===----------------------------------------------------------------------===//
 
+bool SVal::isConstant() const {
+  return isa<nonloc::ConcreteInt>(this) || isa<loc::ConcreteInt>(this);
+}
+
 bool SVal::isZeroConstant() const {
   if (isa<loc::ConcreteInt>(*this))
     return cast<loc::ConcreteInt>(*this).getValue() == 0;

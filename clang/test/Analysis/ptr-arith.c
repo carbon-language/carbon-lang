@@ -36,3 +36,8 @@ void f3() {
   int x, y;
   int d = &y - &x; // expected-warning{{Subtraction of two pointers that do not point to the same memory chunk may cause incorrect result.}}
 }
+
+void f4() {
+  int *p;
+  p = (int*) 0x10000; // expected-warning{{Using a fixed address is not portable because that address will probably not be valid in all environments or platforms.}}
+}
