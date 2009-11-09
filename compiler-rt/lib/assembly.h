@@ -25,7 +25,7 @@
 
 #else
 
-#define SYMBOL_NAME(name) _##name
+#define SYMBOL_NAME(name) #__USER_LABEL_PREFIX__ ##name
 #define SEPARATOR ;
 
 #endif
