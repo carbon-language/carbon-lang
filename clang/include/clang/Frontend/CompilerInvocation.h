@@ -10,7 +10,10 @@
 #ifndef LLVM_CLANG_FRONTEND_COMPILERINVOCATION_H_
 #define LLVM_CLANG_FRONTEND_COMPILERINVOCATION_H_
 
+#include "clang/Basic/LangOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Frontend/HeaderSearchOptions.h"
+#include "llvm/ADT/StringMap.h"
 #include <string>
 
 namespace clang {
@@ -26,16 +29,39 @@ class CompilerInvocation {
   /// invocations which have no output.
   std::string OutputFile;
 
-  DiagnosticOptions Diags;
-  
+  /// Options controlling the diagnostic engine.
+  DiagnosticOptions DiagOpts;
+
+  /// Set of target-specific code generation features to enable/disable.
+  llvm::StringMap<bool> TargetFeatures;
+
+  /// Options controlling the language variant.
+  LangOptions LangOpts;
+
+  /// Options controlling the #include directive.
+  HeaderSearchOptions HeaderSearchOpts;
+
 public:
   CompilerInvocation() {}
 
   std::string &getOutputFile() { return OutputFile; }
   const std::string &getOutputFile() const { return OutputFile; }
 
-  DiagnosticOptions &getDiagnosticOpts() { return Diags; }
-  const DiagnosticOptions &getDiagnosticOpts() const { return Diags; }  
+  DiagnosticOptions &getDiagnosticOpts() { return DiagOpts; }
+  const DiagnosticOptions &getDiagnosticOpts() const { return DiagOpts; }
+
+  llvm::StringMap<bool> &getTargetFeatures() { return TargetFeatures; }
+  const llvm::StringMap<bool> &getTargetFeatures() const {
+    return TargetFeatures;
+  }
+
+  LangOptions &getLangOpts() { return LangOpts; }
+  const LangOptions &getLangOpts() const { return LangOpts; }
+
+  HeaderSearchOptions &getHeaderSearchOpts() { return HeaderSearchOpts; }
+  const HeaderSearchOptions &getHeaderSearchOpts() const {
+    return HeaderSearchOpts;
+  }
 };
 
 } // end namespace clang

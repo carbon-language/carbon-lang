@@ -1041,11 +1041,10 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
-void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
-                            FileManager &FM, const LangOptions &Lang,
-                            llvm::Triple &triple) {
-  HeaderSearchOptions Opts(isysroot);
-
+static void InitializeIncludePaths(HeaderSearchOptions &Opts,
+                                   const char *Argv0,
+                                   const LangOptions &Lang) {
+  Opts.Sysroot = isysroot;
   Opts.Verbose = Verbose;
 
   // Handle -I... and -F... options, walking the lists in parallel.
@@ -1142,9 +1141,6 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     Opts.BuiltinIncludePath = GetBuiltinIncludePath(Argv0);
 
   Opts.UseStandardIncludes = !nostdinc;
-
-  // Apply all the options to the header search object.
-  ApplyHeaderSearchOptions(Opts, Headers, Lang, triple);
 }
 
 void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
@@ -1295,7 +1291,7 @@ NoImplicitFloat("no-implicit-float",
 /// ComputeTargetFeatures - Recompute the target feature list to only
 /// be the list of things that are enabled, based on the target cpu
 /// and feature list.
-static void ComputeFeatureMap(const TargetInfo &Target,
+static void ComputeFeatureMap(TargetInfo &Target,
                               llvm::StringMap<bool> &Features) {
   assert(Features.empty() && "invalid map");
 
@@ -1661,7 +1657,6 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
                                          ProgActions PA,
                                          llvm::OwningPtr<llvm::raw_ostream> &OS,
                                          llvm::sys::Path &OutPath,
-                                         const llvm::StringMap<bool> &Features,
                                          llvm::LLVMContext& Context) {
   switch (PA) {
   default:
@@ -1709,7 +1704,8 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
     }
 
     CompileOptions Opts;
-    InitializeCompileOptions(Opts, PP.getLangOptions(), Features);
+    InitializeCompileOptions(Opts, PP.getLangOptions(),
+                             CompOpts.getTargetFeatures());
     return CreateBackendConsumer(Act, PP.getDiagnostics(), PP.getLangOptions(),
                                  Opts, InFile, OS.get(), Context);
   }
@@ -1730,7 +1726,6 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
 static void ProcessInputFile(const CompilerInvocation &CompOpts,
                              Preprocessor &PP, const std::string &InFile,
                              ProgActions PA,
-                             const llvm::StringMap<bool> &Features,
                              llvm::LLVMContext& Context) {
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
@@ -1742,7 +1737,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   switch (PA) {
   default:
     Consumer.reset(CreateConsumerAction(CompOpts, PP, InFile, PA, OS, OutPath,
-                                        Features, Context));
+                                        Context));
 
     if (!Consumer.get()) {
       PP.getDiagnostics().Report(FullSourceLoc(),
@@ -2077,7 +2072,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
 ///
 static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
                                 const std::string &InFile, ProgActions PA,
-                                const llvm::StringMap<bool> &Features,
                                 Diagnostic &Diags, FileManager &FileMgr,
                                 llvm::LLVMContext& Context) {
   std::string Error;
@@ -2093,8 +2087,7 @@ static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
   llvm::sys::Path OutPath;
   llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(CompOpts, PP, 
                                                              InFile, PA, OS,
-                                                             OutPath, Features,
-                                                             Context));
+                                                             OutPath, Context));
 
   if (!Consumer.get()) {
     Diags.Report(FullSourceLoc(), diag::err_fe_invalid_ast_action);
@@ -2196,11 +2189,30 @@ static void ConstructDiagnosticOptions(DiagnosticOptions &Opts) {
 }
 
 static void ConstructCompilerInvocation(CompilerInvocation &Opts,
+                                        const char *Argv0,
                                         const DiagnosticOptions &DiagOpts,
-                                        const TargetInfo &Target) {
+                                        TargetInfo &Target,
+                                        LangKind LK) {
   Opts.getDiagnosticOpts() = DiagOpts;
 
   Opts.getOutputFile() = OutputFile;
+
+  // Compute the feature set, which may effect the language.
+  ComputeFeatureMap(Target, Opts.getTargetFeatures());
+  
+  // Initialize language options.
+  LangOptions LangInfo;
+  
+  // FIXME: These aren't used during operations on ASTs. Split onto a separate
+  // code path to make this obvious.
+  if (LK != langkind_ast) {
+    InitializeLangOptions(Opts.getLangOpts(), LK);
+    InitializeLanguageStandard(Opts.getLangOpts(), LK, Target,
+                               Opts.getTargetFeatures());
+  }
+
+  // Initialize the header search options.
+  InitializeIncludePaths(Opts.getHeaderSearchOpts(), Argv0, Opts.getLangOpts());
 }
 
 int main(int argc, char **argv) {
@@ -2297,7 +2309,7 @@ int main(int argc, char **argv) {
   // Now that we have initialized the diagnostics engine and the target, finish
   // setting up the compiler invocation.
   CompilerInvocation CompOpts;
-  ConstructCompilerInvocation(CompOpts, DiagOpts, *Target);
+  ConstructCompilerInvocation(CompOpts, argv[0], DiagOpts, *Target, LK);
 
   // Create the source manager.
   SourceManager SourceMgr;
@@ -2305,17 +2317,13 @@ int main(int argc, char **argv) {
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
 
-  // Compute the feature set, unfortunately this effects the language!
-  llvm::StringMap<bool> Features;
-  ComputeFeatureMap(*Target, Features);
-
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
 
     // AST inputs are handled specially.
     if (LK == langkind_ast) {
-      ProcessASTInputFile(CompOpts, InFile, ProgAction, Features,
-                          Diags, FileMgr, Context);
+      ProcessASTInputFile(CompOpts, InFile, ProgAction, Diags, FileMgr,
+                          Context);
       continue;
     }
 
@@ -2323,19 +2331,16 @@ int main(int argc, char **argv) {
     if (i)
       SourceMgr.clearIDTables();
 
-    // Initialize language options, inferring file types from input filenames.
-    LangOptions LangInfo;
-    InitializeLangOptions(LangInfo, LK);
-    InitializeLanguageStandard(LangInfo, LK, *Target, Features);
-
     // Process the -I options and set them in the HeaderInfo.
     HeaderSearch HeaderInfo(FileMgr);
 
-
-    InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo, Triple);
+    // Apply all the options to the header search object.
+    ApplyHeaderSearchOptions(CompOpts.getHeaderSearchOpts(), HeaderInfo,
+                             CompOpts.getLangOpts(), Triple);
 
     // Set up the preprocessor with these options.
-    llvm::OwningPtr<Preprocessor> PP(CreatePreprocessor(Diags, LangInfo,
+    llvm::OwningPtr<Preprocessor> PP(CreatePreprocessor(Diags, 
+                                                        CompOpts.getLangOpts(),
                                                         *Target, SourceMgr,
                                                         HeaderInfo));
 
@@ -2369,8 +2374,8 @@ int main(int argc, char **argv) {
     }
 
     // Process the source file.
-    Diags.getClient()->BeginSourceFile(LangInfo);
-    ProcessInputFile(CompOpts, *PP, InFile, ProgAction, Features, Context);
+    Diags.getClient()->BeginSourceFile(CompOpts.getLangOpts());
+    ProcessInputFile(CompOpts, *PP, InFile, ProgAction, Context);
     Diags.getClient()->EndSourceFile();
 
     HeaderInfo.ClearFileInfo();
