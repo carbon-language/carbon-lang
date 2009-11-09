@@ -31,7 +31,6 @@
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
-#include "clang/Frontend/InitHeaderSearch.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/PreprocessorOptions.h"
@@ -1051,32 +1050,32 @@ static void InitializeIncludePaths(HeaderSearchOptions &Opts,
   unsigned Iidx = 0, Fidx = 0;
   while (Iidx < I_dirs.size() && Fidx < F_dirs.size()) {
     if (I_dirs.getPosition(Iidx) < F_dirs.getPosition(Fidx)) {
-      Opts.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
+      Opts.AddPath(I_dirs[Iidx], frontend::Angled, false, true, false);
       ++Iidx;
     } else {
-      Opts.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
+      Opts.AddPath(F_dirs[Fidx], frontend::Angled, false, true, true);
       ++Fidx;
     }
   }
 
   // Consume what's left from whatever list was longer.
   for (; Iidx != I_dirs.size(); ++Iidx)
-    Opts.AddPath(I_dirs[Iidx], InitHeaderSearch::Angled, false, true, false);
+    Opts.AddPath(I_dirs[Iidx], frontend::Angled, false, true, false);
   for (; Fidx != F_dirs.size(); ++Fidx)
-    Opts.AddPath(F_dirs[Fidx], InitHeaderSearch::Angled, false, true, true);
+    Opts.AddPath(F_dirs[Fidx], frontend::Angled, false, true, true);
 
   // Handle -idirafter... options.
   for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
-    Opts.AddPath(idirafter_dirs[i], InitHeaderSearch::After,
+    Opts.AddPath(idirafter_dirs[i], frontend::After,
         false, true, false);
 
   // Handle -iquote... options.
   for (unsigned i = 0, e = iquote_dirs.size(); i != e; ++i)
-    Opts.AddPath(iquote_dirs[i], InitHeaderSearch::Quoted, false, true, false);
+    Opts.AddPath(iquote_dirs[i], frontend::Quoted, false, true, false);
 
   // Handle -isystem... options.
   for (unsigned i = 0, e = isystem_dirs.size(); i != e; ++i)
-    Opts.AddPath(isystem_dirs[i], InitHeaderSearch::System, false, true, false);
+    Opts.AddPath(isystem_dirs[i], frontend::System, false, true, false);
 
   // Walk the -iprefix/-iwithprefix/-iwithprefixbefore argument lists in
   // parallel, processing the values in order of occurance to get the right
@@ -1105,12 +1104,12 @@ static void InitializeIncludePaths(HeaderSearchOptions &Opts,
                   iwithprefix_vals.getPosition(iwithprefix_idx) <
                   iwithprefixbefore_vals.getPosition(iwithprefixbefore_idx))) {
         Opts.AddPath(Prefix+iwithprefix_vals[iwithprefix_idx],
-                InitHeaderSearch::System, false, false, false);
+                     frontend::System, false, false, false);
         ++iwithprefix_idx;
         iwithprefix_done = iwithprefix_idx == iwithprefix_vals.size();
       } else {
         Opts.AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx],
-                InitHeaderSearch::Angled, false, false, false);
+                     frontend::Angled, false, false, false);
         ++iwithprefixbefore_idx;
         iwithprefixbefore_done =
           iwithprefixbefore_idx == iwithprefixbefore_vals.size();

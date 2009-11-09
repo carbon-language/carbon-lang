@@ -18,6 +18,7 @@
 #include <string>
 
 namespace llvm {
+class Triple;
 class raw_ostream;
 class raw_fd_ostream;
 }
@@ -26,6 +27,8 @@ namespace clang {
 class ASTConsumer;
 class Decl;
 class Diagnostic;
+class HeaderSearch;
+class HeaderSearchOptions;
 class IdentifierTable;
 class LangOptions;
 class MinimalAction;
@@ -34,6 +37,11 @@ class PreprocessorOptions;
 class SourceManager;
 class Stmt;
 class TargetInfo;
+
+/// Apply the header search options to get given HeaderSearch object.
+void ApplyHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
+                              HeaderSearch &HS, const LangOptions &Lang,
+                              const llvm::Triple &triple);
 
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file.

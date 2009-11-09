@@ -10,11 +10,20 @@
 #ifndef LLVM_CLANG_FRONTEND_HEADERSEARCHOPTIONS_H
 #define LLVM_CLANG_FRONTEND_HEADERSEARCHOPTIONS_H
 
-// FIXME: Drop this dependency.
-#include "clang/Frontend/InitHeaderSearch.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
+
+namespace frontend {
+  /// IncludeDirGroup - Identifiers the group a include entry belongs to, which
+  /// represents its relative positive in the search list.
+  enum IncludeDirGroup {
+    Quoted = 0,     ///< `#include ""` paths. Thing `gcc -iquote`.
+    Angled,         ///< Paths for both `#include ""` and `#include <>`. (`-I`)
+    System,         ///< Like Angled, but marks system directories.
+    After           ///< Like System, but searched after the system directories.
+  };
+}
 
 /// HeaderSearchOptions - Helper class for storing options related to the
 /// initialization of the HeaderSearch object.
@@ -22,13 +31,13 @@ class HeaderSearchOptions {
 public:
   struct Entry {
     std::string Path;
-    InitHeaderSearch::IncludeDirGroup Group;
+    frontend::IncludeDirGroup Group;
     unsigned IsCXXAware : 1;
     unsigned IsUserSupplied : 1;
     unsigned IsFramework : 1;
     unsigned IgnoreSysRoot : 1;
 
-    Entry(llvm::StringRef _Path, InitHeaderSearch::IncludeDirGroup _Group,
+    Entry(llvm::StringRef _Path, frontend::IncludeDirGroup _Group,
           bool _IsCXXAware, bool _IsUserSupplied, bool _IsFramework,
           bool _IgnoreSysRoot)
       : Path(_Path), Group(_Group), IsCXXAware(_IsCXXAware),
@@ -70,7 +79,7 @@ public:
     : Sysroot(_Sysroot), UseStandardIncludes(true) {}
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.
-  void AddPath(llvm::StringRef Path, InitHeaderSearch::IncludeDirGroup Group,
+  void AddPath(llvm::StringRef Path, frontend::IncludeDirGroup Group,
                bool IsCXXAware, bool IsUserSupplied,
                bool IsFramework, bool IgnoreSysRoot = false) {
     UserEntries.push_back(Entry(Path, Group, IsCXXAware, IsUserSupplied,
