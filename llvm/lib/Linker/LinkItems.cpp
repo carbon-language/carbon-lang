@@ -187,7 +187,6 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
     case sys::Archive_FileType:
       // A user may specify an ar archive without -l, perhaps because it
       // is not installed as a library. Detect that and link the archive.
-      verbose("Linking archive file '" + File.str() + "'");
       if (LinkInArchive(File, is_native))
         return true;
       break;
