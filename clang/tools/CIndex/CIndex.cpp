@@ -417,6 +417,18 @@ static SourceLocation getLocationFromCursor(CXCursor C,
   }
 }
 
+static CXString createCXString(const char *String, bool DupString = false) {
+  CXString Str;
+  if (DupString) {
+    Str.Spelling = strdup(String);
+    Str.MustFreeString = 1;
+  } else {
+    Str.Spelling = String;
+    Str.MustFreeString = 0;
+  }
+  return Str;
+}
+
 extern "C" {
 
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
@@ -545,10 +557,7 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-  CXString string;
-  string.Spelling = strdup(CXXUnit->getOriginalSourceFileName().c_str());
-  string.MustFreeString = 1;
-  return string;
+  return createCXString(CXXUnit->getOriginalSourceFileName().c_str(), true);
 }
 
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit, 
@@ -617,23 +626,20 @@ CXString clang_getDeclSpelling(CXDecl AnonDecl)
 {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  CXString string;
 
-  string.MustFreeString = 0;
-  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND)) {
-    string.Spelling = strdup(OMD->getSelector().getAsString().c_str());
-    string.MustFreeString = 1;
-  }
-  else if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
+  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
+    return createCXString(OMD->getSelector().getAsString().c_str(), true);
+
+  if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
     // No, this isn't the same as the code below. getIdentifier() is non-virtual
     // and returns different names. NamedDecl returns the class name and
     // ObjCCategoryImplDecl returns the category name.
-    string.Spelling = CIMP->getIdentifier()->getNameStart(); 
-  else if (ND->getIdentifier())
-    string.Spelling = ND->getIdentifier()->getNameStart();
-  else 
-    string.Spelling = "";
-  return string;
+    return createCXString(CIMP->getIdentifier()->getNameStart());
+
+  if (ND->getIdentifier())
+    return createCXString(ND->getIdentifier()->getNameStart());
+
+  return createCXString("");
 }
 
 unsigned clang_getDeclLine(CXDecl AnonDecl)
@@ -697,38 +703,32 @@ CXString clang_getCursorSpelling(CXCursor C)
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
 
   if (clang_isReference(C.kind)) {
-    CXString string;
-    string.MustFreeString = 0;
     switch (C.kind) {
       case CXCursor_ObjCSuperClassRef: {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
-        string.Spelling = OID->getSuperClass()->getIdentifier()->getNameStart();
-        break;
+        return createCXString(OID->getSuperClass()->getIdentifier()
+                                 ->getNameStart());
       }
       case CXCursor_ObjCClassRef: {
-        if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND)) {
-          string.Spelling = OID->getIdentifier()->getNameStart();
-        } else {
-          ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(ND);
-          assert(OCD && "clang_getCursorLine(): Missing category decl");
-          string.Spelling = OCD->getClassInterface()->getIdentifier()->getNameStart();
-        }
-        break;
+        if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND))
+          return createCXString(OID->getIdentifier()->getNameStart());
+
+        ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(ND);
+        assert(OCD && "clang_getCursorLine(): Missing category decl");
+        return createCXString(OCD->getClassInterface()->getIdentifier()
+                                 ->getNameStart());
       }
       case CXCursor_ObjCProtocolRef: {
         ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing protocol decl");
-        string.Spelling = OID->getIdentifier()->getNameStart();
-        break;
+        return createCXString(OID->getIdentifier()->getNameStart());
       }
       case CXCursor_ObjCSelectorRef: {
         ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(OME && "clang_getCursorLine(): Missing message expr");
-        string.Spelling = strdup(OME->getSelector().getAsString().c_str());
-        string.MustFreeString = 1;
-        break;
+        return createCXString(OME->getSelector().getAsString().c_str(), true);
       }
       case CXCursor_VarRef:
       case CXCursor_FunctionRef:
@@ -736,14 +736,11 @@ CXString clang_getCursorSpelling(CXCursor C)
         DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
-        string.Spelling = DRE->getDecl()->getIdentifier()->getNameStart();
-        break;
+        return createCXString(DRE->getDecl()->getIdentifier()->getNameStart());
       }
       default:
-        string.Spelling = "<not implemented>";
-        break;
+        return createCXString("<not implemented>");
     }
-    return string;
   }
   return clang_getDeclSpelling(C.decl);
 }
