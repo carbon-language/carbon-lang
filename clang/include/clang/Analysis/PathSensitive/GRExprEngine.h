@@ -504,9 +504,6 @@ protected:
   void VisitUnaryOperator(UnaryOperator* B, ExplodedNode* Pred, ExplodedNodeSet& Dst,
                           bool asLValue);
 
-  const GRState* CheckDivideZero(Expr* Ex, const GRState* St, ExplodedNode* Pred,
-                                 SVal Denom);
-
   /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
   ///  with those assumptions.
