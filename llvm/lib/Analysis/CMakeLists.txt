@@ -15,6 +15,7 @@ add_llvm_library(LLVMAnalysis
   IVUsers.cpp
   InlineCost.cpp
   InstCount.cpp
+  InstructionSimplify.cpp
   Interval.cpp
   IntervalPartition.cpp
   LibCallAliasAnalysis.cpp
