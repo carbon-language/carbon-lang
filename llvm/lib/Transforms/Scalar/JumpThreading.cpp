@@ -354,7 +354,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         Value *LHS = PN->getIncomingValue(i);
         Value *RHS = Cmp->getOperand(1)->DoPHITranslation(BB, PredBB);
         
-        Value *Res = SimplifyCompare(Cmp->getPredicate(), LHS, RHS);
+        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), LHS, RHS);
         if (Res == 0) continue;
         
         if (isa<UndefValue>(Res))

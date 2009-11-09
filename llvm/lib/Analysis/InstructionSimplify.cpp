@@ -32,11 +32,12 @@ Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 }
 
 
-/// SimplifyCompare - Given operands for a CmpInst, see if we can
-/// fold the result.
-Value *llvm::SimplifyCompare(unsigned Predicate, Value *LHS, Value *RHS,
-                             const TargetData *TD) {
+/// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
+/// fold the result.  If not, this returns null.
+Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                              const TargetData *TD) {
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
+  assert(CmpInst::isIntPredicate(Pred) && "Not an integer compare!");
   
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
@@ -44,12 +45,36 @@ Value *llvm::SimplifyCompare(unsigned Predicate, Value *LHS, Value *RHS,
   
   // If this is an integer compare and the LHS and RHS are the same, fold it.
   if (LHS == RHS)
-    if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType())) {
-      if (ICmpInst::isTrueWhenEqual(Pred))
-        return ConstantInt::getTrue(LHS->getContext());
-      else
-        return ConstantInt::getFalse(LHS->getContext());
-    }
+    if (ICmpInst::isTrueWhenEqual(Pred))
+      return ConstantInt::getTrue(LHS->getContext());
+    else
+      return ConstantInt::getFalse(LHS->getContext());
+
   return 0;
+}
+
+/// SimplifyFCmpInst - Given operands for an FCmpInst, see if we can
+/// fold the result.  If not, this returns null.
+Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                              const TargetData *TD) {
+  CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
+  assert(CmpInst::isFPPredicate(Pred) && "Not an FP compare!");
+
+  if (Constant *CLHS = dyn_cast<Constant>(LHS))
+    if (Constant *CRHS = dyn_cast<Constant>(RHS))
+      return ConstantFoldCompareInstOperands(Pred, CLHS, CRHS, TD);
+  
+  return 0;
+}
+
+
+
+/// SimplifyCmpInst - Given operands for a CmpInst, see if we can
+/// fold the result.
+Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
+                             const TargetData *TD) {
+  if (CmpInst::isIntPredicate((CmpInst::Predicate)Predicate))
+    return SimplifyICmpInst(Predicate, LHS, RHS, TD);
+  return SimplifyFCmpInst(Predicate, LHS, RHS, TD);
 }
 

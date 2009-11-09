@@ -42,6 +42,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Operator.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
