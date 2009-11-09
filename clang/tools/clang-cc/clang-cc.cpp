@@ -25,6 +25,7 @@
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
@@ -268,8 +269,6 @@ TokenCache("token-cache", llvm::cl::value_desc("path"),
 //===----------------------------------------------------------------------===//
 // Diagnostic Options
 //===----------------------------------------------------------------------===//
-
-static DiagnosticOptions DiagOpts;
 
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
@@ -1590,11 +1589,13 @@ class LoggingDiagnosticClient : public DiagnosticClient {
   llvm::OwningPtr<DiagnosticClient> Chain2;
 public:
 
-  LoggingDiagnosticClient(DiagnosticClient *Normal) {
+  LoggingDiagnosticClient(const CompilerInvocation &CompOpts,
+                          DiagnosticClient *Normal) {
     // Output diags both where requested...
     Chain1.reset(Normal);
     // .. and to our log file.
-    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile, DiagOpts));
+    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile,
+                                           CompOpts.getDiagnosticOpts()));
   }
 
   virtual void BeginSourceFile(const LangOptions &LO) {
@@ -1619,7 +1620,8 @@ public:
 };
 } // end anonymous namespace.
 
-static void SetUpBuildDumpLog(unsigned argc, char **argv,
+static void SetUpBuildDumpLog(const CompilerInvocation &CompOpts,
+                              unsigned argc, char **argv,
                               llvm::OwningPtr<DiagnosticClient> &DiagClient) {
 
   std::string ErrorInfo;
@@ -1642,7 +1644,7 @@ static void SetUpBuildDumpLog(unsigned argc, char **argv,
 
   // LoggingDiagnosticClient - Insert a new logging diagnostic client in between
   // the diagnostic producers and the normal receiver.
-  DiagClient.reset(new LoggingDiagnosticClient(DiagClient.take()));
+  DiagClient.reset(new LoggingDiagnosticClient(CompOpts, DiagClient.take()));
 }
 
 
@@ -1651,14 +1653,15 @@ static void SetUpBuildDumpLog(unsigned argc, char **argv,
 // Main driver
 //===----------------------------------------------------------------------===//
 
-static llvm::raw_ostream *ComputeOutFile(const std::string &InFile,
+static llvm::raw_ostream *ComputeOutFile(const CompilerInvocation &CompOpts,
+                                         const std::string &InFile,
                                          const char *Extension,
                                          bool Binary,
                                          llvm::sys::Path& OutPath) {
   llvm::raw_ostream *Ret;
   std::string OutFile;
-  if (!OutputFile.empty())
-    OutFile = OutputFile;
+  if (!CompOpts.getOutputFile().empty())
+    OutFile = CompOpts.getOutputFile();
   else if (InFile == "-") {
     OutFile = "-";
   } else if (Extension) {
@@ -1685,7 +1688,8 @@ static llvm::raw_ostream *ComputeOutFile(const std::string &InFile,
   return Ret;
 }
 
-static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
+static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
+                                         Preprocessor &PP,
                                          const std::string &InFile,
                                          ProgActions PA,
                                          llvm::OwningPtr<llvm::raw_ostream> &OS,
@@ -1697,11 +1701,11 @@ static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
     return 0;
 
   case ASTPrint:
-    OS.reset(ComputeOutFile(InFile, 0, false, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, false, OutPath));
     return CreateASTPrinter(OS.get());
 
   case ASTPrintXML:
-    OS.reset(ComputeOutFile(InFile, "xml", false, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, "xml", false, OutPath));
     return CreateASTPrinterXML(OS.get());
 
   case ASTDump:
@@ -1726,15 +1730,15 @@ static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
     BackendAction Act;
     if (ProgAction == EmitAssembly) {
       Act = Backend_EmitAssembly;
-      OS.reset(ComputeOutFile(InFile, "s", true, OutPath));
+      OS.reset(ComputeOutFile(CompOpts, InFile, "s", true, OutPath));
     } else if (ProgAction == EmitLLVM) {
       Act = Backend_EmitLL;
-      OS.reset(ComputeOutFile(InFile, "ll", true, OutPath));
+      OS.reset(ComputeOutFile(CompOpts, InFile, "ll", true, OutPath));
     } else if (ProgAction == EmitLLVMOnly) {
       Act = Backend_EmitNothing;
     } else {
       Act = Backend_EmitBC;
-      OS.reset(ComputeOutFile(InFile, "bc", true, OutPath));
+      OS.reset(ComputeOutFile(CompOpts, InFile, "bc", true, OutPath));
     }
 
     CompileOptions Opts;
@@ -1744,7 +1748,7 @@ static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
   }
 
   case RewriteObjC:
-    OS.reset(ComputeOutFile(InFile, "cpp", true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, "cpp", true, OutPath));
     return CreateObjCRewriter(InFile, OS.get(), PP.getDiagnostics(),
                               PP.getLangOptions(), SilenceRewriteMacroWarning);
 
@@ -1756,7 +1760,8 @@ static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
 
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
-static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
+static void ProcessInputFile(const CompilerInvocation &CompOpts,
+                             Preprocessor &PP, const std::string &InFile,
                              ProgActions PA,
                              const llvm::StringMap<bool> &Features,
                              llvm::LLVMContext& Context) {
@@ -1769,7 +1774,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
 
   switch (PA) {
   default:
-    Consumer.reset(CreateConsumerAction(PP, InFile, PA, OS, OutPath,
+    Consumer.reset(CreateConsumerAction(CompOpts, PP, InFile, PA, OS, OutPath,
                                         Features, Context));
 
     if (!Consumer.get()) {
@@ -1781,12 +1786,12 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
     break;;
 
   case EmitHTML:
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     Consumer.reset(CreateHTMLPrinter(OS.get(), PP));
     break;
 
   case RunAnalysis:
-    Consumer.reset(CreateAnalysisConsumer(PP, OutputFile,
+    Consumer.reset(CreateAnalysisConsumer(PP, CompOpts.getOutputFile(),
                                           ReadAnalyzerOptions()));
     break;
 
@@ -1796,7 +1801,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
       RelocatablePCH.setValue(false);
     }
 
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     if (RelocatablePCH.getValue())
       Consumer.reset(CreatePCHGenerator(PP, OS.get(), isysroot.c_str()));
     else
@@ -1839,20 +1844,20 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
 
   case GeneratePTH: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    if (OutputFile.empty() || OutputFile == "-") {
+    if (CompOpts.getOutputFile().empty() || CompOpts.getOutputFile() == "-") {
       // FIXME: Don't fail this way.
       // FIXME: Verify that we can actually seek in the given file.
       llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
       ::exit(1);
     }
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     CacheTokens(PP, static_cast<llvm::raw_fd_ostream*>(OS.get()));
     ClearSourceMgr = true;
     break;
   }
 
   case PrintPreprocessedInput:
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     break;
 
   case ParseNoop:
@@ -1860,7 +1865,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
 
   case ParsePrintCallbacks: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     ParseFile(PP, CreatePrintParserActionsAction(PP, OS.get()));
     ClearSourceMgr = true;
     break;
@@ -1873,13 +1878,13 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
   }
 
   case RewriteMacros:
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     RewriteMacrosInInput(PP, OS.get());
     ClearSourceMgr = true;
     break;
 
   case RewriteTest:
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     DoRewriteTest(PP, OS.get());
     ClearSourceMgr = true;
     break;
@@ -2058,7 +2063,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
   }
 
   if (FixItRewrite)
-    FixItRewrite->WriteFixedFile(InFile, OutputFile);
+    FixItRewrite->WriteFixedFile(InFile, CompOpts.getOutputFile());
 
   // Disable the consumer prior to the context, the consumer may perform actions
   // in its destructor which require the context.
@@ -2103,7 +2108,8 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
 
 /// ProcessInputFile - Process a single AST input file with the specified state.
 ///
-static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
+static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
+                                const std::string &InFile, ProgActions PA,
                                 const llvm::StringMap<bool> &Features,
                                 Diagnostic &Diags, FileManager &FileMgr,
                                 llvm::LLVMContext& Context) {
@@ -2118,7 +2124,8 @@ static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
 
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::sys::Path OutPath;
-  llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(PP, InFile, PA, OS,
+  llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(CompOpts, PP, 
+                                                             InFile, PA, OS,
                                                              OutPath, Features,
                                                              Context));
 
@@ -2172,6 +2179,20 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
+static void ConstructCompilerInvocation(CompilerInvocation &Opts) {
+  Opts.getOutputFile() = OutputFile;
+
+  // Initialize the diagnostic options.
+  Opts.getDiagnosticOpts().ShowColumn = !NoShowColumn;
+  Opts.getDiagnosticOpts().ShowLocation = !NoShowLocation;
+  Opts.getDiagnosticOpts().ShowCarets = !NoCaretDiagnostics;
+  Opts.getDiagnosticOpts().ShowFixits = !NoDiagnosticsFixIt;
+  Opts.getDiagnosticOpts().ShowSourceRanges = PrintSourceRangeInfo;
+  Opts.getDiagnosticOpts().ShowOptionNames = PrintDiagnosticOption;
+  Opts.getDiagnosticOpts().ShowColors = PrintColorDiagnostic;
+  Opts.getDiagnosticOpts().MessageLength = MessageLength;
+}
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -2196,15 +2217,8 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
 
-  // Initialize the diagnostic options.
-  DiagOpts.ShowColumn = !NoShowColumn;
-  DiagOpts.ShowLocation = !NoShowLocation;
-  DiagOpts.ShowCarets = !NoCaretDiagnostics;
-  DiagOpts.ShowFixits = !NoDiagnosticsFixIt;
-  DiagOpts.ShowSourceRanges = PrintSourceRangeInfo;
-  DiagOpts.ShowOptionNames = PrintDiagnosticOption;
-  DiagOpts.ShowColors = PrintColorDiagnostic;
-  DiagOpts.MessageLength = MessageLength;
+  CompilerInvocation CompOpts;
+  ConstructCompilerInvocation(CompOpts);
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
@@ -2217,11 +2231,12 @@ int main(int argc, char **argv) {
       return 1;
     }
   } else {
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), DiagOpts));
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
+                                               CompOpts.getDiagnosticOpts()));
   }
 
   if (!DumpBuildInformation.empty())
-    SetUpBuildDumpLog(argc, argv, DiagClient);
+    SetUpBuildDumpLog(CompOpts, argc, argv, DiagClient);
 
   // Configure our handling of diagnostics.
   Diagnostic Diags(DiagClient.get());
@@ -2278,7 +2293,7 @@ int main(int argc, char **argv) {
     LangKind LK = GetLanguage(InFile);
     // AST inputs are handled specially.
     if (LK == langkind_ast) {
-      ProcessASTInputFile(InFile, ProgAction, Features,
+      ProcessASTInputFile(CompOpts, InFile, ProgAction, Features,
                           Diags, FileMgr, Context);
       continue;
     }
@@ -2335,7 +2350,7 @@ int main(int argc, char **argv) {
 
     // Process the source file.
     DiagClient->BeginSourceFile(LangInfo);
-    ProcessInputFile(*PP, InFile, ProgAction, Features, Context);
+    ProcessInputFile(CompOpts, *PP, InFile, ProgAction, Features, Context);
     DiagClient->EndSourceFile();
 
     HeaderInfo.ClearFileInfo();
