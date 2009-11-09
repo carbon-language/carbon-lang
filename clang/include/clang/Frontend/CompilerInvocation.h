@@ -13,6 +13,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
+#include "clang/Frontend/PreprocessorOptions.h"
 #include "llvm/ADT/StringMap.h"
 #include <string>
 
@@ -32,14 +33,17 @@ class CompilerInvocation {
   /// Options controlling the diagnostic engine.
   DiagnosticOptions DiagOpts;
 
-  /// Set of target-specific code generation features to enable/disable.
-  llvm::StringMap<bool> TargetFeatures;
+  /// Options controlling the #include directive.
+  HeaderSearchOptions HeaderSearchOpts;
 
   /// Options controlling the language variant.
   LangOptions LangOpts;
 
-  /// Options controlling the #include directive.
-  HeaderSearchOptions HeaderSearchOpts;
+  /// Options controlling the preprocessor (aside from #include handling).
+  PreprocessorOptions PreprocessorOpts;
+
+  /// Set of target-specific code generation features to enable/disable.
+  llvm::StringMap<bool> TargetFeatures;
 
 public:
   CompilerInvocation() {}
@@ -50,17 +54,22 @@ public:
   DiagnosticOptions &getDiagnosticOpts() { return DiagOpts; }
   const DiagnosticOptions &getDiagnosticOpts() const { return DiagOpts; }
 
-  llvm::StringMap<bool> &getTargetFeatures() { return TargetFeatures; }
-  const llvm::StringMap<bool> &getTargetFeatures() const {
-    return TargetFeatures;
+  HeaderSearchOptions &getHeaderSearchOpts() { return HeaderSearchOpts; }
+  const HeaderSearchOptions &getHeaderSearchOpts() const {
+    return HeaderSearchOpts;
   }
 
   LangOptions &getLangOpts() { return LangOpts; }
   const LangOptions &getLangOpts() const { return LangOpts; }
 
-  HeaderSearchOptions &getHeaderSearchOpts() { return HeaderSearchOpts; }
-  const HeaderSearchOptions &getHeaderSearchOpts() const {
-    return HeaderSearchOpts;
+  PreprocessorOptions &getPreprocessorOpts() { return PreprocessorOpts; }
+  const PreprocessorOptions &getPreprocessorOpts() const {
+    return PreprocessorOpts;
+  }
+
+  llvm::StringMap<bool> &getTargetFeatures() { return TargetFeatures; }
+  const llvm::StringMap<bool> &getTargetFeatures() const {
+    return TargetFeatures;
   }
 };
 

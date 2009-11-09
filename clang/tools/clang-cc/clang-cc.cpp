@@ -1142,7 +1142,7 @@ static void InitializeIncludePaths(HeaderSearchOptions &Opts,
   Opts.UseStandardIncludes = !nostdinc;
 }
 
-void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
+static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
   // Use predefines?
   InitOpts.setUsePredefines(!UndefMacros);
 
@@ -1208,9 +1208,9 @@ void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
 //===----------------------------------------------------------------------===//
 
 static Preprocessor *
-CreatePreprocessor(Diagnostic &Diags,const LangOptions &LangInfo,
-                   TargetInfo &Target, SourceManager &SourceMgr,
-                   HeaderSearch &HeaderInfo) {
+CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
+                   const PreprocessorOptions &PPOpts, TargetInfo &Target,
+                   SourceManager &SourceMgr, HeaderSearch &HeaderInfo) {
   PTHManager *PTHMgr = 0;
   if (!TokenCache.empty() && !ImplicitIncludePTH.empty()) {
     fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
@@ -1241,9 +1241,7 @@ CreatePreprocessor(Diagnostic &Diags,const LangOptions &LangInfo,
     PP->setPTHManager(PTHMgr);
   }
 
-  PreprocessorOptions InitOpts;
-  InitializePreprocessorOptions(InitOpts);
-  InitializePreprocessor(*PP, InitOpts);
+  InitializePreprocessor(*PP, PPOpts);
 
   return PP;
 }
@@ -2212,6 +2210,9 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
 
   // Initialize the header search options.
   InitializeIncludePaths(Opts.getHeaderSearchOpts(), Argv0, Opts.getLangOpts());
+
+  // Initialize the other preprocessor options.
+  InitializePreprocessorOptions(Opts.getPreprocessorOpts());
 }
 
 int main(int argc, char **argv) {
@@ -2338,10 +2339,10 @@ int main(int argc, char **argv) {
                              CompOpts.getLangOpts(), Triple);
 
     // Set up the preprocessor with these options.
-    llvm::OwningPtr<Preprocessor> PP(CreatePreprocessor(Diags, 
-                                                        CompOpts.getLangOpts(),
-                                                        *Target, SourceMgr,
-                                                        HeaderInfo));
+    llvm::OwningPtr<Preprocessor>
+      PP(CreatePreprocessor(Diags, CompOpts.getLangOpts(),
+                            CompOpts.getPreprocessorOpts(), *Target, SourceMgr,
+                            HeaderInfo));
 
     // Handle generating dependencies, if requested.
     if (!DependencyFile.empty()) {
