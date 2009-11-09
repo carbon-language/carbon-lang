@@ -17,6 +17,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
@@ -203,7 +204,6 @@ static void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
   // Remove the entries for Pred from the PHI nodes in BB, but do not simplify
   // them down.  This will leave us with single entry phi nodes and other phis
   // that can be removed.
-  //BB->removePredecessor(Pred, true);
   BB->removePredecessor(Pred, true);
   
   WeakVH PhiIt = &BB->front();
@@ -265,26 +265,6 @@ void JumpThreading::FindLoopHeaders(Function &F) {
   for (unsigned i = 0, e = Edges.size(); i != e; ++i)
     LoopHeaders.insert(const_cast<BasicBlock*>(Edges[i].second));
 }
-
-/// GetResultOfComparison - Given an icmp/fcmp predicate and the left and right
-/// hand sides of the compare instruction, try to determine the result. If the
-/// result can not be determined, a null pointer is returned.
-static Constant *GetResultOfComparison(CmpInst::Predicate pred,
-                                       Value *LHS, Value *RHS) {
-  if (Constant *CLHS = dyn_cast<Constant>(LHS))
-    if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      return ConstantExpr::getCompare(pred, CLHS, CRHS);
-  
-  if (LHS == RHS)
-    if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType())) {
-      if (ICmpInst::isTrueWhenEqual(pred))
-        return ConstantInt::getTrue(LHS->getContext());
-      else
-        return ConstantInt::getFalse(LHS->getContext());
-    }
-  return 0;
-}
-
 
 /// ComputeValueKnownInPredecessors - Given a basic block BB and a value V, see
 /// if we can infer that the value is a known ConstantInt in any of our
@@ -374,7 +354,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         Value *LHS = PN->getIncomingValue(i);
         Value *RHS = Cmp->getOperand(1)->DoPHITranslation(BB, PredBB);
         
-        Constant *Res = GetResultOfComparison(Cmp->getPredicate(), LHS, RHS);
+        Value *Res = SimplifyCompare(Cmp->getPredicate(), LHS, RHS);
         if (Res == 0) continue;
         
         if (isa<UndefValue>(Res))
