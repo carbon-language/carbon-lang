@@ -68,7 +68,7 @@ static cl::opt<bool>
 EnableFastISelAbort("fast-isel-abort", cl::Hidden,
           cl::desc("Enable abort calls when \"fast\" instruction fails"));
 static cl::opt<bool>
-SchedLiveInCopies("schedule-livein-copies",
+SchedLiveInCopies("schedule-livein-copies", cl::Hidden,
                   cl::desc("Schedule copies of livein registers"),
                   cl::init(false));
 

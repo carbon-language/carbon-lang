@@ -53,7 +53,8 @@ static cl::opt<bool> DisableReMat("disable-rematerialization",
 static cl::opt<bool> EnableFastSpilling("fast-spill",
                                         cl::init(false), cl::Hidden);
 
-static cl::opt<bool> EarlyCoalescing("early-coalescing", cl::init(false));
+static cl::opt<bool> EarlyCoalescing("early-coalescing",
+                                     cl::init(false), cl::Hidden);
 
 static cl::opt<int> CoalescingLimit("early-coalescing-limit",
                                     cl::init(-1), cl::Hidden);
