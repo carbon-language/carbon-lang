@@ -11,6 +11,7 @@ add_clang_library(clangAnalysis
   BasicValueFactory.cpp
   BugReporter.cpp
   BugReporterVisitors.cpp
+  CastToStructChecker.cpp
   CFG.cpp
   CFRefCount.cpp
   CallGraph.cpp
