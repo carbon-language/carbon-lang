@@ -188,11 +188,13 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
       Var->setInvalidDecl();
     else if (!D->getType()->isDependentType() &&
              !D->getInit()->isTypeDependent() &&
-             !D->getInit()->isValueDependent()) {
+             !D->getInit()->isValueDependent() &&
+             !isa<InitListExpr>(D->getInit())) {
       // If neither the declaration's type nor its initializer are dependent,
       // we don't want to redo all the checking, especially since the
       // initializer might have been wrapped by a CXXConstructExpr since we did
       // it the first time.
+      // FIXME: The InitListExpr handling here is a hack!
       Var->setInit(SemaRef.Context, Init.takeAs<Expr>());
     }
     else if (ParenListExpr *PLE = dyn_cast<ParenListExpr>((Expr *)Init.get())) {
