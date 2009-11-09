@@ -1704,7 +1704,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   // class template specialization, or an array with known size of such,
   // try to instantiate it.
   QualType MaybeTemplate = T;
-  if (const ConstantArrayType *Array = T->getAs<ConstantArrayType>())
+  if (const ConstantArrayType *Array = Context.getAsConstantArrayType(T))
     MaybeTemplate = Array->getElementType();
   if (const RecordType *Record = MaybeTemplate->getAs<RecordType>()) {
     if (ClassTemplateSpecializationDecl *ClassTemplateSpec

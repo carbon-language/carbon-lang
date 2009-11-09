@@ -2927,8 +2927,21 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
 
+// Helper class template that is used by Type::getAs to ensure that one does
+// not try to look through a qualified type to get to an array type.
+template<typename T,
+         bool isArrayType = (llvm::is_same<T, ArrayType>::value ||
+                             llvm::is_base_of<ArrayType, T>::value)>
+struct ArrayType_cannot_be_used_with_getAs { };
+  
+template<typename T>
+struct ArrayType_cannot_be_used_with_getAs<T, true>;
+  
 /// Member-template getAs<specific type>'.
 template <typename T> const T *Type::getAs() const {
+  ArrayType_cannot_be_used_with_getAs<T> at;
+  (void)at;
+  
   // If this is directly a T type, return it.
   if (const T *Ty = dyn_cast<T>(this))
     return Ty;

@@ -3596,7 +3596,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
         // template <typename... Args> void f(Args... args) {
         //   int vals[] = { args };
         // }
-        const IncompleteArrayType *IAT = T->getAs<IncompleteArrayType>();
+        const IncompleteArrayType *IAT = Context.getAsIncompleteArrayType(T);
         Expr *Init = IDecl->getInit();
         if (IAT && Init &&
             (Init->isTypeDependent() || Init->isValueDependent())) {

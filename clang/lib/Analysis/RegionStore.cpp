@@ -1109,7 +1109,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     // FIXME: Handle loads from strings where the literal is treated as 
     // an integer, e.g., *((unsigned int*)"hello")
     ASTContext &Ctx = getContext();
-    QualType T = StrR->getValueType(Ctx)->getAs<ArrayType>()->getElementType();
+    QualType T = Ctx.getAsArrayType(StrR->getValueType(Ctx))->getElementType();
     if (T != Ctx.getCanonicalType(R->getElementType()))
       return UnknownVal();
     

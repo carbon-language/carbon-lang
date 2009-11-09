@@ -43,7 +43,8 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   if (!VD)
     return;
   
-  const VariableArrayType *VLA = VD->getType()->getAs<VariableArrayType>();
+  const VariableArrayType *VLA
+    = C.getASTContext().getAsVariableArrayType(VD->getType());
   if (!VLA)
     return;
 

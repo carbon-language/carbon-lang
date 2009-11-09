@@ -507,7 +507,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
   // Handle CXX destruction of variables.
   QualType DtorTy(Ty);
-  if (const ArrayType *Array = DtorTy->getAs<ArrayType>())
+  while (const ArrayType *Array = getContext().getAsArrayType(DtorTy))
     DtorTy = getContext().getBaseElementType(Array);
   if (const RecordType *RT = DtorTy->getAs<RecordType>())
     if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
