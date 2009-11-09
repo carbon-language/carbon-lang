@@ -5420,7 +5420,14 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       QualType ProtoArgType = Proto->getArgType(i);
       IsError |= PerformCopyInitialization(Arg, ProtoArgType, "passing");
     } else {
-      Arg = CXXDefaultArgExpr::Create(Context, Method->getParamDecl(i));
+      OwningExprResult DefArg
+        = BuildCXXDefaultArgExpr(LParenLoc, Method, Method->getParamDecl(i));
+      if (DefArg.isInvalid()) {
+        IsError = true;
+        break;
+      }
+      
+      Arg = DefArg.takeAs<Expr>();
     }
 
     TheCall->setArg(i + 1, Arg);

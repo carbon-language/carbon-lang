@@ -65,8 +65,8 @@ void test_x0(X0<int> xi) {
   xi.f(17);
 }
 
-struct NotDefaultConstructible { // expected-note{{candidate}}
-  NotDefaultConstructible(int); // expected-note{{candidate}}
+struct NotDefaultConstructible { // expected-note 2{{candidate}}
+  NotDefaultConstructible(int); // expected-note 2{{candidate}}
 };
 
 void test_x0_not_default_constructible(X0<NotDefaultConstructible> xn) {
@@ -83,6 +83,18 @@ struct X1 {
 
 void test_X1() {
   X1<int> x1;
+}
+
+template<typename T>
+struct X2 {
+  void operator()(T = T()); // expected-error{{no matching}}
+};
+
+void test_x2(X2<int> x2i, X2<NotDefaultConstructible> x2n) {
+  x2i();
+  x2i(17);
+  x2n(NotDefaultConstructible(17));
+  x2n(); // expected-note{{in instantiation of default function argument}}
 }
 
 // PR5283
@@ -131,3 +143,4 @@ namespace pr5301 {
     h(0);
   }
 }
+
