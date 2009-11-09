@@ -568,8 +568,7 @@ static Instruction* createFree(Value* Source, Instruction *InsertBefore,
   const Type *VoidTy = Type::getVoidTy(M->getContext());
   const Type *IntPtrTy = Type::getInt8PtrTy(M->getContext());
   // prototype free as "void free(void*)"
-  Function *FreeFunc = cast<Function>(M->getOrInsertFunction("free", VoidTy,
-                                                             IntPtrTy, NULL));
+  Value *FreeFunc = M->getOrInsertFunction("free", VoidTy, IntPtrTy, NULL);
   CallInst* Result = NULL;
   Value *PtrCast = Source;
   if (InsertBefore) {
@@ -582,7 +581,8 @@ static Instruction* createFree(Value* Source, Instruction *InsertBefore,
     Result = CallInst::Create(FreeFunc, PtrCast, "");
   }
   Result->setTailCall();
-  Result->setCallingConv(FreeFunc->getCallingConv());
+  if (Function *F = dyn_cast<Function>(FreeFunc))
+    Result->setCallingConv(F->getCallingConv());
 
   return Result;
 }
