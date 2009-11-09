@@ -1768,6 +1768,9 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       Record.push_back(cast<BlocksAttr>(Attr)->getType()); // FIXME: stable
       break;
 
+    case Attr::CDecl:
+      break;
+
     case Attr::Cleanup:
       AddDeclRef(cast<CleanupAttr>(Attr)->getFunctionDecl(), Record);
       break;

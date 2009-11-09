@@ -59,6 +59,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("mode", AT_mode)
     .Case("used", AT_used)
     .Case("alias", AT_alias)
+    .Case("cdecl", AT_cdecl)
     .Case("const", AT_const)
     .Case("packed", AT_packed)
     .Case("malloc", AT_malloc)

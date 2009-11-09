@@ -57,6 +57,7 @@ public:
     AT_analyzer_noreturn,
     AT_annotate,
     AT_blocks,
+    AT_cdecl,
     AT_cleanup,
     AT_const,
     AT_constructor,

@@ -17,3 +17,7 @@ void __attribute__((fastcall)) test1(void) {
 
 void __attribute__((fastcall)) test2(int a, ...) { // expected-error {{variadic function cannot use 'fastcall' calling convention}}
 }
+
+void __attribute__((cdecl)) ctest0() {}
+
+void __attribute__((cdecl(1))) ctest1(float x) {} // expected-error {{attribute requires 0 argument(s)}}

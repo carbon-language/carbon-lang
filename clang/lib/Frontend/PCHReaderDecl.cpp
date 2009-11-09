@@ -442,6 +442,8 @@ Attr *PCHReader::ReadAttributes() {
                                   (BlocksAttr::BlocksAttrTypes)Record[Idx++]);
       break;
 
+    SIMPLE_ATTR(CDecl);
+
     case Attr::Cleanup:
       New = ::new (*Context) CleanupAttr(
                                   cast<FunctionDecl>(GetDecl(Record[Idx++])));

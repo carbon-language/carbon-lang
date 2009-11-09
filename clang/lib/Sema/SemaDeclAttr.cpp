@@ -1008,6 +1008,38 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
 }
 
+static void HandleCDeclAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // Attribute has no arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  // Attribute can be applied only to functions.
+  if (!isa<FunctionDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 0 /*function*/;
+    return;
+  }
+
+  // cdecl and fastcall attributes are mutually incompatible.
+  if (d->getAttr<FastCallAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << "cdecl" << "fastcall";
+    return;
+  }
+
+  // cdecl and stdcall attributes are mutually incompatible.
+  if (d->getAttr<StdCallAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << "cdecl" << "stdcall";
+    return;
+  }
+
+  d->addAttr(::new (S.Context) CDeclAttr());
+}
+
+
 static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // Attribute has no arguments.
   if (Attr.getNumArgs() != 0) {
@@ -1822,6 +1854,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_analyzer_noreturn:
     HandleAnalyzerNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
+  case AttributeList::AT_cdecl:       HandleCDeclAttr     (D, Attr, S); break;
   case AttributeList::AT_constructor: HandleConstructorAttr(D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;
   case AttributeList::AT_destructor:  HandleDestructorAttr(D, Attr, S); break;

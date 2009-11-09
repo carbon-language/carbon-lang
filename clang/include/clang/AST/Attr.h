@@ -50,6 +50,7 @@ public:
     Annotate,
     AsmLabel, // Represent GCC asm label extension.
     Blocks,
+    CDecl,
     Cleanup,
     Const,
     Constructor,
@@ -442,6 +443,7 @@ DEF_SIMPLE_ATTR(DLLImport);
 DEF_SIMPLE_ATTR(DLLExport);
 DEF_SIMPLE_ATTR(FastCall);
 DEF_SIMPLE_ATTR(StdCall);
+DEF_SIMPLE_ATTR(CDecl);
 DEF_SIMPLE_ATTR(TransparentUnion);
 DEF_SIMPLE_ATTR(ObjCNSObject);
 DEF_SIMPLE_ATTR(ObjCException);
