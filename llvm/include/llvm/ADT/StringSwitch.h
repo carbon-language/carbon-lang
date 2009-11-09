@@ -65,6 +65,25 @@ public:
     return *this;
   }
   
+  template<unsigned N0, unsigned N1>
+  StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
+                      const T& Value) {
+    return Case(S0, Value).Case(S1, Value);
+  }
+  
+  template<unsigned N0, unsigned N1, unsigned N2>
+  StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
+                      const char (&S2)[N2], const T& Value) {
+    return Case(S0, Value).Case(S1, Value).Case(S2, Value);
+  }
+  
+  template<unsigned N0, unsigned N1, unsigned N2, unsigned N3>
+  StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
+                      const char (&S2)[N2], const char (&S3)[N3],
+                      const T& Value) {
+    return Case(S0, Value).Case(S1, Value).Case(S2, Value).Case(S3, Value);
+  }
+  
   T Default(const T& Value) {
     if (ResultKnown)
       return Result;
