@@ -113,38 +113,41 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
    memory (that will be owned by the caller) to store the file name. */
 int parse_file_line_column(const char *input, char **filename, unsigned *line, 
                            unsigned *column) {
-  const char *colon = strchr(input, ':');
+  /* Find the second colon. */
+  const char *second_colon = strrchr(input, ':'), *first_colon;
   char *endptr = 0;
-  if (!colon) {
+  if (!second_colon || second_colon == input) {
     fprintf(stderr, "could not parse filename:line:column in '%s'\n", input);
     return 1;
   }
 
-  /* Copy the file name. */
-  *filename = (char*)malloc(colon - input);
-  strncpy(*filename, input, colon - input);
-  (*filename)[colon - input] = 0;
-  input = colon + 1;
-  
-  /* Parse the line number. */
-  *line = strtol(input, &endptr, 10);
-  if (*endptr != ':') {
-    fprintf(stderr, "could not parse line:column in '%s'\n", input);
-    free(filename);
-    *filename = 0;
-    return 1;
-  }
-  input = endptr + 1;
-  
   /* Parse the column number. */
-  *column = strtol(input, &endptr, 10);
+  *column = strtol(second_colon + 1, &endptr, 10);
   if (*endptr != 0) {
     fprintf(stderr, "could not parse column in '%s'\n", input);
-    free(filename);
-    *filename = 0;
+    return 1;
+  }
+
+  /* Find the first colon. */
+  first_colon = second_colon - 1;
+  while (first_colon != input && *first_colon != ':')
+    --first_colon;
+  if (first_colon == input) {
+    fprintf(stderr, "could not parse line in '%s'\n", input);
+    return 1;    
+  }
+
+  /* Parse the line number. */
+  *line = strtol(first_colon + 1, &endptr, 10);
+  if (*endptr != ':') {
+    fprintf(stderr, "could not parse line in '%s'\n", input);
     return 1;
   }
   
+  /* Copy the file name. */
+  *filename = (char*)malloc(first_colon - input + 1);
+  memcpy(*filename, input, first_colon - input);
+  (*filename)[first_colon - input] = 0;
   return 0;
 }
 
