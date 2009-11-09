@@ -193,6 +193,12 @@ $ <b>./a.out</b>
 hello world
 </pre>
 
+<p>The 'clang' driver is designed to work as closely to GCC as possible to
+  maximize portability.  The only major difference between the two is that
+  Clang defaults to gnu99 mode while GCC defaults to gnu89 mode.  If you see
+  weird link-time errors relating to inline functions, try passing -std=gnu99
+  to clang.</p>
+
 <h2>Examples of using Clang</h2>
 
 <p>The high-level driver <tt>clang</tt> is designed to understand most of GCC's
