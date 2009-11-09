@@ -5941,26 +5941,14 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   }
 
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-
-  // Fold trivial predicates.
-  if (I.getPredicate() == FCmpInst::FCMP_FALSE)
-    return ReplaceInstUsesWith(I, ConstantInt::get(I.getType(), 0));
-  if (I.getPredicate() == FCmpInst::FCMP_TRUE)
-    return ReplaceInstUsesWith(I, ConstantInt::get(I.getType(), 1));
   
+  if (Value *V = SimplifyFCmpInst(I.getPredicate(), Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
+
   // Simplify 'fcmp pred X, X'
   if (Op0 == Op1) {
     switch (I.getPredicate()) {
     default: llvm_unreachable("Unknown predicate!");
-    case FCmpInst::FCMP_UEQ:    // True if unordered or equal
-    case FCmpInst::FCMP_UGE:    // True if unordered, greater than, or equal
-    case FCmpInst::FCMP_ULE:    // True if unordered, less than, or equal
-      return ReplaceInstUsesWith(I, ConstantInt::get(I.getType(), 1));
-    case FCmpInst::FCMP_OGT:    // True if ordered and greater than
-    case FCmpInst::FCMP_OLT:    // True if ordered and less than
-    case FCmpInst::FCMP_ONE:    // True if ordered and operands are unequal
-      return ReplaceInstUsesWith(I, ConstantInt::get(I.getType(), 0));
-      
     case FCmpInst::FCMP_UNO:    // True if unordered: isnan(X) | isnan(Y)
     case FCmpInst::FCMP_ULT:    // True if unordered or less than
     case FCmpInst::FCMP_UGT:    // True if unordered or greater than
@@ -5981,23 +5969,8 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     }
   }
     
-  if (isa<UndefValue>(Op1))                  // fcmp pred X, undef -> undef
-    return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
-
   // Handle fcmp with constant RHS
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
-    // If the constant is a nan, see if we can fold the comparison based on it.
-    if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
-      if (CFP->getValueAPF().isNaN()) {
-        if (FCmpInst::isOrdered(I.getPredicate()))   // True if ordered and...
-          return ReplaceInstUsesWith(I, ConstantInt::getFalse(*Context));
-        assert(FCmpInst::isUnordered(I.getPredicate()) &&
-               "Comparison must be either ordered or unordered!");
-        // True if unordered.
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
-      }
-    }
-    
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::PHI:
@@ -6055,24 +6028,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   }
   
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  const Type *Ty = Op0->getType();
-
-  // icmp X, X
-  if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, ConstantInt::get(I.getType(),
-                                                   I.isTrueWhenEqual()));
-
-  if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
-    return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
   
-  // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
-  // addresses never equal each other!  We already know that Op0 != Op1.
-  if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) || 
-       isa<ConstantPointerNull>(Op0)) &&
-      (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) || 
-       isa<ConstantPointerNull>(Op1)))
-    return ReplaceInstUsesWith(I, ConstantInt::get(Type::getInt1Ty(*Context), 
-                                                   !I.isTrueWhenEqual()));
+  if (Value *V = SimplifyICmpInst(I.getPredicate(), Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
+  
+  const Type *Ty = Op0->getType();
 
   // icmp's with boolean values can always be turned into bitwise operations
   if (Ty == Type::getInt1Ty(*Context)) {
@@ -6137,27 +6097,24 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     
     // If we have an icmp le or icmp ge instruction, turn it into the
     // appropriate icmp lt or icmp gt instruction.  This allows us to rely on
-    // them being folded in the code below.
+    // them being folded in the code below.  The SimplifyICmpInst code has
+    // already handled the edge cases for us, so we just assert on them.
     switch (I.getPredicate()) {
     default: break;
     case ICmpInst::ICMP_ULE:
-      if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
+      assert(!CI->isMaxValue(false));                 // A <=u MAX -> TRUE
       return new ICmpInst(ICmpInst::ICMP_ULT, Op0,
                           AddOne(CI));
     case ICmpInst::ICMP_SLE:
-      if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
+      assert(!CI->isMaxValue(true));                  // A <=s MAX -> TRUE
       return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
                           AddOne(CI));
     case ICmpInst::ICMP_UGE:
-      if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
+      assert(!CI->isMinValue(false));                  // A >=u MIN -> TRUE
       return new ICmpInst(ICmpInst::ICMP_UGT, Op0,
                           SubOne(CI));
     case ICmpInst::ICMP_SGE:
-      if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue(*Context));
+      assert(!CI->isMinValue(true));                   // A >=s MIN -> TRUE
       return new ICmpInst(ICmpInst::ICMP_SGT, Op0,
                           SubOne(CI));
     }
