@@ -1221,9 +1221,6 @@ void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
   // Proceed with the load.
   ProgramPoint::Kind K = ProgramPoint::PostLoadKind;
 
-  // FIXME: Currently symbolic analysis "generates" new symbols
-  //  for the contents of values.  We need a better approach.
-
   if (location.isUnknown()) {
     // This is important.  We must nuke the old binding.
     MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, UnknownVal()),
