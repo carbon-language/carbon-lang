@@ -158,24 +158,37 @@ clang_getCompletionChunkKindSpelling(enum CXCompletionChunkKind Kind) {
   return "Unknown";
 }
 
-void print_completion_result(CXCompletionResult *completion_result,
-                             CXClientData client_data) {
-  FILE *file = (FILE *)client_data;
+void print_completion_string(CXCompletionString completion_string, FILE *file) {
   int I, N;
-
-  fprintf(file, "%s:", 
-          clang_getCursorKindSpelling(completion_result->CursorKind));
-  N = clang_getNumCompletionChunks(completion_result->CompletionString);
+  
+  N = clang_getNumCompletionChunks(completion_string);
   for (I = 0; I != N; ++I) {
-    const char *text 
-      = clang_getCompletionChunkText(completion_result->CompletionString, I);
-    
     enum CXCompletionChunkKind Kind
-      = clang_getCompletionChunkKind(completion_result->CompletionString, I);
+      = clang_getCompletionChunkKind(completion_string, I);
+    
+    if (Kind == CXCompletionChunk_Optional) {
+      fprintf(file, "{Optional ");
+      print_completion_string(
+                clang_getCompletionChunkCompletionString(completion_string, I), 
+                              file);
+      fprintf(file, "}");
+      continue;
+    }
+    
+    const char *text 
+      = clang_getCompletionChunkText(completion_string, I);
     fprintf(file, "{%s %s}", 
             clang_getCompletionChunkKindSpelling(Kind),
             text? text : "");
   }
+}
+
+void print_completion_result(CXCompletionResult *completion_result,
+                             CXClientData client_data) {
+  FILE *file = (FILE *)client_data;
+  fprintf(file, "%s:", 
+          clang_getCursorKindSpelling(completion_result->CursorKind));
+  print_completion_string(completion_result->CompletionString, file);
   fprintf(file, "\n");
 }
 
