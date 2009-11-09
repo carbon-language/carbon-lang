@@ -215,6 +215,7 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
 // Check: Any use of 'gets' is insecure.
 // Originally: <rdar://problem/6335715>
 // Implements (part of): 300-BSI (buildsecurityin.us-cert.gov)
+// CWE-242: Use of Inherently Dangerous Function
 //===----------------------------------------------------------------------===//
 
 void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
