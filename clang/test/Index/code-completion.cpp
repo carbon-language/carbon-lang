@@ -34,8 +34,6 @@ void test_overloaded() {
 // CHECK-MEMBER: FieldDecl:{TypedText member}
 // CHECK-MEMBER: FunctionDecl:{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{Informative Y::}{TypedText ~Y}{LeftParen (}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{TypedText ~Z}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{TypedText operator int}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{TypedText operator=}{LeftParen (}{Placeholder struct Z const &}{RightParen )}
 // CHECK-MEMBER: StructDecl:{TypedText X}{Text ::}
