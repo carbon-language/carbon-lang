@@ -692,14 +692,14 @@ StackProtector("stack-protector",
                llvm::cl::init(-1));
 
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
-                                       TargetInfo *Target,
+                                       TargetInfo &Target,
                                        const llvm::StringMap<bool> &Features) {
   // Allow the target to set the default the language options as it sees fit.
-  Target->getDefaultLangOptions(Options);
+  Target.getDefaultLangOptions(Options);
 
   // Pass the map of target features to the target for validation and
   // processing.
-  Target->HandleTargetFeatures(Features);
+  Target.HandleTargetFeatures(Features);
 
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
@@ -882,7 +882,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
 
-  Target->setForcedLangOptions(Options);
+  Target.setForcedLangOptions(Options);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1295,12 +1295,12 @@ NoImplicitFloat("no-implicit-float",
 /// ComputeTargetFeatures - Recompute the target feature list to only
 /// be the list of things that are enabled, based on the target cpu
 /// and feature list.
-static void ComputeFeatureMap(TargetInfo *Target,
+static void ComputeFeatureMap(const TargetInfo &Target,
                               llvm::StringMap<bool> &Features) {
   assert(Features.empty() && "invalid map");
 
   // Initialize the feature map based on the target.
-  Target->getDefaultFeatures(TargetCPU, Features);
+  Target.getDefaultFeatures(TargetCPU, Features);
 
   // Apply the user specified deltas.
   for (llvm::cl::list<std::string>::iterator it = TargetFeatures.begin(),
@@ -1313,7 +1313,7 @@ static void ComputeFeatureMap(TargetInfo *Target,
               Name);
       exit(1);
     }
-    if (!Target->setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
+    if (!Target.setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
       fprintf(stderr, "error: clang-cc: invalid target feature name: %s\n",
               Name + 1);
       exit(1);
@@ -2307,7 +2307,7 @@ int main(int argc, char **argv) {
 
   // Compute the feature set, unfortunately this effects the language!
   llvm::StringMap<bool> Features;
-  ComputeFeatureMap(Target.get(), Features);
+  ComputeFeatureMap(*Target, Features);
 
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
@@ -2326,7 +2326,7 @@ int main(int argc, char **argv) {
     // Initialize language options, inferring file types from input filenames.
     LangOptions LangInfo;
     InitializeLangOptions(LangInfo, LK);
-    InitializeLanguageStandard(LangInfo, LK, Target.get(), Features);
+    InitializeLanguageStandard(LangInfo, LK, *Target, Features);
 
     // Process the -I options and set them in the HeaderInfo.
     HeaderSearch HeaderInfo(FileMgr);
