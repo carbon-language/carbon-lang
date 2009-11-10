@@ -55,3 +55,8 @@ void f5() {
   int a[10];
   p = a + 1; // no-warning
 }
+
+// Allow arithmetic on different symbolic regions.
+void f6(int *p, int *q) {
+  int d = q - p; // no-warning
+}
