@@ -211,19 +211,29 @@ define i32 @test8b(i1 %cond, i1 %cond2) {
 T0:
         %A = call i1 @test8a()
 	br i1 %A, label %T1, label %F1
+        
+; CHECK: T0:
+; CHECK-NEXT: call
+; CHECK-NEXT: br i1 %A, label %T1, label %Y
+
 T1:
         %B = call i1 @test8a()
 	br i1 %B, label %T2, label %F1
+
+; CHECK: T1:
+; CHECK-NEXT: call
+; CHECK-NEXT: br i1 %B, label %T2, label %Y
 T2:
         %C = call i1 @test8a()
 	br i1 %cond, label %T3, label %F1
+
+; CHECK: T2:
+; CHECK-NEXT: call
+; CHECK-NEXT: br i1 %cond, label %T3, label %Y
 T3:
         ret i32 0
 
 F1:
-; TODO: F1 uncond branch block should be removed, T2 should jump directly to Y.
-; CHECK: F1:
-; CHECK-NEXT br label %Y
         %D = phi i32 [0, %T0], [0, %T1], [1, %T2]
         %E = icmp eq i32 %D, 1
         %F = and i1 %E, %cond

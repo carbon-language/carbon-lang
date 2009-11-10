@@ -115,6 +115,7 @@ bool JumpThreading::runOnFunction(Function &F) {
     bool Changed = false;
     for (Function::iterator I = F.begin(), E = F.end(); I != E;) {
       BasicBlock *BB = I;
+      // Thread all of the branches we can over this block. 
       while (ProcessBlock(BB))
         Changed = true;
       
@@ -129,6 +130,26 @@ bool JumpThreading::runOnFunction(Function &F) {
         LoopHeaders.erase(BB);
         DeleteDeadBlock(BB);
         Changed = true;
+      } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
+        // Can't thread an unconditional jump, but if the block is "almost
+        // empty", we can replace uses of it with uses of the successor and make
+        // this dead.
+        if (BI->isUnconditional() && 
+            BB != &BB->getParent()->getEntryBlock()) {
+          BasicBlock::iterator BBI = BB->getFirstNonPHI();
+          // Ignore dbg intrinsics.
+          while (isa<DbgInfoIntrinsic>(BBI))
+            ++BBI;
+          // If the terminator is the only non-phi instruction, try to nuke it.
+          if (BBI->isTerminator()) {
+            bool Erased = LoopHeaders.erase(BB);
+            
+            if (TryToSimplifyUncondBranchFromEmptyBlock(BB))
+              Changed = true;
+            else if (Erased)
+              LoopHeaders.insert(BB);
+          }
+        }
       }
     }
     AnotherIteration = Changed;
