@@ -182,6 +182,40 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
 
 //===----------------------------------------------------------------------===//
 
+/// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
+/// delete the From instruction.  In addition to a basic RAUW, this does a
+/// recursive simplification of the newly formed instructions.  This catches
+/// things where one simplification exposes other opportunities.  This only
+/// simplifies and deletes scalar operations, it does not change the CFG.
+///
+static void ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
+                                      const TargetData *TD) {
+  assert(From != To && "ReplaceAndSimplifyAllUses(X,X) is not valid!");
+
+  // FromHandle - This keeps a weakvh on the from value so that we can know if
+  // it gets deleted out from under us in a recursive simplification.
+  WeakVH FromHandle(From);
+  
+  while (!From->use_empty()) {
+    // Update the instruction to use the new value.
+    Use &U = From->use_begin().getUse();
+    Instruction *User = cast<Instruction>(U.getUser());
+    U = To;
+    
+    // See if we can simplify it.
+    if (Value *V = SimplifyInstruction(User, TD)) {
+      // Recursively simplify this.
+      ReplaceAndSimplifyAllUses(User, V, TD);
+      
+      // If the recursive simplification ended up revisiting and deleting 'From'
+      // then we're done.
+      if (FromHandle == 0)
+        return;
+    }
+  }
+  From->eraseFromParent();
+}
+
 
 /// RemovePredecessorAndSimplify - Like BasicBlock::removePredecessor, this
 /// method is called when we're about to delete Pred as a predecessor of BB.  If
@@ -212,26 +246,11 @@ static void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
     Value *PNV = PN->hasConstantValue();
     if (PNV == 0) continue;
     
+    // If we're able to simplify the phi to a single value, substitute the new
+    // value into all of its uses.
     assert(PNV != PN && "hasConstantValue broken");
     
-    // If we're able to simplify the phi to a constant, simplify it into its
-    // uses.
-    while (!PN->use_empty()) {
-      // Update the instruction to use the new value.
-      Use &U = PN->use_begin().getUse();
-      Instruction *User = cast<Instruction>(U.getUser());
-      U = PNV;
-      
-      // See if we can simplify it.
-      if (User != PN)
-        if (Value *V = SimplifyInstruction(User, TD)) {
-          User->replaceAllUsesWith(V);
-          User->eraseFromParent();
-        }
-    }
-    
-    PN->replaceAllUsesWith(PNV);
-    PN->eraseFromParent();
+    ReplaceAndSimplifyAllUses(PN, PNV, TD);
     
     // If recursive simplification ended up deleting the next PHI node we would
     // iterate to, then our iterator is invalid, restart scanning from the top
@@ -1203,9 +1222,12 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   BI = NewBB->begin();
   for (BasicBlock::iterator E = NewBB->end(); BI != E; ) {
     Instruction *Inst = BI++;
+    
     if (Value *V = SimplifyInstruction(Inst, TD)) {
-      Inst->replaceAllUsesWith(V);
-      Inst->eraseFromParent();
+      WeakVH BIHandle(BI);
+      ReplaceAndSimplifyAllUses(Inst, V, TD);
+      if (BIHandle == 0)
+        BI = NewBB->begin();
       continue;
     }
     
