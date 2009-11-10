@@ -36,6 +36,9 @@ Finally, B<lit> also supports additional options for only running a subset of
 the options specified on the command line, see L<"SELECTION OPTIONS"> for
 more information.
 
+Users interested in the B<lit> architecture or designing a B<lit> testing
+implementation should see L<"LIT ARCHITECTURE">
+
 =head1 GENERAL OPTIONS
 
 =over
@@ -221,6 +224,119 @@ which can report unsupported tests.
 Depending on the test format tests may produce additional information about
 their status (generally only for failures). See the L<Output|"LIT OUTPUT">
 section for more information.
+
+=head1 LIT INFRASTRUCTURE
+
+This section describes the B<lit> testing architecture for users interested in
+creating a new B<lit> testing implementation, or extending an existing one.
+
+B<lit> proper is primarily an infrastructure for discovering and running
+arbitrary tests, and to expose a single convenient interface to these
+tests. B<lit> itself doesn't contain know how to run tests, rather this logic is
+defined by I<test suites>.
+
+=head2 TEST SUITES
+
+As described in L<"TEST DISCOVERY">, tests are always located inside a I<test
+suite>. Test suites serve to define the format of the tests they contain, the
+logic for finding those tests, and any additional information to run the tests.
+
+B<lit> identifies test suites as directories containing I<lit.cfg> or
+I<lit.site.cfg> files (see also B<--config-prefix>. Test suites are initially
+discovered by recursively searching up the directory hierarchy for all the input
+files passed on the command line. You can use B<--show-suites> to display the
+discovered test suites at startup.
+
+Once a test suite is discovered, its config file is loaded. Config files
+themselves are just Python modules which will be executed. When the config file
+is executed, two important global variables are predefined:
+
+=over
+
+=item B<lit>
+
+The global B<lit> configuration object (a I<LitConfig> instance), which defines
+the builtin test formats, global configuration parameters, and other helper
+routines for implementing test configurations.
+
+=item B<config>
+
+This is the config object (a I<TestingConfig> instance) for the test suite,
+which the config file is expected to populate. The following variables are also
+available on the I<config> object, some of which must be set by the config and
+others are optional or predefined:
+
+B<name> I<[required]> The name of the test suite, for use in reports and
+diagnostics.
+
+B<test_format> I<[required]> The test format object which will be used to
+discover and run tests in the test suite. Generally this will be a builtin test
+format available from the I<lit.formats> module.
+
+B<test_src_root> The filesystem path to the test suite root. For out-of-dir
+builds this is the directory that will be scanned for tests.
+
+B<test_exec_root> For out-of-dir builds, the path to the test suite root inside
+the object directory. This is where tests will be run and temporary output files
+places.
+
+B<environment> A dictionary representing the environment to use when executing
+tests in the suite.
+
+B<suffixes> For B<lit> test formats which scan directories for tests, this
+variable as a list of suffixes to identify test files. Used by: I<ShTest>,
+I<TclTest>.
+
+B<substitutions> For B<lit> test formats which substitute variables into a test
+script, the list of substitutions to perform. Used by: I<ShTest>, I<TclTest>.
+
+B<unsupported> Mark an unsupported directory, all tests within it will be
+reported as unsupported. Used by: I<ShTest>, I<TclTest>.
+
+B<parent> The parent configuration, this is the config object for the directory
+containing the test suite, or None.
+
+B<on_clone> The config is actually cloned for every subdirectory inside a test
+suite, to allow local configuration on a per-directory basis. The I<on_clone>
+variable can be set to a Python function which will be called whenever a
+configuration is cloned (for a subdirectory). The function should takes three
+arguments: (1) the parent configuration, (2) the new configuration (which the
+I<on_clone> function will generally modify), and (3) the test path to the new
+directory being scanned.
+
+=back
+
+=head2 TEST DISCOVERY
+
+Once test suites are located, B<lit> recursively traverses the source directory
+(following I<test_src_root>) looking for tests. When B<lit> enters a
+sub-directory, it first checks to see if a nest test suite is defined in that
+directory. If so, it loads that test suite recursively, otherwise it
+instantiates a local test config for the directory (see L<"LOCAL CONFIGURATION
+FILES">).
+
+Tests are identified by the test suite they are contained within, and the
+relative path inside that suite. Note that the relative path may not refer to an
+actual file on disk; some test formats (such as I<GoogleTest>) define "virtual
+tests" which have a path that contains both the path to the actual test file and
+a subpath to identify the virtual test.
+
+=head2 LOCAL CONFIGURATION FILES
+
+When B<lit> loads a subdirectory in a test suite, it instantiates a local test
+configuration by cloning the configuration for the parent direction -- the root
+of this configuration chain will always be a test suite. Once the test
+configuration is cloned B<lit> checks for a I<lit.local.cfg> file in the
+subdirectory. If present, this file will be loaded and can be used to specialize
+the configuration for each individual directory. This facility can be used to
+define subdirectories of optional tests, or to change other configuration
+parameters -- for example, to change the test format, or the suffixes which
+identify test files.
+
+=head2 LIT EXAMPLE TESTS
+
+The B<lit> distribution contains several example implementations of test suites
+in the I<ExampleTests> directory.
 
 =head1 SEE ALSO
 
