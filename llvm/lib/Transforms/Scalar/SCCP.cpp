@@ -795,9 +795,14 @@ void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
     return markOverdefined(&EVI);
 
   Value *AggVal = EVI.getAggregateOperand();
-  unsigned i = *EVI.idx_begin();
-  LatticeVal EltVal = getStructValueState(AggVal, i);
-  mergeInValue(getValueState(&EVI), &EVI, EltVal);
+  if (isa<StructType>(AggVal->getType())) {
+    unsigned i = *EVI.idx_begin();
+    LatticeVal EltVal = getStructValueState(AggVal, i);
+    mergeInValue(getValueState(&EVI), &EVI, EltVal);
+  } else {
+    // Otherwise, must be extracting from an array.
+    return markOverdefined(&EVI);
+  }
 }
 
 void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {

@@ -22,3 +22,8 @@ bb34:
 return:
   ret void
 }
+
+define i32 @test2([4 x i32] %A) {
+  %B = extractvalue [4 x i32] %A, 1
+  ret i32 %B
+}
