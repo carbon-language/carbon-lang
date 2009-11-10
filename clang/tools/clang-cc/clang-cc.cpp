@@ -1135,9 +1135,9 @@ static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
       if (!ImplicitIncludes.empty() &&
           Ptr >= &ImplicitIncludes[0] &&
           Ptr <= &ImplicitIncludes[ImplicitIncludes.size()-1]) {
-        InitOpts.addInclude(*Ptr, false);
+        InitOpts.addInclude(*Ptr);
       } else if (Ptr == &ImplicitIncludePTH) {
-        InitOpts.addInclude(*Ptr, true);
+        InitOpts.addInclude(*Ptr);
       } else {
         // We end up here when we're producing preprocessed output and
         // we loaded a PCH file. In this case, just include the header
@@ -1145,7 +1145,7 @@ static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
         assert(Ptr == &ImplicitIncludePCH);
         std::string OriginalFile = PCHReader::getOriginalSourceFile(*Ptr);
         if (!OriginalFile.empty()) {
-          InitOpts.addInclude(OriginalFile, false);
+          InitOpts.addInclude(OriginalFile);
           InitOpts.setImplicitPCHInclude("");
         }
       }

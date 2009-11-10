@@ -492,10 +492,10 @@ void clang::InitializePreprocessor(Preprocessor &PP,
   // Process -include directives.
   for (PreprocessorOptions::include_iterator I = InitOpts.include_begin(),
        E = InitOpts.include_end(); I != E; ++I) {
-    if (I->second) // isPTH
-      AddImplicitIncludePTH(PredefineBuffer, PP, I->first);
+    if (*I == InitOpts.getImplicitPTHInclude())
+      AddImplicitIncludePTH(PredefineBuffer, PP, *I);
     else
-      AddImplicitInclude(PredefineBuffer, I->first);
+      AddImplicitInclude(PredefineBuffer, *I);
   }
 
   // Null terminate PredefinedBuffer and add it.
