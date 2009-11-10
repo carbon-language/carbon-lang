@@ -20,15 +20,26 @@ namespace llvm {
   class Value;
   class TargetData;
   
+  
+  /// SimplifyAndInst - Given operands for an And, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyAndInst(Value *LHS, Value *RHS,
+                         const TargetData *TD = 0);
+
+  /// SimplifyOrInst - Given operands for an Or, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyOrInst(Value *LHS, Value *RHS,
+                        const TargetData *TD = 0);
+  
   /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                         const TargetData *TD = 0);
+                          const TargetData *TD = 0);
   
   /// SimplifyFCmpInst - Given operands for an FCmpInst, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                         const TargetData *TD = 0);
+                          const TargetData *TD = 0);
   
 
   //=== Helper functions for higher up the class hierarchy.

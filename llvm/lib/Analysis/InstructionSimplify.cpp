@@ -16,20 +16,132 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Instructions.h"
+#include "llvm/Support/PatternMatch.h"
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
-
-/// SimplifyBinOp - Given operands for a BinaryOperator, see if we can
+/// SimplifyAndInst - Given operands for an And, see if we can
 /// fold the result.  If not, this returns null.
-Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS, 
-                           const TargetData *TD) {
-  if (Constant *CLHS = dyn_cast<Constant>(LHS))
-    if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
-      Constant *COps[] = {CLHS, CRHS};
-      return ConstantFoldInstOperands(Opcode, LHS->getType(), COps, 2, TD);
-    }     
+Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1,
+                             const TargetData *TD) {
+  if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
+    if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { CLHS, CRHS };
+      return ConstantFoldInstOperands(Instruction::And, CLHS->getType(),
+                                      Ops, 2, TD);
+    }
+  
+    // Canonicalize the constant to the RHS.
+    std::swap(Op0, Op1);
+  }
+  
+  // X & undef -> 0
+  if (isa<UndefValue>(Op1))
+    return Constant::getNullValue(Op0->getType());
+  
+  // X & X = X
+  if (Op0 == Op1)
+    return Op0;
+  
+  // X & <0,0> = <0,0>
+  if (isa<ConstantAggregateZero>(Op1))
+    return Op1;
+  
+  // X & <-1,-1> = X
+  if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1))
+    if (CP->isAllOnesValue())
+      return Op0;
+  
+  if (ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1)) {
+    // X & 0 = 0
+    if (Op1CI->isZero())
+      return Op1CI;
+    // X & -1 = X
+    if (Op1CI->isAllOnesValue())
+      return Op0;
+  }
+  
+  // A & ~A  =  ~A & A  =  0
+  Value *A, *B;
+  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
+      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+    return Constant::getNullValue(Op0->getType());
+  
+  // (A | ?) & A = A
+  if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
+      (A == Op1 || B == Op1))
+    return Op1;
+  
+  // A & (A | ?) = A
+  if (match(Op1, m_Or(m_Value(A), m_Value(B))) &&
+      (A == Op0 || B == Op0))
+    return Op0;
+  
   return 0;
 }
+
+/// SimplifyOrInst - Given operands for an Or, see if we can
+/// fold the result.  If not, this returns null.
+Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1,
+                            const TargetData *TD) {
+  if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
+    if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { CLHS, CRHS };
+      return ConstantFoldInstOperands(Instruction::Or, CLHS->getType(),
+                                      Ops, 2, TD);
+    }
+    
+    // Canonicalize the constant to the RHS.
+    std::swap(Op0, Op1);
+  }
+  
+  // X | undef -> -1
+  if (isa<UndefValue>(Op1))
+    return Constant::getAllOnesValue(Op0->getType());
+  
+  // X | X = X
+  if (Op0 == Op1)
+    return Op0;
+
+  // X | <0,0> = X
+  if (isa<ConstantAggregateZero>(Op1))
+    return Op0;
+  
+  // X | <-1,-1> = <-1,-1>
+  if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1))
+    if (CP->isAllOnesValue())            
+      return Op1;
+  
+  if (ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1)) {
+    // X | 0 = X
+    if (Op1CI->isZero())
+      return Op0;
+    // X | -1 = -1
+    if (Op1CI->isAllOnesValue())
+      return Op1CI;
+  }
+  
+  // A | ~A  =  ~A | A  =  -1
+  Value *A, *B;
+  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
+      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+    return Constant::getAllOnesValue(Op0->getType());
+  
+  // (A & ?) | A = A
+  if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
+      (A == Op1 || B == Op1))
+    return Op1;
+  
+  // A | (A & ?) = A
+  if (match(Op1, m_And(m_Value(A), m_Value(B))) &&
+      (A == Op0 || B == Op0))
+    return Op0;
+  
+  return 0;
+}
+
+
+
 
 static const Type *GetCompareTy(Value *Op) {
   return CmpInst::makeCmpResultType(Op->getType());
@@ -43,9 +155,14 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
   assert(CmpInst::isIntPredicate(Pred) && "Not an integer compare!");
   
-  if (Constant *CLHS = dyn_cast<Constant>(LHS))
+  if (Constant *CLHS = dyn_cast<Constant>(LHS)) {
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
       return ConstantFoldCompareInstOperands(Pred, CLHS, CRHS, TD);
+
+    // If we have a constant, make sure it is on the RHS.
+    std::swap(LHS, RHS);
+    Pred = CmpInst::getSwappedPredicate(Pred);
+  }
   
   // ITy - This is the return type of the compare we're considering.
   const Type *ITy = GetCompareTy(LHS);
@@ -53,12 +170,6 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // icmp X, X -> true/false
   if (LHS == RHS)
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
-
-  // If we have a constant, make sure it is on the RHS.
-  if (isa<Constant>(LHS)) {
-    std::swap(LHS, RHS);
-    Pred = CmpInst::getSwappedPredicate(Pred);
-  }
 
   if (isa<UndefValue>(RHS))                  // X icmp undef -> undef
     return UndefValue::get(ITy);
@@ -95,8 +206,6 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         return ConstantInt::getTrue(CI->getContext());
       break;
     }
-    
-    
   }
   
   
@@ -110,9 +219,14 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
   assert(CmpInst::isFPPredicate(Pred) && "Not an FP compare!");
 
-  if (Constant *CLHS = dyn_cast<Constant>(LHS))
+  if (Constant *CLHS = dyn_cast<Constant>(LHS)) {
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
       return ConstantFoldCompareInstOperands(Pred, CLHS, CRHS, TD);
+   
+    // If we have a constant, make sure it is on the RHS.
+    std::swap(LHS, RHS);
+    Pred = CmpInst::getSwappedPredicate(Pred);
+  }
   
   // Fold trivial predicates.
   if (Pred == FCmpInst::FCMP_FALSE)
@@ -120,12 +234,6 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   if (Pred == FCmpInst::FCMP_TRUE)
     return ConstantInt::get(GetCompareTy(LHS), 1);
 
-  // If we have a constant, make sure it is on the RHS.
-  if (isa<Constant>(LHS)) {
-    std::swap(LHS, RHS);
-    Pred = CmpInst::getSwappedPredicate(Pred);
-  }
-  
   if (isa<UndefValue>(RHS))                  // fcmp pred X, undef -> undef
     return UndefValue::get(GetCompareTy(LHS));
 
@@ -155,7 +263,24 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   return 0;
 }
 
+//=== Helper functions for higher up the class hierarchy.
 
+/// SimplifyBinOp - Given operands for a BinaryOperator, see if we can
+/// fold the result.  If not, this returns null.
+Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS, 
+                           const TargetData *TD) {
+  switch (Opcode) {
+  case Instruction::And: return SimplifyAndInst(LHS, RHS, TD);
+  case Instruction::Or:  return SimplifyOrInst(LHS, RHS, TD);
+  default:
+    if (Constant *CLHS = dyn_cast<Constant>(LHS))
+      if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
+        Constant *COps[] = {CLHS, CRHS};
+        return ConstantFoldInstOperands(Opcode, LHS->getType(), COps, 2, TD);
+      }
+    return 0;
+  }
+}
 
 /// SimplifyCmpInst - Given operands for a CmpInst, see if we can
 /// fold the result.

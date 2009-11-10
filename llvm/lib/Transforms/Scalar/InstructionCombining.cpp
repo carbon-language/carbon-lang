@@ -4292,25 +4292,15 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(Op1))                         // X & undef -> 0
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-
-  // and X, X = X
-  if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, Op1);
+  if (Value *V = SimplifyAndInst(Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
+    
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
     return &I;
-  if (isa<VectorType>(I.getType())) {
-    if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1)) {
-      if (CP->isAllOnesValue())            // X & <-1,-1> -> X
-        return ReplaceInstUsesWith(I, I.getOperand(0));
-    } else if (isa<ConstantAggregateZero>(Op1)) {
-      return ReplaceInstUsesWith(I, Op1);  // X & <0,0> -> <0,0>
-    }
-  }
+  
 
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
     const APInt &AndRHSMask = AndRHS->getValue();
@@ -4431,42 +4421,29 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         return NV;
   }
 
-  Value *Op0NotVal = dyn_castNotVal(Op0);
-  Value *Op1NotVal = dyn_castNotVal(Op1);
-
-  if (Op0NotVal == Op1 || Op1NotVal == Op0)  // A & ~A  == ~A & A == 0
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // (~A & ~B) == (~(A | B)) - De Morgan's Law
-  if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
-    Value *Or = Builder->CreateOr(Op0NotVal, Op1NotVal,
-                                  I.getName()+".demorgan");
-    return BinaryOperator::CreateNot(Or);
-  }
-  
+  if (Value *Op0NotVal = dyn_castNotVal(Op0))
+    if (Value *Op1NotVal = dyn_castNotVal(Op1))
+      if (Op0->hasOneUse() && Op1->hasOneUse()) {
+        Value *Or = Builder->CreateOr(Op0NotVal, Op1NotVal,
+                                      I.getName()+".demorgan");
+        return BinaryOperator::CreateNot(Or);
+      }
+
   {
     Value *A = 0, *B = 0, *C = 0, *D = 0;
-    if (match(Op0, m_Or(m_Value(A), m_Value(B)))) {
-      if (A == Op1 || B == Op1)    // (A | ?) & A  --> A
-        return ReplaceInstUsesWith(I, Op1);
+    // (A|B) & ~(A&B) -> A^B
+    if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
+        match(Op1, m_Not(m_And(m_Value(C), m_Value(D)))) &&
+        ((A == C && B == D) || (A == D && B == C)))
+      return BinaryOperator::CreateXor(A, B);
     
-      // (A|B) & ~(A&B) -> A^B
-      if (match(Op1, m_Not(m_And(m_Value(C), m_Value(D))))) {
-        if ((A == C && B == D) || (A == D && B == C))
-          return BinaryOperator::CreateXor(A, B);
-      }
-    }
-    
-    if (match(Op1, m_Or(m_Value(A), m_Value(B)))) {
-      if (A == Op0 || B == Op0)    // A & (A | ?)  --> A
-        return ReplaceInstUsesWith(I, Op0);
-
-      // ~(A&B) & (A|B) -> A^B
-      if (match(Op0, m_Not(m_And(m_Value(C), m_Value(D))))) {
-        if ((A == C && B == D) || (A == D && B == C))
-          return BinaryOperator::CreateXor(A, B);
-      }
-    }
+    // ~(A&B) & (A|B) -> A^B
+    if (match(Op1, m_Or(m_Value(A), m_Value(B))) &&
+        match(Op0, m_Not(m_And(m_Value(C), m_Value(D)))) &&
+        ((A == C && B == D) || (A == D && B == C)))
+      return BinaryOperator::CreateXor(A, B);
     
     if (Op0->hasOneUse() &&
         match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
@@ -4998,27 +4975,15 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(Op1))                       // X | undef -> -1
-    return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
-
-  // or X, X = X
-  if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, Op0);
-
+  if (Value *V = SimplifyOrInst(Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
+  
+  
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
     return &I;
-  if (isa<VectorType>(I.getType())) {
-    if (isa<ConstantAggregateZero>(Op1)) {
-      return ReplaceInstUsesWith(I, Op0);  // X | <0,0> -> X
-    } else if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1)) {
-      if (CP->isAllOnesValue())            // X | <-1,-1> -> <-1,-1>
-        return ReplaceInstUsesWith(I, I.getOperand(1));
-    }
-  }
 
-  // or X, -1 == -1
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     ConstantInt *C1 = 0; Value *X = 0;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
@@ -5050,13 +5015,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   Value *A = 0, *B = 0;
   ConstantInt *C1 = 0, *C2 = 0;
-
-  if (match(Op0, m_And(m_Value(A), m_Value(B))))
-    if (A == Op1 || B == Op1)    // (A & ?) | A  --> A
-      return ReplaceInstUsesWith(I, Op1);
-  if (match(Op1, m_And(m_Value(A), m_Value(B))))
-    if (A == Op0 || B == Op0)    // A | (A & ?)  --> A
-      return ReplaceInstUsesWith(I, Op0);
 
   // (A | B) | C  and  A | (B | C)                  -> bswap if possible.
   // (A >> B) | (C << D)  and  (A << B) | (B >> C)  -> bswap if possible.
@@ -5191,23 +5149,14 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (Ret) return Ret;
   }
 
-  if ((A = dyn_castNotVal(Op0))) {   // ~A | Op1
-    if (A == Op1)   // ~A | A == -1
-      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
-  } else {
-    A = 0;
-  }
-  // Note, A is still live here!
-  if ((B = dyn_castNotVal(Op1))) {   // Op0 | ~B
-    if (Op0 == B)
-      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
-
-    // (~A | ~B) == (~(A & B)) - De Morgan's Law
-    if (A && isOnlyUse(Op0) && isOnlyUse(Op1)) {
-      Value *And = Builder->CreateAnd(A, B, I.getName()+".demorgan");
-      return BinaryOperator::CreateNot(And);
-    }
-  }
+  // (~A | ~B) == (~(A & B)) - De Morgan's Law
+  if (Value *Op0NotVal = dyn_castNotVal(Op0))
+    if (Value *Op1NotVal = dyn_castNotVal(Op1))
+      if (Op0->hasOneUse() && Op1->hasOneUse()) {
+        Value *And = Builder->CreateAnd(Op0NotVal, Op1NotVal,
+                                        I.getName()+".demorgan");
+        return BinaryOperator::CreateNot(And);
+      }
 
   // (icmp1 A, B) | (icmp2 A, B) --> (icmp3 A, B)
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1))) {
