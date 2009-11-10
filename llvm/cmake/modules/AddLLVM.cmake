@@ -22,6 +22,22 @@ macro(add_llvm_library name)
 endmacro(add_llvm_library name)
 
 
+macro(add_llvm_loadable_module name)
+  if( NOT LLVM_ON_UNIX )
+    message(STATUS "Loadable modules not supported on this platform.
+${name} ignored.")
+  else()
+    set(BUILD_SHARED_LIBS ON)
+    llvm_process_sources( ALL_FILES ${ARGN} )
+    add_library( ${name} MODULE ${ALL_FILES} )
+    set_target_properties( ${name} PROPERTIES PREFIX "" )
+    install(TARGETS ${name}
+      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  endif()
+endmacro(add_llvm_loadable_module name)
+
+
 macro(add_llvm_executable name)
   llvm_process_sources( ALL_FILES ${ARGN} )
   add_executable(${name} ${ALL_FILES})
