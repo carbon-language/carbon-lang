@@ -674,6 +674,7 @@ StackProtector("stack-protector",
 
 static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
                                        TargetInfo &Target,
+                                       const CompileOptions &CompileOpts,
                                        const llvm::StringMap<bool> &Features) {
   // Allow the target to set the default the language options as it sees fit.
   Target.getDefaultLangOptions(Options);
@@ -837,17 +838,18 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   // The __OPTIMIZE_SIZE__ define is tied to -Oz, which we don't
   // support.
   Options.OptimizeSize = 0;
-
-  // -Os implies -O2
-  if (OptSize || OptLevel)
-    Options.Optimize = 1;
+  Options.Optimize = !!CompileOpts.OptimizationLevel;
 
   assert(PICLevel <= 2 && "Invalid value for -pic-level");
   Options.PICLevel = PICLevel;
 
   Options.GNUInline = !Options.C99;
   // FIXME: This is affected by other options (-fno-inline).
-  Options.NoInline = !OptSize && !OptLevel;
+
+  // This is the __NO_INLINE__ define, which just depends on things like the
+  // optimization level and -fno-inline, not actually whether the backend has
+  // inlining enabled.
+  Options.NoInline = !CompileOpts.OptimizationLevel;
 
   Options.Static = StaticDefine;
 
@@ -2176,7 +2178,7 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   if (LK != langkind_ast) {
     InitializeLangOptions(Opts.getLangOpts(), LK);
     InitializeLanguageStandard(Opts.getLangOpts(), LK, Target,
-                               Opts.getTargetFeatures());
+                               Opts.getCompileOpts(), Opts.getTargetFeatures());
   }
 
   // Initialize the header search options.
