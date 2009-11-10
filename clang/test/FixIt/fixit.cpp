@@ -27,3 +27,12 @@ public:
 struct CT<0> { }; // expected-error{{'template<>'}}
 
 template<> class CT<1> { }; // expected-error{{tag type}}
+
+// PR5444
+namespace PR5444 {
+  void foo(int x, int y = 0);
+  void foo(int x, int y = 0) { }
+
+  void foo(int  = 0);
+  void foo(int  = 0) { }
+}

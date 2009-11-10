@@ -264,9 +264,18 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     ParmVarDecl *NewParam = New->getParamDecl(p);
 
     if (OldParam->hasDefaultArg() && NewParam->hasDefaultArg()) {
+      // FIXME: If the parameter doesn't have an identifier then the location
+      // points to the '=' which means that the fixit hint won't remove any
+      // extra spaces between the type and the '='.
+      SourceLocation Begin = NewParam->getLocation();
+      if (IdentifierInfo *II = NewParam->getIdentifier())
+        Begin = Begin.getFileLocWithOffset(II->getLength());
+        
       Diag(NewParam->getLocation(),
            diag::err_param_default_argument_redefinition)
-        << NewParam->getDefaultArgRange();
+        << NewParam->getDefaultArgRange()
+        << CodeModificationHint::CreateRemoval(SourceRange(Begin,
+                                                        NewParam->getLocEnd()));
       
       // Look for the function declaration where the default argument was
       // actually written, which may be a declaration prior to Old.
