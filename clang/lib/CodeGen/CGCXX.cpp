@@ -1492,7 +1492,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
     PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
     VtableField = Builder.CreateBitCast(LoadOfThis, PtrPtr8Ty);
-    llvm::Value *vtable = GenerateVtable(ClassDecl);
+    llvm::Value *vtable = CGM.getVtableInfo().getVtable(ClassDecl);
     Builder.CreateStore(vtable, VtableField);
   }
 }

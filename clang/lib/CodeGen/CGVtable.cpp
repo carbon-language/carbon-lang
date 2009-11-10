@@ -681,10 +681,10 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   return I->second;
 }
 
-llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
+llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleCXXVtable(CGM.getMangleContext(), RD, Out);
+  mangleCXXVtable(getMangleContext(), RD, Out);
 
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::LinkOnceODRLinkage;
@@ -692,7 +692,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t AddressPoint;
 
-  VtableBuilder b(methods, RD, CGM);
+  VtableBuilder b(methods, RD, *this);
 
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   // First comes the vtables for all the non-virtual bases...
@@ -701,17 +701,19 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD);
 
-  //GenerateVTT(RD);
-
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
   C = llvm::ConstantArray::get(type, methods);
-  llvm::Value *vtable = new llvm::GlobalVariable(CGM.getModule(), type, true,
-                                                 linktype, C, Out.str());
-  vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
-  vtable = Builder.CreateGEP(vtable,
-                       llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                              AddressPoint*LLVMPointerWidth/8));
+  llvm::Constant *vtable = new llvm::GlobalVariable(getModule(), type,
+                                                    true, linktype, C,
+                                                    Out.str());
+  vtable = llvm::ConstantExpr::getBitCast(vtable, Ptr8Ty);
+  llvm::Constant *AddressPointC;
+  uint32_t LLVMPointerWidth = getContext().Target.getPointerWidth(0);
+  AddressPointC = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
+                                         AddressPoint*LLVMPointerWidth/8);
+  vtable = llvm::ConstantExpr::getGetElementPtr(vtable, &AddressPointC, 1);
+
   return vtable;
 }
 
@@ -725,28 +727,39 @@ class VTTBuilder {
 public:
   VTTBuilder(std::vector<llvm::Constant *> &inits, const CXXRecordDecl *c,
              CodeGenModule &cgm) : Inits(inits), Class(c), CGM(cgm) {
+    
+    Inits.push_back(CGM.getVtableInfo().getVtable(Class));
   }
 };
 
-llvm::Value *CodeGenFunction::GenerateVTT(const CXXRecordDecl *RD) {
+llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleCXXVTT(CGM.getMangleContext(), RD, Out);
+  mangleCXXVTT(getMangleContext(), RD, Out);
 
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::LinkOnceODRLinkage;
   std::vector<llvm::Constant *> inits;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
 
-  VTTBuilder b(inits, RD, CGM);
+  VTTBuilder b(inits, RD, *this);
 
   D1(printf("vtt %s\n", RD->getNameAsCString()));
 
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, inits.size());
   C = llvm::ConstantArray::get(type, inits);
-  llvm::Value *vtt = new llvm::GlobalVariable(CGM.getModule(), type, true,
-                                              linktype, C, Out.str());
-  vtt = Builder.CreateBitCast(vtt, Ptr8Ty);
+  llvm::Constant *vtt = new llvm::GlobalVariable(getModule(), type, true,
+                                                 linktype, C, Out.str());
+  vtt = llvm::ConstantExpr::getBitCast(vtt, Ptr8Ty);
   return vtt;
+}
+
+llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
+  llvm::Constant *&vtbl = Vtables[RD];
+  if (vtbl)
+    return vtbl;
+  vtbl = CGM.GenerateVtable(RD);
+  CGM.GenerateVTT(RD);
+  return vtbl;
 }

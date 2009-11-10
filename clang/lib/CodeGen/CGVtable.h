@@ -38,6 +38,8 @@ class CGVtableInfo {
   /// offsets for virtual bases of a class are stored.
   typedef llvm::DenseMap<ClassPairTy, int64_t> VirtualBaseClassIndiciesTy;
   VirtualBaseClassIndiciesTy VirtualBaseClassIndicies;
+
+  llvm::DenseMap<const CXXRecordDecl *, llvm::Constant *> Vtables;
 public:
   CGVtableInfo(CodeGenModule &CGM) 
     : CGM(CGM) { }
@@ -54,6 +56,8 @@ public:
   /// base.
   int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD, 
                                     const CXXRecordDecl *VBase);
+
+  llvm::Constant *getVtable(const CXXRecordDecl *RD);
 };
   
 }

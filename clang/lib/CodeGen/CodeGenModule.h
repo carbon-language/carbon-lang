@@ -252,6 +252,12 @@ public:
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
                                     const llvm::Type *Ty = 0);
 
+  /// GenerateVtable - Generate the vtable for the given type.
+  llvm::Constant *GenerateVtable(const CXXRecordDecl *RD);
+
+  /// GenerateVTT - Generate the VTT for the given type.
+  llvm::Constant *GenerateVTT(const CXXRecordDecl *RD);
+
   /// GenerateRtti - Generate the rtti information for the given type.
   llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
 
