@@ -69,6 +69,7 @@ def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
 def ReturnType : DiagGroup<"return-type">;
 def : DiagGroup<"sequence-point">;
+def SemiBeforeMethodBody : DiagGroup<"semicolon-before-method-body">;
 def : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
 def SignCompare : DiagGroup<"sign-compare">;
@@ -133,8 +134,8 @@ def FormatY2K : DiagGroup<"format-y2k", [Format]>;
 def Format2 : DiagGroup<"format=2",
                         [FormatNonLiteral, FormatSecurity, FormatY2K]>;
 
-
 def Extra : DiagGroup<"extra", [
+    SemiBeforeMethodBody,
     SignCompare,
     UnusedParameter
   ]>;

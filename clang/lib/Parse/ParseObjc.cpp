@@ -1410,7 +1410,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDefinition() {
   // parse optional ';'
   if (Tok.is(tok::semi)) {
     if (ObjCImpDecl)
-      Diag(Tok, diag::warn_semicolon_before_method_nody);
+      Diag(Tok, diag::warn_semicolon_before_method_body);
     ConsumeToken();
   }
 

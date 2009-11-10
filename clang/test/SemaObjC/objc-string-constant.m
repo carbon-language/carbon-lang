@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: clang-cc -Wsemicolon-before-method-body %s -verify -fsyntax-only
 
 #define nil 0       /* id of Nil instance */
 
