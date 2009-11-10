@@ -646,6 +646,10 @@ public:
                                  const ArrayType *Array,
                                  llvm::Value *This);
 
+  llvm::Constant * GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
+                                                const ArrayType *Array,
+                                                llvm::Value *This);
+
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              llvm::Value *This);
 
@@ -994,7 +998,7 @@ public:
 
   /// EmitCXXGlobalDtorRegistration - Emits a call to register the global ptr
   /// with the C++ runtime so that its destructor will be called at exit.
-  void EmitCXXGlobalDtorRegistration(const CXXDestructorDecl *Dtor,
+  void EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
                                      llvm::Constant *DeclPtr);
 
   /// GenerateCXXGlobalInitFunc - Generates code for initializing global
