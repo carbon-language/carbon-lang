@@ -494,22 +494,21 @@ static Instruction *createMalloc(Instruction *InsertBefore,
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
   Module* M = BB->getParent()->getParent();
   const Type *BPTy = Type::getInt8PtrTy(BB->getContext());
-  if (!MallocF)
+  Value *MallocFunc = MallocF;
+  if (!MallocFunc)
     // prototype malloc as "void *malloc(size_t)"
-    MallocF = cast<Function>(M->getOrInsertFunction("malloc", BPTy,
-                                                    IntPtrTy, NULL));
-  if (!MallocF->doesNotAlias(0)) MallocF->setDoesNotAlias(0);
+    MallocFunc = M->getOrInsertFunction("malloc", BPTy, IntPtrTy, NULL);
   const PointerType *AllocPtrType = PointerType::getUnqual(AllocTy);
   CallInst *MCall = NULL;
   Instruction *Result = NULL;
   if (InsertBefore) {
-    MCall = CallInst::Create(MallocF, AllocSize, "malloccall", InsertBefore);
+    MCall = CallInst::Create(MallocFunc, AllocSize, "malloccall", InsertBefore);
     Result = MCall;
     if (Result->getType() != AllocPtrType)
       // Create a cast instruction to convert to the right type...
       Result = new BitCastInst(MCall, AllocPtrType, Name, InsertBefore);
   } else {
-    MCall = CallInst::Create(MallocF, AllocSize, "malloccall");
+    MCall = CallInst::Create(MallocFunc, AllocSize, "malloccall");
     Result = MCall;
     if (Result->getType() != AllocPtrType) {
       InsertAtEnd->getInstList().push_back(MCall);
@@ -518,7 +517,10 @@ static Instruction *createMalloc(Instruction *InsertBefore,
     }
   }
   MCall->setTailCall();
-  MCall->setCallingConv(MallocF->getCallingConv());
+  if (Function *F = dyn_cast<Function>(MallocFunc)) {
+    MCall->setCallingConv(F->getCallingConv());
+    if (!F->doesNotAlias(0)) F->setDoesNotAlias(0);
+  }
   assert(MCall->getType() != Type::getVoidTy(BB->getContext()) &&
          "Malloc has void return type");
 
