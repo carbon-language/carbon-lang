@@ -49,7 +49,15 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 
   QualType T = E->getTypeOfArgument();
   if (T->isPointerType()) {
-    SourceRange R = E->getArgumentExpr()->getSourceRange();
+
+    // Many false positives have the form 'sizeof *p'. This is reasonable 
+    // because people know what they are doing when they intentionally 
+    // dereference the pointer.
+    Expr *ArgEx = E->getArgumentExpr();
+    if (!isa<DeclRefExpr>(ArgEx))
+      return;
+
+    SourceRange R = ArgEx->getSourceRange();
     BR.EmitBasicReport("Potential unintended use of sizeof() on pointer type",
                        "Logic",
                        "The code calls sizeof() on a pointer type. "
