@@ -27,12 +27,20 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 #include <map>
 using namespace llvm;
 
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
+STATISTIC(NumSplits, "Number of critical edges split on demand");
+
+static cl::opt<bool>
+SplitEdges("split-phi-edges",
+           cl::desc("Split critical edges during phi elimination"),
+           cl::init(false), cl::Hidden);
 
 char PHIElimination::ID = 0;
 static RegisterPass<PHIElimination>
@@ -41,10 +49,14 @@ X("phi-node-elimination", "Eliminate PHI nodes for register allocation");
 const PassInfo *const llvm::PHIEliminationID = &X;
 
 void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
   AU.addPreserved<LiveVariables>();
-  AU.addPreservedID(MachineLoopInfoID);
-  AU.addPreservedID(MachineDominatorsID);
+  if (SplitEdges) {
+    AU.addRequired<LiveVariables>();
+  } else {
+    AU.setPreservesCFG();
+    AU.addPreservedID(MachineLoopInfoID);
+    AU.addPreservedID(MachineDominatorsID);
+  }
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -83,6 +95,9 @@ bool llvm::PHIElimination::EliminatePHINodes(MachineFunction &MF,
                                              MachineBasicBlock &MBB) {
   if (MBB.empty() || MBB.front().getOpcode() != TargetInstrInfo::PHI)
     return false;   // Quick exit for basic blocks without PHIs.
+
+  if (SplitEdges)
+    SplitPHIEdges(MF, MBB);
 
   // Get an iterator to the first instruction after the last PHI node (this may
   // also be the end of the basic block).
@@ -277,7 +292,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
     // Okay, if we now know that the value is not live out of the block, we can
     // add a kill marker in this block saying that it kills the incoming value!
-    if (!ValueIsUsed && !isLiveOut(SrcReg, opBlock, *LV)) {
+    // When SplitEdges is enabled, the value is never live out.
+    if (!ValueIsUsed && (SplitEdges || !isLiveOut(SrcReg, opBlock, *LV))) {
       // In our final twist, we have to decide which instruction kills the
       // register.  In most cases this is the copy, however, the first
       // terminator instruction at the end of the block may also use the value.
@@ -329,6 +345,22 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& Fn) {
                                      BBI->getOperand(i).getReg())];
 }
 
+void llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
+                                         MachineBasicBlock &MBB) {
+  LiveVariables &LV = getAnalysis<LiveVariables>();
+  for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
+       BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI) {
+    for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
+      unsigned Reg = BBI->getOperand(i).getReg();
+      MachineBasicBlock *PreMBB = BBI->getOperand(i+1).getMBB();
+      // We break edges when registers are live out from the predecessor block
+      // (not considering PHI nodes).
+      if (isLiveOut(Reg, *PreMBB, LV))
+        SplitCriticalEdge(PreMBB, &MBB);
+    }
+  }
+}
+
 bool llvm::PHIElimination::isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
                                      LiveVariables &LV) {
   LiveVariables::VarInfo &InRegVI = LV.getVarInfo(Reg);
@@ -376,3 +408,43 @@ bool llvm::PHIElimination::isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
   }
   return false;
 }
+
+MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
+                                                     MachineBasicBlock *B) {
+  assert(A && B && "Missing MBB end point");
+  ++NumSplits;
+
+  MachineFunction *MF = A->getParent();
+  MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock(B->getBasicBlock());
+  MF->push_back(NMBB);
+  const unsigned NewNum = NMBB->getNumber();
+  DEBUG(errs() << "PHIElimination splitting critical edge:"
+        " BB#" << A->getNumber()
+        << " -- BB#" << NewNum
+        << " -- BB#" << B->getNumber() << '\n');
+
+  A->ReplaceUsesOfBlockWith(B, NMBB);
+  NMBB->addSuccessor(B);
+
+  // Insert unconditional "jump B" instruction in NMBB.
+  SmallVector<MachineOperand, 4> Cond;
+  MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond);
+
+  LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();
+  if (LV)
+    LV->addNewBlock(NMBB, B);
+
+  // Fix PHI nodes in B so they refer to NMBB instead of A
+  for (MachineBasicBlock::iterator i = B->begin(), e = B->end();
+       i != e && i->getOpcode() == TargetInstrInfo::PHI; ++i)
+    for (unsigned ni = 1, ne = i->getNumOperands(); ni != ne; ni += 2)
+      if (i->getOperand(ni+1).getMBB() == A) {
+        i->getOperand(ni+1).setMBB(NMBB);
+        // Mark PHI sources as passing live through NMBB
+        if (LV)
+          LV->getVarInfo(i->getOperand(ni).getReg()).AliveBlocks.set(NewNum);
+      }
+  return NMBB;
+}
+
+

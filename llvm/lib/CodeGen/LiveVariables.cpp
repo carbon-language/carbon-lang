@@ -50,6 +50,14 @@ void LiveVariables::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
+MachineInstr *
+LiveVariables::VarInfo::findKill(const MachineBasicBlock *MBB) const {
+  for (unsigned i = 0, e = Kills.size(); i != e; ++i)
+    if (Kills[i]->getParent() == MBB)
+      return Kills[i];
+  return NULL;
+}
+
 void LiveVariables::VarInfo::dump() const {
   errs() << "  Alive in blocks: ";
   for (SparseBitVector<>::iterator I = AliveBlocks.begin(),
@@ -640,4 +648,36 @@ void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
         PHIVarInfo[BBI->getOperand(i + 1).getMBB()->getNumber()]
           .push_back(BBI->getOperand(i).getReg());
+}
+
+void LiveVariables::addNewBlock(MachineBasicBlock *A, MachineBasicBlock *B) {
+  unsigned NumA = A->getNumber();
+  unsigned NumB = B->getNumber();
+
+  // Update info for all live variables
+  for (unsigned i = 0, e = VirtRegInfo.size(); i != e; ++i) {
+    VarInfo &VI = VirtRegInfo[i];
+
+    // Anything live through B is also live through A.
+    if (VI.AliveBlocks.test(NumB)) {
+      VI.AliveBlocks.set(NumA);
+      continue;
+    }
+
+    // If we're not killed in B, we are not live in
+    if (!VI.findKill(B))
+      continue;
+
+    unsigned Reg = i+TargetRegisterInfo::FirstVirtualRegister;
+
+    // Find a def outside B
+    for (MachineRegisterInfo::def_iterator di = MRI->def_begin(Reg),
+           de=MRI->def_end(); di != de; ++di) {
+      if (di->getParent() != B) {
+        // Reg was defined outside B and killed in B - it must be live in.
+        VI.AliveBlocks.set(NumA);
+        break;
+      }
+    }
+  }
 }

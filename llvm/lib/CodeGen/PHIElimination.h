@@ -89,11 +89,20 @@ namespace llvm {
     ///
     void analyzePHINodes(const MachineFunction& Fn);
 
+    /// Split critical edges where necessary for good coalescer performance.
+    void SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB);
+
     /// isLiveOut - Determine if Reg is live out from MBB, when not
     /// considering PHI nodes. This means that Reg is either killed by
     /// a successor block or passed through one.
     bool isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
                    LiveVariables &LV);
+
+    /// SplitCriticalEdge - Split a critical edge from A to B by
+    /// inserting a new MBB. Update branches in A and PHI instructions
+    /// in B. Return the new block.
+    MachineBasicBlock *SplitCriticalEdge(MachineBasicBlock *A,
+                                         MachineBasicBlock *B);
 
     // FindCopyInsertPoint - Find a safe place in MBB to insert a copy from
     // SrcReg.  This needs to be after any def or uses of SrcReg, but before
