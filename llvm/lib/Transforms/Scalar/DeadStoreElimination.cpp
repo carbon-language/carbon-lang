@@ -143,6 +143,7 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
         return -1u;
       case Intrinsic::lifetime_end:
         Len = II->getOperand(1);
+        break;
     }
   }
   if (ConstantInt *LenCI = dyn_cast<ConstantInt>(Len))
