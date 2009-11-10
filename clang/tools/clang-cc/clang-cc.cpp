@@ -909,14 +909,6 @@ static bool InitializeSourceManager(Preprocessor &PP,
     }
   } else {
     llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-
-    // If stdin was empty, SB is null.  Cons up an empty memory
-    // buffer now.
-    if (!SB) {
-      const char *EmptyStr = "";
-      SB = llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<stdin>");
-    }
-
     SourceMgr.createMainFileIDForMemBuffer(SB);
     if (SourceMgr.getMainFileID().isInvalid()) {
       PP.getDiagnostics().Report(FullSourceLoc(),
