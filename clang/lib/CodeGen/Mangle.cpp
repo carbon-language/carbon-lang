@@ -1456,6 +1456,14 @@ namespace clang {
     os.flush();
   }
 
+  void mangleCXXVTT(MangleContext &Context, const CXXRecordDecl *RD,
+                       llvm::raw_ostream &os) {
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleCXXVTT(RD);
+
+    os.flush();
+  }
+
   void mangleCXXCtorVtable(MangleContext &Context, const CXXRecordDecl *RD,
                            int64_t Offset, const CXXRecordDecl *Type,
                            llvm::raw_ostream &os) {
