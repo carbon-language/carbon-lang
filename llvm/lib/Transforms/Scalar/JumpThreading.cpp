@@ -16,7 +16,6 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -223,9 +222,9 @@ static void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
       Instruction *User = cast<Instruction>(U.getUser());
       U = PNV;
       
-      // See if we can simplify it (constant folding).
-      if (Constant *C = ConstantFoldInstruction(User, TD)) {
-        User->replaceAllUsesWith(C);
+      // See if we can simplify it.
+      if (Value *V = SimplifyInstruction(User, TD)) {
+        User->replaceAllUsesWith(V);
         User->eraseFromParent();
       }
     }
@@ -1203,8 +1202,8 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   BI = NewBB->begin();
   for (BasicBlock::iterator E = NewBB->end(); BI != E; ) {
     Instruction *Inst = BI++;
-    if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
-      Inst->replaceAllUsesWith(C);
+    if (Value *V = SimplifyInstruction(Inst, TD)) {
+      Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
       continue;
     }

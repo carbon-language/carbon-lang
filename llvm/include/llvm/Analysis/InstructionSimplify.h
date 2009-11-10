@@ -17,9 +17,9 @@
 #define LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
 
 namespace llvm {
+  class Instruction;
   class Value;
   class TargetData;
-  
   
   /// SimplifyAndInst - Given operands for an And, see if we can
   /// fold the result.  If not, this returns null.
@@ -54,6 +54,10 @@ namespace llvm {
   /// fold the result.  If not, this returns null.
   Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS, 
                        const TargetData *TD = 0);
+  
+  /// SimplifyInstruction - See if we can compute a simplified version of this
+  /// instruction.  If not, this returns null.
+  Value *SimplifyInstruction(Instruction *I, const TargetData *TD = 0);
   
 } // end namespace llvm
 

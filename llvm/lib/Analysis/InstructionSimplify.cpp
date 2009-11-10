@@ -291,3 +291,23 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   return SimplifyFCmpInst(Predicate, LHS, RHS, TD);
 }
 
+
+/// SimplifyInstruction - See if we can compute a simplified version of this
+/// instruction.  If not, this returns null.
+Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
+  switch (I->getOpcode()) {
+  default:
+    return ConstantFoldInstruction(I, TD);
+  case Instruction::And:
+    return SimplifyAndInst(I->getOperand(0), I->getOperand(1), TD);
+  case Instruction::Or:
+    return SimplifyOrInst(I->getOperand(0), I->getOperand(1), TD);
+  case Instruction::ICmp:
+    return SimplifyICmpInst(cast<ICmpInst>(I)->getPredicate(),
+                            I->getOperand(0), I->getOperand(1), TD);
+  case Instruction::FCmp:
+    return SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
+                            I->getOperand(0), I->getOperand(1), TD);
+  }
+}
+
