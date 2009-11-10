@@ -6201,6 +6201,34 @@ Sema::OwningExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   return Owned(new (Context) GNUNullExpr(Ty, TokenLoc));
 }
 
+static void 
+MakeObjCStringLiteralCodeModificationHint(Sema& SemaRef,
+                                          QualType DstType,
+                                          Expr *SrcExpr,
+                                          CodeModificationHint &Hint) {
+  if (!SemaRef.getLangOptions().ObjC1)
+    return;
+  
+  const ObjCObjectPointerType *PT = DstType->getAs<ObjCObjectPointerType>();
+  if (!PT)
+    return;
+
+  // Check if the destination is of type 'id'.
+  if (!PT->isObjCIdType()) {
+    // Check if the destination is the 'NSString' interface.
+    const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();
+    if (!ID || !ID->getIdentifier()->isStr("NSString"))
+      return;
+  }
+  
+  // Strip off any parens and casts.
+  StringLiteral *SL = dyn_cast<StringLiteral>(SrcExpr->IgnoreParenCasts());
+  if (!SL || SL->isWide())
+    return;
+  
+  Hint = CodeModificationHint::CreateInsertion(SL->getLocStart(), "@");
+}
+
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
                                     SourceLocation Loc,
                                     QualType DstType, QualType SrcType,
@@ -6208,6 +6236,8 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   // Decode the result (notice that AST's are still created for extensions).
   bool isInvalid = false;
   unsigned DiagKind;
+  CodeModificationHint Hint;
+  
   switch (ConvTy) {
   default: assert(0 && "Unknown conversion type");
   case Compatible: return false;
@@ -6218,6 +6248,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     DiagKind = diag::ext_typecheck_convert_int_pointer;
     break;
   case IncompatiblePointer:
+    MakeObjCStringLiteralCodeModificationHint(*this, DstType, SrcExpr, Hint);
     DiagKind = diag::ext_typecheck_convert_incompatible_pointer;
     break;
   case IncompatiblePointerSign:
@@ -6265,7 +6296,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   }
 
   Diag(Loc, DiagKind) << DstType << SrcType << Flavor
-    << SrcExpr->getSourceRange();
+    << SrcExpr->getSourceRange() << Hint;
   return isInvalid;
 }
 
