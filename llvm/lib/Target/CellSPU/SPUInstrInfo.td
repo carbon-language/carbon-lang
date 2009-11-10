@@ -3601,21 +3601,23 @@ def : Pat<(SPUcall (SPUaform texternalsym:$func, 0)),
           (BRASL texternalsym:$func)>;
 
 // Unconditional branches:
-let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, isBarrier = 1 in {
-  def BR :
-    UncondBranch<0b001001100, (outs), (ins brtarget:$dest),
-      "br\t$dest",
-      [(br bb:$dest)]>;
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
+  let isBarrier = 1 in {
+    def BR :
+      UncondBranch<0b001001100, (outs), (ins brtarget:$dest),
+        "br\t$dest",
+        [(br bb:$dest)]>;
 
-  // Unconditional, absolute address branch
-  def BRA:
-    UncondBranch<0b001100000, (outs), (ins brtarget:$dest),
-      "bra\t$dest",
-      [/* no pattern */]>;
+    // Unconditional, absolute address branch
+    def BRA:
+      UncondBranch<0b001100000, (outs), (ins brtarget:$dest),
+        "bra\t$dest",
+        [/* no pattern */]>;
 
-  // Indirect branch
-  def BI:
-    BIForm<0b00010101100, "bi\t$func", [(brind R32C:$func)]>;
+    // Indirect branch
+    def BI:
+      BIForm<0b00010101100, "bi\t$func", [(brind R32C:$func)]>;
+  }
 
   // Conditional branches:
   class BRNZInst<dag IOL, list<dag> pattern>:
