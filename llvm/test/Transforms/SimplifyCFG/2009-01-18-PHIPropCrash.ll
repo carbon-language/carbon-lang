@@ -1,4 +1,4 @@
-; RUN: opt < %s -simplifycfg | llvm-dis
+; RUN: opt < %s -simplifycfg -S
 ; PR3016
 ; Dead use caused invariant violation.
 
