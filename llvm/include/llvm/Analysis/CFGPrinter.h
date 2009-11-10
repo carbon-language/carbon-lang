@@ -71,6 +71,18 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     if (const BranchInst *BI = dyn_cast<BranchInst>(Node->getTerminator()))
       if (BI->isConditional())
         return (I == succ_begin(Node)) ? "T" : "F";
+    
+    // Label source of conditional branches with "T" or "F"
+    if (const SwitchInst *SI = dyn_cast<SwitchInst>(Node->getTerminator())) {
+      unsigned SuccNo = I.getSuccessorIndex();
+
+      if (SuccNo == 0) return "def";
+      
+      std::string Str;
+      raw_string_ostream OS(Str);
+      OS << SI->getCaseValue(SuccNo)->getValue();
+      return OS.str();
+    }    
     return "";
   }
 };
