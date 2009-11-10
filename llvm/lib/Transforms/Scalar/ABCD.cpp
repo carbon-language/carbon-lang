@@ -1049,7 +1049,7 @@ void ABCD::InequalityGraph::printHeader(raw_ostream &OS, Function &F) const {
 
 /// Prints the body of the dot file
 void ABCD::InequalityGraph::printBody(raw_ostream &OS) const {
-  DenseMap<Value *, SmallPtrSet<Edge *, 16> >::iterator begin =
+  DenseMap<Value *, SmallPtrSet<Edge *, 16> >::const_iterator begin =
       graph.begin(), end = graph.end();
 
   for (; begin != end ; ++begin) {

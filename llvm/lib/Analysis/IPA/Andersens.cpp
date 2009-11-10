@@ -518,7 +518,7 @@ namespace {
     /// getObject - Return the node corresponding to the memory object for the
     /// specified global or allocation instruction.
     unsigned getObject(Value *V) const {
-      DenseMap<Value*, unsigned>::iterator I = ObjectNodes.find(V);
+      DenseMap<Value*, unsigned>::const_iterator I = ObjectNodes.find(V);
       assert(I != ObjectNodes.end() &&
              "Value does not have an object in the points-to graph!");
       return I->second;
@@ -527,7 +527,7 @@ namespace {
     /// getReturnNode - Return the node representing the return value for the
     /// specified function.
     unsigned getReturnNode(Function *F) const {
-      DenseMap<Function*, unsigned>::iterator I = ReturnNodes.find(F);
+      DenseMap<Function*, unsigned>::const_iterator I = ReturnNodes.find(F);
       assert(I != ReturnNodes.end() && "Function does not return a value!");
       return I->second;
     }
@@ -535,7 +535,7 @@ namespace {
     /// getVarargNode - Return the node representing the variable arguments
     /// formal for the specified function.
     unsigned getVarargNode(Function *F) const {
-      DenseMap<Function*, unsigned>::iterator I = VarargNodes.find(F);
+      DenseMap<Function*, unsigned>::const_iterator I = VarargNodes.find(F);
       assert(I != VarargNodes.end() && "Function does not take var args!");
       return I->second;
     }

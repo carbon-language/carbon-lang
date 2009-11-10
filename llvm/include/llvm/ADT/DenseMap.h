@@ -14,8 +14,9 @@
 #ifndef LLVM_ADT_DENSEMAP_H
 #define LLVM_ADT_DENSEMAP_H
 
-#include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/PointerLikeTypeTraits.h"
+#include "llvm/Support/type_traits.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include <iterator>
 #include <new>
@@ -27,12 +28,8 @@ namespace llvm {
 
 template<typename KeyT, typename ValueT,
          typename KeyInfoT = DenseMapInfo<KeyT>,
-         typename ValueInfoT = DenseMapInfo<ValueT> >
+         typename ValueInfoT = DenseMapInfo<ValueT>, bool IsConst = false>
 class DenseMapIterator;
-template<typename KeyT, typename ValueT,
-         typename KeyInfoT = DenseMapInfo<KeyT>,
-         typename ValueInfoT = DenseMapInfo<ValueT> >
-class DenseMapConstIterator;
 
 template<typename KeyT, typename ValueT,
          typename KeyInfoT = DenseMapInfo<KeyT>,
@@ -73,7 +70,8 @@ public:
   }
 
   typedef DenseMapIterator<KeyT, ValueT, KeyInfoT> iterator;
-  typedef DenseMapConstIterator<KeyT, ValueT, KeyInfoT> const_iterator;
+  typedef DenseMapIterator<KeyT, ValueT,
+                           KeyInfoT, ValueInfoT, true> const_iterator;
   inline iterator begin() {
      return iterator(Buckets, Buckets+NumBuckets);
   }
@@ -426,32 +424,47 @@ private:
   }
 };
 
-template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
-class DenseMapIterator : 
-      public std::iterator<std::forward_iterator_tag, std::pair<KeyT, ValueT>,
-                          ptrdiff_t> {
-  typedef std::pair<KeyT, ValueT> BucketT;
-protected:
-  const BucketT *Ptr, *End;
+template<typename KeyT, typename ValueT,
+         typename KeyInfoT, typename ValueInfoT, bool IsConst>
+class DenseMapIterator {
+  typedef std::pair<KeyT, ValueT> Bucket;
+  typedef DenseMapIterator<KeyT, ValueT,
+                           KeyInfoT, ValueInfoT, true> ConstIterator;
+  friend class DenseMapIterator<KeyT, ValueT, KeyInfoT, ValueInfoT, true>;
+public:
+  typedef ptrdiff_t difference_type;
+  typedef typename conditional<IsConst, const Bucket, Bucket>::type value_type;
+  typedef value_type *pointer;
+  typedef value_type &reference;
+  typedef std::forward_iterator_tag iterator_category;
+private:
+  pointer Ptr, End;
 public:
   DenseMapIterator() : Ptr(0), End(0) {}
 
-  DenseMapIterator(const BucketT *Pos, const BucketT *E) : Ptr(Pos), End(E) {
+  DenseMapIterator(pointer Pos, pointer E) : Ptr(Pos), End(E) {
     AdvancePastEmptyBuckets();
   }
 
-  std::pair<KeyT, ValueT> &operator*() const {
-    return *const_cast<BucketT*>(Ptr);
+  // If IsConst is true this is a converting constructor from iterator to
+  // const_iterator and the default copy constructor is used.
+  // Otherwise this is a copy constructor for iterator.
+  DenseMapIterator(const DenseMapIterator<KeyT, ValueT,
+                                          KeyInfoT, ValueInfoT, false>& I)
+    : Ptr(I.Ptr), End(I.End) {}
+
+  reference operator*() const {
+    return *Ptr;
   }
-  std::pair<KeyT, ValueT> *operator->() const {
-    return const_cast<BucketT*>(Ptr);
+  pointer operator->() const {
+    return Ptr;
   }
 
-  bool operator==(const DenseMapIterator &RHS) const {
-    return Ptr == RHS.Ptr;
+  bool operator==(const ConstIterator &RHS) const {
+    return Ptr == RHS.operator->();
   }
-  bool operator!=(const DenseMapIterator &RHS) const {
-    return Ptr != RHS.Ptr;
+  bool operator!=(const ConstIterator &RHS) const {
+    return Ptr != RHS.operator->();
   }
 
   inline DenseMapIterator& operator++() {  // Preincrement
@@ -472,22 +485,6 @@ private:
            (KeyInfoT::isEqual(Ptr->first, Empty) ||
             KeyInfoT::isEqual(Ptr->first, Tombstone)))
       ++Ptr;
-  }
-};
-
-template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
-class DenseMapConstIterator : public DenseMapIterator<KeyT, ValueT, KeyInfoT> {
-public:
-  DenseMapConstIterator() : DenseMapIterator<KeyT, ValueT, KeyInfoT>() {}
-  DenseMapConstIterator(const std::pair<KeyT, ValueT> *Pos,
-                        const std::pair<KeyT, ValueT> *E)
-    : DenseMapIterator<KeyT, ValueT, KeyInfoT>(Pos, E) {
-  }
-  const std::pair<KeyT, ValueT> &operator*() const {
-    return *this->Ptr;
-  }
-  const std::pair<KeyT, ValueT> *operator->() const {
-    return this->Ptr;
   }
 };
 

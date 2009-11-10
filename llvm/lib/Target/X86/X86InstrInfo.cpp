@@ -2170,7 +2170,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // If table selected...
   if (OpcodeTablePtr) {
     // Find the Opcode to fuse
-    DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+    DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
       OpcodeTablePtr->find((unsigned*)MI->getOpcode());
     if (I != OpcodeTablePtr->end()) {
       unsigned Opcode = I->second.first;
@@ -2402,7 +2402,7 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   
   if (OpcodeTablePtr) {
     // Find the Opcode to fuse
-    DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+    DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
       OpcodeTablePtr->find((unsigned*)Opc);
     if (I != OpcodeTablePtr->end())
       return true;
@@ -2413,7 +2413,7 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
 bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
     MemOp2RegOpTable.find((unsigned*)MI->getOpcode());
   if (I == MemOp2RegOpTable.end())
     return false;
@@ -2530,7 +2530,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   if (!N->isMachineOpcode())
     return false;
 
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
     MemOp2RegOpTable.find((unsigned*)N->getMachineOpcode());
   if (I == MemOp2RegOpTable.end())
     return false;
@@ -2623,7 +2623,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
 unsigned X86InstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
                                       bool UnfoldLoad, bool UnfoldStore,
                                       unsigned *LoadRegIndex) const {
-  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::const_iterator I =
     MemOp2RegOpTable.find((unsigned*)Opc);
   if (I == MemOp2RegOpTable.end())
     return 0;

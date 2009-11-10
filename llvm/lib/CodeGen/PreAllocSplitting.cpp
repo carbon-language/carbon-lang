@@ -366,10 +366,10 @@ PreAllocSplitting::IsAvailableInStack(MachineBasicBlock *DefMBB,
   if (!DefMBB)
     return false;
 
-  DenseMap<unsigned, int>::iterator I = IntervalSSMap.find(Reg);
+  DenseMap<unsigned, int>::const_iterator I = IntervalSSMap.find(Reg);
   if (I == IntervalSSMap.end())
     return false;
-  DenseMap<SlotIndex, SlotIndex>::iterator
+  DenseMap<SlotIndex, SlotIndex>::const_iterator
     II = Def2SpillMap.find(DefIndex);
   if (II == Def2SpillMap.end())
     return false;

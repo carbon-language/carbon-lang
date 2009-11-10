@@ -364,7 +364,7 @@ bool MSP430DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   /// TokenFactor by PreprocessForRMW. Query the map Store => Load1 (created
   /// during preprocessing) to determine whether it's legal to introduce such
   /// "cycle" for a moment.
-  DenseMap<SDNode*, SDNode*>::iterator I = RMWStores.find(Root);
+  DenseMap<SDNode*, SDNode*>::const_iterator I = RMWStores.find(Root);
   if (I != RMWStores.end() && I->second == N)
     return true;
 

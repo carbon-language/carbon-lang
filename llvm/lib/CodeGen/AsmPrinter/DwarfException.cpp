@@ -497,7 +497,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         SawPotentiallyThrowing = false;
 
       // Beginning of a new try-range?
-      RangeMapType::iterator L = PadMap.find(BeginLabel);
+      RangeMapType::const_iterator L = PadMap.find(BeginLabel);
       if (L == PadMap.end())
         // Nope, it was just some random label.
         continue;

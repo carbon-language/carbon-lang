@@ -507,7 +507,7 @@ void ValueTable::erase(Value *V) {
 /// verifyRemoved - Verify that the value is removed from all internal data
 /// structures.
 void ValueTable::verifyRemoved(const Value *V) const {
-  for (DenseMap<Value*, uint32_t>::iterator
+  for (DenseMap<Value*, uint32_t>::const_iterator
          I = valueNumbering.begin(), E = valueNumbering.end(); I != E; ++I) {
     assert(I->first != V && "Inst still occurs in value numbering map!");
   }

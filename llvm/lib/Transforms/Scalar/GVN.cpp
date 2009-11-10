@@ -624,7 +624,7 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
 /// lookup - Returns the value number of the specified value. Fails if
 /// the value has not yet been numbered.
 uint32_t ValueTable::lookup(Value *V) const {
-  DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
+  DenseMap<Value*, uint32_t>::const_iterator VI = valueNumbering.find(V);
   assert(VI != valueNumbering.end() && "Value not numbered?");
   return VI->second;
 }
@@ -644,7 +644,7 @@ void ValueTable::erase(Value *V) {
 /// verifyRemoved - Verify that the value is removed from all internal data
 /// structures.
 void ValueTable::verifyRemoved(const Value *V) const {
-  for (DenseMap<Value*, uint32_t>::iterator
+  for (DenseMap<Value*, uint32_t>::const_iterator
          I = valueNumbering.begin(), E = valueNumbering.end(); I != E; ++I) {
     assert(I->first != V && "Inst still occurs in value numbering map!");
   }
@@ -2011,12 +2011,12 @@ void GVN::verifyRemoved(const Instruction *Inst) const {
 
   // Walk through the value number scope to make sure the instruction isn't
   // ferreted away in it.
-  for (DenseMap<BasicBlock*, ValueNumberScope*>::iterator
+  for (DenseMap<BasicBlock*, ValueNumberScope*>::const_iterator
          I = localAvail.begin(), E = localAvail.end(); I != E; ++I) {
     const ValueNumberScope *VNS = I->second;
 
     while (VNS) {
-      for (DenseMap<uint32_t, Value*>::iterator
+      for (DenseMap<uint32_t, Value*>::const_iterator
              II = VNS->table.begin(), IE = VNS->table.end(); II != IE; ++II) {
         assert(II->second != Inst && "Inst still in value numbering scope!");
       }

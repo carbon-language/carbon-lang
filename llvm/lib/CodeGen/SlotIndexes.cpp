@@ -201,7 +201,7 @@ void SlotIndexes::dump() const {
     }
   }
 
-  for (MBB2IdxMap::iterator itr = mbb2IdxMap.begin();
+  for (MBB2IdxMap::const_iterator itr = mbb2IdxMap.begin();
        itr != mbb2IdxMap.end(); ++itr) {
     errs() << "MBB " << itr->first->getNumber() << " (" << itr->first << ") - ["
            << itr->second.first << ", " << itr->second.second << "]\n";

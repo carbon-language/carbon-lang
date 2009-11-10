@@ -153,7 +153,7 @@ public:
   /// value.  If an value is not in the map, it is returned as untracked,
   /// unlike the getOrInitValueState method.
   LatticeVal getLatticeState(Value *V) const {
-    DenseMap<Value*, LatticeVal>::iterator I = ValueState.find(V);
+    DenseMap<Value*, LatticeVal>::const_iterator I = ValueState.find(V);
     return I != ValueState.end() ? I->second : LatticeFunc->getUntrackedVal();
   }
   

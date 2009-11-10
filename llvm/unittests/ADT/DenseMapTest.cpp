@@ -164,4 +164,16 @@ TEST_F(DenseMapTest, IterationTest) {
   }
 }
 
+// const_iterator test
+TEST_F(DenseMapTest, ConstIteratorTest) {
+  // Check conversion from iterator to const_iterator.
+  DenseMap<uint32_t, uint32_t>::iterator it = uintMap.begin();
+  DenseMap<uint32_t, uint32_t>::const_iterator cit(it);
+  EXPECT_TRUE(it == cit);
+
+  // Check copying of const_iterators.
+  DenseMap<uint32_t, uint32_t>::const_iterator cit2(cit);
+  EXPECT_TRUE(cit == cit2);
+}
+
 }
