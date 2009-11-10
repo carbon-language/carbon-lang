@@ -15,6 +15,7 @@
 
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
@@ -309,5 +310,39 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
     return SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
                             I->getOperand(0), I->getOperand(1), TD);
   }
+}
+
+/// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
+/// delete the From instruction.  In addition to a basic RAUW, this does a
+/// recursive simplification of the newly formed instructions.  This catches
+/// things where one simplification exposes other opportunities.  This only
+/// simplifies and deletes scalar operations, it does not change the CFG.
+///
+void llvm::ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
+                                     const TargetData *TD) {
+  assert(From != To && "ReplaceAndSimplifyAllUses(X,X) is not valid!");
+  
+  // FromHandle - This keeps a weakvh on the from value so that we can know if
+  // it gets deleted out from under us in a recursive simplification.
+  WeakVH FromHandle(From);
+  
+  while (!From->use_empty()) {
+    // Update the instruction to use the new value.
+    Use &U = From->use_begin().getUse();
+    Instruction *User = cast<Instruction>(U.getUser());
+    U = To;
+    
+    // See if we can simplify it.
+    if (Value *V = SimplifyInstruction(User, TD)) {
+      // Recursively simplify this.
+      ReplaceAndSimplifyAllUses(User, V, TD);
+      
+      // If the recursive simplification ended up revisiting and deleting 'From'
+      // then we're done.
+      if (FromHandle == 0)
+        return;
+    }
+  }
+  From->eraseFromParent();
 }
 

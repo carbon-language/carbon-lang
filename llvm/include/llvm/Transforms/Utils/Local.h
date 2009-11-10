@@ -78,6 +78,21 @@ void RecursivelyDeleteDeadPHINode(PHINode *PN);
 //  Control Flow Graph Restructuring.
 //
 
+/// RemovePredecessorAndSimplify - Like BasicBlock::removePredecessor, this
+/// method is called when we're about to delete Pred as a predecessor of BB.  If
+/// BB contains any PHI nodes, this drops the entries in the PHI nodes for Pred.
+///
+/// Unlike the removePredecessor method, this attempts to simplify uses of PHI
+/// nodes that collapse into identity values.  For example, if we have:
+///   x = phi(1, 0, 0, 0)
+///   y = and x, z
+///
+/// .. and delete the predecessor corresponding to the '1', this will attempt to
+/// recursively fold the 'and' to 0.
+void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
+                                  TargetData *TD = 0);
+    
+  
 /// MergeBasicBlockIntoOnlyPred - BB is a block with one predecessor and its
 /// predecessor is known to have one successor (BB!).  Eliminate the edge
 /// between them, moving the instructions in the predecessor into BB.  This

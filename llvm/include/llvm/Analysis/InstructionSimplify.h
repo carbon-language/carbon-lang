@@ -59,6 +59,15 @@ namespace llvm {
   /// instruction.  If not, this returns null.
   Value *SimplifyInstruction(Instruction *I, const TargetData *TD = 0);
   
+  
+  /// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
+  /// delete the From instruction.  In addition to a basic RAUW, this does a
+  /// recursive simplification of the updated instructions.  This catches
+  /// things where one simplification exposes other opportunities.  This only
+  /// simplifies and deletes scalar operations, it does not change the CFG.
+  ///
+  void ReplaceAndSimplifyAllUses(Instruction *From, Value *To,
+                                 const TargetData *TD = 0);
 } // end namespace llvm
 
 #endif

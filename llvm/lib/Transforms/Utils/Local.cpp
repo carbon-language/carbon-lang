@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CFG.h"
@@ -239,7 +240,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 
 
 //===----------------------------------------------------------------------===//
-//  Local dead code elimination...
+//  Local dead code elimination.
 //
 
 /// isInstructionTriviallyDead - Return true if the result produced by the
@@ -326,8 +327,52 @@ llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
 }
 
 //===----------------------------------------------------------------------===//
-//  Control Flow Graph Restructuring...
+//  Control Flow Graph Restructuring.
 //
+
+
+/// RemovePredecessorAndSimplify - Like BasicBlock::removePredecessor, this
+/// method is called when we're about to delete Pred as a predecessor of BB.  If
+/// BB contains any PHI nodes, this drops the entries in the PHI nodes for Pred.
+///
+/// Unlike the removePredecessor method, this attempts to simplify uses of PHI
+/// nodes that collapse into identity values.  For example, if we have:
+///   x = phi(1, 0, 0, 0)
+///   y = and x, z
+///
+/// .. and delete the predecessor corresponding to the '1', this will attempt to
+/// recursively fold the and to 0.
+void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
+                                        TargetData *TD) {
+  // This only adjusts blocks with PHI nodes.
+  if (!isa<PHINode>(BB->begin()))
+    return;
+  
+  // Remove the entries for Pred from the PHI nodes in BB, but do not simplify
+  // them down.  This will leave us with single entry phi nodes and other phis
+  // that can be removed.
+  BB->removePredecessor(Pred, true);
+  
+  WeakVH PhiIt = &BB->front();
+  while (PHINode *PN = dyn_cast<PHINode>(PhiIt)) {
+    PhiIt = &*++BasicBlock::iterator(cast<Instruction>(PhiIt));
+    
+    Value *PNV = PN->hasConstantValue();
+    if (PNV == 0) continue;
+    
+    // If we're able to simplify the phi to a single value, substitute the new
+    // value into all of its uses.
+    assert(PNV != PN && "hasConstantValue broken");
+    
+    ReplaceAndSimplifyAllUses(PN, PNV, TD);
+    
+    // If recursive simplification ended up deleting the next PHI node we would
+    // iterate to, then our iterator is invalid, restart scanning from the top
+    // of the block.
+    if (PhiIt == 0) PhiIt = &BB->front();
+  }
+}
+
 
 /// MergeBasicBlockIntoOnlyPred - DestBB is a block with one predecessor and its
 /// predecessor is known to have one successor (DestBB!).  Eliminate the edge
