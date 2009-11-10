@@ -46,6 +46,9 @@
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
 		1AA1D91810125DE30078DEBC /* RecordLayoutBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AA1D91610125DE30078DEBC /* RecordLayoutBuilder.cpp */; };
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
+		1ADD795410A90C6100741BBA /* TypePrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795110A90C6100741BBA /* TypePrinter.cpp */; };
+		1ADD795510A90C6100741BBA /* TypeLoc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795210A90C6100741BBA /* TypeLoc.cpp */; };
+		1ADD795610A90C6100741BBA /* TemplateBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795310A90C6100741BBA /* TemplateBase.cpp */; };
 		1ADF47AF0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */; };
 		1AE4EE3E103B89ED00888A23 /* StmtProfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AE4EE3D103B89ED00888A23 /* StmtProfile.cpp */; };
 		1AE4EE40103B8A0A00888A23 /* TargetABIInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AE4EE3F103B8A0A00888A23 /* TargetABIInfo.cpp */; };
@@ -396,6 +399,9 @@
 		1AA1D91710125DE30078DEBC /* RecordLayoutBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = RecordLayoutBuilder.h; path = lib/AST/RecordLayoutBuilder.h; sourceTree = "<group>"; tabWidth = 2; };
 		1AB290021045858B00FE33D8 /* PartialDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = PartialDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1ADD795110A90C6100741BBA /* TypePrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypePrinter.cpp; path = lib/AST/TypePrinter.cpp; sourceTree = "<group>"; };
+		1ADD795210A90C6100741BBA /* TypeLoc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeLoc.cpp; path = lib/AST/TypeLoc.cpp; sourceTree = "<group>"; };
+		1ADD795310A90C6100741BBA /* TemplateBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TemplateBase.cpp; path = lib/AST/TemplateBase.cpp; sourceTree = "<group>"; };
 		1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiateDecl.cpp; path = lib/Sema/SemaTemplateInstantiateDecl.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AE4EE3B103B89CA00888A23 /* TreeTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TreeTransform.h; path = lib/Sema/TreeTransform.h; sourceTree = "<group>"; tabWidth = 2; };
 		1AE4EE3D103B89ED00888A23 /* StmtProfile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtProfile.cpp; path = lib/AST/StmtProfile.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1385,8 +1391,11 @@
 				DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */,
 				1AE4EE3D103B89ED00888A23 /* StmtProfile.cpp */,
 				35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */,
+				1ADD795310A90C6100741BBA /* TemplateBase.cpp */,
 				DEDFF8870F848CF80035BD10 /* TemplateName.cpp */,
 				DE75EDF00B06880E0020CF81 /* Type.cpp */,
+				1ADD795210A90C6100741BBA /* TypeLoc.cpp */,
+				1ADD795110A90C6100741BBA /* TypePrinter.cpp */,
 			);
 			name = AST;
 			sourceTree = "<group>";
@@ -1919,6 +1928,9 @@
 				1A6C01F7108128710072DEE4 /* CGRtti.cpp in Sources */,
 				1A81AA19108144F40094E50B /* CGVtable.cpp in Sources */,
 				1AF1B50F109A4FB800AFAFAC /* CGException.cpp in Sources */,
+				1ADD795410A90C6100741BBA /* TypePrinter.cpp in Sources */,
+				1ADD795510A90C6100741BBA /* TypeLoc.cpp in Sources */,
+				1ADD795610A90C6100741BBA /* TemplateBase.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
