@@ -1612,12 +1612,6 @@ int int_char(char m) {if(m>7) return 0; return m;}
 
 //===---------------------------------------------------------------------===//
 
-IPSCCP is propagating elements of first class aggregates, but is not propagating
-the entire aggregate itself.  This leads it to miss opportunities, for example
-in test/Transforms/SCCP/ipsccp-basic.ll:test5b.
-
-//===---------------------------------------------------------------------===//
-
 int func(int a, int b) { if (a & 0x80) b |= 0x80; else b &= ~0x80; return b; }
 
 Generates this:
