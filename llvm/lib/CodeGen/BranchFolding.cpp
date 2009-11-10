@@ -1179,7 +1179,6 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
         // Analyze the branch at the end of the block before the succ.
         MachineBasicBlock *SuccBB = *SI;
         MachineFunction::iterator SuccPrev = SuccBB; --SuccPrev;
-        std::vector<MachineOperand> SuccPrevCond;
         
         // If this block doesn't already fall-through to that successor, and if
         // the succ doesn't already have a block that can fall through into it,
