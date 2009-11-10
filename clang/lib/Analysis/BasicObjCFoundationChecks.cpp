@@ -384,7 +384,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){
   if (!LV)
     return false;
 
-  const TypedRegion* R = dyn_cast<TypedRegion>(LV->getBaseRegion());
+  const TypedRegion* R = dyn_cast<TypedRegion>(LV->StripCasts());
 
   if (!R)
     return false;

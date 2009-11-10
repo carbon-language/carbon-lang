@@ -624,7 +624,7 @@ const GRState *BasicStoreManager::InvalidateRegion(const GRState *state,
                                                    const Expr *E,
                                                    unsigned Count,
                                                    InvalidatedSymbols *IS) {
-  R = R->getBaseRegion();
+  R = R->StripCasts();
 
   if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
       return state;

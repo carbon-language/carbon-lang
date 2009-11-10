@@ -43,7 +43,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
 
   // Handle casts to Objective-C objects.
   if (CastToTy->isObjCObjectPointerType())
-    return R->getBaseRegion();
+    return R->StripCasts();
 
   if (CastToTy->isBlockPointerType()) {
     // FIXME: We may need different solutions, depending on the symbol

@@ -382,7 +382,7 @@ bool MemRegion::hasGlobalsOrParametersStorage() const {
 // View handling.
 //===----------------------------------------------------------------------===//
 
-const MemRegion *MemRegion::getBaseRegion() const {
+const MemRegion *MemRegion::StripCasts() const {
   const MemRegion *R = this;
   while (true) {
     if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {

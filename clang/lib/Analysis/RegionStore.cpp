@@ -461,7 +461,7 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
   ASTContext& Ctx = StateMgr.getContext();
 
   // Strip away casts.
-  R = R->getBaseRegion();
+  R = R->StripCasts();
 
   // Get the mapping of regions -> subregions.
   llvm::OwningPtr<RegionStoreSubRegionMap>

@@ -3050,7 +3050,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
           const LocationContext *LC = Pred->getLocationContext();
           if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl()) {
             SVal SelfVal = St->getSVal(St->getRegion(SelfDecl, LC));
-            if (L->getBaseRegion() == SelfVal.getAsRegion()) {
+            if (L->StripCasts() == SelfVal.getAsRegion()) {
               // Update the summary to make the default argument effect
               // 'StopTracking'.
               Summ = Summaries.copySummary(Summ);

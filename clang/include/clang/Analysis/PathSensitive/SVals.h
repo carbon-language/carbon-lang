@@ -436,7 +436,7 @@ public:
     return static_cast<MemRegion*>(Data);
   }
 
-  const MemRegion* getBaseRegion() const;
+  const MemRegion* StripCasts() const;
 
   template <typename REGION>
   const REGION* getRegionAs() const {
