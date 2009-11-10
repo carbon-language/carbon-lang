@@ -100,8 +100,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
     }
 
     if (Diags.setDiagnosticGroupMapping(OptStart, Mapping))
-      Diags.Report(FullSourceLoc(), diag::warn_unknown_warning_option)
-        << ("-W" + Opt);
+      Diags.Report(diag::warn_unknown_warning_option) << ("-W" + Opt);
   }
 
   return false;

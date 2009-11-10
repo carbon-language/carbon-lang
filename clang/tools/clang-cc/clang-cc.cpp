@@ -862,16 +862,14 @@ static bool InitializeSourceManager(Preprocessor &PP,
     const FileEntry *File = FileMgr.getFile(InFile);
     if (File) SourceMgr.createMainFileID(File, SourceLocation());
     if (SourceMgr.getMainFileID().isInvalid()) {
-      PP.getDiagnostics().Report(FullSourceLoc(), diag::err_fe_error_reading)
-        << InFile.c_str();
+      PP.getDiagnostics().Report(diag::err_fe_error_reading) << InFile.c_str();
       return true;
     }
   } else {
     llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
     SourceMgr.createMainFileIDForMemBuffer(SB);
     if (SourceMgr.getMainFileID().isInvalid()) {
-      PP.getDiagnostics().Report(FullSourceLoc(),
-                                 diag::err_fe_error_reading_stdin);
+      PP.getDiagnostics().Report(diag::err_fe_error_reading_stdin);
       return true;
     }
   }
@@ -1576,8 +1574,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
                                         Context));
 
     if (!Consumer.get()) {
-      PP.getDiagnostics().Report(FullSourceLoc(),
-                                 diag::err_fe_invalid_ast_action);
+      PP.getDiagnostics().Report(diag::err_fe_invalid_ast_action);
       return;
     }
 
@@ -1804,8 +1801,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
         // Set up the creation routine for code-completion.
         CreateCodeCompleter = BuildPrintingCodeCompleter;
       } else {
-        PP.getDiagnostics().Report(FullSourceLoc(),
-                                   diag::err_fe_invalid_code_complete_file)
+        PP.getDiagnostics().Report(diag::err_fe_invalid_code_complete_file)
           << CodeCompletionAt.FileName;
       }
     }
@@ -1904,7 +1900,7 @@ static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
   std::string Error;
   llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, &Error));
   if (!AST) {
-    Diags.Report(FullSourceLoc(), diag::err_fe_invalid_ast_file) << Error;
+    Diags.Report(diag::err_fe_invalid_ast_file) << Error;
     return;
   }
 
@@ -1917,7 +1913,7 @@ static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
                                                              OutPath, Context));
 
   if (!Consumer.get()) {
-    Diags.Report(FullSourceLoc(), diag::err_fe_invalid_ast_action);
+    Diags.Report(diag::err_fe_invalid_ast_action);
     return;
   }
 
@@ -1960,7 +1956,7 @@ InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
 
-  Diags.Report(FullSourceLoc(), diag::err_fe_error_backend) << Message;
+  Diags.Report(diag::err_fe_error_backend) << Message;
 
   // We cannot recover from llvm errors.
   exit(1);
@@ -2131,16 +2127,14 @@ int main(int argc, char **argv) {
   Target(TargetInfo::CreateTargetInfo(Triple.getTriple()));
 
   if (Target == 0) {
-    Diags.Report(FullSourceLoc(), diag::err_fe_unknown_triple)
-      << Triple.getTriple().c_str();
+    Diags.Report(diag::err_fe_unknown_triple) << Triple.getTriple().c_str();
     return 1;
   }
 
   // Set the target ABI if specified.
   if (!TargetABI.empty()) {
     if (!Target->setABI(TargetABI)) {
-      Diags.Report(FullSourceLoc(), diag::err_fe_unknown_target_abi)
-        << TargetABI;
+      Diags.Report(diag::err_fe_unknown_target_abi) << TargetABI;
       return 1;
     }
   }
@@ -2195,15 +2189,14 @@ int main(int argc, char **argv) {
     // Handle generating dependencies, if requested.
     if (!DependencyFile.empty()) {
       if (DependencyTargets.empty()) {
-        Diags.Report(FullSourceLoc(), diag::err_fe_dependency_file_requires_MT);
+        Diags.Report(diag::err_fe_dependency_file_requires_MT);
         continue;
       }
       std::string ErrStr;
       llvm::raw_ostream *DependencyOS =
           new llvm::raw_fd_ostream(DependencyFile.c_str(), ErrStr);
       if (!ErrStr.empty()) {
-        Diags.Report(FullSourceLoc(), diag::err_fe_error_opening)
-          << DependencyFile << ErrStr;
+        Diags.Report(diag::err_fe_error_opening) << DependencyFile << ErrStr;
         continue;
       }
 

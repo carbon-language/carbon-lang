@@ -386,6 +386,7 @@ public:
   /// @c Pos represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
   inline DiagnosticBuilder Report(FullSourceLoc Pos, unsigned DiagID);
+  inline DiagnosticBuilder Report(unsigned DiagID);
 
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
@@ -670,6 +671,9 @@ inline DiagnosticBuilder Diagnostic::Report(FullSourceLoc Loc, unsigned DiagID){
   CurDiagLoc = Loc;
   CurDiagID = DiagID;
   return DiagnosticBuilder(this);
+}
+inline DiagnosticBuilder Diagnostic::Report(unsigned DiagID) {
+  return Report(FullSourceLoc(), DiagID);
 }
 
 //===----------------------------------------------------------------------===//

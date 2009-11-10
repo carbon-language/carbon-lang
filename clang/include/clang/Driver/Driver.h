@@ -48,7 +48,7 @@ class Driver {
 public:
   // Diag - Forwarding function for diagnostics.
   DiagnosticBuilder Diag(unsigned DiagID) const {
-    return Diags.Report(FullSourceLoc(), DiagID);
+    return Diags.Report(DiagID);
   }
 
   // FIXME: Privatize once interface is stable.

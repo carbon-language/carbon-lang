@@ -411,8 +411,7 @@ static void InvalidPTH(Diagnostic *Diags, Diagnostic::Level level,
                        const char* Msg = 0) {
   if (!Diags) return;
   if (!Msg) Msg = "Invalid or corrupted PTH file";
-  unsigned DiagID = Diags->getCustomDiagID(level, Msg);
-  Diags->Report(FullSourceLoc(), DiagID);
+  Diags->Report(Diags->getCustomDiagID(level, Msg));
 }
 
 PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags,
@@ -423,9 +422,9 @@ PTHManager* PTHManager::Create(const std::string& file, Diagnostic* Diags,
 
   if (!File) {
     if (Diags) {
-      unsigned DiagID = Diags->getCustomDiagID(level,
-                                               "PTH file %0 could not be read");
-      Diags->Report(FullSourceLoc(), DiagID) << file;
+      unsigned DiagID =Diags->getCustomDiagID(level,
+                                              "PTH file %0 could not be read");
+      Diags->Report(DiagID) << file;
     }
 
     return 0;
