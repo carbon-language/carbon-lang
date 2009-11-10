@@ -43,8 +43,12 @@ public:
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned DisableRedZone    : 1; /// Set when -mno-red-zone is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
-  unsigned MergeAllConstants : 1; // Merge identical constants.
-  
+  unsigned MergeAllConstants : 1; /// Merge identical constants.
+  unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
+                                  /// getting .bc files that correspond to the
+                                  /// internal state before optimizations are
+                                  /// done.
+
   /// Inlining - The kind of inlining to perform.
   InliningMethod Inlining;
 
@@ -69,6 +73,7 @@ public:
     DisableRedZone = 0;
     NoImplicitFloat = 0;
     MergeAllConstants = 1;
+    DisableLLVMOpts = 0;
   }
 };
 

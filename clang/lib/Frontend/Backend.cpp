@@ -266,22 +266,30 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
 }
 
 void BackendConsumer::CreatePasses() {
+  unsigned OptLevel = CompileOpts.OptimizationLevel;
+  CompileOptions::InliningMethod Inlining = CompileOpts.Inlining;
+
+  // Handle disabling of LLVM optimization, where we want to preserve the
+  // internal module before any optimization.
+  if (CompileOpts.DisableLLVMOpts) {
+    OptLevel = 0;
+    Inlining = CompileOpts.NoInlining;
+  }
+
   // In -O0 if checking is disabled, we don't even have per-function passes.
   if (CompileOpts.VerifyModule)
     getPerFunctionPasses()->add(createVerifierPass());
 
   // Assume that standard function passes aren't run for -O0.
-  if (CompileOpts.OptimizationLevel > 0)
-    llvm::createStandardFunctionPasses(getPerFunctionPasses(),
-                                       CompileOpts.OptimizationLevel);
+  if (OptLevel > 0)
+    llvm::createStandardFunctionPasses(getPerFunctionPasses(), OptLevel);
 
   llvm::Pass *InliningPass = 0;
-  switch (CompileOpts.Inlining) {
+  switch (Inlining) {
   case CompileOptions::NoInlining: break;
   case CompileOptions::NormalInlining: {
     // Inline small functions
-    unsigned Threshold = (CompileOpts.OptimizeSize ||
-                          CompileOpts.OptimizationLevel < 3) ? 50 : 200;
+    unsigned Threshold = (CompileOpts.OptimizeSize || OptLevel < 3) ? 50 : 200;
     InliningPass = createFunctionInliningPass(Threshold);
     break;
   }
@@ -292,8 +300,7 @@ void BackendConsumer::CreatePasses() {
 
   // For now we always create per module passes.
   PassManager *PM = getPerModulePasses();
-  llvm::createStandardModulePasses(PM, CompileOpts.OptimizationLevel,
-                                   CompileOpts.OptimizeSize,
+  llvm::createStandardModulePasses(PM, OptLevel, CompileOpts.OptimizeSize,
                                    CompileOpts.UnitAtATime,
                                    CompileOpts.UnrollLoops,
                                    CompileOpts.SimplifyLibCalls,

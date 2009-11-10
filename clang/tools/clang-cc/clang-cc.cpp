@@ -1304,24 +1304,14 @@ static void InitializeCompileOptions(CompileOptions &Opts,
   using namespace codegenoptions;
   Opts.OptimizeSize = OptSize;
   Opts.DebugInfo = GenerateDebugInfo;
+  Opts.DisableLLVMOpts = DisableLLVMOptimizations;
 
-  if (DisableLLVMOptimizations) {
-    Opts.OptimizationLevel = 0;
-    Opts.Inlining = CompileOptions::NoInlining;
-  } else {
-    if (OptSize) {
-      // -Os implies -O2
-      Opts.OptimizationLevel = 2;
-    } else {
-      Opts.OptimizationLevel = OptLevel;
-    }
+  // -Os implies -O2
+  Opts.OptimizationLevel = OptSize ? 2 : OptLevel;
 
-    // We must always run at least the always inlining pass.
-    if (Opts.OptimizationLevel > 1)
-      Opts.Inlining = CompileOptions::NormalInlining;
-    else
-      Opts.Inlining = CompileOptions::OnlyAlwaysInlining;
-  }
+  // We must always run at least the always inlining pass.
+  Opts.Inlining = (Opts.OptimizationLevel > 1) ? CompileOptions::NormalInlining
+    : CompileOptions::OnlyAlwaysInlining;
 
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
   Opts.SimplifyLibCalls = !LangOpts.NoBuiltin;
