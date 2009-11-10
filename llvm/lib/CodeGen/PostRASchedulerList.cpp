@@ -216,13 +216,14 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 
   // Check for explicit enable/disable of post-ra scheduling.
   TargetSubtarget::AntiDepBreakMode AntiDepMode = TargetSubtarget::ANTIDEP_NONE;
+  TargetSubtarget::ExcludedRCVector ExcludedRCs;
   if (EnablePostRAScheduler.getPosition() > 0) {
     if (!EnablePostRAScheduler)
       return false;
   } else {
     // Check that post-RA scheduling is enabled for this target.
     const TargetSubtarget &ST = Fn.getTarget().getSubtarget<TargetSubtarget>();
-    if (!ST.enablePostRAScheduler(OptLevel, AntiDepMode))
+    if (!ST.enablePostRAScheduler(OptLevel, AntiDepMode, ExcludedRCs))
       return false;
   }
 
@@ -243,7 +244,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
   AntiDepBreaker *ADB = 
     ((AntiDepMode == TargetSubtarget::ANTIDEP_ALL) ?
-     (AntiDepBreaker *)new AggressiveAntiDepBreaker(Fn) :
+     (AntiDepBreaker *)new AggressiveAntiDepBreaker(Fn, ExcludedRCs) :
      ((AntiDepMode == TargetSubtarget::ANTIDEP_CRITICAL) ? 
       (AntiDepBreaker *)new CriticalAntiDepBreaker(Fn) : NULL));
 

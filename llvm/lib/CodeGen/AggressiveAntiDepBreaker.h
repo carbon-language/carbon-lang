@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/Target/TargetSubtarget.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
@@ -112,7 +113,7 @@ namespace llvm {
     /// AllocatableSet - The set of allocatable registers.
     /// We'll be ignoring anti-dependencies on non-allocatable registers,
     /// because they may not be safe to break.
-    const BitVector AllocatableSet;
+    BitVector AllocatableSet;
 
     /// State - The state used to identify and rename anti-dependence
     /// registers.
@@ -124,7 +125,8 @@ namespace llvm {
     AggressiveAntiDepState *SavedState;
 
   public:
-    AggressiveAntiDepBreaker(MachineFunction& MFi);
+    AggressiveAntiDepBreaker(MachineFunction& MFi, 
+                             TargetSubtarget::ExcludedRCVector& ExcludedRCs);
     ~AggressiveAntiDepBreaker();
     
     /// GetMaxTrials - As anti-dependencies are broken, additional

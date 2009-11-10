@@ -17,6 +17,7 @@
 #include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtarget.h"
+#include "ARMBaseRegisterInfo.h"
 #include <string>
 
 namespace llvm {
@@ -129,8 +130,11 @@ protected:
   /// enablePostRAScheduler - True at 'More' optimization except
   /// for Thumb1.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                             TargetSubtarget::AntiDepBreakMode& mode) const {
-    mode = TargetSubtarget::ANTIDEP_CRITICAL;
+                             TargetSubtarget::AntiDepBreakMode& Mode,
+                             ExcludedRCVector& ExcludedRCs) const {
+    Mode = TargetSubtarget::ANTIDEP_CRITICAL;
+    ExcludedRCs.clear();
+    ExcludedRCs.push_back(&ARM::GPRRegClass);
     return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
   }
 

@@ -99,12 +99,24 @@ bool AggressiveAntiDepState::IsLive(unsigned Reg)
 
 
 AggressiveAntiDepBreaker::
-AggressiveAntiDepBreaker(MachineFunction& MFi) : 
+AggressiveAntiDepBreaker(MachineFunction& MFi,
+                         TargetSubtarget::ExcludedRCVector& ExcludedRCs) : 
   AntiDepBreaker(), MF(MFi),
   MRI(MF.getRegInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
   AllocatableSet(TRI->getAllocatableSet(MF)),
   State(NULL), SavedState(NULL) {
+  /* Remove all registers from excluded RCs from the allocatable
+     register set. */
+  for (unsigned i = 0, e = ExcludedRCs.size(); i < e; ++i) {
+    BitVector NotRenameable = TRI->getAllocatableSet(MF, ExcludedRCs[i]).flip();
+    AllocatableSet &= NotRenameable;
+  }
+
+  DEBUG(errs() << "AntiDep Renameable Registers:");
+  DEBUG(for (int r = AllocatableSet.find_first(); r != -1; 
+             r = AllocatableSet.find_next(r))
+          errs() << " " << TRI->getName(r));
 }
 
 AggressiveAntiDepBreaker::~AggressiveAntiDepBreaker() {
