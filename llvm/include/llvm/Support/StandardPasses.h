@@ -125,8 +125,6 @@ namespace llvm {
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     PM->add(createInstructionCombiningPass());  // Combine silly seq's
     
-    // FIXME: CondProp breaks critical edges, which is slow.
-    PM->add(createCondPropagationPass());       // Propagate conditionals
     PM->add(createTailCallEliminationPass());   // Eliminate tail calls
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     PM->add(createReassociatePass());           // Reassociate expressions
@@ -146,7 +144,7 @@ namespace llvm {
     // Run instcombine after redundancy elimination to exploit opportunities
     // opened up by them.
     PM->add(createInstructionCombiningPass());
-    PM->add(createCondPropagationPass());       // Propagate conditionals
+    PM->add(createJumpThreadingPass());         // Thread jumps
     PM->add(createDeadStoreEliminationPass());  // Delete dead stores
     PM->add(createAggressiveDCEPass());         // Delete dead instructions
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
