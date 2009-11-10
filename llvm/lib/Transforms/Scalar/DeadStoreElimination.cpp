@@ -87,13 +87,13 @@ static bool doesClobberMemory(Instruction *I) {
     switch (II->getIntrinsicID()) {
     default: return false;
     case Intrinsic::memset: case Intrinsic::memmove: case Intrinsic::memcpy:
-    case Intrinsic::lifetime_end: return true;
+    case Intrinsic::init_trampoline: case Intrinsic::lifetime_end: return true;
     }
   }
   return false;
 }
 
-/// isElidable - If the memory this instruction and the memory it writes to is
+/// isElidable - If the value of this instruction and the memory it writes to is
 /// unused, may we delete this instrtction?
 static bool isElidable(Instruction *I) {
   assert(doesClobberMemory(I));
@@ -111,8 +111,15 @@ static Value *getPointerOperand(Instruction *I) {
     return SI->getPointerOperand();
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
     return MI->getOperand(1);
-  assert(cast<IntrinsicInst>(I)->getIntrinsicID() == Intrinsic::lifetime_end);
-  return cast<IntrinsicInst>(I)->getOperand(2);
+  IntrinsicInst *II = cast<IntrinsicInst>(I);
+  switch (II->getIntrinsicID()) {
+    default:
+      assert(false && "Unexpected intrinsic!");
+    case Intrinsic::init_trampoline:
+      return II->getOperand(1);
+    case Intrinsic::lifetime_end:
+      return II->getOperand(2);
+  }
 }
 
 /// getStoreSize - Return the length in bytes of the write by the clobbering
@@ -129,8 +136,14 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
     Len = MI->getLength();
   } else {
     IntrinsicInst *II = cast<IntrinsicInst>(I);
-    assert(II->getIntrinsicID() == Intrinsic::lifetime_end);
-    Len = II->getOperand(0);
+    switch (II->getIntrinsicID()) {
+      default:
+        assert(false && "Unexpected intrinsic!");
+      case Intrinsic::init_trampoline:
+        return -1u;
+      case Intrinsic::lifetime_end:
+        Len = II->getOperand(0);
+    }
   }
   if (ConstantInt *LenCI = dyn_cast<ConstantInt>(Len))
     if (!LenCI->isAllOnesValue())
