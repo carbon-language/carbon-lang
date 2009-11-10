@@ -268,8 +268,8 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       // points to the '=' which means that the fixit hint won't remove any
       // extra spaces between the type and the '='.
       SourceLocation Begin = NewParam->getLocation();
-      if (IdentifierInfo *II = NewParam->getIdentifier())
-        Begin = Begin.getFileLocWithOffset(II->getLength());
+      if (NewParam->getIdentifier())
+        Begin = PP.getLocForEndOfToken(Begin);
         
       Diag(NewParam->getLocation(),
            diag::err_param_default_argument_redefinition)
