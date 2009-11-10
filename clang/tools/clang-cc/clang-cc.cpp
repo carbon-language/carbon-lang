@@ -1299,7 +1299,6 @@ static void ComputeFeatureMap(TargetInfo &Target,
 }
 
 static void InitializeCompileOptions(CompileOptions &Opts,
-                                     const LangOptions &LangOpts,
                                      const llvm::StringMap<bool> &Features) {
   using namespace codegenoptions;
   Opts.OptimizeSize = OptSize;
@@ -1314,7 +1313,7 @@ static void InitializeCompileOptions(CompileOptions &Opts,
     : CompileOptions::OnlyAlwaysInlining;
 
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
-  Opts.SimplifyLibCalls = !LangOpts.NoBuiltin;
+  Opts.SimplifyLibCalls = 1;
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
@@ -1331,7 +1330,7 @@ static void InitializeCompileOptions(CompileOptions &Opts,
     Opts.Features.push_back(Name);
   }
 
-  Opts.NoCommon = NoCommon | LangOpts.CPlusPlus;
+  Opts.NoCommon = NoCommon;
 
   // Handle -ftime-report.
   Opts.TimePasses = TimeReport;
@@ -1340,6 +1339,14 @@ static void InitializeCompileOptions(CompileOptions &Opts,
   Opts.NoImplicitFloat = NoImplicitFloat;
 
   Opts.MergeAllConstants = !NoMergeConstants;
+}
+
+static void FinalizeCompileOptions(CompileOptions &Opts,
+                                   const LangOptions &Lang) {
+  if (Lang.NoBuiltin)
+    Opts.SimplifyLibCalls = 0;
+  if (Lang.CPlusPlus)
+    Opts.NoCommon = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2157,6 +2164,10 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   // Compute the feature set, which may effect the language.
   ComputeFeatureMap(Target, Opts.getTargetFeatures());
 
+  // Initialize backend options, which may also be used to key some language
+  // options.
+  InitializeCompileOptions(Opts.getCompileOpts(), Opts.getTargetFeatures());
+
   // Initialize language options.
   LangOptions LangInfo;
 
@@ -2174,9 +2185,8 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   // Initialize the other preprocessor options.
   InitializePreprocessorOptions(Opts.getPreprocessorOpts());
 
-  // Initialize backend options.
-  InitializeCompileOptions(Opts.getCompileOpts(), Opts.getLangOpts(),
-                           Opts.getTargetFeatures());
+  // Finalize, some code generation options.
+  FinalizeCompileOptions(Opts.getCompileOpts(), Opts.getLangOpts());
 }
 
 int main(int argc, char **argv) {
