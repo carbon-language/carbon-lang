@@ -142,11 +142,14 @@ bool JumpThreading::runOnFunction(Function &F) {
             ++BBI;
           // If the terminator is the only non-phi instruction, try to nuke it.
           if (BBI->isTerminator()) {
-            bool Erased = LoopHeaders.erase(BB);
+            // Since TryToSimplifyUncondBranchFromEmptyBlock may delete the
+            // block, we have to make sure it isn't in the LoopHeaders set.  We
+            // reinsert afterward in the rare case when the block isn't deleted.
+            bool ErasedFromLoopHeaders = LoopHeaders.erase(BB);
             
             if (TryToSimplifyUncondBranchFromEmptyBlock(BB))
               Changed = true;
-            else if (Erased)
+            else if (ErasedFromLoopHeaders)
               LoopHeaders.insert(BB);
           }
         }
