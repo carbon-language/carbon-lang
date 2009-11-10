@@ -136,7 +136,6 @@ function(llvm_find_program name)
     mark_as_advanced(HAVE_${NAME})
   else(LLVM_PATH_${NAME})
     set(HAVE_${NAME} "" CACHE INTERNAL "Is ${name} available ?")
-    unset(LLVM_PATH_${NAME} CACHE)
   endif(LLVM_PATH_${NAME})
 endfunction()
 
