@@ -13,6 +13,7 @@
 
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Template.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
@@ -24,6 +25,15 @@ using namespace clang;
 static DiagnosticBuilder Diag(Diagnostic &D, SourceLocation Loc,
                               SourceManager &SrcMgr, unsigned DiagID) {
   return D.Report(FullSourceLoc(Loc, SrcMgr), DiagID);
+}
+
+
+void UnqualifiedId::setTemplateId(TemplateIdAnnotation *TemplateId) {
+  assert(TemplateId && "NULL template-id annotation?");
+  Kind = IK_TemplateId;
+  this->TemplateId = TemplateId;
+  StartLocation = TemplateId->TemplateNameLoc;
+  EndLocation = TemplateId->RAngleLoc;
 }
 
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.

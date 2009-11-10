@@ -16,6 +16,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Parse/Template.h"
 #include "ExtensionRAIIObject.h"
 using namespace clang;
 
@@ -586,13 +587,10 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Eat the template argument list and try to continue parsing this as
       // a class (or template thereof).
       TemplateArgList TemplateArgs;
-      TemplateArgIsTypeList TemplateArgIsType;
-      TemplateArgLocationList TemplateArgLocations;
       SourceLocation LAngleLoc, RAngleLoc;
       if (ParseTemplateIdAfterTemplateName(TemplateTy(), NameLoc, &SS, 
                                            true, LAngleLoc,
-                                           TemplateArgs, TemplateArgIsType,
-                                           TemplateArgLocations, RAngleLoc)) {
+                                           TemplateArgs, RAngleLoc)) {
         // We couldn't parse the template argument list at all, so don't
         // try to give any location information for the list.
         LAngleLoc = RAngleLoc = SourceLocation();
@@ -704,7 +702,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // or explicit instantiation.
     ASTTemplateArgsPtr TemplateArgsPtr(Actions,
                                        TemplateId->getTemplateArgs(),
-                                       TemplateId->getTemplateArgIsType(),
                                        TemplateId->NumArgs);
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
         TUK == Action::TUK_Declaration) {
@@ -720,7 +717,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                              TemplateId->TemplateNameLoc,
                                              TemplateId->LAngleLoc,
                                              TemplateArgsPtr,
-                                      TemplateId->getTemplateArgLocations(),
                                              TemplateId->RAngleLoc,
                                              Attr);
     } else if (TUK == Action::TUK_Reference) {
@@ -729,7 +725,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                       TemplateId->TemplateNameLoc,
                                       TemplateId->LAngleLoc,
                                       TemplateArgsPtr,
-                                      TemplateId->getTemplateArgLocations(),
                                       TemplateId->RAngleLoc);
 
       TypeResult = Actions.ActOnTagTemplateIdType(TypeResult, TUK,
@@ -777,7 +772,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                        TemplateId->TemplateNameLoc,
                        TemplateId->LAngleLoc,
                        TemplateArgsPtr,
-                       TemplateId->getTemplateArgLocations(),
                        TemplateId->RAngleLoc,
                        Attr,
                        Action::MultiTemplateParamsArg(Actions,

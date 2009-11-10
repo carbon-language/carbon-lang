@@ -14,6 +14,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Template.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
@@ -814,13 +815,9 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   // Parse the enclosed template argument list.
   SourceLocation LAngleLoc, RAngleLoc;
   TemplateArgList TemplateArgs;
-  TemplateArgIsTypeList TemplateArgIsType;
-  TemplateArgLocationList TemplateArgLocations;
   if (ParseTemplateIdAfterTemplateName(Template, Id.StartLocation,
                                        &SS, true, LAngleLoc,
                                        TemplateArgs,
-                                       TemplateArgIsType,
-                                       TemplateArgLocations,
                                        RAngleLoc))
     return true;
   
@@ -845,15 +842,10 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
     TemplateId->Kind = TNK;
     TemplateId->LAngleLoc = LAngleLoc;
     TemplateId->RAngleLoc = RAngleLoc;
-    void **Args = TemplateId->getTemplateArgs();
-    bool *ArgIsType = TemplateId->getTemplateArgIsType();
-    SourceLocation *ArgLocs = TemplateId->getTemplateArgLocations();
+    ParsedTemplateArgument *Args = TemplateId->getTemplateArgs();
     for (unsigned Arg = 0, ArgEnd = TemplateArgs.size(); 
-         Arg != ArgEnd; ++Arg) {
+         Arg != ArgEnd; ++Arg)
       Args[Arg] = TemplateArgs[Arg];
-      ArgIsType[Arg] = TemplateArgIsType[Arg];
-      ArgLocs[Arg] = TemplateArgLocations[Arg];
-    }
     
     Id.setTemplateId(TemplateId);
     return false;
@@ -861,14 +853,12 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
 
   // Bundle the template arguments together.
   ASTTemplateArgsPtr TemplateArgsPtr(Actions, TemplateArgs.data(),
-                                     TemplateArgIsType.data(),
                                      TemplateArgs.size());
   
   // Constructor and destructor names.
   Action::TypeResult Type
     = Actions.ActOnTemplateIdType(Template, NameLoc,
                                   LAngleLoc, TemplateArgsPtr,
-                                  &TemplateArgLocations[0],
                                   RAngleLoc);
   if (Type.isInvalid())
     return true;

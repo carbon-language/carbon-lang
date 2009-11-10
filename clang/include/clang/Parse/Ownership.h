@@ -654,41 +654,33 @@ namespace clang {
 #endif
   };
 
+  class ParsedTemplateArgument;
+    
   class ASTTemplateArgsPtr {
 #if !defined(DISABLE_SMART_POINTERS)
     ActionBase &Actions;
 #endif
-    void **Args;
-    bool *ArgIsType;
+    ParsedTemplateArgument *Args;
     mutable unsigned Count;
 
 #if !defined(DISABLE_SMART_POINTERS)
-    void destroy() {
-      if (!Count)
-        return;
-
-      for (unsigned i = 0; i != Count; ++i)
-        if (Args[i] && !ArgIsType[i])
-          Actions.DeleteExpr((ActionBase::ExprTy *)Args[i]);
-
-      Count = 0;
-    }
+    void destroy();
 #endif
-
+    
   public:
-    ASTTemplateArgsPtr(ActionBase &actions, void **args, bool *argIsType,
+    ASTTemplateArgsPtr(ActionBase &actions, ParsedTemplateArgument *args,
                        unsigned count) :
 #if !defined(DISABLE_SMART_POINTERS)
       Actions(actions),
 #endif
-      Args(args), ArgIsType(argIsType), Count(count) { }
+      Args(args), Count(count) { }
 
     // FIXME: Lame, not-fully-type-safe emulation of 'move semantics'.
     ASTTemplateArgsPtr(ASTTemplateArgsPtr &Other) :
 #if !defined(DISABLE_SMART_POINTERS)
       Actions(Other.Actions),
 #endif
-      Args(Other.Args), ArgIsType(Other.ArgIsType), Count(Other.Count) {
+      Args(Other.Args), Count(Other.Count) {
 #if !defined(DISABLE_SMART_POINTERS)
       Other.Count = 0;
 #endif
@@ -700,7 +692,6 @@ namespace clang {
       Actions = Other.Actions;
 #endif
       Args = Other.Args;
-      ArgIsType = Other.ArgIsType;
       Count = Other.Count;
 #if !defined(DISABLE_SMART_POINTERS)
       Other.Count = 0;
@@ -712,22 +703,20 @@ namespace clang {
     ~ASTTemplateArgsPtr() { destroy(); }
 #endif
 
-    void **getArgs() const { return Args; }
-    bool *getArgIsType() const {return ArgIsType; }
+    ParsedTemplateArgument *getArgs() const { return Args; }
     unsigned size() const { return Count; }
 
-    void reset(void **args, bool *argIsType, unsigned count) {
+    void reset(ParsedTemplateArgument *args, unsigned count) {
 #if !defined(DISABLE_SMART_POINTERS)
       destroy();
 #endif
       Args = args;
-      ArgIsType = argIsType;
       Count = count;
     }
 
-    void *operator[](unsigned Arg) const { return Args[Arg]; }
+    const ParsedTemplateArgument &operator[](unsigned Arg) const;
 
-    void **release() const {
+    ParsedTemplateArgument *release() const {
 #if !defined(DISABLE_SMART_POINTERS)
       Count = 0;
 #endif

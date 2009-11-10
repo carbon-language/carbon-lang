@@ -25,6 +25,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Designator.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Parse/Template.h"
 using namespace clang;
 
 
@@ -622,14 +623,12 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   if (Name.getKind() == UnqualifiedId::IK_TemplateId) {
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        Name.TemplateId->getTemplateArgs(),
-                                       Name.TemplateId->getTemplateArgIsType(),
                                        Name.TemplateId->NumArgs);
     return ActOnTemplateIdExpr(SS, 
                                TemplateTy::make(Name.TemplateId->Template), 
                                Name.TemplateId->TemplateNameLoc,
                                Name.TemplateId->LAngleLoc,
                                TemplateArgsPtr,
-                               Name.TemplateId->getTemplateArgLocations(),
                                Name.TemplateId->RAngleLoc);
   }
   
@@ -2501,12 +2500,10 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg Base,
     // Translate the parser's template argument list in our AST format.
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        Member.TemplateId->getTemplateArgs(),
-                                       Member.TemplateId->getTemplateArgIsType(),
                                        Member.TemplateId->NumArgs);
     
     llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
     translateTemplateArguments(TemplateArgsPtr, 
-                               Member.TemplateId->getTemplateArgLocations(),
                                TemplateArgs);
     TemplateArgsPtr.release();
     

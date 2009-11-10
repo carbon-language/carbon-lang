@@ -1632,7 +1632,6 @@ public:
                                          SourceLocation TemplateLoc,
                                          SourceLocation LAngleLoc,
                                          ASTTemplateArgsPtr TemplateArgs,
-                                         SourceLocation *TemplateArgLocs,
                                          SourceLocation RAngleLoc) {
     return TypeResult();
   };
@@ -1737,7 +1736,6 @@ public:
                                    SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
-                                   SourceLocation *TemplateArgLocs,
                                    SourceLocation RAngleLoc,
                                    AttributeList *Attr,
                               MultiTemplateParamsArg TemplateParameterLists) {
@@ -1817,7 +1815,6 @@ public:
                              SourceLocation TemplateNameLoc,
                              SourceLocation LAngleLoc,
                              ASTTemplateArgsPtr TemplateArgs,
-                             SourceLocation *TemplateArgLocs,
                              SourceLocation RAngleLoc,
                              AttributeList *Attr) {
     return DeclResult();

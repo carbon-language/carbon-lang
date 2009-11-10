@@ -2472,8 +2472,7 @@ public:
                                 AccessSpecifier AS);
 
   void translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
-                                  SourceLocation *TemplateArgLocsIn,
-                        llvm::SmallVector<TemplateArgumentLoc, 16> &TempArgs);
+                        llvm::SmallVectorImpl<TemplateArgumentLoc> &TempArgs);
     
   QualType CheckTemplateIdType(TemplateName Template,
                                SourceLocation TemplateLoc,
@@ -2486,7 +2485,6 @@ public:
   ActOnTemplateIdType(TemplateTy Template, SourceLocation TemplateLoc,
                       SourceLocation LAngleLoc,
                       ASTTemplateArgsPtr TemplateArgs,
-                      SourceLocation *TemplateArgLocs,
                       SourceLocation RAngleLoc);
 
   virtual TypeResult ActOnTagTemplateIdType(TypeResult Type,
@@ -2508,7 +2506,6 @@ public:
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,
                                        ASTTemplateArgsPtr TemplateArgs,
-                                       SourceLocation *TemplateArgLocs,
                                        SourceLocation RAngleLoc);
 
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
@@ -2529,7 +2526,6 @@ public:
                                    SourceLocation TemplateNameLoc,
                                    SourceLocation LAngleLoc,
                                    ASTTemplateArgsPtr TemplateArgs,
-                                   SourceLocation *TemplateArgLocs,
                                    SourceLocation RAngleLoc,
                                    AttributeList *Attr,
                                  MultiTemplateParamsArg TemplateParameterLists);
@@ -2570,7 +2566,6 @@ public:
                              SourceLocation TemplateNameLoc,
                              SourceLocation LAngleLoc,
                              ASTTemplateArgsPtr TemplateArgs,
-                             SourceLocation *TemplateArgLocs,
                              SourceLocation RAngleLoc,
                              AttributeList *Attr);
 

@@ -331,7 +331,7 @@ private:
   /// either "commit the consumed tokens" or revert to the previously marked
   /// token position. Example:
   ///
-  ///   TentativeParsingAction TPA;
+  ///   TentativeParsingAction TPA(*this);
   ///   ConsumeToken();
   ///   ....
   ///   TPA.Revert();
@@ -1347,9 +1347,7 @@ private:
   DeclPtrTy ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
   DeclPtrTy ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
   // C++ 14.3: Template arguments [temp.arg]
-  typedef llvm::SmallVector<void *, 16> TemplateArgList;
-  typedef llvm::SmallVector<bool, 16> TemplateArgIsTypeList;
-  typedef llvm::SmallVector<SourceLocation, 16> TemplateArgLocationList;
+  typedef llvm::SmallVector<ParsedTemplateArgument, 16> TemplateArgList;
 
   bool ParseTemplateIdAfterTemplateName(TemplateTy Template,
                                         SourceLocation TemplateNameLoc,
@@ -1357,8 +1355,6 @@ private:
                                         bool ConsumeLastToken,
                                         SourceLocation &LAngleLoc,
                                         TemplateArgList &TemplateArgs,
-                                    TemplateArgIsTypeList &TemplateArgIsType,
-                               TemplateArgLocationList &TemplateArgLocations,
                                         SourceLocation &RAngleLoc);
 
   bool AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
@@ -1367,10 +1363,8 @@ private:
                                SourceLocation TemplateKWLoc = SourceLocation(),
                                bool AllowTypeAnnotation = true);
   void AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS = 0);
-  bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs,
-                                 TemplateArgIsTypeList &TemplateArgIsType,
-                                 TemplateArgLocationList &TemplateArgLocations);
-  void *ParseTemplateArgument(bool &ArgIsType);
+  bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
+  ParsedTemplateArgument ParseTemplateArgument();
   DeclPtrTy ParseExplicitInstantiation(SourceLocation ExternLoc,
                                        SourceLocation TemplateLoc,
                                        SourceLocation &DeclEnd);

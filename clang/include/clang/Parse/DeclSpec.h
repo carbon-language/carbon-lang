@@ -25,7 +25,8 @@ namespace clang {
   class IdentifierInfo;
   class Preprocessor;
   class Declarator;
-
+  struct TemplateIdAnnotation;
+  
 /// DeclSpec - This class captures information about "declaration specifiers",
 /// which encompasses storage-class-specifiers, type-specifiers,
 /// type-qualifiers, and function-specifiers.
@@ -642,13 +643,7 @@ public:
   /// \param TemplateId the template-id annotation that describes the parsed
   /// template-id. This UnqualifiedId instance will take ownership of the
   /// \p TemplateId and will free it on destruction.
-  void setTemplateId(TemplateIdAnnotation *TemplateId) {
-    assert(TemplateId && "NULL template-id annotation?");
-    Kind = IK_TemplateId;
-    this->TemplateId = TemplateId;
-    StartLocation = TemplateId->TemplateNameLoc;
-    EndLocation = TemplateId->RAngleLoc;
-  }
+  void setTemplateId(TemplateIdAnnotation *TemplateId);
 
   /// \brief Return the source range that covers this unqualified-id.
   SourceRange getSourceRange() const { 

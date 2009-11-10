@@ -16,6 +16,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Template.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/Support/Compiler.h"
@@ -1121,21 +1122,43 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
 /// \brief Translates template arguments as provided by the parser
 /// into template arguments used by semantic analysis.
 void Sema::translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
-                                      SourceLocation *TemplateArgLocs,
-                  llvm::SmallVector<TemplateArgumentLoc, 16> &TemplateArgs) {
+                     llvm::SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs) {
   TemplateArgs.reserve(TemplateArgsIn.size());
 
-  void **Args = TemplateArgsIn.getArgs();
-  bool *ArgIsType = TemplateArgsIn.getArgIsType();
-  for (unsigned Arg = 0, Last = TemplateArgsIn.size(); Arg != Last; ++Arg) {
-    if (ArgIsType[Arg]) {
+  for (unsigned I = 0, Last = TemplateArgsIn.size(); I != Last; ++I) {
+    const ParsedTemplateArgument &Arg = TemplateArgsIn[I];
+    switch (Arg.getKind()) {
+    case ParsedTemplateArgument::Type: {
       DeclaratorInfo *DI;
-      QualType T = Sema::GetTypeFromParser(Args[Arg], &DI);
-      if (!DI) DI = Context.getTrivialDeclaratorInfo(T, TemplateArgLocs[Arg]);
+      QualType T = Sema::GetTypeFromParser(Arg.getAsType(), &DI);
+      if (!DI) DI = Context.getTrivialDeclaratorInfo(T, Arg.getLocation());
       TemplateArgs.push_back(TemplateArgumentLoc(TemplateArgument(T), DI));
-    } else {
-      Expr *E = reinterpret_cast<Expr *>(Args[Arg]);
+      break;
+    }
+        
+    case ParsedTemplateArgument::NonType: {
+      Expr *E = static_cast<Expr *>(Arg.getAsExpr());
       TemplateArgs.push_back(TemplateArgumentLoc(TemplateArgument(E), E));
+      break;
+    }
+      
+    case ParsedTemplateArgument::Template: {
+      TemplateName Template
+        = TemplateName::getFromVoidPointer(Arg.getAsTemplate().get());
+      
+      // FIXME: This is an egregious hack. We turn a nicely-parsed template name
+      // into a DeclRefExpr, because that's how we previously parsed template
+      // template parameters. This will disappear as part of the upcoming
+      // implementation of template template parameters.
+      const CXXScopeSpec &SS = Arg.getScopeSpec();
+      Expr *E = DeclRefExpr::Create(Context, 
+                                    (NestedNameSpecifier *)SS.getScopeRep(),
+                                    SS.getRange(), 
+                                    Template.getAsTemplateDecl(),
+                                    Arg.getLocation(),
+                                    Context.DependentTy, false, false);
+      TemplateArgs.push_back(TemplateArgumentLoc(TemplateArgument(E), E));
+    }
     }
   }
 }
@@ -1228,13 +1251,12 @@ Action::TypeResult
 Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
                           SourceLocation LAngleLoc,
                           ASTTemplateArgsPtr TemplateArgsIn,
-                          SourceLocation *TemplateArgLocsIn,
                           SourceLocation RAngleLoc) {
   TemplateName Template = TemplateD.getAsVal<TemplateName>();
 
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-  translateTemplateArguments(TemplateArgsIn, TemplateArgLocsIn, TemplateArgs);
+  translateTemplateArguments(TemplateArgsIn, TemplateArgs);
 
   QualType Result = CheckTemplateIdType(Template, TemplateLoc, LAngleLoc,
                                         TemplateArgs.data(),
@@ -1336,13 +1358,12 @@ Sema::OwningExprResult Sema::ActOnTemplateIdExpr(const CXXScopeSpec &SS,
                                                  SourceLocation TemplateNameLoc,
                                                  SourceLocation LAngleLoc,
                                               ASTTemplateArgsPtr TemplateArgsIn,
-                                                SourceLocation *TemplateArgSLs,
                                                  SourceLocation RAngleLoc) {
   TemplateName Template = TemplateD.getAsVal<TemplateName>();
 
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-  translateTemplateArguments(TemplateArgsIn, TemplateArgSLs, TemplateArgs);
+  translateTemplateArguments(TemplateArgsIn, TemplateArgs);
   TemplateArgsIn.release();
 
   return BuildTemplateIdExpr((NestedNameSpecifier *)SS.getScopeRep(),
@@ -2803,7 +2824,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,
                                        ASTTemplateArgsPtr TemplateArgsIn,
-                                       SourceLocation *TemplateArgLocs,
                                        SourceLocation RAngleLoc,
                                        AttributeList *Attr,
                                MultiTemplateParamsArg TemplateParameterLists) {
@@ -2898,7 +2918,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-  translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
+  translateTemplateArguments(TemplateArgsIn, TemplateArgs);
 
   // Check that the template argument list is well-formed for this
   // template.
@@ -3704,7 +3724,6 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                  SourceLocation TemplateNameLoc,
                                  SourceLocation LAngleLoc,
                                  ASTTemplateArgsPtr TemplateArgsIn,
-                                 SourceLocation *TemplateArgLocs,
                                  SourceLocation RAngleLoc,
                                  AttributeList *Attr) {
   // Find the class template we're specializing
@@ -3743,7 +3762,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-  translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
+  translateTemplateArguments(TemplateArgsIn, TemplateArgs);
 
   // Check that the template argument list is well-formed for this
   // template.
@@ -4126,10 +4145,8 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        TemplateId->getTemplateArgs(),
-                                       TemplateId->getTemplateArgIsType(),
                                        TemplateId->NumArgs);
     translateTemplateArguments(TemplateArgsPtr,
-                               TemplateId->getTemplateArgLocations(),
                                TemplateArgs);
     HasExplicitTemplateArgs = true;
     TemplateArgsPtr.release();

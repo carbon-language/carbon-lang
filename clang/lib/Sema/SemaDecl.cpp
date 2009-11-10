@@ -24,6 +24,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Template.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1669,7 +1670,7 @@ DeclarationName Sema::GetNameFromUnqualifiedId(UnqualifiedId &Name) {
       
     case UnqualifiedId::IK_TemplateId: {
       TemplateName TName
-      = TemplateName::getFromVoidPointer(Name.TemplateId->Template);    
+        = TemplateName::getFromVoidPointer(Name.TemplateId->Template);    
       if (TemplateDecl *Template = TName.getAsTemplateDecl())
         return Template->getDeclName();
       if (OverloadedFunctionDecl *Ovl = TName.getAsOverloadedFunctionDecl())
@@ -2835,10 +2836,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        TemplateId->getTemplateArgs(),
-                                       TemplateId->getTemplateArgIsType(),
                                        TemplateId->NumArgs);
     translateTemplateArguments(TemplateArgsPtr,
-                               TemplateId->getTemplateArgLocations(),
                                TemplateArgs);
     TemplateArgsPtr.release();
     
