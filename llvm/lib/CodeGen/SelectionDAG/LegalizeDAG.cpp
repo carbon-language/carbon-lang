@@ -1813,10 +1813,19 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         CV.push_back(const_cast<ConstantFP *>(V->getConstantFPValue()));
       } else if (ConstantSDNode *V =
                  dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-        CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
+        if (OpVT==EltVT)
+          CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
+        else {
+          // If OpVT and EltVT don't match, EltVT is not legal and the
+          // element values have been promoted/truncated earlier.  Undo this;
+          // we don't want a v16i8 to become a v16i32 for example.
+          const ConstantInt *CI = V->getConstantIntValue();
+          CV.push_back(ConstantInt::get(EltVT.getTypeForEVT(*DAG.getContext()),
+                                        CI->getZExtValue()));
+        }
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-        const Type *OpNTy = OpVT.getTypeForEVT(*DAG.getContext());
+        const Type *OpNTy = EltVT.getTypeForEVT(*DAG.getContext());
         CV.push_back(UndefValue::get(OpNTy));
       }
     }
