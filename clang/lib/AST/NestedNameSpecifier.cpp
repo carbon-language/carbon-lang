@@ -167,7 +167,7 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
                                                                  InnerPolicy);
     } else {
       // Print the type normally
-      T->getAsStringInternal(TypeStr, InnerPolicy);
+      TypeStr = QualType(T, 0).getAsString(InnerPolicy);
     }
     OS << TypeStr;
     break;

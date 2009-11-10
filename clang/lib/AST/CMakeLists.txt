@@ -30,6 +30,7 @@ add_clang_library(clangAST
   TemplateName.cpp
   Type.cpp
   TypeLoc.cpp
+  TypePrinter.cpp
   )
 
 add_dependencies(clangAST ClangDiagnosticAST)

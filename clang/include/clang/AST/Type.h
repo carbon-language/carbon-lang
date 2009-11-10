@@ -892,8 +892,6 @@ public:
 
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   void dump() const;
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const = 0;
   static bool classof(const Type *) { return true; }
 };
 
@@ -979,9 +977,6 @@ public:
     return TypeKind >= Float && TypeKind <= LongDouble;
   }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
 };
@@ -1004,9 +999,6 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   static bool classof(const Type *T) { return T->getTypeClass() == FixedWidthInt; }
   static bool classof(const FixedWidthIntType *) { return true; }
 };
@@ -1023,9 +1015,6 @@ class ComplexType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 public:
   QualType getElementType() const { return ElementType; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -1051,9 +1040,6 @@ class PointerType : public Type, public llvm::FoldingSetNode {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   QualType getPointeeType() const { return PointeeType; }
 
@@ -1086,9 +1072,6 @@ public:
 
   // Get the pointee type. Pointee is required to always be a function type.
   QualType getPointeeType() const { return PointeeType; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -1173,9 +1156,6 @@ class LValueReferenceType : public ReferenceType {
   {}
   friend class ASTContext; // ASTContext creates these
 public:
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1193,9 +1173,6 @@ class RValueReferenceType : public ReferenceType {
   }
   friend class ASTContext; // ASTContext creates these
 public:
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1224,9 +1201,6 @@ public:
   QualType getPointeeType() const { return PointeeType; }
 
   const Type *getClass() const { return Class; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -1318,9 +1292,6 @@ protected:
   friend class ASTContext;  // ASTContext creates these.
 public:
   const llvm::APInt &getSize() const { return Size; }
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1352,9 +1323,6 @@ class IncompleteArrayType : public ArrayType {
     : ArrayType(IncompleteArray, et, can, sm, tq) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1418,9 +1386,6 @@ public:
   SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
   SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1474,9 +1439,6 @@ public:
   SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
   SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1526,9 +1488,6 @@ public:
   QualType getElementType() const { return ElementType; }
   SourceLocation getAttributeLoc() const { return loc; }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1570,9 +1529,6 @@ public:
 
   QualType getElementType() const { return ElementType; }
   unsigned getNumElements() const { return NumElements; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -1649,9 +1605,6 @@ public:
       return unsigned(idx-1) < NumElements;
     return false;
   }
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1714,9 +1667,6 @@ class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -1828,9 +1778,6 @@ public:
     return exception_begin() + NumExceptions;
   }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -1872,9 +1819,6 @@ public:
   bool isSugared() const { return true; }
   QualType desugar() const;
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
   static bool classof(const TypedefType *) { return true; }
 };
@@ -1894,9 +1838,6 @@ public:
 
   /// \brief Returns whether this type directly provides sugar.
   bool isSugared() const { return true; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExpr; }
   static bool classof(const TypeOfExprType *) { return true; }
@@ -1940,9 +1881,6 @@ public:
   /// \brief Returns whether this type directly provides sugar.
   bool isSugared() const { return true; }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOf; }
   static bool classof(const TypeOfType *) { return true; }
 };
@@ -1968,9 +1906,6 @@ public:
 
   /// \brief Returns whether this type directly provides sugar.
   bool isSugared() const { return !isDependentType(); }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Decltype; }
   static bool classof(const DecltypeType *) { return true; }
@@ -2015,9 +1950,6 @@ public:
   /// defined.
   bool isBeingDefined() const { return decl.getInt(); }
   void setBeingDefined(bool Def) const { decl.setInt(Def? 1 : 0); }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
@@ -2133,9 +2065,6 @@ public:
     }
   }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getUnderlyingType(), getTagKind());
   }
@@ -2170,9 +2099,6 @@ public:
   unsigned getIndex() const { return Index; }
   bool isParameterPack() const { return ParameterPack; }
   IdentifierInfo *getName() const { return Name; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -2226,9 +2152,6 @@ public:
   QualType getReplacementType() const {
     return getCanonicalTypeInternal();
   }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return true; }
   QualType desugar() const { return getReplacementType(); }
@@ -2325,9 +2248,6 @@ public:
   /// \precondition @c isArgType(Arg)
   const TemplateArgument &getArg(unsigned Idx) const;
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return !isDependentType(); }
   QualType desugar() const { return getCanonicalTypeInternal(); }
 
@@ -2378,9 +2298,6 @@ public:
 
   /// \brief Returns whether this type directly provides sugar.
   bool isSugared() const { return true; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, NNS, NamedType);
@@ -2456,9 +2373,6 @@ public:
     return Name.dyn_cast<const TemplateSpecializationType *>();
   }
 
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -2508,9 +2422,6 @@ public:
   qual_iterator qual_begin() const { return Protocols.begin(); }
   qual_iterator qual_end() const   { return Protocols.end(); }
   bool qual_empty() const { return Protocols.size() == 0; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -2597,8 +2508,6 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType T,
                       ObjCProtocolDecl **protocols, unsigned NumProtocols);
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCObjectPointer;
   }
