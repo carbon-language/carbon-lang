@@ -245,3 +245,42 @@ Y:
         ret i32 2
 }
 
+
+;;; Verify that we can handle constraint propagation through "xor x, 1".
+define i32 @test9(i1 %cond, i1 %cond2) {
+Entry:
+; CHECK: @test9
+	%v1 = call i32 @f1()
+	br i1 %cond, label %Merge, label %F1
+
+; CHECK: Entry:
+; CHECK-NEXT:  %v1 = call i32 @f1()
+; CHECK-NEXT:  br i1 %cond, label %F2, label %Merge
+
+F1:
+	%v2 = call i32 @f2()
+	br label %Merge
+
+Merge:
+	%B = phi i32 [%v1, %Entry], [%v2, %F1]
+        %M = icmp eq i32 %B, %v1
+        %M1 = xor i1 %M, 1
+        %N = icmp eq i32 %B, 47
+        %O = and i1 %M1, %N
+	br i1 %O, label %T2, label %F2
+
+; CHECK: Merge:
+; CHECK-NOT: phi
+; CHECK-NEXT:   %v2 = call i32 @f2()
+
+T2:
+	%Q = zext i1 %M to i32
+	ret i32 %Q
+
+F2:
+	ret i32 %B
+; CHECK: F2:
+; CHECK-NEXT: phi i32
+}
+
+

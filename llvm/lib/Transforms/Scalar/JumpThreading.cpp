@@ -299,8 +299,20 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       return !Result.empty();
     }
     
-    // TODO: Should handle the NOT form of XOR.
-    
+    // Handle the NOT form of XOR.
+    if (I->getOpcode() == Instruction::Xor &&
+        isa<ConstantInt>(I->getOperand(1)) &&
+        cast<ConstantInt>(I->getOperand(1))->isOne()) {
+      ComputeValueKnownInPredecessors(I->getOperand(0), BB, Result);
+      if (Result.empty())
+        return false;
+
+      // Invert the known values.
+      for (unsigned i = 0, e = Result.size(); i != e; ++i)
+        Result[i].first =
+          cast<ConstantInt>(ConstantExpr::getNot(Result[i].first));
+      return true;
+    }
   }
   
   // Handle compare with phi operand, where the PHI is defined in this block.
