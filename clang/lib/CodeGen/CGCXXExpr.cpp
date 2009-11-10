@@ -218,6 +218,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   if (NullCheckResult) {
     Builder.CreateBr(NewEnd);
+    NewNotNull = Builder.GetInsertBlock();
     EmitBlock(NewNull);
     Builder.CreateBr(NewEnd);
     EmitBlock(NewEnd);
