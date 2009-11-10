@@ -54,7 +54,7 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
     // because people know what they are doing when they intentionally 
     // dereference the pointer.
     Expr *ArgEx = E->getArgumentExpr();
-    if (!isa<DeclRefExpr>(ArgEx))
+    if (!isa<DeclRefExpr>(ArgEx->IgnoreParens()))
       return;
 
     SourceRange R = ArgEx->getSourceRange();
