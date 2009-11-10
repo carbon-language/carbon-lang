@@ -733,6 +733,10 @@ public:
 };
 
 llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
+  // Only classes that have virtual bases need a VTT.
+  if (RD->getNumVBases() == 0)
+    return 0;
+
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   mangleCXXVTT(getMangleContext(), RD, Out);
