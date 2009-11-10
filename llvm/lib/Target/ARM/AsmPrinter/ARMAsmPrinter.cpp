@@ -715,11 +715,8 @@ ARMAsmPrinter::printThumbAddrModeRI5Operand(const MachineInstr *MI, int Op,
   O << "[" << getRegisterName(MO1.getReg());
   if (MO3.getReg())
     O << ", " << getRegisterName(MO3.getReg());
-  else if (unsigned ImmOffs = MO2.getImm()) {
-    O << ", #" << ImmOffs;
-    if (Scale > 1)
-      O << " * " << Scale;
-  }
+  else if (unsigned ImmOffs = MO2.getImm())
+    O << ", #" << ImmOffs * Scale;
   O << "]";
 }
 
