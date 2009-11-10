@@ -1330,7 +1330,6 @@ static void InitializeCompileOptions(CompileOptions &Opts,
       Opts.Inlining = CompileOptions::OnlyAlwaysInlining;
   }
 
-  // FIXME: There are llvm-gcc options to control these selectively.
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
   Opts.SimplifyLibCalls = !LangOpts.NoBuiltin;
 
@@ -1356,7 +1355,7 @@ static void InitializeCompileOptions(CompileOptions &Opts,
 
   Opts.DisableRedZone = DisableRedZone;
   Opts.NoImplicitFloat = NoImplicitFloat;
-  
+
   Opts.MergeAllConstants = !NoMergeConstants;
 }
 
@@ -1692,11 +1691,9 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
       OS.reset(ComputeOutFile(CompOpts, InFile, "bc", true, OutPath));
     }
 
-    CompileOptions Opts;
-    InitializeCompileOptions(Opts, PP.getLangOptions(),
-                             CompOpts.getTargetFeatures());
     return CreateBackendConsumer(Act, PP.getDiagnostics(), PP.getLangOptions(),
-                                 Opts, InFile, OS.get(), Context);
+                                 CompOpts.getCompileOpts(), InFile, OS.get(),
+                                 Context);
   }
 
   case RewriteObjC:
@@ -2177,10 +2174,10 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
 
   // Compute the feature set, which may effect the language.
   ComputeFeatureMap(Target, Opts.getTargetFeatures());
-  
+
   // Initialize language options.
   LangOptions LangInfo;
-  
+
   // FIXME: These aren't used during operations on ASTs. Split onto a separate
   // code path to make this obvious.
   if (LK != langkind_ast) {
@@ -2194,6 +2191,10 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
 
   // Initialize the other preprocessor options.
   InitializePreprocessorOptions(Opts.getPreprocessorOpts());
+
+  // Initialize backend options.
+  InitializeCompileOptions(Opts.getCompileOpts(), Opts.getLangOpts(),
+                           Opts.getTargetFeatures());
 }
 
 int main(int argc, char **argv) {
