@@ -169,6 +169,7 @@ namespace {
       DeclContext *Common = UD->getNominatedNamespace();
       while (!Common->Encloses(EffectiveDC))
         Common = Common->getParent();
+      Common = Common->getPrimaryContext();
       
       list.push_back(UnqualUsingEntry(UD->getNominatedNamespace(), Common));
     }
@@ -187,7 +188,7 @@ namespace {
 
     std::pair<const_iterator,const_iterator>
     getNamespacesFor(DeclContext *DC) const {
-      return std::equal_range(begin(), end(), DC,
+      return std::equal_range(begin(), end(), DC->getPrimaryContext(),
                               UnqualUsingEntry::Comparator());
     }
   };

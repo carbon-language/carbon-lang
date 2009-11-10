@@ -230,7 +230,7 @@ def ext_ellipsis_exception_spec : Extension<
 def err_expected_catch : Error<"expected catch">;
 def err_expected_lbrace_or_comma : Error<"expected '{' or ','">;
 def err_using_namespace_in_class : Error<
-  "'using namespace' in class not allowed">;
+  "'using namespace' is not allowed in classes">;
 def err_ident_in_pseudo_dtor_not_a_type : Error<
   "identifier %0 in pseudo-destructor expression does not name a type">;
 
