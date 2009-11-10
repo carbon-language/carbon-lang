@@ -452,8 +452,8 @@ def main():
         print '-- Test Suites --'
         suitesAndTests = suitesAndTests.items()
         suitesAndTests.sort(key = lambda (ts,_): ts.name)
-        for ts,tests in suitesAndTests:
-            print '  %s - %d tests' %(ts.name, len(tests))
+        for ts,ts_tests in suitesAndTests:
+            print '  %s - %d tests' %(ts.name, len(ts_tests))
             print '    Source Root: %s' % ts.source_root
             print '    Exec Root  : %s' % ts.exec_root
 
