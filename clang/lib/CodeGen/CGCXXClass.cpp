@@ -127,7 +127,14 @@ CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
     // Just cast back.
     return Builder.CreateBitCast(BaseValue, BasePtrTy);
   }
-  
+
+  llvm::Value *Offset = 
+    GetCXXBaseClassOffset(*this, BaseValue, ClassDecl, BaseClassDecl);
+
+  // If there is no offset, simply cast the pointer and return it.
+  if (!Offset)
+    return Builder.CreateBitCast(BaseValue, BasePtrTy);
+
   llvm::BasicBlock *CastNull = 0;
   llvm::BasicBlock *CastNotNull = 0;
   llvm::BasicBlock *CastEnd = 0;
@@ -145,15 +152,10 @@ CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
   }
   
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-
-  llvm::Value *Offset = 
-    GetCXXBaseClassOffset(*this, BaseValue, ClassDecl, BaseClassDecl);
   
-  if (Offset) {
-    // Apply the offset.
-    BaseValue = Builder.CreateBitCast(BaseValue, Int8PtrTy);
-    BaseValue = Builder.CreateGEP(BaseValue, Offset, "add.ptr");
-  }
+  // Apply the offset.
+  BaseValue = Builder.CreateBitCast(BaseValue, Int8PtrTy);
+  BaseValue = Builder.CreateGEP(BaseValue, Offset, "add.ptr");
   
   // Cast back.
   BaseValue = Builder.CreateBitCast(BaseValue, BasePtrTy);
