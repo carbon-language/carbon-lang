@@ -418,6 +418,8 @@ def VNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
 // Misc.
 //
 
+// APSR is the application level alias of CPSR. This FPSCR N, Z, C, V flags
+// to APSR.
 let Defs = [CPSR], Uses = [FPSCR] in
 def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
                    "\tAPSR_nzcv, FPSCR",
