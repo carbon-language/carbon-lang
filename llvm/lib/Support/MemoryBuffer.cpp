@@ -70,7 +70,7 @@ namespace {
 class MemoryBufferMem : public MemoryBuffer {
   std::string FileID;
 public:
-  MemoryBufferMem(const char *Start, const char *End, const char *FID,
+  MemoryBufferMem(const char *Start, const char *End, StringRef FID,
                   bool Copy = false)
   : FileID(FID) {
     if (!Copy)
@@ -107,7 +107,7 @@ MemoryBuffer *MemoryBuffer::getMemBufferCopy(const char *StartPtr,
 /// initialize the memory allocated by this method.  The memory is owned by
 /// the MemoryBuffer object.
 MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
-                                                  const char *BufferName) {
+                                                  StringRef BufferName) {
   char *Buf = (char *)malloc((Size+1) * sizeof(char));
   if (!Buf) return 0;
   Buf[Size] = 0;
@@ -134,17 +134,12 @@ MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size,
 /// if the Filename is "-".  If an error occurs, this returns null and fills
 /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
 /// returns an empty buffer.
-MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *Filename,
+MemoryBuffer *MemoryBuffer::getFileOrSTDIN(StringRef Filename,
                                            std::string *ErrStr,
                                            int64_t FileSize) {
-  if (Filename[0] != '-' || Filename[1] != 0)
-    return getFile(Filename, ErrStr, FileSize);
-  MemoryBuffer *M = getSTDIN();
-  if (M) return M;
-
-  // If stdin was empty, M is null.  Cons up an empty memory buffer now.
-  const char *EmptyStr = "";
-  return MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<stdin>");
+  if (Filename == "-")
+    return getSTDIN();
+  return getFile(Filename, ErrStr, FileSize);
 }
 
 //===----------------------------------------------------------------------===//
@@ -158,7 +153,7 @@ namespace {
 class MemoryBufferMMapFile : public MemoryBuffer {
   std::string Filename;
 public:
-  MemoryBufferMMapFile(const char *filename, const char *Pages, uint64_t Size)
+  MemoryBufferMMapFile(StringRef filename, const char *Pages, uint64_t Size)
     : Filename(filename) {
     init(Pages, Pages+Size);
   }
@@ -173,13 +168,13 @@ public:
 };
 }
 
-MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
+MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
                                     int64_t FileSize) {
   int OpenFlags = 0;
 #ifdef O_BINARY
   OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
-  int FD = ::open(Filename, O_RDONLY|OpenFlags);
+  int FD = ::open(Filename.str().c_str(), O_RDONLY|OpenFlags);
   if (FD == -1) {
     if (ErrStr) *ErrStr = "could not open file";
     return 0;
@@ -203,6 +198,8 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
   // for small files, because this can severely fragment our address space. Also
   // don't try to map files that are exactly a multiple of the system page size,
   // as the file would not have the required null terminator.
+  //
+  // FIXME: Can we just mmap an extra page in the latter case?
   if (FileSize >= 4096*4 &&
       (FileSize & (sys::Process::GetPageSize()-1)) != 0) {
     if (const char *Pages = sys::Path::MapInFilePages(FD, FileSize)) {
@@ -262,6 +259,9 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
   std::vector<char> FileData;
 
   // Read in all of the data from stdin, we cannot mmap stdin.
+  //
+  // FIXME: That isn't necessarily true, we should try to mmap stdin and
+  // fallback if it fails.
   sys::Program::ChangeStdinToBinary();
   size_t ReadBytes;
   do {
@@ -271,8 +271,6 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
 
   FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
   size_t Size = FileData.size();
-  if (Size <= 1)
-    return 0;
   MemoryBuffer *B = new STDINBufferFile();
   B->initCopyOf(&FileData[0], &FileData[Size-1]);
   return B;

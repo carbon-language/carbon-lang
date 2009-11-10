@@ -1987,13 +1987,15 @@ int LLVMCreateMemoryBufferWithContentsOfFile(const char *Path,
 
 int LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
                                     char **OutMessage) {
-  if (MemoryBuffer *MB = MemoryBuffer::getSTDIN()) {
-    *OutMemBuf = wrap(MB);
-    return 0;
+  MemoryBuffer *MB = MemoryBuffer::getSTDIN();
+  if (!MB->getBufferSize()) {
+    delete MB;
+    *OutMessage = strdup("stdin is empty.");
+    return 1;
   }
-  
-  *OutMessage = strdup("stdin is empty.");
-  return 1;
+
+  *OutMemBuf = wrap(MB);
+  return 0;
 }
 
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf) {

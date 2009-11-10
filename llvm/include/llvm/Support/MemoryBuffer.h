@@ -57,7 +57,7 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.  If FileSize is
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
-  static MemoryBuffer *getFile(const char *Filename,
+  static MemoryBuffer *getFile(StringRef Filename,
                                std::string *ErrStr = 0,
                                int64_t FileSize = -1);
 
@@ -84,29 +84,18 @@ public:
   /// memory allocated by this method.  The memory is owned by the MemoryBuffer
   /// object.
   static MemoryBuffer *getNewUninitMemBuffer(size_t Size,
-                                             const char *BufferName = "");
+                                             StringRef BufferName = "");
 
-  /// getSTDIN - Read all of stdin into a file buffer, and return it.  This
-  /// returns null if stdin is empty.
+  /// getSTDIN - Read all of stdin into a file buffer, and return it.
   static MemoryBuffer *getSTDIN();
 
 
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and fills
-  /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
-  /// returns an empty buffer.
-  static MemoryBuffer *getFileOrSTDIN(const char *Filename,
+  /// in *ErrStr with a reason.
+  static MemoryBuffer *getFileOrSTDIN(StringRef Filename,
                                       std::string *ErrStr = 0,
                                       int64_t FileSize = -1);
-
-  /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
-  /// if the Filename is "-".  If an error occurs, this returns null and fills
-  /// in *ErrStr with a reason.
-  static MemoryBuffer *getFileOrSTDIN(const std::string &FN,
-                                      std::string *ErrStr = 0,
-                                      int64_t FileSize = -1) {
-    return getFileOrSTDIN(FN.c_str(), ErrStr, FileSize);
-  }
 };
 
 } // end namespace llvm

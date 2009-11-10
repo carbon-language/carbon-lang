@@ -160,14 +160,17 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
   // Check for a file of name "-", which means "read standard input"
   if (File.str() == "-") {
     std::auto_ptr<Module> M;
-    if (MemoryBuffer *Buffer = MemoryBuffer::getSTDIN()) {
+    MemoryBuffer *Buffer = MemoryBuffer::getSTDIN();
+    if (!Buffer->getBufferSize()) {
+      delete Buffer;
+      Error = "standard input is empty";
+    } else {
       M.reset(ParseBitcodeFile(Buffer, Context, &Error));
       delete Buffer;
       if (M.get())
         if (!LinkInModule(M.get(), &Error))
           return false;
-    } else 
-      Error = "standard input is empty";
+    }
     return error("Cannot link stdin: " + Error);
   }
 
