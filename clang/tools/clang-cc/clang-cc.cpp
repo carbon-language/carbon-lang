@@ -14,13 +14,6 @@
 //   clang [options] file1 file2 - Read these files.
 //
 //===----------------------------------------------------------------------===//
-//
-// TODO: Options to support:
-//
-//   -Wfatal-errors
-//   -ftabstop=width
-//
-//===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
@@ -446,7 +439,6 @@ static void InitializeObjCOptions(LangOptions &Options) {
 
 
 static void InitializeLangOptions(LangOptions &Options, LangKind LK){
-  // FIXME: implement -fpreprocessed mode.
   bool NoPreprocess = false;
 
   switch (LK) {
@@ -641,7 +633,6 @@ static llvm::cl::opt<std::string>
 MainFileName("main-file-name",
              llvm::cl::desc("Main file name to use for debug info"));
 
-// FIXME: Also add an "-fno-access-control" option.
 static llvm::cl::opt<bool>
 AccessControl("faccess-control",
               llvm::cl::desc("Enable C++ access control"));
@@ -963,10 +954,6 @@ RelocatablePCH("relocatable-pch",
 // This tool exports a large number of command line options to control how the
 // preprocessor searches for header files.  At root, however, the Preprocessor
 // object takes a very simple interface: a list of directories to search for
-//
-// FIXME: -nostdinc++
-// FIXME: -imultilib
-//
 
 static llvm::cl::opt<bool>
 nostdinc("nostdinc", llvm::cl::desc("Disable standard #include directories"));
@@ -1341,8 +1328,8 @@ static void InitializeCompileOptions(CompileOptions &Opts,
   Opts.Features.clear();
   for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it) {
-    // FIXME: If we are completely confident that we have the right
-    // set, we only need to pass the minuses.
+    // FIXME: If we are completely confident that we have the right set, we only
+    // need to pass the minuses.
     std::string Name(it->second ? "+" : "-");
     Name += it->first();
     Opts.Features.push_back(Name);
@@ -1420,7 +1407,6 @@ static llvm::cl::list<std::string>
 DependencyTargets("MT",
          llvm::cl::desc("Specify target for dependency"));
 
-// FIXME: Implement feature
 static llvm::cl::opt<bool>
 PhonyDependencyTarget("MP",
             llvm::cl::desc("Create phony target for each dependency "
