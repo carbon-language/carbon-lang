@@ -477,6 +477,34 @@ static const Type *getPromotedType(const Type *Ty) {
   return Ty;
 }
 
+/// ShouldChangeType - Return true if it is desirable to convert a computation
+/// from 'From' to 'To'.  We don't want to convert from a legal to an illegal
+/// type for example, or from a smaller to a larger illegal type.
+static bool ShouldChangeType(const Type *From, const Type *To,
+                             const TargetData *TD) {
+  assert(isa<IntegerType>(From) && isa<IntegerType>(To));
+  
+  // If we don't have TD, we don't know if the source/dest are legal.
+  if (!TD) return false;
+  
+  unsigned FromWidth = From->getPrimitiveSizeInBits();
+  unsigned ToWidth = To->getPrimitiveSizeInBits();
+  bool FromLegal = TD->isLegalInteger(FromWidth);
+  bool ToLegal = TD->isLegalInteger(ToWidth);
+  
+  // If this is a legal integer from type, and the result would be an illegal
+  // type, don't do the transformation.
+  if (FromLegal && !ToLegal)
+    return false;
+  
+  // Otherwise, if both are illegal, do not increase the size of the result. We
+  // do allow things like i160 -> i64, but not i64 -> i160.
+  if (!FromLegal && !ToLegal && ToWidth > FromWidth)
+    return false;
+  
+  return true;
+}
+
 /// getBitCastOperand - If the specified operand is a CastInst, a constant
 /// expression bitcast, or a GetElementPtrInst with all zero indices, return the
 /// operand value, otherwise return null.
@@ -8082,11 +8110,9 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
     // it is currently legal.
     if (!isa<IntegerType>(Src->getType()) ||
         !isa<IntegerType>(CI.getType()) ||
-        (TD && TD->isLegalInteger(CI.getType()->getPrimitiveSizeInBits())) ||
-        (TD && !TD->isLegalInteger(Src->getType()->getPrimitiveSizeInBits())))
+        ShouldChangeType(CI.getType(), Src->getType(), TD))
       if (Instruction *NV = FoldOpIntoPhi(CI))
         return NV;
-    
   }
   
   return 0;
@@ -8235,10 +8261,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   // Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
-  if (TD &&
-      (TD->isLegalInteger(DestTy->getScalarType()->getPrimitiveSizeInBits()) ||
-       !TD->isLegalInteger((SrcI->getType()->getScalarType()
-                            ->getPrimitiveSizeInBits()))) &&
+  if (!isa<IntegerType>(SrcI->getType()) ||
+      ShouldChangeType(SrcI->getType(), DestTy, TD) &&
       CanEvaluateInDifferentType(SrcI, DestTy,
                                  CI.getOpcode(), NumCastsRemoved)) {
     // If this cast is a truncate, evaluting in a different type always
@@ -10784,9 +10808,10 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
 }
 
 
-// FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
-// operator and they all are only used by the PHI, PHI together their
-// inputs, and do the operation once, to the result of the PHI.
+
+/// FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
+/// operator and they all are only used by the PHI, PHI together their
+/// inputs, and do the operation once, to the result of the PHI.
 Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
 
@@ -10808,23 +10833,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     // Be careful about transforming integer PHIs.  We don't want to pessimize
     // the code by turning an i32 into an i1293.
     if (isa<IntegerType>(PN.getType()) && isa<IntegerType>(CastSrcTy)) {
-      // If we don't have TD, we don't know if the original PHI was legal.
-      if (!TD) return 0;
-
-      unsigned PHIWidth = PN.getType()->getPrimitiveSizeInBits();
-      unsigned NewWidth = CastSrcTy->getPrimitiveSizeInBits();
-      bool PHILegal = TD->isLegalInteger(PHIWidth);
-      bool NewLegal = TD->isLegalInteger(NewWidth);
-    
-      // If this is a legal integer PHI node, and pulling the operation through
-      // would cause it to be an illegal integer PHI, don't do the
-      // transformation.
-      if (PHILegal && !NewLegal)
-        return 0;
-      
-      // Otherwise, if both are illegal, do not increase the size of the PHI. We
-      // do allow things like i160 -> i64, but not i64 -> i160.
-      if (!PHILegal && !NewLegal && NewWidth > PHIWidth)
+      if (!ShouldChangeType(PN.getType(), CastSrcTy, TD))
         return 0;
     }
   } else if (isa<BinaryOperator>(FirstInst) || isa<CmpInst>(FirstInst)) {
