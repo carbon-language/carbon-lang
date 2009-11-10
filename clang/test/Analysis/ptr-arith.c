@@ -35,6 +35,11 @@ domain_port (const char *domain_b, const char *domain_e,
 void f3() {
   int x, y;
   int d = &y - &x; // expected-warning{{Subtraction of two pointers that do not point to the same memory chunk may cause incorrect result.}}
+
+  int a[10];
+  int *p = &a[2];
+  int *q = &a[8];
+  d = q-p; // no-warning
 }
 
 void f4() {

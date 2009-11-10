@@ -48,11 +48,17 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
   const MemRegion *LR = LV.getAsRegion();
   const MemRegion *RR = RV.getAsRegion();
 
-  if (!(LR && RR) || (LR == RR))
+  if (!(LR && RR))
     return;
 
-  // We don't reason about SymbolicRegions for now.
-  if (isa<SymbolicRegion>(LR) || isa<SymbolicRegion>(RR))
+  const MemRegion *BaseLR = LR->getBaseRegion();
+  const MemRegion *BaseRR = RR->getBaseRegion();
+
+  if (BaseLR == BaseRR)
+    return;
+
+  // Allow arithmetic on different symbolic regions.
+  if (isa<SymbolicRegion>(BaseLR) || isa<SymbolicRegion>(BaseRR))
     return;
 
   if (ExplodedNode *N = C.GenerateNode(B)) {

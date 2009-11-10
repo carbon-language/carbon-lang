@@ -75,6 +75,8 @@ public:
 
   const MemSpaceRegion *getMemorySpace() const;
 
+  const MemRegion *getBaseRegion() const;
+
   const MemRegion *StripCasts() const;
 
   bool hasStackStorage() const;
