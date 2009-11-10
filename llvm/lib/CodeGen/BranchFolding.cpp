@@ -600,7 +600,7 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
 
   // Walk through equivalence sets looking for actual exact matches.
   while (MergePotentials.size() > 1) {
-    unsigned CurHash  = prior(MergePotentials.end())->first;
+    unsigned CurHash  = MergePotentials.back().first;
     
     // Build SameTails, identifying the set of blocks with this hash code
     // and with the maximum number of instructions in common.
