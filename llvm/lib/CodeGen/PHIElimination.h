@@ -89,6 +89,12 @@ namespace llvm {
     ///
     void analyzePHINodes(const MachineFunction& Fn);
 
+    /// isLiveOut - Determine if Reg is live out from MBB, when not
+    /// considering PHI nodes. This means that Reg is either killed by
+    /// a successor block or passed through one.
+    bool isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
+                   LiveVariables &LV);
+
     // FindCopyInsertPoint - Find a safe place in MBB to insert a copy from
     // SrcReg.  This needs to be after any def or uses of SrcReg, but before
     // any subsequent point where control flow might jump out of the basic

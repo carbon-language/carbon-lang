@@ -155,7 +155,7 @@ llvm::PHIElimination::FindCopyInsertPoint(MachineBasicBlock &MBB,
 /// under the assuption that it needs to be lowered in a way that supports
 /// atomic execution of PHIs.  This lowering method is always correct all of the
 /// time.
-///  
+///
 void llvm::PHIElimination::LowerAtomicPHINode(
                                       MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator AfterPHIsIt) {
@@ -186,7 +186,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
   }
 
   // Record PHI def.
-  assert(!hasPHIDef(DestReg) && "Vreg has multiple phi-defs?"); 
+  assert(!hasPHIDef(DestReg) && "Vreg has multiple phi-defs?");
   PHIDefs[DestReg] = &MBB;
 
   // Update live variable information if there is any.
@@ -250,7 +250,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     // basic block.
     if (!MBBsInsertedInto.insert(&opBlock))
       continue;  // If the copy has already been emitted, we're done.
- 
+
     // Find a safe location to insert the copy, this may be the first terminator
     // in the block (or end()).
     MachineBasicBlock::iterator InsertPos = FindCopyInsertPoint(opBlock, SrcReg);
@@ -260,82 +260,24 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
     // Now update live variable information if we have it.  Otherwise we're done
     if (!LV) continue;
-    
+
     // We want to be able to insert a kill of the register if this PHI (aka, the
     // copy we just inserted) is the last use of the source value.  Live
     // variable analysis conservatively handles this by saying that the value is
     // live until the end of the block the PHI entry lives in.  If the value
     // really is dead at the PHI copy, there will be no successor blocks which
     // have the value live-in.
-    //
-    // Check to see if the copy is the last use, and if so, update the live
-    // variables information so that it knows the copy source instruction kills
-    // the incoming value.
-    LiveVariables::VarInfo &InRegVI = LV->getVarInfo(SrcReg);
 
-    // Loop over all of the successors of the basic block, checking to see if
-    // the value is either live in the block, or if it is killed in the block.
     // Also check to see if this register is in use by another PHI node which
     // has not yet been eliminated.  If so, it will be killed at an appropriate
     // point later.
 
     // Is it used by any PHI instructions in this block?
-    bool ValueIsLive = VRegPHIUseCount[BBVRegPair(&opBlock, SrcReg)] != 0;
-
-    std::vector<MachineBasicBlock*> OpSuccBlocks;
-    
-    // Otherwise, scan successors, including the BB the PHI node lives in.
-    for (MachineBasicBlock::succ_iterator SI = opBlock.succ_begin(),
-           E = opBlock.succ_end(); SI != E && !ValueIsLive; ++SI) {
-      MachineBasicBlock *SuccMBB = *SI;
-
-      // Is it alive in this successor?
-      unsigned SuccIdx = SuccMBB->getNumber();
-      if (InRegVI.AliveBlocks.test(SuccIdx)) {
-        ValueIsLive = true;
-        break;
-      }
-
-      OpSuccBlocks.push_back(SuccMBB);
-    }
-
-    // Check to see if this value is live because there is a use in a successor
-    // that kills it.
-    if (!ValueIsLive) {
-      switch (OpSuccBlocks.size()) {
-      case 1: {
-        MachineBasicBlock *MBB = OpSuccBlocks[0];
-        for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
-          if (InRegVI.Kills[i]->getParent() == MBB) {
-            ValueIsLive = true;
-            break;
-          }
-        break;
-      }
-      case 2: {
-        MachineBasicBlock *MBB1 = OpSuccBlocks[0], *MBB2 = OpSuccBlocks[1];
-        for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
-          if (InRegVI.Kills[i]->getParent() == MBB1 || 
-              InRegVI.Kills[i]->getParent() == MBB2) {
-            ValueIsLive = true;
-            break;
-          }
-        break;        
-      }
-      default:
-        std::sort(OpSuccBlocks.begin(), OpSuccBlocks.end());
-        for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
-          if (std::binary_search(OpSuccBlocks.begin(), OpSuccBlocks.end(),
-                                 InRegVI.Kills[i]->getParent())) {
-            ValueIsLive = true;
-            break;
-          }
-      }
-    }        
+    bool ValueIsUsed = VRegPHIUseCount[BBVRegPair(&opBlock, SrcReg)] != 0;
 
     // Okay, if we now know that the value is not live out of the block, we can
     // add a kill marker in this block saying that it kills the incoming value!
-    if (!ValueIsLive) {
+    if (!ValueIsUsed && !isLiveOut(SrcReg, opBlock, *LV)) {
       // In our final twist, we have to decide which instruction kills the
       // register.  In most cases this is the copy, however, the first
       // terminator instruction at the end of the block may also use the value.
@@ -346,7 +288,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
       if (Term != opBlock.end()) {
         if (Term->readsRegister(SrcReg))
           KillInst = Term;
-      
+
         // Check that no other terminators use values.
 #ifndef NDEBUG
         for (MachineBasicBlock::iterator TI = next(Term); TI != opBlock.end();
@@ -357,16 +299,16 @@ void llvm::PHIElimination::LowerAtomicPHINode(
         }
 #endif
       }
-      
+
       // Finally, mark it killed.
       LV->addVirtualRegisterKilled(SrcReg, KillInst);
 
       // This vreg no longer lives all of the way through opBlock.
       unsigned opBlockNum = opBlock.getNumber();
-      InRegVI.AliveBlocks.reset(opBlockNum);
+      LV->getVarInfo(SrcReg).AliveBlocks.reset(opBlockNum);
     }
   }
-    
+
   // Really delete the PHI instruction now!
   MF.DeleteMachineInstr(MPhi);
   ++NumAtomic;
@@ -385,4 +327,52 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& Fn) {
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
         ++VRegPHIUseCount[BBVRegPair(BBI->getOperand(i + 1).getMBB(),
                                      BBI->getOperand(i).getReg())];
+}
+
+bool llvm::PHIElimination::isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
+                                     LiveVariables &LV) {
+  LiveVariables::VarInfo &InRegVI = LV.getVarInfo(Reg);
+
+  // Loop over all of the successors of the basic block, checking to see if
+  // the value is either live in the block, or if it is killed in the block.
+  std::vector<MachineBasicBlock*> OpSuccBlocks;
+
+  // Otherwise, scan successors, including the BB the PHI node lives in.
+  for (MachineBasicBlock::const_succ_iterator SI = MBB.succ_begin(),
+         E = MBB.succ_end(); SI != E; ++SI) {
+    MachineBasicBlock *SuccMBB = *SI;
+
+    // Is it alive in this successor?
+    unsigned SuccIdx = SuccMBB->getNumber();
+    if (InRegVI.AliveBlocks.test(SuccIdx))
+      return true;
+    OpSuccBlocks.push_back(SuccMBB);
+  }
+
+  // Check to see if this value is live because there is a use in a successor
+  // that kills it.
+  switch (OpSuccBlocks.size()) {
+  case 1: {
+    MachineBasicBlock *SuccMBB = OpSuccBlocks[0];
+    for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
+      if (InRegVI.Kills[i]->getParent() == SuccMBB)
+        return true;
+    break;
+  }
+  case 2: {
+    MachineBasicBlock *SuccMBB1 = OpSuccBlocks[0], *SuccMBB2 = OpSuccBlocks[1];
+    for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
+      if (InRegVI.Kills[i]->getParent() == SuccMBB1 ||
+          InRegVI.Kills[i]->getParent() == SuccMBB2)
+        return true;
+    break;
+  }
+  default:
+    std::sort(OpSuccBlocks.begin(), OpSuccBlocks.end());
+    for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
+      if (std::binary_search(OpSuccBlocks.begin(), OpSuccBlocks.end(),
+                             InRegVI.Kills[i]->getParent()))
+        return true;
+  }
+  return false;
 }
