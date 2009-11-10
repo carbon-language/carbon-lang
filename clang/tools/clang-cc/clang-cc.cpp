@@ -616,10 +616,6 @@ static llvm::cl::opt<bool>
 DollarsInIdents("fdollars-in-identifiers",
                 llvm::cl::desc("Allow '$' in identifiers"));
 
-
-static llvm::cl::opt<bool>
-OptSize("Os", llvm::cl::desc("Optimize for size"));
-
 static llvm::cl::opt<bool>
 DisableLLVMOptimizations("disable-llvm-optzns",
                          llvm::cl::desc("Don't run LLVM optimization passes"));
@@ -644,22 +640,6 @@ static llvm::cl::opt<std::string>
 TargetTriple("triple",
   llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
 
-
-// It might be nice to add bounds to the CommandLine library directly.
-struct OptLevelParser : public llvm::cl::parser<unsigned> {
-  bool parse(llvm::cl::Option &O, llvm::StringRef ArgName,
-             llvm::StringRef Arg, unsigned &Val) {
-    if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
-      return true;
-    if (Val > 3)
-      return O.error("'" + Arg + "' invalid optimization level!");
-    return false;
-  }
-};
-static llvm::cl::opt<unsigned, false, OptLevelParser>
-OptLevel("O", llvm::cl::Prefix,
-         llvm::cl::desc("Optimization level"),
-         llvm::cl::init(0));
 
 static llvm::cl::opt<unsigned>
 PICLevel("pic-level", llvm::cl::desc("Value for __PIC__"));
@@ -1260,6 +1240,25 @@ NoImplicitFloat("no-implicit-float",
 static llvm::cl::opt<bool>
 NoMergeConstants("fno-merge-all-constants",
                        llvm::cl::desc("Disallow merging of constants."));
+
+// It might be nice to add bounds to the CommandLine library directly.
+struct OptLevelParser : public llvm::cl::parser<unsigned> {
+  bool parse(llvm::cl::Option &O, llvm::StringRef ArgName,
+             llvm::StringRef Arg, unsigned &Val) {
+    if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
+      return true;
+    if (Val > 3)
+      return O.error("'" + Arg + "' invalid optimization level!");
+    return false;
+  }
+};
+static llvm::cl::opt<unsigned, false, OptLevelParser>
+OptLevel("O", llvm::cl::Prefix,
+         llvm::cl::desc("Optimization level"),
+         llvm::cl::init(0));
+
+static llvm::cl::opt<bool>
+OptSize("Os", llvm::cl::desc("Optimize for size"));
 
 static llvm::cl::opt<std::string>
 TargetCPU("mcpu",
