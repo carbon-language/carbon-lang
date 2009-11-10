@@ -4409,6 +4409,16 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMAX);
   case Intrinsic::atomic_swap:
     return implVisitBinaryAtomic(I, ISD::ATOMIC_SWAP);
+
+  case Intrinsic::invariant_start:
+  case Intrinsic::lifetime_start:
+    // Discard region information.
+    setValue(&I, DAG.getUNDEF(TLI.getPointerTy()));
+    return 0;
+  case Intrinsic::invariant_end:
+  case Intrinsic::lifetime_end:
+    // Discard region information.
+    return 0;
   }
 }
 

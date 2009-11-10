@@ -515,6 +515,15 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
      if (CI->getType() != Type::getVoidTy(Context))
        CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 1));
      break;
+  case Intrinsic::invariant_start:
+  case Intrinsic::lifetime_start:
+    // Discard region information.
+    CI->replaceAllUsesWith(UndefValue::get(CI->getType()));
+    break;
+  case Intrinsic::invariant_end:
+  case Intrinsic::lifetime_end:
+    // Discard region information.
+    break;
   }
 
   assert(CI->use_empty() &&
