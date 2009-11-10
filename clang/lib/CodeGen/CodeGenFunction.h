@@ -384,6 +384,9 @@ public:
   /// GenerateVtable - Generate the vtable for the given type.
   llvm::Value *GenerateVtable(const CXXRecordDecl *RD);
 
+  /// GenerateVTT - Generate the VTT for the given type.
+  llvm::Value *GenerateVTT(const CXXRecordDecl *RD);
+
   /// DynamicTypeAdjust - Do the non-virtual and virtual adjustments on an
   /// object pointer to alter the dynamic type of the pointer.  Used by
   /// GenerateCovariantThunk for building thunks.

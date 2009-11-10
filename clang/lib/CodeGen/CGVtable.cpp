@@ -433,6 +433,7 @@ public:
          i != e; ++i)
       methods[InsertionPoint++] = wrap((0?600:0) + *i);
     VCalls.clear();
+    VCall.clear();
   }
 
   Index_t end(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
@@ -700,6 +701,8 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD);
 
+  //GenerateVTT(RD);
+
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
   C = llvm::ConstantArray::get(type, methods);
@@ -710,4 +713,40 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
                        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                               AddressPoint*LLVMPointerWidth/8));
   return vtable;
+}
+
+class VTTBuilder {
+  /// Inits - The list of values built for the VTT.
+  std::vector<llvm::Constant *> &Inits;
+  /// Class - The most derived class that this vtable is being built for.
+  const CXXRecordDecl *Class;
+  CodeGenModule &CGM;  // Per-module state.
+
+public:
+  VTTBuilder(std::vector<llvm::Constant *> &inits, const CXXRecordDecl *c,
+             CodeGenModule &cgm) : Inits(inits), Class(c), CGM(cgm) {
+  }
+};
+
+llvm::Value *CodeGenFunction::GenerateVTT(const CXXRecordDecl *RD) {
+  llvm::SmallString<256> OutName;
+  llvm::raw_svector_ostream Out(OutName);
+  mangleCXXVTT(CGM.getMangleContext(), RD, Out);
+
+  llvm::GlobalVariable::LinkageTypes linktype;
+  linktype = llvm::GlobalValue::LinkOnceODRLinkage;
+  std::vector<llvm::Constant *> inits;
+  llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
+
+  VTTBuilder b(inits, RD, CGM);
+
+  D1(printf("vtt %s\n", RD->getNameAsCString()));
+
+  llvm::Constant *C;
+  llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, inits.size());
+  C = llvm::ConstantArray::get(type, inits);
+  llvm::Value *vtt = new llvm::GlobalVariable(CGM.getModule(), type, true,
+                                              linktype, C, Out.str());
+  vtt = Builder.CreateBitCast(vtt, Ptr8Ty);
+  return vtt;
 }
