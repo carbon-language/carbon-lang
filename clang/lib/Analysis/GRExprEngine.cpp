@@ -2841,7 +2841,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 //===----------------------------------------------------------------------===//
 
 Checker *GRExprEngine::lookupChecker(void *tag) const {
-  CheckerMap::iterator I = CheckerM.find(tag);
+  CheckerMap::const_iterator I = CheckerM.find(tag);
   return (I == CheckerM.end()) ? NULL : Checkers[I->second].second;
 }
 

@@ -164,7 +164,7 @@ public:
   ~RegionStoreSubRegionMap() {}
 
   bool iterSubRegions(const MemRegion* Parent, Visitor& V) const {
-    Map::iterator I = M.find(Parent);
+    Map::const_iterator I = M.find(Parent);
 
     if (I == M.end())
       return true;

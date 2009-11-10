@@ -273,7 +273,7 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
 
 ExplodedNode*
 InterExplodedGraphMap::getMappedNode(const ExplodedNode* N) const {
-  llvm::DenseMap<const ExplodedNode*, ExplodedNode*>::iterator I =
+  llvm::DenseMap<const ExplodedNode*, ExplodedNode*>::const_iterator I =
     M.find(N);
 
   return I == M.end() ? 0 : I->second;

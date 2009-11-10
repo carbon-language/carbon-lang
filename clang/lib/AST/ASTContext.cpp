@@ -258,7 +258,7 @@ ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
 
 UnresolvedUsingDecl *
 ASTContext::getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD) {
-  llvm::DenseMap<UsingDecl *, UnresolvedUsingDecl *>::iterator Pos
+  llvm::DenseMap<UsingDecl *, UnresolvedUsingDecl *>::const_iterator Pos
     = InstantiatedFromUnresolvedUsingDecl.find(UUD);
   if (Pos == InstantiatedFromUnresolvedUsingDecl.end())
     return 0;

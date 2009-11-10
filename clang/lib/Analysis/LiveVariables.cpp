@@ -346,7 +346,7 @@ void LiveVariables::dumpLiveness(const ValTy& V, const SourceManager& SM) const 
 }
 
 void LiveVariables::dumpBlockLiveness(const SourceManager& M) const {
-  for (BlockDataMapTy::iterator I = getBlockDataMap().begin(),
+  for (BlockDataMapTy::const_iterator I = getBlockDataMap().begin(),
        E = getBlockDataMap().end(); I!=E; ++I) {
     llvm::errs() << "\n[ B" << I->first->getBlockID()
                  << " (live variables at block exit) ]\n";
