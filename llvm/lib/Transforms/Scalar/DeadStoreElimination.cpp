@@ -121,9 +121,7 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
   assert(doesClobberMemory(I));
   if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     if (!TD) return -1u;
-    const PointerType *PTy =
-        cast<PointerType>(SI->getPointerOperand()->getType());
-    return TD->getTypeStoreSize(PTy->getElementType());
+    return TD->getTypeStoreSize(SI->getOperand(0)->getType());
   }
 
   Value *Len;
