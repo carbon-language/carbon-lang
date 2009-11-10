@@ -2108,6 +2108,10 @@ def err_operator_overload_needs_class_or_enum : Error<
 def err_operator_overload_variadic : Error<"overloaded %0 cannot be variadic">;
 def err_operator_overload_static : Error<
   "overloaded %0 cannot be a static member function">;
+def err_operator_new_param_type : Error<
+  "%0 takes type size_t (%1) as first parameter">;
+def err_operator_new_result_type : Error<
+  "%0 must return type %1">;
 def err_operator_overload_default_arg : Error<
   "parameter of overloaded %0 cannot have a default argument">;
 def err_operator_overload_must_be : Error<

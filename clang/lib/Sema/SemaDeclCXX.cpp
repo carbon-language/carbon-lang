@@ -4006,9 +4006,28 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   found in the rest of this subclause do not apply to them unless
   //   explicitly stated in 3.7.3.
   // FIXME: Write a separate routine for checking this. For now, just allow it.
-  if (Op == OO_New || Op == OO_Array_New ||
-      Op == OO_Delete || Op == OO_Array_Delete)
+  if (Op == OO_Delete || Op == OO_Array_Delete)
     return false;
+  
+  if (Op == OO_New || Op == OO_Array_New) {
+    bool ret = false;
+    if (FunctionDecl::param_iterator Param = FnDecl->param_begin()) {
+      QualType SizeTy = Context.getCanonicalType(Context.getSizeType());
+      QualType T = Context.getCanonicalType((*Param)->getType());
+      if (!T->isDependentType() && SizeTy != T) {
+        Diag(FnDecl->getLocation(),
+             diag::err_operator_new_param_type) << FnDecl->getDeclName()
+              << SizeTy;
+        ret = true;
+      }
+    }
+    QualType ResultTy = Context.getCanonicalType(FnDecl->getResultType());
+    if (!ResultTy->isDependentType() && ResultTy != Context.VoidPtrTy)
+      return Diag(FnDecl->getLocation(),
+                  diag::err_operator_new_result_type) << FnDecl->getDeclName()
+                  << Context.VoidPtrTy;
+    return ret;
+  }
 
   // C++ [over.oper]p6:
   //   An operator function shall either be a non-static member

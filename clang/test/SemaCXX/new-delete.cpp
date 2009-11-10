@@ -137,3 +137,31 @@ class X5 {
 public:
   void Destroy() const { delete this; }
 };
+
+class Base {
+public:
+  static int operator new(unsigned size) throw(); // expected-error {{'operator new' takes type size_t}} \
+						  // expected-error {{operator new' must return type 'void *'}}
+  static int operator new[] (unsigned size) throw(); // expected-error {{'operator new[]' takes type size_t}} \
+						     // expected-error {{operator new[]' must return type 'void *'}}
+};
+
+class Tier {};
+class Comp : public Tier {};
+
+class Thai : public Base {
+public:
+  Thai(const Tier *adoptDictionary);
+};
+
+void loadEngineFor() {
+  const Comp *dict;
+  new Thai(dict);
+}
+
+template <class T> struct TBase {
+  void* operator new(T size, int); // expected-error {{'operator new' takes type size_t}}
+};
+
+TBase<int> t1; // expected-note {{in instantiation of template class 'struct TBase<int>' requested here}}
+
