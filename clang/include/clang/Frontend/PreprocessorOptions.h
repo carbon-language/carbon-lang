@@ -28,12 +28,37 @@ class PreprocessorOptions {
   unsigned UsePredefines : 1; /// Initialize the preprocessor with the compiler
                               /// and target specific predefines.
 
+  /// The implicit PCH included at the start of the translation unit, or empty.
+  std::string ImplicitPCHInclude;
+
+  /// The implicit PTH input included at the start of the translation unit, or
+  /// empty.
+  std::string ImplicitPTHInclude;
+
 public:
   PreprocessorOptions() : UsePredefines(true) {}
 
   bool getUsePredefines() const { return UsePredefines; }
   void setUsePredefines(bool Value) {
     UsePredefines = Value;
+  }
+
+  const std::string &getImplicitPCHInclude() const {
+    return ImplicitPCHInclude;
+  }
+  void setImplicitPCHInclude(llvm::StringRef Value) {
+    assert((Value.empty() || ImplicitPTHInclude.empty()) &&
+           "Cannot both implicit PCH and PTH includes!");
+    ImplicitPCHInclude = Value;
+  }
+
+  const std::string &getImplicitPTHInclude() const {
+    return ImplicitPTHInclude;
+  }
+  void setImplicitPTHInclude(llvm::StringRef Value) {
+    assert((ImplicitPCHInclude.empty() || Value.empty()) &&
+           "Cannot both implicit PCH and PTH includes!");
+    ImplicitPTHInclude = Value;
   }
 
   void addMacroDef(const std::string &Name) {

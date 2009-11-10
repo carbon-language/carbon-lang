@@ -1090,6 +1090,9 @@ static void InitializeIncludePaths(HeaderSearchOptions &Opts,
 }
 
 static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
+  InitOpts.setImplicitPCHInclude(ImplicitIncludePCH);
+  InitOpts.setImplicitPTHInclude(ImplicitIncludePTH);
+
   // Use predefines?
   InitOpts.setUsePredefines(!UndefMacros);
 
@@ -1143,7 +1146,7 @@ static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
         std::string OriginalFile = PCHReader::getOriginalSourceFile(*Ptr);
         if (!OriginalFile.empty()) {
           InitOpts.addInclude(OriginalFile, false);
-          ImplicitIncludePCH.clear();
+          InitOpts.setImplicitPCHInclude("");
         }
       }
     }
@@ -1159,15 +1162,16 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
                    const PreprocessorOptions &PPOpts, TargetInfo &Target,
                    SourceManager &SourceMgr, HeaderSearch &HeaderInfo) {
   PTHManager *PTHMgr = 0;
-  if (!TokenCache.empty() && !ImplicitIncludePTH.empty()) {
+  if (!TokenCache.empty() && !PPOpts.getImplicitPTHInclude().empty()) {
     fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
             "options\n");
     exit(1);
   }
 
   // Use PTH?
-  if (!TokenCache.empty() || !ImplicitIncludePTH.empty()) {
-    const std::string& x = TokenCache.empty() ? ImplicitIncludePTH:TokenCache;
+  if (!TokenCache.empty() || !PPOpts.getImplicitPTHInclude().empty()) {
+    const std::string& x = TokenCache.empty() ?
+      PPOpts.getImplicitPTHInclude() : TokenCache;
     PTHMgr = PTHManager::Create(x, &Diags,
                                 TokenCache.empty() ? Diagnostic::Error
                                 : Diagnostic::Warning);
@@ -1736,7 +1740,9 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   llvm::OwningPtr<PCHReader> Reader;
   llvm::OwningPtr<ExternalASTSource> Source;
 
-  if (!ImplicitIncludePCH.empty()) {
+  const std::string &ImplicitPCHInclude =
+    CompOpts.getPreprocessorOpts().getImplicitPCHInclude();
+  if (!ImplicitPCHInclude.empty()) {
     // If the user specified -isysroot, it will be used for relocatable PCH
     // files.
     const char *isysrootPCH = 0;
@@ -1747,7 +1753,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
 
     // The user has asked us to include a precompiled header. Load
     // the precompiled header into the AST context.
-    switch (Reader->ReadPCH(ImplicitIncludePCH)) {
+    switch (Reader->ReadPCH(ImplicitPCHInclude)) {
     case PCHReader::Success: {
       // Set the predefines buffer as suggested by the PCH
       // reader. Typically, the predefines buffer will be empty.
@@ -2206,7 +2212,7 @@ int main(int argc, char **argv) {
                               PhonyDependencyTarget);
     }
 
-    if (ImplicitIncludePCH.empty()) {
+    if (CompOpts.getPreprocessorOpts().getImplicitPCHInclude().empty()) {
       if (InitializeSourceManager(*PP.get(), InFile))
         continue;
 
