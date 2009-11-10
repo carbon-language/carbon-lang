@@ -27,10 +27,16 @@ macro(add_llvm_loadable_module name)
     message(STATUS "Loadable modules not supported on this platform.
 ${name} ignored.")
   else()
-    set(BUILD_SHARED_LIBS ON)
     llvm_process_sources( ALL_FILES ${ARGN} )
     add_library( ${name} MODULE ${ALL_FILES} )
     set_target_properties( ${name} PROPERTIES PREFIX "" )
+
+    if (APPLE)
+      # Darwin-specific linker flags for loadable modules.
+      set_target_properties(${name} PROPERTIES
+        LINK_FLAGS "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
+    endif()
+
     install(TARGETS ${name}
       LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
       ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
