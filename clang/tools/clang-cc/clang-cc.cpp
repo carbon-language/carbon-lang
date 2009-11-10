@@ -15,11 +15,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Options.h"
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -616,10 +616,6 @@ static llvm::cl::opt<bool>
 DollarsInIdents("fdollars-in-identifiers",
                 llvm::cl::desc("Allow '$' in identifiers"));
 
-static llvm::cl::opt<bool>
-DisableLLVMOptimizations("disable-llvm-optzns",
-                         llvm::cl::desc("Don't run LLVM optimization passes"));
-
 static llvm::cl::opt<std::string>
 MainFileName("main-file-name",
              llvm::cl::desc("Main file name to use for debug info"));
@@ -815,8 +811,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (EmitAllDecls)
     Options.EmitAllDecls = 1;
 
-  // The __OPTIMIZE_SIZE__ define is tied to -Oz, which we don't
-  // support.
+  // The __OPTIMIZE_SIZE__ define is tied to -Oz, which we don't support.
   Options.OptimizeSize = 0;
   Options.Optimize = !!CompileOpts.OptimizationLevel;
 
@@ -1209,145 +1204,6 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
   // Parsing the specified input file.
   P.ParseTranslationUnit();
   delete PA;
-}
-
-//===----------------------------------------------------------------------===//
-// Code generation options
-//===----------------------------------------------------------------------===//
-
-namespace codegenoptions {
-
-
-static llvm::cl::opt<bool>
-DisableRedZone("disable-red-zone",
-               llvm::cl::desc("Do not emit code that uses the red zone."),
-               llvm::cl::init(false));
-
-static llvm::cl::opt<bool>
-GenerateDebugInfo("g",
-                  llvm::cl::desc("Generate source level debug information"));
-
-static llvm::cl::opt<bool>
-NoCommon("fno-common",
-         llvm::cl::desc("Compile common globals like normal definitions"),
-         llvm::cl::ValueDisallowed);
-
-static llvm::cl::opt<bool>
-NoImplicitFloat("no-implicit-float",
-  llvm::cl::desc("Don't generate implicit floating point instructions (x86-only)"),
-  llvm::cl::init(false));
-
-static llvm::cl::opt<bool>
-NoMergeConstants("fno-merge-all-constants",
-                       llvm::cl::desc("Disallow merging of constants."));
-
-// It might be nice to add bounds to the CommandLine library directly.
-struct OptLevelParser : public llvm::cl::parser<unsigned> {
-  bool parse(llvm::cl::Option &O, llvm::StringRef ArgName,
-             llvm::StringRef Arg, unsigned &Val) {
-    if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
-      return true;
-    if (Val > 3)
-      return O.error("'" + Arg + "' invalid optimization level!");
-    return false;
-  }
-};
-static llvm::cl::opt<unsigned, false, OptLevelParser>
-OptLevel("O", llvm::cl::Prefix,
-         llvm::cl::desc("Optimization level"),
-         llvm::cl::init(0));
-
-static llvm::cl::opt<bool>
-OptSize("Os", llvm::cl::desc("Optimize for size"));
-
-static llvm::cl::opt<std::string>
-TargetCPU("mcpu",
-         llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
-
-static llvm::cl::list<std::string>
-TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
-
-}
-
-/// ComputeTargetFeatures - Recompute the target feature list to only
-/// be the list of things that are enabled, based on the target cpu
-/// and feature list.
-static void ComputeFeatureMap(TargetInfo &Target,
-                              llvm::StringMap<bool> &Features) {
-  using namespace codegenoptions;
-  assert(Features.empty() && "invalid map");
-
-  // Initialize the feature map based on the target.
-  Target.getDefaultFeatures(TargetCPU, Features);
-
-  // Apply the user specified deltas.
-  for (llvm::cl::list<std::string>::iterator it = TargetFeatures.begin(),
-         ie = TargetFeatures.end(); it != ie; ++it) {
-    const char *Name = it->c_str();
-
-    // FIXME: Don't handle errors like this.
-    if (Name[0] != '-' && Name[0] != '+') {
-      fprintf(stderr, "error: clang-cc: invalid target feature string: %s\n",
-              Name);
-      exit(1);
-    }
-    if (!Target.setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
-      fprintf(stderr, "error: clang-cc: invalid target feature name: %s\n",
-              Name + 1);
-      exit(1);
-    }
-  }
-}
-
-static void InitializeCompileOptions(CompileOptions &Opts,
-                                     const llvm::StringMap<bool> &Features) {
-  using namespace codegenoptions;
-  Opts.OptimizeSize = OptSize;
-  Opts.DebugInfo = GenerateDebugInfo;
-  Opts.DisableLLVMOpts = DisableLLVMOptimizations;
-
-  // -Os implies -O2
-  Opts.OptimizationLevel = OptSize ? 2 : OptLevel;
-
-  // We must always run at least the always inlining pass.
-  Opts.Inlining = (Opts.OptimizationLevel > 1) ? CompileOptions::NormalInlining
-    : CompileOptions::OnlyAlwaysInlining;
-
-  Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
-  Opts.SimplifyLibCalls = 1;
-
-#ifdef NDEBUG
-  Opts.VerifyModule = 0;
-#endif
-
-  Opts.CPU = TargetCPU;
-  Opts.Features.clear();
-  for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
-         ie = Features.end(); it != ie; ++it) {
-    // FIXME: If we are completely confident that we have the right set, we only
-    // need to pass the minuses.
-    std::string Name(it->second ? "+" : "-");
-    Name += it->first();
-    Opts.Features.push_back(Name);
-  }
-
-  Opts.NoCommon = NoCommon;
-
-  // Handle -ftime-report.
-  Opts.TimePasses = TimeReport;
-
-  Opts.DisableRedZone = DisableRedZone;
-  Opts.NoImplicitFloat = NoImplicitFloat;
-
-  Opts.MergeAllConstants = !NoMergeConstants;
-}
-
-static void FinalizeCompileOptions(CompileOptions &Opts,
-                                   const LangOptions &Lang) {
-  if (Lang.NoBuiltin)
-    Opts.SimplifyLibCalls = 0;
-  if (Lang.CPlusPlus)
-    Opts.NoCommon = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2153,6 +2009,17 @@ static void ConstructDiagnosticOptions(DiagnosticOptions &Opts) {
   Opts.MessageLength = MessageLength;
 }
 
+static void FinalizeCompileOptions(CompileOptions &Opts,
+                                   const LangOptions &Lang) {
+  if (Lang.NoBuiltin)
+    Opts.SimplifyLibCalls = 0;
+  if (Lang.CPlusPlus)
+    Opts.NoCommon = 1;
+
+  // Handle -ftime-report.
+  Opts.TimePasses = TimeReport;
+}
+
 static void ConstructCompilerInvocation(CompilerInvocation &Opts,
                                         const char *Argv0,
                                         const DiagnosticOptions &DiagOpts,
@@ -2186,7 +2053,7 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   // Initialize the other preprocessor options.
   InitializePreprocessorOptions(Opts.getPreprocessorOpts());
 
-  // Finalize, some code generation options.
+  // Finalize some code generation options.
   FinalizeCompileOptions(Opts.getCompileOpts(), Opts.getLangOpts());
 }
 
