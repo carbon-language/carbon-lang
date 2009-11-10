@@ -941,6 +941,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType FnType,
 
   // Push function on region stack.
   RegionStack.push_back(SP);
+  EmitStopPoint(Fn, Builder);
 }
 
 
@@ -1165,7 +1166,9 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     DebugFactory.CreateVariable(Tag, RegionStack.back(),Decl->getNameAsString(),
                                 Unit, Line, Ty);
   // Insert an llvm.dbg.declare into the current block.
-  DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
+  llvm::Instruction *Call = 
+    DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
+  Builder.SetDebugLocation(Call);
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
