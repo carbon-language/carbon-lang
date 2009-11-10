@@ -1910,12 +1910,12 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
           // with continuation class's readwrite property attribute!
           unsigned PIkind = PIDecl->getPropertyAttributes();
           if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
-            unsigned assignRetainCopyNonatomic = 
+            unsigned retainCopyNonatomic = 
               (ObjCPropertyDecl::OBJC_PR_retain |
                ObjCPropertyDecl::OBJC_PR_copy |
                ObjCPropertyDecl::OBJC_PR_nonatomic);
-            if ((Attributes & assignRetainCopyNonatomic) !=
-                (PIkind & assignRetainCopyNonatomic)) {
+            if ((Attributes & retainCopyNonatomic) !=
+                (PIkind & retainCopyNonatomic)) {
               Diag(AtLoc, diag::warn_property_attr_mismatch);
               Diag(PIDecl->getLocation(), diag::note_property_declare);
             }
