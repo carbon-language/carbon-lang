@@ -8262,9 +8262,9 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   // expression tree to something weird like i93 unless the source is also
   // strange.
   if (!isa<IntegerType>(SrcI->getType()) ||
-      ShouldChangeType(SrcI->getType(), DestTy, TD) &&
-      CanEvaluateInDifferentType(SrcI, DestTy,
-                                 CI.getOpcode(), NumCastsRemoved)) {
+      (ShouldChangeType(SrcI->getType(), DestTy, TD) &&
+       CanEvaluateInDifferentType(SrcI, DestTy,
+                                  CI.getOpcode(), NumCastsRemoved))) {
     // If this cast is a truncate, evaluting in a different type always
     // eliminates the cast, so it is always a win.  If this is a zero-extension,
     // we need to do an AND to maintain the clear top-part of the computation,
