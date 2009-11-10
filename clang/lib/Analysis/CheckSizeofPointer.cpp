@@ -44,7 +44,7 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
 
   QualType T = E->getTypeOfArgument();
   if (T->isPointerType()) {
-    SourceRange R = E->getArgumentExpr()->getSourceRange();
+    SourceRange R = E->getSourceRange();
     BR.EmitBasicReport("Potential unintended use of sizeof() on pointer type",
                        "Logic",
                        "The code calls sizeof() on a pointer type. "
