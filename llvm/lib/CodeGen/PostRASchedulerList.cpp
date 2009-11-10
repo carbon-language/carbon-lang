@@ -216,7 +216,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 
   // Check for explicit enable/disable of post-ra scheduling.
   TargetSubtarget::AntiDepBreakMode AntiDepMode = TargetSubtarget::ANTIDEP_NONE;
-  TargetSubtarget::ExcludedRCVector ExcludedRCs;
+  SmallVector<TargetRegisterClass*, 4> ExcludedRCs;
   if (EnablePostRAScheduler.getPosition() > 0) {
     if (!EnablePostRAScheduler)
       return false;

@@ -15,13 +15,13 @@
 #define LLVM_TARGET_TARGETSUBTARGET_H
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
 class SDep;
 class SUnit;
+class TargetRegisterClass;
+template <typename T> class SmallVectorImpl;
 
 //===----------------------------------------------------------------------===//
 ///
@@ -38,7 +38,7 @@ public:
   // AntiDepBreakMode - Type of anti-dependence breaking that should
   // be performed before post-RA scheduling.
   typedef enum { ANTIDEP_NONE, ANTIDEP_CRITICAL, ANTIDEP_ALL } AntiDepBreakMode;
-  typedef SmallVector<TargetRegisterClass*, 4> ExcludedRCVector;
+  typedef SmallVectorImpl<TargetRegisterClass*> ExcludedRCVector;
 
   virtual ~TargetSubtarget();
 
@@ -53,12 +53,7 @@ public:
   // return true to enable post-register-allocation scheduling. 
   virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      AntiDepBreakMode& Mode,
-                                     ExcludedRCVector& ExcludedRCs) const {
-    Mode = ANTIDEP_NONE;
-    ExcludedRCs.clear();
-    return false;
-  }
-
+                                     ExcludedRCVector& ExcludedRCs) const;
   // adjustSchedDependency - Perform target specific adjustments to
   // the latency of a schedule dependency.
   virtual void adjustSchedDependency(SUnit *def, SUnit *use, 

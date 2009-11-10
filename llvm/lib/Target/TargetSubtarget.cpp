@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetSubtarget.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 //---------------------------------------------------------------------------
@@ -20,3 +21,13 @@ using namespace llvm;
 TargetSubtarget::TargetSubtarget() {}
 
 TargetSubtarget::~TargetSubtarget() {}
+
+bool TargetSubtarget::enablePostRAScheduler(
+          CodeGenOpt::Level OptLevel,
+          AntiDepBreakMode& Mode,
+          ExcludedRCVector& ExcludedRCs) const {
+  Mode = ANTIDEP_NONE;
+  ExcludedRCs.clear();
+  return false;
+}
+

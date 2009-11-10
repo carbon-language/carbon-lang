@@ -127,16 +127,10 @@ protected:
 
   const std::string & getCPUString() const { return CPUString; }
   
-  /// enablePostRAScheduler - True at 'More' optimization except
-  /// for Thumb1.
+  /// enablePostRAScheduler - True at 'More' optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtarget::AntiDepBreakMode& Mode,
-                             ExcludedRCVector& ExcludedRCs) const {
-    Mode = TargetSubtarget::ANTIDEP_CRITICAL;
-    ExcludedRCs.clear();
-    ExcludedRCs.push_back(&ARM::GPRRegClass);
-    return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
-  }
+                             ExcludedRCVector& ExcludedRCs) const;
 
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.

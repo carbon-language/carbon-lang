@@ -16,6 +16,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 static cl::opt<bool>
@@ -158,4 +159,14 @@ ARMSubtarget::GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) const {
   }
 
   return false;
+}
+
+bool ARMSubtarget::enablePostRAScheduler(
+           CodeGenOpt::Level OptLevel,
+           TargetSubtarget::AntiDepBreakMode& Mode,
+           ExcludedRCVector& ExcludedRCs) const {
+  Mode = TargetSubtarget::ANTIDEP_CRITICAL;
+  ExcludedRCs.clear();
+  ExcludedRCs.push_back(&ARM::GPRRegClass);
+  return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
 }

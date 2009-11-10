@@ -20,6 +20,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 #if defined(_MSC_VER)
@@ -454,4 +455,13 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
 
   if (StackAlignment)
     stackAlignment = StackAlignment;
+}
+
+bool X86Subtarget::enablePostRAScheduler(
+            CodeGenOpt::Level OptLevel,
+            TargetSubtarget::AntiDepBreakMode& Mode,
+            ExcludedRCVector& ExcludedRCs) const {
+  Mode = TargetSubtarget::ANTIDEP_CRITICAL;
+  ExcludedRCs.clear();
+  return OptLevel >= CodeGenOpt::Default;
 }
