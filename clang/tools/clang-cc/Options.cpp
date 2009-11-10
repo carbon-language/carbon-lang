@@ -17,6 +17,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
+#include <stdio.h>
 
 using namespace clang;
 
