@@ -42,6 +42,11 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   if (!E->isSizeOf())
     return;
 
+  // If an explicit type is used in the code, usually the coder knows what he is
+  // doing.
+  if (E->isArgumentType())
+    return;
+
   QualType T = E->getTypeOfArgument();
   if (T->isPointerType()) {
     SourceRange R = E->getSourceRange();
