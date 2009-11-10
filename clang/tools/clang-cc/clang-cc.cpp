@@ -1936,17 +1936,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     case PCHReader::IgnorePCH:
       // No suitable PCH file could be found. Return an error.
       return;
-
-#if 0
-      // FIXME: We can recover from failed attempts to load PCH
-      // files. This code will do so, if we ever want to enable it.
-
-      // We delayed the initialization of builtins in the hope of
-      // loading the PCH file. Since the PCH file could not be
-      // loaded, initialize builtins now.
-      if (ContextOwner)
-        ContextOwner->InitializeBuiltins(PP.getIdentifierTable());
-#endif
     }
 
     // Finish preprocessor initialization. We do this now (rather
@@ -2381,7 +2370,7 @@ int main(int argc, char **argv) {
     HeaderInfo.ClearFileInfo();
   }
 
-  if (!NoCaretDiagnostics)
+  if (CompOpts.getDiagnosticOpts().ShowCarets)
     if (unsigned NumDiagnostics = Diags.getNumDiagnostics())
       fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
               (NumDiagnostics == 1 ? "" : "s"));
