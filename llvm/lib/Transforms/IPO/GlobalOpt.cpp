@@ -1321,15 +1321,15 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
   //      if (F1) { free(F1); F1 = 0; }
   //      if (F2) { free(F2); F2 = 0; }
   //    }
-  Value *RunningOr = 0;
+  // The malloc can also fail if its argument is too large.
+  Constant *ConstantZero = ConstantInt::get(CI->getOperand(1)->getType(), 0);
+  Value *RunningOr = new ICmpInst(CI, ICmpInst::ICMP_SLT, CI->getOperand(1),
+                                  ConstantZero, "isneg");
   for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
     Value *Cond = new ICmpInst(CI, ICmpInst::ICMP_EQ, FieldMallocs[i],
                              Constant::getNullValue(FieldMallocs[i]->getType()),
                                "isnull");
-    if (!RunningOr)
-      RunningOr = Cond;   // First seteq
-    else
-      RunningOr = BinaryOperator::CreateOr(RunningOr, Cond, "tmp", CI);
+    RunningOr = BinaryOperator::CreateOr(RunningOr, Cond, "tmp", CI);
   }
 
   // Split the basic block at the old malloc.
@@ -1490,7 +1490,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // This eliminates dynamic allocation, avoids an indirection accessing the
   // data, and exposes the resultant global to further GlobalOpt.
   // We cannot optimize the malloc if we cannot determine malloc array size.
-  if (Value *NElems = getMallocArraySize(CI, TD)) {
+  if (Value *NElems = getMallocArraySize(CI, TD, true)) {
     if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
       // Restrict this transformation to only working on small allocations
       // (2048 bytes currently), as we don't want to introduce a 16M global or
@@ -1535,7 +1535,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                extractMallocCallFromBitCast(Malloc) : cast<CallInst>(Malloc);
         }
       
-        GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD), TD);
+        GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, true),TD);
         return true;
       }
     }

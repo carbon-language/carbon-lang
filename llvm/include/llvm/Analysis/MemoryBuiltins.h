@@ -44,9 +44,7 @@ CallInst *extractMallocCallFromBitCast(Value *I);
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction 
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
-CallInst *isArrayMalloc(Value *I, const TargetData *TD);
-const CallInst *isArrayMalloc(const Value *I,
-                              const TargetData *TD);
+const CallInst *isArrayMalloc(const Value *I, const TargetData *TD);
 
 /// getMallocType - Returns the PointerType resulting from the malloc call.
 /// The PointerType depends on the number of bitcast uses of the malloc call:
@@ -67,7 +65,8 @@ const Type *getMallocAllocatedType(const CallInst *CI);
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
 /// determined.
-Value *getMallocArraySize(CallInst *CI, const TargetData *TD);
+Value *getMallocArraySize(CallInst *CI, const TargetData *TD,
+                          bool LookThroughSExt = false);
                           
 //===----------------------------------------------------------------------===//
 //  free Call Utility Functions.
