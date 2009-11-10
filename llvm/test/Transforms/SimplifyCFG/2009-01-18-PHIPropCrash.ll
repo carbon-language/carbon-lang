@@ -1,4 +1,4 @@
-; RUN: opt < %s -simplifycfg -S
+; RUN: opt < %s -simplifycfg -disable-output
 ; PR3016
 ; Dead use caused invariant violation.
 
