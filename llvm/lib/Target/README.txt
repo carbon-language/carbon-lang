@@ -339,6 +339,8 @@ we don't have whole-function selection dags.  On x86, this means we use one
 extra register for the function when effective_addr2 is declared as U64 than
 when it is declared U32.
 
+PHI Slicing could be extended to do this.
+
 //===---------------------------------------------------------------------===//
 
 LSR should know what GPR types a target has.  This code:
