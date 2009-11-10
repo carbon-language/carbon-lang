@@ -105,6 +105,10 @@ public:
   /// modification is known.
   CodeModificationHint() : RemoveRange(), InsertionLoc() { }
 
+  bool isNull() const {
+    return !RemoveRange.isValid() && !InsertionLoc.isValid();
+  }
+  
   /// \brief Create a code modification hint that inserts the given
   /// code string at a specific location.
   static CodeModificationHint CreateInsertion(SourceLocation InsertionLoc,
@@ -586,6 +590,9 @@ public:
   }
 
   void AddCodeModificationHint(const CodeModificationHint &Hint) const {
+    if (Hint.isNull())
+      return;
+    
     assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
            "Too many code modification hints!");
     if (DiagObj)
