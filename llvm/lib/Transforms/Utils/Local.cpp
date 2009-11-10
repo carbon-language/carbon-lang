@@ -26,8 +26,11 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -361,6 +364,174 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   // Nuke BB.
   PredBB->eraseFromParent();
 }
+
+/// CanPropagatePredecessorsForPHIs - Return true if we can fold BB, an
+/// almost-empty BB ending in an unconditional branch to Succ, into succ.
+///
+/// Assumption: Succ is the single successor for BB.
+///
+static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
+  assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
+
+  DEBUG(errs() << "Looking to fold " << BB->getName() << " into " 
+        << Succ->getName() << "\n");
+  // Shortcut, if there is only a single predecessor it must be BB and merging
+  // is always safe
+  if (Succ->getSinglePredecessor()) return true;
+
+  // Make a list of the predecessors of BB
+  typedef SmallPtrSet<BasicBlock*, 16> BlockSet;
+  BlockSet BBPreds(pred_begin(BB), pred_end(BB));
+
+  // Use that list to make another list of common predecessors of BB and Succ
+  BlockSet CommonPreds;
+  for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
+        PI != PE; ++PI)
+    if (BBPreds.count(*PI))
+      CommonPreds.insert(*PI);
+
+  // Shortcut, if there are no common predecessors, merging is always safe
+  if (CommonPreds.empty())
+    return true;
+  
+  // Look at all the phi nodes in Succ, to see if they present a conflict when
+  // merging these blocks
+  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
+
+    // If the incoming value from BB is again a PHINode in
+    // BB which has the same incoming value for *PI as PN does, we can
+    // merge the phi nodes and then the blocks can still be merged
+    PHINode *BBPN = dyn_cast<PHINode>(PN->getIncomingValueForBlock(BB));
+    if (BBPN && BBPN->getParent() == BB) {
+      for (BlockSet::iterator PI = CommonPreds.begin(), PE = CommonPreds.end();
+            PI != PE; PI++) {
+        if (BBPN->getIncomingValueForBlock(*PI) 
+              != PN->getIncomingValueForBlock(*PI)) {
+          DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
+                << Succ->getName() << " is conflicting with " 
+                << BBPN->getName() << " with regard to common predecessor "
+                << (*PI)->getName() << "\n");
+          return false;
+        }
+      }
+    } else {
+      Value* Val = PN->getIncomingValueForBlock(BB);
+      for (BlockSet::iterator PI = CommonPreds.begin(), PE = CommonPreds.end();
+            PI != PE; PI++) {
+        // See if the incoming value for the common predecessor is equal to the
+        // one for BB, in which case this phi node will not prevent the merging
+        // of the block.
+        if (Val != PN->getIncomingValueForBlock(*PI)) {
+          DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
+                << Succ->getName() << " is conflicting with regard to common "
+                << "predecessor " << (*PI)->getName() << "\n");
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+/// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
+/// unconditional branch, and contains no instructions other than PHI nodes,
+/// potential debug intrinsics and the branch.  If possible, eliminate BB by
+/// rewriting all the predecessors to branch to the successor block and return
+/// true.  If we can't transform, return false.
+bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
+  // We can't eliminate infinite loops.
+  BasicBlock *Succ = cast<BranchInst>(BB->getTerminator())->getSuccessor(0);
+  if (BB == Succ) return false;
+  
+  // Check to see if merging these blocks would cause conflicts for any of the
+  // phi nodes in BB or Succ. If not, we can safely merge.
+  if (!CanPropagatePredecessorsForPHIs(BB, Succ)) return false;
+
+  // Check for cases where Succ has multiple predecessors and a PHI node in BB
+  // has uses which will not disappear when the PHI nodes are merged.  It is
+  // possible to handle such cases, but difficult: it requires checking whether
+  // BB dominates Succ, which is non-trivial to calculate in the case where
+  // Succ has multiple predecessors.  Also, it requires checking whether
+  // constructing the necessary self-referential PHI node doesn't intoduce any
+  // conflicts; this isn't too difficult, but the previous code for doing this
+  // was incorrect.
+  //
+  // Note that if this check finds a live use, BB dominates Succ, so BB is
+  // something like a loop pre-header (or rarely, a part of an irreducible CFG);
+  // folding the branch isn't profitable in that case anyway.
+  if (!Succ->getSinglePredecessor()) {
+    BasicBlock::iterator BBI = BB->begin();
+    while (isa<PHINode>(*BBI)) {
+      for (Value::use_iterator UI = BBI->use_begin(), E = BBI->use_end();
+           UI != E; ++UI) {
+        if (PHINode* PN = dyn_cast<PHINode>(*UI)) {
+          if (PN->getIncomingBlock(UI) != BB)
+            return false;
+        } else {
+          return false;
+        }
+      }
+      ++BBI;
+    }
+  }
+
+  DEBUG(errs() << "Killing Trivial BB: \n" << *BB);
+  
+  if (isa<PHINode>(Succ->begin())) {
+    // If there is more than one pred of succ, and there are PHI nodes in
+    // the successor, then we need to add incoming edges for the PHI nodes
+    //
+    const SmallVector<BasicBlock*, 16> BBPreds(pred_begin(BB), pred_end(BB));
+    
+    // Loop over all of the PHI nodes in the successor of BB.
+    for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
+      Value *OldVal = PN->removeIncomingValue(BB, false);
+      assert(OldVal && "No entry in PHI for Pred BB!");
+      
+      // If this incoming value is one of the PHI nodes in BB, the new entries
+      // in the PHI node are the entries from the old PHI.
+      if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
+        PHINode *OldValPN = cast<PHINode>(OldVal);
+        for (unsigned i = 0, e = OldValPN->getNumIncomingValues(); i != e; ++i)
+          // Note that, since we are merging phi nodes and BB and Succ might
+          // have common predecessors, we could end up with a phi node with
+          // identical incoming branches. This will be cleaned up later (and
+          // will trigger asserts if we try to clean it up now, without also
+          // simplifying the corresponding conditional branch).
+          PN->addIncoming(OldValPN->getIncomingValue(i),
+                          OldValPN->getIncomingBlock(i));
+      } else {
+        // Add an incoming value for each of the new incoming values.
+        for (unsigned i = 0, e = BBPreds.size(); i != e; ++i)
+          PN->addIncoming(OldVal, BBPreds[i]);
+      }
+    }
+  }
+  
+  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+    if (Succ->getSinglePredecessor()) {
+      // BB is the only predecessor of Succ, so Succ will end up with exactly
+      // the same predecessors BB had.
+      Succ->getInstList().splice(Succ->begin(),
+                                 BB->getInstList(), BB->begin());
+    } else {
+      // We explicitly check for such uses in CanPropagatePredecessorsForPHIs.
+      assert(PN->use_empty() && "There shouldn't be any uses here!");
+      PN->eraseFromParent();
+    }
+  }
+    
+  // Everything that jumped to BB now goes to Succ.
+  BB->replaceAllUsesWith(Succ);
+  if (!Succ->hasName()) Succ->takeName(BB);
+  BB->eraseFromParent();              // Delete the old basic block.
+  return true;
+}
+
+
 
 /// OnlyUsedByDbgIntrinsics - Return true if the instruction I is only used
 /// by DbgIntrinsics. If DbgInUses is specified then the vector is filled 

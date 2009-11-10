@@ -85,7 +85,14 @@ void RecursivelyDeleteDeadPHINode(PHINode *PN);
 ///
 void MergeBasicBlockIntoOnlyPred(BasicBlock *BB, Pass *P = 0);
     
-  
+
+/// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
+/// unconditional branch, and contains no instructions other than PHI nodes,
+/// potential debug intrinsics and the branch.  If possible, eliminate BB by
+/// rewriting all the predecessors to branch to the successor block and return
+/// true.  If we can't transform, return false.
+bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB);
+    
 /// SimplifyCFG - This function is used to do simplification of a CFG.  For
 /// example, it adjusts branches to branches to eliminate the extra hop, it
 /// eliminates unreachable basic blocks, and does other "peephole" optimization
