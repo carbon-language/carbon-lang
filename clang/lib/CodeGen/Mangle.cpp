@@ -53,6 +53,8 @@ namespace {
 
     void mangleCXXVtable(const CXXRecordDecl *RD);
     void mangleCXXVTT(const CXXRecordDecl *RD);
+    void mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
+                             const CXXRecordDecl *Type);
     void mangleCXXRtti(QualType Ty);
     void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type);
     void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
@@ -214,6 +216,17 @@ void CXXNameMangler::mangleCXXVTT(const CXXRecordDecl *RD) {
   // <special-name> ::= TT <type>  # VTT structure
   Out << "_ZTT";
   mangleName(RD);
+}
+
+void CXXNameMangler::mangleCXXCtorVtable(const CXXRecordDecl *RD,
+                                         int64_t Offset,
+                                         const CXXRecordDecl *Type) {
+  // <special-name> ::= TC <type> <offset number> _ <base type>
+  Out << "_ZTC";
+  mangleName(RD);
+  Out << Offset;
+  Out << "_";
+  mangleName(Type);
 }
 
 void CXXNameMangler::mangleCXXRtti(QualType Ty) {
@@ -1439,6 +1452,15 @@ namespace clang {
                        llvm::raw_ostream &os) {
     CXXNameMangler Mangler(Context, os);
     Mangler.mangleCXXVtable(RD);
+
+    os.flush();
+  }
+
+  void mangleCXXCtorVtable(MangleContext &Context, const CXXRecordDecl *RD,
+                           int64_t Offset, const CXXRecordDecl *Type,
+                           llvm::raw_ostream &os) {
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleCXXCtorVtable(RD, Offset, Type);
 
     os.flush();
   }
