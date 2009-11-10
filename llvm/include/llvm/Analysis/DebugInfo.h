@@ -623,12 +623,12 @@ namespace llvm {
     void InsertRegionEnd(DIDescriptor D, BasicBlock *BB);
 
     /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
-    void InsertDeclare(llvm::Value *Storage, DIVariable D,
-                       BasicBlock *InsertAtEnd);
+    Instruction *InsertDeclare(llvm::Value *Storage, DIVariable D,
+                               BasicBlock *InsertAtEnd);
 
     /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
-    void InsertDeclare(llvm::Value *Storage, DIVariable D,
-                       Instruction *InsertBefore);
+    Instruction *InsertDeclare(llvm::Value *Storage, DIVariable D,
+                               Instruction *InsertBefore);
 
   private:
     Constant *GetTagConstant(unsigned TAG);
@@ -730,6 +730,9 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
 
     /// processDeclare - Process DbgDeclareInst.
     void processDeclare(DbgDeclareInst *DDI);
+
+    /// processLocation - Process DILocation.
+    void processLocation(DILocation Loc);
 
     /// addCompileUnit - Add compile unit into CUs.
     bool addCompileUnit(DICompileUnit CU);

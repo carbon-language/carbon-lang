@@ -1036,7 +1036,7 @@ void DIFactory::InsertRegionEnd(DIDescriptor D, BasicBlock *BB) {
 }
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
-void DIFactory::InsertDeclare(Value *Storage, DIVariable D,
+Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                               Instruction *InsertBefore) {
   // Cast the storage to a {}* for the call to llvm.dbg.declare.
   Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertBefore);
@@ -1045,11 +1045,11 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D,
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
   Value *Args[] = { Storage, D.getNode() };
-  CallInst::Create(DeclareFn, Args, Args+2, "", InsertBefore);
+  return CallInst::Create(DeclareFn, Args, Args+2, "", InsertBefore);
 }
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
-void DIFactory::InsertDeclare(Value *Storage, DIVariable D,
+Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                               BasicBlock *InsertAtEnd) {
   // Cast the storage to a {}* for the call to llvm.dbg.declare.
   Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertAtEnd);
@@ -1058,7 +1058,7 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D,
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
   Value *Args[] = { Storage, D.getNode() };
-  CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
+  return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
 }
 
 
@@ -1088,18 +1088,9 @@ void DebugInfoFinder::processModule(Module &M) {
         else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-        else if (MDDbgKind) {
-          if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) {
-            DILocation Loc(L);
-            DIScope S(Loc.getScope().getNode());
-            if (S.isCompileUnit())
-              addCompileUnit(DICompileUnit(S.getNode()));
-            else if (S.isSubprogram())
-              processSubprogram(DISubprogram(S.getNode()));
-            else if (S.isLexicalBlock())
-              processLexicalBlock(DILexicalBlock(S.getNode()));
-          }
-        }
+        else if (MDDbgKind) 
+          if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) 
+            processLocation(DILocation(L));
 #endif
       }
 
@@ -1114,6 +1105,20 @@ void DebugInfoFinder::processModule(Module &M) {
       processType(DIG.getType());
     }
   }
+}
+
+/// processLocation - Process DILocation.
+void DebugInfoFinder::processLocation(DILocation Loc) {
+  if (Loc.isNull()) return;
+  DIScope S(Loc.getScope().getNode());
+  if (S.isNull()) return;
+  if (S.isCompileUnit())
+    addCompileUnit(DICompileUnit(S.getNode()));
+  else if (S.isSubprogram())
+    processSubprogram(DISubprogram(S.getNode()));
+  else if (S.isLexicalBlock())
+    processLexicalBlock(DILexicalBlock(S.getNode()));
+  processLocation(Loc.getOrigLocation());
 }
 
 /// processType - Process DIType.
