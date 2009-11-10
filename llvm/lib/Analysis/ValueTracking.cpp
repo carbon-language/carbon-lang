@@ -789,6 +789,131 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
   return std::max(FirstAnswer, std::min(TyBits, Mask.countLeadingZeros()));
 }
 
+/// ComputeMultiple - This function computes the integer multiple of Base that
+/// equals V.  If successful, it returns true and returns the multiple in
+/// Multiple.  If unsuccessful, it returns false.  Also, if V can be
+/// simplified to an integer, then the simplified V is returned in Val. It looks
+/// through SExt instructions only if LookThroughSExt is true.
+bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
+                           APInt &Val, bool LookThroughSExt,
+                           const TargetData *TD, unsigned Depth) {
+  const unsigned MaxDepth = 6;
+
+  assert(TD && V && "No Value?");
+  assert(Depth <= MaxDepth && "Limit Search Depth");
+  assert(V->getType()->isInteger() && "Not integer or pointer type!");
+
+  const Type *T = V->getType();
+  unsigned TSize = TD->getTypeSizeInBits(T->getScalarType());
+
+  ConstantInt *CI = NULL;
+  if ((CI = dyn_cast<ConstantInt>(V)))
+    Val = CI->getValue();
+
+  if (Base == 0)
+    return false;
+    
+  if (Base == 1) {
+    Multiple = V;
+    return true;
+  }
+
+  ConstantExpr *CO = dyn_cast<ConstantExpr>(V);
+  Constant *BaseVal = ConstantInt::get(T, Base);
+  if (CO && CO == BaseVal) {
+    // Multiple is 1.
+    Multiple = ConstantInt::get(T, 1);
+    return true;
+  }
+
+  if (CI && CI->getZExtValue() % Base == 0) {
+    Multiple = ConstantInt::get(T, CI->getZExtValue() / Base);
+    return true;  
+  }
+  
+  if (Depth == MaxDepth) return false;  // Limit search depth.
+        
+  Operator *I = dyn_cast<Operator>(V);
+  if (!I) return false;
+
+  switch (I->getOpcode()) {
+  default: break;
+  case Instruction::SExt: {
+    if (!LookThroughSExt) return false;
+    // otherwise fall through to ZExt
+  }
+  case Instruction::ZExt: {
+    return ComputeMultiple(I->getOperand(0), Base, Multiple, Val,
+                           LookThroughSExt, TD, Depth+1);
+  }
+  case Instruction::Shl:
+  case Instruction::Mul: {
+    Value *Op0 = I->getOperand(0);
+    Value *Op1 = I->getOperand(1);
+
+    if (I->getOpcode() == Instruction::Shl) {
+      ConstantInt *Op1CI = dyn_cast<ConstantInt>(Op1);
+      if (!Op1CI) return false;
+      // Turn Op0 << Op1 into Op0 * 2^Op1
+      APInt Op1Int = Op1CI->getValue();
+      uint64_t BitToSet = Op1Int.getLimitedValue(Op1Int.getBitWidth() - 1);
+      Op1 = ConstantInt::get(V->getContext(), 
+                             APInt(Op1Int.getBitWidth(), 0).set(BitToSet));
+    }
+
+    Value *Mul0 = NULL;
+    Value *Mul1 = NULL;
+    APInt Val0(TSize, 0), Val1(TSize, 0);
+    bool M0 = ComputeMultiple(Op0, Base, Mul0, Val0,
+                              LookThroughSExt, TD, Depth+1);
+    bool M1 = ComputeMultiple(Op1, Base, Mul1, Val1,
+                              LookThroughSExt, TD, Depth+1);
+
+    if (M0) {
+      if (isa<Constant>(Op1) && isa<Constant>(Mul0)) {
+        // V == Base * (Mul0 * Op1), so return (Mul0 * Op1)
+        Multiple = ConstantExpr::getMul(cast<Constant>(Mul0),
+                  Val1.getBoolValue() ? ConstantInt::get(V->getContext(), Val1):
+                                        cast<Constant>(Op1));
+        return true;
+      }
+
+      if (ConstantInt *Mul0CI = dyn_cast<ConstantInt>(Mul0))
+        if (Mul0CI->getValue() == 1) {
+          // V == Base * Op1, so return Op1
+          Multiple = Op1;
+          return true;
+        }
+    }
+
+    if (M1) {
+      if (isa<Constant>(Op0) && isa<Constant>(Mul1)) {
+        // V == Base * (Mul1 * Op0), so return (Mul1 * Op0)
+        Multiple = ConstantExpr::getMul(cast<Constant>(Mul1),
+                  Val0.getBoolValue() ? ConstantInt::get(V->getContext(), Val0):
+                                        cast<Constant>(Op0));
+        return true;
+      }
+
+      if (ConstantInt *Mul1CI = dyn_cast<ConstantInt>(Mul1))
+        if (Mul1CI->getValue() == 1) {
+          // V == Base * Op0, so return Op0
+          Multiple = Op0;
+          return true;
+        }
+    }
+
+    if (Val0.getBoolValue() && Val1.getBoolValue())
+      // Op1*Op2 was simplified, try computing multiple again.
+      return ComputeMultiple(ConstantInt::get(V->getContext(), Val0 * Val1),
+                             Base, Multiple, Val, LookThroughSExt, TD, Depth+1);
+  }
+  }
+
+  // We could not determine if V is a multiple of Base.
+  return false;
+}
+
 /// CannotBeNegativeZero - Return true if we can prove that the specified FP 
 /// value is never equal to -0.0.
 ///
