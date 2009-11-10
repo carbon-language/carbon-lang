@@ -1453,7 +1453,8 @@ DIE *DwarfDebug::UpdateSubprogramScopeDIE(MDNode *SPNode) {
    DIGlobalVariable GV(N);
    if (GV.getContext().getNode() == SPNode) {
      DIE *ScopedGVDie = CreateGlobalVariableDIE(ModuleCU, GV);
-     SPDie->AddChild(ScopedGVDie);
+     if (ScopedGVDie)
+       SPDie->AddChild(ScopedGVDie);
    }
  }
  return SPDie;
@@ -2076,7 +2077,9 @@ void DwarfDebug::CollectVariableInfo() {
       ConcreteScopes.lookup(ScopeLoc.getOrigLocation().getNode());
     if (!Scope)
       Scope = DbgScopeMap.lookup(ScopeLoc.getScope().getNode()); 
-    assert (Scope && "Unable to find variable scope!");
+    // If variable scope is not found then skip this variable.
+    if (!Scope)
+      continue;
 
     DbgVariable *RegVar = new DbgVariable(DV, VP.first);
     Scope->AddVariable(RegVar);
