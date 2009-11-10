@@ -104,14 +104,8 @@ public:
   /// be emitted.
   bool ShouldEmitDwarfDebug() const;
 
-  //// RecordInlinedFnStart - Indicate the start of a inlined function.
-  unsigned RecordInlinedFnStart(DISubprogram SP, DICompileUnit CU,
-                                unsigned Line, unsigned Col);
-
-  /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
-  unsigned RecordInlinedFnEnd(DISubprogram SP);
-  void SetDbgScopeBeginLabels(const MachineInstr *MI, unsigned L);
-  void SetDbgScopeEndLabels(const MachineInstr *MI, unsigned L);
+  void BeginScope(const MachineInstr *MI, unsigned Label);
+  void EndScope(const MachineInstr *MI);
 };
 
 } // end llvm namespace

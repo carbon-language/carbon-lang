@@ -43,6 +43,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -347,21 +348,9 @@ bool FastISel::SelectCall(User *I) {
         && DW->ShouldEmitDwarfDebug()) {
      unsigned ID = 0;
      DISubprogram Subprogram(REI->getContext());
-     if (isInlinedFnEnd(*REI, MF.getFunction())) {
-        // This is end of an inlined function.
-        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        ID = DW->RecordInlinedFnEnd(Subprogram);
-        if (ID)
-          // Returned ID is 0 if this is unbalanced "end of inlined
-          // scope". This could happen if optimizer eats dbg intrinsics
-          // or "beginning of inlined scope" is not recoginized due to
-          // missing location info. In such cases, ignore this region.end.
-          BuildMI(MBB, DL, II).addImm(ID);
-      } else {
-        const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-        ID =  DW->RecordRegionEnd(REI->getContext());
-        BuildMI(MBB, DL, II).addImm(ID);
-      }
+     const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
+     ID =  DW->RecordRegionEnd(REI->getContext());
+     BuildMI(MBB, DL, II).addImm(ID);
     }
     return true;
   }
@@ -371,28 +360,6 @@ bool FastISel::SelectCall(User *I) {
         || !DW->ShouldEmitDwarfDebug()) 
       return true;
 
-    if (isInlinedFnStart(*FSI, MF.getFunction())) {
-      // This is a beginning of an inlined function.
-      
-      // If llvm.dbg.func.start is seen in a new block before any
-      // llvm.dbg.stoppoint intrinsic then the location info is unknown.
-      // FIXME : Why DebugLoc is reset at the beginning of each block ?
-      DebugLoc PrevLoc = DL;
-      if (PrevLoc.isUnknown())
-        return true;
-      // Record the source line.
-      setCurDebugLoc(ExtractDebugLocation(*FSI, MF.getDebugLocInfo()));
-      
-      DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
-      DISubprogram SP(FSI->getSubprogram());
-      unsigned LabelID = 
-        DW->RecordInlinedFnStart(SP,DICompileUnit(PrevLocTpl.Scope),
-                                 PrevLocTpl.Line, PrevLocTpl.Col);
-      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, DL, II).addImm(LabelID);
-      return true;
-    }
-    
     // This is a beginning of a new function.
     MF.setDefaultDebugLoc(ExtractDebugLocation(*FSI, MF.getDebugLocInfo()));
     
@@ -416,8 +383,13 @@ bool FastISel::SelectCall(User *I) {
       StaticAllocaMap.find(AI);
     if (SI == StaticAllocaMap.end()) break; // VLAs.
     int FI = SI->second;
-    if (MMI)
-      MMI->setVariableDbgInfo(DI->getVariable(), FI);
+    if (MMI) {
+      MetadataContext &TheMetadata = 
+        DI->getParent()->getContext().getMetadata();
+      unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+      MDNode *Dbg = TheMetadata.getMD(MDDbgKind, DI);
+      MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
+    }
 #ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
     DW->RecordVariable(DI->getVariable(), FI);
 #endif

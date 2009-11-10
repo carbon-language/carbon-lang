@@ -24,6 +24,7 @@ namespace llvm {
 
 class Module;
 class Function;
+class Instruction;
 class Pass;
 class LPPassManager;
 class BasicBlock;
@@ -154,7 +155,8 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
                                ClonedCodeInfo *CodeInfo = 0,
-                               const TargetData *TD = 0);
+                               const TargetData *TD = 0,
+                               Instruction *TheCall = 0);
 
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline

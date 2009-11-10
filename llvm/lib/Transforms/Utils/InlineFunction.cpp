@@ -386,7 +386,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
     // (which can happen, e.g., because an argument was constant), but we'll be
     // happy with whatever the cloner can do.
     CloneAndPruneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
-                              &InlinedFunctionInfo, TD);
+                              &InlinedFunctionInfo, TD, TheCall);
 
     // Remember the first block that is newly cloned over.
     FirstNewBlock = LastBlock; ++FirstNewBlock;

@@ -693,12 +693,6 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
   DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
                                 DebugLocTracker &DebugLocInfo);
 
-  /// isInlinedFnStart - Return true if FSI is starting an inlined function.
-  bool isInlinedFnStart(DbgFuncStartInst &FSI, const Function *CurrentFn);
-
-  /// isInlinedFnEnd - Return true if REI is ending an inlined function.
-  bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn);
-  /// DebugInfoFinder - This object collects DebugInfo from a module.
   class DebugInfoFinder {
 
   public:

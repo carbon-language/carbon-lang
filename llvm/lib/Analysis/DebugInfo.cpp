@@ -1487,22 +1487,4 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
 
     return DebugLoc::get(Id);
   }
-
-  /// isInlinedFnStart - Return true if FSI is starting an inlined function.
-  bool isInlinedFnStart(DbgFuncStartInst &FSI, const Function *CurrentFn) {
-    DISubprogram Subprogram(cast<MDNode>(FSI.getSubprogram()));
-    if (Subprogram.describes(CurrentFn))
-      return false;
-
-    return true;
-  }
-
-  /// isInlinedFnEnd - Return true if REI is ending an inlined function.
-  bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn) {
-    DISubprogram Subprogram(cast<MDNode>(REI.getContext()));
-    if (Subprogram.isNull() || Subprogram.describes(CurrentFn))
-      return false;
-
-    return true;
-  }
 }

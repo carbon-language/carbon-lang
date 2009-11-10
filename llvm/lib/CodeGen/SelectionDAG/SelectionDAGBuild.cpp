@@ -26,6 +26,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
@@ -3931,25 +3932,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         || !DW->ShouldEmitDwarfDebug()) 
       return 0;
 
-    MachineFunction &MF = DAG.getMachineFunction();
     DISubprogram Subprogram(REI.getContext());
     
-    if (isInlinedFnEnd(REI, MF.getFunction())) {
-      // This is end of inlined function. Debugging information for inlined
-      // function is not handled yet (only supported by FastISel).
-      if (OptLevel == CodeGenOpt::None) {
-        unsigned ID = DW->RecordInlinedFnEnd(Subprogram);
-        if (ID != 0)
-          // Returned ID is 0 if this is unbalanced "end of inlined
-          // scope". This could happen if optimizer eats dbg intrinsics or
-          // "beginning of inlined scope" is not recoginized due to missing
-          // location info. In such cases, do ignore this region.end.
-          DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(), 
-                                   getRoot(), ID));
-      }
-      return 0;
-    } 
-
     unsigned LabelID =
       DW->RecordRegionEnd(REI.getContext());
     DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
@@ -3963,37 +3947,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return 0;
 
     MachineFunction &MF = DAG.getMachineFunction();
-    // This is a beginning of an inlined function.
-    if (isInlinedFnStart(FSI, MF.getFunction())) {
-      if (OptLevel != CodeGenOpt::None)
-        // FIXME: Debugging informaation for inlined function is only
-        // supported at CodeGenOpt::Node.
-        return 0;
-      
-      DebugLoc PrevLoc = CurDebugLoc;
-      // If llvm.dbg.func.start is seen in a new block before any
-      // llvm.dbg.stoppoint intrinsic then the location info is unknown.
-      // FIXME : Why DebugLoc is reset at the beginning of each block ?
-      if (PrevLoc.isUnknown())
-        return 0;
-      
-      // Record the source line.
-      setCurDebugLoc(ExtractDebugLocation(FSI, MF.getDebugLocInfo()));
-      
-      if (!DW || !DW->ShouldEmitDwarfDebug())
-        return 0;
-      DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
-      DISubprogram SP(FSI.getSubprogram());
-      DICompileUnit CU(PrevLocTpl.Scope);
-      unsigned LabelID = DW->RecordInlinedFnStart(SP, CU,
-                                                  PrevLocTpl.Line,
-                                                  PrevLocTpl.Col);
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                               getRoot(), LabelID));
-      return 0;
-    }
-
-    // This is a beginning of a new function.
     MF.setDefaultDebugLoc(ExtractDebugLocation(FSI, MF.getDebugLocInfo()));
 
     if (!DW || !DW->ShouldEmitDwarfDebug())
@@ -4028,8 +3981,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     int FI = SI->second;
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    if (MMI) 
-      MMI->setVariableDbgInfo(Variable, FI);
+    if (MMI) {
+      MetadataContext &TheMetadata = 
+        DI.getParent()->getContext().getMetadata();
+      unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+      MDNode *Dbg = TheMetadata.getMD(MDDbgKind, &DI);
+      MMI->setVariableDbgInfo(Variable, FI, Dbg);
+    }
 #else
     DW->RecordVariable(Variable, FI);
 #endif

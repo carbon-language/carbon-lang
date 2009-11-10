@@ -387,13 +387,14 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
     if (MDDbgKind) {
       // Update DebugLoc if debug information is attached with this
       // instruction.
-      if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
-        DILocation DILoc(Dbg);
-        DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
-        SDL->setCurDebugLoc(Loc);
-        if (MF->getDefaultDebugLoc().isUnknown())
-          MF->setDefaultDebugLoc(Loc);
-      }
+      if (!isa<DbgInfoIntrinsic>(I)) 
+        if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
+          DILocation DILoc(Dbg);
+          DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
+          SDL->setCurDebugLoc(Loc);
+          if (MF->getDefaultDebugLoc().isUnknown())
+            MF->setDefaultDebugLoc(Loc);
+        }
     }
     if (!isa<TerminatorInst>(I))
       SDL->visit(*I);
@@ -750,14 +751,15 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         if (MDDbgKind) {
           // Update DebugLoc if debug information is attached with this
           // instruction.
-          if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, BI)) {
-            DILocation DILoc(Dbg);
-            DebugLoc Loc = ExtractDebugLocation(DILoc,
-                                                MF.getDebugLocInfo());
-            FastIS->setCurDebugLoc(Loc);
-            if (MF.getDefaultDebugLoc().isUnknown())
-              MF.setDefaultDebugLoc(Loc);
-          }
+          if (!isa<DbgInfoIntrinsic>(BI)) 
+            if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, BI)) {
+              DILocation DILoc(Dbg);
+              DebugLoc Loc = ExtractDebugLocation(DILoc,
+                                                  MF.getDebugLocInfo());
+              FastIS->setCurDebugLoc(Loc);
+              if (MF.getDefaultDebugLoc().isUnknown())
+                MF.setDefaultDebugLoc(Loc);
+            }
         }
 
         // Just before the terminator instruction, insert instructions to

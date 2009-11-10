@@ -1357,31 +1357,30 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
 /// instruction's DebugLoc.
 void AsmPrinter::processDebugLoc(const MachineInstr *MI, 
                                  bool BeforePrintingInsn) {
-  if (!MAI || !DW)
+  if (!MAI || !DW || !MAI->doesSupportDebugInformation()
+      || !DW->ShouldEmitDwarfDebug())
     return;
   DebugLoc DL = MI->getDebugLoc();
-  if (MAI->doesSupportDebugInformation() && DW->ShouldEmitDwarfDebug()) {
-    if (!DL.isUnknown()) {
-      DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
-      if (BeforePrintingInsn) {
-        if (CurDLT.Scope != 0 && PrevDLT != CurDLT) {
-	  unsigned L = DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
-	  				    CurDLT.Scope);
-          printLabel(L);
-          O << '\n';
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-          DW->SetDbgScopeBeginLabels(MI, L);
-#endif
-        } else {
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-          DW->SetDbgScopeEndLabels(MI, 0);
-#endif
-        }
-      } 
+  if (DL.isUnknown())
+    return;
+  DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
+  if (CurDLT.Scope == 0)
+    return;
+
+  if (BeforePrintingInsn) {
+    if (CurDLT != PrevDLT) {
+      unsigned L = DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
+                                        CurDLT.Scope);
+      printLabel(L);
+      DW->BeginScope(MI, L);
       PrevDLT = CurDLT;
     }
+  } else {
+    // After printing instruction
+    DW->EndScope(MI);
   }
 }
+
 
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.

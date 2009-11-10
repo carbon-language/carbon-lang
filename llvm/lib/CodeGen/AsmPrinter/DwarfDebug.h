@@ -134,52 +134,52 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   bool shouldEmit;
 
-  // FunctionDbgScope - Top level scope for the current function.
+  // CurrentFnDbgScope - Top level scope for the current function.
   //
-  DbgScope *FunctionDbgScope;
+  DbgScope *CurrentFnDbgScope;
   
   /// DbgScopeMap - Tracks the scopes in the current function.
+  ///
   ValueMap<MDNode *, DbgScope *> DbgScopeMap;
+
+  /// ConcreteScopes - Tracks the concrete scopees in the current function.
+  /// These scopes are also included in DbgScopeMap.
+  ValueMap<MDNode *, DbgScope *> ConcreteScopes;
+
+  /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
+  /// not included DbgScopeMap.
+  ValueMap<MDNode *, DbgScope *> AbstractScopes;
+  SmallVector<DbgScope *, 4>AbstractScopesList;
+
+  /// AbstractVariables - Collection on abstract variables.
+  ValueMap<MDNode *, DbgVariable *> AbstractVariables;
+
+  /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
+  /// (at the end of the module) as DW_AT_inline.
+  SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;
+
+  /// AbstractSubprogramDIEs - Collection of abstruct subprogram DIEs.
+  SmallPtrSet<DIE *, 4> AbstractSubprogramDIEs;
 
   /// ScopedGVs - Tracks global variables that are not at file scope.
   /// For example void f() { static int b = 42; }
   SmallVector<WeakVH, 4> ScopedGVs;
 
-  typedef DenseMap<const MachineInstr *, SmallVector<DbgScope *, 2> > 
+  typedef SmallVector<DbgScope *, 2> ScopeVector;
+  typedef DenseMap<const MachineInstr *, ScopeVector>
     InsnToDbgScopeMapTy;
 
-  /// DbgScopeBeginMap - Maps instruction with a list DbgScopes it starts.
+  /// DbgScopeBeginMap - Maps instruction with a list of DbgScopes it starts.
   InsnToDbgScopeMapTy DbgScopeBeginMap;
 
   /// DbgScopeEndMap - Maps instruction with a list DbgScopes it ends.
   InsnToDbgScopeMapTy DbgScopeEndMap;
 
-  /// DbgAbstractScopeMap - Tracks abstract instance scopes in the current
-  /// function.
-  ValueMap<MDNode *, DbgScope *> DbgAbstractScopeMap;
-
-  /// DbgConcreteScopeMap - Tracks concrete instance scopes in the current
-  /// function.
-  ValueMap<MDNode *,
-           SmallVector<DbgScope *, 8> > DbgConcreteScopeMap;
-
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
-  ValueMap<MDNode *, SmallVector<unsigned, 4> > InlineInfo;
-
-  /// AbstractInstanceRootMap - Map of abstract instance roots of inlined
-  /// functions. These are subroutine entries that contain a DW_AT_inline
-  /// attribute.
-  DenseMap<const MDNode *, DbgScope *> AbstractInstanceRootMap;
-
-  /// AbstractInstanceRootList - List of abstract instance roots of inlined
-  /// functions. These are subroutine entries that contain a DW_AT_inline
-  /// attribute.
-  SmallVector<DbgScope *, 32> AbstractInstanceRootList;
-
-  /// LexicalScopeStack - A stack of lexical scopes. The top one is the current
-  /// scope.
-  SmallVector<DbgScope *, 16> LexicalScopeStack;
+  typedef std::pair<unsigned, DIE *> InlineInfoLabels;
+  ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> > InlineInfo;
+  SmallVector<MDNode *, 4> InlinedSPNodes;
 
   /// CompileUnitOffsets - A vector of the offsets of the compile units. This is
   /// used when calculating the "origin" of a concrete instance of an inlined
@@ -361,10 +361,24 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   DIE *CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
 
-  /// getDbgScope - Returns the scope associated with the given descriptor.
-  ///
+  /// getUpdatedDbgScope - Find or create DbgScope assicated with 
+  /// the instruction. Initialize scope and update scope hierarchy.
+  DbgScope *getUpdatedDbgScope(MDNode *N, const MachineInstr *MI, MDNode *InlinedAt);
+
+  /// createDbgScope - Create DbgScope for the scope.
+  void createDbgScope(MDNode *Scope, MDNode *InlinedAt);
   DbgScope *getOrCreateScope(MDNode *N);
-  DbgScope *getDbgScope(MDNode *N, const MachineInstr *MI, MDNode *InlinedAt);
+  DbgScope *getOrCreateAbstractScope(MDNode *N);
+
+  /// findAbstractVariable - Find abstract variable associated with Var.
+  DbgVariable *findAbstractVariable(DIVariable &Var, unsigned FrameIdx, 
+                                    DILocation &Loc);
+
+  DIE *UpdateSubprogramScopeDIE(MDNode *SPNode);
+  DIE *ConstructLexicalScopeDIE(DbgScope *Scope);
+  DIE *ConstructScopeDIE(DbgScope *Scope);
+  DIE *ConstructInlinedScopeDIE(DbgScope *Scope);
+  DIE *ConstructVariableDIE(DbgVariable *DV, DbgScope *S, CompileUnit *Unit);
 
   /// ConstructDbgScope - Construct the components of a scope.
   ///
@@ -372,10 +386,10 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
                          unsigned ParentStartID, unsigned ParentEndID,
                          DIE *ParentDie, CompileUnit *Unit);
 
-  /// ConstructFunctionDbgScope - Construct the scope for the subprogram.
+  /// ConstructCurrentFnDbgScope - Construct the scope for the subprogram.
   ///
-  void ConstructFunctionDbgScope(DbgScope *RootScope,
-                                 bool AbstractScope = false);
+  void ConstructCurrentFnDbgScope(DbgScope *RootScope,
+                                  bool AbstractScope = false);
 
   /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
   ///
@@ -544,13 +558,6 @@ public:
   /// RecordVariable - Indicate the declaration of  a local variable.
   void RecordVariable(MDNode *N, unsigned FrameIndex);
 
-  //// RecordInlinedFnStart - Indicate the start of inlined subroutine.
-  unsigned RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
-                                unsigned Line, unsigned Col);
-
-  /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
-  unsigned RecordInlinedFnEnd(DISubprogram &SP);
-
   /// ExtractScopeInformation - Scan machine instructions in this function
   /// and collect DbgScopes. Return true, if atleast one scope was found.
   bool ExtractScopeInformation(MachineFunction *MF);
@@ -558,15 +565,16 @@ public:
   /// CollectVariableInfo - Populate DbgScope entries with variables' info.
   void CollectVariableInfo();
 
-  /// SetDbgScopeBeginLabels - Update DbgScope begin labels for the scopes that
-  /// start with this machine instruction.
-  void SetDbgScopeBeginLabels(const MachineInstr *MI, unsigned Label);
-
   /// SetDbgScopeEndLabels - Update DbgScope end labels for the scopes that
   /// end with this machine instruction.
   void SetDbgScopeEndLabels(const MachineInstr *MI, unsigned Label);
-};
 
+  /// BeginScope - Process beginning of a scope starting at Label.
+  void BeginScope(const MachineInstr *MI, unsigned Label);
+
+  /// EndScope - Prcess end of a scope.
+  void EndScope(const MachineInstr *MI);
+};
 } // End of namespace llvm
 
 #endif
