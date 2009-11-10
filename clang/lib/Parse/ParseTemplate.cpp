@@ -803,7 +803,7 @@ void Parser::AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS) {
 }
 
 /// \brief Determine whether the given token can end a template argument.
-static const bool isEndOfTemplateArgument(Token Tok) {
+static bool isEndOfTemplateArgument(Token Tok) {
   return Tok.is(tok::comma) || Tok.is(tok::greater) || 
          Tok.is(tok::greatergreater);
 }
