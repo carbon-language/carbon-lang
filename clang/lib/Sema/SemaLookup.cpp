@@ -783,7 +783,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema::LookupResult &R,
   // We have already looked into the initial namespace; seed the queue
   // with its using-children.
   for (; I != E; ++I) {
-    NamespaceDecl *ND = (*I)->getNominatedNamespace();
+    NamespaceDecl *ND = (*I)->getNominatedNamespace()->getOriginalNamespace();
     if (Visited.insert(ND).second)
       Queue.push_back(ND);
   }
