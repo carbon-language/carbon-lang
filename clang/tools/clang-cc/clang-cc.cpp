@@ -624,11 +624,6 @@ static llvm::cl::opt<bool>
 DisableLLVMOptimizations("disable-llvm-optzns",
                          llvm::cl::desc("Don't run LLVM optimization passes"));
 
-static llvm::cl::opt<bool>
-NoCommon("fno-common",
-         llvm::cl::desc("Compile common globals like normal definitions"),
-         llvm::cl::ValueDisallowed);
-
 static llvm::cl::opt<std::string>
 MainFileName("main-file-name",
              llvm::cl::desc("Main file name to use for debug info"));
@@ -640,10 +635,6 @@ AccessControl("faccess-control",
 static llvm::cl::opt<bool>
 NoElideConstructors("fno-elide-constructors",
                     llvm::cl::desc("Disable C++ copy constructor elision"));
-
-static llvm::cl::opt<bool>
-NoMergeConstants("fno-merge-all-constants",
-                       llvm::cl::desc("Disallow merging of constants."));
 
 static llvm::cl::opt<std::string>
 TargetABI("target-abi",
@@ -1242,16 +1233,7 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 // Code generation options
 //===----------------------------------------------------------------------===//
 
-static llvm::cl::opt<bool>
-GenerateDebugInfo("g",
-                  llvm::cl::desc("Generate source level debug information"));
-
-static llvm::cl::opt<std::string>
-TargetCPU("mcpu",
-         llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
-
-static llvm::cl::list<std::string>
-TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
+namespace codegenoptions {
 
 
 static llvm::cl::opt<bool>
@@ -1260,15 +1242,38 @@ DisableRedZone("disable-red-zone",
                llvm::cl::init(false));
 
 static llvm::cl::opt<bool>
+GenerateDebugInfo("g",
+                  llvm::cl::desc("Generate source level debug information"));
+
+static llvm::cl::opt<bool>
+NoCommon("fno-common",
+         llvm::cl::desc("Compile common globals like normal definitions"),
+         llvm::cl::ValueDisallowed);
+
+static llvm::cl::opt<bool>
 NoImplicitFloat("no-implicit-float",
   llvm::cl::desc("Don't generate implicit floating point instructions (x86-only)"),
   llvm::cl::init(false));
+
+static llvm::cl::opt<bool>
+NoMergeConstants("fno-merge-all-constants",
+                       llvm::cl::desc("Disallow merging of constants."));
+
+static llvm::cl::opt<std::string>
+TargetCPU("mcpu",
+         llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
+
+static llvm::cl::list<std::string>
+TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
+
+}
 
 /// ComputeTargetFeatures - Recompute the target feature list to only
 /// be the list of things that are enabled, based on the target cpu
 /// and feature list.
 static void ComputeFeatureMap(TargetInfo &Target,
                               llvm::StringMap<bool> &Features) {
+  using namespace codegenoptions;
   assert(Features.empty() && "invalid map");
 
   // Initialize the feature map based on the target.
@@ -1296,6 +1301,7 @@ static void ComputeFeatureMap(TargetInfo &Target,
 static void InitializeCompileOptions(CompileOptions &Opts,
                                      const LangOptions &LangOpts,
                                      const llvm::StringMap<bool> &Features) {
+  using namespace codegenoptions;
   Opts.OptimizeSize = OptSize;
   Opts.DebugInfo = GenerateDebugInfo;
 
