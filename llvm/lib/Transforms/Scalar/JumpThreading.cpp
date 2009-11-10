@@ -223,10 +223,11 @@ static void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
       U = PNV;
       
       // See if we can simplify it.
-      if (Value *V = SimplifyInstruction(User, TD)) {
-        User->replaceAllUsesWith(V);
-        User->eraseFromParent();
-      }
+      if (User != PN)
+        if (Value *V = SimplifyInstruction(User, TD)) {
+          User->replaceAllUsesWith(V);
+          User->eraseFromParent();
+        }
     }
     
     PN->replaceAllUsesWith(PNV);
