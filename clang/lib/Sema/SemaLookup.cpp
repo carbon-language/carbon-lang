@@ -34,77 +34,163 @@
 
 using namespace clang;
 
-typedef llvm::SmallVector<UsingDirectiveDecl*, 4> UsingDirectivesTy;
-typedef llvm::DenseSet<NamespaceDecl*> NamespaceSet;
+namespace {
+  class UnqualUsingEntry {
+    const DeclContext *Nominated;
+    const DeclContext *CommonAncestor;
 
-/// UsingDirAncestorCompare - Implements strict weak ordering of
-/// UsingDirectives. It orders them by address of its common ancestor.
-struct UsingDirAncestorCompare {
+  public:
+    UnqualUsingEntry(const DeclContext *Nominated,
+                     const DeclContext *CommonAncestor)
+      : Nominated(Nominated), CommonAncestor(CommonAncestor) {
+    }
 
-  /// @brief Compares UsingDirectiveDecl common ancestor with DeclContext.
-  bool operator () (UsingDirectiveDecl *U, const DeclContext *Ctx) const {
-    return U->getCommonAncestor() < Ctx;
-  }
+    const DeclContext *getCommonAncestor() const {
+      return CommonAncestor;
+    }
 
-  /// @brief Compares UsingDirectiveDecl common ancestor with DeclContext.
-  bool operator () (const DeclContext *Ctx, UsingDirectiveDecl *U) const {
-    return Ctx < U->getCommonAncestor();
-  }
+    const DeclContext *getNominatedNamespace() const {
+      return Nominated;
+    }
 
-  /// @brief Compares UsingDirectiveDecl common ancestors.
-  bool operator () (UsingDirectiveDecl *U1, UsingDirectiveDecl *U2) const {
-    return U1->getCommonAncestor() < U2->getCommonAncestor();
-  }
-};
+    // Sort by the pointer value of the common ancestor.
+    struct Comparator {
+      bool operator()(const UnqualUsingEntry &L, const UnqualUsingEntry &R) {
+        return L.getCommonAncestor() < R.getCommonAncestor();
+      }
 
-/// AddNamespaceUsingDirectives - Adds all UsingDirectiveDecl's to heap UDirs
-/// (ordered by common ancestors), found in namespace NS,
-/// including all found (recursively) in their nominated namespaces.
-void AddNamespaceUsingDirectives(ASTContext &Context,
-                                 DeclContext *NS,
-                                 UsingDirectivesTy &UDirs,
-                                 NamespaceSet &Visited) {
-  DeclContext::udir_iterator I, End;
+      bool operator()(const UnqualUsingEntry &E, const DeclContext *DC) {
+        return E.getCommonAncestor() < DC;
+      }
 
-  for (llvm::tie(I, End) = NS->getUsingDirectives(); I !=End; ++I) {
-    UDirs.push_back(*I);
-    std::push_heap(UDirs.begin(), UDirs.end(), UsingDirAncestorCompare());
-    NamespaceDecl *Nominated = (*I)->getNominatedNamespace();
-    if (Visited.insert(Nominated).second)
-      AddNamespaceUsingDirectives(Context, Nominated, UDirs, /*ref*/ Visited);
-  }
-}
+      bool operator()(const DeclContext *DC, const UnqualUsingEntry &E) {
+        return DC < E.getCommonAncestor();
+      }
+    };
+  };
 
-/// AddScopeUsingDirectives - Adds all UsingDirectiveDecl's found in Scope S,
-/// including all found in the namespaces they nominate.
-static void AddScopeUsingDirectives(ASTContext &Context, Scope *S,
-                                    UsingDirectivesTy &UDirs) {
-  NamespaceSet VisitedNS;
+  /// A collection of using directives, as used by C++ unqualified
+  /// lookup.
+  class UnqualUsingDirectiveSet {
+    typedef llvm::SmallVector<UnqualUsingEntry, 8> ListTy;
 
-  if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
+    ListTy list;
+    llvm::SmallPtrSet<DeclContext*, 8> visited;
 
-    if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(Ctx))
-      VisitedNS.insert(NS);
+  public:
+    UnqualUsingDirectiveSet() {}
 
-    AddNamespaceUsingDirectives(Context, Ctx, UDirs, /*ref*/ VisitedNS);
+    void visitScopeChain(Scope *S, Scope *InnermostFileScope) {
+      // C++ [namespace.udir]p1: 
+      //   During unqualified name lookup, the names appear as if they
+      //   were declared in the nearest enclosing namespace which contains
+      //   both the using-directive and the nominated namespace.
+      DeclContext *InnermostFileDC
+        = static_cast<DeclContext*>(InnermostFileScope->getEntity());
+      assert(InnermostFileDC && InnermostFileDC->isFileContext());
 
-  } else {
-    Scope::udir_iterator I = S->using_directives_begin(),
-                         End = S->using_directives_end();
+      for (; S; S = S->getParent()) {
+        if (!(S->getFlags() & Scope::DeclScope))
+          continue;
 
-    for (; I != End; ++I) {
-      UsingDirectiveDecl *UD = I->getAs<UsingDirectiveDecl>();
-      UDirs.push_back(UD);
-      std::push_heap(UDirs.begin(), UDirs.end(), UsingDirAncestorCompare());
-
-      NamespaceDecl *Nominated = UD->getNominatedNamespace();
-      if (!VisitedNS.count(Nominated)) {
-        VisitedNS.insert(Nominated);
-        AddNamespaceUsingDirectives(Context, Nominated, UDirs,
-                                    /*ref*/ VisitedNS);
+        if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
+          DeclContext *EffectiveDC = (Ctx->isFileContext() ? Ctx : InnermostFileDC);
+          visit(Ctx, EffectiveDC);
+        } else {
+          Scope::udir_iterator I = S->using_directives_begin(),
+                             End = S->using_directives_end();
+          
+          for (; I != End; ++I)
+            visit(I->getAs<UsingDirectiveDecl>(), InnermostFileDC);
+        }
       }
     }
-  }
+
+    // Visits a context and collect all of its using directives
+    // recursively.  Treats all using directives as if they were
+    // declared in the context.
+    //
+    // A given context is only every visited once, so it is important
+    // that contexts be visited from the inside out in order to get
+    // the effective DCs right.
+    void visit(DeclContext *DC, DeclContext *EffectiveDC) {
+      if (!visited.insert(DC))
+        return;
+
+      addUsingDirectives(DC, EffectiveDC);
+    }
+
+    // Visits a using directive and collects all of its using
+    // directives recursively.  Treats all using directives as if they
+    // were declared in the effective DC.
+    void visit(UsingDirectiveDecl *UD, DeclContext *EffectiveDC) {
+      DeclContext *NS = UD->getNominatedNamespace();
+      if (!visited.insert(NS))
+        return;
+
+      addUsingDirective(UD, EffectiveDC);
+      addUsingDirectives(NS, EffectiveDC);
+    }
+
+    // Adds all the using directives in a context (and those nominated
+    // by its using directives, transitively) as if they appeared in
+    // the given effective context.
+    void addUsingDirectives(DeclContext *DC, DeclContext *EffectiveDC) {
+      llvm::SmallVector<DeclContext*,4> queue;
+      while (true) {
+        DeclContext::udir_iterator I, End;
+        for (llvm::tie(I, End) = DC->getUsingDirectives(); I != End; ++I) {
+          UsingDirectiveDecl *UD = *I;
+          DeclContext *NS = UD->getNominatedNamespace();
+          if (visited.insert(NS)) {
+            addUsingDirective(UD, EffectiveDC);
+            queue.push_back(NS);
+          }
+        }
+
+        if (queue.empty())
+          return;
+
+        DC = queue.back();
+        queue.pop_back();
+      }
+    }
+
+    // Add a using directive as if it had been declared in the given
+    // context.  This helps implement C++ [namespace.udir]p3:
+    //   The using-directive is transitive: if a scope contains a
+    //   using-directive that nominates a second namespace that itself
+    //   contains using-directives, the effect is as if the
+    //   using-directives from the second namespace also appeared in
+    //   the first.
+    void addUsingDirective(UsingDirectiveDecl *UD, DeclContext *EffectiveDC) {
+      // Find the common ancestor between the effective context and
+      // the nominated namespace.
+      DeclContext *Common = UD->getNominatedNamespace();
+      while (!Common->Encloses(EffectiveDC))
+        Common = Common->getParent();
+      
+      list.push_back(UnqualUsingEntry(UD->getNominatedNamespace(), Common));
+    }
+
+    void done() {
+      std::sort(list.begin(), list.end(), UnqualUsingEntry::Comparator());
+    }
+
+    typedef ListTy::iterator iterator;
+    typedef ListTy::const_iterator const_iterator;
+    
+    iterator begin() { return list.begin(); }
+    iterator end() { return list.end(); }
+    const_iterator begin() const { return list.begin(); }
+    const_iterator end() const { return list.end(); }
+
+    std::pair<const_iterator,const_iterator>
+    getNamespacesFor(DeclContext *DC) const {
+      return std::equal_range(begin(), end(), DC,
+                              UnqualUsingEntry::Comparator());
+    }
+  };
 }
 
 // Retrieve the set of identifier namespaces that correspond to a
@@ -306,13 +392,14 @@ void Sema::LookupResult::print(llvm::raw_ostream &Out) {
 
 // Adds all qualifying matches for a name within a decl context to the
 // given lookup result.  Returns true if any matches were found.
-static bool LookupDirect(Sema::LookupResult &R, DeclContext *DC,
+static bool LookupDirect(Sema::LookupResult &R,
+                         const DeclContext *DC,
                          DeclarationName Name,
                          Sema::LookupNameKind NameKind,
                          unsigned IDNS) {
   bool Found = false;
 
-  DeclContext::lookup_iterator I, E;
+  DeclContext::lookup_const_iterator I, E;
   for (llvm::tie(I, E) = DC->lookup(Name); I != E; ++I)
     if (Sema::isAcceptableLookupResult(*I, NameKind, IDNS))
       R.addDecl(*I), Found = true;
@@ -320,28 +407,25 @@ static bool LookupDirect(Sema::LookupResult &R, DeclContext *DC,
   return Found;
 }
 
+// Performs C++ unqualified lookup into the given file context.
 static bool
 CppNamespaceLookup(Sema::LookupResult &R, ASTContext &Context, DeclContext *NS,
                    DeclarationName Name, Sema::LookupNameKind NameKind,
-                   unsigned IDNS, UsingDirectivesTy *UDirs = 0) {
+                   unsigned IDNS, UnqualUsingDirectiveSet &UDirs) {
 
   assert(NS && NS->isFileContext() && "CppNamespaceLookup() requires namespace!");
 
-  // Perform qualified name lookup into the LookupCtx.
+  // Perform direct name lookup into the LookupCtx.
   bool Found = LookupDirect(R, NS, Name, NameKind, IDNS);
 
-  if (UDirs) {
-    // For each UsingDirectiveDecl, which common ancestor is equal
-    // to NS, we preform qualified name lookup into namespace nominated by it.
-    UsingDirectivesTy::const_iterator UI, UEnd;
-    llvm::tie(UI, UEnd) =
-      std::equal_range(UDirs->begin(), UDirs->end(), NS,
-                       UsingDirAncestorCompare());
+  // Perform direct name lookup into the namespaces nominated by the
+  // using directives whose common ancestor is this namespace.
+  UnqualUsingDirectiveSet::const_iterator UI, UEnd;
+  llvm::tie(UI, UEnd) = UDirs.getNamespacesFor(NS);
 
-    for (; UI != UEnd; ++UI)
-      if (LookupDirect(R, (*UI)->getNominatedNamespace(), Name, NameKind, IDNS))
-        Found = true;
-  }
+  for (; UI != UEnd; ++UI)
+    if (LookupDirect(R, UI->getNominatedNamespace(), Name, NameKind, IDNS))
+      Found = true;
 
   R.resolveKind();
 
@@ -433,18 +517,19 @@ Sema::CppLookupName(LookupResult &R, Scope *S, DeclarationName Name,
     }
   }
 
+  // Stop if we ran out of scopes.
+  // FIXME:  This really, really shouldn't be happening.
+  if (!S) return false;
+
   // Collect UsingDirectiveDecls in all scopes, and recursively all
   // nominated namespaces by those using-directives.
-  // UsingDirectives are pushed to heap, in common ancestor pointer value order.
+  //
   // FIXME: Cache this sorted list in Scope structure, and DeclContext, so we
   // don't build it for each lookup!
-  UsingDirectivesTy UDirs;
-  for (Scope *SC = Initial; SC; SC = SC->getParent())
-    if (SC->getFlags() & Scope::DeclScope)
-      AddScopeUsingDirectives(Context, SC, UDirs);
 
-  // Sort heapified UsingDirectiveDecls.
-  std::sort_heap(UDirs.begin(), UDirs.end(), UsingDirAncestorCompare());
+  UnqualUsingDirectiveSet UDirs;
+  UDirs.visitScopeChain(Initial, S);
+  UDirs.done();
 
   // Lookup namespace scope, and global scope.
   // Unqualified name lookup in C++ requires looking into scopes
@@ -473,7 +558,7 @@ Sema::CppLookupName(LookupResult &R, Scope *S, DeclarationName Name,
     }
 
     // Look into context considering using-directives.
-    if (CppNamespaceLookup(R, Context, Ctx, Name, NameKind, IDNS, &UDirs))
+    if (CppNamespaceLookup(R, Context, Ctx, Name, NameKind, IDNS, UDirs))
       Found = true;
 
     if (Found) {
