@@ -20,6 +20,7 @@
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PreprocessorOptions.h"
+#include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
@@ -527,6 +528,31 @@ isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
 }
 
 //===----------------------------------------------------------------------===//
+// Preprocessed Output Options
+//===----------------------------------------------------------------------===//
+
+namespace preprocessoroutputoptions {
+
+static llvm::cl::opt<bool>
+DisableLineMarkers("P", llvm::cl::desc("Disable linemarker output in -E mode"));
+
+static llvm::cl::opt<bool>
+EnableCommentOutput("C", llvm::cl::desc("Enable comment output in -E mode"));
+
+static llvm::cl::opt<bool>
+EnableMacroCommentOutput("CC",
+                         llvm::cl::desc("Enable comment output in -E mode, "
+                                        "even from macro expansions"));
+static llvm::cl::opt<bool>
+DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
+                                " normal output"));
+static llvm::cl::opt<bool>
+DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
+                                "addition to normal output"));
+
+}
+
+//===----------------------------------------------------------------------===//
 // Option Object Construction
 //===----------------------------------------------------------------------===//
 
@@ -1010,3 +1036,15 @@ void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
 
   Target.setForcedLangOptions(Options);
 }
+
+void
+clang::InitializePreprocessorOutputOptions(PreprocessorOutputOptions &Opts) {
+  using namespace preprocessoroutputoptions;
+
+  Opts.ShowCPP = !DumpMacros;
+  Opts.ShowMacros = DumpMacros || DumpDefines;
+  Opts.ShowLineMarkers = !DisableLineMarkers;
+  Opts.ShowComments = EnableCommentOutput;
+  Opts.ShowMacroComments = EnableMacroCommentOutput;
+}
+

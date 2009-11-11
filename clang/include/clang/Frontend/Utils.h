@@ -59,7 +59,7 @@ bool ProcessWarningOptions(Diagnostic &Diags,
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS,
-                              PreprocessorOutputOptions &Opts);
+                              const PreprocessorOutputOptions &Opts);
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
 void RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream* OS);

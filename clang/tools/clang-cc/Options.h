@@ -20,6 +20,7 @@ class DiagnosticOptions;
 class HeaderSearchOptions;
 class LangOptions;
 class PreprocessorOptions;
+class PreprocessorOutputOptions;
 class TargetInfo;
 
 enum LangKind {
@@ -54,6 +55,8 @@ void InitializeLangOptions(LangOptions &Options, LangKind LK,
                            const CompileOptions &CompileOpts);
 
 void InitializePreprocessorOptions(PreprocessorOptions &Opts);
+
+void InitializePreprocessorOutputOptions(PreprocessorOutputOptions &Opts);
 
 } // end namespace clang
 

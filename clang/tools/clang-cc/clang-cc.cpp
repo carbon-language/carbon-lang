@@ -455,26 +455,9 @@ static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 
 //===----------------------------------------------------------------------===//
-// Preprocessing (-E mode) Options
-//===----------------------------------------------------------------------===//
-static llvm::cl::opt<bool>
-DisableLineMarkers("P", llvm::cl::desc("Disable linemarker output in -E mode"));
-static llvm::cl::opt<bool>
-EnableCommentOutput("C", llvm::cl::desc("Enable comment output in -E mode"));
-static llvm::cl::opt<bool>
-EnableMacroCommentOutput("CC",
-                         llvm::cl::desc("Enable comment output in -E mode, "
-                                        "even from macro expansions"));
-static llvm::cl::opt<bool>
-DumpMacros("dM", llvm::cl::desc("Print macro definitions in -E mode instead of"
-                                " normal output"));
-static llvm::cl::opt<bool>
-DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
-                                "addition to normal output"));
-
-//===----------------------------------------------------------------------===//
 // Dependency file options
 //===----------------------------------------------------------------------===//
+
 static llvm::cl::opt<std::string>
 DependencyFile("dependency-file",
                llvm::cl::desc("Filename (or -) to write dependency output to"));
@@ -920,13 +903,8 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
 
   case PrintPreprocessedInput: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    PreprocessorOutputOptions Opts;
-    Opts.ShowCPP = !DumpMacros;
-    Opts.ShowMacros = DumpMacros || DumpDefines;
-    Opts.ShowLineMarkers = !DisableLineMarkers;
-    Opts.ShowComments = EnableCommentOutput;
-    Opts.ShowMacroComments = EnableMacroCommentOutput;
-    DoPrintPreprocessedInput(PP, OS.get(), Opts);
+    DoPrintPreprocessedInput(PP, OS.get(),
+                             CompOpts.getPreprocessorOutputOpts());
     ClearSourceMgr = true;
   }
 
@@ -1122,6 +1100,9 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
 
   // Initialize the other preprocessor options.
   InitializePreprocessorOptions(Opts.getPreprocessorOpts());
+
+  // Initialize the preprocessed output options.
+  InitializePreprocessorOutputOptions(Opts.getPreprocessorOutputOpts());
 
   // Finalize some code generation options.
   FinalizeCompileOptions(Opts.getCompileOpts(), Opts.getLangOpts());

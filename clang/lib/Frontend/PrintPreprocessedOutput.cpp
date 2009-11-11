@@ -468,7 +468,7 @@ static void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
 void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
-                                     PreprocessorOutputOptions &Opts) {
+                                     const PreprocessorOutputOptions &Opts) {
   // Show macros with no output is handled specially.
   if (!Opts.ShowCPP) {
     assert(Opts.ShowMacros && "Not yet implemented!");

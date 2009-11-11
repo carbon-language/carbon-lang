@@ -15,6 +15,7 @@
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PreprocessorOptions.h"
+#include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "llvm/ADT/StringMap.h"
 #include <string>
 
@@ -42,12 +43,12 @@ class CompilerInvocation {
   /// Options controlling the preprocessor (aside from #include handling).
   PreprocessorOptions PreprocessorOpts;
 
+  /// Options controlling preprocessed output.
+  PreprocessorOutputOptions PreprocessorOutputOpts;
+
   /// The location for the output file. This is optional only for compiler
   /// invocations which have no output.
   std::string OutputFile;
-
-  /// Set of target-specific code generation features to enable/disable.
-  llvm::StringMap<bool> TargetFeatures;
 
 public:
   CompilerInvocation() {}
@@ -57,11 +58,6 @@ public:
 
   std::string &getOutputFile() { return OutputFile; }
   const std::string &getOutputFile() const { return OutputFile; }
-
-  llvm::StringMap<bool> &getTargetFeatures() { return TargetFeatures; }
-  const llvm::StringMap<bool> &getTargetFeatures() const {
-    return TargetFeatures;
-  }
 
   /// @}
   /// @name Option Subgroups
@@ -86,6 +82,13 @@ public:
   PreprocessorOptions &getPreprocessorOpts() { return PreprocessorOpts; }
   const PreprocessorOptions &getPreprocessorOpts() const {
     return PreprocessorOpts;
+  }
+
+  PreprocessorOutputOptions &getPreprocessorOutputOpts() {
+    return PreprocessorOutputOpts;
+  }
+  const PreprocessorOutputOptions &getPreprocessorOutputOpts() const {
+    return PreprocessorOutputOpts;
   }
 
   /// @}
