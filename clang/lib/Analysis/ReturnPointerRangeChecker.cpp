@@ -48,6 +48,12 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
  
   SVal V = state->getSVal(RetE);
   const MemRegion *R = V.getAsRegion();
+  if (!R)
+    return;
+
+  R = R->StripCasts();
+  if (!R)
+    return;
 
   const ElementRegion *ER = dyn_cast_or_null<ElementRegion>(R);
   if (!ER)
@@ -55,13 +61,8 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
 
   DefinedOrUnknownSVal &Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
 
-  // FIXME: All of this out-of-bounds checking should eventually be refactored into a
-  // common place.
-
-  // Zero index is always in bound, this also passes ElementRegions created for
-  // pointer casts.
-  if (Idx.isZeroConstant())
-    return;
+  // FIXME: All of this out-of-bounds checking should eventually be refactored
+  // into a common place.
 
   SVal NumVal = C.getStoreManager().getSizeInElements(state,
                                                       ER->getSuperRegion());
@@ -75,14 +76,16 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
     if (!N)
       return;
   
-    // FIXME: This bug correspond to CWE-466.  Eventually we should have bug types explicitly
-    // reference such exploit categories (when applicable).
+    // FIXME: This bug correspond to CWE-466.  Eventually we should have bug
+    // types explicitly reference such exploit categories (when applicable).
     if (!BT)
       BT = new BuiltinBug("Return of pointer value outside of expected range",
-           "Returned pointer value points outside the original object (potential buffer overflow)");
+           "Returned pointer value points outside the original object "
+           "(potential buffer overflow)");
 
-    // FIXME: It would be nice to eventually make this diagnostic more clear, e.g., by referencing
-    // the original declaration or by saying *why* this reference is outside the range.
+    // FIXME: It would be nice to eventually make this diagnostic more clear,
+    // e.g., by referencing the original declaration or by saying *why* this
+    // reference is outside the range.
 
     // Generate a report for this bug.
     RangedBugReport *report = 
