@@ -284,3 +284,29 @@ F2:
 }
 
 
+
+
+;;; Duplicate condition to avoid xor of cond.
+define i32 @test10(i1 %cond, i1 %cond2) {
+Entry:
+; CHECK: @test10
+	%v1 = call i32 @f1()
+	br i1 %cond, label %Merge, label %F1
+
+F1:
+	br label %Merge
+
+Merge:
+	%B = phi i1 [true, %Entry], [%cond2, %F1]
+        %M = icmp eq i32 %v1, 192
+        %N = xor i1 %B, %M
+	br i1 %N, label %T2, label %F2
+
+T2:
+	ret i32 123
+
+F2:
+	ret i32 %v1
+}
+
+
