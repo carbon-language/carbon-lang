@@ -15,6 +15,7 @@
 namespace clang {
 
 class CompileOptions;
+class HeaderSearchOptions;
 class LangOptions;
 class PreprocessorOptions;
 class TargetInfo;
@@ -40,6 +41,11 @@ void ComputeFeatureMap(TargetInfo &Target, llvm::StringMap<bool> &Features);
 
 void InitializeCompileOptions(CompileOptions &Opts,
                               const llvm::StringMap<bool> &Features);
+
+void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
+                                   llvm::StringRef BuiltinIncludePath,
+                                   bool Verbose,
+                                   const LangOptions &Lang);
 
 void InitializeLangOptions(LangOptions &Options, LangKind LK,
                            TargetInfo &Target,

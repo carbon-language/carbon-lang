@@ -13,6 +13,7 @@
 
 #include "Options.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Basic/LangOptions.h"
@@ -328,6 +329,58 @@ UndefMacros("undef", llvm::cl::value_desc("macro"),
 }
 
 //===----------------------------------------------------------------------===//
+// Header Search Options
+//===----------------------------------------------------------------------===//
+
+namespace headersearchoptions {
+
+static llvm::cl::opt<bool>
+nostdinc("nostdinc", llvm::cl::desc("Disable standard #include directories"));
+
+static llvm::cl::opt<bool>
+nobuiltininc("nobuiltininc",
+             llvm::cl::desc("Disable builtin #include directories"));
+
+// Various command line options.  These four add directories to each chain.
+static llvm::cl::list<std::string>
+F_dirs("F", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+       llvm::cl::desc("Add directory to framework include search path"));
+
+static llvm::cl::list<std::string>
+I_dirs("I", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+       llvm::cl::desc("Add directory to include search path"));
+
+static llvm::cl::list<std::string>
+idirafter_dirs("idirafter", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+               llvm::cl::desc("Add directory to AFTER include search path"));
+
+static llvm::cl::list<std::string>
+iquote_dirs("iquote", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+               llvm::cl::desc("Add directory to QUOTE include search path"));
+
+static llvm::cl::list<std::string>
+isystem_dirs("isystem", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+            llvm::cl::desc("Add directory to SYSTEM include search path"));
+
+// These handle -iprefix/-iwithprefix/-iwithprefixbefore.
+static llvm::cl::list<std::string>
+iprefix_vals("iprefix", llvm::cl::value_desc("prefix"), llvm::cl::Prefix,
+             llvm::cl::desc("Set the -iwithprefix/-iwithprefixbefore prefix"));
+static llvm::cl::list<std::string>
+iwithprefix_vals("iwithprefix", llvm::cl::value_desc("dir"), llvm::cl::Prefix,
+     llvm::cl::desc("Set directory to SYSTEM include search path with prefix"));
+static llvm::cl::list<std::string>
+iwithprefixbefore_vals("iwithprefixbefore", llvm::cl::value_desc("dir"),
+                       llvm::cl::Prefix,
+            llvm::cl::desc("Set directory to include search path with prefix"));
+
+static llvm::cl::opt<std::string>
+isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
+         llvm::cl::desc("Set the system root directory (usually /)"));
+
+}
+
+//===----------------------------------------------------------------------===//
 // Option Object Construction
 //===----------------------------------------------------------------------===//
 
@@ -399,6 +452,111 @@ void clang::InitializeCompileOptions(CompileOptions &Opts,
   Opts.NoImplicitFloat = NoImplicitFloat;
 
   Opts.MergeAllConstants = !NoMergeConstants;
+}
+
+void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
+                                          llvm::StringRef BuiltinIncludePath,
+                                          bool Verbose,
+                                          const LangOptions &Lang) {
+  using namespace headersearchoptions;
+
+  Opts.Sysroot = isysroot;
+  Opts.Verbose = Verbose;
+
+  // Handle -I... and -F... options, walking the lists in parallel.
+  unsigned Iidx = 0, Fidx = 0;
+  while (Iidx < I_dirs.size() && Fidx < F_dirs.size()) {
+    if (I_dirs.getPosition(Iidx) < F_dirs.getPosition(Fidx)) {
+      Opts.AddPath(I_dirs[Iidx], frontend::Angled, false, true, false);
+      ++Iidx;
+    } else {
+      Opts.AddPath(F_dirs[Fidx], frontend::Angled, false, true, true);
+      ++Fidx;
+    }
+  }
+
+  // Consume what's left from whatever list was longer.
+  for (; Iidx != I_dirs.size(); ++Iidx)
+    Opts.AddPath(I_dirs[Iidx], frontend::Angled, false, true, false);
+  for (; Fidx != F_dirs.size(); ++Fidx)
+    Opts.AddPath(F_dirs[Fidx], frontend::Angled, false, true, true);
+
+  // Handle -idirafter... options.
+  for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
+    Opts.AddPath(idirafter_dirs[i], frontend::After,
+        false, true, false);
+
+  // Handle -iquote... options.
+  for (unsigned i = 0, e = iquote_dirs.size(); i != e; ++i)
+    Opts.AddPath(iquote_dirs[i], frontend::Quoted, false, true, false);
+
+  // Handle -isystem... options.
+  for (unsigned i = 0, e = isystem_dirs.size(); i != e; ++i)
+    Opts.AddPath(isystem_dirs[i], frontend::System, false, true, false);
+
+  // Walk the -iprefix/-iwithprefix/-iwithprefixbefore argument lists in
+  // parallel, processing the values in order of occurance to get the right
+  // prefixes.
+  {
+    std::string Prefix = "";  // FIXME: this isn't the correct default prefix.
+    unsigned iprefix_idx = 0;
+    unsigned iwithprefix_idx = 0;
+    unsigned iwithprefixbefore_idx = 0;
+    bool iprefix_done           = iprefix_vals.empty();
+    bool iwithprefix_done       = iwithprefix_vals.empty();
+    bool iwithprefixbefore_done = iwithprefixbefore_vals.empty();
+    while (!iprefix_done || !iwithprefix_done || !iwithprefixbefore_done) {
+      if (!iprefix_done &&
+          (iwithprefix_done ||
+           iprefix_vals.getPosition(iprefix_idx) <
+           iwithprefix_vals.getPosition(iwithprefix_idx)) &&
+          (iwithprefixbefore_done ||
+           iprefix_vals.getPosition(iprefix_idx) <
+           iwithprefixbefore_vals.getPosition(iwithprefixbefore_idx))) {
+        Prefix = iprefix_vals[iprefix_idx];
+        ++iprefix_idx;
+        iprefix_done = iprefix_idx == iprefix_vals.size();
+      } else if (!iwithprefix_done &&
+                 (iwithprefixbefore_done ||
+                  iwithprefix_vals.getPosition(iwithprefix_idx) <
+                  iwithprefixbefore_vals.getPosition(iwithprefixbefore_idx))) {
+        Opts.AddPath(Prefix+iwithprefix_vals[iwithprefix_idx],
+                     frontend::System, false, false, false);
+        ++iwithprefix_idx;
+        iwithprefix_done = iwithprefix_idx == iwithprefix_vals.size();
+      } else {
+        Opts.AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx],
+                     frontend::Angled, false, false, false);
+        ++iwithprefixbefore_idx;
+        iwithprefixbefore_done =
+          iwithprefixbefore_idx == iwithprefixbefore_vals.size();
+      }
+    }
+  }
+
+  // Add CPATH environment paths.
+  if (const char *Env = getenv("CPATH"))
+    Opts.EnvIncPath = Env;
+
+  // Add language specific environment paths.
+  if (Lang.CPlusPlus && Lang.ObjC1) {
+    if (const char *Env = getenv("OBJCPLUS_INCLUDE_PATH"))
+      Opts.LangEnvIncPath = Env;
+  } else if (Lang.CPlusPlus) {
+    if (const char *Env = getenv("CPLUS_INCLUDE_PATH"))
+      Opts.LangEnvIncPath = Env;
+  } else if (Lang.ObjC1) {
+    if (const char *Env = getenv("OBJC_INCLUDE_PATH"))
+      Opts.LangEnvIncPath = Env;
+  } else {
+    if (const char *Env = getenv("C_INCLUDE_PATH"))
+      Opts.LangEnvIncPath = Env;
+  }
+
+  if (!nobuiltininc)
+    Opts.BuiltinIncludePath = BuiltinIncludePath;
+
+  Opts.UseStandardIncludes = !nostdinc;
 }
 
 void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
