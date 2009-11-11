@@ -5899,7 +5899,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       // FIXME: Verify that MemberDecl isn't a bitfield.
       if (cast<RecordDecl>(MemberDecl->getDeclContext())->isAnonymousStructOrUnion()) {
         Res = BuildAnonymousStructUnionMemberReference(
-            SourceLocation(), MemberDecl, Res, SourceLocation()).takeAs<Expr>();
+            OC.LocEnd, MemberDecl, Res, OC.LocEnd).takeAs<Expr>();
       } else {
         // MemberDecl->getType() doesn't get the right qualifiers, but it
         // doesn't matter here.
