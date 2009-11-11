@@ -74,23 +74,6 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Source Location Parser
-//===----------------------------------------------------------------------===//
-
-static bool ResolveParsedLocation(ParsedSourceLocation &ParsedLoc,
-                                  FileManager &FileMgr,
-                                  RequestedSourceLocation &Result) {
-  const FileEntry *File = FileMgr.getFile(ParsedLoc.FileName);
-  if (!File)
-    return true;
-
-  Result.File = File;
-  Result.Line = ParsedLoc.Line;
-  Result.Column = ParsedLoc.Column;
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
 // Global options.
 //===----------------------------------------------------------------------===//
 
@@ -580,6 +563,29 @@ static llvm::raw_ostream *ComputeOutFile(const CompilerInvocation &CompOpts,
   return Ret;
 }
 
+/// AddFixitLocations - Add any individual user specified "fix-it" locations,
+/// and return true on success (if any were added).
+static bool AddFixitLocations(FixItRewriter *FixItRewrite,
+                              FileManager &FileMgr) {
+  bool AddedFixitLocation = false;
+
+  for (unsigned i = 0, e = FixItAtLocations.size(); i != e; ++i) {
+    if (const FileEntry *File = FileMgr.getFile(FixItAtLocations[i].FileName)) {
+      RequestedSourceLocation Requested;
+      Requested.File = File;
+      Requested.Line = FixItAtLocations[i].Line;
+      Requested.Column = FixItAtLocations[i].Column;
+      FixItRewrite->addFixItLocation(Requested);
+      AddedFixitLocation = true;
+    } else {
+      llvm::errs() << "FIX-IT could not find file \""
+                   << FixItAtLocations[i].FileName << "\"\n";
+    }
+  }
+
+  return AddedFixitLocation;
+}
+
 static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
                                          Preprocessor &PP,
                                          const std::string &InFile,
@@ -795,21 +801,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
                                        PP.getSourceManager(),
                                        PP.getLangOptions());
 
-    bool AddedFixitLocation = false;
-    for (unsigned Idx = 0, Last = FixItAtLocations.size();
-         Idx != Last; ++Idx) {
-      RequestedSourceLocation Requested;
-      if (ResolveParsedLocation(FixItAtLocations[Idx],
-                                PP.getFileManager(), Requested)) {
-        fprintf(stderr, "FIX-IT could not find file \"%s\"\n",
-                FixItAtLocations[Idx].FileName.c_str());
-      } else {
-        FixItRewrite->addFixItLocation(Requested);
-        AddedFixitLocation = true;
-      }
-    }
-
-    if (!AddedFixitLocation) {
+    if (!AddFixitLocations(FixItRewrite, PP.getFileManager())) {
       // All of the fix-it locations were bad. Don't fix anything.
       delete FixItRewrite;
       FixItRewrite = 0;
