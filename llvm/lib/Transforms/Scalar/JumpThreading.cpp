@@ -361,7 +361,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         Value *LHS = PN->getIncomingValue(i);
         Value *RHS = Cmp->getOperand(1)->DoPHITranslation(BB, PredBB);
         
-        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), LHS, RHS);
+        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), LHS, RHS, TD);
         if (Res == 0) continue;
         
         if (isa<UndefValue>(Res))
@@ -373,8 +373,29 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       return !Result.empty();
     }
     
-    // TODO: We could also recurse to see if we can determine constants another
-    // way.
+    
+    // If comparing a live-in value against a constant, see if we know the
+    // live-in value on any predecessors.
+    if (LVI && isa<Constant>(Cmp->getOperand(1)) &&
+        (!isa<Instruction>(Cmp->getOperand(0)) ||
+         cast<Instruction>(Cmp->getOperand(0))->getParent() != BB)) {
+      Constant *RHSCst = cast<Constant>(Cmp->getOperand(1));
+      
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+        // If the value is known by LazyValueInfo to be a constant in a
+        // predecessor, use that information to try to thread this block.
+        Constant *PredCst = LVI->getConstant(Cmp->getOperand(0), *PI);
+        if (PredCst == 0)
+          continue;
+        
+        // Constant fold the compare.
+        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), PredCst, RHSCst, TD);
+        if (isa<ConstantInt>(Res) || isa<UndefValue>(Res))
+          Result.push_back(std::make_pair(dyn_cast<ConstantInt>(Res), *PI));
+      }
+      
+      return !Result.empty();
+    }
   }
   return false;
 }
