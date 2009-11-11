@@ -232,11 +232,16 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
   // corresponding function is static, this should not be externally visible.
   if (!TheFunc->hasLocalLinkage())
     if (const char *GlobalEHDirective = MAI->getGlobalEHDirective())
-      O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
+      O << GlobalEHDirective << EHFrameInfo.FnName << '\n';
 
   // If corresponding function is weak definition, this should be too.
   if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective())
-    O << MAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
+    O << MAI->getWeakDefDirective() << EHFrameInfo.FnName << '\n';
+
+  // If corresponding function is hidden, this should be too.
+  if (TheFunc->hasHiddenVisibility())
+    if (const char *HiddenDirective = MAI->getHiddenDirective())
+      O << HiddenDirective << EHFrameInfo.FnName << '\n' ;
 
   // If there are no calls then you can't unwind.  This may mean we can omit the
   // EH Frame, but some environments do not handle weak absolute symbols. If
