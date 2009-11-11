@@ -281,10 +281,15 @@ def MOVCCRToCCR : MipsPseudo<(outs CCR:$dst), (ins CCR:$src),
 // Floating Point Patterns
 //===----------------------------------------------------------------------===//
 def fpimm0 : PatLeaf<(fpimm), [{
-  return N->isExactlyValue(+0.0) || N->isExactlyValue(-0.0);
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def fpimm0neg : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(-0.0);
 }]>;
 
 def : Pat<(f32 fpimm0), (MTC1 ZERO)>;
+def : Pat<(f32 fpimm0neg), (FNEG_S32 (MTC1 ZERO))>;
 
 def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVTS_W32 (MTC1 CPURegs:$src))>;
 def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;
