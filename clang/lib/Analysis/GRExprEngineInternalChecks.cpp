@@ -361,17 +361,6 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN OutOfBoundMemoryAccess : public BuiltinBug {
-public:
-  OutOfBoundMemoryAccess(GRExprEngine* eng)
-    : BuiltinBug(eng,"Out-of-bounds memory access",
-                     "Load or store into an out-of-bound memory position.") {}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    Emit(BR, Eng.explicit_oob_memacc_begin(), Eng.explicit_oob_memacc_end());
-  }
-};
-
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//
@@ -388,7 +377,6 @@ void GRExprEngine::RegisterInternalChecks() {
   BR.Register(new UndefResult(this));
   BR.Register(new BadMsgExprArg(this));
   BR.Register(new BadReceiver(this));
-  BR.Register(new OutOfBoundMemoryAccess(this));
   BR.Register(new NilReceiverStructRet(this));
   BR.Register(new NilReceiverLargerThanVoidPtrRet(this));
 

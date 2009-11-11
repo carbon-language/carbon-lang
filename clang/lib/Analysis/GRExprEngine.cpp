@@ -2842,6 +2842,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
   // work.
   static std::string getNodeAttributes(const ExplodedNode* N, void*) {
 
+#if 0
+      // FIXME: Replace with a general scheme to tell if the node is
+      // an error node.
     if (GraphPrintCheckerState->isImplicitNullDeref(N) ||
         GraphPrintCheckerState->isExplicitNullDeref(N) ||
         GraphPrintCheckerState->isUndefDeref(N) ||
@@ -2851,6 +2854,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
         GraphPrintCheckerState->isBadCall(N) ||
         GraphPrintCheckerState->isUndefArg(N))
       return "color=\"red\",style=\"filled\"";
+#endif
 
     if (GraphPrintCheckerState->isNoReturnCall(N))
       return "color=\"blue\",style=\"filled\"";
@@ -2902,6 +2906,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
           else if (isa<PostLValue>(Loc))
             Out << "\\lPostLValue\\l";
 
+#if 0
+            // FIXME: Replace with a general scheme to determine
+            // the name of the check.
           if (GraphPrintCheckerState->isImplicitNullDeref(N))
             Out << "\\|Implicit-Null Dereference.\\l";
           else if (GraphPrintCheckerState->isExplicitNullDeref(N))
@@ -2918,6 +2925,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
             Out << "\\|Call to NULL/Undefined.";
           else if (GraphPrintCheckerState->isUndefArg(N))
             Out << "\\|Argument in call is undefined";
+#endif
 
           break;
         }
@@ -2979,9 +2987,13 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
           Out << "\\l";
         }
 
+#if 0
+          // FIXME: Replace with a general scheme to determine
+          // the name of the check.
         if (GraphPrintCheckerState->isUndefControlFlow(N)) {
           Out << "\\|Control-flow based on\\lUndefined value.\\l";
         }
+#endif
       }
     }
 

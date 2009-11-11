@@ -111,14 +111,6 @@ public:
   // was larger than sizeof(void *) (an undefined value).
   ErrorNodes NilReceiverLargerThanVoidPtrRetImplicit;
 
-  /// RetsStackAddr - Nodes in the ExplodedGraph that result from returning
-  ///  the address of a stack variable.
-  ErrorNodes RetsStackAddr;
-
-  /// RetsUndef - Nodes in the ExplodedGraph that result from returning
-  ///  an undefined value.
-  ErrorNodes RetsUndef;
-
   /// UndefBranches - Nodes in the ExplodedGraph that result from
   ///  taking a branch based on an undefined value.
   ErrorNodes UndefBranches;
@@ -131,21 +123,9 @@ public:
   //  calling a function with the attribute "noreturn".
   ErrorNodes NoReturnCalls;
 
-  /// ImplicitBadSizedVLA - Nodes in the ExplodedGraph that result from
-  ///  constructing a zero-sized VLA where the size may be zero.
-  ErrorNodes ImplicitBadSizedVLA;
-
-  /// ExplicitBadSizedVLA - Nodes in the ExplodedGraph that result from
-  ///  constructing a zero-sized VLA where the size must be zero.
-  ErrorNodes ExplicitBadSizedVLA;
-
   /// UndefResults - Nodes in the ExplodedGraph where the operands are defined
   ///  by the result is not.  Excludes divide-by-zero errors.
   ErrorNodes UndefResults;
-
-  /// BadCalls - Nodes in the ExplodedGraph resulting from calls to function
-  ///  pointers that are NULL (or other constants) or Undefined.
-  ErrorNodes BadCalls;
 
   /// UndefReceiver - Nodes in the ExplodedGraph resulting from message
   ///  ObjC message expressions where the receiver is undefined (uninitialized).
@@ -155,14 +135,6 @@ public:
   ///   message expressions where a pass-by-value argument has an undefined
   ///  value.
   UndefArgsTy MsgExprUndefArgs;
-
-  /// OutOfBoundMemAccesses - Nodes in the ExplodedGraph resulting from
-  /// out-of-bound memory accesses where the index MAY be out-of-bound.
-  ErrorNodes ImplicitOOBMemAccesses;
-
-  /// OutOfBoundMemAccesses - Nodes in the ExplodedGraph resulting from
-  /// out-of-bound memory accesses where the index MUST be out-of-bound.
-  ErrorNodes ExplicitOOBMemAccesses;
 
 public:
   GRExprEngine(AnalysisManager &mgr);
@@ -223,44 +195,8 @@ public:
      return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
   }
 
-  bool isUndefControlFlow(const ExplodedNode* N) const {
-    return N->isSink() && UndefBranches.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
-  bool isUndefStore(const ExplodedNode* N) const {
-    return N->isSink() && UndefStores.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
-  bool isImplicitNullDeref(const ExplodedNode* N) const {
-    return false;
-  }
-
-  bool isExplicitNullDeref(const ExplodedNode* N) const {
-    return false;
-  }
-
-  bool isUndefDeref(const ExplodedNode* N) const {
-    return false;
-  }
-
   bool isNoReturnCall(const ExplodedNode* N) const {
     return N->isSink() && NoReturnCalls.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
-  bool isUndefResult(const ExplodedNode* N) const {
-    return N->isSink() && UndefResults.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
-  bool isBadCall(const ExplodedNode* N) const {
-    return false;
-  }
-
-  bool isUndefArg(const ExplodedNode* N) const {
-    return false;
-  }
-
-  bool isUndefReceiver(const ExplodedNode* N) const {
-    return N->isSink() && UndefReceivers.count(const_cast<ExplodedNode*>(N)) != 0;
   }
 
   typedef ErrorNodes::iterator undef_branch_iterator;
@@ -293,10 +229,6 @@ public:
   undef_result_iterator undef_results_begin() { return UndefResults.begin(); }
   undef_result_iterator undef_results_end() { return UndefResults.end(); }
 
-  typedef ErrorNodes::iterator bad_calls_iterator;
-  bad_calls_iterator bad_calls_begin() { return BadCalls.begin(); }
-  bad_calls_iterator bad_calls_end() { return BadCalls.end(); }
-
   typedef UndefArgsTy::iterator undef_arg_iterator;
   undef_arg_iterator msg_expr_undef_arg_begin() {
     return MsgExprUndefArgs.begin();
@@ -313,20 +245,6 @@ public:
 
   undef_receivers_iterator undef_receivers_end() {
     return UndefReceivers.end();
-  }
-
-  typedef ErrorNodes::iterator oob_memacc_iterator;
-  oob_memacc_iterator implicit_oob_memacc_begin() {
-    return ImplicitOOBMemAccesses.begin();
-  }
-  oob_memacc_iterator implicit_oob_memacc_end() {
-    return ImplicitOOBMemAccesses.end();
-  }
-  oob_memacc_iterator explicit_oob_memacc_begin() {
-    return ExplicitOOBMemAccesses.begin();
-  }
-  oob_memacc_iterator explicit_oob_memacc_end() {
-    return ExplicitOOBMemAccesses.end();
   }
 
   void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C);
