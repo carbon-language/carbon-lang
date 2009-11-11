@@ -13,8 +13,11 @@
 
 #include "Options.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/Frontend/PCHReader.h"
+#include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
 #include <stdio.h>
@@ -79,6 +82,41 @@ TargetCPU("mcpu",
 
 static llvm::cl::list<std::string>
 TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
+
+}
+
+//===----------------------------------------------------------------------===//
+// General Preprocessor Options
+//===----------------------------------------------------------------------===//
+
+namespace preprocessoroptions {
+
+static llvm::cl::list<std::string>
+D_macros("D", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
+       llvm::cl::desc("Predefine the specified macro"));
+
+static llvm::cl::list<std::string>
+ImplicitIncludes("include", llvm::cl::value_desc("file"),
+                 llvm::cl::desc("Include file before parsing"));
+static llvm::cl::list<std::string>
+ImplicitMacroIncludes("imacros", llvm::cl::value_desc("file"),
+                      llvm::cl::desc("Include macros from file before parsing"));
+
+static llvm::cl::opt<std::string>
+ImplicitIncludePCH("include-pch", llvm::cl::value_desc("file"),
+                   llvm::cl::desc("Include precompiled header file"));
+
+static llvm::cl::opt<std::string>
+ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
+                   llvm::cl::desc("Include file before parsing"));
+
+static llvm::cl::list<std::string>
+U_macros("U", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
+         llvm::cl::desc("Undefine the specified macro"));
+
+static llvm::cl::opt<bool>
+UndefMacros("undef", llvm::cl::value_desc("macro"),
+            llvm::cl::desc("undef all system defines"));
 
 }
 
@@ -154,4 +192,53 @@ void clang::InitializeCompileOptions(CompileOptions &Opts,
   Opts.NoImplicitFloat = NoImplicitFloat;
 
   Opts.MergeAllConstants = !NoMergeConstants;
+}
+
+void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
+  using namespace preprocessoroptions;
+
+  Opts.setImplicitPCHInclude(ImplicitIncludePCH);
+  Opts.setImplicitPTHInclude(ImplicitIncludePTH);
+
+  // Use predefines?
+  Opts.setUsePredefines(!UndefMacros);
+
+  // Add macros from the command line.
+  unsigned d = 0, D = D_macros.size();
+  unsigned u = 0, U = U_macros.size();
+  while (d < D || u < U) {
+    if (u == U || (d < D && D_macros.getPosition(d) < U_macros.getPosition(u)))
+      Opts.addMacroDef(D_macros[d++]);
+    else
+      Opts.addMacroUndef(U_macros[u++]);
+  }
+
+  // If -imacros are specified, include them now.  These are processed before
+  // any -include directives.
+  for (unsigned i = 0, e = ImplicitMacroIncludes.size(); i != e; ++i)
+    Opts.addMacroInclude(ImplicitMacroIncludes[i]);
+
+  // Add the ordered list of -includes, sorting in the implicit include options
+  // at the appropriate location.
+  llvm::SmallVector<std::pair<unsigned, std::string*>, 8> OrderedPaths;
+  std::string OriginalFile;
+
+  if (!ImplicitIncludePTH.empty())
+    OrderedPaths.push_back(std::make_pair(ImplicitIncludePTH.getPosition(),
+                                          &ImplicitIncludePTH));
+  if (!ImplicitIncludePCH.empty()) {
+    OriginalFile = PCHReader::getOriginalSourceFile(ImplicitIncludePCH);
+    // FIXME: Don't fail like this.
+    if (OriginalFile.empty())
+      exit(1);
+    OrderedPaths.push_back(std::make_pair(ImplicitIncludePCH.getPosition(),
+                                          &OriginalFile));
+  }
+  for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
+    OrderedPaths.push_back(std::make_pair(ImplicitIncludes.getPosition(i),
+                                          &ImplicitIncludes[i]));
+  llvm::array_pod_sort(OrderedPaths.begin(), OrderedPaths.end());
+
+  for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i)
+    Opts.addInclude(*OrderedPaths[i].second);
 }

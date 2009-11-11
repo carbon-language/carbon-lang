@@ -53,7 +53,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -883,32 +882,6 @@ static bool InitializeSourceManager(Preprocessor &PP,
 //===----------------------------------------------------------------------===//
 
 static llvm::cl::opt<bool>
-UndefMacros("undef", llvm::cl::value_desc("macro"),
-            llvm::cl::desc("undef all system defines"));
-
-static llvm::cl::list<std::string>
-D_macros("D", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
-       llvm::cl::desc("Predefine the specified macro"));
-static llvm::cl::list<std::string>
-U_macros("U", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
-         llvm::cl::desc("Undefine the specified macro"));
-
-static llvm::cl::list<std::string>
-ImplicitIncludes("include", llvm::cl::value_desc("file"),
-                 llvm::cl::desc("Include file before parsing"));
-static llvm::cl::list<std::string>
-ImplicitMacroIncludes("imacros", llvm::cl::value_desc("file"),
-                      llvm::cl::desc("Include macros from file before parsing"));
-
-static llvm::cl::opt<std::string>
-ImplicitIncludePCH("include-pch", llvm::cl::value_desc("file"),
-                   llvm::cl::desc("Include precompiled header file"));
-
-static llvm::cl::opt<std::string>
-ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
-                   llvm::cl::desc("Include file before parsing"));
-
-static llvm::cl::opt<bool>
 RelocatablePCH("relocatable-pch",
                llvm::cl::desc("Whether to build a relocatable precompiled "
                               "header"));
@@ -1085,57 +1058,6 @@ static void InitializeIncludePaths(HeaderSearchOptions &Opts,
     Opts.BuiltinIncludePath = GetBuiltinIncludePath(Argv0);
 
   Opts.UseStandardIncludes = !nostdinc;
-}
-
-static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
-  InitOpts.setImplicitPCHInclude(ImplicitIncludePCH);
-  InitOpts.setImplicitPTHInclude(ImplicitIncludePTH);
-
-  // Use predefines?
-  InitOpts.setUsePredefines(!UndefMacros);
-
-  // Add macros from the command line.
-  unsigned d = 0, D = D_macros.size();
-  unsigned u = 0, U = U_macros.size();
-  while (d < D || u < U) {
-    if (u == U || (d < D && D_macros.getPosition(d) < U_macros.getPosition(u)))
-      InitOpts.addMacroDef(D_macros[d++]);
-    else
-      InitOpts.addMacroUndef(U_macros[u++]);
-  }
-
-  // If -imacros are specified, include them now.  These are processed before
-  // any -include directives.
-  for (unsigned i = 0, e = ImplicitMacroIncludes.size(); i != e; ++i)
-    InitOpts.addMacroInclude(ImplicitMacroIncludes[i]);
-
-  if (!ImplicitIncludePTH.empty() || !ImplicitIncludes.empty() ||
-      !ImplicitIncludePCH.empty()) {
-    // We want to add these paths to the predefines buffer in order, make a
-    // temporary vector to sort by their occurrence.
-    llvm::SmallVector<std::pair<unsigned, std::string*>, 8> OrderedPaths;
-    std::string OriginalFile; // For use by -implicit-include-pch.
-
-    if (!ImplicitIncludePTH.empty())
-      OrderedPaths.push_back(std::make_pair(ImplicitIncludePTH.getPosition(),
-                                            &ImplicitIncludePTH));
-    if (!ImplicitIncludePCH.empty()) {
-      OriginalFile = PCHReader::getOriginalSourceFile(ImplicitIncludePCH);
-      // FIXME: Don't fail like this.
-      if (OriginalFile.empty())
-        exit(1);
-      OrderedPaths.push_back(std::make_pair(ImplicitIncludePCH.getPosition(),
-                                            &OriginalFile));
-    }
-    for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
-      OrderedPaths.push_back(std::make_pair(ImplicitIncludes.getPosition(i),
-                                            &ImplicitIncludes[i]));
-    llvm::array_pod_sort(OrderedPaths.begin(), OrderedPaths.end());
-
-    // Now that they are ordered by position, add to the predefines buffer.
-    for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i)
-      InitOpts.addInclude(*OrderedPaths[i].second);
-  }
 }
 
 //===----------------------------------------------------------------------===//

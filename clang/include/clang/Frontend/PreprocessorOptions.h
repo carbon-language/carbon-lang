@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_PREPROCESSOROPTIONS_H_
 
 #include "llvm/ADT/StringRef.h"
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -71,7 +72,7 @@ public:
   void addInclude(llvm::StringRef Name) {
     Includes.push_back(Name);
   }
-  void addMacroInclude(const std::string &Name) {
+  void addMacroInclude(llvm::StringRef Name) {
     MacroIncludes.push_back(Name);
   }
 
