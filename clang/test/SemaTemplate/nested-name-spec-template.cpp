@@ -28,11 +28,8 @@ N::M::Promote<int>::type *ret_intptr5(int* ip) { return ip; }
 ::N::M::Promote<int>::type *ret_intptr6(int* ip) { return ip; }
 
 
-N::M::template; // expected-error{{expected template name after 'template' keyword in nested name specifier}} \
-               // expected-error{{expected unqualified-id}}
-
-N::M::template Promote; // expected-error{{expected '<' after 'template Promote' in nested name specifier}} \
-// expected-error{{C++ requires a type specifier for all declarations}}
+N::M::template; // expected-error{{expected unqualified-id}}
+N::M::template Promote; // expected-error{{expected unqualified-id}}
 
 namespace N {
   template<typename T> struct A;
@@ -49,13 +46,9 @@ struct ::N::A<int>::X {
   int foo;
 };
 
-#if 0
-// FIXME: the following crashes the parser, because Sema has no way to
-// communicate that the "dependent" template-name N::template B doesn't
-// actually refer to a template.
 template<typename T>
 struct TestA {
-  typedef typename N::template B<T>::type type; // xpected-error{{'B' following the 'template' keyword does not refer to a template}}
-  // FIXME: should show what B *does* refer to.
+  typedef typename N::template B<T>::type type; // expected-error{{'B' following the 'template' keyword does not refer to a template}} \
+                                                // expected-error{{identifier or template-id}} \
+                                                // expected-error{{expected member name}}
 };
-#endif

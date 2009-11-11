@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 template<typename T, int N = 2> struct X; // expected-note{{template is declared here}}
 
 X<int, 1> *x1;
@@ -80,16 +79,31 @@ X2<int>::NonType1<> x2_nontype1_bad; // expected-note{{instantiation of default 
 X2<int>::Inner3<float>::VeryInner<> vi;
 X2<char>::Inner3<int>::NonType2<> x2_deep_nontype;
 
-
 template<typename T, typename U>
 struct is_same { static const bool value = false; };
 
 template<typename T>
 struct is_same<T, T> { static const bool value = true; };
 
-static int array1[is_same<__typeof__(vi), 
+int array1[is_same<__typeof__(vi), 
                X2<int>::Inner3<float>::VeryInner<int, float> >::value? 1 : -1];
 
-static int array2[is_same<__typeof(x2_deep_nontype),
-                     X2<char>::Inner3<int>::NonType2<sizeof(char), sizeof(int), 
+int array2[is_same<__typeof(x2_deep_nontype),
+                   X2<char>::Inner3<int>::NonType2<sizeof(char), sizeof(int), 
                                     sizeof(char)+sizeof(int)> >::value? 1 : -1];
+
+// Template template parameter defaults
+template<template<typename T> class X = X2> struct X3 { };
+int array3[is_same<X3<>, X3<X2> >::value? 1 : -1];
+
+struct add_pointer {
+  template<typename T>
+  struct apply {
+    typedef T* type;
+  };
+};
+
+template<typename T, template<typename> class X = T::template apply>
+  struct X4;
+int array4[is_same<X4<add_pointer>, 
+                   X4<add_pointer, add_pointer::apply> >::value? 1 : -1];

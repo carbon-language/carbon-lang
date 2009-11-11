@@ -59,7 +59,8 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
     break;
 
   case Template:
-    ID.AddPointer(getAsTemplate().getAsVoidPointer());
+    ID.AddPointer(Context.getCanonicalTemplateName(getAsTemplate())
+                    .getAsVoidPointer());
     break;
       
   case Integral:
