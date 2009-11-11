@@ -152,26 +152,6 @@ static std::vector<std::string> splitLines(const char *Str, unsigned Len,
   return Lines;
 }
 
-/// \brief Determine whether the string Haystack starts with the
-/// substring Needle.
-static bool startsWith(const std::string &Haystack, const char *Needle) {
-  for (unsigned I = 0, N = Haystack.size(); Needle[I] != 0; ++I) {
-    if (I == N)
-      return false;
-    if (Haystack[I] != Needle[I])
-      return false;
-  }
-
-  return true;
-}
-
-/// \brief Determine whether the string Haystack starts with the
-/// substring Needle.
-static inline bool startsWith(const std::string &Haystack,
-                              const std::string &Needle) {
-  return startsWith(Haystack, Needle.c_str());
-}
-
 bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
                                         unsigned PCHPredefLen,
                                         FileID PCHBufferID,
@@ -207,7 +187,7 @@ bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
   bool ConflictingDefines = false;
   for (unsigned I = 0, N = MissingPredefines.size(); I != N; ++I) {
     const std::string &Missing = MissingPredefines[I];
-    if (!startsWith(Missing, "#define ") != 0) {
+    if (!llvm::StringRef(Missing).startswith("#define ")) {
       Reader.Diag(diag::warn_pch_compiler_options_mismatch);
       return true;
     }
@@ -230,7 +210,7 @@ bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
       = std::lower_bound(CmdLineLines.begin(), CmdLineLines.end(),
                          MacroDefStart);
     for (; ConflictPos != CmdLineLines.end(); ++ConflictPos) {
-      if (!startsWith(*ConflictPos, MacroDefStart)) {
+      if (!llvm::StringRef(*ConflictPos).startswith(MacroDefStart)) {
         // Different macro; we're done.
         ConflictPos = CmdLineLines.end();
         break;
@@ -296,7 +276,7 @@ bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
                       std::back_inserter(ExtraPredefines));
   for (unsigned I = 0, N = ExtraPredefines.size(); I != N; ++I) {
     const std::string &Extra = ExtraPredefines[I];
-    if (!startsWith(Extra, "#define ") != 0) {
+    if (!llvm::StringRef(Extra).startswith("#define ")) {
       Reader.Diag(diag::warn_pch_compiler_options_mismatch);
       return true;
     }
@@ -316,8 +296,7 @@ bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
     // the PCH file.
     if (IdentifierInfo *II = Reader.get(MacroName.c_str(),
                                  MacroName.c_str() + MacroName.size())) {
-      Reader.Diag(diag::warn_macro_name_used_in_pch)
-        << II;
+      Reader.Diag(diag::warn_macro_name_used_in_pch) << II;
       return true;
     }
 
