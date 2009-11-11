@@ -1347,8 +1347,9 @@ DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
   NScope->setFirstInsn(MI);
 
   if (!Parent && !InlinedAt) {
-    assert (!CurrentFnDbgScope && "Unexpected function scope!");
-    CurrentFnDbgScope = NScope;
+    StringRef SPName = DISubprogram(N).getLinkageName();
+    if (SPName == MF->getFunction()->getName())
+      CurrentFnDbgScope = NScope;
   }
 
   if (GetConcreteScope) {
