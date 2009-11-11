@@ -1,6 +1,4 @@
-; RUN: llc < %s -march=ppc32 -disable-fp-elim | FileCheck %s
-; XFAIL: *
-; XTARGET: darwin
+; RUN: llc < %s -mtriple=powerpc-apple-darwin8 -disable-fp-elim | FileCheck %s
 
 define i32 @_Z4funci(i32 %a) ssp {
 ; CHECK:       mflr r0
