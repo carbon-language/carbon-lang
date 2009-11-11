@@ -151,6 +151,15 @@ public:
       Context.getMetadata().addMD(MDKind, CurDbgLocation, I);
   }
 
+  /// SetDebugLocation -  Set location information for the given instruction.
+  void SetDebugLocation(Instruction *I, MDNode *Loc) {
+    if (MDKind == 0) 
+      MDKind = Context.getMetadata().getMDKind("dbg");
+    if (MDKind == 0)
+      MDKind = Context.getMetadata().registerMDKind("dbg");
+    Context.getMetadata().addMD(MDKind, Loc, I);
+  }
+
   /// Insert - Insert and return the specified instruction.
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
