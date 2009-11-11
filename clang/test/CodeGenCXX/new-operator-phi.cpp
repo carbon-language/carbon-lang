@@ -1,7 +1,8 @@
 // RUN: clang-cc -emit-llvm-only -verify %s
 // PR5454
+#include <stddef.h>
 
-class X {static void * operator new(unsigned long size) throw(); X(int); };
+class X {static void * operator new(size_t size) throw(); X(int); };
 int a(), b();
 void b(int x)
 {
