@@ -30,11 +30,58 @@ namespace llvm {
                           const TargetRegisterInfo *tri,
                           MachineModuleInfo *mmi);
   private:
-    typedef std::pair<unsigned,MachineBasicBlock*> MergePotentialsElt;
+    class MergePotentialsElt {
+      unsigned Hash;
+      MachineBasicBlock *Block;
+    public:
+      MergePotentialsElt(unsigned h, MachineBasicBlock *b)
+        : Hash(h), Block(b) {}
+
+      unsigned getHash() const { return Hash; }
+      MachineBasicBlock *getBlock() const { return Block; }
+
+      void setBlock(MachineBasicBlock *MBB) {
+        Block = MBB;
+      }
+
+      bool operator<(const MergePotentialsElt &) const;
+    };
     typedef std::vector<MergePotentialsElt>::iterator MPIterator;
     std::vector<MergePotentialsElt> MergePotentials;
 
-    typedef std::pair<MPIterator, MachineBasicBlock::iterator> SameTailElt;
+    class SameTailElt {
+      MPIterator MPIter;
+      MachineBasicBlock::iterator TailStartPos;
+    public:
+      SameTailElt(MPIterator mp, MachineBasicBlock::iterator tsp)
+        : MPIter(mp), TailStartPos(tsp) {}
+
+      MPIterator getMPIter() const {
+        return MPIter;
+      }
+      MergePotentialsElt &getMergePotentialsElt() const {
+        return *getMPIter();
+      }
+      MachineBasicBlock::iterator getTailStartPos() const {
+        return TailStartPos;
+      }
+      unsigned getHash() const {
+        return getMergePotentialsElt().getHash();
+      }
+      MachineBasicBlock *getBlock() const {
+        return getMergePotentialsElt().getBlock();
+      }
+      bool tailIsWholeBlock() const {
+        return TailStartPos == getBlock()->begin();
+      }
+
+      void setBlock(MachineBasicBlock *MBB) {
+        getMergePotentialsElt().setBlock(MBB);
+      }
+      void setTailStartPos(MachineBasicBlock::iterator Pos) {
+        TailStartPos = Pos;
+      }
+    };
     std::vector<SameTailElt> SameTails;
 
     bool EnableTailMerge;
