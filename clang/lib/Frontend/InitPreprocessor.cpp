@@ -456,7 +456,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 /// environment ready to process a single file. This returns true on error.
 ///
 void clang::InitializePreprocessor(Preprocessor &PP,
-                                   const PreprocessorOptions &InitOpts) {
+                                   const PreprocessorOptions &InitOpts,
+                                   const HeaderSearchOptions &HSOpts) {
   std::vector<char> PredefineBuffer;
 
   const char *LineDirective = "# 1 \"<built-in>\" 3\n";
@@ -501,4 +502,9 @@ void clang::InitializePreprocessor(Preprocessor &PP,
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
   PP.setPredefines(&PredefineBuffer[0]);
+
+  // Initialize the header search object.
+  ApplyHeaderSearchOptions(PP.getHeaderSearchInfo(), HSOpts,
+                           PP.getLangOptions(),
+                           PP.getTargetInfo().getTriple());
 }

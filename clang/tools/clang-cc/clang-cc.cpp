@@ -377,6 +377,7 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 static Preprocessor *
 CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
                    const PreprocessorOptions &PPOpts,
+                   const HeaderSearchOptions &HSOpts,
                    const DependencyOutputOptions &DepOpts,
                    TargetInfo &Target, SourceManager &SourceMgr,
                    FileManager &FileMgr) {
@@ -413,7 +414,7 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
     PP->setPTHManager(PTHMgr);
   }
 
-  InitializePreprocessor(*PP, PPOpts);
+  InitializePreprocessor(*PP, PPOpts, HSOpts);
 
   // Handle generating dependencies, if requested.
   if (!DepOpts.OutputFile.empty())
@@ -1209,13 +1210,9 @@ int main(int argc, char **argv) {
     llvm::OwningPtr<Preprocessor>
       PP(CreatePreprocessor(Diags, CompOpts.getLangOpts(),
                             CompOpts.getPreprocessorOpts(),
+                            CompOpts.getHeaderSearchOpts(),
                             CompOpts.getDependencyOutputOpts(),
                             *Target, SourceMgr, FileMgr));
-
-    // Apply all the options to the header search object.
-    ApplyHeaderSearchOptions(PP->getHeaderSearchInfo(),
-                             CompOpts.getHeaderSearchOpts(),
-                             CompOpts.getLangOpts(), Triple);
 
     if (CompOpts.getPreprocessorOpts().getImplicitPCHInclude().empty()) {
       if (InitializeSourceManager(*PP.get(), InFile))

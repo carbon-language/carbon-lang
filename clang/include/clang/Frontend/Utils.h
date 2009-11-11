@@ -48,9 +48,9 @@ void ApplyHeaderSearchOptions(HeaderSearch &HS,
 
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file.
-///
 void InitializePreprocessor(Preprocessor &PP,
-                            const PreprocessorOptions &PPOpts);
+                            const PreprocessorOptions &PPOpts,
+                            const HeaderSearchOptions &HSOpts);
 
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.
