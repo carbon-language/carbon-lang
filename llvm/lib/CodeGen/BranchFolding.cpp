@@ -58,7 +58,7 @@ TailMergeSize("tail-merge-size",
 
 char BranchFolderPass::ID = 0;
 
-Pass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge) {
+FunctionPass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge) {
   return new BranchFolderPass(DefaultEnableTailMerge);
 }
 
