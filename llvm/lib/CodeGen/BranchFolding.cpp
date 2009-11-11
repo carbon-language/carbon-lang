@@ -753,14 +753,14 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
           MergePotentials.push_back(std::make_pair(HashEndOfMBB(PBB, 1U), *P));
         }
       }
-    if (MergePotentials.size() >= 2)
-      MadeChange |= TryMergeBlocks(I, PredBB);
-    // Reinsert an unconditional branch if needed.
-    // The 1 below can occur as a result of removing blocks in TryMergeBlocks.
-    PredBB = prior(I);      // this may have been changed in TryMergeBlocks
-    if (MergePotentials.size() == 1 &&
-        MergePotentials.begin()->second != PredBB)
-      FixTail(MergePotentials.begin()->second, I, TII);
+      if (MergePotentials.size() >= 2)
+        MadeChange |= TryMergeBlocks(I, PredBB);
+      // Reinsert an unconditional branch if needed.
+      // The 1 below can occur as a result of removing blocks in TryMergeBlocks.
+      PredBB = prior(I);      // this may have been changed in TryMergeBlocks
+      if (MergePotentials.size() == 1 &&
+          MergePotentials.begin()->second != PredBB)
+        FixTail(MergePotentials.begin()->second, I, TII);
     }
   }
   return MadeChange;
