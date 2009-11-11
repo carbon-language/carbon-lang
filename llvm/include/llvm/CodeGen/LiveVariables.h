@@ -267,9 +267,11 @@ public:
   void HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
                         MachineInstr *MI);
 
-  /// addNewBlock - Add a new basic block A as an empty predecessor of B. All
-  /// variables that are live into B will be marked as passing live through A.
-  void addNewBlock(MachineBasicBlock *A, MachineBasicBlock *B);
+  /// addNewBlock - Add a new basic block BB as an empty succcessor to
+  /// DomBB. All variables that are live out of DomBB will be marked as passing
+  /// live through BB. This method assumes that the machine code is still in SSA
+  /// form.
+  void addNewBlock(MachineBasicBlock *BB, MachineBasicBlock *DomBB);
 };
 
 } // End llvm namespace

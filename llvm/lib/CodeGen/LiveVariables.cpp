@@ -650,34 +650,35 @@ void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
           .push_back(BBI->getOperand(i).getReg());
 }
 
-void LiveVariables::addNewBlock(MachineBasicBlock *A, MachineBasicBlock *B) {
-  unsigned NumA = A->getNumber();
-  unsigned NumB = B->getNumber();
+/// addNewBlock - Add a new basic block BB as an empty succcessor to DomBB. All
+/// variables that are live out of DomBB will be marked as passing live through
+/// BB.
+void LiveVariables::addNewBlock(MachineBasicBlock *BB,
+                                MachineBasicBlock *DomBB) {
+  const unsigned NumNew = BB->getNumber();
+  const unsigned NumDom = DomBB->getNumber();
 
   // Update info for all live variables
-  for (unsigned i = 0, e = VirtRegInfo.size(); i != e; ++i) {
-    VarInfo &VI = VirtRegInfo[i];
+  for (unsigned Reg = TargetRegisterInfo::FirstVirtualRegister,
+         E = MRI->getLastVirtReg()+1; Reg != E; ++Reg) {
+    VarInfo &VI = getVarInfo(Reg);
 
-    // Anything live through B is also live through A.
-    if (VI.AliveBlocks.test(NumB)) {
-      VI.AliveBlocks.set(NumA);
+    // Anything live through DomBB is also live through BB.
+    if (VI.AliveBlocks.test(NumDom)) {
+      VI.AliveBlocks.set(NumNew);
       continue;
     }
 
-    // If we're not killed in B, we are not live in
-    if (!VI.findKill(B))
+    // Variables not defined in DomBB cannot be live out.
+    const MachineInstr *Def = MRI->getVRegDef(Reg);
+    if (!Def || Def->getParent() != DomBB)
       continue;
 
-    unsigned Reg = i+TargetRegisterInfo::FirstVirtualRegister;
+    // Killed by DomBB?
+    if (VI.findKill(DomBB))
+      continue;
 
-    // Find a def outside B
-    for (MachineRegisterInfo::def_iterator di = MRI->def_begin(Reg),
-           de=MRI->def_end(); di != de; ++di) {
-      if (di->getParent() != B) {
-        // Reg was defined outside B and killed in B - it must be live in.
-        VI.AliveBlocks.set(NumA);
-        break;
-      }
-    }
+    // This register is defined in DomBB and live out
+    VI.AliveBlocks.set(NumNew);
   }
 }
