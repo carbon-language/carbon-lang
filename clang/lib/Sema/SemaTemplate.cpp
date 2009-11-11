@@ -566,13 +566,21 @@ void Sema::ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParamD,
   //   A template-parameter shall not be used in its own default argument.
   // FIXME: Implement this check! Needs a recursive walk over the types.
 
-  // Check the well-formedness of the template argument.
+  // Check only that we have a template template argument. We don't want to
+  // try to check well-formedness now, because our template template parameter
+  // might have dependent types in its template parameters, which we wouldn't
+  // be able to match now.
+  //
+  // If none of the template template parameter's template arguments mention
+  // other template parameters, we could actually perform more checking here.
+  // However, it isn't worth doing.
   TemplateArgumentLoc DefaultArg = translateTemplateArgument(*this, Default);
-  if (CheckTemplateArgument(TemplateParm, DefaultArg)) {
-    TemplateParm->setInvalidDecl();
+  if (DefaultArg.getArgument().getAsTemplate().isNull()) {
+    Diag(DefaultArg.getLocation(), diag::err_template_arg_not_class_template)
+      << DefaultArg.getSourceRange();
     return;
   }
-
+  
   TemplateParm->setDefaultArgument(DefaultArg);
 }
 
@@ -1739,8 +1747,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       QualType NTTPType = NTTP->getType();
       if (NTTPType->isDependentType()) {
         // Do substitution on the type of the non-type template parameter.
-        InstantiatingTemplate Inst(*this, TemplateLoc,
-                                   Template, Converted.getFlatArguments(),
+        InstantiatingTemplate Inst(*this, TemplateLoc, Template,
+                                   NTTP, Converted.getFlatArguments(),
                                    Converted.flatSize(),
                                    SourceRange(TemplateLoc, RAngleLoc));
 
@@ -1850,6 +1858,30 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       TemplateTemplateParmDecl *TempParm
         = cast<TemplateTemplateParmDecl>(*Param);
 
+      // Substitute into the template parameter list of the template
+      // template parameter, since previously-supplied template arguments
+      // may appear within the template template parameter.
+      {
+        // Set up a template instantiation context.
+        LocalInstantiationScope Scope(*this);
+        InstantiatingTemplate Inst(*this, TemplateLoc, Template,
+                                   TempParm, Converted.getFlatArguments(),
+                                   Converted.flatSize(),
+                                   SourceRange(TemplateLoc, RAngleLoc));
+      
+        TemplateArgumentList TemplateArgs(Context, Converted,
+                                          /*TakeArgs=*/false);
+        TempParm = cast_or_null<TemplateTemplateParmDecl>(
+                        SubstDecl(TempParm, CurContext, 
+                                 MultiLevelTemplateArgumentList(TemplateArgs)));
+        if (!TempParm) {
+          Invalid = true;
+          break;
+        }
+        
+        // FIXME: TempParam is leaked.
+      }
+      
       switch (Arg.getArgument().getKind()) {
       case TemplateArgument::Null:
         assert(false && "Should never see a NULL template argument here");
@@ -2518,9 +2550,9 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
           NextDiag = diag::note_template_param_different_kind;
         }
         Diag((*NewParm)->getLocation(), NextDiag)
-        << IsTemplateTemplateParm;
+          << IsTemplateTemplateParm;
         Diag((*OldParm)->getLocation(), diag::note_template_prev_declaration)
-        << IsTemplateTemplateParm;
+          << IsTemplateTemplateParm;
       }
       return false;
     }
@@ -2528,21 +2560,6 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
     if (isa<TemplateTypeParmDecl>(*OldParm)) {
       // Okay; all template type parameters are equivalent (since we
       // know we're at the same index).
-#if 0
-      // FIXME: Enable this code in debug mode *after* we properly go through
-      // and "instantiate" the template parameter lists of template template
-      // parameters. It's only after this instantiation that (1) any dependent
-      // types within the template parameter list of the template template
-      // parameter can be checked, and (2) the template type parameter depths
-      // will match up.
-      QualType OldParmType
-        = Context.getTypeDeclType(cast<TemplateTypeParmDecl>(*OldParm));
-      QualType NewParmType
-        = Context.getTypeDeclType(cast<TemplateTypeParmDecl>(*NewParm));
-      assert(Context.getCanonicalType(OldParmType) ==
-             Context.getCanonicalType(NewParmType) &&
-             "type parameter mismatch?");
-#endif
     } else if (NonTypeTemplateParmDecl *OldNTTP
                  = dyn_cast<NonTypeTemplateParmDecl>(*OldParm)) {
       // The types of non-type template parameters must agree.
@@ -2566,10 +2583,13 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
         }
         return false;
       }
+      assert(OldNTTP->getDepth() == NewNTTP->getDepth() && 
+             "Non-type template parameter depth mismatch");
+      assert(OldNTTP->getPosition() == NewNTTP->getPosition() && 
+             "Non-type template parameter position mismatch");
     } else {
       // The template parameter lists of template template
       // parameters must agree.
-      // FIXME: Could we perform a faster "type" comparison here?
       assert(isa<TemplateTemplateParmDecl>(*OldParm) &&
              "Only template template parameters handled here");
       TemplateTemplateParmDecl *OldTTP
@@ -2582,6 +2602,11 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
                                           /*IsTemplateTemplateParm=*/true,
                                           TemplateArgLoc))
         return false;
+      
+      assert(OldTTP->getDepth() == NewTTP->getDepth() && 
+             "Template template parameter depth mismatch");
+      assert(OldTTP->getPosition() == NewTTP->getPosition() && 
+             "Template template parameter position mismatch");      
     }
   }
 
@@ -4594,12 +4619,24 @@ QualType Sema::RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
 std::string
 Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
                                       const TemplateArgumentList &Args) {
+  // FIXME: For variadic templates, we'll need to get the structured list.
+  return getTemplateArgumentBindingsText(Params, Args.getFlatArgumentList(),
+                                         Args.flat_size());
+}
+
+std::string
+Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+                                      const TemplateArgument *Args,
+                                      unsigned NumArgs) {
   std::string Result;
 
-  if (!Params || Params->size() == 0)
+  if (!Params || Params->size() == 0 || NumArgs == 0)
     return Result;
   
   for (unsigned I = 0, N = Params->size(); I != N; ++I) {
+    if (I >= NumArgs)
+      break;
+    
     if (I == 0)
       Result += "[with ";
     else

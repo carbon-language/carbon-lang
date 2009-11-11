@@ -1051,7 +1051,7 @@ TemplateDeclInstantiator::SubstTemplateParams(TemplateParameterList *L) {
        PI != PE; ++PI) {
     NamedDecl *D = cast_or_null<NamedDecl>(Visit(*PI));
     Params.push_back(D);
-    Invalid = Invalid || !D;
+    Invalid = Invalid || !D || D->isInvalidDecl();
   }
 
   // Clean up if we had an error.

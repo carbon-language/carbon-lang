@@ -2650,6 +2650,11 @@ public:
   std::string
   getTemplateArgumentBindingsText(const TemplateParameterList *Params,
                                   const TemplateArgumentList &Args);
+
+  std::string
+  getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+                                  const TemplateArgument *Args,
+                                  unsigned NumArgs);
   
   /// \brief Describes the result of template argument deduction.
   ///
@@ -2872,17 +2877,26 @@ public:
       /// partial specialization or a function template. The
       /// Entity is either a ClassTemplatePartialSpecializationDecl or
       /// a FunctionTemplateDecl.
-      DeducedTemplateArgumentSubstitution
+      DeducedTemplateArgumentSubstitution,
+      
+      /// We are substituting prior template arguments into a new
+      /// template parameter. The template parameter itself is either a
+      /// NonTypeTemplateParmDecl or a TemplateTemplateParmDecl.
+      PriorTemplateArgumentSubstitution
     } Kind;
 
     /// \brief The point of instantiation within the source code.
     SourceLocation PointOfInstantiation;
 
+    /// \brief The template in which we are performing the instantiation,
+    /// for substitutions of prior template arguments.
+    TemplateDecl *Template;
+    
     /// \brief The entity that is being instantiated.
     uintptr_t Entity;
 
-    // \brief If this the instantiation of a default template
-    // argument, the list of template arguments.
+    /// \brief The list of template arguments we are substituting, if they
+    /// are not part of the entity.
     const TemplateArgument *TemplateArgs;
 
     /// \brief The number of template arguments in TemplateArgs.
@@ -2893,8 +2907,9 @@ public:
     /// template instantiation.
     SourceRange InstantiationRange;
 
-    ActiveTemplateInstantiation() : Kind(TemplateInstantiation), Entity(0),
-                                    TemplateArgs(0), NumTemplateArgs(0) {}
+    ActiveTemplateInstantiation()
+      : Kind(TemplateInstantiation), Template(0), Entity(0), TemplateArgs(0), 
+        NumTemplateArgs(0) {}
 
     friend bool operator==(const ActiveTemplateInstantiation &X,
                            const ActiveTemplateInstantiation &Y) {
@@ -2908,6 +2923,12 @@ public:
       case TemplateInstantiation:
         return true;
 
+      case PriorTemplateArgumentSubstitution:
+        if (X.Template != Y.Template)
+          return false;
+          
+        // Fall through
+          
       case DefaultTemplateArgumentInstantiation:
       case ExplicitTemplateArgumentSubstitution:
       case DeducedTemplateArgumentSubstitution:
@@ -2993,6 +3014,22 @@ public:
                           unsigned NumTemplateArgs,
                           SourceRange InstantiationRange = SourceRange());
 
+    /// \brief Note that we are substituting prior template arguments into a
+    /// non-type or template template parameter.
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          TemplateDecl *Template,
+                          NonTypeTemplateParmDecl *Param,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          SourceRange InstantiationRange);
+
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          TemplateDecl *Template,
+                          TemplateTemplateParmDecl *Param,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          SourceRange InstantiationRange);
+    
     /// \brief Note that we have finished instantiating this template.
     void Clear();
 

@@ -122,7 +122,7 @@ template<typename T,
   struct X2_arg;
 
 X2<int>::Inner<X2_arg> x2i1;
-X2<float>::Inner<X2_arg> x2i2; // expected-note{{instantiation}}
+X2<float> x2a; // expected-note{{instantiation}}
 X2<long>::Inner<X2_arg> x2i3; // expected-error{{template template argument has different}}
 
 

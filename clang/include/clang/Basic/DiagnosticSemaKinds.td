@@ -1099,6 +1099,10 @@ def note_function_template_deduction_instantiation_here : Note<
 def note_partial_spec_deduct_instantiation_here : Note<
   "during template argument deduction for class template partial "
   "specialization %0, here">;
+def note_prior_template_arg_substitution : Note<
+  "while substituting prior template arguments into %select{non-type|template}0"
+  " template parameter%1 %2">;
+  
 def err_field_instantiates_to_function : Error<
   "data member instantiated with function type %0">;
 def err_nested_name_spec_non_tag : Error<

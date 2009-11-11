@@ -34,4 +34,6 @@ template<int N,
 // Check validity of default arguments
 template<template<class, int> class // expected-note{{previous template template parameter is here}}
            = Y1> // expected-error{{template template argument has different template parameters than its corresponding template template parameter}}
-  class C1; 
+  class C1 {};
+
+C1<> c1;
