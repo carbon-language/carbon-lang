@@ -174,6 +174,7 @@ def CALLp: F1<(outs), (ins P:$func, variable_ops),
 
 let isReturn     = 1,
     isTerminator = 1,
+    isBarrier    = 1,
     Uses         = [RETS] in
 def RTS: F1<(outs), (ins), "rts;", [(BfinRet)]>;
 

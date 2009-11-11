@@ -127,7 +127,7 @@ def NOP : Pseudo<(outs), (ins), "nop", []>;
 //
 
 // FIXME: Provide proper encoding!
-let isReturn = 1, isTerminator = 1 in {
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def RET : Pseudo<(outs), (ins), "ret", [(MSP430retflag)]>;
 }
 

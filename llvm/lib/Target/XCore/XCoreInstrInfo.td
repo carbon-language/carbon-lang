@@ -617,7 +617,7 @@ defm EXTSP : FU6_LU6_np<"extsp">;
 let mayStore = 1 in
 defm ENTSP : FU6_LU6_np<"entsp">;
 
-let isReturn = 1, isTerminator = 1, mayLoad = 1 in {
+let isReturn = 1, isTerminator = 1, mayLoad = 1, isBarrier = 1 in {
 defm RETSP : FU6_LU6<"retsp", XCoreRetsp>;
 }
 }

@@ -391,7 +391,7 @@ def : Pat<(setune GPRC:$X, GPRC:$Y), (CMPEQi (CMPEQ GPRC:$X, GPRC:$Y), 0)>;
 def : Pat<(setune GPRC:$X, immUExt8:$Y), (CMPEQi (CMPEQ GPRC:$X, immUExt8:$Y), 0)>;
 
 
-let isReturn = 1, isTerminator = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in {
+let isReturn = 1, isTerminator = 1, isBarrier = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in {
   def RETDAG : MbrForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1", s_jsr>; //Return from subroutine
   def RETDAGp : MbrpForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1", [(retflag)], s_jsr>; //Return from subroutine
 }
