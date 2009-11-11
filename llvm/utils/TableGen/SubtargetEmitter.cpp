@@ -519,6 +519,8 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS) {
   OS << Target;
   OS << "Subtarget::ParseSubtargetFeatures(const std::string &FS,\n"
      << "                                  const std::string &CPU) {\n"
+     << "  DEBUG(errs() << \"\\nFeatures:\" << FS);\n"
+     << "  DEBUG(errs() << \"\\nCPU:\" << CPU);\n"
      << "  SubtargetFeatures Features(FS);\n"
      << "  Features.setCPUIfNone(CPU);\n"
      << "  uint32_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,\n"
@@ -558,6 +560,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   EmitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);
 
+  OS << "#include \"llvm/Support/Debug.h\"\n";
+  OS << "#include \"llvm/Support/raw_ostream.h\"\n";
   OS << "#include \"llvm/Target/SubtargetFeature.h\"\n";
   OS << "#include \"llvm/Target/TargetInstrItineraries.h\"\n\n";
   

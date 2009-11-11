@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -764,6 +765,11 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
          i != e; ++i)
       free(*i);
   }
+
+  DEBUG(errs() << "\nArgs: ";
+        for (int i = 0; i < argc; ++i)
+          errs() << argv[i] << ' ';
+       );
 
   // If we had an error processing our arguments, don't let the program execute
   if (ErrorParsing) exit(1);
