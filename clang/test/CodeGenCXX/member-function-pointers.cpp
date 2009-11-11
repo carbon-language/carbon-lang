@@ -30,8 +30,8 @@ void f() {
   // CHECK: volatile store i64 0, i64* getelementptr inbounds (%0* @vpa, i32 0, i32 1)
   vpa = 0;
 
-  // CHECK: store i64 %0, i64* getelementptr inbounds (%0* @pc, i32 0, i32 0)
-  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = add i64 %1, 16
+  // CHECK: store i64 {{.*}}, i64* getelementptr inbounds (%0* @pc, i32 0, i32 0)
+  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = add i64 {{.*}}, 16
   // CHECK: store i64 [[ADJ]], i64* getelementptr inbounds (%0* @pc, i32 0, i32 1)
   pc = pa;
 }
@@ -46,7 +46,7 @@ void f2() {
   // CHECK: [[pa3ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 0 
   // CHECK: store i64 1, i64* [[pa3ptr]]
   // CHECK: [[pa3adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 1
-  // CHECK: store i64 0, i64* [[pa2adj]]
+  // CHECK: store i64 0, i64* [[pa3adj]]
   void (A::*pa3)() = &A::vf;
 }
 

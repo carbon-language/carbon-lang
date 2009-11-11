@@ -69,7 +69,6 @@ int t19(void) {
 }
 
 // CHECK:define void @t20() nounwind {
-// CHECK-NEXT:entry:
 // CHECK-NEXT: call void @abort()
 // CHECK-NEXT: unreachable
 void t20(void) {
