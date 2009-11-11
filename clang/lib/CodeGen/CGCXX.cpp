@@ -79,6 +79,9 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
     EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
   } else {
     EmitAggExpr(Init, DeclPtr, isVolatile);
+    // Avoid generating destructor(s) for initialized objects. 
+    if (!isa<CXXConstructExpr>(Init))
+      return;
     const ConstantArrayType *Array = getContext().getAsConstantArrayType(T);
     if (Array)
       T = getContext().getBaseElementType(Array);
