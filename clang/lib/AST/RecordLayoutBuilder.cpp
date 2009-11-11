@@ -226,8 +226,7 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
       if (RD == Class)
         BaseOffset = getBaseOffset(Base);
       else {
-        const ASTRecordLayout &Layout
-          = Ctx.getASTRecordLayout(RD);
+        const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
         BaseOffset = Offset + Layout.getBaseClassOffset(Base);
       }
     }
