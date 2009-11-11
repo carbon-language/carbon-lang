@@ -156,17 +156,34 @@ static std::vector<llvm::StringRef> splitLines(llvm::StringRef Str,
 
 bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                         FileID PCHBufferID,
+                                        llvm::StringRef OriginalFileName,
                                         std::string &SuggestedPredefines) {
-  // If the two predefines buffers compare equal, we're done!
-  if (PP.getPredefines() == PCHPredef)
+  // We are in the context of an implicit include, so the predefines buffer
+  // will have a #include entry for the PCH file itself. Find it and skip over
+  // it in the checking below.
+  llvm::SmallString<256> PCHInclude;
+  PCHInclude += "#include \"";
+  PCHInclude += OriginalFileName;
+  PCHInclude += "\"\n";
+  std::pair<llvm::StringRef,llvm::StringRef> Split =
+    llvm::StringRef(PP.getPredefines()).split(PCHInclude.str());
+  llvm::StringRef Left =  Split.first, Right = Split.second;
+  assert(Left != PP.getPredefines() && "Missing PCH include entry!");
+
+  // If the predefines is equal to the joined left and right halves, we're done!
+  if (Left.size() + Right.size() == PCHPredef.size() &&
+      PCHPredef.startswith(Left) && PCHPredef.endswith(Right))
     return false;
 
   SourceManager &SourceMgr = PP.getSourceManager();
 
   // The predefines buffers are different. Determine what the differences are,
   // and whether they require us to reject the PCH file.
-  std::vector<llvm::StringRef> CmdLineLines = splitLines(PP.getPredefines());
   std::vector<llvm::StringRef> PCHLines = splitLines(PCHPredef);
+  std::vector<llvm::StringRef> CmdLineLines = splitLines(Left);
+  std::vector<llvm::StringRef> CmdLineLinesRight = splitLines(Right);
+  CmdLineLines.insert(CmdLineLines.end(),
+                      CmdLineLinesRight.begin(), CmdLineLinesRight.end());
 
   // Sort both sets of predefined buffer lines, since we allow some extra
   // definitions and they may appear at any point in the output.
@@ -624,6 +641,7 @@ bool PCHReader::CheckPredefinesBuffer(llvm::StringRef PCHPredef,
                                       FileID PCHBufferID) {
   if (Listener)
     return Listener->ReadPredefinesBuffer(PCHPredef, PCHBufferID,
+                                          ActualOriginalFileName,
                                           SuggestedPredefines);
   return false;
 }
@@ -1333,7 +1351,8 @@ PCHReader::ReadPCHBlock() {
       break;
 
     case pch::ORIGINAL_FILE_NAME:
-      OriginalFileName.assign(BlobStart, BlobLen);
+      ActualOriginalFileName.assign(BlobStart, BlobLen);
+      OriginalFileName = ActualOriginalFileName;
       MaybeAddSystemRootToFilename(OriginalFileName);
       break;
 

@@ -88,10 +88,10 @@ public:
   /// \param PCHPredef The start of the predefines buffer in the PCH
   /// file.
   ///
-  /// \param PCHPredefLen The length of the predefines buffer in the PCH
-  /// file.
-  ///
   /// \param PCHBufferID The FileID for the PCH predefines buffer.
+  ///
+  /// \param OriginalFileName The original file name for the PCH, which will
+  /// appear as an entry in the predefines buffer.
   ///
   /// \param SuggestedPredefines If necessary, additional definitions are added
   /// here.
@@ -99,6 +99,7 @@ public:
   /// \returns true to indicate the predefines are invalid or false otherwise.
   virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                     FileID PCHBufferID,
+                                    llvm::StringRef OriginalFileName,
                                     std::string &SuggestedPredefines) {
     return false;
   }
@@ -126,6 +127,7 @@ public:
   virtual bool ReadTargetTriple(llvm::StringRef Triple);
   virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                     FileID PCHBufferID,
+                                    llvm::StringRef OriginalFileName,
                                     std::string &SuggestedPredefines);
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI);
   virtual void ReadCounter(unsigned Value);
@@ -311,9 +313,12 @@ private:
   /// the PCH file.
   llvm::SmallVector<uint64_t, 4> ObjCCategoryImpls;
 
-  /// \brief The original file name that was used to build the PCH
-  /// file.
+  /// \brief The original file name that was used to build the PCH file, which
+  /// may have been modified for relocatable-pch support.
   std::string OriginalFileName;
+
+  /// \brief The actual original file name that was used to build the PCH file.
+  std::string ActualOriginalFileName;
 
   /// \brief Whether this precompiled header is a relocatable PCH file.
   bool RelocatablePCH;

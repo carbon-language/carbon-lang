@@ -1110,7 +1110,7 @@ static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
     InitOpts.addMacroInclude(ImplicitMacroIncludes[i]);
 
   if (!ImplicitIncludePTH.empty() || !ImplicitIncludes.empty() ||
-      (!ImplicitIncludePCH.empty() && ProgAction == PrintPreprocessedInput)) {
+      !ImplicitIncludePCH.empty()) {
     // We want to add these paths to the predefines buffer in order, make a
     // temporary vector to sort by their occurrence.
     llvm::SmallVector<std::pair<unsigned, std::string*>, 8> OrderedPaths;
@@ -1118,14 +1118,13 @@ static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
     if (!ImplicitIncludePTH.empty())
       OrderedPaths.push_back(std::make_pair(ImplicitIncludePTH.getPosition(),
                                             &ImplicitIncludePTH));
-    if (!ImplicitIncludePCH.empty() && ProgAction == PrintPreprocessedInput)
+    if (!ImplicitIncludePCH.empty())
       OrderedPaths.push_back(std::make_pair(ImplicitIncludePCH.getPosition(),
                                             &ImplicitIncludePCH));
     for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
       OrderedPaths.push_back(std::make_pair(ImplicitIncludes.getPosition(i),
                                             &ImplicitIncludes[i]));
     llvm::array_pod_sort(OrderedPaths.begin(), OrderedPaths.end());
-
 
     // Now that they are ordered by position, add to the predefines buffer.
     for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i) {
@@ -1142,10 +1141,10 @@ static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
         // file that was used to build the precompiled header.
         assert(Ptr == &ImplicitIncludePCH);
         std::string OriginalFile = PCHReader::getOriginalSourceFile(*Ptr);
-        if (!OriginalFile.empty()) {
-          InitOpts.addInclude(OriginalFile);
-          InitOpts.setImplicitPCHInclude("");
-        }
+        // FIXME: Don't fail like this.
+        if (OriginalFile.empty())
+          exit(1);
+        InitOpts.addInclude(OriginalFile);
       }
     }
   }

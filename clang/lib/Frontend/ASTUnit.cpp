@@ -68,6 +68,7 @@ public:
 
   virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                     FileID PCHBufferID,
+                                    llvm::StringRef OriginalFileName,
                                     std::string &SuggestedPredefines) {
     Predefines = PCHPredef;
     return false;
