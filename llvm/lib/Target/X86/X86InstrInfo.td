@@ -543,7 +543,7 @@ let neverHasSideEffects = 1 in {
 }
 
 // Trap
-def INT3 : I<0xcc, RawFrm, (outs), (ins), "int 3", []>;
+def INT3 : I<0xcc, RawFrm, (outs), (ins), "int\t3", []>;
 def INT : I<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap", []>;
 
 // PIC base construction.  This expands to code that looks like this:
