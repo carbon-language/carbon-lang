@@ -31,6 +31,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -42,6 +43,12 @@ STATISTIC(NumTBs,        "Number of table branches generated");
 STATISTIC(NumT2CPShrunk, "Number of Thumb2 constantpool instructions shrunk");
 STATISTIC(NumT2BrShrunk, "Number of Thumb2 immediate branches shrunk");
 STATISTIC(NumCBZ,        "Number of CBZ / CBNZ formed");
+STATISTIC(NumJTMoved,    "Number of jump table destination blocks moved");
+
+
+static cl::opt<bool>
+AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(false),
+          cl::desc("Adjust basic block layout to better use TB[BH]"));
 
 namespace {
   /// ARMConstantIslands - Due to limited PC-relative displacements, ARM
@@ -202,6 +209,8 @@ namespace {
     bool OptimizeThumb2Instructions(MachineFunction &MF);
     bool OptimizeThumb2Branches(MachineFunction &MF);
     bool OptimizeThumb2JumpTables(MachineFunction &MF);
+    MachineBasicBlock *AdjustJTTargetBlockForward(MachineBasicBlock *BB,
+                                                  MachineBasicBlock *JTBB);
 
     unsigned GetOffsetOf(MachineInstr *MI) const;
     void dumpBBs();
@@ -1560,7 +1569,7 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
 
   // FIXME: After the tables are shrunk, can we get rid some of the
   // constantpool tables?
-  const MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
+  MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
     MachineInstr *MI = T2JumpTables[i];
@@ -1571,10 +1580,33 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());
 
-    bool ByteOk = true;
-    bool HalfWordOk = true;
+    // We prefer if target blocks for the jump table come after the jump
+    // instruction so we can use TB[BH]. Loop through the target blocks
+    // and try to adjust them such that that's true.
     unsigned JTOffset = GetOffsetOf(MI) + 4;
     const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+    if (AdjustJumpTableBlocks) {
+      for (unsigned j = 0, ee = JTBBs.size(); j != ee; ++j) {
+        MachineBasicBlock *MBB = JTBBs[j];
+        unsigned DstOffset = BBOffsets[MBB->getNumber()];
+
+        if (DstOffset < JTOffset) {
+          // The destination precedes the switch. Try to move the block forward
+          // so we have a positive offset.
+          MachineBasicBlock *NewBB =
+            AdjustJTTargetBlockForward(MBB, MI->getParent());
+          if (NewBB) {
+            MJTI->ReplaceMBBInJumpTables(JTBBs[j], NewBB);
+            JTOffset = GetOffsetOf(MI) + 4;
+            DstOffset = BBOffsets[MBB->getNumber()];
+          }
+        }
+      }
+    }
+
+    bool ByteOk = true;
+    bool HalfWordOk = true;
+    JTOffset = GetOffsetOf(MI) + 4;
     for (unsigned j = 0, ee = JTBBs.size(); j != ee; ++j) {
       MachineBasicBlock *MBB = JTBBs[j];
       unsigned DstOffset = BBOffsets[MBB->getNumber()];
@@ -1659,4 +1691,65 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
   }
 
   return MadeChange;
+}
+
+MachineBasicBlock *ARMConstantIslands::
+AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
+{
+  MachineFunction &MF = *BB->getParent();
+
+  // FIXME: For now, instead of moving the block, we'll create a new block
+  // immediate following the jump that's an unconditional branch to the
+  // actual target. This is obviously not what we want for a real solution,
+  // but it's useful for proof of concept, and it may be a useful fallback
+  // later for cases where we otherwise can't move a block.
+
+  // Create a new MBB for the code after the jump BB.
+  MachineBasicBlock *NewBB =
+    MF.CreateMachineBasicBlock(JTBB->getBasicBlock());
+  MachineFunction::iterator MBBI = JTBB; ++MBBI;
+  MF.insert(MBBI, NewBB);
+
+  // Add an unconditional branch from NewBB to BB.
+  // There doesn't seem to be meaningful DebugInfo available; this doesn't
+  // correspond directly to anything in the source.
+  assert (isThumb2 && "Adjusting for TB[BH] but not in Thumb2?");
+  BuildMI(NewBB, DebugLoc::getUnknownLoc(), TII->get(ARM::t2B)).addMBB(BB);
+
+  // Update the CFG.
+  NewBB->addSuccessor(BB);
+  JTBB->removeSuccessor(BB);
+  JTBB->addSuccessor(NewBB);
+
+  // Update internal data structures to account for the newly inserted MBB.
+  // This is almost the same as UpdateForInsertedWaterBlock, except that
+  // the Water goes after OrigBB, not NewBB.
+  MF.RenumberBlocks(NewBB);
+
+  // Insert a size into BBSizes to align it properly with the (newly
+  // renumbered) block numbers.
+  BBSizes.insert(BBSizes.begin()+NewBB->getNumber(), 0);
+
+  // Likewise for BBOffsets.
+  BBOffsets.insert(BBOffsets.begin()+NewBB->getNumber(), 0);
+
+  // Figure out how large the first NewMBB is.
+  unsigned NewBBSize = 0;
+  for (MachineBasicBlock::iterator I = NewBB->begin(), E = NewBB->end();
+       I != E; ++I)
+    NewBBSize += TII->GetInstSizeInBytes(I);
+
+  unsigned NewBBI = NewBB->getNumber();
+  unsigned JTBBI = JTBB->getNumber();
+  // Set the size of NewBB in BBSizes.
+  BBSizes[NewBBI] = NewBBSize;
+
+  // ...and adjust BBOffsets for NewBB accordingly.
+  BBOffsets[NewBBI] = BBOffsets[JTBBI] + BBSizes[JTBBI];
+
+  // All BBOffsets following these blocks must be modified.
+  AdjustBBOffsetsAfter(NewBB, 4);
+
+  ++NumJTMoved;
+  return NewBB;
 }
