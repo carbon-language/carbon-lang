@@ -687,7 +687,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *RD,
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   if (LayoutClass)
-    mangleCXXCtorVtable(getMangleContext(), RD, Offset, LayoutClass, Out);
+    mangleCXXCtorVtable(getMangleContext(), LayoutClass, Offset, RD, Out);
   else
     mangleCXXVtable(getMangleContext(), RD, Out);
 
