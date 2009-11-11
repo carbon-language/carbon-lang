@@ -26,10 +26,6 @@ void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createCFGSimplificationPass());
 }
 
-void LLVMAddCondPropagationPass(LLVMPassManagerRef PM) {
-  unwrap(PM)->add(createCondPropagationPass());
-}
-
 void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createDeadStoreEliminationPass());
 }

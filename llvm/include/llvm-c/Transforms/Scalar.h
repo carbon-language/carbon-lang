@@ -31,9 +31,6 @@ void LLVMAddAggressiveDCEPass(LLVMPassManagerRef PM);
 /** See llvm::createCFGSimplificationPass function. */
 void LLVMAddCFGSimplificationPass(LLVMPassManagerRef PM);
 
-/** See llvm::createCondPropagationPass function. */
-void LLVMAddCondPropagationPass(LLVMPassManagerRef PM);
-
 /** See llvm::createDeadStoreEliminationPass function. */
 void LLVMAddDeadStoreEliminationPass(LLVMPassManagerRef PM);
 
