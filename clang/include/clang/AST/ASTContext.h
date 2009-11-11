@@ -925,6 +925,10 @@ public:
   /// types, values, and templates.
   TemplateName getCanonicalTemplateName(TemplateName Name);
 
+  /// \brief Determine whether the given template names refer to the same
+  /// template.
+  bool hasSameTemplateName(TemplateName X, TemplateName Y);
+  
   /// \brief Retrieve the "canonical" template argument.
   ///
   /// The canonical template argument is the simplest template argument

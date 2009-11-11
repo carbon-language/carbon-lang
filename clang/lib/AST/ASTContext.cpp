@@ -2350,6 +2350,12 @@ TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
   return DTN->CanonicalTemplateName;
 }
 
+bool ASTContext::hasSameTemplateName(TemplateName X, TemplateName Y) {
+  X = getCanonicalTemplateName(X);
+  Y = getCanonicalTemplateName(Y);
+  return X.getAsVoidPointer() == Y.getAsVoidPointer();
+}
+
 TemplateArgument
 ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) {
   switch (Arg.getKind()) {

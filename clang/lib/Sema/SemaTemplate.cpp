@@ -2607,10 +2607,6 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
         }
         return false;
       }
-      assert(OldNTTP->getDepth() == NewNTTP->getDepth() && 
-             "Non-type template parameter depth mismatch");
-      assert(OldNTTP->getPosition() == NewNTTP->getPosition() && 
-             "Non-type template parameter position mismatch");
     } else {
       // The template parameter lists of template template
       // parameters must agree.
@@ -2626,11 +2622,6 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
                                           /*IsTemplateTemplateParm=*/true,
                                           TemplateArgLoc))
         return false;
-      
-      assert(OldTTP->getDepth() == NewTTP->getDepth() && 
-             "Template template parameter depth mismatch");
-      assert(OldTTP->getPosition() == NewTTP->getPosition() && 
-             "Template template parameter position mismatch");      
     }
   }
 

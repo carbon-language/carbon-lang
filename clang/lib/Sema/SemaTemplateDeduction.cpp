@@ -168,32 +168,48 @@ DeduceNonTypeTemplateArgument(ASTContext &Context,
 
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(ASTContext &Context,
+                        TemplateParameterList *TemplateParams,
                         TemplateName Param,
                         TemplateName Arg,
                         Sema::TemplateDeductionInfo &Info,
                         llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
-  // FIXME: Implement template argument deduction for template
-  // template parameters.
-
-  // FIXME: this routine does not have enough information to produce
-  // good diagnostics.
-
   TemplateDecl *ParamDecl = Param.getAsTemplateDecl();
-  TemplateDecl *ArgDecl = Arg.getAsTemplateDecl();
-
-  if (!ParamDecl || !ArgDecl) {
-    // FIXME: fill in Info.Param/Info.FirstArg
+  if (!ParamDecl) {
+    // The parameter type is dependent and is not a template template parameter,
+    // so there is nothing that we can deduce.
+    return Sema::TDK_Success;
+  }
+  
+  if (TemplateTemplateParmDecl *TempParam
+        = dyn_cast<TemplateTemplateParmDecl>(ParamDecl)) {
+    // Bind the template template parameter to the given template name.
+    TemplateArgument &ExistingArg = Deduced[TempParam->getIndex()];
+    if (ExistingArg.isNull()) {
+      // This is the first deduction for this template template parameter.
+      ExistingArg = TemplateArgument(Context.getCanonicalTemplateName(Arg));
+      return Sema::TDK_Success;
+    }
+    
+    // Verify that the previous binding matches this deduction.
+    assert(ExistingArg.getKind() == TemplateArgument::Template);
+    if (Context.hasSameTemplateName(ExistingArg.getAsTemplate(), Arg))
+      return Sema::TDK_Success;
+    
+    // Inconsistent deduction.
+    Info.Param = TempParam;
+    Info.FirstArg = ExistingArg;
+    Info.SecondArg = TemplateArgument(Arg);
     return Sema::TDK_Inconsistent;
   }
-
-  ParamDecl = cast<TemplateDecl>(ParamDecl->getCanonicalDecl());
-  ArgDecl = cast<TemplateDecl>(ArgDecl->getCanonicalDecl());
-  if (ParamDecl != ArgDecl) {
-    // FIXME: fill in Info.Param/Info.FirstArg
-    return Sema::TDK_Inconsistent;
-  }
-
-  return Sema::TDK_Success;
+  
+  // Verify that the two template names are equivalent.
+  if (Context.hasSameTemplateName(Param, Arg))
+    return Sema::TDK_Success;
+  
+  // Mismatch of non-dependent template parameter to argument.
+  Info.FirstArg = TemplateArgument(Param);
+  Info.SecondArg = TemplateArgument(Arg);
+  return Sema::TDK_NonDeducedMismatch;
 }
 
 /// \brief Deduce the template arguments by comparing the template parameter
@@ -224,32 +240,20 @@ DeduceTemplateArguments(ASTContext &Context,
   assert(Arg.isCanonical() && "Argument type must be canonical");
 
   // Check whether the template argument is a dependent template-id.
-  // FIXME: This is untested code; it can be tested when we implement
-  // partial ordering of class template partial specializations.
   if (const TemplateSpecializationType *SpecArg
         = dyn_cast<TemplateSpecializationType>(Arg)) {
     // Perform template argument deduction for the template name.
     if (Sema::TemplateDeductionResult Result
-          = DeduceTemplateArguments(Context,
+          = DeduceTemplateArguments(Context, TemplateParams,
                                     Param->getTemplateName(),
                                     SpecArg->getTemplateName(),
                                     Info, Deduced))
       return Result;
 
-    unsigned NumArgs = Param->getNumArgs();
-
-    // FIXME: When one of the template-names refers to a
-    // declaration with default template arguments, do we need to
-    // fill in those default template arguments here? Most likely,
-    // the answer is "yes", but I don't see any references. This
-    // issue may be resolved elsewhere, because we may want to
-    // instantiate default template arguments when we actually write
-    // the template-id.
-    if (SpecArg->getNumArgs() != NumArgs)
-      return Sema::TDK_NonDeducedMismatch;
 
     // Perform template argument deduction on each template
     // argument.
+    unsigned NumArgs = std::min(SpecArg->getNumArgs(), Param->getNumArgs());
     for (unsigned I = 0; I != NumArgs; ++I)
       if (Sema::TemplateDeductionResult Result
             = DeduceTemplateArguments(Context, TemplateParams,
@@ -276,13 +280,12 @@ DeduceTemplateArguments(ASTContext &Context,
   // Perform template argument deduction for the template name.
   if (Sema::TemplateDeductionResult Result
         = DeduceTemplateArguments(Context,
+                                  TemplateParams,
                                   Param->getTemplateName(),
                                TemplateName(SpecArg->getSpecializedTemplate()),
                                   Info, Deduced))
     return Result;
 
-  // FIXME: Can the # of arguments in the parameter and the argument
-  // differ due to default arguments?
   unsigned NumArgs = Param->getNumArgs();
   const TemplateArgumentList &ArgArgs = SpecArg->getTemplateArgs();
   if (NumArgs != ArgArgs.size())
@@ -639,9 +642,9 @@ DeduceTemplateArguments(ASTContext &Context,
 
     //     template-name<T> (where template-name refers to a class template)
     //     template-name<i>
-    //     TT<T> (TODO)
-    //     TT<i> (TODO)
-    //     TT<> (TODO)
+    //     TT<T>
+    //     TT<i>
+    //     TT<>
     case Type::TemplateSpecialization: {
       const TemplateSpecializationType *SpecParam
         = cast<TemplateSpecializationType>(Param);
@@ -793,14 +796,10 @@ DeduceTemplateArguments(ASTContext &Context,
     return Sema::TDK_NonDeducedMismatch;
       
   case TemplateArgument::Template:
-#if 0
-      // FIXME: We need template argument deduction for template template
-      // parameters.
-      if (Arg.getKind() == TemplateArgument::Template)
+    if (Arg.getKind() == TemplateArgument::Template)
       return DeduceTemplateArguments(Context, TemplateParams, 
                                      Param.getAsTemplate(),
-                                     Arg.getAsTemplate(), Info, Deduced, 0);
-#endif
+                                     Arg.getAsTemplate(), Info, Deduced);
     Info.FirstArg = Param;
     Info.SecondArg = Arg;
     return Sema::TDK_NonDeducedMismatch;
@@ -2092,6 +2091,7 @@ Sema::getMoreSpecializedPartialSpecialization(
                                                                0);
 
   // Determine whether PS2 is at least as specialized as PS1
+  Deduced.clear();
   Deduced.resize(PS1->getTemplateParameters()->size());
   bool Better2 = !DeduceTemplateArgumentsDuringPartialOrdering(Context,
                                                   PS1->getTemplateParameters(),
