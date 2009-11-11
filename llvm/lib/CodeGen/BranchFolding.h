@@ -44,18 +44,24 @@ namespace llvm {
     RegScavenger *RS;
 
     bool TailMergeBlocks(MachineFunction &MF);
-    bool TryMergeBlocks(MachineBasicBlock* SuccBB,
-                        MachineBasicBlock* PredBB);
+    bool TryTailMergeBlocks(MachineBasicBlock* SuccBB,
+                       MachineBasicBlock* PredBB);
     void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                  MachineBasicBlock *NewDest);
     MachineBasicBlock *SplitMBBAt(MachineBasicBlock &CurMBB,
                                   MachineBasicBlock::iterator BBI1);
-    unsigned ComputeSameTails(unsigned CurHash, unsigned minCommonTailLength);
+    unsigned ComputeSameTails(unsigned CurHash, unsigned minCommonTailLength,
+                              MachineBasicBlock *SuccBB,
+                              MachineBasicBlock *PredBB);
     void RemoveBlocksWithHash(unsigned CurHash, MachineBasicBlock* SuccBB,
                                                 MachineBasicBlock* PredBB);
     unsigned CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
                                        unsigned maxCommonTailLength);
 
+    bool TailDuplicate(MachineBasicBlock *TailBB,
+                       bool PrevFallsThrough,
+                       MachineFunction &MF);
+    
     bool OptimizeBranches(MachineFunction &MF);
     bool OptimizeBlock(MachineBasicBlock *MBB);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
