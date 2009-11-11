@@ -1512,9 +1512,6 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
   case ASTView:
     return CreateASTViewer();
 
-  case PrintDeclContext:
-    return CreateDeclContextPrinter();
-
   case DumpRecordLayouts:
     return CreateRecordLayoutDumper();
 
@@ -1552,6 +1549,12 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
   case RewriteBlocks:
     return CreateBlockRewriter(InFile, PP.getDiagnostics(),
                                PP.getLangOptions());
+
+  case ParseSyntaxOnly:
+    return new ASTConsumer();
+
+  case PrintDeclContext:
+    return CreateDeclContextPrinter();
   }
 }
 
@@ -1666,12 +1669,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     break;
   }
 
-  case ParseSyntaxOnly: {             // -fsyntax-only
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    Consumer.reset(new ASTConsumer());
-    break;
-  }
-
   case RewriteMacros:
     OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
     RewriteMacrosInInput(PP, OS.get());
@@ -1685,7 +1682,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     break;
 
   case FixIt:
-    llvm::TimeRegion Timer(ClangFrontendTimer);
     Consumer.reset(new ASTConsumer());
     FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                      PP.getSourceManager(),
