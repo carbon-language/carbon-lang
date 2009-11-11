@@ -10,9 +10,6 @@
 #ifndef LLVM_CLANG_FRONTEND_PREPROCESSOROUTPUTOPTIONS_H
 #define LLVM_CLANG_FRONTEND_PREPROCESSOROUTPUTOPTIONS_H
 
-#include <string>
-#include <vector>
-
 namespace clang {
 
 /// PreprocessorOutputOptions - Options for controlling the C preprocessor
@@ -22,8 +19,8 @@ public:
   unsigned ShowCPP : 1;           ///< Print normal preprocessed output.
   unsigned ShowMacros : 1;        ///< Print macro definitions.
   unsigned ShowLineMarkers : 1;   ///< Show #line markers.
-  unsigned ShowComments : 1;      /// Show comments.
-  unsigned ShowMacroComments : 1; /// Show comments, even in macros.
+  unsigned ShowComments : 1;      ///< Show comments.
+  unsigned ShowMacroComments : 1; ///< Show comments, even in macros.
 
 public:
   PreprocessorOutputOptions() {

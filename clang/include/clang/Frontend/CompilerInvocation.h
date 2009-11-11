@@ -12,6 +12,7 @@
 
 #include "clang/Basic/LangOptions.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PreprocessorOptions.h"
@@ -30,6 +31,9 @@ namespace clang {
 class CompilerInvocation {
   /// Options controlling IRgen and the backend.
   CompileOptions CompileOpts;
+
+  /// Options controlling dependency output.
+  DependencyOutputOptions DependencyOutputOpts;
 
   /// Options controlling the diagnostic engine.
   DiagnosticOptions DiagOpts;
@@ -66,6 +70,13 @@ public:
   CompileOptions &getCompileOpts() { return CompileOpts; }
   const CompileOptions &getCompileOpts() const {
     return CompileOpts;
+  }
+
+  DependencyOutputOptions &getDependencyOutputOpts() {
+    return DependencyOutputOpts;
+  }
+  const DependencyOutputOptions &getDependencyOutputOpts() const {
+    return DependencyOutputOpts;
   }
 
   DiagnosticOptions &getDiagnosticOpts() { return DiagOpts; }

@@ -32,6 +32,7 @@
 #include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/PCHReader.h"
@@ -455,27 +456,6 @@ static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 
 //===----------------------------------------------------------------------===//
-// Dependency file options
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<std::string>
-DependencyFile("dependency-file",
-               llvm::cl::desc("Filename (or -) to write dependency output to"));
-
-static llvm::cl::opt<bool>
-DependenciesIncludeSystemHeaders("sys-header-deps",
-                 llvm::cl::desc("Include system headers in dependency output"));
-
-static llvm::cl::list<std::string>
-DependencyTargets("MT",
-         llvm::cl::desc("Specify target for dependency"));
-
-static llvm::cl::opt<bool>
-PhonyDependencyTarget("MP",
-            llvm::cl::desc("Create phony target for each dependency "
-                           "(other than main file)"));
-
-//===----------------------------------------------------------------------===//
 // -dump-build-information Stuff
 //===----------------------------------------------------------------------===//
 
@@ -646,8 +626,7 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
 ///
 static void ProcessInputFile(const CompilerInvocation &CompOpts,
                              Preprocessor &PP, const std::string &InFile,
-                             ProgActions PA,
-                             llvm::LLVMContext& Context) {
+                             ProgActions PA, llvm::LLVMContext& Context) {
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
@@ -1085,6 +1064,9 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
     InitializeLangOptions(Opts.getLangOpts(), LK, Target,
                           Opts.getCompileOpts());
 
+  // Initialize the dependency output options (-M...).
+  InitializeDependencyOutputOptions(Opts.getDependencyOutputOpts());
+
   // Initialize the header search options.
   InitializeHeaderSearchOptions(Opts.getHeaderSearchOpts(),
                                 GetBuiltinIncludePath(Argv0),
@@ -1229,23 +1211,8 @@ int main(int argc, char **argv) {
                             HeaderInfo));
 
     // Handle generating dependencies, if requested.
-    if (!DependencyFile.empty()) {
-      if (DependencyTargets.empty()) {
-        Diags.Report(diag::err_fe_dependency_file_requires_MT);
-        continue;
-      }
-      std::string ErrStr;
-      llvm::raw_ostream *DependencyOS =
-          new llvm::raw_fd_ostream(DependencyFile.c_str(), ErrStr);
-      if (!ErrStr.empty()) {
-        Diags.Report(diag::err_fe_error_opening) << DependencyFile << ErrStr;
-        continue;
-      }
-
-      AttachDependencyFileGen(PP.get(), DependencyOS, DependencyTargets,
-                              DependenciesIncludeSystemHeaders,
-                              PhonyDependencyTarget);
-    }
+    if (!CompOpts.getDependencyOutputOpts().OutputFile.empty())
+      AttachDependencyFileGen(PP.get(), CompOpts.getDependencyOutputOpts());
 
     if (CompOpts.getPreprocessorOpts().getImplicitPCHInclude().empty()) {
       if (InitializeSourceManager(*PP.get(), InFile))

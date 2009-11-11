@@ -16,6 +16,7 @@ namespace clang {
 
 class AnalyzerOptions;
 class CompileOptions;
+class DependencyOutputOptions;
 class DiagnosticOptions;
 class HeaderSearchOptions;
 class LangOptions;
@@ -39,6 +40,8 @@ enum LangKind {
 };
 
 void InitializeAnalyzerOptions(AnalyzerOptions &Opts);
+
+void InitializeDependencyOutputOptions(DependencyOutputOptions &Opts);
 
 void InitializeDiagnosticOptions(DiagnosticOptions &Opts);
 

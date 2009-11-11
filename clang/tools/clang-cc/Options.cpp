@@ -16,6 +16,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PCHReader.h"
@@ -186,6 +187,31 @@ TargetCPU("mcpu",
 
 static llvm::cl::list<std::string>
 TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
+
+}
+
+//===----------------------------------------------------------------------===//
+// Dependency Output Options
+//===----------------------------------------------------------------------===//
+
+namespace dependencyoutputoptions {
+
+static llvm::cl::opt<std::string>
+DependencyFile("dependency-file",
+               llvm::cl::desc("Filename (or -) to write dependency output to"));
+
+static llvm::cl::opt<bool>
+DependenciesIncludeSystemHeaders("sys-header-deps",
+                 llvm::cl::desc("Include system headers in dependency output"));
+
+static llvm::cl::list<std::string>
+DependencyTargets("MT",
+         llvm::cl::desc("Specify target for dependency"));
+
+static llvm::cl::opt<bool>
+PhonyDependencyTarget("MP",
+            llvm::cl::desc("Create phony target for each dependency "
+                           "(other than main file)"));
 
 }
 
@@ -614,6 +640,16 @@ void clang::InitializeCompileOptions(CompileOptions &Opts,
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
 #endif
+}
+
+void clang::InitializeDependencyOutputOptions(DependencyOutputOptions &Opts) {
+  using namespace dependencyoutputoptions;
+
+  Opts.OutputFile = DependencyFile;
+  Opts.Targets.insert(Opts.Targets.begin(), DependencyTargets.begin(),
+                      DependencyTargets.end());
+  Opts.IncludeSystemHeaders = DependenciesIncludeSystemHeaders;
+  Opts.UsePhonyTargets = PhonyDependencyTarget;
 }
 
 void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {

@@ -12,12 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/Utils.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/PPCallbacks.h"
-#include "clang/Lex/DirectoryLookup.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/DependencyOutputOptions.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Lex/DirectoryLookup.h"
+#include "clang/Lex/PPCallbacks.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -42,11 +44,10 @@ private:
 public:
   DependencyFileCallback(const Preprocessor *_PP,
                          llvm::raw_ostream *_OS,
-                         const std::vector<std::string> &_Targets,
-                         bool _IncludeSystemHeaders,
-                         bool _PhonyTarget)
-    : PP(_PP), Targets(_Targets), OS(_OS),
-      IncludeSystemHeaders(_IncludeSystemHeaders), PhonyTarget(_PhonyTarget) {}
+                         const DependencyOutputOptions &Opts)
+    : PP(_PP), Targets(Opts.Targets), OS(_OS),
+      IncludeSystemHeaders(Opts.IncludeSystemHeaders),
+      PhonyTarget(Opts.UsePhonyTargets) {}
 
   ~DependencyFileCallback() {
     OutputDependencyFile();
@@ -59,18 +60,23 @@ public:
 };
 }
 
+void clang::AttachDependencyFileGen(Preprocessor *PP,
+                                    const DependencyOutputOptions &Opts) {
+  if (Opts.Targets.empty()) {
+    PP->getDiagnostics().Report(diag::err_fe_dependency_file_requires_MT);
+    return;
+  }
 
+  std::string Err;
+  llvm::raw_ostream *OS(new llvm::raw_fd_ostream(Opts.OutputFile.c_str(), Err));
+  if (!Err.empty()) {
+    PP->getDiagnostics().Report(diag::err_fe_error_opening)
+      << Opts.OutputFile << Err;
+    return;
+  }
 
-void clang::AttachDependencyFileGen(Preprocessor *PP, llvm::raw_ostream *OS,
-                                    std::vector<std::string> &Targets,
-                                    bool IncludeSystemHeaders,
-                                    bool PhonyTarget) {
-  assert(!Targets.empty() && "Target required for dependency generation");
-
-  DependencyFileCallback *PPDep =
-    new DependencyFileCallback(PP, OS, Targets, IncludeSystemHeaders,
-                               PhonyTarget);
-  PP->setPPCallbacks(PPDep);
+  assert(!PP->getPPCallbacks() && "Preprocessor callbacks already registered!");
+  PP->setPPCallbacks(new DependencyFileCallback(PP, OS, Opts));
 }
 
 /// FileMatchesDepCriteria - Determine whether the given Filename should be

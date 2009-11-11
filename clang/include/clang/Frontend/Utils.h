@@ -26,6 +26,7 @@ class raw_fd_ostream;
 namespace clang {
 class ASTConsumer;
 class Decl;
+class DependencyOutputOptions;
 class Diagnostic;
 class HeaderSearch;
 class HeaderSearchOptions;
@@ -77,9 +78,8 @@ bool CheckDiagnostics(Preprocessor &PP);
 
 /// AttachDependencyFileGen - Create a dependency file generator, and attach
 /// it to the given preprocessor.  This takes ownership of the output stream.
-void AttachDependencyFileGen(Preprocessor *PP, llvm::raw_ostream *OS,
-                             std::vector<std::string> &Targets,
-                             bool IncludeSystemHeaders, bool PhonyTarget);
+void AttachDependencyFileGen(Preprocessor *PP,
+                             const DependencyOutputOptions &Opts);
 
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
