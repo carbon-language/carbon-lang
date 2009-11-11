@@ -780,9 +780,13 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
   // Check to make sure that all of the constants in the switch instruction
   // have the same type as the switched-on value.
   const Type *SwitchTy = SI.getCondition()->getType();
-  for (unsigned i = 1, e = SI.getNumCases(); i != e; ++i)
+  SmallPtrSet<ConstantInt*, 32> Constants;
+  for (unsigned i = 1, e = SI.getNumCases(); i != e; ++i) {
     Assert1(SI.getCaseValue(i)->getType() == SwitchTy,
             "Switch constants must all be same type as switch value!", &SI);
+    Assert2(Constants.insert(SI.getCaseValue(i)),
+            "Duplicate integer as switch case", &SI, SI.getCaseValue(i));
+  }
 
   visitTerminatorInst(SI);
 }
