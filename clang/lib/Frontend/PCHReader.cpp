@@ -138,17 +138,19 @@ bool PCHValidator::ReadTargetTriple(llvm::StringRef Triple) {
 /// \param Len the length of Str.
 /// \param KeepEmptyLines true if empty lines should be included
 /// \returns a vector of lines, with the line endings removed
-static std::vector<std::string> splitLines(llvm::StringRef Str,
-                                           bool KeepEmptyLines = false) {
-  std::vector<std::string> Lines;
-  for (unsigned LineStart = 0; LineStart < Str.size(); ++LineStart) {
-    unsigned LineEnd = LineStart;
-    while (LineEnd < Str.size() && Str[LineEnd] != '\n')
-      ++LineEnd;
-    if (LineStart != LineEnd || KeepEmptyLines)
-      Lines.push_back(Str.slice(LineStart, LineEnd));
-    LineStart = LineEnd;
+static std::vector<llvm::StringRef> splitLines(llvm::StringRef Str,
+                                               bool KeepEmptyLines = false) {
+  std::vector<llvm::StringRef> Lines;
+
+  while (!Str.empty()) {
+    std::pair<llvm::StringRef, llvm::StringRef> split = Str.split('\n');
+
+    if (KeepEmptyLines || !split.first.empty())
+      Lines.push_back(split.first);
+
+    Str = split.second;
   }
+
   return Lines;
 }
 
@@ -161,18 +163,17 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
 
   SourceManager &SourceMgr = PP.getSourceManager();
 
-  // The predefines buffers are different. Determine what the
-  // differences are, and whether they require us to reject the PCH
-  // file.
-  std::vector<std::string> CmdLineLines = splitLines(PP.getPredefines());
-  std::vector<std::string> PCHLines = splitLines(PCHPredef);
+  // The predefines buffers are different. Determine what the differences are,
+  // and whether they require us to reject the PCH file.
+  std::vector<llvm::StringRef> CmdLineLines = splitLines(PP.getPredefines());
+  std::vector<llvm::StringRef> PCHLines = splitLines(PCHPredef);
 
   // Sort both sets of predefined buffer lines, since
   std::sort(CmdLineLines.begin(), CmdLineLines.end());
   std::sort(PCHLines.begin(), PCHLines.end());
 
-  // Determine which predefines that where used to build the PCH file
-  // are missing from the command line.
+  // Determine which predefines that where used to build the PCH file are
+  // missing from the command line.
   std::vector<std::string> MissingPredefines;
   std::set_difference(PCHLines.begin(), PCHLines.end(),
                       CmdLineLines.begin(), CmdLineLines.end(),
@@ -187,8 +188,8 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
       return true;
     }
 
-    // This is a macro definition. Determine the name of the macro
-    // we're defining.
+    // This is a macro definition. Determine the name of the macro we're
+    // defining.
     std::string::size_type StartOfMacroName = strlen("#define ");
     std::string::size_type EndOfMacroName
       = Missing.find_first_of("( \n\r", StartOfMacroName);
@@ -197,15 +198,15 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
     std::string MacroName = Missing.substr(StartOfMacroName,
                                            EndOfMacroName - StartOfMacroName);
 
-    // Determine whether this macro was given a different definition
-    // on the command line.
+    // Determine whether this macro was given a different definition on the
+    // command line.
     std::string MacroDefStart = "#define " + MacroName;
     std::string::size_type MacroDefLen = MacroDefStart.size();
-    std::vector<std::string>::iterator ConflictPos
+    std::vector<llvm::StringRef>::iterator ConflictPos
       = std::lower_bound(CmdLineLines.begin(), CmdLineLines.end(),
                          MacroDefStart);
     for (; ConflictPos != CmdLineLines.end(); ++ConflictPos) {
-      if (!llvm::StringRef(*ConflictPos).startswith(MacroDefStart)) {
+      if (!ConflictPos->startswith(MacroDefStart)) {
         // Different macro; we're done.
         ConflictPos = CmdLineLines.end();
         break;
@@ -238,9 +239,8 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
       continue;
     }
 
-    // If the macro doesn't conflict, then we'll just pick up the
-    // macro definition from the PCH file. Warn the user that they
-    // made a mistake.
+    // If the macro doesn't conflict, then we'll just pick up the macro
+    // definition from the PCH file. Warn the user that they made a mistake.
     if (ConflictingDefines)
       continue; // Don't complain if there are already conflicting defs
 
