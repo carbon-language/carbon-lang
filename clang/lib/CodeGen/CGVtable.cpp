@@ -681,10 +681,15 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   return I->second;
 }
 
-llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *RD) {
+llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *RD,
+                                              const CXXRecordDecl *LayoutClass,
+                                              uint64_t Offset) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleCXXVtable(getMangleContext(), RD, Out);
+  if (LayoutClass)
+    mangleCXXCtorVtable(getMangleContext(), RD, Offset, LayoutClass, Out);
+  else
+    mangleCXXVtable(getMangleContext(), RD, Out);
 
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::LinkOnceODRLinkage;
@@ -754,7 +759,7 @@ class VTTBuilder {
           && !NonVirtualPrimaryBase) {
         // FIXME: Slightly too many of these for __ZTT8test8_B2
         llvm::Constant *vtbl;
-        vtbl = CGM.getVtableInfo().getVtable(Base, Class, BaseOffset/8);
+        vtbl = CGM.getVtableInfo().getCtorVtable(Base, Class, BaseOffset/8);
         Inits.push_back(vtbl);
       }
       Secondary(Base, BaseOffset, BaseMorallyVirtual);
@@ -768,7 +773,7 @@ class VTTBuilder {
       return;
 
     // First comes the primary virtual table pointer...
-    Inits.push_back(CGM.getVtableInfo().getVtable(RD, Class, Offset));
+    Inits.push_back(CGM.getVtableInfo().getCtorVtable(RD, Class, Offset));
 
     // then the secondary VTTs....
     SecondaryVTTs(RD, MorallyVirtual);
@@ -852,14 +857,17 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   return vtt;
 }
 
-llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD,
-                                        const CXXRecordDecl *Class,
-                                        uint64_t Offset) {
-  // FIXME: Add ctor vtable support
+llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
   llvm::Constant *&vtbl = Vtables[RD];
   if (vtbl)
     return vtbl;
   vtbl = CGM.GenerateVtable(RD);
   CGM.GenerateVTT(RD);
   return vtbl;
+}
+
+llvm::Constant *CGVtableInfo::getCtorVtable(const CXXRecordDecl *RD,
+                                            const CXXRecordDecl *Class,
+                                            uint64_t Offset) {
+  return CGM.GenerateVtable(RD, Class, Offset);
 }

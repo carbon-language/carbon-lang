@@ -253,7 +253,9 @@ public:
                                     const llvm::Type *Ty = 0);
 
   /// GenerateVtable - Generate the vtable for the given type.
-  llvm::Constant *GenerateVtable(const CXXRecordDecl *RD);
+  llvm::Constant *GenerateVtable(const CXXRecordDecl *RD,
+                                 const CXXRecordDecl *Class=0,
+                                 uint64_t Offset=0);
 
   /// GenerateVTT - Generate the VTT for the given type.
   llvm::Constant *GenerateVTT(const CXXRecordDecl *RD);
