@@ -1270,48 +1270,6 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
     // Update which NodeSet is the current one.
     PrevSet = CurrSet;
   }
-  
-  // FIXME: Temporarily disable out-of-bounds checking until we make
-  // the logic reflect recent changes to CastRegion and friends.
-#if 0
-  // Check for out-of-bound array access.
-  if (isa<loc::MemRegionVal>(LV)) {
-    const MemRegion* R = cast<loc::MemRegionVal>(LV).getRegion();
-    if (const ElementRegion* ER = dyn_cast<ElementRegion>(R)) {
-      // Get the index of the accessed element.
-      SVal Idx = ER->getIndex();
-      // Get the extent of the array.
-      SVal NumElements = getStoreManager().getSizeInElements(StNotNull,
-                                                          ER->getSuperRegion());
-
-      const GRState * StInBound = StNotNull->AssumeInBound(Idx, NumElements,
-                                                           true);
-      const GRState* StOutBound = StNotNull->AssumeInBound(Idx, NumElements,
-                                                           false);
-
-      if (StOutBound) {
-        // Report warning.  Make sink node manually.
-        ExplodedNode* OOBNode =
-          Builder->generateNode(Ex, StOutBound, Pred,
-                                ProgramPoint::PostOutOfBoundsCheckFailedKind);
-
-        if (OOBNode) {
-          OOBNode->markAsSink();
-
-          if (StInBound)
-            ImplicitOOBMemAccesses.insert(OOBNode);
-          else
-            ExplicitOOBMemAccesses.insert(OOBNode);
-        }
-      }
-
-      if (!StInBound)
-        return NULL;
-
-      StNotNull = StInBound;
-    }
-  }
-#endif
 }
 
 //===----------------------------------------------------------------------===//
