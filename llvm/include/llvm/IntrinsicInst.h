@@ -320,6 +320,28 @@ namespace llvm {
     }
   };
   
+  /// MemoryUseIntrinsic - This is the common base class for the memory use
+  /// marker intrinsics.
+  ///
+  struct MemoryUseIntrinsic : public IntrinsicInst {
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const MemoryUseIntrinsic *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      switch (I->getIntrinsicID()) {
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
+      case Intrinsic::invariant_start:
+      case Intrinsic::invariant_end:
+        return true;
+      default: return false;
+      }
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+
 }
 
 #endif

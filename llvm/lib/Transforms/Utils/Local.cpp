@@ -252,6 +252,9 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
   // We don't want debug info removed by anything this general.
   if (isa<DbgInfoIntrinsic>(I)) return false;
 
+  // Likewise for memory use markers.
+  if (isa<MemoryUseIntrinsic>(I)) return false;
+
   if (!I->mayHaveSideEffects()) return true;
 
   // Special case intrinsics that "may have side effects" but can be deleted
