@@ -562,7 +562,7 @@ unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
   MachineBasicBlock::iterator BBI = SameTails[commonTailIndex].second;
   MachineBasicBlock *MBB = SameTails[commonTailIndex].first->second;
 
-  DEBUG(errs() << "\nSplitting " << MBB->getNumber() << ", size "
+  DEBUG(errs() << "\nSplitting BB#" << MBB->getNumber() << ", size "
                << maxCommonTailLength);
 
   MachineBasicBlock *newMBB = SplitMBBAt(*MBB, BBI);
@@ -639,11 +639,11 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
     MachineBasicBlock *MBB = SameTails[commonTailIndex].first->second;
     // MBB is common tail.  Adjust all other BB's to jump to this one.
     // Traversal must be forwards so erases work.
-    DEBUG(errs() << "\nUsing common tail " << MBB->getNumber() << " for ");
+    DEBUG(errs() << "\nUsing common tail BB#" << MBB->getNumber() << " for ");
     for (unsigned int i=0; i<SameTails.size(); ++i) {
       if (commonTailIndex==i)
         continue;
-      DEBUG(errs() << SameTails[i].first->second->getNumber() << ",");
+      DEBUG(errs() << "BB#" << SameTails[i].first->second->getNumber() << ", ");
       // Hack the end off BB i, making it jump to BB commonTailIndex instead.
       ReplaceTailWithBranchTo(SameTails[i].second, MBB);
       // BB i is no longer a predecessor of SuccBB; remove it from the worklist.
