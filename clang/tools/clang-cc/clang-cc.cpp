@@ -202,12 +202,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValEnd));
 
 
-static llvm::cl::opt<std::string>
-OutputFile("o",
- llvm::cl::value_desc("path"),
- llvm::cl::desc("Specify output file"));
-
-
 enum CodeCompletionPrinter {
   CCP_Debug,
   CCP_CIndex
@@ -250,14 +244,6 @@ static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S, void *) {
 }
 
 //===----------------------------------------------------------------------===//
-// PTH.
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<std::string>
-TokenCache("token-cache", llvm::cl::value_desc("path"),
-           llvm::cl::desc("Use specified token cache file"));
-
-//===----------------------------------------------------------------------===//
 // C++ Visualization.
 //===----------------------------------------------------------------------===//
 
@@ -270,10 +256,22 @@ InheritanceViewCls("cxx-inheritance-view",
 // Frontend Options
 //===----------------------------------------------------------------------===//
 
+static llvm::cl::list<std::string>
+InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
+
+static llvm::cl::opt<std::string>
+OutputFile("o",
+ llvm::cl::value_desc("path"),
+ llvm::cl::desc("Specify output file"));
+
 static llvm::cl::opt<bool>
 TimeReport("ftime-report",
            llvm::cl::desc("Print the amount of time each "
                           "phase of compilation takes"));
+
+static llvm::cl::opt<std::string>
+TokenCache("token-cache", llvm::cl::value_desc("path"),
+           llvm::cl::desc("Use specified token cache file"));
 
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
@@ -643,8 +641,6 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   DiagClient.reset(new ChainedDiagnosticClient(DiagClient.take(), Logger));
 }
 
-
-
 //===----------------------------------------------------------------------===//
 // Main driver
 //===----------------------------------------------------------------------===//
@@ -888,9 +884,8 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   }
 
   if (FixItAtLocations.size() > 0) {
-    // Even without the "-fixit" flag, with may have some specific
-    // locations where the user has requested fixes. Process those
-    // locations now.
+    // Even without the "-fixit" flag, we may have some specific locations where
+    // the user has requested fixes. Process those locations now.
     if (!FixItRewrite)
       FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                        PP.getSourceManager(),
@@ -1143,9 +1138,6 @@ static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
   if (PP.getDiagnostics().getNumErrors() && !OutPath.isEmpty())
     OutPath.eraseFromDisk();
 }
-
-static llvm::cl::list<std::string>
-InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
 static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
