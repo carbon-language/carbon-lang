@@ -1710,3 +1710,12 @@ The results for a function + set of constant arguments should be memoized in a
 map.
 
 //===---------------------------------------------------------------------===//
+
+The libcall constant folding stuff should be moved out of SimplifyLibcalls into
+libanalysis' constantfolding logic.  This would allow IPSCCP to be able to
+handle simple things like this:
+
+static int foo(const char *X) { return strlen(X); }
+int bar() { return foo("abcd"); }
+
+//===---------------------------------------------------------------------===//
