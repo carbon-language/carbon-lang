@@ -384,9 +384,10 @@ public:
     return false;
   }
 
-  /// HandleTargetOptions - Perform initialization based on the user
-  /// configured set of features.
-  virtual void HandleTargetFeatures(const llvm::StringMap<bool> &Features) {
+  /// HandleTargetOptions - Perform initialization based on the user configured
+  /// set of features (e.g., +sse4). The list is guaranteed to have at most one
+  /// entry per feature.
+  virtual void HandleTargetFeatures(const std::vector<std::string> &Features) {
   }
 
   // getRegParmMax - Returns maximal number of args passed in registers.

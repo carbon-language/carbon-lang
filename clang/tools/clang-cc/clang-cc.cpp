@@ -1099,12 +1099,9 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
 
   Opts.getOutputFile() = OutputFile;
 
-  // Compute the feature set, which may effect the language.
-  ComputeFeatureMap(Target, Opts.getTargetFeatures());
-
   // Initialize backend options, which may also be used to key some language
   // options.
-  InitializeCompileOptions(Opts.getCompileOpts(), Opts.getTargetFeatures());
+  InitializeCompileOptions(Opts.getCompileOpts(), Target);
 
   // Initialize language options.
   LangOptions LangInfo;
@@ -1113,7 +1110,7 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   // code path to make this obvious.
   if (LK != langkind_ast)
     InitializeLangOptions(Opts.getLangOpts(), LK, Target,
-                          Opts.getCompileOpts(), Opts.getTargetFeatures());
+                          Opts.getCompileOpts());
 
   // Initialize the header search options.
   InitializeHeaderSearchOptions(Opts.getHeaderSearchOpts(),

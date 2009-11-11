@@ -10,7 +10,7 @@
 #ifndef LLVM_CLANGCC_OPTIONS_H
 #define LLVM_CLANGCC_OPTIONS_H
 
-#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace clang {
 
@@ -39,14 +39,10 @@ enum LangKind {
 
 void InitializeAnalyzerOptions(AnalyzerOptions &Opts);
 
-// FIXME: This can be sunk into InitializeCompileOptions now that that happens
-// before language initialization?
-void ComputeFeatureMap(TargetInfo &Target, llvm::StringMap<bool> &Features);
-
 void InitializeDiagnosticOptions(DiagnosticOptions &Opts);
 
 void InitializeCompileOptions(CompileOptions &Opts,
-                              const llvm::StringMap<bool> &Features);
+                              const TargetInfo &Target);
 
 void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
                                    llvm::StringRef BuiltinIncludePath,
@@ -55,8 +51,7 @@ void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
 
 void InitializeLangOptions(LangOptions &Options, LangKind LK,
                            TargetInfo &Target,
-                           const CompileOptions &CompileOpts,
-                           const llvm::StringMap<bool> &Features);
+                           const CompileOptions &CompileOpts);
 
 void InitializePreprocessorOptions(PreprocessorOptions &Opts);
 

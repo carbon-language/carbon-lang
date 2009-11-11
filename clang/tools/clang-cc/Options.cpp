@@ -530,15 +530,13 @@ isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
 // Option Object Construction
 //===----------------------------------------------------------------------===//
 
-/// ComputeTargetFeatures - Recompute the target feature list to only
-/// be the list of things that are enabled, based on the target cpu
-/// and feature list.
-void clang::ComputeFeatureMap(TargetInfo &Target,
-                              llvm::StringMap<bool> &Features) {
+void clang::InitializeCompileOptions(CompileOptions &Opts,
+                                     const TargetInfo &Target) {
   using namespace codegenoptions;
-  assert(Features.empty() && "invalid map");
 
-  // Initialize the feature map based on the target.
+  // Compute the target features, we need the target to handle this because
+  // features may have dependencies on one another.
+  llvm::StringMap<bool> Features;
   Target.getDefaultFeatures(TargetCPU, Features);
 
   // Apply the user specified deltas.
@@ -552,20 +550,22 @@ void clang::ComputeFeatureMap(TargetInfo &Target,
               Name);
       exit(1);
     }
+
+    // Apply the feature via the target.
     if (!Target.setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
       fprintf(stderr, "error: clang-cc: invalid target feature name: %s\n",
               Name + 1);
       exit(1);
     }
   }
-}
 
-void clang::InitializeCompileOptions(CompileOptions &Opts,
-                                     const llvm::StringMap<bool> &Features) {
-  using namespace codegenoptions;
-  Opts.OptimizeSize = OptSize;
-  Opts.DebugInfo = GenerateDebugInfo;
-  Opts.DisableLLVMOpts = DisableLLVMOptimizations;
+  // Add the features to the compile options.
+  //
+  // FIXME: If we are completely confident that we have the right set, we only
+  // need to pass the minuses.
+  for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
+         ie = Features.end(); it != ie; ++it)
+    Opts.Features.push_back(std::string(it->second ? "+" : "-") + it->first());
 
   // -Os implies -O2
   Opts.OptimizationLevel = OptSize ? 2 : OptLevel;
@@ -574,30 +574,20 @@ void clang::InitializeCompileOptions(CompileOptions &Opts,
   Opts.Inlining = (Opts.OptimizationLevel > 1) ? CompileOptions::NormalInlining
     : CompileOptions::OnlyAlwaysInlining;
 
-  Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
+  Opts.CPU = TargetCPU;
+  Opts.DebugInfo = GenerateDebugInfo;
+  Opts.DisableLLVMOpts = DisableLLVMOptimizations;
+  Opts.DisableRedZone = DisableRedZone;
+  Opts.MergeAllConstants = !NoMergeConstants;
+  Opts.NoCommon = NoCommon;
+  Opts.NoImplicitFloat = NoImplicitFloat;
+  Opts.OptimizeSize = OptSize;
   Opts.SimplifyLibCalls = 1;
+  Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
 #endif
-
-  Opts.CPU = TargetCPU;
-  Opts.Features.clear();
-  for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
-         ie = Features.end(); it != ie; ++it) {
-    // FIXME: If we are completely confident that we have the right set, we only
-    // need to pass the minuses.
-    std::string Name(it->second ? "+" : "-");
-    Name += it->first();
-    Opts.Features.push_back(Name);
-  }
-
-  Opts.NoCommon = NoCommon;
-
-  Opts.DisableRedZone = DisableRedZone;
-  Opts.NoImplicitFloat = NoImplicitFloat;
-
-  Opts.MergeAllConstants = !NoMergeConstants;
 }
 
 void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
@@ -769,8 +759,7 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
 
 void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
                                   TargetInfo &Target,
-                                  const CompileOptions &CompileOpts,
-                                  const llvm::StringMap<bool> &Features) {
+                                  const CompileOptions &CompileOpts) {
   using namespace langoptions;
 
   bool NoPreprocess = false;
@@ -836,7 +825,7 @@ void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
 
   // Pass the map of target features to the target for validation and
   // processing.
-  Target.HandleTargetFeatures(Features);
+  Target.HandleTargetFeatures(CompileOpts.Features);
 
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.

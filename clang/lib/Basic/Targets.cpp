@@ -17,9 +17,10 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCSectionMachO.h"
 using namespace clang;
@@ -655,7 +656,7 @@ public:
                                  bool Enabled) const;
   virtual void getDefaultFeatures(const std::string &CPU,
                                   llvm::StringMap<bool> &Features) const;
-  virtual void HandleTargetFeatures(const llvm::StringMap<bool> &Features);
+  virtual void HandleTargetFeatures(const std::vector<std::string> &Features);
 };
 
 void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
@@ -772,21 +773,25 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
 
 /// HandleTargetOptions - Perform initialization based on the user
 /// configured set of features.
-void X86TargetInfo::HandleTargetFeatures(const llvm::StringMap<bool>&Features) {
-  if (Features.lookup("sse42"))
-    SSELevel = SSE42;
-  else if (Features.lookup("sse41"))
-    SSELevel = SSE41;
-  else if (Features.lookup("ssse3"))
-    SSELevel = SSSE3;
-  else if (Features.lookup("sse3"))
-    SSELevel = SSE3;
-  else if (Features.lookup("sse2"))
-    SSELevel = SSE2;
-  else if (Features.lookup("sse"))
-    SSELevel = SSE1;
-  else if (Features.lookup("mmx"))
-    SSELevel = MMX;
+void
+X86TargetInfo::HandleTargetFeatures(const std::vector<std::string> &Features) {
+  // Remember the maximum enabled sselevel.
+  for (unsigned i = 0, e = Features.size(); i !=e; ++i) {
+    // Ignore disabled features.
+    if (Features[i][0] == '-')
+      continue;
+
+    assert(Features[i][0] == '+' && "Invalid target feature!");
+    X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Features[i].substr(1))
+      .Case("sse42", SSE42)
+      .Case("sse41", SSE41)
+      .Case("ssse3", SSSE3)
+      .Case("sse2", SSE2)
+      .Case("sse", SSE1)
+      .Case("mmx", MMX)
+      .Default(NoMMXSSE);
+    SSELevel = std::max(SSELevel, Level);
+  }
 }
 
 /// X86TargetInfo::getTargetDefines - Return a set of the X86-specific #defines
