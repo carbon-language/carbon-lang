@@ -2428,7 +2428,7 @@ static bool isUsedByExitBranch(ICmpInst *Cond, Loop *L) {
   if (!L->isLoopExiting(CondBB))
     return false;
   BranchInst *TermBr = dyn_cast<BranchInst>(CondBB->getTerminator());
-  if (!TermBr->isConditional())
+  if (!TermBr || !TermBr->isConditional())
     return false;
 
   Value *User = *Cond->use_begin();
