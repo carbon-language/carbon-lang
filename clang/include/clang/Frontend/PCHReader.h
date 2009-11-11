@@ -622,13 +622,15 @@ public:
 
   /// \brief Retrieve the IdentifierInfo for the named identifier.
   ///
-  /// This routine builds a new IdentifierInfo for the given
-  /// identifier. If any declarations with this name are visible from
-  /// translation unit scope, their declarations will be deserialized
-  /// and introduced into the declaration chain of the
-  /// identifier. FIXME: if this identifier names a macro, deserialize
-  /// the macro.
+  /// This routine builds a new IdentifierInfo for the given identifier. If any
+  /// declarations with this name are visible from translation unit scope, their
+  /// declarations will be deserialized and introduced into the declaration
+  /// chain of the identifier. FIXME: if this identifier names a macro,
+  /// deserialize the macro.
   virtual IdentifierInfo* get(const char *NameStart, const char *NameEnd);
+  IdentifierInfo* get(llvm::StringRef Name) {
+    return get(Name.begin(), Name.end());
+  }
 
   /// \brief Load the contents of the global method pool for a given
   /// selector.
