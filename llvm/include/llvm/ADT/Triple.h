@@ -160,6 +160,8 @@ public:
   /// @name Direct Component Access
   /// @{
 
+  const std::string &str() const { return Data; }
+
   const std::string &getTriple() const { return Data; }
 
   /// getArchName - Get the architecture (first) component of the
