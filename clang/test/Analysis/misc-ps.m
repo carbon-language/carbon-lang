@@ -745,3 +745,7 @@ NSSwappedFloat test_cast_nonstruct_to_union(float x) {
   return ((union bran *)&x)->sf; // no-warning
 }
 
+void test_undefined_array_subscript() {
+  int i, a[10];
+  int *p = &a[i]; // expected-warning{{Array subscript is undefined}}
+}

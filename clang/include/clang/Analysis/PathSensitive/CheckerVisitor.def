@@ -11,6 +11,7 @@
 //
 //===---------------------------------------------------------------------===//
 
+PREVISIT(ArraySubscriptExpr)
 PREVISIT(BinaryOperator)
 PREVISIT(CallExpr)
 PREVISIT(CastExpr)

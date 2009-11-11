@@ -415,4 +415,5 @@ void GRExprEngine::RegisterInternalChecks() {
 
   RegisterCastToStructChecker(*this);
   RegisterArrayBoundChecker(*this);
+  RegisterUndefinedArraySubscriptChecker(*this);
 }

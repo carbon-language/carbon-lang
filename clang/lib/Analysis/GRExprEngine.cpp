@@ -1080,7 +1080,10 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A,
     ExplodedNodeSet Tmp2;
     Visit(Idx, *I1, Tmp2);     // Evaluate the index.
 
-    for (ExplodedNodeSet::iterator I2=Tmp2.begin(),E2=Tmp2.end();I2!=E2; ++I2) {
+    ExplodedNodeSet Tmp3;
+    CheckerVisit(A, Tmp3, Tmp2, true);
+
+    for (ExplodedNodeSet::iterator I2=Tmp3.begin(),E2=Tmp3.end();I2!=E2; ++I2) {
       const GRState* state = GetState(*I2);
       SVal V = state->getLValue(A->getType(), state->getSVal(Idx),
                                 state->getSVal(Base));
