@@ -424,9 +424,15 @@ static bool IsSameIntAfterCast(const APValue &value, unsigned TargetWidth) {
     return true;
   }
 
-  assert(value.isComplexInt());
-  return IsSameIntAfterCast(value.getComplexIntReal(), TargetWidth) &&
-         IsSameIntAfterCast(value.getComplexIntImag(), TargetWidth);
+  if (value.isComplexInt()) {
+    return IsSameIntAfterCast(value.getComplexIntReal(), TargetWidth) &&
+           IsSameIntAfterCast(value.getComplexIntImag(), TargetWidth);
+  }
+
+  // This can happen with lossless casts to intptr_t of "based" lvalues.
+  // Assume it might use arbitrary bits.
+  assert(value.isLValue());
+  return false;
 }
                                
 

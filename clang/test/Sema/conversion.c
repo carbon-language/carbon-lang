@@ -229,3 +229,9 @@ void test15(char c) {
   c = c + 1 + c * 2;
   c = (short) c + 1 + c * 2; // expected-warning {{implicit cast loses integer precision}}
 }
+
+// PR 5422
+extern void *test16_external;
+void test16(void) {
+  int a = (unsigned long) &test16_external; // expected-warning {{implicit cast loses integer precision}}
+}
