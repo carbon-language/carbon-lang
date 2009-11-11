@@ -125,6 +125,8 @@ TEST(StringRefTest, Find) {
   EXPECT_EQ(0U, Str.find("hello"));
   EXPECT_EQ(1U, Str.find("ello"));
   EXPECT_EQ(StringRef::npos, Str.find("zz"));
+  EXPECT_EQ(2U, Str.find("ll", 2));
+  EXPECT_EQ(StringRef::npos, Str.find("ll", 3));
 
   EXPECT_EQ(3U, Str.rfind('l'));
   EXPECT_EQ(StringRef::npos, Str.rfind('z'));
@@ -132,6 +134,14 @@ TEST(StringRefTest, Find) {
   EXPECT_EQ(0U, Str.rfind("hello"));
   EXPECT_EQ(1U, Str.rfind("ello"));
   EXPECT_EQ(StringRef::npos, Str.rfind("zz"));
+
+  EXPECT_EQ(2U, Str.find_first_of('l'));
+  EXPECT_EQ(1U, Str.find_first_of("el"));
+  EXPECT_EQ(StringRef::npos, Str.find_first_of("xyz"));
+
+  EXPECT_EQ(1U, Str.find_first_not_of('h'));
+  EXPECT_EQ(4U, Str.find_first_not_of("hel"));
+  EXPECT_EQ(StringRef::npos, Str.find_first_not_of("hello"));
 }
 
 TEST(StringRefTest, Count) {

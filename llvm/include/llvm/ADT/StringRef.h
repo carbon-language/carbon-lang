@@ -152,8 +152,8 @@ namespace llvm {
     ///
     /// \return - The index of the first occurence of \arg C, or npos if not
     /// found.
-    size_t find(char C) const {
-      for (size_t i = 0, e = Length; i != e; ++i)
+    size_t find(char C, size_t From = 0) const {
+      for (size_t i = std::min(From, Length), e = Length; i != e; ++i)
         if (Data[i] == C)
           return i;
       return npos;
@@ -163,7 +163,7 @@ namespace llvm {
     ///
     /// \return - The index of the first occurence of \arg Str, or npos if not
     /// found.
-    size_t find(StringRef Str) const;
+    size_t find(StringRef Str, size_t From = 0) const;
 
     /// rfind - Search for the last character \arg C in the string.
     ///
@@ -186,17 +186,25 @@ namespace llvm {
     /// found.
     size_t rfind(StringRef Str) const;
 
-    /// find_first_of - Find the first instance of the specified character or
-    /// return npos if not in string.  Same as find.
-    size_type find_first_of(char C) const { return find(C); }
+    /// find_first_of - Find the first character in the string that is \arg C,
+    /// or npos if not found. Same as find.
+    size_type find_first_of(char C, size_t From = 0) const { return find(C); }
 
-    /// find_first_of - Find the first character from the string 'Chars' in the
-    /// current string or return npos if not in string.
-    size_type find_first_of(StringRef Chars) const;
+    /// find_first_of - Find the first character in the string that is in \arg
+    /// Chars, or npos if not found.
+    ///
+    /// Note: O(size() * Chars.size())
+    size_type find_first_of(StringRef Chars, size_t From = 0) const;
 
     /// find_first_not_of - Find the first character in the string that is not
-    /// in the string 'Chars' or return npos if all are in string. Same as find.
-    size_type find_first_not_of(StringRef Chars) const;
+    /// \arg C or npos if not found.
+    size_type find_first_not_of(char C, size_t From = 0) const;
+
+    /// find_first_not_of - Find the first character in the string that is not
+    /// in the string \arg Chars, or npos if not found.
+    ///
+    /// Note: O(size() * Chars.size())
+    size_type find_first_not_of(StringRef Chars, size_t From = 0) const;
 
     /// @}
     /// @name Helpful Algorithms
