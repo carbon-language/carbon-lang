@@ -633,6 +633,7 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
     return CreateBlockRewriter(InFile, PP.getDiagnostics(),
                                PP.getLangOptions());
 
+  case FixIt: // We add the rewriter later.
   case ParseSyntaxOnly:
     return new ASTConsumer();
 
@@ -766,23 +767,15 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     DoRewriteTest(PP, OS.get());
     ClearSourceMgr = true;
     break;
+  }
 
-  case FixIt:
-    Consumer.reset(new ASTConsumer());
+  // Check if we want a fix-it rewriter.
+  if (PA == FixIt || !FixItAtLocations.empty()) {
     FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                      PP.getSourceManager(),
                                      PP.getLangOptions());
-    break;
-  }
-
-  if (FixItAtLocations.size() > 0) {
-    // Even without the "-fixit" flag, we may have some specific locations where
-    // the user has requested fixes. Process those locations now.
-    if (!FixItRewrite)
-      FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
-                                       PP.getSourceManager(),
-                                       PP.getLangOptions());
-    if (!AddFixItLocations(FixItRewrite, PP.getFileManager())) {
+    if (!FixItAtLocations.empty() &&
+        !AddFixItLocations(FixItRewrite, PP.getFileManager())) {
       // All of the fix-it locations were bad. Don't fix anything.
       delete FixItRewrite;
       FixItRewrite = 0;
