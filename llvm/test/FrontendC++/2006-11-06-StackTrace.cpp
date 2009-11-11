@@ -12,7 +12,7 @@
 
 // Only works on ppc (but not apple-darwin9), x86 and x86_64.  Should
 // generalize?
-// XFAIL: *
+// XFAIL: alpha,arm,powerpc-apple-darwin9
 
 #include <stdlib.h>
 
