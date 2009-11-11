@@ -19,12 +19,32 @@ class LangOptions;
 class PreprocessorOptions;
 class TargetInfo;
 
+enum LangKind {
+  langkind_unspecified,
+  langkind_c,
+  langkind_c_cpp,
+  langkind_asm_cpp,
+  langkind_cxx,
+  langkind_cxx_cpp,
+  langkind_objc,
+  langkind_objc_cpp,
+  langkind_objcxx,
+  langkind_objcxx_cpp,
+  langkind_ocl,
+  langkind_ast
+};
+
 // FIXME: This can be sunk into InitializeCompileOptions now that that happens
 // before language initialization?
 void ComputeFeatureMap(TargetInfo &Target, llvm::StringMap<bool> &Features);
 
 void InitializeCompileOptions(CompileOptions &Opts,
                               const llvm::StringMap<bool> &Features);
+
+void InitializeLangOptions(LangOptions &Options, LangKind LK,
+                           TargetInfo &Target,
+                           const CompileOptions &CompileOpts,
+                           const llvm::StringMap<bool> &Features);
 
 void InitializePreprocessorOptions(PreprocessorOptions &Opts);
 
