@@ -1114,39 +1114,27 @@ static void InitializePreprocessorOptions(PreprocessorOptions &InitOpts) {
     // We want to add these paths to the predefines buffer in order, make a
     // temporary vector to sort by their occurrence.
     llvm::SmallVector<std::pair<unsigned, std::string*>, 8> OrderedPaths;
+    std::string OriginalFile; // For use by -implicit-include-pch.
 
     if (!ImplicitIncludePTH.empty())
       OrderedPaths.push_back(std::make_pair(ImplicitIncludePTH.getPosition(),
                                             &ImplicitIncludePTH));
-    if (!ImplicitIncludePCH.empty())
+    if (!ImplicitIncludePCH.empty()) {
+      OriginalFile = PCHReader::getOriginalSourceFile(ImplicitIncludePCH);
+      // FIXME: Don't fail like this.
+      if (OriginalFile.empty())
+        exit(1);
       OrderedPaths.push_back(std::make_pair(ImplicitIncludePCH.getPosition(),
-                                            &ImplicitIncludePCH));
+                                            &OriginalFile));
+    }
     for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
       OrderedPaths.push_back(std::make_pair(ImplicitIncludes.getPosition(i),
                                             &ImplicitIncludes[i]));
     llvm::array_pod_sort(OrderedPaths.begin(), OrderedPaths.end());
 
     // Now that they are ordered by position, add to the predefines buffer.
-    for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i) {
-      std::string *Ptr = OrderedPaths[i].second;
-      if (!ImplicitIncludes.empty() &&
-          Ptr >= &ImplicitIncludes[0] &&
-          Ptr <= &ImplicitIncludes[ImplicitIncludes.size()-1]) {
-        InitOpts.addInclude(*Ptr);
-      } else if (Ptr == &ImplicitIncludePTH) {
-        InitOpts.addInclude(*Ptr);
-      } else {
-        // We end up here when we're producing preprocessed output and
-        // we loaded a PCH file. In this case, just include the header
-        // file that was used to build the precompiled header.
-        assert(Ptr == &ImplicitIncludePCH);
-        std::string OriginalFile = PCHReader::getOriginalSourceFile(*Ptr);
-        // FIXME: Don't fail like this.
-        if (OriginalFile.empty())
-          exit(1);
-        InitOpts.addInclude(OriginalFile);
-      }
-    }
+    for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i)
+      InitOpts.addInclude(*OrderedPaths[i].second);
   }
 }
 
