@@ -69,7 +69,7 @@ int t19(void) {
 }
 
 // CHECK:define void @t20() nounwind {
-// CHECK-NEXT: call void @abort()
+// CHECK: call void @abort()
 // CHECK-NEXT: unreachable
 void t20(void) {
   __builtin_abort();
