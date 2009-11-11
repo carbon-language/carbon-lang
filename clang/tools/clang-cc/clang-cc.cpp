@@ -428,15 +428,6 @@ static llvm::cl::opt<bool>
 PThread("pthread", llvm::cl::desc("Support POSIX threads in generated code"),
          llvm::cl::init(false));
 
-static void InitializeCOptions(LangOptions &Options) {
-    // Do nothing.
-}
-
-static void InitializeObjCOptions(LangOptions &Options) {
-  Options.ObjC1 = Options.ObjC2 = 1;
-}
-
-
 static void InitializeLangOptions(LangOptions &Options, LangKind LK){
   bool NoPreprocess = false;
 
@@ -449,7 +440,7 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
     NoPreprocess = true;
     // FALLTHROUGH
   case langkind_c:
-    InitializeCOptions(Options);
+    // Do nothing.
     break;
   case langkind_cxx_cpp:
     NoPreprocess = true;
@@ -461,7 +452,7 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
     NoPreprocess = true;
     // FALLTHROUGH
   case langkind_objc:
-    InitializeObjCOptions(Options);
+    Options.ObjC1 = Options.ObjC2 = 1;
     break;
   case langkind_objcxx_cpp:
     NoPreprocess = true;
