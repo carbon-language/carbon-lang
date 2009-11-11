@@ -108,3 +108,21 @@ struct X1 {
   template<typename, bool = false> struct B { };
 };
 template struct X1<int>::B<bool>;
+
+// Template template parameters
+template<typename T>
+struct X2 {
+  template<template<class U, T Value> class>  // expected-error{{cannot have type 'float'}} \
+                                              // expected-note{{previous non-type template}}
+    struct Inner { };
+};
+
+template<typename T, 
+         int Value> // expected-note{{template non-type parameter}}
+  struct X2_arg;
+
+X2<int>::Inner<X2_arg> x2i1;
+X2<float>::Inner<X2_arg> x2i2; // expected-note{{instantiation}}
+X2<long>::Inner<X2_arg> x2i3; // expected-error{{template template argument has different}}
+
+

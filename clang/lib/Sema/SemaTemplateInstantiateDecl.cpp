@@ -64,6 +64,7 @@ namespace {
     Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
+    Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
     Decl *VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
@@ -970,6 +971,35 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
   // Introduce this template parameter's instantiation into the instantiation 
   // scope.
   SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
+  return Param;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
+                                                  TemplateTemplateParmDecl *D) {
+  // Instantiate the template parameter list of the template template parameter.
+  TemplateParameterList *TempParams = D->getTemplateParameters();
+  TemplateParameterList *InstParams;
+  {
+    // Perform the actual substitution of template parameters within a new,
+    // local instantiation scope.
+    Sema::LocalInstantiationScope Scope(SemaRef);
+    InstParams = SubstTemplateParams(TempParams);
+    if (!InstParams)
+      return NULL;
+  }  
+  
+  // Build the template template parameter.
+  TemplateTemplateParmDecl *Param
+    = TemplateTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                       D->getDepth() - 1, D->getPosition(),
+                                       D->getIdentifier(), InstParams);
+  Param->setDefaultArgument(D->getDefaultArgument());
+  
+  // Introduce this template parameter's instantiation into the instantiation 
+  // scope.
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
+  
   return Param;
 }
 
