@@ -61,9 +61,7 @@ static void UndefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
   Buf.push_back('\n');
 }
 
-/// Add the quoted name of an implicit include file.
-static void AddQuotedIncludePath(std::vector<char> &Buf,
-                                 const std::string &File) {
+std::string clang::NormalizeDashIncludePath(llvm::StringRef File) {
   // Implicit include paths should be resolved relative to the current
   // working directory first, and then use the regular header search
   // mechanism. The proper way to handle this is to have the
@@ -76,9 +74,16 @@ static void AddQuotedIncludePath(std::vector<char> &Buf,
   if (!Path.exists())
     Path = File;
 
+  return Lexer::Stringify(Path.str());
+}
+
+/// Add the quoted name of an implicit include file.
+static void AddQuotedIncludePath(std::vector<char> &Buf,
+                                 const std::string &File) {
+
   // Escape double quotes etc.
   Buf.push_back('"');
-  std::string EscapedFile = Lexer::Stringify(Path.str());
+  std::string EscapedFile = NormalizeDashIncludePath(File);
   Buf.insert(Buf.end(), EscapedFile.begin(), EscapedFile.end());
   Buf.push_back('"');
 }

@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_UTILS_H
 #define LLVM_CLANG_FRONTEND_UTILS_H
 
+#include "llvm/ADT/StringRef.h"
 #include <vector>
 #include <string>
 
@@ -39,6 +40,10 @@ class PreprocessorOutputOptions;
 class SourceManager;
 class Stmt;
 class TargetInfo;
+
+/// Normalize \arg File for use in a user defined #include directive (in the
+/// predefines buffer).
+std::string NormalizeDashIncludePath(llvm::StringRef File);
 
 /// Apply the header search options to get given HeaderSearch object.
 void ApplyHeaderSearchOptions(HeaderSearch &HS,

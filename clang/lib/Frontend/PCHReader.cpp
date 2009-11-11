@@ -13,6 +13,7 @@
 
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/Utils.h"
 #include "../Sema/Sema.h" // FIXME: move Sema headers elsewhere
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -158,12 +159,13 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                         FileID PCHBufferID,
                                         llvm::StringRef OriginalFileName,
                                         std::string &SuggestedPredefines) {
-  // We are in the context of an implicit include, so the predefines buffer
-  // will have a #include entry for the PCH file itself. Find it and skip over
-  // it in the checking below.
+  // We are in the context of an implicit include, so the predefines buffer will
+  // have a #include entry for the PCH file itself (as normalized by the
+  // preprocessor initialization). Find it and skip over it in the checking
+  // below.
   llvm::SmallString<256> PCHInclude;
   PCHInclude += "#include \"";
-  PCHInclude += OriginalFileName;
+  PCHInclude += NormalizeDashIncludePath(OriginalFileName);
   PCHInclude += "\"\n";
   std::pair<llvm::StringRef,llvm::StringRef> Split =
     llvm::StringRef(PP.getPredefines()).split(PCHInclude.str());
