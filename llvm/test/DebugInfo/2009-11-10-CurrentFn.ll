@@ -1,3 +1,4 @@
+; RUN: llc < %s -o /dev/null
 
 declare void @foo()
 
