@@ -140,9 +140,9 @@ public:
 
 class Base {
 public:
-  static int operator new(unsigned size) throw(); // expected-error {{'operator new' takes type size_t}} \
+  static int operator new(signed char) throw(); // expected-error {{'operator new' takes type size_t}} \
 						  // expected-error {{operator new' must return type 'void *'}}
-  static int operator new[] (unsigned size) throw(); // expected-error {{'operator new[]' takes type size_t}} \
+  static int operator new[] (signed char) throw(); // expected-error {{'operator new[]' takes type size_t}} \
 						     // expected-error {{operator new[]' must return type 'void *'}}
 };
 
