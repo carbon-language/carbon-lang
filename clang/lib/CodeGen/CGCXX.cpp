@@ -1511,7 +1511,14 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     RHS = RValue::get(CGF.CGM.EmitConstantExpr(RhsExpr, FieldType, &CGF));
   else
     RHS = RValue::get(CGF.EmitScalarExpr(RhsExpr, true));
-  CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
+  if (Array && !FieldType->getAs<RecordType>()) {
+    // value initialize a non-class array data member using arr() syntax in
+    // initializer list.
+    QualType Ty = CGF.getContext().getCanonicalType((Field)->getType());
+    CGF.EmitMemSetToZero(LHS.getAddress(), Ty);
+  }
+  else
+    CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
 }
 
 /// EmitCtorPrologue - This routine generates necessary code to initialize
