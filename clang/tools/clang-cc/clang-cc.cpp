@@ -19,6 +19,7 @@
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
@@ -811,48 +812,9 @@ DumpBuildInformation("dump-build-information",
 
 static llvm::raw_ostream *BuildLogFile = 0;
 
-/// LoggingDiagnosticClient - This is a simple diagnostic client that forwards
-/// all diagnostics to both BuildLogFile and a chained DiagnosticClient.
-namespace {
-class LoggingDiagnosticClient : public DiagnosticClient {
-  llvm::OwningPtr<DiagnosticClient> Chain1;
-  llvm::OwningPtr<DiagnosticClient> Chain2;
-public:
-
-  LoggingDiagnosticClient(const DiagnosticOptions &DiagOpts,
-                          DiagnosticClient *Normal) {
-    // Output diags both where requested...
-    Chain1.reset(Normal);
-    // .. and to our log file.
-    Chain2.reset(new TextDiagnosticPrinter(*BuildLogFile, DiagOpts));
-  }
-
-  virtual void BeginSourceFile(const LangOptions &LO) {
-    Chain1->BeginSourceFile(LO);
-    Chain2->BeginSourceFile(LO);
-  }
-
-  virtual void EndSourceFile() {
-    Chain1->EndSourceFile();
-    Chain2->EndSourceFile();
-  }
-
-  virtual bool IncludeInDiagnosticCounts() const {
-    return Chain1->IncludeInDiagnosticCounts();
-  }
-
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                const DiagnosticInfo &Info) {
-    Chain1->HandleDiagnostic(DiagLevel, Info);
-    Chain2->HandleDiagnostic(DiagLevel, Info);
-  }
-};
-} // end anonymous namespace.
-
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, char **argv,
                               llvm::OwningPtr<DiagnosticClient> &DiagClient) {
-
   std::string ErrorInfo;
   BuildLogFile = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(),
                                           ErrorInfo);
@@ -871,9 +833,9 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
     (*BuildLogFile) << argv[i] << ' ';
   (*BuildLogFile) << '\n';
 
-  // LoggingDiagnosticClient - Insert a new logging diagnostic client in between
-  // the diagnostic producers and the normal receiver.
-  DiagClient.reset(new LoggingDiagnosticClient(DiagOpts, DiagClient.take()));
+  // Chain in a diagnostic client which will log the diagnostics.
+  DiagnosticClient *Logger = new TextDiagnosticPrinter(*BuildLogFile, DiagOpts);
+  DiagClient.reset(new ChainedDiagnosticClient(DiagClient.take(), Logger));
 }
 
 
