@@ -41,8 +41,9 @@ class Stmt;
 class TargetInfo;
 
 /// Apply the header search options to get given HeaderSearch object.
-void ApplyHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
-                              HeaderSearch &HS, const LangOptions &Lang,
+void ApplyHeaderSearchOptions(HeaderSearch &HS,
+                              const HeaderSearchOptions &HSOpts,
+                              const LangOptions &Lang,
                               const llvm::Triple &triple);
 
 /// InitializePreprocessor - Initialize the preprocessor getting it and the

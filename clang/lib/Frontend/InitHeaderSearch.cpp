@@ -641,8 +641,9 @@ void InitHeaderSearch::Realize() {
   }
 }
 
-void clang::ApplyHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
-                                     HeaderSearch &HS, const LangOptions &Lang,
+void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
+                                     const HeaderSearchOptions &HSOpts,
+                                     const LangOptions &Lang,
                                      const llvm::Triple &Triple) {
   InitHeaderSearch Init(HS, HSOpts.Verbose, HSOpts.Sysroot);
 

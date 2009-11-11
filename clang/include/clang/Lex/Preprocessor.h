@@ -94,6 +94,9 @@ class Preprocessor {
   bool DisableMacroExpansion : 1;  // True if macro expansion is disabled.
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
+  /// Whether the preprocessor owns the header search object.
+  bool OwnsHeaderSearch : 1;
+
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   mutable IdentifierTable Identifiers;
@@ -209,7 +212,8 @@ private:  // Cached tokens state.
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers,
-               IdentifierInfoLookup *IILookup = 0);
+               IdentifierInfoLookup *IILookup = 0,
+               bool OwnsHeaderSearch = false);
 
   ~Preprocessor();
 

@@ -379,7 +379,7 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
                    const PreprocessorOptions &PPOpts,
                    const DependencyOutputOptions &DepOpts,
                    TargetInfo &Target, SourceManager &SourceMgr,
-                   HeaderSearch &HeaderInfo) {
+                   FileManager &FileMgr) {
   PTHManager *PTHMgr = 0;
   if (!TokenCache.empty() && !PPOpts.getImplicitPTHInclude().empty()) {
     fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
@@ -400,8 +400,10 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
     exit(1);
 
   // Create the Preprocessor.
+  HeaderSearch *HeaderInfo = new HeaderSearch(FileMgr);
   Preprocessor *PP = new Preprocessor(Diags, LangInfo, Target,
-                                      SourceMgr, HeaderInfo, PTHMgr);
+                                      SourceMgr, *HeaderInfo, PTHMgr,
+                                      /*OwnsHeaderSearch=*/true);
 
   // Note that this is different then passing PTHMgr to Preprocessor's ctor.
   // That argument is used as the IdentifierInfoLookup argument to
@@ -1203,19 +1205,17 @@ int main(int argc, char **argv) {
     if (i)
       SourceMgr.clearIDTables();
 
-    // Process the -I options and set them in the HeaderInfo.
-    HeaderSearch HeaderInfo(FileMgr);
-
-    // Apply all the options to the header search object.
-    ApplyHeaderSearchOptions(CompOpts.getHeaderSearchOpts(), HeaderInfo,
-                             CompOpts.getLangOpts(), Triple);
-
     // Set up the preprocessor with these options.
     llvm::OwningPtr<Preprocessor>
       PP(CreatePreprocessor(Diags, CompOpts.getLangOpts(),
                             CompOpts.getPreprocessorOpts(),
                             CompOpts.getDependencyOutputOpts(),
-                            *Target, SourceMgr, HeaderInfo));
+                            *Target, SourceMgr, FileMgr));
+
+    // Apply all the options to the header search object.
+    ApplyHeaderSearchOptions(PP->getHeaderSearchInfo(),
+                             CompOpts.getHeaderSearchOpts(),
+                             CompOpts.getLangOpts(), Triple);
 
     if (CompOpts.getPreprocessorOpts().getImplicitPCHInclude().empty()) {
       if (InitializeSourceManager(*PP.get(), InFile))
@@ -1230,8 +1230,6 @@ int main(int argc, char **argv) {
     Diags.getClient()->BeginSourceFile(CompOpts.getLangOpts());
     ProcessInputFile(CompOpts, *PP, InFile, ProgAction, Context);
     Diags.getClient()->EndSourceFile();
-
-    HeaderInfo.ClearFileInfo();
   }
 
   if (CompOpts.getDiagnosticOpts().ShowCarets)

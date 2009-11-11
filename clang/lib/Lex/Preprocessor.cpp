@@ -46,12 +46,14 @@ using namespace clang;
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            TargetInfo &target, SourceManager &SM,
                            HeaderSearch &Headers,
-                           IdentifierInfoLookup* IILookup)
+                           IdentifierInfoLookup* IILookup,
+                           bool OwnsHeaders)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts, IILookup),
     BuiltinInfo(Target), CurPPLexer(0), CurDirLookup(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
+  OwnsHeaderSearch = OwnsHeaders;
 
   // Clear stats.
   NumDirectives = NumDefined = NumUndefined = NumPragma = 0;
@@ -114,6 +116,10 @@ Preprocessor::~Preprocessor() {
 
   // Delete the scratch buffer info.
   delete ScratchBuf;
+
+  // Delete the header search info, if we own it.
+  if (OwnsHeaderSearch)
+    delete &HeaderInfo;
 
   delete Callbacks;
 }
