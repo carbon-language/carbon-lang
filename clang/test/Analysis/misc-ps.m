@@ -692,7 +692,6 @@ void *rdar7152418_bar();
 // conversions of the symbol as necessary.
 //===----------------------------------------------------------------------===//
 
-
 // Previously this would crash once we started eagerly evaluating symbols whose 
 // values were constrained to a single value.
 void test_symbol_fold_1(signed char x) {
@@ -722,5 +721,27 @@ unsigned test_symbol_fold_3(void) {
   if (x == 54)
     return (x << 8) | 0x5;
   return 0;
-}  
+} 
+
+//===----------------------------------------------------------------------===//
+// Tests for the warning of casting a non-struct type to a struct type
+//===----------------------------------------------------------------------===//
+
+typedef struct {unsigned int v;} NSSwappedFloat;
+
+NSSwappedFloat test_cast_nonstruct_to_struct(float x) {
+  struct hodor {
+    float number;
+    NSSwappedFloat sf;
+  };
+  return ((struct hodor *)&x)->sf; // expected-warning{{Casting a non-structure type to a structure type and accessing a field can lead to memory access errors or data corruption}}
+}
+
+NSSwappedFloat test_cast_nonstruct_to_union(float x) {
+  union bran {
+    float number;
+    NSSwappedFloat sf;
+  };
+  return ((union bran *)&x)->sf; // no-warning
+}
 
