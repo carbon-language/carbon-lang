@@ -517,31 +517,27 @@ DumpBuildInformation("dump-build-information",
                      llvm::cl::value_desc("filename"),
           llvm::cl::desc("output a dump of some build information to a file"));
 
-static llvm::raw_ostream *BuildLogFile = 0;
-
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, char **argv,
                               llvm::OwningPtr<DiagnosticClient> &DiagClient) {
   std::string ErrorInfo;
-  BuildLogFile = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(),
-                                          ErrorInfo);
-
+  llvm::raw_ostream *OS = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(),
+                                                   ErrorInfo);
   if (!ErrorInfo.empty()) {
     llvm::errs() << "error opening -dump-build-information file '"
                  << DumpBuildInformation << "', option ignored!\n";
-    delete BuildLogFile;
-    BuildLogFile = 0;
-    DumpBuildInformation = "";
+    delete OS;
     return;
   }
 
-  (*BuildLogFile) << "clang-cc command line arguments: ";
+  (*OS) << "clang-cc command line arguments: ";
   for (unsigned i = 0; i != argc; ++i)
-    (*BuildLogFile) << argv[i] << ' ';
-  (*BuildLogFile) << '\n';
+    (*OS) << argv[i] << ' ';
+  (*OS) << '\n';
 
   // Chain in a diagnostic client which will log the diagnostics.
-  DiagnosticClient *Logger = new TextDiagnosticPrinter(*BuildLogFile, DiagOpts);
+  DiagnosticClient *Logger =
+    new TextDiagnosticPrinter(*OS, DiagOpts, /*OwnsOutputStream=*/true);
   DiagClient.reset(new ChainedDiagnosticClient(DiagClient.take(), Logger));
 }
 
@@ -1316,7 +1312,6 @@ int main(int argc, char **argv) {
   }
 
   delete ClangFrontendTimer;
-  delete BuildLogFile;
 
   // If verifying diagnostics and we reached here, all is well.
   if (VerifyDiagnostics)

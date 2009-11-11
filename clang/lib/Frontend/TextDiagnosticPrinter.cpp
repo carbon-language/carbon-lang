@@ -39,9 +39,16 @@ static const enum llvm::raw_ostream::Colors savedColor =
 const unsigned WordWrapIndentation = 6;
 
 TextDiagnosticPrinter::TextDiagnosticPrinter(llvm::raw_ostream &os,
-                                             const DiagnosticOptions &diags)
+                                             const DiagnosticOptions &diags,
+                                             bool _OwnsOutputStream)
   : OS(os), LangOpts(0), DiagOpts(&diags),
-    LastCaretDiagnosticWasNote(false) {
+    LastCaretDiagnosticWasNote(0),
+    OwnsOutputStream(_OwnsOutputStream) {
+}
+
+TextDiagnosticPrinter::~TextDiagnosticPrinter() {
+  if (OwnsOutputStream)
+    delete &OS;
 }
 
 void TextDiagnosticPrinter::
