@@ -1565,6 +1565,7 @@ DIE *DwarfDebug::ConstructVariableDIE(DbgVariable *DV,
     DIScope DS(Scope->getScopeNode());
     DISubprogram InlinedSP = getDISubprogram(DS.getNode());
     DIE *&OriginSPDIE = ModuleCU->getDieMapSlotFor(InlinedSP.getNode());
+    (void) OriginSPDIE;
     assert (OriginSPDIE && "Unable to find Origin DIE for the SP!");
     DIE *AbsDIE = DV->getAbstractVariable()->getDIE();
     assert (AbsDIE && "Unable to find Origin DIE for the Variable!");
