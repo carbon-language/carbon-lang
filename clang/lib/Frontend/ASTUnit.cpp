@@ -61,13 +61,12 @@ public:
     return false;
   }
 
-  virtual bool ReadTargetTriple(const std::string &Triple) {
+  virtual bool ReadTargetTriple(llvm::StringRef Triple) {
     TargetTriple = Triple;
     return false;
   }
 
-  virtual bool ReadPredefinesBuffer(const char *PCHPredef,
-                                    unsigned PCHPredefLen,
+  virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                     FileID PCHBufferID,
                                     std::string &SuggestedPredefines) {
     Predefines = PCHPredef;

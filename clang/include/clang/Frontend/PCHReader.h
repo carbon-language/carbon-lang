@@ -29,6 +29,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/System/DataTypes.h"
 #include <deque>
@@ -78,7 +79,7 @@ public:
   /// \brief Receives the target triple.
   ///
   /// \returns true to indicate the target triple is invalid or false otherwise.
-  virtual bool ReadTargetTriple(const std::string &Triple) {
+  virtual bool ReadTargetTriple(llvm::StringRef Triple) {
     return false;
   }
 
@@ -96,8 +97,7 @@ public:
   /// here.
   ///
   /// \returns true to indicate the predefines are invalid or false otherwise.
-  virtual bool ReadPredefinesBuffer(const char *PCHPredef,
-                                    unsigned PCHPredefLen,
+  virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                     FileID PCHBufferID,
                                     std::string &SuggestedPredefines) {
     return false;
@@ -123,9 +123,8 @@ public:
     : PP(PP), Reader(Reader), NumHeaderInfos(0) {}
 
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts);
-  virtual bool ReadTargetTriple(const std::string &Triple);
-  virtual bool ReadPredefinesBuffer(const char *PCHPredef,
-                                    unsigned PCHPredefLen,
+  virtual bool ReadTargetTriple(llvm::StringRef Triple);
+  virtual bool ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                     FileID PCHBufferID,
                                     std::string &SuggestedPredefines);
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI);
@@ -444,9 +443,7 @@ private:
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
   PCHReadResult ReadPCHBlock();
-  bool CheckPredefinesBuffer(const char *PCHPredef,
-                             unsigned PCHPredefLen,
-                             FileID PCHBufferID);
+  bool CheckPredefinesBuffer(llvm::StringRef PCHPredef, FileID PCHBufferID);
   bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
   PCHReadResult ReadSourceManagerBlock();
   PCHReadResult ReadSLocEntryRecord(unsigned ID);

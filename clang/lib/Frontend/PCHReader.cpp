@@ -122,13 +122,13 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   return false;
 }
 
-bool PCHValidator::ReadTargetTriple(const std::string &Triple) {
-  if (Triple != PP.getTargetInfo().getTriple().getTriple()) {
-    Reader.Diag(diag::warn_pch_target_triple)
-      << Triple << PP.getTargetInfo().getTriple().getTriple();
-    return true;
-  }
-  return false;
+bool PCHValidator::ReadTargetTriple(llvm::StringRef Triple) {
+  if (Triple == PP.getTargetInfo().getTriple().str())
+    return false;
+
+  Reader.Diag(diag::warn_pch_target_triple)
+    << Triple << PP.getTargetInfo().getTriple().str();
+  return true;
 }
 
 /// \brief Split the given string into a vector of lines, eliminating
@@ -138,30 +138,25 @@ bool PCHValidator::ReadTargetTriple(const std::string &Triple) {
 /// \param Len the length of Str.
 /// \param KeepEmptyLines true if empty lines should be included
 /// \returns a vector of lines, with the line endings removed
-static std::vector<std::string> splitLines(const char *Str, unsigned Len,
+static std::vector<std::string> splitLines(llvm::StringRef Str,
                                            bool KeepEmptyLines = false) {
   std::vector<std::string> Lines;
-  for (unsigned LineStart = 0; LineStart < Len; ++LineStart) {
+  for (unsigned LineStart = 0; LineStart < Str.size(); ++LineStart) {
     unsigned LineEnd = LineStart;
-    while (LineEnd < Len && Str[LineEnd] != '\n')
+    while (LineEnd < Str.size() && Str[LineEnd] != '\n')
       ++LineEnd;
     if (LineStart != LineEnd || KeepEmptyLines)
-      Lines.push_back(std::string(&Str[LineStart], &Str[LineEnd]));
+      Lines.push_back(Str.slice(LineStart, LineEnd));
     LineStart = LineEnd;
   }
   return Lines;
 }
 
-bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
-                                        unsigned PCHPredefLen,
+bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                         FileID PCHBufferID,
                                         std::string &SuggestedPredefines) {
-  const char *Predef = PP.getPredefines().c_str();
-  unsigned PredefLen = PP.getPredefines().size();
-
   // If the two predefines buffers compare equal, we're done!
-  if (PredefLen == PCHPredefLen &&
-      strncmp(Predef, PCHPredef, PCHPredefLen) == 0)
+  if (PP.getPredefines() == PCHPredef)
     return false;
 
   SourceManager &SourceMgr = PP.getSourceManager();
@@ -169,8 +164,8 @@ bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
   // The predefines buffers are different. Determine what the
   // differences are, and whether they require us to reject the PCH
   // file.
-  std::vector<std::string> CmdLineLines = splitLines(Predef, PredefLen);
-  std::vector<std::string> PCHLines = splitLines(PCHPredef, PCHPredefLen);
+  std::vector<std::string> CmdLineLines = splitLines(PP.getPredefines());
+  std::vector<std::string> PCHLines = splitLines(PCHPredef);
 
   // Sort both sets of predefined buffer lines, since
   std::sort(CmdLineLines.begin(), CmdLineLines.end());
@@ -231,8 +226,8 @@ bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
           << MacroName;
 
       // Show the definition of this macro within the PCH file.
-      const char *MissingDef = strstr(PCHPredef, Missing.c_str());
-      unsigned Offset = MissingDef - PCHPredef;
+      const char *MissingDef = strstr(PCHPredef.data(), Missing.c_str());
+      unsigned Offset = MissingDef - PCHPredef.data();
       SourceLocation PCHMissingLoc
         = SourceMgr.getLocForStartOfFile(PCHBufferID)
             .getFileLocWithOffset(Offset);
@@ -255,8 +250,8 @@ bool PCHValidator::ReadPredefinesBuffer(const char *PCHPredef,
     }
 
     // Show the definition of this macro within the PCH file.
-    const char *MissingDef = strstr(PCHPredef, Missing.c_str());
-    unsigned Offset = MissingDef - PCHPredef;
+    const char *MissingDef = strstr(PCHPredef.data(), Missing.c_str());
+    unsigned Offset = MissingDef - PCHPredef.data();
     SourceLocation PCHMissingLoc
       = SourceMgr.getLocForStartOfFile(PCHBufferID)
       .getFileLocWithOffset(Offset);
@@ -630,11 +625,10 @@ bool PCHReader::Error(const char *Msg) {
 ///
 /// \returns true if there was a mismatch (in which case the PCH file
 /// should be ignored), or false otherwise.
-bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
-                                      unsigned PCHPredefLen,
+bool PCHReader::CheckPredefinesBuffer(llvm::StringRef PCHPredef,
                                       FileID PCHBufferID) {
   if (Listener)
-    return Listener->ReadPredefinesBuffer(PCHPredef, PCHPredefLen, PCHBufferID,
+    return Listener->ReadPredefinesBuffer(PCHPredef, PCHBufferID,
                                           SuggestedPredefines);
   return false;
 }
@@ -1455,7 +1449,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   }
 
   // Check the predefines buffer.
-  if (CheckPredefinesBuffer(PCHPredefines, PCHPredefinesLen,
+  if (CheckPredefinesBuffer(llvm::StringRef(PCHPredefines, PCHPredefinesLen),
                             PCHPredefinesBufferID))
     return IgnorePCH;
 
