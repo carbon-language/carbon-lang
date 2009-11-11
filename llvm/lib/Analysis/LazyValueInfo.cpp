@@ -17,6 +17,9 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/CFG.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 using namespace llvm;
 
@@ -58,6 +61,12 @@ class LVILatticeVal {
 public:
   LVILatticeVal() : Val(0, undefined) {}
 
+  static LVILatticeVal get(Constant *C) {
+    LVILatticeVal Res;
+    Res.markConstant(C);
+    return Res;
+  }
+  
   bool isUndefined() const   { return Val.getInt() == undefined; }
   bool isConstant() const    { return Val.getInt() == constant; }
   bool isOverdefined() const { return Val.getInt() == overdefined; }
@@ -94,12 +103,34 @@ public:
     Val.setInt(constant);
     assert(V && "Marking constant with NULL");
     Val.setPointer(V);
+    return true;
+  }
+  
+  /// mergeIn - Merge the specified lattice value into this one, updating this
+  /// one and returning true if anything changed.
+  bool mergeIn(const LVILatticeVal &RHS) {
+    if (RHS.isUndefined() || isOverdefined()) return false;
+    if (RHS.isOverdefined()) return markOverdefined();
+
+    // RHS must be a constant, we must be undef or constant.
+    if (isConstant() && getConstant() != RHS.getConstant())
+      return markOverdefined();
+    return markConstant(RHS.getConstant());
   }
   
 };
   
 } // end anonymous namespace.
 
+namespace llvm {
+raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
+  if (Val.isUndefined())
+    return OS << "undefined";
+  if (Val.isOverdefined())
+    return OS << "overdefined";
+  return OS << "constant<" << *Val.getConstant() << '>';
+}
+}
 
 //===----------------------------------------------------------------------===//
 //                            LazyValueInfo Impl
@@ -115,6 +146,127 @@ void LazyValueInfo::releaseMemory() {
   // No caching yet.
 }
 
+static LVILatticeVal GetValueInBlock(Value *V, BasicBlock *BB,
+                                     DenseMap<BasicBlock*, LVILatticeVal> &);
+
+static LVILatticeVal GetValueOnEdge(Value *V, BasicBlock *BBFrom,
+                                    BasicBlock *BBTo,
+                              DenseMap<BasicBlock*, LVILatticeVal> &BlockVals) {
+  // FIXME: Pull edge logic out of jump threading.
+  
+  
+  if (BranchInst *BI = dyn_cast<BranchInst>(BBFrom->getTerminator())) {
+    // If this is a conditional branch and only one successor goes to BBTo, then
+    // we maybe able to infer something from the condition. 
+    if (BI->isConditional() &&
+        BI->getSuccessor(0) != BI->getSuccessor(1)) {
+      bool isTrueDest = BI->getSuccessor(0) == BBTo;
+      assert(BI->getSuccessor(!isTrueDest) == BBTo &&
+             "BBTo isn't a successor of BBFrom");
+      
+      // If V is the condition of the branch itself, then we know exactly what
+      // it is.
+      if (BI->getCondition() == V)
+        return LVILatticeVal::get(ConstantInt::get(
+                                 Type::getInt1Ty(V->getContext()), isTrueDest));
+      
+      // If the condition of the branch is an equality comparison, we may be
+      // able to infer the value.
+      if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
+        if (ICI->isEquality() && ICI->getOperand(0) == V &&
+            isa<Constant>(ICI->getOperand(1))) {
+          // We know that V has the RHS constant if this is a true SETEQ or
+          // false SETNE. 
+          if (isTrueDest == (ICI->getPredicate() == ICmpInst::ICMP_EQ))
+            return LVILatticeVal::get(cast<Constant>(ICI->getOperand(1)));
+        }
+    }
+  }
+  
+  // TODO: Info from switch.
+  
+  
+  // Otherwise see if the value is known in the block.
+  return GetValueInBlock(V, BBFrom, BlockVals);
+}
+
+static LVILatticeVal GetValueInBlock(Value *V, BasicBlock *BB,
+                              DenseMap<BasicBlock*, LVILatticeVal> &BlockVals) {
+  // See if we already have a value for this block.
+  LVILatticeVal &BBLV = BlockVals[BB];
+
+  // If we've already computed this block's value, return it.
+  if (!BBLV.isUndefined())
+    return BBLV;
+  
+  // Otherwise, this is the first time we're seeing this block.  Reset the
+  // lattice value to overdefined, so that cycles will terminate and be
+  // conservatively correct.
+  BBLV.markOverdefined();
+
+  LVILatticeVal Result;  // Start Undefined.
+  
+  // If V is live in to BB, see if our predecessors know anything about it.
+  Instruction *BBI = dyn_cast<Instruction>(V);
+  if (BBI == 0 || BBI->getParent() != BB) {
+    unsigned NumPreds = 0;
+    
+    // Loop over all of our predecessors, merging what we know from them into
+    // result.
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      Result.mergeIn(GetValueOnEdge(V, *PI, BB, BlockVals));
+      
+      // If we hit overdefined, exit early.  The BlockVals entry is already set
+      // to overdefined.
+      if (Result.isOverdefined())
+        return Result;
+      ++NumPreds;
+    }
+    
+    // If this is the entry block, we must be asking about an argument.  The
+    // value is overdefined.
+    if (NumPreds == 0 && BB == &BB->getParent()->front()) {
+      assert(isa<Argument>(V) && "Unknown live-in to the entry block");
+      Result.markOverdefined();
+      return Result;
+    }
+
+    // Return the merged value, which is more precise than 'overdefined'.
+    assert(!Result.isOverdefined());
+    return BlockVals[BB] = Result;
+  }
+
+  // If this value is defined by an instruction in this block, we have to
+  // process it here somehow or return overdefined.
+  if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
+    (void)PN;
+    // TODO: PHI Translation in preds.
+  } else {
+    
+  }
+  
+  Result.markOverdefined();
+  return BlockVals[BB] = Result;
+}
+
+
+Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
+  // If already a constant, return it.
+  if (Constant *VC = dyn_cast<Constant>(V))
+    return VC;
+  
+  DenseMap<BasicBlock*, LVILatticeVal> BlockValues;
+  
+  errs() << "Getting value " << *V << " at end of block '"
+         << BB->getName() << "'\n";
+  LVILatticeVal Result = GetValueInBlock(V, BB, BlockValues);
+  
+  errs() << "  Result = " << Result << "\n";
+
+  if (Result.isConstant())
+    return Result.getConstant();
+  return 0;
+}
 
 /// isEqual - Determine whether the specified value is known to be equal or
 /// not-equal to the specified constant at the end of the specified block.
@@ -135,12 +287,4 @@ LazyValueInfo::isEqual(Value *V, Constant *C, BasicBlock *BB) {
   return Unknown;
 }
 
-Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
-  // If already a constant, return it.
-  if (Constant *VC = dyn_cast<Constant>(V))
-    return VC;
-    
-  // Not a very good implementation.
-  return 0;
-}
 
