@@ -269,6 +269,9 @@ def warn_property_attr_mismatch : Warning<
 def warn_objc_property_copy_missing_on_block : Warning<
     "'copy' attribute must be specified for the block property "
     "when -fobjc-gc-only is specified">;
+def warn_atomic_property_rule : Warning<
+  "writable atomic property %0 cannot pair a synthesized setter/getter "
+  "with a user defined setter/getter">;
 def err_use_continuation_class : Error<
   "property declaration in continuation class of %0 is to change a 'readonly' "
   "property to 'readwrite'">;

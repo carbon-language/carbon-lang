@@ -24,6 +24,7 @@
 - (void) myAnotherobjectSetter : (int)val {
     _Anotherobject = val;
 }
+- (int) Anotherobject { return _Anotherobject; }
 @end
 
 int main(int argc, char **argv) {

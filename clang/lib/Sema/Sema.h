@@ -1447,6 +1447,12 @@ public:
   void ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
                                  ObjCContainerDecl* IDecl,
                                  bool IncompleteImpl = false);
+  
+  /// AtomicPropertySetterGetterRules - This routine enforces the rule (via
+  /// warning) when atomic property has one but not the other user-declared
+  /// setter or getter.
+  void AtomicPropertySetterGetterRules(ObjCImplDecl* IMPDecl,
+                                       ObjCContainerDecl* IDecl);
 
   /// MatchTwoMethodDeclarations - Checks if two methods' type match and returns
   /// true, or false, accordingly.

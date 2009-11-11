@@ -1113,6 +1113,41 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
     assert(false && "invalid ObjCContainerDecl type.");
 }
 
+void
+Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
+                                       ObjCContainerDecl* IDecl) {
+  // Rules apply in non-GC mode only
+  if (getLangOptions().getGCMode() != LangOptions::NonGC)
+    return;
+  for (ObjCContainerDecl::prop_iterator I = IDecl->prop_begin(),
+       E = IDecl->prop_end();
+       I != E; ++I) {
+    ObjCPropertyDecl *Property = (*I);
+    unsigned Attributes = Property->getPropertyAttributes();
+    // We only care about readwrite atomic property.
+    if ((Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) ||
+        !(Attributes & ObjCPropertyDecl::OBJC_PR_readwrite))
+      continue;
+    if (const ObjCPropertyImplDecl *PIDecl
+         = IMPDecl->FindPropertyImplDecl(Property->getIdentifier())) {
+      if (PIDecl->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
+        continue;
+      ObjCMethodDecl *GetterMethod =
+        IMPDecl->getInstanceMethod(Property->getGetterName());
+      ObjCMethodDecl *SetterMethod = 
+        IMPDecl->getInstanceMethod(Property->getSetterName());
+      if ((GetterMethod && !SetterMethod) || (!GetterMethod && SetterMethod)) {
+        SourceLocation MethodLoc = 
+          (GetterMethod ? GetterMethod->getLocation() 
+                        : SetterMethod->getLocation());
+        Diag(MethodLoc, diag::warn_atomic_property_rule)
+          << Property->getIdentifier();
+        Diag(Property->getLocation(), diag::note_property_declare);
+      }
+    }
+  }
+}
+
 /// ActOnForwardClassDeclaration -
 Action::DeclPtrTy
 Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
@@ -1608,8 +1643,10 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     IC->setAtEndLoc(AtEndLoc);
-    if (ObjCInterfaceDecl* IDecl = IC->getClassInterface())
+    if (ObjCInterfaceDecl* IDecl = IC->getClassInterface()) {
       ImplMethodsVsClassMethods(IC, IDecl);
+      AtomicPropertySetterGetterRules(IC, IDecl);
+    }
   } else if (ObjCCategoryImplDecl* CatImplClass =
                                    dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
     CatImplClass->setAtEndLoc(AtEndLoc);
