@@ -875,6 +875,7 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
 /// block.  This is never called on the entry block.
 bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   bool MadeChange = false;
+  MachineFunction &MF = *MBB->getParent();
 
   MachineFunction::iterator FallThrough = MBB;
   ++FallThrough;
@@ -887,7 +888,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     // Dead block?  Leave for cleanup later.
     if (MBB->pred_empty()) return MadeChange;
     
-    if (FallThrough == MBB->getParent()->end()) {
+    if (FallThrough == MF.end()) {
       // TODO: Simplify preds to not branch here if possible!
     } else {
       // Rewrite all predecessors of the old block to go to the fallthrough
@@ -898,8 +899,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       }
       // If MBB was the target of a jump table, update jump tables to go to the
       // fallthrough instead.
-      MBB->getParent()->getJumpTableInfo()->
-        ReplaceMBBInJumpTables(MBB, FallThrough);
+      MF.getJumpTableInfo()->ReplaceMBBInJumpTables(MBB, FallThrough);
       MadeChange = true;
     }
     return MadeChange;
@@ -982,7 +982,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       // last block in the function, we'd just keep swapping the two blocks for
       // last.  Only do the swap if one is clearly better to fall through than
       // the other.
-      if (FallThrough == --MBB->getParent()->end() &&
+      if (FallThrough == --MF.end() &&
           !IsBetterFallthrough(PriorTBB, MBB))
         DoTransform = false;
 
@@ -1013,7 +1013,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
           TII->InsertBranch(PrevBB, MBB, 0, NewPriorCond);
 
           // Move this block to the end of the function.
-          MBB->moveAfter(--MBB->getParent()->end());
+          MBB->moveAfter(--MF.end());
           MadeChange = true;
           ++NumBranchOpts;
           return MadeChange;
@@ -1114,8 +1114,7 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
           }
 
           // Change any jumptables to go to the new MBB.
-          MBB->getParent()->getJumpTableInfo()->
-            ReplaceMBBInJumpTables(MBB, CurTBB);
+          MF.getJumpTableInfo()->ReplaceMBBInJumpTables(MBB, CurTBB);
           if (DidChange) {
             ++NumBranchOpts;
             MadeChange = true;
@@ -1195,9 +1194,9 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       // Okay, there is no really great place to put this block.  If, however,
       // the block before this one would be a fall-through if this block were
       // removed, move this block to the end of the function.
-      if (FallThrough != MBB->getParent()->end() &&
+      if (FallThrough != MF.end() &&
           PrevBB.isSuccessor(FallThrough)) {
-        MBB->moveAfter(--MBB->getParent()->end());
+        MBB->moveAfter(--MF.end());
         MadeChange = true;
         return MadeChange;
       }
