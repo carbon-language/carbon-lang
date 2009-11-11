@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -relocation-model=pic -disable-fp-elim -unwind-tables | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim -unwind-tables | FileCheck %s
 ; <rdar://problem/7383328>
 
 @.str = private constant [12 x i8] c"hello world\00", align 1 ; <[12 x i8]*> [#uses=1]
