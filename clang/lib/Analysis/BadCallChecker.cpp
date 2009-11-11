@@ -12,14 +12,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
+#include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "GRExprEngineInternalChecks.h"
 
 using namespace clang;
 
-void *BadCallChecker::getTag() {
-  static int x = 0;
-  return &x;
+namespace {
+class VISIBILITY_HIDDEN BadCallChecker : public CheckerVisitor<BadCallChecker> {
+  BuiltinBug *BT;
+public:
+  BadCallChecker() : BT(0) {}
+  static void *getTag() {
+    static int x = 0;
+    return &x;
+  }
+  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+};
+} // end anonymous namespace
+
+void clang::RegisterBadCallChecker(GRExprEngine &Eng) {
+  Eng.registerCheck(new BadCallChecker());
 }
 
 void BadCallChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
@@ -29,7 +42,7 @@ void BadCallChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   if (L.isUndef() || isa<loc::ConcreteInt>(L)) {
     if (ExplodedNode *N = C.GenerateNode(CE, true)) {
       if (!BT)
-        BT = new BuiltinBug(0, "Invalid function call",
+        BT = new BuiltinBug("Invalid function call",
                 "Called function pointer is a null or undefined pointer value");
 
       EnhancedBugReport *R =

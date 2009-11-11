@@ -16,10 +16,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
-#include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
-#include "clang/Analysis/PathSensitive/Checkers/UndefinedArgChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedAssignmentChecker.h"
-#include "clang/Analysis/PathSensitive/Checkers/AttrNonNullChecker.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
@@ -400,11 +397,11 @@ void GRExprEngine::RegisterInternalChecks() {
   // their associated BugType will get registered with the BugReporter
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.  
-  registerCheck(new AttrNonNullChecker());
-  registerCheck(new UndefinedArgChecker());
   registerCheck(new UndefinedAssignmentChecker());
-  registerCheck(new BadCallChecker());
   
+  RegisterAttrNonNullChecker(*this);
+  RegisterUndefinedArgChecker(*this);
+  RegisterBadCallChecker(*this);
   RegisterDereferenceChecker(*this);
   RegisterVLASizeChecker(*this);
   RegisterDivZeroChecker(*this);

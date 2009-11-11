@@ -12,14 +12,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/Checkers/AttrNonNullChecker.h"
+#include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "GRExprEngineInternalChecks.h"
 
 using namespace clang;
 
-void *AttrNonNullChecker::getTag() {
-  static int x = 0;
-  return &x;
+namespace {
+class VISIBILITY_HIDDEN AttrNonNullChecker
+  : public CheckerVisitor<AttrNonNullChecker> {
+  BugType *BT;
+public:
+  AttrNonNullChecker() : BT(0) {}
+  static void *getTag() {
+    static int x = 0;
+    return &x;
+  }
+  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+};
+} // end anonymous namespace
+
+void clang::RegisterAttrNonNullChecker(GRExprEngine &Eng) {
+  Eng.registerCheck(new AttrNonNullChecker());
 }
 
 void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C, 
