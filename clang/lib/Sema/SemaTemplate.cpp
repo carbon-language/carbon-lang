@@ -1606,6 +1606,209 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
                                    AllTemplateArgs);
 }
 
+/// \brief Check that the given template argument corresponds to the given
+/// template parameter.
+bool Sema::CheckTemplateArgument(NamedDecl *Param,
+                                 const TemplateArgumentLoc &Arg,
+                                 unsigned ArgIdx,
+                                 TemplateDecl *Template,
+                                 SourceLocation TemplateLoc,
+                                 SourceLocation LAngleLoc,
+                                 const TemplateArgumentLoc *TemplateArgs,
+                                 unsigned NumTemplateArgs,
+                                 SourceLocation RAngleLoc,
+                                 TemplateArgumentListBuilder &Converted) {
+  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param)) {
+    // Check template type parameters.
+    if (TTP->isParameterPack()) {
+      // Check all the remaining arguments (if any).
+      Converted.BeginPack();
+      for (; ArgIdx < NumTemplateArgs; ++ArgIdx) {
+        if (CheckTemplateTypeArgument(TTP, TemplateArgs[ArgIdx], Converted))
+          return true;
+      }
+      
+      Converted.EndPack();
+      return false;
+    } 
+    
+    return CheckTemplateTypeArgument(TTP, Arg, Converted);
+  }
+  
+  if (NonTypeTemplateParmDecl *NTTP =dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+    // Check non-type template parameters.
+    
+    // Do substitution on the type of the non-type template parameter
+    // with the template arguments we've seen thus far.
+    QualType NTTPType = NTTP->getType();
+    if (NTTPType->isDependentType()) {
+      // Do substitution on the type of the non-type template parameter.
+      InstantiatingTemplate Inst(*this, TemplateLoc, Template,
+                                 NTTP, Converted.getFlatArguments(),
+                                 Converted.flatSize(),
+                                 SourceRange(TemplateLoc, RAngleLoc));
+      
+      TemplateArgumentList TemplateArgs(Context, Converted,
+                                        /*TakeArgs=*/false);
+      NTTPType = SubstType(NTTPType,
+                           MultiLevelTemplateArgumentList(TemplateArgs),
+                           NTTP->getLocation(),
+                           NTTP->getDeclName());
+      // If that worked, check the non-type template parameter type
+      // for validity.
+      if (!NTTPType.isNull())
+        NTTPType = CheckNonTypeTemplateParameterType(NTTPType,
+                                                     NTTP->getLocation());
+      if (NTTPType.isNull())
+        return true;
+    }
+    
+    switch (Arg.getArgument().getKind()) {
+    case TemplateArgument::Null:
+      assert(false && "Should never see a NULL template argument here");
+      return true;
+      
+    case TemplateArgument::Expression: {
+      Expr *E = Arg.getArgument().getAsExpr();
+      TemplateArgument Result;
+      if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
+        return true;
+      
+      Converted.Append(Result);
+      break;
+    }
+      
+    case TemplateArgument::Declaration:
+    case TemplateArgument::Integral:
+      // We've already checked this template argument, so just copy
+      // it to the list of converted arguments.
+      Converted.Append(Arg.getArgument());
+      break;
+      
+    case TemplateArgument::Template:
+      // We were given a template template argument. It may not be ill-formed;
+      // see below.
+      if (DependentTemplateName *DTN
+            = Arg.getArgument().getAsTemplate().getAsDependentTemplateName()) {
+        // We have a template argument such as \c T::template X, which we
+        // parsed as a template template argument. However, since we now
+        // know that we need a non-type template argument, convert this
+        // template name into an expression.          
+        Expr *E = new (Context) UnresolvedDeclRefExpr(DTN->getIdentifier(),
+                                                      Context.DependentTy,
+                                                      Arg.getTemplateNameLoc(),
+                                               Arg.getTemplateQualifierRange(),
+                                                      DTN->getQualifier(),
+                                                  /*isAddressOfOperand=*/false);
+        
+        TemplateArgument Result;
+        if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
+          return true;
+        
+        Converted.Append(Result);
+        break;
+      }
+      
+      // We have a template argument that actually does refer to a class
+      // template, template alias, or template template parameter, and
+      // therefore cannot be a non-type template argument.
+      Diag(Arg.getLocation(), diag::err_template_arg_must_be_expr)
+        << Arg.getSourceRange();
+      
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+      
+    case TemplateArgument::Type: {
+      // We have a non-type template parameter but the template
+      // argument is a type.
+      
+      // C++ [temp.arg]p2:
+      //   In a template-argument, an ambiguity between a type-id and
+      //   an expression is resolved to a type-id, regardless of the
+      //   form of the corresponding template-parameter.
+      //
+      // We warn specifically about this case, since it can be rather
+      // confusing for users.
+      QualType T = Arg.getArgument().getAsType();
+      SourceRange SR = Arg.getSourceRange();
+      if (T->isFunctionType())
+        Diag(SR.getBegin(), diag::err_template_arg_nontype_ambig) << SR << T;
+      else
+        Diag(SR.getBegin(), diag::err_template_arg_must_be_expr) << SR;
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;
+    }
+      
+    case TemplateArgument::Pack:
+      assert(0 && "FIXME: Implement!");
+      break;
+    }
+    
+    return false;
+  } 
+  
+  
+  // Check template template parameters.
+  TemplateTemplateParmDecl *TempParm = cast<TemplateTemplateParmDecl>(Param);
+    
+  // Substitute into the template parameter list of the template
+  // template parameter, since previously-supplied template arguments
+  // may appear within the template template parameter.
+  {
+    // Set up a template instantiation context.
+    LocalInstantiationScope Scope(*this);
+    InstantiatingTemplate Inst(*this, TemplateLoc, Template,
+                               TempParm, Converted.getFlatArguments(),
+                               Converted.flatSize(),
+                               SourceRange(TemplateLoc, RAngleLoc));
+    
+    TemplateArgumentList TemplateArgs(Context, Converted,
+                                      /*TakeArgs=*/false);
+    TempParm = cast_or_null<TemplateTemplateParmDecl>(
+                      SubstDecl(TempParm, CurContext, 
+                                MultiLevelTemplateArgumentList(TemplateArgs)));
+    if (!TempParm)
+      return true;
+    
+    // FIXME: TempParam is leaked.
+  }
+    
+  switch (Arg.getArgument().getKind()) {
+  case TemplateArgument::Null:
+    assert(false && "Should never see a NULL template argument here");
+    return true;
+    
+  case TemplateArgument::Template:
+    if (CheckTemplateArgument(TempParm, Arg))
+      return true;
+      
+    Converted.Append(Arg.getArgument());
+    break;
+    
+  case TemplateArgument::Expression:
+  case TemplateArgument::Type:
+    // We have a template template parameter but the template
+    // argument does not refer to a template.
+    Diag(Arg.getLocation(), diag::err_template_arg_must_be_template);
+    return true;
+      
+  case TemplateArgument::Declaration:
+    llvm::llvm_unreachable(
+                       "Declaration argument with template template parameter");
+    break;
+  case TemplateArgument::Integral:
+    llvm::llvm_unreachable(
+                          "Integral argument with template template parameter");
+    break;
+    
+  case TemplateArgument::Pack:
+    assert(0 && "FIXME: Implement!");
+    break;
+  }
+  
+  return false;
+}
+
 /// \brief Check that the given template argument list is well-formed
 /// for specializing the given template.
 bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
@@ -1722,200 +1925,11 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       // Retrieve the template argument produced by the user.
       Arg = TemplateArgs[ArgIdx];
     }
-
-
-    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
-      if (TTP->isParameterPack()) {
-        Converted.BeginPack();
-        // Check all the remaining arguments (if any).
-        for (; ArgIdx < NumArgs; ++ArgIdx) {
-          if (CheckTemplateTypeArgument(TTP, TemplateArgs[ArgIdx], Converted))
-            Invalid = true;
-        }
-
-        Converted.EndPack();
-      } else {
-        if (CheckTemplateTypeArgument(TTP, Arg, Converted))
-          Invalid = true;
-      }
-    } else if (NonTypeTemplateParmDecl *NTTP
-                 = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
-      // Check non-type template parameters.
-
-      // Do substitution on the type of the non-type template parameter
-      // with the template arguments we've seen thus far.
-      QualType NTTPType = NTTP->getType();
-      if (NTTPType->isDependentType()) {
-        // Do substitution on the type of the non-type template parameter.
-        InstantiatingTemplate Inst(*this, TemplateLoc, Template,
-                                   NTTP, Converted.getFlatArguments(),
-                                   Converted.flatSize(),
-                                   SourceRange(TemplateLoc, RAngleLoc));
-
-        TemplateArgumentList TemplateArgs(Context, Converted,
-                                          /*TakeArgs=*/false);
-        NTTPType = SubstType(NTTPType,
-                             MultiLevelTemplateArgumentList(TemplateArgs),
-                             NTTP->getLocation(),
-                             NTTP->getDeclName());
-        // If that worked, check the non-type template parameter type
-        // for validity.
-        if (!NTTPType.isNull())
-          NTTPType = CheckNonTypeTemplateParameterType(NTTPType,
-                                                       NTTP->getLocation());
-        if (NTTPType.isNull()) {
-          Invalid = true;
-          break;
-        }
-      }
-
-      switch (Arg.getArgument().getKind()) {
-      case TemplateArgument::Null:
-        assert(false && "Should never see a NULL template argument here");
-        break;
-
-      case TemplateArgument::Expression: {
-        Expr *E = Arg.getArgument().getAsExpr();
-        TemplateArgument Result;
-        if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
-          Invalid = true;
-        else
-          Converted.Append(Result);
-        break;
-      }
-
-      case TemplateArgument::Declaration:
-      case TemplateArgument::Integral:
-        // We've already checked this template argument, so just copy
-        // it to the list of converted arguments.
-        Converted.Append(Arg.getArgument());
-        break;
-
-      case TemplateArgument::Template:
-        // We were given a template template argument. It may not be ill-formed;
-        // see below.
-        if (DependentTemplateName *DTN
-             = Arg.getArgument().getAsTemplate().getAsDependentTemplateName()) {
-          // We have a template argument such as \c T::template X, which we
-          // parsed as a template template argument. However, since we now
-          // know that we need a non-type template argument, convert this
-          // template name into an expression.          
-          Expr *E = new (Context) UnresolvedDeclRefExpr(DTN->getIdentifier(),
-                                                        Context.DependentTy,
-                                                      Arg.getTemplateNameLoc(),
-                                                Arg.getTemplateQualifierRange(),
-                                                        DTN->getQualifier(),
-                                                  /*isAddressOfOperand=*/false);
-                                                        
-          TemplateArgument Result;
-          if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
-            Invalid = true;
-          else
-            Converted.Append(Result);
-          
-          break;
-        }
-          
-        // We have a template argument that actually does refer to a class
-        // template, template alias, or template template parameter, and
-        // therefore cannot be a non-type template argument.
-        Diag(Arg.getLocation(), diag::err_template_arg_must_be_expr)
-          << Arg.getSourceRange();
-          
-        Diag((*Param)->getLocation(), diag::note_template_param_here);
-        Invalid = true;
-        break;
-          
-      case TemplateArgument::Type: {
-        // We have a non-type template parameter but the template
-        // argument is a type.
-
-        // C++ [temp.arg]p2:
-        //   In a template-argument, an ambiguity between a type-id and
-        //   an expression is resolved to a type-id, regardless of the
-        //   form of the corresponding template-parameter.
-        //
-        // We warn specifically about this case, since it can be rather
-        // confusing for users.
-        QualType T = Arg.getArgument().getAsType();
-        SourceRange SR = Arg.getSourceRange();
-        if (T->isFunctionType())
-          Diag(SR.getBegin(), diag::err_template_arg_nontype_ambig)
-            << SR << T;
-        else
-          Diag(SR.getBegin(), diag::err_template_arg_must_be_expr) << SR;
-        Diag((*Param)->getLocation(), diag::note_template_param_here);
-        Invalid = true;
-        break;
-      }
-
-      case TemplateArgument::Pack:
-        assert(0 && "FIXME: Implement!");
-        break;
-      }
-    } else {
-      // Check template template parameters.
-      TemplateTemplateParmDecl *TempParm
-        = cast<TemplateTemplateParmDecl>(*Param);
-
-      // Substitute into the template parameter list of the template
-      // template parameter, since previously-supplied template arguments
-      // may appear within the template template parameter.
-      {
-        // Set up a template instantiation context.
-        LocalInstantiationScope Scope(*this);
-        InstantiatingTemplate Inst(*this, TemplateLoc, Template,
-                                   TempParm, Converted.getFlatArguments(),
-                                   Converted.flatSize(),
-                                   SourceRange(TemplateLoc, RAngleLoc));
-      
-        TemplateArgumentList TemplateArgs(Context, Converted,
-                                          /*TakeArgs=*/false);
-        TempParm = cast_or_null<TemplateTemplateParmDecl>(
-                        SubstDecl(TempParm, CurContext, 
-                                 MultiLevelTemplateArgumentList(TemplateArgs)));
-        if (!TempParm) {
-          Invalid = true;
-          break;
-        }
-        
-        // FIXME: TempParam is leaked.
-      }
-      
-      switch (Arg.getArgument().getKind()) {
-      case TemplateArgument::Null:
-        assert(false && "Should never see a NULL template argument here");
-        break;
-
-      case TemplateArgument::Template:
-        if (CheckTemplateArgument(TempParm, Arg))
-          Invalid = true;
-        else
-          Converted.Append(Arg.getArgument());
-        break;
-          
-      case TemplateArgument::Expression:
-      case TemplateArgument::Type:
-        // We have a template template parameter but the template
-        // argument does not refer to a template.
-        Diag(Arg.getLocation(), diag::err_template_arg_must_be_template);
-        Invalid = true;
-        break;
-
-      case TemplateArgument::Declaration:
-        llvm::llvm_unreachable(
-                       "Declaration argument with template template parameter");
-        break;
-      case TemplateArgument::Integral:
-        llvm::llvm_unreachable(
-                          "Integral argument with template template parameter");
-        break;
-
-      case TemplateArgument::Pack:
-        assert(0 && "FIXME: Implement!");
-        break;
-      }
-    }
+    
+    if (CheckTemplateArgument(*Param, Arg, ArgIdx, Template, TemplateLoc,
+                              LAngleLoc, TemplateArgs, NumTemplateArgs, 
+                              RAngleLoc, Converted))
+      return true;
   }
 
   return Invalid;

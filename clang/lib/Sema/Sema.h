@@ -2585,6 +2585,17 @@ public:
                                                 SourceLocation TemplateLoc,
                                                 Declarator &D);
     
+  bool CheckTemplateArgument(NamedDecl *Param,
+                             const TemplateArgumentLoc &Arg,
+                             unsigned ArgIdx,
+                             TemplateDecl *Template,
+                             SourceLocation TemplateLoc,
+                             SourceLocation LAngleLoc,
+                             const TemplateArgumentLoc *TemplateArgs,
+                             unsigned NumTemplateArgs,
+                             SourceLocation RAngleLoc,
+                             TemplateArgumentListBuilder &Converted);
+  
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation LAngleLoc,
