@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 | grep cmp | grep 240
 ; RUN: llc < %s -march=x86 | grep inc | count 1
 
-define i32 @foo(i32 %A, i32 %B, i32 %C, i32 %D) {
+define i32 @foo(i32 %A, i32 %B, i32 %C, i32 %D) nounwind {
 entry:
 	%tmp2955 = icmp sgt i32 %C, 0		; <i1> [#uses=1]
 	br i1 %tmp2955, label %bb26.outer.us, label %bb40.split

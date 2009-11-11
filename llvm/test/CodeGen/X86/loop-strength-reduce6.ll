@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 | not grep inc
 
-define fastcc i32 @decodeMP3(i32 %isize, i32* %done) {
+define fastcc i32 @decodeMP3(i32 %isize, i32* %done) nounwind {
 entry:
 	br i1 false, label %cond_next191, label %cond_true189
 
