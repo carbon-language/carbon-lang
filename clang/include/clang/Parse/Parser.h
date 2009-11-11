@@ -1371,6 +1371,7 @@ private:
                                bool AllowTypeAnnotation = true);
   void AnnotateTemplateIdTokenAsType(const CXXScopeSpec *SS = 0);
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
+  ParsedTemplateArgument ParseTemplateTemplateArgument();
   ParsedTemplateArgument ParseTemplateArgument();
   DeclPtrTy ParseExplicitInstantiation(SourceLocation ExternLoc,
                                        SourceLocation TemplateLoc,

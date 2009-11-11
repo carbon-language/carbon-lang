@@ -284,6 +284,46 @@ TemplateDecl *Sema::AdjustDeclIfTemplate(DeclPtrTy &D) {
   return 0;
 }
 
+static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
+                                            const ParsedTemplateArgument &Arg) {
+  
+  switch (Arg.getKind()) {
+  case ParsedTemplateArgument::Type: {
+    DeclaratorInfo *DI;
+    QualType T = SemaRef.GetTypeFromParser(Arg.getAsType(), &DI);
+    if (!DI) 
+      DI = SemaRef.Context.getTrivialDeclaratorInfo(T, Arg.getLocation());
+    return TemplateArgumentLoc(TemplateArgument(T), DI);
+  }
+    
+  case ParsedTemplateArgument::NonType: {
+    Expr *E = static_cast<Expr *>(Arg.getAsExpr());
+    return TemplateArgumentLoc(TemplateArgument(E), E);
+  }
+    
+  case ParsedTemplateArgument::Template: {
+    TemplateName Template
+      = TemplateName::getFromVoidPointer(Arg.getAsTemplate().get());
+    return TemplateArgumentLoc(TemplateArgument(Template),
+                               Arg.getScopeSpec().getRange(),
+                               Arg.getLocation());
+  }
+  }
+  
+  llvm::llvm_unreachable("Unhandled parsed template argument");
+  return TemplateArgumentLoc();
+}
+                                                     
+/// \brief Translates template arguments as provided by the parser
+/// into template arguments used by semantic analysis.
+void Sema::translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
+                     llvm::SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs) {
+ TemplateArgs.reserve(TemplateArgsIn.size());
+ 
+ for (unsigned I = 0, Last = TemplateArgsIn.size(); I != Last; ++I)
+   TemplateArgs.push_back(translateTemplateArgument(*this, TemplateArgsIn[I]));
+}
+                                                     
 /// ActOnTypeParameter - Called when a C++ template type parameter
 /// (e.g., "typename T") has been parsed. Typename specifies whether
 /// the keyword "typename" was used to declare the type parameter
@@ -518,34 +558,22 @@ Sema::DeclPtrTy Sema::ActOnTemplateTemplateParameter(Scope* S,
 /// parameter.
 void Sema::ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParamD,
                                                  SourceLocation EqualLoc,
-                                                 ExprArg DefaultE) {
+                                        const ParsedTemplateArgument &Default) {
   TemplateTemplateParmDecl *TemplateParm
     = cast<TemplateTemplateParmDecl>(TemplateParamD.getAs<Decl>());
-
-  // Since a template-template parameter's default argument is an
-  // id-expression, it must be a DeclRefExpr.
-  DeclRefExpr *Default
-    = cast<DeclRefExpr>(static_cast<Expr *>(DefaultE.get()));
-
+  
   // C++ [temp.param]p14:
   //   A template-parameter shall not be used in its own default argument.
   // FIXME: Implement this check! Needs a recursive walk over the types.
 
   // Check the well-formedness of the template argument.
-  if (!isa<TemplateDecl>(Default->getDecl())) {
-    Diag(Default->getSourceRange().getBegin(),
-         diag::err_template_arg_must_be_template)
-      << Default->getSourceRange();
-    TemplateParm->setInvalidDecl();
-    return;
-  }
-  if (CheckTemplateArgument(TemplateParm, Default)) {
+  TemplateArgumentLoc DefaultArg = translateTemplateArgument(*this, Default);
+  if (CheckTemplateArgument(TemplateParm, DefaultArg)) {
     TemplateParm->setInvalidDecl();
     return;
   }
 
-  DefaultE.release();
-  TemplateParm->setDefaultArgument(Default);
+  TemplateParm->setDefaultArgument(DefaultArg);
 }
 
 /// ActOnTemplateParameterList - Builds a TemplateParameterList that
@@ -924,8 +952,8 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         = OldParams? cast<TemplateTemplateParmDecl>(*OldParam) : 0;
       if (OldTemplateParm && OldTemplateParm->hasDefaultArgument() &&
           NewTemplateParm->hasDefaultArgument()) {
-        OldDefaultLoc = OldTemplateParm->getDefaultArgumentLoc();
-        NewDefaultLoc = NewTemplateParm->getDefaultArgumentLoc();
+        OldDefaultLoc = OldTemplateParm->getDefaultArgument().getLocation();
+        NewDefaultLoc = NewTemplateParm->getDefaultArgument().getLocation();
         SawDefaultArgument = true;
         RedundantDefaultArg = true;
         PreviousDefaultArgLoc = NewDefaultLoc;
@@ -937,10 +965,12 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         // that points to a previous template template parameter.
         NewTemplateParm->setDefaultArgument(
                                         OldTemplateParm->getDefaultArgument());
-        PreviousDefaultArgLoc = OldTemplateParm->getDefaultArgumentLoc();
+        PreviousDefaultArgLoc
+          = OldTemplateParm->getDefaultArgument().getLocation();
       } else if (NewTemplateParm->hasDefaultArgument()) {
         SawDefaultArgument = true;
-        PreviousDefaultArgLoc = NewTemplateParm->getDefaultArgumentLoc();
+        PreviousDefaultArgLoc
+          = NewTemplateParm->getDefaultArgument().getLocation();
       } else if (SawDefaultArgument)
         MissingDefaultArg = true;
     }
@@ -1117,50 +1147,6 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
   // Return the last template parameter list, which corresponds to the
   // entity being declared.
   return ParamLists[NumParamLists - 1];
-}
-
-/// \brief Translates template arguments as provided by the parser
-/// into template arguments used by semantic analysis.
-void Sema::translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
-                     llvm::SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs) {
-  TemplateArgs.reserve(TemplateArgsIn.size());
-
-  for (unsigned I = 0, Last = TemplateArgsIn.size(); I != Last; ++I) {
-    const ParsedTemplateArgument &Arg = TemplateArgsIn[I];
-    switch (Arg.getKind()) {
-    case ParsedTemplateArgument::Type: {
-      DeclaratorInfo *DI;
-      QualType T = Sema::GetTypeFromParser(Arg.getAsType(), &DI);
-      if (!DI) DI = Context.getTrivialDeclaratorInfo(T, Arg.getLocation());
-      TemplateArgs.push_back(TemplateArgumentLoc(TemplateArgument(T), DI));
-      break;
-    }
-        
-    case ParsedTemplateArgument::NonType: {
-      Expr *E = static_cast<Expr *>(Arg.getAsExpr());
-      TemplateArgs.push_back(TemplateArgumentLoc(TemplateArgument(E), E));
-      break;
-    }
-      
-    case ParsedTemplateArgument::Template: {
-      TemplateName Template
-        = TemplateName::getFromVoidPointer(Arg.getAsTemplate().get());
-      
-      // FIXME: This is an egregious hack. We turn a nicely-parsed template name
-      // into a DeclRefExpr, because that's how we previously parsed template
-      // template parameters. This will disappear as part of the upcoming
-      // implementation of template template parameters.
-      const CXXScopeSpec &SS = Arg.getScopeSpec();
-      Expr *E = DeclRefExpr::Create(Context, 
-                                    (NestedNameSpecifier *)SS.getScopeRep(),
-                                    SS.getRange(), 
-                                    Template.getAsTemplateDecl(),
-                                    Arg.getLocation(),
-                                    Context.DependentTy, false, false);
-      TemplateArgs.push_back(TemplateArgumentLoc(TemplateArgument(E), E));
-    }
-    }
-  }
 }
 
 QualType Sema::CheckTemplateIdType(TemplateName Name,
@@ -1538,7 +1524,7 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
 /// \param RAngleLoc the location of the right angle bracket ('>') that
 /// terminates the template-id.
 ///
-/// \param Param the template template parameter whose default we are
+/// \param Param the non-type template parameter whose default we are
 /// substituting into.
 ///
 /// \param Converted the list of template arguments provided for template
@@ -1564,6 +1550,52 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
                                    SourceRange(TemplateLoc, RAngleLoc));
 
   return SemaRef.SubstExpr(Param->getDefaultArgument(), AllTemplateArgs);
+}
+
+/// \brief Substitute template arguments into the default template argument for
+/// the given template template parameter.
+///
+/// \param SemaRef the semantic analysis object for which we are performing
+/// the substitution.
+///
+/// \param Template the template that we are synthesizing template arguments 
+/// for.
+///
+/// \param TemplateLoc the location of the template name that started the
+/// template-id we are checking.
+///
+/// \param RAngleLoc the location of the right angle bracket ('>') that
+/// terminates the template-id.
+///
+/// \param Param the template template parameter whose default we are
+/// substituting into.
+///
+/// \param Converted the list of template arguments provided for template
+/// parameters that precede \p Param in the template parameter list.
+///
+/// \returns the substituted template argument, or NULL if an error occurred.
+static TemplateName
+SubstDefaultTemplateArgument(Sema &SemaRef,
+                             TemplateDecl *Template,
+                             SourceLocation TemplateLoc,
+                             SourceLocation RAngleLoc,
+                             TemplateTemplateParmDecl *Param,
+                             TemplateArgumentListBuilder &Converted) {
+  TemplateArgumentList TemplateArgs(SemaRef.Context, Converted,
+                                    /*TakeArgs=*/false);
+  
+  MultiLevelTemplateArgumentList AllTemplateArgs
+    = SemaRef.getTemplateInstantiationArgs(Template, &TemplateArgs);
+  
+  Sema::InstantiatingTemplate Inst(SemaRef, TemplateLoc,
+                                   Template, Converted.getFlatArguments(),
+                                   Converted.flatSize(),
+                                   SourceRange(TemplateLoc, RAngleLoc));
+  
+  return SemaRef.SubstTemplateName(
+                      Param->getDefaultArgument().getArgument().getAsTemplate(),
+                              Param->getDefaultArgument().getTemplateNameLoc(), 
+                                   AllTemplateArgs);
 }
 
 /// \brief Check that the given template argument list is well-formed
@@ -1666,9 +1698,17 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         if (!TempParm->hasDefaultArgument())
           break;
 
-        // FIXME: Subst default argument
-        Arg = TemplateArgumentLoc(TemplateArgument(TempParm->getDefaultArgument()),
-                                  TempParm->getDefaultArgument());
+        TemplateName Name = SubstDefaultTemplateArgument(*this, Template,
+                                                         TemplateLoc, 
+                                                         RAngleLoc, 
+                                                         TempParm,
+                                                         Converted);
+        if (Name.isNull())
+          return true;
+        
+        Arg = TemplateArgumentLoc(TemplateArgument(Name), 
+                    TempParm->getDefaultArgument().getTemplateQualifierRange(),
+                    TempParm->getDefaultArgument().getTemplateNameLoc());
       }
     } else {
       // Retrieve the template argument produced by the user.
@@ -1743,6 +1783,41 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         Converted.Append(Arg.getArgument());
         break;
 
+      case TemplateArgument::Template:
+        // We were given a template template argument. It may not be ill-formed;
+        // see below.
+        if (DependentTemplateName *DTN
+             = Arg.getArgument().getAsTemplate().getAsDependentTemplateName()) {
+          // We have a template argument such as \c T::template X, which we
+          // parsed as a template template argument. However, since we now
+          // know that we need a non-type template argument, convert this
+          // template name into an expression.          
+          Expr *E = new (Context) UnresolvedDeclRefExpr(DTN->getIdentifier(),
+                                                        Context.DependentTy,
+                                                      Arg.getTemplateNameLoc(),
+                                                Arg.getTemplateQualifierRange(),
+                                                        DTN->getQualifier(),
+                                                  /*isAddressOfOperand=*/false);
+                                                        
+          TemplateArgument Result;
+          if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
+            Invalid = true;
+          else
+            Converted.Append(Result);
+          
+          break;
+        }
+          
+        // We have a template argument that actually does refer to a class
+        // template, template alias, or template template parameter, and
+        // therefore cannot be a non-type template argument.
+        Diag(Arg.getLocation(), diag::err_template_arg_must_be_expr)
+          << Arg.getSourceRange();
+          
+        Diag((*Param)->getLocation(), diag::note_template_param_here);
+        Invalid = true;
+        break;
+          
       case TemplateArgument::Type: {
         // We have a non-type template parameter but the template
         // argument is a type.
@@ -1780,38 +1855,28 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         assert(false && "Should never see a NULL template argument here");
         break;
 
-      case TemplateArgument::Expression: {
-        Expr *ArgExpr = Arg.getArgument().getAsExpr();
-        if (ArgExpr && isa<DeclRefExpr>(ArgExpr) &&
-            isa<TemplateDecl>(cast<DeclRefExpr>(ArgExpr)->getDecl())) {
-          if (CheckTemplateArgument(TempParm, cast<DeclRefExpr>(ArgExpr)))
-            Invalid = true;
-
-          // Add the converted template argument.
-          Decl *D
-            = cast<DeclRefExpr>(ArgExpr)->getDecl()->getCanonicalDecl();
-          Converted.Append(TemplateArgument(D));
-          continue;
-        }
-      }
-        // fall through
-
-      case TemplateArgument::Type: {
+      case TemplateArgument::Template:
+        if (CheckTemplateArgument(TempParm, Arg))
+          Invalid = true;
+        else
+          Converted.Append(Arg.getArgument());
+        break;
+          
+      case TemplateArgument::Expression:
+      case TemplateArgument::Type:
         // We have a template template parameter but the template
         // argument does not refer to a template.
         Diag(Arg.getLocation(), diag::err_template_arg_must_be_template);
         Invalid = true;
         break;
-      }
 
       case TemplateArgument::Declaration:
-        // We've already checked this template argument, so just copy
-        // it to the list of converted arguments.
-        Converted.Append(Arg.getArgument());
+        llvm::llvm_unreachable(
+                       "Declaration argument with template template parameter");
         break;
-
       case TemplateArgument::Integral:
-        assert(false && "Integral argument with template template parameter");
+        llvm::llvm_unreachable(
+                          "Integral argument with template template parameter");
         break;
 
       case TemplateArgument::Pack:
@@ -2357,9 +2422,14 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 /// This routine implements the semantics of C++ [temp.arg.template].
 /// It returns true if an error occurred, and false otherwise.
 bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
-                                 DeclRefExpr *Arg) {
-  assert(isa<TemplateDecl>(Arg->getDecl()) && "Only template decls allowed");
-  TemplateDecl *Template = cast<TemplateDecl>(Arg->getDecl());
+                                 const TemplateArgumentLoc &Arg) {
+  TemplateName Name = Arg.getArgument().getAsTemplate();
+  TemplateDecl *Template = Name.getAsTemplateDecl();
+  if (!Template) {
+    // Any dependent template name is fine.
+    assert(Name.isDependent() && "Non-dependent template isn't a declaration?");
+    return false;
+  }
 
   // C++ [temp.arg.template]p1:
   //   A template-argument for a template template-parameter shall be
@@ -2376,7 +2446,7 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
       !isa<TemplateTemplateParmDecl>(Template)) {
     assert(isa<FunctionTemplateDecl>(Template) &&
            "Only function templates are possible here");
-    Diag(Arg->getLocStart(), diag::err_template_arg_not_class_template);
+    Diag(Arg.getLocation(), diag::err_template_arg_not_class_template);
     Diag(Template->getLocation(), diag::note_template_arg_refers_here_func)
       << Template;
   }
@@ -2384,7 +2454,7 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
   return !TemplateParameterListsAreEqual(Template->getTemplateParameters(),
                                          Param->getTemplateParameters(),
                                          true, true,
-                                         Arg->getSourceRange().getBegin());
+                                         Arg.getLocation());
 }
 
 /// \brief Determine whether the given template parameter lists are
@@ -2735,16 +2805,9 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
       } else if (TemplateTemplateParmDecl *TTP
                    = dyn_cast<TemplateTemplateParmDecl>(
                                                  TemplateParams->getParam(I))) {
-        // FIXME: We should settle on either Declaration storage or
-        // Expression storage for template template parameters.
+        TemplateName Name = ArgList[I].getAsTemplate();
         TemplateTemplateParmDecl *ArgDecl
-          = dyn_cast_or_null<TemplateTemplateParmDecl>(
-                                                  ArgList[I].getAsDecl());
-        if (!ArgDecl)
-          if (DeclRefExpr *DRE
-                = dyn_cast_or_null<DeclRefExpr>(ArgList[I].getAsExpr()))
-            ArgDecl = dyn_cast<TemplateTemplateParmDecl>(DRE->getDecl());
-
+          = dyn_cast_or_null<TemplateTemplateParmDecl>(Name.getAsTemplateDecl());
         if (!ArgDecl ||
             ArgDecl->getIndex() != TTP->getIndex() ||
             ArgDecl->getDepth() != TTP->getDepth())
@@ -2871,12 +2934,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
         }
       } else {
         TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(Param);
-        if (Expr *DefArg = TTP->getDefaultArgument()) {
-          Diag(TTP->getDefaultArgumentLoc(),
+        if (TTP->hasDefaultArgument()) {
+          Diag(TTP->getDefaultArgument().getLocation(),
                diag::err_default_arg_in_partial_spec)
-            << DefArg->getSourceRange();
-          TTP->setDefaultArgument(0);
-          DefArg->Destroy(Context);
+            << TTP->getDefaultArgument().getSourceRange();
+          TTP->setDefaultArgument(TemplateArgumentLoc());
         }
       }
     }
@@ -4577,6 +4639,14 @@ Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
         if (Unnamed) {
           Result += "<anonymous>";
         }
+        break;
+      }
+        
+      case TemplateArgument::Template: {
+        std::string Str;
+        llvm::raw_string_ostream OS(Str);
+        Args[I].getAsTemplate().print(OS, Context.PrintingPolicy);
+        Result += OS.str();
         break;
       }
         

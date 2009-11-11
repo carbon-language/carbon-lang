@@ -26,12 +26,9 @@ B<X> *a6; // expected-error{{template template argument has different template p
 C<Y> *a7;
 C<Ylong> *a8; // expected-error{{template template argument has different template parameters than its corresponding template template parameter}}
 
-template<typename T> void f(int); // expected-note{{function template}}
+template<typename T> void f(int);
 
-// FIXME: we're right to provide an error message, but it should say
-// that we need a class template. We won't get this right until name
-// lookup of 'f' returns a TemplateDecl.
-A<f> *a9; // expected-error{{template argument does not refer to}}
+A<f> *a9; // expected-error{{must be a class template}}
 
 // FIXME: The code below is ill-formed, because of the evil digraph '<:'. 
 // We should provide a much better error message than we currently do.

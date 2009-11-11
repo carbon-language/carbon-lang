@@ -2357,12 +2357,14 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) {
       return Arg;
 
     case TemplateArgument::Expression:
-      // FIXME: Build canonical expression?
       return Arg;
 
     case TemplateArgument::Declaration:
       return TemplateArgument(Arg.getAsDecl()->getCanonicalDecl());
 
+    case TemplateArgument::Template:
+      return TemplateArgument(getCanonicalTemplateName(Arg.getAsTemplate()));
+      
     case TemplateArgument::Integral:
       return TemplateArgument(*Arg.getAsIntegral(),
                               getCanonicalType(Arg.getIntegralType()));

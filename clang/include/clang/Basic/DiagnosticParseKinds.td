@@ -289,6 +289,10 @@ def err_explicit_spec_non_template : Error<
 def err_variadic_templates : Error<
   "variadic templates are only allowed in C++0x">;
   
+def err_default_template_template_parameter_not_template : Error<
+  "default template argument for a template template parameter must be a class "
+  "template">;
+  
 // C++ declarations
 def err_friend_decl_defines_class : Error<
   "cannot define a type in a friend declaration">;

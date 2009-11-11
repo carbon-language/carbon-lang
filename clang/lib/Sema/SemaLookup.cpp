@@ -1219,12 +1219,13 @@ addAssociatedClassesAndNamespaces(const TemplateArgument &Arg,
                                         AssociatedClasses);
       break;
 
-    case TemplateArgument::Declaration:
+    case TemplateArgument::Template: {
       // [...] the namespaces in which any template template arguments are
       // defined; and the classes in which any member templates used as
       // template template arguments are defined.
+      TemplateName Template = Arg.getAsTemplate();
       if (ClassTemplateDecl *ClassTemplate
-            = dyn_cast<ClassTemplateDecl>(Arg.getAsDecl())) {
+                 = dyn_cast<ClassTemplateDecl>(Template.getAsTemplateDecl())) {
         DeclContext *Ctx = ClassTemplate->getDeclContext();
         if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
           AssociatedClasses.insert(EnclosingClass);
@@ -1234,7 +1235,9 @@ addAssociatedClassesAndNamespaces(const TemplateArgument &Arg,
         CollectNamespace(AssociatedNamespaces, Ctx);
       }
       break;
-
+    }
+      
+    case TemplateArgument::Declaration:
     case TemplateArgument::Integral:
     case TemplateArgument::Expression:
       // [Note: non-type template arguments do not contribute to the set of

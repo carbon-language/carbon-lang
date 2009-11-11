@@ -220,7 +220,7 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
       TemplateArgs.push_back(TemplateArgument(E));
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
-      TemplateArgs.push_back(TemplateArgument(TTP));
+      TemplateArgs.push_back(TemplateArgument(TemplateName(TTP)));
     }
   }
 
@@ -283,11 +283,6 @@ TemplateTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
                                  IdentifierInfo *Id,
                                  TemplateParameterList *Params) {
   return new (C) TemplateTemplateParmDecl(DC, L, D, P, Id, Params);
-}
-
-SourceLocation TemplateTemplateParmDecl::getDefaultArgumentLoc() const {
-  return DefaultArgument? DefaultArgument->getSourceRange().getBegin()
-                        : SourceLocation();
 }
 
 //===----------------------------------------------------------------------===//

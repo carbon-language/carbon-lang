@@ -452,10 +452,11 @@ Decl *TemplateInstantiator::TransformDecl(Decl *D) {
 
   if (TemplateTemplateParmDecl *TTP = dyn_cast<TemplateTemplateParmDecl>(D)) {
     if (TTP->getDepth() < TemplateArgs.getNumLevels()) {
-      assert(TemplateArgs(TTP->getDepth(), TTP->getPosition()).getAsDecl() &&
+      TemplateName Template
+        = TemplateArgs(TTP->getDepth(), TTP->getPosition()).getAsTemplate();
+      assert(!Template.isNull() && Template.getAsTemplateDecl() &&
              "Wrong kind of template template argument");
-      return cast<TemplateDecl>(TemplateArgs(TTP->getDepth(),
-                                             TTP->getPosition()).getAsDecl());
+      return Template.getAsTemplateDecl();
     }
 
     // If the corresponding template argument is NULL or non-existent, it's
@@ -466,9 +467,8 @@ Decl *TemplateInstantiator::TransformDecl(Decl *D) {
                                           TTP->getPosition()))
       return D;
 
-    // FIXME: Implement depth reduction of template template parameters
-    assert(false &&
-      "Reducing depth of template template parameters is not yet implemented");
+    // Fall through to find the instantiated declaration for this template
+    // template parameter.
   }
 
   return SemaRef.FindInstantiatedDecl(cast<NamedDecl>(D), TemplateArgs);

@@ -58,6 +58,10 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
     ID.AddPointer(getAsDecl()? getAsDecl()->getCanonicalDecl() : 0);
     break;
 
+  case Template:
+    ID.AddPointer(getAsTemplate().getAsVoidPointer());
+    break;
+      
   case Integral:
     getAsIntegral()->Profile(ID);
     getIntegralType().Profile(ID);
@@ -82,10 +86,19 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
   switch (Argument.getKind()) {
   case TemplateArgument::Expression:
     return getSourceExpression()->getSourceRange();
+      
   case TemplateArgument::Declaration:
     return getSourceDeclExpression()->getSourceRange();
+      
   case TemplateArgument::Type:
     return getSourceDeclaratorInfo()->getTypeLoc().getFullSourceRange();
+      
+  case TemplateArgument::Template:
+    if (getTemplateQualifierRange().isValid())
+      return SourceRange(getTemplateQualifierRange().getBegin(),
+                         getTemplateNameLoc());
+    return SourceRange(getTemplateNameLoc());
+      
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
   case TemplateArgument::Null:

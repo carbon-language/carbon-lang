@@ -485,12 +485,17 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   // Get the a default value, if given.
   if (Tok.is(tok::equal)) {
     SourceLocation EqualLoc = ConsumeToken();
-    OwningExprResult DefaultExpr = ParseCXXIdExpression();
-    if (DefaultExpr.isInvalid())
+    ParsedTemplateArgument Default = ParseTemplateTemplateArgument();
+    if (Default.isInvalid()) {
+      Diag(Tok.getLocation(), 
+           diag::err_default_template_template_parameter_not_template);
+      static tok::TokenKind EndToks[] = { 
+        tok::comma, tok::greater, tok::greatergreater
+      };
+      SkipUntil(EndToks, 3, true, true);
       return Param;
-    else if (Param)
-      Actions.ActOnTemplateTemplateParameterDefault(Param, EqualLoc,
-                                                    move(DefaultExpr));
+    } else if (Param)
+      Actions.ActOnTemplateTemplateParameterDefault(Param, EqualLoc, Default);
   }
 
   return Param;
@@ -808,6 +813,81 @@ static bool isEndOfTemplateArgument(Token Tok) {
          Tok.is(tok::greatergreater);
 }
 
+/// \brief Parse a C++ template template argument.
+ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
+  if (!Tok.is(tok::identifier) && !Tok.is(tok::coloncolon) &&
+      !Tok.is(tok::annot_cxxscope))
+    return ParsedTemplateArgument();
+
+  // C++0x [temp.arg.template]p1:
+  //   A template-argument for a template template-parameter shall be the name
+  //   of a class template or a template alias, expressed as id-expression.
+  //   
+  // We perform some tentative parsing at this point, to determine whether
+  // we have an id-expression that refers to a class template or template
+  // alias. The grammar we tentatively parse is:
+  //
+  //   nested-name-specifier[opt] template[opt] identifier
+  //
+  // followed by a token that terminates a template argument, such as ',', 
+  // '>', or (in some cases) '>>'.
+  TentativeParsingAction TPA(*this);
+  CXXScopeSpec SS; // nested-name-specifier, if present
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, 
+                                 /*EnteringContext=*/false);
+  
+  if (SS.isSet() && Tok.is(tok::kw_template)) {
+    // Parse the optional 'template' keyword following the 
+    // nested-name-specifier.
+    SourceLocation TemplateLoc = ConsumeToken();
+    
+    if (Tok.is(tok::identifier)) {
+      // We appear to have a dependent template name.
+      UnqualifiedId Name;
+      Name.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+      ConsumeToken(); // the identifier
+      
+      // If the next token signals the end of a template argument,
+      // then we have a dependent template name that could be a template
+      // template argument.
+      if (isEndOfTemplateArgument(Tok)) {
+        TemplateTy Template
+        = Actions.ActOnDependentTemplateName(TemplateLoc, SS, Name, 
+                                             /*ObjectType=*/0);
+        if (Template.get()) {
+          TPA.Commit();
+          return ParsedTemplateArgument(SS, Template, Name.StartLocation);
+        }
+      }
+    } 
+  } else if (Tok.is(tok::identifier)) {
+    // We may have a (non-dependent) template name.
+    TemplateTy Template;
+    UnqualifiedId Name;
+    Name.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+    ConsumeToken(); // the identifier
+    
+    if (isEndOfTemplateArgument(Tok)) {
+      TemplateNameKind TNK = Actions.isTemplateName(CurScope, SS, Name, 
+                                                    /*ObjectType=*/0, 
+                                                    /*EnteringContext=*/false, 
+                                                    Template);
+      if (TNK == TNK_Dependent_template_name || TNK == TNK_Type_template) {
+        // We have an id-expression that refers to a class template or
+        // (C++0x) template alias. 
+        TPA.Commit();
+        return ParsedTemplateArgument(SS, Template, Name.StartLocation);
+      }
+    }
+  }
+  
+  // We don't have a template template argument; revert everything we have
+  // tentatively parsed.
+  TPA.Revert();
+  
+  return ParsedTemplateArgument();
+}
+
 /// ParseTemplateArgument - Parse a C++ template argument (C++ [temp.names]).
 ///
 ///       template-argument: [C++ 14.2]
@@ -830,75 +910,12 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
     return ParsedTemplateArgument(ParsedTemplateArgument::Type, TypeArg.get(), 
                                   Loc);
   }
-
-  // C++0x [temp.arg.template]p1:
-  //   A template-argument for a template template-parameter shall be the name
-  //   of a class template or a template alias, expressed as id-expression.
-  // 
-  // We perform some tentative parsing at this point, to determine whether
-  // we have an id-expression that refers to a class template or template
-  // alias. The grammar we tentatively parse is:
-  //
-  //   nested-name-specifier[opt] template[opt] identifier
-  //
-  // followed by a token that terminates a template argument, such as ',', 
-  // '>', or (in some cases) '>>'.
-  if (Tok.is(tok::identifier) || Tok.is(tok::coloncolon) ||
-      Tok.is(tok::annot_cxxscope)) {
-    TentativeParsingAction TPA(*this);
-    CXXScopeSpec SS; // nested-name-specifier, if present
-    ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, 
-                                   /*EnteringContext=*/false);
-
-    if (SS.isSet() && Tok.is(tok::kw_template)) {
-      // Parse the optional 'template' keyword following the 
-      // nested-name-specifier.
-      SourceLocation TemplateLoc = ConsumeToken();
-      
-      if (Tok.is(tok::identifier)) {
-        // We appear to have a dependent template name.
-        UnqualifiedId Name;
-        Name.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
-        ConsumeToken(); // the identifier
-        
-        // If the next token signals the end of a template argument,
-        // then we have a dependent template name that could be a template
-        // template argument.
-        if (isEndOfTemplateArgument(Tok)) {
-          TemplateTy Template
-            = Actions.ActOnDependentTemplateName(TemplateLoc, SS, Name, 
-                                                 /*ObjectType=*/0);
-          if (Template.get()) {
-            TPA.Commit();
-            return ParsedTemplateArgument(SS, Template, Name.StartLocation);
-          }
-        }
-      } 
-    } else if (Tok.is(tok::identifier)) {
-      // We may have a (non-dependent) template name.
-      TemplateTy Template;
-      UnqualifiedId Name;
-      Name.setIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
-      ConsumeToken(); // the identifier
-
-      if (isEndOfTemplateArgument(Tok)) {
-        TemplateNameKind TNK = Actions.isTemplateName(CurScope, SS, Name, 
-                                                      /*ObjectType=*/0, 
-                                                      /*EnteringContext=*/false, 
-                                                      Template);
-        if (TNK == TNK_Dependent_template_name || TNK == TNK_Type_template) {
-          // We have an id-expression that refers to a class template or
-          // (C++0x) template alias. 
-          TPA.Commit();
-          return ParsedTemplateArgument(SS, Template, Name.StartLocation);
-        }
-      }
-    }
-    
-    // We don't have a template template argument; revert everything we have
-    // tentatively parsed.
-    TPA.Revert();
-  }
+  
+  // Try to parse a template template argument.
+  ParsedTemplateArgument TemplateTemplateArgument
+    = ParseTemplateTemplateArgument();
+  if (!TemplateTemplateArgument.isInvalid())
+    return TemplateTemplateArgument;
   
   // Parse a non-type template argument. 
   SourceLocation Loc = Tok.getLocation();

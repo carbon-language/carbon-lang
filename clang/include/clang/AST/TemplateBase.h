@@ -18,6 +18,7 @@
 #include "llvm/ADT/APSInt.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/TemplateName.h"
 
 namespace llvm {
   class FoldingSetNodeID;
@@ -48,21 +49,27 @@ class TemplateArgument {
 public:
   /// \brief The type of template argument we're storing.
   enum ArgKind {
+    /// \brief Represents an empty template argument, e.g., one that has not
+    /// been deduced.
     Null = 0,
     /// The template argument is a type. Its value is stored in the
     /// TypeOrValue field.
-    Type = 1,
-    /// The template argument is a declaration
-    Declaration = 2,
-    /// The template argument is an integral value stored in an llvm::APSInt.
-    Integral = 3,
+    Type,
+    /// The template argument is a declaration that was provided for a pointer
+    /// or reference non-type template parameter.
+    Declaration,
+    /// The template argument is an integral value stored in an llvm::APSInt
+    /// that was provided for an integral non-type template parameter. 
+    Integral,
+    /// The template argument is a template name that was provided for a 
+    /// template template parameter.
+    Template,
     /// The template argument is a value- or type-dependent expression
     /// stored in an Expr*.
-    Expression = 4,
-
+    Expression,
     /// The template argument is actually a parameter pack. Arguments are stored
     /// in the Args struct.
-    Pack = 5
+    Pack
   } Kind;
 
   /// \brief Construct an empty, invalid template argument.
@@ -82,12 +89,21 @@ public:
   }
 
   /// \brief Construct an integral constant template argument.
-  TemplateArgument(const llvm::APSInt &Value, QualType Type)
-  : Kind(Integral) {
+  TemplateArgument(const llvm::APSInt &Value, QualType Type) : Kind(Integral) {
     new (Integer.Value) llvm::APSInt(Value);
     Integer.Type = Type.getAsOpaquePtr();
   }
 
+  /// \brief Construct a template argument that is a template.
+  ///
+  /// This form of template argument is generally used for template template
+  /// parameters. However, the template name could be a dependent template
+  /// name that ends up being instantiated to a function template whose address
+  /// is taken.
+  TemplateArgument(TemplateName Name) : Kind(Template) {
+    TypeOrValue = reinterpret_cast<uintptr_t>(Name.getAsVoidPointer());
+  }
+  
   /// \brief Construct a template argument that is an expression.
   ///
   /// This form of template argument only occurs in template argument
@@ -172,6 +188,15 @@ public:
     return reinterpret_cast<Decl *>(TypeOrValue);
   }
 
+  /// \brief Retrieve the template argument as a template name.
+  TemplateName getAsTemplate() const {
+    if (Kind != Template)
+      return TemplateName();
+    
+    return TemplateName::getFromVoidPointer(
+                                        reinterpret_cast<void *> (TypeOrValue));
+  }
+  
   /// \brief Retrieve the template argument as an integral value.
   llvm::APSInt *getAsIntegral() {
     if (Kind != Integral)
@@ -242,13 +267,18 @@ private:
   union {
     Expr *Expression;
     DeclaratorInfo *Declarator;
+    struct {
+      unsigned QualifierRange[2];
+      unsigned TemplateNameLoc;
+    } Template;
   };
 
 #ifndef NDEBUG
   enum Kind {
     K_None,
     K_DeclaratorInfo,
-    K_Expression
+    K_Expression,
+    K_Template
   } Kind;
 #endif
 
@@ -273,6 +303,17 @@ public:
       , Kind(K_Expression) 
 #endif
     {}
+  
+  TemplateArgumentLocInfo(SourceRange QualifierRange, 
+                          SourceLocation TemplateNameLoc)
+#ifndef NDEBUG
+    : Kind(K_Template)
+#endif
+  {
+    Template.QualifierRange[0] = QualifierRange.getBegin().getRawEncoding();
+    Template.QualifierRange[1] = QualifierRange.getEnd().getRawEncoding();
+    Template.TemplateNameLoc = TemplateNameLoc.getRawEncoding();
+  }
 
   DeclaratorInfo *getAsDeclaratorInfo() const {
     assert(Kind == K_DeclaratorInfo);
@@ -284,6 +325,18 @@ public:
     return Expression;
   }
 
+  SourceRange getTemplateQualifierRange() const {
+    assert(Kind == K_Template);
+    return SourceRange(
+                SourceLocation::getFromRawEncoding(Template.QualifierRange[0]),
+                SourceLocation::getFromRawEncoding(Template.QualifierRange[1]));
+  }
+  
+  SourceLocation getTemplateNameLoc() const {
+    assert(Kind == K_Template);
+    return SourceLocation::getFromRawEncoding(Template.TemplateNameLoc);
+  }
+  
 #ifndef NDEBUG
   void validateForArgument(const TemplateArgument &Arg) {
     switch (Arg.getKind()) {
@@ -293,6 +346,9 @@ public:
     case TemplateArgument::Expression:
     case TemplateArgument::Declaration:
       assert(Kind == K_Expression);
+      break;
+    case TemplateArgument::Template:
+      assert(Kind == K_Template);
       break;
     case TemplateArgument::Integral:
     case TemplateArgument::Pack:
@@ -329,8 +385,18 @@ public:
     assert(Argument.getKind() == TemplateArgument::Expression);
   }
 
-  /// \brief - Fetches the start location of the argument.
+  TemplateArgumentLoc(const TemplateArgument &Argument, 
+                      SourceRange QualifierRange,
+                      SourceLocation TemplateNameLoc)
+    : Argument(Argument), LocInfo(QualifierRange, TemplateNameLoc) {
+    assert(Argument.getKind() == TemplateArgument::Template);
+  }
+  
+  /// \brief - Fetches the primary location of the argument.
   SourceLocation getLocation() const {
+    if (Argument.getKind() == TemplateArgument::Template)
+      return getTemplateNameLoc();
+    
     return getSourceRange().getBegin();
   }
 
@@ -359,6 +425,16 @@ public:
     assert(Argument.getKind() == TemplateArgument::Declaration);
     return LocInfo.getAsExpr();
   }
+  
+  SourceRange getTemplateQualifierRange() const {
+    assert(Argument.getKind() == TemplateArgument::Template);
+    return LocInfo.getTemplateQualifierRange();
+  }
+  
+  SourceLocation getTemplateNameLoc() const {
+    assert(Argument.getKind() == TemplateArgument::Template);
+    return LocInfo.getTemplateNameLoc();
+  }  
 };
 
 }

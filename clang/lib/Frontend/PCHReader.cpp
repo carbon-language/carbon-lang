@@ -2185,6 +2185,14 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
     return ReadDeclExpr();
   case TemplateArgument::Type:
     return GetDeclaratorInfo(Record, Index);
+  case TemplateArgument::Template: {
+    SourceLocation 
+      QualStart = SourceLocation::getFromRawEncoding(Record[Index++]),
+      QualEnd = SourceLocation::getFromRawEncoding(Record[Index++]),
+      TemplateNameLoc = SourceLocation::getFromRawEncoding(Record[Index++]);
+    return TemplateArgumentLocInfo(SourceRange(QualStart, QualEnd),
+                                   TemplateNameLoc);
+  }
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
   case TemplateArgument::Declaration:

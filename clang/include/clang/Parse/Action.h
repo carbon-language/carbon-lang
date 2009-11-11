@@ -1577,7 +1577,7 @@ public:
   /// parameter.
   virtual void ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParam,
                                                      SourceLocation EqualLoc,
-                                                     ExprArg Default) {
+                                        const ParsedTemplateArgument &Default) {
   }
 
   /// ActOnTemplateParameterList - Called when a complete template

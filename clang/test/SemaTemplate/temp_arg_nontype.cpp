@@ -10,8 +10,7 @@ A<int> *a2; // expected-error{{template argument for non-type template parameter
 A<1 >> 2> *a3; // expected-warning{{use of right-shift operator ('>>') in template argument will require parentheses in C++0x}}
 
 // C++ [temp.arg.nontype]p5:
-A<A> *a4; // expected-error{{must have an integral or enumeration type}} \
-          // FIXME: the error message above is a bit lame
+A<A> *a4; // expected-error{{must be an expression}}
 
 enum E { Enumerator = 17 };
 A<E> *a5; // expected-error{{template argument for non-type template parameter must be an expression}}

@@ -699,13 +699,13 @@ class TemplateTemplateParmDecl
   : public TemplateDecl, protected TemplateParmPosition {
 
   /// \brief The default template argument, if any.
-  Expr *DefaultArgument;
+  TemplateArgumentLoc DefaultArgument;
 
   TemplateTemplateParmDecl(DeclContext *DC, SourceLocation L,
                            unsigned D, unsigned P,
                            IdentifierInfo *Id, TemplateParameterList *Params)
     : TemplateDecl(TemplateTemplateParm, DC, L, Id, Params),
-      TemplateParmPosition(D, P), DefaultArgument(0)
+      TemplateParmPosition(D, P), DefaultArgument()
     { }
 
 public:
@@ -720,16 +720,17 @@ public:
 
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const { return DefaultArgument; }
+  bool hasDefaultArgument() const { 
+    return !DefaultArgument.getArgument().isNull(); 
+  }
 
   /// \brief Retrieve the default argument, if any.
-  Expr *getDefaultArgument() const { return DefaultArgument; }
-
-  /// \brief Retrieve the location of the default argument, if any.
-  SourceLocation getDefaultArgumentLoc() const;
+  const TemplateArgumentLoc &getDefaultArgument() const { 
+    return DefaultArgument; 
+  }
 
   /// \brief Set the default argument for this template parameter.
-  void setDefaultArgument(Expr *DefArg) {
+  void setDefaultArgument(const TemplateArgumentLoc &DefArg) {
     DefaultArgument = DefArg;
   }
 

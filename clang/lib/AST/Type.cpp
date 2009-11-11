@@ -807,6 +807,9 @@ static bool isDependent(const TemplateArgument &Arg) {
   case TemplateArgument::Type:
     return Arg.getAsType()->isDependentType();
 
+  case TemplateArgument::Template:
+    return Arg.getAsTemplate().isDependent();
+      
   case TemplateArgument::Declaration:
   case TemplateArgument::Integral:
     // Never dependent

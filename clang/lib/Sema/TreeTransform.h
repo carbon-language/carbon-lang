@@ -1957,6 +1957,10 @@ void TreeTransform<Derived>::InventTemplateArgumentLoc(
                                             
     break;
 
+  case TemplateArgument::Template:
+    Output = TemplateArgumentLoc(Arg, SourceRange(), Loc);
+    break;
+      
   case TemplateArgument::Expression:
     Output = TemplateArgumentLoc(Arg, Arg.getAsExpr());
     break;
@@ -1997,7 +2001,7 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     DeclarationName Name;
     if (NamedDecl *ND = dyn_cast<NamedDecl>(Arg.getAsDecl()))
       Name = ND->getDeclName();
-    TemporaryBase Rebase(*this, SourceLocation(), Name);
+    TemporaryBase Rebase(*this, Input.getLocation(), Name);
     Decl *D = getDerived().TransformDecl(Arg.getAsDecl());
     if (!D) return true;
 
@@ -2018,6 +2022,19 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     return false;
   }
 
+  case TemplateArgument::Template: {
+    TemporaryBase Rebase(*this, Input.getLocation(), DeclarationName());    
+    TemplateName Template
+      = getDerived().TransformTemplateName(Arg.getAsTemplate());
+    if (Template.isNull())
+      return true;
+    
+    Output = TemplateArgumentLoc(TemplateArgument(Template),
+                                 Input.getTemplateQualifierRange(),
+                                 Input.getTemplateNameLoc());
+    return false;
+  }
+      
   case TemplateArgument::Expression: {
     // Template argument expressions are not potentially evaluated.
     EnterExpressionEvaluationContext Unevaluated(getSema(),

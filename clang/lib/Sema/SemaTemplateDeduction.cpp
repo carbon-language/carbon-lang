@@ -785,13 +785,32 @@ DeduceTemplateArguments(ASTContext &Context,
     break;
 
   case TemplateArgument::Type:
-    assert(Arg.getKind() == TemplateArgument::Type && "Type/value mismatch");
-    return DeduceTemplateArguments(Context, TemplateParams, Param.getAsType(),
-                                   Arg.getAsType(), Info, Deduced, 0);
-
+    if (Arg.getKind() == TemplateArgument::Type)
+      return DeduceTemplateArguments(Context, TemplateParams, Param.getAsType(),
+                                     Arg.getAsType(), Info, Deduced, 0);
+    Info.FirstArg = Param;
+    Info.SecondArg = Arg;
+    return Sema::TDK_NonDeducedMismatch;
+      
+  case TemplateArgument::Template:
+#if 0
+      // FIXME: We need template argument deduction for template template
+      // parameters.
+      if (Arg.getKind() == TemplateArgument::Template)
+      return DeduceTemplateArguments(Context, TemplateParams, 
+                                     Param.getAsTemplate(),
+                                     Arg.getAsTemplate(), Info, Deduced, 0);
+#endif
+    Info.FirstArg = Param;
+    Info.SecondArg = Arg;
+    return Sema::TDK_NonDeducedMismatch;
+      
   case TemplateArgument::Declaration:
-    // FIXME: Implement this check
-    assert(false && "Unimplemented template argument deduction case");
+    if (Arg.getKind() == TemplateArgument::Declaration &&
+        Param.getAsDecl()->getCanonicalDecl() ==
+          Arg.getAsDecl()->getCanonicalDecl())
+      return Sema::TDK_Success;
+      
     Info.FirstArg = Param;
     Info.SecondArg = Arg;
     return Sema::TDK_NonDeducedMismatch;
@@ -885,13 +904,21 @@ static bool isSameTemplateArg(ASTContext &Context,
       return X.getAsDecl()->getCanonicalDecl() ==
              Y.getAsDecl()->getCanonicalDecl();
 
+    case TemplateArgument::Template:
+      return Context.getCanonicalTemplateName(X.getAsTemplate())
+               .getAsVoidPointer() ==
+             Context.getCanonicalTemplateName(Y.getAsTemplate())
+               .getAsVoidPointer();
+      
     case TemplateArgument::Integral:
       return *X.getAsIntegral() == *Y.getAsIntegral();
 
-    case TemplateArgument::Expression:
-      // FIXME: We assume that all expressions are distinct, but we should
-      // really check their canonical forms.
-      return false;
+    case TemplateArgument::Expression: {
+      llvm::FoldingSetNodeID XID, YID;
+      X.getAsExpr()->Profile(XID, Context, true);
+      Y.getAsExpr()->Profile(YID, Context, true);      
+      return XID == YID;
+    }
 
     case TemplateArgument::Pack:
       if (X.pack_size() != Y.pack_size())
@@ -1026,15 +1053,6 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
       if (NonTypeTemplateParmDecl *NTTP
             = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
         if (CheckTemplateArgument(NTTP, NTTP->getType(), InstExpr, InstArg)) {
-          Info.Param = makeTemplateParameter(Param);
-          Info.FirstArg = Partial->getTemplateArgs()[I];
-          return TDK_SubstitutionFailure;
-        }
-      } else if (TemplateTemplateParmDecl *TTP
-                   = dyn_cast<TemplateTemplateParmDecl>(Param)) {
-        // FIXME: template template arguments should really resolve to decls
-        DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(InstExpr);
-        if (!DRE || CheckTemplateArgument(TTP, DRE)) {
           Info.Param = makeTemplateParameter(Param);
           Info.FirstArg = Partial->getTemplateArgs()[I];
           return TDK_SubstitutionFailure;
@@ -2153,6 +2171,9 @@ MarkUsedTemplateParameters(Sema &SemaRef,
     return;
   }
   
+  if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName())
+    MarkUsedTemplateParameters(SemaRef, QTN->getQualifier(), OnlyDeduced, 
+                               Depth, Used);
   if (DependentTemplateName *DTN = Name.getAsDependentTemplateName())
     MarkUsedTemplateParameters(SemaRef, DTN->getQualifier(), OnlyDeduced, 
                                Depth, Used);
@@ -2309,6 +2330,7 @@ MarkUsedTemplateParameters(Sema &SemaRef,
   switch (TemplateArg.getKind()) {
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
+    case TemplateArgument::Declaration:
     break;
 
   case TemplateArgument::Type:
@@ -2316,12 +2338,9 @@ MarkUsedTemplateParameters(Sema &SemaRef,
                                Depth, Used);
     break;
 
-  case TemplateArgument::Declaration:
-    if (TemplateTemplateParmDecl *TTP
-          = dyn_cast<TemplateTemplateParmDecl>(TemplateArg.getAsDecl())) {
-      if (TTP->getDepth() == Depth)
-        Used[TTP->getIndex()] = true;
-    }
+  case TemplateArgument::Template:
+    MarkUsedTemplateParameters(SemaRef, TemplateArg.getAsTemplate(), 
+                               OnlyDeduced, Depth, Used);
     break;
 
   case TemplateArgument::Expression:

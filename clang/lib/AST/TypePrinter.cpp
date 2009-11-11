@@ -576,6 +576,11 @@ static void PrintTemplateArgument(std::string &Buffer,
       Buffer = cast<NamedDecl>(Arg.getAsDecl())->getNameAsString();
       break;
       
+    case TemplateArgument::Template: {
+      llvm::raw_string_ostream s(Buffer);
+      Arg.getAsTemplate().print(s, Policy);
+    }
+      
     case TemplateArgument::Integral:
       Buffer = Arg.getAsIntegral()->toString(10, true);
       break;

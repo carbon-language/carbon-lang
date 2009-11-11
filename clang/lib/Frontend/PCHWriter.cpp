@@ -2122,6 +2122,12 @@ void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
   case TemplateArgument::Type:
     AddDeclaratorInfo(Arg.getLocInfo().getAsDeclaratorInfo(), Record);
     break;
+  case TemplateArgument::Template:
+    Record.push_back(
+                   Arg.getTemplateQualifierRange().getBegin().getRawEncoding());
+    Record.push_back(Arg.getTemplateQualifierRange().getEnd().getRawEncoding());
+    Record.push_back(Arg.getTemplateNameLoc().getRawEncoding());
+    break;
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
   case TemplateArgument::Declaration:

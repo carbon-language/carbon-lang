@@ -2446,7 +2446,7 @@ public:
                                                    unsigned Position);
   virtual void ActOnTemplateTemplateParameterDefault(DeclPtrTy TemplateParam,
                                                      SourceLocation EqualLoc,
-                                                     ExprArg Default);
+                                        const ParsedTemplateArgument &Default);
 
   virtual TemplateParamsTy *
   ActOnTemplateParameterList(unsigned Depth,
@@ -2606,13 +2606,14 @@ public:
   bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                              QualType InstantiatedParamType, Expr *&Arg,
                              TemplateArgument &Converted);
-  bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, DeclRefExpr *Arg);
+  bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, 
+                             const TemplateArgumentLoc &Arg);
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,
                                       bool Complain,
                                       bool IsTemplateTemplateParm = false,
                                       SourceLocation TemplateArgLoc
-                                       = SourceLocation());
+                                        = SourceLocation());
 
   bool CheckTemplateDeclScope(Scope *S, TemplateParameterList *TemplateParams);
 

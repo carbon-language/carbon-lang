@@ -919,6 +919,10 @@ public:
         Info = TemplateArgumentLocInfo((DeclaratorInfo*) 0);
         break;
 
+      case TemplateArgument::Template:
+        Info = TemplateArgumentLocInfo(SourceRange(), SourceLocation());
+        break;
+          
       case TemplateArgument::Integral:
       case TemplateArgument::Pack:
       case TemplateArgument::Null:
