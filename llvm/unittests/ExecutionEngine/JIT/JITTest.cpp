@@ -434,10 +434,16 @@ TEST_F(JITTest, ModuleDeletion) {
             RJMM->deallocateFunctionBodyCalls.size());
 
   SmallPtrSet<const void*, 2> ExceptionTablesDeallocated;
+  unsigned NumTablesDeallocated = 0;
   for (unsigned i = 0, e = RJMM->deallocateExceptionTableCalls.size();
        i != e; ++i) {
     ExceptionTablesDeallocated.insert(
         RJMM->deallocateExceptionTableCalls[i].ET);
+    if (RJMM->deallocateExceptionTableCalls[i].ET != NULL) {
+        // If JITEmitDebugInfo is off, we'll "deallocate" NULL, which doesn't
+        // appear in startExceptionTableCalls.
+        NumTablesDeallocated++;
+    }
   }
   for (unsigned i = 0, e = RJMM->startExceptionTableCalls.size(); i != e; ++i) {
     EXPECT_TRUE(ExceptionTablesDeallocated.count(
@@ -446,7 +452,7 @@ TEST_F(JITTest, ModuleDeletion) {
       << RJMM->startExceptionTableCalls[i].F_dump;
   }
   EXPECT_EQ(RJMM->startExceptionTableCalls.size(),
-            RJMM->deallocateExceptionTableCalls.size());
+            NumTablesDeallocated);
 }
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
