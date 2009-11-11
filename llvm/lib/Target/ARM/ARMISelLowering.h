@@ -180,6 +180,12 @@ namespace llvm {
     virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;
     bool isLegalT2ScaledAddressingMode(const AddrMode &AM, EVT VT) const;
 
+    /// isLegalICmpImmediate - Return true if the specified immediate is legal
+    /// icmp immediate, that is the target has icmp instructions which can compare
+    /// a register against the immediate without having to materialize the
+    /// immediate into a register.
+    virtual bool isLegalICmpImmediate(uint64_t Imm) const;
+
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
     /// can be legally represented as pre-indexed load / store address.
