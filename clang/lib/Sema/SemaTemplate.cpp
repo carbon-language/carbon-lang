@@ -1610,34 +1610,16 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
 /// template parameter.
 bool Sema::CheckTemplateArgument(NamedDecl *Param,
                                  const TemplateArgumentLoc &Arg,
-                                 unsigned ArgIdx,
                                  TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
-                                 SourceLocation LAngleLoc,
-                                 const TemplateArgumentLoc *TemplateArgs,
-                                 unsigned NumTemplateArgs,
                                  SourceLocation RAngleLoc,
                                  TemplateArgumentListBuilder &Converted) {
-  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param)) {
-    // Check template type parameters.
-    if (TTP->isParameterPack()) {
-      // Check all the remaining arguments (if any).
-      Converted.BeginPack();
-      for (; ArgIdx < NumTemplateArgs; ++ArgIdx) {
-        if (CheckTemplateTypeArgument(TTP, TemplateArgs[ArgIdx], Converted))
-          return true;
-      }
-      
-      Converted.EndPack();
-      return false;
-    } 
-    
+  // Check template type parameters.
+  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
     return CheckTemplateTypeArgument(TTP, Arg, Converted);
-  }
   
-  if (NonTypeTemplateParmDecl *NTTP =dyn_cast<NonTypeTemplateParmDecl>(Param)) {
-    // Check non-type template parameters.
-    
+  // Check non-type template parameters.
+  if (NonTypeTemplateParmDecl *NTTP =dyn_cast<NonTypeTemplateParmDecl>(Param)) {    
     // Do substitution on the type of the non-type template parameter
     // with the template arguments we've seen thus far.
     QualType NTTPType = NTTP->getType();
@@ -1740,7 +1722,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     }
       
     case TemplateArgument::Pack:
-      assert(0 && "FIXME: Implement!");
+      llvm::llvm_unreachable("Caller must expand template argument packs");
       break;
     }
     
@@ -1802,7 +1784,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     break;
     
   case TemplateArgument::Pack:
-    assert(0 && "FIXME: Implement!");
+    llvm::llvm_unreachable("Caller must expand template argument packs");
     break;
   }
   
@@ -1859,6 +1841,21 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     if (ArgIdx > NumArgs && PartialTemplateArgs)
       break;
 
+    // If we have a template parameter pack, check every remaining template
+    // argument against that template parameter pack.
+    if ((*Param)->isTemplateParameterPack()) {
+      Converted.BeginPack();
+      for (; ArgIdx < NumArgs; ++ArgIdx) {
+        if (CheckTemplateArgument(*Param, TemplateArgs[ArgIdx], Template,
+                                  TemplateLoc, RAngleLoc, Converted)) {
+          Invalid = true;
+          break;
+        }
+      }
+      Converted.EndPack();
+      continue;
+    }
+    
     // Decode the template argument
     TemplateArgumentLoc Arg;
 
@@ -1926,8 +1923,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       Arg = TemplateArgs[ArgIdx];
     }
     
-    if (CheckTemplateArgument(*Param, Arg, ArgIdx, Template, TemplateLoc,
-                              LAngleLoc, TemplateArgs, NumTemplateArgs, 
+    if (CheckTemplateArgument(*Param, Arg, Template, TemplateLoc,
                               RAngleLoc, Converted))
       return true;
   }
