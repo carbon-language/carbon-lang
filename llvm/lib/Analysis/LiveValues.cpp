@@ -17,7 +17,9 @@
 #include "llvm/Analysis/LoopInfo.h"
 using namespace llvm;
 
-FunctionPass *llvm::createLiveValuesPass() { return new LiveValues(); }
+namespace llvm {
+  FunctionPass *createLiveValuesPass() { return new LiveValues(); }
+}
 
 char LiveValues::ID = 0;
 static RegisterPass<LiveValues>

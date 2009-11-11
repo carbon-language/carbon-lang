@@ -94,10 +94,6 @@ public:
   bool isKilledInBlock(const Value *V, const BasicBlock *BB);
 };
 
-/// createLiveValuesPass - This creates an instance of the LiveValues pass.
-///
-FunctionPass *createLiveValuesPass();
-
-}
+}  // end namespace llvm
 
 #endif
