@@ -289,6 +289,23 @@ namespace llvm {
       return std::make_pair(slice(0, Idx), slice(Idx+1, npos));
     }
 
+    /// split - Split into two substrings around the first occurence of a
+    /// separator string.
+    ///
+    /// If \arg Separator is in the string, then the result is a pair (LHS, RHS)
+    /// such that (*this == LHS + Separator + RHS) is true and RHS is
+    /// maximal. If \arg Separator is not in the string, then the result is a
+    /// pair (LHS, RHS) where (*this == LHS) and (RHS == "").
+    ///
+    /// \param Separator - The string to split on.
+    /// \return - The split substrings.
+    std::pair<StringRef, StringRef> split(StringRef Separator) const {
+      size_t Idx = find(Separator);
+      if (Idx == npos)
+        return std::make_pair(*this, StringRef());
+      return std::make_pair(slice(0, Idx), slice(Idx + Separator.size(), npos));
+    }
+
     /// rsplit - Split into two substrings around the last occurence of a
     /// separator character.
     ///
