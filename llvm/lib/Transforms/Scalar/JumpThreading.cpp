@@ -17,6 +17,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
@@ -40,6 +41,12 @@ Threshold("jump-threading-threshold",
           cl::desc("Max block size to duplicate for jump threading"),
           cl::init(6), cl::Hidden);
 
+// Turn on use of LazyValueInfo.
+static cl::opt<bool>
+EnableLVI("enable-jump-threading-lvi", cl::ReallyHidden);
+
+
+
 namespace {
   /// This pass performs 'jump threading', which looks at blocks that have
   /// multiple predecessors and multiple successors.  If one or more of the
@@ -59,6 +66,7 @@ namespace {
   ///
   class JumpThreading : public FunctionPass {
     TargetData *TD;
+    LazyValueInfo *LVI;
 #ifdef NDEBUG
     SmallPtrSet<BasicBlock*, 16> LoopHeaders;
 #else
@@ -69,8 +77,13 @@ namespace {
     JumpThreading() : FunctionPass(&ID) {}
 
     bool runOnFunction(Function &F);
-    void FindLoopHeaders(Function &F);
     
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      if (EnableLVI)
+        AU.addRequired<LazyValueInfo>();
+    }
+    
+    void FindLoopHeaders(Function &F);
     bool ProcessBlock(BasicBlock *BB);
     bool ThreadEdge(BasicBlock *BB, const SmallVectorImpl<BasicBlock*> &PredBBs,
                     BasicBlock *SuccBB);
@@ -106,6 +119,7 @@ FunctionPass *llvm::createJumpThreadingPass() { return new JumpThreading(); }
 bool JumpThreading::runOnFunction(Function &F) {
   DEBUG(errs() << "Jump threading on function '" << F.getName() << "'\n");
   TD = getAnalysisIfAvailable<TargetData>();
+  LVI = EnableLVI ? &getAnalysis<LazyValueInfo>() : 0;
   
   FindLoopHeaders(F);
   
@@ -235,31 +249,48 @@ void JumpThreading::FindLoopHeaders(Function &F) {
 /// predecessors.  If so, return the known list of value and pred BB in the
 /// result vector.  If a value is known to be undef, it is returned as null.
 ///
-/// The BB basic block is known to start with a PHI node.
-///
 /// This returns true if there were any known values.
 ///
-///
-/// TODO: Per PR2563, we could infer value range information about a predecessor
-/// based on its terminator.
 bool JumpThreading::
 ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
-  PHINode *TheFirstPHI = cast<PHINode>(BB->begin());
-  
   // If V is a constantint, then it is known in all predecessors.
   if (isa<ConstantInt>(V) || isa<UndefValue>(V)) {
     ConstantInt *CI = dyn_cast<ConstantInt>(V);
-    Result.resize(TheFirstPHI->getNumIncomingValues());
-    for (unsigned i = 0, e = Result.size(); i != e; ++i)
-      Result[i] = std::make_pair(CI, TheFirstPHI->getIncomingBlock(i));
+    
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+      Result.push_back(std::make_pair(CI, *PI));
     return true;
   }
   
   // If V is a non-instruction value, or an instruction in a different block,
   // then it can't be derived from a PHI.
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0 || I->getParent() != BB)
+  if (I == 0 || I->getParent() != BB) {
+    
+    // Okay, if this is a live-in value, see if it has a known value at the end
+    // of any of our predecessors.
+    //
+    // FIXME: This should be an edge property, not a block end property.
+    /// TODO: Per PR2563, we could infer value range information about a
+    /// predecessor based on its terminator.
+    //
+    if (LVI) {
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+        // If the value is known by LazyValueInfo to be a constant in a
+        // predecessor, use that information to try to thread this block.
+        Constant *PredCst = LVI->getConstant(V, *PI);
+        if (PredCst == 0 ||
+            (!isa<ConstantInt>(PredCst) && !isa<UndefValue>(PredCst)))
+          continue;
+        
+        Result.push_back(std::make_pair(dyn_cast<ConstantInt>(PredCst), *PI));
+      }
+      
+      return !Result.empty();
+    }
+    
     return false;
+  }
   
   /// If I is a PHI node, then we know the incoming values for any constants.
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
@@ -517,12 +548,8 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // a PHI node in the current block.  If we can prove that any predecessors
   // compute a predictable value based on a PHI node, thread those predecessors.
   //
-  // We only bother doing this if the current block has a PHI node and if the
-  // conditional instruction lives in the current block.  If either condition
-  // fails, this won't be a computable value anyway.
-  if (CondInst->getParent() == BB && isa<PHINode>(BB->front()))
-    if (ProcessThreadableEdges(CondInst, BB))
-      return true;
+  if (ProcessThreadableEdges(CondInst, BB))
+    return true;
   
   
   // TODO: If we have: "br (X > 0)"  and we have a predecessor where we know
