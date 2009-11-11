@@ -57,7 +57,8 @@ public:
   int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD, 
                                     const CXXRecordDecl *VBase);
 
-  llvm::Constant *getVtable(const CXXRecordDecl *RD);
+  llvm::Constant *getVtable(const CXXRecordDecl *RD,
+                            const CXXRecordDecl *Class=0, uint64_t Offset=0);
 };
   
 }

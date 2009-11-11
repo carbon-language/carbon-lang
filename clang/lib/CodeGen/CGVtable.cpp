@@ -724,9 +724,13 @@ class VTTBuilder {
   const CXXRecordDecl *Class;
   CodeGenModule &CGM;  // Per-module state.
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenVBase;
+  /// BLayout - Layout for the most derived class that this vtable is being
+  /// built for.
+  const ASTRecordLayout &BLayout;
 
   /// Secondary - Add the secondary vtable pointers to Inits.
-  void Secondary(const CXXRecordDecl *RD, bool MorallyVirtual=false) {
+  void Secondary(const CXXRecordDecl *RD, uint64_t Offset=0,
+                 bool MorallyVirtual=false) {
     if (RD->getNumVBases() == 0 && ! MorallyVirtual)
       return;
 
@@ -740,31 +744,37 @@ class VTTBuilder {
       bool NonVirtualPrimaryBase;
       NonVirtualPrimaryBase = !PrimaryBaseWasVirtual && Base == PrimaryBase;
       bool BaseMorallyVirtual = MorallyVirtual | i->isVirtual();
+      uint64_t BaseOffset;
+      if (!i->isVirtual()) {
+        const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+        BaseOffset = Offset + Layout.getBaseClassOffset(Base);
+      } else
+        BaseOffset = BLayout.getVBaseClassOffset(Base);
       if ((Base->getNumVBases() || BaseMorallyVirtual)
           && !NonVirtualPrimaryBase) {
         // FIXME: Slightly too many of these for __ZTT8test8_B2
-        // FIXME: ctor vtbl or normal vtable.
-        llvm::Constant *vtbl = CGM.getVtableInfo().getVtable(Base);
+        llvm::Constant *vtbl;
+        vtbl = CGM.getVtableInfo().getVtable(Base, Class, BaseOffset/8);
         Inits.push_back(vtbl);
       }
-      Secondary(Base, BaseMorallyVirtual);
+      Secondary(Base, BaseOffset, BaseMorallyVirtual);
     }
   }
 
   /// BuiltVTT - Add the VTT to Inits.
-  void BuildVTT(const CXXRecordDecl *RD, bool MorallyVirtual=false) {
+  void BuildVTT(const CXXRecordDecl *RD, uint64_t Offset,
+                bool MorallyVirtual=false) {
     if (RD->getNumVBases() == 0 && !MorallyVirtual)
       return;
 
     // First comes the primary virtual table pointer...
-    // FIXME: ctor vtable instead
-    Inits.push_back(CGM.getVtableInfo().getVtable(RD));
+    Inits.push_back(CGM.getVtableInfo().getVtable(RD, Class, Offset));
 
     // then the secondary VTTs....
     SecondaryVTTs(RD, MorallyVirtual);
 
     // and last the secondary vtable pointers.
-    Secondary(RD, MorallyVirtual);
+    Secondary(RD, MorallyVirtual, Offset);
   }
 
   /// SecondaryVTTs - Add the secondary VTTs to Inits.  The secondary VTTs are
@@ -797,7 +807,9 @@ class VTTBuilder {
   }
 public:
   VTTBuilder(std::vector<llvm::Constant *> &inits, const CXXRecordDecl *c,
-             CodeGenModule &cgm) : Inits(inits), Class(c), CGM(cgm) {
+             CodeGenModule &cgm)
+    : Inits(inits), Class(c), CGM(cgm),
+      BLayout(cgm.getContext().getASTRecordLayout(c)) {
     
     // First comes the primary virtual table pointer for the complete class...
     Inits.push_back(CGM.getVtableInfo().getVtable(Class));
@@ -840,7 +852,10 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   return vtt;
 }
 
-llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
+llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD,
+                                        const CXXRecordDecl *Class,
+                                        uint64_t Offset) {
+  // FIXME: Add ctor vtable support
   llvm::Constant *&vtbl = Vtables[RD];
   if (vtbl)
     return vtbl;
