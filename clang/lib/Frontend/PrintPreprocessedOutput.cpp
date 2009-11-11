@@ -13,13 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/Utils.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PPCallbacks.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Pragma.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/TokenConcatenation.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
@@ -439,7 +440,7 @@ namespace {
   };
 }
 
-void clang::DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
+static void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
   // -dM mode just scans and ignores all tokens in the files, then dumps out
   // the macro table at the end.
   PP.EnterMainSourceFile();
@@ -467,18 +468,23 @@ void clang::DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
 void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
-                                     bool EnableCommentOutput,
-                                     bool EnableMacroCommentOutput,
-                                     bool DisableLineMarkers,
-                                     bool DumpDefines) {
+                                     PreprocessorOutputOptions &Opts) {
+  // Show macros with no output is handled specially.
+  if (!Opts.ShowCPP) {
+    assert(Opts.ShowMacros && "Not yet implemented!");
+    DoPrintMacros(PP, OS);
+    return;
+  }
+
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
-  PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
+  PP.SetCommentRetentionState(Opts.ShowComments, Opts.ShowMacroComments);
 
   OS->SetBufferSize(64*1024);
 
   PrintPPOutputPPCallbacks *Callbacks =
-      new PrintPPOutputPPCallbacks(PP, *OS, DisableLineMarkers, DumpDefines);
+      new PrintPPOutputPPCallbacks(PP, *OS, !Opts.ShowLineMarkers,
+                                   Opts.ShowMacros);
   PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma", Callbacks));
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                       Callbacks));

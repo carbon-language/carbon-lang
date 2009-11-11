@@ -16,36 +16,37 @@
 //===----------------------------------------------------------------------===//
 
 #include "Options.h"
-#include "clang/Frontend/AnalysisConsumer.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclGroup.h"
+#include "clang/Analysis/PathDiagnostic.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/Version.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ChainedDiagnosticClient.h"
+#include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/PreprocessorOptions.h"
+#include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/Frontend/Utils.h"
-#include "clang/Analysis/PathDiagnostic.h"
-#include "clang/CodeGen/ModuleBuilder.h"
+#include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/LexDiagnostic.h"
+#include "clang/Parse/Parser.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/ParseAST.h"
 #include "clang/Sema/SemaDiagnostic.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclGroup.h"
-#include "clang/Parse/Parser.h"
-#include "clang/Lex/HeaderSearch.h"
-#include "clang/Lex/LexDiagnostic.h"
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/TargetInfo.h"
-#include "clang/Basic/Version.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -919,12 +920,13 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
 
   case PrintPreprocessedInput: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
-    if (DumpMacros)
-      DoPrintMacros(PP, OS.get());
-    else
-      DoPrintPreprocessedInput(PP, OS.get(), EnableCommentOutput,
-                               EnableMacroCommentOutput,
-                               DisableLineMarkers, DumpDefines);
+    PreprocessorOutputOptions Opts;
+    Opts.ShowCPP = !DumpMacros;
+    Opts.ShowMacros = DumpMacros || DumpDefines;
+    Opts.ShowLineMarkers = !DisableLineMarkers;
+    Opts.ShowComments = EnableCommentOutput;
+    Opts.ShowMacroComments = EnableMacroCommentOutput;
+    DoPrintPreprocessedInput(PP, OS.get(), Opts);
     ClearSourceMgr = true;
   }
 

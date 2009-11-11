@@ -1,4 +1,4 @@
-//===--- Utils.h - Misc utilities for the front-end------------------------===//
+//===--- Utils.h - Misc utilities for the front-end -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -34,6 +34,7 @@ class LangOptions;
 class MinimalAction;
 class Preprocessor;
 class PreprocessorOptions;
+class PreprocessorOutputOptions;
 class SourceManager;
 class Stmt;
 class TargetInfo;
@@ -56,15 +57,9 @@ bool ProcessWarningOptions(Diagnostic &Diags,
                            bool Pedantic, bool PedanticErrors,
                            bool NoWarnings);
 
-/// DoPrintPreprocessedInput - Implement -E -dM mode.
-void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream* OS);
-
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS,
-                              bool EnableCommentOutput,
-                              bool EnableMacroCommentOutput,
-                              bool DisableLineMarkers,
-                              bool DumpDefines);
+                              PreprocessorOutputOptions &Opts);
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
 void RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream* OS);
