@@ -490,7 +490,27 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
          MI != E; ++MI) {
       if (!MI->isLabel()) {
-        SawPotentiallyThrowing |= MI->getDesc().isCall();
+        if (MI->getDesc().isCall()) {
+          // Don't mark a call as potentially throwing if the function it's
+          // calling is marked "nounwind".
+          bool DoesNotThrow = false;
+          for (unsigned OI = 0, OE = MI->getNumOperands(); OI != OE; ++OI) {
+            const MachineOperand &MO = MI->getOperand(OI);
+
+            if (MO.isGlobal()) {
+              if (Function *F = dyn_cast<Function>(MO.getGlobal())) {
+                if (F->doesNotThrow()) {
+                  DoesNotThrow = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!DoesNotThrow)
+            SawPotentiallyThrowing = true;
+        }
+
         continue;
       }
 
