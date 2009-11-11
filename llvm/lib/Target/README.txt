@@ -1682,3 +1682,31 @@ entry:
 }
 
 //===---------------------------------------------------------------------===//
+
+IPSCCP does not currently propagate argument dependent constants through
+functions where it does not not all of the callers.  This includes functions
+with normal external linkage as well as templates, C99 inline functions etc.
+Specifically, it does nothing to:
+
+define i32 @test(i32 %x, i32 %y, i32 %z) nounwind {
+entry:
+  %0 = add nsw i32 %y, %z                         
+  %1 = mul i32 %0, %x                             
+  %2 = mul i32 %y, %z                             
+  %3 = add nsw i32 %1, %2                         
+  ret i32 %3
+}
+
+define i32 @test2() nounwind {
+entry:
+  %0 = call i32 @test(i32 1, i32 2, i32 4) nounwind
+  ret i32 %0
+}
+
+It would be interesting extend IPSCCP to be able to handle simple cases like
+this, where all of the arguments to a call are constant.  Because IPSCCP runs
+before inlining, trivial templates and inline functions are not yet inlined.
+The results for a function + set of constant arguments should be memoized in a
+map.
+
+//===---------------------------------------------------------------------===//
