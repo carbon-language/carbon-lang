@@ -1905,6 +1905,9 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
+  if (!MAI->doesSupportDebugInformation())
+    return;
+
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
