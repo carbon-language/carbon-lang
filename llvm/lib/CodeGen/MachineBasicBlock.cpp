@@ -371,10 +371,7 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   MachineBasicBlock::succ_iterator SI = succ_begin();
   MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
   while (SI != succ_end()) {
-    if (*SI == DestA && DestA == DestB) {
-      DestA = DestB = 0;
-      ++SI;
-    } else if (*SI == DestA) {
+    if (*SI == DestA) {
       DestA = 0;
       ++SI;
     } else if (*SI == DestB) {
