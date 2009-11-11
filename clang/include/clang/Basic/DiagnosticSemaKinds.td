@@ -1102,6 +1102,8 @@ def note_partial_spec_deduct_instantiation_here : Note<
 def note_prior_template_arg_substitution : Note<
   "while substituting prior template arguments into %select{non-type|template}0"
   " template parameter%1 %2">;
+def note_template_default_arg_checking : Note<
+  "while checking a default template argument used here">;
   
 def err_field_instantiates_to_function : Error<
   "data member instantiated with function type %0">;

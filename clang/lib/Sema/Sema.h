@@ -2889,7 +2889,11 @@ public:
       /// We are substituting prior template arguments into a new
       /// template parameter. The template parameter itself is either a
       /// NonTypeTemplateParmDecl or a TemplateTemplateParmDecl.
-      PriorTemplateArgumentSubstitution
+      PriorTemplateArgumentSubstitution,
+      
+      /// We are checking the validity of a default template argument that
+      /// has been used when naming a template-id.
+      DefaultTemplateArgumentChecking
     } Kind;
 
     /// \brief The point of instantiation within the source code.
@@ -2918,6 +2922,10 @@ public:
       : Kind(TemplateInstantiation), Template(0), Entity(0), TemplateArgs(0), 
         NumTemplateArgs(0) {}
 
+    /// \brief Determines whether this template is an actual instantiation
+    /// that should be counted toward the maximum instantiation depth.
+    bool isInstantiationRecord() const;
+    
     friend bool operator==(const ActiveTemplateInstantiation &X,
                            const ActiveTemplateInstantiation &Y) {
       if (X.Kind != Y.Kind)
@@ -2931,6 +2939,7 @@ public:
         return true;
 
       case PriorTemplateArgumentSubstitution:
+      case DefaultTemplateArgumentChecking:
         if (X.Template != Y.Template)
           return false;
           
@@ -2962,6 +2971,11 @@ public:
   llvm::SmallVector<ActiveTemplateInstantiation, 16>
     ActiveTemplateInstantiations;
 
+  /// \brief The number of ActiveTemplateInstantiation entries in
+  /// \c ActiveTemplateInstantiations that are not actual instantiations and,
+  /// therefore, should not be counted as part of the instantiation depth.
+  unsigned NonInstantiationEntries;
+  
   /// \brief The last template from which a template instantiation
   /// error or warning was produced.
   ///
@@ -3036,6 +3050,16 @@ public:
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs,
                           SourceRange InstantiationRange);
+    
+    /// \brief Note that we are checking the default template argument
+    /// against the template parameter for a given template-id.
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          TemplateDecl *Template,
+                          NamedDecl *Param,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          SourceRange InstantiationRange);
+    
     
     /// \brief Note that we have finished instantiating this template.
     void Clear();

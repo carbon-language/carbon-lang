@@ -1856,73 +1856,87 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       continue;
     }
     
-    // Decode the template argument
-    TemplateArgumentLoc Arg;
-
-    if (ArgIdx >= NumArgs) {
-      // Retrieve the default template argument from the template
-      // parameter.
-      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
-        if (TTP->isParameterPack()) {
-          // We have an empty argument pack.
-          Converted.BeginPack();
-          Converted.EndPack();
-          break;
-        }
-
-        if (!TTP->hasDefaultArgument())
-          break;
-
-        DeclaratorInfo *ArgType = SubstDefaultTemplateArgument(*this, 
-                                                               Template,
-                                                               TemplateLoc,
-                                                               RAngleLoc,
-                                                               TTP,
-                                                               Converted);
-        if (!ArgType)
-          return true;
-                                                               
-        Arg = TemplateArgumentLoc(TemplateArgument(ArgType->getType()),
-                                  ArgType);
-      } else if (NonTypeTemplateParmDecl *NTTP
-                   = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
-        if (!NTTP->hasDefaultArgument())
-          break;
-
-        Sema::OwningExprResult E = SubstDefaultTemplateArgument(*this, Template,
-                                                                TemplateLoc, 
-                                                                RAngleLoc, 
-                                                                NTTP, 
-                                                                Converted);
-        if (E.isInvalid())
-          return true;
-
-        Expr *Ex = E.takeAs<Expr>();
-        Arg = TemplateArgumentLoc(TemplateArgument(Ex), Ex);
-      } else {
-        TemplateTemplateParmDecl *TempParm
-          = cast<TemplateTemplateParmDecl>(*Param);
-
-        if (!TempParm->hasDefaultArgument())
-          break;
-
-        TemplateName Name = SubstDefaultTemplateArgument(*this, Template,
-                                                         TemplateLoc, 
-                                                         RAngleLoc, 
-                                                         TempParm,
-                                                         Converted);
-        if (Name.isNull())
-          return true;
-        
-        Arg = TemplateArgumentLoc(TemplateArgument(Name), 
-                    TempParm->getDefaultArgument().getTemplateQualifierRange(),
-                    TempParm->getDefaultArgument().getTemplateNameLoc());
-      }
-    } else {
-      // Retrieve the template argument produced by the user.
-      Arg = TemplateArgs[ArgIdx];
+    if (ArgIdx < NumArgs) {
+      // Check the template argument we were given.
+      if (CheckTemplateArgument(*Param, TemplateArgs[ArgIdx], Template, 
+                                TemplateLoc, RAngleLoc, Converted))
+        return true;
+      
+      continue;
     }
     
+    // We have a default template argument that we will use.
+    TemplateArgumentLoc Arg;
+    
+    // Retrieve the default template argument from the template
+    // parameter. For each kind of template parameter, we substitute the
+    // template arguments provided thus far and any "outer" template arguments
+    // (when the template parameter was part of a nested template) into 
+    // the default argument.
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
+      if (!TTP->hasDefaultArgument()) {
+        assert((Invalid || PartialTemplateArgs) && "Missing default argument");
+        break;
+      }
+
+      DeclaratorInfo *ArgType = SubstDefaultTemplateArgument(*this, 
+                                                             Template,
+                                                             TemplateLoc,
+                                                             RAngleLoc,
+                                                             TTP,
+                                                             Converted);
+      if (!ArgType)
+        return true;
+                                                             
+      Arg = TemplateArgumentLoc(TemplateArgument(ArgType->getType()),
+                                ArgType);
+    } else if (NonTypeTemplateParmDecl *NTTP
+                 = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
+      if (!NTTP->hasDefaultArgument()) {
+        assert((Invalid || PartialTemplateArgs) && "Missing default argument");
+        break;
+      }
+
+      Sema::OwningExprResult E = SubstDefaultTemplateArgument(*this, Template,
+                                                              TemplateLoc, 
+                                                              RAngleLoc, 
+                                                              NTTP, 
+                                                              Converted);
+      if (E.isInvalid())
+        return true;
+
+      Expr *Ex = E.takeAs<Expr>();
+      Arg = TemplateArgumentLoc(TemplateArgument(Ex), Ex);
+    } else {
+      TemplateTemplateParmDecl *TempParm
+        = cast<TemplateTemplateParmDecl>(*Param);
+
+      if (!TempParm->hasDefaultArgument()) {
+        assert((Invalid || PartialTemplateArgs) && "Missing default argument");
+        break;
+      }
+
+      TemplateName Name = SubstDefaultTemplateArgument(*this, Template,
+                                                       TemplateLoc, 
+                                                       RAngleLoc, 
+                                                       TempParm,
+                                                       Converted);
+      if (Name.isNull())
+        return true;
+      
+      Arg = TemplateArgumentLoc(TemplateArgument(Name), 
+                  TempParm->getDefaultArgument().getTemplateQualifierRange(),
+                  TempParm->getDefaultArgument().getTemplateNameLoc());
+    }
+    
+    // Introduce an instantiation record that describes where we are using
+    // the default template argument.
+    InstantiatingTemplate Instantiating(*this, RAngleLoc, Template, *Param,
+                                        Converted.getFlatArguments(),
+                                        Converted.flatSize(),
+                                        SourceRange(TemplateLoc, RAngleLoc));    
+    
+    // Check the default template argument.
     if (CheckTemplateArgument(*Param, Arg, Template, TemplateLoc,
                               RAngleLoc, Converted))
       return true;

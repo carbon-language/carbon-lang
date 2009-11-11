@@ -355,8 +355,9 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     IdResolver(pp.getLangOptions()), StdNamespace(0), StdBadAlloc(0),
     GlobalNewDeleteDeclared(false), ExprEvalContext(PotentiallyEvaluated),
     CompleteTranslationUnit(CompleteTranslationUnit),
-    NumSFINAEErrors(0), CurrentInstantiationScope(0) {
-
+    NumSFINAEErrors(0), NonInstantiationEntries(0), 
+    CurrentInstantiationScope(0) 
+{
   TUScope = 0;
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());
