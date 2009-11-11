@@ -32,6 +32,7 @@ void RegisterPointerArithChecker(GRExprEngine &Eng);
 void RegisterFixedAddressChecker(GRExprEngine &Eng);
 void RegisterCastToStructChecker(GRExprEngine &Eng);
 void RegisterUndefinedArgChecker(GRExprEngine &Eng);
+void RegisterArrayBoundChecker(GRExprEngine &Eng);
 
 } // end clang namespace
 #endif

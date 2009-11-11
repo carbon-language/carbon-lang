@@ -414,4 +414,5 @@ void GRExprEngine::RegisterInternalChecks() {
   RegisterReturnPointerRangeChecker(*this);
 
   RegisterCastToStructChecker(*this);
+  RegisterArrayBoundChecker(*this);
 }
