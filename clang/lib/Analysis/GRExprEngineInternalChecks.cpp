@@ -16,7 +16,6 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
-#include "clang/Analysis/PathSensitive/Checkers/DereferenceChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/BadCallChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedArgChecker.h"
 #include "clang/Analysis/PathSensitive/Checkers/UndefinedAssignmentChecker.h"
@@ -405,9 +404,8 @@ void GRExprEngine::RegisterInternalChecks() {
   registerCheck(new UndefinedArgChecker());
   registerCheck(new UndefinedAssignmentChecker());
   registerCheck(new BadCallChecker());
-  registerCheck(new UndefDerefChecker());
-  registerCheck(new NullDerefChecker());
   
+  RegisterDereferenceChecker(*this);
   RegisterVLASizeChecker(*this);
   RegisterDivZeroChecker(*this);
   RegisterReturnStackAddressChecker(*this);

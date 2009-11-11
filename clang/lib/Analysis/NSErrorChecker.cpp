@@ -209,15 +209,12 @@ void NSErrorChecker::CheckParamDeref(const VarDecl *Param,
     return;
 
   // Iterate over the implicit-null dereferences.
-  NullDerefChecker *Checker = Eng.getChecker<NullDerefChecker>();
-  assert(Checker && "NullDerefChecker not exist.");
-  for (NullDerefChecker::iterator I = Checker->implicit_nodes_begin(),
-         E = Checker->implicit_nodes_end(); I != E; ++I) {
-
+  ExplodedNode *const* I,  *const* E;
+  llvm::tie(I, E) = GetImplicitNullDereferences(Eng);
+  for ( ; I != E; ++I) {
     const GRState *state = (*I)->getState();
-    const SVal* X = state->get<GRState::NullDerefTag>();
-
-    if (!X || X->getAsSymbol() != ParamSym)
+    SVal location = state->getSVal((*I)->getLocationAs<StmtPoint>()->getStmt());
+    if (location.getAsSymbol() != ParamSym)
       continue;
 
     // Emit an error.

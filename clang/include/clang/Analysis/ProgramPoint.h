@@ -33,13 +33,10 @@ public:
               BlockEntranceKind,
               BlockExitKind,
               PreStmtKind,
-              // Keep the following together and in this order.
               PostStmtKind,
-              PostLocationChecksSucceedKind,
-              PostOutOfBoundsCheckFailedKind,
-              PostNullCheckFailedKind,
-              PostUndefLocationCheckFailedKind,
+              PreLoadKind,
               PostLoadKind,
+              PreStoreKind,
               PostStoreKind,
               PostPurgeDeadSymbolsKind,
               PostStmtCustomKind,
@@ -194,17 +191,6 @@ public:
   }
 };
 
-class PostLocationChecksSucceed : public PostStmt {
-public:
-  PostLocationChecksSucceed(const Stmt* S, const LocationContext *L,
-                            const void *tag = 0)
-    : PostStmt(S, PostLocationChecksSucceedKind, L, tag) {}
-
-  static bool classof(const ProgramPoint* Location) {
-    return Location->getKind() == PostLocationChecksSucceedKind;
-  }
-};
-
 class PostStmtCustom : public PostStmt {
 public:
   PostStmtCustom(const Stmt* S,
@@ -226,36 +212,36 @@ public:
   }
 };
 
-class PostOutOfBoundsCheckFailed : public PostStmt {
+  
+class LocationCheck : public StmtPoint {
+protected:
+  LocationCheck(const Stmt *S, const LocationContext *L,
+                ProgramPoint::Kind K, const void *tag)
+    : StmtPoint(S, NULL, K, L, tag) {}
+    
+  static bool classof(const ProgramPoint *location) {
+    unsigned k = location->getKind();
+    return k == PreLoadKind || PreStoreKind;
+  }
+};
+  
+class PreLoad : public LocationCheck {
 public:
-  PostOutOfBoundsCheckFailed(const Stmt* S, const LocationContext *L,
-                             const void *tag = 0)
-    : PostStmt(S, PostOutOfBoundsCheckFailedKind, L, tag) {}
-
-  static bool classof(const ProgramPoint* Location) {
-    return Location->getKind() == PostOutOfBoundsCheckFailedKind;
+  PreLoad(const Stmt *S, const LocationContext *L, const void *tag = 0)
+    : LocationCheck(S, L, PreLoadKind, tag) {}
+  
+  static bool classof(const ProgramPoint *location) {
+    return location->getKind() == PreLoadKind;
   }
 };
 
-class PostUndefLocationCheckFailed : public PostStmt {
+class PreStore : public LocationCheck {
 public:
-  PostUndefLocationCheckFailed(const Stmt* S, const LocationContext *L,
-                               const void *tag = 0)
-    : PostStmt(S, PostUndefLocationCheckFailedKind, L, tag) {}
-
-  static bool classof(const ProgramPoint* Location) {
-    return Location->getKind() == PostUndefLocationCheckFailedKind;
-  }
-};
-
-class PostNullCheckFailed : public PostStmt {
-public:
-  PostNullCheckFailed(const Stmt* S, const LocationContext *L,
-                      const void *tag = 0)
-    : PostStmt(S, PostNullCheckFailedKind, L, tag) {}
-
-  static bool classof(const ProgramPoint* Location) {
-    return Location->getKind() == PostNullCheckFailedKind;
+  PreStore(const Stmt *S, const LocationContext *L, const void *tag = 0)
+  : LocationCheck(S, L, PreStoreKind, tag) {}
+  
+  static bool classof(const ProgramPoint *location) {
+    return location->getKind() == PreStoreKind;
   }
 };
 

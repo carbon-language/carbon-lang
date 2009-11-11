@@ -556,16 +556,21 @@ protected:
                 bool atDeclInit = false);
 
 public:
+  // FIXME: 'tag' should be removed, and a LocationContext should be used
+  // instead.
   void EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
                 const GRState* St, SVal location, const void *tag = 0);
 
-  ExplodedNode* EvalLocation(Stmt* Ex, ExplodedNode* Pred,
+  // FIXME: 'tag' should be removed, and a LocationContext should be used
+  // instead.
+  void EvalLocation(ExplodedNodeSet &Dst, Stmt *S, ExplodedNode* Pred,
                        const GRState* St, SVal location,
-                       const void *tag = 0);
+                       const void *tag, bool isLoad);
 
+  // FIXME: 'tag' should be removed, and a LocationContext should be used
+  // instead.
   void EvalStore(ExplodedNodeSet& Dst, Expr* AssignE, Expr* StoreE,
-                 ExplodedNode* Pred,
-                 const GRState* St, SVal TargetLV, SVal Val,
+                 ExplodedNode* Pred, const GRState* St, SVal TargetLV, SVal Val,
                  const void *tag = 0);
 };
 

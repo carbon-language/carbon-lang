@@ -39,22 +39,19 @@ class CheckerContext {
   SaveAndRestore<const void*> OldTag;
   SaveAndRestore<ProgramPoint::Kind> OldPointKind;
   SaveOr OldHasGen;
+  const GRState *state;
 
 public:
-  CheckerContext(ExplodedNodeSet &dst,
-                 GRStmtNodeBuilder &builder,
-                 GRExprEngine &eng,
-                 ExplodedNode *pred,
-                 const void *tag, bool preVisit)
+  CheckerContext(ExplodedNodeSet &dst, GRStmtNodeBuilder &builder,
+                 GRExprEngine &eng, ExplodedNode *pred,
+                 const void *tag, ProgramPoint::Kind K,
+                 const GRState *st = 0)
     : Dst(dst), B(builder), Eng(eng), Pred(pred),
-      OldSink(B.BuildSinks), OldTag(B.Tag),
-      OldPointKind(B.PointKind), OldHasGen(B.HasGeneratedNode) {
-        //assert(Dst.empty()); // This is a fake assertion.
-              // See GRExprEngine::CheckerVisit(), CurrSet is repeatedly used.
-        B.Tag = tag;
-        if (preVisit)
-          B.PointKind = ProgramPoint::PreStmtKind;
-      }
+      OldSink(B.BuildSinks),
+      OldTag(B.Tag, tag),
+      OldPointKind(B.PointKind, K),
+      OldHasGen(B.HasGeneratedNode),
+      state(st) {}
 
   ~CheckerContext() {
     if (!B.BuildSinks && !B.HasGeneratedNode)
@@ -72,7 +69,7 @@ public:
   ExplodedNodeSet &getNodeSet() { return Dst; }
   GRStmtNodeBuilder &getNodeBuilder() { return B; }
   ExplodedNode *&getPredecessor() { return Pred; }
-  const GRState *getState() { return B.GetState(Pred); }
+  const GRState *getState() { return state ? state : B.GetState(Pred); }
 
   ASTContext &getASTContext() {
     return Eng.getContext();
@@ -113,43 +110,54 @@ class Checker {
 private:
   friend class GRExprEngine;
 
+  // FIXME: Remove the 'tag' option.
   void GR_Visit(ExplodedNodeSet &Dst,
                 GRStmtNodeBuilder &Builder,
                 GRExprEngine &Eng,
-                const Stmt *stmt,
+                const Stmt *S,
                 ExplodedNode *Pred, void *tag, bool isPrevisit) {
-    CheckerContext C(Dst, Builder, Eng, Pred, tag, isPrevisit);
+    CheckerContext C(Dst, Builder, Eng, Pred, tag,
+                     isPrevisit ? ProgramPoint::PreStmtKind :
+                     ProgramPoint::PostStmtKind);
     assert(isPrevisit && "Only previsit supported for now.");
-    _PreVisit(C, stmt);
+    _PreVisit(C, S);
   }
 
+  // FIXME: Remove the 'tag' option.
   void GR_VisitBind(ExplodedNodeSet &Dst,
                     GRStmtNodeBuilder &Builder, GRExprEngine &Eng,
                     const Stmt *AssignE,
                     const Stmt *StoreE, ExplodedNode *Pred, void *tag, 
                     SVal location, SVal val,
                     bool isPrevisit) {
-    CheckerContext C(Dst, Builder, Eng, Pred, tag, isPrevisit);
+    CheckerContext C(Dst, Builder, Eng, Pred, tag,
+                     isPrevisit ? ProgramPoint::PreStmtKind :
+                     ProgramPoint::PostStmtKind);
     assert(isPrevisit && "Only previsit supported for now.");
     PreVisitBind(C, AssignE, StoreE, location, val);
+  }
+  
+  // FIXME: Remove the 'tag' option.
+  void GR_VisitLocation(ExplodedNodeSet &Dst,
+                        GRStmtNodeBuilder &Builder,
+                        GRExprEngine &Eng,
+                        const Stmt *S,
+                        ExplodedNode *Pred, const GRState *state,
+                        SVal location,
+                        void *tag, bool isLoad) {
+    CheckerContext C(Dst, Builder, Eng, Pred, tag,
+                     isLoad ? ProgramPoint::PreLoadKind :
+                     ProgramPoint::PreStoreKind, state);
+    VisitLocation(C, S, location);
   }
 
 public:
   virtual ~Checker() {}
   virtual void _PreVisit(CheckerContext &C, const Stmt *ST) {}
-  
-  // This is a previsit which takes a node returns a node.
-  virtual ExplodedNode *CheckLocation(const Stmt *S, ExplodedNode *Pred,
-                                      const GRState *state, SVal V,
-                                      GRExprEngine &Eng) {
-    return Pred;
-  }
-  
-  virtual void PreVisitBind(CheckerContext &C,
-                            const Stmt *AssignE, const Stmt *StoreE, 
-                            SVal location, SVal val) {}
+  virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
+  virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
+                            const Stmt *StoreE, SVal location, SVal val) {}
 };
-
 } // end clang namespace
 
 #endif

@@ -13,99 +13,103 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/Checkers/DereferenceChecker.h"
+#include "clang/Analysis/PathSensitive/Checker.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "GRExprEngineInternalChecks.h"
 
 using namespace clang;
 
-void *NullDerefChecker::getTag() {
-  static int x = 0;
-  return &x;
+namespace {
+class VISIBILITY_HIDDEN DereferenceChecker : public Checker {
+  BuiltinBug *BT_null;
+  BuiltinBug *BT_undef;
+  llvm::SmallVector<ExplodedNode*, 2> ImplicitNullDerefNodes;
+public:
+  DereferenceChecker() : BT_null(0), BT_undef(0) {}
+  static void *getTag() { static int tag = 0; return &tag; }
+  void VisitLocation(CheckerContext &C, const Stmt *S, SVal location);
+  
+  std::pair<ExplodedNode * const*, ExplodedNode * const*>
+  getImplicitNodes() const {    
+    return std::make_pair(ImplicitNullDerefNodes.data(),
+                          ImplicitNullDerefNodes.data() +
+                          ImplicitNullDerefNodes.size());
+  }
+};
+} // end anonymous namespace
+
+void clang::RegisterDereferenceChecker(GRExprEngine &Eng) {
+  Eng.registerCheck(new DereferenceChecker());
 }
 
-ExplodedNode *NullDerefChecker::CheckLocation(const Stmt *S, ExplodedNode *Pred,
-                                              const GRState *state, SVal V,
-                                              GRExprEngine &Eng) {
-  Loc *LV = dyn_cast<Loc>(&V);
-  
-    // If the value is not a location, don't touch the node.
-  if (!LV)
-    return Pred;
-  
-  const GRState *NotNullState = state->Assume(*LV, true);
-  const GRState *NullState = state->Assume(*LV, false);
-  
-  GRStmtNodeBuilder &Builder = Eng.getBuilder();
-  BugReporter &BR = Eng.getBugReporter();
-  
-    // The explicit NULL case.
-  if (NullState) {
-      // Use the GDM to mark in the state what lval was null.
-    const SVal *PersistentLV = Eng.getBasicVals().getPersistentSVal(*LV);
-    NullState = NullState->set<GRState::NullDerefTag>(PersistentLV);
-    
-    ExplodedNode *N = Builder.generateNode(S, NullState, Pred,
-                                         ProgramPoint::PostNullCheckFailedKind);
+std::pair<ExplodedNode * const *, ExplodedNode * const *>
+clang::GetImplicitNullDereferences(GRExprEngine &Eng) {
+  DereferenceChecker *checker = Eng.getChecker<DereferenceChecker>();
+  if (!checker)
+    return std::make_pair((ExplodedNode * const *) 0,
+                          (ExplodedNode * const *) 0);
+  return checker->getImplicitNodes();
+}
+
+void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
+                                       SVal l) {
+  // Check for dereference of an undefined value.
+  if (l.isUndef()) {
+    ExplodedNode *N = C.GenerateNode(S, true);
     if (N) {
-      N->markAsSink();
+      if (!BT_undef)
+        BT_undef = new BuiltinBug("Dereference of undefined pointer value");
       
-      if (!NotNullState) { // Explicit null case.
-        if (!BT)
-          BT = new BuiltinBug("Null dereference","Dereference of null pointer");
+      EnhancedBugReport *report =
+        new EnhancedBugReport(*BT_undef, BT_undef->getDescription().c_str(), N);
+      report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
+                                bugreporter::GetDerefExpr(N));
+      C.EmitReport(report);
+    }
+    return;
+  }
+  
+  DefinedOrUnknownSVal location = cast<DefinedOrUnknownSVal>(l);
+  
+  // Check for null dereferences.  
+  if (!isa<Loc>(location))
+    return;
+  
+  const GRState *state = C.getState();
+  const GRState *notNullState, *nullState;
+  llvm::tie(notNullState, nullState) = state->Assume(location);
+  
+  // The explicit NULL case.
+  if (nullState) {
+    // Generate an error node.
+    ExplodedNode *N = C.GenerateNode(S, nullState, true);    
+    if (N) {      
+      if (!notNullState) {
+        // We know that 'location' cannot be non-null.  This is what
+        // we call an "explicit" null dereference.        
+        if (!BT_null)
+          BT_null = new BuiltinBug("Null pointer dereference",
+                                   "Dereference of null pointer");
 
-        EnhancedBugReport *R =
-          new EnhancedBugReport(*BT, BT->getDescription().c_str(), N);
+        EnhancedBugReport *report =
+          new EnhancedBugReport(*BT_null, BT_null->getDescription().c_str(), N);
+        report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
+                                  bugreporter::GetDerefExpr(N));
+        
+        C.EmitReport(report);
+        return;
+      }
 
-        R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
-                             bugreporter::GetDerefExpr(N));
-        
-        BR.EmitReport(R);
-        
-        return 0;
-      } else // Implicit null case.
-        ImplicitNullDerefNodes.push_back(N);
+      // Otherwise, we have the case where the location could either be
+      // null or not-null.  Record the error node as an "implicit" null
+      // dereference.
+      ImplicitNullDerefNodes.push_back(N);
     }
   }
   
-  if (!NotNullState)
-    return 0;
-
-  return Builder.generateNode(S, NotNullState, Pred, 
-                              ProgramPoint::PostLocationChecksSucceedKind);
+  // From this point forward, we know that the location is not null.
+  assert(notNullState);
+  C.addTransition(state != nullState ? C.GenerateNode(S, notNullState) :
+                                       C.getPredecessor());
 }
-
-
-void *UndefDerefChecker::getTag() {
-  static int x = 0;
-  return &x;
-}
-
-ExplodedNode *UndefDerefChecker::CheckLocation(const Stmt *S, 
-                                               ExplodedNode *Pred,
-                                               const GRState *state, SVal V,
-                                               GRExprEngine &Eng) {
-  GRStmtNodeBuilder &Builder = Eng.getBuilder();
-  BugReporter &BR = Eng.getBugReporter();
-
-  if (V.isUndef()) {
-    ExplodedNode *N = Builder.generateNode(S, state, Pred, 
-                               ProgramPoint::PostUndefLocationCheckFailedKind);
-    if (N) {
-      N->markAsSink();
-
-      if (!BT)
-        BT = new BuiltinBug(0, "Undefined dereference", 
-                            "Dereference of undefined pointer value");
-
-      EnhancedBugReport *R =
-        new EnhancedBugReport(*BT, BT->getDescription().c_str(), N);
-      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
-                           bugreporter::GetDerefExpr(N));
-      BR.EmitReport(R);
-    }
-    return 0;
-  }
-
-  return Pred;
-}
-

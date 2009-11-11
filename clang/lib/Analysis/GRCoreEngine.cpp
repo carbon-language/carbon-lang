@@ -418,51 +418,38 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
-static inline PostStmt GetPostLoc(const Stmt* S, ProgramPoint::Kind K,
-                                  const LocationContext *L, const void *tag) {
+static ProgramPoint GetProgramPoint(const Stmt *S, ProgramPoint::Kind K,
+                                    const LocationContext *LC, const void *tag){
   switch (K) {
     default:
-      assert(false && "Invalid PostXXXKind.");
-
+      assert(false && "Unhandled ProgramPoint kind");    
+    case ProgramPoint::PreStmtKind:
+      return PreStmt(S, LC, tag);
     case ProgramPoint::PostStmtKind:
-      return PostStmt(S, L, tag);
-
+      return PostStmt(S, LC, tag);
+    case ProgramPoint::PreLoadKind:
+      return PreLoad(S, LC, tag);
     case ProgramPoint::PostLoadKind:
-      return PostLoad(S, L, tag);
-
-    case ProgramPoint::PostUndefLocationCheckFailedKind:
-      return PostUndefLocationCheckFailed(S, L, tag);
-
-    case ProgramPoint::PostLocationChecksSucceedKind:
-      return PostLocationChecksSucceed(S, L, tag);
-
-    case ProgramPoint::PostOutOfBoundsCheckFailedKind:
-      return PostOutOfBoundsCheckFailed(S, L, tag);
-
-    case ProgramPoint::PostNullCheckFailedKind:
-      return PostNullCheckFailed(S, L, tag);
-
+      return PostLoad(S, LC, tag);
+    case ProgramPoint::PreStoreKind:
+      return PreStore(S, LC, tag);
     case ProgramPoint::PostStoreKind:
-      return PostStore(S, L, tag);
-
+      return PostStore(S, LC, tag);
     case ProgramPoint::PostLValueKind:
-      return PostLValue(S, L, tag);
-
+      return PostLValue(S, LC, tag);
     case ProgramPoint::PostPurgeDeadSymbolsKind:
-      return PostPurgeDeadSymbols(S, L, tag);
+      return PostPurgeDeadSymbols(S, LC, tag);
   }
 }
 
 ExplodedNode*
-GRStmtNodeBuilder::generateNodeInternal(const Stmt* S, const GRState* State,
+GRStmtNodeBuilder::generateNodeInternal(const Stmt* S, const GRState* state,
                                         ExplodedNode* Pred,
                                         ProgramPoint::Kind K,
                                         const void *tag) {
-  return K == ProgramPoint::PreStmtKind
-         ? generateNodeInternal(PreStmt(S, Pred->getLocationContext(),tag),
-                                State, Pred)
-       : generateNodeInternal(GetPostLoc(S, K, Pred->getLocationContext(), tag),
-                              State, Pred);
+  
+  const ProgramPoint &L = GetProgramPoint(S, K, Pred->getLocationContext(),tag);  
+  return generateNodeInternal(L, state, Pred);
 }
 
 ExplodedNode*

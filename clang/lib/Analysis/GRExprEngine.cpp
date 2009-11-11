@@ -1190,68 +1190,87 @@ void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr *AssignE,
   assert(Builder && "GRStmtNodeBuilder must be defined.");
 
   // Evaluate the location (checks for bad dereferences).
-  Pred = EvalLocation(StoreE, Pred, state, location, tag);
+  ExplodedNodeSet Tmp;
+  EvalLocation(Tmp, StoreE, Pred, state, location, tag, false);
 
-  if (!Pred)
+  if (Tmp.empty())
     return;
 
-  assert (!location.isUndef());
-  state = GetState(Pred);
+  assert(!location.isUndef());
 
+  SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind,
+                                                   ProgramPoint::PostStoreKind);
+  SaveAndRestore<const void*> OldTag(Builder->Tag, tag);
+  
   // Proceed with the store.
-  SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind);
-  SaveAndRestore<const void*> OldTag(Builder->Tag);
-  Builder->PointKind = ProgramPoint::PostStoreKind;
-  Builder->Tag = tag;
-  EvalBind(Dst, AssignE, StoreE, Pred, state, location, Val);
+  for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
+    EvalBind(Dst, AssignE, StoreE, *NI, GetState(*NI), location, Val);
 }
 
-void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
+void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr *Ex, ExplodedNode* Pred,
                             const GRState* state, SVal location,
                             const void *tag) {
 
   // Evaluate the location (checks for bad dereferences).
-  Pred = EvalLocation(Ex, Pred, state, location, tag);
+  ExplodedNodeSet Tmp;
+  EvalLocation(Tmp, Ex, Pred, state, location, tag, true);
 
-  if (!Pred)
+  if (Tmp.empty())
     return;
-
-  state = GetState(Pred);
+  
+  assert(!location.isUndef());
+  
+  SaveAndRestore<ProgramPoint::Kind> OldSPointKind(Builder->PointKind);
+  SaveAndRestore<const void*> OldTag(Builder->Tag);
 
   // Proceed with the load.
-  ProgramPoint::Kind K = ProgramPoint::PostLoadKind;
-
-  if (location.isUnknown()) {
-    // This is important.  We must nuke the old binding.
-    MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, UnknownVal()),
-             K, tag);
-  }
-  else {
-    SVal V = state->getSVal(cast<Loc>(location), Ex->getType());
-    MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V), K, tag);
+  for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI) {
+    state = GetState(*NI);
+    if (location.isUnknown()) {
+      // This is important.  We must nuke the old binding.
+      MakeNode(Dst, Ex, *NI, state->BindExpr(Ex, UnknownVal()),
+               ProgramPoint::PostLoadKind, tag);
+    }
+    else {
+      SVal V = state->getSVal(cast<Loc>(location), Ex->getType());
+      MakeNode(Dst, Ex, *NI, state->BindExpr(Ex, V), ProgramPoint::PostLoadKind,
+               tag);
+    }
   }
 }
 
-ExplodedNode* GRExprEngine::EvalLocation(Stmt* Ex, ExplodedNode* Pred,
-                                         const GRState* state, SVal location,
-                                         const void *tag) {
+void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
+                                ExplodedNode* Pred,
+                                const GRState* state, SVal location,
+                                const void *tag, bool isLoad) {
 
-  SaveAndRestore<const void*> OldTag(Builder->Tag);
-  Builder->Tag = tag;
-
-  if (location.isUnknown() || Checkers.empty())
-    return Pred;
-
-  
-  for (CheckersOrdered::iterator I=Checkers.begin(), E=Checkers.end(); I!=E;++I)
-  {
-    Pred = I->second->CheckLocation(Ex, Pred, state, location, *this);
-    if (!Pred)
-      break;
+  if (location.isUnknown() || Checkers.empty()) {
+    Dst.Add(Pred);
+    return;
   }
   
-  return Pred;
-
+  ExplodedNodeSet Src, Tmp;
+  Src.Add(Pred);
+  ExplodedNodeSet *PrevSet = &Src;
+  
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
+  {
+    ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst 
+      : (PrevSet == &Tmp) ? &Src : &Tmp;
+    
+    CurrSet->clear();
+    void *tag = I->first;
+    Checker *checker = I->second;
+    
+    for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
+         NI != NE; ++NI)
+      checker->GR_VisitLocation(*CurrSet, *Builder, *this, S, *NI, state,
+                                location, tag, isLoad);
+    
+    // Update which NodeSet is the current one.
+    PrevSet = CurrSet;
+  }
+  
   // FIXME: Temporarily disable out-of-bounds checking until we make
   // the logic reflect recent changes to CastRegion and friends.
 #if 0
@@ -1746,46 +1765,47 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
                                        ExplodedNode* Pred, ExplodedNodeSet& Dst,
                                                  SVal ElementV) {
 
-
-
-  // Get the current state.  Use 'EvalLocation' to determine if it is a null
-  // pointer, etc.
+  // Check if the location we are writing back to is a null pointer.
   Stmt* elem = S->getElement();
-
-  Pred = EvalLocation(elem, Pred, GetState(Pred), ElementV);
-  if (!Pred)
+  ExplodedNodeSet Tmp;
+  EvalLocation(Tmp, elem, Pred, GetState(Pred), ElementV, NULL, false);
+  
+  if (Tmp.empty())
     return;
+  
+  for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI) {
+    Pred = *NI;
+    const GRState *state = GetState(Pred);
 
-  const GRState *state = GetState(Pred);
+    // Handle the case where the container still has elements.
+    SVal TrueV = ValMgr.makeTruthVal(1);
+    const GRState *hasElems = state->BindExpr(S, TrueV);
 
-  // Handle the case where the container still has elements.
-  SVal TrueV = ValMgr.makeTruthVal(1);
-  const GRState *hasElems = state->BindExpr(S, TrueV);
+    // Handle the case where the container has no elements.
+    SVal FalseV = ValMgr.makeTruthVal(0);
+    const GRState *noElems = state->BindExpr(S, FalseV);
 
-  // Handle the case where the container has no elements.
-  SVal FalseV = ValMgr.makeTruthVal(0);
-  const GRState *noElems = state->BindExpr(S, FalseV);
+    if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
+      if (const TypedRegion* R = dyn_cast<TypedRegion>(MV->getRegion())) {
+        // FIXME: The proper thing to do is to really iterate over the
+        //  container.  We will do this with dispatch logic to the store.
+        //  For now, just 'conjure' up a symbolic value.
+        QualType T = R->getValueType(getContext());
+        assert(Loc::IsLocType(T));
+        unsigned Count = Builder->getCurrentBlockCount();
+        SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
+        SVal V = ValMgr.makeLoc(Sym);
+        hasElems = hasElems->bindLoc(ElementV, V);
 
-  if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
-    if (const TypedRegion* R = dyn_cast<TypedRegion>(MV->getRegion())) {
-      // FIXME: The proper thing to do is to really iterate over the
-      //  container.  We will do this with dispatch logic to the store.
-      //  For now, just 'conjure' up a symbolic value.
-      QualType T = R->getValueType(getContext());
-      assert (Loc::IsLocType(T));
-      unsigned Count = Builder->getCurrentBlockCount();
-      SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
-      SVal V = ValMgr.makeLoc(Sym);
-      hasElems = hasElems->bindLoc(ElementV, V);
+        // Bind the location to 'nil' on the false branch.
+        SVal nilV = ValMgr.makeIntVal(0, T);
+        noElems = noElems->bindLoc(ElementV, nilV);
+      }
 
-      // Bind the location to 'nil' on the false branch.
-      SVal nilV = ValMgr.makeIntVal(0, T);
-      noElems = noElems->bindLoc(ElementV, nilV);
-    }
-
-  // Create the new nodes.
-  MakeNode(Dst, S, Pred, hasElems);
-  MakeNode(Dst, S, Pred, noElems);
+    // Create the new nodes.
+    MakeNode(Dst, S, Pred, hasElems);
+    MakeNode(Dst, S, Pred, noElems);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -2920,10 +2940,6 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
             Out << "\\lPostStore\\l";
           else if (isa<PostLValue>(Loc))
             Out << "\\lPostLValue\\l";
-          else if (isa<PostLocationChecksSucceed>(Loc))
-            Out << "\\lPostLocationChecksSucceed\\l";
-          else if (isa<PostNullCheckFailed>(Loc))
-            Out << "\\lPostNullCheckFailed\\l";
 
           if (GraphPrintCheckerState->isImplicitNullDeref(N))
             Out << "\\|Implicit-Null Dereference.\\l";
