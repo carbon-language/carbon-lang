@@ -563,11 +563,11 @@ static llvm::raw_ostream *ComputeOutFile(const CompilerInvocation &CompOpts,
   return Ret;
 }
 
-/// AddFixitLocations - Add any individual user specified "fix-it" locations,
+/// AddFixItLocations - Add any individual user specified "fix-it" locations,
 /// and return true on success (if any were added).
-static bool AddFixitLocations(FixItRewriter *FixItRewrite,
+static bool AddFixItLocations(FixItRewriter *FixItRewrite,
                               FileManager &FileMgr) {
-  bool AddedFixitLocation = false;
+  bool AddedFixItLocation = false;
 
   for (unsigned i = 0, e = FixItAtLocations.size(); i != e; ++i) {
     if (const FileEntry *File = FileMgr.getFile(FixItAtLocations[i].FileName)) {
@@ -576,14 +576,14 @@ static bool AddFixitLocations(FixItRewriter *FixItRewrite,
       Requested.Line = FixItAtLocations[i].Line;
       Requested.Column = FixItAtLocations[i].Column;
       FixItRewrite->addFixItLocation(Requested);
-      AddedFixitLocation = true;
+      AddedFixItLocation = true;
     } else {
       llvm::errs() << "FIX-IT could not find file \""
                    << FixItAtLocations[i].FileName << "\"\n";
     }
   }
 
-  return AddedFixitLocation;
+  return AddedFixItLocation;
 }
 
 static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
@@ -674,13 +674,11 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   default:
     Consumer.reset(CreateConsumerAction(CompOpts, PP, InFile, PA, OS, OutPath,
                                         Context));
-
     if (!Consumer.get()) {
       PP.getDiagnostics().Report(diag::err_fe_invalid_ast_action);
       return;
     }
-
-    break;;
+    break;
 
   case EmitHTML:
     OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
@@ -800,13 +798,13 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                        PP.getSourceManager(),
                                        PP.getLangOptions());
-
-    if (!AddFixitLocations(FixItRewrite, PP.getFileManager())) {
+    if (!AddFixItLocations(FixItRewrite, PP.getFileManager())) {
       // All of the fix-it locations were bad. Don't fix anything.
       delete FixItRewrite;
       FixItRewrite = 0;
     }
   }
+
 
   llvm::OwningPtr<ASTContext> ContextOwner;
   if (Consumer)
