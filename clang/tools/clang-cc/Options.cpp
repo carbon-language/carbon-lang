@@ -12,19 +12,120 @@
 // logic.
 
 #include "Options.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PreprocessorOptions.h"
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
 #include <stdio.h>
 
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Analyzer Options
+//===----------------------------------------------------------------------===//
+
+namespace analyzeroptions {
+
+static llvm::cl::list<Analyses>
+AnalysisList(llvm::cl::desc("Source Code Analysis - Checks and Analyses"),
+llvm::cl::values(
+#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
+clEnumValN(NAME, CMDFLAG, DESC),
+#include "clang/Frontend/Analyses.def"
+clEnumValEnd));
+
+static llvm::cl::opt<AnalysisStores>
+AnalysisStoreOpt("analyzer-store",
+  llvm::cl::desc("Source Code Analysis - Abstract Memory Store Models"),
+  llvm::cl::init(BasicStoreModel),
+  llvm::cl::values(
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN)\
+clEnumValN(NAME##Model, CMDFLAG, DESC),
+#include "clang/Frontend/Analyses.def"
+clEnumValEnd));
+
+static llvm::cl::opt<AnalysisConstraints>
+AnalysisConstraintsOpt("analyzer-constraints",
+  llvm::cl::desc("Source Code Analysis - Symbolic Constraint Engines"),
+  llvm::cl::init(RangeConstraintsModel),
+  llvm::cl::values(
+#define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN)\
+clEnumValN(NAME##Model, CMDFLAG, DESC),
+#include "clang/Frontend/Analyses.def"
+clEnumValEnd));
+
+static llvm::cl::opt<AnalysisDiagClients>
+AnalysisDiagOpt("analyzer-output",
+                llvm::cl::desc("Source Code Analysis - Output Options"),
+                llvm::cl::init(PD_HTML),
+                llvm::cl::values(
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREATE)\
+clEnumValN(PD_##NAME, CMDFLAG, DESC),
+#include "clang/Frontend/Analyses.def"
+clEnumValEnd));
+
+static llvm::cl::opt<bool>
+AnalyzeAll("analyzer-opt-analyze-headers",
+    llvm::cl::desc("Force the static analyzer to analyze "
+                   "functions defined in header files"));
+
+static llvm::cl::opt<bool>
+AnalyzerDisplayProgress("analyzer-display-progress",
+          llvm::cl::desc("Emit verbose output about the analyzer's progress."));
+
+static llvm::cl::opt<std::string>
+AnalyzeSpecificFunction("analyze-function",
+               llvm::cl::desc("Run analysis on specific function"));
+
+static llvm::cl::opt<bool>
+EagerlyAssume("analyzer-eagerly-assume",
+          llvm::cl::init(false),
+              llvm::cl::desc("Eagerly assume the truth/falseness of some "
+                             "symbolic constraints."));
+
+static llvm::cl::opt<bool>
+PurgeDead("analyzer-purge-dead",
+          llvm::cl::init(true),
+          llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
+                         " processing a statement."));
+
+static llvm::cl::opt<bool>
+TrimGraph("trim-egraph",
+     llvm::cl::desc("Only show error-related paths in the analysis graph"));
+
+static llvm::cl::opt<bool>
+VisualizeEGDot("analyzer-viz-egraph-graphviz",
+               llvm::cl::desc("Display exploded graph using GraphViz"));
+
+static llvm::cl::opt<bool>
+VisualizeEGUbi("analyzer-viz-egraph-ubigraph",
+               llvm::cl::desc("Display exploded graph using Ubigraph"));
+
+}
+
+void clang::InitializeAnalyzerOptions(AnalyzerOptions &Opts) {
+  using namespace analyzeroptions;
+  Opts.AnalysisList = AnalysisList;
+  Opts.AnalysisStoreOpt = AnalysisStoreOpt;
+  Opts.AnalysisConstraintsOpt = AnalysisConstraintsOpt;
+  Opts.AnalysisDiagOpt = AnalysisDiagOpt;
+  Opts.VisualizeEGDot = VisualizeEGDot;
+  Opts.VisualizeEGUbi = VisualizeEGUbi;
+  Opts.AnalyzeAll = AnalyzeAll;
+  Opts.AnalyzerDisplayProgress = AnalyzerDisplayProgress;
+  Opts.PurgeDead = PurgeDead;
+  Opts.EagerlyAssume = EagerlyAssume;
+  Opts.AnalyzeSpecificFunction = AnalyzeSpecificFunction;
+  Opts.TrimGraph = TrimGraph;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Code Generation Options

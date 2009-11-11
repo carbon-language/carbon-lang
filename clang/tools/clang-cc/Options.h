@@ -14,6 +14,7 @@
 
 namespace clang {
 
+class AnalyzerOptions;
 class CompileOptions;
 class DiagnosticOptions;
 class HeaderSearchOptions;
@@ -35,6 +36,8 @@ enum LangKind {
   langkind_ocl,
   langkind_ast
 };
+
+void InitializeAnalyzerOptions(AnalyzerOptions &Opts);
 
 // FIXME: This can be sunk into InitializeCompileOptions now that that happens
 // before language initialization?
