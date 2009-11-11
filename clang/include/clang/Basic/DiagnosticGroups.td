@@ -40,6 +40,7 @@ def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
 
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
+def : DiagGroup<"idiomatic-parentheses">;
 def : DiagGroup<"import">;
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
@@ -63,7 +64,6 @@ def : DiagGroup<"old-style-definition">;
 def : DiagGroup<"overflow">;
 def : DiagGroup<"overloaded-virtual">;
 def : DiagGroup<"packed">;
-def Parentheses : DiagGroup<"parentheses">;
 def PointerArith : DiagGroup<"pointer-arith">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
@@ -116,6 +116,10 @@ def : DiagGroup<"write-strings">;
 def CharSubscript : DiagGroup<"char-subscripts">;
 
 // Aggregation warning settings.
+
+// -Widiomatic-parentheses contains warnings about 'idiomatic'
+// missing parentheses;  it is off by default.
+def Parentheses : DiagGroup<"parentheses", [DiagGroup<"idiomatic-parentheses">]>;
 
 // -Wconversion has its own warnings, but we split this one out for
 // legacy reasons.

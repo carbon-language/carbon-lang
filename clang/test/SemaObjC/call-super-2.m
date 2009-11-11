@@ -6,6 +6,7 @@ typedef struct objc_object *id;
 id objc_getClass(const char *s);
 
 @interface Object 
+- (id) initWithInt: (int) i;
 @end
 
 @protocol Func
@@ -28,6 +29,7 @@ id objc_getClass(const char *s);
 - (int) instance_func5;
 - (int) instance_func6;
 - (int) instance_func7;
+- (id) initWithInt: (int) i;
 @end
 
 @implementation Derived
@@ -93,6 +95,14 @@ id objc_getClass(const char *s);
 - (int) instance_func7
 {
    return [objc_getClass("Derived") class_func1];
+}
+- (id) initWithInt: (int) i
+{
+   // Don't warn about parentheses here.
+   if (self = [super initWithInt: i]) {
+     [self instance_func1];
+   }
+   return self;
 }
 @end
 

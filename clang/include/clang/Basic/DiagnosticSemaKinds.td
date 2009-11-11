@@ -1806,6 +1806,9 @@ def err_incomplete_object_call : Error<
 def warn_condition_is_assignment : Warning<"using the result of an "
   "assignment as a condition without parentheses">,
   InGroup<Parentheses>;
+def warn_condition_is_self_assignment : Warning<"using the result of an "
+  "assignment to 'self' as a condition without parentheses">,
+  InGroup<DiagGroup<"idiomatic-parentheses">>, DefaultIgnore;
 
 def warn_value_always_zero : Warning<
   "%0 is always %select{zero|false|NULL}1 in this context">;

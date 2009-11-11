@@ -6510,10 +6510,21 @@ bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
 void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
   SourceLocation Loc;
 
+  unsigned diagnostic = diag::warn_condition_is_assignment;
+
   if (isa<BinaryOperator>(E)) {
     BinaryOperator *Op = cast<BinaryOperator>(E);
     if (Op->getOpcode() != BinaryOperator::Assign)
       return;
+
+    // Greylist the following Cocoa ObjC idiom by putting it into a
+    // warning subcategory which defaults off:
+    //   if (self = [super init])
+    // The selector can vary, and it's possible that the base might,
+    // too, so we just recognize any message call.
+    if (isSelfExpr(Op->getLHS()) &&
+        isa<ObjCMessageExpr>(Op->getRHS()->IgnoreParenCasts()))
+      diagnostic = diag::warn_condition_is_self_assignment;
 
     Loc = Op->getOperatorLoc();
   } else if (isa<CXXOperatorCallExpr>(E)) {
@@ -6530,7 +6541,7 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
   SourceLocation Open = E->getSourceRange().getBegin();
   SourceLocation Close = PP.getLocForEndOfToken(E->getSourceRange().getEnd());
   
-  Diag(Loc, diag::warn_condition_is_assignment)
+  Diag(Loc, diagnostic)
     << E->getSourceRange()
     << CodeModificationHint::CreateInsertion(Open, "(")
     << CodeModificationHint::CreateInsertion(Close, ")");
