@@ -72,7 +72,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
       if (BI->isConditional())
         return (I == succ_begin(Node)) ? "T" : "F";
     
-    // Label source of conditional branches with "T" or "F"
+    // Label source of switch edges with the associated value.
     if (const SwitchInst *SI = dyn_cast<SwitchInst>(Node->getTerminator())) {
       unsigned SuccNo = I.getSuccessorIndex();
 
