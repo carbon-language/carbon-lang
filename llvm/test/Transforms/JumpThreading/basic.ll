@@ -287,6 +287,7 @@ F2:
 
 
 ;;; Duplicate condition to avoid xor of cond.
+;;; TODO: Make this happen.
 define i32 @test10(i1 %cond, i1 %cond2) {
 Entry:
 ; CHECK: @test10
