@@ -16,7 +16,7 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
-#include "clang/Frontend/ManagerRegistry.h"
+#include "clang/Analysis/ManagerRegistry.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/FoldingSet.h"

@@ -34,6 +34,7 @@ add_clang_library(clangAnalysis
   GRExprEngineInternalChecks.cpp
   GRState.cpp
   LiveVariables.cpp
+  ManagerRegistry.cpp
   MemRegion.cpp
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
