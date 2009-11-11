@@ -90,6 +90,14 @@ public:
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;
 
+  /// CanLowerReturn - true iff the function's return value can be lowered to
+  /// registers.
+  bool CanLowerReturn;
+
+  /// DemoteRegister - if CanLowerReturn is false, DemoteRegister is a vreg
+  /// allocated to hold a pointer to the hidden sret parameter.
+  unsigned DemoteRegister;
+
   explicit FunctionLoweringInfo(TargetLowering &TLI);
 
   /// set - Initialize this FunctionLoweringInfo with the given Function

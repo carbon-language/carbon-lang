@@ -951,23 +951,23 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
 /// Get the EVTs and ArgFlags collections that represent the return type
 /// of the given function.  This does not require a DAG or a return value, and
 /// is suitable for use before any DAGs for the function are constructed.
-static void getReturnInfo(const Function* F, SmallVectorImpl<EVT> &OutVTs,
+static void getReturnInfo(const Type* ReturnType,
+                   Attributes attr, SmallVectorImpl<EVT> &OutVTs,
                    SmallVectorImpl<ISD::ArgFlagsTy> &OutFlags,
-                   TargetLowering &TLI) {
-  const Type* ReturnType = F->getReturnType();
-
+                   TargetLowering &TLI,
+                   SmallVectorImpl<uint64_t> *Offsets = 0) {
   SmallVector<EVT, 4> ValueVTs;
-  ComputeValueVTs(TLI, ReturnType, ValueVTs);
+  ComputeValueVTs(TLI, ReturnType, ValueVTs, Offsets);
   unsigned NumValues = ValueVTs.size();
   if ( NumValues == 0 ) return;
 
   for (unsigned j = 0, f = NumValues; j != f; ++j) {
     EVT VT = ValueVTs[j];
     ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-    
-    if (F->paramHasAttr(0, Attribute::SExt))
+
+    if (attr & Attribute::SExt)
       ExtendKind = ISD::SIGN_EXTEND;
-    else if (F->paramHasAttr(0, Attribute::ZExt))
+    else if (attr & Attribute::ZExt)
       ExtendKind = ISD::ZERO_EXTEND;
 
     // FIXME: C calling convention requires the return type to be promoted to
@@ -975,26 +975,25 @@ static void getReturnInfo(const Function* F, SmallVectorImpl<EVT> &OutVTs,
     // conventions. The frontend should mark functions whose return values
     // require promoting with signext or zeroext attributes.
     if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
-      EVT MinVT = TLI.getRegisterType(F->getContext(), MVT::i32);
+      EVT MinVT = TLI.getRegisterType(ReturnType->getContext(), MVT::i32);
       if (VT.bitsLT(MinVT))
         VT = MinVT;
     }
 
-    unsigned NumParts = TLI.getNumRegisters(F->getContext(), VT);
-    EVT PartVT = TLI.getRegisterType(F->getContext(), VT);
+    unsigned NumParts = TLI.getNumRegisters(ReturnType->getContext(), VT);
+    EVT PartVT = TLI.getRegisterType(ReturnType->getContext(), VT);
     // 'inreg' on function refers to return value
     ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-    if (F->paramHasAttr(0, Attribute::InReg))
+    if (attr & Attribute::InReg)
       Flags.setInReg();
 
     // Propagate extension type if any
-    if (F->paramHasAttr(0, Attribute::SExt))
+    if (attr & Attribute::SExt)
       Flags.setSExt();
-    else if (F->paramHasAttr(0, Attribute::ZExt))
+    else if (attr & Attribute::ZExt)
       Flags.setZExt();
 
-    for (unsigned i = 0; i < NumParts; ++i)
-    {
+    for (unsigned i = 0; i < NumParts; ++i) {
       OutVTs.push_back(PartVT);
       OutFlags.push_back(Flags);
     }
@@ -1004,54 +1003,88 @@ static void getReturnInfo(const Function* F, SmallVectorImpl<EVT> &OutVTs,
 void SelectionDAGLowering::visitRet(ReturnInst &I) {
   SDValue Chain = getControlRoot();
   SmallVector<ISD::OutputArg, 8> Outs;
-  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+  FunctionLoweringInfo &FLI = DAG.getFunctionLoweringInfo();
+  
+  if (!FLI.CanLowerReturn) {
+    unsigned DemoteReg = FLI.DemoteRegister;
+    const Function *F = I.getParent()->getParent();
+
+    // Emit a store of the return value through the virtual register.
+    // Leave Outs empty so that LowerReturn won't try to load return
+    // registers the usual way.
+    SmallVector<EVT, 1> PtrValueVTs;
+    ComputeValueVTs(TLI, PointerType::getUnqual(F->getReturnType()), 
+                    PtrValueVTs);
+
+    SDValue RetPtr = DAG.getRegister(DemoteReg, PtrValueVTs[0]);
+    SDValue RetOp = getValue(I.getOperand(0));
+  
     SmallVector<EVT, 4> ValueVTs;
-    ComputeValueVTs(TLI, I.getOperand(i)->getType(), ValueVTs);
+    SmallVector<uint64_t, 4> Offsets;
+    ComputeValueVTs(TLI, I.getOperand(0)->getType(), ValueVTs, &Offsets);
     unsigned NumValues = ValueVTs.size();
-    if (NumValues == 0) continue;
 
-    SDValue RetOp = getValue(I.getOperand(i));
-    for (unsigned j = 0, f = NumValues; j != f; ++j) {
-      EVT VT = ValueVTs[j];
+    SmallVector<SDValue, 4> Chains(NumValues);
+    EVT PtrVT = PtrValueVTs[0];
+    for (unsigned i = 0; i != NumValues; ++i)
+      Chains[i] = DAG.getStore(Chain, getCurDebugLoc(),
+                  SDValue(RetOp.getNode(), RetOp.getResNo() + i),
+                  DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT, RetPtr,
+                  DAG.getConstant(Offsets[i], PtrVT)),
+                  NULL, Offsets[i], false, 0);
+    Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
+                        MVT::Other, &Chains[0], NumValues);
+  }
+  else {
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+      SmallVector<EVT, 4> ValueVTs;
+      ComputeValueVTs(TLI, I.getOperand(i)->getType(), ValueVTs);
+      unsigned NumValues = ValueVTs.size();
+      if (NumValues == 0) continue;
+  
+      SDValue RetOp = getValue(I.getOperand(i));
+      for (unsigned j = 0, f = NumValues; j != f; ++j) {
+        EVT VT = ValueVTs[j];
 
-      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+        ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
-      const Function *F = I.getParent()->getParent();
-      if (F->paramHasAttr(0, Attribute::SExt))
-        ExtendKind = ISD::SIGN_EXTEND;
-      else if (F->paramHasAttr(0, Attribute::ZExt))
-        ExtendKind = ISD::ZERO_EXTEND;
+        const Function *F = I.getParent()->getParent();
+        if (F->paramHasAttr(0, Attribute::SExt))
+          ExtendKind = ISD::SIGN_EXTEND;
+        else if (F->paramHasAttr(0, Attribute::ZExt))
+          ExtendKind = ISD::ZERO_EXTEND;
 
-      // FIXME: C calling convention requires the return type to be promoted to
-      // at least 32-bit. But this is not necessary for non-C calling
-      // conventions. The frontend should mark functions whose return values
-      // require promoting with signext or zeroext attributes.
-      if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
-        EVT MinVT = TLI.getRegisterType(*DAG.getContext(), MVT::i32);
-        if (VT.bitsLT(MinVT))
-          VT = MinVT;
+        // FIXME: C calling convention requires the return type to be promoted to
+        // at least 32-bit. But this is not necessary for non-C calling
+        // conventions. The frontend should mark functions whose return values
+        // require promoting with signext or zeroext attributes.
+        if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
+          EVT MinVT = TLI.getRegisterType(*DAG.getContext(), MVT::i32);
+          if (VT.bitsLT(MinVT))
+            VT = MinVT;
+        }
+
+        unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), VT);
+        EVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
+        SmallVector<SDValue, 4> Parts(NumParts);
+        getCopyToParts(DAG, getCurDebugLoc(),
+                       SDValue(RetOp.getNode(), RetOp.getResNo() + j),
+                       &Parts[0], NumParts, PartVT, ExtendKind);
+
+        // 'inreg' on function refers to return value
+        ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
+        if (F->paramHasAttr(0, Attribute::InReg))
+          Flags.setInReg();
+
+        // Propagate extension type if any
+        if (F->paramHasAttr(0, Attribute::SExt))
+          Flags.setSExt();
+        else if (F->paramHasAttr(0, Attribute::ZExt))
+          Flags.setZExt();
+
+        for (unsigned i = 0; i < NumParts; ++i)
+          Outs.push_back(ISD::OutputArg(Flags, Parts[i], /*isfixed=*/true));
       }
-
-      unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), VT);
-      EVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
-      SmallVector<SDValue, 4> Parts(NumParts);
-      getCopyToParts(DAG, getCurDebugLoc(),
-                     SDValue(RetOp.getNode(), RetOp.getResNo() + j),
-                     &Parts[0], NumParts, PartVT, ExtendKind);
-
-      // 'inreg' on function refers to return value
-      ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-      if (F->paramHasAttr(0, Attribute::InReg))
-        Flags.setInReg();
-
-      // Propagate extension type if any
-      if (F->paramHasAttr(0, Attribute::SExt))
-        Flags.setSExt();
-      else if (F->paramHasAttr(0, Attribute::ZExt))
-        Flags.setZExt();
-
-      for (unsigned i = 0; i < NumParts; ++i)
-        Outs.push_back(ISD::OutputArg(Flags, Parts[i], /*isfixed=*/true));
     }
   }
 
@@ -4453,15 +4486,52 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
                                        MachineBasicBlock *LandingPad) {
   const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  const Type *RetTy = FTy->getReturnType();
   MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
   unsigned BeginLabel = 0, EndLabel = 0;
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Args.reserve(CS.arg_size());
-  unsigned j = 1;
+
+  // Check whether the function can return without sret-demotion.
+  SmallVector<EVT, 4> OutVTs;
+  SmallVector<ISD::ArgFlagsTy, 4> OutsFlags;
+  SmallVector<uint64_t, 4> Offsets;
+  getReturnInfo(RetTy, CS.getAttributes().getRetAttributes(), 
+    OutVTs, OutsFlags, TLI, &Offsets);
+  
+
+  bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(), 
+                        FTy->isVarArg(), OutVTs, OutsFlags, DAG);
+
+  SDValue DemoteStackSlot;
+
+  if (!CanLowerReturn) {
+    uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(
+                      FTy->getReturnType());
+    unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(
+                      FTy->getReturnType());
+    MachineFunction &MF = DAG.getMachineFunction();
+    int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
+    const Type *StackSlotPtrType = PointerType::getUnqual(FTy->getReturnType());
+
+    DemoteStackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+    Entry.Node = DemoteStackSlot;
+    Entry.Ty = StackSlotPtrType;
+    Entry.isSExt = false;
+    Entry.isZExt = false;
+    Entry.isInReg = false;
+    Entry.isSRet = true;
+    Entry.isNest = false;
+    Entry.isByVal = false;
+    Entry.Alignment = Align;
+    Args.push_back(Entry);
+    RetTy = Type::getVoidTy(FTy->getContext());
+  }
+
   for (CallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
-       i != e; ++i, ++j) {
+       i != e; ++i) {
     SDValue ArgNode = getValue(*i);
     Entry.Node = ArgNode; Entry.Ty = (*i)->getType();
 
@@ -4497,7 +4567,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
     isTailCall = false;
 
   std::pair<SDValue,SDValue> Result =
-    TLI.LowerCallTo(getRoot(), CS.getType(),
+    TLI.LowerCallTo(getRoot(), RetTy,
                     CS.paramHasAttr(0, Attribute::SExt),
                     CS.paramHasAttr(0, Attribute::ZExt), FTy->isVarArg(),
                     CS.paramHasAttr(0, Attribute::InReg), FTy->getNumParams(),
@@ -4511,6 +4581,35 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
          "Null value expected with tail call!");
   if (Result.first.getNode())
     setValue(CS.getInstruction(), Result.first);
+  else if (!CanLowerReturn && Result.second.getNode()) {
+    // The instruction result is the result of loading from the
+    // hidden sret parameter.
+    SmallVector<EVT, 1> PVTs;
+    const Type *PtrRetTy = PointerType::getUnqual(FTy->getReturnType());
+
+    ComputeValueVTs(TLI, PtrRetTy, PVTs);
+    assert(PVTs.size() == 1 && "Pointers should fit in one register");
+    EVT PtrVT = PVTs[0];
+    unsigned NumValues = OutVTs.size();
+    SmallVector<SDValue, 4> Values(NumValues);
+    SmallVector<SDValue, 4> Chains(NumValues);
+
+    for (unsigned i = 0; i < NumValues; ++i) {
+      SDValue L = DAG.getLoad(OutVTs[i], getCurDebugLoc(), Result.second,
+        DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT, DemoteStackSlot,
+        DAG.getConstant(Offsets[i], PtrVT)),
+        NULL, Offsets[i], false, 1);
+      Values[i] = L;
+      Chains[i] = L.getValue(1);
+    }
+    SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
+                                MVT::Other, &Chains[0], NumValues);
+    PendingLoads.push_back(Chain);
+
+    setValue(CS.getInstruction(), DAG.getNode(ISD::MERGE_VALUES,
+             getCurDebugLoc(), DAG.getVTList(&OutVTs[0], NumValues),
+             &Values[0], NumValues));
+  }
   // As a special case, a null chain means that a tail call has
   // been emitted and the DAG root is already updated.
   if (Result.second.getNode())
@@ -5779,17 +5878,32 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
   SDValue OldRoot = DAG.getRoot();
   DebugLoc dl = SDL->getCurDebugLoc();
   const TargetData *TD = TLI.getTargetData();
+  SmallVector<ISD::InputArg, 16> Ins;
 
   // Check whether the function can return without sret-demotion.
   SmallVector<EVT, 4> OutVTs;
   SmallVector<ISD::ArgFlagsTy, 4> OutsFlags;
-  getReturnInfo(&F, OutVTs, OutsFlags, TLI);
-  // For now, assert and bail out if it can't.
-  assert(TLI.CanLowerReturn(F.getCallingConv(), F.isVarArg(), OutVTs, OutsFlags,
-         DAG) && "Cannot fit return value in registers!");
+  getReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(), 
+                OutVTs, OutsFlags, TLI);
+  FunctionLoweringInfo &FLI = DAG.getFunctionLoweringInfo();
+
+  FLI.CanLowerReturn = TLI.CanLowerReturn(F.getCallingConv(), F.isVarArg(), 
+    OutVTs, OutsFlags, DAG);
+  if (!FLI.CanLowerReturn) {
+    // Put in an sret pointer parameter before all the other parameters.
+    SmallVector<EVT, 1> ValueVTs;
+    ComputeValueVTs(TLI, PointerType::getUnqual(F.getReturnType()), ValueVTs);
+
+    // NOTE: Assuming that a pointer will never break down to more than one VT
+    // or one register.
+    ISD::ArgFlagsTy Flags;
+    Flags.setSRet();
+    EVT RegisterVT = TLI.getRegisterType(*CurDAG->getContext(), ValueVTs[0]);
+    ISD::InputArg RetArg(Flags, RegisterVT, true);
+    Ins.push_back(RetArg);
+  }
 
   // Set up the incoming argument description vector.
-  SmallVector<ISD::InputArg, 16> Ins;
   unsigned Idx = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++Idx) {
@@ -5867,6 +5981,28 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
   // Set up the argument values.
   unsigned i = 0;
   Idx = 1;
+  if (!FLI.CanLowerReturn) {
+    // Create a virtual register for the sret pointer, and put in a copy
+    // from the sret argument into it.
+    SmallVector<EVT, 1> ValueVTs;
+    ComputeValueVTs(TLI, PointerType::getUnqual(F.getReturnType()), ValueVTs);
+    EVT VT = ValueVTs[0];
+    EVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
+    ISD::NodeType AssertOp = ISD::DELETED_NODE;
+    SDValue ArgValue = getCopyFromParts(DAG, dl, &InVals[0], 1, RegVT,
+                                        VT, AssertOp);
+
+    MachineFunction& MF = SDL->DAG.getMachineFunction();
+    MachineRegisterInfo& RegInfo = MF.getRegInfo();
+    unsigned SRetReg = RegInfo.createVirtualRegister(TLI.getRegClassFor(RegVT));
+    FLI.DemoteRegister = SRetReg;
+    NewRoot = SDL->DAG.getCopyToReg(NewRoot, SDL->getCurDebugLoc(), SRetReg, ArgValue);
+    DAG.setRoot(NewRoot);
+    
+    // i indexes lowered arguments.  Bump it past the hidden sret argument.
+    // Idx indexes LLVM arguments.  Don't touch it.
+    ++i;
+  }
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E;
       ++I, ++Idx) {
     SmallVector<SDValue, 4> ArgValues;
