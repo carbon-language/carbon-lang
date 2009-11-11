@@ -202,8 +202,9 @@ int main(int argc, const char **argv) {
   //
   // Note that we intentionally want to use argv[0] here, to support "clang++"
   // being a symlink.
-  llvm::StringRef ProgName(llvm::sys::Path(argv[0]).getBasename());
-  if (ProgName.endswith("++") || ProgName.rsplit('-').first.endswith("++"))
+  std::string ProgName(llvm::sys::Path(argv[0]).getBasename());
+  if (llvm::StringRef(ProgName).endswith("++") ||
+      llvm::StringRef(ProgName).rsplit('-').first.endswith("++"))
     TheDriver.CCCIsCXX = true;
 
   llvm::OwningPtr<Compilation> C;
