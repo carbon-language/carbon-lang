@@ -376,8 +376,10 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 
 static Preprocessor *
 CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
-                   const PreprocessorOptions &PPOpts, TargetInfo &Target,
-                   SourceManager &SourceMgr, HeaderSearch &HeaderInfo) {
+                   const PreprocessorOptions &PPOpts,
+                   const DependencyOutputOptions &DepOpts,
+                   TargetInfo &Target, SourceManager &SourceMgr,
+                   HeaderSearch &HeaderInfo) {
   PTHManager *PTHMgr = 0;
   if (!TokenCache.empty() && !PPOpts.getImplicitPTHInclude().empty()) {
     fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
@@ -410,6 +412,10 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
   }
 
   InitializePreprocessor(*PP, PPOpts);
+
+  // Handle generating dependencies, if requested.
+  if (!DepOpts.OutputFile.empty())
+    AttachDependencyFileGen(*PP, DepOpts);
 
   return PP;
 }
@@ -1207,12 +1213,9 @@ int main(int argc, char **argv) {
     // Set up the preprocessor with these options.
     llvm::OwningPtr<Preprocessor>
       PP(CreatePreprocessor(Diags, CompOpts.getLangOpts(),
-                            CompOpts.getPreprocessorOpts(), *Target, SourceMgr,
-                            HeaderInfo));
-
-    // Handle generating dependencies, if requested.
-    if (!CompOpts.getDependencyOutputOpts().OutputFile.empty())
-      AttachDependencyFileGen(PP.get(), CompOpts.getDependencyOutputOpts());
+                            CompOpts.getPreprocessorOpts(),
+                            CompOpts.getDependencyOutputOpts(),
+                            *Target, SourceMgr, HeaderInfo));
 
     if (CompOpts.getPreprocessorOpts().getImplicitPCHInclude().empty()) {
       if (InitializeSourceManager(*PP.get(), InFile))

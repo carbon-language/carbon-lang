@@ -78,12 +78,12 @@ bool CheckDiagnostics(Preprocessor &PP);
 
 /// AttachDependencyFileGen - Create a dependency file generator, and attach
 /// it to the given preprocessor.  This takes ownership of the output stream.
-void AttachDependencyFileGen(Preprocessor *PP,
+void AttachDependencyFileGen(Preprocessor &PP,
                              const DependencyOutputOptions &Opts);
 
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
-void CacheTokens(Preprocessor& PP, llvm::raw_fd_ostream* OS);
+void CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS);
 
 }  // end namespace clang
 

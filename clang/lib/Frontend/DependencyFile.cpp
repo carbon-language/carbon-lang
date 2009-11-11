@@ -60,23 +60,23 @@ public:
 };
 }
 
-void clang::AttachDependencyFileGen(Preprocessor *PP,
+void clang::AttachDependencyFileGen(Preprocessor &PP,
                                     const DependencyOutputOptions &Opts) {
   if (Opts.Targets.empty()) {
-    PP->getDiagnostics().Report(diag::err_fe_dependency_file_requires_MT);
+    PP.getDiagnostics().Report(diag::err_fe_dependency_file_requires_MT);
     return;
   }
 
   std::string Err;
   llvm::raw_ostream *OS(new llvm::raw_fd_ostream(Opts.OutputFile.c_str(), Err));
   if (!Err.empty()) {
-    PP->getDiagnostics().Report(diag::err_fe_error_opening)
+    PP.getDiagnostics().Report(diag::err_fe_error_opening)
       << Opts.OutputFile << Err;
     return;
   }
 
-  assert(!PP->getPPCallbacks() && "Preprocessor callbacks already registered!");
-  PP->setPPCallbacks(new DependencyFileCallback(PP, OS, Opts));
+  assert(!PP.getPPCallbacks() && "Preprocessor callbacks already registered!");
+  PP.setPPCallbacks(new DependencyFileCallback(&PP, OS, Opts));
 }
 
 /// FileMatchesDepCriteria - Determine whether the given Filename should be
