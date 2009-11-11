@@ -13,6 +13,7 @@
 
 #include "Options.h"
 #include "clang/Frontend/CompileOptions.h"
+#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PreprocessorOptions.h"
@@ -83,6 +84,51 @@ TargetCPU("mcpu",
 
 static llvm::cl::list<std::string>
 TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
+
+}
+
+//===----------------------------------------------------------------------===//
+// Diagnostic Options
+//===----------------------------------------------------------------------===//
+
+namespace diagnosticoptions {
+
+static llvm::cl::opt<bool>
+NoShowColumn("fno-show-column",
+             llvm::cl::desc("Do not include column number on diagnostics"));
+
+static llvm::cl::opt<bool>
+NoShowLocation("fno-show-source-location",
+               llvm::cl::desc("Do not include source location information with"
+                              " diagnostics"));
+
+static llvm::cl::opt<bool>
+NoCaretDiagnostics("fno-caret-diagnostics",
+                   llvm::cl::desc("Do not include source line and caret with"
+                                  " diagnostics"));
+
+static llvm::cl::opt<bool>
+NoDiagnosticsFixIt("fno-diagnostics-fixit-info",
+                   llvm::cl::desc("Do not include fixit information in"
+                                  " diagnostics"));
+
+static llvm::cl::opt<bool>
+PrintSourceRangeInfo("fdiagnostics-print-source-range-info",
+                     llvm::cl::desc("Print source range spans in numeric form"));
+
+static llvm::cl::opt<bool>
+PrintDiagnosticOption("fdiagnostics-show-option",
+             llvm::cl::desc("Print diagnostic name with mappable diagnostics"));
+
+static llvm::cl::opt<unsigned>
+MessageLength("fmessage-length",
+              llvm::cl::desc("Format message diagnostics so that they fit "
+                             "within N columns or fewer, when possible."),
+              llvm::cl::value_desc("N"));
+
+static llvm::cl::opt<bool>
+PrintColorDiagnostic("fcolor-diagnostics",
+                     llvm::cl::desc("Use colors in diagnostics"));
 
 }
 
@@ -250,7 +296,6 @@ PascalStrings("fpascal-strings",
               llvm::cl::desc("Recognize and construct Pascal-style "
                              "string literals"));
 
-// FIXME: Move to CompileOptions.
 static llvm::cl::opt<bool>
 Rtti("frtti", llvm::cl::init(true),
      llvm::cl::desc("Enable generation of rtti information"));
@@ -452,6 +497,19 @@ void clang::InitializeCompileOptions(CompileOptions &Opts,
   Opts.NoImplicitFloat = NoImplicitFloat;
 
   Opts.MergeAllConstants = !NoMergeConstants;
+}
+
+void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
+  using namespace diagnosticoptions;
+
+  Opts.ShowColumn = !NoShowColumn;
+  Opts.ShowLocation = !NoShowLocation;
+  Opts.ShowCarets = !NoCaretDiagnostics;
+  Opts.ShowFixits = !NoDiagnosticsFixIt;
+  Opts.ShowSourceRanges = PrintSourceRangeInfo;
+  Opts.ShowOptionNames = PrintDiagnosticOption;
+  Opts.ShowColors = PrintColorDiagnostic;
+  Opts.MessageLength = MessageLength;
 }
 
 void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,

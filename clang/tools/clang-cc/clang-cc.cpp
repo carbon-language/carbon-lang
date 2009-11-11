@@ -21,7 +21,6 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/PCHReader.h"
@@ -259,51 +258,6 @@ TokenCache("token-cache", llvm::cl::value_desc("path"),
            llvm::cl::desc("Use specified token cache file"));
 
 //===----------------------------------------------------------------------===//
-// Diagnostic Options
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<bool>
-VerifyDiagnostics("verify",
-                  llvm::cl::desc("Verify emitted diagnostics and warnings"));
-
-static llvm::cl::opt<bool>
-NoShowColumn("fno-show-column",
-             llvm::cl::desc("Do not include column number on diagnostics"));
-
-static llvm::cl::opt<bool>
-NoShowLocation("fno-show-source-location",
-               llvm::cl::desc("Do not include source location information with"
-                              " diagnostics"));
-
-static llvm::cl::opt<bool>
-NoCaretDiagnostics("fno-caret-diagnostics",
-                   llvm::cl::desc("Do not include source line and caret with"
-                                  " diagnostics"));
-
-static llvm::cl::opt<bool>
-NoDiagnosticsFixIt("fno-diagnostics-fixit-info",
-                   llvm::cl::desc("Do not include fixit information in"
-                                  " diagnostics"));
-
-static llvm::cl::opt<bool>
-PrintSourceRangeInfo("fdiagnostics-print-source-range-info",
-                     llvm::cl::desc("Print source range spans in numeric form"));
-
-static llvm::cl::opt<bool>
-PrintDiagnosticOption("fdiagnostics-show-option",
-             llvm::cl::desc("Print diagnostic name with mappable diagnostics"));
-
-static llvm::cl::opt<unsigned>
-MessageLength("fmessage-length",
-              llvm::cl::desc("Format message diagnostics so that they fit "
-                             "within N columns or fewer, when possible."),
-              llvm::cl::value_desc("N"));
-
-static llvm::cl::opt<bool>
-PrintColorDiagnostic("fcolor-diagnostics",
-                     llvm::cl::desc("Use colors in diagnostics"));
-
-//===----------------------------------------------------------------------===//
 // C++ Visualization.
 //===----------------------------------------------------------------------===//
 
@@ -313,13 +267,17 @@ InheritanceViewCls("cxx-inheritance-view",
                   llvm::cl::desc("View C++ inheritance for a specified class"));
 
 //===----------------------------------------------------------------------===//
-// Builtin Options
+// Frontend Options
 //===----------------------------------------------------------------------===//
 
 static llvm::cl::opt<bool>
 TimeReport("ftime-report",
            llvm::cl::desc("Print the amount of time each "
                           "phase of compilation takes"));
+
+static llvm::cl::opt<bool>
+VerifyDiagnostics("verify",
+                  llvm::cl::desc("Verify emitted diagnostics and warnings"));
 
 //===----------------------------------------------------------------------===//
 // Language Options
@@ -1235,18 +1193,6 @@ static LangKind GetLanguage() {
   return LK;
 }
 
-static void ConstructDiagnosticOptions(DiagnosticOptions &Opts) {
-  // Initialize the diagnostic options.
-  Opts.ShowColumn = !NoShowColumn;
-  Opts.ShowLocation = !NoShowLocation;
-  Opts.ShowCarets = !NoCaretDiagnostics;
-  Opts.ShowFixits = !NoDiagnosticsFixIt;
-  Opts.ShowSourceRanges = PrintSourceRangeInfo;
-  Opts.ShowOptionNames = PrintDiagnosticOption;
-  Opts.ShowColors = PrintColorDiagnostic;
-  Opts.MessageLength = MessageLength;
-}
-
 static void FinalizeCompileOptions(CompileOptions &Opts,
                                    const LangOptions &Lang) {
   if (Lang.NoBuiltin)
@@ -1323,7 +1269,7 @@ int main(int argc, char **argv) {
   // Construct the diagnostic options first, which cannot fail, so that we can
   // build a diagnostic client to use for any errors during option handling.
   DiagnosticOptions DiagOpts;
-  ConstructDiagnosticOptions(DiagOpts);
+  InitializeDiagnosticOptions(DiagOpts);
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.

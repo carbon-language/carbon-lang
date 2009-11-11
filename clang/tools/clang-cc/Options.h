@@ -15,6 +15,7 @@
 namespace clang {
 
 class CompileOptions;
+class DiagnosticOptions;
 class HeaderSearchOptions;
 class LangOptions;
 class PreprocessorOptions;
@@ -38,6 +39,8 @@ enum LangKind {
 // FIXME: This can be sunk into InitializeCompileOptions now that that happens
 // before language initialization?
 void ComputeFeatureMap(TargetInfo &Target, llvm::StringMap<bool> &Features);
+
+void InitializeDiagnosticOptions(DiagnosticOptions &Opts);
 
 void InitializeCompileOptions(CompileOptions &Opts,
                               const llvm::StringMap<bool> &Features);
