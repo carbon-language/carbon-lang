@@ -331,6 +331,11 @@ const llvm::sys::Path& CIndexer::getClangPath() {
   GetModuleFileNameA((HINSTANCE)mbi.AllocationBase, path, MAX_PATH);
 
   llvm::sys::Path CIndexPath(path);
+
+  CIndexPath.eraseComponent();
+  CIndexPath.appendComponent("clang");
+  CIndexPath.appendSuffix("exe");
+  CIndexPath.makeAbsolute();
 #else
   // This silly cast below avoids a C++ warning.
   Dl_info info;
@@ -338,13 +343,13 @@ const llvm::sys::Path& CIndexer::getClangPath() {
     assert(0 && "Call to dladdr() failed");
 
   llvm::sys::Path CIndexPath(info.dli_fname);
-#endif
 
   // We now have the CIndex directory, locate clang relative to it.
   CIndexPath.eraseComponent();
   CIndexPath.eraseComponent();
   CIndexPath.appendComponent("bin");
   CIndexPath.appendComponent("clang");
+#endif
 
   // Cache our result.
   ClangPath = CIndexPath;
