@@ -1226,13 +1226,18 @@ private:
     Parser &P;
     CXXScopeSpec &SS;
     bool EnteredScope;
+    bool CreatedScope;
   public:
     DeclaratorScopeObj(Parser &p, CXXScopeSpec &ss)
-      : P(p), SS(ss), EnteredScope(false) {}
+      : P(p), SS(ss), EnteredScope(false), CreatedScope(false) {}
 
     void EnterDeclaratorScope() {
       assert(!EnteredScope && "Already entered the scope!");
       assert(SS.isSet() && "C++ scope was not set!");
+
+      CreatedScope = true;
+      P.EnterScope(0); // Not a decl scope.
+
       if (P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS))
         SS.setScopeRep(0);
       
@@ -1245,6 +1250,8 @@ private:
         assert(SS.isSet() && "C++ scope was cleared ?");
         P.Actions.ActOnCXXExitDeclaratorScope(P.CurScope, SS);
       }
+      if (CreatedScope)
+        P.ExitScope();
     }
   };
 

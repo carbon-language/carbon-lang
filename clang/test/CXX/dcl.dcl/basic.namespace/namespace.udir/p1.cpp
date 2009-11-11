@@ -126,3 +126,16 @@ namespace test4 {
     return foo(); // expected-error {{call to 'foo' is ambiguous}}
   }
 }
+
+// Bug: using directives should be followed when parsing default
+// arguments in scoped declarations.
+class test5 {
+  int inc(int x);
+};
+namespace Test5 {
+  int default_x = 0;
+}
+using namespace Test5;
+int test5::inc(int x = default_x) {
+  return x+1;
+}

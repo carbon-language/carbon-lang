@@ -90,9 +90,6 @@ namespace {
       assert(InnermostFileDC && InnermostFileDC->isFileContext());
 
       for (; S; S = S->getParent()) {
-        if (!(S->getFlags() & Scope::DeclScope))
-          continue;
-
         if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
           DeclContext *EffectiveDC = (Ctx->isFileContext() ? Ctx : InnermostFileDC);
           visit(Ctx, EffectiveDC);
