@@ -169,6 +169,10 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
   /// Ignore PHI nodes, these will be flattened when duplication happens.
   BasicBlock::const_iterator I = BB->getFirstNonPHI();
   
+  // FIXME: THREADING will delete values that are just used to compute the
+  // branch, so they shouldn't count against the duplication cost.
+  
+  
   // Sum up the cost of each instruction until we get to the terminator.  Don't
   // include the terminator because the copy won't include it.
   unsigned Size = 0;
