@@ -2124,6 +2124,8 @@ void DwarfDebug::createDbgScope(MDNode *Scope, MDNode *InlinedAt) {
       return;
     WScope = new DbgScope(NULL, DIDescriptor(Scope), NULL);
     DbgScopeMap.insert(std::make_pair(Scope, WScope));
+    if (DIDescriptor(Scope).isLexicalBlock()) 
+      createDbgScope(DILexicalBlock(Scope).getContext().getNode(), NULL);
     return;
   }
 
