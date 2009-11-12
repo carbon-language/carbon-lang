@@ -1704,6 +1704,7 @@ private:
 
             // Mark is killed.
             MachineInstr *CopyMI = prior(InsertLoc);
+            CopyMI->setAsmPrinterFlag(AsmPrinter::ReloadReuse);
             MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
             KillOpnd->setIsKill();
             UpdateKills(*CopyMI, TRI, RegKills, KillOps);
@@ -1984,6 +1985,7 @@ private:
           TII->copyRegToReg(MBB, InsertLoc, DesignatedReg, PhysReg, RC, RC);
 
           MachineInstr *CopyMI = prior(InsertLoc);
+          CopyMI->setAsmPrinterFlag(AsmPrinter::ReloadReuse);
           UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
           // This invalidates DesignatedReg.
@@ -2112,6 +2114,7 @@ private:
                 // virtual or needing to clobber any values if it's physical).
                 NextMII = &MI;
                 --NextMII;  // backtrack to the copy.
+                NextMII->setAsmPrinterFlag(AsmPrinter::ReloadReuse);
                 // Propagate the sub-register index over.
                 if (SubIdx) {
                   DefMO = NextMII->findRegisterDefOperand(DestReg);
