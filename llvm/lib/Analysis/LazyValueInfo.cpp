@@ -51,13 +51,17 @@ class LVILatticeVal {
     undefined,
     /// constant - This LLVM Value has a specific constant value.
     constant,
+    
+    /// notconstant - This LLVM value is known to not have the specified value.
+    notconstant,
+    
     /// overdefined - This instruction is not known to be constant, and we know
     /// it has a value.
     overdefined
   };
   
   /// Val: This stores the current lattice value along with the Constant* for
-  /// the constant if this is a 'constant' value.
+  /// the constant if this is a 'constant' or 'notconstant' value.
   PointerIntPair<Constant *, 2, LatticeValueTy> Val;
   
 public:
@@ -68,9 +72,15 @@ public:
     Res.markConstant(C);
     return Res;
   }
+  static LVILatticeVal getNot(Constant *C) {
+    LVILatticeVal Res;
+    Res.markNotConstant(C);
+    return Res;
+  }
   
   bool isUndefined() const   { return Val.getInt() == undefined; }
   bool isConstant() const    { return Val.getInt() == constant; }
+  bool isNotConstant() const { return Val.getInt() == notconstant; }
   bool isOverdefined() const { return Val.getInt() == overdefined; }
   
   Constant *getConstant() const {
@@ -78,12 +88,9 @@ public:
     return Val.getPointer();
   }
   
-  /// getConstantInt - If this is a constant with a ConstantInt value, return it
-  /// otherwise return null.
-  ConstantInt *getConstantInt() const {
-    if (isConstant())
-      return dyn_cast<ConstantInt>(getConstant());
-    return 0;
+  Constant *getNotConstant() const {
+    assert(isNotConstant() && "Cannot get the constant of a non-notconstant!");
+    return Val.getPointer();
   }
   
   /// markOverdefined - Return true if this is a change in status.
@@ -108,12 +115,41 @@ public:
     return true;
   }
   
+  /// markNotConstant - Return true if this is a change in status.
+  bool markNotConstant(Constant *V) {
+    if (isNotConstant()) {
+      assert(getNotConstant() == V && "Marking !constant with different value");
+      return false;
+    }
+    
+    if (isConstant())
+      assert(getConstant() != V && "Marking not constant with different value");
+    else
+      assert(isUndefined());
+
+    Val.setInt(notconstant);
+    assert(V && "Marking constant with NULL");
+    Val.setPointer(V);
+    return true;
+  }
+  
   /// mergeIn - Merge the specified lattice value into this one, updating this
   /// one and returning true if anything changed.
   bool mergeIn(const LVILatticeVal &RHS) {
     if (RHS.isUndefined() || isOverdefined()) return false;
     if (RHS.isOverdefined()) return markOverdefined();
 
+    if (RHS.isNotConstant()) {
+      if (isNotConstant()) {
+        if (getNotConstant() != RHS.getNotConstant())
+          return markOverdefined();
+        return false;
+      }
+      if (isConstant() && getConstant() != RHS.getNotConstant())
+        return markOverdefined();
+      return markNotConstant(RHS.getNotConstant());
+    }
+    
     // RHS must be a constant, we must be undef or constant.
     if (isConstant() && getConstant() != RHS.getConstant())
       return markOverdefined();
@@ -130,6 +166,9 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
     return OS << "undefined";
   if (Val.isOverdefined())
     return OS << "overdefined";
+
+  if (Val.isNotConstant())
+    return OS << "notconstant<" << *Val.getNotConstant() << '>';
   return OS << "constant<" << *Val.getConstant() << '>';
 }
 }
@@ -181,6 +220,7 @@ static LVILatticeVal GetValueOnEdge(Value *V, BasicBlock *BBFrom,
           // false SETNE. 
           if (isTrueDest == (ICI->getPredicate() == ICmpInst::ICMP_EQ))
             return LVILatticeVal::get(cast<Constant>(ICI->getOperand(1)));
+          return LVILatticeVal::getNot(cast<Constant>(ICI->getOperand(1)));
         }
     }
   }
@@ -291,22 +331,50 @@ Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
   return 0;
 }
 
-/// isEqual - Determine whether the specified value is known to be equal or
-/// not-equal to the specified constant at the end of the specified block.
+/// getPredicateOnEdge - Determine whether the specified value comparison
+/// with a constant is known to be true or false on the specified CFG edge.
+/// Pred is a CmpInst predicate.
 LazyValueInfo::Tristate
-LazyValueInfo::isEqual(Value *V, Constant *C, BasicBlock *BB) {
+LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
+                                  BasicBlock *FromBB, BasicBlock *ToBB) {
+  LVILatticeVal Result;
+  
   // If already a constant, we can use constant folding.
   if (Constant *VC = dyn_cast<Constant>(V)) {
-    // Ignore FP for now.  TODO, consider what form of equality we want.
-    if (C->getType()->isFPOrFPVector())
-      return Unknown;
+    Result = LVILatticeVal::get(VC);
+  } else {
+    DenseMap<BasicBlock*, LVILatticeVal> BlockValues;
     
-    Constant *Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_EQ, VC,C,TD);
-    if (ConstantInt *ResCI = dyn_cast<ConstantInt>(Res))
-      return ResCI->isZero() ? No : Yes;
+    DEBUG(errs() << "Getting value " << *V << " on edge from '"
+          << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
+    Result = GetValueOnEdge(V, FromBB, ToBB, BlockValues);
+    DEBUG(errs() << "  Result = " << Result << "\n");
   }
   
-  // Not a very good implementation.
+  // If we know the value is a constant, evaluate the conditional.
+  Constant *Res = 0;
+  if (Result.isConstant()) {
+    Res = ConstantFoldCompareInstOperands(Pred, Result.getConstant(), C, TD);
+    if (ConstantInt *ResCI = dyn_cast_or_null<ConstantInt>(Res))
+      return ResCI->isZero() ? False : True;
+  } else if (Result.isNotConstant()) {
+    // If this is an equality comparison, we can try to fold it knowing that
+    // "V != C1".
+    if (Pred == ICmpInst::ICMP_EQ) {
+      // !C1 == C -> false iff C1 == C.
+      Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_NE,
+                                            Result.getNotConstant(), C, TD);
+      if (Res->isNullValue())
+        return False;
+    } else if (Pred == ICmpInst::ICMP_NE) {
+      // !C1 != C -> true iff C1 == C.
+      Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_EQ,
+                                            Result.getNotConstant(), C, TD);
+      if (Res->isNullValue())
+        return True;
+    }
+  }
+  
   return Unknown;
 }
 

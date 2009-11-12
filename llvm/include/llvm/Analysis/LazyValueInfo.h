@@ -31,19 +31,21 @@ public:
   static char ID;
   LazyValueInfo() : FunctionPass(&ID), PImpl(0) {}
 
-  /// Tristate - This is used to return yes/no/dunno results.
+  /// Tristate - This is used to return true/false/dunno results.
   enum Tristate {
-    Unknown = -1, No = 0, Yes = 1
+    Unknown = -1, False = 0, True = 1
   };
   
   
   // Public query interface.
   
+  /// getPredicateOnEdge - Determine whether the specified value comparison
+  /// with a constant is known to be true or false on the specified CFG edge.
+  /// Pred is a CmpInst predicate.
+  Tristate getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
+                              BasicBlock *FromBB, BasicBlock *ToBB);
   
-  /// isEqual - Determine whether the specified value is known to be equal or
-  /// not-equal to the specified constant at the end of the specified block.
-  Tristate isEqual(Value *V, Constant *C, BasicBlock *BB);
-
+  
   /// getConstant - Determine whether the specified value is known to be a
   /// constant at the end of the specified block.  Return null if not.
   Constant *getConstant(Value *V, BasicBlock *BB);
