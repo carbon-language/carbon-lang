@@ -700,7 +700,6 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     if (NTTP->getDepth() < TemplateArgs.getNumLevels()) {
-      
       // If the corresponding template argument is NULL or non-existent, it's
       // because we are performing instantiation from explicitly-specified
       // template arguments in a function template, but there were some
@@ -725,7 +724,38 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
         if (!VD)
           return SemaRef.ExprError();
 
-        return SemaRef.BuildDeclRefExpr(VD, VD->getType(), E->getLocation(),
+        if (VD->getDeclContext()->isRecord()) {
+          // If the value is a class member, we might have a pointer-to-member.
+          // Determine whether the non-type template template parameter is of
+          // pointer-to-member type. If so, we need to build an appropriate
+          // expression for a pointer-to-member, since a "normal" DeclRefExpr
+          // would refer to the member itself.
+          if (NTTP->getType()->isMemberPointerType()) {
+            QualType ClassType
+              = SemaRef.Context.getTypeDeclType(
+                                        cast<RecordDecl>(VD->getDeclContext()));
+            NestedNameSpecifier *Qualifier
+              = NestedNameSpecifier::Create(SemaRef.Context, 0, false,
+                                            ClassType.getTypePtr());
+            CXXScopeSpec SS;
+            SS.setScopeRep(Qualifier);
+            OwningExprResult RefExpr 
+              = SemaRef.BuildDeclRefExpr(VD, 
+                                         VD->getType().getNonReferenceType(), 
+                                         E->getLocation(), 
+                                         /*FIXME:*/false, /*FIXME:*/false,
+                                         &SS);
+            if (RefExpr.isInvalid())
+              return SemaRef.ExprError();
+              
+            return SemaRef.CreateBuiltinUnaryOp(E->getLocation(), 
+                                                UnaryOperator::AddrOf, 
+                                                move(RefExpr));
+          }
+        }
+
+        return SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
+                                        E->getLocation(),
                                         /*FIXME:*/false, /*FIXME:*/false);
       }
 

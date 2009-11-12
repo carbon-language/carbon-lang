@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 struct Y {
   int x;
 };
@@ -25,3 +24,12 @@ struct X2 {
 template struct X2<int, Y>;
 template struct X2<int&, Y>; // expected-note{{instantiation}}
 template struct X2<const void, Y>; // expected-note{{instantiation}}
+
+template<typename T, typename Class, T Class::*Ptr>
+struct X3 {
+  X3<T, Class, Ptr> &operator=(const T& value) {
+    return *this;
+  }
+};
+
+X3<int, Y, &Y::x> x3;
