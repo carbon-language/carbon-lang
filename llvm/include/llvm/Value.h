@@ -224,7 +224,6 @@ public:
     NamedMDNodeVal,           // This is an instance of NamedMDNode
     InlineAsmVal,             // This is an instance of InlineAsm
     PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
-    FixedStackPseudoSourceValueVal, // This is an instance of PseudoSourceValue
     InstructionVal,           // This is an instance of Instruction
     FixedStackPseudoSourceValueVal, // This is an instance of 
                                     // FixedStackPseudoSourceValue
