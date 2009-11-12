@@ -491,6 +491,10 @@ static llvm::cl::opt<std::string>
 ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
                    llvm::cl::desc("Include file before parsing"));
 
+static llvm::cl::opt<std::string>
+TokenCache("token-cache", llvm::cl::value_desc("path"),
+           llvm::cl::desc("Use specified token cache file"));
+
 static llvm::cl::list<std::string>
 U_macros("U", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
          llvm::cl::desc("Undefine the specified macro"));
@@ -775,6 +779,19 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
 
   Opts.setImplicitPCHInclude(ImplicitIncludePCH);
   Opts.setImplicitPTHInclude(ImplicitIncludePTH);
+
+  // Select the token cache file, we don't support more than one currently so we
+  // can't have both an implicit-pth and a token cache file.
+  if (TokenCache.getPosition() && ImplicitIncludePTH.getPosition()) {
+    // FIXME: Don't fail like this.
+    fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
+            "options\n");
+    exit(1);
+  }
+  if (TokenCache.getPosition())
+    Opts.setTokenCache(TokenCache);
+  else
+    Opts.setTokenCache(ImplicitIncludePTH);
 
   // Use predefines?
   Opts.setUsePredefines(!UndefMacros);

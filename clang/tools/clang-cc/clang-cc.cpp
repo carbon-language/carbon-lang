@@ -254,10 +254,6 @@ TimeReport("ftime-report",
            llvm::cl::desc("Print the amount of time each "
                           "phase of compilation takes"));
 
-static llvm::cl::opt<std::string>
-TokenCache("token-cache", llvm::cl::value_desc("path"),
-           llvm::cl::desc("Use specified token cache file"));
-
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
                   llvm::cl::desc("Verify emitted diagnostics and warnings"));
@@ -381,20 +377,12 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
                    const DependencyOutputOptions &DepOpts,
                    TargetInfo &Target, SourceManager &SourceMgr,
                    FileManager &FileMgr) {
+  // Create a PTH manager if we are using some form of a token cache.
   PTHManager *PTHMgr = 0;
-  if (!TokenCache.empty() && !PPOpts.getImplicitPTHInclude().empty()) {
-    fprintf(stderr, "error: cannot use both -token-cache and -include-pth "
-            "options\n");
-    exit(1);
-  }
+  if (!PPOpts.getTokenCache().empty())
+    PTHMgr = PTHManager::Create(PPOpts.getTokenCache(), Diags);
 
-  // Use PTH?
-  if (!TokenCache.empty() || !PPOpts.getImplicitPTHInclude().empty()) {
-    const std::string& x = TokenCache.empty() ?
-      PPOpts.getImplicitPTHInclude() : TokenCache;
-    PTHMgr = PTHManager::Create(x, Diags);
-  }
-
+  // FIXME: Don't fail like this.
   if (Diags.hasErrorOccurred())
     exit(1);
 

@@ -37,6 +37,9 @@ class PreprocessorOptions {
   /// empty.
   std::string ImplicitPTHInclude;
 
+  /// If given, a PTH cache file to use for speeding up header parsing.
+  std::string TokenCache;
+
 public:
   PreprocessorOptions() : UsePredefines(true) {}
 
@@ -61,6 +64,13 @@ public:
     assert((ImplicitPCHInclude.empty() || Value.empty()) &&
            "Cannot both implicit PCH and PTH includes!");
     ImplicitPTHInclude = Value;
+  }
+
+  const std::string &getTokenCache() const {
+    return TokenCache;
+  }
+  void setTokenCache(llvm::StringRef Value) {
+    TokenCache = Value;
   }
 
   void addMacroDef(llvm::StringRef Name) {
