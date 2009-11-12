@@ -18,7 +18,7 @@ declare arm_apcscc noalias i8* @calloc(i32, i32) nounwind
 
 define arm_apcscc i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
 ; CHECK: main:
-; CHECK: tbh
+; CHECK: tbb
 entry:
 	br label %bb42.i
 
@@ -26,7 +26,7 @@ bb1.i2:		; preds = %bb42.i
 	br label %bb40.i
 
 bb5.i:		; preds = %bb42.i
-	%0 = or i32 %_Y_flags.1, 32		; <i32> [#uses=1]
+	%0 = or i32 %argc, 32		; <i32> [#uses=1]
 	br label %bb40.i
 
 bb7.i:		; preds = %bb42.i
@@ -66,14 +66,10 @@ bb39.i:		; preds = %bb42.i
 	unreachable
 
 bb40.i:		; preds = %bb42.i, %bb5.i, %bb1.i2
-	%_Y_flags.0 = phi i32 [ 0, %bb1.i2 ], [ %0, %bb5.i ], [ %_Y_flags.1, %bb42.i ]		; <i32> [#uses=1]
-	%_Y_eflag.b.0 = phi i1 [ %_Y_eflag.b.1, %bb1.i2 ], [ %_Y_eflag.b.1, %bb5.i ], [ true, %bb42.i ]		; <i1> [#uses=1]
 	br label %bb42.i
 
 bb42.i:		; preds = %bb40.i, %entry
-	%_Y_eflag.b.1 = phi i1 [ false, %entry ], [ %_Y_eflag.b.0, %bb40.i ]		; <i1> [#uses=2]
-	%_Y_flags.1 = phi i32 [ 0, %entry ], [ %_Y_flags.0, %bb40.i ]		; <i32> [#uses=2]
-	switch i32 undef, label %bb39.i [
+	switch i32 %argc, label %bb39.i [
 		i32 67, label %bb33.i
 		i32 70, label %bb35.i
 		i32 77, label %bb37.i
