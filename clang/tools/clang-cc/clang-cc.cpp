@@ -217,14 +217,14 @@ CodeCompletionWantsMacros("code-completion-macros",
 static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S, void *) {
   switch (CodeCompletionPrinter.getValue()) {
   case CCP_Debug:
-    return new PrintingCodeCompleteConsumer(S, CodeCompletionWantsMacros, 
+    return new PrintingCodeCompleteConsumer(S, CodeCompletionWantsMacros,
                                             llvm::outs());
-      
+
   case CCP_CIndex:
     return new CIndexCodeCompleteConsumer(S, CodeCompletionWantsMacros,
                                           llvm::outs());
   };
-  
+
   return 0;
 }
 
@@ -890,18 +890,15 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   if (FixItRewrite)
     FixItRewrite->WriteFixedFile(InFile, CompOpts.getOutputFile());
 
-  // Disable the consumer prior to the context, the consumer may perform actions
-  // in its destructor which require the context.
-  if (DisableFree)
+  // Release the consumer and the AST, in that order since the consumer may
+  // perform actions in its destructor which require the context.
+  if (DisableFree) {
     Consumer.take();
-  else
-    Consumer.reset();
-
-  // If in -disable-free mode, don't deallocate ASTContext.
-  if (DisableFree)
     ContextOwner.take();
-  else
-    ContextOwner.reset(); // Delete ASTContext
+  } else {
+    Consumer.reset();
+    ContextOwner.reset();
+  }
 
   if (VerifyDiagnostics)
     if (CheckDiagnostics(PP))
@@ -948,10 +945,9 @@ static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
 
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::sys::Path OutPath;
-  llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(CompOpts, PP, 
+  llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(CompOpts, PP,
                                                              InFile, PA, OS,
                                                              OutPath, Context));
-
   if (!Consumer.get()) {
     Diags.Report(diag::err_fe_invalid_ast_action);
     return;
