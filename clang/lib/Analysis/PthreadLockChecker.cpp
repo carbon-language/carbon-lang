@@ -30,7 +30,6 @@ public:
     static int x = 0;
     return &x;
   }
-  void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
   void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
     
   void AcquireLock(CheckerContext &C, const CallExpr *CE,
@@ -55,29 +54,6 @@ void clang::RegisterPthreadLockChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new PthreadLockChecker());
 }
 
-void PthreadLockChecker::PreVisitCallExpr(CheckerContext &C,
-                                          const CallExpr *CE) {
-  const GRState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  const CodeTextRegion *R =
-    dyn_cast_or_null<CodeTextRegion>(state->getSVal(Callee).getAsRegion());
-  
-  if (!R)
-    return;
-  
-  llvm::StringRef FName = R->getDecl()->getName();
-
-  if (FName == "pthread_mutex_lock") {
-    if (CE->getNumArgs() != 1)
-      return;
-    AcquireLock(C, CE, state->getSVal(CE->getArg(0)), false);
-  }
-  else if (FName == "pthread_mutex_trylock") {
-    if (CE->getNumArgs() != 1)
-      return;
-    AcquireLock(C, CE, state->getSVal(CE->getArg(0)), true);
-  }
-}
 
 void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
                                            const CallExpr *CE) {
@@ -91,7 +67,17 @@ void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
   
   llvm::StringRef FName = R->getDecl()->getName();
   
-  if (FName == "pthread_mutex_unlock") {
+  if (FName == "pthread_mutex_lock") {
+    if (CE->getNumArgs() != 1)
+      return;
+    AcquireLock(C, CE, state->getSVal(CE->getArg(0)), false);
+  }
+  else if (FName == "pthread_mutex_trylock") {
+    if (CE->getNumArgs() != 1)
+      return;
+    AcquireLock(C, CE, state->getSVal(CE->getArg(0)), true);
+  }  
+  else if (FName == "pthread_mutex_unlock") {
     if (CE->getNumArgs() != 1)
       return;
     ReleaseLock(C, CE, state->getSVal(CE->getArg(0)));
