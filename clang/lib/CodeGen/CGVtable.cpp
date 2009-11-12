@@ -843,7 +843,7 @@ class VTTBuilder {
     SecondaryVTTs(RD, Offset, MorallyVirtual);
 
     // and last the secondary vtable pointers.
-    Secondary(RD, vtbl, MorallyVirtual, Offset);
+    Secondary(RD, vtbl, Offset, MorallyVirtual);
   }
 
   /// SecondaryVTTs - Add the secondary VTTs to Inits.  The secondary VTTs are
