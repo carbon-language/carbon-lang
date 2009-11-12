@@ -100,11 +100,8 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
         CalleeSavedRegs.set(CSRegs[i]);
   }
 
-  // RS used within emit{Pro,Epi}logue()
-  if (mbb != MBB) {
-    MBB = mbb;
-    initRegState();
-  }
+  MBB = mbb;
+  initRegState();
 
   Tracking = false;
 }
