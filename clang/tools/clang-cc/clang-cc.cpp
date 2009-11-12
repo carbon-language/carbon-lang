@@ -428,28 +428,6 @@ FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Perform Fix-It modifications at the given source location"));
 
 //===----------------------------------------------------------------------===//
-// ObjC Rewriter Options
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<bool>
-SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
-                           llvm::cl::desc("Silence ObjC rewriting warnings"));
-
-//===----------------------------------------------------------------------===//
-// Warning Options
-//===----------------------------------------------------------------------===//
-
-// This gets all -W options, including -Werror, -W[no-]system-headers, etc.  The
-// driver has stripped off -Wa,foo etc.  The driver has also translated -W to
-// -Wextra, so we don't need to worry about it.
-static llvm::cl::list<std::string>
-OptWarnings("W", llvm::cl::Prefix, llvm::cl::ValueOptional);
-
-static llvm::cl::opt<bool> OptPedantic("pedantic");
-static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
-static llvm::cl::opt<bool> OptNoWarnings("w");
-
-//===----------------------------------------------------------------------===//
 // Dump Build Information
 //===----------------------------------------------------------------------===//
 
@@ -596,7 +574,8 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
   case RewriteObjC:
     OS.reset(ComputeOutFile(CompOpts, InFile, "cpp", true, OutPath));
     return CreateObjCRewriter(InFile, OS.get(), PP.getDiagnostics(),
-                              PP.getLangOptions(), SilenceRewriteMacroWarning);
+                              PP.getLangOptions(),
+                              CompOpts.getDiagnosticOpts().NoRewriteMacros);
 
   case RewriteBlocks:
     return CreateBlockRewriter(InFile, PP.getDiagnostics(),
@@ -1079,8 +1058,7 @@ static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,
 
   // Configure our handling of diagnostics.
   Diagnostic *Diags = new Diagnostic(DiagClient.take());
-  if (ProcessWarningOptions(*Diags, OptWarnings, OptPedantic, OptPedanticErrors,
-                            OptNoWarnings))
+  if (ProcessWarningOptions(*Diags, Opts))
     return 0;
 
   // Set an error handler, so that any LLVM backend diagnostics go through our

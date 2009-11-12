@@ -19,6 +19,10 @@ namespace clang {
 /// engine.
 class DiagnosticOptions {
 public:
+  unsigned IgnoreWarnings : 1;   /// -w
+  unsigned NoRewriteMacros : 1;  /// -Wno-rewrite-macros
+  unsigned Pedantic : 1;         /// -pedantic
+  unsigned PedanticErrors : 1;   /// -pedantic-errors
   unsigned ShowColumn : 1;       /// Show column number on diagnostics.
   unsigned ShowLocation : 1;     /// Show source location information.
   unsigned ShowCarets : 1;       /// Show carets in diagnostics.
@@ -35,16 +39,24 @@ public:
   /// testing and analysis.
   std::string DumpBuildInformation;
 
+  /// The list of -W... options used to alter the diagnostic mappings, with the
+  /// prefixes removed.
+  std::vector<std::string> Warnings;
+
 public:
   DiagnosticOptions() {
-    ShowColumn = 1;
-    ShowLocation = 1;
-    ShowCarets = 1;
-    ShowFixits = 1;
-    ShowSourceRanges = 0;
-    ShowOptionNames = 0;
-    ShowColors = 0;
+    IgnoreWarnings = 0;
     MessageLength = 0;
+    NoRewriteMacros = 0;
+    Pedantic = 0;
+    PedanticErrors = 0;
+    ShowCarets = 1;
+    ShowColors = 0;
+    ShowColumn = 1;
+    ShowFixits = 1;
+    ShowLocation = 1;
+    ShowOptionNames = 0;
+    ShowSourceRanges = 0;
   }
 };
 

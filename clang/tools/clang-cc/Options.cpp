@@ -245,6 +245,18 @@ NoDiagnosticsFixIt("fno-diagnostics-fixit-info",
                    llvm::cl::desc("Do not include fixit information in"
                                   " diagnostics"));
 
+static llvm::cl::opt<bool> OptNoWarnings("w");
+
+static llvm::cl::opt<bool> OptPedantic("pedantic");
+
+static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
+
+// This gets all -W options, including -Werror, -W[no-]system-headers, etc.  The
+// driver has stripped off -Wa,foo etc.  The driver has also translated -W to
+// -Wextra, so we don't need to worry about it.
+static llvm::cl::list<std::string>
+OptWarnings("W", llvm::cl::Prefix, llvm::cl::ValueOptional);
+
 static llvm::cl::opt<bool>
 PrintSourceRangeInfo("fdiagnostics-print-source-range-info",
                      llvm::cl::desc("Print source range spans in numeric form"));
@@ -262,6 +274,10 @@ MessageLength("fmessage-length",
 static llvm::cl::opt<bool>
 PrintColorDiagnostic("fcolor-diagnostics",
                      llvm::cl::desc("Use colors in diagnostics"));
+
+static llvm::cl::opt<bool>
+SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
+                           llvm::cl::desc("Silence ObjC rewriting warnings"));
 
 }
 
@@ -664,8 +680,14 @@ void clang::InitializeDependencyOutputOptions(DependencyOutputOptions &Opts) {
 void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
   using namespace diagnosticoptions;
 
+  Opts.Warnings.insert(Opts.Warnings.begin(),
+                       OptWarnings.begin(), OptWarnings.end());
   Opts.DumpBuildInformation = DumpBuildInformation;
+  Opts.IgnoreWarnings = OptNoWarnings;
   Opts.MessageLength = MessageLength;
+  Opts.NoRewriteMacros = SilenceRewriteMacroWarning;
+  Opts.Pedantic = OptPedantic;
+  Opts.PedanticErrors = OptPedanticErrors;
   Opts.ShowCarets = !NoCaretDiagnostics;
   Opts.ShowColors = PrintColorDiagnostic;
   Opts.ShowColumn = !NoShowColumn;
@@ -1106,4 +1128,3 @@ clang::InitializePreprocessorOutputOptions(PreprocessorOutputOptions &Opts) {
   Opts.ShowComments = EnableCommentOutput;
   Opts.ShowMacroComments = EnableMacroCommentOutput;
 }
-

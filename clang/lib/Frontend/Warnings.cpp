@@ -24,6 +24,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include <cstdio>
 #include <cstring>
@@ -32,26 +33,24 @@
 using namespace clang;
 
 bool clang::ProcessWarningOptions(Diagnostic &Diags,
-                                  std::vector<std::string> &Warnings,
-                                  bool Pedantic, bool PedanticErrors,
-                                  bool NoWarnings) {
+                                  const DiagnosticOptions &Opts) {
   Diags.setSuppressSystemWarnings(true);  // Default to -Wno-system-headers
-  Diags.setIgnoreAllWarnings(NoWarnings);
+  Diags.setIgnoreAllWarnings(Opts.IgnoreWarnings);
 
   // If -pedantic or -pedantic-errors was specified, then we want to map all
   // extension diagnostics onto WARNING or ERROR unless the user has futz'd
   // around with them explicitly.
-  if (PedanticErrors)
+  if (Opts.PedanticErrors)
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Error);
-  else if (Pedantic)
+  else if (Opts.Pedantic)
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Warn);
   else
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
 
   // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
-  for (unsigned i = 0, e = Warnings.size(); i != e; ++i) {
-    const std::string &Opt = Warnings[i];
+  for (unsigned i = 0, e = Opts.Warnings.size(); i != e; ++i) {
+    const std::string &Opt = Opts.Warnings[i];
     const char *OptStart = &Opt[0];
     const char *OptEnd = OptStart+Opt.size();
     assert(*OptEnd == 0 && "Expect null termination for lower-bound search");
