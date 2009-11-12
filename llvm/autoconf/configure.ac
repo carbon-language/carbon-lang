@@ -667,6 +667,13 @@ case "$withval" in
   *) AC_MSG_ERROR([Invalid path for --with-ocaml-libdir. Provide full path]) ;;
 esac
 
+AC_ARG_WITH(c-include-dir,
+  AS_HELP_STRING([--with-c-include-dirs],
+    [Colon separated list of directories clang will search for headers]),,
+    withval="")
+AC_DEFINE_UNQUOTED(C_INCLUDE_DIRS,"$withval",
+                   [Directories clang will search for headers])
+
 dnl Allow linking of LLVM with GPLv3 binutils code.
 AC_ARG_WITH(binutils-include,
   AS_HELP_STRING([--with-binutils-include],

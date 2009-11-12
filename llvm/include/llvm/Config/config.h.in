@@ -11,6 +11,9 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
+/* Directories clang will search for headers */
+#undef C_INCLUDE_DIRS
+
 /* Define if CBE is enabled for printf %a output */
 #undef ENABLE_CBE_PRINTF_A
 
