@@ -217,6 +217,18 @@ public:
   /// TODO: This isn't fully implemented yet.
   ConstantRange udiv(const ConstantRange &Other) const;
 
+  /// shl - Return a new range representing the possible values resulting
+  /// from a left shift of a value in this range by the Amount value.
+  ConstantRange shl(const ConstantRange &Amount) const;
+
+  /// ashr - Return a new range representing the possible values resulting from
+  /// an arithmetic right shift of a value in this range by the Amount value.
+  ConstantRange ashr(const ConstantRange &Amount) const;
+
+  /// shr - Return a new range representing the possible values resulting
+  /// from a logical right shift of a value in this range by the Amount value.
+  ConstantRange lshr(const ConstantRange &Amount) const;
+
   /// print - Print out the bounds to a stream...
   ///
   void print(raw_ostream &OS) const;

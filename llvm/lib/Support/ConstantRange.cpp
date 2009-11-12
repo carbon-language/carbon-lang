@@ -609,6 +609,43 @@ ConstantRange::udiv(const ConstantRange &RHS) const {
   return ConstantRange(Lower, Upper);
 }
 
+ConstantRange
+ConstantRange::shl(const ConstantRange &Amount) const {
+  if (isEmptySet())
+    return *this;
+
+  APInt min = getUnsignedMin() << Amount.getUnsignedMin();
+  APInt max = getUnsignedMax() << Amount.getUnsignedMax();
+
+  // there's no overflow!
+  APInt Zeros(sizeof(unsigned)*8, getUnsignedMax().countLeadingZeros());
+  if (Zeros.uge(Amount.getUnsignedMax()))
+    return ConstantRange(min, max);
+
+  // FIXME: implement the other tricky cases
+  return ConstantRange(getBitWidth());
+}
+
+ConstantRange
+ConstantRange::ashr(const ConstantRange &Amount) const {
+  if (isEmptySet())
+    return *this;
+
+  APInt min = getUnsignedMax().ashr(Amount.getUnsignedMin());
+  APInt max = getUnsignedMin().ashr(Amount.getUnsignedMax());
+  return ConstantRange(min, max);
+}
+
+ConstantRange
+ConstantRange::lshr(const ConstantRange &Amount) const {
+  if (isEmptySet())
+    return *this;
+  
+  APInt min = getUnsignedMax().lshr(Amount.getUnsignedMin());
+  APInt max = getUnsignedMin().lshr(Amount.getUnsignedMax());
+  return ConstantRange(min, max);
+}
+
 /// print - Print out the bounds to a stream...
 ///
 void ConstantRange::print(raw_ostream &OS) const {
