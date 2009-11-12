@@ -1069,6 +1069,35 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   FinalizeCompileOptions(Opts.getCompileOpts(), Opts.getLangOpts());
 }
 
+static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,
+                                          int argc, char **argv) {
+  // Create the diagnostic client for reporting errors or for
+  // implementing -verify.
+  llvm::OwningPtr<DiagnosticClient> DiagClient;
+  if (VerifyDiagnostics) {
+    // When checking diagnostics, just buffer them up.
+    DiagClient.reset(new TextDiagnosticBuffer());
+  } else {
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
+  }
+
+  if (!DumpBuildInformation.empty())
+    SetUpBuildDumpLog(Opts, argc, argv, DiagClient);
+
+  // Configure our handling of diagnostics.
+  Diagnostic *Diags = new Diagnostic(DiagClient.take());
+  if (ProcessWarningOptions(*Diags, OptWarnings, OptPedantic, OptPedanticErrors,
+                            OptNoWarnings))
+    return 0;
+
+  // Set an error handler, so that any LLVM backend diagnostics go through our
+  // error handler.
+  llvm::llvm_install_error_handler(LLVMErrorHandler,
+                                   static_cast<void*>(Diags));
+
+  return Diags;
+}
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -1080,6 +1109,11 @@ int main(int argc, char **argv) {
 
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
+
+  if (VerifyDiagnostics && InputFilenames.size() > 1) {
+    fprintf(stderr, "-verify only works on single input files.\n");
+    return 1;
+  }
 
   if (TimeReport)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
@@ -1093,38 +1127,18 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
 
-  // Construct the diagnostic options first, which cannot fail, so that we can
-  // build a diagnostic client to use for any errors during option handling.
+  // Construct the diagnostic engine first, so that we can build a diagnostic
+  // client to use for any errors during option handling.
   DiagnosticOptions DiagOpts;
   InitializeDiagnosticOptions(DiagOpts);
-
-  // Create the diagnostic client for reporting errors or for
-  // implementing -verify.
-  llvm::OwningPtr<DiagnosticClient> DiagClient;
-  if (VerifyDiagnostics) {
-    // When checking diagnostics, just buffer them up.
-    DiagClient.reset(new TextDiagnosticBuffer());
-    if (InputFilenames.size() != 1) {
-      fprintf(stderr, "-verify only works on single input files.\n");
-      return 1;
-    }
-  } else {
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), DiagOpts));
-  }
-
-  if (!DumpBuildInformation.empty())
-    SetUpBuildDumpLog(DiagOpts, argc, argv, DiagClient);
-
-  // Configure our handling of diagnostics.
-  Diagnostic Diags(DiagClient.get());
-  if (ProcessWarningOptions(Diags, OptWarnings, OptPedantic, OptPedanticErrors,
-                            OptNoWarnings))
+  llvm::OwningPtr<Diagnostic>
+    Diags(CreateDiagnosticEngine(DiagOpts, argc, argv));
+  if (!Diags)
     return 1;
 
-  // Set an error handler, so that any LLVM backend diagnostics go through our
-  // error handler.
-  llvm::llvm_install_error_handler(LLVMErrorHandler,
-                                   static_cast<void*>(&Diags));
+  // FIXME: Hack to make sure we release the diagnostic client, the engine
+  // should (optionally?) take ownership of it.
+  llvm::OwningPtr<DiagnosticClient> DiagClient(Diags->getClient());
 
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
@@ -1137,14 +1151,14 @@ int main(int argc, char **argv) {
   Target(TargetInfo::CreateTargetInfo(Triple.getTriple()));
 
   if (Target == 0) {
-    Diags.Report(diag::err_fe_unknown_triple) << Triple.getTriple().c_str();
+    Diags->Report(diag::err_fe_unknown_triple) << Triple.getTriple().c_str();
     return 1;
   }
 
   // Set the target ABI if specified.
   if (!TargetABI.empty()) {
     if (!Target->setABI(TargetABI)) {
-      Diags.Report(diag::err_fe_unknown_target_abi) << TargetABI;
+      Diags->Report(diag::err_fe_unknown_target_abi) << TargetABI;
       return 1;
     }
   }
@@ -1174,7 +1188,7 @@ int main(int argc, char **argv) {
 
     // AST inputs are handled specially.
     if (LK == langkind_ast) {
-      ProcessASTInputFile(CompOpts, InFile, ProgAction, Diags, FileMgr,
+      ProcessASTInputFile(CompOpts, InFile, ProgAction, *Diags, FileMgr,
                           Context);
       continue;
     }
@@ -1185,20 +1199,20 @@ int main(int argc, char **argv) {
 
     // Set up the preprocessor with these options.
     llvm::OwningPtr<Preprocessor>
-      PP(CreatePreprocessor(Diags, CompOpts.getLangOpts(),
+      PP(CreatePreprocessor(*Diags, CompOpts.getLangOpts(),
                             CompOpts.getPreprocessorOpts(),
                             CompOpts.getHeaderSearchOpts(),
                             CompOpts.getDependencyOutputOpts(),
                             *Target, SourceMgr, FileMgr));
 
     // Process the source file.
-    Diags.getClient()->BeginSourceFile(CompOpts.getLangOpts());
+    Diags->getClient()->BeginSourceFile(CompOpts.getLangOpts());
     ProcessInputFile(CompOpts, *PP, InFile, ProgAction, Context);
-    Diags.getClient()->EndSourceFile();
+    Diags->getClient()->EndSourceFile();
   }
 
   if (CompOpts.getDiagnosticOpts().ShowCarets)
-    if (unsigned NumDiagnostics = Diags.getNumDiagnostics())
+    if (unsigned NumDiagnostics = Diags->getNumDiagnostics())
       fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
               (NumDiagnostics == 1 ? "" : "s"));
 
@@ -1217,5 +1231,5 @@ int main(int argc, char **argv) {
   // -time-passes usable.
   llvm::llvm_shutdown();
 
-  return (Diags.getNumErrors() != 0);
+  return (Diags->getNumErrors() != 0);
 }
