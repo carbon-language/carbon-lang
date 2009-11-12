@@ -770,10 +770,26 @@ class VTTBuilder {
   llvm::Constant *ClassVtbl;
   llvm::LLVMContext &VMContext;
 
+  /// BuildVtablePtr - Build up a referene to the given secondary vtable
+  llvm::Constant *BuildVtablePtr(llvm::Constant *vtbl, const CXXRecordDecl *RD,
+                                 uint64_t Offset) {
+    int64_t AddressPoint;
+    AddressPoint = (*CGM.AddressPoints[Class])[std::make_pair(RD, Offset)];
+    D1(printf("XXX address point for %s in %s at offset %d was %d\n",
+              RD->getNameAsCString(), Class->getNameAsCString(),
+              (int)Offset, (int)AddressPoint));
+    uint32_t LLVMPointerWidth = CGM.getContext().Target.getPointerWidth(0);
+    llvm::Constant *init;
+    init = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
+                                  AddressPoint*LLVMPointerWidth/8);
+    init = llvm::ConstantExpr::getInBoundsGetElementPtr(vtbl, &init, 1);
+    return init;
+  }
+
   /// Secondary - Add the secondary vtable pointers to Inits.  Offset is the
   /// current offset in bits to the object we're working on.
-  void Secondary(const CXXRecordDecl *RD, uint64_t Offset=0,
-                 bool MorallyVirtual=false) {
+  void Secondary(const CXXRecordDecl *RD, llvm::Constant *vtbl,
+                 uint64_t Offset=0, bool MorallyVirtual=false) {
     if (RD->getNumVBases() == 0 && ! MorallyVirtual)
       return;
 
@@ -796,11 +812,15 @@ class VTTBuilder {
       if ((Base->getNumVBases() || BaseMorallyVirtual)
           && !NonVirtualPrimaryBase) {
         // FIXME: Slightly too many of these for __ZTT8test8_B2
-        llvm::Constant *vtbl;
-        vtbl = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset);
-        Inits.push_back(vtbl);
+        llvm::Constant *init;
+        if (MorallyVirtual)
+          init = BuildVtablePtr(vtbl, RD, Offset);
+        else
+          init = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset);
+        Inits.push_back(init);
+        // vtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
       }
-      Secondary(Base, BaseOffset, BaseMorallyVirtual);
+      Secondary(Base, vtbl, BaseOffset, BaseMorallyVirtual);
     }
   }
 
@@ -812,25 +832,18 @@ class VTTBuilder {
 
     llvm::Constant *init;
     // First comes the primary virtual table pointer...
-    if (MorallyVirtual) {
-      int64_t AddressPoint;
-      AddressPoint = (*CGM.AddressPoints[Class])[std::make_pair(RD, Offset)];
-      D1(printf("XXX address point for %s in %s at offset %d was %d\n",
-                RD->getNameAsCString(), Class->getNameAsCString(),
-                (int)Offset, (int)AddressPoint));
-      uint32_t LLVMPointerWidth = CGM.getContext().Target.getPointerWidth(0);
-      init = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                    AddressPoint*LLVMPointerWidth/8);
-      init = llvm::ConstantExpr::getInBoundsGetElementPtr(ClassVtbl, &init, 1);
-    } else
+    if (MorallyVirtual)
+      init = BuildVtablePtr(ClassVtbl, RD, Offset);
+    else
       init = CGM.getVtableInfo().getCtorVtable(Class, RD, Offset);
+    llvm::Constant *vtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
     Inits.push_back(init);
 
     // then the secondary VTTs....
     SecondaryVTTs(RD, Offset, MorallyVirtual);
 
     // and last the secondary vtable pointers.
-    Secondary(RD, MorallyVirtual, Offset);
+    Secondary(RD, vtbl, MorallyVirtual, Offset);
   }
 
   /// SecondaryVTTs - Add the secondary VTTs to Inits.  The secondary VTTs are
@@ -881,7 +894,7 @@ public:
     SecondaryVTTs(Class);
 
     // then the secondary vtable pointers...
-    Secondary(Class);
+    Secondary(Class, ClassVtbl);
 
     // and last, the virtual VTTs.
     VirtualVTTs(Class);
