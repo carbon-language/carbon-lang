@@ -275,6 +275,12 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
     /// predecessor based on its terminator.
     //
     if (LVI) {
+      // FIXME: change this to use the more-rich 'getPredicateOnEdge' method if
+      // "I" is a non-local compare-with-a-constant instruction.  This would be
+      // able to handle value inequalities better, for example if the compare is
+      // "X < 4" and "X < 3" is known true but "X < 4" itself is not available.
+      // Perhaps getConstantOnEdge should be smart enough to do this?
+      
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
         // If the value is known by LazyValueInfo to be a constant in a
         // predecessor, use that information to try to thread this block.

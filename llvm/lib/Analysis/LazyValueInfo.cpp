@@ -141,19 +141,40 @@ public:
 
     if (RHS.isNotConstant()) {
       if (isNotConstant()) {
-        if (getNotConstant() != RHS.getNotConstant())
+        if (getNotConstant() != RHS.getNotConstant() ||
+            isa<ConstantExpr>(getNotConstant()) ||
+            isa<ConstantExpr>(RHS.getNotConstant()))
           return markOverdefined();
         return false;
       }
-      if (isConstant() && getConstant() != RHS.getNotConstant())
-        return markOverdefined();
+      if (isConstant()) {
+        if (getConstant() == RHS.getNotConstant() ||
+            isa<ConstantExpr>(RHS.getNotConstant()) ||
+            isa<ConstantExpr>(getConstant()))
+          return markOverdefined();
+        return markNotConstant(RHS.getNotConstant());
+      }
+      
+      assert(isUndefined() && "Unexpected lattice");
       return markNotConstant(RHS.getNotConstant());
     }
     
-    // RHS must be a constant, we must be undef or constant.
-    if (isConstant() && getConstant() != RHS.getConstant())
+    // RHS must be a constant, we must be undef, constant, or notconstant.
+    if (isUndefined())
+      return markConstant(RHS.getConstant());
+    
+    if (isConstant()) {
+      if (getConstant() != RHS.getConstant())
+        return markOverdefined();
+      return false;
+    }
+
+    // If we are known "!=4" and RHS is "==5", stay at "!=4".
+    if (getNotConstant() == RHS.getConstant() ||
+        isa<ConstantExpr>(getNotConstant()) ||
+        isa<ConstantExpr>(RHS.getConstant()))
       return markOverdefined();
-    return markConstant(RHS.getConstant());
+    return false;
   }
   
 };
