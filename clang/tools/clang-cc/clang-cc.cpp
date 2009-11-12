@@ -821,12 +821,12 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       return;
 
     // Run the preprocessor actions.
+    llvm::TimeRegion Timer(ClangFrontendTimer);
     switch (PA) {
     default:
       assert(0 && "unexpected program action");
 
     case DumpRawTokens: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
       SourceManager &SM = PP.getSourceManager();
       // Start lexing the specified input file.
       Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
@@ -839,12 +839,10 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
         fprintf(stderr, "\n");
         RawLex.LexFromRawLexer(RawTok);
       }
-      ClearSourceMgr = true;
       break;
     }
 
     case DumpTokens: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
       Token Tok;
       // Start preprocessing the specified input file.
       PP.EnterMainSourceFile();
@@ -853,66 +851,46 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
         PP.DumpToken(Tok, true);
         fprintf(stderr, "\n");
       } while (Tok.isNot(tok::eof));
-      ClearSourceMgr = true;
       break;
     }
 
-    case GeneratePTH: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
+    case GeneratePTH:
       CacheTokens(PP, static_cast<llvm::raw_fd_ostream*>(OS.get()));
-      ClearSourceMgr = true;
       break;
-    }
 
-    case ParseNoop: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
+    case ParseNoop:
       ParseFile(PP, new MinimalAction(PP));
-      ClearSourceMgr = true;
       break;
-    }
 
-    case ParsePrintCallbacks: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
+    case ParsePrintCallbacks:
       ParseFile(PP, CreatePrintParserActionsAction(PP, OS.get()));
-      ClearSourceMgr = true;
       break;
-    }
 
-    case PrintPreprocessedInput: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
+    case PrintPreprocessedInput:
       DoPrintPreprocessedInput(PP, OS.get(),
                                CompOpts.getPreprocessorOutputOpts());
-      ClearSourceMgr = true;
       break;
-    }
 
-    case RewriteMacros: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
+    case RewriteMacros:
       RewriteMacrosInInput(PP, OS.get());
-      ClearSourceMgr = true;
       break;
-    }
 
-    case RewriteTest: {
-      llvm::TimeRegion Timer(ClangFrontendTimer);
+    case RewriteTest:
       DoRewriteTest(PP, OS.get());
-      ClearSourceMgr = true;
       break;
-    }
 
     case RunPreprocessorOnly: {    // Just lex as fast as we can, no output.
-      llvm::TimeRegion Timer(ClangFrontendTimer);
       Token Tok;
       // Start parsing the specified input file.
       PP.EnterMainSourceFile();
       do {
         PP.Lex(Tok);
       } while (Tok.isNot(tok::eof));
-      ClearSourceMgr = true;
       break;
     }
-
     }
+
+    ClearSourceMgr = true;
   }
 
   if (FixItRewrite)
