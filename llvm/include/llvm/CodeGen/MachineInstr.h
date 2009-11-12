@@ -19,6 +19,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Support/DebugLoc.h"
@@ -44,6 +45,13 @@ private:
   const TargetInstrDesc *TID;           // Instruction descriptor.
   unsigned short NumImplicitOps;        // Number of implicit operands (which
                                         // are determined at construction time).
+
+  unsigned short AsmPrinterFlags;       // Various bits of information used by
+                                        // the AsmPrinter to emit helpful
+                                        // comments.  This is *not* semantic
+                                        // information.  Do not use this for
+                                        // anything other than to convey comment
+                                        // information to AsmPrinter.
 
   std::vector<MachineOperand> Operands; // the operands
   mmo_iterator MemRefs;                 // information on memory references
@@ -106,6 +114,22 @@ private:
 public:
   const MachineBasicBlock* getParent() const { return Parent; }
   MachineBasicBlock* getParent() { return Parent; }
+
+  /// getAsmPrinterFlags - Return the asm printer flags bitvector.
+  ///
+  unsigned short getAsmPrinterFlags() const { return AsmPrinterFlags; }
+
+  /// getAsmPrinterFlag - Return whether an AsmPrinter flag is set.
+  ///
+  bool getAsmPrinterFlag(AsmPrinter::CommentFlag Flag) const {
+    return AsmPrinterFlags & Flag;
+  }
+
+  /// setAsmPrinterFlag - Set a flag for the AsmPrinter.
+  ///
+  void setAsmPrinterFlag(unsigned short Flag) {
+    AsmPrinterFlags |= Flag;
+  }
 
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
