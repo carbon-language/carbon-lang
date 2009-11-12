@@ -1400,7 +1400,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
       // Otherwise, this is a load-store case, so DCE them.
       for (SmallPtrSet<MachineInstr*, 4>::iterator UI = 
            VNUseCount[CurrVN].begin(), UE = VNUseCount[CurrVN].end();
-           UI != UI; ++UI) {
+           UI != UE; ++UI) {
         LIs->RemoveMachineInstrFromMaps(*UI);
         (*UI)->eraseFromParent();
       }
