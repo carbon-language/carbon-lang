@@ -380,7 +380,7 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
       RS->forward(prior(CurMBB.end()));
     BitVector RegsLiveAtExit(TRI->getNumRegs());
     RS->getRegsUsed(RegsLiveAtExit, false);
-    for (unsigned int i=0, e=TRI->getNumRegs(); i!=e; i++)
+    for (unsigned int i = 0, e = TRI->getNumRegs(); i != e; i++)
       if (RegsLiveAtExit[i])
         NewMBB->addLiveIn(i);
   }
@@ -546,7 +546,7 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
   MPIterator HighestMPIter = prior(MergePotentials.end());
   for (MPIterator CurMPIter = prior(MergePotentials.end()),
                   B = MergePotentials.begin();
-       CurMPIter!=B && CurMPIter->getHash() == CurHash;
+       CurMPIter != B && CurMPIter->getHash() == CurHash;
        --CurMPIter) {
     for (MPIterator I = prior(CurMPIter); I->getHash() == CurHash ; --I) {
       unsigned CommonTailLen;
@@ -596,9 +596,9 @@ void BranchFolder::RemoveBlocksWithHash(unsigned CurHash,
 /// only of the common tail.  Create a block that does by splitting one.
 unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
                                              unsigned maxCommonTailLength) {
-  unsigned i, commonTailIndex;
+  unsigned commonTailIndex = 0;
   unsigned TimeEstimate = ~0U;
-  for (i=0, commonTailIndex=0; i<SameTails.size(); i++) {
+  for (unsigned i = 0, e = SameTails.size(); i != e; ++i) {
     // Use PredBB if possible; that doesn't require a new branch.
     if (SameTails[i].getBlock() == PredBB) {
       commonTailIndex = i;
@@ -856,19 +856,19 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
           if (IBB->isLandingPad()) {
             MachineFunction::iterator IP = PBB;  IP++;
             MachineBasicBlock* PredNextBB = NULL;
-            if (IP!=MF.end())
+            if (IP != MF.end())
               PredNextBB = IP;
             if (TBB == NULL) {
-              if (IBB!=PredNextBB)      // fallthrough
+              if (IBB != PredNextBB)      // fallthrough
                 continue;
             } else if (FBB) {
-              if (TBB!=IBB && FBB!=IBB)   // cbr then ubr
+              if (TBB != IBB && FBB != IBB)   // cbr then ubr
                 continue;
             } else if (Cond.empty()) {
-              if (TBB!=IBB)               // ubr
+              if (TBB != IBB)               // ubr
                 continue;
             } else {
-              if (TBB!=IBB && IBB!=PredNextBB)  // cbr
+              if (TBB != IBB && IBB != PredNextBB)  // cbr
                 continue;
             }
           }
