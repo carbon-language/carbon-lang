@@ -422,7 +422,7 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
 
   llvm::DIType DbgTy = 
     DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
-                                   Ty->getDecl()->getName().data(),
+                                   Ty->getDecl()->getNameAsCString(),
                                    DefUnit, Line, 0, 0, 0, 0, Src);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
@@ -513,7 +513,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
-    const char *FieldName = Field->getName().data();
+    const char *FieldName = Field->getNameAsCString();
 
     // Ignore unnamed fields.
     if (!FieldName)
@@ -601,7 +601,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName().data(), 
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsCString(), 
                                      DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray(),
                                      RuntimeLang);
@@ -636,7 +636,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     ObjCIvarDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
-    const char *FieldName = Field->getName().data();
+    const char *FieldName = Field->getNameAsCString();
 
     // Ignore unnamed fields.
     if (!FieldName)
@@ -690,7 +690,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
   llvm::DICompositeType RealDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName().data(), DefUnit,
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsCString(), DefUnit,
                                      Line, Size, Align, 0, 0, llvm::DIType(), 
                                      Elements, RuntimeLang);
 
@@ -714,7 +714,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   for (EnumDecl::enumerator_iterator
          Enum = Decl->enumerator_begin(), EnumEnd = Decl->enumerator_end();
        Enum != EnumEnd; ++Enum) {
-    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getName().data(),
+    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getNameAsCString(),
                                             Enum->getInitVal().getZExtValue()));
   }
 
@@ -739,7 +739,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
 
   llvm::DIType DbgTy = 
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
-                                     Unit, Decl->getName().data(), DefUnit, Line,
+                                     Unit, Decl->getNameAsCString(), DefUnit, Line,
                                      Size, Align, 0, 0,
                                      llvm::DIType(), EltArray);
   
@@ -1132,7 +1132,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     FieldAlign = Align*8;
     
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             Decl->getName().data(), DefUnit,
+                                             Decl->getNameAsCString(), DefUnit,
                                              0, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
     EltTys.push_back(FieldTy);
@@ -1160,7 +1160,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
 
   // Create the descriptor for the variable.
   llvm::DIVariable D =
-    DebugFactory.CreateVariable(Tag, RegionStack.back(),Decl->getName().data(),
+    DebugFactory.CreateVariable(Tag, RegionStack.back(),Decl->getNameAsCString(),
                                 Unit, Line, Ty);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
@@ -1309,7 +1309,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     
     XOffset = FieldOffset;
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             Decl->getName().data(), DefUnit,
+                                             Decl->getNameAsCString(), DefUnit,
                                              0, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
     EltTys.push_back(FieldTy);
@@ -1363,7 +1363,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DebugFactory.CreateComplexVariable(Tag, RegionStack.back(),
-                                       Decl->getName().data(), Unit, Line, Ty,
+                                       Decl->getNameAsCString(), Unit, Line, Ty,
                                        addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
@@ -1421,7 +1421,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     T = M->getContext().getConstantArrayType(ET, ConstVal,
                                            ArrayType::Normal, 0);
   }
-  const char *DeclName = Decl->getName().data();
+  const char *DeclName = Decl->getNameAsCString();
   DebugFactory.CreateGlobalVariable(getContext(Decl, Unit), DeclName, DeclName,
                                     NULL, Unit, LineNo,
                                     getOrCreateType(T, Unit),
@@ -1438,7 +1438,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
-  const char *Name = Decl->getName().data();
+  const char *Name = Decl->getNameAsCString();
 
   QualType T = M->getContext().getObjCInterfaceType(Decl);
   if (T->isIncompleteArrayType()) {
