@@ -1498,17 +1498,6 @@ bool GRExprEngine::EvalBuiltinFunction(const FunctionDecl *FD, CallExpr *CE,
   return false;
 }
 
-void GRExprEngine::EvalCall(ExplodedNodeSet& Dst, CallExpr* CE, SVal L,
-                            ExplodedNode* Pred) {
-  assert (Builder && "GRStmtNodeBuilder must be defined.");
-
-  // FIXME: Allow us to chain together transfer functions.
-  if (EvalOSAtomic(Dst, *this, *Builder, CE, L, Pred))
-      return;
-
-  getTF().EvalCall(Dst, *this, *Builder, CE, L, Pred);
-}
-
 void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
                              CallExpr::arg_iterator AI,
                              CallExpr::arg_iterator AE,
@@ -1589,14 +1578,22 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
 
     unsigned size = Dst.size();
     SaveOr OldHasGen(Builder->HasGeneratedNode);
-    EvalCall(Dst, CE, L, *DI);
+
+    // Dispatch to transfer function logic to handle the call itself.
+    assert(Builder && "GRStmtNodeBuilder must be defined.");
+    
+    // FIXME: Allow us to chain together transfer functions.
+    Pred = *DI;
+
+    if (!EvalOSAtomic(Dst, *this, *Builder, CE, L, Pred))
+      getTF().EvalCall(Dst, *this, *Builder, CE, L, Pred);
 
     // Handle the case where no nodes where generated.  Auto-generate that
     // contains the updated state if we aren't generating sinks.
 
     if (!Builder->BuildSinks && Dst.size() == size &&
         !Builder->HasGeneratedNode)
-      MakeNode(Dst, CE, *DI, state);
+      MakeNode(Dst, CE, Pred, state);
   }
 }
 

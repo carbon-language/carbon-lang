@@ -456,8 +456,6 @@ public:
   }
   
 protected:
-  void EvalCall(ExplodedNodeSet& Dst, CallExpr* CE, SVal L, ExplodedNode* Pred);
-
   void EvalObjCMessageExpr(ExplodedNodeSet& Dst, ObjCMessageExpr* ME, ExplodedNode* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
     getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
