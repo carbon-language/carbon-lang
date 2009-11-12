@@ -392,9 +392,7 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
   if (!TokenCache.empty() || !PPOpts.getImplicitPTHInclude().empty()) {
     const std::string& x = TokenCache.empty() ?
       PPOpts.getImplicitPTHInclude() : TokenCache;
-    PTHMgr = PTHManager::Create(x, &Diags,
-                                TokenCache.empty() ? Diagnostic::Error
-                                : Diagnostic::Warning);
+    PTHMgr = PTHManager::Create(x, Diags);
   }
 
   if (Diags.hasErrorOccurred())
