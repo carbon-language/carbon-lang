@@ -95,6 +95,8 @@ public:
   /// operation would return "x".
   Expr *getImplicitObjectArgument();
 
+  virtual SourceRange getSourceRange() const;
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXMemberCallExprClass;
   }

@@ -323,6 +323,14 @@ Expr *CXXMemberCallExpr::getImplicitObjectArgument() {
   return 0;
 }
 
+SourceRange CXXMemberCallExpr::getSourceRange() const {
+  SourceLocation LocStart = getCallee()->getLocStart();
+  if (LocStart.isInvalid() && getNumArgs() > 0)
+    LocStart = getArg(0)->getLocStart();
+  return SourceRange(LocStart, getRParenLoc());
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Named casts
 //===----------------------------------------------------------------------===//

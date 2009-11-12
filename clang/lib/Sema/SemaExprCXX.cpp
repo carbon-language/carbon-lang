@@ -2120,7 +2120,7 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
     CXXMemberCallExpr *CE =
       new (Context) CXXMemberCallExpr(Context, ME, 0, 0, 
                                       ResultType,
-                                      SourceLocation());
+                                      Exp->getLocEnd());
   return CE;
 }
 
