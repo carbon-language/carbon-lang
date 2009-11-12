@@ -86,6 +86,14 @@ namespace llvm {
     DwarfWriter *DW;
 
   public:
+    /// Flags to specify different kinds of comments to output in
+    /// assembly code.  These flags carry semantic information not
+    /// otherwise easily derivable from the IR text.
+    ///
+    enum CommentFlag {
+      ReloadReuse = 0x1
+    };
+
     /// Output stream on which we're printing assembly code.
     ///
     formatted_raw_ostream &O;
