@@ -56,9 +56,8 @@ void ArrayBoundChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l){
   const GRState *state = C.getState();
 
   // Get the size of the array.
-  SVal NumVal = C.getStoreManager().getSizeInElements(state,
-                                                      ER->getSuperRegion());
-  DefinedOrUnknownSVal &NumElements = cast<DefinedOrUnknownSVal>(NumVal);
+  DefinedOrUnknownSVal NumElements 
+    = C.getStoreManager().getSizeInElements(state, ER->getSuperRegion());
 
   const GRState *StInBound = state->AssumeInBound(Idx, NumElements, true);
   const GRState *StOutBound = state->AssumeInBound(Idx, NumElements, false);

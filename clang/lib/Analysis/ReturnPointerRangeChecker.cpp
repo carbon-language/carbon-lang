@@ -64,9 +64,8 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
   // FIXME: All of this out-of-bounds checking should eventually be refactored
   // into a common place.
 
-  SVal NumVal = C.getStoreManager().getSizeInElements(state,
-                                                      ER->getSuperRegion());
-  DefinedOrUnknownSVal &NumElements = cast<DefinedOrUnknownSVal>(NumVal);
+  DefinedOrUnknownSVal NumElements
+    = C.getStoreManager().getSizeInElements(state, ER->getSuperRegion());
 
   const GRState *StInBound = state->AssumeInBound(Idx, NumElements, true);
   const GRState *StOutBound = state->AssumeInBound(Idx, NumElements, false);

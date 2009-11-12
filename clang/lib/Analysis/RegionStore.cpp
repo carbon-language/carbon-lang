@@ -360,7 +360,8 @@ public:
   //===------------------------------------------------------------------===//
 
   const GRState *setExtent(const GRState *state, const MemRegion* R, SVal Extent);
-  SVal getSizeInElements(const GRState *state, const MemRegion* R);
+  DefinedOrUnknownSVal getSizeInElements(const GRState *state, 
+                                         const MemRegion* R);
 
   //===------------------------------------------------------------------===//
   // Utility methods.
@@ -696,8 +697,8 @@ SVal RegionStoreManager::getLValueElement(QualType elementType, SVal Offset,
 // Extents for regions.
 //===----------------------------------------------------------------------===//
 
-SVal RegionStoreManager::getSizeInElements(const GRState *state,
-                                           const MemRegion *R) {
+DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
+                                                           const MemRegion *R) {
 
   switch (R->getKind()) {
     case MemRegion::MemSpaceRegionKind:
