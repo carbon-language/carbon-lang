@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriplethumbv7-apple-darwin10
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin10
 
 %struct.OP = type { %struct.OP*, %struct.OP*, %struct.OP* ()*, i32, i16, i16, i8, i8 }
 %struct.SV = type { i8*, i32, i32 }
