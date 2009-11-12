@@ -106,7 +106,7 @@ public:
     
     Chunk() : Kind(CK_Text), Text(0) { }
     
-    Chunk(ChunkKind Kind, llvm::StringRef Text = 0);
+    Chunk(ChunkKind Kind, llvm::StringRef Text = "");
     
     /// \brief Create a new text chunk.
     static Chunk CreateText(const char *Text);

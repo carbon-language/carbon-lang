@@ -28,7 +28,7 @@ using namespace clang;
 // Code completion string implementation
 //===----------------------------------------------------------------------===//
 CodeCompletionString::Chunk::Chunk(ChunkKind Kind, llvm::StringRef Text) 
-  : Kind(Kind), Text(0)
+  : Kind(Kind), Text("")
 {
   switch (Kind) {
   case CK_TypedText:
