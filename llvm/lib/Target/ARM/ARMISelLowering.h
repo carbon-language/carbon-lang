@@ -184,7 +184,7 @@ namespace llvm {
     /// icmp immediate, that is the target has icmp instructions which can compare
     /// a register against the immediate without having to materialize the
     /// immediate into a register.
-    virtual bool isLegalICmpImmediate(uint64_t Imm) const;
+    virtual bool isLegalICmpImmediate(int64_t Imm) const;
 
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address
@@ -284,8 +284,12 @@ namespace llvm {
                                    SelectionDAG &DAG);
     SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG);
 
     SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                       SDValue Chain,
@@ -321,6 +325,9 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   DebugLoc dl, SelectionDAG &DAG);
+
+    SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
+                      SDValue &ARMCC, SelectionDAG &DAG, DebugLoc dl);
   };
 }
 

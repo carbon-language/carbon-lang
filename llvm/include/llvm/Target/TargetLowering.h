@@ -1518,7 +1518,7 @@ public:
   /// icmp immediate, that is the target has icmp instructions which can compare
   /// a register against the immediate without having to materialize the
   /// immediate into a register.
-  virtual bool isLegalICmpImmediate(uint64_t Imm) const {
+  virtual bool isLegalICmpImmediate(int64_t Imm) const {
     return true;
   }
 

@@ -1733,46 +1733,41 @@ static bool isFloatingPointZero(SDValue Op) {
   return false;
 }
 
-static bool isLegalCmpImmediate(unsigned C, bool isThumb1Only) {
-  return ( isThumb1Only && (C & ~255U) == 0) ||
-         (!isThumb1Only && ARM_AM::getSOImmVal(C) != -1);
-}
-
 /// Returns appropriate ARM CMP (cmp) and corresponding condition code for
 /// the given operands.
-static SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
-                         SDValue &ARMCC, SelectionDAG &DAG, bool isThumb1Only,
-                         DebugLoc dl) {
+SDValue
+ARMTargetLowering::getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
+                             SDValue &ARMCC, SelectionDAG &DAG, DebugLoc dl) {
   if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.getNode())) {
     unsigned C = RHSC->getZExtValue();
-    if (!isLegalCmpImmediate(C, isThumb1Only)) {
+    if (!isLegalICmpImmediate(C)) {
       // Constant does not fit, try adjusting it by one?
       switch (CC) {
       default: break;
       case ISD::SETLT:
       case ISD::SETGE:
-        if (isLegalCmpImmediate(C-1, isThumb1Only)) {
+        if (isLegalICmpImmediate(C-1)) {
           CC = (CC == ISD::SETLT) ? ISD::SETLE : ISD::SETGT;
           RHS = DAG.getConstant(C-1, MVT::i32);
         }
         break;
       case ISD::SETULT:
       case ISD::SETUGE:
-        if (C > 0 && isLegalCmpImmediate(C-1, isThumb1Only)) {
+        if (C > 0 && isLegalICmpImmediate(C-1)) {
           CC = (CC == ISD::SETULT) ? ISD::SETULE : ISD::SETUGT;
           RHS = DAG.getConstant(C-1, MVT::i32);
         }
         break;
       case ISD::SETLE:
       case ISD::SETGT:
-        if (isLegalCmpImmediate(C+1, isThumb1Only)) {
+        if (isLegalICmpImmediate(C+1)) {
           CC = (CC == ISD::SETLE) ? ISD::SETLT : ISD::SETGE;
           RHS = DAG.getConstant(C+1, MVT::i32);
         }
         break;
       case ISD::SETULE:
       case ISD::SETUGT:
-        if (C < 0xffffffff && isLegalCmpImmediate(C+1, isThumb1Only)) {
+        if (C < 0xffffffff && isLegalICmpImmediate(C+1)) {
           CC = (CC == ISD::SETULE) ? ISD::SETULT : ISD::SETUGE;
           RHS = DAG.getConstant(C+1, MVT::i32);
         }
@@ -1808,8 +1803,7 @@ static SDValue getVFPCmp(SDValue LHS, SDValue RHS, SelectionDAG &DAG,
   return DAG.getNode(ARMISD::FMSTAT, dl, MVT::Flag, Cmp);
 }
 
-static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
-                              const ARMSubtarget *ST) {
+SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
@@ -1821,7 +1815,7 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   if (LHS.getValueType() == MVT::i32) {
     SDValue ARMCC;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb1Only(), dl);
+    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, dl);
     return DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMCC, CCR,Cmp);
   }
 
@@ -1843,8 +1837,7 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   return Result;
 }
 
-static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG,
-                          const ARMSubtarget *ST) {
+SDValue ARMTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue  Chain = Op.getOperand(0);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
   SDValue    LHS = Op.getOperand(2);
@@ -1855,7 +1848,7 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG,
   if (LHS.getValueType() == MVT::i32) {
     SDValue ARMCC;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb1Only(), dl);
+    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, dl);
     return DAG.getNode(ARMISD::BRCOND, dl, MVT::Other,
                        Chain, Dest, ARMCC, CCR,Cmp);
   }
@@ -2138,8 +2131,7 @@ static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
 
 /// LowerShiftRightParts - Lower SRA_PARTS, which returns two
 /// i32 values and take a 2 x i32 value to shift plus a shift amount.
-static SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG,
-                                   const ARMSubtarget *ST) {
+SDValue ARMTargetLowering::LowerShiftRightParts(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && "Not a double-shift!");
   EVT VT = Op.getValueType();
   unsigned VTBits = VT.getSizeInBits();
@@ -2163,7 +2155,7 @@ static SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG,
 
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
   SDValue Cmp = getARMCmp(ExtraShAmt, DAG.getConstant(0, MVT::i32), ISD::SETGE,
-                          ARMCC, DAG, ST->isThumb1Only(), dl);
+                          ARMCC, DAG, dl);
   SDValue Hi = DAG.getNode(Opc, dl, VT, ShOpHi, ShAmt);
   SDValue Lo = DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMCC,
                            CCR, Cmp);
@@ -2174,8 +2166,7 @@ static SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG,
 
 /// LowerShiftLeftParts - Lower SHL_PARTS, which returns two
 /// i32 values and take a 2 x i32 value to shift plus a shift amount.
-static SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG,
-                                   const ARMSubtarget *ST) {
+SDValue ARMTargetLowering::LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 3 && "Not a double-shift!");
   EVT VT = Op.getValueType();
   unsigned VTBits = VT.getSizeInBits();
@@ -2197,7 +2188,7 @@ static SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG,
   SDValue FalseVal = DAG.getNode(ISD::OR, dl, VT, Tmp1, Tmp2);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
   SDValue Cmp = getARMCmp(ExtraShAmt, DAG.getConstant(0, MVT::i32), ISD::SETGE,
-                          ARMCC, DAG, ST->isThumb1Only(), dl);
+                          ARMCC, DAG, dl);
   SDValue Lo = DAG.getNode(ISD::SHL, dl, VT, ShOpLo, ShAmt);
   SDValue Hi = DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, Tmp3, ARMCC,
                            CCR, Cmp);
@@ -2883,8 +2874,8 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
       LowerGlobalAddressELF(Op, DAG);
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
-  case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG, Subtarget);
-  case ISD::BR_CC:         return LowerBR_CC(Op, DAG, Subtarget);
+  case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG);
+  case ISD::BR_CC:         return LowerBR_CC(Op, DAG);
   case ISD::BR_JT:         return LowerBR_JT(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::VASTART:       return LowerVASTART(Op, DAG, VarArgsFrameIndex);
@@ -2901,9 +2892,9 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SHL:
   case ISD::SRL:
   case ISD::SRA:           return LowerShift(Op.getNode(), DAG, Subtarget);
-  case ISD::SHL_PARTS:     return LowerShiftLeftParts(Op, DAG, Subtarget);
+  case ISD::SHL_PARTS:     return LowerShiftLeftParts(Op, DAG);
   case ISD::SRL_PARTS:
-  case ISD::SRA_PARTS:     return LowerShiftRightParts(Op, DAG, Subtarget);
+  case ISD::SRA_PARTS:     return LowerShiftRightParts(Op, DAG);
   case ISD::VSETCC:        return LowerVSETCC(Op, DAG);
   case ISD::BUILD_VECTOR:  return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
@@ -3710,12 +3701,12 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
 /// icmp immediate, that is the target has icmp instructions which can compare
 /// a register against the immediate without having to materialize the
 /// immediate into a register.
-bool ARMTargetLowering::isLegalICmpImmediate(uint64_t Imm) const {
+bool ARMTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
   if (!Subtarget->isThumb())
     return ARM_AM::getSOImmVal(Imm) != -1;
   if (Subtarget->isThumb2())
     return ARM_AM::getT2SOImmVal(Imm) != -1; 
-  return Imm < 256;
+  return Imm >= 0 && Imm <= 255;
 }
 
 static bool getARMIndexedAddressParts(SDNode *Ptr, EVT VT,
