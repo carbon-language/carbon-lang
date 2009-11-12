@@ -232,6 +232,7 @@ public:
   void setOriginalNamespace(NamespaceDecl *ND) { OrigNamespace = ND; }
 
   virtual NamespaceDecl *getCanonicalDecl() { return OrigNamespace; }
+  const NamespaceDecl *getCanonicalDecl() const { return OrigNamespace; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), RBracLoc);
@@ -552,6 +553,9 @@ public:
   }
 
   virtual VarDecl *getCanonicalDecl();
+  const VarDecl *getCanonicalDecl() const {
+    return const_cast<VarDecl*>(this)->getCanonicalDecl();
+  }
 
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
@@ -1424,6 +1428,9 @@ public:
   virtual SourceRange getSourceRange() const;
 
   virtual TagDecl* getCanonicalDecl();
+  const TagDecl* getCanonicalDecl() const {
+    return const_cast<TagDecl*>(this)->getCanonicalDecl();
+  }
 
   /// isDefinition - Return true if this decl has its body specified.
   bool isDefinition() const {
@@ -1513,6 +1520,9 @@ class EnumDecl : public TagDecl {
     }
 public:
   EnumDecl *getCanonicalDecl() {
+    return cast<EnumDecl>(TagDecl::getCanonicalDecl());
+  }
+  const EnumDecl *getCanonicalDecl() const {
     return cast<EnumDecl>(TagDecl::getCanonicalDecl());
   }
 

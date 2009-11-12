@@ -2453,7 +2453,7 @@ struct FindOverriddenMethodData {
 /// \brief Member lookup function that determines whether a given C++
 /// method overrides a method in a base class, to be used with
 /// CXXRecordDecl::lookupInBases().
-static bool FindOverriddenMethod(CXXBaseSpecifier *Specifier,
+static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
                                  CXXBasePath &Path,
                                  void *UserData) {
   RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();

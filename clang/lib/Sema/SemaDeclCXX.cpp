@@ -2839,13 +2839,12 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
   NestedNameSpecifier *NNS =
     static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
-  if (isUnknownSpecialization(SS)) {
+  DeclContext *LookupContext = computeDeclContext(SS);
+  if (!LookupContext) {
     return UnresolvedUsingDecl::Create(Context, CurContext, UsingLoc,
                                        SS.getRange(), NNS,
                                        IdentLoc, Name, IsTypeName);
   }
-
-  DeclContext *LookupContext = 0;
 
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(CurContext)) {
     // C++0x N2914 [namespace.udecl]p3:
@@ -2854,33 +2853,23 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
     // anonymous union that is a member of a base class of the class being
     // defined, or shall refer to an enumerator for an enumeration type that is
     // a member of a base class of the class being defined.
-    const Type *Ty = NNS->getAsType();
-    if (!Ty || !IsDerivedFrom(Context.getTagDeclType(RD), QualType(Ty, 0))) {
+
+    CXXRecordDecl *LookupRD = dyn_cast<CXXRecordDecl>(LookupContext);
+    if (!LookupRD || !RD->isDerivedFrom(LookupRD)) {
       Diag(SS.getRange().getBegin(),
            diag::err_using_decl_nested_name_specifier_is_not_a_base_class)
         << NNS << RD->getDeclName();
       return 0;
     }
-
-    QualType BaseTy = Context.getCanonicalType(QualType(Ty, 0));
-    LookupContext = BaseTy->getAs<RecordType>()->getDecl();
   } else {
     // C++0x N2914 [namespace.udecl]p8:
     // A using-declaration for a class member shall be a member-declaration.
-    if (NNS->getKind() == NestedNameSpecifier::TypeSpec) {
+    if (isa<CXXRecordDecl>(LookupContext)) {
       Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_class_member)
         << SS.getRange();
       return 0;
     }
-
-    // C++0x N2914 [namespace.udecl]p9:
-    // In a using-declaration, a prefix :: refers to the global namespace.
-    if (NNS->getKind() == NestedNameSpecifier::Global)
-      LookupContext = Context.getTranslationUnitDecl();
-    else
-      LookupContext = NNS->getAsNamespace();
   }
-
 
   // Lookup target name.
   LookupResult R;

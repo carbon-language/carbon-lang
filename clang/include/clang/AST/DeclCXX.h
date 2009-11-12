@@ -432,6 +432,9 @@ public:
   virtual CXXRecordDecl *getCanonicalDecl() {
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
+  virtual const CXXRecordDecl *getCanonicalDecl() const {
+    return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
+  }
 
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
@@ -768,7 +771,7 @@ public:
   /// \param Base the base class we are searching for.
   ///
   /// \returns true if this class is derived from Base, false otherwise.
-  bool isDerivedFrom(CXXRecordDecl *Base);
+  bool isDerivedFrom(CXXRecordDecl *Base) const;
   
   /// \brief Determine whether this class is derived from the type \p Base.
   ///
@@ -786,7 +789,7 @@ public:
   ///
   /// \todo add a separate paramaeter to configure IsDerivedFrom, rather than 
   /// tangling input and output in \p Paths  
-  bool isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths);
+  bool isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths) const;
   
   /// \brief Function type used by lookupInBases() to determine whether a 
   /// specific base class subobject matches the lookup criteria.
@@ -801,7 +804,7 @@ public:
   /// lookupInBases().
   ///
   /// \returns true if this base matched the search criteria, false otherwise.
-  typedef bool BaseMatchesCallback(CXXBaseSpecifier *Specifier,
+  typedef bool BaseMatchesCallback(const CXXBaseSpecifier *Specifier,
                                    CXXBasePath &Path,
                                    void *UserData);
   
@@ -826,7 +829,7 @@ public:
   /// \returns true if there exists any path from this class to a base class
   /// subobject that matches the search criteria.
   bool lookupInBases(BaseMatchesCallback *BaseMatches, void *UserData,
-                     CXXBasePaths &Paths);
+                     CXXBasePaths &Paths) const;
   
   /// \brief Base-class lookup callback that determines whether the given
   /// base class specifier refers to a specific class declaration.
@@ -835,8 +838,8 @@ public:
   /// a given derived class has is a base class subobject of a particular type.
   /// The user data pointer should refer to the canonical CXXRecordDecl of the
   /// base class that we are searching for.
-  static bool FindBaseClass(CXXBaseSpecifier *Specifier, CXXBasePath &Path,
-                            void *BaseRecord);
+  static bool FindBaseClass(const CXXBaseSpecifier *Specifier,
+                            CXXBasePath &Path, void *BaseRecord);
   
   /// \brief Base-class lookup callback that determines whether there exists
   /// a tag with the given name.
@@ -844,8 +847,8 @@ public:
   /// This callback can be used with \c lookupInBases() to find tag members
   /// of the given name within a C++ class hierarchy. The user data pointer
   /// is an opaque \c DeclarationName pointer.
-  static bool FindTagMember(CXXBaseSpecifier *Specifier, CXXBasePath &Path,
-                            void *Name);
+  static bool FindTagMember(const CXXBaseSpecifier *Specifier,
+                            CXXBasePath &Path, void *Name);
 
   /// \brief Base-class lookup callback that determines whether there exists
   /// a member with the given name.
@@ -853,8 +856,8 @@ public:
   /// This callback can be used with \c lookupInBases() to find members
   /// of the given name within a C++ class hierarchy. The user data pointer
   /// is an opaque \c DeclarationName pointer.
-  static bool FindOrdinaryMember(CXXBaseSpecifier *Specifier, CXXBasePath &Path,
-                                 void *Name);
+  static bool FindOrdinaryMember(const CXXBaseSpecifier *Specifier,
+                                 CXXBasePath &Path, void *Name);
   
   /// \brief Base-class lookup callback that determines whether there exists
   /// a member with the given name that can be used in a nested-name-specifier.
@@ -862,7 +865,7 @@ public:
   /// This callback can be used with \c lookupInBases() to find membes of
   /// the given name within a C++ class hierarchy that can occur within
   /// nested-name-specifiers.
-  static bool FindNestedNameSpecifierMember(CXXBaseSpecifier *Specifier, 
+  static bool FindNestedNameSpecifierMember(const CXXBaseSpecifier *Specifier,
                                             CXXBasePath &Path,
                                             void *UserData);
   

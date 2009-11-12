@@ -76,28 +76,28 @@ void CXXBasePaths::swap(CXXBasePaths &Other) {
   std::swap(DetectedVirtual, Other.DetectedVirtual);
 }
 
-bool CXXRecordDecl::isDerivedFrom(CXXRecordDecl *Base) {
+bool CXXRecordDecl::isDerivedFrom(CXXRecordDecl *Base) const {
   CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
                      /*DetectVirtual=*/false);
   return isDerivedFrom(Base, Paths);
 }
 
-bool CXXRecordDecl::isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths) {
+bool CXXRecordDecl::isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths) const {
   if (getCanonicalDecl() == Base->getCanonicalDecl())
     return false;
   
-  Paths.setOrigin(this);
+  Paths.setOrigin(const_cast<CXXRecordDecl*>(this));
   return lookupInBases(&FindBaseClass, Base->getCanonicalDecl(), Paths);
 }
 
 bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
                                   void *UserData,
-                                  CXXBasePaths &Paths) {
+                                  CXXBasePaths &Paths) const {
   bool FoundPath = false;
   
   ASTContext &Context = getASTContext();
-  for (base_class_iterator BaseSpec = bases_begin(), BaseSpecEnd = bases_end();
-       BaseSpec != BaseSpecEnd; ++BaseSpec) {
+  for (base_class_const_iterator BaseSpec = bases_begin(),
+         BaseSpecEnd = bases_end(); BaseSpec != BaseSpecEnd; ++BaseSpec) {
     // Find the record of the base class subobjects for this type.
     QualType BaseType = Context.getCanonicalType(BaseSpec->getType());
     BaseType = BaseType.getUnqualifiedType();
@@ -183,7 +183,7 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
   return FoundPath;
 }
 
-bool CXXRecordDecl::FindBaseClass(CXXBaseSpecifier *Specifier, 
+bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier, 
                                   CXXBasePath &Path,
                                   void *BaseRecord) {
   assert(((Decl *)BaseRecord)->getCanonicalDecl() == BaseRecord &&
@@ -192,7 +192,7 @@ bool CXXRecordDecl::FindBaseClass(CXXBaseSpecifier *Specifier,
            ->getCanonicalDecl() == BaseRecord;
 }
 
-bool CXXRecordDecl::FindTagMember(CXXBaseSpecifier *Specifier, 
+bool CXXRecordDecl::FindTagMember(const CXXBaseSpecifier *Specifier, 
                                   CXXBasePath &Path,
                                   void *Name) {
   RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
@@ -208,7 +208,7 @@ bool CXXRecordDecl::FindTagMember(CXXBaseSpecifier *Specifier,
   return false;
 }
 
-bool CXXRecordDecl::FindOrdinaryMember(CXXBaseSpecifier *Specifier, 
+bool CXXRecordDecl::FindOrdinaryMember(const CXXBaseSpecifier *Specifier, 
                                        CXXBasePath &Path,
                                        void *Name) {
   RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
@@ -225,9 +225,10 @@ bool CXXRecordDecl::FindOrdinaryMember(CXXBaseSpecifier *Specifier,
   return false;
 }
 
-bool CXXRecordDecl::FindNestedNameSpecifierMember(CXXBaseSpecifier *Specifier, 
-                                                  CXXBasePath &Path,
-                                                  void *Name) {
+bool CXXRecordDecl::
+FindNestedNameSpecifierMember(const CXXBaseSpecifier *Specifier, 
+                              CXXBasePath &Path,
+                              void *Name) {
   RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
   
   DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
