@@ -31,6 +31,9 @@ public:
   unsigned ShowOptionNames : 1;  /// Show the diagnostic name for mappable
                                  /// diagnostics.
   unsigned ShowColors : 1;       /// Show diagnostics with ANSI color sequences.
+  unsigned VerifyDiagnostics;    /// Check that diagnostics match the expected
+                                 /// diagnostics, indicated by markers in the
+                                 /// input source file.
 
   /// Column limit for formatting message diagnostics, or 0 if unused.
   unsigned MessageLength;
@@ -57,6 +60,7 @@ public:
     ShowLocation = 1;
     ShowOptionNames = 0;
     ShowSourceRanges = 0;
+    VerifyDiagnostics = 0;
   }
 };
 

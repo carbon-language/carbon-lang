@@ -15,6 +15,7 @@
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
@@ -42,6 +43,9 @@ class CompilerInvocation {
   /// Options controlling the diagnostic engine.
   DiagnosticOptions DiagOpts;
 
+  /// Options controlling the frontend itself.
+  FrontendOptions FrontendOpts;
+
   /// Options controlling the #include directive.
   HeaderSearchOptions HeaderSearchOpts;
 
@@ -54,18 +58,8 @@ class CompilerInvocation {
   /// Options controlling preprocessed output.
   PreprocessorOutputOptions PreprocessorOutputOpts;
 
-  /// The location for the output file. This is optional only for compiler
-  /// invocations which have no output.
-  std::string OutputFile;
-
 public:
   CompilerInvocation() {}
-
-  /// @name Invidual Options
-  /// @{
-
-  std::string &getOutputFile() { return OutputFile; }
-  const std::string &getOutputFile() const { return OutputFile; }
 
   /// @}
   /// @name Option Subgroups
@@ -94,6 +88,11 @@ public:
   HeaderSearchOptions &getHeaderSearchOpts() { return HeaderSearchOpts; }
   const HeaderSearchOptions &getHeaderSearchOpts() const {
     return HeaderSearchOpts;
+  }
+
+  FrontendOptions &getFrontendOpts() { return FrontendOpts; }
+  const FrontendOptions &getFrontendOpts() const {
+    return FrontendOpts;
   }
 
   LangOptions &getLangOpts() { return LangOpts; }

@@ -18,6 +18,7 @@ class AnalyzerOptions;
 class CodeGenOptions;
 class DependencyOutputOptions;
 class DiagnosticOptions;
+class FrontendOptions;
 class HeaderSearchOptions;
 class LangOptions;
 class PreprocessorOptions;
@@ -44,6 +45,8 @@ void InitializeAnalyzerOptions(AnalyzerOptions &Opts);
 void InitializeDependencyOutputOptions(DependencyOutputOptions &Opts);
 
 void InitializeDiagnosticOptions(DiagnosticOptions &Opts);
+
+void InitializeFrontendOptions(FrontendOptions &Opts);
 
 void InitializeCodeGenOptions(CodeGenOptions &Opts,
                               const TargetInfo &Target);

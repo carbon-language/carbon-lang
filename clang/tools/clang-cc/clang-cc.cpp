@@ -214,54 +214,12 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
 // Frontend Options
 //===----------------------------------------------------------------------===//
 
-static llvm::cl::opt<bool>
-DisableFree("disable-free",
-           llvm::cl::desc("Disable freeing of memory on exit"),
-           llvm::cl::init(false));
-
-static llvm::cl::opt<bool>
-EmptyInputOnly("empty-input-only",
-      llvm::cl::desc("Force running on an empty input file"));
-
-static llvm::cl::list<std::string>
-InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
-
-static llvm::cl::opt<std::string>
-InheritanceViewCls("cxx-inheritance-view",
-                   llvm::cl::value_desc("class name"),
-                  llvm::cl::desc("View C++ inheritance for a specified class"));
-
-static llvm::cl::opt<bool>
-FixItAll("fixit", llvm::cl::desc("Apply fix-it advice to the input source"));
-
 static llvm::cl::list<ParsedSourceLocation>
 FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Perform Fix-It modifications at the given source location"));
 
-static llvm::cl::opt<std::string>
-OutputFile("o",
- llvm::cl::value_desc("path"),
- llvm::cl::desc("Specify output file"));
-
-static llvm::cl::opt<bool>
-RelocatablePCH("relocatable-pch",
-               llvm::cl::desc("Whether to build a relocatable precompiled "
-                              "header"));
-static llvm::cl::opt<bool>
-Stats("print-stats",
-      llvm::cl::desc("Print performance metrics and statistics"));
-
-static llvm::cl::opt<bool>
-TimeReport("ftime-report",
-           llvm::cl::desc("Print the amount of time each "
-                          "phase of compilation takes"));
-
 static llvm::cl::opt<bool>
 Verbose("v", llvm::cl::desc("Enable verbose output"));
-
-static llvm::cl::opt<bool>
-VerifyDiagnostics("verify",
-                  llvm::cl::desc("Verify emitted diagnostics and warnings"));
 
 //===----------------------------------------------------------------------===//
 // Language Options
@@ -310,12 +268,13 @@ TargetABI("target-abi",
 //===----------------------------------------------------------------------===//
 
 static bool InitializeSourceManager(Preprocessor &PP,
+                                    const FrontendOptions &FEOpts,
                                     const std::string &InFile) {
   // Figure out where to get and map in the main file.
   SourceManager &SourceMgr = PP.getSourceManager();
   FileManager &FileMgr = PP.getFileManager();
 
-  if (EmptyInputOnly) {
+  if (FEOpts.EmptyInputOnly) {
     const char *EmptyStr = "";
     llvm::MemoryBuffer *SB =
       llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<empty input>");
@@ -458,8 +417,8 @@ static llvm::raw_ostream *ComputeOutFile(const CompilerInvocation &CompOpts,
                                          llvm::sys::Path& OutPath) {
   llvm::raw_ostream *Ret;
   std::string OutFile;
-  if (!CompOpts.getOutputFile().empty())
-    OutFile = CompOpts.getOutputFile();
+  if (!CompOpts.getFrontendOpts().OutputFile.empty())
+    OutFile = CompOpts.getFrontendOpts().OutputFile;
   else if (InFile == "-") {
     OutFile = "-";
   } else if (Extension) {
@@ -516,6 +475,8 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
                                          llvm::OwningPtr<llvm::raw_ostream> &OS,
                                          llvm::sys::Path &OutPath,
                                          llvm::LLVMContext& Context) {
+  const FrontendOptions &FEOpts = CompOpts.getFrontendOpts();
+
   switch (PA) {
   default:
     return 0;
@@ -538,7 +499,7 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
     return CreateRecordLayoutDumper();
 
   case InheritanceView:
-    return CreateInheritanceViewer(InheritanceViewCls);
+    return CreateInheritanceViewer(FEOpts.ViewClassInheritance);
 
   case EmitAssembly:
   case EmitLLVM:
@@ -559,7 +520,7 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
     }
 
     // Fix-its can change semantics, disallow with any IRgen action.
-    if (FixItAll || !FixItAtLocations.empty()) {
+    if (FEOpts.FixItAll || !FixItAtLocations.empty()) {
       PP.getDiagnostics().Report(diag::err_fe_no_fixit_and_codegen);
       return 0;
     }
@@ -627,6 +588,7 @@ static ExternalASTSource *ReadPCHFile(llvm::StringRef Path,
 static void ProcessInputFile(const CompilerInvocation &CompOpts,
                              Preprocessor &PP, const std::string &InFile,
                              ProgActions PA, llvm::LLVMContext& Context) {
+  const FrontendOptions &FEOpts = CompOpts.getFrontendOpts();
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
   FixItRewriter *FixItRewrite = 0;
@@ -649,19 +611,20 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     break;
 
   case RunAnalysis:
-    Consumer.reset(CreateAnalysisConsumer(PP, CompOpts.getOutputFile(),
+    Consumer.reset(CreateAnalysisConsumer(PP, FEOpts.OutputFile,
                                           CompOpts.getAnalyzerOpts()));
     break;
 
   case GeneratePCH: {
     const std::string &Sysroot = CompOpts.getHeaderSearchOpts().Sysroot;
-    if (RelocatablePCH.getValue() && Sysroot.empty()) {
+    bool Relocatable = FEOpts.RelocatablePCH;
+    if (Relocatable && Sysroot.empty()) {
       PP.Diag(SourceLocation(), diag::err_relocatable_without_without_isysroot);
-      RelocatablePCH.setValue(false);
+      Relocatable = false;
     }
 
     OS.reset(ComputeOutFile(CompOpts, InFile, 0, true, OutPath));
-    if (RelocatablePCH.getValue())
+    if (Relocatable)
       Consumer.reset(CreatePCHGenerator(PP, OS.get(), Sysroot.c_str()));
     else
       Consumer.reset(CreatePCHGenerator(PP, OS.get()));
@@ -677,7 +640,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     break; // No setup.
 
   case GeneratePTH:
-    if (CompOpts.getOutputFile().empty() || CompOpts.getOutputFile() == "-") {
+    if (FEOpts.OutputFile.empty() || FEOpts.OutputFile == "-") {
       // FIXME: Don't fail this way.
       // FIXME: Verify that we can actually seek in the given file.
       llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
@@ -695,7 +658,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   }
 
   // Check if we want a fix-it rewriter.
-  if (FixItAll || !FixItAtLocations.empty()) {
+  if (FEOpts.FixItAll || !FixItAtLocations.empty()) {
     FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                      PP.getSourceManager(),
                                      PP.getLangOptions());
@@ -718,7 +681,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
                                       PP.getIdentifierTable(),
                                       PP.getSelectorTable(),
                                       PP.getBuiltinInfo(),
-                                      /* FreeMemory = */ !DisableFree,
+                                      /* FreeMemory = */ !FEOpts.DisableFree,
                                       /* size_reserve = */0));
 
     if (!ImplicitPCHInclude.empty()) {
@@ -738,7 +701,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
 
     // Initialize the main file entry. This needs to be delayed until after PCH
     // has loaded.
-    if (InitializeSourceManager(PP, InFile))
+    if (InitializeSourceManager(PP, CompOpts.getFrontendOpts(), InFile))
       return;
 
     CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *) = 0;
@@ -762,7 +725,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     }
 
     // Run the AST consumer action.
-    ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats,
+    ParseAST(PP, Consumer.get(), *ContextOwner.get(), FEOpts.ShowStats,
              CompleteTranslationUnit,
              CreateCodeCompleter, CreateCodeCompleterData);
   } else {
@@ -772,7 +735,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
 
     // Initialize the main file entry. This needs to be delayed until after PCH
     // has loaded.
-    if (InitializeSourceManager(PP, InFile))
+    if (InitializeSourceManager(PP, CompOpts.getFrontendOpts(), InFile))
       return;
 
     // Run the preprocessor actions.
@@ -847,11 +810,11 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   }
 
   if (FixItRewrite)
-    FixItRewrite->WriteFixedFile(InFile, CompOpts.getOutputFile());
+    FixItRewrite->WriteFixedFile(InFile, FEOpts.OutputFile);
 
   // Release the consumer and the AST, in that order since the consumer may
   // perform actions in its destructor which require the context.
-  if (DisableFree) {
+  if (FEOpts.DisableFree) {
     Consumer.take();
     ContextOwner.take();
   } else {
@@ -859,11 +822,11 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     ContextOwner.reset();
   }
 
-  if (VerifyDiagnostics)
+  if (CompOpts.getDiagnosticOpts().VerifyDiagnostics)
     if (CheckDiagnostics(PP))
       exit(1);
 
-  if (Stats) {
+  if (FEOpts.ShowStats) {
     fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
@@ -887,6 +850,7 @@ static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
                                 const std::string &InFile, ProgActions PA,
                                 Diagnostic &Diags, FileManager &FileMgr,
                                 llvm::LLVMContext& Context) {
+  const FrontendOptions &FEOpts = CompOpts.getFrontendOpts();
   std::string Error;
   llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, &Error));
   if (!AST) {
@@ -917,12 +881,12 @@ static void ProcessASTInputFile(const CompilerInvocation &CompOpts,
 
   // Stream the input AST to the consumer.
   Diags.getClient()->BeginSourceFile(PP.getLangOptions());
-  ParseAST(PP, Consumer.get(), AST->getASTContext(), Stats);
+  ParseAST(PP, Consumer.get(), AST->getASTContext(), FEOpts.ShowStats);
   Diags.getClient()->EndSourceFile();
 
   // Release the consumer and the AST, in that order since the consumer may
   // perform actions in its destructor which require the context.
-  if (DisableFree) {
+  if (FEOpts.DisableFree) {
     Consumer.take();
     AST.take();
   } else {
@@ -948,15 +912,15 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
-static LangKind GetLanguage() {
+static LangKind GetLanguage(const std::vector<std::string> &Inputs) {
   // If -x was given, that's the language.
   if (BaseLang != langkind_unspecified)
     return BaseLang;
 
   // Otherwise guess it from the input filenames;
   LangKind LK = langkind_unspecified;
-  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
-    llvm::StringRef Name(InputFilenames[i]);
+  for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
+    llvm::StringRef Name(Inputs[i]);
     LangKind ThisKind =  llvm::StringSwitch<LangKind>(Name.rsplit('.').second)
       .Case("ast", langkind_ast)
       .Case("c", langkind_c)
@@ -985,25 +949,15 @@ static LangKind GetLanguage() {
   return LK;
 }
 
-static void FinalizeCodeGenOptions(CodeGenOptions &Opts,
-                                   const LangOptions &Lang) {
-  if (Lang.NoBuiltin)
-    Opts.SimplifyLibCalls = 0;
-  if (Lang.CPlusPlus)
-    Opts.NoCommon = 1;
-
-  // Handle -ftime-report.
-  Opts.TimePasses = TimeReport;
-}
-
 static void ConstructCompilerInvocation(CompilerInvocation &Opts,
                                         const char *Argv0,
                                         const DiagnosticOptions &DiagOpts,
                                         TargetInfo &Target,
-                                        LangKind LK) {
+                                        bool &IsAST) {
   Opts.getDiagnosticOpts() = DiagOpts;
 
-  Opts.getOutputFile() = OutputFile;
+  // Initialize frontend options.
+  InitializeFrontendOptions(Opts.getFrontendOpts());
 
   // Initialize backend options, which may also be used to key some language
   // options.
@@ -1013,7 +967,9 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   //
   // FIXME: These aren't used during operations on ASTs. Split onto a separate
   // code path to make this obvious.
-  if (LK != langkind_ast)
+  LangKind LK = GetLanguage(Opts.getFrontendOpts().InputFilenames);
+  IsAST = LK == langkind_ast;
+  if (!IsAST)
     InitializeLangOptions(Opts.getLangOpts(), LK, Target,
                           Opts.getCodeGenOpts());
 
@@ -1035,8 +991,12 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   // Initialize the preprocessed output options.
   InitializePreprocessorOutputOptions(Opts.getPreprocessorOutputOpts());
 
-  // Finalize some code generation options.
-  FinalizeCodeGenOptions(Opts.getCodeGenOpts(), Opts.getLangOpts());
+  // Finalize some code generation options which are derived from other places.
+  if (Opts.getLangOpts().NoBuiltin)
+    Opts.getCodeGenOpts().SimplifyLibCalls = 0;
+  if (Opts.getLangOpts().CPlusPlus)
+    Opts.getCodeGenOpts().NoCommon = 1;
+  Opts.getCodeGenOpts().TimePasses = Opts.getFrontendOpts().ShowTimers;
 }
 
 static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,
@@ -1044,7 +1004,7 @@ static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
   llvm::OwningPtr<DiagnosticClient> DiagClient;
-  if (VerifyDiagnostics) {
+  if (Opts.VerifyDiagnostics) {
     // When checking diagnostics, just buffer them up.
     DiagClient.reset(new TextDiagnosticBuffer());
   } else {
@@ -1079,22 +1039,10 @@ int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
 
-  if (VerifyDiagnostics && InputFilenames.size() > 1) {
-    fprintf(stderr, "-verify only works on single input files.\n");
-    return 1;
-  }
-
-  if (TimeReport)
-    ClangFrontendTimer = new llvm::Timer("Clang front-end time");
-
   if (Verbose)
     llvm::errs() << "clang-cc version " CLANG_VERSION_STRING
                  << " based upon " << PACKAGE_STRING
                  << " hosted on " << llvm::sys::getHostTriple() << "\n";
-
-  // If no input was specified, read from stdin.
-  if (InputFilenames.empty())
-    InputFilenames.push_back("-");
 
   // Construct the diagnostic engine first, so that we can build a diagnostic
   // client to use for any errors during option handling.
@@ -1129,19 +1077,28 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (!InheritanceViewCls.empty())  // C++ visualization?
-    ProgAction = InheritanceView;
-
-  // Infer the input language.
+  // Now that we have initialized the diagnostics engine and the target, finish
+  // setting up the compiler invocation.
   //
   // FIXME: We should move .ast inputs to taking a separate path, they are
   // really quite different.
-  LangKind LK = GetLanguage();
-
-  // Now that we have initialized the diagnostics engine and the target, finish
-  // setting up the compiler invocation.
   CompilerInvocation CompOpts;
-  ConstructCompilerInvocation(CompOpts, argv[0], DiagOpts, *Target, LK);
+  bool IsAST;
+  ConstructCompilerInvocation(CompOpts, argv[0], DiagOpts, *Target, IsAST);
+
+  // Validate some options.
+  if (CompOpts.getFrontendOpts().ShowTimers)
+    ClangFrontendTimer = new llvm::Timer("Clang front-end time");
+
+  if (CompOpts.getDiagnosticOpts().VerifyDiagnostics &&
+      CompOpts.getFrontendOpts().InputFilenames.size() > 1) {
+    fprintf(stderr, "-verify only works on single input files.\n");
+    return 1;
+  }
+
+  // C++ visualization?
+  if (!CompOpts.getFrontendOpts().ViewClassInheritance.empty())
+    ProgAction = InheritanceView;
 
   // Create the source manager.
   SourceManager SourceMgr;
@@ -1149,11 +1106,12 @@ int main(int argc, char **argv) {
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
 
-  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
-    const std::string &InFile = InputFilenames[i];
+  for (unsigned i = 0, e = CompOpts.getFrontendOpts().InputFilenames.size();
+       i != e; ++i) {
+    const std::string &InFile = CompOpts.getFrontendOpts().InputFilenames[i];
 
     // AST inputs are handled specially.
-    if (LK == langkind_ast) {
+    if (IsAST) {
       ProcessASTInputFile(CompOpts, InFile, ProgAction, *Diags, FileMgr,
                           Context);
       continue;
@@ -1182,7 +1140,7 @@ int main(int argc, char **argv) {
       fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
               (NumDiagnostics == 1 ? "" : "s"));
 
-  if (Stats) {
+  if (CompOpts.getFrontendOpts().ShowStats) {
     FileMgr.PrintStats();
     fprintf(stderr, "\n");
   }
@@ -1190,7 +1148,7 @@ int main(int argc, char **argv) {
   delete ClangFrontendTimer;
 
   // If verifying diagnostics and we reached here, all is well.
-  if (VerifyDiagnostics)
+  if (CompOpts.getDiagnosticOpts().VerifyDiagnostics)
     return 0;
 
   // Managed static deconstruction. Useful for making things like

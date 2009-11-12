@@ -18,6 +18,7 @@
 #include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PreprocessorOptions.h"
@@ -278,6 +279,57 @@ PrintColorDiagnostic("fcolor-diagnostics",
 static llvm::cl::opt<bool>
 SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
                            llvm::cl::desc("Silence ObjC rewriting warnings"));
+
+static llvm::cl::opt<bool>
+VerifyDiagnostics("verify",
+                  llvm::cl::desc("Verify emitted diagnostics and warnings"));
+
+}
+
+
+//===----------------------------------------------------------------------===//
+// Frontend Options
+//===----------------------------------------------------------------------===//
+
+namespace frontendoptions {
+
+static llvm::cl::opt<bool>
+DisableFree("disable-free",
+           llvm::cl::desc("Disable freeing of memory on exit"),
+           llvm::cl::init(false));
+
+static llvm::cl::opt<bool>
+EmptyInputOnly("empty-input-only",
+      llvm::cl::desc("Force running on an empty input file"));
+
+static llvm::cl::list<std::string>
+InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
+
+static llvm::cl::opt<std::string>
+InheritanceViewCls("cxx-inheritance-view",
+                   llvm::cl::value_desc("class name"),
+                  llvm::cl::desc("View C++ inheritance for a specified class"));
+
+static llvm::cl::opt<bool>
+FixItAll("fixit", llvm::cl::desc("Apply fix-it advice to the input source"));
+
+static llvm::cl::opt<std::string>
+OutputFile("o",
+ llvm::cl::value_desc("path"),
+ llvm::cl::desc("Specify output file"));
+
+static llvm::cl::opt<bool>
+RelocatablePCH("relocatable-pch",
+               llvm::cl::desc("Whether to build a relocatable precompiled "
+                              "header"));
+static llvm::cl::opt<bool>
+Stats("print-stats",
+      llvm::cl::desc("Print performance metrics and statistics"));
+
+static llvm::cl::opt<bool>
+TimeReport("ftime-report",
+           llvm::cl::desc("Print the amount of time each "
+                          "phase of compilation takes"));
 
 }
 
@@ -671,8 +723,7 @@ void clang::InitializeDependencyOutputOptions(DependencyOutputOptions &Opts) {
   using namespace dependencyoutputoptions;
 
   Opts.OutputFile = DependencyFile;
-  Opts.Targets.insert(Opts.Targets.begin(), DependencyTargets.begin(),
-                      DependencyTargets.end());
+  Opts.Targets = DependencyTargets;
   Opts.IncludeSystemHeaders = DependenciesIncludeSystemHeaders;
   Opts.UsePhonyTargets = PhonyDependencyTarget;
 }
@@ -680,8 +731,7 @@ void clang::InitializeDependencyOutputOptions(DependencyOutputOptions &Opts) {
 void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
   using namespace diagnosticoptions;
 
-  Opts.Warnings.insert(Opts.Warnings.begin(),
-                       OptWarnings.begin(), OptWarnings.end());
+  Opts.Warnings = OptWarnings;
   Opts.DumpBuildInformation = DumpBuildInformation;
   Opts.IgnoreWarnings = OptNoWarnings;
   Opts.MessageLength = MessageLength;
@@ -695,6 +745,25 @@ void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
   Opts.ShowLocation = !NoShowLocation;
   Opts.ShowOptionNames = PrintDiagnosticOption;
   Opts.ShowSourceRanges = PrintSourceRangeInfo;
+  Opts.VerifyDiagnostics = VerifyDiagnostics;
+}
+
+void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
+  using namespace frontendoptions;
+
+  Opts.DisableFree = DisableFree;
+  Opts.EmptyInputOnly = EmptyInputOnly;
+  Opts.FixItAll = FixItAll;
+  Opts.RelocatablePCH = RelocatablePCH;
+  Opts.ShowStats = Stats;
+  Opts.ShowTimers = TimeReport;
+  Opts.InputFilenames = InputFilenames;
+  Opts.OutputFile = OutputFile;
+  Opts.ViewClassInheritance = InheritanceViewCls;
+
+  // '-' is the default input if none is given.
+  if (Opts.InputFilenames.empty())
+    Opts.InputFilenames.push_back("-");
 }
 
 void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
