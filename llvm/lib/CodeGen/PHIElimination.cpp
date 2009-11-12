@@ -443,10 +443,9 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   MachineFunction *MF = A->getParent();
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock(BB);
   MF->push_back(NMBB);
-  const unsigned NewNum = NMBB->getNumber();
   DEBUG(errs() << "PHIElimination splitting critical edge:"
         " BB#" << A->getNumber()
-        << " -- BB#" << NewNum
+        << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << B->getNumber() << '\n');
 
   A->ReplaceUsesOfBlockWith(B, NMBB);
