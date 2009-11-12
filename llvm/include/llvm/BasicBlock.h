@@ -247,7 +247,7 @@ private:
   /// almost never 2, and inconceivably 3 or more.
   void AdjustBlockAddressRefCount(int Amt) {
     SubclassData += Amt;
-    assert((int)(char)SubclassData >= 0 && "Refcount wrap-around");
+    assert((int)(signed char)SubclassData >= 0 && "Refcount wrap-around");
   }
 };
 
