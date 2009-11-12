@@ -377,6 +377,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
     // If comparing a live-in value against a constant, see if we know the
     // live-in value on any predecessors.
     if (LVI && isa<Constant>(Cmp->getOperand(1)) &&
+        Cmp->getType()->isInteger() && // Not vector compare.
         (!isa<Instruction>(Cmp->getOperand(0)) ||
          cast<Instruction>(Cmp->getOperand(0))->getParent() != BB)) {
       Constant *RHSCst = cast<Constant>(Cmp->getOperand(1));
@@ -384,14 +385,14 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
         // If the value is known by LazyValueInfo to be a constant in a
         // predecessor, use that information to try to thread this block.
-        Constant *PredCst = LVI->getConstantOnEdge(Cmp->getOperand(0), *PI, BB);
-        if (PredCst == 0)
+        LazyValueInfo::Tristate
+          Res = LVI->getPredicateOnEdge(Cmp->getPredicate(), Cmp->getOperand(0),
+                                        RHSCst, *PI, BB);
+        if (Res == LazyValueInfo::Unknown)
           continue;
-        
-        // Constant fold the compare.
-        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), PredCst, RHSCst, TD);
-        if (isa<ConstantInt>(Res) || isa<UndefValue>(Res))
-          Result.push_back(std::make_pair(dyn_cast<ConstantInt>(Res), *PI));
+
+        Constant *ResC = ConstantInt::get(Cmp->getType(), Res);
+        Result.push_back(std::make_pair(cast<ConstantInt>(ResC), *PI));
       }
       
       return !Result.empty();
@@ -498,7 +499,8 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   //     br COND, BBX, BBY
   //  BBX:
   //     br COND, BBZ, BBW
-  if (!Condition->hasOneUse() && // Multiple uses.
+  if (!LVI &&
+      !Condition->hasOneUse() && // Multiple uses.
       (CondInst == 0 || CondInst->getParent() != BB)) { // Non-local definition.
     pred_iterator PI = pred_begin(BB), E = pred_end(BB);
     if (isa<BranchInst>(BB->getTerminator())) {
@@ -532,8 +534,9 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       return ProcessJumpOnPHI(PN);
   
   if (CmpInst *CondCmp = dyn_cast<CmpInst>(CondInst)) {
-    if (!isa<PHINode>(CondCmp->getOperand(0)) ||
-        cast<PHINode>(CondCmp->getOperand(0))->getParent() != BB) {
+    if (!LVI &&
+        (!isa<PHINode>(CondCmp->getOperand(0)) ||
+         cast<PHINode>(CondCmp->getOperand(0))->getParent() != BB)) {
       // If we have a comparison, loop over the predecessors to see if there is
       // a condition with a lexically identical value.
       pred_iterator PI = pred_begin(BB), E = pred_end(BB);
