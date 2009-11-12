@@ -321,14 +321,42 @@ F2:
 }
 
 
+; Impossible conditional constraints should get threaded.  BB3 is dead here.
+define i32 @test11(i32 %A) {
+; CHECK: @test11
+; CHECK-NEXT: icmp
+; CHECK-NEXT: br i1 %tmp455, label %BB4, label %BB2
+	%tmp455 = icmp eq i32 %A, 42
+	br i1 %tmp455, label %BB1, label %BB2
+        
+BB2:
+; CHECK: call i32 @f1()
+; CHECK-NEXT: call void @f3()
+; CHECK-NEXT: ret i32 4
+	%C = call i32 @f1()
+	ret i32 %C
+        
+
+BB1:
+	%tmp459 = icmp eq i32 %A, 43
+	br i1 %tmp459, label %BB3, label %BB4
+
+BB3:
+	call i32 @f2()
+        ret i32 3
+
+BB4:
+	call void @f3()
+	ret i32 4
+}
 
 
 
 ;;; Duplicate condition to avoid xor of cond.
 ;;; TODO: Make this happen.
-define i32 @test11(i1 %cond, i1 %cond2) {
+define i32 @testXX(i1 %cond, i1 %cond2) {
 Entry:
-; CHECK: @test11
+; CHECK: @testXX
 	%v1 = call i32 @f1()
 	br i1 %cond, label %Merge, label %F1
 
