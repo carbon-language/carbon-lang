@@ -413,6 +413,7 @@ def DBG_LABEL : Instruction {
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;
+  let isNotDuplicable = 1;
 }
 def EH_LABEL : Instruction {
   let OutOperandList = (ops);
@@ -420,6 +421,7 @@ def EH_LABEL : Instruction {
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;
+  let isNotDuplicable = 1;
 }
 def GC_LABEL : Instruction {
   let OutOperandList = (ops);
@@ -427,6 +429,7 @@ def GC_LABEL : Instruction {
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;
+  let isNotDuplicable = 1;
 }
 def KILL : Instruction {
   let OutOperandList = (ops);
