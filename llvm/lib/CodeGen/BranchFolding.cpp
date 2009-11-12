@@ -495,6 +495,15 @@ static bool ProfitableToMerge(MachineBasicBlock *MBB1,
       return true;
   }
 
+  // If one of the blocks can be completely merged and happens to be in
+  // a position where the other could fall through into it, merge any number
+  // of instructions, because it can be done without a branch.
+  // TODO: If the blocks are not adjacent, move one of them so that they are?
+  if (MBB1->isLayoutSuccessor(MBB2) && I2 == MBB2->begin())
+    return true;
+  if (MBB2->isLayoutSuccessor(MBB1) && I1 == MBB1->begin())
+    return true;
+
   // If both blocks have an unconditional branch temporarily stripped out,
   // treat that as an additional common instruction.
   if (MBB1 != PredBB && MBB2 != PredBB && 
@@ -716,16 +725,31 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
     MachineBasicBlock *EntryBB = MergePotentials.begin()->getBlock()->
                                  getParent()->begin();
     unsigned commonTailIndex = SameTails.size();
-    for (unsigned i=0; i<SameTails.size(); i++) {
-      MachineBasicBlock *MBB = SameTails[i].getBlock();
-      if (MBB == EntryBB)
-        continue;
-      if (MBB == PredBB) {
-        commonTailIndex = i;
-        break;
+    // If there are two blocks, check to see if one can be made to fall through
+    // into the other.
+    if (SameTails.size() == 2 &&
+        SameTails[0].getBlock()->isLayoutSuccessor(SameTails[1].getBlock()) &&
+        SameTails[1].tailIsWholeBlock())
+      commonTailIndex = 1;
+    else if (SameTails.size() == 2 &&
+             SameTails[1].getBlock()->isLayoutSuccessor(
+                                                     SameTails[0].getBlock()) &&
+             SameTails[0].tailIsWholeBlock())
+      commonTailIndex = 0;
+    else {
+      // Otherwise just pick one, favoring the fall-through predecessor if
+      // there is one.
+      for (unsigned i = 0, e = SameTails.size(); i != e; ++i) {
+        MachineBasicBlock *MBB = SameTails[i].getBlock();
+        if (MBB == EntryBB && SameTails[i].tailIsWholeBlock())
+          continue;
+        if (MBB == PredBB) {
+          commonTailIndex = i;
+          break;
+        }
+        if (SameTails[i].tailIsWholeBlock())
+          commonTailIndex = i;
       }
-      if (MBB->begin() == SameTails[i].getTailStartPos())
-        commonTailIndex = i;
     }
 
     if (commonTailIndex == SameTails.size() ||
@@ -1049,7 +1073,7 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
       continue;
     // Don't duplicate into a fall-through predecessor unless its the
     // only predecessor.
-    if (&*next(MachineFunction::iterator(PredBB)) == TailBB &&
+    if (PredBB->isLayoutSuccessor(TailBB) &&
         PrevFallsThrough &&
         TailBB->pred_size() != 1)
       continue;

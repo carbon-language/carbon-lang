@@ -266,3 +266,30 @@ bb3:                                              ; preds = %bb2, %bb1, %lvalue_
 declare fastcc i32 @lvalue_p(%union.tree_node* nocapture) nounwind readonly
 
 declare fastcc %union.tree_node* @default_conversion(%union.tree_node*) nounwind
+
+
+; If one tail merging candidate falls through into the other,
+; tail merging is likely profitable regardless of how few
+; instructions are involved. This function should have only
+; one ret instruction.
+
+; CHECK: foo:
+; CHECK:        call func
+; CHECK-NEXT: .LBB5_2:
+; CHECK-NEXT:   addq $8, %rsp
+; CHECK-NEXT:   ret
+
+define void @foo(i1* %V) nounwind {
+entry:
+  %t0 = icmp eq i1* %V, null
+  br i1 %t0, label %return, label %bb
+
+bb:
+  call void @func()
+  ret void
+
+return:
+  ret void
+}
+
+declare void @func()
