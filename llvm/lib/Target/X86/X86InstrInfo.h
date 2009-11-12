@@ -449,7 +449,24 @@ public:
                            unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
 
   unsigned isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+
+  /// hasLoadFromStackSlot - If the specified machine instruction has
+  /// a load from a stack slot, return true along with the FrameIndex
+  /// of the loaded stack slot.  If not, return false.  Unlike
+  /// isLoadFromStackSlot, this returns true for any instructions that
+  /// loads from the stack.  This is a hint only and may not catch all
+  /// cases.
+  bool hasLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+
   unsigned isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+
+  /// hasStoreToStackSlot - If the specified machine instruction has a
+  /// store to a stack slot, return true along with the FrameIndex of
+  /// the loaded stack slot.  If not, return false.  Unlike
+  /// isStoreToStackSlot, this returns true for any instructions that
+  /// loads from the stack.  This is a hint only and may not catch all
+  /// cases.
+  bool hasStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
 
   bool isReallyTriviallyReMaterializable(const MachineInstr *MI,
                                          AliasAnalysis *AA) const;
@@ -610,6 +627,11 @@ private:
                                      unsigned OpNum,
                                      const SmallVectorImpl<MachineOperand> &MOs,
                                      unsigned Size, unsigned Alignment) const;
+
+  /// isFrameOperand - Return true and the FrameIndex if the specified
+  /// operand and follow operands form a reference to the stack frame.
+  bool isFrameOperand(const MachineInstr *MI, unsigned int Op,
+                      int &FrameIndex) const;
 };
 
 } // End llvm namespace

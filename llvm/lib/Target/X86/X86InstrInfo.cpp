@@ -26,11 +26,15 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/MCAsmInfo.h"
+
+#include <limits>
+
 using namespace llvm;
 
 static cl::opt<bool>
@@ -707,6 +711,21 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   }
 }
 
+/// isFrameOperand - Return true and the FrameIndex if the specified
+/// operand and follow operands form a reference to the stack frame.
+bool X86InstrInfo::isFrameOperand(const MachineInstr *MI, unsigned int Op,
+                                  int &FrameIndex) const {
+  if (MI->getOperand(Op).isFI() && MI->getOperand(Op+1).isImm() &&
+      MI->getOperand(Op+2).isReg() && MI->getOperand(Op+3).isImm() &&
+      MI->getOperand(Op+1).getImm() == 1 &&
+      MI->getOperand(Op+2).getReg() == 0 &&
+      MI->getOperand(Op+3).getImm() == 0) {
+    FrameIndex = MI->getOperand(Op).getIndex();
+    return true;
+  }
+  return false;
+}
+
 unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI, 
                                            int &FrameIndex) const {
   switch (MI->getOpcode()) {
@@ -723,17 +742,30 @@ unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   case X86::MOVDQArm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-    if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
-        MI->getOperand(3).isReg() && MI->getOperand(4).isImm() &&
-        MI->getOperand(2).getImm() == 1 &&
-        MI->getOperand(3).getReg() == 0 &&
-        MI->getOperand(4).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
+    if (isFrameOperand(MI, 1, FrameIndex)) {
       return MI->getOperand(0).getReg();
     }
+    // Check for post-frame index elimination operations
+    return hasLoadFromStackSlot(MI, FrameIndex);
     break;
   }
   return 0;
+}
+
+bool X86InstrInfo::hasLoadFromStackSlot(const MachineInstr *MI,
+                                        int &FrameIndex) const {
+  for (MachineInstr::mmo_iterator o = MI->memoperands_begin(),
+         oe = MI->memoperands_end();
+       o != oe;
+       ++o) {
+    if ((*o)->isLoad() && (*o)->getValue())
+      if (const FixedStackPseudoSourceValue *Value =
+          dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
+        FrameIndex = Value->getFrameIndex();
+        return true;
+      }
+  }
+  return false;
 }
 
 unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
@@ -753,17 +785,30 @@ unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
   case X86::MMX_MOVNTQmr:
-    if (MI->getOperand(0).isFI() && MI->getOperand(1).isImm() &&
-        MI->getOperand(2).isReg() && MI->getOperand(3).isImm() &&
-        MI->getOperand(1).getImm() == 1 &&
-        MI->getOperand(2).getReg() == 0 &&
-        MI->getOperand(3).getImm() == 0) {
-      FrameIndex = MI->getOperand(0).getIndex();
+    if (isFrameOperand(MI, 0, FrameIndex)) {
       return MI->getOperand(X86AddrNumOperands).getReg();
     }
+    // Check for post-frame index elimination operations
+    return hasStoreToStackSlot(MI, FrameIndex);
     break;
   }
   return 0;
+}
+
+bool X86InstrInfo::hasStoreToStackSlot(const MachineInstr *MI,
+                                       int &FrameIndex) const {
+  for (MachineInstr::mmo_iterator o = MI->memoperands_begin(),
+         oe = MI->memoperands_end();
+       o != oe;
+       ++o) {
+    if ((*o)->isStore() && (*o)->getValue())
+      if (const FixedStackPseudoSourceValue *Value =
+          dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
+        FrameIndex = Value->getFrameIndex();
+        return true;
+      }
+  }
+  return false;
 }
 
 /// regIsPICBase - Return true if register is PIC base (i.e.g defined by

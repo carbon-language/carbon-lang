@@ -170,6 +170,17 @@ public:
                                        int &FrameIndex) const {
     return 0;
   }
+
+  /// hasLoadFromStackSlot - If the specified machine instruction has
+  /// a load from a stack slot, return true along with the FrameIndex
+  /// of the loaded stack slot.  If not, return false.  Unlike
+  /// isLoadFromStackSlot, this returns true for any instructions that
+  /// loads from the stack.  This is just a hint, as some cases may be
+  /// missed.
+  virtual bool hasLoadFromStackSlot(const MachineInstr *MI,
+                                    int &FrameIndex) const {
+    return 0;
+  }
   
   /// isStoreToStackSlot - If the specified machine instruction is a direct
   /// store to a stack slot, return the virtual or physical register number of
@@ -178,6 +189,17 @@ public:
   /// any side effects other than storing to the stack slot.
   virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const {
+    return 0;
+  }
+
+  /// hasStoreToStackSlot - If the specified machine instruction has a
+  /// store to a stack slot, return true along with the FrameIndex of
+  /// the loaded stack slot.  If not, return false.  Unlike
+  /// isStoreToStackSlot, this returns true for any instructions that
+  /// loads from the stack.  This is just a hint, as some cases may be
+  /// missed.
+  virtual bool hasStoreToStackSlot(const MachineInstr *MI,
+                                   int &FrameIndex) const {
     return 0;
   }
 
