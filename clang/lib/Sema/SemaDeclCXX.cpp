@@ -4014,7 +4014,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     if (!ResultTy->isDependentType() && ResultTy != Context.VoidPtrTy)
       return Diag(FnDecl->getLocation(),
                   diag::err_operator_new_result_type) << FnDecl->getDeclName()
-                  << Context.VoidPtrTy;
+                  << static_cast<QualType>(Context.VoidPtrTy);
     return ret;
   }
 

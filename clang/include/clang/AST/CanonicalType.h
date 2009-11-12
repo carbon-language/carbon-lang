@@ -71,6 +71,9 @@ public:
   /// \brief Implicit conversion to a qualified type.
   operator QualType() const { return Stored; }
 
+  /// \brief Implicit conversion to bool.
+  operator bool() const { return !isNull(); }
+  
   bool isNull() const {
     return Stored.isNull();
   }
