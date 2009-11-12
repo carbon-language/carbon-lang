@@ -518,8 +518,13 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   }
 
   // All the rest of our checks depend on the condition being an instruction.
-  if (CondInst == 0)
+  if (CondInst == 0) {
+    // FIXME: Unify this with code below.
+    if (LVI && ProcessThreadableEdges(Condition, BB))
+      return true;
     return false;
+  }  
+    
   
   // See if this is a phi node in the current block.
   if (PHINode *PN = dyn_cast<PHINode>(CondInst))

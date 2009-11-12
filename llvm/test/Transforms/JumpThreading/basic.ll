@@ -285,12 +285,50 @@ F2:
 
 
 
+; CHECK: @test10
+declare i32 @test10f1()
+declare i32 @test10f2()
+declare void @test10f3()
+
+;; Non-local condition threading.
+define i32 @test10(i1 %cond) {
+; CHECK: @test10
+; CHECK-NEXT:   br i1 %cond, label %T2, label %F2
+        br i1 %cond, label %T1, label %F1
+
+T1:
+        %v1 = call i32 @test10f1()
+        br label %Merge
+        
+; CHECK: %v1 = call i32 @test10f1()
+; CHECK-NEXT: call void @f3()
+; CHeCK-NEXT: ret i32 %v1
+
+F1:
+        %v2 = call i32 @test10f2()
+        br label %Merge
+
+Merge:
+        %B = phi i32 [%v1, %T1], [%v2, %F1]
+        br i1 %cond, label %T2, label %F2
+
+T2:
+        call void @f3()
+        ret i32 %B
+
+F2:
+        ret i32 %B
+}
+
+
+
+
 
 ;;; Duplicate condition to avoid xor of cond.
 ;;; TODO: Make this happen.
-define i32 @test10(i1 %cond, i1 %cond2) {
+define i32 @test11(i1 %cond, i1 %cond2) {
 Entry:
-; CHECK: @test10
+; CHECK: @test11
 	%v1 = call i32 @f1()
 	br i1 %cond, label %Merge, label %F1
 
