@@ -991,6 +991,9 @@ private:
   /// for the given class.
   llvm::Value *EmitClassRef(CGBuilderTy &Builder,
                             const ObjCInterfaceDecl *ID);
+  
+  /// EmitSuperClassRef - Emits reference to class's main metadata class.
+  llvm::Value *EmitSuperClassRef(const ObjCInterfaceDecl *ID);
 
   CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
                                   QualType ResultType,
@@ -1486,7 +1489,9 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       Target = Super;
     }
   } else {
-    Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
+    llvm::Value *ClassPtr = EmitSuperClassRef(Class);
+    ClassPtr = CGF.Builder.CreateStructGEP(ClassPtr, 1);
+    Target = CGF.Builder.CreateLoad(ClassPtr);
   }
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
   // ObjCTypes types.
@@ -2051,11 +2056,22 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[11] = EmitClassExtension(ID);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
-
-  llvm::GlobalVariable *GV =
-    CreateMetadataVar("\01L_OBJC_CLASS_" + ClassName, Init,
-                      "__OBJC,__class,regular,no_dead_strip",
-                      4, true);
+  std::string Name("\01L_OBJC_CLASS_");
+  Name += ClassName;
+  const char *Section = "__OBJC,__class,regular,no_dead_strip";
+  // Check for a forward reference.
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  if (GV) {
+    assert(GV->getType()->getElementType() == ObjCTypes.ClassTy &&
+           "Forward metaclass reference has incorrect type.");
+    GV->setLinkage(llvm::GlobalValue::InternalLinkage);
+    GV->setInitializer(Init);
+    GV->setSection(Section);
+    GV->setAlignment(4);
+    CGM.AddUsedGlobal(GV);
+  } 
+  else
+    GV = CreateMetadataVar(Name, Init, Section, 4, true);
   DefinedClasses.push_back(GV);
 }
 
@@ -2147,6 +2163,22 @@ llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {
   } else {
     // Generate as an external reference to keep a consistent
     // module. This will be patched up when we emit the metaclass.
+    return new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassTy, false,
+                                    llvm::GlobalValue::ExternalLinkage,
+                                    0,
+                                    Name);
+  }
+}
+
+llvm::Value *CGObjCMac::EmitSuperClassRef(const ObjCInterfaceDecl *ID) {
+  std::string Name = "\01L_OBJC_CLASS_" + ID->getNameAsString();
+  
+  if (llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name,
+                                                                   true)) {
+    assert(GV->getType()->getElementType() == ObjCTypes.ClassTy &&
+           "Forward class metadata reference has incorrect type.");
+    return GV;
+  } else {
     return new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassTy, false,
                                     llvm::GlobalValue::ExternalLinkage,
                                     0,
