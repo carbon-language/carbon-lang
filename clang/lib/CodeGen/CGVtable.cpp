@@ -105,8 +105,8 @@ public:
     return llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
   }
 
-#define D1(x)
-//#define D1(X) do { if (getenv("DEBUG")) { X; } } while (0)
+//#define D1(x)
+#define D1(X) do { if (getenv("DEBUG")) { X; } } while (0)
 
   void GenerateVBaseOffsets(const CXXRecordDecl *RD, uint64_t Offset,
                             bool updateVBIndex, Index_t current_vbindex) {
@@ -775,6 +775,10 @@ class VTTBuilder {
                                  uint64_t Offset) {
     int64_t AddressPoint;
     AddressPoint = (*CGM.AddressPoints[Class])[std::make_pair(RD, Offset)];
+    // FIXME: We can never have 0 address point.  Do this for now so gepping
+    // retains the same structure.
+    if (AddressPoint == 0)
+      AddressPoint = 1;
     D1(printf("XXX address point for %s in %s at offset %d was %d\n",
               RD->getNameAsCString(), Class->getNameAsCString(),
               (int)Offset, (int)AddressPoint));
@@ -809,18 +813,20 @@ class VTTBuilder {
         BaseOffset = Offset + Layout.getBaseClassOffset(Base);
       } else
         BaseOffset = BLayout.getVBaseClassOffset(Base);
+      llvm::Constant *subvtbl = vtbl;
       if ((Base->getNumVBases() || BaseMorallyVirtual)
           && !NonVirtualPrimaryBase) {
         // FIXME: Slightly too many of these for __ZTT8test8_B2
         llvm::Constant *init;
-        if (MorallyVirtual)
+        if (BaseMorallyVirtual)
           init = BuildVtablePtr(vtbl, RD, Offset);
-        else
+        else {
           init = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset);
+          subvtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
+        }
         Inits.push_back(init);
-        // vtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
       }
-      Secondary(Base, vtbl, BaseOffset, BaseMorallyVirtual);
+      Secondary(Base, subvtbl, BaseOffset, BaseMorallyVirtual);
     }
   }
 
