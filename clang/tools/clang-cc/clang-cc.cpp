@@ -659,7 +659,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
                              ProgActions PA, llvm::LLVMContext& Context) {
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
-  bool ClearSourceMgr = false;
   FixItRewriter *FixItRewrite = 0;
   bool CompleteTranslationUnit = true;
   llvm::sys::Path OutPath;
@@ -875,8 +874,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       break;
     }
     }
-
-    ClearSourceMgr = true;
   }
 
   if (FixItRewrite)
@@ -904,12 +901,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     PP.getSourceManager().PrintStats();
     fprintf(stderr, "\n");
   }
-
-  // For a multi-file compilation, some things are ok with nuking the source
-  // manager tables, other require stable fileid/macroid's across multiple
-  // files.
-  if (ClearSourceMgr)
-    PP.getSourceManager().clearIDTables();
 
   // Always delete the output stream because we don't want to leak file
   // handles.  Also, we don't want to try to erase an open file.
