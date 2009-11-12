@@ -253,7 +253,7 @@
 #cmakedefine HAVE_NDIR_H ${HAVE_NDIR_H}
 
 /* Define to 1 if you have the `nearbyintf' function. */
-#undef HAVE_NEARBYINTF
+#cmakedefine HAVE_NEARBYINTF ${HAVE_NEARBYINTF}
 
 /* Define if the neat program is available */
 #cmakedefine HAVE_NEATO ${HAVE_NEATO}

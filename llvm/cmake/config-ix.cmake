@@ -4,6 +4,11 @@ include(CheckSymbolExists)
 include(CheckFunctionExists)
 include(CheckCXXSourceCompiles)
 
+if( UNIX )
+  # Used by check_symbol_exists:
+  set(CMAKE_REQUIRED_LIBRARIES m)
+endif()
+
 # Helper macros and functions
 macro(add_cxx_include result files)
   set(${result} "")
@@ -84,6 +89,7 @@ check_symbol_exists(isnan cmath HAVE_ISNAN_IN_CMATH)
 check_symbol_exists(isnan math.h HAVE_ISNAN_IN_MATH_H)
 check_symbol_exists(ceilf math.h HAVE_CEILF)
 check_symbol_exists(floorf math.h HAVE_FLOORF)
+check_symbol_exists(nearbyintf math.h HAVE_NEARBYINTF)
 check_symbol_exists(mallinfo malloc.h HAVE_MALLINFO)
 check_symbol_exists(malloc_zone_statistics malloc/malloc.h
                     HAVE_MALLOC_ZONE_STATISTICS)
