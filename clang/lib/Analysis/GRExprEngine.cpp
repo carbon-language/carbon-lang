@@ -1575,25 +1575,25 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
       continue;
 
     // Dispatch to the plug-in transfer function.
-
-    unsigned size = Dst.size();
     SaveOr OldHasGen(Builder->HasGeneratedNode);
-
-    // Dispatch to transfer function logic to handle the call itself.
-    assert(Builder && "GRStmtNodeBuilder must be defined.");
-    
-    // FIXME: Allow us to chain together transfer functions.
     Pred = *DI;
 
-    if (!EvalOSAtomic(Dst, *this, *Builder, CE, L, Pred))
-      getTF().EvalCall(Dst, *this, *Builder, CE, L, Pred);
+    // Dispatch to transfer function logic to handle the call itself.
+    // FIXME: Allow us to chain together transfer functions.
+    assert(Builder && "GRStmtNodeBuilder must be defined.");
+    ExplodedNodeSet DstTmp;
+    
+    if (!EvalOSAtomic(DstTmp, *this, *Builder, CE, L, Pred))
+      getTF().EvalCall(DstTmp, *this, *Builder, CE, L, Pred);
 
     // Handle the case where no nodes where generated.  Auto-generate that
     // contains the updated state if we aren't generating sinks.
-
-    if (!Builder->BuildSinks && Dst.size() == size &&
+    if (!Builder->BuildSinks && DstTmp.empty() &&
         !Builder->HasGeneratedNode)
-      MakeNode(Dst, CE, Pred, state);
+      MakeNode(DstTmp, CE, Pred, state);
+    
+    // Perform the post-condition check of the CallExpr.
+    CheckerVisit(CE, Dst, DstTmp, false);
   }
 }
 

@@ -11,6 +11,7 @@
 //
 //===---------------------------------------------------------------------===//
 
+#ifdef PREVISIT
 PREVISIT(ArraySubscriptExpr)
 PREVISIT(BinaryOperator)
 PREVISIT(CallExpr)
@@ -18,5 +19,11 @@ PREVISIT(CastExpr)
 PREVISIT(DeclStmt)
 PREVISIT(ObjCMessageExpr)
 PREVISIT(ReturnStmt)
-
 #undef PREVISIT
+#endif
+
+#ifdef POSTVISIT
+POSTVISIT(CallExpr)
+#undef POSTVISIT
+#endif
+

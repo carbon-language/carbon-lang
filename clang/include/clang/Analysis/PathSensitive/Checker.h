@@ -119,8 +119,10 @@ private:
     CheckerContext C(Dst, Builder, Eng, Pred, tag,
                      isPrevisit ? ProgramPoint::PreStmtKind :
                      ProgramPoint::PostStmtKind);
-    assert(isPrevisit && "Only previsit supported for now.");
-    _PreVisit(C, S);
+    if (isPrevisit)
+      _PreVisit(C, S);
+    else
+      _PostVisit(C, S);
   }
 
   // FIXME: Remove the 'tag' option.
@@ -153,7 +155,8 @@ private:
 
 public:
   virtual ~Checker() {}
-  virtual void _PreVisit(CheckerContext &C, const Stmt *ST) {}
+  virtual void _PreVisit(CheckerContext &C, const Stmt *S) {}
+  virtual void _PostVisit(CheckerContext &C, const Stmt *S) {}
   virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
   virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
                             const Stmt *StoreE, SVal location, SVal val) {}
