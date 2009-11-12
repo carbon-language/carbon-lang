@@ -434,33 +434,36 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       // Skip over all PHI nodes, remembering them for later.
       BasicBlock::const_iterator OldI = BI->begin();
       for (; (PN = dyn_cast<PHINode>(I)); ++I, ++OldI) {
-        if (I->hasMetadata())
+        if (I->hasMetadata()) {
           if (TheCallMD) {
             if (MDNode *IMD = Context.getMetadata().getMD(DbgKind, I)) {
               MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD, Context);
               Context.getMetadata().addMD(DbgKind, NewMD, I);
             }
-          } else 
+          } else {
             // The cloned instruction has dbg info but the call instruction
             // does not have dbg info. Remove dbg info from cloned instruction.
             Context.getMetadata().removeMD(DbgKind, I);
+          }
+        }
         PHIToResolve.push_back(cast<PHINode>(OldI));
       }
     }
     
     // Otherwise, remap the rest of the instructions normally.
     for (; I != NewBB->end(); ++I) {
-      if (I->hasMetadata())
+      if (I->hasMetadata()) {
         if (TheCallMD) {
           if (MDNode *IMD = Context.getMetadata().getMD(DbgKind, I)) {
             MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD, Context);
             Context.getMetadata().addMD(DbgKind, NewMD, I);
           }
-        } else 
+        } else {
           // The cloned instruction has dbg info but the call instruction
           // does not have dbg info. Remove dbg info from cloned instruction.
           Context.getMetadata().removeMD(DbgKind, I);
-
+        }
+      }
       RemapInstruction(I, ValueMap);
     }
   }
