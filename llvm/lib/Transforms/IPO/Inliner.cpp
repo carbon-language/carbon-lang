@@ -19,10 +19,11 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/InlineCost.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -344,8 +345,7 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
       // just delete the call instead of trying to inline it, regardless of
       // size.  This happens because IPSCCP propagates the result out of the
       // call and then we're left with the dead call.
-      if (CS.getInstruction()->use_empty() &&
-          !CS.getInstruction()->mayHaveSideEffects()) {
+      if (isInstructionTriviallyDead(CS.getInstruction())) {
         DEBUG(errs() << "    -> Deleting dead call: "
                      << *CS.getInstruction() << "\n");
         // Update the call graph by deleting the edge from Callee to Caller.
