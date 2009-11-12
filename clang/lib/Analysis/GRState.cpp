@@ -332,9 +332,3 @@ bool GRStateManager::isEqual(const GRState* state, const Expr* Ex,
 bool GRStateManager::isEqual(const GRState* state, const Expr* Ex, uint64_t x) {
   return isEqual(state, Ex, getBasicVals().getValue(x, Ex->getType()));
 }
-
-//===----------------------------------------------------------------------===//
-// Persistent values for indexing into the Generic Data Map.
-
-int GRState::NullDerefTag::TagInt = 0;
-

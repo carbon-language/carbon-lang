@@ -333,12 +333,6 @@ public:
   void printStdErr() const;
 
   void printDOT(llvm::raw_ostream& Out) const;
-
-  // Tags used for the Generic Data Map.
-  struct NullDerefTag {
-    static int TagInt;
-    typedef const SVal* data_type;
-  };
 };
 
 class GRStateSet {
