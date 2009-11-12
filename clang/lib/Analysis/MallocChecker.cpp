@@ -27,7 +27,7 @@ enum RefState {
 
 class VISIBILITY_HIDDEN RegionState {};
 
-class VISIBILITY_HIDDEN MallocChecker : CheckerVisitor<MallocChecker> {
+class VISIBILITY_HIDDEN MallocChecker : public CheckerVisitor<MallocChecker> {
   BuiltinBug *BT_DoubleFree;
   IdentifierInfo *II_malloc;
   IdentifierInfo *II_free;
