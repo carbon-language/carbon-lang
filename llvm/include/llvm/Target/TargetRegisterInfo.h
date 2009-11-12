@@ -275,6 +275,7 @@ private:
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
 
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
+
 protected:
   TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                      regclass_iterator RegClassBegin,
@@ -684,7 +685,7 @@ public:
 
   /// getFrameRegister - This method should return the register used as a base
   /// for values allocated in the current stack frame.
-  virtual unsigned getFrameRegister(MachineFunction &MF) const = 0;
+  virtual unsigned getFrameRegister(const MachineFunction &MF) const = 0;
 
   /// getFrameIndexOffset - Returns the displacement from the frame register to
   /// the stack frame of the specified index.

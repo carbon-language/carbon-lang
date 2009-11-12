@@ -320,7 +320,8 @@ unsigned SystemZRegisterInfo::getRARegister() const {
   return 0;
 }
 
-unsigned SystemZRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned
+SystemZRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   assert(0 && "What is the frame register");
   return 0;
 }

@@ -59,7 +59,7 @@ class PIC16RegisterInfo : public PIC16GenRegisterInfo {
   virtual void emitPrologue(MachineFunction &MF) const;
   virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
   virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const;
-  virtual unsigned getFrameRegister(MachineFunction &MF) const;
+  virtual unsigned getFrameRegister(const MachineFunction &MF) const;
   virtual unsigned getRARegister() const;
 
 };

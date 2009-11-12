@@ -60,7 +60,7 @@ public:
   unsigned eliminateFrameIndex(MachineBasicBlock::iterator II,
                                int SPAdj, int *Value = NULL,
                                RegScavenger *RS = NULL) const;
-                           
+
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                 RegScavenger *RS = NULL) const;
 
@@ -71,7 +71,7 @@ public:
   
   // Debug information queries.
   unsigned getRARegister() const;
-  unsigned getFrameRegister(MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const;
   void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
   //! Return the array of argument passing registers

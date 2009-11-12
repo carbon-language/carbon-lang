@@ -60,7 +60,7 @@ public:
 
   // Debug information queries.
   unsigned getRARegister() const;
-  unsigned getFrameRegister(MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const;
 
   //! Get DWARF debugging register number
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;

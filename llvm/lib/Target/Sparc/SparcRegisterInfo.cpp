@@ -175,7 +175,7 @@ unsigned SparcRegisterInfo::getRARegister() const {
   return SP::I7;
 }
 
-unsigned SparcRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned SparcRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return SP::I6;
 }
 

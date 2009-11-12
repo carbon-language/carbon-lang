@@ -65,7 +65,7 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   
   /// Debug information queries.
   unsigned getRARegister() const;
-  unsigned getFrameRegister(MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const;
 
   /// Exception handling queries.
   unsigned getEHExceptionRegister() const;

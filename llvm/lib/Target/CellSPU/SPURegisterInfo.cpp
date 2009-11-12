@@ -596,7 +596,7 @@ SPURegisterInfo::getRARegister() const
 }
 
 unsigned
-SPURegisterInfo::getFrameRegister(MachineFunction &MF) const
+SPURegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
   return SPU::R1;
 }

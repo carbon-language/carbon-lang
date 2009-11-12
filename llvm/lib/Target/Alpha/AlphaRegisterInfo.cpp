@@ -314,7 +314,7 @@ unsigned AlphaRegisterInfo::getRARegister() const {
   return 0;
 }
 
-unsigned AlphaRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned AlphaRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return hasFP(MF) ? Alpha::R15 : Alpha::R30;
 }
 

@@ -72,7 +72,7 @@ getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return -1;
 }
 
-unsigned PIC16RegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned PIC16RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   llvm_unreachable("PIC16 Does not have any frame register");
   return 0;
 }
