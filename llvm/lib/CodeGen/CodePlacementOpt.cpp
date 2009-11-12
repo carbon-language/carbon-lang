@@ -56,7 +56,6 @@ namespace {
                 MachineFunction::iterator InsertPt,
                 MachineFunction::iterator Begin,
                 MachineFunction::iterator End);
-    void UpdateTerminator(MachineBasicBlock *MBB);
     bool EliminateUnconditionalJumpsToTop(MachineFunction &MF,
                                           MachineLoop *L);
     bool MoveDiscontiguousLoopBlocks(MachineFunction &MF,
@@ -141,66 +140,9 @@ void CodePlacementOpt::Splice(MachineFunction &MF,
 
   MF.splice(InsertPt, Begin, End);
 
-  UpdateTerminator(prior(Begin));
-  UpdateTerminator(OldBeginPrior);
-  UpdateTerminator(OldEndPrior);
-}
-
-/// UpdateTerminator - Update the terminator instructions in MBB to account
-/// for changes to the layout. If the block previously used a fallthrough,
-/// it may now need a branch, and if it previously used branching it may now
-/// be able to use a fallthrough.
-///
-void CodePlacementOpt::UpdateTerminator(MachineBasicBlock *MBB) {
-  // A block with no successors has no concerns with fall-through edges.
-  if (MBB->succ_empty()) return;
-
-  MachineBasicBlock *TBB = 0, *FBB = 0;
-  SmallVector<MachineOperand, 4> Cond;
-  bool B = TII->AnalyzeBranch(*MBB, TBB, FBB, Cond);
-  (void) B;
-  assert(!B && "UpdateTerminators requires analyzable predecessors!");
-  if (Cond.empty()) {
-    if (TBB) {
-      // The block has an unconditional branch. If its successor is now
-      // its layout successor, delete the branch.
-      if (MBB->isLayoutSuccessor(TBB))
-        TII->RemoveBranch(*MBB);
-    } else {
-      // The block has an unconditional fallthrough. If its successor is not
-      // its layout successor, insert a branch.
-      TBB = *MBB->succ_begin();
-      if (!MBB->isLayoutSuccessor(TBB))
-        TII->InsertBranch(*MBB, TBB, 0, Cond);
-    }
-  } else {
-    if (FBB) {
-      // The block has a non-fallthrough conditional branch. If one of its
-      // successors is its layout successor, rewrite it to a fallthrough
-      // conditional branch.
-      if (MBB->isLayoutSuccessor(TBB)) {
-        TII->RemoveBranch(*MBB);
-        TII->ReverseBranchCondition(Cond);
-        TII->InsertBranch(*MBB, FBB, 0, Cond);
-      } else if (MBB->isLayoutSuccessor(FBB)) {
-        TII->RemoveBranch(*MBB);
-        TII->InsertBranch(*MBB, TBB, 0, Cond);
-      }
-    } else {
-      // The block has a fallthrough conditional branch.
-      MachineBasicBlock *MBBA = *MBB->succ_begin();
-      MachineBasicBlock *MBBB = *next(MBB->succ_begin());
-      if (MBBA == TBB) std::swap(MBBB, MBBA);
-      if (MBB->isLayoutSuccessor(TBB)) {
-        TII->RemoveBranch(*MBB);
-        TII->ReverseBranchCondition(Cond);
-        TII->InsertBranch(*MBB, MBBA, 0, Cond);
-      } else if (!MBB->isLayoutSuccessor(MBBA)) {
-        TII->RemoveBranch(*MBB);
-        TII->InsertBranch(*MBB, TBB, MBBA, Cond);
-      }
-    }
-  }
+  prior(Begin)->updateTerminator();
+  OldBeginPrior->updateTerminator();
+  OldEndPrior->updateTerminator();
 }
 
 /// EliminateUnconditionalJumpsToTop - Move blocks which unconditionally jump

@@ -17,6 +17,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrDesc.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/raw_ostream.h"
@@ -242,6 +243,58 @@ void MachineBasicBlock::moveAfter(MachineBasicBlock *NewBefore) {
   getParent()->splice(++BBI, this);
 }
 
+void MachineBasicBlock::updateTerminator() {
+  const TargetInstrInfo *TII = getParent()->getTarget().getInstrInfo();
+  // A block with no successors has no concerns with fall-through edges.
+  if (this->succ_empty()) return;
+
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  bool B = TII->AnalyzeBranch(*this, TBB, FBB, Cond);
+  (void) B;
+  assert(!B && "UpdateTerminators requires analyzable predecessors!");
+  if (Cond.empty()) {
+    if (TBB) {
+      // The block has an unconditional branch. If its successor is now
+      // its layout successor, delete the branch.
+      if (isLayoutSuccessor(TBB))
+        TII->RemoveBranch(*this);
+    } else {
+      // The block has an unconditional fallthrough. If its successor is not
+      // its layout successor, insert a branch.
+      TBB = *succ_begin();
+      if (!isLayoutSuccessor(TBB))
+        TII->InsertBranch(*this, TBB, 0, Cond);
+    }
+  } else {
+    if (FBB) {
+      // The block has a non-fallthrough conditional branch. If one of its
+      // successors is its layout successor, rewrite it to a fallthrough
+      // conditional branch.
+      if (isLayoutSuccessor(TBB)) {
+        TII->RemoveBranch(*this);
+        TII->ReverseBranchCondition(Cond);
+        TII->InsertBranch(*this, FBB, 0, Cond);
+      } else if (isLayoutSuccessor(FBB)) {
+        TII->RemoveBranch(*this);
+        TII->InsertBranch(*this, TBB, 0, Cond);
+      }
+    } else {
+      // The block has a fallthrough conditional branch.
+      MachineBasicBlock *MBBA = *succ_begin();
+      MachineBasicBlock *MBBB = *next(succ_begin());
+      if (MBBA == TBB) std::swap(MBBB, MBBA);
+      if (isLayoutSuccessor(TBB)) {
+        TII->RemoveBranch(*this);
+        TII->ReverseBranchCondition(Cond);
+        TII->InsertBranch(*this, MBBA, 0, Cond);
+      } else if (!isLayoutSuccessor(MBBA)) {
+        TII->RemoveBranch(*this);
+        TII->InsertBranch(*this, TBB, MBBA, Cond);
+      }
+    }
+  }
+}
 
 void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ) {
   Successors.push_back(succ);

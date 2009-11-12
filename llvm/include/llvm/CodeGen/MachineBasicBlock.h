@@ -225,7 +225,13 @@ public:
   /// potential fall-throughs at the end of the block.
   void moveBefore(MachineBasicBlock *NewAfter);
   void moveAfter(MachineBasicBlock *NewBefore);
-  
+
+  /// updateTerminator - Update the terminator instructions in block to account
+  /// for changes to the layout. If the block previously used a fallthrough,
+  /// it may now need a branch, and if it previously used branching it may now
+  /// be able to use a fallthrough.
+  void updateTerminator();
+
   // Machine-CFG mutators
   
   /// addSuccessor - Add succ as a successor of this MachineBasicBlock.
