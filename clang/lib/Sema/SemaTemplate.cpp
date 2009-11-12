@@ -1187,11 +1187,10 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 
   QualType CanonType;
 
-  if (TemplateSpecializationType::anyDependentTemplateArguments(
+  if (Name.isDependent() ||
+      TemplateSpecializationType::anyDependentTemplateArguments(
                                                       TemplateArgs,
-                                                      NumTemplateArgs) ||
-      isa<TemplateTemplateParmDecl>(Template) || 
-      Template->getDeclContext()->isDependentContext()) {
+                                                      NumTemplateArgs)) {
     // This class template specialization is a dependent
     // type. Therefore, its canonical type is another class template
     // specialization type that contains all of the converted
@@ -2088,8 +2087,8 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
 
 /// \brief Checks whether the given template argument is a pointer to
 /// member constant according to C++ [temp.arg.nontype]p1.
-bool
-Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
+bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, 
+                                                TemplateArgument &Converted) {
   bool Invalid = false;
 
   // See through any implicit casts we added to fix the type.
@@ -2120,13 +2119,33 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
     Arg = Parens->getSubExpr();
   }
 
-  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg))
+  // A pointer-to-member constant written &Class::member.
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
     if (UnOp->getOpcode() == UnaryOperator::AddrOf) {
       DRE = dyn_cast<DeclRefExpr>(UnOp->getSubExpr());
       if (DRE && !DRE->getQualifier())
         DRE = 0;
     }
-
+  } 
+  // A constant of pointer-to-member type.
+  else if ((DRE = dyn_cast<DeclRefExpr>(Arg))) {
+    if (ValueDecl *VD = dyn_cast<ValueDecl>(DRE->getDecl())) {
+      if (VD->getType()->isMemberPointerType()) {
+        if (isa<NonTypeTemplateParmDecl>(VD) ||
+            (isa<VarDecl>(VD) && 
+             Context.getCanonicalType(VD->getType()).isConstQualified())) {
+          if (Arg->isTypeDependent() || Arg->isValueDependent())
+            Converted = TemplateArgument(Arg->Retain());
+          else
+            Converted = TemplateArgument(VD->getCanonicalDecl());
+          return Invalid;
+        }
+      }
+    }
+    
+    DRE = 0;
+  }
+  
   if (!DRE)
     return Diag(Arg->getSourceRange().getBegin(),
                 diag::err_template_arg_not_pointer_to_member_form)
@@ -2139,7 +2158,10 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
 
     // Okay: this is the address of a non-static member, and therefore
     // a member pointer constant.
-    Member = DRE->getDecl();
+    if (Arg->isTypeDependent() || Arg->isValueDependent())
+      Converted = TemplateArgument(Arg->Retain());
+    else
+      Converted = TemplateArgument(DRE->getDecl()->getCanonicalDecl());
     return Invalid;
   }
 
@@ -2343,16 +2365,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
 
-    if (ParamType->isMemberPointerType()) {
-      NamedDecl *Member = 0;
-      if (CheckTemplateArgumentPointerToMember(Arg, Member))
-        return true;
-
-      if (Member)
-        Member = cast<NamedDecl>(Member->getCanonicalDecl());
-      Converted = TemplateArgument(Member);
-      return false;
-    }
+    if (ParamType->isMemberPointerType())
+      return CheckTemplateArgumentPointerToMember(Arg, Converted);
 
     NamedDecl *Entity = 0;
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
@@ -2465,14 +2479,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return true;
   }
 
-  NamedDecl *Member = 0;
-  if (CheckTemplateArgumentPointerToMember(Arg, Member))
-    return true;
-
-  if (Member)
-    Member = cast<NamedDecl>(Member->getCanonicalDecl());
-  Converted = TemplateArgument(Member);
-  return false;
+  return CheckTemplateArgumentPointerToMember(Arg, Converted);
 }
 
 /// \brief Check a template argument against its corresponding

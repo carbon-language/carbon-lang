@@ -33,3 +33,16 @@ struct X3 {
 };
 
 X3<int, Y, &Y::x> x3;
+
+typedef int Y::*IntMember;
+
+template<IntMember Member>
+struct X4 {
+  X3<int, Y, Member> member;
+  
+  int &getMember(Y& y) { return y.*Member; }
+};
+
+int &get_X4(X4<&Y::x> x4, Y& y) { 
+  return x4.getMember(y); 
+}

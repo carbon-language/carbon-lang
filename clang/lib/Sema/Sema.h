@@ -2615,7 +2615,8 @@ public:
                              DeclaratorInfo *Arg);
   bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
                                                       NamedDecl *&Entity);
-  bool CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member);
+  bool CheckTemplateArgumentPointerToMember(Expr *Arg, 
+                                            TemplateArgument &Converted);
   bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                              QualType InstantiatedParamType, Expr *&Arg,
                              TemplateArgument &Converted);
