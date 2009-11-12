@@ -214,6 +214,27 @@ public:
     return BO;
   }
 
+  /// CreateNUWAdd - Create an Add operator with the NUW flag set.
+  ///
+  static BinaryOperator *CreateNUWAdd(Value *V1, Value *V2,
+                                      const Twine &Name = "") {
+    BinaryOperator *BO = CreateAdd(V1, V2, Name);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNUWAdd(Value *V1, Value *V2,
+                                      const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = CreateAdd(V1, V2, Name, BB);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNUWAdd(Value *V1, Value *V2,
+                                      const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = CreateAdd(V1, V2, Name, I);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+
   /// CreateNSWSub - Create an Sub operator with the NSW flag set.
   ///
   static BinaryOperator *CreateNSWSub(Value *V1, Value *V2,
@@ -232,6 +253,27 @@ public:
                                       const Twine &Name, Instruction *I) {
     BinaryOperator *BO = CreateSub(V1, V2, Name, I);
     BO->setHasNoSignedWrap(true);
+    return BO;
+  }
+
+  /// CreateNUWSub - Create an Sub operator with the NUW flag set.
+  ///
+  static BinaryOperator *CreateNUWSub(Value *V1, Value *V2,
+                                      const Twine &Name = "") {
+    BinaryOperator *BO = CreateSub(V1, V2, Name);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNUWSub(Value *V1, Value *V2,
+                                      const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = CreateSub(V1, V2, Name, BB);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNUWSub(Value *V1, Value *V2,
+                                      const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = CreateSub(V1, V2, Name, I);
+    BO->setHasNoUnsignedWrap(true);
     return BO;
   }
 
