@@ -303,10 +303,10 @@ bool getVisualStudioDir(std::string &path) {
 
 void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   // FIXME: temporary hack: hard-coded paths.
-  if (C_INCLUDE_DIRS != "") {
+  llvm::StringRef CIncludeDirs(C_INCLUDE_DIRS);
+  if (CIncludeDirs != "") {
     std::vector<std::string> dirs;
-    std::string str(C_INCLUDE_DIRS);
-    llvm::SplitString(str, dirs, ":");
+    llvm::SplitString(CIncludeDirs, dirs, ":");
     for (std::vector<std::string>::iterator i = dirs.begin(); i != dirs.end(); ++i)
       AddPath(*i, System, false, false, false);
     return;
