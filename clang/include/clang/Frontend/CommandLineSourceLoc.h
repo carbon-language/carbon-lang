@@ -1,3 +1,4 @@
+
 //===--- CommandLineSourceLoc.h - Parsing for source locations-*- C++ -*---===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -37,7 +38,7 @@ namespace llvm {
     class parser<clang::ParsedSourceLocation>
       : public basic_parser<clang::ParsedSourceLocation> {
     public:
-      bool parse(Option &O, StringRef ArgName, StringRef ArgValue,
+      inline bool parse(Option &O, StringRef ArgName, StringRef ArgValue,
                  clang::ParsedSourceLocation &Val);
     };
 

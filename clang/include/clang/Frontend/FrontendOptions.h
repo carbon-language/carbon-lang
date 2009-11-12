@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_FRONTEND_FRONTENDOPTIONS_H
 #define LLVM_CLANG_FRONTEND_FRONTENDOPTIONS_H
 
+#include "clang/Frontend/CommandLineSourceLoc.h"
 #include <string>
 #include <vector>
 
@@ -35,6 +36,9 @@ public:
 
   /// If given, the name for a C++ class to view the inheritance of.
   std::string ViewClassInheritance;
+
+  /// A list of locations to apply fix-its at.
+  std::vector<ParsedSourceLocation> FixItLocations;
 
 public:
   FrontendOptions() {

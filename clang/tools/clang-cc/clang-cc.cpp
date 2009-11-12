@@ -211,14 +211,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
-// Frontend Options
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::list<ParsedSourceLocation>
-FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
-   llvm::cl::desc("Perform Fix-It modifications at the given source location"));
-
-//===----------------------------------------------------------------------===//
 // Language Options
 //===----------------------------------------------------------------------===//
 
@@ -445,20 +437,21 @@ static llvm::raw_ostream *ComputeOutFile(const CompilerInvocation &CompOpts,
 /// AddFixItLocations - Add any individual user specified "fix-it" locations,
 /// and return true on success (if any were added).
 static bool AddFixItLocations(FixItRewriter *FixItRewrite,
-                              FileManager &FileMgr) {
+                              FileManager &FileMgr,
+                              const std::vector<ParsedSourceLocation> &Locs) {
   bool AddedFixItLocation = false;
 
-  for (unsigned i = 0, e = FixItAtLocations.size(); i != e; ++i) {
-    if (const FileEntry *File = FileMgr.getFile(FixItAtLocations[i].FileName)) {
+  for (unsigned i = 0, e = Locs.size(); i != e; ++i) {
+    if (const FileEntry *File = FileMgr.getFile(Locs[i].FileName)) {
       RequestedSourceLocation Requested;
       Requested.File = File;
-      Requested.Line = FixItAtLocations[i].Line;
-      Requested.Column = FixItAtLocations[i].Column;
+      Requested.Line = Locs[i].Line;
+      Requested.Column = Locs[i].Column;
       FixItRewrite->addFixItLocation(Requested);
       AddedFixItLocation = true;
     } else {
       llvm::errs() << "FIX-IT could not find file \""
-                   << FixItAtLocations[i].FileName << "\"\n";
+                   << Locs[i].FileName << "\"\n";
     }
   }
 
@@ -517,7 +510,7 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
     }
 
     // Fix-its can change semantics, disallow with any IRgen action.
-    if (FEOpts.FixItAll || !FixItAtLocations.empty()) {
+    if (FEOpts.FixItAll || !FEOpts.FixItLocations.empty()) {
       PP.getDiagnostics().Report(diag::err_fe_no_fixit_and_codegen);
       return 0;
     }
@@ -655,12 +648,13 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   }
 
   // Check if we want a fix-it rewriter.
-  if (FEOpts.FixItAll || !FixItAtLocations.empty()) {
+  if (FEOpts.FixItAll || !FEOpts.FixItLocations.empty()) {
     FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                      PP.getSourceManager(),
                                      PP.getLangOptions());
-    if (!FixItAtLocations.empty() &&
-        !AddFixItLocations(FixItRewrite, PP.getFileManager())) {
+    if (!FEOpts.FixItLocations.empty() &&
+        !AddFixItLocations(FixItRewrite, PP.getFileManager(),
+                           FEOpts.FixItLocations)) {
       // All of the fix-it locations were bad. Don't fix anything.
       delete FixItRewrite;
       FixItRewrite = 0;
