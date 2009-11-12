@@ -70,6 +70,9 @@ else( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
 
+set(C_INCLUDE_DIRS "" CACHE STRING
+  "Colon separated list of directories clang will search for headers.")
+
 set(LLVM_TARGET_ARCH "host"
   CACHE STRING "Set target to use for LLVM JIT or use \"host\" for automatic detection.")
 

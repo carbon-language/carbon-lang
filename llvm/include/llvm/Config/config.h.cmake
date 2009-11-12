@@ -9,6 +9,9 @@
 /* Define if CBE is enabled for printf %a output */
 #undef ENABLE_CBE_PRINTF_A
 
+/* Directories clang will search for headers */
+#define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
+
 /* Define if position independent code is enabled */
 #cmakedefine ENABLE_PIC ${ENABLE_PIC}
 
