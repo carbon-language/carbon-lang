@@ -56,6 +56,20 @@ TailMergeSize("tail-merge-size",
           cl::desc("Min number of instructions to consider tail merging"),
                               cl::init(3), cl::Hidden);
 
+namespace {
+  /// BranchFolderPass - Wrap branch folder in a machine function pass.
+  class BranchFolderPass : public MachineFunctionPass,
+                           public BranchFolder {
+  public:
+    static char ID;
+    explicit BranchFolderPass(bool defaultEnableTailMerge)
+      : MachineFunctionPass(&ID), BranchFolder(defaultEnableTailMerge) {}
+
+    virtual bool runOnMachineFunction(MachineFunction &MF);
+    virtual const char *getPassName() const { return "Control Flow Optimizer"; }
+  };
+}
+
 char BranchFolderPass::ID = 0;
 
 FunctionPass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge) {

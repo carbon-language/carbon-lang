@@ -11,7 +11,6 @@
 #define LLVM_CODEGEN_BRANCHFOLDING_HPP
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include <vector>
 
 namespace llvm {
@@ -20,6 +19,7 @@ namespace llvm {
   class RegScavenger;
   class TargetInstrInfo;
   class TargetRegisterInfo;
+  template<typename T> class SmallVectorImpl;
 
   class BranchFolder {
   public:
@@ -118,19 +118,6 @@ namespace llvm {
     bool CanFallThrough(MachineBasicBlock *CurBB, bool BranchUnAnalyzable,
                         MachineBasicBlock *TBB, MachineBasicBlock *FBB,
                         const SmallVectorImpl<MachineOperand> &Cond);
-  };
-
-
-  /// BranchFolderPass - Wrap branch folder in a machine function pass.
-  class BranchFolderPass : public MachineFunctionPass,
-                           public BranchFolder {
-  public:
-    static char ID;
-    explicit BranchFolderPass(bool defaultEnableTailMerge)
-      :  MachineFunctionPass(&ID), BranchFolder(defaultEnableTailMerge) {}
-
-    virtual bool runOnMachineFunction(MachineFunction &MF);
-    virtual const char *getPassName() const { return "Control Flow Optimizer"; }
   };
 }
 
