@@ -291,8 +291,8 @@ declare i32 @test10f2()
 declare void @test10f3()
 
 ;; Non-local condition threading.
-define i32 @test10(i1 %cond) {
-; CHECK: @test10
+define i32 @test10g(i1 %cond) {
+; CHECK: @test10g
 ; CHECK-NEXT:   br i1 %cond, label %T2, label %F2
         br i1 %cond, label %T1, label %F1
 
@@ -331,8 +331,7 @@ define i32 @test11(i32 %A) {
         
 BB2:
 ; CHECK: call i32 @f1()
-; CHECK-NEXT: call void @f3()
-; CHECK-NEXT: ret i32 4
+; CHECK-NEXT: ret i32 %C
 	%C = call i32 @f1()
 	ret i32 %C
         
