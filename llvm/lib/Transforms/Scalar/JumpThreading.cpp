@@ -368,7 +368,17 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         Value *RHS = Cmp->getOperand(1)->DoPHITranslation(BB, PredBB);
         
         Value *Res = SimplifyCmpInst(Cmp->getPredicate(), LHS, RHS, TD);
-        if (Res == 0) continue;
+        if (Res == 0) {
+          if (!LVI || !isa<Constant>(RHS))
+            continue;
+          
+          LazyValueInfo::Tristate 
+            ResT = LVI->getPredicateOnEdge(Cmp->getPredicate(), LHS,
+                                           cast<Constant>(RHS), PredBB, BB);
+          if (ResT == LazyValueInfo::Unknown)
+            continue;
+          Res = ConstantInt::get(Type::getInt1Ty(LHS->getContext()), ResT);
+        }
         
         if (isa<UndefValue>(Res))
           Result.push_back(std::make_pair((ConstantInt*)0, PredBB));

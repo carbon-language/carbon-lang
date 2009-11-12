@@ -349,6 +349,38 @@ BB4:
 	ret i32 4
 }
 
+;; Correlated value through boolean expression.  GCC PR18046.
+define void @test12(i32 %A) {
+; CHECK: @test12
+entry:
+  %cond = icmp eq i32 %A, 0
+  br i1 %cond, label %bb, label %bb1
+; Should branch to the return block instead of through BB1.
+; CHECK: entry:
+; CHECK-NEXT: %cond = icmp eq i32 %A, 0
+; CHECK-NEXT: br i1 %cond, label %bb1, label %return
+
+bb:                   
+  %B = call i32 @test10f2()
+  br label %bb1
+
+bb1:
+  %C = phi i32 [ %A, %entry ], [ %B, %bb ]
+  %cond4 = icmp eq i32 %C, 0
+  br i1 %cond4, label %bb2, label %return
+
+; CHECK: bb1:
+; CHECK-NEXT: %B = call i32 @test10f2()
+; CHECK-NEXT: %cond4 = icmp eq i32 %B, 0
+; CHECK-NEXT: br i1 %cond4, label %bb2, label %return
+
+bb2:
+  %D = call i32 @test10f2()
+  ret void
+
+return:
+  ret void
+}
 
 
 ;;; Duplicate condition to avoid xor of cond.
