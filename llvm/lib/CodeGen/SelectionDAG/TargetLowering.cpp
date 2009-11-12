@@ -22,7 +22,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
@@ -2365,7 +2364,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
   assert(*(Constraint.end()-1) == '}' && "Not a brace enclosed constraint?");
 
   // Remove the braces from around the name.
-  std::string RegName(Constraint.begin()+1, Constraint.end()-1);
+  StringRef RegName(Constraint.data()+1, Constraint.size()-2);
 
   // Figure out which register class contains this reg.
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
@@ -2388,7 +2387,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
     
     for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end(); 
          I != E; ++I) {
-      if (StringsEqualNoCase(RegName, RI->getName(*I)))
+      if (RegName.equals_lower(RI->getName(*I)))
         return std::make_pair(*I, RC);
     }
   }

@@ -18,7 +18,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include <fstream>
 #include <sstream>
@@ -610,9 +609,10 @@ IsARMArchitecture(std::vector<std::string> Args)
 {
   for (std::vector<std::string>::const_iterator
          I = Args.begin(), E = Args.end(); I != E; ++I) {
-    if (!StringsEqualNoCase(*I, "-arch")) {
+    StringRef S(*I);
+    if (!S.equals_lower("-arch")) {
       ++I;
-      if ((I != E) && !StringsEqualNoCase(I->c_str(), "arm", strlen("arm"))) {
+      if (I != E && !S.substr(0, strlen("arm")).equals_lower("arm")) {
         return true;
       }
     }

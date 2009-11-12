@@ -97,6 +97,11 @@ namespace llvm {
               memcmp(Data, RHS.Data, RHS.Length) == 0);
     }
 
+    /// equals_lower - Check for string equality, ignoring case.
+    bool equals_lower(StringRef RHS) const {
+      return Length == RHS.Length && compare_lower(RHS) == 0;
+    }
+
     /// compare - Compare two strings; the result is -1, 0, or 1 if this string
     /// is lexicographically less than, equal to, or greater than the \arg RHS.
     int compare(StringRef RHS) const {
@@ -109,6 +114,9 @@ namespace llvm {
         return 0;
       return Length < RHS.Length ? -1 : 1;
     }
+
+    /// compare_lower - Compare two strings, ignoring case.
+    int compare_lower(StringRef RHS) const;
 
     /// str - Get the contents as an std::string.
     std::string str() const { return std::string(Data, Length); }

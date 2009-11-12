@@ -9595,14 +9595,14 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     }
 
     // GCC allows "st(0)" to be called just plain "st".
-    if (StringsEqualNoCase("{st}", Constraint)) {
+    if (StringRef("{st}").equals_lower(Constraint)) {
       Res.first = X86::ST0;
       Res.second = X86::RFP80RegisterClass;
       return Res;
     }
 
     // flags -> EFLAGS
-    if (StringsEqualNoCase("{flags}", Constraint)) {
+    if (StringRef("{flags}").equals_lower(Constraint)) {
       Res.first = X86::EFLAGS;
       Res.second = X86::CCRRegisterClass;
       return Res;

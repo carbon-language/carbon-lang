@@ -15,6 +15,26 @@ using namespace llvm;
 const size_t StringRef::npos;
 #endif
 
+static char ascii_tolower(char x) {
+  if (x >= 'A' && x <= 'Z')
+    return x - 'A' + 'a';
+  return x;
+}
+
+/// compare_lower - Compare strings, ignoring case.
+int StringRef::compare_lower(StringRef RHS) const {
+  for (size_t I = 0, E = std::min(Length, RHS.Length); I != E; ++I) {
+    char LHC = ascii_tolower(Data[I]);
+    char RHC = ascii_tolower(RHS.Data[I]);
+    if (LHC != RHC)
+      return LHC < RHC ? -1 : 1;
+  }
+
+  if (Length == RHS.Length)
+        return 0;
+  return Length < RHS.Length ? -1 : 1;
+}
+
 //===----------------------------------------------------------------------===//
 // String Searching
 //===----------------------------------------------------------------------===//
