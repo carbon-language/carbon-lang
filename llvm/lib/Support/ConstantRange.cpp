@@ -618,7 +618,7 @@ ConstantRange::shl(const ConstantRange &Amount) const {
   APInt max = getUnsignedMax() << Amount.getUnsignedMax();
 
   // there's no overflow!
-  APInt Zeros(sizeof(unsigned)*8, getUnsignedMax().countLeadingZeros());
+  APInt Zeros(getBitWidth(), getUnsignedMax().countLeadingZeros());
   if (Zeros.uge(Amount.getUnsignedMax()))
     return ConstantRange(min, max);
 
