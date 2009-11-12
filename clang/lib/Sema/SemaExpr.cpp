@@ -6522,8 +6522,6 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
           = dyn_cast<ObjCMessageExpr>(Op->getRHS()->IgnoreParenCasts())) {
       Selector Sel = ME->getSelector();
 
-      llvm::errs() << "selector is '" << Sel.getIdentifierInfoForSlot(0)->getName() << "'\n";
-
       // self = [<foo> init...]
       if (isSelfExpr(Op->getLHS())
           && Sel.getIdentifierInfoForSlot(0)->getName().startswith("init"))
