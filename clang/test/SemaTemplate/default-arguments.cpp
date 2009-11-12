@@ -118,3 +118,6 @@ template<typename T,
 X6<int> x6a;
 X6<long> x6b; // expected-note{{while checking a default template argument}}
 X6<long, X5b> x6c;
+
+
+template<template<class> class X = B<int> > struct X7; // expected-error{{must be a class template}}

@@ -823,15 +823,13 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
   //   A template-argument for a template template-parameter shall be the name
   //   of a class template or a template alias, expressed as id-expression.
   //   
-  // We perform some tentative parsing at this point, to determine whether
-  // we have an id-expression that refers to a class template or template
-  // alias. The grammar we tentatively parse is:
+  // We parse an id-expression that refers to a class template or template
+  // alias. The grammar we parse is:
   //
   //   nested-name-specifier[opt] template[opt] identifier
   //
   // followed by a token that terminates a template argument, such as ',', 
   // '>', or (in some cases) '>>'.
-  TentativeParsingAction TPA(*this);
   CXXScopeSpec SS; // nested-name-specifier, if present
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, 
                                  /*EnteringContext=*/false);
@@ -854,10 +852,8 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
         TemplateTy Template
         = Actions.ActOnDependentTemplateName(TemplateLoc, SS, Name, 
                                              /*ObjectType=*/0);
-        if (Template.get()) {
-          TPA.Commit();
+        if (Template.get())
           return ParsedTemplateArgument(SS, Template, Name.StartLocation);
-        }
       }
     } 
   } else if (Tok.is(tok::identifier)) {
@@ -875,16 +871,12 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       if (TNK == TNK_Dependent_template_name || TNK == TNK_Type_template) {
         // We have an id-expression that refers to a class template or
         // (C++0x) template alias. 
-        TPA.Commit();
         return ParsedTemplateArgument(SS, Template, Name.StartLocation);
       }
     }
   }
   
-  // We don't have a template template argument; revert everything we have
-  // tentatively parsed.
-  TPA.Revert();
-  
+  // We don't have a template template argument.  
   return ParsedTemplateArgument();
 }
 
@@ -912,10 +904,19 @@ ParsedTemplateArgument Parser::ParseTemplateArgument() {
   }
   
   // Try to parse a template template argument.
-  ParsedTemplateArgument TemplateTemplateArgument
-    = ParseTemplateTemplateArgument();
-  if (!TemplateTemplateArgument.isInvalid())
-    return TemplateTemplateArgument;
+  {
+    TentativeParsingAction TPA(*this);
+
+    ParsedTemplateArgument TemplateTemplateArgument
+      = ParseTemplateTemplateArgument();
+    if (!TemplateTemplateArgument.isInvalid()) {
+      TPA.Commit();
+      return TemplateTemplateArgument;
+    }
+    
+    // Revert this tentative parse to parse a non-type template argument.
+    TPA.Revert();
+  }
   
   // Parse a non-type template argument. 
   SourceLocation Loc = Tok.getLocation();

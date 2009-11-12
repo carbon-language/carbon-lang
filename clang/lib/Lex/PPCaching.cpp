@@ -109,6 +109,4 @@ void Preprocessor::AnnotatePreviousCachedTokens(const Token &Tok) {
       return;
     }
   }
-
-  assert(0&&"Didn't find the first token represented by the annotation token!");
 }
