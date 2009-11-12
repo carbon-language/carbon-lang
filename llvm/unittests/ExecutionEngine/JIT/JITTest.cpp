@@ -61,6 +61,7 @@ class RecordingJITMemoryManager : public JITMemoryManager {
 public:
   RecordingJITMemoryManager()
     : Base(JITMemoryManager::CreateDefaultMemManager()) {
+    stubsAllocated = 0;
   }
 
   virtual void setMemoryWritable() { Base->setMemoryWritable(); }
@@ -88,8 +89,10 @@ public:
       StartFunctionBodyCall(Result, F, InitialActualSize, ActualSize));
     return Result;
   }
+  int stubsAllocated;
   virtual uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
                                 unsigned Alignment) {
+    stubsAllocated++;
     return Base->allocateStub(F, StubSize, Alignment);
   }
   struct EndFunctionBodyCall {
@@ -453,6 +456,44 @@ TEST_F(JITTest, ModuleDeletion) {
   }
   EXPECT_EQ(RJMM->startExceptionTableCalls.size(),
             NumTablesDeallocated);
+}
+
+typedef int (*FooPtr) ();
+
+TEST_F(JITTest, NoStubs) {
+  LoadAssembly("define void @bar() {"
+	       "entry: "
+	       "ret void"
+	       "}"
+	       " "
+	       "define i32 @foo() {"
+	       "entry:"
+	       "call void @bar()"
+	       "ret i32 undef"
+	       "}"
+	       " "
+	       "define i32 @main() {"
+	       "entry:"
+	       "%0 = call i32 @foo()"
+	       "call void @bar()"
+	       "ret i32 undef"
+	       "}");
+  Function *foo = M->getFunction("foo");
+  uintptr_t tmp = (uintptr_t)(TheJIT->getPointerToFunction(foo));
+  FooPtr ptr = (FooPtr)(tmp);
+
+  (ptr)();
+
+  // We should now allocate no more stubs, we have the code to foo
+  // and the existing stub for bar.
+  int stubsBefore = RJMM->stubsAllocated;
+  Function *func = M->getFunction("main");
+  TheJIT->getPointerToFunction(func);
+
+  Function *bar = M->getFunction("bar");
+  TheJIT->getPointerToFunction(bar);
+
+  ASSERT_EQ(stubsBefore, RJMM->stubsAllocated);
 }
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
