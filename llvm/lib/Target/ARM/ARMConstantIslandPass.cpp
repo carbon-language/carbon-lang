@@ -294,11 +294,6 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // sizes of each block, the location of all the water, and finding all of the
   // constant pool users.
   InitialFunctionScan(MF, CPEMIs);
-
-  bool MadeChange = false;
-  if (isThumb2)
-    MadeChange |= OptimizeThumb2JumpTables(MF);
-
   CPEMIs.clear();
 
   /// Remove dead constant pool entries.
@@ -306,6 +301,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
 
   // Iteratively place constant pool entries and fix up branches until there
   // is no change.
+  bool MadeChange = false;
   unsigned NoCPIters = 0, NoBRIters = 0;
   while (true) {
     bool CPChange = false;
@@ -1480,6 +1476,7 @@ bool ARMConstantIslands::OptimizeThumb2Instructions(MachineFunction &MF) {
   }
 
   MadeChange |= OptimizeThumb2Branches(MF);
+  MadeChange |= OptimizeThumb2JumpTables(MF);
   return MadeChange;
 }
 
@@ -1725,8 +1722,8 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
   JTBB->addSuccessor(NewBB);
 
   // Update internal data structures to account for the newly inserted MBB.
-  // Don't mark the new block as having water following it, as we want the
-  // blocks following the jump table to be as close together as possible.
+  // This is almost the same as UpdateForInsertedWaterBlock, except that
+  // the Water goes after OrigBB, not NewBB.
   MF.RenumberBlocks(NewBB);
 
   // Insert a size into BBSizes to align it properly with the (newly
