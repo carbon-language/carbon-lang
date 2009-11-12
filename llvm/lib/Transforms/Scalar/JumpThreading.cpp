@@ -95,7 +95,7 @@ namespace {
     
     bool ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,
                                          PredValueInfo &Result);
-    bool ProcessThreadableEdges(Instruction *CondInst, BasicBlock *BB);
+    bool ProcessThreadableEdges(Value *Cond, BasicBlock *BB);
     
     
     bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
@@ -927,15 +927,14 @@ FindMostPopularDest(BasicBlock *BB,
   return MostPopularDest;
 }
 
-bool JumpThreading::ProcessThreadableEdges(Instruction *CondInst,
-                                           BasicBlock *BB) {
+bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB) {
   // If threading this would thread across a loop header, don't even try to
   // thread the edge.
   if (LoopHeaders.count(BB))
     return false;
   
   SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> PredValues;
-  if (!ComputeValueKnownInPredecessors(CondInst, BB, PredValues))
+  if (!ComputeValueKnownInPredecessors(Cond, BB, PredValues))
     return false;
   assert(!PredValues.empty() &&
          "ComputeValueKnownInPredecessors returned true with no values");
