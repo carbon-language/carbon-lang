@@ -494,14 +494,25 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
           // Don't mark a call as potentially throwing if the function it's
           // calling is marked "nounwind".
           bool DoesNotThrow = false;
+          bool SawFunc = false;
           for (unsigned OI = 0, OE = MI->getNumOperands(); OI != OE; ++OI) {
             const MachineOperand &MO = MI->getOperand(OI);
 
             if (MO.isGlobal()) {
               if (Function *F = dyn_cast<Function>(MO.getGlobal())) {
-                if (F->doesNotThrow()) {
-                  DoesNotThrow = true;
+                if (SawFunc) {
+                  // Be conservative. If we have more than one function operand
+                  // for this call, then we can't make the assumption that it's
+                  // the callee and not a parameter to the call.
+                  // 
+                  // FIXME: Determine if there's a way to say that `F' is the
+                  // callee or parameter.
+                  DoesNotThrow = false;
                   break;
+                }
+                if (F->doesNotThrow()) {
+                  SawFunc = true;
+                  DoesNotThrow = true;
                 }
               }
             }
