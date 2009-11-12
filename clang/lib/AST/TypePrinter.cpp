@@ -579,6 +579,7 @@ static void PrintTemplateArgument(std::string &Buffer,
     case TemplateArgument::Template: {
       llvm::raw_string_ostream s(Buffer);
       Arg.getAsTemplate().print(s, Policy);
+      break;
     }
       
     case TemplateArgument::Integral:

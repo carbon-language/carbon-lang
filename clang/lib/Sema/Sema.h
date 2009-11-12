@@ -2621,10 +2621,45 @@ public:
                              TemplateArgument &Converted);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, 
                              const TemplateArgumentLoc &Arg);
+  
+  /// \brief Enumeration describing how template parameter lists are compared
+  /// for equality.
+  enum TemplateParameterListEqualKind {
+    /// \brief We are matching the template parameter lists of two templates
+    /// that might be redeclarations.
+    ///
+    /// \code
+    /// template<typename T> struct X;
+    /// template<typename T> struct X;
+    /// \endcode
+    TPL_TemplateMatch,
+    
+    /// \brief We are matching the template parameter lists of two template
+    /// template parameters as part of matching the template parameter lists
+    /// of two templates that might be redeclarations.
+    ///
+    /// \code
+    /// template<template<int I> class TT> struct X;
+    /// template<template<int Value> class Other> struct X;
+    /// \endcode
+    TPL_TemplateTemplateParmMatch,
+    
+    /// \brief We are matching the template parameter lists of a template
+    /// template argument against the template parameter lists of a template
+    /// template parameter.
+    ///
+    /// \code
+    /// template<template<int Value> class Metafun> struct X;
+    /// template<int Value> struct integer_c;
+    /// X<integer_c> xic;
+    /// \endcode
+    TPL_TemplateTemplateArgumentMatch
+  };
+  
   bool TemplateParameterListsAreEqual(TemplateParameterList *New,
                                       TemplateParameterList *Old,
                                       bool Complain,
-                                      bool IsTemplateTemplateParm = false,
+                                      TemplateParameterListEqualKind Kind,
                                       SourceLocation TemplateArgLoc
                                         = SourceLocation());
 

@@ -350,7 +350,7 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
     if (NewTemplate &&
         (!TemplateParameterListsAreEqual(NewTemplate->getTemplateParameters(),
                                          OldTemplate->getTemplateParameters(),
-                                         false, false, SourceLocation()) ||
+                                         false, TPL_TemplateMatch) ||
          OldType->getResultType() != NewType->getResultType()))
       return true;
 

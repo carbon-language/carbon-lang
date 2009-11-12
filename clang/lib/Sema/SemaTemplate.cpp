@@ -706,7 +706,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // Ensure that the template parameter lists are compatible.
     if (!TemplateParameterListsAreEqual(TemplateParams,
                                    PrevClassTemplate->getTemplateParameters(),
-                                        /*Complain=*/true))
+                                        /*Complain=*/true,
+                                        TPL_TemplateMatch))
       return true;
 
     // C++ [temp.class]p4:
@@ -1124,7 +1125,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
         if (ExpectedTemplateParams)
           TemplateParameterListsAreEqual(ParamLists[Idx],
                                          ExpectedTemplateParams,
-                                         true);
+                                         true, TPL_TemplateMatch);
       }
     } else if (ParamLists[Idx]->size() > 0)
       Diag(ParamLists[Idx]->getTemplateLoc(),
@@ -2511,7 +2512,8 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
 
   return !TemplateParameterListsAreEqual(Template->getTemplateParameters(),
                                          Param->getTemplateParameters(),
-                                         true, true,
+                                         true, 
+                                         TPL_TemplateTemplateArgumentMatch,
                                          Arg.getLocation());
 }
 
@@ -2528,9 +2530,7 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
 /// \param Complain  If true, this routine will produce a diagnostic if
 /// the template parameter lists are not equivalent.
 ///
-/// \param IsTemplateTemplateParm  If true, this routine is being
-/// called to compare the template parameter lists of a template
-/// template parameter.
+/// \param Kind describes how we are to match the template parameter lists.
 ///
 /// \param TemplateArgLoc If this source location is valid, then we
 /// are actually checking the template parameter list of a template
@@ -2544,7 +2544,7 @@ bool
 Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
                                      TemplateParameterList *Old,
                                      bool Complain,
-                                     bool IsTemplateTemplateParm,
+                                     TemplateParameterListEqualKind Kind,
                                      SourceLocation TemplateArgLoc) {
   if (Old->size() != New->size()) {
     if (Complain) {
@@ -2555,10 +2555,10 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       }
       Diag(New->getTemplateLoc(), NextDiag)
           << (New->size() > Old->size())
-          << IsTemplateTemplateParm
+          << (Kind != TPL_TemplateMatch)
           << SourceRange(New->getTemplateLoc(), New->getRAngleLoc());
       Diag(Old->getTemplateLoc(), diag::note_template_prev_declaration)
-        << IsTemplateTemplateParm
+        << (Kind != TPL_TemplateMatch)
         << SourceRange(Old->getTemplateLoc(), Old->getRAngleLoc());
     }
 
@@ -2576,9 +2576,9 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
           NextDiag = diag::note_template_param_different_kind;
         }
         Diag((*NewParm)->getLocation(), NextDiag)
-          << IsTemplateTemplateParm;
+          << (Kind != TPL_TemplateMatch);
         Diag((*OldParm)->getLocation(), diag::note_template_prev_declaration)
-          << IsTemplateTemplateParm;
+          << (Kind != TPL_TemplateMatch);
       }
       return false;
     }
@@ -2591,6 +2591,16 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       // The types of non-type template parameters must agree.
       NonTypeTemplateParmDecl *NewNTTP
         = cast<NonTypeTemplateParmDecl>(*NewParm);
+      
+      // If we are matching a template template argument to a template
+      // template parameter and one of the non-type template parameter types
+      // is dependent, then we must wait until template instantiation time
+      // to actually compare the arguments.
+      if (Kind == TPL_TemplateTemplateArgumentMatch &&
+          (OldNTTP->getType()->isDependentType() ||
+           NewNTTP->getType()->isDependentType()))
+        continue;
+      
       if (Context.getCanonicalType(OldNTTP->getType()) !=
             Context.getCanonicalType(NewNTTP->getType())) {
         if (Complain) {
@@ -2602,7 +2612,7 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
           }
           Diag(NewNTTP->getLocation(), NextDiag)
             << NewNTTP->getType()
-            << IsTemplateTemplateParm;
+            << (Kind != TPL_TemplateMatch);
           Diag(OldNTTP->getLocation(),
                diag::note_template_nontype_parm_prev_declaration)
             << OldNTTP->getType();
@@ -2621,7 +2631,7 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       if (!TemplateParameterListsAreEqual(NewTTP->getTemplateParameters(),
                                           OldTTP->getTemplateParameters(),
                                           Complain,
-                                          /*IsTemplateTemplateParm=*/true,
+              (Kind == TPL_TemplateMatch? TPL_TemplateTemplateParmMatch : Kind),
                                           TemplateArgLoc))
         return false;
     }
