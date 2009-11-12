@@ -16,7 +16,6 @@ add_clang_library(clangAnalysis
   CallGraph.cpp
   CallInliner.cpp
   CastToStructChecker.cpp
-  CheckSizeofPointer.cpp
   CheckDeadStores.cpp
   CheckObjCDealloc.cpp
   CheckObjCInstMethSignature.cpp
@@ -41,6 +40,7 @@ add_clang_library(clangAnalysis
   PathDiagnostic.cpp
   PointerArithChecker.cpp
   PointerSubChecker.cpp
+  PthreadLockChecker.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
   ReturnPointerRangeChecker.cpp
