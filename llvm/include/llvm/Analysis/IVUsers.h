@@ -161,6 +161,10 @@ public:
   void addUser(const SCEV *Offset, Instruction *User, Value *Operand) {
     Users.push_back(new IVStrideUse(this, Offset, User, Operand));
   }
+
+  void removeUser(IVStrideUse *User) {
+    Users.erase(User);
+  }
 };
 
 class IVUsers : public LoopPass {
@@ -200,6 +204,9 @@ public:
   /// reducible SCEV, recursively add its users to the IVUsesByStride set and
   /// return true.  Otherwise, return false.
   bool AddUsersIfInteresting(Instruction *I);
+
+  void AddUser(const SCEV *Stride, const SCEV *Offset,
+               Instruction *User, Value *Operand);
 
   /// getReplacementExpr - Return a SCEV expression which computes the
   /// value of the OperandValToReplace of the given IVStrideUse.

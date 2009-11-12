@@ -267,6 +267,18 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
   return true;
 }
 
+void IVUsers::AddUser(const SCEV *Stride, const SCEV *Offset,
+                      Instruction *User, Value *Operand) {
+  IVUsersOfOneStride *StrideUses = IVUsesByStride[Stride];
+  if (!StrideUses) {    // First occurrence of this stride?
+    StrideOrder.push_back(Stride);
+    StrideUses = new IVUsersOfOneStride(Stride);
+    IVUses.push_back(StrideUses);
+    IVUsesByStride[Stride] = StrideUses;
+  }
+  IVUsesByStride[Stride]->addUser(Offset, User, Operand);
+}
+
 IVUsers::IVUsers()
  : LoopPass(&ID) {
 }
