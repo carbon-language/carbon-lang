@@ -136,10 +136,11 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     RuntimeVers = LO.ObjCNonFragileABI ? 2 : 1;
 
   // Create new compile unit.
-  return Unit = DebugFactory.CreateCompileUnit(LangTag, AbsFileName.getLast(),
-                                               AbsFileName.getDirname(),
-                                               Producer, isMain, isOptimized,
-                                               Flags, RuntimeVers);
+  return Unit = DebugFactory.CreateCompileUnit(LangTag, 
+                                               AbsFileName.getLast().c_str(),
+                                               AbsFileName.getDirname().c_str(),
+                                               Producer.c_str(), isMain, 
+                                               isOptimized, Flags, RuntimeVers);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new
@@ -412,7 +413,6 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
 
   // We don't set size information, but do specify where the typedef was
   // declared.
-  std::string TyName = Ty->getDecl()->getNameAsString();
   SourceLocation DefLoc = Ty->getDecl()->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
 
@@ -422,7 +422,8 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
 
   llvm::DIType DbgTy = 
     DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
-                                   TyName, DefUnit, Line, 0, 0, 0, 0, Src);
+                                   Ty->getDecl()->getName().data(),
+                                   DefUnit, Line, 0, 0, 0, 0, Src);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
@@ -473,8 +474,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   SourceManager &SM = M->getContext().getSourceManager();
 
   // Get overall information about the record type for the debug info.
-  std::string Name = Decl->getNameAsString();
-
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   llvm::DICompileUnit DefUnit;
   unsigned Line = 0;
@@ -490,7 +489,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, 0, 0, 0, 0,
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsString().data(), 
+                                     DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray());
 
   // If this is just a forward declaration, return it.
@@ -513,10 +513,10 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
-    std::string FieldName = Field->getNameAsString();
+    const char *FieldName = Field->getName().data();
 
     // Ignore unnamed fields.
-    if (FieldName.empty())
+    if (!FieldName)
       continue;
 
     // Get the location for the field.
@@ -564,8 +564,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
   llvm::DICompositeType RealDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, Size,
-                                     Align, 0, 0, llvm::DIType(), Elements);
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsString().data(),
+                                     DefUnit, Line, Size, Align, 0, 0, 
+                                     llvm::DIType(), Elements);
 
   // Update TypeCache.
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl.getNode();
@@ -586,8 +587,6 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   SourceManager &SM = M->getContext().getSourceManager();
 
   // Get overall information about the record type for the debug info.
-  std::string Name = Decl->getNameAsString();
-
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(Decl->getLocation());
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
@@ -602,7 +601,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, 0, 0, 0, 0,
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName().data(), 
+                                     DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray(),
                                      RuntimeLang);
 
@@ -636,10 +636,10 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     ObjCIvarDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
-    std::string FieldName = Field->getNameAsString();
+    const char *FieldName = Field->getName().data();
 
     // Ignore unnamed fields.
-    if (FieldName.empty())
+    if (!FieldName)
       continue;
 
     // Get the location for the field.
@@ -690,9 +690,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
   llvm::DICompositeType RealDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, Size,
-                                     Align, 0, 0, llvm::DIType(), Elements,
-                                     RuntimeLang);
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName().data(), DefUnit,
+                                     Line, Size, Align, 0, 0, llvm::DIType(), 
+                                     Elements, RuntimeLang);
 
   // Update TypeCache.
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl.getNode();
@@ -714,7 +714,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   for (EnumDecl::enumerator_iterator
          Enum = Decl->enumerator_begin(), EnumEnd = Decl->enumerator_end();
        Enum != EnumEnd; ++Enum) {
-    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getNameAsString(),
+    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getName().data(),
                                             Enum->getInitVal().getZExtValue()));
   }
 
@@ -722,7 +722,6 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   llvm::DIArray EltArray =
     DebugFactory.GetOrCreateArray(Enumerators.data(), Enumerators.size());
 
-  std::string EnumName = Decl->getNameAsString();
   SourceLocation DefLoc = Decl->getLocation();
   llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
   SourceManager &SM = M->getContext().getSourceManager();
@@ -740,7 +739,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
 
   llvm::DIType DbgTy = 
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
-                                     Unit, EnumName, DefUnit, Line,
+                                     Unit, Decl->getName().data(), DefUnit, Line,
                                      Size, Align, 0, 0,
                                      llvm::DIType(), EltArray);
   
@@ -1131,10 +1130,9 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = M->getContext().getTypeSize(FType);
     FieldAlign = Align*8;
-    std::string Name = Decl->getNameAsString();
     
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             Name, DefUnit,
+                                             Decl->getName().data(), DefUnit,
                                              0, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
     EltTys.push_back(FieldTy);
@@ -1162,7 +1160,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
 
   // Create the descriptor for the variable.
   llvm::DIVariable D =
-    DebugFactory.CreateVariable(Tag, RegionStack.back(),Decl->getNameAsString(),
+    DebugFactory.CreateVariable(Tag, RegionStack.back(),Decl->getName().data(),
                                 Unit, Line, Ty);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
@@ -1308,11 +1306,10 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = M->getContext().getTypeSize(FType);
     FieldAlign = Align*8;
-    std::string Name = Decl->getNameAsString();
     
     XOffset = FieldOffset;
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             Name, DefUnit,
+                                             Decl->getName().data(), DefUnit,
                                              0, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
     EltTys.push_back(FieldTy);
@@ -1366,7 +1363,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DebugFactory.CreateComplexVariable(Tag, RegionStack.back(),
-                                       Decl->getNameAsString(), Unit, Line, Ty,
+                                       Decl->getName().data(), Unit, Line, Ty,
                                        addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
@@ -1412,8 +1409,6 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
-  std::string Name = Var->getName();
-
   QualType T = Decl->getType();
   if (T->isIncompleteArrayType()) {
 
@@ -1426,10 +1421,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     T = M->getContext().getConstantArrayType(ET, ConstVal,
                                            ArrayType::Normal, 0);
   }
-
-  DebugFactory.CreateGlobalVariable(getContext(Decl, Unit), 
-                                    Decl->getNameAsString(), 
-                                    Decl->getNameAsString(), 
+  const char *DeclName = Decl->getName().data();
+  DebugFactory.CreateGlobalVariable(getContext(Decl, Unit), DeclName, DeclName,
                                     NULL, Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
@@ -1445,7 +1438,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
-  std::string Name = Decl->getNameAsString();
+  const char *Name = Decl->getName().data();
 
   QualType T = M->getContext().getObjCInterfaceType(Decl);
   if (T->isIncompleteArrayType()) {
