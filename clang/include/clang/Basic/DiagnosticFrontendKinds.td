@@ -18,10 +18,14 @@ def err_fe_error_reading_stdin : Error<"error reading stdin">;
 def err_fe_error_backend : Error<"error in backend: %0">, DefaultFatal;
 def err_fe_invalid_ast_file : Error<"invalid AST file: '%0'">, DefaultFatal;
 def err_fe_invalid_ast_action : Error<"invalid action for AST input">, DefaultFatal;
-def err_fe_invalid_code_complete_file 
+def err_fe_invalid_code_complete_file
   : Error<"cannot locate code-completion file %0">, DefaultFatal;
 def err_fe_dependency_file_requires_MT : Error<
     "-dependency-file requires at least one -MT option">;
+def err_fe_incompatible_options : Error<
+    "'%0' cannot be used with '%1'">, DefaultFatal;
+def err_fe_no_fixit_and_codegen : Error<
+    "FIX-ITs cannot be applied when generating code">;
 
 def note_fixit_applied : Note<"FIX-IT applied suggested code changes">;
 def note_fixit_in_macro : Note<

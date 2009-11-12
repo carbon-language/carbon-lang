@@ -558,6 +558,12 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
       OS.reset(ComputeOutFile(CompOpts, InFile, "bc", true, OutPath));
     }
 
+    // Fix-its can change semantics, disallow with any IRgen action.
+    if (FixItAll || !FixItAtLocations.empty()) {
+      PP.getDiagnostics().Report(diag::err_fe_no_fixit_and_codegen);
+      return 0;
+    }
+
     return CreateBackendConsumer(Act, PP.getDiagnostics(), PP.getLangOptions(),
                                  CompOpts.getCompileOpts(), InFile, OS.get(),
                                  Context);
