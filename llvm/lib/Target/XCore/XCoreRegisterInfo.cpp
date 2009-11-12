@@ -330,9 +330,10 @@ XCoreRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     int FrameIdx;
     if (! isVarArg) {
       // A fixed offset of 0 allows us to save / restore LR using entsp / retsp.
-      FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0);
+      FrameIdx = MFI->CreateFixedObject(RC->getSize(), 0, true, false);
     } else {
-      FrameIdx = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+      FrameIdx = MFI->CreateStackObject(RC->getSize(), RC->getAlignment(),
+                                        false);
     }
     XFI->setUsesLR(FrameIdx);
     XFI->setLRSpillSlot(FrameIdx);
@@ -340,13 +341,15 @@ XCoreRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (requiresRegisterScavenging(MF)) {
     // Reserve a slot close to SP or frame pointer.
     RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                RC->getAlignment()));
+                                                       RC->getAlignment(),
+                                                       false));
   }
   if (hasFP(MF)) {
     // A callee save register is used to hold the FP.
     // This needs saving / restoring in the epilogue / prologue.
     XFI->setFPSpillSlot(MFI->CreateStackObject(RC->getSize(),
-                        RC->getAlignment()));
+                                               RC->getAlignment(),
+                                               false));
   }
 }
 
@@ -593,7 +596,7 @@ int XCoreRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return XCoreGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
-unsigned XCoreRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned XCoreRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   bool FP = hasFP(MF);
   
   return FP ? XCore::R10 : XCore::SP;

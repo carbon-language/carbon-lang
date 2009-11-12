@@ -1043,7 +1043,8 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64,
                                                            isDarwinABI);
     // Allocate the frame index for frame pointer save area.
-    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset);
+    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset,
+                                                true, false);
     // Save the result.
     FI->setFramePointerSaveIndex(FPSI);                      
   }
@@ -1051,7 +1052,8 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Reserve stack space to move the linkage area to in case of a tail call.
   int TCSPDelta = 0;
   if (PerformTailCallOpt && (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
-    MF.getFrameInfo()->CreateFixedObject(-1 * TCSPDelta, TCSPDelta);
+    MF.getFrameInfo()->CreateFixedObject(-1 * TCSPDelta, TCSPDelta,
+                                         true, false);
   }
   
   // Reserve a slot closest to SP or frame pointer if we have a dynalloc or
@@ -1067,7 +1069,8 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
       const TargetRegisterClass *RC = IsPPC64 ? G8RC : GPRC;
       RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                         RC->getAlignment()));
+                                                         RC->getAlignment(),
+                                                         false));
     }
 }
 
@@ -1711,7 +1714,7 @@ unsigned PPCRegisterInfo::getRARegister() const {
   return !Subtarget.isPPC64() ? PPC::LR : PPC::LR8;
 }
 
-unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   if (!Subtarget.isPPC64())
     return hasFP(MF) ? PPC::R31 : PPC::R1;
   else

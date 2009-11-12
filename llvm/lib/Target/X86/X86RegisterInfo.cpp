@@ -614,8 +614,8 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Offset is a 32-bit integer.
     int Offset = getFrameIndexOffset(MF, FrameIndex) +
       (int)(MI.getOperand(i + 3).getImm());
-  
-     MI.getOperand(i + 3).ChangeToImmediate(Offset);
+
+    MI.getOperand(i + 3).ChangeToImmediate(Offset);
   } else {
     // Offset is symbolic. This is extremely rare.
     uint64_t Offset = getFrameIndexOffset(MF, FrameIndex) +
@@ -651,7 +651,8 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     //   }
     //   [EBP]
     MFI->CreateFixedObject(-TailCallReturnAddrDelta,
-                           (-1U*SlotSize)+TailCallReturnAddrDelta);
+                           (-1U*SlotSize)+TailCallReturnAddrDelta,
+                           true, false);
   }
 
   if (hasFP(MF)) {
@@ -663,7 +664,8 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     int FrameIdx = MFI->CreateFixedObject(SlotSize,
                                           -(int)SlotSize +
                                           TFI.getOffsetOfLocalArea() +
-                                          TailCallReturnAddrDelta);
+                                          TailCallReturnAddrDelta,
+                                          true, false);
     assert(FrameIdx == MFI->getObjectIndexBegin() &&
            "Slot for EBP register must be last in order to be found!");
     FrameIdx = 0;
@@ -1275,7 +1277,7 @@ unsigned X86RegisterInfo::getRARegister() const {
                  : X86::EIP;    // Should have dwarf #8.
 }
 
-unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned X86RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return hasFP(MF) ? FramePtr : StackPtr;
 }
 

@@ -287,7 +287,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   }
 
   if (hasFP(MF)) {
-    MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize), 
+    MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true), 
                          StackOffset);
     MipsFI->setFPStackOffset(StackOffset);
     TopCPUSavedRegOff = StackOffset;
@@ -295,7 +295,7 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   }
 
   if (MFI->hasCalls()) {
-    MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize), 
+    MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
                          StackOffset);
     MipsFI->setRAStackOffset(StackOffset);
     TopCPUSavedRegOff = StackOffset;
@@ -501,7 +501,7 @@ getRARegister() const {
 }
 
 unsigned MipsRegisterInfo::
-getFrameRegister(MachineFunction &MF) const {
+getFrameRegister(const MachineFunction &MF) const {
   return hasFP(MF) ? Mips::FP : Mips::SP;
 }
 

@@ -704,7 +704,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // the stack (even if less than 4 are used as arguments)
   if (Subtarget->isABI_O32()) {
     int VTsize = EVT(MVT::i32).getSizeInBits()/8;
-    MFI->CreateFixedObject(VTsize, (VTsize*3));
+    MFI->CreateFixedObject(VTsize, (VTsize*3), true, false);
     CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
   } else
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
@@ -773,7 +773,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // if O32 ABI is used. For EABI the first address is zero.
     LastArgStackLoc = (FirstStackArgLoc + VA.getLocMemOffset());
     int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
-                                    LastArgStackLoc);
+                                    LastArgStackLoc, true, false);
 
     SDValue PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
@@ -849,7 +849,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         // Create the frame index only once. SPOffset here can be anything 
         // (this will be fixed on processFunctionBeforeFrameFinalized)
         if (MipsFI->getGPStackOffset() == -1) {
-          FI = MFI->CreateFixedObject(4, 0);
+          FI = MFI->CreateFixedObject(4, 0, true, false);
           MipsFI->setGPFI(FI);
         }
         MipsFI->setGPStackOffset(LastArgStackLoc);
@@ -1002,7 +1002,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
         // be used on emitPrologue) to avoid mis-calc of the first stack 
         // offset on PEI::calculateFrameObjectOffsets.
         // Arguments are always 32-bit.
-        int FI = MFI->CreateFixedObject(4, 0);
+        int FI = MFI->CreateFixedObject(4, 0, true, false);
         MipsFI->recordStoreVarArgsFI(FI, -(4+(i*4)));
         SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
       
@@ -1025,7 +1025,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // offset on PEI::calculateFrameObjectOffsets.
       // Arguments are always 32-bit.
       unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
-      int FI = MFI->CreateFixedObject(ArgSize, 0);
+      int FI = MFI->CreateFixedObject(ArgSize, 0, true, false);
       MipsFI->recordLoadArgsFI(FI, -(ArgSize+
         (FirstStackArgLoc + VA.getLocMemOffset())));
 

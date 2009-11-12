@@ -15,9 +15,11 @@
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/System/DataTypes.h"
 #include <cassert>
+#include <limits>
 #include <vector>
 
 namespace llvm {
@@ -106,8 +108,8 @@ class MachineFrameInfo {
     // cannot alias any other memory objects.
     bool isSpillSlot;
 
-    StackObject(uint64_t Sz, unsigned Al, int64_t SP = 0, bool IM = false,
-                bool isSS = false)
+    StackObject(uint64_t Sz, unsigned Al, int64_t SP, bool IM,
+                bool isSS)
       : SPOffset(SP), Size(Sz), Alignment(Al), isImmutable(IM),
         isSpillSlot(isSS) {}
   };
@@ -182,6 +184,10 @@ class MachineFrameInfo {
   /// CSIValid - Has CSInfo been set yet?
   bool CSIValid;
 
+  /// SpillObjects - A vector indicating which frame indices refer to
+  /// spill slots.
+  SmallVector<bool, 8> SpillObjects;
+
   /// MMI - This field is set (via setMachineModuleInfo) by a module info
   /// consumer (ex. DwarfWriter) to indicate that frame layout information
   /// should be acquired.  Typically, it's the responsibility of the target's
@@ -192,6 +198,7 @@ class MachineFrameInfo {
   /// TargetFrameInfo - Target information about frame layout.
   ///
   const TargetFrameInfo &TFI;
+
 public:
   explicit MachineFrameInfo(const TargetFrameInfo &tfi) : TFI(tfi) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
@@ -341,7 +348,7 @@ public:
   /// index with a negative value.
   ///
   int CreateFixedObject(uint64_t Size, int64_t SPOffset,
-                        bool Immutable = true);
+                        bool Immutable, bool isSS);
   
   
   /// isFixedObjectIndex - Returns true if the specified index corresponds to a
@@ -374,13 +381,31 @@ public:
     return Objects[ObjectIdx+NumFixedObjects].Size == ~0ULL;
   }
 
-  /// CreateStackObject - Create a new statically sized stack object, returning
-  /// a nonnegative identifier to represent it.
+  /// CreateStackObject - Create a new statically sized stack object,
+  /// returning a nonnegative identifier to represent it.
   ///
-  int CreateStackObject(uint64_t Size, unsigned Alignment, bool isSS = false) {
+  int CreateStackObject(uint64_t Size, unsigned Alignment, bool isSS) {
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
     Objects.push_back(StackObject(Size, Alignment, 0, false, isSS));
-    return (int)Objects.size()-NumFixedObjects-1;
+    int Index = (int)Objects.size()-NumFixedObjects-1;
+    assert(Index >= 0 && "Bad frame index!");
+    if (SpillObjects.size() <= static_cast<unsigned>(Index))
+      SpillObjects.resize(Index+1);
+    SpillObjects[Index] = false;
+    return Index;
+  }
+
+  /// CreateSpillStackObject - Create a new statically sized stack
+  /// object that represents a spill slot, returning a nonnegative
+  /// identifier to represent it.
+  ///
+  int CreateSpillStackObject(uint64_t Size, unsigned Alignment) {
+    CreateStackObject(Size, Alignment, true);
+    int Index = (int)Objects.size()-NumFixedObjects-1;
+    if (SpillObjects.size() <= static_cast<unsigned>(Index))
+      SpillObjects.resize(Index+1);
+    SpillObjects[Index] = true;
+    return Index;
   }
 
   /// RemoveStackObject - Remove or mark dead a statically sized stack object.
@@ -397,10 +422,20 @@ public:
   ///
   int CreateVariableSizedObject() {
     HasVarSizedObjects = true;
-    Objects.push_back(StackObject(0, 1));
+    Objects.push_back(StackObject(0, 1, 0, false, false));
     return (int)Objects.size()-NumFixedObjects-1;
   }
-  
+
+  /// isSpillObject - Return whether the index refers to a spill slot.
+  ///
+  bool isSpillObject(int Index) const {
+    // Negative indices can't be spill slots.
+    if (Index < 0) return false;
+    assert(static_cast<unsigned>(Index) < SpillObjects.size() &&
+           "Invalid frame index!");
+    return SpillObjects[Index];
+  }
+
   /// getCalleeSavedInfo - Returns a reference to call saved info vector for the
   /// current function.
   const std::vector<CalleeSavedInfo> &getCalleeSavedInfo() const {

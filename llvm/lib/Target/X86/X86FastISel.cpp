@@ -1493,7 +1493,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       EVT ResVT = RVLocs[0].getValVT();
       unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
       unsigned MemSize = ResVT.getSizeInBits()/8;
-      int FI = MFI.CreateStackObject(MemSize, MemSize);
+      int FI = MFI.CreateStackObject(MemSize, MemSize, false);
       addFrameReference(BuildMI(MBB, DL, TII.get(Opc)), FI).addReg(ResultReg);
       DstRC = ResVT == MVT::f32
         ? X86::FR32RegisterClass : X86::FR64RegisterClass;

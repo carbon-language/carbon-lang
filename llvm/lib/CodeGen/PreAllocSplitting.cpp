@@ -341,7 +341,7 @@ int PreAllocSplitting::CreateSpillStackSlot(unsigned Reg,
   if (I != IntervalSSMap.end()) {
     SS = I->second;
   } else {
-    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+    SS = MFI->CreateSpillStackObject(RC->getSize(), RC->getAlignment());
     IntervalSSMap[Reg] = SS;
   }
 
@@ -957,7 +957,7 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
   if (I != IntervalSSMap.end()) {
     SS = I->second;
   } else {
-    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
+    SS = MFI->CreateSpillStackObject(RC->getSize(), RC->getAlignment());
   }
   
   MachineInstr* FMI = TII->foldMemoryOperand(*MBB->getParent(),

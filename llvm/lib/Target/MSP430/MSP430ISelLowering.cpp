@@ -318,7 +318,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
              << "\n";
       }
       // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset());
+      int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset(), true, false);
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter

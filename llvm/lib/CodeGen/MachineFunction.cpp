@@ -441,9 +441,10 @@ DebugLocTuple MachineFunction::getDebugLocTuple(DebugLoc DL) const {
 /// index with a negative value.
 ///
 int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
-                                        bool Immutable) {
+                                        bool Immutable, bool isSS) {
   assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
-  Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset, Immutable));
+  Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset, Immutable,
+                                              isSS));
   return -++NumFixedObjects;
 }
 

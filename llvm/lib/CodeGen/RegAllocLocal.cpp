@@ -261,8 +261,8 @@ int RALocal::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
     return SS;          // Already has space allocated?
 
   // Allocate a new stack object for this spill location...
-  int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
-                                                       RC->getAlignment(),true);
+  int FrameIdx = MF->getFrameInfo()->CreateSpillStackObject(RC->getSize(),
+                                                            RC->getAlignment());
 
   // Assign the slot...
   StackSlotForVirtReg[VirtReg] = FrameIdx;

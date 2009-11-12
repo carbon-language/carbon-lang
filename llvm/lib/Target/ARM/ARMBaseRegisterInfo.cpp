@@ -774,7 +774,8 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
           // Reserve a slot closest to SP or frame pointer.
           const TargetRegisterClass *RC = ARM::GPRRegisterClass;
           RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                           RC->getAlignment()));
+                                                             RC->getAlignment(),
+                                                             false));
         }
       }
     }
@@ -791,7 +792,8 @@ unsigned ARMBaseRegisterInfo::getRARegister() const {
   return ARM::LR;
 }
 
-unsigned ARMBaseRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned 
+ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   if (STI.isTargetDarwin() || hasFP(MF))
     return FramePtr;
   return ARM::SP;

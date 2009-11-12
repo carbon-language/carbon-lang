@@ -329,7 +329,7 @@ SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
       // Create the nodes corresponding to a load from this parameter slot.
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(LocVT.getSizeInBits()/8,
-                                      VA.getLocMemOffset());
+                                      VA.getLocMemOffset(), true, false);
 
       // Create the SelectionDAG nodes corresponding to a load
       // from this parameter

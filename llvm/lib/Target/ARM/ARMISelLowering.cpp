@@ -1545,7 +1545,8 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
   if (NextVA.isMemLoc()) {
     unsigned ArgSize = NextVA.getLocVT().getSizeInBits()/8;
     MachineFrameInfo *MFI = MF.getFrameInfo();
-    int FI = MFI->CreateFixedObject(ArgSize, NextVA.getLocMemOffset());
+    int FI = MFI->CreateFixedObject(ArgSize, NextVA.getLocMemOffset(),
+                                    true, false);
 
     // Create load node to retrieve arguments from the stack.
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -1659,7 +1660,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       assert(VA.getValVT() != MVT::i64 && "i64 should already be lowered");
 
       unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
-      int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset());
+      int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset(),
+                                      true, false);
 
       // Create load nodes to retrieve arguments from the stack.
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -1687,7 +1689,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       // the result of va_next.
       AFI->setVarArgsRegSaveSize(VARegSaveSize);
       VarArgsFrameIndex = MFI->CreateFixedObject(VARegSaveSize, ArgOffset +
-                                                 VARegSaveSize - VARegSize);
+                                                 VARegSaveSize - VARegSize,
+                                                 true, false);
       SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
 
       SmallVector<SDValue, 4> MemOps;
@@ -1711,7 +1714,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
                             &MemOps[0], MemOps.size());
     } else
       // This will point to the next argument passed via stack.
-      VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
+      VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset, true, false);
   }
 
   return Chain;

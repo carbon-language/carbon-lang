@@ -368,7 +368,8 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (requiresRegisterScavenging(MF)) {
     // Reserve a slot close to SP or frame pointer.
     RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                       RC->getAlignment()));
+                                                       RC->getAlignment(),
+                                                       false));
   }
 }
 
@@ -449,7 +450,8 @@ unsigned BlackfinRegisterInfo::getRARegister() const {
   return BF::RETS;
 }
 
-unsigned BlackfinRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned
+BlackfinRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return hasFP(MF) ? BF::FP : BF::SP;
 }
 

@@ -264,7 +264,8 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
       if ((unsigned)FrameIdx > MaxCSFrameIndex) MaxCSFrameIndex = FrameIdx;
     } else {
       // Spill it to the stack where we must.
-      FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->Offset);
+      FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->Offset,
+                                        true, false);
     }
 
     I->setFrameIdx(FrameIdx);

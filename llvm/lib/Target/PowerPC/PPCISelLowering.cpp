@@ -1625,7 +1625,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
 
       unsigned ArgSize = VA.getLocVT().getSizeInBits() / 8;
       int FI = MFI->CreateFixedObject(ArgSize, VA.getLocMemOffset(),
-                                      isImmutable);
+                                      isImmutable, false);
 
       // Create load nodes to retrieve arguments from the stack.
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
@@ -1690,9 +1690,10 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
                 NumFPArgRegs * EVT(MVT::f64).getSizeInBits()/8;
 
     VarArgsStackOffset = MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
-                                                CCInfo.getNextStackOffset());
+                                                CCInfo.getNextStackOffset(),
+                                                true, false);
 
-    VarArgsFrameIndex = MFI->CreateStackObject(Depth, 8);
+    VarArgsFrameIndex = MFI->CreateStackObject(Depth, 8, false);
     SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
 
     // The fixed integer arguments of a variadic function are
@@ -1895,7 +1896,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
         CurArgOffset = CurArgOffset + (4 - ObjSize);
       }
       // The value of the object is its address.
-      int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
+      int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset, true, false);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       InVals.push_back(FIN);
       if (ObjSize==1 || ObjSize==2) {
@@ -1918,7 +1919,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
         // the object.
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
-          int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset);
+          int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true, false);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
           SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
@@ -2043,7 +2044,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
     if (needsLoad) {
       int FI = MFI->CreateFixedObject(ObjSize,
                                       CurArgOffset + (ArgSize - ObjSize),
-                                      isImmutable);
+                                      isImmutable, false);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
       ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, NULL, 0);
     }
@@ -2076,7 +2077,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
     int Depth = ArgOffset;
 
     VarArgsFrameIndex = MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
-                                               Depth);
+                                               Depth, true, false);
     SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
 
     // If this function is vararg, store any remaining integer argument regs
@@ -2289,7 +2290,8 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
     int NewRetAddrLoc = SPDiff + PPCFrameInfo::getReturnSaveOffset(isPPC64,
                                                                    isDarwinABI);
     int NewRetAddr = MF.getFrameInfo()->CreateFixedObject(SlotSize,
-                                                          NewRetAddrLoc);
+                                                          NewRetAddrLoc,
+                                                          true, false);
     EVT VT = isPPC64 ? MVT::i64 : MVT::i32;
     SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewRetAddr, VT);
     Chain = DAG.getStore(Chain, dl, OldRetAddr, NewRetAddrFrIdx,
@@ -2300,7 +2302,8 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
     if (isDarwinABI) {
       int NewFPLoc =
         SPDiff + PPCFrameInfo::getFramePointerSaveOffset(isPPC64, isDarwinABI);
-      int NewFPIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize, NewFPLoc);
+      int NewFPIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize, NewFPLoc,
+                                                          true, false);
       SDValue NewFramePtrIdx = DAG.getFrameIndex(NewFPIdx, VT);
       Chain = DAG.getStore(Chain, dl, OldFP, NewFramePtrIdx,
                            PseudoSourceValue::getFixedStack(NewFPIdx), 0);
@@ -2317,7 +2320,7 @@ CalculateTailCallArgDest(SelectionDAG &DAG, MachineFunction &MF, bool isPPC64,
                       SmallVector<TailCallArgumentInfo, 8>& TailCallArguments) {
   int Offset = ArgOffset + SPDiff;
   uint32_t OpSize = (Arg.getValueType().getSizeInBits()+7)/8;
-  int FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset);
+  int FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset, true,false);
   EVT VT = isPPC64 ? MVT::i64 : MVT::i32;
   SDValue FIN = DAG.getFrameIndex(FI, VT);
   TailCallArgumentInfo Info;
@@ -3224,7 +3227,8 @@ PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG & DAG) const {
     // Find out what the fix offset of the frame pointer save area.
     int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, isDarwinABI);
     // Allocate the frame index for frame pointer save area.
-    RASI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, LROffset);
+    RASI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, LROffset,
+                                                true, false);
     // Save the result.
     FI->setReturnAddrSaveIndex(RASI);
   }
@@ -3250,7 +3254,8 @@ PPCTargetLowering::getFramePointerFrameIndex(SelectionDAG & DAG) const {
                                                            isDarwinABI);
 
     // Allocate the frame index for frame pointer save area.
-    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset);
+    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset,
+                                                true, false);
     // Save the result.
     FI->setFramePointerSaveIndex(FPSI);
   }
@@ -3411,7 +3416,7 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   // then lfd it and fcfid it.
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-  int FrameIdx = FrameInfo->CreateStackObject(8, 8);
+  int FrameIdx = FrameInfo->CreateStackObject(8, 8, false);
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
 
@@ -3469,7 +3474,7 @@ SDValue PPCTargetLowering::LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) {
   SDValue Chain = DAG.getNode(PPCISD::MFFS, dl, NodeTys, &InFlag, 0);
 
   // Save FP register to stack slot
-  int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+  int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, PtrVT);
   SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Chain,
                                  StackSlot, NULL, 0);
@@ -4137,7 +4142,7 @@ SDValue PPCTargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op,
   DebugLoc dl = Op.getDebugLoc();
   // Create a stack slot that is 16-byte aligned.
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
-  int FrameIdx = FrameInfo->CreateStackObject(16, 16);
+  int FrameIdx = FrameInfo->CreateStackObject(16, 16, false);
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
 

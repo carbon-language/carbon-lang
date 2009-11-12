@@ -212,7 +212,7 @@ MSP430RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
                                                                          const {
   // Create a frame entry for the FPW register that must be saved.
   if (hasFP(MF)) {
-    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4);
+    int FrameIdx = MF.getFrameInfo()->CreateFixedObject(2, -4, true, false);
     assert(FrameIdx == MF.getFrameInfo()->getObjectIndexBegin() &&
            "Slot for FPW register must be last in order to be found!");
     FrameIdx = 0;
@@ -355,7 +355,7 @@ unsigned MSP430RegisterInfo::getRARegister() const {
   return MSP430::PCW;
 }
 
-unsigned MSP430RegisterInfo::getFrameRegister(MachineFunction &MF) const {
+unsigned MSP430RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return hasFP(MF) ? MSP430::FPW : MSP430::SPW;
 }
 

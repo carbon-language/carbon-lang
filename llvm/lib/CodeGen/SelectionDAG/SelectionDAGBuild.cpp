@@ -305,7 +305,7 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
         TySize *= CUI->getZExtValue();   // Get total allocated size.
         if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
         StaticAllocaMap[AI] =
-          MF->getFrameInfo()->CreateStackObject(TySize, Align);
+          MF->getFrameInfo()->CreateStackObject(TySize, Align, false);
       }
 
   for (; BB != EB; ++BB)
@@ -4439,7 +4439,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
     unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(
                       FTy->getReturnType());
     MachineFunction &MF = DAG.getMachineFunction();
-    int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
+    int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align, false);
     const Type *StackSlotPtrType = PointerType::getUnqual(FTy->getReturnType());
 
     DemoteStackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
@@ -5276,7 +5276,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(Ty);
         unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
+        int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align, false);
         SDValue StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
         Chain = DAG.getStore(Chain, getCurDebugLoc(),
                              OpInfo.CallOperand, StackSlot, NULL, 0);
