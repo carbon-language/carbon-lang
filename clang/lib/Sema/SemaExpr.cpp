@@ -6517,14 +6517,23 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
     if (Op->getOpcode() != BinaryOperator::Assign)
       return;
 
-    // Greylist the following Cocoa ObjC idiom by putting it into a
-    // warning subcategory which defaults off:
-    //   if (self = [super init])
-    // The selector can vary, and it's possible that the base might,
-    // too, so we just recognize any message call.
-    if (isSelfExpr(Op->getLHS()) &&
-        isa<ObjCMessageExpr>(Op->getRHS()->IgnoreParenCasts()))
-      diagnostic = diag::warn_condition_is_self_assignment;
+    // Greylist some idioms by putting them into a warning subcategory.
+    if (ObjCMessageExpr *ME
+          = dyn_cast<ObjCMessageExpr>(Op->getRHS()->IgnoreParenCasts())) {
+      Selector Sel = ME->getSelector();
+
+      llvm::errs() << "selector is '" << Sel.getIdentifierInfoForSlot(0)->getName() << "'\n";
+
+      // self = [<foo> init...]
+      if (isSelfExpr(Op->getLHS())
+          && Sel.getIdentifierInfoForSlot(0)->getName().startswith("init"))
+        diagnostic = diag::warn_condition_is_idiomatic_assignment;
+
+      // <foo> = [<bar> nextObject]
+      else if (Sel.isUnarySelector() &&
+               Sel.getIdentifierInfoForSlot(0)->getName() == "nextObject")
+        diagnostic = diag::warn_condition_is_idiomatic_assignment;
+    }
 
     Loc = Op->getOperatorLoc();
   } else if (isa<CXXOperatorCallExpr>(E)) {
