@@ -717,7 +717,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     }
   }
 
-
   llvm::OwningPtr<ASTContext> ContextOwner;
   if (Consumer)
     ContextOwner.reset(new ASTContext(PP.getLangOptions(),
@@ -770,26 +769,17 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       // No suitable PCH file could be found. Return an error.
       return;
     }
-
-    // Finish preprocessor initialization. We do this now (rather
-    // than earlier) because this initialization creates new source
-    // location entries in the source manager, which must come after
-    // the source location entries for the PCH file.
-    if (InitializeSourceManager(PP, InFile))
-      return;
-  } else if (!ImplicitPCHInclude.empty()) {
-    // If we have an implicit PCH, the source manager initialization was
-    // delayed, do it now.
-    //
-    // FIXME: Clean this up.
-
-    // Finish preprocessor initialization. We do this now (rather
-    // than earlier) because this initialization creates new source
-    // location entries in the source manager, which must come after
-    // the source location entries for the PCH file.
-    if (InitializeSourceManager(PP, InFile))
-      return;
   }
+
+  // Initialize the main file entry. This needs to be delayed until after PCH
+  // has loaded.
+  if (InitializeSourceManager(PP, InFile))
+    return;
+
+  // Initialize builtin info unless we are using PCH.
+  if (!Consumer || ImplicitPCHInclude.empty())
+    PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
+                                           PP.getLangOptions().NoBuiltin);
 
   // If we have an ASTConsumer, run the parser with it.
   if (Consumer) {
@@ -1231,15 +1221,6 @@ int main(int argc, char **argv) {
                             CompOpts.getHeaderSearchOpts(),
                             CompOpts.getDependencyOutputOpts(),
                             *Target, SourceMgr, FileMgr));
-
-    if (CompOpts.getPreprocessorOpts().getImplicitPCHInclude().empty()) {
-      if (InitializeSourceManager(*PP.get(), InFile))
-        continue;
-
-      // Initialize builtin info.
-      PP->getBuiltinInfo().InitializeBuiltins(PP->getIdentifierTable(),
-                                              PP->getLangOptions().NoBuiltin);
-    }
 
     // Process the source file.
     Diags.getClient()->BeginSourceFile(CompOpts.getLangOpts());
