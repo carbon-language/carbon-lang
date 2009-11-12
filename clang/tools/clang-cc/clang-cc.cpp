@@ -658,14 +658,10 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     Consumer.reset(CreateHTMLPrinter(OS.get(), PP));
     break;
 
-  case RunAnalysis: {
-    AnalyzerOptions AnalyzerOpts;
-    // FIXME: Move into CompilerInvocation.
-    InitializeAnalyzerOptions(AnalyzerOpts);
+  case RunAnalysis:
     Consumer.reset(CreateAnalysisConsumer(PP, CompOpts.getOutputFile(),
-                                          AnalyzerOpts));
+                                          CompOpts.getAnalyzerOpts()));
     break;
-  }
 
   case GeneratePCH: {
     const std::string &Sysroot = CompOpts.getHeaderSearchOpts().Sysroot;
@@ -1065,13 +1061,15 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   InitializeCompileOptions(Opts.getCompileOpts(), Target);
 
   // Initialize language options.
-  LangOptions LangInfo;
-
+  //
   // FIXME: These aren't used during operations on ASTs. Split onto a separate
   // code path to make this obvious.
   if (LK != langkind_ast)
     InitializeLangOptions(Opts.getLangOpts(), LK, Target,
                           Opts.getCompileOpts());
+
+  // Initialize the static analyzer options.
+  InitializeAnalyzerOptions(Opts.getAnalyzerOpts());
 
   // Initialize the dependency output options (-M...).
   InitializeDependencyOutputOptions(Opts.getDependencyOutputOpts());

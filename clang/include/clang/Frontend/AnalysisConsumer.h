@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_FRONTEND_ANALYSISCONSUMER_H
+#define LLVM_CLANG_FRONTEND_ANALYSISCONSUMER_H
+
 #include <string>
 #include <vector>
 
@@ -73,3 +76,5 @@ ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
                                     const AnalyzerOptions& Opts);
 
 }
+
+#endif

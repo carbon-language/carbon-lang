@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_COMPILERINVOCATION_H_
 
 #include "clang/Basic/LangOptions.h"
+#include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
@@ -29,6 +30,9 @@ namespace clang {
 /// compiler, including data such as the include paths, the code generation
 /// options, the warning flags, and so on.
 class CompilerInvocation {
+  /// Options controlling the static analyzer.
+  AnalyzerOptions AnalyzerOpts;
+
   /// Options controlling IRgen and the backend.
   CompileOptions CompileOpts;
 
@@ -66,6 +70,11 @@ public:
   /// @}
   /// @name Option Subgroups
   /// @{
+
+  AnalyzerOptions &getAnalyzerOpts() { return AnalyzerOpts; }
+  const AnalyzerOptions &getAnalyzerOpts() const {
+    return AnalyzerOpts;
+  }
 
   CompileOptions &getCompileOpts() { return CompileOpts; }
   const CompileOptions &getCompileOpts() const {
