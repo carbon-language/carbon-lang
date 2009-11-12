@@ -32,6 +32,7 @@
 using namespace llvm;
 
 STATISTIC(NumInlined, "Number of functions inlined");
+STATISTIC(NumCallsDeleted, "Number of call sites deleted, not inlined");
 STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
 STATISTIC(NumMergedAllocas, "Number of allocas merged together");
 
@@ -336,23 +337,39 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
     for (unsigned CSi = 0; CSi != CallSites.size(); ++CSi) {
       CallSite CS = CallSites[CSi];
       
-      Function *Callee = CS.getCalledFunction();
-      // We can only inline direct calls to non-declarations.
-      if (Callee == 0 || Callee->isDeclaration()) continue;
-      
-      // If the policy determines that we should inline this function,
-      // try to do so.
-      if (!shouldInline(CS))
-        continue;
-
       Function *Caller = CS.getCaller();
-      // Attempt to inline the function...
-      if (!InlineCallIfPossible(CS, CG, TD, InlinedArrayAllocas))
-        continue;
+      Function *Callee = CS.getCalledFunction();
+
+      // If this call site is dead and it is to a readonly function, we should
+      // just delete the call instead of trying to inline it, regardless of
+      // size.  This happens because IPSCCP propagates the result out of the
+      // call and then we're left with the dead call.
+      if (CS.getInstruction()->use_empty() &&
+          !CS.getInstruction()->mayHaveSideEffects()) {
+        DEBUG(errs() << "    -> Deleting dead call: "
+                     << *CS.getInstruction() << "\n");
+        // Update the call graph by deleting the edge from Callee to Caller.
+        CG[Caller]->removeCallEdgeFor(CS);
+        CS.getInstruction()->eraseFromParent();
+        ++NumCallsDeleted;
+      } else {
+        // We can only inline direct calls to non-declarations.
+        if (Callee == 0 || Callee->isDeclaration()) continue;
       
-      // If we inlined the last possible call site to the function, delete the
-      // function body now.
-      if (Callee->use_empty() && Callee->hasLocalLinkage() &&
+        // If the policy determines that we should inline this function,
+        // try to do so.
+        if (!shouldInline(CS))
+          continue;
+
+        // Attempt to inline the function...
+        if (!InlineCallIfPossible(CS, CG, TD, InlinedArrayAllocas))
+          continue;
+        ++NumInlined;
+      }
+      
+      // If we inlined or deleted the last possible call site to the function,
+      // delete the function body now.
+      if (Callee && Callee->use_empty() && Callee->hasLocalLinkage() &&
           // TODO: Can remove if in SCC now.
           !SCCFunctions.count(Callee) &&
           
@@ -391,7 +408,6 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
       }
       --CSi;
 
-      ++NumInlined;
       Changed = true;
       LocalChange = true;
     }
