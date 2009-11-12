@@ -31,6 +31,10 @@ public:
   /// Column limit for formatting message diagnostics, or 0 if unused.
   unsigned MessageLength;
 
+  /// If non-empty, a file to log extended build information to, for development
+  /// testing and analysis.
+  std::string DumpBuildInformation;
+
 public:
   DiagnosticOptions() {
     ShowColumn = 1;

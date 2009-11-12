@@ -341,9 +341,10 @@ RelocatablePCH("relocatable-pch",
                llvm::cl::desc("Whether to build a relocatable precompiled "
                               "header"));
 
-// Finally, implement the code that groks the options above.
+//===----------------------------------------------------------------------===//
+// Preprocessor construction
+//===----------------------------------------------------------------------===//
 
-// Add the clang headers, which are relative to the clang binary.
 std::string GetBuiltinIncludePath(const char *Argv0) {
   llvm::sys::Path P =
     llvm::sys::Path::GetMainExecutable(Argv0,
@@ -362,10 +363,6 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 
   return P.str();
 }
-
-//===----------------------------------------------------------------------===//
-// Preprocessor construction
-//===----------------------------------------------------------------------===//
 
 static Preprocessor *
 CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
@@ -433,6 +430,7 @@ FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
 //===----------------------------------------------------------------------===//
 // ObjC Rewriter Options
 //===----------------------------------------------------------------------===//
+
 static llvm::cl::opt<bool>
 SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
                            llvm::cl::desc("Silence ObjC rewriting warnings"));
@@ -452,23 +450,18 @@ static llvm::cl::opt<bool> OptPedanticErrors("pedantic-errors");
 static llvm::cl::opt<bool> OptNoWarnings("w");
 
 //===----------------------------------------------------------------------===//
-// -dump-build-information Stuff
+// Dump Build Information
 //===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<std::string>
-DumpBuildInformation("dump-build-information",
-                     llvm::cl::value_desc("filename"),
-          llvm::cl::desc("output a dump of some build information to a file"));
 
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, char **argv,
                               llvm::OwningPtr<DiagnosticClient> &DiagClient) {
   std::string ErrorInfo;
-  llvm::raw_ostream *OS = new llvm::raw_fd_ostream(DumpBuildInformation.c_str(),
-                                                   ErrorInfo);
+  llvm::raw_ostream *OS =
+    new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo);
   if (!ErrorInfo.empty()) {
     llvm::errs() << "error opening -dump-build-information file '"
-                 << DumpBuildInformation << "', option ignored!\n";
+                 << DiagOpts.DumpBuildInformation << "', option ignored!\n";
     delete OS;
     return;
   }
@@ -1081,7 +1074,7 @@ static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,
     DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
   }
 
-  if (!DumpBuildInformation.empty())
+  if (!Opts.DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, argc, argv, DiagClient);
 
   // Configure our handling of diagnostics.

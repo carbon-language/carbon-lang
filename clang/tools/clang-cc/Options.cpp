@@ -221,6 +221,11 @@ PhonyDependencyTarget("MP",
 
 namespace diagnosticoptions {
 
+static llvm::cl::opt<std::string>
+DumpBuildInformation("dump-build-information",
+                     llvm::cl::value_desc("filename"),
+          llvm::cl::desc("output a dump of some build information to a file"));
+
 static llvm::cl::opt<bool>
 NoShowColumn("fno-show-column",
              llvm::cl::desc("Do not include column number on diagnostics"));
@@ -659,14 +664,15 @@ void clang::InitializeDependencyOutputOptions(DependencyOutputOptions &Opts) {
 void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
   using namespace diagnosticoptions;
 
-  Opts.ShowColumn = !NoShowColumn;
-  Opts.ShowLocation = !NoShowLocation;
-  Opts.ShowCarets = !NoCaretDiagnostics;
-  Opts.ShowFixits = !NoDiagnosticsFixIt;
-  Opts.ShowSourceRanges = PrintSourceRangeInfo;
-  Opts.ShowOptionNames = PrintDiagnosticOption;
-  Opts.ShowColors = PrintColorDiagnostic;
+  Opts.DumpBuildInformation = DumpBuildInformation;
   Opts.MessageLength = MessageLength;
+  Opts.ShowCarets = !NoCaretDiagnostics;
+  Opts.ShowColors = PrintColorDiagnostic;
+  Opts.ShowColumn = !NoShowColumn;
+  Opts.ShowFixits = !NoDiagnosticsFixIt;
+  Opts.ShowLocation = !NoShowLocation;
+  Opts.ShowOptionNames = PrintDiagnosticOption;
+  Opts.ShowSourceRanges = PrintSourceRangeInfo;
 }
 
 void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
