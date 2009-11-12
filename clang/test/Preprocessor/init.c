@@ -408,7 +408,7 @@
 // MSP430:#define __SIZE_TYPE__ unsigned int
 // MSP430:#define __UINTMAX_TYPE__ long unsigned int
 // MSP430:#define __USER_LABEL_PREFIX__ _
-// MSP430:#define __WCHAR_MAX__ 2147483647
+// MSP430:#define __WCHAR_MAX__ 32767
 // MSP430:#define __WCHAR_TYPE__ int
 // MSP430:#define __WINT_TYPE__ int
 // MSP430:#define __clang__ 1
@@ -476,7 +476,7 @@
 // PIC16:#define __SIZE_TYPE__ unsigned int
 // PIC16:#define __UINTMAX_TYPE__ long unsigned int
 // PIC16:#define __USER_LABEL_PREFIX__ _
-// PIC16:#define __WCHAR_MAX__ 2147483647
+// PIC16:#define __WCHAR_MAX__ 32767
 // PIC16:#define __WCHAR_TYPE__ int
 // PIC16:#define __WINT_TYPE__ int
 // PIC16:#define __clang__ 1

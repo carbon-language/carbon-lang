@@ -962,7 +962,6 @@ public:
     : X86_32TargetInfo(triple) {
     TLSSupported = false;
     WCharType = UnsignedShort;
-    WCharWidth = WCharAlign = 16;
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
@@ -1033,7 +1032,6 @@ public:
     : X86_32TargetInfo(triple) {
     TLSSupported = false;
     WCharType = UnsignedShort;
-    WCharWidth = WCharAlign = 16;
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
@@ -1092,7 +1090,6 @@ public:
     : X86_64TargetInfo(triple) {
     TLSSupported = false;
     WCharType = UnsignedShort;
-    WCharWidth = WCharAlign = 16;
     LongWidth = LongAlign = 32;
     DoubleAlign = LongLongAlign = 64;
   }
@@ -1507,7 +1504,6 @@ namespace {
       TLSSupported = false;
       IntWidth = 16;
       LongWidth = LongLongWidth = 32;
-      IntMaxTWidth = 32;
       PointerWidth = 16;
       IntAlign = 8;
       LongAlign = LongLongAlign = 8;
@@ -1575,7 +1571,6 @@ namespace {
       TLSSupported = false;
       IntWidth = 16;
       LongWidth = LongLongWidth = 32;
-      IntMaxTWidth = 32;
       PointerWidth = 16;
       IntAlign = 8;
       LongAlign = LongLongAlign = 8;
@@ -1789,7 +1784,6 @@ namespace {
       TLSSupported = false;
       IntWidth = 32;
       LongWidth = LongLongWidth = 32;
-      IntMaxTWidth = 32;
       PointerWidth = 32;
       IntAlign = 32;
       LongAlign = LongLongAlign = 32;

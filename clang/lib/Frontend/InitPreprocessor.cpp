@@ -364,11 +364,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineTypeSize("__INT_MAX__", TargetInfo::SignedInt, TI, Buf);
   DefineTypeSize("__LONG_MAX__", TargetInfo::SignedLong, TI, Buf);
   DefineTypeSize("__LONG_LONG_MAX__", TargetInfo::SignedLongLong, TI, Buf);
-  // FIXME: TI.getWCharWidth() and TI.getTypeWidth(TI.getWCharType()) return
-  // different values on PIC16 and MSP430. TargetInfo needs to be corrected 
-  // and the following line substituted for the one below it.
-  // DefineTypeSize("__WCHAR_MAX__", TI.getWCharType(), TI, Buf);
-  DefineTypeSize("__WCHAR_MAX__", TI.getWCharWidth(), "", true, Buf);
+  DefineTypeSize("__WCHAR_MAX__", TI.getWCharType(), TI, Buf);
   DefineTypeSize("__INTMAX_MAX__", TI.getIntMaxType(), TI, Buf);
 
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Buf);

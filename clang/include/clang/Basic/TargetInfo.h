@@ -44,16 +44,12 @@ protected:
   // values are specified by the TargetInfo constructor.
   bool TLSSupported;
   unsigned char PointerWidth, PointerAlign;
-  unsigned char WCharWidth, WCharAlign;
-  unsigned char Char16Width, Char16Align;
-  unsigned char Char32Width, Char32Align;
   unsigned char IntWidth, IntAlign;
   unsigned char FloatWidth, FloatAlign;
   unsigned char DoubleWidth, DoubleAlign;
   unsigned char LongDoubleWidth, LongDoubleAlign;
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
-  unsigned char IntMaxTWidth;
   const char *DescriptionString;
   const char *UserLabelPrefix;
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
@@ -150,18 +146,18 @@ public:
 
   /// getWCharWidth/Align - Return the size of 'wchar_t' for this target, in
   /// bits.
-  unsigned getWCharWidth() const { return WCharWidth; }
-  unsigned getWCharAlign() const { return WCharAlign; }
+  unsigned getWCharWidth() const { return getTypeWidth(WCharType); }
+  unsigned getWCharAlign() const { return getTypeAlign(WCharType); }
 
   /// getChar16Width/Align - Return the size of 'char16_t' for this target, in
   /// bits.
-  unsigned getChar16Width() const { return Char16Width; }
-  unsigned getChar16Align() const { return Char16Align; }
+  unsigned getChar16Width() const { return getTypeWidth(Char16Type); }
+  unsigned getChar16Align() const { return getTypeAlign(Char16Type); }
 
   /// getChar32Width/Align - Return the size of 'char32_t' for this target, in
   /// bits.
-  unsigned getChar32Width() const { return Char32Width; }
-  unsigned getChar32Align() const { return Char32Align; }
+  unsigned getChar32Width() const { return getTypeWidth(Char32Type); }
+  unsigned getChar32Align() const { return getTypeAlign(Char32Type); }
 
   /// getFloatWidth/Align/Format - Return the size/align/format of 'float'.
   unsigned getFloatWidth() const { return FloatWidth; }
@@ -184,7 +180,7 @@ public:
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.
   unsigned getIntMaxTWidth() const {
-    return IntMaxTWidth;
+    return getTypeWidth(IntMaxType);
   }
 
   /// getUserLabelPrefix - This returns the default value of the

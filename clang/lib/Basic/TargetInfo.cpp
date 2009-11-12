@@ -25,9 +25,6 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   // These should be overridden by concrete targets as needed.
   TLSSupported = true;
   PointerWidth = PointerAlign = 32;
-  WCharWidth = WCharAlign = 32;
-  Char16Width = Char16Align = 16;
-  Char32Width = Char32Align = 32;
   IntWidth = IntAlign = 32;
   LongWidth = LongAlign = 32;
   LongLongWidth = LongLongAlign = 64;
@@ -37,7 +34,6 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   DoubleAlign = 64;
   LongDoubleWidth = 64;
   LongDoubleAlign = 64;
-  IntMaxTWidth = 64;
   SizeType = UnsignedLong;
   PtrDiffType = SignedLong;
   IntMaxType = SignedLongLong;
@@ -147,7 +143,6 @@ bool TargetInfo::isTypeSigned(IntType T) const {
 void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
   if (Opts.ShortWChar) {
     WCharType = UnsignedShort;
-    WCharWidth = WCharAlign = 16;
   }
 }
 
