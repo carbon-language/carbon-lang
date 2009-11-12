@@ -335,25 +335,6 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
     DebugLoc DL;
     for (BasicBlock::iterator
            I = BB->begin(), E = BB->end(); I != E; ++I) {
-      if (CallInst *CI = dyn_cast<CallInst>(I)) {
-        if (Function *F = CI->getCalledFunction()) {
-          switch (F->getIntrinsicID()) {
-          default: break;
-          case Intrinsic::dbg_stoppoint: {
-            DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
-            if (isValidDebugInfoIntrinsic(*SPI, CodeGenOpt::Default)) 
-              DL = ExtractDebugLocation(*SPI, MF->getDebugLocInfo());
-            break;
-          }
-          case Intrinsic::dbg_func_start: {
-            DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
-            if (isValidDebugInfoIntrinsic(*FSI, CodeGenOpt::Default)) 
-              DL = ExtractDebugLocation(*FSI, MF->getDebugLocInfo());
-            break;
-          }
-          }
-        }
-      }
 
       PN = dyn_cast<PHINode>(I);
       if (!PN || PN->use_empty()) continue;
@@ -3930,64 +3911,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                                I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
   }
-  case Intrinsic::dbg_stoppoint: {
-    DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    if (isValidDebugInfoIntrinsic(SPI, CodeGenOpt::Default)) {
-      MachineFunction &MF = DAG.getMachineFunction();
-      DebugLoc Loc = ExtractDebugLocation(SPI, MF.getDebugLocInfo());
-      setCurDebugLoc(Loc);
-
-      if (OptLevel == CodeGenOpt::None)
-        DAG.setRoot(DAG.getDbgStopPoint(Loc, getRoot(),
-                                        SPI.getLine(),
-                                        SPI.getColumn(),
-                                        SPI.getContext()));
-    }
+  case Intrinsic::dbg_stoppoint: 
+  case Intrinsic::dbg_region_start:
+  case Intrinsic::dbg_region_end:
+  case Intrinsic::dbg_func_start:
+    // FIXME - Remove this instructions once the dust settles.
     return 0;
-  }
-  case Intrinsic::dbg_region_start: {
-    DwarfWriter *DW = DAG.getDwarfWriter();
-    DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-    if (isValidDebugInfoIntrinsic(RSI, OptLevel) && DW
-        && DW->ShouldEmitDwarfDebug()) {
-      unsigned LabelID =
-        DW->RecordRegionStart(RSI.getContext());
-      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                               getRoot(), LabelID));
-    }
-    return 0;
-  }
-  case Intrinsic::dbg_region_end: {
-    DwarfWriter *DW = DAG.getDwarfWriter();
-    DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
-
-    if (!isValidDebugInfoIntrinsic(REI, OptLevel) || !DW
-        || !DW->ShouldEmitDwarfDebug()) 
-      return 0;
-
-    DISubprogram Subprogram(REI.getContext());
-    
-    unsigned LabelID =
-      DW->RecordRegionEnd(REI.getContext());
-    DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                             getRoot(), LabelID));
-    return 0;
-  }
-  case Intrinsic::dbg_func_start: {
-    DwarfWriter *DW = DAG.getDwarfWriter();
-    DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
-    if (!isValidDebugInfoIntrinsic(FSI, CodeGenOpt::None))
-      return 0;
-
-    MachineFunction &MF = DAG.getMachineFunction();
-    MF.setDefaultDebugLoc(ExtractDebugLocation(FSI, MF.getDebugLocInfo()));
-
-    if (!DW || !DW->ShouldEmitDwarfDebug())
-      return 0;
-    // llvm.dbg.func_start also defines beginning of function scope.
-    DW->RecordRegionStart(FSI.getSubprogram());
-    return 0;
-  }
   case Intrinsic::dbg_declare: {
     if (OptLevel != CodeGenOpt::None) 
       // FIXME: Variable debug info is not supported here.
@@ -4012,7 +3941,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (SI == FuncInfo.StaticAllocaMap.end()) 
       return 0; // VLAs.
     int FI = SI->second;
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     if (MMI) {
       MetadataContext &TheMetadata = 
@@ -4021,9 +3950,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       MDNode *Dbg = TheMetadata.getMD(MDDbgKind, &DI);
       MMI->setVariableDbgInfo(Variable, FI, Dbg);
     }
-#else
-    DW->RecordVariable(Variable, FI);
-#endif
     return 0;
   }
   case Intrinsic::eh_exception: {

@@ -44,8 +44,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Metadata.h"
 
-#define ATTACH_DEBUG_INFO_TO_AN_INSN 1
-
 namespace llvm {
 
 //===----------------------------------------------------------------------===//

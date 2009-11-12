@@ -87,18 +87,8 @@ public:
   /// the source line list.
   unsigned RecordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
 
-  /// RecordRegionStart - Indicate the start of a region.
-  unsigned RecordRegionStart(MDNode *N);
-
-  /// RecordRegionEnd - Indicate the end of a region.
-  unsigned RecordRegionEnd(MDNode *N);
-
   /// getRecordSourceLineCount - Count source lines.
   unsigned getRecordSourceLineCount();
-
-  /// RecordVariable - Indicate the declaration of  a local variable.
-  ///
-  void RecordVariable(MDNode *N, unsigned FrameIndex);
 
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
   /// be emitted.

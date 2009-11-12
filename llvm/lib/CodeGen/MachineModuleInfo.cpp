@@ -76,9 +76,7 @@ void MachineModuleInfo::EndFunction() {
   FilterEnds.clear();
   CallsEHReturn = 0;
   CallsUnwindInit = 0;
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   VariableDbgInfo.clear();
-#endif
 }
 
 /// AnalyzeModule - Scan the module for global debug information.

@@ -325,48 +325,12 @@ bool FastISel::SelectCall(User *I) {
   unsigned IID = F->getIntrinsicID();
   switch (IID) {
   default: break;
-  case Intrinsic::dbg_stoppoint: {
-    DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
-    if (isValidDebugInfoIntrinsic(*SPI, CodeGenOpt::None))
-      setCurDebugLoc(ExtractDebugLocation(*SPI, MF.getDebugLocInfo()));
+  case Intrinsic::dbg_stoppoint: 
+  case Intrinsic::dbg_region_start: 
+  case Intrinsic::dbg_region_end: 
+  case Intrinsic::dbg_func_start:
+    // FIXME - Remove this instructions once the dust settles.
     return true;
-  }
-  case Intrinsic::dbg_region_start: {
-    DbgRegionStartInst *RSI = cast<DbgRegionStartInst>(I);
-    if (isValidDebugInfoIntrinsic(*RSI, CodeGenOpt::None) && DW
-        && DW->ShouldEmitDwarfDebug()) {
-      unsigned ID = 
-        DW->RecordRegionStart(RSI->getContext());
-      const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-      BuildMI(MBB, DL, II).addImm(ID);
-    }
-    return true;
-  }
-  case Intrinsic::dbg_region_end: {
-    DbgRegionEndInst *REI = cast<DbgRegionEndInst>(I);
-    if (isValidDebugInfoIntrinsic(*REI, CodeGenOpt::None) && DW
-        && DW->ShouldEmitDwarfDebug()) {
-     unsigned ID = 0;
-     DISubprogram Subprogram(REI->getContext());
-     const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
-     ID =  DW->RecordRegionEnd(REI->getContext());
-     BuildMI(MBB, DL, II).addImm(ID);
-    }
-    return true;
-  }
-  case Intrinsic::dbg_func_start: {
-    DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
-    if (!isValidDebugInfoIntrinsic(*FSI, CodeGenOpt::None) || !DW
-        || !DW->ShouldEmitDwarfDebug()) 
-      return true;
-
-    // This is a beginning of a new function.
-    MF.setDefaultDebugLoc(ExtractDebugLocation(*FSI, MF.getDebugLocInfo()));
-    
-    // llvm.dbg.func_start also defines beginning of function scope.
-    DW->RecordRegionStart(FSI->getSubprogram());
-    return true;
-  }
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
     if (!isValidDebugInfoIntrinsic(*DI, CodeGenOpt::None) || !DW
@@ -390,9 +354,6 @@ bool FastISel::SelectCall(User *I) {
       MDNode *Dbg = TheMetadata.getMD(MDDbgKind, DI);
       MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
     }
-#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
-    DW->RecordVariable(DI->getVariable(), FI);
-#endif
     return true;
   }
   case Intrinsic::eh_exception: {

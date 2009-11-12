@@ -26,8 +26,6 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ValueHandle.h"
 
-#define ATTACH_DEBUG_INFO_TO_AN_INSN 1
-
 namespace llvm {
   class BasicBlock;
   class Constant;
@@ -709,18 +707,6 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
 
     /// processSubprogram - Process DISubprogram.
     void processSubprogram(DISubprogram SP);
-
-    /// processStopPoint - Process DbgStopPointInst.
-    void processStopPoint(DbgStopPointInst *SPI);
-
-    /// processFuncStart - Process DbgFuncStartInst.
-    void processFuncStart(DbgFuncStartInst *FSI);
-
-    /// processRegionStart - Process DbgRegionStart.
-    void processRegionStart(DbgRegionStartInst *DRS);
-
-    /// processRegionEnd - Process DbgRegionEnd.
-    void processRegionEnd(DbgRegionEndInst *DRE);
 
     /// processDeclare - Process DbgDeclareInst.
     void processDeclare(DbgDeclareInst *DDI);

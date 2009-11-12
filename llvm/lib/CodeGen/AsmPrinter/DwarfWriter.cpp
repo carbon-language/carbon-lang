@@ -81,25 +81,9 @@ unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col,
   return DD->RecordSourceLine(Line, Col, Scope);
 }
 
-/// RecordRegionStart - Indicate the start of a region.
-unsigned DwarfWriter::RecordRegionStart(MDNode *N) {
-  return DD->RecordRegionStart(N);
-}
-
-/// RecordRegionEnd - Indicate the end of a region.
-unsigned DwarfWriter::RecordRegionEnd(MDNode *N) {
-  return DD->RecordRegionEnd(N);
-}
-
 /// getRecordSourceLineCount - Count source lines.
 unsigned DwarfWriter::getRecordSourceLineCount() {
   return DD->getRecordSourceLineCount();
-}
-
-/// RecordVariable - Indicate the declaration of  a local variable.
-///
-void DwarfWriter::RecordVariable(MDNode *N, unsigned FrameIndex) {
-  DD->RecordVariable(N, FrameIndex);
 }
 
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should

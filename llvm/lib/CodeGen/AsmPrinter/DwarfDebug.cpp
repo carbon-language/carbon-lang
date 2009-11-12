@@ -1388,32 +1388,6 @@ DbgScope *DwarfDebug::getOrCreateAbstractScope(MDNode *N) {
   return AScope;
 }
 
-/// getOrCreateScope - Returns the scope associated with the given descriptor.
-/// FIXME - Remove this method.
-DbgScope *DwarfDebug::getOrCreateScope(MDNode *N) {
-  DbgScope *&Slot = DbgScopeMap[N];
-  if (Slot) return Slot;
-
-  DbgScope *Parent = NULL;
-  DILexicalBlock Block(N);
-
-  if (!Block.isNull()) {
-    DIDescriptor ParentDesc = Block.getContext();
-    Parent =
-      ParentDesc.isNull() ?  NULL : getOrCreateScope(ParentDesc.getNode());
-  }
-
-  Slot = new DbgScope(Parent, DIDescriptor(N));
-
-  if (Parent)
-    Parent->AddScope(Slot);
-  else
-    // First function is top level function.
-    CurrentFnDbgScope = Slot;
-
-  return Slot;
-}
-
 static DISubprogram getDISubprogram(MDNode *N) {
 
   DIDescriptor D(N);
@@ -1642,129 +1616,6 @@ DIE *DwarfDebug::ConstructScopeDIE(DbgScope *Scope) {
       ScopeDIE->AddChild(NestedDIE);
   }
   return ScopeDIE;
-}
-
-/// ConstructDbgScope - Construct the components of a scope.
-/// FIXME: Remove
-void DwarfDebug::ConstructDbgScope(DbgScope *ParentScope,
-                                   unsigned ParentStartID,
-                                   unsigned ParentEndID,
-                                   DIE *ParentDie, CompileUnit *Unit) {
-  // Add variables to scope.
-  SmallVector<DbgVariable *, 8> &Variables = ParentScope->getVariables();
-  for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-    DIE *VariableDie = CreateDbgScopeVariable(Variables[i], Unit);
-    if (VariableDie) ParentDie->AddChild(VariableDie);
-  }
-
-  // Add nested scopes.
-  SmallVector<DbgScope *, 4> &Scopes = ParentScope->getScopes();
-  for (unsigned j = 0, M = Scopes.size(); j < M; ++j) {
-    // Define the Scope debug information entry.
-    DbgScope *Scope = Scopes[j];
-
-    unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
-    unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
-
-    // Ignore empty scopes.
-    if (StartID == EndID && StartID != 0) continue;
-
-    // Do not ignore inlined scopes even if they don't have any variables or
-    // scopes.
-    if (Scope->getScopes().empty() && Scope->getVariables().empty())
-      continue;
-
-    if (StartID == ParentStartID && EndID == ParentEndID) {
-      // Just add stuff to the parent scope.
-      ConstructDbgScope(Scope, ParentStartID, ParentEndID, ParentDie, Unit);
-    } else {
-      DIE *ScopeDie = new DIE(dwarf::DW_TAG_lexical_block);
-
-      // Add the scope bounds.
-      if (StartID)
-        AddLabel(ScopeDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-                 DWLabel("label", StartID));
-      else
-        AddLabel(ScopeDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-                 DWLabel("func_begin", SubprogramCount));
-
-      if (EndID)
-        AddLabel(ScopeDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-                 DWLabel("label", EndID));
-      else
-        AddLabel(ScopeDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-                 DWLabel("func_end", SubprogramCount));
-
-      // Add the scope's contents.
-      ConstructDbgScope(Scope, StartID, EndID, ScopeDie, Unit);
-      ParentDie->AddChild(ScopeDie);
-    }
-  }
-}
-
-/// ConstructCurrentFnDbgScope - Construct the scope for the subprogram.
-/// FIXME: Remove
-void DwarfDebug::ConstructCurrentFnDbgScope(DbgScope *RootScope,
-                                           bool AbstractScope) {
-  // Exit if there is no root scope.
-  if (!RootScope) return;
-  DIDescriptor Desc = RootScope->getDesc();
-  if (Desc.isNull())
-    return;
-
-  // Get the subprogram debug information entry.
-  DISubprogram SPD(Desc.getNode());
-
-  // Get the subprogram die.
-  DIE *SPDie = ModuleCU->getDieMapSlotFor(SPD.getNode());
-  if (!SPDie) {
-    ConstructSubprogram(SPD.getNode());
-    SPDie = ModuleCU->getDieMapSlotFor(SPD.getNode());
-  }
-  assert(SPDie && "Missing subprogram descriptor");
-
-  if (!AbstractScope) {
-    // Add the function bounds.
-    AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-             DWLabel("func_begin", SubprogramCount));
-    AddLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-             DWLabel("func_end", SubprogramCount));
-    MachineLocation Location(RI->getFrameRegister(*MF));
-    AddAddress(SPDie, dwarf::DW_AT_frame_base, Location);
-  }
-
-  ConstructDbgScope(RootScope, 0, 0, SPDie, ModuleCU);
-  // If there are global variables at this scope then add their dies.
-  for (SmallVector<WeakVH, 4>::iterator SGI = ScopedGVs.begin(), 
-       SGE = ScopedGVs.end(); SGI != SGE; ++SGI) {
-    MDNode *N = dyn_cast_or_null<MDNode>(*SGI);
-    if (!N) continue;
-    DIGlobalVariable GV(N);
-    if (GV.getContext().getNode() == RootScope->getDesc().getNode()) {
-      DIE *ScopedGVDie = CreateGlobalVariableDIE(ModuleCU, GV);
-      if (ScopedGVDie)
-        SPDie->AddChild(ScopedGVDie);
-    }
-  }
-}
-
-/// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
-/// FIXME: Remove
-void DwarfDebug::ConstructDefaultDbgScope(MachineFunction *MF) {
-  StringMap<DIE*> &Globals = ModuleCU->getGlobals();
-  StringMap<DIE*>::iterator GI = Globals.find(MF->getFunction()->getName());
-  if (GI != Globals.end()) {
-    DIE *SPDie = GI->second;
-
-    // Add the function bounds.
-    AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-             DWLabel("func_begin", SubprogramCount));
-    AddLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-             DWLabel("func_end", SubprogramCount));
-
-    MachineLocation Location(RI->getFrameRegister(*MF));
-    AddAddress(SPDie, dwarf::DW_AT_frame_base, Location);
-  }
 }
 
 /// GetOrCreateSourceID - Look up the source id with the given directory and
@@ -2241,11 +2092,9 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   if (!ExtractScopeInformation(MF))
     return;
   CollectVariableInfo();
-#endif
 
   // Begin accumulating function debug information.
   MMI->BeginFunction(MF);
@@ -2255,7 +2104,6 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
 
   // Emit label for the implicitly defined dbg.stoppoint at the start of the
   // function.
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   DebugLoc FDL = MF->getDefaultDebugLoc();
   if (!FDL.isUnknown()) {
     DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
@@ -2268,15 +2116,6 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
     Asm->printLabel(LabelID);
     O << '\n';
   }
-#else
-  DebugLoc FDL = MF->getDefaultDebugLoc();
-  if (!FDL.isUnknown()) {
-    DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
-    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.Scope);
-    Asm->printLabel(LabelID);
-    O << '\n';
-  }
-#endif
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
 }
@@ -2289,10 +2128,9 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   if (DbgScopeMap.empty())
     return;
-#endif
+
   // Define end label for subprogram.
   EmitLabel("func_end", SubprogramCount);
 
@@ -2307,28 +2145,13 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
                             Lines.begin(), Lines.end());
   }
 
-#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
-  // Construct scopes for subprogram.
-  if (CurrentFnDbgScope)
-    ConstructCurrentFnDbgScope(CurrentFnDbgScope);
-  else
-    // FIXME: This is wrong. We are essentially getting past a problem with
-    // debug information not being able to handle unreachable blocks that have
-    // debug information in them. In particular, those unreachable blocks that
-    // have "region end" info in them. That situation results in the "root
-    // scope" not being created. If that's the case, then emit a "default"
-    // scope, i.e., one that encompasses the whole function. This isn't
-    // desirable. And a better way of handling this (and all of the debugging
-    // information) needs to be explored.
-    ConstructDefaultDbgScope(MF);
-#else
   // Construct abstract scopes.
   for (SmallVector<DbgScope *, 4>::iterator AI = AbstractScopesList.begin(),
          AE = AbstractScopesList.end(); AI != AE; ++AI) 
     ConstructScopeDIE(*AI);
 
   ConstructScopeDIE(CurrentFnDbgScope);
-#endif
+
   DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
                                                MMI->getFrameMoves()));
 
@@ -2404,59 +2227,6 @@ unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
     DebugTimer->stopTimer();
 
   return SrcId;
-}
-
-/// RecordRegionStart - Indicate the start of a region.
-unsigned DwarfDebug::RecordRegionStart(MDNode *N) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DbgScope *Scope = getOrCreateScope(N);
-  unsigned ID = MMI->NextLabelID();
-  if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// RecordRegionEnd - Indicate the end of a region.
-unsigned DwarfDebug::RecordRegionEnd(MDNode *N) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DbgScope *Scope = getOrCreateScope(N);
-  unsigned ID = MMI->NextLabelID();
-  Scope->setEndLabelID(ID);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// RecordVariable - Indicate the declaration of a local variable.
-void DwarfDebug::RecordVariable(MDNode *N, unsigned FrameIndex) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  DIDescriptor Desc(N);
-  DbgScope *Scope = NULL;
-
-  if (Desc.getTag() == dwarf::DW_TAG_variable)
-    Scope = getOrCreateScope(DIGlobalVariable(N).getContext().getNode());
-  else {
-    MDNode *Context = DIVariable(N).getContext().getNode();
-    Scope = getOrCreateScope(Context);
-  }
-
-  assert(Scope && "Unable to find the variable's scope");
-  DbgVariable *DV = new DbgVariable(DIVariable(N), FrameIndex);
-  Scope->AddVariable(DV);
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
 }
 
 //===----------------------------------------------------------------------===//

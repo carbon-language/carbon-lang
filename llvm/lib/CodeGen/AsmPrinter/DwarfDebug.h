@@ -367,7 +367,7 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   /// createDbgScope - Create DbgScope for the scope.
   void createDbgScope(MDNode *Scope, MDNode *InlinedAt);
-  DbgScope *getOrCreateScope(MDNode *N);
+
   DbgScope *getOrCreateAbstractScope(MDNode *N);
 
   /// findAbstractVariable - Find abstract variable associated with Var.
@@ -385,15 +385,6 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   void ConstructDbgScope(DbgScope *ParentScope,
                          unsigned ParentStartID, unsigned ParentEndID,
                          DIE *ParentDie, CompileUnit *Unit);
-
-  /// ConstructCurrentFnDbgScope - Construct the scope for the subprogram.
-  ///
-  void ConstructCurrentFnDbgScope(DbgScope *RootScope,
-                                  bool AbstractScope = false);
-
-  /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
-  ///
-  void ConstructDefaultDbgScope(MachineFunction *MF);
 
   /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
   /// tools to recognize the object file contains Dwarf information.
@@ -548,15 +539,6 @@ public:
   /// well.
   unsigned getOrCreateSourceID(const std::string &DirName,
                                const std::string &FileName);
-
-  /// RecordRegionStart - Indicate the start of a region.
-  unsigned RecordRegionStart(MDNode *N);
-
-  /// RecordRegionEnd - Indicate the end of a region.
-  unsigned RecordRegionEnd(MDNode *N);
-
-  /// RecordVariable - Indicate the declaration of  a local variable.
-  void RecordVariable(MDNode *N, unsigned FrameIndex);
 
   /// ExtractScopeInformation - Scan machine instructions in this function
   /// and collect DbgScopes. Return true, if atleast one scope was found.

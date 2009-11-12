@@ -1069,29 +1069,18 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
 
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   MetadataContext &TheMetadata = M.getContext().getMetadata();
   unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-#endif
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
       for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
            ++BI) {
-        if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(BI))
-          processStopPoint(SPI);
-        else if (DbgFuncStartInst *FSI = dyn_cast<DbgFuncStartInst>(BI))
-          processFuncStart(FSI);
-        else if (DbgRegionStartInst *DRS = dyn_cast<DbgRegionStartInst>(BI))
-          processRegionStart(DRS);
-        else if (DbgRegionEndInst *DRE = dyn_cast<DbgRegionEndInst>(BI))
-          processRegionEnd(DRE);
-        else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
         else if (MDDbgKind) 
           if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) 
             processLocation(DILocation(L));
-#endif
       }
 
   NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
@@ -1166,30 +1155,6 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
     return;
   addCompileUnit(SP.getCompileUnit());
   processType(SP.getType());
-}
-
-/// processStopPoint - Process DbgStopPointInst.
-void DebugInfoFinder::processStopPoint(DbgStopPointInst *SPI) {
-  MDNode *Context = dyn_cast<MDNode>(SPI->getContext());
-  addCompileUnit(DICompileUnit(Context));
-}
-
-/// processFuncStart - Process DbgFuncStartInst.
-void DebugInfoFinder::processFuncStart(DbgFuncStartInst *FSI) {
-  MDNode *SP = dyn_cast<MDNode>(FSI->getSubprogram());
-  processSubprogram(DISubprogram(SP));
-}
-
-/// processRegionStart - Process DbgRegionStart.
-void DebugInfoFinder::processRegionStart(DbgRegionStartInst *DRS) {
-  MDNode *SP = dyn_cast<MDNode>(DRS->getContext());
-  processSubprogram(DISubprogram(SP));
-}
-
-/// processRegionEnd - Process DbgRegionEnd.
-void DebugInfoFinder::processRegionEnd(DbgRegionEndInst *DRE) {
-  MDNode *SP = dyn_cast<MDNode>(DRE->getContext());
-  processSubprogram(DISubprogram(SP));
 }
 
 /// processDeclare - Process DbgDeclareInst.
