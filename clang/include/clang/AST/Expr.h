@@ -1519,6 +1519,9 @@ public:
     /// CK_NoOp - Used for const_cast.
     CK_NoOp,
 
+    /// CK_BaseToDerived - Base to derived class casts.
+    CK_BaseToDerived,
+
     /// CK_DerivedToBase - Derived to base class casts.
     CK_DerivedToBase,
 

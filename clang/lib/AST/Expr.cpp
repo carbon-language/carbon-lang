@@ -490,6 +490,8 @@ const char *CastExpr::getCastKindName() const {
     return "BitCast";
   case CastExpr::CK_NoOp:
     return "NoOp";
+  case CastExpr::CK_BaseToDerived:
+    return "BaseToDerived";
   case CastExpr::CK_DerivedToBase:
     return "DerivedToBase";
   case CastExpr::CK_Dynamic:
