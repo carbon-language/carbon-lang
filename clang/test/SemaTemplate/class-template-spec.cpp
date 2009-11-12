@@ -104,3 +104,8 @@ Foo<int>* v;
 Foo<int>& F() { return *v; }
 template <typename T> class Foo {};
 Foo<int> x;
+
+
+// Template template parameters
+template<template<class T> class Wibble>
+class Wibble<int> { }; // expected-error{{cannot specialize a template template parameter}}

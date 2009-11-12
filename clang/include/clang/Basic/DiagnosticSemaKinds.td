@@ -1012,6 +1012,9 @@ def err_template_spec_friend : Error<
 def err_template_spec_default_arg : Error<
   "default argument not permitted on an explicit "
   "%select{instantiation|specialization}0 of function %1">;
+def err_not_class_template_specialization : Error<
+  "cannot specialize a %select{dependent template|template template "
+  "parameter}0">;
 
 // C++ class template specializations and out-of-line definitions
 def err_template_spec_needs_header : Error<

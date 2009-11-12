@@ -1188,7 +1188,9 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 
   if (TemplateSpecializationType::anyDependentTemplateArguments(
                                                       TemplateArgs,
-                                                      NumTemplateArgs)) {
+                                                      NumTemplateArgs) ||
+      isa<TemplateTemplateParmDecl>(Template) || 
+      Template->getDeclContext()->isDependentContext()) {
     // This class template specialization is a dependent
     // type. Therefore, its canonical type is another class template
     // specialization type that contains all of the converted
@@ -2935,7 +2937,14 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   // Find the class template we're specializing
   TemplateName Name = TemplateD.getAsVal<TemplateName>();
   ClassTemplateDecl *ClassTemplate
-    = cast<ClassTemplateDecl>(Name.getAsTemplateDecl());
+    = dyn_cast_or_null<ClassTemplateDecl>(Name.getAsTemplateDecl());
+
+  if (!ClassTemplate) {
+    Diag(TemplateNameLoc, diag::err_not_class_template_specialization)
+      << (Name.getAsTemplateDecl() && 
+          isa<TemplateTemplateParmDecl>(Name.getAsTemplateDecl()));
+    return true;
+  }
 
   bool isExplicitSpecialization = false;
   bool isPartialSpecialization = false;
