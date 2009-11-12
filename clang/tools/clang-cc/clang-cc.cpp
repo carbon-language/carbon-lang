@@ -718,6 +718,9 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   }
 
   llvm::OwningPtr<ASTContext> ContextOwner;
+  llvm::OwningPtr<ExternalASTSource> Source;
+  const std::string &ImplicitPCHInclude =
+    CompOpts.getPreprocessorOpts().getImplicitPCHInclude();
   if (Consumer)
     ContextOwner.reset(new ASTContext(PP.getLangOptions(),
                                       PP.getSourceManager(),
@@ -727,12 +730,6 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
                                       PP.getBuiltinInfo(),
                                       /* FreeMemory = */ !DisableFree,
                                       /* size_reserve = */0));
-
-  llvm::OwningPtr<PCHReader> Reader;
-  llvm::OwningPtr<ExternalASTSource> Source;
-
-  const std::string &ImplicitPCHInclude =
-    CompOpts.getPreprocessorOpts().getImplicitPCHInclude();
   if (Consumer && !ImplicitPCHInclude.empty()) {
     // If the user specified -isysroot, it will be used for relocatable PCH
     // files.
@@ -740,6 +737,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
     if (isysrootPCH[0] == '\0')
       isysrootPCH = 0;
 
+    llvm::OwningPtr<PCHReader> Reader;
     Reader.reset(new PCHReader(PP, ContextOwner.get(), isysrootPCH));
 
     // The user has asked us to include a precompiled header. Load
@@ -753,10 +751,8 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       // Attach the PCH reader to the AST context as an external AST
       // source, so that declarations will be deserialized from the
       // PCH file as needed.
-      if (ContextOwner) {
-        Source.reset(Reader.take());
-        ContextOwner->setExternalSource(Source);
-      }
+      Source.reset(Reader.take());
+      ContextOwner->setExternalSource(Source);
       break;
     }
 
