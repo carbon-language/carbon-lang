@@ -934,10 +934,6 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType FnType,
                                   getOrCreateType(FnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
 
-#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
-  DebugFactory.InsertSubprogramStart(SP, Builder.GetInsertBlock());
-#endif
-
   // Push function on region stack.
   RegionStack.push_back(SP);
 }
@@ -961,7 +957,6 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
   PresumedLoc PLoc = SM.getPresumedLoc(CurLoc);
 
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   llvm::DIDescriptor DR = RegionStack.back();
   llvm::DIScope DS = llvm::DIScope(DR.getNode());
   llvm::DILocation DO(NULL);
@@ -969,10 +964,6 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
     DebugFactory.CreateLocation(PLoc.getLine(), PLoc.getColumn(),
                                 DS, DO);
   Builder.SetCurrentDebugLocation(DL.getNode());
-#else
-  DebugFactory.InsertStopPoint(Unit, PLoc.getLine(), PLoc.getColumn(),
-                               Builder.GetInsertBlock());
-#endif
 }
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
@@ -983,9 +974,6 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
     D = RegionStack.back();
   D = DebugFactory.CreateLexicalBlock(D);
   RegionStack.push_back(D);
-#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
-  DebugFactory.InsertRegionStart(D, Builder.GetInsertBlock());
-#endif
 }
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
@@ -996,9 +984,6 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder) {
   // Provide an region stop point.
   EmitStopPoint(Fn, Builder);
 
-#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
-  DebugFactory.InsertRegionEnd(RegionStack.back(), Builder.GetInsertBlock());
-#endif
   RegionStack.pop_back();
 }
 
@@ -1165,14 +1150,13 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-    llvm::DIDescriptor DR = RegionStack.back();
-    llvm::DIScope DS = llvm::DIScope(DR.getNode());
-    llvm::DILocation DO(NULL);
-    llvm::DILocation DL = 
-      DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
-    Builder.SetDebugLocation(Call, DL.getNode());
-#endif
+
+  llvm::DIDescriptor DR = RegionStack.back();
+  llvm::DIScope DS = llvm::DIScope(DR.getNode());
+  llvm::DILocation DO(NULL);
+  llvm::DILocation DL = 
+    DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
+  Builder.SetDebugLocation(Call, DL.getNode());
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
@@ -1368,14 +1352,13 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
     DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertPoint());
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-    llvm::DIDescriptor DR = RegionStack.back();
-    llvm::DIScope DS = llvm::DIScope(DR.getNode());
-    llvm::DILocation DO(NULL);
-    llvm::DILocation DL = 
-      DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
-    Builder.SetDebugLocation(Call, DL.getNode());
-#endif
+
+  llvm::DIDescriptor DR = RegionStack.back();
+  llvm::DIScope DS = llvm::DIScope(DR.getNode());
+  llvm::DILocation DO(NULL);
+  llvm::DILocation DL = 
+    DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
+  Builder.SetDebugLocation(Call, DL.getNode());
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *Decl,

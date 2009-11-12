@@ -148,13 +148,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
 
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
     DI->setLocation(S.getLBracLoc());
     DI->EmitRegionStart(CurFn, Builder);
-#else
-    EnsureInsertPoint();
-    DI->setLocation(S.getLBracLoc());
-#endif    
   }
 
   // Keep track of the current cleanup stack depth.
@@ -167,13 +162,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     EmitStmt(*I);
 
   if (DI) {
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
     DI->setLocation(S.getLBracLoc());
     DI->EmitRegionEnd(CurFn, Builder);
-#else
-    EnsureInsertPoint();
-    DI->setLocation(S.getLBracLoc());
-#endif    
   }
 
   RValue RV;
@@ -484,13 +474,11 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock));
 
   // If the condition is true, execute the body of the for stmt.
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getSourceRange().getBegin());
     DI->EmitRegionStart(CurFn, Builder);
   }
-#endif
   EmitStmt(S.getBody());
 
   BreakContinueStack.pop_back();
@@ -503,12 +491,10 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   // Finally, branch back up to the condition for the next iteration.
   EmitBranch(CondBlock);
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   if (DI) {
     DI->setLocation(S.getSourceRange().getEnd());
     DI->EmitRegionEnd(CurFn, Builder);
   }
-#endif
 
   // Emit the fall-through block.
   EmitBlock(AfterFor, true);

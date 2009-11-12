@@ -31,8 +31,6 @@
 #include "llvm/Support/ValueHandle.h"
 #include <list>
 
-#define ATTACH_DEBUG_INFO_TO_AN_INSN 1 
-
 namespace llvm {
   class Module;
   class Constant;
