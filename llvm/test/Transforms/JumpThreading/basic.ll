@@ -302,7 +302,7 @@ T1:
         
 ; CHECK: %v1 = call i32 @test10f1()
 ; CHECK-NEXT: call void @f3()
-; CHeCK-NEXT: ret i32 %v1
+; CHECK-NEXT: ret i32 %v1
 
 F1:
         %v2 = call i32 @test10f2()
