@@ -11,8 +11,8 @@
 #define LLVM_CLANG_FRONTEND_COMPILERINVOCATION_H_
 
 #include "clang/Basic/LangOptions.h"
+#include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/Frontend/AnalysisConsumer.h"
-#include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
@@ -34,7 +34,7 @@ class CompilerInvocation {
   AnalyzerOptions AnalyzerOpts;
 
   /// Options controlling IRgen and the backend.
-  CompileOptions CompileOpts;
+  CodeGenOptions CodeGenOpts;
 
   /// Options controlling dependency output.
   DependencyOutputOptions DependencyOutputOpts;
@@ -76,9 +76,9 @@ public:
     return AnalyzerOpts;
   }
 
-  CompileOptions &getCompileOpts() { return CompileOpts; }
-  const CompileOptions &getCompileOpts() const {
-    return CompileOpts;
+  CodeGenOptions &getCodeGenOpts() { return CodeGenOpts; }
+  const CodeGenOptions &getCodeGenOpts() const {
+    return CodeGenOpts;
   }
 
   DependencyOutputOptions &getDependencyOutputOpts() {

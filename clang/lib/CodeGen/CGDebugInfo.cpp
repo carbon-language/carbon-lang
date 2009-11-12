@@ -21,7 +21,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Version.h"
-#include "clang/Frontend/CompileOptions.h"
+#include "clang/CodeGen/CodeGenOptions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -1010,8 +1010,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   // Do not emit variable debug information while generating optimized code.
   // The llvm optimizer and code generator are not yet ready to support
   // optimized code debugging.
-  const CompileOptions &CO = M->getCompileOpts();
-  if (CO.OptimizationLevel)
+  const CodeGenOptions &CGO = M->getCodeGenOpts();
+  if (CGO.OptimizationLevel)
     return;
 
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
@@ -1185,8 +1185,8 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   // Do not emit variable debug information while generating optimized code.
   // The llvm optimizer and code generator are not yet ready to support
   // optimized code debugging.
-  const CompileOptions &CO = M->getCompileOpts();
-  if (CO.OptimizationLevel || Builder.GetInsertBlock() == 0)
+  const CodeGenOptions &CGO = M->getCodeGenOpts();
+  if (CGO.OptimizationLevel || Builder.GetInsertBlock() == 0)
     return;
 
   uint64_t XOffset = 0;

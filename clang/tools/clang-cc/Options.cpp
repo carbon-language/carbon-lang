@@ -15,7 +15,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/AnalysisConsumer.h"
-#include "clang/Frontend/CompileOptions.h"
+#include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
@@ -607,7 +607,7 @@ DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
 // Option Object Construction
 //===----------------------------------------------------------------------===//
 
-void clang::InitializeCompileOptions(CompileOptions &Opts,
+void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
                                      const TargetInfo &Target) {
   using namespace codegenoptions;
 
@@ -648,8 +648,8 @@ void clang::InitializeCompileOptions(CompileOptions &Opts,
   Opts.OptimizationLevel = OptSize ? 2 : OptLevel;
 
   // We must always run at least the always inlining pass.
-  Opts.Inlining = (Opts.OptimizationLevel > 1) ? CompileOptions::NormalInlining
-    : CompileOptions::OnlyAlwaysInlining;
+  Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
+    : CodeGenOptions::OnlyAlwaysInlining;
 
   Opts.CPU = TargetCPU;
   Opts.DebugInfo = GenerateDebugInfo;
@@ -866,7 +866,7 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
 
 void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
                                   TargetInfo &Target,
-                                  const CompileOptions &CompileOpts) {
+                                  const CodeGenOptions &CodeGenOpts) {
   using namespace langoptions;
 
   bool NoPreprocess = false;
@@ -932,7 +932,7 @@ void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
 
   // Pass the map of target features to the target for validation and
   // processing.
-  Target.HandleTargetFeatures(CompileOpts.Features);
+  Target.HandleTargetFeatures(CodeGenOpts.Features);
 
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
@@ -1088,7 +1088,7 @@ void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
 
   // The __OPTIMIZE_SIZE__ define is tied to -Oz, which we don't support.
   Options.OptimizeSize = 0;
-  Options.Optimize = !!CompileOpts.OptimizationLevel;
+  Options.Optimize = !!CodeGenOpts.OptimizationLevel;
 
   assert(PICLevel <= 2 && "Invalid value for -pic-level");
   Options.PICLevel = PICLevel;
@@ -1099,7 +1099,7 @@ void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
   // This is the __NO_INLINE__ define, which just depends on things like the
   // optimization level and -fno-inline, not actually whether the backend has
   // inlining enabled.
-  Options.NoInline = !CompileOpts.OptimizationLevel;
+  Options.NoInline = !CodeGenOpts.OptimizationLevel;
 
   Options.Static = StaticDefine;
 

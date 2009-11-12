@@ -1,4 +1,4 @@
-//===--- CompileOptions.h ---------------------------------------*- C++ -*-===//
+//===--- CodeGenOptions.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,21 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the CompileOptions interface.
+//  This file defines the CodeGenOptions interface.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_COMPILEOPTIONS_H
-#define LLVM_CLANG_FRONTEND_COMPILEOPTIONS_H
+#ifndef LLVM_CLANG_CODEGEN_CODEGENOPTIONS_H
+#define LLVM_CLANG_CODEGEN_CODEGENOPTIONS_H
 
 #include <string>
 #include <vector>
 
 namespace clang {
 
-/// CompileOptions - Track various options which control how the code
+/// CodeGenOptions - Track various options which control how the code
 /// is optimized and passed to the backend.
-class CompileOptions {
+class CodeGenOptions {
 public:
   enum InliningMethod {
     NoInlining,         // Perform no inlining whatsoever.
@@ -60,7 +60,7 @@ public:
   std::vector<std::string> Features;
 
 public:
-  CompileOptions() {
+  CodeGenOptions() {
     OptimizationLevel = 0;
     OptimizeSize = 0;
     DebugInfo = 0;

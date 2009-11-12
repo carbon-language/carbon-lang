@@ -17,7 +17,7 @@
 #include "CGCall.h"
 #include "CGObjCRuntime.h"
 #include "Mangle.h"
-#include "clang/Frontend/CompileOptions.h"
+#include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
@@ -35,11 +35,11 @@ using namespace clang;
 using namespace CodeGen;
 
 
-CodeGenModule::CodeGenModule(ASTContext &C, const CompileOptions &compileOpts,
+CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
                              llvm::Module &M, const llvm::TargetData &TD,
                              Diagnostic &diags)
   : BlockModule(C, M, TD, Types, *this), Context(C),
-    Features(C.getLangOptions()), CompileOpts(compileOpts), TheModule(M),
+    Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
     TheTargetData(TD), Diags(diags), Types(C, M, TD), MangleCtx(C), 
     VtableInfo(*this), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0),
@@ -55,7 +55,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CompileOptions &compileOpts,
     Runtime = CreateMacObjCRuntime(*this);
 
   // If debug info generation is enabled, create the CGDebugInfo object.
-  DebugInfo = CompileOpts.DebugInfo ? new CGDebugInfo(this) : 0;
+  DebugInfo = CodeGenOpts.DebugInfo ? new CGDebugInfo(this) : 0;
 }
 
 CodeGenModule::~CodeGenModule() {
@@ -1082,7 +1082,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
   } else if (Linkage == GVA_TemplateInstantiation)
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);   
-  else if (!CompileOpts.NoCommon &&
+  else if (!CodeGenOpts.NoCommon &&
            !D->hasExternalStorage() && !D->getInit() &&
            !D->getAttr<SectionAttr>()) {
     GV->setLinkage(llvm::GlobalVariable::CommonLinkage);

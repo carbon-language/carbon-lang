@@ -565,7 +565,7 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
     }
 
     return CreateBackendConsumer(Act, PP.getDiagnostics(), PP.getLangOptions(),
-                                 CompOpts.getCompileOpts(), InFile, OS.get(),
+                                 CompOpts.getCodeGenOpts(), InFile, OS.get(),
                                  Context);
   }
 
@@ -985,7 +985,7 @@ static LangKind GetLanguage() {
   return LK;
 }
 
-static void FinalizeCompileOptions(CompileOptions &Opts,
+static void FinalizeCodeGenOptions(CodeGenOptions &Opts,
                                    const LangOptions &Lang) {
   if (Lang.NoBuiltin)
     Opts.SimplifyLibCalls = 0;
@@ -1007,7 +1007,7 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
 
   // Initialize backend options, which may also be used to key some language
   // options.
-  InitializeCompileOptions(Opts.getCompileOpts(), Target);
+  InitializeCodeGenOptions(Opts.getCodeGenOpts(), Target);
 
   // Initialize language options.
   //
@@ -1015,7 +1015,7 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   // code path to make this obvious.
   if (LK != langkind_ast)
     InitializeLangOptions(Opts.getLangOpts(), LK, Target,
-                          Opts.getCompileOpts());
+                          Opts.getCodeGenOpts());
 
   // Initialize the static analyzer options.
   InitializeAnalyzerOptions(Opts.getAnalyzerOpts());
@@ -1036,7 +1036,7 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   InitializePreprocessorOutputOptions(Opts.getPreprocessorOutputOpts());
 
   // Finalize some code generation options.
-  FinalizeCompileOptions(Opts.getCompileOpts(), Opts.getLangOpts());
+  FinalizeCodeGenOptions(Opts.getCodeGenOpts(), Opts.getLangOpts());
 }
 
 static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,

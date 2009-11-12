@@ -9,7 +9,7 @@
 
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Frontend/CompileOptions.h"
+#include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclGroup.h"
@@ -40,7 +40,7 @@ using namespace llvm;
 namespace {
   class VISIBILITY_HIDDEN BackendConsumer : public ASTConsumer {
     BackendAction Action;
-    CompileOptions CompileOpts;
+    CodeGenOptions CodeGenOpts;
     llvm::raw_ostream *AsmOutStream;
     llvm::formatted_raw_ostream FormattedOutStream;
     ASTContext *Context;
@@ -75,11 +75,11 @@ namespace {
 
   public:
     BackendConsumer(BackendAction action, Diagnostic &Diags,
-                    const LangOptions &langopts, const CompileOptions &compopts,
+                    const LangOptions &langopts, const CodeGenOptions &compopts,
                     const std::string &infile, llvm::raw_ostream* OS,
                     LLVMContext& C) :
       Action(action),
-      CompileOpts(compopts),
+      CodeGenOpts(compopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
@@ -92,7 +92,7 @@ namespace {
                                      formatted_raw_ostream::PRESERVE_STREAM);
 
       // Enable -time-passes if -ftime-report is enabled.
-      llvm::TimePassesIsEnabled = CompileOpts.TimePasses;
+      llvm::TimePassesIsEnabled = CodeGenOpts.TimePasses;
     }
 
     ~BackendConsumer() {
@@ -106,7 +106,7 @@ namespace {
     virtual void Initialize(ASTContext &Ctx) {
       Context = &Ctx;
 
-      if (CompileOpts.TimePasses)
+      if (CodeGenOpts.TimePasses)
         LLVMIRGeneration.startTimer();
 
       Gen->Initialize(Ctx);
@@ -115,7 +115,7 @@ namespace {
       ModuleProvider = new ExistingModuleProvider(TheModule);
       TheTargetData = new llvm::TargetData(Ctx.Target.getTargetDescription());
 
-      if (CompileOpts.TimePasses)
+      if (CodeGenOpts.TimePasses)
         LLVMIRGeneration.stopTimer();
     }
 
@@ -124,24 +124,24 @@ namespace {
                                      Context->getSourceManager(),
                                      "LLVM IR generation of declaration");
 
-      if (CompileOpts.TimePasses)
+      if (CodeGenOpts.TimePasses)
         LLVMIRGeneration.startTimer();
 
       Gen->HandleTopLevelDecl(D);
 
-      if (CompileOpts.TimePasses)
+      if (CodeGenOpts.TimePasses)
         LLVMIRGeneration.stopTimer();
     }
 
     virtual void HandleTranslationUnit(ASTContext &C) {
       {
         PrettyStackTraceString CrashInfo("Per-file LLVM IR generation");
-        if (CompileOpts.TimePasses)
+        if (CodeGenOpts.TimePasses)
           LLVMIRGeneration.startTimer();
 
         Gen->HandleTranslationUnit(C);
 
-        if (CompileOpts.TimePasses)
+        if (CodeGenOpts.TimePasses)
           LLVMIRGeneration.stopTimer();
       }
 
@@ -202,7 +202,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
   } else if (Action == Backend_EmitLL) {
     getPerModulePasses()->add(createPrintModulePass(&FormattedOutStream));
   } else {
-    bool Fast = CompileOpts.OptimizationLevel == 0;
+    bool Fast = CodeGenOpts.OptimizationLevel == 0;
 
     // Create the TargetMachine for generating code.
     std::string Triple = TheModule->getTargetTriple();
@@ -213,12 +213,12 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     }
 
     std::string FeaturesStr;
-    if (CompileOpts.CPU.size() || CompileOpts.Features.size()) {
+    if (CodeGenOpts.CPU.size() || CodeGenOpts.Features.size()) {
       SubtargetFeatures Features;
-      Features.setCPU(CompileOpts.CPU);
+      Features.setCPU(CodeGenOpts.CPU);
       for (std::vector<std::string>::iterator
-             it = CompileOpts.Features.begin(),
-             ie = CompileOpts.Features.end(); it != ie; ++it)
+             it = CodeGenOpts.Features.begin(),
+             ie = CodeGenOpts.Features.end(); it != ie; ++it)
         Features.AddFeature(*it);
       FeaturesStr = Features.getString();
     }
@@ -237,7 +237,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     FunctionPassManager *PM = getCodeGenPasses();
     CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
 
-    switch (CompileOpts.OptimizationLevel) {
+    switch (CodeGenOpts.OptimizationLevel) {
     default: break;
     case 0: OptLevel = CodeGenOpt::None; break;
     case 3: OptLevel = CodeGenOpt::Aggressive; break;
@@ -266,18 +266,18 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
 }
 
 void BackendConsumer::CreatePasses() {
-  unsigned OptLevel = CompileOpts.OptimizationLevel;
-  CompileOptions::InliningMethod Inlining = CompileOpts.Inlining;
+  unsigned OptLevel = CodeGenOpts.OptimizationLevel;
+  CodeGenOptions::InliningMethod Inlining = CodeGenOpts.Inlining;
 
   // Handle disabling of LLVM optimization, where we want to preserve the
   // internal module before any optimization.
-  if (CompileOpts.DisableLLVMOpts) {
+  if (CodeGenOpts.DisableLLVMOpts) {
     OptLevel = 0;
-    Inlining = CompileOpts.NoInlining;
+    Inlining = CodeGenOpts.NoInlining;
   }
 
   // In -O0 if checking is disabled, we don't even have per-function passes.
-  if (CompileOpts.VerifyModule)
+  if (CodeGenOpts.VerifyModule)
     getPerFunctionPasses()->add(createVerifierPass());
 
   // Assume that standard function passes aren't run for -O0.
@@ -286,24 +286,24 @@ void BackendConsumer::CreatePasses() {
 
   llvm::Pass *InliningPass = 0;
   switch (Inlining) {
-  case CompileOptions::NoInlining: break;
-  case CompileOptions::NormalInlining: {
+  case CodeGenOptions::NoInlining: break;
+  case CodeGenOptions::NormalInlining: {
     // Inline small functions
-    unsigned Threshold = (CompileOpts.OptimizeSize || OptLevel < 3) ? 50 : 200;
+    unsigned Threshold = (CodeGenOpts.OptimizeSize || OptLevel < 3) ? 50 : 200;
     InliningPass = createFunctionInliningPass(Threshold);
     break;
   }
-  case CompileOptions::OnlyAlwaysInlining:
+  case CodeGenOptions::OnlyAlwaysInlining:
     InliningPass = createAlwaysInlinerPass();         // Respect always_inline
     break;
   }
 
   // For now we always create per module passes.
   PassManager *PM = getPerModulePasses();
-  llvm::createStandardModulePasses(PM, OptLevel, CompileOpts.OptimizeSize,
-                                   CompileOpts.UnitAtATime,
-                                   CompileOpts.UnrollLoops,
-                                   CompileOpts.SimplifyLibCalls,
+  llvm::createStandardModulePasses(PM, OptLevel, CodeGenOpts.OptimizeSize,
+                                   CodeGenOpts.UnitAtATime,
+                                   CodeGenOpts.UnrollLoops,
+                                   CodeGenOpts.SimplifyLibCalls,
                                    /*HaveExceptions=*/true,
                                    InliningPass);
 }
@@ -315,7 +315,7 @@ void BackendConsumer::EmitAssembly() {
   if (!TheModule || !TheTargetData)
     return;
 
-  TimeRegion Region(CompileOpts.TimePasses ? &CodeGenerationTime : 0);
+  TimeRegion Region(CodeGenOpts.TimePasses ? &CodeGenerationTime : 0);
 
   // Make sure IR generation is happy with the module. This is
   // released by the module provider.
@@ -370,10 +370,10 @@ void BackendConsumer::EmitAssembly() {
 ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           Diagnostic &Diags,
                                           const LangOptions &LangOpts,
-                                          const CompileOptions &CompileOpts,
+                                          const CodeGenOptions &CodeGenOpts,
                                           const std::string& InFile,
                                           llvm::raw_ostream* OS,
                                           LLVMContext& C) {
-  return new BackendConsumer(Action, Diags, LangOpts, CompileOpts,
+  return new BackendConsumer(Action, Diags, LangOpts, CodeGenOpts,
                              InFile, OS, C);
 }

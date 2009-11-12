@@ -15,7 +15,7 @@
 namespace clang {
 
 class AnalyzerOptions;
-class CompileOptions;
+class CodeGenOptions;
 class DependencyOutputOptions;
 class DiagnosticOptions;
 class HeaderSearchOptions;
@@ -45,7 +45,7 @@ void InitializeDependencyOutputOptions(DependencyOutputOptions &Opts);
 
 void InitializeDiagnosticOptions(DiagnosticOptions &Opts);
 
-void InitializeCompileOptions(CompileOptions &Opts,
+void InitializeCodeGenOptions(CodeGenOptions &Opts,
                               const TargetInfo &Target);
 
 void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
@@ -55,7 +55,7 @@ void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
 
 void InitializeLangOptions(LangOptions &Options, LangKind LK,
                            TargetInfo &Target,
-                           const CompileOptions &CompileOpts);
+                           const CodeGenOptions &CodeGenOpts);
 
 void InitializePreprocessorOptions(PreprocessorOptions &Opts);
 

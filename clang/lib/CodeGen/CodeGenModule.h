@@ -61,7 +61,7 @@ namespace clang {
   class ValueDecl;
   class VarDecl;
   class LangOptions;
-  class CompileOptions;
+  class CodeGenOptions;
   class Diagnostic;
   class AnnotateAttr;
   class CXXDestructorDecl;
@@ -122,7 +122,7 @@ class CodeGenModule : public BlockModule {
 
   ASTContext &Context;
   const LangOptions &Features;
-  const CompileOptions &CompileOpts;
+  const CodeGenOptions &CodeGenOpts;
   llvm::Module &TheModule;
   const llvm::TargetData &TheTargetData;
   Diagnostic &Diags;
@@ -201,7 +201,7 @@ class CodeGenModule : public BlockModule {
 
   llvm::LLVMContext &VMContext;
 public:
-  CodeGenModule(ASTContext &C, const CompileOptions &CompileOpts,
+  CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
                 llvm::Module &M, const llvm::TargetData &TD, Diagnostic &Diags);
 
   ~CodeGenModule();
@@ -222,7 +222,7 @@ public:
 
   CGDebugInfo *getDebugInfo() { return DebugInfo; }
   ASTContext &getContext() const { return Context; }
-  const CompileOptions &getCompileOpts() const { return CompileOpts; }
+  const CodeGenOptions &getCodeGenOpts() const { return CodeGenOpts; }
   const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }

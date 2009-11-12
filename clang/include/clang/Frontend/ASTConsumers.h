@@ -28,7 +28,7 @@ class ASTConsumer;
 class Diagnostic;
 class FileManager;
 class Preprocessor;
-class CompileOptions;
+class CodeGenOptions;
 class LangOptions;
 
 // AST pretty-printer: prints out the AST in a format that is close to the
@@ -69,7 +69,7 @@ ASTConsumer *CreateObjCRewriter(const std::string &InFile,
                                 bool SilenceRewriteMacroWarning);
 
 // LLVM code generator: uses the code generation backend to generate LLVM
-// assembly. This runs optimizations depending on the CompileOptions
+// assembly. This runs optimizations depending on the CodeGenOptions
 // parameter. The output depends on the Action parameter.
 enum BackendAction {
   Backend_EmitAssembly,  // Emit native assembly
@@ -80,7 +80,7 @@ enum BackendAction {
 ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    Diagnostic &Diags,
                                    const LangOptions &Features,
-                                   const CompileOptions &CompileOpts,
+                                   const CodeGenOptions &CodeGenOpts,
                                    const std::string &ModuleID,
                                    llvm::raw_ostream *OS,
                                    llvm::LLVMContext& C);
