@@ -603,7 +603,9 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge,
 void SchedulePostRATDList::ReleaseSuccessors(SUnit *SU, bool IgnoreAntiDep) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (IgnoreAntiDep && (I->getKind() == SDep::Anti)) continue;
+    if (IgnoreAntiDep && 
+        ((I->getKind() == SDep::Anti) || (I->getKind() == SDep::Output)))
+      continue;
     ReleaseSucc(SU, &*I, IgnoreAntiDep);
   }
 }
@@ -658,7 +660,7 @@ void SchedulePostRATDList::ListScheduleTopDown(
       available = true;
       for (SUnit::const_pred_iterator I = SUnits[i].Preds.begin(),
              E = SUnits[i].Preds.end(); I != E; ++I) {
-        if (I->getKind() != SDep::Anti) {
+        if ((I->getKind() != SDep::Anti) && (I->getKind() != SDep::Output))  {
           available = false;
         } else {
           SUnits[i].NumPredsLeft -= 1;
@@ -737,7 +739,9 @@ void SchedulePostRATDList::ListScheduleTopDown(
         AntiDepBreaker::AntiDepRegVector AntiDepRegs;
         for (SUnit::const_pred_iterator I = FoundSUnit->Preds.begin(),
                E = FoundSUnit->Preds.end(); I != E; ++I) {
-          if ((I->getKind() == SDep::Anti) && !I->getSUnit()->isScheduled)
+          if (((I->getKind() == SDep::Anti) || 
+               (I->getKind() == SDep::Output)) &&
+              !I->getSUnit()->isScheduled)
             AntiDepRegs.push_back(I->getReg());
         }
         

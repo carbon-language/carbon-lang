@@ -214,7 +214,10 @@ void SUnit::ComputeDepth(bool IgnoreAntiDep) {
     unsigned MaxPredDepth = 0;
     for (SUnit::const_pred_iterator I = Cur->Preds.begin(),
          E = Cur->Preds.end(); I != E; ++I) {
-      if (IgnoreAntiDep && (I->getKind() == SDep::Anti)) continue;
+      if (IgnoreAntiDep && 
+          ((I->getKind() == SDep::Anti) || (I->getKind() == SDep::Output))) 
+        continue;
+
       SUnit *PredSU = I->getSUnit();
       if (PredSU->isDepthCurrent)
         MaxPredDepth = std::max(MaxPredDepth,
@@ -248,7 +251,10 @@ void SUnit::ComputeHeight(bool IgnoreAntiDep) {
     unsigned MaxSuccHeight = 0;
     for (SUnit::const_succ_iterator I = Cur->Succs.begin(),
          E = Cur->Succs.end(); I != E; ++I) {
-      if (IgnoreAntiDep && (I->getKind() == SDep::Anti)) continue;
+      if (IgnoreAntiDep && 
+          ((I->getKind() == SDep::Anti) || (I->getKind() == SDep::Output))) 
+        continue;
+
       SUnit *SuccSU = I->getSUnit();
       if (SuccSU->isHeightCurrent)
         MaxSuccHeight = std::max(MaxSuccHeight,

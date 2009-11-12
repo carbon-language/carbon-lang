@@ -285,7 +285,7 @@ static void AntiDepPathStep(SUnit *SU, AntiDepBreaker::AntiDepRegVector& Regs,
 
   for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
        P != PE; ++P) {
-    if (P->getKind() == SDep::Anti) {
+    if ((P->getKind() == SDep::Anti) || (P->getKind() == SDep::Output)) {
       unsigned Reg = P->getReg();
       if (RegSet.count(Reg) != 0) {
         Edges.push_back(&*P);
@@ -716,7 +716,8 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
         SDep *Edge = Edges[i];
         SUnit *NextSU = Edge->getSUnit();
         
-        if (Edge->getKind() != SDep::Anti) continue;
+        if ((Edge->getKind() != SDep::Anti) &&
+            (Edge->getKind() != SDep::Output)) continue;
         
         unsigned AntiDepReg = Edge->getReg();
         DEBUG(errs() << "\tAntidep reg: " << TRI->getName(AntiDepReg));
