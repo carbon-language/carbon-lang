@@ -485,10 +485,9 @@ bool DwarfException::CallToNoUnwindFunction(const MachineInstr *MI) {
           MarkedNoUnwind = false;
           break;
         }
-        if (F->doesNotThrow()) {
-          SawFunc = true;
-          MarkedNoUnwind = true;
-        }
+
+        MarkedNoUnwind = F->doesNotThrow();
+        SawFunc = true;
       }
     }
   }
