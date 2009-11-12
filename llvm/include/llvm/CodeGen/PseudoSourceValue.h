@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 
 #include "llvm/Value.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
   class MachineFrameInfo;
@@ -32,7 +33,7 @@ namespace llvm {
     virtual void printCustom(raw_ostream &O) const;
 
   public:
-    PseudoSourceValue();
+    PseudoSourceValue(enum ValueTy Subclass = PseudoSourceValueVal);
 
     /// isConstant - Test whether the memory pointed to by this
     /// PseudoSourceValue has a constant value.
@@ -75,6 +76,38 @@ namespace llvm {
     /// A pseudo source value referencing a jump table. Since jump tables are
     /// constant, this doesn't need to identify a specific jump table.
     static const PseudoSourceValue *getJumpTable();
+  };
+
+  /// FixedStackPseudoSourceValue - A specialized PseudoSourceValue
+  /// for holding FixedStack values, which must include a frame
+  /// index.
+  class FixedStackPseudoSourceValue : public PseudoSourceValue {
+    const int FI;
+  public:
+    explicit FixedStackPseudoSourceValue(int fi) :
+        PseudoSourceValue(FixedStackPseudoSourceValueVal), FI(fi) {}
+
+    /// classof - Methods for support type inquiry through isa, cast, and
+    /// dyn_cast:
+    ///
+    static inline bool classof(const FixedStackPseudoSourceValue *) {
+      return true;
+    }
+    static inline bool classof(const Value *V) {
+      return V->getValueID() == FixedStackPseudoSourceValueVal;
+    }
+
+    virtual bool isConstant(const MachineFrameInfo *MFI) const;
+
+    virtual bool isAliased(const MachineFrameInfo *MFI) const;
+
+    virtual bool mayAlias(const MachineFrameInfo *) const;
+
+    virtual void printCustom(raw_ostream &OS) const {
+      OS << "FixedStack" << FI;
+    }
+
+    int getFrameIndex(void) const { return FI; }
   };
 } // End llvm namespace
 
