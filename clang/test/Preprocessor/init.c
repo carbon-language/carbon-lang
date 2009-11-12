@@ -378,7 +378,7 @@
 // MSP430:#define __FLT_MIN__ 1.17549435e-38F
 // MSP430:#define __FLT_RADIX__ 2
 // MSP430:#define __INT16_TYPE__ short
-// MSP430:#define __INT32_TYPE__ long long
+// MSP430:#define __INT32_TYPE__ long int
 // MSP430:#define __INT8_TYPE__ char
 // MSP430:#define __INTMAX_MAX__ 2147483647L
 // MSP430:#define __INTMAX_TYPE__ long int
@@ -447,7 +447,7 @@
 // PIC16:#define __FLT_MIN__ 1.17549435e-38F
 // PIC16:#define __FLT_RADIX__ 2
 // PIC16:#define __INT16_TYPE__ short
-// PIC16:#define __INT32_TYPE__ long long
+// PIC16:#define __INT32_TYPE__ long int
 // PIC16:#define __INT8_TYPE__ char
 // PIC16:#define __INTMAX_MAX__ 2147483647L
 // PIC16:#define __INTMAX_TYPE__ long int
@@ -679,7 +679,7 @@
 // S390X:#define __FLT_RADIX__ 2
 // S390X:#define __INT16_TYPE__ short
 // S390X:#define __INT32_TYPE__ int
-// S390X:#define __INT64_TYPE__ long long int
+// S390X:#define __INT64_TYPE__ long int
 // S390X:#define __INT8_TYPE__ char
 // S390X:#define __INTMAX_MAX__ 9223372036854775807LL
 // S390X:#define __INTMAX_TYPE__ long long int

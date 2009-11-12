@@ -237,6 +237,12 @@ static void DefineType(const char *MacroName, TargetInfo::IntType Ty,
   DefineBuiltinMacro(Buf, MacroBuf);
 }
 
+static void DefineExactWidthIntType(TargetInfo::IntType Ty, 
+                               const TargetInfo &TI, std::vector<char> &Buf) {
+  char MacroBuf[60];
+  sprintf(MacroBuf, "__INT%d_TYPE__", TI.getTypeWidth(Ty));
+  DefineType(MacroBuf, Ty, Buf);
+}
 
 static void InitializePredefinedMacros(const TargetInfo &TI,
                                        const LangOptions &LangOpts,
@@ -386,25 +392,22 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (!LangOpts.CharIsSigned)
     DefineBuiltinMacro(Buf, "__CHAR_UNSIGNED__");
 
-  // Define fixed-sized integer types for stdint.h
-  assert(TI.getCharWidth() == 8 && "unsupported target types");
-  assert(TI.getShortWidth() == 16 && "unsupported target types");
-  DefineBuiltinMacro(Buf, "__INT8_TYPE__=char");
-  DefineType("__INT16_TYPE__", TargetInfo::SignedShort, Buf);
+  // Define exact-width integer types for stdint.h
+  sprintf(MacroBuf, "__INT%d_TYPE__=char", TI.getCharWidth());
+  DefineBuiltinMacro(Buf, MacroBuf);
 
-  TargetInfo::IntType Int32Type;
-  if (TI.getIntWidth() == 32)
-    Int32Type = TargetInfo::SignedInt;
-  else {
-    assert(TI.getLongLongWidth() == 32 && "unsupported target types");
-    Int32Type = TargetInfo::SignedLongLong;
-  }
-  DefineType("__INT32_TYPE__", Int32Type, Buf);
-
-  // 16-bit targets doesn't necessarily have a 64-bit type.
-  if (TI.getLongLongWidth() == 64)
-    DefineType("__INT64_TYPE__", TI.getInt64Type(), Buf);
-
+  if (TI.getShortWidth() > TI.getCharWidth())
+    DefineExactWidthIntType(TargetInfo::SignedShort, TI, Buf);
+                      
+  if (TI.getIntWidth() > TI.getShortWidth())
+    DefineExactWidthIntType(TargetInfo::SignedInt, TI, Buf);
+                              
+  if (TI.getLongWidth() > TI.getIntWidth())
+    DefineExactWidthIntType(TargetInfo::SignedLong, TI, Buf);
+                                      
+  if (TI.getLongLongWidth() > TI.getLongWidth())
+    DefineExactWidthIntType(TargetInfo::SignedLongLong, TI, Buf);
+  
   // Add __builtin_va_list typedef.
   {
     const char *VAList = TI.getVAListDeclaration();
