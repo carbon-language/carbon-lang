@@ -102,7 +102,6 @@ enum ProgActions {
   RewriteBlocks,                // ObjC->C Rewriter for Blocks.
   RewriteMacros,                // Expand macros but not #includes.
   RewriteTest,                  // Rewriter playground
-  FixIt,                        // Fix-It Rewriter
   HTMLTest,                     // HTML displayer testing stuff.
   EmitAssembly,                 // Emit a .s file.
   EmitLLVM,                     // Emit a .ll file.
@@ -182,8 +181,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Expand macros without full preprocessing"),
              clEnumValN(RewriteBlocks, "rewrite-blocks",
                         "Rewrite Blocks to C"),
-             clEnumValN(FixIt, "fixit",
-                        "Apply fix-it advice to the input source"),
              clEnumValEnd));
 
 
@@ -425,6 +422,10 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 //===----------------------------------------------------------------------===//
 // Fix-It Options
 //===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<bool>
+FixItAll("fixit", llvm::cl::desc("Apply fix-it advice to the input source"));
+
 static llvm::cl::list<ParsedSourceLocation>
 FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Perform Fix-It modifications at the given source location"));
@@ -608,7 +609,6 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
     return CreateBlockRewriter(InFile, PP.getDiagnostics(),
                                PP.getLangOptions());
 
-  case FixIt: // We add the rewriter later.
   case ParseSyntaxOnly:
     return new ASTConsumer();
 
@@ -725,7 +725,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   }
 
   // Check if we want a fix-it rewriter.
-  if (PA == FixIt || !FixItAtLocations.empty()) {
+  if (FixItAll || !FixItAtLocations.empty()) {
     FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
                                      PP.getSourceManager(),
                                      PP.getLangOptions());
