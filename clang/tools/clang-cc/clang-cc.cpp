@@ -756,7 +756,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
   llvm::OwningPtr<ExternalASTSource> Source;
   const std::string &ImplicitPCHInclude =
     CompOpts.getPreprocessorOpts().getImplicitPCHInclude();
-  if (Consumer)
+  if (Consumer) {
     ContextOwner.reset(new ASTContext(PP.getLangOptions(),
                                       PP.getSourceManager(),
                                       PP.getTargetInfo(),
@@ -765,28 +765,27 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
                                       PP.getBuiltinInfo(),
                                       /* FreeMemory = */ !DisableFree,
                                       /* size_reserve = */0));
-  if (Consumer && !ImplicitPCHInclude.empty()) {
-    Source.reset(ReadPCHFile(ImplicitPCHInclude, CompOpts, PP, *ContextOwner));
-    if (!Source)
+
+    if (!ImplicitPCHInclude.empty()) {
+      Source.reset(ReadPCHFile(ImplicitPCHInclude, CompOpts, PP,
+                               *ContextOwner));
+      if (!Source)
+        return;
+
+      // Attach the PCH reader to the AST context as an external AST source, so
+      // that declarations will be deserialized from the PCH file as needed.
+      ContextOwner->setExternalSource(Source);
+    } else {
+      // Initialize builtin info when not using PCH.
+      PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
+                                             PP.getLangOptions().NoBuiltin);
+    }
+
+    // Initialize the main file entry. This needs to be delayed until after PCH
+    // has loaded.
+    if (InitializeSourceManager(PP, InFile))
       return;
 
-    // Attach the PCH reader to the AST context as an external AST source, so
-    // that declarations will be deserialized from the PCH file as needed.
-    ContextOwner->setExternalSource(Source);
-  }
-
-  // Initialize the main file entry. This needs to be delayed until after PCH
-  // has loaded.
-  if (InitializeSourceManager(PP, InFile))
-    return;
-
-  // Initialize builtin info unless we are using PCH.
-  if (!Consumer || ImplicitPCHInclude.empty())
-    PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
-                                           PP.getLangOptions().NoBuiltin);
-
-  // If we have an ASTConsumer, run the parser with it.
-  if (Consumer) {
     CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *) = 0;
     void *CreateCodeCompleterData = 0;
 
@@ -807,102 +806,113 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       }
     }
 
+    // Run the AST consumer action.
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats,
              CompleteTranslationUnit,
              CreateCodeCompleter, CreateCodeCompleterData);
-  }
+  } else {
+    // Initialize builtin info.
+    PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
+                                           PP.getLangOptions().NoBuiltin);
 
-  // Perform post processing actions and actions which don't use a consumer.
-  switch (PA) {
-  default: break;
+    // Initialize the main file entry. This needs to be delayed until after PCH
+    // has loaded.
+    if (InitializeSourceManager(PP, InFile))
+      return;
 
-  case DumpRawTokens: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    SourceManager &SM = PP.getSourceManager();
-    // Start lexing the specified input file.
-    Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
-    RawLex.SetKeepWhitespaceMode(true);
+    // Run the preprocessor actions.
+    switch (PA) {
+    default:
+      assert(0 && "unexpected program action");
 
-    Token RawTok;
-    RawLex.LexFromRawLexer(RawTok);
-    while (RawTok.isNot(tok::eof)) {
-      PP.DumpToken(RawTok, true);
-      fprintf(stderr, "\n");
+    case DumpRawTokens: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      SourceManager &SM = PP.getSourceManager();
+      // Start lexing the specified input file.
+      Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
+      RawLex.SetKeepWhitespaceMode(true);
+
+      Token RawTok;
       RawLex.LexFromRawLexer(RawTok);
+      while (RawTok.isNot(tok::eof)) {
+        PP.DumpToken(RawTok, true);
+        fprintf(stderr, "\n");
+        RawLex.LexFromRawLexer(RawTok);
+      }
+      ClearSourceMgr = true;
+      break;
     }
-    ClearSourceMgr = true;
-    break;
-  }
 
-  case DumpTokens: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    Token Tok;
-    // Start preprocessing the specified input file.
-    PP.EnterMainSourceFile();
-    do {
-      PP.Lex(Tok);
-      PP.DumpToken(Tok, true);
-      fprintf(stderr, "\n");
-    } while (Tok.isNot(tok::eof));
-    ClearSourceMgr = true;
-    break;
-  }
+    case DumpTokens: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      Token Tok;
+      // Start preprocessing the specified input file.
+      PP.EnterMainSourceFile();
+      do {
+        PP.Lex(Tok);
+        PP.DumpToken(Tok, true);
+        fprintf(stderr, "\n");
+      } while (Tok.isNot(tok::eof));
+      ClearSourceMgr = true;
+      break;
+    }
 
-  case GeneratePTH: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    CacheTokens(PP, static_cast<llvm::raw_fd_ostream*>(OS.get()));
-    ClearSourceMgr = true;
-    break;
-  }
+    case GeneratePTH: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      CacheTokens(PP, static_cast<llvm::raw_fd_ostream*>(OS.get()));
+      ClearSourceMgr = true;
+      break;
+    }
 
-  case ParseNoop: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    ParseFile(PP, new MinimalAction(PP));
-    ClearSourceMgr = true;
-    break;
-  }
+    case ParseNoop: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      ParseFile(PP, new MinimalAction(PP));
+      ClearSourceMgr = true;
+      break;
+    }
 
-  case ParsePrintCallbacks: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    ParseFile(PP, CreatePrintParserActionsAction(PP, OS.get()));
-    ClearSourceMgr = true;
-    break;
-  }
+    case ParsePrintCallbacks: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      ParseFile(PP, CreatePrintParserActionsAction(PP, OS.get()));
+      ClearSourceMgr = true;
+      break;
+    }
 
-  case PrintPreprocessedInput: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    DoPrintPreprocessedInput(PP, OS.get(),
-                             CompOpts.getPreprocessorOutputOpts());
-    ClearSourceMgr = true;
-    break;
-  }
+    case PrintPreprocessedInput: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      DoPrintPreprocessedInput(PP, OS.get(),
+                               CompOpts.getPreprocessorOutputOpts());
+      ClearSourceMgr = true;
+      break;
+    }
 
-  case RewriteMacros: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    RewriteMacrosInInput(PP, OS.get());
-    ClearSourceMgr = true;
-    break;
-  }
+    case RewriteMacros: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      RewriteMacrosInInput(PP, OS.get());
+      ClearSourceMgr = true;
+      break;
+    }
 
-  case RewriteTest: {
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    DoRewriteTest(PP, OS.get());
-    ClearSourceMgr = true;
-    break;
-  }
+    case RewriteTest: {
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      DoRewriteTest(PP, OS.get());
+      ClearSourceMgr = true;
+      break;
+    }
 
-  case RunPreprocessorOnly: {    // Just lex as fast as we can, no output.
-    llvm::TimeRegion Timer(ClangFrontendTimer);
-    Token Tok;
-    // Start parsing the specified input file.
-    PP.EnterMainSourceFile();
-    do {
-      PP.Lex(Tok);
-    } while (Tok.isNot(tok::eof));
-    ClearSourceMgr = true;
-    break;
-  }
+    case RunPreprocessorOnly: {    // Just lex as fast as we can, no output.
+      llvm::TimeRegion Timer(ClangFrontendTimer);
+      Token Tok;
+      // Start parsing the specified input file.
+      PP.EnterMainSourceFile();
+      do {
+        PP.Lex(Tok);
+      } while (Tok.isNot(tok::eof));
+      ClearSourceMgr = true;
+      break;
+    }
 
+    }
   }
 
   if (FixItRewrite)
