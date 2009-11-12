@@ -146,7 +146,7 @@ def VLDMS : NI<(outs),
 // Use vldmia to load a Q register as a D register pair.
 def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr),
                IIC_fpLoadm,
-               "vldmia $addr, ${dst:dregpair}",
+               "vldmia\t$addr, ${dst:dregpair}",
                [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]> {
   let Inst{27-25} = 0b110;
   let Inst{24}    = 0; // P bit
@@ -158,7 +158,7 @@ def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr),
 // Use vstmia to store a Q register as a D register pair.
 def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr),
                IIC_fpStorem,
-               "vstmia $addr, ${src:dregpair}",
+               "vstmia\t$addr, ${src:dregpair}",
                [(store (v2f64 QPR:$src), addrmode4:$addr)]> {
   let Inst{27-25} = 0b110;
   let Inst{24}    = 0; // P bit
