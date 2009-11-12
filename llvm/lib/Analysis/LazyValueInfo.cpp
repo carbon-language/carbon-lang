@@ -12,12 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "lazy-value-info"
 #include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
@@ -257,11 +259,11 @@ Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
   
   DenseMap<BasicBlock*, LVILatticeVal> BlockValues;
   
-  errs() << "Getting value " << *V << " at end of block '"
-         << BB->getName() << "'\n";
+  DEBUG(errs() << "Getting value " << *V << " at end of block '"
+               << BB->getName() << "'\n");
   LVILatticeVal Result = GetValueInBlock(V, BB, BlockValues);
   
-  errs() << "  Result = " << Result << "\n";
+  DEBUG(errs() << "  Result = " << Result << "\n");
 
   if (Result.isConstant())
     return Result.getConstant();
