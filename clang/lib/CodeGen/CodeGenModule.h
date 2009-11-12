@@ -250,9 +250,13 @@ public:
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
                                     const llvm::Type *Ty = 0);
 
-  /// GenerateVtable - Generate the vtable for the given type.
-  llvm::Constant *GenerateVtable(const CXXRecordDecl *RD,
-                                 const CXXRecordDecl *Class=0,
+  /// GenerateVtable - Generate the vtable for the given type.  LayoutClass is
+  /// the class to use for the virtual base layout information.  For
+  /// non-construction vtables, this is always the same as RD.  Offset is the
+  /// offset in bits for the RD object in the LayoutClass, if we're generating a
+  /// construction vtable, otherwise 0.
+  llvm::Constant *GenerateVtable(const CXXRecordDecl *LayoutClass,
+                                 const CXXRecordDecl *RD,
                                  uint64_t Offset=0);
 
   /// GenerateVTT - Generate the VTT for the given type.
@@ -268,6 +272,10 @@ public:
   llvm::Constant *BuildCovariantThunk(const CXXMethodDecl *MD, bool Extern,
                                       int64_t nv_t, int64_t v_t,
                                       int64_t nv_r, int64_t v_r);
+
+  typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
+  llvm::DenseMap<const CXXRecordDecl *, llvm::DenseMap<CtorVtable_t,
+                                                       int64_t>*> AddressPoints;
 
   /// GetCXXBaseClassOffset - Returns the offset from a derived class to its
   /// base class. Returns null if the offset is 0.
