@@ -783,7 +783,7 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
 
   const std::string &ImplicitPCHInclude =
     CompOpts.getPreprocessorOpts().getImplicitPCHInclude();
-  if (!ImplicitPCHInclude.empty()) {
+  if (Consumer && !ImplicitPCHInclude.empty()) {
     // If the user specified -isysroot, it will be used for relocatable PCH
     // files.
     const char *isysrootPCH = CompOpts.getHeaderSearchOpts().Sysroot.c_str();
@@ -819,6 +819,18 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       // No suitable PCH file could be found. Return an error.
       return;
     }
+
+    // Finish preprocessor initialization. We do this now (rather
+    // than earlier) because this initialization creates new source
+    // location entries in the source manager, which must come after
+    // the source location entries for the PCH file.
+    if (InitializeSourceManager(PP, InFile))
+      return;
+  } else if (!ImplicitPCHInclude.empty()) {
+    // If we have an implicit PCH, the source manager initialization was
+    // delayed, do it now.
+    //
+    // FIXME: Clean this up.
 
     // Finish preprocessor initialization. We do this now (rather
     // than earlier) because this initialization creates new source
