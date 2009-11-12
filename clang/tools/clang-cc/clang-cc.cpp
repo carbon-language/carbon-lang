@@ -76,26 +76,53 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Global options.
+// Code Completion Options
 //===----------------------------------------------------------------------===//
 
-/// ClangFrontendTimer - The front-end activities should charge time to it with
-/// TimeRegion.  The -ftime-report option controls whether this will do
-/// anything.
-llvm::Timer *ClangFrontendTimer = 0;
+enum CodeCompletionPrinter {
+  CCP_Debug,
+  CCP_CIndex
+};
+
+static llvm::cl::opt<ParsedSourceLocation>
+CodeCompletionAt("code-completion-at",
+                 llvm::cl::value_desc("file:line:column"),
+              llvm::cl::desc("Dump code-completion information at a location"));
+
+static llvm::cl::opt<CodeCompletionPrinter>
+CodeCompletionPrinter("code-completion-printer",
+                      llvm::cl::desc("Choose output type:"),
+                      llvm::cl::init(CCP_Debug),
+                      llvm::cl::values(
+                        clEnumValN(CCP_Debug, "debug",
+                          "Debug code-completion results"),
+                        clEnumValN(CCP_CIndex, "cindex",
+                          "Code-completion results for the CIndex library"),
+                        clEnumValEnd));
 
 static llvm::cl::opt<bool>
-Verbose("v", llvm::cl::desc("Enable verbose output"));
-static llvm::cl::opt<bool>
-Stats("print-stats",
-      llvm::cl::desc("Print performance metrics and statistics"));
-static llvm::cl::opt<bool>
-DisableFree("disable-free",
-           llvm::cl::desc("Disable freeing of memory on exit"),
-           llvm::cl::init(false));
-static llvm::cl::opt<bool>
-EmptyInputOnly("empty-input-only",
-      llvm::cl::desc("Force running on an empty input file"));
+CodeCompletionWantsMacros("code-completion-macros",
+                 llvm::cl::desc("Include macros in code-completion results"));
+
+/// \brief Buld a new code-completion consumer that prints the results of
+/// code completion to standard output.
+static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S, void *) {
+  switch (CodeCompletionPrinter.getValue()) {
+  case CCP_Debug:
+    return new PrintingCodeCompleteConsumer(S, CodeCompletionWantsMacros,
+                                            llvm::outs());
+
+  case CCP_CIndex:
+    return new CIndexCodeCompleteConsumer(S, CodeCompletionWantsMacros,
+                                          llvm::outs());
+  };
+
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// Frontend Actions
+//===----------------------------------------------------------------------===//
 
 enum ProgActions {
   RewriteObjC,                  // ObjC->C Rewriter.
@@ -183,63 +210,33 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Rewrite Blocks to C"),
              clEnumValEnd));
 
-
-enum CodeCompletionPrinter {
-  CCP_Debug,
-  CCP_CIndex
-};
-
-static llvm::cl::opt<ParsedSourceLocation>
-CodeCompletionAt("code-completion-at",
-                 llvm::cl::value_desc("file:line:column"),
-              llvm::cl::desc("Dump code-completion information at a location"));
-
-static llvm::cl::opt<CodeCompletionPrinter>
-CodeCompletionPrinter("code-completion-printer",
-                      llvm::cl::desc("Choose output type:"),
-                      llvm::cl::init(CCP_Debug),
-                      llvm::cl::values(
-                        clEnumValN(CCP_Debug, "debug",
-                          "Debug code-completion results"),
-                        clEnumValN(CCP_CIndex, "cindex",
-                          "Code-completion results for the CIndex library"),
-                        clEnumValEnd));
+//===----------------------------------------------------------------------===//
+// Frontend Options
+//===----------------------------------------------------------------------===//
 
 static llvm::cl::opt<bool>
-CodeCompletionWantsMacros("code-completion-macros",
-                 llvm::cl::desc("Include macros in code-completion results"));
+DisableFree("disable-free",
+           llvm::cl::desc("Disable freeing of memory on exit"),
+           llvm::cl::init(false));
 
-/// \brief Buld a new code-completion consumer that prints the results of
-/// code completion to standard output.
-static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S, void *) {
-  switch (CodeCompletionPrinter.getValue()) {
-  case CCP_Debug:
-    return new PrintingCodeCompleteConsumer(S, CodeCompletionWantsMacros,
-                                            llvm::outs());
+static llvm::cl::opt<bool>
+EmptyInputOnly("empty-input-only",
+      llvm::cl::desc("Force running on an empty input file"));
 
-  case CCP_CIndex:
-    return new CIndexCodeCompleteConsumer(S, CodeCompletionWantsMacros,
-                                          llvm::outs());
-  };
-
-  return 0;
-}
-
-//===----------------------------------------------------------------------===//
-// C++ Visualization.
-//===----------------------------------------------------------------------===//
+static llvm::cl::list<std::string>
+InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
 static llvm::cl::opt<std::string>
 InheritanceViewCls("cxx-inheritance-view",
                    llvm::cl::value_desc("class name"),
                   llvm::cl::desc("View C++ inheritance for a specified class"));
 
-//===----------------------------------------------------------------------===//
-// Frontend Options
-//===----------------------------------------------------------------------===//
+static llvm::cl::opt<bool>
+FixItAll("fixit", llvm::cl::desc("Apply fix-it advice to the input source"));
 
-static llvm::cl::list<std::string>
-InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
+static llvm::cl::list<ParsedSourceLocation>
+FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
+   llvm::cl::desc("Perform Fix-It modifications at the given source location"));
 
 static llvm::cl::opt<std::string>
 OutputFile("o",
@@ -247,9 +244,20 @@ OutputFile("o",
  llvm::cl::desc("Specify output file"));
 
 static llvm::cl::opt<bool>
+RelocatablePCH("relocatable-pch",
+               llvm::cl::desc("Whether to build a relocatable precompiled "
+                              "header"));
+static llvm::cl::opt<bool>
+Stats("print-stats",
+      llvm::cl::desc("Print performance metrics and statistics"));
+
+static llvm::cl::opt<bool>
 TimeReport("ftime-report",
            llvm::cl::desc("Print the amount of time each "
                           "phase of compilation takes"));
+
+static llvm::cl::opt<bool>
+Verbose("v", llvm::cl::desc("Enable verbose output"));
 
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
@@ -331,16 +339,6 @@ static bool InitializeSourceManager(Preprocessor &PP,
   return false;
 }
 
-
-//===----------------------------------------------------------------------===//
-// Preprocessor Initialization
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<bool>
-RelocatablePCH("relocatable-pch",
-               llvm::cl::desc("Whether to build a relocatable precompiled "
-                              "header"));
-
 //===----------------------------------------------------------------------===//
 // Preprocessor construction
 //===----------------------------------------------------------------------===//
@@ -417,17 +415,6 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 }
 
 //===----------------------------------------------------------------------===//
-// Fix-It Options
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<bool>
-FixItAll("fixit", llvm::cl::desc("Apply fix-it advice to the input source"));
-
-static llvm::cl::list<ParsedSourceLocation>
-FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
-   llvm::cl::desc("Perform Fix-It modifications at the given source location"));
-
-//===----------------------------------------------------------------------===//
 // Dump Build Information
 //===----------------------------------------------------------------------===//
 
@@ -458,6 +445,11 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
 //===----------------------------------------------------------------------===//
 // Main driver
 //===----------------------------------------------------------------------===//
+
+/// ClangFrontendTimer - The front-end activities should charge time to it with
+/// TimeRegion.  The -ftime-report option controls whether this will do
+/// anything.
+llvm::Timer *ClangFrontendTimer = 0;
 
 static llvm::raw_ostream *ComputeOutFile(const CompilerInvocation &CompOpts,
                                          const std::string &InFile,
@@ -1120,18 +1112,15 @@ int main(int argc, char **argv) {
   // Get information about the target being compiled for.
   llvm::OwningPtr<TargetInfo>
   Target(TargetInfo::CreateTargetInfo(Triple.getTriple()));
-
   if (Target == 0) {
     Diags->Report(diag::err_fe_unknown_triple) << Triple.getTriple().c_str();
     return 1;
   }
 
   // Set the target ABI if specified.
-  if (!TargetABI.empty()) {
-    if (!Target->setABI(TargetABI)) {
-      Diags->Report(diag::err_fe_unknown_target_abi) << TargetABI;
-      return 1;
-    }
+  if (!TargetABI.empty() &&!Target->setABI(TargetABI)) {
+    Diags->Report(diag::err_fe_unknown_target_abi) << TargetABI;
+    return 1;
   }
 
   if (!InheritanceViewCls.empty())  // C++ visualization?
