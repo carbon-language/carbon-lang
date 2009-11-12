@@ -44,6 +44,7 @@ STATISTIC(NumT2CPShrunk, "Number of Thumb2 constantpool instructions shrunk");
 STATISTIC(NumT2BrShrunk, "Number of Thumb2 immediate branches shrunk");
 STATISTIC(NumCBZ,        "Number of CBZ / CBNZ formed");
 STATISTIC(NumJTMoved,    "Number of jump table destination blocks moved");
+STATISTIC(NumJTInserted, "Number of jump table intermediate blocks inserted");
 
 
 static cl::opt<bool>
@@ -181,6 +182,7 @@ namespace {
     void DoInitialPlacement(MachineFunction &MF,
                             std::vector<MachineInstr*> &CPEMIs);
     CPEntry *findConstPoolEntry(unsigned CPI, const MachineInstr *CPEMI);
+    void JumpTableFunctionScan(MachineFunction &MF);
     void InitialFunctionScan(MachineFunction &MF,
                              const std::vector<MachineInstr*> &CPEMIs);
     MachineBasicBlock *SplitBlockBeforeInstr(MachineInstr *MI);
@@ -208,6 +210,7 @@ namespace {
     bool UndoLRSpillRestore();
     bool OptimizeThumb2Instructions(MachineFunction &MF);
     bool OptimizeThumb2Branches(MachineFunction &MF);
+    bool ReorderThumb2JumpTables(MachineFunction &MF);
     bool OptimizeThumb2JumpTables(MachineFunction &MF);
     MachineBasicBlock *AdjustJTTargetBlockForward(MachineBasicBlock *BB,
                                                   MachineBasicBlock *JTBB);
@@ -271,6 +274,20 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // the numbers agree with the position of the block in the function.
   MF.RenumberBlocks();
 
+  // Try to reorder and otherwise adjust the block layout to make good use
+  // of the TB[BH] instructions.
+  bool MadeChange = false;
+  if (isThumb2 && AdjustJumpTableBlocks) {
+    JumpTableFunctionScan(MF);
+    MadeChange |= ReorderThumb2JumpTables(MF);
+    // Data is out of date, so clear it. It'll be re-computed later.
+    BBSizes.clear();
+    BBOffsets.clear();
+    T2JumpTables.clear();
+    // Blocks may have shifted around. Keep the numbering up to date.
+    MF.RenumberBlocks();
+  }
+
   // Thumb1 functions containing constant pools get 4-byte alignment.
   // This is so we can keep exact track of where the alignment padding goes.
 
@@ -301,7 +318,6 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
 
   // Iteratively place constant pool entries and fix up branches until there
   // is no change.
-  bool MadeChange = false;
   unsigned NoCPIters = 0, NoBRIters = 0;
   while (true) {
     bool CPChange = false;
@@ -416,6 +432,39 @@ ARMConstantIslands::CPEntry
       return &CPEs[i];
   }
   return NULL;
+}
+
+/// JumpTableFunctionScan - Do a scan of the function, building up
+/// information about the sizes of each block and the locations of all
+/// the jump tables.
+void ARMConstantIslands::JumpTableFunctionScan(MachineFunction &MF) {
+  unsigned Offset = 0;
+  for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
+       MBBI != E; ++MBBI) {
+    MachineBasicBlock &MBB = *MBBI;
+
+    unsigned MBBSize = 0;
+    for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
+         I != E; ++I) {
+      // Add instruction size to MBBSize.
+      MBBSize += TII->GetInstSizeInBytes(I);
+
+      int Opc = I->getOpcode();
+      if (I->getDesc().isBranch()) {
+        switch (Opc) {
+        default:
+          continue;  // Ignore other JT branches
+        case ARM::t2BR_JT:
+          T2JumpTables.push_back(I);
+          continue;   // Does not get an entry in ImmBranches
+        }
+      }
+    }
+
+    BBSizes.push_back(MBBSize);
+    BBOffsets.push_back(Offset);
+    Offset += MBBSize;
+  }
 }
 
 /// InitialFunctionScan - Do the initial scan of the function, building up
@@ -1561,7 +1610,6 @@ bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
   return MadeChange;
 }
 
-
 /// OptimizeThumb2JumpTables - Use tbb / tbh instructions to generate smaller
 /// jumptables when it's possible.
 bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
@@ -1580,33 +1628,10 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());
 
-    // We prefer if target blocks for the jump table come after the jump
-    // instruction so we can use TB[BH]. Loop through the target blocks
-    // and try to adjust them such that that's true.
-    unsigned JTOffset = GetOffsetOf(MI) + 4;
-    const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
-    if (AdjustJumpTableBlocks) {
-      for (unsigned j = 0, ee = JTBBs.size(); j != ee; ++j) {
-        MachineBasicBlock *MBB = JTBBs[j];
-        unsigned DstOffset = BBOffsets[MBB->getNumber()];
-
-        if (DstOffset < JTOffset) {
-          // The destination precedes the switch. Try to move the block forward
-          // so we have a positive offset.
-          MachineBasicBlock *NewBB =
-            AdjustJTTargetBlockForward(MBB, MI->getParent());
-          if (NewBB) {
-            MJTI->ReplaceMBBInJumpTables(JTBBs[j], NewBB);
-            JTOffset = GetOffsetOf(MI) + 4;
-            DstOffset = BBOffsets[MBB->getNumber()];
-          }
-        }
-      }
-    }
-
     bool ByteOk = true;
     bool HalfWordOk = true;
-    JTOffset = GetOffsetOf(MI) + 4;
+    unsigned JTOffset = GetOffsetOf(MI) + 4;
+    const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
     for (unsigned j = 0, ee = JTBBs.size(); j != ee; ++j) {
       MachineBasicBlock *MBB = JTBBs[j];
       unsigned DstOffset = BBOffsets[MBB->getNumber()];
@@ -1693,16 +1718,73 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
   return MadeChange;
 }
 
+/// ReorderThumb2JumpTables - Use tbb / tbh instructions to generate smaller
+/// jumptables when it's possible.
+bool ARMConstantIslands::ReorderThumb2JumpTables(MachineFunction &MF) {
+  bool MadeChange = false;
+
+  MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
+    MachineInstr *MI = T2JumpTables[i];
+    const TargetInstrDesc &TID = MI->getDesc();
+    unsigned NumOps = TID.getNumOperands();
+    unsigned JTOpIdx = NumOps - (TID.isPredicable() ? 3 : 2);
+    MachineOperand JTOP = MI->getOperand(JTOpIdx);
+    unsigned JTI = JTOP.getIndex();
+    assert(JTI < JT.size());
+
+    // We prefer if target blocks for the jump table come after the jump
+    // instruction so we can use TB[BH]. Loop through the target blocks
+    // and try to adjust them such that that's true.
+    unsigned JTOffset = GetOffsetOf(MI) + 4;
+    const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+    for (unsigned j = 0, ee = JTBBs.size(); j != ee; ++j) {
+      MachineBasicBlock *MBB = JTBBs[j];
+      unsigned DstOffset = BBOffsets[MBB->getNumber()];
+
+      if (DstOffset < JTOffset) {
+        // The destination precedes the switch. Try to move the block forward
+        // so we have a positive offset.
+        MachineBasicBlock *NewBB =
+          AdjustJTTargetBlockForward(MBB, MI->getParent());
+        if (NewBB)
+          MJTI->ReplaceMBBInJumpTables(JTBBs[j], NewBB);
+        MadeChange = true;
+      }
+    }
+  }
+
+  return MadeChange;
+}
+
 MachineBasicBlock *ARMConstantIslands::
 AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
 {
   MachineFunction &MF = *BB->getParent();
 
-  // FIXME: For now, instead of moving the block, we'll create a new block
-  // immediate following the jump that's an unconditional branch to the
-  // actual target. This is obviously not what we want for a real solution,
-  // but it's useful for proof of concept, and it may be a useful fallback
-  // later for cases where we otherwise can't move a block.
+  // FIXME: If it's a small block terminated by an unconditional branch,
+  // try to move it; otherwise, create a new block following the jump
+  // table that branches back to the actual target. This is an overly
+  // simplistic heuristic here for proof-of-concept.
+
+  int BBI = BB->getNumber();
+  int Size = BBSizes[BBI];
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  // If the block terminator isn't analyzable, don't try to move the block
+  if (TII->AnalyzeBranch(*BB, TBB, FBB, Cond))
+    return NULL;
+
+  // If the block is small and ends in an unconditional branch, move it.
+  if (Size < 50 && Cond.empty()) {
+    MachineFunction::iterator OldPrior = prior(BB);
+    BB->moveAfter(JTBB);
+    OldPrior->updateTerminator();
+    //BB->updateTerminator();
+    ++NumJTMoved;
+    return NULL;
+  }
 
   // Create a new MBB for the code after the jump BB.
   MachineBasicBlock *NewBB =
@@ -1750,6 +1832,6 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
   // All BBOffsets following these blocks must be modified.
   AdjustBBOffsetsAfter(NewBB, 4);
 
-  ++NumJTMoved;
+  ++NumJTInserted;
   return NewBB;
 }
