@@ -18,6 +18,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -302,6 +303,14 @@ bool getVisualStudioDir(std::string &path) {
 
 void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   // FIXME: temporary hack: hard-coded paths.
+  if (C_INCLUDE_DIRS != "") {
+    std::vector<std::string> dirs;
+    std::string str(C_INCLUDE_DIRS);
+    llvm::SplitString(str, dirs, ":");
+    for (std::vector<std::string>::iterator i = dirs.begin(); i != dirs.end(); ++i)
+      AddPath(*i, System, false, false, false);
+    return;
+  }
   llvm::Triple::OSType os = triple.getOS();
   switch (os) {
   case llvm::Triple::Win32:
