@@ -15,7 +15,6 @@
 #define LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 
 #include "llvm/Value.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
   class MachineFrameInfo;
@@ -103,11 +102,9 @@ namespace llvm {
 
     virtual bool mayAlias(const MachineFrameInfo *) const;
 
-    virtual void printCustom(raw_ostream &OS) const {
-      OS << "FixedStack" << FI;
-    }
+    virtual void printCustom(raw_ostream &OS) const;
 
-    int getFrameIndex(void) const { return FI; }
+    int getFrameIndex() const { return FI; }
   };
 } // End llvm namespace
 

@@ -109,3 +109,7 @@ bool FixedStackPseudoSourceValue::mayAlias(const MachineFrameInfo *MFI) const {
   // Spill slots will not alias any LLVM IR value.
   return !MFI->isSpillSlotObjectIndex(FI);
 }
+
+void FixedStackPseudoSourceValue::printCustom(raw_ostream &OS) const {
+  OS << "FixedStack" << FI;
+}
