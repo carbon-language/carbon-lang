@@ -226,7 +226,9 @@ public:
     PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
     FixedStackPseudoSourceValueVal, // This is an instance of PseudoSourceValue
     InstructionVal,           // This is an instance of Instruction
-    
+    FixedStackPseudoSourceValueVal, // This is an instance of 
+                                    // FixedStackPseudoSourceValue
+
     // Markers:
     ConstantFirstVal = FunctionVal,
     ConstantLastVal  = ConstantPointerNullVal
