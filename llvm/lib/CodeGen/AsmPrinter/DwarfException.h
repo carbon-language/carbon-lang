@@ -155,6 +155,10 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
                                SmallVectorImpl<ActionEntry> &Actions,
                                SmallVectorImpl<unsigned> &FirstActions);
 
+  /// CallToNoUnwindFunction - Return `true' if this is a call to a function
+  /// marked `nounwind'. Return `false' otherwise.
+  bool CallToNoUnwindFunction(const MachineInstr *MI);
+
   /// ComputeCallSiteTable - Compute the call-site table.  The entry for an
   /// invoke has a try-range containing the call, a non-zero landing pad and an
   /// appropriate action.  The entry for an ordinary call has a try-range

@@ -462,6 +462,40 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
   return SizeActions;
 }
 
+/// CallToNoUnwindFunction - Return `true' if this is a call to a function
+/// marked `nounwind'. Return `false' otherwise.
+bool DwarfException::CallToNoUnwindFunction(const MachineInstr *MI) {
+  assert(MI->getDesc().isCall() && "This should be a call instruction!");
+
+  bool MarkedNoUnwind = false;
+  bool SawFunc = false;
+
+  for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
+    const MachineOperand &MO = MI->getOperand(I);
+
+    if (MO.isGlobal()) {
+      if (Function *F = dyn_cast<Function>(MO.getGlobal())) {
+        if (SawFunc) {
+          // Be conservative. If we have more than one function operand for this
+          // call, then we can't make the assumption that it's the callee and
+          // not a parameter to the call.
+          // 
+          // FIXME: Determine if there's a way to say that `F' is the callee or
+          // parameter.
+          MarkedNoUnwind = false;
+          break;
+        }
+        if (F->doesNotThrow()) {
+          SawFunc = true;
+          MarkedNoUnwind = true;
+        }
+      }
+    }
+  }
+
+  return MarkedNoUnwind;
+}
+
 /// ComputeCallSiteTable - Compute the call-site table.  The entry for an invoke
 /// has a try-range containing the call, a non-zero landing pad, and an
 /// appropriate action.  The entry for an ordinary call has a try-range
@@ -490,37 +524,8 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
          MI != E; ++MI) {
       if (!MI->isLabel()) {
-        if (MI->getDesc().isCall()) {
-          // Don't mark a call as potentially throwing if the function it's
-          // calling is marked "nounwind".
-          bool DoesNotThrow = false;
-          bool SawFunc = false;
-          for (unsigned OI = 0, OE = MI->getNumOperands(); OI != OE; ++OI) {
-            const MachineOperand &MO = MI->getOperand(OI);
-
-            if (MO.isGlobal()) {
-              if (Function *F = dyn_cast<Function>(MO.getGlobal())) {
-                if (SawFunc) {
-                  // Be conservative. If we have more than one function operand
-                  // for this call, then we can't make the assumption that it's
-                  // the callee and not a parameter to the call.
-                  // 
-                  // FIXME: Determine if there's a way to say that `F' is the
-                  // callee or parameter.
-                  DoesNotThrow = false;
-                  break;
-                }
-                if (F->doesNotThrow()) {
-                  SawFunc = true;
-                  DoesNotThrow = true;
-                }
-              }
-            }
-          }
-
-          if (!DoesNotThrow)
-            SawPotentiallyThrowing = true;
-        }
+        if (MI->getDesc().isCall())
+          SawPotentiallyThrowing |= !CallToNoUnwindFunction(MI);
 
         continue;
       }
