@@ -631,6 +631,41 @@ static ASTConsumer *CreateConsumerAction(const CompilerInvocation &CompOpts,
   }
 }
 
+/// ReadPCHFile - Load a PCH file from disk, and initialize the preprocessor for
+/// reading from the PCH file.
+///
+/// \return The AST source, or null on failure.
+static ExternalASTSource *ReadPCHFile(llvm::StringRef Path,
+                                      const CompilerInvocation &CompOpts,
+                                      Preprocessor &PP,
+                                      ASTContext &Context) {
+  // If the user specified -isysroot, it will be used for relocatable PCH files.
+  const char *isysrootPCH = CompOpts.getHeaderSearchOpts().Sysroot.c_str();
+  if (isysrootPCH[0] == '\0')
+    isysrootPCH = 0;
+
+  llvm::OwningPtr<PCHReader> Reader;
+  Reader.reset(new PCHReader(PP, &Context, isysrootPCH));
+
+  switch (Reader->ReadPCH(Path)) {
+  case PCHReader::Success:
+    // Set the predefines buffer as suggested by the PCH reader. Typically, the
+    // predefines buffer will be empty.
+    PP.setPredefines(Reader->getSuggestedPredefines());
+    return Reader.take();
+
+  case PCHReader::Failure:
+    // Unrecoverable failure: don't even try to process the input file.
+    break;
+
+  case PCHReader::IgnorePCH:
+    // No suitable PCH file could be found. Return an error.
+    break;
+  }
+
+  return 0;
+}
+
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
 static void ProcessInputFile(const CompilerInvocation &CompOpts,
@@ -731,40 +766,13 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
                                       /* FreeMemory = */ !DisableFree,
                                       /* size_reserve = */0));
   if (Consumer && !ImplicitPCHInclude.empty()) {
-    // If the user specified -isysroot, it will be used for relocatable PCH
-    // files.
-    const char *isysrootPCH = CompOpts.getHeaderSearchOpts().Sysroot.c_str();
-    if (isysrootPCH[0] == '\0')
-      isysrootPCH = 0;
-
-    llvm::OwningPtr<PCHReader> Reader;
-    Reader.reset(new PCHReader(PP, ContextOwner.get(), isysrootPCH));
-
-    // The user has asked us to include a precompiled header. Load
-    // the precompiled header into the AST context.
-    switch (Reader->ReadPCH(ImplicitPCHInclude)) {
-    case PCHReader::Success: {
-      // Set the predefines buffer as suggested by the PCH
-      // reader. Typically, the predefines buffer will be empty.
-      PP.setPredefines(Reader->getSuggestedPredefines());
-
-      // Attach the PCH reader to the AST context as an external AST
-      // source, so that declarations will be deserialized from the
-      // PCH file as needed.
-      Source.reset(Reader.take());
-      ContextOwner->setExternalSource(Source);
-      break;
-    }
-
-    case PCHReader::Failure:
-      // Unrecoverable failure: don't even try to process the input
-      // file.
+    Source.reset(ReadPCHFile(ImplicitPCHInclude, CompOpts, PP, *ContextOwner));
+    if (!Source)
       return;
 
-    case PCHReader::IgnorePCH:
-      // No suitable PCH file could be found. Return an error.
-      return;
-    }
+    // Attach the PCH reader to the AST context as an external AST source, so
+    // that declarations will be deserialized from the PCH file as needed.
+    ContextOwner->setExternalSource(Source);
   }
 
   // Initialize the main file entry. This needs to be delayed until after PCH
