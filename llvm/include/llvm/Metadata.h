@@ -60,6 +60,7 @@ protected:
 
 public:
   static MDString *get(LLVMContext &Context, StringRef Str);
+  static MDString *get(LLVMContext &Context, const char *Str);
   
   StringRef getString() const { return Str; }
 

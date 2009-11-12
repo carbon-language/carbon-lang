@@ -653,9 +653,9 @@ DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
 /// CreateCompileUnit - Create a new descriptor for the specified compile
 /// unit.  Note that this does not unique compile units within the module.
 DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
-                                           StringRef Filename,
-                                           StringRef Directory,
-                                           StringRef Producer,
+                                           const char * Filename,
+                                           const char * Directory,
+                                           const char * Producer,
                                            bool isMain,
                                            bool isOptimized,
                                            const char *Flags,
@@ -677,7 +677,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
 }
 
 /// CreateEnumerator - Create a single enumerator value.
-DIEnumerator DIFactory::CreateEnumerator(StringRef Name, uint64_t Val){
+DIEnumerator DIFactory::CreateEnumerator(const char * Name, uint64_t Val){
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_enumerator),
     MDString::get(VMContext, Name),
@@ -689,7 +689,7 @@ DIEnumerator DIFactory::CreateEnumerator(StringRef Name, uint64_t Val){
 
 /// CreateBasicType - Create a basic type like int, float, etc.
 DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
-                                       StringRef Name,
+                                       const char * Name,
                                        DICompileUnit CompileUnit,
                                        unsigned LineNumber,
                                        uint64_t SizeInBits,
@@ -714,7 +714,7 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
 
 /// CreateBasicType - Create a basic type like int, float, etc.
 DIBasicType DIFactory::CreateBasicTypeEx(DIDescriptor Context,
-                                         StringRef Name,
+                                         const char * Name,
                                          DICompileUnit CompileUnit,
                                          unsigned LineNumber,
                                          Constant *SizeInBits,
@@ -741,7 +741,7 @@ DIBasicType DIFactory::CreateBasicTypeEx(DIDescriptor Context,
 /// pointer, typedef, etc.
 DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
                                            DIDescriptor Context,
-                                           StringRef Name,
+                                           const char * Name,
                                            DICompileUnit CompileUnit,
                                            unsigned LineNumber,
                                            uint64_t SizeInBits,
@@ -769,7 +769,7 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
 /// pointer, typedef, etc.
 DIDerivedType DIFactory::CreateDerivedTypeEx(unsigned Tag,
                                              DIDescriptor Context,
-                                             StringRef Name,
+                                             const char * Name,
                                              DICompileUnit CompileUnit,
                                              unsigned LineNumber,
                                              Constant *SizeInBits,
@@ -796,7 +796,7 @@ DIDerivedType DIFactory::CreateDerivedTypeEx(unsigned Tag,
 /// CreateCompositeType - Create a composite type like array, struct, etc.
 DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                                DIDescriptor Context,
-                                               StringRef Name,
+                                               const char * Name,
                                                DICompileUnit CompileUnit,
                                                unsigned LineNumber,
                                                uint64_t SizeInBits,
@@ -828,7 +828,7 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
 /// CreateCompositeType - Create a composite type like array, struct, etc.
 DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,
                                                  DIDescriptor Context,
-                                                 StringRef Name,
+                                                 const char * Name,
                                                  DICompileUnit CompileUnit,
                                                  unsigned LineNumber,
                                                  Constant *SizeInBits,
@@ -861,9 +861,9 @@ DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,
 /// See comments in DISubprogram for descriptions of these fields.  This
 /// method does not unique the generated descriptors.
 DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
-                                         StringRef Name,
-                                         StringRef DisplayName,
-                                         StringRef LinkageName,
+                                         const char * Name,
+                                         const char * DisplayName,
+                                         const char * LinkageName,
                                          DICompileUnit CompileUnit,
                                          unsigned LineNo, DIType Type,
                                          bool isLocalToUnit,
@@ -887,9 +887,9 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
 DIGlobalVariable
-DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
-                                StringRef DisplayName,
-                                StringRef LinkageName,
+DIFactory::CreateGlobalVariable(DIDescriptor Context, const char * Name,
+                                const char * DisplayName,
+                                const char * LinkageName,
                                 DICompileUnit CompileUnit,
                                 unsigned LineNo, DIType Type,bool isLocalToUnit,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
@@ -921,7 +921,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
 
 /// CreateVariable - Create a new descriptor for the specified variable.
 DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
-                                     StringRef Name,
+                                     const char * Name,
                                      DICompileUnit CompileUnit, unsigned LineNo,
                                      DIType Type) {
   Value *Elts[] = {

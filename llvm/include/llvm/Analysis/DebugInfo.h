@@ -496,26 +496,26 @@ namespace llvm {
     /// CreateCompileUnit - Create a new descriptor for the specified compile
     /// unit.
     DICompileUnit CreateCompileUnit(unsigned LangID,
-                                    StringRef Filenae,
-                                    StringRef Directory,
-                                    StringRef Producer,
+                                    const char * Filename,
+                                    const char * Directory,
+                                    const char * Producer,
                                     bool isMain = false,
                                     bool isOptimized = false,
                                     const char *Flags = "",
                                     unsigned RunTimeVer = 0);
 
     /// CreateEnumerator - Create a single enumerator value.
-    DIEnumerator CreateEnumerator(StringRef Name, uint64_t Val);
+    DIEnumerator CreateEnumerator(const char * Name, uint64_t Val);
 
     /// CreateBasicType - Create a basic type like int, float, etc.
-    DIBasicType CreateBasicType(DIDescriptor Context, StringRef Name,
+    DIBasicType CreateBasicType(DIDescriptor Context, const char * Name,
                                 DICompileUnit CompileUnit, unsigned LineNumber,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
                                 uint64_t OffsetInBits, unsigned Flags,
                                 unsigned Encoding);
 
     /// CreateBasicType - Create a basic type like int, float, etc.
-    DIBasicType CreateBasicTypeEx(DIDescriptor Context, StringRef Name,
+    DIBasicType CreateBasicTypeEx(DIDescriptor Context, const char * Name,
                                 DICompileUnit CompileUnit, unsigned LineNumber,
                                 Constant *SizeInBits, Constant *AlignInBits,
                                 Constant *OffsetInBits, unsigned Flags,
@@ -524,7 +524,7 @@ namespace llvm {
     /// CreateDerivedType - Create a derived type like const qualified type,
     /// pointer, typedef, etc.
     DIDerivedType CreateDerivedType(unsigned Tag, DIDescriptor Context,
-                                    StringRef Name,
+                                    const char * Name,
                                     DICompileUnit CompileUnit,
                                     unsigned LineNumber,
                                     uint64_t SizeInBits, uint64_t AlignInBits,
@@ -534,7 +534,7 @@ namespace llvm {
     /// CreateDerivedType - Create a derived type like const qualified type,
     /// pointer, typedef, etc.
     DIDerivedType CreateDerivedTypeEx(unsigned Tag, DIDescriptor Context,
-                                        StringRef Name,
+                                        const char * Name,
                                     DICompileUnit CompileUnit,
                                     unsigned LineNumber,
                                     Constant *SizeInBits, Constant *AlignInBits,
@@ -543,7 +543,7 @@ namespace llvm {
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeType(unsigned Tag, DIDescriptor Context,
-                                        StringRef Name,
+                                        const char * Name,
                                         DICompileUnit CompileUnit,
                                         unsigned LineNumber,
                                         uint64_t SizeInBits,
@@ -555,7 +555,7 @@ namespace llvm {
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeTypeEx(unsigned Tag, DIDescriptor Context,
-                                        StringRef Name,
+                                        const char * Name,
                                         DICompileUnit CompileUnit,
                                         unsigned LineNumber,
                                         Constant *SizeInBits,
@@ -567,25 +567,25 @@ namespace llvm {
 
     /// CreateSubprogram - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
-    DISubprogram CreateSubprogram(DIDescriptor Context, StringRef Name,
-                                  StringRef DisplayName,
-                                  StringRef LinkageName,
+    DISubprogram CreateSubprogram(DIDescriptor Context, const char * Name,
+                                  const char * DisplayName,
+                                  const char * LinkageName,
                                   DICompileUnit CompileUnit, unsigned LineNo,
                                   DIType Type, bool isLocalToUnit,
                                   bool isDefinition);
 
     /// CreateGlobalVariable - Create a new descriptor for the specified global.
     DIGlobalVariable
-    CreateGlobalVariable(DIDescriptor Context, StringRef Name,
-                         StringRef DisplayName,
-                         StringRef LinkageName,
+    CreateGlobalVariable(DIDescriptor Context, const char * Name,
+                         const char * DisplayName,
+                         const char * LinkageName,
                          DICompileUnit CompileUnit,
                          unsigned LineNo, DIType Type, bool isLocalToUnit,
                          bool isDefinition, llvm::GlobalVariable *GV);
 
     /// CreateVariable - Create a new descriptor for the specified variable.
     DIVariable CreateVariable(unsigned Tag, DIDescriptor Context,
-                              StringRef Name,
+                              const char * Name,
                               DICompileUnit CompileUnit, unsigned LineNo,
                               DIType Type);
 
