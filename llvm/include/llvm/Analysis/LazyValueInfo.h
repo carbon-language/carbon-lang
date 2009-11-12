@@ -47,6 +47,10 @@ public:
   /// getConstant - Determine whether the specified value is known to be a
   /// constant at the end of the specified block.  Return null if not.
   Constant *getConstant(Value *V, BasicBlock *BB);
+
+  /// getConstantOnEdge - Determine whether the specified value is known to be a
+  /// constant on the specified edge.  Return null if not.
+  Constant *getConstantOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB);
   
   
   // Implementation boilerplate.

@@ -270,6 +270,27 @@ Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
   return 0;
 }
 
+/// getConstantOnEdge - Determine whether the specified value is known to be a
+/// constant on the specified edge.  Return null if not.
+Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
+                                           BasicBlock *ToBB) {
+  // If already a constant, return it.
+  if (Constant *VC = dyn_cast<Constant>(V))
+    return VC;
+  
+  DenseMap<BasicBlock*, LVILatticeVal> BlockValues;
+  
+  DEBUG(errs() << "Getting value " << *V << " on edge from '"
+               << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
+  LVILatticeVal Result = GetValueOnEdge(V, FromBB, ToBB, BlockValues);
+  
+  DEBUG(errs() << "  Result = " << Result << "\n");
+  
+  if (Result.isConstant())
+    return Result.getConstant();
+  return 0;
+}
+
 /// isEqual - Determine whether the specified value is known to be equal or
 /// not-equal to the specified constant at the end of the specified block.
 LazyValueInfo::Tristate

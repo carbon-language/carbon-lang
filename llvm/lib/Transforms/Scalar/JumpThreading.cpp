@@ -278,7 +278,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
         // If the value is known by LazyValueInfo to be a constant in a
         // predecessor, use that information to try to thread this block.
-        Constant *PredCst = LVI->getConstant(V, *PI);
+        Constant *PredCst = LVI->getConstantOnEdge(V, *PI, BB);
         if (PredCst == 0 ||
             (!isa<ConstantInt>(PredCst) && !isa<UndefValue>(PredCst)))
           continue;
@@ -384,7 +384,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
         // If the value is known by LazyValueInfo to be a constant in a
         // predecessor, use that information to try to thread this block.
-        Constant *PredCst = LVI->getConstant(Cmp->getOperand(0), *PI);
+        Constant *PredCst = LVI->getConstantOnEdge(Cmp->getOperand(0), *PI, BB);
         if (PredCst == 0)
           continue;
         
