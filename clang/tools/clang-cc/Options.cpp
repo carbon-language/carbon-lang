@@ -628,6 +628,9 @@ static llvm::cl::opt<std::string>
 isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
          llvm::cl::desc("Set the system root directory (usually /)"));
 
+static llvm::cl::opt<bool>
+Verbose("v", llvm::cl::desc("Enable verbose output"));
+
 }
 
 //===----------------------------------------------------------------------===//
@@ -768,7 +771,6 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
 
 void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
                                           llvm::StringRef BuiltinIncludePath,
-                                          bool Verbose,
                                           const LangOptions &Lang) {
   using namespace headersearchoptions;
 

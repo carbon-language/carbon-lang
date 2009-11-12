@@ -218,9 +218,6 @@ static llvm::cl::list<ParsedSourceLocation>
 FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Perform Fix-It modifications at the given source location"));
 
-static llvm::cl::opt<bool>
-Verbose("v", llvm::cl::desc("Enable verbose output"));
-
 //===----------------------------------------------------------------------===//
 // Language Options
 //===----------------------------------------------------------------------===//
@@ -982,7 +979,6 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   // Initialize the header search options.
   InitializeHeaderSearchOptions(Opts.getHeaderSearchOpts(),
                                 GetBuiltinIncludePath(Argv0),
-                                Verbose,
                                 Opts.getLangOpts());
 
   // Initialize the other preprocessor options.
@@ -1039,11 +1035,6 @@ int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
 
-  if (Verbose)
-    llvm::errs() << "clang-cc version " CLANG_VERSION_STRING
-                 << " based upon " << PACKAGE_STRING
-                 << " hosted on " << llvm::sys::getHostTriple() << "\n";
-
   // Construct the diagnostic engine first, so that we can build a diagnostic
   // client to use for any errors during option handling.
   DiagnosticOptions DiagOpts;
@@ -1086,7 +1077,12 @@ int main(int argc, char **argv) {
   bool IsAST;
   ConstructCompilerInvocation(CompOpts, argv[0], DiagOpts, *Target, IsAST);
 
-  // Validate some options.
+  // Validate/process some options.
+  if (CompOpts.getHeaderSearchOpts().Verbose)
+    llvm::errs() << "clang-cc version " CLANG_VERSION_STRING
+                 << " based upon " << PACKAGE_STRING
+                 << " hosted on " << llvm::sys::getHostTriple() << "\n";
+
   if (CompOpts.getFrontendOpts().ShowTimers)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
 

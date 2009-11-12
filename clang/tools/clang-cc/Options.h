@@ -53,7 +53,6 @@ void InitializeCodeGenOptions(CodeGenOptions &Opts,
 
 void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
                                    llvm::StringRef BuiltinIncludePath,
-                                   bool Verbose,
                                    const LangOptions &Lang);
 
 void InitializeLangOptions(LangOptions &Options, LangKind LK,
