@@ -392,6 +392,11 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(X86::SP);
   Reserved.set(X86::SPL);
 
+  // Set the instruction pointer register and its aliases as reserved.
+  Reserved.set(X86::RIP);
+  Reserved.set(X86::EIP);
+  Reserved.set(X86::IP);
+
   // Set the frame-pointer register and its aliases as reserved if needed.
   if (hasFP(MF)) {
     Reserved.set(X86::RBP);
