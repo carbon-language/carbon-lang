@@ -585,6 +585,11 @@ public:
     if (!RD->isDynamicClass())
       return 0;
 
+    // Construction vtable don't need parts that have no virtual bases and
+    // aren't morally virtual.
+    if ((LayoutClass != Class) && RD->getNumVBases() == 0 && !MorallyVirtual)
+      return 0;
+
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
     const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
     const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
