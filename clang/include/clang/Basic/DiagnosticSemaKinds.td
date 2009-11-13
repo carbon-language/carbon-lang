@@ -487,8 +487,6 @@ def err_constructor_return_type : Error<
 def err_constructor_redeclared : Error<"constructor cannot be redeclared">;
 def err_constructor_byvalue_arg : Error<
   "copy constructor must pass its first argument by reference">;
-def err_constructor_template_is_copy_constructor : Error<
-  "constructor template %0 instantiates to a copy constructor">;
 
 // C++ destructors
 def err_destructor_not_member : Error<

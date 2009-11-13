@@ -3909,9 +3909,6 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
         << FD->getNameAsCString() << "dllimport";
     }
   }
-  
-  assert(ExprTemporaries.empty() && "Leftover temporaries before starting");
-
   return DeclPtrTy::make(FD);
 }
 
