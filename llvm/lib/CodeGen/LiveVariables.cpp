@@ -230,8 +230,9 @@ MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
 /// implicit defs to a machine instruction if there was an earlier def of its
 /// super-register.
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
+  MachineInstr *LastDef = PhysRegDef[Reg];
   // If there was a previous use or a "full" def all is well.
-  if (!PhysRegDef[Reg] && !PhysRegUse[Reg]) {
+  if (!LastDef && !PhysRegUse[Reg]) {
     // Otherwise, the last sub-register def implicitly defines this register.
     // e.g.
     // AH =
@@ -265,6 +266,11 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
       }
     }
   }
+  else if (LastDef && !PhysRegUse[Reg] &&
+           !LastDef->findRegisterDefOperand(Reg))
+    // Last def defines the super register, add an implicit def of reg.
+    LastDef->addOperand(MachineOperand::CreateReg(Reg,
+                                                 true/*IsDef*/, true/*IsImp*/));
 
   // Remember this use.
   PhysRegUse[Reg]  = MI;
