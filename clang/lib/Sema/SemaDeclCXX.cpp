@@ -1348,7 +1348,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       if (const RecordType *FieldClassType =
           Field->getType()->getAs<RecordType>()) {
         CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
+          = cast<CXXRecordDecl>(FieldClassType->getDecl());
         for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
             EA = FieldClassDecl->field_end(); FA != EA; FA++) {
           if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*FA)) {

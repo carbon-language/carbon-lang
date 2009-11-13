@@ -1709,7 +1709,7 @@ Sema::OwningStmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
       if (E.isInvalid())
         return getSema().StmtError();
 
-      return getSema().Owned(E.takeAs<Stmt>());
+      return getSema().ActOnExprStmt(getSema().FullExpr(E));
     }
   }
 
