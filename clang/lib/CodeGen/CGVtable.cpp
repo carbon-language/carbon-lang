@@ -32,6 +32,8 @@ private:
   /// LayoutClass - The most derived class used for virtual base layout
   /// information.
   const CXXRecordDecl *LayoutClass;
+  /// LayoutOffset - The offset for Class in LayoutClass.
+  uint64_t LayoutOffset;
   /// BLayout - Layout for the most derived class that this vtable is being
   /// built for.
   const ASTRecordLayout &BLayout;
@@ -73,11 +75,9 @@ private:
   typedef std::vector<std::pair<const CXXRecordDecl *, int64_t> > Path_t;
   llvm::Constant *cxa_pure;
 public:
-  VtableBuilder(std::vector<llvm::Constant *> &meth,
-                const CXXRecordDecl *c,
-                const CXXRecordDecl *l,
-                CodeGenModule &cgm)
-    : methods(meth), Class(c), LayoutClass(l),
+  VtableBuilder(std::vector<llvm::Constant *> &meth, const CXXRecordDecl *c,
+                const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
+    : methods(meth), Class(c), LayoutClass(l), LayoutOffset(lo),
       BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), AddressPoints(*new llvm::DenseMap<CtorVtable_t, int64_t>),
@@ -426,7 +426,7 @@ public:
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
-        GenerateVtableForBase(Base, MorallyVirtual, o, false,
+        GenerateVtableForBase(Base, o, MorallyVirtual, false,
                               CurrentVBaseOffset, Path);
       }
     }
@@ -472,7 +472,7 @@ public:
       // FIXME: just for extra, or for all uses of VCalls.size post this?
       extra = -VCalls.size();
 
-    methods.push_back(wrap(-(Offset/8)));
+    methods.push_back(wrap(-((Offset-LayoutOffset)/8)));
     methods.push_back(rtti);
     Index_t AddressPoint = methods.size();
 
@@ -577,8 +577,8 @@ public:
     }
   }
 
-  int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
-                                bool MorallyVirtual = false, int64_t Offset = 0,
+  int64_t GenerateVtableForBase(const CXXRecordDecl *RD, int64_t Offset = 0,
+                                bool MorallyVirtual = false, 
                                 bool ForVirtualBase = false,
                                 int CurrentVBaseOffset = 0,
                                 Path_t *Path = 0) {
@@ -630,7 +630,7 @@ public:
         int64_t CurrentVBaseOffset = BaseOffset;
         D1(printf("vtable %s virtual base %s\n",
                   Class->getNameAsCString(), Base->getNameAsCString()));
-        GenerateVtableForBase(Base, true, BaseOffset, true, CurrentVBaseOffset,
+        GenerateVtableForBase(Base, BaseOffset, true, true, CurrentVBaseOffset,
                               Path);
       }
       int64_t BaseOffset;
@@ -669,7 +669,7 @@ int64_t CGVtableInfo::getMethodVtableIndex(const CXXMethodDecl *MD) {
   std::vector<llvm::Constant *> methods;
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
-  VtableBuilder b(methods, RD, RD, CGM);
+  VtableBuilder b(methods, RD, RD, 0, CGM);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -694,7 +694,7 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   std::vector<llvm::Constant *> methods;
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
-  VtableBuilder b(methods, RD, RD, CGM);
+  VtableBuilder b(methods, RD, RD, 0, CGM);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -729,14 +729,14 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t AddressPoint;
 
-  VtableBuilder b(methods, RD, LayoutClass, *this);
+  VtableBuilder b(methods, RD, LayoutClass, Offset, *this);
 
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   // First comes the vtables for all the non-virtual bases...
-  AddressPoint = b.GenerateVtableForBase(RD);
+  AddressPoint = b.GenerateVtableForBase(RD, Offset);
 
   // then the vtables for all the virtual bases.
-  b.GenerateVtableForVBases(RD);
+  b.GenerateVtableForVBases(RD, Offset);
 
   CodeGenModule::AddrMap_t *&ref = AddressPoints[LayoutClass];
   if (ref == 0)
