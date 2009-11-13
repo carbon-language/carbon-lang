@@ -132,29 +132,6 @@ bool PCHValidator::ReadTargetTriple(llvm::StringRef Triple) {
   return true;
 }
 
-/// \brief Split the given string into a vector of lines, eliminating
-/// any empty lines in the process.
-///
-/// \param Str the string to split.
-/// \param Len the length of Str.
-/// \param KeepEmptyLines true if empty lines should be included
-/// \returns a vector of lines, with the line endings removed
-static std::vector<llvm::StringRef> splitLines(llvm::StringRef Str,
-                                               bool KeepEmptyLines = false) {
-  std::vector<llvm::StringRef> Lines;
-
-  while (!Str.empty()) {
-    std::pair<llvm::StringRef, llvm::StringRef> split = Str.split('\n');
-
-    if (KeepEmptyLines || !split.first.empty())
-      Lines.push_back(split.first);
-
-    Str = split.second;
-  }
-
-  return Lines;
-}
-
 bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
                                         FileID PCHBufferID,
                                         llvm::StringRef OriginalFileName,
@@ -181,11 +158,12 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
 
   // The predefines buffers are different. Determine what the differences are,
   // and whether they require us to reject the PCH file.
-  std::vector<llvm::StringRef> PCHLines = splitLines(PCHPredef);
-  std::vector<llvm::StringRef> CmdLineLines = splitLines(Left);
-  std::vector<llvm::StringRef> CmdLineLinesRight = splitLines(Right);
-  CmdLineLines.insert(CmdLineLines.end(),
-                      CmdLineLinesRight.begin(), CmdLineLinesRight.end());
+  llvm::SmallVector<llvm::StringRef, 8> PCHLines;
+  PCHPredef.split(PCHLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+
+  llvm::SmallVector<llvm::StringRef, 8> CmdLineLines;
+  Left.split(CmdLineLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  Right.split(CmdLineLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
   // Sort both sets of predefined buffer lines, since we allow some extra
   // definitions and they may appear at any point in the output.
@@ -221,7 +199,7 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
     // command line.
     std::string MacroDefStart = "#define " + MacroName.str();
     std::string::size_type MacroDefLen = MacroDefStart.size();
-    std::vector<llvm::StringRef>::iterator ConflictPos
+    llvm::SmallVector<llvm::StringRef, 8>::iterator ConflictPos
       = std::lower_bound(CmdLineLines.begin(), CmdLineLines.end(),
                          MacroDefStart);
     for (; ConflictPos != CmdLineLines.end(); ++ConflictPos) {
