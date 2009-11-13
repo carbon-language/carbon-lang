@@ -519,21 +519,24 @@ static bool ProfitableToMerge(MachineBasicBlock *MBB1,
     return true;
 
   // If both blocks have an unconditional branch temporarily stripped out,
-  // treat that as an additional common instruction.
-  if (MBB1 != PredBB && MBB2 != PredBB && 
+  // count that as an additional common instruction for the following
+  // heuristics.
+  unsigned EffectiveTailLen = CommonTailLen;
+  if (SuccBB && MBB1 != PredBB && MBB2 != PredBB && 
       !MBB1->back().getDesc().isBarrier() &&
       !MBB2->back().getDesc().isBarrier())
-    --minCommonTailLength;
+    ++EffectiveTailLen;
 
   // Check if the common tail is long enough to be worthwhile.
-  if (CommonTailLen >= minCommonTailLength)
+  if (EffectiveTailLen >= minCommonTailLength)
     return true;
 
-  // If we are optimizing for code size, 1 instruction in common is enough if
-  // we don't have to split a block.  At worst we will be replacing a
-  // fallthrough into the common tail with a branch, which at worst breaks
-  // even with falling through into the duplicated common tail.
-  if (MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
+  // If we are optimizing for code size, 2 instructions in common is enough if
+  // we don't have to split a block.  At worst we will be introducing 1 new
+  // branch instruction, which is likely to be smaller than the 2
+  // instructions that would be deleted in the merge.
+  if (EffectiveTailLen >= 2 &&
+      MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
       (I1 == MBB1->begin() || I2 == MBB2->begin()))
     return true;
 
