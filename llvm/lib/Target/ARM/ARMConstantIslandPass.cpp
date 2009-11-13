@@ -1804,9 +1804,7 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
   JTBB->addSuccessor(NewBB);
 
   // Update internal data structures to account for the newly inserted MBB.
-  // This is almost the same as UpdateForInsertedWaterBlock, except that
-  // the Water goes after OrigBB, not NewBB.
-  MF.RenumberBlocks(NewBB);
+  MF.RenumberBlocks();
 
   // Insert a size into BBSizes to align it properly with the (newly
   // renumbered) block numbers.
