@@ -406,7 +406,7 @@ void SPUAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   processDebugLoc(MI, true);
   printInstruction(MI);
-  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+  if (VerboseAsm)
     EmitComments(*MI);
   processDebugLoc(MI, false);
   O << '\n';

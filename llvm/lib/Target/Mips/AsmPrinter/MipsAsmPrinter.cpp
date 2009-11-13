@@ -282,7 +282,7 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // Print the assembly for the instruction.
       printInstruction(II);
       
-      if (VerboseAsm && !II->getDebugLoc().isUnknown())
+      if (VerboseAsm)
         EmitComments(*II);
       O << '\n';
 

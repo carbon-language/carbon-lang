@@ -361,7 +361,7 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
   printInstruction(MI);
-  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+  if (VerboseAsm)
     EmitComments(*MI);
   O << '\n';
 

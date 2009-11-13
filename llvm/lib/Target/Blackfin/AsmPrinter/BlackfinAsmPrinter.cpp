@@ -143,7 +143,7 @@ bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       processDebugLoc(II, true);
 
       printInstruction(II);
-      if (VerboseAsm && !II->getDebugLoc().isUnknown())
+      if (VerboseAsm)
         EmitComments(*II);
       O << '\n';
       

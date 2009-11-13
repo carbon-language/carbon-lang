@@ -239,7 +239,7 @@ void MSP430AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
   printInstructionThroughMCStreamer(MI);
 
-  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+  if (VerboseAsm)
     EmitComments(*MI);
   O << '\n';
 

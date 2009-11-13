@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -35,6 +36,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
@@ -1822,21 +1824,28 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
 
 /// EmitComments - Pretty-print comments for instructions
 void AsmPrinter::EmitComments(const MachineInstr &MI) const {
-  assert(VerboseAsm && !MI.getDebugLoc().isUnknown());
-  
-  DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
+  if (!VerboseAsm)
+    return;
 
-  // Print source line info.
-  O.PadToColumn(MAI->getCommentColumn());
-  O << MAI->getCommentString() << " SrcLine ";
-  if (DLT.Scope) {
-    DICompileUnit CU(DLT.Scope);
-    if (!CU.isNull())
-      O << CU.getFilename() << " ";
+  bool Newline = false;
+
+  if (!MI.getDebugLoc().isUnknown()) {
+    DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
+
+    // Print source line info.
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString() << " SrcLine ";
+    if (DLT.Scope) {
+      DICompileUnit CU(DLT.Scope);
+      if (!CU.isNull())
+        O << CU.getFilename() << " ";
+    }
+    O << DLT.Line;
+    if (DLT.Col != 0)
+      O << ":" << DLT.Col;
+    Newline = true;
   }
-  O << DLT.Line;
-  if (DLT.Col != 0) 
-    O << ":" << DLT.Col;
+
 }
 
 /// PrintChildLoopComment - Print comments about child loops within
@@ -1867,8 +1876,7 @@ static void PrintChildLoopComment(formatted_raw_ostream &O,
 }
 
 /// EmitComments - Pretty-print comments for basic blocks
-void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const
-{
+void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const {
   if (VerboseAsm) {
     // Add loop depth information
     const MachineLoop *loop = LI->getLoopFor(&MBB);
