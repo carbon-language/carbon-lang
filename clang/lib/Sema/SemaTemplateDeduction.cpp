@@ -126,7 +126,6 @@ DeduceNonTypeTemplateArgument(ASTContext &Context,
 /// from the given type- or value-dependent expression.
 ///
 /// \returns true if deduction succeeded, false otherwise.
-
 static Sema::TemplateDeductionResult
 DeduceNonTypeTemplateArgument(ASTContext &Context,
                               NonTypeTemplateParmDecl *NTTP,
@@ -163,6 +162,43 @@ DeduceNonTypeTemplateArgument(ASTContext &Context,
     return Sema::TDK_NonDeducedMismatch;
   }
 
+  return Sema::TDK_Success;
+}
+
+/// \brief Deduce the value of the given non-type template parameter
+/// from the given declaration.
+///
+/// \returns true if deduction succeeded, false otherwise.
+static Sema::TemplateDeductionResult
+DeduceNonTypeTemplateArgument(ASTContext &Context,
+                              NonTypeTemplateParmDecl *NTTP,
+                              Decl *D,
+                              Sema::TemplateDeductionInfo &Info,
+                              llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
+  assert(NTTP->getDepth() == 0 &&
+         "Cannot deduce non-type template argument with depth > 0");
+  
+  if (Deduced[NTTP->getIndex()].isNull()) {
+    Deduced[NTTP->getIndex()] = TemplateArgument(D->getCanonicalDecl());
+    return Sema::TDK_Success;
+  }
+  
+  if (Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Expression) {
+    // Okay, we deduced a declaration in one case and a dependent expression
+    // in another case.
+    return Sema::TDK_Success;
+  }
+  
+  if (Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Declaration) {
+    // Compare the declarations for equality
+    if (Deduced[NTTP->getIndex()].getAsDecl()->getCanonicalDecl() ==
+          D->getCanonicalDecl())
+      return Sema::TDK_Success;
+    
+    // FIXME: Fill in argument mismatch information
+    return Sema::TDK_NonDeducedMismatch;
+  }
+  
   return Sema::TDK_Success;
 }
 
@@ -847,7 +883,10 @@ DeduceTemplateArguments(ASTContext &Context,
       if (Arg.getKind() == TemplateArgument::Expression)
         return DeduceNonTypeTemplateArgument(Context, NTTP, Arg.getAsExpr(),
                                              Info, Deduced);
-
+      if (Arg.getKind() == TemplateArgument::Declaration)
+        return DeduceNonTypeTemplateArgument(Context, NTTP, Arg.getAsDecl(),
+                                             Info, Deduced);
+      
       assert(false && "Type/value mismatch");
       Info.FirstArg = Param;
       Info.SecondArg = Arg;

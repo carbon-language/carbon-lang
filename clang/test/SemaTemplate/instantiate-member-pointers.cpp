@@ -46,3 +46,10 @@ struct X4 {
 int &get_X4(X4<&Y::x> x4, Y& y) { 
   return x4.getMember(y); 
 }
+
+template<IntMember Member>
+void accept_X4(X4<Member>);
+
+void test_accept_X4(X4<&Y::x> x4) {
+  accept_X4(x4);
+}
