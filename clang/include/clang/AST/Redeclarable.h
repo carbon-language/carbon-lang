@@ -23,6 +23,8 @@ template<typename decl_type>
 class Redeclarable {
 
 protected:
+  // FIXME: PointerIntPair is a value class that should not be inherited from.
+  // This should change to using containment.
   struct DeclLink : public llvm::PointerIntPair<decl_type *, 1, bool> {
     DeclLink(decl_type *D, bool isLatest)
       : llvm::PointerIntPair<decl_type *, 1, bool>(D, isLatest) { }
