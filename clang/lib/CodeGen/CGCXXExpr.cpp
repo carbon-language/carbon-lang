@@ -293,7 +293,6 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
               Builder.CreateIntCast(NumElements, 
                                     llvm::Type::getInt64Ty(VMContext), false, 
                                     "count.tmp");
-            assert (!Dtor->isVirtual() && "delete [] with virtual dtors NYI");
             EmitCXXAggrDestructorCall(Dtor, NumElements, Ptr);
             Ptr = AllocatedObjectPtr;
           }

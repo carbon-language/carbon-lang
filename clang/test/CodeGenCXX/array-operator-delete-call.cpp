@@ -13,9 +13,16 @@ struct S {
   int iS;
 };
 
+struct V {
+  V() : iV (++count) { printf("V::V(%d)\n", iV); }
+  virtual ~V() { printf("V::~V(%d)\n", iV); }
+  int iV;
+};
+
 struct COST
 {
   S *cost;
+  V *vcost;
   unsigned *cost_val;
 
   ~COST();
@@ -26,6 +33,7 @@ struct COST
 COST::COST()
 {
   cost = new S[3];
+  vcost = new V[4];
   cost_val = new unsigned[10];
 }
 
@@ -33,6 +41,9 @@ COST::~COST()
 {
   if (cost) {
    delete [] cost;
+  }
+  if (vcost) {
+   delete [] vcost;
   }
   if (cost_val)
     delete [] cost_val;

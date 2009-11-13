@@ -567,7 +567,16 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   Counter = Builder.CreateLoad(IndexPtr);
   Counter = Builder.CreateSub(Counter, One);
   llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
-  EmitCXXDestructorCall(D, Dtor_Complete, Address);
+  if (D->isVirtual()) {
+    const llvm::Type *Ty =
+      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(D),
+                                     /*isVariadic=*/false);
+    
+    llvm::Value *Callee = BuildVirtualCall(D, Dtor_Deleting, Address, Ty);
+    EmitCXXMemberCall(D, Callee, Address, 0, 0);
+  }
+  else
+    EmitCXXDestructorCall(D, Dtor_Complete, Address);
 
   EmitBlock(ContinueBlock);
 
