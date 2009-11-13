@@ -33,7 +33,6 @@
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
-#include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
@@ -388,41 +387,6 @@ static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
   }
 }
 
-/// ReadPCHFile - Load a PCH file from disk, and initialize the preprocessor for
-/// reading from the PCH file.
-///
-/// \return The AST source, or null on failure.
-static ExternalASTSource *ReadPCHFile(llvm::StringRef Path,
-                                      const std::string Sysroot,
-                                      Preprocessor &PP,
-                                      ASTContext &Context) {
-  // If the user specified -isysroot, it will be used for relocatable PCH files.
-  const char *isysrootPCH = Sysroot.c_str();
-  if (isysrootPCH[0] == '\0')
-    isysrootPCH = 0;
-
-  llvm::OwningPtr<PCHReader> Reader;
-  Reader.reset(new PCHReader(PP, &Context, isysrootPCH));
-
-  switch (Reader->ReadPCH(Path)) {
-  case PCHReader::Success:
-    // Set the predefines buffer as suggested by the PCH reader. Typically, the
-    // predefines buffer will be empty.
-    PP.setPredefines(Reader->getSuggestedPredefines());
-    return Reader.take();
-
-  case PCHReader::Failure:
-    // Unrecoverable failure: don't even try to process the input file.
-    break;
-
-  case PCHReader::IgnorePCH:
-    // No suitable PCH file could be found. Return an error.
-    break;
-  }
-
-  return 0;
-}
-
 /// ProcessInputFile - Process a single input file with the specified state.
 static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
                              ProgActions PA) {
@@ -509,7 +473,6 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     }
   }
 
-  llvm::OwningPtr<ExternalASTSource> Source;
   const std::string &ImplicitPCHInclude =
     CI.getPreprocessorOpts().getImplicitPCHInclude();
   if (Consumer) {
@@ -517,15 +480,9 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     CI.createASTContext();
 
     if (!ImplicitPCHInclude.empty()) {
-      Source.reset(ReadPCHFile(ImplicitPCHInclude,
-                               CI.getHeaderSearchOpts().Sysroot, PP,
-                               CI.getASTContext()));
-      if (!Source)
+      CI.createPCHExternalASTSource(ImplicitPCHInclude);
+      if (!CI.getASTContext().getExternalSource())
         return;
-
-      // Attach the PCH reader to the AST context as an external AST source, so
-      // that declarations will be deserialized from the PCH file as needed.
-      CI.getASTContext().setExternalSource(Source);
     } else {
       // Initialize builtin info when not using PCH.
       PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),

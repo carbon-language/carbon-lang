@@ -17,6 +17,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PTHManager.h"
 #include "clang/Frontend/ChainedDiagnosticClient.h"
+#include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
@@ -163,4 +164,41 @@ void CompilerInstance::createASTContext() {
                                PP.getSelectorTable(), PP.getBuiltinInfo(),
                                /*FreeMemory=*/ !getFrontendOpts().DisableFree,
                                /*size_reserve=*/ 0));
+}
+
+// ExternalASTSource
+
+void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path) {
+  llvm::OwningPtr<ExternalASTSource> Source;
+  Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
+                                          getPreprocessor(), getASTContext()));
+  getASTContext().setExternalSource(Source);
+}
+
+ExternalASTSource *
+CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
+                                             const std::string &Sysroot,
+                                             Preprocessor &PP,
+                                             ASTContext &Context) {
+  llvm::OwningPtr<PCHReader> Reader;
+  Reader.reset(new PCHReader(PP, &Context,
+                             Sysroot.empty() ? 0 : Sysroot.c_str()));
+
+  switch (Reader->ReadPCH(Path)) {
+  case PCHReader::Success:
+    // Set the predefines buffer as suggested by the PCH reader. Typically, the
+    // predefines buffer will be empty.
+    PP.setPredefines(Reader->getSuggestedPredefines());
+    return Reader.take();
+
+  case PCHReader::Failure:
+    // Unrecoverable failure: don't even try to process the input file.
+    break;
+
+  case PCHReader::IgnorePCH:
+    // No suitable PCH file could be found. Return an error.
+    break;
+  }
+
+  return 0;
 }

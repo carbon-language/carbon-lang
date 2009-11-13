@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_COMPILERINSTANCE_H_
 
 #include "clang/Frontend/CompilerInvocation.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <cassert>
 
@@ -22,8 +23,10 @@ namespace clang {
 class ASTContext;
 class Diagnostic;
 class DiagnosticClient;
-class Preprocessor;
+class ExternalASTSource;
 class FileManager;
+class Preprocessor;
+class Source;
 class SourceManager;
 class TargetInfo;
 
@@ -348,6 +351,17 @@ public:
 
   /// Create the AST context.
   void createASTContext();
+
+  /// Create an external AST source to read a PCH file and attach it to the AST
+  /// context.
+  void createPCHExternalASTSource(llvm::StringRef Path);
+
+  /// Create an external AST source to read a PCH file.
+  ///
+  /// \return - The new object on success, or null on failure.
+  static ExternalASTSource *
+  createPCHExternalASTSource(llvm::StringRef Path, const std::string &Sysroot,
+                             Preprocessor &PP, ASTContext &Context);
 
   /// }
 };
