@@ -20,6 +20,7 @@ namespace clang {
 class GRExprEngine;
 
 void RegisterPthreadLockChecker(GRExprEngine &Eng);
+void RegisterMallocChecker(GRExprEngine &Eng);
 
 } // end clang namespace
 #endif

@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "GRExprEngineExperimentalChecks.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
@@ -33,8 +34,11 @@ class VISIBILITY_HIDDEN MallocChecker : public CheckerVisitor<MallocChecker> {
   IdentifierInfo *II_free;
 
 public:
+  MallocChecker() : BT_DoubleFree(0) {}
   static void *getTag();
   void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
+private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
   void FreeMem(CheckerContext &C, const CallExpr *CE);
 };
@@ -57,6 +61,10 @@ namespace clang {
     : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, RefState> > {
     static void *GDMIndex() { return MallocChecker::getTag(); }
   };
+}
+
+void clang::RegisterMallocChecker(GRExprEngine &Eng) {
+  Eng.registerCheck(new MallocChecker());
 }
 
 void *MallocChecker::getTag() {
@@ -123,4 +131,8 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
   // Normal free.
   const GRState *FreedState = state->set<RegionState>(Sym, Released);
   C.addTransition(C.GenerateNode(CE, FreedState));
+}
+
+void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,
+                                    SymbolReaper &SymReaper) {
 }

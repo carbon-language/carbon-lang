@@ -19,5 +19,6 @@ using namespace clang;
 
 void clang::RegisterExperimentalChecks(GRExprEngine &Eng) {
   RegisterPthreadLockChecker(Eng);  
+  RegisterMallocChecker(Eng);
 }
 
