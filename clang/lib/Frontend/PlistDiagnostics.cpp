@@ -37,6 +37,7 @@ namespace {
     const std::string OutputFile;
     const LangOptions &LangOpts;
     llvm::OwningPtr<PathDiagnosticClient> SubPD;
+    bool flushed;
   public:
     PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
                      PathDiagnosticClient *subPD);
@@ -61,7 +62,7 @@ namespace {
 PlistDiagnostics::PlistDiagnostics(const std::string& output,
                                    const LangOptions &LO,
                                    PathDiagnosticClient *subPD)
-  : OutputFile(output), LangOpts(LO), SubPD(subPD) {}
+  : OutputFile(output), LangOpts(LO), SubPD(subPD), flushed(false) {}
 
 PathDiagnosticClient*
 clang::CreatePlistDiagnosticClient(const std::string& s, const Preprocessor &PP,
@@ -310,6 +311,11 @@ void PlistDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
 
 void PlistDiagnostics::FlushDiagnostics(llvm::SmallVectorImpl<std::string>
                                         *FilesMade) {
+  
+  if (flushed)
+    return;
+  
+  flushed = true;
 
   // Build up a set of FIDs that we use by scanning the locations and
   // ranges of the diagnostics.
