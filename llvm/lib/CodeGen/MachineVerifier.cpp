@@ -287,7 +287,18 @@ void MachineVerifier::visitMachineFunctionBefore() {
   markReachable(&MF->front());
 }
 
-void MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
+// Does iterator point to a and b as the first two elements?
+bool matchPair(MachineBasicBlock::const_succ_iterator i,
+               const MachineBasicBlock *a, const MachineBasicBlock *b) {
+  if (*i == a)
+    return *++i == b;
+  if (*i == b)
+    return *++i == a;
+  return false;
+}
+
+void
+MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   // Start with minimal CFG sanity checks.
@@ -379,8 +390,7 @@ void MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB)
       } if (MBB->succ_size() != 2) {
         report("MBB exits via conditional branch/fall-through but doesn't have "
                "exactly two CFG successors!", MBB);
-      } else if ((MBB->succ_begin()[0] == TBB && MBB->succ_end()[1] == MBBI) ||
-                 (MBB->succ_begin()[1] == TBB && MBB->succ_end()[0] == MBBI)) {
+      } else if (!matchPair(MBB->succ_begin(), TBB, MBBI)) {
         report("MBB exits via conditional branch/fall-through but the CFG "
                "successors don't match the actual successors!", MBB);
       }
@@ -400,8 +410,7 @@ void MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB)
       if (MBB->succ_size() != 2) {
         report("MBB exits via conditional branch/branch but doesn't have "
                "exactly two CFG successors!", MBB);
-      } else if ((MBB->succ_begin()[0] == TBB && MBB->succ_end()[1] == FBB) ||
-                 (MBB->succ_begin()[1] == TBB && MBB->succ_end()[0] == FBB)) {
+      } else if (!matchPair(MBB->succ_begin(), TBB, FBB)) {
         report("MBB exits via conditional branch/branch but the CFG "
                "successors don't match the actual successors!", MBB);
       }
