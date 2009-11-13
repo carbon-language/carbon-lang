@@ -314,6 +314,16 @@ SDNode* MipsDAGToDAGISel::Select(SDValue N) {
     case ISD::GLOBAL_OFFSET_TABLE:
       return getGlobalBaseReg();
 
+    case ISD::ConstantFP: {
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
+      if (N.getValueType() == MVT::f64 && CN->isExactlyValue(+0.0)) { 
+        SDValue Zero = CurDAG->getRegister(Mips::ZERO, MVT::i32);
+        ReplaceUses(N, Zero);
+        return Zero.getNode();
+      }
+      break;
+    }
+
     /// Handle direct and indirect calls when using PIC. On PIC, when 
     /// GOT is smaller than about 64k (small code) the GA target is 
     /// loaded with only one instruction. Otherwise GA's target must 
