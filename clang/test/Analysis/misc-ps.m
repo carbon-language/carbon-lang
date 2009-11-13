@@ -1,8 +1,8 @@
 // NOTE: Use '-fobjc-gc' to test the analysis being run twice, and multiple reports are not issued.
-// RUN: clang-cc -analyze -checker-cfref --analyzer-store=basic -fobjc-gc -analyzer-constraints=basic --verify -fblocks %s
-// RUN: clang-cc -analyze -checker-cfref --analyzer-store=basic -analyzer-constraints=range --verify -fblocks %s
-// RUN: clang-cc -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=basic --verify -fblocks %s
-// RUN: clang-cc -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=range --verify -fblocks %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref --analyzer-store=basic -fobjc-gc -analyzer-constraints=basic --verify -fblocks %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref --analyzer-store=basic -analyzer-constraints=range --verify -fblocks %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref --analyzer-store=region -analyzer-constraints=basic --verify -fblocks %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref --analyzer-store=region -analyzer-constraints=range --verify -fblocks %s
 
 typedef struct objc_ivar *Ivar;
 typedef struct objc_selector *SEL;

@@ -902,6 +902,8 @@ print <<ENDTEXT;
 OPTIONS:
 
  -analyze-headers - Also analyze functions in #included files.
+ 
+ --experimental-checks - Enable experimental checks that are currently in heavy testing
 
  -o             - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
@@ -1094,6 +1096,12 @@ while (@ARGV) {
   if ($arg eq "-k" or $arg eq "--keep-going") {
     shift @ARGV;
     $IgnoreErrors = 1;
+    next;
+  }
+  
+  if ($arg = "--experimental-checks") {
+    shift @ARGV;
+    $ENV{"CCC_EXPERIMENTAL_CHECKS"} = 1;
     next;
   }
   

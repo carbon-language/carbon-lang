@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify %s
 //
 // This test case simply should not crash.  It evaluates the logic of not
 // using MemRegion::getRValueType in incorrect places.

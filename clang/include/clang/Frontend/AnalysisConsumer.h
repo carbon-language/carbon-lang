@@ -68,7 +68,7 @@ public:
   unsigned VisualizeEGDot : 1;
   unsigned VisualizeEGUbi : 1;
   unsigned EnableExperimentalChecks : 1;
-
+  unsigned EnableExperimentalInternalChecks : 1;
 public:
   AnalyzerOptions() {
     AnalyzeAll = 0;
@@ -79,6 +79,7 @@ public:
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;
     EnableExperimentalChecks = 0;
+    EnableExperimentalInternalChecks = 0;
   }
 };
 

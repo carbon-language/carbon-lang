@@ -160,6 +160,11 @@ sub Analyze {
     push @CmdArgs,"-analyzer-display-progress";
     push @CmdArgs,"-analyzer-eagerly-assume";
     push @CmdArgs,(split /\s/,$Analyses);
+    
+    if (defined $ENV{"CCC_EXPERIMENTAL_CHECKS"}) {
+      push @CmdArgs,"-analyzer-experimental-internal-checks";
+    }
+    
     $RunAnalyzer = 1;
   }
   

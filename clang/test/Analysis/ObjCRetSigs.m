@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -warn-objc-methodsigs -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -warn-objc-methodsigs -verify %s
 
 #include <stdio.h>
 

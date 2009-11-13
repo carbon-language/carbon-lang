@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -warn-objc-missing-dealloc '-DIBOutlet=__attribute__((iboutlet))' %s --verify
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -warn-objc-missing-dealloc '-DIBOutlet=__attribute__((iboutlet))' %s --verify
 typedef signed char BOOL;
 @protocol NSObject
 - (BOOL)isEqual:(id)object;

@@ -1,7 +1,7 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
 
 //===----------------------------------------------------------------------===//
 // Delta-debugging produced forward declarations.

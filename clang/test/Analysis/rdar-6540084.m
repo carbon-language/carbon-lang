@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -warn-dead-stores -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -warn-dead-stores -verify %s
 //
 // This test exercises the live variables analysis (LiveVariables.cpp).
 // The case originally identified a non-termination bug.

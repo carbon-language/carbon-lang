@@ -86,6 +86,10 @@ AnalyzerDisplayProgress("analyzer-display-progress",
 static llvm::cl::opt<bool>
 AnalyzerExperimentalChecks("analyzer-experimental-checks",
           llvm::cl::desc("Use experimental path-sensitive checks"));
+
+static llvm::cl::opt<bool>
+AnalyzerExperimentalInternalChecks("analyzer-experimental-internal-checks",
+  llvm::cl::desc("Use new default path-sensitive checks currently in testing"));
   
 static llvm::cl::opt<std::string>
 AnalyzeSpecificFunction("analyze-function",
@@ -131,6 +135,7 @@ void clang::InitializeAnalyzerOptions(AnalyzerOptions &Opts) {
   Opts.EagerlyAssume = EagerlyAssume;
   Opts.AnalyzeSpecificFunction = AnalyzeSpecificFunction;
   Opts.EnableExperimentalChecks = AnalyzerExperimentalChecks;
+  Opts.EnableExperimentalInternalChecks = AnalyzerExperimentalInternalChecks;
   Opts.TrimGraph = TrimGraph;
 }
 

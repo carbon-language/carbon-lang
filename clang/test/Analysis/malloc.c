@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-experimental-checks -analyzer-store=region -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-experimental-checks -analyzer-store=region -verify %s
 #include <stdlib.h>
 
 void f1() {

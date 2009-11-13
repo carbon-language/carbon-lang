@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -analyze -checker-cfref -analyzer-store=region --verify %s
+// RUN: clang-cc -triple x86_64-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region --verify %s
 
 // Test if the 'storage' region gets properly initialized after it is cast to
 // 'struct sockaddr *'. 

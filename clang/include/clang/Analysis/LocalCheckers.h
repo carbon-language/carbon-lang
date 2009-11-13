@@ -51,6 +51,7 @@ void CheckObjCUnusedIvar(const ObjCImplementationDecl *D, BugReporter& BR);
 
 void RegisterAppleChecks(GRExprEngine& Eng, const Decl &D);
 void RegisterExperimentalChecks(GRExprEngine &Eng);
+void RegisterExperimentalInternalChecks(GRExprEngine &Eng);
 
 void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 

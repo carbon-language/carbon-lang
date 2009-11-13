@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic --verify %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region --verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic --verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region --verify %s
 
 // Test function pointer casts.  Currently we track function addresses using
 // loc::FunctionVal.  Because casts can be arbitrary, do we need to model

@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify %s
 //
 // Just exercise the analyzer on code that has at one point caused issues
 // (i.e., no assertions or crashes).
