@@ -6,6 +6,11 @@ void f1() {
   return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
 }
 
+// THIS TEST CURRENTLY FAILS.
+void f1_b() {
+  int *p = malloc(10);
+}
+
 void f2() {
   int *p = malloc(10);
   free(p);
