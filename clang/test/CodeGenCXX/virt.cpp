@@ -936,6 +936,16 @@ class test21_D : public test21_B, public test21_B1 {
 // CHECK-LP64-NEXT: .quad __ZTI8test21_D
 // CHECK-LP64-NEXT: .quad __ZTv0_n24_N8test21_D3fooEv
 
+// CHECK-LP64:     __ZTT8test21_D:
+// CHECK-LP64-NEXT: .quad   (__ZTV8test21_D) + 40
+// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D0_8test21_B) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D0_8test21_B) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D8_9test21_B1) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D8_9test21_B1) + 32
+// CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 40
+// CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 80
+// CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 80
+
 
 
 // CHECK-LP64: __ZTV1B:
