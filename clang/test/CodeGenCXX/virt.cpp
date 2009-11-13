@@ -4,8 +4,6 @@
 // RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t-64.ll
 // RUN: FileCheck -check-prefix LPLL64 --input-file=%t-64.ll %s
 
-// XFAIL: *
-
 struct B {
   virtual void bar1();
   virtual void bar2();
@@ -709,7 +707,7 @@ void test16_D::bar() { }
 // CHECK-LPLL64:  ret %class.test8_D* %10
 // CHECK-LPLL64:}
 
-// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev36(%class.test8_D*) {
+// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D*) {
 // CHECK-LPLL64:entry:
 // CHECK-LPLL64:  %retval = alloca %class.test8_D*
 // CHECK-LPLL64:  %.addr = alloca %class.test8_D*
@@ -912,10 +910,10 @@ class test20_D : public test20_B, public test20_B1 {
 
 
 class test21_V {
-  virtual void foo();
+  virtual void foo() { }
 };
 class test21_V1 {
-  virtual void foo();
+  virtual void foo() { }
 };
 class test21_B : virtual test21_V {
 };
