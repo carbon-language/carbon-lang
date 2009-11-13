@@ -232,15 +232,13 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 /// anything.
 llvm::Timer *ClangFrontendTimer = 0;
 
-static llvm::raw_ostream *ComputeOutFile(const FrontendOptions &Opts,
-                                         const std::string &InFile,
-                                         const char *Extension,
-                                         bool Binary,
-                                         llvm::sys::Path& OutPath) {
-  llvm::raw_ostream *Ret;
+static llvm::raw_fd_ostream *ComputeOutFile(CompilerInstance &CI,
+                                            const std::string &InFile,
+                                            const char *Extension,
+                                            bool Binary) {
   std::string OutFile;
-  if (!Opts.OutputFile.empty())
-    OutFile = Opts.OutputFile;
+  if (!CI.getFrontendOpts().OutputFile.empty())
+    OutFile = CI.getFrontendOpts().OutputFile;
   else if (InFile == "-") {
     OutFile = "-";
   } else if (Extension) {
@@ -253,18 +251,20 @@ static llvm::raw_ostream *ComputeOutFile(const FrontendOptions &Opts,
   }
 
   std::string Error;
-  Ret = new llvm::raw_fd_ostream(OutFile.c_str(), Error,
-                                 (Binary ? llvm::raw_fd_ostream::F_Binary : 0));
+  llvm::raw_fd_ostream *OS =
+    new llvm::raw_fd_ostream(OutFile.c_str(), Error,
+                             (Binary ? llvm::raw_fd_ostream::F_Binary : 0));
   if (!Error.empty()) {
     // FIXME: Don't fail this way.
     llvm::errs() << "ERROR: " << Error << "\n";
     ::exit(1);
   }
 
-  if (OutFile != "-")
-    OutPath = OutFile;
+  // Track that this is an output file, so that we remember to close it and so
+  // we can remove it on errors.
+  CI.addOutputFile((InFile == "-") ? "" : OutFile, OS);
 
-  return Ret;
+  return OS;
 }
 
 /// AddFixItLocations - Add any individual user specified "fix-it" locations,
@@ -294,9 +294,7 @@ static bool AddFixItLocations(FixItRewriter *FixItRewrite,
 static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
                                          Preprocessor &PP,
                                          const std::string &InFile,
-                                         ProgActions PA,
-                                         llvm::OwningPtr<llvm::raw_ostream> &OS,
-                                         llvm::sys::Path &OutPath) {
+                                         ProgActions PA) {
   const FrontendOptions &FEOpts = CI.getFrontendOpts();
 
   switch (PA) {
@@ -304,13 +302,10 @@ static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
     return 0;
 
   case ASTPrint:
-    OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, false, OutPath));
-    return CreateASTPrinter(OS.get());
+    return CreateASTPrinter(ComputeOutFile(CI, InFile, 0, false));
 
   case ASTPrintXML:
-    OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, "xml", false,
-                            OutPath));
-    return CreateASTPrinterXML(OS.get());
+    return CreateASTPrinterXML(ComputeOutFile(CI, InFile, "xml", false));
 
   case ASTDump:
     return CreateASTDumper();
@@ -329,20 +324,18 @@ static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
   case EmitBC:
   case EmitLLVMOnly: {
     BackendAction Act;
+    llvm::OwningPtr<llvm::raw_ostream> OS;
     if (ProgAction == EmitAssembly) {
       Act = Backend_EmitAssembly;
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, "s", true,
-                              OutPath));
+      OS.reset(ComputeOutFile(CI, InFile, "s", true));
     } else if (ProgAction == EmitLLVM) {
       Act = Backend_EmitLL;
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, "ll", true,
-                              OutPath));
+      OS.reset(ComputeOutFile(CI, InFile, "ll", true));
     } else if (ProgAction == EmitLLVMOnly) {
       Act = Backend_EmitNothing;
     } else {
       Act = Backend_EmitBC;
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, "bc", true,
-                              OutPath));
+      OS.reset(ComputeOutFile(CI, InFile, "bc", true));
     }
 
     // Fix-its can change semantics, disallow with any IRgen action.
@@ -352,14 +345,13 @@ static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
     }
 
     return CreateBackendConsumer(Act, PP.getDiagnostics(), PP.getLangOptions(),
-                                 CI.getCodeGenOpts(), InFile, OS.get(),
+                                 CI.getCodeGenOpts(), InFile, OS.take(),
                                  CI.getLLVMContext());
   }
 
   case RewriteObjC:
-    OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, "cpp", true, OutPath));
-    return CreateObjCRewriter(InFile, OS.get(), PP.getDiagnostics(),
-                              PP.getLangOptions(),
+    return CreateObjCRewriter(InFile, ComputeOutFile(CI, InFile, "cpp", true),
+                              PP.getDiagnostics(), PP.getLangOptions(),
                               CI.getDiagnosticOpts().NoRewriteMacros);
 
   case RewriteBlocks:
@@ -379,15 +371,13 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
                              ProgActions PA) {
   Preprocessor &PP = CI.getPreprocessor();
   const FrontendOptions &FEOpts = CI.getFrontendOpts();
-  llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
   FixItRewriter *FixItRewrite = 0;
   bool CompleteTranslationUnit = true;
-  llvm::sys::Path OutPath;
 
   switch (PA) {
   default:
-    Consumer.reset(CreateConsumerAction(CI, PP, InFile, PA, OS, OutPath));
+    Consumer.reset(CreateConsumerAction(CI, PP, InFile, PA));
     if (!Consumer.get()) {
       PP.getDiagnostics().Report(diag::err_fe_invalid_ast_action);
       return;
@@ -395,8 +385,7 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     break;
 
   case EmitHTML:
-    OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-    Consumer.reset(CreateHTMLPrinter(OS.get(), PP));
+    Consumer.reset(CreateHTMLPrinter(ComputeOutFile(CI, InFile, 0, true), PP));
     break;
 
   case RunAnalysis:
@@ -412,11 +401,11 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
       Relocatable = false;
     }
 
-    OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
+    llvm::raw_ostream *OS = ComputeOutFile(CI, InFile, 0, true);
     if (Relocatable)
-      Consumer.reset(CreatePCHGenerator(PP, OS.get(), Sysroot.c_str()));
+      Consumer.reset(CreatePCHGenerator(PP, OS, Sysroot.c_str()));
     else
-      Consumer.reset(CreatePCHGenerator(PP, OS.get()));
+      Consumer.reset(CreatePCHGenerator(PP, OS));
     CompleteTranslationUnit = false;
     break;
   }
@@ -525,32 +514,29 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
         llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
         ::exit(1);
       }
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-      CacheTokens(PP, static_cast<llvm::raw_fd_ostream*>(OS.get()));
+      CacheTokens(PP, ComputeOutFile(CI, InFile, 0, true));
       break;
 
     case ParseNoop:
       ParseFile(PP, new MinimalAction(PP));
       break;
 
-    case ParsePrintCallbacks:
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-      ParseFile(PP, CreatePrintParserActionsAction(PP, OS.get()));
+    case ParsePrintCallbacks: {
+      llvm::raw_ostream *OS = ComputeOutFile(CI, InFile, 0, true);
+      ParseFile(PP, CreatePrintParserActionsAction(PP, OS));
       break;
-
+    }
     case PrintPreprocessedInput:
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-      DoPrintPreprocessedInput(PP, OS.get(), CI.getPreprocessorOutputOpts());
+      DoPrintPreprocessedInput(PP, ComputeOutFile(CI, InFile, 0, true),
+                               CI.getPreprocessorOutputOpts());
       break;
 
     case RewriteMacros:
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-      RewriteMacrosInInput(PP, OS.get());
+      RewriteMacrosInInput(PP, ComputeOutFile(CI, InFile, 0, true));
       break;
 
     case RewriteTest:
-      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-      DoRewriteTest(PP, OS.get());
+      DoRewriteTest(PP, ComputeOutFile(CI, InFile, 0, true));
       break;
 
     case RunPreprocessorOnly: {    // Just lex as fast as we can, no output.
@@ -591,13 +577,9 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     fprintf(stderr, "\n");
   }
 
-  // Always delete the output stream because we don't want to leak file
-  // handles.  Also, we don't want to try to erase an open file.
-  OS.reset();
-
-  // If we had errors, try to erase the output file.
-  if (PP.getDiagnostics().getNumErrors() && !OutPath.isEmpty())
-    OutPath.eraseFromDisk();
+  // Cleanup the output streams, and erase the output files if we encountered an
+  // error.
+  CI.ClearOutputFiles(/*EraseFiles=*/PP.getDiagnostics().getNumErrors());
 }
 
 /// ProcessASTInputFile - Process a single AST input file with the specified
@@ -612,11 +594,8 @@ static void ProcessASTInputFile(CompilerInstance &CI, const std::string &InFile,
   }
 
   Preprocessor &PP = AST->getPreprocessor();
-
-  llvm::OwningPtr<llvm::raw_ostream> OS;
-  llvm::sys::Path OutPath;
-  llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(CI, PP, InFile, PA,
-                                                             OS, OutPath));
+  llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(CI, PP,
+                                                             InFile, PA));
   if (!Consumer.get()) {
     CI.getDiagnostics().Report(diag::err_fe_invalid_ast_action);
     return;
@@ -647,13 +626,9 @@ static void ProcessASTInputFile(CompilerInstance &CI, const std::string &InFile,
     AST.reset();
   }
 
-  // Always delete the output stream because we don't want to leak file
-  // handles.  Also, we don't want to try to erase an open file.
-  OS.reset();
-
-  // If we had errors, try to erase the output file.
-  if (PP.getDiagnostics().getNumErrors() && !OutPath.isEmpty())
-    OutPath.eraseFromDisk();
+  // Cleanup the output streams, and erase the output files if we encountered an
+  // error.
+  CI.ClearOutputFiles(/*EraseFiles=*/PP.getDiagnostics().getNumErrors());
 }
 
 static void LLVMErrorHandler(void *UserData, const std::string &Message) {

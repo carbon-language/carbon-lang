@@ -25,6 +25,7 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Path.h"
 using namespace clang;
 
 CompilerInstance::CompilerInstance(llvm::LLVMContext *_LLVMContext,
@@ -243,3 +244,22 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
   else
     return new CIndexCodeCompleteConsumer(ShowMacros, OS);
 }
+
+// Output Files
+
+void CompilerInstance::addOutputFile(llvm::StringRef Path,
+                                     llvm::raw_ostream *OS) {
+  assert(OS && "Attempt to add empty stream to output list!");
+  OutputFiles.push_back(std::make_pair(Path, OS));
+}
+
+void CompilerInstance::ClearOutputFiles(bool EraseFiles) {
+  for (std::list< std::pair<std::string, llvm::raw_ostream*> >::iterator
+         it = OutputFiles.begin(), ie = OutputFiles.end(); it != ie; ++it) {
+    delete it->second;
+    if (EraseFiles && !it->first.empty())
+      llvm::sys::Path(it->first).eraseFromDisk();
+  }
+  OutputFiles.clear();
+}
+

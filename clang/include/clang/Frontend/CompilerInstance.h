@@ -14,6 +14,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <cassert>
+#include <list>
+#include <string>
 
 namespace llvm {
 class LLVMContext;
@@ -81,6 +83,9 @@ class CompilerInstance {
 
   /// The code completion consumer.
   llvm::OwningPtr<CodeCompleteConsumer> CompletionConsumer;
+
+  /// The list of active output files.
+  std::list< std::pair<std::string, llvm::raw_ostream*> > OutputFiles;
 
 public:
   /// Create a new compiler instance with the given LLVM context, optionally
@@ -330,6 +335,27 @@ public:
   void setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
     CompletionConsumer.reset(Value);
   }
+
+  /// }
+  /// @name Output Files
+  /// {
+
+  /// getOutputFileList - Get the list of (path, output stream) pairs of output
+  /// files; the path may be empty but the stream will always be non-null.
+  const std::list< std::pair<std::string,
+                             llvm::raw_ostream*> > &getOutputFileList() const;
+
+  /// addOutputFile - Add an output file onto the list of tracked output files.
+  ///
+  /// \param Path - The path to the output file, or empty.
+  /// \param OS - The output stream, which should be non-null.
+  void addOutputFile(llvm::StringRef Path, llvm::raw_ostream *OS);
+
+  /// ClearOutputFiles - Clear the output file list, destroying the contained
+  /// output streams.
+  ///
+  /// \param EraseFiles - If true, attempt to erase the files from disk.
+  void ClearOutputFiles(bool EraseFiles);
 
   /// }
   /// @name Construction Utility Methods
