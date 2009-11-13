@@ -839,7 +839,7 @@ int main(int argc, char **argv) {
   // client to use for any errors during option handling.
   InitializeDiagnosticOptions(Clang.getDiagnosticOpts());
   Clang.createDiagnostics(argc, argv);
-  if (!&Clang.getDiagnostics())
+  if (!Clang.hasDiagnostics())
     return 1;
 
   // Set an error handler, so that any LLVM backend diagnostics go through our
@@ -856,7 +856,7 @@ int main(int argc, char **argv) {
   Clang.setTarget(
     ConstructCompilerInvocation(Clang.getInvocation(), Clang.getDiagnostics(),
                                 argv[0], IsAST));
-  if (!&Clang.getTarget())
+  if (!Clang.hasTarget())
     return 1;
 
   // Validate/process some options

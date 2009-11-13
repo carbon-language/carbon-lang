@@ -84,7 +84,9 @@ public:
   /// @name LLVM Context
   /// {
 
-  llvm::LLVMContext &getLLVMContext() {
+  bool hasLLVMContext() const { return LLVMContext != 0; }
+
+  llvm::LLVMContext &getLLVMContext() const {
     assert(LLVMContext && "Compiler instance has no LLVM context!");
     return *LLVMContext;
   }
@@ -175,6 +177,8 @@ public:
   /// @name Diagnostics Engine
   /// {
 
+  bool hasDiagnostics() const { return Diagnostics != 0; }
+
   Diagnostic &getDiagnostics() const {
     assert(Diagnostics && "Compiler instance has no diagnostics!");
     return *Diagnostics;
@@ -204,6 +208,8 @@ public:
   /// @name Target Info
   /// {
 
+  bool hasTarget() const { return Target != 0; }
+
   TargetInfo &getTarget() const {
     assert(Target && "Compiler instance has no target!");
     return *Target;
@@ -220,6 +226,8 @@ public:
   /// }
   /// @name File Manager
   /// {
+
+  bool hasFileManager() const { return FileMgr != 0; }
 
   FileManager &getFileManager() const {
     assert(FileMgr && "Compiler instance has no file manager!");
@@ -238,6 +246,8 @@ public:
   /// @name Source Manager
   /// {
 
+  bool hasSourceManager() const { return SourceMgr != 0; }
+
   SourceManager &getSourceManager() const {
     assert(SourceMgr && "Compiler instance has no source manager!");
     return *SourceMgr;
@@ -255,6 +265,8 @@ public:
   /// @name Preprocessor
   /// {
 
+  bool hasPreprocessor() const { return PP != 0; }
+
   Preprocessor &getPreprocessor() const {
     assert(PP && "Compiler instance has no preprocessor!");
     return *PP;
@@ -271,6 +283,8 @@ public:
   /// }
   /// @name ASTContext
   /// {
+
+  bool hasASTContext() const { return Context != 0; }
 
   ASTContext &getASTContext() const {
     assert(Context && "Compiler instance has no AST context!");
