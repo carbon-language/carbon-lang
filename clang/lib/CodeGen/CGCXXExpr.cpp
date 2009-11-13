@@ -235,11 +235,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 }
 
 void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
-  if (E->isArrayForm()) {
-    ErrorUnsupported(E, "delete[] expression");
-    return;
-  };
-
+  
   // Get at the argument before we performed the implicit conversion
   // to void*.
   const Expr *Arg = E->getArgument();
@@ -273,7 +269,33 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
     if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
       if (!RD->hasTrivialDestructor()) {
         const CXXDestructorDecl *Dtor = RD->getDestructor(getContext());
-        if (Dtor->isVirtual()) {
+        if (E->isArrayForm()) {
+          QualType SizeTy = getContext().getSizeType();
+          uint64_t CookiePadding = std::max(getContext().getTypeSize(SizeTy),
+                static_cast<uint64_t>(getContext().getTypeAlign(DeleteTy))) / 8;
+          if (CookiePadding) {
+            llvm::Type *Ptr8Ty = 
+              llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
+            uint64_t CookieOffset =
+              CookiePadding - getContext().getTypeSize(SizeTy) / 8;
+            llvm::Value *AllocatedObjectPtr = 
+              Builder.CreateConstInBoundsGEP1_64(
+                            Builder.CreateBitCast(Ptr, Ptr8Ty), -CookiePadding);
+            llvm::Value *NumElementsPtr =
+              Builder.CreateConstInBoundsGEP1_64(AllocatedObjectPtr, 
+                                                 CookieOffset);
+            
+            NumElementsPtr =
+              Builder.CreateBitCast(NumElementsPtr,
+                            llvm::Type::getInt64Ty(VMContext)->getPointerTo());
+            llvm::Value *NumElements = 
+              Builder.CreateLoad(NumElementsPtr);
+            assert (!Dtor->isVirtual() && "delete [] with virtual dtors NYI");
+            EmitCXXAggrDestructorCall(Dtor, NumElements, Ptr);
+            Ptr = AllocatedObjectPtr;
+          }
+        }
+        else if (Dtor->isVirtual()) {
           const llvm::Type *Ty =
             CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(Dtor),
                                            /*isVariadic=*/false);

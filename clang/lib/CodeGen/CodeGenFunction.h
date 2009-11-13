@@ -646,6 +646,10 @@ public:
                                  const ArrayType *Array,
                                  llvm::Value *This);
 
+  void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
+                                 llvm::Value *NumElements,
+                                 llvm::Value *This);
+
   llvm::Constant * GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
                                                 const ArrayType *Array,
                                                 llvm::Value *This);

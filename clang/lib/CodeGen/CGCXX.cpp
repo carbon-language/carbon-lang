@@ -521,16 +521,25 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                            llvm::Value *This) {
   const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
   assert(CA && "Do we support VLA for destruction ?");
+  uint64_t ElementCount = getContext().getConstantArrayElementCount(CA);
+  llvm::Value* ElementCountPtr =
+    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), ElementCount);
+  EmitCXXAggrDestructorCall(D, ElementCountPtr, This);
+}
+
+/// EmitCXXAggrDestructorCall - calls the default destructor on array
+/// elements in reverse order of construction.
+void
+CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
+                                           llvm::Value *UpperCount,
+                                           llvm::Value *This) {
   llvm::Value *One = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                             1);
-  uint64_t ElementCount = getContext().getConstantArrayElementCount(CA);
   // Create a temporary for the loop index and initialize it with count of
   // array elements.
   llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
                                            "loop.index");
   // Index = ElementCount;
-  llvm::Value* UpperCount =
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), ElementCount);
   Builder.CreateStore(UpperCount, IndexPtr, false);
 
   // Start the loop with a block that tests the condition.
@@ -574,7 +583,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   EmitBlock(AfterFor, true);
 }
 
-/// EmitCXXAggrDestructorCall - Generates a helper function which when invoked,
+/// GenerateCXXAggrDestructorHelper - Generates a helper function which when invoked,
 /// calls the default destructor on array elements in reverse order of 
 /// construction.
 llvm::Constant * 
