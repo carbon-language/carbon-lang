@@ -1511,6 +1511,9 @@ DIE *DwarfDebug::ConstructVariableDIE(DbgVariable *DV,
                                       DbgScope *Scope, CompileUnit *Unit) {
   // Get the descriptor.
   const DIVariable &VD = DV->getVariable();
+  const char *Name = VD.getName();
+  if (!Name)
+    return NULL;
 
   // Translate tag to proper Dwarf tag.  The result variable is dropped for
   // now.
@@ -1547,7 +1550,6 @@ DIE *DwarfDebug::ConstructVariableDIE(DbgVariable *DV,
                 dwarf::DW_FORM_ref4, AbsDIE);
   }
   else {
-    const char *Name = VD.getName();
     AddString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
     AddSourceLine(VariableDie, &VD);
 
