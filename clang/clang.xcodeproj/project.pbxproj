@@ -365,6 +365,7 @@
 		1A2A54B30FD1DD1C00F4CE45 /* StmtXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtXML.cpp; path = lib/Frontend/StmtXML.cpp; sourceTree = "<group>"; };
 		1A2A54B40FD1DD1C00F4CE45 /* Warnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Warnings.cpp; path = lib/Frontend/Warnings.cpp; sourceTree = "<group>"; };
 		1A30A9E80B93A4C800201A91 /* ExprCXX.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ExprCXX.h; path = clang/AST/ExprCXX.h; sourceTree = "<group>"; tabWidth = 2; };
+		1A31B27210ACE6DA009E0C8B /* GlobalDecl.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = GlobalDecl.h; path = lib/CodeGen/GlobalDecl.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A32C17E0E1C87AD00A6B483 /* ExprConstant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ExprConstant.cpp; path = lib/AST/ExprConstant.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprConstant.cpp; path = lib/CodeGen/CGExprConstant.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A471AB40F437BC500753CE8 /* CGBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBlocks.cpp; path = lib/CodeGen/CGBlocks.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1295,6 +1296,7 @@
 				DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */,
 				DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */,
 				DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */,
+				1A31B27210ACE6DA009E0C8B /* GlobalDecl.h */,
 				1A2193CC0F45EEB700C0713D /* Mangle.cpp */,
 				1A2193CD0F45EEB700C0713D /* Mangle.h */,
 				DE928B120C05659200231DA4 /* ModuleBuilder.cpp */,

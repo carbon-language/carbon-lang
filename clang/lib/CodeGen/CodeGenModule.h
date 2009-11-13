@@ -23,6 +23,7 @@
 #include "CGCXX.h"
 #include "CGVtable.h"
 #include "CodeGenTypes.h"
+#include "GlobalDecl.h"
 #include "Mangle.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
@@ -70,46 +71,7 @@ namespace CodeGen {
   class CGDebugInfo;
   class CGObjCRuntime;
 
-/// GlobalDecl - represents a global declaration. This can either be a
-/// CXXConstructorDecl and the constructor type (Base, Complete).
-/// a CXXDestructorDecl and the destructor type (Base, Complete) or
-/// a VarDecl, a FunctionDecl or a BlockDecl.
-class GlobalDecl {
-  llvm::PointerIntPair<const Decl*, 2> Value;
-
-  void Init(const Decl *D) {
-    assert(!isa<CXXConstructorDecl>(D) && "Use other ctor with ctor decls!");
-    assert(!isa<CXXDestructorDecl>(D) && "Use other ctor with dtor decls!");
-
-    Value.setPointer(D);
-  }
   
-public:
-  GlobalDecl() {}
-
-  GlobalDecl(const VarDecl *D) { Init(D);}
-  GlobalDecl(const FunctionDecl *D) { Init(D); }
-  GlobalDecl(const BlockDecl *D) { Init(D); }
-  GlobalDecl(const ObjCMethodDecl *D) { Init(D); }
-
-  GlobalDecl(const CXXConstructorDecl *D, CXXCtorType Type)
-  : Value(D, Type) {}
-  GlobalDecl(const CXXDestructorDecl *D, CXXDtorType Type)
-  : Value(D, Type) {}
-
-  const Decl *getDecl() const { return Value.getPointer(); }
-
-  CXXCtorType getCtorType() const {
-    assert(isa<CXXConstructorDecl>(getDecl()) && "Decl is not a ctor!");
-    return static_cast<CXXCtorType>(Value.getInt());
-  }
-
-  CXXDtorType getDtorType() const {
-    assert(isa<CXXDestructorDecl>(getDecl()) && "Decl is not a dtor!");
-    return static_cast<CXXDtorType>(Value.getInt());
-  }
-};
-
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
 class CodeGenModule : public BlockModule {
