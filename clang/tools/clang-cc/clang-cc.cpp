@@ -509,30 +509,23 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     }
   }
 
-  llvm::OwningPtr<ASTContext> ContextOwner;
   llvm::OwningPtr<ExternalASTSource> Source;
   const std::string &ImplicitPCHInclude =
     CI.getPreprocessorOpts().getImplicitPCHInclude();
   if (Consumer) {
-    ContextOwner.reset(new ASTContext(PP.getLangOptions(),
-                                      PP.getSourceManager(),
-                                      PP.getTargetInfo(),
-                                      PP.getIdentifierTable(),
-                                      PP.getSelectorTable(),
-                                      PP.getBuiltinInfo(),
-                                      /* FreeMemory = */ !FEOpts.DisableFree,
-                                      /* size_reserve = */0));
+    // Create the ASTContext.
+    CI.createASTContext();
 
     if (!ImplicitPCHInclude.empty()) {
       Source.reset(ReadPCHFile(ImplicitPCHInclude,
                                CI.getHeaderSearchOpts().Sysroot, PP,
-                               *ContextOwner));
+                               CI.getASTContext()));
       if (!Source)
         return;
 
       // Attach the PCH reader to the AST context as an external AST source, so
       // that declarations will be deserialized from the PCH file as needed.
-      ContextOwner->setExternalSource(Source);
+      CI.getASTContext().setExternalSource(Source);
     } else {
       // Initialize builtin info when not using PCH.
       PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
@@ -566,7 +559,7 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     }
 
     // Run the AST consumer action.
-    ParseAST(PP, Consumer.get(), *ContextOwner.get(), FEOpts.ShowStats,
+    ParseAST(PP, Consumer.get(), CI.getASTContext(), FEOpts.ShowStats,
              CompleteTranslationUnit,
              CreateCodeCompleter, CreateCodeCompleterData);
   } else {
@@ -656,10 +649,10 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
   // perform actions in its destructor which require the context.
   if (FEOpts.DisableFree) {
     Consumer.take();
-    ContextOwner.take();
+    CI.takeASTContext();
   } else {
     Consumer.reset();
-    ContextOwner.reset();
+    CI.setASTContext(0);
   }
 
   if (CI.getDiagnosticOpts().VerifyDiagnostics)

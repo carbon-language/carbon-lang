@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -151,4 +152,15 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
     AttachDependencyFileGen(*PP, DepOpts);
 
   return PP;
+}
+
+// ASTContext
+
+void CompilerInstance::createASTContext() {
+  Preprocessor &PP = getPreprocessor();
+  Context.reset(new ASTContext(getLangOpts(), PP.getSourceManager(),
+                               getTarget(), PP.getIdentifierTable(),
+                               PP.getSelectorTable(), PP.getBuiltinInfo(),
+                               /*FreeMemory=*/ !getFrontendOpts().DisableFree,
+                               /*size_reserve=*/ 0));
 }

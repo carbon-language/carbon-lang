@@ -19,6 +19,7 @@ class LLVMContext;
 }
 
 namespace clang {
+class ASTContext;
 class Diagnostic;
 class DiagnosticClient;
 class Preprocessor;
@@ -69,6 +70,9 @@ class CompilerInstance {
 
   /// The preprocessor.
   llvm::OwningPtr<Preprocessor> PP;
+
+  /// The AST context.
+  llvm::OwningPtr<ASTContext> Context;
 
 public:
   /// Create a new compiler instance with the given LLVM context, optionally
@@ -265,6 +269,23 @@ public:
   void setPreprocessor(Preprocessor *Value) { PP.reset(Value); }
 
   /// }
+  /// @name ASTContext
+  /// {
+
+  ASTContext &getASTContext() const {
+    assert(Context && "Compiler instance has no AST context!");
+    return *Context;
+  }
+
+  /// takeASTContext - Remove the current AST context and give ownership to the
+  /// caller.
+  ASTContext *takeASTContext() { return Context.take(); }
+
+  /// setASTContext - Replace the current AST context; the compiler instance
+  /// takes ownership of \arg Value.
+  void setASTContext(ASTContext *Value) { Context.reset(Value); }
+
+  /// }
   /// @name Construction Utility Methods
   /// {
 
@@ -279,6 +300,10 @@ public:
   /// The \arg Argc and \arg Argv arguments are used only for logging purposes,
   /// when the diagnostic options indicate that the compiler should output
   /// logging information.
+  ///
+  /// Note that this creates an unowned DiagnosticClient, if using directly the
+  /// caller is responsible for releaseing the returned Diagnostic's client
+  /// eventually.
   ///
   /// \return The new object on success, or null on failure.
   static Diagnostic *createDiagnostics(const DiagnosticOptions &Opts,
@@ -306,6 +331,9 @@ public:
                                           const DependencyOutputOptions &,
                                           const TargetInfo &,
                                           SourceManager &, FileManager &);
+
+  /// Create the AST context.
+  void createASTContext();
 
   /// }
 };
