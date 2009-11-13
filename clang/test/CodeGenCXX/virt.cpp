@@ -298,6 +298,49 @@ class test8_D : test8_B1, test8_B2, test8_B3 {
 // CHECK-LP64-NEXT: .quad __ZTI7test8_D
 // CHECK-LP64-NEXT: .quad __ZN10test8_B2ab11ftest8_B2abEv
 
+// CHECK-LP64:__ZTC7test8_D8_8test8_B2:
+// CHECK-LP64-NEXT:        .quad   40
+// CHECK-LP64-NEXT:        .quad   24
+// CHECK-LP64-NEXT:        .space  8
+// CHECK-LP64-NEXT:        .quad   __ZTI8test8_B2
+// CHECK-LP64-NEXT:        .quad   __ZN9test8_B2a10ftest8_B2aEv
+// CHECK-LP64-NEXT:        .quad   __ZN8test8_B29ftest8_B2Ev
+// CHECK-LP64-NEXT:        .space  8
+// CHECK-LP64-NEXT:        .quad   18446744073709551592
+// CHECK-LP64-NEXT:        .quad   __ZTI8test8_B2
+// CHECK-LP64-NEXT:        .quad   __ZN10test8_B2aa11ftest8_B2aaEv
+// CHECK-LP64-NEXT:        .space  8
+// CHECK-LP64-NEXT:        .quad   18446744073709551576
+// CHECK-LP64-NEXT:        .quad   __ZTI8test8_B2
+// CHECK-LP64-NEXT:        .quad   __ZN10test8_B2ab11ftest8_B2abEv
+
+// CHECK-LP64:__ZTC7test8_D8_9test8_B2a:
+// CHECK-LP64-NEXT: .quad   40
+// CHECK-LP64-NEXT: .quad   24
+// CHECK-LP64-NEXT: .space  8
+// CHECK-LP64-NEXT: .quad   __ZTI9test8_B2a
+// CHECK-LP64-NEXT: .quad   __ZN9test8_B2a10ftest8_B2aEv
+// CHECK-LP64-NEXT: .space  8
+// CHECK-LP64-NEXT: .quad   18446744073709551592
+// CHECK-LP64-NEXT: .quad   __ZTI9test8_B2a
+// CHECK-LP64-NEXT: .quad   __ZN10test8_B2aa11ftest8_B2aaEv
+// CHECK-LP64-NEXT: .space  8
+// CHECK-LP64-NEXT: .quad   18446744073709551576
+// CHECK-LP64-NEXT: .quad   __ZTI9test8_B2a
+// CHECK-LP64-NEXT: .quad   __ZN10test8_B2ab11ftest8_B2abEv
+
+// CHECK-LP64:__ZTT7test8_D:
+// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_8test8_B2) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_9test8_B2a) + 32
+// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_9test8_B2a) + 64
+// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_9test8_B2a) + 96
+// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_8test8_B2) + 72
+// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_8test8_B2) + 104
+// CHECK-LP64-NEXT  .quad   (__ZTV7test8_D) + 72
+// CHECK-LP64: .quad   (__ZTV7test8_D) + 160
+// CHECK-LP64: .quad   (__ZTV7test8_D) + 192
+
 
 struct test9_B3 { virtual void funcB3(); int i; };
 struct test9_B2 : virtual test9_B3 { virtual void funcB2(); int i; };
