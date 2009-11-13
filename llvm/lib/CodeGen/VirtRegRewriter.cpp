@@ -583,6 +583,10 @@ static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
       RegKills.reset(*SR);
       KillOps[*SR] = NULL;
     }
+    for (const unsigned *SR = TRI->getSuperRegisters(Reg); *SR; ++SR) {
+      RegKills.reset(*SR);
+      KillOps[*SR] = NULL;
+    }
   }
 }
 
