@@ -1497,8 +1497,8 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT,
   case GlobalValue::AvailableExternallyLinkage:
     Out << "available_externally ";
     break;
-  case GlobalValue::GhostLinkage:
-    llvm_unreachable("GhostLinkage not allowed in AsmWriter!");
+    // This is invalid syntax and just a debugging aid.
+  case GlobalValue::GhostLinkage:	  Out << "ghost ";	    break;
   }
 }
 
@@ -1514,6 +1514,11 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
+  // If we're going to print a global that has GhostLinkage
+  // materialize it now.
+  if (GV->getLinkage() == GlobalValue::GhostLinkage) {
+  }
+
   WriteAsOperandInternal(Out, GV, &TypePrinter, &Machine);
   Out << " = ";
 
