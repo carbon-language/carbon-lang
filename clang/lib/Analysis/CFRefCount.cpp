@@ -308,7 +308,232 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+// Reference-counting logic (typestate + counts).
+//===----------------------------------------------------------------------===//
 
+class VISIBILITY_HIDDEN RefVal {
+public:
+  enum Kind {
+    Owned = 0, // Owning reference.
+    NotOwned,  // Reference is not owned by still valid (not freed).
+    Released,  // Object has been released.
+    ReturnedOwned, // Returned object passes ownership to caller.
+    ReturnedNotOwned, // Return object does not pass ownership to caller.
+    ERROR_START,
+    ErrorDeallocNotOwned, // -dealloc called on non-owned object.
+    ErrorDeallocGC, // Calling -dealloc with GC enabled.
+    ErrorUseAfterRelease, // Object used after released.
+    ErrorReleaseNotOwned, // Release of an object that was not owned.
+    ERROR_LEAK_START,
+    ErrorLeak,  // A memory leak due to excessive reference counts.
+    ErrorLeakReturned, // A memory leak due to the returning method not having
+                       // the correct naming conventions.
+    ErrorGCLeakReturned,
+    ErrorOverAutorelease,
+    ErrorReturnedNotOwned
+  };
+  
+private:
+  Kind kind;
+  RetEffect::ObjKind okind;
+  unsigned Cnt;
+  unsigned ACnt;
+  QualType T;
+  
+  RefVal(Kind k, RetEffect::ObjKind o, unsigned cnt, unsigned acnt, QualType t)
+  : kind(k), okind(o), Cnt(cnt), ACnt(acnt), T(t) {}
+  
+  RefVal(Kind k, unsigned cnt = 0)
+  : kind(k), okind(RetEffect::AnyObj), Cnt(cnt), ACnt(0) {}
+  
+public:
+  Kind getKind() const { return kind; }
+  
+  RetEffect::ObjKind getObjKind() const { return okind; }
+  
+  unsigned getCount() const { return Cnt; }
+  unsigned getAutoreleaseCount() const { return ACnt; }
+  unsigned getCombinedCounts() const { return Cnt + ACnt; }
+  void clearCounts() { Cnt = 0; ACnt = 0; }
+  void setCount(unsigned i) { Cnt = i; }
+  void setAutoreleaseCount(unsigned i) { ACnt = i; }
+  
+  QualType getType() const { return T; }
+  
+  // Useful predicates.
+  
+  static bool isError(Kind k) { return k >= ERROR_START; }
+  
+  static bool isLeak(Kind k) { return k >= ERROR_LEAK_START; }
+  
+  bool isOwned() const {
+    return getKind() == Owned;
+  }
+  
+  bool isNotOwned() const {
+    return getKind() == NotOwned;
+  }
+  
+  bool isReturnedOwned() const {
+    return getKind() == ReturnedOwned;
+  }
+  
+  bool isReturnedNotOwned() const {
+    return getKind() == ReturnedNotOwned;
+  }
+  
+  bool isNonLeakError() const {
+    Kind k = getKind();
+    return isError(k) && !isLeak(k);
+  }
+  
+  static RefVal makeOwned(RetEffect::ObjKind o, QualType t,
+                          unsigned Count = 1) {
+    return RefVal(Owned, o, Count, 0, t);
+  }
+  
+  static RefVal makeNotOwned(RetEffect::ObjKind o, QualType t,
+                             unsigned Count = 0) {
+    return RefVal(NotOwned, o, Count, 0, t);
+  }
+  
+  // Comparison, profiling, and pretty-printing.
+  
+  bool operator==(const RefVal& X) const {
+    return kind == X.kind && Cnt == X.Cnt && T == X.T && ACnt == X.ACnt;
+  }
+  
+  RefVal operator-(size_t i) const {
+    return RefVal(getKind(), getObjKind(), getCount() - i,
+                  getAutoreleaseCount(), getType());
+  }
+  
+  RefVal operator+(size_t i) const {
+    return RefVal(getKind(), getObjKind(), getCount() + i,
+                  getAutoreleaseCount(), getType());
+  }
+  
+  RefVal operator^(Kind k) const {
+    return RefVal(k, getObjKind(), getCount(), getAutoreleaseCount(),
+                  getType());
+  }
+  
+  RefVal autorelease() const {
+    return RefVal(getKind(), getObjKind(), getCount(), getAutoreleaseCount()+1,
+                  getType());
+  }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddInteger((unsigned) kind);
+    ID.AddInteger(Cnt);
+    ID.AddInteger(ACnt);
+    ID.Add(T);
+  }
+  
+  void print(llvm::raw_ostream& Out) const;
+};
+
+void RefVal::print(llvm::raw_ostream& Out) const {
+  if (!T.isNull())
+    Out << "Tracked Type:" << T.getAsString() << '\n';
+  
+  switch (getKind()) {
+    default: assert(false);
+    case Owned: {
+      Out << "Owned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
+      break;
+    }
+      
+    case NotOwned: {
+      Out << "NotOwned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
+      break;
+    }
+      
+    case ReturnedOwned: {
+      Out << "ReturnedOwned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
+      break;
+    }
+      
+    case ReturnedNotOwned: {
+      Out << "ReturnedNotOwned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
+      break;
+    }
+      
+    case Released:
+      Out << "Released";
+      break;
+      
+    case ErrorDeallocGC:
+      Out << "-dealloc (GC)";
+      break;
+      
+    case ErrorDeallocNotOwned:
+      Out << "-dealloc (not-owned)";
+      break;
+      
+    case ErrorLeak:
+      Out << "Leaked";
+      break;
+      
+    case ErrorLeakReturned:
+      Out << "Leaked (Bad naming)";
+      break;
+      
+    case ErrorGCLeakReturned:
+      Out << "Leaked (GC-ed at return)";
+      break;
+      
+    case ErrorUseAfterRelease:
+      Out << "Use-After-Release [ERROR]";
+      break;
+      
+    case ErrorReleaseNotOwned:
+      Out << "Release of Not-Owned [ERROR]";
+      break;
+      
+    case RefVal::ErrorOverAutorelease:
+      Out << "Over autoreleased";
+      break;
+      
+    case RefVal::ErrorReturnedNotOwned:
+      Out << "Non-owned object returned instead of owned";
+      break;
+  }
+  
+  if (ACnt) {
+    Out << " [ARC +" << ACnt << ']';
+  }
+}
+} //end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// RefBindings - State used to track object reference counts.
+//===----------------------------------------------------------------------===//
+
+typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
+static int RefBIndex = 0;
+
+namespace clang {
+  template<>
+  struct GRStateTrait<RefBindings> : public GRStatePartialTrait<RefBindings> {
+    static inline void* GDMIndex() { return &RefBIndex; }
+  };
+}
+
+//===----------------------------------------------------------------------===//
+// Summaries
+//===----------------------------------------------------------------------===//
+
+namespace {
 class VISIBILITY_HIDDEN RetainSummary {
   /// Args - an ordered vector of (index, ArgEffect) pairs, where index
   ///  specifies the argument (starting from 0).  This can be sparsely
@@ -757,7 +982,11 @@ public:
 
   RetainSummary* getSummary(FunctionDecl* FD);
 
-  RetainSummary* getInstanceMethodSummary(ObjCMessageExpr* ME,
+  RetainSummary *getInstanceMethodSummary(const ObjCMessageExpr *ME,
+                                          const GRState *state,
+                                          const LocationContext *LC);
+  
+  RetainSummary* getInstanceMethodSummary(const ObjCMessageExpr* ME,
                                           const ObjCInterfaceDecl* ID) {
     return getInstanceMethodSummary(ME->getSelector(), ME->getClassName(),
                             ID, ME->getMethodDecl(), ME->getType());
@@ -773,7 +1002,7 @@ public:
                                        const ObjCMethodDecl *MD,
                                        QualType RetTy);
 
-  RetainSummary *getClassMethodSummary(ObjCMessageExpr *ME) {
+  RetainSummary *getClassMethodSummary(const ObjCMessageExpr *ME) {
     return getClassMethodSummary(ME->getSelector(), ME->getClassName(),
                                  ME->getClassInfo().first,
                                  ME->getMethodDecl(), ME->getType());
@@ -1350,6 +1579,61 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
 }
 
 RetainSummary*
+RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageExpr *ME,
+                                               const GRState *state,
+                                               const LocationContext *LC) {
+
+  // We need the type-information of the tracked receiver object
+  // Retrieve it from the state.
+  const Expr *Receiver = ME->getReceiver();
+  const ObjCInterfaceDecl* ID = 0;
+
+  // FIXME: Is this really working as expected?  There are cases where
+  //  we just use the 'ID' from the message expression.
+  SVal receiverV = state->getSValAsScalarOrLoc(Receiver);
+  
+  // FIXME: Eventually replace the use of state->get<RefBindings> with
+  // a generic API for reasoning about the Objective-C types of symbolic
+  // objects.
+  if (SymbolRef Sym = receiverV.getAsLocSymbol())
+    if (const RefVal *T = state->get<RefBindings>(Sym))
+      if (const ObjCObjectPointerType* PT = 
+            T->getType()->getAs<ObjCObjectPointerType>())
+        ID = PT->getInterfaceDecl();
+  
+  // FIXME: this is a hack.  This may or may not be the actual method
+  //  that is called.
+  if (!ID) {
+    if (const ObjCObjectPointerType *PT =
+        Receiver->getType()->getAs<ObjCObjectPointerType>())
+      ID = PT->getInterfaceDecl();
+  }
+  
+  // FIXME: The receiver could be a reference to a class, meaning that
+  //  we should use the class method.
+  RetainSummary *Summ = getInstanceMethodSummary(ME, ID);
+  
+  // Special-case: are we sending a mesage to "self"?
+  //  This is a hack.  When we have full-IP this should be removed.
+  if (isa<ObjCMethodDecl>(LC->getDecl())) {
+    if (const loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&receiverV)) {
+      // Get the region associated with 'self'.
+      if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl()) {
+        SVal SelfVal = state->getSVal(state->getRegion(SelfDecl, LC));
+        if (L->StripCasts() == SelfVal.getAsRegion()) {
+          // Update the summary to make the default argument effect
+          // 'StopTracking'.
+          Summ = copySummary(Summ);
+          Summ->setDefaultArgEffect(StopTracking);
+        }
+      }
+    }
+  }
+  
+  return Summ ? Summ : getDefaultSummary();
+}
+
+RetainSummary*
 RetainSummaryManager::getInstanceMethodSummary(Selector S,
                                                IdentifierInfo *ClsName,
                                                const ObjCInterfaceDecl* ID,
@@ -1566,230 +1850,6 @@ void RetainSummaryManager::InitializeMethodSummaries() {
                      "createCGImage", "fromRect", "format", "colorSpace", NULL);
   addInstMethSummary("CIContext", CFAllocSumm, "createCGLayerWithSize",
            "info", NULL);
-}
-
-//===----------------------------------------------------------------------===//
-// Reference-counting logic (typestate + counts).
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class VISIBILITY_HIDDEN RefVal {
-public:
-  enum Kind {
-    Owned = 0, // Owning reference.
-    NotOwned,  // Reference is not owned by still valid (not freed).
-    Released,  // Object has been released.
-    ReturnedOwned, // Returned object passes ownership to caller.
-    ReturnedNotOwned, // Return object does not pass ownership to caller.
-    ERROR_START,
-    ErrorDeallocNotOwned, // -dealloc called on non-owned object.
-    ErrorDeallocGC, // Calling -dealloc with GC enabled.
-    ErrorUseAfterRelease, // Object used after released.
-    ErrorReleaseNotOwned, // Release of an object that was not owned.
-    ERROR_LEAK_START,
-    ErrorLeak,  // A memory leak due to excessive reference counts.
-    ErrorLeakReturned, // A memory leak due to the returning method not having
-                      // the correct naming conventions.
-    ErrorGCLeakReturned,
-    ErrorOverAutorelease,
-    ErrorReturnedNotOwned
-  };
-
-private:
-  Kind kind;
-  RetEffect::ObjKind okind;
-  unsigned Cnt;
-  unsigned ACnt;
-  QualType T;
-
-  RefVal(Kind k, RetEffect::ObjKind o, unsigned cnt, unsigned acnt, QualType t)
-    : kind(k), okind(o), Cnt(cnt), ACnt(acnt), T(t) {}
-
-  RefVal(Kind k, unsigned cnt = 0)
-    : kind(k), okind(RetEffect::AnyObj), Cnt(cnt), ACnt(0) {}
-
-public:
-  Kind getKind() const { return kind; }
-
-  RetEffect::ObjKind getObjKind() const { return okind; }
-
-  unsigned getCount() const { return Cnt; }
-  unsigned getAutoreleaseCount() const { return ACnt; }
-  unsigned getCombinedCounts() const { return Cnt + ACnt; }
-  void clearCounts() { Cnt = 0; ACnt = 0; }
-  void setCount(unsigned i) { Cnt = i; }
-  void setAutoreleaseCount(unsigned i) { ACnt = i; }
-
-  QualType getType() const { return T; }
-
-  // Useful predicates.
-
-  static bool isError(Kind k) { return k >= ERROR_START; }
-
-  static bool isLeak(Kind k) { return k >= ERROR_LEAK_START; }
-
-  bool isOwned() const {
-    return getKind() == Owned;
-  }
-
-  bool isNotOwned() const {
-    return getKind() == NotOwned;
-  }
-
-  bool isReturnedOwned() const {
-    return getKind() == ReturnedOwned;
-  }
-
-  bool isReturnedNotOwned() const {
-    return getKind() == ReturnedNotOwned;
-  }
-
-  bool isNonLeakError() const {
-    Kind k = getKind();
-    return isError(k) && !isLeak(k);
-  }
-
-  static RefVal makeOwned(RetEffect::ObjKind o, QualType t,
-                          unsigned Count = 1) {
-    return RefVal(Owned, o, Count, 0, t);
-  }
-
-  static RefVal makeNotOwned(RetEffect::ObjKind o, QualType t,
-                             unsigned Count = 0) {
-    return RefVal(NotOwned, o, Count, 0, t);
-  }
-
-  // Comparison, profiling, and pretty-printing.
-
-  bool operator==(const RefVal& X) const {
-    return kind == X.kind && Cnt == X.Cnt && T == X.T && ACnt == X.ACnt;
-  }
-
-  RefVal operator-(size_t i) const {
-    return RefVal(getKind(), getObjKind(), getCount() - i,
-                  getAutoreleaseCount(), getType());
-  }
-
-  RefVal operator+(size_t i) const {
-    return RefVal(getKind(), getObjKind(), getCount() + i,
-                  getAutoreleaseCount(), getType());
-  }
-
-  RefVal operator^(Kind k) const {
-    return RefVal(k, getObjKind(), getCount(), getAutoreleaseCount(),
-                  getType());
-  }
-
-  RefVal autorelease() const {
-    return RefVal(getKind(), getObjKind(), getCount(), getAutoreleaseCount()+1,
-                  getType());
-  }
-
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddInteger((unsigned) kind);
-    ID.AddInteger(Cnt);
-    ID.AddInteger(ACnt);
-    ID.Add(T);
-  }
-
-  void print(llvm::raw_ostream& Out) const;
-};
-
-void RefVal::print(llvm::raw_ostream& Out) const {
-  if (!T.isNull())
-    Out << "Tracked Type:" << T.getAsString() << '\n';
-
-  switch (getKind()) {
-    default: assert(false);
-    case Owned: {
-      Out << "Owned";
-      unsigned cnt = getCount();
-      if (cnt) Out << " (+ " << cnt << ")";
-      break;
-    }
-
-    case NotOwned: {
-      Out << "NotOwned";
-      unsigned cnt = getCount();
-      if (cnt) Out << " (+ " << cnt << ")";
-      break;
-    }
-
-    case ReturnedOwned: {
-      Out << "ReturnedOwned";
-      unsigned cnt = getCount();
-      if (cnt) Out << " (+ " << cnt << ")";
-      break;
-    }
-
-    case ReturnedNotOwned: {
-      Out << "ReturnedNotOwned";
-      unsigned cnt = getCount();
-      if (cnt) Out << " (+ " << cnt << ")";
-      break;
-    }
-
-    case Released:
-      Out << "Released";
-      break;
-
-    case ErrorDeallocGC:
-      Out << "-dealloc (GC)";
-      break;
-
-    case ErrorDeallocNotOwned:
-      Out << "-dealloc (not-owned)";
-      break;
-
-    case ErrorLeak:
-      Out << "Leaked";
-      break;
-
-    case ErrorLeakReturned:
-      Out << "Leaked (Bad naming)";
-      break;
-
-    case ErrorGCLeakReturned:
-      Out << "Leaked (GC-ed at return)";
-      break;
-
-    case ErrorUseAfterRelease:
-      Out << "Use-After-Release [ERROR]";
-      break;
-
-    case ErrorReleaseNotOwned:
-      Out << "Release of Not-Owned [ERROR]";
-      break;
-
-    case RefVal::ErrorOverAutorelease:
-      Out << "Over autoreleased";
-      break;
-
-    case RefVal::ErrorReturnedNotOwned:
-      Out << "Non-owned object returned instead of owned";
-      break;
-  }
-
-  if (ACnt) {
-    Out << " [ARC +" << ACnt << ']';
-  }
-}
-
-} // end anonymous namespace
-
-//===----------------------------------------------------------------------===//
-// RefBindings - State used to track object reference counts.
-//===----------------------------------------------------------------------===//
-
-typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
-static int RefBIndex = 0;
-
-namespace clang {
-  template<>
-  struct GRStateTrait<RefBindings> : public GRStatePartialTrait<RefBindings> {
-    static inline void* GDMIndex() { return &RefBIndex; }
-  };
 }
 
 //===----------------------------------------------------------------------===//
@@ -3004,69 +3064,14 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                      GRStmtNodeBuilder& Builder,
                                      ObjCMessageExpr* ME,
                                      ExplodedNode* Pred) {
-  RetainSummary* Summ = 0;
+  
+  RetainSummary *Summ =
+    ME->getReceiver()
+      ? Summaries.getInstanceMethodSummary(ME, Builder.GetState(Pred),
+                                           Pred->getLocationContext())
+      : Summaries.getClassMethodSummary(ME);
 
-  if (Expr* Receiver = ME->getReceiver()) {
-    // We need the type-information of the tracked receiver object
-    // Retrieve it from the state.
-    const ObjCInterfaceDecl* ID = 0;
-
-    // FIXME: Wouldn't it be great if this code could be reduced?  It's just
-    // a chain of lookups.
-    // FIXME: Is this really working as expected?  There are cases where
-    //  we just use the 'ID' from the message expression.
-    const GRState* St = Builder.GetState(Pred);
-    SVal V = St->getSValAsScalarOrLoc(Receiver);
-
-    SymbolRef Sym = V.getAsLocSymbol();
-
-    if (Sym) {
-      if (const RefVal* T  = St->get<RefBindings>(Sym)) {
-        if (const ObjCObjectPointerType* PT =
-            T->getType()->getAs<ObjCObjectPointerType>())
-          ID = PT->getInterfaceDecl();
-      }
-    }
-
-    // FIXME: this is a hack.  This may or may not be the actual method
-    //  that is called.
-    if (!ID) {
-      if (const ObjCObjectPointerType *PT =
-          Receiver->getType()->getAs<ObjCObjectPointerType>())
-        ID = PT->getInterfaceDecl();
-    }
-
-    // FIXME: The receiver could be a reference to a class, meaning that
-    //  we should use the class method.
-    Summ = Summaries.getInstanceMethodSummary(ME, ID);
-
-    // Special-case: are we sending a mesage to "self"?
-    //  This is a hack.  When we have full-IP this should be removed.
-    if (isa<ObjCMethodDecl>(Pred->getLocationContext()->getDecl())) {
-      if (Expr* Receiver = ME->getReceiver()) {
-        SVal X = St->getSValAsScalarOrLoc(Receiver);
-        if (loc::MemRegionVal* L = dyn_cast<loc::MemRegionVal>(&X)) {
-          // Get the region associated with 'self'.
-          const LocationContext *LC = Pred->getLocationContext();
-          if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl()) {
-            SVal SelfVal = St->getSVal(St->getRegion(SelfDecl, LC));
-            if (L->StripCasts() == SelfVal.getAsRegion()) {
-              // Update the summary to make the default argument effect
-              // 'StopTracking'.
-              Summ = Summaries.copySummary(Summ);
-              Summ->setDefaultArgEffect(StopTracking);
-            }
-          }
-        }
-      }
-    }
-  }
-  else
-    Summ = Summaries.getClassMethodSummary(ME);
-
-  if (!Summ)
-    Summ = Summaries.getDefaultSummary();
-
+  assert(Summ && "RetainSummary is null");
   EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), *Summ,
               ME->arg_begin(), ME->arg_end(), Pred);
 }
