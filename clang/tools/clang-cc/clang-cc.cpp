@@ -481,36 +481,14 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     if (InitializeSourceManager(PP, CI.getFrontendOpts(), InFile))
       return;
 
-    llvm::OwningPtr<CodeCompleteConsumer> CCConsumer;
-    if (!FEOpts.CodeCompletionAt.FileName.empty()) {
-      // Tell the source manager to chop off the given file at a specific
-      // line and column.
-      if (const FileEntry *Entry
-            = PP.getFileManager().getFile(FEOpts.CodeCompletionAt.FileName)) {
-        // Truncate the named file at the given line/column.
-        PP.getSourceManager().truncateFileAt(Entry,
-                                             FEOpts.CodeCompletionAt.Line,
-                                             FEOpts.CodeCompletionAt.Column);
-
-        // Set up the creation routine for code-completion.
-        if (FEOpts.DebugCodeCompletionPrinter)
-          CCConsumer.reset(
-            new PrintingCodeCompleteConsumer(FEOpts.ShowMacrosInCodeCompletion,
-                                             llvm::outs()));
-        else
-          CCConsumer.reset(
-            new CIndexCodeCompleteConsumer(FEOpts.ShowMacrosInCodeCompletion,
-                                           llvm::outs()));
-      } else {
-        PP.getDiagnostics().Report(diag::err_fe_invalid_code_complete_file)
-          << FEOpts.CodeCompletionAt.FileName;
-      }
-    }
+    if (!FEOpts.CodeCompletionAt.FileName.empty())
+      CI.createCodeCompletionConsumer();
 
     // Run the AST consumer action.
+    CodeCompleteConsumer *CompletionConsumer =
+      CI.hasCodeCompletionConsumer() ? &CI.getCodeCompletionConsumer() : 0;
     ParseAST(PP, Consumer.get(), CI.getASTContext(), FEOpts.ShowStats,
-             CompleteTranslationUnit,
-             CCConsumer.get());
+             CompleteTranslationUnit, CompletionConsumer);
   } else {
     // Initialize builtin info.
     PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),

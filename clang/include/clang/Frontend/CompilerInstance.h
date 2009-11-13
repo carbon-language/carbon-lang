@@ -17,10 +17,12 @@
 
 namespace llvm {
 class LLVMContext;
+class raw_ostream;
 }
 
 namespace clang {
 class ASTContext;
+class CodeCompleteConsumer;
 class Diagnostic;
 class DiagnosticClient;
 class ExternalASTSource;
@@ -76,6 +78,9 @@ class CompilerInstance {
 
   /// The AST context.
   llvm::OwningPtr<ASTContext> Context;
+
+  /// The code completion consumer.
+  llvm::OwningPtr<CodeCompleteConsumer> CompletionConsumer;
 
 public:
   /// Create a new compiler instance with the given LLVM context, optionally
@@ -303,6 +308,30 @@ public:
   void setASTContext(ASTContext *Value) { Context.reset(Value); }
 
   /// }
+  /// @name Code Completion
+  /// {
+
+  bool hasCodeCompletionConsumer() const { return CompletionConsumer != 0; }
+
+  CodeCompleteConsumer &getCodeCompletionConsumer() const {
+    assert(CompletionConsumer &&
+           "Compiler instance has no code completion consumer!");
+    return *CompletionConsumer;
+  }
+
+  /// takeCodeCompletionConsumer - Remove the current code completion consumer
+  /// and give ownership to the caller.
+  CodeCompleteConsumer *takeCodeCompletionConsumer() {
+    return CompletionConsumer.take();
+  }
+
+  /// setCodeCompletionConsumer - Replace the current code completion consumer;
+  /// the compiler instance takes ownership of \arg Value.
+  void setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
+    CompletionConsumer.reset(Value);
+  }
+
+  /// }
   /// @name Construction Utility Methods
   /// {
 
@@ -362,6 +391,20 @@ public:
   static ExternalASTSource *
   createPCHExternalASTSource(llvm::StringRef Path, const std::string &Sysroot,
                              Preprocessor &PP, ASTContext &Context);
+
+  /// Create a code completion consumer using the invocation; note that this
+  /// will cause the source manager to truncate the input source file at the
+  /// completion point.
+  void createCodeCompletionConsumer();
+
+  /// Create a code completion consumer to print code completion results, at
+  /// \arg Filename, \arg Line, and \arg Column, to the given output stream \arg
+  /// OS.
+  static CodeCompleteConsumer *
+  createCodeCompletionConsumer(Preprocessor &PP, const std::string &Filename,
+                               unsigned Line, unsigned Column,
+                               bool UseDebugPrinter, bool ShowMacros,
+                               llvm::raw_ostream &OS);
 
   /// }
 };

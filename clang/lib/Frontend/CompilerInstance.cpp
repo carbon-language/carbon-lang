@@ -18,9 +18,11 @@
 #include "clang/Lex/PTHManager.h"
 #include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/PCHReader.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -29,7 +31,7 @@ CompilerInstance::CompilerInstance(llvm::LLVMContext *_LLVMContext,
                                    bool _OwnsLLVMContext)
   : LLVMContext(_LLVMContext),
     OwnsLLVMContext(_OwnsLLVMContext) {
-}
+    }
 
 CompilerInstance::~CompilerInstance() {
   if (OwnsLLVMContext)
@@ -201,4 +203,43 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
   }
 
   return 0;
+}
+
+// Code Completion
+
+void CompilerInstance::createCodeCompletionConsumer() {
+  const ParsedSourceLocation &Loc = getFrontendOpts().CodeCompletionAt;
+  CompletionConsumer.reset(
+    createCodeCompletionConsumer(getPreprocessor(),
+                                 Loc.FileName, Loc.Line, Loc.Column,
+                                 getFrontendOpts().DebugCodeCompletionPrinter,
+                                 getFrontendOpts().ShowMacrosInCodeCompletion,
+                                 llvm::outs()));
+}
+
+CodeCompleteConsumer *
+CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
+                                               const std::string &Filename,
+                                               unsigned Line,
+                                               unsigned Column,
+                                               bool UseDebugPrinter,
+                                               bool ShowMacros,
+                                               llvm::raw_ostream &OS) {
+  // Tell the source manager to chop off the given file at a specific
+  // line and column.
+  const FileEntry *Entry = PP.getFileManager().getFile(Filename);
+  if (!Entry) {
+    PP.getDiagnostics().Report(diag::err_fe_invalid_code_complete_file)
+      << Filename;
+    return 0;
+  }
+
+  // Truncate the named file at the given line/column.
+  PP.getSourceManager().truncateFileAt(Entry, Line, Column);
+
+  // Set up the creation routine for code-completion.
+  if (UseDebugPrinter)
+    return new PrintingCodeCompleteConsumer(ShowMacros, OS);
+  else
+    return new CIndexCodeCompleteConsumer(ShowMacros, OS);
 }
