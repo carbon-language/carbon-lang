@@ -318,8 +318,30 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
     SaveAndRestore<bool> OldPurgeDeadSymbols(Builder->PurgingDeadSymbols);
     Builder->PurgingDeadSymbols = true;
 
-    getTF().EvalDeadSymbols(Tmp, *this, *Builder, EntryNode, S,
+    // FIXME: This should soon be removed.
+    ExplodedNodeSet Tmp2;
+    getTF().EvalDeadSymbols(Tmp2, *this, *Builder, EntryNode, S,
                             CleanedState, SymReaper);
+
+    if (Checkers.empty())
+      Tmp = Tmp2;
+    else {
+      ExplodedNodeSet Tmp3;
+      ExplodedNodeSet *SrcSet = &Tmp2;
+      for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
+           I != E; ++I) {
+        ExplodedNodeSet *DstSet = (I+1 == E) ? &Tmp
+                                              : (SrcSet == &Tmp2) ? &Tmp3 
+                                                                  : &Tmp2;
+        void *tag = I->first;
+        Checker *checker = I->second;
+        for (ExplodedNodeSet::iterator NI = SrcSet->begin(), NE = SrcSet->end();
+             NI != NE; ++NI)
+          checker->GR_EvalDeadSymbols(*DstSet, *Builder, *this, S, *NI, 
+                                      SymReaper, tag);
+        SrcSet = DstSet;
+      }
+    }
 
     if (!Builder->BuildSinks && !Builder->HasGeneratedNode)
       Tmp.Add(EntryNode);

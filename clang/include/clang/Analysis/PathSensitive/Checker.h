@@ -153,6 +153,14 @@ private:
     VisitLocation(C, S, location);
   }
 
+  void GR_EvalDeadSymbols(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
+                          GRExprEngine &Eng, const Stmt *S, ExplodedNode *Pred,
+                          SymbolReaper &SymReaper, void *tag) {
+    CheckerContext C(Dst, Builder, Eng, Pred, tag, 
+                     ProgramPoint::PostPurgeDeadSymbolsKind, Pred->getState());
+    EvalDeadSymbols(C, S, SymReaper);
+  }
+
 public:
   virtual ~Checker() {}
   virtual void _PreVisit(CheckerContext &C, const Stmt *S) {}
@@ -160,6 +168,8 @@ public:
   virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
   virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
                             const Stmt *StoreE, SVal location, SVal val) {}
+  virtual void EvalDeadSymbols(CheckerContext &C, const Stmt *S,
+                               SymbolReaper &SymReaper) {}
 };
 } // end clang namespace
 
