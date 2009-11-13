@@ -162,6 +162,29 @@ C::C()
   
   // CHECK: call void @_ZN6PR50771BD1Ev
 }
+}
 
+A f8() {
+  // CHECK: call void @_ZN1AC1Ev
+  // CHECK-NOT: call void @_ZN1AD1Ev
+  return A();
+  // CHECK: ret void
+}
 
+struct H {
+  H();
+  ~H();
+  H(const H&);
+};
+
+void f9(H h) {
+  // CHECK: call void @_ZN1HC1Ev
+  // CHECK: call void @_Z2f91H
+  // CHECK: call void @_ZN1HD1Ev
+  f9(H());
+  
+  // CHECK: call void @_ZN1HC1ERKS_
+  // CHECK: call void @_Z2f91H
+  // CHECK: call void @_ZN1HD1Ev
+  f9(h);
 }

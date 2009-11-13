@@ -671,8 +671,13 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   // Code gen optimization to eliminate copy constructor and return
   // its first argument instead.
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
-    CXXConstructExpr::const_arg_iterator i = E->arg_begin();
-    EmitAggExpr((*i), Dest, false);
+    const Expr *Arg = E->getArg(0);
+    
+    if (const CXXBindTemporaryExpr *BindExpr = 
+          dyn_cast<CXXBindTemporaryExpr>(Arg))
+      Arg = BindExpr->getSubExpr();
+
+    EmitAggExpr(Arg, Dest, false);
     return;
   }
   if (Array) {
