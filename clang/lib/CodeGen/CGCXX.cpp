@@ -1011,7 +1011,7 @@ CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
                                   llvm::Value *&This, const llvm::Type *Ty) {
   DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
   int64_t VtableIndex = 
-    CGM.getVtableInfo().getMethodVtableIndex(DD);
+    CGM.getVtableInfo().getMethodVtableIndex(GlobalDecl(DD, Type));
 
   return ::BuildVirtualCall(*this, VtableIndex, This, Ty);
 }

@@ -15,6 +15,7 @@
 #define CLANG_CODEGEN_CGVTABLE_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "GlobalDecl.h"
 
 namespace clang {
   class CXXMethodDecl;
@@ -28,7 +29,7 @@ class CGVtableInfo {
   
   /// MethodVtableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
-  typedef llvm::DenseMap<const CXXMethodDecl *, int64_t> MethodVtableIndicesTy;
+  typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVtableIndicesTy;
   MethodVtableIndicesTy MethodVtableIndices;
   
   typedef std::pair<const CXXRecordDecl *,
@@ -47,7 +48,7 @@ public:
   /// getMethodVtableIndex - Return the index (relative to the vtable address
   /// point) where the function pointer for the given virtual function is 
   /// stored.
-  int64_t getMethodVtableIndex(const CXXMethodDecl *MD);
+  int64_t getMethodVtableIndex(GlobalDecl GD);
   
   /// getVirtualBaseOffsetIndex - Return the index (relative to the vtable
   /// address point) where the offset of the virtual base that contains the

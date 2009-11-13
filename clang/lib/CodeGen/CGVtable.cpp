@@ -45,19 +45,19 @@ private:
   CodeGenModule &CGM;  // Per-module state.
   /// Index - Maps a method decl into a vtable index.  Useful for virtual
   /// dispatch codegen.
-  llvm::DenseMap<const CXXMethodDecl *, Index_t> Index;
-  llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
-  llvm::DenseMap<const CXXMethodDecl *, Index_t> VCallOffset;
+  llvm::DenseMap<GlobalDecl, Index_t> Index;
+  llvm::DenseMap<GlobalDecl, Index_t> VCall;
+  llvm::DenseMap<GlobalDecl, Index_t> VCallOffset;
   // This is the offset to the nearest virtual base
-  llvm::DenseMap<const CXXMethodDecl *, Index_t> NonVirtualOffset;
+  llvm::DenseMap<GlobalDecl, Index_t> NonVirtualOffset;
   llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
 
-  typedef llvm::DenseMap<const CXXMethodDecl *, int> Pures_t;
+  typedef llvm::DenseMap<GlobalDecl, int> Pures_t;
   Pures_t Pures;
   typedef std::pair<Index_t, Index_t>  CallOffset;
-  typedef llvm::DenseMap<const CXXMethodDecl *, CallOffset> Thunks_t;
+  typedef llvm::DenseMap<GlobalDecl, CallOffset> Thunks_t;
   Thunks_t Thunks;
-  typedef llvm::DenseMap<const CXXMethodDecl *,
+  typedef llvm::DenseMap<GlobalDecl,
                          std::pair<std::pair<CallOffset, CallOffset>,
                                    CanQualType> > CovariantThunks_t;
   CovariantThunks_t CovariantThunks;
@@ -94,7 +94,7 @@ public:
     cxa_pure = wrap(CGM.CreateRuntimeFunction(FTy, "__cxa_pure_virtual"));
   }
 
-  llvm::DenseMap<const CXXMethodDecl *, Index_t> &getIndex() { return Index; }
+  llvm::DenseMap<GlobalDecl, Index_t> &getIndex() { return Index; }
   llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
     { return VBIndex; }
 
@@ -205,9 +205,11 @@ public:
     return 0;
   }
 
-  bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
+  bool OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                       bool MorallyVirtual, Index_t OverrideOffset,
                       Index_t Offset, int64_t CurrentVBaseOffset) {
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+
     const bool isPure = MD->isPure();
     typedef CXXMethodDecl::method_iterator meth_iter;
     // FIXME: Should OverrideOffset's be Offset?
@@ -220,9 +222,16 @@ public:
     for (meth_iter mi = MD->begin_overridden_methods(),
            e = MD->end_overridden_methods();
          mi != e; ++mi) {
+      GlobalDecl OGD;
+      
       const CXXMethodDecl *OMD = *mi;
+      if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(OMD))
+        OGD = GlobalDecl(DD, GD.getDtorType());
+      else
+        OGD = OMD;
+      
       llvm::Constant *om;
-      om = CGM.GetAddrOfFunction(OMD, Ptr8Ty);
+      om = WrapAddrOf(OGD);
       om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
 
       for (Index_t i = 0, e = submethods.size();
@@ -245,32 +254,32 @@ public:
           Index_t nv = getNVOffset(oret, ret)/8;
           ReturnOffset = std::make_pair(nv, getVbaseOffset(oret, ret));
         }
-        Index[MD] = i;
+        Index[GD] = i;
         submethods[i] = m;
         if (isPure)
-          Pures[MD] = 1;
-        Pures.erase(OMD);
-        Thunks.erase(OMD);
-        if (MorallyVirtual || VCall.count(OMD)) {
-          Index_t &idx = VCall[OMD];
+          Pures[GD] = 1;
+        Pures.erase(OGD);
+        Thunks.erase(OGD);
+        if (MorallyVirtual || VCall.count(OGD)) {
+          Index_t &idx = VCall[OGD];
           if (idx == 0) {
-            NonVirtualOffset[MD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
-            VCallOffset[MD] = OverrideOffset/8;
+            NonVirtualOffset[GD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
+            VCallOffset[GD] = OverrideOffset/8;
             idx = VCalls.size()+1;
             VCalls.push_back(0);
             D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
                       MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
                       Class->getNameAsCString()));
           } else {
-            NonVirtualOffset[MD] = NonVirtualOffset[OMD];
-            VCallOffset[MD] = VCallOffset[OMD];
-            VCalls[idx-1] = -VCallOffset[OMD] + OverrideOffset/8;
+            NonVirtualOffset[GD] = NonVirtualOffset[OGD];
+            VCallOffset[GD] = VCallOffset[OGD];
+            VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
             D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
                       MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
                       Class->getNameAsCString()));
           }
-          VCall[MD] = idx;
-          int64_t O = NonVirtualOffset[MD];
+          VCall[GD] = idx;
+          int64_t O = NonVirtualOffset[GD];
           int v = -((idx+extra+2)*LLVMPointerWidth/8);
           // Optimize out virtual adjustments of 0.
           if (VCalls[idx-1] == 0)
@@ -279,26 +288,26 @@ public:
           // FIXME: Do we always have to build a covariant thunk to save oret,
           // which is the containing virtual base class?
           if (ReturnOffset.first || ReturnOffset.second)
-            CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
+            CovariantThunks[GD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
                                                  oret);
           else if (!isPure && (ThisOffset.first || ThisOffset.second))
-            Thunks[MD] = ThisOffset;
+            Thunks[GD] = ThisOffset;
           return true;
         }
 
         // FIXME: finish off
-        int64_t O = VCallOffset[OMD] - OverrideOffset/8;
+        int64_t O = VCallOffset[OGD] - OverrideOffset/8;
 
         if (O || ReturnOffset.first || ReturnOffset.second) {
           CallOffset ThisOffset = std::make_pair(O, 0);
           
           if (ReturnOffset.first || ReturnOffset.second)
-            CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
+            CovariantThunks[GD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
                                                  oret);
           else if (!isPure)
-            Thunks[MD] = ThisOffset;
+            Thunks[GD] = ThisOffset;
         }
         return true;
       }
@@ -310,9 +319,10 @@ public:
   void InstallThunks() {
     for (Thunks_t::iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
-      const CXXMethodDecl *MD = i->first;
+      GlobalDecl GD = i->first;
+      const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
       assert(!MD->isPure() && "Trying to thunk a pure");
-      Index_t idx = Index[MD];
+      Index_t idx = Index[GD];
       Index_t nv_O = i->second.first;
       Index_t v_O = i->second.second;
       submethods[idx] = CGM.BuildThunk(MD, Extern, nv_O, v_O);
@@ -321,10 +331,11 @@ public:
     for (CovariantThunks_t::iterator i = CovariantThunks.begin(),
            e = CovariantThunks.end();
          i != e; ++i) {
-      const CXXMethodDecl *MD = i->first;
+      GlobalDecl GD = i->first;
+      const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
       if (MD->isPure())
         continue;
-      Index_t idx = Index[MD];
+      Index_t idx = Index[GD];
       Index_t nv_t = i->second.first.first.first;
       Index_t v_t = i->second.first.first.second;
       Index_t nv_r = i->second.first.second.first;
@@ -335,16 +346,18 @@ public:
     CovariantThunks.clear();
     for (Pures_t::iterator i = Pures.begin(), e = Pures.end();
          i != e; ++i) {
-      const CXXMethodDecl *MD = i->first;
-      Index_t idx = Index[MD];
+      GlobalDecl GD = i->first;
+      Index_t idx = Index[GD];
       submethods[idx] = cxa_pure;
     }
     Pures.clear();
   }
 
-  llvm::Constant *WrapAddrOf(const CXXMethodDecl *MD) {
+  llvm::Constant *WrapAddrOf(GlobalDecl GD) {
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+
     if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
-      return wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
+      return wrap(CGM.GetAddrOfCXXDestructor(Dtor, GD.getDtorType()));
 
     const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
     const llvm::Type *Ty =
@@ -362,38 +375,51 @@ public:
       int64_t OverrideOffset = i->second;
       for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
            ++mi) {
-        if (!mi->isVirtual())
+        const CXXMethodDecl *MD = *mi;
+
+        if (!MD->isVirtual())
           continue;
 
-        const CXXMethodDecl *MD = *mi;
-        llvm::Constant *m = WrapAddrOf(MD);
-        OverrideMethod(MD, m, MorallyVirtual, OverrideOffset, Offset,
-                       CurrentVBaseOffset);
+        if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+          // Override both the complete and the deleting destructor.
+          GlobalDecl CompDtor(DD, Dtor_Complete);
+          OverrideMethod(CompDtor, WrapAddrOf(CompDtor), MorallyVirtual, 
+                         OverrideOffset, Offset, CurrentVBaseOffset);
+          
+          GlobalDecl DeletingDtor(DD, Dtor_Deleting);
+          OverrideMethod(DeletingDtor, WrapAddrOf(DeletingDtor), MorallyVirtual, 
+                         OverrideOffset, Offset, CurrentVBaseOffset);
+        } else {
+          OverrideMethod(MD, WrapAddrOf(MD), MorallyVirtual, OverrideOffset, 
+                         Offset, CurrentVBaseOffset);
+        }
       }
     }
   }
 
-  void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset,
+  void AddMethod(const GlobalDecl GD, bool MorallyVirtual, Index_t Offset,
                  bool ForVirtualBase, int64_t CurrentVBaseOffset) {
-    llvm::Constant *m = WrapAddrOf(MD);
+    llvm::Constant *m = WrapAddrOf(GD);
 
     // If we can find a previously allocated slot for this, reuse it.
-    if (OverrideMethod(MD, m, MorallyVirtual, Offset, Offset,
+    if (OverrideMethod(GD, m, MorallyVirtual, Offset, Offset,
                        CurrentVBaseOffset))
       return;
 
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+    
     // else allocate a new slot.
-    Index[MD] = submethods.size();
+    Index[GD] = submethods.size();
     submethods.push_back(m);
     D1(printf("  vfn for %s at %d\n", MD->getNameAsCString(), (int)Index[MD]));
     if (MD->isPure())
-      Pures[MD] = 1;
+      Pures[GD] = 1;
     if (MorallyVirtual) {
-      VCallOffset[MD] = Offset/8;
-      Index_t &idx = VCall[MD];
+      VCallOffset[GD] = Offset/8;
+      Index_t &idx = VCall[GD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
-        NonVirtualOffset[MD] = CurrentVBaseOffset/8 - Offset/8;
+        NonVirtualOffset[GD] = CurrentVBaseOffset/8 - Offset/8;
         idx = VCalls.size()+1;
         VCalls.push_back(0);
         D1(printf("  vcall for %s at %d with delta %d\n",
@@ -406,10 +432,22 @@ public:
                   Index_t Offset, bool RDisVirtualBase,
                   int64_t CurrentVBaseOffset) {
     for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi)
-      if (mi->isVirtual())
-        AddMethod(*mi, MorallyVirtual, Offset, RDisVirtualBase,
+         ++mi) {
+      const CXXMethodDecl *MD = *mi;
+      if (!MD->isVirtual())
+        continue;
+      
+      if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+        // For destructors, add both the complete and the deleting destructor
+        // to the vtable.
+        AddMethod(GlobalDecl(DD, Dtor_Complete), MorallyVirtual, Offset, 
+                  RDisVirtualBase, CurrentVBaseOffset);
+        AddMethod(GlobalDecl(DD, Dtor_Deleting), MorallyVirtual, Offset, 
+                  RDisVirtualBase, CurrentVBaseOffset);
+      } else
+        AddMethod(MD, MorallyVirtual, Offset, RDisVirtualBase,
                   CurrentVBaseOffset);
+    }
   }
 
   void NonVirtualBases(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
@@ -663,14 +701,12 @@ VtableBuilder::Index_t VtableBuilder::VBlookup(CXXRecordDecl *D,
   return CGM.getVtableInfo().getVirtualBaseOffsetIndex(D, B);
 }
 
-int64_t CGVtableInfo::getMethodVtableIndex(const CXXMethodDecl *MD) {
-  MD = MD->getCanonicalDecl();
-
-  MethodVtableIndicesTy::iterator I = MethodVtableIndices.find(MD);
+int64_t CGVtableInfo::getMethodVtableIndex(GlobalDecl GD) {
+  MethodVtableIndicesTy::iterator I = MethodVtableIndices.find(GD);
   if (I != MethodVtableIndices.end())
     return I->second;
   
-  const CXXRecordDecl *RD = MD->getParent();
+  const CXXRecordDecl *RD = cast<CXXMethodDecl>(GD.getDecl())->getParent();
   
   std::vector<llvm::Constant *> methods;
   // FIXME: This seems expensive.  Can we do a partial job to get
@@ -683,7 +719,7 @@ int64_t CGVtableInfo::getMethodVtableIndex(const CXXMethodDecl *MD) {
   MethodVtableIndices.insert(b.getIndex().begin(),
                              b.getIndex().end());
   
-  I = MethodVtableIndices.find(MD);
+  I = MethodVtableIndices.find(GD);
   assert(I != MethodVtableIndices.end() && "Did not find index!");
   return I->second;
 }
