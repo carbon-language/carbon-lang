@@ -458,6 +458,9 @@ TEST_F(JITTest, ModuleDeletion) {
             NumTablesDeallocated);
 }
 
+#if !defined(__APPLE__) ||                                              \
+  !(defined(__POWERPC__) || defined (__ppc__) ||                        \
+    defined(_POWER) || defined(_ARCH_PPC))
 typedef int (*FooPtr) ();
 
 TEST_F(JITTest, NoStubs) {
@@ -495,6 +498,7 @@ TEST_F(JITTest, NoStubs) {
 
   ASSERT_EQ(stubsBefore, RJMM->stubsAllocated);
 }
+#endif
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange
