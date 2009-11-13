@@ -6,6 +6,7 @@ add_clang_library(clangFrontend
   AnalysisConsumer.cpp
   Backend.cpp
   CacheTokens.cpp
+  CompilerInstance.cpp
   DeclXML.cpp
   DependencyFile.cpp
   DiagChecker.cpp
