@@ -109,6 +109,8 @@ HTMLDiagnostics::FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade)
     ReportDiag(*D, FilesMade);
     delete D;
   }
+  
+  BatchedDiags.clear();
 }
 
 void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,

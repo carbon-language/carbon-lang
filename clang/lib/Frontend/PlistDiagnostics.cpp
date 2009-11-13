@@ -423,4 +423,6 @@ void PlistDiagnostics::FlushDiagnostics(llvm::SmallVectorImpl<std::string>
   
   if (FilesMade)
     FilesMade->push_back(OutputFile);
+  
+  BatchedDiags.clear();
 }
