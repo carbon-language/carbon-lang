@@ -268,6 +268,22 @@ public:
   /// @name Construction Utility Methods
   /// {
 
+  /// Create the diagnostics engine using the invocation's diagnostic options
+  /// and replace any existing one with it.
+  ///
+  /// Note that this routine also replaces the diagnostic client.
+  void createDiagnostics(int Argc, char **Argv);
+
+  /// Create a Diagnostic object with a the TextDiagnosticPrinter.
+  ///
+  /// The \arg Argc and \arg Argv arguments are used only for logging purposes,
+  /// when the diagnostic options indicate that the compiler should output
+  /// logging information.
+  ///
+  /// \return The new object on success, or null on failure.
+  static Diagnostic *createDiagnostics(const DiagnosticOptions &Opts,
+                                       int Argc, char **Argv);
+
   /// Create the file manager and replace any existing one with it.
   void createFileManager();
 

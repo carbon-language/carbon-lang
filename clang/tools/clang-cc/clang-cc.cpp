@@ -18,8 +18,6 @@
 #include "Options.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclGroup.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -29,7 +27,6 @@
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/AnalysisConsumer.h"
-#include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -40,8 +37,6 @@
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
-#include "clang/Frontend/TextDiagnosticBuffer.h"
-#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/LexDiagnostic.h"
@@ -51,9 +46,7 @@
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -65,7 +58,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
-#include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetSelect.h"
 #include <cstdlib>
@@ -243,34 +235,6 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
   // Parsing the specified input file.
   P.ParseTranslationUnit();
   delete PA;
-}
-
-//===----------------------------------------------------------------------===//
-// Dump Build Information
-//===----------------------------------------------------------------------===//
-
-static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
-                              unsigned argc, char **argv,
-                              llvm::OwningPtr<DiagnosticClient> &DiagClient) {
-  std::string ErrorInfo;
-  llvm::raw_ostream *OS =
-    new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo);
-  if (!ErrorInfo.empty()) {
-    llvm::errs() << "error opening -dump-build-information file '"
-                 << DiagOpts.DumpBuildInformation << "', option ignored!\n";
-    delete OS;
-    return;
-  }
-
-  (*OS) << "clang-cc command line arguments: ";
-  for (unsigned i = 0; i != argc; ++i)
-    (*OS) << argv[i] << ' ';
-  (*OS) << '\n';
-
-  // Chain in a diagnostic client which will log the diagnostics.
-  DiagnosticClient *Logger =
-    new TextDiagnosticPrinter(*OS, DiagOpts, /*OwnsOutputStream=*/true);
-  DiagClient.reset(new ChainedDiagnosticClient(DiagClient.take(), Logger));
 }
 
 //===----------------------------------------------------------------------===//
@@ -787,10 +751,7 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
 
 static TargetInfo *
 ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
-                            const char *Argv0,
-                            const DiagnosticOptions &DiagOpts, bool &IsAST) {
-  Opts.getDiagnosticOpts() = DiagOpts;
-
+                            const char *Argv0, bool &IsAST) {
   // Initialize frontend options.
   InitializeFrontendOptions(Opts.getFrontendOpts());
 
@@ -869,34 +830,6 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   return Target;
 }
 
-static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,
-                                          int argc, char **argv) {
-  // Create the diagnostic client for reporting errors or for
-  // implementing -verify.
-  llvm::OwningPtr<DiagnosticClient> DiagClient;
-  if (Opts.VerifyDiagnostics) {
-    // When checking diagnostics, just buffer them up.
-    DiagClient.reset(new TextDiagnosticBuffer());
-  } else {
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
-  }
-
-  if (!Opts.DumpBuildInformation.empty())
-    SetUpBuildDumpLog(Opts, argc, argv, DiagClient);
-
-  // Configure our handling of diagnostics.
-  Diagnostic *Diags = new Diagnostic(DiagClient.take());
-  if (ProcessWarningOptions(*Diags, Opts))
-    return 0;
-
-  // Set an error handler, so that any LLVM backend diagnostics go through our
-  // error handler.
-  llvm::llvm_install_error_handler(LLVMErrorHandler,
-                                   static_cast<void*>(Diags));
-
-  return Diags;
-}
-
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -911,15 +844,15 @@ int main(int argc, char **argv) {
 
   // Construct the diagnostic engine first, so that we can build a diagnostic
   // client to use for any errors during option handling.
-  DiagnosticOptions DiagOpts;
-  InitializeDiagnosticOptions(DiagOpts);
-  Clang.setDiagnostics(CreateDiagnosticEngine(DiagOpts, argc, argv));
+  InitializeDiagnosticOptions(Clang.getDiagnosticOpts());
+  Clang.createDiagnostics(argc, argv);
   if (!&Clang.getDiagnostics())
     return 1;
 
-  // FIXME: Hack to make sure we release the diagnostic client, the engine
-  // should (optionally?) take ownership of it.
-  Clang.setDiagnosticClient(Clang.getDiagnostics().getClient());
+  // Set an error handler, so that any LLVM backend diagnostics go through our
+  // error handler.
+  llvm::llvm_install_error_handler(LLVMErrorHandler,
+                                   static_cast<void*>(&Clang.getDiagnostics()));
 
   // Now that we have initialized the diagnostics engine, create the target and
   // the compiler invocation object.
@@ -929,7 +862,7 @@ int main(int argc, char **argv) {
   bool IsAST;
   Clang.setTarget(
     ConstructCompilerInvocation(Clang.getInvocation(), Clang.getDiagnostics(),
-                                argv[0], DiagOpts, IsAST));
+                                argv[0], IsAST));
   if (!&Clang.getTarget())
     return 1;
 

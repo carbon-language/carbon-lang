@@ -15,8 +15,12 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PTHManager.h"
+#include "clang/Frontend/ChainedDiagnosticClient.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 CompilerInstance::CompilerInstance(llvm::LLVMContext *_LLVMContext,
@@ -30,13 +34,76 @@ CompilerInstance::~CompilerInstance() {
     delete LLVMContext;
 }
 
+// Diagnostics
+
+static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
+                              unsigned argc, char **argv,
+                              llvm::OwningPtr<DiagnosticClient> &DiagClient) {
+  std::string ErrorInfo;
+  llvm::raw_ostream *OS =
+    new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo);
+  if (!ErrorInfo.empty()) {
+    // FIXME: Do not fail like this.
+    llvm::errs() << "error opening -dump-build-information file '"
+                 << DiagOpts.DumpBuildInformation << "', option ignored!\n";
+    delete OS;
+    return;
+  }
+
+  (*OS) << "clang-cc command line arguments: ";
+  for (unsigned i = 0; i != argc; ++i)
+    (*OS) << argv[i] << ' ';
+  (*OS) << '\n';
+
+  // Chain in a diagnostic client which will log the diagnostics.
+  DiagnosticClient *Logger =
+    new TextDiagnosticPrinter(*OS, DiagOpts, /*OwnsOutputStream=*/true);
+  DiagClient.reset(new ChainedDiagnosticClient(DiagClient.take(), Logger));
+}
+
+void CompilerInstance::createDiagnostics(int Argc, char **Argv) {
+  Diagnostics.reset(createDiagnostics(getDiagnosticOpts(), Argc, Argv));
+
+  if (Diagnostics)
+    DiagClient.reset(Diagnostics->getClient());
+}
+
+Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
+                                                int Argc, char **Argv) {
+  // Create the diagnostic client for reporting errors or for
+  // implementing -verify.
+  llvm::OwningPtr<DiagnosticClient> DiagClient;
+  if (Opts.VerifyDiagnostics) {
+    // When checking diagnostics, just buffer them up.
+    DiagClient.reset(new TextDiagnosticBuffer());
+  } else {
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
+  }
+
+  if (!Opts.DumpBuildInformation.empty())
+    SetUpBuildDumpLog(Opts, Argc, Argv, DiagClient);
+
+  // Configure our handling of diagnostics.
+  Diagnostic *Diags = new Diagnostic(DiagClient.take());
+  if (ProcessWarningOptions(*Diags, Opts))
+    return 0;
+
+  return Diags;
+}
+
+// File Manager
+
 void CompilerInstance::createFileManager() {
   FileMgr.reset(new FileManager());
 }
 
+// Source Manager
+
 void CompilerInstance::createSourceManager() {
   SourceMgr.reset(new SourceManager());
 }
+
+// Preprocessor
 
 void CompilerInstance::createPreprocessor() {
   PP.reset(createPreprocessor(getDiagnostics(), getLangOpts(),
