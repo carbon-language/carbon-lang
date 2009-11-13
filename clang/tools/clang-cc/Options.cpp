@@ -321,6 +321,44 @@ static llvm::cl::opt<bool>
 EmptyInputOnly("empty-input-only",
       llvm::cl::desc("Force running on an empty input file"));
 
+static llvm::cl::opt<FrontendOptions::InputKind>
+InputType("x", llvm::cl::desc("Input language type"),
+         llvm::cl::init(FrontendOptions::IK_None),
+   llvm::cl::values(clEnumValN(FrontendOptions::IK_C,     "c", "C"),
+                    clEnumValN(FrontendOptions::IK_OpenCL,   "cl", "OpenCL C"),
+                    clEnumValN(FrontendOptions::IK_CXX,   "c++", "C++"),
+                    clEnumValN(FrontendOptions::IK_ObjC,  "objective-c",
+                               "Objective C"),
+                    clEnumValN(FrontendOptions::IK_ObjCXX, "objective-c++",
+                               "Objective C++"),
+                    clEnumValN(FrontendOptions::IK_PreprocessedC,
+                               "cpp-output",
+                               "Preprocessed C"),
+                    clEnumValN(FrontendOptions::IK_Asm,
+                               "assembler-with-cpp",
+                               "Assembly Source Codde"),
+                    clEnumValN(FrontendOptions::IK_PreprocessedCXX,
+                               "c++-cpp-output",
+                               "Preprocessed C++"),
+                    clEnumValN(FrontendOptions::IK_PreprocessedObjC,
+                               "objective-c-cpp-output",
+                               "Preprocessed Objective C"),
+                    clEnumValN(FrontendOptions::IK_PreprocessedObjCXX,
+                               "objective-c++-cpp-output",
+                               "Preprocessed Objective C++"),
+                    clEnumValN(FrontendOptions::IK_C, "c-header",
+                               "C header"),
+                    clEnumValN(FrontendOptions::IK_ObjC, "objective-c-header",
+                               "Objective-C header"),
+                    clEnumValN(FrontendOptions::IK_CXX, "c++-header",
+                               "C++ header"),
+                    clEnumValN(FrontendOptions::IK_ObjCXX,
+                               "objective-c++-header",
+                               "Objective-C++ header"),
+                    clEnumValN(FrontendOptions::IK_AST, "ast",
+                               "Clang AST"),
+                    clEnumValEnd));
+
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
@@ -791,7 +829,6 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   Opts.EmptyInputOnly = EmptyInputOnly;
   Opts.FixItAll = FixItAll;
   Opts.FixItLocations = FixItAtLocations;
-  Opts.InputFilenames = InputFilenames;
   Opts.OutputFile = OutputFile;
   Opts.RelocatablePCH = RelocatablePCH;
   Opts.ShowMacrosInCodeCompletion = CodeCompletionWantsMacros;
@@ -802,8 +839,21 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   Opts.ViewClassInheritance = InheritanceViewCls;
 
   // '-' is the default input if none is given.
-  if (Opts.InputFilenames.empty())
-    Opts.InputFilenames.push_back("-");
+  if (InputFilenames.empty()) {
+    FrontendOptions::InputKind IK = InputType;
+    if (IK == FrontendOptions::IK_None) IK = FrontendOptions::IK_C;
+    Opts.Inputs.push_back(std::make_pair(IK, "-"));
+  } else {
+    for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
+      FrontendOptions::InputKind IK = InputType;
+      llvm::StringRef Ext =
+        llvm::StringRef(InputFilenames[i]).rsplit('.').second;
+      if (IK == FrontendOptions::IK_None)
+        IK = FrontendOptions::getInputKindForExtension(Ext);
+      Opts.Inputs.push_back(std::make_pair(IK, InputFilenames[i]));
+                                           
+    }
+  }
 }
 
 void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
@@ -972,44 +1022,47 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
     Opts.addInclude(*OrderedPaths[i].second);
 }
 
-void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
+void clang::InitializeLangOptions(LangOptions &Options,
+                                  FrontendOptions::InputKind IK,
                                   TargetInfo &Target,
                                   const CodeGenOptions &CodeGenOpts) {
   using namespace langoptions;
 
   bool NoPreprocess = false;
 
-  switch (LK) {
-  default: assert(0 && "Unknown language kind!");
-  case langkind_asm_cpp:
+  switch (IK) {
+  case FrontendOptions::IK_None:
+  case FrontendOptions::IK_AST:
+    assert(0 && "Invalid input kind!");
+  case FrontendOptions::IK_Asm:
     Options.AsmPreprocessor = 1;
     // FALLTHROUGH
-  case langkind_c_cpp:
+  case FrontendOptions::IK_PreprocessedC:
     NoPreprocess = true;
     // FALLTHROUGH
-  case langkind_c:
+  case FrontendOptions::IK_C:
     // Do nothing.
     break;
-  case langkind_cxx_cpp:
+  case FrontendOptions::IK_PreprocessedCXX:
     NoPreprocess = true;
     // FALLTHROUGH
-  case langkind_cxx:
+  case FrontendOptions::IK_CXX:
     Options.CPlusPlus = 1;
     break;
-  case langkind_objc_cpp:
+  case FrontendOptions::IK_PreprocessedObjC:
     NoPreprocess = true;
     // FALLTHROUGH
-  case langkind_objc:
+  case FrontendOptions::IK_ObjC:
     Options.ObjC1 = Options.ObjC2 = 1;
     break;
-  case langkind_objcxx_cpp:
+  case FrontendOptions::IK_PreprocessedObjCXX:
     NoPreprocess = true;
     // FALLTHROUGH
-  case langkind_objcxx:
+  case FrontendOptions::IK_ObjCXX:
     Options.ObjC1 = Options.ObjC2 = 1;
     Options.CPlusPlus = 1;
     break;
-  case langkind_ocl:
+  case FrontendOptions::IK_OpenCL:
     Options.OpenCL = 1;
     Options.AltiVec = 1;
     Options.CXXOperatorNames = 1;
@@ -1044,23 +1097,24 @@ void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
 
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
-    switch (LK) {
-    case langkind_ast: assert(0 && "Invalid call for AST inputs");
-    case lang_unspecified: assert(0 && "Unknown base language");
-    case langkind_ocl:
+    switch (IK) {
+    case FrontendOptions::IK_None:
+    case FrontendOptions::IK_AST:
+      assert(0 && "Invalid input kind!");
+    case FrontendOptions::IK_OpenCL:
       LangStd = lang_c99;
       break;
-    case langkind_c:
-    case langkind_asm_cpp:
-    case langkind_c_cpp:
-    case langkind_objc:
-    case langkind_objc_cpp:
+    case FrontendOptions::IK_Asm:
+    case FrontendOptions::IK_C:
+    case FrontendOptions::IK_PreprocessedC:
+    case FrontendOptions::IK_ObjC:
+    case FrontendOptions::IK_PreprocessedObjC:
       LangStd = lang_gnu99;
       break;
-    case langkind_cxx:
-    case langkind_cxx_cpp:
-    case langkind_objcxx:
-    case langkind_objcxx_cpp:
+    case FrontendOptions::IK_CXX:
+    case FrontendOptions::IK_PreprocessedCXX:
+    case FrontendOptions::IK_ObjCXX:
+    case FrontendOptions::IK_PreprocessedObjCXX:
       LangStd = lang_gnucxx98;
       break;
     }
@@ -1139,7 +1193,7 @@ void clang::InitializeLangOptions(LangOptions &Options, LangKind LK,
   // Default to not accepting '$' in identifiers when preprocessing assembler,
   // but do accept when preprocessing C.  FIXME: these defaults are right for
   // darwin, are they right everywhere?
-  Options.DollarIdents = LK != langkind_asm_cpp;
+  Options.DollarIdents = IK != FrontendOptions::IK_Asm;
   if (DollarsInIdents.getPosition())  // Explicit setting overrides default.
     Options.DollarIdents = DollarsInIdents;
 

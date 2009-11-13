@@ -53,7 +53,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -164,40 +163,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValN(RewriteBlocks, "rewrite-blocks",
                         "Rewrite Blocks to C"),
              clEnumValEnd));
-
-//===----------------------------------------------------------------------===//
-// Language Options
-//===----------------------------------------------------------------------===//
-
-static llvm::cl::opt<LangKind>
-BaseLang("x", llvm::cl::desc("Base language to compile"),
-         llvm::cl::init(langkind_unspecified),
-   llvm::cl::values(clEnumValN(langkind_c,     "c",            "C"),
-                    clEnumValN(langkind_ocl,   "cl",           "OpenCL C"),
-                    clEnumValN(langkind_cxx,   "c++",          "C++"),
-                    clEnumValN(langkind_objc,  "objective-c",  "Objective C"),
-                    clEnumValN(langkind_objcxx,"objective-c++","Objective C++"),
-                    clEnumValN(langkind_c_cpp,     "cpp-output",
-                               "Preprocessed C"),
-                    clEnumValN(langkind_asm_cpp,     "assembler-with-cpp",
-                               "Preprocessed asm"),
-                    clEnumValN(langkind_cxx_cpp,   "c++-cpp-output",
-                               "Preprocessed C++"),
-                    clEnumValN(langkind_objc_cpp,  "objective-c-cpp-output",
-                               "Preprocessed Objective C"),
-                    clEnumValN(langkind_objcxx_cpp, "objective-c++-cpp-output",
-                               "Preprocessed Objective C++"),
-                    clEnumValN(langkind_c, "c-header",
-                               "C header"),
-                    clEnumValN(langkind_objc, "objective-c-header",
-                               "Objective-C header"),
-                    clEnumValN(langkind_cxx, "c++-header",
-                               "C++ header"),
-                    clEnumValN(langkind_objcxx, "objective-c++-header",
-                               "Objective-C++ header"),
-                    clEnumValN(langkind_ast, "ast",
-                               "Clang AST"),
-                    clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
 // Utility Methods
@@ -860,43 +825,6 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
-static LangKind GetLanguage(const std::vector<std::string> &Inputs) {
-  // If -x was given, that's the language.
-  if (BaseLang != langkind_unspecified)
-    return BaseLang;
-
-  // Otherwise guess it from the input filenames;
-  LangKind LK = langkind_unspecified;
-  for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
-    llvm::StringRef Name(Inputs[i]);
-    LangKind ThisKind =  llvm::StringSwitch<LangKind>(Name.rsplit('.').second)
-      .Case("ast", langkind_ast)
-      .Case("c", langkind_c)
-      .Cases("S", "s", langkind_asm_cpp)
-      .Case("i", langkind_c_cpp)
-      .Case("ii", langkind_cxx_cpp)
-      .Case("m", langkind_objc)
-      .Case("mi", langkind_objc_cpp)
-      .Cases("mm", "M", langkind_objcxx)
-      .Case("mii", langkind_objcxx_cpp)
-      .Case("C", langkind_cxx)
-      .Cases("C", "cc", "cp", langkind_cxx)
-      .Cases("cpp", "CPP", "c++", "cxx", langkind_cxx)
-      .Case("cl", langkind_ocl)
-      .Default(langkind_c);
-
-    if (LK != langkind_unspecified && ThisKind != LK) {
-      llvm::errs() << "error: cannot have multiple input files of distinct "
-                   << "language kinds without -x\n";
-      exit(1);
-    }
-
-    LK = ThisKind;
-  }
-
-  return LK;
-}
-
 static TargetInfo *
 ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
                             const char *Argv0,
@@ -931,14 +859,23 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   // options.
   InitializeCodeGenOptions(Opts.getCodeGenOpts(), *Target);
 
+  // Determine the input language, we currently require all files to match.
+  FrontendOptions::InputKind IK = Opts.getFrontendOpts().Inputs[0].first;
+  for (unsigned i = 1, e = Opts.getFrontendOpts().Inputs.size(); i != e; ++i) {
+    if (Opts.getFrontendOpts().Inputs[i].first != IK) {
+      llvm::errs() << "error: cannot have multiple input files of distinct "
+                   << "language kinds without -x\n";
+      return 0;
+    }
+  }
+
   // Initialize language options.
   //
   // FIXME: These aren't used during operations on ASTs. Split onto a separate
   // code path to make this obvious.
-  LangKind LK = GetLanguage(Opts.getFrontendOpts().InputFilenames);
-  IsAST = LK == langkind_ast;
+  IsAST = (IK == FrontendOptions::IK_AST);
   if (!IsAST)
-    InitializeLangOptions(Opts.getLangOpts(), LK, *Target,
+    InitializeLangOptions(Opts.getLangOpts(), IK, *Target,
                           Opts.getCodeGenOpts());
 
   // Initialize the static analyzer options.
@@ -1043,7 +980,7 @@ int main(int argc, char **argv) {
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
 
   if (CompOpts.getDiagnosticOpts().VerifyDiagnostics &&
-      CompOpts.getFrontendOpts().InputFilenames.size() > 1) {
+      CompOpts.getFrontendOpts().Inputs.size() > 1) {
     fprintf(stderr, "-verify only works on single input files.\n");
     return 1;
   }
@@ -1058,9 +995,9 @@ int main(int argc, char **argv) {
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
 
-  for (unsigned i = 0, e = CompOpts.getFrontendOpts().InputFilenames.size();
+  for (unsigned i = 0, e = CompOpts.getFrontendOpts().Inputs.size();
        i != e; ++i) {
-    const std::string &InFile = CompOpts.getFrontendOpts().InputFilenames[i];
+    const std::string &InFile = CompOpts.getFrontendOpts().Inputs[i].second;
 
     // AST inputs are handled specially.
     if (IsAST) {

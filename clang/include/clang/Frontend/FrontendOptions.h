@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_FRONTENDOPTIONS_H
 
 #include "clang/Frontend/CommandLineSourceLoc.h"
+#include "llvm/ADT/StringRef.h"
 #include <string>
 #include <vector>
 
@@ -19,6 +20,21 @@ namespace clang {
 /// FrontendOptions - Options for controlling the behavior of the frontend.
 class FrontendOptions {
 public:
+  enum InputKind {
+    IK_None,
+    IK_Asm,
+    IK_C,
+    IK_CXX,
+    IK_ObjC,
+    IK_ObjCXX,
+    IK_PreprocessedC,
+    IK_PreprocessedCXX,
+    IK_PreprocessedObjC,
+    IK_PreprocessedObjCXX,
+    IK_OpenCL,
+    IK_AST
+  };
+
   unsigned DebugCodeCompletionPrinter : 1; ///< Use the debug printer for code
                                            /// completion results.
   unsigned DisableFree : 1;                ///< Disable memory freeing on exit.
@@ -44,8 +60,8 @@ public:
   /// If given, the name of the target ABI to use.
   std::string TargetABI;
 
-  /// The input files.
-  std::vector<std::string> InputFilenames;
+  /// The input files and their types.
+  std::vector<std::pair<InputKind, std::string> > Inputs;
 
   /// The output file, if any.
   std::string OutputFile;
@@ -70,6 +86,13 @@ public:
     ShowStats = 0;
     ShowTimers = 0;
   }
+
+  /// getInputKindForExtension - Return the appropriate input kind for a file
+  /// extension. For example, "c" would return IK_C.
+  ///
+  /// \return The input kind for the extension, or IK_None if the extension is
+  /// not recognized.
+  static InputKind getInputKindForExtension(llvm::StringRef Extension);
 };
 
 }  // end namespace clang

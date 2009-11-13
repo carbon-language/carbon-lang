@@ -11,6 +11,7 @@ add_clang_library(clangFrontend
   DiagChecker.cpp
   DocumentXML.cpp
   FixItRewriter.cpp
+  FrontendOptions.cpp
   GeneratePCH.cpp
   HTMLDiagnostics.cpp
   HTMLPrint.cpp
