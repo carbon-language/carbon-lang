@@ -1293,6 +1293,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         
         MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
         
+        // FIXME: CXXBaseOrMemberInitializer should only contain a single 
+        // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+        ExprTemporaries.clear();
         CXXBaseOrMemberInitializer *Member =
           new (Context) CXXBaseOrMemberInitializer(VBase->getType(),
                                                    CtorArgs.takeAs<Expr>(),
@@ -1343,6 +1346,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         
         MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
 
+        // FIXME: CXXBaseOrMemberInitializer should only contain a single 
+        // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+        ExprTemporaries.clear();
         CXXBaseOrMemberInitializer *Member =
           new (Context) CXXBaseOrMemberInitializer(Base->getType(),
                                                    CtorArgs.takeAs<Expr>(),
@@ -1413,6 +1419,9 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   Constructor->getLocation(), CtorArgs))
         continue;
       
+      // FIXME: CXXBaseOrMemberInitializer should only contain a single 
+      // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+      ExprTemporaries.clear();
       CXXBaseOrMemberInitializer *Member =
         new (Context) CXXBaseOrMemberInitializer(*Field,CtorArgs.takeAs<Expr>(),
                                                  CtorArgs.size(), Ctor,
