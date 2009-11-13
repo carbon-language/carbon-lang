@@ -985,20 +985,35 @@ CodeGenFunction::GetVirtualCXXBaseClassOffset(llvm::Value *This,
   return VBaseOffset;
 }
 
-llvm::Value *
-CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *&This,
-                                  const llvm::Type *Ty) {
-  int64_t Index = CGM.getVtableInfo().getMethodVtableIndex(MD);
+static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, int64_t VtableIndex, 
+                                     llvm::Value *This, const llvm::Type *Ty) {
+  Ty = Ty->getPointerTo()->getPointerTo()->getPointerTo();
   
-  Ty = llvm::PointerType::get(Ty, 0);
-  Ty = llvm::PointerType::get(Ty, 0);
-  Ty = llvm::PointerType::get(Ty, 0);
-  llvm::Value *vtbl = Builder.CreateBitCast(This, Ty);
-  vtbl = Builder.CreateLoad(vtbl);
-  llvm::Value *vfn = Builder.CreateConstInBoundsGEP1_64(vtbl,
-                                                        Index, "vfn");
-  vfn = Builder.CreateLoad(vfn);
-  return vfn;
+  llvm::Value *Vtable = CGF.Builder.CreateBitCast(This, Ty);
+  Vtable = CGF.Builder.CreateLoad(Vtable);
+  
+  llvm::Value *VFuncPtr = 
+    CGF.Builder.CreateConstInBoundsGEP1_64(Vtable, VtableIndex, "vfn");
+  return CGF.Builder.CreateLoad(VFuncPtr);
+}
+
+llvm::Value *
+CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
+                                  const llvm::Type *Ty) {
+  MD = MD->getCanonicalDecl();
+  int64_t VtableIndex = CGM.getVtableInfo().getMethodVtableIndex(MD);
+  
+  return ::BuildVirtualCall(*this, VtableIndex, This, Ty);
+}
+
+llvm::Value *
+CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type, 
+                                  llvm::Value *&This, const llvm::Type *Ty) {
+  DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
+  int64_t VtableIndex = 
+    CGM.getVtableInfo().getMethodVtableIndex(DD);
+
+  return ::BuildVirtualCall(*this, VtableIndex, This, Ty);
 }
 
 /// EmitClassAggrMemberwiseCopy - This routine generates code to copy a class

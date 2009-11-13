@@ -265,7 +265,9 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
 
   Builder.CreateCondBr(IsNull, DeleteEnd, DeleteNotNull);
   EmitBlock(DeleteNotNull);
-
+  
+  bool ShouldCallDelete = true;
+  
   // Call the destructor if necessary.
   if (const RecordType *RT = DeleteTy->getAs<RecordType>()) {
     if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
@@ -276,30 +278,35 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
             CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(Dtor),
                                            /*isVariadic=*/false);
           
-          llvm::Value *Callee = BuildVirtualCall(Dtor, Ptr, Ty);
+          llvm::Value *Callee = BuildVirtualCall(Dtor, Dtor_Deleting, Ptr, Ty);
           EmitCXXMemberCall(Dtor, Callee, Ptr, 0, 0);
+
+          // The dtor took care of deleting the object.
+          ShouldCallDelete = false;
         } else 
           EmitCXXDestructorCall(Dtor, Dtor_Complete, Ptr);
       }
     }
   }
 
-  // Call delete.
-  FunctionDecl *DeleteFD = E->getOperatorDelete();
-  const FunctionProtoType *DeleteFTy =
-    DeleteFD->getType()->getAs<FunctionProtoType>();
+  if (ShouldCallDelete) {
+    // Call delete.
+    FunctionDecl *DeleteFD = E->getOperatorDelete();
+    const FunctionProtoType *DeleteFTy =
+      DeleteFD->getType()->getAs<FunctionProtoType>();
 
-  CallArgList DeleteArgs;
+    CallArgList DeleteArgs;
 
-  QualType ArgTy = DeleteFTy->getArgType(0);
-  llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
-  DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
+    QualType ArgTy = DeleteFTy->getArgType(0);
+    llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
+    DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
 
-  // Emit the call to delete.
-  EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
-                                          DeleteArgs),
-           CGM.GetAddrOfFunction(DeleteFD),
-           DeleteArgs, DeleteFD);
-
+    // Emit the call to delete.
+    EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
+                                            DeleteArgs),
+             CGM.GetAddrOfFunction(DeleteFD),
+             DeleteArgs, DeleteFD);
+  }
+  
   EmitBlock(DeleteEnd);
 }
