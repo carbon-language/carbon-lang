@@ -110,11 +110,12 @@ namespace llvm {
     MachineBasicBlock *SplitCriticalEdge(MachineBasicBlock *A,
                                          MachineBasicBlock *B);
 
-    // FindCopyInsertPoint - Find a safe place in MBB to insert a copy from
-    // SrcReg.  This needs to be after any def or uses of SrcReg, but before
-    // any subsequent point where control flow might jump out of the basic
-    // block.
+    /// FindCopyInsertPoint - Find a safe place in MBB to insert a copy from
+    /// SrcReg when following the CFG edge to SuccMBB. This needs to be after
+    /// any def of SrcReg, but before any subsequent point where control flow
+    /// might jump out of the basic block.
     MachineBasicBlock::iterator FindCopyInsertPoint(MachineBasicBlock &MBB,
+                                                    MachineBasicBlock &SuccMBB,
                                                     unsigned SrcReg);
 
     // SkipPHIsAndLabels - Copies need to be inserted after phi nodes and

@@ -15,8 +15,6 @@
 
 #define DEBUG_TYPE "phielim"
 #include "PHIElimination.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Instructions.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -126,26 +124,28 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
   return true;
 }
 
-// FindCopyInsertPoint - Find a safe place in MBB to insert a copy from SrcReg.
-// This needs to be after any def or uses of SrcReg, but before any subsequent
-// point where control flow might jump out of the basic block.
+// FindCopyInsertPoint - Find a safe place in MBB to insert a copy from SrcReg
+// when following the CFG edge to SuccMBB. This needs to be after any def of
+// SrcReg, but before any subsequent point where control flow might jump out of
+// the basic block.
 MachineBasicBlock::iterator
 llvm::PHIElimination::FindCopyInsertPoint(MachineBasicBlock &MBB,
+                                          MachineBasicBlock &SuccMBB,
                                           unsigned SrcReg) {
   // Handle the trivial case trivially.
   if (MBB.empty())
     return MBB.begin();
 
-  // If this basic block does not contain an invoke, then control flow always
-  // reaches the end of it, so place the copy there.  The logic below works in
-  // this case too, but is more expensive.
-  if (!isa<InvokeInst>(MBB.getBasicBlock()->getTerminator()))
+  // Usually, we just want to insert the copy before the first terminator
+  // instruction. However, for the edge going to a landing pad, we must insert
+  // the copy before the call/invoke instruction.
+  if (!SuccMBB.isLandingPad())
     return MBB.getFirstTerminator();
 
-  // Discover any definition/uses in this basic block.
+  // Discover any definitions in this basic block.
   SmallPtrSet<MachineInstr*, 8> DefUsesInMBB;
-  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
-       RE = MRI->reg_end(); RI != RE; ++RI) {
+  for (MachineRegisterInfo::def_iterator RI = MRI->def_begin(SrcReg),
+         RE = MRI->def_end(); RI != RE; ++RI) {
     MachineInstr *DefUseMI = &*RI;
     if (DefUseMI->getParent() == &MBB)
       DefUsesInMBB.insert(DefUseMI);
@@ -153,14 +153,14 @@ llvm::PHIElimination::FindCopyInsertPoint(MachineBasicBlock &MBB,
 
   MachineBasicBlock::iterator InsertPoint;
   if (DefUsesInMBB.empty()) {
-    // No def/uses.  Insert the copy at the start of the basic block.
+    // No defs.  Insert the copy at the start of the basic block.
     InsertPoint = MBB.begin();
   } else if (DefUsesInMBB.size() == 1) {
-    // Insert the copy immediately after the definition/use.
+    // Insert the copy immediately after the def.
     InsertPoint = *DefUsesInMBB.begin();
     ++InsertPoint;
   } else {
-    // Insert the copy immediately after the last definition/use.
+    // Insert the copy immediately after the last def.
     InsertPoint = MBB.end();
     while (!DefUsesInMBB.count(&*--InsertPoint)) {}
     ++InsertPoint;
@@ -272,7 +272,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
     // Find a safe location to insert the copy, this may be the first terminator
     // in the block (or end()).
-    MachineBasicBlock::iterator InsertPos = FindCopyInsertPoint(opBlock, SrcReg);
+    MachineBasicBlock::iterator InsertPos =
+      FindCopyInsertPoint(opBlock, MBB, SrcReg);
 
     // Insert the copy.
     TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC);
@@ -427,21 +428,8 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   assert(A && B && "Missing MBB end point");
   ++NumSplits;
 
-  BasicBlock *ABB = const_cast<BasicBlock*>(A->getBasicBlock());
-  BasicBlock *BBB = const_cast<BasicBlock*>(B->getBasicBlock());
-  assert(ABB && BBB && "End points must have a basic block");
-  BasicBlock *BB = BasicBlock::Create(BBB->getContext(),
-                                      ABB->getName() + "." + BBB->getName() +
-                                      "_phi_edge");
-  Function *F = ABB->getParent();
-  F->getBasicBlockList().insert(F->end(), BB);
-
-  BranchInst::Create(BBB, BB);
-  // We could do more here to produce correct IR, compare
-  // llvm::SplitCriticalEdge
-
   MachineFunction *MF = A->getParent();
-  MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock(BB);
+  MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
   MF->push_back(NMBB);
   DEBUG(errs() << "PHIElimination splitting critical edge:"
         " BB#" << A->getNumber()
