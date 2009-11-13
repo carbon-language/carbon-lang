@@ -729,7 +729,7 @@ static void printStringChar(formatted_raw_ostream &O, unsigned char C) {
 /// Special characters are emitted properly.
 /// \literal (Eg. '\t') \endliteral
 void AsmPrinter::EmitString(const std::string &String) const {
-  EmitString(String.c_str(), String.size());
+  EmitString(String.data(), String.size());
 }
 
 void AsmPrinter::EmitString(const char *String, unsigned Size) const {

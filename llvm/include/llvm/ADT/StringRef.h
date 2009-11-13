@@ -56,7 +56,7 @@ namespace llvm {
 
     /// Construct a string ref from an std::string.
     /*implicit*/ StringRef(const std::string &Str)
-      : Data(Str.c_str()), Length(Str.length()) {}
+      : Data(Str.data()), Length(Str.length()) {}
 
     /// @}
     /// @name Iterators
