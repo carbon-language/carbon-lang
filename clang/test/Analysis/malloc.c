@@ -1,5 +1,7 @@
 // RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-experimental-checks -analyzer-store=region -verify %s
-#include <stdlib.h>
+typedef long unsigned int size_t;
+void *malloc(size_t);
+void free(void *);
 
 void f1() {
   int *p = malloc(10);
