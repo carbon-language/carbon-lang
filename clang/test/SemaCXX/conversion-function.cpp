@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s 
+// RUN: clang-cc -fsyntax-only -verify %s
 class X { 
 public:
   operator bool();
@@ -92,4 +92,32 @@ void f(Yb& a) {
   int i = a; // OK. calls XB::operator int();
   char ch = a;  // OK. calls Yb::operator char();
 }
+
+// Test conversion + copy construction.
+class AutoPtrRef { };
+
+class AutoPtr {
+  // FIXME: Using 'unavailable' since we do not have access control yet.
+  // FIXME: The error message isn't so good.
+  AutoPtr(AutoPtr &) __attribute__((unavailable));
+  
+public:
+  AutoPtr();
+  AutoPtr(AutoPtrRef);
+  
+  operator AutoPtrRef();
+};
+
+AutoPtr make_auto_ptr();
+
+AutoPtr test_auto_ptr(bool Cond) {
+  AutoPtr p1( make_auto_ptr() );
+  
+  AutoPtr p;
+  if (Cond)
+    return p; // expected-error{{incompatible type returning}}
+  
+  return AutoPtr();
+}
+
 

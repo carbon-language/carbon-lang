@@ -1399,6 +1399,13 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
       //   functions are all the converting constructors (12.3.1) of
       //   that class. The argument list is the expression-list within
       //   the parentheses of the initializer.
+      bool SuppressUserConversions = !UserCast;
+      if (Context.hasSameUnqualifiedType(ToType, From->getType()) ||
+          IsDerivedFrom(From->getType(), ToType)) {
+        SuppressUserConversions = false;
+        AllowConversionFunctions = false;
+      }
+          
       DeclarationName ConstructorName
         = Context.DeclarationNames.getCXXConstructorName(
                           Context.getCanonicalType(ToType).getUnqualifiedType());
@@ -1420,15 +1427,13 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
             Constructor->isConvertingConstructor(AllowExplicit)) {
           if (ConstructorTmpl)
             AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0, &From,
-                                         1, CandidateSet,
-                                         /*SuppressUserConversions=*/!UserCast,
-                                         ForceRValue);
+                                         1, CandidateSet, 
+                                         SuppressUserConversions, ForceRValue);
           else
             // Allow one user-defined conversion when user specifies a
             // From->ToType conversion via an static cast (c-style, etc).
             AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
-                                 /*SuppressUserConversions=*/!UserCast, 
-                                 ForceRValue);
+                                 SuppressUserConversions, ForceRValue);
         }
       }
     }
