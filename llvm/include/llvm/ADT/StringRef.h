@@ -15,15 +15,9 @@
 #include <cstring>
 #include <string>
 
-namespace std {
- template<typename _Tp>
- class allocator;
-
- template<typename _Tp, typename _Alloc>
- class vector;
-}
-
 namespace llvm {
+  template<typename T>
+  class SmallVectorImpl;
 
   /// StringRef - Represent a constant reference to a string, i.e. a character
   /// array and a length, which need not be null terminated.
@@ -337,8 +331,8 @@ namespace llvm {
     /// \param Separator - The string to split on.
     /// \param MaxSplit - The maximum number of times the string is split.
     /// \parm KeepEmpty - True if empty substring should be added.
-    void split(std::vector<StringRef, std::allocator<StringRef> > &A,
-               StringRef Separator, unsigned MaxSplit = -1,
+    void split(SmallVectorImpl<StringRef> &A,
+               StringRef Separator, int MaxSplit = -1,
                bool KeepEmpty = true) const;
 
     /// rsplit - Split into two substrings around the last occurence of a

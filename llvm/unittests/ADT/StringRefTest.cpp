@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -111,8 +112,8 @@ TEST(StringRefTest, Split) {
 }
 
 TEST(StringRefTest, Split2) {
-  std::vector<StringRef> parts;
-  std::vector<StringRef> expected;
+  SmallVector<StringRef, 5> parts;
+  SmallVector<StringRef, 5> expected;
 
   expected.push_back("ab"); expected.push_back("c");
   StringRef(",ab,,c,").split(parts, ",", -1, false);

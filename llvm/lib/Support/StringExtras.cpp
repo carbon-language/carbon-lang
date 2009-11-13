@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include <cstring>
 using namespace llvm;
 
@@ -57,12 +58,12 @@ void llvm::SplitString(const std::string &Source,
   }
 }
 
-void llvm::StringRef::split(std::vector<StringRef> &A,
-                            StringRef Separators, unsigned MaxSplit,
+void llvm::StringRef::split(SmallVectorImpl<StringRef> &A,
+                            StringRef Separators, int MaxSplit,
                             bool KeepEmpty) const {
   StringRef rest = *this;
 
-  for (unsigned splits = 0;
+  for (int splits = 0;
        rest.size() != 0 && (MaxSplit < 0 || splits < MaxSplit);
        ++splits) {
     std::pair<llvm::StringRef, llvm::StringRef> p = rest.split(Separators);
