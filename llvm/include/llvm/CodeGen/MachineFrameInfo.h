@@ -389,9 +389,6 @@ public:
     Objects.push_back(StackObject(Size, Alignment, 0, false, isSS));
     int Index = (int)Objects.size()-NumFixedObjects-1;
     assert(Index >= 0 && "Bad frame index!");
-    if (SpillObjects.size() <= static_cast<unsigned>(Index))
-      SpillObjects.resize(Index+1);
-    SpillObjects[Index] = false;
     return Index;
   }
 
@@ -402,9 +399,6 @@ public:
   int CreateSpillStackObject(uint64_t Size, unsigned Alignment) {
     CreateStackObject(Size, Alignment, true);
     int Index = (int)Objects.size()-NumFixedObjects-1;
-    if (SpillObjects.size() <= static_cast<unsigned>(Index))
-      SpillObjects.resize(Index+1);
-    SpillObjects[Index] = true;
     return Index;
   }
 
@@ -424,16 +418,6 @@ public:
     HasVarSizedObjects = true;
     Objects.push_back(StackObject(0, 1, 0, false, false));
     return (int)Objects.size()-NumFixedObjects-1;
-  }
-
-  /// isSpillObject - Return whether the index refers to a spill slot.
-  ///
-  bool isSpillObject(int Index) const {
-    // Negative indices can't be spill slots.
-    if (Index < 0) return false;
-    assert(static_cast<unsigned>(Index) < SpillObjects.size() &&
-           "Invalid frame index!");
-    return SpillObjects[Index];
   }
 
   /// getCalleeSavedInfo - Returns a reference to call saved info vector for the
