@@ -232,6 +232,10 @@ public:
   ///
   void dump() const;
 
+  /// verify - Run the current MachineFunction through the machine code
+  /// verifier, useful for debugger use.
+  void verify() const;
+
   // Provide accessors for the MachineBasicBlock list...
   typedef BasicBlockListType::iterator iterator;
   typedef BasicBlockListType::const_iterator const_iterator;

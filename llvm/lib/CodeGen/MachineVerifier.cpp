@@ -175,6 +175,10 @@ FunctionPass *llvm::createMachineVerifierPass(bool allowPhysDoubleDefs) {
   return new MachineVerifier(allowPhysDoubleDefs);
 }
 
+void MachineFunction::verify() const {
+  MachineVerifier().runOnMachineFunction(const_cast<MachineFunction&>(*this));
+}
+
 bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   raw_ostream *OutFile = 0;
   if (OutFileName) {
