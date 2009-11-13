@@ -1247,7 +1247,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
     if (Deduced[I].isNull()) {
       Info.Param = makeTemplateParameter(
-                            const_cast<NamedDecl *>(TemplateParams->getParam(I)));
+                          const_cast<NamedDecl *>(TemplateParams->getParam(I)));
       return TDK_Incomplete;
     }
 

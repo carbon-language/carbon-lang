@@ -707,23 +707,23 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
   //   if its first parameter is of type X&, const X&, volatile X& or
   //   const volatile X&, and either there are no other parameters
   //   or else all other parameters have default arguments (8.3.6).
+  //
+  // Note that we also test cv 'X' as a copy constructor, even though it is
+  // ill-formed, because this helps enforce C++ [class.copy]p3.
   if ((getNumParams() < 1) ||
       (getNumParams() > 1 && !getParamDecl(1)->hasDefaultArg()) ||
-      (getPrimaryTemplate() != 0) ||
       (getDescribedFunctionTemplate() != 0))
     return false;
 
   const ParmVarDecl *Param = getParamDecl(0);
 
   // Do we have a reference type? Rvalue references don't count.
-  const LValueReferenceType *ParamRefType =
-    Param->getType()->getAs<LValueReferenceType>();
-  if (!ParamRefType)
-    return false;
+  CanQualType PointeeType = Context.getCanonicalType(Param->getType());
+  if (CanQual<LValueReferenceType> ParamRefType =
+                                     PointeeType->getAs<LValueReferenceType>())
+    PointeeType = ParamRefType->getPointeeType();
 
-  // Is it a reference to our class type?
-  CanQualType PointeeType
-    = Context.getCanonicalType(ParamRefType->getPointeeType());
+  // Do we have our class type?
   CanQualType ClassTy 
     = Context.getCanonicalType(Context.getTagDeclType(getParent()));
   if (PointeeType.getUnqualifiedType() != ClassTy)

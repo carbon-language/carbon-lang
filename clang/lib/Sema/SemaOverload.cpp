@@ -2237,7 +2237,9 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     // argument doesn't participate in overload resolution.
   }
 
-  if (!CandidateSet.isNewCandidate(Function))
+  // FIXME: It would be nice if it were safe to keep invalid methods in the
+  // overload set (but it isn't due to broken copy constructors).
+  if (!CandidateSet.isNewCandidate(Function) || Function->isInvalidDecl())
     return;
     
   // Add this candidate
