@@ -50,7 +50,7 @@ TODO: File Manager Speedup:
 
 //===---------------------------------------------------------------------===//
 // Specifying targets:  -triple and -arch
-===---------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 The clang supports "-triple" and "-arch" options. At most one -triple and one
 -arch option may be specified.  Both are optional.
