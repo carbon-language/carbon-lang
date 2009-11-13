@@ -426,24 +426,12 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
   case DumpTokens:
   case RunPreprocessorOnly:
   case ParseNoop:
-    break; // No setup.
-
   case GeneratePTH:
-    if (FEOpts.OutputFile.empty() || FEOpts.OutputFile == "-") {
-      // FIXME: Don't fail this way.
-      // FIXME: Verify that we can actually seek in the given file.
-      llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
-      ::exit(1);
-    }
-    OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-    break;
-
   case PrintPreprocessedInput:
   case ParsePrintCallbacks:
   case RewriteMacros:
   case RewriteTest:
-    OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
-    break;
+    break; // No setup.
   }
 
   // Check if we want a fix-it rewriter.
@@ -531,6 +519,13 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     }
 
     case GeneratePTH:
+      if (FEOpts.OutputFile.empty() || FEOpts.OutputFile == "-") {
+        // FIXME: Don't fail this way.
+        // FIXME: Verify that we can actually seek in the given file.
+        llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
+        ::exit(1);
+      }
+      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
       CacheTokens(PP, static_cast<llvm::raw_fd_ostream*>(OS.get()));
       break;
 
@@ -539,18 +534,22 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
       break;
 
     case ParsePrintCallbacks:
+      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
       ParseFile(PP, CreatePrintParserActionsAction(PP, OS.get()));
       break;
 
     case PrintPreprocessedInput:
+      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
       DoPrintPreprocessedInput(PP, OS.get(), CI.getPreprocessorOutputOpts());
       break;
 
     case RewriteMacros:
+      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
       RewriteMacrosInInput(PP, OS.get());
       break;
 
     case RewriteTest:
+      OS.reset(ComputeOutFile(CI.getFrontendOpts(), InFile, 0, true, OutPath));
       DoRewriteTest(PP, OS.get());
       break;
 
