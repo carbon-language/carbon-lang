@@ -284,12 +284,15 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
             llvm::Value *NumElementsPtr =
               Builder.CreateConstInBoundsGEP1_64(AllocatedObjectPtr, 
                                                  CookieOffset);
+            NumElementsPtr = Builder.CreateBitCast(NumElementsPtr,
+                                          ConvertType(SizeTy)->getPointerTo());
             
-            NumElementsPtr =
-              Builder.CreateBitCast(NumElementsPtr,
-                            llvm::Type::getInt64Ty(VMContext)->getPointerTo());
             llvm::Value *NumElements = 
               Builder.CreateLoad(NumElementsPtr);
+            NumElements = 
+              Builder.CreateIntCast(NumElements, 
+                                    llvm::Type::getInt64Ty(VMContext), false, 
+                                    "count.tmp");
             assert (!Dtor->isVirtual() && "delete [] with virtual dtors NYI");
             EmitCXXAggrDestructorCall(Dtor, NumElements, Ptr);
             Ptr = AllocatedObjectPtr;
