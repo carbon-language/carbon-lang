@@ -18,6 +18,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
@@ -305,9 +306,11 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   // FIXME: temporary hack: hard-coded paths.
   llvm::StringRef CIncludeDirs(C_INCLUDE_DIRS);
   if (CIncludeDirs != "") {
-    std::vector<std::string> dirs;
-    llvm::SplitString(CIncludeDirs, dirs, ":");
-    for (std::vector<std::string>::iterator i = dirs.begin(); i != dirs.end(); ++i)
+    llvm::SmallVector<llvm::StringRef, 5> dirs;
+    CIncludeDirs.split(dirs, ":");
+    for (llvm::SmallVectorImpl<llvm::StringRef>::iterator i = dirs.begin();
+         i != dirs.end();
+         ++i) 
       AddPath(*i, System, false, false, false);
     return;
   }
