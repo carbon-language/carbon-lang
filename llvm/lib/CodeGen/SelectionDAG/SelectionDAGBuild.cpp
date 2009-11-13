@@ -4349,7 +4349,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 /// TargetLowering::IsEligibleForTailCallOptimization.
 ///
 static bool
-isInTailCallPosition(const Instruction *I, Attributes RetAttr,
+isInTailCallPosition(const Instruction *I, Attributes CalleeRetAttr,
                      const TargetLowering &TLI) {
   const BasicBlock *ExitBB = I->getParent();
   const TerminatorInst *Term = ExitBB->getTerminator();
@@ -4377,8 +4377,9 @@ isInTailCallPosition(const Instruction *I, Attributes RetAttr,
   if (!Ret || Ret->getNumOperands() == 0) return true;
 
   // Conservatively require the attributes of the call to match those of
-  // the return.
-  if (F->getAttributes().getRetAttributes() != RetAttr)
+  // the return. Ignore noalias because it doesn't affect the call sequence.
+  unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
+  if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
     return false;
 
   // Otherwise, make sure the unmodified return value of I is the return value.
