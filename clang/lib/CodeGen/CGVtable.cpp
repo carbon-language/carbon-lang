@@ -29,6 +29,9 @@ private:
   llvm::Type *Ptr8Ty;
   /// Class - The most derived class that this vtable is being built for.
   const CXXRecordDecl *Class;
+  /// LayoutClass - The most derived class used for virtual base layout
+  /// information.
+  const CXXRecordDecl *LayoutClass;
   /// BLayout - Layout for the most derived class that this vtable is being
   /// built for.
   const ASTRecordLayout &BLayout;
@@ -72,8 +75,10 @@ private:
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth,
                 const CXXRecordDecl *c,
+                const CXXRecordDecl *l,
                 CodeGenModule &cgm)
-    : methods(meth), Class(c), BLayout(cgm.getContext().getASTRecordLayout(c)),
+    : methods(meth), Class(c), LayoutClass(l),
+      BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), AddressPoints(*new llvm::DenseMap<CtorVtable_t, int64_t>),
       Extern(true),
@@ -492,13 +497,10 @@ public:
       insertVCalls(VCallInsertionPoint);
     }
     
-    if (MorallyVirtual) {
-      D1(printf("XXX address point for %s in %s at offset %d is %d\n",
-                RD->getNameAsCString(), Class->getNameAsCString(),
-                (int)Offset, (int)AddressPoint));
-      AddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
-      
-    }
+    D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
+              RD->getNameAsCString(), Class->getNameAsCString(),
+              LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
+    AddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
 
     if (alloc) {
       delete Path;
@@ -667,7 +669,7 @@ int64_t CGVtableInfo::getMethodVtableIndex(const CXXMethodDecl *MD) {
   std::vector<llvm::Constant *> methods;
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
-  VtableBuilder b(methods, RD, CGM);
+  VtableBuilder b(methods, RD, RD, CGM);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -692,7 +694,7 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   std::vector<llvm::Constant *> methods;
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
-  VtableBuilder b(methods, RD, CGM);
+  VtableBuilder b(methods, RD, RD, CGM);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -727,7 +729,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t AddressPoint;
 
-  VtableBuilder b(methods, RD, *this);
+  VtableBuilder b(methods, RD, LayoutClass, *this);
 
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   // First comes the vtables for all the non-virtual bases...
@@ -736,8 +738,11 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   // then the vtables for all the virtual bases.
   b.GenerateVtableForVBases(RD);
 
-  if (LayoutClass == RD)
-    AddressPoints[RD] = b.getAddressPoints();
+  CodeGenModule::AddrMap_t *&ref = AddressPoints[LayoutClass];
+  if (ref == 0)
+    ref = new CodeGenModule::AddrMap_t;
+    
+  (*ref)[RD] = b.getAddressPoints();
 
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
@@ -766,22 +771,25 @@ class VTTBuilder {
   /// BLayout - Layout for the most derived class that this vtable is being
   /// built for.
   const ASTRecordLayout &BLayout;
+  CodeGenModule::AddrMap_t &AddressPoints;
   // vtbl - A pointer to the vtable for Class.
   llvm::Constant *ClassVtbl;
   llvm::LLVMContext &VMContext;
 
   /// BuildVtablePtr - Build up a referene to the given secondary vtable
-  llvm::Constant *BuildVtablePtr(llvm::Constant *vtbl, const CXXRecordDecl *RD,
+  llvm::Constant *BuildVtablePtr(llvm::Constant *vtbl,
+                                 const CXXRecordDecl *VtblClass,
+                                 const CXXRecordDecl *RD,
                                  uint64_t Offset) {
     int64_t AddressPoint;
-    AddressPoint = (*CGM.AddressPoints[Class])[std::make_pair(RD, Offset)];
+    AddressPoint = (*AddressPoints[VtblClass])[std::make_pair(RD, Offset)];    
     // FIXME: We can never have 0 address point.  Do this for now so gepping
     // retains the same structure.
     if (AddressPoint == 0)
       AddressPoint = 1;
-    D1(printf("XXX address point for %s in %s at offset %d was %d\n",
-              RD->getNameAsCString(), Class->getNameAsCString(),
-              (int)Offset, (int)AddressPoint));
+    D1(printf("XXX address point for %s in %s layout %s at offset %d was %d\n",
+              RD->getNameAsCString(), VtblClass->getNameAsCString(),
+              Class->getNameAsCString(), (int)Offset, (int)AddressPoint));
     uint32_t LLVMPointerWidth = CGM.getContext().Target.getPointerWidth(0);
     llvm::Constant *init;
     init = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
@@ -793,7 +801,8 @@ class VTTBuilder {
   /// Secondary - Add the secondary vtable pointers to Inits.  Offset is the
   /// current offset in bits to the object we're working on.
   void Secondary(const CXXRecordDecl *RD, llvm::Constant *vtbl,
-                 uint64_t Offset=0, bool MorallyVirtual=false) {
+                 const CXXRecordDecl *VtblClass, uint64_t Offset=0,
+                 bool MorallyVirtual=false) {
     if (RD->getNumVBases() == 0 && ! MorallyVirtual)
       return;
 
@@ -814,19 +823,21 @@ class VTTBuilder {
       } else
         BaseOffset = BLayout.getVBaseClassOffset(Base);
       llvm::Constant *subvtbl = vtbl;
+      const CXXRecordDecl *subVtblClass = VtblClass;
       if ((Base->getNumVBases() || BaseMorallyVirtual)
           && !NonVirtualPrimaryBase) {
         // FIXME: Slightly too many of these for __ZTT8test8_B2
         llvm::Constant *init;
         if (BaseMorallyVirtual)
-          init = BuildVtablePtr(vtbl, RD, Offset);
+          init = BuildVtablePtr(vtbl, VtblClass, RD, Offset);
         else {
           init = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset);
           subvtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
+          subVtblClass = Base;
         }
         Inits.push_back(init);
       }
-      Secondary(Base, subvtbl, BaseOffset, BaseMorallyVirtual);
+      Secondary(Base, subvtbl, subVtblClass, BaseOffset, BaseMorallyVirtual);
     }
   }
 
@@ -837,11 +848,16 @@ class VTTBuilder {
       return;
 
     llvm::Constant *init;
+    const CXXRecordDecl *VtblClass;
+
     // First comes the primary virtual table pointer...
-    if (MorallyVirtual)
-      init = BuildVtablePtr(ClassVtbl, RD, Offset);
-    else
+    if (MorallyVirtual) {
+      init = BuildVtablePtr(ClassVtbl, Class, RD, Offset);
+      VtblClass = Class;
+    } else {
       init = CGM.getVtableInfo().getCtorVtable(Class, RD, Offset);
+      VtblClass = RD;
+    }
     llvm::Constant *vtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
     Inits.push_back(init);
 
@@ -849,7 +865,7 @@ class VTTBuilder {
     SecondaryVTTs(RD, Offset, MorallyVirtual);
 
     // and last the secondary vtable pointers.
-    Secondary(RD, vtbl, Offset, MorallyVirtual);
+    Secondary(RD, vtbl, VtblClass, Offset, MorallyVirtual);
   }
 
   /// SecondaryVTTs - Add the secondary VTTs to Inits.  The secondary VTTs are
@@ -889,6 +905,7 @@ public:
              CodeGenModule &cgm)
     : Inits(inits), Class(c), CGM(cgm),
       BLayout(cgm.getContext().getASTRecordLayout(c)),
+      AddressPoints(*cgm.AddressPoints[c]),
       VMContext(cgm.getModule().getContext()) {
     
     // First comes the primary virtual table pointer for the complete class...
@@ -900,7 +917,7 @@ public:
     SecondaryVTTs(Class);
 
     // then the secondary vtable pointers...
-    Secondary(Class, ClassVtbl);
+    Secondary(Class, ClassVtbl, Class);
 
     // and last, the virtual VTTs.
     VirtualVTTs(Class);
