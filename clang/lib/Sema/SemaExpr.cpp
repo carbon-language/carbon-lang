@@ -2653,7 +2653,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
       if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
         return true;
       
-      Arg = MaybeBindToTemporary(Arg).takeAs<Expr>();
+      if (!ProtoArgType->isReferenceType())
+        Arg = MaybeBindToTemporary(Arg).takeAs<Expr>();
     } else {
       ParmVarDecl *Param = FDecl->getParamDecl(i);
 

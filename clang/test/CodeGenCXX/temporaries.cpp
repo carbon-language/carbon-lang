@@ -188,3 +188,17 @@ void f9(H h) {
   // CHECK: call void @_ZN1HD1Ev
   f9(h);
 }
+
+void f10(const H&);
+
+void f11(H h) {
+  // CHECK: call void @_ZN1HC1Ev
+  // CHECK: call void @_Z3f10RK1H
+  // CHECK: call void @_ZN1HD1Ev
+  f10(H());
+  
+  // CHECK: call void @_Z3f10RK1H
+  // CHECK-NOT: call void @_ZN1HD1Ev
+  // CHECK: ret void
+  f10(h);
+}
