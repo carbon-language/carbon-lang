@@ -143,6 +143,11 @@ TEST(StringRefTest, Split2) {
   StringRef(",").split(parts, ",", -1, true);
   EXPECT_TRUE(parts == expected);
 
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back("b");
+  StringRef("a,b").split(parts, ",", -1, true);
+  EXPECT_TRUE(parts == expected);
+
   // Test MaxSplit
   expected.clear(); parts.clear();
   expected.push_back("a,,b,c");

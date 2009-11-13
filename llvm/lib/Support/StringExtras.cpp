@@ -63,8 +63,10 @@ void llvm::StringRef::split(SmallVectorImpl<StringRef> &A,
                             bool KeepEmpty) const {
   StringRef rest = *this;
 
+  // rest.data() is used to distinguish cases like "a," that splits into
+  // "a" + "" and "a" that splits into "a" + 0.
   for (int splits = 0;
-       rest.size() != 0 && (MaxSplit < 0 || splits < MaxSplit);
+       rest.data() != NULL && (MaxSplit < 0 || splits < MaxSplit);
        ++splits) {
     std::pair<llvm::StringRef, llvm::StringRef> p = rest.split(Separators);
 
@@ -72,7 +74,7 @@ void llvm::StringRef::split(SmallVectorImpl<StringRef> &A,
       A.push_back(p.first);
     rest = p.second;
   }
-
-  if (rest.size() != 0 || KeepEmpty)
+  // If we have a tail left, add it.
+  if (rest.data() != NULL && (rest.size() != 0 || KeepEmpty))
     A.push_back(rest);
 }
