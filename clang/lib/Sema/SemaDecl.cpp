@@ -4020,6 +4020,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
 
   if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
     computeBaseOrMembersToDestroy(Destructor);
+  
+  assert(ExprTemporaries.empty() && "Leftover temporaries in function");
   return D;
 }
 

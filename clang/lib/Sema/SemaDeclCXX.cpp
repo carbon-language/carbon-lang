@@ -1028,6 +1028,10 @@ Sema::MemInitResult
 Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                              unsigned NumArgs, SourceLocation IdLoc,
                              SourceLocation RParenLoc) {
+  // FIXME: CXXBaseOrMemberInitializer should only contain a single 
+  // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+  ExprTemporaries.clear();
+
   // Diagnose value-uses of fields to initialize themselves, e.g.
   //   foo(foo)
   // where foo is not also a parameter to the constructor.
@@ -1098,6 +1102,11 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
       return true;
     Args[0] = NewExp;
   }
+  
+  // FIXME: CXXBaseOrMemberInitializer should only contain a single 
+  // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+  ExprTemporaries.clear();
+  
   // FIXME: Perform direct initialization of the member.
   return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args,
                                                   NumArgs, C, IdLoc, RParenLoc);
@@ -1192,6 +1201,10 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
     }
   }
 
+  // FIXME: CXXBaseOrMemberInitializer should only contain a single 
+  // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+  ExprTemporaries.clear();
+  
   return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args,
                                                   NumArgs, C, IdLoc, RParenLoc);
 }
