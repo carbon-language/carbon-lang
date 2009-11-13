@@ -520,12 +520,14 @@ void RefVal::print(llvm::raw_ostream& Out) const {
 //===----------------------------------------------------------------------===//
 
 typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
-static int RefBIndex = 0;
 
 namespace clang {
   template<>
   struct GRStateTrait<RefBindings> : public GRStatePartialTrait<RefBindings> {
-    static inline void* GDMIndex() { return &RefBIndex; }
+    static void* GDMIndex() {
+      static int RefBIndex = 0;
+      return &RefBIndex;
+    }
   };
 }
 
