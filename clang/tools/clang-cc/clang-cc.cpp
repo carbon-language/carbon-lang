@@ -219,45 +219,6 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
   return P.str();
 }
 
-static Preprocessor *
-CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
-                   const PreprocessorOptions &PPOpts,
-                   const HeaderSearchOptions &HSOpts,
-                   const DependencyOutputOptions &DepOpts,
-                   const TargetInfo &Target, SourceManager &SourceMgr,
-                   FileManager &FileMgr) {
-  // Create a PTH manager if we are using some form of a token cache.
-  PTHManager *PTHMgr = 0;
-  if (!PPOpts.getTokenCache().empty())
-    PTHMgr = PTHManager::Create(PPOpts.getTokenCache(), Diags);
-
-  // FIXME: Don't fail like this.
-  if (Diags.hasErrorOccurred())
-    exit(1);
-
-  // Create the Preprocessor.
-  HeaderSearch *HeaderInfo = new HeaderSearch(FileMgr);
-  Preprocessor *PP = new Preprocessor(Diags, LangInfo, Target,
-                                      SourceMgr, *HeaderInfo, PTHMgr,
-                                      /*OwnsHeaderSearch=*/true);
-
-  // Note that this is different then passing PTHMgr to Preprocessor's ctor.
-  // That argument is used as the IdentifierInfoLookup argument to
-  // IdentifierTable's ctor.
-  if (PTHMgr) {
-    PTHMgr->setPreprocessor(PP);
-    PP->setPTHManager(PTHMgr);
-  }
-
-  InitializePreprocessor(*PP, PPOpts, HSOpts);
-
-  // Handle generating dependencies, if requested.
-  if (!DepOpts.OutputFile.empty())
-    AttachDependencyFileGen(*PP, DepOpts);
-
-  return PP;
-}
-
 /// \brief Buld a new code-completion consumer that prints the results of
 /// code completion to standard output.
 static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S,
@@ -499,9 +460,9 @@ static ExternalASTSource *ReadPCHFile(llvm::StringRef Path,
 }
 
 /// ProcessInputFile - Process a single input file with the specified state.
-///
-static void ProcessInputFile(CompilerInstance &CI, Preprocessor &PP,
-                             const std::string &InFile, ProgActions PA) {
+static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
+                             ProgActions PA) {
+  Preprocessor &PP = CI.getPreprocessor();
   const FrontendOptions &FEOpts = CI.getFrontendOpts();
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
@@ -759,8 +720,8 @@ static void ProcessInputFile(CompilerInstance &CI, Preprocessor &PP,
     OutPath.eraseFromDisk();
 }
 
-/// ProcessInputFile - Process a single AST input file with the specified state.
-///
+/// ProcessASTInputFile - Process a single AST input file with the specified
+/// state.
 static void ProcessASTInputFile(CompilerInstance &CI, const std::string &InFile,
                                 ProgActions PA) {
   std::string Error;
@@ -1006,18 +967,12 @@ int main(int argc, char **argv) {
     if (i)
       Clang.getSourceManager().clearIDTables();
 
-    // Set up the preprocessor with these options.
-    llvm::OwningPtr<Preprocessor>
-      PP(CreatePreprocessor(Clang.getDiagnostics(), Clang.getLangOpts(),
-                            Clang.getPreprocessorOpts(),
-                            Clang.getHeaderSearchOpts(),
-                            Clang.getDependencyOutputOpts(),
-                            Clang.getTarget(), Clang.getSourceManager(),
-                            Clang.getFileManager()));
+    // Create the preprocessor.
+    Clang.createPreprocessor();
 
     // Process the source file.
     Clang.getDiagnostics().getClient()->BeginSourceFile(Clang.getLangOpts());
-    ProcessInputFile(Clang, *PP, InFile, ProgAction);
+    ProcessInputFile(Clang, InFile, ProgAction);
     Clang.getDiagnostics().getClient()->EndSourceFile();
   }
 

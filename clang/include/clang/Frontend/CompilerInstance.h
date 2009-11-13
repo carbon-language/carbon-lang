@@ -12,6 +12,7 @@
 
 #include "clang/Frontend/CompilerInvocation.h"
 #include "llvm/ADT/OwningPtr.h"
+#include <cassert>
 
 namespace llvm {
 class LLVMContext;
@@ -20,6 +21,7 @@ class LLVMContext;
 namespace clang {
 class Diagnostic;
 class DiagnosticClient;
+class Preprocessor;
 class FileManager;
 class SourceManager;
 class TargetInfo;
@@ -65,6 +67,9 @@ class CompilerInstance {
   /// The source manager.
   llvm::OwningPtr<SourceManager> SourceMgr;
 
+  /// The preprocessor.
+  llvm::OwningPtr<Preprocessor> PP;
+
 public:
   /// Create a new compiler instance with the given LLVM context, optionally
   /// taking ownership of it.
@@ -75,7 +80,10 @@ public:
   /// @name LLVM Context
   /// {
 
-  llvm::LLVMContext &getLLVMContext() { return *LLVMContext; }
+  llvm::LLVMContext &getLLVMContext() {
+    assert(LLVMContext && "Compiler instance has no LLVM context!");
+    return *LLVMContext;
+  }
 
   /// setLLVMContext - Replace the current LLVM context and take ownership of
   /// \arg Value.
@@ -163,7 +171,10 @@ public:
   /// @name Diagnostics Engine
   /// {
 
-  Diagnostic &getDiagnostics() const { return *Diagnostics; }
+  Diagnostic &getDiagnostics() const {
+    assert(Diagnostics && "Compiler instance has no diagnostics!");
+    return *Diagnostics;
+  }
 
   /// takeDiagnostics - Remove the current diagnostics engine and give ownership
   /// to the caller.
@@ -189,7 +200,10 @@ public:
   /// @name Target Info
   /// {
 
-  TargetInfo &getTarget() const { return *Target; }
+  TargetInfo &getTarget() const {
+    assert(Target && "Compiler instance has no target!");
+    return *Target;
+  }
 
   /// takeTarget - Remove the current diagnostics engine and give ownership
   /// to the caller.
@@ -203,7 +217,10 @@ public:
   /// @name File Manager
   /// {
 
-  FileManager &getFileManager() const { return *FileMgr; }
+  FileManager &getFileManager() const {
+    assert(FileMgr && "Compiler instance has no file manager!");
+    return *FileMgr;
+  }
 
   /// takeFileManager - Remove the current file manager and give ownership to
   /// the caller.
@@ -217,7 +234,10 @@ public:
   /// @name Source Manager
   /// {
 
-  SourceManager &getSourceManager() const { return *SourceMgr; }
+  SourceManager &getSourceManager() const {
+    assert(SourceMgr && "Compiler instance has no source manager!");
+    return *SourceMgr;
+  }
 
   /// takeSourceManager - Remove the current source manager and give ownership
   /// to the caller.
@@ -228,6 +248,23 @@ public:
   void setSourceManager(SourceManager *Value) { SourceMgr.reset(Value); }
 
   /// }
+  /// @name Preprocessor
+  /// {
+
+  Preprocessor &getPreprocessor() const {
+    assert(PP && "Compiler instance has no preprocessor!");
+    return *PP;
+  }
+
+  /// takePreprocessor - Remove the current preprocessor and give ownership to
+  /// the caller.
+  Preprocessor *takePreprocessor() { return PP.take(); }
+
+  /// setPreprocessor - Replace the current preprocessor; the compiler instance
+  /// takes ownership of \arg Value.
+  void setPreprocessor(Preprocessor *Value) { PP.reset(Value); }
+
+  /// }
   /// @name Construction Utility Methods
   /// {
 
@@ -236,6 +273,23 @@ public:
 
   /// Create the source manager and replace any existing one with it.
   void createSourceManager();
+
+  /// Create the preprocessor, using the invocation, file, and source managers,
+  /// and replace any existing one with it.
+  void createPreprocessor();
+
+  /// Create a Preprocessor object.
+  ///
+  /// Note that this also creates a new HeaderSearch object which will be owned
+  /// by the resulting Preprocessor.
+  ///
+  /// \return The new object on success, or null on failure.
+  static Preprocessor *createPreprocessor(Diagnostic &, const LangOptions &,
+                                          const PreprocessorOptions &,
+                                          const HeaderSearchOptions &,
+                                          const DependencyOutputOptions &,
+                                          const TargetInfo &,
+                                          SourceManager &, FileManager &);
 
   /// }
 };
