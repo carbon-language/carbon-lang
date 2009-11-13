@@ -76,51 +76,6 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Code Completion Options
-//===----------------------------------------------------------------------===//
-
-enum CodeCompletionPrinter {
-  CCP_Debug,
-  CCP_CIndex
-};
-
-static llvm::cl::opt<ParsedSourceLocation>
-CodeCompletionAt("code-completion-at",
-                 llvm::cl::value_desc("file:line:column"),
-              llvm::cl::desc("Dump code-completion information at a location"));
-
-static llvm::cl::opt<CodeCompletionPrinter>
-CodeCompletionPrinter("code-completion-printer",
-                      llvm::cl::desc("Choose output type:"),
-                      llvm::cl::init(CCP_Debug),
-                      llvm::cl::values(
-                        clEnumValN(CCP_Debug, "debug",
-                          "Debug code-completion results"),
-                        clEnumValN(CCP_CIndex, "cindex",
-                          "Code-completion results for the CIndex library"),
-                        clEnumValEnd));
-
-static llvm::cl::opt<bool>
-CodeCompletionWantsMacros("code-completion-macros",
-                 llvm::cl::desc("Include macros in code-completion results"));
-
-/// \brief Buld a new code-completion consumer that prints the results of
-/// code completion to standard output.
-static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S, void *) {
-  switch (CodeCompletionPrinter.getValue()) {
-  case CCP_Debug:
-    return new PrintingCodeCompleteConsumer(S, CodeCompletionWantsMacros,
-                                            llvm::outs());
-
-  case CCP_CIndex:
-    return new CIndexCodeCompleteConsumer(S, CodeCompletionWantsMacros,
-                                          llvm::outs());
-  };
-
-  return 0;
-}
-
-//===----------------------------------------------------------------------===//
 // Frontend Actions
 //===----------------------------------------------------------------------===//
 
@@ -253,7 +208,7 @@ TargetABI("target-abi",
           llvm::cl::desc("Target a particular ABI type"));
 
 //===----------------------------------------------------------------------===//
-// SourceManager initialization.
+// Utility Methods
 //===----------------------------------------------------------------------===//
 
 static bool InitializeSourceManager(Preprocessor &PP,
@@ -286,10 +241,6 @@ static bool InitializeSourceManager(Preprocessor &PP,
 
   return false;
 }
-
-//===----------------------------------------------------------------------===//
-// Preprocessor construction
-//===----------------------------------------------------------------------===//
 
 std::string GetBuiltinIncludePath(const char *Argv0) {
   llvm::sys::Path P =
@@ -347,6 +298,19 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
     AttachDependencyFileGen(*PP, DepOpts);
 
   return PP;
+}
+
+/// \brief Buld a new code-completion consumer that prints the results of
+/// code completion to standard output.
+static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S,
+                                                        void *UserData) {
+  const FrontendOptions &Opts = *(FrontendOptions*)UserData;
+  if (Opts.DebugCodeCompletionPrinter)
+    return new PrintingCodeCompleteConsumer(S, Opts.ShowMacrosInCodeCompletion,
+                                            llvm::outs());
+
+  return new CIndexCodeCompleteConsumer(S, Opts.ShowMacrosInCodeCompletion,
+                                        llvm::outs());
 }
 
 //===----------------------------------------------------------------------===//
@@ -696,22 +660,23 @@ static void ProcessInputFile(const CompilerInvocation &CompOpts,
       return;
 
     CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *) = 0;
-    void *CreateCodeCompleterData = 0;
+    void *CreateCodeCompleterData = (void*) &FEOpts;
 
-    if (!CodeCompletionAt.FileName.empty()) {
+    if (!FEOpts.CodeCompletionAt.FileName.empty()) {
       // Tell the source manager to chop off the given file at a specific
       // line and column.
       if (const FileEntry *Entry
-            = PP.getFileManager().getFile(CodeCompletionAt.FileName)) {
+            = PP.getFileManager().getFile(FEOpts.CodeCompletionAt.FileName)) {
         // Truncate the named file at the given line/column.
-        PP.getSourceManager().truncateFileAt(Entry, CodeCompletionAt.Line,
-                                             CodeCompletionAt.Column);
+        PP.getSourceManager().truncateFileAt(Entry,
+                                             FEOpts.CodeCompletionAt.Line,
+                                             FEOpts.CodeCompletionAt.Column);
 
         // Set up the creation routine for code-completion.
         CreateCodeCompleter = BuildPrintingCodeCompleter;
       } else {
         PP.getDiagnostics().Report(diag::err_fe_invalid_code_complete_file)
-          << CodeCompletionAt.FileName;
+          << FEOpts.CodeCompletionAt.FileName;
       }
     }
 

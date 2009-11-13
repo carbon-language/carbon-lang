@@ -1202,7 +1202,7 @@ void clang_codeComplete(CXIndex CIdx,
   argv.push_back("-Xclang");
   argv.push_back(code_complete_at.c_str());
   argv.push_back("-Xclang");
-  argv.push_back("-code-completion-printer=cindex");
+  argv.push_back("-code-completion-debug-printer=0");
   
   // Add the source file name (FIXME: later, we'll want to build temporary
   // file from the buffer, or just feed the source text via standard input).

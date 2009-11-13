@@ -293,6 +293,20 @@ VerifyDiagnostics("verify",
 
 namespace frontendoptions {
 
+static llvm::cl::opt<ParsedSourceLocation>
+CodeCompletionAt("code-completion-at",
+                 llvm::cl::value_desc("file:line:column"),
+              llvm::cl::desc("Dump code-completion information at a location"));
+
+static llvm::cl::opt<bool>
+CodeCompletionDebugPrinter("code-completion-debug-printer",
+                      llvm::cl::desc("Use the \"debug\" code-completion print"),
+                           llvm::cl::init(true));
+
+static llvm::cl::opt<bool>
+CodeCompletionWantsMacros("code-completion-macros",
+                 llvm::cl::desc("Include macros in code-completion results"));
+
 static llvm::cl::opt<bool>
 DisableFree("disable-free",
            llvm::cl::desc("Disable freeing of memory on exit"),
@@ -758,15 +772,18 @@ void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
 void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   using namespace frontendoptions;
 
+  Opts.CodeCompletionAt = CodeCompletionAt;
+  Opts.DebugCodeCompletionPrinter = CodeCompletionDebugPrinter;
   Opts.DisableFree = DisableFree;
   Opts.EmptyInputOnly = EmptyInputOnly;
   Opts.FixItAll = FixItAll;
   Opts.FixItLocations = FixItAtLocations;
-  Opts.RelocatablePCH = RelocatablePCH;
-  Opts.ShowStats = Stats;
-  Opts.ShowTimers = TimeReport;
   Opts.InputFilenames = InputFilenames;
   Opts.OutputFile = OutputFile;
+  Opts.RelocatablePCH = RelocatablePCH;
+  Opts.ShowMacrosInCodeCompletion = CodeCompletionWantsMacros;
+  Opts.ShowStats = Stats;
+  Opts.ShowTimers = TimeReport;
   Opts.ViewClassInheritance = InheritanceViewCls;
 
   // '-' is the default input if none is given.

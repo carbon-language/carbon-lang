@@ -19,14 +19,23 @@ namespace clang {
 /// FrontendOptions - Options for controlling the behavior of the frontend.
 class FrontendOptions {
 public:
-  unsigned DisableFree : 1; ///< Disable freeing of memory on exit.
-  unsigned EmptyInputOnly : 1; ///< Force input files to be treated as if they
-                               /// were empty, for timing the frontend startup.
-  unsigned FixItAll : 1; ///< Apply FIX-IT advice to the input source files.
-  unsigned RelocatablePCH : 1;   ///< When generating PCH files, instruct the
-                                 /// PCH writer to create relocatable PCH files.
-  unsigned ShowStats : 1; ///< Show frontend performance metrics and statistics.
-  unsigned ShowTimers : 1; ///< Show timers for individual actions.
+  unsigned DebugCodeCompletionPrinter : 1; ///< Use the debug printer for code
+                                           /// completion results.
+  unsigned DisableFree : 1;                ///< Disable memory freeing on exit.
+  unsigned EmptyInputOnly : 1;             ///< Force input files to be treated
+                                           /// as if they were empty, for timing
+                                           /// the frontend startup.
+  unsigned FixItAll : 1;                   ///< Apply FIX-IT advice to the input
+                                           /// source files.
+  unsigned RelocatablePCH : 1;             ///< When generating PCH files,
+                                           /// instruct the PCH writer to create
+                                           /// relocatable PCH files.
+  unsigned ShowMacrosInCodeCompletion : 1; ///< Show macros in code completion
+                                           /// results.
+  unsigned ShowStats : 1;                  ///< Show frontend performance
+                                           /// metrics and statistics.
+  unsigned ShowTimers : 1;                 ///< Show timers for individual
+                                           /// actions.
 
   /// The input files.
   std::vector<std::string> InputFilenames;
@@ -40,12 +49,17 @@ public:
   /// A list of locations to apply fix-its at.
   std::vector<ParsedSourceLocation> FixItLocations;
 
+  /// If given, enable code completion at the provided location.
+  ParsedSourceLocation CodeCompletionAt;
+
 public:
   FrontendOptions() {
+    DebugCodeCompletionPrinter = 0;
     DisableFree = 0;
     EmptyInputOnly = 0;
     FixItAll = 0;
     RelocatablePCH = 0;
+    ShowMacrosInCodeCompletion = 0;
     ShowStats = 0;
     ShowTimers = 0;
   }
