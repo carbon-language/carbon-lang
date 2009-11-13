@@ -467,7 +467,6 @@ namespace llvm {
     LLVMContext& VMContext;
 
     // Cached values for uniquing and faster lookups.
-    const Type *EmptyStructPtr; // "{}*".
     Function *StopPointFn;   // llvm.dbg.stoppoint
     Function *FuncStartFn;   // llvm.dbg.func.start
     Function *RegionStartFn; // llvm.dbg.region.start

@@ -608,9 +608,7 @@ void DIVariable::dump() const {
 DIFactory::DIFactory(Module &m)
   : M(m), VMContext(M.getContext()), StopPointFn(0), FuncStartFn(0),
     RegionStartFn(0), RegionEndFn(0),
-    DeclareFn(0) {
-  EmptyStructPtr = PointerType::getUnqual(StructType::get(VMContext));
-}
+    DeclareFn(0) {}
 
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & LLVMDebugVersionMask) == 0 &&
@@ -1037,10 +1035,7 @@ void DIFactory::InsertRegionEnd(DIDescriptor D, BasicBlock *BB) {
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
-                              Instruction *InsertBefore) {
-  // Cast the storage to a {}* for the call to llvm.dbg.declare.
-  Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertBefore);
-
+                                      Instruction *InsertBefore) {
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -1050,10 +1045,7 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
-                              BasicBlock *InsertAtEnd) {
-  // Cast the storage to a {}* for the call to llvm.dbg.declare.
-  Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertAtEnd);
-
+                                      BasicBlock *InsertAtEnd) {
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
