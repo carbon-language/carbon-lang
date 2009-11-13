@@ -1514,11 +1514,6 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
-  // If we're going to print a global that has GhostLinkage
-  // materialize it now.
-  if (GV->getLinkage() == GlobalValue::GhostLinkage) {
-  }
-
   WriteAsOperandInternal(Out, GV, &TypePrinter, &Machine);
   Out << " = ";
 
