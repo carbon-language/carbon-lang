@@ -44,9 +44,11 @@ namespace llvm {
   class Instruction;
   class LLVMContext;
 
+  /// DIDescriptor - A thin wraper around MDNode to access encoded debug info. This should not
+  /// be stored in a container, because underly MDNode may change in certain situations.
   class DIDescriptor {
   protected:
-    TrackingVH<MDNode> DbgNode;
+    MDNode  *DbgNode;
 
     /// DIDescriptor constructor.  If the specified node is non-null, check
     /// to make sure that the tag in the descriptor matches 'RequiredTag'.  If
