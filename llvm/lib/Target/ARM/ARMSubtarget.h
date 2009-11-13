@@ -130,7 +130,7 @@ protected:
   /// enablePostRAScheduler - True at 'More' optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtarget::AntiDepBreakMode& Mode,
-                             ExcludedRCVector& ExcludedRCs) const;
+                             RegClassVector& CriticalPathRCs) const;
 
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.

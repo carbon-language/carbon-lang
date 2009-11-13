@@ -460,8 +460,8 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
 bool X86Subtarget::enablePostRAScheduler(
             CodeGenOpt::Level OptLevel,
             TargetSubtarget::AntiDepBreakMode& Mode,
-            ExcludedRCVector& ExcludedRCs) const {
+            RegClassVector& CriticalPathRCs) const {
   Mode = TargetSubtarget::ANTIDEP_CRITICAL;
-  ExcludedRCs.clear();
+  CriticalPathRCs.clear();
   return OptLevel >= CodeGenOpt::Default;
 }

@@ -25,9 +25,9 @@ TargetSubtarget::~TargetSubtarget() {}
 bool TargetSubtarget::enablePostRAScheduler(
           CodeGenOpt::Level OptLevel,
           AntiDepBreakMode& Mode,
-          ExcludedRCVector& ExcludedRCs) const {
+          RegClassVector& CriticalPathRCs) const {
   Mode = ANTIDEP_NONE;
-  ExcludedRCs.clear();
+  CriticalPathRCs.clear();
   return false;
 }
 

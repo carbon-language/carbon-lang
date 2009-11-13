@@ -86,8 +86,11 @@ namespace llvm {
     unsigned GetGroup(unsigned Reg);
     
     // GetGroupRegs - Return a vector of the registers belonging to a
-    // group.
-    void GetGroupRegs(unsigned Group, std::vector<unsigned> &Regs);
+    // group. If RegRefs is non-NULL then only included referenced registers.
+    void GetGroupRegs(
+       unsigned Group,
+       std::vector<unsigned> &Regs,
+       std::multimap<unsigned, AggressiveAntiDepState::RegisterReference> *RegRefs);
 
     // UnionGroups - Union Reg1's and Reg2's groups to form a new
     // group. Return the index of the GroupNode representing the
@@ -113,7 +116,11 @@ namespace llvm {
     /// AllocatableSet - The set of allocatable registers.
     /// We'll be ignoring anti-dependencies on non-allocatable registers,
     /// because they may not be safe to break.
-    BitVector AllocatableSet;
+    const BitVector AllocatableSet;
+
+    /// CriticalPathSet - The set of registers that should only be
+    /// renamed if they are on the critical path.
+    BitVector CriticalPathSet;
 
     /// State - The state used to identify and rename anti-dependence
     /// registers.
@@ -126,7 +133,7 @@ namespace llvm {
 
   public:
     AggressiveAntiDepBreaker(MachineFunction& MFi, 
-                             TargetSubtarget::ExcludedRCVector& ExcludedRCs);
+                             TargetSubtarget::RegClassVector& CriticalPathRCs);
     ~AggressiveAntiDepBreaker();
     
     /// GetMaxTrials - As anti-dependencies are broken, additional

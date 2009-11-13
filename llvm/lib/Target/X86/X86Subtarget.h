@@ -220,7 +220,7 @@ public:
   /// at 'More' optimization level.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtarget::AntiDepBreakMode& Mode,
-                             ExcludedRCVector& ExcludedRCs) const;
+                             RegClassVector& CriticalPathRCs) const;
 };
 
 } // End llvm namespace

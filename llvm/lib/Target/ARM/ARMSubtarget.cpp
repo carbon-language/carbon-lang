@@ -164,9 +164,9 @@ ARMSubtarget::GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) const {
 bool ARMSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtarget::AntiDepBreakMode& Mode,
-           ExcludedRCVector& ExcludedRCs) const {
+           RegClassVector& CriticalPathRCs) const {
   Mode = TargetSubtarget::ANTIDEP_CRITICAL;
-  ExcludedRCs.clear();
-  ExcludedRCs.push_back(&ARM::GPRRegClass);
+  CriticalPathRCs.clear();
+  CriticalPathRCs.push_back(&ARM::GPRRegClass);
   return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
 }
