@@ -881,6 +881,17 @@ struct test19_D : virtual test19_B4 {
 // CHECK-LP64-NEXT: .quad __ZN9test19_B46foB3B4Ev
 // CHECK-LP64-NEXT: .quad __ZN9test19_B43fB4Ev
 
+// CHECK-LP64:     __ZTT8test19_D:
+// CHECK-LP64-NEXT: .quad   (__ZTV8test19_D) + 144
+// CHECK-LP64-NEXT: .quad   (__ZTV8test19_D) + 144
+// CHECK-LP64-NEXT .quad   (__ZTV8test19_D) + 144
+// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B4) + 136
+// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B3) + 104
+// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B3) + 104
+// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B4) + 136
+// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B2) + 88
+// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B1) + 24
+
 
 class test20_V {
   virtual void foo1();
@@ -907,6 +918,16 @@ class test20_D : public test20_B, public test20_B1 {
 // CHECK-LP64-NEXT: .quad 18446744073709551608
 // CHECK-LP64-NEXT: .quad __ZTI8test20_D
 // CHECK-LP64-NEXT: .quad __ZN9test20_V14foo2Ev
+
+// CHECK-LP64:     __ZTT8test20_D:
+// CHECK-LP64-NEXT: .quad   (__ZTV8test20_D) + 40
+// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D0_8test20_B) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D0_8test20_B) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D8_9test20_B1) + 32
+// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D8_9test20_B1) + 32
+// CHECK-LP64-NEXT .quad   (__ZTV8test20_D) + 40
+// CHECK-LP64-NEXT .quad   (__ZTV8test20_D) + 80
+// CHECK-LP64-NEXT .quad   (__ZTV8test20_D) + 80
 
 
 class test21_V {
