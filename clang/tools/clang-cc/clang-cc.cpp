@@ -460,27 +460,33 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     }
   }
 
-  const std::string &ImplicitPCHInclude =
-    CI.getPreprocessorOpts().getImplicitPCHInclude();
   if (Consumer) {
     // Create the ASTContext.
     CI.createASTContext();
 
+    // Create the external AST source when using PCH.
+    const std::string &ImplicitPCHInclude =
+      CI.getPreprocessorOpts().getImplicitPCHInclude();
     if (!ImplicitPCHInclude.empty()) {
       CI.createPCHExternalASTSource(ImplicitPCHInclude);
       if (!CI.getASTContext().getExternalSource())
         return;
-    } else {
-      // Initialize builtin info when not using PCH.
-      PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
-                                             PP.getLangOptions().NoBuiltin);
     }
+  }
 
-    // Initialize the main file entry. This needs to be delayed until after PCH
-    // has loaded.
-    if (InitializeSourceManager(PP, CI.getFrontendOpts(), InFile))
-      return;
+  // Initialize builtin info as long as we aren't using an external AST
+  // source.
+  if (!CI.hasASTContext() || !CI.getASTContext().getExternalSource())
+    PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
+                                           PP.getLangOptions().NoBuiltin);
 
+  // Initialize the main file entry. This needs to be delayed until after PCH
+  // has loaded.
+  if (InitializeSourceManager(PP, CI.getFrontendOpts(), InFile))
+    return;
+
+  if (Consumer) {
+    // FIXME: Move the truncation aspect of this into Sema.
     if (!FEOpts.CodeCompletionAt.FileName.empty())
       CI.createCodeCompletionConsumer();
 
@@ -490,15 +496,6 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     ParseAST(PP, Consumer.get(), CI.getASTContext(), FEOpts.ShowStats,
              CompleteTranslationUnit, CompletionConsumer);
   } else {
-    // Initialize builtin info.
-    PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
-                                           PP.getLangOptions().NoBuiltin);
-
-    // Initialize the main file entry. This needs to be delayed until after PCH
-    // has loaded.
-    if (InitializeSourceManager(PP, CI.getFrontendOpts(), InFile))
-      return;
-
     // Run the preprocessor actions.
     llvm::TimeRegion Timer(ClangFrontendTimer);
     switch (PA) {
