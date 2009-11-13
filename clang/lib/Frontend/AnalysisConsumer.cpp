@@ -332,7 +332,9 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr, Decl *
   Eng.RegisterInternalChecks(); // FIXME: Internal checks should just
                                 // automatically register.
   RegisterAppleChecks(Eng, *D);
-
+  
+  if (C.Opts.EnableExperimentalChecks)
+    RegisterExperimentalChecks(Eng);
 
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;

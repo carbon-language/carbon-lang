@@ -67,6 +67,7 @@ public:
   unsigned TrimGraph : 1;
   unsigned VisualizeEGDot : 1;
   unsigned VisualizeEGUbi : 1;
+  unsigned EnableExperimentalChecks : 1;
 
 public:
   AnalyzerOptions() {
@@ -77,6 +78,7 @@ public:
     TrimGraph = 0;
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;
+    EnableExperimentalChecks = 0;
   }
 };
 

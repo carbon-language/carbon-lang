@@ -30,6 +30,7 @@ add_clang_library(clangAnalysis
   GRBlockCounter.cpp
   GRCoreEngine.cpp
   GRExprEngine.cpp
+  GRExprEngineExperimentalChecks.cpp
   GRExprEngineInternalChecks.cpp
   GRState.cpp
   LiveVariables.cpp

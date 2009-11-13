@@ -78,11 +78,15 @@ static llvm::cl::opt<bool>
 AnalyzeAll("analyzer-opt-analyze-headers",
     llvm::cl::desc("Force the static analyzer to analyze "
                    "functions defined in header files"));
-
+  
 static llvm::cl::opt<bool>
 AnalyzerDisplayProgress("analyzer-display-progress",
-          llvm::cl::desc("Emit verbose output about the analyzer's progress."));
+          llvm::cl::desc("Emit verbose output about the analyzer's progress"));
 
+static llvm::cl::opt<bool>
+AnalyzerExperimentalChecks("analyzer-experimental-checks",
+          llvm::cl::desc("Use experimental path-sensitive checks"));
+  
 static llvm::cl::opt<std::string>
 AnalyzeSpecificFunction("analyze-function",
                llvm::cl::desc("Run analysis on specific function"));
@@ -91,13 +95,13 @@ static llvm::cl::opt<bool>
 EagerlyAssume("analyzer-eagerly-assume",
           llvm::cl::init(false),
               llvm::cl::desc("Eagerly assume the truth/falseness of some "
-                             "symbolic constraints."));
+                             "symbolic constraints"));
 
 static llvm::cl::opt<bool>
 PurgeDead("analyzer-purge-dead",
           llvm::cl::init(true),
           llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
-                         " processing a statement."));
+                         " processing a statement"));
 
 static llvm::cl::opt<bool>
 TrimGraph("trim-egraph",
@@ -126,6 +130,7 @@ void clang::InitializeAnalyzerOptions(AnalyzerOptions &Opts) {
   Opts.PurgeDead = PurgeDead;
   Opts.EagerlyAssume = EagerlyAssume;
   Opts.AnalyzeSpecificFunction = AnalyzeSpecificFunction;
+  Opts.EnableExperimentalChecks = AnalyzerExperimentalChecks;
   Opts.TrimGraph = TrimGraph;
 }
 
