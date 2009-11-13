@@ -794,6 +794,10 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   // Initialize frontend options.
   InitializeFrontendOptions(Opts.getFrontendOpts());
 
+  // FIXME: The target information in frontend options should be split out into
+  // TargetOptions, and the target options in codegen options should move there
+  // as well. Then we could properly initialize in layering order.
+
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
   llvm::Triple Triple(Opts.getFrontendOpts().TargetTriple);
