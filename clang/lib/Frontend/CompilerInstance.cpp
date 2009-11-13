@@ -263,3 +263,65 @@ void CompilerInstance::ClearOutputFiles(bool EraseFiles) {
   OutputFiles.clear();
 }
 
+llvm::raw_fd_ostream *
+CompilerInstance::createDefaultOutputFile(bool Binary,
+                                          llvm::StringRef InFile,
+                                          llvm::StringRef Extension) {
+  return createOutputFile(getFrontendOpts().OutputFile, Binary,
+                          InFile, Extension);
+}
+
+llvm::raw_fd_ostream *
+CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
+                                   bool Binary,
+                                   llvm::StringRef InFile,
+                                   llvm::StringRef Extension) {
+  std::string Error, OutputPathName;
+  llvm::raw_fd_ostream *OS = createOutputFile(OutputPath, Error, Binary,
+                                              InFile, Extension,
+                                              &OutputPathName);
+  if (!OS) {
+    // FIXME: Don't fail this way.
+    llvm::errs() << "ERROR: " << Error << "\n";
+    ::exit(1);
+  }
+
+  // Add the output file -- but don't try to remove "-", since this means we are
+  // using stdin.
+  addOutputFile((OutputPathName != "-") ? OutputPathName : "", OS);
+
+  return OS;
+}
+
+llvm::raw_fd_ostream *
+CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
+                                   std::string &Error,
+                                   bool Binary,
+                                   llvm::StringRef InFile,
+                                   llvm::StringRef Extension,
+                                   std::string *ResultPathName) {
+  std::string OutFile;
+  if (!OutputPath.empty()) {
+    OutFile = OutputPath;
+  } else if (InFile == "-") {
+    OutFile = "-";
+  } else if (!Extension.empty()) {
+    llvm::sys::Path Path(InFile);
+    Path.eraseSuffix();
+    Path.appendSuffix(Extension);
+    OutFile = Path.str();
+  } else {
+    OutFile = "-";
+  }
+
+  llvm::raw_fd_ostream *OS =
+    new llvm::raw_fd_ostream(OutFile.c_str(), Error,
+                             (Binary ? llvm::raw_fd_ostream::F_Binary : 0));
+  if (!OS)
+    return 0;
+
+  if (ResultPathName)
+    *ResultPathName = OutFile;
+
+  return OS;
+}

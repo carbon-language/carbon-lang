@@ -20,6 +20,7 @@
 namespace llvm {
 class LLVMContext;
 class raw_ostream;
+class raw_fd_ostream;
 }
 
 namespace clang {
@@ -431,6 +432,39 @@ public:
                                unsigned Line, unsigned Column,
                                bool UseDebugPrinter, bool ShowMacros,
                                llvm::raw_ostream &OS);
+
+  /// Create the default output file (from the invocation's options) and add it
+  /// to the list of tracked output files.
+  llvm::raw_fd_ostream *
+  createDefaultOutputFile(bool Binary = true, llvm::StringRef BaseInput = "",
+                          llvm::StringRef Extension = "");
+
+  /// Create a new output file and add it to the list of tracked output files,
+  /// optionally deriving the output path name.
+  llvm::raw_fd_ostream *
+  createOutputFile(llvm::StringRef OutputPath, bool Binary = true,
+                   llvm::StringRef BaseInput = "",
+                   llvm::StringRef Extension = "");
+
+  /// Create a new output file, optionally deriving the output path name.
+  ///
+  /// If \arg OutputPath is empty, then createOutputFile will derive an output
+  /// path location as \arg BaseInput, with any suffix removed, and \arg
+  /// Extension appended.
+  ///
+  /// \param OutputPath - If given, the path to the output file.
+  /// \param Error [out] - On failure, the error message.
+  /// \param BaseInput - If \arg OutputPath is empty, the input path name to use
+  /// for deriving the output path.
+  /// \param Extension - The extension to use for derived output names.
+  /// \param Binary - The mode to open the file in.
+  /// \param ResultPathName [out] - If given, the result path name will be
+  /// stored here on success.
+  static llvm::raw_fd_ostream *
+  createOutputFile(llvm::StringRef OutputPath, std::string &Error,
+                   bool Binary = true, llvm::StringRef BaseInput = "",
+                   llvm::StringRef Extension = "",
+                   std::string *ResultPathName = 0);
 
   /// }
 };
