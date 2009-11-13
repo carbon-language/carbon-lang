@@ -163,6 +163,7 @@ sub Analyze {
     
     if (defined $ENV{"CCC_EXPERIMENTAL_CHECKS"}) {
       push @CmdArgs,"-analyzer-experimental-internal-checks";
+      push @CmdArgs,"-analyzer-experimental-checks";
     }
     
     $RunAnalyzer = 1;

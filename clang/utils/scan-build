@@ -1099,7 +1099,7 @@ while (@ARGV) {
     next;
   }
   
-  if ($arg = "--experimental-checks") {
+  if ($arg eq "--experimental-checks") {
     shift @ARGV;
     $ENV{"CCC_EXPERIMENTAL_CHECKS"} = 1;
     next;
