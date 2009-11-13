@@ -111,3 +111,9 @@ void *g20(void) {
 // PR4108
 struct g21 {int g21;};
 const struct g21 g21 = (struct g21){1};
+
+// PR5474
+struct g22 {int x;} __attribute((packed));
+struct g23 {char a; short b; char c; struct g22 d;};
+struct g23 g24 = {1,2,3,4};
+

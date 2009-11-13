@@ -262,7 +262,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
         uint64_t NumBytes =
           AlignedElementOffsetInBytes - ElementOffsetInBytes;
 
-        const llvm::Type *Ty = llvm::Type::getInt8Ty(CGF->getLLVMContext());
+        const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
         if (NumBytes > 1)
           Ty = llvm::ArrayType::get(Ty, NumBytes);
 
