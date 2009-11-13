@@ -1953,10 +1953,10 @@ public:
   /// that value are zero, and the corresponding bits in the SplatUndef mask
   /// are set.  The SplatBitSize value is set to the splat element size in
   /// bits.  HasAnyUndefs is set to true if any bits in the vector are
-  /// undefined.
+  /// undefined.  isBigEndian describes the endianness of the target.
   bool isConstantSplat(APInt &SplatValue, APInt &SplatUndef,
                        unsigned &SplatBitSize, bool &HasAnyUndefs,
-                       unsigned MinSplatBits = 0);
+                       unsigned MinSplatBits = 0, bool isBigEndian = false);
 
   static inline bool classof(const BuildVectorSDNode *) { return true; }
   static inline bool classof(const SDNode *N) {

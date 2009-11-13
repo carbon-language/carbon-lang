@@ -5916,7 +5916,8 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
                                         APInt &SplatUndef,
                                         unsigned &SplatBitSize,
                                         bool &HasAnyUndefs,
-                                        unsigned MinSplatBits) {
+                                        unsigned MinSplatBits,
+                                        bool isBigEndian) {
   EVT VT = getValueType(0);
   assert(VT.isVector() && "Expected a vector type");
   unsigned sz = VT.getSizeInBits();
@@ -5933,12 +5934,14 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
   unsigned int nOps = getNumOperands();
   assert(nOps > 0 && "isConstantSplat has 0-size build vector");
   unsigned EltBitSize = VT.getVectorElementType().getSizeInBits();
-  for (unsigned i = 0; i < nOps; ++i) {
+
+  for (unsigned j = 0; j < nOps; ++j) {
+    unsigned i = isBigEndian ? nOps-1-j : j;
     SDValue OpVal = getOperand(i);
-    unsigned BitPos = i * EltBitSize;
+    unsigned BitPos = j * EltBitSize;
 
     if (OpVal.getOpcode() == ISD::UNDEF)
-      SplatUndef |= APInt::getBitsSet(sz, BitPos, BitPos +EltBitSize);
+      SplatUndef |= APInt::getBitsSet(sz, BitPos, BitPos + EltBitSize);
     else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal))
       SplatValue |= (APInt(CN->getAPIntValue()).zextOrTrunc(EltBitSize).
                      zextOrTrunc(sz) << BitPos);

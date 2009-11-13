@@ -637,7 +637,7 @@ bool PPC::isAllNegativeZeroVector(SDNode *N) {
   unsigned BitSize;
   bool HasAnyUndefs;
   
-  if (BV->isConstantSplat(APVal, APUndef, BitSize, HasAnyUndefs, 32))
+  if (BV->isConstantSplat(APVal, APUndef, BitSize, HasAnyUndefs, 32, true))
     if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0)))
       return CFP->getValueAPF().isNegZero();
 
@@ -3672,7 +3672,7 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   unsigned SplatBitSize;
   bool HasAnyUndefs;
   if (! BVN->isConstantSplat(APSplatBits, APSplatUndef, SplatBitSize,
-                             HasAnyUndefs) || SplatBitSize > 32)
+                             HasAnyUndefs, 0, true) || SplatBitSize > 32)
     return SDValue();
 
   unsigned SplatBits = APSplatBits.getZExtValue();
