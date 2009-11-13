@@ -15,6 +15,7 @@
 #include "CodeGenFunction.h"
 
 #include "clang/AST/RecordLayout.h"
+#include <cstdio>
 
 using namespace clang;
 using namespace CodeGen;
