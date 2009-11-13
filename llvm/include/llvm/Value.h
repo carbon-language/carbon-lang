@@ -224,9 +224,11 @@ public:
     NamedMDNodeVal,           // This is an instance of NamedMDNode
     InlineAsmVal,             // This is an instance of InlineAsm
     PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
-    InstructionVal,           // This is an instance of Instruction
     FixedStackPseudoSourceValueVal, // This is an instance of 
                                     // FixedStackPseudoSourceValue
+    InstructionVal,           // This is an instance of Instruction
+    // Enum values starting at InstructionVal are used for Instructions;
+    // don't add new values here!
 
     // Markers:
     ConstantFirstVal = FunctionVal,
