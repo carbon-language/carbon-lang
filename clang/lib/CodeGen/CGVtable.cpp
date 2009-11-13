@@ -268,15 +268,15 @@ public:
             idx = VCalls.size()+1;
             VCalls.push_back(0);
             D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
-                      MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
-                      Class->getNameAsCString()));
+                      MD->getNameAsString().c_str(), (int)-idx-3,
+                      (int)VCalls[idx-1], Class->getNameAsCString()));
           } else {
             NonVirtualOffset[GD] = NonVirtualOffset[OGD];
             VCallOffset[GD] = VCallOffset[OGD];
             VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
             D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
-                      MD->getNameAsCString(), (int)-idx-3, (int)VCalls[idx-1],
-                      Class->getNameAsCString()));
+                      MD->getNameAsString().c_str(), (int)-idx-3,
+                      (int)VCalls[idx-1], Class->getNameAsCString()));
           }
           VCall[GD] = idx;
           int64_t O = NonVirtualOffset[GD];
@@ -411,7 +411,8 @@ public:
     // else allocate a new slot.
     Index[GD] = submethods.size();
     submethods.push_back(m);
-    D1(printf("  vfn for %s at %d\n", MD->getNameAsCString(), (int)Index[MD]));
+    D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
+              (int)Index[GD]));
     if (MD->isPure())
       Pures[GD] = 1;
     if (MorallyVirtual) {
@@ -423,7 +424,7 @@ public:
         idx = VCalls.size()+1;
         VCalls.push_back(0);
         D1(printf("  vcall for %s at %d with delta %d\n",
-                  MD->getNameAsCString(), (int)-VCalls.size()-3, 0));
+                  MD->getNameAsString().c_str(), (int)-VCalls.size()-3, 0));
       }
     }
   }
