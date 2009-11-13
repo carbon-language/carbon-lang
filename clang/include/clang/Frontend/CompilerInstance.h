@@ -20,6 +20,8 @@ class LLVMContext;
 namespace clang {
 class Diagnostic;
 class DiagnosticClient;
+class FileManager;
+class SourceManager;
 class TargetInfo;
 
 /// CompilerInstance - Helper class for managing a single instance of the Clang
@@ -56,6 +58,12 @@ class CompilerInstance {
 
   /// The target being compiled for.
   llvm::OwningPtr<TargetInfo> Target;
+
+  /// The file manager.
+  llvm::OwningPtr<FileManager> FileMgr;
+
+  /// The source manager.
+  llvm::OwningPtr<SourceManager> SourceMgr;
 
 public:
   /// Create a new compiler instance with the given LLVM context, optionally
@@ -190,6 +198,44 @@ public:
   /// setTarget - Replace the current diagnostics engine; the compiler
   /// instance takes ownership of \arg Value.
   void setTarget(TargetInfo *Value) { Target.reset(Value); }
+
+  /// }
+  /// @name File Manager
+  /// {
+
+  FileManager &getFileManager() const { return *FileMgr; }
+
+  /// takeFileManager - Remove the current file manager and give ownership to
+  /// the caller.
+  FileManager *takeFileManager() { return FileMgr.take(); }
+
+  /// setFileManager - Replace the current file manager; the compiler instance
+  /// takes ownership of \arg Value.
+  void setFileManager(FileManager *Value) { FileMgr.reset(Value); }
+
+  /// }
+  /// @name Source Manager
+  /// {
+
+  SourceManager &getSourceManager() const { return *SourceMgr; }
+
+  /// takeSourceManager - Remove the current source manager and give ownership
+  /// to the caller.
+  SourceManager *takeSourceManager() { return SourceMgr.take(); }
+
+  /// setSourceManager - Replace the current source manager; the compiler
+  /// instance takes ownership of \arg Value.
+  void setSourceManager(SourceManager *Value) { SourceMgr.reset(Value); }
+
+  /// }
+  /// @name Construction Utility Methods
+  /// {
+
+  /// Create the file manager and replace any existing one with it.
+  void createFileManager();
+
+  /// Create the source manager and replace any existing one with it.
+  void createSourceManager();
 
   /// }
 };

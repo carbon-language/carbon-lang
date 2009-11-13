@@ -762,8 +762,7 @@ static void ProcessInputFile(CompilerInstance &CI, Preprocessor &PP,
 /// ProcessInputFile - Process a single AST input file with the specified state.
 ///
 static void ProcessASTInputFile(CompilerInstance &CI, const std::string &InFile,
-                                ProgActions PA, FileManager &FileMgr) {
-  const FrontendOptions &FEOpts = CI.getFrontendOpts();
+                                ProgActions PA) {
   std::string Error;
   llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, &Error));
   if (!AST) {
@@ -793,12 +792,13 @@ static void ProcessASTInputFile(CompilerInstance &CI, const std::string &InFile,
 
   // Stream the input AST to the consumer.
   CI.getDiagnostics().getClient()->BeginSourceFile(PP.getLangOptions());
-  ParseAST(PP, Consumer.get(), AST->getASTContext(), FEOpts.ShowStats);
+  ParseAST(PP, Consumer.get(), AST->getASTContext(),
+           CI.getFrontendOpts().ShowStats);
   CI.getDiagnostics().getClient()->EndSourceFile();
 
   // Release the consumer and the AST, in that order since the consumer may
   // perform actions in its destructor which require the context.
-  if (FEOpts.DisableFree) {
+  if (CI.getFrontendOpts().DisableFree) {
     Consumer.take();
     AST.take();
   } else {
@@ -988,23 +988,23 @@ int main(int argc, char **argv) {
     ProgAction = InheritanceView;
 
   // Create the source manager.
-  SourceManager SourceMgr;
+  Clang.createSourceManager();
 
   // Create a file manager object to provide access to and cache the filesystem.
-  FileManager FileMgr;
+  Clang.createFileManager();
 
   for (unsigned i = 0, e = Clang.getFrontendOpts().Inputs.size(); i != e; ++i) {
     const std::string &InFile = Clang.getFrontendOpts().Inputs[i].second;
 
     // AST inputs are handled specially.
     if (IsAST) {
-      ProcessASTInputFile(Clang, InFile, ProgAction, FileMgr);
+      ProcessASTInputFile(Clang, InFile, ProgAction);
       continue;
     }
 
     // Reset the ID tables if we are reusing the SourceManager.
     if (i)
-      SourceMgr.clearIDTables();
+      Clang.getSourceManager().clearIDTables();
 
     // Set up the preprocessor with these options.
     llvm::OwningPtr<Preprocessor>
@@ -1012,7 +1012,8 @@ int main(int argc, char **argv) {
                             Clang.getPreprocessorOpts(),
                             Clang.getHeaderSearchOpts(),
                             Clang.getDependencyOutputOpts(),
-                            Clang.getTarget(), SourceMgr, FileMgr));
+                            Clang.getTarget(), Clang.getSourceManager(),
+                            Clang.getFileManager()));
 
     // Process the source file.
     Clang.getDiagnostics().getClient()->BeginSourceFile(Clang.getLangOpts());
@@ -1026,7 +1027,7 @@ int main(int argc, char **argv) {
               (NumDiagnostics == 1 ? "" : "s"));
 
   if (Clang.getFrontendOpts().ShowStats) {
-    FileMgr.PrintStats();
+    Clang.getFileManager().PrintStats();
     fprintf(stderr, "\n");
   }
 
