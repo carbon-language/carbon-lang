@@ -422,7 +422,7 @@ def VNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
 // to APSR.
 let Defs = [CPSR], Uses = [FPSCR] in
 def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
-                   "\tAPSR_nzcv, FPSCR",
+                   "\tapsr_nzcv, fpscr",
              [(arm_fmstat)]> {
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
