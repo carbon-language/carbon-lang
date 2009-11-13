@@ -199,14 +199,6 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                                "Clang AST"),
                     clEnumValEnd));
 
-static llvm::cl::opt<std::string>
-TargetTriple("triple",
-  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
-
-static llvm::cl::opt<std::string>
-TargetABI("target-abi",
-          llvm::cl::desc("Target a particular ABI type"));
-
 //===----------------------------------------------------------------------===//
 // Utility Methods
 //===----------------------------------------------------------------------===//
@@ -905,19 +897,39 @@ static LangKind GetLanguage(const std::vector<std::string> &Inputs) {
   return LK;
 }
 
-static void ConstructCompilerInvocation(CompilerInvocation &Opts,
-                                        const char *Argv0,
-                                        const DiagnosticOptions &DiagOpts,
-                                        TargetInfo &Target,
-                                        bool &IsAST) {
+static TargetInfo *
+ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
+                            const char *Argv0,
+                            const DiagnosticOptions &DiagOpts, bool &IsAST) {
   Opts.getDiagnosticOpts() = DiagOpts;
 
   // Initialize frontend options.
   InitializeFrontendOptions(Opts.getFrontendOpts());
 
+  // Initialize base triple.  If a -triple option has been specified, use
+  // that triple.  Otherwise, default to the host triple.
+  llvm::Triple Triple(Opts.getFrontendOpts().TargetTriple);
+  if (Triple.getTriple().empty())
+    Triple = llvm::Triple(llvm::sys::getHostTriple());
+
+  // Get information about the target being compiled for.
+  TargetInfo *Target = TargetInfo::CreateTargetInfo(Triple.getTriple());
+  if (!Target) {
+    Diags.Report(diag::err_fe_unknown_triple) << Triple.getTriple().c_str();
+    return 0;
+  }
+
+  // Set the target ABI if specified.
+  if (!Opts.getFrontendOpts().TargetABI.empty() &&
+      !Target->setABI(Opts.getFrontendOpts().TargetABI)) {
+    Diags.Report(diag::err_fe_unknown_target_abi)
+      << Opts.getFrontendOpts().TargetABI;
+    return 0;
+  }
+
   // Initialize backend options, which may also be used to key some language
   // options.
-  InitializeCodeGenOptions(Opts.getCodeGenOpts(), Target);
+  InitializeCodeGenOptions(Opts.getCodeGenOpts(), *Target);
 
   // Initialize language options.
   //
@@ -926,7 +938,7 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   LangKind LK = GetLanguage(Opts.getFrontendOpts().InputFilenames);
   IsAST = LK == langkind_ast;
   if (!IsAST)
-    InitializeLangOptions(Opts.getLangOpts(), LK, Target,
+    InitializeLangOptions(Opts.getLangOpts(), LK, *Target,
                           Opts.getCodeGenOpts());
 
   // Initialize the static analyzer options.
@@ -952,6 +964,8 @@ static void ConstructCompilerInvocation(CompilerInvocation &Opts,
   if (Opts.getLangOpts().CPlusPlus)
     Opts.getCodeGenOpts().NoCommon = 1;
   Opts.getCodeGenOpts().TimePasses = Opts.getFrontendOpts().ShowTimers;
+
+  return Target;
 }
 
 static Diagnostic *CreateDiagnosticEngine(const DiagnosticOptions &Opts,
@@ -1007,36 +1021,19 @@ int main(int argc, char **argv) {
   // should (optionally?) take ownership of it.
   llvm::OwningPtr<DiagnosticClient> DiagClient(Diags->getClient());
 
-  // Initialize base triple.  If a -triple option has been specified, use
-  // that triple.  Otherwise, default to the host triple.
-  llvm::Triple Triple(TargetTriple);
-  if (Triple.getTriple().empty())
-    Triple = llvm::Triple(llvm::sys::getHostTriple());
-
-  // Get information about the target being compiled for.
-  llvm::OwningPtr<TargetInfo>
-  Target(TargetInfo::CreateTargetInfo(Triple.getTriple()));
-  if (Target == 0) {
-    Diags->Report(diag::err_fe_unknown_triple) << Triple.getTriple().c_str();
-    return 1;
-  }
-
-  // Set the target ABI if specified.
-  if (!TargetABI.empty() &&!Target->setABI(TargetABI)) {
-    Diags->Report(diag::err_fe_unknown_target_abi) << TargetABI;
-    return 1;
-  }
-
-  // Now that we have initialized the diagnostics engine and the target, finish
-  // setting up the compiler invocation.
+  // Now that we have initialized the diagnostics engine, create the target and
+  // the compiler invocation object.
   //
   // FIXME: We should move .ast inputs to taking a separate path, they are
   // really quite different.
   CompilerInvocation CompOpts;
   bool IsAST;
-  ConstructCompilerInvocation(CompOpts, argv[0], DiagOpts, *Target, IsAST);
+  llvm::OwningPtr<TargetInfo> Target(
+    ConstructCompilerInvocation(CompOpts, *Diags, argv[0], DiagOpts, IsAST));
+  if (!Target)
+    return 1;
 
-  // Validate/process some options.
+  // Validate/process some options
   if (CompOpts.getHeaderSearchOpts().Verbose)
     llvm::errs() << "clang-cc version " CLANG_VERSION_STRING
                  << " based upon " << PACKAGE_STRING

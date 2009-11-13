@@ -344,6 +344,14 @@ static llvm::cl::opt<bool>
 Stats("print-stats",
       llvm::cl::desc("Print performance metrics and statistics"));
 
+static llvm::cl::opt<std::string>
+TargetABI("target-abi",
+          llvm::cl::desc("Target a particular ABI type"));
+
+static llvm::cl::opt<std::string>
+TargetTriple("triple",
+  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
+
 static llvm::cl::opt<bool>
 TimeReport("ftime-report",
            llvm::cl::desc("Print the amount of time each "
@@ -784,6 +792,8 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   Opts.ShowMacrosInCodeCompletion = CodeCompletionWantsMacros;
   Opts.ShowStats = Stats;
   Opts.ShowTimers = TimeReport;
+  Opts.TargetABI = TargetABI;
+  Opts.TargetTriple = TargetTriple;
   Opts.ViewClassInheritance = InheritanceViewCls;
 
   // '-' is the default input if none is given.
