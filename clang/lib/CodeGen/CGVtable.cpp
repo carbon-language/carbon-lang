@@ -490,6 +490,32 @@ public:
     VCall.clear();
   }
 
+  void AddAddressPoints(const CXXRecordDecl *RD, uint64_t Offset,
+                       Index_t AddressPoint) {
+    D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
+              RD->getNameAsCString(), Class->getNameAsCString(),
+              LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
+    AddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
+
+    // Now also add the address point for all our primary bases.
+    while (1) {
+      const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+      RD = Layout.getPrimaryBase();
+      const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
+      // FIXME: Double check this.
+      if (RD == 0)
+        break;
+      if (PrimaryBaseWasVirtual &&
+          BLayout.getVBaseClassOffset(RD) != Offset)
+        break;
+      D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
+                RD->getNameAsCString(), Class->getNameAsCString(),
+                LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
+      AddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
+    }
+  }
+
+
   Index_t end(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
               const CXXRecordDecl *PrimaryBase, bool PrimaryBaseWasVirtual,
               bool MorallyVirtual, int64_t Offset, bool ForVirtualBase,
@@ -536,10 +562,7 @@ public:
       insertVCalls(VCallInsertionPoint);
     }
     
-    D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
-              RD->getNameAsCString(), Class->getNameAsCString(),
-              LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
-    AddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
+    AddAddressPoints(RD, Offset, AddressPoint);
 
     if (alloc) {
       delete Path;
