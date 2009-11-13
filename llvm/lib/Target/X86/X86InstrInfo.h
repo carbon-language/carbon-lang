@@ -449,6 +449,11 @@ public:
                            unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
 
   unsigned isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+  /// isLoadFromStackSlotPostFE - Check for post-frame ptr elimination
+  /// stack locations as well.  This uses a heuristic so it isn't
+  /// reliable for correctness.
+  unsigned isLoadFromStackSlotPostFE(const MachineInstr *MI,
+                                     int &FrameIndex) const;
 
   /// hasLoadFromStackSlot - If the specified machine instruction has
   /// a load from a stack slot, return true along with the FrameIndex
@@ -459,6 +464,11 @@ public:
   bool hasLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
 
   unsigned isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+  /// isStoreToStackSlotPostFE - Check for post-frame ptr elimination
+  /// stack locations as well.  This uses a heuristic so it isn't
+  /// reliable for correctness.
+  unsigned isStoreToStackSlotPostFE(const MachineInstr *MI,
+                                    int &FrameIndex) const;
 
   /// hasStoreToStackSlot - If the specified machine instruction has a
   /// store to a stack slot, return true along with the FrameIndex of

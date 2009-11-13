@@ -726,9 +726,8 @@ bool X86InstrInfo::isFrameOperand(const MachineInstr *MI, unsigned int Op,
   return false;
 }
 
-unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI, 
-                                           int &FrameIndex) const {
-  switch (MI->getOpcode()) {
+static bool isFrameLoadOpcode(int Opcode) {
+  switch (Opcode) {
   default: break;
   case X86::MOV8rm:
   case X86::MOV16rm:
@@ -742,12 +741,49 @@ unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   case X86::MOVDQArm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-    if (isFrameOperand(MI, 1, FrameIndex)) {
+    return true;
+    break;
+  }
+  return false;
+}
+
+static bool isFrameStoreOpcode(int Opcode) {
+  switch (Opcode) {
+  default: break;
+  case X86::MOV8mr:
+  case X86::MOV16mr:
+  case X86::MOV32mr:
+  case X86::MOV64mr:
+  case X86::ST_FpP64m:
+  case X86::MOVSSmr:
+  case X86::MOVSDmr:
+  case X86::MOVAPSmr:
+  case X86::MOVAPDmr:
+  case X86::MOVDQAmr:
+  case X86::MMX_MOVD64mr:
+  case X86::MMX_MOVQ64mr:
+  case X86::MMX_MOVNTQmr:
+    return true;
+  }
+  return false;
+}
+
+unsigned X86InstrInfo::isLoadFromStackSlot(const MachineInstr *MI, 
+                                           int &FrameIndex) const {
+  if (isFrameLoadOpcode(MI->getOpcode()))
+    if (isFrameOperand(MI, 1, FrameIndex))
       return MI->getOperand(0).getReg();
-    }
+  return 0;
+}
+
+unsigned X86InstrInfo::isLoadFromStackSlotPostFE(const MachineInstr *MI, 
+                                                 int &FrameIndex) const {
+  if (isFrameLoadOpcode(MI->getOpcode())) {
+    unsigned Reg;
+    if ((Reg = isLoadFromStackSlot(MI, FrameIndex)))
+      return Reg;
     // Check for post-frame index elimination operations
     return hasLoadFromStackSlot(MI, FrameIndex);
-    break;
   }
   return 0;
 }
@@ -770,27 +806,20 @@ bool X86InstrInfo::hasLoadFromStackSlot(const MachineInstr *MI,
 
 unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                           int &FrameIndex) const {
-  switch (MI->getOpcode()) {
-  default: break;
-  case X86::MOV8mr:
-  case X86::MOV16mr:
-  case X86::MOV32mr:
-  case X86::MOV64mr:
-  case X86::ST_FpP64m:
-  case X86::MOVSSmr:
-  case X86::MOVSDmr:
-  case X86::MOVAPSmr:
-  case X86::MOVAPDmr:
-  case X86::MOVDQAmr:
-  case X86::MMX_MOVD64mr:
-  case X86::MMX_MOVQ64mr:
-  case X86::MMX_MOVNTQmr:
-    if (isFrameOperand(MI, 0, FrameIndex)) {
+  if (isFrameStoreOpcode(MI->getOpcode()))
+    if (isFrameOperand(MI, 0, FrameIndex))
       return MI->getOperand(X86AddrNumOperands).getReg();
-    }
+  return 0;
+}
+
+unsigned X86InstrInfo::isStoreToStackSlotPostFE(const MachineInstr *MI,
+                                                int &FrameIndex) const {
+  if (isFrameStoreOpcode(MI->getOpcode())) {
+    unsigned Reg;
+    if ((Reg = isStoreToStackSlot(MI, FrameIndex)))
+      return Reg;
     // Check for post-frame index elimination operations
     return hasStoreToStackSlot(MI, FrameIndex);
-    break;
   }
   return 0;
 }

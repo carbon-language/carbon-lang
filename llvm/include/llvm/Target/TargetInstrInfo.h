@@ -171,6 +171,14 @@ public:
     return 0;
   }
 
+  /// isLoadFromStackSlotPostFE - Check for post-frame ptr elimination
+  /// stack locations as well.  This uses a heuristic so it isn't
+  /// reliable for correctness.
+  virtual unsigned isLoadFromStackSlotPostFE(const MachineInstr *MI,
+                                             int &FrameIndex) const {
+    return 0;
+  }
+
   /// hasLoadFromStackSlot - If the specified machine instruction has
   /// a load from a stack slot, return true along with the FrameIndex
   /// of the loaded stack slot.  If not, return false.  Unlike
@@ -188,6 +196,14 @@ public:
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than storing to the stack slot.
   virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
+                                      int &FrameIndex) const {
+    return 0;
+  }
+
+  /// isStoreToStackSlotPostFE - Check for post-frame ptr elimination
+  /// stack locations as well.  This uses a heuristic so it isn't
+  /// reliable for correctness.
+  virtual unsigned isStoreToStackSlotPostFE(const MachineInstr *MI,
                                       int &FrameIndex) const {
     return 0;
   }
