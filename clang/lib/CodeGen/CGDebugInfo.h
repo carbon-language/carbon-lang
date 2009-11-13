@@ -56,7 +56,7 @@ class CGDebugInfo {
   bool BlockLiteralGenericSet;
   llvm::DIType BlockLiteralGeneric;
 
-  std::vector<llvm::DIDescriptor> RegionStack;
+  std::vector<llvm::TrackingVH<llvm::MDNode> > RegionStack;
 
   /// Helper functions for getOrCreateType.
   llvm::DIType CreateType(const BuiltinType *Ty, llvm::DICompileUnit U);
