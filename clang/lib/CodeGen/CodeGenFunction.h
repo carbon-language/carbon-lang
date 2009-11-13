@@ -74,7 +74,7 @@ class CodeGenFunction : public BlockFunction {
   void operator=(const CodeGenFunction&);  // DO NOT IMPLEMENT
 public:
   CodeGenModule &CGM;  // Per-module state.
-  TargetInfo &Target;
+  const TargetInfo &Target;
 
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   CGBuilderTy Builder;

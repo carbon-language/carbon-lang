@@ -737,7 +737,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 }
 
 static std::string
-SimplifyConstraint(const char *Constraint, TargetInfo &Target,
+SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
                  llvm::SmallVectorImpl<TargetInfo::ConstraintInfo> *OutCons=0) {
   std::string Result;
 

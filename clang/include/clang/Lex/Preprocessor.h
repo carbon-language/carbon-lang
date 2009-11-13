@@ -51,7 +51,7 @@ class DirectoryLookup;
 class Preprocessor {
   Diagnostic        *Diags;
   LangOptions        Features;
-  TargetInfo        &Target;
+  const TargetInfo  &Target;
   FileManager       &FileMgr;
   SourceManager     &SourceMgr;
   ScratchBuffer     *ScratchBuf;
@@ -210,7 +210,8 @@ private:  // Cached tokens state.
   std::vector<CachedTokensTy::size_type> BacktrackPositions;
 
 public:
-  Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
+  Preprocessor(Diagnostic &diags, const LangOptions &opts,
+               const TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers,
                IdentifierInfoLookup *IILookup = 0,
                bool OwnsHeaderSearch = false);
@@ -221,7 +222,7 @@ public:
   void setDiagnostics(Diagnostic &D) { Diags = &D; }
 
   const LangOptions &getLangOptions() const { return Features; }
-  TargetInfo &getTargetInfo() const { return Target; }
+  const TargetInfo &getTargetInfo() const { return Target; }
   FileManager &getFileManager() const { return FileMgr; }
   SourceManager &getSourceManager() const { return SourceMgr; }
   HeaderSearch &getHeaderSearchInfo() const { return HeaderInfo; }

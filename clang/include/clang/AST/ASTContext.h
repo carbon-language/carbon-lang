@@ -232,7 +232,7 @@ class ASTContext {
   llvm::DenseMap<const Decl *, std::string> DeclComments;
 
 public:
-  TargetInfo &Target;
+  const TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
   Builtin::Context &BuiltinInfo;
@@ -319,7 +319,7 @@ public:
   CanQualType UndeducedAutoTy;
   CanQualType ObjCBuiltinIdTy, ObjCBuiltinClassTy;
 
-  ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
+  ASTContext(const LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
              Builtin::Context &builtins,
              bool FreeMemory = true, unsigned size_reserve=0);

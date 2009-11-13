@@ -114,7 +114,7 @@ public:
   ~Parser();
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }
-  TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
+  const TargetInfo &getTargetInfo() const { return PP.getTargetInfo(); }
   Preprocessor &getPreprocessor() const { return PP; }
   Action &getActions() const { return Actions; }
 

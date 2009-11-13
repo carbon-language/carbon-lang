@@ -224,7 +224,7 @@ CreatePreprocessor(Diagnostic &Diags, const LangOptions &LangInfo,
                    const PreprocessorOptions &PPOpts,
                    const HeaderSearchOptions &HSOpts,
                    const DependencyOutputOptions &DepOpts,
-                   TargetInfo &Target, SourceManager &SourceMgr,
+                   const TargetInfo &Target, SourceManager &SourceMgr,
                    FileManager &FileMgr) {
   // Create a PTH manager if we are using some form of a token cache.
   PTHManager *PTHMgr = 0;

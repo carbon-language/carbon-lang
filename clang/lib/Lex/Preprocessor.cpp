@@ -44,7 +44,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
-                           TargetInfo &target, SourceManager &SM,
+                           const TargetInfo &target, SourceManager &SM,
                            HeaderSearch &Headers,
                            IdentifierInfoLookup* IILookup,
                            bool OwnsHeaders)

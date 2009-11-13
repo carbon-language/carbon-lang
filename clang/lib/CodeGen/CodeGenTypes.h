@@ -91,7 +91,7 @@ namespace CodeGen {
 /// while lowering AST types to LLVM types.
 class CodeGenTypes {
   ASTContext &Context;
-  TargetInfo &Target;
+  const TargetInfo &Target;
   llvm::Module& TheModule;
   const llvm::TargetData& TheTargetData;
   mutable const ABIInfo* TheABIInfo;
@@ -153,7 +153,7 @@ public:
   ~CodeGenTypes();
 
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
-  TargetInfo &getTarget() const { return Target; }
+  const TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
   const ABIInfo &getABIInfo() const;
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }

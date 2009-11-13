@@ -35,7 +35,7 @@ enum FloatingRank {
 };
 
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
-                       TargetInfo &t,
+                       const TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
                        Builtin::Context &builtins,
                        bool FreeMem, unsigned size_reserve) :

@@ -228,7 +228,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       return true;  // A diagnostic was already emitted.
 
     // Character literals are always int or wchar_t, expand to intmax_t.
-    TargetInfo &TI = PP.getTargetInfo();
+    const TargetInfo &TI = PP.getTargetInfo();
     unsigned NumBits;
     if (Literal.isMultiChar())
       NumBits = TI.getIntWidth();
