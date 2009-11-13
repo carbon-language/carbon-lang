@@ -400,10 +400,6 @@ private:
   /// Alloc - A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator& Alloc;
 
-  /// CurrentStmt - The block-level statement currently being visited.  This
-  ///  is set by GRExprEngine.
-  Stmt* CurrentStmt;
-
   /// TF - Object that represents a bundle of transfer functions
   ///  for manipulating and creating SVals.
   GRTransferFuncs* TF;

@@ -293,9 +293,7 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
   Builder = &builder;
   EntryNode = builder.getLastNode();
 
-  // FIXME: Consolidate.
   CurrentStmt = S;
-  StateMgr.CurrentStmt = S;
 
   // Set up our simple checks.
   if (BatchAuditor)
@@ -353,8 +351,6 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
   CleanedState = NULL;
   EntryNode = NULL;
 
-  // FIXME: Consolidate.
-  StateMgr.CurrentStmt = 0;
   CurrentStmt = 0;
 
   Builder = NULL;
