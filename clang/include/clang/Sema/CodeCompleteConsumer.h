@@ -373,17 +373,18 @@ public:
   /// \name Code-completion callbacks
   //@{
   /// \brief Process the finalized code-completion results.
-  virtual void ProcessCodeCompleteResults(Result *Results, 
+  virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
                                           unsigned NumResults) { }
-  
-  /// \brief Process the set of overload candidates.
+
+  /// \param S the semantic-analyzer object for which code-completion is being
+  /// done.
   ///
   /// \param CurrentArg the index of the current argument.
   ///
   /// \param Candidates an array of overload candidates.
   ///
   /// \param NumCandidates the number of overload candidates
-  virtual void ProcessOverloadCandidates(unsigned CurrentArg,
+  virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
                                          OverloadCandidate *Candidates,
                                          unsigned NumCandidates) { }
   //@}
@@ -392,25 +393,21 @@ public:
 /// \brief A simple code-completion consumer that prints the results it 
 /// receives in a simple format.
 class PrintingCodeCompleteConsumer : public CodeCompleteConsumer {
-  /// \brief The semantic-analysis object to which this code-completion
-  /// consumer is attached.
-  Sema &SemaRef;
-  
   /// \brief The raw output stream.
   llvm::raw_ostream &OS;
     
 public:
   /// \brief Create a new printing code-completion consumer that prints its
   /// results to the given raw output stream.
-  PrintingCodeCompleteConsumer(Sema &S, bool IncludeMacros, 
+  PrintingCodeCompleteConsumer(bool IncludeMacros,
                                llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros), SemaRef(S), OS(OS) { }
+    : CodeCompleteConsumer(IncludeMacros), OS(OS) { }
   
   /// \brief Prints the finalized code-completion results.
-  virtual void ProcessCodeCompleteResults(Result *Results, 
+  virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
                                           unsigned NumResults);
   
-  virtual void ProcessOverloadCandidates(unsigned CurrentArg,
+  virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
                                          OverloadCandidate *Candidates,
                                          unsigned NumCandidates);  
 };
@@ -418,10 +415,6 @@ public:
 /// \brief A code-completion consumer that prints the results it receives
 /// in a format that is parsable by the CIndex library.
 class CIndexCodeCompleteConsumer : public CodeCompleteConsumer {
-  /// \brief The semantic-analysis object to which this code-completion
-  /// consumer is attached.
-  Sema &SemaRef;
-  
   /// \brief The raw output stream.
   llvm::raw_ostream &OS;
   
@@ -429,14 +422,14 @@ public:
   /// \brief Create a new CIndex code-completion consumer that prints its
   /// results to the given raw output stream in a format readable to the CIndex
   /// library.
-  CIndexCodeCompleteConsumer(Sema &S, bool IncludeMacros, llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros), SemaRef(S), OS(OS) { }
+  CIndexCodeCompleteConsumer(bool IncludeMacros, llvm::raw_ostream &OS)
+    : CodeCompleteConsumer(IncludeMacros), OS(OS) { }
   
   /// \brief Prints the finalized code-completion results.
-  virtual void ProcessCodeCompleteResults(Result *Results, 
+  virtual void ProcessCodeCompleteResults(Sema &S, Result *Results, 
                                           unsigned NumResults);
   
-  virtual void ProcessOverloadCandidates(unsigned CurrentArg,
+  virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
                                          OverloadCandidate *Candidates,
                                          unsigned NumCandidates);  
 };

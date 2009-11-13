@@ -347,10 +347,11 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
-           bool CompleteTranslationUnit)
+           bool CompleteTranslationUnit,
+           CodeCompleteConsumer *CodeCompleter)
   : LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
-    ExternalSource(0), CodeCompleter(0), CurContext(0), 
+    ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
     PreDeclaratorDC(0), CurBlock(0), PackContext(0), ParsingDeclDepth(0),
     IdResolver(pp.getLangOptions()), StdNamespace(0), StdBadAlloc(0),
     GlobalNewDeleteDeclared(false), ExprEvalContext(PotentiallyEvaluated),

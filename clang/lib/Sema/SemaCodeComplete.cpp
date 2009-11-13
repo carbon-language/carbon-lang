@@ -23,13 +23,6 @@
 
 using namespace clang;
 
-/// \brief Set the code-completion consumer for semantic analysis.
-void Sema::setCodeCompleteConsumer(CodeCompleteConsumer *CCC) {
-  assert(((CodeCompleter != 0) != (CCC != 0)) && 
-         "Already set or cleared a code-completion consumer?");
-  CodeCompleter = CCC;
-}
-
 namespace {
   /// \brief A container of code-completion results.
   class ResultBuilder {
@@ -1079,14 +1072,15 @@ static void AddMacroResults(Preprocessor &PP, unsigned Rank,
   Results.ExitScope();
 }
 
-static void HandleCodeCompleteResults(CodeCompleteConsumer *CodeCompleter,
-                                      CodeCompleteConsumer::Result *Results,
-                                      unsigned NumResults) {
+static void HandleCodeCompleteResults(Sema *S,
+                                      CodeCompleteConsumer *CodeCompleter,
+                                     CodeCompleteConsumer::Result *Results,
+                                     unsigned NumResults) {
   // Sort the results by rank/kind/etc.
   std::stable_sort(Results, Results + NumResults, SortCodeCompleteResult());
 
   if (CodeCompleter)
-    CodeCompleter->ProcessCodeCompleteResults(Results, NumResults);
+    CodeCompleter->ProcessCodeCompleteResults(*S, Results, NumResults);
 }
 
 void Sema::CodeCompleteOrdinaryName(Scope *S) {
@@ -1095,7 +1089,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S) {
                                            0, CurContext, Results);
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
@@ -1120,46 +1114,46 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   
   ResultBuilder Results(*this, &ResultBuilder::IsMember);
   unsigned NextRank = 0;
-  
-  if (const RecordType *Record = BaseType->getAs<RecordType>()) {
-    NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank, 
-                                          Record->getDecl(), Results);
-    
-    if (getLangOptions().CPlusPlus) {
-      if (!Results.empty()) {
-        // The "template" keyword can follow "->" or "." in the grammar.
-        // However, we only want to suggest the template keyword if something
-        // is dependent.
-        bool IsDependent = BaseType->isDependentType();
-        if (!IsDependent) {
-          for (Scope *DepScope = S; DepScope; DepScope = DepScope->getParent())
-            if (DeclContext *Ctx = (DeclContext *)DepScope->getEntity()) {
-              IsDependent = Ctx->isDependentContext();
-              break;
-            }
-        }
-        
-        if (IsDependent)
-          Results.MaybeAddResult(Result("template", NextRank++));
-      }
-      
-      // We could have the start of a nested-name-specifier. Add those
-      // results as well.
-      Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-      CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank, 
-                           CurContext, Results);
-    }
-    
-    // Add macros
-    if (CodeCompleter->includeMacros())
-      AddMacroResults(PP, NextRank, Results);
-    
-    // Hand off the results found for code completion.
-    HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
-    
-    // We're done!
+
+  // If this isn't a record type, we are done.
+  const RecordType *Record = BaseType->getAs<RecordType>();
+  if (!Record)
     return;
+
+  NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank,
+                                        Record->getDecl(), Results);
+
+  if (getLangOptions().CPlusPlus) {
+    if (!Results.empty()) {
+      // The "template" keyword can follow "->" or "." in the grammar.
+      // However, we only want to suggest the template keyword if something
+      // is dependent.
+      bool IsDependent = BaseType->isDependentType();
+      if (!IsDependent) {
+        for (Scope *DepScope = S; DepScope; DepScope = DepScope->getParent())
+          if (DeclContext *Ctx = (DeclContext *)DepScope->getEntity()) {
+            IsDependent = Ctx->isDependentContext();
+            break;
+          }
+      }
+
+      if (IsDependent)
+        Results.MaybeAddResult(Result("template", NextRank++));
+    }
+
+    // We could have the start of a nested-name-specifier. Add those
+    // results as well.
+    Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
+    CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank,
+                         CurContext, Results);
   }
+
+  // Add macros
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, NextRank, Results);
+
+  // Hand off the results found for code completion.
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
@@ -1201,7 +1195,7 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteCase(Scope *S) {
@@ -1280,7 +1274,7 @@ void Sema::CodeCompleteCase(Scope *S) {
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, 1, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 namespace {
@@ -1352,7 +1346,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
     if (Cand->Viable)
       Results.push_back(ResultCandidate(Cand->Function));
   }
-  CodeCompleter->ProcessOverloadCandidates(NumArgs, Results.data(), 
+  CodeCompleter->ProcessOverloadCandidates(*this, NumArgs, Results.data(), 
                                            Results.size());
 }
 
@@ -1376,7 +1370,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank + 1, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteUsing(Scope *S) {
@@ -1398,7 +1392,7 @@ void Sema::CodeCompleteUsing(Scope *S) {
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteUsingDirective(Scope *S) {
@@ -1414,7 +1408,7 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   Results.ExitScope();
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
@@ -1450,7 +1444,7 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, 1, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
@@ -1463,7 +1457,7 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
                                            0, CurContext, Results);
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteOperatorName(Scope *S) {
@@ -1495,7 +1489,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank, Results);
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) { 
@@ -1523,7 +1517,7 @@ void Sema::CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) {
   if (!(Attributes & ObjCDeclSpec::DQ_PR_getter))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("getter", 0));
   Results.ExitScope();
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
@@ -1574,7 +1568,7 @@ void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
   }
   Results.ExitScope();
   // This also suppresses remaining diagnostics.
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteObjCInstanceMethod(Scope *S, ExprTy *Receiver) {
@@ -1634,5 +1628,5 @@ void Sema::CodeCompleteObjCInstanceMethod(Scope *S, ExprTy *Receiver) {
   }
   Results.ExitScope();
   // This also suppresses remaining diagnostics.
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }

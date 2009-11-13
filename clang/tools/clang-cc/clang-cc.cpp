@@ -210,19 +210,6 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
   return P.str();
 }
 
-/// \brief Buld a new code-completion consumer that prints the results of
-/// code completion to standard output.
-static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S,
-                                                        void *UserData) {
-  const FrontendOptions &Opts = *(FrontendOptions*)UserData;
-  if (Opts.DebugCodeCompletionPrinter)
-    return new PrintingCodeCompleteConsumer(S, Opts.ShowMacrosInCodeCompletion,
-                                            llvm::outs());
-
-  return new CIndexCodeCompleteConsumer(S, Opts.ShowMacrosInCodeCompletion,
-                                        llvm::outs());
-}
-
 //===----------------------------------------------------------------------===//
 // Basic Parser driver
 //===----------------------------------------------------------------------===//
@@ -494,9 +481,7 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     if (InitializeSourceManager(PP, CI.getFrontendOpts(), InFile))
       return;
 
-    CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *) = 0;
-    void *CreateCodeCompleterData = (void*) &FEOpts;
-
+    llvm::OwningPtr<CodeCompleteConsumer> CCConsumer;
     if (!FEOpts.CodeCompletionAt.FileName.empty()) {
       // Tell the source manager to chop off the given file at a specific
       // line and column.
@@ -508,7 +493,14 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
                                              FEOpts.CodeCompletionAt.Column);
 
         // Set up the creation routine for code-completion.
-        CreateCodeCompleter = BuildPrintingCodeCompleter;
+        if (FEOpts.DebugCodeCompletionPrinter)
+          CCConsumer.reset(
+            new PrintingCodeCompleteConsumer(FEOpts.ShowMacrosInCodeCompletion,
+                                             llvm::outs()));
+        else
+          CCConsumer.reset(
+            new CIndexCodeCompleteConsumer(FEOpts.ShowMacrosInCodeCompletion,
+                                           llvm::outs()));
       } else {
         PP.getDiagnostics().Report(diag::err_fe_invalid_code_complete_file)
           << FEOpts.CodeCompletionAt.FileName;
@@ -518,7 +510,7 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     // Run the AST consumer action.
     ParseAST(PP, Consumer.get(), CI.getASTContext(), FEOpts.ShowStats,
              CompleteTranslationUnit,
-             CreateCodeCompleter, CreateCodeCompleterData);
+             CCConsumer.get());
   } else {
     // Initialize builtin info.
     PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),

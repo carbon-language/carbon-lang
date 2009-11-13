@@ -373,7 +373,8 @@ public:
   bool isSelfExpr(Expr *RExpr);
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
-       bool CompleteTranslationUnit = true);
+       bool CompleteTranslationUnit = true,
+       CodeCompleteConsumer *CompletionConsumer = 0);
   ~Sema() {
     if (PackContext) FreePackedContext();
   }
@@ -3853,7 +3854,6 @@ public:
 
   /// \name Code completion
   //@{
-  void setCodeCompleteConsumer(CodeCompleteConsumer *CCC);
   virtual void CodeCompleteOrdinaryName(Scope *S);
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,

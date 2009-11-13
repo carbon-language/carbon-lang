@@ -508,7 +508,8 @@ CodeCompleteConsumer::OverloadCandidate::getFunctionType() const {
 CodeCompleteConsumer::~CodeCompleteConsumer() { }
 
 void 
-PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results, 
+PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
+                                                         Result *Results, 
                                                          unsigned NumResults) {
   // Print the results.
   for (unsigned I = 0; I != NumResults; ++I) {
@@ -552,7 +553,8 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results,
 }
 
 void 
-PrintingCodeCompleteConsumer::ProcessOverloadCandidates(unsigned CurrentArg,
+PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
+                                                        unsigned CurrentArg,
                                               OverloadCandidate *Candidates,
                                                      unsigned NumCandidates) {
   for (unsigned I = 0; I != NumCandidates; ++I) {
@@ -570,7 +572,8 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(unsigned CurrentArg,
 }
 
 void 
-CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results, 
+CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
+                                                       Result *Results, 
                                                        unsigned NumResults) {
   // Print the results.
   for (unsigned I = 0; I != NumResults; ++I) {
@@ -632,7 +635,8 @@ CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results,
 }
 
 void 
-CIndexCodeCompleteConsumer::ProcessOverloadCandidates(unsigned CurrentArg,
+CIndexCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
+                                                      unsigned CurrentArg,
                                                 OverloadCandidate *Candidates,
                                                        unsigned NumCandidates) {
   for (unsigned I = 0; I != NumCandidates; ++I) {
