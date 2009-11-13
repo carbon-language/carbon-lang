@@ -15,6 +15,14 @@
 #include <cstring>
 #include <string>
 
+namespace std {
+ template<typename _Tp>
+ class allocator;
+
+ template<typename _Tp, typename _Alloc>
+ class vector;
+}
+
 namespace llvm {
 
   /// StringRef - Represent a constant reference to a string, i.e. a character
@@ -313,6 +321,25 @@ namespace llvm {
         return std::make_pair(*this, StringRef());
       return std::make_pair(slice(0, Idx), slice(Idx + Separator.size(), npos));
     }
+
+    /// split - Split into substrings around the occurences of a separator
+    /// string.
+    ///
+    /// Each substring is stored in \arg A. If \arg MaxSplit is >= 0, at most
+    /// \arg MaxSplit splits are done and consequently <= \arg MaxSplit
+    /// elements are added to A.
+    /// If \arg KeepEmpty is false, empty strings are not added to \arg A. They
+    /// still count when considering \arg MaxSplit
+    /// An useful invariant is that
+    /// Separator.join(A) == *this if MaxSplit == -1 and KeepEmpty == true
+    ///
+    /// \param A - Where to put the substrings.
+    /// \param Separator - The string to split on.
+    /// \param MaxSplit - The maximum number of times the string is split.
+    /// \parm KeepEmpty - True if empty substring should be added.
+    void split(std::vector<StringRef, std::allocator<StringRef> > &A,
+               StringRef Separator, unsigned MaxSplit = -1,
+               bool KeepEmpty = true) const;
 
     /// rsplit - Split into two substrings around the last occurence of a
     /// separator character.

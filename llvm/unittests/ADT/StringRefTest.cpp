@@ -110,6 +110,81 @@ TEST(StringRefTest, Split) {
             Str.rsplit('o'));
 }
 
+TEST(StringRefTest, Split2) {
+  std::vector<StringRef> parts;
+  std::vector<StringRef> expected;
+
+  expected.push_back("ab"); expected.push_back("c");
+  StringRef(",ab,,c,").split(parts, ",", -1, false);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back(""); expected.push_back("ab"); expected.push_back("");
+  expected.push_back("c"); expected.push_back("");
+  StringRef(",ab,,c,").split(parts, ",", -1, true);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("");
+  StringRef("").split(parts, ",", -1, true);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  StringRef("").split(parts, ",", -1, false);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  StringRef(",").split(parts, ",", -1, false);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back(""); expected.push_back("");
+  StringRef(",").split(parts, ",", -1, true);
+  EXPECT_TRUE(parts == expected);
+
+  // Test MaxSplit
+  expected.clear(); parts.clear();
+  expected.push_back("a,,b,c");
+  StringRef("a,,b,c").split(parts, ",", 0, true);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a,,b,c");
+  StringRef("a,,b,c").split(parts, ",", 0, false);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back(",b,c");
+  StringRef("a,,b,c").split(parts, ",", 1, true);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back(",b,c");
+  StringRef("a,,b,c").split(parts, ",", 1, false);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back(""); expected.push_back("b,c");
+  StringRef("a,,b,c").split(parts, ",", 2, true);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back("b,c");
+  StringRef("a,,b,c").split(parts, ",", 2, false);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back(""); expected.push_back("b");
+  expected.push_back("c");
+  StringRef("a,,b,c").split(parts, ",", 3, true);
+  EXPECT_TRUE(parts == expected);
+
+  expected.clear(); parts.clear();
+  expected.push_back("a"); expected.push_back("b"); expected.push_back("c");
+  StringRef("a,,b,c").split(parts, ",", 3, false);
+  EXPECT_TRUE(parts == expected);
+}
+
 TEST(StringRefTest, StartsWith) {
   StringRef Str("hello");
   EXPECT_TRUE(Str.startswith("he"));

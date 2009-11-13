@@ -56,3 +56,22 @@ void llvm::SplitString(const std::string &Source,
     S2 = getToken(S, Delimiters);
   }
 }
+
+void llvm::StringRef::split(std::vector<StringRef> &A,
+                            StringRef Separators, unsigned MaxSplit,
+                            bool KeepEmpty) const {
+  StringRef rest = *this;
+
+  for (unsigned splits = 0;
+       rest.size() != 0 && (MaxSplit < 0 || splits < MaxSplit);
+       ++splits) {
+    std::pair<llvm::StringRef, llvm::StringRef> p = rest.split(Separators);
+
+    if (p.first.size() != 0 || KeepEmpty)
+      A.push_back(p.first);
+    rest = p.second;
+  }
+
+  if (rest.size() != 0 || KeepEmpty)
+    A.push_back(rest);
+}
