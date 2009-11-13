@@ -30,11 +30,12 @@ class VISIBILITY_HIDDEN RegionState {};
 
 class VISIBILITY_HIDDEN MallocChecker : public CheckerVisitor<MallocChecker> {
   BuiltinBug *BT_DoubleFree;
+  BuiltinBug *BT_Leak;
   IdentifierInfo *II_malloc;
   IdentifierInfo *II_free;
 
 public:
-  MallocChecker() : BT_DoubleFree(0) {}
+  MallocChecker() : BT_DoubleFree(0), BT_Leak(0), II_malloc(0), II_free(0) {}
   static void *getTag();
   void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
@@ -81,7 +82,7 @@ void MallocChecker::PostVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   if (!II_malloc)
     II_malloc = &Ctx.Idents.get("malloc");
   if (!II_free)
-    II_malloc = &Ctx.Idents.get("free");
+    II_free = &Ctx.Idents.get("free");
 
   if (FD->getIdentifier() == II_malloc) {
     MallocMem(C, CE);
@@ -135,4 +136,25 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
 
 void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,
                                     SymbolReaper &SymReaper) {
+  for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
+         E = SymReaper.dead_end(); I != E; ++I) {
+    SymbolRef Sym = *I;
+    const GRState *state = C.getState();
+    const RefState *RS = state->get<RegionState>(Sym);
+    if (!RS)
+      return;
+
+    if (*RS == Allocated) {
+      ExplodedNode *N = C.GenerateNode(S, true);
+      if (N) {
+        if (!BT_Leak)
+          BT_Leak = new BuiltinBug("Memory leak",
+                     "Allocated memory never released. Potential memory leak.");
+        // FIXME: where it is allocated.
+        BugReport *R = new BugReport(*BT_Leak,
+                                     BT_Leak->getDescription().c_str(), N);
+        C.EmitReport(R);
+      }
+    }
+  }
 }
