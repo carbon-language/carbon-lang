@@ -1302,7 +1302,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
       if (ICE->isLvalueCast())
         return EmitLValue(E->getSubExpr());
     
-    assert(0 && "Unhandled cast!");
+    assert(false && "Unhandled cast!");
       
   case CastExpr::CK_NoOp:
   case CastExpr::CK_ConstructorConversion:
@@ -1327,13 +1327,22 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     return LValue::MakeAddr(Base, MakeQualifiers(E->getType()));
   }
-
   case CastExpr::CK_ToUnion: {
     llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
     EmitAnyExpr(E->getSubExpr(), Temp, false);
 
     return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
-    }
+  }
+  case CastExpr::CK_BitCast: {
+    // This must be a reinterpret_cast.
+    const CXXReinterpretCastExpr *CE = cast<CXXReinterpretCastExpr>(E);
+    
+    LValue LV = EmitLValue(E->getSubExpr());
+    llvm::Value *V = Builder.CreateBitCast(LV.getAddress(),
+                                           ConvertType(CE->getTypeAsWritten()));
+    return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+  }
+
   }
 }
 
