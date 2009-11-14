@@ -4376,6 +4376,10 @@ isInTailCallPosition(const Instruction *I, Attributes CalleeRetAttr,
   // what the call's return type is.
   if (!Ret || Ret->getNumOperands() == 0) return true;
 
+  // If the return value is undef, it doesn't matter what the call's
+  // return type is.
+  if (isa<UndefValue>(Ret->getOperand(0))) return true;
+
   // Conservatively require the attributes of the call to match those of
   // the return. Ignore noalias because it doesn't affect the call sequence.
   unsigned CallerRetAttr = F->getAttributes().getRetAttributes();

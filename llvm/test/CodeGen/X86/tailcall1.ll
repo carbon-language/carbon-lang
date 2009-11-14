@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -tailcallopt | grep TAILCALL | count 3
+; RUN: llc < %s -march=x86 -tailcallopt | grep TAILCALL | count 4
 define fastcc i32 @tailcallee(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
 entry:
 	ret i32 %a3
@@ -22,4 +22,11 @@ declare fastcc noalias i8* @noalias_callee()
 define fastcc i8* @alias_caller() nounwind {
   %p = tail call fastcc noalias i8* @noalias_callee()
   ret i8* %p
+}
+
+declare fastcc i32 @i32_callee()
+
+define fastcc i32 @ret_undef() nounwind {
+  %p = tail call fastcc i32 @i32_callee()
+  ret i32 undef
 }
