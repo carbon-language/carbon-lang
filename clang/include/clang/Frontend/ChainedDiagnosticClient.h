@@ -30,9 +30,10 @@ public:
     Secondary.reset(_Secondary);
   }
 
-  virtual void BeginSourceFile(const LangOptions &LO) {
-    Primary->BeginSourceFile(LO);
-    Secondary->BeginSourceFile(LO);
+  virtual void BeginSourceFile(const LangOptions &LO,
+                               const Preprocessor *PP) {
+    Primary->BeginSourceFile(LO, PP);
+    Secondary->BeginSourceFile(LO, PP);
   }
 
   virtual void EndSourceFile() {

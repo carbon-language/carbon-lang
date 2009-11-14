@@ -579,7 +579,7 @@ static void ProcessASTInputFile(CompilerInstance &CI, const std::string &InFile,
   AST->getSourceManager().createMainFileIDForMemBuffer(SB);
 
   // Stream the input AST to the consumer.
-  CI.getDiagnostics().getClient()->BeginSourceFile(PP.getLangOptions());
+  CI.getDiagnostics().getClient()->BeginSourceFile(PP.getLangOptions(), &PP);
   ParseAST(PP, Consumer.get(), AST->getASTContext(),
            CI.getFrontendOpts().ShowStats);
   CI.getDiagnostics().getClient()->EndSourceFile();
@@ -767,7 +767,8 @@ int main(int argc, char **argv) {
     Clang.createPreprocessor();
 
     // Process the source file.
-    Clang.getDiagnostics().getClient()->BeginSourceFile(Clang.getLangOpts());
+    Clang.getDiagnostics().getClient()->BeginSourceFile(Clang.getLangOpts(),
+                                                      &Clang.getPreprocessor());
     ProcessInputFile(Clang, InFile, ProgAction);
     Clang.getDiagnostics().getClient()->EndSourceFile();
   }

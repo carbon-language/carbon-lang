@@ -42,7 +42,7 @@ public:
                         bool OwnsOutputStream = false);
   virtual ~TextDiagnosticPrinter();
 
-  void BeginSourceFile(const LangOptions &LO) {
+  void BeginSourceFile(const LangOptions &LO, const Preprocessor *PP) {
     LangOpts = &LO;
   }
 

@@ -32,6 +32,7 @@ namespace clang {
   class IdentifierInfo;
   class LangOptions;
   class PartialDiagnostic;
+  class Preprocessor;
   class SourceRange;
 
   // Import the diagnostic enums themselves.
@@ -791,7 +792,8 @@ public:
   /// \arg LO - The language options for the source file being processed.
   /// \arg PP - The preprocessor object being used for the source; this optional
   /// and may not be present, for example when processing AST source files.
-  virtual void BeginSourceFile(const LangOptions &LangOpts) {}
+  virtual void BeginSourceFile(const LangOptions &LangOpts,
+                               const Preprocessor *PP = 0) {}
 
   /// EndSourceFile - Callback to inform the diagnostic client that processing
   /// of a source file has ended. The diagnostic client should assume that any
