@@ -1488,7 +1488,10 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       llvm::Value *Super = CGF.Builder.CreateLoad(SuperPtr);
       Target = Super;
     }
-  } else {
+  } 
+  else if (isCategoryImpl)
+    Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
+  else {
     llvm::Value *ClassPtr = EmitSuperClassRef(Class);
     ClassPtr = CGF.Builder.CreateStructGEP(ClassPtr, 1);
     Target = CGF.Builder.CreateLoad(ClassPtr);
