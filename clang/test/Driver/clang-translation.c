@@ -10,6 +10,6 @@
 // RUN: grep '"-o" .*clang-translation.*' %t.log
 // RUN: grep '"--asm-verbose"' %t.log
 // RUN: clang -ccc-host-triple i386-apple-darwin9 -### -S %s -o %t.s 2> %t.log
-// RUN: grep '"--mcpu=yonah"' %t.log
+// RUN: grep '"--mcpu" "yonah"' %t.log
 // RUN: clang -ccc-host-triple x86_64-apple-darwin9 -### -S %s -o %t.s 2> %t.log
-// RUN: grep '"--mcpu=core2"' %t.log
+// RUN: grep '"--mcpu" "core2"' %t.log

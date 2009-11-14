@@ -26,6 +26,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Process.h"
 
 #include "InputInfo.h"
@@ -428,26 +429,40 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
                    false))
     CmdArgs.push_back("--no-implicit-float");
 
+  const char *CPUName = 0;
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    // FIXME: We may need some translation here from the options gcc takes to
-    // names the LLVM backend understand?
-    CmdArgs.push_back("-mcpu");
-    CmdArgs.push_back(A->getValue(Args));
-  } else {
-    // Select default CPU.
+    if (llvm::StringRef(A->getValue(Args)) == "native") {
+      // FIXME: Reject attempts to use -march=native unless the target matches
+      // the host.
+      //
+      // FIXME: We should also incorporate the detected target features for use
+      // with -native.
+      std::string CPU = llvm::sys::getHostCPUName();
+      if (!CPU.empty())
+        CPUName = Args.MakeArgString(CPU);
+    } else
+      CPUName = A->getValue(Args);
+  }
 
+  // Select the default CPU if none was given (or detection failed).
+  if (!CPUName) {
     // FIXME: Need target hooks.
     if (memcmp(getToolChain().getOS().c_str(), "darwin", 6) == 0) {
       if (getToolChain().getArchName() == "x86_64")
-        CmdArgs.push_back("--mcpu=core2");
+        CPUName = "core2";
       else if (getToolChain().getArchName() == "i386")
-        CmdArgs.push_back("--mcpu=yonah");
+        CPUName = "yonah";
     } else {
       if (getToolChain().getArchName() == "x86_64")
-        CmdArgs.push_back("--mcpu=x86-64");
+        CPUName = "x86-64";
       else if (getToolChain().getArchName() == "i386")
-        CmdArgs.push_back("--mcpu=pentium4");
+        CPUName = "pentium4";
     }
+  }
+
+  if (CPUName) {
+    CmdArgs.push_back("--mcpu");
+    CmdArgs.push_back(CPUName);
   }
 
   // FIXME: Use iterator.
