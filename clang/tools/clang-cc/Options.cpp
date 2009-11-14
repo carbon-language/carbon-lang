@@ -372,9 +372,6 @@ InheritanceViewCls("cxx-inheritance-view",
                    llvm::cl::value_desc("class name"),
                   llvm::cl::desc("View C++ inheritance for a specified class"));
 
-static llvm::cl::opt<bool>
-FixItAll("fixit", llvm::cl::desc("Apply fix-it advice to the input source"));
-
 static llvm::cl::list<ParsedSourceLocation>
 FixItAtLocations("fixit-at", llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Perform Fix-It modifications at the given source location"));
@@ -832,7 +829,6 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   Opts.DebugCodeCompletionPrinter = CodeCompletionDebugPrinter;
   Opts.DisableFree = DisableFree;
   Opts.EmptyInputOnly = EmptyInputOnly;
-  Opts.FixItAll = FixItAll;
   Opts.FixItLocations = FixItAtLocations;
   Opts.OutputFile = OutputFile;
   Opts.RelocatablePCH = RelocatablePCH;
@@ -856,7 +852,6 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
       if (IK == FrontendOptions::IK_None)
         IK = FrontendOptions::getInputKindForExtension(Ext);
       Opts.Inputs.push_back(std::make_pair(IK, InputFilenames[i]));
-                                           
     }
   }
 }

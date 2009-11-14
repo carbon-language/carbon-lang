@@ -26,6 +26,8 @@ def err_fe_incompatible_options : Error<
     "'%0' cannot be used with '%1'">, DefaultFatal;
 def err_fe_no_fixit_and_codegen : Error<
     "FIX-ITs cannot be applied when generating code">;
+def err_fe_unable_to_find_fixit_file : Error<
+    "FIX-IT could not find file '%0'">;
 
 def err_verify_bogus_characters : Error<
     "bogus characters before '{{' in expected string">;

@@ -41,8 +41,6 @@ public:
   unsigned EmptyInputOnly : 1;             ///< Force input files to be treated
                                            /// as if they were empty, for timing
                                            /// the frontend startup.
-  unsigned FixItAll : 1;                   ///< Apply FIX-IT advice to the input
-                                           /// source files.
   unsigned RelocatablePCH : 1;             ///< When generating PCH files,
                                            /// instruct the PCH writer to create
                                            /// relocatable PCH files.
@@ -80,7 +78,6 @@ public:
     DebugCodeCompletionPrinter = 0;
     DisableFree = 0;
     EmptyInputOnly = 0;
-    FixItAll = 0;
     RelocatablePCH = 0;
     ShowMacrosInCodeCompletion = 0;
     ShowStats = 0;

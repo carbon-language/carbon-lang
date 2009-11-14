@@ -90,6 +90,7 @@ enum ProgActions {
   DumpRecordLayouts,            // Dump record layout information.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
+  FixIt,                        // Parse and apply any fixits to the source.
   ParseNoop,                    // Parse with noop callbacks.
   RunPreprocessorOnly,          // Just lex, no output.
   PrintPreprocessedInput,       // -E mode.
@@ -119,6 +120,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser with noop callbacks (for timings)"),
              clEnumValN(ParseSyntaxOnly, "fsyntax-only",
                         "Run parser and perform semantic analysis"),
+             clEnumValN(FixIt, "fixit",
+                        "Apply fix-it advice to the input source"),
              clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
                         "Run parser and print each callback invoked"),
              clEnumValN(EmitHTML, "emit-html",
@@ -234,27 +237,27 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
 llvm::Timer *ClangFrontendTimer = 0;
 
 /// AddFixItLocations - Add any individual user specified "fix-it" locations,
-/// and return true on success (if any were added).
-static bool AddFixItLocations(FixItRewriter *FixItRewrite,
-                              FileManager &FileMgr,
-                              const std::vector<ParsedSourceLocation> &Locs) {
-  bool AddedFixItLocation = false;
-
+/// and return true on success.
+static bool AddFixItLocations(CompilerInstance &CI,
+                              FixItRewriter &FixItRewrite) {
+  const std::vector<ParsedSourceLocation> &Locs =
+    CI.getFrontendOpts().FixItLocations;
   for (unsigned i = 0, e = Locs.size(); i != e; ++i) {
-    if (const FileEntry *File = FileMgr.getFile(Locs[i].FileName)) {
-      RequestedSourceLocation Requested;
-      Requested.File = File;
-      Requested.Line = Locs[i].Line;
-      Requested.Column = Locs[i].Column;
-      FixItRewrite->addFixItLocation(Requested);
-      AddedFixItLocation = true;
-    } else {
-      llvm::errs() << "FIX-IT could not find file \""
-                   << Locs[i].FileName << "\"\n";
+    const FileEntry *File = CI.getFileManager().getFile(Locs[i].FileName);
+    if (!File) {
+      CI.getDiagnostics().Report(diag::err_fe_unable_to_find_fixit_file)
+        << Locs[i].FileName;
+      return false;
     }
+
+    RequestedSourceLocation Requested;
+    Requested.File = File;
+    Requested.Line = Locs[i].Line;
+    Requested.Column = Locs[i].Column;
+    FixItRewrite.addFixItLocation(Requested);
   }
 
-  return AddedFixItLocation;
+  return true;
 }
 
 static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
@@ -305,12 +308,6 @@ static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
       OS.reset(CI.createDefaultOutputFile(true, InFile, "bc"));
     }
 
-    // Fix-its can change semantics, disallow with any IRgen action.
-    if (FEOpts.FixItAll || !FEOpts.FixItLocations.empty()) {
-      PP.getDiagnostics().Report(diag::err_fe_no_fixit_and_codegen);
-      return 0;
-    }
-
     return CreateBackendConsumer(Act, PP.getDiagnostics(), PP.getLangOptions(),
                                  CI.getCodeGenOpts(), InFile, OS.take(),
                                  CI.getLLVMContext());
@@ -326,6 +323,9 @@ static ASTConsumer *CreateConsumerAction(CompilerInstance &CI,
     return CreateBlockRewriter(InFile, PP.getDiagnostics(),
                                PP.getLangOptions());
 
+  case FixIt:
+    return new ASTConsumer();
+
   case ParseSyntaxOnly:
     return new ASTConsumer();
 
@@ -340,7 +340,7 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
   Preprocessor &PP = CI.getPreprocessor();
   const FrontendOptions &FEOpts = CI.getFrontendOpts();
   llvm::OwningPtr<ASTConsumer> Consumer;
-  FixItRewriter *FixItRewrite = 0;
+  llvm::OwningPtr<FixItRewriter> FixItRewrite;
   bool CompleteTranslationUnit = true;
 
   switch (PA) {
@@ -393,17 +393,12 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
   }
 
   // Check if we want a fix-it rewriter.
-  if (FEOpts.FixItAll || !FEOpts.FixItLocations.empty()) {
-    FixItRewrite = new FixItRewriter(PP.getDiagnostics(),
-                                     PP.getSourceManager(),
-                                     PP.getLangOptions());
-    if (!FEOpts.FixItLocations.empty() &&
-        !AddFixItLocations(FixItRewrite, PP.getFileManager(),
-                           FEOpts.FixItLocations)) {
-      // All of the fix-it locations were bad. Don't fix anything.
-      delete FixItRewrite;
-      FixItRewrite = 0;
-    }
+  if (PA == FixIt) {
+    FixItRewrite.reset(new FixItRewriter(PP.getDiagnostics(),
+                                         PP.getSourceManager(),
+                                         PP.getLangOptions()));
+    if (!AddFixItLocations(CI, *FixItRewrite))
+      return;
   }
 
   if (Consumer) {
@@ -731,9 +726,11 @@ int main(int argc, char **argv) {
   if (Clang.getFrontendOpts().ShowTimers)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
 
-  // C++ visualization?
+  // Enforce certain implications.
   if (!Clang.getFrontendOpts().ViewClassInheritance.empty())
     ProgAction = InheritanceView;
+  if (!Clang.getFrontendOpts().FixItLocations.empty())
+    ProgAction = FixIt;
 
   // Create the source manager.
   Clang.createSourceManager();
