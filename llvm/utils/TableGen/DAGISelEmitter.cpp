@@ -1786,11 +1786,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
         }
 
         CallerCode += ");";
-        CalleeCode += ") ";
-        // Prevent emission routines from being inlined to reduce selection
-        // routines stack frame sizes.
-        CalleeCode += "DISABLE_INLINE ";
-        CalleeCode += "{\n";
+        CalleeCode += ") {\n";
 
         for (std::vector<std::string>::const_reverse_iterator
                I = AddedInits.rbegin(), E = AddedInits.rend(); I != E; ++I)
@@ -1811,6 +1807,9 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
         } else {
           EmitFuncNum = EmitFunctions.size();
           EmitFunctions.insert(std::make_pair(CalleeCode, EmitFuncNum));
+          // Prevent emission routines from being inlined to reduce selection
+          // routines stack frame sizes.
+          OS << "DISABLE_INLINE ";
           OS << "SDNode *Emit_" << utostr(EmitFuncNum) << CalleeCode;
         }
 

@@ -52,6 +52,8 @@
 // method "not for inlining".
 #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
 #define DISABLE_INLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+#define DISABLE_INLINE __declspec(noinline)
 #else
 #define DISABLE_INLINE
 #endif

@@ -64,22 +64,22 @@ public:
 
 /// ReplaceUses - replace all uses of the old node F with the use
 /// of the new node T.
-void ReplaceUses(SDValue F, SDValue T) DISABLE_INLINE {
+DISABLE_INLINE void ReplaceUses(SDValue F, SDValue T) {
   ISelUpdater ISU(ISelPosition);
   CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISU);
 }
 
 /// ReplaceUses - replace all uses of the old nodes F with the use
 /// of the new nodes T.
-void ReplaceUses(const SDValue *F, const SDValue *T,
-                 unsigned Num) DISABLE_INLINE {
+DISABLE_INLINE void ReplaceUses(const SDValue *F, const SDValue *T,
+                                unsigned Num) {
   ISelUpdater ISU(ISelPosition);
   CurDAG->ReplaceAllUsesOfValuesWith(F, T, Num, &ISU);
 }
 
 /// ReplaceUses - replace all uses of the old node F with the use
 /// of the new node T.
-void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {
+DISABLE_INLINE void ReplaceUses(SDNode *F, SDNode *T) {
   ISelUpdater ISU(ISelPosition);
   CurDAG->ReplaceAllUsesWith(F, T, &ISU);
 }
