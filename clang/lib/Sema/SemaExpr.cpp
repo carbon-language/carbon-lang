@@ -2679,7 +2679,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
       CallType = VariadicMethod;
 
     // Promote the arguments (C99 6.5.2.2p7).
-    for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
+    for (unsigned i = NumArgsInProto; i < NumArgs; i++) {
       Expr *Arg = Args[i];
       Invalid |= DefaultVariadicArgumentPromotion(Arg, CallType);
       Call->setArg(i, Arg);
