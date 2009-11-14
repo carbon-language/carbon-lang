@@ -13,6 +13,7 @@ add_clang_library(clangFrontend
   DocumentXML.cpp
   FixItRewriter.cpp
   FrontendAction.cpp
+  FrontendActions.cpp
   FrontendOptions.cpp
   GeneratePCH.cpp
   HTMLDiagnostics.cpp
