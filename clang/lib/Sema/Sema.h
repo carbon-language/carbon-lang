@@ -805,13 +805,15 @@ public:
                            QualType& ConvertedType, bool &IncompatibleObjC);
   bool isObjCPointerConversion(QualType FromType, QualType ToType,
                                QualType& ConvertedType, bool &IncompatibleObjC);
-  bool CheckPointerConversion(Expr *From, QualType ToType, 
-                              CastExpr::CastKind &Kind);
+  bool CheckPointerConversion(Expr *From, QualType ToType,
+                              CastExpr::CastKind &Kind,
+                              bool IgnoreBaseAccess);
   bool IsMemberPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                  bool InOverloadResolution,
                                  QualType &ConvertedType);
   bool CheckMemberPointerConversion(Expr *From, QualType ToType,
-                                    CastExpr::CastKind &Kind);
+                                    CastExpr::CastKind &Kind,
+                                    bool IgnoreBaseAccess);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   OverloadingResult IsUserDefinedConversion(Expr *From, QualType ToType,
                                UserDefinedConversionSequence& User,
@@ -2361,7 +2363,8 @@ public:
   bool IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths);
   
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
-                                    SourceLocation Loc, SourceRange Range);
+                                    SourceLocation Loc, SourceRange Range,
+                                    bool IgnoreAccess = false);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     unsigned InaccessibleBaseID,
                                     unsigned AmbigiousBaseConvID,
@@ -3670,10 +3673,11 @@ public:
                                  ImplicitConversionSequence& ICS);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const ImplicitConversionSequence& ICS,
-                                 const char *Flavor);
+                                 const char *Flavor,
+                                 bool IgnoreBaseAccess = false);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const StandardConversionSequence& SCS,
-                                 const char *Flavor);
+                                 const char *Flavor, bool IgnoreBaseAccess);
   
   bool BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
                                  const ImplicitConversionSequence& ICS,
@@ -3775,7 +3779,8 @@ public:
                           bool SuppressUserConversions,
                           bool AllowExplicit,
                           bool ForceRValue,
-                          ImplicitConversionSequence *ICS = 0);
+                          ImplicitConversionSequence *ICS = 0,
+                          bool IgnoreBaseAccess = false);
 
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.

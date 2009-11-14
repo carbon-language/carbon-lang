@@ -1155,7 +1155,8 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 /// true. It returns true and produces a diagnostic if there was an
 /// error, or returns false otherwise.
 bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
-                                  CastExpr::CastKind &Kind) {
+                                  CastExpr::CastKind &Kind,
+                                  bool IgnoreBaseAccess) {
   QualType FromType = From->getType();
 
   if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
@@ -1169,7 +1170,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
         // ambiguous or inaccessible conversion.
         if (CheckDerivedToBaseConversion(FromPointeeType, ToPointeeType,
                                          From->getExprLoc(),
-                                         From->getSourceRange()))
+                                         From->getSourceRange(),
+                                         IgnoreBaseAccess))
           return true;
         
         // The conversion was successful.
@@ -1238,7 +1240,9 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 /// true and produces a diagnostic if there was an error, or returns false
 /// otherwise.
 bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
-                                        CastExpr::CastKind &Kind) {
+                                        CastExpr::CastKind &Kind,
+                                        bool IgnoreBaseAccess) {
+  (void)IgnoreBaseAccess;
   QualType FromType = From->getType();
   const MemberPointerType *FromPtrType = FromType->getAs<MemberPointerType>();
   if (!FromPtrType) {

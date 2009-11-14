@@ -5,7 +5,7 @@ struct B : public A {};             // Single public base.
 struct C1 : public virtual B {};    // Single virtual base.
 struct C2 : public virtual B {};
 struct D : public C1, public C2 {}; // Diamond
-struct E : private A {};            // Single private base. expected-note 2 {{'private' inheritance specifier here}}
+struct E : private A {};            // Single private base. expected-note 3 {{'private' inheritance specifier here}}
 struct F : public C1 {};            // Single path to B with virtual.
 struct G1 : public B {};
 struct G2 : public B {};
@@ -57,8 +57,8 @@ void t_529_2()
   // Bad code below
 
   (void)static_cast<void*>((const int*)0); // expected-error {{static_cast from 'int const *' to 'void *' is not allowed}}
-  //(void)static_cast<A*>((E*)0); // {{static_cast from 'struct E *' to 'struct A *' is not allowed}}
-  //(void)static_cast<A*>((H*)0); // {{static_cast from 'struct H *' to 'struct A *' is not allowed}}
+  (void)static_cast<A*>((E*)0); // expected-error {{inaccessible base class 'struct A'}}
+  (void)static_cast<A*>((H*)0); // expected-error {{ambiguous conversion}}
   (void)static_cast<int>((int*)0); // expected-error {{static_cast from 'int *' to 'int' is not allowed}}
   (void)static_cast<A**>((B**)0); // expected-error {{static_cast from 'struct B **' to 'struct A **' is not allowed}}
   (void)static_cast<char&>(i); // expected-error {{non-const lvalue reference to type 'char' cannot be initialized with a value of type 'int'}}

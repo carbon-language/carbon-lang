@@ -88,13 +88,13 @@ static TryCastResult TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType,
                                                   const SourceRange &OpRange,
                                                   unsigned &msg,
                                                   CastExpr::CastKind &Kind);
-static TryCastResult TryStaticImplicitCast(Sema &Self, Expr *SrcExpr,
+static TryCastResult TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr,
                                            QualType DestType, bool CStyle,
                                            const SourceRange &OpRange,
                                            unsigned &msg,
                                            CastExpr::CastKind &Kind,
                                            CXXMethodDecl *&ConversionDecl);
-static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
+static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
                                    QualType DestType, bool CStyle,
                                    const SourceRange &OpRange,
                                    unsigned &msg,
@@ -387,15 +387,14 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
-  if (DestType->isVoidType()) {
+  if (DestType->isVoidType())
     return;
-  }
 
   if (!DestType->isLValueReferenceType() && !DestType->isRecordType())
     Self.DefaultFunctionArrayConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
-  if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false,OpRange, msg, 
+  if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, msg,
                     Kind, ConversionDecl)
       != TC_Success && msg != 0)
     Self.Diag(OpRange.getBegin(), msg) << CT_Static
@@ -405,7 +404,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// TryStaticCast - Check if a static cast can be performed, and do so if
 /// possible. If @p CStyle, ignore access restrictions on hierarchy casting
 /// and casting away constness.
-static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
+static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
                                    QualType DestType, bool CStyle,
                                    const SourceRange &OpRange, unsigned &msg,
                                    CastExpr::CastKind &Kind,
@@ -430,7 +429,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
   // C++ 5.2.9p5, reference downcast.
   // See the function for details.
   // DR 427 specifies that this is to be applied before paragraph 2.
-  tcr = TryStaticReferenceDowncast(Self, SrcExpr, DestType, CStyle, OpRange, 
+  tcr = TryStaticReferenceDowncast(Self, SrcExpr, DestType, CStyle, OpRange,
                                    msg, Kind);
   if (tcr != TC_NotApplicable)
     return tcr;
@@ -438,8 +437,10 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
   // N2844 5.2.9p3: An lvalue of type "cv1 T1" can be cast to type "rvalue
   //   reference to cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
   tcr = TryLValueToRValueCast(Self, SrcExpr, DestType, msg);
-  if (tcr != TC_NotApplicable)
+  if (tcr != TC_NotApplicable) {
+    Kind = CastExpr::CK_NoOp;
     return tcr;
+  }
 
   // C++ 5.2.9p2: An expression e can be explicitly converted to a type T
   //   [...] if the declaration "T t(e);" is well-formed, [...].
@@ -779,7 +780,7 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
 ///   An expression e can be explicitly converted to a type T using a
 ///   @c static_cast if the declaration "T t(e);" is well-formed [...].
 TryCastResult
-TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
+TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                       bool CStyle, const SourceRange &OpRange, unsigned &msg,
                       CastExpr::CastKind &Kind, 
                       CXXMethodDecl *&ConversionDecl) {
@@ -792,30 +793,39 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   }
 
   if (DestType->isReferenceType()) {
+    // All reference bindings insert implicit casts above that do the actual
+    // casting.
+    Kind = CastExpr::CK_NoOp;
+
     // At this point of CheckStaticCast, if the destination is a reference,
     // this has to work. There is no other way that works.
     // On the other hand, if we're checking a C-style cast, we've still got
-    // the reinterpret_cast way. In that case, we pass an ICS so we don't
-    // get error messages.
-    ImplicitConversionSequence ICS;
-    bool failed = Self.CheckReferenceInit(SrcExpr, DestType,
-                                          OpRange.getBegin(),
-                                          /*SuppressUserConversions=*/false,
-                                          /*AllowExplicit=*/false,
-                                          /*ForceRValue=*/false,
-                                          CStyle ? &ICS : 0);
-    if (!failed)
+    // the reinterpret_cast way. So in C-style mode, we first try the call
+    // with an ICS to suppress errors.
+    if (CStyle) {
+      ImplicitConversionSequence ICS;
+      if(Self.CheckReferenceInit(SrcExpr, DestType, OpRange.getBegin(),
+                                 /*SuppressUserConversions=*/false,
+                                 /*AllowExplicit=*/false, /*ForceRValue=*/false,
+                                 &ICS))
+        return TC_NotApplicable;
+    }
+    // Now we're committed either way.
+    if(!Self.CheckReferenceInit(SrcExpr, DestType, OpRange.getBegin(),
+                                /*SuppressUserConversions=*/false,
+                                /*AllowExplicit=*/false,
+                                /*ForceRValue=*/false, 0,
+                                /*IgnoreBaseAccess=*/CStyle))
       return TC_Success;
-    if (CStyle)
-      return TC_NotApplicable;
-    // If we didn't pass the ICS, we already got an error message.
+
+    // We already got an error message.
     msg = 0;
     return TC_Failed;
   }
 
   if (DestType->isRecordType()) {
     if (CXXConstructorDecl *Constructor
-          = Self.TryInitializationByConstructor(DestType, &SrcExpr, 1, 
+          = Self.TryInitializationByConstructor(DestType, &SrcExpr, 1,
                                                 OpRange.getBegin(),
                                                 Sema::IK_Direct)) {
       ConversionDecl = Constructor;
@@ -825,7 +835,7 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     
     return TC_NotApplicable;
   }
-  
+
   // FIXME: To get a proper error from invalid conversions here, we need to
   // reimplement more of this.
   // FIXME: This does not actually perform the conversion, and thus does not
@@ -841,18 +851,11 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
     return TC_NotApplicable;
 
-  if (ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion) {
-    ConversionDecl = cast<CXXMethodDecl>(ICS.UserDefined.ConversionFunction);
-    if (isa<CXXConstructorDecl>(ConversionDecl))
-      Kind = CastExpr::CK_ConstructorConversion;
-    else if (isa<CXXConversionDecl>(ConversionDecl))
-      Kind = CastExpr::CK_UserDefinedConversion;
-  } else if (ICS.ConversionKind ==
-              ImplicitConversionSequence::StandardConversion) {
-    // FIXME: Set the cast kind depending on which types of conversions we have.
-  }
-
-  return TC_Success;
+  // The conversion is possible, so commit to it.
+  msg = 0;
+  return Self.PerformImplicitConversion(SrcExpr, DestType, ICS, "casting",
+                                        /*IgnoreBaseAccess*/CStyle) ?
+      TC_Failed : TC_Success;
 }
 
 /// TryConstCast - See if a const_cast from source to destination is allowed,

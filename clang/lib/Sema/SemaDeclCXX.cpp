@@ -698,6 +698,8 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   (void)DerivationOkay;
   
   if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType())) {
+    if (InaccessibleBaseID == 0)
+      return false;
     // Check that the base class can be accessed.
     return CheckBaseClassAccess(Derived, Base, InaccessibleBaseID, Paths, Loc,
                                 Name);
@@ -728,9 +730,11 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
 
 bool
 Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
-                                   SourceLocation Loc, SourceRange Range) {
+                                   SourceLocation Loc, SourceRange Range,
+                                   bool IgnoreAccess) {
   return CheckDerivedToBaseConversion(Derived, Base,
-                                      diag::err_conv_to_inaccessible_base,
+                                      IgnoreAccess ? 0 :
+                                        diag::err_conv_to_inaccessible_base,
                                       diag::err_ambiguous_derived_to_base_conv,
                                       Loc, Range, DeclarationName());
 }
@@ -3693,12 +3697,15 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
 /// When @p AllowExplicit, we also permit explicit user-defined
 /// conversion functions.
 /// When @p ForceRValue, we unconditionally treat the initializer as an rvalue.
+/// When @p IgnoreBaseAccess, we don't do access control on to-base conversion.
+/// This is used when this is called from a C-style cast.
 bool
 Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
                          SourceLocation DeclLoc,
                          bool SuppressUserConversions,
                          bool AllowExplicit, bool ForceRValue,
-                         ImplicitConversionSequence *ICS) {
+                         ImplicitConversionSequence *ICS,
+                         bool IgnoreBaseAccess) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
   QualType T1 = DeclType->getAs<ReferenceType>()->getPointeeType();
@@ -3913,7 +3920,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     // actually happens.
     if (DerivedToBase)
       return CheckDerivedToBaseConversion(T2, T1, DeclLoc,
-                                          Init->getSourceRange());
+                                          Init->getSourceRange(),
+                                          IgnoreBaseAccess);
     else
       return false;
   }
