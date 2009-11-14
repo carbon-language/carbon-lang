@@ -821,9 +821,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   else
     Success = E->Evaluate(Result, Context);
 
-  if (Success) {
-    assert(!Result.HasSideEffects &&
-           "Constant expr should not have any side effects!");
+  if (Success && !Result.HasSideEffects) {
     switch (Result.Val.getKind()) {
     case APValue::Uninitialized:
       assert(0 && "Constant expressions should be initialized.");
