@@ -1,4 +1,4 @@
-/* RUN: clang-cc -fsyntax-only -std=c90 -pedantic -fixit %s -o - | clang-cc -pedantic -x c -std=c90 -Werror -
+/* RUN: clang-cc -std=c90 -pedantic -fixit %s -o - | clang-cc -pedantic -x c -std=c90 -Werror -
  */
 
 /* This is a test of the various code modification hints that are
