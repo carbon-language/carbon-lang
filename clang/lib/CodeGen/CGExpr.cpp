@@ -267,6 +267,10 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCXXBindTemporaryLValue(cast<CXXBindTemporaryExpr>(E));
   case Expr::CXXExprWithTemporariesClass:
     return EmitCXXExprWithTemporariesLValue(cast<CXXExprWithTemporaries>(E));
+  case Expr::CXXZeroInitValueExprClass:
+    return EmitNullInitializationLValue(cast<CXXZeroInitValueExpr>(E));
+  case Expr::CXXDefaultArgExprClass:
+    return EmitLValue(cast<CXXDefaultArgExpr>(E)->getExpr());
 
   case Expr::ObjCMessageExprClass:
     return EmitObjCMessageExprLValue(cast<ObjCMessageExpr>(E));
@@ -303,8 +307,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXConstCastExprClass:
     return EmitCastLValue(cast<CastExpr>(E));
-  case Expr::CXXZeroInitValueExprClass:
-    return EmitNullInitializationLValue(cast<CXXZeroInitValueExpr>(E));
   }
 }
 
