@@ -866,6 +866,13 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                       BaseReg, BaseKill, BaseUndef, OffReg, OffKill, OffUndef,
                       Pred, PredReg, TII, isT2);
       } else {
+        if (OddReg == EvenReg && EvenDeadKill) {
+          // If the two source operands are the same, the kill marker is probably
+          // on the first one. e.g.
+          // t2STRDi8 %R5<kill>, %R5, %R9<kill>, 0, 14, %reg0
+          EvenDeadKill = false;
+          OddDeadKill = true;
+        }
         InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
                       EvenReg, EvenDeadKill, EvenUndef,
                       BaseReg, false, BaseUndef, OffReg, false, OffUndef,
