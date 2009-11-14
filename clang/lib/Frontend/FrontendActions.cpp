@@ -9,6 +9,8 @@
 
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/Parser.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
@@ -19,6 +21,10 @@
 #include "clang/Frontend/Utils.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// AST Consumer Actions
+//===----------------------------------------------------------------------===//
 
 ASTConsumer *AnalysisAction::CreateASTConsumer(CompilerInstance &CI,
                                                llvm::StringRef InFile) {
@@ -89,7 +95,7 @@ FixItAction::FixItAction() {}
 FixItAction::~FixItAction() {}
 
 ASTConsumer *FixItAction::CreateASTConsumer(CompilerInstance &CI,
-                                                    llvm::StringRef InFile) {
+                                            llvm::StringRef InFile) {
   return new ASTConsumer();
 }
 
@@ -176,3 +182,100 @@ EmitBCAction::EmitBCAction() : CodeGenAction(Backend_EmitBC) {}
 EmitLLVMAction::EmitLLVMAction() : CodeGenAction(Backend_EmitLL) {}
 
 EmitLLVMOnlyAction::EmitLLVMOnlyAction() : CodeGenAction(Backend_EmitNothing) {}
+
+//===----------------------------------------------------------------------===//
+// Preprocessor Actions
+//===----------------------------------------------------------------------===//
+
+void DumpRawTokensAction::ExecuteAction() {
+  Preprocessor &PP = getCompilerInstance().getPreprocessor();
+  SourceManager &SM = PP.getSourceManager();
+
+  // Start lexing the specified input file.
+  Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
+  RawLex.SetKeepWhitespaceMode(true);
+
+  Token RawTok;
+  RawLex.LexFromRawLexer(RawTok);
+  while (RawTok.isNot(tok::eof)) {
+    PP.DumpToken(RawTok, true);
+    fprintf(stderr, "\n");
+    RawLex.LexFromRawLexer(RawTok);
+  }
+}
+
+void DumpTokensAction::ExecuteAction() {
+  Preprocessor &PP = getCompilerInstance().getPreprocessor();
+  // Start preprocessing the specified input file.
+  Token Tok;
+  PP.EnterMainSourceFile();
+  do {
+    PP.Lex(Tok);
+    PP.DumpToken(Tok, true);
+    fprintf(stderr, "\n");
+  } while (Tok.isNot(tok::eof));
+}
+
+void GeneratePTHAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  if (CI.getFrontendOpts().OutputFile.empty() ||
+      CI.getFrontendOpts().OutputFile == "-") {
+    // FIXME: Don't fail this way.
+    // FIXME: Verify that we can actually seek in the given file.
+    llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
+    ::exit(1);
+  }
+  llvm::raw_fd_ostream *OS =
+    CI.createDefaultOutputFile(true, getCurrentFile());
+  CacheTokens(CI.getPreprocessor(), OS);
+}
+
+void ParseOnlyAction::ExecuteAction() {
+  Preprocessor &PP = getCompilerInstance().getPreprocessor();
+  llvm::OwningPtr<Action> PA(new MinimalAction(PP));
+
+  Parser P(PP, *PA);
+  PP.EnterMainSourceFile();
+  P.ParseTranslationUnit();
+}
+
+void PreprocessOnlyAction::ExecuteAction() {
+  Preprocessor &PP = getCompilerInstance().getPreprocessor();
+
+  Token Tok;
+  // Start parsing the specified input file.
+  PP.EnterMainSourceFile();
+  do {
+    PP.Lex(Tok);
+  } while (Tok.isNot(tok::eof));
+}
+
+void PrintParseAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  Preprocessor &PP = getCompilerInstance().getPreprocessor();
+  llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
+  llvm::OwningPtr<Action> PA(CreatePrintParserActionsAction(PP, OS));
+
+  Parser P(PP, *PA);
+  PP.EnterMainSourceFile();
+  P.ParseTranslationUnit();
+}
+
+void PrintPreprocessedAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
+  DoPrintPreprocessedInput(CI.getPreprocessor(), OS,
+                           CI.getPreprocessorOutputOpts());
+}
+
+void RewriteMacrosAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  llvm::raw_ostream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
+  RewriteMacrosInInput(CI.getPreprocessor(), OS);
+}
+
+void RewriteTestAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
+  DoRewriteTest(CI.getPreprocessor(), OS);
+}

@@ -15,6 +15,10 @@
 namespace clang {
 class FixItRewriter;
 
+//===----------------------------------------------------------------------===//
+// AST Consumer Actions
+//===----------------------------------------------------------------------===//
+
 class AnalysisAction : public ASTFrontendAction {
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
@@ -121,7 +125,9 @@ public:
   virtual bool hasCodeCompletionSupport() const { return true; }
 };
 
-// Code Gen Actions
+//===----------------------------------------------------------------------===//
+// Code Gen AST Actions
+//===----------------------------------------------------------------------===//
 
 class CodeGenAction : public ASTFrontendAction {
 private:
@@ -152,6 +158,57 @@ public:
 class EmitLLVMOnlyAction : public CodeGenAction {
 public:
   EmitLLVMOnlyAction();
+};
+
+//===----------------------------------------------------------------------===//
+// Preprocessor Actions
+//===----------------------------------------------------------------------===//
+
+class DumpRawTokensAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
+class DumpTokensAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
+class GeneratePTHAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
+class ParseOnlyAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
+class PreprocessOnlyAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
+class PrintParseAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
+class PrintPreprocessedAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+
+  virtual bool hasPCHSupport() const { return true; }
+};
+
+class RewriteMacrosAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
+class RewriteTestAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
 };
 
 }  // end namespace clang
