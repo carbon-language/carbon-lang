@@ -69,6 +69,11 @@ public:
   /// the jump tables to branch to New instead.
   bool ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New);
 
+  /// ReplaceMBBInJumpTable - If Old is a target of the jump tables, update
+  /// the jump table to branch to New instead.
+  bool ReplaceMBBInJumpTable(unsigned Idx, MachineBasicBlock *Old,
+                             MachineBasicBlock *New);
+
   /// getEntrySize - Returns the size of an individual field in a jump table. 
   ///
   unsigned getEntrySize() const { return EntrySize; }
