@@ -3279,8 +3279,13 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     return;
   }
 
-  if (!VDecl->getType()->isArrayType() &&
-      RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
+  // A definition must end up with a complete type, which means it must be
+  // complete with the restriction that an array type might be completed by the
+  // initializer; note that later code assumes this restriction.
+  QualType BaseDeclType = VDecl->getType();
+  if (const ArrayType *Array = Context.getAsIncompleteArrayType(BaseDeclType))
+    BaseDeclType = Array->getElementType();
+  if (RequireCompleteType(VDecl->getLocation(), BaseDeclType,
                           diag::err_typecheck_decl_incomplete_type)) {
     RealDecl->setInvalidDecl();
     return;
