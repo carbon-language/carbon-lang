@@ -185,3 +185,6 @@ int test_pr5432() {
   return a[X][X];
 }
 
+void f() {
+  (void)__extension__(A());
+}
