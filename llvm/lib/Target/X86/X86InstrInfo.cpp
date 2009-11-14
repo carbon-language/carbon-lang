@@ -991,12 +991,13 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
 void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
                                  unsigned DestReg, unsigned SubIdx,
-                                 const MachineInstr *Orig) const {
+                                 const MachineInstr *Orig,
+                                 const TargetRegisterInfo *TRI) const {
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
-    DestReg = RI.getSubReg(DestReg, SubIdx);
+    DestReg = TRI->getSubReg(DestReg, SubIdx);
     SubIdx = 0;
   }
 

@@ -482,7 +482,8 @@ public:
                                          AliasAnalysis *AA) const;
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, unsigned SubIdx,
-                     const MachineInstr *Orig) const;
+                     const MachineInstr *Orig,
+                     const TargetRegisterInfo *TRI) const;
 
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target

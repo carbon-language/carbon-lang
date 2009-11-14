@@ -81,8 +81,8 @@ bool ARMInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
 
 void ARMInstrInfo::
 reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-              unsigned DestReg, unsigned SubIdx,
-              const MachineInstr *Orig) const {
+              unsigned DestReg, unsigned SubIdx, const MachineInstr *Orig,
+              const TargetRegisterInfo *TRI) const {
   DebugLoc dl = Orig->getDebugLoc();
   unsigned Opcode = Orig->getOpcode();
   switch (Opcode) {
@@ -100,6 +100,6 @@ reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
   }
 
-  return ARMBaseInstrInfo::reMaterialize(MBB, I, DestReg, SubIdx, Orig);
+  return ARMBaseInstrInfo::reMaterialize(MBB, I, DestReg, SubIdx, Orig, TRI);
 }
 

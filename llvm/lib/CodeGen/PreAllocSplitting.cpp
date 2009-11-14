@@ -881,7 +881,7 @@ bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
   if (KillPt == DefMI->getParent()->end())
     return false;
   
-  TII->reMaterialize(MBB, RestorePt, VReg, 0, DefMI);
+  TII->reMaterialize(MBB, RestorePt, VReg, 0, DefMI, TRI);
   SlotIndex RematIdx = LIs->InsertMachineInstrInMaps(prior(RestorePt));
   
   ReconstructLiveInterval(CurrLI);

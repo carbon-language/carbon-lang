@@ -135,11 +135,16 @@ void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
                                         unsigned DestReg,
                                         unsigned SubIdx,
-                                        const MachineInstr *Orig) const {
+                                        const MachineInstr *Orig,
+                                        const TargetRegisterInfo *TRI) const {
   MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
   MachineOperand &MO = MI->getOperand(0);
-  MO.setReg(DestReg);
-  MO.setSubReg(SubIdx);
+  if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
+    MO.setReg(DestReg);
+    MO.setSubReg(SubIdx);
+  } else {
+    MO.setReg(TRI->getSubReg(DestReg, SubIdx));
+  }
   MBB.insert(I, MI);
 }
 

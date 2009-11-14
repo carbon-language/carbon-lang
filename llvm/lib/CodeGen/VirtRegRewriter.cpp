@@ -594,7 +594,7 @@ static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
 
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
+    if (!MO.isReg() || !MO.getReg() || !MO.isDef())
       continue;
     unsigned Reg = MO.getReg();
     RegKills.reset(Reg);
@@ -626,7 +626,7 @@ static void ReMaterialize(MachineBasicBlock &MBB,
          "Don't know how to remat instructions that define > 1 values!");
 #endif
   TII->reMaterialize(MBB, MII, DestReg,
-                     ReMatDefMI->getOperand(0).getSubReg(), ReMatDefMI);
+                     ReMatDefMI->getOperand(0).getSubReg(), ReMatDefMI, TRI);
   MachineInstr *NewMI = prior(MII);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
