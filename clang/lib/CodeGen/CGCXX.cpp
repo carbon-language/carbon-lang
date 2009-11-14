@@ -752,6 +752,8 @@ const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
 }
 
 void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
+  if (D->isVirtual())
+    EmitCXXDestructor(D, Dtor_Deleting);
   EmitCXXDestructor(D, Dtor_Complete);
   EmitCXXDestructor(D, Dtor_Base);
 }
