@@ -20,8 +20,8 @@
 #include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
-#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/LLVMContext.h"
@@ -114,13 +114,12 @@ Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                                 int Argc, char **Argv) {
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  llvm::OwningPtr<DiagnosticClient> DiagClient;
-  if (Opts.VerifyDiagnostics) {
-    // When checking diagnostics, just buffer them up.
-    DiagClient.reset(new TextDiagnosticBuffer());
-  } else {
-    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
-  }
+  llvm::OwningPtr<DiagnosticClient> DiagClient(
+    new TextDiagnosticPrinter(llvm::errs(), Opts));
+
+  // Chain in -verify checker, if requested.
+  if (Opts.VerifyDiagnostics)
+    DiagClient.reset(new VerifyDiagnosticsClient(DiagClient.take()));
 
   if (!Opts.DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, Argc, Argv, DiagClient);

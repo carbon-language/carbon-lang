@@ -37,6 +37,7 @@
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "clang/Frontend/Utils.h"
+#include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Parse/Parser.h"
@@ -532,10 +533,6 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
     CI.setASTContext(0);
   }
 
-  if (CI.getDiagnosticOpts().VerifyDiagnostics)
-    if (CheckDiagnostics(PP))
-      exit(1);
-
   if (FEOpts.ShowStats) {
     fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
     PP.PrintStats();
@@ -734,12 +731,6 @@ int main(int argc, char **argv) {
   if (Clang.getFrontendOpts().ShowTimers)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
 
-  if (Clang.getDiagnosticOpts().VerifyDiagnostics &&
-      Clang.getFrontendOpts().Inputs.size() > 1) {
-    fprintf(stderr, "-verify only works on single input files.\n");
-    return 1;
-  }
-
   // C++ visualization?
   if (!Clang.getFrontendOpts().ViewClassInheritance.empty())
     ProgAction = InheritanceView;
@@ -785,9 +776,13 @@ int main(int argc, char **argv) {
 
   delete ClangFrontendTimer;
 
-  // If verifying diagnostics and we reached here, all is well.
+  // Return the appropriate status when verifying diagnostics.
+  //
+  // FIXME: If we could make getNumErrors() do the right thing, we wouldn't need
+  // this.
   if (Clang.getDiagnosticOpts().VerifyDiagnostics)
-    return 0;
+    return static_cast<VerifyDiagnosticsClient&>(
+      Clang.getDiagnosticClient()).HadErrors();
 
   // Managed static deconstruction. Useful for making things like
   // -time-passes usable.
