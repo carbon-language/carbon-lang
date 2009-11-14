@@ -165,3 +165,20 @@ template <class T> struct TBase {
 
 TBase<int> t1; // expected-note {{in instantiation of template class 'struct TBase<int>' requested here}}
 
+class X6 {
+public:
+  static void operator delete(void*, int); // expected-note {{member found by ambiguous name lookup}}
+};
+
+class X7 {
+public:
+  static void operator delete(void*, int); // expected-note {{member found by ambiguous name lookup}}
+};
+
+class X8 : public X6, public X7 {
+};
+
+void f(X8* x8) {
+  delete x8; // expected-error {{member 'operator delete' found in multiple base classes of different types}}
+}
+

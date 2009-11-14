@@ -851,8 +851,13 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       // Try to find operator delete/operator delete[] in class scope.
       LookupResult Found;
       LookupQualifiedName(Found, Record, DeleteName, LookupOrdinaryName);
+      
+      if (Found.isAmbiguous()) {
+        DiagnoseAmbiguousLookup(Found, DeleteName, StartLoc);
+        return ExprError();
+      }
+      
       // FIXME: Diagnose ambiguity properly
-      assert(!Found.isAmbiguous() && "Ambiguous delete/delete[] not handled");
       for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
            F != FEnd; ++F) {
         if (CXXMethodDecl *Delete = dyn_cast<CXXMethodDecl>(*F))
