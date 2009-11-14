@@ -766,13 +766,15 @@ public:
       return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
     }
     case Expr::PredefinedExprClass: {
-      // __func__/__FUNCTION__ -> "".  __PRETTY_FUNCTION__ -> "top level".
-      std::string Str;
-      if (cast<PredefinedExpr>(E)->getIdentType() ==
-          PredefinedExpr::PrettyFunction)
-        Str = "top level";
+      unsigned Type = cast<PredefinedExpr>(E)->getIdentType();
+      if (CGF) {
+        LValue Res = CGF->EmitPredefinedFunctionName(Type);
+        return cast<llvm::Constant>(Res.getAddress());
+      } else if (Type == PredefinedExpr::PrettyFunction) {
+        return CGM.GetAddrOfConstantCString("top level", ".tmp");
+      }
 
-      return CGM.GetAddrOfConstantCString(Str, ".tmp");
+      return CGM.GetAddrOfConstantCString("", ".tmp");
     }
     case Expr::AddrLabelExprClass: {
       assert(CGF && "Invalid address of label expression outside function.");

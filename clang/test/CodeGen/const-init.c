@@ -117,3 +117,9 @@ struct g22 {int x;} __attribute((packed));
 struct g23 {char a; short b; char c; struct g22 d;};
 struct g23 g24 = {1,2,3,4};
 
+// CHECK: @__func__.g25 = private constant [4 x i8] c"g25\00"
+// CHECK: @g25.g26 = internal global i8* getelementptr inbounds ([4 x i8]* @__func__.g25, i32 0, i32 0)
+int g25() {
+  static const char *g26 = __func__;
+  return *g26;
+}
