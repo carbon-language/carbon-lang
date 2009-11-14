@@ -715,8 +715,8 @@ unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc) const {
 
 
 
-static void ComputeLineNumbers(ContentCache* FI,
-                               llvm::BumpPtrAllocator &Alloc) DISABLE_INLINE;
+static DISABLE_INLINE void ComputeLineNumbers(ContentCache* FI,
+                                              llvm::BumpPtrAllocator &Alloc);
 static void ComputeLineNumbers(ContentCache* FI, llvm::BumpPtrAllocator &Alloc){
   // Note that calling 'getBuffer()' may lazily page in the file.
   const MemoryBuffer *Buffer = FI->getBuffer();

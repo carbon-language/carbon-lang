@@ -384,10 +384,10 @@ static inline bool isNumberBody(unsigned char c) {
 /// lexer buffer was all instantiated at a single point, perform the mapping.
 /// This is currently only used for _Pragma implementation, so it is the slow
 /// path of the hot getSourceLocation method.  Do not allow it to be inlined.
-static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
-                                        SourceLocation FileLoc,
-                                        unsigned CharNo,
-                                        unsigned TokLen) DISABLE_INLINE;
+static DISABLE_INLINE SourceLocation GetMappedTokenLoc(Preprocessor &PP,
+                                                       SourceLocation FileLoc,
+                                                       unsigned CharNo,
+                                                       unsigned TokLen);
 static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
                                         SourceLocation FileLoc,
                                         unsigned CharNo, unsigned TokLen) {
