@@ -795,6 +795,29 @@ llvm::DIType CGDebugInfo::CreateType(const LValueReferenceType *Ty,
                                Ty, Ty->getPointeeType(), Unit);
 }
 
+static QualType CanonicalizeTypeForDebugInfo(QualType T) {
+  switch (T->getTypeClass()) {
+  default:
+    return T;
+  case Type::TemplateSpecialization:
+    return cast<TemplateSpecializationType>(T)->desugar();
+  case Type::TypeOfExpr: {
+    TypeOfExprType *Ty = cast<TypeOfExprType>(T);
+    return CanonicalizeTypeForDebugInfo(Ty->getUnderlyingExpr()->getType());
+  }
+  case Type::TypeOf:
+    return cast<TypeOfType>(T)->getUnderlyingType();
+  case Type::Decltype:
+    return cast<DecltypeType>(T)->getUnderlyingType();
+  case Type::QualifiedName:
+    return cast<QualifiedNameType>(T)->getNamedType();
+  case Type::SubstTemplateTypeParm:
+    return cast<SubstTemplateTypeParmType>(T)->getReplacementType();
+  case Type::Elaborated:
+    return cast<ElaboratedType>(T)->getUnderlyingType();
+  }
+}
+
 /// getOrCreateType - Get the type from the cache or create a new
 /// one if necessary.
 llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
@@ -802,6 +825,9 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   if (Ty.isNull())
     return llvm::DIType();
 
+  // Canonicalize the type.
+  Ty = CanonicalizeTypeForDebugInfo(Ty);
+  
   // Check for existing entry.
   std::map<void *, llvm::WeakVH>::iterator it =
     TypeCache.find(Ty.getAsOpaquePtr());
@@ -859,36 +885,10 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::FunctionProto:
   case Type::FunctionNoProto:
     return CreateType(cast<FunctionType>(Ty), Unit);
-  case Type::Elaborated:
-    return getOrCreateType(cast<ElaboratedType>(Ty)->getUnderlyingType(),
-                           Unit);
-
   case Type::ConstantArray:
   case Type::VariableArray:
   case Type::IncompleteArray:
     return CreateType(cast<ArrayType>(Ty), Unit);
-  case Type::TypeOfExpr:
-    return getOrCreateType(cast<TypeOfExprType>(Ty)->getUnderlyingExpr()
-                           ->getType(), Unit);
-  case Type::TypeOf:
-    return getOrCreateType(cast<TypeOfType>(Ty)->getUnderlyingType(), Unit);
-  case Type::Decltype:
-    return getOrCreateType(cast<DecltypeType>(Ty)->getUnderlyingType(), Unit);
-
-  case Type::QualifiedName: {
-    const QualifiedNameType *T = cast<QualifiedNameType>(Ty);
-    return CreateTypeNode(T->getNamedType(), Unit);
-  }
-
-  case Type::SubstTemplateTypeParm: {
-    const SubstTemplateTypeParmType *T = cast<SubstTemplateTypeParmType>(Ty);
-    return CreateTypeNode(T->getReplacementType(), Unit);
-  }
-
-  case Type::TemplateSpecialization: {
-    const TemplateSpecializationType *T = cast<TemplateSpecializationType>(Ty);
-    return CreateTypeNode(T->desugar(), Unit);
-  }
 
   case Type::LValueReference:
     return CreateType(cast<LValueReferenceType>(Ty), Unit);
