@@ -64,7 +64,6 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
 
   PHIDefs.clear();
   PHIKills.clear();
-
   bool Changed = false;
 
   // Split critical edges to help the coalescer
@@ -419,7 +418,16 @@ bool llvm::PHIElimination::isLiveIn(unsigned Reg, const MachineBasicBlock &MBB,
                                     LiveVariables &LV) {
   LiveVariables::VarInfo &VI = LV.getVarInfo(Reg);
 
-  return VI.AliveBlocks.test(MBB.getNumber()) || VI.findKill(&MBB);
+  if (VI.AliveBlocks.test(MBB.getNumber()))
+    return true;
+
+  // defined in MBB?
+  const MachineInstr *Def = MRI->getVRegDef(Reg);
+  if (Def && Def->getParent() == &MBB)
+    return false;
+
+  // killed in MBB?
+  return VI.findKill(&MBB);
 }
 
 MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
@@ -436,9 +444,12 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
         << " -- BB#" << B->getNumber() << '\n');
 
   A->ReplaceUsesOfBlockWith(B, NMBB);
-  NMBB->addSuccessor(B);
+  // If A may fall through to B, we may have to insert a branch.
+  if (A->isLayoutSuccessor(B))
+    A->updateTerminator();
 
   // Insert unconditional "jump B" instruction in NMBB.
+  NMBB->addSuccessor(B);
   SmallVector<MachineOperand, 4> Cond;
   MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond);
 
