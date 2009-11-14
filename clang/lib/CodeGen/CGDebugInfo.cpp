@@ -179,8 +179,6 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
                                  BT->getName(M->getContext().getLangOptions()),
                                  Unit, 0, Size, Align,
                                  Offset, /*flags*/ 0, Encoding);
-
-  TypeCache[QualType(BT, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -199,7 +197,6 @@ llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty,
     DebugFactory.CreateBasicType(Unit, "complex",
                                  Unit, 0, Size, Align,
                                  Offset, /*flags*/ 0, Encoding);
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -237,7 +234,6 @@ llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DICompileUnit U
   llvm::DIType DbgTy =
     DebugFactory.CreateDerivedType(Tag, Unit, "", llvm::DICompileUnit(),
                                    0, 0, 0, 0, 0, FromTy);
-  TypeCache[Ty.getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -246,7 +242,6 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCObjectPointerType *Ty,
   llvm::DIType DbgTy =
     CreatePointerLikeType(llvm::dwarf::DW_TAG_pointer_type, Ty, 
                           Ty->getPointeeType(), Unit);
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -424,7 +419,6 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
     DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
                                    Ty->getDecl()->getNameAsCString(),
                                    DefUnit, Line, 0, 0, 0, 0, Src);
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -452,7 +446,6 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
                                      Unit, "", llvm::DICompileUnit(),
                                      0, 0, 0, 0, 0,
                                      llvm::DIType(), EltTypeArray);
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -567,9 +560,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsString().data(),
                                      DefUnit, Line, Size, Align, 0, 0, 
                                      llvm::DIType(), Elements);
-
-  // Update TypeCache.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl.getNode();
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
@@ -694,9 +684,6 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
                                      Line, Size, Align, 0, 0, llvm::DIType(), 
                                      Elements, RuntimeLang);
 
-  // Update TypeCache.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl.getNode();
-
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
   FwdDecl.replaceAllUsesWith(RealDecl);
@@ -742,8 +729,6 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
                                      Unit, Decl->getNameAsCString(), DefUnit, Line,
                                      Size, Align, 0, 0,
                                      llvm::DIType(), EltArray);
-  
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -801,8 +786,6 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
                                      0, Size, Align, 0, 0,
                                      getOrCreateType(EltTy, Unit),
                                      SubscriptArray);
-  
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
   return DbgTy;
 }
 
@@ -830,11 +813,13 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
+
+  // And update the type cache.
+  TypeCache[Ty.getAsOpaquePtr()] = Res.getNode();  
   return Res;
 }
 
-/// getOrCreateTypeNode - Get the type metadata node from the cache or create a
-/// new one if necessary.
+/// CreateTypeNode - Create a new debug type node.
 llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
                                          llvm::DICompileUnit Unit) {
   // Handle qualifiers, which recursively handles what they refer to.
