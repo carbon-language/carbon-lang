@@ -243,10 +243,6 @@ std::string sys::getHostCPUName() {
                // and manufactured using the 65 nm process.
         return (Em64T) ? "nocona" : "prescott";
 
-        // FIXME: Are these bogus?
-      case 26: return "corei7";
-      case 28: return "atom";
-
       default:
         return (Em64T) ? "x86-64" : "pentium4";
       }
