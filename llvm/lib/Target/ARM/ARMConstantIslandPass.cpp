@@ -48,7 +48,7 @@ STATISTIC(NumJTInserted, "Number of jump table intermediate blocks inserted");
 
 
 static cl::opt<bool>
-AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(false),
+AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
 namespace {
@@ -1791,8 +1791,6 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
     MF.CreateMachineBasicBlock(JTBB->getBasicBlock());
   MachineFunction::iterator MBBI = JTBB; ++MBBI;
   MF.insert(MBBI, NewBB);
-
-  //MF.splice(MBBI, NewBB, NewBB);
 
   // Add an unconditional branch from NewBB to BB.
   // There doesn't seem to be meaningful DebugInfo available; this doesn't
