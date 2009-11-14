@@ -530,10 +530,6 @@ void MachineFrameInfo::dump(const MachineFunction &MF) const {
 unsigned MachineJumpTableInfo::getJumpTableIndex(
                                const std::vector<MachineBasicBlock*> &DestBBs) {
   assert(!DestBBs.empty() && "Cannot create an empty jump table!");
-  for (unsigned i = 0, e = JumpTables.size(); i != e; ++i)
-    if (JumpTables[i].MBBs == DestBBs)
-      return i;
-  
   JumpTables.push_back(MachineJumpTableEntry(DestBBs));
   return JumpTables.size()-1;
 }
