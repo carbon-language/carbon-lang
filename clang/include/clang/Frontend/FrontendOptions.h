@@ -17,6 +17,39 @@
 
 namespace clang {
 
+namespace frontend {
+  enum ActionKind {
+    ASTDump,                ///< Parse ASTs and dump them.
+    ASTPrint,               ///< Parse ASTs and print them.
+    ASTPrintXML,            ///< Parse ASTs and print them in XML.
+    ASTView,                ///< Parse ASTs and view them in Graphviz.
+    DumpRawTokens,          ///< Dump out raw tokens.
+    DumpRecordLayouts,      ///< Dump record layout information.
+    DumpTokens,             ///< Dump out preprocessed tokens.
+    EmitAssembly,           ///< Emit a .s file.
+    EmitBC,                 ///< Emit a .bc file.
+    EmitHTML,               ///< Translate input source into HTML.
+    EmitLLVM,               ///< Emit a .ll file.
+    EmitLLVMOnly,           ///< Generate LLVM IR, but do not
+    FixIt,                  ///< Parse and apply any fixits to the source.
+    GeneratePCH,            ///< Generate pre-compiled header.
+    GeneratePTH,            ///< Generate pre-tokenized header.
+    HTMLTest,               ///< HTML displayer testing stuff.
+    InheritanceView,        ///< View C++ inheritance for a specified class.
+    ParseNoop,              ///< Parse with noop callbacks.
+    ParsePrintCallbacks,    ///< Parse and print each callback.
+    ParseSyntaxOnly,        ///< Parse and perform semantic analysis.
+    PrintDeclContext,       ///< Print DeclContext and their Decls.
+    PrintPreprocessedInput, ///< -E mode.
+    RewriteBlocks,          ///< ObjC->C Rewriter for Blocks.
+    RewriteMacros,          ///< Expand macros but not #includes.
+    RewriteObjC,            ///< ObjC->C Rewriter.
+    RewriteTest,            ///< Rewriter playground
+    RunAnalysis,            ///< Run one or more source code analyses.
+    RunPreprocessorOnly     ///< Just lex, no output.
+  };
+}
+
 /// FrontendOptions - Options for controlling the behavior of the frontend.
 class FrontendOptions {
 public:
@@ -73,11 +106,15 @@ public:
   /// If given, enable code completion at the provided location.
   ParsedSourceLocation CodeCompletionAt;
 
+  /// The frontend action to perform.
+  frontend::ActionKind ProgramAction;
+
 public:
   FrontendOptions() {
     DebugCodeCompletionPrinter = 0;
     DisableFree = 0;
     EmptyInputOnly = 0;
+    ProgramAction = frontend::ParseSyntaxOnly;
     RelocatablePCH = 0;
     ShowMacrosInCodeCompletion = 0;
     ShowStats = 0;

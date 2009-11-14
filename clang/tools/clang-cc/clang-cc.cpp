@@ -50,99 +50,6 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Frontend Actions
-//===----------------------------------------------------------------------===//
-
-enum ProgActions {
-  RewriteObjC,                  // ObjC->C Rewriter.
-  RewriteBlocks,                // ObjC->C Rewriter for Blocks.
-  RewriteMacros,                // Expand macros but not #includes.
-  RewriteTest,                  // Rewriter playground
-  HTMLTest,                     // HTML displayer testing stuff.
-  EmitAssembly,                 // Emit a .s file.
-  EmitLLVM,                     // Emit a .ll file.
-  EmitBC,                       // Emit a .bc file.
-  EmitLLVMOnly,                 // Generate LLVM IR, but do not
-  EmitHTML,                     // Translate input source into HTML.
-  ASTPrint,                     // Parse ASTs and print them.
-  ASTPrintXML,                  // Parse ASTs and print them in XML.
-  ASTDump,                      // Parse ASTs and dump them.
-  ASTView,                      // Parse ASTs and view them in Graphviz.
-  PrintDeclContext,             // Print DeclContext and their Decls.
-  DumpRecordLayouts,            // Dump record layout information.
-  ParsePrintCallbacks,          // Parse and print each callback.
-  ParseSyntaxOnly,              // Parse and perform semantic analysis.
-  FixIt,                        // Parse and apply any fixits to the source.
-  ParseNoop,                    // Parse with noop callbacks.
-  RunPreprocessorOnly,          // Just lex, no output.
-  PrintPreprocessedInput,       // -E mode.
-  DumpTokens,                   // Dump out preprocessed tokens.
-  DumpRawTokens,                // Dump out raw tokens.
-  RunAnalysis,                  // Run one or more source code analyses.
-  GeneratePTH,                  // Generate pre-tokenized header.
-  GeneratePCH,                  // Generate pre-compiled header.
-  InheritanceView               // View C++ inheritance for a specified class.
-};
-
-static llvm::cl::opt<ProgActions>
-ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
-           llvm::cl::init(ParseSyntaxOnly),
-           llvm::cl::values(
-             clEnumValN(RunPreprocessorOnly, "Eonly",
-                        "Just run preprocessor, no output (for timings)"),
-             clEnumValN(PrintPreprocessedInput, "E",
-                        "Run preprocessor, emit preprocessed file"),
-             clEnumValN(DumpRawTokens, "dump-raw-tokens",
-                        "Lex file in raw mode and dump raw tokens"),
-             clEnumValN(RunAnalysis, "analyze",
-                        "Run static analysis engine"),
-             clEnumValN(DumpTokens, "dump-tokens",
-                        "Run preprocessor, dump internal rep of tokens"),
-             clEnumValN(ParseNoop, "parse-noop",
-                        "Run parser with noop callbacks (for timings)"),
-             clEnumValN(ParseSyntaxOnly, "fsyntax-only",
-                        "Run parser and perform semantic analysis"),
-             clEnumValN(FixIt, "fixit",
-                        "Apply fix-it advice to the input source"),
-             clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
-                        "Run parser and print each callback invoked"),
-             clEnumValN(EmitHTML, "emit-html",
-                        "Output input source as HTML"),
-             clEnumValN(ASTPrint, "ast-print",
-                        "Build ASTs and then pretty-print them"),
-             clEnumValN(ASTPrintXML, "ast-print-xml",
-                        "Build ASTs and then print them in XML format"),
-             clEnumValN(ASTDump, "ast-dump",
-                        "Build ASTs and then debug dump them"),
-             clEnumValN(ASTView, "ast-view",
-                        "Build ASTs and view them with GraphViz"),
-             clEnumValN(PrintDeclContext, "print-decl-contexts",
-                        "Print DeclContexts and their Decls"),
-             clEnumValN(DumpRecordLayouts, "dump-record-layouts",
-                        "Dump record layout information"),
-             clEnumValN(GeneratePTH, "emit-pth",
-                        "Generate pre-tokenized header file"),
-             clEnumValN(GeneratePCH, "emit-pch",
-                        "Generate pre-compiled header file"),
-             clEnumValN(EmitAssembly, "S",
-                        "Emit native assembly code"),
-             clEnumValN(EmitLLVM, "emit-llvm",
-                        "Build ASTs then convert to LLVM, emit .ll file"),
-             clEnumValN(EmitBC, "emit-llvm-bc",
-                        "Build ASTs then convert to LLVM, emit .bc file"),
-             clEnumValN(EmitLLVMOnly, "emit-llvm-only",
-                        "Build ASTs and convert to LLVM, discarding output"),
-             clEnumValN(RewriteTest, "rewrite-test",
-                        "Rewriter playground"),
-             clEnumValN(RewriteObjC, "rewrite-objc",
-                        "Rewrite ObjC into C (code rewriter example)"),
-             clEnumValN(RewriteMacros, "rewrite-macros",
-                        "Expand macros without full preprocessing"),
-             clEnumValN(RewriteBlocks, "rewrite-blocks",
-                        "Rewrite Blocks to C"),
-             clEnumValEnd));
-
-//===----------------------------------------------------------------------===//
 // Utility Methods
 //===----------------------------------------------------------------------===//
 
@@ -174,8 +81,10 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 /// anything.
 llvm::Timer *ClangFrontendTimer = 0;
 
-static FrontendAction *CreateFrontendAction(ProgActions PA) {
-  switch (PA) {
+static FrontendAction *CreateFrontendAction(frontend::ActionKind AK) {
+  using namespace clang::frontend;
+
+  switch (AK) {
   default:                     return 0;
   case ASTDump:                return new ASTDumpAction();
   case ASTPrint:               return new ASTPrintAction();
@@ -344,9 +253,9 @@ int main(int argc, char **argv) {
 
   // Enforce certain implications.
   if (!Clang.getFrontendOpts().ViewClassInheritance.empty())
-    ProgAction = InheritanceView;
+    Clang.getFrontendOpts().ProgramAction = frontend::InheritanceView;
   if (!Clang.getFrontendOpts().FixItLocations.empty())
-    ProgAction = FixIt;
+    Clang.getFrontendOpts().ProgramAction = frontend::FixIt;
 
   for (unsigned i = 0, e = Clang.getFrontendOpts().Inputs.size(); i != e; ++i) {
     const std::string &InFile = Clang.getFrontendOpts().Inputs[i].second;
@@ -370,7 +279,8 @@ int main(int argc, char **argv) {
       Clang.createPreprocessor();
     }
 
-    llvm::OwningPtr<FrontendAction> Act(CreateFrontendAction(ProgAction));
+    llvm::OwningPtr<FrontendAction> Act(
+      CreateFrontendAction(Clang.getFrontendOpts().ProgramAction));
     assert(Act && "Invalid program action!");
     Act->setCurrentTimer(ClangFrontendTimer);
     if (Act->BeginSourceFile(Clang, InFile, IsAST)) {

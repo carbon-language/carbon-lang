@@ -303,6 +303,8 @@ VerifyDiagnostics("verify",
 
 namespace frontendoptions {
 
+using namespace clang::frontend;
+
 static llvm::cl::opt<ParsedSourceLocation>
 CodeCompletionAt("code-completion-at",
                  llvm::cl::value_desc("file:line:column"),
@@ -380,6 +382,64 @@ static llvm::cl::opt<std::string>
 OutputFile("o",
  llvm::cl::value_desc("path"),
  llvm::cl::desc("Specify output file"));
+
+static llvm::cl::opt<ActionKind>
+ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
+           llvm::cl::init(ParseSyntaxOnly),
+           llvm::cl::values(
+             clEnumValN(RunPreprocessorOnly, "Eonly",
+                        "Just run preprocessor, no output (for timings)"),
+             clEnumValN(PrintPreprocessedInput, "E",
+                        "Run preprocessor, emit preprocessed file"),
+             clEnumValN(DumpRawTokens, "dump-raw-tokens",
+                        "Lex file in raw mode and dump raw tokens"),
+             clEnumValN(RunAnalysis, "analyze",
+                        "Run static analysis engine"),
+             clEnumValN(DumpTokens, "dump-tokens",
+                        "Run preprocessor, dump internal rep of tokens"),
+             clEnumValN(ParseNoop, "parse-noop",
+                        "Run parser with noop callbacks (for timings)"),
+             clEnumValN(ParseSyntaxOnly, "fsyntax-only",
+                        "Run parser and perform semantic analysis"),
+             clEnumValN(FixIt, "fixit",
+                        "Apply fix-it advice to the input source"),
+             clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
+                        "Run parser and print each callback invoked"),
+             clEnumValN(EmitHTML, "emit-html",
+                        "Output input source as HTML"),
+             clEnumValN(ASTPrint, "ast-print",
+                        "Build ASTs and then pretty-print them"),
+             clEnumValN(ASTPrintXML, "ast-print-xml",
+                        "Build ASTs and then print them in XML format"),
+             clEnumValN(ASTDump, "ast-dump",
+                        "Build ASTs and then debug dump them"),
+             clEnumValN(ASTView, "ast-view",
+                        "Build ASTs and view them with GraphViz"),
+             clEnumValN(PrintDeclContext, "print-decl-contexts",
+                        "Print DeclContexts and their Decls"),
+             clEnumValN(DumpRecordLayouts, "dump-record-layouts",
+                        "Dump record layout information"),
+             clEnumValN(GeneratePTH, "emit-pth",
+                        "Generate pre-tokenized header file"),
+             clEnumValN(GeneratePCH, "emit-pch",
+                        "Generate pre-compiled header file"),
+             clEnumValN(EmitAssembly, "S",
+                        "Emit native assembly code"),
+             clEnumValN(EmitLLVM, "emit-llvm",
+                        "Build ASTs then convert to LLVM, emit .ll file"),
+             clEnumValN(EmitBC, "emit-llvm-bc",
+                        "Build ASTs then convert to LLVM, emit .bc file"),
+             clEnumValN(EmitLLVMOnly, "emit-llvm-only",
+                        "Build ASTs and convert to LLVM, discarding output"),
+             clEnumValN(RewriteTest, "rewrite-test",
+                        "Rewriter playground"),
+             clEnumValN(RewriteObjC, "rewrite-objc",
+                        "Rewrite ObjC into C (code rewriter example)"),
+             clEnumValN(RewriteMacros, "rewrite-macros",
+                        "Expand macros without full preprocessing"),
+             clEnumValN(RewriteBlocks, "rewrite-blocks",
+                        "Rewrite Blocks to C"),
+             clEnumValEnd));
 
 static llvm::cl::opt<bool>
 RelocatablePCH("relocatable-pch",
@@ -830,6 +890,7 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   Opts.DisableFree = DisableFree;
   Opts.EmptyInputOnly = EmptyInputOnly;
   Opts.FixItLocations = FixItAtLocations;
+  Opts.ProgramAction = ProgAction;
   Opts.OutputFile = OutputFile;
   Opts.RelocatablePCH = RelocatablePCH;
   Opts.ShowMacrosInCodeCompletion = CodeCompletionWantsMacros;
