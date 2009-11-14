@@ -39,6 +39,38 @@ CompilerInstance::~CompilerInstance() {
     delete LLVMContext;
 }
 
+void CompilerInstance::setDiagnostics(Diagnostic *Value) {
+  Diagnostics.reset(Value);
+}
+
+void CompilerInstance::setDiagnosticClient(DiagnosticClient *Value) {
+  DiagClient.reset(Value);
+}
+
+void CompilerInstance::setTarget(TargetInfo *Value) {
+  Target.reset(Value);
+}
+
+void CompilerInstance::setFileManager(FileManager *Value) {
+  FileMgr.reset(Value);
+}
+
+void CompilerInstance::setSourceManager(SourceManager *Value) {
+  SourceMgr.reset(Value);
+}
+
+void CompilerInstance::setPreprocessor(Preprocessor *Value) {
+  PP.reset(Value);
+}
+
+void CompilerInstance::setASTContext(ASTContext *Value) {
+  Context.reset(Value);
+}
+
+void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
+  CompletionConsumer.reset(Value);
+}
+
 // Diagnostics
 
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,

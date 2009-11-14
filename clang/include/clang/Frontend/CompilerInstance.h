@@ -204,9 +204,9 @@ public:
 
   /// setDiagnostics - Replace the current diagnostics engine; the compiler
   /// instance takes ownership of \arg Value.
-  void setDiagnostics(Diagnostic *Value) { Diagnostics.reset(Value); }
+  void setDiagnostics(Diagnostic *Value);
 
-  DiagnosticClient &getDiagnosticClient() const { return *DiagClient; }
+  DiagnosticClient &getDiagnosticClient() const;
 
   /// takeDiagnosticClient - Remove the current diagnostics client and give
   /// ownership to the caller.
@@ -214,9 +214,7 @@ public:
 
   /// setDiagnosticClient - Replace the current diagnostics client; the compiler
   /// instance takes ownership of \arg Value.
-  void setDiagnosticClient(DiagnosticClient *Value) {
-    DiagClient.reset(Value);
-  }
+  void setDiagnosticClient(DiagnosticClient *Value);
 
   /// }
   /// @name Target Info
@@ -235,7 +233,7 @@ public:
 
   /// setTarget - Replace the current diagnostics engine; the compiler
   /// instance takes ownership of \arg Value.
-  void setTarget(TargetInfo *Value) { Target.reset(Value); }
+  void setTarget(TargetInfo *Value);
 
   /// }
   /// @name File Manager
@@ -254,7 +252,7 @@ public:
 
   /// setFileManager - Replace the current file manager; the compiler instance
   /// takes ownership of \arg Value.
-  void setFileManager(FileManager *Value) { FileMgr.reset(Value); }
+  void setFileManager(FileManager *Value);
 
   /// }
   /// @name Source Manager
@@ -273,7 +271,7 @@ public:
 
   /// setSourceManager - Replace the current source manager; the compiler
   /// instance takes ownership of \arg Value.
-  void setSourceManager(SourceManager *Value) { SourceMgr.reset(Value); }
+  void setSourceManager(SourceManager *Value);
 
   /// }
   /// @name Preprocessor
@@ -292,7 +290,7 @@ public:
 
   /// setPreprocessor - Replace the current preprocessor; the compiler instance
   /// takes ownership of \arg Value.
-  void setPreprocessor(Preprocessor *Value) { PP.reset(Value); }
+  void setPreprocessor(Preprocessor *Value);
 
   /// }
   /// @name ASTContext
@@ -311,7 +309,7 @@ public:
 
   /// setASTContext - Replace the current AST context; the compiler instance
   /// takes ownership of \arg Value.
-  void setASTContext(ASTContext *Value) { Context.reset(Value); }
+  void setASTContext(ASTContext *Value);
 
   /// }
   /// @name Code Completion
@@ -333,9 +331,7 @@ public:
 
   /// setCodeCompletionConsumer - Replace the current code completion consumer;
   /// the compiler instance takes ownership of \arg Value.
-  void setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
-    CompletionConsumer.reset(Value);
-  }
+  void setCodeCompletionConsumer(CodeCompleteConsumer *Value);
 
   /// }
   /// @name Output Files
