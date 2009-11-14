@@ -133,17 +133,14 @@ namespace {
 
 
   private:
-    MachineBasicBlock::iterator
-      findNextEmptySlot(MachineBasicBlock*, MachineInstr*,
-                        SlotIndex&);
 
     MachineBasicBlock::iterator
       findSpillPoint(MachineBasicBlock*, MachineInstr*, MachineInstr*,
-                     SmallPtrSet<MachineInstr*, 4>&, SlotIndex&);
+                     SmallPtrSet<MachineInstr*, 4>&);
 
     MachineBasicBlock::iterator
       findRestorePoint(MachineBasicBlock*, MachineInstr*, SlotIndex,
-                     SmallPtrSet<MachineInstr*, 4>&, SlotIndex&);
+                     SmallPtrSet<MachineInstr*, 4>&);
 
     int CreateSpillStackSlot(unsigned, const TargetRegisterClass *);
 
@@ -163,7 +160,6 @@ namespace {
     bool Rematerialize(unsigned vreg, VNInfo* ValNo,
                        MachineInstr* DefMI,
                        MachineBasicBlock::iterator RestorePt,
-                       SlotIndex RestoreIdx,
                        SmallPtrSet<MachineInstr*, 4>& RefsInMBB);
     MachineInstr* FoldSpill(unsigned vreg, const TargetRegisterClass* RC,
                             MachineInstr* DefMI,
@@ -210,24 +206,6 @@ X("pre-alloc-splitting", "Pre-Register Allocation Live Interval Splitting");
 
 const PassInfo *const llvm::PreAllocSplittingID = &X;
 
-
-/// findNextEmptySlot - Find a gap after the given machine instruction in the
-/// instruction index map. If there isn't one, return end().
-MachineBasicBlock::iterator
-PreAllocSplitting::findNextEmptySlot(MachineBasicBlock *MBB, MachineInstr *MI,
-                                     SlotIndex &SpotIndex) {
-  MachineBasicBlock::iterator MII = MI;
-  if (++MII != MBB->end()) {
-    SlotIndex Index =
-      LIs->findGapBeforeInstr(LIs->getInstructionIndex(MII));
-    if (Index != SlotIndex()) {
-      SpotIndex = Index;
-      return MII;
-    }
-  }
-  return MBB->end();
-}
-
 /// findSpillPoint - Find a gap as far away from the given MI that's suitable
 /// for spilling the current live interval. The index must be before any
 /// defs and uses of the live interval register in the mbb. Return begin() if
@@ -235,8 +213,7 @@ PreAllocSplitting::findNextEmptySlot(MachineBasicBlock *MBB, MachineInstr *MI,
 MachineBasicBlock::iterator
 PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
                                   MachineInstr *DefMI,
-                                  SmallPtrSet<MachineInstr*, 4> &RefsInMBB,
-                                  SlotIndex &SpillIndex) {
+                                  SmallPtrSet<MachineInstr*, 4> &RefsInMBB) {
   MachineBasicBlock::iterator Pt = MBB->begin();
 
   MachineBasicBlock::iterator MII = MI;
@@ -249,8 +226,6 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
   if (MII == EndPt || RefsInMBB.count(MII)) return Pt;
     
   while (MII != EndPt && !RefsInMBB.count(MII)) {
-    SlotIndex Index = LIs->getInstructionIndex(MII);
-    
     // We can't insert the spill between the barrier (a call), and its
     // corresponding call frame setup.
     if (MII->getOpcode() == TRI->getCallFrameDestroyOpcode()) {
@@ -261,9 +236,8 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
         }
       }
       continue;
-    } else if (LIs->hasGapBeforeInstr(Index)) {
+    } else {
       Pt = MII;
-      SpillIndex = LIs->findGapBeforeInstr(Index, true);
     }
     
     if (RefsInMBB.count(MII))
@@ -283,8 +257,7 @@ PreAllocSplitting::findSpillPoint(MachineBasicBlock *MBB, MachineInstr *MI,
 MachineBasicBlock::iterator
 PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
                                     SlotIndex LastIdx,
-                                    SmallPtrSet<MachineInstr*, 4> &RefsInMBB,
-                                    SlotIndex &RestoreIndex) {
+                                    SmallPtrSet<MachineInstr*, 4> &RefsInMBB) {
   // FIXME: Allow spill to be inserted to the beginning of the mbb. Update mbb
   // begin index accordingly.
   MachineBasicBlock::iterator Pt = MBB->end();
@@ -308,7 +281,6 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
     SlotIndex Index = LIs->getInstructionIndex(MII);
     if (Index > LastIdx)
       break;
-    SlotIndex Gap = LIs->findGapBeforeInstr(Index);
       
     // We can't insert a restore between the barrier (a call) and its 
     // corresponding call frame teardown.
@@ -317,9 +289,8 @@ PreAllocSplitting::findRestorePoint(MachineBasicBlock *MBB, MachineInstr *MI,
         if (MII == EndPt || RefsInMBB.count(MII)) return Pt;
         ++MII;
       } while (MII->getOpcode() != TRI->getCallFrameDestroyOpcode());
-    } else if (Gap != SlotIndex()) {
+    } else {
       Pt = MII;
-      RestoreIndex = Gap;
     }
     
     if (RefsInMBB.count(MII))
@@ -742,7 +713,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     DefIdx = DefIdx.getDefIndex();
     
     assert(DI->getOpcode() != TargetInstrInfo::PHI &&
-           "Following NewVN isPHIDef flag incorrect. Fix me!");
+           "PHI instr in code during pre-alloc splitting.");
     VNInfo* NewVN = LI->getNextValue(DefIdx, 0, true, Alloc);
     
     // If the def is a move, set the copy field.
@@ -898,25 +869,22 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
 bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
                                       MachineInstr* DefMI,
                                       MachineBasicBlock::iterator RestorePt,
-                                      SlotIndex RestoreIdx,
                                     SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
   MachineBasicBlock& MBB = *RestorePt->getParent();
   
   MachineBasicBlock::iterator KillPt = BarrierMBB->end();
-  SlotIndex KillIdx;
   if (!ValNo->isDefAccurate() || DefMI->getParent() == BarrierMBB)
-    KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, KillIdx);
+    KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB);
   else
-    KillPt = findNextEmptySlot(DefMI->getParent(), DefMI, KillIdx);
+    KillPt = next(MachineBasicBlock::iterator(DefMI));
   
   if (KillPt == DefMI->getParent()->end())
     return false;
   
   TII->reMaterialize(MBB, RestorePt, VReg, 0, DefMI);
-  LIs->InsertMachineInstrInMaps(prior(RestorePt), RestoreIdx);
+  SlotIndex RematIdx = LIs->InsertMachineInstrInMaps(prior(RestorePt));
   
   ReconstructLiveInterval(CurrLI);
-  SlotIndex RematIdx = LIs->getInstructionIndex(prior(RestorePt));
   RematIdx = RematIdx.getDefIndex();
   RenumberValno(CurrLI->findDefinedVNInfoForRegInt(RematIdx));
   
@@ -1088,17 +1056,15 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   }
 
   // Find a point to restore the value after the barrier.
-  SlotIndex RestoreIndex;
   MachineBasicBlock::iterator RestorePt =
-    findRestorePoint(BarrierMBB, Barrier, LR->end, RefsInMBB, RestoreIndex);
+    findRestorePoint(BarrierMBB, Barrier, LR->end, RefsInMBB);
   if (RestorePt == BarrierMBB->end()) {
     DEBUG(errs() << "FAILED (could not find a suitable restore point).\n");
     return false;
   }
 
   if (DefMI && LIs->isReMaterializable(*LI, ValNo, DefMI))
-    if (Rematerialize(LI->reg, ValNo, DefMI, RestorePt,
-                      RestoreIndex, RefsInMBB)) {
+    if (Rematerialize(LI->reg, ValNo, DefMI, RestorePt, RefsInMBB)) {
       DEBUG(errs() << "success (remat).\n");
       return true;
     }
@@ -1116,7 +1082,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       SpillIndex = LIs->getInstructionIndex(SpillMI);
     } else {
       MachineBasicBlock::iterator SpillPt = 
-        findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB, SpillIndex);
+        findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB);
       if (SpillPt == BarrierMBB->begin()) {
         DEBUG(errs() << "FAILED (could not find a suitable spill point).\n");
         return false; // No gap to insert spill.
@@ -1126,10 +1092,10 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       SS = CreateSpillStackSlot(CurrLI->reg, RC);
       TII->storeRegToStackSlot(*BarrierMBB, SpillPt, CurrLI->reg, true, SS, RC);
       SpillMI = prior(SpillPt);
-      LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
+      SpillIndex = LIs->InsertMachineInstrInMaps(SpillMI);
     }
   } else if (!IsAvailableInStack(DefMBB, CurrLI->reg, ValNo->def,
-                                 RestoreIndex, SpillIndex, SS)) {
+                                 LIs->getZeroIndex(), SpillIndex, SS)) {
     // If it's already split, just restore the value. There is no need to spill
     // the def again.
     if (!DefMI) {
@@ -1146,13 +1112,13 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       if (DefMBB == BarrierMBB) {
         // Add spill after the def and the last use before the barrier.
         SpillPt = findSpillPoint(BarrierMBB, Barrier, DefMI,
-                                 RefsInMBB, SpillIndex);
+                                 RefsInMBB);
         if (SpillPt == DefMBB->begin()) {
           DEBUG(errs() << "FAILED (could not find a suitable spill point).\n");
           return false; // No gap to insert spill.
         }
       } else {
-        SpillPt = findNextEmptySlot(DefMBB, DefMI, SpillIndex);
+        SpillPt = next(MachineBasicBlock::iterator(DefMI));
         if (SpillPt == DefMBB->end()) {
           DEBUG(errs() << "FAILED (could not find a suitable spill point).\n");
           return false; // No gap to insert spill.
@@ -1162,7 +1128,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       SS = CreateSpillStackSlot(CurrLI->reg, RC);
       TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg, false, SS, RC);
       SpillMI = prior(SpillPt);
-      LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
+      SpillIndex = LIs->InsertMachineInstrInMaps(SpillMI);
     }
   }
 
@@ -1172,6 +1138,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
 
   // Add restore.
   bool FoldedRestore = false;
+  SlotIndex RestoreIndex;
   if (MachineInstr* LMI = FoldRestore(CurrLI->reg, RC, Barrier,
                                       BarrierMBB, SS, RefsInMBB)) {
     RestorePt = LMI;
@@ -1180,7 +1147,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   } else {
     TII->loadRegFromStackSlot(*BarrierMBB, RestorePt, CurrLI->reg, SS, RC);
     MachineInstr *LoadMI = prior(RestorePt);
-    LIs->InsertMachineInstrInMaps(LoadMI, RestoreIndex);
+    RestoreIndex = LIs->InsertMachineInstrInMaps(LoadMI);
   }
 
   // Update spill stack slot live interval.

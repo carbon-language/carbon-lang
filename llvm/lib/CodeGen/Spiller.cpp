@@ -52,16 +52,16 @@ protected:
   /// Ensures there is space before the given machine instruction, returns the
   /// instruction's new number.
   SlotIndex makeSpaceBefore(MachineInstr *mi) {
-    if (!lis->hasGapBeforeInstr(lis->getInstructionIndex(mi))) {
+    //if (!lis->hasGapBeforeInstr(lis->getInstructionIndex(mi))) {
       // FIXME: Should be updated to use rewrite-in-place methods when they're
       // introduced. Currently broken.
       //lis->scaleNumbering(2);
       //ls->scaleNumbering(2);
-    }
+    //}
 
     SlotIndex miIdx = lis->getInstructionIndex(mi);
 
-    assert(lis->hasGapBeforeInstr(miIdx));
+    //assert(lis->hasGapBeforeInstr(miIdx));
     
     return miIdx;
   }
@@ -69,16 +69,16 @@ protected:
   /// Ensure there is space after the given machine instruction, returns the
   /// instruction's new number.
   SlotIndex makeSpaceAfter(MachineInstr *mi) {
-    if (!lis->hasGapAfterInstr(lis->getInstructionIndex(mi))) {
+    //if (!lis->hasGapAfterInstr(lis->getInstructionIndex(mi))) {
       // FIXME: Should be updated to use rewrite-in-place methods when they're
       // introduced. Currently broken.
       // lis->scaleNumbering(2);
       // ls->scaleNumbering(2);
-    }
+    //}
 
     SlotIndex miIdx = lis->getInstructionIndex(mi);
 
-    assert(lis->hasGapAfterInstr(miIdx));
+    //assert(lis->hasGapAfterInstr(miIdx));
 
     return miIdx;
   }  
@@ -99,14 +99,8 @@ protected:
                              true, ss, trc);
     MachineBasicBlock::iterator storeInstItr(next(mi));
     MachineInstr *storeInst = &*storeInstItr;
-    SlotIndex storeInstIdx = miIdx.getNextIndex();
-
-    assert(lis->getInstructionFromIndex(storeInstIdx) == 0 &&
-           "Store inst index already in use.");
     
-    lis->InsertMachineInstrInMaps(storeInst, storeInstIdx);
-
-    return storeInstIdx;
+    return lis->InsertMachineInstrInMaps(storeInst);
   }
 
   /// Insert a store of the given vreg to the given stack slot immediately
@@ -120,14 +114,8 @@ protected:
     tii->storeRegToStackSlot(*mi->getParent(), mi, vreg, true, ss, trc);
     MachineBasicBlock::iterator storeInstItr(prior(mi));
     MachineInstr *storeInst = &*storeInstItr;
-    SlotIndex storeInstIdx = miIdx.getPrevIndex();
 
-    assert(lis->getInstructionFromIndex(storeInstIdx) == 0 &&
-           "Store inst index already in use.");
-
-    lis->InsertMachineInstrInMaps(storeInst, storeInstIdx);
-
-    return storeInstIdx;
+    return lis->InsertMachineInstrInMaps(storeInst);
   }
 
   void insertStoreAfterInstOnInterval(LiveInterval *li,
@@ -164,14 +152,8 @@ protected:
     tii->loadRegFromStackSlot(*mi->getParent(), nextInstItr, vreg, ss, trc);
     MachineBasicBlock::iterator loadInstItr(next(mi));
     MachineInstr *loadInst = &*loadInstItr;
-    SlotIndex loadInstIdx = miIdx.getNextIndex();
-
-    assert(lis->getInstructionFromIndex(loadInstIdx) == 0 &&
-           "Store inst index already in use.");
     
-    lis->InsertMachineInstrInMaps(loadInst, loadInstIdx);
-
-    return loadInstIdx;
+    return lis->InsertMachineInstrInMaps(loadInst);
   }
 
   /// Insert a load of the given vreg from the given stack slot immediately
@@ -186,14 +168,8 @@ protected:
     tii->loadRegFromStackSlot(*mi->getParent(), mi, vreg, ss, trc);
     MachineBasicBlock::iterator loadInstItr(prior(mi));
     MachineInstr *loadInst = &*loadInstItr;
-    SlotIndex loadInstIdx = miIdx.getPrevIndex();
 
-    assert(lis->getInstructionFromIndex(loadInstIdx) == 0 &&
-           "Load inst index already in use.");
-
-    lis->InsertMachineInstrInMaps(loadInst, loadInstIdx);
-
-    return loadInstIdx;
+    return lis->InsertMachineInstrInMaps(loadInst);
   }
 
   void insertLoadBeforeInstOnInterval(LiveInterval *li,

@@ -189,20 +189,8 @@ namespace llvm {
       return indexes_->getMBBFromIndex(index);
     }
 
-    bool hasGapBeforeInstr(SlotIndex index) {
-      return indexes_->hasGapBeforeInstr(index);
-    }
-
-    bool hasGapAfterInstr(SlotIndex index) {
-      return indexes_->hasGapAfterInstr(index);
-    }
-
-    SlotIndex findGapBeforeInstr(SlotIndex index, bool furthest = false) {
-      return indexes_->findGapBeforeInstr(index, furthest);
-    }
-
-    void InsertMachineInstrInMaps(MachineInstr *MI, SlotIndex Index) {
-      indexes_->insertMachineInstrInMaps(MI, Index);
+    SlotIndex InsertMachineInstrInMaps(MachineInstr *MI) {
+      return indexes_->insertMachineInstrInMaps(MI);
     }
 
     void RemoveMachineInstrFromMaps(MachineInstr *MI) {
@@ -219,7 +207,7 @@ namespace llvm {
     }
 
     void renumber() {
-      indexes_->renumber();
+      indexes_->renumberIndexes();
     }
 
     BumpPtrAllocator& getVNInfoAllocator() { return VNInfoAllocator; }

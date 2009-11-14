@@ -156,7 +156,7 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
   return false;
 }
 
-void SlotIndexes::renumber() {
+void SlotIndexes::renumberIndexes() {
 
   // Renumber updates the index of every element of the index list.
   // If all instrs in the function have been allocated an index (which has been
@@ -184,7 +184,6 @@ void SlotIndexes::renumber() {
         Slots = 1;
 
       index += (Slots + 1) * SlotIndex::NUM;
-
     }
   }
 }
