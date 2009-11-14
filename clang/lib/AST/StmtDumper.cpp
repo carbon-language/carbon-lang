@@ -115,6 +115,7 @@ namespace  {
     // Exprs
     void VisitExpr(Expr *Node);
     void VisitCastExpr(CastExpr *Node);
+    void VisitImplicitCastExpr(ImplicitCastExpr *Node);
     void VisitDeclRefExpr(DeclRefExpr *Node);
     void VisitPredefinedExpr(PredefinedExpr *Node);
     void VisitCharacterLiteral(CharacterLiteral *Node);
@@ -299,6 +300,12 @@ void StmtDumper::VisitExpr(Expr *Node) {
 void StmtDumper::VisitCastExpr(CastExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " <%s>", Node->getCastKindName());
+}
+
+void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
+  VisitCastExpr(Node);
+  if (Node->isLvalueCast())
+    fprintf(F, " lvalue");
 }
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
