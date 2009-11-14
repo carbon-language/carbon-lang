@@ -1,4 +1,5 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++0x %t 
+// RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
+
 template<typename T, typename U> struct is_same {
   static const bool value = false;
 };
