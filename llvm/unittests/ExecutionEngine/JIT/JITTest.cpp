@@ -458,9 +458,7 @@ TEST_F(JITTest, ModuleDeletion) {
             NumTablesDeallocated);
 }
 
-#if !defined(__APPLE__) ||                                              \
-  !(defined(__POWERPC__) || defined (__ppc__) ||                        \
-    defined(_POWER) || defined(_ARCH_PPC))
+#if !defined(__arm__) && !defined(__powerpc__) && !defined(__ppc__)
 typedef int (*FooPtr) ();
 
 TEST_F(JITTest, NoStubs) {
