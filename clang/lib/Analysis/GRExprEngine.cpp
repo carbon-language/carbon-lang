@@ -896,6 +896,13 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
   MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, X, true));
 }
 
+/// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
+///  nodes when the control reaches the end of a function.
+void GRExprEngine::ProcessEndPath(GREndPathNodeBuilder& builder) {
+  getTF().EvalEndPath(*this, builder);
+  StateMgr.EndPath(builder.getState());
+}
+
 /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a switch statement.
 void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
