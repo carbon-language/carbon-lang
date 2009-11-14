@@ -1,5 +1,5 @@
 // RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-experimental-checks -analyzer-store=region -verify %s
-typedef long unsigned int size_t;
+typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
 

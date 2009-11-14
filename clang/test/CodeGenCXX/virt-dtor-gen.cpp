@@ -1,4 +1,4 @@
-// clang-cc -o - -emit-llvm %s | FileCheck %s
+// RUN: clang-cc -o - -emit-llvm %s | FileCheck %s
 // PR5483
 
 // Make sure we generate all three forms of the destructor when it is virtual.
