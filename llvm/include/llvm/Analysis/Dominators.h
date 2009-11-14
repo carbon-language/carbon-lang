@@ -310,7 +310,6 @@ public:
     if (DomTreeNodes.size() != OtherDomTreeNodes.size())
       return true;
 
-    SmallPtrSet<const NodeT *,4> MyBBs;
     for (typename DomTreeNodeMapType::const_iterator 
            I = this->DomTreeNodes.begin(),
            E = this->DomTreeNodes.end(); I != E; ++I) {
