@@ -1,5 +1,6 @@
 ; RUN: llc -mtriple=armv7-eabi -mcpu=cortex-a8 < %s
 ; PR5412
+; rdar://7384107
 
 %bar = type { %quad, float, float, [3 x %quuz*], [3 x %bar*], [2 x %bar*], [3 x i8], i8 }
 %baz = type { %bar*, i32 }
