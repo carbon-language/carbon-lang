@@ -58,6 +58,8 @@
 
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define NORETURN __declspec(noreturn)
 #else
 #define NORETURN
 #endif
