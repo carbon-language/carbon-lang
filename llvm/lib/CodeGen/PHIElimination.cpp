@@ -17,7 +17,7 @@
 #include "PHIElimination.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -49,12 +49,12 @@ const PassInfo *const llvm::PHIEliminationID = &X;
 
 void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
+  AU.addPreserved<MachineDominatorTree>();
   if (SplitEdges) {
     AU.addRequired<LiveVariables>();
   } else {
     AU.setPreservesCFG();
     AU.addPreservedID(MachineLoopInfoID);
-    AU.addPreservedID(MachineDominatorsID);
   }
   MachineFunctionPass::getAnalysisUsage(AU);
 }
@@ -297,7 +297,6 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
     // Okay, if we now know that the value is not live out of the block, we can
     // add a kill marker in this block saying that it kills the incoming value!
-    // When SplitEdges is enabled, the value is never live out.
     if (!ValueIsUsed && !isLiveOut(SrcReg, opBlock, *LV)) {
       // In our final twist, we have to decide which instruction kills the
       // register.  In most cases this is the copy, however, the first
@@ -443,14 +442,18 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   SmallVector<MachineOperand, 4> Cond;
   MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond);
 
-  if (LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>())
-    LV->addNewBlock(NMBB, A);
-
   // Fix PHI nodes in B so they refer to NMBB instead of A
   for (MachineBasicBlock::iterator i = B->begin(), e = B->end();
        i != e && i->getOpcode() == TargetInstrInfo::PHI; ++i)
     for (unsigned ni = 1, ne = i->getNumOperands(); ni != ne; ni += 2)
       if (i->getOperand(ni+1).getMBB() == A)
         i->getOperand(ni+1).setMBB(NMBB);
+
+  if (LiveVariables *LV=getAnalysisIfAvailable<LiveVariables>())
+    LV->addNewBlock(NMBB, A);
+
+  if (MachineDominatorTree *MDT=getAnalysisIfAvailable<MachineDominatorTree>())
+    MDT->addNewBlock(NMBB, A);
+
   return NMBB;
 }
