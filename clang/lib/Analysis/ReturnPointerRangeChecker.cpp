@@ -88,7 +88,7 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
 
     // Generate a report for this bug.
     RangedBugReport *report = 
-      new RangedBugReport(*BT, BT->getDescription().c_str(), N);
+      new RangedBugReport(*BT, BT->getDescription(), N);
 
     report->addRange(RetE->getSourceRange());
 

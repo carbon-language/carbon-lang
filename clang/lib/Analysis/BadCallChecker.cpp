@@ -46,7 +46,7 @@ void BadCallChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
                 "Called function pointer is a null or undefined pointer value");
 
       EnhancedBugReport *R =
-        new EnhancedBugReport(*BT, BT->getDescription().c_str(), N);
+        new EnhancedBugReport(*BT, BT->getDescription(), N);
         
       R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                            bugreporter::GetCalleeExpr(N));

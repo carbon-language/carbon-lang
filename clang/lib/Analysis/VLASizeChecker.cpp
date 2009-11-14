@@ -64,7 +64,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
                                 "garbage value as its size");
 
     EnhancedBugReport *report =
-      new EnhancedBugReport(*BT_undef, BT_undef->getName().c_str(), N);
+      new EnhancedBugReport(*BT_undef, BT_undef->getName(), N);
     report->addRange(SE->getSourceRange());
     report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, SE);
     C.EmitReport(report);
@@ -84,7 +84,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
                                "size");
 
     EnhancedBugReport *report =
-      new EnhancedBugReport(*BT_zero, BT_zero->getName().c_str(), N);
+      new EnhancedBugReport(*BT_zero, BT_zero->getName(), N);
     report->addRange(SE->getSourceRange());
     report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, SE);
     C.EmitReport(report);

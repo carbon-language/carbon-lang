@@ -46,8 +46,7 @@ UndefinedArraySubscriptChecker::PreVisitArraySubscriptExpr(CheckerContext &C,
         BT = new BuiltinBug("Array subscript is undefined");
 
       // Generate a report for this bug.
-      EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName().c_str(),
-                                                   N);
+      EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName(), N);
       R->addRange(A->getIdx()->getSourceRange());
       R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, 
                            A->getIdx());

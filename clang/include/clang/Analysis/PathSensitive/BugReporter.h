@@ -81,10 +81,10 @@ public:
             getOriginalNode(const ExplodedNode* N) = 0;
   };
 
-  BugReport(BugType& bt, const char* desc, const ExplodedNode *n)
+  BugReport(BugType& bt, llvm::StringRef desc, const ExplodedNode *n)
     : BT(bt), Description(desc), EndNode(n) {}
 
-  BugReport(BugType& bt, const char* shortDesc, const char* desc,
+  BugReport(BugType& bt, llvm::StringRef shortDesc, llvm::StringRef desc,
             const ExplodedNode *n)
   : BT(bt), ShortDescription(shortDesc), Description(desc), EndNode(n) {}
 
@@ -193,11 +193,11 @@ public:
 class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
 public:
-  RangedBugReport(BugType& D, const char* description, ExplodedNode *n)
+  RangedBugReport(BugType& D, llvm::StringRef description, ExplodedNode *n)
     : BugReport(D, description, n) {}
 
-  RangedBugReport(BugType& D, const char *shortDescription,
-                  const char *description, ExplodedNode *n)
+  RangedBugReport(BugType& D, llvm::StringRef shortDescription,
+                  llvm::StringRef description, ExplodedNode *n)
   : BugReport(D, shortDescription, description, n) {}
 
   ~RangedBugReport();
@@ -229,11 +229,11 @@ private:
   Creators creators;
 
 public:
-  EnhancedBugReport(BugType& D, const char* description, ExplodedNode *n)
+  EnhancedBugReport(BugType& D, llvm::StringRef description, ExplodedNode *n)
    : RangedBugReport(D, description, n) {}
 
-  EnhancedBugReport(BugType& D, const char *shortDescription,
-                  const char *description, ExplodedNode *n)
+  EnhancedBugReport(BugType& D, llvm::StringRef shortDescription,
+                   llvm::StringRef description, ExplodedNode *n)
     : RangedBugReport(D, shortDescription, description, n) {}
 
   ~EnhancedBugReport() {}

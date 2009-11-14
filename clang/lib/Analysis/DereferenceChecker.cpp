@@ -62,7 +62,7 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
         BT_undef = new BuiltinBug("Dereference of undefined pointer value");
       
       EnhancedBugReport *report =
-        new EnhancedBugReport(*BT_undef, BT_undef->getDescription().c_str(), N);
+        new EnhancedBugReport(*BT_undef, BT_undef->getDescription(), N);
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                                 bugreporter::GetDerefExpr(N));
       C.EmitReport(report);
@@ -93,7 +93,7 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
                                    "Dereference of null pointer");
 
         EnhancedBugReport *report =
-          new EnhancedBugReport(*BT_null, BT_null->getDescription().c_str(), N);
+          new EnhancedBugReport(*BT_null, BT_null->getDescription(), N);
         report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                                   bugreporter::GetDerefExpr(N));
         

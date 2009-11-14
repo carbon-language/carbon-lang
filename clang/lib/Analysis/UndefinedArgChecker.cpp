@@ -46,8 +46,7 @@ void UndefinedArgChecker::PreVisitCallExpr(CheckerContext &C,
           BT = new BuiltinBug("Pass-by-value argument in function call is "
                               "undefined");
         // Generate a report for this bug.
-        EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName().c_str(),
-                                                     N);
+        EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName(), N);
         R->addRange((*I)->getSourceRange());
         R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, *I);
         C.EmitReport(R);

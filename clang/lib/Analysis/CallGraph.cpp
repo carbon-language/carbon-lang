@@ -117,7 +117,7 @@ void CallGraph::print(llvm::raw_ostream &os) {
          << " calls:\n";
       for (CallGraphNode::iterator CI = I->second->begin(),
              CE = I->second->end(); CI != CE; ++CI) {
-        os << "    " << CI->second->getName().c_str();
+        os << "    " << CI->second->getName();
       }
       os << '\n';
     }

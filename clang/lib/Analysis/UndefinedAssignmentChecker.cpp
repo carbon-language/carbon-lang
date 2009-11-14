@@ -39,7 +39,7 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
     BT = new BuiltinBug("Assigned value is garbage or undefined");
 
   // Generate a report for this bug.
-  EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName().c_str(), N);
+  EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName(), N);
 
   if (AssignE) {
     const Expr *ex = 0;

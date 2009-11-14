@@ -68,7 +68,7 @@ void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
         BT = new BuiltinBug("Division by zero");
 
       EnhancedBugReport *R = 
-        new EnhancedBugReport(*BT, BT->getDescription().c_str(), N);
+        new EnhancedBugReport(*BT, BT->getDescription(), N);
 
       R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                            bugreporter::GetDenomExpr(N));

@@ -123,7 +123,7 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
                          "Try to free a memory block that has been released");
       // FIXME: should find where it's freed last time.
       BugReport *R = new BugReport(*BT_DoubleFree, 
-                                   BT_DoubleFree->getDescription().c_str(), N);
+                                   BT_DoubleFree->getDescription(), N);
       C.EmitReport(R);
     }
     return;
@@ -152,7 +152,7 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,
                      "Allocated memory never released. Potential memory leak.");
         // FIXME: where it is allocated.
         BugReport *R = new BugReport(*BT_Leak,
-                                     BT_Leak->getDescription().c_str(), N);
+                                     BT_Leak->getDescription(), N);
         C.EmitReport(R);
       }
     }

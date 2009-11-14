@@ -59,8 +59,7 @@ void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
                             "Pointer arithmetic done on non-array variables "
                             "means reliance on memory layout, which is "
                             "dangerous.");
-      RangedBugReport *R = new RangedBugReport(*BT,BT->getDescription().c_str(),
-                                               N);
+      RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(), N);
       R->addRange(B->getSourceRange());
       C.EmitReport(R);
     }

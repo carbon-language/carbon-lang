@@ -65,8 +65,7 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
                             "Casting a non-structure type to a structure type "
                             "and accessing a field can lead to memory access "
                             "errors or data corruption.");
-      RangedBugReport *R = new RangedBugReport(*BT,BT->getDescription().c_str(),
-                                               N);
+      RangedBugReport *R = new RangedBugReport(*BT,BT->getDescription(), N);
       R->addRange(CE->getSourceRange());
       C.EmitReport(R);
     }

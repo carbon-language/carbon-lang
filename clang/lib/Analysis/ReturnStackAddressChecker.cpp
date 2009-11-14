@@ -88,7 +88,7 @@ void ReturnStackAddressChecker::PreVisitReturnStmt(CheckerContext &C,
         << R->getString() << "' returned.";
   }
 
-  RangedBugReport *report = new RangedBugReport(*BT, os.str().data(), N);
+  RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
   report->addRange(RS->getSourceRange());
   if (range.isValid())
     report->addRange(range);

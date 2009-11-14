@@ -59,8 +59,7 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
                           "Using a fixed address is not portable because that "
                           "address will probably not be valid in all "
                           "environments or platforms.");
-    RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription().c_str(),
-                                             N);
+    RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(), N);
     R->addRange(B->getRHS()->getSourceRange());
     C.EmitReport(R);
   }

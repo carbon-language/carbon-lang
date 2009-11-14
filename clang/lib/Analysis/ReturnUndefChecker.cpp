@@ -60,7 +60,7 @@ void ReturnUndefChecker::PreVisitReturnStmt(CheckerContext &C,
                         "Undefined or garbage value returned to caller");
     
   EnhancedBugReport *report = 
-    new EnhancedBugReport(*BT, BT->getDescription().c_str(), N);  
+    new EnhancedBugReport(*BT, BT->getDescription(), N);
 
   report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, RetE);
 
