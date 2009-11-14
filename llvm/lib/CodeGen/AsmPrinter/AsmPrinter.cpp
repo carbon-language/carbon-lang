@@ -138,7 +138,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   if (MMI)
     MMI->AnalyzeModule(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
-  if (DW)
+  if (DW && MAI->doesSupportDebugInformation())
     DW->BeginModule(&M, MMI, O, this, MAI);
 
   return false;

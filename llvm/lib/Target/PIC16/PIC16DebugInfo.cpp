@@ -467,12 +467,18 @@ void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
 void PIC16DbgInfo::SwitchToCU(MDNode *CU) {
   // Get the file path from CU.
   DICompileUnit cu(CU);
-  std::string DirName = cu.getDirectory();
-  std::string FileName = cu.getFilename();
-  std::string FilePath = DirName + "/" + FileName;
+  std::string FilePath = "";
+  if (cu.getDirectory()) {
+    std::string DirName = cu.getDirectory();
+    FilePath = FilePath + DirName + "/";
+  }
+  if (cu.getFilename()) {
+    std::string FileName = cu.getFilename();
+    FilePath = FilePath + FileName;
+  }
 
-  // Nothing to do if source file is still same.
-  if ( FilePath == CurFile ) return;
+  // Nothing to do if source file is still same or it is empty.
+  if ( FilePath == CurFile || FilePath == "") return;
 
   // Else, close the current one and start a new.
   if (CurFile != "") O << "\n\t.eof";
