@@ -841,11 +841,8 @@ unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
                "A reuse cannot be a virtual register");
         if (PRRU != RealPhysRegUsed) {
           // What was the sub-register index?
-          unsigned SubReg;
-          for (SubIdx = 1; (SubReg = TRI->getSubReg(PRRU, SubIdx)); SubIdx++)
-            if (SubReg == RealPhysRegUsed)
-              break;
-          assert(SubReg == RealPhysRegUsed &&
+          SubIdx = TRI->getSubRegIndex(PRRU, RealPhysRegUsed);
+          assert(SubIdx &&
                  "Operand physreg is not a sub-register of PhysRegUsed");
         }
 
