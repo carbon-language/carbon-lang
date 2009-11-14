@@ -80,7 +80,7 @@ public:
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
     : methods(meth), Class(c), LayoutClass(l), LayoutOffset(lo),
       BLayout(cgm.getContext().getASTRecordLayout(l)),
-      rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
+      rtti(cgm.GenerateRttiRef(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), AddressPoints(*new llvm::DenseMap<CtorVtable_t, int64_t>),
       Extern(true),
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
@@ -1022,6 +1022,7 @@ llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
   if (vtbl)
     return vtbl;
   vtbl = CGM.GenerateVtable(RD, RD);
+  CGM.GenerateRtti(RD);
   CGM.GenerateVTT(RD);
   return vtbl;
 }

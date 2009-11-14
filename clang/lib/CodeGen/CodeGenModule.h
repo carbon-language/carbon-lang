@@ -226,6 +226,9 @@ public:
 
   /// GenerateRtti - Generate the rtti information for the given type.
   llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
+  /// GenerateRttiRef - Generate a reference to the rtti information for the
+  /// given type.
+  llvm::Constant *GenerateRttiRef(const CXXRecordDecl *RD);
 
   /// BuildThunk - Build a thunk for the given method
   llvm::Constant *BuildThunk(const CXXMethodDecl *MD, bool Extern, int64_t nv,
