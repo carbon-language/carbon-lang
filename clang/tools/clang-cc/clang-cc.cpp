@@ -164,37 +164,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
 // Utility Methods
 //===----------------------------------------------------------------------===//
 
-static bool InitializeSourceManager(Preprocessor &PP,
-                                    const FrontendOptions &FEOpts,
-                                    const std::string &InFile) {
-  // Figure out where to get and map in the main file.
-  SourceManager &SourceMgr = PP.getSourceManager();
-  FileManager &FileMgr = PP.getFileManager();
-
-  if (FEOpts.EmptyInputOnly) {
-    const char *EmptyStr = "";
-    llvm::MemoryBuffer *SB =
-      llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<empty input>");
-    SourceMgr.createMainFileIDForMemBuffer(SB);
-  } else if (InFile != "-") {
-    const FileEntry *File = FileMgr.getFile(InFile);
-    if (File) SourceMgr.createMainFileID(File, SourceLocation());
-    if (SourceMgr.getMainFileID().isInvalid()) {
-      PP.getDiagnostics().Report(diag::err_fe_error_reading) << InFile.c_str();
-      return true;
-    }
-  } else {
-    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-    SourceMgr.createMainFileIDForMemBuffer(SB);
-    if (SourceMgr.getMainFileID().isInvalid()) {
-      PP.getDiagnostics().Report(diag::err_fe_error_reading_stdin);
-      return true;
-    }
-  }
-
-  return false;
-}
-
 std::string GetBuiltinIncludePath(const char *Argv0) {
   llvm::sys::Path P =
     llvm::sys::Path::GetMainExecutable(Argv0,
@@ -423,7 +392,7 @@ static void ProcessInputFile(CompilerInstance &CI, const std::string &InFile,
 
   // Initialize the main file entry. This needs to be delayed until after PCH
   // has loaded.
-  if (InitializeSourceManager(PP, CI.getFrontendOpts(), InFile))
+  if (!CI.InitializeSourceManager(InFile))
     return;
 
   if (Consumer) {

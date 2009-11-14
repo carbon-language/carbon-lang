@@ -25,6 +25,7 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 using namespace clang;
@@ -360,4 +361,41 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
     *ResultPathName = OutFile;
 
   return OS;
+}
+
+// Initialization Utilities
+
+bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile) {
+  return InitializeSourceManager(InputFile, getDiagnostics(), getFileManager(),
+                                 getSourceManager(), getFrontendOpts());
+}
+
+bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
+                                               Diagnostic &Diags,
+                                               FileManager &FileMgr,
+                                               SourceManager &SourceMgr,
+                                               const FrontendOptions &Opts) {
+  // Figure out where to get and map in the main file.
+  if (Opts.EmptyInputOnly) {
+    const char *EmptyStr = "";
+    llvm::MemoryBuffer *SB =
+      llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<empty input>");
+    SourceMgr.createMainFileIDForMemBuffer(SB);
+  } else if (InputFile != "-") {
+    const FileEntry *File = FileMgr.getFile(InputFile);
+    if (File) SourceMgr.createMainFileID(File, SourceLocation());
+    if (SourceMgr.getMainFileID().isInvalid()) {
+      Diags.Report(diag::err_fe_error_reading) << InputFile;
+      return false;
+    }
+  } else {
+    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
+    SourceMgr.createMainFileIDForMemBuffer(SB);
+    if (SourceMgr.getMainFileID().isInvalid()) {
+      Diags.Report(diag::err_fe_error_reading_stdin);
+      return false;
+    }
+  }
+
+  return true;
 }

@@ -489,6 +489,26 @@ public:
                    std::string *ResultPathName = 0);
 
   /// }
+  /// @name Initialization Utility Methods
+  /// {
+
+  /// InitializeSourceManager - Initialize the source manager to set InputFile
+  /// as the main file.
+  ///
+  /// \return True on success.
+  bool InitializeSourceManager(llvm::StringRef InputFile);
+
+  /// InitializeSourceManager - Initialize the source manager to set InputFile
+  /// as the main file.
+  ///
+  /// \return True on success.
+  static bool InitializeSourceManager(llvm::StringRef InputFile,
+                                      Diagnostic &Diags,
+                                      FileManager &FileMgr,
+                                      SourceManager &SourceMgr,
+                                      const FrontendOptions &Opts);
+
+  /// }
 };
 
 } // end namespace clang
