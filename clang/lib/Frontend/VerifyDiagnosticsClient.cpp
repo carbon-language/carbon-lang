@@ -19,9 +19,10 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-VerifyDiagnosticsClient::VerifyDiagnosticsClient(DiagnosticClient *_Primary)
-  : PrimaryClient(_Primary), Buffer(new TextDiagnosticBuffer()),
-    CurrentPreprocessor(0), Diags(0), SourceMgr(0), NumErrors(0) {
+VerifyDiagnosticsClient::VerifyDiagnosticsClient(Diagnostic &_Diags,
+                                                 DiagnosticClient *_Primary)
+  : Diags(_Diags), PrimaryClient(_Primary),
+    Buffer(new TextDiagnosticBuffer()), CurrentPreprocessor(0), NumErrors(0) {
 }
 
 VerifyDiagnosticsClient::~VerifyDiagnosticsClient() {
@@ -36,14 +37,6 @@ void VerifyDiagnosticsClient::BeginSourceFile(const LangOptions &LangOpts,
   // because it doesn't get reused. It would be better if we could make a copy
   // though.
   CurrentPreprocessor = const_cast<Preprocessor*>(PP);
-  
-  // FIXME: HACK. Remember the source manager, and just expect that its lifetime
-  // exceeds when we need it.
-  SourceMgr = PP ? &PP->getSourceManager() : 0;
-
-  // FIXME: HACK. Remember the diagnostic engine, and just expect that its
-  // lifetime exceeds when we need it.
-  Diags = PP ? &PP->getDiagnostics() : 0;
 
   PrimaryClient->BeginSourceFile(LangOpts, PP);
 }
@@ -55,7 +48,7 @@ void VerifyDiagnosticsClient::EndSourceFile() {
 
   CurrentPreprocessor = 0;
 }
-                               
+
 void VerifyDiagnosticsClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                               const DiagnosticInfo &Info) {
   // Send the diagnostic to the buffer, we will check it once we reach the end
@@ -209,7 +202,7 @@ static void FindExpectedDiags(Preprocessor &PP,
 /// happened. Print the map out in a nice format and return "true". If the map
 /// is empty and we're not going to print things, then return "false".
 ///
-static unsigned PrintProblem(Diagnostic &Diags, SourceManager &SourceMgr,
+static unsigned PrintProblem(Diagnostic &Diags, SourceManager *SourceMgr,
                              const_diag_iterator diag_begin,
                              const_diag_iterator diag_end,
                              const char *Kind, bool Expected) {
@@ -218,15 +211,15 @@ static unsigned PrintProblem(Diagnostic &Diags, SourceManager &SourceMgr,
   llvm::SmallString<256> Fmt;
   llvm::raw_svector_ostream OS(Fmt);
   for (const_diag_iterator I = diag_begin, E = diag_end; I != E; ++I) {
-    if (I->first.isInvalid())
+    if (I->first.isInvalid() || !SourceMgr)
       OS << "\n  (frontend)";
     else
-      OS << "\n  Line " << SourceMgr.getInstantiationLineNumber(I->first);
+      OS << "\n  Line " << SourceMgr->getInstantiationLineNumber(I->first);
     OS << ": " << I->second;
   }
 
   Diags.Report(diag::err_verify_inconsistent_diags)
-    << Kind << Expected << OS.str();
+    << Kind << !Expected << OS.str();
   return std::distance(diag_begin, diag_end);
 }
 
@@ -269,10 +262,10 @@ static unsigned CompareDiagLists(Diagnostic &Diags,
   }
   // Now all that's left in Right are those that were not matched.
 
-  return (PrintProblem(Diags, SourceMgr,
-                      LeftOnly.begin(), LeftOnly.end(), Label, false) +
-          PrintProblem(Diags, SourceMgr,
-                       Right.begin(), Right.end(), Label, true));
+  return (PrintProblem(Diags, &SourceMgr,
+                      LeftOnly.begin(), LeftOnly.end(), Label, true) +
+          PrintProblem(Diags, &SourceMgr,
+                       Right.begin(), Right.end(), Label, false));
 }
 
 /// CheckResults - This compares the expected results to those that
@@ -296,7 +289,7 @@ static unsigned CheckResults(Diagnostic &Diags, SourceManager &SourceMgr,
                                   ExpectedErrors.begin(), ExpectedErrors.end(),
                                   Buffer.err_begin(), Buffer.err_end(),
                                   "error");
-  
+
   // See if there are warning mismatches.
   NumProblems += CompareDiagLists(Diags, SourceMgr,
                                   ExpectedWarnings.begin(),
@@ -319,21 +312,32 @@ void VerifyDiagnosticsClient::CheckDiagnostics() {
   DiagList ExpectedErrors, ExpectedWarnings, ExpectedNotes;
 
   // Ensure any diagnostics go to the primary client.
-  DiagnosticClient *CurClient = Diags->getClient();
-  Diags->setClient(PrimaryClient.get());
+  DiagnosticClient *CurClient = Diags.getClient();
+  Diags.setClient(PrimaryClient.get());
 
   // If we have a preprocessor, scan the source for expected diagnostic
   // markers. If not then any diagnostics are unexpected.
   if (CurrentPreprocessor) {
     FindExpectedDiags(*CurrentPreprocessor, ExpectedErrors, ExpectedWarnings,
                       ExpectedNotes);
+
+    // Check that the expected diagnostics occurred.
+    NumErrors += CheckResults(Diags, CurrentPreprocessor->getSourceManager(),
+                              *Buffer,
+                              ExpectedErrors, ExpectedWarnings, ExpectedNotes);
+  } else {
+    NumErrors += (PrintProblem(Diags, 0,
+                               Buffer->err_begin(), Buffer->err_end(),
+                               "error", false) +
+                  PrintProblem(Diags, 0,
+                               Buffer->warn_begin(), Buffer->warn_end(),
+                               "warn", false) +
+                  PrintProblem(Diags, 0,
+                               Buffer->note_begin(), Buffer->note_end(),
+                               "note", false));
   }
 
-  // Check that the expected diagnostics occurred.
-  NumErrors += CheckResults(*Diags, *SourceMgr, *Buffer,
-                            ExpectedErrors, ExpectedWarnings, ExpectedNotes);
-
-  Diags->setClient(CurClient);
+  Diags.setClient(CurClient);
 
   // Reset the buffer, we have processed all the diagnostics in it.
   Buffer.reset(new TextDiagnosticBuffer());

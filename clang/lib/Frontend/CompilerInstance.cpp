@@ -113,6 +113,8 @@ void CompilerInstance::createDiagnostics(int Argc, char **Argv) {
 
 Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                                 int Argc, char **Argv) {
+  llvm::OwningPtr<Diagnostic> Diags(new Diagnostic());
+
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
   llvm::OwningPtr<DiagnosticClient> DiagClient(
@@ -120,17 +122,17 @@ Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
 
   // Chain in -verify checker, if requested.
   if (Opts.VerifyDiagnostics)
-    DiagClient.reset(new VerifyDiagnosticsClient(DiagClient.take()));
+    DiagClient.reset(new VerifyDiagnosticsClient(*Diags, DiagClient.take()));
 
   if (!Opts.DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, Argc, Argv, DiagClient);
 
   // Configure our handling of diagnostics.
-  Diagnostic *Diags = new Diagnostic(DiagClient.take());
+  Diags->setClient(DiagClient.take());
   if (ProcessWarningOptions(*Diags, Opts))
     return 0;
 
-  return Diags;
+  return Diags.take();
 }
 
 // File Manager

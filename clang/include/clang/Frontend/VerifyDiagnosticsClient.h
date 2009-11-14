@@ -48,11 +48,10 @@ class TextDiagnosticBuffer;
 ///
 class VerifyDiagnosticsClient : public DiagnosticClient {
 public:
+  Diagnostic &Diags;
   llvm::OwningPtr<DiagnosticClient> PrimaryClient;
   llvm::OwningPtr<TextDiagnosticBuffer> Buffer;
   Preprocessor *CurrentPreprocessor;
-  Diagnostic *Diags;
-  SourceManager *SourceMgr;
   bool NumErrors;
 
 private:
@@ -63,14 +62,14 @@ public:
   /// PrimaryClient when a diagnostic does not match what is expected (as
   /// indicated in the source file). The verifying diagnostic client takes
   /// ownership of \arg PrimaryClient.
-  VerifyDiagnosticsClient(DiagnosticClient *PrimaryClient);
+  VerifyDiagnosticsClient(Diagnostic &Diags, DiagnosticClient *PrimaryClient);
   ~VerifyDiagnosticsClient();
 
   virtual void BeginSourceFile(const LangOptions &LangOpts,
                                const Preprocessor *PP);
 
   virtual void EndSourceFile();
-                               
+
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 
