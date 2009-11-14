@@ -1153,9 +1153,12 @@ public:
 #ifndef NDEBUG
     OS << " with assertions";
 #endif
+    std::string CPU = sys::getHostCPUName();
+    if (CPU.empty()) CPU = "(unknown)";
     OS << ".\n"
        << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
        << "  Host: " << sys::getHostTriple() << '\n'
+       << "  Host CPU: " << CPU << '\n'
        << '\n'
        << "  Registered Targets:\n";
 
