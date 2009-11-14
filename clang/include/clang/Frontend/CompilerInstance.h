@@ -210,7 +210,10 @@ public:
   /// instance takes ownership of \arg Value.
   void setDiagnostics(Diagnostic *Value);
 
-  DiagnosticClient &getDiagnosticClient() const;
+  DiagnosticClient &getDiagnosticClient() const {
+    assert(Target && "Compiler instance has no diagnostic client!");
+    return *DiagClient;
+  }
 
   /// takeDiagnosticClient - Remove the current diagnostics client and give
   /// ownership to the caller.

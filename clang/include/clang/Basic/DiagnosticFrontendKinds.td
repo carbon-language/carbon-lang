@@ -27,6 +27,15 @@ def err_fe_incompatible_options : Error<
 def err_fe_no_fixit_and_codegen : Error<
     "FIX-ITs cannot be applied when generating code">;
 
+def err_verify_bogus_characters : Error<
+    "bogus characters before '{{' in expected string">;
+def err_verify_missing_start : Error<
+    "cannot find start ('{{') of expected string">;
+def err_verify_missing_end : Error<
+    "cannot find end ('}}') of expected string">;
+def err_verify_inconsistent_diags : Error<
+    "'%0' diagnostics %select{expected|seen}1 but not %select{seen|expected}1: %2">;
+
 def note_fixit_applied : Note<"FIX-IT applied suggested code changes">;
 def note_fixit_in_macro : Note<
     "FIX-IT unable to apply suggested code changes in a macro">;

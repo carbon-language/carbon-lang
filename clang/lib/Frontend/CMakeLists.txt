@@ -35,6 +35,7 @@ add_clang_library(clangFrontend
   TextDiagnosticBuffer.cpp
   TextDiagnosticPrinter.cpp
   TypeXML.cpp
+  VerifyDiagnosticsClient.cpp
   Warnings.cpp
   )
 
