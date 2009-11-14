@@ -41,6 +41,12 @@ namespace sys {
   ///   CPU_TYPE-VENDOR-KERNEL-OPERATING_SYSTEM
   std::string getHostTriple();
 
+  /// getHostCPUName - Get the LLVM name for the host CPU. The particular format
+  /// of the name is target dependent, and suitable for passing as -mcpu to the
+  /// target which matches the host.
+  ///
+  /// \return - The host CPU name, or empty if the CPU could not be determined.
+  std::string getHostCPUName();
 }
 }
 
