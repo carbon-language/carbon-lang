@@ -192,13 +192,14 @@ void Preprocessor::PrintStats() {
 // Token Spelling
 //===----------------------------------------------------------------------===//
 
-
 /// getSpelling() - Return the 'spelling' of this token.  The spelling of a
 /// token are the characters used to represent the token in the source file
 /// after trigraph expansion and escaped-newline folding.  In particular, this
 /// wants to get the true, uncanonicalized, spelling of things like digraphs
 /// UCNs, etc.
-std::string Preprocessor::getSpelling(const Token &Tok) const {
+std::string Preprocessor::getSpelling(const Token &Tok,
+                                      const SourceManager &SourceMgr,
+                                      const LangOptions &Features) {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
 
   // If this token contains nothing interesting, return it directly.
@@ -219,6 +220,15 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
   assert(Result.size() != unsigned(Tok.getLength()) &&
          "NeedsCleaning flag set on something that didn't need cleaning!");
   return Result;
+}
+
+/// getSpelling() - Return the 'spelling' of this token.  The spelling of a
+/// token are the characters used to represent the token in the source file
+/// after trigraph expansion and escaped-newline folding.  In particular, this
+/// wants to get the true, uncanonicalized, spelling of things like digraphs
+/// UCNs, etc.
+std::string Preprocessor::getSpelling(const Token &Tok) const {
+  return getSpelling(Tok, SourceMgr, Features);
 }
 
 /// getSpelling - This method is used to get the spelling of a token into a

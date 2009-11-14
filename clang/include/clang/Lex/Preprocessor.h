@@ -503,6 +503,15 @@ public:
   /// UCNs, etc.
   std::string getSpelling(const Token &Tok) const;
 
+  /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
+  /// token is the characters used to represent the token in the source file
+  /// after trigraph expansion and escaped-newline folding.  In particular, this
+  /// wants to get the true, uncanonicalized, spelling of things like digraphs
+  /// UCNs, etc.
+  static std::string getSpelling(const Token &Tok,
+                                 const SourceManager &SourceMgr,
+                                 const LangOptions &Features);
+
   /// getSpelling - This method is used to get the spelling of a token into a
   /// preallocated buffer, instead of as an std::string.  The caller is required
   /// to allocate enough space for the token, which is guaranteed to be at least
