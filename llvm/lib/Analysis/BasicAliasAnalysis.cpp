@@ -659,7 +659,12 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
     // If V1/V2 point to two different objects we know that we have no alias.
     if (isIdentifiedObject(O1) && isIdentifiedObject(O2))
       return NoAlias;
-  
+
+    // Constant pointers can't alias with non-const isIdentifiedObject objects.
+    if ((isa<Constant>(O1) && isIdentifiedObject(O2) && !isa<Constant>(O2)) ||
+        (isa<Constant>(O2) && isIdentifiedObject(O1) && !isa<Constant>(O1)))
+      return NoAlias;
+
     // Arguments can't alias with local allocations or noalias calls.
     if ((isa<Argument>(O1) && (isa<AllocaInst>(O2) || isNoAliasCall(O2))) ||
         (isa<Argument>(O2) && (isa<AllocaInst>(O1) || isNoAliasCall(O1))))
