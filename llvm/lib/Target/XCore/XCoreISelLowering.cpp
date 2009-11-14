@@ -918,6 +918,17 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
+bool XCoreTargetLowering::
+CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
+               const SmallVectorImpl<EVT> &OutTys,
+               const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+               SelectionDAG &DAG) {
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
+                 RVLocs, *DAG.getContext());
+  return CCInfo.CheckReturn(OutTys, ArgsFlags, RetCC_XCore);
+}
+
 SDValue
 XCoreTargetLowering::LowerReturn(SDValue Chain,
                                  CallingConv::ID CallConv, bool isVarArg,

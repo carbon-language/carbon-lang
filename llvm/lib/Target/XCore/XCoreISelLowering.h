@@ -159,6 +159,12 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   DebugLoc dl, SelectionDAG &DAG);
+
+    virtual bool
+      CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
+                     const SmallVectorImpl<EVT> &OutTys,
+                     const SmallVectorImpl<ISD::ArgFlagsTy> &ArgsFlags,
+                     SelectionDAG &DAG);
   };
 }
 
