@@ -2755,6 +2755,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
   }
   if (!R.empty()) {
     NamedDecl *NS = R.getFoundDecl();
+    // FIXME: Namespace aliases!
     assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
     // C++ [namespace.udir]p1:
     //   A using-directive specifies that the names in the nominated
@@ -3369,6 +3370,107 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                        /*DirectInit=*/true);
 }
 
+/// \brief Add the applicable constructor candidates for an initialization
+/// by constructor.
+static void AddConstructorInitializationCandidates(Sema &SemaRef,
+                                                   QualType ClassType,
+                                                   Expr **Args,
+                                                   unsigned NumArgs,
+                                                  Sema::InitializationKind Kind,
+                                           OverloadCandidateSet &CandidateSet) {
+  // C++ [dcl.init]p14:
+  //   If the initialization is direct-initialization, or if it is
+  //   copy-initialization where the cv-unqualified version of the
+  //   source type is the same class as, or a derived class of, the
+  //   class of the destination, constructors are considered. The
+  //   applicable constructors are enumerated (13.3.1.3), and the
+  //   best one is chosen through overload resolution (13.3). The
+  //   constructor so selected is called to initialize the object,
+  //   with the initializer expression(s) as its argument(s). If no
+  //   constructor applies, or the overload resolution is ambiguous,
+  //   the initialization is ill-formed.
+  const RecordType *ClassRec = ClassType->getAs<RecordType>();
+  assert(ClassRec && "Can only initialize a class type here");
+  
+  // FIXME: When we decide not to synthesize the implicitly-declared
+  // constructors, we'll need to make them appear here.
+
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
+  DeclarationName ConstructorName
+    = SemaRef.Context.DeclarationNames.getCXXConstructorName(
+              SemaRef.Context.getCanonicalType(ClassType).getUnqualifiedType());
+  DeclContext::lookup_const_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(ConstructorName);
+       Con != ConEnd; ++Con) {
+    // Find the constructor (which may be a template).
+    CXXConstructorDecl *Constructor = 0;
+    FunctionTemplateDecl *ConstructorTmpl= dyn_cast<FunctionTemplateDecl>(*Con);
+    if (ConstructorTmpl)
+      Constructor
+      = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
+    else
+      Constructor = cast<CXXConstructorDecl>(*Con);
+    
+    if ((Kind == Sema::IK_Direct) ||
+        (Kind == Sema::IK_Copy &&
+         Constructor->isConvertingConstructor(/*AllowExplicit=*/false)) ||
+        (Kind == Sema::IK_Default && Constructor->isDefaultConstructor())) {
+      if (ConstructorTmpl)
+        SemaRef.AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0,
+                                             Args, NumArgs, CandidateSet);
+      else
+        SemaRef.AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+    }
+  }
+}
+
+/// \brief Attempt to perform initialization by constructor 
+/// (C++ [dcl.init]p14), which may occur as part of direct-initialization or 
+/// copy-initialization. 
+///
+/// This routine determines whether initialization by constructor is possible,
+/// but it does not emit any diagnostics in the case where the initialization
+/// is ill-formed.
+///
+/// \param ClassType the type of the object being initialized, which must have
+/// class type.
+///
+/// \param Args the arguments provided to initialize the object
+///
+/// \param NumArgs the number of arguments provided to initialize the object
+///
+/// \param Kind the type of initialization being performed
+///
+/// \returns the constructor used to initialize the object, if successful.
+/// Otherwise, emits a diagnostic and returns NULL.
+CXXConstructorDecl *
+Sema::TryInitializationByConstructor(QualType ClassType,
+                                     Expr **Args, unsigned NumArgs,
+                                     SourceLocation Loc,
+                                     InitializationKind Kind) {
+  // Build the overload candidate set
+  OverloadCandidateSet CandidateSet;
+  AddConstructorInitializationCandidates(*this, ClassType, Args, NumArgs, Kind,
+                                         CandidateSet);
+  
+  // Determine whether we found a constructor we can use.
+  OverloadCandidateSet::iterator Best;
+  switch (BestViableFunction(CandidateSet, Loc, Best)) {
+    case OR_Success:
+    case OR_Deleted:
+      // We found a constructor. Return it.
+      return cast<CXXConstructorDecl>(Best->Function);
+      
+    case OR_No_Viable_Function:
+    case OR_Ambiguous:
+      // Overload resolution failed. Return nothing.
+      return 0;
+  }
+  
+  // Silence GCC warning
+  return 0;
+}
+
 /// \brief Perform initialization by constructor (C++ [dcl.init]p14), which 
 /// may occur as part of direct-initialization or copy-initialization. 
 ///
@@ -3398,55 +3500,13 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
                                          DeclarationName InitEntity,
                                          InitializationKind Kind,
                       ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs) {
-  const RecordType *ClassRec = ClassType->getAs<RecordType>();
-  assert(ClassRec && "Can only initialize a class type here");
+  
+  // Build the overload candidate set
   Expr **Args = (Expr **)ArgsPtr.get();
   unsigned NumArgs = ArgsPtr.size();
-    
-  // C++ [dcl.init]p14:
-  //   If the initialization is direct-initialization, or if it is
-  //   copy-initialization where the cv-unqualified version of the
-  //   source type is the same class as, or a derived class of, the
-  //   class of the destination, constructors are considered. The
-  //   applicable constructors are enumerated (13.3.1.3), and the
-  //   best one is chosen through overload resolution (13.3). The
-  //   constructor so selected is called to initialize the object,
-  //   with the initializer expression(s) as its argument(s). If no
-  //   constructor applies, or the overload resolution is ambiguous,
-  //   the initialization is ill-formed.
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(ClassRec->getDecl());
   OverloadCandidateSet CandidateSet;
-
-  // Add constructors to the overload set.
-  DeclarationName ConstructorName
-    = Context.DeclarationNames.getCXXConstructorName(
-                      Context.getCanonicalType(ClassType).getUnqualifiedType());
-  DeclContext::lookup_const_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(ConstructorName);
-       Con != ConEnd; ++Con) {
-    // Find the constructor (which may be a template).
-    CXXConstructorDecl *Constructor = 0;
-    FunctionTemplateDecl *ConstructorTmpl= dyn_cast<FunctionTemplateDecl>(*Con);
-    if (ConstructorTmpl)
-      Constructor
-        = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
-    else
-      Constructor = cast<CXXConstructorDecl>(*Con);
-
-    if ((Kind == IK_Direct) ||
-        (Kind == IK_Copy &&
-         Constructor->isConvertingConstructor(/*AllowExplicit=*/false)) ||
-        (Kind == IK_Default && Constructor->isDefaultConstructor())) {
-      if (ConstructorTmpl)
-        AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0,
-                                     Args, NumArgs, CandidateSet);
-      else
-        AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
-    }
-  }
-
-  // FIXME: When we decide not to synthesize the implicitly-declared
-  // constructors, we'll need to make them appear here.
+  AddConstructorInitializationCandidates(*this, ClassType, Args, NumArgs, Kind,
+                                         CandidateSet);
 
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Loc, Best)) {

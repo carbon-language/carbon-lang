@@ -144,3 +144,21 @@ namespace pr5261 {
   };
   outer<int> EntryList;
 }
+
+
+// Initialization by constructor
+struct X0;
+
+struct X1 {
+  X1();
+  X1(X1&);
+  X1(const X0&);
+  
+  operator X0() const;
+};
+
+struct X0 { };
+
+void test_ctor_init() {
+  (void)static_cast<X1>(X1());
+}

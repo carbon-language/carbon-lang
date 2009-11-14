@@ -2000,6 +2000,12 @@ public:
   };
 
   CXXConstructorDecl *
+  TryInitializationByConstructor(QualType ClassType,
+                                 Expr **Args, unsigned NumArgs,
+                                 SourceLocation Loc,
+                                 InitializationKind Kind);
+  
+  CXXConstructorDecl *
   PerformInitializationByConstructor(QualType ClassType,
                                      MultiExprArg ArgsPtr,
                                      SourceLocation Loc, SourceRange Range,

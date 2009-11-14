@@ -813,6 +813,19 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     return TC_Failed;
   }
 
+  if (DestType->isRecordType()) {
+    if (CXXConstructorDecl *Constructor
+          = Self.TryInitializationByConstructor(DestType, &SrcExpr, 1, 
+                                                OpRange.getBegin(),
+                                                Sema::IK_Direct)) {
+      ConversionDecl = Constructor;
+      Kind = CastExpr::CK_ConstructorConversion;
+      return TC_Success;
+    }
+    
+    return TC_NotApplicable;
+  }
+  
   // FIXME: To get a proper error from invalid conversions here, we need to
   // reimplement more of this.
   // FIXME: This does not actually perform the conversion, and thus does not
