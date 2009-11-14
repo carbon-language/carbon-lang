@@ -658,6 +658,12 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
                                                     TemplateParams, Function);
     Function->setDescribedFunctionTemplate(FunctionTemplate);
     FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
+  } else if (FunctionTemplate) {
+    // Record this function template specialization.
+    Function->setFunctionTemplateSpecialization(SemaRef.Context,
+                                                FunctionTemplate,
+                                                &TemplateArgs.getInnermost(),
+                                                InsertPos);
   }
     
   if (InitFunctionInstantiation(Function, D))
@@ -707,14 +713,6 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
     if (!TemplateParams)
       Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
-  }
-
-  if (FunctionTemplate && !TemplateParams) {
-    // Record this function template specialization.
-    Function->setFunctionTemplateSpecialization(SemaRef.Context,
-                                                FunctionTemplate,
-                                                &TemplateArgs.getInnermost(),
-                                                InsertPos);
   }
 
   return Function;
@@ -811,9 +809,17 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     if (D->isOutOfLine())
       FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
     Method->setDescribedFunctionTemplate(FunctionTemplate);
-  } else if (!FunctionTemplate)
+  } else if (FunctionTemplate) {
+    // Record this function template specialization.
+    Method->setFunctionTemplateSpecialization(SemaRef.Context,
+                                              FunctionTemplate,
+                                              &TemplateArgs.getInnermost(),
+                                              InsertPos);
+  } else {
+    // Record that this is an instantiation of a member function.
     Method->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
-
+  }
+  
   // If we are instantiating a member function defined
   // out-of-line, the instantiation will have the same lexical
   // context (which will be a namespace scope) as the template.
@@ -842,13 +848,6 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
       PrevDecl = 0;
   }
-
-  if (FunctionTemplate && !TemplateParams)
-    // Record this function template specialization.
-    Method->setFunctionTemplateSpecialization(SemaRef.Context,
-                                              FunctionTemplate,
-                                              &TemplateArgs.getInnermost(),
-                                              InsertPos);
 
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;

@@ -2362,13 +2362,18 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
   if (!Constructor->isInvalidDecl() &&
       ((Constructor->getNumParams() == 1) ||
        (Constructor->getNumParams() > 1 &&
-        Constructor->getParamDecl(1)->hasDefaultArg()))) {
+        Constructor->getParamDecl(1)->hasDefaultArg())) &&
+      Constructor->getTemplateSpecializationKind()
+                                              != TSK_ImplicitInstantiation) {
     QualType ParamType = Constructor->getParamDecl(0)->getType();
     QualType ClassTy = Context.getTagDeclType(ClassDecl);
     if (Context.getCanonicalType(ParamType).getUnqualifiedType() == ClassTy) {
       SourceLocation ParamLoc = Constructor->getParamDecl(0)->getLocation();
       Diag(ParamLoc, diag::err_constructor_byvalue_arg)
         << CodeModificationHint::CreateInsertion(ParamLoc, " const &");
+
+      // FIXME: Rather that making the constructor invalid, we should endeavor
+      // to fix the type.
       Constructor->setInvalidDecl();
     }
   }

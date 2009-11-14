@@ -1422,7 +1422,7 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
             = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
         else
           Constructor = cast<CXXConstructorDecl>(*Con);
-
+        
         if (!Constructor->isInvalidDecl() &&
             Constructor->isConvertingConstructor(AllowExplicit)) {
           if (ConstructorTmpl)
@@ -2239,7 +2239,18 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 
   if (!CandidateSet.isNewCandidate(Function))
     return;
-    
+
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Function)){
+    // C++ [class.copy]p3:
+    //   A member function template is never instantiated to perform the copy
+    //   of a class object to an object of its class type.
+    QualType ClassType = Context.getTypeDeclType(Constructor->getParent());
+    if (NumArgs == 1 && 
+        Constructor->isCopyConstructorLikeSpecialization() &&
+        Context.hasSameUnqualifiedType(ClassType, Args[0]->getType()))
+      return;
+  }
+  
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();

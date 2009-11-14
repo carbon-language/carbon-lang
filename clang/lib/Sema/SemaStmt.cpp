@@ -965,9 +965,12 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     // In C++ the return statement is handled via a copy initialization.
     // the C version of which boils down to CheckSingleAssignmentConstraints.
     // FIXME: Leaks RetValExp on error.
-    if (PerformCopyInitialization(RetValExp, FnRetType, "returning", Elidable))
+    if (PerformCopyInitialization(RetValExp, FnRetType, "returning", Elidable)){
+      // We should still clean up our temporaries, even when we're failing!
+      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp, true);
       return StmtError();
-
+    }
+    
     if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   }
 

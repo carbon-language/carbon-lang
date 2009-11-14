@@ -1247,6 +1247,11 @@ public:
   /// used for user-defined conversions.
   bool isConvertingConstructor(bool AllowExplicit) const;
 
+  /// \brief Determine whether this is a member template specialization that
+  /// looks like a copy constructor. Such constructors are never used to copy
+  /// an object.
+  bool isCopyConstructorLikeSpecialization() const;
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() == CXXConstructor;

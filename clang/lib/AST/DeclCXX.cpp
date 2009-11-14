@@ -752,6 +752,33 @@ bool CXXConstructorDecl::isConvertingConstructor(bool AllowExplicit) const {
          (getNumParams() > 1 && getParamDecl(1)->hasDefaultArg());
 }
 
+bool CXXConstructorDecl::isCopyConstructorLikeSpecialization() const {
+  if ((getNumParams() < 1) ||
+      (getNumParams() > 1 && !getParamDecl(1)->hasDefaultArg()) ||
+      (getPrimaryTemplate() == 0) ||
+      (getDescribedFunctionTemplate() != 0))
+    return false;
+
+  const ParmVarDecl *Param = getParamDecl(0);
+
+  ASTContext &Context = getASTContext();
+  CanQualType ParamType = Context.getCanonicalType(Param->getType());
+  
+  // Strip off the lvalue reference, if any.
+  if (CanQual<LValueReferenceType> ParamRefType
+                                    = ParamType->getAs<LValueReferenceType>())
+    ParamType = ParamRefType->getPointeeType();
+
+  
+  // Is it the same as our our class type?
+  CanQualType ClassTy 
+    = Context.getCanonicalType(Context.getTagDeclType(getParent()));
+  if (ParamType.getUnqualifiedType() != ClassTy)
+    return false;
+  
+  return true;  
+}
+
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           SourceLocation L, DeclarationName N,
