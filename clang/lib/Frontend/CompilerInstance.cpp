@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
@@ -65,6 +66,10 @@ void CompilerInstance::setPreprocessor(Preprocessor *Value) {
 
 void CompilerInstance::setASTContext(ASTContext *Value) {
   Context.reset(Value);
+}
+
+void CompilerInstance::setASTConsumer(ASTConsumer *Value) {
+  Consumer.reset(Value);
 }
 
 void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {

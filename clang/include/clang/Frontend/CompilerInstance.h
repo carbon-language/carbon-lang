@@ -25,6 +25,7 @@ class raw_fd_ostream;
 
 namespace clang {
 class ASTContext;
+class ASTConsumer;
 class CodeCompleteConsumer;
 class Diagnostic;
 class DiagnosticClient;
@@ -81,6 +82,9 @@ class CompilerInstance {
 
   /// The AST context.
   llvm::OwningPtr<ASTContext> Context;
+
+  /// The AST consumer.
+  llvm::OwningPtr<ASTConsumer> Consumer;
 
   /// The code completion consumer.
   llvm::OwningPtr<CodeCompleteConsumer> CompletionConsumer;
@@ -310,6 +314,25 @@ public:
   /// setASTContext - Replace the current AST context; the compiler instance
   /// takes ownership of \arg Value.
   void setASTContext(ASTContext *Value);
+
+  /// }
+  /// @name ASTConsumer
+  /// {
+
+  bool hasASTConsumer() const { return Consumer != 0; }
+
+  ASTConsumer &getASTConsumer() const {
+    assert(Consumer && "Compiler instance has no AST consumer!");
+    return *Consumer;
+  }
+
+  /// takeASTConsumer - Remove the current AST consumer and give ownership to
+  /// the caller.
+  ASTConsumer *takeASTConsumer() { return Consumer.take(); }
+
+  /// setASTConsumer - Replace the current AST consumer; the compiler instance
+  /// takes ownership of \arg Value.
+  void setASTConsumer(ASTConsumer *Value);
 
   /// }
   /// @name Code Completion
