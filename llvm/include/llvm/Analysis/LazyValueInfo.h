@@ -27,9 +27,12 @@ namespace llvm {
 class LazyValueInfo : public FunctionPass {
   class TargetData *TD;
   void *PImpl;
+  LazyValueInfo(const LazyValueInfo&); // DO NOT IMPLEMENT.
+  void operator=(const LazyValueInfo&); // DO NOT IMPLEMENT.
 public:
   static char ID;
   LazyValueInfo() : FunctionPass(&ID), PImpl(0) {}
+  ~LazyValueInfo() { assert(PImpl == 0 && "releaseMemory not called"); }
 
   /// Tristate - This is used to return true/false/dunno results.
   enum Tristate {
