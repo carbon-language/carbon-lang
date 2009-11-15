@@ -271,6 +271,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitNullInitializationLValue(cast<CXXZeroInitValueExpr>(E));
   case Expr::CXXDefaultArgExprClass:
     return EmitLValue(cast<CXXDefaultArgExpr>(E)->getExpr());
+  case Expr::CXXTypeidExprClass:
+    return EmitCXXTypeidLValue(cast<CXXTypeidExpr>(E));
 
   case Expr::ObjCMessageExprClass:
     return EmitObjCMessageExprLValue(cast<ObjCMessageExpr>(E));
@@ -1461,6 +1463,12 @@ CodeGenFunction::EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E) {
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
   llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), "tmp");
   EmitCXXConstructExpr(Temp, E);
+  return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
+}
+
+LValue
+CodeGenFunction::EmitCXXTypeidLValue(const CXXTypeidExpr *E) {
+  llvm::Value *Temp = EmitCXXTypeidExpr(E);
   return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
 }
 

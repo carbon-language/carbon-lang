@@ -663,6 +663,8 @@ public:
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);
 
+  llvm::Value* EmitCXXTypeidExpr(const CXXTypeidExpr *E);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -856,6 +858,7 @@ public:
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
   LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);
   LValue EmitCXXExprWithTemporariesLValue(const CXXExprWithTemporaries *E);
+  LValue EmitCXXTypeidLValue(const CXXTypeidExpr *E);
   
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
@@ -1022,7 +1025,7 @@ public:
                                     bool IsInitializer = false);
 
   void EmitCXXThrowExpr(const CXXThrowExpr *E);
-  
+
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//

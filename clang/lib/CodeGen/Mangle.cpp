@@ -1286,6 +1286,8 @@ static bool isCharSpecialization(QualType T, const char *Name) {
 
 bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   // <substitution> ::= St # ::std::
+  // FIXME: type_info == comes out as __ZNK3std9type_infoeqERKS0_ instead of
+  // __ZNKSt9type_infoeqERKS_
   if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
     if (isStdNamespace(NS)) {
       Out << "St";

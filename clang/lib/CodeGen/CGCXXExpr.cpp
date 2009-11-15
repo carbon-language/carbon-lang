@@ -334,3 +334,39 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   
   EmitBlock(DeleteEnd);
 }
+
+llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
+  QualType Ty = E->getType();
+  const llvm::Type *LTy = ConvertType(Ty)->getPointerTo();
+  if (E->isTypeOperand()) {
+    QualType Ty = E->getTypeOperand();
+    if (const RecordType *RT = Ty->getAs<RecordType>()) {
+      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (RD->isPolymorphic())
+        return Builder.CreateBitCast(CGM.GenerateRttiRef(RD), LTy);
+      return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
+    }
+    // FIXME: return the rtti for the non-class static type.
+    ErrorUnsupported(E, "typeid expression");
+    return 0;
+  }
+  Expr *subE = E->getExprOperand();
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    if (RD->isPolymorphic()) {
+      // FIXME: if subE is an lvalue do
+      LValue Obj = EmitLValue(subE);
+      llvm::Value *This = Obj.getAddress();
+      // FIXME: need to do a 0 check here for *p on This
+      llvm::Value *V = Builder.CreateBitCast(This, LTy->getPointerTo()->getPointerTo());
+      V = Builder.CreateLoad(V, "vtable");
+      V = Builder.CreateConstInBoundsGEP1_64(V, -1ULL);
+      V = Builder.CreateLoad(V);
+      return V;
+    }      
+    return CGM.GenerateRtti(RD);
+  }
+  // FIXME: return rtti for the non-class static type.
+  ErrorUnsupported(E, "typeid expression");
+  return 0;
+}
