@@ -195,28 +195,132 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 }
 
 //===----------------------------------------------------------------------===//
-//                            LazyValueInfo Impl
+//                          LazyValueInfoCache Decl
 //===----------------------------------------------------------------------===//
 
-bool LazyValueInfo::runOnFunction(Function &F) {
-  TD = getAnalysisIfAvailable<TargetData>();
-  // Fully lazy.
-  return false;
+namespace {
+  /// LazyValueInfoCache - This is the cache kept by LazyValueInfo which
+  /// maintains information about queries across the clients' queries.
+  class LazyValueInfoCache {
+  public:
+    /// BlockCacheEntryTy - This is a computed lattice value at the end of the
+    /// specified basic block for a Value* that depends on context.
+    typedef std::pair<BasicBlock*, LVILatticeVal> BlockCacheEntryTy;
+    
+    /// ValueCacheEntryTy - This is all of the cached block information for
+    /// exactly one Value*.  The entries are sorted by the BasicBlock* of the
+    /// entries, allowing us to do a lookup with a binary search.
+    typedef std::vector<BlockCacheEntryTy> ValueCacheEntryTy;
+
+  private:
+    /// ValueCache - This is all of the cached information for all values,
+    /// mapped from Value* to key information.
+    DenseMap<Value*, ValueCacheEntryTy> ValueCache;
+  public:
+    
+    /// getValueInBlock - This is the query interface to determine the lattice
+    /// value for the specified Value* at the end of the specified block.
+    LVILatticeVal getValueInBlock(Value *V, BasicBlock *BB);
+
+    /// getValueOnEdge - This is the query interface to determine the lattice
+    /// value for the specified Value* that is true on the specified edge.
+    LVILatticeVal getValueOnEdge(Value *V, BasicBlock *FromBB,BasicBlock *ToBB);
+  };
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+//                              LVIQuery Impl
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// LVIQuery - This is a transient object that exists while a query is
+  /// being performed.
+  class LVIQuery {
+    typedef LazyValueInfoCache::BlockCacheEntryTy BlockCacheEntryTy;
+    typedef LazyValueInfoCache::ValueCacheEntryTy ValueCacheEntryTy;
+    
+    /// This is the current value being queried.
+    Value *Val;
+    
+    /// This is all of the cached information about this value.
+    ValueCacheEntryTy &Cache;
+    
+    /// BlockVals Temporary Cache used while processing a query.
+    DenseMap<BasicBlock*, LVILatticeVal> BlockVals;
+
+  public:
+    
+    LVIQuery(Value *V, ValueCacheEntryTy &VC) : Val(V), Cache(VC) {
+    }
+
+    LVILatticeVal getBlockValue(BasicBlock *BB);
+    
+    LVILatticeVal getEdgeValue(BasicBlock *FromBB, BasicBlock *ToBB);
+  };
+} // end anonymous namespace
+
+
+LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
+  // See if we already have a value for this block.
+  LVILatticeVal &BBLV = BlockVals[BB];
+  
+  // If we've already computed this block's value, return it.
+  if (!BBLV.isUndefined())
+    return BBLV;
+  
+  // Otherwise, this is the first time we're seeing this block.  Reset the
+  // lattice value to overdefined, so that cycles will terminate and be
+  // conservatively correct.
+  BBLV.markOverdefined();
+  
+  // If V is live into BB, see if our predecessors know anything about it.
+  Instruction *BBI = dyn_cast<Instruction>(Val);
+  if (BBI == 0 || BBI->getParent() != BB) {
+    LVILatticeVal Result;  // Start Undefined.
+    unsigned NumPreds = 0;
+    
+    // Loop over all of our predecessors, merging what we know from them into
+    // result.
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      Result.mergeIn(getEdgeValue(*PI, BB));
+      
+      // If we hit overdefined, exit early.  The BlockVals entry is already set
+      // to overdefined.
+      if (Result.isOverdefined())
+        return Result;
+      ++NumPreds;
+    }
+    
+    // If this is the entry block, we must be asking about an argument.  The
+    // value is overdefined.
+    if (NumPreds == 0 && BB == &BB->getParent()->front()) {
+      assert(isa<Argument>(Val) && "Unknown live-in to the entry block");
+      Result.markOverdefined();
+      return Result;
+    }
+    
+    // Return the merged value, which is more precise than 'overdefined'.
+    assert(!Result.isOverdefined());
+    return BlockVals[BB] = Result;
+  }
+  
+  // If this value is defined by an instruction in this block, we have to
+  // process it here somehow or return overdefined.
+  if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
+    (void)PN;
+    // TODO: PHI Translation in preds.
+  } else {
+    
+  }
+  
+  LVILatticeVal Result;
+  Result.markOverdefined();
+  return BlockVals[BB] = Result;
 }
 
-void LazyValueInfo::releaseMemory() {
-  // No caching yet.
-}
 
-static LVILatticeVal GetValueInBlock(Value *V, BasicBlock *BB,
-                                     DenseMap<BasicBlock*, LVILatticeVal> &);
-
-static LVILatticeVal GetValueOnEdge(Value *V, BasicBlock *BBFrom,
-                                    BasicBlock *BBTo,
-                              DenseMap<BasicBlock*, LVILatticeVal> &BlockVals) {
-  // FIXME: Pull edge logic out of jump threading.
-  
-  
+/// getEdgeValue - This method 
+LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
   if (BranchInst *BI = dyn_cast<BranchInst>(BBFrom->getTerminator())) {
     // If this is a conditional branch and only one successor goes to BBTo, then
     // we maybe able to infer something from the condition. 
@@ -228,14 +332,14 @@ static LVILatticeVal GetValueOnEdge(Value *V, BasicBlock *BBFrom,
       
       // If V is the condition of the branch itself, then we know exactly what
       // it is.
-      if (BI->getCondition() == V)
+      if (BI->getCondition() == Val)
         return LVILatticeVal::get(ConstantInt::get(
-                                 Type::getInt1Ty(V->getContext()), isTrueDest));
+                               Type::getInt1Ty(Val->getContext()), isTrueDest));
       
       // If the condition of the branch is an equality comparison, we may be
       // able to infer the value.
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
-        if (ICI->isEquality() && ICI->getOperand(0) == V &&
+        if (ICI->isEquality() && ICI->getOperand(0) == Val &&
             isa<Constant>(ICI->getOperand(1))) {
           // We know that V has the RHS constant if this is a true SETEQ or
           // false SETNE. 
@@ -248,84 +352,76 @@ static LVILatticeVal GetValueOnEdge(Value *V, BasicBlock *BBFrom,
   
   // TODO: Info from switch.
   
+  // TODO: Handle more complex conditionals.  If (v == 0 || v2 < 1) is false, we
+  // know that v != 0.
   
   // Otherwise see if the value is known in the block.
-  return GetValueInBlock(V, BBFrom, BlockVals);
-}
-
-static LVILatticeVal GetValueInBlock(Value *V, BasicBlock *BB,
-                              DenseMap<BasicBlock*, LVILatticeVal> &BlockVals) {
-  // See if we already have a value for this block.
-  LVILatticeVal &BBLV = BlockVals[BB];
-
-  // If we've already computed this block's value, return it.
-  if (!BBLV.isUndefined())
-    return BBLV;
-  
-  // Otherwise, this is the first time we're seeing this block.  Reset the
-  // lattice value to overdefined, so that cycles will terminate and be
-  // conservatively correct.
-  BBLV.markOverdefined();
-
-  LVILatticeVal Result;  // Start Undefined.
-  
-  // If V is live in to BB, see if our predecessors know anything about it.
-  Instruction *BBI = dyn_cast<Instruction>(V);
-  if (BBI == 0 || BBI->getParent() != BB) {
-    unsigned NumPreds = 0;
-    
-    // Loop over all of our predecessors, merging what we know from them into
-    // result.
-    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-      Result.mergeIn(GetValueOnEdge(V, *PI, BB, BlockVals));
-      
-      // If we hit overdefined, exit early.  The BlockVals entry is already set
-      // to overdefined.
-      if (Result.isOverdefined())
-        return Result;
-      ++NumPreds;
-    }
-    
-    // If this is the entry block, we must be asking about an argument.  The
-    // value is overdefined.
-    if (NumPreds == 0 && BB == &BB->getParent()->front()) {
-      assert(isa<Argument>(V) && "Unknown live-in to the entry block");
-      Result.markOverdefined();
-      return Result;
-    }
-
-    // Return the merged value, which is more precise than 'overdefined'.
-    assert(!Result.isOverdefined());
-    return BlockVals[BB] = Result;
-  }
-
-  // If this value is defined by an instruction in this block, we have to
-  // process it here somehow or return overdefined.
-  if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
-    (void)PN;
-    // TODO: PHI Translation in preds.
-  } else {
-    
-  }
-  
-  Result.markOverdefined();
-  return BlockVals[BB] = Result;
+  return getBlockValue(BBFrom);
 }
 
 
-Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
-  // If already a constant, return it.
+//===----------------------------------------------------------------------===//
+//                         LazyValueInfoCache Impl
+//===----------------------------------------------------------------------===//
+
+LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
+  // If already a constant, there is nothing to compute.
   if (Constant *VC = dyn_cast<Constant>(V))
-    return VC;
-  
-  DenseMap<BasicBlock*, LVILatticeVal> BlockValues;
+    return LVILatticeVal::get(VC);
   
   DEBUG(errs() << "Getting value " << *V << " at end of block '"
-               << BB->getName() << "'\n");
-  LVILatticeVal Result = GetValueInBlock(V, BB, BlockValues);
+        << BB->getName() << "'\n");
+  
+  LVILatticeVal Result = LVIQuery(V, ValueCache[V]).getBlockValue(BB);
   
   DEBUG(errs() << "  Result = " << Result << "\n");
+  return Result;
+}
 
+LVILatticeVal LazyValueInfoCache::
+getValueOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB) {
+  // If already a constant, there is nothing to compute.
+  if (Constant *VC = dyn_cast<Constant>(V))
+    return LVILatticeVal::get(VC);
+  
+  DEBUG(errs() << "Getting value " << *V << " on edge from '"
+        << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
+  LVILatticeVal Result =
+    LVIQuery(V, ValueCache[V]).getEdgeValue(FromBB, ToBB);
+  
+  DEBUG(errs() << "  Result = " << Result << "\n");
+  
+  return Result;
+}
+
+//===----------------------------------------------------------------------===//
+//                            LazyValueInfo Impl
+//===----------------------------------------------------------------------===//
+
+bool LazyValueInfo::runOnFunction(Function &F) {
+  TD = getAnalysisIfAvailable<TargetData>();
+  // Fully lazy.
+  return false;
+}
+
+/// getCache - This lazily constructs the LazyValueInfoCache.
+static LazyValueInfoCache &getCache(void *&PImpl) {
+  if (!PImpl)
+    PImpl = new LazyValueInfoCache();
+  return *static_cast<LazyValueInfoCache*>(PImpl);
+}
+
+void LazyValueInfo::releaseMemory() {
+  // If the cache was allocated, free it.
+  if (PImpl) {
+    delete &getCache(PImpl);
+    PImpl = 0;
+  }
+}
+
+Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
+  LVILatticeVal Result = getCache(PImpl).getValueInBlock(V, BB);
+  
   if (Result.isConstant())
     return Result.getConstant();
   return 0;
@@ -335,17 +431,7 @@ Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
 /// constant on the specified edge.  Return null if not.
 Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
                                            BasicBlock *ToBB) {
-  // If already a constant, return it.
-  if (Constant *VC = dyn_cast<Constant>(V))
-    return VC;
-  
-  DenseMap<BasicBlock*, LVILatticeVal> BlockValues;
-  
-  DEBUG(errs() << "Getting value " << *V << " on edge from '"
-               << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
-  LVILatticeVal Result = GetValueOnEdge(V, FromBB, ToBB, BlockValues);
-  
-  DEBUG(errs() << "  Result = " << Result << "\n");
+  LVILatticeVal Result = getCache(PImpl).getValueOnEdge(V, FromBB, ToBB);
   
   if (Result.isConstant())
     return Result.getConstant();
@@ -358,19 +444,7 @@ Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
 LazyValueInfo::Tristate
 LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
                                   BasicBlock *FromBB, BasicBlock *ToBB) {
-  LVILatticeVal Result;
-  
-  // If already a constant, we can use constant folding.
-  if (Constant *VC = dyn_cast<Constant>(V)) {
-    Result = LVILatticeVal::get(VC);
-  } else {
-    DenseMap<BasicBlock*, LVILatticeVal> BlockValues;
-    
-    DEBUG(errs() << "Getting value " << *V << " on edge from '"
-          << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
-    Result = GetValueOnEdge(V, FromBB, ToBB, BlockValues);
-    DEBUG(errs() << "  Result = " << Result << "\n");
-  }
+  LVILatticeVal Result = getCache(PImpl).getValueOnEdge(V, FromBB, ToBB);
   
   // If we know the value is a constant, evaluate the conditional.
   Constant *Res = 0;
@@ -378,7 +452,10 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
     Res = ConstantFoldCompareInstOperands(Pred, Result.getConstant(), C, TD);
     if (ConstantInt *ResCI = dyn_cast_or_null<ConstantInt>(Res))
       return ResCI->isZero() ? False : True;
-  } else if (Result.isNotConstant()) {
+    return Unknown;
+  }
+  
+  if (Result.isNotConstant()) {
     // If this is an equality comparison, we can try to fold it knowing that
     // "V != C1".
     if (Pred == ICmpInst::ICMP_EQ) {
@@ -394,6 +471,7 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
       if (Res->isNullValue())
         return True;
     }
+    return Unknown;
   }
   
   return Unknown;
