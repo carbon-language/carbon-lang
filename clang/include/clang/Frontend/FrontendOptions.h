@@ -39,6 +39,7 @@ namespace frontend {
     ParseNoop,              ///< Parse with noop callbacks.
     ParsePrintCallbacks,    ///< Parse and print each callback.
     ParseSyntaxOnly,        ///< Parse and perform semantic analysis.
+    PluginAction,           ///< Run a plugin action, \see ActionName.
     PrintDeclContext,       ///< Print DeclContext and their Decls.
     PrintPreprocessedInput, ///< -E mode.
     RewriteBlocks,          ///< ObjC->C Rewriter for Blocks.
@@ -109,12 +110,16 @@ public:
   /// The frontend action to perform.
   frontend::ActionKind ProgramAction;
 
+  /// The name of the action to run when using a plugin action.
+  std::string ActionName;
+
 public:
   FrontendOptions() {
     DebugCodeCompletionPrinter = 0;
     DisableFree = 0;
     EmptyInputOnly = 0;
     ProgramAction = frontend::ParseSyntaxOnly;
+    ActionName = "";
     RelocatablePCH = 0;
     ShowMacrosInCodeCompletion = 0;
     ShowStats = 0;

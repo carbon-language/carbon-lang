@@ -24,6 +24,7 @@
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
@@ -36,6 +37,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Registry.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
@@ -81,11 +83,13 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 /// anything.
 llvm::Timer *ClangFrontendTimer = 0;
 
-static FrontendAction *CreateFrontendAction(frontend::ActionKind AK) {
+static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   using namespace clang::frontend;
 
-  switch (AK) {
-  default:                     return 0;
+  switch (CI.getFrontendOpts().ProgramAction) {
+  default:
+    llvm::llvm_unreachable("Invalid program action!");
+
   case ASTDump:                return new ASTDumpAction();
   case ASTPrint:               return new ASTPrintAction();
   case ASTPrintXML:            return new ASTPrintXMLAction();
@@ -105,6 +109,30 @@ static FrontendAction *CreateFrontendAction(frontend::ActionKind AK) {
   case ParseNoop:              return new ParseOnlyAction();
   case ParsePrintCallbacks:    return new PrintParseAction();
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();
+
+  case PluginAction: {
+    if (CI.getFrontendOpts().ActionName == "help") {
+      llvm::errs() << "clang-cc plugins:\n";
+      for (FrontendPluginRegistry::iterator it =
+             FrontendPluginRegistry::begin(),
+             ie = FrontendPluginRegistry::end();
+           it != ie; ++it)
+        llvm::errs() << "  " << it->getName() << " - " << it->getDesc() << "\n";
+      exit(1);
+    }
+
+    for (FrontendPluginRegistry::iterator it =
+           FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
+         it != ie; ++it) {
+      if (it->getName() == CI.getFrontendOpts().ActionName)
+        return it->instantiate();
+    }
+
+    CI.getDiagnostics().Report(diag::err_fe_invalid_plugin_name)
+      << CI.getFrontendOpts().ActionName;
+    return 0;
+  }
+
   case PrintDeclContext:       return new DeclContextPrintAction();
   case PrintPreprocessedInput: return new PrintPreprocessedAction();
   case RewriteBlocks:          return new RewriteBlocksAction();
@@ -279,9 +307,10 @@ int main(int argc, char **argv) {
       Clang.createPreprocessor();
     }
 
-    llvm::OwningPtr<FrontendAction> Act(
-      CreateFrontendAction(Clang.getFrontendOpts().ProgramAction));
-    assert(Act && "Invalid program action!");
+    llvm::OwningPtr<FrontendAction> Act(CreateFrontendAction(Clang));
+    if (!Act)
+      break;
+
     Act->setCurrentTimer(ClangFrontendTimer);
     if (Act->BeginSourceFile(Clang, InFile, IsAST)) {
       Act->Execute();
@@ -315,3 +344,4 @@ int main(int argc, char **argv) {
 
   return (Clang.getDiagnostics().getNumErrors() != 0);
 }
+

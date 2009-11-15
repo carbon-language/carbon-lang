@@ -26,6 +26,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/RegistryParser.h"
 #include <stdio.h>
 
 using namespace clang;
@@ -382,6 +383,11 @@ static llvm::cl::opt<std::string>
 OutputFile("o",
  llvm::cl::value_desc("path"),
  llvm::cl::desc("Specify output file"));
+
+static llvm::cl::opt<std::string>
+PluginActionName("plugin",
+                 llvm::cl::desc("Use the named plugin action "
+                                "(use \"help\" to list available options)"));
 
 static llvm::cl::opt<ActionKind>
 ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
@@ -885,12 +891,18 @@ void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
 void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   using namespace frontendoptions;
 
+  // Select program action.
+  Opts.ProgramAction = ProgAction;
+  if (PluginActionName.getPosition()) {
+    Opts.ProgramAction = frontend::PluginAction;
+    Opts.ActionName = PluginActionName;
+  }
+
   Opts.CodeCompletionAt = CodeCompletionAt;
   Opts.DebugCodeCompletionPrinter = CodeCompletionDebugPrinter;
   Opts.DisableFree = DisableFree;
   Opts.EmptyInputOnly = EmptyInputOnly;
   Opts.FixItLocations = FixItAtLocations;
-  Opts.ProgramAction = ProgAction;
   Opts.OutputFile = OutputFile;
   Opts.RelocatablePCH = RelocatablePCH;
   Opts.ShowMacrosInCodeCompletion = CodeCompletionWantsMacros;
