@@ -17,3 +17,24 @@ namespace N {
   
   void f(int) { } // expected-error{{redefinition}}
 }
+
+namespace N {
+  void f(double);
+  void f(long);
+}
+
+struct X0 {
+  void operator()(int);
+  void operator()(long);
+};
+
+struct X1 : X0 {
+  // FIXME: give this operator() a 'float' parameter to test overloading
+  // behavior. It currently fails.
+  void operator()();
+  using X0::operator();
+  
+  void test() {
+    (*this)(1);
+  }
+};

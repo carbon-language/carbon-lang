@@ -1212,7 +1212,20 @@ public:
 
     /// \brief Add a declaration to these results.
     void addDecl(NamedDecl *D) {
-      Decls.push_back(D->getUnderlyingDecl());
+      // "Flatten" overloaded function declarations to get the underlying
+      // functions.
+      // FIXME: This may not be necessary with the impending using-declarations
+      // rewrite (11/09).
+      if (OverloadedFunctionDecl *Ovl 
+            = dyn_cast<OverloadedFunctionDecl>(D->getUnderlyingDecl())) {
+        for (OverloadedFunctionDecl::function_iterator 
+               F = Ovl->function_begin(),
+               FEnd = Ovl->function_end();
+             F != FEnd; ++F) {
+          Decls.push_back(*F);
+        }
+      } else
+        Decls.push_back(D->getUnderlyingDecl());
       Kind = Found;
     }
 
