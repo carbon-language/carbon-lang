@@ -156,37 +156,21 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
 static TargetInfo *
 ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
                             const char *Argv0, bool &IsAST) {
-  // Initialize frontend options.
-  InitializeFrontendOptions(Opts.getFrontendOpts());
-
-  // FIXME: The target information in frontend options should be split out into
-  // TargetOptions, and the target options in codegen options should move there
-  // as well. Then we could properly initialize in layering order.
-
-  // Initialize base triple.  If a -triple option has been specified, use
-  // that triple.  Otherwise, default to the host triple.
-  llvm::Triple Triple(Opts.getFrontendOpts().TargetTriple);
-  if (Triple.getTriple().empty())
-    Triple = llvm::Triple(llvm::sys::getHostTriple());
+  // Initialize target options.
+  InitializeTargetOptions(Opts.getTargetOpts());
 
   // Get information about the target being compiled for.
-  TargetInfo *Target = TargetInfo::CreateTargetInfo(Triple.getTriple());
-  if (!Target) {
-    Diags.Report(diag::err_fe_unknown_triple) << Triple.getTriple().c_str();
+  llvm::OwningPtr<TargetInfo> Target(
+    TargetInfo::CreateTargetInfo(Diags, Opts.getTargetOpts()));
+  if (!Target)
     return 0;
-  }
-
-  // Set the target ABI if specified.
-  if (!Opts.getFrontendOpts().TargetABI.empty() &&
-      !Target->setABI(Opts.getFrontendOpts().TargetABI)) {
-    Diags.Report(diag::err_fe_unknown_target_abi)
-      << Opts.getFrontendOpts().TargetABI;
-    return 0;
-  }
 
   // Initialize backend options, which may also be used to key some language
   // options.
-  InitializeCodeGenOptions(Opts.getCodeGenOpts(), *Target);
+  InitializeCodeGenOptions(Opts.getCodeGenOpts());
+
+  // Initialize frontend options.
+  InitializeFrontendOptions(Opts.getFrontendOpts());
 
   // Determine the input language, we currently require all files to match.
   FrontendOptions::InputKind IK = Opts.getFrontendOpts().Inputs[0].first;
@@ -231,7 +215,7 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
     Opts.getCodeGenOpts().NoCommon = 1;
   Opts.getCodeGenOpts().TimePasses = Opts.getFrontendOpts().ShowTimers;
 
-  return Target;
+  return Target.take();
 }
 
 int main(int argc, char **argv) {

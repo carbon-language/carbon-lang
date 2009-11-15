@@ -8,12 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/ASTConsumers.h"
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/CodeGen/CodeGenOptions.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
+#include "clang/CodeGen/CodeGenOptions.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -41,6 +42,7 @@ namespace {
   class VISIBILITY_HIDDEN BackendConsumer : public ASTConsumer {
     BackendAction Action;
     CodeGenOptions CodeGenOpts;
+    TargetOptions TargetOpts;
     llvm::raw_ostream *AsmOutStream;
     llvm::formatted_raw_ostream FormattedOutStream;
     ASTContext *Context;
@@ -76,10 +78,11 @@ namespace {
   public:
     BackendConsumer(BackendAction action, Diagnostic &Diags,
                     const LangOptions &langopts, const CodeGenOptions &compopts,
-                    const std::string &infile, llvm::raw_ostream* OS,
-                    LLVMContext& C) :
+                    const TargetOptions &targetopts, const std::string &infile,
+                    llvm::raw_ostream* OS, LLVMContext& C) :
       Action(action),
       CodeGenOpts(compopts),
+      TargetOpts(targetopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
@@ -213,12 +216,12 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     }
 
     std::string FeaturesStr;
-    if (CodeGenOpts.CPU.size() || CodeGenOpts.Features.size()) {
+    if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
       SubtargetFeatures Features;
-      Features.setCPU(CodeGenOpts.CPU);
+      Features.setCPU(TargetOpts.CPU);
       for (std::vector<std::string>::iterator
-             it = CodeGenOpts.Features.begin(),
-             ie = CodeGenOpts.Features.end(); it != ie; ++it)
+             it = TargetOpts.Features.begin(),
+             ie = TargetOpts.Features.end(); it != ie; ++it)
         Features.AddFeature(*it);
       FeaturesStr = Features.getString();
     }
@@ -371,9 +374,10 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           Diagnostic &Diags,
                                           const LangOptions &LangOpts,
                                           const CodeGenOptions &CodeGenOpts,
+                                          const TargetOptions &TargetOpts,
                                           const std::string& InFile,
                                           llvm::raw_ostream* OS,
                                           LLVMContext& C) {
   return new BackendConsumer(Action, Diags, LangOpts, CodeGenOpts,
-                             InFile, OS, C);
+                             TargetOpts, InFile, OS, C);
 }

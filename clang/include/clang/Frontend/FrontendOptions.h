@@ -85,13 +85,6 @@ public:
   unsigned ShowTimers : 1;                 ///< Show timers for individual
                                            /// actions.
 
-  /// If given, the name of the target triple to compile for. If not given the
-  /// target will be selected to match the host.
-  std::string TargetTriple;
-
-  /// If given, the name of the target ABI to use.
-  std::string TargetABI;
-
   /// The input files and their types.
   std::vector<std::pair<InputKind, std::string> > Inputs;
 

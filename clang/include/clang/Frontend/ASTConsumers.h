@@ -25,11 +25,12 @@ namespace llvm {
 namespace clang {
 
 class ASTConsumer;
+class CodeGenOptions;
 class Diagnostic;
 class FileManager;
-class Preprocessor;
-class CodeGenOptions;
 class LangOptions;
+class Preprocessor;
+class TargetOptions;
 
 // AST pretty-printer: prints out the AST in a format that is close to the
 // original C code.  The output is intended to be in a format such that
@@ -81,6 +82,7 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    Diagnostic &Diags,
                                    const LangOptions &Features,
                                    const CodeGenOptions &CodeGenOpts,
+                                   const TargetOptions &TargetOpts,
                                    const std::string &ModuleID,
                                    llvm::raw_ostream *OS,
                                    llvm::LLVMContext& C);

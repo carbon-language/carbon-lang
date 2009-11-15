@@ -12,11 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/Builtins.h"
-#include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/Builtins.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetBuiltins.h"
+#include "clang/Basic/TargetOptions.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -1836,9 +1839,7 @@ namespace {
 // Driver code
 //===----------------------------------------------------------------------===//
 
-/// CreateTargetInfo - Return the target info object for the specified target
-/// triple.
-TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
+static TargetInfo *AllocateTarget(const std::string &T) {
   llvm::Triple Triple(T);
   llvm::Triple::OSType os = Triple.getOS();
 
@@ -1941,4 +1942,54 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new X86_64TargetInfo(T);
     }
   }
+}
+
+/// CreateTargetInfo - Return the target info object for the specified target
+/// triple.
+TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
+                                         const TargetOptions &Opts) {
+  llvm::Triple Triple(Opts.Triple);
+
+  // Construct the target
+  llvm::OwningPtr<TargetInfo> Target(AllocateTarget(Triple.str()));
+  if (!Target) {
+    Diags.Report(diag::err_target_unknown_triple) << Triple.str();
+    return 0;
+  }
+
+  // Set the target ABI if specified.
+  if (!Opts.ABI.empty() && !Target->setABI(Opts.ABI)) {
+    Diags.Report(diag::err_target_unknown_abi) << Opts.ABI;
+    return 0;
+  }
+
+  // Compute the default target features, we need the target to handle this
+  // because features may have dependencies on one another.
+  llvm::StringMap<bool> Features;
+  Target->getDefaultFeatures(Opts.CPU, Features);
+
+  // Apply the user specified deltas.
+  for (std::vector<std::string>::const_iterator it = Opts.Features.begin(),
+         ie = Opts.Features.end(); it != ie; ++it) {
+    const char *Name = it->c_str();
+
+    // Apply the feature via the target.
+    if ((Name[0] != '-' && Name[0] != '+') ||
+        !Target->setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
+      Diags.Report(diag::err_target_invalid_feature) << Name;
+      return 0;
+    }
+  }
+
+  // Add the features to the compile options.
+  //
+  // FIXME: If we are completely confident that we have the right set, we only
+  // need to pass the minuses.
+  std::vector<std::string> StrFeatures;
+  for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
+         ie = Features.end(); it != ie; ++it)
+    StrFeatures.push_back(std::string(it->second ? "+" : "-") + it->first());
+  Target->HandleTargetFeatures(StrFeatures);
+
+  return Target.take();
 }

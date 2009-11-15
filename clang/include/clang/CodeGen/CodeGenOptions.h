@@ -52,13 +52,6 @@ public:
   /// Inlining - The kind of inlining to perform.
   InliningMethod Inlining;
 
-  /// CPU - An optional CPU to target.
-  std::string CPU;
-
-  /// Features - A list of subtarget features to pass to the code
-  /// generator.
-  std::vector<std::string> Features;
-
 public:
   CodeGenOptions() {
     OptimizationLevel = 0;

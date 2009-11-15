@@ -25,6 +25,7 @@ class LangOptions;
 class PreprocessorOptions;
 class PreprocessorOutputOptions;
 class TargetInfo;
+class TargetOptions;
 
 void InitializeAnalyzerOptions(AnalyzerOptions &Opts);
 
@@ -34,8 +35,7 @@ void InitializeDiagnosticOptions(DiagnosticOptions &Opts);
 
 void InitializeFrontendOptions(FrontendOptions &Opts);
 
-void InitializeCodeGenOptions(CodeGenOptions &Opts,
-                              const TargetInfo &Target);
+void InitializeCodeGenOptions(CodeGenOptions &Opts);
 
 void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
                                    llvm::StringRef BuiltinIncludePath,
@@ -49,6 +49,8 @@ void InitializeLangOptions(LangOptions &Options,
 void InitializePreprocessorOptions(PreprocessorOptions &Opts);
 
 void InitializePreprocessorOutputOptions(PreprocessorOutputOptions &Opts);
+
+void InitializeTargetOptions(TargetOptions &Opts);
 
 } // end namespace clang
 

@@ -170,8 +170,8 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
     OS.reset(CI.createDefaultOutputFile(true, InFile, "bc"));
 
   return CreateBackendConsumer(BA, CI.getDiagnostics(), CI.getLangOpts(),
-                               CI.getCodeGenOpts(), InFile, OS.take(),
-                               CI.getLLVMContext());
+                               CI.getCodeGenOpts(), CI.getTargetOpts(), InFile,
+                               OS.take(), CI.getLLVMContext());
 }
 
 EmitAssemblyAction::EmitAssemblyAction()

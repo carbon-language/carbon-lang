@@ -28,11 +28,12 @@ class StringRef;
 }
 
 namespace clang {
-
 class Diagnostic;
+class LangOptions;
 class SourceLocation;
 class SourceManager;
-class LangOptions;
+class TargetOptions;
+
 namespace Builtin { struct Info; }
 
 /// TargetInfo - This class exposes information about the current target.
@@ -59,9 +60,9 @@ protected:
   TargetInfo(const std::string &T);
 
 public:
-  /// CreateTargetInfo - Return the target info object for the specified target
-  /// triple.
-  static TargetInfo* CreateTargetInfo(const std::string &Triple);
+  /// CreateTargetInfo - Construct a target for the given options.
+  static TargetInfo* CreateTargetInfo(Diagnostic &Diags,
+                                      const TargetOptions &Opts);
 
   virtual ~TargetInfo();
 

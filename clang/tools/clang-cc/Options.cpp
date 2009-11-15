@@ -14,6 +14,7 @@
 #include "Options.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
@@ -27,6 +28,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/RegistryParser.h"
+#include "llvm/System/Host.h"
 #include <stdio.h>
 
 using namespace clang;
@@ -193,13 +195,6 @@ OptLevel("O", llvm::cl::Prefix,
 static llvm::cl::opt<bool>
 OptSize("Os", llvm::cl::desc("Optimize for size"));
 
-static llvm::cl::opt<std::string>
-TargetCPU("mcpu",
-         llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
-
-static llvm::cl::list<std::string>
-TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
-
 }
 
 //===----------------------------------------------------------------------===//
@@ -296,7 +291,6 @@ VerifyDiagnostics("verify",
                   llvm::cl::desc("Verify emitted diagnostics and warnings"));
 
 }
-
 
 //===----------------------------------------------------------------------===//
 // Frontend Options
@@ -454,14 +448,6 @@ RelocatablePCH("relocatable-pch",
 static llvm::cl::opt<bool>
 Stats("print-stats",
       llvm::cl::desc("Print performance metrics and statistics"));
-
-static llvm::cl::opt<std::string>
-TargetABI("target-abi",
-          llvm::cl::desc("Target a particular ABI type"));
-
-static llvm::cl::opt<std::string>
-TargetTriple("triple",
-  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
 
 static llvm::cl::opt<bool>
 TimeReport("ftime-report",
@@ -794,47 +780,35 @@ DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
                                 "addition to normal output"));
 
 }
+//===----------------------------------------------------------------------===//
+// Target Options
+//===----------------------------------------------------------------------===//
+
+namespace targetoptions {
+
+static llvm::cl::opt<std::string>
+TargetABI("target-abi",
+          llvm::cl::desc("Target a particular ABI type"));
+
+static llvm::cl::opt<std::string>
+TargetCPU("mcpu",
+         llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
+
+static llvm::cl::list<std::string>
+TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));
+
+static llvm::cl::opt<std::string>
+TargetTriple("triple",
+  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
+
+}
 
 //===----------------------------------------------------------------------===//
 // Option Object Construction
 //===----------------------------------------------------------------------===//
 
-void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
-                                     const TargetInfo &Target) {
+void clang::InitializeCodeGenOptions(CodeGenOptions &Opts) {
   using namespace codegenoptions;
-
-  // Compute the target features, we need the target to handle this because
-  // features may have dependencies on one another.
-  llvm::StringMap<bool> Features;
-  Target.getDefaultFeatures(TargetCPU, Features);
-
-  // Apply the user specified deltas.
-  for (llvm::cl::list<std::string>::iterator it = TargetFeatures.begin(),
-         ie = TargetFeatures.end(); it != ie; ++it) {
-    const char *Name = it->c_str();
-
-    // FIXME: Don't handle errors like this.
-    if (Name[0] != '-' && Name[0] != '+') {
-      fprintf(stderr, "error: clang-cc: invalid target feature string: %s\n",
-              Name);
-      exit(1);
-    }
-
-    // Apply the feature via the target.
-    if (!Target.setFeatureEnabled(Features, Name + 1, (Name[0] == '+'))) {
-      fprintf(stderr, "error: clang-cc: invalid target feature name: %s\n",
-              Name + 1);
-      exit(1);
-    }
-  }
-
-  // Add the features to the compile options.
-  //
-  // FIXME: If we are completely confident that we have the right set, we only
-  // need to pass the minuses.
-  for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
-         ie = Features.end(); it != ie; ++it)
-    Opts.Features.push_back(std::string(it->second ? "+" : "-") + it->first());
 
   // -Os implies -O2
   Opts.OptimizationLevel = OptSize ? 2 : OptLevel;
@@ -843,7 +817,6 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
     : CodeGenOptions::OnlyAlwaysInlining;
 
-  Opts.CPU = TargetCPU;
   Opts.DebugInfo = GenerateDebugInfo;
   Opts.DisableLLVMOpts = DisableLLVMOptimizations;
   Opts.DisableRedZone = DisableRedZone;
@@ -908,8 +881,6 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   Opts.ShowMacrosInCodeCompletion = CodeCompletionWantsMacros;
   Opts.ShowStats = Stats;
   Opts.ShowTimers = TimeReport;
-  Opts.TargetABI = TargetABI;
-  Opts.TargetTriple = TargetTriple;
   Opts.ViewClassInheritance = InheritanceViewCls;
 
   // '-' is the default input if none is given.
@@ -1160,13 +1131,8 @@ void clang::InitializeLangOptions(LangOptions &Options,
   Options.setVisibilityMode(SymbolVisibility);
   Options.OverflowChecking = OverflowChecking;
 
-
   // Allow the target to set the default the language options as it sees fit.
   Target.getDefaultLangOptions(Options);
-
-  // Pass the map of target features to the target for validation and
-  // processing.
-  Target.HandleTargetFeatures(CodeGenOpts.Features);
 
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
@@ -1362,4 +1328,17 @@ clang::InitializePreprocessorOutputOptions(PreprocessorOutputOptions &Opts) {
   Opts.ShowLineMarkers = !DisableLineMarkers;
   Opts.ShowComments = EnableCommentOutput;
   Opts.ShowMacroComments = EnableMacroCommentOutput;
+}
+
+void clang::InitializeTargetOptions(TargetOptions &Opts) {
+  using namespace targetoptions;
+
+  Opts.ABI = TargetABI;
+  Opts.CPU = TargetCPU;
+  Opts.Triple = TargetTriple;
+  Opts.Features = TargetFeatures;
+
+  // Use the host triple if unspecified.
+  if (Opts.Triple.empty())
+    Opts.Triple = llvm::sys::getHostTriple();
 }

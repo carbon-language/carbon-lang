@@ -191,6 +191,13 @@ public:
     return Invocation.getPreprocessorOutputOpts();
   }
 
+  TargetOptions &getTargetOpts() {
+    return Invocation.getTargetOpts();
+  }
+  const TargetOptions &getTargetOpts() const {
+    return Invocation.getTargetOpts();
+  }
+
   /// }
   /// @name Diagnostics Engine
   /// {

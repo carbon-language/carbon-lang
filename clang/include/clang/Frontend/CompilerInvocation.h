@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_COMPILERINVOCATION_H_
 
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
@@ -57,6 +58,9 @@ class CompilerInvocation {
 
   /// Options controlling preprocessed output.
   PreprocessorOutputOptions PreprocessorOutputOpts;
+
+  /// Options controlling the target.
+  TargetOptions TargetOpts;
 
 public:
   CompilerInvocation() {}
@@ -108,6 +112,11 @@ public:
   }
   const PreprocessorOutputOptions &getPreprocessorOutputOpts() const {
     return PreprocessorOutputOpts;
+  }
+
+  TargetOptions &getTargetOpts() { return TargetOpts; }
+  const TargetOptions &getTargetOpts() const {
+    return TargetOpts;
   }
 
   /// @}
