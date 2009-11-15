@@ -1,6 +1,12 @@
 LEVEL = ../..
 DIRS := include lib tools docs
 
+PARALLEL_DIRS :=
+
+ifeq ($(BUILD_EXAMPLES),1)
+  PARALLEL_DIRS += examples
+endif
+
 include $(LEVEL)/Makefile.common
 
 ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))

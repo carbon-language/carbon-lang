@@ -34,7 +34,6 @@ int main(int argc, char **argv) {
     return 0;
 
   TextDiagnosticBuffer DiagClient;
-  Diagnostic Diags(&DiagClient);
 
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
@@ -42,7 +41,7 @@ int main(int argc, char **argv) {
     std::string ErrMsg;
     llvm::OwningPtr<ASTUnit> AST;
 
-    AST.reset(ASTUnit::LoadFromPCHFile(InFile, Diags, FileMgr, &ErrMsg));
+    AST.reset(ASTUnit::LoadFromPCHFile(InFile, &ErrMsg, &DiagClient));
 
     if (!AST) {
       llvm::errs() << "[" << InFile << "] error: " << ErrMsg << '\n';
