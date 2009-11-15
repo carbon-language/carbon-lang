@@ -8539,6 +8539,34 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
     }
   }
 
+  // icmp ne A, B is equal to xor A, B when A and B only really have one bit.
+  // It is also profitable to transform icmp eq into not(xor(A, B)) because that
+  // may lead to additional simplifications.
+  if (CI.getType() == ICI->getOperand(0)->getType()) {
+    if (const IntegerType *ITy = dyn_cast<IntegerType>(CI.getType())) {
+      Value *LHS = ICI->getOperand(0);
+      Value *RHS = ICI->getOperand(1);
+
+      uint32_t BitWidth = ITy->getBitWidth();
+      APInt KnownZeroLHS(BitWidth, 0), KnownOneLHS(BitWidth, 0);
+      APInt KnownZeroRHS(BitWidth, 0), KnownOneRHS(BitWidth, 0);
+      APInt TypeMask(APInt::getAllOnesValue(BitWidth));
+      ComputeMaskedBits(LHS, TypeMask, KnownZeroLHS, KnownOneLHS);
+      ComputeMaskedBits(RHS, TypeMask, KnownZeroRHS, KnownOneRHS);
+
+      if (KnownZeroLHS.countLeadingOnes() == BitWidth-1 &&
+          KnownZeroRHS.countLeadingOnes() == BitWidth-1) {
+        if (!DoXform) return ICI;
+
+        Value *Xor = Builder->CreateXor(LHS, RHS);
+        if (ICI->isTrueWhenEqual())
+          Xor = Builder->CreateXor(Xor, ConstantInt::get(ITy, 1));
+        Xor->takeName(ICI);
+        return ReplaceInstUsesWith(CI, Xor);
+      }
+    }
+  }
+
   return 0;
 }
 
