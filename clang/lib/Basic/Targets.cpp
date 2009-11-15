@@ -324,6 +324,25 @@ public:
     : OSTargetInfo<Target>(triple) {}
 };
 
+// PSP Target
+template<typename Target>
+class PSPTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                           std::vector<char> &Defs) const {
+    // PSP defines; list based on the output of the pspdev gcc toolchain.
+    Define(Defs, "PSP", "1");
+    Define(Defs, "_PSP", "1");
+    Define(Defs, "__psp__", "1");
+    Define(Defs, "__ELF__", "1");
+  }
+public:
+  PSPTargetInfo(const std::string& triple)
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+  }
+};
+
 // AuroraUX target
 template<typename Target>
 class AuroraUXTargetInfo : public OSTargetInfo<Target> {
@@ -1835,6 +1854,136 @@ namespace {
   };
 }
 
+namespace {
+class MipsTargetInfo : public TargetInfo {
+  static const TargetInfo::GCCRegAlias GCCRegAliases[];
+  static const char * const GCCRegNames[];
+public:
+  MipsTargetInfo(const std::string& triple) : TargetInfo(triple) {
+    DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
+                        "i64:32:64-f32:32:32-f64:64:64-v64:64:64-n32";
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    DefineStd(Defines, "mips", Opts);
+    Define(Defines, "_mips");
+    DefineStd(Defines, "MIPSEB", Opts);
+    Define(Defines, "_MIPSEB");
+    Define(Defines, "__REGISTER_PREFIX__", "");
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    // FIXME: Implement!
+  }
+  virtual const char *getVAListDeclaration() const {
+    return "typedef void* __builtin_va_list;";
+  }
+  virtual void getGCCRegNames(const char * const *&Names,
+                              unsigned &NumNames) const;
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                unsigned &NumAliases) const;
+  virtual bool validateAsmConstraint(const char *&Name,
+                                     TargetInfo::ConstraintInfo &Info) const {
+    switch (*Name) {
+    default:
+    case 'r': // CPU registers.
+    case 'd': // Equivalent to "r" unless generating MIPS16 code.
+    case 'y': // Equivalent to "r", backwards compatibility only.
+    case 'f': // floating-point registers.
+      Info.setAllowsRegister();
+      return true;
+    }
+    return false;
+  }
+
+  virtual const char *getClobbers() const {
+    // FIXME: Implement!
+    return "";
+  }
+};
+
+const char * const MipsTargetInfo::GCCRegNames[] = {
+  "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7", 
+  "$8",   "$9",   "$10",  "$11",  "$12",  "$13",  "$14",  "$15",
+  "$16",  "$17",  "$18",  "$19",  "$20",  "$21",  "$22",  "$23",
+  "$24",  "$25",  "$26",  "$27",  "$28",  "$sp",  "$fp",  "$31",
+  "$f0",  "$f1",  "$f2",  "$f3",  "$f4",  "$f5",  "$f6",  "$f7",
+  "$f8",  "$f9",  "$f10", "$f11", "$f12", "$f13", "$f14", "$f15",
+  "$f16", "$f17", "$f18", "$f19", "$f20", "$f21", "$f22", "$f23",
+  "$f24", "$f25", "$f26", "$f27", "$f28", "$f29", "$f30", "$f31",
+  "hi",   "lo",   "",     "$fcc0","$fcc1","$fcc2","$fcc3","$fcc4",
+  "$fcc5","$fcc6","$fcc7"
+};
+
+void MipsTargetInfo::getGCCRegNames(const char * const *&Names,
+                                       unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+const TargetInfo::GCCRegAlias MipsTargetInfo::GCCRegAliases[] = {
+  { { "at" },  "$1" },
+  { { "v0" },  "$2" },
+  { { "v1" },  "$3" },
+  { { "a0" },  "$4" },
+  { { "a1" },  "$5" },
+  { { "a2" },  "$6" },
+  { { "a3" },  "$7" },
+  { { "t0" },  "$8" },
+  { { "t1" },  "$9" },
+  { { "t2" }, "$10" },
+  { { "t3" }, "$11" },
+  { { "t4" }, "$12" },
+  { { "t5" }, "$13" },
+  { { "t6" }, "$14" },
+  { { "t7" }, "$15" },
+  { { "s0" }, "$16" },
+  { { "s1" }, "$17" },
+  { { "s2" }, "$18" },
+  { { "s3" }, "$19" },
+  { { "s4" }, "$20" },
+  { { "s5" }, "$21" },
+  { { "s6" }, "$22" },
+  { { "s7" }, "$23" },
+  { { "t8" }, "$24" },
+  { { "t9" }, "$25" },
+  { { "k0" }, "$26" },
+  { { "k1" }, "$27" },
+  { { "gp" }, "$28" },
+  { { "sp" }, "$29" },
+  { { "fp" }, "$30" },
+  { { "ra" }, "$31" }
+};
+
+void MipsTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                         unsigned &NumAliases) const {
+  Aliases = GCCRegAliases;
+  NumAliases = llvm::array_lengthof(GCCRegAliases);
+}
+} // end anonymous namespace.
+
+namespace {
+class MipselTargetInfo : public MipsTargetInfo {
+public:
+  MipselTargetInfo(const std::string& triple) : MipsTargetInfo(triple) {
+    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
+                        "i64:32:64-f32:32:32-f64:64:64-v64:64:64-n32";
+  }
+
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const;
+};
+
+void MipselTargetInfo::getTargetDefines(const LangOptions &Opts,
+                                        std::vector<char> &Defines) const {
+  DefineStd(Defines, "mips", Opts);
+  Define(Defines, "_mips");
+  DefineStd(Defines, "MIPSEL", Opts);
+  Define(Defines, "_MIPSEL");
+  Define(Defines, "__REGISTER_PREFIX__", "");
+}
+} // end anonymous namespace.
+
 //===----------------------------------------------------------------------===//
 // Driver code
 //===----------------------------------------------------------------------===//
@@ -1863,6 +2012,20 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
   case llvm::Triple::msp430:
     return new MSP430TargetInfo(T);
+
+  case llvm::Triple::mips:
+    if (os == llvm::Triple::Psp)
+      return new PSPTargetInfo<MipsTargetInfo>(T);
+    if (os == llvm::Triple::Linux)
+      return new LinuxTargetInfo<MipsTargetInfo>(T);
+    return new MipsTargetInfo(T);
+
+  case llvm::Triple::mipsel:
+    if (os == llvm::Triple::Psp)
+      return new PSPTargetInfo<MipselTargetInfo>(T);
+    if (os == llvm::Triple::Linux)
+      return new LinuxTargetInfo<MipselTargetInfo>(T);
+    return new MipselTargetInfo(T);
 
   case llvm::Triple::pic16:
     return new PIC16TargetInfo(T);
