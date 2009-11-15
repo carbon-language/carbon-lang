@@ -149,6 +149,11 @@ List the discovered test suites as part of the standard output.
 
 Run Tcl scripts internally (instead of converting to shell scripts).
 
+=item B<--repeat>=I<N>
+
+Run each test I<N> times. Currently this is primarily useful for timing tests,
+other results are not collated in any reasonable fashion.
+
 =back
 
 =head1 EXIT STATUS

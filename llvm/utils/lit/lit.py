@@ -388,6 +388,9 @@ def main():
     group.add_option("", "--no-tcl-as-sh", dest="useTclAsSh",
                       help="Don't run Tcl scripts using 'sh'",
                       action="store_false", default=True)
+    group.add_option("", "--repeat", dest="repeatTests", metavar="N",
+                      help="Repeat tests N times (for timing)",
+                      action="store", default=None, type=int)
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()
@@ -472,6 +475,11 @@ def main():
     header = '-- Testing: %d%s tests, %d threads --'%(len(tests),extra,
                                                       opts.numThreads)
 
+    if opts.repeatTests:
+        tests = [t.copyWithIndex(i)
+                 for t in tests
+                 for i in range(opts.repeatTests)]
+
     progressBar = None
     if not opts.quiet:
         if opts.succinct and opts.useProgressBar:
@@ -524,11 +532,16 @@ def main():
         print
 
     if opts.timeTests:
-        byTime = list(tests)
-        byTime.sort(key = lambda t: t.elapsed)
+        # Collate, in case we repeated tests.
+        times = {}
+        for t in tests:
+            key = t.getFullName()
+            times[key] = times.get(key, 0.) + t.elapsed
+
+        byTime = list(times.items())
+        byTime.sort(key = lambda (name,elapsed): elapsed)
         if byTime:
-            Util.printHistogram([(t.getFullName(), t.elapsed) for t in byTime],
-                                title='Tests')
+            Util.printHistogram(byTime, title='Tests')
 
     for name,code in (('Expected Passes    ', Test.PASS),
                       ('Expected Failures  ', Test.XFAIL),

@@ -54,6 +54,14 @@ class Test:
         self.output = None
         # The wall time to execute this test, if timing and once complete.
         self.elapsed = None
+        # The repeat index of this test, or None.
+        self.index = None
+
+    def copyWithIndex(self, index):
+        import copy
+        res = copy.copy(self)
+        res.index = index
+        return res
 
     def setResult(self, result, output, elapsed):
         assert self.result is None, "Test result already set!"

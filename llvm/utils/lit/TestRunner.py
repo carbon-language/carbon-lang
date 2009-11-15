@@ -367,6 +367,8 @@ def parseIntegratedTestScript(test):
     execpath = test.getExecPath()
     execdir,execbase = os.path.split(execpath)
     tmpBase = os.path.join(execdir, 'Output', execbase)
+    if test.index is not None:
+        tmpBase += '_%d' % test.index
 
     # We use #_MARKER_# to hide %% while we do the other substitutions.
     substitutions = [('%%', '#_MARKER_#')]
