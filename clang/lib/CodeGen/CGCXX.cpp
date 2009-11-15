@@ -1712,15 +1712,35 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
       continue;
     DestructedBases.push_back(BaseClassDecl);
   }
-  if (DestructedBases.empty())
-    return;
-  for (int i = DestructedBases.size() -1; i >= 0; --i) {
-    CXXRecordDecl *BaseClassDecl = DestructedBases[i];
+
+  for (int i = DestructedBases.size(); i > 0; --i) {
+    CXXRecordDecl *BaseClassDecl = DestructedBases[i - 1];
     llvm::Value *V = GetAddressCXXOfBaseClass(LoadCXXThis(),
                                               ClassDecl,BaseClassDecl, 
                                               /*NullCheckValue=*/false);
     EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
                           Dtor_Complete, V);
+  }
+  
+  if (DtorType == Dtor_Deleting) {
+    const FunctionDecl *DeleteFD = DD->getOperatorDelete();
+    assert(DeleteFD && "deleting dtor did not have a delete operator!");
+    
+    const FunctionProtoType *DeleteFTy =
+      DeleteFD->getType()->getAs<FunctionProtoType>();
+
+    CallArgList DeleteArgs;
+
+    QualType ArgTy = DeleteFTy->getArgType(0);
+    llvm::Value *DeletePtr = Builder.CreateBitCast(LoadCXXThis(), 
+                                                   ConvertType(ArgTy));
+    DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
+
+    // Emit the call to delete.
+    EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
+                                            DeleteArgs),
+             CGM.GetAddrOfFunction(DeleteFD),
+             DeleteArgs, DeleteFD);
   }
 }
 
