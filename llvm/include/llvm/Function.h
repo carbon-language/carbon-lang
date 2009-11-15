@@ -23,6 +23,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
 #include "llvm/Attributes.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
@@ -148,7 +149,7 @@ public:
   /// The particular intrinsic functions which correspond to this value are
   /// defined in llvm/Intrinsics.h.
   ///
-  unsigned getIntrinsicID() const;
+  unsigned getIntrinsicID() const ATTRIBUTE_READONLY;
   bool isIntrinsic() const { return getIntrinsicID() != 0; }
 
   /// getCallingConv()/setCallingConv(CC) - These method get and set the
