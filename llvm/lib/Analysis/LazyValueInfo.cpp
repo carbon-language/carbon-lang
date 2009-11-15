@@ -23,6 +23,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 char LazyValueInfo::ID = 0;
@@ -228,6 +229,27 @@ namespace {
   };
 } // end anonymous namespace
 
+namespace {
+  struct BlockCacheEntryComparator {
+    static int Compare(const void *LHSv, const void *RHSv) {
+      const LazyValueInfoCache::BlockCacheEntryTy *LHS =
+        static_cast<const LazyValueInfoCache::BlockCacheEntryTy *>(LHSv);
+      const LazyValueInfoCache::BlockCacheEntryTy *RHS =
+        static_cast<const LazyValueInfoCache::BlockCacheEntryTy *>(RHSv);
+      if (LHS->first < RHS->first)
+        return -1;
+      if (LHS->first > RHS->first)
+        return 1;
+      return 0;
+    }
+    
+    bool operator()(const LazyValueInfoCache::BlockCacheEntryTy &LHS,
+                    const LazyValueInfoCache::BlockCacheEntryTy &RHS) const {
+      return LHS.first < RHS.first;
+    }
+  };
+}
+
 //===----------------------------------------------------------------------===//
 //                              LVIQuery Impl
 //===----------------------------------------------------------------------===//
@@ -235,39 +257,95 @@ namespace {
 namespace {
   /// LVIQuery - This is a transient object that exists while a query is
   /// being performed.
+  ///
+  /// TODO: Reuse LVIQuery instead of recreating it for every query, this avoids
+  /// reallocation of the densemap on every query.
   class LVIQuery {
     typedef LazyValueInfoCache::BlockCacheEntryTy BlockCacheEntryTy;
     typedef LazyValueInfoCache::ValueCacheEntryTy ValueCacheEntryTy;
     
-    /// This is the current value being queried.
+    /// This is the current value being queried for.
     Value *Val;
     
     /// This is all of the cached information about this value.
     ValueCacheEntryTy &Cache;
     
-    /// BlockVals Temporary Cache used while processing a query.
-    DenseMap<BasicBlock*, LVILatticeVal> BlockVals;
-
+    ///  NewBlocks - This is a mpping of the new BasicBlocks which have been
+    /// added to cache but that are not in sorted order.
+    DenseMap<BasicBlock*, LVILatticeVal> NewBlockInfo;
   public:
     
     LVIQuery(Value *V, ValueCacheEntryTy &VC) : Val(V), Cache(VC) {
     }
 
+    ~LVIQuery() {
+      // When the query is done, insert the newly discovered facts into the
+      // cache in sorted order.
+      if (NewBlockInfo.empty()) return;
+
+      // Grow the cache to exactly fit the new data.
+      Cache.reserve(Cache.size() + NewBlockInfo.size());
+      
+      // If we only have one new entry, insert it instead of doing a full-on
+      // sort.
+      if (NewBlockInfo.size() == 1) {
+        BlockCacheEntryTy Entry = *NewBlockInfo.begin();
+        ValueCacheEntryTy::iterator I =
+          std::lower_bound(Cache.begin(), Cache.end(), Entry,
+                           BlockCacheEntryComparator());
+        assert((I == Cache.end() || I->first != Entry.first) &&
+               "Entry already in map!");
+        
+        Cache.insert(I, Entry);
+        return;
+      }
+      
+      // TODO: If we only have two new elements, INSERT them both.
+      
+      Cache.insert(Cache.end(), NewBlockInfo.begin(), NewBlockInfo.end());
+      array_pod_sort(Cache.begin(), Cache.end(),
+                     BlockCacheEntryComparator::Compare);
+      
+    }
+
     LVILatticeVal getBlockValue(BasicBlock *BB);
-    
     LVILatticeVal getEdgeValue(BasicBlock *FromBB, BasicBlock *ToBB);
+
+  private:
+    LVILatticeVal &getCachedEntryForBlock(BasicBlock *BB);
   };
 } // end anonymous namespace
 
+/// getCachedEntryForBlock - See if we already have a value for this block.  If
+/// so, return it, otherwise create a new entry in the NewBlockInfo map to use.
+LVILatticeVal &LVIQuery::getCachedEntryForBlock(BasicBlock *BB) {
+  
+  // Do a binary search to see if we already have an entry for this block in
+  // the cache set.  If so, find it.
+  if (!Cache.empty()) {
+    ValueCacheEntryTy::iterator Entry =
+      std::lower_bound(Cache.begin(), Cache.end(),
+                       BlockCacheEntryTy(BB, LVILatticeVal()),
+                       BlockCacheEntryComparator());
+    if (Entry != Cache.end() && Entry->first == BB)
+      return Entry->second;
+  }
+  
+  // Otherwise, check to see if it's in NewBlockInfo or create a new entry if
+  // not.
+  return NewBlockInfo[BB];
+}
 
 LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   // See if we already have a value for this block.
-  LVILatticeVal &BBLV = BlockVals[BB];
+  LVILatticeVal &BBLV = getCachedEntryForBlock(BB);
   
   // If we've already computed this block's value, return it.
-  if (!BBLV.isUndefined())
+  if (!BBLV.isUndefined()) {
+    DEBUG(errs() << "  reuse BB '" << BB->getName() << "' val=" << BBLV <<'\n');
     return BBLV;
-  
+  }
+
   // Otherwise, this is the first time we're seeing this block.  Reset the
   // lattice value to overdefined, so that cycles will terminate and be
   // conservatively correct.
@@ -286,8 +364,11 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
       
       // If we hit overdefined, exit early.  The BlockVals entry is already set
       // to overdefined.
-      if (Result.isOverdefined())
+      if (Result.isOverdefined()) {
+        DEBUG(errs() << " compute BB '" << BB->getName()
+                     << "' - overdefined because of pred.\n");
         return Result;
+      }
       ++NumPreds;
     }
     
@@ -301,7 +382,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     
     // Return the merged value, which is more precise than 'overdefined'.
     assert(!Result.isOverdefined());
-    return BlockVals[BB] = Result;
+    return getCachedEntryForBlock(BB) = Result;
   }
   
   // If this value is defined by an instruction in this block, we have to
@@ -313,9 +394,12 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     
   }
   
+  DEBUG(errs() << " compute BB '" << BB->getName()
+               << "' - overdefined because inst def found.\n");
+
   LVILatticeVal Result;
   Result.markOverdefined();
-  return BlockVals[BB] = Result;
+  return getCachedEntryForBlock(BB) = Result;
 }
 
 
@@ -369,7 +453,7 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
   if (Constant *VC = dyn_cast<Constant>(V))
     return LVILatticeVal::get(VC);
   
-  DEBUG(errs() << "Getting value " << *V << " at end of block '"
+  DEBUG(errs() << "LVI Getting block end value " << *V << " at '"
         << BB->getName() << "'\n");
   
   LVILatticeVal Result = LVIQuery(V, ValueCache[V]).getBlockValue(BB);
@@ -384,7 +468,7 @@ getValueOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB) {
   if (Constant *VC = dyn_cast<Constant>(V))
     return LVILatticeVal::get(VC);
   
-  DEBUG(errs() << "Getting value " << *V << " on edge from '"
+  DEBUG(errs() << "LVI Getting edge value " << *V << " from '"
         << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
   LVILatticeVal Result =
     LVIQuery(V, ValueCache[V]).getEdgeValue(FromBB, ToBB);
