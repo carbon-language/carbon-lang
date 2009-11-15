@@ -844,12 +844,12 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
 
+    LookupResult Found;
     if (Pointee->isRecordType() && !UseGlobal) {
       CXXRecordDecl *Record
         = cast<CXXRecordDecl>(Pointee->getAs<RecordType>()->getDecl());
       
       // Try to find operator delete/operator delete[] in class scope.
-      LookupResult Found;
       LookupQualifiedName(Found, Record, DeleteName, LookupOrdinaryName);
       
       if (Found.isAmbiguous()) {
@@ -865,6 +865,21 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
             OperatorDelete = Delete;
             break;
           }
+      }
+      
+      if (!OperatorDelete && !Found.empty()) {
+        // We did find operator delete/operator delete[] declarations, but
+        // none of them were suitable.
+        Diag(StartLoc, diag::err_no_suitable_delete_member_function_found)
+        << DeleteName << Record;
+        
+        for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
+             F != FEnd; ++F) {
+          Diag((*F)->getLocation(), 
+               diag::note_delete_member_function_declared_here)
+          << DeleteName;
+        }
+        return ExprError();
       }
       
       if (!Record->hasTrivialDestructor())

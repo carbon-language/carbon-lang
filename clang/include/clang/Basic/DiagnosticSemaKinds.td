@@ -1739,6 +1739,10 @@ def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
                                          "expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
   "deleting pointer to incomplete type %0 may cause undefined behaviour">;
+def err_no_suitable_delete_member_function_found : Error<
+  "no suitable member %0 in %1">;
+def note_delete_member_function_declared_here : Note<
+  "%0 declared here">;
 def err_decrement_bool : Error<"cannot decrement expression of type bool">;
 def warn_increment_bool : Warning<
   "incrementing expression of type bool is deprecated">;

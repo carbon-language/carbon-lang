@@ -178,7 +178,15 @@ public:
 class X8 : public X6, public X7 {
 };
 
-void f(X8* x8) {
+void f(X8 *x8) {
   delete x8; // expected-error {{member 'operator delete' found in multiple base classes of different types}}
 }
 
+class X9 {
+  static void operator delete(void*, int); // expected-note {{'operator delete' declared here}}
+  static void operator delete(void*, float); // expected-note {{'operator delete' declared here}}
+};
+
+void f(X9 *x9) {
+  delete x9; // expected-error {{no suitable member 'operator delete' in 'X9'}}
+}
