@@ -310,6 +310,10 @@ DeclarationName DeclarationName::getUsingDirectiveName() {
   return DeclarationName(Ptr);
 }
 
+void DeclarationName::dump() const {
+  fprintf(stderr, "%s\n", getAsString().c_str());
+}
+
 DeclarationNameTable::DeclarationNameTable() {
   CXXSpecialNamesImpl = new llvm::FoldingSet<CXXSpecialName>;
 

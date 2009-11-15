@@ -176,7 +176,6 @@ public:
   /// getNameKind - Determine what kind of name this is.
   NameKind getNameKind() const;
 
-
   /// getName - Retrieve the human-readable string for this name.
   std::string getAsString() const;
 
@@ -249,6 +248,8 @@ public:
   static DeclarationName getTombstoneMarker() {
     return DeclarationName(uintptr_t(-2));
   }
+  
+  void dump() const;
 };
 
 /// Ordering on two declaration names. If both names are identifiers,
