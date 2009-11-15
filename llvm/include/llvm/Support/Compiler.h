@@ -29,6 +29,18 @@
 #define ATTRIBUTE_USED
 #endif
 
+#ifdef __GNUC__ // aka 'ATTRIBUTE_CONST' but following LLVM Conventions.
+#define ATTRIBUTE_READNONE __attribute__((__const__))
+#else
+#define ATTRIBUTE_READNONE
+#endif
+
+#ifdef __GNUC__  // aka 'ATTRIBUTE_PURE' but following LLVM Conventions.
+#define ATTRIBUTE_READONLY __attribute__((__pure__))
+#else
+#define ATTRIBUTE_READONLY
+#endif
+
 #if (__GNUC__ >= 4)
 #define BUILTIN_EXPECT(EXPR, VALUE) __builtin_expect((EXPR), (VALUE))
 #else
