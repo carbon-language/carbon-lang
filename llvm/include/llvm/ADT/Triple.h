@@ -94,6 +94,7 @@ public:
     MinGW64,
     NetBSD,
     OpenBSD,
+    Psp,
     Solaris,
     Win32,
     Haiku

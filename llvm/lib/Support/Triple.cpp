@@ -94,6 +94,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case MinGW64: return "mingw64";
   case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
+  case Psp: return "psp";
   case Solaris: return "solaris";
   case Win32: return "win32";
   case Haiku: return "haiku";
@@ -273,6 +274,8 @@ void Triple::Parse() const {
     OS = NetBSD;
   else if (OSName.startswith("openbsd"))
     OS = OpenBSD;
+  else if (OSName.startswith("psp"))
+    OS = Psp;
   else if (OSName.startswith("solaris"))
     OS = Solaris;
   else if (OSName.startswith("win32"))
