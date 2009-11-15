@@ -18,6 +18,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include <cstdio>
 using namespace clang;
 
 namespace clang {
