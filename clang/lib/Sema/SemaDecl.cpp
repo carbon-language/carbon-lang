@@ -2612,10 +2612,19 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       return 0;
     }
 
+    bool isStatic = SC == FunctionDecl::Static;
+    
+    // [class.free]p1:
+    // Any allocation function for a class T is a static member
+    // (even if not explicitly declared static).
+    if (Name.getCXXOverloadedOperator() == OO_New ||
+        Name.getCXXOverloadedOperator() == OO_Array_New)
+      isStatic = true;
+    
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                   D.getIdentifierLoc(), Name, R, DInfo,
-                                  (SC == FunctionDecl::Static), isInline);
+                                  isStatic, isInline);
 
     isVirtualOkay = (SC != FunctionDecl::Static);
   } else {
