@@ -340,6 +340,8 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
   const llvm::Type *LTy = ConvertType(Ty)->getPointerTo();
   if (E->isTypeOperand()) {
     QualType Ty = E->getTypeOperand();
+    CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
+    Ty = CanTy.getUnqualifiedType().getNonReferenceType();
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
       const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
       if (RD->isPolymorphic())
