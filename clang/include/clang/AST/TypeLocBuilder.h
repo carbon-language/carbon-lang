@@ -17,6 +17,7 @@
 
 #include "clang/AST/TypeLoc.h"
 #include "llvm/ADT/SmallVector.h"
+#include "clang/AST/ASTContext.h"
 
 namespace clang {
 

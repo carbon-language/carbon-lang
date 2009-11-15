@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_REDECLARABLE_H
 
 #include "llvm/ADT/PointerIntPair.h"
+#include <iterator>
 
 namespace clang {
 
