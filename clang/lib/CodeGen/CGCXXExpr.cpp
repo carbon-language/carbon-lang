@@ -357,8 +357,31 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
       // FIXME: if subE is an lvalue do
       LValue Obj = EmitLValue(subE);
       llvm::Value *This = Obj.getAddress();
-      // FIXME: need to do a 0 check here for *p on This
-      llvm::Value *V = Builder.CreateBitCast(This, LTy->getPointerTo()->getPointerTo());
+      LTy = LTy->getPointerTo()->getPointerTo();
+      llvm::Value *V = Builder.CreateBitCast(This, LTy);
+      // We need to do a zero check for *p, unless it has NonNullAttr.
+      // FIXME: PointerType->hasAttr<NonNullAttr>()
+      bool CanBeZero = false;
+      if (UnaryOperator *UO = dyn_cast<UnaryOperator>(subE))
+        if (UO->getOpcode() == UnaryOperator::Deref)
+          CanBeZero = true;
+      if (CanBeZero) {
+        llvm::BasicBlock *NonZeroBlock = createBasicBlock();
+        llvm::BasicBlock *ZeroBlock = createBasicBlock();
+        
+        llvm::Value *Zero = llvm::Constant::getNullValue(LTy);
+        Builder.CreateCondBr(Builder.CreateICmpNE(V, Zero),
+                             NonZeroBlock, ZeroBlock);
+        EmitBlock(ZeroBlock);
+        /// Call __cxa_bad_typeid
+        const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
+        const llvm::FunctionType *FTy;
+        FTy = llvm::FunctionType::get(ResultType, false);
+        llvm::Value *F = CGM.CreateRuntimeFunction(FTy, "__cxa_bad_typeid");
+        Builder.CreateCall(F);
+        Builder.CreateUnreachable();
+        EmitBlock(NonZeroBlock);
+      }
       V = Builder.CreateLoad(V, "vtable");
       V = Builder.CreateConstInBoundsGEP1_64(V, -1ULL);
       V = Builder.CreateLoad(V);

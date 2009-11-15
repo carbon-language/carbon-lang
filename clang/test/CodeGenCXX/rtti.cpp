@@ -102,6 +102,8 @@ void test2_2(test1_D *dp) {
     test2_1();
   if (typeid(NP) == typeid(test1_D))
     test2_1();
+  if (typeid(*dp) == typeid(test1_D))
+    test2_1();
 }
 
 // CHECK-LL:define void @_Z7test2_2P7test1_D(%class.test1_B7* %dp) nounwind {
@@ -113,3 +115,15 @@ void test2_2(test1_D *dp) {
 // CHECK-LL-NEXT:  %call = call zeroext i1 @_ZNK3std9type_infoeqERKS0_(%"class.std::type_info"* %2, %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
 
 // CHECK-LL:       %call2 = call zeroext i1 @_ZNK3std9type_infoeqERKS0_(%"class.std::type_info"* bitcast (%0* @_ZTI2NP to %"class.std::type_info"*), %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
+
+// CHECK-LL:       %3 = bitcast %class.test1_B7* %tmp5 to %"class.std::type_info"***
+// CHECK-LL-NEXT:  %4 = icmp ne %"class.std::type_info"*** %3, null
+// CHECK-LL-NEXT:  br i1 %4, label %6, label %5
+// CHECK-LL:     ; <label>:5
+// CHECK-LL-NEXT:  call void @__cxa_bad_typeid()
+// CHECK-LL-NEXT:  unreachable
+// CHECK-LL:     ; <label>:6
+// CHECK-LL-NEXT:  %vtable6 = load %"class.std::type_info"*** %3
+// CHECK-LL-NEXT:  %7 = getelementptr inbounds %"class.std::type_info"** %vtable6, i64 -1
+// CHECK-LL-NEXT:  %8 = load %"class.std::type_info"** %7
+// CHECK-LL-NEXT:  %call7 = call zeroext i1 @_ZNK3std9type_infoeqERKS0_(%"class.std::type_info"* %8, %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
