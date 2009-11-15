@@ -1170,7 +1170,8 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // as much as possible above, handle the rest, providing a register that is
   // SP+LargeImm.
   assert((Offset ||
-          (MI.getDesc().TSFlags & ARMII::AddrModeMask) == ARMII::AddrMode4) &&
+          (MI.getDesc().TSFlags & ARMII::AddrModeMask) == ARMII::AddrMode4 ||
+          (MI.getDesc().TSFlags & ARMII::AddrModeMask) == ARMII::AddrMode6) &&
          "This code isn't needed if offset already handled!");
 
   unsigned ScratchReg = 0;
@@ -1179,7 +1180,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImm();
   unsigned PredReg = (PIdx == -1) ? 0 : MI.getOperand(PIdx+1).getReg();
   if (Offset == 0)
-    // Must be addrmode4.
+    // Must be addrmode4/6.
     MI.getOperand(i).ChangeToRegister(FrameReg, false, false, false);
   else {
     ScratchReg = MF.getRegInfo().createVirtualRegister(ARM::GPRRegisterClass);
@@ -1461,5 +1462,47 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
   if (VARegSaveSize)
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, VARegSaveSize);
 }
+
+namespace {
+  struct MSAC : public MachineFunctionPass {
+    static char ID;
+    MSAC() : MachineFunctionPass(&ID) {}
+
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
+      MachineFrameInfo *FFI = MF.getFrameInfo();
+      MachineRegisterInfo &RI = MF.getRegInfo();
+
+      // Calculate max stack alignment of all already allocated stack objects.
+      unsigned MaxAlign = calculateMaxStackAlignment(FFI);
+
+      // Be over-conservative: scan over all vreg defs and find, whether vector
+      // registers are used. If yes - there is probability, that vector register
+      // will be spilled and thus stack needs to be aligned properly.
+      for (unsigned RegNum = TargetRegisterInfo::FirstVirtualRegister;
+           RegNum < RI.getLastVirtReg(); ++RegNum)
+        MaxAlign = std::max(MaxAlign, RI.getRegClass(RegNum)->getAlignment());
+
+      if (FFI->getMaxAlignment() == MaxAlign)
+        return false;
+
+      FFI->setMaxAlignment(MaxAlign);
+      return true;
+    }
+
+    virtual const char *getPassName() const {
+      return "ARM Maximal Stack Alignment Calculator";
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+  };
+
+  char MSAC::ID = 0;
+}
+
+FunctionPass*
+llvm::createARMMaxStackAlignmentCalculatorPass() { return new MSAC(); }
 
 #include "ARMGenRegisterInfo.inc"

@@ -1132,6 +1132,7 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       break;
     }
     case ARMII::AddrMode4:
+    case ARMII::AddrMode6:
       // Can't fold any offset even if it's zero.
       return false;
     case ARMII::AddrMode5: {

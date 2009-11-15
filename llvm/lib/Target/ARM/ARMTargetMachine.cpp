@@ -93,6 +93,10 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
   if (Subtarget.hasNEON())
     PM.add(createNEONPreAllocPass());
 
+  // Calculate and set max stack object alignment early, so we can decide
+  // whether we will need stack realignment (and thus FP).
+  PM.add(createARMMaxStackAlignmentCalculatorPass());
+
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass(true));

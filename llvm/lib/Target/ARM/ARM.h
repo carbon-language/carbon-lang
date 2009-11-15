@@ -109,6 +109,7 @@ FunctionPass *createNEONPreAllocPass();
 FunctionPass *createNEONMoveFixPass();
 FunctionPass *createThumb2ITBlockPass();
 FunctionPass *createThumb2SizeReductionPass();
+FunctionPass *createARMMaxStackAlignmentCalculatorPass();
 
 extern Target TheARMTarget, TheThumbTarget;
 
