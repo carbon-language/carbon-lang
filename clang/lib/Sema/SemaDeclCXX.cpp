@@ -1266,13 +1266,8 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
          E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
       if (VBase->getType()->isDependentType())
         continue;
-      if (CXXBaseOrMemberInitializer *Value =
-          AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
-        CXXRecordDecl *BaseDecl =
-          cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
-        assert(BaseDecl && "SetBaseOrMemberInitializers - BaseDecl null");
-        if (CXXConstructorDecl *Ctor = BaseDecl->getDefaultConstructor(Context))
-          MarkDeclarationReferenced(Value->getSourceLocation(), Ctor);
+      if (CXXBaseOrMemberInitializer *Value
+            = AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
         AllToInit.push_back(Value);
       }
       else {
@@ -1319,13 +1314,8 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       // Skip dependent types.
       if (Base->getType()->isDependentType())
         continue;
-      if (CXXBaseOrMemberInitializer *Value =
-          AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
-        CXXRecordDecl *BaseDecl =
-          cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-        assert(BaseDecl && "SetBaseOrMemberInitializers - BaseDecl null");
-        if (CXXConstructorDecl *Ctor = BaseDecl->getDefaultConstructor(Context))
-          MarkDeclarationReferenced(Value->getSourceLocation(), Ctor);
+      if (CXXBaseOrMemberInitializer *Value
+            = AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
         AllToInit.push_back(Value);
       }
       else {
@@ -1388,14 +1378,6 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       continue;
     }
     if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*Field)) {
-      QualType FT = (*Field)->getType();
-      if (const RecordType* RT = FT->getAs<RecordType>()) {
-        CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RT->getDecl());
-        assert(FieldRecDecl && "SetBaseOrMemberInitializers - BaseDecl null");
-        if (CXXConstructorDecl *Ctor =
-              FieldRecDecl->getDefaultConstructor(Context))
-          MarkDeclarationReferenced(Value->getSourceLocation(), Ctor);
-      }
       AllToInit.push_back(Value);
       continue;
     }

@@ -158,3 +158,18 @@ class CopyConstructorTest {
         B(B),  // expected-warning {{field is uninitialized when used here}}
         C(rhs.C || C) { }  // expected-warning {{field is uninitialized when used here}}
 };
+
+// Make sure we aren't marking default constructors when we shouldn't be.
+template<typename T>
+struct NDC {
+  T &ref;
+  
+  NDC() { }
+  NDC(T &ref) : ref(ref) { }
+};
+  
+struct X0 : NDC<int> {
+  X0(int &ref) : NDC<int>(ref), ndc(ref) { }
+  
+  NDC<int> ndc;
+};
