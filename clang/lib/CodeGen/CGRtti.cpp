@@ -20,6 +20,8 @@ class RttiBuilder {
   CodeGenModule &CGM;  // Per-module state.
   llvm::LLVMContext &VMContext;
   const llvm::Type *Int8PtrTy;
+  llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
+  llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
 public:
   RttiBuilder(CodeGenModule &cgm)
     : CGM(cgm), VMContext(cgm.getModule().getContext()),
@@ -98,6 +100,47 @@ public:
     return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
   }
 
+  /// CalculateFlags - Calculate the flags for the __vmi_class_type_info
+  /// datastructure.  1 for non-diamond repeated inheritance, 2 for a dimond
+  /// shaped class.
+  int CalculateFlags(const CXXRecordDecl*RD) {
+    int flags = 0;
+    if (SeenBase.count(RD))
+      flags |= 1;
+    else
+      SeenBase.insert(RD);
+    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+           e = RD->bases_end(); i != e; ++i) {
+      const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      if (i->isVirtual()) {
+        if (SeenVBase.count(Base))
+          flags |= 2;
+        else
+          SeenVBase.insert(Base);
+      }
+      flags |= CalculateFlags(Base);
+    }
+    return flags;
+  }
+
+  bool SimpleInheritance(const CXXRecordDecl *RD) {
+    if (RD->getNumBases() != 1)
+      return false;
+    CXXRecordDecl::base_class_const_iterator i = RD->bases_begin();
+    if (i->isVirtual())
+      return false;
+    if (i->getAccessSpecifier() != AS_public)
+      return false;
+
+    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+    const CXXRecordDecl *Base =
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (Layout.getBaseClassOffset(Base) != 0)
+      return false;
+    return true;
+  }
+
   llvm::Constant *Buildclass_type_info(const CXXRecordDecl *RD) {
     const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
     llvm::Constant *C;
@@ -119,31 +162,35 @@ public:
     linktype = llvm::GlobalValue::LinkOnceODRLinkage;
     std::vector<llvm::Constant *> info;
 
+    bool simple = false;
     if (RD->getNumBases() == 0)
       C = BuildVtableRef("_ZTVN10__cxxabiv117__class_type_infoE");
-    // FIXME: Add si_class_type_info optimization
-    else
+    else if (SimpleInheritance(RD)) {
+      simple = true;
+      C = BuildVtableRef("_ZTVN10__cxxabiv120__si_class_type_infoE");
+    } else
       C = BuildVtableRef("_ZTVN10__cxxabiv121__vmi_class_type_infoE");
     info.push_back(C);
     info.push_back(BuildName(RD));
 
     // If we have no bases, there are no more fields.
     if (RD->getNumBases()) {
-
-      // FIXME: Calculate is_diamond and non-diamond repeated inheritance, 3 is
-      // conservative.
-      info.push_back(BuildFlags(3));
-      info.push_back(BuildBaseCount(RD->getNumBases()));
+      if (!simple) {
+        info.push_back(BuildFlags(CalculateFlags(RD)));
+        info.push_back(BuildBaseCount(RD->getNumBases()));
+      }
 
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
              e = RD->bases_end(); i != e; ++i) {
         const CXXRecordDecl *Base =
           cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        info.push_back(CGM.GenerateRtti(Base));
+        info.push_back(CGM.GenerateRttiRef(Base));
+        if (simple)
+          break;
         int64_t offset;
         if (!i->isVirtual())
-          offset = Layout.getBaseClassOffset(Base);
+          offset = Layout.getBaseClassOffset(Base)/8;
         else
           offset = CGM.getVtableInfo().getVirtualBaseOffsetIndex(RD, Base);
         offset <<= 8;
