@@ -97,17 +97,20 @@ class TclTest(FileBasedTest):
 import re
 import tempfile
 
-class SyntaxCheckTest:
+class OneCommandPerFileTest:
     # FIXME: Refactor into generic test for running some command on a directory
     # of inputs.
 
-    def __init__(self, compiler, dir, recursive, pattern,
-                 extra_cxx_args=[]):
-        self.compiler = str(compiler)
+    def __init__(self, command, dir, recursive=False,
+                 pattern=".*", useTempInput=False):
+        if isinstance(command, str):
+            self.command = [command]
+        else:
+            self.command = list(command)
         self.dir = str(dir)
         self.recursive = bool(recursive)
         self.pattern = re.compile(pattern)
-        self.extra_cxx_args = list(extra_cxx_args)
+        self.useTempInput = useTempInput
 
     def getTestsInDirectory(self, testSuite, path_in_suite,
                             litConfig, localConfig):
@@ -134,20 +137,46 @@ class SyntaxCheckTest:
                 test.source_path = path
                 yield test
 
+    def createTempInput(self, tmp, test):
+        abstract
+
     def execute(self, test, litConfig):
         if test.config.unsupported:
             return (Test.UNSUPPORTED, 'Test is unsupported')
 
-        tmp = tempfile.NamedTemporaryFile(suffix='.cpp')
-        print >>tmp, '#include "%s"' % test.source_path
-        tmp.flush()
+        cmd = list(self.command)
 
-        cmd = [self.compiler, '-x', 'c++', '-fsyntax-only', tmp.name]
-        cmd.extend(self.extra_cxx_args)
+        # If using temp input, create a temporary file and hand it to the
+        # subclass.
+        if self.useTempInput:
+            tmp = tempfile.NamedTemporaryFile(suffix='.cpp')
+            self.createTempInput(tmp, test)
+            tmp.flush()
+            cmd.append(tmp.name)
+        else:
+            cmd.append(test.source_path)
+
         out, err, exitCode = TestRunner.executeCommand(cmd)
 
         diags = out + err
         if not exitCode and not diags.strip():
             return Test.PASS,''
 
-        return Test.FAIL, diags
+        # Try to include some useful information.
+        report = """Command: %s\n""" % ' '.join(["'%s'" % a
+                                                 for a in cmd])
+        if self.useTempInput:
+            report += """Temporary File: %s\n""" % tmp.name
+            report += "--\n%s--\n""" % open(tmp.name).read()
+        report += """Output:\n--\n%s--""" % diags
+
+        return Test.FAIL, report
+
+class SyntaxCheckTest(OneCommandPerFileTest):
+    def __init__(self, compiler, dir, extra_cxx_args=[], *args, **kwargs):
+        cmd = [compiler, '-x', 'c++', '-fsyntax-only'] + extra_cxx_args
+        OneCommandPerFileTest.__init__(self, cmd, dir,
+                                       useTempInput=1, *args, **kwargs)
+
+    def createTempInput(self, tmp, test):
+        print >>tmp, '#include "%s"' % test.source_path
