@@ -550,7 +550,7 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
         return False;
     } else if (Pred == ICmpInst::ICMP_NE) {
       // !C1 != C -> true iff C1 == C.
-      Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_EQ,
+      Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_NE,
                                             Result.getNotConstant(), C, TD);
       if (Res->isNullValue())
         return True;
