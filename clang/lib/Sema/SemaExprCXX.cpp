@@ -753,6 +753,59 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   ((DeclContext *)TUScope->getEntity())->addDecl(Alloc);
 }
 
+bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
+                                    DeclarationName Name,
+                                    FunctionDecl* &Operator) {
+  LookupResult Found;
+  // Try to find operator delete/operator delete[] in class scope.
+  LookupQualifiedName(Found, RD, Name, LookupOrdinaryName);
+  
+  if (Found.isAmbiguous()) {
+    DiagnoseAmbiguousLookup(Found, Name, StartLoc);
+    return true;
+  }
+
+  for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
+       F != FEnd; ++F) {
+    if (CXXMethodDecl *Delete = dyn_cast<CXXMethodDecl>(*F))
+      if (Delete->isUsualDeallocationFunction()) {
+        Operator = Delete;
+        return false;
+      }
+  }
+
+  // We did find operator delete/operator delete[] declarations, but
+  // none of them were suitable.
+  if (!Found.empty()) {
+    Diag(StartLoc, diag::err_no_suitable_delete_member_function_found)
+      << Name << RD;
+        
+    for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
+         F != FEnd; ++F) {
+      Diag((*F)->getLocation(), 
+           diag::note_delete_member_function_declared_here)
+        << Name;
+    }
+
+    return true;
+  }
+
+  // Look for a global declaration.
+  DeclareGlobalNewDelete();
+  DeclContext *TUDecl = Context.getTranslationUnitDecl();
+  
+  CXXNullPtrLiteralExpr Null(Context.VoidPtrTy, SourceLocation());
+  Expr* DeallocArgs[1];
+  DeallocArgs[0] = &Null;
+  if (FindAllocationOverload(StartLoc, SourceRange(), Name,
+                             DeallocArgs, 1, TUDecl, /*AllowMissing=*/false,
+                             Operator))
+    return true;
+
+  assert(Operator && "Did not find a deallocation function!");
+  return false;
+}
+
 /// ActOnCXXDelete - Parsed a C++ 'delete' expression (C++ 5.3.5), as in:
 /// @code ::delete ptr; @endcode
 /// or
@@ -844,52 +897,21 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
 
-    LookupResult Found;
-    if (Pointee->isRecordType() && !UseGlobal) {
-      CXXRecordDecl *Record
-        = cast<CXXRecordDecl>(Pointee->getAs<RecordType>()->getDecl());
-      
-      // Try to find operator delete/operator delete[] in class scope.
-      LookupQualifiedName(Found, Record, DeleteName, LookupOrdinaryName);
-      
-      if (Found.isAmbiguous()) {
-        DiagnoseAmbiguousLookup(Found, DeleteName, StartLoc);
+    if (const RecordType *RT = Pointee->getAs<RecordType>()) {
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+
+      if (!UseGlobal && 
+          FindDeallocationFunction(StartLoc, RD, DeleteName, OperatorDelete))
         return ExprError();
-      }
       
-      // FIXME: Diagnose ambiguity properly
-      for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
-           F != FEnd; ++F) {
-        if (CXXMethodDecl *Delete = dyn_cast<CXXMethodDecl>(*F))
-          if (Delete->isUsualDeallocationFunction()) {
-            OperatorDelete = Delete;
-            break;
-          }
-      }
-      
-      if (!OperatorDelete && !Found.empty()) {
-        // We did find operator delete/operator delete[] declarations, but
-        // none of them were suitable.
-        Diag(StartLoc, diag::err_no_suitable_delete_member_function_found)
-        << DeleteName << Record;
-        
-        for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
-             F != FEnd; ++F) {
-          Diag((*F)->getLocation(), 
-               diag::note_delete_member_function_declared_here)
-          << DeleteName;
-        }
-        return ExprError();
-      }
-      
-      if (!Record->hasTrivialDestructor())
-        if (const CXXDestructorDecl *Dtor = Record->getDestructor(Context))
+      if (!RD->hasTrivialDestructor())
+        if (const CXXDestructorDecl *Dtor = RD->getDestructor(Context))
           MarkDeclarationReferenced(StartLoc,
                                     const_cast<CXXDestructorDecl*>(Dtor));
     }
-
+    
     if (!OperatorDelete) {
-      // Didn't find a member overload. Look for a global one.
+      // Look for a global declaration.
       DeclareGlobalNewDelete();
       DeclContext *TUDecl = Context.getTranslationUnitDecl();
       if (FindAllocationOverload(StartLoc, SourceRange(), DeleteName,

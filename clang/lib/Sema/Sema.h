@@ -2112,6 +2112,9 @@ public:
   void DeclareGlobalAllocationFunction(DeclarationName Name, QualType Return,
                                        QualType Argument);
 
+  bool FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD, 
+                                DeclarationName Name, FunctionDecl* &Operator);
+
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   virtual OwningExprResult ActOnCXXDelete(SourceLocation StartLoc,
                                           bool UseGlobal, bool ArrayForm,
