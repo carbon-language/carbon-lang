@@ -693,6 +693,11 @@ void PBQPRegAlloc::addStackInterval(const LiveInterval *spilled,
 }
 
 bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
+
+  // Assert that this is a valid solution to the regalloc problem.
+  assert(solution.getCost() != std::numeric_limits<PBQP::PBQPNum>::infinity() &&
+         "Invalid (infinite cost) solution for PBQP problem.");
+
   // Set to true if we have any spills
   bool anotherRoundNeeded = false;
 
