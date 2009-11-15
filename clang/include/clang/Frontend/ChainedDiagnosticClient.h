@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_CHAINEDDIAGNOSTICCLIENT_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
 class LangOptions;

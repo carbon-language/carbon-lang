@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_HEADERSEARCHOPTIONS_H
 
 #include "llvm/ADT/StringRef.h"
+#include <vector>
 
 namespace clang {
 
