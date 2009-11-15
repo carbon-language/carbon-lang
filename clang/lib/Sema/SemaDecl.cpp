@@ -4026,6 +4026,12 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
     computeBaseOrMembersToDestroy(Destructor);
   
+  // If any errors have occurred, clear out any temporaries that may have
+  // been leftover. This ensures that these temporaries won't be picked up for
+  // deletion in some later function.
+  if (PP.getDiagnostics().hasErrorOccurred())
+    ExprTemporaries.clear();
+  
   assert(ExprTemporaries.empty() && "Leftover temporaries in function");
   return D;
 }
