@@ -77,8 +77,8 @@ static TryCastResult TryStaticPointerDowncast(Sema &Self, QualType SrcType,
                                               const SourceRange &OpRange,
                                               unsigned &msg,
                                               CastExpr::CastKind &Kind);
-static TryCastResult TryStaticDowncast(Sema &Self, QualType SrcType,
-                                       QualType DestType, bool CStyle,
+static TryCastResult TryStaticDowncast(Sema &Self, CanQualType SrcType,
+                                       CanQualType DestType, bool CStyle,
                                        const SourceRange &OpRange,
                                        QualType OrigSrcType,
                                        QualType OrigDestType, unsigned &msg,
@@ -190,7 +190,8 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
   assert((DestType->isPointerType() || DestType->isMemberPointerType()) &&
          "Destination type is not pointer or pointer to member.");
 
-  QualType UnwrappedSrcType = SrcType, UnwrappedDestType = DestType;
+  QualType UnwrappedSrcType = Self.Context.getCanonicalType(SrcType), 
+           UnwrappedDestType = Self.Context.getCanonicalType(DestType);
   llvm::SmallVector<Qualifiers, 8> cv1, cv2;
 
   // Find the qualifications.
@@ -573,7 +574,9 @@ TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr, QualType DestType,
 
   QualType DestPointee = DestReference->getPointeeType();
 
-  return TryStaticDowncast(Self, SrcExpr->getType(), DestPointee, CStyle,
+  return TryStaticDowncast(Self, 
+                           Self.Context.getCanonicalType(SrcExpr->getType()), 
+                           Self.Context.getCanonicalType(DestPointee), CStyle,
                            OpRange, SrcExpr->getType(), DestType, msg, Kind);
 }
 
@@ -601,16 +604,17 @@ TryStaticPointerDowncast(Sema &Self, QualType SrcType, QualType DestType,
     return TC_NotApplicable;
   }
 
-  return TryStaticDowncast(Self, SrcPointer->getPointeeType(),
-                          DestPointer->getPointeeType(), CStyle,
-                          OpRange, SrcType, DestType, msg, Kind);
+  return TryStaticDowncast(Self, 
+                   Self.Context.getCanonicalType(SrcPointer->getPointeeType()),
+                  Self.Context.getCanonicalType(DestPointer->getPointeeType()), 
+                           CStyle, OpRange, SrcType, DestType, msg, Kind);
 }
 
 /// TryStaticDowncast - Common functionality of TryStaticReferenceDowncast and
 /// TryStaticPointerDowncast. Tests whether a static downcast from SrcType to
-/// DestType, both of which must be canonical, is possible and allowed.
+/// DestType is possible and allowed.
 TryCastResult
-TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
+TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
                   bool CStyle, const SourceRange &OpRange, QualType OrigSrcType,
                   QualType OrigDestType, unsigned &msg, 
                   CastExpr::CastKind &Kind) {
@@ -620,7 +624,7 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
     return TC_NotApplicable;
 
   // Downcast can only happen in class hierarchies, so we need classes.
-  if (!DestType->isRecordType() || !SrcType->isRecordType()) {
+  if (!DestType->getAs<RecordType>() || !SrcType->getAs<RecordType>()) {
     return TC_NotApplicable;
   }
 
@@ -676,12 +680,13 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
                                                  EE = PI->rend();
              EI != EE; ++EI)
           PathDisplayStr += EI->Base->getType().getAsString() + " -> ";
-        PathDisplayStr += DestType.getAsString();
+        PathDisplayStr += QualType(DestType).getAsString();
       }
     }
 
     Self.Diag(OpRange.getBegin(), diag::err_ambiguous_base_to_derived_cast)
-      << SrcType.getUnqualifiedType() << DestType.getUnqualifiedType()
+      << QualType(SrcType).getUnqualifiedType() 
+      << QualType(DestType).getUnqualifiedType()
       << PathDisplayStr << OpRange;
     msg = 0;
     return TC_Failed;

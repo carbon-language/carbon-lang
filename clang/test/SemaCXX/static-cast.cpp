@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify -faccess-control %s
-
 struct A {};
 struct B : public A {};             // Single public base.
 struct C1 : public virtual B {};    // Single virtual base.
@@ -162,3 +161,20 @@ struct X0 { };
 void test_ctor_init() {
   (void)static_cast<X1>(X1());
 }
+
+// Casting away constness
+struct X2 {
+};
+
+struct X3 : X2 {
+};
+
+struct X4 {
+  typedef const X3 X3_typedef;
+  
+  void f() const {
+    (void)static_cast<X3_typedef*>(x2);
+  }
+  
+  const X2 *x2;
+};
