@@ -1,4 +1,4 @@
-; RUN: opt %S -instcombine -S | FileCheck %S
+; RUN: opt %s -instcombine -S | FileCheck %s
 ; PR5438
 
 ; TODO: This should also optimize down.
