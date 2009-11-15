@@ -3105,9 +3105,13 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
     // C++-specific checks.
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD)) {
       CheckConstructor(Constructor);
-    } else if (isa<CXXDestructorDecl>(NewFD)) {
-      CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
+    } else if (CXXDestructorDecl *Destructor = 
+                dyn_cast<CXXDestructorDecl>(NewFD)) {
+      CXXRecordDecl *Record = Destructor->getParent();
       QualType ClassType = Context.getTypeDeclType(Record);
+      
+      // FIXME: Shouldn't we be able to perform thisc heck even when the class
+      // type is dependent? Both gcc and edg can handle that.
       if (!ClassType->isDependentType()) {
         DeclarationName Name
           = Context.DeclarationNames.getCXXDestructorName(
@@ -3116,7 +3120,10 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
           Diag(NewFD->getLocation(), diag::err_destructor_name);
           return NewFD->setInvalidDecl();
         }
+      
+        CheckDestructor(Destructor);
       }
+
       Record->setUserDeclaredDestructor(true);
       // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
       // user-defined destructor.

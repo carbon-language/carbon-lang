@@ -1293,12 +1293,15 @@ private:
   uintptr_t *BaseOrMemberDestructions;
   unsigned NumBaseOrMemberDestructions;
 
+  FunctionDecl *OperatorDelete;
+  
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, L, N, T, /*DInfo=*/0, false, isInline),
       ImplicitlyDefined(false),
-      BaseOrMemberDestructions(0), NumBaseOrMemberDestructions(0) {
+      BaseOrMemberDestructions(0), NumBaseOrMemberDestructions(0),
+      OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
   }
   virtual void Destroy(ASTContext& C);
@@ -1326,6 +1329,9 @@ public:
            "Can only set the implicit-definition flag once the destructor has been defined");
     ImplicitlyDefined = ID;
   }
+
+  void setOperatorDelete(FunctionDecl *OD) { OperatorDelete = OD; }
+  const FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
 
   /// destr_iterator - Iterates through the member/base destruction list.
 

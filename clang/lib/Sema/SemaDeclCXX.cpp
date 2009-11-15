@@ -2368,6 +2368,28 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
   ClassDecl->addedConstructor(Context, Constructor);
 }
 
+/// CheckDestructor - Checks a fully-formed destructor for
+/// well-formedness, issuing any diagnostics required. 
+void Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
+  CXXRecordDecl *RD = Destructor->getParent();
+  
+  if (Destructor->isVirtual()) {
+    SourceLocation Loc;
+    
+    if (!Destructor->isImplicit())
+      Loc = Destructor->getLocation();
+    else
+      Loc = RD->getLocation();
+    
+    // If we have a virtual destructor, look up the deallocation function
+    FunctionDecl *OperatorDelete = 0;
+    DeclarationName Name = 
+    Context.DeclarationNames.getCXXOperatorName(OO_Delete);
+    if (!FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
+      Destructor->setOperatorDelete(OperatorDelete);
+  }
+}
+
 static inline bool
 FTIHasSingleVoidArgument(DeclaratorChunk::FunctionTypeInfo &FTI) {
   return (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
@@ -2997,9 +3019,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
                                     CXXDestructorDecl *Destructor) {
   assert((Destructor->isImplicit() && !Destructor->isUsed()) &&
          "DefineImplicitDestructor - call it for implicit default dtor");
-
-  CXXRecordDecl *ClassDecl
-  = cast<CXXRecordDecl>(Destructor->getDeclContext());
+  CXXRecordDecl *ClassDecl = Destructor->getParent();
   assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
   // C++ [class.dtor] p5
   // Before the implicitly-declared default destructor for a class is
