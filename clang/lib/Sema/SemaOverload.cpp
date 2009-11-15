@@ -5255,8 +5255,15 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //  (E).operator().
   OverloadCandidateSet CandidateSet;
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
-  DeclContext::lookup_const_iterator Oper, OperEnd;
-  for (llvm::tie(Oper, OperEnd) = Record->getDecl()->lookup(OpName);
+
+  if (RequireCompleteType(LParenLoc, Object->getType(), 
+                          PartialDiagnostic(diag::err_incomplete_object_call)
+                          << Object->getSourceRange()))
+    return true;
+  
+  LookupResult R;
+  LookupQualifiedName(R, Record->getDecl(), OpName, LookupOrdinaryName, false);
+  for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper) {
     if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*Oper)) {
       AddMethodTemplateCandidate(FunTmpl, false, 0, 0, Object, Args, NumArgs,
@@ -5268,11 +5275,6 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Object, Args, NumArgs,
                        CandidateSet, /*SuppressUserConversions=*/false);
   }
-
-  if (RequireCompleteType(LParenLoc, Object->getType(), 
-                          PartialDiagnostic(diag::err_incomplete_object_call)
-                            << Object->getSourceRange()))
-    return true;
   
   // C++ [over.call.object]p2:
   //   In addition, for each conversion function declared in T of the

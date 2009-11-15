@@ -164,7 +164,11 @@ struct Callable2 {
   double& operator()(...) const;
 };
 
-void test_callable(Callable c, Callable2 c2, const Callable2& c2c) {
+struct DerivesCallable : public Callable {
+};
+
+void test_callable(Callable c, Callable2 c2, const Callable2& c2c,
+                   DerivesCallable dc) {
   int &ir = c(1);
   float &fr = c(1, 3.14159, 17, 42);
 
@@ -175,6 +179,9 @@ void test_callable(Callable c, Callable2 c2, const Callable2& c2c) {
   int &ir2 = c2();
   int &ir3 = c2(1);
   double &fr2 = c2c();
+  
+  int &ir4 = dc(17);
+  double &fr3 = dc(3.14159f);
 }
 
 typedef float FLOAT;
