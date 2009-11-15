@@ -403,8 +403,10 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
 }
 
 
-/// getEdgeValue - This method 
+/// getEdgeValue - This method attempts to infer more complex 
 LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
+  // TODO: Handle more complex conditionals.  If (v == 0 || v2 < 1) is false, we
+  // know that v != 0.
   if (BranchInst *BI = dyn_cast<BranchInst>(BBFrom->getTerminator())) {
     // If this is a conditional branch and only one successor goes to BBTo, then
     // we maybe able to infer something from the condition. 
@@ -433,11 +435,27 @@ LVILatticeVal LVIQuery::getEdgeValue(BasicBlock *BBFrom, BasicBlock *BBTo) {
         }
     }
   }
-  
-  // TODO: Info from switch.
-  
-  // TODO: Handle more complex conditionals.  If (v == 0 || v2 < 1) is false, we
-  // know that v != 0.
+
+  // If the edge was formed by a switch on the value, then we may know exactly
+  // what it is.
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(BBFrom->getTerminator())) {
+    // If BBTo is the default destination of the switch, we don't know anything.
+    // Given a more powerful range analysis we could know stuff.
+    if (SI->getCondition() == Val && SI->getDefaultDest() != BBTo) {
+      // We only know something if there is exactly one value that goes from
+      // BBFrom to BBTo.
+      unsigned NumEdges = 0;
+      ConstantInt *EdgeVal = 0;
+      for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
+        if (SI->getSuccessor(i) != BBTo) continue;
+        if (NumEdges++) break;
+        EdgeVal = SI->getCaseValue(i);
+      }
+      assert(EdgeVal && "Missing successor?");
+      if (NumEdges == 1)
+        return LVILatticeVal::get(EdgeVal);
+    }
+  }
   
   // Otherwise see if the value is known in the block.
   return getBlockValue(BBFrom);
