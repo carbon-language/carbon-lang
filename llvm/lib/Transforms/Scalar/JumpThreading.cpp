@@ -350,8 +350,9 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
 
       // Invert the known values.
       for (unsigned i = 0, e = Result.size(); i != e; ++i)
-        Result[i].first =
-          cast<ConstantInt>(ConstantExpr::getNot(Result[i].first));
+        if (Result[i].first)
+          Result[i].first =
+            cast<ConstantInt>(ConstantExpr::getNot(Result[i].first));
       return true;
     }
   }
