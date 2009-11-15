@@ -16,9 +16,12 @@
 #define LLVM_CLANG_ANALYSIS_GRWORKLIST
 
 #include "clang/Analysis/PathSensitive/GRBlockCounter.h"
+#include <cstddef>
 
 namespace clang {
-
+  
+class CFGBlock;
+class ExplodedNode;
 class ExplodedNodeImpl;
 
 class GRWorkListUnit {

@@ -23,6 +23,7 @@ class BugReportEquivClass;
 class BugReporter;
 class BuiltinBugReport;
 class BugReporterContext;
+class ExplodedNode;
 class GRExprEngine;
 
 class BugType {

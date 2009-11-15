@@ -16,6 +16,7 @@
 
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/ProgramPoint.h"
+#include "clang/Analysis/FlowSensitive/DataflowValues.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "functional" // STL
 

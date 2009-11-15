@@ -39,6 +39,9 @@ public:
 } //end clang namespace
 
 namespace llvm {
+
+template<typename T> struct simplify_type;
+  
 template <typename T>
 struct simplify_type<const ::clang::Optional<T> > {
   typedef const T* SimpleType;
