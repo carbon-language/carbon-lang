@@ -2620,13 +2620,19 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (Name.getCXXOverloadedOperator() == OO_New ||
         Name.getCXXOverloadedOperator() == OO_Array_New)
       isStatic = true;
+
+    // [class.free]p6 Any deallocation function for a class X is a static member
+    // (even if not explicitly declared static).
+    if (Name.getCXXOverloadedOperator() == OO_Delete ||
+        Name.getCXXOverloadedOperator() == OO_Array_Delete)
+      isStatic = true;
     
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                   D.getIdentifierLoc(), Name, R, DInfo,
                                   isStatic, isInline);
 
-    isVirtualOkay = (SC != FunctionDecl::Static);
+    isVirtualOkay = !isStatic;
   } else {
     // Determine whether the function was written with a
     // prototype. This true when:
