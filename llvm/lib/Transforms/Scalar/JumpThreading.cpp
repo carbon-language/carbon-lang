@@ -585,6 +585,8 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     if (isa<Constant>(CondCmp->getOperand(1)))
       SimplifyValue = CondCmp->getOperand(0);
   
+  // TODO: There are other places where load PRE would be profitable, such as
+  // more complex comparisons.
   if (LoadInst *LI = dyn_cast<LoadInst>(SimplifyValue))
     if (SimplifyPartiallyRedundantLoad(LI))
       return true;
@@ -752,7 +754,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   Value *LoadedPtr = LI->getOperand(0);
 
   // If the loaded operand is defined in the LoadBB, it can't be available.
-  // FIXME: Could do PHI translation, that would be fun :)
+  // TODO: Could do simple PHI translation, that would be fun :)
   if (Instruction *PtrOp = dyn_cast<Instruction>(LoadedPtr))
     if (PtrOp->getParent() == LoadBB)
       return false;
@@ -761,8 +763,8 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   // the entry to its block.
   BasicBlock::iterator BBIt = LI;
 
-  if (Value *AvailableVal = FindAvailableLoadedValue(LoadedPtr, LoadBB, 
-                                                     BBIt, 6)) {
+  if (Value *AvailableVal = 
+        FindAvailableLoadedValue(LoadedPtr, LoadBB, BBIt, 6)) {
     // If the value if the load is locally available within the block, just use
     // it.  This frequently occurs for reg2mem'd allocas.
     //cerr << "LOAD ELIMINATED:\n" << *BBIt << *LI << "\n";
@@ -845,7 +847,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     // Split them out to their own block.
     UnavailablePred =
       SplitBlockPredecessors(LoadBB, &PredsToSplit[0], PredsToSplit.size(),
-                             "thread-split", this);
+                             "thread-pre-split", this);
   }
   
   // If the value isn't available in all predecessors, then there will be
@@ -854,7 +856,8 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   if (UnavailablePred) {
     assert(UnavailablePred->getTerminator()->getNumSuccessors() == 1 &&
            "Can't handle critical edge here!");
-    Value *NewVal = new LoadInst(LoadedPtr, LI->getName()+".pr",
+    Value *NewVal = new LoadInst(LoadedPtr, LI->getName()+".pr", false,
+                                 LI->getAlignment(),
                                  UnavailablePred->getTerminator());
     AvailablePreds.push_back(std::make_pair(UnavailablePred, NewVal));
   }
