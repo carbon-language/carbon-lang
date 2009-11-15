@@ -740,8 +740,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     // FIXME: Neon instructions should support predicates
     if (Align >= 16
         && (getRegisterInfo().needsStackRealignment(MF))) {
-      BuildMI(MBB, I, DL, get(ARM::VLD1q64))
-        .addReg(DestReg)
+      BuildMI(MBB, I, DL, get(ARM::VLD1q64), DestReg)
         .addFrameIndex(FI).addImm(0).addImm(0).addImm(128).addMemOperand(MMO);
     } else {
       BuildMI(MBB, I, DL, get(ARM::VLDRQ), DestReg).addFrameIndex(FI).addImm(0).
