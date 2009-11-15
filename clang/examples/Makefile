@@ -9,6 +9,6 @@
 
 LEVEL = ../../..
 
-PARALLEL_DIRS := wpa
+PARALLEL_DIRS := PrintFunctionNames wpa
 
 include $(LEVEL)/Makefile.common
