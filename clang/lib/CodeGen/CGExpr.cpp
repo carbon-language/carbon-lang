@@ -1298,14 +1298,8 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   switch (E->getCastKind()) {
   default:
-    // If this is an lvalue cast, treat it as a no-op.
-    // FIXME: We shouldn't need to check for this explicitly!
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
-      if (ICE->isLvalueCast())
-        return EmitLValue(E->getSubExpr());
-    
-    assert(false && "Unhandled cast!");
-      
+    return EmitUnsupportedLValue(E, "unexpected cast lvalue");
+
   case CastExpr::CK_NoOp:
   case CastExpr::CK_ConstructorConversion:
   case CastExpr::CK_UserDefinedConversion:
@@ -1335,16 +1329,18 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 
     return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
   }
+  case CastExpr::CK_BaseToDerived: {
+    return EmitUnsupportedLValue(E, "base-to-derived cast lvalue");
+  }
   case CastExpr::CK_BitCast: {
-    // This must be a reinterpret_cast.
-    const CXXReinterpretCastExpr *CE = cast<CXXReinterpretCastExpr>(E);
+    // This must be a reinterpret_cast (or c-style equivalent).
+    const ExplicitCastExpr *CE = cast<ExplicitCastExpr>(E);
     
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *V = Builder.CreateBitCast(LV.getAddress(),
                                            ConvertType(CE->getTypeAsWritten()));
     return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
   }
-
   }
 }
 
