@@ -1313,8 +1313,7 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
 static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
                                        GRExprEngine& Engine,
                                        GRStmtNodeBuilder& Builder,
-                                       CallExpr* CE, SVal L,
-                                       ExplodedNode* Pred) {
+                                       CallExpr* CE, ExplodedNode* Pred) {
 
   // Not enough arguments to match OSAtomicCompareAndSwap?
   if (CE->getNumArgs() != 3)
@@ -1434,7 +1433,7 @@ static bool EvalOSAtomic(ExplodedNodeSet& Dst,
   // Check for compare and swap.
   if (strncmp(FName, "OSAtomicCompareAndSwap", 22) == 0 ||
       strncmp(FName, "objc_atomicCompareAndSwap", 25) == 0)
-    return EvalOSAtomicCompareAndSwap(Dst, Engine, Builder, CE, L, Pred);
+    return EvalOSAtomicCompareAndSwap(Dst, Engine, Builder, CE, Pred);
 
   // FIXME: Other atomics.
   return false;
