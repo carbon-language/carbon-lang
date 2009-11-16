@@ -52,7 +52,7 @@ TailMergeThreshold("tail-merge-threshold",
 // Heuristic for tail merging (and, inversely, tail duplication).
 // TODO: This should be replaced with a target query.
 static cl::opt<unsigned>
-TailMergeSize("tail-merge-size", 
+TailMergeSize("tail-merge-size",
           cl::desc("Min number of instructions to consider tail merging"),
                               cl::init(3), cl::Hidden);
 
@@ -522,7 +522,7 @@ static bool ProfitableToMerge(MachineBasicBlock *MBB1,
   // count that as an additional common instruction for the following
   // heuristics.
   unsigned EffectiveTailLen = CommonTailLen;
-  if (SuccBB && MBB1 != PredBB && MBB2 != PredBB && 
+  if (SuccBB && MBB1 != PredBB && MBB2 != PredBB &&
       !MBB1->back().getDesc().isBarrier() &&
       !MBB2->back().getDesc().isBarrier())
     ++EffectiveTailLen;
@@ -970,7 +970,7 @@ bool BranchFolder::CanFallThrough(MachineBasicBlock *CurBB,
   if (BranchUnAnalyzable)
     return CurBB->empty() || !CurBB->back().getDesc().isBarrier() ||
            CurBB->back().getDesc().isPredicable();
-  
+
   // If there is no branch, control always falls through.
   if (TBB == 0) return true;
 
@@ -1043,7 +1043,7 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
   // get into an infinite loop between duplicating and merging. When optimizing
   // for size, duplicate only one, because one branch instruction can be
   // eliminated to compensate for the duplication.
-  unsigned MaxDuplicateCount = 
+  unsigned MaxDuplicateCount =
     MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize) ?
       1 : (TailMergeSize - 1);
 
@@ -1201,7 +1201,7 @@ ReoptimizeBlock:
       MadeChange = true;
       return MadeChange;
     }
-    
+
     // If the previous branch *only* branches to *this* block (conditional or
     // not) remove the branch.
     if (PriorTBB == MBB && PriorFBB == 0) {
@@ -1401,7 +1401,7 @@ ReoptimizeBlock:
 
   // Now we know that there was no fall-through into this block, check to
   // see if it has a fall-through into its successor.
-  bool CurFallsThru = CanFallThrough(MBB, CurUnAnalyzable, CurTBB, CurFBB, 
+  bool CurFallsThru = CanFallThrough(MBB, CurUnAnalyzable, CurTBB, CurFBB,
                                      CurCond);
   bool PrevFallsThru = CanFallThrough(&PrevBB, PriorUnAnalyzable,
                                       PriorTBB, PriorFBB, PriorCond);
