@@ -1860,8 +1860,9 @@ LLVMValueRef LLVMBuildPointerCast(LLVMBuilderRef B, LLVMValueRef Val,
 }
 
 LLVMValueRef LLVMBuildIntCast(LLVMBuilderRef B, LLVMValueRef Val,
-                              LLVMTypeRef DestTy, const char *Name) {
-  return wrap(unwrap(B)->CreateIntCast(unwrap(Val), unwrap(DestTy), Name));
+                              LLVMTypeRef DestTy, int isSigned,
+                              const char *Name) {
+  return wrap(unwrap(B)->CreateIntCast(unwrap(Val), unwrap(DestTy), isSigned, Name));
 }
 
 LLVMValueRef LLVMBuildFPCast(LLVMBuilderRef B, LLVMValueRef Val,
