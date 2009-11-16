@@ -141,10 +141,10 @@ llvm::PHIElimination::FindCopyInsertPoint(MachineBasicBlock &MBB,
   if (!SuccMBB.isLandingPad())
     return MBB.getFirstTerminator();
 
-  // Discover any definitions in this basic block.
+  // Discover any defs/uses in this basic block.
   SmallPtrSet<MachineInstr*, 8> DefUsesInMBB;
-  for (MachineRegisterInfo::def_iterator RI = MRI->def_begin(SrcReg),
-         RE = MRI->def_end(); RI != RE; ++RI) {
+  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
+         RE = MRI->reg_end(); RI != RE; ++RI) {
     MachineInstr *DefUseMI = &*RI;
     if (DefUseMI->getParent() == &MBB)
       DefUsesInMBB.insert(DefUseMI);
@@ -155,11 +155,11 @@ llvm::PHIElimination::FindCopyInsertPoint(MachineBasicBlock &MBB,
     // No defs.  Insert the copy at the start of the basic block.
     InsertPoint = MBB.begin();
   } else if (DefUsesInMBB.size() == 1) {
-    // Insert the copy immediately after the def.
+    // Insert the copy immediately after the def/use.
     InsertPoint = *DefUsesInMBB.begin();
     ++InsertPoint;
   } else {
-    // Insert the copy immediately after the last def.
+    // Insert the copy immediately after the last def/use.
     InsertPoint = MBB.end();
     while (!DefUsesInMBB.count(&*--InsertPoint)) {}
     ++InsertPoint;
