@@ -448,11 +448,6 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (CodeGenOpts.NoImplicitFloat)
     FuncAttrs |= llvm::Attribute::NoImplicitFloat;
 
-  if (Features.getStackProtectorMode() == LangOptions::SSPOn)
-    FuncAttrs |= llvm::Attribute::StackProtect;
-  else if (Features.getStackProtectorMode() == LangOptions::SSPReq)
-    FuncAttrs |= llvm::Attribute::StackProtectReq;
-
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
   const ABIArgInfo &RetAI = FI.getReturnInfo();
