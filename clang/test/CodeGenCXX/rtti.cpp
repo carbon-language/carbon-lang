@@ -1,12 +1,10 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -O0 -S %s -o %t.s
+// RUN: clang-cc -I%S -triple x86_64-apple-darwin -std=c++0x -O0 -S %s -o %t.s
 // RUN: FileCheck --input-file=%t.s %s
 
-// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t.ll
+// RUN: clang-cc -I%S -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t.ll
 // RUN: FileCheck -check-prefix LL --input-file=%t.ll %s
 
 #include <typeinfo>
-// FIXME: The above doesn't work in some environments.  What's the best way to fix this?
-// XFAIL: *
 
 class test1_B1 {
   virtual void foo() { }
@@ -114,9 +112,9 @@ void test2_2(test1_D *dp) {
 // CHECK-LL-NEXT:  %vtable = load %"class.std::type_info"*** %0
 // CHECK-LL-NEXT:  %1 = getelementptr inbounds %"class.std::type_info"** %vtable, i64 -1
 // CHECK-LL-NEXT:  %2 = load %"class.std::type_info"** %1
-// CHECK-LL-NEXT:  %call = call zeroext i1 @_ZNK3std9type_infoeqERKS0_(%"class.std::type_info"* %2, %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
+// CHECK-LL-NEXT:  %call = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* %2, %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
 
-// CHECK-LL:       %call2 = call zeroext i1 @_ZNK3std9type_infoeqERKS0_(%"class.std::type_info"* bitcast (%0* @_ZTI2NP to %"class.std::type_info"*), %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
+// CHECK-LL:       %call2 = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* bitcast (%0* @_ZTI2NP to %"class.std::type_info"*), %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
 
 // CHECK-LL:       %3 = bitcast %class.test1_B7* %tmp5 to %"class.std::type_info"***
 // CHECK-LL-NEXT:  %4 = icmp ne %"class.std::type_info"*** %3, null
@@ -128,4 +126,4 @@ void test2_2(test1_D *dp) {
 // CHECK-LL-NEXT:  %vtable6 = load %"class.std::type_info"*** %3
 // CHECK-LL-NEXT:  %7 = getelementptr inbounds %"class.std::type_info"** %vtable6, i64 -1
 // CHECK-LL-NEXT:  %8 = load %"class.std::type_info"** %7
-// CHECK-LL-NEXT:  %call7 = call zeroext i1 @_ZNK3std9type_infoeqERKS0_(%"class.std::type_info"* %8, %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
+// CHECK-LL-NEXT:  %call7 = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* %8, %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
