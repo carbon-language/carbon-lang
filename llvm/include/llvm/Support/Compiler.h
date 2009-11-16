@@ -78,4 +78,10 @@
 #define NORETURN
 #endif
 
+#ifdef __GNUC__
+#define ERROR_IF_USED __attribute__((error("wrong usage")))
+#else
+#define ERROR_IF_USED
+#endif
+
 #endif
