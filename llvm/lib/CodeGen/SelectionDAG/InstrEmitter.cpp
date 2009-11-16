@@ -497,7 +497,7 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
   assert(isNew && "Node emitted out of order - early");
 }
 
-/// EmitNode - Generate machine code for an node and needed dependencies.
+/// EmitNode - Generate machine code for a node and needed dependencies.
 ///
 void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
                             DenseMap<SDValue, unsigned> &VRBaseMap,

@@ -97,7 +97,7 @@ public:
   /// MachineInstr.
   static unsigned CountOperands(SDNode *Node);
 
-  /// EmitNode - Generate machine code for an node and needed dependencies.
+  /// EmitNode - Generate machine code for a node and needed dependencies.
   ///
   void EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
                 DenseMap<SDValue, unsigned> &VRBaseMap,
