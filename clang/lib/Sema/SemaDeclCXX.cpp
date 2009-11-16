@@ -1398,7 +1398,20 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         HadError = true;
         continue;
       }
-      
+
+      if (FT.isConstQualified() && Ctor->isTrivial()) {
+        Diag(Constructor->getLocation(), diag::err_unintialized_member_in_ctor)
+          << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
+          << 1 << (*Field)->getDeclName();
+        Diag((*Field)->getLocation(), diag::note_declared_at);
+        HadError = true;
+      }
+
+      // Don't create initializers for trivial constructors, since they don't
+      // actually need to be run.
+      if (Ctor->isTrivial())
+        continue;
+
       ASTOwningVector<&ActionBase::DeleteExpr> CtorArgs(*this);
       if (CompleteConstructorCall(Ctor, MultiExprArg(*this, 0, 0), 
                                   Constructor->getLocation(), CtorArgs))
@@ -1415,13 +1428,6 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
 
       AllToInit.push_back(Member);
       MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
-      if (FT.isConstQualified() && Ctor->isTrivial()) {
-        Diag(Constructor->getLocation(), diag::err_unintialized_member_in_ctor)
-          << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
-          << 1 << (*Field)->getDeclName();
-        Diag((*Field)->getLocation(), diag::note_declared_at);
-        HadError = true;
-      }
     }
     else if (FT->isReferenceType()) {
       Diag(Constructor->getLocation(), diag::err_unintialized_member_in_ctor)
