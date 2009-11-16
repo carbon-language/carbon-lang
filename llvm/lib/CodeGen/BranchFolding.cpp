@@ -1185,7 +1185,7 @@ ReoptimizeBlock:
     // If the previous block unconditionally falls through to this block and
     // this block has no other predecessors, move the contents of this block
     // into the prior block. This doesn't usually happen when SimplifyCFG
-    // has been used, but it can happen tail duplication eliminates all the
+    // has been used, but it can happen if tail duplication eliminates all the
     // non-branch predecessors of a block leaving only the fall-through edge.
     // This has to check PrevBB->succ_size() because EH edges are ignored by
     // AnalyzeBranch.
