@@ -1238,7 +1238,8 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     return;
   }
 
-  if (V->getValueID() == Value::PseudoSourceValueVal) {
+  if (V->getValueID() == Value::PseudoSourceValueVal ||
+      V->getValueID() == Value::FixedStackPseudoSourceValueVal) {
     V->print(Out);
     return;
   }
