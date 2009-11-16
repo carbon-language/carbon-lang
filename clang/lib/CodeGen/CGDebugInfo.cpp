@@ -1123,11 +1123,13 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   SourceManager &SM = M->getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   unsigned Line = 0;
-  if (!PLoc.isInvalid())
+  unsigned Column = 0;
+  if (!PLoc.isInvalid()) {
     Line = PLoc.getLine();
-  else
+    Column = PLoc.getColumn();
+  } else {
     Unit = llvm::DICompileUnit();
-
+  }
 
   // Create the descriptor for the variable.
   llvm::DIVariable D =
@@ -1141,7 +1143,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   llvm::DIScope DS(RegionStack.back());
   llvm::DILocation DO(NULL);
   llvm::DILocation DL = 
-    DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
+    DebugFactory.CreateLocation(Line, Column, DS, DO);
   Builder.SetDebugLocation(Call, DL.getNode());
 }
 
