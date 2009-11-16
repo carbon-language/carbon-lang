@@ -608,6 +608,8 @@ llvm::Constant *CGObjCGNU::GenerateIvarList(
     const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
     const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
     const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets) {
+  if (IvarNames.size() == 0)
+    return NULLPtr;
   // Get the method structure type.
   llvm::StructType *ObjCIvarTy = llvm::StructType::get(VMContext,
     PtrToInt8Ty,
@@ -1301,7 +1303,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   }
   //Generate metaclass for class methods
   llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
-      NULLPtr, 0x12L, /*name*/"", 0, Zeros[0], GenerateIvarList(
+      NULLPtr, 0x12L, ClassName.c_str(), 0, Zeros[0], GenerateIvarList(
         empty, empty, empty), ClassMethodList, NULLPtr, NULLPtr, NULLPtr);
 
   // Generate the class structure
