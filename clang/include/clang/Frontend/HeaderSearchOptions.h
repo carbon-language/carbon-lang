@@ -59,11 +59,11 @@ public:
   /// environment variable for gcc.
   std::string EnvIncPath;
 
-  /// A (system-path) delimited list of include paths to be added from the
-  /// environment following the user specified includes and the \see EnvIncPath
-  /// includes (but prior to builtin and standard includes). This is parsed in
-  /// the same manner as the CPATH environment variable for gcc.
-  std::string LangEnvIncPath;
+  /// Per-language environmental include paths, see \see EnvIncPath.
+  std::string CEnvIncPath;
+  std::string ObjCEnvIncPath;
+  std::string CXXEnvIncPath;
+  std::string ObjCXXEnvIncPath;
 
   /// If non-empty, the path to the compiler builtin include directory, which
   /// will be searched following the user and environment includes.

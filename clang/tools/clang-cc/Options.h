@@ -40,8 +40,7 @@ void InitializeDiagnosticOptions(DiagnosticOptions &Opts);
 void InitializeFrontendOptions(FrontendOptions &Opts);
 
 void InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
-                                   llvm::StringRef BuiltinIncludePath,
-                                   const LangOptions &Lang);
+                                   llvm::StringRef BuiltinIncludePath);
 
 void InitializeLangOptions(LangOptions &Options,
                            FrontendOptions::InputKind LK,

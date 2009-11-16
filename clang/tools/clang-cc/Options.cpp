@@ -910,8 +910,7 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
 }
 
 void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
-                                          llvm::StringRef BuiltinIncludePath,
-                                          const LangOptions &Lang) {
+                                          llvm::StringRef BuiltinIncludePath) {
   using namespace headersearchoptions;
 
   Opts.Sysroot = isysroot;
@@ -993,19 +992,14 @@ void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
     Opts.EnvIncPath = Env;
 
   // Add language specific environment paths.
-  if (Lang.CPlusPlus && Lang.ObjC1) {
-    if (const char *Env = getenv("OBJCPLUS_INCLUDE_PATH"))
-      Opts.LangEnvIncPath = Env;
-  } else if (Lang.CPlusPlus) {
-    if (const char *Env = getenv("CPLUS_INCLUDE_PATH"))
-      Opts.LangEnvIncPath = Env;
-  } else if (Lang.ObjC1) {
-    if (const char *Env = getenv("OBJC_INCLUDE_PATH"))
-      Opts.LangEnvIncPath = Env;
-  } else {
-    if (const char *Env = getenv("C_INCLUDE_PATH"))
-      Opts.LangEnvIncPath = Env;
-  }
+  if (const char *Env = getenv("OBJCPLUS_INCLUDE_PATH"))
+    Opts.ObjCXXEnvIncPath = Env;
+  if (const char *Env = getenv("CPLUS_INCLUDE_PATH"))
+    Opts.CXXEnvIncPath = Env;
+  if (const char *Env = getenv("OBJC_INCLUDE_PATH"))
+    Opts.CEnvIncPath = Env;
+  if (const char *Env = getenv("C_INCLUDE_PATH"))
+    Opts.CEnvIncPath = Env;
 
   if (!nobuiltininc)
     Opts.BuiltinIncludePath = BuiltinIncludePath;

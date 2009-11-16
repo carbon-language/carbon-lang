@@ -636,7 +636,14 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
 
   // Add entries from CPATH and friends.
   Init.AddDelimitedPaths(HSOpts.EnvIncPath.c_str());
-  Init.AddDelimitedPaths(HSOpts.LangEnvIncPath.c_str());
+  if (Lang.CPlusPlus && Lang.ObjC1)
+    Init.AddDelimitedPaths(HSOpts.ObjCXXEnvIncPath.c_str());
+  else if (Lang.CPlusPlus)
+    Init.AddDelimitedPaths(HSOpts.CXXEnvIncPath.c_str());
+  else if (Lang.ObjC1)
+    Init.AddDelimitedPaths(HSOpts.ObjCEnvIncPath.c_str());
+  else
+    Init.AddDelimitedPaths(HSOpts.CEnvIncPath.c_str());
 
   if (!HSOpts.BuiltinIncludePath.empty()) {
     // Ignore the sys root, we *always* look for clang headers relative to

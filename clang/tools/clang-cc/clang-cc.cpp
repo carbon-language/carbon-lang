@@ -52,7 +52,7 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Utility Methods
+// Main driver
 //===----------------------------------------------------------------------===//
 
 std::string GetBuiltinIncludePath(const char *Argv0) {
@@ -74,9 +74,14 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
   return P.str();
 }
 
-//===----------------------------------------------------------------------===//
-// Main driver
-//===----------------------------------------------------------------------===//
+static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+  Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
+
+  Diags.Report(diag::err_fe_error_backend) << Message;
+
+  // We cannot recover from llvm errors.
+  exit(1);
+}
 
 /// ClangFrontendTimer - The front-end activities should charge time to it with
 /// TimeRegion.  The -ftime-report option controls whether this will do
@@ -144,15 +149,6 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   }
 }
 
-static void LLVMErrorHandler(void *UserData, const std::string &Message) {
-  Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
-
-  Diags.Report(diag::err_fe_error_backend) << Message;
-
-  // We cannot recover from llvm errors.
-  exit(1);
-}
-
 static TargetInfo *
 ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
                             const char *Argv0, bool &IsAST) {
@@ -194,8 +190,7 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
 
   // Initialize the header search options.
   InitializeHeaderSearchOptions(Opts.getHeaderSearchOpts(),
-                                GetBuiltinIncludePath(Argv0),
-                                Opts.getLangOpts());
+                                GetBuiltinIncludePath(Argv0));
 
   // Initialize the other preprocessor options.
   InitializePreprocessorOptions(Opts.getPreprocessorOpts());
