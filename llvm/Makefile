@@ -32,7 +32,11 @@ ifeq ($(BUILD_DIRS_ONLY),1)
 else
   DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
           tools runtime docs unittests
-  OPTIONAL_DIRS := examples projects bindings
+  OPTIONAL_DIRS := projects bindings
+endif
+
+ifeq ($(BUILD_EXAMPLES),1)
+  OPTIONAL_DIRS += examples
 endif
 
 EXTRA_DIST := test unittests llvm.spec include win32 Xcode
