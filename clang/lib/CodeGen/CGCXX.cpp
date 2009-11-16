@@ -1543,6 +1543,18 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   if (Array)
     FieldType = CGF.getContext().getBaseElementType(FieldType);
 
+  // We lose the constructor for anonymous union members, so handle them
+  // explicitly.
+  // FIXME: This is somwhat ugly.
+  if (MemberInit->getAnonUnionMember() && FieldType->getAs<RecordType>()) {
+    if (MemberInit->getNumArgs())
+      CGF.EmitAggExpr(*MemberInit->arg_begin(), LHS.getAddress(),
+                      LHS.isVolatileQualified());
+    else
+      CGF.EmitAggregateClear(LHS.getAddress(), Field->getType());
+    return;
+  }
+
   if (FieldType->getAs<RecordType>()) {
     assert(MemberInit->getConstructor() &&
            "EmitCtorPrologue - no constructor to initialize member");
@@ -1565,21 +1577,22 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   assert(MemberInit->getNumArgs() == 1 && "Initializer count must be 1 only");
   Expr *RhsExpr = *MemberInit->arg_begin();
   RValue RHS;
-  if (FieldType->isReferenceType())
+  if (FieldType->isReferenceType()) {
     RHS = CGF.EmitReferenceBindingToExpr(RhsExpr, FieldType,
                                     /*IsInitializer=*/true);
-  else if (FieldType->isMemberFunctionPointerType())
-    RHS = RValue::get(CGF.CGM.EmitConstantExpr(RhsExpr, FieldType, &CGF));
-  else
-    RHS = RValue::get(CGF.EmitScalarExpr(RhsExpr, true));
-  if (Array && !FieldType->getAs<RecordType>()) {
-    // value initialize a non-class array data member using arr() syntax in
-    // initializer list.
-    QualType Ty = CGF.getContext().getCanonicalType((Field)->getType());
-    CGF.EmitMemSetToZero(LHS.getAddress(), Ty);
-  }
-  else
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
+  } else if (Array) {
+    CGF.EmitMemSetToZero(LHS.getAddress(), Field->getType());
+  } else if (!CGF.hasAggregateLLVMType(RhsExpr->getType())) {
+    RHS = RValue::get(CGF.EmitScalarExpr(RhsExpr, true));
+    CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
+  } else if (RhsExpr->getType()->isAnyComplexType()) {
+    CGF.EmitComplexExprIntoAddr(RhsExpr, LHS.getAddress(),
+                                LHS.isVolatileQualified());
+  } else {
+    // Handle member function pointers; other aggregates shouldn't get this far.
+    CGF.EmitAggExpr(RhsExpr, LHS.getAddress(), LHS.isVolatileQualified());
+  }
 }
 
 /// EmitCtorPrologue - This routine generates necessary code to initialize
