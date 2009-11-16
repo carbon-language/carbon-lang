@@ -12917,29 +12917,33 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     if (isa<UndefValue>(RHS)) {
       std::vector<unsigned> LHSMask = getShuffleMask(LHSSVI);
 
-      std::vector<unsigned> NewMask;
-      for (unsigned i = 0, e = Mask.size(); i != e; ++i)
-        if (Mask[i] >= 2*e)
-          NewMask.push_back(2*e);
-        else
-          NewMask.push_back(LHSMask[Mask[i]]);
+      if (LHSMask.size() == Mask.size()) {
+        std::vector<unsigned> NewMask;
+        for (unsigned i = 0, e = Mask.size(); i != e; ++i)
+          if (Mask[i] >= 2*e)
+            NewMask.push_back(2*e);
+          else
+            NewMask.push_back(LHSMask[Mask[i]]);
       
-      // If the result mask is equal to the src shuffle or this shuffle mask, do
-      // the replacement.
-      if (NewMask == LHSMask || NewMask == Mask) {
-        unsigned LHSInNElts =
-          cast<VectorType>(LHSSVI->getOperand(0)->getType())->getNumElements();
-        std::vector<Constant*> Elts;
-        for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
-          if (NewMask[i] >= LHSInNElts*2) {
-            Elts.push_back(UndefValue::get(Type::getInt32Ty(*Context)));
-          } else {
-            Elts.push_back(ConstantInt::get(Type::getInt32Ty(*Context), NewMask[i]));
+        // If the result mask is equal to the src shuffle or this
+        // shuffle mask, do the replacement.
+        if (NewMask == LHSMask || NewMask == Mask) {
+          unsigned LHSInNElts =
+            cast<VectorType>(LHSSVI->getOperand(0)->getType())->
+            getNumElements();
+          std::vector<Constant*> Elts;
+          for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
+            if (NewMask[i] >= LHSInNElts*2) {
+              Elts.push_back(UndefValue::get(Type::getInt32Ty(*Context)));
+            } else {
+              Elts.push_back(ConstantInt::get(Type::getInt32Ty(*Context),
+                                              NewMask[i]));
+            }
           }
+          return new ShuffleVectorInst(LHSSVI->getOperand(0),
+                                       LHSSVI->getOperand(1),
+                                       ConstantVector::get(Elts));
         }
-        return new ShuffleVectorInst(LHSSVI->getOperand(0),
-                                     LHSSVI->getOperand(1),
-                                     ConstantVector::get(Elts));
       }
     }
   }
