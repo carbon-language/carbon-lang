@@ -408,26 +408,14 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
 llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
                                               const CXXDynamicCastExpr *DCE) {
   QualType CastTy = DCE->getTypeAsWritten();
+  QualType InnerType = CastTy->getPointeeType();
   QualType ArgTy = DCE->getSubExpr()->getType();
   const llvm::Type *LArgTy = ConvertType(ArgTy);
   const llvm::Type *LTy = ConvertType(DCE->getType());
-  CXXRecordDecl *SrcTy;
-  CXXRecordDecl *DstTy;
-  QualType Ty = CastTy.getTypePtr()->getPointeeType();
-  CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
-  Ty = CanTy.getUnqualifiedType();
-  DstTy = cast<CXXRecordDecl>(Ty->getAs<RecordType>()->getDecl());
-  Ty = ArgTy;
-  if (ArgTy.getTypePtr()->isPointerType()
-      || ArgTy.getTypePtr()->isReferenceType())
-    Ty = Ty.getTypePtr()->getPointeeType();
-  CanTy = CGM.getContext().getCanonicalType(Ty);
-  Ty = CanTy.getUnqualifiedType();
-  SrcTy = cast<CXXRecordDecl>(Ty->getAs<RecordType>()->getDecl());
+
   bool CanBeZero = false;
-  bool ThrowOnBad = false;
   bool ToVoid = false;
-  QualType InnerType = CastTy->getPointeeType();
+  bool ThrowOnBad = false;
   if (CastTy->isPointerType()) {
     // FIXME: if PointerType->hasAttr<NonNullAttr>(), we don't set this
     CanBeZero = true;
@@ -438,7 +426,14 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
     ThrowOnBad = true;
   }
 
-  // FIXME: Add support for ToVoid
+  CXXRecordDecl *SrcTy;
+  QualType Ty = ArgTy;
+  if (ArgTy.getTypePtr()->isPointerType()
+      || ArgTy.getTypePtr()->isReferenceType())
+    Ty = Ty.getTypePtr()->getPointeeType();
+  CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
+  Ty = CanTy.getUnqualifiedType();
+  SrcTy = cast<CXXRecordDecl>(Ty->getAs<RecordType>()->getDecl());
 
   llvm::BasicBlock *ContBlock = createBasicBlock();
   llvm::BasicBlock *NullBlock = 0;
@@ -452,44 +447,62 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
     EmitBlock(NonZeroBlock);
   }
 
-
-  /// Call __dynamic_cast
-  const llvm::Type *ResultType = llvm::Type::getInt8PtrTy(VMContext);
-  const llvm::FunctionType *FTy;
-  std::vector<const llvm::Type*> ArgTys;
-  const llvm::Type *PtrToInt8Ty
-    = llvm::Type::getInt8Ty(VMContext)->getPointerTo();
-  const llvm::Type *PtrDiffTy = ConvertType(getContext().getSizeType());
-  ArgTys.push_back(PtrToInt8Ty);
-  ArgTys.push_back(PtrToInt8Ty);
-  ArgTys.push_back(PtrToInt8Ty);
-  ArgTys.push_back(PtrDiffTy);
-  FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
-
-  // FIXME: Calculate better hint.
-  llvm::Value *hint = llvm::ConstantInt::get(PtrDiffTy, -1ULL);
-  llvm::Value *SrcArg = CGM.GenerateRttiRef(SrcTy);
-  llvm::Value *DstArg = CGM.GenerateRttiRef(DstTy);
-  V = Builder.CreateBitCast(V, PtrToInt8Ty);
-  V = Builder.CreateCall4(CGM.CreateRuntimeFunction(FTy, "__dynamic_cast"),
-                          V, SrcArg, DstArg, hint);
-  V = Builder.CreateBitCast(V, LTy);
-
   llvm::BasicBlock *BadCastBlock = 0;
-  if (ThrowOnBad) {
-    BadCastBlock = createBasicBlock();
 
-    llvm::Value *Zero = llvm::Constant::getNullValue(LTy);
-    Builder.CreateCondBr(Builder.CreateICmpNE(V, Zero),
-                         ContBlock, BadCastBlock);
-    EmitBlock(BadCastBlock);
-    /// Call __cxa_bad_cast
-    ResultType = llvm::Type::getVoidTy(VMContext);
-    const llvm::FunctionType *FBadTy;
-    FTy = llvm::FunctionType::get(ResultType, false);
-    llvm::Value *F = CGM.CreateRuntimeFunction(FBadTy, "__cxa_bad_cast");
-    Builder.CreateCall(F)->setDoesNotReturn();
-    // Builder.CreateUnreachable();
+  const llvm::Type *PtrDiffTy = ConvertType(getContext().getSizeType());
+
+  // See if this is a dynamic_cast(void*)
+  if (ToVoid) {
+    llvm::Value *This = V;
+    V = Builder.CreateBitCast(This, PtrDiffTy->getPointerTo()->getPointerTo());
+    V = Builder.CreateLoad(V, "vtable");
+    V = Builder.CreateConstInBoundsGEP1_64(V, -2ULL);
+    V = Builder.CreateLoad(V, "offset to top");
+    This = Builder.CreateBitCast(This, llvm::Type::getInt8PtrTy(VMContext));
+    V = Builder.CreateInBoundsGEP(This, V);
+    V = Builder.CreateBitCast(V, LTy);
+  } else {
+    /// Call __dynamic_cast
+    const llvm::Type *ResultType = llvm::Type::getInt8PtrTy(VMContext);
+    const llvm::FunctionType *FTy;
+    std::vector<const llvm::Type*> ArgTys;
+    const llvm::Type *PtrToInt8Ty
+      = llvm::Type::getInt8Ty(VMContext)->getPointerTo();
+    ArgTys.push_back(PtrToInt8Ty);
+    ArgTys.push_back(PtrToInt8Ty);
+    ArgTys.push_back(PtrToInt8Ty);
+    ArgTys.push_back(PtrDiffTy);
+    FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+    CXXRecordDecl *DstTy;
+    Ty = CastTy.getTypePtr()->getPointeeType();
+    CanTy = CGM.getContext().getCanonicalType(Ty);
+    Ty = CanTy.getUnqualifiedType();
+    DstTy = cast<CXXRecordDecl>(Ty->getAs<RecordType>()->getDecl());
+
+    // FIXME: Calculate better hint.
+    llvm::Value *hint = llvm::ConstantInt::get(PtrDiffTy, -1ULL);
+    llvm::Value *SrcArg = CGM.GenerateRttiRef(SrcTy);
+    llvm::Value *DstArg = CGM.GenerateRttiRef(DstTy);
+    V = Builder.CreateBitCast(V, PtrToInt8Ty);
+    V = Builder.CreateCall4(CGM.CreateRuntimeFunction(FTy, "__dynamic_cast"),
+                            V, SrcArg, DstArg, hint);
+    V = Builder.CreateBitCast(V, LTy);
+
+    if (ThrowOnBad) {
+      BadCastBlock = createBasicBlock();
+
+      llvm::Value *Zero = llvm::Constant::getNullValue(LTy);
+      Builder.CreateCondBr(Builder.CreateICmpNE(V, Zero),
+                           ContBlock, BadCastBlock);
+      EmitBlock(BadCastBlock);
+      /// Call __cxa_bad_cast
+      ResultType = llvm::Type::getVoidTy(VMContext);
+      const llvm::FunctionType *FBadTy;
+      FTy = llvm::FunctionType::get(ResultType, false);
+      llvm::Value *F = CGM.CreateRuntimeFunction(FBadTy, "__cxa_bad_cast");
+      Builder.CreateCall(F)->setDoesNotReturn();
+      // Builder.CreateUnreachable();
+    }
   }
   
   if (CanBeZero) {
