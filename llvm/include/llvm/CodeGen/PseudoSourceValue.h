@@ -32,7 +32,7 @@ namespace llvm {
     virtual void printCustom(raw_ostream &O) const;
 
   public:
-    PseudoSourceValue(enum ValueTy Subclass = PseudoSourceValueVal);
+    explicit PseudoSourceValue(enum ValueTy Subclass = PseudoSourceValueVal);
 
     /// isConstant - Test whether the memory pointed to by this
     /// PseudoSourceValue has a constant value.
@@ -52,7 +52,8 @@ namespace llvm {
     ///
     static inline bool classof(const PseudoSourceValue *) { return true; }
     static inline bool classof(const Value *V) {
-      return V->getValueID() == PseudoSourceValueVal;
+      return V->getValueID() == PseudoSourceValueVal ||
+             V->getValueID() == FixedStackPseudoSourceValueVal;
     }
 
     /// A pseudo source value referencing a fixed stack frame entry,
