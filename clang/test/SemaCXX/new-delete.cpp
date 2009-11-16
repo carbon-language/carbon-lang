@@ -119,13 +119,13 @@ void test_delete_conv(X0 x0, X1 x1, X2 x2) {
 // PR4782
 class X3 {
 public:
-  static void operator delete(void * mem, unsigned long size);
+  static void operator delete(void * mem, size_t size);
 };
 
 class X4 {
 public:
   static void release(X3 *x);
-  static void operator delete(void * mem, unsigned long size);
+  static void operator delete(void * mem, size_t size);
 };
 
 
