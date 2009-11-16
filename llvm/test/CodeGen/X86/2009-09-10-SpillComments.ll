@@ -1,7 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux | grep "Spill"
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux | grep "Folded Spill"
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux | grep "Reload"
-; RUN: llc < %s -mtriple=x86_64-unknown-linux | grep "Reload Reuse"
 
 	%struct..0anon = type { i32 }
 	%struct.rtvec_def = type { i32, [1 x %struct..0anon] }
