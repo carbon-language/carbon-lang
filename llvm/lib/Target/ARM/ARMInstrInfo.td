@@ -647,6 +647,7 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in
   def BX_RET : AI<(outs), (ins), BrMiscFrm, IIC_Br, 
                   "bx", "\tlr", [(ARMretflag)]> {
+  let Inst{3-0}   = 0b1110;
   let Inst{7-4}   = 0b0001;
   let Inst{19-8}  = 0b111111111111;
   let Inst{27-20} = 0b00010010;
@@ -659,6 +660,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
+    let Inst{31-28} = 0b1110;
   }
 }
 
