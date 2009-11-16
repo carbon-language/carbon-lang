@@ -1515,11 +1515,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   
   // non-static data member initializers.
   FieldDecl *Field = MemberInit->getMember();
-  QualType FieldType = CGF.getContext().getCanonicalType((Field)->getType());
-  const ConstantArrayType *Array =
-    CGF.getContext().getAsConstantArrayType(FieldType);
-  if (Array)
-    FieldType = CGF.getContext().getBaseElementType(FieldType);
+  QualType FieldType = CGF.getContext().getCanonicalType(Field->getType());
 
   llvm::Value *ThisPtr = CGF.LoadCXXThis();
   LValue LHS;
@@ -1532,32 +1528,38 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   } else {
     LHS = CGF.EmitLValueForField(ThisPtr, Field, ClassDecl->isUnion(), 0);
   }
+
+  // If we are initializing an anonymous union field, drill down to the field.
+  if (MemberInit->getAnonUnionMember()) {
+    Field = MemberInit->getAnonUnionMember();
+    LHS = CGF.EmitLValueForField(LHS.getAddress(), Field,
+                                 /*IsUnion=*/true, 0);
+    FieldType = Field->getType();
+  }
+
+  // If the field is an array, branch based on the element type.
+  const ConstantArrayType *Array =
+    CGF.getContext().getAsConstantArrayType(FieldType);
+  if (Array)
+    FieldType = CGF.getContext().getBaseElementType(FieldType);
+
   if (FieldType->getAs<RecordType>()) {
-    if (!Field->isAnonymousStructOrUnion()) {
-      assert(MemberInit->getConstructor() &&
-             "EmitCtorPrologue - no constructor to initialize member");
-      if (Array) {
-        const llvm::Type *BasePtr = CGF.ConvertType(FieldType);
-        BasePtr = llvm::PointerType::getUnqual(BasePtr);
-        llvm::Value *BaseAddrPtr =
-          CGF.Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-        CGF.EmitCXXAggrConstructorCall(MemberInit->getConstructor(),
-                                       Array, BaseAddrPtr);
-      }
-      else
-        CGF.EmitCXXConstructorCall(MemberInit->getConstructor(),
-                                   Ctor_Complete, LHS.getAddress(),
-                                   MemberInit->const_arg_begin(),
-                                   MemberInit->const_arg_end());
-      return;
+    assert(MemberInit->getConstructor() &&
+           "EmitCtorPrologue - no constructor to initialize member");
+    if (Array) {
+      const llvm::Type *BasePtr = CGF.ConvertType(FieldType);
+      BasePtr = llvm::PointerType::getUnqual(BasePtr);
+      llvm::Value *BaseAddrPtr =
+        CGF.Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+      CGF.EmitCXXAggrConstructorCall(MemberInit->getConstructor(),
+                                     Array, BaseAddrPtr);
     }
-    else {
-      // Initializing an anonymous union data member.
-      FieldDecl *anonMember = MemberInit->getAnonUnionMember();
-      LHS = CGF.EmitLValueForField(LHS.getAddress(), anonMember,
-                                   /*IsUnion=*/true, 0);
-      FieldType = anonMember->getType();
-    }
+    else
+      CGF.EmitCXXConstructorCall(MemberInit->getConstructor(),
+                                 Ctor_Complete, LHS.getAddress(),
+                                 MemberInit->const_arg_begin(),
+                                 MemberInit->const_arg_end());
+    return;
   }
 
   assert(MemberInit->getNumArgs() == 1 && "Initializer count must be 1 only");
