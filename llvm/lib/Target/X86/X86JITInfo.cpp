@@ -367,8 +367,9 @@ X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   // Rewrite the call target... so that we don't end up here every time we
   // execute the call.
 #if defined (X86_64_JIT)
-  if (!isStub)
-    *(intptr_t *)(RetAddr - 0xa) = NewVal;
+  assert(isStub &&
+         "X86-64 doesn't support rewriting non-stub lazy compilation calls:"
+         " the call instruction varies too much.");
 #else
   *(intptr_t *)RetAddr = (intptr_t)(NewVal-RetAddr-4);
 #endif

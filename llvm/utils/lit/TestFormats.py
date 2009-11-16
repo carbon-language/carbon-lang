@@ -53,8 +53,9 @@ class GoogleTest(object):
 
     def execute(self, test, litConfig):
         testPath,testName = os.path.split(test.getSourcePath())
-        if not os.path.exists(testPath):
-            # Handle GTest typed tests, whose name includes a '/'.
+        while not os.path.exists(testPath):
+            # Handle GTest parametrized and typed tests, whose name includes
+            # some '/'s.
             testPath, namePrefix = os.path.split(testPath)
             testName = os.path.join(namePrefix, testName)
 

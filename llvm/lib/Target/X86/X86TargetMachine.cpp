@@ -185,14 +185,8 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   }
   
   // 64-bit JIT places everything in the same buffer except external functions.
-  // On Darwin, use small code model but hack the call instruction for 
-  // externals.  Elsewhere, do not assume globals are in the lower 4G.
-  if (Subtarget.is64Bit()) {
-    if (Subtarget.isTargetDarwin())
-      setCodeModel(CodeModel::Small);
-    else
+  if (Subtarget.is64Bit())
       setCodeModel(CodeModel::Large);
-  }
 
   PM.add(createX86CodeEmitterPass(*this, MCE));
 
@@ -211,14 +205,8 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   }
   
   // 64-bit JIT places everything in the same buffer except external functions.
-  // On Darwin, use small code model but hack the call instruction for 
-  // externals.  Elsewhere, do not assume globals are in the lower 4G.
-  if (Subtarget.is64Bit()) {
-    if (Subtarget.isTargetDarwin())
-      setCodeModel(CodeModel::Small);
-    else
+  if (Subtarget.is64Bit())
       setCodeModel(CodeModel::Large);
-  }
 
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
 

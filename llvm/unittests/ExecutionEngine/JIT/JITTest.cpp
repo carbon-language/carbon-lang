@@ -26,10 +26,22 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TypeBuilder.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/Type.h"
 
 #include <vector>
+#include <string.h>
+
+#if HAVE_ERRNO_H
+#include <errno.h>
+#endif
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#if _POSIX_MAPPED_FILES > 0
+#include <sys/mman.h>
+#endif
 
 using namespace llvm;
 
@@ -177,6 +189,15 @@ public:
   }
 };
 
+void LoadAssemblyInto(Module *M, const char *assembly) {
+  SMDiagnostic Error;
+  bool success = NULL != ParseAssemblyString(assembly, M, Error, M->getContext());
+  std::string errMsg;
+  raw_string_ostream os(errMsg);
+  Error.Print("", os);
+  ASSERT_TRUE(success) << os.str();
+}
+
 class JITTest : public testing::Test {
  protected:
   virtual void SetUp() {
@@ -191,12 +212,7 @@ class JITTest : public testing::Test {
   }
 
   void LoadAssembly(const char *assembly) {
-    SMDiagnostic Error;
-    bool success = NULL != ParseAssemblyString(assembly, M, Error, Context);
-    std::string errMsg;
-    raw_string_ostream os(errMsg);
-    Error.Print("", os);
-    ASSERT_TRUE(success) << os.str();
+    LoadAssemblyInto(M, assembly);
   }
 
   LLVMContext Context;
@@ -497,6 +513,135 @@ TEST_F(JITTest, NoStubs) {
   ASSERT_EQ(stubsBefore, RJMM->stubsAllocated);
 }
 #endif
+
+#if _POSIX_MAPPED_FILES > 0 && (defined (__x86_64__) || defined (_M_AMD64) || defined (_M_X64))
+class FarCallMemMgr : public RecordingJITMemoryManager {
+  void *MmapRegion;
+  size_t MmapSize;
+  uint8_t *NextStub;
+  uint8_t *NextFunction;
+
+ public:
+  FarCallMemMgr()
+      : MmapSize(16ULL << 30) {  // 16GB
+    MmapRegion = mmap(NULL, MmapSize, PROT_READ | PROT_WRITE | PROT_EXEC,
+                      MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (MmapRegion == MAP_FAILED) {
+      ADD_FAILURE() << "mmap failed: " << strerror(errno);
+    }
+    // Set up the 16GB mapped region in several chunks:
+    // Stubs / ~5GB empty space / Function 1 / ~5GB empty space / Function 2
+    // This way no two entities can use a 32-bit relative call to reach each other.
+    NextStub = static_cast<uint8_t*>(MmapRegion);
+    NextFunction = NextStub + (5ULL << 30);
+
+    // Next, poison some of the memory so a wild call will eventually crash,
+    // even if memory was initialized by the OS to 0.  We can't poison all of
+    // the memory because we want to be able to run on systems with less than
+    // 16GB of physical ram.
+    int TrapInstr = 0xCC;  // INT 3
+    memset(NextStub, TrapInstr, 1<<10);
+    for (size_t Offset = 1<<30; Offset < MmapSize; Offset += 1<<30) {
+      // Fill the 2KB around each GB boundary with trap instructions.  This
+      // should ensure that we can't run into emitted functions without hitting
+      // the trap.
+      memset(NextStub + Offset - (1<<10), TrapInstr, 2<<10);
+    }
+  }
+
+  ~FarCallMemMgr() {
+    EXPECT_EQ(0, munmap(MmapRegion, MmapSize));
+  }
+
+  virtual void setMemoryWritable() {}
+  virtual void setMemoryExecutable() {}
+  virtual uint8_t *startFunctionBody(const Function *F,
+                                     uintptr_t &ActualSize) {
+    ActualSize = 1 << 30;
+    uint8_t *Result = NextFunction;
+    NextFunction += 5ULL << 30;
+    return Result;
+  }
+  virtual void endFunctionBody(const Function*, uint8_t*, uint8_t*) {}
+  virtual uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
+                                unsigned Alignment) {
+    NextStub = reinterpret_cast<uint8_t*>(
+        uintptr_t(NextStub + Alignment - 1) &~ uintptr_t(Alignment - 1));
+    uint8_t *Result = NextStub;
+    NextStub += StubSize;
+    return Result;
+  }
+};
+
+class FarTargetTest : public ::testing::TestWithParam<CodeGenOpt::Level> {
+ protected:
+  FarTargetTest() : SavedCodeModel(TargetMachine::getCodeModel()) {}
+  ~FarTargetTest() {
+    TargetMachine::setCodeModel(SavedCodeModel);
+  }
+
+  const CodeModel::Model SavedCodeModel;
+};
+INSTANTIATE_TEST_CASE_P(CodeGenOpt,
+                        FarTargetTest,
+                        ::testing::Values(CodeGenOpt::None,
+                                          CodeGenOpt::Default));
+
+TEST_P(FarTargetTest, CallToFarTarget) {
+  // x86-64 can only make direct calls to functions within 32 bits of
+  // the current PC.  To call anything farther away, we have to load
+  // the address into a register and call through the register.  The
+  // old JIT did this by allocating a stub for any far call.  However,
+  // that stub needed to be within 32 bits of the callsite.  Here we
+  // test that the JIT correctly deals with stubs and calls more than
+  // 32 bits away from the callsite.
+
+  // Make sure the code generator is assuming code might be far away.
+  //TargetMachine::setCodeModel(CodeModel::Large);
+
+  LLVMContext Context;
+  Module *M = new Module("<main>", Context);
+  ExistingModuleProvider *MP = new ExistingModuleProvider(M);
+
+  JITMemoryManager *MemMgr = new FarCallMemMgr();
+  std::string Error;
+  OwningPtr<ExecutionEngine> JIT(EngineBuilder(MP)
+                                 .setEngineKind(EngineKind::JIT)
+                                 .setErrorStr(&Error)
+                                 .setJITMemoryManager(MemMgr)
+                                 .setOptLevel(GetParam())
+                                 .create());
+  ASSERT_EQ(Error, "");
+  TargetMachine::setCodeModel(CodeModel::Large);
+
+  LoadAssemblyInto(M,
+                   "define i32 @test() { "
+                   "  ret i32 7 "
+                   "} "
+                   " "
+                   "define i32 @test_far() { "
+                   "  %result = call i32 @test() "
+                   "  ret i32 %result "
+                   "} ");
+  // First, lay out a function early in memory.
+  Function *TestFunction = M->getFunction("test");
+  int32_t (*TestFunctionPtr)() = reinterpret_cast<int32_t(*)()>(
+      (intptr_t)JIT->getPointerToFunction(TestFunction));
+  ASSERT_EQ(7, TestFunctionPtr());
+
+  // We now lay out the far-away function. This should land >4GB away from test().
+  Function *FarFunction = M->getFunction("test_far");
+  int32_t (*FarFunctionPtr)() = reinterpret_cast<int32_t(*)()>(
+      (intptr_t)JIT->getPointerToFunction(FarFunction));
+
+  EXPECT_LT(1LL << 32, llabs(intptr_t(FarFunctionPtr) - intptr_t(TestFunctionPtr)))
+      << "Functions must be >32 bits apart or the test is meaningless.";
+
+  // This used to result in a segfault in FarFunction, when its call instruction
+  // jumped to the wrong address.
+  EXPECT_EQ(7, FarFunctionPtr());
+}
+#endif  // Platform has far-call problem.
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange

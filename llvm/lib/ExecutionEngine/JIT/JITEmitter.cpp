@@ -247,16 +247,6 @@ namespace {
     /// specified GV address.
     void *getGlobalValueIndirectSym(GlobalValue *V, void *GVAddress);
 
-    /// AddCallbackAtLocation - If the target is capable of rewriting an
-    /// instruction without the use of a stub, record the location of the use so
-    /// we know which function is being used at the location.
-    void *AddCallbackAtLocation(Function *F, void *Location) {
-      MutexGuard locked(TheJIT->lock);
-      /// Get the target-specific JIT resolver function.
-      state.AddCallSite(locked, Location, F);
-      return (void*)(intptr_t)LazyResolverFn;
-    }
-
     void getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
                            SmallVectorImpl<void*> &Ptrs);
 
@@ -755,13 +745,6 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode() &&
       !MayNeedFarStub)
     return TheJIT->getPointerToFunction(F);
-
-  // Okay, the function has not been compiled yet, if the target callback
-  // mechanism is capable of rewriting the instruction directly, prefer to do
-  // that instead of emitting a stub.  This uses the lazy resolver, so is not
-  // legal if lazy compilation is disabled.
-  if (!MayNeedFarStub && TheJIT->isCompilingLazily())
-    return Resolver.AddCallbackAtLocation(F, Reference);
 
   // Otherwise, we have to emit a stub.
   void *StubAddr = Resolver.getFunctionStub(F);

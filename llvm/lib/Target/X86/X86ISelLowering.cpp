@@ -1937,9 +1937,19 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                      FPDiff, dl);
   }
 
-  // If the callee is a GlobalAddress node (quite common, every direct call is)
-  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  bool WasGlobalOrExternal = false;
+  if (getTargetMachine().getCodeModel() == CodeModel::Large) {
+    assert(Is64Bit && "Large code model is only legal in 64-bit mode.");
+    // In the 64-bit large code model, we have to make all calls
+    // through a register, since the call instruction's 32-bit
+    // pc-relative offset may not be large enough to hold the whole
+    // address.
+  } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    WasGlobalOrExternal = true;
+    // If the callee is a GlobalAddress node (quite common, every direct call
+    // is) turn it into a TargetGlobalAddress node so that legalize doesn't hack
+    // it.
+
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
     GlobalValue *GV = G->getGlobal();
@@ -1967,6 +1977,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                           G->getOffset(), OpFlags);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+    WasGlobalOrExternal = true;
     unsigned char OpFlags = 0;
 
     // On ELF targets, in either X86-64 or X86-32 mode, direct calls to external
@@ -1984,7 +1995,9 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
                                          OpFlags);
-  } else if (isTailCall) {
+  }
+
+  if (isTailCall && !WasGlobalOrExternal) {
     unsigned Opc = Is64Bit ? X86::R11 : X86::EAX;
 
     Chain = DAG.getCopyToReg(Chain,  dl,

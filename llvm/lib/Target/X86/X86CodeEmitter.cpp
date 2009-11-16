@@ -82,7 +82,7 @@ namespace {
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
     void emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
                            intptr_t Disp = 0, intptr_t PCAdj = 0,
-                           bool MayNeedFarStub = false, bool Indirect = false);
+                           bool Indirect = false);
     void emitExternalSymbolAddress(const char *ES, unsigned Reloc);
     void emitConstPoolAddress(unsigned CPI, unsigned Reloc, intptr_t Disp = 0,
                               intptr_t PCAdj = 0);
@@ -176,7 +176,6 @@ template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
                                 intptr_t Disp /* = 0 */,
                                 intptr_t PCAdj /* = 0 */,
-                                bool MayNeedFarStub /* = false */,
                                 bool Indirect /* = false */) {
   intptr_t RelocCST = Disp;
   if (Reloc == X86::reloc_picrel_word)
@@ -185,9 +184,9 @@ void Emitter<CodeEmitter>::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
     RelocCST = PCAdj;
   MachineRelocation MR = Indirect
     ? MachineRelocation::getIndirectSymbol(MCE.getCurrentPCOffset(), Reloc,
-                                           GV, RelocCST, MayNeedFarStub)
+                                           GV, RelocCST, false)
     : MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
-                               GV, RelocCST, MayNeedFarStub);
+                               GV, RelocCST, false);
   MCE.addRelocation(MR);
   // The relocated value will be added to the displacement
   if (Reloc == X86::reloc_absolute_dword)
@@ -333,10 +332,9 @@ void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
     // do it, otherwise fallback to absolute (this is determined by IsPCRel). 
     //  89 05 00 00 00 00     mov    %eax,0(%rip)  # PC-relative
     //  89 04 25 00 00 00 00  mov    %eax,0x0      # Absolute
-    bool MayNeedFarStub = isa<Function>(RelocOp->getGlobal());
     bool Indirect = gvNeedsNonLazyPtr(*RelocOp, TM);
     emitGlobalAddress(RelocOp->getGlobal(), RelocType, RelocOp->getOffset(),
-                      Adj, MayNeedFarStub, Indirect);
+                      Adj, Indirect);
   } else if (RelocOp->isSymbol()) {
     emitExternalSymbolAddress(RelocOp->getSymbolName(), RelocType);
   } else if (RelocOp->isCPI()) {
@@ -633,14 +631,8 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     }
     
     if (MO.isGlobal()) {
-      // Assume undefined functions may be outside the Small codespace.
-      bool MayNeedFarStub = 
-        (Is64BitMode && 
-            (TM.getCodeModel() == CodeModel::Large ||
-             TM.getSubtarget<X86Subtarget>().isTargetDarwin())) ||
-        Opcode == X86::TAILJMPd;
       emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
-                        MO.getOffset(), 0, MayNeedFarStub);
+                        MO.getOffset(), 0);
       break;
     }
     
@@ -681,10 +673,9 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     if (Opcode == X86::MOV64ri)
       rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
     if (MO1.isGlobal()) {
-      bool MayNeedFarStub = isa<Function>(MO1.getGlobal());
       bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
       emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
-                        MayNeedFarStub, Indirect);
+                        Indirect);
     } else if (MO1.isSymbol())
       emitExternalSymbolAddress(MO1.getSymbolName(), rt);
     else if (MO1.isCPI())
@@ -790,10 +781,9 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     if (Opcode == X86::MOV64ri32)
       rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
     if (MO1.isGlobal()) {
-      bool MayNeedFarStub = isa<Function>(MO1.getGlobal());
       bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
       emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
-                        MayNeedFarStub, Indirect);
+                        Indirect);
     } else if (MO1.isSymbol())
       emitExternalSymbolAddress(MO1.getSymbolName(), rt);
     else if (MO1.isCPI())
@@ -831,10 +821,9 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     if (Opcode == X86::MOV64mi32)
       rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
     if (MO.isGlobal()) {
-      bool MayNeedFarStub = isa<Function>(MO.getGlobal());
       bool Indirect = gvNeedsNonLazyPtr(MO, TM);
       emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
-                        MayNeedFarStub, Indirect);
+                        Indirect);
     } else if (MO.isSymbol())
       emitExternalSymbolAddress(MO.getSymbolName(), rt);
     else if (MO.isCPI())
