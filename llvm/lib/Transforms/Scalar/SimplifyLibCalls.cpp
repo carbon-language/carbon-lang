@@ -259,6 +259,7 @@ Value *LibCallOptimization::EmitPutChar(Value *Char, IRBuilder<> &B) {
   CallInst *CI = B.CreateCall(PutChar,
                               B.CreateIntCast(Char,
 					      Type::getInt32Ty(*Context),
+                                              /*isSigned*/true,
 					      "chari"),
                               "putchar");
 
@@ -303,7 +304,8 @@ void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
 			       Type::getInt32Ty(*Context),
 			       Type::getInt32Ty(*Context),
                                File->getType(), NULL);
-  Char = B.CreateIntCast(Char, Type::getInt32Ty(*Context), "chari");
+  Char = B.CreateIntCast(Char, Type::getInt32Ty(*Context), /*isSigned*/true,
+                         "chari");
   CallInst *CI = B.CreateCall2(F, Char, File, "fputc");
 
   if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
