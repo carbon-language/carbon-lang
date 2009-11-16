@@ -1772,13 +1772,15 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
   int Size = BBSizes[BBI];
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
-  // If the block is small and ends in an unconditional branch, move it.
-  if (Size < 50 && Cond.empty()) {
-    // If the block terminator isn't analyzable, don't try to move the block
-    if (TII->AnalyzeBranch(*BB, TBB, FBB, Cond))
-      return NULL;
 
-    MachineFunction::iterator OldPrior = prior(BB);
+  // If the block terminator isn't analyzable, don't try to move the block
+  if (TII->AnalyzeBranch(*BB, TBB, FBB, Cond))
+    return NULL;
+
+  // If the block is small and ends in an unconditional branch, move it.
+  if (Size < 50 && Cond.empty() && BB != MF.begin()) {
+    MachineFunction::iterator BBi = BB;
+    MachineFunction::iterator OldPrior = prior(BBi);
     BB->moveAfter(JTBB);
     OldPrior->updateTerminator();
     BB->updateTerminator();
