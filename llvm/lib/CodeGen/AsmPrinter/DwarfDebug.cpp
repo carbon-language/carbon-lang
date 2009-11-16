@@ -124,7 +124,7 @@ public:
 //===----------------------------------------------------------------------===//
 /// DbgVariable - This class is used to track local variable information.
 ///
-class VISIBILITY_HIDDEN DbgVariable {
+class DbgVariable {
   DIVariable Var;                    // Variable Descriptor.
   unsigned FrameIndex;               // Variable frame index.
   DbgVariable *AbstractVar;          // Abstract variable for this variable.
@@ -146,7 +146,7 @@ public:
 /// DbgScope - This class is used to track scope information.
 ///
 class DbgConcreteScope;
-class VISIBILITY_HIDDEN DbgScope {
+class DbgScope {
   DbgScope *Parent;                   // Parent to this scope.
   DIDescriptor Desc;                  // Debug info descriptor for scope. 
   WeakVH InlinedAtLocation;           // Location at which scope is inlined.
