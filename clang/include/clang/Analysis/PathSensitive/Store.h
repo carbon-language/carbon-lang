@@ -181,8 +181,7 @@ protected:
   /// CastRetrievedVal - Used by subclasses of StoreManager to implement
   ///  implicit casts that arise from loads from regions that are reinterpreted
   ///  as another region.
-  SValuator::CastResult CastRetrievedVal(SVal val, const GRState *state,
-                                         const TypedRegion *R, QualType castTy);
+  SVal CastRetrievedVal(SVal val, const TypedRegion *R, QualType castTy);
 };
 
 // FIXME: Do we still need this?

@@ -21,7 +21,7 @@ StoreManager::StoreManager(GRStateManager &stateMgr)
     MRMgr(ValMgr.getRegionManager()) {}
 
 const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
-                                                 QualType EleTy, uint64_t index) {
+                                              QualType EleTy, uint64_t index) {
   SVal idx = ValMgr.makeArrayIndex(index);
   return MRMgr.getElementRegion(EleTy, idx, Base, ValMgr.getContext());
 }
@@ -192,14 +192,16 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
 /// CastRetrievedVal - Used by subclasses of StoreManager to implement
 ///  implicit casts that arise from loads from regions that are reinterpreted
 ///  as another region.
-SValuator::CastResult StoreManager::CastRetrievedVal(SVal V,
-                                                     const GRState *state,
-                                                     const TypedRegion *R,
-                                                     QualType castTy) {
-  if (castTy.isNull())
-    return SValuator::CastResult(state, V);
-
+SVal  StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
+                                     QualType castTy) {
   ASTContext &Ctx = ValMgr.getContext();
-  return ValMgr.getSValuator().EvalCast(V, state, castTy, R->getValueType(Ctx));
+
+  if (castTy.isNull())
+    return V;
+  
+  assert(Ctx.getCanonicalType(castTy).getUnqualifiedType() == 
+         Ctx.getCanonicalType(R->getValueType(Ctx)).getUnqualifiedType());
+
+  return V;
 }
 

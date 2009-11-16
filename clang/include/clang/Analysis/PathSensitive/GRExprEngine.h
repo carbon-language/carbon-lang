@@ -472,7 +472,8 @@ public:
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
   void EvalLoad(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
-                const GRState* St, SVal location, const void *tag = 0);
+                const GRState* St, SVal location, const void *tag = 0,
+                QualType LoadTy = QualType());
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.

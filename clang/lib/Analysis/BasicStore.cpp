@@ -268,20 +268,6 @@ SValuator::CastResult BasicStoreManager::Retrieve(const GRState *state,
     case loc::MemRegionKind: {
       const MemRegion* R = cast<loc::MemRegionVal>(loc).getRegion();
 
-      if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-        // Just support void**, void***, intptr_t*, intptr_t**, etc., for now.
-        // This is needed to handle OSCompareAndSwapPtr() and friends.
-        ASTContext &Ctx = StateMgr.getContext();
-        QualType T = ER->getLocationType(Ctx);
-
-        if (!isHigherOrderRawPtr(T, Ctx))
-          return SValuator::CastResult(state, UnknownVal());
-
-        // FIXME: Should check for element 0.
-        // Otherwise, strip the element region.
-        R = ER->getSuperRegion();
-      }
-
       if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
         return SValuator::CastResult(state, UnknownVal());
 
@@ -291,7 +277,8 @@ SValuator::CastResult BasicStoreManager::Retrieve(const GRState *state,
       if (!Val)
         break;
 
-      return CastRetrievedVal(*Val, state, cast<TypedRegion>(R), T);
+      return SValuator::CastResult(state,
+                              CastRetrievedVal(*Val, cast<TypedRegion>(R), T));
     }
 
     case loc::ConcreteIntKind:

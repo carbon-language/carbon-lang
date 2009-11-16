@@ -1029,16 +1029,20 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     return SValuator::CastResult(state, UnknownVal());
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
-    return CastRetrievedVal(RetrieveField(state, FR), state, FR, T);
+    return SValuator::CastResult(state, 
+                            CastRetrievedVal(RetrieveField(state, FR), FR, T));
 
   if (const ElementRegion* ER = dyn_cast<ElementRegion>(R))
-    return CastRetrievedVal(RetrieveElement(state, ER), state, ER, T);
+    return SValuator::CastResult(state,
+                          CastRetrievedVal(RetrieveElement(state, ER), ER, T));
 
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
-    return CastRetrievedVal(RetrieveObjCIvar(state, IVR), state, IVR, T);
+    return SValuator::CastResult(state,
+                       CastRetrievedVal(RetrieveObjCIvar(state, IVR), IVR, T));
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(R))
-    return CastRetrievedVal(RetrieveVar(state, VR), state, VR, T);
+    return SValuator::CastResult(state,
+                              CastRetrievedVal(RetrieveVar(state, VR), VR, T));
 
   RegionBindings B = GetRegionBindings(state->getStore());
   RegionBindings::data_type* V = B.lookup(R);

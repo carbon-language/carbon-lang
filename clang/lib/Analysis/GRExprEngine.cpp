@@ -1237,7 +1237,7 @@ void GRExprEngine::EvalStore(ExplodedNodeSet& Dst, Expr *AssignE,
 
 void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr *Ex, ExplodedNode* Pred,
                             const GRState* state, SVal location,
-                            const void *tag) {
+                            const void *tag, QualType LoadTy) {
 
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
@@ -1260,7 +1260,8 @@ void GRExprEngine::EvalLoad(ExplodedNodeSet& Dst, Expr *Ex, ExplodedNode* Pred,
                ProgramPoint::PostLoadKind, tag);
     }
     else {
-      SVal V = state->getSVal(cast<Loc>(location), Ex->getType());
+      SVal V = state->getSVal(cast<Loc>(location), LoadTy.isNull() ? 
+                                                     Ex->getType() : LoadTy);
       MakeNode(Dst, Ex, *NI, state->BindExpr(Ex, V), ProgramPoint::PostLoadKind,
                tag);
     }
@@ -1355,7 +1356,13 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
   const GRState *state = Pred->getState();
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);
-  Engine.EvalLoad(Tmp, theValueExpr, Pred, state, location, OSAtomicLoadTag);
+  // Here we should use the value type of the region as the load type.
+  const MemRegion *R = location.getAsRegion();
+  QualType LoadTy;
+  if (R)
+    LoadTy = cast<TypedRegion>(R)->getValueType(C);
+  Engine.EvalLoad(Tmp, theValueExpr, Pred, state, location, OSAtomicLoadTag,
+                  LoadTy);
 
   for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end();
        I != E; ++I) {
