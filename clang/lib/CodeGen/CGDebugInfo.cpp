@@ -493,6 +493,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();
   // Otherwise, insert it into the TypeCache so that recursive uses will find
   // it.
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl.getNode();
 
   // Convert all the elements.
