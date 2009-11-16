@@ -851,7 +851,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
                                          llvm::DICompileUnit Unit) {
   // Handle qualifiers, which recursively handles what they refer to.
-  if (Ty.hasQualifiers())
+  if (Ty.hasLocalQualifiers())
     return CreateQualifiedType(Ty, Unit);
 
   // Work out details of type.

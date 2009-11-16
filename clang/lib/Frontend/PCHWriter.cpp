@@ -1248,9 +1248,9 @@ void PCHWriter::WriteType(QualType T) {
   // Emit the type's representation.
   PCHTypeWriter W(*this, Record);
 
-  if (T.hasNonFastQualifiers()) {
-    Qualifiers Qs = T.getQualifiers();
-    AddTypeRef(T.getUnqualifiedType(), Record);
+  if (T.hasLocalNonFastQualifiers()) {
+    Qualifiers Qs = T.getLocalQualifiers();
+    AddTypeRef(T.getLocalUnqualifiedType(), Record);
     Record.push_back(Qs.getAsOpaqueValue());
     W.Code = pch::TYPE_EXT_QUAL;
   } else {
@@ -2154,10 +2154,10 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     return;
   }
 
-  unsigned FastQuals = T.getFastQualifiers();
+  unsigned FastQuals = T.getLocalFastQualifiers();
   T.removeFastQualifiers();
 
-  if (T.hasNonFastQualifiers()) {
+  if (T.hasLocalNonFastQualifiers()) {
     pch::TypeID &ID = TypeIDs[T];
     if (ID == 0) {
       // We haven't seen these qualifiers applied to this type before.
@@ -2172,7 +2172,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     return;
   }
 
-  assert(!T.hasQualifiers());
+  assert(!T.hasLocalQualifiers());
   
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr())) {
     pch::TypeID ID = 0;

@@ -1537,7 +1537,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
          E = MD->param_end(); I != E; ++I, ++i)
       if (ParmVarDecl *PD = *I) {
         QualType Ty = Ctx.getCanonicalType(PD->getType());
-        if (Ty.getUnqualifiedType() == Ctx.VoidPtrTy)
+        if (Ty.getLocalUnqualifiedType() == Ctx.VoidPtrTy)
           ScratchArgs = AF.Add(ScratchArgs, i, StopTracking);
       }
   }

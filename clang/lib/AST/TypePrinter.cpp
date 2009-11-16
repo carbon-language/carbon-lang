@@ -63,7 +63,7 @@ void TypePrinter::Print(QualType T, std::string &S) {
     return;
   
   // Print qualifiers as appropriate.
-  Qualifiers Quals = T.getQualifiers();
+  Qualifiers Quals = T.getLocalQualifiers();
   if (!Quals.empty()) {
     std::string TQS;
     Quals.getAsStringInternal(TQS, Policy);
@@ -550,7 +550,8 @@ void TypePrinter::PrintObjCObjectPointer(const ObjCObjectPointerType *T,
     ObjCQIString += '>';
   }
   
-  T->getPointeeType().getQualifiers().getAsStringInternal(ObjCQIString, Policy);
+  T->getPointeeType().getLocalQualifiers().getAsStringInternal(ObjCQIString, 
+                                                               Policy);
   
   if (!T->isObjCIdType() && !T->isObjCQualifiedIdType())
     ObjCQIString += " *"; // Don't forget the implicit pointer.

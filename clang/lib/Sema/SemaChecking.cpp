@@ -628,8 +628,7 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       return ExprError();
     }
 
-    if (Context.getCanonicalType(FAType).getUnqualifiedType() !=
-        Context.getCanonicalType(SAType).getUnqualifiedType()) {
+    if (!Context.hasSameUnqualifiedType(FAType, SAType)) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
         << SourceRange(TheCall->getArg(0)->getLocStart(),
                        TheCall->getArg(1)->getLocEnd());

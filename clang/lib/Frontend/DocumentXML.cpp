@@ -135,7 +135,7 @@ void DocumentXML::finalize() {
 
   for (XML::IdMap<QualType>::iterator i = Types.begin(), e = Types.end();
        i != e; ++i) {
-    if (i->first.hasQualifiers()) {
+    if (i->first.hasLocalQualifiers()) {
       writeTypeToXML(i->first);
       addAttribute("id", getPrefixedId(i->second, ID_NORMAL));
       toParent();
@@ -205,7 +205,7 @@ void DocumentXML::addTypeRecursively(const QualType& pType)
   {
     addTypeRecursively(pType.getTypePtr());
     // beautifier: a non-qualified type shall be transparent
-    if (!pType.hasQualifiers())
+    if (!pType.hasLocalQualifiers())
     {
       Types[pType] = BasicTypes[pType.getTypePtr()];
     }

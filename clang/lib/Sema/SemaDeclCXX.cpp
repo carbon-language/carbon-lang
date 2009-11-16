@@ -587,7 +587,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
   for (unsigned idx = 0; idx < NumBases; ++idx) {
     QualType NewBaseType
       = Context.getCanonicalType(Bases[idx]->getType());
-    NewBaseType = NewBaseType.getUnqualifiedType();
+    NewBaseType = NewBaseType.getLocalUnqualifiedType();
 
     if (KnownBaseTypes[NewBaseType]) {
       // C++ [class.mi]p3:
@@ -1140,8 +1140,7 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
     const CXXBaseSpecifier *DirectBaseSpec = 0;
     for (CXXRecordDecl::base_class_const_iterator Base =
          ClassDecl->bases_begin(); Base != ClassDecl->bases_end(); ++Base) {
-      if (Context.getCanonicalType(BaseType).getUnqualifiedType() ==
-          Context.getCanonicalType(Base->getType()).getUnqualifiedType()) {
+      if (Context.hasSameUnqualifiedType(BaseType, Base->getType())) {
         // We found a direct base of this type. That's what we're
         // initializing.
         DirectBaseSpec = &*Base;
@@ -3649,8 +3648,8 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
 
   QualType T1 = Context.getCanonicalType(OrigT1);
   QualType T2 = Context.getCanonicalType(OrigT2);
-  QualType UnqualT1 = T1.getUnqualifiedType();
-  QualType UnqualT2 = T2.getUnqualifiedType();
+  QualType UnqualT1 = T1.getLocalUnqualifiedType();
+  QualType UnqualT2 = T2.getLocalUnqualifiedType();
 
   // C++ [dcl.init.ref]p4:
   //   Given types "cv1 T1" and "cv2 T2," "cv1 T1" is
@@ -4756,7 +4755,7 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   QualType COldTy = Context.getCanonicalType(OldTy);
 
   if (CNewTy == COldTy &&
-      CNewTy.getCVRQualifiers() == COldTy.getCVRQualifiers())
+      CNewTy.getLocalCVRQualifiers() == COldTy.getLocalCVRQualifiers())
     return false;
 
   // Check if the return types are covariant
@@ -4785,7 +4784,7 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
     return true;
   }
 
-  if (NewClassTy.getUnqualifiedType() != OldClassTy.getUnqualifiedType()) {
+  if (!Context.hasSameUnqualifiedType(NewClassTy, OldClassTy)) {
     // Check if the new class derives from the old class.
     if (!IsDerivedFrom(NewClassTy, OldClassTy)) {
       Diag(New->getLocation(),
@@ -4807,7 +4806,7 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   }
 
   // The qualifiers of the return types must be the same.
-  if (CNewTy.getCVRQualifiers() != COldTy.getCVRQualifiers()) {
+  if (CNewTy.getLocalCVRQualifiers() != COldTy.getLocalCVRQualifiers()) {
     Diag(New->getLocation(),
          diag::err_covariant_return_type_different_qualifications)
     << New->getDeclName() << NewTy << OldTy;

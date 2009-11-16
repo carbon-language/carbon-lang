@@ -99,8 +99,8 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
   for (base_class_const_iterator BaseSpec = bases_begin(),
          BaseSpecEnd = bases_end(); BaseSpec != BaseSpecEnd; ++BaseSpec) {
     // Find the record of the base class subobjects for this type.
-    QualType BaseType = Context.getCanonicalType(BaseSpec->getType());
-    BaseType = BaseType.getUnqualifiedType();
+    QualType BaseType = Context.getCanonicalType(BaseSpec->getType())
+                                                          .getUnqualifiedType();
     
     // C++ [temp.dep]p3:
     //   In the definition of a class template or a member of a class template,

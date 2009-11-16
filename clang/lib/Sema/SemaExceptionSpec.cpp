@@ -183,7 +183,7 @@ bool Sema::CheckExceptionSpecSubset(
       SubIsPointer = true;
     }
     bool SubIsClass = CanonicalSubT->isRecordType();
-    CanonicalSubT = CanonicalSubT.getUnqualifiedType();
+    CanonicalSubT = CanonicalSubT.getLocalUnqualifiedType();
 
     CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                        /*DetectVirtual=*/false);
@@ -205,7 +205,7 @@ bool Sema::CheckExceptionSpecSubset(
           continue;
         }
       }
-      CanonicalSuperT = CanonicalSuperT.getUnqualifiedType();
+      CanonicalSuperT = CanonicalSuperT.getLocalUnqualifiedType();
       // If the types are the same, move on to the next type in the subset.
       if (CanonicalSubT == CanonicalSuperT) {
         Contained = true;

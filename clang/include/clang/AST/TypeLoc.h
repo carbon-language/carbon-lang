@@ -58,7 +58,7 @@ public:
     : Ty(ty), Data(opaqueData) { }
 
   TypeLocClass getTypeLocClass() const {
-    if (getType().hasQualifiers()) return Qualified;
+    if (getType().hasLocalQualifiers()) return Qualified;
     return (TypeLocClass) getType()->getTypeClass();
   }
 
@@ -155,7 +155,7 @@ public:
   }
 
   static bool classof(const TypeLoc *TL) {
-    return !TL->getType().hasQualifiers();
+    return !TL->getType().hasLocalQualifiers();
   }
   static bool classof(const UnqualTypeLoc *TL) { return true; }
 };
@@ -200,7 +200,7 @@ public:
   }
 
   static bool classof(const TypeLoc *TL) {
-    return TL->getType().hasQualifiers();
+    return TL->getType().hasLocalQualifiers();
   }
   static bool classof(const QualifiedTypeLoc *TL) { return true; }
 };

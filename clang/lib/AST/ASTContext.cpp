@@ -1186,7 +1186,7 @@ QualType ASTContext::getNoReturnType(QualType T) {
     }
   }
 
-  return getQualifiedType(ResultType, T.getQualifiers());
+  return getQualifiedType(ResultType, T.getLocalQualifiers());
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex
@@ -2435,7 +2435,7 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) {
 
 const ArrayType *ASTContext::getAsArrayType(QualType T) {
   // Handle the non-qualified case efficiently.
-  if (!T.hasQualifiers()) {
+  if (!T.hasLocalQualifiers()) {
     // Handle the common positive case fast.
     if (const ArrayType *AT = dyn_cast<ArrayType>(T))
       return AT;
@@ -4204,8 +4204,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return LHS;
 
   // If the qualifiers are different, the types aren't compatible... mostly.
-  Qualifiers LQuals = LHSCan.getQualifiers();
-  Qualifiers RQuals = RHSCan.getQualifiers();
+  Qualifiers LQuals = LHSCan.getLocalQualifiers();
+  Qualifiers RQuals = RHSCan.getLocalQualifiers();
   if (LQuals != RQuals) {
     // If any of these qualifiers are different, we have a type
     // mismatch.

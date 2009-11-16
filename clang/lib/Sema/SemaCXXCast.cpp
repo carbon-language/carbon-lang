@@ -737,10 +737,8 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
   }
 
   // T == T, modulo cv
-  if (Self.Context.getCanonicalType(
-        SrcMemPtr->getPointeeType().getUnqualifiedType()) !=
-      Self.Context.getCanonicalType(DestMemPtr->getPointeeType().
-                                    getUnqualifiedType()))
+  if (!Self.Context.hasSameUnqualifiedType(SrcMemPtr->getPointeeType(),
+                                           DestMemPtr->getPointeeType()))
     return TC_NotApplicable;
 
   // B base of D

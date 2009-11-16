@@ -3070,8 +3070,7 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
 
 static CastExpr::CastKind getScalarCastKind(ASTContext &Context,
                                             QualType SrcTy, QualType DestTy) {
-  if (Context.getCanonicalType(SrcTy).getUnqualifiedType() ==
-      Context.getCanonicalType(DestTy).getUnqualifiedType())
+  if (Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CastExpr::CK_NoOp;
 
   if (SrcTy->hasPointerRepresentation()) {
@@ -3122,8 +3121,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
   }
   
   if (!castType->isScalarType() && !castType->isVectorType()) {
-    if (Context.getCanonicalType(castType).getUnqualifiedType() ==
-        Context.getCanonicalType(castExpr->getType().getUnqualifiedType()) &&
+    if (Context.hasSameUnqualifiedType(castType, castExpr->getType()) &&
         (castType->isStructureType() || castType->isUnionType())) {
       // GCC struct/union extension: allow cast to self.
       // FIXME: Check that the cast destination type is complete.
@@ -3139,8 +3137,8 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       RecordDecl::field_iterator Field, FieldEnd;
       for (Field = RD->field_begin(), FieldEnd = RD->field_end();
            Field != FieldEnd; ++Field) {
-        if (Context.getCanonicalType(Field->getType()).getUnqualifiedType() ==
-            Context.getCanonicalType(castExpr->getType()).getUnqualifiedType()) {
+        if (Context.hasSameUnqualifiedType(Field->getType(), 
+                                           castExpr->getType())) {
           Diag(TyR.getBegin(), diag::ext_typecheck_cast_to_union)
             << castExpr->getSourceRange();
           break;
@@ -3761,7 +3759,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
         rhptee = Context.getCanonicalType(rhptee);
       } while (lhptee->isPointerType() && rhptee->isPointerType());
       
-      if (lhptee.getUnqualifiedType() == rhptee.getUnqualifiedType())
+      if (Context.hasSameUnqualifiedType(lhptee, rhptee))
         return IncompatibleNestedPointerQualifiers;
     }
     
@@ -3791,7 +3789,7 @@ Sema::CheckBlockPointerTypesForAssignment(QualType lhsType,
   AssignConvertType ConvTy = Compatible;
 
   // For blocks we enforce that qualifiers are identical.
-  if (lhptee.getCVRQualifiers() != rhptee.getCVRQualifiers())
+  if (lhptee.getLocalCVRQualifiers() != rhptee.getLocalCVRQualifiers())
     ConvTy = CompatiblePointerDiscardsQualifiers;
 
   if (!Context.typesAreCompatible(lhptee, rhptee))

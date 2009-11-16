@@ -1576,8 +1576,7 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
 
   if (T1->isEnumeralType()) {
     QualType ArgType = Proto->getArgType(0).getNonReferenceType();
-    if (Context.getCanonicalType(T1).getUnqualifiedType()
-          == Context.getCanonicalType(ArgType).getUnqualifiedType())
+    if (Context.hasSameUnqualifiedType(T1, ArgType))
       return true;
   }
 
@@ -1586,8 +1585,7 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
 
   if (!T2.isNull() && T2->isEnumeralType()) {
     QualType ArgType = Proto->getArgType(1).getNonReferenceType();
-    if (Context.getCanonicalType(T2).getUnqualifiedType()
-          == Context.getCanonicalType(ArgType).getUnqualifiedType())
+    if (Context.hasSameUnqualifiedType(T2, ArgType))
       return true;
   }
 

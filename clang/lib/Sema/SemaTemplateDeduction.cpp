@@ -354,8 +354,8 @@ static QualType getUnqualifiedArrayType(ASTContext &Context, QualType T,
                                         Qualifiers &Quals) {
   assert(T.isCanonical() && "Only operates on canonical types");
   if (!isa<ArrayType>(T)) {
-    Quals = T.getQualifiers();
-    return T.getUnqualifiedType();
+    Quals = T.getLocalQualifiers();
+    return T.getLocalUnqualifiedType();
   }
 
   assert(!T.hasQualifiers() && "canonical array type has qualifiers!");
@@ -1440,16 +1440,16 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
         // - If A is a cv-qualified type, the top level cv-qualifiers of A’s
         //   type are ignored for type deduction.
         QualType CanonArgType = Context.getCanonicalType(ArgType);
-        if (CanonArgType.getCVRQualifiers())
-          ArgType = CanonArgType.getUnqualifiedType();
+        if (CanonArgType.getLocalCVRQualifiers())
+          ArgType = CanonArgType.getLocalUnqualifiedType();
       }
     }
 
     // C++0x [temp.deduct.call]p3:
     //   If P is a cv-qualified type, the top level cv-qualifiers of P’s type
     //   are ignored for type deduction.
-    if (CanonParamType.getCVRQualifiers())
-      ParamType = CanonParamType.getUnqualifiedType();
+    if (CanonParamType.getLocalCVRQualifiers())
+      ParamType = CanonParamType.getLocalUnqualifiedType();
     if (const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>()) {
       //   [...] If P is a reference type, the type referred to by P is used
       //   for type deduction.

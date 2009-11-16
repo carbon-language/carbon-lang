@@ -873,8 +873,7 @@ static bool IsReturnCopyElidable(ASTContext &Ctx, QualType RetType,
   if (!RetType->isRecordType())
     return false;
   // ... the same cv-unqualified type as the function return type ...
-  if (Ctx.getCanonicalType(RetType).getUnqualifiedType() !=
-      Ctx.getCanonicalType(ExprType).getUnqualifiedType())
+  if (!Ctx.hasSameUnqualifiedType(RetType, ExprType))
     return false;
   // ... the expression is the name of a non-volatile automatic object ...
   // We ignore parentheses here.

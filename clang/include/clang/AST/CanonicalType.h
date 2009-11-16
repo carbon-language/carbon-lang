@@ -102,22 +102,22 @@ public:
   CanProxy<T> operator->() const;
 
   /// \brief Retrieve all qualifiers.
-  Qualifiers getQualifiers() const { return Stored.getQualifiers(); }
+  Qualifiers getQualifiers() const { return Stored.getLocalQualifiers(); }
 
   /// \brief Retrieve the const/volatile/restrict qualifiers.
-  unsigned getCVRQualifiers() const { return Stored.getCVRQualifiers(); }
+  unsigned getCVRQualifiers() const { return Stored.getLocalCVRQualifiers(); }
 
   /// \brief Determines whether this type has any qualifiers
-  bool hasQualifiers() const { return Stored.hasQualifiers(); }
+  bool hasQualifiers() const { return Stored.hasLocalQualifiers(); }
 
   bool isConstQualified() const {
-    return Stored.isConstQualified();
+    return Stored.isLocalConstQualified();
   }
   bool isVolatileQualified() const {
-    return Stored.isVolatileQualified();
+    return Stored.isLocalVolatileQualified();
   }
   bool isRestrictQualified() const {
-    return Stored.isRestrictQualified();
+    return Stored.isLocalRestrictQualified();
   }
 
   /// \brief Retrieve the unqualified form of this type.
@@ -638,7 +638,7 @@ struct CanProxyAdaptor<ObjCObjectPointerType>
 //----------------------------------------------------------------------------//
 template<typename T>
 inline CanQual<T> CanQual<T>::getUnqualifiedType() const {
-  return CanQual<T>::CreateUnsafe(Stored.getUnqualifiedType());
+  return CanQual<T>::CreateUnsafe(Stored.getLocalUnqualifiedType());
 }
 
 template<typename T>

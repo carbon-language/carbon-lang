@@ -174,7 +174,8 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       //      copy-initialization where the cv-unqualified version of the
       //      source type is the same class as, or a derived class of, the
       //      class of the destination, constructors are considered.
-      if ((DeclTypeC.getUnqualifiedType() == InitTypeC.getUnqualifiedType()) ||
+      if ((DeclTypeC.getLocalUnqualifiedType() 
+                                     == InitTypeC.getLocalUnqualifiedType()) ||
           IsDerivedFrom(InitTypeC, DeclTypeC)) {
         const CXXRecordDecl *RD =
           cast<CXXRecordDecl>(DeclType->getAs<RecordType>()->getDecl());

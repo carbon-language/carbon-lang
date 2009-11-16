@@ -1698,9 +1698,8 @@ static bool isNearlyMatchingFunction(ASTContext &Context,
     QualType DeclParamTy = Declaration->getParamDecl(Idx)->getType();
     QualType DefParamTy = Definition->getParamDecl(Idx)->getType();
 
-    DeclParamTy = Context.getCanonicalType(DeclParamTy.getNonReferenceType());
-    DefParamTy = Context.getCanonicalType(DefParamTy.getNonReferenceType());
-    if (DeclParamTy.getUnqualifiedType() != DefParamTy.getUnqualifiedType())
+    if (!Context.hasSameUnqualifiedType(DeclParamTy.getNonReferenceType(),
+                                        DefParamTy.getNonReferenceType()))
       return false;
   }
 

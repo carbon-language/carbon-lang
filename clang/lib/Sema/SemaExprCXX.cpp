@@ -1431,8 +1431,7 @@ QualType Sema::CheckPointerToMemberOperands(
     }
   }
 
-  if (Context.getCanonicalType(Class).getUnqualifiedType() !=
-      Context.getCanonicalType(LType).getUnqualifiedType()) {
+  if (!Context.hasSameUnqualifiedType(Class, LType)) {
     CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
                        /*DetectVirtual=*/false);
     // FIXME: Would it be useful to print full ambiguity paths, or is that

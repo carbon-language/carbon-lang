@@ -2146,7 +2146,7 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
                                                QualifiedTypeLoc T) {
-  Qualifiers Quals = T.getType().getQualifiers();
+  Qualifiers Quals = T.getType().getLocalQualifiers();
 
   QualType Result = getDerived().TransformType(TLB, T.getUnqualifiedLoc());
   if (Result.isNull())
@@ -5306,7 +5306,7 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    QualType T) {
   if (T->isDependentType() || T->isRecordType() ||
       (SemaRef.getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
-    assert(!T.hasQualifiers() && "Can't get cv-qualifiers here");
+    assert(!T.hasLocalQualifiers() && "Can't get cv-qualifiers here");
     return NestedNameSpecifier::Create(SemaRef.Context, Prefix, TemplateKW,
                                        T.getTypePtr());
   }

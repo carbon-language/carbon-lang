@@ -744,15 +744,15 @@ void CXXNameMangler::mangleType(QualType T) {
   // Only operate on the canonical type!
   T = Context.getASTContext().getCanonicalType(T);
 
-  bool IsSubstitutable = T.hasQualifiers() || !isa<BuiltinType>(T);
+  bool IsSubstitutable = T.hasLocalQualifiers() || !isa<BuiltinType>(T);
   if (IsSubstitutable && mangleSubstitution(T))
     return;
 
-  if (Qualifiers Quals = T.getQualifiers()) {
+  if (Qualifiers Quals = T.getLocalQualifiers()) {
     mangleQualifiers(Quals);
     // Recurse:  even if the qualified type isn't yet substitutable,
     // the unqualified type might be.
-    mangleType(T.getUnqualifiedType());
+    mangleType(T.getLocalUnqualifiedType());
   } else {
     switch (T->getTypeClass()) {
 #define ABSTRACT_TYPE(CLASS, PARENT)

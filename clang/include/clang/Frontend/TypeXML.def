@@ -65,9 +65,9 @@
 NODE_XML(QualType, "CvQualifiedType")
   ID_ATTRIBUTE_XML
   TYPE_ATTRIBUTE_XML(getTypePtr())                      // the qualified type, e.g. for 'T* const' it's 'T*'
-  ATTRIBUTE_OPT_XML(isConstQualified(), "const")        // boolean
-  ATTRIBUTE_OPT_XML(isVolatileQualified(), "volatile")  // boolean
-  ATTRIBUTE_OPT_XML(isRestrictQualified(), "restrict")  // boolean
+  ATTRIBUTE_OPT_XML(isLocalConstQualified(), "const")        // boolean
+  ATTRIBUTE_OPT_XML(isLocalVolatileQualified(), "volatile")  // boolean
+  ATTRIBUTE_OPT_XML(isLocalRestrictQualified(), "restrict")  // boolean
   ATTRIBUTE_OPT_XML(getObjCGCAttr(), "objc_gc")         // Qualifiers::GC
   ATTRIBUTE_OPT_XML(getAddressSpace(), "address_space") // unsigned
 END_NODE_XML

@@ -519,8 +519,6 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // cv-unqualified version of T. Otherwise, the type of the rvalue
     // is T (C++ 4.1p1). C++ can't get here with class types; in C, we
     // just strip the qualifiers because they don't matter.
-
-    // FIXME: Doesn't see through to qualifiers behind a typedef!
     FromType = FromType.getUnqualifiedType();
   } else if (FromType->isArrayType()) {
     // Array-to-pointer conversion (C++ 4.2)
@@ -678,8 +676,9 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     //   a conversion. [...]
     CanonFrom = Context.getCanonicalType(FromType);
     CanonTo = Context.getCanonicalType(ToType);
-    if (CanonFrom.getUnqualifiedType() == CanonTo.getUnqualifiedType() &&
-        CanonFrom.getCVRQualifiers() != CanonTo.getCVRQualifiers()) {
+    if (CanonFrom.getLocalUnqualifiedType() 
+                                       == CanonTo.getLocalUnqualifiedType() &&
+        CanonFrom.getLocalCVRQualifiers() != CanonTo.getLocalCVRQualifiers()) {
       FromType = ToType;
       CanonFrom = CanonTo;
     }
@@ -756,8 +755,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
         // We found the type that we can promote to. If this is the
         // type we wanted, we have a promotion. Otherwise, no
         // promotion.
-        return Context.getCanonicalType(ToType).getUnqualifiedType()
-          == Context.getCanonicalType(PromoteTypes[Idx]).getUnqualifiedType();
+        return Context.hasSameUnqualifiedType(ToType, PromoteTypes[Idx]);
       }
     }
   }
@@ -864,7 +862,7 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
   Qualifiers Quals = CanonFromPointee.getQualifiers();
 
   // Exact qualifier match -> return the pointer type we're converting to.
-  if (CanonToPointee.getQualifiers() == Quals) {
+  if (CanonToPointee.getLocalQualifiers() == Quals) {
     // ToType is exactly what we need. Return it.
     if (!ToType.isNull())
       return ToType;
@@ -876,7 +874,8 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
 
   // Just build a canonical type that has the right qualifiers.
   return Context.getPointerType(
-         Context.getQualifiedType(CanonToPointee.getUnqualifiedType(), Quals));
+         Context.getQualifiedType(CanonToPointee.getLocalUnqualifiedType(), 
+                                  Quals));
 }
 
 static bool isNullPointerConstantForConversion(Expr *Expr,
@@ -1348,8 +1347,7 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
   // of types. If we unwrapped any pointers, and if FromType and
   // ToType have the same unqualified type (since we checked
   // qualifiers above), then this is a qualification conversion.
-  return UnwrappedAnyPointer &&
-    FromType.getUnqualifiedType() == ToType.getUnqualifiedType();
+  return UnwrappedAnyPointer && Context.hasSameUnqualifiedType(FromType,ToType);
 }
 
 /// \brief Given a function template or function, extract the function template
@@ -1742,7 +1740,7 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
     T1 = Context.getCanonicalType(T1);
     T2 = Context.getCanonicalType(T2);
-    if (T1.getUnqualifiedType() == T2.getUnqualifiedType()) {
+    if (Context.hasSameUnqualifiedType(T1, T2)) {
       if (T2.isMoreQualifiedThan(T1))
         return ImplicitConversionSequence::Better;
       else if (T1.isMoreQualifiedThan(T2))
@@ -1778,7 +1776,7 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
 
   // If the types are the same, we won't learn anything by unwrapped
   // them.
-  if (T1.getUnqualifiedType() == T2.getUnqualifiedType())
+  if (Context.hasSameUnqualifiedType(T1, T2))
     return ImplicitConversionSequence::Indistinguishable;
 
   ImplicitConversionSequence::CompareKind Result
@@ -1818,7 +1816,7 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
     }
 
     // If the types after this point are equivalent, we're done.
-    if (T1.getUnqualifiedType() == T2.getUnqualifiedType())
+    if (Context.hasSameUnqualifiedType(T1, T2))
       break;
   }
 
@@ -1933,8 +1931,8 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     //   -- binding of an expression of type C to a reference of type
     //      B& is better than binding an expression of type C to a
     //      reference of type A&,
-    if (FromType1.getUnqualifiedType() == FromType2.getUnqualifiedType() &&
-        ToType1.getUnqualifiedType() != ToType2.getUnqualifiedType()) {
+    if (Context.hasSameUnqualifiedType(FromType1, FromType2) &&
+        !Context.hasSameUnqualifiedType(ToType1, ToType2)) {
       if (IsDerivedFrom(ToType1, ToType2))
         return ImplicitConversionSequence::Better;
       else if (IsDerivedFrom(ToType2, ToType1))
@@ -1944,8 +1942,8 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     //   -- binding of an expression of type B to a reference of type
     //      A& is better than binding an expression of type C to a
     //      reference of type A&,
-    if (FromType1.getUnqualifiedType() != FromType2.getUnqualifiedType() &&
-        ToType1.getUnqualifiedType() == ToType2.getUnqualifiedType()) {
+    if (!Context.hasSameUnqualifiedType(FromType1, FromType2) &&
+        Context.hasSameUnqualifiedType(ToType1, ToType2)) {
       if (IsDerivedFrom(FromType2, FromType1))
         return ImplicitConversionSequence::Better;
       else if (IsDerivedFrom(FromType1, FromType2))
@@ -1992,8 +1990,8 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
   if (SCS1.CopyConstructor && SCS2.CopyConstructor &&
       SCS1.Second == ICK_Derived_To_Base) {
     //   -- conversion of C to B is better than conversion of C to A,
-    if (FromType1.getUnqualifiedType() == FromType2.getUnqualifiedType() &&
-        ToType1.getUnqualifiedType() != ToType2.getUnqualifiedType()) {
+    if (Context.hasSameUnqualifiedType(FromType1, FromType2) &&
+        !Context.hasSameUnqualifiedType(ToType1, ToType2)) {
       if (IsDerivedFrom(ToType1, ToType2))
         return ImplicitConversionSequence::Better;
       else if (IsDerivedFrom(ToType2, ToType1))
@@ -2001,8 +1999,8 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     }
 
     //   -- conversion of B to A is better than conversion of C to A.
-    if (FromType1.getUnqualifiedType() != FromType2.getUnqualifiedType() &&
-        ToType1.getUnqualifiedType() == ToType2.getUnqualifiedType()) {
+    if (!Context.hasSameUnqualifiedType(FromType1, FromType2) &&
+        Context.hasSameUnqualifiedType(ToType1, ToType2)) {
       if (IsDerivedFrom(FromType2, FromType1))
         return ImplicitConversionSequence::Better;
       else if (IsDerivedFrom(FromType1, FromType2))
@@ -2114,14 +2112,15 @@ Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
   // First check the qualifiers. We don't care about lvalue-vs-rvalue
   // with the implicit object parameter (C++ [over.match.funcs]p5).
   QualType FromTypeCanon = Context.getCanonicalType(FromType);
-  if (ImplicitParamType.getCVRQualifiers() != FromTypeCanon.getCVRQualifiers() &&
+  if (ImplicitParamType.getCVRQualifiers() 
+                                    != FromTypeCanon.getLocalCVRQualifiers() &&
       !ImplicitParamType.isAtLeastAsQualifiedAs(FromTypeCanon))
     return ICS;
 
   // Check that we have either the same type or a derived type. It
   // affects the conversion rank.
   QualType ClassTypeCanon = Context.getCanonicalType(ClassType);
-  if (ClassTypeCanon == FromTypeCanon.getUnqualifiedType())
+  if (ClassTypeCanon == FromTypeCanon.getLocalUnqualifiedType())
     ICS.Standard.Second = ICK_Identity;
   else if (IsDerivedFrom(FromType, ClassType))
     ICS.Standard.Second = ICK_Derived_To_Base;
@@ -3079,7 +3078,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     Ty = RefTy->getPointeeType();
 
   // We don't care about qualifiers on the type.
-  Ty = Ty.getUnqualifiedType();
+  Ty = Ty.getLocalUnqualifiedType();
 
   // If we're dealing with an array type, decay to the pointer.
   if (Ty->isArrayType())

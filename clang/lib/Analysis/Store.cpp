@@ -64,7 +64,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
   QualType CanonPointeeTy = Ctx.getCanonicalType(PointeeTy);
 
   // Handle casts to void*.  We just pass the region through.
-  if (CanonPointeeTy.getUnqualifiedType() == Ctx.VoidTy)
+  if (CanonPointeeTy.getLocalUnqualifiedType() == Ctx.VoidTy)
     return R;
 
   // Handle casts from compatible types.
@@ -199,9 +199,7 @@ SVal  StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
   if (castTy.isNull())
     return V;
   
-  assert(Ctx.getCanonicalType(castTy).getUnqualifiedType() == 
-         Ctx.getCanonicalType(R->getValueType(Ctx)).getUnqualifiedType());
-
+  assert(Ctx.hasSameUnqualifiedType(castTy, R->getValueType(Ctx)));
   return V;
 }
 

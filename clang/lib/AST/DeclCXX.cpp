@@ -211,7 +211,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context,
       if (!ArgType.isConstQualified())
         AcceptsConst = false;
     }
-    if (Context.getCanonicalType(ArgType).getUnqualifiedType() != ClassType)
+    if (!Context.hasSameUnqualifiedType(ArgType, ClassType))
       continue;
     MD = Method;
     // We have a single argument of type cv X or cv X&, i.e. we've found the
@@ -276,7 +276,7 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
     const_cast<CXXRecordDecl*>(this)));
 
-  if (ClassType != Context.getCanonicalType(ArgType))
+  if (!Context.hasSameUnqualifiedType(ClassType, ArgType))
     return;
 
   // This is a copy assignment operator.
