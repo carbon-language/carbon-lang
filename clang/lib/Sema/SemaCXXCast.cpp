@@ -388,8 +388,10 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
-  if (DestType->isVoidType())
+  if (DestType->isVoidType()) {
+    Kind = CastExpr::CK_ToVoid;
     return;
+  }
 
   if (!DestType->isLValueReferenceType() && !DestType->isRecordType())
     Self.DefaultFunctionArrayConversion(SrcExpr);
@@ -473,8 +475,10 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   if (DestType->isEnumeralType()) {
     if (SrcType->isComplexType() || SrcType->isVectorType()) {
       // Fall through - these cannot be converted.
-    } else if (SrcType->isArithmeticType() || SrcType->isEnumeralType())
+    } else if (SrcType->isArithmeticType() || SrcType->isEnumeralType()) {
+      Kind = CastExpr::CK_IntegralCast;
       return TC_Success;
+    }
   }
 
   // Reverse pointer upcast. C++ 4.10p3 specifies pointer upcast.
@@ -507,6 +511,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
             msg = diag::err_bad_cxx_cast_const_away;
             return TC_Failed;
           }
+          Kind = CastExpr::CK_BitCast;
           return TC_Success;
         }
       }
@@ -857,6 +862,7 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return TC_NotApplicable;
 
   // The conversion is possible, so commit to it.
+  Kind = CastExpr::CK_NoOp;
   msg = 0;
   return Self.PerformImplicitConversion(SrcExpr, DestType, ICS, "casting",
                                         /*IgnoreBaseAccess*/CStyle) ?
