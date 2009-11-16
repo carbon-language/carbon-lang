@@ -1490,7 +1490,7 @@ namespace {
     }
 
     virtual const char *getPassName() const {
-      return "ARM Maximal Stack Alignment Calculator";
+      return "ARM Stack Required Alignment Auto-Detector";
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
