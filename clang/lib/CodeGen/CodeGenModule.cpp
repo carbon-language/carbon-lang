@@ -1555,7 +1555,14 @@ std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   // FIXME: This can be more efficient.
-  return GetAddrOfConstantString(GetStringForStringLiteral(S));
+  // FIXME: We shouldn't need to bitcast the constant in the wide string case.
+  llvm::Constant *C = GetAddrOfConstantString(GetStringForStringLiteral(S));
+  if (S->isWide()) {
+    llvm::Type *DestTy =
+        llvm::PointerType::getUnqual(getTypes().ConvertType(S->getType()));
+    C = llvm::ConstantExpr::getBitCast(C, DestTy);
+  }
+  return C;
 }
 
 /// GetAddrOfConstantStringFromObjCEncode - Return a pointer to a constant
