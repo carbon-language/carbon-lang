@@ -33,3 +33,13 @@ int ptrcmp1(void *a, int *b) {
 int ptrcmp2(long *a, int *b) {
   return a < b; // expected-error{{distinct}}
 }
+
+// PR5509 - Multi-level pointers
+int f2() {
+  typedef int *IntPtr;
+  typedef IntPtr *IntPtrPtr;
+  typedef IntPtr const *IntPtrConstPtr;
+  IntPtrConstPtr i = 0;
+  IntPtrPtr j = 0;
+  return i != j;
+}

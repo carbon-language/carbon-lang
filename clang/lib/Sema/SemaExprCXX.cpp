@@ -1884,8 +1884,6 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
       !T2->isPointerType() && !T2->isMemberPointerType())
    return QualType();
 
-  // FIXME: Do we need to work on the canonical types?
-
   // C++0x 5.9p2
   //   Pointer conversions and qualification conversions are performed on
   //   pointer operands to bring them to their composite pointer type. If
@@ -1907,8 +1905,8 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   }
 
   // Now both have to be pointers or member pointers.
-  if (!T1->isPointerType() && !T1->isMemberPointerType() &&
-      !T2->isPointerType() && !T2->isMemberPointerType())
+  if ((!T1->isPointerType() && !T1->isMemberPointerType()) ||
+      (!T2->isPointerType() && !T2->isMemberPointerType()))
     return QualType();
 
   //   Otherwise, of one of the operands has type "pointer to cv1 void," then
@@ -1922,9 +1920,13 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   // conversions in both directions. If only one works, or if the two composite
   // types are the same, we have succeeded.
   // FIXME: extended qualifiers?
-  llvm::SmallVector<unsigned, 4> QualifierUnion;
-  llvm::SmallVector<std::pair<const Type *, const Type *>, 4> MemberOfClass;
-  QualType Composite1 = T1, Composite2 = T2;
+  typedef llvm::SmallVector<unsigned, 4> QualifierVector;
+  QualifierVector QualifierUnion;
+  typedef llvm::SmallVector<std::pair<const Type *, const Type *>, 4>
+      ContainingClassVector;
+  ContainingClassVector MemberOfClass;
+  QualType Composite1 = Context.getCanonicalType(T1),
+           Composite2 = Context.getCanonicalType(T2);
   do {
     const PointerType *Ptr1, *Ptr2;
     if ((Ptr1 = Composite1->getAs<PointerType>()) &&
@@ -1956,11 +1958,11 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   } while (true);
 
   // Rewrap the composites as pointers or member pointers with the union CVRs.
-  llvm::SmallVector<std::pair<const Type *, const Type *>, 4>::iterator MOC
-    = MemberOfClass.begin();
-  for (llvm::SmallVector<unsigned, 4>::iterator
-         I = QualifierUnion.begin(),
-         E = QualifierUnion.end();
+  ContainingClassVector::reverse_iterator MOC
+    = MemberOfClass.rbegin();
+  for (QualifierVector::reverse_iterator
+         I = QualifierUnion.rbegin(),
+         E = QualifierUnion.rend();
        I != E; (void)++I, ++MOC) {
     Qualifiers Quals = Qualifiers::fromCVRMask(*I);
     if (MOC->first && MOC->second) {
