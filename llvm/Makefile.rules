@@ -338,11 +338,19 @@ ifeq ($(ENABLE_OPTIMIZED),1)
     KEEP_SYMBOLS := 1
   endif
 else
-  BuildMode := Debug
-  CXX.Flags += -g
-  C.Flags   += -g
-  LD.Flags  += -g
-  KEEP_SYMBOLS := 1
+  ifdef NO_DEBUG_SYMBOLS
+    BuildMode := Unoptimized
+    CXX.Flags +=
+    C.Flags   +=
+    LD.Flags  +=
+    KEEP_SYMBOLS := 1
+  else
+    BuildMode := Debug
+    CXX.Flags += -g
+    C.Flags   += -g
+    LD.Flags  += -g
+    KEEP_SYMBOLS := 1
+  endif
 endif
 
 ifeq ($(ENABLE_PROFILING),1)
