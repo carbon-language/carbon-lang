@@ -440,8 +440,6 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
 
   // FIXME: Add support for ToVoid
 
-  // FIXME: Ensure non-runtime casts are done before this point.
-
   llvm::BasicBlock *ContBlock = createBasicBlock();
   llvm::BasicBlock *NullBlock = 0;
   llvm::BasicBlock *NonZeroBlock = 0;
