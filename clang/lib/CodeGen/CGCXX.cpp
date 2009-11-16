@@ -282,14 +282,20 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   // We also don't emit a virtual call if the base expression has a record type
   // because then we know what the type is.
   llvm::Value *Callee;
-  if (MD->isVirtual() && !ME->hasQualifier() && 
-      !canDevirtualizeMemberFunctionCalls(ME->getBase()))
-    Callee = BuildVirtualCall(MD, This, Ty);
-  else if (const CXXDestructorDecl *Destructor
-             = dyn_cast<CXXDestructorDecl>(MD))
-    Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);
-  else
+  if (const CXXDestructorDecl *Destructor
+             = dyn_cast<CXXDestructorDecl>(MD)) {
+    if (MD->isVirtual() && !ME->hasQualifier() && 
+        !canDevirtualizeMemberFunctionCalls(ME->getBase())) {
+      Callee = BuildVirtualCall(Destructor, Dtor_Complete, This, Ty); 
+    } else {
+      Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);
+    }
+  } else if (MD->isVirtual() && !ME->hasQualifier() && 
+             !canDevirtualizeMemberFunctionCalls(ME->getBase())) {
+    Callee = BuildVirtualCall(MD, This, Ty); 
+  } else {
     Callee = CGM.GetAddrOfFunction(MD, Ty);
+  }
 
   return EmitCXXMemberCall(MD, Callee, This,
                            CE->arg_begin(), CE->arg_end());
@@ -425,9 +431,14 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
-  llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, Ty);
 
   llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
+
+  llvm::Value *Callee;
+  if (MD->isVirtual() && !canDevirtualizeMemberFunctionCalls(E->getArg(0)))
+    Callee = BuildVirtualCall(MD, This, Ty);
+  else
+    Callee = CGM.GetAddrOfFunction(MD, Ty);
 
   return EmitCXXMemberCall(MD, Callee, This,
                            E->arg_begin() + 1, E->arg_end());
