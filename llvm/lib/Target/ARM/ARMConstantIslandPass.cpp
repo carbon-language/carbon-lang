@@ -48,7 +48,7 @@ STATISTIC(NumJTInserted, "Number of jump table intermediate blocks inserted");
 
 
 static cl::opt<bool>
-AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
+AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(false),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
 namespace {
