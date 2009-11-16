@@ -314,6 +314,10 @@ endif
 BINUTILS_INCDIR := @BINUTILS_INCDIR@
 
 C_INCLUDE_DIRS := @C_INCLUDE_DISR@
+CXX_INCLUDE_ROOT := @CXX_INCLUDE_ROOT@
+CXX_INCLUDE_ARCH := @CXX_INCLUDE_ARCH@
+CXX_INCLUDE_32BIT_DIR = @CXX_INCLUDE_32BIT_DIR@
+CXX_INCLUDE_64BIT_DIR = @CXX_INCLUDE_64BIT_DIR@
 
 # When ENABLE_LLVMC_DYNAMIC is enabled, LLVMC will link libCompilerDriver
 # dynamically. This is needed to make dynamic plugins work on some targets

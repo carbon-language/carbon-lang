@@ -8,6 +8,18 @@
    */
 #undef CRAY_STACKSEG_END
 
+/* 32 bit multilib directory. */
+#undef CXX_INCLUDE_32BIT_DIR
+
+/* 64 bit multilib directory. */
+#undef CXX_INCLUDE_64BIT_DIR
+
+/* Arch the libstdc++ headers. */
+#undef CXX_INCLUDE_ARCH
+
+/* Directory with the libstdc++ headers. */
+#undef CXX_INCLUDE_ROOT
+
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
