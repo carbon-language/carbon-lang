@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include <map>
 
 namespace llvm {
 

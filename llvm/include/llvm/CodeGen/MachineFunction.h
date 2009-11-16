@@ -23,7 +23,6 @@
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Recycler.h"
-#include <map>
 
 namespace llvm {
 
