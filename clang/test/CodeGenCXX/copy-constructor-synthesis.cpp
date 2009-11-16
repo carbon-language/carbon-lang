@@ -44,6 +44,8 @@ struct X  : M, N, P { // ...
   const char *name;
   unsigned bf1 : 8;
   unsigned bf2 : 16;
+  int arr[2];
+  _Complex float complex;
 
   union {
     int au_i1;

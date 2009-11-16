@@ -1381,8 +1381,16 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
     // Do a built-in assignment of scalar data members.
     LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
     LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
-    RValue RVRHS = EmitLoadOfLValue(RHS, FieldType);
-    EmitStoreThroughLValue(RVRHS, LHS, FieldType);
+    if (!hasAggregateLLVMType(Field->getType())) {
+      RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
+      EmitStoreThroughLValue(RVRHS, LHS, Field->getType());
+    } else if (Field->getType()->isAnyComplexType()) {
+      ComplexPairTy Pair = LoadComplexFromAddr(RHS.getAddress(),
+                                               RHS.isVolatileQualified());
+      StoreComplexToAddr(Pair, LHS.getAddress(), LHS.isVolatileQualified());
+    } else {
+      EmitAggregateCopy(LHS.getAddress(), RHS.getAddress(), Field->getType());
+    }
   }
   FinishFunction();
 }
