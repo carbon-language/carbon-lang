@@ -600,6 +600,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   if (Decl->isForwardDecl())
     return FwdDecl;
 
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();
   // Otherwise, insert it into the TypeCache so that recursive uses will find
   // it.
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl.getNode();
@@ -686,7 +687,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
-  FwdDecl.replaceAllUsesWith(RealDecl);
+  llvm::DIDerivedType(FwdDeclNode).replaceAllUsesWith(RealDecl);
 
   return RealDecl;
 }
