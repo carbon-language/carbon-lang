@@ -423,7 +423,7 @@ static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
 // branches temporarily for tail merging).  In the case where CurMBB ends
 // with a conditional branch to the next block, optimize by reversing the
 // test and conditionally branching to SuccMBB instead.
-static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
+static void FixTail(MachineBasicBlock *CurMBB, MachineBasicBlock *SuccBB,
                     const TargetInstrInfo *TII) {
   MachineFunction *MF = CurMBB->getParent();
   MachineFunction::iterator I = next(MachineFunction::iterator(CurMBB));
@@ -591,8 +591,8 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
 /// RemoveBlocksWithHash - Remove all blocks with hash CurHash from
 /// MergePotentials, restoring branches at ends of blocks as appropriate.
 void BranchFolder::RemoveBlocksWithHash(unsigned CurHash,
-                                        MachineBasicBlock* SuccBB,
-                                        MachineBasicBlock* PredBB) {
+                                        MachineBasicBlock *SuccBB,
+                                        MachineBasicBlock *PredBB) {
   MPIterator CurMPIter, B;
   for (CurMPIter = prior(MergePotentials.end()), B = MergePotentials.begin();
        CurMPIter->getHash() == CurHash;
@@ -658,7 +658,7 @@ unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
 // if any, is given in PredBB.
 
 bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
-                                      MachineBasicBlock* PredBB) {
+                                      MachineBasicBlock *PredBB) {
   bool MadeChange = false;
 
   // Except for the special cases below, tail-merge if there are at least
@@ -847,7 +847,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
       for (MachineBasicBlock::pred_iterator P = I->pred_begin(),
                                             E2 = I->pred_end();
            P != E2; ++P) {
-        MachineBasicBlock* PBB = *P;
+        MachineBasicBlock *PBB = *P;
         // Skip blocks that loop to themselves, can't tail merge these.
         if (PBB == IBB)
           continue;
@@ -872,7 +872,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
           // to have a bit in the edge so we didn't have to do all this.
           if (IBB->isLandingPad()) {
             MachineFunction::iterator IP = PBB;  IP++;
-            MachineBasicBlock* PredNextBB = NULL;
+            MachineBasicBlock *PredNextBB = NULL;
             if (IP != MF.end())
               PredNextBB = IP;
             if (TBB == NULL) {
