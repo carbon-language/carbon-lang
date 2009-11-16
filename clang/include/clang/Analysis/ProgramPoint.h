@@ -221,7 +221,7 @@ protected:
     
   static bool classof(const ProgramPoint *location) {
     unsigned k = location->getKind();
-    return k == PreLoadKind || PreStoreKind;
+    return k == PreLoadKind || k == PreStoreKind;
   }
 };
   
