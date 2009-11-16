@@ -1530,7 +1530,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
     LHS = LValue::MakeAddr(V, CGF.MakeQualifiers(FieldType));
   } else {
-    LHS = CGF.EmitLValueForField(ThisPtr, Field, false, 0);
+    LHS = CGF.EmitLValueForField(ThisPtr, Field, ClassDecl->isUnion(), 0);
   }
   if (FieldType->getAs<RecordType>()) {
     if (!Field->isAnonymousStructOrUnion()) {
