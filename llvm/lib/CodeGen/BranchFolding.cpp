@@ -1025,8 +1025,8 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
   return MBB2I->getDesc().isCall() && !MBB1I->getDesc().isCall();
 }
 
-/// TailDuplicate - MBB unconditionally branches to SuccBB. If it is profitable,
-/// duplicate SuccBB's contents in MBB to eliminate the branch.
+/// TailDuplicate - If it is profitable, duplicate TailBB's contents in each
+/// of its predecessors.
 bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
                                  bool PrevFallsThrough,
                                  MachineFunction &MF) {
@@ -1048,7 +1048,7 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
       1 : (TailMergeSize - 1);
 
   // Check the instructions in the block to determine whether tail-duplication
-  // is invalid or unlikely to be unprofitable.
+  // is invalid or unlikely to be profitable.
   unsigned i = 0;
   bool HasCall = false;
   for (MachineBasicBlock::iterator I = TailBB->begin();
@@ -1088,7 +1088,7 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
     // EH edges are ignored by AnalyzeBranch.
     if (PredBB->succ_size() != 1)
       continue;
-    // Don't duplicate into a fall-through predecessor unless its the
+    // Don't duplicate into a fall-through predecessor unless it's the
     // only predecessor.
     if (PredBB->isLayoutSuccessor(TailBB) &&
         PrevFallsThrough &&
@@ -1316,7 +1316,6 @@ ReoptimizeBlock:
         goto ReoptimizeBlock;
       }
     }
-
 
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
