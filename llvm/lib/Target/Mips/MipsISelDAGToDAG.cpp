@@ -170,6 +170,27 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
         return true;
       }
     }
+
+    // When loading from constant pools, load the lower address part in
+    // the instruction itself. Instead of:
+    //  lui $2, %hi($CPI1_0)
+    //  addiu $2, $2, %lo($CPI1_0)
+    //  lwc1 $f0, 0($2)
+    // Generate:
+    //  lui $2, %hi($CPI1_0)
+    //  lwc1 $f0, %lo($CPI1_0)($2)
+    if (Addr.getOperand(0).getOpcode() == MipsISD::Hi &&
+        Addr.getOperand(1).getOpcode() == MipsISD::Lo) {
+      SDValue LoVal = Addr.getOperand(1); 
+      if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(
+          LoVal.getOperand(0))) {
+        if (!CP->getOffset()) {
+          Base = Addr.getOperand(0);
+          Offset = LoVal.getOperand(0);
+          return true;
+        }
+      }
+    }
   }
 
   Base   = Addr;

@@ -568,7 +568,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
   Constant *C = N->getConstVal();
   SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(), 
-                                         MipsII::MO_ABS_HILO);
+                                         N->getOffset(), MipsII::MO_ABS_HILO);
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
 
