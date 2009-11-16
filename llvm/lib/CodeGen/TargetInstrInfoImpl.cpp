@@ -142,8 +142,10 @@ void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
   if (TargetRegisterInfo::isVirtualRegister(DestReg)) {
     MO.setReg(DestReg);
     MO.setSubReg(SubIdx);
-  } else {
+  } else if (SubIdx) {
     MO.setReg(TRI->getSubReg(DestReg, SubIdx));
+  } else {
+    MO.setReg(DestReg);
   }
   MBB.insert(I, MI);
 }
