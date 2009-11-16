@@ -1718,8 +1718,8 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
   return MadeChange;
 }
 
-/// ReorderThumb2JumpTables - Use tbb / tbh instructions to generate smaller
-/// jumptables when it's possible.
+/// ReorderThumb2JumpTables - Adjust the function's block layout to ensure that
+/// jump tables always branch forwards, since that's what tbb and tbh need.
 bool ARMConstantIslands::ReorderThumb2JumpTables(MachineFunction &MF) {
   bool MadeChange = false;
 
