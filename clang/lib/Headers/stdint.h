@@ -247,8 +247,6 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 
 #ifdef __INT64_TYPE__
-/* FIXME: predefine suffix based on type*/
-# define __INT64_C_SUFFIX__ LL
 # ifdef __INT64_C_SUFFIX__
 #  define __int64_c_suffix __INT64_C_SUFFIX__
 #  define __int32_c_suffix __INT64_C_SUFFIX__
@@ -274,8 +272,6 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 
 #ifdef __INT56_TYPE__
-/* FIXME: predefine suffix based on type */
-# define __INT56_C_SUFFIX__ L
 # ifdef __INT56_C_SUFFIX__
 #  define INT56_C(v) __int_c(v, __INT56_C_SUFFIX__)
 #  define UINT56_C(v) __uint_c(v, __INT56_C_SUFFIX__)
@@ -293,8 +289,6 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 
 #ifdef __INT48_TYPE__
-/* FIXME: predefine suffix based on type */
-# define __INT48_C_SUFFIX__ L
 # ifdef __INT48_C_SUFFIX__
 #  define INT48_C(v) __int_c(v, __INT48_C_SUFFIX__)
 #  define UINT48_C(v) __uint_c(v, __INT48_C_SUFFIX__)
@@ -312,8 +306,6 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 
 #ifdef __INT40_TYPE__
-/* FIXME: predefine suffix based on type */
-# define __INT40_C_SUFFIX__ L
 # ifdef __INT40_C_SUFFIX__
 #  define INT40_C(v) __int_c(v, __INT40_C_SUFFIX__)
 #  define UINT40_C(v) __uint_c(v, __INT40_C_SUFFIX__)

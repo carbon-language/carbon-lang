@@ -155,6 +155,7 @@
 // ARM:#define __FLT_RADIX__ 2
 // ARM:#define __INT16_TYPE__ short
 // ARM:#define __INT32_TYPE__ int
+// ARM:#define __INT64_C_SUFFIX__ LL
 // ARM:#define __INT64_TYPE__ long long int
 // ARM:#define __INT8_TYPE__ char
 // ARM:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -232,6 +233,7 @@
 // BFIN:#define __FLT_RADIX__ 2
 // BFIN:#define __INT16_TYPE__ short
 // BFIN:#define __INT32_TYPE__ int
+// BFIN:#define __INT64_C_SUFFIX__ LL
 // BFIN:#define __INT64_TYPE__ long long int
 // BFIN:#define __INT8_TYPE__ char
 // BFIN:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -302,6 +304,7 @@
 // I386:#define __FLT_RADIX__ 2
 // I386:#define __INT16_TYPE__ short
 // I386:#define __INT32_TYPE__ int
+// I386:#define __INT64_C_SUFFIX__ LL
 // I386:#define __INT64_TYPE__ long long int
 // I386:#define __INT8_TYPE__ char
 // I386:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -378,6 +381,7 @@
 // MSP430:#define __FLT_MIN__ 1.17549435e-38F
 // MSP430:#define __FLT_RADIX__ 2
 // MSP430:#define __INT16_TYPE__ short
+// MSP430:#define __INT32_C_SUFFIX__ L
 // MSP430:#define __INT32_TYPE__ long int
 // MSP430:#define __INT8_TYPE__ char
 // MSP430:#define __INTMAX_MAX__ 2147483647L
@@ -447,6 +451,7 @@
 // PIC16:#define __FLT_MIN__ 1.17549435e-38F
 // PIC16:#define __FLT_RADIX__ 2
 // PIC16:#define __INT16_TYPE__ short
+// PIC16:#define __INT32_C_SUFFIX__ L
 // PIC16:#define __INT32_TYPE__ long int
 // PIC16:#define __INT8_TYPE__ char
 // PIC16:#define __INTMAX_MAX__ 2147483647L
@@ -528,6 +533,7 @@
 // PPC64:#define __FLT_RADIX__ 2
 // PPC64:#define __INT16_TYPE__ short
 // PPC64:#define __INT32_TYPE__ int
+// PPC64:#define __INT64_C_SUFFIX__ L
 // PPC64:#define __INT64_TYPE__ long int
 // PPC64:#define __INT8_TYPE__ char
 // PPC64:#define __INTMAX_MAX__ 9223372036854775807L
@@ -606,6 +612,7 @@
 // PPC:#define __FLT_RADIX__ 2
 // PPC:#define __INT16_TYPE__ short
 // PPC:#define __INT32_TYPE__ int
+// PPC:#define __INT64_C_SUFFIX__ LL
 // PPC:#define __INT64_TYPE__ long long int
 // PPC:#define __INT8_TYPE__ char
 // PPC:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -679,6 +686,7 @@
 // S390X:#define __FLT_RADIX__ 2
 // S390X:#define __INT16_TYPE__ short
 // S390X:#define __INT32_TYPE__ int
+// S390X:#define __INT64_C_SUFFIX__ L
 // S390X:#define __INT64_TYPE__ long int
 // S390X:#define __INT8_TYPE__ char
 // S390X:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -748,6 +756,7 @@
 // SPARC:#define __FLT_RADIX__ 2
 // SPARC:#define __INT16_TYPE__ short
 // SPARC:#define __INT32_TYPE__ int
+// SPARC:#define __INT64_C_SUFFIX__ LL
 // SPARC:#define __INT64_TYPE__ long long int
 // SPARC:#define __INT8_TYPE__ char
 // SPARC:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -893,6 +902,7 @@
 // X86_64:#define __FLT_RADIX__ 2
 // X86_64:#define __INT16_TYPE__ short
 // X86_64:#define __INT32_TYPE__ int
+// X86_64:#define __INT64_C_SUFFIX__ L
 // X86_64:#define __INT64_TYPE__ long int
 // X86_64:#define __INT8_TYPE__ char
 // X86_64:#define __INTMAX_MAX__ 9223372036854775807L

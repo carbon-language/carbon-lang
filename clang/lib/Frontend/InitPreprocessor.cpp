@@ -240,8 +240,16 @@ static void DefineType(const char *MacroName, TargetInfo::IntType Ty,
 static void DefineExactWidthIntType(TargetInfo::IntType Ty, 
                                const TargetInfo &TI, std::vector<char> &Buf) {
   char MacroBuf[60];
-  sprintf(MacroBuf, "__INT%d_TYPE__", TI.getTypeWidth(Ty));
+  int TypeWidth = TI.getTypeWidth(Ty);
+  sprintf(MacroBuf, "__INT%d_TYPE__", TypeWidth);
   DefineType(MacroBuf, Ty, Buf);
+
+
+  const char *ConstSuffix = TargetInfo::getTypeConstantSuffix(Ty);
+  if (strlen(ConstSuffix) > 0) {
+    sprintf(MacroBuf, "__INT%d_C_SUFFIX__=%s", TypeWidth, ConstSuffix);
+    DefineBuiltinMacro(Buf, MacroBuf);
+  }
 }
 
 static void InitializePredefinedMacros(const TargetInfo &TI,
