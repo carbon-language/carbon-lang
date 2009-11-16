@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Options.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -25,30 +26,19 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
-#include "clang/Frontend/PathDiagnosticClients.h"
-#include "clang/Frontend/PreprocessorOptions.h"
-#include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/Config/config.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Registry.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetSelect.h"
-#include <cstdlib>
-#if HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
