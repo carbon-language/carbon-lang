@@ -180,11 +180,11 @@ namespace llvm {
 
     /// EmitStartOfAsmFile - This virtual method can be overridden by targets
     /// that want to emit something at the start of their file.
-    virtual void EmitStartOfAsmFile(Module &M) {}
+    virtual void EmitStartOfAsmFile(Module &) {}
     
     /// EmitEndOfAsmFile - This virtual method can be overridden by targets that
     /// want to emit something at the end of their file.
-    virtual void EmitEndOfAsmFile(Module &M) {}
+    virtual void EmitEndOfAsmFile(Module &) {}
     
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.

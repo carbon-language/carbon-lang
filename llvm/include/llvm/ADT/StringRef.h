@@ -198,7 +198,7 @@ namespace llvm {
 
     /// find_first_of - Find the first character in the string that is \arg C,
     /// or npos if not found. Same as find.
-    size_type find_first_of(char C, size_t From = 0) const { return find(C); }
+    size_type find_first_of(char C, size_t = 0) const { return find(C); }
 
     /// find_first_of - Find the first character in the string that is in \arg
     /// Chars, or npos if not found.
