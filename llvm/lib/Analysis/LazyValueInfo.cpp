@@ -270,7 +270,7 @@ namespace {
     /// This is all of the cached information about this value.
     ValueCacheEntryTy &Cache;
     
-    ///  NewBlocks - This is a mpping of the new BasicBlocks which have been
+    ///  NewBlocks - This is a mapping of the new BasicBlocks which have been
     /// added to cache but that are not in sorted order.
     DenseMap<BasicBlock*, LVILatticeVal> NewBlockInfo;
   public:
