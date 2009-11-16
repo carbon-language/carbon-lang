@@ -209,6 +209,10 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
         if (tii_->isMoveInstr(*RMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
             Reg == SrcReg) {
+          if (RMO.isKill()) {
+            LiveVariables::VarInfo& vi = lv_->getVarInfo(Reg);
+            vi.removeKill(RMI);
+          }
           RMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
           for (int j = RMI->getNumOperands() - 1, ee = 0; j > ee; --j)
             RMI->RemoveOperand(j);
