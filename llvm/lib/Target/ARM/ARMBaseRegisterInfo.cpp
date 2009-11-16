@@ -1464,9 +1464,9 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
 }
 
 namespace {
-  struct MSAC : public MachineFunctionPass {
+  struct MaximalStackAlignmentCalculator : public MachineFunctionPass {
     static char ID;
-    MSAC() : MachineFunctionPass(&ID) {}
+    MaximalStackAlignmentCalculator() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
@@ -1499,10 +1499,12 @@ namespace {
     }
   };
 
-  char MSAC::ID = 0;
+  char MaximalStackAlignmentCalculator::ID = 0;
 }
 
 FunctionPass*
-llvm::createARMMaxStackAlignmentCalculatorPass() { return new MSAC(); }
+llvm::createARMMaxStackAlignmentCalculatorPass() {
+  return new MaximalStackAlignmentCalculator();
+}
 
 #include "ARMGenRegisterInfo.inc"
