@@ -1,5 +1,6 @@
 namespace std {
   class type_info {
+  public:
     virtual ~type_info();
     const char* name() const { return __name; }
     bool operator==(const type_info& __arg) const {
