@@ -5390,6 +5390,9 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
       return getSema().CreateBuiltinArraySubscriptExpr(move(First),
                                                        DRE->getLocStart(),
                                                        move(Second), OpLoc);
+  } else if (Op == OO_Arrow) {
+    // -> is never a builtin operation.
+    return SemaRef.BuildOverloadedArrowExpr(0, move(First), OpLoc);
   } else if (SecondExpr == 0 || isPostIncDec) {
     if (!FirstExpr->getType()->isOverloadableType()) {
       // The argument is not of overloadable type, so try to create a
