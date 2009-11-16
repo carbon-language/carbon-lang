@@ -1488,7 +1488,7 @@ public:
 
   // FIXME: Missing: __real__/__imag__, array subscript of vector,
   //                 member of vector, ImplicitValueInitExpr,
-  //                 conditional ?:, comma
+  //                 conditional ?:
 };
 } // end anonymous namespace
 
@@ -1577,6 +1577,18 @@ bool FloatExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 }
 
 bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  if (E->getOpcode() == BinaryOperator::Comma) {
+    if (!EvaluateFloat(E->getRHS(), Result, Info))
+      return false;
+
+    // If we can't evaluate the LHS, it might have side effects;
+    // conservatively mark it.
+    if (!E->getLHS()->isEvaluatable(Info.Ctx))
+      Info.EvalResult.HasSideEffects = true;
+
+    return true;
+  }
+
   // FIXME: Diagnostics?  I really don't understand how the warnings
   // and errors are supposed to work.
   APFloat RHS(0.0);
