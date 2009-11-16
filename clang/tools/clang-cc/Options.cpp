@@ -807,7 +807,9 @@ TargetTriple("triple",
 // Option Object Construction
 //===----------------------------------------------------------------------===//
 
-void clang::InitializeCodeGenOptions(CodeGenOptions &Opts) {
+void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
+                                     const LangOptions &Lang,
+                                     bool TimePasses) {
   using namespace codegenoptions;
 
   // -Os implies -O2
@@ -826,6 +828,13 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts) {
   Opts.OptimizeSize = OptSize;
   Opts.SimplifyLibCalls = 1;
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
+
+  // FIXME: Eliminate this dependency?
+  if (Lang.NoBuiltin)
+    Opts.SimplifyLibCalls = 0;
+  if (Lang.CPlusPlus)
+    Opts.NoCommon = 1;
+  Opts.TimePasses = TimePasses;
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
@@ -1068,8 +1077,7 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
 
 void clang::InitializeLangOptions(LangOptions &Options,
                                   FrontendOptions::InputKind IK,
-                                  TargetInfo &Target,
-                                  const CodeGenOptions &CodeGenOpts) {
+                                  TargetInfo &Target) {
   using namespace langoptions;
 
   bool NoPreprocess = false;
@@ -1289,18 +1297,19 @@ void clang::InitializeLangOptions(LangOptions &Options,
 
   // The __OPTIMIZE_SIZE__ define is tied to -Oz, which we don't support.
   Options.OptimizeSize = 0;
-  Options.Optimize = !!CodeGenOpts.OptimizationLevel;
+  Options.Optimize = codegenoptions::OptSize || codegenoptions::OptLevel;
 
   assert(PICLevel <= 2 && "Invalid value for -pic-level");
   Options.PICLevel = PICLevel;
 
   Options.GNUInline = !Options.C99;
-  // FIXME: This is affected by other options (-fno-inline).
 
   // This is the __NO_INLINE__ define, which just depends on things like the
   // optimization level and -fno-inline, not actually whether the backend has
   // inlining enabled.
-  Options.NoInline = !CodeGenOpts.OptimizationLevel;
+  //
+  // FIXME: This is affected by other options (-fno-inline).
+  Options.NoInline = !codegenoptions::OptLevel;
 
   Options.Static = StaticDefine;
 

@@ -165,10 +165,6 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   if (!Target)
     return 0;
 
-  // Initialize backend options, which may also be used to key some language
-  // options.
-  InitializeCodeGenOptions(Opts.getCodeGenOpts());
-
   // Initialize frontend options.
   InitializeFrontendOptions(Opts.getFrontendOpts());
 
@@ -188,8 +184,7 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   // code path to make this obvious.
   IsAST = (IK == FrontendOptions::IK_AST);
   if (!IsAST)
-    InitializeLangOptions(Opts.getLangOpts(), IK, *Target,
-                          Opts.getCodeGenOpts());
+    InitializeLangOptions(Opts.getLangOpts(), IK, *Target);
 
   // Initialize the static analyzer options.
   InitializeAnalyzerOptions(Opts.getAnalyzerOpts());
@@ -208,12 +203,10 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   // Initialize the preprocessed output options.
   InitializePreprocessorOutputOptions(Opts.getPreprocessorOutputOpts());
 
-  // Finalize some code generation options which are derived from other places.
-  if (Opts.getLangOpts().NoBuiltin)
-    Opts.getCodeGenOpts().SimplifyLibCalls = 0;
-  if (Opts.getLangOpts().CPlusPlus)
-    Opts.getCodeGenOpts().NoCommon = 1;
-  Opts.getCodeGenOpts().TimePasses = Opts.getFrontendOpts().ShowTimers;
+  // Initialize backend options, which may also be used to key some language
+  // options.
+  InitializeCodeGenOptions(Opts.getCodeGenOpts(), Opts.getLangOpts(),
+                           Opts.getFrontendOpts().ShowTimers);
 
   return Target.take();
 }
