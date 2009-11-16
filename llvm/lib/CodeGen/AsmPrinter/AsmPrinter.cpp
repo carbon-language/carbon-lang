@@ -1846,6 +1846,58 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
     Newline = true;
   }
 
+  // Check for spills and reloads
+  int FI;
+
+  const MachineFrameInfo *FrameInfo =
+    MI.getParent()->getParent()->getFrameInfo();
+
+  // We assume a single instruction only has a spill or reload, not
+  // both.
+  if (TM.getInstrInfo()->isLoadFromStackSlotPostFE(&MI, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      if (Newline) O << '\n';
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " Reload";
+      Newline = true;
+    }
+  }
+  else if (TM.getInstrInfo()->hasLoadFromStackSlot(&MI, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      if (Newline) O << '\n';
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " Folded Reload";
+      Newline = true;
+    }
+  }
+  else if (TM.getInstrInfo()->isStoreToStackSlotPostFE(&MI, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      if (Newline) O << '\n';
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " Spill";
+      Newline = true;
+    }
+  }
+  else if (TM.getInstrInfo()->hasStoreToStackSlot(&MI, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      if (Newline) O << '\n';
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " Folded Spill";
+      Newline = true;
+    }
+  }
+
+  // Check for spill-induced copies
+  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  if (TM.getInstrInfo()->isMoveInstr(MI, SrcReg, DstReg,
+                                      SrcSubIdx, DstSubIdx)) {
+    if (MI.getAsmPrinterFlag(ReloadReuse)) {
+      if (Newline) O << '\n';
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " Reload Reuse";
+      Newline = true;
+    }
+  }
 }
 
 /// PrintChildLoopComment - Print comments about child loops within
