@@ -852,6 +852,12 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     Value *Src = Visit(const_cast<Expr*>(E));
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
+
+  case CastExpr::CK_Dynamic: {
+    Value *V = Visit(const_cast<Expr*>(E));
+    const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(CE);
+    return CGF.EmitDynamicCast(V, DCE);
+  }
   
   }
 

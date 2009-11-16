@@ -388,7 +388,8 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
         const llvm::FunctionType *FTy;
         FTy = llvm::FunctionType::get(ResultType, false);
         llvm::Value *F = CGM.CreateRuntimeFunction(FTy, "__cxa_bad_typeid");
-        Builder.CreateCall(F);
+        Builder.CreateCall(F)->setDoesNotReturn();
+        // FIXME: Should we have the below?
         Builder.CreateUnreachable();
         EmitBlock(NonZeroBlock);
       }
@@ -402,4 +403,112 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
   // FIXME: return rtti for the non-class static type.
   ErrorUnsupported(E, "typeid expression");
   return 0;
+}
+
+llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
+                                              const CXXDynamicCastExpr *DCE) {
+  QualType CastTy = DCE->getTypeAsWritten();
+  QualType ArgTy = DCE->getSubExpr()->getType();
+  const llvm::Type *LArgTy = ConvertType(ArgTy);
+  const llvm::Type *LTy = ConvertType(DCE->getType());
+  CXXRecordDecl *SrcTy;
+  CXXRecordDecl *DstTy;
+  QualType Ty = CastTy.getTypePtr()->getPointeeType();
+  CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
+  Ty = CanTy.getUnqualifiedType();
+  DstTy = cast<CXXRecordDecl>(Ty->getAs<RecordType>()->getDecl());
+  Ty = ArgTy;
+  if (ArgTy.getTypePtr()->isPointerType()
+      || ArgTy.getTypePtr()->isReferenceType())
+    Ty = Ty.getTypePtr()->getPointeeType();
+  CanTy = CGM.getContext().getCanonicalType(Ty);
+  Ty = CanTy.getUnqualifiedType();
+  SrcTy = cast<CXXRecordDecl>(Ty->getAs<RecordType>()->getDecl());
+  bool CanBeZero = false;
+  bool ThrowOnBad = false;
+  bool ToVoid = false;
+  QualType InnerType = CastTy->getPointeeType();
+  if (CastTy->isPointerType()) {
+    // FIXME: if PointerType->hasAttr<NonNullAttr>(), we don't set this
+    CanBeZero = true;
+    if (InnerType->isVoidType())
+      ToVoid = true;
+  } else {
+    LTy = LTy->getPointerTo();
+    ThrowOnBad = true;
+  }
+
+  // FIXME: Add support for ToVoid
+
+  // FIXME: Ensure non-runtime casts are done before this point.
+
+  llvm::BasicBlock *ContBlock = createBasicBlock();
+  llvm::BasicBlock *NullBlock = 0;
+  llvm::BasicBlock *NonZeroBlock = 0;
+  if (CanBeZero) {
+    NonZeroBlock = createBasicBlock();
+    NullBlock = createBasicBlock();
+    llvm::Value *Zero = llvm::Constant::getNullValue(LArgTy);
+    Builder.CreateCondBr(Builder.CreateICmpNE(V, Zero),
+                         NonZeroBlock, NullBlock);
+    EmitBlock(NonZeroBlock);
+  }
+
+
+  /// Call __dynamic_cast
+  const llvm::Type *ResultType = llvm::Type::getInt8PtrTy(VMContext);
+  const llvm::FunctionType *FTy;
+  std::vector<const llvm::Type*> ArgTys;
+  const llvm::Type *PtrToInt8Ty
+    = llvm::Type::getInt8Ty(VMContext)->getPointerTo();
+  const llvm::Type *PtrDiffTy = ConvertType(getContext().getSizeType());
+  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(PtrToInt8Ty);
+  ArgTys.push_back(PtrDiffTy);
+  FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+
+  // FIXME: Calculate better hint.
+  llvm::Value *hint = llvm::ConstantInt::get(PtrDiffTy, -1ULL);
+  llvm::Value *SrcArg = CGM.GenerateRttiRef(SrcTy);
+  llvm::Value *DstArg = CGM.GenerateRttiRef(DstTy);
+  V = Builder.CreateBitCast(V, PtrToInt8Ty);
+  V = Builder.CreateCall4(CGM.CreateRuntimeFunction(FTy, "__dynamic_cast"),
+                          V, SrcArg, DstArg, hint);
+  V = Builder.CreateBitCast(V, LTy);
+
+  llvm::BasicBlock *BadCastBlock = 0;
+  if (ThrowOnBad) {
+    BadCastBlock = createBasicBlock();
+
+    llvm::Value *Zero = llvm::Constant::getNullValue(LTy);
+    Builder.CreateCondBr(Builder.CreateICmpNE(V, Zero),
+                         ContBlock, BadCastBlock);
+    EmitBlock(BadCastBlock);
+    /// Call __cxa_bad_cast
+    ResultType = llvm::Type::getVoidTy(VMContext);
+    const llvm::FunctionType *FBadTy;
+    FTy = llvm::FunctionType::get(ResultType, false);
+    llvm::Value *F = CGM.CreateRuntimeFunction(FBadTy, "__cxa_bad_cast");
+    Builder.CreateCall(F)->setDoesNotReturn();
+    // Builder.CreateUnreachable();
+  }
+  
+  if (CanBeZero) {
+    Builder.CreateBr(ContBlock);
+    EmitBlock(NullBlock);
+    Builder.CreateBr(ContBlock);
+  }
+  EmitBlock(ContBlock);
+  if (CanBeZero) {
+    llvm::PHINode *PHI = Builder.CreatePHI(LTy);
+    PHI->reserveOperandSpace(3);
+    PHI->addIncoming(V, NonZeroBlock);
+    PHI->addIncoming(llvm::Constant::getNullValue(LTy), NullBlock);
+    if (ThrowOnBad)
+      PHI->addIncoming(llvm::Constant::getNullValue(LTy), BadCastBlock);
+    V = PHI;
+  }
+
+  return V;
 }

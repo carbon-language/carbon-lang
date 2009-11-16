@@ -1290,15 +1290,25 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
   return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
 }
 
-/// EmitCastLValue - Casts are never lvalues.  If a cast is needed by the code
-/// generator in an lvalue context, then it must mean that we need the address
-/// of an aggregate in order to access one of its fields.  This can happen for
-/// all the reasons that casts are permitted with aggregate result, including
-/// noop aggregate casts, and cast from scalar to union.
+/// EmitCastLValue - Casts are never lvalues unless that cast is a dynamic_cast.
+/// If the cast is a dynamic_cast, we can have the usual lvalue result,
+/// otherwise if a cast is needed by the code generator in an lvalue context,
+/// then it must mean that we need the address of an aggregate in order to
+/// access one of its fields.  This can happen for all the reasons that casts
+/// are permitted with aggregate result, including noop aggregate casts, and
+/// cast from scalar to union.
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   switch (E->getCastKind()) {
   default:
     return EmitUnsupportedLValue(E, "unexpected cast lvalue");
+
+  case CastExpr::CK_Dynamic: {
+    LValue LV = EmitLValue(E->getSubExpr());
+    llvm::Value *V = LV.getAddress();
+    const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(E);
+    return LValue::MakeAddr(EmitDynamicCast(V, DCE),
+                            MakeQualifiers(E->getType()));
+  }
 
   case CastExpr::CK_NoOp:
   case CastExpr::CK_ConstructorConversion:

@@ -664,6 +664,7 @@ public:
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);
 
   llvm::Value* EmitCXXTypeidExpr(const CXXTypeidExpr *E);
+  llvm::Value *EmitDynamicCast(llvm::Value *V, const CXXDynamicCastExpr *DCE);
 
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
