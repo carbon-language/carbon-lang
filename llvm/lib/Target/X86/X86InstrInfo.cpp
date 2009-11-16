@@ -868,6 +868,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
     case X86::MOVSSrm:
     case X86::MOVSDrm:
     case X86::MOVAPSrm:
+    case X86::MOVUPSrm:
     case X86::MOVAPDrm:
     case X86::MOVDQArm:
     case X86::MMX_MOVD64rm:
@@ -1966,8 +1967,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   MachineInstr::mmo_iterator MMOBegin,
                                   MachineInstr::mmo_iterator MMOEnd,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  bool isAligned = (RI.getStackAlignment() >= 16) ||
-    RI.needsStackRealignment(MF);
+  bool isAligned = (*MMOBegin)->getAlignment() >= 16;
   unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, TM);
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
@@ -2060,8 +2060,7 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                  MachineInstr::mmo_iterator MMOBegin,
                                  MachineInstr::mmo_iterator MMOEnd,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  bool isAligned = (RI.getStackAlignment() >= 16) ||
-    RI.needsStackRealignment(MF);
+  bool isAligned = (*MMOBegin)->getAlignment() >= 16;
   unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, TM);
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
@@ -2638,17 +2637,16 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   MachineFunction &MF = DAG.getMachineFunction();
   if (FoldedLoad) {
     EVT VT = *RC->vt_begin();
-    bool isAligned = (RI.getStackAlignment() >= 16) ||
-      RI.needsStackRealignment(MF);
+    std::pair<MachineInstr::mmo_iterator,
+              MachineInstr::mmo_iterator> MMOs =
+      MF.extractLoadMemRefs(cast<MachineSDNode>(N)->memoperands_begin(),
+                            cast<MachineSDNode>(N)->memoperands_end());
+    bool isAligned = (*MMOs.first)->getAlignment() >= 16;
     Load = DAG.getMachineNode(getLoadRegOpcode(0, RC, isAligned, TM), dl,
                               VT, MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
 
     // Preserve memory reference information.
-    std::pair<MachineInstr::mmo_iterator,
-              MachineInstr::mmo_iterator> MMOs =
-      MF.extractLoadMemRefs(cast<MachineSDNode>(N)->memoperands_begin(),
-                            cast<MachineSDNode>(N)->memoperands_end());
     cast<MachineSDNode>(Load)->setMemRefs(MMOs.first, MMOs.second);
   }
 
@@ -2676,8 +2674,11 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     AddrOps.pop_back();
     AddrOps.push_back(SDValue(NewNode, 0));
     AddrOps.push_back(Chain);
-    bool isAligned = (RI.getStackAlignment() >= 16) ||
-      RI.needsStackRealignment(MF);
+    std::pair<MachineInstr::mmo_iterator,
+              MachineInstr::mmo_iterator> MMOs =
+      MF.extractStoreMemRefs(cast<MachineSDNode>(N)->memoperands_begin(),
+                             cast<MachineSDNode>(N)->memoperands_end());
+    bool isAligned = (*MMOs.first)->getAlignment() >= 16;
     SDNode *Store = DAG.getMachineNode(getStoreRegOpcode(0, DstRC,
                                                          isAligned, TM),
                                        dl, MVT::Other,
@@ -2685,10 +2686,6 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     NewNodes.push_back(Store);
 
     // Preserve memory reference information.
-    std::pair<MachineInstr::mmo_iterator,
-              MachineInstr::mmo_iterator> MMOs =
-      MF.extractStoreMemRefs(cast<MachineSDNode>(N)->memoperands_begin(),
-                             cast<MachineSDNode>(N)->memoperands_end());
     cast<MachineSDNode>(Load)->setMemRefs(MMOs.first, MMOs.second);
   }
 

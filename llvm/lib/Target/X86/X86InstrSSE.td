@@ -706,7 +706,7 @@ def MOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 let neverHasSideEffects = 1 in
 def MOVUPSrr : PSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movups\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVUPSrm : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movups\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (loadv4f32 addr:$src))]>;
