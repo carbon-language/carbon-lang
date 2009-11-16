@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -o - -emit-llvm -verify | FileCheck %s
+// RUN: clang-cc -triple i686-pc-linue-gnu %s -o - -emit-llvm -verify | FileCheck %s
 
 struct A { void operator delete(void*,__typeof(sizeof(int))); int x; };
 void a(A* x) { delete x; }
