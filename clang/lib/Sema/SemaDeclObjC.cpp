@@ -1559,12 +1559,17 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
   // should be true.
   if (!ClassDecl)
     return;
-
+  
   bool isInterfaceDeclKind =
         isa<ObjCInterfaceDecl>(ClassDecl) || isa<ObjCCategoryDecl>(ClassDecl)
          || isa<ObjCProtocolDecl>(ClassDecl);
   bool checkIdenticalMethods = isa<ObjCImplementationDecl>(ClassDecl);
 
+  if (!isInterfaceDeclKind && AtEndLoc.isInvalid()) {
+    AtEndLoc = ClassDecl->getLocation();
+    Diag(AtEndLoc, diag::warn_missing_atend);
+  }
+  
   DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
 
   // FIXME: Remove these and use the ObjCContainerDecl/DeclContext.

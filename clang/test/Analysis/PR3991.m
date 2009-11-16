@@ -42,7 +42,15 @@ typedef struct _NSZone NSZone;
 - (unsigned int)currentPathComponentIndex;
 - (void)setCurrentPathComponentIndex:(unsigned int)aCurrentPathComponentIndex;
 - (NSURL *)folderFeedURL;
-@end  @implementation IHGoogleDocsAdapter    - (id)initWithUsername:(NSString *)inUsername password:(NSString *)inPassword owner:(NSObject <IHGoogleDocsAdapterDelegate> *)owner {
+@end  
+
+@implementation IHGoogleDocsAdapter    - (id)initWithUsername:(NSString *)inUsername password:(NSString *)inPassword owner:(NSObject <IHGoogleDocsAdapterDelegate> *)owner {	// expected-warning {{incomplete implementation}} \
+// expected-warning {{method definition for 'entries' not found}} \
+// expected-warning {{method definition for 'feedDocList' not found}} \
+// expected-warning {{method definition for 'directoryPathComponents' not found}} \
+// expected-warning {{method definition for 'currentPathComponentIndex' not found}} \
+// expected-warning {{method definition for 'setCurrentPathComponentIndex:' not found}} \
+// expected-warning {{method definition for 'folderFeedURL' not found}} 
   return 0;
 }
 
@@ -66,3 +74,4 @@ typedef struct _NSZone NSZone;
     }
   }
 }
+@end

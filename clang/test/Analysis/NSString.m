@@ -371,5 +371,4 @@ void test_synchronized(id x) {
     NSString *string = [[NSString stringWithFormat:@"%ld", (long) 100] retain]; // expected-warning {{leak}}
   }
 }
-
-
+@end

@@ -23,11 +23,12 @@ extern NSString * const NSTaskDidTerminateNotification;
 - (NSString *)evaluateAsStringInContext:(XCPropertyExpansionContext *)context withNestingState:(const void *)state;
 @end
 
-@implementation XCPropertyExpansionContext
+@implementation XCPropertyExpansionContext	// expected-warning {{method definition for 'copyWithZone:' not found}} \
+						// expected-warning {{incomplete implementation}}
 - (NSString *)expandedValueForProperty:(NSString *)property {
   id <XCPropertyValues> cachedValueNode = [_propNamesToPropValuesCache objectForKey:property]; // expected-warning {{method '-objectForKey:' not found (return type defaults to 'id')}}
   if (cachedValueNode == ((void *)0)) { }
   NSString * expandedValue = [cachedValueNode evaluateAsStringInContext:self withNestingState:((void *)0)];
   return expandedValue;
 }
-
+@end

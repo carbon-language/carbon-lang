@@ -749,3 +749,4 @@ void test_undefined_array_subscript() {
   int i, a[10];
   int *p = &a[i]; // expected-warning{{Array subscript is undefined}}
 }
+@end

@@ -49,17 +49,20 @@ CMProfileLocation;
   GSEbayCategory *rootCategory;
 }
 - (NSMutableDictionary*)categoryDictionaryForCategoryID:(int)inID inRootTreeCategories:(NSMutableArray*)inRootTreeCategories;
--(NSString*) categoryID;
+-(NSString*) categoryID; 
 @end @interface GSEbayCategory : NSObject <NSCoding> {
 }
 - (int) categoryID;
 - (GSEbayCategory *) parent;
 - (GSEbayCategory*) subcategoryWithID:(int) inID;
-@end   @implementation GBCategoryChooserPanelController  + (int) chooseCategoryIDFromCategories:(NSArray*) inCategories        searchRequest:(GBSearchRequest*)inRequest         parentWindow:(NSWindow*) inParent {
+@end   @implementation GBCategoryChooserPanelController  + (int) chooseCategoryIDFromCategories:(NSArray*) inCategories        searchRequest:(GBSearchRequest*)inRequest         parentWindow:(NSWindow*) inParent { // expected-warning {{incomplete implementation}} \
+// expected-warning {{method definition for 'categoryDictionaryForCategoryID:inRootTreeCategories:' not found}} \
+// expected-warning {{method definition for 'categoryID' not found}}
   return 0;
 }
 - (void) addCategory:(EBayCategoryType*)inCategory toRootTreeCategory:(NSMutableArray*)inRootTreeCategories {
-  GSEbayCategory *category = [rootCategory subcategoryWithID:[[inCategory categoryID] intValue]];
+  GSEbayCategory *category = [rootCategory subcategoryWithID:[[inCategory categoryID] intValue]]; 
+
   if (rootCategory != category)  {
     GSEbayCategory *parent = category;
     while ((((void*)0) != (parent = [parent parent])) && ([parent categoryID] != 0))   {
@@ -69,3 +72,4 @@ CMProfileLocation;
     }
   }
 }
+@end

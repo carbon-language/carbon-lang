@@ -179,6 +179,8 @@ public:
   /// the EOF was encountered.
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
 
+  DeclGroupPtrTy RetreivePendingObjCImpDecl();
+
 private:
   //===--------------------------------------------------------------------===//
   // Low-Level token peeking and consumption methods.
@@ -783,6 +785,7 @@ private:
                                            AttributeList *prefixAttrs = 0);
 
   DeclPtrTy ObjCImpDecl;
+  llvm::SmallVector<DeclPtrTy, 4> PendingObjCImpDecl;
 
   DeclPtrTy ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
   DeclPtrTy ParseObjCAtEndDeclaration(SourceLocation atLoc);

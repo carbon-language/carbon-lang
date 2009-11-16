@@ -123,6 +123,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     Diag(Tok, diag::err_expected_ident); // missing class or category name.
     return DeclPtrTy();
   }
+
   // We have a class or category name - consume it.
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken();
@@ -1093,6 +1094,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
                                     atLoc, nameId, nameLoc, categoryId,
                                     categoryLoc);
     ObjCImpDecl = ImplCatType;
+    PendingObjCImpDecl.push_back(ObjCImpDecl);
     return DeclPtrTy();
   }
   // We have a class implementation
@@ -1115,7 +1117,8 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
   if (Tok.is(tok::l_brace)) // we have ivars
     ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/, atLoc);
   ObjCImpDecl = ImplClsType;
-
+  PendingObjCImpDecl.push_back(ObjCImpDecl);
+  
   return DeclPtrTy();
 }
 
@@ -1127,10 +1130,19 @@ Parser::DeclPtrTy Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
   if (ObjCImpDecl) {
     Actions.ActOnAtEnd(atLoc, ObjCImpDecl);
     ObjCImpDecl = DeclPtrTy();
+    PendingObjCImpDecl.pop_back();
   }
   else
     Diag(atLoc, diag::warn_expected_implementation); // missing @implementation
   return Result;
+}
+
+Parser::DeclGroupPtrTy Parser::RetreivePendingObjCImpDecl() {
+  if (PendingObjCImpDecl.empty())
+    return Actions.ConvertDeclToDeclGroup(DeclPtrTy());
+  DeclPtrTy ImpDecl = PendingObjCImpDecl.pop_back_val();
+  Actions.ActOnAtEnd(SourceLocation(), ImpDecl);
+  return Actions.ConvertDeclToDeclGroup(ImpDecl);
 }
 
 ///   compatibility-alias-decl:

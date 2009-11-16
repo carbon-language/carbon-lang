@@ -89,3 +89,4 @@ Dos_CharacterRangeType = 0,     Dos_LineRangeType = 1 }
     symbol = [HancodeFett symbolFromClass:(JabaSCClass *) selectedClassifier];
   }
 }
+@end

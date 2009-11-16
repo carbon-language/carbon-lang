@@ -72,7 +72,9 @@ extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExpos
 }
 - (PBXModule *) moduleForTab:(NSTabViewItem *)item;
 @end  
-@implementation XCPerspectiveModule    
+@implementation XCPerspectiveModule    // expected-warning {{method definition for 'moduleForTab:' not found}}	\
+					// expected-warning {{method definition for 'performAction:withSelection:' not found}} \
+					// expected-warning {{incomplete implementation}}
 + (void) openForProjectDocument:(PBXProjectDocument *)projectDocument {
 }
 - (PBXModule *) type:(Class)type inPerspective:(id)perspectiveIdentifer  matchingFunction:(BOOL (void *, void *))comparator usingData:(void *)data {
@@ -94,3 +96,4 @@ extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExpos
  prompts++;
  return (BOOL)0;
 }
+@end
