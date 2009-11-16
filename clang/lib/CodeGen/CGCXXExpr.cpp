@@ -325,6 +325,14 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
     llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
     DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
 
+    if (DeleteFTy->getNumArgs() == 2) {
+      QualType SizeTy = DeleteFTy->getArgType(1);
+      uint64_t SizeVal = getContext().getTypeSize(DeleteTy) / 8;
+      llvm::Constant *Size = llvm::ConstantInt::get(ConvertType(SizeTy),
+                                                    SizeVal);
+      DeleteArgs.push_back(std::make_pair(RValue::get(Size), SizeTy));
+    }
+
     // Emit the call to delete.
     EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
                                             DeleteArgs),
