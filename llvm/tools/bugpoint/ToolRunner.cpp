@@ -199,13 +199,14 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout,
                         unsigned MemoryLimit) {
-  if (!SharedLibs.empty())
-    throw ToolExecutionError("LLI currently does not support "
-                             "loading shared libraries.");
-
   std::vector<const char*> LLIArgs;
   LLIArgs.push_back(LLIPath.c_str());
   LLIArgs.push_back("-force-interpreter=true");
+
+  for (std::vector<std::string>::const_iterator i = SharedLibs.begin(), e = SharedLibs.end(); i != e; ++i) {
+    LLIArgs.push_back("-load");
+    LLIArgs.push_back((*i).c_str());
+  }
 
   // Add any extra LLI args.
   for (unsigned i = 0, e = ToolArgs.size(); i != e; ++i)
