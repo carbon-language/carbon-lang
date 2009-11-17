@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
   //
   // FIXME: We should move .ast inputs to taking a separate path, they are
   // really quite different.
-  bool IsAST;
+  bool IsAST = false;
   Clang.setTarget(
     ConstructCompilerInvocation(Clang.getInvocation(), Clang.getDiagnostics(),
                                 argv[0], IsAST));
