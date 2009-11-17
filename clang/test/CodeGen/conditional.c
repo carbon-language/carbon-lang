@@ -39,3 +39,11 @@ void _php_stream_free3() {
 void _php_stream_free4() {
   1 ? _efree(0) : free(0);
 }
+
+// PR5526
+struct test9 { int a; };
+void* test9spare();
+void test9(struct test9 *p) {
+  p ? p : test9spare();
+}
+

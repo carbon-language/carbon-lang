@@ -3584,9 +3584,9 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
         = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
       QualType destType = Context.getPointerType(destPointee);
       // Add qualifiers if necessary.
-      ImpCastExprToType(LHS, destType, CastExpr::CK_NoOp);
+      ImpCastExprToType(RHS, destType, CastExpr::CK_NoOp);
       // Promote to void*.
-      ImpCastExprToType(RHS, destType, CastExpr::CK_BitCast);
+      ImpCastExprToType(LHS, destType, CastExpr::CK_BitCast);
       return destType;
     }
 
