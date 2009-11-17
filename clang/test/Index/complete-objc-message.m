@@ -23,6 +23,57 @@ void func() {
   Foo *obj = [Foo new];
   [obj xx];
 }
+
+@interface MyClass { }
++ (int)MyClassMethod:(id)obj;
+- (int)MyInstMethod:(id)x second:(id)y;
+@end
+
+@interface MySubClass : MyClass { }
++ (int)MySubClassMethod;
+- (int)MySubInstMethod;
+@end
+
+@implementation MyClass 
++ (int)MyClassMethod:(id)obj {
+  return 0;
+}
+
++ (int)MyPrivateMethod {
+  return 1;
+}
+
+- (int)MyInstMethod:(id)x second:(id)y {
+  return 2;
+}
+
+- (int)MyPrivateInstMethod {
+  return 3;
+}
+@end
+
+@implementation MySubClass
++ (int)MySubClassMethod {
+  return 2;
+}
+
++ (int)MySubPrivateMethod {
+  return [super MyPrivateMethod];
+}
+
+- (int)MySubInstMethod:(id)obj {
+  return [super MyInstMethod: obj second:obj];
+}
+
+- (int)MyInstMethod:(id)x second:(id)y {
+  return 3;
+}
+@end
+
+void test_super_var(MySubClass *super) {
+  [super MyInstMethod: super second:super];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod2}
@@ -33,3 +84,13 @@ void func() {
 // CHECK-CC2: {TypedText categoryInstanceMethod}
 // CHECK-CC2: {TypedText instanceMethod1}
 // CHECK-CC2: {TypedText protocolInstanceMethod:}{Placeholder (int)value}
+// RUN: c-index-test -code-completion-at=%s:61:16 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// CHECK-CC3: ObjCClassMethodDecl:{TypedText MyClassMethod:}{Placeholder (id)obj}
+// FIXME-CC3: ObjCClassMethodDecl:{TypedText MyPrivateMethod}
+// RUN: c-index-test -code-completion-at=%s:65:16 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// CHECK-CC4: ObjCInstanceMethodDecl:{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
+// FIXME-CC4: ObjCInstanceMethodDecl:{TypedText MyPrivateInstMethod}
+// RUN: c-index-test -code-completion-at=%s:74:9 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// CHECK-CC5: ObjCInstanceMethodDecl:{TypedText MySubInstMethod}
+// CHECK-CC5: ObjCInstanceMethodDecl:{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
+

@@ -13,6 +13,7 @@
 #include "Sema.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -1555,11 +1556,61 @@ void Sema::CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) {
 
 void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
   typedef CodeCompleteConsumer::Result Result;
+  ObjCInterfaceDecl *CDecl = 0;
+
+  // FIXME: Pass this in!
+  SourceLocation NameLoc;
+
+  if (FName->isStr("super")) {
+    // We're sending a message to "super".
+    if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
+      // Figure out which interface we're in.
+      CDecl = CurMethod->getClassInterface();
+      if (!CDecl)
+        return;
+
+      // Find the superclass of this class.
+      CDecl = CDecl->getSuperClass();
+      if (!CDecl)
+        return;
+
+      if (CurMethod->isInstanceMethod()) {
+        // We are inside an instance method, which means that the message
+        // send [super ...] is actually calling an instance method on the
+        // current object. Build the super expression and handle this like
+        // an instance method.
+        QualType SuperTy = Context.getObjCInterfaceType(CDecl);
+        SuperTy = Context.getObjCObjectPointerType(SuperTy);
+        OwningExprResult Super
+          = Owned(new (Context) ObjCSuperExpr(NameLoc, SuperTy));
+        return CodeCompleteObjCInstanceMethod(S, (Expr *)Super.get());
+      }
+
+      // Okay, we're calling a factory method in our superclass.
+    } 
+  }
+
+  // If the given name refers to an interface type, retrieve the
+  // corresponding declaration.
+  if (!CDecl)
+    if (TypeTy *Ty = getTypeName(*FName, NameLoc, S, 0, false)) {
+      QualType T = GetTypeFromParser(Ty, 0);
+      if (!T.isNull()) 
+        if (const ObjCInterfaceType *Interface = T->getAs<ObjCInterfaceType>())
+          CDecl = Interface->getDecl();
+    }
+
+  if (!CDecl && FName->isStr("super")) {
+    // "super" may be the name of a variable, in which case we are
+    // probably calling an instance method.
+    OwningExprResult Super = ActOnDeclarationNameExpr(S, NameLoc, FName,
+                                                      false, 0, false);
+    return CodeCompleteObjCInstanceMethod(S, (Expr *)Super.get());
+  }
+
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   
-  ObjCInterfaceDecl *CDecl = getObjCInterfaceDecl(FName);
-    
   while (CDecl != NULL) {
     for (ObjCInterfaceDecl::classmeth_iterator I = CDecl->classmeth_begin(), 
                                                E = CDecl->classmeth_end(); 
