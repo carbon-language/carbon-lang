@@ -1137,7 +1137,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
   return Result;
 }
 
-Parser::DeclGroupPtrTy Parser::RetreivePendingObjCImpDecl() {
+Parser::DeclGroupPtrTy Parser::RetrievePendingObjCImpDecl() {
   if (PendingObjCImpDecl.empty())
     return Actions.ConvertDeclToDeclGroup(DeclPtrTy());
   DeclPtrTy ImpDecl = PendingObjCImpDecl.pop_back_val();
