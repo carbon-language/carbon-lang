@@ -189,4 +189,7 @@ int test3() {
   if (typeid(pmd) == typeid(pmf))
     return 1;
   return 0;
+  enum a { };
+  if (typeid(int[5]) == typeid(enum a))
+    return 0;
 }

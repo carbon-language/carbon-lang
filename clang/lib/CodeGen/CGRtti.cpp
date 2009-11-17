@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/Type.h"
 #include "clang/AST/RecordLayout.h"
 #include "CodeGenModule.h"
 using namespace clang;
@@ -255,8 +256,6 @@ public:
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
-    llvm::GlobalVariable::LinkageTypes linktype;
-    linktype = llvm::GlobalValue::LinkOnceODRLinkage;
     std::vector<llvm::Constant *> info;
 
     QualType PTy = Ty->getPointeeType();
@@ -294,7 +293,7 @@ public:
     return finish(info, GV, Out.str());
   }
 
-  llvm::Constant *BuildFunctionType(QualType Ty) {
+  llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
@@ -308,16 +307,7 @@ public:
 
     std::vector<llvm::Constant *> info;
 
-    QualType PTy = Ty->getPointeeType();
-    QualType BTy;
-    bool PtrMem = false;
-    if (const MemberPointerType *MPT = dyn_cast<MemberPointerType>(Ty)) {
-      PtrMem = true;
-      BTy = QualType(MPT->getClass(), 0);
-      PTy = MPT->getPointeeType();
-    }
-
-    C = BuildVtableRef("_ZTVN10__cxxabiv120__function_type_infoE");
+    C = BuildVtableRef(vtbl);
     info.push_back(C);
     info.push_back(BuildName(Ty));
       
@@ -329,7 +319,6 @@ public:
       = *CGM.getContext().getCanonicalType(Ty).getTypePtr();
     switch (Type.getTypeClass()) {
     default: {
-      // FIXME: Add all the missing types, such as array...
       assert(0 && "typeid expression");
       return llvm::Constant::getNullValue(Int8PtrTy);
     }
@@ -352,7 +341,16 @@ public:
     case Type::MemberPointer:
       return BuildPointerType(Ty);
     case Type::FunctionProto:
-      return BuildFunctionType(Ty);
+    case Type::FunctionNoProto:
+      return BuildSimpleType(Ty, "_ZTVN10__cxxabiv120__function_type_infoE");
+    case Type::ConstantArray:
+    case Type::IncompleteArray:
+    case Type::VariableArray:
+    case Type::Vector:
+    case Type::ExtVector:
+      return BuildSimpleType(Ty, "_ZTVN10__cxxabiv117__array_type_infoE");
+    case Type::Enum:
+      return BuildSimpleType(Ty, "_ZTVN10__cxxabiv116__enum_type_infoE");
     }
   }
 };
