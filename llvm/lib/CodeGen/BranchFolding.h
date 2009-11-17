@@ -105,9 +105,8 @@ namespace llvm {
     unsigned CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
                                        unsigned maxCommonTailLength);
 
-    bool TailDuplicate(MachineBasicBlock *TailBB,
-                       bool PrevFallsThrough,
-                       MachineFunction &MF);
+    bool TailDuplicateBlocks(MachineFunction &MF);
+    bool TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF);
     
     bool OptimizeBranches(MachineFunction &MF);
     bool OptimizeBlock(MachineBasicBlock *MBB);
