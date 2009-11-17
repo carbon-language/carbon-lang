@@ -1,9 +1,4 @@
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
-; xRUN: llc < %s -march=thumb -mattr=+thumb2 | grep lsl
-; xRUN: llc < %s -march=thumb -mattr=+thumb2 | grep lsr
-; xRUN: llc < %s -march=thumb -mattr=+thumb2 | grep asr
-; xRUN: llc < %s -march=thumb -mattr=+thumb2 | grep ror
-; xRUN: llc < %s -march=thumb -mattr=+thumb2 | not grep mov
 
 define i32 @t2ADDrs_lsl(i32 %X, i32 %Y) {
 ; CHECK: t2ADDrs_lsl
