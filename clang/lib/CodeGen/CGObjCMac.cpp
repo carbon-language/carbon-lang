@@ -4551,6 +4551,9 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   Values[0] = GetClassName(OCD->getIdentifier());
   // meta-class entry symbol
   llvm::GlobalVariable *ClassGV = GetClassGlobal(ExtClassName);
+  if (Interface->hasAttr<WeakImportAttr>())
+    ClassGV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+  
   Values[1] = ClassGV;
   std::vector<llvm::Constant*> Methods;
   std::string MethodListName(Prefix);
