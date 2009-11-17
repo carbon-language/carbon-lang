@@ -213,7 +213,9 @@ MinimalAction::ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 /// Scope will always be top level file scope.
 Action::DeclPtrTy
 MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
-                                IdentifierInfo **IdentList, unsigned NumElts) {
+                                            IdentifierInfo **IdentList,
+                                            SourceLocation *IdentLocs,
+                                            unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     // Allocate and add the 'TypeNameInfo' "decl".
     getTable(TypeNameInfoTablePtr)->AddEntry(true, IdentList[i]);

@@ -1160,6 +1160,7 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
 Action::DeclPtrTy
 Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                    IdentifierInfo **IdentList,
+                                   SourceLocation *IdentLocs,
                                    unsigned NumElts) {
   llvm::SmallVector<ObjCInterfaceDecl*, 32> Interfaces;
 

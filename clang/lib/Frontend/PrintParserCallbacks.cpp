@@ -79,10 +79,11 @@ namespace {
     /// Scope will always be top level file scope.
     Action::DeclPtrTy ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                                    IdentifierInfo **IdentList,
+                                                   SourceLocation *IdentLocs,
                                                    unsigned NumElts) {
       Out << __FUNCTION__ << "\n";
       return MinimalAction::ActOnForwardClassDeclaration(AtClassLoc, IdentList,
-                                                         NumElts);
+                                                         IdentLocs, NumElts);
     }
 
     // Pure Printing

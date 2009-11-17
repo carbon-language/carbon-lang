@@ -3505,8 +3505,9 @@ public:
                                                   SourceLocation CatLoc);
 
   virtual DeclPtrTy ActOnForwardClassDeclaration(SourceLocation Loc,
-                                               IdentifierInfo **IdentList,
-                                               unsigned NumElts);
+                                                 IdentifierInfo **IdentList,
+                                                 SourceLocation *IdentLocs,
+                                                 unsigned NumElts);
 
   virtual DeclPtrTy ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                             const IdentifierLocPair *IdentList,

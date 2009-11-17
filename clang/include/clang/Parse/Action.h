@@ -2102,6 +2102,7 @@ public:
   virtual DeclPtrTy ActOnForwardClassDeclaration(
     SourceLocation AtClassLoc,
     IdentifierInfo **IdentList,
+    SourceLocation *IdentLocs,
     unsigned NumElts) {
     return DeclPtrTy();
   }
@@ -2415,6 +2416,7 @@ public:
 
   virtual DeclPtrTy ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                                  IdentifierInfo **IdentList,
+                                                 SourceLocation *SLocs,
                                                  unsigned NumElts);
 
   virtual DeclPtrTy ActOnStartClassInterface(SourceLocation interLoc,

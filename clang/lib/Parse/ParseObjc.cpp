@@ -61,6 +61,8 @@ Parser::DeclPtrTy Parser::ParseObjCAtDirectives() {
 Parser::DeclPtrTy Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
   llvm::SmallVector<IdentifierInfo *, 8> ClassNames;
+  llvm::SmallVector<SourceLocation, 8> ClassLocs;
+
 
   while (1) {
     if (Tok.isNot(tok::identifier)) {
@@ -69,6 +71,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
       return DeclPtrTy();
     }
     ClassNames.push_back(Tok.getIdentifierInfo());
+    ClassLocs.push_back(Tok.getLocation());
     ConsumeToken();
 
     if (Tok.isNot(tok::comma))
@@ -81,8 +84,9 @@ Parser::DeclPtrTy Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@class"))
     return DeclPtrTy();
 
-  return Actions.ActOnForwardClassDeclaration(atLoc,
-                                      &ClassNames[0], ClassNames.size());
+  return Actions.ActOnForwardClassDeclaration(atLoc, ClassNames.data(),
+                                              ClassLocs.data(),
+                                              ClassNames.size());
 }
 
 ///
