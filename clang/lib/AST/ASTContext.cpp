@@ -3071,6 +3071,54 @@ int ASTContext::getObjCEncodingTypeSize(QualType type) {
   return sz / getTypeSize(CharTy);
 }
 
+/// getObjCEncodingForBlockDecl - Return the encoded type for this method
+/// declaration.
+void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr, 
+                                             std::string& S) {
+  const BlockDecl *Decl = Expr->getBlockDecl();
+  QualType BlockTy =
+      Expr->getType()->getAs<BlockPointerType>()->getPointeeType();
+  // Encode result type.
+  getObjCEncodingForType(cast<FunctionType>(BlockTy)->getResultType(), S);
+  // Compute size of all parameters.
+  // Start with computing size of a pointer in number of bytes.
+  // FIXME: There might(should) be a better way of doing this computation!
+  SourceLocation Loc;
+  int PtrSize = getTypeSize(VoidPtrTy) / getTypeSize(CharTy);
+  int ParmOffset = PtrSize;
+  for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
+       E = Decl->param_end(); PI != E; ++PI) {
+    QualType PType = (*PI)->getType();
+    int sz = getObjCEncodingTypeSize(PType);
+    assert (sz > 0 && "BlockExpr - Incomplete param type");
+    ParmOffset += sz;
+  }
+  // Size of the argument frame
+  S += llvm::utostr(ParmOffset);
+  // Block pointer and offset.
+  S += "@?0";
+  ParmOffset = PtrSize;
+  
+  // Argument types.
+  ParmOffset = PtrSize;
+  for (BlockDecl::param_const_iterator PI = Decl->param_begin(), E =
+       Decl->param_end(); PI != E; ++PI) {
+    ParmVarDecl *PVDecl = *PI;
+    QualType PType = PVDecl->getOriginalType(); 
+    if (const ArrayType *AT =
+          dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) {
+      // Use array's original type only if it has known number of
+      // elements.
+      if (!isa<ConstantArrayType>(AT))
+        PType = PVDecl->getType();
+    } else if (PType->isFunctionType())
+      PType = PVDecl->getType();
+    getObjCEncodingForType(PType, S);
+    S += llvm::utostr(ParmOffset);
+    ParmOffset += getObjCEncodingTypeSize(PType);
+  }
+}
+
 /// getObjCEncodingForMethodDecl - Return the encoded type for this method
 /// declaration.
 void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,

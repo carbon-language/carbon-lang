@@ -146,13 +146,32 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   if (0 && CanBlockBeGlobal(Info))
     return CGM.GetAddrOfGlobalBlock(BE, Name.c_str());
 
-  std::vector<llvm::Constant*> Elts(5);
+  size_t BlockFields = 5;
+
+  bool hasIntrospection  = CGM.getContext().getLangOptions().BlockIntrospection;
+
+  if (hasIntrospection) {
+    BlockFields++;
+  }
+  std::vector<llvm::Constant*> Elts(BlockFields);
+
+  if (hasIntrospection) {
+    std::string BlockTypeEncoding;
+    CGM.getContext().getObjCEncodingForBlock(BE, BlockTypeEncoding);
+
+    Elts[5] = llvm::ConstantExpr::getBitCast(
+            CGM.GetAddrOfConstantCString(BlockTypeEncoding), PtrToInt8Ty);
+  }
+
   llvm::Constant *C;
   llvm::Value *V;
 
   {
     // C = BuildBlockStructInitlist();
     unsigned int flags = BLOCK_HAS_DESCRIPTOR;
+
+    if (hasIntrospection)
+      flags |= BLOCK_HAS_OBJC_TYPE;
 
     // We run this first so that we set BlockHasCopyDispose from the entire
     // block literal.
@@ -211,19 +230,21 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       return C;
     }
 
-    std::vector<const llvm::Type *> Types(5+subBlockDeclRefDecls.size());
+    std::vector<const llvm::Type *> Types(BlockFields+subBlockDeclRefDecls.size());
     for (int i=0; i<4; ++i)
       Types[i] = Elts[i]->getType();
     Types[4] = PtrToInt8Ty;
+    if (hasIntrospection)
+      Types[5] = PtrToInt8Ty;
 
     for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i) {
       const Expr *E = subBlockDeclRefDecls[i];
       const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
       QualType Ty = E->getType();
       if (BDRE && BDRE->isByRef()) {
-        Types[i+5] = llvm::PointerType::get(BuildByRefType(BDRE->getDecl()), 0);
+        Types[i+BlockFields] = llvm::PointerType::get(BuildByRefType(BDRE->getDecl()), 0);
       } else
-        Types[i+5] = ConvertType(Ty);
+        Types[i+BlockFields] = ConvertType(Ty);
     }
 
     llvm::StructType *Ty = llvm::StructType::get(VMContext, Types, true);
@@ -237,6 +258,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     for (unsigned i=0; i<4; ++i)
       Builder.CreateStore(Elts[i], Builder.CreateStructGEP(V, i, "block.tmp"));
+    if (hasIntrospection)
+      Builder.CreateStore(Elts[5], Builder.CreateStructGEP(V, 5, "block.tmp"));
 
     for (unsigned i=0; i < subBlockDeclRefDecls.size(); ++i)
       {
@@ -252,7 +275,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
         BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
         VD = BDRE->getDecl();
 
-        llvm::Value* Addr = Builder.CreateStructGEP(V, i+5, "tmp");
+        llvm::Value* Addr = Builder.CreateStructGEP(V, i+BlockFields, "tmp");
         NoteForHelper[helpersize].index = i+5;
         NoteForHelper[helpersize].RequiresCopying
           = BlockRequiresCopying(VD->getType());
@@ -291,7 +314,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
         RValue r = EmitAnyExpr(E, Addr, false);
         if (r.isScalar()) {
           llvm::Value *Loc = r.getScalarVal();
-          const llvm::Type *Ty = Types[i+5];
+          const llvm::Type *Ty = Types[i+BlockFields];
           if  (BDRE->isByRef()) {
             // E is now the address of the value field, instead, we want the
             // address of the actual ByRef struct.  We optimize this slightly
@@ -375,8 +398,20 @@ const llvm::Type *BlockModule::getGenericBlockLiteralType() {
   //   int __reserved;
   //   void (*__invoke)(void *);
   //   struct __block_descriptor *__descriptor;
+  //   // GNU runtime only:
+  //   const char *types;
   // };
-  GenericBlockLiteralType = llvm::StructType::get(IntTy->getContext(),
+  if (CGM.getContext().getLangOptions().BlockIntrospection)
+    GenericBlockLiteralType = llvm::StructType::get(IntTy->getContext(),
+                                                  PtrToInt8Ty,
+                                                  IntTy,
+                                                  IntTy,
+                                                  PtrToInt8Ty,
+                                                  BlockDescPtrTy,
+                                                  PtrToInt8Ty,
+                                                  NULL);
+  else
+    GenericBlockLiteralType = llvm::StructType::get(IntTy->getContext(),
                                                   PtrToInt8Ty,
                                                   IntTy,
                                                   IntTy,
@@ -571,8 +606,12 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
                              llvm::GlobalVariable::InternalLinkage,
                              DescriptorStruct, "__block_descriptor_global");
 
+  int FieldCount = 5;
   // Generate the constants for the block literal.
-  llvm::Constant *LiteralFields[5];
+  if (CGM.getContext().getLangOptions().BlockIntrospection)
+    FieldCount = 6;
+
+  std::vector<llvm::Constant*> LiteralFields(FieldCount);
 
   CodeGenFunction::BlockInfo Info(0, n);
   uint64_t subBlockSize, subBlockAlign;
@@ -592,7 +631,9 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   LiteralFields[0] = getNSConcreteGlobalBlock();
 
   // Flags
-  LiteralFields[1] =
+  LiteralFields[1] = CGM.getContext().getLangOptions().BlockIntrospection ?
+    llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_DESCRIPTOR |
+            BLOCK_HAS_OBJC_TYPE) :
     llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_DESCRIPTOR);
 
   // Reserved
@@ -603,9 +644,17 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 
   // Descriptor
   LiteralFields[4] = Descriptor;
+  
+  // Type encoding
+  if (CGM.getContext().getLangOptions().BlockIntrospection) {
+    std::string BlockTypeEncoding;
+    CGM.getContext().getObjCEncodingForBlock(BE, BlockTypeEncoding);
+
+    LiteralFields[5] = CGM.GetAddrOfConstantCString(BlockTypeEncoding);
+  }
 
   llvm::Constant *BlockLiteralStruct =
-    llvm::ConstantStruct::get(VMContext, &LiteralFields[0], 5, false);
+    llvm::ConstantStruct::get(VMContext, LiteralFields, false);
 
   llvm::GlobalVariable *BlockLiteral =
     new llvm::GlobalVariable(getModule(), BlockLiteralStruct->getType(), true,

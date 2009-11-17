@@ -55,6 +55,7 @@ public:
   unsigned POSIXThreads      : 1; // Compiling with POSIX thread support
                                   // (-pthread)
   unsigned Blocks            : 1; // block extension to C
+  unsigned BlockIntrospection: 1; // block have ObjC type encodings.
   unsigned EmitAllDecls      : 1; // Emit all declarations, even if
                                   // they are unused.
   unsigned MathErrno         : 1; // Math functions must respect errno
@@ -139,6 +140,7 @@ public:
     ThreadsafeStatics = 0;
     POSIXThreads = 0;
     Blocks = 0;
+    BlockIntrospection = 0;
     EmitAllDecls = 0;
     MathErrno = 1;
 

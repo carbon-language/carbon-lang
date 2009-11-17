@@ -37,6 +37,7 @@ namespace llvm {
 namespace clang {
   class FileManager;
   class ASTRecordLayout;
+  class BlockExpr;
   class Expr;
   class ExternalASTSource;
   class IdentifierTable;
@@ -672,6 +673,10 @@ public:
   /// declaration.
   void getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, std::string &S);
 
+  /// getObjCEncodingForBlockDecl - Return the encoded type for this block
+  /// declaration.
+  void getObjCEncodingForBlock(const BlockExpr *Expr, std::string& S);
+  
   /// getObjCEncodingForPropertyDecl - Return the encoded type for
   /// this method declaration. If non-NULL, Container must be either
   /// an ObjCCategoryImplDecl or ObjCImplementationDecl; it should

@@ -926,8 +926,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fblocks=0 is default.
   if (Args.hasFlag(options::OPT_fblocks, options::OPT_fno_blocks,
-                   getToolChain().IsBlocksDefault()))
+                   getToolChain().IsBlocksDefault())) {
+    Args.AddLastArg(CmdArgs, options::OPT_fblock_introspection);
     CmdArgs.push_back("-fblocks");
+  }
 
   if (needsExceptions(Args, InputType, getToolChain().getTriple()))
     CmdArgs.push_back("-fexceptions");
