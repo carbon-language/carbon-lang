@@ -347,7 +347,7 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
   QualType Ty = E->getType();
   const llvm::Type *LTy = ConvertType(Ty)->getPointerTo();
   if (E->isTypeOperand()) {
-    QualType Ty = E->getTypeOperand();
+    Ty = E->getTypeOperand();
     CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
     Ty = CanTy.getUnqualifiedType().getNonReferenceType();
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
@@ -356,9 +356,7 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
         return Builder.CreateBitCast(CGM.GenerateRttiRef(RD), LTy);
       return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
     }
-    // FIXME: return the rtti for the non-class static type.
-    ErrorUnsupported(E, "typeid expression");
-    return 0;
+    return Builder.CreateBitCast(CGM.GenerateRttiNonClass(Ty), LTy);
   }
   Expr *subE = E->getExprOperand();
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
@@ -397,11 +395,12 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
       V = Builder.CreateLoad(V);
       return V;
     }      
-    return CGM.GenerateRtti(RD);
+    return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
   }
-  // FIXME: return rtti for the non-class static type.
-  ErrorUnsupported(E, "typeid expression");
-  return 0;
+  Ty = subE->getType();
+  CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
+  Ty = CanTy.getUnqualifiedType().getNonReferenceType();
+  return Builder.CreateBitCast(CGM.GenerateRttiNonClass(Ty), LTy);
 }
 
 llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,

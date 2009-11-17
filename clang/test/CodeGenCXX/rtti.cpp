@@ -104,6 +104,8 @@ void test2_2(test1_D *dp) {
     test2_1();
   if (typeid(((*(dp)))) == typeid(test1_D))
     test2_1();
+  if (typeid(int) == typeid(float))
+    test2_1();
 }
 
 // CHECK-LL:define void @_Z7test2_2P7test1_D(%class.test1_B7* %dp) nounwind {
@@ -127,3 +129,5 @@ void test2_2(test1_D *dp) {
 // CHECK-LL-NEXT:  %7 = getelementptr inbounds %"class.std::type_info"** %vtable6, i64 -1
 // CHECK-LL-NEXT:  %8 = load %"class.std::type_info"** %7
 // CHECK-LL-NEXT:  %call7 = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* %8, %"class.std::type_info"* bitcast (%1* @_ZTI7test1_D to %"class.std::type_info"*))
+
+// CHECK-LL:       %call10 = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* bitcast (i8** @_ZTIi to %"class.std::type_info"*), %"class.std::type_info"* bitcast (i8** @_ZTIf to %"class.std::type_info"*)) ; <i1> [#uses=1]

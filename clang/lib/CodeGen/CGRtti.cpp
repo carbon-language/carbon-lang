@@ -76,7 +76,7 @@ public:
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), c);
   }
 
-  llvm::Constant *Buildclass_type_infoRef(const CXXRecordDecl *RD) {
+  llvm::Constant *BuildTypeRef(QualType Ty) {
     const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
     llvm::Constant *C;
 
@@ -85,8 +85,7 @@ public:
 
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
-    mangleCXXRtti(CGM.getMangleContext(), CGM.getContext().getTagDeclType(RD),
-                  Out);
+    mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
 
     C = CGM.getModule().getGlobalVariable(Out.str());
     if (C)
@@ -98,6 +97,10 @@ public:
     C = new llvm::GlobalVariable(CGM.getModule(), Int8PtrTy, true, linktype,
                                  0, Out.str());
     return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
+  }
+
+  llvm::Constant *Buildclass_type_infoRef(const CXXRecordDecl *RD) {
+    return BuildTypeRef(CGM.getContext().getTagDeclType(RD));
   }
 
   /// CalculateFlags - Calculate the flags for the __vmi_class_type_info
@@ -234,6 +237,24 @@ public:
     return Rtti;
 #endif
   }
+
+  llvm::Constant *BuildType(QualType Ty) {
+    const clang::Type &Type
+      = *CGM.getContext().getCanonicalType(Ty).getTypePtr();
+    switch (Type.getTypeClass()) {
+    default: {
+      // FIXME: Add all the missing types, such as pointer, array...
+      assert(0 && "typeid expression");
+      const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+      return llvm::Constant::getNullValue(Int8PtrTy);
+    }
+
+    case Type::Builtin: {
+      // We expect all type_info objects for builtin types to be in the library.
+      return BuildTypeRef(Ty);
+    }
+    }
+  }
 };
 
 llvm::Constant *CodeGenModule::GenerateRttiRef(const CXXRecordDecl *RD) {
@@ -246,4 +267,10 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
   RttiBuilder b(*this);
 
   return b.Buildclass_type_info(RD);
+}
+
+llvm::Constant *CodeGenModule::GenerateRttiNonClass(QualType Ty) {
+  RttiBuilder b(*this);
+
+  return b.BuildType(Ty);
 }
