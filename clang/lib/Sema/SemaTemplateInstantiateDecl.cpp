@@ -65,11 +65,17 @@ namespace {
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
+    Decl *VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     Decl *VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
-    Decl *VisitDecl(Decl *) {
-      assert(false && "Template instantiation of unknown declaration kind!");
+    Decl *VisitDecl(Decl *D) {
+      unsigned DiagID = SemaRef.getDiagnostics().getCustomDiagID(
+                                                            Diagnostic::Error,
+                                                   "cannot instantiate %0 yet");
+      SemaRef.Diag(D->getLocation(), DiagID)
+        << D->getDeclKindName();
+      
       return 0;
     }
 
@@ -1003,6 +1009,20 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
   SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
   
   return Param;
+}
+
+Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
+  // Using directives are never dependent, so they require no explicit
+  
+  UsingDirectiveDecl *Inst
+    = UsingDirectiveDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                 D->getNamespaceKeyLocation(), 
+                                 D->getQualifierRange(), D->getQualifier(), 
+                                 D->getIdentLocation(), 
+                                 D->getNominatedNamespace(), 
+                                 D->getCommonAncestor());
+  Owner->addDecl(Inst);
+  return Inst;
 }
 
 Decl *
