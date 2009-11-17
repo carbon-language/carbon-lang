@@ -130,12 +130,17 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
     LookupCtx = computeDeclContext(ObjectType);
     isDependent = ObjectType->isDependentType();
+    assert((isDependent || !ObjectType->isIncompleteType()) && 
+           "Caller should have completed object type");
   } else if (SS.isSet()) {
     // This nested-name-specifier occurs after another nested-name-specifier,
     // so long into the context associated with the prior nested-name-specifier.
-
     LookupCtx = computeDeclContext(SS, EnteringContext);
     isDependent = isDependentScopeSpecifier(SS);
+    
+    // The declaration context must be complete.
+    if (LookupCtx && RequireCompleteDeclContext(SS))
+      return TNK_Non_template;
   }
 
   LookupResult Found(*this, TName, SourceLocation(), LookupOrdinaryName);
@@ -145,11 +150,6 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     // computed, which is either the type of the base of a member access
     // expression or the declaration context associated with a prior
     // nested-name-specifier.
-
-    // The declaration context must be complete.
-    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
-      return TNK_Non_template;
-
     LookupQualifiedName(Found, LookupCtx);
 
     if (ObjectTypePtr && Found.empty()) {

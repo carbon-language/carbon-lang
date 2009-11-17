@@ -2141,12 +2141,19 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
     return move(Base);
   }
 
+  // The object type must be complete (or dependent).
+  if (!BaseType->isDependentType() &&
+      RequireCompleteType(OpLoc, BaseType, 
+                          PDiag(diag::err_incomplete_member_access)))
+    return ExprError();
+  
   // C++ [basic.lookup.classref]p2:
   //   If the id-expression in a class member access (5.2.5) is an
-  //   unqualified-id, and the type of the object expres- sion is of a class
+  //   unqualified-id, and the type of the object expression is of a class
   //   type C (or of pointer to a class type C), the unqualified-id is looked
   //   up in the scope of class C. [...]
   ObjectType = BaseType.getAsOpaquePtr();
+  
   return move(Base);
 }
 

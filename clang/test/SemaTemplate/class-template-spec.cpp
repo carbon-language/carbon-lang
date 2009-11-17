@@ -19,7 +19,7 @@ int test_specs(A<float, float> *a1, A<float, int> *a2) {
 int test_incomplete_specs(A<double, double> *a1, 
                           A<double> *a2)
 {
-  (void)a1->x; // expected-error{{incomplete definition of type 'A<double, double>'}}
+  (void)a1->x; // expected-error{{member access into incomplete type}}
   (void)a2->x; // expected-error{{implicit instantiation of undefined template 'struct A<double, int>'}}
 }
 
