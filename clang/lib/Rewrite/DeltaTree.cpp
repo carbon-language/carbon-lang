@@ -19,12 +19,6 @@ using namespace clang;
 using llvm::cast;
 using llvm::dyn_cast;
 
-namespace {
-  struct SourceDelta;
-  class DeltaTreeNode;
-  class DeltaTreeInteriorNode;
-}
-
 /// The DeltaTree class is a multiway search tree (BTree) structure with some
 /// fancy features.  B-Trees are are generally more memory and cache efficient
 /// than binary trees, because they store multiple keys/values in each node.
@@ -55,21 +49,17 @@ namespace {
       return Delta;
     }
   };
-} // end anonymous namespace
-
-
-namespace {
-  struct InsertResult {
-    DeltaTreeNode *LHS, *RHS;
-    SourceDelta Split;
-  };
-} // end anonymous namespace
-
-
-namespace {
+  
   /// DeltaTreeNode - The common part of all nodes.
   ///
   class DeltaTreeNode {
+  public:
+    struct InsertResult {
+      DeltaTreeNode *LHS, *RHS;
+      SourceDelta Split;
+    };
+    
+  private:
     friend class DeltaTreeInteriorNode;
 
     /// WidthFactor - This controls the number of K/V slots held in the BTree:
@@ -473,7 +463,7 @@ void DeltaTree::AddDelta(unsigned FileIndex, int Delta) {
   assert(Delta && "Adding a noop?");
   DeltaTreeNode *MyRoot = getRoot(Root);
 
-  InsertResult InsertRes;
+  DeltaTreeNode::InsertResult InsertRes;
   if (MyRoot->DoInsertion(FileIndex, Delta, &InsertRes)) {
     Root = MyRoot = new DeltaTreeInteriorNode(InsertRes);
   }
