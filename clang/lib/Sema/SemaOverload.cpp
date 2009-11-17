@@ -2645,7 +2645,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // call on the stack and we don't need its arguments to be
   // well-formed.
   DeclRefExpr ConversionRef(Conversion, Conversion->getType(),
-                            SourceLocation());
+                            From->getLocStart());
   ImplicitCastExpr ConversionFn(Context.getPointerType(Conversion->getType()),
                                 CastExpr::CK_FunctionToPointerDecay,
                                 &ConversionRef, false);
@@ -2655,7 +2655,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // allocator).
   CallExpr Call(Context, &ConversionFn, 0, 0,
                 Conversion->getConversionType().getNonReferenceType(),
-                SourceLocation());
+                From->getLocStart());
   ImplicitConversionSequence ICS =
     TryCopyInitialization(&Call, ToType,
                           /*SuppressUserConversions=*/true,
