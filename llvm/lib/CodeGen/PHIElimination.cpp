@@ -40,7 +40,7 @@ STATISTIC(NumSplits, "Number of critical edges split on demand");
 static cl::opt<bool>
 SplitEdges("split-phi-edges",
            cl::desc("Split critical edges during phi elimination"),
-           cl::init(true), cl::Hidden);
+           cl::init(false), cl::Hidden);
 
 char PHIElimination::ID = 0;
 static RegisterPass<PHIElimination>
