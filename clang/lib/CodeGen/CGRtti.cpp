@@ -263,10 +263,13 @@ public:
     std::vector<llvm::Constant *> info;
 
     QualType PTy = Ty->getPointeeType();
-    // FIXME: ptr-mem data
     QualType BTy;
-    // FIXME: ptr-mem data
     bool PtrMem = false;
+    if (const MemberPointerType *MPT = dyn_cast<MemberPointerType>(Ty)) {
+      PtrMem = true;
+      BTy = QualType(MPT->getClass(), 0);
+      PTy = MPT->getPointeeType();
+    }
 
     if (PtrMem)
       C = BuildVtableRef("_ZTVN10__cxxabiv129__pointer_to_member_type_infoE");
@@ -335,6 +338,8 @@ public:
 
       return BuildPointerType(Ty);
     }
+    case Type::MemberPointer:
+      return BuildPointerType(Ty);
     }
   }
 };

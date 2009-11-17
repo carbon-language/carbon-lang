@@ -359,6 +359,9 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
     return Builder.CreateBitCast(CGM.GenerateRttiNonClass(Ty), LTy);
   }
   Expr *subE = E->getExprOperand();
+  Ty = subE->getType();
+  CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
+  Ty = CanTy.getUnqualifiedType().getNonReferenceType();
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
     if (RD->isPolymorphic()) {
@@ -397,9 +400,6 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
     }      
     return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
   }
-  Ty = subE->getType();
-  CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
-  Ty = CanTy.getUnqualifiedType().getNonReferenceType();
   return Builder.CreateBitCast(CGM.GenerateRttiNonClass(Ty), LTy);
 }
 
