@@ -605,7 +605,8 @@ clang_getNumCompletionChunks(CXCompletionString completion_string);
  * \param source_filename the name of the source file that should be parsed
  * to perform code-completion. This source file must be the same as or
  * include the filename described by \p complete_filename, or no code-completion
- * results will be produced.
+ * results will be produced.  NOTE: One can also specify NULL for this argument if
+ * the source file is included in command_line_args.
  *
  * \param num_command_line_args the number of command-line arguments stored in
  * \p command_line_args.

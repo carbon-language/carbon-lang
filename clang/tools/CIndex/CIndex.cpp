@@ -1211,7 +1211,8 @@ void clang_codeComplete(CXIndex CIdx,
   
   // Add the source file name (FIXME: later, we'll want to build temporary
   // file from the buffer, or just feed the source text via standard input).
-  argv.push_back(source_filename);  
+  if (source_filename)
+    argv.push_back(source_filename);  
   
   // Process the compiler options, stripping off '-o', '-c', '-fsyntax-only'.
   for (int i = 0; i < num_command_line_args; ++i)
