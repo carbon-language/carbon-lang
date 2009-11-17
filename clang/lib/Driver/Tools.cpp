@@ -889,7 +889,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_fgnu_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_flax_vector_conversions);
-  Args.AddLastArg(CmdArgs, options::OPT_fms_extensions);
   Args.AddLastArg(CmdArgs, options::OPT_fnext_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_fno_caret_diagnostics);
   Args.AddLastArg(CmdArgs, options::OPT_fno_show_column);
@@ -940,7 +939,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   else
     CmdArgs.push_back("-fexceptions=0");
 
-  // -frtti is default, only pass non-default.
+  // -frtti is default.
   if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-frtti=0");
 
@@ -949,6 +948,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_funsigned_char,
                     isSignedCharDefault(getToolChain().getTriple())))
     CmdArgs.push_back("-fsigned-char=0");
+
+  // -fms-extensions=0 is default.
+  if (Args.hasFlag(options::OPT_fms_extensions,
+                   options::OPT_fno_ms_extensions,
+                   getToolChain().getTriple().getOS() == llvm::Triple::Win32))
+    CmdArgs.push_back("-fms-extensions");
 
   // -fshort-wchar default varies depending on platform; only
   // pass if specified.

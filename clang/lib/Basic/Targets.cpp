@@ -995,11 +995,6 @@ public:
 
 namespace {
 
-/// GetWindowsVisualStudioLanguageOptions - Set the default language options for Windows.
-static void GetWindowsVisualStudioLanguageOptions(LangOptions &Opts) {
-  Opts.Microsoft = true;
-}
-
 // x86-32 Windows Visual Studio target
 class VisualStudioWindowsX86_32TargetInfo : public WindowsX86_32TargetInfo {
 public:
@@ -1013,10 +1008,6 @@ public:
     // 300=386, 400=486, 500=Pentium, 600=Blend (default)
     // We lost the original triple, so we use the default.
     Define(Defines, "_M_IX86", "600");
-  }
-  virtual void getDefaultLangOptions(LangOptions &Opts) {
-    WindowsX86_32TargetInfo::getDefaultLangOptions(Opts);
-    GetWindowsVisualStudioLanguageOptions(Opts);
   }
 };
 } // end anonymous namespace
