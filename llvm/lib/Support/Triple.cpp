@@ -179,6 +179,33 @@ Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
   return Triple::UnknownArch;
 }
 
+// Returns architecture name that is unsderstood by the target assembler.
+const char *Triple::getArchNameForAssembler() {
+  if (getOS() != Triple::Darwin && getVendor() != Triple::Apple)
+    return NULL;
+
+  StringRef Str = getArchName();
+  if (Str == "i386")
+    return "i386";
+  if (Str == "x86_64")
+    return "x86_64";
+  if (Str == "powerpc")
+    return "ppc";
+  if (Str == "powerpc64")
+    return "ppc64";
+  if (Str == "arm")
+    return "arm";
+  if (Str == "armv4t" || Str == "thumbv4t")
+    return "armv4t";
+  if (Str == "armv5" || Str == "armv5e" || Str == "thumbv5" || Str == "thumbv5e")
+    return "armv5";
+  if (Str == "armv6" || Str == "thumbv6")
+    return "armv6";
+  if (Str == "armv7" || Str == "thumbv7")
+    return "armv7";
+  return NULL;
+}
+
 //
 
 void Triple::Parse() const {

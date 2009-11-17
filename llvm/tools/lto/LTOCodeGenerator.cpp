@@ -24,6 +24,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
@@ -242,51 +243,16 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
 
     // build argument list
     std::vector<const char*> args;
-    std::string targetTriple = _linker.getModule()->getTargetTriple();
+    llvm::Triple targetTriple(_linker.getModule()->getTargetTriple());
+    const char *arch = targetTriple.getArchNameForAssembler();
+
     args.push_back(tool.c_str());
-    if ( targetTriple.find("darwin") != std::string::npos ) {
+
+    if (targetTriple.getOS() == Triple::Darwin) {
         // darwin specific command line options
-        if (strncmp(targetTriple.c_str(), "i386-apple-", 11) == 0) {
+        if (arch != NULL) {
             args.push_back("-arch");
-            args.push_back("i386");
-        }
-        else if (strncmp(targetTriple.c_str(), "x86_64-apple-", 13) == 0) {
-            args.push_back("-arch");
-            args.push_back("x86_64");
-        }
-        else if (strncmp(targetTriple.c_str(), "powerpc-apple-", 14) == 0) {
-            args.push_back("-arch");
-            args.push_back("ppc");
-        }
-        else if (strncmp(targetTriple.c_str(), "powerpc64-apple-", 16) == 0) {
-            args.push_back("-arch");
-            args.push_back("ppc64");
-        }
-        else if (strncmp(targetTriple.c_str(), "arm-apple-", 10) == 0) {
-            args.push_back("-arch");
-            args.push_back("arm");
-        }
-        else if ((strncmp(targetTriple.c_str(), "armv4t-apple-", 13) == 0) ||
-                 (strncmp(targetTriple.c_str(), "thumbv4t-apple-", 15) == 0)) {
-            args.push_back("-arch");
-            args.push_back("armv4t");
-        }
-        else if ((strncmp(targetTriple.c_str(), "armv5-apple-", 12) == 0) ||
-                 (strncmp(targetTriple.c_str(), "armv5e-apple-", 13) == 0) ||
-                 (strncmp(targetTriple.c_str(), "thumbv5-apple-", 14) == 0) ||
-                 (strncmp(targetTriple.c_str(), "thumbv5e-apple-", 15) == 0)) {
-            args.push_back("-arch");
-            args.push_back("armv5");
-        }
-        else if ((strncmp(targetTriple.c_str(), "armv6-apple-", 12) == 0) ||
-                 (strncmp(targetTriple.c_str(), "thumbv6-apple-", 14) == 0)) {
-            args.push_back("-arch");
-            args.push_back("armv6");
-        }
-        else if ((strncmp(targetTriple.c_str(), "armv7-apple-", 12) == 0) ||
-                 (strncmp(targetTriple.c_str(), "thumbv7-apple-", 14) == 0)) {
-            args.push_back("-arch");
-            args.push_back("armv7");
+            args.push_back(arch);
         }
         // add -static to assembler command line when code model requires
         if ( (_assemblerPath != NULL) && (_codeModel == LTO_CODEGEN_PIC_MODEL_STATIC) )
