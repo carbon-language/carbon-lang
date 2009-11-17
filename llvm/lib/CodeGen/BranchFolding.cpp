@@ -670,39 +670,6 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
   // this many instructions in common.
   unsigned minCommonTailLength = TailMergeSize;
 
-  // If there's a successor block, there are some cases which don't require
-  // new branching and as such are very likely to be profitable.
-  if (SuccBB) {
-    if (SuccBB->pred_size() == MergePotentials.size() &&
-        !MergePotentials[0].getBlock()->empty()) {
-      // If all the predecessors have at least one tail instruction in common,
-      // merging is very likely to be a win since it won't require an increase
-      // in static branches, and it will decrease the static instruction count.
-      bool AllPredsMatch = true;
-      MachineBasicBlock::iterator FirstNonTerm;
-      unsigned MinNumTerms = CountTerminators(MergePotentials[0].getBlock(),
-                                              FirstNonTerm);
-      if (FirstNonTerm != MergePotentials[0].getBlock()->end()) {
-        for (unsigned i = 1, e = MergePotentials.size(); i != e; ++i) {
-          MachineBasicBlock::iterator OtherFirstNonTerm;
-          unsigned NumTerms = CountTerminators(MergePotentials[0].getBlock(),
-                                               OtherFirstNonTerm);
-          if (NumTerms < MinNumTerms)
-            MinNumTerms = NumTerms;
-          if (OtherFirstNonTerm == MergePotentials[i].getBlock()->end() ||
-              OtherFirstNonTerm->isIdenticalTo(FirstNonTerm)) {
-            AllPredsMatch = false;
-            break;
-          }
-        }
-
-        // If they all have an instruction in common, do any amount of merging.
-        if (AllPredsMatch)
-          minCommonTailLength = MinNumTerms + 1;
-      }
-    }
-  }
-
   DEBUG(errs() << "\nTryTailMergeBlocks: ";
         for (unsigned i = 0, e = MergePotentials.size(); i != e; ++i)
           errs() << "BB#" << MergePotentials[i].getBlock()->getNumber()
