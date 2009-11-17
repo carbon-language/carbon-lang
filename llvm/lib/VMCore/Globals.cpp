@@ -171,6 +171,21 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
   this->setOperand(0, cast<Constant>(To));
 }
 
+void GlobalVariable::setInitializer(Constant *InitVal) {
+  if (InitVal == 0) {
+    if (hasInitializer()) {
+      Op<0>().set(0);
+      NumOperands = 0;
+    }
+  } else {
+    assert(InitVal->getType() == getType()->getElementType() &&
+           "Initializer type must match GlobalVariable type");
+    if (!hasInitializer())
+      NumOperands = 1;
+    Op<0>().set(InitVal);
+  }
+}
+
 /// copyAttributesFrom - copy all additional attributes (those not needed to
 /// create a GlobalVariable) from the GlobalVariable Src to this one.
 void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
