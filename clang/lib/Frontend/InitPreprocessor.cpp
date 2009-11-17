@@ -477,7 +477,7 @@ void clang::InitializePreprocessor(Preprocessor &PP,
                          LineDirective, LineDirective+strlen(LineDirective));
 
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
-  if (InitOpts.getUsePredefines())
+  if (InitOpts.UsePredefines)
     InitializePredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
                                PredefineBuffer);
 
@@ -488,27 +488,25 @@ void clang::InitializePreprocessor(Preprocessor &PP,
                          LineDirective, LineDirective+strlen(LineDirective));
 
   // Process #define's and #undef's in the order they are given.
-  for (PreprocessorOptions::macro_iterator I = InitOpts.macro_begin(),
-       E = InitOpts.macro_end(); I != E; ++I) {
-    if (I->second)  // isUndef
-      UndefineBuiltinMacro(PredefineBuffer, I->first.c_str());
+  for (unsigned i = 0, e = InitOpts.Macros.size(); i != e; ++i) {
+    if (InitOpts.Macros[i].second)  // isUndef
+      UndefineBuiltinMacro(PredefineBuffer, InitOpts.Macros[i].first.c_str());
     else
-      DefineBuiltinMacro(PredefineBuffer, I->first.c_str());
+      DefineBuiltinMacro(PredefineBuffer, InitOpts.Macros[i].first.c_str());
   }
 
   // If -imacros are specified, include them now.  These are processed before
   // any -include directives.
-  for (PreprocessorOptions::imacro_iterator I = InitOpts.imacro_begin(),
-       E = InitOpts.imacro_end(); I != E; ++I)
-    AddImplicitIncludeMacros(PredefineBuffer, *I);
+  for (unsigned i = 0, e = InitOpts.MacroIncludes.size(); i != e; ++i)
+    AddImplicitIncludeMacros(PredefineBuffer, InitOpts.MacroIncludes[i]);
 
   // Process -include directives.
-  for (PreprocessorOptions::include_iterator I = InitOpts.include_begin(),
-       E = InitOpts.include_end(); I != E; ++I) {
-    if (*I == InitOpts.getImplicitPTHInclude())
-      AddImplicitIncludePTH(PredefineBuffer, PP, *I);
+  for (unsigned i = 0, e = InitOpts.Includes.size(); i != e; ++i) {
+    const std::string &Path = InitOpts.Includes[i];
+    if (Path == InitOpts.ImplicitPTHInclude)
+      AddImplicitIncludePTH(PredefineBuffer, PP, Path);
     else
-      AddImplicitInclude(PredefineBuffer, *I);
+      AddImplicitInclude(PredefineBuffer, Path);
   }
 
   // Null terminate PredefinedBuffer and add it.

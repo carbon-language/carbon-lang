@@ -1008,8 +1008,8 @@ void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
 void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
   using namespace preprocessoroptions;
 
-  Opts.setImplicitPCHInclude(ImplicitIncludePCH);
-  Opts.setImplicitPTHInclude(ImplicitIncludePTH);
+  Opts.ImplicitPCHInclude = ImplicitIncludePCH;
+  Opts.ImplicitPTHInclude = ImplicitIncludePTH;
 
   // Select the token cache file, we don't support more than one currently so we
   // can't have both an implicit-pth and a token cache file.
@@ -1020,12 +1020,12 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
     exit(1);
   }
   if (TokenCache.getPosition())
-    Opts.setTokenCache(TokenCache);
+    Opts.TokenCache = TokenCache;
   else
-    Opts.setTokenCache(ImplicitIncludePTH);
+    Opts.TokenCache = ImplicitIncludePTH;
 
   // Use predefines?
-  Opts.setUsePredefines(!UndefMacros);
+  Opts.UsePredefines = !UndefMacros;
 
   // Add macros from the command line.
   unsigned d = 0, D = D_macros.size();
@@ -1040,7 +1040,7 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
   // If -imacros are specified, include them now.  These are processed before
   // any -include directives.
   for (unsigned i = 0, e = ImplicitMacroIncludes.size(); i != e; ++i)
-    Opts.addMacroInclude(ImplicitMacroIncludes[i]);
+    Opts.MacroIncludes.push_back(ImplicitMacroIncludes[i]);
 
   // Add the ordered list of -includes, sorting in the implicit include options
   // at the appropriate location.
@@ -1064,7 +1064,7 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
   llvm::array_pod_sort(OrderedPaths.begin(), OrderedPaths.end());
 
   for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i)
-    Opts.addInclude(*OrderedPaths[i].second);
+    Opts.Includes.push_back(*OrderedPaths[i].second);
 }
 
 void clang::InitializeLangOptions(LangOptions &Options,

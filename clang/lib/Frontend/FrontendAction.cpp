@@ -90,10 +90,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       goto failure;
 
     /// Use PCH?
-    if (!CI.getPreprocessorOpts().getImplicitPCHInclude().empty()) {
+    if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
       assert(hasPCHSupport() && "This action does not have PCH support!");
       CI.createPCHExternalASTSource(
-        CI.getPreprocessorOpts().getImplicitPCHInclude());
+        CI.getPreprocessorOpts().ImplicitPCHInclude);
       if (!CI.getASTContext().getExternalSource())
         goto failure;
     }
