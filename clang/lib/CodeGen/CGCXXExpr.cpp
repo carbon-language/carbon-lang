@@ -496,7 +496,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
       /// Call __cxa_bad_cast
       ResultType = llvm::Type::getVoidTy(VMContext);
       const llvm::FunctionType *FBadTy;
-      FTy = llvm::FunctionType::get(ResultType, false);
+      FBadTy = llvm::FunctionType::get(ResultType, false);
       llvm::Value *F = CGM.CreateRuntimeFunction(FBadTy, "__cxa_bad_cast");
       Builder.CreateCall(F)->setDoesNotReturn();
       Builder.CreateUnreachable();
