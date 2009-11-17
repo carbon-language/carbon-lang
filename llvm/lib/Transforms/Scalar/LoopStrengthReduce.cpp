@@ -2414,7 +2414,7 @@ bool LoopStrengthReduce::StrideMightBeShared(const SCEV* Stride, Loop *L,
 /// conditional branch or it's and / or with other conditions before being used
 /// as the condition.
 static bool isUsedByExitBranch(ICmpInst *Cond, Loop *L) {
- BasicBlock *CondBB = Cond->getParent();
+  BasicBlock *CondBB = Cond->getParent();
   if (!L->isLoopExiting(CondBB))
     return false;
   BranchInst *TermBr = dyn_cast<BranchInst>(CondBB->getTerminator());
@@ -2482,106 +2482,119 @@ static bool ShouldCountToZero(ICmpInst *Cond, IVStrideUse* &CondUse,
 /// OptimizeLoopTermCond - Change loop terminating condition to use the
 /// postinc iv when possible.
 void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
-  // Finally, get the terminating condition for the loop if possible.  If we
-  // can, we want to change it to use a post-incremented version of its
-  // induction variable, to allow coalescing the live ranges for the IV into
-  // one register value.
   BasicBlock *LatchBlock = L->getLoopLatch();
-  BasicBlock *ExitingBlock = L->getExitingBlock();
+  bool LatchExit = L->isLoopExiting(LatchBlock);
+  SmallVector<BasicBlock*, 8> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
 
-  if (!ExitingBlock)
-    // Multiple exits, just look at the exit in the latch block if there is one.
-    ExitingBlock = LatchBlock;
-  BranchInst *TermBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
-  if (!TermBr)
-    return;
-  if (TermBr->isUnconditional() || !isa<ICmpInst>(TermBr->getCondition()))
-    return;
+  for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
+    BasicBlock *ExitingBlock = ExitingBlocks[i];
 
-  // Search IVUsesByStride to find Cond's IVUse if there is one.
-  IVStrideUse *CondUse = 0;
-  const SCEV *CondStride = 0;
-  ICmpInst *Cond = cast<ICmpInst>(TermBr->getCondition());
-  if (!FindIVUserForCond(Cond, CondUse, CondStride))
-    return;
+    // Finally, get the terminating condition for the loop if possible.  If we
+    // can, we want to change it to use a post-incremented version of its
+    // induction variable, to allow coalescing the live ranges for the IV into
+    // one register value.
 
-  bool UsePostInc = true;
-  if (ExitingBlock != LatchBlock) {
-    if (Cond->hasOneUse()) {
-      // See below, we don't want the condition to be cloned.
+    BranchInst *TermBr = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
+    if (!TermBr)
+      continue;
+    // FIXME: Overly conservative, termination condition could be an 'or' etc..
+    if (TermBr->isUnconditional() || !isa<ICmpInst>(TermBr->getCondition()))
+      continue;
 
-      // If exiting block is the latch block, we know it's safe and profitable
-      // to transform the icmp to use post-inc iv. Otherwise do so only if it
-      // would not reuse another iv and its iv would be reused by other uses.
-      // We are optimizing for the case where the icmp is the only use of the
-      // iv.
-      IVUsersOfOneStride &StrideUses = *IU->IVUsesByStride[CondStride];
-      for (ilist<IVStrideUse>::iterator I = StrideUses.Users.begin(),
-             E = StrideUses.Users.end(); I != E; ++I) {
-        if (I->getUser() == Cond)
-          continue;
-        if (!I->isUseOfPostIncrementedValue()) {
-          UsePostInc = false;
-          break;
+    // Search IVUsesByStride to find Cond's IVUse if there is one.
+    IVStrideUse *CondUse = 0;
+    const SCEV *CondStride = 0;
+    ICmpInst *Cond = cast<ICmpInst>(TermBr->getCondition());
+    if (!FindIVUserForCond(Cond, CondUse, CondStride))
+      continue;
+
+    // If the latch block is exiting and it's not a single block loop, it's
+    // not safe to use postinc iv in other exiting blocks. FIXME: overly
+    // conservative? How about icmp stride optimization?
+    bool UsePostInc =  !(e > 1 && LatchExit && ExitingBlock != LatchBlock);
+    if (UsePostInc && ExitingBlock != LatchBlock) {
+      if (!Cond->hasOneUse())
+        // See below, we don't want the condition to be cloned.
+        UsePostInc = false;
+      else {
+        // If exiting block is the latch block, we know it's safe and profitable
+        // to transform the icmp to use post-inc iv. Otherwise do so only if it
+        // would not reuse another iv and its iv would be reused by other uses.
+        // We are optimizing for the case where the icmp is the only use of the
+        // iv.
+        IVUsersOfOneStride &StrideUses = *IU->IVUsesByStride[CondStride];
+        for (ilist<IVStrideUse>::iterator I = StrideUses.Users.begin(),
+               E = StrideUses.Users.end(); I != E; ++I) {
+          if (I->getUser() == Cond)
+            continue;
+          if (!I->isUseOfPostIncrementedValue()) {
+            UsePostInc = false;
+            break;
+          }
         }
+      }
+
+      // If iv for the stride might be shared and any of the users use pre-inc
+      // iv might be used, then it's not safe to use post-inc iv.
+      if (UsePostInc &&
+          isa<SCEVConstant>(CondStride) &&
+          StrideMightBeShared(CondStride, L, true))
+        UsePostInc = false;
+    }
+
+    // If the trip count is computed in terms of a max (due to ScalarEvolution
+    // being unable to find a sufficient guard, for example), change the loop
+    // comparison to use SLT or ULT instead of NE.
+    Cond = OptimizeMax(L, Cond, CondUse);
+
+    // If possible, change stride and operands of the compare instruction to
+    // eliminate one stride. However, avoid rewriting the compare instruction
+    // with an iv of new stride if it's likely the new stride uses will be
+    // rewritten using the stride of the compare instruction.
+    if (ExitingBlock == LatchBlock && isa<SCEVConstant>(CondStride)) {
+      // If the condition stride is a constant and it's the only use, we might
+      // want to optimize it first by turning it to count toward zero.
+      if (!StrideMightBeShared(CondStride, L, false) &&
+          !ShouldCountToZero(Cond, CondUse, SE, L, TLI))
+        Cond = ChangeCompareStride(L, Cond, CondUse, CondStride);
+    }
+
+    if (!UsePostInc)
+      continue;
+
+    DEBUG(errs() << "  Change loop exiting icmp to use postinc iv: "
+          << *Cond << '\n');
+
+    // It's possible for the setcc instruction to be anywhere in the loop, and
+    // possible for it to have multiple users.  If it is not immediately before
+    // the exiting block branch, move it.
+    if (&*++BasicBlock::iterator(Cond) != (Instruction*)TermBr) {
+      if (Cond->hasOneUse()) {   // Condition has a single use, just move it.
+        Cond->moveBefore(TermBr);
+      } else {
+        // Otherwise, clone the terminating condition and insert into the
+        // loopend.
+        Cond = cast<ICmpInst>(Cond->clone());
+        Cond->setName(L->getHeader()->getName() + ".termcond");
+        ExitingBlock->getInstList().insert(TermBr, Cond);
+
+        // Clone the IVUse, as the old use still exists!
+        IU->IVUsesByStride[CondStride]->addUser(CondUse->getOffset(), Cond,
+                                             CondUse->getOperandValToReplace());
+        CondUse = &IU->IVUsesByStride[CondStride]->Users.back();
       }
     }
 
-    // If iv for the stride might be shared and any of the users use pre-inc iv
-    // might be used, then it's not safe to use post-inc iv.
-    if (UsePostInc &&
-        isa<SCEVConstant>(CondStride) &&
-        StrideMightBeShared(CondStride, L, true))
-      UsePostInc = false;
+    // If we get to here, we know that we can transform the setcc instruction to
+    // use the post-incremented version of the IV, allowing us to coalesce the
+    // live ranges for the IV correctly.
+    CondUse->setOffset(SE->getMinusSCEV(CondUse->getOffset(), CondStride));
+    CondUse->setIsUseOfPostIncrementedValue(true);
+    Changed = true;
+
+    ++NumLoopCond;
   }
-
-  // If the trip count is computed in terms of a max (due to ScalarEvolution
-  // being unable to find a sufficient guard, for example), change the loop
-  // comparison to use SLT or ULT instead of NE.
-  Cond = OptimizeMax(L, Cond, CondUse);
-
-  // If possible, change stride and operands of the compare instruction to
-  // eliminate one stride. However, avoid rewriting the compare instruction with
-  // an iv of new stride if it's likely the new stride uses will be rewritten
-  // using the stride of the compare instruction.
-  if (ExitingBlock == LatchBlock && isa<SCEVConstant>(CondStride)) {
-    // If the condition stride is a constant and it's the only use, we might
-    // want to optimize it first by turning it to count toward zero.
-    if (!StrideMightBeShared(CondStride, L, false) &&
-        !ShouldCountToZero(Cond, CondUse, SE, L, TLI))
-      Cond = ChangeCompareStride(L, Cond, CondUse, CondStride);
-  }
-
-  if (!UsePostInc)
-    return;
-
-  // It's possible for the setcc instruction to be anywhere in the loop, and
-  // possible for it to have multiple users.  If it is not immediately before
-  // the latch block branch, move it.
-  if (&*++BasicBlock::iterator(Cond) != (Instruction*)TermBr) {
-    if (Cond->hasOneUse()) {   // Condition has a single use, just move it.
-      Cond->moveBefore(TermBr);
-    } else {
-      // Otherwise, clone the terminating condition and insert into the loopend.
-      Cond = cast<ICmpInst>(Cond->clone());
-      Cond->setName(L->getHeader()->getName() + ".termcond");
-      LatchBlock->getInstList().insert(TermBr, Cond);
-
-      // Clone the IVUse, as the old use still exists!
-      IU->IVUsesByStride[CondStride]->addUser(CondUse->getOffset(), Cond,
-                                             CondUse->getOperandValToReplace());
-      CondUse = &IU->IVUsesByStride[CondStride]->Users.back();
-    }
-  }
-
-  // If we get to here, we know that we can transform the setcc instruction to
-  // use the post-incremented version of the IV, allowing us to coalesce the
-  // live ranges for the IV correctly.
-  CondUse->setOffset(SE->getMinusSCEV(CondUse->getOffset(), CondStride));
-  CondUse->setIsUseOfPostIncrementedValue(true);
-  Changed = true;
-
-  ++NumLoopCond;
 }
 
 bool LoopStrengthReduce::OptimizeLoopCountIVOfStride(const SCEV* &Stride,
@@ -2728,7 +2741,6 @@ bool LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
 }
 
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
-
   IU = &getAnalysis<IVUsers>();
   LI = &getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
