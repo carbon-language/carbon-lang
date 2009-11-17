@@ -902,6 +902,11 @@ void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
 void GRExprEngine::ProcessEndPath(GREndPathNodeBuilder& builder) {
   getTF().EvalEndPath(*this, builder);
   StateMgr.EndPath(builder.getState());
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
+    void *tag = I->first;
+    Checker *checker = I->second;
+    checker->EvalEndPath(builder, tag, *this);
+  }
 }
 
 /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor

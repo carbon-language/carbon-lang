@@ -170,6 +170,8 @@ public:
                             const Stmt *StoreE, SVal location, SVal val) {}
   virtual void EvalDeadSymbols(CheckerContext &C, const Stmt *S,
                                SymbolReaper &SymReaper) {}
+  virtual void EvalEndPath(GREndPathNodeBuilder &B, void *tag,
+                           GRExprEngine &Eng) {}
 };
 } // end clang namespace
 

@@ -22,8 +22,28 @@ using namespace clang;
 
 namespace {
 
-enum RefState {
-  Allocated, Released, Escaped
+struct RefState {
+  enum Kind { Allocated, Released, Escaped } K;
+  const Stmt *S;
+
+  RefState(Kind k, const Stmt *s) : K(k), S(s) {}
+
+  bool isAllocated() const { return K == Allocated; }
+  bool isReleased() const { return K == Released; }
+  bool isEscaped() const { return K == Escaped; }
+
+  bool operator==(const RefState &X) const {
+    return K == X.K && S == X.S;
+  }
+
+  static RefState getAllocated(const Stmt *s) { return RefState(Allocated, s); }
+  static RefState getReleased(const Stmt *s) { return RefState(Released, s); }
+  static RefState getEscaped(const Stmt *s) { return RefState(Escaped, s); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddInteger(K);
+    ID.AddPointer(S);
+  }
 };
 
 class VISIBILITY_HIDDEN RegionState {};
@@ -39,25 +59,15 @@ public:
   static void *getTag();
   void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
+  void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
   void FreeMem(CheckerContext &C, const CallExpr *CE);
 };
 }
 
-namespace llvm {
-  template<> struct FoldingSetTrait<RefState> {
-    static void Profile(const RefState &X, FoldingSetNodeID &ID) { 
-      ID.AddInteger(X);
-    }
-    static void Profile(RefState &X, FoldingSetNodeID &ID) { 
-      ID.AddInteger(X);
-    }
-  };
-}
-
 namespace clang {
-  template<>
+  template <>
   struct GRStateTrait<RegionState> 
     : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, RefState> > {
     static void *GDMIndex() { return MallocChecker::getTag(); }
@@ -101,7 +111,8 @@ void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
   SymbolRef Sym = CallVal.getAsLocSymbol();
   assert(Sym);
   // Set the symbol's state to Allocated.
-  const GRState *AllocState = state->set<RegionState>(Sym, Allocated);
+  const GRState *AllocState 
+    = state->set<RegionState>(Sym, RefState::getAllocated(CE));
   C.addTransition(C.GenerateNode(CE, AllocState));
 }
 
@@ -115,7 +126,7 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
   assert(RS);
 
   // Check double free.
-  if (*RS == Released) {
+  if (RS->isReleased()) {
     ExplodedNode *N = C.GenerateNode(CE, true);
     if (N) {
       if (!BT_DoubleFree)
@@ -130,7 +141,8 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
   }
 
   // Normal free.
-  const GRState *FreedState = state->set<RegionState>(Sym, Released);
+  const GRState *FreedState 
+    = state->set<RegionState>(Sym, RefState::getReleased(CE));
   C.addTransition(C.GenerateNode(CE, FreedState));
 }
 
@@ -144,16 +156,36 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,
     if (!RS)
       return;
 
-    if (*RS == Allocated) {
+    if (RS->isAllocated()) {
       ExplodedNode *N = C.GenerateNode(S, true);
       if (N) {
         if (!BT_Leak)
           BT_Leak = new BuiltinBug("Memory leak",
                      "Allocated memory never released. Potential memory leak.");
         // FIXME: where it is allocated.
-        BugReport *R = new BugReport(*BT_Leak,
-                                     BT_Leak->getDescription(), N);
+        BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
         C.EmitReport(R);
+      }
+    }
+  }
+}
+
+void MallocChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
+                                GRExprEngine &Eng) {
+  const GRState *state = B.getState();
+  typedef llvm::ImmutableMap<SymbolRef, RefState> SymMap;
+  SymMap M = state->get<RegionState>();
+
+  for (SymMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    RefState RS = I->second;
+    if (RS.isAllocated()) {
+      ExplodedNode *N = B.generateNode(state, tag, B.getPredecessor());
+      if (N) {
+        if (!BT_Leak)
+          BT_Leak = new BuiltinBug("Memory leak",
+                     "Allocated memory never released. Potential memory leak.");
+        BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
+        Eng.getBugReporter().EmitReport(R);
       }
     }
   }
