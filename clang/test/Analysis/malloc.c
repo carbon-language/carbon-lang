@@ -23,8 +23,8 @@ void f2() {
 // or inter-procedural analysis, this is a conservative answer.
 int *f3() {
   static int *p = 0;
-  p = malloc(10); // will be fixed.
-  return p; // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  p = malloc(10); 
+  return p; // no-warning
 }
 
 // This case tests that storing malloc'ed memory to a static global variable
@@ -32,6 +32,6 @@ int *f3() {
 // functions or inter-procedural analysis, this is a conservative answer.
 static int *p_f4 = 0;
 int *f4() {
-  p_f4 = malloc(10); // will be fixed.
-  return p_f4; // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  p_f4 = malloc(10); 
+  return p_f4; // no-warning
 }

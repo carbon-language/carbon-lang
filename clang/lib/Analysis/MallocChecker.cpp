@@ -60,6 +60,7 @@ public:
   void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
   void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
+  void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
   void FreeMem(CheckerContext &C, const CallExpr *CE);
@@ -189,4 +190,29 @@ void MallocChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
       }
     }
   }
+}
+
+void MallocChecker::PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S) {
+  const Expr *RetE = S->getRetValue();
+  if (!RetE)
+    return;
+
+  const GRState *state = C.getState();
+
+  SymbolRef Sym = state->getSVal(RetE).getAsSymbol();
+
+  if (!Sym)
+    return;
+
+  const RefState *RS = state->get<RegionState>(Sym);
+  if (!RS)
+    return;
+
+  // FIXME: check other cases.
+  if (RS->isAllocated())
+    state = state->set<RegionState>(Sym, RefState::getEscaped(S));
+
+  ExplodedNode *N = C.GenerateNode(S, state);
+  if (N)
+    C.addTransition(N);
 }
