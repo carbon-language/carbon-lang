@@ -1121,9 +1121,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
   Options.setVisibilityMode(SymbolVisibility);
   Options.OverflowChecking = OverflowChecking;
 
-  // Allow the target to set the default the language options as it sees fit.
-  Target.getDefaultLangOptions(Options);
-
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
     switch (IK) {

@@ -155,24 +155,6 @@ static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
          iPhoneOSStr);
 }
 
-/// GetDarwinLanguageOptions - Set the default language options for darwin.
-static void GetDarwinLanguageOptions(LangOptions &Opts,
-                                     const llvm::Triple &Triple) {
-  unsigned MajorVersion = Triple.getDarwinMajorNumber();
-
-  // Blocks and stack protectors default to on for 10.6 (darwin10) and beyond.
-  if (MajorVersion > 9) {
-    Opts.Blocks = 1;
-    Opts.setStackProtectorMode(LangOptions::SSPOn);
-  }
-
-  // Non-fragile ABI (in 64-bit mode) default to on for 10.5 (darwin9) and
-  // beyond.
-  if (MajorVersion >= 9 && Opts.ObjC1 &&
-      Triple.getArch() == llvm::Triple::x86_64)
-    Opts.ObjCNonFragileABI = 1;
-}
-
 namespace {
 template<typename Target>
 class DarwinTargetInfo : public OSTargetInfo<Target> {
@@ -183,12 +165,6 @@ protected:
     getDarwinOSXDefines(Defines, Triple);
   }
 
-  /// getDefaultLangOptions - Allow the target to specify default settings for
-  /// various language options.  These may be overridden by command line
-  /// options.
-  virtual void getDefaultLangOptions(LangOptions &Opts) {
-    GetDarwinLanguageOptions(Opts, TargetInfo::getTriple());
-  }
 public:
   DarwinTargetInfo(const std::string& triple) :
     OSTargetInfo<Target>(triple) {

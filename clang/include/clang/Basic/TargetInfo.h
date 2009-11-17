@@ -342,11 +342,6 @@ public:
     return "";
   }
 
-  /// getDefaultLangOptions - Allow the target to specify default settings for
-  /// various language options.  These may be overridden by command line
-  /// options.
-  virtual void getDefaultLangOptions(LangOptions &Opts) {}
-
   /// setForcedLangOptions - Set forced language options.
   /// Apply changes to the target information with respect to certain
   /// language options which change the target configuration.
