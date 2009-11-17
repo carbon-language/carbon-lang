@@ -93,17 +93,17 @@
 // ARM:WCHAR_MAX_ 2147483647
 // ARM:WCHAR_MIN_ (-2147483647 -1)
 //
-// ARM:INT8_C_(0) (0)
-// ARM:UINT8_C_(0) (0U)
-// ARM:INT16_C_(0) (0)
-// ARM:UINT16_C_(0) (0U)
-// ARM:INT32_C_(0) (0)
-// ARM:UINT32_C_(0) (0U)
-// ARM:INT64_C_(0) (0LL)
-// ARM:UINT64_C_(0) (0ULL)
+// ARM:INT8_C_(0) 0
+// ARM:UINT8_C_(0) 0U
+// ARM:INT16_C_(0) 0
+// ARM:UINT16_C_(0) 0U
+// ARM:INT32_C_(0) 0
+// ARM:UINT32_C_(0) 0U
+// ARM:INT64_C_(0) 0LL
+// ARM:UINT64_C_(0) 0ULL
 //
-// ARM:INTMAX_C_(0) (0LL)
-// ARM:UINTMAX_C_(0) (0ULL)
+// ARM:INTMAX_C_(0) 0LL
+// ARM:UINTMAX_C_(0) 0ULL
 //
 //
 // RUN: clang-cc -E -ffreestanding -triple=bfin-none-none %s | FileCheck -check-prefix BFIN %s
@@ -201,17 +201,17 @@
 // BFIN:WCHAR_MAX_ 2147483647
 // BFIN:WCHAR_MIN_ (-2147483647 -1)
 //
-// BFIN:INT8_C_(0) (0)
-// BFIN:UINT8_C_(0) (0U)
-// BFIN:INT16_C_(0) (0)
-// BFIN:UINT16_C_(0) (0U)
-// BFIN:INT32_C_(0) (0)
-// BFIN:UINT32_C_(0) (0U)
-// BFIN:INT64_C_(0) (0LL)
-// BFIN:UINT64_C_(0) (0ULL)
+// BFIN:INT8_C_(0) 0
+// BFIN:UINT8_C_(0) 0U
+// BFIN:INT16_C_(0) 0
+// BFIN:UINT16_C_(0) 0U
+// BFIN:INT32_C_(0) 0
+// BFIN:UINT32_C_(0) 0U
+// BFIN:INT64_C_(0) 0LL
+// BFIN:UINT64_C_(0) 0ULL
 // 
-// BFIN:INTMAX_C_(0) (0LL)
-// BFIN:UINTMAX_C_(0) (0ULL)
+// BFIN:INTMAX_C_(0) 0LL
+// BFIN:UINTMAX_C_(0) 0ULL
 //
 //
 // RUN: clang-cc -E -ffreestanding -triple=i386-none-none %s | FileCheck -check-prefix I386 %s
@@ -309,17 +309,17 @@
 // I386:WCHAR_MAX_ 2147483647
 // I386:WCHAR_MIN_ (-2147483647 -1)
 //
-// I386:INT8_C_(0) (0)
-// I386:UINT8_C_(0) (0U)
-// I386:INT16_C_(0) (0)
-// I386:UINT16_C_(0) (0U)
-// I386:INT32_C_(0) (0)
-// I386:UINT32_C_(0) (0U)
-// I386:INT64_C_(0) (0LL)
-// I386:UINT64_C_(0) (0ULL)
+// I386:INT8_C_(0) 0
+// I386:UINT8_C_(0) 0U
+// I386:INT16_C_(0) 0
+// I386:UINT16_C_(0) 0U
+// I386:INT32_C_(0) 0
+// I386:UINT32_C_(0) 0U
+// I386:INT64_C_(0) 0LL
+// I386:UINT64_C_(0) 0ULL
 //
-// I386:INTMAX_C_(0) (0LL)
-// I386:UINTMAX_C_(0) (0ULL)
+// I386:INTMAX_C_(0) 0LL
+// I386:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=msp430-none-none %s | FileCheck -check-prefix MSP430 %s
 //
@@ -409,17 +409,17 @@
 // MSP430:WCHAR_MAX_ 32767
 // MSP430:WCHAR_MIN_ (-32767 -1)
 //
-// MSP430:INT8_C_(0) (0)
-// MSP430:UINT8_C_(0) (0U)
-// MSP430:INT16_C_(0) (0)
-// MSP430:UINT16_C_(0) (0U)
-// MSP430:INT32_C_(0) (0L)
-// MSP430:UINT32_C_(0) (0UL)
+// MSP430:INT8_C_(0) 0
+// MSP430:UINT8_C_(0) 0U
+// MSP430:INT16_C_(0) 0
+// MSP430:UINT16_C_(0) 0U
+// MSP430:INT32_C_(0) 0L
+// MSP430:UINT32_C_(0) 0UL
 // MSP430:INT64_C_(0) INT64_C(0)
 // MSP430:UINT64_C_(0) UINT64_C(0)
 //
-// MSP430:INTMAX_C_(0) (0LL)
-// MSP430:UINTMAX_C_(0) (0ULL)
+// MSP430:INTMAX_C_(0) 0LL
+// MSP430:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=pic16-none-none %s | FileCheck -check-prefix PIC16 %s
 // 
@@ -509,17 +509,17 @@
 // PIC16:WCHAR_MAX_ 32767
 // PIC16:WCHAR_MIN_ (-32767 -1)
 //
-// PIC16:INT8_C_(0) (0)
-// PIC16:UINT8_C_(0) (0U)
-// PIC16:INT16_C_(0) (0)
-// PIC16:UINT16_C_(0) (0U)
-// PIC16:INT32_C_(0) (0L)
-// PIC16:UINT32_C_(0) (0UL)
+// PIC16:INT8_C_(0) 0
+// PIC16:UINT8_C_(0) 0U
+// PIC16:INT16_C_(0) 0
+// PIC16:UINT16_C_(0) 0U
+// PIC16:INT32_C_(0) 0L
+// PIC16:UINT32_C_(0) 0UL
 // PIC16:INT64_C_(0) INT64_C(0)
 // PIC16:UINT64_C_(0) UINT64_C(0)
 //
-// PIC16:INTMAX_C_(0) (0LL)
-// PIC16:UINTMAX_C_(0) (0ULL)
+// PIC16:INTMAX_C_(0) 0LL
+// PIC16:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=powerpc64-none-none %s | FileCheck -check-prefix PPC64 %s
 //
@@ -616,17 +616,17 @@
 // PPC64:WCHAR_MAX_ 2147483647
 // PPC64:WCHAR_MIN_ (-2147483647 -1)
 //
-// PPC64:INT8_C_(0) (0)
-// PPC64:UINT8_C_(0) (0U)
-// PPC64:INT16_C_(0) (0)
-// PPC64:UINT16_C_(0) (0U)
-// PPC64:INT32_C_(0) (0)
-// PPC64:UINT32_C_(0) (0U)
-// PPC64:INT64_C_(0) (0L)
-// PPC64:UINT64_C_(0) (0UL)
+// PPC64:INT8_C_(0) 0
+// PPC64:UINT8_C_(0) 0U
+// PPC64:INT16_C_(0) 0
+// PPC64:UINT16_C_(0) 0U
+// PPC64:INT32_C_(0) 0
+// PPC64:UINT32_C_(0) 0U
+// PPC64:INT64_C_(0) 0L
+// PPC64:UINT64_C_(0) 0UL
 //
-// PPC64:INTMAX_C_(0) (0LL)
-// PPC64:UINTMAX_C_(0) (0ULL)
+// PPC64:INTMAX_C_(0) 0LL
+// PPC64:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=powerpc-none-none %s | FileCheck -check-prefix PPC %s
 //
@@ -724,17 +724,17 @@
 // PPC:WCHAR_MAX_ 2147483647
 // PPC:WCHAR_MIN_ (-2147483647 -1)
 //
-// PPC:INT8_C_(0) (0)
-// PPC:UINT8_C_(0) (0U)
-// PPC:INT16_C_(0) (0)
-// PPC:UINT16_C_(0) (0U)
-// PPC:INT32_C_(0) (0)
-// PPC:UINT32_C_(0) (0U)
-// PPC:INT64_C_(0) (0LL)
-// PPC:UINT64_C_(0) (0ULL)
+// PPC:INT8_C_(0) 0
+// PPC:UINT8_C_(0) 0U
+// PPC:INT16_C_(0) 0
+// PPC:UINT16_C_(0) 0U
+// PPC:INT32_C_(0) 0
+// PPC:UINT32_C_(0) 0U
+// PPC:INT64_C_(0) 0LL
+// PPC:UINT64_C_(0) 0ULL
 //
-// PPC:INTMAX_C_(0) (0LL)
-// PPC:UINTMAX_C_(0) (0ULL)
+// PPC:INTMAX_C_(0) 0LL
+// PPC:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=s390x-none-none %s | FileCheck -check-prefix S390X %s
 //
@@ -831,17 +831,17 @@
 // S390X:WCHAR_MAX_ 2147483647
 // S390X:WCHAR_MIN_ (-2147483647 -1)
 //
-// S390X:INT8_C_(0) (0)
-// S390X:UINT8_C_(0) (0U)
-// S390X:INT16_C_(0) (0)
-// S390X:UINT16_C_(0) (0U)
-// S390X:INT32_C_(0) (0)
-// S390X:UINT32_C_(0) (0U)
-// S390X:INT64_C_(0) (0L)
-// S390X:UINT64_C_(0) (0UL)
+// S390X:INT8_C_(0) 0
+// S390X:UINT8_C_(0) 0U
+// S390X:INT16_C_(0) 0
+// S390X:UINT16_C_(0) 0U
+// S390X:INT32_C_(0) 0
+// S390X:UINT32_C_(0) 0U
+// S390X:INT64_C_(0) 0L
+// S390X:UINT64_C_(0) 0UL
 //
-// S390X:INTMAX_C_(0) (0LL)
-// S390X:UINTMAX_C_(0) (0ULL)
+// S390X:INTMAX_C_(0) 0LL
+// S390X:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=sparc-none-none %s | FileCheck -check-prefix SPARC %s
 //
@@ -938,17 +938,17 @@
 // SPARC:WCHAR_MAX_ 2147483647
 // SPARC:WCHAR_MIN_ (-2147483647 -1)
 //
-// SPARC:INT8_C_(0) (0)
-// SPARC:UINT8_C_(0) (0U)
-// SPARC:INT16_C_(0) (0)
-// SPARC:UINT16_C_(0) (0U)
-// SPARC:INT32_C_(0) (0)
-// SPARC:UINT32_C_(0) (0U)
-// SPARC:INT64_C_(0) (0LL)
-// SPARC:UINT64_C_(0) (0ULL)
+// SPARC:INT8_C_(0) 0
+// SPARC:UINT8_C_(0) 0U
+// SPARC:INT16_C_(0) 0
+// SPARC:UINT16_C_(0) 0U
+// SPARC:INT32_C_(0) 0
+// SPARC:UINT32_C_(0) 0U
+// SPARC:INT64_C_(0) 0LL
+// SPARC:UINT64_C_(0) 0ULL
 //
-// SPARC:INTMAX_C_(0) (0LL)
-// SPARC:UINTMAX_C_(0) (0ULL)
+// SPARC:INTMAX_C_(0) 0LL
+// SPARC:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=tce-none-none %s | FileCheck -check-prefix TCE %s
 //
@@ -1038,17 +1038,17 @@
 // TCE:WCHAR_MAX_ 2147483647
 // TCE:WCHAR_MIN_ (-2147483647 -1)
 //
-// TCE:INT8_C_(0) (0)
-// TCE:UINT8_C_(0) (0U)
-// TCE:INT16_C_(0) (0)
-// TCE:UINT16_C_(0) (0U)
-// TCE:INT32_C_(0) (0)
-// TCE:UINT32_C_(0) (0U)
+// TCE:INT8_C_(0) 0
+// TCE:UINT8_C_(0) 0U
+// TCE:INT16_C_(0) 0
+// TCE:UINT16_C_(0) 0U
+// TCE:INT32_C_(0) 0
+// TCE:UINT32_C_(0) 0U
 // TCE:INT64_C_(0) INT64_C(0)
 // TCE:UINT64_C_(0) UINT64_C(0)
 //
-// TCE:INTMAX_C_(0) (0LL)
-// TCE:UINTMAX_C_(0) (0ULL)
+// TCE:INTMAX_C_(0) 0LL
+// TCE:UINTMAX_C_(0) 0ULL
 //
 // RUN: clang-cc -E -ffreestanding -triple=x86_64-none-none %s | FileCheck -check-prefix X86_64 %s
 //
@@ -1146,17 +1146,17 @@
 // X86_64:WCHAR_MAX_ 2147483647
 // X86_64:WCHAR_MIN_ (-2147483647 -1)
 //
-// X86_64:INT8_C_(0) (0)
-// X86_64:UINT8_C_(0) (0U)
-// X86_64:INT16_C_(0) (0)
-// X86_64:UINT16_C_(0) (0U)
-// X86_64:INT32_C_(0) (0)
-// X86_64:UINT32_C_(0) (0U)
-// X86_64:INT64_C_(0) (0L)
-// X86_64:UINT64_C_(0) (0UL)
+// X86_64:INT8_C_(0) 0
+// X86_64:UINT8_C_(0) 0U
+// X86_64:INT16_C_(0) 0
+// X86_64:UINT16_C_(0) 0U
+// X86_64:INT32_C_(0) 0
+// X86_64:UINT32_C_(0) 0U
+// X86_64:INT64_C_(0) 0L
+// X86_64:UINT64_C_(0) 0UL
 //
-// X86_64:INTMAX_C_(0) (0LL)
-// X86_64:UINTMAX_C_(0) (0ULL)
+// X86_64:INTMAX_C_(0) 0LL
+// X86_64:UINTMAX_C_(0) 0ULL
 //
 
 #include <stdint.h>

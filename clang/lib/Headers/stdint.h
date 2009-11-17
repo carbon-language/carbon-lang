@@ -242,8 +242,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
  */
 
 #define __int_c_join(a, b) a ## b
-#define __int_c(v, suffix) (__int_c_join(v, suffix))
-#define __uint_c(v, suffix) (__int_c_join(v##U, suffix))
+#define __int_c(v, suffix) __int_c_join(v, suffix)
+#define __uint_c(v, suffix) __int_c_join(v##U, suffix)
 
 
 #ifdef __INT64_TYPE__
@@ -265,8 +265,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define INT64_C(v) __int_c(v, __int64_c_suffix)
 #  define UINT64_C(v) __uint_c(v, __int64_c_suffix)
 # else
-#  define INT64_C(v) (v)
-#  define UINT64_C(v) (v ## U)
+#  define INT64_C(v) v
+#  define UINT64_C(v) v ## U
 # endif /* __int64_c_suffix */
 #endif /* __int_least64_t */
 
@@ -279,8 +279,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define __int16_c_suffix __INT56_C_SUFFIX__
 #  define __int8_c_suffix  __INT56_C_SUFFIX__
 # else
-#  define INT56_C(v) (v)
-#  define UINT56_C(v) (v ## U)
+#  define INT56_C(v) v
+#  define UINT56_C(v) v ## U
 #  undef __int32_c_suffix
 #  undef __int16_c_suffix
 #  undef  __int8_c_suffix
@@ -296,8 +296,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define __int16_c_suffix __INT48_C_SUFFIX__
 #  define __int8_c_suffix  __INT48_C_SUFFIX__
 # else
-#  define INT48_C(v) (v)
-#  define UINT48_C(v) (v ## U)
+#  define INT48_C(v) v
+#  define UINT48_C(v) v ## U
 #  undef __int32_c_suffix
 #  undef __int16_c_suffix
 #  undef  __int8_c_suffix
@@ -313,8 +313,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define __int16_c_suffix __INT40_C_SUFFIX__
 #  define __int8_c_suffix  __INT40_C_SUFFIX__
 # else
-#  define INT40_C(v) (v)
-#  define UINT40_C(v) (v ## U)
+#  define INT40_C(v) v
+#  define UINT40_C(v) v ## U
 #  undef __int32_c_suffix
 #  undef __int16_c_suffix
 #  undef  __int8_c_suffix
@@ -339,8 +339,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define INT32_C(v) __int_c(v, __int32_c_suffix)
 #  define UINT32_C(v) __uint_c(v, __int32_c_suffix)
 # else
-#  define INT32_C(v) (v)
-#  define UINT32_C(v) (v ## U)
+#  define INT32_C(v) v
+#  define UINT32_C(v) v ## U
 # endif /* __int32_c_suffix */
 #endif /* __int_least32_t */
 
@@ -352,8 +352,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define __int16_c_suffix __INT24_C_SUFFIX__
 #  define __int8_c_suffix  __INT24_C_SUFFIX__
 # else
-#  define INT24_C(v) (v)
-#  define UINT24_C(v) (v ## U)
+#  define INT24_C(v) v
+#  define UINT24_C(v) v ## U
 #  undef __int16_c_suffix
 #  undef  __int8_c_suffix
 # endif /* __INT24_C_SUFFIX__ */
@@ -375,8 +375,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define INT16_C(v) __int_c(v, __int16_c_suffix)
 #  define UINT16_C(v) __uint_c(v, __int16_c_suffix)
 # else
-#  define INT16_C(v) (v)
-#  define UINT16_C(v) (v ## U)
+#  define INT16_C(v) v
+#  define UINT16_C(v) v ## U
 # endif /* __int16_c_suffix */
 #endif /* __int_least16_t */
 
@@ -394,8 +394,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #  define INT8_C(v) __int_c(v, __int8_c_suffix)
 #  define UINT8_C(v) __uint_c(v, __int8_c_suffix)
 # else
-#  define INT8_C(v) (v)
-#  define UINT8_C(v) (v ## U)
+#  define INT8_C(v) v
+#  define UINT8_C(v) v ## U
 # endif /* __int8_c_suffix */
 #endif /* __int_least8_t */
 
@@ -653,8 +653,8 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #endif
 
 /* 7.18.4.2 Macros for greatest-width integer constants. */
-#define INTMAX_C(v)  (v##LL)
-#define UINTMAX_C(v) (v##ULL)
+#define INTMAX_C(v)  v##LL
+#define UINTMAX_C(v) v##ULL
 
 #endif /* __STDC_HOSTED__ */
 #endif /* __CLANG_STDINT_H */
