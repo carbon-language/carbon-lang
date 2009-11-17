@@ -212,12 +212,15 @@ static int perform_file_scan(const char *ast_file, const char *source_file) {
   start_col = last_col = 1;
   
   while (!feof(fp)) {
-    size_t len;
-    const char *buf;
-        
-    if ((buf = fgetln(fp, &len)) == NULL)
-      break;
-    
+    size_t len = 0;
+    int c;
+
+    while ((c = fgetc(fp)) != EOF) {
+      len++;
+      if (c == '\n')
+        break;
+    }
+
     ++line;
     
     for (i = 0; i < len ; ++i) {
