@@ -445,9 +445,21 @@ bool llvm::PHIElimination::isLiveIn(unsigned Reg, const MachineBasicBlock &MBB,
 MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
                                                      MachineBasicBlock *B) {
   assert(A && B && "Missing MBB end point");
-  ++NumSplits;
 
   MachineFunction *MF = A->getParent();
+
+  // We may need to update A's terminator, but we can't do that if AnalyzeBranch
+  // fails.
+  if (A->isLayoutSuccessor(B)) {
+    const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+    MachineBasicBlock *TBB = 0, *FBB = 0;
+    SmallVector<MachineOperand, 4> Cond;
+    if (!TII->AnalyzeBranch(*A, TBB, FBB, Cond))
+      return NULL;
+  }
+
+  ++NumSplits;
+
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
   MF->push_back(NMBB);
   DEBUG(errs() << "PHIElimination splitting critical edge:"
