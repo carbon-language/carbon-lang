@@ -5243,6 +5243,12 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
 /// decl.
 llvm::Value *CGObjCNonFragileABIMac::GetClass(CGBuilderTy &Builder,
                                               const ObjCInterfaceDecl *ID) {
+  if (ID->hasAttr<WeakImportAttr>()) {
+    std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
+    llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName);
+    ClassGV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+  }
+  
   return EmitClassRef(Builder, ID);
 }
 
