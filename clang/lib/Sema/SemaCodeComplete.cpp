@@ -932,6 +932,39 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     return Result;
   }
   
+  if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND)) {
+    CodeCompletionString *Result = new CodeCompletionString;
+    Selector Sel = Method->getSelector();
+    if (Sel.isUnarySelector()) {
+      Result->AddTypedTextChunk(Sel.getIdentifierInfoForSlot(0)->getName());
+      return Result;
+    }
+
+    Result->AddTypedTextChunk(
+          Sel.getIdentifierInfoForSlot(0)->getName().str() + std::string(":"));
+    unsigned Idx = 0;
+    for (ObjCMethodDecl::param_iterator P = Method->param_begin(),
+                                     PEnd = Method->param_end();
+         P != PEnd; (void)++P, ++Idx) {
+      if (Idx > 0) {
+        std::string Keyword = " ";
+        if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(Idx))
+          Keyword += II->getName().str();
+        Keyword += ":";
+        Result->AddTextChunk(Keyword);
+      }
+
+      std::string Arg;
+      (*P)->getType().getAsStringInternal(Arg, S.Context.PrintingPolicy);
+      Arg = "(" + Arg + ")";
+      if (IdentifierInfo *II = (*P)->getIdentifier())
+        Arg += II->getName().str();
+      Result->AddPlaceholderChunk(Arg);
+    }
+
+    return Result;
+  }
+
   if (Qualifier) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
