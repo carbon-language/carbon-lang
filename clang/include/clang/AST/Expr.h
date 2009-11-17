@@ -87,7 +87,7 @@ public:
     // type. Additionally, inspect Expr::isLvalue to determine whether
     // an expression that is adjusted in this manner should be
     // considered an lvalue.
-    assert((TR.isNull() || !TR->isReferenceType()) &&
+    assert((t.isNull() || !t->isReferenceType()) &&
            "Expressions can't have reference type");
 
     TR = t;
