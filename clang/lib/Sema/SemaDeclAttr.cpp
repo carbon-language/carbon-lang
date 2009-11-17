@@ -1351,7 +1351,14 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // FIXME: Do we need to bounds check?
   unsigned ArgIdx = Idx.getZExtValue() - 1;
 
-  if (HasImplicitThisParam) ArgIdx--;
+  if (HasImplicitThisParam) {
+    if (ArgIdx == 0) {
+      S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
+        << "a string type" << IdxExpr->getSourceRange();
+      return;
+    }
+    ArgIdx--;
+  }
 
   // make sure the format string is really a string
   QualType Ty = getFunctionOrMethodArgType(d, ArgIdx);

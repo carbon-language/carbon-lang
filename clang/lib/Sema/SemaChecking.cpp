@@ -91,6 +91,12 @@ bool Sema::CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall) {
   if (Format->getType() == "printf0") {
     // printf0 allows null "format" string; if so don't check format/args
     unsigned format_idx = Format->getFormatIdx() - 1;
+    // Does the index refer to the implicit object argument?
+    if (isa<CXXMemberCallExpr>(TheCall)) {
+      if (format_idx == 0)
+        return false;
+      --format_idx;
+    }
     if (format_idx < TheCall->getNumArgs()) {
       Expr *Format = TheCall->getArg(format_idx)->IgnoreParenCasts();
       if (!Format->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
@@ -204,7 +210,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
       if (!HasVAListArg) {
         if (const FunctionProtoType *Proto
             = FDecl->getType()->getAs<FunctionProtoType>())
-        HasVAListArg = !Proto->isVariadic();
+          HasVAListArg = !Proto->isVariadic();
       }
       CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
                            HasVAListArg ? 0 : Format->getFirstArg() - 1);
@@ -969,6 +975,18 @@ void
 Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
                            unsigned format_idx, unsigned firstDataArg) {
   const Expr *Fn = TheCall->getCallee();
+
+  // The way the format attribute works in GCC, the implicit this argument
+  // of member functions is counted. However, it doesn't appear in our own
+  // lists, so decrement format_idx in that case.
+  if (isa<CXXMemberCallExpr>(TheCall)) {
+    // Catch a format attribute mistakenly referring to the object argument.
+    if (format_idx == 0)
+      return;
+    --format_idx;
+    if(firstDataArg != 0)
+      --firstDataArg;
+  }
 
   // CHECK: printf-like function is called with no format string.
   if (format_idx >= TheCall->getNumArgs()) {
