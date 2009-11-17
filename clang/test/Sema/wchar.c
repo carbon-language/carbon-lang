@@ -1,8 +1,8 @@
 // RUN: clang %s -fsyntax-only -Xclang -verify
 // RUN: clang %s -fsyntax-only -fshort-wchar -Xclang -verify -DSHORT_WCHAR
- 
-#include <wchar.h>
- 
+
+typedef __WCHAR_TYPE__ wchar_t;
+
 #if defined(_WIN32) || defined(_M_IX86) || defined(__CYGWIN__) \
  || defined(_M_X64) || defined(SHORT_WCHAR)
   #define WCHAR_T_TYPE unsigned short
