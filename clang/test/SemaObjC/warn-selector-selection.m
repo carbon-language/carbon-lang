@@ -10,5 +10,5 @@
 
 void foo(void) {
   Object *obj;
-  [obj setWindow:0]; // expected-warning{{Object  may not respond to 'setWindow:'}}
+  [obj setWindow:0]; // expected-warning{{Object may not respond to 'setWindow:'}}
 }
