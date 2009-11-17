@@ -253,6 +253,19 @@ public:
       // We expect all type_info objects for builtin types to be in the library.
       return BuildTypeRef(Ty);
     }
+
+    case Type::Pointer: {
+      QualType PTy = Ty->getPointeeType();
+      Qualifiers Q = PTy.getQualifiers();
+      Q.removeConst();
+      // T* and const T* for all builtin types T are expected in the library.
+      if (isa<BuiltinType>(PTy) && Q.empty())
+        return BuildTypeRef(Ty);
+
+      assert(0 && "typeid expression");
+      const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+      return llvm::Constant::getNullValue(Int8PtrTy);
+    }
     }
   }
 };
