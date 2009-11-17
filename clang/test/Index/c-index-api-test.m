@@ -1,5 +1,5 @@
 // RUN: clang-cc -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fblocks -emit-pch -x objective-c %s -o %t.ast
-// RUN: c-index-test %t.ast all | FileCheck %s
+// RUN: c-index-test -test-load-tu %t.ast all | FileCheck %s
 
 // CHECK: <invalid loc>:0:0: TypedefDecl=__int128_t:0:0 [Context=c-index-api-test.m]
 // CHECK: <invalid loc>:0:0: TypedefDecl=__uint128_t:0:0 [Context=c-index-api-test.m]
