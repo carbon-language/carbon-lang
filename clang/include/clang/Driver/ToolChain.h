@@ -90,6 +90,17 @@ public:
   /// default.
   virtual bool IsMathErrnoDefault() const = 0;
 
+  /// IsBlocksDefault - Does this tool chain enable -fblocks by default.
+  virtual bool IsBlocksDefault() const { return false; }
+
+  /// IsObjCNonFragileABIDefault - Does this tool chain set
+  /// -fobjc-nonfragile-abi by default.
+  virtual bool IsObjCNonFragileABIDefault() const { return false; }
+
+  /// GetDefaultStackProtectorLevel - Get the default stack protector level for
+  /// this tool chain (0=off, 1=on, 2=all).
+  virtual unsigned GetDefaultStackProtectorLevel() const { return 0; }
+
   /// IsUnwindTablesDefault - Does this tool chain use -funwind-tables
   /// by default.
   virtual bool IsUnwindTablesDefault() const = 0;

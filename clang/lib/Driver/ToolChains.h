@@ -137,7 +137,20 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
   virtual bool IsMathErrnoDefault() const;
+  virtual bool IsBlocksDefault() const {
+    // Blocks default to on for 10.6 (darwin10) and beyond.
+    return (DarwinVersion[0] > 9);
+  }
+  virtual bool IsObjCNonFragileABIDefault() const {
+    // Non-fragile ABI default to on for 10.5 (darwin9) and beyond on x86-64.
+    return (DarwinVersion[0] >= 9 &&
+            getTriple().getArch() == llvm::Triple::x86_64);
+  }
   virtual bool IsUnwindTablesDefault() const;
+  virtual unsigned GetDefaultStackProtectorLevel() const {
+    // Stack protectors default to on for 10.6 (darwin10) and beyond.
+    return (DarwinVersion[0] > 9) ? 1 : 0;
+  }
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
 

@@ -893,9 +893,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc_only);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_sender_dependent_dispatch);
-  // FIXME: Should we remove this?
-  Args.AddLastArg(CmdArgs, options::OPT_fobjc_nonfragile_abi);
-  Args.AddLastArg(CmdArgs, options::OPT_fobjc_tight_layout);
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_print_source_range_info);
   Args.AddLastArg(CmdArgs, options::OPT_ftime_report);
   Args.AddLastArg(CmdArgs, options::OPT_ftrapv);
@@ -904,33 +901,33 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_pthread);
 
-  // Forward stack protector flags.
+  // -stack-protector=0 is default.
+  unsigned StackProtectorLevel = 0;
   if (Arg *A = Args.getLastArg(options::OPT_fno_stack_protector,
                                options::OPT_fstack_protector_all,
                                options::OPT_fstack_protector)) {
-    if (A->getOption().matches(options::OPT_fno_stack_protector))
-      CmdArgs.push_back("--stack-protector=0");
-    else if (A->getOption().matches(options::OPT_fstack_protector))
-      CmdArgs.push_back("--stack-protector=1");
-    else
-      CmdArgs.push_back("--stack-protector=2");
+    if (A->getOption().matches(options::OPT_fstack_protector))
+      StackProtectorLevel = 1;
+    else if (A->getOption().matches(options::OPT_fstack_protector_all))
+      StackProtectorLevel = 2;
+  } else
+    StackProtectorLevel = getToolChain().GetDefaultStackProtectorLevel();
+  if (StackProtectorLevel) {
+    CmdArgs.push_back("-stack-protector");
+    CmdArgs.push_back(Args.MakeArgString(llvm::Twine(StackProtectorLevel)));
   }
 
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
 
-  // -fbuiltin is default, only pass non-default.
+  // -fbuiltin is default.
   if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
     CmdArgs.push_back("-fbuiltin=0");
 
-  // -fblocks default varies depending on platform and language; only
-  // pass if specified.
-  if (Arg *A = Args.getLastArg(options::OPT_fblocks, options::OPT_fno_blocks)) {
-    if (A->getOption().matches(options::OPT_fblocks))
-      CmdArgs.push_back("-fblocks");
-    else
-      CmdArgs.push_back("-fblocks=0");
-  }
+  // -fblocks=0 is default.
+  if (Args.hasFlag(options::OPT_fblocks, options::OPT_fno_blocks,
+                   getToolChain().IsBlocksDefault()))
+    CmdArgs.push_back("-fblocks");
 
   if (needsExceptions(Args, InputType, getToolChain().getTriple()))
     CmdArgs.push_back("-fexceptions");
@@ -958,6 +955,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fgnu_runtime,
                     getToolChain().getTriple().getOS() == llvm::Triple::Darwin))
     CmdArgs.push_back("-fgnu-runtime");
+
+  // -fobjc-nonfragile-abi=0 is default.
+  if (types::isObjC(InputType)) {
+    if (Args.hasArg(options::OPT_fobjc_nonfragile_abi) ||
+        getToolChain().IsObjCNonFragileABIDefault())
+      CmdArgs.push_back("-fobjc-nonfragile-abi");
+  }
 
   // -fshort-wchar default varies depending on platform; only
   // pass if specified.

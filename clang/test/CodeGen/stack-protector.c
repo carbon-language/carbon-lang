@@ -1,15 +1,9 @@
-// RUN: clang-cc -triple i686-unknown-unknown -emit-llvm -o %t %s
-// RUN: not grep 'ssp' %t
-// RUN: clang-cc -triple i686-apple-darwin9 -emit-llvm -o %t %s
-// RUN: not grep 'ssp' %t
-// RUN: clang-cc -triple i686-apple-darwin10 -emit-llvm -o %t %s
-// RUN: grep 'ssp' %t
-// RUN: clang -fstack-protector-all -emit-llvm -S -o %t %s
-// RUN: grep 'sspreq' %t
-// RUN: clang -fstack-protector -emit-llvm -S -o %t %s
-// RUN: grep 'ssp' %t
-// RUN: clang -fno-stack-protector -emit-llvm -S -o %t %s
-// RUN: not grep 'ssp' %t
+// RUN: clang-cc -emit-llvm -o - %s -stack-protector=0 | FileCheck -check-prefix=NOSSP %s
+// NOSSP: define void @test1(i8* %msg) nounwind {
+// RUN: clang-cc -emit-llvm -o - %s -stack-protector=1 | FileCheck -check-prefix=WITHSSP %s
+// WITHSSP: define void @test1(i8* %msg) nounwind ssp {
+// RUN: clang-cc -emit-llvm -o - %s -stack-protector=2 | FileCheck -check-prefix=SSPREQ %s
+// SSPREQ: define void @test1(i8* %msg) nounwind sspreq {
 
 int printf(const char * _Format, ...);
 
