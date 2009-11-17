@@ -145,7 +145,7 @@ static TimeRecord getTimeRecord(bool Start) {
 static ManagedStatic<std::vector<Timer*> > ActiveTimers;
 
 void Timer::startTimer() {
-  sys::SmartScopedLock<true> L(Lock);
+  sys::SmartScopedLock<true> L(*TimerLock);
   Started = true;
   ActiveTimers->push_back(this);
   TimeRecord TR = getTimeRecord(true);
@@ -157,7 +157,7 @@ void Timer::startTimer() {
 }
 
 void Timer::stopTimer() {
-  sys::SmartScopedLock<true> L(Lock);
+  sys::SmartScopedLock<true> L(*TimerLock);
   TimeRecord TR = getTimeRecord(false);
   Elapsed    += TR.Elapsed;
   UserTime   += TR.UserTime;
@@ -175,27 +175,11 @@ void Timer::stopTimer() {
 }
 
 void Timer::sum(const Timer &T) {
-  if (&T < this) {
-    T.Lock.acquire();
-    Lock.acquire();
-  } else {
-    Lock.acquire();
-    T.Lock.acquire();
-  }
-
   Elapsed    += T.Elapsed;
   UserTime   += T.UserTime;
   SystemTime += T.SystemTime;
   MemUsed    += T.MemUsed;
   PeakMem    += T.PeakMem;
-
-  if (&T < this) {
-    T.Lock.release();
-    Lock.release();
-  } else {
-    Lock.release();
-    T.Lock.release();
-  }
 }
 
 /// addPeakMemoryMeasurement - This method should be called whenever memory
@@ -203,14 +187,12 @@ void Timer::sum(const Timer &T) {
 /// currently active timers, which will be printed when the timer group prints
 ///
 void Timer::addPeakMemoryMeasurement() {
+  sys::SmartScopedLock<true> L(*TimerLock);
   size_t MemUsed = getMemUsage();
 
   for (std::vector<Timer*>::iterator I = ActiveTimers->begin(),
-         E = ActiveTimers->end(); I != E; ++I) {
-    (*I)->Lock.acquire();
+         E = ActiveTimers->end(); I != E; ++I)
     (*I)->PeakMem = std::max((*I)->PeakMem, MemUsed-(*I)->PeakMemBase);
-    (*I)->Lock.release();
-  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -280,14 +262,7 @@ static void printVal(double Val, double Total, raw_ostream &OS) {
 }
 
 void Timer::print(const Timer &Total, raw_ostream &OS) {
-  if (&Total < this) {
-    Total.Lock.acquire();
-    Lock.acquire();
-  } else {
-    Lock.acquire();
-    Total.Lock.acquire();
-  }
-
+  sys::SmartScopedLock<true> L(*TimerLock);
   if (Total.UserTime)
     printVal(UserTime, Total.UserTime, OS);
   if (Total.SystemTime)
@@ -310,14 +285,6 @@ void Timer::print(const Timer &Total, raw_ostream &OS) {
   OS << Name << "\n";
 
   Started = false;  // Once printed, don't print again
-
-  if (&Total < this) {
-    Total.Lock.release();
-    Lock.release();
-  } else {
-    Lock.release();
-    Total.Lock.release();
-  }
 }
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on...
