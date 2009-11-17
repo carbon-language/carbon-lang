@@ -34,7 +34,6 @@ namespace frontend {
     FixIt,                  ///< Parse and apply any fixits to the source.
     GeneratePCH,            ///< Generate pre-compiled header.
     GeneratePTH,            ///< Generate pre-tokenized header.
-    HTMLTest,               ///< HTML displayer testing stuff.
     InheritanceView,        ///< View C++ inheritance for a specified class.
     ParseNoop,              ///< Parse with noop callbacks.
     ParsePrintCallbacks,    ///< Parse and print each callback.
