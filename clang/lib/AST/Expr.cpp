@@ -814,6 +814,11 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     }
     return false;
   }
+
+  case CXXTemporaryObjectExprClass:
+  case CXXConstructExprClass:
+    return false;
+
   case ObjCMessageExprClass:
     return false;
 
@@ -855,15 +860,19 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     Loc = cast<CStyleCastExpr>(this)->getLParenLoc();
     R1 = cast<CStyleCastExpr>(this)->getSubExpr()->getSourceRange();
     return true;
-  case CXXFunctionalCastExprClass:
-    // If this is a cast to void, check the operand.  Otherwise, the result of
-    // the cast is unused.
-    if (getType()->isVoidType())
+  case CXXFunctionalCastExprClass: {
+    const CastExpr *CE = cast<CastExpr>(this);
+    
+    // If this is a cast to void or a constructor conversion, check the operand.
+    // Otherwise, the result of the cast is unused.
+    if (CE->getCastKind() == CastExpr::CK_ToVoid ||
+        CE->getCastKind() == CastExpr::CK_ConstructorConversion)
       return (cast<CastExpr>(this)->getSubExpr()
               ->isUnusedResultAWarning(Loc, R1, R2, Ctx));
     Loc = cast<CXXFunctionalCastExpr>(this)->getTypeBeginLoc();
     R1 = cast<CXXFunctionalCastExpr>(this)->getSubExpr()->getSourceRange();
     return true;
+  }
 
   case ImplicitCastExprClass:
     // Check the operand, since implicit casts are inserted by Sema

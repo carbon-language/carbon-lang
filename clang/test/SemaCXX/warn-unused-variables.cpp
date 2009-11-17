@@ -12,3 +12,23 @@ void f() {
   A a;
   B b;
 }
+
+// PR5531
+namespace PR5531 {
+  struct A {
+  };
+
+  struct B {
+    B(int);
+  };
+
+  struct C {
+    ~C();
+  };
+
+  void test() {
+    A();
+    B(17);
+    C();
+  }
+}
