@@ -124,25 +124,6 @@ VisualizeEGUbi("analyzer-viz-egraph-ubigraph",
 
 }
 
-void clang::InitializeAnalyzerOptions(AnalyzerOptions &Opts) {
-  using namespace analyzeroptions;
-  Opts.AnalysisList = AnalysisList;
-  Opts.AnalysisStoreOpt = AnalysisStoreOpt;
-  Opts.AnalysisConstraintsOpt = AnalysisConstraintsOpt;
-  Opts.AnalysisDiagOpt = AnalysisDiagOpt;
-  Opts.VisualizeEGDot = VisualizeEGDot;
-  Opts.VisualizeEGUbi = VisualizeEGUbi;
-  Opts.AnalyzeAll = AnalyzeAll;
-  Opts.AnalyzerDisplayProgress = AnalyzerDisplayProgress;
-  Opts.PurgeDead = PurgeDead;
-  Opts.EagerlyAssume = EagerlyAssume;
-  Opts.AnalyzeSpecificFunction = AnalyzeSpecificFunction;
-  Opts.EnableExperimentalChecks = AnalyzerExperimentalChecks;
-  Opts.EnableExperimentalInternalChecks = AnalyzerExperimentalInternalChecks;
-  Opts.TrimGraph = TrimGraph;
-}
-
-
 //===----------------------------------------------------------------------===//
 // Code Generation Options
 //===----------------------------------------------------------------------===//
@@ -806,6 +787,24 @@ TargetTriple("triple",
 //===----------------------------------------------------------------------===//
 // Option Object Construction
 //===----------------------------------------------------------------------===//
+
+void clang::InitializeAnalyzerOptions(AnalyzerOptions &Opts) {
+  using namespace analyzeroptions;
+  Opts.AnalysisList = AnalysisList;
+  Opts.AnalysisStoreOpt = AnalysisStoreOpt;
+  Opts.AnalysisConstraintsOpt = AnalysisConstraintsOpt;
+  Opts.AnalysisDiagOpt = AnalysisDiagOpt;
+  Opts.VisualizeEGDot = VisualizeEGDot;
+  Opts.VisualizeEGUbi = VisualizeEGUbi;
+  Opts.AnalyzeAll = AnalyzeAll;
+  Opts.AnalyzerDisplayProgress = AnalyzerDisplayProgress;
+  Opts.PurgeDead = PurgeDead;
+  Opts.EagerlyAssume = EagerlyAssume;
+  Opts.AnalyzeSpecificFunction = AnalyzeSpecificFunction;
+  Opts.EnableExperimentalChecks = AnalyzerExperimentalChecks;
+  Opts.EnableExperimentalInternalChecks = AnalyzerExperimentalInternalChecks;
+  Opts.TrimGraph = TrimGraph;
+}
 
 void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
                                      const LangOptions &Lang,
