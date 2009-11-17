@@ -540,8 +540,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 #ifdef __INT24_TYPE__
 # define INT24_MAX           INT24_C(8388607)
-/* FIXME: argument of 8388608 for INT24_C is outside of legal range */
-# define INT24_MIN         (-INT24_C(8388608))
+# define INT24_MIN         (-INT24_C(8388607)-1)
 # define UINT24_MAX         UINT24_C(16777215)
 # define INT_LEAST24_MIN     INT24_MIN
 # define INT_LEAST24_MAX     INT24_MAX
@@ -560,8 +559,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 #ifdef __INT16_TYPE__
 #define INT16_MAX            INT16_C(32767)
-/* FIXME: argument of 32768 for INT16_C is outside of legal range */
-#define INT16_MIN          (-INT16_C(32768))
+#define INT16_MIN          (-INT16_C(32767)-1)
 #define UINT16_MAX          UINT16_C(65535)
 # define __INT_LEAST16_MIN   INT16_MIN
 # define __INT_LEAST16_MAX   INT16_MAX
@@ -583,8 +581,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 #ifdef __INT8_TYPE__
 # define INT8_MAX            INT8_C(127)
-/* FIXME: argument of 128 for INT8_C is outside of legal range */
-# define INT8_MIN          (-INT8_C(128))
+# define INT8_MIN          (-INT8_C(127)-1)
 # define UINT8_MAX          UINT8_C(255)
 # define __INT_LEAST8_MIN    INT8_MIN
 # define __INT_LEAST8_MAX    INT8_MAX
