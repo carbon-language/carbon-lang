@@ -1073,7 +1073,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
                                   TargetInfo &Target) {
   using namespace langoptions;
 
-  bool NoPreprocess = false;
 
   switch (IK) {
   case FrontendOptions::IK_None:
@@ -1083,25 +1082,21 @@ void clang::InitializeLangOptions(LangOptions &Options,
     Options.AsmPreprocessor = 1;
     // FALLTHROUGH
   case FrontendOptions::IK_PreprocessedC:
-    NoPreprocess = true;
     // FALLTHROUGH
   case FrontendOptions::IK_C:
     // Do nothing.
     break;
   case FrontendOptions::IK_PreprocessedCXX:
-    NoPreprocess = true;
     // FALLTHROUGH
   case FrontendOptions::IK_CXX:
     Options.CPlusPlus = 1;
     break;
   case FrontendOptions::IK_PreprocessedObjC:
-    NoPreprocess = true;
     // FALLTHROUGH
   case FrontendOptions::IK_ObjC:
     Options.ObjC1 = Options.ObjC2 = 1;
     break;
   case FrontendOptions::IK_PreprocessedObjCXX:
-    NoPreprocess = true;
     // FALLTHROUGH
   case FrontendOptions::IK_ObjCXX:
     Options.ObjC1 = Options.ObjC2 = 1;
