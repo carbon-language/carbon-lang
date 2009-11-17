@@ -196,7 +196,7 @@ public:
   /// \brief Returns the size of the type source info data block.
   unsigned getFullDataSize() const {
     return getLocalDataSize() + 
-      getFullDataSizeForType(getType().getUnqualifiedType());
+      getFullDataSizeForType(getType().getLocalUnqualifiedType());
   }
 
   static bool classof(const TypeLoc *TL) {

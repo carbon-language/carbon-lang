@@ -404,6 +404,8 @@ class QualType {
     return Value.getPointer().get<const Type*>();
   }
 
+  QualType getUnqualifiedTypeSlow() const;
+  
   friend class QualifierCollector;
 public:
   QualType() {}
@@ -456,10 +458,7 @@ public:
   }
   
   /// \brief Determine whether this type is const-qualified.
-  bool isConstQualified() const {
-    // FIXME: Look through sugar types.
-    return isLocalConstQualified();
-  }
+  bool isConstQualified() const;
   
   /// \brief Determine whether this particular QualType instance has the 
   /// "restrict" qualifier set, without looking through typedefs that may have
@@ -469,10 +468,7 @@ public:
   }
   
   /// \brief Determine whether this type is restrict-qualified.
-  bool isRestrictQualified() const {
-    // FIXME: Look through sugar types.
-    return isLocalRestrictQualified();
-  }
+  bool isRestrictQualified() const;
   
   /// \brief Determine whether this particular QualType instance has the 
   /// "volatile" qualifier set, without looking through typedefs that may have
@@ -482,10 +478,7 @@ public:
   }
 
   /// \brief Determine whether this type is volatile-qualified.
-  bool isVolatileQualified() const {
-    // FIXME: Look through sugar types.
-    return isLocalVolatileQualified();
-  }
+  bool isVolatileQualified() const;
   
   /// \brief Determine whether this particular QualType instance has any
   /// qualifiers, without looking through any typedefs that might add 
@@ -495,10 +488,7 @@ public:
   }
 
   /// \brief Determine whether this type has any qualifiers.
-  bool hasQualifiers() const {
-    // FIXME: Look for qualifiers at any level.
-    return hasLocalQualifiers();
-  }
+  bool hasQualifiers() const;
   
   /// \brief Determine whether this particular QualType instance has any
   /// "non-fast" qualifiers, e.g., those that are stored in an ExtQualType
@@ -519,10 +509,7 @@ public:
   }
 
   /// \brief Retrieve the set of qualifiers applied to this type.
-  Qualifiers getQualifiers() const {
-    // FIXME: Collect qualifiers from all levels.
-    return getLocalQualifiers();
-  }
+  Qualifiers getQualifiers() const;
   
   /// \brief Retrieve the set of CVR (const-volatile-restrict) qualifiers 
   /// local to this particular QualType instance, not including any qualifiers
@@ -536,10 +523,7 @@ public:
 
   /// \brief Retrieve the set of CVR (const-volatile-restrict) qualifiers 
   /// applied to this type.
-  unsigned getCVRQualifiers() const {
-    // FIXME: Collect qualifiers from all levels.
-    return getLocalCVRQualifiers();
-  }
+  unsigned getCVRQualifiers() const;
   
   bool isConstant(ASTContext& Ctx) const {
     return QualType::isConstant(*this, Ctx);
@@ -604,9 +588,12 @@ public:
 
   /// \brief Return the unqualified form of the given type, which might be
   /// desugared to eliminate qualifiers introduced via typedefs.
-  QualType getUnqualifiedType() const { 
-    // FIXME: We may have to desugar the type to remove qualifiers.
-    return getLocalUnqualifiedType();
+  QualType getUnqualifiedType() const {
+    QualType T = getLocalUnqualifiedType();
+    if (!T.hasQualifiers())
+      return T;
+    
+    return getUnqualifiedTypeSlow();
   }
   
   bool isMoreQualifiedThan(QualType Other) const;
@@ -2631,6 +2618,39 @@ inline bool QualType::isCanonicalAsParam() const {
            !isa<FunctionType>(T) && !isa<ArrayType>(T);
 }
 
+inline bool QualType::isConstQualified() const {
+  return isLocalConstQualified() || 
+              getTypePtr()->getCanonicalTypeInternal().isLocalConstQualified();
+}
+
+inline bool QualType::isRestrictQualified() const {
+  return isLocalRestrictQualified() || 
+            getTypePtr()->getCanonicalTypeInternal().isLocalRestrictQualified();
+}
+
+
+inline bool QualType::isVolatileQualified() const {
+  return isLocalVolatileQualified() || 
+  getTypePtr()->getCanonicalTypeInternal().isLocalVolatileQualified();
+}
+  
+inline bool QualType::hasQualifiers() const {
+  return hasLocalQualifiers() ||
+                  getTypePtr()->getCanonicalTypeInternal().hasLocalQualifiers();
+}
+  
+inline Qualifiers QualType::getQualifiers() const {
+  Qualifiers Quals = getLocalQualifiers();
+  Quals.addQualifiers(
+                 getTypePtr()->getCanonicalTypeInternal().getLocalQualifiers());
+  return Quals;
+}
+  
+inline unsigned QualType::getCVRQualifiers() const {
+  return getLocalCVRQualifiers() | 
+              getTypePtr()->getCanonicalTypeInternal().getLocalCVRQualifiers();
+}
+  
 inline void QualType::removeConst() {
   removeFastQualifiers(Qualifiers::Const);
 }
