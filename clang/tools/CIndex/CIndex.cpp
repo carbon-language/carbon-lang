@@ -980,8 +980,11 @@ const char *clang_getCursorSource(CXCursor C)
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
   
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
-  if (SLoc.isFileID())
-    return SourceMgr.getBufferName(SLoc);
+  
+  if (SLoc.isFileID()) {
+    const char *bufferName = SourceMgr.getBufferName(SLoc);
+    return bufferName[0] == '<' ? NULL : bufferName;
+  }
 
   // Retrieve the file in which the macro was instantiated, then provide that
   // buffer name.

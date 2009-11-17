@@ -8,13 +8,13 @@
 // CHECK: <invalid loc>:0:0: ObjCInterfaceDecl=Protocol:0:0 [Context=c-index-api-test.m]
 // CHECK: <invalid loc>:0:0: TypedefDecl=id:0:0 [Context=c-index-api-test.m]
 // CHECK: <invalid loc>:0:0: TypedefDecl=Class:0:0 [Context=c-index-api-test.m]
-// CHECK: <built-in>:80:16: StructDecl=__va_list_tag:80:16 [Context=c-index-api-test.m]
-// CHECK: <built-in>:80:42: FieldDecl=gp_offset:80:42 [Context=__va_list_tag]
-// CHECK: <built-in>:80:63: FieldDecl=fp_offset:80:63 [Context=__va_list_tag]
-// CHECK: <built-in>:80:81: FieldDecl=overflow_arg_area:80:81 [Context=__va_list_tag]
-// CHECK: <built-in>:80:107: FieldDecl=reg_save_area:80:107 [Context=__va_list_tag]
-// CHECK: <built-in>:80:123: TypedefDecl=__va_list_tag:80:123 [Context=c-index-api-test.m]
-// CHECK: <built-in>:80:159: TypedefDecl=__builtin_va_list:80:159 [Context=c-index-api-test.m]
+// CHECK: <invalid loc>:80:16: StructDecl=__va_list_tag:80:16 [Context=c-index-api-test.m]
+// CHECK: <invalid loc>:80:42: FieldDecl=gp_offset:80:42 [Context=__va_list_tag]
+// CHECK: <invalid loc>:80:63: FieldDecl=fp_offset:80:63 [Context=__va_list_tag]
+// CHECK: <invalid loc>:80:81: FieldDecl=overflow_arg_area:80:81 [Context=__va_list_tag]
+// CHECK: <invalid loc>:80:107: FieldDecl=reg_save_area:80:107 [Context=__va_list_tag]
+// CHECK: <invalid loc>:80:123: TypedefDecl=__va_list_tag:80:123 [Context=c-index-api-test.m]
+// CHECK: <invalid loc>:80:159: TypedefDecl=__builtin_va_list:80:159 [Context=c-index-api-test.m]
 // 
 
 @interface Foo 

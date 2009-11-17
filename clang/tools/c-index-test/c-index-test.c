@@ -40,11 +40,18 @@ static void PrintCursor(CXCursor Cursor) {
   }
 }
 
+static const char* GetCursorSource(CXCursor Cursor) {  
+  const char *source = clang_getCursorSource(Cursor);
+  if (!source)
+    return "<invalid loc>";  
+  return basename(source);
+}
+
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter)
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXString string;
-    printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Cursor)),
+    printf("// CHECK: %s:%d:%d: ", GetCursorSource(Cursor),
                                  clang_getCursorLine(Cursor),
                                  clang_getCursorColumn(Cursor));
     PrintCursor(Cursor);
@@ -58,7 +65,7 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXString string;
-    printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Cursor)),
+    printf("// CHECK: %s:%d:%d: ", GetCursorSource(Cursor),
                                  clang_getCursorLine(Cursor),
                                  clang_getCursorColumn(Cursor));
     PrintCursor(Cursor);
@@ -94,8 +101,8 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
             /* Nothing found here; that's fine. */
           } else if (Ref.kind != CXCursor_FunctionDecl) {
             CXString string;
-            printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Ref)),
-                                             curLine, curColumn);
+            printf("// CHECK: %s:%d:%d: ", GetCursorSource(Ref),
+                   curLine, curColumn);
             PrintCursor(Ref);
             string = clang_getDeclSpelling(Ref.decl);
             printf(" [Context:%s]\n", clang_getCString(string));
