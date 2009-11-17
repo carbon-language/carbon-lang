@@ -40,7 +40,8 @@ ExecutionEngine *(*ExecutionEngine::JITCtor)(ModuleProvider *MP,
                                              std::string *ErrorStr,
                                              JITMemoryManager *JMM,
                                              CodeGenOpt::Level OptLevel,
-                                             bool GVsWithCode) = 0;
+                                             bool GVsWithCode,
+					     CodeModel::Model CMM) = 0;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(ModuleProvider *MP,
                                                 std::string *ErrorStr) = 0;
 ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
@@ -444,7 +445,7 @@ ExecutionEngine *EngineBuilder::create() {
     if (ExecutionEngine::JITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::JITCtor(MP, ErrorStr, JMM, OptLevel,
-                                 AllocateGVsWithCode);
+                                 AllocateGVsWithCode, CMModel);
       if (EE) return EE;
     }
   }

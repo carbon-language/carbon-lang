@@ -85,8 +85,10 @@ public:
                                  JITMemoryManager *JMM,
                                  CodeGenOpt::Level OptLevel =
                                    CodeGenOpt::Default,
-                                 bool GVsWithCode = true) {
-    return ExecutionEngine::createJIT(MP, Err, JMM, OptLevel, GVsWithCode);
+                                 bool GVsWithCode = true,
+				 CodeModel::Model CMM = CodeModel::Default) {
+    return ExecutionEngine::createJIT(MP, Err, JMM, OptLevel, GVsWithCode,
+				      CMM);
   }
 
   virtual void addModuleProvider(ModuleProvider *MP);
@@ -175,7 +177,8 @@ public:
                                     std::string *ErrorStr,
                                     JITMemoryManager *JMM,
                                     CodeGenOpt::Level OptLevel,
-                                    bool GVsWithCode);
+                                    bool GVsWithCode,
+				    CodeModel::Model CMM);
 
   // Run the JIT on F and return information about the generated code
   void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0);
