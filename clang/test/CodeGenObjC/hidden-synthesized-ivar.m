@@ -1,4 +1,4 @@
-// RUN: clang-cc -fvisibility=hidden -triple x86_64-apple-darwin10  -S -o - %s | grep -e "private_extern _OBJC_IVAR_"
+// RUN: clang-cc -fobjc-nonfragile-abi -fvisibility=hidden -S -o - %s | grep -e "private_extern _OBJC_IVAR_"
 @interface I
 {
 	int P;

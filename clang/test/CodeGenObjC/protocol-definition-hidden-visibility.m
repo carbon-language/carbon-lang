@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10  -S -o - %s | grep -e "private_extern l_OBJC_PROTOCOL_" | count 2
+// RUN: clang-cc -fobjc-nonfragile-abi  -S -o - %s | grep -e "private_extern l_OBJC_PROTOCOL_" | count 2
 
 @interface FOO @end
 

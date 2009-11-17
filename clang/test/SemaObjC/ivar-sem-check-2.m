@@ -1,4 +1,4 @@
-// RUN: clang-cc  -fsyntax-only -triple x86_64-apple-darwin10 -verify %s
+// RUN: clang-cc  -fsyntax-only -fobjc-nonfragile-abi -verify %s
 
 @interface Super  {
   id value2; // expected-note {{previously declared 'value2' here}}

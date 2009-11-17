@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -verify -fsyntax-only %s
+// RUN: clang-cc -fobjc-nonfragile-abi -verify -fsyntax-only %s
 
 @class I0;
 

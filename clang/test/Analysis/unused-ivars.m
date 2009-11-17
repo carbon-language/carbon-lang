@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -warn-objc-unused-ivars %s -verify
+// RUN: clang-cc -fblocks -analyze -warn-objc-unused-ivars %s -verify
 
 //===--- BEGIN: Delta-debugging reduced headers. --------------------------===//
 

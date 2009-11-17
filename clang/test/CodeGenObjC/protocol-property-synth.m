@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm -o %t %s
+// RUN: clang-cc -fobjc-nonfragile-abi -emit-llvm -o %t %s
 
 @interface BaseClass {
     id _delegate;

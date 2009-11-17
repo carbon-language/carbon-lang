@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -emit-llvm -o %t %s
+// RUN: clang-cc -fobjc-nonfragile-abi -emit-llvm -o %t %s
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
 
 // RUN: grep '@"OBJC_CLASS_$_A" = global' %t

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -triple x86_64-apple-darwin9 -verify %s 
+// RUN: clang-cc -fsyntax-only -fobjc-nonfragile-abi -verify %s
 
 typedef signed char BOOL;
 
