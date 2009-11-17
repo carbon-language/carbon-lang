@@ -25,7 +25,7 @@ FrontendOptions::getInputKindForExtension(llvm::StringRef Extension) {
     .Case("mii", IK_PreprocessedObjCXX)
     .Case("C", IK_CXX)
     .Cases("C", "cc", "cp", IK_CXX)
-    .Cases("cpp", "CPP", "c++", "cxx", IK_CXX)
+    .Cases("cpp", "CPP", "c++", "cxx", "hpp", IK_CXX)
     .Case("cl", IK_OpenCL)
     .Default(IK_C);
 }
