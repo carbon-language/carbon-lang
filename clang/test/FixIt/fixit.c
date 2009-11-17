@@ -6,7 +6,9 @@
    provided as part of warning or extension diagnostics. All of the
    warnings will be fixed by -fixit, and the resulting file should
    compile cleanly with -Werror -pedantic. */
-#include <string.h> // FIXME: FIX-IT hint should add this for us!
+
+// FIXME: FIX-IT should add #include <string.h>?
+int strcmp(const char *s1, const char *s2);
 
 void f0(void) { };
 

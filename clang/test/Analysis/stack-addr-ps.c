@@ -1,8 +1,6 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
-#include <stdlib.h>
-
 int* f1() {
   int x = 0;
   return &x; // expected-warning{{Address of stack memory associated with local variable 'x' returned.}} expected-warning{{address of stack memory associated with local variable 'x' returned}}
