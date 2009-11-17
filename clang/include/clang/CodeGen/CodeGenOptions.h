@@ -29,25 +29,25 @@ public:
     OnlyAlwaysInlining  // Only run the always inlining pass.
   };
 
-  unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
-  unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
-  unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC
-                                  /// optimization selection.
-  unsigned SimplifyLibCalls  : 1; /// Should standard library calls be
-                                  /// treated specially.
-  unsigned UnrollLoops       : 1; /// Control whether loops are unrolled.
-  unsigned VerifyModule      : 1; /// Control whether the module
-                                  /// should be run through the LLVM Verifier.
-  unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
-  unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
-  unsigned DisableRedZone    : 1; /// Set when -mno-red-zone is enabled.
-  unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
-  unsigned MergeAllConstants : 1; /// Merge identical constants.
   unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
                                   /// getting .bc files that correspond to the
                                   /// internal state before optimizations are
                                   /// done.
+  unsigned DisableRedZone    : 1; /// Set when -mno-red-zone is enabled.
+  unsigned MergeAllConstants : 1; /// Merge identical constants.
+  unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
+  unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
+  unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
+  unsigned OptimizeSize      : 1; /// If -Os is specified.
+  unsigned SimplifyLibCalls  : 1; /// Should standard library calls be treated
+                                  /// specially.
+  unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
+  unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC optimization
+                                  /// selection.
+  unsigned UnrollLoops       : 1; /// Control whether loops are unrolled.
+  unsigned VerifyModule      : 1; /// Control whether the module should be run
+                                  /// through the LLVM Verifier.
 
   /// Inlining - The kind of inlining to perform.
   InliningMethod Inlining;
