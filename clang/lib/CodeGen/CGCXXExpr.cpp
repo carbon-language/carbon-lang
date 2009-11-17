@@ -512,7 +512,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
   EmitBlock(ContBlock);
   if (CanBeZero) {
     llvm::PHINode *PHI = Builder.CreatePHI(LTy);
-    PHI->reserveOperandSpace(3);
+    PHI->reserveOperandSpace(2);
     PHI->addIncoming(V, NonZeroBlock);
     PHI->addIncoming(llvm::Constant::getNullValue(LTy), NullBlock);
     V = PHI;
