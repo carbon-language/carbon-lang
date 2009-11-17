@@ -1633,77 +1633,63 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
 }
 
 void
-Sema::computeBaseOrMembersToDestroy(CXXDestructorDecl *Destructor) {
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Destructor->getDeclContext());
-  llvm::SmallVector<uintptr_t, 32> AllToDestruct;
+Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
+  // Ignore dependent destructors.
+  if (Destructor->isDependentContext())
+    return;
+  
+  CXXRecordDecl *ClassDecl = Destructor->getParent();
 
+  // Non-static data members.
+  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); I != E; ++I) {
+    FieldDecl *Field = *I;
+    
+    QualType FieldType = Context.getBaseElementType(Field->getType());
+    
+    const RecordType* RT = FieldType->getAs<RecordType>();
+    if (!RT)
+      continue;
+    
+    CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+    if (FieldClassDecl->hasTrivialDestructor())
+      continue;
+
+    const CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor(Context);
+    MarkDeclarationReferenced(Destructor->getLocation(),
+                              const_cast<CXXDestructorDecl*>(Dtor));
+  }
+
+  // Bases.
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
+    // Ignore virtual bases.
+    if (Base->isVirtual())
+      continue;
+
+    // Ignore trivial destructors.
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (BaseClassDecl->hasTrivialDestructor())
+      continue;
+    
+    const CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context);
+    MarkDeclarationReferenced(Destructor->getLocation(),
+                              const_cast<CXXDestructorDecl*>(Dtor));
+  }
+  
+  // Virtual bases.
   for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
-    if (VBase->getType()->isDependentType())
-      continue;
-    // Skip over virtual bases which have trivial destructors.
+    // Ignore trivial destructors.
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
-    if (const CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context))
-      MarkDeclarationReferenced(Destructor->getLocation(),
-                                const_cast<CXXDestructorDecl*>(Dtor));
-
-    uintptr_t Member =
-    reinterpret_cast<uintptr_t>(VBase->getType().getTypePtr())
-      | CXXDestructorDecl::VBASE;
-    AllToDestruct.push_back(Member);
-  }
-  for (CXXRecordDecl::base_class_iterator Base =
-       ClassDecl->bases_begin(),
-       E = ClassDecl->bases_end(); Base != E; ++Base) {
-    if (Base->isVirtual())
-      continue;
-    if (Base->getType()->isDependentType())
-      continue;
-    // Skip over virtual bases which have trivial destructors.
-    CXXRecordDecl *BaseClassDecl
-    = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (BaseClassDecl->hasTrivialDestructor())
-      continue;
-    if (const CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context))
-      MarkDeclarationReferenced(Destructor->getLocation(),
-                                const_cast<CXXDestructorDecl*>(Dtor));
-    uintptr_t Member =
-    reinterpret_cast<uintptr_t>(Base->getType().getTypePtr())
-      | CXXDestructorDecl::DRCTNONVBASE;
-    AllToDestruct.push_back(Member);
-  }
-
-  // non-static data members.
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); Field != E; ++Field) {
-    QualType FieldType = Context.getBaseElementType((*Field)->getType());
-
-    if (const RecordType* RT = FieldType->getAs<RecordType>()) {
-      // Skip over virtual bases which have trivial destructors.
-      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      if (FieldClassDecl->hasTrivialDestructor())
-        continue;
-      if (const CXXDestructorDecl *Dtor =
-            FieldClassDecl->getDestructor(Context))
-        MarkDeclarationReferenced(Destructor->getLocation(),
-                                  const_cast<CXXDestructorDecl*>(Dtor));
-      uintptr_t Member = reinterpret_cast<uintptr_t>(*Field);
-      AllToDestruct.push_back(Member);
-    }
-  }
-
-  unsigned NumDestructions = AllToDestruct.size();
-  if (NumDestructions > 0) {
-    Destructor->setNumBaseOrMemberDestructions(NumDestructions);
-    uintptr_t *BaseOrMemberDestructions =
-      new (Context) uintptr_t [NumDestructions];
-    // Insert in reverse order.
-    for (int Idx = NumDestructions-1, i=0 ; Idx >= 0; --Idx)
-      BaseOrMemberDestructions[i++] = AllToDestruct[Idx];
-    Destructor->setBaseOrMemberDestructions(BaseOrMemberDestructions);
+    
+    const CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context);
+    MarkDeclarationReferenced(Destructor->getLocation(),
+                              const_cast<CXXDestructorDecl*>(Dtor));
   }
 }
 

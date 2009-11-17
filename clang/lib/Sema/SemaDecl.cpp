@@ -4052,7 +4052,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
 
   if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
-    computeBaseOrMembersToDestroy(Destructor);
+    MarkBaseAndMemberDestructorsReferenced(Destructor);
   
   // If any errors have occurred, clear out any temporaries that may have
   // been leftover. This ensures that these temporaries won't be picked up for

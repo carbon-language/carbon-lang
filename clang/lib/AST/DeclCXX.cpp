@@ -791,12 +791,6 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 }
 
 void
-CXXDestructorDecl::Destroy(ASTContext& C) {
-  C.Deallocate(BaseOrMemberDestructions);
-  CXXMethodDecl::Destroy(C);
-}
-
-void
 CXXConstructorDecl::Destroy(ASTContext& C) {
   C.Deallocate(BaseOrMemberInitializers);
   CXXMethodDecl::Destroy(C);

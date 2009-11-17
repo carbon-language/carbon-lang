@@ -1269,13 +1269,6 @@ public:
 /// };
 /// @endcode
 class CXXDestructorDecl : public CXXMethodDecl {
-public:
-  enum KindOfObjectToDestroy {
-    VBASE = 0x1,
-    DRCTNONVBASE = 0x2,
-    ANYBASE = 0x3
-  };
-private:
   /// ImplicitlyDefined - Whether this destructor was implicitly
   /// defined by the compiler. When false, the destructor was defined
   /// by the user. In C++03, this flag will have the same value as
@@ -1284,27 +1277,15 @@ private:
   /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
 
-  /// Support for base and member destruction.
-  /// BaseOrMemberDestructions - The arguments used to destruct the base
-  /// or member. Each uintptr_t value represents one of base classes (either
-  /// virtual or direct non-virtual base), or non-static data member
-  /// to be destroyed. The low two bits encode the kind of object
-  /// being destroyed.
-  uintptr_t *BaseOrMemberDestructions;
-  unsigned NumBaseOrMemberDestructions;
-
   FunctionDecl *OperatorDelete;
   
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, L, N, T, /*DInfo=*/0, false, isInline),
-      ImplicitlyDefined(false),
-      BaseOrMemberDestructions(0), NumBaseOrMemberDestructions(0),
-      OperatorDelete(0) {
+      ImplicitlyDefined(false), OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
   }
-  virtual void Destroy(ASTContext& C);
 
 public:
   static CXXDestructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
@@ -1332,96 +1313,6 @@ public:
 
   void setOperatorDelete(FunctionDecl *OD) { OperatorDelete = OD; }
   const FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
-
-  /// destr_iterator - Iterates through the member/base destruction list.
-
-  /// destr_const_iterator - Iterates through the member/base destruction list.
-  typedef uintptr_t const destr_const_iterator;
-
-  /// destr_begin() - Retrieve an iterator to the first destructed member/base.
-  uintptr_t* destr_begin() {
-    return BaseOrMemberDestructions;
-  }
-  /// destr_begin() - Retrieve an iterator to the first destructed member/base.
-  uintptr_t* destr_begin() const {
-    return BaseOrMemberDestructions;
-  }
-
-  /// destr_end() - Retrieve an iterator past the last destructed member/base.
-  uintptr_t* destr_end() {
-    return BaseOrMemberDestructions + NumBaseOrMemberDestructions;
-  }
-  /// destr_end() - Retrieve an iterator past the last destructed member/base.
-  uintptr_t* destr_end() const {
-    return BaseOrMemberDestructions + NumBaseOrMemberDestructions;
-  }
-
-  /// getNumBaseOrMemberDestructions - Number of base and non-static members
-  /// to destroy.
-  unsigned getNumBaseOrMemberDestructions() const {
-    return NumBaseOrMemberDestructions;
-  }
-
-  /// setNumBaseOrMemberDestructions - Set number of base and non-static members
-  /// to destroy.
-  void setNumBaseOrMemberDestructions(unsigned numBaseOrMemberDestructions) {
-    NumBaseOrMemberDestructions = numBaseOrMemberDestructions;
-  }
-
-  /// getBaseOrMemberToDestroy - get the generic 'member' representing either
-  /// the field or a base class.
-  uintptr_t* getBaseOrMemberToDestroy() const {
-    return BaseOrMemberDestructions;
-  }
-
-  /// setBaseOrMemberToDestroy - set the generic 'member' representing either
-  /// the field or a base class.
-  void setBaseOrMemberDestructions(uintptr_t* baseOrMemberDestructions) {
-    BaseOrMemberDestructions = baseOrMemberDestructions;
-  }
-
-  /// isVbaseToDestroy - returns true, if object is virtual base.
-  bool isVbaseToDestroy(uintptr_t Vbase) const {
-    return (Vbase & VBASE) != 0;
-  }
-  /// isDirectNonVBaseToDestroy - returns true, if object is direct non-virtual
-  /// base.
-  bool isDirectNonVBaseToDestroy(uintptr_t DrctNonVbase) const {
-    return (DrctNonVbase & DRCTNONVBASE) != 0;
-  }
-  /// isAnyBaseToDestroy - returns true, if object is any base (virtual or
-  /// direct non-virtual)
-  bool isAnyBaseToDestroy(uintptr_t AnyBase) const {
-    return (AnyBase & ANYBASE) != 0;
-  }
-  /// isMemberToDestroy - returns true if object is a non-static data member.
-  bool isMemberToDestroy(uintptr_t Member) const {
-    return (Member & ANYBASE)  == 0;
-  }
-  /// getAnyBaseClassToDestroy - Get the type for the given base class object.
-  Type *getAnyBaseClassToDestroy(uintptr_t Base) const {
-    if (isAnyBaseToDestroy(Base))
-      return reinterpret_cast<Type*>(Base  & ~0x03);
-    return 0;
-  }
-  /// getMemberToDestroy - Get the member for the given object.
-  FieldDecl *getMemberToDestroy(uintptr_t Member) const {
-    if (isMemberToDestroy(Member))
-      return reinterpret_cast<FieldDecl *>(Member);
-    return 0;
-  }
-  /// getVbaseClassToDestroy - Get the virtual base.
-  Type *getVbaseClassToDestroy(uintptr_t Vbase) const {
-    if (isVbaseToDestroy(Vbase))
-      return reinterpret_cast<Type*>(Vbase  & ~0x01);
-    return 0;
-  }
-  /// getDirectNonVBaseClassToDestroy - Get the virtual base.
-  Type *getDirectNonVBaseClassToDestroy(uintptr_t Base) const {
-    if (isDirectNonVBaseToDestroy(Base))
-      return reinterpret_cast<Type*>(Base  & ~0x02);
-    return 0;
-  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

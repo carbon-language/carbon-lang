@@ -28,3 +28,17 @@ class A1 {
 };
 
 template<> A1<char>::~A1();
+
+// PR5529
+namespace PR5529 {
+  struct A {
+    ~A();
+  };
+  
+  A::~A() { }
+  struct B : A {
+    virtual ~B();
+  };
+  
+  B::~B()  {}
+}

@@ -2407,11 +2407,10 @@ public:
                               unsigned NumInitializers,
                               bool IsImplicitConstructor);
 
-  /// computeBaseOrMembersToDestroy - Compute information in current
-  /// destructor decl's AST of bases and non-static data members which will be
-  /// implicitly destroyed. We are storing the destruction in the order that
-  /// they should occur (which is the reverse of construction order).
-  void computeBaseOrMembersToDestroy(CXXDestructorDecl *Destructor);
+  /// MarkBaseAndMemberDestructorsReferenced - Given a destructor decl,
+  /// mark all its non-trivial member and base destructor declarations
+  /// as referenced.
+  void MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor);
 
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 

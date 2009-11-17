@@ -1643,119 +1643,97 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
 /// FIXME: This needs to take a CXXDtorType.
 void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
                                        CXXDtorType DtorType) {
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DD->getDeclContext());
-  assert(!ClassDecl->getNumVBases() &&
-         "FIXME: Destruction of virtual bases not supported");
-  (void)ClassDecl;  // prevent warning.
+  assert(!DD->isTrivial() &&
+         "Should not emit dtor epilogue for trivial dtor!");
 
-  for (CXXDestructorDecl::destr_const_iterator *B = DD->destr_begin(),
-       *E = DD->destr_end(); B != E; ++B) {
-    uintptr_t BaseOrMember = (*B);
-    if (DD->isMemberToDestroy(BaseOrMember)) {
-      FieldDecl *FD = DD->getMemberToDestroy(BaseOrMember);
-      QualType FieldType = getContext().getCanonicalType((FD)->getType());
-      const ConstantArrayType *Array =
-        getContext().getAsConstantArrayType(FieldType);
-      if (Array)
-        FieldType = getContext().getBaseElementType(FieldType);
-      const RecordType *RT = FieldType->getAs<RecordType>();
-      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      if (FieldClassDecl->hasTrivialDestructor())
-        continue;
-      llvm::Value *LoadOfThis = LoadCXXThis();
-      LValue LHS = EmitLValueForField(LoadOfThis, FD, false, 0);
-      if (Array) {
-        const llvm::Type *BasePtr = ConvertType(FieldType);
-        BasePtr = llvm::PointerType::getUnqual(BasePtr);
-        llvm::Value *BaseAddrPtr =
-          Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-        EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                                  Array, BaseAddrPtr);
-      }
-      else
-        EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                              Dtor_Complete, LHS.getAddress());
-    } else {
-      const RecordType *RT =
-        DD->getAnyBaseClassToDestroy(BaseOrMember)->getAs<RecordType>();
-      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      if (BaseClassDecl->hasTrivialDestructor())
-        continue;
-      llvm::Value *V = GetAddressCXXOfBaseClass(LoadCXXThis(),
-                                                ClassDecl, BaseClassDecl,
-                                                /*NullCheckValue=*/false);
-      EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
-                            DtorType, V);
-    }
-  }
-  if (DD->getNumBaseOrMemberDestructions() || DD->isTrivial())
-    return;
-  // Case of destructor synthesis with fields and base classes
-  // which have non-trivial destructors. They must be destructed in
-  // reverse order of their construction.
-  llvm::SmallVector<FieldDecl *, 16> DestructedFields;
+  const CXXRecordDecl *ClassDecl = DD->getParent();
 
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
-    QualType FieldType = getContext().getCanonicalType((*Field)->getType());
-    if (getContext().getAsConstantArrayType(FieldType))
-      FieldType = getContext().getBaseElementType(FieldType);
-    if (const RecordType *RT = FieldType->getAs<RecordType>()) {
-      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      if (FieldClassDecl->hasTrivialDestructor())
-        continue;
-      DestructedFields.push_back(*Field);
-    }
-  }
-  if (!DestructedFields.empty())
-    for (int i = DestructedFields.size() -1; i >= 0; --i) {
-      FieldDecl *Field = DestructedFields[i];
-      QualType FieldType = Field->getType();
-      const ConstantArrayType *Array =
-        getContext().getAsConstantArrayType(FieldType);
-        if (Array)
-          FieldType = getContext().getBaseElementType(FieldType);
-      const RecordType *RT = FieldType->getAs<RecordType>();
-      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      llvm::Value *LoadOfThis = LoadCXXThis();
-      LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
-      if (Array) {
-        const llvm::Type *BasePtr = ConvertType(FieldType);
-        BasePtr = llvm::PointerType::getUnqual(BasePtr);
-        llvm::Value *BaseAddrPtr =
-        Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-        EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                                  Array, BaseAddrPtr);
-      }
-      else
-        EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
-                              Dtor_Complete, LHS.getAddress());
-    }
-
-  llvm::SmallVector<CXXRecordDecl*, 4> DestructedBases;
-  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    // FIXME. copy assignment of virtual base NYI
-    if (Base->isVirtual())
+  // Collect the fields.
+  llvm::SmallVector<const FieldDecl *, 16> FieldDecls;
+  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); I != E; ++I) {
+    const FieldDecl *Field = *I;
+    
+    QualType FieldType = getContext().getCanonicalType(Field->getType());
+    FieldType = getContext().getBaseElementType(FieldType);
+    
+    const RecordType *RT = FieldType->getAs<RecordType>();
+    if (!RT)
       continue;
-
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (BaseClassDecl->hasTrivialDestructor())
-      continue;
-    DestructedBases.push_back(BaseClassDecl);
-  }
-
-  for (int i = DestructedBases.size(); i > 0; --i) {
-    CXXRecordDecl *BaseClassDecl = DestructedBases[i - 1];
-    llvm::Value *V = GetAddressCXXOfBaseClass(LoadCXXThis(),
-                                              ClassDecl,BaseClassDecl, 
-                                              /*NullCheckValue=*/false);
-    EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
-                          Dtor_Complete, V);
+    
+    CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+    if (FieldClassDecl->hasTrivialDestructor())
+        continue;
+    
+    FieldDecls.push_back(Field);
   }
   
+  // Now destroy the fields.
+  for (size_t i = FieldDecls.size(); i > 0; --i) {
+    const FieldDecl *Field = FieldDecls[i - 1];
+    
+    QualType FieldType = Field->getType();
+    const ConstantArrayType *Array = 
+      getContext().getAsConstantArrayType(FieldType);
+    if (Array)
+      FieldType = getContext().getBaseElementType(FieldType);
+    
+    const RecordType *RT = FieldType->getAs<RecordType>();
+    CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+
+    llvm::Value *ThisPtr = LoadCXXThis();
+
+    LValue LHS = EmitLValueForField(ThisPtr, Field, 
+                                    /*isUnion=*/false,
+                                    // FIXME: Qualifiers?
+                                    /*CVRQualifiers=*/0);
+    if (Array) {
+      const llvm::Type *BasePtr = ConvertType(FieldType);
+      BasePtr = llvm::PointerType::getUnqual(BasePtr);
+      llvm::Value *BaseAddrPtr =
+        Builder.CreateBitCast(LHS.getAddress(), BasePtr);
+      EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(getContext()),
+                                Array, BaseAddrPtr);
+    } else
+      EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
+                            Dtor_Complete, LHS.getAddress());
+  }
+
+  // Destroy non-virtual bases.
+  for (CXXRecordDecl::reverse_base_class_const_iterator I = 
+        ClassDecl->bases_rbegin(), E = ClassDecl->bases_rend(); I != E; ++I) {
+    const CXXBaseSpecifier &Base = *I;
+    
+    // Ignore virtual bases.
+    if (Base.isVirtual())
+      continue;
+    
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
+    
+    // Ignore trivial destructors.
+    if (BaseClassDecl->hasTrivialDestructor())
+      continue;
+
+    llvm::Value *V = GetAddressCXXOfBaseClass(LoadCXXThis(),
+                                              ClassDecl, BaseClassDecl, 
+                                              /*NullCheckValue=*/false);
+    EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
+                          Dtor_Base, V);
+  }
+
+  // If we're emitting a base destructor, we don't want to emit calls to the
+  // virtual bases.
+  if (DtorType == Dtor_Base)
+    return;
+  
+  // FIXME: Handle virtual bases.
+  for (CXXRecordDecl::reverse_base_class_const_iterator I = 
+       ClassDecl->vbases_rbegin(), E = ClassDecl->vbases_rend(); I != E; ++I) {
+    assert(false && "FIXME: Handle virtual bases.");
+  }
+    
+  // If we have a deleting destructor, emit a call to the delete operator.
   if (DtorType == Dtor_Deleting) {
     const FunctionDecl *DeleteFD = DD->getOperatorDelete();
     assert(DeleteFD && "deleting dtor did not have a delete operator!");
@@ -1782,19 +1760,17 @@ void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
                                                   CXXDtorType DtorType,
                                                   llvm::Function *Fn,
                                                   const FunctionArgList &Args) {
-
-  const CXXRecordDecl *ClassDecl = Dtor->getParent();
-  assert(!ClassDecl->hasUserDeclaredDestructor() &&
+  assert(!Dtor->getParent()->hasUserDeclaredDestructor() &&
          "SynthesizeDefaultDestructor - destructor has user declaration");
-  (void) ClassDecl;
 
   StartFunction(GlobalDecl(Dtor, DtorType), Dtor->getResultType(), Fn, Args, 
                 SourceLocation());
+
   EmitDtorEpilogue(Dtor, DtorType);
   FinishFunction();
 }
 
-// FIXME: Move this to CGCXXStmt.cpp
+// FIXME: Move this to CGStmtCXX.cpp
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   // FIXME: We need to do more here.
   EmitStmt(S.getTryBlock());

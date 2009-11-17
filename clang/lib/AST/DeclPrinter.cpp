@@ -401,37 +401,6 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         }
       }
     }
-    else if (CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(D)) {
-      if (DDecl->getNumBaseOrMemberDestructions() > 0) {
-        // List order of base/member destruction for visualization purposes.
-        assert (D->isThisDeclarationADefinition() && "Destructor with dtor-list");
-        Proto += "/* : ";
-        for (CXXDestructorDecl::destr_const_iterator *B = DDecl->destr_begin(),
-             *E = DDecl->destr_end();
-             B != E; ++B) {
-          uintptr_t BaseOrMember = (*B);
-          if (B != DDecl->destr_begin())
-            Proto += ", ";
-
-          if (DDecl->isMemberToDestroy(BaseOrMember)) {
-            FieldDecl *FD = DDecl->getMemberToDestroy(BaseOrMember);
-            Proto += "~";
-            Proto += FD->getNameAsString();
-          }
-          else // FIXME. skip dependent types for now.
-            if (const RecordType *RT =
-                  DDecl->getAnyBaseClassToDestroy(BaseOrMember)
-                    ->getAs<RecordType>()) {
-              const CXXRecordDecl *BaseDecl =
-                cast<CXXRecordDecl>(RT->getDecl());
-              Proto += "~";
-              Proto += BaseDecl->getNameAsString();
-            }
-          Proto += "()";
-        }
-        Proto += " */";
-      }
-    }
     else
       AFT->getResultType().getAsStringInternal(Proto, Policy);
   } else {
