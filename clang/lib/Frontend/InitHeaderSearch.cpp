@@ -630,8 +630,8 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   // Add the user defined entries.
   for (unsigned i = 0, e = HSOpts.UserEntries.size(); i != e; ++i) {
     const HeaderSearchOptions::Entry &E = HSOpts.UserEntries[i];
-    Init.AddPath(E.Path, E.Group, E.IsCXXAware, E.IsUserSupplied, E.IsFramework,
-                 E.IgnoreSysRoot);
+    Init.AddPath(E.Path, E.Group, false, E.IsUserSupplied, E.IsFramework,
+                 false);
   }
 
   // Add entries from CPATH and friends.

@@ -33,17 +33,13 @@ public:
   struct Entry {
     std::string Path;
     frontend::IncludeDirGroup Group;
-    unsigned IsCXXAware : 1;
     unsigned IsUserSupplied : 1;
     unsigned IsFramework : 1;
-    unsigned IgnoreSysRoot : 1;
 
     Entry(llvm::StringRef _Path, frontend::IncludeDirGroup _Group,
-          bool _IsCXXAware, bool _IsUserSupplied, bool _IsFramework,
-          bool _IgnoreSysRoot)
-      : Path(_Path), Group(_Group), IsCXXAware(_IsCXXAware),
-        IsUserSupplied(_IsUserSupplied), IsFramework(_IsFramework),
-        IgnoreSysRoot(_IgnoreSysRoot) {}
+          bool _IsUserSupplied, bool _IsFramework)
+      : Path(_Path), Group(_Group), IsUserSupplied(_IsUserSupplied),
+        IsFramework(_IsFramework) {}
   };
 
   /// If non-empty, the directory to use as a "virtual system root" for include
@@ -81,10 +77,8 @@ public:
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.
   void AddPath(llvm::StringRef Path, frontend::IncludeDirGroup Group,
-               bool IsCXXAware, bool IsUserSupplied,
-               bool IsFramework, bool IgnoreSysRoot = false) {
-    UserEntries.push_back(Entry(Path, Group, IsCXXAware, IsUserSupplied,
-                                IsFramework, IgnoreSysRoot));
+               bool IsUserSupplied, bool IsFramework) {
+    UserEntries.push_back(Entry(Path, Group, IsUserSupplied, IsFramework));
   }
 };
 
