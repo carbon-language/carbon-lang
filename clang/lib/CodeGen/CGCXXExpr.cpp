@@ -389,7 +389,6 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
         FTy = llvm::FunctionType::get(ResultType, false);
         llvm::Value *F = CGM.CreateRuntimeFunction(FTy, "__cxa_bad_typeid");
         Builder.CreateCall(F)->setDoesNotReturn();
-        // FIXME: Should we have the below?
         Builder.CreateUnreachable();
         EmitBlock(NonZeroBlock);
       }
@@ -501,7 +500,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
       FTy = llvm::FunctionType::get(ResultType, false);
       llvm::Value *F = CGM.CreateRuntimeFunction(FBadTy, "__cxa_bad_cast");
       Builder.CreateCall(F)->setDoesNotReturn();
-      // Builder.CreateUnreachable();
+      Builder.CreateUnreachable();
     }
   }
   
@@ -516,8 +515,6 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
     PHI->reserveOperandSpace(3);
     PHI->addIncoming(V, NonZeroBlock);
     PHI->addIncoming(llvm::Constant::getNullValue(LTy), NullBlock);
-    if (ThrowOnBad)
-      PHI->addIncoming(llvm::Constant::getNullValue(LTy), BadCastBlock);
     V = PHI;
   }
 
