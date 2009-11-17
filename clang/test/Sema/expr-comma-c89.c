@@ -1,7 +1,6 @@
 // RUN: clang-cc %s -fsyntax-only -verify -std=c99
 // rdar://6095180
 
-#include <assert.h>
 struct s { char c[17]; };
 extern struct s foo(void);
 

@@ -1,5 +1,5 @@
-// RUN: clang-cc %s -fsyntax-only -verify
-// RUN: clang-cc %s -fsyntax-only -fshort-wchar -verify -DSHORT_WCHAR
+// RUN: clang %s -fsyntax-only -Xclang -verify
+// RUN: clang %s -fsyntax-only -fshort-wchar -Xclang -verify -DSHORT_WCHAR
  
 #include <wchar.h>
  

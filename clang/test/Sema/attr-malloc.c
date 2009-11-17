@@ -1,5 +1,5 @@
-// RUN: clang-cc -verify -fsyntax-only %s
-// RUN: clang-cc -emit-llvm -o %t %s
+// RUN: clang -Xclang -verify -fsyntax-only %s
+// RUN: clang -emit-llvm -S -o %t %s
 
 #include <stdlib.h>
 
