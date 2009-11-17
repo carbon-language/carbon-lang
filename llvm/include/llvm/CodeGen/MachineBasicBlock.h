@@ -358,6 +358,8 @@ private:   // Methods used to maintain doubly linked list of blocks...
 
 raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
 
+void WriteAsOperand(raw_ostream &, const MachineBasicBlock*, bool t);
+
 //===--------------------------------------------------------------------===//
 // GraphTraits specializations for machine basic block graphs (machine-CFGs)
 //===--------------------------------------------------------------------===//

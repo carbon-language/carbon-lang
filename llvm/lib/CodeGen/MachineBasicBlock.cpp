@@ -447,3 +447,8 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   }
   return MadeChange;
 }
+
+void llvm::WriteAsOperand(raw_ostream &OS, const MachineBasicBlock *MBB,
+                          bool t) {
+  OS << "BB#" << MBB->getNumber();
+}

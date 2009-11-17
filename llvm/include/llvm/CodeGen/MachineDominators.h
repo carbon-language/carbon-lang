@@ -23,8 +23,6 @@
 
 namespace llvm {
 
-inline void WriteAsOperand(raw_ostream &, const MachineBasicBlock*, bool t) {  }
-
 template<>
 inline void DominatorTreeBase<MachineBasicBlock>::addRoot(MachineBasicBlock* MBB) {
   this->Roots.push_back(MBB);
