@@ -52,7 +52,7 @@ public:
   llvm::OwningPtr<DiagnosticClient> PrimaryClient;
   llvm::OwningPtr<TextDiagnosticBuffer> Buffer;
   Preprocessor *CurrentPreprocessor;
-  bool NumErrors;
+  unsigned NumErrors;
 
 private:
   void CheckDiagnostics();
