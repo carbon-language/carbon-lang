@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/******************************************************************************/
+/* Utility functions.                                                         */
+/******************************************************************************/
+
 #ifdef _MSC_VER
 char *basename(const char* path)
 {
@@ -22,6 +26,10 @@ char *basename(const char* path)
 #else
 extern char *basename(const char *);
 #endif
+
+/******************************************************************************/
+/* Pretty-printing.                                                           */
+/******************************************************************************/
 
 static void PrintCursor(CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind))
@@ -46,6 +54,10 @@ static const char* GetCursorSource(CXCursor Cursor) {
     return "<invalid loc>";  
   return basename(source);
 }
+
+/******************************************************************************/
+/* Logic for testing clang_loadTranslationUnit().                             */
+/******************************************************************************/
 
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter)
 {
@@ -114,6 +126,43 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
     }
   }
 }
+
+int perform_test_load_tu(const char *file, const char *filter) {
+  CXIndex Idx;
+  CXTranslationUnit TU;
+  enum CXCursorKind K = CXCursor_NotImplemented;
+  enum CXCursorKind *ck = &K;
+  Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
+                          !strcmp(filter, "local") ? 1 : 0, 
+                          /* displayDiagnostics */ 1);
+  
+  TU = clang_createTranslationUnit(Idx, file);
+  
+  if (!TU) {
+    fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
+    return 1;
+  }
+  
+  /* Perform some simple filtering. */
+  if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
+  else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
+  else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
+  else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
+  else if (!strcmp(filter, "function")) K = CXCursor_FunctionDecl;
+  else if (!strcmp(filter, "typedef")) K = CXCursor_TypedefDecl;
+  else {
+    fprintf(stderr, "Unknown filter for -test-load-tu: %s\n", filter);
+    return 1;
+  }
+  
+  clang_loadTranslationUnit(TU, TranslationUnitVisitor, ck);
+  clang_disposeTranslationUnit(TU);
+  return 0;
+}
+
+/******************************************************************************/
+/* Logic for testing clang_codeComplete().                                    */
+/******************************************************************************/
 
 /* Parse file:line:column from the input string. Returns 0 on success, non-zero
    on failure. If successful, the pointer *filename will contain newly-allocated
@@ -236,51 +285,22 @@ int perform_code_completion(int argc, const char **argv) {
   return 0;
 }
 
-int perform_test_load_tu(const char *file, const char *filter) {
-  CXIndex Idx;
-  CXTranslationUnit TU;
-  enum CXCursorKind K = CXCursor_NotImplemented;
-  enum CXCursorKind *ck = &K;
-  Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
-                          !strcmp(filter, "local") ? 1 : 0, 
-                          /* displayDiagnostics */ 1);
-  
-  TU = clang_createTranslationUnit(Idx, file);
-  
-  if (!TU) {
-    fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
-    return 1;
-  }
-  
-  /* Perform some simple filtering. */
-  if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
-  else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
-  else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
-  else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
-  else if (!strcmp(filter, "function")) K = CXCursor_FunctionDecl;
-  else if (!strcmp(filter, "typedef")) K = CXCursor_TypedefDecl;
-  else {
-    fprintf(stderr, "Unknown filter for -test-load-tu: %s\n", filter);
-    return 1;
-  }
-            
-  clang_loadTranslationUnit(TU, TranslationUnitVisitor, ck);
-  clang_disposeTranslationUnit(TU);
-  return 0;
-}
+/******************************************************************************/
+/* Command line processing.                                                   */
+/******************************************************************************/
 
 static void print_usage(void) {
   fprintf(stderr,
-  "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
-  "       c-index-test -test-load-tu <AST file> <symbol filter>\n\n"
-          " <symbol filter> options for -test-load-tu:\n%s",
-          "   all - load all symbols, including those from PCH\n"
-          "   local - load all symbols except those in PCH\n"
-          "   category - only load ObjC categories (non-PCH)\n"
-          "   interface - only load ObjC interfaces (non-PCH)\n"
-          "   protocol - only load ObjC protocols (non-PCH)\n"
-          "   function - only load functions (non-PCH)\n"
-          "   typedef - only load typdefs (non-PCH)\n\n");
+    "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
+    "       c-index-test -test-load-tu <AST file> <symbol filter>\n\n"
+    " <symbol filter> options for -test-load-tu:\n%s",
+    "   all - load all symbols, including those from PCH\n"
+    "   local - load all symbols except those in PCH\n"
+    "   category - only load ObjC categories (non-PCH)\n"
+    "   interface - only load ObjC interfaces (non-PCH)\n"
+    "   protocol - only load ObjC protocols (non-PCH)\n"
+    "   function - only load functions (non-PCH)\n"
+    "   typedef - only load typdefs (non-PCH)\n\n");
 }
 
 int main(int argc, const char **argv) {
