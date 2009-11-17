@@ -112,6 +112,12 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       IDecl->setLocation(AtInterfaceLoc);
       IDecl->setForwardDecl(false);
       IDecl->setClassLoc(ClassLoc);
+      
+      // Since this ObjCInterfaceDecl was created by a forward declaration,
+      // we now add it to the DeclContext since it wasn't added before
+      // (see ActOnForwardClassDeclaration).
+      CurContext->addDecl(IDecl);
+      
       if (AttrList)
         ProcessDeclAttributeList(TUScope, IDecl, AttrList);
     }
@@ -1194,7 +1200,14 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                         // FIXME: need to get the 'real'
                                         // identifier loc from the parser.
                                         AtClassLoc, true);
-      PushOnScopeChains(IDecl, TUScope);
+      
+      // Push the ObjCInterfaceDecl on the scope chain but do *not* add it to
+      // the current DeclContext.  This prevents clients that walk DeclContext
+      // from seeing the imaginary ObjCInterfaceDecl until it is actually
+      // declared later (if at all).  We also take care to explicitly make
+      // sure this declaration is visible for name lookup.
+      PushOnScopeChains(IDecl, TUScope, false);
+      CurContext->makeDeclVisibleInContext(IDecl, true);
     }
 
     Interfaces.push_back(IDecl);
