@@ -30,7 +30,7 @@ struct GraphTraits {
   // typedef NodeType          - Type of Node in the graph
   // typedef ChildIteratorType - Type used to iterate over children in graph
 
-  // static NodeType *getEntryNode(GraphType *)
+  // static NodeType *getEntryNode(const GraphType &)
   //    Return the entry node of the graph
 
   // static ChildIteratorType child_begin(NodeType *)
