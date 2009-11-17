@@ -377,8 +377,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
   //   BCPLComment, C99, CPlusPlus0x, Digraphs, GNUInline, ImplicitInt, GNUMode
   if (Opts.DollarIdents)
     Res.push_back("-fdollars-in-identifiers");
-  Res.push_back("-fms-extensions");
-  Res.push_back(Opts.Microsoft ? "1" : "0");
+  if (Opts.Microsoft)
+    Res.push_back("-fms-extensions=1");
   if (Opts.ObjCNonFragileABI)
     Res.push_back("-fobjc-nonfragile-abi");
   // NoInline is implicit.
@@ -406,12 +406,12 @@ static void LangOptsToArgs(const LangOptions &Opts,
     llvm::llvm_report_error("FIXME: Not yet implemented!");
   if (Opts.POSIXThreads)
     Res.push_back("-pthread");
-  Res.push_back("-fblocks");
-  Res.push_back(Opts.Blocks ? "1" : "0");
+  if (Opts.Blocks)
+    Res.push_back("-fblocks=1");
   if (Opts.EmitAllDecls)
     Res.push_back("-femit-all-decls");
-  Res.push_back("-fmath-errno");
-  Res.push_back(Opts.MathErrno ? "1" : "0");
+  if (!Opts.MathErrno)
+    Res.push_back("-fmath-errno=0");
   if (Opts.OverflowChecking)
     Res.push_back("-ftrapv");
   if (Opts.HeinousExtensions)
