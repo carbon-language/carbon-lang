@@ -372,7 +372,7 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
       // We need to do a zero check for *p, unless it has NonNullAttr.
       // FIXME: PointerType->hasAttr<NonNullAttr>()
       bool CanBeZero = false;
-      if (UnaryOperator *UO = dyn_cast<UnaryOperator>(subE))
+      if (UnaryOperator *UO = dyn_cast<UnaryOperator>(subE->IgnoreParens()))
         if (UO->getOpcode() == UnaryOperator::Deref)
           CanBeZero = true;
       if (CanBeZero) {

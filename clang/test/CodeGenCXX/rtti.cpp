@@ -102,7 +102,7 @@ void test2_2(test1_D *dp) {
     test2_1();
   if (typeid(NP) == typeid(test1_D))
     test2_1();
-  if (typeid(*dp) == typeid(test1_D))
+  if (typeid(((*(dp)))) == typeid(test1_D))
     test2_1();
 }
 
