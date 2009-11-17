@@ -4442,14 +4442,13 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
   SDValue Chain = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   SDValue N2 = N->getOperand(2);
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
 
-  // never taken branch, fold to chain
-  if (N1C && N1C->isNullValue())
-    return Chain;
-  // unconditional branch
-  if (N1C && N1C->getAPIntValue() == 1)
-    return DAG.getNode(ISD::BR, N->getDebugLoc(), MVT::Other, Chain, N2);
+  // If N is a constant we could fold this into a fallthrough or unconditional
+  // branch. However that doesn't happen very often in normal code, because
+  // Instcombine/SimplifyCFG should have handled the available opportunities.
+  // If we did this folding here, it would be necessary to update the
+  // MachineBasicBlock CFG, which is awkward.
+
   // fold a brcond with a setcc condition into a BR_CC node if BR_CC is legal
   // on the target.
   if (N1.getOpcode() == ISD::SETCC &&
@@ -4516,21 +4515,17 @@ SDValue DAGCombiner::visitBR_CC(SDNode *N) {
   CondCodeSDNode *CC = cast<CondCodeSDNode>(N->getOperand(1));
   SDValue CondLHS = N->getOperand(2), CondRHS = N->getOperand(3);
 
+  // If N is a constant we could fold this into a fallthrough or unconditional
+  // branch. However that doesn't happen very often in normal code, because
+  // Instcombine/SimplifyCFG should have handled the available opportunities.
+  // If we did this folding here, it would be necessary to update the
+  // MachineBasicBlock CFG, which is awkward.
+
   // Use SimplifySetCC to simplify SETCC's.
   SDValue Simp = SimplifySetCC(TLI.getSetCCResultType(CondLHS.getValueType()),
                                CondLHS, CondRHS, CC->get(), N->getDebugLoc(),
                                false);
   if (Simp.getNode()) AddToWorkList(Simp.getNode());
-
-  ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(Simp.getNode());
-
-  // fold br_cc true, dest -> br dest (unconditional branch)
-  if (SCCC && !SCCC->isNullValue())
-    return DAG.getNode(ISD::BR, N->getDebugLoc(), MVT::Other,
-                       N->getOperand(0), N->getOperand(4));
-  // fold br_cc false, dest -> unconditional fall through
-  if (SCCC && SCCC->isNullValue())
-    return N->getOperand(0);
 
   // fold to a simpler setcc
   if (Simp.getNode() && Simp.getOpcode() == ISD::SETCC)
