@@ -29,7 +29,8 @@ void test1() {
   S(bp == 0, 3);
   ap = dynamic_cast<test1_A*>(&test1_d);
   S(ap != 0, 4);
-  // FIXME: Doesn't work yet, gcc fails this at comepile time
+  // FIXME: Doesn't work yet, gcc fails this at compile time.  We'd need access
+  // control for this to work.
   // bp = dynamic_cast<test1_B*>(&test1_d);
   // S(bp == 0, 5);
   {
