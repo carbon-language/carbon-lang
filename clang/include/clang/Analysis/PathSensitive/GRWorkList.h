@@ -28,7 +28,7 @@ class GRWorkListUnit {
   ExplodedNode* Node;
   GRBlockCounter Counter;
   CFGBlock* Block;
-  unsigned BlockIdx;
+  unsigned BlockIdx; // This is the index of the next statement.
 
 public:
   GRWorkListUnit(ExplodedNode* N, GRBlockCounter C,
