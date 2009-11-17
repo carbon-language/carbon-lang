@@ -42,7 +42,7 @@ class CompilerInvocation {
   DependencyOutputOptions DependencyOutputOpts;
 
   /// Options controlling the diagnostic engine.
-  DiagnosticOptions DiagOpts;
+  DiagnosticOptions DiagnosticOpts;
 
   /// Options controlling the frontend itself.
   FrontendOptions FrontendOpts;
@@ -86,8 +86,8 @@ public:
     return DependencyOutputOpts;
   }
 
-  DiagnosticOptions &getDiagnosticOpts() { return DiagOpts; }
-  const DiagnosticOptions &getDiagnosticOpts() const { return DiagOpts; }
+  DiagnosticOptions &getDiagnosticOpts() { return DiagnosticOpts; }
+  const DiagnosticOptions &getDiagnosticOpts() const { return DiagnosticOpts; }
 
   HeaderSearchOptions &getHeaderSearchOpts() { return HeaderSearchOpts; }
   const HeaderSearchOptions &getHeaderSearchOpts() const {
