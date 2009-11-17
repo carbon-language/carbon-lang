@@ -9,7 +9,7 @@
 // CHECK: @__func__.staticFunction = private constant [15 x i8] c"staticFunction\00"
 // CHECK: @__PRETTY_FUNCTION__.staticFunction = private constant [22 x i8] c"void staticFunction()\00"
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 void plainFunction() {
   printf("__func__ %s\n", __func__);

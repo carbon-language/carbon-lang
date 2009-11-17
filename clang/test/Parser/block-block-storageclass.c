@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify -parse-noop %s
 #if 0
-#include <stdio.h>
+int printf(const char *, ...);
 void _Block_byref_release(void*src){}
 
 int main() {

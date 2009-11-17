@@ -1,16 +1,19 @@
 // RUN: clang-cc -fsyntax-only -verify -Wformat-nonliteral %s
 
-// Define this to get vasprintf on Linux
-#define _GNU_SOURCE
-
-#include <stdio.h>
 #include <stdarg.h>
+typedef __typeof(sizeof(int)) size_t;
+typedef struct _FILE FILE;
+int fprintf(FILE *, const char *restrict, ...);
+int printf(const char *restrict, ...);
+int snprintf(char *restrict, size_t, const char *restrict, ...);
+int sprintf(char *restrict, const char *restrict, ...);
+int vasprintf(char **, const char *, va_list);
+int vfprintf(FILE *, const char *restrict, va_list);
+int vprintf(const char *restrict, va_list);
+int vsnprintf(char *, size_t, const char *, va_list);
+int vsprintf(char *restrict, const char *restrict, va_list);
 
 char * global_fmt;
-
-#if defined(_WIN32) || defined(_WIN64)
-extern int snprintf(char*, size_t, const char*, ...);
-#endif
 
 void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
 

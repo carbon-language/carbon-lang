@@ -1,6 +1,6 @@
 // RUN: clang-cc --emit-llvm -o %t %s
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 @interface Root
 -(id) alloc;

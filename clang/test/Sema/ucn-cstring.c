@@ -1,6 +1,6 @@
 // RUN: clang-cc %s -verify -fsyntax-only -pedantic
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 int main(void) {
   int a[sizeof("hello \u2192 \u2603 \u2190 world") == 24 ? 1 : -1];

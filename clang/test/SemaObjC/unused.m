@@ -1,5 +1,6 @@
 // RUN: clang-cc %s -verify -Wunused -fsyntax-only
-#include <stdio.h>
+
+int printf(const char *, ...);
 
 @interface Greeter
 + (void) hello;
@@ -7,7 +8,7 @@
 
 @implementation Greeter
 + (void) hello {
-    fprintf(stdout, "Hello, World!\n");
+    printf("Hello, World!\n");
 }
 @end
 

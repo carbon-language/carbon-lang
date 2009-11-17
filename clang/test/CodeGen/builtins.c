@@ -1,7 +1,7 @@
 // RUN: clang-cc -emit-llvm -o %t %s
 // RUN: not grep __builtin %t
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 void p(char *str, int x) {
   printf("%s: %d\n", str, x);

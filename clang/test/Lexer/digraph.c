@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify < %s
 
-%:include <stdio.h>
+%:include <stdint.h>
 
     %:ifndef BUFSIZE
      %:define BUFSIZE  512

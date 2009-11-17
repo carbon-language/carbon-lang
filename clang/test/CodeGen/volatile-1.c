@@ -14,7 +14,7 @@ volatile struct S {
 } a, b;
 
 //void operator =(volatile struct S&o1, volatile struct S&o2) volatile;
-#include <stdio.h>
+int printf(const char *, ...);
 
 int main() {
   // A use.

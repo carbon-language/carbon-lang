@@ -1,6 +1,6 @@
 // RUN: clang-cc -analyze -analyzer-experimental-internal-checks -warn-objc-methodsigs -verify %s
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 @interface MyBase
 -(long long)length;

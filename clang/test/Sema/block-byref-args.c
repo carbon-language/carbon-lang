@@ -1,6 +1,6 @@
 // RUN: clang-cc %s -fsyntax-only -verify -fblocks
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 int main(int argc, char **argv) {
   __block void(*bobTheFunction)(void);

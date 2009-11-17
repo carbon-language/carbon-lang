@@ -7,7 +7,7 @@
 // RUN: grep "i32 135)" %t | count 2
 // RUN: grep "_Block_object_assign" %t | count 10
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 void test1() {
   __block int a;

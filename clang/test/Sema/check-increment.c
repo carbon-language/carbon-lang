@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-#include <stdio.h>
+int printf(const char *, ...);
 typedef int *pint;
 int main() {
    int a[5] = {0};

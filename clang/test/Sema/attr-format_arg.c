@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-#include <stdio.h>
+int printf(const char *, ...);
 
 const char* f(const char *s) __attribute__((format_arg(1)));
 
