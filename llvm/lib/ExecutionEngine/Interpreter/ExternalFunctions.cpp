@@ -284,6 +284,9 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   else
     llvm_report_error("Tried to execute an unknown external function: " +
                       F->getType()->getDescription() + " " +F->getName());
+#ifndef USE_LIBFFI
+  errs() << "Recompiling LLVM with --enable-libffi might help.\n";
+#endif
   return GenericValue();
 }
 
