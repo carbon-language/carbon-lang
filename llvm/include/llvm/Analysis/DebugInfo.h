@@ -468,15 +468,8 @@ namespace llvm {
     Module &M;
     LLVMContext& VMContext;
 
-    // Cached values for uniquing and faster lookups.
     const Type *EmptyStructPtr; // "{}*".
-    Function *StopPointFn;   // llvm.dbg.stoppoint
-    Function *FuncStartFn;   // llvm.dbg.func.start
-    Function *RegionStartFn; // llvm.dbg.region.start
-    Function *RegionEndFn;   // llvm.dbg.region.end
     Function *DeclareFn;     // llvm.dbg.declare
-    StringMap<Constant*> StringCache;
-    DenseMap<Constant*, DIDescriptor> SimpleConstantCache;
 
     DIFactory(const DIFactory &);     // DO NOT IMPLEMENT
     void operator=(const DIFactory&); // DO NOT IMPLEMENT
@@ -604,23 +597,6 @@ namespace llvm {
     /// CreateLocation - Creates a debug info location.
     DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo,
                               DIScope S, DILocation OrigLoc);
-
-    /// InsertStopPoint - Create a new llvm.dbg.stoppoint intrinsic invocation,
-    /// inserting it at the end of the specified basic block.
-    void InsertStopPoint(DICompileUnit CU, unsigned LineNo, unsigned ColNo,
-                         BasicBlock *BB);
-
-    /// InsertSubprogramStart - Create a new llvm.dbg.func.start intrinsic to
-    /// mark the start of the specified subprogram.
-    void InsertSubprogramStart(DISubprogram SP, BasicBlock *BB);
-
-    /// InsertRegionStart - Insert a new llvm.dbg.region.start intrinsic call to
-    /// mark the start of a region for the specified scoping descriptor.
-    void InsertRegionStart(DIDescriptor D, BasicBlock *BB);
-
-    /// InsertRegionEnd - Insert a new llvm.dbg.region.end intrinsic call to
-    /// mark the end of a region for the specified scoping descriptor.
-    void InsertRegionEnd(DIDescriptor D, BasicBlock *BB);
 
     /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     Instruction *InsertDeclare(llvm::Value *Storage, DIVariable D,
