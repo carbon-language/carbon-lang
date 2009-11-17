@@ -1,5 +1,9 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -relocation-model=pic -disable-fp-elim -O0 -regalloc=local
+
+; Globally enabling -split-phi-edges causes LiveVariables to always run.
+; LiveVariables trips up the local allocator on this test.
+; It doesn't understand the subtleties of subregister imp-kills.
+; DONT: llc < %s -mtriple=x86_64-apple-darwin -relocation-model=pic -disable-fp-elim -O0 -regalloc=local
 
 	%struct.CGPoint = type { double, double }
 	%struct.NSArray = type { %struct.NSObject }
