@@ -497,7 +497,7 @@ def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
 
 // Alias instruction to load FR32 from f128mem using movaps. Upper bits are
 // disregarded.
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1 in
 def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
                      "movaps\t{$src, $dst|$dst, $src}",
                      [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>;
@@ -715,7 +715,7 @@ def MOVUPSmr : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    [(store (v4f32 VR128:$src), addr:$dst)]>;
 
 // Intrinsic forms of MOVUPS load and store
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1 in
 def MOVUPSrm_Int : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "movups\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>;
@@ -1256,7 +1256,7 @@ def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
 
 // Alias instruction to load FR64 from f128mem using movapd. Upper bits are
 // disregarded.
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1 in
 def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
                      "movapd\t{$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
