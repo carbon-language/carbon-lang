@@ -699,7 +699,7 @@ namespace llvm {
       if (miItr == mbb->end()) {
         // If this is the last instr in the MBB then we need to fix up the bb
         // range:
-        mbbRangeItr->second.second = SlotIndex(newIndex, SlotIndex::STORE);
+        mbbRangeItr->second.second = SlotIndex(newEntry, SlotIndex::STORE);
       }
 
       // Renumber if we need to.
