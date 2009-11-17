@@ -2603,8 +2603,8 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
 bool LoopStrengthReduce::OptimizeLoopCountIVOfStride(const SCEV* &Stride,
                                                      IVStrideUse* &CondUse,
                                                      Loop *L) {
-  // If the only use is an icmp of an loop exiting conditional branch, then
-  // attempts the optimization.
+  // If the only use is an icmp of a loop exiting conditional branch, then
+  // attempt the optimization.
   BasedUser User = BasedUser(*CondUse, SE);
   assert(isa<ICmpInst>(User.Inst) && "Expecting an ICMPInst!");
   ICmpInst *Cond = cast<ICmpInst>(User.Inst);
