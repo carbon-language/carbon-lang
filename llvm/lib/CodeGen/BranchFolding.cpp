@@ -205,7 +205,7 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
   // Do tail duplication once after tail merging is done.  Otherwise it is
   // tough to avoid situations where tail duplication and tail merging undo
   // each other's transformations ad infinitum.
-  MadeChangeThisIteration |= TailDuplicateBlocks(MF);
+  MadeChange |= TailDuplicateBlocks(MF);
 
   // See if any jump tables have become mergable or dead as the code generator
   // did its thing.
