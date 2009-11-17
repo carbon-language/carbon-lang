@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -fnext-runtime -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang-cc -triple i386-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
 
 @interface PBXTarget 
 {

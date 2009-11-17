@@ -83,17 +83,13 @@
 // RUN: clang-cc -x=objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
 //
 // OBJC:#define OBJC_NEW_PROPERTIES 1
+// OBJC:#define __NEXT_RUNTIME__ 1
 // OBJC:#define __OBJC__ 1
 //
-// 
+//
 // RUN: clang-cc -x=objective-c -fobjc-gc -E -dM < /dev/null | FileCheck -check-prefix OBJCGC %s
 //
 // OBJCGC:#define __OBJC_GC__ 1
-//
-// 
-// RUN: clang-cc -x=objective-c -fnext-runtime -E -dM < /dev/null | FileCheck -check-prefix NEXTRT %s
-//
-// NEXTRT:#define __NEXT_RUNTIME__ 1
 //
 // 
 // RUN: clang-cc -x=objective-c -fobjc-nonfragile-abi -E -dM < /dev/null | FileCheck -check-prefix NONFRAGILE %s

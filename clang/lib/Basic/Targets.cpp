@@ -158,8 +158,6 @@ static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
 /// GetDarwinLanguageOptions - Set the default language options for darwin.
 static void GetDarwinLanguageOptions(LangOptions &Opts,
                                      const llvm::Triple &Triple) {
-  Opts.NeXTRuntime = true;
-
   unsigned MajorVersion = Triple.getDarwinMajorNumber();
 
   // Blocks and stack protectors default to on for 10.6 (darwin10) and beyond.

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fnext-runtime -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang-cc -fobjc-gc -emit-llvm -o %t %s
 
 @interface I {
   __attribute__((objc_gc(strong))) signed long *_documentIDs;

@@ -396,7 +396,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
   Res.push_back(Opts.Exceptions ? "1" : "0");
   Res.push_back("-frtti");
   Res.push_back(Opts.Rtti ? "1" : "0");
-  Res.push_back(Opts.NeXTRuntime ? "-fnext-runtime" : "-fgnu-runtime");
+  if (!Opts.NeXTRuntime)
+    Res.push_back("-fgnu-runtime");
   if (Opts.Freestanding)
     Res.push_back("-ffreestanding");
   if (Opts.NoBuiltin)

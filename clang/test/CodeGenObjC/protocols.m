@@ -1,4 +1,4 @@
-// RUN: clang-cc -fnext-runtime -emit-llvm %s -o %t
+// RUN: clang-cc -emit-llvm %s -o %t
 
 void p(const char*, ...);
 

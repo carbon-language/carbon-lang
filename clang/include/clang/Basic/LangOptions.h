@@ -126,7 +126,8 @@ public:
     ObjCConstantStringClass = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = 0;
-    Exceptions = NeXTRuntime = Freestanding = NoBuiltin = 0;
+    Exceptions = Freestanding = NoBuiltin = 0;
+    NeXTRuntime = 1;
     Rtti = 1;
     LaxVectorConversions = 1;
     HeinousExtensions = 0;

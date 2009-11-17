@@ -541,11 +541,6 @@ MathErrno("fmath-errno", llvm::cl::init(true),
           llvm::cl::desc("Require math functions to respect errno"));
 
 static llvm::cl::opt<bool>
-NeXTRuntime("fnext-runtime",
-            llvm::cl::desc("Generate output compatible with the NeXT "
-                           "runtime"));
-
-static llvm::cl::opt<bool>
 NoElideConstructors("fno-elide-constructors",
                     llvm::cl::desc("Disable C++ copy constructor elision"));
 
@@ -1268,9 +1263,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
   Options.InstantiationDepth = TemplateDepth;
 
   // Override the default runtime if the user requested it.
-  if (NeXTRuntime)
-    Options.NeXTRuntime = 1;
-  else if (GNURuntime)
+  if (GNURuntime)
     Options.NeXTRuntime = 0;
 
   if (!ObjCConstantStringClass.empty())

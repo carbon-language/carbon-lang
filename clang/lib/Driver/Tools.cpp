@@ -887,9 +887,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_ffreestanding);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
-  Args.AddLastArg(CmdArgs, options::OPT_fgnu_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_flax_vector_conversions);
-  Args.AddLastArg(CmdArgs, options::OPT_fnext_runtime);
   Args.AddLastArg(CmdArgs, options::OPT_fno_caret_diagnostics);
   Args.AddLastArg(CmdArgs, options::OPT_fno_show_column);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_gc_only);
@@ -954,6 +952,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_ms_extensions,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32))
     CmdArgs.push_back("-fms-extensions");
+
+  // -fnext-runtime is default.
+  if (!Args.hasFlag(options::OPT_fnext_runtime,
+                    options::OPT_fgnu_runtime,
+                    getToolChain().getTriple().getOS() == llvm::Triple::Darwin))
+    CmdArgs.push_back("-fgnu-runtime");
 
   // -fshort-wchar default varies depending on platform; only
   // pass if specified.

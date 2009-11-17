@@ -1,4 +1,4 @@
-// RUN: clang-cc -fnext-runtime -emit-llvm -o %t %s
+// RUN: clang-cc -emit-llvm -o %t %s
 
 typedef struct {
   unsigned f0;
