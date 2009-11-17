@@ -869,10 +869,13 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
     case X86::MOVSDrm:
     case X86::MOVAPSrm:
     case X86::MOVUPSrm:
+    case X86::MOVUPSrm_Int:
     case X86::MOVAPDrm:
     case X86::MOVDQArm:
     case X86::MMX_MOVD64rm:
-    case X86::MMX_MOVQ64rm: {
+    case X86::MMX_MOVQ64rm:
+    case X86::FsMOVAPSrm:
+    case X86::FsMOVAPDrm: {
       // Loads from constant pools are trivially rematerializable.
       if (MI->getOperand(1).isReg() &&
           MI->getOperand(2).isImm() &&
