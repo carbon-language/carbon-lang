@@ -20,8 +20,14 @@
 #include "clang/Frontend/HeaderSearchOptions.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringMap.h"
 #include <string>
+#include <vector>
+
+namespace llvm {
+  template<typename T> class SmallVectorImpl;
+}
 
 namespace clang {
 
@@ -64,6 +70,23 @@ class CompilerInvocation {
 
 public:
   CompilerInvocation() {}
+
+  /// @name Utility Methods
+  /// @{
+
+  /// CreateFromArgs - Create a compiler invocation from a list of input
+  /// options.
+  ///
+  /// FIXME: Documenting error behavior.
+  ///
+  /// \param Res [out] - The resulting invocation.
+  /// \param Args - The input argument strings.
+  static void CreateFromArgs(CompilerInvocation &Res,
+                            const llvm::SmallVectorImpl<llvm::StringRef> &Args);
+
+  /// toArgs - Convert the CompilerInvocation to a list of strings suitable for
+  /// passing to CreateFromArgs.
+  void toArgs(std::vector<std::string> &Res);
 
   /// @}
   /// @name Option Subgroups
