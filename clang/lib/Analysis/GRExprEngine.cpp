@@ -333,6 +333,7 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
         ExplodedNodeSet *DstSet = (I+1 == E) ? &Tmp
                                               : (SrcSet == &Tmp2) ? &Tmp3 
                                                                   : &Tmp2;
+        DstSet->clear();
         void *tag = I->first;
         Checker *checker = I->second;
         for (ExplodedNodeSet::iterator NI = SrcSet->begin(), NE = SrcSet->end();
