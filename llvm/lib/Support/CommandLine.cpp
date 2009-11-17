@@ -1154,7 +1154,7 @@ public:
     OS << " with assertions";
 #endif
     std::string CPU = sys::getHostCPUName();
-    if (CPU.empty()) CPU = "(unknown)";
+    if (CPU == "generic") CPU = "(unknown)";
     OS << ".\n"
        << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
        << "  Host: " << sys::getHostTriple() << '\n'

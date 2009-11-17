@@ -249,7 +249,7 @@ std::string sys::getHostCPUName() {
     }
 
     default:
-      return "";
+      return "generic";
     }
   } else if (memcmp(text.c, "AuthenticAMD", 12) == 0) {
     // FIXME: this poorly matches the generated SubtargetFeatureKV table.  There
@@ -289,10 +289,10 @@ std::string sys::getHostCPUName() {
       case 16:
         return "amdfam10";
     default:
-      return "";
+      return "generic";
     }
   }
 #endif
 
-  return "";
+  return "generic";
 }
