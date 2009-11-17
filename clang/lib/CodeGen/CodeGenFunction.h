@@ -844,13 +844,13 @@ public:
   
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);
-  LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
+  LValue EmitLValueForField(llvm::Value* Base, const FieldDecl* Field,
                             bool isUnion, unsigned CVRQualifiers);
   LValue EmitLValueForIvar(QualType ObjectTy,
                            llvm::Value* Base, const ObjCIvarDecl *Ivar,
                            unsigned CVRQualifiers);
 
-  LValue EmitLValueForBitfield(llvm::Value* Base, FieldDecl* Field,
+  LValue EmitLValueForBitfield(llvm::Value* Base, const FieldDecl* Field,
                                 unsigned CVRQualifiers);
 
   LValue EmitBlockDeclRefLValue(const BlockDeclRefExpr *E);

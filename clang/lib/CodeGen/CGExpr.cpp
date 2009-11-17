@@ -1171,7 +1171,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 }
 
 LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
-                                              FieldDecl* Field,
+                                              const FieldDecl* Field,
                                               unsigned CVRQualifiers) {
   CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
 
@@ -1196,7 +1196,7 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
 }
 
 LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
-                                           FieldDecl* Field,
+                                           const FieldDecl* Field,
                                            bool isUnion,
                                            unsigned CVRQualifiers) {
   if (Field->isBitField())
@@ -1563,8 +1563,8 @@ LValue CodeGenFunction::EmitPointerToDataMemberLValue(const FieldDecl *Field) {
       getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(ClassDecl)));
   NNSpecTy = getContext().getPointerType(NNSpecTy);
   llvm::Value *V = llvm::Constant::getNullValue(ConvertType(NNSpecTy));
-  LValue MemExpLV = EmitLValueForField(V, const_cast<FieldDecl*>(Field), 
-                                       /*isUnion*/false, /*Qualifiers*/0);
+  LValue MemExpLV = EmitLValueForField(V, Field, /*isUnion=*/false, 
+                                       /*Qualifiers=*/0);
   const llvm::Type *ResultType = ConvertType(getContext().getPointerDiffType());
   V = Builder.CreatePtrToInt(MemExpLV.getAddress(), ResultType, "datamember");
   return LValue::MakeAddr(V, MakeQualifiers(Field->getType()));
