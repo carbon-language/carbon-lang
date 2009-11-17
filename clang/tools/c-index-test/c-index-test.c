@@ -27,13 +27,25 @@ char *basename(const char* path)
 extern char *basename(const char *);
 #endif
 
+static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
+                                      CXTranslationUnit *TU) {
+  
+  *TU = clang_createTranslationUnit(Idx, file);
+  if (!TU) {
+    fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
+    return 0;
+  }  
+  return 1;
+}
+
+
 /******************************************************************************/
 /* Pretty-printing.                                                           */
 /******************************************************************************/
 
 static void PrintCursor(CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind))
-    printf("Invalid Cursor => %s\n", clang_getCursorKindSpelling(Cursor.kind));
+    printf("Invalid Cursor => %s", clang_getCursorKindSpelling(Cursor.kind));
   else {
     CXDecl DeclReferenced;
     CXString string;
@@ -136,12 +148,8 @@ int perform_test_load_tu(const char *file, const char *filter) {
                           !strcmp(filter, "local") ? 1 : 0, 
                           /* displayDiagnostics */ 1);
   
-  TU = clang_createTranslationUnit(Idx, file);
-  
-  if (!TU) {
-    fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
+  if (!CreateTranslationUnit(Idx, file, &TU))
     return 1;
-  }
   
   /* Perform some simple filtering. */
   if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
@@ -157,6 +165,89 @@ int perform_test_load_tu(const char *file, const char *filter) {
   
   clang_loadTranslationUnit(TU, TranslationUnitVisitor, ck);
   clang_disposeTranslationUnit(TU);
+  return 0;
+}
+
+/******************************************************************************/
+/* Logic for testing clang_getCursor().                                       */
+/******************************************************************************/
+
+static void print_cursor_file_scan(CXCursor cursor,
+                                   unsigned start_line, unsigned start_col,
+                                   unsigned end_line, unsigned end_col) {
+  printf("CHECK: {start_line=%d start_col=%d end_line=%d end_col=%d} ",
+         start_line, start_col, end_line, end_col);
+  PrintCursor(cursor);
+  printf("\n");
+}
+
+static int perform_file_scan(const char *ast_file, const char *source_file) {
+  CXIndex Idx;
+  CXTranslationUnit TU;
+  FILE *fp;
+  unsigned line;
+  CXCursor prevCursor;
+  unsigned printed;
+  unsigned start_line, start_col, last_line, last_col;
+  size_t i;
+  
+  if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1,
+                                /* displayDiagnostics */ 1))) {
+    fprintf(stderr, "Could not create Index\n");
+    return 1;
+  }
+  
+  if (!CreateTranslationUnit(Idx, ast_file, &TU))
+    return 1;
+  
+  if ((fp = fopen(source_file, "r")) == NULL) {
+    fprintf(stderr, "Could not open '%s'\n", source_file);
+    return 1;
+  }
+  
+  line = 0;
+  prevCursor = clang_getNullCursor();
+  printed = 0;
+  start_line = last_line = 1;
+  start_col = last_col = 1;
+  
+  while (!feof(fp)) {
+    size_t len;
+    const char *buf;
+        
+    if ((buf = fgetln(fp, &len)) == NULL)
+      break;
+    
+    ++line;
+    
+    for (i = 0; i < len ; ++i) {
+      CXCursor cursor;
+      cursor = clang_getCursor(TU, source_file, line, i+1);
+
+      if (!clang_equalCursors(cursor, prevCursor) &&
+          prevCursor.kind != CXCursor_InvalidFile) {
+        print_cursor_file_scan(prevCursor, start_line, start_col,
+                               last_line, last_col);
+        printed = 1;
+        start_line = line;
+        start_col = (unsigned) i+1;
+      }
+      else {
+        printed = 0;
+      }
+      
+      prevCursor = cursor;
+      last_line = line;
+      last_col = (unsigned) i+1;
+    }    
+  }
+  
+  if (!printed && prevCursor.kind != CXCursor_InvalidFile) {
+    print_cursor_file_scan(prevCursor, start_line, start_col,
+                           last_line, last_col);
+  }  
+  
+  fclose(fp);
   return 0;
 }
 
@@ -292,6 +383,7 @@ int perform_code_completion(int argc, const char **argv) {
 static void print_usage(void) {
   fprintf(stderr,
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
+    "       c-index-test -test-file-scan <AST file> <source file>\n"
     "       c-index-test -test-load-tu <AST file> <symbol filter>\n\n"
     " <symbol filter> options for -test-load-tu:\n%s",
     "   all - load all symbols, including those from PCH\n"
@@ -308,6 +400,8 @@ int main(int argc, const char **argv) {
     return perform_code_completion(argc, argv);
   if (argc == 4 && strcmp(argv[1], "-test-load-tu") == 0)
     return perform_test_load_tu(argv[2], argv[3]);
+  if (argc == 4 && strcmp(argv[1], "-test-file-scan") == 0)
+    return perform_file_scan(argv[2], argv[3]);
 
   print_usage();
   return 1;
