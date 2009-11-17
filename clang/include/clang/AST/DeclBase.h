@@ -79,9 +79,11 @@ public:
   /// namespaces, labels, tags, members and ordinary
   /// identifiers. These are meant as bitmasks, so that searches in
   /// C++ can look into the "tag" namespace during ordinary lookup. We
-  /// use additional namespaces for Objective-C entities.  We also
-  /// put C++ friend declarations (of previously-undeclared entities) in
-  /// shadow namespaces.
+  /// use additional namespaces for Objective-C entities.  We also put
+  /// C++ friend declarations (of previously-undeclared entities) in
+  /// shadow namespaces, and 'using' declarations (as opposed to their
+  /// implicit shadow declarations) can be found in their own
+  /// namespace.
   enum IdentifierNamespace {
     IDNS_Label = 0x1,
     IDNS_Tag = 0x2,
@@ -91,7 +93,8 @@ public:
     IDNS_ObjCImplementation = 0x20,
     IDNS_ObjCCategoryImpl = 0x40,
     IDNS_OrdinaryFriend = 0x80,
-    IDNS_TagFriend = 0x100
+    IDNS_TagFriend = 0x100,
+    IDNS_Using = 0x200
   };
 
   /// ObjCDeclQualifier - Qualifier used on types in method declarations

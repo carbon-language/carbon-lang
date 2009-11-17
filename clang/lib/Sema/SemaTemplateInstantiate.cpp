@@ -788,10 +788,46 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
   if (!InstD)
     return SemaRef.ExprError();
 
-  // If we instantiated an UnresolvedUsingDecl and got back an UsingDecl,
-  // we need to get the underlying decl.
-  // FIXME: Is this correct? Maybe FindInstantiatedDecl should do this?
-  InstD = InstD->getUnderlyingDecl();
+  // Flatten using declarations into their shadow declarations.
+  if (isa<UsingDecl>(InstD)) {
+    UsingDecl *UD = cast<UsingDecl>(InstD);
+
+    bool HasNonFunction = false;
+
+    llvm::SmallVector<NamedDecl*, 8> Decls;
+    for (UsingDecl::shadow_iterator I = UD->shadow_begin(),
+                                    E = UD->shadow_end(); I != E; ++I) {
+      NamedDecl *TD = (*I)->getTargetDecl();
+      if (!TD->isFunctionOrFunctionTemplate())
+        HasNonFunction = true;
+
+      Decls.push_back(TD);
+    }
+
+    if (Decls.empty())
+      return SemaRef.ExprError();
+
+    if (Decls.size() == 1)
+      InstD = Decls[0];
+    else if (!HasNonFunction) {
+      OverloadedFunctionDecl *OFD
+        = OverloadedFunctionDecl::Create(SemaRef.Context,
+                                         UD->getDeclContext(),
+                                         UD->getDeclName());
+      for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Decls.begin(),
+                                                E = Decls.end(); I != E; ++I)
+        if (isa<FunctionDecl>(*I))
+          OFD->addOverload(cast<FunctionDecl>(*I));
+        else
+          OFD->addOverload(cast<FunctionTemplateDecl>(*I));
+
+      InstD = OFD;
+    } else {
+      // FIXME
+      assert(false && "using declaration resolved to mixed set");
+      return SemaRef.ExprError();
+    }
+  }
 
   CXXScopeSpec SS;
   NestedNameSpecifier *Qualifier = 0;

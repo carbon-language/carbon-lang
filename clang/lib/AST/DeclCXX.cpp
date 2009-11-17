@@ -914,11 +914,10 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC,
-      SourceLocation L, SourceRange NNR, SourceLocation TargetNL,
-      SourceLocation UL, NamedDecl* Target,
-      NestedNameSpecifier* TargetNNS, bool IsTypeNameArg) {
-  return new (C) UsingDecl(DC, L, NNR, TargetNL, UL, Target,
-      TargetNNS, IsTypeNameArg);
+      SourceLocation L, SourceRange NNR, SourceLocation UL,
+      NestedNameSpecifier* TargetNNS, DeclarationName Name,
+      bool IsTypeNameArg) {
+  return new (C) UsingDecl(DC, L, NNR, UL, TargetNNS, Name, IsTypeNameArg);
 }
 
 UnresolvedUsingDecl *UnresolvedUsingDecl::Create(ASTContext &C, DeclContext *DC,

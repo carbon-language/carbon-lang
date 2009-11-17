@@ -297,7 +297,7 @@ void Sema::LookupResult::resolveKind() {
   //   wherever the object, function, or enumerator name is visible.
   // But it's still an error if there are distinct tag types found,
   // even if they're not visible. (ref?)
-  if (HasTag && !Ambiguous && (HasFunction || HasNonFunction))
+  if (HideTags && HasTag && !Ambiguous && (HasFunction || HasNonFunction))
     Decls[UniqueTagIndex] = Decls[--N];
 
   Decls.set_size(N);

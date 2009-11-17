@@ -198,7 +198,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     return;
       
   // Look through using declarations.
-  if (UsingDecl *Using = dyn_cast<UsingDecl>(R.Declaration))
+  if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(R.Declaration))
     MaybeAddResult(Result(Using->getTargetDecl(), R.Rank, R.Qualifier),
                    CurContext);
   

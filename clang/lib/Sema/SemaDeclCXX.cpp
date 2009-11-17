@@ -2835,7 +2835,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   }
   
   DeclarationName TargetName = GetNameFromUnqualifiedId(Name);
-  NamedDecl *UD = BuildUsingDeclaration(UsingLoc, SS, 
+  NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
                                         Name.getSourceRange().getBegin(),
                                         TargetName, AttrList, IsTypeName);
   if (UD) {
@@ -2846,7 +2846,34 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   return DeclPtrTy::make(UD);
 }
 
-NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
+/// Builds a shadow declaration corresponding to a 'using' declaration.
+static UsingShadowDecl *BuildUsingShadowDecl(Sema &SemaRef, Scope *S,
+                                             AccessSpecifier AS,
+                                             UsingDecl *UD, NamedDecl *Orig) {
+  // FIXME: diagnose hiding, collisions
+
+  // If we resolved to another shadow declaration, just coalesce them.
+  if (isa<UsingShadowDecl>(Orig)) {
+    Orig = cast<UsingShadowDecl>(Orig)->getTargetDecl();
+    assert(!isa<UsingShadowDecl>(Orig) && "nested shadow declaration");
+  }
+  
+  UsingShadowDecl *Shadow
+    = UsingShadowDecl::Create(SemaRef.Context, SemaRef.CurContext,
+                              UD->getLocation(), UD, Orig);
+  UD->addShadowDecl(Shadow);
+
+  if (S)
+    SemaRef.PushOnScopeChains(Shadow, S);
+  else
+    SemaRef.CurContext->addDecl(Shadow);
+  Shadow->setAccess(AS);
+
+  return Shadow;
+}
+
+NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
+                                       SourceLocation UsingLoc,
                                        const CXXScopeSpec &SS,
                                        SourceLocation IdentLoc,
                                        DeclarationName Name,
@@ -2880,7 +2907,7 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
     // anonymous union that is a member of a base class of the class being
     // defined, or shall refer to an enumerator for an enumeration type that is
     // a member of a base class of the class being defined.
-
+    
     CXXRecordDecl *LookupRD = dyn_cast<CXXRecordDecl>(LookupContext);
     if (!LookupRD || !RD->isDerivedFrom(LookupRD)) {
       Diag(SS.getRange().getBegin(),
@@ -2898,8 +2925,12 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
     }
   }
 
-  // Lookup target name.
+  // Look up the target name.  Unlike most lookups, we do not want to
+  // hide tag declarations: tag names are visible through the using
+  // declaration even if hidden by ordinary names.
   LookupResult R(*this, Name, IdentLoc, LookupOrdinaryName);
+  R.setHideTags(false);
+
   LookupQualifiedName(R, LookupContext);
 
   if (R.empty()) {
@@ -2908,24 +2939,33 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
     return 0;
   }
 
-  // FIXME: handle ambiguity?
-  NamedDecl *ND = R.getAsSingleDecl(Context);
+  if (R.isAmbiguous())
+    return 0;
 
-  if (IsTypeName && !isa<TypeDecl>(ND)) {
+  if (IsTypeName &&
+      (R.getResultKind() != LookupResult::Found
+       || !isa<TypeDecl>(R.getFoundDecl()))) {
     Diag(IdentLoc, diag::err_using_typename_non_type);
     return 0;
   }
 
   // C++0x N2914 [namespace.udecl]p6:
   // A using-declaration shall not name a namespace.
-  if (isa<NamespaceDecl>(ND)) {
+  if (R.getResultKind() == LookupResult::Found
+      && isa<NamespaceDecl>(R.getFoundDecl())) {
     Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_namespace)
       << SS.getRange();
     return 0;
   }
 
-  return UsingDecl::Create(Context, CurContext, IdentLoc, SS.getRange(),
-                           ND->getLocation(), UsingLoc, ND, NNS, IsTypeName);
+  UsingDecl *UD = UsingDecl::Create(Context, CurContext, IdentLoc,
+                                    SS.getRange(), UsingLoc, NNS, Name,
+                                    IsTypeName);
+
+  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+    BuildUsingShadowDecl(*this, S, AS, UD, *I);
+
+  return UD;
 }
 
 /// getNamespaceDecl - Returns the namespace a decl represents. If the decl

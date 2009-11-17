@@ -1197,6 +1197,7 @@ public:
         LookupKind(LookupKind),
         IDNS(0),
         Redecl(Redecl != NotForRedeclaration),
+        HideTags(true),
         Diagnose(Redecl == NotForRedeclaration)
     {}
 
@@ -1212,6 +1213,7 @@ public:
         LookupKind(Other.LookupKind),
         IDNS(Other.IDNS),
         Redecl(Other.Redecl),
+        HideTags(Other.HideTags),
         Diagnose(false)
     {}
 
@@ -1233,6 +1235,12 @@ public:
     /// True if this lookup is just looking for an existing declaration.
     bool isForRedeclaration() const {
       return Redecl;
+    }
+
+    /// Sets whether tag declarations should be hidden by non-tag
+    /// declarations during resolution.  The default is true.
+    void setHideTags(bool Hide) {
+      HideTags = Hide;
     }
 
     /// The identifier namespace of this lookup.  This information is
@@ -1440,6 +1448,10 @@ public:
     LookupNameKind LookupKind;
     unsigned IDNS; // ill-defined until set by lookup
     bool Redecl;
+
+    /// \brief True if tag declarations should be hidden if non-tags
+    ///   are present
+    bool HideTags;
 
     bool Diagnose;
   };
@@ -2007,7 +2019,8 @@ public:
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident);
 
-  NamedDecl *BuildUsingDeclaration(SourceLocation UsingLoc,
+  NamedDecl *BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
+                                   SourceLocation UsingLoc,
                                    const CXXScopeSpec &SS,
                                    SourceLocation IdentLoc,
                                    DeclarationName Name,

@@ -289,6 +289,10 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   if (isa<ObjCInterfaceDecl>(this) && isa<ObjCCompatibleAliasDecl>(OldD))
     return true;
 
+  if (isa<UsingShadowDecl>(this) && isa<UsingShadowDecl>(OldD))
+    return cast<UsingShadowDecl>(this)->getTargetDecl() ==
+           cast<UsingShadowDecl>(OldD)->getTargetDecl();
+
   // For non-function declarations, if the declarations are of the
   // same kind then this must be a redeclaration, or semantic analysis
   // would not have given us the new declaration.
@@ -308,7 +312,7 @@ bool NamedDecl::hasLinkage() const {
 NamedDecl *NamedDecl::getUnderlyingDecl() {
   NamedDecl *ND = this;
   while (true) {
-    if (UsingDecl *UD = dyn_cast<UsingDecl>(ND))
+    if (UsingShadowDecl *UD = dyn_cast<UsingShadowDecl>(ND))
       ND = UD->getTargetDecl();
     else if (ObjCCompatibleAliasDecl *AD
               = dyn_cast<ObjCCompatibleAliasDecl>(ND))

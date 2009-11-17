@@ -1644,6 +1644,56 @@ public:
   static bool classof(const NamespaceAliasDecl *D) { return true; }
 };
 
+/// UsingShadowDecl - Represents a shadow declaration introduced into
+/// a scope by a (resolved) using declaration.  For example,
+///
+/// namespace A {
+///   void foo();
+/// }
+/// namespace B {
+///   using A::foo(); // <- a UsingDecl
+///                   // Also creates a UsingShadowDecl for A::foo in B
+/// }
+///
+class UsingShadowDecl : public NamedDecl {
+  /// The referenced declaration.
+  NamedDecl *Underlying;
+
+  /// The using declaration which introduced this decl.
+  UsingDecl *Using;
+
+  UsingShadowDecl(DeclContext *DC, SourceLocation Loc, UsingDecl *Using,
+                  NamedDecl *Target)
+    : NamedDecl(UsingShadow, DC, Loc, Target->getDeclName()),
+      Underlying(Target), Using(Using) {
+    IdentifierNamespace = Target->getIdentifierNamespace();
+    setImplicit();
+  }
+
+public:
+  static UsingShadowDecl *Create(ASTContext &C, DeclContext *DC,
+                                 SourceLocation Loc, UsingDecl *Using,
+                                 NamedDecl *Target) {
+    return new (C) UsingShadowDecl(DC, Loc, Using, Target);
+  }
+
+  /// Gets the underlying declaration which has been brought into the
+  /// local scope.
+  NamedDecl *getTargetDecl() const {
+    return Underlying;
+  }
+
+  /// Gets the using declaration to which this declaration is tied.
+  UsingDecl *getUsingDecl() const {
+    return Using;
+  }
+
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::UsingShadow;
+  }
+  static bool classof(const UsingShadowDecl *D) { return true; }
+};
+
 /// UsingDecl - Represents a C++ using-declaration. For example:
 ///    using someNameSpace::someIdentifier;
 class UsingDecl : public NamedDecl {
@@ -1651,29 +1701,26 @@ class UsingDecl : public NamedDecl {
   /// preceding the declaration name.
   SourceRange NestedNameRange;
 
-  /// \brief The source location of the target declaration name.
-  SourceLocation TargetNameLocation;
-
   /// \brief The source location of the "using" location itself.
   SourceLocation UsingLocation;
 
-  /// \brief Target declaration.
-  NamedDecl* TargetDecl;
-
   /// \brief Target nested name specifier.
-  NestedNameSpecifier* TargetNestedNameDecl;
+  NestedNameSpecifier* TargetNestedName;
+
+  /// \brief The collection of shadow declarations associated with
+  /// this using declaration.  This set can change as a class is
+  /// processed.
+  llvm::SmallPtrSet<UsingShadowDecl*, 8> Shadows;
 
   // \brief Has 'typename' keyword.
   bool IsTypeName;
 
   UsingDecl(DeclContext *DC, SourceLocation L, SourceRange NNR,
-            SourceLocation TargetNL, SourceLocation UL, NamedDecl* Target,
-            NestedNameSpecifier* TargetNNS, bool IsTypeNameArg)
-    : NamedDecl(Decl::Using, DC, L, Target->getDeclName()),
-      NestedNameRange(NNR), TargetNameLocation(TargetNL),
-      UsingLocation(UL), TargetDecl(Target),
-      TargetNestedNameDecl(TargetNNS), IsTypeName(IsTypeNameArg) {
-    this->IdentifierNamespace = TargetDecl->getIdentifierNamespace();
+            SourceLocation UL, NestedNameSpecifier* TargetNNS,
+            DeclarationName Name, bool IsTypeNameArg)
+    : NamedDecl(Decl::Using, DC, L, Name),
+      NestedNameRange(NNR), UsingLocation(UL), TargetNestedName(TargetNNS),
+      IsTypeName(IsTypeNameArg) {
   }
 
 public:
@@ -1681,28 +1728,37 @@ public:
   /// preceding the namespace name.
   SourceRange getNestedNameRange() { return NestedNameRange; }
 
-  /// \brief Returns the source location of the target declaration name.
-  SourceLocation getTargetNameLocation() { return TargetNameLocation; }
-
   /// \brief Returns the source location of the "using" location itself.
   SourceLocation getUsingLocation() { return UsingLocation; }
 
-  /// \brief getTargetDecl - Returns target specified by using-decl.
-  NamedDecl *getTargetDecl() { return TargetDecl; }
-  const NamedDecl *getTargetDecl() const { return TargetDecl; }
-
   /// \brief Get target nested name declaration.
   NestedNameSpecifier* getTargetNestedNameDecl() {
-    return TargetNestedNameDecl;
+    return TargetNestedName;
   }
 
   /// isTypeName - Return true if using decl has 'typename'.
   bool isTypeName() const { return IsTypeName; }
 
+  typedef llvm::SmallPtrSet<UsingShadowDecl*,8>::const_iterator shadow_iterator;
+  shadow_iterator shadow_begin() const { return Shadows.begin(); }
+  shadow_iterator shadow_end() const { return Shadows.end(); }
+
+  void addShadowDecl(UsingShadowDecl *S) {
+    assert(S->getUsingDecl() == this);
+    if (!Shadows.insert(S)) {
+      assert(false && "declaration already in set");
+    }
+  }
+  void removeShadowDecl(UsingShadowDecl *S) {
+    assert(S->getUsingDecl() == this);
+    if (!Shadows.erase(S)) {
+      assert(false && "declaration not in set");
+    }
+  }
+
   static UsingDecl *Create(ASTContext &C, DeclContext *DC,
-      SourceLocation L, SourceRange NNR, SourceLocation TargetNL,
-      SourceLocation UL, NamedDecl* Target,
-      NestedNameSpecifier* TargetNNS, bool IsTypeNameArg);
+      SourceLocation IdentL, SourceRange NNR, SourceLocation UsingL,
+      NestedNameSpecifier* TargetNNS, DeclarationName Name, bool IsTypeNameArg);
 
   static bool classof(const Decl *D) {
     return D->getKind() == Decl::Using;

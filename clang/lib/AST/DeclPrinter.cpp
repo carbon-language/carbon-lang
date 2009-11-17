@@ -73,6 +73,7 @@ namespace {
     void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
     void VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
     void VisitUsingDecl(UsingDecl *D);
+    void VisitUsingShadowDecl(UsingShadowDecl *D);
   };
 }
 
@@ -825,11 +826,15 @@ void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
 void DeclPrinter::VisitUsingDecl(UsingDecl *D) {
   Out << "using ";
   D->getTargetNestedNameDecl()->print(Out, Policy);
-  Out << D->getTargetDecl()->getNameAsString();
+  Out << D->getNameAsString();
 }
 
 void DeclPrinter::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
   Out << "using ";
   D->getTargetNestedNameSpecifier()->print(Out, Policy);
   Out << D->getTargetName().getAsString();
+}
+
+void DeclPrinter::VisitUsingShadowDecl(UsingShadowDecl *D) {
+  // ignore
 }

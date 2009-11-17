@@ -1019,9 +1019,9 @@ TemplateDeclInstantiator::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
   SS.setScopeRep(NNS);
 
   NamedDecl *UD =
-    SemaRef.BuildUsingDeclaration(D->getLocation(), SS,
-                                  D->getTargetNameLocation(),
-                                  D->getTargetName(), 0, D->isTypeName());
+    SemaRef.BuildUsingDeclaration(/*Scope*/ 0, D->getAccess(),
+                                  D->getLocation(), SS, D->getTargetNameLocation(),
+                                  D->getDeclName(), 0, D->isTypeName());
   if (UD)
     SemaRef.Context.setInstantiatedFromUnresolvedUsingDecl(cast<UsingDecl>(UD),
                                                            D);
