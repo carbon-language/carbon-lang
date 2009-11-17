@@ -484,7 +484,7 @@ ASTLocation LocResolverBase::ResolveInDeclarator(Decl *D, Stmt *Stm,
   assert(ContainsLocation(DInfo) &&
          "Should visit only after verifying that loc is in range");
   
-  TypeLocResolver(Ctx, Loc, D);
+  (void)TypeLocResolver(Ctx, Loc, D);
   for (TypeLoc TL = DInfo->getTypeLoc(); TL; TL = TL.getNextTypeLoc())
     if (ContainsLocation(TL))
       return TypeLocResolver(Ctx, Loc, D).Visit(TL);

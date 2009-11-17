@@ -325,5 +325,5 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
 }
 
 void Sema::DiagnoseInvalidJumps(Stmt *Body) {
-  JumpScopeChecker(Body, *this);
+  (void)JumpScopeChecker(Body, *this);
 }

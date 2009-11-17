@@ -44,11 +44,6 @@ static ExplodedNode::Auditor* CreateUbiViz();
 // Basic type definitions.
 //===----------------------------------------------------------------------===//
 
-namespace {
-  class AnalysisConsumer;
-  typedef void (*CodeAction)(AnalysisConsumer &C, AnalysisManager &M, Decl *D);
-} // end anonymous namespace
-
 //===----------------------------------------------------------------------===//
 // Special PathDiagnosticClients.
 //===----------------------------------------------------------------------===//
@@ -68,6 +63,10 @@ CreatePlistHTMLDiagnosticClient(const std::string& prefix,
 namespace {
 
  class VISIBILITY_HIDDEN AnalysisConsumer : public ASTConsumer {
+ public:
+  typedef void (*CodeAction)(AnalysisConsumer &C, AnalysisManager &M, Decl *D);
+   
+ private:
   typedef std::vector<CodeAction> Actions;
   Actions FunctionActions;
   Actions ObjCMethodActions;
@@ -189,8 +188,9 @@ public:
 } // end anonymous namespace
 
 namespace llvm {
-  template <> struct FoldingSetTrait<CodeAction> {
-    static inline void Profile(CodeAction X, FoldingSetNodeID& ID) {
+  template <> struct FoldingSetTrait<AnalysisConsumer::CodeAction> {
+    static inline void Profile(AnalysisConsumer::CodeAction X, 
+                               FoldingSetNodeID& ID) {
       ID.AddPointer(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(X)));
     }
   };

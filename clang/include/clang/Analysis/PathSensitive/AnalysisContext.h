@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_ANALYSISCONTEXT_H
 #define LLVM_CLANG_ANALYSIS_ANALYSISCONTEXT_H
 
+#include "clang/AST/Stmt.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
