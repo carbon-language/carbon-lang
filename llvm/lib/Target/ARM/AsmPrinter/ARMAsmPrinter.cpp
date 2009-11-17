@@ -637,11 +637,8 @@ void ARMAsmPrinter::printAddrMode6Operand(const MachineInstr *MI, int Op) {
 
   O << "[" << getRegisterName(MO1.getReg());
   if (MO4.getImm()) {
-    if (Subtarget->isTargetDarwin())
-      O << ", :";
-    else
-      O << " @";
-    O << MO4.getImm();
+    // FIXME: Both darwin as and GNU as violate ARM docs here.
+    O << ", :" << MO4.getImm();
   }
   O << "]";
 
