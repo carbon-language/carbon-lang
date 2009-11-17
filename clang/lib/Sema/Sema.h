@@ -4003,8 +4003,9 @@ public:
   virtual void CodeCompleteOperatorName(Scope *S);
   
   virtual void CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS);
-  virtual void CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName);
-  virtual void CodeCompleteObjCInstanceMethod(Scope *S, ExprTy *Receiver);
+  virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
+                                            SourceLocation FNameLoc);
+  virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver);
   //@}
   
   //===--------------------------------------------------------------------===//

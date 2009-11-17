@@ -1624,12 +1624,10 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     AddObjCMethods(Impl, WantInstanceMethods, CurContext, Results);
 }
 
-void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
+void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
+                                        SourceLocation FNameLoc) {
   typedef CodeCompleteConsumer::Result Result;
   ObjCInterfaceDecl *CDecl = 0;
-
-  // FIXME: Pass this in!
-  SourceLocation NameLoc;
 
   if (FName->isStr("super")) {
     // We're sending a message to "super".
@@ -1652,8 +1650,8 @@ void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
         QualType SuperTy = Context.getObjCInterfaceType(CDecl);
         SuperTy = Context.getObjCObjectPointerType(SuperTy);
         OwningExprResult Super
-          = Owned(new (Context) ObjCSuperExpr(NameLoc, SuperTy));
-        return CodeCompleteObjCInstanceMethod(S, (Expr *)Super.get());
+          = Owned(new (Context) ObjCSuperExpr(FNameLoc, SuperTy));
+        return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get());
       }
 
       // Okay, we're calling a factory method in our superclass.
@@ -1663,7 +1661,7 @@ void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
   // If the given name refers to an interface type, retrieve the
   // corresponding declaration.
   if (!CDecl)
-    if (TypeTy *Ty = getTypeName(*FName, NameLoc, S, 0, false)) {
+    if (TypeTy *Ty = getTypeName(*FName, FNameLoc, S, 0, false)) {
       QualType T = GetTypeFromParser(Ty, 0);
       if (!T.isNull()) 
         if (const ObjCInterfaceType *Interface = T->getAs<ObjCInterfaceType>())
@@ -1673,9 +1671,9 @@ void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
   if (!CDecl && FName->isStr("super")) {
     // "super" may be the name of a variable, in which case we are
     // probably calling an instance method.
-    OwningExprResult Super = ActOnDeclarationNameExpr(S, NameLoc, FName,
+    OwningExprResult Super = ActOnDeclarationNameExpr(S, FNameLoc, FName,
                                                       false, 0, false);
-    return CodeCompleteObjCInstanceMethod(S, (Expr *)Super.get());
+    return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get());
   }
 
   // Add all of the factory methods in this Objective-C class, its protocols,
@@ -1689,7 +1687,7 @@ void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
-void Sema::CodeCompleteObjCInstanceMethod(Scope *S, ExprTy *Receiver) {
+void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver) {
   typedef CodeCompleteConsumer::Result Result;
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);
