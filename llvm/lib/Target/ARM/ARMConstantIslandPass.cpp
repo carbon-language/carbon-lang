@@ -1749,21 +1749,23 @@ AdjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB)
   // heuristic. FIXME: We can definitely improve it.
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
+  SmallVector<MachineOperand, 4> CondPrior;
+  MachineFunction::iterator BBi = BB;
+  MachineFunction::iterator OldPrior = prior(BBi);
 
   // If the block terminator isn't analyzable, don't try to move the block
-  if (TII->AnalyzeBranch(*BB, TBB, FBB, Cond))
-    return NULL;
+  bool B = TII->AnalyzeBranch(*BB, TBB, FBB, Cond);
 
-  // If the block ends in an unconditional branch, move it. Be paranoid
+  // If the block ends in an unconditional branch, move it. The prior block
+  // has to have an analyzable terminator for us to move this one. Be paranoid
   // and make sure we're not trying to move the entry block of the function.
-  if (Cond.empty() && BB != MF.begin()) {
-    MachineFunction::iterator BBi = BB;
-    MachineFunction::iterator OldPrior = prior(BBi);
+  if (!B && Cond.empty() && BB != MF.begin() &&
+      !TII->AnalyzeBranch(*OldPrior, TBB, FBB, CondPrior)) {
     BB->moveAfter(JTBB);
     OldPrior->updateTerminator();
     BB->updateTerminator();
     // Update numbering to account for the block being moved.
-    MF.RenumberBlocks(OldPrior);
+    MF.RenumberBlocks();
     ++NumJTMoved;
     return NULL;
   }
