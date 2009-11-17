@@ -202,53 +202,35 @@ static bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 // llvm.dbg.region.end calls, and any globals they point to if now dead.
 static bool StripDebugInfo(Module &M) {
 
+  bool Changed = false;
+
   // Remove all of the calls to the debugger intrinsics, and remove them from
   // the module.
-  Function *FuncStart = M.getFunction("llvm.dbg.func.start");
-  Function *StopPoint = M.getFunction("llvm.dbg.stoppoint");
-  Function *RegionStart = M.getFunction("llvm.dbg.region.start");
-  Function *RegionEnd = M.getFunction("llvm.dbg.region.end");
-  Function *Declare = M.getFunction("llvm.dbg.declare");
-
-  if (FuncStart) {
-    while (!FuncStart->use_empty()) {
-      CallInst *CI = cast<CallInst>(FuncStart->use_back());
-      CI->eraseFromParent();
-    }
-    FuncStart->eraseFromParent();
-  }
-  if (StopPoint) {
-    while (!StopPoint->use_empty()) {
-      CallInst *CI = cast<CallInst>(StopPoint->use_back());
-      CI->eraseFromParent();
-    }
-    StopPoint->eraseFromParent();
-  }
-  if (RegionStart) {
-    while (!RegionStart->use_empty()) {
-      CallInst *CI = cast<CallInst>(RegionStart->use_back());
-      CI->eraseFromParent();
-    }
-    RegionStart->eraseFromParent();
-  }
-  if (RegionEnd) {
-    while (!RegionEnd->use_empty()) {
-      CallInst *CI = cast<CallInst>(RegionEnd->use_back());
-      CI->eraseFromParent();
-    }
-    RegionEnd->eraseFromParent();
-  }
-  if (Declare) {
+  if (Function *Declare = M.getFunction("llvm.dbg.declare")) {
     while (!Declare->use_empty()) {
       CallInst *CI = cast<CallInst>(Declare->use_back());
       CI->eraseFromParent();
     }
     Declare->eraseFromParent();
+    Changed = true;
   }
 
   NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
-  if (NMD)
+  if (NMD) {
+    Changed = true;
     NMD->eraseFromParent();
+  }
+  MetadataContext &TheMetadata = M.getContext().getMetadata();
+  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+  if (!MDDbgKind)
+    return Changed;
+
+  for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) 
+    for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;
+         ++FI)
+      for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
+           ++BI) 
+        TheMetadata.removeMD(MDDbgKind, BI);
 
   return true;
 }
