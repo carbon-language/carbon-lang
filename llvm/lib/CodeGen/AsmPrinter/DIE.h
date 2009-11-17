@@ -29,7 +29,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
   /// Dwarf abbreviation.
-  class VISIBILITY_HIDDEN DIEAbbrevData {
+  class DIEAbbrevData {
     /// Attribute - Dwarf attribute code.
     ///
     unsigned Attribute;
@@ -52,7 +52,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
   /// information object.
-  class VISIBILITY_HIDDEN DIEAbbrev : public FoldingSetNode {
+  class DIEAbbrev : public FoldingSetNode {
     /// Tag - Dwarf tag code.
     ///
     unsigned Tag;
@@ -113,7 +113,7 @@ namespace llvm {
   class CompileUnit;
   class DIEValue;
 
-  class VISIBILITY_HIDDEN DIE : public FoldingSetNode {
+  class DIE : public FoldingSetNode {
   protected:
     /// Abbrev - Buffer for constructing abbreviation.
     ///
@@ -202,7 +202,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEValue - A debug information entry value.
   ///
-  class VISIBILITY_HIDDEN DIEValue : public FoldingSetNode {
+  class DIEValue : public FoldingSetNode {
   public:
     enum {
       isInteger,
@@ -249,7 +249,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEInteger - An integer value DIE.
   ///
-  class VISIBILITY_HIDDEN DIEInteger : public DIEValue {
+  class DIEInteger : public DIEValue {
     uint64_t Integer;
   public:
     explicit DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
@@ -294,7 +294,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEString - A string value DIE.
   ///
-  class VISIBILITY_HIDDEN DIEString : public DIEValue {
+  class DIEString : public DIEValue {
     const std::string Str;
   public:
     explicit DIEString(const std::string &S) : DIEValue(isString), Str(S) {}
@@ -326,7 +326,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEDwarfLabel - A Dwarf internal label expression DIE.
   //
-  class VISIBILITY_HIDDEN DIEDwarfLabel : public DIEValue {
+  class DIEDwarfLabel : public DIEValue {
     const DWLabel Label;
   public:
     explicit DIEDwarfLabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
@@ -356,7 +356,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEObjectLabel - A label to an object in code or data.
   //
-  class VISIBILITY_HIDDEN DIEObjectLabel : public DIEValue {
+  class DIEObjectLabel : public DIEValue {
     const std::string Label;
   public:
     explicit DIEObjectLabel(const std::string &L)
@@ -389,7 +389,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIESectionOffset - A section offset DIE.
   ///
-  class VISIBILITY_HIDDEN DIESectionOffset : public DIEValue {
+  class DIESectionOffset : public DIEValue {
     const DWLabel Label;
     const DWLabel Section;
     bool IsEH : 1;
@@ -428,7 +428,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEDelta - A simple label difference DIE.
   ///
-  class VISIBILITY_HIDDEN DIEDelta : public DIEValue {
+  class DIEDelta : public DIEValue {
     const DWLabel LabelHi;
     const DWLabel LabelLo;
   public:
@@ -462,7 +462,7 @@ namespace llvm {
   /// DIEntry - A pointer to another debug information entry.  An instance of
   /// this class can also be used as a proxy for a debug information entry not
   /// yet defined (ie. types.)
-  class VISIBILITY_HIDDEN DIEEntry : public DIEValue {
+  class DIEEntry : public DIEValue {
     DIE *Entry;
   public:
     explicit DIEEntry(DIE *E) : DIEValue(isEntry), Entry(E) {}
@@ -497,7 +497,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEBlock - A block of values.  Primarily used for location expressions.
   //
-  class VISIBILITY_HIDDEN DIEBlock : public DIEValue, public DIE {
+  class DIEBlock : public DIEValue, public DIE {
     unsigned Size;                // Size in bytes excluding size header.
   public:
     DIEBlock()

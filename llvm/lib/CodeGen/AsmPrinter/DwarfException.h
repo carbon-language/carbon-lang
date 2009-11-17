@@ -32,7 +32,7 @@ class raw_ostream;
 //===----------------------------------------------------------------------===//
 /// DwarfException - Emits Dwarf exception handling directives.
 ///
-class VISIBILITY_HIDDEN DwarfException : public Dwarf {
+class DwarfException : public Dwarf {
   struct FunctionEHFrameInfo {
     std::string FnName;
     unsigned Number;

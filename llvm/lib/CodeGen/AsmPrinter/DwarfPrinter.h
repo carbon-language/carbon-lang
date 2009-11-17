@@ -29,7 +29,7 @@ namespace llvm {
   class TargetData;
   class TargetRegisterInfo;
 
-  class VISIBILITY_HIDDEN Dwarf {
+  class Dwarf {
   protected:
     //===-------------------------------------------------------------==---===//
     // Core attributes used by the DWARF printer.

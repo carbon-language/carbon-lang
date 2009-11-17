@@ -145,7 +145,6 @@ public:
 //===----------------------------------------------------------------------===//
 /// DbgScope - This class is used to track scope information.
 ///
-class DbgConcreteScope;
 class DbgScope {
   DbgScope *Parent;                   // Parent to this scope.
   DIDescriptor Desc;                  // Debug info descriptor for scope. 

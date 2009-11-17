@@ -30,9 +30,9 @@
 namespace llvm {
 
 class CompileUnit;
-class DbgVariable;
-class DbgScope;
 class DbgConcreteScope;
+class DbgScope;
+class DbgVariable;
 class MachineFrameInfo;
 class MachineModuleInfo;
 class MCAsmInfo;
@@ -41,7 +41,7 @@ class Timer;
 //===----------------------------------------------------------------------===//
 /// SrcLineInfo - This class is used to record source line correspondence.
 ///
-class VISIBILITY_HIDDEN SrcLineInfo {
+class SrcLineInfo {
   unsigned Line;                     // Source line number.
   unsigned Column;                   // Source column.
   unsigned SourceID;                 // Source ID number.
@@ -57,7 +57,7 @@ public:
   unsigned getLabelID() const { return LabelID; }
 };
 
-class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
+class DwarfDebug : public Dwarf {
   //===--------------------------------------------------------------------===//
   // Attributes used to construct specific Dwarf sections.
   //
