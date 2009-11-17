@@ -109,19 +109,19 @@ public:
     Chunk(ChunkKind Kind, llvm::StringRef Text = "");
     
     /// \brief Create a new text chunk.
-    static Chunk CreateText(const char *Text);
+    static Chunk CreateText(llvm::StringRef Text);
 
     /// \brief Create a new optional chunk.
     static Chunk CreateOptional(std::auto_ptr<CodeCompletionString> Optional);
 
     /// \brief Create a new placeholder chunk.
-    static Chunk CreatePlaceholder(const char *Placeholder);
+    static Chunk CreatePlaceholder(llvm::StringRef Placeholder);
 
     /// \brief Create a new informative chunk.
-    static Chunk CreateInformative(const char *Informative);
+    static Chunk CreateInformative(llvm::StringRef Informative);
 
     /// \brief Create a new current-parameter chunk.
-    static Chunk CreateCurrentParameter(const char *CurrentParameter);
+    static Chunk CreateCurrentParameter(llvm::StringRef CurrentParameter);
 
     /// \brief Destroy this chunk, deallocating any memory it owns.
     void Destroy();
@@ -156,13 +156,13 @@ public:
   
   /// \brief Add a new typed-text chunk.
   /// The text string will be copied.
-  void AddTypedTextChunk(const char *Text) { 
+  void AddTypedTextChunk(llvm::StringRef Text) { 
     Chunks.push_back(Chunk(CK_TypedText, Text));
   }
   
   /// \brief Add a new text chunk.
   /// The text string will be copied.
-  void AddTextChunk(const char *Text) { 
+  void AddTextChunk(llvm::StringRef Text) { 
     Chunks.push_back(Chunk::CreateText(Text)); 
   }
   
@@ -173,19 +173,19 @@ public:
   
   /// \brief Add a new placeholder chunk.
   /// The placeholder text will be copied.
-  void AddPlaceholderChunk(const char *Placeholder) {
+  void AddPlaceholderChunk(llvm::StringRef Placeholder) {
     Chunks.push_back(Chunk::CreatePlaceholder(Placeholder));
   }
 
   /// \brief Add a new informative chunk.
   /// The text will be copied.
-  void AddInformativeChunk(const char *Text) {
+  void AddInformativeChunk(llvm::StringRef Text) {
     Chunks.push_back(Chunk::CreateInformative(Text));
   }
 
   /// \brief Add a new current-parameter chunk.
   /// The text will be copied.
-  void AddCurrentParameterChunk(const char *CurrentParameter) {
+  void AddCurrentParameterChunk(llvm::StringRef CurrentParameter) {
     Chunks.push_back(Chunk::CreateCurrentParameter(CurrentParameter));
   }
   

@@ -22,7 +22,9 @@
 #include <algorithm>
 #include <cstring>
 #include <functional>
+
 using namespace clang;
+using llvm::StringRef;
 
 //===----------------------------------------------------------------------===//
 // Code completion string implementation
@@ -86,7 +88,7 @@ CodeCompletionString::Chunk::Chunk(ChunkKind Kind, llvm::StringRef Text)
 }
 
 CodeCompletionString::Chunk
-CodeCompletionString::Chunk::CreateText(const char *Text) {
+CodeCompletionString::Chunk::CreateText(StringRef Text) {
   return Chunk(CK_Text, Text);
 }
 
@@ -100,18 +102,18 @@ CodeCompletionString::Chunk::CreateOptional(
 }
 
 CodeCompletionString::Chunk 
-CodeCompletionString::Chunk::CreatePlaceholder(const char *Placeholder) {
+CodeCompletionString::Chunk::CreatePlaceholder(StringRef Placeholder) {
   return Chunk(CK_Placeholder, Placeholder);
 }
 
 CodeCompletionString::Chunk 
-CodeCompletionString::Chunk::CreateInformative(const char *Informative) {
+CodeCompletionString::Chunk::CreateInformative(StringRef Informative) {
   return Chunk(CK_Informative, Informative);
 }
 
 CodeCompletionString::Chunk 
 CodeCompletionString::Chunk::CreateCurrentParameter(
-                                                const char *CurrentParameter) {
+                                                StringRef CurrentParameter) {
   return Chunk(CK_CurrentParameter, CurrentParameter);
 }
 
