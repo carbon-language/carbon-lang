@@ -71,6 +71,9 @@ public:
   unsigned EnableExperimentalInternalChecks : 1;
 public:
   AnalyzerOptions() {
+    AnalysisStoreOpt = BasicStoreModel;
+    AnalysisConstraintsOpt = RangeConstraintsModel;
+    AnalysisDiagOpt = PD_HTML;
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
     EagerlyAssume = 0;
