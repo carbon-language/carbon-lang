@@ -112,6 +112,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       IDecl->setLocation(AtInterfaceLoc);
       IDecl->setForwardDecl(false);
       IDecl->setClassLoc(ClassLoc);
+      if (AttrList)
+        ProcessDeclAttributeList(TUScope, IDecl, AttrList);
     }
   } else {
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc,
