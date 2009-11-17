@@ -94,6 +94,11 @@ install(DIRECTORY include/
 
 add_definitions( -D_GNU_SOURCE )
 
+option(CLANG_BUILD_EXAMPLES "Build CLANG example programs." OFF)
+if(CLANG_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif ()
+
 add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(tools)
