@@ -2652,7 +2652,8 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // in that declarative region, it is treated as an original-namespace-name.
 
     NamedDecl *PrevDecl
-      = LookupSingleName(DeclRegionScope, II, LookupOrdinaryName, true);
+      = LookupSingleName(DeclRegionScope, II, LookupOrdinaryName,
+                         LookupResult::ForRedeclaration);
 
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
@@ -2760,12 +2761,11 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
   UsingDirectiveDecl *UDir = 0;
 
   // Lookup namespace name.
-  LookupResult R;
-  LookupParsedName(R, S, &SS, NamespcName, LookupNamespaceName, false);
-  if (R.isAmbiguous()) {
-    DiagnoseAmbiguousLookup(R, NamespcName, IdentLoc);
+  LookupResult R(*this, NamespcName, IdentLoc, LookupNamespaceName);
+  LookupParsedName(R, S, &SS);
+  if (R.isAmbiguous())
     return DeclPtrTy();
-  }
+
   if (!R.empty()) {
     NamedDecl *NS = R.getFoundDecl();
     // FIXME: Namespace aliases!
@@ -2913,8 +2913,8 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
   }
 
   // Lookup target name.
-  LookupResult R;
-  LookupQualifiedName(R, LookupContext, Name, LookupOrdinaryName);
+  LookupResult R(*this, Name, IdentLoc, LookupOrdinaryName);
+  LookupQualifiedName(R, LookupContext);
 
   if (R.empty()) {
     Diag(IdentLoc, diag::err_no_member) 
@@ -2959,12 +2959,13 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
                                              IdentifierInfo *Ident) {
 
   // Lookup the namespace name.
-  LookupResult R;
-  LookupParsedName(R, S, &SS, Ident, LookupNamespaceName, false);
+  LookupResult R(*this, Ident, IdentLoc, LookupNamespaceName);
+  LookupParsedName(R, S, &SS);
 
   // Check if we have a previous declaration with the same name.
   if (NamedDecl *PrevDecl
-        = LookupSingleName(S, Alias, LookupOrdinaryName, true)) {
+        = LookupSingleName(S, Alias, LookupOrdinaryName,
+                           LookupResult::ForRedeclaration)) {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
       // We already have an alias with the same name that points to the same
       // namespace, so don't create a new one.
@@ -2980,10 +2981,8 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     return DeclPtrTy();
   }
 
-  if (R.isAmbiguous()) {
-    DiagnoseAmbiguousLookup(R, Ident, IdentLoc);
+  if (R.isAmbiguous())
     return DeclPtrTy();
-  }
 
   if (R.empty()) {
     Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
@@ -4613,8 +4612,9 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
     // FIXME: handle dependent contexts
     if (!DC) return DeclPtrTy();
 
-    LookupResult R;
-    LookupQualifiedName(R, DC, Name, LookupOrdinaryName, true);
+    LookupResult R(*this, Name, Loc, LookupOrdinaryName,
+                   LookupResult::ForRedeclaration);
+    LookupQualifiedName(R, DC);
     PrevDecl = R.getAsSingleDecl(Context);
 
     // If searching in that context implicitly found a declaration in
@@ -4648,8 +4648,9 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
       while (DC->isRecord()) 
         DC = DC->getParent();
 
-      LookupResult R;
-      LookupQualifiedName(R, DC, Name, LookupOrdinaryName, true);
+      LookupResult R(*this, Name, Loc, LookupOrdinaryName,
+                     LookupResult::ForRedeclaration);
+      LookupQualifiedName(R, DC);
       PrevDecl = R.getAsSingleDecl(Context);
 
       // TODO: decide what we think about using declarations.

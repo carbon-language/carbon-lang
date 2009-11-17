@@ -1092,7 +1092,7 @@ public:
   /// of multiple declarations.
   class LookupResult {
   public:
-    enum LookupKind {
+    enum LookupResultKind {
       /// @brief No entity found met the criteria.
       NotFound = 0,
 
@@ -1173,24 +1173,86 @@ public:
       AmbiguousTagHiding
     };
 
+    enum RedeclarationKind {
+      NotForRedeclaration,
+      ForRedeclaration
+    };
+
+    /// A little identifier for flagging temporary lookup results.
+    enum TemporaryToken {
+      Temporary
+    };
+
     typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
     typedef DeclsTy::const_iterator iterator;
 
-    LookupResult()
-      : Kind(NotFound),
-        Paths(0)
+    LookupResult(Sema &SemaRef, DeclarationName Name, SourceLocation NameLoc,
+                 LookupNameKind LookupKind,
+                 RedeclarationKind Redecl = NotForRedeclaration)
+      : ResultKind(NotFound),
+        Paths(0),
+        SemaRef(SemaRef),
+        Name(Name),
+        NameLoc(NameLoc),
+        LookupKind(LookupKind),
+        IDNS(0),
+        Redecl(Redecl != NotForRedeclaration),
+        Diagnose(Redecl == NotForRedeclaration)
     {}
+
+    /// Creates a temporary lookup result, initializing its core data
+    /// using the information from another result.  Diagnostics are always
+    /// disabled.
+    LookupResult(TemporaryToken _, const LookupResult &Other)
+      : ResultKind(NotFound),
+        Paths(0),
+        SemaRef(Other.SemaRef),
+        Name(Other.Name),
+        NameLoc(Other.NameLoc),
+        LookupKind(Other.LookupKind),
+        IDNS(Other.IDNS),
+        Redecl(Other.Redecl),
+        Diagnose(false)
+    {}
+
     ~LookupResult() {
+      if (Diagnose) diagnose();
       if (Paths) deletePaths(Paths);
     }
 
-    bool isAmbiguous() const {
-      return getKind() == Ambiguous;
+    /// Gets the name to look up.
+    DeclarationName getLookupName() const {
+      return Name;
     }
 
-    LookupKind getKind() const {
+    /// Gets the kind of lookup to perform.
+    LookupNameKind getLookupKind() const {
+      return LookupKind;
+    }
+
+    /// True if this lookup is just looking for an existing declaration.
+    bool isForRedeclaration() const {
+      return Redecl;
+    }
+
+    /// The identifier namespace of this lookup.  This information is
+    /// private to the lookup routines.
+    unsigned getIdentifierNamespace() const {
+      assert(IDNS);
+      return IDNS;
+    }
+
+    void setIdentifierNamespace(unsigned NS) {
+      IDNS = NS;
+    }
+
+    bool isAmbiguous() const {
+      return getResultKind() == Ambiguous;
+    }
+
+    LookupResultKind getResultKind() const {
       sanity();
-      return Kind;
+      return ResultKind;
     }
 
     AmbiguityKind getAmbiguityKind() const {
@@ -1226,14 +1288,14 @@ public:
         }
       } else
         Decls.push_back(D->getUnderlyingDecl());
-      Kind = Found;
+      ResultKind = Found;
     }
 
     /// \brief Add all the declarations from another set of lookup
     /// results.
     void addAllDecls(const LookupResult &Other) {
       Decls.append(Other.begin(), Other.end());
-      Kind = Found;
+      ResultKind = Found;
     }
 
     /// \brief Hides a set of declarations.
@@ -1267,13 +1329,14 @@ public:
     /// This is intended for users who have examined the result kind
     /// and are certain that there is only one result.
     NamedDecl *getFoundDecl() const {
-      assert(getKind() == Found && "getFoundDecl called on non-unique result");
+      assert(getResultKind() == Found
+             && "getFoundDecl called on non-unique result");
       return *Decls.begin();
     }
 
     /// \brief Asks if the result is a single tag decl.
     bool isSingleTagDecl() const {
-      return getKind() == Found && isa<TagDecl>(getFoundDecl());
+      return getResultKind() == Found && isa<TagDecl>(getFoundDecl());
     }
 
     /// \brief Make these results show that the name was found in
@@ -1297,17 +1360,53 @@ public:
 
     /// \brief Clears out any current state.
     void clear() {
-      Kind = NotFound;
+      ResultKind = NotFound;
       Decls.clear();
       if (Paths) deletePaths(Paths);
       Paths = NULL;
     }
 
+    /// \brief Clears out any current state and re-initializes for a
+    /// different kind of lookup.
+    void clear(LookupNameKind Kind) {
+      clear();
+      LookupKind = Kind;
+    }
+
     void print(llvm::raw_ostream &);
 
+    /// Suppress the diagnostics that would normally fire because of this
+    /// lookup.  This happens during (e.g.) redeclaration lookups.
+    void suppressDiagnostics() {
+      Diagnose = false;
+    }
+
+    /// Sets a 'context' source range.
+    void setContextRange(SourceRange SR) {
+      NameContextRange = SR;
+    }
+
+    /// Gets the source range of the context of this name; for C++
+    /// qualified lookups, this is the source range of the scope
+    /// specifier.
+    SourceRange getContextRange() const {
+      return NameContextRange;
+    }
+
+    /// Gets the location of the identifier.  This isn't always defined:
+    /// sometimes we're doing lookups on synthesized names.
+    SourceLocation getNameLoc() const {
+      return NameLoc;
+    }
+
   private:
+    void diagnose() {
+      if (isAmbiguous())
+        SemaRef.DiagnoseAmbiguousLookup(*this);
+    }
+
     void setAmbiguous(AmbiguityKind AK) {
-      Kind = Ambiguous;
+      ResultKind = Ambiguous;
       Ambiguity = AK;
     }
 
@@ -1315,29 +1414,41 @@ public:
 
     // Sanity checks.
     void sanity() const {
-      assert(Kind != NotFound || Decls.size() == 0);
-      assert(Kind != Found || Decls.size() == 1);
-      assert(Kind == NotFound || Kind == Found ||
-             (Kind == Ambiguous && Ambiguity == AmbiguousBaseSubobjects)
+      assert(ResultKind != NotFound || Decls.size() == 0);
+      assert(ResultKind != Found || Decls.size() == 1);
+      assert(ResultKind == NotFound || ResultKind == Found ||
+             (ResultKind == Ambiguous && Ambiguity == AmbiguousBaseSubobjects)
              || Decls.size() > 1);
-      assert((Paths != NULL) == (Kind == Ambiguous &&
+      assert((Paths != NULL) == (ResultKind == Ambiguous &&
                                  (Ambiguity == AmbiguousBaseSubobjectTypes ||
                                   Ambiguity == AmbiguousBaseSubobjects)));
     }
 
     static void deletePaths(CXXBasePaths *);
 
-    LookupKind Kind;
+    // Results.
+    LookupResultKind ResultKind;
     AmbiguityKind Ambiguity; // ill-defined unless ambiguous
     DeclsTy Decls;
     CXXBasePaths *Paths;
+
+    // Parameters.
+    Sema &SemaRef;
+    DeclarationName Name;
+    SourceLocation NameLoc;
+    SourceRange NameContextRange;
+    LookupNameKind LookupKind;
+    unsigned IDNS; // ill-defined until set by lookup
+    bool Redecl;
+
+    bool Diagnose;
   };
 
 private:
   typedef llvm::SmallVector<LookupResult, 3> LookupResultsVecTy;
 
-  bool CppLookupName(LookupResult &R, Scope *S, DeclarationName Name,
-                     LookupNameKind NameKind, bool RedeclarationOnly);
+  bool CppLookupName(LookupResult &R, Scope *S);
+
 public:
   /// Determines whether D is a suitable lookup result according to the
   /// lookup criteria.
@@ -1376,27 +1487,17 @@ public:
   /// ambiguity and overloaded.
   NamedDecl *LookupSingleName(Scope *S, DeclarationName Name,
                               LookupNameKind NameKind,
-                              bool RedeclarationOnly = false) {
-    LookupResult R;
-    LookupName(R, S, Name, NameKind, RedeclarationOnly);
+                              LookupResult::RedeclarationKind Redecl
+                                = LookupResult::NotForRedeclaration) {
+    LookupResult R(*this, Name, SourceLocation(), NameKind, Redecl);
+    LookupName(R, S);
     return R.getAsSingleDecl(Context);
   }
   bool LookupName(LookupResult &R, Scope *S,
-                  DeclarationName Name,
-                  LookupNameKind NameKind,
-                  bool RedeclarationOnly = false,
-                  bool AllowBuiltinCreation = false,
-                  SourceLocation Loc = SourceLocation());
-  bool LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
-                           DeclarationName Name,
-                           LookupNameKind NameKind,
-                           bool RedeclarationOnly = false);
+                  bool AllowBuiltinCreation = false);
+  bool LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx);
   bool LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
-                        DeclarationName Name,
-                        LookupNameKind NameKind,
-                        bool RedeclarationOnly = false,
                         bool AllowBuiltinCreation = false,
-                        SourceLocation Loc = SourceLocation(),
                         bool EnteringContext = false);
 
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
@@ -1414,9 +1515,7 @@ public:
                                    AssociatedNamespaceSet &AssociatedNamespaces,
                                    AssociatedClassSet &AssociatedClasses);
 
-  bool DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
-                               SourceLocation NameLoc,
-                               SourceRange LookupRange = SourceRange());
+  bool DiagnoseAmbiguousLookup(LookupResult &Result);
   //@}
 
   ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);

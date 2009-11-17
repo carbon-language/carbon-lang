@@ -2833,9 +2833,10 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
     if (RequireCompleteType(OpLoc, T1, PDiag()))
       return;
 
-    LookupResult Operators;
-    LookupQualifiedName(Operators, T1Rec->getDecl(), OpName,
-                        LookupOrdinaryName, false);
+    LookupResult Operators(*this, OpName, OpLoc, LookupOrdinaryName);
+    LookupQualifiedName(Operators, T1Rec->getDecl());
+    Operators.suppressDiagnostics();
+
     for (LookupResult::iterator Oper = Operators.begin(),
                              OperEnd = Operators.end();
          Oper != OperEnd;
@@ -5260,8 +5261,10 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                           << Object->getSourceRange()))
     return true;
   
-  LookupResult R;
-  LookupQualifiedName(R, Record->getDecl(), OpName, LookupOrdinaryName, false);
+  LookupResult R(*this, OpName, LParenLoc, LookupOrdinaryName);
+  LookupQualifiedName(R, Record->getDecl());
+  R.suppressDiagnostics();
+
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper) {
     if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*Oper)) {
@@ -5492,8 +5495,9 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
 
-  LookupResult R;
-  LookupQualifiedName(R, BaseRecord->getDecl(), OpName, LookupOrdinaryName);
+  LookupResult R(*this, OpName, OpLoc, LookupOrdinaryName);
+  LookupQualifiedName(R, BaseRecord->getDecl());
+  R.suppressDiagnostics();
 
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper)

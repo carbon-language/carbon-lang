@@ -34,8 +34,8 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
     TyOrExpr = GetTypeFromParser(TyOrExpr).getAsOpaquePtr();
 
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
-  LookupResult R;
-  LookupQualifiedName(R, StdNamespace, TypeInfoII, LookupTagName);  
+  LookupResult R(*this, TypeInfoII, SourceLocation(), LookupTagName);
+  LookupQualifiedName(R, StdNamespace);
   Decl *TypeInfoDecl = R.getAsSingleDecl(Context);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
   if (!TypeInfoRecordDecl)
@@ -567,8 +567,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                                   DeclarationName Name, Expr** Args,
                                   unsigned NumArgs, DeclContext *Ctx,
                                   bool AllowMissing, FunctionDecl *&Operator) {
-  LookupResult R;
-  LookupQualifiedName(R, Ctx, Name, LookupOrdinaryName);
+  LookupResult R(*this, Name, StartLoc, LookupOrdinaryName);
+  LookupQualifiedName(R, Ctx);
   if (R.empty()) {
     if (AllowMissing)
       return false;
@@ -756,14 +756,12 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
                                     DeclarationName Name,
                                     FunctionDecl* &Operator) {
-  LookupResult Found;
+  LookupResult Found(*this, Name, StartLoc, LookupOrdinaryName);
   // Try to find operator delete/operator delete[] in class scope.
-  LookupQualifiedName(Found, RD, Name, LookupOrdinaryName);
+  LookupQualifiedName(Found, RD);
   
-  if (Found.isAmbiguous()) {
-    DiagnoseAmbiguousLookup(Found, Name, StartLoc);
+  if (Found.isAmbiguous())
     return true;
-  }
 
   for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
        F != FEnd; ++F) {

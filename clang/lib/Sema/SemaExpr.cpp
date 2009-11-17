@@ -681,15 +681,11 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                                      isAddressOfOperand));
   }
 
-  LookupResult Lookup;
-  LookupParsedName(Lookup, S, SS, Name, LookupOrdinaryName, false, true, Loc);
+  LookupResult Lookup(*this, Name, Loc, LookupOrdinaryName);
+  LookupParsedName(Lookup, S, SS, true);
 
-  if (Lookup.isAmbiguous()) {
-    DiagnoseAmbiguousLookup(Lookup, Name, Loc,
-                            SS && SS->isSet() ? SS->getRange()
-                                              : SourceRange());
+  if (Lookup.isAmbiguous())
     return ExprError();
-  }
 
   NamedDecl *D = Lookup.getAsSingleDecl(Context);
 
@@ -2075,17 +2071,14 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
 
     // The record definition is complete, now make sure the member is valid.
-    LookupResult Result;
-    LookupQualifiedName(Result, DC, MemberName, LookupMemberName, false);
+    LookupResult Result(*this, MemberName, MemberLoc, LookupMemberName);
+    LookupQualifiedName(Result, DC);
 
     if (Result.empty())
       return ExprError(Diag(MemberLoc, diag::err_no_member)
                << MemberName << DC << BaseExpr->getSourceRange());
-    if (Result.isAmbiguous()) {
-      DiagnoseAmbiguousLookup(Result, MemberName, MemberLoc,
-                              BaseExpr->getSourceRange());
+    if (Result.isAmbiguous())
       return ExprError();
-    }
 
     NamedDecl *MemberDecl = Result.getAsSingleDecl(Context);
 
@@ -5887,8 +5880,8 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         }
       }
 
-      LookupResult R;
-      LookupQualifiedName(R, RD, OC.U.IdentInfo, LookupMemberName);
+      LookupResult R(*this, OC.U.IdentInfo, OC.LocStart, LookupMemberName);
+      LookupQualifiedName(R, RD);
 
       FieldDecl *MemberDecl
         = dyn_cast_or_null<FieldDecl>(R.getAsSingleDecl(Context));

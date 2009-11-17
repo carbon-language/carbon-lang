@@ -677,9 +677,10 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
     // Look only into the namespace where the friend would be declared to 
     // find a previous declaration. This is the innermost enclosing namespace, 
     // as described in ActOnFriendFunctionDecl.
-    Sema::LookupResult R;
-    SemaRef.LookupQualifiedName(R, DC, Function->getDeclName(), 
-                              Sema::LookupOrdinaryName, true);
+    Sema::LookupResult R(SemaRef, Function->getDeclName(), SourceLocation(),
+                         Sema::LookupOrdinaryName,
+                         Sema::LookupResult::ForRedeclaration);
+    SemaRef.LookupQualifiedName(R, DC);
     
     PrevDecl = R.getAsSingleDecl(SemaRef.Context);
 
@@ -837,8 +838,10 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   NamedDecl *PrevDecl = 0;
 
   if (!FunctionTemplate || TemplateParams) {
-    Sema::LookupResult R;
-    SemaRef.LookupQualifiedName(R, Owner, Name, Sema::LookupOrdinaryName, true);
+    Sema::LookupResult R(SemaRef, Name, SourceLocation(),
+                         Sema::LookupOrdinaryName,
+                         Sema::LookupResult::ForRedeclaration);
+    SemaRef.LookupQualifiedName(R, Owner);
     PrevDecl = R.getAsSingleDecl(SemaRef.Context);
 
     // In C++, the previous declaration we find might be a tag type

@@ -87,11 +87,11 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                              II, SS->getRange()).getAsOpaquePtr();
   }
 
-  LookupResult Result;
-  LookupParsedName(Result, S, SS, &II, LookupOrdinaryName, false, false);
+  LookupResult Result(*this, &II, NameLoc, LookupOrdinaryName);
+  LookupParsedName(Result, S, SS, false);
 
   NamedDecl *IIDecl = 0;
-  switch (Result.getKind()) {
+  switch (Result.getResultKind()) {
   case LookupResult::NotFound:
   case LookupResult::FoundOverloaded:
     return 0;
@@ -102,8 +102,10 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     // diagnose the error then.  If we don't do this, then the error
     // about hiding the type will be immediately followed by an error
     // that only makes sense if the identifier was treated like a type.
-    if (Result.getAmbiguityKind() == LookupResult::AmbiguousTagHiding)
+    if (Result.getAmbiguityKind() == LookupResult::AmbiguousTagHiding) {
+      Result.suppressDiagnostics();
       return 0;
+    }
 
     // Look to see if we have a type anywhere in the list of results.
     for (LookupResult::iterator Res = Result.begin(), ResEnd = Result.end();
@@ -123,6 +125,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       // perform this lookup again (e.g., as an object name), which
       // will produce the ambiguity, or will complain that it expected
       // a type name.
+      Result.suppressDiagnostics();
       return 0;
     }
 
@@ -130,7 +133,6 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     // ambiguity and then return that type. This might be the right
     // answer, or it might not be, but it suppresses any attempt to
     // perform the name lookup again.
-    DiagnoseAmbiguousLookup(Result, DeclarationName(&II), NameLoc);
     break;
 
   case LookupResult::Found:
@@ -143,7 +145,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   QualType T;
   if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
     DiagnoseUseOfDecl(IIDecl, NameLoc);
-  
+
     // C++ [temp.local]p2:
     //   Within the scope of a class template specialization or
     //   partial specialization, when the injected-class-name is
@@ -163,10 +165,12 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       T = getQualifiedNameType(*SS, T);
     
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
-    DiagnoseUseOfDecl(IIDecl, NameLoc);
     T = Context.getObjCInterfaceType(IDecl);
-  } else
+  } else {
+    // If it's not plausibly a type, suppress diagnostics.
+    Result.suppressDiagnostics();
     return 0;
+  }
 
   return T.getAsOpaquePtr();
 }
@@ -178,9 +182,10 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
 /// where the user forgot to specify the tag.
 DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
   // Do a tag name lookup in this scope.
-  LookupResult R;
-  LookupName(R, S, &II, LookupTagName, false, false);
-  if (R.getKind() == LookupResult::Found)
+  LookupResult R(*this, &II, SourceLocation(), LookupTagName);
+  LookupName(R, S, false);
+  R.suppressDiagnostics();
+  if (R.getResultKind() == LookupResult::Found)
     if (const TagDecl *TD = dyn_cast<TagDecl>(R.getAsSingleDecl(Context))) {
       switch (TD->getTagKind()) {
       case TagDecl::TK_struct: return DeclSpec::TST_struct;
@@ -1415,9 +1420,9 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                FEnd = AnonRecord->field_end();
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
-      LookupResult R;
-      LookupQualifiedName(R, Owner, (*F)->getDeclName(),
-                          LookupOrdinaryName, true);
+      LookupResult R(*this, (*F)->getDeclName(), SourceLocation(),
+                     LookupOrdinaryName, LookupResult::ForRedeclaration);
+      LookupQualifiedName(R, Owner);
       NamedDecl *PrevDecl = R.getAsSingleDecl(Context);
       if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
         // C++ [class.union]p2:
@@ -1784,10 +1789,10 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
       NameKind = LookupRedeclarationWithLinkage;
 
     DC = CurContext;
-    LookupResult R;
-    LookupName(R, S, Name, NameKind, true,
-               NameKind == LookupRedeclarationWithLinkage,
-               D.getIdentifierLoc());
+    LookupResult R(*this, Name, D.getIdentifierLoc(), NameKind,
+                   LookupResult::ForRedeclaration);
+
+    LookupName(R, S, NameKind == LookupRedeclarationWithLinkage);
     PrevDecl = R.getAsSingleDecl(Context);
   } else { // Something like "int foo::x;"
     DC = computeDeclContext(D.getCXXScopeSpec(), true);
@@ -1808,8 +1813,9 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
         RequireCompleteDeclContext(D.getCXXScopeSpec()))
       return DeclPtrTy();
     
-    LookupResult Res;
-    LookupQualifiedName(Res, DC, Name, LookupOrdinaryName, true);
+    LookupResult Res(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
+                     LookupResult::ForRedeclaration);
+    LookupQualifiedName(Res, DC);
     PrevDecl = Res.getAsSingleDecl(Context);
 
     // C++ 7.3.1.2p2:
@@ -2923,8 +2929,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << Name << DC << D.getCXXScopeSpec().getRange();
       NewFD->setInvalidDecl();
 
-      LookupResult Prev;
-      LookupQualifiedName(Prev, DC, Name, LookupOrdinaryName, true);
+      LookupResult Prev(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
+                        LookupResult::ForRedeclaration);
+      LookupQualifiedName(Prev, DC);
       assert(!Prev.isAmbiguous() &&
              "Cannot have an ambiguity in previous-declaration lookup");
       for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
@@ -4302,7 +4309,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   bool isStdBadAlloc = false;
   bool Invalid = false;
 
-  bool RedeclarationOnly = (TUK != TUK_Reference);
+  LookupResult::RedeclarationKind Redecl =
+    (LookupResult::RedeclarationKind) (TUK != TUK_Reference);
 
   if (Name && SS.isNotEmpty()) {
     // We have a nested-name tag ('struct foo::bar').
@@ -4329,15 +4337,13 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     DC = computeDeclContext(SS, true);
     SearchDC = DC;
     // Look-up name inside 'foo::'.
-    LookupResult R;
-    LookupQualifiedName(R, DC, Name, LookupTagName, RedeclarationOnly);
+    LookupResult R(*this, Name, NameLoc, LookupTagName, Redecl);
+    LookupQualifiedName(R, DC);
 
-    if (R.isAmbiguous()) {
-      DiagnoseAmbiguousLookup(R, Name, NameLoc, SS.getRange());
+    if (R.isAmbiguous())
       return DeclPtrTy();
-    }
 
-    if (R.getKind() == LookupResult::Found)
+    if (R.getResultKind() == LookupResult::Found)
       PrevDecl = dyn_cast<TagDecl>(R.getFoundDecl());
 
     // A tag 'foo::bar' must already exist.
@@ -4353,10 +4359,9 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // FIXME: We're looking into outer scopes here, even when we
     // shouldn't be. Doing so can result in ambiguities that we
     // shouldn't be diagnosing.
-    LookupResult R;
-    LookupName(R, S, Name, LookupTagName, RedeclarationOnly);
+    LookupResult R(*this, Name, NameLoc, LookupTagName, Redecl);
+    LookupName(R, S);
     if (R.isAmbiguous()) {
-      DiagnoseAmbiguousLookup(R, Name, NameLoc);
       // FIXME: This is not best way to recover from case like:
       //
       // struct S s;
@@ -4618,8 +4623,9 @@ CreateNewDecl:
     //   shall not be declared with the same name as a typedef-name
     //   that is declared in that scope and refers to a type other
     //   than the class or enumeration itself.
-    LookupResult Lookup;
-    LookupName(Lookup, S, Name, LookupOrdinaryName, true);
+    LookupResult Lookup(*this, Name, NameLoc, LookupOrdinaryName,
+                        LookupResult::ForRedeclaration);
+    LookupName(Lookup, S);
     TypedefDecl *PrevTypedef = 0;
     if (NamedDecl *Prev = Lookup.getAsSingleDecl(Context))
       PrevTypedef = dyn_cast<TypedefDecl>(Prev);
@@ -4838,7 +4844,8 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
-  NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName, true);
+  NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName,
+                                         LookupResult::ForRedeclaration);
 
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
@@ -5223,7 +5230,8 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
                                              DInfo, ac, (Expr *)BitfieldWidth);
 
   if (II) {
-    NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName, true);
+    NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName,
+                                           LookupResult::ForRedeclaration);
     if (PrevDecl && isDeclInScope(PrevDecl, EnclosingContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;

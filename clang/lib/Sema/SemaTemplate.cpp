@@ -138,7 +138,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     isDependent = isDependentScopeSpecifier(SS);
   }
 
-  LookupResult Found;
+  LookupResult Found(*this, TName, SourceLocation(), LookupOrdinaryName);
   bool ObjectTypeSearchedInScope = false;
   if (LookupCtx) {
     // Perform "qualified" name lookup into the declaration context we
@@ -150,9 +150,9 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
       return TNK_Non_template;
 
-    LookupQualifiedName(Found, LookupCtx, TName, LookupOrdinaryName);
+    LookupQualifiedName(Found, LookupCtx);
 
-    if (ObjectTypePtr && Found.getKind() == LookupResult::NotFound) {
+    if (ObjectTypePtr && Found.empty()) {
       // C++ [basic.lookup.classref]p1:
       //   In a class member access expression (5.2.5), if the . or -> token is
       //   immediately followed by an identifier followed by a <, the
@@ -165,7 +165,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
       //
       // FIXME: When we're instantiating a template, do we actually have to
       // look in the scope of the template? Seems fishy...
-      LookupName(Found, S, TName, LookupOrdinaryName);
+      LookupName(Found, S);
       ObjectTypeSearchedInScope = true;
     }
   } else if (isDependent) {
@@ -173,7 +173,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     return TNK_Non_template;
   } else {
     // Perform unqualified name lookup in the current scope.
-    LookupName(Found, S, TName, LookupOrdinaryName);
+    LookupName(Found, S);
   }
 
   // FIXME: Cope with ambiguous name-lookup results.
@@ -191,8 +191,8 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     //   template, the name is also looked up in the context of the entire
     //   postfix-expression and [...]
     //
-    LookupResult FoundOuter;
-    LookupName(FoundOuter, S, TName, LookupOrdinaryName);
+    LookupResult FoundOuter(*this, TName, SourceLocation(), LookupOrdinaryName);
+    LookupName(FoundOuter, S);
     // FIXME: Handle ambiguities in this lookup better
     NamedDecl *OuterTemplate
       = isAcceptableTemplateName(Context, FoundOuter.getAsSingleDecl(Context));
@@ -628,7 +628,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
   // Find any previous declaration with this name.
   DeclContext *SemanticContext;
-  LookupResult Previous;
+  LookupResult Previous(*this, Name, NameLoc, LookupOrdinaryName,
+                        LookupResult::ForRedeclaration);
   if (SS.isNotEmpty() && !SS.isInvalid()) {
     if (RequireCompleteDeclContext(SS))
       return true;
@@ -639,11 +640,10 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       return true;
     }
 
-    LookupQualifiedName(Previous, SemanticContext, Name, LookupOrdinaryName,
-                                   true);
+    LookupQualifiedName(Previous, SemanticContext);
   } else {
     SemanticContext = CurContext;
-    LookupName(Previous, S, Name, LookupOrdinaryName, true);
+    LookupName(Previous, S);
   }
 
   assert(!Previous.isAmbiguous() && "Ambiguity in class template redecl?");
@@ -4192,19 +4192,16 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition
                            : TSK_ExplicitInstantiationDeclaration;
     
-  LookupResult Previous;
-  LookupParsedName(Previous, S, &D.getCXXScopeSpec(),
-                   Name, LookupOrdinaryName);
+  LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName);
+  LookupParsedName(Previous, S, &D.getCXXScopeSpec());
 
   if (!R->isFunctionType()) {
     // C++ [temp.explicit]p1:
     //   A [...] static data member of a class template can be explicitly 
     //   instantiated from the member definition associated with its class 
     //   template.
-    if (Previous.isAmbiguous()) {
-      return DiagnoseAmbiguousLookup(Previous, Name, D.getIdentifierLoc(),
-                                     D.getSourceRange());
-    }
+    if (Previous.isAmbiguous())
+      return true;
     
     VarDecl *Prev = dyn_cast_or_null<VarDecl>(
         Previous.getAsSingleDecl(Context));
@@ -4483,11 +4480,11 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
   assert(Ctx && "No declaration context?");
 
   DeclarationName Name(&II);
-  LookupResult Result;
-  LookupQualifiedName(Result, Ctx, Name, LookupOrdinaryName, false);
+  LookupResult Result(*this, Name, Range.getEnd(), LookupOrdinaryName);
+  LookupQualifiedName(Result, Ctx);
   unsigned DiagID = 0;
   Decl *Referenced = 0;
-  switch (Result.getKind()) {
+  switch (Result.getResultKind()) {
   case LookupResult::NotFound:
     DiagID = diag::err_typename_nested_not_found;
     break;
@@ -4510,7 +4507,6 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     break;
 
   case LookupResult::Ambiguous:
-    DiagnoseAmbiguousLookup(Result, Name, Range.getEnd(), Range);
     return QualType();
   }
 

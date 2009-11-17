@@ -179,10 +179,8 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
   for (unsigned i = 0; i < NumIdentifiers; ++i) {
     const Token &Tok = Identifiers[i];
     IdentifierInfo *Name = Tok.getIdentifierInfo();
-    LookupResult Lookup;
-    LookupParsedName(Lookup, curScope, NULL, Name,LookupOrdinaryName,
-                     false, true, Tok.getLocation());
-    // FIXME: Handle Lookup.isAmbiguous?
+    LookupResult Lookup(*this, Name, Tok.getLocation(), LookupOrdinaryName);
+    LookupParsedName(Lookup, curScope, NULL, true);
 
     NamedDecl *ND = Lookup.getAsSingleDecl(Context);
 
