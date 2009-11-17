@@ -78,12 +78,4 @@
 #define NORETURN
 #endif
 
-#if defined(__GNUC__) && ((__GNUC__ > 4)||(__GNUC__ == 4 && __GNUC_MINOR__ > 2))
-#define ERROR_IF_USED __attribute__((error("wrong usage")))
-#elif defined(__APPLE__)
-#define ERROR_IF_USED __attribute__((unavailable))
-#else
-#define ERROR_IF_USED
-#endif
-
 #endif

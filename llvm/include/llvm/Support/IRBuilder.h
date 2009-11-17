@@ -709,9 +709,11 @@ public:
       return Folder.CreateIntCast(VC, DestTy, isSigned);
     return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned), Name);
   }
-  // Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', instead of converting
-  // the string to 'bool' for the isSigned parameter.
-  ERROR_IF_USED Value *CreateIntCast(Value *, const Type *, const char *);
+private:
+  // Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', giving a compile time
+  // error, instead of converting the string to bool for the isSigned parameter.
+  Value *CreateIntCast(Value *, const Type *, const char *); // DO NOT IMPLEMENT
+public:
   Value *CreateFPCast(Value *V, const Type *DestTy, const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
