@@ -321,6 +321,23 @@ static std::string getLLVMTriple(const ToolChain &TC, const ArgList &Args) {
   }
 }
 
+// FIXME: Move to target hook.
+static bool isSignedCharDefault(const llvm::Triple &Triple) {
+  switch (Triple.getArch()) {
+  default:
+    return true;
+
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
+    if (Triple.getOS() == llvm::Triple::Darwin)
+      return true;
+    return false;
+
+  case llvm::Triple::systemz:
+    return false;
+  }
+}
+
 void Clang::AddARMTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getHost().getDriver();
@@ -927,15 +944,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-frtti=0");
 
-  // -fsigned-char/-funsigned-char default varies depending on platform; only
-  // pass if specified.
-  if (Arg *A = Args.getLastArg(options::OPT_fsigned_char,
-                               options::OPT_funsigned_char)) {
-    if (A->getOption().matches(options::OPT_fsigned_char))
-      CmdArgs.push_back("-fsigned-char");
-    else
-      CmdArgs.push_back("-fsigned-char=0");
-  }
+  // -fsigned-char is default.
+  if (!Args.hasFlag(options::OPT_fsigned_char,
+                    options::OPT_funsigned_char,
+                    isSignedCharDefault(getToolChain().getTriple())))
+    CmdArgs.push_back("-fsigned-char=0");
 
   // -fshort-wchar default varies depending on platform; only
   // pass if specified.

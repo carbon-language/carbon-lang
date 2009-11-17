@@ -160,9 +160,6 @@ static void GetDarwinLanguageOptions(LangOptions &Opts,
                                      const llvm::Triple &Triple) {
   Opts.NeXTRuntime = true;
 
-  if (Triple.getOS() != llvm::Triple::Darwin)
-    return;
-
   unsigned MajorVersion = Triple.getDarwinMajorNumber();
 
   // Blocks and stack protectors default to on for 10.6 (darwin10) and beyond.
@@ -192,7 +189,6 @@ protected:
   /// various language options.  These may be overridden by command line
   /// options.
   virtual void getDefaultLangOptions(LangOptions &Opts) {
-    TargetInfo::getDefaultLangOptions(Opts);
     GetDarwinLanguageOptions(Opts, TargetInfo::getTriple());
   }
 public:
@@ -435,10 +431,6 @@ public:
       Info.setAllowsRegister();
       return true;
     }
-  }
-  virtual void getDefaultLangOptions(LangOptions &Opts) {
-    TargetInfo::getDefaultLangOptions(Opts);
-    Opts.CharIsSigned = false;
   }
   virtual const char *getClobbers() const {
     return "";
@@ -1674,11 +1666,6 @@ namespace {
       // FIXME: Implement.
       Records = 0;
       NumRecords = 0;
-    }
-
-    virtual void getDefaultLangOptions(LangOptions &Opts) {
-      TargetInfo::getDefaultLangOptions(Opts);
-      Opts.CharIsSigned = false;
     }
 
     virtual void getGCCRegNames(const char * const *&Names,
