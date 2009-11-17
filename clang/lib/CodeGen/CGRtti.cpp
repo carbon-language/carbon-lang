@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CodeGenModule.h"
 #include "clang/AST/RecordLayout.h"
+#include "CodeGenModule.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -46,11 +46,10 @@ public:
     return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
   }
 
-  llvm::Constant *BuildName(const CXXRecordDecl *RD) {
+  llvm::Constant *BuildName(QualType Ty) {
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
-    mangleCXXRttiName(CGM.getMangleContext(),
-                      CGM.getContext().getTagDeclType(RD), Out);
+    mangleCXXRttiName(CGM.getMangleContext(), Ty, Out);
 
     llvm::GlobalVariable::LinkageTypes linktype;
     linktype = llvm::GlobalValue::LinkOnceODRLinkage;
@@ -174,7 +173,7 @@ public:
     } else
       C = BuildVtableRef("_ZTVN10__cxxabiv121__vmi_class_type_infoE");
     info.push_back(C);
-    info.push_back(BuildName(RD));
+    info.push_back(BuildName(CGM.getContext().getTagDeclType(RD)));
 
     // If we have no bases, there are no more fields.
     if (RD->getNumBases()) {
@@ -207,10 +206,6 @@ public:
       }
     }
 
-    std::vector<const llvm::Type *> Types(info.size());
-    for (unsigned i=0; i<info.size(); ++i)
-      Types[i] = info[i]->getType();
-    // llvm::StructType *Ty = llvm::StructType::get(VMContext, Types, true);
     C = llvm::ConstantStruct::get(VMContext, &info[0], info.size(), false);
 
     if (GV == 0)
@@ -238,6 +233,82 @@ public:
 #endif
   }
 
+  /// - BuildFlags - Build a __flags value for __pbase_type_info.
+  llvm::Constant *BuildInt(int f) {
+    return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), f);
+  }
+
+  llvm::Constant *BuildType2(QualType Ty) {
+    if (const RecordType *RT = Ty.getTypePtr()->getAs<RecordType>())
+      if (const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl()))
+      return Buildclass_type_info(RD);
+    return BuildType(Ty);
+  }
+
+  llvm::Constant *BuildPointerType(QualType Ty) {
+    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+    llvm::Constant *C;
+
+    llvm::SmallString<256> OutName;
+    llvm::raw_svector_ostream Out(OutName);
+    mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
+
+    llvm::GlobalVariable *GV;
+    GV = CGM.getModule().getGlobalVariable(Out.str());
+    if (GV && !GV->isDeclaration())
+      return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
+
+    llvm::GlobalVariable::LinkageTypes linktype;
+    linktype = llvm::GlobalValue::LinkOnceODRLinkage;
+    std::vector<llvm::Constant *> info;
+
+    QualType PTy = Ty->getPointeeType();
+    // FIXME: ptr-mem data
+    QualType BTy;
+    // FIXME: ptr-mem data
+    bool PtrMem = false;
+
+    if (PtrMem)
+      C = BuildVtableRef("_ZTVN10__cxxabiv129__pointer_to_member_type_infoE");
+    else
+      C = BuildVtableRef("_ZTVN10__cxxabiv119__pointer_type_infoE");
+    info.push_back(C);
+    info.push_back(BuildName(Ty));
+    Qualifiers Q = PTy.getQualifiers();
+    PTy = CGM.getContext().getCanonicalType(PTy).getUnqualifiedType();
+    int flags = 0;
+    flags += Q.hasConst() ? 0x1 : 0;
+    flags += Q.hasVolatile() ? 0x2 : 0;
+    flags += Q.hasRestrict() ? 0x4 : 0;
+    flags += Ty.getTypePtr()->isIncompleteType() ? 0x8 : 0;
+    if (PtrMem && BTy.getTypePtr()->isIncompleteType())
+      flags += 0x10;
+      
+    info.push_back(BuildInt(flags));
+    info.push_back(BuildInt(0));
+    info.push_back(BuildType2(PTy));
+
+    if (PtrMem)
+      info.push_back(BuildType2(BTy));
+      
+    C = llvm::ConstantStruct::get(VMContext, &info[0], info.size(), false);
+
+    if (GV == 0)
+      GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
+                                    linktype, C, Out.str());
+    else {
+      llvm::GlobalVariable *OGV = GV;
+      GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
+                                    linktype, C, Out.str());
+      GV->takeName(OGV);
+      llvm::Constant *NewPtr
+        = llvm::ConstantExpr::getBitCast(GV, OGV->getType());
+      OGV->replaceAllUsesWith(NewPtr);
+      OGV->eraseFromParent();
+    }
+    return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
+  }
+
   llvm::Constant *BuildType(QualType Ty) {
     const clang::Type &Type
       = *CGM.getContext().getCanonicalType(Ty).getTypePtr();
@@ -262,9 +333,7 @@ public:
       if (isa<BuiltinType>(PTy) && Q.empty())
         return BuildTypeRef(Ty);
 
-      assert(0 && "typeid expression");
-      const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-      return llvm::Constant::getNullValue(Int8PtrTy);
+      return BuildPointerType(Ty);
     }
     }
   }
