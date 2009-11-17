@@ -48,7 +48,7 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 /// CompileUnit - This dwarf writer support class manages information associate
 /// with a source file.
-class VISIBILITY_HIDDEN CompileUnit {
+class CompileUnit {
   /// ID - File identifier for source.
   ///
   unsigned ID;
@@ -241,7 +241,7 @@ void DbgScope::dump() const {
 /// DbgConcreteScope - This class is used to track a scope that holds concrete
 /// instance information.
 ///
-class VISIBILITY_HIDDEN DbgConcreteScope : public DbgScope {
+class DbgConcreteScope : public DbgScope {
   CompileUnit *Unit;
   DIE *Die;                           // Debug info for this concrete scope.
 public:
