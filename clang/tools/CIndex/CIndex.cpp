@@ -141,8 +141,25 @@ public:
            I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
       Visit(*I);
   }
-  void VisitTypedefDecl(TypedefDecl *ND) { 
-    Call(CXCursor_TypedefDecl, ND); 
+
+  void VisitFunctionDecl(FunctionDecl *ND) {
+    Call(ND->isThisDeclarationADefinition() ? CXCursor_FunctionDefn
+                                            : CXCursor_FunctionDecl, ND);
+  }
+  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
+    Call(CXCursor_ObjCCategoryDecl, ND);
+  }
+  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *ND) {
+    Call(CXCursor_ObjCCategoryDefn, ND);
+  }
+  void VisitObjCImplementationDecl(ObjCImplementationDecl *ND) {
+    Call(CXCursor_ObjCClassDefn, ND);
+  }
+  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *ND) {
+    Call(CXCursor_ObjCInterfaceDecl, ND);
+  }  
+  void VisitObjCProtocolDecl(ObjCProtocolDecl *ND) {
+    Call(CXCursor_ObjCProtocolDecl, ND);
   }
   void VisitTagDecl(TagDecl *ND) {
     switch (ND->getTagKind()) {
@@ -160,29 +177,14 @@ public:
         break;
     }
   }
+  void VisitTypedefDecl(TypedefDecl *ND) { 
+    Call(CXCursor_TypedefDecl, ND); 
+  }  
   void VisitVarDecl(VarDecl *ND) {
     Call(CXCursor_VarDecl, ND);
-  }
-  void VisitFunctionDecl(FunctionDecl *ND) {
-    Call(ND->isThisDeclarationADefinition() ? CXCursor_FunctionDefn
-                                            : CXCursor_FunctionDecl, ND);
-  }
-  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *ND) {
-    Call(CXCursor_ObjCInterfaceDecl, ND);
-  }
-  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
-    Call(CXCursor_ObjCCategoryDecl, ND);
-  }
-  void VisitObjCProtocolDecl(ObjCProtocolDecl *ND) {
-    Call(CXCursor_ObjCProtocolDecl, ND);
-  }
-  void VisitObjCImplementationDecl(ObjCImplementationDecl *ND) {
-    Call(CXCursor_ObjCClassDefn, ND);
-  }
-  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *ND) {
-    Call(CXCursor_ObjCCategoryDefn, ND);
-  }
+  }  
 };
+  
 
 // Declaration visitor.
 class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
