@@ -2367,6 +2367,33 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
   }
 }
 
+/// AddMethodCandidate - Adds a named decl (which is some kind of
+/// method) as a method candidate to the given overload set.
+void Sema::AddMethodCandidate(NamedDecl *Decl, Expr *Object,
+                              Expr **Args, unsigned NumArgs,
+                              OverloadCandidateSet& CandidateSet,
+                              bool SuppressUserConversions, bool ForceRValue) {
+
+  // FIXME: use this
+  //DeclContext *ActingContext = Decl->getDeclContext();
+
+  if (isa<UsingShadowDecl>(Decl))
+    Decl = cast<UsingShadowDecl>(Decl)->getTargetDecl();
+  
+  if (FunctionTemplateDecl *TD = dyn_cast<FunctionTemplateDecl>(Decl)) {
+    assert(isa<CXXMethodDecl>(TD->getTemplatedDecl()) &&
+           "Expected a member function template");
+    AddMethodTemplateCandidate(TD, false, 0, 0,
+                               Object, Args, NumArgs,
+                               CandidateSet,
+                               SuppressUserConversions,
+                               ForceRValue);
+  } else {
+    AddMethodCandidate(cast<CXXMethodDecl>(Decl), Object, Args, NumArgs,
+                       CandidateSet, SuppressUserConversions, ForceRValue);
+  }
+}
+
 /// AddMethodCandidate - Adds the given C++ member function to the set
 /// of candidate functions, using the given function call arguments
 /// and the object argument (@c Object). For example, in a call
@@ -2840,21 +2867,9 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
     for (LookupResult::iterator Oper = Operators.begin(),
                              OperEnd = Operators.end();
          Oper != OperEnd;
-         ++Oper) {
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Oper)) {
-        AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
-                           /*SuppressUserConversions=*/false);
-        continue;
-      }
-      
-      assert(isa<FunctionTemplateDecl>(*Oper) && 
-             isa<CXXMethodDecl>(cast<FunctionTemplateDecl>(*Oper)
-                                                        ->getTemplatedDecl()) &&
-             "Expected a member function template");
-      AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Oper), false, 0, 0, 
-                                 Args[0], Args+1, NumArgs - 1, CandidateSet, 
-                                 /*SuppressUserConversions=*/false);
-    }
+         ++Oper)
+      AddMethodCandidate(*Oper, Args[0], Args + 1, NumArgs - 1, CandidateSet,
+                         /* SuppressUserConversions = */ false);
   }
 }
 
@@ -5267,15 +5282,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper) {
-    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*Oper)) {
-      AddMethodTemplateCandidate(FunTmpl, false, 0, 0, Object, Args, NumArgs,
-                                 CandidateSet, 
-                                 /*SuppressUserConversions=*/false);
-      continue;
-    }
-    
-    AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Object, Args, NumArgs,
-                       CandidateSet, /*SuppressUserConversions=*/false);
+    AddMethodCandidate(*Oper, Object, Args, NumArgs, CandidateSet,
+                       /*SuppressUserConversions=*/ false);
   }
   
   // C++ [over.call.object]p2:

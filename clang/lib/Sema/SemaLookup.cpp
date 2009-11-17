@@ -254,21 +254,21 @@ void Sema::LookupResult::resolveKind() {
 
   bool Ambiguous = false;
   bool HasTag = false, HasFunction = false, HasNonFunction = false;
+  bool HasUnresolved = false;
 
   unsigned UniqueTagIndex = 0;
   
   unsigned I = 0;
   while (I < N) {
-    NamedDecl *D = Decls[I];
-    assert(D == D->getUnderlyingDecl());
+    NamedDecl *D = Decls[I]->getUnderlyingDecl();
+    D = cast<NamedDecl>(D->getCanonicalDecl());
 
-    NamedDecl *CanonD = cast<NamedDecl>(D->getCanonicalDecl());
-    if (!Unique.insert(CanonD)) {
+    if (!Unique.insert(D)) {
       // If it's not unique, pull something off the back (and
       // continue at this index).
       Decls[I] = Decls[--N];
     } else if (isa<UnresolvedUsingDecl>(D)) {
-      // FIXME: proper support for UnresolvedUsingDecls.
+      HasUnresolved = true;
       Decls[I] = Decls[--N];
     } else {
       // Otherwise, do some decl type analysis and then continue.
@@ -286,6 +286,13 @@ void Sema::LookupResult::resolveKind() {
       }
       I++;
     }
+  }
+
+  // Postpone all other decisions if we have an unresolved decl, even
+  // if we can prove ambiguity.  We can probably do better than this.
+  if (HasUnresolved) {
+    ResultKind = LookupResult::FoundOverloaded;
+    return;
   }
 
   // C++ [basic.scope.hiding]p2:
@@ -329,7 +336,7 @@ void Sema::LookupResult::resolveKind() {
 NamedDecl *Sema::LookupResult::getAsSingleDecl(ASTContext &C) const {
   size_t size = Decls.size();
   if (size == 0) return 0;
-  if (size == 1) return *begin();
+  if (size == 1) return (*begin())->getUnderlyingDecl();
 
   if (isAmbiguous()) return 0;
 
@@ -339,9 +346,7 @@ NamedDecl *Sema::LookupResult::getAsSingleDecl(ASTContext &C) const {
     = OverloadedFunctionDecl::Create(C, (*I)->getDeclContext(),
                                         (*I)->getDeclName());
   for (; I != E; ++I) {
-    NamedDecl *ND = *I;
-    assert(ND->getUnderlyingDecl() == ND
-           && "decls in lookup result should have redirections stripped");
+    NamedDecl *ND = (*I)->getUnderlyingDecl();
     assert(ND->isFunctionOrFunctionTemplate());
     if (isa<FunctionDecl>(ND))
       Ovl->addOverload(cast<FunctionDecl>(ND));
