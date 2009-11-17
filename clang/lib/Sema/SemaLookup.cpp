@@ -254,7 +254,6 @@ void Sema::LookupResult::resolveKind() {
 
   bool Ambiguous = false;
   bool HasTag = false, HasFunction = false, HasNonFunction = false;
-  bool HasUnresolved = false;
 
   unsigned UniqueTagIndex = 0;
   
@@ -268,7 +267,7 @@ void Sema::LookupResult::resolveKind() {
       // continue at this index).
       Decls[I] = Decls[--N];
     } else if (isa<UnresolvedUsingDecl>(D)) {
-      HasUnresolved = true;
+      // FIXME: support unresolved using decls
       Decls[I] = Decls[--N];
     } else {
       // Otherwise, do some decl type analysis and then continue.
@@ -286,13 +285,6 @@ void Sema::LookupResult::resolveKind() {
       }
       I++;
     }
-  }
-
-  // Postpone all other decisions if we have an unresolved decl, even
-  // if we can prove ambiguity.  We can probably do better than this.
-  if (HasUnresolved) {
-    ResultKind = LookupResult::FoundOverloaded;
-    return;
   }
 
   // C++ [basic.scope.hiding]p2:
