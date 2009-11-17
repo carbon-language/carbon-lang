@@ -163,7 +163,8 @@ namespace {
     void StrengthReduceIVUsers(Loop *L);
 
     ICmpInst *ChangeCompareStride(Loop *L, ICmpInst *Cond,
-                                  IVStrideUse* &CondUse, const SCEV* &CondStride,
+                                  IVStrideUse* &CondUse,
+                                  const SCEV* &CondStride,
                                   bool PostPass = false);
 
     bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
@@ -1137,8 +1138,8 @@ static bool isNonConstantNegative(const SCEV *const &Expr) {
 }
 
 /// CollectIVUsers - Transform our list of users and offsets to a bit more
-/// complex table. In this new vector, each 'BasedUser' contains 'Base', the base
-/// of the strided accesses, as well as the old information from Uses. We
+/// complex table. In this new vector, each 'BasedUser' contains 'Base', the
+/// base of the strided accesses, as well as the old information from Uses. We
 /// progressively move information from the Base field to the Imm field, until
 /// we eventually have the full access expression to rewrite the use.
 const SCEV *LoopStrengthReduce::CollectIVUsers(const SCEV *const &Stride,
@@ -1517,9 +1518,10 @@ static bool IsImmFoldedIntoAddrMode(GlobalValue *GV, int64_t Offset,
 /// StrengthReduceIVUsersOfStride - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride.
-void LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *const &Stride,
-                                                       IVUsersOfOneStride &Uses,
-                                                       Loop *L) {
+void
+LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *const &Stride,
+                                                  IVUsersOfOneStride &Uses,
+                                                  Loop *L) {
   // If all the users are moved to another stride, then there is nothing to do.
   if (Uses.Users.empty())
     return;
@@ -1818,8 +1820,9 @@ void LoopStrengthReduce::StrengthReduceIVUsers(Loop *L) {
 /// FindIVUserForCond - If Cond has an operand that is an expression of an IV,
 /// set the IV user and stride information and return true, otherwise return
 /// false.
-bool LoopStrengthReduce::FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
-                                       const SCEV* &CondStride) {
+bool LoopStrengthReduce::FindIVUserForCond(ICmpInst *Cond,
+                                           IVStrideUse *&CondUse,
+                                           const SCEV* &CondStride) {
   for (unsigned Stride = 0, e = IU->StrideOrder.size();
        Stride != e && !CondUse; ++Stride) {
     std::map<const SCEV *, IVUsersOfOneStride *>::iterator SI =
