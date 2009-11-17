@@ -49,13 +49,26 @@ class test1_D : public test1_B7 {
 // CHECK-NEXT: .quad  __ZTIi
 // CHECK-NEXT: .quad  __ZTI7test3_A
 
-// CHECK:__ZTIM7test3_Ii:
+// CHECK:     __ZTIM7test3_Ii:
 // CHECK-NEXT: .quad  (__ZTVN10__cxxabiv129__pointer_to_member_type_infoE) + 16
 // CHECK-NEXT: .quad  __ZTSM7test3_Ii
 // CHECK-NEXT: .long  16
 // CHECK-NEXT: .space 4
 // CHECK-NEXT: .quad  __ZTIi
 // CHECK-NEXT: .quad  __ZTI7test3_I
+
+// CHECK:     __ZTIFvvE:
+// CHECK-NEXT: 	.quad	(__ZTVN10__cxxabiv120__function_type_infoE) + 16
+// CHECK-NEXT: 	.quad	__ZTSFvvE
+
+// CHECK:     __ZTIM7test3_AFvvE:
+// CHECK-NEXT: 	.quad	(__ZTVN10__cxxabiv129__pointer_to_member_type_infoE) + 16
+// CHECK-NEXT: 	.quad	__ZTSM7test3_AFvvE
+// CHECK-NEXT: 	.space	4
+// CHECK-NEXT: 	.space	4
+// CHECK-NEXT: 	.quad	__ZTIFvvE
+// CHECK-NEXT: 	.quad	__ZTI7test3_A
+
 
 
 // CHECK:__ZTI7test1_D:
@@ -167,10 +180,13 @@ class test3_A { };
 class test3_I;
 int (test3_A::*pmd);
 int (test3_I::*i_pmd);
+void (test3_A::*pmf)();
 int test3() {
   if (typeid(volatile int *) == typeid(int *))
     return 1;
   if (typeid(pmd) == typeid(i_pmd))
+    return 1;
+  if (typeid(pmd) == typeid(pmf))
     return 1;
   return 0;
 }
