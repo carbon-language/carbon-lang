@@ -282,14 +282,14 @@ public:
     flags += Ty.getTypePtr()->isIncompleteType() ? 0x8 : 0;
     if (PtrMem && BTy.getTypePtr()->isIncompleteType())
       flags += 0x10;
-      
+
     info.push_back(BuildInt(flags));
     info.push_back(BuildInt(0));
     info.push_back(BuildType2(PTy));
 
     if (PtrMem)
       info.push_back(BuildType2(BTy));
-      
+
     return finish(info, GV, Out.str());
   }
 
@@ -310,7 +310,7 @@ public:
     C = BuildVtableRef(vtbl);
     info.push_back(C);
     info.push_back(BuildName(Ty));
-      
+
     return finish(info, GV, Out.str());
   }
 
