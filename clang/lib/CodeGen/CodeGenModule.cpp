@@ -1716,6 +1716,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     EmitNamespace(cast<NamespaceDecl>(D));
     break;
     // No code generation needed.
+  case Decl::UsingShadow:
   case Decl::Using:
   case Decl::UsingDirective:
   case Decl::ClassTemplate:
