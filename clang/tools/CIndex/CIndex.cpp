@@ -875,6 +875,18 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   return C;
 }
 
+CXCursor clang_getNullCursor(void) {
+  CXCursor C;
+  C.kind = CXCursor_InvalidFile;
+  C.decl = NULL;
+  C.stmt = NULL;
+  return C;
+}
+
+unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
+  return X.kind == Y.kind && X.decl == Y.decl && X.stmt == Y.stmt;
+}
+  
 CXCursor clang_getCursorFromDecl(CXDecl AnonDecl)
 {
   assert(AnonDecl && "Passed null CXDecl");

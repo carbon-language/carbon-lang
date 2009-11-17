@@ -294,12 +294,16 @@ CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
  */
 CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
                          unsigned line, unsigned column);
+                         
+CINDEX_LINKAGE CXCursor clang_getNullCursor(void);
 
 CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
 CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isDefinition(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
+
+CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 
 CINDEX_LINKAGE unsigned clang_getCursorLine(CXCursor);
 CINDEX_LINKAGE unsigned clang_getCursorColumn(CXCursor);

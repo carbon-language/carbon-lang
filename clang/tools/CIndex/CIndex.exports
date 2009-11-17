@@ -5,6 +5,7 @@ _clang_createTranslationUnitFromSourceFile
 _clang_disposeIndex
 _clang_disposeString
 _clang_disposeTranslationUnit
+_clang_equalCursors
 _clang_getCompletionChunkCompletionString
 _clang_getCompletionChunkKind
 _clang_getCompletionChunkText
@@ -30,6 +31,7 @@ _clang_getEntity
 _clang_getEntityFromDecl
 _clang_getFileName
 _clang_getFileTime
+_clang_getNullCursor
 _clang_getNumCompletionChunks
 _clang_getTranslationUnitSpelling
 _clang_getURI
