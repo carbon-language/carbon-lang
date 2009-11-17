@@ -1047,7 +1047,9 @@ namespace {
     typedef CodeCompleteConsumer::Result Result;
     
     bool isEarlierDeclarationName(DeclarationName X, DeclarationName Y) const {
-      if (X.getNameKind() != Y.getNameKind())
+      if (!X.getObjCSelector().isNull() && !Y.getObjCSelector().isNull()) {
+        // Consider all selector kinds to be equivalent.
+      } else if (X.getNameKind() != Y.getNameKind())
         return X.getNameKind() < Y.getNameKind();
       
       return llvm::LowercaseString(X.getAsString()) 
@@ -1554,6 +1556,74 @@ void Sema::CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
+/// \brief Add all of the Objective-C methods in the given Objective-C 
+/// container to the set of results.
+///
+/// The container will be a class, protocol, category, or implementation of 
+/// any of the above. This mether will recurse to include methods from 
+/// the superclasses of classes along with their categories, protocols, and
+/// implementations.
+///
+/// \param Container the container in which we'll look to find methods.
+///
+/// \param WantInstance whether to add instance methods (only); if false, this
+/// routine will add factory methods (only).
+///
+/// \param CurContext the context in which we're performing the lookup that
+/// finds methods.
+///
+/// \param Results the structure into which we'll add results.
+static void AddObjCMethods(ObjCContainerDecl *Container, 
+                           bool WantInstanceMethods,
+                           DeclContext *CurContext,
+                           ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
+                                       MEnd = Container->meth_end();
+       M != MEnd; ++M) {
+    if ((*M)->isInstanceMethod() == WantInstanceMethods)
+      Results.MaybeAddResult(Result(*M, 0), CurContext);
+  }
+  
+  ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container);
+  if (!IFace)
+    return;
+  
+  // Add methods in protocols.
+  const ObjCList<ObjCProtocolDecl> &Protocols= IFace->getReferencedProtocols();
+  for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+                                            E = Protocols.end(); 
+       I != E; ++I)
+    AddObjCMethods(*I, WantInstanceMethods, CurContext, Results);
+  
+  // Add methods in categories.
+  for (ObjCCategoryDecl *CatDecl = IFace->getCategoryList(); CatDecl;
+       CatDecl = CatDecl->getNextClassCategory()) {
+    AddObjCMethods(CatDecl, WantInstanceMethods, CurContext, Results);
+    
+    // Add a categories protocol methods.
+    const ObjCList<ObjCProtocolDecl> &Protocols 
+      = CatDecl->getReferencedProtocols();
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+                                              E = Protocols.end();
+         I != E; ++I)
+      AddObjCMethods(*I, WantInstanceMethods, CurContext, Results);
+    
+    // Add methods in category implementations.
+    if (ObjCCategoryImplDecl *Impl = CatDecl->getImplementation())
+      AddObjCMethods(Impl, WantInstanceMethods, CurContext, Results);
+  }
+  
+  // Add methods in superclass.
+  if (IFace->getSuperClass())
+    AddObjCMethods(IFace->getSuperClass(), WantInstanceMethods, CurContext,
+                   Results);
+
+  // Add methods in our implementation, if any.
+  if (ObjCImplementationDecl *Impl = IFace->getImplementation())
+    AddObjCMethods(Impl, WantInstanceMethods, CurContext, Results);
+}
+
 void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
   typedef CodeCompleteConsumer::Result Result;
   ObjCInterfaceDecl *CDecl = 0;
@@ -1608,109 +1678,52 @@ void Sema::CodeCompleteObjCFactoryMethod(Scope *S, IdentifierInfo *FName) {
     return CodeCompleteObjCInstanceMethod(S, (Expr *)Super.get());
   }
 
+  // Add all of the factory methods in this Objective-C class, its protocols,
+  // superclasses, categories, implementation, etc.
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  
-  while (CDecl != NULL) {
-    for (ObjCInterfaceDecl::classmeth_iterator I = CDecl->classmeth_begin(), 
-                                               E = CDecl->classmeth_end(); 
-         I != E; ++I) {
-      Results.MaybeAddResult(Result(*I, 0), CurContext);
-    }
-    // Add class methods in protocols.
-    const ObjCList<ObjCProtocolDecl> &Protocols=CDecl->getReferencedProtocols();
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-         E = Protocols.end(); I != E; ++I) {
-      for (ObjCProtocolDecl::classmeth_iterator I2 = (*I)->classmeth_begin(), 
-                                                E2 = (*I)->classmeth_end(); 
-           I2 != E2; ++I2) {
-        Results.MaybeAddResult(Result(*I2, 0), CurContext);
-      }
-    }
-    // Add class methods in categories.
-    ObjCCategoryDecl *CatDecl = CDecl->getCategoryList();
-    while (CatDecl) {
-      for (ObjCCategoryDecl::classmeth_iterator I = CatDecl->classmeth_begin(), 
-                                                E = CatDecl->classmeth_end(); 
-           I != E; ++I) {
-        Results.MaybeAddResult(Result(*I, 0), CurContext);
-      }
-      // Add a categories protocol methods.
-      const ObjCList<ObjCProtocolDecl> &Protocols =
-        CatDecl->getReferencedProtocols();
-      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-           E = Protocols.end(); I != E; ++I) {
-        for (ObjCProtocolDecl::classmeth_iterator I2 = (*I)->classmeth_begin(), 
-                                                  E2 = (*I)->classmeth_end(); 
-             I2 != E2; ++I2) {
-          Results.MaybeAddResult(Result(*I2, 0), CurContext);
-        }
-      }
-      CatDecl = CatDecl->getNextClassCategory();
-    }
-    CDecl = CDecl->getSuperClass();
-  }
+  AddObjCMethods(CDecl, false, CurContext, Results);  
   Results.ExitScope();
+  
   // This also suppresses remaining diagnostics.
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteObjCInstanceMethod(Scope *S, ExprTy *Receiver) {
   typedef CodeCompleteConsumer::Result Result;
-  ResultBuilder Results(*this);
-  Results.EnterNewScope();
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);
   QualType RecType = RecExpr->getType();
   
-  const ObjCObjectPointerType* OCOPT = RecType->getAs<ObjCObjectPointerType>();
+  // If necessary, apply function/array conversion to the receiver.
+  // C99 6.7.5.3p[7,8].
+  DefaultFunctionArrayConversion(RecExpr);
+  QualType ReceiverType = RecExpr->getType();
   
+  if (ReceiverType->isObjCIdType() || ReceiverType->isBlockPointerType()) {
+    // FIXME: We're messaging 'id'. Do we actually want to look up every method
+    // in the universe?
+    return;
+  }
+  
+  const ObjCObjectPointerType* OCOPT 
+    = ReceiverType->getAs<ObjCObjectPointerType>();  
   if (!OCOPT)
     return;
   
   // FIXME: handle 'id', 'Class', and qualified types. 
-  ObjCInterfaceDecl *CDecl = OCOPT->getInterfaceDecl();
+  
+  // Build the set of methods we can see.
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
 
-  while (CDecl != NULL) {
-    for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(), 
-                                               E = CDecl->instmeth_end(); 
-         I != E; ++I) {
-      Results.MaybeAddResult(Result(*I, 0), CurContext);
-    }
-    // Add class methods in protocols.
-    const ObjCList<ObjCProtocolDecl> &Protocols=CDecl->getReferencedProtocols();
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-         E = Protocols.end(); I != E; ++I) {
-      for (ObjCProtocolDecl::instmeth_iterator I2 = (*I)->instmeth_begin(), 
-                                                E2 = (*I)->instmeth_end(); 
-           I2 != E2; ++I2) {
-        Results.MaybeAddResult(Result(*I2, 0), CurContext);
-      }
-    }
-    // Add class methods in categories.
-    ObjCCategoryDecl *CatDecl = CDecl->getCategoryList();
-    while (CatDecl) {
-      for (ObjCCategoryDecl::instmeth_iterator I = CatDecl->instmeth_begin(), 
-                                                E = CatDecl->instmeth_end(); 
-           I != E; ++I) {
-        Results.MaybeAddResult(Result(*I, 0), CurContext);
-      }
-      // Add a categories protocol methods.
-      const ObjCList<ObjCProtocolDecl> &Protocols =
-        CatDecl->getReferencedProtocols();
-      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-           E = Protocols.end(); I != E; ++I) {
-        for (ObjCProtocolDecl::instmeth_iterator I2 = (*I)->instmeth_begin(), 
-                                                  E2 = (*I)->instmeth_end(); 
-             I2 != E2; ++I2) {
-          Results.MaybeAddResult(Result(*I2, 0), CurContext);
-        }
-      }
-      CatDecl = CatDecl->getNextClassCategory();
-    }
-    CDecl = CDecl->getSuperClass();
-  }
+  ObjCInterfaceDecl *CDecl = OCOPT->getInterfaceDecl();
+  if (!CDecl)
+    return;
+  
+  AddObjCMethods(CDecl, true, CurContext, Results);
   Results.ExitScope();
+  
   // This also suppresses remaining diagnostics.
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
