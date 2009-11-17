@@ -242,9 +242,9 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     // to decide whether the loaded value is actually a constant. If so, we can
     // actually use it as a load.
     if (!I.isInvariantLoad(AA))
-      // FIXME: we should be able to sink loads with no other side effects if
-      // there is nothing that can change memory from here until the end of
-      // block. This is a trivial form of alias analysis.
+      // FIXME: we should be able to hoist loads with no other side effects if
+      // there are no other instructions which can change memory in this loop.
+      // This is a trivial form of alias analysis.
       return false;
   }
 
