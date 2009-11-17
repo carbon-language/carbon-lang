@@ -1170,6 +1170,9 @@ private:
   /// legacy messaging dispatch.
   llvm::DenseSet<Selector> NonLegacyDispatchMethods;
 
+  /// DefinedMetaClasses - List of defined meta-classes.
+  std::vector<llvm::GlobalValue*> DefinedMetaClasses;
+  
   /// LegacyDispatchedSelector - Returns true if SEL is not in the list of
   /// NonLegacyDispatchMethods; false otherwise.
   bool LegacyDispatchedSelector(Selector Sel);
@@ -4130,6 +4133,25 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   AddModuleClassList(DefinedClasses,
                      "\01L_OBJC_LABEL_CLASS_$",
                      "__DATA, __objc_classlist, regular, no_dead_strip");
+  
+  bool hasWeakImport = false;
+  for (unsigned i = 0; i < DefinedClasses.size(); i++) {
+    llvm::GlobalValue *IMPLGV = DefinedClasses[i];
+    if (IMPLGV->getLinkage() != llvm::GlobalValue::ExternalWeakLinkage)
+      continue;
+    IMPLGV->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    hasWeakImport = true;
+  }
+  
+  if (hasWeakImport) {
+    for (unsigned i = 0; i < DefinedMetaClasses.size(); i++) {
+      llvm::GlobalValue *IMPLGV = DefinedMetaClasses[i];
+      if (IMPLGV->getLinkage() != llvm::GlobalValue::ExternalWeakLinkage)
+        continue;
+      IMPLGV->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    }    
+  }
+  
   AddModuleClassList(DefinedNonLazyClasses,
                      "\01L_OBJC_LABEL_NONLAZY_CLASS_$",
                      "__DATA, __objc_nlclslist, regular, no_dead_strip");
@@ -4419,6 +4441,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     std::string SuperClassName =
       ObjCMetaClassName + ID->getClassInterface()->getSuperClass()->getNameAsString();
     SuperClassGV = GetClassGlobal(SuperClassName);
+    if (ID->getClassInterface()->getSuperClass()->hasAttr<WeakImportAttr>())
+      SuperClassGV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
   }
   llvm::GlobalVariable *CLASS_RO_GV = BuildClassRoTInitializer(flags,
                                                                InstanceStart,
@@ -4427,6 +4451,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   llvm::GlobalVariable *MetaTClass =
     BuildClassMetaData(TClassName, IsAGV, SuperClassGV, CLASS_RO_GV,
                        classIsHidden);
+  DefinedMetaClasses.push_back(MetaTClass);
 
   // Metadata for the class
   flags = CLS;
@@ -4444,6 +4469,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     std::string RootClassName =
       ID->getClassInterface()->getSuperClass()->getNameAsString();
     SuperClassGV = GetClassGlobal(ObjCClassName + RootClassName);
+    if (ID->getClassInterface()->getSuperClass()->hasAttr<WeakImportAttr>())
+      SuperClassGV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
   }
   GetClassSizeInfo(ID, InstanceStart, InstanceSize);
   CLASS_RO_GV = BuildClassRoTInitializer(flags,
