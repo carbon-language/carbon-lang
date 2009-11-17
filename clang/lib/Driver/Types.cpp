@@ -89,6 +89,19 @@ bool types::isAcceptedByClang(ID Id) {
   }
 }
 
+bool types::isObjC(ID Id) {
+  switch (Id) {
+  default:
+    return false;
+
+  case TY_ObjC: case TY_PP_ObjC:
+  case TY_ObjCXX: case TY_PP_ObjCXX:
+  case TY_ObjCHeader: case TY_PP_ObjCHeader:
+  case TY_ObjCXXHeader: case TY_PP_ObjCXXHeader:
+    return true;
+  }
+}
+
 bool types::isCXX(ID Id) {
   switch (Id) {
   default:
