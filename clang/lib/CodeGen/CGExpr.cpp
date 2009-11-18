@@ -1600,16 +1600,14 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
 
 LValue CodeGenFunction::
 EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E) {
-  llvm::Value *BaseV = EmitLValue(E->getLHS()).getAddress();
+  llvm::Value *BaseV;
   if (E->getOpcode() == BinaryOperator::PtrMemI)
-    BaseV = Builder.CreateLoad(BaseV, "indir.ptr");
+    BaseV = EmitScalarExpr(E->getLHS());
+  else
+    BaseV = EmitLValue(E->getLHS()).getAddress();
   const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(getLLVMContext());
   BaseV = Builder.CreateBitCast(BaseV, i8Ty);
-  LValue RHSLV = EmitLValue(E->getRHS());
-  llvm::Value *OffsetV = 
-    EmitLoadOfLValue(RHSLV, E->getRHS()->getType()).getScalarVal();
-  const llvm::Type* ResultType = ConvertType(getContext().getPointerDiffType());
-  OffsetV = Builder.CreateBitCast(OffsetV, ResultType);
+  llvm::Value *OffsetV = EmitScalarExpr(E->getRHS());
   llvm::Value *AddV = Builder.CreateInBoundsGEP(BaseV, OffsetV, "add.ptr");
 
   QualType Ty = E->getRHS()->getType();
