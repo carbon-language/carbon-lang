@@ -4895,11 +4895,13 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   if (Opc == BinaryOperator::PtrMemD)
     return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
-  // If this is one of the assignment operators, we only perform
-  // overload resolution if the left-hand side is a class or
-  // enumeration type (C++ [expr.ass]p3).
-  if (Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign &&
-      !Args[0]->getType()->isOverloadableType())
+  // If this is the assignment operator, we only perform overload resolution
+  // if the left-hand side is a class or enumeration type. This is actually
+  // a hack. The standard requires that we do overload resolution between the
+  // various built-in candidates, but as DR507 points out, this can lead to
+  // problems. So we do it this way, which pretty much follows what GCC does.
+  // Note that we go the traditional code path for compound assignment forms.
+  if (Opc==BinaryOperator::Assign && !Args[0]->getType()->isOverloadableType())
     return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // Build an empty overload set.

@@ -296,3 +296,31 @@ namespace pr5546
   const char* a() { return sMoveCommands[X][0][0]; }
   const char* b() { return (*(sMoveCommands+X))[0][0]; }
 }
+
+// PR5512 and its discussion
+namespace pr5512 {
+  struct Y {
+    operator short();
+    operator float();
+  };
+  void g_test(Y y) {
+    short s = 0;
+    // DR507, this should be ambiguous, but we special-case assignment
+    s = y;
+    // Note: DR507, this is ambiguous as specified
+    //s += y;
+  }
+
+  struct S {};
+  void operator +=(int&, S);
+  void f(S s) {
+    int i = 0;
+    i += s;
+  }
+
+  struct A {operator int();};
+  int a;
+  void b(A x) {
+    a += x;
+  }
+}
