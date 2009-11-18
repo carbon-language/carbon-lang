@@ -449,14 +449,12 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   MachineFunction *MF = A->getParent();
 
   // We may need to update A's terminator, but we can't do that if AnalyzeBranch
-  // fails.
-  if (A->isLayoutSuccessor(B)) {
-    const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
-    MachineBasicBlock *TBB = 0, *FBB = 0;
-    SmallVector<MachineOperand, 4> Cond;
-    if (!TII->AnalyzeBranch(*A, TBB, FBB, Cond))
-      return NULL;
-  }
+  // fails. If A uses a jump table, we won't touch it.
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  if (TII->AnalyzeBranch(*A, TBB, FBB, Cond))
+    return NULL;
 
   ++NumSplits;
 
@@ -474,7 +472,7 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
 
   // Insert unconditional "jump B" instruction in NMBB.
   NMBB->addSuccessor(B);
-  SmallVector<MachineOperand, 4> Cond;
+  Cond.clear();
   MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond);
 
   // Fix PHI nodes in B so they refer to NMBB instead of A
