@@ -11,6 +11,8 @@ void g(pmfc) {
   c->*pmfc(); // expected-error {{invalid use of pointer to member type after ->*}}
   C c1;
   c1.*pmfc(); // expected-error {{invalid use of pointer to member type after .*}}
+  c->*(pmfc()); // expected-error {{invalid use of pointer to member type after ->*}}
+  c1.*((pmfc())); // expected-error {{invalid use of pointer to member type after .*}}
 }
 
 int a(C* x) { 
