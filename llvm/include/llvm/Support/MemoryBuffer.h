@@ -24,7 +24,7 @@ namespace llvm {
 /// of memory, and provides simple methods for reading files and standard input
 /// into a memory buffer.  In addition to basic access to the characters in the
 /// file, this interface guarantees you can read one character past the end of
-/// @verbatim the file, and that this character will read as '\0'. @endverbatim
+/// the file, and that this character will read as '\0'.
 class MemoryBuffer {
   const char *BufferStart; // Start of the buffer.
   const char *BufferEnd;   // End of the buffer.
