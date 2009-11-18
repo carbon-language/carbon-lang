@@ -2329,7 +2329,7 @@ public:
   /// found after the left paren.
   ///
   /// \param S the scope in which the operator keyword occurs.  
-  virtual void CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) { }
+  virtual void CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) { }
   
   /// \brief Code completion for an ObjC message expression that refers to
   /// a class method.

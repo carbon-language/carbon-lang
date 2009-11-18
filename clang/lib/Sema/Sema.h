@@ -3646,7 +3646,7 @@ public:
   virtual void CodeCompleteNamespaceAliasDecl(Scope *S);
   virtual void CodeCompleteOperatorName(Scope *S);
   
-  virtual void CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS);
+  virtual void CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS);
   virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
                                             SourceLocation FNameLoc);
   virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver);

@@ -431,7 +431,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
 
   while (1) {
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCProperty(CurScope, DS);
+      Actions.CodeCompleteObjCPropertyFlags(CurScope, DS);
       ConsumeToken();
     }
     const IdentifierInfo *II = Tok.getIdentifierInfo();

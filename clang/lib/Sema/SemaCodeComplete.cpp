@@ -1615,7 +1615,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
-void Sema::CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) { 
+void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) { 
   if (!CodeCompleter)
     return;
   unsigned Attributes = ODS.getPropertyAttributes();
