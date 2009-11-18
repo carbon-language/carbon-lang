@@ -234,6 +234,33 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   return NewPtr;
 }
 
+void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
+                                     llvm::Value *Ptr,
+                                     QualType DeleteTy) {
+  const FunctionProtoType *DeleteFTy =
+    DeleteFD->getType()->getAs<FunctionProtoType>();
+
+  CallArgList DeleteArgs;
+
+  QualType ArgTy = DeleteFTy->getArgType(0);
+  llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
+  DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
+
+  if (DeleteFTy->getNumArgs() == 2) {
+    QualType SizeTy = DeleteFTy->getArgType(1);
+    uint64_t SizeVal = getContext().getTypeSize(DeleteTy) / 8;
+    llvm::Constant *Size = llvm::ConstantInt::get(ConvertType(SizeTy),
+                                                  SizeVal);
+    DeleteArgs.push_back(std::make_pair(RValue::get(Size), SizeTy));
+  }
+
+  // Emit the call to delete.
+  EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
+                                          DeleteArgs),
+           CGM.GetAddrOfFunction(DeleteFD),
+           DeleteArgs, DeleteFD);
+}
+
 void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   
   // Get at the argument before we performed the implicit conversion
@@ -313,33 +340,9 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
     }
   }
 
-  if (ShouldCallDelete) {
-    // Call delete.
-    FunctionDecl *DeleteFD = E->getOperatorDelete();
-    const FunctionProtoType *DeleteFTy =
-      DeleteFD->getType()->getAs<FunctionProtoType>();
+  if (ShouldCallDelete)
+    EmitDeleteCall(E->getOperatorDelete(), Ptr, DeleteTy);
 
-    CallArgList DeleteArgs;
-
-    QualType ArgTy = DeleteFTy->getArgType(0);
-    llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
-    DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
-
-    if (DeleteFTy->getNumArgs() == 2) {
-      QualType SizeTy = DeleteFTy->getArgType(1);
-      uint64_t SizeVal = getContext().getTypeSize(DeleteTy) / 8;
-      llvm::Constant *Size = llvm::ConstantInt::get(ConvertType(SizeTy),
-                                                    SizeVal);
-      DeleteArgs.push_back(std::make_pair(RValue::get(Size), SizeTy));
-    }
-
-    // Emit the call to delete.
-    EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
-                                            DeleteArgs),
-             CGM.GetAddrOfFunction(DeleteFD),
-             DeleteArgs, DeleteFD);
-  }
-  
   EmitBlock(DeleteEnd);
 }
 

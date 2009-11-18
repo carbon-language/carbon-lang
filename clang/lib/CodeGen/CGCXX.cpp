@@ -1734,26 +1734,9 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
   }
     
   // If we have a deleting destructor, emit a call to the delete operator.
-  if (DtorType == Dtor_Deleting) {
-    const FunctionDecl *DeleteFD = DD->getOperatorDelete();
-    assert(DeleteFD && "deleting dtor did not have a delete operator!");
-    
-    const FunctionProtoType *DeleteFTy =
-      DeleteFD->getType()->getAs<FunctionProtoType>();
-
-    CallArgList DeleteArgs;
-
-    QualType ArgTy = DeleteFTy->getArgType(0);
-    llvm::Value *DeletePtr = Builder.CreateBitCast(LoadCXXThis(), 
-                                                   ConvertType(ArgTy));
-    DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
-
-    // Emit the call to delete.
-    EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
-                                            DeleteArgs),
-             CGM.GetAddrOfFunction(DeleteFD),
-             DeleteArgs, DeleteFD);
-  }
+  if (DtorType == Dtor_Deleting)
+    EmitDeleteCall(DD->getOperatorDelete(), LoadCXXThis(),
+                   getContext().getTagDeclType(ClassDecl));
 }
 
 void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
