@@ -3022,6 +3022,12 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
   assert(PointerTy && "type was not a pointer type!");
 
   QualType PointeeTy = PointerTy->getPointeeType();
+  // Don't add qualified variants of arrays. For one, they're not allowed
+  // (the qualifier would sink to the element type), and for another, the
+  // only overload situation where it matters is subscript or pointer +- int,
+  // and those shouldn't have qualifier variants anyway.
+  if (PointeeTy->isArrayType())
+    return true;
   unsigned BaseCVR = PointeeTy.getCVRQualifiers();
   if (const ConstantArrayType *Array =Context.getAsConstantArrayType(PointeeTy))
     BaseCVR = Array->getElementType().getCVRQualifiers();
@@ -3062,6 +3068,12 @@ BuiltinCandidateTypeSet::AddMemberPointerWithMoreQualifiedTypeVariants(
   assert(PointerTy && "type was not a member pointer type!");
 
   QualType PointeeTy = PointerTy->getPointeeType();
+  // Don't add qualified variants of arrays. For one, they're not allowed
+  // (the qualifier would sink to the element type), and for another, the
+  // only overload situation where it matters is subscript or pointer +- int,
+  // and those shouldn't have qualifier variants anyway.
+  if (PointeeTy->isArrayType())
+    return true;
   const Type *ClassTy = PointerTy->getClass();
 
   // Iterate through all strict supersets of the pointee type's CVR

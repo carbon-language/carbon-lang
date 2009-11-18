@@ -286,3 +286,13 @@ class RegAlloc {
   }
   int usepri[LastReg + 1];
 };
+
+// PR5546: Don't generate incorrect and ambiguous overloads for multi-level
+// arrays.
+namespace pr5546
+{
+  enum { X };
+  extern const char *const sMoveCommands[][2][2];
+  const char* a() { return sMoveCommands[X][0][0]; }
+  const char* b() { return (*(sMoveCommands+X))[0][0]; }
+}
