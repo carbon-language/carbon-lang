@@ -634,9 +634,9 @@ typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
 #endif
 
 /* C99 7.18.2.5 Limits of greatest-width integer types. */
-#define INTMAX_MIN  (-__INTMAX_MAX__-1)
-#define INTMAX_MAX   __INTMAX_MAX__
-#define UINTMAX_MAX (__INTMAX_MAX__*2ULL+1ULL)
+#define INTMAX_MIN  __stdint_exjoin3( INT, __INTMAX_WIDTH__, _MIN)
+#define INTMAX_MAX  __stdint_exjoin3( INT, __INTMAX_WIDTH__, _MAX)
+#define UINTMAX_MAX __stdint_exjoin3(UINT, __INTMAX_WIDTH__, _MAX)
 
 /* C99 7.18.3 Limits of other integer types. */
 #define SIG_ATOMIC_MIN INT32_MIN
