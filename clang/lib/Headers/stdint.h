@@ -213,16 +213,17 @@ typedef __uint_least8_t uint_fast8_t;
 
 /* C99 7.18.1.4 Integer types capable of holding object pointers.
  */
+#define __stdint_join3(a,b,c) a ## b ## c
+#define __stdint_exjoin3(a,b,c) __stdint_join3(a,b,c)
+
 #ifndef __intptr_t_defined
-typedef __INTPTR_TYPE__          intptr_t;
+typedef __stdint_exjoin3( int, __INTPTR_WIDTH__, _t) intptr_t;
 #define __intptr_t_defined
 #endif
-typedef unsigned __INTPTR_TYPE__ uintptr_t;
+typedef __stdint_exjoin3(uint, __INTPTR_WIDTH__, _t) uintptr_t;
 
 /* C99 7.18.1.5 Greatest-width integer types.
  */
-#define __stdint_join3(a,b,c) a ## b ## c
-#define __stdint_exjoin3(a,b,c) __stdint_join3(a,b,c)
 typedef __stdint_exjoin3( int, __INTMAX_WIDTH__, _t) intmax_t;
 typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
 

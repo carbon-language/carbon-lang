@@ -28,8 +28,8 @@
 // ARM:typedef int8_t int_fast8_t;
 // ARM:typedef uint8_t uint_fast8_t;
 //
-// ARM:typedef long int intptr_t;
-// ARM:typedef unsigned long int uintptr_t;
+// ARM:typedef int32_t intptr_t;
+// ARM:typedef uint32_t uintptr_t;
 // 
 // ARM:typedef int64_t intmax_t;
 // ARM:typedef uint64_t uintmax_t;
@@ -136,8 +136,8 @@
 // BFIN:typedef int8_t int_fast8_t;
 // BFIN:typedef uint8_t uint_fast8_t;
 //
-// BFIN:typedef long int intptr_t;
-// BFIN:typedef unsigned long int uintptr_t;
+// BFIN:typedef int32_t intptr_t;
+// BFIN:typedef uint32_t uintptr_t;
 //
 // BFIN:typedef int64_t intmax_t;
 // BFIN:typedef uint64_t uintmax_t;
@@ -244,8 +244,8 @@
 // I386:typedef int8_t int_fast8_t;
 // I386:typedef uint8_t uint_fast8_t;
 //
-// I386:typedef int intptr_t;
-// I386:typedef unsigned int uintptr_t;
+// I386:typedef int32_t intptr_t;
+// I386:typedef uint32_t uintptr_t;
 //
 // I386:typedef int64_t intmax_t;
 // I386:typedef uint64_t uintmax_t;
@@ -344,8 +344,8 @@
 // MSP430:typedef int8_t int_fast8_t;
 // MSP430:typedef uint8_t uint_fast8_t;
 //
-// MSP430:typedef short intptr_t;
-// MSP430:typedef unsigned short uintptr_t;
+// MSP430:typedef int16_t intptr_t;
+// MSP430:typedef uint16_t uintptr_t;
 //
 // MSP430:typedef int32_t intmax_t;
 // MSP430:typedef uint32_t uintmax_t;
@@ -444,8 +444,8 @@
 // PIC16:typedef int8_t int_fast8_t;
 // PIC16:typedef uint8_t uint_fast8_t;
 //
-// PIC16:typedef short intptr_t;
-// PIC16:typedef unsigned short uintptr_t;
+// PIC16:typedef int16_t intptr_t;
+// PIC16:typedef uint16_t uintptr_t;
 //
 // PIC16:typedef int32_t intmax_t;
 // PIC16:typedef uint32_t uintmax_t;
@@ -551,8 +551,8 @@
 // PPC64:typedef int8_t int_fast8_t;
 // PPC64:typedef uint8_t uint_fast8_t;
 //
-// PPC64:typedef long int intptr_t;
-// PPC64:typedef unsigned long int uintptr_t;
+// PPC64:typedef int64_t intptr_t;
+// PPC64:typedef uint64_t uintptr_t;
 //
 // PPC64:typedef int64_t intmax_t;
 // PPC64:typedef uint64_t uintmax_t;
@@ -659,8 +659,8 @@
 // PPC:typedef int8_t int_fast8_t;
 // PPC:typedef uint8_t uint_fast8_t;
 //
-// PPC:typedef long int intptr_t;
-// PPC:typedef unsigned long int uintptr_t;
+// PPC:typedef int32_t intptr_t;
+// PPC:typedef uint32_t uintptr_t;
 //
 // PPC:typedef int64_t intmax_t;
 // PPC:typedef uint64_t uintmax_t;
@@ -766,8 +766,8 @@
 // S390X:typedef int8_t int_fast8_t;
 // S390X:typedef uint8_t uint_fast8_t;
 //
-// S390X:typedef long int intptr_t;
-// S390X:typedef unsigned long int uintptr_t;
+// S390X:typedef int64_t intptr_t;
+// S390X:typedef uint64_t uintptr_t;
 //
 // S390X:typedef int64_t intmax_t;
 // S390X:typedef uint64_t uintmax_t;
@@ -873,8 +873,8 @@
 // SPARC:typedef int8_t int_fast8_t;
 // SPARC:typedef uint8_t uint_fast8_t;
 //
-// SPARC:typedef long int intptr_t;
-// SPARC:typedef unsigned long int uintptr_t;
+// SPARC:typedef int32_t intptr_t;
+// SPARC:typedef uint32_t uintptr_t;
 //
 // SPARC:typedef int64_t intmax_t;
 // SPARC:typedef uint64_t uintmax_t;
@@ -973,8 +973,8 @@
 // TCE:typedef int8_t int_fast8_t;
 // TCE:typedef uint8_t uint_fast8_t;
 //
-// TCE:typedef int intptr_t;
-// TCE:typedef unsigned int uintptr_t;
+// TCE:typedef int32_t intptr_t;
+// TCE:typedef uint32_t uintptr_t;
 //
 // TCE:typedef int32_t intmax_t;
 // TCE:typedef uint32_t uintmax_t;
@@ -1081,8 +1081,8 @@
 // X86_64:typedef int8_t int_fast8_t;
 // X86_64:typedef uint8_t uint_fast8_t;
 //
-// X86_64:typedef long int intptr_t;
-// X86_64:typedef unsigned long int uintptr_t;
+// X86_64:typedef int64_t intptr_t;
+// X86_64:typedef uint64_t uintptr_t;
 //
 // X86_64:typedef int64_t intmax_t;
 // X86_64:typedef uint64_t uintmax_t;
