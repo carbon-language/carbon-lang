@@ -663,6 +663,9 @@ public:
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);
 
+  void EmitDeleteCall(const FunctionDecl *DeleteFD, llvm::Value *Ptr,
+                      QualType DeleteTy);
+
   llvm::Value* EmitCXXTypeidExpr(const CXXTypeidExpr *E);
   llvm::Value *EmitDynamicCast(llvm::Value *V, const CXXDynamicCastExpr *DCE);
 
