@@ -27,20 +27,20 @@ void function(Foo * arg)
 // CHECK-scan: {start_line=10 start_col=24 end_line=13 end_col=1} FunctionDecl=function:10:6
 // CHECK-scan: {start_line=13 start_col=2 end_line=46 end_col=1} Invalid Cursor => NoDeclFound
 
-// CHECK-load: <invalid loc>:0:0: TypedefDecl=__int128_t:0:0 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:0:0: TypedefDecl=__uint128_t:0:0 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:0:0: StructDecl=objc_selector:0:0 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:0:0: TypedefDecl=SEL:0:0 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:0:0: ObjCInterfaceDecl=Protocol:0:0 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:0:0: TypedefDecl=id:0:0 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:0:0: TypedefDecl=Class:0:0 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:81:16: StructDecl=__va_list_tag:81:16 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:81:42: FieldDecl=gp_offset:81:42 [Context=__va_list_tag]
-// CHECK-load: <invalid loc>:81:63: FieldDecl=fp_offset:81:63 [Context=__va_list_tag]
-// CHECK-load: <invalid loc>:81:81: FieldDecl=overflow_arg_area:81:81 [Context=__va_list_tag]
-// CHECK-load: <invalid loc>:81:107: FieldDecl=reg_save_area:81:107 [Context=__va_list_tag]
-// CHECK-load: <invalid loc>:81:123: TypedefDecl=__va_list_tag:81:123 [Context=TestClassForwardDecl.m]
-// CHECK-load: <invalid loc>:81:159: TypedefDecl=__builtin_va_list:81:159 [Context=TestClassForwardDecl.m]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // CHECK-load: TestClassForwardDecl.m:10:6: FunctionDefn=function [Context=TestClassForwardDecl.m]
 // CHECK-load: TestClassForwardDecl.m:10:21: ParmDecl=arg:10:21 [Context=function]
 
