@@ -603,8 +603,8 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   EmitBlock(AfterFor, true);
 }
 
-/// GenerateCXXAggrDestructorHelper - Generates a helper function which when invoked,
-/// calls the default destructor on array elements in reverse order of 
+/// GenerateCXXAggrDestructorHelper - Generates a helper function which when
+/// invoked, calls the default destructor on array elements in reverse order of
 /// construction.
 llvm::Constant * 
 CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
