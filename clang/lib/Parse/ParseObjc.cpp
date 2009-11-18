@@ -1236,7 +1236,13 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
     return DeclPtrTy();
   }
 
-  while (Tok.is(tok::identifier)) {
+  while (true) {
+    if (Tok.isNot(tok::identifier)) {
+      Diag(Tok, diag::err_synthesized_property_name);
+      SkipUntil(tok::semi);
+      return DeclPtrTy();
+    }
+    
     IdentifierInfo *propertyIvar = 0;
     IdentifierInfo *propertyId = Tok.getIdentifierInfo();
     SourceLocation propertyLoc = ConsumeToken(); // consume property name
@@ -1256,8 +1262,10 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
       break;
     ConsumeToken(); // consume ','
   }
-  if (Tok.isNot(tok::semi))
+  if (Tok.isNot(tok::semi)) {
     Diag(Tok, diag::err_expected_semi_after) << "@synthesize";
+    SkipUntil(tok::semi);
+  }
   else
     ConsumeToken(); // consume ';'
   return DeclPtrTy();

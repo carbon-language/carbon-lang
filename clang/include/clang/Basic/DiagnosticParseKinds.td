@@ -201,6 +201,8 @@ def warn_expected_implementation : Warning<
   "@end must appear in an @implementation context">;
 def error_property_ivar_decl : Error<
   "property synthesize requires specification of an ivar">;
+def err_synthesized_property_name : Error<
+  "expected a property name in @synthesize">;
 def warn_semicolon_before_method_body : Warning<
   "semicolon before method body is ignored">,
   InGroup<DiagGroup<"semicolon-before-method-body">>, DefaultIgnore;
