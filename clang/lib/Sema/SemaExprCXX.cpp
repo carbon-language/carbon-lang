@@ -1445,6 +1445,12 @@ QualType Sema::CheckPointerToMemberOperands(
     }
   }
 
+  if (isa<CXXZeroInitValueExpr>(rex)) {
+    // Diagnose use of pointer-to-member type which when used as
+    // the functional cast in a pointer-to-member expression.
+    Diag(Loc, diag::err_pointer_to_member_type) << isIndirect;
+     return QualType();
+  }
   // C++ 5.5p2
   //   The result is an object or a function of the type specified by the
   //   second operand.

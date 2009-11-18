@@ -979,6 +979,8 @@ def err_template_arg_not_pointer_to_member_form : Error<
   "non-type template argument is not a pointer to member constant">;
 def err_template_arg_extra_parens : Error<
   "non-type template argument cannot be surrounded by parentheses">;
+def err_pointer_to_member_type : Error<
+  "invalid use of pointer to member type after %select{.*|->*}0">;
 
 // C++ template specialization
 def err_template_spec_unknown_kind : Error<

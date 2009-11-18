@@ -341,17 +341,6 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
       ColonLoc = ConsumeToken();
     }
     
-    if ((OpToken.is(tok::periodstar) || OpToken.is(tok::arrowstar))
-         && Tok.is(tok::identifier)) {
-      CXXScopeSpec SS;
-      if (Actions.getTypeName(*Tok.getIdentifierInfo(),
-                              Tok.getLocation(), CurScope, &SS)) {
-        const char *Opc = OpToken.is(tok::periodstar) ? "'.*'" : "'->*'";
-        Diag(OpToken, diag::err_pointer_to_member_type) << Opc;
-        return ExprError();
-      }
-        
-    }
     // Parse another leaf here for the RHS of the operator.
     // ParseCastExpression works here because all RHS expressions in C have it
     // as a prefix, at least. However, in C++, an assignment-expression could
