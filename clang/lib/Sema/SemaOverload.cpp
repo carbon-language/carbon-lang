@@ -1545,18 +1545,23 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
 }
   
 bool
-Sema::DiagnoseAmbiguousUserDefinedConversion(Expr *From, QualType ToType) {
+Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
   ImplicitConversionSequence ICS;
   OverloadCandidateSet CandidateSet;
   OverloadingResult OvResult = 
     IsUserDefinedConversion(From, ToType, ICS.UserDefined,
                             CandidateSet, true, false, false);
-  if (OvResult != OR_Ambiguous)
+  if (OvResult == OR_Ambiguous)
+    Diag(From->getSourceRange().getBegin(),
+         diag::err_typecheck_ambiguous_condition)
+          << From->getType() << ToType << From->getSourceRange();
+  else if (OvResult == OR_No_Viable_Function && !CandidateSet.empty())
+    Diag(From->getSourceRange().getBegin(),
+         diag::err_typecheck_nonviable_condition)
+    << From->getType() << ToType << From->getSourceRange();
+  else
     return false;
-  Diag(From->getSourceRange().getBegin(),
-       diag::err_typecheck_ambiguous_condition)
-  << From->getType() << ToType << From->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+  PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
   return true;  
 }
 
@@ -2072,7 +2077,7 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   if (!PerformImplicitConversion(From, ToType, Flavor,
                                  /*AllowExplicit=*/false, Elidable))
     return false;
-  if (!DiagnoseAmbiguousUserDefinedConversion(From, ToType))
+  if (!DiagnoseMultipleUserDefinedConversion(From, ToType))
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_typecheck_convert_incompatible)
       << ToType << From->getType() << Flavor << From->getSourceRange();
@@ -2192,7 +2197,7 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
   if (!PerformImplicitConversion(From, Context.BoolTy, ICS, "converting"))
     return false;
   
-  if (!DiagnoseAmbiguousUserDefinedConversion(From, Context.BoolTy))
+  if (!DiagnoseMultipleUserDefinedConversion(From, Context.BoolTy))
     return  Diag(From->getSourceRange().getBegin(),
                  diag::err_typecheck_bool_condition)
                   << From->getType() << From->getSourceRange();

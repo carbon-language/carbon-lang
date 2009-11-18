@@ -31,7 +31,7 @@ void test() {
 }
 
 namespace Numbers {
-  struct Number {
+  struct Number {	// expected-note 2 {{candidate}}
     explicit Number(double d) : d(d) {}
     double d;
   };
@@ -57,9 +57,9 @@ void test3() {
 
   int i = Ints::zero;
   Numbers2::f(i);
-  Numbers2::g(i); // expected-error {{incompatible type passing 'int'}}
+  Numbers2::g(i); // expected-error {{no viable conversion from 'int' to 'struct Numbers::Number' is possible}}
 
   float f = Floats::zero;
   Numbers2::f(f);
-  Numbers2::g(f); // expected-error {{incompatible type passing 'float'}}
+  Numbers2::g(f); // expected-error {{no viable conversion from 'float' to 'struct Numbers::Number' is possible}}
 }

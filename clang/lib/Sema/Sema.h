@@ -822,7 +822,7 @@ public:
                                bool AllowConversionFunctions,
                                bool AllowExplicit, bool ForceRValue,
                                bool UserCast = false);
-  bool DiagnoseAmbiguousUserDefinedConversion(Expr *From, QualType ToType);
+  bool DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType);
                                               
 
   ImplicitConversionSequence::CompareKind

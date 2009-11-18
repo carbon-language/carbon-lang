@@ -53,7 +53,7 @@ struct B { A<int> x; B(B& a) : x(a.x) {} };
 
 struct X2 {
   X2();
-  X2(X2&);
+  X2(X2&);	// expected-note {{candidate function}}
   template<typename T> X2(T);
 };
 
@@ -61,7 +61,7 @@ X2 test(bool Cond, X2 x2) {
   if (Cond)
     return x2; // okay, uses copy constructor
   
-  return X2(); // expected-error{{incompatible type}}
+  return X2(); // expected-error{{no viable conversion from 'struct X2' to 'struct X2' is possible}}
 }
 
 struct X3 {
@@ -73,12 +73,12 @@ template<> X3::X3(X3); // expected-error{{must pass its first argument by refere
 struct X4 {
   X4();
   ~X4();
-  X4(X4&);
+  X4(X4&);	// expected-note {{candidate function}}
   template<typename T> X4(const T&, int = 17);
 };
 
 X4 test_X4(bool Cond, X4 x4) {
   X4 a(x4, 17); // okay, constructor template
   X4 b(x4); // okay, copy constructor
-  return X4(); // expected-error{{incompatible type}}
+  return X4(); // expected-error{{no viable conversion}}
 }

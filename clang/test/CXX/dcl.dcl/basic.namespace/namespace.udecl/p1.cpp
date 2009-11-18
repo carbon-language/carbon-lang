@@ -4,7 +4,7 @@
 
 template <unsigned N> class test {};
 
-class foo {};
+class foo {};	// expected-note {{candidate}}
 test<0> foo(foo); // expected-note {{candidate}}
 
 namespace Test0 {
@@ -38,7 +38,7 @@ namespace Test0 {
       test<2> _1 = (foo)(a);
 
       class Test0::foo b;
-      test<2> _2 = (foo)(b); // expected-error {{incompatible type passing}}
+      test<2> _2 = (foo)(b); // expected-error {{no viable conversion from 'class Test0::foo' to 'class foo' is possible}}
     }
   }
 }
