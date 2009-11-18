@@ -34,6 +34,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/System/Path.h"
 #include <algorithm>
 #include <iterator>
 #include <cstdio>
@@ -1086,10 +1087,8 @@ void PCHReader::MaybeAddSystemRootToFilename(std::string &Filename) {
   if (!RelocatablePCH)
     return;
 
-  if (Filename.empty() || Filename[0] == '/' || Filename[0] == '<')
+  if (Filename.empty() || llvm::sys::Path(Filename).isAbsolute())
     return;
-
-  std::string FIXME = Filename;
 
   if (isysroot == 0) {
     // If no system root was given, default to '/'
