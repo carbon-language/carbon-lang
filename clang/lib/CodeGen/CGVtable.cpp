@@ -813,10 +813,13 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
   C = llvm::ConstantArray::get(type, methods);
-  llvm::Constant *vtable = new llvm::GlobalVariable(getModule(), type,
-                                                    true, linktype, C,
-                                                    Out.str());
-  vtable = llvm::ConstantExpr::getBitCast(vtable, Ptr8Ty);
+  llvm::GlobalVariable *GV = new llvm::GlobalVariable(getModule(), type,
+                                                      true, linktype, C,
+                                                      Out.str());
+  bool Hidden = getDeclVisibilityMode(RD) == LangOptions::Hidden;
+  if (Hidden)
+    GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+  llvm::Constant *vtable = llvm::ConstantExpr::getBitCast(GV, Ptr8Ty);
   llvm::Constant *AddressPointC;
   uint32_t LLVMPointerWidth = getContext().Target.getPointerWidth(0);
   AddressPointC = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
@@ -1011,10 +1014,12 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   llvm::Constant *C;
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, inits.size());
   C = llvm::ConstantArray::get(type, inits);
-  llvm::Constant *vtt = new llvm::GlobalVariable(getModule(), type, true,
+  llvm::GlobalVariable *vtt = new llvm::GlobalVariable(getModule(), type, true,
                                                  linktype, C, Out.str());
-  vtt = llvm::ConstantExpr::getBitCast(vtt, Ptr8Ty);
-  return vtt;
+  bool Hidden = getDeclVisibilityMode(RD) == LangOptions::Hidden;
+  if (Hidden)
+    vtt->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+  return llvm::ConstantExpr::getBitCast(vtt, Ptr8Ty);
 }
 
 llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
