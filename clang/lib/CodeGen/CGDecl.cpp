@@ -611,4 +611,3 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     DI->EmitDeclareOfArgVariable(&D, DeclPtr, Builder);
   }
 }
-
