@@ -44,6 +44,8 @@ static int StrCmpOptionName(const char *A, const char *B) {
   return (a < b) ? -1 : 1;
 }
 
+namespace clang {
+namespace driver {
 static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
   if (&A == &B)
     return false;
@@ -56,6 +58,16 @@ static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
   assert(((A.Kind == Option::JoinedClass) ^ (B.Kind == Option::JoinedClass)) &&
          "Unexpected classes for options with same name.");
   return B.Kind == Option::JoinedClass;
+}
+
+// Support lower_bound between info and an option name.
+static inline bool operator<(const OptTable::Info &I, const char *Name) {
+  return StrCmpOptionName(I.Name, Name) == -1;
+}
+static inline bool operator<(const char *Name, const OptTable::Info &I) {
+  return StrCmpOptionName(Name, I.Name) == -1;
+}
+}
 }
 
 //
@@ -162,18 +174,6 @@ Option *OptTable::CreateOption(unsigned id) const {
     Opt->setUnsupported(true);
 
   return Opt;
-}
-
-// Support lower_bound between info and an option name.
-namespace clang {
-namespace driver {
-static inline bool operator<(const OptTable::Info &I, const char *Name) {
-  return StrCmpOptionName(I.Name, Name) == -1;
-}
-static inline bool operator<(const char *Name, const OptTable::Info &I) {
-  return StrCmpOptionName(Name, I.Name) == -1;
-}
-}
 }
 
 Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
