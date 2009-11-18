@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Mangler.h"
@@ -120,27 +121,6 @@ LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length,
     return makeLTOModule(buffer.get(), errMsg);
 }
 
-/// getFeatureString - Return a string listing the features associated with the
-/// target triple.
-///
-/// FIXME: This is an inelegant way of specifying the features of a
-/// subtarget. It would be better if we could encode this information into the
-/// IR. See <rdar://5972456>.
-std::string getFeatureString(const char *TargetTriple) {
-  InitializeAllTargets();
-
-  SubtargetFeatures Features;
-
-  if (strncmp(TargetTriple, "powerpc-apple-", 14) == 0) {
-    Features.AddFeature("altivec", true);
-  } else if (strncmp(TargetTriple, "powerpc64-apple-", 16) == 0) {
-    Features.AddFeature("64bit", true);
-    Features.AddFeature("altivec", true);
-  }
-
-  return Features.getString();
-}
-
 LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
                                     std::string& errMsg)
 {
@@ -161,7 +141,8 @@ LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
         return NULL;
 
     // construct LTModule, hand over ownership of module and target
-    std::string FeatureStr = getFeatureString(Triple.c_str());
+    const std::string FeatureStr = 
+        SubtargetFeatures::getDefaultSubtargetFeatures(llvm::Triple(Triple));
     TargetMachine* target = march->createTargetMachine(Triple, FeatureStr);
     return new LTOModule(m.take(), target);
 }

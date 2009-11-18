@@ -107,7 +107,5 @@ private:
     llvm::StringMap<NameAndAttributes>      _undefines;
 };
 
-extern std::string getFeatureString(const char *TargetTriple);
-
 #endif // LTO_MODULE_H
 

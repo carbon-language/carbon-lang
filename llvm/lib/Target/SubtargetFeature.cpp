@@ -357,3 +357,30 @@ void SubtargetFeatures::print(raw_ostream &OS) const {
 void SubtargetFeatures::dump() const {
   print(errs());
 }
+
+/// getDefaultSubtargetFeatures - Return a string listing
+/// the features associated with the target triple.
+///
+/// FIXME: This is an inelegant way of specifying the features of a
+/// subtarget. It would be better if we could encode this information
+/// into the IR. See <rdar://5972456>.
+///
+std::string SubtargetFeatures::getDefaultSubtargetFeatures(
+                                               const Triple& Triple) {
+  switch (Triple.getVendor()) {
+  case Triple::Apple:
+    switch (Triple.getArch()) {
+    case Triple::ppc:   // powerpc-apple-*
+      return std::string("altivec");
+    case Triple::ppc64: // powerpc64-apple-*
+      return std::string("64bit,altivec");
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
+  } 
+
+  return std::string("");
+}
