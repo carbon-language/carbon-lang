@@ -53,16 +53,9 @@ static cl::opt<bool> DisableReMat("disable-rematerialization",
 static cl::opt<bool> EnableFastSpilling("fast-spill",
                                         cl::init(false), cl::Hidden);
 
-static cl::opt<bool> EarlyCoalescing("early-coalescing",
-                                     cl::init(false), cl::Hidden);
-
-static cl::opt<int> CoalescingLimit("early-coalescing-limit",
-                                    cl::init(-1), cl::Hidden);
-
 STATISTIC(numIntervals , "Number of original intervals");
 STATISTIC(numFolds     , "Number of loads/stores folded into instructions");
 STATISTIC(numSplits    , "Number of intervals split");
-STATISTIC(numCoalescing, "Number of early coalescing performed");
 
 char LiveIntervals::ID = 0;
 static RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
@@ -96,7 +89,6 @@ void LiveIntervals::releaseMemory() {
     delete I->second;
   
   r2iMap_.clear();
-  phiJoinCopies.clear();
 
   // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
   VNInfoAllocator.Reset();
@@ -121,7 +113,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   allocatableRegs_ = tri_->getAllocatableSet(fn);
 
   computeIntervals();
-  performEarlyCoalescing();
 
   numIntervals += getNumIntervals();
 
@@ -409,7 +400,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         // Remove the old range that we now know has an incorrect number.
         VNInfo *VNI = interval.getValNumInfo(0);
         MachineInstr *Killer = vi.Kills[0];
-        phiJoinCopies.push_back(Killer);
         SlotIndex Start = getMBBStartIdx(Killer->getParent());
         SlotIndex End = getInstructionIndex(Killer).getDefIndex();
         DEBUG({
@@ -651,133 +641,6 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   interval.addRange(LR);
   LR.valno->addKill(end);
   DEBUG(errs() << " +" << LR << '\n');
-}
-
-bool LiveIntervals::
-isSafeAndProfitableToCoalesce(LiveInterval &DstInt,
-                              LiveInterval &SrcInt,
-                              SmallVector<MachineInstr*,16> &IdentCopies,
-                              SmallVector<MachineInstr*,16> &OtherCopies) {
-  unsigned NumIdent = 0;
-  for (MachineRegisterInfo::def_iterator ri = mri_->def_begin(SrcInt.reg),
-         re = mri_->def_end(); ri != re; ++ri) {
-    MachineInstr *MI = &*ri;
-    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
-      return false;
-    if (SrcReg != DstInt.reg) {
-      // Non-identity copy - we cannot handle overlapping intervals
-      if (DstInt.liveAt(getInstructionIndex(MI)))
-        return false;
-      OtherCopies.push_back(MI);
-    } else {
-      IdentCopies.push_back(MI);
-      ++NumIdent;
-    }
-  }
-
-  return IdentCopies.size() > OtherCopies.size();
-}
-
-void LiveIntervals::performEarlyCoalescing() {
-  if (!EarlyCoalescing)
-    return;
-
-  /// Perform early coalescing: eliminate copies which feed into phi joins
-  /// and whose sources are defined by the phi joins.
-  for (unsigned i = 0, e = phiJoinCopies.size(); i != e; ++i) {
-    MachineInstr *Join = phiJoinCopies[i];
-    if (CoalescingLimit != -1 && (int)numCoalescing == CoalescingLimit)
-      break;
-
-    unsigned PHISrc, PHIDst, SrcSubReg, DstSubReg;
-    bool isMove= tii_->isMoveInstr(*Join, PHISrc, PHIDst, SrcSubReg, DstSubReg);
-#ifndef NDEBUG
-    assert(isMove && "PHI join instruction must be a move!");
-#else
-    isMove = isMove;
-#endif
-
-    LiveInterval &DstInt = getInterval(PHIDst);
-    LiveInterval &SrcInt = getInterval(PHISrc);
-    SmallVector<MachineInstr*, 16> IdentCopies;
-    SmallVector<MachineInstr*, 16> OtherCopies;
-    if (!isSafeAndProfitableToCoalesce(DstInt, SrcInt,
-                                       IdentCopies, OtherCopies))
-      continue;
-
-    DEBUG(errs() << "PHI Join: " << *Join);
-    assert(DstInt.containsOneValue() && "PHI join should have just one val#!");
-    assert(std::distance(mri_->use_begin(PHISrc), mri_->use_end()) == 1 &&
-           "PHI join src should not be used elsewhere");
-    VNInfo *VNI = DstInt.getValNumInfo(0);
-
-    // Change the non-identity copies to directly target the phi destination.
-    for (unsigned i = 0, e = OtherCopies.size(); i != e; ++i) {
-      MachineInstr *PHICopy = OtherCopies[i];
-      SlotIndex MIIndex = getInstructionIndex(PHICopy);
-      DEBUG(errs() << "Moving: " << MIIndex << ' ' << *PHICopy);
-      SlotIndex DefIndex = MIIndex.getDefIndex();
-      LiveRange *SLR = SrcInt.getLiveRangeContaining(DefIndex);
-      SlotIndex StartIndex = SLR->start;
-      SlotIndex EndIndex = SLR->end;
-
-      // Delete val# defined by the now identity copy and add the range from
-      // beginning of the mbb to the end of the range.
-      SrcInt.removeValNo(SLR->valno);
-      DEBUG(errs() << "  added range [" << StartIndex << ','
-            << EndIndex << "] to reg" << DstInt.reg << '\n');
-      assert (!DstInt.liveAt(StartIndex) && "Cannot coalesce when dst live!");
-      VNInfo *NewVNI = DstInt.getNextValue(DefIndex, PHICopy, true,
-                                           VNInfoAllocator);
-      NewVNI->setHasPHIKill(true);
-      DstInt.addRange(LiveRange(StartIndex, EndIndex, NewVNI));
-      for (unsigned j = 0, ee = PHICopy->getNumOperands(); j != ee; ++j) {
-        MachineOperand &MO = PHICopy->getOperand(j);
-        if (!MO.isReg() || MO.getReg() != PHISrc)
-          continue;
-        MO.setReg(PHIDst);
-      }
-    }
-
-    // Now let's eliminate all the would-be identity copies.
-    for (unsigned i = 0, e = IdentCopies.size(); i != e; ++i) {
-      MachineInstr *PHICopy = IdentCopies[i];
-      DEBUG(errs() << "Coalescing: " << *PHICopy);
-
-      SlotIndex MIIndex = getInstructionIndex(PHICopy);
-      SlotIndex DefIndex = MIIndex.getDefIndex();
-      LiveRange *SLR = SrcInt.getLiveRangeContaining(DefIndex);
-      SlotIndex StartIndex = SLR->start;
-      SlotIndex EndIndex = SLR->end;
-
-      // Delete val# defined by the now identity copy and add the range from
-      // beginning of the mbb to the end of the range.
-      SrcInt.removeValNo(SLR->valno);
-      RemoveMachineInstrFromMaps(PHICopy);
-      PHICopy->eraseFromParent();
-      DEBUG(errs() << "  added range [" << StartIndex << ','
-            << EndIndex << "] to reg" << DstInt.reg << '\n');
-      DstInt.addRange(LiveRange(StartIndex, EndIndex, VNI));
-    }
-
-    // Remove the phi join and update the phi block liveness.
-    SlotIndex MIIndex = getInstructionIndex(Join);
-    SlotIndex UseIndex = MIIndex.getUseIndex();
-    SlotIndex DefIndex = MIIndex.getDefIndex();
-    LiveRange *SLR = SrcInt.getLiveRangeContaining(UseIndex);
-    LiveRange *DLR = DstInt.getLiveRangeContaining(DefIndex);
-    DLR->valno->setCopy(0);
-    DLR->valno->setIsDefAccurate(false);
-    DstInt.addRange(LiveRange(SLR->start, SLR->end, DLR->valno));
-    SrcInt.removeRange(SLR->start, SLR->end);
-    assert(SrcInt.empty());
-    removeInterval(PHISrc);
-    RemoveMachineInstrFromMaps(Join);
-    Join->eraseFromParent();
-
-    ++numCoalescing;
-  }
 }
 
 /// computeIntervals - computes the live intervals for virtual
