@@ -1128,6 +1128,49 @@ void Sema::CodeCompleteOrdinaryName(Scope *S) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
+static void AddObjCProperties(ObjCContainerDecl *Container, 
+                              DeclContext *CurContext,
+                              ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+
+  // Add properties in this container.
+  for (ObjCContainerDecl::prop_iterator P = Container->prop_begin(),
+                                     PEnd = Container->prop_end();
+       P != PEnd;
+       ++P)
+    Results.MaybeAddResult(Result(*P, 0), CurContext);
+  
+  // Add properties in referenced protocols.
+  if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
+    for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
+                                          PEnd = Protocol->protocol_end();
+         P != PEnd; ++P)
+      AddObjCProperties(*P, CurContext, Results);
+  } else if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)){
+    // Look through categories.
+    for (ObjCCategoryDecl *Category = IFace->getCategoryList();
+         Category; Category = Category->getNextClassCategory())
+      AddObjCProperties(Category, CurContext, Results);
+    
+    // Look through protocols.
+    for (ObjCInterfaceDecl::protocol_iterator I = IFace->protocol_begin(),
+                                              E = IFace->protocol_end(); 
+         I != E; ++I)
+      AddObjCProperties(*I, CurContext, Results);
+    
+    // Look in the superclass.
+    if (IFace->getSuperClass())
+      AddObjCProperties(IFace->getSuperClass(), CurContext, Results);
+  } else if (const ObjCCategoryDecl *Category
+                                    = dyn_cast<ObjCCategoryDecl>(Container)) {
+    // Look through protocols.
+    for (ObjCInterfaceDecl::protocol_iterator P = Category->protocol_begin(),
+                                           PEnd = Category->protocol_end(); 
+         P != PEnd; ++P)
+      AddObjCProperties(*P, CurContext, Results);
+  }
+}
+
 void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
                                            SourceLocation OpLoc,
                                            bool IsArrow) {
@@ -1151,38 +1194,75 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   ResultBuilder Results(*this, &ResultBuilder::IsMember);
   unsigned NextRank = 0;
 
-  // If this isn't a record type, we are done.
-  const RecordType *Record = BaseType->getAs<RecordType>();
-  if (!Record)
-    return;
+  Results.EnterNewScope();
+  if (const RecordType *Record = BaseType->getAs<RecordType>()) {
+    // Access to a C/C++ class, struct, or union.
+    NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank,
+                                          Record->getDecl(), Results);
 
-  NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank,
-                                        Record->getDecl(), Results);
+    if (getLangOptions().CPlusPlus) {
+      if (!Results.empty()) {
+        // The "template" keyword can follow "->" or "." in the grammar.
+        // However, we only want to suggest the template keyword if something
+        // is dependent.
+        bool IsDependent = BaseType->isDependentType();
+        if (!IsDependent) {
+          for (Scope *DepScope = S; DepScope; DepScope = DepScope->getParent())
+            if (DeclContext *Ctx = (DeclContext *)DepScope->getEntity()) {
+              IsDependent = Ctx->isDependentContext();
+              break;
+            }
+        }
 
-  if (getLangOptions().CPlusPlus) {
-    if (!Results.empty()) {
-      // The "template" keyword can follow "->" or "." in the grammar.
-      // However, we only want to suggest the template keyword if something
-      // is dependent.
-      bool IsDependent = BaseType->isDependentType();
-      if (!IsDependent) {
-        for (Scope *DepScope = S; DepScope; DepScope = DepScope->getParent())
-          if (DeclContext *Ctx = (DeclContext *)DepScope->getEntity()) {
-            IsDependent = Ctx->isDependentContext();
-            break;
-          }
+        if (IsDependent)
+          Results.MaybeAddResult(Result("template", NextRank++));
       }
 
-      if (IsDependent)
-        Results.MaybeAddResult(Result("template", NextRank++));
+      // We could have the start of a nested-name-specifier. Add those
+      // results as well.
+      Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
+      CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank,
+                           CurContext, Results);
     }
-
-    // We could have the start of a nested-name-specifier. Add those
-    // results as well.
-    Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-    CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank,
-                         CurContext, Results);
+  } else if (!IsArrow && BaseType->getAsObjCInterfacePointerType()) {
+    // Objective-C property reference.
+    
+    // Add property results based on our interface.
+    const ObjCObjectPointerType *ObjCPtr
+      = BaseType->getAsObjCInterfacePointerType();
+    assert(ObjCPtr && "Non-NULL pointer guaranteed above!");
+    AddObjCProperties(ObjCPtr->getInterfaceDecl(), CurContext, Results);
+    
+    // Add properties from the protocols in a qualified interface.
+    for (ObjCObjectPointerType::qual_iterator I = ObjCPtr->qual_begin(),
+                                              E = ObjCPtr->qual_end();
+         I != E; ++I)
+      AddObjCProperties(*I, CurContext, Results);
+    
+    // FIXME: We could (should?) also look for "implicit" properties, identified
+    // only by the presence of nullary and unary selectors.
+  } else if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
+             (!IsArrow && BaseType->isObjCInterfaceType())) {
+    // Objective-C instance variable access.
+    ObjCInterfaceDecl *Class = 0;
+    if (const ObjCObjectPointerType *ObjCPtr
+                                    = BaseType->getAs<ObjCObjectPointerType>())
+      Class = ObjCPtr->getInterfaceDecl();
+    else
+      Class = BaseType->getAs<ObjCInterfaceType>()->getDecl();
+    
+    // Add all ivars from this class and its superclasses.
+    for (; Class; Class = Class->getSuperClass()) {
+      for (ObjCInterfaceDecl::ivar_iterator IVar = Class->ivar_begin(), 
+                                         IVarEnd = Class->ivar_end();
+           IVar != IVarEnd; ++IVar)
+        Results.MaybeAddResult(Result(*IVar, 0), CurContext);
+    }
   }
+  
+  // FIXME: How do we cope with isa?
+  
+  Results.ExitScope();
 
   // Add macros
   if (CodeCompleter->includeMacros())
