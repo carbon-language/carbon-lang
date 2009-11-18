@@ -4501,6 +4501,10 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     Referenced = Result.getFoundDecl();
     break;
 
+  case LookupResult::FoundUnresolvedValue:
+    llvm::llvm_unreachable("unresolved using decl in non-dependent context");
+    return QualType();
+
   case LookupResult::FoundOverloaded:
     DiagID = diag::err_typename_nested_not_type;
     Referenced = *Result.begin();

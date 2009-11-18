@@ -71,7 +71,8 @@ namespace {
     void VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D);
     void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
-    void VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
+    void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
+    void VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
     void VisitUsingDecl(UsingDecl *D);
     void VisitUsingShadowDecl(UsingShadowDecl *D);
   };
@@ -829,10 +830,17 @@ void DeclPrinter::VisitUsingDecl(UsingDecl *D) {
   Out << D->getNameAsString();
 }
 
-void DeclPrinter::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
+void
+DeclPrinter::VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) {
+  Out << "using typename ";
+  D->getTargetNestedNameSpecifier()->print(Out, Policy);
+  Out << D->getDeclName().getAsString();
+}
+
+void DeclPrinter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   Out << "using ";
   D->getTargetNestedNameSpecifier()->print(Out, Policy);
-  Out << D->getTargetName().getAsString();
+  Out << D->getDeclName().getAsString();
 }
 
 void DeclPrinter::VisitUsingShadowDecl(UsingShadowDecl *D) {

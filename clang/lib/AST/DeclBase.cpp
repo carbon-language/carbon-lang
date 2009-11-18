@@ -212,8 +212,9 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case UsingShadow:
       return 0; // we'll actually overwrite this later
 
-    case UnresolvedUsing:
-      return IDNS_Tag | IDNS_Ordinary | IDNS_Using;
+    case UnresolvedUsingValue:
+    case UnresolvedUsingTypename:
+      return IDNS_Ordinary | IDNS_Using;
 
     case Using:
       return IDNS_Using;

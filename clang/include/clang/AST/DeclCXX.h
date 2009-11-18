@@ -1766,31 +1766,33 @@ public:
   static bool classof(const UsingDecl *D) { return true; }
 };
 
-/// UnresolvedUsingDecl - Represents a using declaration whose name can not
-/// yet be resolved.
-class UnresolvedUsingDecl : public NamedDecl {
+/// UnresolvedUsingValueDecl - Represents a dependent using
+/// declaration which was not marked with 'typename'.  Unlike
+/// non-dependent using declarations, these *only* bring through
+/// non-types; otherwise they would break two-phase lookup.
+///
+/// template <class T> class A : public Base<T> {
+///   using Base<T>::foo;
+/// };
+class UnresolvedUsingValueDecl : public ValueDecl {
   /// \brief The source range that covers the nested-name-specifier
   /// preceding the declaration name.
   SourceRange TargetNestedNameRange;
 
-  /// \brief The source location of the target declaration name.
-  SourceLocation TargetNameLocation;
+  /// \brief The source location of the 'using' keyword
+  SourceLocation UsingLocation;
 
   NestedNameSpecifier *TargetNestedNameSpecifier;
 
-  DeclarationName TargetName;
-
-  // \brief Has 'typename' keyword.
-  bool IsTypeName;
-
-  UnresolvedUsingDecl(DeclContext *DC, SourceLocation UsingLoc,
-                      SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
-                      SourceLocation TargetNameLoc, DeclarationName TargetName,
-                      bool IsTypeNameArg)
-  : NamedDecl(Decl::UnresolvedUsing, DC, UsingLoc, TargetName),
-    TargetNestedNameRange(TargetNNR), TargetNameLocation(TargetNameLoc),
-    TargetNestedNameSpecifier(TargetNNS), TargetName(TargetName),
-    IsTypeName(IsTypeNameArg) { }
+  UnresolvedUsingValueDecl(DeclContext *DC, QualType Ty,
+                           SourceLocation UsingLoc, SourceRange TargetNNR,
+                           NestedNameSpecifier *TargetNNS,
+                           SourceLocation TargetNameLoc,
+                           DeclarationName TargetName)
+    : ValueDecl(Decl::UnresolvedUsingValue, DC, TargetNameLoc, TargetName, Ty),
+    TargetNestedNameRange(TargetNNR), UsingLocation(UsingLoc),
+    TargetNestedNameSpecifier(TargetNNS)
+  { }
 
 public:
   /// \brief Returns the source range that covers the nested-name-specifier
@@ -1802,26 +1804,77 @@ public:
     return TargetNestedNameSpecifier;
   }
 
-  /// \brief Returns the source location of the target declaration name.
-  SourceLocation getTargetNameLocation() const { return TargetNameLocation; }
+  /// \brief Returns the source location of the 'using' keyword.
+  SourceLocation getUsingLoc() const { return UsingLocation; }
 
-  /// \brief Returns the source location of the target declaration name.
-  DeclarationName getTargetName() const { return TargetName; }
-
-  bool isTypeName() const { return IsTypeName; }
-
-  static UnresolvedUsingDecl *Create(ASTContext &C, DeclContext *DC,
-                                     SourceLocation UsingLoc,
-                                     SourceRange TargetNNR,
-                                     NestedNameSpecifier *TargetNNS,
-                                     SourceLocation TargetNameLoc,
-                                     DeclarationName TargetName,
-                                     bool IsTypeNameArg);
+  static UnresolvedUsingValueDecl *
+    Create(ASTContext &C, DeclContext *DC, SourceLocation UsingLoc,
+           SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
+           SourceLocation TargetNameLoc, DeclarationName TargetName);
 
   static bool classof(const Decl *D) {
-    return D->getKind() == Decl::UnresolvedUsing;
+    return D->getKind() == Decl::UnresolvedUsingValue;
   }
-  static bool classof(const UnresolvedUsingDecl *D) { return true; }
+  static bool classof(const UnresolvedUsingValueDecl *D) { return true; }
+};
+
+/// UnresolvedUsingTypenameDecl - Represents a dependent using
+/// declaration which was marked with 'typename'.
+///
+/// template <class T> class A : public Base<T> {
+///   using typename Base<T>::foo;
+/// };
+///
+/// The type associated with a unresolved using typename decl is
+/// currently always a typename type.
+class UnresolvedUsingTypenameDecl : public TypeDecl {
+  /// \brief The source range that covers the nested-name-specifier
+  /// preceding the declaration name.
+  SourceRange TargetNestedNameRange;
+
+  /// \brief The source location of the 'using' keyword
+  SourceLocation UsingLocation;
+
+  /// \brief The source location of the 'typename' keyword
+  SourceLocation TypenameLocation;
+
+  NestedNameSpecifier *TargetNestedNameSpecifier;
+
+  UnresolvedUsingTypenameDecl(DeclContext *DC, SourceLocation UsingLoc,
+                    SourceLocation TypenameLoc,
+                    SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
+                    SourceLocation TargetNameLoc, IdentifierInfo *TargetName)
+  : TypeDecl(Decl::UnresolvedUsingTypename, DC, TargetNameLoc, TargetName),
+    TargetNestedNameRange(TargetNNR), UsingLocation(UsingLoc),
+    TypenameLocation(TypenameLoc), TargetNestedNameSpecifier(TargetNNS)
+  { }
+
+public:
+  /// \brief Returns the source range that covers the nested-name-specifier
+  /// preceding the namespace name.
+  SourceRange getTargetNestedNameRange() const { return TargetNestedNameRange; }
+
+  /// \brief Get target nested name declaration.
+  NestedNameSpecifier* getTargetNestedNameSpecifier() {
+    return TargetNestedNameSpecifier;
+  }
+
+  /// \brief Returns the source location of the 'using' keyword.
+  SourceLocation getUsingLoc() const { return UsingLocation; }
+
+  /// \brief Returns the source location of the 'typename' keyword.
+  SourceLocation getTypenameLoc() const { return TypenameLocation; }
+
+  static UnresolvedUsingTypenameDecl *
+    Create(ASTContext &C, DeclContext *DC, SourceLocation UsingLoc,
+           SourceLocation TypenameLoc,
+           SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
+           SourceLocation TargetNameLoc, DeclarationName TargetName);
+
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::UnresolvedUsingTypename;
+  }
+  static bool classof(const UnresolvedUsingTypenameDecl *D) { return true; }
 };
 
 /// StaticAssertDecl - Represents a C++0x static_assert declaration.

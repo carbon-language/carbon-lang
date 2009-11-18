@@ -256,9 +256,9 @@ ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
     = new (*this) MemberSpecializationInfo(Tmpl, TSK);
 }
 
-UnresolvedUsingDecl *
+NamedDecl *
 ASTContext::getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD) {
-  llvm::DenseMap<UsingDecl *, UnresolvedUsingDecl *>::const_iterator Pos
+  llvm::DenseMap<UsingDecl *, NamedDecl *>::const_iterator Pos
     = InstantiatedFromUnresolvedUsingDecl.find(UUD);
   if (Pos == InstantiatedFromUnresolvedUsingDecl.end())
     return 0;
@@ -268,7 +268,10 @@ ASTContext::getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD) {
 
 void
 ASTContext::setInstantiatedFromUnresolvedUsingDecl(UsingDecl *UD,
-                                                   UnresolvedUsingDecl *UUD) {
+                                                   NamedDecl *UUD) {
+  assert((isa<UnresolvedUsingValueDecl>(UUD) ||
+          isa<UnresolvedUsingTypenameDecl>(UUD)) && 
+         "original declaration is not an unresolved using decl");
   assert(!InstantiatedFromUnresolvedUsingDecl[UD] &&
          "Already noted what using decl what instantiated from");
   InstantiatedFromUnresolvedUsingDecl[UD] = UUD;

@@ -283,11 +283,13 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
                                                 SourceLocation &DeclEnd,
                                                 AccessSpecifier AS) {
   CXXScopeSpec SS;
+  SourceLocation TypenameLoc;
   bool IsTypeName;
 
   // Ignore optional 'typename'.
   // FIXME: This is wrong; we should parse this as a typename-specifier.
   if (Tok.is(tok::kw_typename)) {
+    TypenameLoc = Tok.getLocation();
     ConsumeToken();
     IsTypeName = true;
   }
@@ -330,7 +332,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
                    tok::semi);
 
   return Actions.ActOnUsingDeclaration(CurScope, AS, UsingLoc, SS, Name,
-                                       AttrList, IsTypeName);
+                                       AttrList, IsTypeName, TypenameLoc);
 }
 
 /// ParseStaticAssertDeclaration - Parse C++0x static_assert-declaratoion.

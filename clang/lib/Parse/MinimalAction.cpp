@@ -49,7 +49,8 @@ Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
                                                 const CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
                                                 AttributeList *AttrList,
-                                                bool IsTypeName) {
+                                                bool IsTypeName,
+                                                SourceLocation TypenameLoc) {
 
   // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
   // passed AttributeList, however other actions don't free it, is it

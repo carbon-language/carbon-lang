@@ -977,7 +977,7 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
   else if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
     return BuildDeclRefExpr(Template, Context.OverloadTy, Loc,
                             false, false, SS);
-  else if (UnresolvedUsingDecl *UD = dyn_cast<UnresolvedUsingDecl>(D))
+  else if (UnresolvedUsingValueDecl *UD = dyn_cast<UnresolvedUsingValueDecl>(D))
     return BuildDeclRefExpr(UD, Context.DependentTy, Loc,
                             /*TypeDependent=*/true,
                             /*ValueDependent=*/true, SS);

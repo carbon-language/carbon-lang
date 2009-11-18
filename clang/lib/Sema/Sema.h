@@ -1110,6 +1110,11 @@ public:
       /// functions into an OverloadedFunctionDecl.
       FoundOverloaded,
 
+      /// @brief Name lookup found an unresolvable value declaration
+      /// and cannot yet complete.  This only happens in C++ dependent
+      /// contexts with dependent using declarations.
+      FoundUnresolvedValue,
+
       /// @brief Name lookup results in an ambiguity; use
       /// getAmbiguityKind to figure out what kind of ambiguity
       /// we have.
@@ -1417,6 +1422,7 @@ public:
       assert(ResultKind != NotFound || Decls.size() == 0);
       assert(ResultKind != Found || Decls.size() == 1);
       assert(ResultKind == NotFound || ResultKind == Found ||
+             ResultKind == FoundUnresolvedValue ||
              (ResultKind == Ambiguous && Ambiguity == AmbiguousBaseSubobjects)
              || Decls.size() > 1);
       assert((Paths != NULL) == (ResultKind == Ambiguous &&
@@ -2017,7 +2023,9 @@ public:
                                    SourceLocation IdentLoc,
                                    DeclarationName Name,
                                    AttributeList *AttrList,
-                                   bool IsTypeName);
+                                   bool IsInstantiation,
+                                   bool IsTypeName,
+                                   SourceLocation TypenameLoc);
 
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
                                           AccessSpecifier AS,
@@ -2025,7 +2033,8 @@ public:
                                           const CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           AttributeList *AttrList,
-                                          bool IsTypeName);
+                                          bool IsTypeName,
+                                          SourceLocation TypenameLoc);
 
   /// AddCXXDirectInitializerToDecl - This action is called immediately after
   /// ActOnDeclarator, when a C++ direct initializer is present.

@@ -56,7 +56,6 @@ namespace clang {
   class TranslationUnitDecl;
   class TypeDecl;
   class TypedefDecl;
-  class UnresolvedUsingDecl;
   class UsingDecl;
 
   namespace Builtin { class Context; }
@@ -205,7 +204,7 @@ class ASTContext {
   ///
   /// This mapping will contain an entry that maps from the UsingDecl in
   /// B<int> to the UnresolvedUsingDecl in B<T>.
-  llvm::DenseMap<UsingDecl *, UnresolvedUsingDecl *>
+  llvm::DenseMap<UsingDecl *, NamedDecl *>
     InstantiatedFromUnresolvedUsingDecl;
 
   llvm::DenseMap<FieldDecl *, FieldDecl *> InstantiatedFromUnnamedFieldDecl;
@@ -285,12 +284,11 @@ public:
 
   /// \brief If this using decl is instantiated from an unresolved using decl,
   /// return it.
-  UnresolvedUsingDecl *getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD);
+  NamedDecl *getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD);
 
   /// \brief Note that the using decl \p Inst is an instantiation of
   /// the unresolved using decl \p Tmpl of a class template.
-  void setInstantiatedFromUnresolvedUsingDecl(UsingDecl *Inst,
-                                              UnresolvedUsingDecl *Tmpl);
+  void setInstantiatedFromUnresolvedUsingDecl(UsingDecl *Inst, NamedDecl *Tmpl);
 
 
   FieldDecl *getInstantiatedFromUnnamedFieldDecl(FieldDecl *Field);

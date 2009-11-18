@@ -2,12 +2,12 @@
 
 template<typename T> struct A {
   void f() { }
-  struct N { };
+  struct N { }; // expected-note{{target of using declaration}}
 };
 
 template<typename T> struct B : A<T> {
   using A<T>::f;
-  using A<T>::N;
+  using A<T>::N; // expected-error{{dependent using declaration resolved to type without 'typename'}}
   
   using A<T>::foo; // expected-error{{no member named 'foo'}}
   using A<double>::f; // expected-error{{using declaration refers into 'A<double>::', which is not a base class of 'B'}}

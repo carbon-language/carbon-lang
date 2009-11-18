@@ -245,7 +245,12 @@ void Sema::LookupResult::resolveKind() {
   unsigned N = Decls.size();
 
   // Fast case: no possible ambiguity.
-  if (N <= 1) return;
+  if (N == 0) return;
+  if (N == 1) {
+    if (isa<UnresolvedUsingValueDecl>(Decls[0]))
+      ResultKind = FoundUnresolvedValue;
+    return;
+  }
 
   // Don't do any extra resolution if we've already resolved as ambiguous.
   if (ResultKind == Ambiguous) return;
@@ -254,6 +259,7 @@ void Sema::LookupResult::resolveKind() {
 
   bool Ambiguous = false;
   bool HasTag = false, HasFunction = false, HasNonFunction = false;
+  bool HasUnresolved = false;
 
   unsigned UniqueTagIndex = 0;
   
@@ -266,12 +272,15 @@ void Sema::LookupResult::resolveKind() {
       // If it's not unique, pull something off the back (and
       // continue at this index).
       Decls[I] = Decls[--N];
-    } else if (isa<UnresolvedUsingDecl>(D)) {
-      // FIXME: support unresolved using decls
+    } else if (isa<UnresolvedUsingValueDecl>(D)) {
+      // FIXME: support unresolved using value declarations
       Decls[I] = Decls[--N];
     } else {
       // Otherwise, do some decl type analysis and then continue.
-      if (isa<TagDecl>(D)) {
+
+      if (isa<UnresolvedUsingValueDecl>(D)) {
+        HasUnresolved = true;
+      } else if (isa<TagDecl>(D)) {
         if (HasTag)
           Ambiguous = true;
         UniqueTagIndex = I;
@@ -296,7 +305,8 @@ void Sema::LookupResult::resolveKind() {
   //   wherever the object, function, or enumerator name is visible.
   // But it's still an error if there are distinct tag types found,
   // even if they're not visible. (ref?)
-  if (HideTags && HasTag && !Ambiguous && (HasFunction || HasNonFunction))
+  if (HideTags && HasTag && !Ambiguous && !HasUnresolved &&
+      (HasFunction || HasNonFunction))
     Decls[UniqueTagIndex] = Decls[--N];
 
   Decls.set_size(N);
@@ -306,6 +316,8 @@ void Sema::LookupResult::resolveKind() {
 
   if (Ambiguous)
     setAmbiguous(LookupResult::AmbiguousReference);
+  else if (HasUnresolved)
+    ResultKind = LookupResult::FoundUnresolvedValue;
   else if (N > 1)
     ResultKind = LookupResult::FoundOverloaded;
   else

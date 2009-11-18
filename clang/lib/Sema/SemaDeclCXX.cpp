@@ -2809,7 +2809,8 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
                                             const CXXScopeSpec &SS,
                                             UnqualifiedId &Name,
                                             AttributeList *AttrList,
-                                            bool IsTypeName) {
+                                            bool IsTypeName,
+                                            SourceLocation TypenameLoc) {
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
   switch (Name.getKind()) {
@@ -2837,7 +2838,9 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   DeclarationName TargetName = GetNameFromUnqualifiedId(Name);
   NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
                                         Name.getSourceRange().getBegin(),
-                                        TargetName, AttrList, IsTypeName);
+                                        TargetName, AttrList,
+                                        /* IsInstantiation */ false,
+                                        IsTypeName, TypenameLoc);
   if (UD) {
     PushOnScopeChains(UD, S);
     UD->setAccess(AS);
@@ -2872,13 +2875,20 @@ static UsingShadowDecl *BuildUsingShadowDecl(Sema &SemaRef, Scope *S,
   return Shadow;
 }
 
+/// Builds a using declaration.
+///
+/// \param IsInstantiation - Whether this call arises from an
+///   instantiation of an unresolved using declaration.  We treat
+///   the lookup differently for these declarations.
 NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
                                        SourceLocation UsingLoc,
                                        const CXXScopeSpec &SS,
                                        SourceLocation IdentLoc,
                                        DeclarationName Name,
                                        AttributeList *AttrList,
-                                       bool IsTypeName) {
+                                       bool IsInstantiation,
+                                       bool IsTypeName,
+                                       SourceLocation TypenameLoc) {
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   assert(IdentLoc.isValid() && "Invalid TargetName location.");
 
@@ -2895,9 +2905,16 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
   DeclContext *LookupContext = computeDeclContext(SS);
   if (!LookupContext) {
-    return UnresolvedUsingDecl::Create(Context, CurContext, UsingLoc,
-                                       SS.getRange(), NNS,
-                                       IdentLoc, Name, IsTypeName);
+    if (IsTypeName) {
+      return UnresolvedUsingTypenameDecl::Create(Context, CurContext,
+                                                 UsingLoc, TypenameLoc,
+                                                 SS.getRange(), NNS,
+                                                 IdentLoc, Name);
+    } else {
+      return UnresolvedUsingValueDecl::Create(Context, CurContext,
+                                              UsingLoc, SS.getRange(), NNS,
+                                              IdentLoc, Name);
+    }
   }
 
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(CurContext)) {
@@ -2929,7 +2946,12 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   // hide tag declarations: tag names are visible through the using
   // declaration even if hidden by ordinary names.
   LookupResult R(*this, Name, IdentLoc, LookupOrdinaryName);
-  R.setHideTags(false);
+
+  // We don't hide tags behind ordinary decls if we're in a
+  // non-dependent context, but in a dependent context, this is
+  // important for the stability of two-phase lookup.
+  if (!IsInstantiation)
+    R.setHideTags(false);
 
   LookupQualifiedName(R, LookupContext);
 
@@ -2942,11 +2964,27 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   if (R.isAmbiguous())
     return 0;
 
-  if (IsTypeName &&
-      (R.getResultKind() != LookupResult::Found
-       || !isa<TypeDecl>(R.getFoundDecl()))) {
-    Diag(IdentLoc, diag::err_using_typename_non_type);
-    return 0;
+  if (IsTypeName) {
+    // If we asked for a typename and got a non-type decl, error out.
+    if (R.getResultKind() != LookupResult::Found
+        || !isa<TypeDecl>(R.getFoundDecl())) {
+      Diag(IdentLoc, diag::err_using_typename_non_type);
+      for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+        Diag((*I)->getUnderlyingDecl()->getLocation(),
+             diag::note_using_decl_target);
+      return 0;
+    }
+  } else {
+    // If we asked for a non-typename and we got a type, error out,
+    // but only if this is an instantiation of an unresolved using
+    // decl.  Otherwise just silently find the type name.
+    if (IsInstantiation &&
+        R.getResultKind() == LookupResult::Found &&
+        isa<TypeDecl>(R.getFoundDecl())) {
+      Diag(IdentLoc, diag::err_using_dependent_value_is_type);
+      Diag(R.getFoundDecl()->getLocation(), diag::note_using_decl_target);
+      return 0;
+    }
   }
 
   // C++0x N2914 [namespace.udecl]p6:

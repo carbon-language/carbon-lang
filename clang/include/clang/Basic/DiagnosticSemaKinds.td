@@ -103,6 +103,8 @@ def err_using_requires_qualname : Error<
   "using declaration requires a qualified name">;
 def err_using_typename_non_type : Error<
   "'typename' keyword used on a non-type">;
+def err_using_dependent_value_is_type : Error<
+  "dependent using declaration resolved to type without 'typename'">;
 def err_using_decl_nested_name_specifier_is_not_a_base_class : Error<
   "using declaration refers into '%0', which is not a base class of %1">;
 def err_using_decl_can_not_refer_to_class_member : Error<
@@ -115,6 +117,8 @@ def err_using_decl_destructor : Error<
   "using declaration can not refer to a destructor">;
 def err_using_decl_template_id : Error<
   "using declaration can not refer to a template specialization">;
+def note_using_decl_target : Note<
+  "target of using declaration">;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;

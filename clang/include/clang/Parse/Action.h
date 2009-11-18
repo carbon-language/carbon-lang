@@ -1203,6 +1203,8 @@ public:
   /// 'typename' keyword. FIXME: This will eventually be split into a 
   /// separate action.
   ///
+  /// \param TypenameLoc the location of the 'typename' keyword, if present
+  ///
   /// \returns a representation of the using declaration.
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
                                           AccessSpecifier AS,
@@ -1210,7 +1212,8 @@ public:
                                           const CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
                                           AttributeList *AttrList,
-                                          bool IsTypeName);
+                                          bool IsTypeName,
+                                          SourceLocation TypenameLoc);
 
   /// ActOnParamDefaultArgument - Parse default argument for function parameter
   virtual void ActOnParamDefaultArgument(DeclPtrTy param,

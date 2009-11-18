@@ -920,15 +920,30 @@ UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) UsingDecl(DC, L, NNR, UL, TargetNNS, Name, IsTypeNameArg);
 }
 
-UnresolvedUsingDecl *UnresolvedUsingDecl::Create(ASTContext &C, DeclContext *DC,
-                                                 SourceLocation UsingLoc,
-                                                 SourceRange TargetNNR,
-                                                 NestedNameSpecifier *TargetNNS,
-                                                 SourceLocation TargetNameLoc,
-                                                 DeclarationName TargetName,
-                                                 bool IsTypeNameArg) {
-  return new (C) UnresolvedUsingDecl(DC, UsingLoc, TargetNNR, TargetNNS,
-                                     TargetNameLoc, TargetName, IsTypeNameArg);
+UnresolvedUsingValueDecl *
+UnresolvedUsingValueDecl::Create(ASTContext &C, DeclContext *DC,
+                                 SourceLocation UsingLoc,
+                                 SourceRange TargetNNR,
+                                 NestedNameSpecifier *TargetNNS,
+                                 SourceLocation TargetNameLoc,
+                                 DeclarationName TargetName) {
+  return new (C) UnresolvedUsingValueDecl(DC, C.DependentTy, UsingLoc,
+                                          TargetNNR, TargetNNS,
+                                          TargetNameLoc, TargetName);
+}
+
+UnresolvedUsingTypenameDecl *
+UnresolvedUsingTypenameDecl::Create(ASTContext &C, DeclContext *DC,
+                                    SourceLocation UsingLoc,
+                                    SourceLocation TypenameLoc,
+                                    SourceRange TargetNNR,
+                                    NestedNameSpecifier *TargetNNS,
+                                    SourceLocation TargetNameLoc,
+                                    DeclarationName TargetName) {
+  return new (C) UnresolvedUsingTypenameDecl(DC, UsingLoc, TypenameLoc,
+                                             TargetNNR, TargetNNS,
+                                             TargetNameLoc,
+                                             TargetName.getAsIdentifierInfo());
 }
 
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,

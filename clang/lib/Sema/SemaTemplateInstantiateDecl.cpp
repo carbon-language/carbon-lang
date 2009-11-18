@@ -66,7 +66,8 @@ namespace {
     Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
     Decl *VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
-    Decl *VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
+    Decl *VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
+    Decl *VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *D) {
@@ -1025,8 +1026,8 @@ Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   return Inst;
 }
 
-Decl *
-TemplateDeclInstantiator::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
+Decl * TemplateDeclInstantiator
+    ::VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) {
   NestedNameSpecifier *NNS =
     SemaRef.SubstNestedNameSpecifier(D->getTargetNestedNameSpecifier(),
                                      D->getTargetNestedNameRange(),
@@ -1040,8 +1041,35 @@ TemplateDeclInstantiator::VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D) {
 
   NamedDecl *UD =
     SemaRef.BuildUsingDeclaration(/*Scope*/ 0, D->getAccess(),
-                                  D->getLocation(), SS, D->getTargetNameLocation(),
-                                  D->getDeclName(), 0, D->isTypeName());
+                                  D->getUsingLoc(), SS, D->getLocation(),
+                                  D->getDeclName(), 0,
+                                  /*instantiation*/ true,
+                                  /*typename*/ true, D->getTypenameLoc());
+  if (UD)
+    SemaRef.Context.setInstantiatedFromUnresolvedUsingDecl(cast<UsingDecl>(UD),
+                                                           D);
+  return UD;
+}
+
+Decl * TemplateDeclInstantiator
+    ::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
+  NestedNameSpecifier *NNS =
+    SemaRef.SubstNestedNameSpecifier(D->getTargetNestedNameSpecifier(),
+                                     D->getTargetNestedNameRange(),
+                                     TemplateArgs);
+  if (!NNS)
+    return 0;
+
+  CXXScopeSpec SS;
+  SS.setRange(D->getTargetNestedNameRange());
+  SS.setScopeRep(NNS);
+
+  NamedDecl *UD =
+    SemaRef.BuildUsingDeclaration(/*Scope*/ 0, D->getAccess(),
+                                  D->getUsingLoc(), SS, D->getLocation(),
+                                  D->getDeclName(), 0,
+                                  /*instantiation*/ true,
+                                  /*typename*/ false, SourceLocation());
   if (UD)
     SemaRef.Context.setInstantiatedFromUnresolvedUsingDecl(cast<UsingDecl>(UD),
                                                            D);
@@ -1724,7 +1752,13 @@ static bool isInstantiationOf(EnumDecl *Pattern,
   return false;
 }
 
-static bool isInstantiationOf(UnresolvedUsingDecl *Pattern,
+static bool isInstantiationOf(UnresolvedUsingValueDecl *Pattern,
+                              UsingDecl *Instance,
+                              ASTContext &C) {
+  return C.getInstantiatedFromUnresolvedUsingDecl(Instance) == Pattern;
+}
+
+static bool isInstantiationOf(UnresolvedUsingTypenameDecl *Pattern,
                               UsingDecl *Instance,
                               ASTContext &C) {
   return C.getInstantiatedFromUnresolvedUsingDecl(Instance) == Pattern;
@@ -1747,7 +1781,15 @@ static bool isInstantiationOfStaticDataMember(VarDecl *Pattern,
 
 static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
   if (D->getKind() != Other->getKind()) {
-    if (UnresolvedUsingDecl *UUD = dyn_cast<UnresolvedUsingDecl>(D)) {
+    if (UnresolvedUsingTypenameDecl *UUD
+          = dyn_cast<UnresolvedUsingTypenameDecl>(D)) {
+      if (UsingDecl *UD = dyn_cast<UsingDecl>(Other)) {
+        return isInstantiationOf(UUD, UD, Ctx);
+      }
+    }
+
+    if (UnresolvedUsingValueDecl *UUD
+          = dyn_cast<UnresolvedUsingValueDecl>(D)) {
       if (UsingDecl *UD = dyn_cast<UsingDecl>(Other)) {
         return isInstantiationOf(UUD, UD, Ctx);
       }

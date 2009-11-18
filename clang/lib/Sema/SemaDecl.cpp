@@ -94,6 +94,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   switch (Result.getResultKind()) {
   case LookupResult::NotFound:
   case LookupResult::FoundOverloaded:
+  case LookupResult::FoundUnresolvedValue:
     return 0;
 
   case LookupResult::Ambiguous:
@@ -166,6 +167,10 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
     T = Context.getObjCInterfaceType(IDecl);
+  } else if (UnresolvedUsingTypenameDecl *UUDecl =
+               dyn_cast<UnresolvedUsingTypenameDecl>(IIDecl)) {
+    // FIXME: preserve source structure information.
+    T = Context.getTypenameType(UUDecl->getTargetNestedNameSpecifier(), &II);
   } else {
     // If it's not plausibly a type, suppress diagnostics.
     Result.suppressDiagnostics();
@@ -2446,7 +2451,9 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
 }
 
 static bool isUsingDecl(Decl *D) {
-  return isa<UsingDecl>(D) || isa<UnresolvedUsingDecl>(D);
+  return isa<UsingDecl>(D) ||
+         isa<UnresolvedUsingTypenameDecl>(D) ||
+         isa<UnresolvedUsingValueDecl>(D);
 }
 
 /// \brief Data used with FindOverriddenMethod
