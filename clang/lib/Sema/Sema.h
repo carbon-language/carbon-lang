@@ -4015,6 +4015,8 @@ public:
   virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
                                             SourceLocation FNameLoc);
   virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver);
+  virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
+                                                  unsigned NumProtocols);
   //@}
   
   //===--------------------------------------------------------------------===//

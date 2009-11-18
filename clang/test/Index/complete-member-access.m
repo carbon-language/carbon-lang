@@ -1,5 +1,5 @@
-// Note: the RUN lines are near the end of the file, since line/column
-// matter for this test.
+/* Note: the RUN lines are near the end of the file, since line/column
+   matter for this test. */
 
 @protocol MyProtocol
 @property float ProtoProp;

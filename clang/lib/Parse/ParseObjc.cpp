@@ -834,6 +834,12 @@ ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclPtrTy> &Protocols,
   llvm::SmallVector<IdentifierLocPair, 8> ProtocolIdents;
 
   while (1) {
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCProtocolReferences(ProtocolIdents.data(), 
+                                                 ProtocolIdents.size());
+      ConsumeToken();
+    }
+
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
       SkipUntil(tok::greater);

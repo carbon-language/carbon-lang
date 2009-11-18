@@ -2352,6 +2352,19 @@ public:
   /// \param S the scope in which the operator keyword occurs.  
   /// \param Receiver an expression for the receiver of the message. 
   virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver) { }
+
+  /// \brief Code completion for a list of protocol references in Objective-C,
+  /// such as P1 and P2 in \c id<P1,P2>.
+  ///
+  /// This code completion action is invoked prior to each identifier 
+  /// in the protocol list.
+  ///
+  /// \param Protocols the set of protocols that have already been parsed.
+  ///
+  /// \param NumProtocols the number of protocols that have already been
+  /// parsed.
+  virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
+                                                  unsigned NumProtocols) { }
   //@}
 };
 

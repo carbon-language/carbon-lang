@@ -95,6 +95,9 @@ namespace {
     /// \brief Exit from the current scope.
     void ExitScope();
     
+    /// \brief Ignore this declaration, if it is seen again.
+    void Ignore(Decl *D) { AllDeclsFound.insert(D->getCanonicalDecl()); }
+
     /// \name Name lookup predicates
     ///
     /// These predicates can be passed to the name lookup functions to filter the
@@ -1820,6 +1823,49 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver) {
       AddObjCMethods(*I, true, CurContext, Results);
   }
   
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+/// \brief Add all of the protocol declarations that we find in the given
+/// (translation unit) context.
+static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
+                               ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  
+  for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
+                               DEnd = Ctx->decls_end();
+       D != DEnd; ++D) {
+    // Record any protocols we find.
+    if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*D))
+      Results.MaybeAddResult(Result(Proto, 0), CurContext);
+
+    // Record any forward-declared protocols we find.
+    if (ObjCForwardProtocolDecl *Forward
+          = dyn_cast<ObjCForwardProtocolDecl>(*D)) {
+      for (ObjCForwardProtocolDecl::protocol_iterator 
+             P = Forward->protocol_begin(),
+             PEnd = Forward->protocol_end();
+           P != PEnd; ++P)
+        Results.MaybeAddResult(Result(*P, 0), CurContext);
+    }
+  }
+}
+
+void Sema::CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
+                                              unsigned NumProtocols) {
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
+  // Tell the result set to ignore all of the protocols we have
+  // already seen.
+  for (unsigned I = 0; I != NumProtocols; ++I)
+    if (ObjCProtocolDecl *Protocol = LookupProtocol(Protocols[I].first))
+      Results.Ignore(Protocol);
+
+  // Add all protocols.
+  AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, Results);
+
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
