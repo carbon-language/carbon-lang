@@ -184,7 +184,7 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Single-precision FP Compare
   InstrItinData<IIC_fpCMP32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+                               InstrStage<1, [FU_NPipe]>], [1, 1]>,
   //
   // Double-precision FP Compare
   InstrItinData<IIC_fpCMP64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
@@ -221,7 +221,7 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Single-precision FP ALU
   InstrItinData<IIC_fpALU32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1, 1]>,
   //
   // Double-precision FP ALU
   InstrItinData<IIC_fpALU64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
@@ -230,7 +230,7 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Single-precision FP Multiply
   InstrItinData<IIC_fpMUL32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1, 1]>,
   //
   // Double-precision FP Multiply
   InstrItinData<IIC_fpMUL64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
@@ -239,7 +239,7 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Single-precision FP MAC
   InstrItinData<IIC_fpMAC32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 2, 1, 1]>,
   //
   // Double-precision FP MAC
   InstrItinData<IIC_fpMAC64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
