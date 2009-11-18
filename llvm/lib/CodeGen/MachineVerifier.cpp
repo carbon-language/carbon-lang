@@ -42,23 +42,18 @@
 using namespace llvm;
 
 namespace {
-  struct MachineVerifier : public MachineFunctionPass {
-    static char ID; // Pass ID, replacement for typeid
+  struct MachineVerifier {
 
-    MachineVerifier(bool allowDoubleDefs = false) :
-      MachineFunctionPass(&ID),
+    MachineVerifier(Pass *pass, bool allowDoubleDefs) :
+      PASS(pass),
       allowVirtDoubleDefs(allowDoubleDefs),
       allowPhysDoubleDefs(allowDoubleDefs),
       OutFileName(getenv("LLVM_VERIFY_MACHINEINSTRS"))
-        {}
-
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-      MachineFunctionPass::getAnalysisUsage(AU);
-    }
+      {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
+    Pass *const PASS;
     const bool allowVirtDoubleDefs;
     const bool allowPhysDoubleDefs;
 
@@ -112,6 +107,10 @@ namespace {
       // regsKilled and regsLiveOut.
       RegSet vregsPassed;
 
+      // Vregs that must pass through MBB because they are needed by a successor
+      // block. This set is disjoint from regsLiveOut.
+      RegSet vregsRequired;
+
       BBInfo() : reachable(false) {}
 
       // Add register to vregsPassed if it belongs there. Return true if
@@ -133,6 +132,34 @@ namespace {
         return changed;
       }
 
+      // Add register to vregsRequired if it belongs there. Return true if
+      // anything changed.
+      bool addRequired(unsigned Reg) {
+        if (!TargetRegisterInfo::isVirtualRegister(Reg))
+          return false;
+        if (regsLiveOut.count(Reg))
+          return false;
+        return vregsRequired.insert(Reg).second;
+      }
+
+      // Same for a full set.
+      bool addRequired(const RegSet &RS) {
+        bool changed = false;
+        for (RegSet::const_iterator I = RS.begin(), E = RS.end(); I != E; ++I)
+          if (addRequired(*I))
+            changed = true;
+        return changed;
+      }
+
+      // Same for a full map.
+      bool addRequired(const RegMap &RM) {
+        bool changed = false;
+        for (RegMap::const_iterator I = RM.begin(), E = RM.end(); I != E; ++I)
+          if (addRequired(I->first))
+            changed = true;
+        return changed;
+      }
+
       // Live-out registers are either in regsLiveOut or vregsPassed.
       bool isLiveOut(unsigned Reg) const {
         return regsLiveOut.count(Reg) || vregsPassed.count(Reg);
@@ -145,6 +172,9 @@ namespace {
     bool isReserved(unsigned Reg) {
       return Reg < regsReserved.size() && regsReserved.test(Reg);
     }
+
+    // Analysis information if available
+    LiveVariables *LiveVars;
 
     void visitMachineFunctionBefore();
     void visitMachineBasicBlockBefore(const MachineBasicBlock *MBB);
@@ -163,20 +193,44 @@ namespace {
     void calcMaxRegsPassed();
     void calcMinRegsPassed();
     void checkPHIOps(const MachineBasicBlock *MBB);
+
+    void calcRegsRequired();
+    void verifyLiveVariables();
   };
+
+  struct MachineVerifierPass : public MachineFunctionPass {
+    static char ID; // Pass ID, replacement for typeid
+    bool AllowDoubleDefs;
+
+    explicit MachineVerifierPass(bool allowDoubleDefs = false)
+      : MachineFunctionPass(&ID),
+        AllowDoubleDefs(allowDoubleDefs) {}
+
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+
+    bool runOnMachineFunction(MachineFunction &MF) {
+      MF.verify(this, AllowDoubleDefs);
+      return false;
+    }
+  };
+
 }
 
-char MachineVerifier::ID = 0;
-static RegisterPass<MachineVerifier>
+char MachineVerifierPass::ID = 0;
+static RegisterPass<MachineVerifierPass>
 MachineVer("machineverifier", "Verify generated machine code");
 static const PassInfo *const MachineVerifyID = &MachineVer;
 
 FunctionPass *llvm::createMachineVerifierPass(bool allowPhysDoubleDefs) {
-  return new MachineVerifier(allowPhysDoubleDefs);
+  return new MachineVerifierPass(allowPhysDoubleDefs);
 }
 
-void MachineFunction::verify() const {
-  MachineVerifier().runOnMachineFunction(const_cast<MachineFunction&>(*this));
+void MachineFunction::verify(Pass *p, bool allowDoubleDefs) const {
+  MachineVerifier(p, allowDoubleDefs)
+    .runOnMachineFunction(const_cast<MachineFunction&>(*this));
 }
 
 bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
@@ -201,6 +255,12 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   TM = &MF.getTarget();
   TRI = TM->getRegisterInfo();
   MRI = &MF.getRegInfo();
+
+  if (PASS) {
+    LiveVars = PASS->getAnalysisIfAvailable<LiveVariables>();
+  } else {
+    LiveVars = NULL;
+  }
 
   visitMachineFunctionBefore();
   for (MachineFunction::const_iterator MFI = MF.begin(), MFE = MF.end();
@@ -518,8 +578,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     } else if (MO->isUse()) {
       regsLiveInButUnused.erase(Reg);
 
+      bool isKill = false;
       if (MO->isKill()) {
-        addRegWithSubRegs(regsKilled, Reg);
+        isKill = true;
         // Tied operands on two-address instuctions MUST NOT have a <kill> flag.
         if (MI->isRegTiedToDefOperand(MONum))
             report("Illegal kill flag on two-address instruction operand",
@@ -529,8 +590,20 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         unsigned defIdx;
         if (MI->isRegTiedToDefOperand(MONum, &defIdx) &&
             MI->getOperand(defIdx).getReg() == Reg)
-          addRegWithSubRegs(regsKilled, Reg);
+          isKill = true;
       }
+      if (isKill) {
+        addRegWithSubRegs(regsKilled, Reg);
+
+        // Check that LiveVars knows this kill
+        if (LiveVars && TargetRegisterInfo::isVirtualRegister(Reg)) {
+          LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
+          if (std::find(VI.Kills.begin(),
+                        VI.Kills.end(), MI) == VI.Kills.end())
+            report("Kill missing from LiveVariables", MO, MONum);
+        }
+      }
+
       // Use of a dead register.
       if (!regsLive.count(Reg)) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
@@ -734,6 +807,41 @@ void MachineVerifier::calcMinRegsPassed() {
   }
 }
 
+// Calculate the set of virtual registers that must be passed through each basic
+// block in order to satisfy the requirements of successor blocks. This is very
+// similar to calcMaxRegsPassed, only backwards.
+void MachineVerifier::calcRegsRequired() {
+  // First push live-in regs to predecessors' vregsRequired.
+  DenseSet<const MachineBasicBlock*> todo;
+  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
+       MFI != MFE; ++MFI) {
+    const MachineBasicBlock &MBB(*MFI);
+    BBInfo &MInfo = MBBInfoMap[&MBB];
+    for (MachineBasicBlock::const_pred_iterator PrI = MBB.pred_begin(),
+           PrE = MBB.pred_end(); PrI != PrE; ++PrI) {
+      BBInfo &PInfo = MBBInfoMap[*PrI];
+      if (PInfo.addRequired(MInfo.vregsLiveIn))
+        todo.insert(*PrI);
+    }
+  }
+
+  // Iteratively push vregsRequired to predecessors. This will converge to the
+  // same final state regardless of DenseSet iteration order.
+  while (!todo.empty()) {
+    const MachineBasicBlock *MBB = *todo.begin();
+    todo.erase(MBB);
+    BBInfo &MInfo = MBBInfoMap[MBB];
+    for (MachineBasicBlock::const_pred_iterator PrI = MBB->pred_begin(),
+           PrE = MBB->pred_end(); PrI != PrE; ++PrI) {
+      if (*PrI == MBB)
+        continue;
+      BBInfo &SInfo = MBBInfoMap[*PrI];
+      if (SInfo.addRequired(MInfo.vregsRequired))
+        todo.insert(*PrI);
+    }
+  }
+}
+
 // Check PHI instructions at the beginning of MBB. It is assumed that
 // calcMinRegsPassed has been run so BBInfo::isLiveOut is valid.
 void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
@@ -849,4 +957,39 @@ void MachineVerifier::visitMachineFunctionAfter() {
       }
     }
   }
+
+  // Now check LiveVariables info if available
+  if (LiveVars) {
+    calcRegsRequired();
+    verifyLiveVariables();
+  }
 }
+
+void MachineVerifier::verifyLiveVariables() {
+  assert(LiveVars && "Don't call verifyLiveVariables without LiveVars");
+  for (unsigned Reg = TargetRegisterInfo::FirstVirtualRegister,
+         RegE = MRI->getLastVirtReg()-1; Reg != RegE; ++Reg) {
+    LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
+    for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
+         MFI != MFE; ++MFI) {
+      BBInfo &MInfo = MBBInfoMap[MFI];
+
+      // Our vregsRequired should be identical to LiveVariables' AliveBlocks
+      if (MInfo.vregsRequired.count(Reg)) {
+        if (!VI.AliveBlocks.test(MFI->getNumber())) {
+          report("LiveVariables: Block missing from AliveBlocks", MFI);
+          *OS << "Virtual register %reg" << Reg
+              << " must be live through the block.\n";
+        }
+      } else {
+        if (VI.AliveBlocks.test(MFI->getNumber())) {
+          report("LiveVariables: Block should not be in AliveBlocks", MFI);
+          *OS << "Virtual register %reg" << Reg
+              << " is not needed live through the block.\n";
+        }
+      }
+    }
+  }
+}
+
+
