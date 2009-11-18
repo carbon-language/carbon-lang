@@ -41,8 +41,11 @@ using namespace llvm;
 STATISTIC(NumDeadBlocks, "Number of dead blocks removed");
 STATISTIC(NumBranchOpts, "Number of branches optimized");
 STATISTIC(NumTailMerge , "Number of block tails merged");
+STATISTIC(NumTailDups  , "Number of tail duplicated blocks");
+
 static cl::opt<cl::boolOrDefault> FlagEnableTailMerge("enable-tail-merge",
                               cl::init(cl::BOU_UNSET), cl::Hidden);
+
 // Throttle for huge numbers of predecessors (compile speed problems)
 static cl::opt<unsigned>
 TailMergeThreshold("tail-merge-threshold",
@@ -1107,6 +1110,7 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
        PredBB->addSuccessor(*I);
 
     Changed = true;
+    ++NumTailDups;
   }
 
   // If TailBB was duplicated into all its predecessors except for the prior
