@@ -143,6 +143,11 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
 
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCInterfaceCategory(CurScope, nameId);
+      ConsumeToken();
+    }
+    
     // For ObjC2, the category name is optional (not an error).
     if (Tok.is(tok::identifier)) {
       categoryId = Tok.getIdentifierInfo();
@@ -1111,6 +1116,11 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
 
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCImplementationCategory(CurScope, nameId);
+      ConsumeToken();
+    }
+    
     if (Tok.is(tok::identifier)) {
       categoryId = Tok.getIdentifierInfo();
       categoryLoc = ConsumeToken();

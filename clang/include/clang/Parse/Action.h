@@ -2389,6 +2389,25 @@ public:
   /// \brief Code completion for an Objective-C implementation, after the
   /// @implementation but before any identifier.
   virtual void CodeCompleteObjCImplementationDecl(Scope *S) { }
+  
+  /// \brief Code completion for the category name in an Objective-C interface
+  /// declaration.
+  ///
+  /// This code completion action is invoked after the '(' that indicates
+  /// a category name within an Objective-C interface declaration.
+  virtual void CodeCompleteObjCInterfaceCategory(Scope *S, 
+                                                 IdentifierInfo *ClassName) {
+  }
+
+  /// \brief Code completion for the category name in an Objective-C category
+  /// implementation.
+  ///
+  /// This code completion action is invoked after the '(' that indicates
+  /// the category name within an Objective-C category implementation.
+  virtual void CodeCompleteObjCImplementationCategory(Scope *S, 
+                                                   IdentifierInfo *ClassName) {
+  }
+  
   //@}
 };
 

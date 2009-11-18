@@ -808,7 +808,7 @@ public:
 /// - myMethod;
 /// @end
 ///
-/// Cateogries also allow you to split the implementation of a class across
+/// Categories also allow you to split the implementation of a class across
 /// several files (a feature more naturally supported in C++).
 ///
 /// Categories were originally inspired by dynamic languages such as Common

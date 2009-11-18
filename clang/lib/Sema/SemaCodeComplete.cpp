@@ -1933,7 +1933,7 @@ void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName) {
   // Make sure that we ignore the class we're currently defining.
   NamedDecl *CurClass
     = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
-  if (isa<ObjCInterfaceDecl>(CurClass))
+  if (CurClass && isa<ObjCInterfaceDecl>(CurClass))
     Results.Ignore(CurClass);
 
   // Add all classes.
@@ -1954,4 +1954,70 @@ void Sema::CodeCompleteObjCImplementationDecl(Scope *S) {
 
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCInterfaceCategory(Scope *S, 
+                                             IdentifierInfo *ClassName) {
+  typedef CodeCompleteConsumer::Result Result;
+  
+  ResultBuilder Results(*this);
+  
+  // Ignore any categories we find that have already been implemented by this
+  // interface.
+  llvm::SmallPtrSet<IdentifierInfo *, 16> CategoryNames;
+  NamedDecl *CurClass
+    = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+  if (ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurClass))
+    for (ObjCCategoryDecl *Category = Class->getCategoryList(); Category;
+         Category = Category->getNextClassCategory())
+      CategoryNames.insert(Category->getIdentifier());
+  
+  // Add all of the categories we know about.
+  Results.EnterNewScope();
+  TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
+  for (DeclContext::decl_iterator D = TU->decls_begin(), 
+                               DEnd = TU->decls_end();
+       D != DEnd; ++D) 
+    if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(*D))
+      if (CategoryNames.insert(Category->getIdentifier()))
+          Results.MaybeAddResult(Result(Category, 0), CurContext);
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());  
+}
+
+void Sema::CodeCompleteObjCImplementationCategory(Scope *S, 
+                                                  IdentifierInfo *ClassName) {
+  typedef CodeCompleteConsumer::Result Result;
+  
+  // Find the corresponding interface. If we couldn't find the interface, the
+  // program itself is ill-formed. However, we'll try to be helpful still by
+  // providing the list of all of the categories we know about.
+  NamedDecl *CurClass
+    = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+  ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurClass);
+  if (!Class)
+    return CodeCompleteObjCInterfaceCategory(S, ClassName);
+    
+  ResultBuilder Results(*this);
+  
+  // Add all of the categories that have have corresponding interface 
+  // declarations in this class and any of its superclasses, except for
+  // already-implemented categories in the class itself.
+  llvm::SmallPtrSet<IdentifierInfo *, 16> CategoryNames;
+  Results.EnterNewScope();
+  bool IgnoreImplemented = true;
+  while (Class) {
+    for (ObjCCategoryDecl *Category = Class->getCategoryList(); Category;
+         Category = Category->getNextClassCategory())
+      if ((!IgnoreImplemented || !Category->getImplementation()) &&
+          CategoryNames.insert(Category->getIdentifier()))
+        Results.MaybeAddResult(Result(Category, 0), CurContext);
+    
+    Class = Class->getSuperClass();
+    IgnoreImplemented = false;
+  }
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());  
 }

@@ -3649,6 +3649,10 @@ public:
   virtual void CodeCompleteObjCSuperclass(Scope *S, 
                                           IdentifierInfo *ClassName);
   virtual void CodeCompleteObjCImplementationDecl(Scope *S);
+  virtual void CodeCompleteObjCInterfaceCategory(Scope *S, 
+                                                 IdentifierInfo *ClassName);
+  virtual void CodeCompleteObjCImplementationCategory(Scope *S, 
+                                                    IdentifierInfo *ClassName);
   //@}
   
   //===--------------------------------------------------------------------===//
