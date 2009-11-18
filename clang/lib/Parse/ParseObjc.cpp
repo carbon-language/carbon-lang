@@ -123,6 +123,12 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
          "ParseObjCAtInterfaceDeclaration(): Expected @interface");
   ConsumeToken(); // the "interface" identifier
 
+  // Code completion after '@interface'.
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCInterfaceDecl(CurScope);
+    ConsumeToken();
+  }
+
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident); // missing class or category name.
     return DeclPtrTy();
@@ -181,6 +187,13 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
 
   if (Tok.is(tok::colon)) { // a super class is specified.
     ConsumeToken();
+
+    // Code completion of superclass names.
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCSuperclass(CurScope, nameId);
+      ConsumeToken();
+    }
+
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident); // missing super class name.
       return DeclPtrTy();
@@ -1077,6 +1090,12 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
   assert(Tok.isObjCAtKeyword(tok::objc_implementation) &&
          "ParseObjCAtImplementationDeclaration(): Expected @implementation");
   ConsumeToken(); // the "implementation" identifier
+
+  // Code completion after '@implementation'.
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCImplementationDecl(CurScope);
+    ConsumeToken();
+  }
 
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident); // missing class or category name.

@@ -1885,3 +1885,73 @@ void Sema::CodeCompleteObjCProtocolDecl(Scope *) {
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
+
+/// \brief Add all of the Objective-C interface declarations that we find in
+/// the given (translation unit) context.
+static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
+                                bool OnlyForwardDeclarations,
+                                bool OnlyUnimplemented,
+                                ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  
+  for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
+                               DEnd = Ctx->decls_end();
+       D != DEnd; ++D) {
+    // Record any interfaces we find.
+    if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*D))
+      if ((!OnlyForwardDeclarations || Class->isForwardDecl()) &&
+          (!OnlyUnimplemented || !Class->getImplementation()))
+        Results.MaybeAddResult(Result(Class, 0), CurContext);
+
+    // Record any forward-declared interfaces we find.
+    if (ObjCClassDecl *Forward = dyn_cast<ObjCClassDecl>(*D)) {
+      for (ObjCClassDecl::iterator C = Forward->begin(), CEnd = Forward->end();
+           C != CEnd; ++C)
+        if ((!OnlyForwardDeclarations || C->getInterface()->isForwardDecl()) &&
+            (!OnlyUnimplemented || !C->getInterface()->getImplementation()))
+          Results.MaybeAddResult(Result(C->getInterface(), 0), CurContext);
+    }
+  }
+}
+
+void Sema::CodeCompleteObjCInterfaceDecl(Scope *S) { 
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
+  // Add all classes.
+  AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, true,
+                      false, Results);
+
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName) { 
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
+  // Make sure that we ignore the class we're currently defining.
+  NamedDecl *CurClass
+    = LookupSingleName(TUScope, ClassName, LookupOrdinaryName);
+  if (isa<ObjCInterfaceDecl>(CurClass))
+    Results.Ignore(CurClass);
+
+  // Add all classes.
+  AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, false,
+                      false, Results);
+
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCImplementationDecl(Scope *S) { 
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+
+  // Add all unimplemented classes.
+  AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, false,
+                      true, Results);
+
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}

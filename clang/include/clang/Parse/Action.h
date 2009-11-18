@@ -2371,6 +2371,24 @@ public:
   ///
   /// \param S the scope in which the protocol declaration occurs.
   virtual void CodeCompleteObjCProtocolDecl(Scope *S) { }
+
+  /// \brief Code completion for an Objective-C interface, after the
+  /// @interface but before any identifier.
+  virtual void CodeCompleteObjCInterfaceDecl(Scope *S) { }
+
+  /// \brief Code completion for the superclass of an Objective-C
+  /// interface, after the ':'.
+  ///
+  /// \param S the scope in which the interface declaration occurs.
+  ///
+  /// \param ClassName the name of the class being defined.
+  virtual void CodeCompleteObjCSuperclass(Scope *S, 
+                                          IdentifierInfo *ClassName) {
+  }
+
+  /// \brief Code completion for an Objective-C implementation, after the
+  /// @implementation but before any identifier.
+  virtual void CodeCompleteObjCImplementationDecl(Scope *S) { }
   //@}
 };
 

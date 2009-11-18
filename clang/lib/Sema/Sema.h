@@ -3645,7 +3645,11 @@ public:
   virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                                   unsigned NumProtocols);
   virtual void CodeCompleteObjCProtocolDecl(Scope *S);
- //@}
+  virtual void CodeCompleteObjCInterfaceDecl(Scope *S);
+  virtual void CodeCompleteObjCSuperclass(Scope *S, 
+                                          IdentifierInfo *ClassName);
+  virtual void CodeCompleteObjCImplementationDecl(Scope *S);
+  //@}
   
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
