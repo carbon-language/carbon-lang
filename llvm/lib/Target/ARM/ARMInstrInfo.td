@@ -608,11 +608,11 @@ def PICSTR  : AXI2stw<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
                [(store GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRH : AXI3sth<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iStorer, "\n${addr:label}:\n\tstr${p}h\t$src, $addr",
+               Pseudo, IIC_iStorer, "\n${addr:label}:\n\tstrh${p}\t$src, $addr",
                [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-               Pseudo, IIC_iStorer, "\n${addr:label}:\n\tstr${p}b\t$src, $addr",
+               Pseudo, IIC_iStorer, "\n${addr:label}:\n\tstrb${p}\t$src, $addr",
                [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
 } // isNotDuplicable = 1
