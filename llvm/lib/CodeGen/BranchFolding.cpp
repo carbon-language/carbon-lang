@@ -42,6 +42,7 @@ STATISTIC(NumDeadBlocks, "Number of dead blocks removed");
 STATISTIC(NumBranchOpts, "Number of branches optimized");
 STATISTIC(NumTailMerge , "Number of block tails merged");
 STATISTIC(NumTailDups  , "Number of tail duplicated blocks");
+STATISTIC(NumInstrDups , "Additional instructions due to tail duplication");
 
 static cl::opt<cl::boolOrDefault> FlagEnableTailMerge("enable-tail-merge",
                               cl::init(cl::BOU_UNSET), cl::Hidden);
@@ -1020,6 +1021,7 @@ bool BranchFolder::TailDuplicateBlocks(MachineFunction &MF) {
 
     // If it is dead, remove it.
     if (MBB->pred_empty()) {
+      NumInstrDups -= MBB->size();
       RemoveDeadBlock(MBB);
       MadeChange = true;
       ++NumDeadBlocks;
@@ -1100,6 +1102,7 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
       MachineInstr *NewMI = MF.CloneMachineInstr(I);
       PredBB->insert(PredBB->end(), NewMI);
     }
+    NumInstrDups += TailBB->size() - 1; // subtract one for removed branch
 
     // Update the CFG.
     PredBB->removeSuccessor(PredBB->succ_begin());
