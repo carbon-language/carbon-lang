@@ -77,27 +77,38 @@ struct TrivialRewriter : public VirtRegRewriter {
     DEBUG(MF.dump());
 
     MachineRegisterInfo *mri = &MF.getRegInfo();
+    const TargetRegisterInfo *tri = MF.getTarget().getRegisterInfo();
 
     bool changed = false;
 
     for (LiveIntervals::iterator liItr = LIs->begin(), liEnd = LIs->end();
          liItr != liEnd; ++liItr) {
 
-      if (TargetRegisterInfo::isVirtualRegister(liItr->first)) {
-        if (VRM.hasPhys(liItr->first)) {
-          unsigned preg = VRM.getPhys(liItr->first);
-          mri->replaceRegWith(liItr->first, preg);
-          mri->setPhysRegUsed(preg);
+      const LiveInterval *li = liItr->second;
+      unsigned reg = li->reg;
+
+      if (TargetRegisterInfo::isPhysicalRegister(reg)) {
+        if (!li->empty())
+          mri->setPhysRegUsed(reg);
+      }
+      else {
+        if (!VRM.hasPhys(reg))
+          continue;
+        unsigned pReg = VRM.getPhys(reg);
+        mri->setPhysRegUsed(pReg);
+        for (MachineRegisterInfo::reg_iterator regItr = mri->reg_begin(reg),
+             regEnd = mri->reg_end(); regItr != regEnd;) {
+          MachineOperand &mop = regItr.getOperand();
+          assert(mop.isReg() && mop.getReg() == reg && "reg_iterator broken?");
+          ++regItr;
+          unsigned subRegIdx = mop.getSubReg();
+          unsigned pRegOp = subRegIdx ? tri->getSubReg(pReg, subRegIdx) : pReg;
+          mop.setReg(pRegOp);
+          mop.setSubReg(0);
           changed = true;
         }
       }
-      else {
-        if (!liItr->second->empty()) {
-          mri->setPhysRegUsed(liItr->first);
-        }
-      }
     }
-
     
     DEBUG(errs() << "**** Post Machine Instrs ****\n");
     DEBUG(MF.dump());

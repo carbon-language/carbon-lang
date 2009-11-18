@@ -34,10 +34,6 @@ namespace llvm {
     /// implementation selected.
     virtual std::vector<LiveInterval*> spill(LiveInterval *li) = 0;
 
-    /// Intra-block split.
-    virtual std::vector<LiveInterval*> intraBlockSplit(LiveInterval *li,
-                                                       VNInfo *valno) = 0;
-
   };
 
   /// Create and return a spiller object, as specified on the command line.
