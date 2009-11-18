@@ -68,8 +68,8 @@ namespace llvm {
   /// Multiple.  If unsuccessful, it returns false.  Also, if V can be
   /// simplified to an integer, then the simplified V is returned in Val.  Look
   /// through sext only if LookThroughSExt=true.
-  bool ComputeMultiple(Value *V, unsigned Base, Value *&Multiple, APInt &Val,
-                       bool LookThroughSExt = false, const TargetData *TD = 0,
+  bool ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
+                       bool LookThroughSExt = false,
                        unsigned Depth = 0);
 
   /// CannotBeNegativeZero - Return true if we can prove that the specified FP 

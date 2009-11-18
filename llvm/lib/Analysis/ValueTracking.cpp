@@ -791,24 +791,19 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
 
 /// ComputeMultiple - This function computes the integer multiple of Base that
 /// equals V.  If successful, it returns true and returns the multiple in
-/// Multiple.  If unsuccessful, it returns false.  Also, if V can be
-/// simplified to an integer, then the simplified V is returned in Val. It looks
+/// Multiple.  If unsuccessful, it returns false. It looks
 /// through SExt instructions only if LookThroughSExt is true.
 bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
-                           APInt &Val, bool LookThroughSExt,
-                           const TargetData *TD, unsigned Depth) {
+                           bool LookThroughSExt, unsigned Depth) {
   const unsigned MaxDepth = 6;
 
-  assert(TD && V && "No Value?");
+  assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
   assert(V->getType()->isInteger() && "Not integer or pointer type!");
 
   const Type *T = V->getType();
-  unsigned TSize = TD->getTypeSizeInBits(T->getScalarType());
 
-  ConstantInt *CI = NULL;
-  if ((CI = dyn_cast<ConstantInt>(V)))
-    Val = CI->getValue();
+  ConstantInt *CI = dyn_cast<ConstantInt>(V);
 
   if (Base == 0)
     return false;
@@ -843,8 +838,8 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
     // otherwise fall through to ZExt
   }
   case Instruction::ZExt: {
-    return ComputeMultiple(I->getOperand(0), Base, Multiple, Val,
-                           LookThroughSExt, TD, Depth+1);
+    return ComputeMultiple(I->getOperand(0), Base, Multiple,
+                           LookThroughSExt, Depth+1);
   }
   case Instruction::Shl:
   case Instruction::Mul: {
@@ -863,17 +858,15 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
 
     Value *Mul0 = NULL;
     Value *Mul1 = NULL;
-    APInt Val0(TSize, 0), Val1(TSize, 0);
-    bool M0 = ComputeMultiple(Op0, Base, Mul0, Val0,
-                              LookThroughSExt, TD, Depth+1);
-    bool M1 = ComputeMultiple(Op1, Base, Mul1, Val1,
-                              LookThroughSExt, TD, Depth+1);
+    bool M0 = ComputeMultiple(Op0, Base, Mul0,
+                              LookThroughSExt, Depth+1);
+    bool M1 = ComputeMultiple(Op1, Base, Mul1,
+                              LookThroughSExt, Depth+1);
 
     if (M0) {
       if (isa<Constant>(Op1) && isa<Constant>(Mul0)) {
         // V == Base * (Mul0 * Op1), so return (Mul0 * Op1)
         Multiple = ConstantExpr::getMul(cast<Constant>(Mul0),
-                  Val1.getBoolValue() ? ConstantInt::get(V->getContext(), Val1):
                                         cast<Constant>(Op1));
         return true;
       }
@@ -890,7 +883,6 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
       if (isa<Constant>(Op0) && isa<Constant>(Mul1)) {
         // V == Base * (Mul1 * Op0), so return (Mul1 * Op0)
         Multiple = ConstantExpr::getMul(cast<Constant>(Mul1),
-                  Val0.getBoolValue() ? ConstantInt::get(V->getContext(), Val0):
                                         cast<Constant>(Op0));
         return true;
       }
@@ -902,11 +894,6 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
           return true;
         }
     }
-
-    if (Val0.getBoolValue() && Val1.getBoolValue())
-      // Op1*Op2 was simplified, try computing multiple again.
-      return ComputeMultiple(ConstantInt::get(V->getContext(), Val0 * Val1),
-                             Base, Multiple, Val, LookThroughSExt, TD, Depth+1);
   }
   }
 

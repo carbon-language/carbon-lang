@@ -105,9 +105,8 @@ static Value *computeArraySize(const CallInst *CI, const TargetData *TD,
   // return the multiple.  Otherwise, return NULL.
   Value *MallocArg = CI->getOperand(1);
   Value *Multiple = NULL;
-  APInt Val(TD->getTypeSizeInBits(MallocArg->getType()->getScalarType()), 0);
   if (ComputeMultiple(MallocArg, ElementSize, Multiple,
-                      Val, LookThroughSExt, TD))
+                      LookThroughSExt))
     return Multiple;
 
   return NULL;
