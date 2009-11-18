@@ -41,7 +41,12 @@ class test1_D : public test1_B7 {
 // CHECK-NEXT: .space 4
 // CHECK-NEXT: .quad  __ZTIi
 
-// CHECK:    __ZTIM7test3_Ai:
+// CHECK:      .globl __ZTS7test3_A
+// CHECK-NEXT: .weak_definition __ZTS7test3_A
+// CHECK:     __ZTS7test3_A:
+// CHECK-NEXT: .asciz	"7test3_A"
+
+// CHECK:     __ZTIM7test3_Ai:
 // CHECK-NEXT: .quad  (__ZTVN10__cxxabiv129__pointer_to_member_type_infoE) + 16
 // CHECK-NEXT: .quad  __ZTSM7test3_Ai
 // CHECK-NEXT: .space 4

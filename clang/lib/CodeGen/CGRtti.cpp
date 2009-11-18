@@ -145,7 +145,7 @@ public:
 
   llvm::Constant *finish(std::vector<llvm::Constant *> &info,
                          llvm::GlobalVariable *GV,
-                         llvm::StringRef Name) {
+                         llvm::StringRef Name, bool Extern) {
     llvm::GlobalVariable::LinkageTypes linktype;
     linktype = llvm::GlobalValue::LinkOnceODRLinkage;
 
@@ -165,7 +165,8 @@ public:
       OGV->replaceAllUsesWith(NewPtr);
       OGV->eraseFromParent();
     }
-    GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+    if (!Extern)
+      GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
     return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
   }
 
@@ -230,7 +231,9 @@ public:
       }
     }
 
-    return finish(info, GV, Out.str());
+    bool Extern = CGM.getDeclVisibilityMode(RD) != LangOptions::Hidden;
+
+    return finish(info, GV, Out.str(), Extern);
   }
 
   /// - BuildFlags - Build a __flags value for __pbase_type_info.
@@ -291,7 +294,7 @@ public:
     if (PtrMem)
       info.push_back(BuildType2(BTy));
 
-    return finish(info, GV, Out.str());
+    return finish(info, GV, Out.str(), false);
   }
 
   llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
@@ -312,7 +315,7 @@ public:
     info.push_back(C);
     info.push_back(BuildName(Ty));
 
-    return finish(info, GV, Out.str());
+    return finish(info, GV, Out.str(), false);
   }
 
   llvm::Constant *BuildType(QualType Ty) {
