@@ -221,8 +221,10 @@ typedef unsigned __INTPTR_TYPE__ uintptr_t;
 
 /* C99 7.18.1.5 Greatest-width integer types.
  */
-typedef __INTMAX_TYPE__   intmax_t;
-typedef __UINTMAX_TYPE__ uintmax_t;
+#define __stdint_join3(a,b,c) a ## b ## c
+#define __stdint_exjoin3(a,b,c) __stdint_join3(a,b,c)
+typedef __stdint_exjoin3( int, __INTMAX_WIDTH__, _t) intmax_t;
+typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
 
 /* C99 7.18.4 Macros for minimum-width integer constants.
  *
