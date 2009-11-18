@@ -18,28 +18,6 @@
 using namespace clang::driver;
 using namespace clang::driver::options;
 
-enum DriverFlag {
-  DriverOption     = (1 << 0),
-  LinkerInput      = (1 << 1),
-  NoArgumentUnused = (1 << 2),
-  RenderAsInput    = (1 << 3),
-  RenderJoined     = (1 << 4),
-  RenderSeparate   = (1 << 5),
-  Unsupported      = (1 << 6)
-};
-
-struct Info {
-  const char *Name;
-  const char *HelpText;
-  const char *MetaVar;
-
-  unsigned char Kind;
-  unsigned char Flags;
-  unsigned char Param;
-  unsigned short GroupID;
-  unsigned short AliasID;
-};
-
 // Ordering on Info. The ordering is *almost* lexicographic, with two
 // exceptions. First, '\0' comes at the end of the alphabet instead of
 // the beginning (thus options preceed any other options which prefix
@@ -66,7 +44,7 @@ static int StrCmpOptionName(const char *A, const char *B) {
   return (a < b) ? -1 : 1;
 }
 
-static inline bool operator<(const Info &A, const Info &B) {
+static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
   if (&A == &B)
     return false;
 
@@ -82,55 +60,46 @@ static inline bool operator<(const Info &A, const Info &B) {
 
 //
 
-static Info OptionInfos[] = {
-  // The InputOption info
-  { "<input>", 0, 0, Option::InputClass, DriverOption, 0, OPT_INVALID, OPT_INVALID },
-  // The UnknownOption info
-  { "<unknown>", 0, 0, Option::UnknownClass, 0, 0, OPT_INVALID, OPT_INVALID },
-
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
-               HELPTEXT, METAVAR)   \
-  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \
-    OPT_##GROUP, OPT_##ALIAS },
-#include "clang/Driver/Options.def"
-};
-static const unsigned numOptions = sizeof(OptionInfos) / sizeof(OptionInfos[0]);
-
-static Info &getInfo(unsigned id) {
-  assert(id > 0 && id - 1 < numOptions && "Invalid Option ID.");
-  return OptionInfos[id - 1];
-}
-
-OptTable::OptTable() : Options(new Option*[numOptions]) {
+OptTable::OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos)
+  : OptionInfos(_OptionInfos), NumOptionInfos(_NumOptionInfos),
+    Options(new Option*[NumOptionInfos]),
+    TheInputOption(0), TheUnknownOption(0), FirstSearchableIndex(0)
+{
   // Explicitly zero initialize the error to work around a bug in array
   // value-initialization on MinGW with gcc 4.3.5.
-  memset(Options, 0, sizeof(*Options) * numOptions);
+  memset(Options, 0, sizeof(*Options) * NumOptionInfos);
 
   // Find start of normal options.
-  FirstSearchableOption = 0;
-  for (unsigned i = OPT_UNKNOWN + 1; i < LastOption; ++i) {
-    if (getInfo(i).Kind != Option::GroupClass) {
-      FirstSearchableOption = i;
+  for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
+    unsigned Kind = getInfo(i + 1).Kind;
+    if (Kind == Option::InputClass) {
+      assert(!TheInputOption && "Cannot have multiple input options!");
+      TheInputOption = getOption(i + 1);
+    } else if (Kind == Option::UnknownClass) {
+      assert(!TheUnknownOption && "Cannot have multiple input options!");
+      TheUnknownOption = getOption(i + 1);
+    } else if (Kind != Option::GroupClass) {
+      FirstSearchableIndex = i;
       break;
     }
   }
-  assert(FirstSearchableOption != 0 && "No searchable options?");
+  assert(FirstSearchableIndex != 0 && "No searchable options?");
 
 #ifndef NDEBUG
   // Check that everything after the first searchable option is a
   // regular option class.
-  for (unsigned i = FirstSearchableOption; i < LastOption; ++i) {
-    Option::OptionClass Kind = (Option::OptionClass) getInfo(i).Kind;
+  for (unsigned i = FirstSearchableIndex, e = getNumOptions(); i != e; ++i) {
+    Option::OptionClass Kind = (Option::OptionClass) getInfo(i + 1).Kind;
     assert((Kind != Option::InputClass && Kind != Option::UnknownClass &&
             Kind != Option::GroupClass) &&
            "Special options should be defined first!");
   }
 
   // Check that options are in order.
-  for (unsigned i = FirstSearchableOption + 1; i < LastOption; ++i) {
-    if (!(getInfo(i - 1) < getInfo(i))) {
-      getOption((options::ID) (i - 1))->dump();
-      getOption((options::ID) i)->dump();
+  for (unsigned i = FirstSearchableIndex+1, e = getNumOptions(); i != e; ++i) {
+    if (!(getInfo(i) < getInfo(i + 1))) {
+      getOption(i)->dump();
+      getOption(i + 1)->dump();
       assert(0 && "Options are not in order!");
     }
   }
@@ -138,49 +107,16 @@ OptTable::OptTable() : Options(new Option*[numOptions]) {
 }
 
 OptTable::~OptTable() {
-  for (unsigned i = 0; i < numOptions; ++i)
+  for (unsigned i = 0, e = getNumOptions(); i != e; ++i)
     delete Options[i];
   delete[] Options;
 }
 
-unsigned OptTable::getNumOptions() const {
-  return numOptions;
-}
-
-const char *OptTable::getOptionName(options::ID id) const {
-  return getInfo(id).Name;
-}
-
-unsigned OptTable::getOptionKind(options::ID id) const {
-  return getInfo(id).Kind;
-}
-
-const char *OptTable::getOptionHelpText(options::ID id) const {
-  return getInfo(id).HelpText;
-}
-
-const char *OptTable::getOptionMetaVar(options::ID id) const {
-  return getInfo(id).MetaVar;
-}
-
-const Option *OptTable::getOption(options::ID id) const {
-  if (id == OPT_INVALID)
-    return 0;
-
-  assert((unsigned) (id - 1) < numOptions && "Invalid ID.");
-
-  Option *&Entry = Options[id - 1];
-  if (!Entry)
-    Entry = constructOption(id);
-
-  return Entry;
-}
-
-Option *OptTable::constructOption(options::ID id) const {
-  Info &info = getInfo(id);
+Option *OptTable::CreateOption(unsigned id) const {
+  const Info &info = getInfo(id);
   const OptionGroup *Group =
-    cast_or_null<OptionGroup>(getOption((options::ID) info.GroupID));
-  const Option *Alias = getOption((options::ID) info.AliasID);
+    cast_or_null<OptionGroup>(getOption(info.GroupID));
+  const Option *Alias = getOption(info.AliasID);
 
   Option *Opt = 0;
   switch (info.Kind) {
@@ -229,11 +165,15 @@ Option *OptTable::constructOption(options::ID id) const {
 }
 
 // Support lower_bound between info and an option name.
-static inline bool operator<(struct Info &I, const char *Name) {
+namespace clang {
+namespace driver {
+static inline bool operator<(const OptTable::Info &I, const char *Name) {
   return StrCmpOptionName(I.Name, Name) == -1;
 }
-static inline bool operator<(const char *Name, struct Info &I) {
+static inline bool operator<(const char *Name, const OptTable::Info &I) {
   return StrCmpOptionName(Name, I.Name) == -1;
+}
+}
 }
 
 Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
@@ -242,10 +182,10 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
 
   // Anything that doesn't start with '-' is an input, as is '-' itself.
   if (Str[0] != '-' || Str[1] == '\0')
-    return new PositionalArg(getOption(OPT_INPUT), Index++);
+    return new PositionalArg(TheInputOption, Index++);
 
-  struct Info *Start = OptionInfos + FirstSearchableOption - 1;
-  struct Info *End = OptionInfos + LastOption - 1;
+  const Info *Start = OptionInfos + FirstSearchableIndex;
+  const Info *End = OptionInfos + LastOption - 1;
 
   // Search for the first next option which could be a prefix.
   Start = std::lower_bound(Start, End, Str);
@@ -276,6 +216,34 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
       return 0;
   }
 
-  return new PositionalArg(getOption(OPT_UNKNOWN), Index++);
+  return new PositionalArg(TheUnknownOption, Index++);
 }
 
+//
+
+static OptTable::Info InfoTable[] = {
+  // The InputOption info
+  { "<input>", 0, 0, Option::InputClass, DriverOption, 0, OPT_INVALID, OPT_INVALID },
+  // The UnknownOption info
+  { "<unknown>", 0, 0, Option::UnknownClass, 0, 0, OPT_INVALID, OPT_INVALID },
+
+#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+               HELPTEXT, METAVAR)   \
+  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \
+    OPT_##GROUP, OPT_##ALIAS },
+#include "clang/Driver/Options.def"
+};
+
+namespace {
+
+class DriverOptTable : public OptTable {
+public:
+  DriverOptTable()
+    : OptTable(InfoTable, sizeof(InfoTable) / sizeof(InfoTable[0])) {}
+};
+
+}
+
+OptTable *clang::driver::createDriverOptTable() {
+  return new DriverOptTable();
+}

@@ -44,7 +44,7 @@ Driver::Driver(const char *_Name, const char *_Dir,
                const char *_DefaultHostTriple,
                const char *_DefaultImageName,
                bool IsProduction, Diagnostic &_Diags)
-  : Opts(new OptTable()), Diags(_Diags),
+  : Opts(createDriverOptTable()), Diags(_Diags),
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
     DefaultImageName(_DefaultImageName),
     Host(0),
