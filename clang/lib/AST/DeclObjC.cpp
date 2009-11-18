@@ -614,6 +614,12 @@ void ObjCClassDecl::Destroy(ASTContext &C) {
   Decl::Destroy(C);
 }
 
+SourceRange ObjCClassDecl::getSourceRange() const {
+  // FIXME: We should include the semicolon
+  assert(NumDecls);
+  return SourceRange(getLocation(), ForwardDecls[NumDecls-1].getLocation());
+}
+
 //===----------------------------------------------------------------------===//
 // ObjCForwardProtocolDecl
 //===----------------------------------------------------------------------===//

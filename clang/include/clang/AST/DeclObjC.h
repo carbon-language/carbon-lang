@@ -744,6 +744,8 @@ public:
                                ObjCInterfaceDecl *const *Elts = 0,
                                const SourceLocation *Locs = 0,
                                unsigned nElts = 0);
+  
+  virtual SourceRange getSourceRange() const;
 
   typedef const ObjCClassRef* iterator;
   iterator begin() const { return ForwardDecls; }
