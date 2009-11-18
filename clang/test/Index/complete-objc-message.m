@@ -74,6 +74,14 @@ void test_super_var(MySubClass *super) {
   [super MyInstMethod: super second:super];
 }
 
+@protocol FooTestProtocol2
+- (int)secondProtocolInstanceMethod;
+@end
+
+void test_qual_id(id<FooTestProtocol,FooTestProtocol2> ptr) {
+  [ptr protocolInstanceMethod:1];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)a}{Text  withKeyword:}{Placeholder (int)b}
@@ -93,4 +101,7 @@ void test_super_var(MySubClass *super) {
 // RUN: c-index-test -code-completion-at=%s:74:9 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: ObjCInstanceMethodDecl:{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
 // CHECK-CC5: ObjCInstanceMethodDecl:{TypedText MySubInstMethod}
+// RUN: c-index-test -code-completion-at=%s:82:8 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText protocolInstanceMethod:}{Placeholder (int)value}
+// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText secondProtocolInstanceMethod}
 

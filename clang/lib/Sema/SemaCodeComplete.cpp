@@ -1704,24 +1704,42 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver) {
     return;
   }
   
-  const ObjCObjectPointerType* OCOPT 
-    = ReceiverType->getAs<ObjCObjectPointerType>();  
-  if (!OCOPT)
-    return;
-  
-  // FIXME: handle 'id', 'Class', and qualified types. 
-  
   // Build the set of methods we can see.
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-
-  ObjCInterfaceDecl *CDecl = OCOPT->getInterfaceDecl();
-  if (!CDecl)
-    return;
   
-  AddObjCMethods(CDecl, true, CurContext, Results);
+  // Handle messages to Class. This really isn't a message to an instance
+  // method, so we treat it the same way we would treat a message send to a
+  // class method.
+  if (ReceiverType->isObjCClassType() || 
+      ReceiverType->isObjCQualifiedClassType()) {
+    if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
+      if (ObjCInterfaceDecl *ClassDecl = CurMethod->getClassInterface())
+        AddObjCMethods(ClassDecl, false, CurContext, Results);
+    }
+  } 
+  // Handle messages to a qualified ID ("id<foo>").
+  else if (const ObjCObjectPointerType *QualID
+             = ReceiverType->getAsObjCQualifiedIdType()) {
+    // Search protocols for instance methods.
+    for (ObjCObjectPointerType::qual_iterator I = QualID->qual_begin(),
+                                              E = QualID->qual_end(); 
+         I != E; ++I)
+      AddObjCMethods(*I, true, CurContext, Results);
+  }
+  // Handle messages to a pointer to interface type.
+  else if (const ObjCObjectPointerType *IFacePtr
+                              = ReceiverType->getAsObjCInterfacePointerType()) {
+    // Search the class, its superclasses, etc., for instance methods.
+    AddObjCMethods(IFacePtr->getInterfaceDecl(), true, CurContext, Results);
+    
+    // Search protocols for instance methods.
+    for (ObjCObjectPointerType::qual_iterator I = IFacePtr->qual_begin(),
+         E = IFacePtr->qual_end(); 
+         I != E; ++I)
+      AddObjCMethods(*I, true, CurContext, Results);
+  }
+  
   Results.ExitScope();
-  
-  // This also suppresses remaining diagnostics.
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
