@@ -272,6 +272,9 @@ public:
 
   virtual bool isIdentical(const MachineInstr *MI, const MachineInstr *Other,
                            const MachineRegisterInfo *MRI) const;
+
+  virtual unsigned TailDuplicationLimit(const MachineBasicBlock &MBB,
+                                        unsigned DefaultLimit) const;
 };
 
 static inline

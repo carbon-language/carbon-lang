@@ -50,6 +50,9 @@ protected:
   /// determine if NEON should actually be used.
   bool UseNEONForSinglePrecisionFP;
 
+  /// HasBranchTargetBuffer - True if processor can predict indirect branches.
+  bool HasBranchTargetBuffer;
+
   /// IsThumb - True if we are in thumb mode, false if in ARM mode.
   bool IsThumb;
 
@@ -122,6 +125,8 @@ protected:
   bool isThumb1Only() const { return IsThumb && (ThumbMode == Thumb1); }
   bool isThumb2() const { return IsThumb && (ThumbMode == Thumb2); }
   bool hasThumb2() const { return ThumbMode >= Thumb2; }
+
+  bool hasBranchTargetBuffer() const { return HasBranchTargetBuffer; }
 
   bool isR9Reserved() const { return IsR9Reserved; }
 

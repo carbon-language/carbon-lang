@@ -1033,12 +1033,13 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
   if (TailBB->isSuccessor(TailBB))
     return false;
 
-  // Duplicate up to one less than the tail-merge threshold. When optimizing
-  // for size, duplicate only one, because one branch instruction can be
-  // eliminated to compensate for the duplication.
+  // Set the limit on the number of instructions to duplicate, with a default
+  // of one less than the tail-merge threshold. When optimizing for size,
+  // duplicate only one, because one branch instruction can be eliminated to
+  // compensate for the duplication.
   unsigned MaxDuplicateCount =
     MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize) ?
-      1 : (TailMergeSize - 1);
+    1 : TII->TailDuplicationLimit(*TailBB, TailMergeSize - 1);
 
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.
