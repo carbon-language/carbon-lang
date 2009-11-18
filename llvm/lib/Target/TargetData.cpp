@@ -17,9 +17,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetData.h"
-#include "llvm/Module.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -323,37 +323,130 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
                  : Alignments[BestMatchIdx].PrefAlign;
 }
 
-typedef DenseMap<const StructType*, StructLayout*>LayoutInfoTy;
+typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
+
+namespace llvm {
+
+class StructLayoutMap : public AbstractTypeUser {
+  LayoutInfoTy LayoutInfo;
+
+  /// refineAbstractType - The callback method invoked when an abstract type is
+  /// resolved to another type.  An object must override this method to update
+  /// its internal state to reference NewType instead of OldType.
+  ///
+  virtual void refineAbstractType(const DerivedType *OldTy,
+                                  const Type *) {
+    const StructType *STy = dyn_cast<const StructType>(OldTy);
+    if (!STy) {
+      OldTy->removeAbstractTypeUser(this);
+      return;
+    }
+
+    StructLayout *SL = LayoutInfo[STy];
+    if (SL) {
+      SL->~StructLayout();
+      free(SL);
+      LayoutInfo[STy] = NULL;
+    }
+
+    OldTy->removeAbstractTypeUser(this);
+  }
+
+  /// typeBecameConcrete - The other case which AbstractTypeUsers must be aware
+  /// of is when a type makes the transition from being abstract (where it has
+  /// clients on its AbstractTypeUsers list) to concrete (where it does not).
+  /// This method notifies ATU's when this occurs for a type.
+  ///
+  virtual void typeBecameConcrete(const DerivedType *AbsTy) {
+    const StructType *STy = dyn_cast<const StructType>(AbsTy);
+    if (!STy) {
+      AbsTy->removeAbstractTypeUser(this);
+      return;
+    }
+
+    StructLayout *SL = LayoutInfo[STy];
+    if (SL) {
+      SL->~StructLayout();
+      free(SL);
+      LayoutInfo[STy] = NULL;
+    }
+
+    AbsTy->removeAbstractTypeUser(this);
+  }
+
+  bool insert(const Type *Ty) {
+    if (Ty->isAbstract())
+      Ty->addAbstractTypeUser(this);
+    return true;
+  }
+
+public:
+  virtual ~StructLayoutMap() {
+    // Remove any layouts.
+    for (LayoutInfoTy::iterator
+           I = LayoutInfo.begin(), E = LayoutInfo.end(); I != E; ++I)
+      if (StructLayout *SL = I->second) {
+        SL->~StructLayout();
+        free(SL);
+      }
+  }
+
+  inline LayoutInfoTy::iterator begin() {
+    return LayoutInfo.begin();
+  }
+  inline LayoutInfoTy::iterator end() {
+    return LayoutInfo.end();
+  }
+  inline LayoutInfoTy::const_iterator begin() const {
+    return LayoutInfo.begin();
+  }
+  inline LayoutInfoTy::const_iterator end() const {
+    return LayoutInfo.end();
+  }
+
+  LayoutInfoTy::iterator find(const StructType *&Val) {
+    return LayoutInfo.find(Val);
+  }
+  LayoutInfoTy::const_iterator find(const StructType *&Val) const {
+    return LayoutInfo.find(Val);
+  }
+
+  bool erase(const StructType *&Val) {
+    return LayoutInfo.erase(Val);
+  }
+  bool erase(LayoutInfoTy::iterator I) {
+    return LayoutInfo.erase(I);
+  }
+
+  StructLayout *&operator[](const Type *Key) {
+    const StructType *STy = dyn_cast<const StructType>(Key);
+    assert(STy && "Trying to access the struct layout map with a non-struct!");
+    insert(STy);
+    return LayoutInfo[STy];
+  }
+
+  // for debugging...
+  virtual void dump() const {}
+};
+
+} // end namespace llvm
 
 TargetData::~TargetData() {
-  if (!LayoutMap)
-    return;
-  
-  // Remove any layouts for this TD.
-  LayoutInfoTy &TheMap = *static_cast<LayoutInfoTy*>(LayoutMap);
-  for (LayoutInfoTy::iterator I = TheMap.begin(), E = TheMap.end(); I != E; ) {
-    I->second->~StructLayout();
-    free(I->second);
-    TheMap.erase(I++);
-  }
-  
-  delete static_cast<LayoutInfoTy*>(LayoutMap);
+  delete LayoutMap;
 }
 
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
   if (!LayoutMap)
-    LayoutMap = static_cast<void*>(new LayoutInfoTy());
+    LayoutMap = new StructLayoutMap();
   
-  LayoutInfoTy &TheMap = *static_cast<LayoutInfoTy*>(LayoutMap);
-  
-  StructLayout *&SL = TheMap[Ty];
+  StructLayout *&SL = (*LayoutMap)[Ty];
   if (SL) return SL;
 
   // Otherwise, create the struct layout.  Because it is variable length, we 
   // malloc it, then use placement new.
   int NumElts = Ty->getNumElements();
   StructLayout *L =
-    (StructLayout *)malloc(sizeof(StructLayout)+(NumElts-1)*sizeof(uint64_t));
+    (StructLayout *)malloc(sizeof(StructLayout)+(NumElts-1) * sizeof(uint64_t));
   
   // Set SL before calling StructLayout's ctor.  The ctor could cause other
   // entries to be added to TheMap, invalidating our reference.
@@ -370,13 +463,12 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutMap) return;  // No cache.
   
-  LayoutInfoTy* LayoutInfo = static_cast<LayoutInfoTy*>(LayoutMap);
-  LayoutInfoTy::iterator I = LayoutInfo->find(Ty);
-  if (I == LayoutInfo->end()) return;
+  DenseMap<const StructType*, StructLayout*>::iterator I = LayoutMap->find(Ty);
+  if (I == LayoutMap->end()) return;
   
   I->second->~StructLayout();
   free(I->second);
-  LayoutInfo->erase(I);
+  LayoutMap->erase(I);
 }
 
 
