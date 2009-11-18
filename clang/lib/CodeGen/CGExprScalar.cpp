@@ -348,6 +348,9 @@ public:
   Value *VisitBinLOr        (const BinaryOperator *E);
   Value *VisitBinComma      (const BinaryOperator *E);
 
+  Value *VisitBinPtrMemD(const Expr *E) { return EmitLoadOfLValue(E); }
+  Value *VisitBinPtrMemI(const Expr *E) { return EmitLoadOfLValue(E); }
+
   // Other Operators.
   Value *VisitBlockExpr(const BlockExpr *BE);
   Value *VisitConditionalOperator(const ConditionalOperator *CO);
@@ -539,13 +542,6 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
 //===----------------------------------------------------------------------===//
 
 Value *ScalarExprEmitter::VisitExpr(Expr *E) {
-  if (const BinaryOperator *BExpr = dyn_cast<BinaryOperator>(E))
-    if (BExpr->getOpcode() == BinaryOperator::PtrMemD) {
-      LValue LV = CGF.EmitPointerToDataMemberBinaryExpr(BExpr);
-      Value *InVal = CGF.EmitLoadOfLValue(LV, E->getType()).getScalarVal();
-      return InVal;
-    }
-  
   CGF.ErrorUnsupported(E, "scalar expression");
   if (E->getType()->isVoidType())
     return 0;
