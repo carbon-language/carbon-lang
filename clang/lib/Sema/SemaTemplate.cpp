@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===/
 
 #include "Sema.h"
+#include "Lookup.h"
 #include "TreeTransform.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
@@ -629,7 +630,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // Find any previous declaration with this name.
   DeclContext *SemanticContext;
   LookupResult Previous(*this, Name, NameLoc, LookupOrdinaryName,
-                        LookupResult::ForRedeclaration);
+                        ForRedeclaration);
   if (SS.isNotEmpty() && !SS.isInvalid()) {
     if (RequireCompleteDeclContext(SS))
       return true;

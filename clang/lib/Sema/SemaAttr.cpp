@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/AST/Expr.h"
 using namespace clang;
 

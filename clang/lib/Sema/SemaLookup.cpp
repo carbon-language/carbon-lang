@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Decl.h"
@@ -237,11 +238,11 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
 }
 
 // Necessary because CXXBasePaths is not complete in Sema.h
-void Sema::LookupResult::deletePaths(CXXBasePaths *Paths) {
+void LookupResult::deletePaths(CXXBasePaths *Paths) {
   delete Paths;
 }
 
-void Sema::LookupResult::resolveKind() {
+void LookupResult::resolveKind() {
   unsigned N = Decls.size();
 
   // Fast case: no possible ambiguity.
@@ -337,7 +338,7 @@ void Sema::LookupResult::resolveKind() {
 /// solution, since it causes the OverloadedFunctionDecl to be
 /// leaked. FIXME: Eventually, there will be a better way to iterate
 /// over the set of overloaded functions returned by name lookup.
-NamedDecl *Sema::LookupResult::getAsSingleDecl(ASTContext &C) const {
+NamedDecl *LookupResult::getAsSingleDecl(ASTContext &C) const {
   size_t size = Decls.size();
   if (size == 0) return 0;
   if (size == 1) return (*begin())->getUnderlyingDecl();
@@ -362,7 +363,7 @@ NamedDecl *Sema::LookupResult::getAsSingleDecl(ASTContext &C) const {
   return Ovl;
 }
 
-void Sema::LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
+void LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
   CXXBasePaths::paths_iterator I, E;
   DeclContext::lookup_iterator DI, DE;
   for (I = P.begin(), E = P.end(); I != E; ++I)
@@ -370,7 +371,7 @@ void Sema::LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
       addDecl(*DI);
 }
 
-void Sema::LookupResult::setAmbiguousBaseSubobjects(CXXBasePaths &P) {
+void LookupResult::setAmbiguousBaseSubobjects(CXXBasePaths &P) {
   Paths = new CXXBasePaths;
   Paths->swap(P);
   addDeclsFromBasePaths(*Paths);
@@ -378,7 +379,7 @@ void Sema::LookupResult::setAmbiguousBaseSubobjects(CXXBasePaths &P) {
   setAmbiguous(AmbiguousBaseSubobjects);
 }
 
-void Sema::LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
+void LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
   Paths = new CXXBasePaths;
   Paths->swap(P);
   addDeclsFromBasePaths(*Paths);
@@ -386,7 +387,7 @@ void Sema::LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
   setAmbiguous(AmbiguousBaseSubobjectTypes);
 }
 
-void Sema::LookupResult::print(llvm::raw_ostream &Out) {
+void LookupResult::print(llvm::raw_ostream &Out) {
   Out << Decls.size() << " result(s)";
   if (isAmbiguous()) Out << ", ambiguous";
   if (Paths) Out << ", base paths present";
@@ -399,8 +400,7 @@ void Sema::LookupResult::print(llvm::raw_ostream &Out) {
 
 // Adds all qualifying matches for a name within a decl context to the
 // given lookup result.  Returns true if any matches were found.
-static bool LookupDirect(Sema::LookupResult &R,
-                         const DeclContext *DC) {
+static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
   bool Found = false;
 
   DeclContext::lookup_const_iterator I, E;
@@ -414,7 +414,7 @@ static bool LookupDirect(Sema::LookupResult &R,
 
 // Performs C++ unqualified lookup into the given file context.
 static bool
-CppNamespaceLookup(Sema::LookupResult &R, ASTContext &Context, DeclContext *NS,
+CppNamespaceLookup(LookupResult &R, ASTContext &Context, DeclContext *NS,
                    UnqualUsingDirectiveSet &UDirs) {
 
   assert(NS && NS->isFileContext() && "CppNamespaceLookup() requires namespace!");
@@ -768,7 +768,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
 ///   class or enumeration name if and only if the declarations are
 ///   from the same namespace; otherwise (the declarations are from
 ///   different namespaces), the program is ill-formed.
-static bool LookupQualifiedNameInUsingDirectives(Sema::LookupResult &R,
+static bool LookupQualifiedNameInUsingDirectives(LookupResult &R,
                                                  DeclContext *StartDC) {
   assert(StartDC->isFileContext() && "start context is not a file context");
 
@@ -800,7 +800,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema::LookupResult &R,
   bool FoundTag = false;
   bool FoundNonTag = false;
 
-  Sema::LookupResult LocalR(Sema::LookupResult::Temporary, R);
+  LookupResult LocalR(LookupResult::Temporary, R);
 
   bool Found = false;
   while (!Queue.empty()) {
@@ -810,7 +810,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema::LookupResult &R,
     // We go through some convolutions here to avoid copying results
     // between LookupResults.
     bool UseLocal = !R.empty();
-    Sema::LookupResult &DirectR = UseLocal ? LocalR : R;
+    LookupResult &DirectR = UseLocal ? LocalR : R;
     bool FoundDirect = LookupDirect(DirectR, ND);
 
     if (FoundDirect) {
@@ -1599,6 +1599,14 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
   }
 
   return false;
+}
+
+NamedDecl *Sema::LookupSingleName(Scope *S, DeclarationName Name,
+                                  LookupNameKind NameKind,
+                                  RedeclarationKind Redecl) {
+  LookupResult R(*this, Name, SourceLocation(), NameKind, Redecl);
+  LookupName(R, S);
+  return R.getAsSingleDecl(Context);
 }
 
 /// \brief Find the protocol with the given name, if any.

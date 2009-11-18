@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -1426,7 +1427,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
       LookupResult R(*this, (*F)->getDeclName(), SourceLocation(),
-                     LookupOrdinaryName, LookupResult::ForRedeclaration);
+                     LookupOrdinaryName, ForRedeclaration);
       LookupQualifiedName(R, Owner);
       NamedDecl *PrevDecl = R.getAsSingleDecl(Context);
       if (PrevDecl && !isa<TagDecl>(PrevDecl)) {
@@ -1795,7 +1796,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
 
     DC = CurContext;
     LookupResult R(*this, Name, D.getIdentifierLoc(), NameKind,
-                   LookupResult::ForRedeclaration);
+                   ForRedeclaration);
 
     LookupName(R, S, NameKind == LookupRedeclarationWithLinkage);
     PrevDecl = R.getAsSingleDecl(Context);
@@ -1819,7 +1820,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
       return DeclPtrTy();
     
     LookupResult Res(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
-                     LookupResult::ForRedeclaration);
+                     ForRedeclaration);
     LookupQualifiedName(Res, DC);
     PrevDecl = Res.getAsSingleDecl(Context);
 
@@ -2937,7 +2938,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       NewFD->setInvalidDecl();
 
       LookupResult Prev(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
-                        LookupResult::ForRedeclaration);
+                        ForRedeclaration);
       LookupQualifiedName(Prev, DC);
       assert(!Prev.isAmbiguous() &&
              "Cannot have an ambiguity in previous-declaration lookup");
@@ -4316,8 +4317,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   bool isStdBadAlloc = false;
   bool Invalid = false;
 
-  LookupResult::RedeclarationKind Redecl =
-    (LookupResult::RedeclarationKind) (TUK != TUK_Reference);
+  RedeclarationKind Redecl = (RedeclarationKind) (TUK != TUK_Reference);
 
   if (Name && SS.isNotEmpty()) {
     // We have a nested-name tag ('struct foo::bar').
@@ -4631,7 +4631,7 @@ CreateNewDecl:
     //   that is declared in that scope and refers to a type other
     //   than the class or enumeration itself.
     LookupResult Lookup(*this, Name, NameLoc, LookupOrdinaryName,
-                        LookupResult::ForRedeclaration);
+                        ForRedeclaration);
     LookupName(Lookup, S);
     TypedefDecl *PrevTypedef = 0;
     if (NamedDecl *Prev = Lookup.getAsSingleDecl(Context))
@@ -4852,7 +4852,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
   NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName,
-                                         LookupResult::ForRedeclaration);
+                                         ForRedeclaration);
 
   if (PrevDecl && PrevDecl->isTemplateParameter()) {
     // Maybe we will complain about the shadowed template parameter.
@@ -5238,7 +5238,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
 
   if (II) {
     NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName,
-                                           LookupResult::ForRedeclaration);
+                                           ForRedeclaration);
     if (PrevDecl && isDeclInScope(PrevDecl, EnclosingContext, S)
         && !isa<TagDecl>(PrevDecl)) {
       Diag(Loc, diag::err_duplicate_member) << II;

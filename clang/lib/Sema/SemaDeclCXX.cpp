@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -2639,7 +2640,7 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
     NamedDecl *PrevDecl
       = LookupSingleName(DeclRegionScope, II, LookupOrdinaryName,
-                         LookupResult::ForRedeclaration);
+                         ForRedeclaration);
 
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
@@ -3028,8 +3029,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
 
   // Check if we have a previous declaration with the same name.
   if (NamedDecl *PrevDecl
-        = LookupSingleName(S, Alias, LookupOrdinaryName,
-                           LookupResult::ForRedeclaration)) {
+        = LookupSingleName(S, Alias, LookupOrdinaryName, ForRedeclaration)) {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
       // We already have an alias with the same name that points to the same
       // namespace, so don't create a new one.
@@ -4676,8 +4676,7 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
     // FIXME: handle dependent contexts
     if (!DC) return DeclPtrTy();
 
-    LookupResult R(*this, Name, Loc, LookupOrdinaryName,
-                   LookupResult::ForRedeclaration);
+    LookupResult R(*this, Name, Loc, LookupOrdinaryName, ForRedeclaration);
     LookupQualifiedName(R, DC);
     PrevDecl = R.getAsSingleDecl(Context);
 
@@ -4712,8 +4711,7 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
       while (DC->isRecord()) 
         DC = DC->getParent();
 
-      LookupResult R(*this, Name, Loc, LookupOrdinaryName,
-                     LookupResult::ForRedeclaration);
+      LookupResult R(*this, Name, Loc, LookupOrdinaryName, ForRedeclaration);
       LookupQualifiedName(R, DC);
       PrevDecl = R.getAsSingleDecl(Context);
 

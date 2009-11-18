@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===/
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
@@ -684,9 +685,9 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
     // Look only into the namespace where the friend would be declared to 
     // find a previous declaration. This is the innermost enclosing namespace, 
     // as described in ActOnFriendFunctionDecl.
-    Sema::LookupResult R(SemaRef, Function->getDeclName(), SourceLocation(),
-                         Sema::LookupOrdinaryName,
-                         Sema::LookupResult::ForRedeclaration);
+    LookupResult R(SemaRef, Function->getDeclName(), SourceLocation(),
+                   Sema::LookupOrdinaryName,
+                   Sema::ForRedeclaration);
     SemaRef.LookupQualifiedName(R, DC);
     
     PrevDecl = R.getAsSingleDecl(SemaRef.Context);
@@ -845,9 +846,9 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   NamedDecl *PrevDecl = 0;
 
   if (!FunctionTemplate || TemplateParams) {
-    Sema::LookupResult R(SemaRef, Name, SourceLocation(),
-                         Sema::LookupOrdinaryName,
-                         Sema::LookupResult::ForRedeclaration);
+    LookupResult R(SemaRef, Name, SourceLocation(),
+                   Sema::LookupOrdinaryName,
+                   Sema::ForRedeclaration);
     SemaRef.LookupQualifiedName(R, Owner);
     PrevDecl = R.getAsSingleDecl(SemaRef.Context);
 
