@@ -323,7 +323,7 @@ if(LLVM_BUILD_TOOLS)
   add_subdirectory(tools)
 endif()
 
-option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." ON)
+option(LLVM_BUILD_EXAMPLES "Build LLVM example programs." OFF)
 if(LLVM_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif ()
