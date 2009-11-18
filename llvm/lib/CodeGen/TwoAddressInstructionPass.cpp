@@ -112,8 +112,7 @@ namespace {
                                MachineBasicBlock *MBB, unsigned Dist);
     bool DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
                            MachineBasicBlock::iterator &nmi,
-                           MachineFunction::iterator &mbbi,
-                           unsigned regB, unsigned regBIdx, unsigned Dist);
+                           MachineFunction::iterator &mbbi, unsigned Dist);
 
     bool TryInstructionTransform(MachineBasicBlock::iterator &mi,
                                  MachineBasicBlock::iterator &nmi,
@@ -730,7 +729,7 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
 
 /// isSafeToDelete - If the specified instruction does not produce any side
 /// effects and all of its defs are dead, then it's safe to delete.
-static bool isSafeToDelete(MachineInstr *MI, unsigned Reg,
+static bool isSafeToDelete(MachineInstr *MI,
                            const TargetInstrInfo *TII,
                            SmallVector<unsigned, 4> &Kills) {
   const TargetInstrDesc &TID = MI->getDesc();
@@ -745,10 +744,9 @@ static bool isSafeToDelete(MachineInstr *MI, unsigned Reg,
       continue;
     if (MO.isDef() && !MO.isDead())
       return false;
-    if (MO.isUse() && MO.getReg() != Reg && MO.isKill())
+    if (MO.isUse() && MO.isKill())
       Kills.push_back(MO.getReg());
   }
-
   return true;
 }
 
@@ -783,11 +781,10 @@ bool
 TwoAddressInstructionPass::DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
                                              MachineBasicBlock::iterator &nmi,
                                              MachineFunction::iterator &mbbi,
-                                             unsigned regB, unsigned regBIdx,
                                              unsigned Dist) {
   // Check if the instruction has no side effects and if all its defs are dead.
   SmallVector<unsigned, 4> Kills;
-  if (!isSafeToDelete(mi, regB, TII, Kills))
+  if (!isSafeToDelete(mi, TII, Kills))
     return false;
 
   // If this instruction kills some virtual registers, we need to
@@ -810,10 +807,6 @@ TwoAddressInstructionPass::DeleteUnusedInstr(MachineBasicBlock::iterator &mi,
           LV->addVirtualRegisterKilled(Kill, NewKill);
       }
     }
-
-    // If regB was marked as a kill, update its Kills list.
-    if (mi->getOperand(regBIdx).isKill())
-      LV->removeVirtualRegisterKilled(regB, mi);
   }
 
   mbbi->erase(mi); // Nuke the old inst.
@@ -842,7 +835,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   // it so it doesn't clobber regB.
   bool regBKilled = isKilled(*mi, regB, MRI, TII);
   if (!regBKilled && mi->getOperand(DstIdx).isDead() &&
-      DeleteUnusedInstr(mi, nmi, mbbi, regB, SrcIdx, Dist)) {
+      DeleteUnusedInstr(mi, nmi, mbbi, Dist)) {
     ++NumDeletes;
     return true; // Done with this instruction.
   }
