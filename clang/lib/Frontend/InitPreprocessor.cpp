@@ -388,8 +388,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineTypeSize("__WCHAR_MAX__", TI.getWCharType(), TI, Buf);
   DefineTypeSize("__INTMAX_MAX__", TI.getIntMaxType(), TI, Buf);
 
-  DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Buf);
-  DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Buf);
   DefineTypeWidth("__INTMAX_WIDTH__",  TI.getIntMaxType(), TI, Buf);
   DefineType("__PTRDIFF_TYPE__", TI.getPtrDiffType(0), Buf);
   DefineType("__INTPTR_TYPE__", TI.getIntPtrType(), Buf);
