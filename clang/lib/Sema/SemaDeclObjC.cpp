@@ -828,9 +828,10 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
   for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
        IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
        IM != EM; ++IM, ++IF) {
-    if (Context.typesAreCompatible((*IF)->getType(), (*IM)->getType()) ||
-        Context.QualifiedIdConformsQualifiedId((*IF)->getType(),
-                                               (*IM)->getType()))
+    QualType ParmDeclTy = (*IF)->getType().getUnqualifiedType();
+    QualType ParmImpTy = (*IM)->getType().getUnqualifiedType();
+    if (Context.typesAreCompatible(ParmDeclTy, ParmImpTy) ||
+        Context.QualifiedIdConformsQualifiedId(ParmDeclTy, ParmImpTy))
       continue;
 
     Diag((*IM)->getLocation(), diag::warn_conflicting_param_types)
