@@ -16,14 +16,14 @@
 using namespace clang::driver;
 using namespace clang::driver::types;
 
-struct Info {
+struct TypeInfo {
   const char *Name;
   const char *Flags;
   const char *TempSuffix;
   ID PreprocessedType;
 };
 
-static Info TypeInfos[] = {
+static TypeInfo TypeInfos[] = {
 #define TYPE(NAME, ID, PP_TYPE, TEMP_SUFFIX, FLAGS) \
   { NAME, FLAGS, TEMP_SUFFIX, TY_##PP_TYPE, },
 #include "clang/Driver/Types.def"
@@ -31,7 +31,7 @@ static Info TypeInfos[] = {
 };
 static const unsigned numTypes = sizeof(TypeInfos) / sizeof(TypeInfos[0]);
 
-static Info &getInfo(unsigned id) {
+static TypeInfo &getInfo(unsigned id) {
   assert(id > 0 && id - 1 < numTypes && "Invalid Type ID.");
   return TypeInfos[id - 1];
 }
