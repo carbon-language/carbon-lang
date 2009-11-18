@@ -1830,6 +1830,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver) {
 /// \brief Add all of the protocol declarations that we find in the given
 /// (translation unit) context.
 static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
+                               bool OnlyForwardDeclarations,
                                ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
   
@@ -1838,7 +1839,8 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
        D != DEnd; ++D) {
     // Record any protocols we find.
     if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*D))
-      Results.MaybeAddResult(Result(Proto, 0), CurContext);
+      if (!OnlyForwardDeclarations || Proto->isForwardDecl())
+        Results.MaybeAddResult(Result(Proto, 0), CurContext);
 
     // Record any forward-declared protocols we find.
     if (ObjCForwardProtocolDecl *Forward
@@ -1847,7 +1849,8 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
              P = Forward->protocol_begin(),
              PEnd = Forward->protocol_end();
            P != PEnd; ++P)
-        Results.MaybeAddResult(Result(*P, 0), CurContext);
+        if (!OnlyForwardDeclarations || (*P)->isForwardDecl())
+          Results.MaybeAddResult(Result(*P, 0), CurContext);
     }
   }
 }
@@ -1864,7 +1867,20 @@ void Sema::CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
       Results.Ignore(Protocol);
 
   // Add all protocols.
-  AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, Results);
+  AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, false,
+                     Results);
+
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCProtocolDecl(Scope *) {
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
+  // Add all protocols.
+  AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, true,
+                     Results);
 
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());

@@ -994,6 +994,11 @@ Parser::DeclPtrTy Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
          "ParseObjCAtProtocolDeclaration(): Expected @protocol");
   ConsumeToken(); // the "protocol" identifier
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCProtocolDecl(CurScope);
+    ConsumeToken();
+  }
+
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident); // missing protocol name.
     return DeclPtrTy();

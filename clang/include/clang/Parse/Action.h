@@ -2365,6 +2365,12 @@ public:
   /// parsed.
   virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                                   unsigned NumProtocols) { }
+
+  /// \brief Code completion for a protocol declaration or definition, after
+  /// the @protocol but before any identifier.
+  ///
+  /// \param S the scope in which the protocol declaration occurs.
+  virtual void CodeCompleteObjCProtocolDecl(Scope *S) { }
   //@}
 };
 

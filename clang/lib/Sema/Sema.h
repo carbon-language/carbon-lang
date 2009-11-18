@@ -4017,7 +4017,8 @@ public:
   virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver);
   virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                                   unsigned NumProtocols);
-  //@}
+  virtual void CodeCompleteObjCProtocolDecl(Scope *S);
+ //@}
   
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
