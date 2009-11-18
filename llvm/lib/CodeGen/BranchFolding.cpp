@@ -197,7 +197,6 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
     MadeChange |= OptimizeImpDefsBlock(MBB);
   }
 
-
   bool MadeChangeThisIteration = true;
   while (MadeChangeThisIteration) {
     MadeChangeThisIteration = false;
@@ -206,10 +205,15 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
     MadeChange |= MadeChangeThisIteration;
   }
 
-  // Do tail duplication once after tail merging is done.  Otherwise it is
+  // Do tail duplication after tail merging is done.  Otherwise it is
   // tough to avoid situations where tail duplication and tail merging undo
   // each other's transformations ad infinitum.
-  MadeChange |= TailDuplicateBlocks(MF);
+  MadeChangeThisIteration = true;
+  while (MadeChangeThisIteration) {
+    MadeChangeThisIteration = false;
+    MadeChangeThisIteration |= TailDuplicateBlocks(MF);
+    MadeChange |= MadeChangeThisIteration;
+  }
 
   // See if any jump tables have become mergable or dead as the code generator
   // did its thing.
