@@ -603,29 +603,24 @@ typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
 /* C99 7.18.2.4 Limits of integer types capable of holding object pointers. */
 /* C99 7.18.3 Limits of other integer types. */
 
+#define  INTPTR_MIN __stdint_exjoin3( INT, __INTPTR_WIDTH__, _MIN)
+#define  INTPTR_MAX __stdint_exjoin3( INT, __INTPTR_WIDTH__, _MAX)
+#define UINTPTR_MAX __stdint_exjoin3(UINT, __INTPTR_WIDTH__, _MAX)
+
 #if __POINTER_WIDTH__ == 64
 
-#define  INTPTR_MIN  INT64_MIN
-#define  INTPTR_MAX  INT64_MAX
-#define UINTPTR_MAX UINT64_MAX
 #define PTRDIFF_MIN  INT64_MIN
 #define PTRDIFF_MAX  INT64_MAX
 #define SIZE_MAX    UINT64_MAX
 
 #elif __POINTER_WIDTH__ == 32
 
-#define  INTPTR_MIN  INT32_MIN
-#define  INTPTR_MAX  INT32_MAX
-#define UINTPTR_MAX UINT32_MAX
 #define PTRDIFF_MIN  INT32_MIN
 #define PTRDIFF_MAX  INT32_MAX
 #define SIZE_MAX    UINT32_MAX
 
 #elif __POINTER_WIDTH__ == 16
 
-#define  INTPTR_MIN  INT16_MIN
-#define  INTPTR_MAX  INT16_MAX
-#define UINTPTR_MAX UINT16_MAX
 #define PTRDIFF_MIN  INT16_MIN
 #define PTRDIFF_MAX  INT16_MAX
 #define SIZE_MAX    UINT16_MAX
