@@ -119,8 +119,9 @@ class OneCommandPerFileTest:
             if not self.recursive:
                 subdirs[:] = []
 
-            if dirname == '.svn' or dirname in localConfig.excludes:
-                continue
+            subdirs[:] = [d for d in subdirs
+                          if (d != '.svn' and
+                              d not in localConfig.excludes)]
 
             for filename in filenames:
                 if (not self.pattern.match(filename) or
