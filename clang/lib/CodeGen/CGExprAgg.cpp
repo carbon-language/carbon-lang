@@ -114,6 +114,7 @@ public:
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
   void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
   void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
+  void VisitCXXTypeidExpr(CXXTypeidExpr *E) { EmitAggLoadOfLValue(E); }
 
   void VisitVAArgExpr(VAArgExpr *E);
 

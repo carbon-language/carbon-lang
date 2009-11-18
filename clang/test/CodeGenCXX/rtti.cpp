@@ -193,3 +193,7 @@ int test3() {
   if (typeid(int[5]) == typeid(enum a))
     return 0;
 }
+
+bool test4(std::type_info* __pointee) {
+  return *__pointee == typeid (void);
+}
