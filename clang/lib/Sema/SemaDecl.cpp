@@ -2486,6 +2486,26 @@ static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
   return false;
 }
 
+/// AddOverriddenMethods - See if a method overrides any in the base classes,
+/// and if so, check that it's a valid override and remember it.
+void Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
+  // Look for virtual methods in base classes that this method might override.
+  CXXBasePaths Paths;
+  FindOverriddenMethodData Data;
+  Data.Method = MD;
+  Data.S = this;
+  if (DC->lookupInBases(&FindOverriddenMethod, &Data, Paths)) {
+    for (CXXBasePaths::decl_iterator I = Paths.found_decls_begin(),
+         E = Paths.found_decls_end(); I != E; ++I) {
+      if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
+        if (!CheckOverridingFunctionReturnType(MD, OldMD) &&
+            !CheckOverridingFunctionExceptionSpec(MD, OldMD))
+          MD->addOverriddenMethod(OldMD);
+      }
+    }
+  }
+}
+
 NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, DeclaratorInfo *DInfo,
@@ -2746,24 +2766,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
 
-  if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD)) {
-    // Look for virtual methods in base classes that this method might override.
-    CXXBasePaths Paths;
-    FindOverriddenMethodData Data;
-    Data.Method = NewMD;
-    Data.S = this;
-    if (cast<CXXRecordDecl>(DC)->lookupInBases(&FindOverriddenMethod, &Data,
-                                                Paths)) {
-      for (CXXBasePaths::decl_iterator I = Paths.found_decls_begin(),
-           E = Paths.found_decls_end(); I != E; ++I) {
-        if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
-          if (!CheckOverridingFunctionReturnType(NewMD, OldMD) &&
-              !CheckOverridingFunctionExceptionSpec(NewMD, OldMD))
-            NewMD->addOverriddenMethod(OldMD);
-        }
-      }
-    }
-  }
+  if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
+    AddOverriddenMethods(cast<CXXRecordDecl>(DC), NewMD);
 
   if (SC == FunctionDecl::Static && isa<CXXMethodDecl>(NewFD) &&
       !CurContext->isRecord()) {

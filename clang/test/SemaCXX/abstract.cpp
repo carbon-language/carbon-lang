@@ -138,3 +138,20 @@ namespace PR5222 {
 
   C c;  
 }
+
+// PR5550 - instantiating template didn't track overridden methods
+namespace PR5550 {
+  struct A {
+    virtual void a() = 0;
+    virtual void b() = 0;
+  };
+  template<typename T> struct B : public A {
+    virtual void b();
+    virtual void c() = 0;
+  };
+  struct C : public B<int> {
+    virtual void a();
+    virtual void c();
+  }; 
+  C x;
+}

@@ -869,6 +869,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       !Method->getFriendObjectKind())
     Owner->addDecl(Method);
 
+  SemaRef.AddOverriddenMethods(Record, Method);
+
   return Method;
 }
 
