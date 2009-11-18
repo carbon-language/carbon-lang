@@ -1011,9 +1011,6 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
 bool BranchFolder::TailDuplicateBlocks(MachineFunction &MF) {
   bool MadeChange = false;
 
-  // Make sure blocks are numbered in order
-  MF.RenumberBlocks();
-
   for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
     MachineBasicBlock *MBB = I++;
 
