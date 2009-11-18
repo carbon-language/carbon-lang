@@ -156,6 +156,7 @@
 // ARM:#define __INT8_TYPE__ char
 // ARM:#define __INTMAX_MAX__ 9223372036854775807LL
 // ARM:#define __INTMAX_TYPE__ long long int
+// ARM:#define __INTMAX_WIDTH__ 64
 // ARM:#define __INTPTR_TYPE__ long int
 // ARM:#define __INT_MAX__ 2147483647
 // ARM:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -234,6 +235,7 @@
 // BFIN:#define __INT8_TYPE__ char
 // BFIN:#define __INTMAX_MAX__ 9223372036854775807LL
 // BFIN:#define __INTMAX_TYPE__ long long int
+// BFIN:#define __INTMAX_WIDTH__ 64
 // BFIN:#define __INTPTR_TYPE__ long int
 // BFIN:#define __INT_MAX__ 2147483647
 // BFIN:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -305,6 +307,7 @@
 // I386:#define __INT8_TYPE__ char
 // I386:#define __INTMAX_MAX__ 9223372036854775807LL
 // I386:#define __INTMAX_TYPE__ long long int
+// I386:#define __INTMAX_WIDTH__ 64
 // I386:#define __INTPTR_TYPE__ int
 // I386:#define __INT_MAX__ 2147483647
 // I386:#define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
@@ -382,6 +385,7 @@
 // MSP430:#define __INT8_TYPE__ char
 // MSP430:#define __INTMAX_MAX__ 2147483647L
 // MSP430:#define __INTMAX_TYPE__ long int
+// MSP430:#define __INTMAX_WIDTH__ 32
 // MSP430:#define __INTPTR_TYPE__ short
 // MSP430:#define __INT_MAX__ 32767
 // MSP430:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -452,6 +456,7 @@
 // PIC16:#define __INT8_TYPE__ char
 // PIC16:#define __INTMAX_MAX__ 2147483647L
 // PIC16:#define __INTMAX_TYPE__ long int
+// PIC16:#define __INTMAX_WIDTH__ 32
 // PIC16:#define __INTPTR_TYPE__ short
 // PIC16:#define __INT_MAX__ 32767
 // PIC16:#define __LDBL_DENORM_MIN__ 1.40129846e-45F
@@ -534,6 +539,7 @@
 // PPC64:#define __INT8_TYPE__ char
 // PPC64:#define __INTMAX_MAX__ 9223372036854775807L
 // PPC64:#define __INTMAX_TYPE__ long int
+// PPC64:#define __INTMAX_WIDTH__ 64
 // PPC64:#define __INTPTR_TYPE__ long int
 // PPC64:#define __INT_MAX__ 2147483647
 // PPC64:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -613,6 +619,7 @@
 // PPC:#define __INT8_TYPE__ char
 // PPC:#define __INTMAX_MAX__ 9223372036854775807LL
 // PPC:#define __INTMAX_TYPE__ long long int
+// PPC:#define __INTMAX_WIDTH__ 64
 // PPC:#define __INTPTR_TYPE__ long int
 // PPC:#define __INT_MAX__ 2147483647
 // PPC:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -687,6 +694,7 @@
 // S390X:#define __INT8_TYPE__ char
 // S390X:#define __INTMAX_MAX__ 9223372036854775807LL
 // S390X:#define __INTMAX_TYPE__ long long int
+// S390X:#define __INTMAX_WIDTH__ 64
 // S390X:#define __INTPTR_TYPE__ long int
 // S390X:#define __INT_MAX__ 2147483647
 // S390X:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -757,6 +765,7 @@
 // SPARC:#define __INT8_TYPE__ char
 // SPARC:#define __INTMAX_MAX__ 9223372036854775807LL
 // SPARC:#define __INTMAX_TYPE__ long long int
+// SPARC:#define __INTMAX_WIDTH__ 64
 // SPARC:#define __INTPTR_TYPE__ long int
 // SPARC:#define __INT_MAX__ 2147483647
 // SPARC:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
@@ -829,6 +838,7 @@
 // TCE:#define __INT8_TYPE__ char
 // TCE:#define __INTMAX_MAX__ 2147483647L
 // TCE:#define __INTMAX_TYPE__ long int
+// TCE:#define __INTMAX_WIDTH__ 32
 // TCE:#define __INTPTR_TYPE__ int
 // TCE:#define __INT_MAX__ 2147483647
 // TCE:#define __LDBL_DENORM_MIN__ 1.40129846e-45F
@@ -903,6 +913,7 @@
 // X86_64:#define __INT8_TYPE__ char
 // X86_64:#define __INTMAX_MAX__ 9223372036854775807L
 // X86_64:#define __INTMAX_TYPE__ long int
+// X86_64:#define __INTMAX_WIDTH__ 64
 // X86_64:#define __INTPTR_TYPE__ long int
 // X86_64:#define __INT_MAX__ 2147483647
 // X86_64:#define __LDBL_DENORM_MIN__ 3.64519953188247460253e-4951L
