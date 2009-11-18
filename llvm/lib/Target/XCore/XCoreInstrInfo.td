@@ -679,6 +679,12 @@ def LDAP_lu10 : _FLU10<
                   "ldap r11, $addr",
                   [(set R11, (pcrelwrapper tglobaladdr:$addr))]>;
 
+let Defs = [R11], isReMaterializable = 1 in
+def LDAP_lu10_ba : _FLU10<(outs),
+                          (ins i32imm:$addr),
+                          "ldap r11, $addr",
+                          [(set R11, (pcrelwrapper tblockaddress:$addr))]>;
+
 let isCall=1,
 // All calls clobber the the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR] in {

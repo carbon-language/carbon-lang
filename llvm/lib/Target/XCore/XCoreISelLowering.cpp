@@ -111,7 +111,8 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::JumpTable, MVT::i32, Custom);
 
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
-  
+  setOperationAction(ISD::BlockAddress, MVT::i32 , Custom);
+
   // Thread Local Storage
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   
@@ -158,6 +159,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   {
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
   case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
+  case ISD::BlockAddress:     return LowerBlockAddress(Op, DAG);
   case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
   case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
   case ISD::LOAD:             return LowerLOAD(Op, DAG);
@@ -285,6 +287,17 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   SDValue offset = DAG.getNode(ISD::MUL, dl, MVT::i32, BuildGetId(DAG, dl),
                        DAG.getConstant(Size, MVT::i32));
   return DAG.getNode(ISD::ADD, dl, MVT::i32, base, offset);
+}
+
+SDValue XCoreTargetLowering::
+LowerBlockAddress(SDValue Op, SelectionDAG &DAG)
+{
+  DebugLoc DL = Op.getDebugLoc();
+
+  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  SDValue Result = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
+
+  return DAG.getNode(XCoreISD::PCRelativeWrapper, DL, getPointerTy(), Result);
 }
 
 SDValue XCoreTargetLowering::
