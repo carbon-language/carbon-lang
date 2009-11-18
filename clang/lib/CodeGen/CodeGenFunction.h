@@ -1097,6 +1097,7 @@ private:
     if (CallArgTypeInfo) {
       for (typename T::arg_type_iterator I = CallArgTypeInfo->arg_type_begin(),
            E = CallArgTypeInfo->arg_type_end(); I != E; ++I, ++Arg) {
+        assert(Arg != ArgEnd && "Running over edge of argument list!");
         QualType ArgType = *I;
 
         assert(getContext().getCanonicalType(ArgType.getNonReferenceType()).
