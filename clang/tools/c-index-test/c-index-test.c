@@ -174,14 +174,19 @@ int perform_test_load_tu(const char *file, const char *filter) {
 
 static void print_cursor_file_scan(CXCursor cursor,
                                    unsigned start_line, unsigned start_col,
-                                   unsigned end_line, unsigned end_col) {
-  printf("CHECK: {start_line=%d start_col=%d end_line=%d end_col=%d} ",
-         start_line, start_col, end_line, end_col);
+                                   unsigned end_line, unsigned end_col,
+                                   const char *prefix) {
+  printf("// CHECK");
+  if (prefix)
+    printf("-%s", prefix);
+  printf("{start_line=%d start_col=%d end_line=%d end_col=%d} ",
+          start_line, start_col, end_line, end_col);
   PrintCursor(cursor);
   printf("\n");
 }
 
-static int perform_file_scan(const char *ast_file, const char *source_file) {
+static int perform_file_scan(const char *ast_file, const char *source_file,
+                             const char *prefix) {
   CXIndex Idx;
   CXTranslationUnit TU;
   FILE *fp;
@@ -230,7 +235,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file) {
       if (!clang_equalCursors(cursor, prevCursor) &&
           prevCursor.kind != CXCursor_InvalidFile) {
         print_cursor_file_scan(prevCursor, start_line, start_col,
-                               last_line, last_col);
+                               last_line, last_col, prefix);
         printed = 1;
         start_line = line;
         start_col = (unsigned) i+1;
@@ -247,7 +252,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file) {
   
   if (!printed && prevCursor.kind != CXCursor_InvalidFile) {
     print_cursor_file_scan(prevCursor, start_line, start_col,
-                           last_line, last_col);
+                           last_line, last_col, prefix);
   }  
   
   fclose(fp);
@@ -386,7 +391,8 @@ int perform_code_completion(int argc, const char **argv) {
 static void print_usage(void) {
   fprintf(stderr,
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
-    "       c-index-test -test-file-scan <AST file> <source file>\n"
+    "       c-index-test -test-file-scan <AST file> <source file> "
+          "[FileCheck prefix]\n"
     "       c-index-test -test-load-tu <AST file> <symbol filter>\n\n"
     " <symbol filter> options for -test-load-tu:\n%s",
     "   all - load all symbols, including those from PCH\n"
@@ -403,8 +409,9 @@ int main(int argc, const char **argv) {
     return perform_code_completion(argc, argv);
   if (argc == 4 && strcmp(argv[1], "-test-load-tu") == 0)
     return perform_test_load_tu(argv[2], argv[3]);
-  if (argc == 4 && strcmp(argv[1], "-test-file-scan") == 0)
-    return perform_file_scan(argv[2], argv[3]);
+  if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)
+    return perform_file_scan(argv[2], argv[3],
+                             argc >= 5 ? argv[4] : 0);
 
   print_usage();
   return 1;

@@ -112,6 +112,7 @@ public:
   ASTLocation VisitDeclaratorDecl(DeclaratorDecl *D);
   ASTLocation VisitVarDecl(VarDecl *D);
   ASTLocation VisitFunctionDecl(FunctionDecl *D);
+  ASTLocation VisitObjCClassDecl(ObjCClassDecl *D);                                                             
   ASTLocation VisitObjCMethodDecl(ObjCMethodDecl *D);
   ASTLocation VisitTypedefDecl(TypedefDecl *D);
   ASTLocation VisitDecl(Decl *D);
@@ -324,6 +325,17 @@ ASTLocation DeclLocResolver::VisitVarDecl(VarDecl *D) {
   if (ContainsLocation(D->getDeclaratorInfo()))
     return ResolveInDeclarator(D, 0, D->getDeclaratorInfo());
 
+  return ASTLocation(D);
+}
+
+ASTLocation DeclLocResolver::VisitObjCClassDecl(ObjCClassDecl *D) {
+  assert(ContainsLocation(D) &&
+         "Should visit only after verifying that loc is in range");
+         
+  for (ObjCClassDecl::iterator I = D->begin(), E = D->end() ; I != E; ++I) {
+    if (CheckRange(I->getLocation()) == ContainsLoc)
+      return ASTLocation(D, I->getInterface(), I->getLocation());
+  }
   return ASTLocation(D);
 }
 
