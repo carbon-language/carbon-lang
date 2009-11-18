@@ -165,6 +165,7 @@ public:
       OGV->replaceAllUsesWith(NewPtr);
       OGV->eraseFromParent();
     }
+    GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
     return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
   }
 

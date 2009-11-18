@@ -57,6 +57,9 @@ class test1_D : public test1_B7 {
 // CHECK-NEXT: .quad  __ZTIi
 // CHECK-NEXT: .quad  __ZTI7test3_I
 
+// CHECK:     .private_extern __ZTIFvvE
+// CHECK:     .globl __ZTIFvvE
+// CHECK:     .weak_definition __ZTIFvvE
 // CHECK:     __ZTIFvvE:
 // CHECK-NEXT: 	.quad	(__ZTVN10__cxxabiv120__function_type_infoE) + 16
 // CHECK-NEXT: 	.quad	__ZTSFvvE
