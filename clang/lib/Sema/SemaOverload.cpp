@@ -5503,6 +5503,11 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
 
+  if (RequireCompleteType(Base->getLocStart(), Base->getType(),
+                          PDiag(diag::err_typecheck_incomplete_tag)
+                            << Base->getSourceRange()))
+    return ExprError();
+
   LookupResult R(*this, OpName, OpLoc, LookupOrdinaryName);
   LookupQualifiedName(R, BaseRecord->getDecl());
   R.suppressDiagnostics();
