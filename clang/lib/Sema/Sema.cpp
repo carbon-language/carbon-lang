@@ -319,7 +319,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
                                 &Context.Idents.get("Protocol"),
                                 SourceLocation(), true);
     Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
-    PushOnScopeChains(ProtocolDecl, TUScope);
+    PushOnScopeChains(ProtocolDecl, TUScope, false);
   }
   // Create the built-in typedef for 'id'.
   if (Context.getObjCIdType().isNull()) {
