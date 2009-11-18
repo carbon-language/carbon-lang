@@ -2408,6 +2408,24 @@ public:
                                                    IdentifierInfo *ClassName) {
   }
   
+  /// \brief Code completion for the property names when synthesizing an
+  /// Objective-C property.
+  ///
+  /// This code completion action is invoked after the @synthesized and after
+  /// each "," in an @synthesized definition.
+  virtual void CodeCompleteObjCPropertySynthesize(Scope *S, 
+                                                  DeclPtrTy ObjCImpDecl) {
+  }
+
+  /// \brief Code completion for the instance variable name that should 
+  /// follow an '=' when synthesizing an Objective-C property.
+  ///
+  /// This code completion action is invoked after each '=' that occurs within
+  /// an @synthesized definition.
+  virtual void CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 
+                                                   IdentifierInfo *PropertyName,
+                                                  DeclPtrTy ObjCImpDecl) {
+  }
   //@}
 };
 

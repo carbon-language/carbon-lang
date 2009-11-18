@@ -1231,12 +1231,13 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_synthesize) &&
          "ParseObjCPropertyDynamic(): Expected '@synthesize'");
   SourceLocation loc = ConsumeToken(); // consume synthesize
-  if (Tok.isNot(tok::identifier)) {
-    Diag(Tok, diag::err_expected_ident);
-    return DeclPtrTy();
-  }
 
   while (true) {
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCPropertySynthesize(CurScope, ObjCImpDecl);
+      ConsumeToken();
+    }
+    
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_synthesized_property_name);
       SkipUntil(tok::semi);
@@ -1249,6 +1250,13 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
     if (Tok.is(tok::equal)) {
       // property '=' ivar-name
       ConsumeToken(); // consume '='
+      
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteObjCPropertySynthesizeIvar(CurScope, propertyId,
+                                                       ObjCImpDecl);
+        ConsumeToken();
+      }
+      
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
         break;

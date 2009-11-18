@@ -1132,6 +1132,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S) {
 }
 
 static void AddObjCProperties(ObjCContainerDecl *Container, 
+                              bool AllowCategories,
                               DeclContext *CurContext,
                               ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
@@ -1148,29 +1149,32 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
     for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
                                           PEnd = Protocol->protocol_end();
          P != PEnd; ++P)
-      AddObjCProperties(*P, CurContext, Results);
+      AddObjCProperties(*P, AllowCategories, CurContext, Results);
   } else if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)){
-    // Look through categories.
-    for (ObjCCategoryDecl *Category = IFace->getCategoryList();
-         Category; Category = Category->getNextClassCategory())
-      AddObjCProperties(Category, CurContext, Results);
+    if (AllowCategories) {
+      // Look through categories.
+      for (ObjCCategoryDecl *Category = IFace->getCategoryList();
+           Category; Category = Category->getNextClassCategory())
+        AddObjCProperties(Category, AllowCategories, CurContext, Results);
+    }
     
     // Look through protocols.
     for (ObjCInterfaceDecl::protocol_iterator I = IFace->protocol_begin(),
                                               E = IFace->protocol_end(); 
          I != E; ++I)
-      AddObjCProperties(*I, CurContext, Results);
+      AddObjCProperties(*I, AllowCategories, CurContext, Results);
     
     // Look in the superclass.
     if (IFace->getSuperClass())
-      AddObjCProperties(IFace->getSuperClass(), CurContext, Results);
+      AddObjCProperties(IFace->getSuperClass(), AllowCategories, CurContext, 
+                        Results);
   } else if (const ObjCCategoryDecl *Category
                                     = dyn_cast<ObjCCategoryDecl>(Container)) {
     // Look through protocols.
     for (ObjCInterfaceDecl::protocol_iterator P = Category->protocol_begin(),
                                            PEnd = Category->protocol_end(); 
          P != PEnd; ++P)
-      AddObjCProperties(*P, CurContext, Results);
+      AddObjCProperties(*P, AllowCategories, CurContext, Results);
   }
 }
 
@@ -1234,13 +1238,13 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
     const ObjCObjectPointerType *ObjCPtr
       = BaseType->getAsObjCInterfacePointerType();
     assert(ObjCPtr && "Non-NULL pointer guaranteed above!");
-    AddObjCProperties(ObjCPtr->getInterfaceDecl(), CurContext, Results);
+    AddObjCProperties(ObjCPtr->getInterfaceDecl(), true, CurContext, Results);
     
     // Add properties from the protocols in a qualified interface.
     for (ObjCObjectPointerType::qual_iterator I = ObjCPtr->qual_begin(),
                                               E = ObjCPtr->qual_end();
          I != E; ++I)
-      AddObjCProperties(*I, CurContext, Results);
+      AddObjCProperties(*I, true, CurContext, Results);
     
     // FIXME: We could (should?) also look for "implicit" properties, identified
     // only by the presence of nullary and unary selectors.
@@ -2020,4 +2024,75 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());  
+}
+
+void Sema::CodeCompleteObjCPropertySynthesize(Scope *S, DeclPtrTy ObjCImpDecl) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+
+  // Figure out where this @synthesize lives.
+  ObjCContainerDecl *Container
+    = dyn_cast_or_null<ObjCContainerDecl>(ObjCImpDecl.getAs<Decl>());
+  if (!Container || 
+      (!isa<ObjCImplementationDecl>(Container) && 
+       !isa<ObjCCategoryImplDecl>(Container)))
+    return; 
+
+  // Ignore any properties that have already been implemented.
+  for (DeclContext::decl_iterator D = Container->decls_begin(), 
+                               DEnd = Container->decls_end();
+       D != DEnd; ++D)
+    if (ObjCPropertyImplDecl *PropertyImpl = dyn_cast<ObjCPropertyImplDecl>(*D))
+      Results.Ignore(PropertyImpl->getPropertyDecl());
+  
+  // Add any properties that we find.
+  Results.EnterNewScope();
+  if (ObjCImplementationDecl *ClassImpl
+        = dyn_cast<ObjCImplementationDecl>(Container))
+    AddObjCProperties(ClassImpl->getClassInterface(), false, CurContext, 
+                      Results);
+  else
+    AddObjCProperties(cast<ObjCCategoryImplDecl>(Container)->getCategoryDecl(),
+                      false, CurContext, Results);
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());  
+}
+
+void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 
+                                                  IdentifierInfo *PropertyName,
+                                                  DeclPtrTy ObjCImpDecl) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+
+  // Figure out where this @synthesize lives.
+  ObjCContainerDecl *Container
+    = dyn_cast_or_null<ObjCContainerDecl>(ObjCImpDecl.getAs<Decl>());
+  if (!Container || 
+      (!isa<ObjCImplementationDecl>(Container) && 
+       !isa<ObjCCategoryImplDecl>(Container)))
+    return; 
+  
+  // Figure out which interface we're looking into.
+  ObjCInterfaceDecl *Class = 0;
+  if (ObjCImplementationDecl *ClassImpl
+                                 = dyn_cast<ObjCImplementationDecl>(Container))  
+    Class = ClassImpl->getClassInterface();
+  else
+    Class = cast<ObjCCategoryImplDecl>(Container)->getCategoryDecl()
+                                                          ->getClassInterface();
+
+  // Add all of the instance variables in this class and its superclasses.
+  Results.EnterNewScope();
+  for(; Class; Class = Class->getSuperClass()) {
+    // FIXME: We could screen the type of each ivar for compatibility with
+    // the property, but is that being too paternal?
+    for (ObjCInterfaceDecl::ivar_iterator IVar = Class->ivar_begin(),
+                                       IVarEnd = Class->ivar_end();
+         IVar != IVarEnd; ++IVar) 
+      Results.MaybeAddResult(Result(*IVar, 0), CurContext);
+  }
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }

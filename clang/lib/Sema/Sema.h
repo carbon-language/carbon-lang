@@ -3654,6 +3654,11 @@ public:
                                                  IdentifierInfo *ClassName);
   virtual void CodeCompleteObjCImplementationCategory(Scope *S, 
                                                     IdentifierInfo *ClassName);
+  virtual void CodeCompleteObjCPropertySynthesize(Scope *S, 
+                                                  DeclPtrTy ObjCImpDecl);
+  virtual void CodeCompleteObjCPropertySynthesizeIvar(Scope *S, 
+                                                  IdentifierInfo *PropertyName,
+                                                      DeclPtrTy ObjCImpDecl);
   //@}
   
   //===--------------------------------------------------------------------===//
