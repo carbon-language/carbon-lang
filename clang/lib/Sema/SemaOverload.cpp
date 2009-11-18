@@ -4754,10 +4754,10 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
       UsualUnaryConversions(FnExpr);
 
       input.release();
-
+      Args[0] = Input;
       ExprOwningPtr<CallExpr> TheCall(this,
         new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                          &Input, 1, ResultTy, OpLoc));
+                                          Args, NumArgs, ResultTy, OpLoc));
       
       if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
                               FnDecl))
