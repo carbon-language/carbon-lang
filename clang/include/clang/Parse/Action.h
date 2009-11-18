@@ -2408,12 +2408,12 @@ public:
                                                    IdentifierInfo *ClassName) {
   }
   
-  /// \brief Code completion for the property names when synthesizing an
+  /// \brief Code completion for the property names when defining an
   /// Objective-C property.
   ///
-  /// This code completion action is invoked after the @synthesized and after
-  /// each "," in an @synthesized definition.
-  virtual void CodeCompleteObjCPropertySynthesize(Scope *S, 
+  /// This code completion action is invoked after @synthesize or @dynamic and
+  /// after each "," within one of those definitions.
+  virtual void CodeCompleteObjCPropertyDefinition(Scope *S, 
                                                   DeclPtrTy ObjCImpDecl) {
   }
 

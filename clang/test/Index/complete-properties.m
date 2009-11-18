@@ -6,25 +6,35 @@
   id StoredProp3;
   int RandomIVar;
 }
+@property int Prop0;
 @property int Prop1;
 @property float Prop2;
 @end
 
 @interface I2 : I1
 @property id Prop3;
+@property id Prop4;
 @end
 
 @implementation I2
 @synthesize Prop2, Prop1, Prop3 = StoredProp3;
+@dynamic Prop4;
 @end
 
-// RUN: c-index-test -code-completion-at=%s:18:13 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// RUN: c-index-test -code-completion-at=%s:20:13 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// CHECK-CC1: ObjCPropertyDecl:{TypedText Prop0}
 // CHECK-CC1: ObjCPropertyDecl:{TypedText Prop1}
 // CHECK-CC1: ObjCPropertyDecl:{TypedText Prop2}
 // CHECK-CC1: ObjCPropertyDecl:{TypedText Prop3}
-// RUN: c-index-test -code-completion-at=%s:18:20 %s | FileCheck -check-prefix=CHECK-CC2 %s
+// CHECK-CC1: ObjCPropertyDecl:{TypedText Prop4}
+// RUN: c-index-test -code-completion-at=%s:20:20 %s | FileCheck -check-prefix=CHECK-CC2 %s
+// CHECK-CC2: ObjCPropertyDecl:{TypedText Prop0}
 // CHECK-CC2: ObjCPropertyDecl:{TypedText Prop1}
 // CHECK-CC2-NEXT: ObjCPropertyDecl:{TypedText Prop3}
-// RUN: c-index-test -code-completion-at=%s:18:35 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// CHECK-CC2: ObjCPropertyDecl:{TypedText Prop4}
+// RUN: c-index-test -code-completion-at=%s:20:35 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: ObjCIvarDecl:{TypedText RandomIVar}
 // CHECK-CC3: ObjCIvarDecl:{TypedText StoredProp3}
+// RUN: c-index-test -code-completion-at=%s:21:10 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// CHECK-CC4: ObjCPropertyDecl:{TypedText Prop0}
+// CHECK-CC4-NEXT: ObjCPropertyDecl:{TypedText Prop4}

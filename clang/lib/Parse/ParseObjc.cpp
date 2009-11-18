@@ -1234,7 +1234,7 @@ Parser::DeclPtrTy Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
 
   while (true) {
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteObjCPropertySynthesize(CurScope, ObjCImpDecl);
+      Actions.CodeCompleteObjCPropertyDefinition(CurScope, ObjCImpDecl);
       ConsumeToken();
     }
     
@@ -1290,11 +1290,18 @@ Parser::DeclPtrTy Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_dynamic) &&
          "ParseObjCPropertyDynamic(): Expected '@dynamic'");
   SourceLocation loc = ConsumeToken(); // consume dynamic
-  if (Tok.isNot(tok::identifier)) {
-    Diag(Tok, diag::err_expected_ident);
-    return DeclPtrTy();
-  }
-  while (Tok.is(tok::identifier)) {
+  while (true) {
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCPropertyDefinition(CurScope, ObjCImpDecl);
+      ConsumeToken();
+    }
+    
+    if (Tok.isNot(tok::identifier)) {
+      Diag(Tok, diag::err_expected_ident);
+      SkipUntil(tok::semi);
+      return DeclPtrTy();
+    }
+    
     IdentifierInfo *propertyId = Tok.getIdentifierInfo();
     SourceLocation propertyLoc = ConsumeToken(); // consume property name
     Actions.ActOnPropertyImplDecl(atLoc, propertyLoc, false, ObjCImpDecl,

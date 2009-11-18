@@ -2026,7 +2026,7 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());  
 }
 
-void Sema::CodeCompleteObjCPropertySynthesize(Scope *S, DeclPtrTy ObjCImpDecl) {
+void Sema::CodeCompleteObjCPropertyDefinition(Scope *S, DeclPtrTy ObjCImpDecl) {
   typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this);
 
