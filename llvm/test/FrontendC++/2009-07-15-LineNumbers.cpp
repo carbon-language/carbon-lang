@@ -1,7 +1,7 @@
 // This is a regression test on debug info to make sure that we can
 // print line numbers in asm.
 // RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | \
-// RUN:    llc --disable-fp-elim -O0 -relocation-model=pic | grep {# SrcLine 25}
+// RUN:    llc --disable-fp-elim -O0 -relocation-model=pic | grep {SrcLine 25}
 
 #include <stdlib.h>
 
