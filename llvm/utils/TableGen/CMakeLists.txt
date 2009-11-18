@@ -13,6 +13,7 @@ add_executable(tblgen
   InstrInfoEmitter.cpp
   IntrinsicEmitter.cpp
   LLVMCConfigurationEmitter.cpp
+  OptParserEmitter.cpp
   Record.cpp
   RegisterInfoEmitter.cpp
   SubtargetEmitter.cpp
