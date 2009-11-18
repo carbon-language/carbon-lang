@@ -2090,8 +2090,11 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
 ImplicitConversionSequence
 Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
   QualType ClassType = Context.getTypeDeclType(Method->getParent());
-  QualType ImplicitParamType
-    = Context.getCVRQualifiedType(ClassType, Method->getTypeQualifiers());
+  // [class.dtor]p2: A destructor can be invoked for a const, volatile or
+  //                 const volatile object.
+  unsigned Quals = isa<CXXDestructorDecl>(Method) ?
+    Qualifiers::Const | Qualifiers::Volatile : Method->getTypeQualifiers();
+  QualType ImplicitParamType =  Context.getCVRQualifiedType(ClassType, Quals);
 
   // Set up the conversion sequence as a "bad" conversion, to allow us
   // to exit early.
@@ -2106,7 +2109,7 @@ Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
 
   assert(FromType->isRecordType());
 
-  // The implicit object parmeter is has the type "reference to cv X",
+  // The implicit object parameter is has the type "reference to cv X",
   // where X is the class of which the function is a member
   // (C++ [over.match.funcs]p4). However, when finding an implicit
   // conversion sequence for the argument, we are not allowed to
