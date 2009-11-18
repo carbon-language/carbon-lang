@@ -1432,10 +1432,6 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
 Action::OwningExprResult
 Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                           tok::TokenKind Kind, ExprArg Input) {
-  // Since this might be a postfix expression, get rid of ParenListExprs.
-  Input = MaybeConvertParenListExprToParenExpr(S, move(Input));
-  Expr *Arg = (Expr *)Input.get();
-
   UnaryOperator::Opcode Opc;
   switch (Kind) {
   default: assert(0 && "Unknown unary op!");
@@ -1443,124 +1439,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
   }
 
-  if (getLangOptions().CPlusPlus &&
-      (Arg->getType()->isRecordType() || Arg->getType()->isEnumeralType())) {
-    // Which overloaded operator?
-    OverloadedOperatorKind OverOp =
-      (Opc == UnaryOperator::PostInc)? OO_PlusPlus : OO_MinusMinus;
-
-    // C++ [over.inc]p1:
-    //
-    //     [...] If the function is a member function with one
-    //     parameter (which shall be of type int) or a non-member
-    //     function with two parameters (the second of which shall be
-    //     of type int), it defines the postfix increment operator ++
-    //     for objects of that type. When the postfix increment is
-    //     called as a result of using the ++ operator, the int
-    //     argument will have value zero.
-    Expr *Args[2] = {
-      Arg,
-      new (Context) IntegerLiteral(llvm::APInt(Context.Target.getIntWidth(), 0,
-                          /*isSigned=*/true), Context.IntTy, SourceLocation())
-    };
-
-    // Build the candidate set for overloading
-    OverloadCandidateSet CandidateSet;
-    AddOperatorCandidates(OverOp, S, OpLoc, Args, 2, CandidateSet);
-
-    // Perform overload resolution.
-    OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, OpLoc, Best)) {
-    case OR_Success: {
-      // We found a built-in operator or an overloaded operator.
-      FunctionDecl *FnDecl = Best->Function;
-
-      if (FnDecl) {
-        // We matched an overloaded operator. Build a call to that
-        // operator.
-
-        // Convert the arguments.
-        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
-          if (PerformObjectArgumentInitialization(Arg, Method))
-            return ExprError();
-        } else {
-          // Convert the arguments.
-          if (PerformCopyInitialization(Arg,
-                                        FnDecl->getParamDecl(0)->getType(),
-                                        "passing"))
-            return ExprError();
-        }
-
-        // Determine the result type
-        QualType ResultTy = FnDecl->getResultType().getNonReferenceType();
-
-        // Build the actual expression node.
-        Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                                 SourceLocation());
-        UsualUnaryConversions(FnExpr);
-
-        Input.release();
-        Args[0] = Arg;
-        
-        ExprOwningPtr<CXXOperatorCallExpr> 
-          TheCall(this, new (Context) CXXOperatorCallExpr(Context, OverOp, 
-                                                          FnExpr, Args, 2, 
-                                                          ResultTy, OpLoc));
-        
-        if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
-                                FnDecl))
-          return ExprError();
-        return Owned(TheCall.release());
-
-      } else {
-        // We matched a built-in operator. Convert the arguments, then
-        // break out so that we will build the appropriate built-in
-        // operator node.
-        if (PerformCopyInitialization(Arg, Best->BuiltinTypes.ParamTypes[0],
-                                      "passing"))
-          return ExprError();
-
-        break;
-      }
-    }
-
-    case OR_No_Viable_Function: {
-      // No viable function; try checking this as a built-in operator, which
-      // will fail and provide a diagnostic. Then, print the overload
-      // candidates.
-      OwningExprResult Result = CreateBuiltinUnaryOp(OpLoc, Opc, move(Input));
-      assert(Result.isInvalid() && 
-             "C++ postfix-unary operator overloading is missing candidates!");
-      if (Result.isInvalid())
-        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-      
-      return move(Result);
-    }
-        
-    case OR_Ambiguous:
-      Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
-          << UnaryOperator::getOpcodeStr(Opc)
-          << Arg->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return ExprError();
-
-    case OR_Deleted:
-      Diag(OpLoc, diag::err_ovl_deleted_oper)
-        << Best->Function->isDeleted()
-        << UnaryOperator::getOpcodeStr(Opc)
-        << Arg->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
-      return ExprError();
-    }
-
-    // Either we found no viable overloaded operator or we matched a
-    // built-in operator. In either case, fall through to trying to
-    // build a built-in operation.
-  }
-
-  Input.release();
-  Input = Arg;
-  return CreateBuiltinUnaryOp(OpLoc, Opc, move(Input));
+  return BuildUnaryOp(S, OpLoc, Opc, move(Input));
 }
 
 Action::OwningExprResult
