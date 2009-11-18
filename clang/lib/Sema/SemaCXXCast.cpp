@@ -175,6 +175,30 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   return ExprError();
 }
 
+/// UnwrapDissimilarPointerTypes - Like Sema::UnwrapSimilarPointerTypes,
+/// this removes one level of indirection from both types, provided that they're
+/// the same kind of pointer (plain or to-member). Unlike the Sema function,
+/// this one doesn't care if the two pointers-to-member don't point into the
+/// same class. This is because CastsAwayConstness doesn't care.
+bool UnwrapDissimilarPointerTypes(QualType& T1, QualType& T2) {
+  const PointerType *T1PtrType = T1->getAs<PointerType>(),
+                    *T2PtrType = T2->getAs<PointerType>();
+  if (T1PtrType && T2PtrType) {
+    T1 = T1PtrType->getPointeeType();
+    T2 = T2PtrType->getPointeeType();
+    return true;
+  }
+
+  const MemberPointerType *T1MPType = T1->getAs<MemberPointerType>(),
+                          *T2MPType = T2->getAs<MemberPointerType>();
+  if (T1MPType && T2MPType) {
+    T1 = T1MPType->getPointeeType();
+    T2 = T2MPType->getPointeeType();
+    return true;
+  }
+  return false;
+}
+
 /// CastsAwayConstness - Check if the pointer conversion from SrcType to
 /// DestType casts away constness as defined in C++ 5.2.11p8ff. This is used by
 /// the cast checkers.  Both arguments must denote pointer (possibly to member)
@@ -195,7 +219,7 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
   llvm::SmallVector<Qualifiers, 8> cv1, cv2;
 
   // Find the qualifications.
-  while (Self.UnwrapSimilarPointerTypes(UnwrappedSrcType, UnwrappedDestType)) {
+  while (UnwrapDissimilarPointerTypes(UnwrappedSrcType, UnwrappedDestType)) {
     cv1.push_back(UnwrappedSrcType.getQualifiers());
     cv2.push_back(UnwrappedDestType.getQualifiers());
   }

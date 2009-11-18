@@ -88,3 +88,9 @@ void memptrs()
   (void)reinterpret_cast<void (structure::*)()>(0); // expected-error {{reinterpret_cast from 'int' to 'void (struct structure::*)()' is not allowed}}
   (void)reinterpret_cast<int structure::*>(0); // expected-error {{reinterpret_cast from 'int' to 'int struct structure::*' is not allowed}}
 }
+
+// PR5545
+class A;
+class B;
+void (A::*a)();
+void (B::*b)() = reinterpret_cast<void (B::*)()>(a);
