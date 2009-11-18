@@ -418,8 +418,8 @@
 // MSP430:INT64_C_(0) INT64_C(0)
 // MSP430:UINT64_C_(0) UINT64_C(0)
 //
-// MSP430:INTMAX_C_(0) 0LL
-// MSP430:UINTMAX_C_(0) 0ULL
+// MSP430:INTMAX_C_(0) 0L
+// MSP430:UINTMAX_C_(0) 0UL
 //
 // RUN: clang-cc -E -ffreestanding -triple=pic16-none-none %s | FileCheck -check-prefix PIC16 %s
 // 
@@ -518,8 +518,8 @@
 // PIC16:INT64_C_(0) INT64_C(0)
 // PIC16:UINT64_C_(0) UINT64_C(0)
 //
-// PIC16:INTMAX_C_(0) 0LL
-// PIC16:UINTMAX_C_(0) 0ULL
+// PIC16:INTMAX_C_(0) 0L
+// PIC16:UINTMAX_C_(0) 0UL
 //
 // RUN: clang-cc -E -ffreestanding -triple=powerpc64-none-none %s | FileCheck -check-prefix PPC64 %s
 //
@@ -625,8 +625,8 @@
 // PPC64:INT64_C_(0) 0L
 // PPC64:UINT64_C_(0) 0UL
 //
-// PPC64:INTMAX_C_(0) 0LL
-// PPC64:UINTMAX_C_(0) 0ULL
+// PPC64:INTMAX_C_(0) 0L
+// PPC64:UINTMAX_C_(0) 0UL
 //
 // RUN: clang-cc -E -ffreestanding -triple=powerpc-none-none %s | FileCheck -check-prefix PPC %s
 //
@@ -840,8 +840,8 @@
 // S390X:INT64_C_(0) 0L
 // S390X:UINT64_C_(0) 0UL
 //
-// S390X:INTMAX_C_(0) 0LL
-// S390X:UINTMAX_C_(0) 0ULL
+// S390X:INTMAX_C_(0) 0L
+// S390X:UINTMAX_C_(0) 0UL
 //
 // RUN: clang-cc -E -ffreestanding -triple=sparc-none-none %s | FileCheck -check-prefix SPARC %s
 //
@@ -1047,8 +1047,8 @@
 // TCE:INT64_C_(0) INT64_C(0)
 // TCE:UINT64_C_(0) UINT64_C(0)
 //
-// TCE:INTMAX_C_(0) 0LL
-// TCE:UINTMAX_C_(0) 0ULL
+// TCE:INTMAX_C_(0) 0
+// TCE:UINTMAX_C_(0) 0U
 //
 // RUN: clang-cc -E -ffreestanding -triple=x86_64-none-none %s | FileCheck -check-prefix X86_64 %s
 //
@@ -1155,8 +1155,8 @@
 // X86_64:INT64_C_(0) 0L
 // X86_64:UINT64_C_(0) 0UL
 //
-// X86_64:INTMAX_C_(0) 0LL
-// X86_64:UINTMAX_C_(0) 0ULL
+// X86_64:INTMAX_C_(0) 0L
+// X86_64:UINTMAX_C_(0) 0UL
 //
 
 #include <stdint.h>

@@ -655,8 +655,8 @@ typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
 #endif
 
 /* 7.18.4.2 Macros for greatest-width integer constants. */
-#define INTMAX_C(v)  v##LL
-#define UINTMAX_C(v) v##ULL
+#define INTMAX_C(v)  __stdint_exjoin3( INT, __INTMAX_WIDTH__, _C(v))
+#define UINTMAX_C(v) __stdint_exjoin3(UINT, __INTMAX_WIDTH__, _C(v))
 
 #endif /* __STDC_HOSTED__ */
 #endif /* __CLANG_STDINT_H */
