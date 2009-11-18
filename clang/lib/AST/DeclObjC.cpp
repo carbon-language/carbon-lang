@@ -571,31 +571,46 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
 //===----------------------------------------------------------------------===//
 
 ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                             ObjCInterfaceDecl *const *Elts, unsigned nElts,
+                             ObjCInterfaceDecl *const *Elts,
+                             const SourceLocation *Locs,
+                             unsigned nElts,
                              ASTContext &C)
   : Decl(ObjCClass, DC, L) {
-  ForwardDecls.set(Elts, nElts, C);
+  setClassList(C, Elts, Locs, nElts);
 }
 
+void ObjCClassDecl::setClassList(ASTContext &C, ObjCInterfaceDecl*const*List,
+                                 const SourceLocation *Locs, unsigned Num) {
+  ForwardDecls = (ObjCClassRef*) C.Allocate(sizeof(ObjCClassRef)*Num,
+                                            llvm::alignof<ObjCClassRef>());
+  for (unsigned i = 0; i < Num; ++i)
+    new (&ForwardDecls[i]) ObjCClassRef(List[i], Locs[i]);
+  
+  NumDecls = Num;
+}
 
 ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L,
                                      ObjCInterfaceDecl *const *Elts,
+                                     const SourceLocation *Locs,
                                      unsigned nElts) {
-  return new (C) ObjCClassDecl(DC, L, Elts, nElts, C);
+  return new (C) ObjCClassDecl(DC, L, Elts, Locs, nElts, C);
 }
 
 void ObjCClassDecl::Destroy(ASTContext &C) {
-
-  // FIXME: There is no clear ownership policy now for referenced
-  //  ObjCInterfaceDecls.  Some of them can be forward declarations that
-  //  are never later defined (in which case the ObjCClassDecl owns them)
-  //  or the ObjCInterfaceDecl later becomes a real definition later.  Ideally
-  //  we should have separate objects for forward declarations and definitions,
-  //  obviating this problem.  Because of this situation, referenced
-  //  ObjCInterfaceDecls are destroyed in ~TranslationUnit.
-
-  ForwardDecls.Destroy(C);
+  // ObjCInterfaceDecls registered with a DeclContext will get destroyed
+  // when the DeclContext is destroyed.  For those created only by a forward
+  // declaration, the first @class that created the ObjCInterfaceDecl gets
+  // to destroy it.
+  // FIXME: Note that this ownership role is very brittle; a better
+  // polict is surely need in the future.
+  for (iterator I = begin(), E = end(); I !=E ; ++I) {
+    ObjCInterfaceDecl *ID = I->getInterface();
+    if (ID->isForwardDecl() && ID->getLocStart() == getLocStart())
+      ID->Destroy(C);
+  }
+  
+  C.Deallocate(ForwardDecls);
   Decl::Destroy(C);
 }
 

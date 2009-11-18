@@ -624,7 +624,7 @@ void DeclPrinter::VisitObjCClassDecl(ObjCClassDecl *D) {
   for (ObjCClassDecl::iterator I = D->begin(), E = D->end();
        I != E; ++I) {
     if (I != D->begin()) Out << ", ";
-    Out << (*I)->getNameAsString();
+    Out << I->getInterface()->getNameAsString();
   }
 }
 

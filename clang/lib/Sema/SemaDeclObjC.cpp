@@ -1197,10 +1197,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
     if (!IDecl) {  // Not already seen?  Make a forward decl.
       IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                        IdentList[i],
-                                        // FIXME: need to get the 'real'
-                                        // identifier loc from the parser.
-                                        AtClassLoc, true);
+                                        IdentList[i], IdentLocs[i], true);
       
       // Push the ObjCInterfaceDecl on the scope chain but do *not* add it to
       // the current DeclContext.  This prevents clients that walk DeclContext
@@ -1214,8 +1211,9 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     Interfaces.push_back(IDecl);
   }
 
+  assert(Interfaces.size() == NumElts);
   ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, CurContext, AtClassLoc,
-                                               &Interfaces[0],
+                                               Interfaces.data(), IdentLocs,
                                                Interfaces.size());
   CurContext->addDecl(CDecl);
   CheckObjCDeclScope(CDecl);

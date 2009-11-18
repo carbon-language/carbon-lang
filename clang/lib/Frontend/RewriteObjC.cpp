@@ -744,7 +744,7 @@ void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
   typedefString += "\n";
   for (ObjCClassDecl::iterator I = ClassDecl->begin(), E = ClassDecl->end();
        I != E; ++I) {
-    ObjCInterfaceDecl *ForwardDecl = *I;
+    ObjCInterfaceDecl *ForwardDecl = I->getInterface();
     typedefString += "#ifndef _REWRITER_typedef_";
     typedefString += ForwardDecl->getNameAsString();
     typedefString += "\n";

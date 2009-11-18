@@ -678,7 +678,7 @@ void DeclContext::buildLookup(DeclContext *DCtx) {
       if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(*D))
         for (ObjCClassDecl::iterator I = Class->begin(), IEnd = Class->end();
              I != IEnd; ++I)
-          makeDeclVisibleInContextImpl(*I);
+          makeDeclVisibleInContextImpl(I->getInterface());
       
       // If this declaration is itself a transparent declaration context,
       // add its members (recursively).

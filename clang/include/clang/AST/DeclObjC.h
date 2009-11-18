@@ -718,10 +718,22 @@ public:
 /// @class NSCursor, NSImage, NSPasteboard, NSWindow;
 ///
 class ObjCClassDecl : public Decl {
-  ObjCList<ObjCInterfaceDecl> ForwardDecls;
+public:
+  class ObjCClassRef {
+    ObjCInterfaceDecl *ID;
+    SourceLocation L;
+  public:
+    ObjCClassRef(ObjCInterfaceDecl *d, SourceLocation l) : ID(d), L(l) {}
+    SourceLocation getLocation() const { return L; }
+    ObjCInterfaceDecl *getInterface() const { return ID; }
+  };
+private:
+  ObjCClassRef *ForwardDecls;
+  unsigned NumDecls;
 
   ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                ObjCInterfaceDecl *const *Elts, unsigned nElts, ASTContext &C);
+                ObjCInterfaceDecl *const *Elts, const SourceLocation *Locs,                
+                unsigned nElts, ASTContext &C);
   virtual ~ObjCClassDecl() {}
 public:
 
@@ -730,17 +742,17 @@ public:
 
   static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                                ObjCInterfaceDecl *const *Elts = 0,
+                               const SourceLocation *Locs = 0,
                                unsigned nElts = 0);
 
-  typedef ObjCList<ObjCInterfaceDecl>::iterator iterator;
-  iterator begin() const { return ForwardDecls.begin(); }
-  iterator end() const { return ForwardDecls.end(); }
-  unsigned size() const { return ForwardDecls.size(); }
+  typedef const ObjCClassRef* iterator;
+  iterator begin() const { return ForwardDecls; }
+  iterator end() const { return ForwardDecls + NumDecls; }
+  unsigned size() const { return NumDecls; }
 
   /// setClassList - Set the list of forward classes.
-  void setClassList(ASTContext &C, ObjCInterfaceDecl*const*List, unsigned Num) {
-    ForwardDecls.set(List, Num, C);
-  }
+  void setClassList(ASTContext &C, ObjCInterfaceDecl*const*List,
+                    const SourceLocation *Locs, unsigned Num);
 
   static bool classof(const Decl *D) { return D->getKind() == ObjCClass; }
   static bool classof(const ObjCClassDecl *D) { return true; }

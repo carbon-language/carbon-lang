@@ -260,7 +260,9 @@ void PCHDeclWriter::VisitObjCClassDecl(ObjCClassDecl *D) {
   VisitDecl(D);
   Record.push_back(D->size());
   for (ObjCClassDecl::iterator I = D->begin(), IEnd = D->end(); I != IEnd; ++I)
-    Writer.AddDeclRef(*I, Record);
+    Writer.AddDeclRef(I->getInterface(), Record);
+  for (ObjCClassDecl::iterator I = D->begin(), IEnd = D->end(); I != IEnd; ++I)
+    Writer.AddSourceLocation(I->getLocation(), Record);
   Code = pch::DECL_OBJC_CLASS;
 }
 
