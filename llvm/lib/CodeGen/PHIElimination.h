@@ -90,7 +90,8 @@ namespace llvm {
     void analyzePHINodes(const MachineFunction& Fn);
 
     /// Split critical edges where necessary for good coalescer performance.
-    bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB);
+    bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
+                       LiveVariables &LV);
 
     /// isLiveOut - Determine if Reg is live out from MBB, when not
     /// considering PHI nodes. This means that Reg is either killed by

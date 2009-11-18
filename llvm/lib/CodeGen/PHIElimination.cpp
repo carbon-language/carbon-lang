@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Function.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -37,37 +36,17 @@ using namespace llvm;
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
 STATISTIC(NumSplits, "Number of critical edges split on demand");
 
-static cl::opt<bool>
-SplitEdges("split-phi-edges",
-           cl::desc("Split critical edges during phi elimination"),
-           cl::init(false), cl::Hidden);
-
 char PHIElimination::ID = 0;
 static RegisterPass<PHIElimination>
 X("phi-node-elimination", "Eliminate PHI nodes for register allocation");
 
 const PassInfo *const llvm::PHIEliminationID = &X;
 
-namespace llvm { FunctionPass *createLocalRegisterAllocator(); }
-
-// Should we run edge splitting?
-static bool shouldSplitEdges() {
-  // Edge splitting breaks the local register allocator. It cannot tolerate
-  // LiveVariables being run.
-  if (RegisterRegAlloc::getDefault() == createLocalRegisterAllocator)
-    return false;
-  return SplitEdges;
-}
-
 void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
   AU.addPreserved<MachineDominatorTree>();
-  if (shouldSplitEdges()) {
-    AU.addRequired<LiveVariables>();
-  } else {
-    AU.setPreservesCFG();
-    AU.addPreservedID(MachineLoopInfoID);
-  }
+  // rdar://7401784 This would be nice:
+  // AU.addPreservedID(MachineLoopInfoID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -79,9 +58,9 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   bool Changed = false;
 
   // Split critical edges to help the coalescer
-  if (shouldSplitEdges())
+  if (LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>())
     for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-      Changed |= SplitPHIEdges(Fn, *I);
+      Changed |= SplitPHIEdges(Fn, *I, *LV);
 
   // Populate VRegPHIUseCount
   analyzePHINodes(Fn);
@@ -361,10 +340,11 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& Fn) {
 }
 
 bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
-                                         MachineBasicBlock &MBB) {
+                                         MachineBasicBlock &MBB,
+                                         LiveVariables &LV) {
   if (MBB.empty() || MBB.front().getOpcode() != TargetInstrInfo::PHI)
     return false;   // Quick exit for basic blocks without PHIs.
-  LiveVariables &LV = getAnalysis<LiveVariables>();
+
   for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
        BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI) {
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
