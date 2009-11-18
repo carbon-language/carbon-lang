@@ -47,7 +47,7 @@ public:
     return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
   }
 
-  llvm::Constant *BuildName(QualType Ty) {
+  llvm::Constant *BuildName(QualType Ty, bool Hidden) {
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
     mangleCXXRttiName(CGM.getMangleContext(), Ty, Out);
@@ -58,11 +58,13 @@ public:
     llvm::Constant *C;
     C = llvm::ConstantArray::get(VMContext, Out.str().substr(4));
 
-    llvm::Constant *s = new llvm::GlobalVariable(CGM.getModule(), C->getType(),
-                                                 true, linktype, C,
-                                                 Out.str());
-    s = llvm::ConstantExpr::getBitCast(s, Int8PtrTy);
-    return s;
+    llvm::GlobalVariable * GV = new llvm::GlobalVariable(CGM.getModule(),
+                                                         C->getType(),
+                                                         true, linktype, C,
+                                                         Out.str());
+    if (Hidden)
+      GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+    return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
   };
 
   /// - BuildFlags - Build a psABI __flags value for __vmi_class_type_info.
@@ -145,7 +147,7 @@ public:
 
   llvm::Constant *finish(std::vector<llvm::Constant *> &info,
                          llvm::GlobalVariable *GV,
-                         llvm::StringRef Name, bool Extern) {
+                         llvm::StringRef Name, bool Hidden) {
     llvm::GlobalVariable::LinkageTypes linktype;
     linktype = llvm::GlobalValue::LinkOnceODRLinkage;
 
@@ -165,7 +167,7 @@ public:
       OGV->replaceAllUsesWith(NewPtr);
       OGV->eraseFromParent();
     }
-    if (!Extern)
+    if (Hidden)
       GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
     return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
   }
@@ -189,6 +191,8 @@ public:
 
     std::vector<llvm::Constant *> info;
 
+    bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
+
     bool simple = false;
     if (RD->getNumBases() == 0)
       C = BuildVtableRef("_ZTVN10__cxxabiv117__class_type_infoE");
@@ -198,7 +202,7 @@ public:
     } else
       C = BuildVtableRef("_ZTVN10__cxxabiv121__vmi_class_type_infoE");
     info.push_back(C);
-    info.push_back(BuildName(CGM.getContext().getTagDeclType(RD)));
+    info.push_back(BuildName(CGM.getContext().getTagDeclType(RD), Hidden));
 
     // If we have no bases, there are no more fields.
     if (RD->getNumBases()) {
@@ -231,9 +235,7 @@ public:
       }
     }
 
-    bool Extern = CGM.getDeclVisibilityMode(RD) != LangOptions::Hidden;
-
-    return finish(info, GV, Out.str(), Extern);
+    return finish(info, GV, Out.str(), Hidden);
   }
 
   /// - BuildFlags - Build a __flags value for __pbase_type_info.
@@ -262,6 +264,10 @@ public:
 
     std::vector<llvm::Constant *> info;
 
+    // FIXME: pointer to hidden should be hidden, we should be able to
+    // grab a bit off the type for this.
+    bool Hidden = false;
+
     QualType PTy = Ty->getPointeeType();
     QualType BTy;
     bool PtrMem = false;
@@ -276,7 +282,7 @@ public:
     else
       C = BuildVtableRef("_ZTVN10__cxxabiv119__pointer_type_infoE");
     info.push_back(C);
-    info.push_back(BuildName(Ty));
+    info.push_back(BuildName(Ty, Hidden));
     Qualifiers Q = PTy.getQualifiers();
     PTy = CGM.getContext().getCanonicalType(PTy).getUnqualifiedType();
     int flags = 0;
@@ -294,7 +300,7 @@ public:
     if (PtrMem)
       info.push_back(BuildType2(BTy));
 
-    return finish(info, GV, Out.str(), false);
+    return finish(info, GV, Out.str(), true);
   }
 
   llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
@@ -311,11 +317,15 @@ public:
 
     std::vector<llvm::Constant *> info;
 
+    // FIXME: pointer to hidden should be hidden, we should be able to
+    // grab a bit off the type for this.
+    bool Hidden = false;
+
     C = BuildVtableRef(vtbl);
     info.push_back(C);
-    info.push_back(BuildName(Ty));
+    info.push_back(BuildName(Ty, Hidden));
 
-    return finish(info, GV, Out.str(), false);
+    return finish(info, GV, Out.str(), true);
   }
 
   llvm::Constant *BuildType(QualType Ty) {
