@@ -365,8 +365,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
     // Sob. These is strictly gcc compatible for the time being. Apple
     // gcc translates options twice, which means that self-expanding
     // options add duplicates.
-    options::ID id = A->getOption().getId();
-    switch (id) {
+    switch ((options::ID) A->getOption().getId()) {
     default:
       DAL->append(A);
       break;

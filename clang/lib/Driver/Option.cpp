@@ -16,7 +16,7 @@
 #include <algorithm>
 using namespace clang::driver;
 
-Option::Option(OptionClass _Kind, options::ID _ID, const char *_Name,
+Option::Option(OptionClass _Kind, unsigned _ID, const char *_Name,
                const OptionGroup *_Group, const Option *_Alias)
   : Kind(_Kind), ID(_ID), Name(_Name), Group(_Group), Alias(_Alias),
     Unsupported(false), LinkerInput(false), NoOptAsInput(false),
@@ -85,7 +85,7 @@ bool Option::matches(const Option *Opt) const {
   return false;
 }
 
-bool Option::matches(options::ID Id) const {
+bool Option::matches(unsigned Id) const {
   // FIXME: Decide what to do here; we should either pull out the
   // handling of alias on the option for Id from the other matches, or
   // find some other solution (which hopefully doesn't require using
@@ -101,7 +101,7 @@ bool Option::matches(options::ID Id) const {
   return false;
 }
 
-OptionGroup::OptionGroup(options::ID ID, const char *Name,
+OptionGroup::OptionGroup(unsigned ID, const char *Name,
                          const OptionGroup *Group)
   : Option(Option::GroupClass, ID, Name, Group, 0) {
 }
@@ -129,7 +129,7 @@ Arg *UnknownOption::accept(const InputArgList &Args, unsigned &Index) const {
   return 0;
 }
 
-FlagOption::FlagOption(options::ID ID, const char *Name,
+FlagOption::FlagOption(unsigned ID, const char *Name,
                        const OptionGroup *Group, const Option *Alias)
   : Option(Option::FlagClass, ID, Name, Group, Alias) {
 }
@@ -143,7 +143,7 @@ Arg *FlagOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new FlagArg(this, Index++);
 }
 
-JoinedOption::JoinedOption(options::ID ID, const char *Name,
+JoinedOption::JoinedOption(unsigned ID, const char *Name,
                            const OptionGroup *Group, const Option *Alias)
   : Option(Option::JoinedClass, ID, Name, Group, Alias) {
 }
@@ -153,7 +153,7 @@ Arg *JoinedOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new JoinedArg(this, Index++);
 }
 
-CommaJoinedOption::CommaJoinedOption(options::ID ID, const char *Name,
+CommaJoinedOption::CommaJoinedOption(unsigned ID, const char *Name,
                                      const OptionGroup *Group,
                                      const Option *Alias)
   : Option(Option::CommaJoinedClass, ID, Name, Group, Alias) {
@@ -170,7 +170,7 @@ Arg *CommaJoinedOption::accept(const InputArgList &Args,
   return new CommaJoinedArg(this, Index++, Suffix);
 }
 
-SeparateOption::SeparateOption(options::ID ID, const char *Name,
+SeparateOption::SeparateOption(unsigned ID, const char *Name,
                                const OptionGroup *Group, const Option *Alias)
   : Option(Option::SeparateClass, ID, Name, Group, Alias) {
 }
@@ -188,7 +188,7 @@ Arg *SeparateOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new SeparateArg(this, Index - 2, 1);
 }
 
-MultiArgOption::MultiArgOption(options::ID ID, const char *Name,
+MultiArgOption::MultiArgOption(unsigned ID, const char *Name,
                                const OptionGroup *Group, const Option *Alias,
                                unsigned _NumArgs)
   : Option(Option::MultiArgClass, ID, Name, Group, Alias), NumArgs(_NumArgs) {
@@ -208,7 +208,7 @@ Arg *MultiArgOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new SeparateArg(this, Index - 1 - NumArgs, NumArgs);
 }
 
-JoinedOrSeparateOption::JoinedOrSeparateOption(options::ID ID, const char *Name,
+JoinedOrSeparateOption::JoinedOrSeparateOption(unsigned ID, const char *Name,
                                                const OptionGroup *Group,
                                                const Option *Alias)
   : Option(Option::JoinedOrSeparateClass, ID, Name, Group, Alias) {
@@ -229,7 +229,7 @@ Arg *JoinedOrSeparateOption::accept(const InputArgList &Args,
   return new SeparateArg(this, Index - 2, 1);
 }
 
-JoinedAndSeparateOption::JoinedAndSeparateOption(options::ID ID,
+JoinedAndSeparateOption::JoinedAndSeparateOption(unsigned ID,
                                                  const char *Name,
                                                  const OptionGroup *Group,
                                                  const Option *Alias)
