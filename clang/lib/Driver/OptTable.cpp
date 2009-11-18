@@ -18,16 +18,26 @@
 using namespace clang::driver;
 using namespace clang::driver::options;
 
+enum DriverFlag {
+  DriverOption     = (1 << 0),
+  LinkerInput      = (1 << 1),
+  NoArgumentUnused = (1 << 2),
+  RenderAsInput    = (1 << 3),
+  RenderJoined     = (1 << 4),
+  RenderSeparate   = (1 << 5),
+  Unsupported      = (1 << 6)
+};
+
 struct Info {
   const char *Name;
-  const char *Flags;
   const char *HelpText;
   const char *MetaVar;
 
-  Option::OptionClass Kind;
-  unsigned GroupID;
-  unsigned AliasID;
-  unsigned Param;
+  unsigned char Kind;
+  unsigned char Flags;
+  unsigned char Param;
+  unsigned short GroupID;
+  unsigned short AliasID;
 };
 
 // Ordering on Info. The ordering is *almost* lexicographic, with two
@@ -74,14 +84,14 @@ static inline bool operator<(const Info &A, const Info &B) {
 
 static Info OptionInfos[] = {
   // The InputOption info
-  { "<input>", "d", 0, 0, Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
+  { "<input>", 0, 0, Option::InputClass, DriverOption, 0, OPT_INVALID, OPT_INVALID },
   // The UnknownOption info
-  { "<unknown>", "", 0, 0, Option::UnknownClass, OPT_INVALID, OPT_INVALID, 0 },
+  { "<unknown>", 0, 0, Option::UnknownClass, 0, 0, OPT_INVALID, OPT_INVALID },
 
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
-  { NAME, FLAGS, HELPTEXT, METAVAR, \
-    Option::KIND##Class, OPT_##GROUP, OPT_##ALIAS, PARAM },
+  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \
+    OPT_##GROUP, OPT_##ALIAS },
 #include "clang/Driver/Options.def"
 };
 static const unsigned numOptions = sizeof(OptionInfos) / sizeof(OptionInfos[0]);
@@ -110,7 +120,7 @@ OptTable::OptTable() : Options(new Option*[numOptions]) {
   // Check that everything after the first searchable option is a
   // regular option class.
   for (unsigned i = FirstSearchableOption; i < LastOption; ++i) {
-    Option::OptionClass Kind = getInfo(i).Kind;
+    Option::OptionClass Kind = (Option::OptionClass) getInfo(i).Kind;
     assert((Kind != Option::InputClass && Kind != Option::UnknownClass &&
             Kind != Option::GroupClass) &&
            "Special options should be defined first!");
@@ -196,22 +206,24 @@ Option *OptTable::constructOption(options::ID id) const {
     Opt = new JoinedAndSeparateOption(id, info.Name, Group, Alias); break;
   }
 
-  for (const char *s = info.Flags; *s; ++s) {
-    switch (*s) {
-    default: assert(0 && "Invalid option flag.");
-    case 'J':
-      assert(info.Kind == Option::SeparateClass && "Invalid option.");
-      Opt->setForceJoinedRender(true); break;
-    case 'S':
-      assert(info.Kind == Option::JoinedClass && "Invalid option.");
-      Opt->setForceSeparateRender(true); break;
-    case 'd': Opt->setDriverOption(true); break;
-    case 'i': Opt->setNoOptAsInput(true); break;
-    case 'l': Opt->setLinkerInput(true); break;
-    case 'q': Opt->setNoArgumentUnused(true); break;
-    case 'u': Opt->setUnsupported(true); break;
-    }
+  if (info.Flags & DriverOption)
+    Opt->setDriverOption(true);
+  if (info.Flags & LinkerInput)
+    Opt->setLinkerInput(true);
+  if (info.Flags & NoArgumentUnused)
+    Opt->setNoArgumentUnused(true);
+  if (info.Flags & RenderAsInput)
+    Opt->setNoOptAsInput(true);
+  if (info.Flags & RenderJoined) {
+    assert(info.Kind == Option::SeparateClass && "Invalid option.");
+    Opt->setForceJoinedRender(true);
   }
+  if (info.Flags & RenderSeparate) {
+    assert(info.Kind == Option::JoinedClass && "Invalid option.");
+    Opt->setForceSeparateRender(true);
+  }
+  if (info.Flags & Unsupported)
+    Opt->setUnsupported(true);
 
   return Opt;
 }
