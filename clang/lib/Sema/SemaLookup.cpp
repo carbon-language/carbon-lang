@@ -246,7 +246,11 @@ void LookupResult::resolveKind() {
   unsigned N = Decls.size();
 
   // Fast case: no possible ambiguity.
-  if (N == 0) return;
+  if (N == 0) {
+    assert(ResultKind == NotFound);
+    return;
+  }
+
   if (N == 1) {
     if (isa<UnresolvedUsingValueDecl>(Decls[0]))
       ResultKind = FoundUnresolvedValue;

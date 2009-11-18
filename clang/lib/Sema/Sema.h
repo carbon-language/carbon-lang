@@ -548,27 +548,32 @@ public:
   DeclPtrTy HandleDeclarator(Scope *S, Declarator &D,
                              MultiTemplateParamsArg TemplateParameterLists,
                              bool IsFunctionDefinition);
-  void RegisterLocallyScopedExternCDecl(NamedDecl *ND, NamedDecl *PrevDecl,
+  void RegisterLocallyScopedExternCDecl(NamedDecl *ND,
+                                        const LookupResult &Previous,
                                         Scope *S);
   void DiagnoseFunctionSpecifiers(Declarator& D);
+  bool CheckRedeclaration(DeclContext *DC,
+                          DeclarationName Name,
+                          SourceLocation NameLoc,
+                          unsigned Diagnostic);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     QualType R, DeclaratorInfo *DInfo,
-                                    NamedDecl* PrevDecl, bool &Redeclaration);
+                                    LookupResult &Previous, bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, DeclaratorInfo *DInfo,
-                                     NamedDecl* PrevDecl,
+                                     LookupResult &Previous,
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool &Redeclaration);
-  void CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
+  void CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous,
                                 bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, DeclaratorInfo *DInfo,
-                                     NamedDecl* PrevDecl,
+                                     LookupResult &Previous,
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool IsFunctionDefinition,
                                      bool &Redeclaration);
   void AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
-  void CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
+  void CheckFunctionDeclaration(FunctionDecl *NewFD, LookupResult &Previous,
                                 bool IsExplicitSpecialization,
                                 bool &Redeclaration,
                                 bool &OverloadableAttrRequired);
@@ -780,15 +785,17 @@ public:
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 DeclaratorInfo *DInfo);
-  void MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
+  void MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
-  void MergeVarDecl(VarDecl *New, Decl *Old);
+  void MergeVarDecl(VarDecl *New, LookupResult &OldDecls);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 
   /// C++ Overloading.
-  bool IsOverload(FunctionDecl *New, Decl* OldD,
-                  OverloadedFunctionDecl::function_iterator &MatchedDecl);
+  bool IsOverload(FunctionDecl *New, LookupResult &OldDecls,
+                  NamedDecl *&OldDecl);
+  bool IsOverload(FunctionDecl *New, FunctionDecl *Old);
+
   ImplicitConversionSequence
   TryImplicitConversion(Expr* From, QualType ToType,
                         bool SuppressUserConversions,
@@ -2325,8 +2332,8 @@ public:
                             const TemplateArgumentLoc *ExplicitTemplateArgs,
                                            unsigned NumExplicitTemplateArgs,
                                            SourceLocation RAngleLoc,
-                                           NamedDecl *&PrevDecl);
-  bool CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl);
+                                           LookupResult &Previous);
+  bool CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous);
     
   virtual DeclResult
   ActOnExplicitInstantiation(Scope *S,

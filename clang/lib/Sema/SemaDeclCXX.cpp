@@ -4668,7 +4668,8 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   // FIXME: handle local classes
 
   // Recover from invalid scope qualifiers as if they just weren't there.
-  NamedDecl *PrevDecl = 0;
+  LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
+                        ForRedeclaration);
   if (!ScopeQual.isInvalid() && ScopeQual.isSet()) {
     // FIXME: RequireCompleteDeclContext
     DC = computeDeclContext(ScopeQual);
@@ -4676,15 +4677,15 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
     // FIXME: handle dependent contexts
     if (!DC) return DeclPtrTy();
 
-    LookupResult R(*this, Name, Loc, LookupOrdinaryName, ForRedeclaration);
-    LookupQualifiedName(R, DC);
-    PrevDecl = R.getAsSingleDecl(Context);
+    LookupQualifiedName(Previous, DC);
 
     // If searching in that context implicitly found a declaration in
     // a different context, treat it like it wasn't found at all.
     // TODO: better diagnostics for this case.  Suggesting the right
     // qualified scope would be nice...
-    if (!PrevDecl || !PrevDecl->getDeclContext()->Equals(DC)) {
+    // FIXME: getRepresentativeDecl() is not right here at all
+    if (Previous.empty() ||
+        !Previous.getRepresentativeDecl()->getDeclContext()->Equals(DC)) {
       D.setInvalidType();
       Diag(Loc, diag::err_qualified_friend_not_found) << Name << T;
       return DeclPtrTy();
@@ -4711,12 +4712,10 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
       while (DC->isRecord()) 
         DC = DC->getParent();
 
-      LookupResult R(*this, Name, Loc, LookupOrdinaryName, ForRedeclaration);
-      LookupQualifiedName(R, DC);
-      PrevDecl = R.getAsSingleDecl(Context);
+      LookupQualifiedName(Previous, DC);
 
       // TODO: decide what we think about using declarations.
-      if (PrevDecl)
+      if (!Previous.empty())
         break;
       
       if (DC->isFileContext()) break;
@@ -4728,7 +4727,8 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
     // C++0x changes this for both friend types and functions.
     // Most C++ 98 compilers do seem to give an error here, so
     // we do, too.
-    if (PrevDecl && DC->Equals(CurContext) && !getLangOptions().CPlusPlus0x)
+    if (!Previous.empty() && DC->Equals(CurContext)
+        && !getLangOptions().CPlusPlus0x)
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
   }
 
@@ -4745,7 +4745,7 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   }
 
   bool Redeclaration = false;
-  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, DInfo, PrevDecl,
+  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, DInfo, Previous,
                                           move(TemplateParams),
                                           IsDefinition,
                                           Redeclaration);

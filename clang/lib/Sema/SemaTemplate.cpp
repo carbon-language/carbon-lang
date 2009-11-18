@@ -3538,15 +3538,17 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                            const TemplateArgumentLoc *ExplicitTemplateArgs,
                                           unsigned NumExplicitTemplateArgs,
                                           SourceLocation RAngleLoc,
-                                          NamedDecl *&PrevDecl) {
+                                          LookupResult &Previous) {
   // The set of function template specializations that could match this
   // explicit function template specialization.
   typedef llvm::SmallVector<FunctionDecl *, 8> CandidateSet;
   CandidateSet Candidates;
   
   DeclContext *FDLookupContext = FD->getDeclContext()->getLookupContext();
-  for (OverloadIterator Ovl(PrevDecl), OvlEnd; Ovl != OvlEnd; ++Ovl) {
-    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*Ovl)) {
+  for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
+         I != E; ++I) {
+    NamedDecl *Ovl = (*I)->getUnderlyingDecl();
+    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(Ovl)) {
       // Only consider templates found within the same semantic lookup scope as 
       // FD.
       if (!FDLookupContext->Equals(Ovl->getDeclContext()->getLookupContext()))
@@ -3637,7 +3639,8 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   
   // The "previous declaration" for this function template specialization is
   // the prior function template specialization.
-  PrevDecl = Specialization;
+  Previous.clear();
+  Previous.addDecl(Specialization);
   return false;
 }
 
@@ -3652,10 +3655,11 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
 /// \param Member the member declaration, which will be updated to become a
 /// specialization.
 ///
-/// \param PrevDecl the set of declarations, one of which may be specialized
-/// by this function specialization.
+/// \param Previous the set of declarations, one of which may be specialized
+/// by this function specialization;  the set will be modified to contain the
+/// redeclared member.
 bool 
-Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
+Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
   assert(!isa<TemplateDecl>(Member) && "Only for non-template members");
          
   // Try to find the member we are instantiating.
@@ -3663,11 +3667,13 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
   NamedDecl *InstantiatedFrom = 0;
   MemberSpecializationInfo *MSInfo = 0;
 
-  if (!PrevDecl) {
+  if (Previous.empty()) {
     // Nowhere to look anyway.
   } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Member)) {
-    for (OverloadIterator Ovl(PrevDecl), OvlEnd; Ovl != OvlEnd; ++Ovl) {
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Ovl)) {
+    for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
+           I != E; ++I) {
+      NamedDecl *D = (*I)->getUnderlyingDecl();
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
         if (Context.hasSameType(Function->getType(), Method->getType())) {
           Instantiation = Method;
           InstantiatedFrom = Method->getInstantiatedFromMemberFunction();
@@ -3677,15 +3683,19 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
       }
     }
   } else if (isa<VarDecl>(Member)) {
-    if (VarDecl *PrevVar = dyn_cast<VarDecl>(PrevDecl))
+    VarDecl *PrevVar;
+    if (Previous.isSingleResult() &&
+        (PrevVar = dyn_cast<VarDecl>(Previous.getFoundDecl())))
       if (PrevVar->isStaticDataMember()) {
-        Instantiation = PrevDecl;
+        Instantiation = PrevVar;
         InstantiatedFrom = PrevVar->getInstantiatedFromStaticDataMember();
         MSInfo = PrevVar->getMemberSpecializationInfo();
       }
   } else if (isa<RecordDecl>(Member)) {
-    if (CXXRecordDecl *PrevRecord = dyn_cast<CXXRecordDecl>(PrevDecl)) {
-      Instantiation = PrevDecl;
+    CXXRecordDecl *PrevRecord;
+    if (Previous.isSingleResult() &&
+        (PrevRecord = dyn_cast<CXXRecordDecl>(Previous.getFoundDecl()))) {
+      Instantiation = PrevRecord;
       InstantiatedFrom = PrevRecord->getInstantiatedFromMemberClass();
       MSInfo = PrevRecord->getMemberSpecializationInfo();
     }
@@ -3774,7 +3784,8 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
              
   // Save the caller the trouble of having to figure out which declaration
   // this specialization matches.
-  PrevDecl = Instantiation;
+  Previous.clear();
+  Previous.addDecl(Instantiation);
   return false;
 }
 

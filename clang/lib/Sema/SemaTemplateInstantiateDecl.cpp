@@ -175,7 +175,10 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.
   bool Redeclaration = false;
-  SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration);
+  // FIXME: having to fake up a LookupResult is dumb.
+  LookupResult Previous(SemaRef, Var->getDeclName(), Var->getLocation(),
+                        Sema::LookupOrdinaryName);
+  SemaRef.CheckVariableDeclaration(Var, Previous, Redeclaration);
 
   if (D->isOutOfLine()) {
     D->getLexicalDeclContext()->addDecl(Var);
@@ -680,27 +683,24 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
     
-  NamedDecl *PrevDecl = 0;
+  LookupResult Previous(SemaRef, Function->getDeclName(), SourceLocation(),
+                        Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+
   if (TemplateParams || !FunctionTemplate) {
     // Look only into the namespace where the friend would be declared to 
     // find a previous declaration. This is the innermost enclosing namespace, 
     // as described in ActOnFriendFunctionDecl.
-    LookupResult R(SemaRef, Function->getDeclName(), SourceLocation(),
-                   Sema::LookupOrdinaryName,
-                   Sema::ForRedeclaration);
-    SemaRef.LookupQualifiedName(R, DC);
+    SemaRef.LookupQualifiedName(Previous, DC);
     
-    PrevDecl = R.getAsSingleDecl(SemaRef.Context);
-
     // In C++, the previous declaration we find might be a tag type
     // (class or enum). In this case, the new declaration will hide the
     // tag type. Note that this does does not apply if we're declaring a
     // typedef (C++ [dcl.typedef]p4).
-    if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
-      PrevDecl = 0;
+    if (Previous.isSingleTagDecl())
+      Previous.clear();
   }
   
-  SemaRef.CheckFunctionDeclaration(Function, PrevDecl, false, Redeclaration,
+  SemaRef.CheckFunctionDeclaration(Function, Previous, false, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
   // If the original function was part of a friend declaration,
@@ -709,6 +709,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
       = TemplateParams? cast<NamedDecl>(D->getDescribedFunctionTemplate()) : D;
   if (FromFriendD->getFriendObjectKind()) {
     NamedDecl *ToFriendD = 0;
+    NamedDecl *PrevDecl;
     if (TemplateParams) {
       ToFriendD = cast<NamedDecl>(FunctionTemplate);
       PrevDecl = FunctionTemplate->getPreviousDeclaration();
@@ -843,29 +844,26 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   if (InitMethodInstantiation(Method, D))
     Method->setInvalidDecl();
 
-  NamedDecl *PrevDecl = 0;
+  LookupResult Previous(SemaRef, Name, SourceLocation(),
+                        Sema::LookupOrdinaryName, Sema::ForRedeclaration);
 
   if (!FunctionTemplate || TemplateParams) {
-    LookupResult R(SemaRef, Name, SourceLocation(),
-                   Sema::LookupOrdinaryName,
-                   Sema::ForRedeclaration);
-    SemaRef.LookupQualifiedName(R, Owner);
-    PrevDecl = R.getAsSingleDecl(SemaRef.Context);
+    SemaRef.LookupQualifiedName(Previous, Owner);
 
     // In C++, the previous declaration we find might be a tag type
     // (class or enum). In this case, the new declaration will hide the
     // tag type. Note that this does does not apply if we're declaring a
     // typedef (C++ [dcl.typedef]p4).
-    if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
-      PrevDecl = 0;
+    if (Previous.isSingleTagDecl())
+      Previous.clear();
   }
 
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
-  SemaRef.CheckFunctionDeclaration(Method, PrevDecl, false, Redeclaration,
+  SemaRef.CheckFunctionDeclaration(Method, Previous, false, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
-  if (!FunctionTemplate && (!Method->isInvalidDecl() || !PrevDecl) &&
+  if (!FunctionTemplate && (!Method->isInvalidDecl() || Previous.empty()) &&
       !Method->getFriendObjectKind())
     Owner->addDecl(Method);
 

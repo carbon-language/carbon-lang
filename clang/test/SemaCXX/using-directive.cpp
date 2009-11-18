@@ -54,9 +54,7 @@ using namespace A;
 
 void K1::foo() {} // okay
 
-// FIXME: Do we want err_ovl_no_viable_function_in_init here?
-struct K2 k2; // expected-error{{reference to 'K2' is ambiguous}} \
-                 expected-error{{incomplete type}}
+struct K2 *k2; // expected-error{{reference to 'K2' is ambiguous}}
 
 // FIXME: This case is incorrectly diagnosed!
 //K2 k3;

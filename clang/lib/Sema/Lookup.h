@@ -201,6 +201,13 @@ public:
     return getResultKind() == Ambiguous;
   }
 
+  /// Determines if this names a single result which is not an
+  /// unresolved value using decl.  If so, it is safe to call
+  /// getFoundDecl().
+  bool isSingleResult() const {
+    return getResultKind() == Found;
+  }
+
   LookupResultKind getResultKind() const {
     sanity();
     return ResultKind;
@@ -248,11 +255,23 @@ public:
     Decls.set_size(N);
   }
 
-  /// \brief Resolves the kind of the lookup, possibly hiding decls.
+  /// \brief Resolves the result kind of the lookup, possibly hiding
+  /// decls.
   ///
   /// This should be called in any environment where lookup might
   /// generate multiple lookup results.
   void resolveKind();
+
+  /// \brief Re-resolves the result kind of the lookup after a set of
+  /// removals has been performed.
+  void resolveKindAfterFilter() {
+    if (Decls.empty())
+      ResultKind = NotFound;
+    else {
+      ResultKind = Found;
+      resolveKind();
+    }
+  }
 
   /// \brief Fetch this as an unambiguous single declaration
   /// (possibly an overloaded one).
@@ -270,6 +289,12 @@ public:
     assert(getResultKind() == Found
            && "getFoundDecl called on non-unique result");
     return Decls[0]->getUnderlyingDecl();
+  }
+
+  /// Fetches a representative decl.  Useful for lazy diagnostics.
+  NamedDecl *getRepresentativeDecl() const {
+    assert(!Decls.empty() && "cannot get representative of empty set");
+    return Decls[0];
   }
 
   /// \brief Asks if the result is a single tag decl.
@@ -335,6 +360,65 @@ public:
   /// sometimes we're doing lookups on synthesized names.
   SourceLocation getNameLoc() const {
     return NameLoc;
+  }
+
+  /// A class for iterating through a result set and possibly
+  /// filtering out results.  The results returned are possibly
+  /// sugared.
+  class Filter {
+    LookupResult &Results;
+    unsigned I;
+    bool ErasedAny;
+#ifndef NDEBUG
+    bool CalledDone;
+#endif
+    
+    friend class LookupResult;
+    Filter(LookupResult &Results)
+      : Results(Results), I(0), ErasedAny(false)
+#ifndef NDEBUG
+      , CalledDone(false)
+#endif
+    {}
+
+  public:
+#ifndef NDEBUG
+    ~Filter() {
+      assert(CalledDone &&
+             "LookupResult::Filter destroyed without done() call");
+    }
+#endif
+
+    bool hasNext() const {
+      return I != Results.Decls.size();
+    }
+
+    NamedDecl *next() {
+      assert(I < Results.Decls.size() && "next() called on empty filter");
+      return Results.Decls[I++];
+    }
+
+    /// Erase the last element returned from this iterator.
+    void erase() {
+      Results.Decls[--I] = Results.Decls.back();
+      Results.Decls.pop_back();
+      ErasedAny = true;
+    }
+
+    void done() {
+#ifndef NDEBUG
+      assert(!CalledDone && "done() called twice");
+      CalledDone = true;
+#endif
+
+      if (ErasedAny)
+        Results.resolveKindAfterFilter();
+    }
+  };
+
+  /// Create a filter for this result set.
+  Filter makeFilter() {
+    return Filter(*this);
   }
 
 private:
