@@ -98,6 +98,11 @@ bool llvm::PointerMayBeCaptured(const Value *V, bool ReturnCaptures) {
           Worklist.push_back(U);
       }
       break;
+    case Instruction::ICmp:
+      // Comparing the pointer against null does not count as a capture.
+      if (isa<ConstantPointerNull>(I->getOperand(1)))
+        break;
+      return true;
     default:
       // Something else - be conservative and say it is captured.
       return true;
