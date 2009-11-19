@@ -1,7 +1,7 @@
-// RUN: clang-cc -fmath-errno=1 -emit-llvm -o %t %s -triple i386-unknown-unknown
+// RUN: clang-cc -emit-llvm -o %t %s -triple i386-unknown-unknown
 // RUN: grep "declare " %t | count 6
 // RUN: grep "declare " %t | grep "@llvm." | count 1
-// RUN: clang-cc -fmath-errno=0 -emit-llvm -o %t %s -triple i386-unknown-unknown
+// RUN: clang-cc -fno-math-errno -emit-llvm -o %t %s -triple i386-unknown-unknown
 // RUN: grep "declare " %t | count 6
 // RUN: grep "declare " %t | grep -v "@llvm." | count 0
 

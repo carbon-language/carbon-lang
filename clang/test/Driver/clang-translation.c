@@ -5,7 +5,6 @@
 // RUN: grep '"--relocation-model" "static"' %t.log
 // RUN: grep '"--disable-fp-elim"' %t.log
 // RUN: grep '"--unwind-tables=0"' %t.log
-// RUN: grep '"--fmath-errno=1"' %t.log
 // RUN: grep '"-Os"' %t.log
 // RUN: grep '"-o" .*clang-translation.*' %t.log
 // RUN: grep '"--asm-verbose"' %t.log

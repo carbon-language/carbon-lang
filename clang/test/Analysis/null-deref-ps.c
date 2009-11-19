@@ -1,6 +1,6 @@
 // RUN: clang-cc -triple i386-apple-darwin10 -analyze -analyzer-experimental-internal-checks -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic
 // RUN: clang-cc -triple i386-apple-darwin10 -analyze -analyzer-experimental-internal-checks -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic
-// RUN: clang-cc -triple i386-apple-darwin10 -analyze -analyzer-experimental-internal-checks -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -analyzer-purge-dead=false -verify %s
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -analyzer-experimental-internal-checks -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -analyzer-no-purge-dead -verify %s
 // RUN: clang-cc -triple i386-apple-darwin10 -analyze -analyzer-experimental-internal-checks -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
 typedef unsigned uintptr_t;

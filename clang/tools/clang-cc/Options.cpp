@@ -104,8 +104,7 @@ EagerlyAssume("analyzer-eagerly-assume",
                              "symbolic constraints"));
 
 static llvm::cl::opt<bool>
-PurgeDead("analyzer-purge-dead",
-          llvm::cl::init(true),
+NoPurgeDead("analyzer-no-purge-dead",
           llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
                          " processing a statement"));
 
@@ -440,8 +439,8 @@ TimeReport("ftime-report",
 namespace langoptions {
 
 static llvm::cl::opt<bool>
-AllowBuiltins("fbuiltin", llvm::cl::init(true),
-             llvm::cl::desc("Disable implicit builtin knowledge of functions"));
+NoBuiltin("fno-builtin",
+          llvm::cl::desc("Disable implicit builtin knowledge of functions"));
 
 static llvm::cl::opt<bool>
 AltiVec("faltivec", llvm::cl::desc("Enable AltiVec vector initializer syntax"));
@@ -532,7 +531,7 @@ MainFileName("main-file-name",
              llvm::cl::desc("Main file name to use for debug info"));
 
 static llvm::cl::opt<bool>
-MathErrno("fmath-errno", llvm::cl::init(true),
+NoMathErrno("fno-math-errno",
           llvm::cl::desc("Require math functions to respect errno"));
 
 static llvm::cl::opt<bool>
@@ -590,7 +589,7 @@ PascalStrings("fpascal-strings",
                              "string literals"));
 
 static llvm::cl::opt<bool>
-Rtti("frtti", llvm::cl::init(true),
+NoRtti("fno-rtti",
      llvm::cl::desc("Enable generation of rtti information"));
 
 static llvm::cl::opt<bool>
@@ -786,7 +785,7 @@ void clang::InitializeAnalyzerOptions(AnalyzerOptions &Opts) {
   Opts.VisualizeEGUbi = VisualizeEGUbi;
   Opts.AnalyzeAll = AnalyzeAll;
   Opts.AnalyzerDisplayProgress = AnalyzerDisplayProgress;
-  Opts.PurgeDead = PurgeDead;
+  Opts.PurgeDead = !NoPurgeDead;
   Opts.EagerlyAssume = EagerlyAssume;
   Opts.AnalyzeSpecificFunction = AnalyzeSpecificFunction;
   Opts.EnableExperimentalChecks = AnalyzerExperimentalChecks;
@@ -1224,7 +1223,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
   if (NoLaxVectorConversions.getPosition())
       Options.LaxVectorConversions = 0;
   Options.Exceptions = Exceptions;
-  Options.Rtti = Rtti;
+  Options.Rtti = !NoRtti;
   if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
   if (CharIsSigned.getPosition())
@@ -1232,8 +1231,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
   if (ShortWChar.getPosition())
     Options.ShortWChar = ShortWChar;
 
-  if (!AllowBuiltins)
-    Options.NoBuiltin = 1;
+  Options.NoBuiltin = NoBuiltin;
   if (Freestanding)
     Options.Freestanding = Options.NoBuiltin = 1;
 
@@ -1248,7 +1246,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
   // OpenCL and C++ both have bool, true, false keywords.
   Options.Bool = Options.OpenCL | Options.CPlusPlus;
 
-  Options.MathErrno = MathErrno;
+  Options.MathErrno = !NoMathErrno;
 
   Options.InstantiationDepth = TemplateDepth;
 

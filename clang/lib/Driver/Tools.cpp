@@ -779,12 +779,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
   }
 
-  if (Args.hasFlag(options::OPT_fmath_errno,
+  // -fmath-errno is default.
+  if (!Args.hasFlag(options::OPT_fmath_errno,
                    options::OPT_fno_math_errno,
                    getToolChain().IsMathErrnoDefault()))
-    CmdArgs.push_back("--fmath-errno=1");
-  else
-    CmdArgs.push_back("--fmath-errno=0");
+    CmdArgs.push_back("-fno-math-errno");
 
   if (Arg *A = Args.getLastArg(options::OPT_flimited_precision_EQ)) {
     CmdArgs.push_back("--limit-float-precision");
@@ -923,7 +922,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fbuiltin is default.
   if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
-    CmdArgs.push_back("-fbuiltin=0");
+    CmdArgs.push_back("-fno-builtin");
 
   // -fblocks=0 is default.
   if (Args.hasFlag(options::OPT_fblocks, options::OPT_fno_blocks,
@@ -939,7 +938,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -frtti is default.
   if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
-    CmdArgs.push_back("-frtti=0");
+    CmdArgs.push_back("-fno-rtti");
 
   // -fsigned-char is default.
   if (!Args.hasFlag(options::OPT_fsigned_char,
