@@ -123,6 +123,9 @@ public:
     /// \brief Create a new current-parameter chunk.
     static Chunk CreateCurrentParameter(llvm::StringRef CurrentParameter);
 
+    /// \brief Clone the given chunk.
+    Chunk Clone() const;
+    
     /// \brief Destroy this chunk, deallocating any memory it owns.
     void Destroy();
   };
@@ -192,15 +195,21 @@ public:
   /// \brief Add a new chunk.
   void AddChunk(Chunk C) { Chunks.push_back(C); }
   
+  /// \brief Returns the text in the TypedText chunk.
+  const char *getTypedText() const;
+
   /// \brief Retrieve a string representation of the code completion string,
   /// which is mainly useful for debugging.
   std::string getAsString() const; 
+  
+  /// \brief Clone this code-completion string.
+  CodeCompletionString *Clone() const;
   
   /// \brief Serialize this code-completion string to the given stream.
   void Serialize(llvm::raw_ostream &OS) const;
   
   /// \brief Deserialize a code-completion string from the given string.
-  static CodeCompletionString *Deserialize(llvm::StringRef &Str);
+  static CodeCompletionString *Deserialize(llvm::StringRef &Str);  
 };
   
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, 
@@ -220,7 +229,8 @@ public:
     enum ResultKind {
       RK_Declaration = 0, //< Refers to a declaration
       RK_Keyword,         //< Refers to a keyword or symbol.
-      RK_Macro            //< Refers to a macro
+      RK_Macro,           //< Refers to a macro
+      RK_Pattern          //< Refers to a precomputed pattern.
     };
     
     /// \brief The kind of result stored here.
@@ -234,6 +244,10 @@ public:
       /// \brief When Kind == RK_Keyword, the string representing the keyword 
       /// or symbol's spelling.
       const char *Keyword;
+      
+      /// \brief When Kind == RK_Pattern, the code-completion string that
+      /// describes the completion text to insert.
+      CodeCompletionString *Pattern;
       
       /// \brief When Kind == RK_Macro, the identifier that refers to a macro.
       IdentifierInfo *Macro;
@@ -277,6 +291,12 @@ public:
      : Kind(RK_Macro), Macro(Macro), Rank(Rank), Hidden(false), 
        QualifierIsInformative(0), StartsNestedNameSpecifier(false),
        Qualifier(0) { }
+
+    /// \brief Build a result that refers to a pattern.
+    Result(CodeCompletionString *Pattern, unsigned Rank)
+      : Kind(RK_Pattern), Pattern(Pattern), Rank(Rank), Hidden(false), 
+        QualifierIsInformative(0), StartsNestedNameSpecifier(false),
+        Qualifier(0) { }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {
@@ -293,6 +313,8 @@ public:
     /// \brief Create a new code-completion string that describes how to insert
     /// this result into a program.
     CodeCompletionString *CreateCodeCompletionString(Sema &S);
+    
+    void Destroy();
   };
     
   class OverloadCandidate {

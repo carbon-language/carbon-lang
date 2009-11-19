@@ -1066,6 +1066,17 @@ namespace {
       else if (X.Rank > Y.Rank)
         return false;
       
+      // We use a special ordering for keywords and patterns, based on the
+      // typed text.
+      if ((X.Kind == Result::RK_Keyword || X.Kind == Result::RK_Pattern) &&
+          (Y.Kind == Result::RK_Keyword || Y.Kind == Result::RK_Pattern)) {
+        const char *XStr = (X.Kind == Result::RK_Keyword)? X.Keyword 
+                                                   : X.Pattern->getTypedText();
+        const char *YStr = (Y.Kind == Result::RK_Keyword)? Y.Keyword 
+                                                   : Y.Pattern->getTypedText();
+        return strcmp(XStr, YStr) < 0;
+      }
+      
       // Result kinds are ordered by decreasing importance.
       if (X.Kind < Y.Kind)
         return true;
@@ -1087,12 +1098,14 @@ namespace {
           return isEarlierDeclarationName(X.Declaration->getDeclName(),
                                           Y.Declaration->getDeclName());
           
-        case Result::RK_Keyword:
-          return strcmp(X.Keyword, Y.Keyword) < 0;
-          
         case Result::RK_Macro:
           return llvm::LowercaseString(X.Macro->getName()) < 
                    llvm::LowercaseString(Y.Macro->getName());
+          
+        case Result::RK_Keyword:
+        case Result::RK_Pattern:
+          llvm::llvm_unreachable("Result kinds handled above");
+          break;
       }
       
       // Silence GCC warning.
@@ -1120,6 +1133,9 @@ static void HandleCodeCompleteResults(Sema *S,
 
   if (CodeCompleter)
     CodeCompleter->ProcessCodeCompleteResults(*S, Results, NumResults);
+  
+  for (unsigned I = 0; I != NumResults; ++I)
+    Results[I].Destroy();
 }
 
 void Sema::CodeCompleteOrdinaryName(Scope *S) {
@@ -1635,10 +1651,20 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
     Results.MaybeAddResult(CodeCompleteConsumer::Result("copy", 0));
   if (!(Attributes & ObjCDeclSpec::DQ_PR_nonatomic))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("nonatomic", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_setter))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("setter", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_getter))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("getter", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_setter)) {
+    CodeCompletionString *Setter = new CodeCompletionString;
+    Setter->AddTypedTextChunk("setter");
+    Setter->AddTextChunk(" = ");
+    Setter->AddPlaceholderChunk("method");
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(Setter, 0));
+  }
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_getter)) {
+    CodeCompletionString *Getter = new CodeCompletionString;
+    Getter->AddTypedTextChunk("getter");
+    Getter->AddTextChunk(" = ");
+    Getter->AddPlaceholderChunk("method");
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(Getter, 0));
+  }
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }

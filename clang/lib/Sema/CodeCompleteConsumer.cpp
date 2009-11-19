@@ -117,6 +117,33 @@ CodeCompletionString::Chunk::CreateCurrentParameter(
   return Chunk(CK_CurrentParameter, CurrentParameter);
 }
 
+CodeCompletionString::Chunk CodeCompletionString::Chunk::Clone() const {
+  switch (Kind) {
+  case CK_TypedText:
+  case CK_Text:
+  case CK_Placeholder:
+  case CK_Informative:
+  case CK_CurrentParameter:
+  case CK_LeftParen:
+  case CK_RightParen:
+  case CK_LeftBracket:
+  case CK_RightBracket:
+  case CK_LeftBrace:
+  case CK_RightBrace:
+  case CK_LeftAngle:
+  case CK_RightAngle:
+  case CK_Comma:
+    return Chunk(Kind, Text);
+      
+  case CK_Optional: {
+    std::auto_ptr<CodeCompletionString> Opt(Optional->Clone());
+    return CreateOptional(Opt);
+  }
+  }
+
+  // Silence GCC warning.
+  return Chunk();
+}
 
 void
 CodeCompletionString::Chunk::Destroy() {
@@ -168,6 +195,20 @@ std::string CodeCompletionString::getAsString() const {
   return Result;
 }
 
+const char *CodeCompletionString::getTypedText() const {
+  for (iterator C = begin(), CEnd = end(); C != CEnd; ++C)
+    if (C->Kind == CK_TypedText)
+      return C->Text;
+  
+  return 0;
+}
+
+CodeCompletionString *CodeCompletionString::Clone() const {
+  CodeCompletionString *Result = new CodeCompletionString;
+  for (iterator C = begin(), CEnd = end(); C != CEnd; ++C)
+    Result->AddChunk(C->Clone());
+  return Result;
+}
 
 namespace {
   // Escape a string for XML-like formatting.
@@ -473,6 +514,13 @@ CodeCompletionString *CodeCompletionString::Deserialize(llvm::StringRef &Str) {
   return Result;
 }
 
+void CodeCompleteConsumer::Result::Destroy() {
+  if (Kind == RK_Pattern) {
+    delete Pattern;
+    Pattern = 0;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Code completion overload candidate implementation
 //===----------------------------------------------------------------------===//
@@ -543,6 +591,12 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
         delete CCS;
       }
       OS << '\n';
+      break;
+    }
+        
+    case Result::RK_Pattern: {
+      OS << "Pattern : " << Results[I].Rank << " : " 
+         << Results[I].Pattern->getAsString() << '\n';
       break;
     }
     }
@@ -624,6 +678,13 @@ CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
         } else {
           OS << "<typed-text>" << Results[I].Macro->getName() << "</>";
         }
+        OS << '\n';
+        break;
+      }
+        
+      case Result::RK_Pattern: {
+        OS << "Pattern:";
+        Results[I].Pattern->Serialize(OS);
         OS << '\n';
         break;
       }
