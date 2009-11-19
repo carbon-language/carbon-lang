@@ -550,7 +550,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           case ARM::LEApcrel:
             // This takes a SoImm, which is 8 bit immediate rotated. We'll
             // pretend the maximum offset is 255 * 4. Since each instruction
-            // 4 byte wide, this is always correct. We'llc heck for other
+            // 4 byte wide, this is always correct. We'll check for other
             // displacements that fits in a SoImm as well.
             Bits = 8;
             Scale = 4;
