@@ -183,6 +183,7 @@
 // ARM:#define __SCHAR_MAX__ 127
 // ARM:#define __SHRT_MAX__ 32767
 // ARM:#define __SIZE_TYPE__ unsigned int
+// ARM:#define __SIZE_WIDTH__ 32
 // ARM:#define __THUMB_INTERWORK__ 1
 // ARM:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM:#define __USER_LABEL_PREFIX__ _
@@ -263,6 +264,7 @@
 // BFIN:#define __SCHAR_MAX__ 127
 // BFIN:#define __SHRT_MAX__ 32767
 // BFIN:#define __SIZE_TYPE__ long unsigned int
+// BFIN:#define __SIZE_WIDTH__ 32
 // BFIN:#define __UINTMAX_TYPE__ long long unsigned int
 // BFIN:#define __USER_LABEL_PREFIX__ _
 // BFIN:#define __WCHAR_MAX__ 2147483647
@@ -340,6 +342,7 @@
 // I386:#define __SCHAR_MAX__ 127
 // I386:#define __SHRT_MAX__ 32767
 // I386:#define __SIZE_TYPE__ unsigned int
+// I386:#define __SIZE_WIDTH__ 32
 // I386:#define __UINTMAX_TYPE__ long long unsigned int
 // I386:#define __USER_LABEL_PREFIX__ _
 // I386:#define __WCHAR_MAX__ 2147483647
@@ -418,6 +421,7 @@
 // MSP430:#define __SCHAR_MAX__ 127
 // MSP430:#define __SHRT_MAX__ 32767
 // MSP430:#define __SIZE_TYPE__ unsigned int
+// MSP430:#define __SIZE_WIDTH__ 16
 // MSP430:#define __UINTMAX_TYPE__ long unsigned int
 // MSP430:#define __USER_LABEL_PREFIX__ _
 // MSP430:#define __WCHAR_MAX__ 32767
@@ -490,6 +494,7 @@
 // PIC16:#define __SCHAR_MAX__ 127
 // PIC16:#define __SHRT_MAX__ 32767
 // PIC16:#define __SIZE_TYPE__ unsigned int
+// PIC16:#define __SIZE_WIDTH__ 16
 // PIC16:#define __UINTMAX_TYPE__ long unsigned int
 // PIC16:#define __USER_LABEL_PREFIX__ _
 // PIC16:#define __WCHAR_MAX__ 32767
@@ -580,6 +585,7 @@
 // PPC64:#define __SCHAR_MAX__ 127
 // PPC64:#define __SHRT_MAX__ 32767
 // PPC64:#define __SIZE_TYPE__ long unsigned int
+// PPC64:#define __SIZE_WIDTH__ 64
 // PPC64:#define __UINTMAX_TYPE__ long unsigned int
 // PPC64:#define __USER_LABEL_PREFIX__ _
 // PPC64:#define __WCHAR_MAX__ 2147483647
@@ -661,6 +667,7 @@
 // PPC:#define __SCHAR_MAX__ 127
 // PPC:#define __SHRT_MAX__ 32767
 // PPC:#define __SIZE_TYPE__ long unsigned int
+// PPC:#define __SIZE_WIDTH__ 32
 // PPC:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC:#define __USER_LABEL_PREFIX__ _
 // PPC:#define __WCHAR_MAX__ 2147483647
@@ -734,6 +741,7 @@
 // S390X:#define __SCHAR_MAX__ 127
 // S390X:#define __SHRT_MAX__ 32767
 // S390X:#define __SIZE_TYPE__ long unsigned int
+// S390X:#define __SIZE_WIDTH__ 64
 // S390X:#define __UINTMAX_TYPE__ long long unsigned int
 // S390X:#define __USER_LABEL_PREFIX__ _
 // S390X:#define __WCHAR_MAX__ 2147483647
@@ -808,6 +816,7 @@
 // SPARC:#define __SCHAR_MAX__ 127
 // SPARC:#define __SHRT_MAX__ 32767
 // SPARC:#define __SIZE_TYPE__ long unsigned int
+// SPARC:#define __SIZE_WIDTH__ 32
 // SPARC:#define __UINTMAX_TYPE__ long long unsigned int
 // SPARC:#define __USER_LABEL_PREFIX__ _
 // SPARC:#define __VERSION__ "4.2.1 Compatible Clang Compiler"
@@ -882,6 +891,7 @@
 // TCE:#define __SCHAR_MAX__ 127
 // TCE:#define __SHRT_MAX__ 32767
 // TCE:#define __SIZE_TYPE__ unsigned int
+// TCE:#define __SIZE_WIDTH__ 32
 // TCE:#define __TCE_V1__ 1
 // TCE:#define __TCE__ 1
 // TCE:#define __UINTMAX_TYPE__ long unsigned int
@@ -964,6 +974,7 @@
 // X86_64:#define __SCHAR_MAX__ 127
 // X86_64:#define __SHRT_MAX__ 32767
 // X86_64:#define __SIZE_TYPE__ long unsigned int
+// X86_64:#define __SIZE_WIDTH__ 64
 // X86_64:#define __SSE2_MATH__ 1
 // X86_64:#define __SSE2__ 1
 // X86_64:#define __SSE_MATH__ 1
