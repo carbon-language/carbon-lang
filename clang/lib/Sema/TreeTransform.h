@@ -3037,18 +3037,21 @@ TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformCaseStmt(CaseStmt *S) {
-  // The case value expressions are not potentially evaluated.
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
+  OwningExprResult LHS(SemaRef), RHS(SemaRef);
+  {
+    // The case value expressions are not potentially evaluated.
+    EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
 
-  // Transform the left-hand case value.
-  OwningExprResult LHS = getDerived().TransformExpr(S->getLHS());
-  if (LHS.isInvalid())
-    return SemaRef.StmtError();
+    // Transform the left-hand case value.
+    LHS = getDerived().TransformExpr(S->getLHS());
+    if (LHS.isInvalid())
+      return SemaRef.StmtError();
 
-  // Transform the right-hand case value (for the GNU case-range extension).
-  OwningExprResult RHS = getDerived().TransformExpr(S->getRHS());
-  if (RHS.isInvalid())
-    return SemaRef.StmtError();
+    // Transform the right-hand case value (for the GNU case-range extension).
+    RHS = getDerived().TransformExpr(S->getRHS());
+    if (RHS.isInvalid())
+      return SemaRef.StmtError();
+  }
 
   // Build the case statement.
   // Case statements are always rebuilt so that they will attached to their
