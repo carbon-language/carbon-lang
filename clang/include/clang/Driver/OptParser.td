@@ -14,10 +14,12 @@
 
 // Define the kinds of options.
 
-class OptionKind<string name, int predecence = 0> {
+class OptionKind<string name, int predecence = 0, bit sentinel = 0> {
   string Name = name;
   // The kind precedence, kinds with lower precedence are matched first.
   int Precedence = predecence;
+  // Indicate a sentinel option.
+  bit Sentinel = sentinel;
 }
 
 // An option group.
