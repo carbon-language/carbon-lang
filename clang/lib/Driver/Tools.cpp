@@ -18,6 +18,7 @@
 #include "clang/Driver/Job.h"
 #include "clang/Driver/HostInfo.h"
 #include "clang/Driver/Option.h"
+#include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Util.h"
 

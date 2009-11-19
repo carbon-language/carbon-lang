@@ -16,6 +16,7 @@
 #include "clang/Driver/HostInfo.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
+#include "clang/Driver/Options.h"
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"

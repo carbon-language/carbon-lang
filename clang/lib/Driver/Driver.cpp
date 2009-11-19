@@ -341,8 +341,8 @@ void Driver::PrintHelp(bool ShowHidden) const {
   // Render help text into (option, help) pairs.
   std::vector< std::pair<std::string, const char*> > OptionHelp;
 
-  for (unsigned i = options::OPT_INPUT, e = options::LastOption; i != e; ++i) {
-    options::ID Id = (options::ID) i;
+  for (unsigned i = 0, e = getOpts().getNumOptions(); i != e; ++i) {
+    options::ID Id = (options::ID) (i + 1);
     if (const char *Text = getOpts().getOptionHelpText(Id))
       OptionHelp.push_back(std::make_pair(getOptionHelpName(getOpts(), Id),
                                           Text));
