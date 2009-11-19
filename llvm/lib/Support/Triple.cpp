@@ -90,6 +90,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case DragonFly: return "dragonfly";
   case FreeBSD: return "freebsd";
   case Linux: return "linux";
+  case Lv2: return "lv2";
   case MinGW32: return "mingw32";
   case MinGW64: return "mingw64";
   case NetBSD: return "netbsd";
@@ -227,7 +228,7 @@ void Triple::Parse() const {
     Arch = pic16;
   else if (ArchName == "powerpc")
     Arch = ppc;
-  else if (ArchName == "powerpc64")
+  else if ((ArchName == "powerpc64") || (ArchName == "ppu"))
     Arch = ppc64;
   else if (ArchName == "arm" ||
            ArchName.startswith("armv") ||
@@ -293,6 +294,8 @@ void Triple::Parse() const {
     OS = FreeBSD;
   else if (OSName.startswith("linux"))
     OS = Linux;
+  else if (OSName.startswith("lv2"))
+    OS = Lv2;
   else if (OSName.startswith("mingw32"))
     OS = MinGW32;
   else if (OSName.startswith("mingw64"))

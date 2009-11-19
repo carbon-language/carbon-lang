@@ -64,7 +64,7 @@ public:
     msp430,  // MSP430: msp430
     pic16,   // PIC16: pic16
     ppc,     // PPC: powerpc
-    ppc64,   // PPC64: powerpc64
+    ppc64,   // PPC64: powerpc64, ppu
     sparc,   // Sparc: sparc
     systemz, // SystemZ: s390x
     tce,     // TCE (http://tce.cs.tut.fi/): tce
@@ -90,6 +90,7 @@ public:
     DragonFly,
     FreeBSD,
     Linux,
+    Lv2,        // PS3
     MinGW32,
     MinGW64,
     NetBSD,
