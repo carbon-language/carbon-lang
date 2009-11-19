@@ -59,6 +59,15 @@ Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
   return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
 }
 
+void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
+  DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
+  
+  // If we have an invalid decl, just return.
+  if (DG.isNull() || !DG.isSingleDecl()) return;
+  // suppress any potential 'unused variable' warning.
+  DG.getSingleDecl()->setUsed();
+}
+
 void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   const Expr *E = dyn_cast_or_null<Expr>(S);
   if (!E)

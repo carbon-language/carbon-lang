@@ -944,6 +944,7 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
     if (Tok.is(tok::semi)) {  // for (int x = 4;
       ConsumeToken();
     } else if ((ForEach = isTokIdentifier_in())) {
+      Actions.ActOnForEachDeclStmt(DG);
       // ObjC: for (id x in expr)
       ConsumeToken(); // consume 'in'
       SecondPart = ParseExpression();

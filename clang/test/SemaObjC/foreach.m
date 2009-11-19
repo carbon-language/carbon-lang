@@ -1,4 +1,4 @@
-/* RUN: clang-cc -fsyntax-only -verify -std=c89 -pedantic %s
+/* RUN: clang-cc -Wall -fsyntax-only -verify -std=c89 -pedantic %s
  */
 
 @class NSArray;

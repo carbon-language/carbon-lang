@@ -1260,6 +1260,7 @@ public:
   virtual OwningStmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
                                          SourceLocation StartLoc,
                                          SourceLocation EndLoc);
+  virtual void ActOnForEachDeclStmt(DeclGroupPtrTy Decl);
   virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprArg LHSVal,
                                     SourceLocation DotDotDotLoc, ExprArg RHSVal,
                                     SourceLocation ColonLoc);

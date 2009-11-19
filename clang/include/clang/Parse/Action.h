@@ -668,6 +668,9 @@ public:
     return StmtEmpty();
   }
 
+  virtual void ActOnForEachDeclStmt(DeclGroupPtrTy Decl) {
+  }
+
   virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr) {
     return OwningStmtResult(*this, Expr->release());
   }
