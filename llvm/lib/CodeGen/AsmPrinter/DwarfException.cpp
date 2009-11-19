@@ -727,8 +727,7 @@ void DwarfException::EmitExceptionTable() {
     // somewhere.  This predicate should be moved to a shared location that is
     // in target-independent code.
     //
-    if ((LSDASection->getKind().isWriteable() &&
-         !LSDASection->getKind().isReadOnlyWithRel()) ||
+    if (LSDASection->getKind().isWriteable() ||
         Asm->TM.getRelocationModel() == Reloc::Static)
       TTypeFormat = dwarf::DW_EH_PE_absptr;
     else
@@ -918,36 +917,14 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Catch TypeInfos.
-  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-  unsigned Index = 1;
-
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
-    const GlobalVariable *TI = *I;
+    const GlobalVariable *GV = *I;
+    PrintRelDirective();
 
-    if (TI) {
-      if (!LSDASection->getKind().isReadOnlyWithRel() &&
-          (TTypeFormat == dwarf::DW_EH_PE_absptr ||
-           TI->getLinkage() == GlobalValue::InternalLinkage)) {
-        // Print out the unadorned name of the type info.
-        PrintRelDirective();
-        O << Asm->Mang->getMangledName(TI);
-      } else {
-        bool IsTypeInfoIndirect = false, IsTypeInfoPCRel = false;
-        const MCExpr *TypeInfoRef =
-          TLOF.getSymbolForDwarfGlobalReference(TI, Asm->Mang, Asm->MMI,
-                                                IsTypeInfoIndirect,
-                                                IsTypeInfoPCRel);
-
-        if (!IsTypeInfoPCRel)
-          TypeInfoRef = CreateLabelDiff(TypeInfoRef, "typeinforef_addr",
-                                        Index++);
-
-        O << MAI->getData32bitsDirective();
-        TypeInfoRef->print(O, MAI);
-      }
+    if (GV) {
+      O << Asm->Mang->getMangledName(GV);
     } else {
-      PrintRelDirective();
       O << "0x0";
     }
 
