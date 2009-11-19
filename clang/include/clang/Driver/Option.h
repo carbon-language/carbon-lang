@@ -177,7 +177,7 @@ namespace driver {
   /// InputOption - Dummy option class for representing driver inputs.
   class InputOption : public Option {
   public:
-    InputOption();
+    InputOption(OptSpecifier ID);
 
     virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
 
@@ -190,7 +190,7 @@ namespace driver {
   /// UnknownOption - Dummy option class for represent unknown arguments.
   class UnknownOption : public Option {
   public:
-    UnknownOption();
+    UnknownOption(OptSpecifier ID);
 
     virtual Arg *accept(const InputArgList &Args, unsigned &Index) const;
 

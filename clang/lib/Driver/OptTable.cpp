@@ -136,9 +136,9 @@ Option *OptTable::CreateOption(unsigned id) const {
   Option *Opt = 0;
   switch (info.Kind) {
   case Option::InputClass:
-    Opt = new InputOption(); break;
+    Opt = new InputOption(id); break;
   case Option::UnknownClass:
-    Opt = new UnknownOption(); break;
+    Opt = new UnknownOption(id); break;
   case Option::GroupClass:
     Opt = new OptionGroup(id, info.Name, Group); break;
   case Option::FlagClass:
@@ -188,7 +188,7 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
     return new PositionalArg(TheInputOption, Index++);
 
   const Info *Start = OptionInfos + FirstSearchableIndex;
-  const Info *End = OptionInfos + LastOption - 1;
+  const Info *End = OptionInfos + getNumOptions();
 
   // Search for the first next option which could be a prefix.
   Start = std::lower_bound(Start, End, Str);
@@ -210,8 +210,7 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
       break;
 
     // See if this option matches.
-    options::ID id = (options::ID) (Start - OptionInfos + 1);
-    if (Arg *A = getOption(id)->accept(Args, Index))
+    if (Arg *A = getOption(Start - OptionInfos + 1)->accept(Args, Index))
       return A;
 
     // Otherwise, see if this argument was missing values.

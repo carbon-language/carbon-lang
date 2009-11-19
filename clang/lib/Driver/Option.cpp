@@ -94,8 +94,8 @@ Arg *OptionGroup::accept(const InputArgList &Args, unsigned &Index) const {
   return 0;
 }
 
-InputOption::InputOption()
-  : Option(Option::InputClass, options::OPT_INPUT, "<input>", 0, 0) {
+InputOption::InputOption(OptSpecifier ID)
+  : Option(Option::InputClass, ID, "<input>", 0, 0) {
 }
 
 Arg *InputOption::accept(const InputArgList &Args, unsigned &Index) const {
@@ -103,8 +103,8 @@ Arg *InputOption::accept(const InputArgList &Args, unsigned &Index) const {
   return 0;
 }
 
-UnknownOption::UnknownOption()
-  : Option(Option::UnknownClass, options::OPT_UNKNOWN, "<unknown>", 0, 0) {
+UnknownOption::UnknownOption(OptSpecifier ID)
+  : Option(Option::UnknownClass, ID, "<unknown>", 0, 0) {
 }
 
 Arg *UnknownOption::accept(const InputArgList &Args, unsigned &Index) const {
