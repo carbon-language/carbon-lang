@@ -44,7 +44,7 @@ class Ra<bits<3> num, string n, list<Register> subs> : BlackfinReg<n> {
   let Num = num;
 }
 
-// Ywo halves of 32-bit register
+// Two halves of 32-bit register
 multiclass Rss<bits<3> group, bits<3> num, string n> {
   def H : Rs<group, num, 1, !strconcat(n, ".h")>;
   def L : Rs<group, num, 0, !strconcat(n, ".l")>;
