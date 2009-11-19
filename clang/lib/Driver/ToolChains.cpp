@@ -14,6 +14,7 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/HostInfo.h"
+#include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
 
 #include "llvm/ADT/StringExtras.h"

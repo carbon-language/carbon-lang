@@ -1,4 +1,4 @@
-//===--- Options.cpp - Option info table --------------------------------*-===//
+//===--- OptTable.cpp - Option Table Implementation ---------------------*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Driver/Options.h"
-
+#include "clang/Driver/OptTable.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
@@ -217,33 +216,4 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
   }
 
   return new PositionalArg(TheUnknownOption, Index++);
-}
-
-//
-
-static OptTable::Info InfoTable[] = {
-  // The InputOption info
-  { "<input>", 0, 0, Option::InputClass, DriverOption, 0, OPT_INVALID, OPT_INVALID },
-  // The UnknownOption info
-  { "<unknown>", 0, 0, Option::UnknownClass, 0, 0, OPT_INVALID, OPT_INVALID },
-
-#define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
-               HELPTEXT, METAVAR)   \
-  { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \
-    OPT_##GROUP, OPT_##ALIAS },
-#include "clang/Driver/Options.def"
-};
-
-namespace {
-
-class DriverOptTable : public OptTable {
-public:
-  DriverOptTable()
-    : OptTable(InfoTable, sizeof(InfoTable) / sizeof(InfoTable[0])) {}
-};
-
-}
-
-OptTable *clang::driver::createDriverOptTable() {
-  return new DriverOptTable();
 }

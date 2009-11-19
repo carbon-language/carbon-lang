@@ -26,6 +26,7 @@ namespace llvm {
 namespace clang {
 namespace driver {
   class Arg;
+  class Option;
 
   /// ArgList - Ordered collection of driver arguments.
   ///
