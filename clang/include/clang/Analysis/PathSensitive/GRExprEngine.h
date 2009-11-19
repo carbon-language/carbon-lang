@@ -361,33 +361,38 @@ protected:
                     unsigned ParamIdx = 0);
 
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
-  void VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  void VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,
+                 ExplodedNodeSet& Dst);
 
   /// VisitCompoundLiteralExpr - Transfer function logic for compound literals.
   void VisitCompoundLiteralExpr(CompoundLiteralExpr* CL, ExplodedNode* Pred,
                                 ExplodedNodeSet& Dst, bool asLValue);
 
   /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
-  void VisitDeclRefExpr(DeclRefExpr* DR, ExplodedNode* Pred, ExplodedNodeSet& Dst,
-                        bool asLValue);
+  void VisitDeclRefExpr(DeclRefExpr* DR, ExplodedNode* Pred,
+                        ExplodedNodeSet& Dst, bool asLValue);
 
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
   /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
-  void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, ExplodedNode* Pred,
+                        ExplodedNodeSet& Dst);
 
-  void VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  void VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
+                         ExplodedNodeSet& Dst);
 
   /// VisitLogicalExpr - Transfer function logic for '&&', '||'
-  void VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  void VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
+                        ExplodedNodeSet& Dst);
 
   /// VisitMemberExpr - Transfer function for member expressions.
-  void VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred, ExplodedNodeSet& Dst,bool asLValue);
+  void VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred, ExplodedNodeSet& Dst,
+                       bool asLValue);
 
   /// VisitObjCIvarRefExpr - Transfer function logic for ObjCIvarRefExprs.
-  void VisitObjCIvarRefExpr(ObjCIvarRefExpr* DR, ExplodedNode* Pred, ExplodedNodeSet& Dst,
-                            bool asLValue);
+  void VisitObjCIvarRefExpr(ObjCIvarRefExpr* DR, ExplodedNode* Pred,
+                            ExplodedNodeSet& Dst, bool asLValue);
 
   /// VisitObjCForCollectionStmt - Transfer function logic for
   ///  ObjCForCollectionStmt.
