@@ -100,7 +100,6 @@ AnalyzeSpecificFunction("analyze-function",
 
 static llvm::cl::opt<bool>
 EagerlyAssume("analyzer-eagerly-assume",
-          llvm::cl::init(false),
               llvm::cl::desc("Eagerly assume the truth/falseness of some "
                              "symbolic constraints"));
 
@@ -136,8 +135,7 @@ DisableLLVMOptimizations("disable-llvm-optzns",
 
 static llvm::cl::opt<bool>
 DisableRedZone("disable-red-zone",
-               llvm::cl::desc("Do not emit code that uses the red zone."),
-               llvm::cl::init(false));
+               llvm::cl::desc("Do not emit code that uses the red zone."));
 
 static llvm::cl::opt<bool>
 GenerateDebugInfo("g",
@@ -150,8 +148,7 @@ NoCommon("fno-common",
 
 static llvm::cl::opt<bool>
 NoImplicitFloat("no-implicit-float",
-  llvm::cl::desc("Don't generate implicit floating point instructions (x86-only)"),
-  llvm::cl::init(false));
+  llvm::cl::desc("Don't generate implicit floating point instructions (x86-only)"));
 
 static llvm::cl::opt<bool>
 NoMergeConstants("fno-merge-all-constants",
@@ -264,7 +261,7 @@ PrintColorDiagnostic("fcolor-diagnostics",
                      llvm::cl::desc("Use colors in diagnostics"));
 
 static llvm::cl::opt<bool>
-SilenceRewriteMacroWarning("Wno-rewrite-macros", llvm::cl::init(false),
+SilenceRewriteMacroWarning("Wno-rewrite-macros",
                            llvm::cl::desc("Silence ObjC rewriting warnings"));
 
 static llvm::cl::opt<bool>
@@ -297,8 +294,7 @@ CodeCompletionWantsMacros("code-completion-macros",
 
 static llvm::cl::opt<bool>
 DisableFree("disable-free",
-           llvm::cl::desc("Disable freeing of memory on exit"),
-           llvm::cl::init(false));
+           llvm::cl::desc("Disable freeing of memory on exit"));
 
 static llvm::cl::opt<bool>
 EmptyInputOnly("empty-input-only",
@@ -448,8 +444,7 @@ AllowBuiltins("fbuiltin", llvm::cl::init(true),
              llvm::cl::desc("Disable implicit builtin knowledge of functions"));
 
 static llvm::cl::opt<bool>
-AltiVec("faltivec", llvm::cl::desc("Enable AltiVec vector initializer syntax"),
-                    llvm::cl::init(false));
+AltiVec("faltivec", llvm::cl::desc("Enable AltiVec vector initializer syntax"));
 
 static llvm::cl::opt<bool>
 AccessControl("faccess-control",
@@ -581,15 +576,13 @@ ObjCNonFragileABI("fobjc-nonfragile-abi",
 
 static llvm::cl::opt<bool>
 OverflowChecking("ftrapv",
-                 llvm::cl::desc("Trap on integer overflow"),
-                 llvm::cl::init(false));
+                 llvm::cl::desc("Trap on integer overflow"));
 
 static llvm::cl::opt<unsigned>
 PICLevel("pic-level", llvm::cl::desc("Value for __PIC__"));
 
 static llvm::cl::opt<bool>
-PThread("pthread", llvm::cl::desc("Support POSIX threads in generated code"),
-         llvm::cl::init(false));
+PThread("pthread", llvm::cl::desc("Support POSIX threads in generated code"));
 
 static llvm::cl::opt<bool>
 PascalStrings("fpascal-strings",
