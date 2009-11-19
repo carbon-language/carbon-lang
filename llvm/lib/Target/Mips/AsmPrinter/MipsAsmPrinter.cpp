@@ -365,6 +365,8 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     case MachineOperand::MO_ConstantPoolIndex:
       O << MAI->getPrivateGlobalPrefix() << "CPI"
         << getFunctionNumber() << "_" << MO.getIndex();
+      if (MO.getOffset())
+        O << "+" << MO.getOffset();
       break;
   
     default:
