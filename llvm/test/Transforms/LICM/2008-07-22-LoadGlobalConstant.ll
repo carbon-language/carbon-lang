@@ -1,4 +1,4 @@
-; RUN: opt < %s -licm -enable-licm-constant-variables -S | FileCheck %s
+; RUN: opt < %s -licm -S | FileCheck %s
 
 @a = external constant float*
 
