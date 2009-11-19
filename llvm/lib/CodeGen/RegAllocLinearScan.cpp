@@ -1435,7 +1435,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
     if (SkipDGRegs && DowngradedRegs.count(Reg))
       continue;
     if (isRegAvail(Reg) && Reg < inactiveCounts.size() &&
-        FreeRegInactiveCount < inactiveCounts[Reg]) {
+        FreeRegInactiveCount < inactiveCounts[Reg] && !isRecentlyUsed(Reg)) {
       FreeReg = Reg;
       FreeRegInactiveCount = inactiveCounts[Reg];
       if (FreeRegInactiveCount == MaxInactiveCount)
