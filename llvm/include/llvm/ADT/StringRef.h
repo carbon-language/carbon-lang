@@ -10,9 +10,9 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
-#include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <utility>
 #include <string>
 
 namespace llvm {
