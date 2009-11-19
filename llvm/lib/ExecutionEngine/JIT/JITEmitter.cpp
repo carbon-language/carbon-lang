@@ -736,17 +736,21 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
     return FnStub;
   }
 
-  // Otherwise if we have code, go ahead and return that.
-  void *ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
-  if (ResultPtr) return ResultPtr;
+  // If we know the target can handle arbitrary-distance calls, try to
+  // return a direct pointer.
+  if (!MayNeedFarStub) {
+    // If we have code, go ahead and return that.
+    void *ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
+    if (ResultPtr) return ResultPtr;
 
-  // If this is an external function pointer, we can force the JIT to
-  // 'compile' it, which really just adds it to the map.
-  if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode() &&
-      !MayNeedFarStub)
-    return TheJIT->getPointerToFunction(F);
+    // If this is an external function pointer, we can force the JIT to
+    // 'compile' it, which really just adds it to the map.
+    if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode())
+      return TheJIT->getPointerToFunction(F);
+  }
 
-  // Otherwise, we have to emit a stub.
+  // Otherwise, we may need a to emit a stub, and, conservatively, we
+  // always do so.
   void *StubAddr = Resolver.getFunctionStub(F);
 
   // Add the stub to the current function's list of referenced stubs, so we can
