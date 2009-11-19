@@ -107,7 +107,14 @@ void MergeBasicBlockIntoOnlyPred(BasicBlock *BB, Pass *P = 0);
 /// rewriting all the predecessors to branch to the successor block and return
 /// true.  If we can't transform, return false.
 bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB);
-    
+
+/// EliminateDuplicatePHINodes - Check for and eliminate duplicate PHI
+/// nodes in this block. This doesn't try to be clever about PHI nodes
+/// which differ only in the order of the incoming values, but instcombine
+/// orders them so it usually won't matter.
+///
+bool EliminateDuplicatePHINodes(BasicBlock *BB);
+
 /// SimplifyCFG - This function is used to do simplification of a CFG.  For
 /// example, it adjusts branches to branches to eliminate the extra hop, it
 /// eliminates unreachable basic blocks, and does other "peephole" optimization

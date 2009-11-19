@@ -1594,7 +1594,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
 /// which differ only in the order of the incoming values, but instcombine
 /// orders them so it usually won't matter.
 ///
-static bool EliminateDuplicatePHINodes(BasicBlock *BB) {
+bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
   bool Changed = false;
   
   // This implementation doesn't currently consider undef operands
