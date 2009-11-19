@@ -864,7 +864,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
-  if (Args.hasArg(options::OPT__relocatable_pch, true))
+  if (Args.hasArg(options::OPT__relocatable_pch))
     CmdArgs.push_back("--relocatable-pch");
 
   if (Arg *A = Args.getLastArg(options::OPT_fconstant_string_class_EQ)) {

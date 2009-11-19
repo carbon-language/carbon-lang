@@ -687,7 +687,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
           //
           // Otherwise emit an error but still use a valid type to avoid
           // spurious errors (e.g., no inputs).
-          if (!Args.hasArg(options::OPT_E, false))
+          if (!Args.hasArgNoClaim(options::OPT_E))
             Diag(clang::diag::err_drv_unknown_stdin_type);
           Ty = types::TY_C;
         } else {
