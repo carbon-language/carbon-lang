@@ -1545,7 +1545,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       InFlag = SDValue(ResNode, 1);
       ReplaceUses(SDValue(Op.getNode(), 1), InFlag);
     }
-    ReplaceUses(SDValue(Op.getNode(), 0), SDValue(Chain.getNode(), Chain.getResNo()));
+    ReplaceUses(SDValue(Op.getNode(), 0),
+                SDValue(Chain.getNode(), Chain.getResNo()));
     return NULL;
   }
   case ARMISD::CMOV: {
