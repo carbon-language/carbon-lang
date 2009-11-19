@@ -22,6 +22,9 @@
 #ifdef LLVM_ON_WIN32
 #include "Win32/Host.inc"
 #endif
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 //===----------------------------------------------------------------------===//
 //
