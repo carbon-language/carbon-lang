@@ -1631,6 +1631,36 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
+/// \brief Determine whether the addition of the given flag to an Objective-C
+/// property's attributes will cause a conflict.
+static bool ObjCPropertyFlagConflicts(unsigned Attributes, unsigned NewFlag) {
+  // Check if we've already added this flag.
+  if (Attributes & NewFlag)
+    return true;
+  
+  Attributes |= NewFlag;
+  
+  // Check for collisions with "readonly".
+  if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      (Attributes & (ObjCDeclSpec::DQ_PR_readwrite |
+                     ObjCDeclSpec::DQ_PR_assign |
+                     ObjCDeclSpec::DQ_PR_copy |
+                     ObjCDeclSpec::DQ_PR_retain)))
+    return true;
+  
+  // Check for more than one of { assign, copy, retain }.
+  unsigned AssignCopyRetMask = Attributes & (ObjCDeclSpec::DQ_PR_assign |
+                                             ObjCDeclSpec::DQ_PR_copy |
+                                             ObjCDeclSpec::DQ_PR_retain);
+  if (AssignCopyRetMask &&
+      AssignCopyRetMask != ObjCDeclSpec::DQ_PR_assign &&
+      AssignCopyRetMask != ObjCDeclSpec::DQ_PR_copy &&
+      AssignCopyRetMask != ObjCDeclSpec::DQ_PR_retain)
+    return true;
+  
+  return false;
+}
+
 void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) { 
   if (!CodeCompleter)
     return;
@@ -1639,26 +1669,26 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
   typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_readonly))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readonly))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("readonly", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_assign))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_assign))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("assign", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_readwrite))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readwrite))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("readwrite", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_retain))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_retain))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("retain", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_copy))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_copy))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("copy", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_nonatomic))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_nonatomic))
     Results.MaybeAddResult(CodeCompleteConsumer::Result("nonatomic", 0));
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_setter)) {
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_setter)) {
     CodeCompletionString *Setter = new CodeCompletionString;
     Setter->AddTypedTextChunk("setter");
     Setter->AddTextChunk(" = ");
     Setter->AddPlaceholderChunk("method");
     Results.MaybeAddResult(CodeCompleteConsumer::Result(Setter, 0));
   }
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_getter)) {
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_getter)) {
     CodeCompletionString *Getter = new CodeCompletionString;
     Getter->AddTypedTextChunk("getter");
     Getter->AddTextChunk(" = ");

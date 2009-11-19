@@ -16,14 +16,8 @@
 // CHECK-CC1-NEXT: {TypedText retain}
 // CHECK-CC1-NEXT: {TypedText setter}{Text  = }{Placeholder method}
 // RUN: c-index-test -code-completion-at=%s:8:18 %s | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: {TypedText assign}
-// CHECK-CC2-NEXT: {TypedText copy}
-// CHECK-CC2-NEXT: {TypedText getter}{Text  = }{Placeholder method}
+// CHECK-CC2: {TypedText getter}{Text  = }{Placeholder method}
 // CHECK-CC2-NEXT: {TypedText nonatomic}
-// CHECK-CC2-NEXT: {TypedText readonly}
 // CHECK-CC2-NEXT: {TypedText readwrite}
 // CHECK-CC2-NEXT: {TypedText setter}{Text  = }{Placeholder method}
 @end
-
-
-
