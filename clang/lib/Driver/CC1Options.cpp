@@ -10,6 +10,8 @@
 #include "clang/Driver/CC1Options.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
+#include "clang/Frontend/CompilerInvocation.h"
+#include "llvm/ADT/SmallVector.h"
 
 using namespace clang::driver;
 using namespace clang::driver::options;
@@ -35,4 +37,12 @@ public:
 
 OptTable *clang::driver::createCC1OptTable() {
   return new CC1OptTable();
+}
+
+//
+
+using namespace clang;
+
+void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
+                           const llvm::SmallVectorImpl<llvm::StringRef> &Args) {
 }

@@ -107,7 +107,7 @@ public:
 
 public:
   FrontendOptions() {
-    DebugCodeCompletionPrinter = 0;
+    DebugCodeCompletionPrinter = 1;
     DisableFree = 0;
     EmptyInputOnly = 0;
     ProgramAction = frontend::ParseSyntaxOnly;

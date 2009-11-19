@@ -77,7 +77,7 @@ public:
     AnalyzeAll = 0;
     AnalyzerDisplayProgress = 0;
     EagerlyAssume = 0;
-    PurgeDead = 0;
+    PurgeDead = 1;
     TrimGraph = 0;
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;

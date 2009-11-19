@@ -60,7 +60,7 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd) {
 
   // Dump the converted arguments.
   llvm::SmallVector<llvm::StringRef, 32> Invocation2Args;
-  llvm::errs() << "invocation argv:";
+  llvm::errs() << "invocation argv :";
   for (unsigned i = 0, e = InvocationArgs.size(); i != e; ++i) {
     Invocation2Args.push_back(InvocationArgs[i]);
     llvm::errs() << " \"" << InvocationArgs[i] << '"';
@@ -73,12 +73,12 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd) {
   CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args);
 
   // FIXME: Implement CompilerInvocation comparison.
-  if (memcmp(&Invocation, &Invocation2, sizeof(Invocation)) != 0) {
-    llvm::errs() << "warning: Invocations differ!\n";
+  if (true) {
+    //llvm::errs() << "warning: Invocations differ!\n";
 
     std::vector<std::string> Invocation2Args;
     Invocation2.toArgs(Invocation2Args);
-    llvm::errs() << "invocation argv:";
+    llvm::errs() << "invocation2 argv:";
     for (unsigned i = 0, e = Invocation2Args.size(); i != e; ++i)
       llvm::errs() << " \"" << Invocation2Args[i] << '"';
     llvm::errs() << "\n";

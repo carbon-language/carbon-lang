@@ -12,10 +12,6 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
-void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
-                           const llvm::SmallVectorImpl<llvm::StringRef> &Args) {
-}
-
 static const char *getAnalysisName(Analyses Kind) {
   switch (Kind) {
   default:
@@ -112,8 +108,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   if (Opts.OptimizeSize) {
     assert(Opts.OptimizationLevel == 2 && "Invalid options!");
     Res.push_back("-Os");
-  } else if (Opts.OptimizationLevel == 0)
-    Res.push_back("-O" + Opts.OptimizationLevel);
+  } else if (Opts.OptimizationLevel != 0)
+    Res.push_back("-O" + llvm::utostr(Opts.OptimizationLevel));
   // SimplifyLibCalls is only derived.
   // TimePasses is only derived.
   // UnitAtATime is unused.
@@ -391,8 +387,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fno-lax-vector-conversions");
   if (Opts.AltiVec)
     Res.push_back("-faltivec");
-  Res.push_back("-fexceptions");
-  Res.push_back(Opts.Exceptions ? "1" : "0");
+  if (Opts.Exceptions)
+    Res.push_back("-fexceptions");
   if (!Opts.Rtti)
     Res.push_back("-fno-rtti");
   if (!Opts.NeXTRuntime)
@@ -425,12 +421,13 @@ static void LangOptsToArgs(const LangOptions &Opts,
   }
   if (Opts.ObjCGCBitmapPrint)
     Res.push_back("-print-ivar-layout");
-  Res.push_back("-faccess-control");
-  Res.push_back(Opts.AccessControl ? "1" : "0");
-  Res.push_back("-fsigned-char");
-  Res.push_back(Opts.CharIsSigned ? "1" : "0");
-  Res.push_back("-fshort-wchar");
-  Res.push_back(Opts.ShortWChar ? "1" : "0");
+  // FIXME: Don't forget to update when the default changes!
+  if (Opts.AccessControl)
+    Res.push_back("-faccess-control");
+  if (!Opts.CharIsSigned)
+    Res.push_back("-fsigned-char=0");
+  if (Opts.ShortWChar)
+    Res.push_back("-fshort-wchar");
   if (!Opts.ElideConstructors)
     Res.push_back("-fno-elide-constructors");
   if (Opts.getGCMode() != LangOptions::NonGC) {
@@ -444,7 +441,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.getVisibilityMode() != LangOptions::Default) {
     Res.push_back("-fvisibility");
     if (Opts.getVisibilityMode() == LangOptions::Hidden) {
-      Res.push_back("default");
+      Res.push_back("hidden");
     } else {
       assert(Opts.getVisibilityMode() == LangOptions::Protected &&
              "Invalid visibility!");
