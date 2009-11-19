@@ -133,9 +133,9 @@ namespace llvm {
     /// Null or Empty kinds.
     const void *RHS;
     /// LHSKind - The NodeKind of the left hand side, \see getLHSKind().
-    NodeKind LHSKind : 8;
+    unsigned char LHSKind;
     /// RHSKind - The NodeKind of the left hand side, \see getLHSKind().
-    NodeKind RHSKind : 8;
+    unsigned char RHSKind;
 
   private:
     /// Construct a nullary twine; the kind must be NullKind or EmptyKind.
@@ -209,10 +209,10 @@ namespace llvm {
     }
 
     /// getLHSKind - Get the NodeKind of the left-hand side.
-    NodeKind getLHSKind() const { return LHSKind; }
+    NodeKind getLHSKind() const { return (NodeKind) LHSKind; }
 
     /// getRHSKind - Get the NodeKind of the left-hand side.
-    NodeKind getRHSKind() const { return RHSKind; }
+    NodeKind getRHSKind() const { return (NodeKind) RHSKind; }
 
     /// printOneChild - Print one child from a twine.
     void printOneChild(raw_ostream &OS, const void *Ptr, NodeKind Kind) const;
