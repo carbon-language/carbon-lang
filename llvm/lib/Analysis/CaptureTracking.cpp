@@ -107,8 +107,10 @@ bool llvm::PointerMayBeCaptured(const Value *V,
       break;
     case Instruction::ICmp:
       // Comparing the pointer against null does not count as a capture.
-      if (isa<ConstantPointerNull>(I->getOperand(1)))
-        break;
+      if (ConstantPointerNull *CPN =
+            dyn_cast<ConstantPointerNull>(I->getOperand(1)))
+        if (CPN->getType()->getAddressSpace() == 0)
+          break;
       return true;
     default:
       // Something else - be conservative and say it is captured.
