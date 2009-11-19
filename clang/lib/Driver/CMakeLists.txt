@@ -4,6 +4,7 @@ add_clang_library(clangDriver
   Action.cpp
   Arg.cpp
   ArgList.cpp
+  CC1Options.cpp
   Compilation.cpp
   Driver.cpp
   DriverOptions.cpp
