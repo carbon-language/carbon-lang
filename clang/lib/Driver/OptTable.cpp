@@ -220,3 +220,38 @@ Arg *OptTable::ParseOneArg(const InputArgList &Args, unsigned &Index) const {
 
   return new PositionalArg(TheUnknownOption, Index++);
 }
+
+InputArgList *OptTable::ParseArgs(const char **ArgBegin, const char **ArgEnd,
+                                  unsigned &MissingArgIndex,
+                                  unsigned &MissingArgCount) const {
+  InputArgList *Args = new InputArgList(ArgBegin, ArgEnd);
+
+  // FIXME: Handle '@' args (or at least error on them).
+
+  MissingArgIndex = MissingArgCount = 0;
+  unsigned Index = 0, End = ArgEnd - ArgBegin;
+  while (Index < End) {
+    // Ignore empty arguments (other things may still take them as arguments).
+    if (Args->getArgString(Index)[0] == '\0') {
+      ++Index;
+      continue;
+    }
+
+    unsigned Prev = Index;
+    Arg *A = ParseOneArg(*Args, Index);
+    assert(Index > Prev && "Parser failed to consume argument.");
+
+    // Check for missing argument error.
+    if (!A) {
+      assert(Index >= End && "Unexpected parser error.");
+      assert(Index - Prev - 1 && "No missing arguments!");
+      MissingArgIndex = Prev;
+      MissingArgCount = Index - Prev - 1;
+      break;
+    }
+
+    Args->append(A);
+  }
+
+  return Args;
+}

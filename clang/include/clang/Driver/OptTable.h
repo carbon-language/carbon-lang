@@ -124,7 +124,7 @@ namespace options {
       return getInfo(id).MetaVar;
     }
 
-    /// parseOneArg - Parse a single argument; returning the new argument and
+    /// ParseOneArg - Parse a single argument; returning the new argument and
     /// updating Index.
     ///
     /// \param [in] [out] Index - The current parsing position in the argument
@@ -135,6 +135,27 @@ namespace options {
     /// (in which case Index still points at the conceptual next argument string
     /// to parse).
     Arg *ParseOneArg(const InputArgList &Args, unsigned &Index) const;
+
+    /// ParseArgs - Parse an list of arguments into an InputArgList.
+    ///
+    /// The resulting InputArgList will reference the strings in [ArgBegin,
+    /// ArgEnd), and their lifetime should extend past that of the returned
+    /// InputArgList.
+    ///
+    /// The only error that can occur in this routine is if an argument is
+    /// missing values; in this case \arg MissingArgCount will be non-zero.
+    ///
+    /// \param ArgBegin - The beginning of the argument vector.
+    /// \param ArgEnd - The end of the argument vector.
+    /// \param MissingArgIndex - On error, the index of the option which could
+    /// not be parsed.
+    /// \param MissingArgCount - On error, the number of missing options.
+    /// \return - An InputArgList; on error this will contain all the options
+    /// which could be parsed.
+    InputArgList *ParseArgs(const char **ArgBegin,
+                            const char **ArgEnd,
+                            unsigned &MissingArgIndex,
+                            unsigned &MissingArgCount) const;
   };
 }
 }

@@ -76,40 +76,23 @@ Driver::~Driver() {
 InputArgList *Driver::ParseArgStrings(const char **ArgBegin,
                                       const char **ArgEnd) {
   llvm::PrettyStackTraceString CrashInfo("Command line argument parsing");
-  InputArgList *Args = new InputArgList(ArgBegin, ArgEnd);
+  unsigned MissingArgIndex, MissingArgCount;
+  InputArgList *Args = getOpts().ParseArgs(ArgBegin, ArgEnd,
+                                           MissingArgIndex, MissingArgCount);
 
-  // FIXME: Handle '@' args (or at least error on them).
+  // Check for missing argument error.
+  if (MissingArgCount)
+    Diag(clang::diag::err_drv_missing_argument)
+      << Args->getArgString(MissingArgIndex) << MissingArgCount;
 
-  unsigned Index = 0, End = ArgEnd - ArgBegin;
-  while (Index < End) {
-    // gcc's handling of empty arguments doesn't make sense, but this is not a
-    // common use case. :)
-    //
-    // We just ignore them here (note that other things may still take them as
-    // arguments).
-    if (Args->getArgString(Index)[0] == '\0') {
-      ++Index;
-      continue;
-    }
-
-    unsigned Prev = Index;
-    Arg *A = getOpts().ParseOneArg(*Args, Index);
-    assert(Index > Prev && "Parser failed to consume argument.");
-
-    // Check for missing argument error.
-    if (!A) {
-      assert(Index >= End && "Unexpected parser error.");
-      Diag(clang::diag::err_drv_missing_argument)
-        << Args->getArgString(Prev)
-        << (Index - Prev - 1);
-      break;
-    }
-
+  // Check for unsupported options.
+  for (ArgList::const_iterator it = Args->begin(), ie = Args->end();
+       it != ie; ++it) {
+    Arg *A = *it;
     if (A->getOption().isUnsupported()) {
       Diag(clang::diag::err_drv_unsupported_opt) << A->getAsString(*Args);
       continue;
     }
-    Args->append(A);
   }
 
   return Args;
