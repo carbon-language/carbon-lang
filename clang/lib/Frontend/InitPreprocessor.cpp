@@ -398,6 +398,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineType("__SIZE_TYPE__", TI.getSizeType(), Buf);
   DefineTypeWidth("__SIZE_WIDTH__", TI.getSizeType(), TI, Buf);
   DefineType("__WCHAR_TYPE__", TI.getWCharType(), Buf);
+  DefineTypeWidth("__WCHAR_WIDTH__", TI.getWCharType(), TI, Buf);
   DefineType("__WINT_TYPE__", TI.getWIntType(), Buf);
   DefineTypeWidth("__WINT_WIDTH__", TI.getWIntType(), TI, Buf);
 
