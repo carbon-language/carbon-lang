@@ -345,6 +345,11 @@ static const CXXMethodDecl *GetKeyFunction(const RecordDecl *D) {
     if (MD->isPure())
       continue;
 
+    // FIXME: This doesn't work.  If we have an out of line body, that body will
+    // set the MD to have a body, what we want to know is, was the body present
+    // inside the declaration of the class.  For now, we just avoid the problem
+    // by pretending there is no key function.
+    return 0;
     if (MD->getBody())
       continue;
 
