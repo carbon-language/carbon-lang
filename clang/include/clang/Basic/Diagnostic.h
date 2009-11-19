@@ -235,8 +235,8 @@ public:
   //  Diagnostic characterization methods, used by a client to customize how
   //
 
-  DiagnosticClient *getClient() { return Client; };
-  const DiagnosticClient *getClient() const { return Client; };
+  DiagnosticClient *getClient() { return Client; }
+  const DiagnosticClient *getClient() const { return Client; }
 
 
   /// pushMappings - Copies the current DiagMappings and pushes the new copy
