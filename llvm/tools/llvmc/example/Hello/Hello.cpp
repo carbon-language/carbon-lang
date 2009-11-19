@@ -17,6 +17,10 @@
 
 namespace {
 struct MyPlugin : public llvmc::BasePlugin {
+
+  void PreprocessOptions() const
+  {}
+
   void PopulateLanguageMap(llvmc::LanguageMap&) const
   { outs() << "Hello!\n"; }
 
