@@ -111,11 +111,6 @@ TEST(StringRefTest, Split) {
             Str.rsplit('o'));
 }
 
-// XFAIL for PR5482, StringRef is miscompiled by Apple gcc.
-#if (!defined(__llvm__) && defined(__APPLE__) && defined(__OPTIMIZE__))
-#define SKIP_SPLIT2
-#endif
-#ifndef SKIP_SPLIT2
 TEST(StringRefTest, Split2) {
   SmallVector<StringRef, 5> parts;
   SmallVector<StringRef, 5> expected;
@@ -195,7 +190,6 @@ TEST(StringRefTest, Split2) {
   StringRef("a,,b,c").split(parts, ",", 3, false);
   EXPECT_TRUE(parts == expected);
 }
-#endif
 
 TEST(StringRefTest, StartsWith) {
   StringRef Str("hello");
