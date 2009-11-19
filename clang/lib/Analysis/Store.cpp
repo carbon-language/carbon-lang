@@ -194,13 +194,11 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
 ///  as another region.
 SVal  StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
                                      QualType castTy) {
-  ASTContext &Ctx = ValMgr.getContext();
-  (void) Ctx;
-
   if (castTy.isNull())
     return V;
   
-  assert(Ctx.hasSameUnqualifiedType(castTy, R->getValueType(Ctx)));
+  assert(ValMgr.getContext().hasSameUnqualifiedType(castTy,
+                                         R->getValueType(ValMgr.getContext())));
   return V;
 }
 
