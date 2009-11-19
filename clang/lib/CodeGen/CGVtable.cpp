@@ -64,9 +64,9 @@ private:
   std::vector<Index_t> VCalls;
 
   typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
-  // CtorVtable - Used to hold the AddressPoints (offsets) into the built vtable
-  // for use in computing the initializers for the VTT.
-  llvm::DenseMap<CtorVtable_t, int64_t> &AddressPoints;
+  // subAddressPoints - Used to hold the AddressPoints (offsets) into the built
+  // vtable for use in computing the initializers for the VTT.
+  llvm::DenseMap<CtorVtable_t, int64_t> &subAddressPoints;
 
   typedef CXXRecordDecl::method_iterator method_iter;
   const bool Extern;
@@ -74,13 +74,25 @@ private:
   Index_t extra;
   typedef std::vector<std::pair<const CXXRecordDecl *, int64_t> > Path_t;
   llvm::Constant *cxa_pure;
+  static llvm::DenseMap<CtorVtable_t, int64_t>&
+  AllocAddressPoint(CodeGenModule &cgm, const CXXRecordDecl *l,
+                    const CXXRecordDecl *c) {
+    CodeGenModule::AddrMap_t *&oref = cgm.AddressPoints[l];
+    if (oref == 0)
+      oref = new CodeGenModule::AddrMap_t;
+
+    llvm::DenseMap<CtorVtable_t, int64_t> *&ref = (*oref)[c];
+    if (ref == 0)
+      ref = new llvm::DenseMap<CtorVtable_t, int64_t>;
+    return *ref;
+  }
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth, const CXXRecordDecl *c,
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
     : methods(meth), Class(c), LayoutClass(l), LayoutOffset(lo),
       BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(cgm.GenerateRttiRef(c)), VMContext(cgm.getModule().getContext()),
-      CGM(cgm), AddressPoints(*new llvm::DenseMap<CtorVtable_t, int64_t>),
+      CGM(cgm), subAddressPoints(AllocAddressPoint(cgm, l, c)),
       Extern(!l->isInAnonymousNamespace()),
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
@@ -96,9 +108,6 @@ public:
   llvm::DenseMap<GlobalDecl, Index_t> &getIndex() { return Index; }
   llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
     { return VBIndex; }
-
-  llvm::DenseMap<CtorVtable_t, int64_t> *getAddressPoints()
-    { return &AddressPoints; }
 
   llvm::Constant *wrap(Index_t i) {
     llvm::Constant *m;
@@ -495,7 +504,7 @@ public:
     D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
               RD->getNameAsCString(), Class->getNameAsCString(),
               LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
-    AddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
+    subAddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
 
     // Now also add the address point for all our primary bases.
     while (1) {
@@ -511,7 +520,7 @@ public:
       D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
                 RD->getNameAsCString(), Class->getNameAsCString(),
                 LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
-      AddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
+      subAddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
     }
   }
 
@@ -794,10 +803,14 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   int64_t AddressPoint;
 
   llvm::GlobalVariable *GV = getModule().getGlobalVariable(Name);
-  if (GV && AddressPoints[LayoutClass] && !GV->isDeclaration())
+  if (GV && AddressPoints[LayoutClass] && !GV->isDeclaration()) {
     AddressPoint=(*(*(AddressPoints[LayoutClass]))[RD])[std::make_pair(RD,
                                                                        Offset)];
-  else {
+    // FIXME: We can never have 0 address point.  Do this for now so gepping
+    // retains the same structure.  Later, we'll just assert.
+    if (AddressPoint == 0)
+      AddressPoint = 1;
+  } else {
     VtableBuilder b(methods, RD, LayoutClass, Offset, *this);
 
     D1(printf("vtable %s\n", RD->getNameAsCString()));
@@ -806,12 +819,6 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
 
     // then the vtables for all the virtual bases.
     b.GenerateVtableForVBases(RD, Offset);
-
-    CodeGenModule::AddrMap_t *&ref = AddressPoints[LayoutClass];
-    if (ref == 0)
-      ref = new CodeGenModule::AddrMap_t;
-    
-    (*ref)[RD] = b.getAddressPoints();
 
     bool CreateDefinition = true;
     if (LayoutClass != RD)
@@ -862,6 +869,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   vtable = llvm::ConstantExpr::getInBoundsGetElementPtr(vtable, &AddressPointC,
                                                         1);
 
+  assert(vtable->getType() == Ptr8Ty);
   return vtable;
 }
 
@@ -888,7 +896,7 @@ class VTTBuilder {
     int64_t AddressPoint;
     AddressPoint = (*AddressPoints[VtblClass])[std::make_pair(RD, Offset)];    
     // FIXME: We can never have 0 address point.  Do this for now so gepping
-    // retains the same structure.
+    // retains the same structure.  Later we'll just assert.
     if (AddressPoint == 0)
       AddressPoint = 1;
     D1(printf("XXX address point for %s in %s layout %s at offset %d was %d\n",
