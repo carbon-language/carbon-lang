@@ -625,10 +625,10 @@ typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
  * 0 .. Max.
  */
 #ifndef WCHAR_MAX
-#define WCHAR_MAX __WCHAR_MAX__
+#define WCHAR_MAX __stdint_exjoin3(INT, __WCHAR_WIDTH__, _MAX)
 #endif
 #ifndef WCHAR_MIN
-#define WCHAR_MIN (-__WCHAR_MAX__-1)
+#define WCHAR_MIN __stdint_exjoin3(INT, __WCHAR_WIDTH__, _MIN)
 #endif
 
 /* 7.18.4.2 Macros for greatest-width integer constants. */
