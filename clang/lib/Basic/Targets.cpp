@@ -313,6 +313,42 @@ public:
   }
 };
 
+// PS3 PPU Target
+template<typename Target>
+class PS3PPUTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                           std::vector<char> &Defs) const {
+    // PS3 PPU defines.
+    Define(Defs, "__PPU__", "1");
+    Define(Defs, "__CELLOS_LV2__", "1");
+    Define(Defs, "__ELF__", "1");
+  }
+public:
+  PS3PPUTargetInfo(const std::string& triple)
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+  }
+};
+
+// FIXME: Need a real SPU target.
+// PS3 SPU Target
+template<typename Target>
+class PS3SPUTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                           std::vector<char> &Defs) const {
+    // PS3 PPU defines.
+    Define(Defs, "__SPU__", "1");
+    Define(Defs, "__ELF__", "1");
+  }
+public:
+  PS3SPUTargetInfo(const std::string& triple)
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+  }
+};
+
 // AuroraUX target
 template<typename Target>
 class AuroraUXTargetInfo : public OSTargetInfo<Target> {
@@ -445,6 +481,11 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
 
   // FIXME: Should be controlled by command line option.
   Define(Defs, "__LONG_DOUBLE_128__");
+  
+  if (Opts.AltiVec) {
+    Define(Defs, "__VEC__", "10206");
+    Define(Defs, "__ALTIVEC__", "1");
+  }
 }
 
 
@@ -1990,6 +2031,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
   case llvm::Triple::ppc64:
     if (os == llvm::Triple::Darwin)
       return new DarwinTargetInfo<PPC64TargetInfo>(T);
+    else if (os == llvm::Triple::Lv2)
+      return new PS3PPUTargetInfo<PPC64TargetInfo>(T);
     return new PPC64TargetInfo(T);
 
   case llvm::Triple::sparc:
@@ -1998,6 +2041,10 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     if (os == llvm::Triple::Solaris)
       return new SolarisSparcV8TargetInfo(T);
     return new SparcV8TargetInfo(T);
+
+  // FIXME: Need a real SPU target.
+  case llvm::Triple::cellspu:
+    return new PS3SPUTargetInfo<PPC64TargetInfo>(T);
 
   case llvm::Triple::systemz:
     return new SystemZTargetInfo(T);
