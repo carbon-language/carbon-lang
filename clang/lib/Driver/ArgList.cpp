@@ -27,7 +27,7 @@ void ArgList::append(Arg *A) {
   Args.push_back(A);
 }
 
-Arg *ArgList::getLastArgNoClaim(options::ID Id) const {
+Arg *ArgList::getLastArgNoClaim(OptSpecifier Id) const {
   // FIXME: Make search efficient?
   for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it)
     if ((*it)->getOption().matches(Id))
@@ -35,14 +35,14 @@ Arg *ArgList::getLastArgNoClaim(options::ID Id) const {
   return 0;
 }
 
-Arg *ArgList::getLastArg(options::ID Id) const {
+Arg *ArgList::getLastArg(OptSpecifier Id) const {
   Arg *A = getLastArgNoClaim(Id);
   if (A)
     A->claim();
   return A;
 }
 
-Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1) const {
+Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
   Arg *Res, *A0 = getLastArgNoClaim(Id0), *A1 = getLastArgNoClaim(Id1);
 
   if (A0 && A1)
@@ -56,8 +56,8 @@ Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1) const {
   return Res;
 }
 
-Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1,
-                         options::ID Id2) const {
+Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
+                         OptSpecifier Id2) const {
   Arg *Res = 0;
   Arg *A0 = getLastArgNoClaim(Id0);
   Arg *A1 = getLastArgNoClaim(Id1);
@@ -85,20 +85,20 @@ Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1,
   return Res;
 }
 
-bool ArgList::hasFlag(options::ID Pos, options::ID Neg, bool Default) const {
+bool ArgList::hasFlag(OptSpecifier Pos, OptSpecifier Neg, bool Default) const {
   if (Arg *A = getLastArg(Pos, Neg))
     return A->getOption().matches(Pos);
   return Default;
 }
 
-void ArgList::AddLastArg(ArgStringList &Output, options::ID Id) const {
+void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id) const {
   if (Arg *A = getLastArg(Id)) {
     A->claim();
     A->render(*this, Output);
   }
 }
 
-void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0) const {
+void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -109,8 +109,8 @@ void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0) const {
   }
 }
 
-void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0,
-                         options::ID Id1) const {
+void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
+                         OptSpecifier Id1) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -121,8 +121,8 @@ void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0,
   }
 }
 
-void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0,
-                         options::ID Id1, options::ID Id2) const {
+void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
+                         OptSpecifier Id1, OptSpecifier Id2) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -134,7 +134,7 @@ void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0,
   }
 }
 
-void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0) const {
+void ArgList::AddAllArgValues(ArgStringList &Output, OptSpecifier Id0) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -146,8 +146,8 @@ void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0) const {
   }
 }
 
-void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0,
-                              options::ID Id1) const {
+void ArgList::AddAllArgValues(ArgStringList &Output, OptSpecifier Id0,
+                              OptSpecifier Id1) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -159,7 +159,7 @@ void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0,
   }
 }
 
-void ArgList::AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
+void ArgList::AddAllArgsTranslated(ArgStringList &Output, OptSpecifier Id0,
                                    const char *Translation,
                                    bool Joined) const {
   // FIXME: Make fast.
@@ -180,7 +180,7 @@ void ArgList::AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
   }
 }
 
-void ArgList::ClaimAllArgs(options::ID Id0) const {
+void ArgList::ClaimAllArgs(OptSpecifier Id0) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     const Arg *A = *it;

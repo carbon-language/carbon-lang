@@ -10,6 +10,7 @@
 #ifndef CLANG_DRIVER_OPTTABLE_H
 #define CLANG_DRIVER_OPTTABLE_H
 
+#include "clang/Driver/OptSpecifier.h"
 #include <cassert>
 
 namespace clang {
@@ -37,9 +38,6 @@ namespace options {
   /// be needed at runtime; the OptTable class maintains enough information to
   /// parse command lines without instantiating Options, while letting other
   /// parts of the driver still use Option instances where convenient.
-  //
-  // FIXME: Introduce an OptionSpecifier class to wrap the option ID
-  // variant?
   class OptTable {
   public:
     /// Info - Entry for a single option instance in the option data table.
@@ -73,7 +71,8 @@ namespace options {
     unsigned FirstSearchableIndex;
 
   private:
-    const Info &getInfo(unsigned id) const {
+    const Info &getInfo(OptSpecifier Opt) const {
+      unsigned id = Opt.getID();
       assert(id > 0 && id - 1 < getNumOptions() && "Invalid Option ID.");
       return OptionInfos[id - 1];
     }
@@ -92,7 +91,8 @@ namespace options {
     /// if necessary.
     ///
     /// \return The option, or null for the INVALID option id.
-    const Option *getOption(unsigned id) const {
+    const Option *getOption(OptSpecifier Opt) const {
+      unsigned id = Opt.getID();
       if (id == 0)
         return 0;
 
@@ -104,23 +104,23 @@ namespace options {
     }
 
     /// getOptionName - Lookup the name of the given option.
-    const char *getOptionName(unsigned id) const {
+    const char *getOptionName(OptSpecifier id) const {
       return getInfo(id).Name;
     }
 
     /// getOptionKind - Get the kind of the given option.
-    unsigned getOptionKind(unsigned id) const {
+    unsigned getOptionKind(OptSpecifier id) const {
       return getInfo(id).Kind;
     }
 
     /// getOptionHelpText - Get the help text to use to describe this option.
-    const char *getOptionHelpText(unsigned id) const {
+    const char *getOptionHelpText(OptSpecifier id) const {
       return getInfo(id).HelpText;
     }
 
     /// getOptionMetaVar - Get the meta-variable name to use when describing
     /// this options values in the help text.
-    const char *getOptionMetaVar(unsigned id) const {
+    const char *getOptionMetaVar(OptSpecifier id) const {
       return getInfo(id).MetaVar;
     }
 

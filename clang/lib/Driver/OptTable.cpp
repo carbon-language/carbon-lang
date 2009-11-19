@@ -71,6 +71,10 @@ static inline bool operator<(const char *Name, const OptTable::Info &I) {
 
 //
 
+OptSpecifier::OptSpecifier(const Option *Opt) : ID(Opt->getID()) {}
+
+//
+
 OptTable::OptTable(const Info *_OptionInfos, unsigned _NumOptionInfos)
   : OptionInfos(_OptionInfos), NumOptionInfos(_NumOptionInfos),
     Options(new Option*[NumOptionInfos]),

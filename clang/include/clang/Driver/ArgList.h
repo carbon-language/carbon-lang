@@ -10,8 +10,8 @@
 #ifndef CLANG_DRIVER_ARGLIST_H_
 #define CLANG_DRIVER_ARGLIST_H_
 
+#include "clang/Driver/OptSpecifier.h"
 #include "clang/Driver/Options.h"
-
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -78,27 +78,26 @@ namespace driver {
     /// hasArg - Does the arg list contain any option matching \arg Id.
     ///
     /// \arg Claim Whether the argument should be claimed, if it exists.
-    bool hasArgNoClaim(options::ID Id) const {
+    bool hasArgNoClaim(OptSpecifier Id) const {
       return getLastArgNoClaim(Id) != 0;
     }
-    bool hasArg(options::ID Id) const {
+    bool hasArg(OptSpecifier Id) const {
       return getLastArg(Id) != 0;
     }
-    bool hasArg(options::ID Id0, options::ID Id1) const {
+    bool hasArg(OptSpecifier Id0, OptSpecifier Id1) const {
       return getLastArg(Id0, Id1) != 0;
     }
-    bool hasArg(options::ID Id0, options::ID Id1, options::ID Id2) const {
+    bool hasArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2) const {
       return getLastArg(Id0, Id1, Id2) != 0;
     }
 
     /// getLastArg - Return the last argument matching \arg Id, or null.
     ///
     /// \arg Claim Whether the argument should be claimed, if it exists.
-    Arg *getLastArgNoClaim(options::ID Id) const;
-    Arg *getLastArg(options::ID Id) const;
-    Arg *getLastArg(options::ID Id0, options::ID Id1) const;
-    Arg *getLastArg(options::ID Id0, options::ID Id1,
-                    options::ID Id2) const;
+    Arg *getLastArgNoClaim(OptSpecifier Id) const;
+    Arg *getLastArg(OptSpecifier Id) const;
+    Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1) const;
+    Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2) const;
 
     /// getArgString - Return the input argument string at \arg Index.
     virtual const char *getArgString(unsigned Index) const = 0;
@@ -110,24 +109,24 @@ namespace driver {
     /// negation is present, and \arg Default if neither option is
     /// given. If both the option and its negation are present, the
     /// last one wins.
-    bool hasFlag(options::ID Pos, options::ID Neg, bool Default=true) const;
+    bool hasFlag(OptSpecifier Pos, OptSpecifier Neg, bool Default=true) const;
 
     /// AddLastArg - Render only the last argument match \arg Id0, if
     /// present.
-    void AddLastArg(ArgStringList &Output, options::ID Id0) const;
+    void AddLastArg(ArgStringList &Output, OptSpecifier Id0) const;
 
     /// AddAllArgs - Render all arguments matching the given ids.
-    void AddAllArgs(ArgStringList &Output, options::ID Id0) const;
-    void AddAllArgs(ArgStringList &Output, options::ID Id0,
-                    options::ID Id1) const;
-    void AddAllArgs(ArgStringList &Output, options::ID Id0, options::ID Id1,
-                    options::ID Id2) const;
+    void AddAllArgs(ArgStringList &Output, OptSpecifier Id0) const;
+    void AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
+                    OptSpecifier Id1) const;
+    void AddAllArgs(ArgStringList &Output, OptSpecifier Id0, OptSpecifier Id1,
+                    OptSpecifier Id2) const;
 
     /// AddAllArgValues - Render the argument values of all arguments
     /// matching the given ids.
-    void AddAllArgValues(ArgStringList &Output, options::ID Id0) const;
-    void AddAllArgValues(ArgStringList &Output, options::ID Id0,
-                         options::ID Id1) const;
+    void AddAllArgValues(ArgStringList &Output, OptSpecifier Id0) const;
+    void AddAllArgValues(ArgStringList &Output, OptSpecifier Id0,
+                         OptSpecifier Id1) const;
 
     /// AddAllArgsTranslated - Render all the arguments matching the
     /// given ids, but forced to separate args and using the provided
@@ -135,13 +134,13 @@ namespace driver {
     ///
     /// \param Joined - If true, render the argument as joined with
     /// the option specifier.
-    void AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
+    void AddAllArgsTranslated(ArgStringList &Output, OptSpecifier Id0,
                               const char *Translation,
                               bool Joined = false) const;
 
     /// ClaimAllArgs - Claim all arguments which match the given
     /// option id.
-    void ClaimAllArgs(options::ID Id0) const;
+    void ClaimAllArgs(OptSpecifier Id0) const;
 
     /// @}
     /// @name Arg Synthesis
