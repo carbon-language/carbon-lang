@@ -21,7 +21,7 @@ namespace options {
     OPT_UNKNOWN,     // Reserved ID for unknown option.
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR) OPT_##ID,
-#include "clang/Driver/Options.def"
+#include "clang/Driver/Options.inc"
     LastOption
 #undef OPTION
   };

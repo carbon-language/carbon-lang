@@ -1,4 +1,4 @@
 LEVEL = ../../../..
-DIRS := Basic
+DIRS := Basic Driver
 
 include $(LEVEL)/Makefile.common
