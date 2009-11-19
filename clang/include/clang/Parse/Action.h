@@ -2335,23 +2335,31 @@ public:
   /// a class method.
   ///
   /// This code completion action is invoked when the code-completion token is
-  /// found after the class name.
+  /// found after the class name and after each argument.
   ///
   /// \param S the scope in which the message expression occurs. 
   /// \param FName the factory name. 
   /// \param FNameLoc the source location of the factory name.
+  /// \param SelIdents the identifiers that describe the selector (thus far).
+  /// \param NumSelIdents the number of identifiers in \p SelIdents.
   virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
-                                            SourceLocation FNameLoc){ }
+                                            SourceLocation FNameLoc,
+                                            IdentifierInfo **SelIdents,
+                                            unsigned NumSelIdents){ }
   
   /// \brief Code completion for an ObjC message expression that refers to
   /// an instance method.
   ///
   /// This code completion action is invoked when the code-completion token is
-  /// found after the receiver expression.
+  /// found after the receiver expression and after each argument.
   ///
   /// \param S the scope in which the operator keyword occurs.  
   /// \param Receiver an expression for the receiver of the message. 
-  virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver) { }
+  /// \param SelIdents the identifiers that describe the selector (thus far).
+  /// \param NumSelIdents the number of identifiers in \p SelIdents.
+  virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
+                                               IdentifierInfo **SelIdents,
+                                               unsigned NumSelIdents) { }
 
   /// \brief Code completion for a list of protocol references in Objective-C,
   /// such as P1 and P2 in \c id<P1,P2>.

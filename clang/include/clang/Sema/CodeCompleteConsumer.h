@@ -257,6 +257,10 @@ public:
     /// result and progressively higher numbers representing poorer results.
     unsigned Rank;
     
+    /// \brief Specifiers which parameter (of a function, Objective-C method,
+    /// macro, etc.) we should start with when formatting the result.
+    unsigned StartParameter;
+    
     /// \brief Whether this result is hidden by another name.
     bool Hidden : 1;
     
@@ -277,26 +281,27 @@ public:
            NestedNameSpecifier *Qualifier = 0,
            bool QualifierIsInformative = false)
       : Kind(RK_Declaration), Declaration(Declaration), Rank(Rank), 
-        Hidden(false), QualifierIsInformative(QualifierIsInformative),
+        StartParameter(0), Hidden(false), 
+        QualifierIsInformative(QualifierIsInformative),
         StartsNestedNameSpecifier(false), Qualifier(Qualifier) { }
     
     /// \brief Build a result that refers to a keyword or symbol.
     Result(const char *Keyword, unsigned Rank)
-      : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), Hidden(false),
-        QualifierIsInformative(0), StartsNestedNameSpecifier(false), 
-        Qualifier(0) { }
+      : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), StartParameter(0),
+        Hidden(false), QualifierIsInformative(0), 
+        StartsNestedNameSpecifier(false), Qualifier(0) { }
     
     /// \brief Build a result that refers to a macro.
     Result(IdentifierInfo *Macro, unsigned Rank)
-     : Kind(RK_Macro), Macro(Macro), Rank(Rank), Hidden(false), 
-       QualifierIsInformative(0), StartsNestedNameSpecifier(false),
-       Qualifier(0) { }
+     : Kind(RK_Macro), Macro(Macro), Rank(Rank), StartParameter(0), 
+       Hidden(false), QualifierIsInformative(0), 
+       StartsNestedNameSpecifier(false), Qualifier(0) { }
 
     /// \brief Build a result that refers to a pattern.
     Result(CodeCompletionString *Pattern, unsigned Rank)
-      : Kind(RK_Pattern), Pattern(Pattern), Rank(Rank), Hidden(false), 
-        QualifierIsInformative(0), StartsNestedNameSpecifier(false),
-        Qualifier(0) { }
+      : Kind(RK_Pattern), Pattern(Pattern), Rank(Rank), StartParameter(0), 
+        Hidden(false), QualifierIsInformative(0), 
+        StartsNestedNameSpecifier(false), Qualifier(0) { }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {

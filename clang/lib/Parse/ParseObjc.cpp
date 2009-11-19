@@ -1632,11 +1632,14 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
                                        ExprArg ReceiverExpr) {
   if (Tok.is(tok::code_completion)) {
     if (ReceiverName)
-      Actions.CodeCompleteObjCClassMessage(CurScope, ReceiverName, NameLoc);
+      Actions.CodeCompleteObjCClassMessage(CurScope, ReceiverName, NameLoc, 
+                                           0, 0);
     else
-      Actions.CodeCompleteObjCInstanceMessage(CurScope, ReceiverExpr.get());
+      Actions.CodeCompleteObjCInstanceMessage(CurScope, ReceiverExpr.get(), 
+                                              0, 0);
     ConsumeToken();
   }
+  
   // Parse objc-selector
   SourceLocation Loc;
   IdentifierInfo *selIdent = ParseObjCSelectorPiece(Loc);
@@ -1674,6 +1677,19 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
       // We have a valid expression.
       KeyExprs.push_back(Res.release());
 
+      // Code completion after each argument.
+      if (Tok.is(tok::code_completion)) {
+        if (ReceiverName)
+          Actions.CodeCompleteObjCClassMessage(CurScope, ReceiverName, NameLoc,
+                                               KeyIdents.data(), 
+                                               KeyIdents.size());
+        else
+          Actions.CodeCompleteObjCInstanceMessage(CurScope, ReceiverExpr.get(),
+                                                  KeyIdents.data(), 
+                                                  KeyIdents.size());
+        ConsumeToken();
+      }
+            
       // Check for another keyword selector.
       selIdent = ParseObjCSelectorPiece(Loc);
       if (!selIdent && Tok.isNot(tok::colon))

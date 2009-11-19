@@ -3648,8 +3648,12 @@ public:
   
   virtual void CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS);
   virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
-                                            SourceLocation FNameLoc);
-  virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver);
+                                            SourceLocation FNameLoc,
+                                            IdentifierInfo **SelIdents, 
+                                            unsigned NumSelIdents);
+  virtual void CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
+                                               IdentifierInfo **SelIdents,
+                                               unsigned NumSelIdents);
   virtual void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                                   unsigned NumProtocols);
   virtual void CodeCompleteObjCProtocolDecl(Scope *S);
