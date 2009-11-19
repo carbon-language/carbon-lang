@@ -176,7 +176,6 @@
 // ARM:#define __LONG_MAX__ 2147483647L
 // ARM:#define __NO_INLINE__ 1
 // ARM:#define __POINTER_WIDTH__ 32
-// ARM:#define __PTRDIFF_TYPE__ int
 // ARM:#define __PTRDIFF_WIDTH__ 32
 // ARM:#define __SCHAR_MAX__ 127
 // ARM:#define __SHRT_MAX__ 32767
@@ -253,7 +252,6 @@
 // BFIN:#define __LONG_MAX__ 2147483647L
 // BFIN:#define __NO_INLINE__ 1
 // BFIN:#define __POINTER_WIDTH__ 32
-// BFIN:#define __PTRDIFF_TYPE__ long int
 // BFIN:#define __PTRDIFF_WIDTH__ 32
 // BFIN:#define __SCHAR_MAX__ 127
 // BFIN:#define __SHRT_MAX__ 32767
@@ -326,7 +324,6 @@
 // I386:#define __NO_INLINE__ 1
 // I386:#define __NO_MATH_INLINES 1
 // I386:#define __POINTER_WIDTH__ 32
-// I386:#define __PTRDIFF_TYPE__ int
 // I386:#define __PTRDIFF_WIDTH__ 32
 // I386:#define __REGISTER_PREFIX__ 
 // I386:#define __SCHAR_MAX__ 127
@@ -402,7 +399,6 @@
 // MSP430:#define __MSP430__ 1
 // MSP430:#define __NO_INLINE__ 1
 // MSP430:#define __POINTER_WIDTH__ 16
-// MSP430:#define __PTRDIFF_TYPE__ int
 // MSP430:#define __PTRDIFF_WIDTH__ 16 
 // MSP430:#define __SCHAR_MAX__ 127
 // MSP430:#define __SHRT_MAX__ 32767
@@ -471,7 +467,6 @@
 // PIC16:#define __LONG_MAX__ 2147483647L
 // PIC16:#define __NO_INLINE__ 1
 // PIC16:#define __POINTER_WIDTH__ 16
-// PIC16:#define __PTRDIFF_TYPE__ int
 // PIC16:#define __PTRDIFF_WIDTH__ 16
 // PIC16:#define __SCHAR_MAX__ 127
 // PIC16:#define __SHRT_MAX__ 32767
@@ -557,7 +552,6 @@
 // PPC64:#define __NO_INLINE__ 1
 // PPC64:#define __POINTER_WIDTH__ 64
 // PPC64:#define __POWERPC__ 1
-// PPC64:#define __PTRDIFF_TYPE__ long int
 // PPC64:#define __PTRDIFF_WIDTH__ 64
 // PPC64:#define __REGISTER_PREFIX__ 
 // PPC64:#define __SCHAR_MAX__ 127
@@ -635,7 +629,6 @@
 // PPC:#define __NO_INLINE__ 1
 // PPC:#define __POINTER_WIDTH__ 32
 // PPC:#define __POWERPC__ 1
-// PPC:#define __PTRDIFF_TYPE__ long int
 // PPC:#define __PTRDIFF_WIDTH__ 32
 // PPC:#define __REGISTER_PREFIX__ 
 // PPC:#define __SCHAR_MAX__ 127
@@ -706,7 +699,6 @@
 // S390X:#define __LONG_MAX__ 9223372036854775807L
 // S390X:#define __NO_INLINE__ 1
 // S390X:#define __POINTER_WIDTH__ 64
-// S390X:#define __PTRDIFF_TYPE__ long int
 // S390X:#define __PTRDIFF_WIDTH__ 64
 // S390X:#define __SCHAR_MAX__ 127
 // S390X:#define __SHRT_MAX__ 32767
@@ -776,7 +768,6 @@
 // SPARC:#define __LONG_MAX__ 2147483647L
 // SPARC:#define __NO_INLINE__ 1
 // SPARC:#define __POINTER_WIDTH__ 32
-// SPARC:#define __PTRDIFF_TYPE__ long int
 // SPARC:#define __PTRDIFF_WIDTH__ 32
 // SPARC:#define __REGISTER_PREFIX__ 
 // SPARC:#define __SCHAR_MAX__ 127
@@ -848,7 +839,6 @@
 // TCE:#define __LONG_MAX__ 2147483647L
 // TCE:#define __NO_INLINE__ 1
 // TCE:#define __POINTER_WIDTH__ 32
-// TCE:#define __PTRDIFF_TYPE__ int
 // TCE:#define __PTRDIFF_WIDTH__ 32
 // TCE:#define __SCHAR_MAX__ 127
 // TCE:#define __SHRT_MAX__ 32767
@@ -926,7 +916,6 @@
 // X86_64:#define __NO_INLINE__ 1
 // X86_64:#define __NO_MATH_INLINES 1
 // X86_64:#define __POINTER_WIDTH__ 64
-// X86_64:#define __PTRDIFF_TYPE__ long int
 // X86_64:#define __PTRDIFF_WIDTH__ 64
 // X86_64:#define __REGISTER_PREFIX__ 
 // X86_64:#define __SCHAR_MAX__ 127
