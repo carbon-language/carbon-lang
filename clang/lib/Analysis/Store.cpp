@@ -195,6 +195,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
 SVal  StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
                                      QualType castTy) {
   ASTContext &Ctx = ValMgr.getContext();
+  (void) Ctx;
 
   if (castTy.isNull())
     return V;
