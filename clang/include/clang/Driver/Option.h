@@ -136,6 +136,10 @@ namespace driver {
 
     /// matches - Predicate for whether this option is part of the
     /// given option (which may be a group).
+    ///
+    /// Note that matches against options which are an alias should never be
+    /// done -- aliases do not participate in matching and so such a query will
+    /// always be false.
     bool matches(const Option *Opt) const;
     bool matches(unsigned Id) const;
 

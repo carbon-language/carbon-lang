@@ -71,9 +71,7 @@ void Option::dump() const {
 }
 
 bool Option::matches(const Option *Opt) const {
-  // Aliases are never considered in matching.
-  if (Opt->getAlias())
-    return matches(Opt->getAlias());
+  // Aliases are never considered in matching, look through them.
   if (Alias)
     return Alias->matches(Opt);
 
@@ -86,10 +84,7 @@ bool Option::matches(const Option *Opt) const {
 }
 
 bool Option::matches(unsigned Id) const {
-  // FIXME: Decide what to do here; we should either pull out the
-  // handling of alias on the option for Id from the other matches, or
-  // find some other solution (which hopefully doesn't require using
-  // the option table).
+  // Aliases are never considered in matching, look through them.
   if (Alias)
     return Alias->matches(Id);
 
