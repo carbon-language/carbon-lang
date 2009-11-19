@@ -298,7 +298,7 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
 
 static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
                                    std::vector<std::string> &Res) {
-  if (Opts.Sysroot.empty()) {
+  if (Opts.Sysroot != "/") {
     Res.push_back("-isysroot");
     Res.push_back(Opts.Sysroot);
   }

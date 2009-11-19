@@ -166,8 +166,7 @@ struct OptLevelParser : public llvm::cl::parser<unsigned> {
 };
 static llvm::cl::opt<unsigned, false, OptLevelParser>
 OptLevel("O", llvm::cl::Prefix,
-         llvm::cl::desc("Optimization level"),
-         llvm::cl::init(0));
+         llvm::cl::desc("Optimization level"));
 
 static llvm::cl::opt<bool>
 OptSize("Os", llvm::cl::desc("Optimize for size"));
@@ -600,8 +599,7 @@ StaticDefine("static-define", llvm::cl::desc("Should __STATIC__ be defined"));
 
 static llvm::cl::opt<int>
 StackProtector("stack-protector",
-               llvm::cl::desc("Enable stack protectors"),
-               llvm::cl::init(-1));
+               llvm::cl::desc("Enable stack protectors"));
 
 static llvm::cl::opt<LangOptions::VisibilityMode>
 SymbolVisibility("fvisibility",
@@ -616,7 +614,7 @@ SymbolVisibility("fvisibility",
                                   clEnumValEnd));
 
 static llvm::cl::opt<unsigned>
-TemplateDepth("ftemplate-depth", llvm::cl::init(99),
+TemplateDepth("ftemplate-depth",
               llvm::cl::desc("Maximum depth of recursive template "
                              "instantiation"));
 
@@ -715,7 +713,7 @@ iwithprefixbefore_vals("iwithprefixbefore", llvm::cl::value_desc("dir"),
             llvm::cl::desc("Set directory to include search path with prefix"));
 
 static llvm::cl::opt<std::string>
-isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
+isysroot("isysroot", llvm::cl::value_desc("dir"),
          llvm::cl::desc("Set the system root directory (usually /)"));
 
 static llvm::cl::opt<bool>
@@ -798,7 +796,8 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   using namespace codegenoptions;
 
   // -Os implies -O2
-  Opts.OptimizationLevel = OptSize ? 2 : OptLevel;
+  unsigned Opt = OptLevel.getPosition() ? OptLevel : 0;
+  Opts.OptimizationLevel = OptSize ? 2 : Opt;
 
   // We must always run at least the always inlining pass.
   Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
@@ -898,7 +897,8 @@ void clang::InitializeHeaderSearchOptions(HeaderSearchOptions &Opts,
                                           llvm::StringRef BuiltinIncludePath) {
   using namespace headersearchoptions;
 
-  Opts.Sysroot = isysroot;
+  if (isysroot.getPosition())
+    Opts.Sysroot = isysroot;
   Opts.Verbose = Verbose;
 
   // Handle -I... and -F... options, walking the lists in parallel.
@@ -1247,7 +1247,8 @@ void clang::InitializeLangOptions(LangOptions &Options,
 
   Options.MathErrno = !NoMathErrno;
 
-  Options.InstantiationDepth = TemplateDepth;
+  if (TemplateDepth.getPosition())
+    Options.InstantiationDepth = TemplateDepth;
 
   // Override the default runtime if the user requested it.
   if (GNURuntime)
@@ -1263,8 +1264,10 @@ void clang::InitializeLangOptions(LangOptions &Options,
     Options.EmitAllDecls = 1;
 
   // The __OPTIMIZE_SIZE__ define is tied to -Oz, which we don't support.
+  unsigned Opt =
+    codegenoptions::OptLevel.getPosition() ? codegenoptions::OptLevel : 0;
   Options.OptimizeSize = 0;
-  Options.Optimize = codegenoptions::OptSize || codegenoptions::OptLevel;
+  Options.Optimize = codegenoptions::OptSize || Opt;
 
   assert(PICLevel <= 2 && "Invalid value for -pic-level");
   Options.PICLevel = PICLevel;
@@ -1276,17 +1279,18 @@ void clang::InitializeLangOptions(LangOptions &Options,
   // inlining enabled.
   //
   // FIXME: This is affected by other options (-fno-inline).
-  Options.NoInline = !codegenoptions::OptLevel;
+  Options.NoInline = !Opt;
 
   Options.Static = StaticDefine;
 
-  switch (StackProtector) {
-  default:
-    assert(StackProtector <= 2 && "Invalid value for -stack-protector");
-  case -1: break;
-  case 0: Options.setStackProtectorMode(LangOptions::SSPOff); break;
-  case 1: Options.setStackProtectorMode(LangOptions::SSPOn);  break;
-  case 2: Options.setStackProtectorMode(LangOptions::SSPReq); break;
+  if (StackProtector.getPosition()) {
+    switch (StackProtector) {
+    default:
+      assert(0 && "Invalid value for -stack-protector");
+    case 0: Options.setStackProtectorMode(LangOptions::SSPOff); break;
+    case 1: Options.setStackProtectorMode(LangOptions::SSPOn);  break;
+    case 2: Options.setStackProtectorMode(LangOptions::SSPReq); break;
+    }
   }
 
   if (MainFileName.getPosition())
