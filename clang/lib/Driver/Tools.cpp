@@ -81,8 +81,8 @@ void Clang::AddPreprocessingOptions(const Driver &D,
         DepFile = Output.getFilename();
     } else if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
       DepFile = MF->getValue(Args);
-    } else if (A->getOption().getId() == options::OPT_M ||
-               A->getOption().getId() == options::OPT_MM) {
+    } else if (A->getOption().matches(options::OPT_M) ||
+               A->getOption().matches(options::OPT_MM)) {
       DepFile = "-";
     } else {
       DepFile = darwin::CC1::getDependencyFileName(Args, Inputs);
@@ -116,8 +116,8 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       CmdArgs.push_back(DepTarget);
     }
 
-    if (A->getOption().getId() == options::OPT_M ||
-        A->getOption().getId() == options::OPT_MD)
+    if (A->getOption().matches(options::OPT_M) ||
+        A->getOption().matches(options::OPT_MD))
       CmdArgs.push_back("-sys-header-deps");
   }
 
@@ -822,7 +822,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Manually translate -O to -O2 and -O4 to -O3; let clang reject
   // others.
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
-    if (A->getOption().getId() == options::OPT_O4)
+    if (A->getOption().matches(options::OPT_O4))
       CmdArgs.push_back("-O3");
     else if (A->getValue(Args)[0] == '\0')
       CmdArgs.push_back("-O2");

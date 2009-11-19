@@ -592,7 +592,7 @@ void Driver::BuildUniversalActions(const ArgList &Args,
        it != ie; ++it) {
     Arg *A = *it;
 
-    if (A->getOption().getId() == options::OPT_arch) {
+    if (A->getOption().matches(options::OPT_arch)) {
       // Validate the option here; we don't save the type here because its
       // particular spelling may participate in other driver choices.
       llvm::Triple::ArchType Arch =
@@ -731,7 +731,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
       // necessary.
       Inputs.push_back(std::make_pair(types::TY_Object, A));
 
-    } else if (A->getOption().getId() == options::OPT_x) {
+    } else if (A->getOption().matches(options::OPT_x)) {
       InputTypeArg = A;
       InputType = types::lookupTypeForTypeSpecifier(A->getValue(Args));
 
@@ -985,7 +985,7 @@ void Driver::BuildJobs(Compilation &C) const {
         // FIXME: Use iterator.
         for (ArgList::const_iterator it = C.getArgs().begin(),
                ie = C.getArgs().end(); it != ie; ++it) {
-          if ((*it)->isClaimed() && (*it)->getOption().matches(Opt.getId())) {
+          if ((*it)->isClaimed() && (*it)->getOption().matches(&Opt)) {
             DuplicateClaimed = true;
             break;
           }

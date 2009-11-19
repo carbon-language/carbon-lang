@@ -122,7 +122,7 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
     //
     // FIXME: Should this information be in llvm::Triple?
     if (Arg *A = Args.getLastArg(options::OPT_m32, options::OPT_m64)) {
-      if (A->getOption().getId() == options::OPT_m32) {
+      if (A->getOption().matches(options::OPT_m32)) {
         if (Arch == llvm::Triple::x86_64)
           Arch = llvm::Triple::x86;
         if (Arch == llvm::Triple::ppc64)
@@ -205,11 +205,11 @@ ToolChain *UnknownHostInfo::CreateToolChain(const ArgList &Args,
     if (Triple.getArch() == llvm::Triple::x86 ||
         Triple.getArch() == llvm::Triple::x86_64) {
       ArchName =
-        (A->getOption().getId() == options::OPT_m32) ? "i386" : "x86_64";
+        (A->getOption().matches(options::OPT_m32)) ? "i386" : "x86_64";
     } else if (Triple.getArch() == llvm::Triple::ppc ||
                Triple.getArch() == llvm::Triple::ppc64) {
       ArchName =
-        (A->getOption().getId() == options::OPT_m32) ? "powerpc" : "powerpc64";
+        (A->getOption().matches(options::OPT_m32)) ? "powerpc" : "powerpc64";
     }
   }
 
@@ -478,11 +478,11 @@ ToolChain *LinuxHostInfo::CreateToolChain(const ArgList &Args,
     if (Triple.getArch() == llvm::Triple::x86 ||
         Triple.getArch() == llvm::Triple::x86_64) {
       ArchName =
-        (A->getOption().getId() == options::OPT_m32) ? "i386" : "x86_64";
+        (A->getOption().matches(options::OPT_m32)) ? "i386" : "x86_64";
     } else if (Triple.getArch() == llvm::Triple::ppc ||
                Triple.getArch() == llvm::Triple::ppc64) {
       ArchName =
-        (A->getOption().getId() == options::OPT_m32) ? "powerpc" : "powerpc64";
+        (A->getOption().matches(options::OPT_m32)) ? "powerpc" : "powerpc64";
     }
   }
 
