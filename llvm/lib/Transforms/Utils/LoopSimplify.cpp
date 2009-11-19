@@ -305,6 +305,12 @@ ReprocessLoop:
     }
   }
 
+  // If there are duplicate phi nodes (for example, from loop rotation),
+  // get rid of them.
+  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
+       BB != E; ++BB)
+    EliminateDuplicatePHINodes(*BB);
+
   return Changed;
 }
 
