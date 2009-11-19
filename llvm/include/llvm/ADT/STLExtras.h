@@ -18,6 +18,7 @@
 #define LLVM_ADT_STLEXTRAS_H
 
 #include <cstddef> // for std::size_t
+#include <cstdlib> // for qsort
 #include <functional>
 #include <iterator>
 #include <utility> // for std::pair
