@@ -105,7 +105,7 @@ namespace {
 
     // FIXME: Clean this up after splitting each Thumb load / store opcode
     // into multiple ones.
-    { ARM::t2LDRi12,ARM::tLDR,    0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRi12,ARM::tLDR,    ARM::tLDRspi,  5,   8,    1,   0,  0,0, 1 },
     { ARM::t2LDRs,  ARM::tLDR,    0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRBi12,ARM::tLDRB,  0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRBs, ARM::tLDRB,   0,             0,   0,    1,   0,  0,0, 1 },
@@ -113,7 +113,7 @@ namespace {
     { ARM::t2LDRHs, ARM::tLDRH,   0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRSBs,ARM::tLDRSB,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,    1,   0,  0,0, 1 },
-    { ARM::t2STRi12,ARM::tSTR,    0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRi12,ARM::tSTR,    ARM::tSTRspi,  5,   8,    1,   0,  0,0, 1 },
     { ARM::t2STRs,  ARM::tSTR,    0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRBi12,ARM::tSTRB,  0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRBs, ARM::tSTRB,   0,             0,   0,    1,   0,  0,0, 1 },
@@ -244,8 +244,13 @@ static bool VerifyLowRegs(MachineInstr *MI) {
       continue;
     if (isLROk && Reg == ARM::LR)
       continue;
-    if (isSPOk && Reg == ARM::SP)
-      continue;
+    if (Reg == ARM::SP) {
+      if (isSPOk)
+        continue;
+      if (i == 1 && (Opc == ARM::t2LDRi12 || Opc == ARM::t2STRi12))
+        // Special case for these ldr / str with sp as base register.
+        continue;
+    }
     if (!isARMLowRegister(Reg))
       return false;
   }
@@ -261,17 +266,26 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   unsigned Scale = 1;
   bool HasImmOffset = false;
   bool HasShift = false;
+  bool HasOffReg = true;
   bool isLdStMul = false;
   unsigned Opc = Entry.NarrowOpc1;
   unsigned OpNum = 3; // First 'rest' of operands.
+  uint8_t  ImmLimit = Entry.Imm1Limit;
   switch (Entry.WideOpc) {
   default:
     llvm_unreachable("Unexpected Thumb2 load / store opcode!");
   case ARM::t2LDRi12:
-  case ARM::t2STRi12:
+  case ARM::t2STRi12: {
+    unsigned BaseReg = MI->getOperand(1).getReg();
+    if (BaseReg == ARM::SP) {
+      Opc = Entry.NarrowOpc2;
+      ImmLimit = Entry.Imm2Limit;
+      HasOffReg = false;
+    }
     Scale = 4;
     HasImmOffset = true;
     break;
+  }
   case ARM::t2LDRBi12:
   case ARM::t2STRBi12:
     HasImmOffset = true;
@@ -325,7 +339,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   unsigned OffsetImm = 0;
   if (HasImmOffset) {
     OffsetImm = MI->getOperand(2).getImm();
-    unsigned MaxOffset = ((1 << Entry.Imm1Limit) - 1) * Scale;
+    unsigned MaxOffset = ((1 << ImmLimit) - 1) * Scale;
     if ((OffsetImm & (Scale-1)) || OffsetImm > MaxOffset)
       // Make sure the immediate field fits.
       return false;
@@ -337,7 +351,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, TII->get(Opc));
   if (!isLdStMul) {
     MIB.addOperand(MI->getOperand(0)).addOperand(MI->getOperand(1));
-    if (Entry.NarrowOpc1 != ARM::tLDRSB && Entry.NarrowOpc1 != ARM::tLDRSH) {
+    if (Opc != ARM::tLDRSB && Opc != ARM::tLDRSH) {
       // tLDRSB and tLDRSH do not have an immediate offset field. On the other
       // hand, it must have an offset register.
       // FIXME: Remove this special case.
@@ -345,12 +359,16 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     }
     assert((!HasShift || OffsetReg) && "Invalid so_reg load / store address!");
 
-    MIB.addReg(OffsetReg, getKillRegState(OffsetKill));
+    if (HasOffReg)
+      MIB.addReg(OffsetReg, getKillRegState(OffsetKill));
   }
 
   // Transfer the rest of operands.
   for (unsigned e = MI->getNumOperands(); OpNum != e; ++OpNum)
     MIB.addOperand(MI->getOperand(OpNum));
+
+  // Transfer memoperands.
+  (*MIB).setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
 
   DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " << *MIB);
 

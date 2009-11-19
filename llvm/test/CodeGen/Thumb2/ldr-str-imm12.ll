@@ -49,6 +49,12 @@ bb119:                                            ; preds = %bb20, %bb20
   unreachable
 
 bb420:                                            ; preds = %bb20, %bb20
+; CHECK: bb420
+; CHECK: str r{{[0-7]}}, [sp]
+; CHECK: str r{{[0-7]}}, [sp, #+4]
+; CHECK: str r{{[0-7]}}, [sp, #+8]
+; CHECK: ldr r{{[0-7]}}, [sp, #+28]
+; CHECK: str r{{[0-7]}}, [sp, #+24]
   store %union.rec* null, %union.rec** @zz_hold, align 4
   store %union.rec* null, %union.rec** @zz_res, align 4
   store %union.rec* %x, %union.rec** @zz_hold, align 4
