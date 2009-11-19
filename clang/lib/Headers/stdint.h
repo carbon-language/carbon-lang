@@ -618,8 +618,8 @@ typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
 /* C99 7.18.3 Limits of other integer types. */
 #define SIG_ATOMIC_MIN INT32_MIN
 #define SIG_ATOMIC_MAX INT32_MAX
-#define WINT_MIN       INT32_MIN
-#define WINT_MAX       INT32_MAX
+#define WINT_MIN       __stdint_exjoin3(INT, __WINT_WIDTH__, _MIN)
+#define WINT_MAX       __stdint_exjoin3(INT, __WINT_WIDTH__, _MAX)
 
 /* FIXME: if we ever support a target with unsigned wchar_t, this should be
  * 0 .. Max.
