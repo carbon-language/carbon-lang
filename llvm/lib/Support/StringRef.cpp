@@ -23,7 +23,7 @@ static char ascii_tolower(char x) {
 
 /// compare_lower - Compare strings, ignoring case.
 int StringRef::compare_lower(StringRef RHS) const {
-  for (size_t I = 0, E = std::min(Length, RHS.Length); I != E; ++I) {
+  for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
     char LHC = ascii_tolower(Data[I]);
     char RHC = ascii_tolower(RHS.Data[I]);
     if (LHC != RHC)
@@ -48,7 +48,7 @@ size_t StringRef::find(StringRef Str, size_t From) const {
   size_t N = Str.size();
   if (N > Length)
     return npos;
-  for (size_t e = Length - N + 1, i = std::min(From, e); i != e; ++i)
+  for (size_t e = Length - N + 1, i = min(From, e); i != e; ++i)
     if (substr(i, N).equals(Str))
       return i;
   return npos;
@@ -76,7 +76,7 @@ size_t StringRef::rfind(StringRef Str) const {
 /// Note: O(size() * Chars.size())
 StringRef::size_type StringRef::find_first_of(StringRef Chars,
                                               size_t From) const {
-  for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
+  for (size_type i = min(From, Length), e = Length; i != e; ++i)
     if (Chars.find(Data[i]) != npos)
       return i;
   return npos;
@@ -85,7 +85,7 @@ StringRef::size_type StringRef::find_first_of(StringRef Chars,
 /// find_first_not_of - Find the first character in the string that is not
 /// \arg C or npos if not found.
 StringRef::size_type StringRef::find_first_not_of(char C, size_t From) const {
-  for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
+  for (size_type i = min(From, Length), e = Length; i != e; ++i)
     if (Data[i] != C)
       return i;
   return npos;
@@ -97,7 +97,7 @@ StringRef::size_type StringRef::find_first_not_of(char C, size_t From) const {
 /// Note: O(size() * Chars.size())
 StringRef::size_type StringRef::find_first_not_of(StringRef Chars,
                                                   size_t From) const {
-  for (size_type i = std::min(From, Length), e = Length; i != e; ++i)
+  for (size_type i = min(From, Length), e = Length; i != e; ++i)
     if (Chars.find(Data[i]) == npos)
       return i;
   return npos;
