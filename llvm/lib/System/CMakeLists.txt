@@ -42,5 +42,5 @@ add_llvm_library(LLVMSystem
   )
 
 if( BUILD_SHARED_LIBS AND NOT WIN32 )
-  target_link_libraries(LLVMSystem dl)
+  target_link_libraries(LLVMSystem ${CMAKE_DL_LIBS})
 endif()
