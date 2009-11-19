@@ -2246,8 +2246,6 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
     return;
   }
 
-
-  printf("InitListExpr type = %s\n", T.getAsString().c_str());
   assert(0 && "unprocessed InitListExpr type");
 }
 
