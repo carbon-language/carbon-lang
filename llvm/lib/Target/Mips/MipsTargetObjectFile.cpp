@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsTargetObjectFile.h"
+#include "MipsSubtarget.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -56,6 +57,12 @@ bool MipsTargetObjectFile::IsGlobalInSmallSection(const GlobalValue *GV,
 bool MipsTargetObjectFile::
 IsGlobalInSmallSection(const GlobalValue *GV, const TargetMachine &TM,
                        SectionKind Kind) const {
+
+  // Only use small section for non linux targets.
+  const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
+  if (Subtarget.isLinux())
+    return false;
+
   // Only global variables, not functions.
   const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
   if (!GVA)
