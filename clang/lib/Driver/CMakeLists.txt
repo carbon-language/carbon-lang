@@ -20,4 +20,4 @@ add_clang_library(clangDriver
   Types.cpp
   )
 
-add_dependencies(clangDriver ClangDiagnosticDriver ClangDriverOptions)
+add_dependencies(clangDriver ClangDiagnosticDriver ClangDriverOptions ClangCC1Options)
