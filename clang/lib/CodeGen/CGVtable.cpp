@@ -1021,6 +1021,12 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   return llvm::ConstantExpr::getBitCast(vtt, Ptr8Ty);
 }
 
+void CGVtableInfo::GenerateClassData(const CXXRecordDecl *RD) {
+  Vtables[RD] = CGM.GenerateVtable(RD, RD);
+  CGM.GenerateRtti(RD);
+  CGM.GenerateVTT(RD);  
+}
+
 llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
   llvm::Constant *&vtbl = Vtables[RD];
   if (vtbl)

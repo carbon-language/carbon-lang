@@ -47,21 +47,35 @@ public:
     return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
   }
 
-  llvm::Constant *BuildName(QualType Ty, bool Hidden) {
+  llvm::Constant *BuildName(QualType Ty, bool Hidden, bool Extern) {
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
     mangleCXXRttiName(CGM.getMangleContext(), Ty, Out);
+    llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable::LinkageTypes linktype;
     linktype = llvm::GlobalValue::LinkOnceODRLinkage;
+    if (!Extern)
+      linktype = llvm::GlobalValue::InternalLinkage;
+
+    llvm::GlobalVariable *GV;
+    GV = CGM.getModule().getGlobalVariable(Name);
+    if (GV && !GV->isDeclaration())
+      return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
     llvm::Constant *C;
-    C = llvm::ConstantArray::get(VMContext, Out.str().substr(4));
+    C = llvm::ConstantArray::get(VMContext, Name.substr(4));
 
-    llvm::GlobalVariable * GV = new llvm::GlobalVariable(CGM.getModule(),
-                                                         C->getType(),
-                                                         true, linktype, C,
-                                                         Out.str());
+    llvm::GlobalVariable *OGV = GV;
+    GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true, linktype,
+                                  C, Name);
+    if (OGV) {
+      GV->takeName(OGV);
+      llvm::Constant *NewPtr = llvm::ConstantExpr::getBitCast(GV,
+                                                              OGV->getType());
+      OGV->replaceAllUsesWith(NewPtr);
+      OGV->eraseFromParent();
+    }
     if (Hidden)
       GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
     return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
@@ -87,8 +101,9 @@ public:
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
     mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
+    llvm::StringRef Name = Out.str();
 
-    C = CGM.getModule().getGlobalVariable(Out.str());
+    C = CGM.getModule().getGlobalVariable(Name);
     if (C)
       return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
 
@@ -96,7 +111,7 @@ public:
     linktype = llvm::GlobalValue::ExternalLinkage;;
 
     C = new llvm::GlobalVariable(CGM.getModule(), Int8PtrTy, true, linktype,
-                                 0, Out.str());
+                                 0, Name);
     return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
   }
 
@@ -147,20 +162,19 @@ public:
 
   llvm::Constant *finish(std::vector<llvm::Constant *> &info,
                          llvm::GlobalVariable *GV,
-                         llvm::StringRef Name, bool Hidden) {
+                         llvm::StringRef Name, bool Hidden, bool Extern) {
     llvm::GlobalVariable::LinkageTypes linktype;
     linktype = llvm::GlobalValue::LinkOnceODRLinkage;
+    if (!Extern)
+      linktype = llvm::GlobalValue::InternalLinkage;
 
     llvm::Constant *C;
     C = llvm::ConstantStruct::get(VMContext, &info[0], info.size(), false);
 
-    if (GV == 0)
-      GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
-                                    linktype, C, Name);
-    else {
-      llvm::GlobalVariable *OGV = GV;
-      GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
-                                    linktype, C, Name);
+    llvm::GlobalVariable *OGV = GV;
+    GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true, linktype,
+                                  C, Name);
+    if (OGV) {
       GV->takeName(OGV);
       llvm::Constant *NewPtr = llvm::ConstantExpr::getBitCast(GV,
                                                               OGV->getType());
@@ -183,15 +197,17 @@ public:
     llvm::raw_svector_ostream Out(OutName);
     mangleCXXRtti(CGM.getMangleContext(), CGM.getContext().getTagDeclType(RD),
                   Out);
+    llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getGlobalVariable(Out.str());
+    GV = CGM.getModule().getGlobalVariable(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
     std::vector<llvm::Constant *> info;
 
     bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
+    bool Extern = !RD->isInAnonymousNamespace();
 
     bool simple = false;
     if (RD->getNumBases() == 0)
@@ -202,7 +218,8 @@ public:
     } else
       C = BuildVtableRef("_ZTVN10__cxxabiv121__vmi_class_type_infoE");
     info.push_back(C);
-    info.push_back(BuildName(CGM.getContext().getTagDeclType(RD), Hidden));
+    info.push_back(BuildName(CGM.getContext().getTagDeclType(RD), Hidden,
+                             Extern));
 
     // If we have no bases, there are no more fields.
     if (RD->getNumBases()) {
@@ -235,7 +252,7 @@ public:
       }
     }
 
-    return finish(info, GV, Out.str(), Hidden);
+    return finish(info, GV, Name, Hidden, Extern);
   }
 
   /// - BuildFlags - Build a __flags value for __pbase_type_info.
@@ -250,23 +267,49 @@ public:
     return BuildType(Ty);
   }
 
+  bool DecideExtern(QualType Ty) {
+    // For this type, see if all components are never in an anonymous namespace.
+    if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
+      return (DecideExtern(MPT->getPointeeType())
+              && DecideExtern(QualType(MPT->getClass(), 0)));
+    if (const PointerType *PT = Ty->getAs<PointerType>())
+      return DecideExtern(PT->getPointeeType());
+    if (const RecordType *RT = Ty->getAs<RecordType>())
+      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
+        return !RD->isInAnonymousNamespace();
+    return true;
+  }
+
+  bool DecideHidden(QualType Ty) {
+    // For this type, see if all components are never hidden.
+    if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
+      return (DecideHidden(MPT->getPointeeType())
+              && DecideHidden(QualType(MPT->getClass(), 0)));
+    if (const PointerType *PT = Ty->getAs<PointerType>())
+      return DecideHidden(PT->getPointeeType());
+    if (const RecordType *RT = Ty->getAs<RecordType>())
+      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
+        return CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
+    return false;
+  }
+
   llvm::Constant *BuildPointerType(QualType Ty) {
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
     mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
+    llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getGlobalVariable(Out.str());
+    GV = CGM.getModule().getGlobalVariable(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
     std::vector<llvm::Constant *> info;
 
-    // FIXME: pointer to hidden should be hidden, we should be able to
-    // grab a bit off the type for this.
-    bool Hidden = false;
+    bool Extern = DecideExtern(Ty);
+    bool Hidden = DecideHidden(Ty);
 
     QualType PTy = Ty->getPointeeType();
     QualType BTy;
@@ -282,7 +325,7 @@ public:
     else
       C = BuildVtableRef("_ZTVN10__cxxabiv119__pointer_type_infoE");
     info.push_back(C);
-    info.push_back(BuildName(Ty, Hidden));
+    info.push_back(BuildName(Ty, Hidden, Extern));
     Qualifiers Q = PTy.getQualifiers();
     PTy = CGM.getContext().getCanonicalType(PTy).getUnqualifiedType();
     int flags = 0;
@@ -300,7 +343,8 @@ public:
     if (PtrMem)
       info.push_back(BuildType2(BTy));
 
-    return finish(info, GV, Out.str(), true);
+    // We always generate these as hidden, only the name isn't hidden.
+    return finish(info, GV, Name, true, Extern);
   }
 
   llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
@@ -309,23 +353,24 @@ public:
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
     mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
+    llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getGlobalVariable(Out.str());
+    GV = CGM.getModule().getGlobalVariable(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
     std::vector<llvm::Constant *> info;
 
-    // FIXME: pointer to hidden should be hidden, we should be able to
-    // grab a bit off the type for this.
-    bool Hidden = false;
+    bool Extern = DecideExtern(Ty);
+    bool Hidden = DecideHidden(Ty);
 
     C = BuildVtableRef(vtbl);
     info.push_back(C);
-    info.push_back(BuildName(Ty, Hidden));
+    info.push_back(BuildName(Ty, Hidden, Extern));
 
-    return finish(info, GV, Out.str(), true);
+    // We always generate these as hidden, only the name isn't hidden.
+    return finish(info, GV, Name, true, Extern);
   }
 
   llvm::Constant *BuildType(QualType Ty) {
