@@ -39,6 +39,19 @@ namespace llvm {
     /// The length of the string.
     size_t Length;
 
+    // Workaround PR5482: nearly all gcc 4.x miscompile StringRef and std::min()
+    // Changing the arg of min to be an integer, instead of a reference to an
+    // integer works around this bug.
+    size_t min(size_t a, size_t b) const
+    {
+      return a < b ? a : b;
+    }
+
+    size_t max(size_t a, size_t b) const
+    {
+      return a > b ? a : b;
+    }
+
   public:
     /// @name Constructors
     /// @{
@@ -108,7 +121,7 @@ namespace llvm {
     /// is lexicographically less than, equal to, or greater than the \arg RHS.
     int compare(StringRef RHS) const {
       // Check the prefix for a mismatch.
-      if (int Res = memcmp(Data, RHS.Data, std::min(Length, RHS.Length)))
+      if (int Res = memcmp(Data, RHS.Data, min(Length, RHS.Length)))
         return Res < 0 ? -1 : 1;
 
       // Otherwise the prefixes match, so we only need to check the lengths.
@@ -163,7 +176,7 @@ namespace llvm {
     /// \return - The index of the first occurence of \arg C, or npos if not
     /// found.
     size_t find(char C, size_t From = 0) const {
-      for (size_t i = std::min(From, Length), e = Length; i != e; ++i)
+      for (size_t i = min(From, Length), e = Length; i != e; ++i)
         if (Data[i] == C)
           return i;
       return npos;
@@ -180,7 +193,7 @@ namespace llvm {
     /// \return - The index of the last occurence of \arg C, or npos if not
     /// found.
     size_t rfind(char C, size_t From = npos) const {
-      From = std::min(From, Length);
+      From = min(From, Length);
       size_t i = From;
       while (i != 0) {
         --i;
@@ -262,8 +275,8 @@ namespace llvm {
     /// exceeds the number of characters remaining in the string, the string
     /// suffix (starting with \arg Start) will be returned.
     StringRef substr(size_t Start, size_t N = npos) const {
-      Start = std::min(Start, Length);
-      return StringRef(Data + Start, std::min(N, Length - Start));
+      Start = min(Start, Length);
+      return StringRef(Data + Start, min(N, Length - Start));
     }
 
     /// slice - Return a reference to the substring from [Start, End).
@@ -277,8 +290,8 @@ namespace llvm {
     /// number of characters remaining in the string, the string suffix
     /// (starting with \arg Start) will be returned.
     StringRef slice(size_t Start, size_t End) const {
-      Start = std::min(Start, Length);
-      End = std::min(std::max(Start, End), Length);
+      Start = min(Start, Length);
+      End = min(max(Start, End), Length);
       return StringRef(Data + Start, End - Start);
     }
 
