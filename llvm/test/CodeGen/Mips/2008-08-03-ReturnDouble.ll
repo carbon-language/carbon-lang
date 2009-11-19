@@ -1,5 +1,5 @@
 ; Double return in abicall (default)
-; RUN: llc < %s -march=mips | FileCheck %s
+; RUN: llc < %s -march=mips
 ; PR2615
 
 define double @main(...) {
