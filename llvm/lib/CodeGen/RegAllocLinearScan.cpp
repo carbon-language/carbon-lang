@@ -64,9 +64,30 @@ linearscanRegAlloc("linearscan", "linear scan register allocator",
                    createLinearScanRegisterAllocator);
 
 namespace {
+  // When we allocate a register, add it to a fixed-size queue of
+  // registers to skip in subsequent allocations. This trades a small
+  // amount of register pressure and increased spills for flexibility in
+  // the post-pass scheduler.
+  //
+  // Note that in a the number of registers used for reloading spills
+  // will be one greater than the value of this option.
+  //
+  // One big limitation of this is that it doesn't differentiate between
+  // different register classes. So on x86-64, if there is xmm register
+  // pressure, it can caused fewer GPRs to be held in the queue.
+  static cl::opt<unsigned>
+  NumRecentlyUsedRegs("linearscan-skip-count",
+                      cl::desc("Number of registers for linearscan to remember to skip."),
+                      cl::init(0),
+                      cl::Hidden);
+ 
   struct RALinScan : public MachineFunctionPass {
     static char ID;
-    RALinScan() : MachineFunctionPass(&ID) {}
+    RALinScan() : MachineFunctionPass(&ID) {
+      // Initialize the queue to record recently-used registers.
+      if (NumRecentlyUsedRegs > 0)
+        RecentRegs.resize(NumRecentlyUsedRegs, 0);
+    }
 
     typedef std::pair<LiveInterval*, LiveInterval::iterator> IntervalPtr;
     typedef SmallVector<IntervalPtr, 32> IntervalPtrs;
@@ -132,6 +153,18 @@ namespace {
 
     std::auto_ptr<Spiller> spiller_;
 
+    // The queue of recently-used registers.
+    SmallVector<unsigned, 3> RecentRegs;
+
+    // Record that we just picked this register.
+    void recordRecentlyUsed(unsigned reg) {
+      assert(reg != 0 && "Recently used register is NOREG!");
+      if (!RecentRegs.empty()) {
+        std::copy(RecentRegs.begin() + 1, RecentRegs.end(), RecentRegs.begin());
+        RecentRegs.back() = reg;
+      }
+    }
+
   public:
     virtual const char* getPassName() const {
       return "Linear Scan Register Allocator";
@@ -160,6 +193,12 @@ namespace {
 
     /// runOnMachineFunction - register allocate the whole function
     bool runOnMachineFunction(MachineFunction&);
+
+    // Determine if we skip this register due to its being recently used.
+    bool isRecentlyUsed(unsigned reg) const {
+      return std::find(RecentRegs.begin(), RecentRegs.end(), reg) !=
+             RecentRegs.end();
+    }
 
   private:
     /// linearScan - the linear scan algorithm
@@ -833,9 +872,15 @@ void RALinScan::findIntervalsToSpill(LiveInterval *cur,
 
 namespace {
   struct WeightCompare {
+  private:
+    const RALinScan &Allocator;
+
+  public:
+    WeightCompare(const RALinScan &Alloc) : Allocator(Alloc) {};
+
     typedef std::pair<unsigned, float> RegWeightPair;
     bool operator()(const RegWeightPair &LHS, const RegWeightPair &RHS) const {
-      return LHS.second < RHS.second;
+      return LHS.second < RHS.second && !Allocator.isRecentlyUsed(LHS.first);
     }
   };
 }
@@ -1079,7 +1124,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
            e = RC->allocation_order_end(*mf_); i != e; ++i) {
       unsigned reg = *i;
       float regWeight = SpillWeights[reg];
-      if (minWeight > regWeight)
+      // Skip recently allocated registers.
+      if (minWeight > regWeight && !isRecentlyUsed(reg))
         Found = true;
       RegsWeights.push_back(std::make_pair(reg, regWeight));
     }
@@ -1097,7 +1143,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   }
 
   // Sort all potential spill candidates by weight.
-  std::sort(RegsWeights.begin(), RegsWeights.end(), WeightCompare());
+  std::sort(RegsWeights.begin(), RegsWeights.end(), WeightCompare(*this));
   minReg = RegsWeights[0].first;
   minWeight = RegsWeights[0].second;
   if (minWeight == HUGE_VALF) {
@@ -1360,7 +1406,8 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
     // Ignore "downgraded" registers.
     if (SkipDGRegs && DowngradedRegs.count(Reg))
       continue;
-    if (isRegAvail(Reg)) {
+    // Skip recently allocated registers.
+    if (isRegAvail(Reg) && !isRecentlyUsed(Reg)) {
       FreeReg = Reg;
       if (FreeReg < inactiveCounts.size())
         FreeRegInactiveCount = inactiveCounts[FreeReg];
@@ -1372,9 +1419,12 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
 
   // If there are no free regs, or if this reg has the max inactive count,
   // return this register.
-  if (FreeReg == 0 || FreeRegInactiveCount == MaxInactiveCount)
+  if (FreeReg == 0 || FreeRegInactiveCount == MaxInactiveCount) {
+    // Remember what register we picked so we can skip it next time.
+    if (FreeReg != 0) recordRecentlyUsed(FreeReg);
     return FreeReg;
- 
+  }
+
   // Continue scanning the registers, looking for the one with the highest
   // inactive count.  Alkis found that this reduced register pressure very
   // slightly on X86 (in rev 1.94 of this file), though this should probably be
@@ -1392,6 +1442,9 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
         break;    // We found the one with the max inactive count.
     }
   }
+
+  // Remember what register we picked so we can skip it next time.
+  recordRecentlyUsed(FreeReg);
 
   return FreeReg;
 }
