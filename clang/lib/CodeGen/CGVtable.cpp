@@ -787,37 +787,73 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     mangleCXXCtorVtable(getMangleContext(), LayoutClass, Offset/8, RD, Out);
   else
     mangleCXXVtable(getMangleContext(), RD, Out);
+  llvm::StringRef Name = Out.str();
 
-  llvm::GlobalVariable::LinkageTypes linktype;
-  linktype = llvm::GlobalValue::LinkOnceODRLinkage;
   std::vector<llvm::Constant *> methods;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t AddressPoint;
 
-  VtableBuilder b(methods, RD, LayoutClass, Offset, *this);
+  llvm::GlobalVariable *GV = getModule().getGlobalVariable(Name);
+  if (GV && AddressPoints[LayoutClass] && !GV->isDeclaration())
+    AddressPoint=(*(*(AddressPoints[LayoutClass]))[RD])[std::make_pair(RD,
+                                                                       Offset)];
+  else {
+    VtableBuilder b(methods, RD, LayoutClass, Offset, *this);
 
-  D1(printf("vtable %s\n", RD->getNameAsCString()));
-  // First comes the vtables for all the non-virtual bases...
-  AddressPoint = b.GenerateVtableForBase(RD, Offset);
+    D1(printf("vtable %s\n", RD->getNameAsCString()));
+    // First comes the vtables for all the non-virtual bases...
+    AddressPoint = b.GenerateVtableForBase(RD, Offset);
 
-  // then the vtables for all the virtual bases.
-  b.GenerateVtableForVBases(RD, Offset);
+    // then the vtables for all the virtual bases.
+    b.GenerateVtableForVBases(RD, Offset);
 
-  CodeGenModule::AddrMap_t *&ref = AddressPoints[LayoutClass];
-  if (ref == 0)
-    ref = new CodeGenModule::AddrMap_t;
+    CodeGenModule::AddrMap_t *&ref = AddressPoints[LayoutClass];
+    if (ref == 0)
+      ref = new CodeGenModule::AddrMap_t;
     
-  (*ref)[RD] = b.getAddressPoints();
+    (*ref)[RD] = b.getAddressPoints();
 
-  llvm::Constant *C;
-  llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
-  C = llvm::ConstantArray::get(type, methods);
-  llvm::GlobalVariable *GV = new llvm::GlobalVariable(getModule(), type,
-                                                      true, linktype, C,
-                                                      Out.str());
-  bool Hidden = getDeclVisibilityMode(RD) == LangOptions::Hidden;
-  if (Hidden)
-    GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+    bool CreateDefinition = true;
+    if (LayoutClass != RD)
+      CreateDefinition = true;
+    else {
+      // We have to convert it to have a record layout.
+      Types.ConvertTagDeclType(LayoutClass);
+      const CGRecordLayout &CGLayout = Types.getCGRecordLayout(LayoutClass);
+      if (const CXXMethodDecl *KeyFunction = CGLayout.getKeyFunction()) {
+        if (!KeyFunction->getBody()) {
+          // If there is a KeyFunction, and it isn't defined, just build a
+          // reference to the vtable.
+          CreateDefinition = false;
+        }
+      }
+    }
+
+    llvm::Constant *C = 0;
+    llvm::Type *type = Ptr8Ty;
+    llvm::GlobalVariable::LinkageTypes linktype
+      = llvm::GlobalValue::ExternalLinkage;
+    if (CreateDefinition) {
+      llvm::ArrayType *ntype = llvm::ArrayType::get(Ptr8Ty, methods.size());
+      C = llvm::ConstantArray::get(ntype, methods);
+      linktype = llvm::GlobalValue::LinkOnceODRLinkage;
+      if (LayoutClass->isInAnonymousNamespace())
+        linktype = llvm::GlobalValue::InternalLinkage;
+      type = ntype;
+    }
+    llvm::GlobalVariable *OGV = GV;
+    GV = new llvm::GlobalVariable(getModule(), type, true, linktype, C, Name);
+    if (OGV) {
+      GV->takeName(OGV);
+      llvm::Constant *NewPtr = llvm::ConstantExpr::getBitCast(GV,
+                                                              OGV->getType());
+      OGV->replaceAllUsesWith(NewPtr);
+      OGV->eraseFromParent();
+    }
+    bool Hidden = getDeclVisibilityMode(RD) == LangOptions::Hidden;
+    if (Hidden)
+      GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+  }
   llvm::Constant *vtable = llvm::ConstantExpr::getBitCast(GV, Ptr8Ty);
   llvm::Constant *AddressPointC;
   uint32_t LLVMPointerWidth = getContext().Target.getPointerWidth(0);
@@ -1000,9 +1036,12 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   mangleCXXVTT(getMangleContext(), RD, Out);
+  llvm::StringRef Name = Out.str();
 
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::LinkOnceODRLinkage;
+  if (RD->isInAnonymousNamespace())
+    linktype = llvm::GlobalValue::InternalLinkage;
   std::vector<llvm::Constant *> inits;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
 
@@ -1014,7 +1053,7 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, inits.size());
   C = llvm::ConstantArray::get(type, inits);
   llvm::GlobalVariable *vtt = new llvm::GlobalVariable(getModule(), type, true,
-                                                 linktype, C, Out.str());
+                                                       linktype, C, Name);
   bool Hidden = getDeclVisibilityMode(RD) == LangOptions::Hidden;
   if (Hidden)
     vtt->setVisibility(llvm::GlobalVariable::HiddenVisibility);
@@ -1032,8 +1071,23 @@ llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
   if (vtbl)
     return vtbl;
   vtbl = CGM.GenerateVtable(RD, RD);
-  CGM.GenerateRtti(RD);
-  CGM.GenerateVTT(RD);
+
+  bool CreateDefinition = true;
+  // We have to convert it to have a record layout.
+  CGM.getTypes().ConvertTagDeclType(RD);
+  const CGRecordLayout &CGLayout = CGM.getTypes().getCGRecordLayout(RD);
+  if (const CXXMethodDecl *KeyFunction = CGLayout.getKeyFunction()) {
+    if (!KeyFunction->getBody()) {
+      // If there is a KeyFunction, and it isn't defined, just build a
+      // reference to the vtable.
+      CreateDefinition = false;
+    }
+  }
+
+  if (CreateDefinition) {
+    CGM.GenerateRtti(RD);
+    CGM.GenerateVTT(RD);
+  }
   return vtbl;
 }
 
