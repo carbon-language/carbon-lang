@@ -606,23 +606,19 @@ typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
 #define  INTPTR_MIN __stdint_exjoin3( INT, __INTPTR_WIDTH__, _MIN)
 #define  INTPTR_MAX __stdint_exjoin3( INT, __INTPTR_WIDTH__, _MAX)
 #define UINTPTR_MAX __stdint_exjoin3(UINT, __INTPTR_WIDTH__, _MAX)
+#define PTRDIFF_MIN __stdint_exjoin3( INT, __PTRDIFF_WIDTH__, _MIN)
+#define PTRDIFF_MAX __stdint_exjoin3( INT, __PTRDIFF_WIDTH__, _MAX)
 
 #if __POINTER_WIDTH__ == 64
 
-#define PTRDIFF_MIN  INT64_MIN
-#define PTRDIFF_MAX  INT64_MAX
 #define SIZE_MAX    UINT64_MAX
 
 #elif __POINTER_WIDTH__ == 32
 
-#define PTRDIFF_MIN  INT32_MIN
-#define PTRDIFF_MAX  INT32_MAX
 #define SIZE_MAX    UINT32_MAX
 
 #elif __POINTER_WIDTH__ == 16
 
-#define PTRDIFF_MIN  INT16_MIN
-#define PTRDIFF_MAX  INT16_MAX
 #define SIZE_MAX    UINT16_MAX
 
 #else
