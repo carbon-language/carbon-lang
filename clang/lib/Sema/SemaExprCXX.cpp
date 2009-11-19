@@ -326,7 +326,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &DInfo);
   if (D.isInvalidType())
     return ExprError();
-
+    
   return BuildCXXNew(StartLoc, UseGlobal,
                      PlacementLParen,
                      move(PlacementArgs),
@@ -394,7 +394,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   FunctionDecl *OperatorDelete = 0;
   Expr **PlaceArgs = (Expr**)PlacementArgs.get();
   unsigned NumPlaceArgs = PlacementArgs.size();
-    
+  
   if (!AllocType->isDependentType() &&
       !Expr::hasAnyTypeDependentArguments(PlaceArgs, NumPlaceArgs) &&
       FindAllocationFunctions(StartLoc,
@@ -402,7 +402,35 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                               UseGlobal, AllocType, ArraySize, PlaceArgs,
                               NumPlaceArgs, OperatorNew, OperatorDelete))
     return ExprError();
-
+  llvm::SmallVector<Expr *, 4> AllPlaceArgs;
+  if (OperatorNew) {
+    // Add default arguments, if any.
+    const FunctionProtoType *Proto = 
+      OperatorNew->getType()->getAs<FunctionProtoType>();
+    unsigned NumArgsInProto = Proto->getNumArgs();
+    for (unsigned i = 1; i != NumArgsInProto; i++) {
+      QualType ProtoArgType = Proto->getArgType(i);
+    
+      Expr *Arg;
+      if (i <= NumPlaceArgs) {
+        AllPlaceArgs.push_back(PlaceArgs[i-1]);
+        continue;
+      }
+      ParmVarDecl *Param = OperatorNew->getParamDecl(i);
+    
+      OwningExprResult ArgExpr =
+        BuildCXXDefaultArgExpr(StartLoc, OperatorNew, Param);
+      if (ArgExpr.isInvalid())
+        return ExprError();
+    
+      Arg = ArgExpr.takeAs<Expr>();
+      AllPlaceArgs.push_back(Arg);
+    }
+    NumPlaceArgs = AllPlaceArgs.size();
+    if (NumPlaceArgs > 0)
+      PlaceArgs = &AllPlaceArgs[0];
+  }
+  
   bool Init = ConstructorLParen.isValid();
   // --- Choosing a constructor ---
   // C++ 5.3.4p15
