@@ -215,6 +215,13 @@ public:
   /// getDefaultBinding - Returns an SVal* representing an optional default
   ///  binding associated with a region and its subregions.
   Optional<SVal> getDefaultBinding(RegionBindings B, const MemRegion *R);
+  
+  /// setImplicitDefaultValue - Set the default binding for the provided
+  ///  MemRegion to the value implicitly defined for compound literals when
+  ///  the value is not specified.  
+  const GRState *setImplicitDefaultValue(const GRState *state,
+                                         const MemRegion *R,
+                                         QualType T);
 
   /// getLValueString - Returns an SVal representing the lvalue of a
   ///  StringLiteral.  Within RegionStore a StringLiteral has an
@@ -1437,6 +1444,30 @@ RegionStoreManager::BindCompoundLiteral(const GRState *state,
   return Bind(state, loc::MemRegionVal(R), V);
 }
 
+const GRState *RegionStoreManager::setImplicitDefaultValue(const GRState *state,
+                                                           const MemRegion *R,
+                                                           QualType T) {
+  Store store = state->getStore();
+  RegionBindings B = GetRegionBindings(store);
+  SVal V;
+
+  if (Loc::IsLocType(T))
+    V = ValMgr.makeNull();
+  else if (T->isIntegerType())
+    V = ValMgr.makeZeroVal(T);
+  else if (T->isStructureType() || T->isArrayType()) {
+    // Set the default value to a zero constant when it is a structure
+    // or array.  The type doesn't really matter.
+    V = ValMgr.makeZeroVal(ValMgr.getContext().IntTy);
+  }
+  else {
+    return state;
+  }
+    
+  B = RBFactory.Add(B, R, BindingVal(V, BindingVal::Default));
+  return state->makeWithStore(B.getRoot());  
+}
+  
 const GRState *RegionStoreManager::BindArray(const GRState *state,
                                              const TypedRegion* R,
                                              SVal Init) {
@@ -1478,6 +1509,10 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     return CopyLazyBindings(*LCV, state, R);
 
   // Remaining case: explicit compound values.
+  
+  if (Init.isUnknown())
+    return setImplicitDefaultValue(state, R, ElementTy);    
+  
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
   uint64_t i = 0;
@@ -1497,17 +1532,10 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
       state = Bind(state, ValMgr.makeLoc(ER), *VI);
   }
 
-  // If the init list is shorter than the array length, set the array default
-  // value.
-  if (i < size) {
-    if (ElementTy->isIntegerType()) {
-      SVal V = ValMgr.makeZeroVal(ElementTy);
-      Store store = state->getStore();
-      RegionBindings B = GetRegionBindings(store);
-      B = RBFactory.Add(B, R, BindingVal(V, BindingVal::Default));
-      state = state->makeWithStore(B.getRoot());
-    }
-  }
+  // If the init list is shorter than the array length, set the
+  // array default value.
+  if (i < size)
+    state = setImplicitDefaultValue(state, R, ElementTy);
 
   return state;
 }

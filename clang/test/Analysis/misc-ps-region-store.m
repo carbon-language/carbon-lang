@@ -470,3 +470,42 @@ int pr3135() {
   return 0;
 }
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7403269> - Test that we handle compound initializers with
+// partially unspecified array values. Previously this caused a crash.
+//===----------------------------------------------------------------------===//
+
+typedef struct RDar7403269 {
+  unsigned x[10];
+  unsigned y;
+} RDar7403269;
+
+void rdar7403269() {
+  RDar7403269 z = { .y = 0 };
+  if (z.x[4] == 0)
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning  
+}
+
+typedef struct RDar7403269_b {
+  struct zorg { int w; int k; } x[10];
+  unsigned y;
+} RDar7403269_b;
+
+void rdar7403269_b() {
+  RDar7403269_b z = { .y = 0 };
+  if (z.x[5].w == 0)
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+}
+
+void rdar7403269_b_pos() {
+  RDar7403269_b z = { .y = 0 };
+  if (z.x[5].w == 1)
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+}
+
