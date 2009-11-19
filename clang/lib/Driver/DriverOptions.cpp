@@ -15,11 +15,6 @@ using namespace clang::driver;
 using namespace clang::driver::options;
 
 static OptTable::Info InfoTable[] = {
-  // The InputOption info
-  { "<input>", 0, 0, Option::InputClass, DriverOption, 0, OPT_INVALID, OPT_INVALID },
-  // The UnknownOption info
-  { "<unknown>", 0, 0, Option::UnknownClass, 0, 0, OPT_INVALID, OPT_INVALID },
-
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \

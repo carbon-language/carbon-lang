@@ -24,6 +24,10 @@ class OptionKind<string name, int predecence = 0, bit sentinel = 0> {
 
 // An option group.
 def KIND_GROUP : OptionKind<"Group">;
+// The input option kind.
+def KIND_INPUT : OptionKind<"Input", 1, 1>;
+// The unknown option kind.
+def KIND_UNKNOWN : OptionKind<"Unknown", 2, 1>;
 // A flag with no values.
 def KIND_FLAG : OptionKind<"Flag">;
 // An option which prefixes its (single) value.
@@ -116,3 +120,10 @@ class Flags<list<OptionFlag> flags> { list<OptionFlag> Flags = flags; }
 class Group<OptionGroup group> { OptionGroup Group = group; }
 class HelpText<string text> { string HelpText = text; }
 class MetaVarName<string name> { string MetaVarName = name; }
+
+// Predefined options.
+
+// FIXME: Have generator validate that these appear in correct position (and
+// aren't duplicated).
+def INPUT : Option<"<input>", KIND_INPUT>, Flags<[DriverOption]>;
+def UNKNOWN : Option<"<unknown>", KIND_UNKNOWN>;

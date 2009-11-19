@@ -17,8 +17,6 @@ namespace driver {
 namespace options {
   enum ID {
     OPT_INVALID = 0, // This is not an option ID.
-    OPT_INPUT,       // Reserved ID for input option.
-    OPT_UNKNOWN,     // Reserved ID for unknown option.
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR) OPT_##ID,
 #include "clang/Driver/Options.inc"
