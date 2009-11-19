@@ -3647,6 +3647,13 @@ public:
   virtual void CodeCompleteOperatorName(Scope *S);
   
   virtual void CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS);
+  virtual void CodeCompleteObjCPropertyGetter(Scope *S, DeclPtrTy ClassDecl,
+                                              DeclPtrTy *Methods,
+                                              unsigned NumMethods);
+  virtual void CodeCompleteObjCPropertySetter(Scope *S, DeclPtrTy ClassDecl,
+                                              DeclPtrTy *Methods,
+                                              unsigned NumMethods);
+
   virtual void CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
                                             SourceLocation FNameLoc,
                                             IdentifierInfo **SelIdents, 

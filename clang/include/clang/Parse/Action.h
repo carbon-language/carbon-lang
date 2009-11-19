@@ -2330,7 +2330,45 @@ public:
   ///
   /// \param S the scope in which the operator keyword occurs.  
   virtual void CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) { }
-  
+
+  /// \brief Code completion for the getter of an Objective-C property 
+  /// declaration.  
+  ///
+  /// This code completion action is invoked when the code-completion
+  /// token is found after the "getter = " in a property declaration.
+  ///
+  /// \param S the scope in which the property is being declared.
+  ///
+  /// \param ClassDecl the Objective-C class or category in which the property
+  /// is being defined.
+  ///
+  /// \param Methods the set of methods declared thus far within \p ClassDecl.
+  ///
+  /// \param NumMethods the number of methods in \p Methods
+  virtual void CodeCompleteObjCPropertyGetter(Scope *S, DeclPtrTy ClassDecl,
+                                              DeclPtrTy *Methods,
+                                              unsigned NumMethods) {
+  }
+
+  /// \brief Code completion for the setter of an Objective-C property 
+  /// declaration.  
+  ///
+  /// This code completion action is invoked when the code-completion
+  /// token is found after the "setter = " in a property declaration.
+  ///
+  /// \param S the scope in which the property is being declared.
+  ///
+  /// \param ClassDecl the Objective-C class or category in which the property
+  /// is being defined.
+  ///
+  /// \param Methods the set of methods declared thus far within \p ClassDecl.
+  ///
+  /// \param NumMethods the number of methods in \p Methods
+  virtual void CodeCompleteObjCPropertySetter(Scope *S, DeclPtrTy ClassDecl,
+                                              DeclPtrTy *Methods,
+                                              unsigned NumMethods) {
+  }
+
   /// \brief Code completion for an ObjC message expression that refers to
   /// a class method.
   ///

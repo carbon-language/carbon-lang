@@ -270,7 +270,11 @@ public:
     /// \brief Whether this declaration is the beginning of a 
     /// nested-name-specifier and, therefore, should be followed by '::'.
     bool StartsNestedNameSpecifier : 1;
-    
+
+    /// \brief Whether all parameters (of a function, Objective-C
+    /// method, etc.) should be considered "informative".
+    bool AllParametersAreInformative : 1;
+
     /// \brief If the result should have a nested-name-specifier, this is it.
     /// When \c QualifierIsInformative, the nested-name-specifier is 
     /// informative rather than required.
@@ -283,25 +287,29 @@ public:
       : Kind(RK_Declaration), Declaration(Declaration), Rank(Rank), 
         StartParameter(0), Hidden(false), 
         QualifierIsInformative(QualifierIsInformative),
-        StartsNestedNameSpecifier(false), Qualifier(Qualifier) { }
+        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
+        Qualifier(Qualifier) { }
     
     /// \brief Build a result that refers to a keyword or symbol.
     Result(const char *Keyword, unsigned Rank)
       : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), StartParameter(0),
         Hidden(false), QualifierIsInformative(0), 
-        StartsNestedNameSpecifier(false), Qualifier(0) { }
+        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
+        Qualifier(0) { }
     
     /// \brief Build a result that refers to a macro.
     Result(IdentifierInfo *Macro, unsigned Rank)
      : Kind(RK_Macro), Macro(Macro), Rank(Rank), StartParameter(0), 
        Hidden(false), QualifierIsInformative(0), 
-       StartsNestedNameSpecifier(false), Qualifier(0) { }
+       StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
+       Qualifier(0) { }
 
     /// \brief Build a result that refers to a pattern.
     Result(CodeCompletionString *Pattern, unsigned Rank)
       : Kind(RK_Pattern), Pattern(Pattern), Rank(Rank), StartParameter(0), 
         Hidden(false), QualifierIsInformative(0), 
-        StartsNestedNameSpecifier(false), Qualifier(0) { }
+        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
+        Qualifier(0) { }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {

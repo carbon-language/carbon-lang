@@ -326,7 +326,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
       ObjCDeclSpec OCDS;
       // Parse property attribute list, if any.
       if (Tok.is(tok::l_paren))
-        ParseObjCPropertyAttribute(OCDS);
+        ParseObjCPropertyAttribute(OCDS, interfaceDecl,
+                                   allMethods.data(), allMethods.size());
 
       struct ObjCPropertyCallback : FieldCallback {
         Parser &P;
@@ -425,7 +426,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
 ///     copy
 ///     nonatomic
 ///
-void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
+void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, DeclPtrTy ClassDecl,
+                                        DeclPtrTy *Methods, 
+                                        unsigned NumMethods) {
   assert(Tok.getKind() == tok::l_paren);
   SourceLocation LHSLoc = ConsumeParen(); // consume '('
 
@@ -461,6 +464,16 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
       if (ExpectAndConsume(tok::equal, diag::err_objc_expected_equal, "",
                            tok::r_paren))
         return;
+
+      if (Tok.is(tok::code_completion)) {
+        if (II->getNameStart()[0] == 's')
+          Actions.CodeCompleteObjCPropertySetter(CurScope, ClassDecl,
+                                                 Methods, NumMethods);
+        else
+          Actions.CodeCompleteObjCPropertyGetter(CurScope, ClassDecl,
+                                                 Methods, NumMethods);
+        ConsumeToken();
+      }
 
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);

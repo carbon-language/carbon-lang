@@ -967,7 +967,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
         if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(Idx))
           Keyword += II->getName().str();
         Keyword += ":";
-        if (Idx < StartParameter) {
+        if (Idx < StartParameter || AllParametersAreInformative) {
           Result->AddInformativeChunk(Keyword);
         } else if (Idx == StartParameter)
           Result->AddTypedTextChunk(Keyword);
@@ -984,7 +984,10 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
       Arg = "(" + Arg + ")";
       if (IdentifierInfo *II = (*P)->getIdentifier())
         Arg += II->getName().str();
-      Result->AddPlaceholderChunk(Arg);
+      if (AllParametersAreInformative)
+        Result->AddInformativeChunk(Arg);
+      else
+        Result->AddPlaceholderChunk(Arg);
     }
 
     return Result;
@@ -1721,6 +1724,35 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
+/// \brief Descripts the kind of Objective-C method that we want to find
+/// via code completion.
+enum ObjCMethodKind {
+  MK_Any, //< Any kind of method, provided it means other specified criteria.
+  MK_ZeroArgSelector, //< Zero-argument (unary) selector.
+  MK_OneArgSelector //< One-argument selector.
+};
+
+static bool isAcceptableObjCMethod(ObjCMethodDecl *Method,
+                                   ObjCMethodKind WantKind,
+                                   IdentifierInfo **SelIdents,
+                                   unsigned NumSelIdents) {
+  Selector Sel = Method->getSelector();
+  if (NumSelIdents > Sel.getNumArgs())
+    return false;
+      
+  switch (WantKind) {
+  case MK_Any:             break;
+  case MK_ZeroArgSelector: return Sel.isUnarySelector();
+  case MK_OneArgSelector:  return Sel.getNumArgs() == 1;
+  }
+
+  for (unsigned I = 0; I != NumSelIdents; ++I)
+    if (SelIdents[I] != Sel.getIdentifierInfoForSlot(I))
+      return false;
+
+  return true;
+}
+                                   
 /// \brief Add all of the Objective-C methods in the given Objective-C 
 /// container to the set of results.
 ///
@@ -1740,6 +1772,7 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
 /// \param Results the structure into which we'll add results.
 static void AddObjCMethods(ObjCContainerDecl *Container, 
                            bool WantInstanceMethods,
+                           ObjCMethodKind WantKind,
                            IdentifierInfo **SelIdents,
                            unsigned NumSelIdents,
                            DeclContext *CurContext,
@@ -1751,20 +1784,12 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     if ((*M)->isInstanceMethod() == WantInstanceMethods) {
       // Check whether the selector identifiers we've been given are a 
       // subset of the identifiers for this particular method.
-      Selector Sel = (*M)->getSelector();
-      if (NumSelIdents > Sel.getNumArgs())
+      if (!isAcceptableObjCMethod(*M, WantKind, SelIdents, NumSelIdents))
         continue;
-      
-      bool Failed = false;
-      for (unsigned I = 0; I != NumSelIdents && !Failed; ++I)
-        if (SelIdents[I] != Sel.getIdentifierInfoForSlot(I))
-          Failed = true;
-      
-      if (Failed)
-        continue;
-      
+
       Result R = Result(*M, 0);
       R.StartParameter = NumSelIdents;
+      R.AllParametersAreInformative = (WantKind != MK_Any);
       Results.MaybeAddResult(R, CurContext);
     }
   }
@@ -1778,14 +1803,14 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
   for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
                                             E = Protocols.end(); 
        I != E; ++I)
-    AddObjCMethods(*I, WantInstanceMethods, SelIdents, NumSelIdents, 
+    AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
                    CurContext, Results);
   
   // Add methods in categories.
   for (ObjCCategoryDecl *CatDecl = IFace->getCategoryList(); CatDecl;
        CatDecl = CatDecl->getNextClassCategory()) {
-    AddObjCMethods(CatDecl, WantInstanceMethods, SelIdents, NumSelIdents,
-                   CurContext, Results);
+    AddObjCMethods(CatDecl, WantInstanceMethods, WantKind, SelIdents, 
+                   NumSelIdents, CurContext, Results);
     
     // Add a categories protocol methods.
     const ObjCList<ObjCProtocolDecl> &Protocols 
@@ -1793,24 +1818,104 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
                                               E = Protocols.end();
          I != E; ++I)
-      AddObjCMethods(*I, WantInstanceMethods, SelIdents, NumSelIdents,
-                     CurContext, Results);
+      AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, 
+                     NumSelIdents, CurContext, Results);
     
     // Add methods in category implementations.
     if (ObjCCategoryImplDecl *Impl = CatDecl->getImplementation())
-      AddObjCMethods(Impl, WantInstanceMethods, SelIdents, NumSelIdents,
-                     CurContext, Results);
+      AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents, 
+                     NumSelIdents, CurContext, Results);
   }
   
   // Add methods in superclass.
   if (IFace->getSuperClass())
-    AddObjCMethods(IFace->getSuperClass(), WantInstanceMethods, SelIdents, 
-                   NumSelIdents, CurContext,Results);
+    AddObjCMethods(IFace->getSuperClass(), WantInstanceMethods, WantKind, 
+                   SelIdents, NumSelIdents, CurContext, Results);
 
   // Add methods in our implementation, if any.
   if (ObjCImplementationDecl *Impl = IFace->getImplementation())
-    AddObjCMethods(Impl, WantInstanceMethods, SelIdents, NumSelIdents, 
-                   CurContext, Results);
+    AddObjCMethods(Impl, WantInstanceMethods, WantKind, SelIdents,
+                   NumSelIdents, CurContext, Results);
+}
+
+
+void Sema::CodeCompleteObjCPropertyGetter(Scope *S, DeclPtrTy ClassDecl,
+                                          DeclPtrTy *Methods,
+                                          unsigned NumMethods) {
+  typedef CodeCompleteConsumer::Result Result;
+
+  // Try to find the interface where getters might live.
+  ObjCInterfaceDecl *Class
+    = dyn_cast_or_null<ObjCInterfaceDecl>(ClassDecl.getAs<Decl>());
+  if (!Class) {
+    if (ObjCCategoryDecl *Category
+          = dyn_cast_or_null<ObjCCategoryDecl>(ClassDecl.getAs<Decl>()))
+      Class = Category->getClassInterface();
+
+    if (!Class)
+      return;
+  }
+
+  // Find all of the potential getters.
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+
+  // FIXME: We need to do this because Objective-C methods don't get
+  // pushed into DeclContexts early enough. Argh!
+  for (unsigned I = 0; I != NumMethods; ++I) { 
+    if (ObjCMethodDecl *Method
+            = dyn_cast_or_null<ObjCMethodDecl>(Methods[I].getAs<Decl>()))
+      if (Method->isInstanceMethod() &&
+          isAcceptableObjCMethod(Method, MK_ZeroArgSelector, 0, 0)) {
+        Result R = Result(Method, 0);
+        R.AllParametersAreInformative = true;
+        Results.MaybeAddResult(R, CurContext);
+      }
+  }
+
+  AddObjCMethods(Class, true, MK_ZeroArgSelector, 0, 0, CurContext, Results);
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter,Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCPropertySetter(Scope *S, DeclPtrTy ObjCImplDecl,
+                                          DeclPtrTy *Methods,
+                                          unsigned NumMethods) {
+  typedef CodeCompleteConsumer::Result Result;
+
+  // Try to find the interface where setters might live.
+  ObjCInterfaceDecl *Class
+    = dyn_cast_or_null<ObjCInterfaceDecl>(ObjCImplDecl.getAs<Decl>());
+  if (!Class) {
+    if (ObjCCategoryDecl *Category
+          = dyn_cast_or_null<ObjCCategoryDecl>(ObjCImplDecl.getAs<Decl>()))
+      Class = Category->getClassInterface();
+
+    if (!Class)
+      return;
+  }
+
+  // Find all of the potential getters.
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+
+  // FIXME: We need to do this because Objective-C methods don't get
+  // pushed into DeclContexts early enough. Argh!
+  for (unsigned I = 0; I != NumMethods; ++I) { 
+    if (ObjCMethodDecl *Method
+            = dyn_cast_or_null<ObjCMethodDecl>(Methods[I].getAs<Decl>()))
+      if (Method->isInstanceMethod() &&
+          isAcceptableObjCMethod(Method, MK_OneArgSelector, 0, 0)) {
+        Result R = Result(Method, 0);
+        R.AllParametersAreInformative = true;
+        Results.MaybeAddResult(R, CurContext);
+      }
+  }
+
+  AddObjCMethods(Class, true, MK_OneArgSelector, 0, 0, CurContext, Results);
+
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter,Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
@@ -1873,7 +1978,8 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
   // superclasses, categories, implementation, etc.
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  AddObjCMethods(CDecl, false, SelIdents, NumSelIdents, CurContext, Results);  
+  AddObjCMethods(CDecl, false, MK_Any, SelIdents, NumSelIdents, CurContext, 
+                 Results);  
   Results.ExitScope();
   
   // This also suppresses remaining diagnostics.
@@ -1910,8 +2016,8 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
       ReceiverType->isObjCQualifiedClassType()) {
     if (ObjCMethodDecl *CurMethod = getCurMethodDecl()) {
       if (ObjCInterfaceDecl *ClassDecl = CurMethod->getClassInterface())
-        AddObjCMethods(ClassDecl, false, SelIdents, NumSelIdents, CurContext, 
-                       Results);
+        AddObjCMethods(ClassDecl, false, MK_Any, SelIdents, NumSelIdents, 
+                       CurContext, Results);
     }
   } 
   // Handle messages to a qualified ID ("id<foo>").
@@ -1921,20 +2027,22 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
     for (ObjCObjectPointerType::qual_iterator I = QualID->qual_begin(),
                                               E = QualID->qual_end(); 
          I != E; ++I)
-      AddObjCMethods(*I, true, SelIdents, NumSelIdents, CurContext, Results);
+      AddObjCMethods(*I, true, MK_Any, SelIdents, NumSelIdents, CurContext, 
+                     Results);
   }
   // Handle messages to a pointer to interface type.
   else if (const ObjCObjectPointerType *IFacePtr
                               = ReceiverType->getAsObjCInterfacePointerType()) {
     // Search the class, its superclasses, etc., for instance methods.
-    AddObjCMethods(IFacePtr->getInterfaceDecl(), true, SelIdents, NumSelIdents,
-                   CurContext, Results);
+    AddObjCMethods(IFacePtr->getInterfaceDecl(), true, MK_Any, SelIdents,
+                   NumSelIdents, CurContext, Results);
     
     // Search protocols for instance methods.
     for (ObjCObjectPointerType::qual_iterator I = IFacePtr->qual_begin(),
          E = IFacePtr->qual_end(); 
          I != E; ++I)
-      AddObjCMethods(*I, true, SelIdents, NumSelIdents, CurContext, Results);
+      AddObjCMethods(*I, true, MK_Any, SelIdents, NumSelIdents, CurContext, 
+                     Results);
   }
   
   Results.ExitScope();
