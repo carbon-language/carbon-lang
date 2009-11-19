@@ -439,21 +439,21 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   ++NumSplits;
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
-  MF->push_back(NMBB);
+  MF->insert(next(MachineFunction::iterator(A)), NMBB);
   DEBUG(errs() << "PHIElimination splitting critical edge:"
         " BB#" << A->getNumber()
         << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << B->getNumber() << '\n');
 
   A->ReplaceUsesOfBlockWith(B, NMBB);
-  // If A may fall through to B, we may have to insert a branch.
-  if (A->isLayoutSuccessor(B))
-    A->updateTerminator();
+  A->updateTerminator();
 
-  // Insert unconditional "jump B" instruction in NMBB.
+  // Insert unconditional "jump B" instruction in NMBB if necessary.
   NMBB->addSuccessor(B);
-  Cond.clear();
-  MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond);
+  if (!NMBB->isLayoutSuccessor(B)) {
+    Cond.clear();
+    MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, B, NULL, Cond);
+  }
 
   // Fix PHI nodes in B so they refer to NMBB instead of A
   for (MachineBasicBlock::iterator i = B->begin(), e = B->end();
