@@ -143,12 +143,34 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
 
     // If the declaration is a non-dependent, incomplete array type
     // that has an initializer, then its type will be completed once
-    // the initializer is instantiated, meaning that the type is
-    // dependent. Morph the declaration's type into a
-    // dependently-sized array type.
+    // the initializer is instantiated.
     if (!DeclType->isDependentType()) {
       if (const IncompleteArrayType *ArrayT
                            = Context.getAsIncompleteArrayType(DeclType)) {
+        if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
+          if (!ILE->isTypeDependent()) {
+            // Compute the constant array type from the length of the 
+            // initializer list. 
+            // FIXME: This will be wrong if there are designated 
+            // initializations. Good thing they don't exist in C++!
+            llvm::APInt NumElements(Context.getTypeSize(Context.getSizeType()),
+                                    ILE->getNumInits());
+            llvm::APInt Zero(Context.getTypeSize(Context.getSizeType()), 0);
+            if (NumElements == Zero) {
+              // Sizing an array implicitly to zero is not allowed by ISO C,
+              // but is supported by GNU.
+              Diag(ILE->getLocStart(), diag::ext_typecheck_zero_array_size);
+            }
+            
+            DeclType = Context.getConstantArrayType(ArrayT->getElementType(),
+                                                    NumElements,
+                                                    ArrayT->getSizeModifier(),
+                                           ArrayT->getIndexTypeCVRQualifiers());
+            return false;
+          }
+        }
+        
+        // Make the array type-dependent by making it dependently-sized.
         DeclType = Context.getDependentSizedArrayType(ArrayT->getElementType(),
                                                       /*NumElts=*/0,
                                                      ArrayT->getSizeModifier(),

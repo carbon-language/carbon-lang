@@ -640,12 +640,17 @@ OverloadedOperatorKind BinaryOperator::getOverloadedOperator(Opcode Opc) {
 InitListExpr::InitListExpr(SourceLocation lbraceloc,
                            Expr **initExprs, unsigned numInits,
                            SourceLocation rbraceloc)
-  : Expr(InitListExprClass, QualType(),
-         hasAnyTypeDependentArguments(initExprs, numInits),
-         hasAnyValueDependentArguments(initExprs, numInits)),
+  : Expr(InitListExprClass, QualType(), false, false),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0),
-    UnionFieldInit(0), HadArrayRangeDesignator(false) {
-
+    UnionFieldInit(0), HadArrayRangeDesignator(false) 
+{      
+  for (unsigned I = 0; I != numInits; ++I) {
+    if (initExprs[I]->isTypeDependent())
+      TypeDependent = true;
+    if (initExprs[I]->isValueDependent())
+      ValueDependent = true;
+  }
+      
   InitExprs.insert(InitExprs.end(), initExprs, initExprs+numInits);
 }
 
