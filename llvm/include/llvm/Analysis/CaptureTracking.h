@@ -21,8 +21,12 @@ namespace llvm {
   /// by the enclosing function (which is required to exist).  This routine can
   /// be expensive, so consider caching the results.  The boolean ReturnCaptures
   /// specifies whether returning the value (or part of it) from the function
+  /// counts as capturing it or not.  The boolean StoreCaptures specified whether
+  /// storing the value (or part of it) into memory anywhere automatically
   /// counts as capturing it or not.
-  bool PointerMayBeCaptured(const Value *V, bool ReturnCaptures);
+  bool PointerMayBeCaptured(const Value *V,
+                            bool ReturnCaptures,
+                            bool StoreCaptures);
 
 } // end namespace llvm
 

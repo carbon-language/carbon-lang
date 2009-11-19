@@ -28,8 +28,11 @@ using namespace llvm;
 /// by the enclosing function (which is required to exist).  This routine can
 /// be expensive, so consider caching the results.  The boolean ReturnCaptures
 /// specifies whether returning the value (or part of it) from the function
+/// counts as capturing it or not.  The boolean StoreCaptures specified whether
+/// storing the value (or part of it) into memory anywhere automatically
 /// counts as capturing it or not.
-bool llvm::PointerMayBeCaptured(const Value *V, bool ReturnCaptures) {
+bool llvm::PointerMayBeCaptured(const Value *V,
+                                bool ReturnCaptures, bool StoreCaptures) {
   assert(isa<PointerType>(V->getType()) && "Capture is for pointers only!");
   SmallVector<Use*, 16> Worklist;
   SmallSet<Use*, 16> Visited;
@@ -82,7 +85,11 @@ bool llvm::PointerMayBeCaptured(const Value *V, bool ReturnCaptures) {
       break;
     case Instruction::Store:
       if (V == I->getOperand(0))
-        // Stored the pointer - it may be captured.
+        // Stored the pointer - conservatively assume it may be captured.
+        // TODO: If StoreCaptures is not true, we could do Fancy analysis
+        // to determine whether this store is not actually an escape point.
+        // In that case, BasicAliasAnalysis should be updated as well to
+        // take advantage of this.
         return true;
       // Storing to the pointee does not cause the pointer to be captured.
       break;

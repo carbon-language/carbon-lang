@@ -79,7 +79,12 @@ static bool isKnownNonNull(const Value *V) {
 static bool isNonEscapingLocalObject(const Value *V) {
   // If this is a local allocation, check to see if it escapes.
   if (isa<AllocaInst>(V) || isNoAliasCall(V))
-    return !PointerMayBeCaptured(V, false);
+    // Set StoreCaptures to True so that we can assume in our callers that the
+    // pointer is not the result of a load instruction. Currently
+    // PointerMayBeCaptured doesn't have any special analysis for the
+    // StoreCaptures=false case; if it did, our callers could be refined to be
+    // more precise.
+    return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
 
   // If this is an argument that corresponds to a byval or noalias argument,
   // then it has not escaped before entering the function.  Check if it escapes
@@ -89,7 +94,7 @@ static bool isNonEscapingLocalObject(const Value *V) {
       // Don't bother analyzing arguments already known not to escape.
       if (A->hasNoCaptureAttr())
         return true;
-      return !PointerMayBeCaptured(V, false);
+      return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
     }
   return false;
 }
@@ -683,15 +688,19 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
         (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, *TD)))
       return NoAlias;
   
-  // If one pointer is the result of a call/invoke and the other is a
+  // If one pointer is the result of a call/invoke or load and the other is a
   // non-escaping local object, then we know the object couldn't escape to a
-  // point where the call could return it.
-  if ((isa<CallInst>(O1) || isa<InvokeInst>(O1)) &&
-      isNonEscapingLocalObject(O2) && O1 != O2)
-    return NoAlias;
-  if ((isa<CallInst>(O2) || isa<InvokeInst>(O2)) &&
-      isNonEscapingLocalObject(O1) && O1 != O2)
-    return NoAlias;
+  // point where the call could return it. The load case works because
+  // isNonEscapingLocalObject considers all stores to be escapes (it
+  // passes true for the StoreCaptures argument to PointerMayBeCaptured).
+  if (O1 != O2) {
+    if ((isa<CallInst>(O1) || isa<InvokeInst>(O1) || isa<LoadInst>(O1)) &&
+        isNonEscapingLocalObject(O2))
+      return NoAlias;
+    if ((isa<CallInst>(O2) || isa<InvokeInst>(O2) || isa<LoadInst>(O2)) &&
+        isNonEscapingLocalObject(O1))
+      return NoAlias;
+  }
 
   if (!isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
     std::swap(V1, V2);
