@@ -526,7 +526,8 @@ void StmtProfiler::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *S) {
   VisitType(S->getQueriedType());
 }
 
-void StmtProfiler::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *S) {
+void
+StmtProfiler::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *S) {
   VisitExpr(S);
   VisitName(S->getDeclName());
   VisitNestedNameSpecifier(S->getQualifier());
@@ -554,7 +555,8 @@ StmtProfiler::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *S) {
   VisitType(S->getTypeAsWritten());
 }
 
-void StmtProfiler::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *S) {
+void
+StmtProfiler::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isArrow());
   VisitNestedNameSpecifier(S->getQualifier());

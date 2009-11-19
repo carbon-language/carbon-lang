@@ -1456,7 +1456,7 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildUnresolvedDeclRefExpr(NestedNameSpecifier *NNS,
+  OwningExprResult RebuildDependentScopeDeclRefExpr(NestedNameSpecifier *NNS,
                                                 SourceRange QualifierRange,
                                                 DeclarationName Name,
                                                 SourceLocation Location,
@@ -1546,7 +1546,7 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXUnresolvedMemberExpr(ExprArg BaseE,
+  OwningExprResult RebuildCXXDependentScopeMemberExpr(ExprArg BaseE,
                                                   bool IsArrow,
                                                   SourceLocation OperatorLoc,
                                               NestedNameSpecifier *Qualifier,
@@ -1575,7 +1575,7 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXUnresolvedMemberExpr(ExprArg BaseE,
+  OwningExprResult RebuildCXXDependentScopeMemberExpr(ExprArg BaseE,
                                                   bool IsArrow,
                                                   SourceLocation OperatorLoc,
                                                 NestedNameSpecifier *Qualifier,
@@ -4592,8 +4592,8 @@ TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformUnresolvedDeclRefExpr(
-                                                     UnresolvedDeclRefExpr *E,
+TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
+                                                  DependentScopeDeclRefExpr *E,
                                                      bool isAddressOfOperand) {
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
@@ -4611,7 +4611,7 @@ TreeTransform<Derived>::TransformUnresolvedDeclRefExpr(
       Name == E->getDeclName())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildUnresolvedDeclRefExpr(NNS,
+  return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
                                                    E->getQualifierRange(),
                                                    Name,
                                                    E->getLocation(),
@@ -4828,8 +4828,8 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
-                                                     CXXUnresolvedMemberExpr *E,
+TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
+                                                     CXXDependentScopeMemberExpr *E,
                                                      bool isAddressOfOperand) {
   // Transform the base of the expression.
   OwningExprResult Base = getDerived().TransformExpr(E->getBase());
@@ -4878,7 +4878,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
         FirstQualifierInScope == E->getFirstQualifierFoundInScope())
       return SemaRef.Owned(E->Retain());
 
-    return getDerived().RebuildCXXUnresolvedMemberExpr(move(Base),
+    return getDerived().RebuildCXXDependentScopeMemberExpr(move(Base),
                                                        E->isArrow(),
                                                        E->getOperatorLoc(),
                                                        Qualifier,
@@ -4912,7 +4912,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
       return SemaRef.ExprError();
   }
 
-  return getDerived().RebuildCXXUnresolvedMemberExpr(move(Base),
+  return getDerived().RebuildCXXDependentScopeMemberExpr(move(Base),
                                                      E->isArrow(),
                                                      E->getOperatorLoc(),
                                                      Qualifier,

@@ -1679,7 +1679,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
         // parsed as a template template argument. However, since we now
         // know that we need a non-type template argument, convert this
         // template name into an expression.          
-        Expr *E = new (Context) UnresolvedDeclRefExpr(DTN->getIdentifier(),
+        Expr *E = new (Context) DependentScopeDeclRefExpr(DTN->getIdentifier(),
                                                       Context.DependentTy,
                                                       Arg.getTemplateNameLoc(),
                                                Arg.getTemplateQualifierRange(),

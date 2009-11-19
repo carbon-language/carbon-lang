@@ -1061,8 +1061,8 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
   
-  case Expr::UnresolvedDeclRefExprClass: {
-    const UnresolvedDeclRefExpr *DRE = cast<UnresolvedDeclRefExpr>(E);
+  case Expr::DependentScopeDeclRefExprClass: {
+    const DependentScopeDeclRefExpr *DRE = cast<DependentScopeDeclRefExpr>(E);
     const Type *QTy = DRE->getQualifier()->getAsType();
     assert(QTy && "Qualifier was not type!");
 

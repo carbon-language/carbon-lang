@@ -483,7 +483,8 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
                                                     Policy);  
 }
 
-void StmtPrinter::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *Node) {
+void StmtPrinter::VisitDependentScopeDeclRefExpr(
+                                           DependentScopeDeclRefExpr *Node) {
   Node->getQualifier()->print(OS, Policy);
   OS << Node->getDeclName().getAsString();
 }
@@ -1146,7 +1147,8 @@ StmtPrinter::VisitCXXUnresolvedConstructExpr(
   OS << ")";
 }
 
-void StmtPrinter::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *Node) {
+void StmtPrinter::VisitCXXDependentScopeMemberExpr(
+                                         CXXDependentScopeMemberExpr *Node) {
   PrintExpr(Node->getBase());
   OS << (Node->isArrow() ? "->" : ".");
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())

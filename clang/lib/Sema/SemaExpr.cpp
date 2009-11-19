@@ -676,7 +676,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   //        names a dependent type.
   // FIXME: Member of the current instantiation.
   if (SS && isDependentScopeSpecifier(*SS)) {
-    return Owned(new (Context) UnresolvedDeclRefExpr(Name, Context.DependentTy,
+    return Owned(new (Context) DependentScopeDeclRefExpr(Name, Context.DependentTy,
                                                      Loc, SS->getRange(),
                 static_cast<NestedNameSpecifier *>(SS->getScopeRep()),
                                                      isAddressOfOperand));
@@ -1868,7 +1868,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
           FirstQualifierInScope = FindFirstQualifierInScope(S, Qualifier);
       }
 
-      return Owned(CXXUnresolvedMemberExpr::Create(Context, BaseExpr, true,
+      return Owned(CXXDependentScopeMemberExpr::Create(Context, BaseExpr, true,
                                                    OpLoc, Qualifier,
                                             SS? SS->getRange() : SourceRange(),
                                                    FirstQualifierInScope,
@@ -1908,7 +1908,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
             FirstQualifierInScope = FindFirstQualifierInScope(S, Qualifier);
         }
 
-        return Owned(CXXUnresolvedMemberExpr::Create(Context,
+        return Owned(CXXDependentScopeMemberExpr::Create(Context,
                                                      BaseExpr, false,
                                                      OpLoc,
                                                      Qualifier,
@@ -1946,7 +1946,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       }
 
       // FIXME: If DC is not computable, we should build a
-      // CXXUnresolvedMemberExpr.
+      // CXXDependentScopeMemberExpr.
       assert(DC && "Cannot handle non-computable dependent contexts in lookup");
     }
 

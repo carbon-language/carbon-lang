@@ -1496,14 +1496,14 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXDeleteExprClass:
   case Expr::CXXPseudoDestructorExprClass:
   case Expr::UnresolvedFunctionNameExprClass:
-  case Expr::UnresolvedDeclRefExprClass:
+  case Expr::DependentScopeDeclRefExprClass:
   case Expr::TemplateIdRefExprClass:
   case Expr::CXXConstructExprClass:
   case Expr::CXXBindTemporaryExprClass:
   case Expr::CXXExprWithTemporariesClass:
   case Expr::CXXTemporaryObjectExprClass:
   case Expr::CXXUnresolvedConstructExprClass:
-  case Expr::CXXUnresolvedMemberExprClass:
+  case Expr::CXXDependentScopeMemberExprClass:
   case Expr::ObjCStringLiteralClass:
   case Expr::ObjCEncodeExprClass:
   case Expr::ObjCMessageExprClass:
