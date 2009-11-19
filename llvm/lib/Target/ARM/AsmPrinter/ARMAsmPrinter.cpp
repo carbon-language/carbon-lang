@@ -110,6 +110,7 @@ namespace {
                                 const char *Modifier = 0);
     void printBitfieldInvMaskImmOperand (const MachineInstr *MI, int OpNum);
 
+    void printThumbS4ImmOperand(const MachineInstr *MI, int OpNum);
     void printThumbITMask(const MachineInstr *MI, int OpNum);
     void printThumbAddrModeRROperand(const MachineInstr *MI, int OpNum);
     void printThumbAddrModeRI5Operand(const MachineInstr *MI, int OpNum,
@@ -673,6 +674,10 @@ ARMAsmPrinter::printBitfieldInvMaskImmOperand(const MachineInstr *MI, int Op) {
 }
 
 //===--------------------------------------------------------------------===//
+
+void ARMAsmPrinter::printThumbS4ImmOperand(const MachineInstr *MI, int Op) {
+  O << "#" <<  MI->getOperand(Op).getImm() * 4;
+}
 
 void
 ARMAsmPrinter::printThumbITMask(const MachineInstr *MI, int Op) {

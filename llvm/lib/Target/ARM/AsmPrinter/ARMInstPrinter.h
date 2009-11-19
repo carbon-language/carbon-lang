@@ -52,7 +52,8 @@ public:
                               const char *Modifier = 0);
     
   void printBitfieldInvMaskImmOperand(const MCInst *MI, unsigned OpNum);
-  
+
+  void printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum);
   void printThumbITMask(const MCInst *MI, unsigned OpNum) {}
   void printThumbAddrModeRROperand(const MCInst *MI, unsigned OpNum) {}
   void printThumbAddrModeRI5Operand(const MCInst *MI, unsigned OpNum,

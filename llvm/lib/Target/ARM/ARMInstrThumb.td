@@ -66,6 +66,11 @@ def thumb_immshifted_shamt : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
+// Scaled 4 immediate.
+def t_imm_s4 : Operand<i32> {
+  let PrintMethod = "printThumbS4ImmOperand";
+}
+
 // Define Thumb specific addressing modes.
 
 // t_addrmode_rr := reg + reg
@@ -134,20 +139,20 @@ def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr,
                  [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
 
 // PC relative add.
-def tADDrPCi : T1I<(outs tGPR:$dst), (ins i32imm:$rhs), IIC_iALUi,
-                  "add\t$dst, pc, $rhs * 4", []>;
+def tADDrPCi : T1I<(outs tGPR:$dst), (ins t_imm_s4:$rhs), IIC_iALUi,
+                  "add\t$dst, pc, $rhs", []>;
 
 // ADD rd, sp, #imm8
-def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, i32imm:$rhs), IIC_iALUi,
-                  "add\t$dst, $sp, $rhs * 4", []>;
+def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, t_imm_s4:$rhs), IIC_iALUi,
+                  "add\t$dst, $sp, $rhs", []>;
 
 // ADD sp, sp, #imm7
-def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALUi,
-                  "add\t$dst, $rhs * 4", []>;
+def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
+                  "add\t$dst, $rhs", []>;
 
 // SUB sp, sp, #imm7
-def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALUi,
-                  "sub\t$dst, $rhs * 4", []>;
+def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
+                  "sub\t$dst, $rhs", []>;
 
 // ADD rm, sp
 def tADDrSP : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
@@ -159,8 +164,8 @@ def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
 
 // Pseudo instruction that will expand into a tSUBspi + a copy.
 let usesCustomInserter = 1 in { // Expanded after instruction selection.
-def tSUBspi_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
-               NoItinerary, "@ sub\t$dst, $rhs * 4", []>;
+def tSUBspi_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs),
+               NoItinerary, "@ sub\t$dst, $rhs", []>;
 
 def tADDspr_ : PseudoInst<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
                NoItinerary, "@ add\t$dst, $rhs", []>;

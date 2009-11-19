@@ -6,7 +6,7 @@
 define arm_apcscc i32 @t(i32, ...) nounwind {
 entry:
 ; CHECK: t:
-; CHECK: add r7, sp, #3 * 4
+; CHECK: add r7, sp, #12
 	%1 = load i8** undef, align 4		; <i8*> [#uses=3]
 	%2 = getelementptr i8* %1, i32 4		; <i8*> [#uses=1]
 	%3 = getelementptr i8* %1, i32 8		; <i8*> [#uses=1]

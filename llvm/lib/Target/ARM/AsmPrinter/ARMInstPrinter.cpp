@@ -351,3 +351,8 @@ void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum) {
   // FIXME: remove this.
   abort();
 }
+
+void ARMInstPrinter::printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum) {
+  // FIXME: remove this.
+  abort();
+}
