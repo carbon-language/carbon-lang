@@ -1457,21 +1457,27 @@ public:
 
 /// DependentSizedArrayType - This type represents an array type in
 /// C++ whose size is a value-dependent expression. For example:
-/// @code
+///
+/// \code
 /// template<typename T, int Size>
 /// class array {
 ///   T data[Size];
 /// };
-/// @endcode
+/// \endcode
+///
 /// For these types, we won't actually know what the array bound is
 /// until template instantiation occurs, at which point this will
 /// become either a ConstantArrayType or a VariableArrayType.
 class DependentSizedArrayType : public ArrayType {
   ASTContext &Context;
 
-  /// SizeExpr - An assignment expression that will instantiate to the
+  /// \brief An assignment expression that will instantiate to the
   /// size of the array.
+  ///
+  /// The expression itself might be NULL, in which case the array
+  /// type will have its size deduced from an initializer.
   Stmt *SizeExpr;
+
   /// Brackets - The left and right array brackets.
   SourceRange Brackets;
 

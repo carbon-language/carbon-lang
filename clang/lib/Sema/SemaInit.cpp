@@ -136,8 +136,29 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
                                  SourceLocation InitLoc,
                                  DeclarationName InitEntity, bool DirectInit) {
   if (DeclType->isDependentType() ||
-      Init->isTypeDependent() || Init->isValueDependent())
+      Init->isTypeDependent() || Init->isValueDependent()) {
+    // We have either a dependent type or a type- or value-dependent
+    // initializer, so we don't perform any additional checking at
+    // this point.
+
+    // If the declaration is a non-dependent, incomplete array type
+    // that has an initializer, then its type will be completed once
+    // the initializer is instantiated, meaning that the type is
+    // dependent. Morph the declaration's type into a
+    // dependently-sized array type.
+    if (!DeclType->isDependentType()) {
+      if (const IncompleteArrayType *ArrayT
+                           = Context.getAsIncompleteArrayType(DeclType)) {
+        DeclType = Context.getDependentSizedArrayType(ArrayT->getElementType(),
+                                                      /*NumElts=*/0,
+                                                     ArrayT->getSizeModifier(),
+                                           ArrayT->getIndexTypeCVRQualifiers(),
+                                                      SourceRange());
+      }
+    }
+
     return false;
+  }
 
   // C++ [dcl.init.ref]p1:
   //   A variable declared to be a T& or T&&, that is "reference to type T"

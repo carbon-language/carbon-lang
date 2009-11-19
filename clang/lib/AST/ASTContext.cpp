@@ -1460,16 +1460,24 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
                                                 ArrayType::ArraySizeModifier ASM,
                                                 unsigned EltTypeQuals,
                                                 SourceRange Brackets) {
-  assert((NumElts->isTypeDependent() || NumElts->isValueDependent()) &&
+  assert((!NumElts || NumElts->isTypeDependent() || 
+          NumElts->isValueDependent()) &&
          "Size must be type- or value-dependent!");
 
-  llvm::FoldingSetNodeID ID;
-  DependentSizedArrayType::Profile(ID, *this, getCanonicalType(EltTy), ASM,
-                                   EltTypeQuals, NumElts);
-
   void *InsertPos = 0;
-  DependentSizedArrayType *Canon
-    = DependentSizedArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+  DependentSizedArrayType *Canon = 0;
+
+  if (NumElts) {
+    // Dependently-sized array types that do not have a specified
+    // number of elements will have their sizes deduced from an
+    // initializer.
+    llvm::FoldingSetNodeID ID;
+    DependentSizedArrayType::Profile(ID, *this, getCanonicalType(EltTy), ASM,
+                                     EltTypeQuals, NumElts);
+
+    Canon = DependentSizedArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+  }
+
   DependentSizedArrayType *New;
   if (Canon) {
     // We already have a canonical version of this array type; use it as
@@ -1483,7 +1491,9 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
       New = new (*this, TypeAlignment)
         DependentSizedArrayType(*this, EltTy, QualType(),
                                 NumElts, ASM, EltTypeQuals, Brackets);
-      DependentSizedArrayTypes.InsertNode(New, InsertPos);
+
+      if (NumElts)
+        DependentSizedArrayTypes.InsertNode(New, InsertPos);
     } else {
       QualType Canon = getDependentSizedArrayType(CanonEltTy, NumElts,
                                                   ASM, EltTypeQuals,
