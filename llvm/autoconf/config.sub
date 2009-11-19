@@ -1256,6 +1256,9 @@ case $os in
 	-solaris1 | -solaris1.*)
 		os=`echo $os | sed -e 's|solaris1|sunos4|'`
 		;;
+	-auroraux)
+		os=-auroraux
+		;;
 	-solaris)
 		os=-solaris2
 		;;
@@ -1274,7 +1277,7 @@ case $os in
 	# -sysv* is not here because it comes later, after sysvr4.
 	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
 	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
-	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -solaris* | -sym* \
+	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* | -sym* \
 	      | -kopensolaris* \
 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
 	      | -aos* | -aros* \
