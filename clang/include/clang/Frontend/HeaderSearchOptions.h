@@ -73,7 +73,7 @@ public:
 
 public:
   HeaderSearchOptions(llvm::StringRef _Sysroot = "/")
-    : Sysroot(_Sysroot), UseStandardIncludes(true) {}
+    : Sysroot(_Sysroot), UseStandardIncludes(true), Verbose(false) {}
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.
   void AddPath(llvm::StringRef Path, frontend::IncludeDirGroup Group,
