@@ -736,6 +736,8 @@ else
 Ranlib        = ranlib
 endif
 
+AliasTool     = ln -s
+
 #----------------------------------------------------------
 # Get the list of source files and compute object file
 # names from them.
@@ -1215,10 +1217,20 @@ ifdef TOOLNAME
 #---------------------------------------------------------
 # Set up variables for building a tool.
 #---------------------------------------------------------
+TOOLEXENAME := $(strip $(TOOLNAME))$(EXEEXT)
 ifdef EXAMPLE_TOOL
-ToolBuildPath   := $(ExmplDir)/$(strip $(TOOLNAME))$(EXEEXT)
+ToolBuildPath   := $(ExmplDir)/$(TOOLEXENAME)
 else
-ToolBuildPath   := $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT)
+ToolBuildPath   := $(ToolDir)/$(TOOLEXENAME)
+endif
+
+# TOOLALIAS is a name to symlink (or copy) the tool to.
+ifdef TOOLALIAS
+ifdef EXAMPLE_TOOL
+ToolAliasBuildPath   := $(ExmplDir)/$(strip $(TOOLALIAS))$(EXEEXT)
+else
+ToolAliasBuildPath   := $(ToolDir)/$(strip $(TOOLALIAS))$(EXEEXT)
+endif
 endif
 
 #---------------------------------------------------------
@@ -1246,11 +1258,14 @@ endif
 #---------------------------------------------------------
 # Provide targets for building the tools
 #---------------------------------------------------------
-all-local:: $(ToolBuildPath)
+all-local:: $(ToolBuildPath) $(ToolAliasBuildPath)
 
 clean-local::
 ifneq ($(strip $(ToolBuildPath)),)
 	-$(Verb) $(RM) -f $(ToolBuildPath)
+endif
+ifneq ($(strip $(ToolAliasBuildPath)),)
+	-$(Verb) $(RM) -f $(ToolAliasBuildPath)
 endif
 
 ifdef EXAMPLE_TOOL
@@ -1266,13 +1281,22 @@ $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
           $(StripWarnMsg)
 
+ifneq ($(strip $(ToolAliasBuildPath)),)
+$(ToolAliasBuildPath): $(ToolBuildPath)
+	$(Echo) Creating $(BuildMode) Alias $(TOOLALIAS) $(StripWarnMsg)
+	$(Verb) $(RM) -f $(ToolAliasBuildPath)
+	$(Verb) $(AliasTool) $(TOOLEXENAME) $(ToolAliasBuildPath)
+	$(Echo) ======= Finished Creating $(BuildMode) Alias $(TOOLNAME) \
+          $(StripWarnMsg)
+endif
+
 ifdef NO_INSTALL
 install-local::
 	$(Echo) Install circumvented with NO_INSTALL
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
-DestTool = $(PROJ_bindir)/$(TOOLNAME)$(EXEEXT)
+DestTool = $(PROJ_bindir)/$(TOOLEXENAME)
 
 install-local:: $(DestTool)
 
@@ -1283,6 +1307,23 @@ $(DestTool): $(ToolBuildPath) $(PROJ_bindir)
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) $(DestTool)
 	-$(Verb) $(RM) -f $(DestTool)
+
+# TOOLALIAS install.
+ifdef TOOLALIAS
+DestToolAlias = $(PROJ_bindir)/$(TOOLALIAS)$(EXEEXT)
+
+install-local:: $(DestToolAlias)
+
+$(DestToolAlias): $(DestTool) $(PROJ_bindir)
+	$(Echo) Installing $(BuildMode) $(DestToolAlias)
+	$(Verb) $(RM) -f $(DestToolAlias)
+	$(Verb) $(AliasTool) $(TOOLEXENAME) $(DestToolAlias)
+
+uninstall-local::
+	$(Echo) Uninstalling $(BuildMode) $(DestToolAlias)
+	-$(Verb) $(RM) -f $(DestToolAlias)
+endif
+
 endif
 endif
 
