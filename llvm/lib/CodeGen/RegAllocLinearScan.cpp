@@ -59,11 +59,6 @@ PreSplitIntervals("pre-alloc-split",
                   cl::desc("Pre-register allocation live interval splitting"),
                   cl::init(false), cl::Hidden);
 
-static cl::opt<bool>
-NewSpillFramework("new-spill-framework",
-                  cl::desc("New spilling framework"),
-                  cl::init(false), cl::Hidden);
-
 static RegisterRegAlloc
 linearscanRegAlloc("linearscan", "linear scan register allocator",
                    createLinearScanRegisterAllocator);
@@ -441,9 +436,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   vrm_ = &getAnalysis<VirtRegMap>();
   if (!rewriter_.get()) rewriter_.reset(createVirtRegRewriter());
   
-  if (NewSpillFramework) {
-    spiller_.reset(createSpiller(mf_, li_, ls_, vrm_));
-  }
+  spiller_.reset(createSpiller(mf_, li_, ls_, loopInfo, vrm_));
   
   initIntervalSets();
 
@@ -1157,11 +1150,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     SmallVector<LiveInterval*, 8> spillIs;
     std::vector<LiveInterval*> added;
     
-    if (!NewSpillFramework) {
-      added = li_->addIntervalsForSpills(*cur, spillIs, loopInfo, *vrm_);
-    } else {
-      added = spiller_->spill(cur); 
-    }
+    added = spiller_->spill(cur, spillIs); 
 
     std::sort(added.begin(), added.end(), LISorter());
     addStackInterval(cur, ls_, li_, mri_, *vrm_);
@@ -1241,11 +1230,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
          earliestStartInterval : sli;
        
     std::vector<LiveInterval*> newIs;
-    if (!NewSpillFramework) {
-      newIs = li_->addIntervalsForSpills(*sli, spillIs, loopInfo, *vrm_);
-    } else {
-      newIs = spiller_->spill(sli);
-    }
+    newIs = spiller_->spill(sli, spillIs);
     addStackInterval(sli, ls_, li_, mri_, *vrm_);
     std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
     spilled.insert(sli->reg);

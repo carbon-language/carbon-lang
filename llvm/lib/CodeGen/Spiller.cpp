@@ -18,10 +18,24 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+namespace {
+  enum SpillerName { trivial, standard };
+}
+
+static cl::opt<SpillerName>
+spillerOpt("spiller",
+           cl::desc("Spiller to use: (default: standard)"),
+           cl::Prefix,
+           cl::values(clEnumVal(trivial, "trivial spiller"),
+                      clEnumVal(standard, "default spiller"),
+                      clEnumValEnd),
+           cl::init(standard));
 
 Spiller::~Spiller() {}
 
@@ -156,11 +170,32 @@ class TrivialSpiller : public SpillerBase {
 public:
 
   TrivialSpiller(MachineFunction *mf, LiveIntervals *lis, LiveStacks *ls,
-                 VirtRegMap *vrm) :
-    SpillerBase(mf, lis, ls, vrm) {}
+                 VirtRegMap *vrm)
+    : SpillerBase(mf, lis, ls, vrm) {}
 
-  std::vector<LiveInterval*> spill(LiveInterval *li) {
+  std::vector<LiveInterval*> spill(LiveInterval *li,
+                                   SmallVectorImpl<LiveInterval*> &spillIs) {
+    // Ignore spillIs - we don't use it.
     return trivialSpillEverywhere(li);
+  }
+
+};
+
+/// Falls back on LiveIntervals::addIntervalsForSpills.
+class StandardSpiller : public Spiller {
+private:
+  LiveIntervals *lis;
+  const MachineLoopInfo *loopInfo;
+  VirtRegMap *vrm;
+public:
+  StandardSpiller(MachineFunction *mf, LiveIntervals *lis, LiveStacks *ls,
+                  const MachineLoopInfo *loopInfo, VirtRegMap *vrm)
+    : lis(lis), loopInfo(loopInfo), vrm(vrm) {}
+
+  /// Falls back on LiveIntervals::addIntervalsForSpills.
+  std::vector<LiveInterval*> spill(LiveInterval *li,
+                                   SmallVectorImpl<LiveInterval*> &spillIs) {
+    return lis->addIntervalsForSpills(*li, spillIs, loopInfo, *vrm);
   }
 
 };
@@ -168,6 +203,12 @@ public:
 }
 
 llvm::Spiller* llvm::createSpiller(MachineFunction *mf, LiveIntervals *lis,
-                                   LiveStacks *ls, VirtRegMap *vrm) {
-  return new TrivialSpiller(mf, lis, ls, vrm);
+                                   LiveStacks *ls,
+                                   const MachineLoopInfo *loopInfo,
+                                   VirtRegMap *vrm) {
+  switch (spillerOpt) {
+    case trivial: return new TrivialSpiller(mf, lis, ls, vrm); break;
+    case standard: return new StandardSpiller(mf, lis, ls, loopInfo, vrm); break;
+    default: llvm_unreachable("Unreachable!"); break;
+  }
 }
