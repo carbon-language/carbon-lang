@@ -728,7 +728,7 @@ void DwarfException::EmitExceptionTable() {
     // in target-independent code.
     //
     if ((LSDASection->getKind().isWriteable() &&
-         !LSDASection->getKind().isDataRel()) ||
+         !LSDASection->getKind().isReadOnlyWithRel()) ||
         Asm->TM.getRelocationModel() == Reloc::Static)
       TTypeFormat = dwarf::DW_EH_PE_absptr;
     else
@@ -922,11 +922,11 @@ void DwarfException::EmitExceptionTable() {
   unsigned Index = 1;
 
   for (std::vector<GlobalVariable *>::const_reverse_iterator
-         I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I, ++Index) {
+         I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *TI = *I;
 
     if (TI) {
-      if (!LSDASection->getKind().isDataRel() &&
+      if (!LSDASection->getKind().isReadOnlyWithRel() &&
           (TTypeFormat == dwarf::DW_EH_PE_absptr ||
            TI->getLinkage() == GlobalValue::InternalLinkage)) {
         // Print out the unadorned name of the type info.
@@ -940,7 +940,8 @@ void DwarfException::EmitExceptionTable() {
                                                 IsTypeInfoPCRel);
 
         if (!IsTypeInfoPCRel)
-          TypeInfoRef = CreateLabelDiff(TypeInfoRef, "typeinforef_addr", Index);
+          TypeInfoRef = CreateLabelDiff(TypeInfoRef, "typeinforef_addr",
+                                        Index++);
 
         O << MAI->getData32bitsDirective();
         TypeInfoRef->print(O, MAI);
