@@ -14,7 +14,6 @@ using namespace clang;
 
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                            const llvm::SmallVectorImpl<llvm::StringRef> &Args) {
-  llvm::llvm_report_error("FIXME: Not yet implemented!");
 }
 
 static const char *getAnalysisName(Analyses Kind) {

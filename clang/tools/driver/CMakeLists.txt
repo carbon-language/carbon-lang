@@ -3,12 +3,14 @@ set(LLVM_NO_RTTI 1)
 set( LLVM_USED_LIBS
   clangDriver
   clangBasic
+  clangFrontend
   )
 
 set(LLVM_LINK_COMPONENTS system support bitreader bitwriter)
 
 add_clang_executable(clang
   driver.cpp
+  cc1_main.cpp
   )
 
 add_dependencies(clang clang-cc)
