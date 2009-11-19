@@ -105,7 +105,7 @@ EagerlyAssume("analyzer-eagerly-assume",
 
 static llvm::cl::opt<bool>
 NoPurgeDead("analyzer-no-purge-dead",
-          llvm::cl::desc("Remove dead symbols, bindings, and constraints before"
+          llvm::cl::desc("Don't remove dead symbols, bindings, and constraints before"
                          " processing a statement"));
 
 static llvm::cl::opt<bool>
@@ -283,9 +283,8 @@ CodeCompletionAt("code-completion-at",
               llvm::cl::desc("Dump code-completion information at a location"));
 
 static llvm::cl::opt<bool>
-CodeCompletionDebugPrinter("code-completion-debug-printer",
-                      llvm::cl::desc("Use the \"debug\" code-completion print"),
-                           llvm::cl::init(true));
+NoCodeCompletionDebugPrinter("no-code-completion-debug-printer",
+                      llvm::cl::desc("Don't the \"debug\" code-completion print"));
 
 static llvm::cl::opt<bool>
 CodeCompletionWantsMacros("code-completion-macros",
@@ -532,7 +531,7 @@ MainFileName("main-file-name",
 
 static llvm::cl::opt<bool>
 NoMathErrno("fno-math-errno",
-          llvm::cl::desc("Require math functions to respect errno"));
+          llvm::cl::desc("Don't require math functions to respect errno"));
 
 static llvm::cl::opt<bool>
 NoElideConstructors("fno-elide-constructors",
@@ -590,7 +589,7 @@ PascalStrings("fpascal-strings",
 
 static llvm::cl::opt<bool>
 NoRtti("fno-rtti",
-     llvm::cl::desc("Enable generation of rtti information"));
+     llvm::cl::desc("Disable generation of rtti information"));
 
 static llvm::cl::opt<bool>
 ShortWChar("fshort-wchar",
@@ -867,7 +866,7 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   }
 
   Opts.CodeCompletionAt = CodeCompletionAt;
-  Opts.DebugCodeCompletionPrinter = CodeCompletionDebugPrinter;
+  Opts.DebugCodeCompletionPrinter = !NoCodeCompletionDebugPrinter;
   Opts.DisableFree = DisableFree;
   Opts.EmptyInputOnly = EmptyInputOnly;
   Opts.FixItLocations = FixItAtLocations;
