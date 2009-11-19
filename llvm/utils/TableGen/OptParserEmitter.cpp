@@ -35,9 +35,16 @@ static int CompareOptionRecords(const void *Av, const void *Bv) {
   const Record *A = *(Record**) Av;
   const Record *B = *(Record**) Bv;
 
-  // Compare options by name first.
-  if (int Cmp = StrCmpOptionName(A->getValueAsString("Name").c_str(),
-                                 B->getValueAsString("Name").c_str()))
+  // Sentinel options preceed all others and are only ordered by precedence.
+  bool ASent = A->getValueAsDef("Kind")->getValueAsBit("Sentinel");
+  bool BSent = B->getValueAsDef("Kind")->getValueAsBit("Sentinel");
+  if (ASent != BSent)
+    return ASent ? -1 : 1;
+
+  // Compare options by name, unless they are sentinels.
+  if (!ASent)
+    if (int Cmp = StrCmpOptionName(A->getValueAsString("Name").c_str(),
+                                   B->getValueAsString("Name").c_str()))
     return Cmp;
 
   // Then by the kind precedence;
