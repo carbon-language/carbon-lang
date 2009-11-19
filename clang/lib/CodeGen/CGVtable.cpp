@@ -69,7 +69,6 @@ private:
   llvm::DenseMap<CtorVtable_t, int64_t> &AddressPoints;
 
   typedef CXXRecordDecl::method_iterator method_iter;
-  // FIXME: Linkage should follow vtable
   const bool Extern;
   const uint32_t LLVMPointerWidth;
   Index_t extra;
@@ -82,7 +81,7 @@ public:
       BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(cgm.GenerateRttiRef(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), AddressPoints(*new llvm::DenseMap<CtorVtable_t, int64_t>),
-      Extern(true),
+      Extern(!l->isInAnonymousNamespace()),
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
 
