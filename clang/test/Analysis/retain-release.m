@@ -1162,6 +1162,19 @@ void rdar7306898(void) {
 }
 
 //===----------------------------------------------------------------------===//
+// <rdar://problem/7252064> sending 'release', 'retain', etc. to a Class
+// directly is not likely what the user intended
+//===----------------------------------------------------------------------===//
+
+@interface RDar7252064 : NSObject @end
+void rdar7252064(void) {
+  [RDar7252064 release]; // expected-warning{{The 'release' message should be sent to instances of class 'RDar7252064' and not the class directly}}
+  [RDar7252064 retain]; // expected-warning{{The 'retain' message should be sent to instances of class 'RDar7252064' and not the class directly}}
+  [RDar7252064 autorelease]; // expected-warning{{The 'autorelease' message should be sent to instances of class 'RDar7252064' and not the class directly}}
+  [NSAutoreleasePool drain]; // expected-warning{{method '+drain' not found}} expected-warning{{The 'drain' message should be sent to instances of class 'NSAutoreleasePool' and not the class directly}}
+}
+
+//===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 

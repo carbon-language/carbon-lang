@@ -22,6 +22,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathDiagnostic.h"
+#include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -522,6 +523,65 @@ clang::CreateAuditCFRetainRelease(ASTContext& Ctx, BugReporter& BR) {
 }
 
 //===----------------------------------------------------------------------===//
+// Check for sending 'retain', 'release', or 'autorelease' directly to a Class.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN ClassReleaseChecker :
+    public CheckerVisitor<ClassReleaseChecker> {
+  Selector releaseS;
+  Selector retainS;
+  Selector autoreleaseS;
+  Selector drainS;
+  BugType *BT;
+public:
+  ClassReleaseChecker(ASTContext &Ctx)
+    : releaseS(GetNullarySelector("release", Ctx)),
+      retainS(GetNullarySelector("retain", Ctx)),
+      autoreleaseS(GetNullarySelector("autorelease", Ctx)),
+      drainS(GetNullarySelector("drain", Ctx)),
+      BT(0) {}
+
+  static void *getTag() { static int x = 0; return &x; }
+      
+  void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);    
+};
+}
+
+void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
+                                                  const ObjCMessageExpr *ME) {
+  
+  const IdentifierInfo *ClsName = ME->getClassName();
+  if (!ClsName)
+    return;
+  
+  Selector S = ME->getSelector();
+  if (!(S == releaseS || S == retainS || S == autoreleaseS | S == drainS))
+    return;
+  
+  if (!BT)
+    BT = new APIMisuse("message incorrectly sent to class instead of class "
+                       "instance");
+  
+  ExplodedNode *N = C.GenerateNode(ME, C.getState(), false);
+  if (!N)
+    return;
+  
+  C.addTransition(N);
+  
+  llvm::SmallString<200> buf;
+  llvm::raw_svector_ostream os(buf);
+
+  os << "The '" << S.getAsString() << "' message should be sent to instances "
+        "of class '" << ClsName->getName()
+     << "' and not the class directly";
+  
+  RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
+  report->addRange(ME->getSourceRange());
+  C.EmitReport(report);
+}
+
+//===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
 
@@ -536,4 +596,5 @@ void clang::RegisterAppleChecks(GRExprEngine& Eng, const Decl &D) {
 
   RegisterNSErrorChecks(BR, Eng, D);
   RegisterNSAutoreleasePoolChecks(Eng);
+  Eng.registerCheck(new ClassReleaseChecker(Ctx));
 }
