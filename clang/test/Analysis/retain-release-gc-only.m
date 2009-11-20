@@ -332,6 +332,17 @@ void rdar_6250216(void) {
     [pool release]; // expected-warning{{Use -drain instead of -release when using NSAutoreleasePool and garbage collection}}
 }
 
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7407273> Don't crash when analyzing messages sent to blocks
+//===----------------------------------------------------------------------===//
+
+@class RDar7407273;
+typedef void (^RDar7407273Block)(RDar7407273 *operation);
+void rdar7407273(RDar7407273Block b) {
+  [b copy];
+}
+
 //===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//

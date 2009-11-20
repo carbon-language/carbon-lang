@@ -65,6 +65,9 @@ NSAutoreleasePoolChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   // the type of the expression.
   const ObjCObjectPointerType* PT =
     receiver->getType()->getAs<ObjCObjectPointerType>();
+  
+  if (!PT)
+    return;  
   const ObjCInterfaceDecl* OD = PT->getInterfaceDecl();
   if (!OD)
     return;  
