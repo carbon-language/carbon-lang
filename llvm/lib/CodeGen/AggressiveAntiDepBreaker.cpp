@@ -587,37 +587,36 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
     return false;
   }
 
+#ifndef NDEBUG
+  // If DebugDiv > 0 then only rename (renamecnt % DebugDiv) == DebugMod
+  if (DebugDiv > 0) {
+    static int renamecnt = 0;
+    if (renamecnt++ % DebugDiv != DebugMod)
+      return false;
+    
+    errs() << "*** Performing rename " << TRI->getName(SuperReg) <<
+      " for debug ***\n";
+  }
+#endif
+
   // Check each possible rename register for SuperReg in round-robin
   // order. If that register is available, and the corresponding
   // registers are available for the other group subregisters, then we
   // can use those registers to rename.
-  BitVector SuperBV = RenameRegisterMap[SuperReg];
   const TargetRegisterClass *SuperRC = 
     TRI->getPhysicalRegisterRegClass(SuperReg, MVT::Other);
   
   const TargetRegisterClass::iterator RB = SuperRC->allocation_order_begin(MF);
   const TargetRegisterClass::iterator RE = SuperRC->allocation_order_end(MF);
   if (RB == RE) {
-    DEBUG(errs() << "\tEmpty Regclass!!\n");
+    DEBUG(errs() << "\tEmpty Super Regclass!!\n");
     return false;
   }
 
-#ifndef NDEBUG
-      // If DebugDiv > 0 then only rename (renamecnt % DebugDiv) == DebugMod
-      if (DebugDiv > 0) {
-        static int renamecnt = 0;
-        if (renamecnt++ % DebugDiv != DebugMod)
-          return false;
-
-        errs() << "*** Performing rename " << TRI->getName(SuperReg) <<
-          " for debug ***\n";
-      }
-#endif
+  DEBUG(errs() << "\tFind Registers:");
 
   if (RenameOrder.count(SuperRC) == 0)
     RenameOrder.insert(RenameOrderType::value_type(SuperRC, RE));
-
-  DEBUG(errs() << "\tFind Register:");
 
   const TargetRegisterClass::iterator OrigR = RenameOrder[SuperRC];
   const TargetRegisterClass::iterator EndR = ((OrigR == RE) ? RB : OrigR);
@@ -625,41 +624,71 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
   do {
     if (R == RB) R = RE;
     --R;
-    const unsigned Reg = *R;
+    const unsigned NewSuperReg = *R;
     // Don't replace a register with itself.
-    if (Reg == SuperReg) continue;
+    if (NewSuperReg == SuperReg) continue;
     
-    DEBUG(errs() << " " << TRI->getName(Reg));
-    
-    // If Reg is dead and Reg's most recent def is not before
-    // SuperRegs's kill, it's safe to replace SuperReg with Reg. We
-    // must also check all aliases of Reg. because we can't define a
-    // register when any sub or super is already live.
-    if (State->IsLive(Reg) || (KillIndices[SuperReg] > DefIndices[Reg])) {
-      DEBUG(errs() << "(live)");
-      continue;
-    } else {
-      bool found = false;
-      for (const unsigned *Alias = TRI->getAliasSet(Reg);
-           *Alias; ++Alias) {
-        unsigned AliasReg = *Alias;
-        if (State->IsLive(AliasReg) || (KillIndices[SuperReg] > DefIndices[AliasReg])) {
-          DEBUG(errs() << "(alias " << TRI->getName(AliasReg) << " live)");
-          found = true;
-          break;
-        }
+    DEBUG(errs() << " [" << TRI->getName(NewSuperReg) << ':');
+    RenameMap.clear();
+
+    // For each referenced group register (which must be a SuperReg or
+    // a subregister of SuperReg), find the corresponding subregister
+    // of NewSuperReg and make sure it is free to be renamed.
+    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+      unsigned Reg = Regs[i];
+      unsigned NewReg = 0;
+      if (Reg == SuperReg) {
+        NewReg = NewSuperReg;
+      } else {
+        unsigned NewSubRegIdx = TRI->getSubRegIndex(SuperReg, Reg);
+        if (NewSubRegIdx != 0)
+          NewReg = TRI->getSubReg(NewSuperReg, NewSubRegIdx);
       }
-      if (found)
-        continue;
+
+      DEBUG(errs() << " " << TRI->getName(NewReg));
+      
+      // Check if Reg can be renamed to NewReg.
+      BitVector BV = RenameRegisterMap[Reg];
+      if (!BV.test(NewReg)) {
+        DEBUG(errs() << "(no rename)");
+        goto next_super_reg;
+      }
+
+      // If NewReg is dead and NewReg's most recent def is not before
+      // Regs's kill, it's safe to replace Reg with NewReg. We
+      // must also check all aliases of NewReg, because we can't define a
+      // register when any sub or super is already live.
+      if (State->IsLive(NewReg) || (KillIndices[Reg] > DefIndices[NewReg])) {
+        DEBUG(errs() << "(live)");
+        goto next_super_reg;
+      } else {
+        bool found = false;
+        for (const unsigned *Alias = TRI->getAliasSet(NewReg);
+             *Alias; ++Alias) {
+          unsigned AliasReg = *Alias;
+          if (State->IsLive(AliasReg) || (KillIndices[Reg] > DefIndices[AliasReg])) {
+            DEBUG(errs() << "(alias " << TRI->getName(AliasReg) << " live)");
+            found = true;
+            break;
+          }
+        }
+        if (found)
+          goto next_super_reg;
+      }
+      
+      // Record that 'Reg' can be renamed to 'NewReg'.
+      RenameMap.insert(std::pair<unsigned, unsigned>(Reg, NewReg));
     }
     
-    if (Reg != 0) { 
-      DEBUG(errs() << '\n');
-      RenameOrder.erase(SuperRC);
-      RenameOrder.insert(RenameOrderType::value_type(SuperRC, R));
-      RenameMap.insert(std::pair<unsigned, unsigned>(SuperReg, Reg));
-      return true;
-    }
+    // If we fall-out here, then every register in the group can be
+    // renamed, as recorded in RenameMap.
+    RenameOrder.erase(SuperRC);
+    RenameOrder.insert(RenameOrderType::value_type(SuperRC, R));
+    DEBUG(errs() << "]\n");
+    return true;
+
+  next_super_reg:
+    DEBUG(errs() << ']');
   } while (R != EndR);
 
   DEBUG(errs() << '\n');

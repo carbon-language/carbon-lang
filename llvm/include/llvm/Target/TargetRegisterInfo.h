@@ -465,7 +465,7 @@ public:
   virtual unsigned getSubReg(unsigned RegNo, unsigned Index) const = 0;
 
   /// getSubRegIndex - For a given register pair, return the sub-register index
-  /// if they are second register is a sub-register of the second. Return zero
+  /// if the are second register is a sub-register of the first. Return zero
   /// otherwise.
   virtual unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const = 0;
 
