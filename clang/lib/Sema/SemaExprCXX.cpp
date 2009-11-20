@@ -2160,10 +2160,10 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
         return ExprError();
       }
     }
-  }
 
-  if (BaseType->isPointerType())
-    BaseType = BaseType->getPointeeType();
+    if (BaseType->isPointerType())
+      BaseType = BaseType->getPointeeType();
+  }
 
   // We could end up with various non-record types here, such as extended
   // vector types or Objective-C interfaces. Just return early and let

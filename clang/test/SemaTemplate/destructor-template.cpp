@@ -9,4 +9,11 @@ template<typename A> class s0 {
 
 };
 
+struct Incomplete;
 
+template<typename T>
+void destroy_me(T me) {
+  me.~T();
+}
+
+template void destroy_me(Incomplete*);
