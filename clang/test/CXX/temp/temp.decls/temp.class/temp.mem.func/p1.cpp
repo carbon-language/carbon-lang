@@ -66,3 +66,14 @@ X0<T, U>::operator T*() const {
 
 namespace N { template <class X> class A {void a();}; }
 namespace N { template <class X> void A<X>::a() {} }
+
+// PR5566
+template<typename T>
+struct X1 { 
+  template<typename U>
+  struct B { void f(); };
+};
+
+template<typename T>
+template<typename U>
+void X1<T>::template B<U>::f() { }

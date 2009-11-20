@@ -1685,10 +1685,14 @@ public:
   /// \param ObjectType if this dependent template name occurs in the
   /// context of a member access expression, the type of the object being
   /// accessed.
+  ///
+  /// \param EnteringContext whether we are entering the context of this
+  /// template.
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                                 const CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
-                                                TypeTy *ObjectType) {
+                                                TypeTy *ObjectType,
+                                                bool EnteringContext) {
     return TemplateTy();
   }
 

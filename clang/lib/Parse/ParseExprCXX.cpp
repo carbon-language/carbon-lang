@@ -148,7 +148,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       TPA.Commit();
       TemplateTy Template
         = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, TemplateName,
-                                             ObjectType);
+                                             ObjectType, EnteringContext);
       if (!Template)
         break;
       if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
@@ -774,7 +774,8 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
     TemplateName.setIdentifier(Name, NameLoc);
     if (ObjectType) {
       Template = Actions.ActOnDependentTemplateName(SourceLocation(), SS, 
-                                                    TemplateName, ObjectType);
+                                                    TemplateName, ObjectType,
+                                                    EnteringContext);
       TNK = TNK_Dependent_template_name;
       if (!Template.get())
         return true;

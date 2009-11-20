@@ -2293,7 +2293,8 @@ public:
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                                 const CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,
-                                                TypeTy *ObjectType);
+                                                TypeTy *ObjectType,
+                                                bool EnteringContext);
 
   bool CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,

@@ -5349,7 +5349,8 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                       /*FIXME:*/getDerived().getBaseLocation(),
                                               SS,
                                               Name,
-                                              ObjectType.getAsOpaquePtr())
+                                              ObjectType.getAsOpaquePtr(),
+                                              /*EnteringContext=*/false)
            .template getAsVal<TemplateName>();
 }
 
@@ -5369,7 +5370,8 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                        /*FIXME:*/getDerived().getBaseLocation(),
                                               SS,
                                               Name,
-                                              ObjectType.getAsOpaquePtr())
+                                              ObjectType.getAsOpaquePtr(),
+                                              /*EnteringContext=*/false)
            .template getAsVal<TemplateName>();
 }
   

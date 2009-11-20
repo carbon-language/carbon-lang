@@ -1381,10 +1381,11 @@ Sema::TemplateTy
 Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                  const CXXScopeSpec &SS,
                                  UnqualifiedId &Name,
-                                 TypeTy *ObjectType) {
+                                 TypeTy *ObjectType,
+                                 bool EnteringContext) {
   if ((ObjectType &&
        computeDeclContext(QualType::getFromOpaquePtr(ObjectType))) ||
-      (SS.isSet() && computeDeclContext(SS, false))) {
+      (SS.isSet() && computeDeclContext(SS, EnteringContext))) {
     // C++0x [temp.names]p5:
     //   If a name prefixed by the keyword template is not the name of
     //   a template, the program is ill-formed. [Note: the keyword
@@ -1403,7 +1404,7 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     // rules, even in C++03 mode, retroactively applying the DR.
     TemplateTy Template;
     TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
-                                          false, Template);
+                                          EnteringContext, Template);
     if (TNK == TNK_Non_template) {
       Diag(Name.getSourceRange().getBegin(), 
            diag::err_template_kw_refers_to_non_template)
