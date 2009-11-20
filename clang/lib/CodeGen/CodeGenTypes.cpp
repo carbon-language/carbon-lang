@@ -38,7 +38,13 @@ CodeGenTypes::~CodeGenTypes() {
          I = CGRecordLayouts.begin(), E = CGRecordLayouts.end();
       I != E; ++I)
     delete I->second;
-  CGRecordLayouts.clear();
+  {
+    llvm::FoldingSet<CGFunctionInfo>::iterator
+         I = FunctionInfos.begin(), E = FunctionInfos.end();
+    while (I != E)
+      delete &*I++;
+  }
+  delete TheABIInfo;
 }
 
 /// ConvertType - Convert the specified type to its LLVM form.
