@@ -321,7 +321,7 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
                                               &OutputPathName);
   if (!OS) {
     // FIXME: Don't fail this way.
-    llvm::errs() << "ERROR: " << Error << "\n";
+    llvm::errs() << "error: " << Error << "\n";
     ::exit(1);
   }
 
@@ -353,16 +353,16 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
     OutFile = "-";
   }
 
-  llvm::raw_fd_ostream *OS =
+  llvm::OwningPtr<llvm::raw_fd_ostream> OS(
     new llvm::raw_fd_ostream(OutFile.c_str(), Error,
-                             (Binary ? llvm::raw_fd_ostream::F_Binary : 0));
-  if (!OS)
+                             (Binary ? llvm::raw_fd_ostream::F_Binary : 0)));
+  if (!Error.empty())
     return 0;
 
   if (ResultPathName)
     *ResultPathName = OutFile;
 
-  return OS;
+  return OS.take();
 }
 
 // Initialization Utilities
