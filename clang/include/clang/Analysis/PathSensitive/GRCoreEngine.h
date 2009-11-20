@@ -215,7 +215,7 @@ public:
   void setAuditor(GRAuditor* A) { Auditor = A; }
 
   const GRState* GetState(ExplodedNode* Pred) const {
-    if ((ExplodedNode*) Pred == getBasePredecessor())
+    if (Pred == getBasePredecessor())
       return CleanedState;
     else
       return Pred->getState();
