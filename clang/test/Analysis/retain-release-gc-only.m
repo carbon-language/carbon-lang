@@ -93,6 +93,7 @@ typedef struct _NSZone NSZone;
 + (id)alloc;
 - (void)dealloc;
 - (void)release;
+- (id)copy;
 @end
 @interface NSObject (NSCoderMethods)
 - (id)awakeAfterUsingCoder:(NSCoder *)aDecoder;
