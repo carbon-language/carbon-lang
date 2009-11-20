@@ -244,12 +244,15 @@ void ARMConstantIslands::verify(MachineFunction &MF) {
              (BBOffsets[MBBId]%4 != 0 && BBSizes[MBBId]%4 != 0));
     }
   }
-#endif
   for (unsigned i = 0, e = CPUsers.size(); i != e; ++i) {
     CPUser &U = CPUsers[i];
     unsigned UserOffset = GetOffsetOf(U.MI) + (isThumb ? 4 : 8);
-    assert (CPEIsInRange(U.MI, UserOffset, U.CPEMI, U.MaxDisp, U.NegOk, true));
+    unsigned CPEOffset  = GetOffsetOf(U.CPEMI);
+    unsigned Disp = UserOffset < CPEOffset ? CPEOffset - UserOffset :
+      UserOffset - CPEOffset;
+    assert(Disp <= U.MaxDisp || "Constant pool entry out of range!");
   }
+#endif
 }
 
 /// print block size and offset information - debugging
