@@ -38,3 +38,10 @@ void explicit_constructor(short s) {
   FromShortExplicitly fse1(s);
   FromShortExplicitly fse2 = s; // expected-error{{error: cannot initialize 'fse2' with an lvalue of type 'short'}}
 }
+
+// PR5519
+struct X1 { X1(const char&); };
+void x1(X1);
+void y1() {
+  x1(1);
+}
