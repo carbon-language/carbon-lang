@@ -475,7 +475,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   vrm_ = &getAnalysis<VirtRegMap>();
   if (!rewriter_.get()) rewriter_.reset(createVirtRegRewriter());
   
-  spiller_.reset(createSpiller(mf_, li_, ls_, loopInfo, vrm_));
+  spiller_.reset(createSpiller(mf_, li_, loopInfo, vrm_));
   
   initIntervalSets();
 

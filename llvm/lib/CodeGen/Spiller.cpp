@@ -12,7 +12,6 @@
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -47,16 +46,14 @@ protected:
 
   MachineFunction *mf;
   LiveIntervals *lis;
-  LiveStacks *ls;
   MachineFrameInfo *mfi;
   MachineRegisterInfo *mri;
   const TargetInstrInfo *tii;
   VirtRegMap *vrm;
   
   /// Construct a spiller base. 
-  SpillerBase(MachineFunction *mf, LiveIntervals *lis, LiveStacks *ls,
-              VirtRegMap *vrm) :
-    mf(mf), lis(lis), ls(ls), vrm(vrm)
+  SpillerBase(MachineFunction *mf, LiveIntervals *lis, VirtRegMap *vrm)
+    : mf(mf), lis(lis), vrm(vrm)
   {
     mfi = mf->getFrameInfo();
     mri = &mf->getRegInfo();
@@ -169,9 +166,8 @@ protected:
 class TrivialSpiller : public SpillerBase {
 public:
 
-  TrivialSpiller(MachineFunction *mf, LiveIntervals *lis, LiveStacks *ls,
-                 VirtRegMap *vrm)
-    : SpillerBase(mf, lis, ls, vrm) {}
+  TrivialSpiller(MachineFunction *mf, LiveIntervals *lis, VirtRegMap *vrm)
+    : SpillerBase(mf, lis, vrm) {}
 
   std::vector<LiveInterval*> spill(LiveInterval *li,
                                    SmallVectorImpl<LiveInterval*> &spillIs) {
@@ -188,7 +184,7 @@ private:
   const MachineLoopInfo *loopInfo;
   VirtRegMap *vrm;
 public:
-  StandardSpiller(MachineFunction *mf, LiveIntervals *lis, LiveStacks *ls,
+  StandardSpiller(MachineFunction *mf, LiveIntervals *lis,
                   const MachineLoopInfo *loopInfo, VirtRegMap *vrm)
     : lis(lis), loopInfo(loopInfo), vrm(vrm) {}
 
@@ -203,12 +199,11 @@ public:
 }
 
 llvm::Spiller* llvm::createSpiller(MachineFunction *mf, LiveIntervals *lis,
-                                   LiveStacks *ls,
                                    const MachineLoopInfo *loopInfo,
                                    VirtRegMap *vrm) {
   switch (spillerOpt) {
-    case trivial: return new TrivialSpiller(mf, lis, ls, vrm); break;
-    case standard: return new StandardSpiller(mf, lis, ls, loopInfo, vrm); break;
+    case trivial: return new TrivialSpiller(mf, lis, vrm); break;
+    case standard: return new StandardSpiller(mf, lis, loopInfo, vrm); break;
     default: llvm_unreachable("Unreachable!"); break;
   }
 }
