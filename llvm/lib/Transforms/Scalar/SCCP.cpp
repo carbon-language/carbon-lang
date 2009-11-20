@@ -1869,8 +1869,12 @@ bool IPSCCP::runOnModule(Module &M) {
     for (unsigned i = 0, e = BlocksToErase.size(); i != e; ++i) {
       // If there are any PHI nodes in this successor, drop entries for BB now.
       BasicBlock *DeadBB = BlocksToErase[i];
-      while (!DeadBB->use_empty()) {
-        Instruction *I = cast<Instruction>(DeadBB->use_back());
+      for (Value::use_iterator UI = DeadBB->use_begin(), UE = DeadBB->use_end();
+           UI != UE; ) {
+        // Ignore blockaddress users; BasicBlock's dtor will handle them.
+        Instruction *I = dyn_cast<Instruction>(*UI++);
+        if (!I) continue;
+
         bool Folded = ConstantFoldTerminator(I->getParent());
         if (!Folded) {
           // The constant folder may not have been able to fold the terminator
