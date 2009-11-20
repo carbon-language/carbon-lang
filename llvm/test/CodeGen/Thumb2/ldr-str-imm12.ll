@@ -22,8 +22,7 @@
 
 define arm_apcscc %union.rec* @Manifest(%union.rec* %x, %union.rec* %env, %struct.STYLE* %style, %union.rec** %bthr, %union.rec** %fthr, %union.rec** %target, %union.rec** %crs, i32 %ok, i32 %need_expand, %union.rec** %enclose, i32 %fcr) nounwind {
 entry:
-; CHECK:       ldr.w	r9, [r7, #+32]
-; CHECK-NEXT : str.w	r9, [sp, #+28]
+; CHECK:       ldr.w	r9, [r7, #+28]
   %xgaps.i = alloca [32 x %union.rec*], align 4   ; <[32 x %union.rec*]*> [#uses=0]
   %ycomp.i = alloca [32 x %union.rec*], align 4   ; <[32 x %union.rec*]*> [#uses=0]
   br i1 false, label %bb, label %bb20
@@ -53,7 +52,6 @@ bb420:                                            ; preds = %bb20, %bb20
 ; CHECK: str r{{[0-7]}}, [sp]
 ; CHECK: str r{{[0-7]}}, [sp, #+4]
 ; CHECK: str r{{[0-7]}}, [sp, #+8]
-; CHECK: ldr r{{[0-7]}}, [sp, #+28]
 ; CHECK: str r{{[0-7]}}, [sp, #+24]
   store %union.rec* null, %union.rec** @zz_hold, align 4
   store %union.rec* null, %union.rec** @zz_res, align 4
