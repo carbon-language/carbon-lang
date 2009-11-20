@@ -18,9 +18,9 @@ include "OptParser.td"
 
 def target_abi : Separate<"-target-abi">,
   HelpText<"Target a particular ABI type">;
-def target_cpu : Separate<"-mcpu">,
+def mcpu : Separate<"-mcpu">,
   HelpText<"Target a specific cpu type (-mcpu=help for details)">;
-def target_features : Separate<"-target-feature">,
+def target_feature : Separate<"-target-feature">,
   HelpText<"Target specific attributes">;
-def target_triple : Separate<"-triple">,
+def triple : Separate<"-triple">,
   HelpText<"Specify target triple (e.g. i686-apple-darwin9)">;
