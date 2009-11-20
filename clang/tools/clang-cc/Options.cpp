@@ -757,7 +757,7 @@ TargetABI("target-abi",
 
 static llvm::cl::opt<std::string>
 TargetCPU("mcpu",
-         llvm::cl::desc("Target a specific cpu type (-mcpu=help for details)"));
+         llvm::cl::desc("Target a specific cpu type ('-mcpu help' for details)"));
 
 static llvm::cl::list<std::string>
 TargetFeatures("target-feature", llvm::cl::desc("Target specific attributes"));

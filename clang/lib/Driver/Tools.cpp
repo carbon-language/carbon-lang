@@ -209,7 +209,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targetting.
 //
 // FIXME: tblgen this.
-static llvm::StringRef getARMTargetCPU(const ArgList &Args) {
+static const char *getARMTargetCPU(const ArgList &Args) {
   // FIXME: Warn on inconsistent use of -mcpu and -march.
 
   // If we have -mcpu=, use that.
@@ -370,7 +370,8 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   CmdArgs.push_back(ABIName);
 
   // Set the CPU based on -march= and -mcpu=.
-  CmdArgs.push_back(Args.MakeArgString("-mcpu=" + getARMTargetCPU(Args)));
+  CmdArgs.push_back("-mcpu");
+  CmdArgs.push_back(getARMTargetCPU(Args));
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
   // -mfloat-abi=.

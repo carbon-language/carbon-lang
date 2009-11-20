@@ -136,7 +136,7 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
 
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                            const llvm::SmallVectorImpl<llvm::StringRef> &Args) {
-  // This is gratuitous, but until we switch the driver to using StringRe we
+  // This is gratuitous, but until we switch the driver to using StringRef we
   // need to get C strings.
   llvm::SmallVector<std::string, 16> StringArgs(Args.begin(), Args.end());
   llvm::SmallVector<const char *, 16> CStringArgs;
