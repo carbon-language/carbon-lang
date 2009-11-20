@@ -34,15 +34,10 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-
-static cl::opt<bool> HoistLdConst("licm-const-load",
-                                  cl::desc("LICM load from constant memory"),
-                                  cl::init(false), cl::Hidden);
 
 STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 STATISTIC(NumCSEed,   "Number of hoisted machine instructions CSEed");
@@ -102,7 +97,7 @@ namespace {
 
     /// IsProfitableToHoist - Return true if it is potentially profitable to
     /// hoist the given loop invariant.
-    bool IsProfitableToHoist(MachineInstr &MI, bool &isConstLd);
+    bool IsProfitableToHoist(MachineInstr &MI);
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
@@ -367,9 +362,7 @@ bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
 
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
 /// the given loop invariant.
-bool MachineLICM::IsProfitableToHoist(MachineInstr &MI, bool &isConstLd) {
-  isConstLd = false;
-
+bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   if (MI.getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
     return false;
 
@@ -382,9 +375,8 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI, bool &isConstLd) {
   // adding a store in the loop preheader. But the reload is no more expensive.
   // The side benefit is these loads are frequently CSE'ed.
   if (!TII->isTriviallyReMaterializable(&MI, AA)) {
-    if (!HoistLdConst || !isLoadFromConstantMemory(&MI))
+    if (!isLoadFromConstantMemory(&MI))
       return false;
-    isConstLd = true;
   }
 
   // If result(s) of this instruction is used by PHIs, then don't hoist it.
@@ -439,9 +431,7 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   MBB->insert(MI, NewMIs[1]);
   // If unfolding produced a load that wasn't loop-invariant or profitable to
   // hoist, discard the new instructions and bail.
-  bool isConstLd;
-  if (!IsLoopInvariantInst(*NewMIs[0]) ||
-      !IsProfitableToHoist(*NewMIs[0], isConstLd)) {
+  if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {
     NewMIs[0]->eraseFromParent();
     NewMIs[1]->eraseFromParent();
     return 0;
@@ -507,9 +497,7 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
 ///
 void MachineLICM::Hoist(MachineInstr *MI) {
   // First check whether we should hoist this instruction.
-  bool isConstLd;
-  if (!IsLoopInvariantInst(*MI) ||
-      !IsProfitableToHoist(*MI, isConstLd)) {
+  if (!IsLoopInvariantInst(*MI) || !IsProfitableToHoist(*MI)) {
     // If not, try unfolding a hoistable load.
     MI = ExtractHoistableLoad(MI);
     if (!MI) return;
@@ -518,10 +506,7 @@ void MachineLICM::Hoist(MachineInstr *MI) {
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
   DEBUG({
-      errs() << "Hoisting ";
-      if (isConstLd)
-        errs() << "load from constant mem ";
-      errs() << *MI;
+      errs() << "Hoisting " << *MI;
       if (CurPreheader->getBasicBlock())
         errs() << " to MachineBasicBlock "
                << CurPreheader->getName();

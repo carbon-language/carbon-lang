@@ -1,10 +1,4 @@
 ; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+sse2 -relocation-model=pic | grep psllw | grep pb
-; XFAIL: *
-
-; This is XFAIL'd because MachineLICM is now hoisting all of the loads, and the pic
-; base appears killed in the entry block when remat is making its decisions. Remat's
-; simple heuristic decides against rematting because it doesn't want to extend the
-; live-range of the pic base; this isn't necessarily optimal.
 
 define void @f() nounwind  {
 entry:

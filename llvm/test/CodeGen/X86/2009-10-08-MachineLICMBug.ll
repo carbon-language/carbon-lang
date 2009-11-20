@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic -stats |& grep {machine-licm} | grep 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic -stats |& grep {machine-licm} | grep 2
 ; rdar://7274692
 
 %0 = type { [125 x i32] }
