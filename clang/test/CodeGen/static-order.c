@@ -1,4 +1,7 @@
-// RUN: clang-cc -emit-llvm -o - %s | not grep "zeroinitializer"
+// RUN: clang-cc -emit-llvm -o - %s | FileCheck %s
+// CHECK: ModuleID
+// CHECK-NOT: zeroinitializer
+// CHECK: define i8* @f
 
 struct s {
     int a;
