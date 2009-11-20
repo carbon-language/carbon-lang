@@ -1156,11 +1156,12 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                   dyn_cast<CXXConstructorDecl>(FD)) {
         CastKind = CastExpr::CK_ConstructorConversion;
         // Do no conversion if dealing with ... for the first conversion.
-        if (!ICS.UserDefined.EllipsisConversion)
+        if (!ICS.UserDefined.EllipsisConversion) {
           // If the user-defined conversion is specified by a constructor, the 
           // initial standard conversion sequence converts the source type to the
           // type required by the argument of the constructor
-          BeforeToType = Ctor->getParamDecl(0)->getType();
+          BeforeToType = Ctor->getParamDecl(0)->getType().getNonReferenceType();
+        }
       }    
       else
         assert(0 && "Unknown conversion function kind!");
