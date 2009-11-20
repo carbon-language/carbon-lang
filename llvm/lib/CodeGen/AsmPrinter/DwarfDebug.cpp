@@ -929,7 +929,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
     AddUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
 
   // Add source line info if available and TyDesc is not a forward declaration.
-  if (!DTy.isForwardDecl())
+  if (!DTy.isForwardDecl() && Tag != dwarf::DW_TAG_pointer_type)
     AddSourceLine(&Buffer, &DTy);
 }
 
