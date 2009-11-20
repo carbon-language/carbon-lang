@@ -61,12 +61,6 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   }
   
   QualType ThrowType = E->getSubExpr()->getType();
-  // FIXME: We only handle non-class types for now.
-  if (ThrowType->isRecordType()) {
-    ErrorUnsupported(E, "throw expression");
-    return;
-  }
-
   // FIXME: Handle cleanup.
   if (!CleanupEntries.empty()){
     ErrorUnsupported(E, "throw expression");
@@ -90,8 +84,15 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
     
     Builder.CreateStore(Value, Builder.CreateBitCast(ExceptionPtr, ValuePtrTy));
   } else {
-    // FIXME: Handle complex and aggregate expressions.
-    ErrorUnsupported(E, "throw expression");
+    // See EmitCXXConstructorCall.
+    const llvm::Type *Ty = ConvertType(ThrowType)->getPointerTo(0);
+    const CXXRecordDecl *RD;
+    RD = cast<CXXRecordDecl>(ThrowType->getAs<RecordType>()->getDecl());
+    if (RD->hasTrivialCopyConstructor()) {
+      EmitAggExpr(E->getSubExpr(), Builder.CreateBitCast(ExceptionPtr, Ty),
+                  false);
+    } else
+      ErrorUnsupported(E, "throw expression with copy ctor");
   }
   
   // Now throw the exception.
