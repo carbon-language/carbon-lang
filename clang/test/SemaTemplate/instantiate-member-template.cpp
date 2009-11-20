@@ -116,3 +116,18 @@ struct X2 {
 
 X2<int&> x2a; // expected-note{{instantiation}}
 X2<float> x2b; // expected-note{{instantiation}}
+
+namespace N0 {
+  template<typename T>
+  struct X0 { };
+  
+  struct X1 {
+    template<typename T> void f(X0<T>& vals) { g(vals); }
+    template<typename T> void g(X0<T>& vals) { }
+  };
+  
+  void test(X1 x1, X0<int> x0i, X0<long> x0l) {
+    x1.f(x0i);
+    x1.f(x0l);
+  }  
+}

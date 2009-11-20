@@ -5238,7 +5238,12 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       return true;
     }
 
-    FixOverloadedFunctionReference(MemExpr, Method);
+    MemExprE = FixOverloadedFunctionReference(MemExprE, Method);
+    if (ParenExpr *ParenE = dyn_cast<ParenExpr>(MemExprE))
+      MemExpr = dyn_cast<MemberExpr>(ParenE->getSubExpr());
+    else
+      MemExpr = dyn_cast<MemberExpr>(MemExprE);
+    
   } else {
     Method = dyn_cast<CXXMethodDecl>(MemExpr->getMemberDecl());
   }
@@ -5604,16 +5609,28 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
 /// refer (possibly indirectly) to Fn. Returns the new expr.
 Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
   if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
-    Expr *NewExpr = FixOverloadedFunctionReference(PE->getSubExpr(), Fn);
-    PE->setSubExpr(NewExpr);
-    PE->setType(NewExpr->getType());
-  } else if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    Expr *NewExpr = FixOverloadedFunctionReference(ICE->getSubExpr(), Fn);
+    Expr *SubExpr = FixOverloadedFunctionReference(PE->getSubExpr(), Fn);
+    if (SubExpr == PE->getSubExpr())
+      return PE->Retain();
+    
+    return new (Context) ParenExpr(PE->getLParen(), PE->getRParen(), SubExpr);
+  } 
+  
+  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    Expr *SubExpr = FixOverloadedFunctionReference(ICE->getSubExpr(), Fn);
     assert(Context.hasSameType(ICE->getSubExpr()->getType(), 
-                               NewExpr->getType()) &&
+                               SubExpr->getType()) &&
            "Implicit cast type cannot be determined from overload");
-    ICE->setSubExpr(NewExpr);
-  } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {
+    if (SubExpr == ICE->getSubExpr())
+      return ICE->Retain();
+    
+    return new (Context) ImplicitCastExpr(ICE->getType(), 
+                                          ICE->getCastKind(),
+                                          SubExpr,
+                                          ICE->isLvalueCast());
+  } 
+  
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {
     assert(UnOp->getOpcode() == UnaryOperator::AddrOf &&
            "Can only take the address of an overloaded function");
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
@@ -5625,59 +5642,109 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
           // We have taken the address of a pointer to member
           // function. Perform the computation here so that we get the
           // appropriate pointer to member type.
-          DRE->setDecl(Fn);
-          DRE->setType(Fn->getType());
           QualType ClassType
-            = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
-          E->setType(Context.getMemberPointerType(Fn->getType(),
-                                                  ClassType.getTypePtr()));
-          return E;
+            = Context.getTypeDeclType(
+                                  cast<RecordDecl>(Method->getDeclContext()));
+          QualType MemPtrType
+            = Context.getMemberPointerType(Fn->getType(), 
+                                           ClassType.getTypePtr());
+
+          DeclRefExpr *NewDRE 
+            = DeclRefExpr::Create(Context,
+                                  DRE->getQualifier(),
+                                  DRE->getQualifierRange(),
+                                  Fn,
+                                  DRE->getLocation(),
+                                  DRE->hasExplicitTemplateArgumentList(),
+                                  DRE->getLAngleLoc(),
+                                  DRE->getTemplateArgs(),
+                                  DRE->getNumTemplateArgs(),
+                                  DRE->getRAngleLoc(),
+                                  Fn->getType(),
+                                  DRE->isTypeDependent(),
+                                  DRE->isValueDependent());
+          
+          return new (Context) UnaryOperator(NewDRE, UnaryOperator::AddrOf,
+                                             MemPtrType,
+                                             UnOp->getOperatorLoc());
         }
       }
       // FIXME: TemplateIdRefExpr referring to a member function template
       // specialization!
     }
-    Expr *NewExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
-    UnOp->setSubExpr(NewExpr);
-    UnOp->setType(Context.getPointerType(NewExpr->getType()));
+    Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
+    if (SubExpr == UnOp->getSubExpr())
+      return UnOp->Retain();
     
-    return UnOp;
-  } else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {
-    assert((isa<OverloadedFunctionDecl>(DR->getDecl()) ||
-            isa<FunctionTemplateDecl>(DR->getDecl()) ||
-            isa<FunctionDecl>(DR->getDecl())) &&
+    return new (Context) UnaryOperator(SubExpr, UnaryOperator::AddrOf,
+                                     Context.getPointerType(SubExpr->getType()),
+                                       UnOp->getOperatorLoc());
+  }
+  
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    assert((isa<OverloadedFunctionDecl>(DRE->getDecl()) ||
+            isa<FunctionTemplateDecl>(DRE->getDecl()) ||
+            isa<FunctionDecl>(DRE->getDecl())) &&
            "Expected function or function template");
-    DR->setDecl(Fn);
-    E->setType(Fn->getType());
-  } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(E)) {
-    MemExpr->setMemberDecl(Fn);
-    E->setType(Fn->getType());
-  } else if (TemplateIdRefExpr *TID = dyn_cast<TemplateIdRefExpr>(E)) {
-    E = DeclRefExpr::Create(Context, 
-                            TID->getQualifier(), TID->getQualifierRange(),
-                            Fn, TID->getTemplateNameLoc(), 
-                            true,
-                            TID->getLAngleLoc(),
-                            TID->getTemplateArgs(),
-                            TID->getNumTemplateArgs(),
-                            TID->getRAngleLoc(),
-                            Fn->getType(), 
-                            /*FIXME?*/false, /*FIXME?*/false);
-    
+    return DeclRefExpr::Create(Context,
+                               DRE->getQualifier(),
+                               DRE->getQualifierRange(),
+                               Fn,
+                               DRE->getLocation(),
+                               DRE->hasExplicitTemplateArgumentList(),
+                               DRE->getLAngleLoc(),
+                               DRE->getTemplateArgs(),
+                               DRE->getNumTemplateArgs(),
+                               DRE->getRAngleLoc(),
+                               Fn->getType(),
+                               DRE->isTypeDependent(),
+                               DRE->isValueDependent());
+  } 
+  
+  if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(E)) {
+    assert((isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
+            isa<FunctionTemplateDecl>(MemExpr->getMemberDecl()) ||
+            isa<FunctionDecl>(MemExpr->getMemberDecl())) &&
+           "Expected member function or member function template");
+    return MemberExpr::Create(Context, MemExpr->getBase()->Retain(),
+                              MemExpr->isArrow(), 
+                              MemExpr->getQualifier(), 
+                              MemExpr->getQualifierRange(),
+                              Fn, 
+                              MemExpr->getMemberLoc(), 
+                              MemExpr->hasExplicitTemplateArgumentList(),
+                              MemExpr->getLAngleLoc(), 
+                              MemExpr->getTemplateArgs(),
+                              MemExpr->getNumTemplateArgs(),
+                              MemExpr->getRAngleLoc(),
+                              Fn->getType());
+  }
+  
+  if (TemplateIdRefExpr *TID = dyn_cast<TemplateIdRefExpr>(E)) {
     // FIXME: Don't destroy TID here, since we need its template arguments
     // to survive.
     // TID->Destroy(Context);
-  } else if (isa<UnresolvedFunctionNameExpr>(E)) {
+    return DeclRefExpr::Create(Context, 
+                               TID->getQualifier(), TID->getQualifierRange(),
+                               Fn, TID->getTemplateNameLoc(), 
+                               true,
+                               TID->getLAngleLoc(),
+                               TID->getTemplateArgs(),
+                               TID->getNumTemplateArgs(),
+                               TID->getRAngleLoc(),
+                               Fn->getType(), 
+                               /*FIXME?*/false, /*FIXME?*/false);    
+  } 
+  
+  if (isa<UnresolvedFunctionNameExpr>(E))
     return DeclRefExpr::Create(Context, 
                                /*Qualifier=*/0,
                                /*QualifierRange=*/SourceRange(),
                                Fn, E->getLocStart(),
                                Fn->getType(), false, false);
-  } else {
-    assert(false && "Invalid reference to overloaded function");
-  }
   
-  return E;
+  assert(false && "Invalid reference to overloaded function");
+  return E->Retain();
 }
 
 } // end namespace clang
