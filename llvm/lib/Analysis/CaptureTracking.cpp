@@ -106,19 +106,14 @@ bool llvm::PointerMayBeCaptured(const Value *V,
       }
       break;
     case Instruction::ICmp:
-      // Don't count comparisons of the original value against null as captures.
-      // This allows us to ignore comparisons of malloc results with null,
-      // for example.
-      if (isIdentifiedObject(V))
+      // Don't count comparisons of a no-alias return value against null as
+      // captures. This allows us to ignore comparisons of malloc results
+      // with null, for example.
+      if (isNoAliasCall(V))
         if (ConstantPointerNull *CPN =
               dyn_cast<ConstantPointerNull>(I->getOperand(1)))
           if (CPN->getType()->getAddressSpace() == 0)
             break;
-      // Don't count comparisons of two pointers within the same object
-      // as captures.
-      if (I->getOperand(0)->getUnderlyingObject() ==
-          I->getOperand(1)->getUnderlyingObject())
-        break;
       // Otherwise, be conservative. There are crazy ways to capture pointers
       // using comparisons.
       return true;
