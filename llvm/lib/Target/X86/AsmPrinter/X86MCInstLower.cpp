@@ -235,8 +235,8 @@ GetBlockAddressSymbol(const MachineOperand &MO) const {
   const char *Suffix = "";
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on BA operand");
-  case X86II::MO_NO_FLAG:                // No flag.
-  case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
+  case X86II::MO_NO_FLAG:         break; // No flag.
+  case X86II::MO_PIC_BASE_OFFSET: break; // Doesn't modify symbol name.
   case X86II::MO_GOTOFF: Suffix = "@GOTOFF"; break;
   }
 
