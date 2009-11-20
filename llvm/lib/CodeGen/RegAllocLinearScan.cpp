@@ -87,6 +87,7 @@ namespace {
       // Initialize the queue to record recently-used registers.
       if (NumRecentlyUsedRegs > 0)
         RecentRegs.resize(NumRecentlyUsedRegs, 0);
+      RecentNext = RecentRegs.begin();
     }
 
     typedef std::pair<LiveInterval*, LiveInterval::iterator> IntervalPtr;
@@ -154,14 +155,16 @@ namespace {
     std::auto_ptr<Spiller> spiller_;
 
     // The queue of recently-used registers.
-    SmallVector<unsigned, 3> RecentRegs;
+    SmallVector<unsigned, 4> RecentRegs;
+    SmallVector<unsigned, 4>::iterator RecentNext;
 
     // Record that we just picked this register.
     void recordRecentlyUsed(unsigned reg) {
       assert(reg != 0 && "Recently used register is NOREG!");
       if (!RecentRegs.empty()) {
-        std::copy(RecentRegs.begin() + 1, RecentRegs.end(), RecentRegs.begin());
-        RecentRegs.back() = reg;
+        *RecentNext++ = reg;
+        if (RecentNext == RecentRegs.end())
+          RecentNext = RecentRegs.begin();
       }
     }
 
