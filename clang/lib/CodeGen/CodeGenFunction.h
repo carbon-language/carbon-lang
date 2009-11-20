@@ -176,19 +176,23 @@ public:
   /// this behavior for branches?
   void EmitBranchThroughCleanup(llvm::BasicBlock *Dest);
 
-  /// PushConditionalTempDestruction - Should be called before a conditional
-  /// part of an expression is emitted. For example, before the RHS of the
-  /// expression below is emitted:
+  /// StartConditionalBranch - Should be called before a conditional part of an
+  /// expression is emitted. For example, before the RHS of the expression below
+  /// is emitted:
   ///
   /// b && f(T());
   ///
-  /// This is used to make sure that any temporaryes created in the conditional
+  /// This is used to make sure that any temporaries created in the conditional
   /// branch are only destroyed if the branch is taken.
-  void PushConditionalTempDestruction();
+  void StartConditionalBranch() {
+    ++ConditionalBranchLevel;
+  }
 
-  /// PopConditionalTempDestruction - Should be called after a conditional
-  /// part of an expression has been emitted.
-  void PopConditionalTempDestruction();
+  /// FinishConditionalBranch - Should be called after a conditional part of an
+  /// expression has been emitted.
+  void FinishConditionalBranch() {
+    --ConditionalBranchLevel;
+  }
 
 private:
   CGDebugInfo *DebugInfo;
@@ -298,10 +302,10 @@ private:
 
   llvm::SmallVector<CXXLiveTemporaryInfo, 4> LiveTemporaries;
 
-  /// ConditionalTempDestructionStack - Contains the number of live temporaries
-  /// when PushConditionalTempDestruction was called. This is used so that
-  /// we know how many temporaries were created by a certain expression.
-  llvm::SmallVector<size_t, 4> ConditionalTempDestructionStack;
+  /// ConditionalBranchLevel - Contains the nesting level of the current
+  /// conditional branch. This is used so that we know if a temporary should be
+  /// destroyed conditionally.
+  unsigned ConditionalBranchLevel;
 
 
   /// ByrefValueInfoMap - For each __block variable, contains a pair of the LLVM

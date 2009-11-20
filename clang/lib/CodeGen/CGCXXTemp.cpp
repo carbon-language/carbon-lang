@@ -23,7 +23,7 @@ void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
 
   // Check if temporaries need to be conditional. If so, we'll create a
   // condition boolean, initialize it to 0 and
-  if (!ConditionalTempDestructionStack.empty()) {
+  if (ConditionalBranchLevel != 0) {
     CondPtr = CreateTempAlloca(llvm::Type::getInt1Ty(VMContext), "cond");
 
     // Initialize it to false. This initialization takes place right after
@@ -141,23 +141,3 @@ LValue CodeGenFunction::EmitCXXExprWithTemporariesLValue(
 
   return LV;
 }
-
-void
-CodeGenFunction::PushConditionalTempDestruction() {
-  // Store the current number of live temporaries.
-  ConditionalTempDestructionStack.push_back(LiveTemporaries.size());
-}
-
-void CodeGenFunction::PopConditionalTempDestruction() {
- size_t NumLiveTemporaries = ConditionalTempDestructionStack.back();
- ConditionalTempDestructionStack.pop_back();
-
-  // Pop temporaries.
-  while (LiveTemporaries.size() > NumLiveTemporaries) {
-    assert(LiveTemporaries.back().CondPtr &&
-           "Conditional temporary must have a cond ptr!");
-
-    PopCXXTemporary();
-  }
-}
-

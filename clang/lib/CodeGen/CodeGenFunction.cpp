@@ -29,7 +29,8 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     Builder(cgm.getModule().getContext()),
     DebugInfo(0), IndirectBranch(0),
     SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0),
-    CXXThisDecl(0) {
+    CXXThisDecl(0),
+    ConditionalBranchLevel(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(0);
 }
