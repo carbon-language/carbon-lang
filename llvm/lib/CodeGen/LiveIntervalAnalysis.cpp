@@ -136,7 +136,8 @@ void LiveIntervals::printInstrs(raw_ostream &OS) const {
 
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
-    OS << mbbi->getName() << ":\n";
+    OS << "BB#" << mbbi->getNumber()
+       << ":\t\t# derived from " << mbbi->getName() << "\n";
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
       OS << getInstructionIndex(mii) << '\t' << *mii;
