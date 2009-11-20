@@ -19,6 +19,7 @@
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Instructions.h"
 #include "llvm/Value.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CallSite.h"
@@ -104,13 +105,25 @@ bool llvm::PointerMayBeCaptured(const Value *V,
           Worklist.push_back(U);
       }
       break;
-    case Instruction::ICmp:
-      // Comparing the pointer against null does not count as a capture.
-      if (ConstantPointerNull *CPN =
-            dyn_cast<ConstantPointerNull>(I->getOperand(1)))
-        if (CPN->getType()->getAddressSpace() == 0)
-          break;
+    case Instruction::ICmp: {
+      // Don't count comparisons of the original value against null as captures.
+      // This allows us to ignore comparisons of malloc results with null,
+      // for example.
+      if (isIdentifiedObject(V))
+        if (ConstantPointerNull *CPN =
+              dyn_cast<ConstantPointerNull>(I->getOperand(1)))
+          if (CPN->getType()->getAddressSpace() == 0)
+            break;
+      // Don't count comparisons of two pointers within the same identified
+      // object as captures.
+      Value *O0 = I->getOperand(0)->getUnderlyingObject();
+      if (isIdentifiedObject(O0) &&
+          O0 == I->getOperand(1)->getUnderlyingObject())
+        break;
+      // Otherwise, be conservative. There are crazy ways to capture pointers
+      // using comparisons.
       return true;
+    }
     default:
       // Something else - be conservative and say it is captured.
       return true;
