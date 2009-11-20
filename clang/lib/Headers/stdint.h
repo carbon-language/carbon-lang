@@ -216,16 +216,19 @@ typedef __uint_least8_t uint_fast8_t;
 #define __stdint_join3(a,b,c) a ## b ## c
 #define __stdint_exjoin3(a,b,c) __stdint_join3(a,b,c)
 
+#define  __intn_t(n) __stdint_join3( int, n, _t)
+#define __uintn_t(n) __stdint_join3(uint, n, _t)
+
 #ifndef __intptr_t_defined
-typedef __stdint_exjoin3( int, __INTPTR_WIDTH__, _t) intptr_t;
+typedef  __intn_t(__INTPTR_WIDTH__)  intptr_t;
 #define __intptr_t_defined
 #endif
-typedef __stdint_exjoin3(uint, __INTPTR_WIDTH__, _t) uintptr_t;
+typedef __uintn_t(__INTPTR_WIDTH__) uintptr_t;
 
 /* C99 7.18.1.5 Greatest-width integer types.
  */
-typedef __stdint_exjoin3( int, __INTMAX_WIDTH__, _t) intmax_t;
-typedef __stdint_exjoin3(uint, __INTMAX_WIDTH__, _t) uintmax_t;
+typedef  __intn_t(__INTMAX_WIDTH__)  intmax_t;
+typedef __uintn_t(__INTMAX_WIDTH__) uintmax_t;
 
 /* C99 7.18.4 Macros for minimum-width integer constants.
  *

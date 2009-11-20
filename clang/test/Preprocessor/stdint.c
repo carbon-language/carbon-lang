@@ -1158,6 +1158,35 @@
 // X86_64:INTMAX_C_(0) 0L
 // X86_64:UINTMAX_C_(0) 0UL
 //
+//
+// stdint.h forms several macro definitions by pasting together identifiers
+// to form names (eg. int32_t is formed from int ## 32 ## _t). The following 
+// case tests that these joining operations are performed correctly even if
+// the identifiers used in the operations (int, uint, _t, INT, UINT, _MIN,
+// _MAX, and _C(v)) are themselves macros.
+//
+// RUN: clang-cc -E -ffreestanding -Dint=a -Duint=b -D_t=c -DINT=d -DUINT=e -D_MIN=f -D_MAX=g '-D_C(v)=h' -triple=i386-none-none %s | FileCheck -check-prefix JOIN %s
+// JOIN:typedef int32_t intptr_t;
+// JOIN:typedef uint32_t uintptr_t;
+// JOIN:typedef int64_t intmax_t;
+// JOIN:typedef uint64_t uintmax_t;
+// TODO:INTPTR_MIN_ (-2147483647 -1)
+// TODO:INTPTR_MAX_ 2147483647
+// TODO:UINTPTR_MAX_ 4294967295U
+// TODO:PTRDIFF_MIN_ (-2147483647 -1)
+// TODO:PTRDIFF_MAX_ 2147483647
+// TODO:SIZE_MAX_ 4294967295U
+// TODO:INTMAX_MIN_ (-9223372036854775807LL -1)
+// TODO:INTMAX_MAX_ 9223372036854775807LL
+// TODO:UINTMAX_MAX_ 18446744073709551615ULL
+// TODO:SIG_ATOMIC_MIN_ (-2147483647 -1)
+// TODO:SIG_ATOMIC_MAX_ 2147483647
+// TODO:WINT_MIN_ (-2147483647 -1)
+// TODO:WINT_MAX_ 2147483647
+// TODO:WCHAR_MAX_ 2147483647
+// TODO:WCHAR_MIN_ (-2147483647 -1)
+// TODO:INTMAX_C_(0) 0LL
+// TODO:UINTMAX_C_(0) 0ULL
 
 #include <stdint.h>
 
