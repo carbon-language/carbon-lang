@@ -127,7 +127,8 @@ private:
 
   void SelectBasicBlock(BasicBlock *LLVMBB,
                         BasicBlock::iterator Begin,
-                        BasicBlock::iterator End);
+                        BasicBlock::iterator End,
+                        bool &HadTailCall);
   void CodeGenAndEmitDAG();
   void LowerArguments(BasicBlock *BB);
   

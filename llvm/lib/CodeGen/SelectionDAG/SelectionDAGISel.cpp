@@ -376,7 +376,8 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
-                                        BasicBlock::iterator End) {
+                                        BasicBlock::iterator End,
+                                        bool &HadTailCall) {
   SDL->setCurrentBasicBlock(BB);
   MetadataContext &TheMetadata = LLVMBB->getParent()->getContext().getMetadata();
   unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
@@ -421,6 +422,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
 
   // Final step, emit the lowered DAG as machine code.
   CodeGenAndEmitDAG();
+  HadTailCall = SDL->HasTailCall;
   SDL->clear();
 }
 
@@ -797,7 +799,16 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
           }
 
           SDL->setCurDebugLoc(FastIS->getCurDebugLoc());
-          SelectBasicBlock(LLVMBB, BI, next(BI));
+
+          bool HadTailCall = false;
+          SelectBasicBlock(LLVMBB, BI, next(BI), HadTailCall);
+
+          // If the call was emitted as a tail call, we're done with the block.
+          if (HadTailCall) {
+            BI = End;
+            break;
+          }
+
           // If the instruction was codegen'd with multiple blocks,
           // inform the FastISel object where to resume inserting.
           FastIS->setCurrentBlock(BB);
@@ -827,7 +838,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
       // If FastISel is run and it has known DebugLoc then use it.
       if (FastIS && !FastIS->getCurDebugLoc().isUnknown())
         SDL->setCurDebugLoc(FastIS->getCurDebugLoc());
-      SelectBasicBlock(LLVMBB, BI, End);
+      bool HadTailCall;
+      SelectBasicBlock(LLVMBB, BI, End, HadTailCall);
     }
 
     FinishBasicBlock();
