@@ -157,7 +157,7 @@ private:
                           GRExprEngine &Eng, const Stmt *S, ExplodedNode *Pred,
                           SymbolReaper &SymReaper, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, 
-                     ProgramPoint::PostPurgeDeadSymbolsKind, Pred->getState());
+                     ProgramPoint::PostPurgeDeadSymbolsKind);
     EvalDeadSymbols(C, S, SymReaper);
   }
 
