@@ -4,6 +4,11 @@
 // RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t-64.ll
 // RUN: FileCheck -check-prefix LPLL64 --input-file=%t-64.ll %s
 
+
+// CHECK-LP64: main:
+// CHECK-LP64: movl $1, 12(%rax)
+// CHECK-LP64: movl $2, 8(%rax)
+
 struct B {
   virtual void bar1();
   virtual void bar2();
@@ -11,6 +16,12 @@ struct B {
 };
 void B::bar1() { }
 void B::bar2() { }
+
+// CHECK-LP64: __ZTV1B:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI1B
+// CHECK-LP64-NEXT: .quad __ZN1B4bar1Ev
+// CHECK-LP64-NEXT: .quad __ZN1B4bar2Ev
 
 struct C {
   virtual void bee1();
@@ -40,6 +51,28 @@ public:
   void *f;
 };
 void F::foo() { }
+
+// CHECK-LP64: __ZTV1F:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad 16
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI1F
+// CHECK-LP64-NEXT: .quad __ZN1D3booEv
+// CHECK-LP64-NEXT: .quad __ZN1F3fooEv
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .quad __ZTI1F
+// CHECK-LP64-NEXT: .quad __ZN2D13barEv
+// CHECK-LP64-NEXT: .quad __ZN2D14bar2Ev
+// CHECK-LP64-NEXT: .quad __ZN2D14bar3Ev
+// CHECK-LP64-NEXT: .quad __ZN2D14bar4Ev
+// CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
+
 
 int j;
 void *vp;
@@ -79,9 +112,18 @@ int main() {
   ap->b = 2;
 }
 
-// CHECK-LP64: main:
-// CHECK-LP64: movl $1, 12(%rax)
-// CHECK-LP64: movl $2, 8(%rax)
+// CHECK-LP64: __ZTV1A:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI1A
+// CHECK-LP64-NEXT: .quad __ZN1B4bar1Ev
+// CHECK-LP64-NEXT: .quad __ZN1B4bar2Ev
+// CHECK-LP64-NEXT: .quad __ZN1A4foo1Ev
+// CHECK-LP64-NEXT: .quad __ZN1A4foo2Ev
+// CHECK-LP64-NEXT: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .quad __ZTI1A
+// CHECK-LP64-NEXT: .quad __ZN1C4bee1Ev
+// CHECK-LP64-NEXT: .quad __ZN1C4bee2Ev
+
 
 struct test12_A {
   virtual void foo0() { }
@@ -675,11 +717,9 @@ virtual void foo_B2() { }
 };
 
 struct test16_D : test16_NV1, virtual test16_B2 {
-  virtual void bar();
-  virtual test16_D *foo1();
+  virtual void bar() { }
+  virtual test16_D *foo1() { return 0; }
 };
-
-void test16_D::bar() { }
 
 // CHECK-LP64: __ZTV8test16_D:
 // CHECK-LP64-NEXT: .quad 32
@@ -1039,45 +1079,6 @@ class test21_D : public test21_B, public test21_B1 {
 // CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 80
 
 
-
-// CHECK-LP64: __ZTV1B:
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .quad __ZTI1B
-// CHECK-LP64-NEXT: .quad __ZN1B4bar1Ev
-// CHECK-LP64-NEXT: .quad __ZN1B4bar2Ev
-
-// CHECK-LP64: __ZTV1A:
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .quad __ZTI1A
-// CHECK-LP64-NEXT: .quad __ZN1B4bar1Ev
-// CHECK-LP64-NEXT: .quad __ZN1B4bar2Ev
-// CHECK-LP64-NEXT: .quad __ZN1A4foo1Ev
-// CHECK-LP64-NEXT: .quad __ZN1A4foo2Ev
-// CHECK-LP64-NEXT: .quad 18446744073709551600
-// CHECK-LP64-NEXT: .quad __ZTI1A
-// CHECK-LP64-NEXT: .quad __ZN1C4bee1Ev
-// CHECK-LP64-NEXT: .quad __ZN1C4bee2Ev
-
-// CHECK-LP64: __ZTV1F:
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .quad 16
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .quad __ZTI1F
-// CHECK-LP64-NEXT: .quad __ZN1D3booEv
-// CHECK-LP64-NEXT: .quad __ZN1F3fooEv
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .space 8
-// CHECK-LP64-NEXT: .quad 18446744073709551600
-// CHECK-LP64-NEXT: .quad __ZTI1F
-// CHECK-LP64-NEXT: .quad __ZN2D13barEv
-// CHECK-LP64-NEXT: .quad __ZN2D14bar2Ev
-// CHECK-LP64-NEXT: .quad __ZN2D14bar3Ev
-// CHECK-LP64-NEXT: .quad __ZN2D14bar4Ev
-// CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
 
 test21_D d21;
 test20_D d20;

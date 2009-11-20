@@ -623,7 +623,9 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
     const CGRecordLayout &CGLayout = Types.getCGRecordLayout(RD);
     // A definition of a KeyFunction, generates all the class data, such
     // as vtable, rtti and the VTT.
-    if (CGLayout.getKeyFunction() == MD)
+    if (CGLayout.getKeyFunction()
+        && (CGLayout.getKeyFunction()->getCanonicalDecl()
+            == MD->getCanonicalDecl()))
       getVtableInfo().GenerateClassData(RD);
   }
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))

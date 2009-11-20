@@ -97,7 +97,7 @@ void test1() {
 // CHECK-LL-NEXT:  br i1 %4, label %5, label %9
 // CHECK-LL:       ; <label>:5
 // CHECK-LL-NEXT:  %6 = bitcast %class.test1_A* %tmp to i8*
-// CHECK-LL-NEXT:  %7 = call i8* @__dynamic_cast(i8* %6, i8* bitcast (i8** @_ZTI7test1_B to i8*), i8* bitcast (i8** @_ZTI7test1_D to i8*), i64 -1)
+// CHECK-LL-NEXT:  %7 = call i8* @__dynamic_cast(i8* %6, i8* bitcast ({{.*}} @_ZTI7test1_B to i8*), i8* bitcast (i8** @_ZTI7test1_D to i8*), i64 -1)
 // CHECK-LL-NEXT:  %8 = bitcast i8* %7 to %class.test1_D*
 // CHECK-LL-NEXT:  br label %10
 // CHECK-LL:       ; <label>:9
@@ -120,7 +120,7 @@ void test1() {
 // CHECK-LL-NEXT:  br i1 %12, label %13, label %17
 // CHECK-LL:       ; <label>:13
 // CHECK-LL-NEXT:  %14 = bitcast %class.test1_A* %tmp6 to i8*
-// CHECK-LL-NEXT:  %15 = call i8* @__dynamic_cast(i8* %14, i8* bitcast (i8** @_ZTI7test1_B to i8*), i8* bitcast (i8** @_ZTI7test1_A to i8*), i64 -1)
+// CHECK-LL-NEXT:  %15 = call i8* @__dynamic_cast(i8* %14, i8* bitcast ({{.*}} @_ZTI7test1_B to i8*), i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i64 -1)
 // CHECK-LL-NEXT:  %16 = bitcast i8* %15 to %class.test1_A*
 // CHECK-LL-NEXT:  br label %18
 // CHECK-LL:       ; <label>:17
@@ -143,7 +143,7 @@ void test1() {
 // CHECK-LL-NEXT:  br i1 %20, label %21, label %25
 // CHECK-LL:       ; <label>:21
 // CHECK-LL-NEXT:  %22 = bitcast %class.test1_A* %tmp14 to i8*
-// CHECK-LL-NEXT:  %23 = call i8* @__dynamic_cast(i8* %22, i8* bitcast (i8** @_ZTI7test1_A to i8*), i8* bitcast (i8** @_ZTI7test1_B to i8*), i64 -1)
+// CHECK-LL-NEXT:  %23 = call i8* @__dynamic_cast({{.*}} %22, i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_B to i8*), i64 -1)
 // CHECK-LL-NEXT:  %24 = bitcast i8* %23 to %class.test1_A*
 // CHECK-LL-NEXT:  br label %26
 // CHECK-LL:       ; <label>:25
@@ -214,7 +214,7 @@ void test1() {
 // CHECK-LL-NEXT:  br i1 %34, label %35, label %39
 // CHECK-LL:       ; <label>:35
 // CHECK-LL-NEXT:  %36 = bitcast %class.test1_A* %tmp54 to i8*
-// CHECK-LL-NEXT:  %37 = call i8* @__dynamic_cast(i8* %36, i8* bitcast (i8** @_ZTI7test1_A to i8*), i8* bitcast (i8** @_ZTI7test1_D to i8*), i64 -1)
+// CHECK-LL-NEXT:  %37 = call i8* @__dynamic_cast(i8* %36, i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_D to i8*), i64 -1)
 // CHECK-LL-NEXT:  %38 = bitcast i8* %37 to %class.test1_D*
 // CHECK-LL-NEXT:  br label %40
 // CHECK-LL:       ; <label>:39
@@ -237,7 +237,7 @@ void test1() {
 // CHECK-LL-NEXT:  br i1 %42, label %43, label %47
 // CHECK-LL:       ; <label>:43
 // CHECK-LL-NEXT:  %44 = bitcast %class.test1_A* %tmp63 to i8*
-// CHECK-LL-NEXT:  %45 = call i8* @__dynamic_cast(i8* %44, i8* bitcast (i8** @_ZTI7test1_A to i8*), i8* bitcast (i8** @_ZTI7test1_E to i8*), i64 -1)
+// CHECK-LL-NEXT:  %45 = call i8* @__dynamic_cast(i8* %44, i8* bitcast ({{.*}} @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_E to i8*), i64 -1)
 // CHECK-LL-NEXT:  %46 = bitcast i8* %45 to %class.test1_E*
 // CHECK-LL-NEXT:  br label %48
 // CHECK-LL:       ; <label>:47
@@ -279,7 +279,7 @@ void test1() {
 // CHECK-LL:       if.end85:
 // CHECK-LL-NEXT:  br i1 false, label %50, label %53
 // CHECK-LL:       ; <label>:50
-// CHECK-LL-NEXT:  %51 = call i8* @__dynamic_cast(i8* null, i8* bitcast (i8** @_ZTI7test1_A to i8*), i8* bitcast (i8** @_ZTI7test1_D to i8*), i64 -1)
+// CHECK-LL-NEXT:  %51 = call i8* @__dynamic_cast(i8* null, i8* bitcast ({{.*}}* @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_D to i8*), i64 -1)
 // CHECK-LL-NEXT:  %52 = bitcast i8* %51 to %class.test1_D*
 // CHECK-LL-NEXT:  br label %54
 // CHECK-LL:       ; <label>:53
