@@ -1630,12 +1630,14 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   return true;
 }
 
-MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BlockAddress *BA) const {
-  return GetBlockAddressSymbol(BA->getFunction(), BA->getBasicBlock());
+MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BlockAddress *BA,
+                                            const char *Suffix) const {
+  return GetBlockAddressSymbol(BA->getFunction(), BA->getBasicBlock(), Suffix);
 }
 
 MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
-                                            const BasicBlock *BB) const {
+                                            const BasicBlock *BB,
+                                            const char *Suffix) const {
   assert(BB->hasName() &&
          "Address of anonymous basic block not supported yet!");
 
@@ -1647,7 +1649,8 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
   SmallString<60> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "BA"
     << FuncName.size() << '_' << FuncName << '_'
-    << Mang->makeNameProper(BB->getName());
+    << Mang->makeNameProper(BB->getName())
+    << Suffix;
 
   return OutContext.GetOrCreateSymbol(Name.str());
 }

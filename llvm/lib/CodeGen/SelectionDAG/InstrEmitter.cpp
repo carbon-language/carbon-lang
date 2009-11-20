@@ -350,7 +350,8 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
     MI->addOperand(MachineOperand::CreateES(ES->getSymbol(),
                                             ES->getTargetFlags()));
   } else if (BlockAddressSDNode *BA = dyn_cast<BlockAddressSDNode>(Op)) {
-    MI->addOperand(MachineOperand::CreateBA(BA->getBlockAddress()));
+    MI->addOperand(MachineOperand::CreateBA(BA->getBlockAddress(),
+                                            BA->getTargetFlags()));
   } else {
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Flag &&

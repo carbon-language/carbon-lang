@@ -1174,7 +1174,7 @@ SDValue PPCTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
   DebugLoc DL = Op.getDebugLoc();
 
   BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  SDValue TgtBA = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
+  SDValue TgtBA = DAG.getBlockAddress(BA, PtrVT, /*isTarget=*/true);
   SDValue Zero = DAG.getConstant(0, PtrVT);
   SDValue Hi = DAG.getNode(PPCISD::Hi, DL, PtrVT, TgtBA, Zero);
   SDValue Lo = DAG.getNode(PPCISD::Lo, DL, PtrVT, TgtBA, Zero);

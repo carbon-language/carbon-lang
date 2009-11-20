@@ -252,8 +252,8 @@ namespace {
       else if (AM.JT != -1)
         Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32, AM.SymbolFlags);
       else if (AM.BlockAddr)
-        Disp = CurDAG->getBlockAddress(AM.BlockAddr, DebugLoc()/*MVT::i32*/,
-                                       true /*AM.SymbolFlags*/);
+        Disp = CurDAG->getBlockAddress(AM.BlockAddr, MVT::i32,
+                                       true, AM.SymbolFlags);
       else
         Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
 
@@ -777,7 +777,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       AM.SymbolFlags = J->getTargetFlags();
     } else {
       AM.BlockAddr = cast<BlockAddressSDNode>(N0)->getBlockAddress();
-      //AM.SymbolFlags = cast<BlockAddressSDNode>(N0)->getTargetFlags();
+      AM.SymbolFlags = cast<BlockAddressSDNode>(N0)->getTargetFlags();
     }
 
     if (N.getOpcode() == X86ISD::WrapperRIP)
@@ -808,7 +808,7 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       AM.SymbolFlags = J->getTargetFlags();
     } else {
       AM.BlockAddr = cast<BlockAddressSDNode>(N0)->getBlockAddress();
-      //AM.SymbolFlags = cast<BlockAddressSDNode>(N0)->getTargetFlags();
+      AM.SymbolFlags = cast<BlockAddressSDNode>(N0)->getTargetFlags();
     }
     return false;
   }

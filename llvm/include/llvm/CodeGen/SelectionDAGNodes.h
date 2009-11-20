@@ -2029,12 +2029,16 @@ public:
 
 class BlockAddressSDNode : public SDNode {
   BlockAddress *BA;
+  unsigned char TargetFlags;
   friend class SelectionDAG;
-  BlockAddressSDNode(unsigned NodeTy, DebugLoc dl, EVT VT, BlockAddress *ba)
-    : SDNode(NodeTy, dl, getSDVTList(VT)), BA(ba) {
+  BlockAddressSDNode(unsigned NodeTy, EVT VT, BlockAddress *ba,
+                     unsigned char Flags)
+    : SDNode(NodeTy, DebugLoc::getUnknownLoc(), getSDVTList(VT)),
+             BA(ba), TargetFlags(Flags) {
   }
 public:
   BlockAddress *getBlockAddress() const { return BA; }
+  unsigned char getTargetFlags() const { return TargetFlags; }
 
   static bool classof(const BlockAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {

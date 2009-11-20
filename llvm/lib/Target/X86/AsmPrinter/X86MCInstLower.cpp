@@ -43,7 +43,6 @@ MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
                                Twine(AsmPrinter.getFunctionNumber())+"$pb");
 }
 
-
 /// LowerGlobalAddressOperand - Lower an MO_GlobalAddress operand to an
 /// MCOperand.
 MCSymbol *X86MCInstLower::
@@ -231,6 +230,19 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 
+MCSymbol *X86MCInstLower::
+GetBlockAddressSymbol(const MachineOperand &MO) const {
+  const char *Suffix = "";
+  switch (MO.getTargetFlags()) {
+  default: llvm_unreachable("Unknown target flag on BA operand");
+  case X86II::MO_NO_FLAG:                // No flag.
+  case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
+  case X86II::MO_GOTOFF: Suffix = "@GOTOFF"; break;
+  }
+
+  return AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress(), Suffix);
+}
+
 MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                              MCSymbol *Sym) const {
   // FIXME: We would like an efficient form for this, so we don't have to do a
@@ -331,8 +343,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
       break;
     case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetBlockAddressSymbol(
-                                                 MO.getBlockAddress()));
+      MCOp = LowerSymbolOperand(MO, GetBlockAddressSymbol(MO));
       break;
     }
     

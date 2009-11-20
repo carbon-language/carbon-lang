@@ -884,7 +884,7 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
     }
 
     if (BlockAddress *BA = dyn_cast<BlockAddress>(C))
-      return DAG.getBlockAddress(BA, getCurDebugLoc());
+      return DAG.getBlockAddress(BA, VT);
 
     const VectorType *VecTy = cast<VectorType>(V->getType());
     unsigned NumElements = VecTy->getNumElements();

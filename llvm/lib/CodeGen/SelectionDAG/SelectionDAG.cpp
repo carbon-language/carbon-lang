@@ -462,7 +462,8 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   }
   case ISD::TargetBlockAddress:
   case ISD::BlockAddress: {
-    ID.AddPointer(cast<BlockAddressSDNode>(N));
+    ID.AddPointer(cast<BlockAddressSDNode>(N)->getBlockAddress());
+    ID.AddInteger(cast<BlockAddressSDNode>(N)->getTargetFlags());
     break;
   }
   } // end switch (N->getOpcode())
@@ -1323,18 +1324,20 @@ SDValue SelectionDAG::getLabel(unsigned Opcode, DebugLoc dl,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getBlockAddress(BlockAddress *BA, DebugLoc DL,
-                                      bool isTarget) {
+SDValue SelectionDAG::getBlockAddress(BlockAddress *BA, EVT VT,
+                                      bool isTarget,
+                                      unsigned char TargetFlags) {
   unsigned Opc = isTarget ? ISD::TargetBlockAddress : ISD::BlockAddress;
 
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(TLI.getPointerTy()), 0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddPointer(BA);
+  ID.AddInteger(TargetFlags);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<BlockAddressSDNode>();
-  new (N) BlockAddressSDNode(Opc, DL, TLI.getPointerTy(), BA);
+  new (N) BlockAddressSDNode(Opc, VT, BA, TargetFlags);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -5810,6 +5813,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     OS << ", ";
     WriteAsOperand(OS, BA->getBlockAddress()->getBasicBlock(), false);
     OS << ">";
+    if (unsigned int TF = BA->getTargetFlags())
+      OS << " [TF=" << TF << ']';
   }
 }
 

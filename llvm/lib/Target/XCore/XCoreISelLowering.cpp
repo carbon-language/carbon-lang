@@ -295,7 +295,7 @@ LowerBlockAddress(SDValue Op, SelectionDAG &DAG)
   DebugLoc DL = Op.getDebugLoc();
 
   BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  SDValue Result = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
+  SDValue Result = DAG.getBlockAddress(BA, getPointerTy(), /*isTarget=*/true);
 
   return DAG.getNode(XCoreISD::PCRelativeWrapper, DL, getPointerTy(), Result);
 }

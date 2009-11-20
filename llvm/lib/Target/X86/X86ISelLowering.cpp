@@ -4722,18 +4722,27 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 X86TargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) {
-  unsigned WrapperKind = X86ISD::Wrapper;
+  // Create the TargetBlockAddressAddress node.
+  unsigned char OpFlags =
+    Subtarget->ClassifyBlockAddressReference();
   CodeModel::Model M = getTargetMachine().getCodeModel();
+  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Result = DAG.getBlockAddress(BA, getPointerTy(),
+                                       /*isTarget=*/true, OpFlags);
+
   if (Subtarget->isPICStyleRIPRel() &&
       (M == CodeModel::Small || M == CodeModel::Kernel))
-    WrapperKind = X86ISD::WrapperRIP;
+    Result = DAG.getNode(X86ISD::WrapperRIP, dl, getPointerTy(), Result);
+  else
+    Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
 
-  DebugLoc DL = Op.getDebugLoc();
-
-  BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  SDValue Result = DAG.getBlockAddress(BA, DL, /*isTarget=*/true);
-
-  Result = DAG.getNode(WrapperKind, DL, getPointerTy(), Result);
+  // With PIC, the address is actually $g + Offset.
+  if (isGlobalRelativeToPICBase(OpFlags)) {
+    Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                         DAG.getNode(X86ISD::GlobalBaseReg, dl, getPointerTy()),
+                         Result);
+  }
 
   return Result;
 }

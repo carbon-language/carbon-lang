@@ -28,6 +28,21 @@ using namespace llvm;
 #include <intrin.h>
 #endif
 
+/// ClassifyBlockAddressReference - Classify a blockaddress reference for the
+/// current subtarget according to how we should reference it in a non-pcrel
+/// context.
+unsigned char X86Subtarget::
+ClassifyBlockAddressReference() const {
+  if (isPICStyleGOT())    // 32-bit ELF targets.
+    return X86II::MO_GOTOFF;
+  
+  if (isPICStyleStubPIC())   // Darwin/32 in PIC mode.
+    return X86II::MO_PIC_BASE_OFFSET;
+  
+  // Direct static reference to label.
+  return X86II::MO_NO_FLAG;
+}
+
 /// ClassifyGlobalReference - Classify a global variable reference for the
 /// current subtarget according to how we should reference it in a non-pcrel
 /// context.

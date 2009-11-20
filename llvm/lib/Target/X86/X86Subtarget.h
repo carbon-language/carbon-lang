@@ -199,6 +199,11 @@ public:
   unsigned char ClassifyGlobalReference(const GlobalValue *GV,
                                         const TargetMachine &TM)const;
 
+  /// ClassifyBlockAddressReference - Classify a blockaddress reference for the
+  /// current subtarget according to how we should reference it in a non-pcrel
+  /// context.
+  unsigned char ClassifyBlockAddressReference() const;
+
   /// IsLegalToCallImmediateAddr - Return true if the subtarget allows calls
   /// to immediate address.
   bool IsLegalToCallImmediateAddr(const TargetMachine &TM) const;

@@ -435,10 +435,12 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateBA(BlockAddress *BA) {
+  static MachineOperand CreateBA(BlockAddress *BA,
+                                 unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_BlockAddress);
     Op.Contents.OffsetedInfo.Val.BA = BA;
     Op.setOffset(0); // Offset is always 0.
+    Op.setTargetFlags(TargetFlags);
     return Op;
   }
 
