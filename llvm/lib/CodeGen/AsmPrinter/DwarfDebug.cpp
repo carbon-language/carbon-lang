@@ -60,12 +60,12 @@ class CompileUnit {
   /// GVToDieMap - Tracks the mapping of unit level debug informaton
   /// variables to debug information entries.
   /// FIXME : Rename GVToDieMap -> NodeToDieMap
-  std::map<MDNode *, DIE *> GVToDieMap;
+  ValueMap<MDNode *, DIE *> GVToDieMap;
 
   /// GVToDIEEntryMap - Tracks the mapping of unit level debug informaton
   /// descriptors to debug information entries using a DIEEntry proxy.
   /// FIXME : Rename
-  std::map<MDNode *, DIEEntry *> GVToDIEEntryMap;
+  ValueMap<MDNode *, DIEEntry *> GVToDIEEntryMap;
 
   /// Globals - A map of globally visible named entities for this unit.
   ///
@@ -81,7 +81,7 @@ public:
 
   // Accessors.
   unsigned getID() const { return ID; }
-  DIE* getDie() const { return Die; }
+  DIE* getCUDie() const { return Die; }
   StringMap<DIE*> &getGlobals() { return Globals; }
 
   /// hasContent - Return true if this compile unit has something to write out.
@@ -92,14 +92,22 @@ public:
   ///
   void AddGlobal(const std::string &Name, DIE *Die) { Globals[Name] = Die; }
 
-  /// getDieMapSlotFor - Returns the debug information entry map slot for the
+  /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable.
-  DIE *&getDieMapSlotFor(MDNode *N) { return GVToDieMap[N]; }
+  DIE *getDIE(MDNode *N) { return GVToDieMap.lookup(N); }
+  
+  /// insertDIE - Insert DIE into the map.
+  void insertDIE(MDNode *N, DIE *D) {
+    GVToDieMap.insert(std::make_pair(N, D));
+  }
 
-  /// getDIEEntrySlotFor - Returns the debug information entry proxy slot for
-  /// the specified debug variable.
-  DIEEntry *&getDIEEntrySlotFor(MDNode *N) {
-    return GVToDIEEntryMap[N];
+  /// getDIEEntry - Returns the debug information entry for the speciefied
+  /// debug variable.
+  DIEEntry *getDIEEntry(MDNode *N) { return GVToDIEEntryMap.lookup(N); }
+
+  /// insertDIEEntry - Insert debug information entry into the map.
+  void insertDIEEntry(MDNode *N, DIEEntry *E) {
+    GVToDIEEntryMap.insert(std::make_pair(N, E));
   }
 
   /// AddDie - Adds or interns the DIE to the compile unit.
@@ -846,7 +854,7 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
     return;
 
   // Check for pre-existence.
-  DIEEntry *&Slot = DW_Unit->getDIEEntrySlotFor(Ty.getNode());
+  DIEEntry *Slot = DW_Unit->getDIEEntry(Ty.getNode());
 
   // If it exists then use the existing value.
   if (Slot) {
@@ -856,6 +864,7 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
 
   // Set up proxy.
   Slot = CreateDIEEntry();
+  DW_Unit->insertDIEEntry(Ty.getNode(), Slot);
 
   // Construct type.
   DIE Buffer(dwarf::DW_TAG_base_type);
@@ -872,7 +881,7 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   DIE *Die = NULL;
   DIDescriptor Context = Ty.getContext();
   if (!Context.isNull())
-    Die = DW_Unit->getDieMapSlotFor(Context.getNode());
+    Die = DW_Unit->getDIE(Context.getNode());
 
   if (Die) {
     DIE *Child = new DIE(Buffer);
@@ -1236,8 +1245,7 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
   }
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  DIE *&Slot = DW_Unit->getDieMapSlotFor(SP.getNode());
-  Slot = SPDie;
+  DW_Unit->insertDIE(SP.getNode(), SPDie);
   return SPDie;
 }
 
@@ -1407,7 +1415,7 @@ static DISubprogram getDISubprogram(MDNode *N) {
 
 DIE *DwarfDebug::UpdateSubprogramScopeDIE(MDNode *SPNode) {
 
- DIE *SPDie = ModuleCU->getDieMapSlotFor(SPNode);
+ DIE *SPDie = ModuleCU->getDIE(SPNode);
  assert (SPDie && "Unable to find subprogram DIE!");
  AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
           DWLabel("func_begin", SubprogramCount));
@@ -1475,7 +1483,7 @@ DIE *DwarfDebug::ConstructInlinedScopeDIE(DbgScope *Scope) {
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
 
   DISubprogram InlinedSP = getDISubprogram(DS.getNode());
-  DIE *&OriginDIE = ModuleCU->getDieMapSlotFor(InlinedSP.getNode());
+  DIE *OriginDIE = ModuleCU->getDIE(InlinedSP.getNode());
   assert (OriginDIE && "Unable to find Origin DIE!");
   AddDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
               dwarf::DW_FORM_ref4, OriginDIE);
@@ -1540,7 +1548,7 @@ DIE *DwarfDebug::ConstructVariableDIE(DbgVariable *DV,
   if (AbsDIE) {
     DIScope DS(Scope->getScopeNode());
     DISubprogram InlinedSP = getDISubprogram(DS.getNode());
-    DIE *&OriginSPDIE = ModuleCU->getDieMapSlotFor(InlinedSP.getNode());
+    DIE *OriginSPDIE = ModuleCU->getDIE(InlinedSP.getNode());
     (void) OriginSPDIE;
     assert (OriginSPDIE && "Unable to find Origin DIE for the SP!");
     DIE *AbsDIE = DV->getAbstractVariable()->getDIE();
@@ -1591,7 +1599,7 @@ DIE *DwarfDebug::ConstructScopeDIE(DbgScope *Scope) {
    ScopeDIE = ConstructInlinedScopeDIE(Scope);
  else if (DS.isSubprogram()) {
    if (Scope->isAbstractScope())
-     ScopeDIE = ModuleCU->getDieMapSlotFor(DS.getNode());
+     ScopeDIE = ModuleCU->getDIE(DS.getNode());
    else
      ScopeDIE = UpdateSubprogramScopeDIE(DS.getNode());
  }
@@ -1705,17 +1713,16 @@ void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
     return;
 
   // Check for pre-existence.
-  DIE *&Slot = ModuleCU->getDieMapSlotFor(DI_GV.getNode());
-  if (Slot)
+  if (ModuleCU->getDIE(DI_GV.getNode()))
     return;
 
   DIE *VariableDie = CreateGlobalVariableDIE(ModuleCU, DI_GV);
 
   // Add to map.
-  Slot = VariableDie;
+  ModuleCU->insertDIE(N, VariableDie);
 
   // Add to context owner.
-  ModuleCU->getDie()->AddChild(VariableDie);
+  ModuleCU->getCUDie()->AddChild(VariableDie);
 
   // Expose as global. FIXME - need to check external flag.
   ModuleCU->AddGlobal(DI_GV.getName(), VariableDie);
@@ -1726,8 +1733,7 @@ void DwarfDebug::ConstructSubprogram(MDNode *N) {
   DISubprogram SP(N);
 
   // Check for pre-existence.
-  DIE *&Slot = ModuleCU->getDieMapSlotFor(N);
-  if (Slot)
+  if (ModuleCU->getDIE(N))
     return;
 
   if (!SP.isDefinition())
@@ -1738,10 +1744,10 @@ void DwarfDebug::ConstructSubprogram(MDNode *N) {
   DIE *SubprogramDie = CreateSubprogramDIE(ModuleCU, SP);
 
   // Add to map.
-  Slot = SubprogramDie;
+  ModuleCU->insertDIE(N, SubprogramDie);
 
   // Add to context owner.
-  ModuleCU->getDie()->AddChild(SubprogramDie);
+  ModuleCU->getCUDie()->AddChild(SubprogramDie);
 
   // Expose as global.
   ModuleCU->AddGlobal(SP.getName(), SubprogramDie);
@@ -2290,7 +2296,7 @@ void DwarfDebug::SizeAndOffsets() {
     sizeof(int32_t) + // Offset Into Abbrev. Section
     sizeof(int8_t);   // Pointer Size (in bytes)
 
-  SizeAndOffsetDie(ModuleCU->getDie(), Offset, true);
+  SizeAndOffsetDie(ModuleCU->getCUDie(), Offset, true);
   CompileUnitOffsets[ModuleCU] = 0;
 }
 
@@ -2402,7 +2408,7 @@ void DwarfDebug::EmitDIE(DIE *Die) {
 /// EmitDebugInfo / EmitDebugInfoPerCU - Emit the debug info section.
 ///
 void DwarfDebug::EmitDebugInfoPerCU(CompileUnit *Unit) {
-  DIE *Die = Unit->getDie();
+  DIE *Die = Unit->getCUDie();
 
   // Emit the compile units header.
   EmitLabel("info_begin", Unit->getID());
