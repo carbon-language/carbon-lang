@@ -88,9 +88,29 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
     const llvm::Type *Ty = ConvertType(ThrowType)->getPointerTo(0);
     const CXXRecordDecl *RD;
     RD = cast<CXXRecordDecl>(ThrowType->getAs<RecordType>()->getDecl());
+    llvm::Value *This = Builder.CreateBitCast(ExceptionPtr, Ty);
     if (RD->hasTrivialCopyConstructor()) {
-      EmitAggExpr(E->getSubExpr(), Builder.CreateBitCast(ExceptionPtr, Ty),
-                  false);
+      EmitAggExpr(E->getSubExpr(), This, false);
+    } else if (CXXConstructorDecl *CopyCtor
+               = RD->getCopyConstructor(getContext(), 0)) {
+      // FIXME: region management
+      llvm::Value *Src = EmitLValue(E->getSubExpr()).getAddress();
+
+      // Stolen from EmitClassAggrMemberwiseCopy
+      llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(CopyCtor,
+                                                        Ctor_Complete);
+      CallArgList CallArgs;
+      CallArgs.push_back(std::make_pair(RValue::get(This),
+                                        CopyCtor->getThisType(getContext())));
+
+      // Push the Src ptr.
+      CallArgs.push_back(std::make_pair(RValue::get(Src),
+                                        CopyCtor->getParamDecl(0)->getType()));
+      QualType ResultType =
+        CopyCtor->getType()->getAs<FunctionType>()->getResultType();
+      EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+               Callee, CallArgs, CopyCtor);
+      // FIXME: region management
     } else
       ErrorUnsupported(E, "throw expression with copy ctor");
   }
