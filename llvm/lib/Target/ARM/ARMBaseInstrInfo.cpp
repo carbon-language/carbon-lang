@@ -978,7 +978,10 @@ bool ARMBaseInstrInfo::isIdentical(const MachineInstr *MI0,
                                   const MachineInstr *MI1,
                                   const MachineRegisterInfo *MRI) const {
   int Opcode = MI0->getOpcode();
-  if (Opcode == ARM::t2LDRpci_pic || Opcode == ARM::tLDRpci_pic) {
+  if (Opcode == ARM::t2LDRpci ||
+      Opcode == ARM::t2LDRpci_pic ||
+      Opcode == ARM::tLDRpci ||
+      Opcode == ARM::tLDRpci_pic) {
     if (MI1->getOpcode() != Opcode)
       return false;
     if (MI0->getNumOperands() != MI1->getNumOperands())
