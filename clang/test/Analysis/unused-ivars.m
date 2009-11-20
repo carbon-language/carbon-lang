@@ -65,3 +65,19 @@
 }
 @end
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7254495> - ivars referenced by lexically nested functions
+//  should not be flagged as unused
+//===----------------------------------------------------------------------===//
+
+@interface RDar7254495 {
+@private
+  int x; // no-warning
+}
+@end
+
+@implementation RDar7254495
+int radar_7254495(RDar7254495 *a) {
+  return a->x;
+}
+@end
