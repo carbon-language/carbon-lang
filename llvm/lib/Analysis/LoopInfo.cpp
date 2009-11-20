@@ -243,6 +243,11 @@ unsigned Loop::getSmallConstantTripMultiple() const {
         case BinaryOperator::Mul:
           Result = dyn_cast<ConstantInt>(BO->getOperand(1));
           break;
+        case BinaryOperator::Shl:
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(BO->getOperand(1)))
+            if (CI->getValue().getActiveBits() <= 5)
+              return 1u << CI->getZExtValue();
+          break;
         default:
           break;
         }
