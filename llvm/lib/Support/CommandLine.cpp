@@ -177,7 +177,37 @@ static Option *LookupOption(StringRef &Arg, StringRef &Value,
   return I->second;
 }
 
+/// CommaSeparateAndAddOccurence - A wrapper around Handler->addOccurence() that
+/// does special handling of cl::CommaSeparated options.
+static bool CommaSeparateAndAddOccurence(Option *Handler, unsigned pos,
+                                         StringRef ArgName,
+                                         StringRef Value, bool MultiArg = false)
+{
+  // Check to see if this option accepts a comma separated list of values.  If
+  // it does, we have to split up the value into multiple values.
+  if (Handler->getMiscFlags() & CommaSeparated) {
+    StringRef Val(Value);
+    StringRef::size_type Pos = Val.find(',');
 
+    while (Pos != StringRef::npos) {
+      // Process the portion before the comma.
+      if (Handler->addOccurrence(pos, ArgName, Val.substr(0, Pos), MultiArg))
+        return true;
+      // Erase the portion before the comma, AND the comma.
+      Val = Val.substr(Pos+1);
+      Value.substr(Pos+1);  // Increment the original value pointer as well.
+      // Check for another comma.
+      Pos = Val.find(',');
+    }
+
+    Value = Val;
+  }
+
+  if (Handler->addOccurrence(pos, ArgName, Value, MultiArg))
+    return true;
+
+  return false;
+}
 
 /// ProvideOption - For Value, this differentiates between an empty value ("")
 /// and a null value (StringRef()).  The later is accepted for arguments that
@@ -219,13 +249,13 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
 
   // If this isn't a multi-arg option, just run the handler.
   if (NumAdditionalVals == 0)
-    return Handler->addOccurrence(i, ArgName, Value);
+    return CommaSeparateAndAddOccurence(Handler, i, ArgName, Value);
 
   // If it is, run the handle several times.
   bool MultiArg = false;
 
   if (Value.data()) {
-    if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
+    if (CommaSeparateAndAddOccurence(Handler, i, ArgName, Value, MultiArg))
       return true;
     --NumAdditionalVals;
     MultiArg = true;
@@ -236,7 +266,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
       return Handler->error("not enough values!");
     Value = argv[++i];
 
-    if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
+    if (CommaSeparateAndAddOccurence(Handler, i, ArgName, Value, MultiArg))
       return true;
     MultiArg = true;
     --NumAdditionalVals;
@@ -625,26 +655,6 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
           (*I)->addOccurrence(i, "", argv[i]);
       }
       continue;
-    }
-
-    // Check to see if this option accepts a comma separated list of values.  If
-    // it does, we have to split up the value into multiple values.
-    if (Handler->getMiscFlags() & CommaSeparated) {
-      StringRef Val(Value);
-      StringRef::size_type Pos = Val.find(',');
-
-      while (Pos != StringRef::npos) {
-        // Process the portion before the comma.
-        ErrorParsing |= ProvideOption(Handler, ArgName, Val.substr(0, Pos),
-                                      argc, argv, i);
-        // Erase the portion before the comma, AND the comma.
-        Val = Val.substr(Pos+1);
-        Value.substr(Pos+1);  // Increment the original value pointer as well.
-
-        // Check for another comma.
-        Pos = Val.find(',');
-      }
-      Value = Val;
     }
 
     // If this is a named positional argument, just remember that it is the
