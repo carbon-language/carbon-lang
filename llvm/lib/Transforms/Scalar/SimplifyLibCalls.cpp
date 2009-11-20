@@ -81,6 +81,9 @@ public:
   Value *EmitMemCpy(Value *Dst, Value *Src, Value *Len,
                     unsigned Align, IRBuilder<> &B);
 
+  Value *EmitMemMove(Value *Dst, Value *Src, Value *Len,
+		     unsigned Align, IRBuilder<> &B);
+
   /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
   /// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
   Value *EmitMemChr(Value *Ptr, Value *Val, Value *Len, IRBuilder<> &B);
@@ -158,6 +161,22 @@ Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
   Value *MemCpy = Intrinsic::getDeclaration(M, IID, Tys, 1);
   return B.CreateCall4(MemCpy, CastToCStr(Dst, B), CastToCStr(Src, B), Len,
                        ConstantInt::get(Type::getInt32Ty(*Context), Align));
+}
+
+/// EmitMemMOve - Emit a call to the memmove function to the builder.  This
+/// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
+Value *LibCallOptimization::EmitMemMove(Value *Dst, Value *Src, Value *Len,
+					unsigned Align, IRBuilder<> &B) {
+  Module *M = Caller->getParent();
+  Intrinsic::ID IID = Intrinsic::memmove;
+  const Type *Tys[1];
+  Tys[0] = TD->getIntPtrType(*Context);
+  Value *MemMove = Intrinsic::getDeclaration(M, IID, Tys, 1);
+  Value *Dst = CastToCStr(CI->getOperand(1), B);
+  Value *Src = CastToCStr(CI->getOperand(2), B);
+  Value *Size = CI->getOperand(3);
+  Value *Align = ConstantInt::get(Type::getInt32Ty(*Context), 1);
+  return B.CreateCall4(MemMove, Dst, Src, Size, Align);
 }
 
 /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
@@ -1010,16 +1029,7 @@ struct MemMoveOpt : public LibCallOptimization {
       return 0;
 
     // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
-    Module *M = Caller->getParent();
-    Intrinsic::ID IID = Intrinsic::memmove;
-    const Type *Tys[1];
-    Tys[0] = TD->getIntPtrType(*Context);
-    Value *MemMove = Intrinsic::getDeclaration(M, IID, Tys, 1);
-    Value *Dst = CastToCStr(CI->getOperand(1), B);
-    Value *Src = CastToCStr(CI->getOperand(2), B);
-    Value *Size = CI->getOperand(3);
-    Value *Align = ConstantInt::get(Type::getInt32Ty(*Context), 1);
-    B.CreateCall4(MemMove, Dst, Src, Size, Align);
+    EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3), 1, B);
     return CI->getOperand(1);
   }
 };
@@ -1044,6 +1054,96 @@ struct MemSetOpt : public LibCallOptimization {
 				 false);
     EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B);
     return CI->getOperand(1);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Object Size Checking Optimizations
+//===----------------------------------------------------------------------===//
+//===---------------------------------------===//
+// 'memcpy_chk' Optimizations
+
+struct MemCpyChkOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
+        !isa<PointerType>(FT->getParamType(0)) ||
+        !isa<PointerType>(FT->getParamType(1)) ||
+	!isa<IntegerType>(FT->getParamType(3)) ||
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
+      return 0;
+
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    if (SizeCI->isAllOnesValue()) {
+      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3), 1, B);
+      return CI->getOperand(1);
+    }
+
+    return 0;
+  }
+};
+
+//===---------------------------------------===//
+// 'memset_chk' Optimizations
+
+struct MemSetChkOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
+        !isa<PointerType>(FT->getParamType(0)) ||
+        !isa<IntegerType>(FT->getParamType(1)) ||
+	!isa<IntegerType>(FT->getParamType(3)) ||
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
+      return 0;
+
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    if (SizeCI->isAllOnesValue()) {
+      Value *Val = B.CreateIntCast(CI->getOperand(2), Type::getInt8Ty(*Context),
+				   false);
+      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B);
+      return CI->getOperand(1);
+    }
+
+    return 0;
+  }
+};
+
+//===---------------------------------------===//
+// 'memmove_chk' Optimizations
+
+struct MemMoveChkOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
+        !isa<PointerType>(FT->getParamType(0)) ||
+        !isa<PointerType>(FT->getParamType(1)) ||
+	!isa<IntegerType>(FT->getParamType(3)) ||
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
+      return 0;
+
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    if (SizeCI->isAllOnesValue()) {
+      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+		  1, B);
+      return CI->getOperand(1);
+    }
+
+    return 0;
   }
 };
 
@@ -1586,7 +1686,10 @@ namespace {
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
+
+    // Object Size Checking
     SizeOpt ObjectSize;
+    MemCpyChkOpt MemCpyChk; MemSetChkOpt MemSetChk; MemMoveChkOpt MemMoveChk;
 
     bool Modified;  // This is only used by doInitialization.
   public:
@@ -1693,8 +1796,12 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["fputs"] = &FPuts;
   Optimizations["fprintf"] = &FPrintF;
   
-  // Miscellaneous
-  Optimizations["llvm.objectsize"] = &ObjectSize;
+  // Object Size Checking
+  Optimizations["llvm.objectsize.i32"] = &ObjectSize;
+  Optimizations["llvm.objectsize.i64"] = &ObjectSize;
+  Optimizations["__memcpy_chk"] = &MemCpyChk;
+  Optimizations["__memset_chk"] = &MemSetChk;
+  Optimizations["__memmove_chk"] = &MemMoveChk;
 }
 
 
