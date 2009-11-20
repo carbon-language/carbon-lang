@@ -66,31 +66,68 @@ Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(DeclPtrTy Ptr) {
 /// and then return NULL.
 Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                                 Scope *S, const CXXScopeSpec *SS,
-                                bool isClassName) {
-  // C++ [temp.res]p3:
-  //   A qualified-id that refers to a type and in which the
-  //   nested-name-specifier depends on a template-parameter (14.6.2)
-  //   shall be prefixed by the keyword typename to indicate that the
-  //   qualified-id denotes a type, forming an
-  //   elaborated-type-specifier (7.1.5.3).
-  //
-  // We therefore do not perform any name lookup if the result would
-  // refer to a member of an unknown specialization.
-  if (SS && isUnknownSpecialization(*SS)) {
-    if (!isClassName)
+                                bool isClassName,
+                                TypeTy *ObjectTypePtr) {
+  // Determine where we will perform name lookup.
+  DeclContext *LookupCtx = 0;
+  if (ObjectTypePtr) {
+    QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
+    if (ObjectType->isRecordType())
+      LookupCtx = computeDeclContext(ObjectType);
+  } else if (SS && SS->isSet()) {
+    LookupCtx = computeDeclContext(*SS, false);
+
+    if (!LookupCtx) {
+      if (isDependentScopeSpecifier(*SS)) {
+        // C++ [temp.res]p3:
+        //   A qualified-id that refers to a type and in which the
+        //   nested-name-specifier depends on a template-parameter (14.6.2)
+        //   shall be prefixed by the keyword typename to indicate that the
+        //   qualified-id denotes a type, forming an
+        //   elaborated-type-specifier (7.1.5.3).
+        //
+        // We therefore do not perform any name lookup if the result would
+        // refer to a member of an unknown specialization.
+        if (!isClassName)
+          return 0;
+        
+        // We know from the grammar that this name refers to a type, so build a
+        // TypenameType node to describe the type.
+        // FIXME: Record somewhere that this TypenameType node has no "typename"
+        // keyword associated with it.
+        return CheckTypenameType((NestedNameSpecifier *)SS->getScopeRep(),
+                                 II, SS->getRange()).getAsOpaquePtr();
+      }
+      
       return 0;
-
-    // We know from the grammar that this name refers to a type, so build a
-    // TypenameType node to describe the type.
-    // FIXME: Record somewhere that this TypenameType node has no "typename"
-    // keyword associated with it.
-    return CheckTypenameType((NestedNameSpecifier *)SS->getScopeRep(),
-                             II, SS->getRange()).getAsOpaquePtr();
+    }
+    
+    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(*SS))
+      return 0;
   }
-
+      
   LookupResult Result(*this, &II, NameLoc, LookupOrdinaryName);
-  LookupParsedName(Result, S, SS, false);
+  if (LookupCtx) {
+    // Perform "qualified" name lookup into the declaration context we
+    // computed, which is either the type of the base of a member access
+    // expression or the declaration context associated with a prior
+    // nested-name-specifier.
+    LookupQualifiedName(Result, LookupCtx);
 
+    if (ObjectTypePtr && Result.empty()) {
+      // C++ [basic.lookup.classref]p3:
+      //   If the unqualified-id is ~type-name, the type-name is looked up
+      //   in the context of the entire postfix-expression. If the type T of 
+      //   the object expression is of a class type C, the type-name is also
+      //   looked up in the scope of class C. At least one of the lookups shall
+      //   find a name that refers to (possibly cv-qualified) T.
+      LookupName(Result, S);
+    }
+  } else {
+    // Perform unqualified name lookup.
+    LookupName(Result, S);
+  }
+  
   NamedDecl *IIDecl = 0;
   switch (Result.getResultKind()) {
   case LookupResult::NotFound:

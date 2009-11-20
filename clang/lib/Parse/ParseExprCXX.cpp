@@ -1010,7 +1010,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
   
   // Parse the type-specifier-seq.
   DeclSpec DS;
-  if (ParseCXXTypeSpecifierSeq(DS))
+  if (ParseCXXTypeSpecifierSeq(DS)) // FIXME: ObjectType?
     return true;
   
   // Parse the conversion-declarator, which is merely a sequence of
@@ -1152,7 +1152,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     
     // Note that this is a destructor name.
     Action::TypeTy *Ty = Actions.getTypeName(*ClassName, ClassNameLoc,
-                                             CurScope, &SS);
+                                             CurScope, &SS, false, ObjectType);
     if (!Ty) {
       if (ObjectType)
         Diag(ClassNameLoc, diag::err_ident_in_pseudo_dtor_not_a_type)

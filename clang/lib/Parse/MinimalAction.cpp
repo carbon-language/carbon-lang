@@ -144,7 +144,7 @@ void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 Action::TypeTy *
 MinimalAction::getTypeName(IdentifierInfo &II, SourceLocation Loc,
                            Scope *S, const CXXScopeSpec *SS,
-                           bool isClassName) {
+                           bool isClassName, TypeTy *ObjectType) {
   if (TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>())
     if (TI->isTypeName)
       return TI;

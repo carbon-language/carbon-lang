@@ -38,3 +38,12 @@ typedef int Integer;
 void destroy_without_call(int *ip) {
   ip->~Integer; // expected-error{{called immediately}}
 }
+
+// PR5530
+namespace N1 {
+  class X0 { };
+}
+
+void test_X0(N1::X0 &x0) {
+  x0.~X0();
+}

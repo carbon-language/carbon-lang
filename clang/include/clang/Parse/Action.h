@@ -203,11 +203,15 @@ public:
   /// this occurs when deriving from "std::vector<T>::allocator_type", where T
   /// is a template parameter.
   ///
+  /// \param ObjectType if we're checking whether an identifier is a type
+  /// within a C++ member access expression, this will be the type of the 
+  /// 
   /// \returns the type referred to by this identifier, or NULL if the type
   /// does not name an identifier.
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                               Scope *S, const CXXScopeSpec *SS = 0,
-                              bool isClassName = false) = 0;
+                              bool isClassName = false,
+                              TypeTy *ObjectType = 0) = 0;
 
   /// isTagName() - This method is called *for error recovery purposes only*
   /// to determine if the specified name is a valid tag name ("struct foo").  If
@@ -2518,7 +2522,8 @@ public:
   /// does not name an identifier.
   virtual TypeTy *getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                               Scope *S, const CXXScopeSpec *SS,
-                              bool isClassName = false);
+                              bool isClassName = false,
+                              TypeTy *ObjectType = 0);
 
   /// isCurrentClassName - Always returns false, because MinimalAction
   /// does not support C++ classes with constructors.
