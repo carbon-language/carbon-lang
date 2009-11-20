@@ -747,9 +747,14 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
   std::vector<llvm::Constant*> Elements;
   for (const std::string *iter = Protocols.begin(), *endIter = Protocols.end();
       iter != endIter ; iter++) {
-    llvm::Constant *protocol = ExistingProtocols[*iter];
-    if (!protocol)
+    llvm::Constant *protocol = 0;
+    llvm::StringMap<llvm::Constant*>::iterator value =
+      ExistingProtocols.find(*iter);
+    if (value == ExistingProtocols.end()) {
       protocol = GenerateEmptyProtocol(*iter);
+    } else {
+      protocol = value->getValue();
+    }
     llvm::Constant *Ptr = llvm::ConstantExpr::getBitCast(protocol,
                                                            PtrToInt8Ty);
     Elements.push_back(Ptr);
