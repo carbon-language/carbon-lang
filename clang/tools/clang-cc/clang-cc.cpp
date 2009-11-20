@@ -139,17 +139,11 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   }
 }
 
-static TargetInfo *
-ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
-                            const char *Argv0, bool &IsAST) {
+static bool ConstructCompilerInvocation(CompilerInvocation &Opts,
+                                        Diagnostic &Diags,
+                                        const char *Argv0, bool &IsAST) {
   // Initialize target options.
   InitializeTargetOptions(Opts.getTargetOpts());
-
-  // Get information about the target being compiled for.
-  llvm::OwningPtr<TargetInfo> Target(
-    TargetInfo::CreateTargetInfo(Diags, Opts.getTargetOpts()));
-  if (!Target)
-    return 0;
 
   // Initialize frontend options.
   InitializeFrontendOptions(Opts.getFrontendOpts());
@@ -160,7 +154,7 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
     if (Opts.getFrontendOpts().Inputs[i].first != IK) {
       llvm::errs() << "error: cannot have multiple input files of distinct "
                    << "language kinds without -x\n";
-      return 0;
+      return false;
     }
   }
 
@@ -170,7 +164,7 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   // code path to make this obvious.
   IsAST = (IK == FrontendOptions::IK_AST);
   if (!IsAST)
-    InitializeLangOptions(Opts.getLangOpts(), IK, *Target);
+    InitializeLangOptions(Opts.getLangOpts(), IK);
 
   // Initialize the static analyzer options.
   InitializeAnalyzerOptions(Opts.getAnalyzerOpts());
@@ -188,12 +182,11 @@ ConstructCompilerInvocation(CompilerInvocation &Opts, Diagnostic &Diags,
   // Initialize the preprocessed output options.
   InitializePreprocessorOutputOptions(Opts.getPreprocessorOutputOpts());
 
-  // Initialize backend options, which may also be used to key some language
-  // options.
+  // Initialize backend options.
   InitializeCodeGenOptions(Opts.getCodeGenOpts(), Opts.getLangOpts(),
                            Opts.getFrontendOpts().ShowTimers);
 
-  return Target.take();
+  return true;
 }
 
 int main(int argc, char **argv) {
@@ -226,11 +219,22 @@ int main(int argc, char **argv) {
   // FIXME: We should move .ast inputs to taking a separate path, they are
   // really quite different.
   bool IsAST = false;
-  Clang.setTarget(
-    ConstructCompilerInvocation(Clang.getInvocation(), Clang.getDiagnostics(),
-                                argv[0], IsAST));
+  if (!ConstructCompilerInvocation(Clang.getInvocation(),
+                                   Clang.getDiagnostics(),
+                                   argv[0], IsAST))
+    return 1;
+
+  // Create the target instance.
+  Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
+                                               Clang.getTargetOpts()));
   if (!Clang.hasTarget())
     return 1;
+
+  // Inform the target of the language options
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
+  Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
 
   // Validate/process some options
   if (Clang.getHeaderSearchOpts().Verbose)

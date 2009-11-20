@@ -1054,10 +1054,8 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
 }
 
 void clang::InitializeLangOptions(LangOptions &Options,
-                                  FrontendOptions::InputKind IK,
-                                  TargetInfo &Target) {
+                                  FrontendOptions::InputKind IK) {
   using namespace langoptions;
-
 
   switch (IK) {
   case FrontendOptions::IK_None:
@@ -1295,8 +1293,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
 
   if (MainFileName.getPosition())
     Options.setMainFileName(MainFileName.c_str());
-
-  Target.setForcedLangOptions(Options);
 }
 
 void
