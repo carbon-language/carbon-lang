@@ -121,6 +121,14 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args) {
 #endif
 }
 
+static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
+                                         ArgList &Args) {
+  Opts.OutputFile = getLastArgValue(Args, cc1options::OPT_dependency_file);
+  Opts.Targets = getAllArgValues(Args, cc1options::OPT_MT);
+  Opts.IncludeSystemHeaders = Args.hasArg(cc1options::OPT_sys_header_deps);
+  Opts.UsePhonyTargets = Args.hasArg(cc1options::OPT_MP);
+}
+
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   Opts.ABI = getLastArgValue(Args, cc1options::OPT_target_abi);
   Opts.CPU = getLastArgValue(Args, cc1options::OPT_mcpu);
@@ -152,8 +160,7 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                  << " value )\n";
   }
 
-  // FIXME: Disabled until the FIXMEs are resolved.
-  if (0)
-    ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
+  ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
+  ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *InputArgs);
   ParseTargetArgs(Res.getTargetOpts(), *InputArgs);
 }

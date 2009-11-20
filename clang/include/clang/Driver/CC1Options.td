@@ -40,3 +40,12 @@ def fno_merge_all_constants : Flag<"-fno-merge-all-constants">,
   HelpText<"Disallow merging of constants.">;
 def O : Joined<"-O">, HelpText<"Optimization level">;
 def Os : Flag<"-Os">, HelpText<"Optimize for size">;
+
+// Dependency Output Options
+def dependency_file : Separate<"-dependency-file">,
+  HelpText<"Filename (or -) to write dependency output to">;
+def sys_header_deps : Flag<"-sys-header-deps">,
+  HelpText<"Include system headers in dependency output">;
+def MT : Separate<"-MT">, HelpText<"Specify target for dependency">;
+def MP : Flag<"-MP">,
+  HelpText<"Create phony target for each dependency (other than main file)">;
