@@ -2820,40 +2820,40 @@ defm PSIGND      : SS3I_binop_rm_int_32<0x0A, "psignd",
 
 let Constraints = "$src1 = $dst" in {
   def PALIGNR64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
-                           (ins VR64:$src1, VR64:$src2, i16imm:$src3),
+                           (ins VR64:$src1, VR64:$src2, i8imm:$src3),
                            "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                            []>;
   def PALIGNR64rm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
-                           (ins VR64:$src1, i64mem:$src2, i16imm:$src3),
+                           (ins VR64:$src1, i64mem:$src2, i8imm:$src3),
                            "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                            []>;
 
   def PALIGNR128rr : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
-                           (ins VR128:$src1, VR128:$src2, i32imm:$src3),
+                           (ins VR128:$src1, VR128:$src2, i8imm:$src3),
                            "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                            []>, OpSize;
   def PALIGNR128rm : SS3AI<0x0F, MRMSrcMem, (outs VR128:$dst),
-                           (ins VR128:$src1, i128mem:$src2, i32imm:$src3),
+                           (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
                            "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                            []>, OpSize;
 }
 
 // palignr patterns.
-def : Pat<(int_x86_ssse3_palign_r VR64:$src1, VR64:$src2, (i16 imm:$src3)),
+def : Pat<(int_x86_ssse3_palign_r VR64:$src1, VR64:$src2, (i8 imm:$src3)),
           (PALIGNR64rr VR64:$src1, VR64:$src2, (BYTE_imm imm:$src3))>,
           Requires<[HasSSSE3]>;
 def : Pat<(int_x86_ssse3_palign_r VR64:$src1,
                                       (memop64 addr:$src2),
-                                      (i16 imm:$src3)),
+                                      (i8 imm:$src3)),
           (PALIGNR64rm VR64:$src1, addr:$src2, (BYTE_imm imm:$src3))>,
           Requires<[HasSSSE3]>;
 
-def : Pat<(int_x86_ssse3_palign_r_128 VR128:$src1, VR128:$src2, (i32 imm:$src3)),
+def : Pat<(int_x86_ssse3_palign_r_128 VR128:$src1, VR128:$src2, (i8 imm:$src3)),
           (PALIGNR128rr VR128:$src1, VR128:$src2, (BYTE_imm imm:$src3))>,
           Requires<[HasSSSE3]>;
 def : Pat<(int_x86_ssse3_palign_r_128 VR128:$src1,
                                       (memopv2i64 addr:$src2),
-                                      (i32 imm:$src3)),
+                                      (i8 imm:$src3)),
           (PALIGNR128rm VR128:$src1, addr:$src2, (BYTE_imm imm:$src3))>,
           Requires<[HasSSSE3]>;
 
