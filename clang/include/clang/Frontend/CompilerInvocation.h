@@ -81,8 +81,8 @@ public:
   ///
   /// \param Res [out] - The resulting invocation.
   /// \param Args - The input argument strings.
-  static void CreateFromArgs(CompilerInvocation &Res,
-                            const llvm::SmallVectorImpl<llvm::StringRef> &Args);
+  static void CreateFromArgs(CompilerInvocation &Res, const char **ArgBegin,
+                             const char **ArgEnd);
 
   /// toArgs - Convert the CompilerInvocation to a list of strings suitable for
   /// passing to CreateFromArgs.

@@ -51,18 +51,17 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd) {
   // Create a compiler invocation.
   llvm::errs() << "cc1 creating invocation.\n";
   CompilerInvocation Invocation;
-  CompilerInvocation::CreateFromArgs(Invocation,
-                      llvm::SmallVector<llvm::StringRef, 32>(ArgBegin, ArgEnd));
+  CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd);
 
   // Convert the invocation back to argument strings.
   std::vector<std::string> InvocationArgs;
   Invocation.toArgs(InvocationArgs);
 
   // Dump the converted arguments.
-  llvm::SmallVector<llvm::StringRef, 32> Invocation2Args;
+  llvm::SmallVector<const char*, 32> Invocation2Args;
   llvm::errs() << "invocation argv :";
   for (unsigned i = 0, e = InvocationArgs.size(); i != e; ++i) {
-    Invocation2Args.push_back(InvocationArgs[i]);
+    Invocation2Args.push_back(InvocationArgs[i].c_str());
     llvm::errs() << " \"" << InvocationArgs[i] << '"';
   }
   llvm::errs() << "\n";
@@ -70,7 +69,8 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd) {
   // Convert those arguments to another invocation, and check that we got the
   // same thing.
   CompilerInvocation Invocation2;
-  CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args);
+  CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
+                                     Invocation2Args.end());
 
   // FIXME: Implement CompilerInvocation comparison.
   if (true) {

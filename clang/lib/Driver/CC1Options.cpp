@@ -135,20 +135,13 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
 //
 
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
-                           const llvm::SmallVectorImpl<llvm::StringRef> &Args) {
-  // This is gratuitous, but until we switch the driver to using StringRef we
-  // need to get C strings.
-  llvm::SmallVector<std::string, 16> StringArgs(Args.begin(), Args.end());
-  llvm::SmallVector<const char *, 16> CStringArgs;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i)
-    CStringArgs.push_back(StringArgs[i].c_str());
-
+                                        const char **ArgBegin,
+                                        const char **ArgEnd) {
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
   unsigned MissingArgIndex, MissingArgCount;
   llvm::OwningPtr<InputArgList> InputArgs(
-    Opts->ParseArgs(CStringArgs.begin(), CStringArgs.end(),
-                    MissingArgIndex, MissingArgCount));
+    Opts->ParseArgs(ArgBegin, ArgEnd,MissingArgIndex, MissingArgCount));
 
   // Check for missing argument error.
   if (MissingArgCount) {
@@ -159,6 +152,8 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                  << " value )\n";
   }
 
-  ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
+  // FIXME: Disabled until the FIXMEs are resolved.
+  if (0)
+    ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
   ParseTargetArgs(Res.getTargetOpts(), *InputArgs);
 }
