@@ -172,6 +172,13 @@ static inline void OutputReg(raw_ostream &os, unsigned RegNo,
     os << " %reg" << RegNo;
 }
 
+StringRef MachineBasicBlock::getName() const {
+  if (const BasicBlock *LBB = getBasicBlock())
+    return LBB->getName();
+  else
+    return "(null)";
+}
+
 void MachineBasicBlock::print(raw_ostream &OS) const {
   const MachineFunction *MF = getParent();
   if (!MF) {

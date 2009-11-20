@@ -92,9 +92,14 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
 
 public:
   /// getBasicBlock - Return the LLVM basic block that this instance
-  /// corresponded to originally.
+  /// corresponded to originally. Note that this may be NULL if this instance
+  /// does not correspond directly to an LLVM basic block.
   ///
   const BasicBlock *getBasicBlock() const { return BB; }
+
+  /// getName - Return the name of the corresponding LLVM basic block, or
+  /// "(null)".
+  StringRef getName() const;
 
   /// hasAddressTaken - Test whether this block is potentially the target
   /// of an indirect branch.

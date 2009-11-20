@@ -1600,7 +1600,7 @@ private:
                   std::vector<MachineOperand*> &KillOps) {
 
     DEBUG(errs() << "\n**** Local spiller rewriting MBB '"
-          << MBB.getBasicBlock()->getName() << "':\n");
+          << MBB.getName() << "':\n");
 
     MachineFunction &MF = *MBB.getParent();
     

@@ -2380,7 +2380,7 @@ namespace {
 
 void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
                                                std::vector<CopyRec> &TryAgain) {
-  DEBUG(errs() << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
+  DEBUG(errs() << MBB->getName() << ":\n");
 
   std::vector<CopyRec> VirtCopies;
   std::vector<CopyRec> PhysCopies;

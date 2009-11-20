@@ -305,7 +305,7 @@ void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
 void MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB) {
   assert(MBB);
   report(msg, MBB->getParent());
-  *OS << "- basic block: " << MBB->getBasicBlock()->getNameStr()
+  *OS << "- basic block: " << MBB->getName()
       << " " << (void*)MBB
       << " (BB#" << MBB->getNumber() << ")\n";
 }
