@@ -109,7 +109,7 @@ bool llvm::PointerMayBeCaptured(const Value *V,
       // Don't count comparisons of a no-alias return value against null as
       // captures. This allows us to ignore comparisons of malloc results
       // with null, for example.
-      if (isNoAliasCall(V))
+      if (isNoAliasCall(V->stripPointerCasts()))
         if (ConstantPointerNull *CPN =
               dyn_cast<ConstantPointerNull>(I->getOperand(1)))
           if (CPN->getType()->getAddressSpace() == 0)
