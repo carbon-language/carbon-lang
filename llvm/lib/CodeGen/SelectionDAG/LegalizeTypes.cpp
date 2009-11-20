@@ -64,8 +64,12 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
   // The final node obtained by mapping by ReplacedValues is not marked NewNode.
   // Note that ReplacedValues should be applied iteratively.
 
-  // Note that the ReplacedValues map may also map deleted nodes.  By iterating
-  // over the DAG we only consider non-deleted nodes.
+  // Note that the ReplacedValues map may also map deleted nodes (by iterating
+  // over the DAG we never dereference deleted nodes).  This means that it may
+  // also map nodes marked NewNode if the deallocated memory was reallocated as
+  // another node, and that new node was not seen by the LegalizeTypes machinery
+  // (for example because it was created but not used).  In general, we cannot
+  // distinguish between new nodes and deleted nodes.
   SmallVector<SDNode*, 16> NewNodes;
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); I != E; ++I) {
@@ -114,7 +118,11 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
         Mapped |= 128;
 
       if (I->getNodeId() != Processed) {
-        if (Mapped != 0) {
+        // Since we allow ReplacedValues to map deleted nodes, it may map nodes
+        // marked NewNode too, since a deleted node may have been reallocated as
+        // another node that has not been seen by the LegalizeTypes machinery.
+        if ((I->getNodeId() == NewNode && Mapped > 1) ||
+            (I->getNodeId() != NewNode && Mapped != 0)) {
           errs() << "Unprocessed value in a map!";
           Failed = true;
         }
@@ -320,16 +328,12 @@ ScanOperands:
         continue;
 
       // The node morphed - this is equivalent to legalizing by replacing every
-      // value of N with the corresponding value of M.  So do that now.  However
-      // there is no need to remember the replacement - morphing will make sure
-      // it is never used non-trivially.
+      // value of N with the corresponding value of M.  So do that now.
       assert(N->getNumValues() == M->getNumValues() &&
              "Node morphing changed the number of results!");
       for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
-        // Replacing the value takes care of remapping the new value.  Do the
-        // replacement without recording it in ReplacedValues.  This does not
-        // expunge From but that is fine - it is not really a new node.
-        ReplaceValueWithHelper(SDValue(N, i), SDValue(M, i));
+        // Replacing the value takes care of remapping the new value.
+        ReplaceValueWith(SDValue(N, i), SDValue(M, i));
       assert(N->getNodeId() == NewNode && "Unexpected node state!");
       // The node continues to live on as part of the NewNode fungus that
       // grows on top of the useful nodes.  Nothing more needs to be done
@@ -666,14 +670,14 @@ namespace {
 }
 
 
-/// ReplaceValueWithHelper - Internal helper for ReplaceValueWith.  Updates the
-/// DAG causing any uses of From to use To instead, but without expunging From
-/// or recording the replacement in ReplacedValues.  Do not call directly unless
-/// you really know what you are doing!
-void DAGTypeLegalizer::ReplaceValueWithHelper(SDValue From, SDValue To) {
+/// ReplaceValueWith - The specified value was legalized to the specified other
+/// value.  Update the DAG and NodeIds replacing any uses of From to use To
+/// instead.
+void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
   assert(From.getNode() != To.getNode() && "Potential legalization loop!");
 
   // If expansion produced new nodes, make sure they are properly marked.
+  ExpungeNode(From.getNode());
   AnalyzeNewValue(To); // Expunges To.
 
   // Anything that used the old node should now use the new one.  Note that this
@@ -681,6 +685,10 @@ void DAGTypeLegalizer::ReplaceValueWithHelper(SDValue From, SDValue To) {
   SmallSetVector<SDNode*, 16> NodesToAnalyze;
   NodeUpdateListener NUL(*this, NodesToAnalyze);
   DAG.ReplaceAllUsesOfValueWith(From, To, &NUL);
+
+  // The old node may still be present in a map like ExpandedIntegers or
+  // PromotedIntegers.  Inform maps about the replacement.
+  ReplacedValues[From] = To;
 
   // Process the list of nodes that need to be reanalyzed.
   while (!NodesToAnalyze.empty()) {
@@ -710,25 +718,6 @@ void DAGTypeLegalizer::ReplaceValueWithHelper(SDValue From, SDValue To) {
       // The original node continues to exist in the DAG, marked NewNode.
     }
   }
-}
-
-/// ReplaceValueWith - The specified value was legalized to the specified other
-/// value.  Update the DAG and NodeIds replacing any uses of From to use To
-/// instead.
-void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
-  assert(From.getNode()->getNodeId() == ReadyToProcess &&
-         "Only the node being processed may be remapped!");
-
-  // If expansion produced new nodes, make sure they are properly marked.
-  ExpungeNode(From.getNode());
-  AnalyzeNewValue(To); // Expunges To.
-
-  // The old node may still be present in a map like ExpandedIntegers or
-  // PromotedIntegers.  Inform maps about the replacement.
-  ReplacedValues[From] = To;
-
-  // Do the replacement.
-  ReplaceValueWithHelper(From, To);
 }
 
 void DAGTypeLegalizer::SetPromotedInteger(SDValue Op, SDValue Result) {
