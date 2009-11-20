@@ -1,5 +1,5 @@
 // RUN: %llvmgcc %s -c -Os -m32 -emit-llvm -o - | llc -march=x86 -mtriple=i386-apple-darwin10 | FileCheck %s -check-prefix=DARWIN32
-// RUN: %llvmgcc %s -c -Os -m64 -emit-llvm -o - | llc -march=x86 -mtriple=i386-apple-darwin10 | FileCheck %s -check-prefix=DARWIN64
+// RUN: %llvmgcc %s -c -Os -m64 -emit-llvm -o - | llc -march=x86_64 -mtriple=x86_64-apple-darwin10 | FileCheck %s -check-prefix=DARWIN64
 
 extern void func(const char *, const char *);
 
