@@ -1,8 +1,7 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o - %s | grep 7 | count 1
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o - %s | grep 11 | count 1
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o - %s | grep 13 | count 1
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o - %s | grep 15 | count 1
+// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o - %s | FileCheck %s
 
 struct { int x; int y[]; } a = { 1, 7, 11 };
+// CHECK: @a = global %0 { i32 1, [2 x i32] [i32 7, i32 11] }
 
 struct { int x; int y[]; } b = { 1, { 13, 15 } };
+// CHECK: @b = global %0 { i32 1, [2 x i32] [i32 13, i32 15] }
