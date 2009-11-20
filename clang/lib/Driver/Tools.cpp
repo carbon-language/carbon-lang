@@ -440,12 +440,12 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
                     true) ||
       Args.hasArg(options::OPT_mkernel) ||
       Args.hasArg(options::OPT_fapple_kext))
-    CmdArgs.push_back("--disable-red-zone");
+    CmdArgs.push_back("-disable-red-zone");
 
   if (Args.hasFlag(options::OPT_msoft_float,
                    options::OPT_mno_soft_float,
                    false))
-    CmdArgs.push_back("--no-implicit-float");
+    CmdArgs.push_back("-no-implicit-float");
 
   const char *CPUName = 0;
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
@@ -479,7 +479,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
 
   if (CPUName) {
-    CmdArgs.push_back("--mcpu");
+    CmdArgs.push_back("-mcpu");
     CmdArgs.push_back(CPUName);
   }
 
@@ -707,7 +707,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       Model = getToolChain().GetDefaultRelocationModel();
   }
-  CmdArgs.push_back("--relocation-model");
+  CmdArgs.push_back("-relocation-model");
   CmdArgs.push_back(Model);
 
   // Infer the __PIC__ value.
@@ -722,24 +722,24 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   if (Args.hasArg(options::OPT_ftime_report))
-    CmdArgs.push_back("--time-passes");
+    CmdArgs.push_back("-time-passes");
   // FIXME: Set --enable-unsafe-fp-math.
   if (Args.hasFlag(options::OPT_fno_omit_frame_pointer,
                    options::OPT_fomit_frame_pointer))
-    CmdArgs.push_back("--disable-fp-elim");
+    CmdArgs.push_back("-disable-fp-elim");
   if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
                     options::OPT_fno_zero_initialized_in_bss,
                     true))
-    CmdArgs.push_back("--nozero-initialized-in-bss");
+    CmdArgs.push_back("-nozero-initialized-in-bss");
   if (Args.hasArg(options::OPT_dA) || Args.hasArg(options::OPT_fverbose_asm))
-    CmdArgs.push_back("--asm-verbose");
+    CmdArgs.push_back("-asm-verbose");
   if (Args.hasArg(options::OPT_fdebug_pass_structure))
-    CmdArgs.push_back("--debug-pass=Structure");
+    CmdArgs.push_back("-debug-pass=Structure");
   if (Args.hasArg(options::OPT_fdebug_pass_arguments))
-    CmdArgs.push_back("--debug-pass=Arguments");
+    CmdArgs.push_back("-debug-pass=Arguments");
   if (!Args.hasFlag(options::OPT_fmerge_all_constants,
                     options::OPT_fno_merge_all_constants))
-    CmdArgs.push_back("--no-merge-all-constants");
+    CmdArgs.push_back("-no-merge-all-constants");
 
   // This is a coarse approximation of what llvm-gcc actually does, both
   // -fasynchronous-unwind-tables and -fnon-call-exceptions interact in more
@@ -751,9 +751,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                  !Args.hasArg(options::OPT_mkernel));
   if (Args.hasFlag(options::OPT_funwind_tables, options::OPT_fno_unwind_tables,
                    AsynchronousUnwindTables))
-    CmdArgs.push_back("--unwind-tables=1");
+    CmdArgs.push_back("-unwind-tables=1");
   else
-    CmdArgs.push_back("--unwind-tables=0");
+    CmdArgs.push_back("-unwind-tables=0");
 
   // FIXME: Handle -mtune=.
   (void) Args.hasArg(options::OPT_mtune_EQ);
@@ -786,7 +786,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-math-errno");
 
   if (Arg *A = Args.getLastArg(options::OPT_flimited_precision_EQ)) {
-    CmdArgs.push_back("--limit-float-precision");
+    CmdArgs.push_back("-limit-float-precision");
     CmdArgs.push_back(A->getValue(Args));
   }
 
@@ -865,7 +865,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   if (Args.hasArg(options::OPT__relocatable_pch))
-    CmdArgs.push_back("--relocatable-pch");
+    CmdArgs.push_back("-relocatable-pch");
 
   if (Arg *A = Args.getLastArg(options::OPT_fconstant_string_class_EQ)) {
     CmdArgs.push_back("-fconstant-string-class");
@@ -1703,7 +1703,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     // to be a good reason.
     CmdArgs.push_back("/dev/null");
 
-    CmdArgs.push_back("--output-pch=");
+    CmdArgs.push_back("-output-pch=");
     CmdArgs.push_back(Output.getFilename());
   }
 
