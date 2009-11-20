@@ -55,11 +55,70 @@ static llvm::StringRef getLastArgValue(ArgList &Args, cc1options::ID ID,
   return Default;
 }
 
+static int getLastArgIntValue(ArgList &Args, cc1options::ID ID,
+                              int Default = 0) {
+  Arg *A = Args.getLastArg(ID);
+  if (!A)
+    return Default;
+
+  int Res = Default;
+  // FIXME: What to do about argument parsing errors?
+  if (llvm::StringRef(A->getValue(Args)).getAsInteger(10, Res))
+    llvm::errs() << "error: invalid integral argument in '"
+                 << A->getAsString(Args) << "'\n";
+
+  return Res;
+}
+
 static std::vector<std::string>
 getAllArgValues(ArgList &Args, cc1options::ID ID) {
   llvm::SmallVector<const char *, 16> Values;
   Args.AddAllArgValues(Values, ID);
   return std::vector<std::string>(Values.begin(), Values.end());
+}
+
+//
+
+static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args) {
+  // -Os implies -O2
+  if (Args.hasArg(cc1options::OPT_Os))
+    Opts.OptimizationLevel = 2;
+  else
+    Opts.OptimizationLevel = getLastArgIntValue(Args, cc1options::OPT_O);
+
+  // FIXME: What to do about argument parsing errors?
+  if (Opts.OptimizationLevel > 3) {
+    llvm::errs() << "error: invalid optimization level '"
+                 << Opts.OptimizationLevel << "' (out of range)\n";
+    Opts.OptimizationLevel = 3;
+  }
+
+  // We must always run at least the always inlining pass.
+  Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
+    : CodeGenOptions::OnlyAlwaysInlining;
+
+  Opts.DebugInfo = Args.hasArg(cc1options::OPT_g);
+  Opts.DisableLLVMOpts = Args.hasArg(cc1options::OPT_disable_llvm_optzns);
+  Opts.DisableRedZone = Args.hasArg(cc1options::OPT_disable_red_zone);
+  Opts.MergeAllConstants = !Args.hasArg(cc1options::OPT_fno_merge_all_constants);
+  Opts.NoCommon = Args.hasArg(cc1options::OPT_fno_common);
+  Opts.NoImplicitFloat = Args.hasArg(cc1options::OPT_no_implicit_float);
+  Opts.OptimizeSize = Args.hasArg(cc1options::OPT_Os);
+  Opts.SimplifyLibCalls = 1;
+  Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
+
+  // FIXME: Implement!
+  // FIXME: Eliminate this dependency?
+//   if (Lang.NoBuiltin)
+//     Opts.SimplifyLibCalls = 0;
+//   if (Lang.CPlusPlus)
+//     Opts.NoCommon = 1;
+//   Opts.TimePasses = TimePasses;
+
+  // FIXME: Put elsewhere?
+#ifdef NDEBUG
+  Opts.VerifyModule = 0;
+#endif
 }
 
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
@@ -72,6 +131,8 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   if (Opts.Triple.empty())
     Opts.Triple = llvm::sys::getHostTriple();
 }
+
+//
 
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                            const llvm::SmallVectorImpl<llvm::StringRef> &Args) {
@@ -98,5 +159,6 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                  << " value )\n";
   }
 
+  ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
   ParseTargetArgs(Res.getTargetOpts(), *InputArgs);
 }

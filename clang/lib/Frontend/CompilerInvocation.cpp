@@ -102,7 +102,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-disable-red-zone");
   if (!Opts.MergeAllConstants)
     Res.push_back("-fno-merge-all-constants");
-  // NoCommon is only derived.
+  if (Opts.NoCommon)
+    Res.push_back("-fno-common");
   if (Opts.NoImplicitFloat)
     Res.push_back("-no-implicit-float");
   if (Opts.OptimizeSize) {
