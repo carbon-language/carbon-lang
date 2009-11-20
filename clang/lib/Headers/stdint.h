@@ -605,33 +605,36 @@ typedef __uintn_t(__INTMAX_WIDTH__) uintmax_t;
 
 /* C99 7.18.2.4 Limits of integer types capable of holding object pointers. */
 /* C99 7.18.3 Limits of other integer types. */
+#define  __INTN_MIN(n) __stdint_join3( INT, n, _MIN)
+#define  __INTN_MAX(n) __stdint_join3( INT, n, _MAX)
+#define __UINTN_MAX(n) __stdint_join3(UINT, n, _MAX)
 
-#define  INTPTR_MIN __stdint_exjoin3( INT, __INTPTR_WIDTH__, _MIN)
-#define  INTPTR_MAX __stdint_exjoin3( INT, __INTPTR_WIDTH__, _MAX)
-#define UINTPTR_MAX __stdint_exjoin3(UINT, __INTPTR_WIDTH__, _MAX)
-#define PTRDIFF_MIN __stdint_exjoin3( INT, __PTRDIFF_WIDTH__, _MIN)
-#define PTRDIFF_MAX __stdint_exjoin3( INT, __PTRDIFF_WIDTH__, _MAX)
-#define    SIZE_MAX __stdint_exjoin3(UINT, __SIZE_WIDTH__, _MAX)
+#define  INTPTR_MIN  __INTN_MIN(__INTPTR_WIDTH__)
+#define  INTPTR_MAX  __INTN_MAX(__INTPTR_WIDTH__)
+#define UINTPTR_MAX __UINTN_MAX(__INTPTR_WIDTH__)
+#define PTRDIFF_MIN  __INTN_MIN(__PTRDIFF_WIDTH__)
+#define PTRDIFF_MAX  __INTN_MAX(__PTRDIFF_WIDTH__)
+#define    SIZE_MAX __UINTN_MAX(__SIZE_WIDTH__)
 
 /* C99 7.18.2.5 Limits of greatest-width integer types. */
-#define INTMAX_MIN  __stdint_exjoin3( INT, __INTMAX_WIDTH__, _MIN)
-#define INTMAX_MAX  __stdint_exjoin3( INT, __INTMAX_WIDTH__, _MAX)
-#define UINTMAX_MAX __stdint_exjoin3(UINT, __INTMAX_WIDTH__, _MAX)
+#define INTMAX_MIN   __INTN_MIN(__INTMAX_WIDTH__)
+#define INTMAX_MAX   __INTN_MAX(__INTMAX_WIDTH__)
+#define UINTMAX_MAX __UINTN_MAX(__INTMAX_WIDTH__)
 
 /* C99 7.18.3 Limits of other integer types. */
 #define SIG_ATOMIC_MIN INT32_MIN
 #define SIG_ATOMIC_MAX INT32_MAX
-#define WINT_MIN       __stdint_exjoin3(INT, __WINT_WIDTH__, _MIN)
-#define WINT_MAX       __stdint_exjoin3(INT, __WINT_WIDTH__, _MAX)
+#define WINT_MIN       __INTN_MIN(__WINT_WIDTH__)
+#define WINT_MAX       __INTN_MAX(__WINT_WIDTH__)
 
 /* FIXME: if we ever support a target with unsigned wchar_t, this should be
  * 0 .. Max.
  */
 #ifndef WCHAR_MAX
-#define WCHAR_MAX __stdint_exjoin3(INT, __WCHAR_WIDTH__, _MAX)
+#define WCHAR_MAX __INTN_MAX(__WCHAR_WIDTH__)
 #endif
 #ifndef WCHAR_MIN
-#define WCHAR_MIN __stdint_exjoin3(INT, __WCHAR_WIDTH__, _MIN)
+#define WCHAR_MIN __INTN_MIN(__WCHAR_WIDTH__)
 #endif
 
 /* 7.18.4.2 Macros for greatest-width integer constants. */
