@@ -221,43 +221,8 @@ namespace {
     unsigned GetOffsetOf(MachineInstr *MI) const;
     void dumpBBs();
     void verify(MachineFunction &MF);
-    void verifySizes(MachineFunction &MF);
   };
   char ARMConstantIslands::ID = 0;
-}
-
-// verifySizes - Recalculate BB sizes from scratch and validate that the result
-// matches the values we've been using.
-void ARMConstantIslands::verifySizes(MachineFunction &MF) {
-  unsigned Offset = 0;
-  for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
-       MBBI != E; ++MBBI) {
-    MachineBasicBlock &MBB = *MBBI;
-    unsigned MBBSize = 0;
-    for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
-         I != E; ++I) {
-      // Add instruction size to MBBSize.
-      MBBSize += TII->GetInstSizeInBytes(I);
-    }
-    // In thumb mode, if this block is a constpool island, we may need padding
-    // so it's aligned on 4 byte boundary.
-    if (isThumb &&
-        !MBB.empty() &&
-        MBB.begin()->getOpcode() == ARM::CONSTPOOL_ENTRY &&
-        ((Offset%4) != 0 || HasInlineAsm))
-      MBBSize += 2;
-    Offset += MBBSize;
-
-    DEBUG(errs() << "block #" << MBB.getNumber() << ": "
-          << MBBSize << " bytes (expecting " << BBSizes[MBB.getNumber()]
-          << (MBB.begin()->getOpcode() == ARM::CONSTPOOL_ENTRY ?
-              " CONSTANTPOOL" : "") <<  ")\n");
-#ifndef NDEBUG
-    if (MBBSize != BBSizes[MBB.getNumber()])
-      MBB.dump();
-#endif
-    assert (MBBSize == BBSizes[MBB.getNumber()] && "block size mismatch!");
-  }
 }
 
 /// verify - check BBOffsets, BBSizes, alignment of islands
@@ -392,7 +357,6 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
 
   // After a while, this might be made debug-only, but it is not expensive.
   verify(MF);
-  verifySizes(MF);
 
   // If LR has been forced spilled and no far jumps (i.e. BL) has been issued.
   // Undo the spill / restore of LR if possible.
