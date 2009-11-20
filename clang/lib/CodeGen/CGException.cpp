@@ -84,15 +84,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   
   // Now throw the exception.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
-  
-  llvm::SmallString<256> OutName;
-  llvm::raw_svector_ostream Out(OutName);
-  mangleCXXRtti(CGM.getMangleContext(), ThrowType, Out);
-  
-  // FIXME: Is it OK to use CreateRuntimeVariable for this?
-  llvm::Constant *TypeInfo = 
-    CGM.CreateRuntimeVariable(llvm::Type::getInt8Ty(getLLVMContext()),
-                              OutName.c_str());
+  llvm::Constant *TypeInfo = CGM.GenerateRtti(ThrowType);
   llvm::Constant *Dtor = llvm::Constant::getNullValue(Int8PtrTy);
   
   llvm::CallInst *ThrowCall = 
