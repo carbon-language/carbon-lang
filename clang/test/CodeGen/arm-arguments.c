@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple armv7-apple-darwin9 -target-abi=apcs-gnu -emit-llvm -w -o - %s | FileCheck -check-prefix=APCS-GNU %s
-// RUN: clang-cc -triple armv7-apple-darwin9 -target-abi=aapcs -emit-llvm -w -o - %s | FileCheck -check-prefix=AAPCS %s
+// RUN: clang-cc -triple armv7-apple-darwin9 -target-abi apcs-gnu -emit-llvm -w -o - %s | FileCheck -check-prefix=APCS-GNU %s
+// RUN: clang-cc -triple armv7-apple-darwin9 -target-abi aapcs -emit-llvm -w -o - %s | FileCheck -check-prefix=AAPCS %s
 
 // APCS-GNU: define arm_apcscc signext i8 @f0()
 // AAPCS: define arm_aapcscc signext i8 @f0()
