@@ -11,6 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/StmtCXX.h"
+
+#include "llvm/Intrinsics.h"
+
 #include "CodeGenFunction.h"
 using namespace clang;
 using namespace CodeGen;
@@ -50,6 +54,28 @@ static llvm::Constant *getReThrowFn(CodeGenFunction &CGF) {
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_rethrow");
 }
 
+static llvm::Constant *getBeginCatchFn(CodeGenFunction &CGF) {
+  // void __cxa_begin_catch ();
+
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  std::vector<const llvm::Type*> Args(1, Int8PtrTy);
+  
+  const llvm::FunctionType *FTy = 
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), Args,
+                            false);
+  
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_begin_catch");
+}
+
+static llvm::Constant *getEndCatchFn(CodeGenFunction &CGF) {
+  // void __cxa_end_catch ();
+
+  const llvm::FunctionType *FTy = 
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), false);
+  
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_end_catch");
+}
+
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   if (!E->getSubExpr()) {
     Builder.CreateCall(getReThrowFn(*this))->setDoesNotReturn();
@@ -63,7 +89,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   QualType ThrowType = E->getSubExpr()->getType();
   // FIXME: Handle cleanup.
   if (!CleanupEntries.empty()){
-    ErrorUnsupported(E, "throw expression");
+    ErrorUnsupported(E, "throw expression with cleanup entries");
     return;
   }
   
@@ -84,7 +110,6 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
     
     Builder.CreateStore(Value, Builder.CreateBitCast(ExceptionPtr, ValuePtrTy));
   } else {
-    // See EmitCXXConstructorCall.
     const llvm::Type *Ty = ConvertType(ThrowType)->getPointerTo(0);
     const CXXRecordDecl *RD;
     RD = cast<CXXRecordDecl>(ThrowType->getAs<RecordType>()->getDecl());
@@ -127,4 +152,103 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   
   // Clear the insertion point to indicate we are in unreachable code.
   Builder.ClearInsertionPoint();
+}
+
+void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
+  // FIXME: We need to do more here.
+  EmitStmt(S.getTryBlock());
+  getBeginCatchFn(*this);
+  getEndCatchFn(*this);
+
+#if 0
+  // WIP.  Can't enable until the basic structure is correct.
+  // Pointer to the personality function
+  llvm::Constant *Personality =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
+                                                      (VMContext),
+                                                      true),
+                              "__gxx_personality_v0");
+  Personality = llvm::ConstantExpr::getBitCast(Personality, PtrToInt8Ty);
+
+  llvm::BasicBlock *TryBlock = createBasicBlock("try");
+  llvm::BasicBlock *PrevLandingPad = getInvokeDest();
+  llvm::BasicBlock *TryHandler = createBasicBlock("try.handler");
+  llvm::BasicBlock *CatchInCatch = createBasicBlock("catch.rethrow");
+  llvm::BasicBlock *FinallyBlock = createBasicBlock("finally");
+  llvm::BasicBlock *FinallyEnd = createBasicBlock("finally.end");
+
+  // Push an EH context entry, used for handling rethrows.
+  PushCleanupBlock(FinallyBlock);
+
+  // Emit the statements in the try {} block
+  setInvokeDest(TryHandler);
+
+  EmitStmt(S.getTryBlock());
+
+  // Jump to end if there is no exception
+  EmitBranchThroughCleanup(FinallyEnd);
+
+  // Emit the handlers
+  EmitBlock(TryHandler);
+  
+  const llvm::IntegerType *Int8Ty;
+  const llvm::PointerType *PtrToInt8Ty;
+  Int8Ty = llvm::Type::getInt8Ty(VMContext);
+  // C string type.  Used in lots of places.
+  PtrToInt8Ty = llvm::PointerType::getUnqual(Int8Ty);
+  llvm::Constant *NULLPtr = llvm::ConstantPointerNull::get(PtrToInt8Ty);
+  llvm::SmallVector<llvm::Value*, 8> ESelArgs;
+  llvm::Value *llvm_eh_exception =
+    CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
+  llvm::Value *llvm_eh_selector =
+    CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
+  // Exception object
+  llvm::Value *Exc = Builder.CreateCall(llvm_eh_exception, "exc");
+
+  ESelArgs.push_back(Exc);
+  ESelArgs.push_back(Personality);
+
+  for (unsigned i = 0; i<S.getNumHandlers(); ++i) {
+    const CXXCatchStmt *C = S.getHandler(i);
+    VarDecl *VD = C->getExceptionDecl();
+    if (VD) {
+#if 0
+      // FIXME: Handle type matching.
+      llvm::Value *EHType = 0;
+      ESelArgs.push_back(EHType);
+#endif
+    } else {
+      // null indicates catch all
+      ESelArgs.push_back(NULLPtr);
+    }
+  }
+
+  // Find which handler was matched.
+  llvm::Value *ESelector
+    = Builder.CreateCall(llvm_eh_selector, ESelArgs.begin(), ESelArgs.end(),
+                         "selector");
+
+  for (unsigned i = 0; i<S.getNumHandlers(); ++i) {
+    const CXXCatchStmt *C = S.getHandler(i);
+    getBeginCatchFn(*this);
+    getEndCatchFn(*this);
+  }  
+
+  CodeGenFunction::CleanupBlockInfo Info = PopCleanupBlock();
+
+  setInvokeDest(PrevLandingPad);
+
+  EmitBlock(FinallyBlock);
+
+#if 0
+  // Branch around the rethrow code.
+  EmitBranch(FinallyEnd);
+
+  EmitBlock(FinallyRethrow);
+  Builder.CreateCall(RethrowFn, Builder.CreateLoad(RethrowPtr));
+  Builder.CreateUnreachable();
+#endif
+
+  EmitBlock(FinallyEnd);
+#endif
 }

@@ -42,7 +42,7 @@ public:
   }
 
   SourceLocation getCatchLoc() const { return CatchLoc; }
-  VarDecl *getExceptionDecl() { return ExceptionDecl; }
+  VarDecl *getExceptionDecl() const { return ExceptionDecl; }
   QualType getCaughtType();
   Stmt *getHandlerBlock() { return HandlerBlock; }
 

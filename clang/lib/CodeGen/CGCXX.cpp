@@ -1752,9 +1752,3 @@ void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
   EmitDtorEpilogue(Dtor, DtorType);
   FinishFunction();
 }
-
-// FIXME: Move this to CGStmtCXX.cpp
-void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
-  // FIXME: We need to do more here.
-  EmitStmt(S.getTryBlock());
-}
