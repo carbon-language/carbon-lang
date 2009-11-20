@@ -177,7 +177,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
       if (!sys::Memory::setRangeWritable((void*)Addr, 16)) {
         llvm_unreachable("ERROR: Unable to mark stub writable");
       }
-      JCE.emitWordLE(0xe59fc004);            // ldr pc, [pc, #+4]
+      JCE.emitWordLE(0xe59fc004);            // ldr ip, [pc, #+4]
       JCE.emitWordLE(0xe08fc00c);            // L_func$scv: add ip, pc, ip
       JCE.emitWordLE(0xe59cf000);            // ldr pc, [ip]
       JCE.emitWordLE(LazyPtr - (Addr+4+8));  // func - (L_func$scv+8)
