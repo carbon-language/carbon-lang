@@ -151,6 +151,18 @@ private:
 
   /// SelectCMOVOp - Select CMOV instructions for ARM.
   SDNode *SelectCMOVOp(SDValue Op);
+  SDNode *SelectT2CMOVShiftOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                              ARMCC::CondCodes CCVal, SDValue CCR,
+                              SDValue InFlag);
+  SDNode *SelectARMCMOVShiftOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                               ARMCC::CondCodes CCVal, SDValue CCR,
+                               SDValue InFlag);
+  SDNode *SelectT2CMOVSoImmOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                              ARMCC::CondCodes CCVal, SDValue CCR,
+                              SDValue InFlag);
+  SDNode *SelectARMCMOVSoImmOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                               ARMCC::CondCodes CCVal, SDValue CCR,
+                               SDValue InFlag);
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
@@ -1305,15 +1317,92 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDValue Op,
   return NULL;
 }
 
+SDNode *ARMDAGToDAGISel::
+SelectT2CMOVShiftOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                    ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
+  SDValue CPTmp0;
+  SDValue CPTmp1;
+  if (SelectT2ShifterOperandReg(Op, TrueVal, CPTmp0, CPTmp1)) {
+    unsigned SOVal = cast<ConstantSDNode>(CPTmp1)->getZExtValue();
+    unsigned SOShOp = ARM_AM::getSORegShOp(SOVal);
+    unsigned Opc = 0;
+    switch (SOShOp) {
+    case ARM_AM::lsl: Opc = ARM::t2MOVCClsl; break;
+    case ARM_AM::lsr: Opc = ARM::t2MOVCClsr; break;
+    case ARM_AM::asr: Opc = ARM::t2MOVCCasr; break;
+    case ARM_AM::ror: Opc = ARM::t2MOVCCror; break;
+    default:
+      llvm_unreachable("Unknown so_reg opcode!");
+      break;
+    }
+    SDValue SOShImm =
+      CurDAG->getTargetConstant(ARM_AM::getSORegOffset(SOVal), MVT::i32);
+    SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
+    SDValue Ops[] = { FalseVal, CPTmp0, SOShImm, CC, CCR, InFlag };
+    return CurDAG->SelectNodeTo(Op.getNode(), Opc, MVT::i32,Ops, 6);
+  }
+  return 0;
+}
+
+SDNode *ARMDAGToDAGISel::
+SelectARMCMOVShiftOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                     ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
+  SDValue CPTmp0;
+  SDValue CPTmp1;
+  SDValue CPTmp2;
+  if (SelectShifterOperandReg(Op, TrueVal, CPTmp0, CPTmp1, CPTmp2)) {
+    SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
+    SDValue Ops[] = { FalseVal, CPTmp0, CPTmp1, CPTmp2, CC, CCR, InFlag };
+    return CurDAG->SelectNodeTo(Op.getNode(), ARM::MOVCCs, MVT::i32, Ops, 7);
+  }
+  return 0;
+}
+
+SDNode *ARMDAGToDAGISel::
+SelectT2CMOVSoImmOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                    ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
+  ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
+  if (!T)
+    return 0;
+
+  if (Predicate_t2_so_imm(TrueVal.getNode())) {
+    SDValue True = CurDAG->getTargetConstant(T->getZExtValue(), MVT::i32);
+    SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
+    SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
+    return CurDAG->SelectNodeTo(Op.getNode(),
+                                ARM::t2MOVCCi, MVT::i32, Ops, 5);
+  }
+  return 0;
+}
+
+SDNode *ARMDAGToDAGISel::
+SelectARMCMOVSoImmOp(SDValue Op, SDValue FalseVal, SDValue TrueVal,
+                     ARMCC::CondCodes CCVal, SDValue CCR, SDValue InFlag) {
+  ConstantSDNode *T = dyn_cast<ConstantSDNode>(TrueVal);
+  if (!T)
+    return 0;
+
+  if (Predicate_so_imm(TrueVal.getNode())) {
+    SDValue True = CurDAG->getTargetConstant(T->getZExtValue(), MVT::i32);
+    SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
+    SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
+    return CurDAG->SelectNodeTo(Op.getNode(),
+                                ARM::MOVCCi, MVT::i32, Ops, 5);
+  }
+  return 0;
+}
+
 SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDValue Op) {
   EVT VT = Op.getValueType();
-  SDValue N0 = Op.getOperand(0);
-  SDValue N1 = Op.getOperand(1);
-  SDValue N2 = Op.getOperand(2);
-  SDValue N3 = Op.getOperand(3);
+  SDValue FalseVal = Op.getOperand(0);
+  SDValue TrueVal  = Op.getOperand(1);
+  SDValue CC = Op.getOperand(2);
+  SDValue CCR = Op.getOperand(3);
   SDValue InFlag = Op.getOperand(4);
-  assert(N2.getOpcode() == ISD::Constant);
-  assert(N3.getOpcode() == ISD::Register);
+  assert(CC.getOpcode() == ISD::Constant);
+  assert(CCR.getOpcode() == ISD::Register);
+  ARMCC::CondCodes CCVal =
+    (ARMCC::CondCodes)cast<ConstantSDNode>(CC)->getZExtValue();
 
   if (!Subtarget->isThumb1Only() && VT == MVT::i32) {
     // Pattern: (ARMcmov:i32 GPR:i32:$false, so_reg:i32:$true, (imm:i32):$cc)
@@ -1323,36 +1412,21 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDValue Op) {
     SDValue CPTmp1;
     SDValue CPTmp2;
     if (Subtarget->isThumb()) {
-      if (SelectT2ShifterOperandReg(Op, N1, CPTmp0, CPTmp1)) {
-        unsigned SOVal = cast<ConstantSDNode>(CPTmp1)->getZExtValue();
-        unsigned SOShOp = ARM_AM::getSORegShOp(SOVal);
-        unsigned Opc = 0;
-        switch (SOShOp) {
-        case ARM_AM::lsl: Opc = ARM::t2MOVCClsl; break;
-        case ARM_AM::lsr: Opc = ARM::t2MOVCClsr; break;
-        case ARM_AM::asr: Opc = ARM::t2MOVCCasr; break;
-        case ARM_AM::ror: Opc = ARM::t2MOVCCror; break;
-        default:
-          llvm_unreachable("Unknown so_reg opcode!");
-          break;
-        }
-        SDValue SOShImm =
-          CurDAG->getTargetConstant(ARM_AM::getSORegOffset(SOVal), MVT::i32);
-        SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                                      cast<ConstantSDNode>(N2)->getZExtValue()),
-                                                 MVT::i32);
-        SDValue Ops[] = { N0, CPTmp0, SOShImm, Tmp2, N3, InFlag };
-        return CurDAG->SelectNodeTo(Op.getNode(), Opc, MVT::i32,Ops, 6);
-      }
+      SDNode *Res = SelectT2CMOVShiftOp(Op, FalseVal, TrueVal,
+                                        CCVal, CCR, InFlag);
+      if (!Res)
+        Res = SelectT2CMOVShiftOp(Op, TrueVal, FalseVal,
+                               ARMCC::getOppositeCondition(CCVal), CCR, InFlag);
+      if (Res)
+        return Res;
     } else {
-      if (SelectShifterOperandReg(Op, N1, CPTmp0, CPTmp1, CPTmp2)) {
-        SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                                      cast<ConstantSDNode>(N2)->getZExtValue()),
-                                                 MVT::i32);
-        SDValue Ops[] = { N0, CPTmp0, CPTmp1, CPTmp2, Tmp2, N3, InFlag };
-        return CurDAG->SelectNodeTo(Op.getNode(),
-                                    ARM::MOVCCs, MVT::i32, Ops, 7);
-      }
+      SDNode *Res = SelectARMCMOVShiftOp(Op, FalseVal, TrueVal,
+                                         CCVal, CCR, InFlag);
+      if (!Res)
+        Res = SelectARMCMOVShiftOp(Op, TrueVal, FalseVal,
+                               ARMCC::getOppositeCondition(CCVal), CCR, InFlag);
+      if (Res)
+        return Res;
     }
 
     // Pattern: (ARMcmov:i32 GPR:i32:$false,
@@ -1361,32 +1435,22 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDValue Op) {
     // Emits: (MOVCCi:i32 GPR:i32:$false,
     //           (so_imm:i32 (imm:i32):$true), (imm:i32):$cc)
     // Pattern complexity = 10  cost = 1  size = 0
-    if (N3.getOpcode() == ISD::Constant) {
-      if (Subtarget->isThumb()) {
-        if (Predicate_t2_so_imm(N3.getNode())) {
-          SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
-                                      cast<ConstantSDNode>(N1)->getZExtValue()),
-                                                   MVT::i32);
-          SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                                      cast<ConstantSDNode>(N2)->getZExtValue()),
-                                                   MVT::i32);
-          SDValue Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
-          return CurDAG->SelectNodeTo(Op.getNode(),
-                                      ARM::t2MOVCCi, MVT::i32, Ops, 5);
-        }
-      } else {
-        if (Predicate_so_imm(N3.getNode())) {
-          SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
-                                      cast<ConstantSDNode>(N1)->getZExtValue()),
-                                                   MVT::i32);
-          SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                                      cast<ConstantSDNode>(N2)->getZExtValue()),
-                                                   MVT::i32);
-          SDValue Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
-          return CurDAG->SelectNodeTo(Op.getNode(),
-                                      ARM::MOVCCi, MVT::i32, Ops, 5);
-        }
-      }
+    if (Subtarget->isThumb()) {
+      SDNode *Res = SelectT2CMOVSoImmOp(Op, FalseVal, TrueVal,
+                                        CCVal, CCR, InFlag);
+      if (!Res)
+        Res = SelectT2CMOVSoImmOp(Op, TrueVal, FalseVal,
+                               ARMCC::getOppositeCondition(CCVal), CCR, InFlag);
+      if (Res)
+        return Res;
+    } else {
+      SDNode *Res = SelectARMCMOVSoImmOp(Op, FalseVal, TrueVal,
+                                         CCVal, CCR, InFlag);
+      if (!Res)
+        Res = SelectARMCMOVSoImmOp(Op, TrueVal, FalseVal,
+                               ARMCC::getOppositeCondition(CCVal), CCR, InFlag);
+      if (Res)
+        return Res;
     }
   }
 
@@ -1399,10 +1463,8 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDValue Op) {
   // Pattern complexity = 6  cost = 11  size = 0
   //
   // Also FCPYScc and FCPYDcc.
-  SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                                      cast<ConstantSDNode>(N2)->getZExtValue()),
-                                           MVT::i32);
-  SDValue Ops[] = { N0, N1, Tmp2, N3, InFlag };
+  SDValue Tmp2 = CurDAG->getTargetConstant(CCVal, MVT::i32);
+  SDValue Ops[] = { FalseVal, TrueVal, Tmp2, CCR, InFlag };
   unsigned Opc = 0;
   switch (VT.getSimpleVT().SimpleTy) {
   default: assert(false && "Illegal conditional move type!");
