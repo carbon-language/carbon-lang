@@ -443,8 +443,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
     
     unsigned MB, ME;
     if (InsertMask && isRunOfOnes(InsertMask, MB, ME)) {
-      SDValue Tmp1, Tmp2, Tmp3;
-      bool DisjointMask = (TargetMask ^ InsertMask) == 0xFFFFFFFF;
+      SDValue Tmp1, Tmp2;
 
       if ((Op1Opc == ISD::SHL || Op1Opc == ISD::SRL) &&
           isInt32Immediate(Op1.getOperand(1), Value)) {
@@ -461,10 +460,9 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
           Op1 = Op1.getOperand(0);
         }
       }
-      
-      Tmp3 = (Op0Opc == ISD::AND && DisjointMask) ? Op0.getOperand(0) : Op0;
+
       SH &= 31;
-      SDValue Ops[] = { Tmp3, Op1, getI32Imm(SH), getI32Imm(MB),
+      SDValue Ops[] = { Op0, Op1, getI32Imm(SH), getI32Imm(MB),
                           getI32Imm(ME) };
       return CurDAG->getMachineNode(PPC::RLWIMI, dl, MVT::i32, Ops, 5);
     }
