@@ -81,3 +81,20 @@ L1:
   %y = phi i64 [ %z, %L0 ], [ 1, %entry ]
   ret i64 %y
 }
+
+define void @pr5502() nounwind {
+entry:
+  br label %while.cond
+
+while.cond:
+  br i1 undef, label %while.body, label %while.end
+
+while.body:
+  indirectbr i8* undef, [label %end_opcode, label %end_opcode]
+
+end_opcode:
+  br i1 false, label %end_opcode, label %while.cond
+
+while.end:
+  ret void
+}

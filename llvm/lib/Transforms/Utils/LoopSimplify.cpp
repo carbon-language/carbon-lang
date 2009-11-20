@@ -477,8 +477,13 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM) {
   SmallVector<BasicBlock*, 8> OuterLoopPreds;
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
     if (PN->getIncomingValue(i) != PN ||
-        !L->contains(PN->getIncomingBlock(i)))
+        !L->contains(PN->getIncomingBlock(i))) {
+      // We can't split indirectbr edges.
+      if (isa<IndirectBrInst>(PN->getIncomingBlock(i)->getTerminator()))
+        return 0;
+
       OuterLoopPreds.push_back(PN->getIncomingBlock(i));
+    }
 
   BasicBlock *Header = L->getHeader();
   BasicBlock *NewBB = SplitBlockPredecessors(Header, &OuterLoopPreds[0],

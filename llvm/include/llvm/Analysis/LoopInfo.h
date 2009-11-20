@@ -269,8 +269,6 @@ public:
 
   /// getLoopLatch - If there is a single latch block for this loop, return it.
   /// A latch block is a block that contains a branch back to the header.
-  /// A loop header in normal form has two edges into it: one from a preheader
-  /// and one from a latch block.
   BlockT *getLoopLatch() const {
     BlockT *Header = getHeader();
     typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
@@ -278,20 +276,12 @@ public:
                                             InvBlockTraits::child_begin(Header);
     typename InvBlockTraits::ChildIteratorType PE =
                                               InvBlockTraits::child_end(Header);
-    if (PI == PE) return 0;  // no preds?
-
     BlockT *Latch = 0;
-    if (contains(*PI))
-      Latch = *PI;
-    ++PI;
-    if (PI == PE) return 0;  // only one pred?
-
-    if (contains(*PI)) {
-      if (Latch) return 0;  // multiple backedges
-      Latch = *PI;
-    }
-    ++PI;
-    if (PI != PE) return 0;  // more than two preds
+    for (; PI != PE; ++PI)
+      if (contains(*PI)) {
+        if (Latch) return 0;
+        Latch = *PI;
+      }
 
     return Latch;
   }
