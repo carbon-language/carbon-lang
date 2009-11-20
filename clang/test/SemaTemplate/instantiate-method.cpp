@@ -84,6 +84,8 @@ int *a(A0<int> &x0, A1<int> &x1) {
 
 struct X0Base {
   int &f();
+  int& g(int);
+  static double &g(double);
 };
 
 template<typename T>
@@ -92,9 +94,26 @@ struct X0 : X0Base {
 
 template<typename U>
 struct X1 : X0<U> {
-  int &f2() { return X0Base::f(); }
+  int &f2() { 
+    return X0Base::f(); // expected-error{{call to non-static member function without an object argument}}
+  }
 };
 
 void test_X1(X1<int> x1i) {
   int &ir = x1i.f2();
 }
+
+template<typename U>
+struct X2 : X0Base, U {
+  int &f2() { return X0Base::f(); }
+};
+
+template<typename T>
+struct X3 {
+  void test(T x) {
+    double& d1 = X0Base::g(x);
+  }
+};
+
+
+template struct X3<double>;
