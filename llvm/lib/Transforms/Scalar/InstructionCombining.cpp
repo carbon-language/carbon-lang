@@ -12920,7 +12920,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
       if (LHSMask.size() == Mask.size()) {
         std::vector<unsigned> NewMask;
         for (unsigned i = 0, e = Mask.size(); i != e; ++i)
-          if (Mask[i] >= 2*e)
+          if (Mask[i] >= e)
             NewMask.push_back(2*e);
           else
             NewMask.push_back(LHSMask[Mask[i]]);
