@@ -556,7 +556,7 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
     return;
   
   Selector S = ME->getSelector();
-  if (!(S == releaseS || S == retainS || S == autoreleaseS | S == drainS))
+  if (!(S == releaseS || S == retainS || S == autoreleaseS || S == drainS))
     return;
   
   if (!BT)
