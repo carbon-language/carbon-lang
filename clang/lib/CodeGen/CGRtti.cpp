@@ -260,13 +260,6 @@ public:
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), f);
   }
 
-  llvm::Constant *BuildType2(QualType Ty) {
-    if (const RecordType *RT = Ty.getTypePtr()->getAs<RecordType>())
-      if (const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl()))
-      return Buildclass_type_info(RD);
-    return BuildType(Ty);
-  }
-
   bool DecideExtern(QualType Ty) {
     // For this type, see if all components are never in an anonymous namespace.
     if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
@@ -338,10 +331,10 @@ public:
 
     info.push_back(BuildInt(flags));
     info.push_back(BuildInt(0));
-    info.push_back(BuildType2(PTy));
+    info.push_back(BuildType(PTy));
 
     if (PtrMem)
-      info.push_back(BuildType2(BTy));
+      info.push_back(BuildType(BTy));
 
     // We always generate these as hidden, only the name isn't hidden.
     return finish(info, GV, Name, true, Extern);
@@ -376,6 +369,11 @@ public:
   llvm::Constant *BuildType(QualType Ty) {
     const clang::Type &Type
       = *CGM.getContext().getCanonicalType(Ty).getTypePtr();
+
+    if (const RecordType *RT = Ty.getTypePtr()->getAs<RecordType>())
+      if (const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl()))
+        return Buildclass_type_info(RD);
+
     switch (Type.getTypeClass()) {
     default: {
       assert(0 && "typeid expression");
@@ -426,7 +424,7 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
   return b.Buildclass_type_info(RD);
 }
 
-llvm::Constant *CodeGenModule::GenerateRttiNonClass(QualType Ty) {
+llvm::Constant *CodeGenModule::GenerateRtti(QualType Ty) {
   RttiBuilder b(*this);
 
   return b.BuildType(Ty);

@@ -359,7 +359,7 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
         return Builder.CreateBitCast(CGM.GenerateRttiRef(RD), LTy);
       return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
     }
-    return Builder.CreateBitCast(CGM.GenerateRttiNonClass(Ty), LTy);
+    return Builder.CreateBitCast(CGM.GenerateRtti(Ty), LTy);
   }
   Expr *subE = E->getExprOperand();
   Ty = subE->getType();
@@ -403,7 +403,7 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
     }      
     return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
   }
-  return Builder.CreateBitCast(CGM.GenerateRttiNonClass(Ty), LTy);
+  return Builder.CreateBitCast(CGM.GenerateRtti(Ty), LTy);
 }
 
 llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
