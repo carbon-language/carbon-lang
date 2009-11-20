@@ -35,16 +35,28 @@ static llvm::Constant *getThrowFn(CodeGenFunction &CGF) {
   std::vector<const llvm::Type*> Args(3, Int8PtrTy);
   
   const llvm::FunctionType *FTy = 
-  llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()),
-                          Args, false);
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()),
+                            Args, false);
   
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_throw");
 }
 
+static llvm::Constant *getReThrowFn(CodeGenFunction &CGF) {
+  // void __cxa_rethrow ();
+
+  const llvm::FunctionType *FTy = 
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), false);
+  
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_rethrow");
+}
+
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
-  // FIXME: Handle rethrows.
   if (!E->getSubExpr()) {
-    ErrorUnsupported(E, "rethrow expression");
+    Builder.CreateCall(getReThrowFn(*this))->setDoesNotReturn();
+    Builder.CreateUnreachable();
+
+    // Clear the insertion point to indicate we are in unreachable code.
+    Builder.ClearInsertionPoint();
     return;
   }
   
