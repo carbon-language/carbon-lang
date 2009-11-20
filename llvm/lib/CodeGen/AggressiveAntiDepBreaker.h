@@ -27,12 +27,11 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
+#include <map>
 
 namespace llvm {
   /// Class AggressiveAntiDepState 
-  /// Contains all the state necessary for anti-dep breaking. We place
-  /// into a separate class so be can conveniently save/restore it to
-  /// enable multi-pass anti-dep breaking.
+  /// Contains all the state necessary for anti-dep breaking.
   class AggressiveAntiDepState {
   public:
     /// RegisterReference - Information about a register reference
@@ -126,23 +125,11 @@ namespace llvm {
     /// registers.
     AggressiveAntiDepState *State;
 
-    /// SavedState - The state for the start of an anti-dep
-    /// region. Used to restore the state at the beginning of each
-    /// pass
-    AggressiveAntiDepState *SavedState;
-
   public:
     AggressiveAntiDepBreaker(MachineFunction& MFi, 
                              TargetSubtarget::RegClassVector& CriticalPathRCs);
     ~AggressiveAntiDepBreaker();
     
-    /// GetMaxTrials - As anti-dependencies are broken, additional
-    /// dependencies may be exposed, so multiple passes are required.
-    unsigned GetMaxTrials();
-
-    /// NeedCandidates - Candidates required.
-    bool NeedCandidates() { return true; }
-
     /// Start - Initialize anti-dep breaking for a new basic block.
     void StartBlock(MachineBasicBlock *BB);
 
@@ -150,7 +137,6 @@ namespace llvm {
     /// of the ScheduleDAG and break them by renaming registers.
     ///
     unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
-                                   CandidateMap& Candidates,
                                    MachineBasicBlock::iterator& Begin,
                                    MachineBasicBlock::iterator& End,
                                    unsigned InsertPosIndex);

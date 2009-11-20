@@ -183,8 +183,8 @@ void SUnit::setHeightDirty() {
 /// setDepthToAtLeast - Update this node's successors to reflect the
 /// fact that this node's depth just increased.
 ///
-void SUnit::setDepthToAtLeast(unsigned NewDepth, bool IgnoreAntiDep) {
-  if (NewDepth <= getDepth(IgnoreAntiDep))
+void SUnit::setDepthToAtLeast(unsigned NewDepth) {
+  if (NewDepth <= getDepth())
     return;
   setDepthDirty();
   Depth = NewDepth;
@@ -194,8 +194,8 @@ void SUnit::setDepthToAtLeast(unsigned NewDepth, bool IgnoreAntiDep) {
 /// setHeightToAtLeast - Update this node's predecessors to reflect the
 /// fact that this node's height just increased.
 ///
-void SUnit::setHeightToAtLeast(unsigned NewHeight, bool IgnoreAntiDep) {
-  if (NewHeight <= getHeight(IgnoreAntiDep))
+void SUnit::setHeightToAtLeast(unsigned NewHeight) {
+  if (NewHeight <= getHeight())
     return;
   setHeightDirty();
   Height = NewHeight;
@@ -204,7 +204,7 @@ void SUnit::setHeightToAtLeast(unsigned NewHeight, bool IgnoreAntiDep) {
 
 /// ComputeDepth - Calculate the maximal path from the node to the exit.
 ///
-void SUnit::ComputeDepth(bool IgnoreAntiDep) {
+void SUnit::ComputeDepth() {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
   do {
@@ -214,10 +214,6 @@ void SUnit::ComputeDepth(bool IgnoreAntiDep) {
     unsigned MaxPredDepth = 0;
     for (SUnit::const_pred_iterator I = Cur->Preds.begin(),
          E = Cur->Preds.end(); I != E; ++I) {
-      if (IgnoreAntiDep && 
-          ((I->getKind() == SDep::Anti) || (I->getKind() == SDep::Output))) 
-        continue;
-
       SUnit *PredSU = I->getSUnit();
       if (PredSU->isDepthCurrent)
         MaxPredDepth = std::max(MaxPredDepth,
@@ -241,7 +237,7 @@ void SUnit::ComputeDepth(bool IgnoreAntiDep) {
 
 /// ComputeHeight - Calculate the maximal path from the node to the entry.
 ///
-void SUnit::ComputeHeight(bool IgnoreAntiDep) {
+void SUnit::ComputeHeight() {
   SmallVector<SUnit*, 8> WorkList;
   WorkList.push_back(this);
   do {
@@ -251,10 +247,6 @@ void SUnit::ComputeHeight(bool IgnoreAntiDep) {
     unsigned MaxSuccHeight = 0;
     for (SUnit::const_succ_iterator I = Cur->Succs.begin(),
          E = Cur->Succs.end(); I != E; ++I) {
-      if (IgnoreAntiDep && 
-          ((I->getKind() == SDep::Anti) || (I->getKind() == SDep::Output))) 
-        continue;
-
       SUnit *SuccSU = I->getSUnit();
       if (SuccSU->isHeightCurrent)
         MaxSuccHeight = std::max(MaxSuccHeight,

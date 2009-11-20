@@ -28,11 +28,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-static cl::opt<int>
-AntiDepTrials("agg-antidep-trials",
-              cl::desc("Maximum number of anti-dependency breaking passes"),
-              cl::init(1), cl::Hidden);
-
 // If DebugDiv > 0 then only break antidep with (ID % DebugDiv) == DebugMod
 static cl::opt<int>
 DebugDiv("agg-antidep-debugdiv",
@@ -118,7 +113,7 @@ AggressiveAntiDepBreaker(MachineFunction& MFi,
   MRI(MF.getRegInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
   AllocatableSet(TRI->getAllocatableSet(MF)),
-  State(NULL), SavedState(NULL) {
+  State(NULL) {
   /* Collect a bitset of all registers that are only broken if they
      are on the critical path. */
   for (unsigned i = 0, e = CriticalPathRCs.size(); i < e; ++i) {
@@ -138,13 +133,6 @@ AggressiveAntiDepBreaker(MachineFunction& MFi,
 
 AggressiveAntiDepBreaker::~AggressiveAntiDepBreaker() {
   delete State;
-  delete SavedState;
-}
-
-unsigned AggressiveAntiDepBreaker::GetMaxTrials() {
-  if (AntiDepTrials <= 0)
-    return 1;
-  return AntiDepTrials;
 }
 
 void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
@@ -216,8 +204,6 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
 void AggressiveAntiDepBreaker::FinishBlock() {
   delete State;
   State = NULL;
-  delete SavedState;
-  SavedState = NULL;
 }
 
 void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
@@ -251,10 +237,6 @@ void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
     }
   }
   DEBUG(errs() << '\n');
-
-  // We're starting a new schedule region so forget any saved state.
-  delete SavedState;
-  SavedState = NULL;
 }
 
 bool AggressiveAntiDepBreaker::IsImplicitDefUse(MachineInstr *MI,
@@ -293,27 +275,20 @@ void AggressiveAntiDepBreaker::GetPassthruRegs(MachineInstr *MI,
   }
 }
 
-/// AntiDepEdges - Return in Edges the anti- and output-
-/// dependencies on Regs in SU that we want to consider for breaking.
-static void AntiDepEdges(SUnit *SU, 
-                         const AntiDepBreaker::AntiDepRegVector& Regs,
-                         std::vector<SDep*>& Edges) {
-  AntiDepBreaker::AntiDepRegSet RegSet;
-  for (unsigned i = 0, e = Regs.size(); i < e; ++i)
-    RegSet.insert(Regs[i]);
-
+/// AntiDepEdges - Return in Edges the anti- and output- dependencies
+/// in SU that we want to consider for breaking.
+static void AntiDepEdges(SUnit *SU, std::vector<SDep*>& Edges) {
+  SmallSet<unsigned, 4> RegSet;
   for (SUnit::pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
        P != PE; ++P) {
     if ((P->getKind() == SDep::Anti) || (P->getKind() == SDep::Output)) {
       unsigned Reg = P->getReg();
-      if (RegSet.count(Reg) != 0) {
+      if (RegSet.count(Reg) == 0) {
         Edges.push_back(&*P);
-        RegSet.erase(Reg);
+        RegSet.insert(Reg);
       }
     }
   }
-
-  assert(RegSet.empty() && "Expected all antidep registers to be found");
 }
 
 /// CriticalPathStep - Return the next SUnit after SU on the bottom-up
@@ -698,7 +673,6 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
 ///
 unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
                               std::vector<SUnit>& SUnits,
-                              CandidateMap& Candidates,
                               MachineBasicBlock::iterator& Begin,
                               MachineBasicBlock::iterator& End,
                               unsigned InsertPosIndex) {
@@ -710,16 +684,6 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
   // The code below assumes that there is at least one instruction,
   // so just duck out immediately if the block is empty.
   if (SUnits.empty()) return 0;
-  
-  // Manage saved state to enable multiple passes...
-  if (AntiDepTrials > 1) {
-    if (SavedState == NULL) {
-      SavedState = new AggressiveAntiDepState(*State);
-    } else {
-      delete State;
-      State = new AggressiveAntiDepState(*SavedState);
-    }
-  }
   
   // For each regclass the next register to use for renaming.
   RenameOrderType RenameOrder;
@@ -749,21 +713,14 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
     CriticalPathMI = CriticalPathSU->getInstr();
   }
 
-  // Even if there are no anti-dependencies we still need to go
-  // through the instructions to update Def, Kills, etc.
 #ifndef NDEBUG 
-  if (Candidates.empty()) {
-    DEBUG(errs() << "\n===== No anti-dependency candidates\n");
-  } else {
-    DEBUG(errs() << "\n===== Attempting to break " << Candidates.size() << 
-          " anti-dependencies\n");
-    DEBUG(errs() << "Available regs:");
-    for (unsigned Reg = 0; Reg < TRI->getNumRegs(); ++Reg) {
-      if (!State->IsLive(Reg))
-        DEBUG(errs() << " " << TRI->getName(Reg));
-    }
-    DEBUG(errs() << '\n');
+  DEBUG(errs() << "\n===== Aggressive anti-dependency breaking\n");
+  DEBUG(errs() << "Available regs:");
+  for (unsigned Reg = 0; Reg < TRI->getNumRegs(); ++Reg) {
+    if (!State->IsLive(Reg))
+      DEBUG(errs() << " " << TRI->getName(Reg));
   }
+  DEBUG(errs() << '\n');
 #endif
 
   // Attempt to break anti-dependence edges. Walk the instructions
@@ -784,14 +741,11 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
     // Process the defs in MI...
     PrescanInstruction(MI, Count, PassthruRegs);
     
-    // The the dependence edges that represent anti- and output-
+    // The dependence edges that represent anti- and output-
     // dependencies that are candidates for breaking.
     std::vector<SDep*> Edges;
     SUnit *PathSU = MISUnitMap[MI];
-    AntiDepBreaker::CandidateMap::iterator 
-      citer = Candidates.find(PathSU);
-    if (citer != Candidates.end())
-      AntiDepEdges(PathSU, citer->second, Edges);
+    AntiDepEdges(PathSU, Edges);
 
     // If MI is not on the critical path, then we don't rename
     // registers in the CriticalPathSet.
@@ -847,10 +801,30 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
           // anti-dependency since those edges would prevent such
           // units from being scheduled past each other
           // regardless.
+          //
+          // Also, if there are dependencies on other SUnits with the
+          // same register as the anti-dependency, don't attempt to
+          // break it.
           for (SUnit::pred_iterator P = PathSU->Preds.begin(),
                  PE = PathSU->Preds.end(); P != PE; ++P) {
-            if ((P->getSUnit() == NextSU) && (P->getKind() != SDep::Anti)) {
+            if (P->getSUnit() == NextSU ?
+                (P->getKind() != SDep::Anti || P->getReg() != AntiDepReg) :
+                (P->getKind() == SDep::Data && P->getReg() == AntiDepReg)) {
+              AntiDepReg = 0;
+              break;
+            }
+          }
+          for (SUnit::pred_iterator P = PathSU->Preds.begin(),
+                 PE = PathSU->Preds.end(); P != PE; ++P) {
+            if ((P->getSUnit() == NextSU) && (P->getKind() != SDep::Anti) &&
+                (P->getKind() != SDep::Output)) {
               DEBUG(errs() << " (real dependency)\n");
+              AntiDepReg = 0;
+              break;
+            } else if ((P->getSUnit() != NextSU) && 
+                       (P->getKind() == SDep::Data) && 
+                       (P->getReg() == AntiDepReg)) {
+              DEBUG(errs() << " (other dependency)\n");
               AntiDepReg = 0;
               break;
             }

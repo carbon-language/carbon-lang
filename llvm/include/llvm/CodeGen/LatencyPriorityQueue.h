@@ -40,18 +40,11 @@ namespace llvm {
     /// mobility.
     std::vector<unsigned> NumNodesSolelyBlocking;
     
-    /// IgnoreAntiDep - Ignore anti-dependencies
-    bool IgnoreAntiDep;
-    
     /// Queue - The queue.
     PriorityQueue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
 
 public:
-  LatencyPriorityQueue() : IgnoreAntiDep(false), Queue(latency_sort(this)) {
-    }
-
-    void setIgnoreAntiDep(bool ignore) {
-      IgnoreAntiDep = ignore;
+  LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
 
     void initNodes(std::vector<SUnit> &sunits) {
@@ -72,7 +65,7 @@ public:
     
     unsigned getLatency(unsigned NodeNum) const {
       assert(NodeNum < (*SUnits).size());
-      return (*SUnits)[NodeNum].getHeight(IgnoreAntiDep);
+      return (*SUnits)[NodeNum].getHeight();
     }
     
     unsigned getNumSolelyBlockNodes(unsigned NodeNum) const {

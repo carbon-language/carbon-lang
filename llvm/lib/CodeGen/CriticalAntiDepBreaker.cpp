@@ -316,7 +316,6 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(unsigned AntiDepReg,
 
 unsigned CriticalAntiDepBreaker::
 BreakAntiDependencies(std::vector<SUnit>& SUnits,
-                      CandidateMap& Candidates,
                       MachineBasicBlock::iterator& Begin,
                       MachineBasicBlock::iterator& End,
                       unsigned InsertPosIndex) {

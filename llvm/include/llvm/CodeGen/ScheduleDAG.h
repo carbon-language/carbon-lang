@@ -340,34 +340,30 @@ namespace llvm {
     void removePred(const SDep &D);
 
     /// getDepth - Return the depth of this node, which is the length of the
-    /// maximum path up to any node with has no predecessors. If IgnoreAntiDep
-    /// is true, ignore anti-dependence edges.
-    unsigned getDepth(bool IgnoreAntiDep=false) const {
+    /// maximum path up to any node with has no predecessors.
+    unsigned getDepth() const {
       if (!isDepthCurrent) 
-        const_cast<SUnit *>(this)->ComputeDepth(IgnoreAntiDep);
+        const_cast<SUnit *>(this)->ComputeDepth();
       return Depth;
     }
 
     /// getHeight - Return the height of this node, which is the length of the
-    /// maximum path down to any node with has no successors. If IgnoreAntiDep
-    /// is true, ignore anti-dependence edges.
-    unsigned getHeight(bool IgnoreAntiDep=false) const {
+    /// maximum path down to any node with has no successors.
+    unsigned getHeight() const {
       if (!isHeightCurrent) 
-        const_cast<SUnit *>(this)->ComputeHeight(IgnoreAntiDep);
+        const_cast<SUnit *>(this)->ComputeHeight();
       return Height;
     }
 
     /// setDepthToAtLeast - If NewDepth is greater than this node's
     /// depth value, set it to be the new depth value. This also
-    /// recursively marks successor nodes dirty.  If IgnoreAntiDep is
-    /// true, ignore anti-dependence edges.
-    void setDepthToAtLeast(unsigned NewDepth, bool IgnoreAntiDep=false);
+    /// recursively marks successor nodes dirty.
+    void setDepthToAtLeast(unsigned NewDepth);
 
     /// setDepthToAtLeast - If NewDepth is greater than this node's
     /// depth value, set it to be the new height value. This also
-    /// recursively marks predecessor nodes dirty. If IgnoreAntiDep is
-    /// true, ignore anti-dependence edges.
-    void setHeightToAtLeast(unsigned NewHeight, bool IgnoreAntiDep=false);
+    /// recursively marks predecessor nodes dirty.
+    void setHeightToAtLeast(unsigned NewHeight);
 
     /// setDepthDirty - Set a flag in this node to indicate that its
     /// stored Depth value will require recomputation the next time
@@ -400,8 +396,8 @@ namespace llvm {
     void print(raw_ostream &O, const ScheduleDAG *G) const;
 
   private:
-    void ComputeDepth(bool IgnoreAntiDep);
-    void ComputeHeight(bool IgnoreAntiDep);
+    void ComputeDepth();
+    void ComputeHeight();
   };
 
   //===--------------------------------------------------------------------===//
