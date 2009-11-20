@@ -78,16 +78,19 @@ def : DiagGroup<"synth">;
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;
 
-// Just silence warnings about common forms of -Wstrict-aliasing for now.
+// Just silence warnings about -Wstrict-aliasing for now.
 def : DiagGroup<"strict-aliasing=0">;
 def : DiagGroup<"strict-aliasing=1">;
 def : DiagGroup<"strict-aliasing=2">;
 def : DiagGroup<"strict-aliasing">;
 
-// Just silence warnings about common forms of -Wstrict-aliasing for now.
+// Just silence warnings about -Wstrict-overflow for now.
 def : DiagGroup<"strict-overflow=0">;
 def : DiagGroup<"strict-overflow=1">;
 def : DiagGroup<"strict-overflow=2">;
+def : DiagGroup<"strict-overflow=3">;
+def : DiagGroup<"strict-overflow=4">;
+def : DiagGroup<"strict-overflow=5">;
 def : DiagGroup<"strict-overflow">;
 
 def InvalidOffsetof : DiagGroup<"invalid-offsetof">;
