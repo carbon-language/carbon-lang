@@ -1278,8 +1278,7 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
                                 ExplodedNode* Pred,
                                 const GRState* state, SVal location,
                                 const void *tag, bool isLoad) {
-
-  if (location.isUnknown() || Checkers.empty()) {
+  if (Checkers.empty()) {
     Dst.Add(Pred);
     return;
   }
