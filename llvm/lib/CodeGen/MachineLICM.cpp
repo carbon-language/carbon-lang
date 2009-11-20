@@ -34,10 +34,15 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+static cl::opt<bool> HoistLdConst("licm-const-load",
+                                  cl::desc("LICM load from constant memory"),
+                                  cl::init(false), cl::Hidden);
 
 STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 STATISTIC(NumCSEed,   "Number of hoisted machine instructions CSEed");
@@ -97,7 +102,7 @@ namespace {
 
     /// IsProfitableToHoist - Return true if it is potentially profitable to
     /// hoist the given loop invariant.
-    bool IsProfitableToHoist(MachineInstr &MI);
+    bool IsProfitableToHoist(MachineInstr &MI, bool &isConstLd);
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
@@ -106,6 +111,10 @@ namespace {
     /// pass without iteration.
     ///
     void HoistRegion(MachineDomTreeNode *N);
+
+    /// isLoadFromConstantMemory - Return true if the given instruction is a
+    /// load from constant memory.
+    bool isLoadFromConstantMemory(MachineInstr *MI);
 
     /// ExtractHoistableLoad - Unfold a load from the given machineinstr if
     /// the load itself could be hoisted. Return the unfolded and hoistable
@@ -338,17 +347,45 @@ static bool HasPHIUses(unsigned Reg, MachineRegisterInfo *RegInfo) {
   return false;
 }
 
+/// isLoadFromConstantMemory - Return true if the given instruction is a
+/// load from constant memory. Machine LICM will hoist these even if they are
+/// not re-materializable.
+bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
+  if (!MI->getDesc().mayLoad()) return false;
+  if (!MI->hasOneMemOperand()) return false;
+  MachineMemOperand *MMO = *MI->memoperands_begin();
+  if (MMO->isVolatile()) return false;
+  if (!MMO->getValue()) return false;
+  const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(MMO->getValue());
+  if (PSV) {
+    MachineFunction &MF = *MI->getParent()->getParent();
+    return PSV->isConstant(MF.getFrameInfo());
+  } else {
+    return AA->pointsToConstantMemory(MMO->getValue());
+  }
+}
+
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
 /// the given loop invariant.
-bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
+bool MachineLICM::IsProfitableToHoist(MachineInstr &MI, bool &isConstLd) {
+  isConstLd = false;
+
   if (MI.getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
     return false;
 
   // FIXME: For now, only hoist re-materilizable instructions. LICM will
   // increase register pressure. We want to make sure it doesn't increase
   // spilling.
-  if (!TII->isTriviallyReMaterializable(&MI, AA))
-    return false;
+  // Also hoist loads from constant memory, e.g. load from stubs, GOT. Hoisting
+  // these tend to help performance in low register pressure situation. The
+  // trade off is it may cause spill in high pressure situation. It will end up
+  // adding a store in the loop preheader. But the reload is no more expensive.
+  // The side benefit is these loads are frequently CSE'ed.
+  if (!TII->isTriviallyReMaterializable(&MI, AA)) {
+    if (!HoistLdConst || !isLoadFromConstantMemory(&MI))
+      return false;
+    isConstLd = true;
+  }
 
   // If result(s) of this instruction is used by PHIs, then don't hoist it.
   // The presence of joins makes it difficult for current register allocator
@@ -368,18 +405,9 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   // If not, we may be able to unfold a load and hoist that.
   // First test whether the instruction is loading from an amenable
   // memory location.
-  if (!MI->getDesc().mayLoad()) return 0;
-  if (!MI->hasOneMemOperand()) return 0;
-  MachineMemOperand *MMO = *MI->memoperands_begin();
-  if (MMO->isVolatile()) return 0;
-  MachineFunction &MF = *MI->getParent()->getParent();
-  if (!MMO->getValue()) return 0;
-  if (const PseudoSourceValue *PSV =
-        dyn_cast<PseudoSourceValue>(MMO->getValue())) {
-    if (!PSV->isConstant(MF.getFrameInfo())) return 0;
-  } else {
-    if (!AA->pointsToConstantMemory(MMO->getValue())) return 0;
-  }
+  if (!isLoadFromConstantMemory(MI))
+    return 0;
+
   // Next determine the register class for a temporary register.
   unsigned LoadRegIndex;
   unsigned NewOpc =
@@ -393,6 +421,8 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   const TargetRegisterClass *RC = TID.OpInfo[LoadRegIndex].getRegClass(TRI);
   // Ok, we're unfolding. Create a temporary register and do the unfold.
   unsigned Reg = RegInfo->createVirtualRegister(RC);
+
+  MachineFunction &MF = *MI->getParent()->getParent();
   SmallVector<MachineInstr *, 2> NewMIs;
   bool Success =
     TII->unfoldMemoryOperand(MF, MI, Reg,
@@ -409,7 +439,9 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   MBB->insert(MI, NewMIs[1]);
   // If unfolding produced a load that wasn't loop-invariant or profitable to
   // hoist, discard the new instructions and bail.
-  if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {
+  bool isConstLd;
+  if (!IsLoopInvariantInst(*NewMIs[0]) ||
+      !IsProfitableToHoist(*NewMIs[0], isConstLd)) {
     NewMIs[0]->eraseFromParent();
     NewMIs[1]->eraseFromParent();
     return 0;
@@ -475,7 +507,9 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
 ///
 void MachineLICM::Hoist(MachineInstr *MI) {
   // First check whether we should hoist this instruction.
-  if (!IsLoopInvariantInst(*MI) || !IsProfitableToHoist(*MI)) {
+  bool isConstLd;
+  if (!IsLoopInvariantInst(*MI) ||
+      !IsProfitableToHoist(*MI, isConstLd)) {
     // If not, try unfolding a hoistable load.
     MI = ExtractHoistableLoad(MI);
     if (!MI) return;
@@ -484,7 +518,10 @@ void MachineLICM::Hoist(MachineInstr *MI) {
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
   DEBUG({
-      errs() << "Hoisting " << *MI;
+      errs() << "Hoisting ";
+      if (isConstLd)
+        errs() << "load from constant mem ";
+      errs() << *MI;
       if (CurPreheader->getBasicBlock())
         errs() << " to MachineBasicBlock "
                << CurPreheader->getName();
