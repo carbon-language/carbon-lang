@@ -277,13 +277,14 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   mangleBareFunctionType(FT, MangleReturnType);
 }
 
-static bool isStdNamespace(const DeclContext *DC) {
-  if (!DC->isNamespace() || !DC->getParent()->isTranslationUnit())
-    return false;
-
-  const NamespaceDecl *NS = cast<NamespaceDecl>(DC);
+static bool isStdNamespace(const NamespaceDecl *NS) {
   const IdentifierInfo *II = NS->getOriginalNamespace()->getIdentifier();
   return II && II->isStr("std");
+}
+
+static bool isStdNamespace(const DeclContext *DC) {
+  return DC->isNamespace() && DC->getParent()->isTranslationUnit() &&
+    isStdNamespace(cast<NamespaceDecl>(DC));
 }
 
 static const TemplateDecl *
