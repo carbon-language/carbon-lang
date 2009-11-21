@@ -4509,7 +4509,6 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 /// \brief Add a single candidate to the overload set.
 static void AddOverloadedCallCandidate(Sema &S,
                                        NamedDecl *Callee,
-                                       bool &ArgumentDependentLookup,
                                        bool HasExplicitTemplateArgs,
                              const TemplateArgumentLoc *ExplicitTemplateArgs,
                                        unsigned NumExplicitTemplateArgs,
@@ -4523,10 +4522,6 @@ static void AddOverloadedCallCandidate(Sema &S,
     assert(!HasExplicitTemplateArgs && "Explicit template arguments?");
     S.AddOverloadCandidate(Func, Args, NumArgs, CandidateSet, false, false,
                            PartialOverloading);
-  
-    if (Func->getDeclContext()->isRecord() ||
-        Func->getDeclContext()->isFunctionOrMethod())
-      ArgumentDependentLookup = false;
     return;
   }
 
@@ -4536,9 +4531,6 @@ static void AddOverloadedCallCandidate(Sema &S,
                                    ExplicitTemplateArgs,
                                    NumExplicitTemplateArgs,
                                    Args, NumArgs, CandidateSet);
-
-    if (FuncTemplate->getDeclContext()->isRecord())
-      ArgumentDependentLookup = false;
     return;
   }
 
@@ -4551,7 +4543,7 @@ static void AddOverloadedCallCandidate(Sema &S,
 /// dependent lookup to the given overload set.
 void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
                                        DeclarationName &UnqualifiedName,
-                                       bool &ArgumentDependentLookup,
+                                       bool ArgumentDependentLookup,
                                        bool HasExplicitTemplateArgs,
                              const TemplateArgumentLoc *ExplicitTemplateArgs,
                                        unsigned NumExplicitTemplateArgs,
@@ -4589,8 +4581,7 @@ void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
 
   for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Fns.begin(),
          E = Fns.end(); I != E; ++I)
-    AddOverloadedCallCandidate(*this, *I, ArgumentDependentLookup,
-                               HasExplicitTemplateArgs,
+    AddOverloadedCallCandidate(*this, *I, HasExplicitTemplateArgs,
                                ExplicitTemplateArgs, NumExplicitTemplateArgs,
                                Args, NumArgs, CandidateSet, 
                                PartialOverloading);
@@ -4621,7 +4612,7 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn,
                                             Expr **Args, unsigned NumArgs,
                                             SourceLocation *CommaLocs,
                                             SourceLocation RParenLoc,
-                                            bool &ArgumentDependentLookup) {
+                                            bool ArgumentDependentLookup) {
   OverloadCandidateSet CandidateSet;
 
   // Add the functions denoted by Callee to the set of candidate

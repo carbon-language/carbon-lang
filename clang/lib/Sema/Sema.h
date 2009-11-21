@@ -961,7 +961,7 @@ public:
 
   void AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*>& Callees,
                                    DeclarationName &UnqualifiedName,
-                                   bool &ArgumentDependentLookup,
+                                   bool ArgumentDependentLookup,
                                    bool HasExplicitTemplateArgs,
                              const TemplateArgumentLoc *ExplicitTemplateArgs,
                                    unsigned NumExplicitTemplateArgs,
@@ -979,7 +979,7 @@ public:
                                         Expr **Args, unsigned NumArgs,
                                         SourceLocation *CommaLocs,
                                         SourceLocation RParenLoc,
-                                        bool &ArgumentDependentLookup);
+                                        bool ArgumentDependentLookup);
 
   OwningExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
                                            unsigned Opc,
