@@ -194,7 +194,15 @@ void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(const std::string &Base,
 
   // FIXME: This probably should goto to some platform utils place.
 #ifdef _MSC_VER
+
   // Read registry string.
+  // This also supports a means to look for high-versioned keys by use
+  // of a $VERSION placeholder in the key path.
+  // $VERSION in the key path is a placeholder for the version number,
+  // causing the highest value path to be searched for and used.
+  // I.e. "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\$VERSION".
+  // There can be additional characters in the component.  Only the numberic
+  // characters are compared.
 bool getSystemRegistryString(const char *keyPath, const char *valueName,
                        char *value, size_t maxLength) {
   HKEY hRootKey = NULL;
@@ -202,6 +210,7 @@ bool getSystemRegistryString(const char *keyPath, const char *valueName,
   const char* subKey = NULL;
   DWORD valueType;
   DWORD valueSize = maxLength - 1;
+  long lResult;
   bool returnValue = false;
   if (strncmp(keyPath, "HKEY_CLASSES_ROOT\\", 18) == 0) {
     hRootKey = HKEY_CLASSES_ROOT;
@@ -221,13 +230,80 @@ bool getSystemRegistryString(const char *keyPath, const char *valueName,
   }
   else
     return(false);
-  long lResult = RegOpenKeyEx(hRootKey, subKey, 0, KEY_READ, &hKey);
-  if (lResult == ERROR_SUCCESS) {
-    lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
-      (LPBYTE)value, &valueSize);
-    if (lResult == ERROR_SUCCESS)
-      returnValue = true;
-    RegCloseKey(hKey);
+  const char *placeHolder = strstr(subKey, "$VERSION");
+  char bestName[256];
+  bestName[0] = '\0';
+  // If we have a $VERSION placeholder, do the highest-version search.
+  if (placeHolder) {
+    const char *keyEnd = placeHolder - 1;
+    const char *nextKey = placeHolder;
+    // Find end of previous key.
+    while ((keyEnd > subKey) && (*keyEnd != '\\'))
+      keyEnd--;
+    // Find end of key containing $VERSION.
+    while (*nextKey && (*nextKey != '\\'))
+      nextKey++;
+    size_t partialKeyLength = keyEnd - subKey;
+    char partialKey[256];
+    if (partialKeyLength > sizeof(partialKey))
+      partialKeyLength = sizeof(partialKey);
+    strncpy(partialKey, subKey, partialKeyLength);
+    partialKey[partialKeyLength] = '\0';
+    HKEY hTopKey = NULL;
+    lResult = RegOpenKeyEx(hRootKey, partialKey, 0, KEY_READ, &hTopKey);
+    if (lResult == ERROR_SUCCESS) {
+      char keyName[256];
+      int bestIndex = -1;
+      double bestValue = 0.0;
+      DWORD index, size = sizeof(keyName) - 1;
+      for (index = 0; RegEnumKeyEx(hTopKey, index, keyName, &size, NULL,
+          NULL, NULL, NULL) == ERROR_SUCCESS; index++) {
+        const char *sp = keyName;
+        while (*sp && !isdigit(*sp))
+          sp++;
+        if (!*sp)
+          continue;
+        const char *ep = sp + 1;
+        while (*ep && (isdigit(*ep) || (*ep == '.')))
+          ep++;
+        char numBuf[32];
+        strncpy(numBuf, sp, sizeof(numBuf) - 1);
+        numBuf[sizeof(numBuf) - 1] = '\0';
+        double value = strtod(numBuf, NULL);
+        if (value > bestValue) {
+          bestIndex = (int)index;
+          bestValue = value;
+          strcpy(bestName, keyName);
+        }
+        size = sizeof(keyName) - 1;
+      }
+      // If we found the highest versioned key, open the key and get the value.
+      if (bestIndex != -1) {
+        // Append rest of key.
+        strncat(bestName, nextKey, sizeof(bestName) - 1);
+        bestName[sizeof(bestName) - 1] = '\0';
+        // Open the chosen key path remainder.
+        lResult = RegOpenKeyEx(hTopKey, bestName, 0, KEY_READ, &hKey);
+        if (lResult == ERROR_SUCCESS) {
+          lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
+            (LPBYTE)value, &valueSize);
+          if (lResult == ERROR_SUCCESS)
+            returnValue = true;
+          RegCloseKey(hKey);
+        }
+      }
+      RegCloseKey(hTopKey);
+    }
+  }
+  else {
+    lResult = RegOpenKeyEx(hRootKey, subKey, 0, KEY_READ, &hKey);
+    if (lResult == ERROR_SUCCESS) {
+      lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
+        (LPBYTE)value, &valueSize);
+      if (lResult == ERROR_SUCCESS)
+        returnValue = true;
+      RegCloseKey(hKey);
+    }
   }
   return(returnValue);
 }
@@ -240,35 +316,13 @@ bool getSystemRegistryString(const char *, const char *, char *, size_t) {
 
   // Get Visual Studio installation directory.
 bool getVisualStudioDir(std::string &path) {
+  char vsIDEInstallDir[256];
   // Try the Windows registry first.
-  char vs80IDEInstallDir[256];
-  char vs90IDEInstallDir[256];
-  const char* vsIDEInstallDir = NULL;
-  bool has80 = getSystemRegistryString(
-    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\8.0",
-    "InstallDir", vs80IDEInstallDir, sizeof(vs80IDEInstallDir) - 1);
-  bool has90 = getSystemRegistryString(
-    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\9.0",
-    "InstallDir", vs90IDEInstallDir, sizeof(vs90IDEInstallDir) - 1);
+  bool hasVCDir = getSystemRegistryString(
+    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\$VERSION",
+    "InstallDir", vsIDEInstallDir, sizeof(vsIDEInstallDir) - 1);
     // If we have both vc80 and vc90, pick version we were compiled with. 
-  if (has80 && has90) {
-    #ifdef _MSC_VER
-      #if (_MSC_VER >= 1500)  // VC90
-          vsIDEInstallDir = vs90IDEInstallDir;
-      #elif (_MSC_VER == 1400) // VC80
-          vsIDEInstallDir = vs80IDEInstallDir;
-      #else
-          vsIDEInstallDir = vs90IDEInstallDir;
-      #endif
-    #else
-      vsIDEInstallDir = vs90IDEInstallDir;
-    #endif
-  }
-  else if (has90)
-    vsIDEInstallDir = vs90IDEInstallDir;
-  else if (has80)
-    vsIDEInstallDir = vs80IDEInstallDir;
-  if (vsIDEInstallDir && *vsIDEInstallDir) {
+  if (hasVCDir && vsIDEInstallDir[0]) {
     char *p = (char*)strstr(vsIDEInstallDir, "\\Common7\\IDE");
     if (p)
       *p = '\0';
@@ -307,6 +361,21 @@ bool getVisualStudioDir(std::string &path) {
   return(false);
 }
 
+  // Get Windows SDK installation directory.
+bool getWindowsSDKDir(std::string &path) {
+  char windowsSDKInstallDir[256];
+  // Try the Windows registry.
+  bool hasSDKDir = getSystemRegistryString(
+   "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\$VERSION",
+    "InstallationFolder", windowsSDKInstallDir, sizeof(windowsSDKInstallDir) - 1);
+    // If we have both vc80 and vc90, pick version we were compiled with. 
+  if (hasSDKDir && windowsSDKInstallDir[0]) {
+    path = windowsSDKInstallDir;
+    return(true);
+  }
+  return(false);
+}
+
 void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   // FIXME: temporary hack: hard-coded paths.
   llvm::StringRef CIncludeDirs(C_INCLUDE_DIRS);
@@ -324,29 +393,14 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   case llvm::Triple::Win32:
     {
       std::string VSDir;
+      std::string WindowsSDKDir;
       if (getVisualStudioDir(VSDir)) {
         AddPath(VSDir + "\\VC\\include", System, false, false, false);
-        AddPath(VSDir + "\\VC\\PlatformSDK\\Include",
-          System, false, false, false);
-      }
-      else {
-          // Default install paths.
-        AddPath("C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
-          System, false, false, false);
-        AddPath(
-        "C:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
-          System, false, false, false);
-        AddPath("C:/Program Files/Microsoft Visual Studio 8/VC/include",
-          System, false, false, false);
-        AddPath(
-        "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include",
-          System, false, false, false);
-          // For some clang developers.
-        AddPath("G:/Program Files/Microsoft Visual Studio 9.0/VC/include",
-          System, false, false, false);
-        AddPath(
-        "G:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
-          System, false, false, false);
+        if (getWindowsSDKDir(WindowsSDKDir))
+          AddPath(WindowsSDKDir, System, false, false, false);
+        else
+          AddPath(VSDir + "\\VC\\PlatformSDK\\Include",
+            System, false, false, false);
       }
     }
     break;
