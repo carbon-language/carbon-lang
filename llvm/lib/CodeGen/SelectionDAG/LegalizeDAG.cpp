@@ -1517,6 +1517,7 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
   // Create the stack frame object.
   EVT VT = Node->getValueType(0);
   EVT OpVT = Node->getOperand(0).getValueType();
+  EVT EltVT = VT.getVectorElementType();
   DebugLoc dl = Node->getDebugLoc();
   SDValue FIPtr = DAG.CreateStackTemporary(VT);
   int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
@@ -1524,7 +1525,7 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
 
   // Emit a store of each element to the stack slot.
   SmallVector<SDValue, 8> Stores;
-  unsigned TypeByteSize = OpVT.getSizeInBits() / 8;
+  unsigned TypeByteSize = EltVT.getSizeInBits() / 8;
   // Store (in the right endianness) the elements to memory.
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     // Ignore undef elements.
@@ -1535,8 +1536,13 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
     SDValue Idx = DAG.getConstant(Offset, FIPtr.getValueType());
     Idx = DAG.getNode(ISD::ADD, dl, FIPtr.getValueType(), FIPtr, Idx);
 
-    Stores.push_back(DAG.getStore(DAG.getEntryNode(), dl, Node->getOperand(i),
-                                  Idx, SV, Offset));
+    // If EltVT smaller than OpVT, only store the bits necessary.
+    if (EltVT.bitsLT(OpVT))
+      Stores.push_back(DAG.getTruncStore(DAG.getEntryNode(), dl,
+                          Node->getOperand(i), Idx, SV, Offset, EltVT));
+    else
+      Stores.push_back(DAG.getStore(DAG.getEntryNode(), dl, 
+                                    Node->getOperand(i), Idx, SV, Offset));
   }
 
   SDValue StoreChain;
