@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=arm -mattr=+v6
 ; RUN: llc < %s -mtriple=arm-apple-darwin -mattr=+v6 |\
-; RUN:   grep mov | count 3
+; RUN:   grep mov | count 4
 
 define i32 @test(i32 %x) {
         %tmp = trunc i32 %x to i16              ; <i16> [#uses=1]
