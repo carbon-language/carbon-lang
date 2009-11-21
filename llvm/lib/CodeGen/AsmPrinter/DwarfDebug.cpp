@@ -241,21 +241,6 @@ void DbgScope::dump() const {
 }
 #endif
 
-//===----------------------------------------------------------------------===//
-/// DbgConcreteScope - This class is used to track a scope that holds concrete
-/// instance information.
-///
-class DbgConcreteScope : public DbgScope {
-  CompileUnit *Unit;
-  DIE *Die;                           // Debug info for this concrete scope.
-public:
-  DbgConcreteScope(DIDescriptor D) : DbgScope(NULL, D) {}
-
-  // Accessors.
-  DIE *getDie() const { return Die; }
-  void setDie(DIE *D) { Die = D; }
-};
-
 DbgScope::~DbgScope() {
   for (unsigned i = 0, N = Scopes.size(); i < N; ++i)
     delete Scopes[i];
