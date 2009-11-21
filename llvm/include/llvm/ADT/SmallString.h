@@ -38,12 +38,15 @@ public:
   // Extra methods.
   StringRef str() const { return StringRef(this->begin(), this->size()); }
 
+  // Implicit conversion to StringRef.
+  operator StringRef() const { return str(); }
+
   const char *c_str() {
     this->push_back(0);
     this->pop_back();
     return this->data();
   }
-  
+
   // Extra operators.
   const SmallString &operator=(StringRef RHS) {
     this->clear();
