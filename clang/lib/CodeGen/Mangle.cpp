@@ -36,7 +36,6 @@ class VISIBILITY_HIDDEN CXXNameMangler {
 
   const CXXMethodDecl *Structor;
   unsigned StructorType;
-  CXXCtorType CtorType;
 
   llvm::DenseMap<uintptr_t, unsigned> Substitutions;
 
