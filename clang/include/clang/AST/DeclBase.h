@@ -503,12 +503,12 @@ private:
 /// PrettyStackTraceDecl - If a crash occurs, indicate that it happened when
 /// doing something to a specific decl.
 class PrettyStackTraceDecl : public llvm::PrettyStackTraceEntry {
-  Decl *TheDecl;
+  const Decl *TheDecl;
   SourceLocation Loc;
   SourceManager &SM;
   const char *Message;
 public:
-  PrettyStackTraceDecl(Decl *theDecl, SourceLocation L,
+  PrettyStackTraceDecl(const Decl *theDecl, SourceLocation L,
                        SourceManager &sm, const char *Msg)
   : TheDecl(theDecl), Loc(L), SM(sm), Message(Msg) {}
 

@@ -119,7 +119,7 @@ void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
 
   OS << Message;
 
-  if (NamedDecl *DN = dyn_cast_or_null<NamedDecl>(TheDecl))
+  if (const NamedDecl *DN = dyn_cast_or_null<NamedDecl>(TheDecl))
     OS << " '" << DN->getQualifiedNameAsString() << '\'';
   OS << '\n';
 }
