@@ -113,7 +113,7 @@ namespace llvm {
   class CompileUnit;
   class DIEValue;
 
-  class DIE : public FoldingSetNode {
+  class DIE {
   protected:
     /// Abbrev - Buffer for constructing abbreviation.
     ///
@@ -189,10 +189,6 @@ namespace llvm {
       Children.clear();
     }
 
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    void Profile(FoldingSetNodeID &ID) ;
-
 #ifndef NDEBUG
     void print(raw_ostream &O, unsigned IncIndent = 0);
     void dump();
@@ -202,7 +198,7 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEValue - A debug information entry value.
   ///
-  class DIEValue : public FoldingSetNode {
+  class DIEValue {
   public:
     enum {
       isInteger,
@@ -232,10 +228,6 @@ namespace llvm {
     /// SizeOf - Return the size of a value in bytes.
     ///
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const = 0;
-
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    virtual void Profile(FoldingSetNodeID &ID) = 0;
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEValue *) { return true; }
@@ -277,10 +269,6 @@ namespace llvm {
     ///
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
 
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    static void Profile(FoldingSetNodeID &ID, unsigned Int);
-    virtual void Profile(FoldingSetNodeID &ID);
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEInteger *) { return true; }
@@ -309,11 +297,6 @@ namespace llvm {
       return Str.size() + sizeof(char); // sizeof('\0');
     }
 
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    static void Profile(FoldingSetNodeID &ID, const std::string &Str);
-    virtual void Profile(FoldingSetNodeID &ID);
-
     // Implement isa/cast/dyncast.
     static bool classof(const DIEString *) { return true; }
     static bool classof(const DIEValue *S) { return S->getType() == isString; }
@@ -338,11 +321,6 @@ namespace llvm {
     /// SizeOf - Determine size of label value in bytes.
     ///
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
-
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    static void Profile(FoldingSetNodeID &ID, const DWLabel &Label);
-    virtual void Profile(FoldingSetNodeID &ID);
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEDwarfLabel *)  { return true; }
@@ -369,11 +347,6 @@ namespace llvm {
     /// SizeOf - Determine size of label value in bytes.
     ///
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
-
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    static void Profile(FoldingSetNodeID &ID, const std::string &Label);
-    virtual void Profile(FoldingSetNodeID &ID);
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEObjectLabel *) { return true; }
@@ -408,12 +381,6 @@ namespace llvm {
     ///
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
 
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    static void Profile(FoldingSetNodeID &ID, const DWLabel &Label,
-                        const DWLabel &Section);
-    virtual void Profile(FoldingSetNodeID &ID);
-
     // Implement isa/cast/dyncast.
     static bool classof(const DIESectionOffset *)  { return true; }
     static bool classof(const DIEValue *D) {
@@ -442,12 +409,6 @@ namespace llvm {
     /// SizeOf - Determine size of delta value in bytes.
     ///
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
-
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    static void Profile(FoldingSetNodeID &ID, const DWLabel &LabelHi,
-                        const DWLabel &LabelLo);
-    virtual void Profile(FoldingSetNodeID &ID);
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEDelta *)  { return true; }
@@ -479,11 +440,6 @@ namespace llvm {
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const {
       return sizeof(int32_t);
     }
-
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    static void Profile(FoldingSetNodeID &ID, DIE *Entry);
-    virtual void Profile(FoldingSetNodeID &ID);
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEEntry *)  { return true; }
@@ -524,10 +480,6 @@ namespace llvm {
     /// SizeOf - Determine size of block data in bytes.
     ///
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
-
-    /// Profile - Used to gather unique data for the value folding set.
-    ///
-    virtual void Profile(FoldingSetNodeID &ID);
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEBlock *)  { return true; }

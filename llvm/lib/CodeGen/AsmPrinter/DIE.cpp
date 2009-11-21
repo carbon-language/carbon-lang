@@ -113,18 +113,6 @@ void DIE::AddSiblingOffset() {
   Abbrev.AddFirstAttribute(dwarf::DW_AT_sibling, dwarf::DW_FORM_ref4);
 }
 
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIE::Profile(FoldingSetNodeID &ID) {
-  Abbrev.Profile(ID);
-
-  for (unsigned i = 0, N = Children.size(); i < N; ++i)
-    ID.AddPointer(Children[i]);
-
-  for (unsigned j = 0, M = Values.size(); j < M; ++j)
-    ID.AddPointer(Values[j]);
-}
-
 #ifndef NDEBUG
 void DIE::print(raw_ostream &O, unsigned IncIndent) {
   IndentCount += IncIndent;
@@ -231,16 +219,6 @@ unsigned DIEInteger::SizeOf(const TargetData *TD, unsigned Form) const {
   return 0;
 }
 
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIEInteger::Profile(FoldingSetNodeID &ID, unsigned Int) {
-  ID.AddInteger(isInteger);
-  ID.AddInteger(Int);
-}
-void DIEInteger::Profile(FoldingSetNodeID &ID) {
-  Profile(ID, Integer);
-}
-
 #ifndef NDEBUG
 void DIEInteger::print(raw_ostream &O) {
   O << "Int: " << (int64_t)Integer
@@ -256,16 +234,6 @@ void DIEInteger::print(raw_ostream &O) {
 ///
 void DIEString::EmitValue(Dwarf *D, unsigned Form) const {
   D->getAsm()->EmitString(Str);
-}
-
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIEString::Profile(FoldingSetNodeID &ID, const std::string &Str) {
-  ID.AddInteger(isString);
-  ID.AddString(Str);
-}
-void DIEString::Profile(FoldingSetNodeID &ID) {
-  Profile(ID, Str);
 }
 
 #ifndef NDEBUG
@@ -290,16 +258,6 @@ void DIEDwarfLabel::EmitValue(Dwarf *D, unsigned Form) const {
 unsigned DIEDwarfLabel::SizeOf(const TargetData *TD, unsigned Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
   return TD->getPointerSize();
-}
-
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIEDwarfLabel::Profile(FoldingSetNodeID &ID, const DWLabel &Label) {
-  ID.AddInteger(isLabel);
-  Label.Profile(ID);
-}
-void DIEDwarfLabel::Profile(FoldingSetNodeID &ID) {
-  Profile(ID, Label);
 }
 
 #ifndef NDEBUG
@@ -327,16 +285,6 @@ unsigned DIEObjectLabel::SizeOf(const TargetData *TD, unsigned Form) const {
   return TD->getPointerSize();
 }
 
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIEObjectLabel::Profile(FoldingSetNodeID &ID, const std::string &Label) {
-  ID.AddInteger(isAsIsLabel);
-  ID.AddString(Label);
-}
-void DIEObjectLabel::Profile(FoldingSetNodeID &ID) {
-  Profile(ID, Label.c_str());
-}
-
 #ifndef NDEBUG
 void DIEObjectLabel::print(raw_ostream &O) {
   O << "Obj: " << Label;
@@ -361,20 +309,6 @@ void DIESectionOffset::EmitValue(Dwarf *D, unsigned Form) const {
 unsigned DIESectionOffset::SizeOf(const TargetData *TD, unsigned Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
   return TD->getPointerSize();
-}
-
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIESectionOffset::Profile(FoldingSetNodeID &ID, const DWLabel &Label,
-                               const DWLabel &Section) {
-  ID.AddInteger(isSectionOffset);
-  Label.Profile(ID);
-  Section.Profile(ID);
-  // IsEH and UseSet are specific to the Label/Section that we will emit the
-  // offset for; so Label/Section are enough for uniqueness.
-}
-void DIESectionOffset::Profile(FoldingSetNodeID &ID) {
-  Profile(ID, Label, Section);
 }
 
 #ifndef NDEBUG
@@ -405,18 +339,6 @@ unsigned DIEDelta::SizeOf(const TargetData *TD, unsigned Form) const {
   return TD->getPointerSize();
 }
 
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIEDelta::Profile(FoldingSetNodeID &ID, const DWLabel &LabelHi,
-                       const DWLabel &LabelLo) {
-  ID.AddInteger(isDelta);
-  LabelHi.Profile(ID);
-  LabelLo.Profile(ID);
-}
-void DIEDelta::Profile(FoldingSetNodeID &ID) {
-  Profile(ID, LabelHi, LabelLo);
-}
-
 #ifndef NDEBUG
 void DIEDelta::print(raw_ostream &O) {
   O << "Del: ";
@@ -434,21 +356,6 @@ void DIEDelta::print(raw_ostream &O) {
 ///
 void DIEEntry::EmitValue(Dwarf *D, unsigned Form) const {
   D->getAsm()->EmitInt32(Entry->getOffset());
-}
-
-/// Profile - Used to gather unique data for the value folding set.
-///
-void DIEEntry::Profile(FoldingSetNodeID &ID, DIE *Entry) {
-  ID.AddInteger(isEntry);
-  ID.AddPointer(Entry);
-}
-void DIEEntry::Profile(FoldingSetNodeID &ID) {
-  ID.AddInteger(isEntry);
-
-  if (Entry)
-    ID.AddPointer(Entry);
-  else
-    ID.AddPointer(this);
 }
 
 #ifndef NDEBUG
@@ -503,11 +410,6 @@ unsigned DIEBlock::SizeOf(const TargetData *TD, unsigned Form) const {
   default: llvm_unreachable("Improper form for block"); break;
   }
   return 0;
-}
-
-void DIEBlock::Profile(FoldingSetNodeID &ID) {
-  ID.AddInteger(isBlock);
-  DIE::Profile(ID);
 }
 
 #ifndef NDEBUG

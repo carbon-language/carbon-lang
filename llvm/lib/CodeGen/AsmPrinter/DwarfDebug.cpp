@@ -39,9 +39,7 @@ static TimerGroup &getDwarfTimerGroup() {
 
 /// Configuration values for initial hash set sizes (log2).
 ///
-static const unsigned InitDiesSetSize          = 9; // log2(512)
 static const unsigned InitAbbreviationsSetSize = 9; // log2(512)
-static const unsigned InitValuesSetSize        = 9; // log2(512)
 
 namespace llvm {
 
@@ -57,6 +55,9 @@ class CompileUnit {
   ///
   DIE *Die;
 
+  /// IndexTyDie - An anonymous type for index type.
+  DIE *IndexTyDie;
+
   /// GVToDieMap - Tracks the mapping of unit level debug informaton
   /// variables to debug information entries.
   /// FIXME : Rename GVToDieMap -> NodeToDieMap
@@ -71,13 +72,10 @@ class CompileUnit {
   ///
   StringMap<DIE*> Globals;
 
-  /// DiesSet - Used to uniquely define dies within the compile unit.
-  ///
-  FoldingSet<DIE> DiesSet;
 public:
   CompileUnit(unsigned I, DIE *D)
-    : ID(I), Die(D), DiesSet(InitDiesSetSize) {}
-  ~CompileUnit() { delete Die; }
+    : ID(I), Die(D), IndexTyDie(0) {}
+  ~CompileUnit() { delete Die; delete IndexTyDie; }
 
   // Accessors.
   unsigned getID() const { return ID; }
@@ -112,21 +110,20 @@ public:
 
   /// AddDie - Adds or interns the DIE to the compile unit.
   ///
-  DIE *AddDie(DIE &Buffer) {
-    FoldingSetNodeID ID;
-    Buffer.Profile(ID);
-    void *Where;
-    DIE *Die = DiesSet.FindNodeOrInsertPos(ID, Where);
-
-    if (!Die) {
-      Die = new DIE(Buffer);
-      DiesSet.InsertNode(Die, Where);
-      this->Die->AddChild(Die);
-      Buffer.Detach();
-    }
-
-    return Die;
+  void AddDie(DIE *Buffer) {
+    this->Die->AddChild(Buffer);
   }
+
+  // getIndexTyDie - Get an anonymous type for index type.
+  DIE *getIndexTyDie() {
+    return IndexTyDie;
+  }
+
+  // setIndexTyDie - Set D as anonymous type for index which can be reused later.
+  void setIndexTyDie(DIE *D) {
+    IndexTyDie = D;
+  }
+
 };
 
 //===----------------------------------------------------------------------===//
@@ -271,7 +268,7 @@ DbgScope::~DbgScope() {
 DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
   : Dwarf(OS, A, T, "dbg"), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
-    ValuesSet(InitValuesSetSize), Values(), StringPool(),
+    Values(), StringPool(),
     SectionSourceLines(), didInitial(false), shouldEmit(false),
     CurrentFnDbgScope(0), DebugTimer(0) {
   if (TimePassesIsEnabled)
@@ -311,22 +308,7 @@ void DwarfDebug::AssignAbbrevNumber(DIEAbbrev &Abbrev) {
 /// CreateDIEEntry - Creates a new DIEEntry to be a proxy for a debug
 /// information entry.
 DIEEntry *DwarfDebug::CreateDIEEntry(DIE *Entry) {
-  DIEEntry *Value;
-
-  if (Entry) {
-    FoldingSetNodeID ID;
-    DIEEntry::Profile(ID, Entry);
-    void *Where;
-    Value = static_cast<DIEEntry *>(ValuesSet.FindNodeOrInsertPos(ID, Where));
-
-    if (Value) return Value;
-
-    Value = new DIEEntry(Entry);
-    ValuesSet.InsertNode(Value, Where);
-  } else {
-    Value = new DIEEntry(Entry);
-  }
-
+  DIEEntry *Value = new DIEEntry(Entry);
   Values.push_back(Value);
   return Value;
 }
@@ -335,10 +317,6 @@ DIEEntry *DwarfDebug::CreateDIEEntry(DIE *Entry) {
 ///
 void DwarfDebug::SetDIEEntry(DIEEntry *Value, DIE *Entry) {
   Value->setEntry(Entry);
-
-  // Add to values set if not already there.  If it is, we merely have a
-  // duplicate in the values list (no harm.)
-  ValuesSet.GetOrInsertNode(Value);
 }
 
 /// AddUInt - Add an unsigned integer attribute data and value.
@@ -346,18 +324,8 @@ void DwarfDebug::SetDIEEntry(DIEEntry *Value, DIE *Entry) {
 void DwarfDebug::AddUInt(DIE *Die, unsigned Attribute,
                          unsigned Form, uint64_t Integer) {
   if (!Form) Form = DIEInteger::BestForm(false, Integer);
-
-  FoldingSetNodeID ID;
-  DIEInteger::Profile(ID, Integer);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = new DIEInteger(Integer);
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  }
-
+  DIEValue *Value = new DIEInteger(Integer);
+  Values.push_back(Value);
   Die->AddValue(Attribute, Form, Value);
 }
 
@@ -366,18 +334,8 @@ void DwarfDebug::AddUInt(DIE *Die, unsigned Attribute,
 void DwarfDebug::AddSInt(DIE *Die, unsigned Attribute,
                          unsigned Form, int64_t Integer) {
   if (!Form) Form = DIEInteger::BestForm(true, Integer);
-
-  FoldingSetNodeID ID;
-  DIEInteger::Profile(ID, (uint64_t)Integer);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = new DIEInteger(Integer);
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  }
-
+  DIEValue *Value = new DIEInteger(Integer);
+  Values.push_back(Value);
   Die->AddValue(Attribute, Form, Value);
 }
 
@@ -385,17 +343,8 @@ void DwarfDebug::AddSInt(DIE *Die, unsigned Attribute,
 ///
 void DwarfDebug::AddString(DIE *Die, unsigned Attribute, unsigned Form,
                            const std::string &String) {
-  FoldingSetNodeID ID;
-  DIEString::Profile(ID, String);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = new DIEString(String);
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  }
-
+  DIEValue *Value = new DIEString(String);
+  Values.push_back(Value);
   Die->AddValue(Attribute, Form, Value);
 }
 
@@ -403,17 +352,8 @@ void DwarfDebug::AddString(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::AddLabel(DIE *Die, unsigned Attribute, unsigned Form,
                           const DWLabel &Label) {
-  FoldingSetNodeID ID;
-  DIEDwarfLabel::Profile(ID, Label);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = new DIEDwarfLabel(Label);
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  }
-
+  DIEValue *Value = new DIEDwarfLabel(Label);
+  Values.push_back(Value);
   Die->AddValue(Attribute, Form, Value);
 }
 
@@ -421,17 +361,8 @@ void DwarfDebug::AddLabel(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::AddObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
                                 const std::string &Label) {
-  FoldingSetNodeID ID;
-  DIEObjectLabel::Profile(ID, Label);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = new DIEObjectLabel(Label);
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  }
-
+  DIEValue *Value = new DIEObjectLabel(Label);
+  Values.push_back(Value);
   Die->AddValue(Attribute, Form, Value);
 }
 
@@ -440,17 +371,8 @@ void DwarfDebug::AddObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
 void DwarfDebug::AddSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
                                   const DWLabel &Label, const DWLabel &Section,
                                   bool isEH, bool useSet) {
-  FoldingSetNodeID ID;
-  DIESectionOffset::Profile(ID, Label, Section);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = new DIESectionOffset(Label, Section, isEH, useSet);
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  }
-
+  DIEValue *Value = new DIESectionOffset(Label, Section, isEH, useSet);
+  Values.push_back(Value);
   Die->AddValue(Attribute, Form, Value);
 }
 
@@ -458,17 +380,8 @@ void DwarfDebug::AddSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::AddDelta(DIE *Die, unsigned Attribute, unsigned Form,
                           const DWLabel &Hi, const DWLabel &Lo) {
-  FoldingSetNodeID ID;
-  DIEDelta::Profile(ID, Hi, Lo);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = new DIEDelta(Hi, Lo);
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  }
-
+  DIEValue *Value = new DIEDelta(Hi, Lo);
+  Values.push_back(Value);
   Die->AddValue(Attribute, Form, Value);
 }
 
@@ -477,22 +390,8 @@ void DwarfDebug::AddDelta(DIE *Die, unsigned Attribute, unsigned Form,
 void DwarfDebug::AddBlock(DIE *Die, unsigned Attribute, unsigned Form,
                           DIEBlock *Block) {
   Block->ComputeSize(TD);
-  FoldingSetNodeID ID;
-  Block->Profile(ID);
-  void *Where;
-  DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
-
-  if (!Value) {
-    Value = Block;
-    ValuesSet.InsertNode(Value, Where);
-    Values.push_back(Value);
-  } else {
-    // Already exists, reuse the previous one.
-    delete Block;
-    Block = cast<DIEBlock>(Value);
-  }
-
-  Die->AddValue(Attribute, Block->BestForm(), Value);
+  Values.push_back(Block);
+  Die->AddValue(Attribute, Block->BestForm(), Block);
 }
 
 /// AddSourceLine - Add location information to specified debug information
@@ -867,14 +766,14 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   DW_Unit->insertDIEEntry(Ty.getNode(), Slot);
 
   // Construct type.
-  DIE Buffer(dwarf::DW_TAG_base_type);
+  DIE *Buffer = new DIE(dwarf::DW_TAG_base_type);
   if (Ty.isBasicType())
-    ConstructTypeDIE(DW_Unit, Buffer, DIBasicType(Ty.getNode()));
+    ConstructTypeDIE(DW_Unit, *Buffer, DIBasicType(Ty.getNode()));
   else if (Ty.isCompositeType())
-    ConstructTypeDIE(DW_Unit, Buffer, DICompositeType(Ty.getNode()));
+    ConstructTypeDIE(DW_Unit, *Buffer, DICompositeType(Ty.getNode()));
   else {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
-    ConstructTypeDIE(DW_Unit, Buffer, DIDerivedType(Ty.getNode()));
+    ConstructTypeDIE(DW_Unit, *Buffer, DIDerivedType(Ty.getNode()));
   }
 
   // Add debug information entry to entity and appropriate context.
@@ -883,16 +782,11 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   if (!Context.isNull())
     Die = DW_Unit->getDIE(Context.getNode());
 
-  if (Die) {
-    DIE *Child = new DIE(Buffer);
-    Die->AddChild(Child);
-    Buffer.Detach();
-    SetDIEEntry(Slot, Child);
-  } else {
-    Die = DW_Unit->AddDie(Buffer);
-    SetDIEEntry(Slot, Die);
-  }
-
+  if (Die) 
+    Die->AddChild(Buffer);
+  else 
+    DW_Unit->AddDie(Buffer);
+  SetDIEEntry(Slot, Buffer);
   Entity->AddValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Slot);
 }
 
@@ -1076,18 +970,23 @@ void DwarfDebug::ConstructArrayTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
   AddType(DW_Unit, &Buffer, CTy->getTypeDerivedFrom());
   DIArray Elements = CTy->getTypeArray();
 
-  // Construct an anonymous type for index type.
-  DIE IdxBuffer(dwarf::DW_TAG_base_type);
-  AddUInt(&IdxBuffer, dwarf::DW_AT_byte_size, 0, sizeof(int32_t));
-  AddUInt(&IdxBuffer, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
-          dwarf::DW_ATE_signed);
-  DIE *IndexTy = DW_Unit->AddDie(IdxBuffer);
+  // Get an anonymous type for index type.
+  DIE *IdxTy = DW_Unit->getIndexTyDie();
+  if (!IdxTy) {
+    // Construct an anonymous type for index type.
+    IdxTy = new DIE(dwarf::DW_TAG_base_type);
+    AddUInt(IdxTy, dwarf::DW_AT_byte_size, 0, sizeof(int32_t));
+    AddUInt(IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
+            dwarf::DW_ATE_signed);
+    DW_Unit->AddDie(IdxTy);
+    DW_Unit->setIndexTyDie(IdxTy);
+  }
 
   // Add subranges to array type.
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Elements.getElement(i);
     if (Element.getTag() == dwarf::DW_TAG_subrange_type)
-      ConstructSubrangeDIE(Buffer, DISubrange(Element.getNode()), IndexTy);
+      ConstructSubrangeDIE(Buffer, DISubrange(Element.getNode()), IdxTy);
   }
 }
 
