@@ -608,7 +608,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (TII->DefinesPredicate(I, PredDefs))
       BBI.ClobbersPred = true;
 
-    if (!TID.isPredicable()) {
+    if (!TII->isPredicable(I)) {
       BBI.IsUnpredicable = true;
       return;
     }
