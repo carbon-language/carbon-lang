@@ -353,7 +353,7 @@ bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // We break edges when registers are live out from the predecessor block
       // (not considering PHI nodes). If the register is live in to this block
       // anyway, we would gain nothing from splitting.
-      if (isLiveOut(Reg, *PreMBB, LV) && !isLiveIn(Reg, MBB, LV))
+      if (!LV.isLiveIn(Reg, MBB) && isLiveOut(Reg, *PreMBB, LV))
         SplitCriticalEdge(PreMBB, &MBB);
     }
   }
@@ -406,22 +406,6 @@ bool llvm::PHIElimination::isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
   return false;
 }
 
-bool llvm::PHIElimination::isLiveIn(unsigned Reg, const MachineBasicBlock &MBB,
-                                    LiveVariables &LV) {
-  LiveVariables::VarInfo &VI = LV.getVarInfo(Reg);
-
-  if (VI.AliveBlocks.test(MBB.getNumber()))
-    return true;
-
-  // defined in MBB?
-  const MachineInstr *Def = MRI->getVRegDef(Reg);
-  if (Def && Def->getParent() == &MBB)
-    return false;
-
-  // killed in MBB?
-  return VI.findKill(&MBB);
-}
-
 MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
                                                      MachineBasicBlock *B) {
   assert(A && B && "Missing MBB end point");
@@ -463,7 +447,7 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
         i->getOperand(ni+1).setMBB(NMBB);
 
   if (LiveVariables *LV=getAnalysisIfAvailable<LiveVariables>())
-    LV->addNewBlock(NMBB, A);
+    LV->addNewBlock(NMBB, A, B);
 
   if (MachineDominatorTree *MDT=getAnalysisIfAvailable<MachineDominatorTree>())
     MDT->addNewBlock(NMBB, A);

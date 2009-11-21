@@ -99,12 +99,6 @@ namespace llvm {
     bool isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
                    LiveVariables &LV);
 
-    /// isLiveIn - Determine if Reg is live in to MBB, not considering PHI
-    /// source registers. This means that Reg is either killed by MBB or passes
-    /// through it.
-    bool isLiveIn(unsigned Reg, const MachineBasicBlock &MBB,
-                  LiveVariables &LV);
-
     /// SplitCriticalEdge - Split a critical edge from A to B by
     /// inserting a new MBB. Update branches in A and PHI instructions
     /// in B. Return the new block.
