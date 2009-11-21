@@ -509,3 +509,26 @@ void rdar7403269_b_pos() {
   *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
 }
 
+
+//===----------------------------------------------------------------------===//
+// Test that incrementing a non-null pointer results in a non-null pointer.
+// (<rdar://problem/7191542>)
+//===----------------------------------------------------------------------===//
+
+void test_increment_nonnull_rdar_7191542(const char *path) {
+  const char *alf = 0;
+  
+  for (;;) {
+    // When using basic-store, we get a null dereference here because we lose information
+    // about path after the pointer increment.
+    char c = *path++; // no-warning
+    if (c == 'a') {
+      alf = path;
+    }
+    
+    if (alf)
+      return;
+  }
+}
+
+
