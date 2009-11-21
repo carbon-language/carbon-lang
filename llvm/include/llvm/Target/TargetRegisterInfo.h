@@ -656,7 +656,9 @@ public:
                                      MachineBasicBlock::iterator I,
                                      MachineBasicBlock::iterator &UseMI,
                                      const TargetRegisterClass *RC,
-                                     unsigned Reg) const {return false;}
+                                     unsigned Reg) const {
+    return false;
+  }
 
   /// eliminateFrameIndex - This method must be overriden to eliminate abstract
   /// frame indices from instructions which may use them.  The instruction
