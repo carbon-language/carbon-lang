@@ -30,7 +30,8 @@ namespace {
     PrintingPolicy Policy;
     unsigned Indentation;
 
-    llvm::raw_ostream& Indent();
+    llvm::raw_ostream& Indent() { return Indent(Indentation); }
+    llvm::raw_ostream& Indent(unsigned Indentation);
     void ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls);
 
     void Print(AccessSpecifier AS);
@@ -154,8 +155,8 @@ void Decl::dump() const {
   print(llvm::errs());
 }
 
-llvm::raw_ostream& DeclPrinter::Indent() {
-  for (unsigned i = 0; i < Indentation; ++i)
+llvm::raw_ostream& DeclPrinter::Indent(unsigned Indentation) {
+  for (unsigned i = 0; i != Indentation; ++i)
     Out << "  ";
   return Out;
 }
@@ -205,6 +206,8 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
       AccessSpecifier AS = D->getAccess();
 
       if (AS != CurAS) {
+        if (Indent)
+          this->Indent(Indentation - Policy.Indentation);
         Print(AS);
         Out << ":\n";
         CurAS = AS;
