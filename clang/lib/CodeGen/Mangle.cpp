@@ -43,6 +43,12 @@ class VISIBILITY_HIDDEN CXXNameMangler {
   public:
   CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res)
     : Context(C), Out(Res), Structor(0), StructorType(0) { }
+  CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res,
+                 const CXXConstructorDecl *D, CXXCtorType Type)
+    : Context(C), Out(Res), Structor(D), StructorType(Type) { }
+  CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res,
+                 const CXXDestructorDecl *D, CXXDtorType Type)
+    : Context(C), Out(Res), Structor(D), StructorType(Type) { }
 
   bool mangle(const NamedDecl *D);
   void mangleCalloffset(int64_t nv, int64_t v);
@@ -58,8 +64,6 @@ class VISIBILITY_HIDDEN CXXNameMangler {
                            const CXXRecordDecl *Type);
   void mangleCXXRtti(QualType Ty);
   void mangleCXXRttiName(QualType Ty);
-  void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type);
-  void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
 
   private:
   bool mangleSubstitution(const NamedDecl *ND);
@@ -188,24 +192,6 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   }
 
   return false;
-}
-
-void CXXNameMangler::mangleCXXCtor(const CXXConstructorDecl *D,
-                                   CXXCtorType Type) {
-  assert(!Structor && "Structor already set!");
-  Structor = D;
-  StructorType = Type;
-
-  mangle(D);
-}
-
-void CXXNameMangler::mangleCXXDtor(const CXXDestructorDecl *D,
-                                   CXXDtorType Type) {
-  assert(!Structor && "Structor already set!");
-  Structor = D;
-  StructorType = Type;
-
-  mangle(D);
 }
 
 void CXXNameMangler::mangleCXXVtable(const CXXRecordDecl *RD) {
@@ -1437,14 +1423,14 @@ void MangleContext::mangleGuardVariable(const VarDecl *D,
 
 void MangleContext::mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
                                   llvm::SmallVectorImpl<char> &Res) {
-  CXXNameMangler Mangler(*this, Res);
-  Mangler.mangleCXXCtor(D, Type);
+  CXXNameMangler Mangler(*this, Res, D, Type);
+  Mangler.mangle(D);
 }
 
 void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                                   llvm::SmallVectorImpl<char> &Res) {
-  CXXNameMangler Mangler(*this, Res);
-  Mangler.mangleCXXDtor(D, Type);
+  CXXNameMangler Mangler(*this, Res, D, Type);
+  Mangler.mangle(D);
 }
 
 void MangleContext::mangleCXXVtable(const CXXRecordDecl *RD,
