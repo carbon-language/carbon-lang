@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin | FileCheck %s
-; XFAIL: *
 
 define void @foo(i32 %X, i32 %Y) {
 entry:

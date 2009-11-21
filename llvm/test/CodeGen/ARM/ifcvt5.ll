@@ -1,7 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
 
-; XFAIL: *
-
 @x = external global i32*		; <i32**> [#uses=1]
 
 define void @foo(i32 %a) {

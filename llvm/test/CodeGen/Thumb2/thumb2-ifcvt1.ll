@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin | FileCheck %s
-; XFAIL: *
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; CHECK: t1:

@@ -222,7 +222,6 @@ BitVector ARMBaseRegisterInfo::getReservedRegs(const MachineFunction &MF) const 
   BitVector Reserved(getNumRegs());
   Reserved.set(ARM::SP);
   Reserved.set(ARM::PC);
-  // FP is reserved on Darwin even if we're not using it in this function.
   if (STI.isTargetDarwin() || hasFP(MF))
     Reserved.set(FramePtr);
   // Some targets reserve R9.
@@ -240,7 +239,6 @@ bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
     return true;
   case ARM::R7:
   case ARM::R11:
-    // FP is reserved on Darwin even if we're not using it in this function.
     if (FramePtr == Reg && (STI.isTargetDarwin() || hasFP(MF)))
       return true;
     break;
@@ -494,8 +492,7 @@ static unsigned calculateMaxStackAlignment(const MachineFrameInfo *FFI) {
 ///
 bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return ((STI.isTargetDarwin() && MFI->hasCalls()) ||
-          NoFramePointerElim ||
+  return (NoFramePointerElim ||
           needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken());
