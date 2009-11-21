@@ -51,7 +51,7 @@ public:
 
   llvm::raw_svector_ostream &getStream() { return Out; }
 
-  void mangle(const NamedDecl *D);
+  void mangle(const NamedDecl *D, llvm::StringRef Prefix = "_Z");
   void mangleCalloffset(int64_t nv, int64_t v);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleName(const NamedDecl *ND);
@@ -162,9 +162,7 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
   return true;
 }
 
-void CXXNameMangler::mangle(const NamedDecl *D) {
-  assert(Context.shouldMangleDeclName(D) && "Invalid mangle call!");
-
+void CXXNameMangler::mangle(const NamedDecl *D, llvm::StringRef Prefix) {
   // Any decl can be declared with __asm("foo") on it, and this takes precedence
   // over all other naming in the .o file.
   if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
@@ -177,20 +175,20 @@ void CXXNameMangler::mangle(const NamedDecl *D) {
   // <mangled-name> ::= _Z <encoding>
   //            ::= <data name>
   //            ::= <special-name>
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // If we get here, mangle the decl name!
-    Out << "_Z";
+  Out << Prefix;
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     mangleFunctionEncoding(FD);
-  } else {
-    const VarDecl *VD = cast<VarDecl>(D);
-    Out << "_Z";
-    mangleName(VD);
-  }
+  else
+    mangleName(cast<VarDecl>(D));
 }
 
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   // <encoding> ::= <function name> <bare-function-type>
   mangleName(FD);
+
+  // Don't mangle in the type if this isn't a decl we should typically mangle.
+  if (!Context.shouldMangleDeclName(FD))
+    return;
 
   // Whether the mangling of a function type includes the return type depends on
   // the context and the nature of the function. The rules for deciding whether
@@ -1037,13 +1035,8 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
 void CXXNameMangler::mangleTemplateArgumentList(const TemplateArgumentList &L) {
   // <template-args> ::= I <template-arg>+ E
   Out << "I";
-
-  for (unsigned i = 0, e = L.size(); i != e; ++i) {
-    const TemplateArgument &A = L[i];
-
-    mangleTemplateArgument(A);
-  }
-
+  for (unsigned i = 0, e = L.size(); i != e; ++i)
+    mangleTemplateArgument(L[i]);
   Out << "E";
 }
 
@@ -1051,11 +1044,8 @@ void CXXNameMangler::mangleTemplateArgs(const TemplateArgument *TemplateArgs,
                                         unsigned NumTemplateArgs) {
   // <template-args> ::= I <template-arg>+ E
   Out << "I";
-
-  for (unsigned i = 0; i != NumTemplateArgs; ++i) {
+  for (unsigned i = 0; i != NumTemplateArgs; ++i)
     mangleTemplateArgument(TemplateArgs[i]);
-  }
-
   Out << "E";
 }
 
@@ -1076,14 +1066,12 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
     mangleExpression(A.getAsExpr());
     Out << 'E';
     break;
-  case TemplateArgument::Integral:
+  case TemplateArgument::Integral: {
     //  <expr-primary> ::= L <type> <value number> E # integer literal
 
-    Out << 'L';
-
-    mangleType(A.getIntegralType());
-
     const llvm::APSInt *Integral = A.getAsIntegral();
+    Out << 'L';
+    mangleType(A.getIntegralType());
     if (A.getIntegralType()->isBooleanType()) {
       // Boolean values are encoded as 0/1.
       Out << (Integral->getBoolValue() ? '1' : '0');
@@ -1092,9 +1080,26 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
         Out << 'n';
       Integral->abs().print(Out, false);
     }
-
     Out << 'E';
     break;
+  }
+  case TemplateArgument::Declaration: {
+    //  <expr-primary> ::= L <mangled-name> E # external name
+
+    // FIXME: Clang produces AST's where pointer-to-member-function expressions
+    // and pointer-to-function expressions are represented as a declaration not
+    // an expression; this is not how gcc represents them and this changes the
+    // mangling.
+    Out << 'L';
+    // References to external entities use the mangled name; if the name would
+    // not normally be manged then mangle it as unqualified.
+    //
+    // FIXME: The ABI specifies that external names here should have _Z, but
+    // gcc leaves this off.
+    mangle(cast<NamedDecl>(A.getAsDecl()), "Z");
+    Out << 'E';
+    break;
+  }
   }
 }
 
