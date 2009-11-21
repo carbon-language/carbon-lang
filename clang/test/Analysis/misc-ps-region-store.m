@@ -531,4 +531,13 @@ void test_increment_nonnull_rdar_7191542(const char *path) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// Test that the store (implicitly) tracks values for doubles/floats that are
+// uninitialized (<rdar://problem/6811085>)
+//===----------------------------------------------------------------------===//
+
+double rdar_6811085(void) {
+  double u;
+  return u + 10; // expected-warning{{The left operand of '+' is a garbage value}}
+}
 
