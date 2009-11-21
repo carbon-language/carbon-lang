@@ -333,6 +333,40 @@ Parser::ParseTemplateParameterList(unsigned Depth,
   return true;
 }
 
+/// \brief Determine whether the parser is at the start of a template
+/// type parameter.
+bool Parser::isStartOfTemplateTypeParameter() {
+  if (Tok.is(tok::kw_class))
+    return true;
+
+  if (Tok.isNot(tok::kw_typename))
+    return false;
+
+  // C++ [temp.param]p2:
+  //   There is no semantic difference between class and typename in a
+  //   template-parameter. typename followed by an unqualified-id
+  //   names a template type parameter. typename followed by a
+  //   qualified-id denotes the type in a non-type
+  //   parameter-declaration.
+  Token Next = NextToken();
+
+  // If we have an identifier, skip over it.
+  if (Next.getKind() == tok::identifier)
+    Next = GetLookAheadToken(2);
+
+  switch (Next.getKind()) {
+  case tok::equal:
+  case tok::comma:
+  case tok::greater:
+  case tok::greatergreater:
+  case tok::ellipsis:
+    return true;
+
+  default:
+    return false;
+  }
+}
+
 /// ParseTemplateParameter - Parse a template-parameter (C++ [temp.param]).
 ///
 ///       template-parameter: [C++ temp.param]
@@ -348,12 +382,8 @@ Parser::ParseTemplateParameterList(unsigned Depth,
 ///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
 Parser::DeclPtrTy
 Parser::ParseTemplateParameter(unsigned Depth, unsigned Position) {
-  if (Tok.is(tok::kw_class) ||
-      (Tok.is(tok::kw_typename) &&
-       // FIXME: Next token has not been annotated!
-       NextToken().isNot(tok::annot_typename))) {
+  if (isStartOfTemplateTypeParameter())
     return ParseTypeParameter(Depth, Position);
-  }
 
   if (Tok.is(tok::kw_template))
     return ParseTemplateTemplateParameter(Depth, Position);

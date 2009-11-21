@@ -1353,6 +1353,7 @@ private:
                                SourceLocation &RAngleLoc);
   bool ParseTemplateParameterList(unsigned Depth,
                                   TemplateParameterList &TemplateParams);
+  bool isStartOfTemplateTypeParameter();
   DeclPtrTy ParseTemplateParameter(unsigned Depth, unsigned Position);
   DeclPtrTy ParseTypeParameter(unsigned Depth, unsigned Position);
   DeclPtrTy ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
