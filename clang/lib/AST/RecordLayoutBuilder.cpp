@@ -448,7 +448,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     MaxFieldAlignment = PPA->getAlignment();
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    UpdateAlignment(AA->getAlignment());
+    UpdateAlignment(AA->getMaxAlignment());
 
   // If this is a C++ class, lay out the vtable and the non-virtual bases.
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
@@ -498,7 +498,7 @@ void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
     MaxFieldAlignment = PPA->getAlignment();
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    UpdateAlignment(AA->getAlignment());
+    UpdateAlignment(AA->getMaxAlignment());
 
   // Layout each ivar sequentially.
   llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
@@ -539,8 +539,9 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
     if (FieldPacked)
       FieldAlign = 1;
-    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-      FieldAlign = std::max(FieldAlign, AA->getAlignment());
+    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>()) {
+      FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
+    }
     // The maximum field alignment overrides the aligned attribute.
     if (MaxFieldAlignment)
       FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
@@ -574,8 +575,9 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
     if (FieldPacked)
       FieldAlign = 8;
-    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-      FieldAlign = std::max(FieldAlign, AA->getAlignment());
+    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>()) {
+      FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
+    }
     // The maximum field alignment overrides the aligned attribute.
     if (MaxFieldAlignment)
       FieldAlign = std::min(FieldAlign, MaxFieldAlignment);

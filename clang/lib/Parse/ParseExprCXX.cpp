@@ -568,7 +568,7 @@ Parser::OwningExprResult Parser::ParseCXXCondition() {
   // If attributes are present, parse them.
   if (Tok.is(tok::kw___attribute)) {
     SourceLocation Loc;
-    AttributeList *AttrList = ParseAttributes(&Loc);
+    AttributeList *AttrList = ParseGNUAttributes(&Loc);
     DeclaratorInfo.AddAttributes(AttrList, Loc);
   }
 

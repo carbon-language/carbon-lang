@@ -55,12 +55,11 @@ bool Parser::isCXXDeclarationStatement() {
     // using-declaration
     // using-directive
   case tok::kw_using:
-    return true;
-  case tok::kw_static_assert:
     // static_assert-declaration
+  case tok::kw_static_assert:
     return true;
-  default:
     // simple-declaration
+  default:
     return isCXXSimpleDeclaration();
   }
 }
@@ -349,6 +348,89 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
 
   assert(TPR == TPResult::True() || TPR == TPResult::False());
   return TPR == TPResult::True();
+}
+
+/// isCXX0XAttributeSpecifier - returns true if this is a C++0x
+/// attribute-specifier. By default, unless in Obj-C++, only a cursory check is
+/// performed that will simply return true if a [[ is seen. Currently C++ has no
+/// syntactical ambiguities from this check, but it may inhibit error recovery.
+/// If CheckClosing is true, a check is made for closing ]] brackets.
+///
+/// If given, After is set to the token after the attribute-specifier so that
+/// appropriate parsing decisions can be made; it is left untouched if false is
+/// returned.
+///
+/// FIXME: If an error is in the closing ]] brackets, the program assumes
+/// the absence of an attribute-specifier, which can cause very yucky errors
+/// to occur.
+///
+/// [C++0x] attribute-specifier:
+///         '[' '[' attribute-list ']' ']'
+///
+/// [C++0x] attribute-list:
+///         attribute[opt]
+///         attribute-list ',' attribute[opt]
+///
+/// [C++0x] attribute:
+///         attribute-token attribute-argument-clause[opt]
+///
+/// [C++0x] attribute-token:
+///         identifier
+///         attribute-scoped-token
+///
+/// [C++0x] attribute-scoped-token:
+///         attribute-namespace '::' identifier
+///
+/// [C++0x] attribute-namespace:
+///         identifier
+///
+/// [C++0x] attribute-argument-clause:
+///         '(' balanced-token-seq ')'
+///
+/// [C++0x] balanced-token-seq:
+///         balanced-token
+///         balanced-token-seq balanced-token
+///
+/// [C++0x] balanced-token:
+///         '(' balanced-token-seq ')'
+///         '[' balanced-token-seq ']'
+///         '{' balanced-token-seq '}'
+///         any token but '(', ')', '[', ']', '{', or '}'
+bool Parser::isCXX0XAttributeSpecifier (bool CheckClosing,
+                                        tok::TokenKind *After) {
+  if (Tok.isNot(tok::l_square) || NextToken().isNot(tok::l_square))
+    return false;
+  
+  // No tentative parsing if we don't need to look for ]]
+  if (!CheckClosing && !getLang().ObjC1)
+    return true;
+  
+  struct TentativeReverter {
+    TentativeParsingAction PA;
+
+    TentativeReverter (Parser& P)
+      : PA(P)
+    {}
+    ~TentativeReverter () {
+      PA.Revert();
+    }
+  } R(*this);
+
+  // Opening brackets were checked for above.
+  ConsumeBracket();
+  ConsumeBracket();
+
+  // SkipUntil will handle balanced tokens, which are guaranteed in attributes.
+  SkipUntil(tok::r_square, false);
+
+  if (Tok.isNot(tok::r_square))
+    return false;
+  ConsumeBracket();
+
+  if (After)
+    *After = Tok.getKind();
+
+  return true;
 }
 
 ///         declarator:

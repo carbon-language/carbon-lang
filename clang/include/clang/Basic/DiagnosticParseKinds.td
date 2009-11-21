@@ -75,6 +75,7 @@ def err_expected_ident_lbrace : Error<"expected identifier or '{'">;
 def err_expected_lbrace : Error<"expected '{'">;
 def err_expected_lparen : Error<"expected '('">;
 def err_expected_rparen : Error<"expected ')'">;
+def err_expected_lsquare : Error<"expected '['">;
 def err_expected_rsquare : Error<"expected ']'">;
 def err_expected_rbrace : Error<"expected '}'">;
 def err_expected_greater : Error<"expected '>'">;
@@ -245,6 +246,11 @@ def err_operator_missing_type_specifier : Error<
 def err_anon_type_definition : Error<
   "declaration of anonymous %0 must be a definition">;
 
+def err_cxx0x_attribute_forbids_arguments : Error<
+  "C++0x attribute '%0' cannot have an argument list">;
+def err_cxx0x_attribute_requires_arguments : Error<
+  "C++0x attribute '%0' must have an argument list">;
+def err_attributes_not_allowed : Error<"an attribute list cannot appear here">;
 
 /// C++ Templates
 def err_expected_template : Error<"expected template">;

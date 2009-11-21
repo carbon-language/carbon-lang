@@ -461,6 +461,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(Deprecated);
     UNSIGNED_ATTR(Destructor);
     SIMPLE_ATTR(FastCall);
+    SIMPLE_ATTR(Final);
 
     case Attr::Format: {
       std::string Type = ReadString(Record, Idx);

@@ -192,6 +192,10 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
   // Parse the declaration specifiers.
   ParsingDeclSpec DS(*this);
+
+  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
+    DS.AddAttributes(ParseCXX0XAttributes().AttrList);
+
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS);
 
   if (Tok.is(tok::semi)) {

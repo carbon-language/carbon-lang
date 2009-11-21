@@ -353,8 +353,12 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   else if (Features.getStackProtectorMode() == LangOptions::SSPReq)
     F->addFnAttr(llvm::Attribute::StackProtectReq);
   
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    F->setAlignment(AA->getAlignment()/8);
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>()) {
+    unsigned width = Context.Target.getCharWidth();
+    F->setAlignment(AA->getAlignment() / width);
+    while ((AA = AA->getNext<AlignedAttr>()))
+      F->setAlignment(std::max(F->getAlignment(), AA->getAlignment() / width));
+  }
   // C++ ABI requires 2-byte alignment for member functions.
   if (F->getAlignment() < 2 && isa<CXXMethodDecl>(D))
     F->setAlignment(2);

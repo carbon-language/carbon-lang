@@ -355,7 +355,10 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
     return true;
   }
 
-  Result = ParseExternalDeclaration();
+  CXX0XAttributeList Attr;
+  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
+    Attr = ParseCXX0XAttributes();
+  Result = ParseExternalDeclaration(Attr);
   return false;
 }
 
@@ -396,7 +399,7 @@ void Parser::ParseTranslationUnit() {
 ///           ';'
 ///
 /// [C++0x/GNU] 'extern' 'template' declaration
-Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
+Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr) {
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::semi:
@@ -418,9 +421,13 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     ConsumeToken();
-    return ParseExternalDeclaration();
+    return ParseExternalDeclaration(Attr);
   }
   case tok::kw_asm: {
+    if (Attr.HasAttr)
+      Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
+        << Attr.Range;
+
     OwningExprResult Result(ParseSimpleAsm());
 
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
@@ -449,7 +456,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
   case tok::code_completion:
     Actions.CodeCompleteOrdinaryName(CurScope);
     ConsumeToken();
-    return ParseExternalDeclaration();
+    return ParseExternalDeclaration(Attr);
   case tok::kw_using:
   case tok::kw_namespace:
   case tok::kw_typedef:
@@ -459,7 +466,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
     // A function definition cannot start with a these keywords.
     {
       SourceLocation DeclEnd;
-      return ParseDeclaration(Declarator::FileContext, DeclEnd);
+      return ParseDeclaration(Declarator::FileContext, DeclEnd, Attr);
     }
   case tok::kw_extern:
     if (getLang().CPlusPlus && NextToken().is(tok::kw_template)) {
@@ -477,7 +484,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
 
   default:
     // We can't tell whether this is a function-definition or declaration yet.
-    return ParseDeclarationOrFunctionDefinition();
+    return ParseDeclarationOrFunctionDefinition(Attr.AttrList);
   }
 
   // This routine returns a DeclGroup, if the thing we parsed only contains a
@@ -525,9 +532,13 @@ bool Parser::isStartOfFunctionDefinition() {
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
 Parser::DeclGroupPtrTy
-Parser::ParseDeclarationOrFunctionDefinition(AccessSpecifier AS) {
+Parser::ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
+                                             AccessSpecifier AS) {
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this);
+  if (Attr)
+    DS.AddAttributes(Attr);
+
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
@@ -719,7 +730,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       // If attributes are present, parse them.
       if (Tok.is(tok::kw___attribute))
         // FIXME: attach attributes too.
-        AttrList = ParseAttributes();
+        AttrList = ParseGNUAttributes();
 
       // Ask the actions module to compute the type for this declarator.
       Action::DeclPtrTy Param =

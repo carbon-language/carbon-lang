@@ -1792,6 +1792,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       break;
 
     case Attr::FastCall:
+    case Attr::Final:
       break;
 
     case Attr::Format: {

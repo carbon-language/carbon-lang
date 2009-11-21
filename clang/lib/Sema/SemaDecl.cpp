@@ -2613,7 +2613,8 @@ void Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
          E = Paths.found_decls_end(); I != E; ++I) {
       if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
         if (!CheckOverridingFunctionReturnType(MD, OldMD) &&
-            !CheckOverridingFunctionExceptionSpec(MD, OldMD))
+            !CheckOverridingFunctionExceptionSpec(MD, OldMD) &&
+            !CheckOverridingFunctionAttributes(MD, OldMD))
           MD->addOverriddenMethod(OldMD);
       }
     }
@@ -2882,7 +2883,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     NewFD->setAccess(AS_public);
   }
-
 
   if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
     AddOverriddenMethods(cast<CXXRecordDecl>(DC), NewMD);

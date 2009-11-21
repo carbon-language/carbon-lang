@@ -489,6 +489,13 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     Class->setEmpty(false);
   if (CXXBaseDecl->isPolymorphic())
     Class->setPolymorphic(true);
+  // C++0x CWG Issue #817 indicates that [[final]] classes shouldn't be bases.
+  if (CXXBaseDecl->hasAttr<FinalAttr>()) {
+    Diag(BaseLoc, diag::err_final_base) << BaseType.getAsString();
+    Diag(CXXBaseDecl->getLocation(), diag::note_previous_class_decl)
+      << BaseType.getAsString();
+    return 0;
+  }
 
   // C++ [dcl.init.aggr]p1:
   //   An aggregate is [...] a class with [...] no base classes [...].
@@ -4892,6 +4899,19 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
     Diag(Old->getLocation(), diag::note_overridden_virtual_function);
     return true;
   };
+
+  return false;
+}
+
+bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+                                             const CXXMethodDecl *Old)
+{
+  if (Old->hasAttr<FinalAttr>()) {
+    Diag(New->getLocation(), diag::err_final_function_overridden)
+      << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+    return true;
+  }
 
   return false;
 }

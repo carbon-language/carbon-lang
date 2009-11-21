@@ -1,3 +1,4 @@
+
 //===--- ParseDecl.cpp - Declaration Parsing ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -45,7 +46,7 @@ Action::TypeResult Parser::ParseTypeName(SourceRange *Range) {
   return Actions.ActOnTypeName(CurScope, DeclaratorInfo);
 }
 
-/// ParseAttributes - Parse a non-empty attributes list.
+/// ParseGNUAttributes - Parse a non-empty attributes list.
 ///
 /// [GNU] attributes:
 ///         attribute
@@ -81,8 +82,8 @@ Action::TypeResult Parser::ParseTypeName(SourceRange *Range) {
 /// attributes are very simple in practice. Until we find a bug, I don't see
 /// a pressing need to implement the 2 token lookahead.
 
-AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
-  assert(Tok.is(tok::kw___attribute) && "Not an attribute list!");
+AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
+  assert(Tok.is(tok::kw___attribute) && "Not a GNU attribute list!");
 
   AttributeList *CurrAttr = 0;
 
@@ -121,7 +122,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
           if (Tok.is(tok::r_paren)) {
             // __attribute__(( mode(byte) ))
             ConsumeParen(); // ignore the right paren loc for now
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc,
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
                                          ParmName, ParmLoc, 0, 0, CurrAttr);
           } else if (Tok.is(tok::comma)) {
             ConsumeToken();
@@ -145,8 +146,10 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             }
             if (ArgExprsOk && Tok.is(tok::r_paren)) {
               ConsumeParen(); // ignore the right paren loc for now
-              CurrAttr = new AttributeList(AttrName, AttrNameLoc, ParmName,
-                           ParmLoc, ArgExprs.take(), ArgExprs.size(), CurrAttr);
+              CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
+                                           AttrNameLoc, ParmName, ParmLoc,
+                                           ArgExprs.take(), ArgExprs.size(),
+                                           CurrAttr);
             }
           }
         } else { // not an identifier
@@ -155,7 +158,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
           // parse a possibly empty comma separated list of expressions
             // __attribute__(( nonnull() ))
             ConsumeParen(); // ignore the right paren loc for now
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc,
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
                                          0, SourceLocation(), 0, 0, CurrAttr);
             break;
           case tok::kw_char:
@@ -175,7 +178,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             // If it's a builtin type name, eat it and expect a rparen
             // __attribute__(( vec_type_hint(char) ))
             ConsumeToken();
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc,
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
                                          0, SourceLocation(), 0, 0, CurrAttr);
             if (Tok.is(tok::r_paren))
               ConsumeParen();
@@ -203,20 +206,21 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             if (ArgExprsOk && Tok.is(tok::r_paren)) {
               ConsumeParen(); // ignore the right paren loc for now
               CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
-                           SourceLocation(), ArgExprs.take(), ArgExprs.size(),
+                           AttrNameLoc, 0, SourceLocation(), ArgExprs.take(),
+                           ArgExprs.size(),
                            CurrAttr);
             }
             break;
           }
         }
       } else {
-        CurrAttr = new AttributeList(AttrName, AttrNameLoc,
+        CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
                                      0, SourceLocation(), 0, 0, CurrAttr);
       }
     }
     if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
       SkipUntil(tok::r_paren, false);
-    SourceLocation Loc = Tok.getLocation();;
+    SourceLocation Loc = Tok.getLocation();
     if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
       SkipUntil(tok::r_paren, false);
     }
@@ -254,15 +258,15 @@ AttributeList* Parser::ParseMicrosoftDeclSpec(AttributeList *CurrAttr) {
       OwningExprResult ArgExpr(ParseAssignmentExpression());
       if (!ArgExpr.isInvalid()) {
         ExprTy* ExprList = ArgExpr.take();
-        CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
+        CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
                                      SourceLocation(), &ExprList, 1,
                                      CurrAttr, true);
       }
       if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
         SkipUntil(tok::r_paren, false);
     } else {
-      CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, SourceLocation(),
-                                   0, 0, CurrAttr, true);
+      CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc,
+                                   0, SourceLocation(), 0, 0, CurrAttr, true);
     }
   }
   if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
@@ -281,7 +285,7 @@ AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
     if (Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64))
       // FIXME: Support these properly!
       continue;
-    CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0,
+    CurrAttr = new AttributeList(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
                                  SourceLocation(), 0, 0, CurrAttr, true);
   }
   return CurrAttr;
@@ -304,26 +308,36 @@ AttributeList* Parser::ParseMicrosoftTypeAttributes(AttributeList *CurrAttr) {
 ///         others... [FIXME]
 ///
 Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
-                                                SourceLocation &DeclEnd) {
+                                                SourceLocation &DeclEnd,
+                                                CXX0XAttributeList Attr) {
   DeclPtrTy SingleDecl;
   switch (Tok.getKind()) {
   case tok::kw_template:
   case tok::kw_export:
+    if (Attr.HasAttr)
+      Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
+        << Attr.Range;
     SingleDecl = ParseDeclarationStartingWithTemplate(Context, DeclEnd);
     break;
   case tok::kw_namespace:
+    if (Attr.HasAttr)
+      Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
+        << Attr.Range;
     SingleDecl = ParseNamespace(Context, DeclEnd);
     break;
   case tok::kw_using:
-    SingleDecl = ParseUsingDirectiveOrDeclaration(Context, DeclEnd);
+    SingleDecl = ParseUsingDirectiveOrDeclaration(Context, DeclEnd, Attr);
     break;
   case tok::kw_static_assert:
+    if (Attr.HasAttr)
+      Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
+        << Attr.Range;
     SingleDecl = ParseStaticAssertDeclaration(DeclEnd);
     break;
   default:
-    return ParseSimpleDeclaration(Context, DeclEnd);
+    return ParseSimpleDeclaration(Context, DeclEnd, Attr.AttrList);
   }
-
+  
   // This routine returns a DeclGroup, if the thing we parsed only contains a
   // single decl, convert it now.
   return Actions.ConvertDeclToDeclGroup(SingleDecl);
@@ -337,9 +351,12 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
 /// If RequireSemi is false, this does not check for a ';' at the end of the
 /// declaration.
 Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
-                                                      SourceLocation &DeclEnd) {
+                                                      SourceLocation &DeclEnd,
+                                                      AttributeList *Attr) {
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this);
+  if (Attr)
+    DS.AddAttributes(Attr);
   ParseDeclarationSpecifiers(DS);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
@@ -422,7 +439,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     //    short x, __attribute__((common)) var;    -> declarator
     if (Tok.is(tok::kw___attribute)) {
       SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
+      AttributeList *AttrList = ParseGNUAttributes(&Loc);
       D.AddAttributes(AttrList, Loc);
     }
 
@@ -491,7 +508,7 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   // If attributes are present, parse them.
   if (Tok.is(tok::kw___attribute)) {
     SourceLocation Loc;
-    AttributeList *AttrList = ParseAttributes(&Loc);
+    AttributeList *AttrList = ParseGNUAttributes(&Loc);
     D.AddAttributes(AttrList, Loc);
   }
 
@@ -988,7 +1005,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // GNU attributes support.
     case tok::kw___attribute:
-      DS.AddAttributes(ParseAttributes());
+      DS.AddAttributes(ParseGNUAttributes());
       continue;
 
     // Microsoft declspec support.
@@ -1522,7 +1539,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
     // Attributes are only allowed here on successive declarators.
     if (!FirstDeclarator && Tok.is(tok::kw___attribute)) {
       SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
+      AttributeList *AttrList = ParseGNUAttributes(&Loc);
       DeclaratorInfo.D.AddAttributes(AttrList, Loc);
     }
 
@@ -1543,7 +1560,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
     // If attributes exist after the declarator, parse them.
     if (Tok.is(tok::kw___attribute)) {
       SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
+      AttributeList *AttrList = ParseGNUAttributes(&Loc);
       DeclaratorInfo.D.AddAttributes(AttrList, Loc);
     }
 
@@ -1667,7 +1684,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   AttributeList *AttrList = 0;
   // If attributes exist after struct contents, parse them.
   if (Tok.is(tok::kw___attribute))
-    AttrList = ParseAttributes();
+    AttrList = ParseGNUAttributes();
 
   Actions.ActOnFields(CurScope,
                       RecordLoc, TagDecl, FieldDecls.data(), FieldDecls.size(),
@@ -1702,7 +1719,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   AttributeList *Attr = 0;
   // If attributes exist after tag, parse them.
   if (Tok.is(tok::kw___attribute))
-    Attr = ParseAttributes();
+    Attr = ParseGNUAttributes();
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS, 0, false)) {
@@ -1833,7 +1850,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   AttributeList *Attr = 0;
   // If attributes exist after the identifier list, parse them.
   if (Tok.is(tok::kw___attribute))
-    Attr = ParseAttributes();
+    Attr = ParseGNUAttributes(); // FIXME: where do they do?
 
   Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
                         EnumConstantDecls.data(), EnumConstantDecls.size(),
@@ -2049,8 +2066,20 @@ bool Parser::isDeclarationSpecifier() {
 /// [GNU]   attributes                        [ only if AttributesAllowed=true ]
 ///         type-qualifier-list type-qualifier
 /// [GNU]   type-qualifier-list attributes    [ only if AttributesAllowed=true ]
+/// [C++0x] attribute-specifier[opt] is allowed before cv-qualifier-seq
+///           if CXX0XAttributesAllowed = true
 ///
-void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
+void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed,
+                                       bool CXX0XAttributesAllowed) {
+  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+    SourceLocation Loc = Tok.getLocation();
+    CXX0XAttributeList Attr = ParseCXX0XAttributes();
+    if (CXX0XAttributesAllowed)
+      DS.AddAttributes(Attr.AttrList);
+    else
+      Diag(Loc, diag::err_attributes_not_allowed);
+  }
+  
   while (1) {
     bool isInvalid = false;
     const char *PrevSpec = 0;
@@ -2075,14 +2104,14 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed) {
     case tok::kw___cdecl:
     case tok::kw___stdcall:
     case tok::kw___fastcall:
-      if (AttributesAllowed) {
+      if (GNUAttributesAllowed) {
         DS.AddAttributes(ParseMicrosoftTypeAttributes());
         continue;
       }
       goto DoneWithTypeQuals;
     case tok::kw___attribute:
-      if (AttributesAllowed) {
-        DS.AddAttributes(ParseAttributes());
+      if (GNUAttributesAllowed) {
+        DS.AddAttributes(ParseGNUAttributes());
         continue; // do *not* consume the next token!
       }
       // otherwise, FALL THROUGH!
@@ -2221,7 +2250,8 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     //
     // [GNU] Retricted references are allowed.
     // [GNU] Attributes on references are allowed.
-    ParseTypeQualifierListOpt(DS);
+    // [C++0x] Attributes on references are not allowed.
+    ParseTypeQualifierListOpt(DS, true, false);
     D.ExtendWithDeclSpec(DS);
 
     if (DS.getTypeQualifiers() != DeclSpec::TQ_unspecified) {
@@ -2362,6 +2392,14 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   assert(D.isPastIdentifier() &&
          "Haven't past the location of the identifier yet?");
 
+  // Don't parse attributes unless we have an identifier.
+  if (D.getIdentifier() && getLang().CPlusPlus
+   && isCXX0XAttributeSpecifier(true)) {
+    SourceLocation AttrEndLoc;
+    CXX0XAttributeList Attr = ParseCXX0XAttributes();
+    D.AddAttributes(Attr.AttrList, AttrEndLoc);
+  }
+
   while (1) {
     if (Tok.is(tok::l_paren)) {
       // The paren may be part of a C++ direct initializer, eg. "int x(1);".
@@ -2413,7 +2451,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   AttributeList *AttrList = 0;
   bool RequiresArg = false;
   if (Tok.is(tok::kw___attribute)) {
-    AttrList = ParseAttributes();
+    AttrList = ParseGNUAttributes();
 
     // We require that the argument list (if this is a non-grouping paren) be
     // present even if the attribute list was empty.
@@ -2618,7 +2656,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // Parse GNU attributes, if present.
     if (Tok.is(tok::kw___attribute)) {
       SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
+      AttributeList *AttrList = ParseGNUAttributes(&Loc);
       ParmDecl.AddAttributes(AttrList, Loc);
     }
 
@@ -2722,6 +2760,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   bool hasAnyExceptionSpec = false;
   llvm::SmallVector<TypeTy*, 2> Exceptions;
   llvm::SmallVector<SourceRange, 2> ExceptionRanges;
+  
   if (getLang().CPlusPlus) {
     // Parse cv-qualifier-seq[opt].
     ParseTypeQualifierListOpt(DS, false /*no attributes*/);
@@ -2842,6 +2881,12 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // This code does a fast path to handle some of the most obvious cases.
   if (Tok.getKind() == tok::r_square) {
     SourceLocation EndLoc = MatchRHSPunctuation(tok::r_square, StartLoc);
+    //FIXME: Use these
+    CXX0XAttributeList Attr;
+    if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier(true)) {
+      Attr = ParseCXX0XAttributes();
+    }
+    
     // Remember that we parsed the empty array type.
     OwningExprResult NumElements(Actions);
     D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false, 0,
@@ -2855,6 +2900,11 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     ConsumeToken();
 
     SourceLocation EndLoc = MatchRHSPunctuation(tok::r_square, StartLoc);
+    //FIXME: Use these
+    CXX0XAttributeList Attr;
+    if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+      Attr = ParseCXX0XAttributes();
+    }
 
     // If there was an error parsing the assignment-expression, recover.
     if (ExprRes.isInvalid())
@@ -2921,6 +2971,12 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   }
 
   SourceLocation EndLoc = MatchRHSPunctuation(tok::r_square, StartLoc);
+
+  //FIXME: Use these
+  CXX0XAttributeList Attr;
+  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+    Attr = ParseCXX0XAttributes();
+  }
 
   // Remember that we parsed a array type, and remember its features.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),

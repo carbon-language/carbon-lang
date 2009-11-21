@@ -17,11 +17,13 @@
 using namespace clang;
 
 AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
+                             IdentifierInfo *sName, SourceLocation sLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
                              ActionBase::ExprTy **ExprList, unsigned numArgs,
-                             AttributeList *n, bool declspec)
-  : AttrName(aName), AttrLoc(aLoc), ParmName(pName), ParmLoc(pLoc),
-    NumArgs(numArgs), Next(n), DeclspecAttribute(declspec) {
+                             AttributeList *n, bool declspec, bool cxx0x)
+  : AttrName(aName), AttrLoc(aLoc), ScopeName(sName), ScopeLoc(sLoc),
+    ParmName(pName), ParmLoc(pLoc), NumArgs(numArgs), Next(n),
+    DeclspecAttribute(declspec), CXX0XAttribute(cxx0x) {
 
   if (numArgs == 0)
     Args = 0;
@@ -59,6 +61,8 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("mode", AT_mode)
     .Case("used", AT_used)
     .Case("alias", AT_alias)
+    .Case("align", AT_aligned)
+    .Case("final", AT_final)
     .Case("cdecl", AT_cdecl)
     .Case("const", AT_const)
     .Case("packed", AT_packed)
@@ -103,6 +107,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("transparent_union", AT_transparent_union)
     .Case("analyzer_noreturn", AT_analyzer_noreturn)
     .Case("warn_unused_result", AT_warn_unused_result)
+    .Case("carries_dependency", AT_carries_dependency)
     .Case("ns_returns_retained", AT_ns_returns_retained)
     .Case("cf_returns_retained", AT_cf_returns_retained)
     .Case("reqd_work_group_size", AT_reqd_wg_size)

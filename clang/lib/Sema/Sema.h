@@ -2149,6 +2149,11 @@ public:
   bool CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                             const CXXMethodDecl *Old);
 
+  /// CheckOverridingFunctionAttributes - Checks whether attributes are
+  /// incompatible or prevent overriding.
+  bool CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+                                         const CXXMethodDecl *Old);
+
   //===--------------------------------------------------------------------===//
   // C++ Access Control
   //

@@ -282,7 +282,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
 
       // FIXME: as the name implies, this rule allows function definitions.
       // We could pass a flag or check for functions during semantic analysis.
-      allTUVariables.push_back(ParseDeclarationOrFunctionDefinition());
+      allTUVariables.push_back(ParseDeclarationOrFunctionDefinition(0));
       continue;
     }
 
@@ -759,7 +759,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     // If attributes exist after the method, parse them.
     AttributeList *MethodAttrs = 0;
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-      MethodAttrs = ParseAttributes();
+      MethodAttrs = ParseGNUAttributes();
 
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     DeclPtrTy Result
@@ -791,7 +791,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     // If attributes exist before the argument name, parse them.
     ArgInfo.ArgAttrs = 0;
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-      ArgInfo.ArgAttrs = ParseAttributes();
+      ArgInfo.ArgAttrs = ParseGNUAttributes();
 
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident); // missing argument name.
@@ -835,7 +835,7 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   // If attributes exist after the method, parse them.
   AttributeList *MethodAttrs = 0;
   if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-    MethodAttrs = ParseAttributes();
+    MethodAttrs = ParseGNUAttributes();
 
   if (KeyIdents.size() == 0)
     return DeclPtrTy();

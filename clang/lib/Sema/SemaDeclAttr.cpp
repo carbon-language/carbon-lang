@@ -464,7 +464,9 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
   if (!isFunctionOrMethod(d) && !isa<BlockDecl>(d)) {
     ValueDecl *VD = dyn_cast<ValueDecl>(d);
     if (VD == 0 || !VD->getType()->isBlockPointerType()) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      S.Diag(Attr.getLoc(),
+             Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+                                     : diag::warn_attribute_wrong_decl_type)
         << Attr.getName() << 0 /*function*/;
       return false;
     }
@@ -482,6 +484,15 @@ static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
                                        Sema &S) {
   if (HandleCommonNoReturnAttr(d, Attr, S))
     d->addAttr(::new (S.Context) AnalyzerNoReturnAttr());
+}
+
+static void HandleDependencyAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (!isFunctionOrMethod(d) && !isa<ParmVarDecl>(d)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << 8; /*function, method, or parameter*/
+    return;
+  }
+  // FIXME: Actually store the attribute on the declaration
 }
 
 static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1516,6 +1527,10 @@ static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
+  
+  //FIXME: The C++0x version of this attribute has more limited applicabilty
+  //       than GNU's, and should error out when it is used to specify a
+  //       weaker alignment, rather than being silently ignored.
 
   unsigned Align = 0;
   if (Attr.getNumArgs() == 0) {
@@ -1794,6 +1809,29 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) RegparmAttr(NumParams.getZExtValue()));
 }
 
+static void HandleFinalAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<CXXRecordDecl>(d)
+   && (!isa<CXXMethodDecl>(d) || !cast<CXXMethodDecl>(d)->isVirtual())) {
+    S.Diag(Attr.getLoc(),
+           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+                                   : diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 7 /*virtual method or class*/;
+    return;
+  }
+
+  // FIXME: Check that it's not specified more than once in an attribute-
+  //        specifier and that it conforms to the C++0x rules for
+  //        redeclarations.
+
+  d->addAttr(::new (S.Context) FinalAttr());
+}
+
 //===----------------------------------------------------------------------===//
 // Checker-specific attribute handlers.
 //===----------------------------------------------------------------------===//
@@ -1841,7 +1879,8 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
 
 /// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
 /// the attribute applies to decls.  If the attribute is a type attribute, just
-/// silently ignore it.
+/// silently ignore it if a GNU attribute. FIXME: Applying a C++0x attribute to
+/// the wrong thing is illegal (C++0x [dcl.attr.grammar]/4).
 static void ProcessDeclAttribute(Scope *scope, Decl *D,
                                  const AttributeList &Attr, Sema &S) {
   if (Attr.isDeclspecAttribute())
@@ -1861,6 +1900,8 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_analyzer_noreturn:
     HandleAnalyzerNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
+  case AttributeList::AT_carries_dependency:
+                                      HandleDependencyAttr (D, Attr, S); break;
   case AttributeList::AT_cdecl:       HandleCDeclAttr     (D, Attr, S); break;
   case AttributeList::AT_constructor: HandleConstructorAttr(D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;
@@ -1871,9 +1912,10 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
   case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
+  case AttributeList::AT_final:       HandleFinalAttr     (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
   case AttributeList::AT_format_arg:  HandleFormatArgAttr (D, Attr, S); break;
-  case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr(D, Attr, S); break;
+  case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr (D, Attr, S); break;
   case AttributeList::AT_mode:        HandleModeAttr      (D, Attr, S); break;
   case AttributeList::AT_malloc:      HandleMallocAttr    (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;

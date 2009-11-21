@@ -551,6 +551,12 @@ def err_auto_not_allowed : Error<
   "|class member|exception declaration|template parameter|block literal}0">;
 def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
+
+// C++0x [[final]]
+def err_final_function_overridden : Error<
+  "declaration of %0 overrides a 'final' function">;
+def err_final_base : Error<
+  "derivation from 'final' %0">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
@@ -638,8 +644,14 @@ def warn_attribute_weak_import_invalid_on_definition : Warning<
   "'weak_import' attribute cannot be specified on a definition">;
 def warn_attribute_wrong_decl_type : Warning<
   "%0 attribute only applies to %select{function|union|"
-  "variable and function|function or method|parameter|parameter or Objective-C method |"
-  "function, method or block}1 types">;
+  "variable and function|function or method|parameter|"
+  "parameter or Objective-C method |function, method or block|"
+  "virtual method or class|function, method, or parameter}1 types">;
+def err_attribute_wrong_decl_type : Error<
+  "%0 attribute only applies to %select{function|union|"
+  "variable and function|function or method|parameter|"
+  "parameter or Objective-C method |function, method or block|"
+  "virtual method or class|function, method, or parameter}1 types">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;

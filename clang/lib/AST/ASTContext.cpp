@@ -521,7 +521,7 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
   unsigned Align = Target.getCharWidth();
 
   if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
-    Align = std::max(Align, AA->getAlignment());
+    Align = std::max(Align, AA->getMaxAlignment());
 
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
@@ -761,7 +761,8 @@ ASTContext::getTypeInfo(const Type *T) {
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
     if (const AlignedAttr *Aligned = Typedef->getAttr<AlignedAttr>()) {
-      Align = Aligned->getAlignment();
+      Align = std::max(Aligned->getMaxAlignment(),
+                       getTypeAlign(Typedef->getUnderlyingType().getTypePtr()));
       Width = getTypeSize(Typedef->getUnderlyingType().getTypePtr());
     } else
       return getTypeInfo(Typedef->getUnderlyingType().getTypePtr());

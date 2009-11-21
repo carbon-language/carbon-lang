@@ -33,19 +33,22 @@ namespace clang {
 class AttributeList {
   IdentifierInfo *AttrName;
   SourceLocation AttrLoc;
+  IdentifierInfo *ScopeName;
+  SourceLocation ScopeLoc;
   IdentifierInfo *ParmName;
   SourceLocation ParmLoc;
   ActionBase::ExprTy **Args;
   unsigned NumArgs;
   AttributeList *Next;
-  bool DeclspecAttribute;
+  bool DeclspecAttribute, CXX0XAttribute;
   AttributeList(const AttributeList &); // DO NOT IMPLEMENT
   void operator=(const AttributeList &); // DO NOT IMPLEMENT
 public:
   AttributeList(IdentifierInfo *AttrName, SourceLocation AttrLoc,
+                IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
                 ActionBase::ExprTy **args, unsigned numargs,
-                AttributeList *Next, bool declspec = false);
+                AttributeList *Next, bool declspec = false, bool cxx0x = false);
   ~AttributeList();
 
   enum Kind {              // Please keep this list alphabetized.
@@ -57,6 +60,7 @@ public:
     AT_analyzer_noreturn,
     AT_annotate,
     AT_blocks,
+    AT_carries_dependency,
     AT_cdecl,
     AT_cleanup,
     AT_const,
@@ -67,6 +71,7 @@ public:
     AT_dllimport,
     AT_ext_vector_type,
     AT_fastcall,
+    AT_final,
     AT_format,
     AT_format_arg,
     AT_gnu_inline,
@@ -106,8 +111,15 @@ public:
 
   IdentifierInfo *getName() const { return AttrName; }
   SourceLocation getLoc() const { return AttrLoc; }
+  
+  bool hasScope() const { return ScopeName; }
+  IdentifierInfo *getScopeName() const { return ScopeName; }
+  SourceLocation getScopeLoc() const { return ScopeLoc; }
+  
   IdentifierInfo *getParameterName() const { return ParmName; }
+
   bool isDeclspecAttribute() const { return DeclspecAttribute; }
+  bool isCXX0XAttribute() const { return CXX0XAttribute; }
 
   Kind getKind() const { return getKind(getName()); }
   static Kind getKind(const IdentifierInfo *Name);
@@ -180,6 +192,22 @@ inline AttributeList* addAttributeLists (AttributeList *Left,
   prev->setNext(Right);
   return Left;
 }
+
+/// CXX0XAttributeList - A wrapper around a C++0x attribute list.
+/// Stores, in addition to the list proper, whether or not an actual list was
+/// (as opposed to an empty list, which may be ill-formed in some places) and
+/// the source range of the list.
+struct CXX0XAttributeList { 
+  AttributeList *AttrList;
+  SourceRange Range;
+  bool HasAttr;
+  CXX0XAttributeList (AttributeList *attrList, SourceRange range, bool hasAttr)
+    : AttrList(attrList), Range(range), HasAttr (hasAttr) {
+  }
+  CXX0XAttributeList ()
+    : AttrList(0), Range(), HasAttr(false) {
+  }
+};
 
 }  // end namespace clang
 

@@ -24,6 +24,7 @@
 
 namespace clang {
   class AttributeList;
+  struct CXX0XAttributeList;
   class PragmaHandler;
   class Scope;
   class DiagnosticBuilder;
@@ -753,10 +754,10 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
-  DeclGroupPtrTy ParseExternalDeclaration();
+  DeclGroupPtrTy ParseExternalDeclaration(CXX0XAttributeList Attr);
   bool isDeclarationAfterDeclarator();
   bool isStartOfFunctionDefinition();
-  DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(
+  DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
             AccessSpecifier AS = AS_none);
 
   DeclPtrTy ParseFunctionDefinition(ParsingDeclarator &D,
@@ -994,24 +995,25 @@ private:
     return ParseStatementOrDeclaration(true);
   }
   OwningStmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
-  OwningStmtResult ParseLabeledStatement();
-  OwningStmtResult ParseCaseStatement();
-  OwningStmtResult ParseDefaultStatement();
-  OwningStmtResult ParseCompoundStatement(bool isStmtExpr = false);
+  OwningStmtResult ParseLabeledStatement(AttributeList *Attr);
+  OwningStmtResult ParseCaseStatement(AttributeList *Attr);
+  OwningStmtResult ParseDefaultStatement(AttributeList *Attr);
+  OwningStmtResult ParseCompoundStatement(AttributeList *Attr,
+                                          bool isStmtExpr = false);
   OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   bool ParseParenExprOrCondition(OwningExprResult &CondExp,
                                  bool OnlyAllowCondition = false,
                                  SourceLocation *LParenLoc = 0,
                                  SourceLocation *RParenLoc = 0);
-  OwningStmtResult ParseIfStatement();
-  OwningStmtResult ParseSwitchStatement();
-  OwningStmtResult ParseWhileStatement();
-  OwningStmtResult ParseDoStatement();
-  OwningStmtResult ParseForStatement();
-  OwningStmtResult ParseGotoStatement();
-  OwningStmtResult ParseContinueStatement();
-  OwningStmtResult ParseBreakStatement();
-  OwningStmtResult ParseReturnStatement();
+  OwningStmtResult ParseIfStatement(AttributeList *Attr);
+  OwningStmtResult ParseSwitchStatement(AttributeList *Attr);
+  OwningStmtResult ParseWhileStatement(AttributeList *Attr);
+  OwningStmtResult ParseDoStatement(AttributeList *Attr);
+  OwningStmtResult ParseForStatement(AttributeList *Attr);
+  OwningStmtResult ParseGotoStatement(AttributeList *Attr);
+  OwningStmtResult ParseContinueStatement(AttributeList *Attr);
+  OwningStmtResult ParseBreakStatement(AttributeList *Attr);
+  OwningStmtResult ParseReturnStatement(AttributeList *Attr);
   OwningStmtResult ParseAsmStatement(bool &msAsm);
   OwningStmtResult FuzzyParseMicrosoftAsmStatement();
   bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
@@ -1021,7 +1023,7 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 6: Statements and Blocks
 
-  OwningStmtResult ParseCXXTryBlock();
+  OwningStmtResult ParseCXXTryBlock(AttributeList *Attr);
   OwningStmtResult ParseCXXTryBlockCommon(SourceLocation TryLoc);
   OwningStmtResult ParseCXXCatchBlock();
 
@@ -1045,9 +1047,11 @@ private:
     DSC_class   // class context, enables 'friend'
   };
 
-  DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd);
+  DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd,
+                                  CXX0XAttributeList Attr);
   DeclGroupPtrTy ParseSimpleDeclaration(unsigned Context,
-                                        SourceLocation &DeclEnd);
+                                        SourceLocation &DeclEnd,
+                                        AttributeList *Attr);
   DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,
                                 bool AllowFunctionDefinitions,
                                 SourceLocation *DeclEnd = 0);
@@ -1217,11 +1221,14 @@ private:
   void ParseBlockId();
   // EndLoc, if non-NULL, is filled with the location of the last token of
   // the attribute list.
-  AttributeList *ParseAttributes(SourceLocation *EndLoc = 0);
+  CXX0XAttributeList ParseCXX0XAttributes(SourceLocation *EndLoc = 0);
+  AttributeList *ParseGNUAttributes(SourceLocation *EndLoc = 0);
   AttributeList *ParseMicrosoftDeclSpec(AttributeList* CurrAttr = 0);
   AttributeList *ParseMicrosoftTypeAttributes(AttributeList* CurrAttr = 0);
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);
+  
+  OwningExprResult ParseCXX0XAlignArgument(SourceLocation Start);
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
   /// enter a new C++ declarator scope and exit it when the function is
@@ -1265,7 +1272,8 @@ private:
   typedef void (Parser::*DirectDeclParseFunction)(Declarator&);
   void ParseDeclaratorInternal(Declarator &D,
                                DirectDeclParseFunction DirectDeclParser);
-  void ParseTypeQualifierListOpt(DeclSpec &DS, bool AttributesAllowed = true);
+  void ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed = true,
+                                 bool CXX0XAttributesAllowed = true);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
@@ -1278,12 +1286,17 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 7: Declarations [dcl.dcl]
 
+  bool isCXX0XAttributeSpecifier(bool FullLookahead = false, 
+                                 tok::TokenKind *After = 0);
+  
   DeclPtrTy ParseNamespace(unsigned Context, SourceLocation &DeclEnd);
   DeclPtrTy ParseLinkage(unsigned Context);
   DeclPtrTy ParseUsingDirectiveOrDeclaration(unsigned Context,
-                                             SourceLocation &DeclEnd);
+                                             SourceLocation &DeclEnd,
+                                             CXX0XAttributeList Attrs);
   DeclPtrTy ParseUsingDirective(unsigned Context, SourceLocation UsingLoc,
-                                SourceLocation &DeclEnd);
+                                SourceLocation &DeclEnd,
+                                AttributeList *Attr);
   DeclPtrTy ParseUsingDeclaration(unsigned Context, SourceLocation UsingLoc,
                                   SourceLocation &DeclEnd,
                                   AccessSpecifier AS = AS_none);

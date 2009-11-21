@@ -59,6 +59,7 @@ public:
     Deprecated,
     Destructor,
     FastCall,
+    Final,
     Format,
     FormatArg,
     GNUInline,
@@ -184,12 +185,24 @@ public:
 class AlignedAttr : public Attr {
   unsigned Alignment;
 public:
-  AlignedAttr(unsigned alignment) : Attr(Aligned), Alignment(alignment) {}
+  AlignedAttr(unsigned alignment)
+    : Attr(Aligned), Alignment(alignment) {}
 
   /// getAlignment - The specified alignment in bits.
   unsigned getAlignment() const { return Alignment; }
+  
+  /// getMaxAlignment - Get the maximum alignment of attributes on this list.
+  unsigned getMaxAlignment() const {
+    const AlignedAttr *Next = getNext<AlignedAttr>();
+    if (Next)
+      return std::max(Next->getMaxAlignment(), Alignment);
+    else
+      return Alignment;
+  }
 
-  virtual Attr* clone(ASTContext &C) const { return ::new (C) AlignedAttr(Alignment); }
+  virtual Attr* clone(ASTContext &C) const {
+    return ::new (C) AlignedAttr(Alignment);
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
@@ -304,6 +317,7 @@ DEF_SIMPLE_ATTR(Malloc);
 DEF_SIMPLE_ATTR(NoReturn);
 DEF_SIMPLE_ATTR(AnalyzerNoReturn);
 DEF_SIMPLE_ATTR(Deprecated);
+DEF_SIMPLE_ATTR(Final);
 
 class SectionAttr : public Attr {
   std::string Name;

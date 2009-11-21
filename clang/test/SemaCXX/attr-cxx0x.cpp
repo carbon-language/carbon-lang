@@ -1,0 +1,24 @@
+// RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
+
+int final_fail [[final]]; //expected-error {{'final' attribute only applies to virtual method or class types}}
+
+struct [[final]] final_base { }; // expected-note {{struct final_base declared here}}
+struct final_child : final_base { }; // expected-error {{derivation from 'final' struct final_base}}
+
+struct final_member { virtual void quux [[final]] (); }; // expected-note {{overridden virtual function is here}}
+struct final_override : final_member { virtual void quux (); }; // expected-error {{declaration of 'quux' overrides a 'final' function}}
+
+int align_illegal [[align(3)]]; //expected-error {{requested alignment is not a power of 2}}
+char align_big [[align(int)]];
+int align_small [[align(1)]];
+int align_multiple [[align(1), align(8), align(1)]];
+
+struct align_member {
+  int member [[align(8)]];
+};
+
+static_assert(alignof(align_big) == alignof(int), "k's alignment is wrong");
+static_assert(alignof(align_small) == alignof(int), "j's alignment is wrong");
+static_assert(alignof(align_multiple) == 8, "l's alignment is wrong");
+static_assert(alignof(align_member) == 8, "quuux's alignment is wrong");
+static_assert(sizeof(align_member) == 8, "quuux's size is wrong");

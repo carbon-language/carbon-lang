@@ -1315,7 +1315,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    OwningStmtResult Stmt(ParseCompoundStatement(true));
+    OwningStmtResult Stmt(ParseCompoundStatement(0, true));
     ExprType = CompoundStmt;
 
     // If the substmt parsed correctly, build the AST node.
@@ -1503,7 +1503,7 @@ void Parser::ParseBlockId() {
 
   if (Tok.is(tok::kw___attribute)) {
     SourceLocation Loc;
-    AttributeList *AttrList = ParseAttributes(&Loc);
+    AttributeList *AttrList = ParseGNUAttributes(&Loc);
     DeclaratorInfo.AddAttributes(AttrList, Loc);
   }
 
@@ -1565,7 +1565,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
 
     if (Tok.is(tok::kw___attribute)) {
       SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
+      AttributeList *AttrList = ParseGNUAttributes(&Loc);
       ParamInfo.AddAttributes(AttrList, Loc);
     }
 
@@ -1586,7 +1586,7 @@ Parser::OwningExprResult Parser::ParseBlockLiteralExpression() {
 
     if (Tok.is(tok::kw___attribute)) {
       SourceLocation Loc;
-      AttributeList *AttrList = ParseAttributes(&Loc);
+      AttributeList *AttrList = ParseGNUAttributes(&Loc);
       ParamInfo.AddAttributes(AttrList, Loc);
     }
 
