@@ -1704,7 +1704,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     // to be a good reason.
     CmdArgs.push_back("/dev/null");
 
-    CmdArgs.push_back("-output-pch=");
+    CmdArgs.push_back("--output-pch=");
     CmdArgs.push_back(Output.getFilename());
   }
 
