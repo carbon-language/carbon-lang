@@ -58,7 +58,9 @@ public:
   /// @name Mangler Entry Points
   /// @{
 
-  bool mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
+  bool shouldMangleDeclName(const NamedDecl *D);
+
+  void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
   void mangleThunk(const FunctionDecl *FD, int64_t n, int64_t vn,
                    llvm::SmallVectorImpl<char> &);
   void mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t, int64_t v_t,

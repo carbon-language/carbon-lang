@@ -51,7 +51,7 @@ public:
 
   llvm::raw_svector_ostream &getStream() { return Out; }
 
-  bool mangle(const NamedDecl *D);
+  void mangle(const NamedDecl *D);
   void mangleCalloffset(int64_t nv, int64_t v);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleName(const NamedDecl *ND);
@@ -124,60 +124,68 @@ static bool isInCLinkageSpecification(const Decl *D) {
   return false;
 }
 
-bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
+bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
+  // In C, functions with no attributes never need to be mangled. Fastpath them.
+  if (!getASTContext().getLangOptions().CPlusPlus && !D->hasAttrs())
+    return false;
+
+  // Any decl can be declared with __asm("foo") on it, and this takes precedence
+  // over all other naming in the .o file.
+  if (D->hasAttr<AsmLabelAttr>())
+    return true;
+
   // Clang's "overloadable" attribute extension to C/C++ implies name mangling
   // (always) as does passing a C++ member function and a function
   // whose name is not a simple identifier.
-  if (!FD->hasAttr<OverloadableAttr>() && !isa<CXXMethodDecl>(FD) &&
-      FD->getDeclName().isIdentifier()) {
-    // C functions are not mangled, and "main" is never mangled.
-    if (!Context.getASTContext().getLangOptions().CPlusPlus || FD->isMain())
-      return false;
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (FD && (FD->hasAttr<OverloadableAttr>() || isa<CXXMethodDecl>(FD) ||
+             !FD->getDeclName().isIdentifier()))
+    return true;
 
-    // No mangling in an "implicit extern C" header.
-    if (FD->getLocation().isValid() &&
-        Context.getASTContext().getSourceManager().
-        isInExternCSystemHeader(FD->getLocation()))
-      return false;
+  // Otherwise, no mangling is done outside C++ mode.
+  if (!getASTContext().getLangOptions().CPlusPlus)
+    return false;
 
-    // No name mangling in a C linkage specification.
-    if (isInCLinkageSpecification(FD))
-      return false;
-  }
+  // No mangling in an "implicit extern C" header.
+  if (D->getLocation().isValid() &&
+      getASTContext().getSourceManager().
+      isInExternCSystemHeader(D->getLocation()))
+    return false;
 
-  // If we get here, mangle the decl name!
-  Out << "_Z";
-  mangleFunctionEncoding(FD);
+  // C functions, "main", and variables at global scope are not
+  // mangled.
+  if ((FD && FD->isMain()) ||
+      (!FD && D->getDeclContext()->isTranslationUnit()) ||
+      isInCLinkageSpecification(D))
+    return false;
+
   return true;
 }
 
-bool CXXNameMangler::mangle(const NamedDecl *D) {
+void CXXNameMangler::mangle(const NamedDecl *D) {
+  assert(Context.shouldMangleDeclName(D) && "Invalid mangle call!");
+
   // Any decl can be declared with __asm("foo") on it, and this takes precedence
   // over all other naming in the .o file.
   if (const AsmLabelAttr *ALA = D->getAttr<AsmLabelAttr>()) {
     // If we have an asm name, then we use it as the mangling.
     Out << '\01';  // LLVM IR Marker for __asm("foo")
     Out << ALA->getLabel();
-    return true;
+    return;
   }
 
   // <mangled-name> ::= _Z <encoding>
   //            ::= <data name>
   //            ::= <special-name>
-
-  // FIXME: Actually use a visitor to decode these?
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return mangleFunctionDecl(FD);
-
-  const VarDecl *VD = cast<VarDecl>(D);
-  if (!Context.getASTContext().getLangOptions().CPlusPlus ||
-      isInCLinkageSpecification(D) ||
-      D->getDeclContext()->isTranslationUnit())
-    return false;
-
-  Out << "_Z";
-  mangleName(VD);
-  return true;
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // If we get here, mangle the decl name!
+    Out << "_Z";
+    mangleFunctionEncoding(FD);
+  } else {
+    const VarDecl *VD = cast<VarDecl>(D);
+    Out << "_Z";
+    mangleName(VD);
+  }
 }
 
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
@@ -1293,7 +1301,7 @@ void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
 /// and this routine will return false. In this case, the caller should just
 /// emit the identifier of the declaration (\c D->getIdentifier()) as its
 /// name.
-bool MangleContext::mangleName(const NamedDecl *D,
+void MangleContext::mangleName(const NamedDecl *D,
                                llvm::SmallVectorImpl<char> &Res) {
   assert((isa<FunctionDecl>(D) || isa<VarDecl>(D)) &&
           "Invalid mangleName() call, argument is not a variable or function!");

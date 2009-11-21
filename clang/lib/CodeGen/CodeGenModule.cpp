@@ -160,18 +160,13 @@ const char *CodeGenModule::getMangledName(const GlobalDecl &GD) {
 /// the unmangled name.
 ///
 const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
-  // In C, functions with no attributes never need to be mangled. Fastpath them.
-  if (!getLangOptions().CPlusPlus && !ND->hasAttrs()) {
+  if (!getMangleContext().shouldMangleDeclName(ND)) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
     return ND->getNameAsCString();
   }
 
   llvm::SmallString<256> Name;
-  if (!getMangleContext().mangleName(ND, Name)) {
-    assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
-    return ND->getNameAsCString();
-  }
-
+  getMangleContext().mangleName(ND, Name);
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
 }
