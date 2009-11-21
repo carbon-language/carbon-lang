@@ -1109,7 +1109,7 @@ Init *VarInit::resolveBitReference(Record &R, const RecordVal *IRV,
   if (IRV && IRV->getName() != getName()) return 0;
 
   RecordVal *RV = R.getValue(getName());
-  assert(RV && "Reference to a non-existant variable?");
+  assert(RV && "Reference to a non-existent variable?");
   assert(dynamic_cast<BitsInit*>(RV->getValue()));
   BitsInit *BI = (BitsInit*)RV->getValue();
 
@@ -1127,7 +1127,7 @@ Init *VarInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   if (IRV && IRV->getName() != getName()) return 0;
 
   RecordVal *RV = R.getValue(getName());
-  assert(RV && "Reference to a non-existant variable?");
+  assert(RV && "Reference to a non-existent variable?");
   ListInit *LI = dynamic_cast<ListInit*>(RV->getValue());
   if (!LI) {
     VarInit *VI = dynamic_cast<VarInit*>(RV->getValue());
@@ -1165,7 +1165,7 @@ Init *VarInit::getFieldInit(Record &R, const std::string &FieldName) const {
 }
 
 /// resolveReferences - This method is used by classes that refer to other
-/// variables which may not be defined at the time they expression is formed.
+/// variables which may not be defined at the time the expression is formed.
 /// If a value is set for the variable later, this method will be called on
 /// users of the value to allow the value to propagate out.
 ///
