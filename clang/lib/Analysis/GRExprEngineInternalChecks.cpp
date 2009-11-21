@@ -326,6 +326,5 @@ void GRExprEngine::RegisterInternalChecks() {
   RegisterDivZeroChecker(*this);
   RegisterReturnStackAddressChecker(*this);
   RegisterReturnUndefChecker(*this);
-  RegisterFixedAddressChecker(*this);
   RegisterUndefinedArraySubscriptChecker(*this);
 }

@@ -31,6 +31,8 @@ void clang::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
   
   // Note that this must be registered after ReturnStackAddresEngsChecker.
   RegisterReturnPointerRangeChecker(Eng);
+  
+  RegisterFixedAddressChecker(Eng);
   RegisterPointerSubChecker(Eng);
   RegisterPointerArithChecker(Eng);
   RegisterCastToStructChecker(Eng);
