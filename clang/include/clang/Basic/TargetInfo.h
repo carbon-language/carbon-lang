@@ -80,7 +80,7 @@ public:
   };
 protected:
   IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
-          WIntType, Char16Type, Char32Type, Int64Type;
+          WIntType, Char16Type, Char32Type, Int64Type, SigAtomicType;
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
@@ -94,6 +94,7 @@ public:
   IntType getChar16Type() const { return Char16Type; }
   IntType getChar32Type() const { return Char32Type; }
   IntType getInt64Type() const { return Int64Type; }
+  IntType getSigAtomicType() const { return SigAtomicType; }
 
 
   /// getTypeWidth - Return the width (in bits) of the specified integer type 

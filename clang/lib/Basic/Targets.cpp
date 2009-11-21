@@ -1533,6 +1533,7 @@ namespace {
       UIntMaxType = UnsignedLong;
       IntPtrType = SignedShort;
       PtrDiffType = SignedInt;
+      SigAtomicType = SignedLong;
       FloatWidth = 32;
       FloatAlign = 32;
       DoubleWidth = 32;
@@ -1600,6 +1601,7 @@ namespace {
       UIntMaxType = UnsignedLong;
       IntPtrType = SignedShort;
       PtrDiffType = SignedInt;
+      SigAtomicType = SignedLong;
       DescriptionString = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-n8:16";
    }
     virtual void getTargetDefines(const LangOptions &Opts,
