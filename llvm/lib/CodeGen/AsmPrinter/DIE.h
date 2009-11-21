@@ -161,32 +161,26 @@ namespace llvm {
     void setSize(unsigned S) { Size = S; }
     void setAbstractCompileUnit(CompileUnit *CU) { AbstractCU = CU; }
 
-    /// AddValue - Add a value and attributes to a DIE.
+    /// addValue - Add a value and attributes to a DIE.
     ///
-    void AddValue(unsigned Attribute, unsigned Form, DIEValue *Value) {
+    void addValue(unsigned Attribute, unsigned Form, DIEValue *Value) {
       Abbrev.AddAttribute(Attribute, Form);
       Values.push_back(Value);
     }
 
     /// SiblingOffset - Return the offset of the debug information entry's
     /// sibling.
-    unsigned SiblingOffset() const { return Offset + Size; }
+    unsigned getSiblingOffset() const { return Offset + Size; }
 
-    /// AddSiblingOffset - Add a sibling offset field to the front of the DIE.
+    /// addSiblingOffset - Add a sibling offset field to the front of the DIE.
     ///
-    void AddSiblingOffset();
+    void addSiblingOffset();
 
-    /// AddChild - Add a child to the DIE.
+    /// addChild - Add a child to the DIE.
     ///
-    void AddChild(DIE *Child) {
+    void addChild(DIE *Child) {
       Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
       Children.push_back(Child);
-    }
-
-    /// Detach - Detaches objects connected to it after copying.
-    ///
-    void Detach() {
-      Children.clear();
     }
 
 #ifndef NDEBUG

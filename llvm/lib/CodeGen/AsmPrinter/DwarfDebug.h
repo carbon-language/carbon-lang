@@ -106,9 +106,9 @@ class DwarfDebug : public Dwarf {
   /// Lines - List of of source line correspondence.
   std::vector<SrcLineInfo> Lines;
 
-  /// Values - A list of all the unique values in use.
+  /// DIEValues - A list of all the unique values in use.
   ///
-  std::vector<DIEValue *> Values;
+  std::vector<DIEValue *> DIEValues;
 
   /// StringPool - A UniqueVector of strings used by indirect references.
   ///
@@ -225,137 +225,133 @@ class DwarfDebug : public Dwarf {
     return SourceIds.size();
   }
 
-  /// AssignAbbrevNumber - Define a unique number for the abbreviation.
+  /// assignAbbrevNumber - Define a unique number for the abbreviation.
   ///
-  void AssignAbbrevNumber(DIEAbbrev &Abbrev);
+  void assignAbbrevNumber(DIEAbbrev &Abbrev);
 
-  /// CreateDIEEntry - Creates a new DIEEntry to be a proxy for a debug
+  /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
   /// information entry.
-  DIEEntry *CreateDIEEntry(DIE *Entry = NULL);
+  DIEEntry *createDIEEntry(DIE *Entry = NULL);
 
-  /// SetDIEEntry - Set a DIEEntry once the debug information entry is defined.
+  /// addUInt - Add an unsigned integer attribute data and value.
   ///
-  void SetDIEEntry(DIEEntry *Value, DIE *Entry);
+  void addUInt(DIE *Die, unsigned Attribute, unsigned Form, uint64_t Integer);
 
-  /// AddUInt - Add an unsigned integer attribute data and value.
+  /// addSInt - Add an signed integer attribute data and value.
   ///
-  void AddUInt(DIE *Die, unsigned Attribute, unsigned Form, uint64_t Integer);
+  void addSInt(DIE *Die, unsigned Attribute, unsigned Form, int64_t Integer);
 
-  /// AddSInt - Add an signed integer attribute data and value.
+  /// addString - Add a string attribute data and value.
   ///
-  void AddSInt(DIE *Die, unsigned Attribute, unsigned Form, int64_t Integer);
-
-  /// AddString - Add a string attribute data and value.
-  ///
-  void AddString(DIE *Die, unsigned Attribute, unsigned Form,
+  void addString(DIE *Die, unsigned Attribute, unsigned Form,
                  const std::string &String);
 
-  /// AddLabel - Add a Dwarf label attribute data and value.
+  /// addLabel - Add a Dwarf label attribute data and value.
   ///
-  void AddLabel(DIE *Die, unsigned Attribute, unsigned Form,
+  void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                 const DWLabel &Label);
 
-  /// AddObjectLabel - Add an non-Dwarf label attribute data and value.
+  /// addObjectLabel - Add an non-Dwarf label attribute data and value.
   ///
-  void AddObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
+  void addObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
                       const std::string &Label);
 
-  /// AddSectionOffset - Add a section offset label attribute data and value.
+  /// addSectionOffset - Add a section offset label attribute data and value.
   ///
-  void AddSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
+  void addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
                         const DWLabel &Label, const DWLabel &Section,
                         bool isEH = false, bool useSet = true);
 
-  /// AddDelta - Add a label delta attribute data and value.
+  /// addDelta - Add a label delta attribute data and value.
   ///
-  void AddDelta(DIE *Die, unsigned Attribute, unsigned Form,
+  void addDelta(DIE *Die, unsigned Attribute, unsigned Form,
                 const DWLabel &Hi, const DWLabel &Lo);
 
-  /// AddDIEEntry - Add a DIE attribute data and value.
+  /// addDIEEntry - Add a DIE attribute data and value.
   ///
-  void AddDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry) {
-    Die->AddValue(Attribute, Form, CreateDIEEntry(Entry));
+  void addDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry) {
+    Die->addValue(Attribute, Form, createDIEEntry(Entry));
   }
 
-  /// AddBlock - Add block data.
+  /// addBlock - Add block data.
   ///
-  void AddBlock(DIE *Die, unsigned Attribute, unsigned Form, DIEBlock *Block);
+  void addBlock(DIE *Die, unsigned Attribute, unsigned Form, DIEBlock *Block);
 
-  /// AddSourceLine - Add location information to specified debug information
+  /// addSourceLine - Add location information to specified debug information
   /// entry.
-  void AddSourceLine(DIE *Die, const DIVariable *V);
-  void AddSourceLine(DIE *Die, const DIGlobal *G);
-  void AddSourceLine(DIE *Die, const DISubprogram *SP);
-  void AddSourceLine(DIE *Die, const DIType *Ty);
+  void addSourceLine(DIE *Die, const DIVariable *V);
+  void addSourceLine(DIE *Die, const DIGlobal *G);
+  void addSourceLine(DIE *Die, const DISubprogram *SP);
+  void addSourceLine(DIE *Die, const DIType *Ty);
 
-  /// AddAddress - Add an address attribute to a die based on the location
+  /// addAddress - Add an address attribute to a die based on the location
   /// provided.
-  void AddAddress(DIE *Die, unsigned Attribute,
+  void addAddress(DIE *Die, unsigned Attribute,
                   const MachineLocation &Location);
 
-  /// AddComplexAddress - Start with the address based on the location provided,
+  /// addComplexAddress - Start with the address based on the location provided,
   /// and generate the DWARF information necessary to find the actual variable
   /// (navigating the extra location information encoded in the type) based on
   /// the starting location.  Add the DWARF information to the die.
   ///
-  void AddComplexAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
+  void addComplexAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
                          const MachineLocation &Location);
 
-  // FIXME: Should be reformulated in terms of AddComplexAddress.
-  /// AddBlockByrefAddress - Start with the address based on the location
+  // FIXME: Should be reformulated in terms of addComplexAddress.
+  /// addBlockByrefAddress - Start with the address based on the location
   /// provided, and generate the DWARF information necessary to find the
   /// actual Block variable (navigating the Block struct) based on the
   /// starting location.  Add the DWARF information to the die.  Obsolete,
-  /// please use AddComplexAddress instead.
+  /// please use addComplexAddress instead.
   ///
-  void AddBlockByrefAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
+  void addBlockByrefAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
                             const MachineLocation &Location);
 
-  /// AddType - Add a new type attribute to the specified entity.
-  void AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty);
+  /// addType - Add a new type attribute to the specified entity.
+  void addType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty);
 
-  /// ConstructTypeDIE - Construct basic type die from DIBasicType.
-  void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+  /// constructTypeDIE - Construct basic type die from DIBasicType.
+  void constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DIBasicType BTy);
 
-  /// ConstructTypeDIE - Construct derived type die from DIDerivedType.
-  void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+  /// constructTypeDIE - Construct derived type die from DIDerivedType.
+  void constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DIDerivedType DTy);
 
-  /// ConstructTypeDIE - Construct type DIE from DICompositeType.
-  void ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+  /// constructTypeDIE - Construct type DIE from DICompositeType.
+  void constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DICompositeType CTy);
 
-  /// ConstructSubrangeDIE - Construct subrange DIE from DISubrange.
-  void ConstructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy);
+  /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
+  void constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy);
 
-  /// ConstructArrayTypeDIE - Construct array type DIE from DICompositeType.
-  void ConstructArrayTypeDIE(CompileUnit *DW_Unit, DIE &Buffer, 
+  /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
+  void constructArrayTypeDIE(CompileUnit *DW_Unit, DIE &Buffer, 
                              DICompositeType *CTy);
 
-  /// ConstructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-  DIE *ConstructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy);
+  /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
+  DIE *constructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy);
 
-  /// CreateGlobalVariableDIE - Create new DIE using GV.
-  DIE *CreateGlobalVariableDIE(CompileUnit *DW_Unit,
+  /// createGlobalVariableDIE - Create new DIE using GV.
+  DIE *createGlobalVariableDIE(CompileUnit *DW_Unit,
                                const DIGlobalVariable &GV);
 
-  /// CreateMemberDIE - Create new member DIE.
-  DIE *CreateMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT);
+  /// createMemberDIE - Create new member DIE.
+  DIE *createMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT);
 
-  /// CreateSubprogramDIE - Create new DIE using SP.
-  DIE *CreateSubprogramDIE(CompileUnit *DW_Unit,
+  /// createSubprogramDIE - Create new DIE using SP.
+  DIE *createSubprogramDIE(CompileUnit *DW_Unit,
                            const DISubprogram &SP,
                            bool IsConstructor = false,
                            bool IsInlined = false);
 
-  /// FindCompileUnit - Get the compile unit for the given descriptor. 
+  /// findCompileUnit - Get the compile unit for the given descriptor. 
   ///
-  CompileUnit &FindCompileUnit(DICompileUnit Unit) const;
+  CompileUnit &findCompileUnit(DICompileUnit Unit) const;
 
-  /// CreateDbgScopeVariable - Create a new scope variable.
+  /// createDbgScopeVariable - Create a new scope variable.
   ///
-  DIE *CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
+  DIE *createDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
 
   /// getUpdatedDbgScope - Find or create DbgScope assicated with 
   /// the instruction. Initialize scope and update scope hierarchy.
@@ -370,88 +366,97 @@ class DwarfDebug : public Dwarf {
   DbgVariable *findAbstractVariable(DIVariable &Var, unsigned FrameIdx, 
                                     DILocation &Loc);
 
-  DIE *UpdateSubprogramScopeDIE(MDNode *SPNode);
-  DIE *ConstructLexicalScopeDIE(DbgScope *Scope);
-  DIE *ConstructScopeDIE(DbgScope *Scope);
-  DIE *ConstructInlinedScopeDIE(DbgScope *Scope);
-  DIE *ConstructVariableDIE(DbgVariable *DV, DbgScope *S, CompileUnit *Unit);
+  /// updateSubprogramScopeDIE - Find DIE for the given subprogram and 
+  /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
+  /// If there are global variables in this scope then create and insert
+  /// DIEs for these variables.
+  DIE *updateSubprogramScopeDIE(MDNode *SPNode);
 
-  /// ConstructDbgScope - Construct the components of a scope.
-  ///
-  void ConstructDbgScope(DbgScope *ParentScope,
-                         unsigned ParentStartID, unsigned ParentEndID,
-                         DIE *ParentDie, CompileUnit *Unit);
+  /// constructLexicalScope - Construct new DW_TAG_lexical_block 
+  /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
+  DIE *constructLexicalScopeDIE(DbgScope *Scope);
 
-  /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
+  /// constructInlinedScopeDIE - This scope represents inlined body of
+  /// a function. Construct DIE to represent this concrete inlined copy
+  /// of the function.
+  DIE *constructInlinedScopeDIE(DbgScope *Scope);
+
+  /// constructVariableDIE - Construct a DIE for the given DbgVariable.
+  DIE *constructVariableDIE(DbgVariable *DV, DbgScope *S, CompileUnit *Unit);
+
+  /// constructScopeDIE - Construct a DIE for this scope.
+  DIE *constructScopeDIE(DbgScope *Scope);
+
+  /// emitInitial - Emit initial Dwarf declarations.  This is necessary for cc
   /// tools to recognize the object file contains Dwarf information.
-  void EmitInitial();
+  void emitInitial();
 
-  /// EmitDIE - Recusively Emits a debug information entry.
+  /// emitDIE - Recusively Emits a debug information entry.
   ///
-  void EmitDIE(DIE *Die);
+  void emitDIE(DIE *Die);
 
-  /// SizeAndOffsetDie - Compute the size and offset of a DIE.
+  /// computeSizeAndOffset - Compute the size and offset of a DIE.
   ///
-  unsigned SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last);
+  unsigned computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last);
 
-  /// SizeAndOffsets - Compute the size and offset of all the DIEs.
+  /// computeSizeAndOffsets - Compute the size and offset of all the DIEs.
   ///
-  void SizeAndOffsets();
+  void computeSizeAndOffsets();
 
-  /// EmitDebugInfo / EmitDebugInfoPerCU - Emit the debug info section.
+  /// EmitDebugInfo / emitDebugInfoPerCU - Emit the debug info section.
   ///
-  void EmitDebugInfoPerCU(CompileUnit *Unit);
+  void emitDebugInfoPerCU(CompileUnit *Unit);
 
-  void EmitDebugInfo();
+  void emitDebugInfo();
 
-  /// EmitAbbreviations - Emit the abbreviation section.
+  /// emitAbbreviations - Emit the abbreviation section.
   ///
-  void EmitAbbreviations() const;
+  void emitAbbreviations() const;
 
-  /// EmitEndOfLineMatrix - Emit the last address of the section and the end of
+  /// emitEndOfLineMatrix - Emit the last address of the section and the end of
   /// the line matrix.
   ///
-  void EmitEndOfLineMatrix(unsigned SectionEnd);
+  void emitEndOfLineMatrix(unsigned SectionEnd);
 
-  /// EmitDebugLines - Emit source line information.
+  /// emitDebugLines - Emit source line information.
   ///
-  void EmitDebugLines();
+  void emitDebugLines();
 
-  /// EmitCommonDebugFrame - Emit common frame info into a debug frame section.
+  /// emitCommonDebugFrame - Emit common frame info into a debug frame section.
   ///
-  void EmitCommonDebugFrame();
+  void emitCommonDebugFrame();
 
-  /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
+  /// emitFunctionDebugFrame - Emit per function frame info into a debug frame
   /// section.
-  void EmitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo);
+  void emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo);
 
-  void EmitDebugPubNamesPerCU(CompileUnit *Unit);
+  void emitDebugPubNamesPerCU(CompileUnit *Unit);
 
-  /// EmitDebugPubNames - Emit visible names into a debug pubnames section.
+  /// emitDebugPubNames - Emit visible names into a debug pubnames section.
   ///
-  void EmitDebugPubNames();
+  void emitDebugPubNames();
 
-  /// EmitDebugStr - Emit visible names into a debug str section.
+  /// emitDebugStr - Emit visible names into a debug str section.
   ///
-  void EmitDebugStr();
+  void emitDebugStr();
 
-  /// EmitDebugLoc - Emit visible names into a debug loc section.
+  /// emitDebugLoc - Emit visible names into a debug loc section.
   ///
-  void EmitDebugLoc();
+  void emitDebugLoc();
 
   /// EmitDebugARanges - Emit visible names into a debug aranges section.
   ///
   void EmitDebugARanges();
 
-  /// EmitDebugRanges - Emit visible names into a debug ranges section.
+  /// emitDebugRanges - Emit visible names into a debug ranges section.
   ///
-  void EmitDebugRanges();
+  void emitDebugRanges();
 
-  /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
+  /// emitDebugMacInfo - Emit visible names into a debug macinfo section.
   ///
-  void EmitDebugMacInfo();
+  void emitDebugMacInfo();
 
-  /// EmitDebugInlineInfo - Emit inline info using following format.
+  /// emitDebugInlineInfo - Emit inline info using following format.
   /// Section Header:
   /// 1. length of section
   /// 2. Dwarf version number
@@ -469,7 +474,7 @@ class DwarfDebug : public Dwarf {
   /// inlined instance; the die_offset points to the inlined_subroutine die in
   /// the __debug_info section, and the low_pc is the starting address  for the
   ///  inlining instance.
-  void EmitDebugInlineInfo();
+  void emitDebugInlineInfo();
 
   /// GetOrCreateSourceID - Look up the source id with the given directory and
   /// source file names. If none currently exists, create a new id and insert it
@@ -478,17 +483,17 @@ class DwarfDebug : public Dwarf {
   unsigned GetOrCreateSourceID(const char *DirName,
                                const char *FileName);
 
-  void ConstructCompileUnit(MDNode *N);
+  void constructCompileUnit(MDNode *N);
 
-  void ConstructGlobalVariableDIE(MDNode *N);
+  void constructGlobalVariableDIE(MDNode *N);
 
-  void ConstructSubprogram(MDNode *N);
+  void constructSubprogramDIE(MDNode *N);
 
   // FIXME: This should go away in favor of complex addresses.
   /// Find the type the programmer originally declared the variable to be
   /// and return that type.  Obsolete, use GetComplexAddrType instead.
   ///
-  DIType GetBlockByrefType(DIType Ty, std::string Name);
+  DIType getBlockByrefType(DIType Ty, std::string Name);
 
 public:
   //===--------------------------------------------------------------------===//
@@ -501,30 +506,30 @@ public:
   /// be emitted.
   bool ShouldEmitDwarfDebug() const { return shouldEmit; }
 
-  /// BeginModule - Emit all Dwarf sections that should come prior to the
+  /// beginModule - Emit all Dwarf sections that should come prior to the
   /// content.
-  void BeginModule(Module *M, MachineModuleInfo *MMI);
+  void beginModule(Module *M, MachineModuleInfo *MMI);
 
-  /// EndModule - Emit all Dwarf sections that should come after the content.
+  /// endModule - Emit all Dwarf sections that should come after the content.
   ///
-  void EndModule();
+  void endModule();
 
-  /// BeginFunction - Gather pre-function debug information.  Assumes being
+  /// beginFunction - Gather pre-function debug information.  Assumes being
   /// emitted immediately after the function entry point.
-  void BeginFunction(MachineFunction *MF);
+  void beginFunction(MachineFunction *MF);
 
-  /// EndFunction - Gather and emit post-function debug information.
+  /// endFunction - Gather and emit post-function debug information.
   ///
-  void EndFunction(MachineFunction *MF);
+  void endFunction(MachineFunction *MF);
 
-  /// RecordSourceLine - Records location information and associates it with a 
+  /// recordSourceLine - Records location information and associates it with a 
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
-  unsigned RecordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
+  unsigned recordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
 
-  /// getRecordSourceLineCount - Return the number of source lines in the debug
+  /// getSourceLineCount - Return the number of source lines in the debug
   /// info.
-  unsigned getRecordSourceLineCount() const {
+  unsigned getSourceLineCount() const {
     return Lines.size();
   }
                             
@@ -536,22 +541,18 @@ public:
   unsigned getOrCreateSourceID(const std::string &DirName,
                                const std::string &FileName);
 
-  /// ExtractScopeInformation - Scan machine instructions in this function
+  /// extractScopeInformation - Scan machine instructions in this function
   /// and collect DbgScopes. Return true, if atleast one scope was found.
-  bool ExtractScopeInformation(MachineFunction *MF);
+  bool extractScopeInformation(MachineFunction *MF);
 
-  /// CollectVariableInfo - Populate DbgScope entries with variables' info.
-  void CollectVariableInfo();
+  /// collectVariableInfo - Populate DbgScope entries with variables' info.
+  void collectVariableInfo();
 
-  /// SetDbgScopeEndLabels - Update DbgScope end labels for the scopes that
-  /// end with this machine instruction.
-  void SetDbgScopeEndLabels(const MachineInstr *MI, unsigned Label);
+  /// beginScope - Process beginning of a scope starting at Label.
+  void beginScope(const MachineInstr *MI, unsigned Label);
 
-  /// BeginScope - Process beginning of a scope starting at Label.
-  void BeginScope(const MachineInstr *MI, unsigned Label);
-
-  /// EndScope - Prcess end of a scope.
-  void EndScope(const MachineInstr *MI);
+  /// endScope - Prcess end of a scope.
+  void endScope(const MachineInstr *MI);
 };
 } // End of namespace llvm
 

@@ -43,14 +43,14 @@ void DwarfWriter::BeginModule(Module *M,
   DE = new DwarfException(OS, A, T);
   DD = new DwarfDebug(OS, A, T);
   DE->BeginModule(M, MMI);
-  DD->BeginModule(M, MMI);
+  DD->beginModule(M, MMI);
 }
 
 /// EndModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfWriter::EndModule() {
   DE->EndModule();
-  DD->EndModule();
+  DD->endModule();
   delete DD; DD = 0;
   delete DE; DE = 0;
 }
@@ -59,13 +59,13 @@ void DwarfWriter::EndModule() {
 /// emitted immediately after the function entry point.
 void DwarfWriter::BeginFunction(MachineFunction *MF) {
   DE->BeginFunction(MF);
-  DD->BeginFunction(MF);
+  DD->beginFunction(MF);
 }
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
 void DwarfWriter::EndFunction(MachineFunction *MF) {
-  DD->EndFunction(MF);
+  DD->endFunction(MF);
   DE->EndFunction();
 
   if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())
@@ -78,12 +78,12 @@ void DwarfWriter::EndFunction(MachineFunction *MF) {
 /// correspondence to the source line list.
 unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
                                        MDNode *Scope) {
-  return DD->RecordSourceLine(Line, Col, Scope);
+  return DD->recordSourceLine(Line, Col, Scope);
 }
 
 /// getRecordSourceLineCount - Count source lines.
 unsigned DwarfWriter::getRecordSourceLineCount() {
-  return DD->getRecordSourceLineCount();
+  return DD->getSourceLineCount();
 }
 
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
@@ -93,8 +93,8 @@ bool DwarfWriter::ShouldEmitDwarfDebug() const {
 }
 
 void DwarfWriter::BeginScope(const MachineInstr *MI, unsigned L) {
-  DD->BeginScope(MI, L);
+  DD->beginScope(MI, L);
 }
 void DwarfWriter::EndScope(const MachineInstr *MI) {
-  DD->EndScope(MI);
+  DD->endScope(MI);
 }

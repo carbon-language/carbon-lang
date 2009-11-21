@@ -105,9 +105,9 @@ DIE::~DIE() {
     delete Children[i];
 }
 
-/// AddSiblingOffset - Add a sibling offset field to the front of the DIE.
+/// addSiblingOffset - Add a sibling offset field to the front of the DIE.
 ///
-void DIE::AddSiblingOffset() {
+void DIE::addSiblingOffset() {
   DIEInteger *DI = new DIEInteger(0);
   Values.insert(Values.begin(), DI);
   Abbrev.AddFirstAttribute(dwarf::DW_AT_sibling, dwarf::DW_FORM_ref4);
