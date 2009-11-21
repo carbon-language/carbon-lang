@@ -219,34 +219,6 @@ public:
   const Stmt *getArg() const { return Arg; }
 };
 
-class VISIBILITY_HIDDEN BadReceiver : public BuiltinBug {
-public:
-  BadReceiver(GRExprEngine* eng)
-  : BuiltinBug(eng,"Uninitialized receiver",
-               "Receiver in message expression is an uninitialized value") {}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    for (GRExprEngine::ErrorNodes::iterator I=Eng.undef_receivers_begin(),
-         End = Eng.undef_receivers_end(); I!=End; ++I) {
-
-      // Generate a report for this bug.
-      BuiltinBugReport *report = new BuiltinBugReport(*this, desc.c_str(), *I);
-      ExplodedNode* N = *I;
-      const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
-      const Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
-      assert (E && "Receiver cannot be NULL");
-      report->addRange(E->getSourceRange());
-      BR.EmitReport(report);
-    }
-  }
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
-  }
-};
-
 class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
   struct VISIBILITY_HIDDEN FindUndefExpr {
     GRStateManager& VM;
@@ -337,7 +309,6 @@ void GRExprEngine::RegisterInternalChecks() {
   // to 'FlushReports' from BugReporter.
   BR.Register(new UndefBranch(this));
   BR.Register(new UndefResult(this));
-  BR.Register(new BadReceiver(this));
   BR.Register(new NilReceiverStructRet(this));
   BR.Register(new NilReceiverLargerThanVoidPtrRet(this));
 
@@ -350,7 +321,6 @@ void GRExprEngine::RegisterInternalChecks() {
   
   RegisterAttrNonNullChecker(*this);
   RegisterUndefinedArgChecker(*this);
-  RegisterBadCallChecker(*this);
   RegisterDereferenceChecker(*this);
   RegisterVLASizeChecker(*this);
   RegisterDivZeroChecker(*this);

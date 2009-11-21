@@ -126,10 +126,6 @@ public:
   ///  by the result is not.  Excludes divide-by-zero errors.
   ErrorNodes UndefResults;
 
-  /// UndefReceiver - Nodes in the ExplodedGraph resulting from message
-  ///  ObjC message expressions where the receiver is undefined (uninitialized).
-  ErrorNodes UndefReceivers;
-
 public:
   GRExprEngine(AnalysisManager &mgr);
 
@@ -222,16 +218,6 @@ public:
   typedef ErrorNodes::iterator undef_result_iterator;
   undef_result_iterator undef_results_begin() { return UndefResults.begin(); }
   undef_result_iterator undef_results_end() { return UndefResults.end(); }
-
-  typedef ErrorNodes::iterator undef_receivers_iterator;
-
-  undef_receivers_iterator undef_receivers_begin() {
-    return UndefReceivers.begin();
-  }
-
-  undef_receivers_iterator undef_receivers_end() {
-    return UndefReceivers.end();
-  }
 
   void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C);
   void AddCheck(GRSimpleAPICheck* A);

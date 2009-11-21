@@ -42,7 +42,7 @@ extern NSString * const NSUndoManagerCheckpointNotification;
 
 unsigned f1() {
   NSString *aString;
-  return [aString length]; // expected-warning {{Receiver in message expression is an uninitialized value}}
+  return [aString length]; // expected-warning {{Receiver in message expression is a garbage value}}
 }
 
 unsigned f2() {

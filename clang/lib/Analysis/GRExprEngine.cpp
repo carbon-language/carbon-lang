@@ -1850,177 +1850,164 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
                                                       ExplodedNode* Pred,
                                                       ExplodedNodeSet& Dst) {
 
-  // FIXME: More logic for the processing the method call.
-
-  const GRState* state = GetState(Pred);
-  bool RaisesException = false;
-
-
-  if (Expr* Receiver = ME->getReceiver()) {
-
-    SVal L_untested = state->getSVal(Receiver);
-
-    // Check for undefined control-flow.
-    if (L_untested.isUndef()) {
-      ExplodedNode* N = Builder->generateNode(ME, state, Pred);
-
-      if (N) {
-        N->markAsSink();
-        UndefReceivers.insert(N);
-      }
-
-      return;
-    }
-
-    // "Assume" that the receiver is not NULL.
-    DefinedOrUnknownSVal L = cast<DefinedOrUnknownSVal>(L_untested);
-    const GRState *StNotNull = state->Assume(L, true);
-
-    // "Assume" that the receiver is NULL.
-    const GRState *StNull = state->Assume(L, false);
-
-    if (StNull) {
-      QualType RetTy = ME->getType();
-
-      // Check if the receiver was nil and the return value a struct.
-      if (RetTy->isRecordType()) {
-        if (Pred->getParentMap().isConsumedExpr(ME)) {
-          // The [0 ...] expressions will return garbage.  Flag either an
-          // explicit or implicit error.  Because of the structure of this
-          // function we currently do not bifurfacte the state graph at
-          // this point.
-          // FIXME: We should bifurcate and fill the returned struct with
-          //  garbage.
-          if (ExplodedNode* N = Builder->generateNode(ME, StNull, Pred)) {
-            N->markAsSink();
-            if (StNotNull)
-              NilReceiverStructRetImplicit.insert(N);
-            else
-              NilReceiverStructRetExplicit.insert(N);
-          }
-        }
-      }
-      else {
-        ASTContext& Ctx = getContext();
-        if (RetTy != Ctx.VoidTy) {
-          if (Pred->getParentMap().isConsumedExpr(ME)) {
-            // sizeof(void *)
-            const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
-            // sizeof(return type)
-            const uint64_t returnTypeSize = Ctx.getTypeSize(ME->getType());
-
-            if (voidPtrSize < returnTypeSize) {
-              if (ExplodedNode* N = Builder->generateNode(ME, StNull, Pred)) {
-                N->markAsSink();
-                if (StNotNull)
-                  NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
-                else
-                  NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
-              }
-            }
-            else if (!StNotNull) {
-              // Handle the safe cases where the return value is 0 if the
-              // receiver is nil.
-              //
-              // FIXME: For now take the conservative approach that we only
-              // return null values if we *know* that the receiver is nil.
-              // This is because we can have surprises like:
-              //
-              //   ... = [[NSScreens screens] objectAtIndex:0];
-              //
-              // What can happen is that [... screens] could return nil, but
-              // it most likely isn't nil.  We should assume the semantics
-              // of this case unless we have *a lot* more knowledge.
-              //
-              SVal V = ValMgr.makeZeroVal(ME->getType());
-              MakeNode(Dst, ME, Pred, StNull->BindExpr(ME, V));
-              return;
-            }
-          }
-        }
-      }
-      // We have handled the cases where the receiver is nil.  The remainder
-      // of this method should assume that the receiver is not nil.
-      if (!StNotNull)
-        return;
-
-      state = StNotNull;
-    }
-
-    // Check if the "raise" message was sent.
-    if (ME->getSelector() == RaiseSel)
-      RaisesException = true;
-  }
-  else {
-
-    IdentifierInfo* ClsName = ME->getClassName();
-    Selector S = ME->getSelector();
-
-    // Check for special instance methods.
-
-    if (!NSExceptionII) {
-      ASTContext& Ctx = getContext();
-
-      NSExceptionII = &Ctx.Idents.get("NSException");
-    }
-
-    if (ClsName == NSExceptionII) {
-
-      enum { NUM_RAISE_SELECTORS = 2 };
-
-      // Lazily create a cache of the selectors.
-
-      if (!NSExceptionInstanceRaiseSelectors) {
-
-        ASTContext& Ctx = getContext();
-
-        NSExceptionInstanceRaiseSelectors = new Selector[NUM_RAISE_SELECTORS];
-
-        llvm::SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
-        unsigned idx = 0;
-
-        // raise:format:
-        II.push_back(&Ctx.Idents.get("raise"));
-        II.push_back(&Ctx.Idents.get("format"));
-        NSExceptionInstanceRaiseSelectors[idx++] =
-          Ctx.Selectors.getSelector(II.size(), &II[0]);
-
-        // raise:format::arguments:
-        II.push_back(&Ctx.Idents.get("arguments"));
-        NSExceptionInstanceRaiseSelectors[idx++] =
-          Ctx.Selectors.getSelector(II.size(), &II[0]);
-      }
-
-      for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i)
-        if (S == NSExceptionInstanceRaiseSelectors[i]) {
-          RaisesException = true; break;
-        }
-    }
-  }
-
   // Handle previsits checks.
   ExplodedNodeSet Src, DstTmp;
   Src.Add(Pred);  
   CheckerVisit(ME, DstTmp, Src, true);
   
-  // Check if we raise an exception.  For now treat these as sinks.  Eventually
-  // we will want to handle exceptions properly.
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-  if (RaisesException)
-    Builder->BuildSinks = true;
-
-  // Dispatch to plug-in transfer function.
   unsigned size = Dst.size();
-  SaveOr OldHasGen(Builder->HasGeneratedNode);
-  
+
   for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
-       DI!=DE; ++DI)
-    EvalObjCMessageExpr(Dst, ME, *DI);
+       DI!=DE; ++DI) {    
+    Pred = *DI;
+    // FIXME: More logic for the processing the method call.
+    const GRState* state = GetState(Pred);
+    bool RaisesException = false;
+
+    if (Expr* Receiver = ME->getReceiver()) {
+      SVal L_untested = state->getSVal(Receiver);
+
+      // "Assume" that the receiver is not NULL.
+      DefinedOrUnknownSVal L = cast<DefinedOrUnknownSVal>(L_untested);
+      const GRState *StNotNull = state->Assume(L, true);
+
+      // "Assume" that the receiver is NULL.
+      const GRState *StNull = state->Assume(L, false);
+
+      if (StNull) {
+        QualType RetTy = ME->getType();
+
+        // Check if the receiver was nil and the return value a struct.
+        if (RetTy->isRecordType()) {
+          if (Pred->getParentMap().isConsumedExpr(ME)) {
+            // The [0 ...] expressions will return garbage.  Flag either an
+            // explicit or implicit error.  Because of the structure of this
+            // function we currently do not bifurfacte the state graph at
+            // this point.
+            // FIXME: We should bifurcate and fill the returned struct with
+            //  garbage.
+            if (ExplodedNode* N = Builder->generateNode(ME, StNull, Pred)) {
+              N->markAsSink();
+              if (StNotNull)
+                NilReceiverStructRetImplicit.insert(N);
+              else
+                NilReceiverStructRetExplicit.insert(N);
+            }
+          }
+        }
+        else {
+          ASTContext& Ctx = getContext();
+          if (RetTy != Ctx.VoidTy) {
+            if (Pred->getParentMap().isConsumedExpr(ME)) {
+              // sizeof(void *)
+              const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
+              // sizeof(return type)
+              const uint64_t returnTypeSize = Ctx.getTypeSize(ME->getType());
+
+              if (voidPtrSize < returnTypeSize) {
+                if (ExplodedNode* N = Builder->generateNode(ME, StNull, Pred)) {
+                  N->markAsSink();
+                  if (StNotNull)
+                    NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
+                  else
+                    NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
+                }
+              }
+              else if (!StNotNull) {
+                // Handle the safe cases where the return value is 0 if the
+                // receiver is nil.
+                //
+                // FIXME: For now take the conservative approach that we only
+                // return null values if we *know* that the receiver is nil.
+                // This is because we can have surprises like:
+                //
+                //   ... = [[NSScreens screens] objectAtIndex:0];
+                //
+                // What can happen is that [... screens] could return nil, but
+                // it most likely isn't nil.  We should assume the semantics
+                // of this case unless we have *a lot* more knowledge.
+                //
+                SVal V = ValMgr.makeZeroVal(ME->getType());
+                MakeNode(Dst, ME, Pred, StNull->BindExpr(ME, V));
+                return;
+              }
+            }
+          }
+        }
+        // We have handled the cases where the receiver is nil.  The remainder
+        // of this method should assume that the receiver is not nil.
+        if (!StNotNull)
+          return;
+
+        state = StNotNull;
+      }
+
+      // Check if the "raise" message was sent.
+      if (ME->getSelector() == RaiseSel)
+        RaisesException = true;
+    }
+    else {
+
+      IdentifierInfo* ClsName = ME->getClassName();
+      Selector S = ME->getSelector();
+
+      // Check for special instance methods.
+
+      if (!NSExceptionII) {
+        ASTContext& Ctx = getContext();
+
+        NSExceptionII = &Ctx.Idents.get("NSException");
+      }
+
+      if (ClsName == NSExceptionII) {
+
+        enum { NUM_RAISE_SELECTORS = 2 };
+
+        // Lazily create a cache of the selectors.
+
+        if (!NSExceptionInstanceRaiseSelectors) {
+
+          ASTContext& Ctx = getContext();
+
+          NSExceptionInstanceRaiseSelectors = new Selector[NUM_RAISE_SELECTORS];
+
+          llvm::SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
+          unsigned idx = 0;
+
+          // raise:format:
+          II.push_back(&Ctx.Idents.get("raise"));
+          II.push_back(&Ctx.Idents.get("format"));
+          NSExceptionInstanceRaiseSelectors[idx++] =
+            Ctx.Selectors.getSelector(II.size(), &II[0]);
+
+          // raise:format::arguments:
+          II.push_back(&Ctx.Idents.get("arguments"));
+          NSExceptionInstanceRaiseSelectors[idx++] =
+            Ctx.Selectors.getSelector(II.size(), &II[0]);
+        }
+
+        for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i)
+          if (S == NSExceptionInstanceRaiseSelectors[i]) {
+            RaisesException = true; break;
+          }
+      }
+    }
+
+    // Check if we raise an exception.  For now treat these as sinks.  Eventually
+    // we will want to handle exceptions properly.
+    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+    if (RaisesException)
+      Builder->BuildSinks = true;
+
+    // Dispatch to plug-in transfer function.
+    SaveOr OldHasGen(Builder->HasGeneratedNode);  
+    EvalObjCMessageExpr(Dst, ME, Pred);
+  }
 
   // Handle the case where no nodes where generated.  Auto-generate that
   // contains the updated state if we aren't generating sinks.
   if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
-    MakeNode(Dst, ME, Pred, state);
+    MakeNode(Dst, ME, Pred, GetState(Pred));
 }
 
 //===----------------------------------------------------------------------===//
