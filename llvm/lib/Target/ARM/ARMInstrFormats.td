@@ -1217,27 +1217,30 @@ class AVConv5I<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops,
 //
 
 class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
-            string asm, string cstr, list<dag> pattern>
+            string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, Size4Bytes, im, NEONFrm, NeonDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = iops;
-  let AsmString = asm;
+  let InOperandList = !con(iops, (ops pred:$p));
+  let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
 }
 
-class NI<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
-  : NeonI<oops, iops, AddrModeNone, IndexModeNone, itin, asm, "", pattern> {
+class NI<dag oops, dag iops, InstrItinClass itin, string opc, string asm,
+         list<dag> pattern>
+  : NeonI<oops, iops, AddrModeNone, IndexModeNone, itin, opc, asm, "",
+          pattern> {
 }
 
-class NI4<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
-  : NeonI<oops, iops, AddrMode4, IndexModeNone, itin, asm, "", pattern> {
+class NI4<dag oops, dag iops, InstrItinClass itin, string opc, string asm,
+          list<dag> pattern>
+  : NeonI<oops, iops, AddrMode4, IndexModeNone, itin, opc, asm, "", pattern> {
 }
 
 class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
             dag oops, dag iops, InstrItinClass itin,
-            string asm, string cstr, list<dag> pattern>
-  : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, asm, cstr, pattern> {
+            string opc, string asm, string cstr, list<dag> pattern>
+  : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, opc, asm, cstr, pattern> {
   let Inst{31-24} = 0b11110100;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
@@ -1248,8 +1251,8 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
 // With selective bit(s) from op7_4 specified by subclasses.
 class NLdStLN<bit op23, bits<2> op21_20, bits<4> op11_8,
               dag oops, dag iops, InstrItinClass itin,
-              string asm, string cstr, list<dag> pattern>
-  : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, asm, cstr, pattern> {
+              string opc, string asm, string cstr, list<dag> pattern>
+  : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, opc, asm, cstr, pattern> {
   let Inst{31-24} = 0b11110100;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
@@ -1257,8 +1260,9 @@ class NLdStLN<bit op23, bits<2> op21_20, bits<4> op11_8,
 }
 
 class NDataI<dag oops, dag iops, InstrItinClass itin,
-             string asm, string cstr, list<dag> pattern>
-  : NeonI<oops, iops, AddrModeNone, IndexModeNone, itin, asm, cstr, pattern> {
+             string opc, string asm, string cstr, list<dag> pattern>
+  : NeonI<oops, iops, AddrModeNone, IndexModeNone, itin, opc, asm,
+         cstr, pattern> {
   let Inst{31-25} = 0b1111001;
 }
 
@@ -1266,8 +1270,8 @@ class NDataI<dag oops, dag iops, InstrItinClass itin,
 class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
                bit op5, bit op4,
                dag oops, dag iops, InstrItinClass itin,
-               string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, itin, asm, cstr, pattern> {
+               string opc, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, itin, opc, asm, cstr, pattern> {
   let Inst{23} = op23;
   let Inst{21-19} = op21_19;
   let Inst{11-8} = op11_8;
@@ -1281,8 +1285,8 @@ class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
 class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
           bits<5> op11_7, bit op6, bit op4,
           dag oops, dag iops, InstrItinClass itin,
-          string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, itin, asm, cstr, pattern> {
+          string opc, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, itin, opc, asm, cstr, pattern> {
   let Inst{24-23} = op24_23;
   let Inst{21-20} = op21_20;
   let Inst{19-18} = op19_18;
@@ -1296,8 +1300,8 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
 // Inst{19-16} is specified by subclasses.
 class N2VDup<bits<2> op24_23, bits<2> op21_20, bits<5> op11_7, bit op6, bit op4,
              dag oops, dag iops, InstrItinClass itin,
-             string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, itin, asm, cstr, pattern> {
+             string opc, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, itin, opc, asm, cstr, pattern> {
   let Inst{24-23} = op24_23;
   let Inst{21-20} = op21_20;
   let Inst{11-7} = op11_7;
@@ -1308,8 +1312,8 @@ class N2VDup<bits<2> op24_23, bits<2> op21_20, bits<5> op11_7, bit op6, bit op4,
 // NEON 2 vector register with immediate.
 class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
              dag oops, dag iops, InstrItinClass itin,
-             string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, itin, asm, cstr, pattern> {
+             string opc, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, itin, opc, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{11-8} = op11_8;
@@ -1321,8 +1325,8 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 // NEON 3 vector register format.
 class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
           dag oops, dag iops, InstrItinClass itin,
-          string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, itin, asm, cstr, pattern> {
+          string opc, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, itin, opc, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
@@ -1336,8 +1340,8 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
 // concatenation of the operands and is left unspecified.
 class N3VImm<bit op24, bit op23, bits<2> op21_20, bit op6, bit op4,
              dag oops, dag iops, InstrItinClass itin,
-             string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, itin, asm, cstr, pattern> {
+             string opc, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, itin, opc, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;

@@ -1049,12 +1049,15 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
   case MVT::v4i32: OpcodeIndex = 2; break;
   }
 
+  SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+  SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
   if (is64BitVector) {
     unsigned Opc = DOpcodes[OpcodeIndex];
-    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Align, Chain };
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Align,
+                            Pred, PredReg, Chain };
     std::vector<EVT> ResTys(NumVecs, VT);
     ResTys.push_back(MVT::Other);
-    return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
+    return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 7);
   }
 
   EVT RegVT = GetNEONSubregVT(VT);
@@ -1062,10 +1065,11 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
     // Quad registers are directly supported for VLD2,
     // loading 2 pairs of D regs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
-    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Align, Chain };
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Align,
+                            Pred, PredReg, Chain };
     std::vector<EVT> ResTys(4, VT);
     ResTys.push_back(MVT::Other);
-    SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
+    SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 7);
     Chain = SDValue(VLd, 4);
 
     // Combine the even and odd subregs to produce the result.
@@ -1086,15 +1090,16 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
 
     // Load the even subregs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
-    const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Align, Chain };
-    SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 5);
+    const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Align,
+                             Pred, PredReg, Chain };
+    SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 7);
     Chain = SDValue(VLdA, NumVecs+1);
 
     // Load the odd subregs.
     Opc = QOpcodes1[OpcodeIndex];
     const SDValue OpsB[] = { SDValue(VLdA, NumVecs), MemUpdate, MemOpc,
-                             Align, Chain };
-    SDNode *VLdB = CurDAG->getMachineNode(Opc, dl, ResTys, OpsB, 5);
+                             Align, Pred, PredReg, Chain };
+    SDNode *VLdB = CurDAG->getMachineNode(Opc, dl, ResTys, OpsB, 7);
     Chain = SDValue(VLdB, NumVecs+1);
 
     // Combine the even and odd subregs to produce the result.
@@ -1138,6 +1143,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
   case MVT::v4i32: OpcodeIndex = 2; break;
   }
 
+  SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+  SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
+
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(MemAddr);
   Ops.push_back(MemUpdate);
@@ -1148,8 +1156,10 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
     unsigned Opc = DOpcodes[OpcodeIndex];
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
       Ops.push_back(N->getOperand(Vec+3));
+    Ops.push_back(Pred);
+    Ops.push_back(PredReg);
     Ops.push_back(Chain);
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+5);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+7);
   }
 
   EVT RegVT = GetNEONSubregVT(VT);
@@ -1163,8 +1173,10 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
       Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
                                                    N->getOperand(Vec+3)));
     }
+    Ops.push_back(Pred);
+    Ops.push_back(PredReg);
     Ops.push_back(Chain);
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 9);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 11);
   }
 
   // Otherwise, quad registers are stored with two separate instructions,
@@ -1177,10 +1189,12 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
   for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
     Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
                                                  N->getOperand(Vec+3)));
+  Ops.push_back(Pred);
+  Ops.push_back(PredReg);
   Ops.push_back(Chain);
   unsigned Opc = QOpcodes0[OpcodeIndex];
   SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                        MVT::Other, Ops.data(), NumVecs+5);
+                                        MVT::Other, Ops.data(), NumVecs+7);
   Chain = SDValue(VStA, 1);
 
   // Store the odd subregs.
@@ -1188,10 +1202,12 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
   for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
     Ops[Vec+4] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
                                                 N->getOperand(Vec+3));
-  Ops[NumVecs+4] = Chain;
+  Ops[NumVecs+4] = Pred;
+  Ops[NumVecs+5] = PredReg;
+  Ops[NumVecs+6] = Chain;
   Opc = QOpcodes1[OpcodeIndex];
   SDNode *VStB = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                        MVT::Other, Ops.data(), NumVecs+5);
+                                        MVT::Other, Ops.data(), NumVecs+7);
   Chain = SDValue(VStB, 1);
   ReplaceUses(SDValue(N, 0), Chain);
   return NULL;
@@ -1239,6 +1255,9 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDValue Op, bool IsLoad,
   case MVT::v4i32: OpcodeIndex = 1; break;
   }
 
+  SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+  SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
+
   SmallVector<SDValue, 9> Ops;
   Ops.push_back(MemAddr);
   Ops.push_back(MemUpdate);
@@ -1264,15 +1283,17 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDValue Op, bool IsLoad,
                                                    N->getOperand(Vec+3)));
   }
   Ops.push_back(getI32Imm(Lane));
+  Ops.push_back(Pred);
+  Ops.push_back(PredReg);
   Ops.push_back(Chain);
 
   if (!IsLoad)
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+5);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+7);
 
   std::vector<EVT> ResTys(NumVecs, RegVT);
   ResTys.push_back(MVT::Other);
   SDNode *VLdLn =
-    CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(), NumVecs+5);
+    CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(), NumVecs+7);
   // For a 64-bit vector load to D registers, nothing more needs to be done.
   if (is64BitVector)
     return VLdLn;
@@ -1297,7 +1318,7 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDValue Op,
     return NULL;
 
   unsigned Shl_imm = 0;
-  if (isOpcWithIntImmediate(Op.getOperand(0).getNode(), ISD::SHL, Shl_imm)){
+  if (isOpcWithIntImmediate(Op.getOperand(0).getNode(), ISD::SHL, Shl_imm)) {
     assert(Shl_imm > 0 && Shl_imm < 32 && "bad amount in shift node!");
     unsigned Srl_imm = 0;
     if (isInt32Immediate(Op.getOperand(1), Srl_imm)) {
@@ -1519,7 +1540,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
 
       SDNode *ResNode;
       if (Subtarget->isThumb1Only()) {
-        SDValue Pred = CurDAG->getTargetConstant(0xEULL, MVT::i32);
+        SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
         SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
         SDValue Ops[] = { CPIdx, Pred, PredReg, CurDAG->getEntryNode() };
         ResNode = CurDAG->getMachineNode(ARM::tLDRcp, dl, MVT::i32, MVT::Other,
@@ -1775,8 +1796,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VZIPq32; break;
     }
-    return CurDAG->getMachineNode(Opc, dl, VT, VT,
-                                  N->getOperand(0), N->getOperand(1));
+    SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+    SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
+    SDValue Ops[] = { N->getOperand(0), N->getOperand(1), Pred, PredReg };
+    return CurDAG->getMachineNode(Opc, dl, VT, VT, Ops, 4);
   }
   case ARMISD::VUZP: {
     unsigned Opc = 0;
@@ -1792,8 +1815,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VUZPq32; break;
     }
-    return CurDAG->getMachineNode(Opc, dl, VT, VT,
-                                  N->getOperand(0), N->getOperand(1));
+    SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+    SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
+    SDValue Ops[] = { N->getOperand(0), N->getOperand(1), Pred, PredReg };
+    return CurDAG->getMachineNode(Opc, dl, VT, VT, Ops, 4);
   }
   case ARMISD::VTRN: {
     unsigned Opc = 0;
@@ -1809,8 +1834,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VTRNq32; break;
     }
-    return CurDAG->getMachineNode(Opc, dl, VT, VT,
-                                  N->getOperand(0), N->getOperand(1));
+    SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
+    SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
+    SDValue Ops[] = { N->getOperand(0), N->getOperand(1), Pred, PredReg };
+    return CurDAG->getMachineNode(Opc, dl, VT, VT, Ops, 4);
   }
 
   case ISD::INTRINSIC_VOID:

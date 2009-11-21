@@ -81,8 +81,8 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
         //    afterwards
         //  - The imp-defs / imp-uses are superregs only, we don't care about
         //    them.
-        BuildMI(MBB, *MI, MI->getDebugLoc(),
-                TII->get(ARM::VMOVDneon), DestReg).addReg(SrcReg);
+        AddDefaultPred(BuildMI(MBB, *MI, MI->getDebugLoc(),
+                             TII->get(ARM::VMOVDneon), DestReg).addReg(SrcReg));
         MBB.erase(MI);
         MachineBasicBlock::iterator I = prior(NextMII);
         MI = &*I;
