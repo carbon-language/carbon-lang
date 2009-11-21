@@ -158,7 +158,6 @@ private:
   SDValue EmitStackConvert(SDValue SrcOp, EVT SlotVT, EVT DestVT, DebugLoc dl);
   SDValue ExpandBUILD_VECTOR(SDNode *Node);
   SDValue ExpandSCALAR_TO_VECTOR(SDNode *Node);
-  SDValue ExpandDBG_STOPPOINT(SDNode *Node);
   void ExpandDYNAMIC_STACKALLOC(SDNode *Node,
                                 SmallVectorImpl<SDValue> &Results);
   SDValue ExpandFCOPYSIGN(SDNode *Node);
@@ -1596,37 +1595,6 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
                      AbsVal);
 }
 
-SDValue SelectionDAGLegalize::ExpandDBG_STOPPOINT(SDNode* Node) {
-  DebugLoc dl = Node->getDebugLoc();
-  DwarfWriter *DW = DAG.getDwarfWriter();
-  bool useDEBUG_LOC = TLI.isOperationLegalOrCustom(ISD::DEBUG_LOC,
-                                                    MVT::Other);
-  bool useLABEL = TLI.isOperationLegalOrCustom(ISD::DBG_LABEL, MVT::Other);
-
-  const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
-  MDNode *CU_Node = DSP->getCompileUnit();
-  if (DW && (useDEBUG_LOC || useLABEL)) {
-
-    unsigned Line = DSP->getLine();
-    unsigned Col = DSP->getColumn();
-
-    if (OptLevel == CodeGenOpt::None) {
-      // A bit self-referential to have DebugLoc on Debug_Loc nodes, but it
-      // won't hurt anything.
-      if (useDEBUG_LOC) {
-        return DAG.getNode(ISD::DEBUG_LOC, dl, MVT::Other, Node->getOperand(0),
-                           DAG.getConstant(Line, MVT::i32),
-                           DAG.getConstant(Col, MVT::i32),
-                           DAG.getSrcValue(CU_Node));
-      } else {
-        unsigned ID = DW->RecordSourceLine(Line, Col, CU_Node);
-        return DAG.getLabel(ISD::DBG_LABEL, dl, Node->getOperand(0), ID);
-      }
-    }
-  }
-  return Node->getOperand(0);
-}
-
 void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
                                            SmallVectorImpl<SDValue> &Results) {
   unsigned SPReg = TLI.getStackPointerRegisterToSaveRestore();
@@ -2281,9 +2249,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::MEMBARRIER:
   case ISD::VAEND:
     Results.push_back(Node->getOperand(0));
-    break;
-  case ISD::DBG_STOPPOINT:
-    Results.push_back(ExpandDBG_STOPPOINT(Node));
     break;
   case ISD::DYNAMIC_STACKALLOC:
     ExpandDYNAMIC_STACKALLOC(Node, Results);

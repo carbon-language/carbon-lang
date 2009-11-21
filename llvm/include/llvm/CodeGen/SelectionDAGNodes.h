@@ -546,12 +546,6 @@ namespace ISD {
     // HANDLENODE node - Used as a handle for various purposes.
     HANDLENODE,
 
-    // DBG_STOPPOINT - This node is used to represent a source location for
-    // debug info.  It takes token chain as input, and carries a line number,
-    // column number, and a pointer to a CompileUnit object identifying
-    // the containing compilation unit.  It produces a token chain as output.
-    DBG_STOPPOINT,
-
     // DEBUG_LOC - This node is used to represent source line information
     // embedded in the code.  It takes a token chain as input, then a line
     // number, then a column then a file id (provided by MachineModuleInfo.) It
@@ -2001,29 +1995,6 @@ public:
   static bool classof(const RegisterSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::Register;
-  }
-};
-
-class DbgStopPointSDNode : public SDNode {
-  SDUse Chain;
-  unsigned Line;
-  unsigned Column;
-  MDNode *CU;
-  friend class SelectionDAG;
-  DbgStopPointSDNode(SDValue ch, unsigned l, unsigned c,
-                     MDNode *cu)
-    : SDNode(ISD::DBG_STOPPOINT, DebugLoc::getUnknownLoc(),
-      getSDVTList(MVT::Other)), Line(l), Column(c), CU(cu) {
-    InitOperands(&Chain, ch);
-  }
-public:
-  unsigned getLine() const { return Line; }
-  unsigned getColumn() const { return Column; }
-  MDNode *getCompileUnit() const { return CU; }
-
-  static bool classof(const DbgStopPointSDNode *) { return true; }
-  static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::DBG_STOPPOINT;
   }
 };
 

@@ -393,13 +393,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   case ISD::Register:
     ID.AddInteger(cast<RegisterSDNode>(N)->getReg());
     break;
-  case ISD::DBG_STOPPOINT: {
-    const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(N);
-    ID.AddInteger(DSP->getLine());
-    ID.AddInteger(DSP->getColumn());
-    ID.AddPointer(DSP->getCompileUnit());
-    break;
-  }
+
   case ISD::SRCVALUE:
     ID.AddPointer(cast<SrcValueSDNode>(N)->getValue());
     break;
@@ -510,7 +504,6 @@ static bool doNotCSE(SDNode *N) {
   default: break;
   case ISD::HANDLENODE:
   case ISD::DBG_LABEL:
-  case ISD::DBG_STOPPOINT:
   case ISD::EH_LABEL:
     return true;   // Never CSE these nodes.
   }
@@ -1293,16 +1286,6 @@ SDValue SelectionDAG::getRegister(unsigned RegNo, EVT VT) {
   SDNode *N = NodeAllocator.Allocate<RegisterSDNode>();
   new (N) RegisterSDNode(RegNo, VT);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDValue(N, 0);
-}
-
-SDValue SelectionDAG::getDbgStopPoint(DebugLoc DL, SDValue Root,
-                                      unsigned Line, unsigned Col,
-                                      MDNode *CU) {
-  SDNode *N = NodeAllocator.Allocate<DbgStopPointSDNode>();
-  new (N) DbgStopPointSDNode(Root, Line, Col, CU);
-  N->setDebugLoc(DL);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
@@ -5590,7 +5573,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CTLZ:    return "ctlz";
 
   // Debug info
-  case ISD::DBG_STOPPOINT: return "dbg_stoppoint";
   case ISD::DEBUG_LOC: return "debug_loc";
 
   // Trampolines
