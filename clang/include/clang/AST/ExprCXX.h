@@ -17,6 +17,7 @@
 #include "clang/Basic/TypeTraits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 
 namespace clang {
 
@@ -975,52 +976,6 @@ public:
   virtual child_iterator child_end();
 };
 
-/// \brief Represents the name of a function that has not been
-/// resolved to any declaration.
-///
-/// Unresolved function names occur when a function name is
-/// encountered prior to an open parentheses ('(') in a C++ function
-/// call, and the function name itself did not resolve to a
-/// declaration. These function names can only be resolved when they
-/// form the postfix-expression of a function call, so that
-/// argument-dependent lookup finds declarations corresponding to
-/// these functions.
-
-/// @code
-/// template<typename T> void f(T x) {
-///   g(x); // g is an unresolved function name (that is also a dependent name)
-/// }
-/// @endcode
-class UnresolvedFunctionNameExpr : public Expr {
-  /// The name that was present in the source
-  DeclarationName Name;
-
-  /// The location of this name in the source code
-  SourceLocation Loc;
-
-public:
-  UnresolvedFunctionNameExpr(DeclarationName N, QualType T, SourceLocation L)
-    : Expr(UnresolvedFunctionNameExprClass, T, false, false), Name(N), Loc(L) { }
-
-  /// \brief Retrieves the name that occurred in the source code.
-  DeclarationName getName() const { return Name; }
-
-  /// getLocation - Retrieves the location in the source code where
-  /// the name occurred.
-  SourceLocation getLocation() const { return Loc; }
-
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == UnresolvedFunctionNameExprClass;
-  }
-  static bool classof(const UnresolvedFunctionNameExpr *) { return true; }
-
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-};
-
 /// UnaryTypeTraitExpr - A GCC or MS unary type trait, as used in the
 /// implementation of TR1/C++0x type trait templates.
 /// Example:
@@ -1063,10 +1018,101 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief A reference to a name which we were able to look up during
+/// parsing but could not resolve to a specific declaration.  This
+/// arises in several ways:
+///   * we might be waiting for argument-dependent lookup
+///   * the name might resolve to an overloaded function
+/// and eventually:
+///   * the lookup might have included a function template
+/// These never include UnresolvedUsingValueDecls, which are always
+/// class members and therefore appear only in
+/// UnresolvedMemberLookupExprs.
+class UnresolvedLookupExpr : public Expr {
+  /// The results.  These are undesugared, which is to say, they may
+  /// include UsingShadowDecls.
+  UnresolvedSet Results;
+
+  /// The name declared.
+  DeclarationName Name;
+
+  /// The qualifier given, if any.
+  NestedNameSpecifier *Qualifier;
+
+  /// The source range of the nested name specifier.
+  SourceRange QualifierRange;
+
+  /// The location of the name.
+  SourceLocation NameLoc;
+
+  /// True if these lookup results should be extended by
+  /// argument-dependent lookup if this is the operand of a function
+  /// call.
+  bool RequiresADL;
+
+  UnresolvedLookupExpr(QualType T,
+                       NestedNameSpecifier *Qualifier, SourceRange QRange,
+                       DeclarationName Name, SourceLocation NameLoc,
+                       bool RequiresADL)
+    : Expr(UnresolvedLookupExprClass, T, false, false),
+      Name(Name), Qualifier(Qualifier), QualifierRange(QRange),
+      NameLoc(NameLoc), RequiresADL(RequiresADL)
+  {}
+
+public:
+  static UnresolvedLookupExpr *Create(ASTContext &C,
+                                      NestedNameSpecifier *Qualifier,
+                                      SourceRange QualifierRange,
+                                      DeclarationName Name,
+                                      SourceLocation NameLoc,
+                                      bool ADL) {
+    return new(C) UnresolvedLookupExpr(C.OverloadTy, Qualifier, QualifierRange,
+                                       Name, NameLoc, ADL);
+  }
+
+  void addDecl(NamedDecl *Decl) {
+    Results.addDecl(Decl);
+  }
+
+  typedef UnresolvedSet::iterator decls_iterator;
+  decls_iterator decls_begin() const { return Results.begin(); }
+  decls_iterator decls_end() const { return Results.end(); }
+
+  /// True if this declaration should be extended by
+  /// argument-dependent lookup.
+  bool requiresADL() const { return RequiresADL; }
+
+  /// Fetches the name looked up.
+  DeclarationName getName() const { return Name; }
+
+  /// Gets the location of the name.
+  SourceLocation getNameLoc() const { return NameLoc; }
+
+  /// Fetches the nested-name qualifier, if one was given.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+
+  /// Fetches the range of the nested-name qualifier.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+  
+
+  virtual SourceRange getSourceRange() const {
+    if (Qualifier) return SourceRange(QualifierRange.getBegin(), NameLoc);
+    return SourceRange(NameLoc, NameLoc);
+  }
+
+  virtual StmtIterator child_begin();
+  virtual StmtIterator child_end();
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == UnresolvedLookupExprClass;
+  }
+  static bool classof(const UnresolvedLookupExpr *) { return true; }
+};
+
 /// \brief A qualified reference to a name whose declaration cannot
 /// yet be resolved.
 ///
-/// DependentScopeDeclRefExpr is similar to eclRefExpr in that
+/// DependentScopeDeclRefExpr is similar to DeclRefExpr in that
 /// it expresses a reference to a declaration such as
 /// X<T>::value. The difference, however, is that an
 /// DependentScopeDeclRefExpr node is used only within C++ templates when
@@ -1377,9 +1423,9 @@ public:
   virtual child_iterator child_end();
 };
 
-/// \brief Represents a C++ member access expression where the actual member
-/// referenced could not be resolved, e.g., because the base expression or the
-/// member name was dependent.
+/// \brief Represents a C++ member access expression where the actual
+/// member referenced could not be resolved because the base
+/// expression or the member name was dependent.
 class CXXDependentScopeMemberExpr : public Expr {
   /// \brief The expression for the base pointer or class reference,
   /// e.g., the \c x in x.f.

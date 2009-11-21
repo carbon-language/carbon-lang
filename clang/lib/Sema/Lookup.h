@@ -280,6 +280,12 @@ public:
   /// ambiguous and overloaded lookups.
   NamedDecl *getAsSingleDecl(ASTContext &Context) const;
 
+  template <class DeclClass>
+  DeclClass *getAsSingle() const {
+    if (getResultKind() != Found) return 0;
+    return dyn_cast<DeclClass>(getFoundDecl());
+  }
+
   /// \brief Fetch the unique decl found by this lookup.  Asserts
   /// that one was found.
   ///

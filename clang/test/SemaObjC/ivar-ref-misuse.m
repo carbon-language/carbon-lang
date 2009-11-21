@@ -15,7 +15,7 @@ int UseGlobalBar;
 
 @implementation Sprite
 + (void)setFoo:(int)foo {
-  sprite = foo;   // expected-error {{use of undeclared identifier 'sprite'}}
+  sprite = foo;   // expected-error {{instance variable 'sprite' accessed in class method}}
   spree = foo;
   Xsprite = foo; // expected-error {{use of undeclared identifier 'Xsprite'}} 
   UseGlobalBar = 10;

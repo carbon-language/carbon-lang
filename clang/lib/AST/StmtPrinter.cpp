@@ -489,6 +489,10 @@ void StmtPrinter::VisitDependentScopeDeclRefExpr(
   OS << Node->getDeclName().getAsString();
 }
 
+void StmtPrinter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node) {
+  OS << Node->getName().getAsString();
+}
+
 void StmtPrinter::VisitTemplateIdRefExpr(TemplateIdRefExpr *Node) {
   if (Node->getQualifier())
     Node->getQualifier()->print(OS, Policy);
@@ -1117,10 +1121,6 @@ void StmtPrinter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   std::string TypeS;
   E->getDestroyedType().getAsStringInternal(TypeS, Policy);
   OS << TypeS;
-}
-
-void StmtPrinter::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *E) {
-  OS << E->getName().getAsString();
 }
 
 void StmtPrinter::VisitCXXConstructExpr(CXXConstructExpr *E) {

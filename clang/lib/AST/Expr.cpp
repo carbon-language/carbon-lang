@@ -46,6 +46,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
                (HasExplicitTemplateArgumentList? 
                                     HasExplicitTemplateArgumentListFlag : 0)),
     Loc(NameLoc) {
+  assert(!isa<OverloadedFunctionDecl>(D));
   if (Qualifier) {
     NameQualifier *NQ = getNameQualifier();
     NQ->NNS = Qualifier;
@@ -1096,6 +1097,8 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     return LV_Valid;
   case PredefinedExprClass:
     return LV_Valid;
+  case UnresolvedLookupExprClass:
+    return LV_Valid;
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
   case CXXConditionDeclExprClass:
@@ -1500,7 +1503,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXNewExprClass:
   case Expr::CXXDeleteExprClass:
   case Expr::CXXPseudoDestructorExprClass:
-  case Expr::UnresolvedFunctionNameExprClass:
+  case Expr::UnresolvedLookupExprClass:
   case Expr::DependentScopeDeclRefExprClass:
   case Expr::TemplateIdRefExprClass:
   case Expr::CXXConstructExprClass:

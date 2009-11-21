@@ -515,7 +515,7 @@ void StmtProfiler::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *S) {
 }
 
 void
-StmtProfiler::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *S) {
+StmtProfiler::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *S) {
   VisitExpr(S);
   VisitName(S->getName());
 }

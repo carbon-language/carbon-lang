@@ -417,6 +417,8 @@ Sema::OwningExprResult
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        bool TypeDependent, bool ValueDependent,
                        const CXXScopeSpec *SS) {
+  assert(!isa<OverloadedFunctionDecl>(D));
+
   if (Context.getCanonicalType(Ty) == Context.UndeducedAutoTy) {
     Diag(Loc,
          diag::err_auto_variable_cannot_appear_in_own_initializer)
@@ -688,8 +690,6 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (Lookup.isAmbiguous())
     return ExprError();
 
-  NamedDecl *D = Lookup.getAsSingleDecl(Context);
-
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
   IdentifierInfo *II = Name.getAsIdentifierInfo();
@@ -699,44 +699,58 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     // found a decl, but that decl is outside the current instance method (i.e.
     // a global variable).  In these two cases, we do a lookup for an ivar with
     // this name, if the lookup sucedes, we replace it our current decl.
-    if (D == 0 || D->isDefinedOutsideFunctionOrMethod()) {
+
+    // FIXME:  we should change lookup to do this.
+
+    // If we're in a class method, we don't normally want to look for
+    // ivars.  But if we don't find anything else, and there's an
+    // ivar, that's an error.
+    bool IsClassMethod = getCurMethodDecl()->isClassMethod();
+
+    bool LookForIvars;
+    if (Lookup.empty())
+      LookForIvars = true;
+    else if (IsClassMethod)
+      LookForIvars = false;
+    else
+      LookForIvars = (Lookup.isSingleResult() &&
+                      Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod());
+
+    if (LookForIvars) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
       ObjCInterfaceDecl *ClassDeclared;
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
-        // Check if referencing a field with __attribute__((deprecated)).
-        if (DiagnoseUseOfDecl(IV, Loc))
-          return ExprError();
+        // Diagnose using an ivar in a class method.
+        if (IsClassMethod)
+           return ExprError(Diag(Loc, diag::error_ivar_use_in_class_method)
+                            << IV->getDeclName());
 
         // If we're referencing an invalid decl, just return this as a silent
         // error node.  The error diagnostic was already emitted on the decl.
         if (IV->isInvalidDecl())
           return ExprError();
 
-        bool IsClsMethod = getCurMethodDecl()->isClassMethod();
-        // If a class method attemps to use a free standing ivar, this is
-        // an error.
-        if (IsClsMethod && D && !D->isDefinedOutsideFunctionOrMethod())
-           return ExprError(Diag(Loc, diag::error_ivar_use_in_class_method)
-                           << IV->getDeclName());
-        // If a class method uses a global variable, even if an ivar with
-        // same name exists, use the global.
-        if (!IsClsMethod) {
-          if (IV->getAccessControl() == ObjCIvarDecl::Private &&
-              ClassDeclared != IFace)
-           Diag(Loc, diag::error_private_ivar_access) << IV->getDeclName();
-          // FIXME: This should use a new expr for a direct reference, don't
-          // turn this into Self->ivar, just return a BareIVarExpr or something.
-          IdentifierInfo &II = Context.Idents.get("self");
-          UnqualifiedId SelfName;
-          SelfName.setIdentifier(&II, SourceLocation());          
-          CXXScopeSpec SelfScopeSpec;
-          OwningExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec,
-                                                        SelfName, false, false);
-          MarkDeclarationReferenced(Loc, IV);
-          return Owned(new (Context)
-                       ObjCIvarRefExpr(IV, IV->getType(), Loc,
-                                       SelfExpr.takeAs<Expr>(), true, true));
-        }
+        // Check if referencing a field with __attribute__((deprecated)).
+        if (DiagnoseUseOfDecl(IV, Loc))
+          return ExprError();
+
+        // Diagnose the use of an ivar outside of the declaring class.
+        if (IV->getAccessControl() == ObjCIvarDecl::Private &&
+            ClassDeclared != IFace)
+          Diag(Loc, diag::error_private_ivar_access) << IV->getDeclName();
+
+        // FIXME: This should use a new expr for a direct reference, don't
+        // turn this into Self->ivar, just return a BareIVarExpr or something.
+        IdentifierInfo &II = Context.Idents.get("self");
+        UnqualifiedId SelfName;
+        SelfName.setIdentifier(&II, SourceLocation());          
+        CXXScopeSpec SelfScopeSpec;
+        OwningExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec,
+                                                      SelfName, false, false);
+        MarkDeclarationReferenced(Loc, IV);
+        return Owned(new (Context)
+                     ObjCIvarRefExpr(IV, IV->getType(), Loc,
+                                     SelfExpr.takeAs<Expr>(), true, true));
       }
     } else if (getCurMethodDecl()->isInstanceMethod()) {
       // We should warn if a local variable hides an ivar.
@@ -749,7 +763,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       }
     }
     // Needed to implement property "super.method" notation.
-    if (D == 0 && II->isStr("super")) {
+    if (Lookup.empty() && II->isStr("super")) {
       QualType T;
 
       if (getCurMethodDecl()->isInstanceMethod())
@@ -766,26 +780,14 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   bool ADL = getLangOptions().CPlusPlus && (!SS || !SS->isSet()) &&
              HasTrailingLParen;
 
-  if (ADL && D == 0) {
-    // We've seen something of the form
-    //
-    //   identifier(
-    //
-    // and we did not find any entity by the name
-    // "identifier". However, this identifier is still subject to
-    // argument-dependent lookup, so keep track of the name.
-    return Owned(new (Context) UnresolvedFunctionNameExpr(Name,
-                                                          Context.OverloadTy,
-                                                          Loc));
-  }
-
-  if (D == 0) {
+  if (Lookup.empty() && !ADL) {
     // Otherwise, this could be an implicitly declared function reference (legal
     // in C90, extension in C99).
     if (HasTrailingLParen && II &&
-        !getLangOptions().CPlusPlus) // Not in C++.
-      D = ImplicitlyDefineFunction(Loc, *II, S);
-    else {
+        !getLangOptions().CPlusPlus) { // Not in C++.
+      NamedDecl *D = ImplicitlyDefineFunction(Loc, *II, S);
+      if (D) Lookup.addDecl(D);
+    } else {
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
       if (SS && !SS->isEmpty())
@@ -801,7 +803,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
   }
 
-  if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+  if (VarDecl *Var = Lookup.getAsSingle<VarDecl>()) {
     // Warn about constructs like:
     //   if (void *X = foo()) { ... } else { X }.
     // In the else block, the pointer is always false.
@@ -824,7 +826,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
         CheckS = CheckS->getParent();
       }
     }
-  } else if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D)) {
+  } else if (FunctionDecl *Func = Lookup.getAsSingle<FunctionDecl>()) {
     if (!getLangOptions().CPlusPlus && !Func->hasPrototype()) {
       // C99 DR 316 says that, if a function type comes from a
       // function definition (without a prototype), that type is only
@@ -842,8 +844,10 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
   }
 
-  return BuildDeclarationNameExpr(Loc, D, HasTrailingLParen, SS, isAddressOfOperand);
+  return BuildDeclarationNameExpr(SS, Lookup, HasTrailingLParen,
+                                  isAddressOfOperand);
 }
+
 /// \brief Cast member's object to its own class if necessary.
 bool
 Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
@@ -887,53 +891,28 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
   return new (C) MemberExpr(Base, isArrow, Member, Loc, Ty);
 }
 
-/// \brief Complete semantic analysis for a reference to the given declaration.
-Sema::OwningExprResult
-Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
-                               bool HasTrailingLParen,
-                               const CXXScopeSpec *SS,
-                               bool isAddressOfOperand) {
-  assert(D && "Cannot refer to a NULL declaration");
-  DeclarationName Name = D->getDeclName();
-
-  // If this is an expression of the form &Class::member, don't build an
-  // implicit member ref, because we want a pointer to the member in general,
-  // not any specific instance's member.
-  if (isAddressOfOperand && SS && !SS->isEmpty() && !HasTrailingLParen) {
-    DeclContext *DC = computeDeclContext(*SS);
-    if (D && isa<CXXRecordDecl>(DC)) {
-      QualType DType;
-      if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
-        DType = FD->getType().getNonReferenceType();
-      } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
-        DType = Method->getType();
-      } else if (isa<OverloadedFunctionDecl>(D)) {
-        DType = Context.OverloadTy;
-      }
-      // Could be an inner type. That's diagnosed below, so ignore it here.
-      if (!DType.isNull()) {
-        // The pointer is type- and value-dependent if it points into something
-        // dependent.
-        bool Dependent = DC->isDependentContext();
-        return BuildDeclRefExpr(D, DType, Loc, Dependent, Dependent, SS);
-      }
-    }
-  }
+/// Builds an implicit member access expression from the given
+/// unqualified lookup set, which is known to contain only class
+/// members.
+Sema::OwningExprResult BuildImplicitMemberExpr(Sema &S, LookupResult &R,
+                                               const CXXScopeSpec *SS) {
+  NamedDecl *D = R.getAsSingleDecl(S.Context);
+  SourceLocation Loc = R.getNameLoc();
 
   // We may have found a field within an anonymous union or struct
   // (C++ [class.union]).
   // FIXME: This needs to happen post-isImplicitMemberReference?
   if (FieldDecl *FD = dyn_cast<FieldDecl>(D))
     if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
-      return BuildAnonymousStructUnionMemberReference(Loc, FD);
+      return S.BuildAnonymousStructUnionMemberReference(Loc, FD);
 
-  // Cope with an implicit member access in a C++ non-static member function.
-  QualType ThisType, MemberType;
-  if (isImplicitMemberReference(SS, D, Loc, ThisType, MemberType)) {
-    Expr *This = new (Context) CXXThisExpr(SourceLocation(), ThisType);
-    MarkDeclarationReferenced(Loc, D);
-    if (PerformObjectMemberConversion(This, D))
-      return ExprError();
+  QualType ThisType;
+  QualType MemberType;
+  if (S.isImplicitMemberReference(SS, D, Loc, ThisType, MemberType)) {
+    Expr *This = new (S.Context) CXXThisExpr(SourceLocation(), ThisType);
+    S.MarkDeclarationReferenced(Loc, D);
+    if (S.PerformObjectMemberConversion(This, D))
+      return S.ExprError();
 
     bool ShouldCheckUse = true;
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
@@ -943,45 +922,196 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
         ShouldCheckUse = false;
     }
 
-    if (ShouldCheckUse && DiagnoseUseOfDecl(D, Loc))
-      return ExprError();
-    return Owned(BuildMemberExpr(Context, This, true, SS, D,
-                                 Loc, MemberType));
+    if (ShouldCheckUse && S.DiagnoseUseOfDecl(D, Loc))
+      return S.ExprError();
+    return S.Owned(BuildMemberExpr(S.Context, This, true, SS, D,
+                                   Loc, MemberType));
   }
 
-  if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
-    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
-      if (MD->isStatic())
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+    if (!Method->isStatic()) {
+      S.Diag(Loc, diag::err_member_call_without_object);
+      return S.ExprError();
+    }
+  }
+
+  if (isa<FieldDecl>(D)) {
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(S.CurContext)) {
+      if (MD->isStatic()) {
         // "invalid use of member 'x' in static member function"
-        return ExprError(Diag(Loc,diag::err_invalid_member_use_in_static_method)
-          << FD->getDeclName());
+        S.Diag(Loc,diag::err_invalid_member_use_in_static_method)
+          << D->getDeclName();
+        return S.ExprError();
+      }
     }
 
     // Any other ways we could have found the field in a well-formed
     // program would have been turned into implicit member expressions
     // above.
-    return ExprError(Diag(Loc, diag::err_invalid_non_static_member_use)
-      << FD->getDeclName());
+    S.Diag(Loc, diag::err_invalid_non_static_member_use)
+      << D->getDeclName();
+    return S.ExprError();
   }
 
-  if (isa<TypedefDecl>(D))
-    return ExprError(Diag(Loc, diag::err_unexpected_typedef) << Name);
-  if (isa<ObjCInterfaceDecl>(D))
-    return ExprError(Diag(Loc, diag::err_unexpected_interface) << Name);
-  if (isa<NamespaceDecl>(D))
-    return ExprError(Diag(Loc, diag::err_unexpected_namespace) << Name);
+  return S.BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getLookupName(),
+                                    /*ADL*/ false,
+                                    R.begin(), R.end() - R.begin());
+}
+
+static bool UseArgumentDependentLookup(Sema &SemaRef,
+                                       const CXXScopeSpec *SS,
+                                       bool HasTrailingLParen,
+                                       const LookupResult &R) {
+  // Only when used directly as the postfix-expression of a call.
+  if (!HasTrailingLParen)
+    return false;
+
+  // Never if a scope specifier was provided.
+  if (SS && SS->isSet())
+    return false;
+
+  // Only in C++ or ObjC++.
+  if (!SemaRef.getLangOptions().CPlusPlus)
+    return false;
+
+  // Turn off ADL when we find certain kinds of declarations during
+  // normal lookup:
+  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
+    NamedDecl *D = *I;
+
+    // C++0x [basic.lookup.argdep]p3:
+    //     -- a declaration of a class member
+    // Since using decls preserve this property, we check this on the
+    // original decl.
+    if (D->getDeclContext()->isRecord())
+      return false;
+
+    // C++0x [basic.lookup.argdep]p3:
+    //     -- a block-scope function declaration that is not a
+    //        using-declaration
+    // NOTE: we also trigger this for function templates (in fact, we
+    // don't check the decl type at all, since all other decl types
+    // turn off ADL anyway).
+    if (isa<UsingShadowDecl>(D))
+      D = cast<UsingShadowDecl>(D)->getTargetDecl();
+    else if (D->getDeclContext()->isFunctionOrMethod())
+      return false;
+
+    // C++0x [basic.lookup.argdep]p3:
+    //     -- a declaration that is neither a function or a function
+    //        template
+    // And also for builtin functions.
+    if (isa<FunctionDecl>(D)) {
+      FunctionDecl *FDecl = cast<FunctionDecl>(D);
+
+      // But also builtin functions.
+      if (FDecl->getBuiltinID() && FDecl->isImplicit())
+        return false;
+    } else if (!isa<FunctionTemplateDecl>(D))
+      return false;
+  }
+
+  return true;
+}
+
+
+/// \brief Complete semantic analysis for a reference to the given
+/// lookup results.
+Sema::OwningExprResult
+Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
+                               LookupResult &R,
+                               bool HasTrailingLParen,
+                               bool isAddressOfOperand) {
+  assert(!R.isAmbiguous() && "results are ambiguous");
+
+  // &SomeClass::foo is an abstract member reference, regardless of
+  // the nature of foo, but &SomeClass::foo(...) is not.
+  bool isAbstractMemberPointer = 
+    (isAddressOfOperand && !HasTrailingLParen && SS && !SS->isEmpty());
+
+  // If we're *not* an abstract member reference, and any of the
+  // results are class members (i.e. they're all class members), then
+  // we make an implicit member reference instead.
+  if (!isAbstractMemberPointer && !R.empty() &&
+      isa<CXXRecordDecl>((*R.begin())->getDeclContext())) {
+    return BuildImplicitMemberExpr(*this, R, SS);
+  }
+
+  assert(R.getResultKind() != LookupResult::FoundUnresolvedValue &&
+         "found UnresolvedUsingValueDecl in non-class scope");
+
+  bool ADL = UseArgumentDependentLookup(*this, SS, HasTrailingLParen, R);
+
+  return BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getLookupName(), ADL,
+                                  R.begin(), R.end() - R.begin());
+}
+
+/// Diagnoses obvious problems with the use of the given declaration
+/// as an expression.  This is only actually called for lookups that
+/// were not overloaded, and it doesn't promise that the declaration
+/// will in fact be used.
+static bool CheckDeclInExpr(Sema &S, SourceLocation Loc, NamedDecl *D) {
+  if (isa<TypedefDecl>(D)) {
+    S.Diag(Loc, diag::err_unexpected_typedef) << D->getDeclName();
+    return true;
+  }
+
+  if (isa<ObjCInterfaceDecl>(D)) {
+    S.Diag(Loc, diag::err_unexpected_interface) << D->getDeclName();
+    return true;
+  }
+
+  if (isa<NamespaceDecl>(D)) {
+    S.Diag(Loc, diag::err_unexpected_namespace) << D->getDeclName();
+    return true;
+  }
+
+  return false;
+}
+
+Sema::OwningExprResult
+Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
+                               SourceLocation Loc,
+                               DeclarationName Name,
+                               bool NeedsADL,
+                               NamedDecl * const *Decls,
+                               unsigned NumDecls) {
+  if (!NeedsADL && NumDecls == 1)
+    return BuildDeclarationNameExpr(SS, Loc, Decls[0]->getUnderlyingDecl());
+
+  // We only need to check the declaration if there's exactly one
+  // result, because in the overloaded case the results can only be
+  // functions and function templates.
+  if (NumDecls == 1 &&
+      CheckDeclInExpr(*this, Loc, Decls[0]->getUnderlyingDecl()))
+    return ExprError();
+
+  UnresolvedLookupExpr *ULE
+    = UnresolvedLookupExpr::Create(Context,
+                    SS ? (NestedNameSpecifier *)SS->getScopeRep() : 0,
+                                   SS ? SS->getRange() : SourceRange(), 
+                                   Name, Loc, NeedsADL);
+  for (unsigned I = 0; I != NumDecls; ++I)
+    ULE->addDecl(Decls[I]);
+
+  return Owned(ULE);
+}
+                               
+
+/// \brief Complete semantic analysis for a reference to the given declaration.
+Sema::OwningExprResult
+Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
+                               SourceLocation Loc, NamedDecl *D) {
+  assert(D && "Cannot refer to a NULL declaration");
+  DeclarationName Name = D->getDeclName();
+
+  if (CheckDeclInExpr(*this, Loc, D))
+    return ExprError();
 
   // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
-  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D))
-    return BuildDeclRefExpr(Ovl, Context.OverloadTy, Loc,
-                           false, false, SS);
-  else if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
+  if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
     return BuildDeclRefExpr(Template, Context.OverloadTy, Loc,
                             false, false, SS);
-  else if (UnresolvedUsingValueDecl *UD = dyn_cast<UnresolvedUsingValueDecl>(D))
-    return BuildDeclRefExpr(UD, Context.DependentTy, Loc,
-                            /*TypeDependent=*/true,
-                            /*ValueDependent=*/true, SS);
 
   ValueDecl *VD = cast<ValueDecl>(D);
 
@@ -989,9 +1119,7 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
   // this check when we're going to perform argument-dependent lookup
   // on this function name, because this might not be the function
   // that overload resolution actually selects.
-  bool ADL = getLangOptions().CPlusPlus && (!SS || !SS->isSet()) &&
-             HasTrailingLParen;
-  if (!(ADL && isa<FunctionDecl>(VD)) && DiagnoseUseOfDecl(VD, Loc))
+  if (DiagnoseUseOfDecl(VD, Loc))
     return ExprError();
 
   // Only create DeclRefExpr's for valid Decl's.
@@ -1038,9 +1166,8 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
       TypeDependent = true;
     //     - a nested-name-specifier that contains a class-name that
     //       names a dependent type.
-    else if (SS && !SS->isEmpty()) {
-      for (DeclContext *DC = computeDeclContext(*SS);
-           DC; DC = DC->getParent()) {
+    else {
+      for (DeclContext *DC = D->getDeclContext(); DC; DC = DC->getParent()) {
         // FIXME: could stop early at namespace scope.
         if (DC->isRecord()) {
           CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
@@ -2557,7 +2684,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
 /// whether argument-dependent lookup is available, whether it has explicit
 /// template arguments, etc.
 void Sema::DeconstructCallFunction(Expr *FnExpr,
-                                   NamedDecl *&Function,
+                                   llvm::SmallVectorImpl<NamedDecl*> &Fns,
                                    DeclarationName &Name,
                                    NestedNameSpecifier *&Qualifier,
                                    SourceRange &QualifierRange,
@@ -2566,7 +2693,6 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
                            const TemplateArgumentLoc *&ExplicitTemplateArgs,
                                    unsigned &NumExplicitTemplateArgs) {
   // Set defaults for all of the output parameters.
-  Function = 0;
   Name = DeclarationName();
   Qualifier = 0;
   QualifierRange = SourceRange();
@@ -2589,21 +2715,29 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
                == UnaryOperator::AddrOf) {
       FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
     } else if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(FnExpr)) {
-      Function = dyn_cast<NamedDecl>(DRExpr->getDecl());
-      if ((Qualifier = DRExpr->getQualifier())) {
-        ArgumentDependentLookup = false;
+      Fns.push_back(cast<NamedDecl>(DRExpr->getDecl()));
+      ArgumentDependentLookup = false;
+      if ((Qualifier = DRExpr->getQualifier()))
         QualifierRange = DRExpr->getQualifierRange();
-      }      
       break;
-    } else if (UnresolvedFunctionNameExpr *DepName
-               = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr)) {
-      Name = DepName->getName();
+    } else if (UnresolvedLookupExpr *UnresLookup
+               = dyn_cast<UnresolvedLookupExpr>(FnExpr)) {
+      Name = UnresLookup->getName();
+      Fns.append(UnresLookup->decls_begin(), UnresLookup->decls_end());
+      ArgumentDependentLookup = UnresLookup->requiresADL();
+      if ((Qualifier = UnresLookup->getQualifier()))
+        QualifierRange = UnresLookup->getQualifierRange();
       break;
     } else if (TemplateIdRefExpr *TemplateIdRef
                = dyn_cast<TemplateIdRefExpr>(FnExpr)) {
-      Function = TemplateIdRef->getTemplateName().getAsTemplateDecl();
-      if (!Function)
-        Function = TemplateIdRef->getTemplateName().getAsOverloadedFunctionDecl();
+      if (NamedDecl *Function
+          = TemplateIdRef->getTemplateName().getAsTemplateDecl())
+        Fns.push_back(Function);
+      else {
+        OverloadedFunctionDecl *Overload
+          = TemplateIdRef->getTemplateName().getAsOverloadedFunctionDecl();
+        Fns.append(Overload->function_begin(), Overload->function_end());
+      }
       HasExplicitTemplateArguments = true;
       ExplicitTemplateArgs = TemplateIdRef->getTemplateArgs();
       NumExplicitTemplateArgs = TemplateIdRef->getNumTemplateArgs();
@@ -2653,9 +2787,6 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   Expr *Fn = fn.takeAs<Expr>();
   Expr **Args = reinterpret_cast<Expr**>(args.release());
   assert(Fn && "no function call expression");
-  FunctionDecl *FDecl = NULL;
-  NamedDecl *NDecl = NULL;
-  DeclarationName UnqualifiedName;
 
   if (getLangOptions().CPlusPlus) {
     // If this is a pseudo-destructor expression, build the call immediately.
@@ -2742,39 +2873,43 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // If we're directly calling a function, get the appropriate declaration.
   // Also, in C++, keep track of whether we should perform argument-dependent
   // lookup and whether there were any explicitly-specified template arguments.
+  llvm::SmallVector<NamedDecl*,8> Fns;
+  DeclarationName UnqualifiedName;
   bool ADL = true;
   bool HasExplicitTemplateArgs = 0;
   const TemplateArgumentLoc *ExplicitTemplateArgs = 0;
   unsigned NumExplicitTemplateArgs = 0;
   NestedNameSpecifier *Qualifier = 0;
   SourceRange QualifierRange;
-  DeconstructCallFunction(Fn, NDecl, UnqualifiedName, Qualifier, QualifierRange,
+  DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
                           ADL,HasExplicitTemplateArgs, ExplicitTemplateArgs,
                           NumExplicitTemplateArgs);
 
-  OverloadedFunctionDecl *Ovl = 0;
+  NamedDecl *NDecl = 0; // the specific declaration we're calling, if applicable
+  FunctionDecl *FDecl = 0; // same, if it's a function or function template
   FunctionTemplateDecl *FunctionTemplate = 0;
-  if (NDecl) {
+
+  if (Fns.size() == 1) {
+    NDecl = Fns[0];
     FDecl = dyn_cast<FunctionDecl>(NDecl);
     if ((FunctionTemplate = dyn_cast<FunctionTemplateDecl>(NDecl)))
       FDecl = FunctionTemplate->getTemplatedDecl();
     else
       FDecl = dyn_cast<FunctionDecl>(NDecl);
-    Ovl = dyn_cast<OverloadedFunctionDecl>(NDecl);
   }
 
-  if (Ovl || FunctionTemplate ||
+  if (Fns.size() > 1 || FunctionTemplate ||
       (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
     // We don't perform ADL for implicit declarations of builtins.
     if (FDecl && FDecl->getBuiltinID() && FDecl->isImplicit())
-      ADL = false;
+      assert(!ADL); // this should be guaranteed earlier
 
     // We don't perform ADL in C.
     if (!getLangOptions().CPlusPlus)
-      ADL = false;
+      assert(!ADL); // ditto
 
-    if (Ovl || FunctionTemplate || ADL) {
-      FDecl = ResolveOverloadedCallFn(Fn, NDecl, UnqualifiedName,
+    if (Fns.size() > 1 || FunctionTemplate || ADL) {
+      FDecl = ResolveOverloadedCallFn(Fn, Fns, UnqualifiedName,
                                       HasExplicitTemplateArgs,
                                       ExplicitTemplateArgs,
                                       NumExplicitTemplateArgs,
@@ -2784,6 +2919,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
         return ExprError();
 
       Fn = FixOverloadedFunctionReference(Fn, FDecl);
+
+      NDecl = FDecl;
     }
   }
 
@@ -5123,6 +5260,8 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     // FIXME: Can LHS ever be null here?
     if (!CheckAddressOfOperand(CO->getTrueExpr(), OpLoc).isNull())
       return CheckAddressOfOperand(CO->getFalseExpr(), OpLoc);
+  } else if (isa<UnresolvedLookupExpr>(op)) {
+    return Context.OverloadTy;
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
     // with the register storage-class specifier.
@@ -5132,8 +5271,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
           << "register variable" << op->getSourceRange();
         return QualType();
       }
-    } else if (isa<OverloadedFunctionDecl>(dcl) ||
-               isa<FunctionTemplateDecl>(dcl)) {
+    } else if (isa<FunctionTemplateDecl>(dcl)) {
       return Context.OverloadTy;
     } else if (FieldDecl *FD = dyn_cast<FieldDecl>(dcl)) {
       // Okay: we can take the address of a field.

@@ -2601,16 +2601,8 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
     if (FunctionTemplateDecl *ConversionTemplate
           = Conversion->getDescribedFunctionTemplate())
       ExpectedPrevDecl = ConversionTemplate->getPreviousDeclaration();
-    OverloadedFunctionDecl *Conversions = ClassDecl->getConversionFunctions();
-    for (OverloadedFunctionDecl::function_iterator
-           Conv = Conversions->function_begin(),
-           ConvEnd = Conversions->function_end();
-         Conv != ConvEnd; ++Conv) {
-      if (*Conv == ExpectedPrevDecl) {
-        *Conv = Conversion;
-        return DeclPtrTy::make(Conversion);
-      }
-    }
+    if (ClassDecl->replaceConversion(ExpectedPrevDecl, Conversion))
+      return DeclPtrTy::make(Conversion);
     assert(Conversion->isInvalidDecl() && "Conversion should not get here.");
   } else if (FunctionTemplateDecl *ConversionTemplate
                = Conversion->getDescribedFunctionTemplate())
@@ -3895,18 +3887,17 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
     OverloadCandidateSet CandidateSet;
-    OverloadedFunctionDecl *Conversions
+    const UnresolvedSet *Conversions
       = T2RecordDecl->getVisibleConversionFunctions();
-    for (OverloadedFunctionDecl::function_iterator Func
-           = Conversions->function_begin();
-         Func != Conversions->function_end(); ++Func) {
+    for (UnresolvedSet::iterator I = Conversions->begin(),
+           E = Conversions->end(); I != E; ++I) {
       FunctionTemplateDecl *ConvTemplate
-        = dyn_cast<FunctionTemplateDecl>(*Func);
+        = dyn_cast<FunctionTemplateDecl>(*I);
       CXXConversionDecl *Conv;
       if (ConvTemplate)
         Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
       else
-        Conv = cast<CXXConversionDecl>(*Func);
+        Conv = cast<CXXConversionDecl>(*I);
       
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion.

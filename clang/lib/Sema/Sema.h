@@ -959,7 +959,7 @@ public:
                                                    bool Complain);
   Expr *FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
 
-  void AddOverloadedCallCandidates(NamedDecl *Callee,
+  void AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*>& Callees,
                                    DeclarationName &UnqualifiedName,
                                    bool &ArgumentDependentLookup,
                                    bool HasExplicitTemplateArgs,
@@ -969,7 +969,8 @@ public:
                                    OverloadCandidateSet &CandidateSet,
                                    bool PartialOverloading = false);
     
-  FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
+  FunctionDecl *ResolveOverloadedCallFn(Expr *Fn,
+                                        llvm::SmallVectorImpl<NamedDecl*> &Fns,
                                         DeclarationName UnqualifiedName,
                                         bool HasExplicitTemplateArgs,
                              const TemplateArgumentLoc *ExplicitTemplateArgs,
@@ -1415,10 +1416,18 @@ public:
                                             bool HasTrailingLParen,
                                             const CXXScopeSpec *SS,
                                             bool isAddressOfOperand = false);
-  OwningExprResult BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
-                                            bool HasTrailingLParen,
-                                            const CXXScopeSpec *SS,
+  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
+                                            LookupResult &R, bool ADL,
                                             bool isAddressOfOperand);
+  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
+                                            SourceLocation Loc,
+                                            DeclarationName Name,
+                                            bool NeedsADL,
+                                            NamedDecl * const *Decls,
+                                            unsigned NumDecls);
+  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
+                                            SourceLocation Loc,
+                                            NamedDecl *D);
 
   virtual OwningExprResult ActOnPredefinedExpr(SourceLocation Loc,
                                                tok::TokenKind Kind);
@@ -1517,7 +1526,7 @@ public:
                                SourceLocation RParenLoc);
 
   void DeconstructCallFunction(Expr *FnExpr,
-                               NamedDecl *&Function,
+                               llvm::SmallVectorImpl<NamedDecl*>& Fns,
                                DeclarationName &Name,
                                NestedNameSpecifier *&Qualifier,
                                SourceRange &QualifierRange,

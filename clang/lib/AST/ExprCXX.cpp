@@ -121,11 +121,11 @@ Stmt::child_iterator CXXPseudoDestructorExpr::child_end() {
   return &Base + 1;
 }
 
-// UnresolvedFunctionNameExpr
-Stmt::child_iterator UnresolvedFunctionNameExpr::child_begin() {
+// UnresolvedLookupExpr
+Stmt::child_iterator UnresolvedLookupExpr::child_begin() {
   return child_iterator();
 }
-Stmt::child_iterator UnresolvedFunctionNameExpr::child_end() {
+Stmt::child_iterator UnresolvedLookupExpr::child_end() {
   return child_iterator();
 }
 // UnaryTypeTraitExpr

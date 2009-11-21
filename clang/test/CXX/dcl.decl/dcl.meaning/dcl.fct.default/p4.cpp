@@ -41,8 +41,8 @@ namespace N1 {
   
   void m()
   {
-    void f(int, int); // expected-note{{candidate}}
-    f(4);  // expected-error{{no matching}}
+    void f(int, int);
+    f(4);  // expected-error{{too few arguments to function call}}
     void f(int, int = 5); // expected-note{{previous definition}}
     f(4); // okay
     void f(int, int = 5); // expected-error{{redefinition of default argument}}

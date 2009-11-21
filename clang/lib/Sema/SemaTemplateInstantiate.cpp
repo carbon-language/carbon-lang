@@ -556,6 +556,9 @@ namespace {
                                                    bool isAddressOfOperand);
     Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E,
                                                 bool isAddressOfOperand);
+    Sema::OwningExprResult TransformUnresolvedLookupExpr(
+                                                UnresolvedLookupExpr *E,
+                                                bool isAddressOfOperand);
 
     Sema::OwningExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E,
                                                       bool isAddressOfOperand);
@@ -694,6 +697,55 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E,
 }
 
 Sema::OwningExprResult
+TemplateInstantiator::TransformUnresolvedLookupExpr(UnresolvedLookupExpr *Old,
+                                                    bool isAddressOfOperand) {
+  llvm::SmallVector<NamedDecl*, 16> InstDecls;
+
+  bool HasUnresolved = false;
+
+  for (UnresolvedLookupExpr::decls_iterator I = Old->decls_begin(),
+         E = Old->decls_end(); I != E; ++I) {
+    NamedDecl *InstD = SemaRef.FindInstantiatedDecl(*I, TemplateArgs);
+    if (!InstD)
+      return SemaRef.ExprError();
+
+    // Expand using declarations.
+    if (isa<UsingDecl>(InstD)) {
+      UsingDecl *UD = cast<UsingDecl>(InstD);
+      for (UsingDecl::shadow_iterator UI = UD->shadow_begin(),
+             UE = UD->shadow_end(); UI != UE; ++UI) {
+        UsingShadowDecl *Shadow = *UI;
+        if (isa<UnresolvedUsingValueDecl>(Shadow->getUnderlyingDecl()))
+          HasUnresolved = true;
+        InstDecls.push_back(Shadow);
+      }
+
+      continue;
+    }
+
+    if (isa<UnresolvedUsingValueDecl>(InstD->getUnderlyingDecl()))
+      HasUnresolved = true;
+    InstDecls.push_back(InstD);
+  }
+
+  CXXScopeSpec SS;
+  NestedNameSpecifier *Qualifier = 0;
+  if (Old->getQualifier()) {
+    Qualifier = TransformNestedNameSpecifier(Old->getQualifier(),
+                                             Old->getQualifierRange());
+    if (!Qualifier)
+      return SemaRef.ExprError();
+    
+    SS.setScopeRep(Qualifier);
+    SS.setRange(Old->getQualifierRange());
+  }
+
+  return SemaRef.BuildDeclarationNameExpr(&SS, Old->getNameLoc(),
+                                          Old->getName(), Old->requiresADL(),
+                                          InstDecls.data(), InstDecls.size());
+}
+
+Sema::OwningExprResult
 TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
                                            bool isAddressOfOperand) {
   // FIXME: Clean this up a bit
@@ -788,46 +840,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
   if (!InstD)
     return SemaRef.ExprError();
 
-  // Flatten using declarations into their shadow declarations.
-  if (isa<UsingDecl>(InstD)) {
-    UsingDecl *UD = cast<UsingDecl>(InstD);
-
-    bool HasNonFunction = false;
-
-    llvm::SmallVector<NamedDecl*, 8> Decls;
-    for (UsingDecl::shadow_iterator I = UD->shadow_begin(),
-                                    E = UD->shadow_end(); I != E; ++I) {
-      NamedDecl *TD = (*I)->getTargetDecl();
-      if (!TD->isFunctionOrFunctionTemplate())
-        HasNonFunction = true;
-
-      Decls.push_back(TD);
-    }
-
-    if (Decls.empty())
-      return SemaRef.ExprError();
-
-    if (Decls.size() == 1)
-      InstD = Decls[0];
-    else if (!HasNonFunction) {
-      OverloadedFunctionDecl *OFD
-        = OverloadedFunctionDecl::Create(SemaRef.Context,
-                                         UD->getDeclContext(),
-                                         UD->getDeclName());
-      for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Decls.begin(),
-                                                E = Decls.end(); I != E; ++I)
-        if (isa<FunctionDecl>(*I))
-          OFD->addOverload(cast<FunctionDecl>(*I));
-        else
-          OFD->addOverload(cast<FunctionTemplateDecl>(*I));
-
-      InstD = OFD;
-    } else {
-      // FIXME
-      assert(false && "using declaration resolved to mixed set");
-      return SemaRef.ExprError();
-    }
-  }
+  assert(!isa<UsingDecl>(InstD) && "decl ref instantiated to UsingDecl");
 
   CXXScopeSpec SS;
   NestedNameSpecifier *Qualifier = 0;
@@ -841,10 +854,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
     SS.setRange(E->getQualifierRange());
   }
   
-  return SemaRef.BuildDeclarationNameExpr(E->getLocation(), InstD,
-                                          /*FIXME:*/false,
-                                          &SS,
-                                          isAddressOfOperand);
+  return SemaRef.BuildDeclarationNameExpr(&SS, E->getLocation(), InstD);
 }
 
 Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(

@@ -36,8 +36,6 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     HasTrivialCopyConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialDestructor(true), ComputedVisibleConversions(false),
     Bases(0), NumBases(0), VBases(0), NumVBases(0),
-    Conversions(DC, DeclarationName()),
-    VisibleConversions(DC, DeclarationName()),
     TemplateOrInstantiation() { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
@@ -299,14 +297,11 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
 
 void
 CXXRecordDecl::collectConversionFunctions(
-                        llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet) 
+                 llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet) const
 {
-  OverloadedFunctionDecl *TopConversions = getConversionFunctions();
-  for (OverloadedFunctionDecl::function_iterator
-       TFunc = TopConversions->function_begin(),
-       TFuncEnd = TopConversions->function_end();
-       TFunc != TFuncEnd; ++TFunc) {
-    NamedDecl *TopConv = TFunc->get();
+  const UnresolvedSet *Cs = getConversionFunctions();
+  for (UnresolvedSet::iterator I = Cs->begin(), E = Cs->end(); I != E; ++I) {
+    NamedDecl *TopConv = *I;
     CanQualType TConvType;
     if (FunctionTemplateDecl *TConversionTemplate =
         dyn_cast<FunctionTemplateDecl>(TopConv))
@@ -336,14 +331,11 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
   bool inTopClass = (RD == this);
   QualType ClassType = getASTContext().getTypeDeclType(this);
   if (const RecordType *Record = ClassType->getAs<RecordType>()) {
-    OverloadedFunctionDecl *Conversions
+    const UnresolvedSet *Cs
       = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
     
-    for (OverloadedFunctionDecl::function_iterator
-         Func = Conversions->function_begin(),
-         FuncEnd = Conversions->function_end();
-         Func != FuncEnd; ++Func) {
-      NamedDecl *Conv = Func->get();
+    for (UnresolvedSet::iterator I = Cs->begin(), E = Cs->end(); I != E; ++I) {
+      NamedDecl *Conv = *I;
       // Only those conversions not exact match of conversions in current
       // class are candidateconversion routines.
       CanQualType ConvType;
@@ -405,8 +397,7 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
 
 /// getVisibleConversionFunctions - get all conversion functions visible
 /// in current class; including conversion function templates.
-OverloadedFunctionDecl *
-CXXRecordDecl::getVisibleConversionFunctions() {
+const UnresolvedSet *CXXRecordDecl::getVisibleConversionFunctions() {
   // If root class, all conversions are visible.
   if (bases_begin() == bases_end())
     return &Conversions;
@@ -425,26 +416,26 @@ void CXXRecordDecl::addVisibleConversionFunction(
                                           CXXConversionDecl *ConvDecl) {
   assert(!ConvDecl->getDescribedFunctionTemplate() &&
          "Conversion function templates should cast to FunctionTemplateDecl.");
-  VisibleConversions.addOverload(ConvDecl);
+  VisibleConversions.addDecl(ConvDecl);
 }
 
 void CXXRecordDecl::addVisibleConversionFunction(
                                           FunctionTemplateDecl *ConvDecl) {
   assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
          "Function template is not a conversion function template");
-  VisibleConversions.addOverload(ConvDecl);
+  VisibleConversions.addDecl(ConvDecl);
 }
 
 void CXXRecordDecl::addConversionFunction(CXXConversionDecl *ConvDecl) {
   assert(!ConvDecl->getDescribedFunctionTemplate() &&
          "Conversion function templates should cast to FunctionTemplateDecl.");
-  Conversions.addOverload(ConvDecl);
+  Conversions.addDecl(ConvDecl);
 }
 
 void CXXRecordDecl::addConversionFunction(FunctionTemplateDecl *ConvDecl) {
   assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
          "Function template is not a conversion function template");
-  Conversions.addOverload(ConvDecl);
+  Conversions.addDecl(ConvDecl);
 }
 
 CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() const {

@@ -1467,7 +1467,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
       Expr::hasAnyTypeDependentArguments(Args, NumArgs))
     return;
   
-  NamedDecl *Function;
+  llvm::SmallVector<NamedDecl*,8> Fns;
   DeclarationName UnqualifiedName;
   NestedNameSpecifier *Qualifier;
   SourceRange QualifierRange;
@@ -1476,8 +1476,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   const TemplateArgumentLoc *ExplicitTemplateArgs;
   unsigned NumExplicitTemplateArgs;
   
-  DeconstructCallFunction(Fn,
-                          Function, UnqualifiedName, Qualifier, QualifierRange,
+  DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
                           ArgumentDependentLookup, HasExplicitTemplateArgs,
                           ExplicitTemplateArgs, NumExplicitTemplateArgs);
 
@@ -1488,7 +1487,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   
   // Build an overload candidate set based on the functions we find.
   OverloadCandidateSet CandidateSet;
-  AddOverloadedCallCandidates(Function, UnqualifiedName, 
+  AddOverloadedCallCandidates(Fns, UnqualifiedName, 
                               ArgumentDependentLookup, HasExplicitTemplateArgs,
                               ExplicitTemplateArgs, NumExplicitTemplateArgs,
                               Args, NumArgs,

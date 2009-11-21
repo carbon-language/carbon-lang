@@ -4558,10 +4558,10 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformUnresolvedFunctionNameExpr(
-                                                  UnresolvedFunctionNameExpr *E,
+TreeTransform<Derived>::TransformUnresolvedLookupExpr(
+                                                  UnresolvedLookupExpr *E,
                                                   bool isAddressOfOperand) {
-  // There is no transformation we can apply to an unresolved function name.
+  // There is no transformation we can apply to an unresolved lookup.
   return SemaRef.Owned(E->Retain());
 }
 
@@ -5384,8 +5384,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
                                                    ExprArg Second) {
   Expr *FirstExpr = (Expr *)First.get();
   Expr *SecondExpr = (Expr *)Second.get();
-  DeclRefExpr *DRE
-    = cast<DeclRefExpr>(((Expr *)Callee.get())->IgnoreParenCasts());
+  Expr *CalleeExpr = ((Expr *)Callee.get())->IgnoreParenCasts();
   bool isPostIncDec = SecondExpr && (Op == OO_PlusPlus || Op == OO_MinusMinus);
 
   // Determine whether this should be a builtin operation.
@@ -5393,7 +5392,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
     if (!FirstExpr->getType()->isOverloadableType() &&
         !SecondExpr->getType()->isOverloadableType())
       return getSema().CreateBuiltinArraySubscriptExpr(move(First),
-                                                       DRE->getLocStart(),
+                                                 CalleeExpr->getLocStart(),
                                                        move(Second), OpLoc);
   } else if (Op == OO_Arrow) {
     // -> is never a builtin operation.
@@ -5428,10 +5427,18 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
   // used during overload resolution.
   Sema::FunctionSet Functions;
 
-  // FIXME: Do we have to check
-  // IsAcceptableNonMemberOperatorCandidate for each of these?
-  for (OverloadIterator F(DRE->getDecl()), FEnd; F != FEnd; ++F)
-    Functions.insert(*F);
+  if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(CalleeExpr)) {
+    assert(ULE->requiresADL());
+
+    // FIXME: Do we have to check
+    // IsAcceptableNonMemberOperatorCandidate for each of these?
+    for (UnresolvedLookupExpr::decls_iterator I = ULE->decls_begin(),
+           E = ULE->decls_end(); I != E; ++I)
+      Functions.insert(AnyFunctionDecl::getFromNamedDecl(*I));
+  } else {
+    Functions.insert(AnyFunctionDecl::getFromNamedDecl(
+                        cast<DeclRefExpr>(CalleeExpr)->getDecl()));
+  }
 
   // Add any functions found via argument-dependent lookup.
   Expr *Args[2] = { FirstExpr, SecondExpr };
@@ -5449,8 +5456,10 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
   }
 
   if (Op == OO_Subscript)
-    return SemaRef.CreateOverloadedArraySubscriptExpr(DRE->getLocStart(), OpLoc,
-                                                      move(First),move(Second));
+    return SemaRef.CreateOverloadedArraySubscriptExpr(CalleeExpr->getLocStart(),
+                                                      OpLoc,
+                                                      move(First),
+                                                      move(Second));
 
   // Create the overloaded operator invocation for binary operators.
   BinaryOperator::Opcode Opc =

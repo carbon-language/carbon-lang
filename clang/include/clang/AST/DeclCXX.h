@@ -88,6 +88,28 @@ namespace llvm {
 
 namespace clang {
 
+/// UnresolvedSet - A set of unresolved declarations.
+class UnresolvedSet {
+  typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
+  DeclsTy Decls;
+
+public:
+  void addDecl(NamedDecl *D) {
+    Decls.push_back(D);
+  }
+
+  bool replace(const NamedDecl* Old, NamedDecl *New) {
+    for (DeclsTy::iterator I = Decls.begin(), E = Decls.end(); I != E; ++I)
+      if (*I == Old)
+        return (*I = New, true);
+    return false;
+  }
+
+  typedef DeclsTy::const_iterator iterator;
+  iterator begin() const { return Decls.begin(); }
+  iterator end() const { return Decls.end(); }
+};
+
 /// OverloadedFunctionDecl - An instance of this class represents a
 /// set of overloaded functions. All of the functions have the same
 /// name and occur within the same scope.
@@ -376,13 +398,13 @@ class CXXRecordDecl : public RecordDecl {
   /// of this C++ class (but not its inherited conversion
   /// functions). Each of the entries in this overload set is a
   /// CXXConversionDecl. 
-  OverloadedFunctionDecl Conversions;
+  UnresolvedSet Conversions;
 
   /// VisibleConversions - Overload set containing the conversion functions
   /// of this C++ class and all those inherited conversion functions that
   /// are visible in this class. Each of the entries in this overload set is
   /// a CXXConversionDecl or a FunctionTemplateDecl.
-  OverloadedFunctionDecl VisibleConversions;
+  UnresolvedSet VisibleConversions;
   
   /// \brief The template or declaration that this declaration
   /// describes or was instantiated from, respectively.
@@ -400,7 +422,7 @@ class CXXRecordDecl : public RecordDecl {
           const llvm::SmallPtrSet<CanQualType, 8> &TopConversionsTypeSet,
           const llvm::SmallPtrSet<CanQualType, 8> &HiddenConversionTypes);
   void collectConversionFunctions(
-    llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet);
+    llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet) const;
   
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
@@ -581,22 +603,34 @@ public:
 
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.
-  OverloadedFunctionDecl *getConversionFunctions() {
+  UnresolvedSet *getConversionFunctions() {
     assert((this->isDefinition() ||
             cast<RecordType>(getTypeForDecl())->isBeingDefined()) &&
            "getConversionFunctions() called on incomplete type");
     return &Conversions;
   }
-  const OverloadedFunctionDecl *getConversionFunctions() const {
+  const UnresolvedSet *getConversionFunctions() const {
     assert((this->isDefinition() ||
             cast<RecordType>(getTypeForDecl())->isBeingDefined()) &&
            "getConversionFunctions() called on incomplete type");
     return &Conversions;
   }
 
+  typedef UnresolvedSet::iterator conversion_iterator;
+  conversion_iterator conversion_begin() const { return Conversions.begin(); }
+  conversion_iterator conversion_end() const { return Conversions.end(); }
+
+  /// Replaces a conversion function with a new declaration.
+  ///
+  /// Returns true if the old conversion was found.
+  bool replaceConversion(const NamedDecl* Old, NamedDecl *New) {
+    return Conversions.replace(Old, New);
+  }
+
   /// getVisibleConversionFunctions - get all conversion functions visible
   /// in current class; including conversion function templates.
-  OverloadedFunctionDecl *getVisibleConversionFunctions();
+  const UnresolvedSet *getVisibleConversionFunctions();
+
   /// addVisibleConversionFunction - Add a new conversion function to the
   /// list of visible conversion functions.
   void addVisibleConversionFunction(CXXConversionDecl *ConvDecl);

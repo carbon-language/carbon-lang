@@ -855,18 +855,15 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     if (const RecordType *Record = Type->getAs<RecordType>()) {
       llvm::SmallVector<CXXConversionDecl *, 4> ObjectPtrConversions;
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
-      OverloadedFunctionDecl *Conversions = 
-        RD->getVisibleConversionFunctions();
+      const UnresolvedSet *Conversions = RD->getVisibleConversionFunctions();
       
-      for (OverloadedFunctionDecl::function_iterator
-             Func = Conversions->function_begin(),
-             FuncEnd = Conversions->function_end();
-           Func != FuncEnd; ++Func) {
+      for (UnresolvedSet::iterator I = Conversions->begin(),
+             E = Conversions->end(); I != E; ++I) {
         // Skip over templated conversion functions; they aren't considered.
-        if (isa<FunctionTemplateDecl>(*Func))
+        if (isa<FunctionTemplateDecl>(*I))
           continue;
         
-        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*I);
         
         QualType ConvType = Conv->getConversionType().getNonReferenceType();
         if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
@@ -2310,6 +2307,9 @@ bool Sema::isImplicitMemberReference(const CXXScopeSpec *SS, NamedDecl *D,
       MemberType
         = Context.getQualifiedType(MemberType,
                            Qualifiers::fromCVRMask(MD->getTypeQualifiers()));
+  } else if (isa<UnresolvedUsingValueDecl>(D)) {
+    Ctx = D->getDeclContext();
+    MemberType = Context.DependentTy;
   } else {
     for (OverloadIterator Ovl(D), OvlEnd; Ovl != OvlEnd; ++Ovl) {
       CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Ovl);
