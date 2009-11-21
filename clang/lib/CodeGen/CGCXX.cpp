@@ -152,7 +152,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   llvm::SmallString<256> GuardVName;
   llvm::raw_svector_ostream GuardVOut(GuardVName);
-  mangleGuardVariable(CGM.getMangleContext(), &D, GuardVOut);
+  CGM.getMangleContext().mangleGuardVariable(&D, GuardVOut);
 
   // Create the guard variable.
   llvm::GlobalValue *GuardV =
@@ -756,7 +756,7 @@ const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
                                                  CXXCtorType Type) {
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  mangleCXXCtor(getMangleContext(), D, Type, Out);
+  getMangleContext().mangleCXXCtor(D, Type, Out);
 
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
@@ -794,7 +794,7 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
                                                  CXXDtorType Type) {
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  mangleCXXDtor(getMangleContext(), D, Type, Out);
+  getMangleContext().mangleCXXDtor(D, Type, Out);
 
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
@@ -946,7 +946,7 @@ llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
                                           int64_t nv, int64_t v) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleThunk(getMangleContext(), MD, nv, v, Out);
+  getMangleContext().mangleThunk(MD, nv, v, Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)
@@ -970,7 +970,7 @@ llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
                                                    int64_t v_r) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleCovariantThunk(getMangleContext(), MD, nv_t, v_t, nv_r, v_r, Out);
+  getMangleContext().mangleCovariantThunk(MD, nv_t, v_t, nv_r, v_r, Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)

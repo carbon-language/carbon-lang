@@ -50,7 +50,7 @@ public:
   llvm::Constant *BuildName(QualType Ty, bool Hidden, bool Extern) {
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
-    mangleCXXRttiName(CGM.getMangleContext(), Ty, Out);
+    CGM.getMangleContext().mangleCXXRttiName(Ty, Out);
     llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable::LinkageTypes linktype;
@@ -100,7 +100,7 @@ public:
 
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
-    mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
+    CGM.getMangleContext().mangleCXXRtti(Ty, Out);
     llvm::StringRef Name = Out.str();
 
     C = CGM.getModule().getGlobalVariable(Name);
@@ -195,8 +195,8 @@ public:
 
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
-    mangleCXXRtti(CGM.getMangleContext(), CGM.getContext().getTagDeclType(RD),
-                  Out);
+    CGM.getMangleContext().mangleCXXRtti(CGM.getContext().getTagDeclType(RD),
+                                         Out);
     llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable *GV;
@@ -291,7 +291,7 @@ public:
 
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
-    mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
+    CGM.getMangleContext().mangleCXXRtti(Ty, Out);
     llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable *GV;
@@ -345,7 +345,7 @@ public:
 
     llvm::SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
-    mangleCXXRtti(CGM.getMangleContext(), Ty, Out);
+    CGM.getMangleContext().mangleCXXRtti(Ty, Out);
     llvm::StringRef Name = Out.str();
 
     llvm::GlobalVariable *GV;

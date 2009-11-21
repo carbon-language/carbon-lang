@@ -793,9 +793,9 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   if (LayoutClass != RD)
-    mangleCXXCtorVtable(getMangleContext(), LayoutClass, Offset/8, RD, Out);
+    getMangleContext().mangleCXXCtorVtable(LayoutClass, Offset/8, RD, Out);
   else
-    mangleCXXVtable(getMangleContext(), RD, Out);
+    getMangleContext().mangleCXXVtable(RD, Out);
   llvm::StringRef Name = Out.str();
 
   std::vector<llvm::Constant *> methods;
@@ -1043,7 +1043,7 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
 
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleCXXVTT(getMangleContext(), RD, Out);
+  getMangleContext().mangleCXXVTT(RD, Out);
   llvm::StringRef Name = Out.str();
 
   llvm::GlobalVariable::LinkageTypes linktype;

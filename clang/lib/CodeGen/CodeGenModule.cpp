@@ -168,7 +168,7 @@ const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
 
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  if (!mangleName(getMangleContext(), ND, Out)) {
+  if (!getMangleContext().mangleName(ND, Out)) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
     return ND->getNameAsCString();
   }
