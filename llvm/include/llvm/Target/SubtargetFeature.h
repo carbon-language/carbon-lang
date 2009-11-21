@@ -22,6 +22,7 @@
 #include <vector>
 #include <cstring>
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/DataTypes.h"
 
 namespace llvm {
@@ -93,6 +94,12 @@ public:
   /// Adding Features.
   void AddFeature(const std::string &String, bool IsEnabled = true);
            
+  /// Add a set of features from the comma-separated string.
+  void AddFeatures(const std::string &String);
+
+  /// Add a set of features from the parsed command line parameters.
+  void AddFeatures(const cl::list<std::string> &List);
+
   /// Get feature bits.
   uint32_t getBits(const SubtargetFeatureKV *CPUTable,
                          size_t CPUTableSize,
