@@ -1,5 +1,5 @@
-; RUN: llc -march=msp430 %s
-; RUN: llc -march=pic16 %s
+; RUN: llc -march=msp430 < %s
+; RUN: llc -march=pic16 < %s
 ; PR5558
 
 define i64 @_strtoll_r(i16 %base) nounwind {
