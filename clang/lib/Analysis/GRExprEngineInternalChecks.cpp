@@ -34,11 +34,6 @@ ExplodedNode* GetNode(ITERATOR I) {
   return *I;
 }
 
-template <> inline
-ExplodedNode* GetNode(GRExprEngine::undef_arg_iterator I) {
-  return I->first;
-}
-
 //===----------------------------------------------------------------------===//
 // Bug Descriptions.
 //===----------------------------------------------------------------------===//
@@ -224,39 +219,6 @@ public:
   const Stmt *getArg() const { return Arg; }
 };
 
-class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
-public:
-  BadArg(GRExprEngine* eng=0) : BuiltinBug(eng,"Uninitialized argument",
-    "Pass-by-value argument in function call is undefined") {}
-
-  BadArg(GRExprEngine* eng, const char* d)
-    : BuiltinBug(eng,"Uninitialized argument", d) {}
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, static_cast<ArgReport*>(R)->getArg(),
-                                  N);
-  }
-};
-
-class VISIBILITY_HIDDEN BadMsgExprArg : public BadArg {
-public:
-  BadMsgExprArg(GRExprEngine* eng)
-    : BadArg(eng,"Pass-by-value argument in message expression is undefined"){}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    for (GRExprEngine::UndefArgsTy::iterator I=Eng.msg_expr_undef_arg_begin(),
-         E = Eng.msg_expr_undef_arg_end(); I!=E; ++I) {
-      // Generate a report for this bug.
-      ArgReport *report = new ArgReport(*this, desc.c_str(), I->first,
-                                        I->second);
-      report->addRange(I->second->getSourceRange());
-      BR.EmitReport(report);
-    }
-  }
-};
-
 class VISIBILITY_HIDDEN BadReceiver : public BuiltinBug {
 public:
   BadReceiver(GRExprEngine* eng)
@@ -375,7 +337,6 @@ void GRExprEngine::RegisterInternalChecks() {
   // to 'FlushReports' from BugReporter.
   BR.Register(new UndefBranch(this));
   BR.Register(new UndefResult(this));
-  BR.Register(new BadMsgExprArg(this));
   BR.Register(new BadReceiver(this));
   BR.Register(new NilReceiverStructRet(this));
   BR.Register(new NilReceiverLargerThanVoidPtrRet(this));

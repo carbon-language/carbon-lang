@@ -1998,26 +1998,6 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     }
   }
 
-  // Check for any arguments that are uninitialized/undefined.
-
-  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
-       I != E; ++I) {
-
-    if (state->getSVal(*I).isUndef()) {
-
-      // Generate an error node for passing an uninitialized/undefined value
-      // as an argument to a message expression.  This node is a sink.
-      ExplodedNode* N = Builder->generateNode(ME, state, Pred);
-
-      if (N) {
-        N->markAsSink();
-        MsgExprUndefArgs[N] = *I;
-      }
-
-      return;
-    }
-  }
-
   // Handle previsits checks.
   ExplodedNodeSet Src, DstTmp;
   Src.Add(Pred);  

@@ -89,7 +89,6 @@ class GRExprEngine : public GRSubEngine {
 
 public:
   typedef llvm::SmallPtrSet<ExplodedNode*,2> ErrorNodes;
-  typedef llvm::DenseMap<ExplodedNode*, Expr*> UndefArgsTy;
 
   /// NilReceiverStructRetExplicit - Nodes in the ExplodedGraph that resulted
   ///  from [x ...] with 'x' definitely being nil and the result was a 'struct'
@@ -130,11 +129,6 @@ public:
   /// UndefReceiver - Nodes in the ExplodedGraph resulting from message
   ///  ObjC message expressions where the receiver is undefined (uninitialized).
   ErrorNodes UndefReceivers;
-
-  /// MsgExprUndefArgs - Nodes in the ExplodedGraph resulting from
-  ///   message expressions where a pass-by-value argument has an undefined
-  ///  value.
-  UndefArgsTy MsgExprUndefArgs;
 
 public:
   GRExprEngine(AnalysisManager &mgr);
@@ -228,14 +222,6 @@ public:
   typedef ErrorNodes::iterator undef_result_iterator;
   undef_result_iterator undef_results_begin() { return UndefResults.begin(); }
   undef_result_iterator undef_results_end() { return UndefResults.end(); }
-
-  typedef UndefArgsTy::iterator undef_arg_iterator;
-  undef_arg_iterator msg_expr_undef_arg_begin() {
-    return MsgExprUndefArgs.begin();
-  }
-  undef_arg_iterator msg_expr_undef_arg_end() {
-    return MsgExprUndefArgs.end();
-  }
 
   typedef ErrorNodes::iterator undef_receivers_iterator;
 
