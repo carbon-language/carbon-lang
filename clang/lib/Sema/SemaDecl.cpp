@@ -681,7 +681,9 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
     case 3:
       if (!TypeID->isStr("SEL"))
         break;
-      Context.setObjCSelType(Context.getTypeDeclType(New));
+      Context.ObjCSELRedefinitionType = New->getUnderlyingType();
+      // Install the built-in type for 'SEL', ignoring the current definition.
+      New->setTypeForDecl(Context.getObjCSelType().getTypePtr());
       return;
     case 8:
       if (!TypeID->isStr("Protocol"))

@@ -751,6 +751,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
     break;
   case BuiltinType::ObjCId: Out << "11objc_object"; break;
   case BuiltinType::ObjCClass: Out << "10objc_class"; break;
+  case BuiltinType::ObjCSel: Out << "13objc_selector"; break;
   }
 }
 

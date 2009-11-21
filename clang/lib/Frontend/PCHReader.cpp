@@ -1554,6 +1554,12 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   if (unsigned ObjCClassRedef
       = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
     Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
+#if 0
+  // FIXME. Accommodate for this in several PCH/Index tests
+  if (unsigned ObjCSelRedef
+      = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
+    Context->ObjCSELRedefinitionType = GetType(ObjCSelRedef);
+#endif
   if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_DESCRIPTOR])
     Context->setBlockDescriptorType(GetType(String));
   if (unsigned String
@@ -2155,6 +2161,7 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     case pch::PREDEF_TYPE_CHAR32_ID:     T = Context->Char32Ty;           break;
     case pch::PREDEF_TYPE_OBJC_ID:       T = Context->ObjCBuiltinIdTy;    break;
     case pch::PREDEF_TYPE_OBJC_CLASS:    T = Context->ObjCBuiltinClassTy; break;
+    case pch::PREDEF_TYPE_OBJC_SEL:      T = Context->ObjCBuiltinSelTy;   break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");

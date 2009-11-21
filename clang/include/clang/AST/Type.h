@@ -859,6 +859,7 @@ public:
   bool isObjCQualifiedClassType() const;        // Class<foo>
   bool isObjCIdType() const;                    // id
   bool isObjCClassType() const;                 // Class
+  bool isObjCSelType() const;                 // Class
   bool isObjCBuiltinType() const;               // 'id' or 'Class'
   bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isNullPtrType() const;                   // C++0x nullptr_t
@@ -1000,7 +1001,8 @@ public:
     UndeducedAuto, // In C++0x, this represents the type of an auto variable
                    // that has not been deduced yet.
     ObjCId,    // This represents the ObjC 'id' type.
-    ObjCClass  // This represents the ObjC 'Class' type.
+    ObjCClass, // This represents the ObjC 'Class' type.
+    ObjCSel    // This represents the ObjC 'SEL' type.
   };
 private:
   Kind TypeKind;
@@ -2540,6 +2542,12 @@ public:
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
            !Protocols.size();
   }
+
+  /// isObjCSelType - true for "SEL".
+  bool isObjCSelType() const {
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCSel);
+  }
+
   /// isObjCQualifiedIdType - true for "id <p>".
   bool isObjCQualifiedIdType() const {
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
@@ -2887,8 +2895,13 @@ inline bool Type::isObjCClassType() const {
     return OPT->isObjCClassType();
   return false;
 }
+inline bool Type::isObjCSelType() const {
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
+    return OPT->isObjCSelType();
+  return false;
+}
 inline bool Type::isObjCBuiltinType() const {
-  return isObjCIdType() || isObjCClassType();
+  return isObjCIdType() || isObjCClassType() || isObjCSelType();
 }
 inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType);

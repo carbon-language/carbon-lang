@@ -336,7 +336,9 @@ namespace clang {
       /// \brief The ObjC 'id' type.
       PREDEF_TYPE_OBJC_ID       = 26,
       /// \brief The ObjC 'Class' type.
-      PREDEF_TYPE_OBJC_CLASS    = 27
+      PREDEF_TYPE_OBJC_CLASS    = 27,
+      /// \brief The ObjC 'SEL' type.
+      PREDEF_TYPE_OBJC_SEL    = 28
     };
 
     /// \brief The number of predefined type IDs that are reserved for
@@ -438,7 +440,9 @@ namespace clang {
       /// \brief Block descriptor type for Blocks CodeGen
       SPECIAL_TYPE_BLOCK_DESCRIPTOR            = 12,
       /// \brief Block extedned descriptor type for Blocks CodeGen
-      SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR   = 13
+      SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR   = 13,
+      /// \brief Objective-C "SEL" redefinition type
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 14
     };
 
     /// \brief Record codes for each kind of declaration.

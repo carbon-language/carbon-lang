@@ -535,6 +535,8 @@ void TypePrinter::PrintObjCObjectPointer(const ObjCObjectPointerType *T,
     ObjCQIString = "id";
   else if (T->isObjCClassType() || T->isObjCQualifiedClassType())
     ObjCQIString = "Class";
+  else if (T->isObjCSelType())
+    ObjCQIString = "SEL";
   else
     ObjCQIString = T->getInterfaceDecl()->getNameAsString();
   

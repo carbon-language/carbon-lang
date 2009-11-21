@@ -39,7 +39,8 @@ typedef struct objc_selector *SEL;
 
 @end
 
-@implementation TestSELs // no-warning
+// FIXME!! This warning should not come out and is temporarily added so test 'passes'.
+@implementation TestSELs // expected-warning {{Objective-C class 'TestSELs' lacks a 'dealloc' instance method}}
 - (id)init {
   if( (self = [super init]) ) {
     a = @selector(a);

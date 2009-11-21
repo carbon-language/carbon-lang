@@ -1990,6 +1990,10 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getsigjmp_bufType(), Record);
   AddTypeRef(Context.ObjCIdRedefinitionType, Record);
   AddTypeRef(Context.ObjCClassRedefinitionType, Record);
+#if 0
+  // FIXME. Accommodate for this in several PCH/Indexer tests
+  AddTypeRef(Context.ObjCSELRedefinitionType, Record);
+#endif
   AddTypeRef(Context.getRawBlockdescriptorType(), Record);
   AddTypeRef(Context.getRawBlockdescriptorExtendedType(), Record);
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
@@ -2205,6 +2209,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     case BuiltinType::Dependent:  ID = pch::PREDEF_TYPE_DEPENDENT_ID;  break;
     case BuiltinType::ObjCId:     ID = pch::PREDEF_TYPE_OBJC_ID;       break;
     case BuiltinType::ObjCClass:  ID = pch::PREDEF_TYPE_OBJC_CLASS;    break;
+    case BuiltinType::ObjCSel:    ID = pch::PREDEF_TYPE_OBJC_SEL;      break;
     case BuiltinType::UndeducedAuto:
       assert(0 && "Should not see undeduced auto here");
       break;

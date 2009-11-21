@@ -203,6 +203,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::Void:
     case BuiltinType::ObjCId:
     case BuiltinType::ObjCClass:
+    case BuiltinType::ObjCSel:
       // LLVM void type can only be used as the result of a function call.  Just
       // map to the same as char.
       return llvm::IntegerType::get(getLLVMContext(), 8);

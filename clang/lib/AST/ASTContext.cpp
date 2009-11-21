@@ -48,6 +48,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {
   ObjCIdRedefinitionType = QualType();
   ObjCClassRedefinitionType = QualType();
+  ObjCSELRedefinitionType = QualType();
   if (size_reserve > 0) Types.reserve(size_reserve);
   TUDecl = TranslationUnitDecl::Create(*this);
   InitBuiltinTypes();
@@ -220,10 +221,12 @@ void ASTContext::InitBuiltinTypes() {
   // "Builtin" typedefs set by Sema::ActOnTranslationUnitScope().
   ObjCIdTypedefType = QualType();
   ObjCClassTypedefType = QualType();
+  ObjCSelTypedefType = QualType();
 
-  // Builtin types for 'id' and 'Class'.
+  // Builtin types for 'id', 'Class', and 'SEL'.
   InitBuiltinType(ObjCBuiltinIdTy, BuiltinType::ObjCId);
   InitBuiltinType(ObjCBuiltinClassTy, BuiltinType::ObjCClass);
+  InitBuiltinType(ObjCBuiltinSelTy, BuiltinType::ObjCSel);
 
   ObjCConstantStringType = QualType();
 
@@ -3644,21 +3647,7 @@ void ASTContext::setObjCIdType(QualType T) {
 }
 
 void ASTContext::setObjCSelType(QualType T) {
-  ObjCSelType = T;
-
-  const TypedefType *TT = T->getAs<TypedefType>();
-  if (!TT)
-    return;
-  TypedefDecl *TD = TT->getDecl();
-
-  // typedef struct objc_selector *SEL;
-  const PointerType *ptr = TD->getUnderlyingType()->getAs<PointerType>();
-  if (!ptr)
-    return;
-  const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
-  if (!rec)
-    return;
-  SelStructType = rec;
+  ObjCSelTypedefType = T;
 }
 
 void ASTContext::setObjCProtoType(QualType QT) {

@@ -120,8 +120,7 @@ class ASTContext {
   QualType ObjCIdTypedefType;
 
   /// ObjCSelType - another pseudo built-in typedef type (set by Sema).
-  QualType ObjCSelType;
-  const RecordType *SelStructType;
+  QualType ObjCSelTypedefType;
 
   /// ObjCProtoType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCProtoType;
@@ -244,6 +243,7 @@ public:
   // pseudo-builtins
   QualType ObjCIdRedefinitionType;
   QualType ObjCClassRedefinitionType;
+  QualType ObjCSELRedefinitionType;
 
   /// \brief Source ranges for all of the comments in the source file,
   /// sorted in order of appearance in the translation unit.
@@ -316,7 +316,7 @@ public:
   CanQualType OverloadTy;
   CanQualType DependentTy;
   CanQualType UndeducedAutoTy;
-  CanQualType ObjCBuiltinIdTy, ObjCBuiltinClassTy;
+  CanQualType ObjCBuiltinIdTy, ObjCBuiltinClassTy, ObjCBuiltinSelTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
@@ -696,7 +696,7 @@ public:
   void setObjCIdType(QualType T);
 
   void setObjCSelType(QualType T);
-  QualType getObjCSelType() const { return ObjCSelType; }
+  QualType getObjCSelType() const { return ObjCSelTypedefType; }
 
   void setObjCProtoType(QualType QT);
   QualType getObjCProtoType() const { return ObjCProtoType; }
@@ -1023,8 +1023,7 @@ public:
     return T == ObjCClassTypedefType;
   }
   bool isObjCSelType(QualType T) const {
-    assert(SelStructType && "isObjCSelType used before 'SEL' type is built");
-    return T->getAsStructureType() == SelStructType;
+    return T == ObjCSelTypedefType;
   }
   bool QualifiedIdConformsQualifiedId(QualType LHS, QualType RHS);
   bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,

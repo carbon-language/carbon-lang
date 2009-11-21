@@ -299,17 +299,15 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 
   // Built-in ObjC types may already be set by PCHReader (hence isNull checks).
   if (Context.getObjCSelType().isNull()) {
-    // Synthesize "typedef struct objc_selector *SEL;"
-    RecordDecl *SelTag = CreateStructDecl(Context, "objc_selector");
-    PushOnScopeChains(SelTag, TUScope);
-
-    QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
+    // Create the built-in typedef for 'SEL'.
+    QualType SelT = Context.getObjCObjectPointerType(Context.ObjCBuiltinSelTy);
     DeclaratorInfo *SelInfo = Context.getTrivialDeclaratorInfo(SelT);
     TypedefDecl *SelTypedef
       = TypedefDecl::Create(Context, CurContext, SourceLocation(),
                             &Context.Idents.get("SEL"), SelInfo);
     PushOnScopeChains(SelTypedef, TUScope);
     Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
+    Context.ObjCSELRedefinitionType = Context.getObjCSelType();
   }
 
   // Synthesize "@class Protocol;
