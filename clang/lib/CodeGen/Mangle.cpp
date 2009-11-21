@@ -169,18 +169,15 @@ bool CXXNameMangler::mangle(const NamedDecl *D) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     return mangleFunctionDecl(FD);
 
-  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    if (!Context.getASTContext().getLangOptions().CPlusPlus ||
-        isInCLinkageSpecification(D) ||
-        D->getDeclContext()->isTranslationUnit())
-      return false;
+  const VarDecl *VD = cast<VarDecl>(D);
+  if (!Context.getASTContext().getLangOptions().CPlusPlus ||
+      isInCLinkageSpecification(D) ||
+      D->getDeclContext()->isTranslationUnit())
+    return false;
 
-    Out << "_Z";
-    mangleName(VD);
-    return true;
-  }
-
-  return false;
+  Out << "_Z";
+  mangleName(VD);
+  return true;
 }
 
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
@@ -1298,10 +1295,10 @@ void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
 /// name.
 bool MangleContext::mangleName(const NamedDecl *D,
                                llvm::SmallVectorImpl<char> &Res) {
-  assert(!isa<CXXConstructorDecl>(D) &&
-         "Use mangleCXXCtor for constructor decls!");
-  assert(!isa<CXXDestructorDecl>(D) &&
-         "Use mangleCXXDtor for destructor decls!");
+  assert((isa<FunctionDecl>(D) || isa<VarDecl>(D)) &&
+          "Invalid mangleName() call, argument is not a variable or function!");
+  assert(!isa<CXXConstructorDecl>(D) && !isa<CXXDestructorDecl>(D) &&
+         "Invalid mangleName() call on 'structor decl!");
 
   PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
                                  getASTContext().getSourceManager(),
