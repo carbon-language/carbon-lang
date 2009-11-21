@@ -23,7 +23,8 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
-class raw_ostream;
+template<typename T>
+class SmallVectorImpl;
 }
 
 namespace clang {
@@ -57,22 +58,24 @@ public:
   /// @name Mangler Entry Points
   /// @{
 
-  bool mangleName(const NamedDecl *D, llvm::raw_ostream &os);
+  bool mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
   void mangleThunk(const FunctionDecl *FD, int64_t n, int64_t vn,
-                   llvm::raw_ostream &os);
+                   llvm::SmallVectorImpl<char> &);
   void mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t, int64_t v_t,
-                            int64_t nv_r, int64_t v_r, llvm::raw_ostream &os);
-  void mangleGuardVariable(const VarDecl *D, llvm::raw_ostream &os);
-  void mangleCXXVtable(const CXXRecordDecl *RD, llvm::raw_ostream &os);
-  void mangleCXXVTT(const CXXRecordDecl *RD, llvm::raw_ostream &os);
+                            int64_t nv_r, int64_t v_r,
+                            llvm::SmallVectorImpl<char> &);
+  void mangleGuardVariable(const VarDecl *D, llvm::SmallVectorImpl<char> &);
+  void mangleCXXVtable(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
+  void mangleCXXVTT(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
   void mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
-                           const CXXRecordDecl *Type, llvm::raw_ostream &os);
-  void mangleCXXRtti(QualType T, llvm::raw_ostream &os);
-  void mangleCXXRttiName(QualType T, llvm::raw_ostream &os);
+                           const CXXRecordDecl *Type,
+                           llvm::SmallVectorImpl<char> &);
+  void mangleCXXRtti(QualType T, llvm::SmallVectorImpl<char> &);
+  void mangleCXXRttiName(QualType T, llvm::SmallVectorImpl<char> &);
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                     llvm::raw_ostream &os);
+                     llvm::SmallVectorImpl<char> &);
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                     llvm::raw_ostream &os);
+                     llvm::SmallVectorImpl<char> &);
 
   /// @}
 };

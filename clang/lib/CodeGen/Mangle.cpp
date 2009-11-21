@@ -32,7 +32,7 @@ namespace {
 /// CXXNameMangler - Manage the mangling of a single name.
 class VISIBILITY_HIDDEN CXXNameMangler {
   MangleContext &Context;
-  llvm::raw_ostream &Out;
+  llvm::raw_svector_ostream Out;
 
   const CXXMethodDecl *Structor;
   unsigned StructorType;
@@ -41,8 +41,8 @@ class VISIBILITY_HIDDEN CXXNameMangler {
   llvm::DenseMap<uintptr_t, unsigned> Substitutions;
 
   public:
-  CXXNameMangler(MangleContext &C, llvm::raw_ostream &os)
-    : Context(C), Out(os), Structor(0), StructorType(0) { }
+  CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res)
+    : Context(C), Out(Res), Structor(0), StructorType(0) { }
 
   bool mangle(const NamedDecl *D);
   void mangleCalloffset(int64_t nv, int64_t v);
@@ -1387,7 +1387,8 @@ void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
 /// and this routine will return false. In this case, the caller should just
 /// emit the identifier of the declaration (\c D->getIdentifier()) as its
 /// name.
-bool MangleContext::mangleName(const NamedDecl *D, llvm::raw_ostream &os) {
+bool MangleContext::mangleName(const NamedDecl *D,
+                               llvm::SmallVectorImpl<char> &Res) {
   assert(!isa<CXXConstructorDecl>(D) &&
          "Use mangleCXXCtor for constructor decls!");
   assert(!isa<CXXDestructorDecl>(D) &&
@@ -1397,102 +1398,82 @@ bool MangleContext::mangleName(const NamedDecl *D, llvm::raw_ostream &os) {
                                  getASTContext().getSourceManager(),
                                  "Mangling declaration");
 
-  CXXNameMangler Mangler(*this, os);
-  if (!Mangler.mangle(D))
-    return false;
-
-  os.flush();
-  return true;
+  CXXNameMangler Mangler(*this, Res);
+  return Mangler.mangle(D);
 }
 
 /// \brief Mangles the a thunk with the offset n for the declaration D and
 /// emits that name to the given output stream.
 void MangleContext::mangleThunk(const FunctionDecl *FD, int64_t nv, int64_t v,
-                                llvm::raw_ostream &os) {
+                                llvm::SmallVectorImpl<char> &Res) {
   // FIXME: Hum, we might have to thunk these, fix.
   assert(!isa<CXXDestructorDecl>(FD) &&
          "Use mangleCXXDtor for destructor decls!");
 
-  CXXNameMangler Mangler(*this, os);
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleThunk(FD, nv, v);
-  os.flush();
 }
 
 /// \brief Mangles the a covariant thunk for the declaration D and emits that
 /// name to the given output stream.
 void MangleContext::mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t,
                                          int64_t v_t, int64_t nv_r, int64_t v_r,
-                                         llvm::raw_ostream &os) {
+                                         llvm::SmallVectorImpl<char> &Res) {
   // FIXME: Hum, we might have to thunk these, fix.
   assert(!isa<CXXDestructorDecl>(FD) &&
          "Use mangleCXXDtor for destructor decls!");
 
-  CXXNameMangler Mangler(*this, os);
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCovariantThunk(FD, nv_t, v_t, nv_r, v_r);
-  os.flush();
 }
 
 /// mangleGuardVariable - Returns the mangled name for a guard variable
 /// for the passed in VarDecl.
 void MangleContext::mangleGuardVariable(const VarDecl *D,
-                                        llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+                                        llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleGuardVariable(D);
-
-  os.flush();
 }
 
 void MangleContext::mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                                  llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+                                  llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCXXCtor(D, Type);
-
-  os.flush();
 }
 
 void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                                  llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+                                  llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCXXDtor(D, Type);
-
-  os.flush();
 }
 
 void MangleContext::mangleCXXVtable(const CXXRecordDecl *RD,
-                                    llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+                                    llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCXXVtable(RD);
-
-  os.flush();
 }
 
 void MangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
-                                 llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+                                 llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCXXVTT(RD);
-
-  os.flush();
 }
 
 void MangleContext::mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
                                         const CXXRecordDecl *Type,
-                                        llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+                                        llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCXXCtorVtable(RD, Offset, Type);
-
-  os.flush();
 }
 
-void MangleContext::mangleCXXRtti(QualType Ty, llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+void MangleContext::mangleCXXRtti(QualType Ty,
+                                  llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCXXRtti(Ty);
-
-  os.flush();
 }
 
-void MangleContext::mangleCXXRttiName(QualType Ty, llvm::raw_ostream &os) {
-  CXXNameMangler Mangler(*this, os);
+void MangleContext::mangleCXXRttiName(QualType Ty,
+                                      llvm::SmallVectorImpl<char> &Res) {
+  CXXNameMangler Mangler(*this, Res);
   Mangler.mangleCXXRttiName(Ty);
-
-  os.flush();
 }

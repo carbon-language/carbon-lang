@@ -49,9 +49,8 @@ public:
 
   llvm::Constant *BuildName(QualType Ty, bool Hidden, bool Extern) {
     llvm::SmallString<256> OutName;
-    llvm::raw_svector_ostream Out(OutName);
-    CGM.getMangleContext().mangleCXXRttiName(Ty, Out);
-    llvm::StringRef Name = Out.str();
+    CGM.getMangleContext().mangleCXXRttiName(Ty, OutName);
+    llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable::LinkageTypes linktype;
     linktype = llvm::GlobalValue::LinkOnceODRLinkage;
@@ -99,9 +98,8 @@ public:
       return llvm::Constant::getNullValue(Int8PtrTy);
 
     llvm::SmallString<256> OutName;
-    llvm::raw_svector_ostream Out(OutName);
-    CGM.getMangleContext().mangleCXXRtti(Ty, Out);
-    llvm::StringRef Name = Out.str();
+    CGM.getMangleContext().mangleCXXRtti(Ty, OutName);
+    llvm::StringRef Name = OutName.str();
 
     C = CGM.getModule().getGlobalVariable(Name);
     if (C)
@@ -194,10 +192,9 @@ public:
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
-    llvm::raw_svector_ostream Out(OutName);
     CGM.getMangleContext().mangleCXXRtti(CGM.getContext().getTagDeclType(RD),
-                                         Out);
-    llvm::StringRef Name = Out.str();
+                                         OutName);
+    llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *GV;
     GV = CGM.getModule().getGlobalVariable(Name);
@@ -290,9 +287,8 @@ public:
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
-    llvm::raw_svector_ostream Out(OutName);
-    CGM.getMangleContext().mangleCXXRtti(Ty, Out);
-    llvm::StringRef Name = Out.str();
+    CGM.getMangleContext().mangleCXXRtti(Ty, OutName);
+    llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *GV;
     GV = CGM.getModule().getGlobalVariable(Name);
@@ -344,9 +340,8 @@ public:
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
-    llvm::raw_svector_ostream Out(OutName);
-    CGM.getMangleContext().mangleCXXRtti(Ty, Out);
-    llvm::StringRef Name = Out.str();
+    CGM.getMangleContext().mangleCXXRtti(Ty, OutName);
+    llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *GV;
     GV = CGM.getModule().getGlobalVariable(Name);

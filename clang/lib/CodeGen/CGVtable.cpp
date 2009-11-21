@@ -791,12 +791,11 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
                                               const CXXRecordDecl *RD,
                                               uint64_t Offset) {
   llvm::SmallString<256> OutName;
-  llvm::raw_svector_ostream Out(OutName);
   if (LayoutClass != RD)
-    getMangleContext().mangleCXXCtorVtable(LayoutClass, Offset/8, RD, Out);
+    getMangleContext().mangleCXXCtorVtable(LayoutClass, Offset/8, RD, OutName);
   else
-    getMangleContext().mangleCXXVtable(RD, Out);
-  llvm::StringRef Name = Out.str();
+    getMangleContext().mangleCXXVtable(RD, OutName);
+  llvm::StringRef Name = OutName.str();
 
   std::vector<llvm::Constant *> methods;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
@@ -1042,9 +1041,8 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
     return 0;
 
   llvm::SmallString<256> OutName;
-  llvm::raw_svector_ostream Out(OutName);
-  getMangleContext().mangleCXXVTT(RD, Out);
-  llvm::StringRef Name = Out.str();
+  getMangleContext().mangleCXXVTT(RD, OutName);
+  llvm::StringRef Name = OutName.str();
 
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::LinkOnceODRLinkage;

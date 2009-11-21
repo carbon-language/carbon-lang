@@ -151,8 +151,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
          "thread safe statics are currently not supported!");
 
   llvm::SmallString<256> GuardVName;
-  llvm::raw_svector_ostream GuardVOut(GuardVName);
-  CGM.getMangleContext().mangleGuardVariable(&D, GuardVOut);
+  CGM.getMangleContext().mangleGuardVariable(&D, GuardVName);
 
   // Create the guard variable.
   llvm::GlobalValue *GuardV =
@@ -755,8 +754,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
 const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
                                                  CXXCtorType Type) {
   llvm::SmallString<256> Name;
-  llvm::raw_svector_ostream Out(Name);
-  getMangleContext().mangleCXXCtor(D, Type, Out);
+  getMangleContext().mangleCXXCtor(D, Type, Name);
 
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
@@ -793,8 +791,7 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
 const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
                                                  CXXDtorType Type) {
   llvm::SmallString<256> Name;
-  llvm::raw_svector_ostream Out(Name);
-  getMangleContext().mangleCXXDtor(D, Type, Out);
+  getMangleContext().mangleCXXDtor(D, Type, Name);
 
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
@@ -945,8 +942,7 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
                                           int64_t nv, int64_t v) {
   llvm::SmallString<256> OutName;
-  llvm::raw_svector_ostream Out(OutName);
-  getMangleContext().mangleThunk(MD, nv, v, Out);
+  getMangleContext().mangleThunk(MD, nv, v, OutName);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)
@@ -957,7 +953,7 @@ llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
     getTypes().GetFunctionType(getTypes().getFunctionInfo(MD),
                                FPT->isVariadic());
 
-  llvm::Function *Fn = llvm::Function::Create(FTy, linktype, Out.str(),
+  llvm::Function *Fn = llvm::Function::Create(FTy, linktype, OutName.str(),
                                               &getModule());
   CodeGenFunction(*this).GenerateThunk(Fn, MD, Extern, nv, v);
   llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
@@ -969,8 +965,7 @@ llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
                                                    int64_t v_t, int64_t nv_r,
                                                    int64_t v_r) {
   llvm::SmallString<256> OutName;
-  llvm::raw_svector_ostream Out(OutName);
-  getMangleContext().mangleCovariantThunk(MD, nv_t, v_t, nv_r, v_r, Out);
+  getMangleContext().mangleCovariantThunk(MD, nv_t, v_t, nv_r, v_r, OutName);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)
@@ -981,7 +976,7 @@ llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
     getTypes().GetFunctionType(getTypes().getFunctionInfo(MD),
                                FPT->isVariadic());
 
-  llvm::Function *Fn = llvm::Function::Create(FTy, linktype, Out.str(),
+  llvm::Function *Fn = llvm::Function::Create(FTy, linktype, OutName.str(),
                                               &getModule());
   CodeGenFunction(*this).GenerateCovariantThunk(Fn, MD, Extern, nv_t, v_t, nv_r,
                                                v_r);
