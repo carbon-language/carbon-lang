@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=x86 -enable-eh -asm-verbose -o - | \
-; RUN:   grep -A 3 {Llabel138.*Region start} | grep {3.*Action}
+; RUN: llc < %s -march=x86 -enable-eh -asm-verbose -o - | FileCheck %s
 ; PR1422
 ; PR1508
 
@@ -2864,3 +2863,8 @@ declare void @system__img_enum__image_enumeration_8(%struct.string___XUP* sret ,
 declare i32 @memcmp(i8*, i8*, i32, ...)
 
 declare void @report__result()
+
+; CHECK: {{Llabel138.*Region start}}
+; CHECK-NEXT: Region length
+; CHECK-NEXT: Landing pad
+; CHECK-NEXT: {{3.*Action}}
