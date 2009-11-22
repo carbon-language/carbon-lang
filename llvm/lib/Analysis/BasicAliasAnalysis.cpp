@@ -164,7 +164,6 @@ namespace {
       llvm_unreachable("This method may not be called on this function!");
     }
 
-    virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) { }
     virtual bool pointsToConstantMemory(const Value *P) { return false; }
     virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       return ModRef;
@@ -172,7 +171,6 @@ namespace {
     virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
       return ModRef;
     }
-    virtual bool hasNoModRefInfoForCalls() const { return true; }
 
     virtual void deleteValue(Value *V) {}
     virtual void copyValue(Value *From, Value *To) {}
@@ -210,10 +208,6 @@ namespace {
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
-
-    /// hasNoModRefInfoForCalls - We can provide mod/ref information against
-    /// non-escaping allocations.
-    virtual bool hasNoModRefInfoForCalls() const { return false; }
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.

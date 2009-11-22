@@ -111,7 +111,6 @@ namespace {
     ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
-    bool hasNoModRefInfoForCalls() const { return false; }
 
     /// getModRefBehavior - Return the behavior of the specified function if
     /// called from the specified call site.  The call site may be null in which

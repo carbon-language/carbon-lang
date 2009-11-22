@@ -49,19 +49,9 @@ AliasAnalysis::alias(const Value *V1, unsigned V1Size,
   return AA->alias(V1, V1Size, V2, V2Size);
 }
 
-void AliasAnalysis::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
-  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->getMustAliases(P, RetVals);
-}
-
 bool AliasAnalysis::pointsToConstantMemory(const Value *P) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
   return AA->pointsToConstantMemory(P);
-}
-
-bool AliasAnalysis::hasNoModRefInfoForCalls() const {
-  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->hasNoModRefInfoForCalls();
 }
 
 void AliasAnalysis::deleteValue(Value *V) {

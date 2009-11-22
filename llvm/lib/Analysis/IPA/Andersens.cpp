@@ -484,7 +484,6 @@ namespace {
                       const Value *V2, unsigned V2Size);
     virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
-    void getMustAliases(Value *P, std::vector<Value*> &RetVals);
     bool pointsToConstantMemory(const Value *P);
 
     virtual void deleteValue(Value *V) {
@@ -678,32 +677,6 @@ Andersens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 AliasAnalysis::ModRefResult
 Andersens::getModRefInfo(CallSite CS1, CallSite CS2) {
   return AliasAnalysis::getModRefInfo(CS1,CS2);
-}
-
-/// getMustAlias - We can provide must alias information if we know that a
-/// pointer can only point to a specific function or the null pointer.
-/// Unfortunately we cannot determine must-alias information for global
-/// variables or any other memory memory objects because we do not track whether
-/// a pointer points to the beginning of an object or a field of it.
-void Andersens::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
-  Node *N = &GraphNodes[FindNode(getNode(P))];
-  if (N->PointsTo->count() == 1) {
-    Node *Pointee = &GraphNodes[N->PointsTo->find_first()];
-    // If a function is the only object in the points-to set, then it must be
-    // the destination.  Note that we can't handle global variables here,
-    // because we don't know if the pointer is actually pointing to a field of
-    // the global or to the beginning of it.
-    if (Value *V = Pointee->getValue()) {
-      if (Function *F = dyn_cast<Function>(V))
-        RetVals.push_back(F);
-    } else {
-      // If the object in the points-to set is the null object, then the null
-      // pointer is a must alias.
-      if (Pointee == &GraphNodes[NullObject])
-        RetVals.push_back(Constant::getNullValue(P->getType()));
-    }
-  }
-  AliasAnalysis::getMustAliases(P, RetVals);
 }
 
 /// pointsToConstantMemory - If we can determine that this pointer only points

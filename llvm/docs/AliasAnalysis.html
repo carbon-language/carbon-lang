@@ -225,12 +225,7 @@ method for testing dependencies between function calls.  This method takes two
 call sites (CS1 &amp; CS2), returns NoModRef if the two calls refer to disjoint
 memory locations, Ref if CS1 reads memory written by CS2, Mod if CS1 writes to
 memory read or written by CS2, or ModRef if CS1 might read or write memory
-accessed by CS2.  Note that this relation is not commutative.  Clients that use
-this method should be predicated on the <tt>hasNoModRefInfoForCalls()</tt>
-method, which indicates whether or not an analysis can provide mod/ref
-information for function call pairs (most can not).  If this predicate is false,
-the client shouldn't waste analysis time querying the <tt>getModRefInfo</tt>
-method many times.</p>
+accessed by CS2.  Note that this relation is not commutative.</p>
 
 </div>
 
@@ -246,21 +241,6 @@ method many times.</p>
 Several other tidbits of information are often collected by various alias
 analysis implementations and can be put to good use by various clients.
 </p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  The <tt>getMustAliases</tt> method
-</div>
-
-<div class="doc_text">
-
-<p>The <tt>getMustAliases</tt> method returns all values that are known to
-always must alias a pointer.  This information can be provided in some cases for
-important objects like the null pointer and global values.  Knowing that a
-pointer always points to a particular function allows indirect calls to be
-turned into direct calls, for example.</p>
 
 </div>
 

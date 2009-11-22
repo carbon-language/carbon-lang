@@ -49,9 +49,6 @@ namespace llvm {
       return false;
     }
     
-    /// hasNoModRefInfoForCalls - We can provide mod/ref information against
-    /// non-escaping allocations.
-    virtual bool hasNoModRefInfoForCalls() const { return false; }
   private:
     ModRefResult AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
                                        CallSite CS, Value *P, unsigned Size);

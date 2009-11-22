@@ -90,11 +90,6 @@ namespace {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
     
-    void getMustAliases(Value *P, std::vector<Value*> &RetVals) {
-      assert(Vals.find(P) != Vals.end() && "Never seen value in AA before");
-      return AliasAnalysis::getMustAliases(P, RetVals);
-    }
-
     bool pointsToConstantMemory(const Value *P) {
       assert(Vals.find(P) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::pointsToConstantMemory(P);

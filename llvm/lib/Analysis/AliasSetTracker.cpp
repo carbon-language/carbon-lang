@@ -153,9 +153,6 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
 
   // Check the call sites list and invoke list...
   if (!CallSites.empty()) {
-    if (AA.hasNoModRefInfoForCalls())
-      return true;
-
     for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
       if (AA.getModRefInfo(CallSites[i], const_cast<Value*>(Ptr), Size)
                    != AliasAnalysis::NoModRef)
@@ -168,9 +165,6 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
 bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
   if (AA.doesNotAccessMemory(CS))
     return false;
-
-  if (AA.hasNoModRefInfoForCalls())
-    return true;
 
   for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
     if (AA.getModRefInfo(CallSites[i], CS) != AliasAnalysis::NoModRef ||

@@ -94,14 +94,6 @@ public:
   virtual AliasResult alias(const Value *V1, unsigned V1Size,
                             const Value *V2, unsigned V2Size);
 
-  /// getMustAliases - If there are any pointers known that must alias this
-  /// pointer, return them now.  This allows alias-set based alias analyses to
-  /// perform a form a value numbering (which is exposed by load-vn).  If an
-  /// alias analysis supports this, it should ADD any must aliased pointers to
-  /// the specified vector.
-  ///
-  virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals);
-
   /// pointsToConstantMemory - If the specified pointer is known to point into
   /// constant global memory, return true.  This allows disambiguation of store
   /// instructions from constant pointers.
@@ -261,14 +253,6 @@ public:
   /// ModRef if CS1 might read or write memory accessed by CS2.
   ///
   virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
-
-  /// hasNoModRefInfoForCalls - Return true if the analysis has no mod/ref
-  /// information for pairs of function calls (other than "pure" and "const"
-  /// functions).  This can be used by clients to avoid many pointless queries.
-  /// Remember that if you override this and chain to another analysis, you must
-  /// make sure that it doesn't have mod/ref info either.
-  ///
-  virtual bool hasNoModRefInfoForCalls() const;
 
 public:
   /// Convenience functions...
