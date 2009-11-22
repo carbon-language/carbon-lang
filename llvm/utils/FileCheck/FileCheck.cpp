@@ -92,6 +92,12 @@ public:
 private:
   static void AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr);
   bool AddRegExToRegEx(StringRef RegExStr, unsigned &CurParen, SourceMgr &SM);
+
+  /// ComputeMatchDistance - Compute an arbitrary estimate for the quality of
+  /// matching this pattern at the start of \arg Buffer; a distance of zero
+  /// should correspond to a perfect match.
+  unsigned ComputeMatchDistance(StringRef Buffer,
+                               const StringMap<StringRef> &VariableTable) const;
 };
 
 
@@ -322,12 +328,28 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
   return FullMatch.data()-Buffer.data();
 }
 
+unsigned Pattern::ComputeMatchDistance(StringRef Buffer,
+                              const StringMap<StringRef> &VariableTable) const {
+  // Just compute the number of matching characters. For regular expressions, we
+  // just compare against the regex itself and hope for the best.
+  //
+  // FIXME: One easy improvement here is have the regex lib generate a single
+  // example regular expression which matches, and use that as the example
+  // string.
+  StringRef ExampleString(FixedStr);
+  if (ExampleString.empty())
+    ExampleString = RegExStr;
+
+  unsigned Distance = 0;
+  for (unsigned i = 0, e = ExampleString.size(); i != e; ++i)
+    if (Buffer.substr(i, 1) != ExampleString.substr(i, 1))
+      ++Distance;
+
+  return Distance;
+}
+
 void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
                                const StringMap<StringRef> &VariableTable) const{
-  // If this is a fixed string, do nothing.
-  if (!FixedStr.empty())
-    return;
-
   // If this was a regular expression using variables, print the current
   // variable values.
   if (!VariableUses.empty()) {
@@ -350,6 +372,40 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
       SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), OS.str(), "note",
                       /*ShowLine=*/false);
     }
+  }
+
+  // Attempt to find the closest/best fuzzy match.  Usually an error happens
+  // because some string in the output didn't exactly match. In these cases, we
+  // would like to show the user a best guess at what "should have" matched, to
+  // save them having to actually check the input manually.
+  size_t NumLinesForward = 0;
+  size_t Best = StringRef::npos;
+  double BestQuality = 0;
+
+  // Use an arbitrary 4k limit on how far we will search.
+  for (size_t i = 0, e = std::min(4096, int(Buffer.size())); i != e; ++i) {
+    if (Buffer[i] == '\n')
+      ++NumLinesForward;
+
+    // Compute the "quality" of this match as an arbitrary combination of the
+    // match distance and the number of lines skipped to get to this match.
+    unsigned Distance = ComputeMatchDistance(Buffer.substr(i), VariableTable);
+    double Quality = Distance + (NumLinesForward / 100.);
+
+    if (Quality < BestQuality || Best == StringRef::npos) {
+      Best = i;
+      BestQuality = Quality;
+    }
+  }
+
+  if (BestQuality < 50) {
+    // Print the "possible intended match here" line if we found something
+    // reasonable.
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.data() + Best),
+                    "possible intended match here", "note");
+
+    // FIXME: If we wanted to be really friendly we would show why the match
+    // failed, as it can be hard to spot simple one character differences.
   }
 }
 
