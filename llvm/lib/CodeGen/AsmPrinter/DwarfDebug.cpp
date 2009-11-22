@@ -119,7 +119,8 @@ public:
     return IndexTyDie;
   }
 
-  // setIndexTyDie - Set D as anonymous type for index which can be reused later.
+  // setIndexTyDie - Set D as anonymous type for index which can be reused
+  // later.
   void setIndexTyDie(DIE *D) {
     IndexTyDie = D;
   }
@@ -982,7 +983,8 @@ DIE *DwarfDebug::constructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
 /// createGlobalVariableDIE - Create new DIE using GV.
 DIE *DwarfDebug::createGlobalVariableDIE(CompileUnit *DW_Unit,
                                          const DIGlobalVariable &GV) {
-  // If the global variable was optmized out then no need to create debug info entry.
+  // If the global variable was optmized out then no need to create debug info
+  // entry.
   if (!GV.getGlobal()) return NULL;
   if (!GV.getDisplayName()) return NULL;
 
@@ -1080,9 +1082,10 @@ DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
 
   const char *LinkageName = SP.getLinkageName();
   if (LinkageName) {
-    // Skip special LLVM prefix that is used to inform the asm printer to not emit
-    // usual symbol prefix before the symbol name. This happens for Objective-C
-    // symbol names and symbol whose name is replaced using GCC's __asm__ attribute.
+    // Skip special LLVM prefix that is used to inform the asm printer to not
+    // emit usual symbol prefix before the symbol name. This happens for
+    // Objective-C symbol names and symbol whose name is replaced using GCC's
+    // __asm__ attribute.
     if (LinkageName[0] == 1)
       LinkageName = &LinkageName[1];
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
@@ -1387,7 +1390,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
     I = InlineInfo.find(InlinedSP.getNode());
 
   if (I == InlineInfo.end()) {
-    InlineInfo[InlinedSP.getNode()].push_back(std::make_pair(StartID, ScopeDIE));
+    InlineInfo[InlinedSP.getNode()].push_back(std::make_pair(StartID,
+                                                             ScopeDIE));
     InlinedSPNodes.push_back(InlinedSP.getNode());
   } else
     I->second.push_back(std::make_pair(StartID, ScopeDIE));
@@ -1796,7 +1800,8 @@ void DwarfDebug::endModule() {
 }
 
 /// findAbstractVariable - Find abstract variable, if any, associated with Var.
-DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var, unsigned FrameIdx,
+DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
+                                              unsigned FrameIdx,
                                               DILocation &ScopeLoc) {
 
   DbgVariable *AbsDbgVariable = AbstractVariables.lookup(Var.getNode());
@@ -1837,7 +1842,8 @@ void DwarfDebug::collectVariableInfo() {
 
     DbgVariable *RegVar = new DbgVariable(DV, VP.first);
     Scope->addVariable(RegVar);
-    if (DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.first, ScopeLoc))
+    if (DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.first,
+                                                           ScopeLoc))
       RegVar->setAbstractVariable(AbsDbgVariable);
   }
 }
@@ -2134,7 +2140,8 @@ unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
 
 /// computeSizeAndOffset - Compute the size and offset of a DIE.
 ///
-unsigned DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
+unsigned
+DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
   // Get the children.
   const std::vector<DIE *> &Children = Die->getChildren();
 
@@ -2808,7 +2815,8 @@ void DwarfDebug::emitDebugInlineInfo() {
 //  for (ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator
     //        I = InlineInfo.begin(), E = InlineInfo.end(); I != E; ++I) {
     MDNode *Node = *I;
-    ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator II = InlineInfo.find(Node);
+    ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator II
+      = InlineInfo.find(Node);
     SmallVector<InlineInfoLabels, 4> &Labels = II->second;
     DISubprogram SP(Node);
     const char *LName = SP.getLinkageName();
