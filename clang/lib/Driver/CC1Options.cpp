@@ -14,6 +14,7 @@
 #include "clang/Driver/Option.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
@@ -78,6 +79,73 @@ getAllArgValues(ArgList &Args, cc1options::ID ID) {
 }
 
 //
+
+static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args) {
+  Opts.AnalysisList.clear();
+#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE) \
+  if (Args.hasArg(cc1options::OPT_analysis_##NAME)) \
+    Opts.AnalysisList.push_back(NAME);
+#include "clang/Frontend/Analyses.def"
+
+  if (Arg *A = Args.getLastArg(cc1options::OPT_analyzer_store)) {
+    llvm::StringRef Name = A->getValue(Args);
+    AnalysisStores Value = llvm::StringSwitch<AnalysisStores>(Name)
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN) \
+      .Case(CMDFLAG, NAME##Model)
+#include "clang/Frontend/Analyses.def"
+      .Default(NumStores);
+    // FIXME: Error handling.
+    if (Value == NumStores)
+      llvm::errs() << "error: invalid analysis store '" << Name << "'\n";
+    else
+      Opts.AnalysisStoreOpt = Value;
+  }
+
+  if (Arg *A = Args.getLastArg(cc1options::OPT_analyzer_constraints)) {
+    llvm::StringRef Name = A->getValue(Args);
+    AnalysisConstraints Value = llvm::StringSwitch<AnalysisConstraints>(Name)
+#define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN) \
+      .Case(CMDFLAG, NAME##Model)
+#include "clang/Frontend/Analyses.def"
+      .Default(NumConstraints);
+    // FIXME: Error handling.
+    if (Value == NumConstraints)
+      llvm::errs() << "error: invalid analysis constraints '" << Name << "'\n";
+    else
+      Opts.AnalysisConstraintsOpt = Value;
+  }
+
+  if (Arg *A = Args.getLastArg(cc1options::OPT_analyzer_output)) {
+    llvm::StringRef Name = A->getValue(Args);
+    AnalysisDiagClients Value = llvm::StringSwitch<AnalysisDiagClients>(Name)
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREAT) \
+      .Case(CMDFLAG, PD_##NAME)
+#include "clang/Frontend/Analyses.def"
+      .Default(NUM_ANALYSIS_DIAG_CLIENTS);
+    // FIXME: Error handling.
+    if (Value == NUM_ANALYSIS_DIAG_CLIENTS)
+      llvm::errs() << "error: invalid analysis output '" << Name << "'\n";
+    else
+      Opts.AnalysisDiagOpt = Value;
+  }
+
+  Opts.VisualizeEGDot =
+    Args.hasArg(cc1options::OPT_analyzer_viz_egraph_graphviz);
+  Opts.VisualizeEGUbi =
+    Args.hasArg(cc1options::OPT_analyzer_viz_egraph_ubigraph);
+  Opts.AnalyzeAll = Args.hasArg(cc1options::OPT_analyzer_opt_analyze_headers);
+  Opts.AnalyzerDisplayProgress =
+    Args.hasArg(cc1options::OPT_analyzer_display_progress);
+  Opts.PurgeDead = !Args.hasArg(cc1options::OPT_analyzer_no_purge_dead);
+  Opts.EagerlyAssume = Args.hasArg(cc1options::OPT_analyzer_eagerly_assume);
+  Opts.AnalyzeSpecificFunction =
+    getLastArgValue(Args, cc1options::OPT_analyze_function);
+  Opts.EnableExperimentalChecks =
+    Args.hasArg(cc1options::OPT_analyzer_experimental_checks);
+  Opts.EnableExperimentalInternalChecks =
+    Args.hasArg(cc1options::OPT_analyzer_experimental_internal_checks);
+  Opts.TrimGraph = Args.hasArg(cc1options::OPT_trim_egraph);
+}
 
 static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args) {
   // -Os implies -O2
@@ -160,6 +228,7 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                  << " value )\n";
   }
 
+  ParseAnalyzerArgs(Res.getAnalyzerOpts(), *InputArgs);
   ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *InputArgs);
   ParseTargetArgs(Res.getTargetOpts(), *InputArgs);

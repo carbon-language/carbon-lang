@@ -81,7 +81,7 @@ static llvm::cl::opt<bool>
 AnalyzeAll("analyzer-opt-analyze-headers",
     llvm::cl::desc("Force the static analyzer to analyze "
                    "functions defined in header files"));
-  
+
 static llvm::cl::opt<bool>
 AnalyzerDisplayProgress("analyzer-display-progress",
           llvm::cl::desc("Emit verbose output about the analyzer's progress"));
@@ -93,7 +93,7 @@ AnalyzerExperimentalChecks("analyzer-experimental-checks",
 static llvm::cl::opt<bool>
 AnalyzerExperimentalInternalChecks("analyzer-experimental-internal-checks",
   llvm::cl::desc("Use new default path-sensitive checks currently in testing"));
-  
+
 static llvm::cl::opt<std::string>
 AnalyzeSpecificFunction("analyze-function",
                llvm::cl::desc("Run analysis on specific function"));

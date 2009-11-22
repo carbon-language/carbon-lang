@@ -17,7 +17,7 @@ static const char *getAnalysisName(Analyses Kind) {
   default:
     llvm::llvm_unreachable("Unknown analysis store!");
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
-  case NAME: return CMDFLAG;
+  case NAME: return "-" CMDFLAG;
 #include "clang/Frontend/Analyses.def"
   }
 }
@@ -89,7 +89,7 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
   if (Opts.EnableExperimentalChecks)
     Res.push_back("-analyzer-experimental-checks");
   if (Opts.EnableExperimentalInternalChecks)
-    Res.push_back("-analyzer-experimental-internal-checls");
+    Res.push_back("-analyzer-experimental-internal-checks");
 }
 
 static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
