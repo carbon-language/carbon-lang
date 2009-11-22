@@ -823,37 +823,6 @@ def CMP16mr : Pseudo<(outs), (ins memsrc:$src1, GR16:$src2),
                 "cmp.w\t{$src1, $src2}",
                 [(MSP430cmp (load addr:$src1), GR16:$src2), (implicit SRW)]>;
 
-def CMP8mi0 : Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.b\t{$src1, #0}",
-                [(MSP430cmp (load addr:$src1), (i8 0)), (implicit SRW)]>;
-def CMP16mi0: Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.w\t{$src1, #0}",
-                [(MSP430cmp (load addr:$src1), (i16 0)), (implicit SRW)]>;
-def CMP8mi1 : Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.b\t{$src1, #1}",
-                [(MSP430cmp (load addr:$src1), (i8 1)), (implicit SRW)]>;
-def CMP16mi1: Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.w\t{$src1, #1}",
-                [(MSP430cmp (load addr:$src1), (i16 1)), (implicit SRW)]>;
-def CMP8mi2 : Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.b\t{$src1, #2}",
-                [(MSP430cmp (load addr:$src1), (i8 2)), (implicit SRW)]>;
-def CMP16mi2: Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.w\t{$src1, #2}",
-                [(MSP430cmp (load addr:$src1), (i16 2)), (implicit SRW)]>;
-def CMP8mi4 : Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.b\t{$src1, #4}",
-                [(MSP430cmp (load addr:$src1), (i8 4)), (implicit SRW)]>;
-def CMP16mi4: Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.w\t{$src1, #4}",
-                [(MSP430cmp (load addr:$src1), (i16 4)), (implicit SRW)]>;
-def CMP8mi8 : Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.b\t{$src1, #8}",
-                [(MSP430cmp (load addr:$src1), (i8 8)), (implicit SRW)]>;
-def CMP16mi8: Pseudo<(outs), (ins memsrc:$src1),
-                "cmp.w\t{$src1, #8}",
-                [(MSP430cmp (load addr:$src1), (i16 8)), (implicit SRW)]>;
-
 } // Defs = [SRW]
 
 //===----------------------------------------------------------------------===//
