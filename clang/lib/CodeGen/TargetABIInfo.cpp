@@ -771,7 +771,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     // reference.
     if (hasNonTrivialDestructorOrCopyConstructor(RT))
       return;
-    
+
     const RecordDecl *RD = RT->getDecl();
 
     // Assume variable sized types are passed in memory.
@@ -782,6 +782,32 @@ void X86_64ABIInfo::classify(QualType Ty,
 
     // Reset Lo class, this will be recomputed.
     Current = NoClass;
+
+    // If this is a C++ record, classify the bases first.
+    if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+      for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
+             e = CXXRD->bases_end(); i != e; ++i) {
+        assert(!i->isVirtual() && !i->getType()->isDependentType() &&
+               "Unexpected base class!");
+        const CXXRecordDecl *Base =
+          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+
+        // Classify this field.
+        //
+        // AMD64-ABI 3.2.3p2: Rule 3. If the size of the aggregate exceeds a
+        // single eightbyte, each is classified separately. Each eightbyte gets
+        // initialized to class NO_CLASS.
+        Class FieldLo, FieldHi;
+        uint64_t Offset = OffsetBase + Layout.getBaseClassOffset(Base);
+        classify(i->getType(), Context, Offset, FieldLo, FieldHi);
+        Lo = merge(Lo, FieldLo);
+        Hi = merge(Hi, FieldHi);
+        if (Lo == Memory || Hi == Memory)
+          break;
+      }
+    }
+
+    // Classify the fields one at a time, merging the results.
     unsigned idx = 0;
     for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i, ++idx) {
