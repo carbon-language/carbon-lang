@@ -39,17 +39,13 @@ declare i32 @llvm.bswap.i32(i32)
 declare i16 @llvm.bswap.i16(i16)
 
 
-; X32: stwbrx 3, 4, 5
-; X32: lwbrx 3, 3, 4
-; X32: sthbrx 3, 4, 5
-; X32: lhbrx 3, 3, 4
-; X32-NOT: rlwinm
-; X32-NOT: rlwimi
+; X32: stwbrx
+; X32: lwbrx
+; X32: sthbrx
+; X32: lhbrx
 
-; X32: stwbrx 3, 4, 5
-; X32: lwbrx 3, 3, 4
-; X32: sthbrx 3, 4, 5
-; X32: lhbrx 3, 3, 4
-; X64-NOT: rlwinm
-; X64-NOT: rlwimi
+; X64: stwbrx
+; X64: lwbrx
+; X64: sthbrx
+; X64: lhbrx
 
