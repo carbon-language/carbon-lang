@@ -401,6 +401,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineTypeWidth("__WCHAR_WIDTH__", TI.getWCharType(), TI, Buf);
   DefineType("__WINT_TYPE__", TI.getWIntType(), Buf);
   DefineTypeWidth("__WINT_WIDTH__", TI.getWIntType(), TI, Buf);
+  DefineTypeWidth("__SIG_ATOMIC_WIDTH__", TI.getSigAtomicType(), TI, Buf);
 
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());

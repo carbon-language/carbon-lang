@@ -182,6 +182,7 @@
 // ARM:#define __PTRDIFF_WIDTH__ 32
 // ARM:#define __SCHAR_MAX__ 127
 // ARM:#define __SHRT_MAX__ 32767
+// ARM:#define __SIG_ATOMIC_WIDTH__ 32
 // ARM:#define __SIZE_TYPE__ unsigned int
 // ARM:#define __SIZE_WIDTH__ 32
 // ARM:#define __THUMB_INTERWORK__ 1
@@ -265,6 +266,7 @@
 // BFIN:#define __PTRDIFF_WIDTH__ 32
 // BFIN:#define __SCHAR_MAX__ 127
 // BFIN:#define __SHRT_MAX__ 32767
+// BFIN:#define __SIG_ATOMIC_WIDTH__ 32
 // BFIN:#define __SIZE_TYPE__ long unsigned int
 // BFIN:#define __SIZE_WIDTH__ 32
 // BFIN:#define __UINTMAX_TYPE__ long long unsigned int
@@ -345,6 +347,7 @@
 // I386:#define __REGISTER_PREFIX__ 
 // I386:#define __SCHAR_MAX__ 127
 // I386:#define __SHRT_MAX__ 32767
+// I386:#define __SIG_ATOMIC_WIDTH__ 32
 // I386:#define __SIZE_TYPE__ unsigned int
 // I386:#define __SIZE_WIDTH__ 32
 // I386:#define __UINTMAX_TYPE__ long long unsigned int
@@ -426,6 +429,7 @@
 // MSP430:#define __PTRDIFF_WIDTH__ 16 
 // MSP430:#define __SCHAR_MAX__ 127
 // MSP430:#define __SHRT_MAX__ 32767
+// MSP430:#define __SIG_ATOMIC_WIDTH__ 32
 // MSP430:#define __SIZE_TYPE__ unsigned int
 // MSP430:#define __SIZE_WIDTH__ 16
 // MSP430:#define __UINTMAX_TYPE__ long unsigned int
@@ -501,6 +505,7 @@
 // PIC16:#define __PTRDIFF_WIDTH__ 16
 // PIC16:#define __SCHAR_MAX__ 127
 // PIC16:#define __SHRT_MAX__ 32767
+// PIC16:#define __SIG_ATOMIC_WIDTH__ 32
 // PIC16:#define __SIZE_TYPE__ unsigned int
 // PIC16:#define __SIZE_WIDTH__ 16
 // PIC16:#define __UINTMAX_TYPE__ long unsigned int
@@ -594,6 +599,7 @@
 // PPC64:#define __REGISTER_PREFIX__ 
 // PPC64:#define __SCHAR_MAX__ 127
 // PPC64:#define __SHRT_MAX__ 32767
+// PPC64:#define __SIG_ATOMIC_WIDTH__ 32
 // PPC64:#define __SIZE_TYPE__ long unsigned int
 // PPC64:#define __SIZE_WIDTH__ 64
 // PPC64:#define __UINTMAX_TYPE__ long unsigned int
@@ -678,6 +684,7 @@
 // PPC:#define __REGISTER_PREFIX__ 
 // PPC:#define __SCHAR_MAX__ 127
 // PPC:#define __SHRT_MAX__ 32767
+// PPC:#define __SIG_ATOMIC_WIDTH__ 32
 // PPC:#define __SIZE_TYPE__ long unsigned int
 // PPC:#define __SIZE_WIDTH__ 32
 // PPC:#define __UINTMAX_TYPE__ long long unsigned int
@@ -754,6 +761,7 @@
 // S390X:#define __PTRDIFF_WIDTH__ 64
 // S390X:#define __SCHAR_MAX__ 127
 // S390X:#define __SHRT_MAX__ 32767
+// S390X:#define __SIG_ATOMIC_WIDTH__ 32
 // S390X:#define __SIZE_TYPE__ long unsigned int
 // S390X:#define __SIZE_WIDTH__ 64
 // S390X:#define __UINTMAX_TYPE__ long long unsigned int
@@ -831,6 +839,7 @@
 // SPARC:#define __REGISTER_PREFIX__ 
 // SPARC:#define __SCHAR_MAX__ 127
 // SPARC:#define __SHRT_MAX__ 32767
+// SPARC:#define __SIG_ATOMIC_WIDTH__ 32
 // SPARC:#define __SIZE_TYPE__ long unsigned int
 // SPARC:#define __SIZE_WIDTH__ 32
 // SPARC:#define __UINTMAX_TYPE__ long long unsigned int
@@ -908,6 +917,7 @@
 // TCE:#define __PTRDIFF_WIDTH__ 32
 // TCE:#define __SCHAR_MAX__ 127
 // TCE:#define __SHRT_MAX__ 32767
+// TCE:#define __SIG_ATOMIC_WIDTH__ 32
 // TCE:#define __SIZE_TYPE__ unsigned int
 // TCE:#define __SIZE_WIDTH__ 32
 // TCE:#define __TCE_V1__ 1
@@ -993,6 +1003,7 @@
 // X86_64:#define __REGISTER_PREFIX__ 
 // X86_64:#define __SCHAR_MAX__ 127
 // X86_64:#define __SHRT_MAX__ 32767
+// X86_64:#define __SIG_ATOMIC_WIDTH__ 32
 // X86_64:#define __SIZE_TYPE__ long unsigned int
 // X86_64:#define __SIZE_WIDTH__ 64
 // X86_64:#define __SSE2_MATH__ 1
