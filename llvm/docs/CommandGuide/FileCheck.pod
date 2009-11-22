@@ -224,7 +224,7 @@ The first check line matches a regex (<tt>%[a-z]+</tt>) and captures it into
 the variables "REGISTER".  The second line verifies that whatever is in REGISTER
 occurs later in the file after an "andw".  FileCheck variable references are
 always contained in <tt>[[ ]]</tt> pairs, are named, and their names can be
-formed with the regex "<tt>[a-zA-Z][a-zA-Z0-9]*</tt>".  If a colon follows the
+formed with the regex "<tt>[a-zA-Z_][a-zA-Z0-9_]*</tt>".  If a colon follows the
 name, then it is a definition of the variable, if not, it is a use.
 
 FileCheck variables can be defined multiple times, and uses always get the

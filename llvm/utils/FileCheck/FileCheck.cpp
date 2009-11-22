@@ -140,7 +140,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
     // Named RegEx matches.  These are of two forms: [[foo:.*]] which matches .*
     // (or some other regex) and assigns it to the FileCheck variable 'foo'. The
     // second form is [[foo]] which is a reference to foo.  The variable name
-    // itself must be of the form "[a-zA-Z][0-9a-zA-Z]*", otherwise we reject
+    // itself must be of the form "[a-zA-Z_][0-9a-zA-Z_]*", otherwise we reject
     // it.  This is to catch some common errors.
     if (PatternStr.size() >= 2 &&
         PatternStr[0] == '[' && PatternStr[1] == '[') {
@@ -167,7 +167,8 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
 
       // Verify that the name is well formed.
       for (unsigned i = 0, e = Name.size(); i != e; ++i)
-        if ((Name[i] < 'a' || Name[i] > 'z') &&
+        if (Name[i] != '_' &&
+            (Name[i] < 'a' || Name[i] > 'z') &&
             (Name[i] < 'A' || Name[i] > 'Z') &&
             (Name[i] < '0' || Name[i] > '9')) {
           SM.PrintMessage(SMLoc::getFromPointer(Name.data()+i),
