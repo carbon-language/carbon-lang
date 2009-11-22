@@ -2711,8 +2711,6 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         state = state->BindExpr(B, Result);
         
         if (Result.isUndef()) {
-          // The operands were *not* undefined, but the result is undefined.
-          // This is a special node that should be flagged as an error.
           if (ExplodedNode *UndefNode = Builder->generateNode(B, state, *I2)){
             UndefNode->markAsSink();
             UndefResults.insert(UndefNode);
