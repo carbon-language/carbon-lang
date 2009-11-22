@@ -12,6 +12,7 @@
 
 #include "Sema.h"
 #include "TreeTransform.h"
+#include "Lookup.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
@@ -699,7 +700,8 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E,
 Sema::OwningExprResult
 TemplateInstantiator::TransformUnresolvedLookupExpr(UnresolvedLookupExpr *Old,
                                                     bool isAddressOfOperand) {
-  llvm::SmallVector<NamedDecl*, 16> InstDecls;
+  LookupResult R(SemaRef, Old->getName(), Old->getNameLoc(),
+                 Sema::LookupOrdinaryName);
 
   for (UnresolvedLookupExpr::decls_iterator I = Old->decls_begin(),
          E = Old->decls_end(); I != E; ++I) {
@@ -715,8 +717,13 @@ TemplateInstantiator::TransformUnresolvedLookupExpr(UnresolvedLookupExpr *Old,
     // Analogously.
     assert(!isa<UnresolvedUsingValueDecl>(InstD->getUnderlyingDecl()));
 
-    InstDecls.push_back(InstD);
+    R.addDecl(InstD);
   }
+
+  R.resolveKind();
+
+  // This shouldn't be possible.
+  assert(!R.isAmbiguous());
 
   CXXScopeSpec SS;
   NestedNameSpecifier *Qualifier = 0;
@@ -730,10 +737,7 @@ TemplateInstantiator::TransformUnresolvedLookupExpr(UnresolvedLookupExpr *Old,
     SS.setRange(Old->getQualifierRange());
   }
 
-  return SemaRef.BuildDeclarationNameExpr(&SS, Old->getNameLoc(),
-                                          Old->getName(), Old->requiresADL(),
-                                          Old->isOverloaded(),
-                                          InstDecls.data(), InstDecls.size());
+  return SemaRef.BuildDeclarationNameExpr(&SS, R, Old->requiresADL());
 }
 
 Sema::OwningExprResult

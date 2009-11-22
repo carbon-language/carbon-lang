@@ -777,8 +777,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
 
   // Determine whether this name might be a candidate for
   // argument-dependent lookup.
-  bool ADL = getLangOptions().CPlusPlus && (!SS || !SS->isSet()) &&
-             HasTrailingLParen;
+  bool ADL = UseArgumentDependentLookup(SS, Lookup, HasTrailingLParen);
 
   if (Lookup.empty() && !ADL) {
     // Otherwise, this could be an implicitly declared function reference (legal
@@ -844,8 +843,31 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     }
   }
 
-  return BuildDeclarationNameExpr(SS, Lookup, HasTrailingLParen,
-                                  isAddressOfOperand);
+  // &SomeClass::foo is an abstract member reference, regardless of
+  // the nature of foo, but &SomeClass::foo(...) is not.  If this is
+  // *not* an abstract member reference, and any of the results is a
+  // class member (which necessarily means they're all class members),
+  // then we make an implicit member reference instead.
+  //
+  // This check considers all the same information as the "needs ADL"
+  // check, but there's no simple logical relationship other than the
+  // fact that they can never be simultaneously true.  We could
+  // calculate them both in one pass if that proves important for
+  // performance.
+  if (!ADL) {
+    bool isAbstractMemberPointer = 
+      (isAddressOfOperand && !HasTrailingLParen && SS && !SS->isEmpty());
+
+    if (!isAbstractMemberPointer && !Lookup.empty() &&
+        isa<CXXRecordDecl>((*Lookup.begin())->getDeclContext())) {
+      return BuildImplicitMemberReferenceExpr(SS, Lookup);
+    }
+  }
+
+  assert(Lookup.getResultKind() != LookupResult::FoundUnresolvedValue &&
+         "found UnresolvedUsingValueDecl in non-class scope");
+
+  return BuildDeclarationNameExpr(SS, Lookup, ADL);
 }
 
 /// \brief Cast member's object to its own class if necessary.
@@ -894,9 +916,10 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
 /// Builds an implicit member access expression from the given
 /// unqualified lookup set, which is known to contain only class
 /// members.
-Sema::OwningExprResult BuildImplicitMemberExpr(Sema &S, LookupResult &R,
-                                               const CXXScopeSpec *SS) {
-  NamedDecl *D = R.getAsSingleDecl(S.Context);
+Sema::OwningExprResult
+Sema::BuildImplicitMemberReferenceExpr(const CXXScopeSpec *SS,
+                                       LookupResult &R) {
+  NamedDecl *D = R.getAsSingleDecl(Context);
   SourceLocation Loc = R.getNameLoc();
 
   // We may have found a field within an anonymous union or struct
@@ -904,15 +927,15 @@ Sema::OwningExprResult BuildImplicitMemberExpr(Sema &S, LookupResult &R,
   // FIXME: This needs to happen post-isImplicitMemberReference?
   if (FieldDecl *FD = dyn_cast<FieldDecl>(D))
     if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
-      return S.BuildAnonymousStructUnionMemberReference(Loc, FD);
+      return BuildAnonymousStructUnionMemberReference(Loc, FD);
 
   QualType ThisType;
   QualType MemberType;
-  if (S.isImplicitMemberReference(SS, D, Loc, ThisType, MemberType)) {
-    Expr *This = new (S.Context) CXXThisExpr(SourceLocation(), ThisType);
-    S.MarkDeclarationReferenced(Loc, D);
-    if (S.PerformObjectMemberConversion(This, D))
-      return S.ExprError();
+  if (isImplicitMemberReference(SS, D, Loc, ThisType, MemberType)) {
+    Expr *This = new (Context) CXXThisExpr(SourceLocation(), ThisType);
+    MarkDeclarationReferenced(Loc, D);
+    if (PerformObjectMemberConversion(This, D))
+      return ExprError();
 
     bool ShouldCheckUse = true;
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
@@ -922,46 +945,43 @@ Sema::OwningExprResult BuildImplicitMemberExpr(Sema &S, LookupResult &R,
         ShouldCheckUse = false;
     }
 
-    if (ShouldCheckUse && S.DiagnoseUseOfDecl(D, Loc))
-      return S.ExprError();
-    return S.Owned(BuildMemberExpr(S.Context, This, true, SS, D,
-                                   Loc, MemberType));
+    if (ShouldCheckUse && DiagnoseUseOfDecl(D, Loc))
+      return ExprError();
+    return Owned(BuildMemberExpr(Context, This, true, SS, D, Loc, MemberType));
   }
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
-    if (!Method->isStatic()) {
-      S.Diag(Loc, diag::err_member_call_without_object);
-      return S.ExprError();
-    }
+    if (!Method->isStatic())
+      return ExprError(Diag(Loc, diag::err_member_call_without_object));
   }
 
   if (isa<FieldDecl>(D)) {
-    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(S.CurContext)) {
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
       if (MD->isStatic()) {
         // "invalid use of member 'x' in static member function"
-        S.Diag(Loc,diag::err_invalid_member_use_in_static_method)
+        Diag(Loc, diag::err_invalid_member_use_in_static_method)
           << D->getDeclName();
-        return S.ExprError();
+        return ExprError();
       }
     }
 
     // Any other ways we could have found the field in a well-formed
     // program would have been turned into implicit member expressions
     // above.
-    S.Diag(Loc, diag::err_invalid_non_static_member_use)
+    Diag(Loc, diag::err_invalid_non_static_member_use)
       << D->getDeclName();
-    return S.ExprError();
+    return ExprError();
   }
 
-  return S.BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getLookupName(),
-                                    /*ADL*/ false, R.isOverloadedResult(),
-                                    R.begin(), R.end() - R.begin());
+  // We're not in an implicit member-reference context, but the lookup
+  // results might not require an instance.  Try to build a non-member
+  // decl reference.
+  return BuildDeclarationNameExpr(SS, R, /*ADL*/ false);
 }
 
-static bool UseArgumentDependentLookup(Sema &SemaRef,
-                                       const CXXScopeSpec *SS,
-                                       bool HasTrailingLParen,
-                                       const LookupResult &R) {
+bool Sema::UseArgumentDependentLookup(const CXXScopeSpec *SS,
+                                      const LookupResult &R,
+                                      bool HasTrailingLParen) {
   // Only when used directly as the postfix-expression of a call.
   if (!HasTrailingLParen)
     return false;
@@ -971,7 +991,7 @@ static bool UseArgumentDependentLookup(Sema &SemaRef,
     return false;
 
   // Only in C++ or ObjC++.
-  if (!SemaRef.getLangOptions().CPlusPlus)
+  if (!getLangOptions().CPlusPlus)
     return false;
 
   // Turn off ADL when we find certain kinds of declarations during
@@ -1015,38 +1035,6 @@ static bool UseArgumentDependentLookup(Sema &SemaRef,
 }
 
 
-/// \brief Complete semantic analysis for a reference to the given
-/// lookup results.
-Sema::OwningExprResult
-Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
-                               LookupResult &R,
-                               bool HasTrailingLParen,
-                               bool isAddressOfOperand) {
-  assert(!R.isAmbiguous() && "results are ambiguous");
-
-  // &SomeClass::foo is an abstract member reference, regardless of
-  // the nature of foo, but &SomeClass::foo(...) is not.
-  bool isAbstractMemberPointer = 
-    (isAddressOfOperand && !HasTrailingLParen && SS && !SS->isEmpty());
-
-  // If we're *not* an abstract member reference, and any of the
-  // results are class members (i.e. they're all class members), then
-  // we make an implicit member reference instead.
-  if (!isAbstractMemberPointer && !R.empty() &&
-      isa<CXXRecordDecl>((*R.begin())->getDeclContext())) {
-    return BuildImplicitMemberExpr(*this, R, SS);
-  }
-
-  assert(R.getResultKind() != LookupResult::FoundUnresolvedValue &&
-         "found UnresolvedUsingValueDecl in non-class scope");
-
-  bool ADL = UseArgumentDependentLookup(*this, SS, HasTrailingLParen, R);
-
-  return BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getLookupName(),
-                                  ADL, R.isOverloadedResult(),
-                                  R.begin(), R.end() - R.begin());
-}
-
 /// Diagnoses obvious problems with the use of the given declaration
 /// as an expression.  This is only actually called for lookups that
 /// were not overloaded, and it doesn't promise that the declaration
@@ -1072,29 +1060,28 @@ static bool CheckDeclInExpr(Sema &S, SourceLocation Loc, NamedDecl *D) {
 
 Sema::OwningExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
-                               SourceLocation Loc,
-                               DeclarationName Name,
-                               bool NeedsADL,
-                               bool IsOverloaded,
-                               NamedDecl * const *Decls,
-                               unsigned NumDecls) {
-  if (!NeedsADL && !IsOverloaded)
-    return BuildDeclarationNameExpr(SS, Loc, Decls[0]->getUnderlyingDecl());
+                               LookupResult &R,
+                               bool NeedsADL) {
+  assert(R.getResultKind() != LookupResult::FoundUnresolvedValue);
+
+  if (!NeedsADL && !R.isOverloadedResult())
+    return BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getFoundDecl());
 
   // We only need to check the declaration if there's exactly one
   // result, because in the overloaded case the results can only be
   // functions and function templates.
-  if (!IsOverloaded && NumDecls == 1 &&
-      CheckDeclInExpr(*this, Loc, Decls[0]->getUnderlyingDecl()))
+  if (R.isSingleResult() &&
+      CheckDeclInExpr(*this, R.getNameLoc(), R.getFoundDecl()))
     return ExprError();
 
   UnresolvedLookupExpr *ULE
     = UnresolvedLookupExpr::Create(Context,
                     SS ? (NestedNameSpecifier *)SS->getScopeRep() : 0,
                                    SS ? SS->getRange() : SourceRange(),
-                                   Name, Loc, NeedsADL, IsOverloaded);
-  for (unsigned I = 0; I != NumDecls; ++I)
-    ULE->addDecl(Decls[I]);
+                                   R.getLookupName(), R.getNameLoc(),
+                                   NeedsADL, R.isOverloadedResult());
+  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+    ULE->addDecl(*I);
 
   return Owned(ULE);
 }

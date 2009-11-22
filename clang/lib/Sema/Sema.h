@@ -1416,9 +1416,13 @@ public:
                                             bool HasTrailingLParen,
                                             const CXXScopeSpec *SS,
                                             bool isAddressOfOperand = false);
+  OwningExprResult BuildImplicitMemberReferenceExpr(const CXXScopeSpec *SS,
+                                                    LookupResult &R);
+  bool UseArgumentDependentLookup(const CXXScopeSpec *SS,
+                                  const LookupResult &R,
+                                  bool HasTrailingLParen);
   OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
-                                            LookupResult &R, bool ADL,
-                                            bool isAddressOfOperand);
+                                            LookupResult &R, bool ADL);
   OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
                                             SourceLocation Loc,
                                             DeclarationName Name,
