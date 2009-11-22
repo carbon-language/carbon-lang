@@ -72,3 +72,10 @@ void t8(int n) {
   new U[10];
   new U[n];
 }
+
+void t9() {
+  bool b;
+
+  new bool(true);  
+  new (&b) bool(true);
+}

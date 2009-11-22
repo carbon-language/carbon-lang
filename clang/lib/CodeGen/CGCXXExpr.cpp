@@ -103,8 +103,9 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
       
     const Expr *Init = E->getConstructorArg(0);
     
-    if (!CGF.hasAggregateLLVMType(AllocType))
-      CGF.Builder.CreateStore(CGF.EmitScalarExpr(Init), NewPtr);
+    if (!CGF.hasAggregateLLVMType(AllocType)) 
+      CGF.EmitStoreOfScalar(CGF.EmitScalarExpr(Init), NewPtr,
+                        AllocType.isVolatileQualified(), AllocType);
     else if (AllocType->isAnyComplexType())
       CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
                                   AllocType.isVolatileQualified());
