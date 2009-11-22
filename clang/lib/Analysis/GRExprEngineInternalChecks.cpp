@@ -317,8 +317,6 @@ void GRExprEngine::RegisterInternalChecks() {
   // their associated BugType will get registered with the BugReporter
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.  
-  registerCheck(new UndefinedAssignmentChecker());
-  
   RegisterAttrNonNullChecker(*this);
   RegisterUndefinedArgChecker(*this);
   RegisterDereferenceChecker(*this);
@@ -327,4 +325,5 @@ void GRExprEngine::RegisterInternalChecks() {
   RegisterReturnStackAddressChecker(*this);
   RegisterReturnUndefChecker(*this);
   RegisterUndefinedArraySubscriptChecker(*this);
+  RegisterUndefinedAssignmentChecker(*this);
 }

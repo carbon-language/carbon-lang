@@ -33,6 +33,7 @@ void RegisterCastToStructChecker(GRExprEngine &Eng);
 void RegisterUndefinedArgChecker(GRExprEngine &Eng);
 void RegisterArrayBoundChecker(GRExprEngine &Eng);
 void RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng);
+void RegisterUndefinedAssignmentChecker(GRExprEngine &Eng);
 
 } // end clang namespace
 #endif

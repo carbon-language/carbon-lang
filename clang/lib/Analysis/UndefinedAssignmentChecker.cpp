@@ -12,10 +12,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/Checkers/UndefinedAssignmentChecker.h"
+#include "GRExprEngineInternalChecks.h"
+#include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 
 using namespace clang;
+
+namespace {
+class VISIBILITY_HIDDEN UndefinedAssignmentChecker
+  : public CheckerVisitor<UndefinedAssignmentChecker> {
+  BugType *BT;
+public:
+  UndefinedAssignmentChecker() : BT(0) {}
+  static void *getTag();
+  virtual void PreVisitBind(CheckerContext &C, const Stmt *AssignE,
+                            const Stmt *StoreE, SVal location,
+                            SVal val);
+};
+}
+
+void clang::RegisterUndefinedAssignmentChecker(GRExprEngine &Eng){
+  Eng.registerCheck(new UndefinedAssignmentChecker());
+}
 
 void *UndefinedAssignmentChecker::getTag() {
   static int x = 0;
