@@ -51,4 +51,4 @@ cond_true:
 cond_false:
     ret i32 42
 }
-; CHECK: testb $1, %al
+; CHECK: testb $1
