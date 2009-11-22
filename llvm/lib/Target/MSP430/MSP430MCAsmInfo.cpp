@@ -19,6 +19,7 @@ MSP430MCAsmInfo::MSP430MCAsmInfo(const Target &T, const StringRef &TT) {
   WeakRefDirective ="\t.weak\t";
   SetDirective = "\t.set\t";
   PCSymbol=".";
+  CommentString = ";";
 
   AlignmentIsInBytes = false;
   AllowNameToStartWithDigit = true;
