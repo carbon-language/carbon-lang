@@ -594,9 +594,17 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
   default: llvm_unreachable("Invalid integer condition!");
   case ISD::SETEQ:
     TCC = MSP430CC::COND_E;     // aka COND_Z
+    // Minor optimization: if RHS is a constant, swap operands, then the
+    // constant can be folded into comparison.
+    if (RHS.getOpcode() == ISD::Constant)
+      std::swap(LHS, RHS);
     break;
   case ISD::SETNE:
     TCC = MSP430CC::COND_NE;    // aka COND_NZ
+    // Minor optimization: if RHS is a constant, swap operands, then the
+    // constant can be folded into comparison.
+    if (RHS.getOpcode() == ISD::Constant)
+      std::swap(LHS, RHS);
     break;
   case ISD::SETULE:
     std::swap(LHS, RHS);        // FALLTHROUGH
