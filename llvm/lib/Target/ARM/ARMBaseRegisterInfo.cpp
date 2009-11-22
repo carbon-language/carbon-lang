@@ -799,6 +799,53 @@ ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return ARM::SP;
 }
 
+int
+ARMBaseRegisterInfo::getFrameIndexReference(MachineFunction &MF, int FI,
+                                            unsigned &FrameReg) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
+  bool isFixed = MFI->isFixedObjectIndex(FI);
+
+  if (AFI->isGPRCalleeSavedArea1Frame(FI))
+    Offset -= AFI->getGPRCalleeSavedArea1Offset();
+  else if (AFI->isGPRCalleeSavedArea2Frame(FI))
+    Offset -= AFI->getGPRCalleeSavedArea2Offset();
+  else if (AFI->isDPRCalleeSavedAreaFrame(FI))
+    Offset -= AFI->getDPRCalleeSavedAreaOffset();
+  else if (needsStackRealignment(MF)) {
+    // When dynamically realigning the stack, use the frame pointer for
+    // parameters, and the stack pointer for locals.
+    assert (hasFP(MF) && "dynamic stack realignment without a FP!");
+    if (isFixed) {
+      FrameReg = getFrameRegister(MF);
+      Offset -= AFI->getFramePtrSpillOffset();
+    }
+  } else if (hasFP(MF) && AFI->hasStackFrame()) {
+    if (isFixed || MFI->hasVarSizedObjects()) {
+      // Use frame pointer to reference fixed objects unless this is a
+      // frameless function.
+      FrameReg = getFrameRegister(MF);
+      Offset -= AFI->getFramePtrSpillOffset();
+    } else if (AFI->isThumb2Function()) {
+      // In Thumb2 mode, the negative offset is very limited.
+      int FPOffset = Offset - AFI->getFramePtrSpillOffset();
+      if (FPOffset >= -255 && FPOffset < 0) {
+        FrameReg = getFrameRegister(MF);
+        Offset = FPOffset;
+      }
+    }
+  }
+  return Offset;
+}
+
+
+int
+ARMBaseRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
+  unsigned FrameReg;
+  return getFrameIndexReference(MF, FI, FrameReg);
+}
+
 unsigned ARMBaseRegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
   return 0;
@@ -1118,42 +1165,10 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned FrameReg = ARM::SP;
   int FrameIndex = MI.getOperand(i).getIndex();
   int Offset = MFI->getObjectOffset(FrameIndex) + MFI->getStackSize() + SPAdj;
-  bool isFixed = MFI->isFixedObjectIndex(FrameIndex);
 
-  // When doing dynamic stack realignment, all of these need to change(?)
-  if (AFI->isGPRCalleeSavedArea1Frame(FrameIndex))
-    Offset -= AFI->getGPRCalleeSavedArea1Offset();
-  else if (AFI->isGPRCalleeSavedArea2Frame(FrameIndex))
-    Offset -= AFI->getGPRCalleeSavedArea2Offset();
-  else if (AFI->isDPRCalleeSavedAreaFrame(FrameIndex))
-    Offset -= AFI->getDPRCalleeSavedAreaOffset();
-  else if (needsStackRealignment(MF)) {
-    // When dynamically realigning the stack, use the frame pointer for
-    // parameters, and the stack pointer for locals.
-    assert (hasFP(MF) && "dynamic stack realignment without a FP!");
-    if (isFixed) {
-      FrameReg = getFrameRegister(MF);
-      Offset -= AFI->getFramePtrSpillOffset();
-      // When referencing from the frame pointer, stack pointer adjustments
-      // don't matter.
-      SPAdj = 0;
-    }
-  } else if (hasFP(MF) && AFI->hasStackFrame()) {
-    assert(SPAdj == 0 && "Unexpected stack offset!");
-    if (isFixed || MFI->hasVarSizedObjects()) {
-      // Use frame pointer to reference fixed objects unless this is a
-      // frameless function.
-      FrameReg = getFrameRegister(MF);
-      Offset -= AFI->getFramePtrSpillOffset();
-    } else if (AFI->isThumb2Function()) {
-      // In Thumb2 mode, the negative offset is very limited.
-      int FPOffset = Offset - AFI->getFramePtrSpillOffset();
-      if (FPOffset >= -255 && FPOffset < 0) {
-        FrameReg = getFrameRegister(MF);
-        Offset = FPOffset;
-      }
-    }
-  }
+  Offset = getFrameIndexReference(MF, FrameIndex, FrameReg);
+  if (FrameReg != ARM::SP)
+    SPAdj = 0;
 
   // Modify MI as necessary to handle as much of 'Offset' as possible
   bool Done = false;
