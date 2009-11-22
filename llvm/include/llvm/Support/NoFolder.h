@@ -174,7 +174,7 @@ public:
   }
 
   Value *CreateExtractElement(Constant *Vec, Constant *Idx) const {
-    return new ExtractElementInst(Vec, Idx);
+    return ExtractElementInst::Create(Vec, Idx);
   }
 
   Value *CreateInsertElement(Constant *Vec, Constant *NewElt,
