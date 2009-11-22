@@ -263,6 +263,7 @@ ImmutablePass *llvm::createBasicAliasAnalysisPass() {
 bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
   if (const GlobalVariable *GV = 
         dyn_cast<GlobalVariable>(P->getUnderlyingObject()))
+    // FIXME: shouldn't this require GV to be "ODR"?
     return GV->isConstant();
   return false;
 }
