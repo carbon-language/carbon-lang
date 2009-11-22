@@ -807,6 +807,7 @@ ARMBaseRegisterInfo::getFrameIndexReference(MachineFunction &MF, int FI,
   int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
   bool isFixed = MFI->isFixedObjectIndex(FI);
 
+  FrameReg = ARM::SP;
   if (AFI->isGPRCalleeSavedArea1Frame(FI))
     Offset -= AFI->getGPRCalleeSavedArea1Offset();
   else if (AFI->isGPRCalleeSavedArea2Frame(FI))
@@ -1162,9 +1163,9 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
-  unsigned FrameReg = ARM::SP;
   int FrameIndex = MI.getOperand(i).getIndex();
   int Offset = MFI->getObjectOffset(FrameIndex) + MFI->getStackSize() + SPAdj;
+  unsigned FrameReg;
 
   Offset = getFrameIndexReference(MF, FrameIndex, FrameReg);
   if (FrameReg != ARM::SP)
