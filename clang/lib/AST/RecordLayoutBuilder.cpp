@@ -22,9 +22,9 @@
 using namespace clang;
 
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
-  : Ctx(Ctx), Size(0), Alignment(8), Packed(false), MaxFieldAlignment(0),
-  DataSize(0), IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8),
-  PrimaryBase(0), PrimaryBaseWasVirtual(false) {}
+  : Ctx(Ctx), Size(0), Alignment(8), Packed(false), UnfilledBitsInLastByte(0),
+  MaxFieldAlignment(0), DataSize(0), IsUnion(false), NonVirtualSize(0), 
+  NonVirtualAlignment(8), PrimaryBase(0), PrimaryBaseWasVirtual(false) {}
 
 /// LayoutVtable - Lay out the vtable and set PrimaryBase.
 void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
@@ -521,7 +521,7 @@ void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 
 void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
-  uint64_t FieldOffset = IsUnion ? 0 : DataSize;
+  uint64_t FieldOffset = IsUnion ? 0 : (DataSize - UnfilledBitsInLastByte);
   uint64_t FieldSize = D->getBitWidth()->EvaluateAsInt(Ctx).getZExtValue();
   
   std::pair<uint64_t, unsigned> FieldInfo = Ctx.getTypeInfo(D->getType());
@@ -549,14 +549,19 @@ void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
   
-  // Reserve space for this field.
-  if (IsUnion)
-    Size = std::max(Size, FieldSize);
-  else
-    Size = FieldOffset + FieldSize;
+  // Update DataSize to include the last byte containing (part of) the bitfield.
+  if (IsUnion) {
+    // FIXME: I think FieldSize should be TypeSize here.
+    DataSize = std::max(DataSize, FieldSize);
+  } else {
+    uint64_t NewSizeInBits = FieldOffset + FieldSize;
+    
+    DataSize = llvm::RoundUpToAlignment(NewSizeInBits, 8);
+    UnfilledBitsInLastByte = DataSize - NewSizeInBits;
+  }
   
-  // Update the data size.
-  DataSize = Size;
+  // Update the size.
+  Size = std::max(Size, DataSize);
   
   // Remember max struct/class alignment.
   UpdateAlignment(FieldAlign);
@@ -567,6 +572,9 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     LayoutBitField(D);
     return;
   }
+
+  // Reset the unfilled bits.
+  UnfilledBitsInLastByte = 0;
 
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
   uint64_t FieldOffset = IsUnion ? 0 : DataSize;

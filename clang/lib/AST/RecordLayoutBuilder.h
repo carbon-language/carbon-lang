@@ -27,12 +27,21 @@ namespace clang {
 class ASTRecordLayoutBuilder {
   ASTContext &Ctx;
 
+  /// Size - The current size of the record layout.
   uint64_t Size;
+  
+  /// Alignment - The current alignment of the record layout.
   unsigned Alignment;
+  
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
 
   /// Packed - Whether the record is packed or not.
   bool Packed;
+
+  /// UnfilledBitsInLastByte - If the last field laid out was a bitfield,
+  /// this contains the number of bits in the last byte that can be used for
+  /// an adjacent bitfield if necessary.
+  unsigned char UnfilledBitsInLastByte;
   
   /// MaxFieldAlignment - The maximum allowed field alignment. This is set by
   /// #pragma pack. 
