@@ -519,86 +519,103 @@ void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     LayoutField(*Field);
 }
 
+void ASTRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
+  bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
+  uint64_t FieldOffset = IsUnion ? 0 : DataSize;
+  uint64_t FieldSize = D->getBitWidth()->EvaluateAsInt(Ctx).getZExtValue();
+  
+  std::pair<uint64_t, unsigned> FieldInfo = Ctx.getTypeInfo(D->getType());
+  uint64_t TypeSize = FieldInfo.first;
+  unsigned FieldAlign = FieldInfo.second;
+  
+  if (FieldPacked)
+    FieldAlign = 1;
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
+    FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
+
+  // The maximum field alignment overrides the aligned attribute.
+  if (MaxFieldAlignment)
+    FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
+  
+  // Check if we need to add padding to give the field the correct
+  // alignment.
+  if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
+    FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
+  
+  // Padding members don't affect overall alignment
+  if (!D->getIdentifier())
+    FieldAlign = 1;
+  
+  // Place this field at the current location.
+  FieldOffsets.push_back(FieldOffset);
+  
+  // Reserve space for this field.
+  if (IsUnion)
+    Size = std::max(Size, FieldSize);
+  else
+    Size = FieldOffset + FieldSize;
+  
+  // Update the data size.
+  DataSize = Size;
+  
+  // Remember max struct/class alignment.
+  UpdateAlignment(FieldAlign);
+}
+
 void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
-  bool FieldPacked = Packed;
+  if (D->isBitField()) {
+    LayoutBitField(D);
+    return;
+  }
+
+  bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
   uint64_t FieldOffset = IsUnion ? 0 : DataSize;
   uint64_t FieldSize;
   unsigned FieldAlign;
-
-  FieldPacked |= D->hasAttr<PackedAttr>();
-
-  if (const Expr *BitWidthExpr = D->getBitWidth()) {
-    // TODO: Need to check this algorithm on other targets!
-    //       (tested on Linux-X86)
-    FieldSize = BitWidthExpr->EvaluateAsInt(Ctx).getZExtValue();
-
-    std::pair<uint64_t, unsigned> FieldInfo = Ctx.getTypeInfo(D->getType());
-    uint64_t TypeSize = FieldInfo.first;
-
-    FieldAlign = FieldInfo.second;
-
-    if (FieldPacked)
-      FieldAlign = 1;
-    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>()) {
-      FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
-    }
-    // The maximum field alignment overrides the aligned attribute.
-    if (MaxFieldAlignment)
-      FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
-
-    // Check if we need to add padding to give the field the correct
-    // alignment.
-    if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
-      FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
-
-    // Padding members don't affect overall alignment
-    if (!D->getIdentifier())
-      FieldAlign = 1;
+  
+  if (D->getType()->isIncompleteArrayType()) {
+    // This is a flexible array member; we can't directly
+    // query getTypeInfo about these, so we figure it out here.
+    // Flexible array members don't have any size, but they
+    // have to be aligned appropriately for their element type.
+    FieldSize = 0;
+    const ArrayType* ATy = Ctx.getAsArrayType(D->getType());
+    FieldAlign = Ctx.getTypeAlign(ATy->getElementType());
+  } else if (const ReferenceType *RT = D->getType()->getAs<ReferenceType>()) {
+    unsigned AS = RT->getPointeeType().getAddressSpace();
+    FieldSize = Ctx.Target.getPointerWidth(AS);
+    FieldAlign = Ctx.Target.getPointerAlign(AS);
   } else {
-    if (D->getType()->isIncompleteArrayType()) {
-      // This is a flexible array member; we can't directly
-      // query getTypeInfo about these, so we figure it out here.
-      // Flexible array members don't have any size, but they
-      // have to be aligned appropriately for their element type.
-      FieldSize = 0;
-      const ArrayType* ATy = Ctx.getAsArrayType(D->getType());
-      FieldAlign = Ctx.getTypeAlign(ATy->getElementType());
-    } else if (const ReferenceType *RT = D->getType()->getAs<ReferenceType>()) {
-      unsigned AS = RT->getPointeeType().getAddressSpace();
-      FieldSize = Ctx.Target.getPointerWidth(AS);
-      FieldAlign = Ctx.Target.getPointerAlign(AS);
-    } else {
-      std::pair<uint64_t, unsigned> FieldInfo = Ctx.getTypeInfo(D->getType());
-      FieldSize = FieldInfo.first;
-      FieldAlign = FieldInfo.second;
-    }
-
-    if (FieldPacked)
-      FieldAlign = 8;
-    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>()) {
-      FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
-    }
-    // The maximum field alignment overrides the aligned attribute.
-    if (MaxFieldAlignment)
-      FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
-
-    // Round up the current record size to the field's alignment boundary.
-    FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
-    
-    if (!IsUnion) {
-      while (true) {
-        // Check if we can place the field at this offset.
-        if (canPlaceFieldAtOffset(D, FieldOffset))
-          break;
-        
-        // We couldn't place the field at the offset. Try again at a new offset.
-        FieldOffset += FieldAlign;
-      }
-      
-      UpdateEmptyClassOffsets(D, FieldOffset);
-    }
+    std::pair<uint64_t, unsigned> FieldInfo = Ctx.getTypeInfo(D->getType());
+    FieldSize = FieldInfo.first;
+    FieldAlign = FieldInfo.second;
   }
 
+  if (FieldPacked)
+    FieldAlign = 8;
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
+    FieldAlign = std::max(FieldAlign, AA->getMaxAlignment());
+
+  // The maximum field alignment overrides the aligned attribute.
+  if (MaxFieldAlignment)
+    FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
+
+  // Round up the current record size to the field's alignment boundary.
+  FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
+  
+  if (!IsUnion) {
+    while (true) {
+      // Check if we can place the field at this offset.
+      if (canPlaceFieldAtOffset(D, FieldOffset))
+        break;
+      
+      // We couldn't place the field at the offset. Try again at a new offset.
+      FieldOffset += FieldAlign;
+    }
+    
+    UpdateEmptyClassOffsets(D, FieldOffset);
+  }
+  
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
 
@@ -621,7 +638,7 @@ void ASTRecordLayoutBuilder::FinishLayout() {
     Size = 8;
   // Finally, round the size of the record up to the alignment of the
   // record itself.
-  Size = (Size + (Alignment-1)) & ~(Alignment-1);
+  Size = llvm::RoundUpToAlignment(Size, Alignment);
 }
 
 void ASTRecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment) {

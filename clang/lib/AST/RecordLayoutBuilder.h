@@ -74,6 +74,7 @@ class ASTRecordLayoutBuilder {
 
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
+  void LayoutBitField(const FieldDecl *D);
 
   void SelectPrimaryBase(const CXXRecordDecl *RD);
   void SelectPrimaryVBase(const CXXRecordDecl *RD,
