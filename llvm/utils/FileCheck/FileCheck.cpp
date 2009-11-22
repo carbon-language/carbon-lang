@@ -23,6 +23,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include <algorithm>
 using namespace llvm;
@@ -82,7 +83,12 @@ public:
   /// variables and is updated if this match defines new values.
   size_t Match(StringRef Buffer, size_t &MatchLen,
                StringMap<StringRef> &VariableTable) const;
-  
+
+  /// PrintFailureInfo - Print additional information about a failure to match
+  /// involving this pattern.
+  void PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
+                        const StringMap<StringRef> &VariableTable) const;
+
 private:
   static void AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr);
   bool AddRegExToRegEx(StringRef RegExStr, unsigned &CurParen, SourceMgr &SM);
@@ -276,9 +282,15 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
     
     unsigned InsertOffset = 0;
     for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
+      StringMap<StringRef>::iterator it =
+        VariableTable.find(VariableUses[i].first);
+      // If the variable is undefined, return an error.
+      if (it == VariableTable.end())
+        return StringRef::npos;
+
       // Look up the value and escape it so that we can plop it into the regex.
       std::string Value;
-      AddFixedStringToRegEx(VariableTable[VariableUses[i].first], Value);
+      AddFixedStringToRegEx(it->second, Value);
       
       // Plop it into the regex at the adjusted offset.
       TmpStr.insert(TmpStr.begin()+VariableUses[i].second+InsertOffset,
@@ -310,6 +322,36 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
   return FullMatch.data()-Buffer.data();
 }
 
+void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
+                               const StringMap<StringRef> &VariableTable) const{
+  // If this is a fixed string, do nothing.
+  if (!FixedStr.empty())
+    return;
+
+  // If this was a regular expression using variables, print the current
+  // variable values.
+  if (!VariableUses.empty()) {
+    for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
+      StringRef Var = VariableUses[i].first;
+      StringMap<StringRef>::const_iterator it = VariableTable.find(Var);
+      SmallString<256> Msg;
+      raw_svector_ostream OS(Msg);
+
+      // Check for undefined variable references.
+      if (it == VariableTable.end()) {
+        OS << "uses undefined variable \"";
+        OS.write_escaped(Var) << "\"";;
+      } else {
+        OS << "with variable \"";
+        OS.write_escaped(Var) << "\" equal to \"";
+        OS.write_escaped(it->second) << "\"";
+      }
+
+      SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), OS.str(), "note",
+                      /*ShowLine=*/false);
+    }
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // Check Strings.
@@ -478,7 +520,8 @@ static bool ReadCheckFile(SourceMgr &SM,
 }
 
 static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
-                             StringRef Buffer) {
+                             StringRef Buffer,
+                             StringMap<StringRef> &VariableTable) {
   // Otherwise, we have an error, emit an error message.
   SM.PrintMessage(CheckStr.Loc, "expected string not found in input",
                   "error");
@@ -489,6 +532,9 @@ static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
   
   SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), "scanning from here",
                   "note");
+
+  // Allow the pattern to print additional information if desired.
+  CheckStr.Pat.PrintFailureInfo(SM, Buffer, VariableTable);
 }
 
 /// CountNumNewlinesBetween - Count the number of newlines in the specified
@@ -559,7 +605,7 @@ int main(int argc, char **argv) {
     
     // If we didn't find a match, reject the input.
     if (Buffer.empty()) {
-      PrintCheckFailed(SM, CheckStr, SearchFrom);
+      PrintCheckFailed(SM, CheckStr, SearchFrom, VariableTable);
       return 1;
     }
 
