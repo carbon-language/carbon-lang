@@ -40,6 +40,11 @@ if(PYTHONINTERP_FOUND)
     set(CLANG_TEST_EXTRA_ARGS "--no-progress-bar")
   endif()
 
+  option(CLANG_TEST_USE_VG "Run Clang tests under Valgrind" OFF)
+  if(CLANG_TEST_USE_VG)
+    set(CLANG_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
+  endif ()
+
   foreach(testdir ${CLANG_TEST_DIRECTORIES})
     add_custom_target(clang-test-${testdir}
       COMMAND ${PYTHON_EXECUTABLE}
