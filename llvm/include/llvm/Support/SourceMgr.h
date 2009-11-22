@@ -120,7 +120,9 @@ public:
   ///
   /// @param Type - If non-null, the kind of message (e.g., "error") which is
   /// prefixed to the message.
-  void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
+  /// @param ShowLine - Should the diagnostic show the source line.
+  void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type,
+                    bool ShowLine = true) const;
   
   
   /// GetMessage - Return an SMDiagnostic at the specified location with the
@@ -128,8 +130,10 @@ public:
   ///
   /// @param Type - If non-null, the kind of message (e.g., "error") which is
   /// prefixed to the message.
+  /// @param ShowLine - Should the diagnostic show the source line.
   SMDiagnostic GetMessage(SMLoc Loc,
-                          const std::string &Msg, const char *Type) const;
+                          const std::string &Msg, const char *Type,
+                          bool ShowLine = true) const;
   
   
 private:
@@ -143,12 +147,15 @@ class SMDiagnostic {
   std::string Filename;
   int LineNo, ColumnNo;
   std::string Message, LineContents;
+  unsigned ShowLine : 1;
+
 public:
   SMDiagnostic() : LineNo(0), ColumnNo(0) {}
   SMDiagnostic(const std::string &FN, int Line, int Col,
-               const std::string &Msg, const std::string &LineStr)
+               const std::string &Msg, const std::string &LineStr,
+               bool showline = true)
     : Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
-      LineContents(LineStr) {}
+      LineContents(LineStr), ShowLine(showline) {}
 
   void Print(const char *ProgName, raw_ostream &S);
 };

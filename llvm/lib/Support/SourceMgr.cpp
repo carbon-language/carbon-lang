@@ -136,7 +136,7 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 /// @param Type - If non-null, the kind of message (e.g., "error") which is
 /// prefixed to the message.
 SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
-                                   const char *Type) const {
+                                   const char *Type, bool ShowLine) const {
   
   // First thing to do: find the current buffer containing the specified
   // location.
@@ -144,18 +144,22 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
   assert(CurBuf != -1 && "Invalid or unspecified location!");
   
   MemoryBuffer *CurMB = getBufferInfo(CurBuf).Buffer;
-  
-  
+
   // Scan backward to find the start of the line.
   const char *LineStart = Loc.getPointer();
-  while (LineStart != CurMB->getBufferStart() && 
+  while (LineStart != CurMB->getBufferStart() &&
          LineStart[-1] != '\n' && LineStart[-1] != '\r')
     --LineStart;
-  // Get the end of the line.
-  const char *LineEnd = Loc.getPointer();
-  while (LineEnd != CurMB->getBufferEnd() && 
-         LineEnd[0] != '\n' && LineEnd[0] != '\r')
-    ++LineEnd;
+
+  std::string LineStr;
+  if (ShowLine) {
+    // Get the end of the line.
+    const char *LineEnd = Loc.getPointer();
+    while (LineEnd != CurMB->getBufferEnd() &&
+           LineEnd[0] != '\n' && LineEnd[0] != '\r')
+      ++LineEnd;
+    LineStr = std::string(LineStart, LineEnd);
+  }
   
   std::string PrintedMsg;
   if (Type) {
@@ -163,22 +167,21 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
     PrintedMsg += ": ";
   }
   PrintedMsg += Msg;
-  
-  // Print out the line.
+
   return SMDiagnostic(CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
                       Loc.getPointer()-LineStart, PrintedMsg,
-                      std::string(LineStart, LineEnd));
+                      LineStr, ShowLine);
 }
 
 void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg, 
-                             const char *Type) const {
+                             const char *Type, bool ShowLine) const {
   raw_ostream &OS = errs();
 
   int CurBuf = FindBufferContainingLoc(Loc);
   assert(CurBuf != -1 && "Invalid or unspecified location!");
   PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
 
-  GetMessage(Loc, Msg, Type).Print(0, OS);
+  GetMessage(Loc, Msg, Type, ShowLine).Print(0, OS);
 }
 
 //===----------------------------------------------------------------------===//
@@ -201,8 +204,8 @@ void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) {
   }
   
   S << ": " << Message << '\n';
-  
-  if (LineNo != -1 && ColumnNo != -1) {
+
+  if (LineNo != -1 && ColumnNo != -1 && ShowLine) {
     S << LineContents << '\n';
     
     // Print out spaces/tabs before the caret.
