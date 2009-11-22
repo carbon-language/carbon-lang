@@ -1,5 +1,7 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
+#include <stdint.h>
+
 enum test { testval = 1 };
 struct structure { int m; };
 typedef void (*fnptr)();
@@ -20,11 +22,11 @@ void self_conversion()
 void integral_conversion()
 {
   void *vp = reinterpret_cast<void*>(testval);
-  long l = reinterpret_cast<long>(vp);
-  (void)reinterpret_cast<float*>(l);
-  fnptr fnp = reinterpret_cast<fnptr>(l);
+  intptr_t i = reinterpret_cast<intptr_t>(vp);
+  (void)reinterpret_cast<float*>(i);
+  fnptr fnp = reinterpret_cast<fnptr>(i);
   (void)reinterpret_cast<char>(fnp); // expected-error {{cast from pointer to smaller type 'char' loses information}}
-  (void)reinterpret_cast<long>(fnp);
+  (void)reinterpret_cast<intptr_t>(fnp);
 }
 
 void pointer_conversion()
