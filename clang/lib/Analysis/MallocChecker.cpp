@@ -173,6 +173,7 @@ void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,
 
 void MallocChecker::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                                 GRExprEngine &Eng) {
+  SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
   typedef llvm::ImmutableMap<SymbolRef, RefState> SymMap;
   SymMap M = state->get<RegionState>();

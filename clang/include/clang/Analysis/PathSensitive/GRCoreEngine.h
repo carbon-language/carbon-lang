@@ -405,6 +405,8 @@ class GREndPathNodeBuilder {
   GRCoreEngine& Eng;
   CFGBlock& B;
   ExplodedNode* Pred;
+
+public:
   bool HasGeneratedNode;
 
 public:
