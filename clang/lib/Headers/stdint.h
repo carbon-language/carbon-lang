@@ -621,8 +621,8 @@ typedef __uintn_t(__INTMAX_WIDTH__) uintmax_t;
 #define UINTMAX_MAX __UINTN_MAX(__INTMAX_WIDTH__)
 
 /* C99 7.18.3 Limits of other integer types. */
-#define SIG_ATOMIC_MIN INT32_MIN
-#define SIG_ATOMIC_MAX INT32_MAX
+#define SIG_ATOMIC_MIN __INTN_MIN(__SIG_ATOMIC_WIDTH__)
+#define SIG_ATOMIC_MAX __INTN_MAX(__SIG_ATOMIC_WIDTH__)
 #define WINT_MIN       __INTN_MIN(__WINT_WIDTH__)
 #define WINT_MAX       __INTN_MAX(__WINT_WIDTH__)
 
