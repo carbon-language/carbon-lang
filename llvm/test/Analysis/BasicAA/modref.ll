@@ -90,3 +90,20 @@ define void @test3a(i8* %P, i8 %X) {
   ret void
 ; CHECK: ret void
 }
+
+@G1 = external global i32
+@G2 = external global [4000 x i32]
+
+define i32 @test4(i8* %P, i8 %X) {
+  %tmp = load i32* @G1
+  call void @llvm.memset.i32(i8* bitcast ([4000 x i32]* @G2 to i8*), i8 0, i32 4000, i32 1)
+  %tmp2 = load i32* @G1
+  %sub = sub i32 %tmp2, %tmp
+  ret i32 %sub
+; CHECK: @test4
+; CHECK: load i32* @G
+; CHECK: memset.i32
+; CHECK-NOT: load
+; CHECK: sub i32 %tmp, %tmp
+}
+

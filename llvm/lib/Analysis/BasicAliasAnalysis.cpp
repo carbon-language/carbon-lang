@@ -275,11 +275,6 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
 //
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  // Don't do anything smart for constant pointers.
-  // FIXME: WHY?
-  if (isa<Constant>(P))
-    return AliasAnalysis::getModRefInfo(CS, P, Size);
-  
   const Value *Object = P->getUnderlyingObject();
   
   // If this is a tail call and P points to a stack location, we know that
