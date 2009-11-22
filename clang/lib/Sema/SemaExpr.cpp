@@ -623,6 +623,9 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
                                                UnqualifiedId &Name,
                                                bool HasTrailingLParen,
                                                bool IsAddressOfOperand) {
+  assert(!(IsAddressOfOperand && HasTrailingLParen) &&
+         "cannot be direct & operand and have a trailing lparen");
+
   if (Name.getKind() == UnqualifiedId::IK_TemplateId) {
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        Name.TemplateId->getTemplateArgs(),
@@ -856,7 +859,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   // performance.
   if (!ADL) {
     bool isAbstractMemberPointer = 
-      (isAddressOfOperand && !HasTrailingLParen && SS && !SS->isEmpty());
+      (isAddressOfOperand && SS && !SS->isEmpty());
 
     if (!isAbstractMemberPointer && !Lookup.empty() &&
         isa<CXXRecordDecl>((*Lookup.begin())->getDeclContext())) {

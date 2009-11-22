@@ -326,6 +326,24 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
                          /*ObjectType=*/0,
                          Name))
     return ExprError();
+
+  // This is only the direct operand of an & operator if it is not
+  // followed by a postfix-expression suffix.
+  if (isAddressOfOperand) {
+    switch (Tok.getKind()) {
+    case tok::l_square:
+    case tok::l_paren:
+    case tok::arrow:
+    case tok::period:
+    case tok::plusplus:
+    case tok::minusminus:
+      isAddressOfOperand = false;
+      break;
+
+    default:
+      break;
+    }
+  }
   
   return Actions.ActOnIdExpression(CurScope, SS, Name, Tok.is(tok::l_paren),
                                    isAddressOfOperand);
