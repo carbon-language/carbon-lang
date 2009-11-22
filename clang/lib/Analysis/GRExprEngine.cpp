@@ -2772,15 +2772,6 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                                                              RightV, CTy),
                                                    state, B->getType(), CTy);
 
-        if (Result.isUndef()) {
-          // The operands were not undefined, but the result is undefined.
-          if (ExplodedNode* UndefNode = Builder->generateNode(B, state, *I3)) {
-            UndefNode->markAsSink();
-            UndefResults.insert(UndefNode);
-          }
-          continue;
-        }
-
         // EXPERIMENTAL: "Conjured" symbols.
         // FIXME: Handle structs.
 
