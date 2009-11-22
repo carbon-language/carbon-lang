@@ -1,8 +1,8 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | grep -E {vneg.f32\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 2
-; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=1 | grep -E {vneg.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 2
-; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=0 | grep -E {vneg.f32\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 2
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | grep -E {vneg.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 2
-; RUN: llc < %s -march=arm -mcpu=cortex-a9 | grep -E {vneg.f32\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 2
+; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
+; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=1 | FileCheck %s -check-prefix=NFP1
+; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=0 | FileCheck %s -check-prefix=NFP0
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=CORTEXA8
+; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=CORTEXA9
 
 define float @test1(float* %a) {
 entry:
@@ -13,6 +13,20 @@ entry:
 	%retval = select i1 %3, float %1, float %0		; <float> [#uses=1]
 	ret float %retval
 }
+; VFP2: test1:
+; VFP2: 	vneg.f32	s1, s0
+
+; NFP1: test1:
+; NFP1: 	vneg.f32	d1, d0
+
+; NFP0: test1:
+; NFP0: 	vneg.f32	s1, s0
+
+; CORTEXA8: test1:
+; CORTEXA8: 	vneg.f32	d1, d0
+
+; CORTEXA9: test1:
+; CORTEXA9: 	vneg.f32	s1, s0
 
 define float @test2(float* %a) {
 entry:
@@ -23,3 +37,18 @@ entry:
 	%retval = select i1 %3, float %1, float %0		; <float> [#uses=1]
 	ret float %retval
 }
+; VFP2: test2:
+; VFP2: 	vneg.f32	s1, s0
+
+; NFP1: test2:
+; NFP1: 	vneg.f32	d1, d0
+
+; NFP0: test2:
+; NFP0: 	vneg.f32	s1, s0
+
+; CORTEXA8: test2:
+; CORTEXA8: 	vneg.f32	d1, d0
+
+; CORTEXA9: test2:
+; CORTEXA9: 	vneg.f32	s1, s0
+
