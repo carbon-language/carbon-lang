@@ -701,30 +701,20 @@ TemplateInstantiator::TransformUnresolvedLookupExpr(UnresolvedLookupExpr *Old,
                                                     bool isAddressOfOperand) {
   llvm::SmallVector<NamedDecl*, 16> InstDecls;
 
-  bool HasUnresolved = false;
-
   for (UnresolvedLookupExpr::decls_iterator I = Old->decls_begin(),
          E = Old->decls_end(); I != E; ++I) {
     NamedDecl *InstD = SemaRef.FindInstantiatedDecl(*I, TemplateArgs);
     if (!InstD)
       return SemaRef.ExprError();
 
-    // Expand using declarations.
-    if (isa<UsingDecl>(InstD)) {
-      UsingDecl *UD = cast<UsingDecl>(InstD);
-      for (UsingDecl::shadow_iterator UI = UD->shadow_begin(),
-             UE = UD->shadow_end(); UI != UE; ++UI) {
-        UsingShadowDecl *Shadow = *UI;
-        if (isa<UnresolvedUsingValueDecl>(Shadow->getUnderlyingDecl()))
-          HasUnresolved = true;
-        InstDecls.push_back(Shadow);
-      }
+    // The lookup values can never instantiate to a UsingDecl, because
+    // only UnresolvedUsingValueDecls do that, and those can never
+    // appear in UnresolvedLookupExprs (only UnresolvedMemberLookupExprs).
+    assert(!isa<UsingDecl>(InstD));
 
-      continue;
-    }
+    // Analogously.
+    assert(!isa<UnresolvedUsingValueDecl>(InstD->getUnderlyingDecl()));
 
-    if (isa<UnresolvedUsingValueDecl>(InstD->getUnderlyingDecl()))
-      HasUnresolved = true;
     InstDecls.push_back(InstD);
   }
 
@@ -742,6 +732,7 @@ TemplateInstantiator::TransformUnresolvedLookupExpr(UnresolvedLookupExpr *Old,
 
   return SemaRef.BuildDeclarationNameExpr(&SS, Old->getNameLoc(),
                                           Old->getName(), Old->requiresADL(),
+                                          Old->isOverloaded(),
                                           InstDecls.data(), InstDecls.size());
 }
 

@@ -208,6 +208,11 @@ public:
     return getResultKind() == Found;
   }
 
+  /// Determines if the results are overloaded.
+  bool isOverloadedResult() const {
+    return getResultKind() == FoundOverloaded;
+  }
+
   LookupResultKind getResultKind() const {
     sanity();
     return ResultKind;
@@ -444,13 +449,22 @@ private:
   void sanity() const {
     assert(ResultKind != NotFound || Decls.size() == 0);
     assert(ResultKind != Found || Decls.size() == 1);
-    assert(ResultKind == NotFound || ResultKind == Found ||
-           ResultKind == FoundUnresolvedValue ||
-           (ResultKind == Ambiguous && Ambiguity == AmbiguousBaseSubobjects)
-           || Decls.size() > 1);
+    assert(ResultKind != FoundOverloaded || Decls.size() > 1 ||
+           (Decls.size() == 1 && isa<FunctionTemplateDecl>(Decls[0])));
+    assert(ResultKind != FoundUnresolvedValue || sanityCheckUnresolved());
+    assert(ResultKind != Ambiguous || Decls.size() > 1 ||
+           (Decls.size() == 1 && Ambiguity == AmbiguousBaseSubobjects));
     assert((Paths != NULL) == (ResultKind == Ambiguous &&
                                (Ambiguity == AmbiguousBaseSubobjectTypes ||
                                 Ambiguity == AmbiguousBaseSubobjects)));
+  }
+
+  bool sanityCheckUnresolved() const {
+    for (DeclsTy::const_iterator I = Decls.begin(), E = Decls.end();
+           I != E; ++I)
+      if (isa<UnresolvedUsingValueDecl>(*I))
+        return true;
+    return false;
   }
 
   static void deletePaths(CXXBasePaths *);

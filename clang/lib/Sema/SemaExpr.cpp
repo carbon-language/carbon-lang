@@ -954,7 +954,7 @@ Sema::OwningExprResult BuildImplicitMemberExpr(Sema &S, LookupResult &R,
   }
 
   return S.BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getLookupName(),
-                                    /*ADL*/ false,
+                                    /*ADL*/ false, R.isOverloadedResult(),
                                     R.begin(), R.end() - R.begin());
 }
 
@@ -1042,7 +1042,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
 
   bool ADL = UseArgumentDependentLookup(*this, SS, HasTrailingLParen, R);
 
-  return BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getLookupName(), ADL,
+  return BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getLookupName(),
+                                  ADL, R.isOverloadedResult(),
                                   R.begin(), R.end() - R.begin());
 }
 
@@ -1074,23 +1075,24 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
                                SourceLocation Loc,
                                DeclarationName Name,
                                bool NeedsADL,
+                               bool IsOverloaded,
                                NamedDecl * const *Decls,
                                unsigned NumDecls) {
-  if (!NeedsADL && NumDecls == 1)
+  if (!NeedsADL && !IsOverloaded)
     return BuildDeclarationNameExpr(SS, Loc, Decls[0]->getUnderlyingDecl());
 
   // We only need to check the declaration if there's exactly one
   // result, because in the overloaded case the results can only be
   // functions and function templates.
-  if (NumDecls == 1 &&
+  if (!IsOverloaded && NumDecls == 1 &&
       CheckDeclInExpr(*this, Loc, Decls[0]->getUnderlyingDecl()))
     return ExprError();
 
   UnresolvedLookupExpr *ULE
     = UnresolvedLookupExpr::Create(Context,
                     SS ? (NestedNameSpecifier *)SS->getScopeRep() : 0,
-                                   SS ? SS->getRange() : SourceRange(), 
-                                   Name, Loc, NeedsADL);
+                                   SS ? SS->getRange() : SourceRange(),
+                                   Name, Loc, NeedsADL, IsOverloaded);
   for (unsigned I = 0; I != NumDecls; ++I)
     ULE->addDecl(Decls[I]);
 
@@ -1103,15 +1105,12 @@ Sema::OwningExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
                                SourceLocation Loc, NamedDecl *D) {
   assert(D && "Cannot refer to a NULL declaration");
+  assert(!isa<FunctionTemplateDecl>(D) &&
+         "Cannot refer unambiguously to a function template");
   DeclarationName Name = D->getDeclName();
 
   if (CheckDeclInExpr(*this, Loc, D))
     return ExprError();
-
-  // Make the DeclRefExpr or BlockDeclRefExpr for the decl.
-  if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
-    return BuildDeclRefExpr(Template, Context.OverloadTy, Loc,
-                            false, false, SS);
 
   ValueDecl *VD = cast<ValueDecl>(D);
 
@@ -2689,6 +2688,7 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
                                    NestedNameSpecifier *&Qualifier,
                                    SourceRange &QualifierRange,
                                    bool &ArgumentDependentLookup,
+                                   bool &Overloaded,
                                    bool &HasExplicitTemplateArguments,
                            const TemplateArgumentLoc *&ExplicitTemplateArgs,
                                    unsigned &NumExplicitTemplateArgs) {
@@ -2697,7 +2697,12 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
   Qualifier = 0;
   QualifierRange = SourceRange();
   ArgumentDependentLookup = getLangOptions().CPlusPlus;
+  Overloaded = false;
   HasExplicitTemplateArguments = false;
+
+  // Most of the explicit tracking of ArgumentDependentLookup in this
+  // function can disappear when we handle unresolved
+  // TemplateIdRefExprs properly.
   
   // If we're directly calling a function, get the appropriate declaration.
   // Also, in C++, keep track of whether we should perform argument-dependent
@@ -2725,19 +2730,24 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
       Name = UnresLookup->getName();
       Fns.append(UnresLookup->decls_begin(), UnresLookup->decls_end());
       ArgumentDependentLookup = UnresLookup->requiresADL();
+      Overloaded = UnresLookup->isOverloaded();
       if ((Qualifier = UnresLookup->getQualifier()))
         QualifierRange = UnresLookup->getQualifierRange();
       break;
     } else if (TemplateIdRefExpr *TemplateIdRef
                = dyn_cast<TemplateIdRefExpr>(FnExpr)) {
       if (NamedDecl *Function
-          = TemplateIdRef->getTemplateName().getAsTemplateDecl())
+          = TemplateIdRef->getTemplateName().getAsTemplateDecl()) {
+        Name = Function->getDeclName();
         Fns.push_back(Function);
+      }
       else {
         OverloadedFunctionDecl *Overload
           = TemplateIdRef->getTemplateName().getAsOverloadedFunctionDecl();
+        Name = Overload->getDeclName();
         Fns.append(Overload->function_begin(), Overload->function_end());
       }
+      Overloaded = true;
       HasExplicitTemplateArguments = true;
       ExplicitTemplateArgs = TemplateIdRef->getTemplateArgs();
       NumExplicitTemplateArgs = TemplateIdRef->getNumTemplateArgs();
@@ -2875,52 +2885,66 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // lookup and whether there were any explicitly-specified template arguments.
   llvm::SmallVector<NamedDecl*,8> Fns;
   DeclarationName UnqualifiedName;
-  bool ADL = true;
+  bool Overloaded;
+  bool ADL;
   bool HasExplicitTemplateArgs = 0;
   const TemplateArgumentLoc *ExplicitTemplateArgs = 0;
   unsigned NumExplicitTemplateArgs = 0;
   NestedNameSpecifier *Qualifier = 0;
   SourceRange QualifierRange;
   DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
-                          ADL,HasExplicitTemplateArgs, ExplicitTemplateArgs,
-                          NumExplicitTemplateArgs);
+                          ADL, Overloaded, HasExplicitTemplateArgs,
+                          ExplicitTemplateArgs, NumExplicitTemplateArgs);
 
-  NamedDecl *NDecl = 0; // the specific declaration we're calling, if applicable
-  FunctionDecl *FDecl = 0; // same, if it's a function or function template
-  FunctionTemplateDecl *FunctionTemplate = 0;
+  NamedDecl *NDecl;    // the specific declaration we're calling, if applicable
+  FunctionDecl *FDecl; // same, if it's known to be a function
 
-  if (Fns.size() == 1) {
-    NDecl = Fns[0];
-    FDecl = dyn_cast<FunctionDecl>(NDecl);
-    if ((FunctionTemplate = dyn_cast<FunctionTemplateDecl>(NDecl)))
-      FDecl = FunctionTemplate->getTemplatedDecl();
-    else
+  if (Overloaded || ADL) {
+#ifndef NDEBUG
+    if (ADL) {
+      // To do ADL, we must have found an unqualified name.
+      assert(UnqualifiedName && "found no unqualified name for ADL");
+
+      // We don't perform ADL for implicit declarations of builtins.
+      // Verify that this was correctly set up.
+      if (Fns.size() == 1 && (FDecl = dyn_cast<FunctionDecl>(Fns[0])) &&
+          FDecl->getBuiltinID() && FDecl->isImplicit())
+        assert(0 && "performing ADL for builtin");
+
+      // We don't perform ADL in C.
+      assert(getLangOptions().CPlusPlus && "ADL enabled in C");
+    }
+
+    if (Overloaded) {
+      // To be overloaded, we must either have multiple functions or
+      // at least one function template (which is effectively an
+      // infinite set of functions).
+      assert((Fns.size() > 1 ||
+              (Fns.size() == 1 &&
+               isa<FunctionTemplateDecl>(Fns[0]->getUnderlyingDecl())))
+             && "unrecognized overload situation");
+    }
+#endif
+
+    FDecl = ResolveOverloadedCallFn(Fn, Fns, UnqualifiedName,
+                                    HasExplicitTemplateArgs,
+                                    ExplicitTemplateArgs,
+                                    NumExplicitTemplateArgs,
+                                    LParenLoc, Args, NumArgs, CommaLocs,
+                                    RParenLoc, ADL);
+    if (!FDecl)
+      return ExprError();
+
+    Fn = FixOverloadedFunctionReference(Fn, FDecl);
+
+    NDecl = FDecl;
+  } else {
+    assert(Fns.size() <= 1 && "overloaded without Overloaded flag");
+    if (Fns.empty())
+      NDecl = FDecl = 0;
+    else {
+      NDecl = Fns[0];
       FDecl = dyn_cast<FunctionDecl>(NDecl);
-  }
-
-  if (Fns.size() > 1 || FunctionTemplate ||
-      (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
-    // We don't perform ADL for implicit declarations of builtins.
-    if (FDecl && FDecl->getBuiltinID() && FDecl->isImplicit())
-      assert(!ADL); // this should be guaranteed earlier
-
-    // We don't perform ADL in C.
-    if (!getLangOptions().CPlusPlus)
-      assert(!ADL); // ditto
-
-    if (Fns.size() > 1 || FunctionTemplate || ADL) {
-      FDecl = ResolveOverloadedCallFn(Fn, Fns, UnqualifiedName,
-                                      HasExplicitTemplateArgs,
-                                      ExplicitTemplateArgs,
-                                      NumExplicitTemplateArgs,
-                                      LParenLoc, Args, NumArgs, CommaLocs,
-                                      RParenLoc, ADL);
-      if (!FDecl)
-        return ExprError();
-
-      Fn = FixOverloadedFunctionReference(Fn, FDecl);
-
-      NDecl = FDecl;
     }
   }
 

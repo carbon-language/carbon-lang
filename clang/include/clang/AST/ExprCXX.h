@@ -1050,13 +1050,17 @@ class UnresolvedLookupExpr : public Expr {
   /// call.
   bool RequiresADL;
 
+  /// True if these lookup results are overloaded.  This is pretty
+  /// trivially rederivable if we urgently need to kill this field.
+  bool Overloaded;
+
   UnresolvedLookupExpr(QualType T,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
                        DeclarationName Name, SourceLocation NameLoc,
-                       bool RequiresADL)
+                       bool RequiresADL, bool Overloaded)
     : Expr(UnresolvedLookupExprClass, T, false, false),
       Name(Name), Qualifier(Qualifier), QualifierRange(QRange),
-      NameLoc(NameLoc), RequiresADL(RequiresADL)
+      NameLoc(NameLoc), RequiresADL(RequiresADL), Overloaded(Overloaded)
   {}
 
 public:
@@ -1065,9 +1069,9 @@ public:
                                       SourceRange QualifierRange,
                                       DeclarationName Name,
                                       SourceLocation NameLoc,
-                                      bool ADL) {
+                                      bool ADL, bool Overloaded) {
     return new(C) UnresolvedLookupExpr(C.OverloadTy, Qualifier, QualifierRange,
-                                       Name, NameLoc, ADL);
+                                       Name, NameLoc, ADL, Overloaded);
   }
 
   void addDecl(NamedDecl *Decl) {
@@ -1081,6 +1085,9 @@ public:
   /// True if this declaration should be extended by
   /// argument-dependent lookup.
   bool requiresADL() const { return RequiresADL; }
+
+  /// True if this lookup is overloaded.
+  bool isOverloaded() const { return Overloaded; }
 
   /// Fetches the name looked up.
   DeclarationName getName() const { return Name; }

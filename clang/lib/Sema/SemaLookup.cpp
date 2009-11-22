@@ -242,6 +242,7 @@ void LookupResult::deletePaths(CXXBasePaths *Paths) {
   delete Paths;
 }
 
+/// Resolves the result kind of this lookup.
 void LookupResult::resolveKind() {
   unsigned N = Decls.size();
 
@@ -251,8 +252,12 @@ void LookupResult::resolveKind() {
     return;
   }
 
+  // If there's a single decl, we need to examine it to decide what
+  // kind of lookup this is.
   if (N == 1) {
-    if (isa<UnresolvedUsingValueDecl>(Decls[0]))
+    if (isa<FunctionTemplateDecl>(Decls[0]))
+      ResultKind = FoundOverloaded;
+    else if (isa<UnresolvedUsingValueDecl>(Decls[0]))
       ResultKind = FoundUnresolvedValue;
     return;
   }
@@ -264,7 +269,7 @@ void LookupResult::resolveKind() {
 
   bool Ambiguous = false;
   bool HasTag = false, HasFunction = false, HasNonFunction = false;
-  bool HasUnresolved = false;
+  bool HasFunctionTemplate = false, HasUnresolved = false;
 
   unsigned UniqueTagIndex = 0;
   
@@ -290,7 +295,10 @@ void LookupResult::resolveKind() {
           Ambiguous = true;
         UniqueTagIndex = I;
         HasTag = true;
-      } else if (D->isFunctionOrFunctionTemplate()) {
+      } else if (isa<FunctionTemplateDecl>(D)) {
+        HasFunction = true;
+        HasFunctionTemplate = true;
+      } else if (isa<FunctionDecl>(D)) {
         HasFunction = true;
       } else {
         if (HasNonFunction)
@@ -323,7 +331,7 @@ void LookupResult::resolveKind() {
     setAmbiguous(LookupResult::AmbiguousReference);
   else if (HasUnresolved)
     ResultKind = LookupResult::FoundUnresolvedValue;
-  else if (N > 1)
+  else if (N > 1 || HasFunctionTemplate)
     ResultKind = LookupResult::FoundOverloaded;
   else
     ResultKind = LookupResult::Found;

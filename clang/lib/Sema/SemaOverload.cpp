@@ -4656,6 +4656,11 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn,
   return 0;
 }
 
+static bool IsOverloaded(const Sema::FunctionSet &Functions) {
+  return Functions.size() > 1 ||
+    (Functions.size() == 1 && isa<FunctionTemplateDecl>(*Functions.begin()));
+}
+
 /// \brief Create a unary operation that may resolve to an overloaded
 /// operator.
 ///
@@ -4699,7 +4704,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
   if (Input->isTypeDependent()) {
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, 0, SourceRange(), OpName, OpLoc,
-                                     /*ADL*/ true);
+                                     /*ADL*/ true, IsOverloaded(Functions));
     for (FunctionSet::iterator Func = Functions.begin(),
                             FuncEnd = Functions.end();
          Func != FuncEnd; ++Func)
@@ -4855,7 +4860,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, 0, SourceRange(), OpName, OpLoc,
-                                     /* ADL */ true);
+                                     /* ADL */ true, IsOverloaded(Functions));
                                      
     for (FunctionSet::iterator Func = Functions.begin(),
                             FuncEnd = Functions.end();
@@ -5020,7 +5025,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, 0, SourceRange(), OpName, LLoc,
-                                     /*ADL*/ true);
+                                     /*ADL*/ true, /*Overloaded*/ false);
     // Can't add an actual overloads yet
 
     Base.release();

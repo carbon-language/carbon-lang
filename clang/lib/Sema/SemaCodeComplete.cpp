@@ -1472,13 +1472,15 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   NestedNameSpecifier *Qualifier;
   SourceRange QualifierRange;
   bool ArgumentDependentLookup;
+  bool Overloaded;
   bool HasExplicitTemplateArgs;
   const TemplateArgumentLoc *ExplicitTemplateArgs;
   unsigned NumExplicitTemplateArgs;
   
   DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
-                          ArgumentDependentLookup, HasExplicitTemplateArgs,
-                          ExplicitTemplateArgs, NumExplicitTemplateArgs);
+                          ArgumentDependentLookup, Overloaded,
+                          HasExplicitTemplateArgs, ExplicitTemplateArgs,
+                          NumExplicitTemplateArgs);
 
   
   // FIXME: What if we're calling something that isn't a function declaration?

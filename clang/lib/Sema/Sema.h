@@ -1423,6 +1423,7 @@ public:
                                             SourceLocation Loc,
                                             DeclarationName Name,
                                             bool NeedsADL,
+                                            bool IsOverloaded,
                                             NamedDecl * const *Decls,
                                             unsigned NumDecls);
   OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
@@ -1531,6 +1532,7 @@ public:
                                NestedNameSpecifier *&Qualifier,
                                SourceRange &QualifierRange,
                                bool &ArgumentDependentLookup,
+                               bool &Overloaded,
                                bool &HasExplicitTemplateArguments,
                             const TemplateArgumentLoc *&ExplicitTemplateArgs,
                                unsigned &NumExplicitTemplateArgs);
