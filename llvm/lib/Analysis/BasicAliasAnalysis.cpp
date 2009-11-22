@@ -275,95 +275,101 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
 //
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  if (!isa<Constant>(P)) {
-    const Value *Object = P->getUnderlyingObject();
+  // Don't do anything smart for constant pointers.
+  // FIXME: WHY?
+  if (isa<Constant>(P))
+    return AliasAnalysis::getModRefInfo(CS, P, Size);
+  
+  const Value *Object = P->getUnderlyingObject();
+  
+  // If this is a tail call and P points to a stack location, we know that
+  // the tail call cannot access or modify the local stack.
+  // We cannot exclude byval arguments here; these belong to the caller of
+  // the current function not to the current function, and a tail callee
+  // may reference them.
+  if (isa<AllocaInst>(Object))
+    if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
+      if (CI->isTailCall())
+        return NoModRef;
+  
+  // If the pointer is to a locally allocated object that does not escape,
+  // then the call can not mod/ref the pointer unless the call takes the
+  // argument without capturing it.
+  if (isNonEscapingLocalObject(Object) && CS.getInstruction() != Object) {
+    bool passedAsArg = false;
+    // TODO: Eventually only check 'nocapture' arguments.
+    for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+         CI != CE; ++CI)
+      if (isa<PointerType>((*CI)->getType()) &&
+          alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias)
+        passedAsArg = true;
     
-    // If this is a tail call and P points to a stack location, we know that
-    // the tail call cannot access or modify the local stack.
-    // We cannot exclude byval arguments here; these belong to the caller of
-    // the current function not to the current function, and a tail callee
-    // may reference them.
-    if (isa<AllocaInst>(Object))
-      if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
-        if (CI->isTailCall())
-          return NoModRef;
-    
-    // If the pointer is to a locally allocated object that does not escape,
-    // then the call can not mod/ref the pointer unless the call takes the
-    // argument without capturing it.
-    if (isNonEscapingLocalObject(Object) && CS.getInstruction() != Object) {
-      bool passedAsArg = false;
-      // TODO: Eventually only check 'nocapture' arguments.
-      for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-           CI != CE; ++CI)
-        if (isa<PointerType>((*CI)->getType()) &&
-            alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias)
-          passedAsArg = true;
-      
-      if (!passedAsArg)
+    if (!passedAsArg)
+      return NoModRef;
+  }
+
+  // Finally, handle specific knowledge of intrinsics.
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
+  if (II == 0)
+    return AliasAnalysis::getModRefInfo(CS, P, Size);
+
+  switch (II->getIntrinsicID()) {
+  default: break;
+  case Intrinsic::memcpy:
+  case Intrinsic::memmove: {
+    unsigned Len = ~0U;
+    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(3)))
+      Len = LenCI->getZExtValue();
+    Value *Dest = II->getOperand(1);
+    Value *Src = II->getOperand(2);
+    if (alias(Dest, Len, P, Size) == NoAlias) {
+      if (alias(Src, Len, P, Size) == NoAlias)
+        return NoModRef;
+      return Ref;
+    }
+    break;
+  }
+  case Intrinsic::memset:
+    if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(3))) {
+      unsigned Len = LenCI->getZExtValue();
+      Value *Dest = II->getOperand(1);
+      if (alias(Dest, Len, P, Size) == NoAlias)
         return NoModRef;
     }
-
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
-      switch (II->getIntrinsicID()) {
-      default: break;
-      case Intrinsic::memcpy:
-      case Intrinsic::memmove: {
-        unsigned Len = ~0U;
-        if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(3)))
-          Len = LenCI->getZExtValue();
-        Value *Dest = II->getOperand(1);
-        Value *Src = II->getOperand(2);
-        if (alias(Dest, Len, P, Size) == NoAlias) {
-          if (alias(Src, Len, P, Size) == NoAlias)
-            return NoModRef;
-          return Ref;
-        }
-        }
-        break;
-      case Intrinsic::memset:
-        if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(3))) {
-          unsigned Len = LenCI->getZExtValue();
-          Value *Dest = II->getOperand(1);
-          if (alias(Dest, Len, P, Size) == NoAlias)
-            return NoModRef;
-        }
-        break;
-      case Intrinsic::atomic_cmp_swap:
-      case Intrinsic::atomic_swap:
-      case Intrinsic::atomic_load_add:
-      case Intrinsic::atomic_load_sub:
-      case Intrinsic::atomic_load_and:
-      case Intrinsic::atomic_load_nand:
-      case Intrinsic::atomic_load_or:
-      case Intrinsic::atomic_load_xor:
-      case Intrinsic::atomic_load_max:
-      case Intrinsic::atomic_load_min:
-      case Intrinsic::atomic_load_umax:
-      case Intrinsic::atomic_load_umin:
-        if (TD) {
-          Value *Op1 = II->getOperand(1);
-          unsigned Op1Size = TD->getTypeStoreSize(Op1->getType());
-          if (alias(Op1, Op1Size, P, Size) == NoAlias)
-            return NoModRef;
-        }
-        break;
-      case Intrinsic::lifetime_start:
-      case Intrinsic::lifetime_end:
-      case Intrinsic::invariant_start: {
-        unsigned PtrSize = cast<ConstantInt>(II->getOperand(1))->getZExtValue();
-        if (alias(II->getOperand(2), PtrSize, P, Size) == NoAlias)
-          return NoModRef;
-      }
-      break;
-      case Intrinsic::invariant_end: {
-        unsigned PtrSize = cast<ConstantInt>(II->getOperand(2))->getZExtValue();
-        if (alias(II->getOperand(3), PtrSize, P, Size) == NoAlias)
-          return NoModRef;
-      }
-      break;
-      }
+    break;
+  case Intrinsic::atomic_cmp_swap:
+  case Intrinsic::atomic_swap:
+  case Intrinsic::atomic_load_add:
+  case Intrinsic::atomic_load_sub:
+  case Intrinsic::atomic_load_and:
+  case Intrinsic::atomic_load_nand:
+  case Intrinsic::atomic_load_or:
+  case Intrinsic::atomic_load_xor:
+  case Intrinsic::atomic_load_max:
+  case Intrinsic::atomic_load_min:
+  case Intrinsic::atomic_load_umax:
+  case Intrinsic::atomic_load_umin:
+    if (TD) {
+      Value *Op1 = II->getOperand(1);
+      unsigned Op1Size = TD->getTypeStoreSize(Op1->getType());
+      if (alias(Op1, Op1Size, P, Size) == NoAlias)
+        return NoModRef;
     }
+    break;
+  case Intrinsic::lifetime_start:
+  case Intrinsic::lifetime_end:
+  case Intrinsic::invariant_start: {
+    unsigned PtrSize = cast<ConstantInt>(II->getOperand(1))->getZExtValue();
+    if (alias(II->getOperand(2), PtrSize, P, Size) == NoAlias)
+      return NoModRef;
+    break;
+  }
+  case Intrinsic::invariant_end: {
+    unsigned PtrSize = cast<ConstantInt>(II->getOperand(2))->getZExtValue();
+    if (alias(II->getOperand(3), PtrSize, P, Size) == NoAlias)
+      return NoModRef;
+    break;
+  }
   }
 
   // The AliasAnalysis base class has some smarts, lets use them.
