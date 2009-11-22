@@ -117,10 +117,6 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       Pointer = Inst->getOperand(1);
       // calls to free() erase the entire structure
       PointerSize = ~0ULL;
-    } else if (isFreeCall(Inst)) {
-      Pointer = Inst->getOperand(0);
-      // calls to free() erase the entire structure
-      PointerSize = ~0ULL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
       // Debug intrinsics don't cause dependences.
       if (isa<DbgInfoIntrinsic>(Inst)) continue;
@@ -174,7 +170,7 @@ MemDepResult MemoryDependenceAnalysis::
 getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad, 
                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
 
-  Value* invariantTag = 0;
+  Value *invariantTag = 0;
 
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
@@ -185,12 +181,12 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     if (invariantTag == Inst) {
       invariantTag = 0;
       continue;
-    } else if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst)) {
+    } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
       // If we pass an invariant-end marker, then we've just entered an
       // invariant region and can start ignoring dependencies.
       if (II->getIntrinsicID() == Intrinsic::invariant_end) {
         uint64_t invariantSize = ~0ULL;
-        if (ConstantInt* CI = dyn_cast<ConstantInt>(II->getOperand(2)))
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(2)))
           invariantSize = CI->getZExtValue();
         
         AliasAnalysis::AliasResult R =
@@ -205,7 +201,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       } else if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
                    II->getIntrinsicID() == Intrinsic::lifetime_end) {
         uint64_t invariantSize = ~0ULL;
-        if (ConstantInt* CI = dyn_cast<ConstantInt>(II->getOperand(1)))
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(1)))
           invariantSize = CI->getZExtValue();
 
         AliasAnalysis::AliasResult R =
