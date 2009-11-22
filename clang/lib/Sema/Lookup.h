@@ -450,7 +450,8 @@ private:
     assert(ResultKind != NotFound || Decls.size() == 0);
     assert(ResultKind != Found || Decls.size() == 1);
     assert(ResultKind != FoundOverloaded || Decls.size() > 1 ||
-           (Decls.size() == 1 && isa<FunctionTemplateDecl>(Decls[0])));
+           (Decls.size() == 1 &&
+            isa<FunctionTemplateDecl>(Decls[0]->getUnderlyingDecl())));
     assert(ResultKind != FoundUnresolvedValue || sanityCheckUnresolved());
     assert(ResultKind != Ambiguous || Decls.size() > 1 ||
            (Decls.size() == 1 && Ambiguity == AmbiguousBaseSubobjects));
