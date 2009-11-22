@@ -135,6 +135,7 @@ types::ID types::lookupTypeForExtension(const char *Ext) {
            .Case("CC", TY_CXX)
            .Case("cp", TY_CXX)
            .Case("hh", TY_CXXHeader)
+           .Case("hpp", TY_CXXHeader)
            .Case("ads", TY_Ada)
            .Case("adb", TY_Ada)
            .Case("ast", TY_AST)
