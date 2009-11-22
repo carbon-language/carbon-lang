@@ -490,8 +490,11 @@ Init *ListInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   if (Elt >= getSize())
     return 0;  // Out of range reference.
   Init *E = getElement(Elt);
-  if (!dynamic_cast<UnsetInit*>(E))  // If the element is set
-    return E;                        // Replace the VarListElementInit with it.
+  // If the element is set to some value, or if we are resolving a reference
+  // to a specific variable and that variable is explicitly unset, then
+  // replace the VarListElementInit with it.
+  if (IRV || !dynamic_cast<UnsetInit*>(E))
+    return E;
   return 0;
 }
 
@@ -1116,8 +1119,11 @@ Init *VarInit::resolveBitReference(Record &R, const RecordVal *IRV,
   assert(Bit < BI->getNumBits() && "Bit reference out of range!");
   Init *B = BI->getBit(Bit);
 
-  if (!dynamic_cast<UnsetInit*>(B))  // If the bit is not set...
-    return B;                        // Replace the VarBitInit with it.
+  // If the bit is set to some value, or if we are resolving a reference to a
+  // specific variable and that variable is explicitly unset, then replace the
+  // VarBitInit with it.
+  if (IRV || !dynamic_cast<UnsetInit*>(B))
+    return B;
   return 0;
 }
 
@@ -1138,8 +1144,11 @@ Init *VarInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   if (Elt >= LI->getSize())
     return 0;  // Out of range reference.
   Init *E = LI->getElement(Elt);
-  if (!dynamic_cast<UnsetInit*>(E))  // If the element is set
-    return E;                        // Replace the VarListElementInit with it.
+  // If the element is set to some value, or if we are resolving a reference
+  // to a specific variable and that variable is explicitly unset, then
+  // replace the VarListElementInit with it.
+  if (IRV || !dynamic_cast<UnsetInit*>(E))
+    return E;
   return 0;
 }
 
@@ -1246,8 +1255,11 @@ Init *FieldInit::resolveListElementReference(Record &R, const RecordVal *RV,
       if (Elt >= LI->getSize()) return 0;
       Init *E = LI->getElement(Elt);
 
-      if (!dynamic_cast<UnsetInit*>(E))  // If the bit is set...
-        return E;                  // Replace the VarListElementInit with it.
+      // If the element is set to some value, or if we are resolving a
+      // reference to a specific variable and that variable is explicitly
+      // unset, then replace the VarListElementInit with it.
+      if (RV || !dynamic_cast<UnsetInit*>(E))
+        return E;
     }
   return 0;
 }
