@@ -34,7 +34,7 @@ void f4(int k) {
     
   k = 2;  // expected-warning {{never read}}
 }
-
+  
 void f5() {
 
   int x = 4; // no-warning
@@ -52,6 +52,24 @@ int f6() {
 int f7(int *p) {  
   // This is allowed for defensive programming.
   p = 0; // no-warning  
+  return 1;
+}
+
+int f7b(int *p) {  
+  // This is allowed for defensive programming.
+  p = (0); // no-warning  
+  return 1;
+}
+
+int f7c(int *p) {  
+  // This is allowed for defensive programming.
+  p = (void*) 0; // no-warning  
+  return 1;
+}
+
+int f7d(int *p) {  
+  // This is allowed for defensive programming.
+  p = (void*) (0); // no-warning  
   return 1;
 }
 
