@@ -698,6 +698,18 @@ public:
   /// the stack frame of the specified index.
   virtual int getFrameIndexOffset(MachineFunction &MF, int FI) const;
 
+  /// getFrameIndexReference - This method should return the base register
+  /// and offset used to reference a frame index location. The offset is
+  /// returned directly, and the base register is returned via FrameReg.
+  virtual int getFrameIndexReference(MachineFunction &MF, int FI,
+                                     unsigned &FrameReg) const {
+    // By default, assume all frame indices are referenced via whatever
+    // getFrameRegister() says. The target can override this if it's doing
+    // something different.
+    FrameReg = getFrameRegister(MF);
+    return getFrameIndexOffset(MF, FI);
+  }
+
   /// getRARegister - This method should return the register where the return
   /// address can be found.
   virtual unsigned getRARegister() const = 0;
