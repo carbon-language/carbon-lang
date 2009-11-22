@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -asm-verbose | grep -A 1 lpad | grep Llabel
+; RUN: llc < %s -march=x86 -asm-verbose | FileCheck %s
 ; Check that register copies in the landing pad come after the EH_LABEL
 
 declare i32 @f()
@@ -19,3 +19,6 @@ lpad:		; preds = %cont, %entry
 	%v = phi i32 [ %x, %entry ], [ %a, %cont ]		; <i32> [#uses=1]
 	ret i32 %v
 }
+
+; CHECK: lpad
+; CHECK-NEXT: Llabel

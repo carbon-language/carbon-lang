@@ -1,4 +1,4 @@
-; RUN: llc < %s  -mtriple=i686-unknown-linux  -tailcallopt | grep -A 1 call | grep -A 1 tailcaller | grep subl | grep 12
+; RUN: llc < %s  -mtriple=i686-unknown-linux  -tailcallopt | FileCheck %s
 ; Linux has 8 byte alignment so the params cause stack size 20 when tailcallopt
 ; is enabled, ensure that a normal fastcc call has matching stack size
 
@@ -19,6 +19,5 @@ define i32 @main(i32 %argc, i8** %argv) {
  ret i32 0
 }
 
-
-
-
+; CHECK: call tailcaller
+; CHECK-NEXT: subl $12

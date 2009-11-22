@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6t2 | grep {mls\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\]} | count 1
+; RUN: llc < %s -march=arm -mattr=+v6t2 | FileCheck %s
 
 define i32 @f1(i32 %a, i32 %b, i32 %c) {
     %tmp1 = mul i32 %a, %b
@@ -12,3 +12,5 @@ define i32 @f2(i32 %a, i32 %b, i32 %c) {
     %tmp2 = sub i32 %tmp1, %c
     ret i32 %tmp2
 }
+
+; CHECK: mls	r0, r0, r1, r2

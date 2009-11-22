@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=pic16 | grep {movf \\+@i + 0, \\+W}
+; RUN: llc < %s -march=pic16 | FileCheck %s
 
 target datalayout = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8-f32:32:32"
 target triple = "pic16-"
@@ -27,3 +27,5 @@ entry:
 	store i8 %conv8, i8* %tmp9
 	ret void
 }
+
+; CHECK: movf @i + 0, W

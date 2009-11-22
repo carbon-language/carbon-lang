@@ -1,13 +1,13 @@
 ; An integer truncation to i1 should be done with an and instruction to make
 ; sure only the LSBit survives. Test that this is the case both for a returned
 ; value and as the operand of a branch.
-; RUN: llc < %s -march=x86 | grep {\\(and\\)\\|\\(test.*\\\$1\\)} | \
-; RUN:   count 5
+; RUN: llc < %s -march=x86 | FileCheck %s
 
 define i1 @test1(i32 %X) zeroext {
     %Y = trunc i32 %X to i1
     ret i1 %Y
 }
+; CHECK: andl $1, %eax
 
 define i1 @test2(i32 %val, i32 %mask) {
 entry:
@@ -20,6 +20,7 @@ ret_true:
 ret_false:
     ret i1 false
 }
+; CHECK: testb $1, %al
 
 define i32 @test3(i8* %ptr) {
     %val = load i8* %ptr
@@ -30,6 +31,7 @@ cond_true:
 cond_false:
     ret i32 42
 }
+; CHECK: testb $1, %al
 
 define i32 @test4(i8* %ptr) {
     %tmp = ptrtoint i8* %ptr to i1
@@ -39,6 +41,7 @@ cond_true:
 cond_false:
     ret i32 42
 }
+; CHECK: testb $1, %al
 
 define i32 @test6(double %d) {
     %tmp = fptosi double %d to i1
@@ -48,4 +51,4 @@ cond_true:
 cond_false:
     ret i32 42
 }
-
+; CHECK: testb $1, %al

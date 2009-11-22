@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | grep -A 2 {call.*f} | grep movl
+; RUN: llc < %s -march=x86 | FileCheck %s
 ; Check the register copy comes after the call to f and before the call to g
 ; PR3784
 
@@ -26,3 +26,7 @@ lpad:		; preds = %cont, %entry
 	%y = phi i32 [ %a, %entry ], [ %aa, %cont ]		; <i32> [#uses=1]
 	ret i32 %y
 }
+
+; CHECK: call{{.*}}f
+; CHECK-NEXT: Llabel1:
+; CHECK-NEXT: movl %eax, %esi

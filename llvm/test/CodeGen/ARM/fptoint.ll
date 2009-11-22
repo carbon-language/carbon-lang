@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | grep -E {vmov\\W*r\[0-9\]+,\\W*s\[0-9\]+} | count 1
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | not grep fmrrd
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | FileCheck %s
 
 @i = weak global i32 0		; <i32*> [#uses=2]
 @u = weak global i32 0		; <i32*> [#uses=2]
@@ -45,3 +44,7 @@ define void @foo9(double %x) {
 	store i16 %tmp, i16* null
 	ret void
 }
+
+; CHECK: vmov	d0, r0, r1
+; CHECK-NOT: fmrrd
+
