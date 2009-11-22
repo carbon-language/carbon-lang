@@ -279,8 +279,9 @@ void MachineBasicBlock::updateTerminator() {
       // successors is its layout successor, rewrite it to a fallthrough
       // conditional branch.
       if (isLayoutSuccessor(TBB)) {
+        if (TII->ReverseBranchCondition(Cond))
+          return;
         TII->RemoveBranch(*this);
-        TII->ReverseBranchCondition(Cond);
         TII->InsertBranch(*this, FBB, 0, Cond);
       } else if (isLayoutSuccessor(FBB)) {
         TII->RemoveBranch(*this);
@@ -292,8 +293,13 @@ void MachineBasicBlock::updateTerminator() {
       MachineBasicBlock *MBBB = *next(succ_begin());
       if (MBBA == TBB) std::swap(MBBB, MBBA);
       if (isLayoutSuccessor(TBB)) {
+        if (TII->ReverseBranchCondition(Cond)) {
+          // We can't reverse the condition, add an unconditional branch.
+          Cond.clear();
+          TII->InsertBranch(*this, MBBA, 0, Cond);
+          return;
+        }
         TII->RemoveBranch(*this);
-        TII->ReverseBranchCondition(Cond);
         TII->InsertBranch(*this, MBBA, 0, Cond);
       } else if (!isLayoutSuccessor(MBBA)) {
         TII->RemoveBranch(*this);
