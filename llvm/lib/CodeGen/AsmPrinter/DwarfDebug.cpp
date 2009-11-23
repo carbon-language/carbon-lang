@@ -1854,7 +1854,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI, unsigned Label) {
   InsnToDbgScopeMapTy::iterator I = DbgScopeBeginMap.find(MI);
   if (I == DbgScopeBeginMap.end())
     return;
-  ScopeVector &SD = DbgScopeBeginMap[MI];
+  ScopeVector &SD = I->second;
   for (ScopeVector::iterator SDI = SD.begin(), SDE = SD.end();
        SDI != SDE; ++SDI)
     (*SDI)->setStartLabelID(Label);
