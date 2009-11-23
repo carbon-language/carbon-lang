@@ -17,3 +17,11 @@ void f()
 }
 
 }
+
+struct A {
+  enum E { Foo };
+};
+
+void f(A *a) {
+  A::E e = a->Foo;
+}

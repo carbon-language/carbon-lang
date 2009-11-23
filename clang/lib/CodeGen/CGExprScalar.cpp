@@ -167,7 +167,14 @@ public:
 
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
-  Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
+  Value *VisitMemberExpr(MemberExpr *E) { 
+    if (const EnumConstantDecl *EC = 
+          dyn_cast<EnumConstantDecl>(E->getMemberDecl()))
+      return llvm::ConstantInt::get(VMContext, EC->getInitVal());
+
+    return EmitLoadOfLValue(E);
+  }
+    
   Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
   Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return EmitLoadOfLValue(E);
