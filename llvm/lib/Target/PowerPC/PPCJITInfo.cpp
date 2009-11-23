@@ -330,11 +330,12 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 
 void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                    JITCodeEmitter &JCE) {
+  MachineCodeEmitter::BufferState BS;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)PPC32CompilationCallback && 
       Fn != (void*)(intptr_t)PPC64CompilationCallback) {
-    JCE.startGVStub(F, 7*4);
+    JCE.startGVStub(BS, F, 7*4);
     intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
     JCE.emitWordBE(0);
     JCE.emitWordBE(0);
@@ -345,10 +346,10 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
     JCE.emitWordBE(0);
     EmitBranchToAt(Addr, (intptr_t)Fn, false, is64Bit);
     sys::Memory::InvalidateInstructionCache((void*)Addr, 7*4);
-    return JCE.finishGVStub(F);
+    return JCE.finishGVStub(BS);
   }
 
-  JCE.startGVStub(F, 10*4);
+  JCE.startGVStub(BS, F, 10*4);
   intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
   if (is64Bit) {
     JCE.emitWordBE(0xf821ffb1);     // stdu r1,-80(r1)
@@ -373,7 +374,7 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
   JCE.emitWordBE(0);
   EmitBranchToAt(BranchAddr, (intptr_t)Fn, true, is64Bit);
   sys::Memory::InvalidateInstructionCache((void*)Addr, 10*4);
-  return JCE.finishGVStub(F);
+  return JCE.finishGVStub(BS);
 }
 
 

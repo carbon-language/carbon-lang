@@ -192,15 +192,16 @@ extern "C" {
 
 void *AlphaJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                      JITCodeEmitter &JCE) {
+  MachineCodeEmitter::BufferState BS;
   //assert(Fn == AlphaCompilationCallback && "Where are you going?\n");
   //Do things in a stupid slow way!
-  JCE.startGVStub(F, 19*4);
+  JCE.startGVStub(BS, F, 19*4);
   void* Addr = (void*)(intptr_t)JCE.getCurrentPCValue();
   for (int x = 0; x < 19; ++ x)
     JCE.emitWordLE(0);
   EmitBranchToAt(Addr, Fn);
   DEBUG(errs() << "Emitting Stub to " << Fn << " at [" << Addr << "]\n");
-  return JCE.finishGVStub(F);
+  return JCE.finishGVStub(BS);
 }
 
 TargetJITInfo::LazyResolverFn

@@ -268,10 +268,6 @@ namespace {
   class JITEmitter : public JITCodeEmitter {
     JITMemoryManager *MemMgr;
 
-    // When outputting a function stub in the context of some other function, we
-    // save BufferBegin/BufferEnd/CurBufferPtr here.
-    uint8_t *SavedBufferBegin, *SavedBufferEnd, *SavedCurBufferPtr;
-
     // When reattempting to JIT a function after running out of space, we store
     // the estimated size of the function we're trying to JIT here, so we can
     // ask the memory manager for at least this much space.  When we
@@ -397,11 +393,11 @@ namespace {
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
     void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
 
-    virtual void startGVStub(const GlobalValue* GV, unsigned StubSize,
-                                   unsigned Alignment = 1);
-    virtual void startGVStub(const GlobalValue* GV, void *Buffer,
+    virtual void startGVStub(BufferState &BS, const GlobalValue* GV,
+                             unsigned StubSize, unsigned Alignment = 1);
+    virtual void startGVStub(BufferState &BS, void *Buffer,
                              unsigned StubSize);
-    virtual void* finishGVStub(const GlobalValue *GV);
+    virtual void* finishGVStub(BufferState &BS);
 
     /// allocateSpace - Reserves space in the current block if any, or
     /// allocate a new one of the given size.
@@ -1207,9 +1203,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
   if (DwarfExceptionHandling || JITEmitDebugInfo) {
     uintptr_t ActualSize = 0;
-    SavedBufferBegin = BufferBegin;
-    SavedBufferEnd = BufferEnd;
-    SavedCurBufferPtr = CurBufferPtr;
+    BufferState BS;
+    SaveStateTo(BS);
 
     if (MemMgr->NeedsExactSize()) {
       ActualSize = DE->GetDwarfTableSizeInBytes(F, *this, FnStart, FnEnd);
@@ -1225,9 +1220,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr,
                               FrameRegister);
     uint8_t *EhEnd = CurBufferPtr;
-    BufferBegin = SavedBufferBegin;
-    BufferEnd = SavedBufferEnd;
-    CurBufferPtr = SavedCurBufferPtr;
+    RestoreStateFrom(BS);
 
     if (DwarfExceptionHandling) {
       TheJIT->RegisterTable(FrameRegister);
@@ -1433,32 +1426,26 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   }
 }
 
-void JITEmitter::startGVStub(const GlobalValue* GV, unsigned StubSize,
-                             unsigned Alignment) {
-  SavedBufferBegin = BufferBegin;
-  SavedBufferEnd = BufferEnd;
-  SavedCurBufferPtr = CurBufferPtr;
+void JITEmitter::startGVStub(BufferState &BS, const GlobalValue* GV,
+                             unsigned StubSize, unsigned Alignment) {
+  SaveStateTo(BS);
 
   BufferBegin = CurBufferPtr = MemMgr->allocateStub(GV, StubSize, Alignment);
   BufferEnd = BufferBegin+StubSize+1;
 }
 
-void JITEmitter::startGVStub(const GlobalValue* GV, void *Buffer,
-                             unsigned StubSize) {
-  SavedBufferBegin = BufferBegin;
-  SavedBufferEnd = BufferEnd;
-  SavedCurBufferPtr = CurBufferPtr;
+void JITEmitter::startGVStub(BufferState &BS, void *Buffer, unsigned StubSize) {
+  SaveStateTo(BS);
 
   BufferBegin = CurBufferPtr = (uint8_t *)Buffer;
   BufferEnd = BufferBegin+StubSize+1;
 }
 
-void *JITEmitter::finishGVStub(const GlobalValue* GV) {
+void *JITEmitter::finishGVStub(BufferState &BS) {
   NumBytes += getCurrentPCOffset();
-  std::swap(SavedBufferBegin, BufferBegin);
-  BufferEnd = SavedBufferEnd;
-  CurBufferPtr = SavedCurBufferPtr;
-  return SavedBufferBegin;
+  void *Result = BufferBegin;
+  RestoreStateFrom(BS);
+  return Result;
 }
 
 // getConstantPoolEntryAddress - Return the address of the 'ConstantNum' entry

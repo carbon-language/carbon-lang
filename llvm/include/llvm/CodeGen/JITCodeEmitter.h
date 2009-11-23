@@ -68,23 +68,29 @@ public:
   ///
   virtual bool finishFunction(MachineFunction &F) = 0;
   
-  /// startGVStub - This callback is invoked when the JIT needs the
-  /// address of a GV (e.g. function) that has not been code generated yet.
-  /// The StubSize specifies the total size required by the stub.
+  /// startGVStub - This callback is invoked when the JIT needs the address of a
+  /// GV (e.g. function) that has not been code generated yet.  The StubSize
+  /// specifies the total size required by the stub.  The BufferState must be
+  /// passed to finishGVStub, and start/finish pairs with the same BufferState
+  /// must be properly nested.
   ///
-  virtual void startGVStub(const GlobalValue* GV, unsigned StubSize,
-                           unsigned Alignment = 1) = 0;
+  virtual void startGVStub(BufferState &BS, const GlobalValue* GV,
+                           unsigned StubSize, unsigned Alignment = 1) = 0;
 
-  /// startGVStub - This callback is invoked when the JIT needs the address of a 
+  /// startGVStub - This callback is invoked when the JIT needs the address of a
   /// GV (e.g. function) that has not been code generated yet.  Buffer points to
-  /// memory already allocated for this stub.
+  /// memory already allocated for this stub.  The BufferState must be passed to
+  /// finishGVStub, and start/finish pairs with the same BufferState must be
+  /// properly nested.
   ///
-  virtual void startGVStub(const GlobalValue* GV, void *Buffer,
+  virtual void startGVStub(BufferState &BS, void *Buffer,
                            unsigned StubSize) = 0;
-  
-  /// finishGVStub - This callback is invoked to terminate a GV stub.
+
+  /// finishGVStub - This callback is invoked to terminate a GV stub and returns
+  /// the start address of the stub.  The BufferState must first have been
+  /// passed to startGVStub.
   ///
-  virtual void *finishGVStub(const GlobalValue* F) = 0;
+  virtual void *finishGVStub(BufferState &BS) = 0;
 
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.

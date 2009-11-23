@@ -139,7 +139,8 @@ ARMJITInfo::getLazyResolverFunction(JITCompilerFn F) {
 
 void *ARMJITInfo::emitGlobalValueIndirectSym(const GlobalValue *GV, void *Ptr,
                                              JITCodeEmitter &JCE) {
-  JCE.startGVStub(GV, 4, 4);
+  MachineCodeEmitter::BufferState BS;
+  JCE.startGVStub(BS, GV, 4, 4);
   intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
   if (!sys::Memory::setRangeWritable((void*)Addr, 4)) {
     llvm_unreachable("ERROR: Unable to mark indirect symbol writable");
@@ -148,13 +149,14 @@ void *ARMJITInfo::emitGlobalValueIndirectSym(const GlobalValue *GV, void *Ptr,
   if (!sys::Memory::setRangeExecutable((void*)Addr, 4)) {
     llvm_unreachable("ERROR: Unable to mark indirect symbol executable");
   }
-  void *PtrAddr = JCE.finishGVStub(GV);
+  void *PtrAddr = JCE.finishGVStub(BS);
   addIndirectSymAddr(Ptr, (intptr_t)PtrAddr);
   return PtrAddr;
 }
 
 void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                    JITCodeEmitter &JCE) {
+  MachineCodeEmitter::BufferState BS;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
@@ -172,7 +174,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
                 errs() << "JIT: Stub emitted at [" << LazyPtr
                        << "] for external function at '" << Fn << "'\n");
       }
-      JCE.startGVStub(F, 16, 4);
+      JCE.startGVStub(BS, F, 16, 4);
       intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
       if (!sys::Memory::setRangeWritable((void*)Addr, 16)) {
         llvm_unreachable("ERROR: Unable to mark stub writable");
@@ -187,7 +189,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
       }
     } else {
       // The stub is 8-byte size and 4-aligned.
-      JCE.startGVStub(F, 8, 4);
+      JCE.startGVStub(BS, F, 8, 4);
       intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
       if (!sys::Memory::setRangeWritable((void*)Addr, 8)) {
         llvm_unreachable("ERROR: Unable to mark stub writable");
@@ -207,7 +209,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     //
     // Branch and link to the compilation callback.
     // The stub is 16-byte size and 4-byte aligned.
-    JCE.startGVStub(F, 16, 4);
+    JCE.startGVStub(BS, F, 16, 4);
     intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
     if (!sys::Memory::setRangeWritable((void*)Addr, 16)) {
       llvm_unreachable("ERROR: Unable to mark stub writable");
@@ -228,7 +230,7 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     }
   }
 
-  return JCE.finishGVStub(F);
+  return JCE.finishGVStub(BS);
 }
 
 intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {
