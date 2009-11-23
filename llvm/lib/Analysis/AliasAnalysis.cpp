@@ -127,17 +127,18 @@ AliasAnalysis::getModRefBehavior(Function *F,
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  ModRefResult Mask = ModRef;
   ModRefBehavior MRB = getModRefBehavior(CS);
   if (MRB == DoesNotAccessMemory)
     return NoModRef;
-  else if (MRB == OnlyReadsMemory)
+  
+  ModRefResult Mask = ModRef;
+  if (MRB == OnlyReadsMemory)
     Mask = Ref;
   else if (MRB == AliasAnalysis::AccessesArguments) {
     bool doesAlias = false;
     for (CallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
          AI != AE; ++AI)
-      if (alias(*AI, ~0U, P, Size) != NoAlias) {
+      if (!isNoAlias(*AI, ~0U, P, Size)) {
         doesAlias = true;
         break;
       }

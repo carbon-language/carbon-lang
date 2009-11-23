@@ -290,7 +290,8 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   // If the pointer is to a locally allocated object that does not escape,
   // then the call can not mod/ref the pointer unless the call takes the pointer
   // as an argument, and itself doesn't capture it.
-  if (isNonEscapingLocalObject(Object) && CS.getInstruction() != Object) {
+  if (!isa<Constant>(Object) && CS.getInstruction() != Object &&
+      isNonEscapingLocalObject(Object)) {
     bool PassedAsArg = false;
     unsigned ArgNo = 0;
     for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
@@ -304,7 +305,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       // is impossible to alias the pointer we're checking.  If not, we have to
       // assume that the call could touch the pointer, even though it doesn't
       // escape.
-      if (alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias) {
+      if (!isNoAlias(cast<Value>(CI), ~0U, P, ~0U)) {
         PassedAsArg = true;
         break;
       }
@@ -328,18 +329,20 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       Len = LenCI->getZExtValue();
     Value *Dest = II->getOperand(1);
     Value *Src = II->getOperand(2);
-    if (alias(Dest, Len, P, Size) == NoAlias) {
-      if (alias(Src, Len, P, Size) == NoAlias)
+    if (isNoAlias(Dest, Len, P, Size)) {
+      if (isNoAlias(Src, Len, P, Size))
         return NoModRef;
       return Ref;
     }
     break;
   }
   case Intrinsic::memset:
+    // Since memset is 'accesses arguments' only, the AliasAnalysis base class
+    // will handle it for the variable length case.
     if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getOperand(3))) {
       unsigned Len = LenCI->getZExtValue();
       Value *Dest = II->getOperand(1);
-      if (alias(Dest, Len, P, Size) == NoAlias)
+      if (isNoAlias(Dest, Len, P, Size))
         return NoModRef;
     }
     break;
@@ -358,7 +361,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     if (TD) {
       Value *Op1 = II->getOperand(1);
       unsigned Op1Size = TD->getTypeStoreSize(Op1->getType());
-      if (alias(Op1, Op1Size, P, Size) == NoAlias)
+      if (isNoAlias(Op1, Op1Size, P, Size))
         return NoModRef;
     }
     break;
@@ -366,13 +369,13 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   case Intrinsic::lifetime_end:
   case Intrinsic::invariant_start: {
     unsigned PtrSize = cast<ConstantInt>(II->getOperand(1))->getZExtValue();
-    if (alias(II->getOperand(2), PtrSize, P, Size) == NoAlias)
+    if (isNoAlias(II->getOperand(2), PtrSize, P, Size))
       return NoModRef;
     break;
   }
   case Intrinsic::invariant_end: {
     unsigned PtrSize = cast<ConstantInt>(II->getOperand(2))->getZExtValue();
-    if (alias(II->getOperand(3), PtrSize, P, Size) == NoAlias)
+    if (isNoAlias(II->getOperand(3), PtrSize, P, Size))
       return NoModRef;
     break;
   }
@@ -701,11 +704,11 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   // passes true for the StoreCaptures argument to PointerMayBeCaptured).
   if (O1 != O2) {
     if ((isa<CallInst>(O1) || isa<InvokeInst>(O1) || isa<LoadInst>(O1) ||
-         isa<Argument(O1)) &&
+         isa<Argument>(O1)) &&
         isNonEscapingLocalObject(O2))
       return NoAlias;
     if ((isa<CallInst>(O2) || isa<InvokeInst>(O2) || isa<LoadInst>(O2) ||
-         isa<Argument(O2)) &&
+         isa<Argument>(O2)) &&
         isNonEscapingLocalObject(O1))
       return NoAlias;
   }
