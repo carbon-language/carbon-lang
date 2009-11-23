@@ -24,17 +24,12 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 using namespace llvm;
 
 char IVUsers::ID = 0;
 static RegisterPass<IVUsers>
 X("iv-users", "Induction Variable Users", false, true);
-
-static cl::opt<bool>
-SimplifyIVUsers("simplify-iv-users", cl::Hidden, cl::init(false),
-          cl::desc("Restrict IV Users to loop-invariant strides"));
 
 Pass *llvm::createIVUsersPass() {
   return new IVUsers();
@@ -214,8 +209,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
     return false;  // Non-reducible symbolic expression, bail out.
 
   // Keep things simple. Don't touch loop-variant strides.
-  if (SimplifyIVUsers && !Stride->isLoopInvariant(L)
-      && L->contains(I->getParent()))
+  if (!Stride->isLoopInvariant(L) && L->contains(I->getParent()))
     return false;
 
   SmallPtrSet<Instruction *, 4> UniqueUsers;
