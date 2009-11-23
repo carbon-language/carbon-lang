@@ -73,9 +73,6 @@ void UndefBranchChecker::VisitBranchCondition(GRBranchNodeBuilder &Builder,
       N->markAsSink();
       if (!BT)
         BT = new BuiltinBug("Branch condition evaluates to a garbage value");
-      EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getDescription(),N);
-      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, 
-                           Condition);
 
       // What's going on here: we want to highlight the subexpression of the
       // condition that is the most likely source of the "uninitialized
@@ -105,6 +102,10 @@ void UndefBranchChecker::VisitBranchCondition(GRBranchNodeBuilder &Builder,
 
       FindUndefExpr FindIt(Eng.getStateManager(), St);
       Ex = FindIt.FindExpr(Ex);
+
+      // Emit the bug report.
+      EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getDescription(),N);
+      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Ex);
       R->addRange(Ex->getSourceRange());
 
       Eng.getBugReporter().EmitReport(R);

@@ -767,6 +767,12 @@ int test_uninit_branch_b(void) {
   return x ? 1 : 0; // expected-warning{{Branch condition evaluates to a garbage value}}
 }
 
+int test_uninit_branch_c(void) {
+  int x;
+  if ((short)x) // expected-warning{{Branch condition evaluates to a garbage value}}
+    return 1;
+  return 0; 
+}
 
 //===----------------------------------------------------------------------===//
 // Test passing an undefined value in a message or function call.
