@@ -2722,6 +2722,14 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   return DeclPtrTy::make(Namespc);
 }
 
+/// getNamespaceDecl - Returns the namespace a decl represents. If the decl
+/// is a namespace alias, returns the namespace it points to.
+static inline NamespaceDecl *getNamespaceDecl(NamedDecl *D) {
+  if (NamespaceAliasDecl *AD = dyn_cast_or_null<NamespaceAliasDecl>(D))
+    return AD->getNamespace();
+  return dyn_cast_or_null<NamespaceDecl>(D);
+}
+
 /// ActOnFinishNamespaceDef - This callback is called after a namespace is
 /// exited. Decl is the DeclTy returned by ActOnStartNamespaceDef.
 void Sema::ActOnFinishNamespaceDef(DeclPtrTy D, SourceLocation RBrace) {
@@ -2753,9 +2761,9 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
     return DeclPtrTy();
 
   if (!R.empty()) {
-    NamedDecl *NS = R.getFoundDecl();
-    // FIXME: Namespace aliases!
-    assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
+    NamedDecl *Named = R.getFoundDecl();
+    assert((isa<NamespaceDecl>(Named) || isa<NamespaceAliasDecl>(Named))
+        && "expected namespace decl");
     // C++ [namespace.udir]p1:
     //   A using-directive specifies that the names in the nominated
     //   namespace can be used in the scope in which the
@@ -2768,18 +2776,15 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
 
     // Find enclosing context containing both using-directive and
     // nominated namespace.
+    NamespaceDecl *NS = getNamespaceDecl(Named);
     DeclContext *CommonAncestor = cast<DeclContext>(NS);
     while (CommonAncestor && !CommonAncestor->Encloses(CurContext))
       CommonAncestor = CommonAncestor->getParent();
 
-    UDir = UsingDirectiveDecl::Create(Context,
-                                      CurContext, UsingLoc,
-                                      NamespcLoc,
+    UDir = UsingDirectiveDecl::Create(Context, CurContext, UsingLoc, NamespcLoc,
                                       SS.getRange(),
                                       (NestedNameSpecifier *)SS.getScopeRep(),
-                                      IdentLoc,
-                                      cast<NamespaceDecl>(NS),
-                                      CommonAncestor);
+                                      IdentLoc, Named, CommonAncestor);
     PushUsingDirective(S, UDir);
   } else {
     Diag(IdentLoc, diag::err_expected_namespace_name) << SS.getRange();
@@ -3004,14 +3009,6 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     BuildUsingShadowDecl(*this, S, AS, UD, *I);
 
   return UD;
-}
-
-/// getNamespaceDecl - Returns the namespace a decl represents. If the decl
-/// is a namespace alias, returns the namespace it points to.
-static inline NamespaceDecl *getNamespaceDecl(NamedDecl *D) {
-  if (NamespaceAliasDecl *AD = dyn_cast_or_null<NamespaceAliasDecl>(D))
-    return AD->getNamespace();
-  return dyn_cast_or_null<NamespaceDecl>(D);
 }
 
 Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,

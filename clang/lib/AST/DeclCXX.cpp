@@ -886,10 +886,19 @@ UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
                                                SourceRange QualifierRange,
                                                NestedNameSpecifier *Qualifier,
                                                SourceLocation IdentLoc,
-                                               NamespaceDecl *Used,
+                                               NamedDecl *Used,
                                                DeclContext *CommonAncestor) {
+  if (NamespaceDecl *NS = dyn_cast_or_null<NamespaceDecl>(Used))
+    Used = NS->getOriginalNamespace();
   return new (C) UsingDirectiveDecl(DC, L, NamespaceLoc, QualifierRange,
                                     Qualifier, IdentLoc, Used, CommonAncestor);
+}
+
+NamespaceDecl *UsingDirectiveDecl::getNominatedNamespace() {
+  if (NamespaceAliasDecl *NA =
+        dyn_cast_or_null<NamespaceAliasDecl>(NominatedNamespace))
+    return NA->getNamespace();
+  return cast_or_null<NamespaceDecl>(NominatedNamespace);
 }
 
 NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
@@ -900,6 +909,8 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                                NestedNameSpecifier *Qualifier,
                                                SourceLocation IdentLoc,
                                                NamedDecl *Namespace) {
+  if (NamespaceDecl *NS = dyn_cast_or_null<NamespaceDecl>(Namespace))
+    Namespace = NS->getOriginalNamespace();
   return new (C) NamespaceAliasDecl(DC, L, AliasLoc, Alias, QualifierRange,
                                     Qualifier, IdentLoc, Namespace);
 }

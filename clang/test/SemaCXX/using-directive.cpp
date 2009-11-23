@@ -102,3 +102,13 @@ namespace FuncHidesTagAmbiguity {
     (void)X(); // expected-error{{reference to 'X' is ambiguous}}
   }
 }
+
+// PR5479
+namespace Aliased {
+  void inAliased();
+}
+namespace Alias = Aliased;
+using namespace Alias;
+void testAlias() {
+  inAliased();
+}

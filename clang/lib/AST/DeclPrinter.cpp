@@ -505,7 +505,7 @@ void DeclPrinter::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   Out << "using namespace ";
   if (D->getQualifier())
     D->getQualifier()->print(Out, Policy);
-  Out << D->getNominatedNamespace()->getNameAsString();
+  Out << D->getNominatedNamespaceAsWritten()->getNameAsString();
 }
 
 void DeclPrinter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {

@@ -1514,9 +1514,9 @@ class UsingDirectiveDecl : public NamedDecl {
   SourceLocation IdentLoc;
 
   /// NominatedNamespace - Namespace nominated by using-directive.
-  NamespaceDecl *NominatedNamespace;
+  NamedDecl *NominatedNamespace;
 
-  /// Enclosing context containing both using-directive and nomintated
+  /// Enclosing context containing both using-directive and nominated
   /// namespace.
   DeclContext *CommonAncestor;
 
@@ -1532,12 +1532,12 @@ class UsingDirectiveDecl : public NamedDecl {
                      SourceRange QualifierRange,
                      NestedNameSpecifier *Qualifier,
                      SourceLocation IdentLoc,
-                     NamespaceDecl *Nominated,
+                     NamedDecl *Nominated,
                      DeclContext *CommonAncestor)
     : NamedDecl(Decl::UsingDirective, DC, L, getName()),
       NamespaceLoc(NamespcLoc), QualifierRange(QualifierRange),
       Qualifier(Qualifier), IdentLoc(IdentLoc),
-      NominatedNamespace(Nominated? Nominated->getOriginalNamespace() : 0),
+      NominatedNamespace(Nominated),
       CommonAncestor(CommonAncestor) {
   }
 
@@ -1550,8 +1550,13 @@ public:
   /// name of the namespace.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
 
+  NamedDecl *getNominatedNamespaceAsWritten() { return NominatedNamespace; }
+  const NamedDecl *getNominatedNamespaceAsWritten() const {
+    return NominatedNamespace;
+  }
+
   /// getNominatedNamespace - Returns namespace nominated by using-directive.
-  NamespaceDecl *getNominatedNamespace() { return NominatedNamespace; }
+  NamespaceDecl *getNominatedNamespace();
 
   const NamespaceDecl *getNominatedNamespace() const {
     return const_cast<UsingDirectiveDecl*>(this)->getNominatedNamespace();
@@ -1574,7 +1579,7 @@ public:
                                     SourceRange QualifierRange,
                                     NestedNameSpecifier *Qualifier,
                                     SourceLocation IdentLoc,
-                                    NamespaceDecl *Nominated,
+                                    NamedDecl *Nominated,
                                     DeclContext *CommonAncestor);
 
   static bool classof(const Decl *D) {
