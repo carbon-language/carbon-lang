@@ -148,8 +148,8 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     if (BaseClassDecl) {
       llvm::Value *Derived = Val.getAggregateAddr();
       llvm::Value *Base = 
-        GetAddressCXXOfBaseClass(Derived, DerivedClassDecl, BaseClassDecl, 
-                                 /*NullCheckValue=*/false);
+        GetAddressOfBaseClass(Derived, DerivedClassDecl, BaseClassDecl, 
+                              /*NullCheckValue=*/false);
       return RValue::get(Base);
     }
   }
@@ -1328,8 +1328,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     // Perform the derived-to-base conversion
     llvm::Value *Base = 
-      GetAddressCXXOfBaseClass(LV.getAddress(), DerivedClassDecl, 
-                               BaseClassDecl, /*NullCheckValue=*/false);
+      GetAddressOfBaseClass(LV.getAddress(), DerivedClassDecl, 
+                            BaseClassDecl, /*NullCheckValue=*/false);
     
     return LValue::MakeAddr(Base, MakeQualifiers(E->getType()));
   }
@@ -1340,7 +1340,23 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
   }
   case CastExpr::CK_BaseToDerived: {
-    return EmitUnsupportedLValue(E, "base-to-derived cast lvalue");
+    const RecordType *BaseClassTy = 
+      E->getSubExpr()->getType()->getAs<RecordType>();
+    CXXRecordDecl *BaseClassDecl = 
+      cast<CXXRecordDecl>(BaseClassTy->getDecl());
+    
+    const RecordType *DerivedClassTy = E->getType()->getAs<RecordType>();
+    CXXRecordDecl *DerivedClassDecl = 
+      cast<CXXRecordDecl>(DerivedClassTy->getDecl());
+    
+    LValue LV = EmitLValue(E->getSubExpr());
+    
+    // Perform the base-to-derived conversion
+    llvm::Value *Derived = 
+      GetAddressOfDerivedClass(LV.getAddress(), BaseClassDecl, 
+                               DerivedClassDecl, /*NullCheckValue=*/false);
+    
+    return LValue::MakeAddr(Derived, MakeQualifiers(E->getType()));
   }
   case CastExpr::CK_BitCast: {
     // This must be a reinterpret_cast (or c-style equivalent).

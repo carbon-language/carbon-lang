@@ -1211,10 +1211,10 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
                         const CXXRecordDecl *ClassDecl,
                         const CXXRecordDecl *BaseClassDecl, QualType Ty) {
   if (ClassDecl) {
-    Dest = GetAddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl,
-                                    /*NullCheckValue=*/false);
-    Src = GetAddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl,
-                                   /*NullCheckValue=*/false);
+    Dest = GetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl,
+                                 /*NullCheckValue=*/false);
+    Src = GetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl,
+                                /*NullCheckValue=*/false);
   }
   if (BaseClassDecl->hasTrivialCopyConstructor()) {
     EmitAggregateCopy(Dest, Src, Ty);
@@ -1250,10 +1250,10 @@ void CodeGenFunction::EmitClassCopyAssignment(
                                         const CXXRecordDecl *BaseClassDecl,
                                         QualType Ty) {
   if (ClassDecl) {
-    Dest = GetAddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl,
-                                    /*NullCheckValue=*/false);
-    Src = GetAddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl,
-                                   /*NullCheckValue=*/false);
+    Dest = GetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl,
+                                 /*NullCheckValue=*/false);
+    Src = GetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl,
+                                /*NullCheckValue=*/false);
   }
   if (BaseClassDecl->hasTrivialCopyAssignment()) {
     EmitAggregateCopy(Dest, Src, Ty);
@@ -1493,9 +1493,9 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   const Type *BaseType = BaseInit->getBaseClass();
   CXXRecordDecl *BaseClassDecl =
     cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
-  llvm::Value *V = CGF.GetAddressCXXOfBaseClass(ThisPtr, ClassDecl,
-                                                BaseClassDecl,
-                                                /*NullCheckValue=*/false);
+  llvm::Value *V = CGF.GetAddressOfBaseClass(ThisPtr, ClassDecl,
+                                             BaseClassDecl,
+                                             /*NullCheckValue=*/false);
   CGF.EmitCXXConstructorCall(BaseInit->getConstructor(),
                              CtorType, V,
                              BaseInit->const_arg_begin(),
@@ -1710,9 +1710,9 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
 
-    llvm::Value *V = GetAddressCXXOfBaseClass(LoadCXXThis(),
-                                              ClassDecl, BaseClassDecl, 
-                                              /*NullCheckValue=*/false);
+    llvm::Value *V = GetAddressOfBaseClass(LoadCXXThis(),
+                                           ClassDecl, BaseClassDecl, 
+                                           /*NullCheckValue=*/false);
     EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
                           Dtor_Base, V);
   }

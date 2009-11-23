@@ -598,15 +598,20 @@ public:
   /// generating code for an C++ member function.
   llvm::Value *LoadCXXThis();
 
-  /// GetAddressCXXOfBaseClass - This function will add the necessary delta
+  /// GetAddressOfBaseClass - This function will add the necessary delta
   /// to the load of 'this' and returns address of the base class.
   // FIXME. This currently only does a derived to non-virtual base conversion.
   // Other kinds of conversions will come later.
-  llvm::Value *GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
-                                        const CXXRecordDecl *ClassDecl,
-                                        const CXXRecordDecl *BaseClassDecl,
-                                        bool NullCheckValue);
+  llvm::Value *GetAddressOfBaseClass(llvm::Value *Value,
+                                     const CXXRecordDecl *ClassDecl,
+                                     const CXXRecordDecl *BaseClassDecl,
+                                     bool NullCheckValue);
   
+  llvm::Value *GetAddressOfDerivedClass(llvm::Value *Value,
+                                        const CXXRecordDecl *ClassDecl,
+                                        const CXXRecordDecl *DerivedClassDecl,
+                                        bool NullCheckValue);
+
   llvm::Value *
   GetVirtualCXXBaseClassOffset(llvm::Value *This,
                                const CXXRecordDecl *ClassDecl,

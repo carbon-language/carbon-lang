@@ -748,6 +748,23 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
   return V;
 }
 
+static bool ShouldNullCheckClassCastValue(const CastExpr *CE) {
+  const Expr *E = CE->getSubExpr();
+  
+  if (isa<CXXThisExpr>(E)) {
+    // We always assume that 'this' is never null.
+    return false;
+  }
+  
+  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(CE)) {
+    // And that lvalue casts are never null.
+    if (ICE->isLvalueCast())
+      return false;
+  }
+
+  return true;
+}
+
 // VisitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
@@ -775,6 +792,19 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
   case CastExpr::CK_NoOp:
     return Visit(const_cast<Expr*>(E));
 
+  case CastExpr::CK_BaseToDerived: {
+    const CXXRecordDecl *BaseClassDecl = 
+      E->getType()->getCXXRecordDeclForPointerType();
+    const CXXRecordDecl *DerivedClassDecl = 
+      DestTy->getCXXRecordDeclForPointerType();
+    
+    Value *Src = Visit(const_cast<Expr*>(E));
+    
+    bool NullCheckValue = ShouldNullCheckClassCastValue(CE);
+    return CGF.GetAddressOfDerivedClass(Src, BaseClassDecl, DerivedClassDecl, 
+                                        NullCheckValue);
+  }
+      
   case CastExpr::CK_DerivedToBase: {
     const RecordType *DerivedClassTy = 
       E->getType()->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();
@@ -787,18 +817,9 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     
     Value *Src = Visit(const_cast<Expr*>(E));
 
-    bool NullCheckValue = true;
-    
-    if (isa<CXXThisExpr>(E)) {
-      // We always assume that 'this' is never null.
-      NullCheckValue = false;
-    } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(CE)) {
-      // And that lvalue casts are never null.
-      if (ICE->isLvalueCast())
-        NullCheckValue = false;
-    }
-    return CGF.GetAddressCXXOfBaseClass(Src, DerivedClassDecl, BaseClassDecl,
-                                        NullCheckValue);
+    bool NullCheckValue = ShouldNullCheckClassCastValue(CE);
+    return CGF.GetAddressOfBaseClass(Src, DerivedClassDecl, BaseClassDecl,
+                                     NullCheckValue);
   }
   case CastExpr::CK_ToUnion: {
     assert(0 && "Should be unreachable!");
