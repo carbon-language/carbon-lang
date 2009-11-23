@@ -2,9 +2,9 @@
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 ; CHECK: t1
-; CHECK: mvn  r0, #-2147483648
+; CHECK: sub.w r0, r1, #-2147483648
 ; CHECK: cmp r2, #10
-; CHECK: add.w r0, r1, r0
+; CHECK: sub.w r0, r0, #1
 ; CHECK: it  gt
 ; CHECK: movgt r0, r1
         %tmp1 = icmp sgt i32 %c, 10
