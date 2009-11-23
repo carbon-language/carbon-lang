@@ -4852,19 +4852,41 @@ inline QualType Sema::CheckBitwiseOperands(
 
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   Expr *&lex, Expr *&rex, SourceLocation Loc) {
-  UsualUnaryConversions(lex);
-  UsualUnaryConversions(rex);
+  if (!Context.getLangOptions().CPlusPlus) {
+    UsualUnaryConversions(lex);
+    UsualUnaryConversions(rex);
 
-  if (!lex->getType()->isScalarType() || !rex->getType()->isScalarType())
-    return InvalidOperands(Loc, lex, rex);
+    if (!lex->getType()->isScalarType() || !rex->getType()->isScalarType())
+      return InvalidOperands(Loc, lex, rex);
     
-  if (Context.getLangOptions().CPlusPlus) {
-    // C++ [expr.log.and]p2
-    // C++ [expr.log.or]p2
-    return Context.BoolTy;
+    return Context.IntTy;
   }
+  
+  // C++ [expr.log.and]p1
+  // C++ [expr.log.or]p1
+  // The operands are both implicitly converted to type bool (clause 4).
+  StandardConversionSequence LHS;
+  if (!IsStandardConversion(lex, Context.BoolTy,
+                            /*InOverloadResolution=*/false, LHS))
+    return InvalidOperands(Loc, lex, rex);
 
-  return Context.IntTy;
+  if (PerformImplicitConversion(lex, Context.BoolTy, LHS,
+                                "passing", /*IgnoreBaseAccess=*/false))
+    return InvalidOperands(Loc, lex, rex);
+  
+  StandardConversionSequence RHS;
+  if (!IsStandardConversion(rex, Context.BoolTy,
+                            /*InOverloadResolution=*/false, RHS))
+    return InvalidOperands(Loc, lex, rex);
+  
+  if (PerformImplicitConversion(rex, Context.BoolTy, RHS,
+                                "passing", /*IgnoreBaseAccess=*/false))
+    return InvalidOperands(Loc, lex, rex);
+  
+  // C++ [expr.log.and]p2
+  // C++ [expr.log.or]p2
+  // The result is a bool.
+  return Context.BoolTy;
 }
 
 /// IsReadonlyProperty - Verify that otherwise a valid l-value expression

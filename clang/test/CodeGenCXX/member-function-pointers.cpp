@@ -91,3 +91,12 @@ namespace PR5138 {
 
   void (foo::*ptr3)(void) = (void (foo::*)(void))&foo::bar;
 }
+
+// PR5593
+namespace PR5593 {
+  struct A { };
+  
+  bool f(void (A::*f)()) {
+    return f && f;
+  }
+}
