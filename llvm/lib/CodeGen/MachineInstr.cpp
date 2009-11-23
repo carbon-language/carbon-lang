@@ -1149,9 +1149,10 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
 
     DebugLocTuple DLT = MF->getDebugLocTuple(debugLoc);
     DICompileUnit CU(DLT.Scope);
+    OS << " dbg:";
     if (!CU.isNull())
-      OS << " dbg:" << CU.getDirectory() << '/' << CU.getFilename() << ":"
-         << DLT.Line << ":" << DLT.Col;
+      OS << CU.getDirectory() << '/' << CU.getFilename() << ":";
+    OS << DLT.Line << ":" << DLT.Col;
   }
 
   OS << "\n";
