@@ -1231,6 +1231,9 @@ bool FunctionPassManager::doFinalization() {
 bool FunctionPassManagerImpl::doInitialization(Module &M) {
   bool Changed = false;
 
+  dumpArguments();
+  dumpPasses();
+
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
     Changed |= getContainedManager(Index)->doInitialization(M);
 
@@ -1273,9 +1276,6 @@ void FunctionPassManagerImpl::releaseMemoryOnTheFly() {
 bool FunctionPassManagerImpl::run(Function &F) {
   bool Changed = false;
   TimingInfo::createTheTimeInfo();
-
-  dumpArguments();
-  dumpPasses();
 
   initializeAllAnalysisInfo();
   for (unsigned Index = 0; Index < getNumContainedManagers(); ++Index)
