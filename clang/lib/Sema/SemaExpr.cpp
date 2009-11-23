@@ -673,12 +673,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (SS && SS->isInvalid())
     return ExprError();
 
-  // C++ [temp.dep.expr]p3:
-  //   An id-expression is type-dependent if it contains:
-  //     -- a nested-name-specifier that contains a class-name that
-  //        names a dependent type.
-  // FIXME: Member of the current instantiation.
-  if (SS && isDependentScopeSpecifier(*SS)) {
+  // Determine whether this is a member of an unknown specialization.
+  if (SS && SS->isSet() && !computeDeclContext(*SS, false)) {
     return Owned(new (Context) DependentScopeDeclRefExpr(Name, Context.DependentTy,
                                                      Loc, SS->getRange(),
                 static_cast<NestedNameSpecifier *>(SS->getScopeRep()),

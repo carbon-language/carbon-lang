@@ -142,3 +142,12 @@ struct X0<T*, U*> {
     void g8(typename ::X0<typename X0<T_type*, U*>::X2::my_T_type*, U_type*>::X2::my_T_type&); // expected-error{{redecl}}
   };
 };
+
+template<typename T>
+struct X1 {
+  static int *a;
+  void f(float *b) {
+    X1<T>::a = b; // expected-error{{incompatible}}
+    X1<T*>::a = b;
+  }
+};
