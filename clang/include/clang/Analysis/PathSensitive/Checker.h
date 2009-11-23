@@ -172,6 +172,10 @@ public:
                                SymbolReaper &SymReaper) {}
   virtual void EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                            GRExprEngine &Eng) {}
+
+  virtual void VisitBranchCondition(GRBranchNodeBuilder &Builder,
+                                    GRExprEngine &Eng,
+                                    Stmt *Condition, void *tag) {}
 };
 } // end clang namespace
 

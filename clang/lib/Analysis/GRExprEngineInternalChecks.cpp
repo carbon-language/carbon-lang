@@ -306,7 +306,6 @@ void GRExprEngine::RegisterInternalChecks() {
   // create BugReports on-the-fly but instead wait until GRExprEngine finishes
   // analyzing a function.  Generation of BugReport objects is done via a call
   // to 'FlushReports' from BugReporter.
-  BR.Register(new UndefBranch(this));
   BR.Register(new UndefResult(this));
   BR.Register(new NilReceiverStructRet(this));
   BR.Register(new NilReceiverLargerThanVoidPtrRet(this));
@@ -325,4 +324,5 @@ void GRExprEngine::RegisterInternalChecks() {
   RegisterReturnUndefChecker(*this);
   RegisterUndefinedArraySubscriptChecker(*this);
   RegisterUndefinedAssignmentChecker(*this);
+  RegisterUndefBranchChecker(*this);
 }

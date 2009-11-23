@@ -771,55 +771,49 @@ void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
                                 Condition->getLocStart(),
                                 "Error evaluating branch");
 
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
+    void *tag = I->first;
+    Checker *checker = I->second;
+    checker->VisitBranchCondition(builder, *this, Condition, tag);
+  }
+
+  // If the branch condition is undefined, return;
+  if (!builder.isFeasible(true) && !builder.isFeasible(false))
+    return;
+
   const GRState* PrevState = builder.getState();
   SVal X = PrevState->getSVal(Condition);
-  DefinedSVal *V = NULL;
-  
-  while (true) {
-    V = dyn_cast<DefinedSVal>(&X);
 
-    if (!V) {
-      if (X.isUnknown()) {
-        if (const Expr *Ex = dyn_cast<Expr>(Condition)) {
-          if (Ex->getType()->isIntegerType()) {
-            // Try to recover some path-sensitivity.  Right now casts of symbolic
-            // integers that promote their values are currently not tracked well.
-            // If 'Condition' is such an expression, try and recover the
-            // underlying value and use that instead.
-            SVal recovered = RecoverCastedSymbol(getStateManager(),
-                                                 builder.getState(), Condition,
-                                                 getContext());
-
-            if (!recovered.isUnknown()) {
-              X = recovered;
-              continue;
-            }
-          }
-        }    
-
-        builder.generateNode(MarkBranch(PrevState, Term, true), true);
-        builder.generateNode(MarkBranch(PrevState, Term, false), false);
-        return;
+  if (X.isUnknown()) {
+    // Give it a chance to recover from unknown.
+    if (const Expr *Ex = dyn_cast<Expr>(Condition)) {
+      if (Ex->getType()->isIntegerType()) {
+        // Try to recover some path-sensitivity.  Right now casts of symbolic
+        // integers that promote their values are currently not tracked well.
+        // If 'Condition' is such an expression, try and recover the
+        // underlying value and use that instead.
+        SVal recovered = RecoverCastedSymbol(getStateManager(),
+                                             builder.getState(), Condition,
+                                             getContext());
+        
+        if (!recovered.isUnknown()) {
+          X = recovered;
+        }
       }
-
-      assert(X.isUndef());
-      ExplodedNode *N = builder.generateNode(PrevState, true);
-
-      if (N) {
-        N->markAsSink();
-        UndefBranches.insert(N);
-      }
-
-      builder.markInfeasible(false);
+    }
+    // If the condition is still unknown, give up.
+    if (X.isUnknown()) {
+      builder.generateNode(MarkBranch(PrevState, Term, true), true);
+      builder.generateNode(MarkBranch(PrevState, Term, false), false);
       return;
     }
-    
-    break;
   }
+
+  DefinedSVal V = cast<DefinedSVal>(X);
 
   // Process the true branch.
   if (builder.isFeasible(true)) {
-    if (const GRState *state = PrevState->Assume(*V, true))
+    if (const GRState *state = PrevState->Assume(V, true))
       builder.generateNode(MarkBranch(state, Term, true), true);
     else
       builder.markInfeasible(true);
@@ -827,7 +821,7 @@ void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
 
   // Process the false branch.
   if (builder.isFeasible(false)) {
-    if (const GRState *state = PrevState->Assume(*V, false))
+    if (const GRState *state = PrevState->Assume(V, false))
       builder.generateNode(MarkBranch(state, Term, false), false);
     else
       builder.markInfeasible(false);
