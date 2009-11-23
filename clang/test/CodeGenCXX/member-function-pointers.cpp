@@ -55,6 +55,10 @@ void f3(A *a, A &ar) {
   (ar.*pa)();
 }
 
+bool f4() {
+  return pa;
+}
+
 // PR5177
 namespace PR5177 {
   struct A {

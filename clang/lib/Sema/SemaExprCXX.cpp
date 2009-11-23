@@ -1359,9 +1359,14 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ImpCastExprToType(From, ToType, Kind);
     break;
   }
-  case ICK_Boolean_Conversion:
-    ImpCastExprToType(From, Context.BoolTy, CastExpr::CK_Unknown);
+  case ICK_Boolean_Conversion: {
+    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    if (FromType->isMemberPointerType())
+      Kind = CastExpr::CK_MemberPointerToBoolean;
+    
+    ImpCastExprToType(From, Context.BoolTy, Kind);
     break;
+  }
 
   case ICK_Derived_To_Base:
     if (CheckDerivedToBaseConversion(From->getType(), 

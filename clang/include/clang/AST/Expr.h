@@ -1574,7 +1574,11 @@ public:
     CK_FloatingToIntegral,
     
     /// CK_FloatingCast - Casting between floating types of different size.
-    CK_FloatingCast
+    CK_FloatingCast,
+    
+    /// CK_MemberPointerToBoolean - Member pointer to boolean
+    CK_MemberPointerToBoolean
+
   };
 
 private:
