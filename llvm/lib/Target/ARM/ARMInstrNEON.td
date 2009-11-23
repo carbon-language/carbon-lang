@@ -2682,28 +2682,29 @@ def  VDUPfq   : NVDup<0b11101010, 0b1011, 0b00, (outs QPR:$dst), (ins GPR:$src),
 
 //   VDUP     : Vector Duplicate Lane (from scalar to all elements)
 
-class VDUPLND<string OpcodeStr, ValueType Ty>
-  : N2VDup<0b11, 0b11, 0b11000, 0, 0,
+class VDUPLND<bits<2> op19_18, bits<2> op17_16, string OpcodeStr, ValueType Ty>
+  : N2V<0b11, 0b11, op19_18, op17_16, 0b11000, 0, 0,
         (outs DPR:$dst), (ins DPR:$src, nohash_imm:$lane), IIC_VMOVD,
         OpcodeStr, "\t$dst, $src[$lane]", "",
         [(set DPR:$dst, (Ty (NEONvduplane (Ty DPR:$src), imm:$lane)))]>;
 
-class VDUPLNQ<string OpcodeStr, ValueType ResTy, ValueType OpTy>
-  : N2VDup<0b11, 0b11, 0b11000, 1, 0,
+class VDUPLNQ<bits<2> op19_18, bits<2> op17_16, string OpcodeStr,
+              ValueType ResTy, ValueType OpTy>
+  : N2V<0b11, 0b11, op19_18, op17_16, 0b11000, 1, 0,
         (outs QPR:$dst), (ins DPR:$src, nohash_imm:$lane), IIC_VMOVD,
         OpcodeStr, "\t$dst, $src[$lane]", "",
         [(set QPR:$dst, (ResTy (NEONvduplane (OpTy DPR:$src), imm:$lane)))]>;
 
 // Inst{19-16} is partially specified depending on the element size.
 
-def VDUPLN8d  : VDUPLND<"vdup.8", v8i8> { let Inst{16} = 1; }
-def VDUPLN16d : VDUPLND<"vdup.16", v4i16> { let Inst{17-16} = 0b10; }
-def VDUPLN32d : VDUPLND<"vdup.32", v2i32> { let Inst{18-16} = 0b100; }
-def VDUPLNfd  : VDUPLND<"vdup.32", v2f32> { let Inst{18-16} = 0b100; }
-def VDUPLN8q  : VDUPLNQ<"vdup.8", v16i8, v8i8> { let Inst{16} = 1; }
-def VDUPLN16q : VDUPLNQ<"vdup.16", v8i16, v4i16> { let Inst{17-16} = 0b10; }
-def VDUPLN32q : VDUPLNQ<"vdup.32", v4i32, v2i32> { let Inst{18-16} = 0b100; }
-def VDUPLNfq  : VDUPLNQ<"vdup.32", v4f32, v2f32> { let Inst{18-16} = 0b100; }
+def VDUPLN8d  : VDUPLND<{?,?}, {?,1}, "vdup.8", v8i8>;
+def VDUPLN16d : VDUPLND<{?,?}, {1,0}, "vdup.16", v4i16>;
+def VDUPLN32d : VDUPLND<{?,1}, {0,0}, "vdup.32", v2i32>;
+def VDUPLNfd  : VDUPLND<{?,1}, {0,0}, "vdup.32", v2f32>;
+def VDUPLN8q  : VDUPLNQ<{?,?}, {?,1}, "vdup.8", v16i8, v8i8>;
+def VDUPLN16q : VDUPLNQ<{?,?}, {1,0}, "vdup.16", v8i16, v4i16>;
+def VDUPLN32q : VDUPLNQ<{?,1}, {0,0}, "vdup.32", v4i32, v2i32>;
+def VDUPLNfq  : VDUPLNQ<{?,1}, {0,0}, "vdup.32", v4f32, v2f32>;
 
 def : Pat<(v16i8 (NEONvduplane (v16i8 QPR:$src), imm:$lane)),
           (v16i8 (VDUPLN8q (v8i8 (EXTRACT_SUBREG QPR:$src,
@@ -2722,19 +2723,15 @@ def : Pat<(v4f32 (NEONvduplane (v4f32 QPR:$src), imm:$lane)),
                                    (DSubReg_i32_reg imm:$lane))),
                            (SubReg_i32_lane imm:$lane)))>;
 
-def  VDUPfdf  : N2VDup<0b11, 0b11, 0b11000, 0, 0,
-                       (outs DPR:$dst), (ins SPR:$src),
-                       IIC_VMOVD, "vdup.32", "\t$dst, ${src:lane}", "",
-                       [(set DPR:$dst, (v2f32 (NEONvdup (f32 SPR:$src))))]> {
-  let Inst{18-16} = 0b100;
-}
+def  VDUPfdf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 0, 0,
+                    (outs DPR:$dst), (ins SPR:$src),
+                    IIC_VMOVD, "vdup.32", "\t$dst, ${src:lane}", "",
+                    [(set DPR:$dst, (v2f32 (NEONvdup (f32 SPR:$src))))]>;
 
-def  VDUPfqf  : N2VDup<0b11, 0b11, 0b11000, 1, 0,
-                       (outs QPR:$dst), (ins SPR:$src),
-                       IIC_VMOVD, "vdup.32", "\t$dst, ${src:lane}", "",
-                       [(set QPR:$dst, (v4f32 (NEONvdup (f32 SPR:$src))))]> {
-  let Inst{18-16} = 0b100;
-}
+def  VDUPfqf  : N2V<0b11, 0b11, {?,1}, {0,0}, 0b11000, 1, 0,
+                    (outs QPR:$dst), (ins SPR:$src),
+                    IIC_VMOVD, "vdup.32", "\t$dst, ${src:lane}", "",
+                    [(set QPR:$dst, (v4f32 (NEONvdup (f32 SPR:$src))))]>;
 
 def : Pat<(v2i64 (NEONvduplane (v2i64 QPR:$src), imm:$lane)),
           (INSERT_SUBREG QPR:$src, 
