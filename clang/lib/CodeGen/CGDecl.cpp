@@ -30,7 +30,9 @@ using namespace CodeGen;
 
 void CodeGenFunction::EmitDecl(const Decl &D) {
   switch (D.getKind()) {
-  default: assert(0 && "Unknown decl kind!");
+  default:
+    CGM.ErrorUnsupported(&D, "decl");
+    return;
   case Decl::ParmVar:
     assert(0 && "Parmdecls should not be in declstmts!");
   case Decl::Function:  // void X();
@@ -38,7 +40,9 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Enum:      // enum X;
   case Decl::EnumConstant: // enum ? { X = ? }
   case Decl::CXXRecord: // struct/union/class X; [C++]
-  case Decl::UsingDirective: // using X; [C++]
+  case Decl::Using:          // using X; [C++]
+  case Decl::UsingShadow:
+  case Decl::UsingDirective: // using namespace X; [C++]
     // None of these decls require codegen support.
     return;
 
