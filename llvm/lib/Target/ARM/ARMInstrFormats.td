@@ -1248,17 +1248,6 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{7-4} = op7_4;
 }
 
-// With selective bit(s) from op7_4 specified by subclasses.
-class NLdStLN<bit op23, bits<2> op21_20, bits<4> op11_8,
-              dag oops, dag iops, InstrItinClass itin,
-              string opc, string asm, string cstr, list<dag> pattern>
-  : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, opc, asm, cstr, pattern> {
-  let Inst{31-24} = 0b11110100;
-  let Inst{23} = op23;
-  let Inst{21-20} = op21_20;
-  let Inst{11-8} = op11_8;
-}
-
 class NDataI<dag oops, dag iops, InstrItinClass itin,
              string opc, string asm, string cstr, list<dag> pattern>
   : NeonI<oops, iops, AddrModeNone, IndexModeNone, itin, opc, asm,
