@@ -1871,8 +1871,12 @@ bool IPSCCP::runOnModule(Module &M) {
       BasicBlock *DeadBB = BlocksToErase[i];
       for (Value::use_iterator UI = DeadBB->use_begin(), UE = DeadBB->use_end();
            UI != UE; ) {
+        // Grab the user and then increment the iterator early, as the user
+        // will be deleted. Step past all adjacent uses from the same user.
+        Instruction *I = dyn_cast<Instruction>(*UI);
+        do { ++UI; } while (UI != UE && *UI == I);
+
         // Ignore blockaddress users; BasicBlock's dtor will handle them.
-        Instruction *I = dyn_cast<Instruction>(*UI++);
         if (!I) continue;
 
         bool Folded = ConstantFoldTerminator(I->getParent());
