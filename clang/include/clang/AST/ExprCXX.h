@@ -681,10 +681,7 @@ public:
   CXXConditionDeclExpr(SourceLocation startLoc,
                        SourceLocation eqLoc, VarDecl *var)
     : DeclRefExpr(CXXConditionDeclExprClass, var,
-                  var->getType().getNonReferenceType(), startLoc,
-                  var->getType()->isDependentType(),
-                  /*FIXME:integral constant?*/
-                    var->getType()->isDependentType()) {}
+                  var->getType().getNonReferenceType(), startLoc) {}
 
   SourceLocation getStartLoc() const { return getLocation(); }
 

@@ -56,12 +56,64 @@ std::size_t ExplicitTemplateArgumentList::sizeFor(
          sizeof(TemplateArgumentLoc) * Info.size();
 }
 
+void DeclRefExpr::computeDependence() {
+  TypeDependent = false;
+  ValueDependent = false;
+  
+  NamedDecl *D = getDecl();
+
+  // (TD) C++ [temp.dep.expr]p3:
+  //   An id-expression is type-dependent if it contains:
+  //
+  // and 
+  //
+  // (VD) C++ [temp.dep.constexpr]p2:
+  //  An identifier is value-dependent if it is:
+
+  //  (TD)  - an identifier that was declared with dependent type
+  //  (VD)  - a name declared with a dependent type,
+  if (getType()->isDependentType()) {
+    TypeDependent = true;
+    ValueDependent = true;
+  }
+  //  (TD)  - a conversion-function-id that specifies a dependent type
+  else if (D->getDeclName().getNameKind() 
+                               == DeclarationName::CXXConversionFunctionName &&
+           D->getDeclName().getCXXNameType()->isDependentType()) {
+    TypeDependent = true;
+    ValueDependent = true;
+  }
+  //  (TD)  - a template-id that is dependent,
+  else if (hasExplicitTemplateArgumentList() && 
+           TemplateSpecializationType::anyDependentTemplateArguments(
+                                                       getTemplateArgs(), 
+                                                       getNumTemplateArgs())) {
+    TypeDependent = true;
+    ValueDependent = true;
+  }
+  //  (VD)  - the name of a non-type template parameter,
+  else if (isa<NonTypeTemplateParmDecl>(D))
+    ValueDependent = true;
+  //  (VD) - a constant with integral or enumeration type and is
+  //         initialized with an expression that is value-dependent.
+  else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    if (Var->getType()->isIntegralType() &&
+        Var->getType().getCVRQualifiers() == Qualifiers::Const &&
+        Var->getInit() &&
+        Var->getInit()->isValueDependent())
+    ValueDependent = true;
+  }
+  //  (TD)  - a nested-name-specifier or a qualified-id that names a
+  //          member of an unknown specialization.
+  //        (handled by DependentScopeDeclRefExpr)
+}
+
 DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier, 
                          SourceRange QualifierRange,
                          NamedDecl *D, SourceLocation NameLoc,
                          const TemplateArgumentListInfo *TemplateArgs,
-                         QualType T, bool TD, bool VD)
-  : Expr(DeclRefExprClass, T, TD, VD),
+                         QualType T)
+  : Expr(DeclRefExprClass, T, false, false),
     DecoratedD(D,
                (Qualifier? HasQualifierFlag : 0) |
                (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
@@ -75,6 +127,8 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
       
   if (TemplateArgs)
     getExplicitTemplateArgumentList()->initializeFrom(*TemplateArgs);
+
+  computeDependence();
 }
 
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
@@ -82,18 +136,8 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  SourceRange QualifierRange,
                                  NamedDecl *D,
                                  SourceLocation NameLoc,
-                                 QualType T, bool TD, bool VD) {
-  return Create(Context, Qualifier, QualifierRange, D, NameLoc,
-                /*TemplateArgs*/ 0, T, TD, VD);
-}
-
-DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
-                                 NestedNameSpecifier *Qualifier,
-                                 SourceRange QualifierRange,
-                                 NamedDecl *D,
-                                 SourceLocation NameLoc,
-                                 const TemplateArgumentListInfo *TemplateArgs,
-                                 QualType T, bool TD, bool VD) {
+                                 QualType T,
+                                 const TemplateArgumentListInfo *TemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
   if (Qualifier != 0)
     Size += sizeof(NameQualifier);
@@ -103,7 +147,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
   
   void *Mem = Context.Allocate(Size, llvm::alignof<DeclRefExpr>());
   return new (Mem) DeclRefExpr(Qualifier, QualifierRange, D, NameLoc,
-                               TemplateArgs, T, TD, VD);
+                               TemplateArgs, T);
 }
 
 SourceRange DeclRefExpr::getSourceRange() const {

@@ -1391,8 +1391,7 @@ public:
                                              bool IsAddressOfOperand);
   
   OwningExprResult BuildDeclRefExpr(NamedDecl *D, QualType Ty,
-                                    SourceLocation Loc, bool TypeDependent,
-                                    bool ValueDependent,
+                                    SourceLocation Loc,
                                     const CXXScopeSpec *SS = 0);
   VarDecl *BuildAnonymousStructUnionMemberPath(FieldDecl *Field,
                                     llvm::SmallVectorImpl<FieldDecl *> &Path);

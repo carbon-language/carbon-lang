@@ -429,26 +429,23 @@ class DeclRefExpr : public Expr {
   DeclRefExpr(NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
               NamedDecl *D, SourceLocation NameLoc,
               const TemplateArgumentListInfo *TemplateArgs,
-              QualType T, bool TD, bool VD);
+              QualType T);
   
 protected:
-  // FIXME: Eventually, this constructor will go away and all subclasses
-  // will have to provide the type- and value-dependent flags.
-  DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l) :
-    Expr(SC, t), DecoratedD(d, 0), Loc(l) {}
+  /// \brief Computes the type- and value-dependence flags for this
+  /// declaration reference expression.
+  void computeDependence();
 
-  DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l, bool TD,
-              bool VD) :
-    Expr(SC, t, TD, VD), DecoratedD(d, 0), Loc(l) {}
+  DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l) :
+    Expr(SC, t, false, false), DecoratedD(d, 0), Loc(l) {
+    computeDependence();
+  }
 
 public:
-  // FIXME: Eventually, this constructor will go away and all clients
-  // will have to provide the type- and value-dependent flags.
   DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l) :
-    Expr(DeclRefExprClass, t), DecoratedD(d, 0), Loc(l) {}
-
-  DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, bool VD) :
-    Expr(DeclRefExprClass, t, TD, VD), DecoratedD(d, 0), Loc(l) {}
+    Expr(DeclRefExprClass, t, false, false), DecoratedD(d, 0), Loc(l) {
+    computeDependence();
+  }
 
   /// \brief Construct an empty declaration reference expression.
   explicit DeclRefExpr(EmptyShell Empty)
@@ -459,15 +456,8 @@ public:
                              SourceRange QualifierRange,
                              NamedDecl *D,
                              SourceLocation NameLoc,
-                             QualType T, bool TD, bool VD);
-  
-  static DeclRefExpr *Create(ASTContext &Context,
-                             NestedNameSpecifier *Qualifier,
-                             SourceRange QualifierRange,
-                             NamedDecl *D,
-                             SourceLocation NameLoc,
-                             const TemplateArgumentListInfo *TemplateArgs,
-                             QualType T, bool TD, bool VD);
+                             QualType T,
+                             const TemplateArgumentListInfo *TemplateArgs = 0);
   
   NamedDecl *getDecl() { return DecoratedD.getPointer(); }
   const NamedDecl *getDecl() const { return DecoratedD.getPointer(); }

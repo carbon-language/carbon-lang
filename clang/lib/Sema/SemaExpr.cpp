@@ -415,7 +415,6 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 /// BuildDeclRefExpr - Build a DeclRefExpr.
 Sema::OwningExprResult
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
-                       bool TypeDependent, bool ValueDependent,
                        const CXXScopeSpec *SS) {
   assert(!isa<OverloadedFunctionDecl>(D));
 
@@ -445,8 +444,7 @@ Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
   return Owned(DeclRefExpr::Create(Context, 
                               SS? (NestedNameSpecifier *)SS->getScopeRep() : 0, 
                                    SS? SS->getRange() : SourceRange(), 
-                                   D, Loc, 
-                                   Ty, TypeDependent, ValueDependent));
+                                   D, Loc, Ty));
 }
 
 /// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
@@ -842,7 +840,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       QualType NoProtoType = T;
       if (const FunctionProtoType *Proto = T->getAs<FunctionProtoType>())
         NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType());
-      return BuildDeclRefExpr(Func, NoProtoType, Loc, false, false, SS);
+      return BuildDeclRefExpr(Func, NoProtoType, Loc, SS);
     }
   }
 
@@ -1139,56 +1137,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec *SS,
   // If this reference is not in a block or if the referenced variable is
   // within the block, create a normal DeclRefExpr.
 
-  bool TypeDependent = false;
-  bool ValueDependent = false;
-  if (getLangOptions().CPlusPlus) {
-    // C++ [temp.dep.expr]p3:
-    //   An id-expression is type-dependent if it contains:
-    //     - an identifier that was declared with a dependent type,
-    if (VD->getType()->isDependentType())
-      TypeDependent = true;
-    //     - FIXME: a template-id that is dependent,
-    //     - a conversion-function-id that specifies a dependent type,
-    else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName &&
-             Name.getCXXNameType()->isDependentType())
-      TypeDependent = true;
-    //     - a nested-name-specifier that contains a class-name that
-    //       names a dependent type.
-    else {
-      for (DeclContext *DC = D->getDeclContext(); DC; DC = DC->getParent()) {
-        // FIXME: could stop early at namespace scope.
-        if (DC->isRecord()) {
-          CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
-          if (Context.getTypeDeclType(Record)->isDependentType()) {
-            TypeDependent = true;
-            break;
-          }
-        }
-      }
-    }
-
-    // C++ [temp.dep.constexpr]p2:
-    //
-    //   An identifier is value-dependent if it is:
-    //     - a name declared with a dependent type,
-    if (TypeDependent)
-      ValueDependent = true;
-    //     - the name of a non-type template parameter,
-    else if (isa<NonTypeTemplateParmDecl>(VD))
-      ValueDependent = true;
-    //    - a constant with integral or enumeration type and is
-    //      initialized with an expression that is value-dependent
-    else if (const VarDecl *Dcl = dyn_cast<VarDecl>(VD)) {
-      if (Context.getCanonicalType(Dcl->getType()).getCVRQualifiers()
-          == Qualifiers::Const &&
-          Dcl->getInit()) {
-        ValueDependent = Dcl->getInit()->isValueDependent();
-      }
-    }
-  }
-
-  return BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc,
-                          TypeDependent, ValueDependent, SS);
+  return BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(), Loc, SS);
 }
 
 Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,

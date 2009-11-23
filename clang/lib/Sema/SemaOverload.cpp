@@ -5647,11 +5647,9 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                                DRE->getQualifierRange(),
                                Fn,
                                DRE->getLocation(),
-                               (DRE->hasExplicitTemplateArgumentList()
-                                 ? &TemplateArgs : 0),
                                Fn->getType(),
-                               DRE->isTypeDependent(),
-                               DRE->isValueDependent());
+                               (DRE->hasExplicitTemplateArgumentList()
+                                  ? &TemplateArgs : 0));
   } 
 
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(E)) {
@@ -5660,9 +5658,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                                ULE->getQualifierRange(),
                                Fn,
                                ULE->getNameLoc(),
-                               Fn->getType(),
-                               Fn->getType()->isDependentType(),
-                               false);
+                               Fn->getType());
   }
 
   
@@ -5699,9 +5695,8 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     return DeclRefExpr::Create(Context, 
                                TID->getQualifier(), TID->getQualifierRange(),
                                Fn, TID->getTemplateNameLoc(), 
-                               &TemplateArgs,
-                               Fn->getType(), 
-                               /*FIXME?*/false, /*FIXME?*/false);    
+                               Fn->getType(),
+                               &TemplateArgs);
   } 
   
   assert(false && "Invalid reference to overloaded function");

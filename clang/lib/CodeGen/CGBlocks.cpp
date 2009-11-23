@@ -297,8 +297,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
             continue;
           } else
             E = new (getContext()) DeclRefExpr (cast<NamedDecl>(VD),
-                                                VD->getType(), SourceLocation(),
-                                                false, false);
+                                                VD->getType(), 
+                                                SourceLocation());
         }
         if (BDRE->isByRef()) {
           NoteForHelper[helpersize].flag = BLOCK_FIELD_IS_BYREF |
@@ -836,7 +836,7 @@ uint64_t BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
                                          0, QualType(PadTy), 0, VarDecl::None);
     Expr *E;
     E = new (getContext()) DeclRefExpr(PadDecl, PadDecl->getType(),
-                                       SourceLocation(), false, false);
+                                       SourceLocation());
     BlockDeclRefDecls.push_back(E);
   }
   BlockDeclRefDecls.push_back(BDRE);

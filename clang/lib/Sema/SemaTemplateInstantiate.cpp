@@ -790,7 +790,6 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
               = SemaRef.BuildDeclRefExpr(VD, 
                                          VD->getType().getNonReferenceType(), 
                                          E->getLocation(), 
-                                         /*FIXME:*/false, /*FIXME:*/false,
                                          &SS);
             if (RefExpr.isInvalid())
               return SemaRef.ExprError();
@@ -802,8 +801,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
         }
 
         return SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
-                                        E->getLocation(),
-                                        /*FIXME:*/false, /*FIXME:*/false);
+                                        E->getLocation());
       }
 
       assert(Arg.getKind() == TemplateArgument::Integral);

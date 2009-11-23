@@ -1643,7 +1643,7 @@ public:
     FunctionDecl *Builtin = cast<FunctionDecl>(*Lookup.first);
     Expr *Callee
       = new (SemaRef.Context) DeclRefExpr(Builtin, Builtin->getType(),
-                                          BuiltinLoc, false, false);
+                                          BuiltinLoc);
     SemaRef.UsualUnaryConversions(Callee);
 
     // Build the CallExpr
