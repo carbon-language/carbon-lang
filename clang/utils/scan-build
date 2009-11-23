@@ -131,7 +131,7 @@ while(<PIPE>) {
     
   if (/^\s\s\s\s([^\s]+)\s(.+)$/) {
     next if ($1 =~ /-dump/ or $1 =~ /-view/ 
-             or $1 =~ /-checker-simple/ or $1 =~ /-warn-uninit/);
+             or $1 =~ /-warn-uninit/);
              
     $AvailableAnalyses{$1} = $2;
     next;
