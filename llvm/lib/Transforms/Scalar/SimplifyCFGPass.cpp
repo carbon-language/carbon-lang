@@ -26,7 +26,6 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CFG.h"
@@ -57,7 +56,7 @@ FunctionPass *llvm::createCFGSimplificationPass() {
 
 /// ChangeToUnreachable - Insert an unreachable instruction before the specified
 /// instruction, making it and the rest of the code in the block dead.
-static void ChangeToUnreachable(Instruction *I, LLVMContext &Context) {
+static void ChangeToUnreachable(Instruction *I) {
   BasicBlock *BB = I->getParent();
   // Loop over all of the successors, removing BB's entry from any PHI
   // nodes.
@@ -95,8 +94,7 @@ static void ChangeToCall(InvokeInst *II) {
 }
 
 static bool MarkAliveBlocks(BasicBlock *BB,
-                            SmallPtrSet<BasicBlock*, 128> &Reachable,
-                            LLVMContext &Context) {
+                            SmallPtrSet<BasicBlock*, 128> &Reachable) {
   
   SmallVector<BasicBlock*, 128> Worklist;
   Worklist.push_back(BB);
@@ -119,7 +117,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
           // though.
           ++BBI;
           if (!isa<UnreachableInst>(BBI)) {
-            ChangeToUnreachable(BBI, Context);
+            ChangeToUnreachable(BBI);
             Changed = true;
           }
           break;
@@ -135,7 +133,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
         if (isa<UndefValue>(Ptr) ||
             (isa<ConstantPointerNull>(Ptr) &&
              SI->getPointerAddressSpace() == 0)) {
-          ChangeToUnreachable(SI, Context);
+          ChangeToUnreachable(SI);
           Changed = true;
           break;
         }
@@ -161,7 +159,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
 /// otherwise.
 static bool RemoveUnreachableBlocksFromFn(Function &F) {
   SmallPtrSet<BasicBlock*, 128> Reachable;
-  bool Changed = MarkAliveBlocks(F.begin(), Reachable, F.getContext());
+  bool Changed = MarkAliveBlocks(F.begin(), Reachable);
   
   // If there are unreachable blocks in the CFG...
   if (Reachable.size() == F.size())
