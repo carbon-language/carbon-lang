@@ -13,7 +13,7 @@ entry:
   %4 = fadd float 0.000000e+00, %3                ; <float> [#uses=1]
   %5 = fsub float 1.000000e+00, %4                ; <float> [#uses=1]
 ; CHECK: foo:
-; CHECK: fconsts s{{[0-9]+}}, #112
+; CHECK: vmov.f32 s{{[0-9]+}}, #1.000000e+00
   %6 = fsub float 1.000000e+00, undef             ; <float> [#uses=2]
   %7 = fsub float %2, undef                       ; <float> [#uses=1]
   %8 = fsub float 0.000000e+00, undef             ; <float> [#uses=3]
