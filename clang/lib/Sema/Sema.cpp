@@ -300,7 +300,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   // Built-in ObjC types may already be set by PCHReader (hence isNull checks).
   if (Context.getObjCSelType().isNull()) {
     // Create the built-in typedef for 'SEL'.
-    QualType SelT = Context.getObjCObjectPointerType(Context.ObjCBuiltinSelTy);
+    QualType SelT = Context.getPointerType(Context.ObjCBuiltinSelTy);
     DeclaratorInfo *SelInfo = Context.getTrivialDeclaratorInfo(SelT);
     TypedefDecl *SelTypedef
       = TypedefDecl::Create(Context, CurContext, SourceLocation(),

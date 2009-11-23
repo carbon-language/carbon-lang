@@ -725,6 +725,7 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case UndeducedAuto:     return "auto";
   case ObjCId:            return "id";
   case ObjCClass:         return "Class";
+  case ObjCSel:         return "SEL";
   }
 }
 
