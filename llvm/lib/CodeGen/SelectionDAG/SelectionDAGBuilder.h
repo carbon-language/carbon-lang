@@ -1,4 +1,4 @@
-//===-- SelectionDAGBuild.h - Selection-DAG building ----------------------===//
+//===-- SelectionDAGBuilder.h - Selection-DAG building --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SELECTIONDAGBUILD_H
-#define SELECTIONDAGBUILD_H
+#ifndef SELECTIONDAGBUILDER_H
+#define SELECTIONDAGBUILDER_H
 
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -79,11 +79,11 @@ class VAArgInst;
 class ZExtInst;
 
 //===----------------------------------------------------------------------===//
-/// SelectionDAGLowering - This is the common target-independent lowering
+/// SelectionDAGBuilder - This is the common target-independent lowering
 /// implementation that is parameterized by a TargetLowering object.
 /// Also, targets can overload any lowering method.
 ///
-class SelectionDAGLowering {
+class SelectionDAGBuilder {
   MachineBasicBlock *CurMBB;
 
   /// CurDebugLoc - current file + line number.  Changes as we build the DAG.
@@ -173,9 +173,9 @@ class SelectionDAGLowering {
 
   size_t Clusterify(CaseVector& Cases, const SwitchInst &SI);
 
-  /// CaseBlock - This structure is used to communicate between SDLowering and
-  /// SDISel for the code generation of additional basic blocks needed by multi-
-  /// case switch statements.
+  /// CaseBlock - This structure is used to communicate between
+  /// SelectionDAGBuilder and SDISel for the code generation of additional basic
+  /// blocks needed by multi-case switch statements.
   struct CaseBlock {
     CaseBlock(ISD::CondCode cc, Value *cmplhs, Value *cmprhs, Value *cmpmiddle,
               MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
@@ -297,9 +297,9 @@ public:
 
   LLVMContext *Context;
 
-  SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
-                       FunctionLoweringInfo &funcinfo,
-                       CodeGenOpt::Level ol)
+  SelectionDAGBuilder(SelectionDAG &dag, TargetLowering &tli,
+                      FunctionLoweringInfo &funcinfo,
+                      CodeGenOpt::Level ol)
     : CurDebugLoc(DebugLoc::getUnknownLoc()), 
       TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
       HasTailCall(false),
@@ -309,7 +309,7 @@ public:
   void init(GCFunctionInfo *gfi, AliasAnalysis &aa);
 
   /// clear - Clear out the curret SelectionDAG and the associated
-  /// state and prepare this SelectionDAGLowering object to be used
+  /// state and prepare this SelectionDAGBuilder object to be used
   /// for a new block. This doesn't clear out information about
   /// additional blocks that are needed to complete switch lowering
   /// or PHI node updating; that information is cleared out as it is

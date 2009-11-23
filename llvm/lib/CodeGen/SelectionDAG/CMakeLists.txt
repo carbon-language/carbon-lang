@@ -16,7 +16,7 @@ add_llvm_library(LLVMSelectionDAG
   ScheduleDAGRRList.cpp
   ScheduleDAGSDNodes.cpp
   SelectionDAG.cpp
-  SelectionDAGBuild.cpp
+  SelectionDAGBuilder.cpp
   SelectionDAGISel.cpp
   SelectionDAGPrinter.cpp
   TargetLowering.cpp

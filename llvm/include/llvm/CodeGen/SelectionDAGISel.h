@@ -23,7 +23,7 @@
 
 namespace llvm {
   class FastISel;
-  class SelectionDAGLowering;
+  class SelectionDAGBuilder;
   class SDValue;
   class MachineRegisterInfo;
   class MachineBasicBlock;
@@ -48,7 +48,7 @@ public:
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;
   SelectionDAG *CurDAG;
-  SelectionDAGLowering *SDL;
+  SelectionDAGBuilder *SDB;
   MachineBasicBlock *BB;
   AliasAnalysis *AA;
   GCFunctionInfo *GFI;

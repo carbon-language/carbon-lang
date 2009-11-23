@@ -54,7 +54,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "SelectionDAGBuild.h"
+#include "SelectionDAGBuilder.h"
 #include "FunctionLoweringInfo.h"
 using namespace llvm;
 
