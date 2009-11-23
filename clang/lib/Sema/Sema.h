@@ -1879,7 +1879,8 @@ public:
                                                       Declarator &D,
                                                       SourceLocation EqualLoc,
                                                       ExprArg AssignExprVal);
-
+  OwningExprResult CheckConditionVariable(VarDecl *ConditionVar);
+                                          
   /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support
   /// pseudo-functions.
   virtual OwningExprResult ActOnUnaryTypeTrait(UnaryTypeTrait OTT,

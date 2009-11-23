@@ -242,8 +242,17 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
   OwningExprResult CondResult(CondVal.release());
 
   Expr *condExpr = CondResult.takeAs<Expr>();
-
   assert(condExpr && "ActOnIfStmt(): missing expression");
+  
+  VarDecl *ConditionVar = 0;
+  if (CXXConditionDeclExpr *Cond = dyn_cast<CXXConditionDeclExpr>(condExpr)) {
+    ConditionVar = Cond->getVarDecl();
+    condExpr = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
+                                   ConditionVar->getLocation(), 
+                                 ConditionVar->getType().getNonReferenceType());
+    // FIXME: Leaks the old condExpr
+  }
+  
   if (CheckBooleanCondition(condExpr, IfLoc)) {
     CondResult = condExpr;
     return StmtError();
@@ -265,7 +274,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
   DiagnoseUnusedExprResult(elseStmt);
 
   CondResult.release();
-  return Owned(new (Context) IfStmt(IfLoc, condExpr, thenStmt,
+  return Owned(new (Context) IfStmt(IfLoc, ConditionVar, condExpr, thenStmt,
                                     ElseLoc, elseStmt));
 }
 

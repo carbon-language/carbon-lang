@@ -1002,6 +1002,27 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   return Owned(new (Context) CXXConditionDeclExpr(StartLoc, EqualLoc, VD));
 }
 
+/// \brief Check the use of the given variable as a C++ condition in an if,
+/// while, do-while, or switch statement.
+Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar) {
+  QualType T = ConditionVar->getType();
+  
+  // C++ [stmt.select]p2:
+  //   The declarator shall not specify a function or an array.
+  if (T->isFunctionType())
+    return ExprError(Diag(ConditionVar->getLocation(), 
+                          diag::err_invalid_use_of_function_type)
+                       << ConditionVar->getSourceRange());
+  else if (T->isArrayType())
+    return ExprError(Diag(ConditionVar->getLocation(), 
+                          diag::err_invalid_use_of_array_type)
+                     << ConditionVar->getSourceRange());
+  
+  return Owned(DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
+                                   ConditionVar->getLocation(), 
+                                ConditionVar->getType().getNonReferenceType()));
+}
+
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.
 bool Sema::CheckCXXBooleanCondition(Expr *&CondExpr) {
   // C++ 6.4p4:

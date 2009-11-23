@@ -177,6 +177,7 @@ unsigned PCHStmtReader::VisitLabelStmt(LabelStmt *S) {
 
 unsigned PCHStmtReader::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
+  S->setConditionVariable(cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   S->setCond(cast<Expr>(StmtStack[StmtStack.size() - 3]));
   S->setThen(StmtStack[StmtStack.size() - 2]);
   S->setElse(StmtStack[StmtStack.size() - 1]);

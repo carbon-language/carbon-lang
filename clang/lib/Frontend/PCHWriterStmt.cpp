@@ -170,6 +170,7 @@ void PCHStmtWriter::VisitLabelStmt(LabelStmt *S) {
 
 void PCHStmtWriter::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
+  Writer.AddDeclRef(S->getConditionVariable(), Record);
   Writer.WriteSubStmt(S->getCond());
   Writer.WriteSubStmt(S->getThen());
   Writer.WriteSubStmt(S->getElse());

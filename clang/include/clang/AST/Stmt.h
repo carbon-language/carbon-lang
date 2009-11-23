@@ -604,22 +604,36 @@ public:
 class IfStmt : public Stmt {
   enum { COND, THEN, ELSE, END_EXPR };
   Stmt* SubExprs[END_EXPR];
+
+  /// \brief If non-NULL, the declaration in the "if" statement.
+  VarDecl *Var;
+  
   SourceLocation IfLoc;
   SourceLocation ElseLoc;
+  
 public:
-  IfStmt(SourceLocation IL, Expr *cond, Stmt *then,
+  IfStmt(SourceLocation IL, VarDecl *Var, Expr *cond, Stmt *then,
          SourceLocation EL = SourceLocation(), Stmt *elsev = 0)
-    : Stmt(IfStmtClass)  {
+    : Stmt(IfStmtClass), Var(Var), IfLoc(IL), ElseLoc(EL)  {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[THEN] = then;
     SubExprs[ELSE] = elsev;
-    IfLoc = IL;
-    ElseLoc = EL;
   }
 
   /// \brief Build an empty if/then/else statement
   explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) { }
 
+  /// \brief Retrieve the variable declared in this "if" statement, if any.
+  ///
+  /// In the following example, "x" is the condition variable.
+  /// \code
+  /// if (int x = foo()) {
+  ///   printf("x is %d", x);
+  /// }
+  /// \endcode
+  VarDecl *getConditionVariable() const { return Var; }
+  void setConditionVariable(VarDecl *V) { Var = V; }
+  
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
   const Stmt *getThen() const { return SubExprs[THEN]; }
