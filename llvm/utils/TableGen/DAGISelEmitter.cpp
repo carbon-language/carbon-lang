@@ -1947,7 +1947,6 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "    return NULL;\n"
      << "  }\n"
      << "  case ISD::INLINEASM: return Select_INLINEASM(N);\n"
-     << "  case ISD::DBG_LABEL: return Select_DBG_LABEL(N);\n"
      << "  case ISD::EH_LABEL: return Select_EH_LABEL(N);\n"
      << "  case ISD::UNDEF: return Select_UNDEF(N);\n";
 

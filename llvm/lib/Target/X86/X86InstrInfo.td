@@ -3506,16 +3506,6 @@ def FS_MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                    [(set GR32:$dst, (fsload addr:$src))]>, SegFS;
 
 //===----------------------------------------------------------------------===//
-// DWARF Pseudo Instructions
-//
-
-def DWARF_LOC   : I<0, Pseudo, (outs),
-                    (ins i32imm:$line, i32imm:$col, i32imm:$file),
-                    ".loc\t$file $line $col",
-                    [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
-                      (i32 imm:$file))]>;
-
-//===----------------------------------------------------------------------===//
 // EH Pseudo Instructions
 //
 let isTerminator = 1, isReturn = 1, isBarrier = 1,

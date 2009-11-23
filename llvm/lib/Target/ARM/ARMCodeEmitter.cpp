@@ -613,7 +613,6 @@ void Emitter<CodeEmitter>::emitPseudoInstruction(const MachineInstr &MI) {
     break;
   case TargetInstrInfo::IMPLICIT_DEF:
   case TargetInstrInfo::KILL:
-  case ARM::DWARF_LOC:
     // Do nothing.
     break;
   case ARM::CONSTPOOL_ENTRY:

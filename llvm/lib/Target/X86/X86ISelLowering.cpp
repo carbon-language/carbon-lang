@@ -377,7 +377,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (!Subtarget->isTargetDarwin() &&
       !Subtarget->isTargetELF() &&
       !Subtarget->isTargetCygMing()) {
-    setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
     setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
   }
 

@@ -584,12 +584,6 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            [(ARMcallseq_start timm:$amt)]>;
 }
 
-def DWARF_LOC :
-PseudoInst<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file), NoItinerary,
-           ".loc $file, $line, $col",
-           [(dwarf_loc (i32 imm:$line), (i32 imm:$col), (i32 imm:$file))]>;
-
-
 // Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
 def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),

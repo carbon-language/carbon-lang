@@ -200,19 +200,6 @@ bool ISD::isScalarToVector(const SDNode *N) {
   return true;
 }
 
-
-/// isDebugLabel - Return true if the specified node represents a debug
-/// label (i.e. ISD::DBG_LABEL or TargetInstrInfo::DBG_LABEL node).
-bool ISD::isDebugLabel(const SDNode *N) {
-  SDValue Zero;
-  if (N->getOpcode() == ISD::DBG_LABEL)
-    return true;
-  if (N->isMachineOpcode() &&
-      N->getMachineOpcode() == TargetInstrInfo::DBG_LABEL)
-    return true;
-  return false;
-}
-
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
 /// when given the operation for (X op Y).
 ISD::CondCode ISD::getSetCCSwappedOperands(ISD::CondCode Operation) {
@@ -503,7 +490,6 @@ static bool doNotCSE(SDNode *N) {
   switch (N->getOpcode()) {
   default: break;
   case ISD::HANDLENODE:
-  case ISD::DBG_LABEL:
   case ISD::EH_LABEL:
     return true;   // Never CSE these nodes.
   }
@@ -5438,7 +5424,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::UNDEF:         return "undef";
   case ISD::MERGE_VALUES:  return "merge_values";
   case ISD::INLINEASM:     return "inlineasm";
-  case ISD::DBG_LABEL:     return "dbg_label";
   case ISD::EH_LABEL:      return "eh_label";
   case ISD::HANDLENODE:    return "handlenode";
 
@@ -5571,9 +5556,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CTPOP:   return "ctpop";
   case ISD::CTTZ:    return "cttz";
   case ISD::CTLZ:    return "ctlz";
-
-  // Debug info
-  case ISD::DEBUG_LOC: return "debug_loc";
 
   // Trampolines
   case ISD::TRAMPOLINE: return "trampoline";

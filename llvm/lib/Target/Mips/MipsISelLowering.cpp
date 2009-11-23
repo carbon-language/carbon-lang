@@ -132,9 +132,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FLOG10,            MVT::f32,   Expand);
   setOperationAction(ISD::FEXP,              MVT::f32,   Expand);
 
-  // We don't have line number support yet.
-  setOperationAction(ISD::DEBUG_LOC,         MVT::Other, Expand);
-  setOperationAction(ISD::DBG_LABEL,         MVT::Other, Expand);
   setOperationAction(ISD::EH_LABEL,          MVT::Other, Expand);
 
   // Use the default for now

@@ -355,9 +355,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
 
-  // Support label based line numbers.
-  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
   setOperationAction(ISD::GLOBAL_OFFSET_TABLE, MVT::i32, Custom);

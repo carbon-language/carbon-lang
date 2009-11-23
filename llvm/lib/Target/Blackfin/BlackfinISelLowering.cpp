@@ -114,9 +114,6 @@ BlackfinTargetLowering::BlackfinTargetLowering(TargetMachine &TM)
   // READCYCLECOUNTER needs special type legalization.
   setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
 
-  // We don't have line number support yet.
-  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
   setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
 
   // Use the default implementation.

@@ -182,9 +182,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // We cannot sextinreg(i1).  Expand to shifts.
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  // Support label based line numbers.
-  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
   setOperationAction(ISD::EHSELECTION,   MVT::i64, Expand);
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);

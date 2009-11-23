@@ -387,9 +387,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // We cannot sextinreg(i1).  Expand to shifts.
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  // Support label based line numbers.
-  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-
   // We want to legalize GlobalAddress and ConstantPool nodes into the
   // appropriate instructions to materialize the address.
   for (unsigned sctype = (unsigned) MVT::i8; sctype < (unsigned) MVT::f128;

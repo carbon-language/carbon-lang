@@ -532,11 +532,6 @@ TargetLowering::TargetLowering(TargetMachine &tm,TargetLoweringObjectFile *tlof)
   InitLibcallNames(LibcallRoutineNames);
   InitCmpLibcallCCs(CmpLibcallCCs);
   InitLibcallCallingConvs(LibcallCallingConvs);
-
-  // Tell Legalize whether the assembler supports DEBUG_LOC.
-  const MCAsmInfo *TASM = TM.getMCAsmInfo();
-  if (!TASM || !TASM->hasDotLocAndDotFile())
-    setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
 }
 
 TargetLowering::~TargetLowering() {

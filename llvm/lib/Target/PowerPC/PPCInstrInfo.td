@@ -1358,15 +1358,6 @@ def RLWNM  : MForm_2<23,
 
 
 //===----------------------------------------------------------------------===//
-// DWARF Pseudo Instructions
-//
-
-def DWARF_LOC        : Pseudo<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file),
-                              "${:comment} .loc $file, $line, $col",
-                      [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
-                                  (i32 imm:$file))]>;
-
-//===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns
 //
 

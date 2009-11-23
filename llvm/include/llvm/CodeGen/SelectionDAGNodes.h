@@ -494,10 +494,9 @@ namespace ISD {
     //   Operand #last: Optional, an incoming flag.
     INLINEASM,
 
-    // DBG_LABEL, EH_LABEL - Represents a label in mid basic block used to track
+    // EH_LABEL - Represents a label in mid basic block used to track
     // locations needed for debug and exception handling tables.  These nodes
     // take a chain as input and return a chain.
-    DBG_LABEL,
     EH_LABEL,
 
     // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
@@ -545,12 +544,6 @@ namespace ISD {
 
     // HANDLENODE node - Used as a handle for various purposes.
     HANDLENODE,
-
-    // DEBUG_LOC - This node is used to represent source line information
-    // embedded in the code.  It takes a token chain as input, then a line
-    // number, then a column then a file id (provided by MachineModuleInfo.) It
-    // produces a token chain as output.
-    DEBUG_LOC,
 
     // TRAMPOLINE - This corresponds to the init_trampoline intrinsic.
     // It takes as input a token chain, the pointer to the trampoline,
@@ -629,10 +622,6 @@ namespace ISD {
   /// ISD::SCALAR_TO_VECTOR node or a BUILD_VECTOR node where only the low
   /// element is not an undef.
   bool isScalarToVector(const SDNode *N);
-
-  /// isDebugLabel - Return true if the specified node represents a debug
-  /// label (i.e. ISD::DBG_LABEL or TargetInstrInfo::DBG_LABEL node).
-  bool isDebugLabel(const SDNode *N);
 
   //===--------------------------------------------------------------------===//
   /// MemIndexedMode enum - This enum defines the load / store indexed
@@ -2031,8 +2020,7 @@ public:
 
   static bool classof(const LabelSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::DBG_LABEL ||
-           N->getOpcode() == ISD::EH_LABEL;
+    return N->getOpcode() == ISD::EH_LABEL;
   }
 };
 
