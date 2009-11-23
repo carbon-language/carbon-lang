@@ -136,3 +136,8 @@ void f(int &a) {
   (a = 10) = 20;
 }
 }
+
+// PR5590
+struct s0;
+struct s1 { struct s0 &s0; };
+void f0(s1 a) { s1 b = a; }

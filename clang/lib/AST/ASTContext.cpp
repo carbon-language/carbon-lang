@@ -520,7 +520,9 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
 /// getDeclAlignInBytes - Return a conservative estimate of the alignment of the
 /// specified decl.  Note that bitfields do not have a valid alignment, so
 /// this method will assert on them.
-unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
+/// If @p RefAsPointee, references are treated like their underlying type
+/// (for alignof), else they're treated like pointers (for CodeGen).
+unsigned ASTContext::getDeclAlignInBytes(const Decl *D, bool RefAsPointee) {
   unsigned Align = Target.getCharWidth();
 
   if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
@@ -529,9 +531,12 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
     if (const ReferenceType* RT = T->getAs<ReferenceType>()) {
-      unsigned AS = RT->getPointeeType().getAddressSpace();
-      Align = Target.getPointerAlign(AS);
-    } else if (!T->isIncompleteType() && !T->isFunctionType()) {
+      if (RefAsPointee)
+        T = RT->getPointeeType();
+      else
+        T = getPointerType(RT->getPointeeType());
+    }
+    if (!T->isIncompleteType() && !T->isFunctionType()) {
       // Incomplete or function types default to 1.
       while (isa<VariableArrayType>(T) || isa<IncompleteArrayType>(T))
         T = cast<ArrayType>(T)->getElementType();
@@ -690,19 +695,21 @@ ASTContext::getTypeInfo(const Type *T) {
     Align = Target.getPointerAlign(AS);
     break;
   }
+  case Type::LValueReference:
+  case Type::RValueReference: {
+    // alignof and sizeof should never enter this code path here, so we go
+    // the pointer route.
+    unsigned AS = cast<ReferenceType>(T)->getPointeeType().getAddressSpace();
+    Width = Target.getPointerWidth(AS);
+    Align = Target.getPointerAlign(AS);
+    break;
+  }
   case Type::Pointer: {
     unsigned AS = cast<PointerType>(T)->getPointeeType().getAddressSpace();
     Width = Target.getPointerWidth(AS);
     Align = Target.getPointerAlign(AS);
     break;
   }
-  case Type::LValueReference:
-  case Type::RValueReference:
-    // "When applied to a reference or a reference type, the result is the size
-    // of the referenced type." C++98 5.3.3p2: expr.sizeof.
-    // FIXME: This is wrong for struct layout: a reference in a struct has
-    // pointer size.
-    return getTypeInfo(cast<ReferenceType>(T)->getPointeeType());
   case Type::MemberPointer: {
     // FIXME: This is ABI dependent. We use the Itanium C++ ABI.
     // http://www.codesourcery.com/public/cxx-abi/abi.html#member-pointers

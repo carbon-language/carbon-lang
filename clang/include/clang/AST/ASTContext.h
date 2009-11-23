@@ -810,10 +810,7 @@ public:
   /// a data type.
   unsigned getPreferredTypeAlign(const Type *T);
 
-  /// getDeclAlignInBytes - Return the alignment of the specified decl
-  /// that should be returned by __alignof().  Note that bitfields do
-  /// not have a valid alignment, so this method will assert on them.
-  unsigned getDeclAlignInBytes(const Decl *D);
+  unsigned getDeclAlignInBytes(const Decl *D, bool RefAsPointee = false);
 
   /// getASTRecordLayout - Get or compute information about the layout of the
   /// specified record (struct/union/class), which indicates its size and field

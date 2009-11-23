@@ -1341,6 +1341,13 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   if (exprType->isDependentType())
     return false;
 
+  // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
+  //   the result is the size of the referenced type."
+  // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
+  //   result shall be the alignment of the referenced type."
+  if (const ReferenceType *Ref = exprType->getAs<ReferenceType>())
+    exprType = Ref->getPointeeType();
+
   // C99 6.5.3.4p1:
   if (exprType->isFunctionType()) {
     // alignof(function) is allowed as an extension.

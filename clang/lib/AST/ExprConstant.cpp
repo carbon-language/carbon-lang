@@ -1244,6 +1244,13 @@ bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
 }
 
 unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
+  // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
+  //   the result is the size of the referenced type."
+  // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
+  //   result shall be the alignment of the referenced type."
+  if (const ReferenceType *Ref = T->getAs<ReferenceType>())
+    T = Ref->getPointeeType();
+
   // Get information about the alignment.
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
 
@@ -1257,10 +1264,11 @@ unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
   // alignof decl is always accepted, even if it doesn't make sense: we default
   // to 1 in those cases.
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-    return Info.Ctx.getDeclAlignInBytes(DRE->getDecl());
+    return Info.Ctx.getDeclAlignInBytes(DRE->getDecl(), /*RefAsPointee*/true);
 
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
-    return Info.Ctx.getDeclAlignInBytes(ME->getMemberDecl());
+    return Info.Ctx.getDeclAlignInBytes(ME->getMemberDecl(),
+                                        /*RefAsPointee*/true);
 
   return GetAlignOfType(E->getType());
 }
@@ -1280,6 +1288,12 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   }
 
   QualType SrcTy = E->getTypeOfArgument();
+  // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
+  //   the result is the size of the referenced type."
+  // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
+  //   result shall be the alignment of the referenced type."
+  if (const ReferenceType *Ref = SrcTy->getAs<ReferenceType>())
+    SrcTy = Ref->getPointeeType();
 
   // sizeof(void), __alignof__(void), sizeof(function) = 1 as a gcc
   // extension.
