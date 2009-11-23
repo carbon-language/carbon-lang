@@ -39,7 +39,6 @@ void clang::RegisterAttrNonNullChecker(GRExprEngine &Eng) {
 void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C, 
                                           const CallExpr *CE) {
   const GRState *state = C.getState();
-  const GRState *originalState = state;
 
   // Check if the callee has a 'nonnull' attribute.
   SVal X = state->getSVal(CE->getCallee());
@@ -74,7 +73,7 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
     if (stateNull && !stateNotNull) {
       // Generate an error node.  Check for a null node in case
       // we cache out.
-      if (ExplodedNode *errorNode = C.GenerateNode(CE, stateNull, true)) {
+      if (ExplodedNode *errorNode = C.GenerateSink(stateNull)) {
 
         // Lazily allocate the BugType object if it hasn't already been
         // created. Ownership is transferred to the BugReporter object once
@@ -109,6 +108,5 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
 
   // If we reach here all of the arguments passed the nonnull check.
   // If 'state' has been updated generated a new node.
-  if (state != originalState)
-    C.addTransition(C.GenerateNode(CE, state));
+  C.addTransition(state);
 }

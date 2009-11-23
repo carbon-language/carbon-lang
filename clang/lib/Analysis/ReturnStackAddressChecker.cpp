@@ -53,7 +53,7 @@ void ReturnStackAddressChecker::PreVisitReturnStmt(CheckerContext &C,
   if (!R || !R->hasStackStorage())
     return;  
   
-  ExplodedNode *N = C.GenerateNode(RS, C.getState(), true);
+  ExplodedNode *N = C.GenerateSink();
 
   if (!N)
     return;

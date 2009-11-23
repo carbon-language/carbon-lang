@@ -563,11 +563,10 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
     BT = new APIMisuse("message incorrectly sent to class instead of class "
                        "instance");
   
-  ExplodedNode *N = C.GenerateNode(ME, C.getState(), false);
+  ExplodedNode *N = C.GenerateNode();
+
   if (!N)
     return;
-  
-  C.addTransition(N);
   
   llvm::SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);

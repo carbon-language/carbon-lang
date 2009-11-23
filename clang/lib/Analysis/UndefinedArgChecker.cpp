@@ -47,7 +47,7 @@ void clang::RegisterUndefinedArgChecker(GRExprEngine &Eng) {
 
 void UndefinedArgChecker::EmitBadCall(BugType *BT, CheckerContext &C,
                                       const CallExpr *CE) {
-  ExplodedNode *N = C.GenerateNode(CE, true);
+  ExplodedNode *N = C.GenerateSink();
   if (!N)
     return;
     
@@ -81,7 +81,7 @@ void UndefinedArgChecker::PreVisitCallExpr(CheckerContext &C,
   for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end();
        I != E; ++I) {
     if (C.getState()->getSVal(*I).isUndef()) {
-      if (ExplodedNode *N = C.GenerateNode(CE, true)) {
+      if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_call_arg)
           BT_call_arg = new BuiltinBug("Pass-by-value argument in function call"
                                        " is undefined");
@@ -104,7 +104,7 @@ void UndefinedArgChecker::PreVisitObjCMessageExpr(CheckerContext &C,
 
   if (const Expr *receiver = ME->getReceiver())
     if (state->getSVal(receiver).isUndef()) {
-      if (ExplodedNode *N = C.GenerateNode(ME, true)) {
+      if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_msg_undef)
           BT_msg_undef =
             new BuiltinBug("Receiver in message expression is a garbage value");
@@ -122,7 +122,7 @@ void UndefinedArgChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   for (ObjCMessageExpr::const_arg_iterator I = ME->arg_begin(), E = ME->arg_end();
        I != E; ++I) {
     if (state->getSVal(*I).isUndef()) {
-      if (ExplodedNode *N = C.GenerateNode(ME, true)) {
+      if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_msg_arg)
           BT_msg_arg =
             new BuiltinBug("Pass-by-value argument in message expression"

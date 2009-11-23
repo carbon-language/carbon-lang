@@ -56,8 +56,7 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
                                        SVal l) {
   // Check for dereference of an undefined value.
   if (l.isUndef()) {
-    ExplodedNode *N = C.GenerateNode(S, true);
-    if (N) {
+    if (ExplodedNode *N = C.GenerateSink()) {
       if (!BT_undef)
         BT_undef = new BuiltinBug("Dereference of undefined pointer value");
       
@@ -84,7 +83,7 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
   if (nullState) {
     if (!notNullState) {    
       // Generate an error node.
-      ExplodedNode *N = C.GenerateNode(S, nullState, true);
+      ExplodedNode *N = C.GenerateSink(nullState);
       if (!N)
         return;
       
@@ -106,13 +105,11 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
       // Otherwise, we have the case where the location could either be
       // null or not-null.  Record the error node as an "implicit" null
       // dereference.      
-      if (ExplodedNode *N = C.GenerateNode(S, nullState, true))
+      if (ExplodedNode *N = C.GenerateSink(nullState))
         ImplicitNullDerefNodes.push_back(N);
     }
   }
   
   // From this point forward, we know that the location is not null.
-  assert(notNullState);
-  C.addTransition(state != nullState ? C.GenerateNode(S, notNullState) :
-                                       C.getPredecessor());
+  C.addTransition(notNullState);
 }

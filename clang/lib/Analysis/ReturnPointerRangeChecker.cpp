@@ -70,7 +70,7 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
   const GRState *StInBound = state->AssumeInBound(Idx, NumElements, true);
   const GRState *StOutBound = state->AssumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
-    ExplodedNode *N = C.GenerateNode(RS, StOutBound, true);
+    ExplodedNode *N = C.GenerateSink(StOutBound);
 
     if (!N)
       return;
@@ -91,7 +91,6 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
       new RangedBugReport(*BT, BT->getDescription(), N);
 
     report->addRange(RetE->getSourceRange());
-
     C.EmitReport(report);
   }
 }

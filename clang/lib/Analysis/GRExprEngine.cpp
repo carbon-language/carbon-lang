@@ -1292,9 +1292,13 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
     Checker *checker = I->second;
     
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI)
-      checker->GR_VisitLocation(*CurrSet, *Builder, *this, S, *NI, state,
+         NI != NE; ++NI) {
+      // Use the 'state' argument only when the predecessor node is the
+      // same as Pred.  This allows us to catch updates to the state.
+      checker->GR_VisitLocation(*CurrSet, *Builder, *this, S, *NI,
+                                *NI == Pred ? state : GetState(*NI),
                                 location, tag, isLoad);
+    }
     
     // Update which NodeSet is the current one.
     PrevSet = CurrSet;

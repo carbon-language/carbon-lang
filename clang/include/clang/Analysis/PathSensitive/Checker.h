@@ -40,24 +40,22 @@ class CheckerContext {
   SaveAndRestore<ProgramPoint::Kind> OldPointKind;
   SaveOr OldHasGen;
   const GRState *state;
-
+  const Stmt *statement;
+  const unsigned size;
 public:
   CheckerContext(ExplodedNodeSet &dst, GRStmtNodeBuilder &builder,
                  GRExprEngine &eng, ExplodedNode *pred,
                  const void *tag, ProgramPoint::Kind K,
-                 const GRState *st = 0)
+                 const Stmt *stmt = 0, const GRState *st = 0)
     : Dst(dst), B(builder), Eng(eng), Pred(pred),
       OldSink(B.BuildSinks),
       OldTag(B.Tag, tag),
       OldPointKind(B.PointKind, K),
       OldHasGen(B.HasGeneratedNode),
-      state(st) {}
+      state(st), statement(stmt), size(Dst.size()) {}
 
-  ~CheckerContext() {
-    if (!B.BuildSinks && !B.HasGeneratedNode)
-      Dst.Add(Pred);
-  }
-
+  ~CheckerContext();
+  
   ConstraintManager &getConstraintManager() {
       return Eng.getConstraintManager();
   }
@@ -83,27 +81,66 @@ public:
     return getBugReporter().getSourceManager();
   }
 
-  ExplodedNode *GenerateNode(const Stmt *S, bool markAsSink = false) {
-    return GenerateNode(S, getState(), markAsSink);
+  ExplodedNode *GenerateNode(bool autoTransition = true) {
+    assert(statement && "Only transitions with statements currently supported");
+    ExplodedNode *N = GenerateNodeImpl(statement, getState(), false);
+    if (N && autoTransition)
+      Dst.Add(N);
+    return N;
+  }
+  
+  ExplodedNode *GenerateNode(const Stmt *stmt, const GRState *state,
+                             bool autoTransition = true) {
+    assert(state);
+    ExplodedNode *N = GenerateNodeImpl(stmt, state, false);
+    if (N && autoTransition)
+      addTransition(N);
+    return N;
   }
 
-  ExplodedNode *GenerateNode(const Stmt* S, const GRState *state,
-                             bool markAsSink = false) {
-    ExplodedNode *node = B.generateNode(S, state, Pred);
+  ExplodedNode *GenerateNode(const GRState *state, bool autoTransition = true) {
+    assert(statement && "Only transitions with statements currently supported");
+    ExplodedNode *N = GenerateNodeImpl(statement, state, false);
+    if (N && autoTransition)
+      addTransition(N);
+    return N;
+  }
 
-    if (markAsSink && node)
-      node->markAsSink();
-
-    return node;
+  ExplodedNode *GenerateSink(const Stmt *stmt, const GRState *state = 0) {
+    return GenerateNodeImpl(stmt, state ? state : getState(), true);
+  }
+  
+  ExplodedNode *GenerateSink(const GRState *state = 0) {
+    assert(statement && "Only transitions with statements currently supported");
+    return GenerateNodeImpl(statement, state ? state : getState(), true);
   }
 
   void addTransition(ExplodedNode *node) {
     Dst.Add(node);
   }
+  
+  void addTransition(const GRState *state) {
+    assert(state);
+    if (state != getState() || 
+        (state && state != B.GetState(Pred)))
+      GenerateNode(state, true);
+    else
+      Dst.Add(Pred);
+  }
 
   void EmitReport(BugReport *R) {
     Eng.getBugReporter().EmitReport(R);
   }
+
+private:
+  ExplodedNode *GenerateNodeImpl(const Stmt* stmt, const GRState *state,
+                             bool markAsSink) {
+    ExplodedNode *node = B.generateNode(stmt, state, Pred);
+    if (markAsSink && node)
+      node->markAsSink();
+    return node;
+  }
+  
 };
 
 class Checker {
@@ -118,7 +155,7 @@ private:
                 ExplodedNode *Pred, void *tag, bool isPrevisit) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag,
                      isPrevisit ? ProgramPoint::PreStmtKind :
-                     ProgramPoint::PostStmtKind);
+                     ProgramPoint::PostStmtKind, S);
     if (isPrevisit)
       _PreVisit(C, S);
     else
@@ -134,7 +171,7 @@ private:
                     bool isPrevisit) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag,
                      isPrevisit ? ProgramPoint::PreStmtKind :
-                     ProgramPoint::PostStmtKind);
+                     ProgramPoint::PostStmtKind, StoreE);
     assert(isPrevisit && "Only previsit supported for now.");
     PreVisitBind(C, AssignE, StoreE, location, val);
   }
@@ -149,7 +186,7 @@ private:
                         void *tag, bool isLoad) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag,
                      isLoad ? ProgramPoint::PreLoadKind :
-                     ProgramPoint::PreStoreKind, state);
+                     ProgramPoint::PreStoreKind, S, state);
     VisitLocation(C, S, location);
   }
 
@@ -157,7 +194,7 @@ private:
                           GRExprEngine &Eng, const Stmt *S, ExplodedNode *Pred,
                           SymbolReaper &SymReaper, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, 
-                     ProgramPoint::PostPurgeDeadSymbolsKind);
+                     ProgramPoint::PostPurgeDeadSymbolsKind, S);
     EvalDeadSymbols(C, S, SymReaper);
   }
 

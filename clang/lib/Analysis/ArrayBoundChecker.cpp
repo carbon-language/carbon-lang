@@ -62,8 +62,7 @@ void ArrayBoundChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l){
   const GRState *StInBound = state->AssumeInBound(Idx, NumElements, true);
   const GRState *StOutBound = state->AssumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
-    ExplodedNode *N = C.GenerateNode(S, StOutBound, true);
-
+    ExplodedNode *N = C.GenerateSink(StOutBound);
     if (!N)
       return;
   
@@ -80,7 +79,6 @@ void ArrayBoundChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l){
       new RangedBugReport(*BT, BT->getDescription(), N);
 
     report->addRange(S->getSourceRange());
-
     C.EmitReport(report);
   }
 }
