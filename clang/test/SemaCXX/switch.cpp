@@ -33,3 +33,10 @@ void x2() {
   switch (B()) { // expected-error{{multiple conversions}}
   }
 }
+
+struct C; // expected-note{{forward declaration}}
+
+void x3(C &c) {
+  switch (c) { // expected-error{{incomplete class type}}
+  }
+}

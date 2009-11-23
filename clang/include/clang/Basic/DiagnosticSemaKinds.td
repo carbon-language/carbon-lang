@@ -2299,6 +2299,8 @@ def note_switch_conversion : Note<
   "conversion to %select{integral|enumeration}0 type %1">;
 def err_switch_explicit_conversion : Error<
   "switch condition type %0 requires explicit conversion to %1">;
+def err_switch_incomplete_class_type : Error<
+  "switch condition has incomplete class type %0">;
 def warn_empty_if_body : Warning<
   "if statement has empty body">, InGroup<EmptyBody>;
 def err_va_start_used_in_non_variadic_function : Error<

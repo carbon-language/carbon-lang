@@ -391,6 +391,13 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
     // conversion is used in place of the original condition for the remainder
     // of this section. Integral promotions are performed.
     if (!CondExpr->isTypeDependent()) {
+      // Make sure that the condition expression has a complete type,
+      // otherwise we'll never find any conversions.
+      if (RequireCompleteType(SwitchLoc, CondType,
+                              PDiag(diag::err_switch_incomplete_class_type)
+                                << CondExpr->getSourceRange()))
+        return StmtError();
+
       llvm::SmallVector<CXXConversionDecl *, 4> ViableConversions;
       llvm::SmallVector<CXXConversionDecl *, 4> ExplicitConversions;
       if (const RecordType *RecordTy = CondType->getAs<RecordType>()) {
