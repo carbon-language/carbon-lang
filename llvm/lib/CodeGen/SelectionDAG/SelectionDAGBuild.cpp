@@ -68,7 +68,7 @@ LimitFPPrecision("limit-float-precision",
                  cl::location(LimitFloatPrecision),
                  cl::init(0));
 
-namespace llvm {
+namespace {
   /// RegsForValue - This struct represents the registers (physical or virtual)
   /// that a particular set of values is assigned, and the type information about
   /// the value. The most common situation is to represent one value at a time,
@@ -78,7 +78,7 @@ namespace llvm {
   /// have legal types, so each value may require one or more registers of some
   /// legal type.
   ///
-  struct VISIBILITY_HIDDEN RegsForValue {
+  struct RegsForValue {
     /// TLI - The TargetLowering object.
     ///
     const TargetLowering *TLI;
