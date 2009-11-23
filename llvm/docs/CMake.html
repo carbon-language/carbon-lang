@@ -251,10 +251,16 @@
     <i>-DLLVM_TARGETS_TO_BUILD="X86;PowerPC;Alpha"</i>.</dd>
 
   <dt><b>LLVM_BUILD_TOOLS</b>:BOOL</dt>
-  <dd>Build LLVM tools. Defaults to ON.</dd>
+  <dd>Build LLVM tools. Defaults to ON. Targets for building each tool
+    are generated in any case. You can build an tool separately by
+    invoking its target. For example, you can build <i>llvm-as</i>
+    with a makefile-based system executing <i>make llvm-as</i> on the
+    root of your build directory.</dd>
 
   <dt><b>LLVM_BUILD_EXAMPLES</b>:BOOL</dt>
-  <dd>Build LLVM examples. Defaults to OFF.</dd>
+  <dd>Build LLVM examples. Defaults to OFF. Targets for building each
+    example are generated in any case. See documentation
+    for <i>LLVM_BUILD_TOOLS</i> above for more details.</dd>
 
   <dt><b>LLVM_ENABLE_THREADS</b>:BOOL</dt>
   <dd>Build with threads support, if available. Defaults to ON.</dd>
