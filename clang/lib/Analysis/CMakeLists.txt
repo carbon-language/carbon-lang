@@ -21,6 +21,7 @@ add_clang_library(clangAnalysis
   CheckObjCUnusedIVars.cpp
   CheckSecuritySyntaxOnly.cpp
   CheckSizeofPointer.cpp
+  Checker.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   Environment.cpp

@@ -162,7 +162,7 @@ private:
   }
 
 public:
-  virtual ~Checker() {}
+  virtual ~Checker();
   virtual void _PreVisit(CheckerContext &C, const Stmt *S) {}
   virtual void _PostVisit(CheckerContext &C, const Stmt *S) {}
   virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
