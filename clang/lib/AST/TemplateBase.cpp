@@ -15,6 +15,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/TypeLoc.h"
 
@@ -59,8 +60,17 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
     break;
 
   case Template:
-    ID.AddPointer(Context.getCanonicalTemplateName(getAsTemplate())
-                    .getAsVoidPointer());
+    if (TemplateTemplateParmDecl *TTP
+          = dyn_cast_or_null<TemplateTemplateParmDecl>(
+                                       getAsTemplate().getAsTemplateDecl())) {
+      ID.AddBoolean(true);
+      ID.AddInteger(TTP->getDepth());
+      ID.AddInteger(TTP->getPosition());
+    } else {
+      ID.AddBoolean(false);
+      ID.AddPointer(Context.getCanonicalTemplateName(getAsTemplate())
+                      .getAsVoidPointer());
+    }
     break;
       
   case Integral:
