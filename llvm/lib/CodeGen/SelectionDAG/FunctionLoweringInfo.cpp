@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -340,4 +341,15 @@ void llvm::AddCatchInfo(CallInst &I, MachineModuleInfo *MMI,
   }
 }
 
-
+void llvm::CopyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
+                         MachineModuleInfo *MMI, FunctionLoweringInfo &FLI) {
+  for (BasicBlock::iterator I = SrcBB->begin(), E = --SrcBB->end(); I != E; ++I)
+    if (EHSelectorInst *EHSel = dyn_cast<EHSelectorInst>(I)) {
+      // Apply the catch info to DestBB.
+      AddCatchInfo(*EHSel, MMI, FLI.MBBMap[DestBB]);
+#ifndef NDEBUG
+      if (!FLI.MBBMap[SrcBB]->isLandingPad())
+        FLI.CatchInfoFound.insert(EHSel);
+#endif
+    }
+}

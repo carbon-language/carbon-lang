@@ -142,6 +142,10 @@ GlobalVariable *ExtractTypeInfo(Value *V);
 /// call, and add them to the specified machine basic block.
 void AddCatchInfo(CallInst &I, MachineModuleInfo *MMI, MachineBasicBlock *MBB);
 
+/// CopyCatchInfo - Copy catch information from DestBB to SrcBB.
+void CopyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
+                   MachineModuleInfo *MMI, FunctionLoweringInfo &FLI);
+
 } // end namespace llvm
 
 #endif

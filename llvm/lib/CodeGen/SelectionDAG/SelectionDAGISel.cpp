@@ -362,19 +362,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   return true;
 }
 
-static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
-                          MachineModuleInfo *MMI, FunctionLoweringInfo &FLI) {
-  for (BasicBlock::iterator I = SrcBB->begin(), E = --SrcBB->end(); I != E; ++I)
-    if (EHSelectorInst *EHSel = dyn_cast<EHSelectorInst>(I)) {
-      // Apply the catch info to DestBB.
-      AddCatchInfo(*EHSel, MMI, FLI.MBBMap[DestBB]);
-#ifndef NDEBUG
-      if (!FLI.MBBMap[SrcBB]->isLandingPad())
-        FLI.CatchInfoFound.insert(EHSel);
-#endif
-    }
-}
-
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
                                         BasicBlock::iterator End,
@@ -735,7 +722,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
 
         if (I == E)
           // No catch info found - try to extract some from the successor.
-          copyCatchInfo(Br->getSuccessor(0), LLVMBB, MMI, *FuncInfo);
+          CopyCatchInfo(Br->getSuccessor(0), LLVMBB, MMI, *FuncInfo);
       }
     }
 
