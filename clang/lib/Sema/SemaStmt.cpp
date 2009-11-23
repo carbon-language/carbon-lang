@@ -15,9 +15,11 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -269,35 +271,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
 
 Action::OwningStmtResult
 Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
-  Expr *Cond = cond.takeAs<Expr>();
-
-  if (getLangOptions().CPlusPlus) {
-    // C++ 6.4.2.p2:
-    // The condition shall be of integral type, enumeration type, or of a class
-    // type for which a single conversion function to integral or enumeration
-    // type exists (12.3). If the condition is of class type, the condition is
-    // converted by calling that conversion function, and the result of the
-    // conversion is used in place of the original condition for the remainder
-    // of this section. Integral promotions are performed.
-    if (!Cond->isTypeDependent()) {
-      QualType Ty = Cond->getType();
-
-      // FIXME: Handle class types.
-
-      // If the type is wrong a diagnostic will be emitted later at
-      // ActOnFinishSwitchStmt.
-      if (Ty->isIntegralType() || Ty->isEnumeralType()) {
-        // Integral promotions are performed.
-        // FIXME: Integral promotions for C++ are not complete.
-        UsualUnaryConversions(Cond);
-      }
-    }
-  } else {
-    // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
-    UsualUnaryConversions(Cond);
-  }
-
-  SwitchStmt *SS = new (Context) SwitchStmt(Cond);
+  SwitchStmt *SS = new (Context) SwitchStmt(cond.takeAs<Expr>());
   getSwitchStack().push_back(SS);
   return Owned(SS);
 }
@@ -404,7 +378,102 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   getSwitchStack().pop_back();
 
   Expr *CondExpr = SS->getCond();
+  QualType CondTypeBeforePromotion =
+      GetTypeBeforeIntegralPromotion(CondExpr);
   QualType CondType = CondExpr->getType();
+
+  if (getLangOptions().CPlusPlus) {
+    // C++ 6.4.2.p2:
+    // The condition shall be of integral type, enumeration type, or of a class
+    // type for which a single conversion function to integral or enumeration
+    // type exists (12.3). If the condition is of class type, the condition is
+    // converted by calling that conversion function, and the result of the
+    // conversion is used in place of the original condition for the remainder
+    // of this section. Integral promotions are performed.
+    if (!CondExpr->isTypeDependent()) {
+      llvm::SmallVector<CXXConversionDecl *, 4> ViableConversions;
+      llvm::SmallVector<CXXConversionDecl *, 4> ExplicitConversions;
+      if (const RecordType *RecordTy = CondType->getAs<RecordType>()) {
+        const UnresolvedSet *Conversions
+          = cast<CXXRecordDecl>(RecordTy->getDecl())
+                           ->getVisibleConversionFunctions();
+        for (UnresolvedSet::iterator I = Conversions->begin(),
+               E = Conversions->end(); I != E; ++I) {
+          if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(*I))
+            if (Conversion->getConversionType().getNonReferenceType()
+                  ->isIntegralType()) {
+              if (Conversion->isExplicit())
+                ExplicitConversions.push_back(Conversion);
+              else
+              ViableConversions.push_back(Conversion);
+            }
+        }
+
+        switch (ViableConversions.size()) {
+        case 0:
+          if (ExplicitConversions.size() == 1) {
+            // The user probably meant to invoke the given explicit
+            // conversion; use it.
+            QualType ConvTy
+              = ExplicitConversions[0]->getConversionType()
+                            .getNonReferenceType();
+            std::string TypeStr;
+            ConvTy.getAsStringInternal(TypeStr, Context.PrintingPolicy);
+            
+
+            Diag(SwitchLoc, diag::err_switch_explicit_conversion)
+              << CondType << ConvTy << CondExpr->getSourceRange()
+              << CodeModificationHint::CreateInsertion(CondExpr->getLocStart(),
+                                             "static_cast<" + TypeStr + ">(")
+              << CodeModificationHint::CreateInsertion(
+                                PP.getLocForEndOfToken(CondExpr->getLocEnd()),
+                                   ")");
+            Diag(ExplicitConversions[0]->getLocation(),
+                 diag::note_switch_conversion)
+              << ConvTy->isEnumeralType() << ConvTy;
+
+            // If we aren't in a SFINAE context, build a call to the 
+            // explicit conversion function.
+            if (!isSFINAEContext())
+              CondExpr = BuildCXXMemberCallExpr(CondExpr, 
+                                                ExplicitConversions[0]);
+          }
+
+          // We'll complain below about a non-integral condition type.
+          break;
+
+        case 1:
+          // Apply this conversion.
+          CondExpr = BuildCXXMemberCallExpr(CondExpr, ViableConversions[0]);
+          break;
+
+        default:
+          Diag(SwitchLoc, diag::err_switch_multiple_conversions)
+            << CondType << CondExpr->getSourceRange();
+          for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
+            QualType ConvTy
+              = ViableConversions[I]->getConversionType()
+                            .getNonReferenceType();
+            Diag(ViableConversions[I]->getLocation(),
+                 diag::note_switch_conversion)
+              << ConvTy->isEnumeralType() << ConvTy;
+          }
+          return StmtError();
+        }
+      } 
+      CondType = CondExpr->getType();
+
+      if (CondType->isIntegralType() || CondType->isEnumeralType()) {
+        // Integral promotions are performed.
+        UsualUnaryConversions(CondExpr);
+      }
+    }
+  } else {
+    // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
+    UsualUnaryConversions(CondExpr);
+  }
+  CondType = CondExpr->getType();
+  SS->setCond(CondExpr);
 
   // C++ 6.4.2.p2:
   // Integral promotions are performed (on the switch condition).
@@ -413,9 +482,6 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   // type (before the promotion) doesn't make sense, even when it can
   // be represented by the promoted type.  Therefore we need to find
   // the pre-promotion type of the switch condition.
-  QualType CondTypeBeforePromotion =
-      GetTypeBeforeIntegralPromotion(CondExpr);
-
   if (!CondExpr->isTypeDependent()) {
     if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
       Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)

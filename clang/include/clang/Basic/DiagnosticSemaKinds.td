@@ -2292,6 +2292,13 @@ def err_typecheck_statement_requires_integer : Error<
   "statement requires expression of integer type (%0 invalid)">;
 def err_multiple_default_labels_defined : Error<
   "multiple default labels in one switch">;
+def err_switch_multiple_conversions : Error<
+  "multiple conversions from switch condition type %0 to an integral or "
+  "enumeration type">;
+def note_switch_conversion : Note<
+  "conversion to %select{integral|enumeration}0 type %1">;
+def err_switch_explicit_conversion : Error<
+  "switch condition type %0 requires explicit conversion to %1">;
 def warn_empty_if_body : Warning<
   "if statement has empty body">, InGroup<EmptyBody>;
 def err_va_start_used_in_non_variadic_function : Error<
