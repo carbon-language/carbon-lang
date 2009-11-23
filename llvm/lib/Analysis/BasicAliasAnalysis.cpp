@@ -217,13 +217,13 @@ namespace {
     // VisitedPHIs - Track PHI nodes visited by a aliasCheck() call.
     SmallPtrSet<const Value*, 16> VisitedPHIs;
 
-    // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
-    // against another.
+    // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
+    // instruction against another.
     AliasResult aliasGEP(const Value *V1, unsigned V1Size,
                          const Value *V2, unsigned V2Size);
 
-    // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
-    // against another.
+    // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI
+    // instruction against another.
     AliasResult aliasPHI(const PHINode *PN, unsigned PNSize,
                          const Value *V2, unsigned V2Size);
 
@@ -236,7 +236,7 @@ namespace {
 
     // CheckGEPInstructions - Check two GEP instructions with known
     // must-aliasing base pointers.  This checks to see if the index expressions
-    // preclude the pointers from aliasing...
+    // preclude the pointers from aliasing.
     AliasResult
     CheckGEPInstructions(const Type* BasePtr1Ty,
                          Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1Size,
@@ -269,11 +269,10 @@ bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
 }
 
 
-// getModRefInfo - Check to see if the specified callsite can clobber the
-// specified memory object.  Since we only look at local properties of this
-// function, we really can't say much about this query.  We do, however, use
-// simple "address taken" analysis on local objects.
-//
+/// getModRefInfo - Check to see if the specified callsite can clobber the
+/// specified memory object.  Since we only look at local properties of this
+/// function, we really can't say much about this query.  We do, however, use
+/// simple "address taken" analysis on local objects.
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   const Value *Object = P->getUnderlyingObject();
@@ -534,8 +533,8 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
   return MayAlias;
 }
 
-// aliasSelect - Provide a bunch of ad-hoc rules to disambiguate a Select instruction
-// against another.
+/// aliasSelect - Provide a bunch of ad-hoc rules to disambiguate a Select
+/// instruction against another.
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasSelect(const SelectInst *SI, unsigned SISize,
                                 const Value *V2, unsigned V2Size) {
@@ -701,10 +700,12 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   // isNonEscapingLocalObject considers all stores to be escapes (it
   // passes true for the StoreCaptures argument to PointerMayBeCaptured).
   if (O1 != O2) {
-    if ((isa<CallInst>(O1) || isa<InvokeInst>(O1) || isa<LoadInst>(O1)) &&
+    if ((isa<CallInst>(O1) || isa<InvokeInst>(O1) || isa<LoadInst>(O1) ||
+         isa<Argument(O1)) &&
         isNonEscapingLocalObject(O2))
       return NoAlias;
-    if ((isa<CallInst>(O2) || isa<InvokeInst>(O2) || isa<LoadInst>(O2)) &&
+    if ((isa<CallInst>(O2) || isa<InvokeInst>(O2) || isa<LoadInst>(O2) ||
+         isa<Argument(O2)) &&
         isNonEscapingLocalObject(O1))
       return NoAlias;
   }
@@ -752,7 +753,7 @@ static bool IndexOperandsEqual(Value *V1, Value *V2) {
 
 /// CheckGEPInstructions - Check two GEP instructions with known must-aliasing
 /// base pointers.  This checks to see if the index expressions preclude the
-/// pointers from aliasing...
+/// pointers from aliasing.
 AliasAnalysis::AliasResult 
 BasicAliasAnalysis::CheckGEPInstructions(
   const Type* BasePtr1Ty, Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1S,
@@ -1079,5 +1080,5 @@ BasicAliasAnalysis::CheckGEPInstructions(
   return MayAlias;
 }
 
-// Make sure that anything that uses AliasAnalysis pulls in this file...
+// Make sure that anything that uses AliasAnalysis pulls in this file.
 DEFINING_FILE_FOR(BasicAliasAnalysis)
