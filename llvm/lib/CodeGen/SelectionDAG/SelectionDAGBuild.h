@@ -25,7 +25,6 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetMachine.h"
 #include <vector>
 #include <set>
 
@@ -59,7 +58,6 @@ class LoadInst;
 class MachineBasicBlock;
 class MachineFunction;
 class MachineInstr;
-class MachineModuleInfo;
 class MachineRegisterInfo;
 class PHINode;
 class PtrToIntInst;
@@ -483,11 +481,6 @@ private:
   const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);
   const char *implVisitAluOverflow(CallInst &I, ISD::NodeType Op);
 };
-
-/// AddCatchInfo - Extract the personality and type infos from an eh.selector
-/// call, and add them to the specified machine basic block.
-void AddCatchInfo(CallInst &I, MachineModuleInfo *MMI,
-                  MachineBasicBlock *MBB);
 
 } // end namespace llvm
 

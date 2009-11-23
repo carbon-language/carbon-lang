@@ -27,10 +27,13 @@ namespace llvm {
 
 class AllocaInst;
 class BasicBlock;
+class CallInst;
 class Function;
+class GlobalVariable;
 class Instruction;
 class MachineBasicBlock;
 class MachineFunction;
+class MachineModuleInfo;
 class MachineRegisterInfo;
 class TargetLowering;
 class Value;
@@ -131,6 +134,13 @@ void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
                      SmallVectorImpl<EVT> &ValueVTs,
                      SmallVectorImpl<uint64_t> *Offsets = 0,
                      uint64_t StartingOffset = 0);
+
+/// ExtractTypeInfo - Returns the type info, possibly bitcast, encoded in V.
+GlobalVariable *ExtractTypeInfo(Value *V);
+
+/// AddCatchInfo - Extract the personality and type infos from an eh.selector
+/// call, and add them to the specified machine basic block.
+void AddCatchInfo(CallInst &I, MachineModuleInfo *MMI, MachineBasicBlock *MBB);
 
 } // end namespace llvm
 

@@ -55,6 +55,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "SelectionDAGBuild.h"
+#include "FunctionLoweringInfo.h"
 using namespace llvm;
 
 unsigned FastISel::getRegForValue(Value *V) {
