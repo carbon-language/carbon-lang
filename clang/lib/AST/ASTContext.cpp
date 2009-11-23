@@ -3396,6 +3396,11 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                false);
     return;
   }
+  
+  if (isObjCSelType(T)) {
+    S += ':';
+    return;
+  }
 
   if (const PointerType *PT = T->getAs<PointerType>()) {
     QualType PointeeTy = PT->getPointeeType();
@@ -3428,10 +3433,6 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         std::string replace = "rn";
         S.replace(S.end()-2, S.end(), replace);
       }
-    }
-    if (isObjCSelType(PointeeTy)) {
-      S += ':';
-      return;
     }
 
     if (PointeeTy->isCharType()) {

@@ -68,10 +68,12 @@ struct Innermost {
 	int ivar;
 }
 -(void) test3: (Test*  [3] [4])b ; 
+- (SEL**) meth : (SEL) arg : (SEL*****) arg1 : (SEL*)arg2 : (SEL**) arg3;
 @end
 
 @implementation Test
 -(void) test3: (Test* [3] [4])b {}
+- (SEL**) meth : (SEL) arg : (SEL*****) arg1 : (SEL*)arg2 : (SEL**) arg3 {}
 @end
 
 struct S { int iS; };
