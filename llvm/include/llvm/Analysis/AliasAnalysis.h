@@ -94,6 +94,13 @@ public:
   virtual AliasResult alias(const Value *V1, unsigned V1Size,
                             const Value *V2, unsigned V2Size);
 
+  /// isNoAlias - A trivial helper function to check to see if the specified
+  /// pointers are no-alias.
+  bool isNoAlias(const Value *V1, unsigned V1Size,
+                 const Value *V2, unsigned V2Size) {
+    return alias(V1, V1Size, V2, V2Size) == NoAlias;
+  }
+
   /// pointsToConstantMemory - If the specified pointer is known to point into
   /// constant global memory, return true.  This allows disambiguation of store
   /// instructions from constant pointers.
