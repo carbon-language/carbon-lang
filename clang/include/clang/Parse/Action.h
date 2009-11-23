@@ -1048,6 +1048,10 @@ public:
     return ExprEmpty();
   }
 
+  virtual bool TypeIsVectorType(TypeTy *Ty) {
+    return false;
+  }
+
   virtual OwningExprResult ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                       tok::TokenKind Kind,
                                       ExprArg LHS, ExprArg RHS) {

@@ -1536,6 +1536,9 @@ public:
   virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
                                          TypeTy *Ty, SourceLocation RParenLoc,
                                          ExprArg Op);
+  virtual bool TypeIsVectorType(TypeTy *Ty) {
+    return GetTypeFromParser(Ty)->isVectorType();
+  }
 
   OwningExprResult MaybeConvertParenListExprToParenExpr(Scope *S, ExprArg ME);
   OwningExprResult ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,

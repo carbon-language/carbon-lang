@@ -1365,7 +1365,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
       // Parse the cast-expression that follows it next.
       // TODO: For cast expression with CastTy.
-      Result = ParseCastExpression(false, false, true);
+      Result = ParseCastExpression(false, false, 
+                                   Actions.TypeIsVectorType(CastTy));
       if (!Result.isInvalid())
         Result = Actions.ActOnCastExpr(CurScope, OpenLoc, CastTy, RParenLoc,
                                        move(Result));

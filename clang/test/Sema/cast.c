@@ -12,3 +12,7 @@ void bar() {
   a = (char*)b; // expected-error {{cannot be cast to a pointer type}}
 }
 
+long bar1(long *next) {
+        return (long)(*next)++;  
+}
+
