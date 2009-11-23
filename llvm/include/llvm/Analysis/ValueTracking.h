@@ -86,16 +86,14 @@ namespace llvm {
   Value *FindInsertedValue(Value *V,
                            const unsigned *idx_begin,
                            const unsigned *idx_end,
-                           LLVMContext &Context,
                            Instruction *InsertBefore = 0);
 
   /// This is a convenience wrapper for finding values indexed by a single index
   /// only.
   inline Value *FindInsertedValue(Value *V, const unsigned Idx,
-                                  LLVMContext &Context,
                                   Instruction *InsertBefore = 0) {
     const unsigned Idxs[1] = { Idx };
-    return FindInsertedValue(V, &Idxs[0], &Idxs[1], Context, InsertBefore);
+    return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
   }
   
   /// GetConstantStringInfo - This function computes the length of a

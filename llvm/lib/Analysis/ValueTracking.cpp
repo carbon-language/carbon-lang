@@ -325,7 +325,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
       APInt Mask2(Mask.shl(ShiftAmt));
       ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero,KnownOne, TD,
                         Depth+1);
-      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
       // high bits known zero.
@@ -343,7 +343,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
       APInt Mask2(Mask.shl(ShiftAmt));
       ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero, KnownOne, TD,
                         Depth+1);
-      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero = APIntOps::lshr(KnownZero, ShiftAmt);
       KnownOne  = APIntOps::lshr(KnownOne, ShiftAmt);
         
@@ -380,7 +380,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
   // fall through
   case Instruction::Add: {
-    // If one of the operands has trailing zeros, than the bits that the
+    // If one of the operands has trailing zeros, then the bits that the
     // other operand has in those bit positions will be preserved in the
     // result. For an add, this works with either operand. For a subtract,
     // this only works if the known zeros are in the right operand.
@@ -436,7 +436,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
 
         KnownZero |= KnownZero2 & Mask;
 
-        assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+        assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       }
     }
     break;
@@ -449,7 +449,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
         KnownZero |= ~LowBits & Mask;
         ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero, KnownOne, TD,
                           Depth+1);
-        assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?");
+        assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
         break;
       }
     }
@@ -959,7 +959,6 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
                                 SmallVector<unsigned, 10> &Idxs,
                                 unsigned IdxSkip,
-                                LLVMContext &Context,
                                 Instruction *InsertBefore) {
   const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
@@ -971,7 +970,7 @@ static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
       Idxs.push_back(i);
       Value *PrevTo = To;
       To = BuildSubAggregate(From, To, STy->getElementType(i), Idxs, IdxSkip,
-                             Context, InsertBefore);
+                             InsertBefore);
       Idxs.pop_back();
       if (!To) {
         // Couldn't find any inserted value for this index? Cleanup
@@ -994,7 +993,7 @@ static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
   // we might be able to find the complete struct somewhere.
   
   // Find the value that is at that particular spot
-  Value *V = FindInsertedValue(From, Idxs.begin(), Idxs.end(), Context);
+  Value *V = FindInsertedValue(From, Idxs.begin(), Idxs.end());
 
   if (!V)
     return NULL;
@@ -1017,7 +1016,7 @@ static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 //
 // All inserted insertvalue instructions are inserted before InsertBefore
 static Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
-                                const unsigned *idx_end, LLVMContext &Context,
+                                const unsigned *idx_end,
                                 Instruction *InsertBefore) {
   assert(InsertBefore && "Must have someplace to insert!");
   const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
@@ -1027,8 +1026,7 @@ static Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
   SmallVector<unsigned, 10> Idxs(idx_begin, idx_end);
   unsigned IdxSkip = Idxs.size();
 
-  return BuildSubAggregate(From, To, IndexedType, Idxs, IdxSkip,
-                           Context, InsertBefore);
+  return BuildSubAggregate(From, To, IndexedType, Idxs, IdxSkip, InsertBefore);
 }
 
 /// FindInsertedValue - Given an aggregrate and an sequence of indices, see if
@@ -1038,8 +1036,7 @@ static Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
 /// If InsertBefore is not null, this function will duplicate (modified)
 /// insertvalues when a part of a nested struct is extracted.
 Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
-                         const unsigned *idx_end, LLVMContext &Context,
-                         Instruction *InsertBefore) {
+                         const unsigned *idx_end, Instruction *InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
   // recursion)
   if (idx_begin == idx_end)
@@ -1063,7 +1060,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
     if (isa<ConstantArray>(C) || isa<ConstantStruct>(C))
       // Recursively process this constant
       return FindInsertedValue(C->getOperand(*idx_begin), idx_begin + 1,
-                               idx_end, Context, InsertBefore);
+                               idx_end, InsertBefore);
   } else if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
     // Loop the indices for the insertvalue instruction in parallel with the
     // requested indices
@@ -1082,8 +1079,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
           // %C = insertvalue {i32, i32 } %A, i32 11, 1
           // which allows the unused 0,0 element from the nested struct to be
           // removed.
-          return BuildSubAggregate(V, idx_begin, req_idx,
-                                   Context, InsertBefore);
+          return BuildSubAggregate(V, idx_begin, req_idx, InsertBefore);
         else
           // We can't handle this without inserting insertvalues
           return 0;
@@ -1094,13 +1090,13 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
       // looking for, then.
       if (*req_idx != *i)
         return FindInsertedValue(I->getAggregateOperand(), idx_begin, idx_end,
-                                 Context, InsertBefore);
+                                 InsertBefore);
     }
     // If we end up here, the indices of the insertvalue match with those
     // requested (though possibly only partially). Now we recursively look at
     // the inserted value, passing any remaining indices.
     return FindInsertedValue(I->getInsertedValueOperand(), req_idx, idx_end,
-                             Context, InsertBefore);
+                             InsertBefore);
   } else if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
     // If we're extracting a value from an aggregrate that was extracted from
     // something else, we can extract from that something else directly instead.
@@ -1124,7 +1120,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
            && "Number of indices added not correct?");
     
     return FindInsertedValue(I->getAggregateOperand(), Idxs.begin(), Idxs.end(),
-                             Context, InsertBefore);
+                             InsertBefore);
   }
   // Otherwise, we don't know (such as, extracting from a function return value
   // or load instruction)

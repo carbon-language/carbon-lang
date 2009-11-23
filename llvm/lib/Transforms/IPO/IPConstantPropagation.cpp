@@ -19,7 +19,6 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -155,7 +154,7 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
 // callers will be updated to use the value they pass in directly instead of
 // using the return value.
 bool IPCP::PropagateConstantReturn(Function &F) {
-  if (F.getReturnType() == Type::getVoidTy(F.getContext()))
+  if (F.getReturnType()->isVoidTy())
     return false; // No return value.
 
   // If this function could be overridden later in the link stage, we can't
@@ -163,8 +162,6 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   if (F.mayBeOverridden())
     return false;
     
-  LLVMContext &Context = F.getContext();
-  
   // Check to see if this function returns a constant.
   SmallVector<Value *,4> RetVals;
   const StructType *STy = dyn_cast<StructType>(F.getReturnType());
@@ -188,7 +185,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
         if (!STy)
           V = RI->getOperand(i);
         else
-          V = FindInsertedValue(RI->getOperand(0), i, Context);
+          V = FindInsertedValue(RI->getOperand(0), i);
 
         if (V) {
           // Ignore undefs, we can change them into anything
