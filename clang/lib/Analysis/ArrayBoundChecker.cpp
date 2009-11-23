@@ -80,5 +80,11 @@ void ArrayBoundChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l){
 
     report->addRange(S->getSourceRange());
     C.EmitReport(report);
+    return;
   }
+  
+  // Array bound check succeeded.  From this point forward the array bound
+  // should always succeed.
+  assert(StInBound);
+  C.addTransition(StInBound);
 }
