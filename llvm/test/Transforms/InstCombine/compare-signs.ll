@@ -1,5 +1,4 @@
 ; RUN: opt %s -instcombine -S | FileCheck %s
-; XFAIL: *
 ; PR5438
 
 ; TODO: This should also optimize down.
