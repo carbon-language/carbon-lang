@@ -955,8 +955,7 @@ public:
          TemplateParameterList *Params,
          ClassTemplateDecl *SpecializedTemplate,
          TemplateArgumentListBuilder &Builder,
-         TemplateArgumentLoc *ArgInfos,
-         unsigned NumArgInfos,
+         const TemplateArgumentListInfo &ArgInfos,
          ClassTemplatePartialSpecializationDecl *PrevDecl);
 
   /// Get the list of template parameters

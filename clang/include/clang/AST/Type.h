@@ -82,6 +82,7 @@ namespace clang {
   class StmtIteratorBase;
   class TemplateArgument;
   class TemplateArgumentLoc;
+  class TemplateArgumentListInfo;
   class QualifiedNameType;
   struct PrintingPolicy;
 
@@ -2280,6 +2281,8 @@ public:
   static bool anyDependentTemplateArguments(const TemplateArgumentLoc *Args,
                                             unsigned NumArgs);
 
+  static bool anyDependentTemplateArguments(const TemplateArgumentListInfo &);
+
   /// \brief Print a template argument list, including the '<' and '>'
   /// enclosing the template arguments.
   static std::string PrintTemplateArgumentList(const TemplateArgument *Args,
@@ -2288,6 +2291,9 @@ public:
 
   static std::string PrintTemplateArgumentList(const TemplateArgumentLoc *Args,
                                                unsigned NumArgs,
+                                               const PrintingPolicy &Policy);
+
+  static std::string PrintTemplateArgumentList(const TemplateArgumentListInfo &,
                                                const PrintingPolicy &Policy);
 
   typedef const TemplateArgument * iterator;

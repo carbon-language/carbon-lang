@@ -910,8 +910,7 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
                               (NestedNameSpecifier *)SS->getScopeRep(),
                               SS->getRange(), Member, Loc,
                               // FIXME: Explicit template argument lists
-                              false, SourceLocation(), 0, 0, SourceLocation(),
-                              Ty);
+                              0, Ty);
 
   return new (C) MemberExpr(Base, isArrow, Member, Loc, Ty);
 }
@@ -1853,11 +1852,7 @@ Action::OwningExprResult
 Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
                                DeclarationName MemberName,
-                               bool HasExplicitTemplateArgs,
-                               SourceLocation LAngleLoc,
-                               const TemplateArgumentLoc *ExplicitTemplateArgs,
-                               unsigned NumExplicitTemplateArgs,
-                               SourceLocation RAngleLoc,
+                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                DeclPtrTy ObjCImpDecl, const CXXScopeSpec *SS,
                                NamedDecl *FirstQualifierInScope) {
   if (SS && SS->isInvalid())
@@ -1990,11 +1985,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                    FirstQualifierInScope,
                                                    MemberName,
                                                    MemberLoc,
-                                                   HasExplicitTemplateArgs,
-                                                   LAngleLoc,
-                                                   ExplicitTemplateArgs,
-                                                   NumExplicitTemplateArgs,
-                                                   RAngleLoc));
+                                                   ExplicitTemplateArgs));
     }
     else if (const PointerType *PT = BaseType->getAs<PointerType>())
       BaseType = PT->getPointeeType();
@@ -2032,11 +2023,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                      FirstQualifierInScope,
                                                      MemberName,
                                                      MemberLoc,
-                                                     HasExplicitTemplateArgs,
-                                                     LAngleLoc,
-                                                     ExplicitTemplateArgs,
-                                                     NumExplicitTemplateArgs,
-                                                     RAngleLoc));
+                                                     ExplicitTemplateArgs));
       }
     }
 
@@ -2157,13 +2144,12 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
           = dyn_cast<FunctionTemplateDecl>(MemberDecl)) {
       MarkDeclarationReferenced(MemberLoc, MemberDecl);
 
-      if (HasExplicitTemplateArgs)
+      if (ExplicitTemplateArgs)
         return Owned(MemberExpr::Create(Context, BaseExpr, OpKind == tok::arrow,
                              (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0),
                                        SS? SS->getRange() : SourceRange(),
-                                        FunTmpl, MemberLoc, true,
-                                        LAngleLoc, ExplicitTemplateArgs,
-                                        NumExplicitTemplateArgs, RAngleLoc,
+                                        FunTmpl, MemberLoc,
+                                        ExplicitTemplateArgs,
                                         Context.OverloadTy));
 
       return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
@@ -2172,13 +2158,11 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
     if (OverloadedFunctionDecl *Ovl
           = dyn_cast<OverloadedFunctionDecl>(MemberDecl)) {
-      if (HasExplicitTemplateArgs)
+      if (ExplicitTemplateArgs)
         return Owned(MemberExpr::Create(Context, BaseExpr, OpKind == tok::arrow,
                              (NestedNameSpecifier *)(SS? SS->getScopeRep() : 0),
                                         SS? SS->getRange() : SourceRange(),
-                                        Ovl, MemberLoc, true,
-                                        LAngleLoc, ExplicitTemplateArgs,
-                                        NumExplicitTemplateArgs, RAngleLoc,
+                                        Ovl, MemberLoc, ExplicitTemplateArgs,
                                         Context.OverloadTy));
 
       return Owned(BuildMemberExpr(Context, BaseExpr, OpKind == tok::arrow, SS,
@@ -2481,17 +2465,16 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg Base,
                                        Member.TemplateId->getTemplateArgs(),
                                        Member.TemplateId->NumArgs);
     
-    llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-    translateTemplateArguments(TemplateArgsPtr, 
-                               TemplateArgs);
+    TemplateArgumentListInfo TemplateArgs;
+    TemplateArgs.setLAngleLoc(Member.TemplateId->LAngleLoc);
+    TemplateArgs.setRAngleLoc(Member.TemplateId->RAngleLoc);
+    translateTemplateArguments(TemplateArgsPtr, TemplateArgs);
     TemplateArgsPtr.release();
     
     // Do we have the save the actual template name? We might need it...
     return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, 
                                     Member.TemplateId->TemplateNameLoc,
-                                    Name, true, Member.TemplateId->LAngleLoc,
-                                    TemplateArgs.data(), TemplateArgs.size(),
-                                    Member.TemplateId->RAngleLoc, DeclPtrTy(),
+                                    Name, &TemplateArgs, DeclPtrTy(),
                                     &SS);
   }
   
@@ -2680,8 +2663,7 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
                                    bool &ArgumentDependentLookup,
                                    bool &Overloaded,
                                    bool &HasExplicitTemplateArguments,
-                           const TemplateArgumentLoc *&ExplicitTemplateArgs,
-                                   unsigned &NumExplicitTemplateArgs) {
+                           TemplateArgumentListInfo &ExplicitTemplateArgs) {
   // Set defaults for all of the output parameters.
   Name = DeclarationName();
   Qualifier = 0;
@@ -2739,8 +2721,7 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
       }
       Overloaded = true;
       HasExplicitTemplateArguments = true;
-      ExplicitTemplateArgs = TemplateIdRef->getTemplateArgs();
-      NumExplicitTemplateArgs = TemplateIdRef->getNumTemplateArgs();
+      TemplateIdRef->copyTemplateArgumentsInto(ExplicitTemplateArgs);
       
       // C++ [temp.arg.explicit]p6:
       //   [Note: For simple function names, argument dependent lookup (3.4.2)
@@ -2878,13 +2859,12 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   bool Overloaded;
   bool ADL;
   bool HasExplicitTemplateArgs = 0;
-  const TemplateArgumentLoc *ExplicitTemplateArgs = 0;
-  unsigned NumExplicitTemplateArgs = 0;
+  TemplateArgumentListInfo ExplicitTemplateArgs;
   NestedNameSpecifier *Qualifier = 0;
   SourceRange QualifierRange;
   DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
                           ADL, Overloaded, HasExplicitTemplateArgs,
-                          ExplicitTemplateArgs, NumExplicitTemplateArgs);
+                          ExplicitTemplateArgs);
 
   NamedDecl *NDecl;    // the specific declaration we're calling, if applicable
   FunctionDecl *FDecl; // same, if it's known to be a function
@@ -2917,9 +2897,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
 #endif
 
     FDecl = ResolveOverloadedCallFn(Fn, Fns, UnqualifiedName,
-                                    HasExplicitTemplateArgs,
-                                    ExplicitTemplateArgs,
-                                    NumExplicitTemplateArgs,
+                       (HasExplicitTemplateArgs ? &ExplicitTemplateArgs : 0),
                                     LParenLoc, Args, NumArgs, CommaLocs,
                                     RParenLoc, ADL);
     if (!FDecl)

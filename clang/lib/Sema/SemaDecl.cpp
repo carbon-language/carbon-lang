@@ -2974,10 +2974,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // If the declarator is a template-id, translate the parser's template 
   // argument list into our AST format.
   bool HasExplicitTemplateArgs = false;
-  llvm::SmallVector<TemplateArgumentLoc, 16> TemplateArgs;
-  SourceLocation LAngleLoc, RAngleLoc;
+  TemplateArgumentListInfo TemplateArgs;
   if (D.getName().getKind() == UnqualifiedId::IK_TemplateId) {
     TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
+    TemplateArgs.setLAngleLoc(TemplateId->LAngleLoc);
+    TemplateArgs.setRAngleLoc(TemplateId->RAngleLoc);
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        TemplateId->getTemplateArgs(),
                                        TemplateId->NumArgs);
@@ -2986,8 +2987,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     TemplateArgsPtr.release();
     
     HasExplicitTemplateArgs = true;
-    LAngleLoc = TemplateId->LAngleLoc;
-    RAngleLoc = TemplateId->RAngleLoc;
     
     if (FunctionTemplate) {
       // FIXME: Diagnose function template with explicit template
@@ -3009,9 +3008,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   if (isFunctionTemplateSpecialization) {
-      if (CheckFunctionTemplateSpecialization(NewFD, HasExplicitTemplateArgs,
-                                              LAngleLoc, TemplateArgs.data(),
-                                              TemplateArgs.size(), RAngleLoc,
+      if (CheckFunctionTemplateSpecialization(NewFD,
+                               (HasExplicitTemplateArgs ? &TemplateArgs : 0),
                                               Previous))
         NewFD->setInvalidDecl();
   } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD) &&

@@ -601,6 +601,14 @@ static void PrintTemplateArgument(std::string &Buffer,
   }
 }
 
+std::string TemplateSpecializationType::
+  PrintTemplateArgumentList(const TemplateArgumentListInfo &Args,
+                            const PrintingPolicy &Policy) {
+  return PrintTemplateArgumentList(Args.getArgumentArray(),
+                                   Args.size(),
+                                   Policy);
+}
+
 std::string
 TemplateSpecializationType::PrintTemplateArgumentList(
                                                 const TemplateArgument *Args,

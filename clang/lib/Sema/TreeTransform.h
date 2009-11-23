@@ -503,10 +503,7 @@ public:
   /// different behavior.
   QualType RebuildTemplateSpecializationType(TemplateName Template,
                                              SourceLocation TemplateLoc,
-                                             SourceLocation LAngleLoc,
-                                             const TemplateArgumentLoc *Args,
-                                             unsigned NumArgs,
-                                             SourceLocation RAngleLoc);
+                                       const TemplateArgumentListInfo &Args);
 
   /// \brief Build a new qualified name type.
   ///
@@ -942,11 +939,7 @@ public:
                                      SourceRange QualifierRange,
                                      SourceLocation MemberLoc,
                                      NamedDecl *Member,
-                                     bool HasExplicitTemplateArgs,
-                                     SourceLocation LAngleLoc,
-                              const TemplateArgumentLoc *ExplicitTemplateArgs,
-                                     unsigned NumExplicitTemplateArgs,
-                                     SourceLocation RAngleLoc,
+                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                      NamedDecl *FirstQualifierInScope) {
     if (!Member->getDeclName()) {
       // We have a reference to an unnamed field.
@@ -969,11 +962,7 @@ public:
                                               isArrow? tok::arrow : tok::period,
                                               MemberLoc,
                                               Member->getDeclName(),
-                                              HasExplicitTemplateArgs,
-                                              LAngleLoc,
                                               ExplicitTemplateArgs,
-                                              NumExplicitTemplateArgs,
-                                              RAngleLoc,
                                      /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
                                               &SS,
                                               FirstQualifierInScope);
@@ -1480,15 +1469,9 @@ public:
                                          SourceRange QualifierRange,
                                          TemplateName Template,
                                          SourceLocation TemplateLoc,
-                                         SourceLocation LAngleLoc,
-                                         TemplateArgumentLoc *TemplateArgs,
-                                         unsigned NumTemplateArgs,
-                                         SourceLocation RAngleLoc) {
+                              const TemplateArgumentListInfo &TemplateArgs) {
     return getSema().BuildTemplateIdExpr(Qualifier, QualifierRange,
-                                         Template, TemplateLoc,
-                                         LAngleLoc,
-                                         TemplateArgs, NumTemplateArgs,
-                                         RAngleLoc);
+                                         Template, TemplateLoc, TemplateArgs);
   }
 
   /// \brief Build a new object-construction expression.
@@ -1583,10 +1566,7 @@ public:
                                                   TemplateName Template,
                                                 SourceLocation TemplateNameLoc,
                                               NamedDecl *FirstQualifierInScope,
-                                                  SourceLocation LAngleLoc,
-                                       const TemplateArgumentLoc *TemplateArgs,
-                                                  unsigned NumTemplateArgs,
-                                                  SourceLocation RAngleLoc) {
+                                       const TemplateArgumentListInfo &TemplateArgs) {
     OwningExprResult Base = move(BaseE);
     tok::TokenKind OpKind = IsArrow? tok::arrow : tok::period;
 
@@ -1610,12 +1590,11 @@ public:
         Name = SemaRef.Context.DeclarationNames.getCXXOperatorName(
                                                           DTN->getOperator());
     }
-      return SemaRef.BuildMemberReferenceExpr(/*Scope=*/0, move(Base),
-                                              OperatorLoc, OpKind,
-                                              TemplateNameLoc, Name, true,
-                                              LAngleLoc, TemplateArgs,
-                                              NumTemplateArgs, RAngleLoc,
-                                              Sema::DeclPtrTy(), &SS);
+    return SemaRef.BuildMemberReferenceExpr(/*Scope=*/0, move(Base),
+                                            OperatorLoc, OpKind,
+                                            TemplateNameLoc, Name,
+                                            &TemplateArgs,
+                                            Sema::DeclPtrTy(), &SS);
   }
 
   /// \brief Build a new Objective-C @encode expression.
@@ -2879,21 +2858,23 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
   if (Template.isNull())
     return QualType();
 
-  llvm::SmallVector<TemplateArgumentLoc, 4> NewTemplateArgs(T->getNumArgs());
-  for (unsigned i = 0, e = T->getNumArgs(); i != e; ++i)
-    if (getDerived().TransformTemplateArgument(TL.getArgLoc(i),
-                                               NewTemplateArgs[i]))
+  TemplateArgumentListInfo NewTemplateArgs;
+  NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
+  NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
+
+  for (unsigned i = 0, e = T->getNumArgs(); i != e; ++i) {
+    TemplateArgumentLoc Loc;
+    if (getDerived().TransformTemplateArgument(TL.getArgLoc(i), Loc))
       return QualType();
+    NewTemplateArgs.addArgument(Loc);
+  }
 
   // FIXME: maybe don't rebuild if all the template arguments are the same.
 
   QualType Result =
     getDerived().RebuildTemplateSpecializationType(Template,
                                                    TL.getTemplateNameLoc(),
-                                                   TL.getLAngleLoc(),
-                                                   NewTemplateArgs.data(),
-                                                   NewTemplateArgs.size(),
-                                                   TL.getRAngleLoc());
+                                                   NewTemplateArgs);
 
   if (!Result.isNull()) {
     TemplateSpecializationTypeLoc NewTL
@@ -3695,13 +3676,15 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E,
       !E->hasExplicitTemplateArgumentList())
     return SemaRef.Owned(E->Retain());
 
-  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs;
+  TemplateArgumentListInfo TransArgs;
   if (E->hasExplicitTemplateArgumentList()) {
-    TransArgs.resize(E->getNumTemplateArgs());
+    TransArgs.setLAngleLoc(E->getLAngleLoc());
+    TransArgs.setRAngleLoc(E->getRAngleLoc());
     for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-      if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
-                                                 TransArgs[I]))
+      TemplateArgumentLoc Loc;
+      if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
         return SemaRef.ExprError();
+      TransArgs.addArgument(Loc);
     }
   }
   
@@ -3715,11 +3698,8 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E,
                                         E->getQualifierRange(),
                                         E->getMemberLoc(),
                                         Member,
-                                        E->hasExplicitTemplateArgumentList(),
-                                        E->getLAngleLoc(),
-                                        TransArgs.data(),
-                                        TransArgs.size(),
-                                        E->getRAngleLoc(),
+                                        (E->hasExplicitTemplateArgumentList()
+                                           ? &TransArgs : 0),
                                         0);
 }
 
@@ -4636,12 +4616,13 @@ TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E,
     if (!Qualifier)
       return SemaRef.ExprError();
   }
-  
-  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs(E->getNumTemplateArgs());
+
+  TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
   for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
-                                               TransArgs[I]))
+    TemplateArgumentLoc Loc;
+    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
       return SemaRef.ExprError();
+    TransArgs.addArgument(Loc);
   }
 
   // FIXME: Would like to avoid rebuilding if nothing changed, but we can't
@@ -4652,10 +4633,7 @@ TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E,
   // with a functional cast. Give a reasonable error message!
   return getDerived().RebuildTemplateIdExpr(Qualifier, E->getQualifierRange(),
                                             Template, E->getTemplateNameLoc(),
-                                            E->getLAngleLoc(),
-                                            TransArgs.data(),
-                                            TransArgs.size(),
-                                            E->getRAngleLoc());
+                                            TransArgs);
 }
 
 template<typename Derived>
@@ -4905,11 +4883,12 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
   if (Template.isNull())
     return SemaRef.ExprError();
 
-  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs(E->getNumTemplateArgs());
+  TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
   for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
-                                               TransArgs[I]))
+    TemplateArgumentLoc Loc;
+    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
       return SemaRef.ExprError();
+    TransArgs.addArgument(Loc);
   }
 
   return getDerived().RebuildCXXDependentScopeMemberExpr(move(Base),
@@ -4920,10 +4899,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                      Template,
                                                      E->getMemberLoc(),
                                                      FirstQualifierInScope,
-                                                     E->getLAngleLoc(),
-                                                     TransArgs.data(),
-                                                     TransArgs.size(),
-                                                     E->getRAngleLoc());
+                                                     TransArgs);
 }
 
 template<typename Derived>
@@ -5266,12 +5242,8 @@ template<typename Derived>
 QualType TreeTransform<Derived>::RebuildTemplateSpecializationType(
                                                       TemplateName Template,
                                              SourceLocation TemplateNameLoc,
-                                                   SourceLocation LAngleLoc,
-                                            const TemplateArgumentLoc *Args,
-                                                           unsigned NumArgs,
-                                                   SourceLocation RAngleLoc) {
-  return SemaRef.CheckTemplateIdType(Template, TemplateNameLoc, LAngleLoc,
-                                     Args, NumArgs, RAngleLoc);
+                               const TemplateArgumentListInfo &TemplateArgs) {
+  return SemaRef.CheckTemplateIdType(Template, TemplateNameLoc, TemplateArgs);
 }
 
 template<typename Derived>
@@ -5280,7 +5252,7 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    SourceRange Range,
                                                    IdentifierInfo &II,
                                                    QualType ObjectType,
-                                             NamedDecl *FirstQualifierInScope) {
+                                                   NamedDecl *FirstQualifierInScope) {
   CXXScopeSpec SS;
   // FIXME: The source location information is all wrong.
   SS.setRange(Range);

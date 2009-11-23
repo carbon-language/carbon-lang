@@ -88,28 +88,6 @@ namespace llvm {
 
 namespace clang {
 
-/// UnresolvedSet - A set of unresolved declarations.
-class UnresolvedSet {
-  typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
-  DeclsTy Decls;
-
-public:
-  void addDecl(NamedDecl *D) {
-    Decls.push_back(D);
-  }
-
-  bool replace(const NamedDecl* Old, NamedDecl *New) {
-    for (DeclsTy::iterator I = Decls.begin(), E = Decls.end(); I != E; ++I)
-      if (*I == Old)
-        return (*I = New, true);
-    return false;
-  }
-
-  typedef DeclsTy::const_iterator iterator;
-  iterator begin() const { return Decls.begin(); }
-  iterator end() const { return Decls.end(); }
-};
-
 /// OverloadedFunctionDecl - An instance of this class represents a
 /// set of overloaded functions. All of the functions have the same
 /// name and occur within the same scope.

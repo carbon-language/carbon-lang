@@ -17,7 +17,7 @@
 #include "clang/Basic/TypeTraits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
+#include "clang/AST/TemplateBase.h"
 
 namespace clang {
 
@@ -25,6 +25,7 @@ namespace clang {
   class CXXDestructorDecl;
   class CXXMethodDecl;
   class CXXTemporary;
+  class TemplateArgumentListInfo;
 
 //===--------------------------------------------------------------------===//
 // C++ Expressions.
@@ -1215,10 +1216,7 @@ class TemplateIdRefExpr : public Expr {
   TemplateIdRefExpr(QualType T,
                     NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
                     TemplateName Template, SourceLocation TemplateNameLoc,
-                    SourceLocation LAngleLoc,
-                    const TemplateArgumentLoc *TemplateArgs,
-                    unsigned NumTemplateArgs,
-                    SourceLocation RAngleLoc);
+                    const TemplateArgumentListInfo &TemplateArgs);
 
   virtual void DoDestroy(ASTContext &Context);
 
@@ -1227,8 +1225,7 @@ public:
   Create(ASTContext &Context, QualType T,
          NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
          TemplateName Template, SourceLocation TemplateNameLoc,
-         SourceLocation LAngleLoc, const TemplateArgumentLoc *TemplateArgs,
-         unsigned NumTemplateArgs, SourceLocation RAngleLoc);
+         const TemplateArgumentListInfo &TemplateArgs);
 
   /// \brief Retrieve the nested name specifier used to qualify the name of
   /// this template-id, e.g., the "std::sort" in @c std::sort<int>, or NULL
@@ -1260,6 +1257,15 @@ public:
   /// \brief Retrieve the number of template arguments provided as part of this
   /// template-id.
   unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
+
+  /// \brief Copies the template-argument information into the given
+  /// structure.
+  void copyTemplateArgumentsInto(TemplateArgumentListInfo &Info) const {
+    Info.setLAngleLoc(LAngleLoc);
+    Info.setRAngleLoc(RAngleLoc);
+    for (unsigned i = 0; i < NumTemplateArgs; ++i)
+      Info.addArgument(getTemplateArgs()[i]);
+  }
 
   /// \brief Retrieve the location of the right angle bracket following the
   /// template arguments ('>').
@@ -1496,11 +1502,7 @@ class CXXDependentScopeMemberExpr : public Expr {
                           NamedDecl *FirstQualifierFoundInScope,
                           DeclarationName Member,
                           SourceLocation MemberLoc,
-                          bool HasExplicitTemplateArgs,
-                          SourceLocation LAngleLoc,
-                          const TemplateArgumentLoc *TemplateArgs,
-                          unsigned NumTemplateArgs,
-                          SourceLocation RAngleLoc);
+                          const TemplateArgumentListInfo *TemplateArgs);
 
 public:
   CXXDependentScopeMemberExpr(ASTContext &C,
@@ -1527,11 +1529,7 @@ public:
          NamedDecl *FirstQualifierFoundInScope,
          DeclarationName Member,
          SourceLocation MemberLoc,
-         bool HasExplicitTemplateArgs,
-         SourceLocation LAngleLoc,
-         const TemplateArgumentLoc *TemplateArgs,
-         unsigned NumTemplateArgs,
-         SourceLocation RAngleLoc);
+         const TemplateArgumentListInfo *TemplateArgs);
 
   /// \brief Retrieve the base object of this member expressions,
   /// e.g., the \c x in \c x.m.
@@ -1582,8 +1580,15 @@ public:
 
   /// \brief Determines whether this member expression actually had a C++
   /// template argument list explicitly specified, e.g., x.f<int>.
-  bool hasExplicitTemplateArgumentList() {
+  bool hasExplicitTemplateArgumentList() const {
     return HasExplicitTemplateArgumentList;
+  }
+
+  /// \brief Copies the template arguments (if present) into the given
+  /// structure.
+  void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
+    if (hasExplicitTemplateArgumentList())
+      getExplicitTemplateArgumentList()->copyInto(List);
   }
 
   /// \brief Retrieve the location of the left angle bracket following the

@@ -453,8 +453,9 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
        TemplateParameterList *Params,
        ClassTemplateDecl *SpecializedTemplate,
        TemplateArgumentListBuilder &Builder,
-       TemplateArgumentLoc *ArgInfos, unsigned N,
+       const TemplateArgumentListInfo &ArgInfos,
        ClassTemplatePartialSpecializationDecl *PrevDecl) {
+  unsigned N = ArgInfos.size();
   TemplateArgumentLoc *ClonedArgs = new (Context) TemplateArgumentLoc[N];
   for (unsigned I = 0; I != N; ++I)
     ClonedArgs[I] = ArgInfos[I];

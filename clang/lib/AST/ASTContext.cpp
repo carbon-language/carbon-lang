@@ -1832,9 +1832,10 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
 
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
-                                          const TemplateArgumentLoc *Args,
-                                          unsigned NumArgs,
+                                          const TemplateArgumentListInfo &Args,
                                           QualType Canon) {
+  unsigned NumArgs = Args.size();
+
   llvm::SmallVector<TemplateArgument, 4> ArgVec;
   ArgVec.reserve(NumArgs);
   for (unsigned i = 0; i != NumArgs; ++i)

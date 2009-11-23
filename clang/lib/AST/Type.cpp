@@ -866,6 +866,11 @@ static bool isDependent(const TemplateArgument &Arg) {
 }
 
 bool TemplateSpecializationType::
+anyDependentTemplateArguments(const TemplateArgumentListInfo &Args) {
+  return anyDependentTemplateArguments(Args.getArgumentArray(), Args.size());
+}
+
+bool TemplateSpecializationType::
 anyDependentTemplateArguments(const TemplateArgumentLoc *Args, unsigned N) {
   for (unsigned i = 0; i != N; ++i)
     if (isDependent(Args[i].getArgument()))

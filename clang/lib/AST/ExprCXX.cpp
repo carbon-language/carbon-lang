@@ -150,20 +150,19 @@ TemplateIdRefExpr::TemplateIdRefExpr(QualType T,
                                      SourceRange QualifierRange,
                                      TemplateName Template,
                                      SourceLocation TemplateNameLoc,
-                                     SourceLocation LAngleLoc,
-                                     const TemplateArgumentLoc *TemplateArgs,
-                                     unsigned NumTemplateArgs,
-                                     SourceLocation RAngleLoc)
+                                const TemplateArgumentListInfo &TemplateArgs)
   : Expr(TemplateIdRefExprClass, T,
          (Template.isDependent() ||
-          TemplateSpecializationType::anyDependentTemplateArguments(
-                                              TemplateArgs, NumTemplateArgs)),
+          TemplateSpecializationType
+             ::anyDependentTemplateArguments(TemplateArgs)),
          (Template.isDependent() ||
-          TemplateSpecializationType::anyDependentTemplateArguments(
-                                              TemplateArgs, NumTemplateArgs))),
+          TemplateSpecializationType
+             ::anyDependentTemplateArguments(TemplateArgs))),
     Qualifier(Qualifier), QualifierRange(QualifierRange), Template(Template),
-    TemplateNameLoc(TemplateNameLoc), LAngleLoc(LAngleLoc),
-    RAngleLoc(RAngleLoc), NumTemplateArgs(NumTemplateArgs) {
+    TemplateNameLoc(TemplateNameLoc),
+    LAngleLoc(TemplateArgs.getLAngleLoc()),
+    RAngleLoc(TemplateArgs.getRAngleLoc()),
+    NumTemplateArgs(TemplateArgs.size()) {
   TemplateArgumentLoc *StoredTemplateArgs
     = reinterpret_cast<TemplateArgumentLoc *> (this+1);
   for (unsigned I = 0; I != NumTemplateArgs; ++I)
@@ -175,14 +174,11 @@ TemplateIdRefExpr::Create(ASTContext &Context, QualType T,
                           NestedNameSpecifier *Qualifier,
                           SourceRange QualifierRange,
                           TemplateName Template, SourceLocation TemplateNameLoc,
-                          SourceLocation LAngleLoc,
-                          const TemplateArgumentLoc *TemplateArgs,
-                          unsigned NumTemplateArgs, SourceLocation RAngleLoc) {
+                          const TemplateArgumentListInfo &TemplateArgs) {
   void *Mem = Context.Allocate(sizeof(TemplateIdRefExpr) +
-                               sizeof(TemplateArgumentLoc) * NumTemplateArgs);
+                          sizeof(TemplateArgumentLoc) * TemplateArgs.size());
   return new (Mem) TemplateIdRefExpr(T, Qualifier, QualifierRange, Template,
-                                     TemplateNameLoc, LAngleLoc, TemplateArgs,
-                                     NumTemplateArgs, RAngleLoc);
+                                     TemplateNameLoc, TemplateArgs);
 }
 
 void TemplateIdRefExpr::DoDestroy(ASTContext &Context) {
@@ -534,29 +530,16 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
                                           NamedDecl *FirstQualifierFoundInScope,
                                                  DeclarationName Member,
                                                  SourceLocation MemberLoc,
-                                                 bool HasExplicitTemplateArgs,
-                                                 SourceLocation LAngleLoc,
-                                       const TemplateArgumentLoc *TemplateArgs,
-                                                 unsigned NumTemplateArgs,
-                                                 SourceLocation RAngleLoc)
+                                   const TemplateArgumentListInfo *TemplateArgs)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, true, true),
     Base(Base), IsArrow(IsArrow),
-    HasExplicitTemplateArgumentList(HasExplicitTemplateArgs),
+    HasExplicitTemplateArgumentList(TemplateArgs),
     OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
     Member(Member), MemberLoc(MemberLoc) {
-  if (HasExplicitTemplateArgumentList) {
-    ExplicitTemplateArgumentList *ETemplateArgs
-      = getExplicitTemplateArgumentList();
-    ETemplateArgs->LAngleLoc = LAngleLoc;
-    ETemplateArgs->RAngleLoc = RAngleLoc;
-    ETemplateArgs->NumTemplateArgs = NumTemplateArgs;
-
-    TemplateArgumentLoc *SavedTemplateArgs = ETemplateArgs->getTemplateArgs();
-    for (unsigned I = 0; I < NumTemplateArgs; ++I)
-      new (SavedTemplateArgs + I) TemplateArgumentLoc(TemplateArgs[I]);
-  }
+  if (TemplateArgs)
+    getExplicitTemplateArgumentList()->initializeFrom(*TemplateArgs);
 }
 
 CXXDependentScopeMemberExpr *
@@ -568,31 +551,24 @@ CXXDependentScopeMemberExpr::Create(ASTContext &C,
                                 NamedDecl *FirstQualifierFoundInScope,
                                 DeclarationName Member,
                                 SourceLocation MemberLoc,
-                                bool HasExplicitTemplateArgs,
-                                SourceLocation LAngleLoc,
-                                const TemplateArgumentLoc *TemplateArgs,
-                                unsigned NumTemplateArgs,
-                                SourceLocation RAngleLoc) {
-  if (!HasExplicitTemplateArgs)
+                                const TemplateArgumentListInfo *TemplateArgs) {
+  if (!TemplateArgs)
     return new (C) CXXDependentScopeMemberExpr(C, Base, IsArrow, OperatorLoc,
                                            Qualifier, QualifierRange,
                                            FirstQualifierFoundInScope,
                                            Member, MemberLoc);
 
-  void *Mem = C.Allocate(sizeof(CXXDependentScopeMemberExpr) +
-                         sizeof(ExplicitTemplateArgumentList) +
-                         sizeof(TemplateArgumentLoc) * NumTemplateArgs,
-                         llvm::alignof<CXXDependentScopeMemberExpr>());
+  std::size_t size = sizeof(CXXDependentScopeMemberExpr);
+  if (TemplateArgs)
+    size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
+
+  void *Mem = C.Allocate(size, llvm::alignof<CXXDependentScopeMemberExpr>());
   return new (Mem) CXXDependentScopeMemberExpr(C, Base, IsArrow, OperatorLoc,
                                            Qualifier, QualifierRange,
                                            FirstQualifierFoundInScope,
                                            Member,
                                            MemberLoc,
-                                           HasExplicitTemplateArgs,
-                                           LAngleLoc,
-                                           TemplateArgs,
-                                           NumTemplateArgs,
-                                           RAngleLoc);
+                                           TemplateArgs);
 }
 
 Stmt::child_iterator CXXDependentScopeMemberExpr::child_begin() {

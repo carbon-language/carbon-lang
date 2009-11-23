@@ -532,8 +532,7 @@ public:
                                          QualType Canon = QualType());
 
   QualType getTemplateSpecializationType(TemplateName T,
-                                         const TemplateArgumentLoc *Args,
-                                         unsigned NumArgs,
+                                         const TemplateArgumentListInfo &Args,
                                          QualType Canon = QualType());
 
   QualType getQualifiedNameType(NestedNameSpecifier *NNS,

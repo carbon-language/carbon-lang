@@ -1153,11 +1153,12 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
     = PartialSpec->getTemplateArgsAsWritten();
   unsigned N = PartialSpec->getNumTemplateArgsAsWritten();
 
-  llvm::SmallVector<TemplateArgumentLoc, 4> InstTemplateArgs(N);
+  TemplateArgumentListInfo InstTemplateArgs; // no angle locations
   for (unsigned I = 0; I != N; ++I) {
-    if (SemaRef.Subst(PartialSpecTemplateArgs[I], InstTemplateArgs[I],
-                      TemplateArgs))
+    TemplateArgumentLoc Loc;
+    if (SemaRef.Subst(PartialSpecTemplateArgs[I], Loc, TemplateArgs))
       return true;
+    InstTemplateArgs.addArgument(Loc);
   }
   
 
@@ -1167,10 +1168,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                         InstTemplateArgs.size());
   if (SemaRef.CheckTemplateArgumentList(ClassTemplate, 
                                         PartialSpec->getLocation(),
-                                        /*FIXME:*/PartialSpec->getLocation(),
-                                        InstTemplateArgs.data(), 
-                                        InstTemplateArgs.size(),
-                                        /*FIXME:*/PartialSpec->getLocation(), 
+                                        InstTemplateArgs, 
                                         false,
                                         Converted))
     return true;
@@ -1203,8 +1201,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   // template arguments in the specialization.
   QualType WrittenTy
     = SemaRef.Context.getTemplateSpecializationType(TemplateName(ClassTemplate),
-                                                    InstTemplateArgs.data(),
-                                                    InstTemplateArgs.size(),
+                                                    InstTemplateArgs,
                                                     CanonType);
   
   if (PrevDecl) {
@@ -1238,8 +1235,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      InstParams,
                                                      ClassTemplate, 
                                                      Converted,
-                                                     InstTemplateArgs.data(),
-                                                     InstTemplateArgs.size(),
+                                                     InstTemplateArgs,
                                                      0);
   InstPartialSpec->setInstantiatedFromMember(PartialSpec);
   InstPartialSpec->setTypeAsWritten(WrittenTy);

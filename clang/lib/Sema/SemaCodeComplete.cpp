@@ -1474,13 +1474,11 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   bool ArgumentDependentLookup;
   bool Overloaded;
   bool HasExplicitTemplateArgs;
-  const TemplateArgumentLoc *ExplicitTemplateArgs;
-  unsigned NumExplicitTemplateArgs;
+  TemplateArgumentListInfo ExplicitTemplateArgs;
   
   DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
                           ArgumentDependentLookup, Overloaded,
-                          HasExplicitTemplateArgs, ExplicitTemplateArgs,
-                          NumExplicitTemplateArgs);
+                          HasExplicitTemplateArgs, ExplicitTemplateArgs);
 
   
   // FIXME: What if we're calling something that isn't a function declaration?
@@ -1490,8 +1488,8 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   // Build an overload candidate set based on the functions we find.
   OverloadCandidateSet CandidateSet;
   AddOverloadedCallCandidates(Fns, UnqualifiedName, 
-                              ArgumentDependentLookup, HasExplicitTemplateArgs,
-                              ExplicitTemplateArgs, NumExplicitTemplateArgs,
+                              ArgumentDependentLookup,
+                       (HasExplicitTemplateArgs ? &ExplicitTemplateArgs : 0),
                               Args, NumArgs,
                               CandidateSet,
                               /*PartialOverloading=*/true);

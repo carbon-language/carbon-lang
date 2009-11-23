@@ -1419,8 +1419,8 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
         if (!Constructor->isInvalidDecl() &&
             Constructor->isConvertingConstructor(AllowExplicit)) {
           if (ConstructorTmpl)
-            AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0, &From,
-                                         1, CandidateSet, 
+            AddTemplateOverloadCandidate(ConstructorTmpl, /*ExplicitArgs*/ 0,
+                                         &From, 1, CandidateSet, 
                                          SuppressUserConversions, ForceRValue);
           else
             // Allow one user-defined conversion when user specifies a
@@ -2351,13 +2351,13 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
       if (isa<CXXMethodDecl>(FunTmpl->getTemplatedDecl()) &&
           !cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl())->isStatic())
         AddMethodTemplateCandidate(FunTmpl,
-                                   /*FIXME: explicit args */false, 0, 0,
+                                   /*FIXME: explicit args */ 0,
                                    Args[0], Args + 1, NumArgs - 1,
                                    CandidateSet,
                                    SuppressUserConversions);
       else
         AddTemplateOverloadCandidate(FunTmpl,
-                                     /*FIXME: explicit args */false, 0, 0,
+                                     /*FIXME: explicit args */ 0,
                                      Args, NumArgs, CandidateSet,
                                      SuppressUserConversions);
     }
@@ -2380,7 +2380,7 @@ void Sema::AddMethodCandidate(NamedDecl *Decl, Expr *Object,
   if (FunctionTemplateDecl *TD = dyn_cast<FunctionTemplateDecl>(Decl)) {
     assert(isa<CXXMethodDecl>(TD->getTemplatedDecl()) &&
            "Expected a member function template");
-    AddMethodTemplateCandidate(TD, false, 0, 0,
+    AddMethodTemplateCandidate(TD, /*ExplicitArgs*/ 0,
                                Object, Args, NumArgs,
                                CandidateSet,
                                SuppressUserConversions,
@@ -2495,9 +2495,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
 /// function template specialization.
 void
 Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
-                                 bool HasExplicitTemplateArgs,
-                             const TemplateArgumentLoc *ExplicitTemplateArgs,
-                                 unsigned NumExplicitTemplateArgs,
+                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                  Expr *Object, Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet,
                                  bool SuppressUserConversions,
@@ -2517,8 +2515,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
   TemplateDeductionInfo Info(Context);
   FunctionDecl *Specialization = 0;
   if (TemplateDeductionResult Result
-      = DeduceTemplateArguments(MethodTmpl, HasExplicitTemplateArgs,
-                                ExplicitTemplateArgs, NumExplicitTemplateArgs,
+      = DeduceTemplateArguments(MethodTmpl, ExplicitTemplateArgs,
                                 Args, NumArgs, Specialization, Info)) {
         // FIXME: Record what happened with template argument deduction, so
         // that we can give the user a beautiful diagnostic.
@@ -2540,9 +2537,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
 /// an appropriate function template specialization.
 void
 Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
-                                   bool HasExplicitTemplateArgs,
-                          const TemplateArgumentLoc *ExplicitTemplateArgs,
-                                   unsigned NumExplicitTemplateArgs,
+                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet& CandidateSet,
                                    bool SuppressUserConversions,
@@ -2562,8 +2557,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
   TemplateDeductionInfo Info(Context);
   FunctionDecl *Specialization = 0;
   if (TemplateDeductionResult Result
-        = DeduceTemplateArguments(FunctionTemplate, HasExplicitTemplateArgs,
-                                  ExplicitTemplateArgs, NumExplicitTemplateArgs,
+        = DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
                                   Args, NumArgs, Specialization, Info)) {
     // FIXME: Record what happened with template argument deduction, so
     // that we can give the user a beautiful diagnostic.
@@ -3941,9 +3935,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                            Expr **Args, unsigned NumArgs,
-                                           bool HasExplicitTemplateArgs,
-                            const TemplateArgumentLoc *ExplicitTemplateArgs,
-                                           unsigned NumExplicitTemplateArgs,                                            
+                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
                                            bool PartialOverloading) {
   FunctionSet Functions;
@@ -3982,16 +3974,14 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                           FuncEnd = Functions.end();
        Func != FuncEnd; ++Func) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Func)) {
-      if (HasExplicitTemplateArgs)
+      if (ExplicitTemplateArgs)
         continue;
       
       AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
                            false, false, PartialOverloading);
     } else
       AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*Func),
-                                   HasExplicitTemplateArgs,
                                    ExplicitTemplateArgs,
-                                   NumExplicitTemplateArgs,
                                    Args, NumArgs, CandidateSet);
   }
 }
@@ -4333,8 +4323,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   bool HasExplicitTemplateArgs = false;
-  const TemplateArgumentLoc *ExplicitTemplateArgs = 0;
-  unsigned NumExplicitTemplateArgs = 0;
+  TemplateArgumentListInfo ExplicitTemplateArgs;
 
   llvm::SmallVector<NamedDecl*,8> Fns;
   
@@ -4345,8 +4334,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     assert(!isa<OverloadedFunctionDecl>(DR->getDecl()));
     FunctionTemplate = dyn_cast<FunctionTemplateDecl>(DR->getDecl());
     HasExplicitTemplateArgs = DR->hasExplicitTemplateArgumentList();
-    ExplicitTemplateArgs = DR->getTemplateArgs();
-    NumExplicitTemplateArgs = DR->getNumTemplateArgs();
+    if (HasExplicitTemplateArgs)
+      DR->copyTemplateArgumentsInto(ExplicitTemplateArgs);
   } else if (UnresolvedLookupExpr *UL
                = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
     Fns.append(UL->decls_begin(), UL->decls_end());
@@ -4354,8 +4343,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     Ovl = dyn_cast<OverloadedFunctionDecl>(ME->getMemberDecl());
     FunctionTemplate = dyn_cast<FunctionTemplateDecl>(ME->getMemberDecl());
     HasExplicitTemplateArgs = ME->hasExplicitTemplateArgumentList();
-    ExplicitTemplateArgs = ME->getTemplateArgs();
-    NumExplicitTemplateArgs = ME->getNumTemplateArgs();
+    if (HasExplicitTemplateArgs)
+      ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
   } else if (TemplateIdRefExpr *TIRE = dyn_cast<TemplateIdRefExpr>(OvlExpr)) {
     TemplateName Name = TIRE->getTemplateName();
     Ovl = Name.getAsOverloadedFunctionDecl();
@@ -4363,8 +4352,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       dyn_cast_or_null<FunctionTemplateDecl>(Name.getAsTemplateDecl());
     
     HasExplicitTemplateArgs = true;
-    ExplicitTemplateArgs = TIRE->getTemplateArgs();
-    NumExplicitTemplateArgs = TIRE->getNumTemplateArgs();
+    TIRE->copyTemplateArgumentsInto(ExplicitTemplateArgs);
   }
 
   if (Ovl) Fns.append(Ovl->function_begin(), Ovl->function_end());
@@ -4408,9 +4396,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       FunctionDecl *Specialization = 0;
       TemplateDeductionInfo Info(Context);
       if (TemplateDeductionResult Result
-            = DeduceTemplateArguments(FunctionTemplate, HasExplicitTemplateArgs,
-                                      ExplicitTemplateArgs,
-                                      NumExplicitTemplateArgs,
+            = DeduceTemplateArguments(FunctionTemplate,
+                       (HasExplicitTemplateArgs ? &ExplicitTemplateArgs : 0),
                                       FunctionType, Specialization, Info)) {
         // FIXME: make a note of the failed deduction for diagnostics.
         (void)Result;
@@ -4509,9 +4496,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 /// \brief Add a single candidate to the overload set.
 static void AddOverloadedCallCandidate(Sema &S,
                                        NamedDecl *Callee,
-                                       bool HasExplicitTemplateArgs,
-                             const TemplateArgumentLoc *ExplicitTemplateArgs,
-                                       unsigned NumExplicitTemplateArgs,
+                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                        Expr **Args, unsigned NumArgs,
                                        OverloadCandidateSet &CandidateSet,
                                        bool PartialOverloading) {
@@ -4519,7 +4504,7 @@ static void AddOverloadedCallCandidate(Sema &S,
     Callee = cast<UsingShadowDecl>(Callee)->getTargetDecl();
 
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(Callee)) {
-    assert(!HasExplicitTemplateArgs && "Explicit template arguments?");
+    assert(!ExplicitTemplateArgs && "Explicit template arguments?");
     S.AddOverloadCandidate(Func, Args, NumArgs, CandidateSet, false, false,
                            PartialOverloading);
     return;
@@ -4527,9 +4512,7 @@ static void AddOverloadedCallCandidate(Sema &S,
 
   if (FunctionTemplateDecl *FuncTemplate
       = dyn_cast<FunctionTemplateDecl>(Callee)) {
-    S.AddTemplateOverloadCandidate(FuncTemplate, HasExplicitTemplateArgs,
-                                   ExplicitTemplateArgs,
-                                   NumExplicitTemplateArgs,
+    S.AddTemplateOverloadCandidate(FuncTemplate, ExplicitTemplateArgs,
                                    Args, NumArgs, CandidateSet);
     return;
   }
@@ -4544,9 +4527,7 @@ static void AddOverloadedCallCandidate(Sema &S,
 void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
                                        DeclarationName &UnqualifiedName,
                                        bool ArgumentDependentLookup,
-                                       bool HasExplicitTemplateArgs,
-                             const TemplateArgumentLoc *ExplicitTemplateArgs,
-                                       unsigned NumExplicitTemplateArgs,
+                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                        Expr **Args, unsigned NumArgs,
                                        OverloadCandidateSet &CandidateSet,
                                        bool PartialOverloading) {
@@ -4581,16 +4562,13 @@ void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
 
   for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Fns.begin(),
          E = Fns.end(); I != E; ++I)
-    AddOverloadedCallCandidate(*this, *I, HasExplicitTemplateArgs,
-                               ExplicitTemplateArgs, NumExplicitTemplateArgs,
+    AddOverloadedCallCandidate(*this, *I, ExplicitTemplateArgs,
                                Args, NumArgs, CandidateSet, 
                                PartialOverloading);
 
   if (ArgumentDependentLookup)
     AddArgumentDependentLookupCandidates(UnqualifiedName, Args, NumArgs,
-                                         HasExplicitTemplateArgs,
                                          ExplicitTemplateArgs,
-                                         NumExplicitTemplateArgs,
                                          CandidateSet,
                                          PartialOverloading);  
 }
@@ -4605,9 +4583,7 @@ void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
 FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn,
                                      llvm::SmallVectorImpl<NamedDecl*> &Fns,
                                             DeclarationName UnqualifiedName,
-                                            bool HasExplicitTemplateArgs,
-                             const TemplateArgumentLoc *ExplicitTemplateArgs,
-                                            unsigned NumExplicitTemplateArgs,
+                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             SourceLocation LParenLoc,
                                             Expr **Args, unsigned NumArgs,
                                             SourceLocation *CommaLocs,
@@ -4618,8 +4594,7 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn,
   // Add the functions denoted by Callee to the set of candidate
   // functions. 
   AddOverloadedCallCandidates(Fns, UnqualifiedName, ArgumentDependentLookup,
-                              HasExplicitTemplateArgs, ExplicitTemplateArgs,
-                              NumExplicitTemplateArgs, Args, NumArgs, 
+                              ExplicitTemplateArgs, Args, NumArgs, 
                               CandidateSet);
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Fn->getLocStart(), Best)) {
@@ -5178,14 +5153,19 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
         
         AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet,
                            /*SuppressUserConversions=*/false);
-      } else
+      } else {
+        // FIXME: avoid copy.
+        TemplateArgumentListInfo TemplateArgs;
+        if (MemExpr->hasExplicitTemplateArgumentList())
+          MemExpr->copyTemplateArgumentsInto(TemplateArgs);
+
         AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func),
-                                   MemExpr->hasExplicitTemplateArgumentList(),
-                                   MemExpr->getTemplateArgs(),
-                                   MemExpr->getNumTemplateArgs(),
+                                   (MemExpr->hasExplicitTemplateArgumentList()
+                                      ? &TemplateArgs : 0),
                                    ObjectArg, Args, NumArgs,
                                    CandidateSet,
                                    /*SuppressUsedConversions=*/false);
+      }
     }
 
     OverloadCandidateSet::iterator Best;
@@ -5657,16 +5637,18 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     assert((isa<FunctionTemplateDecl>(DRE->getDecl()) ||
             isa<FunctionDecl>(DRE->getDecl())) &&
            "Expected function or function template");
+    // FIXME: avoid copy.
+    TemplateArgumentListInfo TemplateArgs;
+    if (DRE->hasExplicitTemplateArgumentList())
+      DRE->copyTemplateArgumentsInto(TemplateArgs);
+
     return DeclRefExpr::Create(Context,
                                DRE->getQualifier(),
                                DRE->getQualifierRange(),
                                Fn,
                                DRE->getLocation(),
-                               DRE->hasExplicitTemplateArgumentList(),
-                               DRE->getLAngleLoc(),
-                               DRE->getTemplateArgs(),
-                               DRE->getNumTemplateArgs(),
-                               DRE->getRAngleLoc(),
+                               (DRE->hasExplicitTemplateArgumentList()
+                                 ? &TemplateArgs : 0),
                                Fn->getType(),
                                DRE->isTypeDependent(),
                                DRE->isValueDependent());
@@ -5689,17 +5671,19 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
             isa<FunctionTemplateDecl>(MemExpr->getMemberDecl()) ||
             isa<FunctionDecl>(MemExpr->getMemberDecl())) &&
            "Expected member function or member function template");
+    // FIXME: avoid copy.
+    TemplateArgumentListInfo TemplateArgs;
+    if (MemExpr->hasExplicitTemplateArgumentList())
+      MemExpr->copyTemplateArgumentsInto(TemplateArgs);
+
     return MemberExpr::Create(Context, MemExpr->getBase()->Retain(),
                               MemExpr->isArrow(), 
                               MemExpr->getQualifier(), 
                               MemExpr->getQualifierRange(),
                               Fn, 
-                              MemExpr->getMemberLoc(), 
-                              MemExpr->hasExplicitTemplateArgumentList(),
-                              MemExpr->getLAngleLoc(), 
-                              MemExpr->getTemplateArgs(),
-                              MemExpr->getNumTemplateArgs(),
-                              MemExpr->getRAngleLoc(),
+                              MemExpr->getMemberLoc(),
+                              (MemExpr->hasExplicitTemplateArgumentList()
+                                 ? &TemplateArgs : 0),
                               Fn->getType());
   }
   
@@ -5707,14 +5691,15 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     // FIXME: Don't destroy TID here, since we need its template arguments
     // to survive.
     // TID->Destroy(Context);
+
+    // FIXME: avoid copy.
+    TemplateArgumentListInfo TemplateArgs;
+    TID->copyTemplateArgumentsInto(TemplateArgs);
+
     return DeclRefExpr::Create(Context, 
                                TID->getQualifier(), TID->getQualifierRange(),
                                Fn, TID->getTemplateNameLoc(), 
-                               true,
-                               TID->getLAngleLoc(),
-                               TID->getTemplateArgs(),
-                               TID->getNumTemplateArgs(),
-                               TID->getRAngleLoc(),
+                               &TemplateArgs,
                                Fn->getType(), 
                                /*FIXME?*/false, /*FIXME?*/false);    
   } 

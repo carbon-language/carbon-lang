@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_TEMPLATEBASE_H
 
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TemplateName.h"
@@ -435,6 +436,41 @@ public:
     assert(Argument.getKind() == TemplateArgument::Template);
     return LocInfo.getTemplateNameLoc();
   }  
+};
+
+/// A convenient class for passing around template argument
+/// information.  Designed to be passed by reference.
+class TemplateArgumentListInfo {
+  llvm::SmallVector<TemplateArgumentLoc, 8> Arguments;
+  SourceLocation LAngleLoc;
+  SourceLocation RAngleLoc;
+
+public:
+  TemplateArgumentListInfo() {}
+
+  TemplateArgumentListInfo(SourceLocation LAngleLoc,
+                           SourceLocation RAngleLoc)
+    : LAngleLoc(LAngleLoc), RAngleLoc(RAngleLoc) {}
+
+  SourceLocation getLAngleLoc() const { return LAngleLoc; }
+  SourceLocation getRAngleLoc() const { return RAngleLoc; }
+
+  void setLAngleLoc(SourceLocation Loc) { LAngleLoc = Loc; }
+  void setRAngleLoc(SourceLocation Loc) { RAngleLoc = Loc; }
+
+  unsigned size() const { return Arguments.size(); }
+
+  const TemplateArgumentLoc *getArgumentArray() const {
+    return Arguments.data();
+  }
+
+  const TemplateArgumentLoc &operator[](unsigned I) const {
+    return Arguments[I];
+  }
+
+  void addArgument(const TemplateArgumentLoc &Loc) {
+    Arguments.push_back(Loc);
+  }
 };
 
 }

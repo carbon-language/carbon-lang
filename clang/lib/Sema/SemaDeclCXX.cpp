@@ -3489,7 +3489,8 @@ static void AddConstructorInitializationCandidates(Sema &SemaRef,
          Constructor->isConvertingConstructor(/*AllowExplicit=*/false)) ||
         (Kind == Sema::IK_Default && Constructor->isDefaultConstructor())) {
       if (ConstructorTmpl)
-        SemaRef.AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0,
+        SemaRef.AddTemplateOverloadCandidate(ConstructorTmpl,
+                                             /*ExplicitArgs*/ 0,
                                              Args, NumArgs, CandidateSet);
       else
         SemaRef.AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
