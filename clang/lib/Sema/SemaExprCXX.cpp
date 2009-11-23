@@ -2201,10 +2201,10 @@ CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp,
   else
     ResultType = Method->getResultType().getNonReferenceType();
 
-    CXXMemberCallExpr *CE =
-      new (Context) CXXMemberCallExpr(Context, ME, 0, 0, 
-                                      ResultType,
-                                      Exp->getLocEnd());
+  MarkDeclarationReferenced(Exp->getLocStart(), Method);
+  CXXMemberCallExpr *CE =
+    new (Context) CXXMemberCallExpr(Context, ME, 0, 0, ResultType,
+                                    Exp->getLocEnd());
   return CE;
 }
 

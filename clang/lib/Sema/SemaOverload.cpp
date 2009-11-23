@@ -2240,6 +2240,9 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   if (!CandidateSet.isNewCandidate(Function))
     return;
 
+  // Overload resolution is always an unevaluated context.
+  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Function)){
     // C++ [class.copy]p3:
     //   A member function template is never instantiated to perform the copy
@@ -2416,6 +2419,9 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
   if (!CandidateSet.isNewCandidate(Method))
     return;
 
+  // Overload resolution is always an unevaluated context.
+  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -2588,6 +2594,9 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   if (!CandidateSet.isNewCandidate(Conversion))
     return;
 
+  // Overload resolution is always an unevaluated context.
+  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -2711,6 +2720,9 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
                                  OverloadCandidateSet& CandidateSet) {
   if (!CandidateSet.isNewCandidate(Conversion))
     return;
+
+  // Overload resolution is always an unevaluated context.
+  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
 
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -2877,6 +2889,9 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
                                OverloadCandidateSet& CandidateSet,
                                bool IsAssignmentOperator,
                                unsigned NumContextualBoolArguments) {
+  // Overload resolution is always an unevaluated context.
+  EnterExpressionEvaluationContext Unevaluated(*this, Action::Unevaluated);
+
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();

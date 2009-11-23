@@ -3291,6 +3291,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   unsigned NumExprs = ExprArgs.size();
   Expr **Exprs = (Expr **)ExprArgs.release();
 
+  MarkDeclarationReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, Constructor,
                                         Elidable, Exprs, NumExprs));
 }
@@ -3304,6 +3305,7 @@ Sema::BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Constructor,
   unsigned NumExprs = Args.size();
   Expr **Exprs = (Expr **)Args.release();
 
+  MarkDeclarationReferenced(TyBeginLoc, Constructor);
   return Owned(new (Context) CXXTemporaryObjectExpr(Context, Constructor, Ty, 
                                                     TyBeginLoc, Exprs,
                                                     NumExprs, RParenLoc));
