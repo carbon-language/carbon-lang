@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "isel"
 #include "ScheduleDAGSDNodes.h"
 #include "SelectionDAGBuild.h"
+#include "FunctionLoweringInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/DebugInfo.h"
@@ -331,7 +332,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
   CurDAG->init(*MF, MMI, DW);
-  FuncInfo->set(Fn, *MF, *CurDAG, EnableFastISel);
+  FuncInfo->set(Fn, *MF, EnableFastISel);
   SDL->init(GFI, *AA);
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)

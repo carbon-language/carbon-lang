@@ -45,6 +45,7 @@ class FPToSIInst;
 class FPToUIInst;
 class FPTruncInst;
 class Function;
+class FunctionLoweringInfo;
 class GetElementPtrInst;
 class GCFunctionInfo;
 class ICmpInst;
@@ -78,92 +79,6 @@ class UnreachableInst;
 class UnwindInst;
 class VAArgInst;
 class ZExtInst;
-
-//===--------------------------------------------------------------------===//
-/// FunctionLoweringInfo - This contains information that is global to a
-/// function that is used when lowering a region of the function.
-///
-class FunctionLoweringInfo {
-public:
-  TargetLowering &TLI;
-  Function *Fn;
-  MachineFunction *MF;
-  MachineRegisterInfo *RegInfo;
-
-  /// CanLowerReturn - true iff the function's return value can be lowered to
-  /// registers.
-  bool CanLowerReturn;
-
-  /// DemoteRegister - if CanLowerReturn is false, DemoteRegister is a vreg
-  /// allocated to hold a pointer to the hidden sret parameter.
-  unsigned DemoteRegister;
-
-  explicit FunctionLoweringInfo(TargetLowering &TLI);
-
-  /// set - Initialize this FunctionLoweringInfo with the given Function
-  /// and its associated MachineFunction.
-  ///
-  void set(Function &Fn, MachineFunction &MF, SelectionDAG &DAG,
-           bool EnableFastISel);
-
-  /// MBBMap - A mapping from LLVM basic blocks to their machine code entry.
-  DenseMap<const BasicBlock*, MachineBasicBlock *> MBBMap;
-
-  /// ValueMap - Since we emit code for the function a basic block at a time,
-  /// we must remember which virtual registers hold the values for
-  /// cross-basic-block values.
-  DenseMap<const Value*, unsigned> ValueMap;
-
-  /// StaticAllocaMap - Keep track of frame indices for fixed sized allocas in
-  /// the entry block.  This allows the allocas to be efficiently referenced
-  /// anywhere in the function.
-  DenseMap<const AllocaInst*, int> StaticAllocaMap;
-
-#ifndef NDEBUG
-  SmallSet<Instruction*, 8> CatchInfoLost;
-  SmallSet<Instruction*, 8> CatchInfoFound;
-#endif
-
-  unsigned MakeReg(EVT VT);
-  
-  /// isExportedInst - Return true if the specified value is an instruction
-  /// exported from its block.
-  bool isExportedInst(const Value *V) {
-    return ValueMap.count(V);
-  }
-
-  unsigned CreateRegForValue(const Value *V);
-  
-  unsigned InitializeRegForValue(const Value *V) {
-    unsigned &R = ValueMap[V];
-    assert(R == 0 && "Already initialized this value register!");
-    return R = CreateRegForValue(V);
-  }
-  
-  struct LiveOutInfo {
-    unsigned NumSignBits;
-    APInt KnownOne, KnownZero;
-    LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
-  };
-  
-  /// LiveOutRegInfo - Information about live out vregs, indexed by their
-  /// register number offset by 'FirstVirtualRegister'.
-  std::vector<LiveOutInfo> LiveOutRegInfo;
-
-  /// clear - Clear out all the function-specific state. This returns this
-  /// FunctionLoweringInfo to an empty state, ready to be used for a
-  /// different function.
-  void clear() {
-    MBBMap.clear();
-    ValueMap.clear();
-    StaticAllocaMap.clear();
-#ifndef NDEBUG
-    CatchInfoLost.clear();
-    CatchInfoFound.clear();
-#endif
-    LiveOutRegInfo.clear();
-  }
-};
 
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLowering - This is the common target-independent lowering
