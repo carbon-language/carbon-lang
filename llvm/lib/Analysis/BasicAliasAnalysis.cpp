@@ -289,18 +289,29 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
         return NoModRef;
   
   // If the pointer is to a locally allocated object that does not escape,
-  // then the call can not mod/ref the pointer unless the call takes the
-  // argument without capturing it.
+  // then the call can not mod/ref the pointer unless the call takes the pointer
+  // as an argument, and itself doesn't capture it.
   if (isNonEscapingLocalObject(Object) && CS.getInstruction() != Object) {
-    bool passedAsArg = false;
-    // TODO: Eventually only check 'nocapture' arguments.
+    bool PassedAsArg = false;
+    unsigned ArgNo = 0;
     for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-         CI != CE; ++CI)
-      if (isa<PointerType>((*CI)->getType()) &&
-          alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias)
-        passedAsArg = true;
+         CI != CE; ++CI, ++ArgNo) {
+      // Only look at the no-capture pointer arguments.
+      if (!isa<PointerType>((*CI)->getType()) ||
+          !CS.paramHasAttr(ArgNo+1, Attribute::NoCapture))
+        continue;
+      
+      // If  this is a no-capture pointer argument, see if we can tell that it
+      // is impossible to alias the pointer we're checking.  If not, we have to
+      // assume that the call could touch the pointer, even though it doesn't
+      // escape.
+      if (alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias) {
+        PassedAsArg = true;
+        break;
+      }
+    }
     
-    if (!passedAsArg)
+    if (!PassedAsArg)
       return NoModRef;
   }
 
