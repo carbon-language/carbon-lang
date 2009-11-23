@@ -170,9 +170,8 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(const std::string &Base,
                                                    const char *Dir32,
                                                    const char *Dir64,
                                                    const llvm::Triple &triple) {
-  // Add the common dirs
+  // Add the base dir
   AddPath(Base, System, true, false, false);
-  AddPath(Base + "/backward", System, true, false, false);
 
   // Add the multilib dirs
   llvm::Triple::ArchType arch = triple.getArch();
@@ -181,6 +180,9 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(const std::string &Base,
     AddPath(Base + "/" + ArchDir + "/" + Dir64, System, true, false, false);
   else
     AddPath(Base + "/" + ArchDir + "/" + Dir32, System, true, false, false);
+
+  // Add the backward dir
+  AddPath(Base + "/backward", System, true, false, false);
 }
 
 void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(const std::string &Base,
@@ -543,6 +545,9 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
 
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                                     const llvm::Triple &triple) {
+  if (Lang.CPlusPlus)
+    AddDefaultCPlusPlusIncludePaths(triple);
+
   AddDefaultCIncludePaths(triple);
 
   // Add the default framework include paths on Darwin.
@@ -550,9 +555,6 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
     AddPath("/System/Library/Frameworks", System, true, false, true);
     AddPath("/Library/Frameworks", System, true, false, true);
   }
-
-  if (Lang.CPlusPlus)
-    AddDefaultCPlusPlusIncludePaths(triple);
 }
 
 /// RemoveDuplicates - If there are duplicate directory entries in the specified
