@@ -1898,6 +1898,15 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
     // Global variables without names cannot be referenced outside this module.
     if (!GV->hasName() && !GV->isDeclaration())
       GV->setLinkage(GlobalValue::InternalLinkage);
+    // Simplify the initializer.
+    if (GV->hasInitializer())
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GV->getInitializer())) {
+        TargetData *TD = getAnalysisIfAvailable<TargetData>();
+        Constant *New = ConstantFoldConstantExpression(CE, TD);
+        if (New && New != CE)
+          GV->setInitializer(New);
+      }
+    // Do more involved optimizations if the global is internal.
     if (!GV->isConstant() && GV->hasLocalLinkage() &&
         GV->hasInitializer())
       Changed |= ProcessInternalGlobal(GV, GVI);

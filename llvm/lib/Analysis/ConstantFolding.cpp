@@ -671,8 +671,13 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
 Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
                                                const TargetData *TD) {
   SmallVector<Constant*, 8> Ops;
-  for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
-    Ops.push_back(cast<Constant>(*i));
+  for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i) {
+    Constant *NewC = cast<Constant>(*i);
+    // Recursively fold the ConstantExpr's operands.
+    if (ConstantExpr *NewCE = dyn_cast<ConstantExpr>(NewC))
+      NewC = ConstantFoldConstantExpression(NewCE, TD);
+    Ops.push_back(NewC);
+  }
 
   if (CE->isCompare())
     return ConstantFoldCompareInstOperands(CE->getPredicate(), Ops[0], Ops[1],
@@ -686,6 +691,10 @@ Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
 /// returned, if not, null is returned.  Note that this function can fail when
 /// attempting to fold instructions like loads and stores, which have no
 /// constant expression form.
+///
+/// TODO: This function neither utilizes nor preserves nsw/nuw/inbounds/etc
+/// information, due to only being passed an opcode and operands. Constant
+/// folding using this function strips this information.
 ///
 Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy, 
                                          Constant* const* Ops, unsigned NumOps,
