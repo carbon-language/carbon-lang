@@ -113,3 +113,50 @@ def sys_header_deps : Flag<"-sys-header-deps">,
 def MT : Separate<"-MT">, HelpText<"Specify target for dependency">;
 def MP : Flag<"-MP">,
   HelpText<"Create phony target for each dependency (other than main file)">;
+
+// Diagnostic Options
+
+def dump_build_information : Separate<"-dump-build-information">,
+  MetaVarName<"filename">,
+  HelpText<"output a dump of some build information to a file">;
+
+def fno_show_column : Flag<"-fno-show-column">,
+  HelpText<"Do not include column number on diagnostics">;
+
+def fno_show_source_location : Flag<"-fno-show-source-location">,
+  HelpText<"Do not include source location information with diagnostics">;
+
+def fno_caret_diagnostics : Flag<"-fno-caret-diagnostics">,
+  HelpText<"Do not include source line and caret with diagnostics">;
+
+def fno_diagnostics_fixit_info : Flag<"-fno-diagnostics-fixit-info">,
+  HelpText<"Do not include fixit information in diagnostics">;
+
+def w : Flag<"w">, HelpText<"Suppress all warnings">;
+
+def pedantic : Flag<"-pedantic">;
+
+def pedantic_errors : Flag<"-pedantic-errors">;
+
+// This gets all -W options, including -Werror, -W[no-]system-headers, etc.  The
+// driver has stripped off -Wa,foo etc.  The driver has also translated -W to
+// -Wextra, so we don't need to worry about it.
+def W : Joined<"-W">;
+
+def fdiagnostics_print_source_range_info : Flag<"-fdiagnostics-print-source-range-info">,
+  HelpText<"Print source range spans in numeric form">;
+
+def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
+  HelpText<"Print diagnostic name with mappable diagnostics">;
+
+def fmessage_length : Separate<"-fmessage-length">, MetaVarName<"N">,
+  HelpText<"Format message diagnostics so that they fit within N columns or fewer, when possible.">;
+
+def fcolor_diagnostics : Flag<"-fcolor-diagnostics">,
+  HelpText<"Use colors in diagnostics">;
+
+def Wno_rewrite_macros : Flag<"-Wno-rewrite-macros">,
+  HelpText<"Silence ObjC rewriting warnings">;
+
+def verify : Flag<"-verify">,
+  HelpText<"Verify emitted diagnostics and warnings">;

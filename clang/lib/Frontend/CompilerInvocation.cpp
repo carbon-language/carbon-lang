@@ -518,7 +518,7 @@ static void TargetOptsToArgs(const TargetOptions &Opts,
   Res.push_back("-triple");
   Res.push_back(Opts.Triple);
   if (!Opts.CPU.empty()) {
-    Res.push_back("-target-cpu");
+    Res.push_back("-mcpu");
     Res.push_back(Opts.CPU);
   }
   if (!Opts.ABI.empty()) {
