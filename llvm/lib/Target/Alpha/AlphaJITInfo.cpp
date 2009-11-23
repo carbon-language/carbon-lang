@@ -190,18 +190,27 @@ extern "C" {
 #endif
 }
 
+TargetJITInfo::StubLayout AlphaJITInfo::getStubLayout() {
+  // The stub contains 19 4-byte instructions, aligned at 4 bytes:
+  // R0 = R27
+  // 8 x "R27 <<= 8; R27 |= 8-bits-of-Target"  == 16 instructions
+  // JMP R27
+  // Magic number so the compilation callback can recognize the stub.
+  StubLayout Result = {19 * 4, 4};
+  return Result;
+}
+
 void *AlphaJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                      JITCodeEmitter &JCE) {
   MachineCodeEmitter::BufferState BS;
   //assert(Fn == AlphaCompilationCallback && "Where are you going?\n");
   //Do things in a stupid slow way!
-  JCE.startGVStub(BS, F, 19*4);
   void* Addr = (void*)(intptr_t)JCE.getCurrentPCValue();
   for (int x = 0; x < 19; ++ x)
     JCE.emitWordLE(0);
   EmitBranchToAt(Addr, Fn);
   DEBUG(errs() << "Emitting Stub to " << Fn << " at [" << Addr << "]\n");
-  return JCE.finishGVStub(BS);
+  return Addr;
 }
 
 TargetJITInfo::LazyResolverFn

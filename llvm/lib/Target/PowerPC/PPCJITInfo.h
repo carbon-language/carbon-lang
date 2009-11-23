@@ -30,6 +30,7 @@ namespace llvm {
       is64Bit = tmIs64Bit;
     }
 
+    virtual StubLayout getStubLayout();
     virtual void *emitFunctionStub(const Function* F, void *Fn,
                                    JITCodeEmitter &JCE);
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);

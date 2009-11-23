@@ -438,74 +438,65 @@ void *X86JITInfo::emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
   return JCE.finishGVStub(BS);
 }
 
-void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
+TargetJITInfo::StubLayout X86JITInfo::getStubLayout() {
+  // The 64-bit stub contains:
+  //   movabs r10 <- 8-byte-target-address  # 10 bytes
+  //   call|jmp *r10  # 3 bytes
+  // The 32-bit stub contains a 5-byte call|jmp.
+  // If the stub is a call to the compilation callback, an extra byte is added
+  // to mark it as a stub.
+  StubLayout Result = {14, 4};
+  return Result;
+}
+
+void *X86JITInfo::emitFunctionStub(const Function* F, void *Target,
                                    JITCodeEmitter &JCE) {
   MachineCodeEmitter::BufferState BS;
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
 #if defined (X86_32_JIT) && !defined (_MSC_VER)
-  bool NotCC = (Fn != (void*)(intptr_t)X86CompilationCallback &&
-                Fn != (void*)(intptr_t)X86CompilationCallback_SSE);
+  bool NotCC = (Target != (void*)(intptr_t)X86CompilationCallback &&
+                Target != (void*)(intptr_t)X86CompilationCallback_SSE);
 #else
-  bool NotCC = Fn != (void*)(intptr_t)X86CompilationCallback;
+  bool NotCC = Target != (void*)(intptr_t)X86CompilationCallback;
 #endif
+  JCE.emitAlignment(4);
+  void *Result = (void*)JCE.getCurrentPCValue();
   if (NotCC) {
 #if defined (X86_64_JIT)
-    JCE.startGVStub(BS, F, 13, 4);
     JCE.emitByte(0x49);          // REX prefix
     JCE.emitByte(0xB8+2);        // movabsq r10
-    JCE.emitWordLE((unsigned)(intptr_t)Fn);
-    JCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
+    JCE.emitWordLE((unsigned)(intptr_t)Target);
+    JCE.emitWordLE((unsigned)(((intptr_t)Target) >> 32));
     JCE.emitByte(0x41);          // REX prefix
     JCE.emitByte(0xFF);          // jmpq *r10
     JCE.emitByte(2 | (4 << 3) | (3 << 6));
 #else
-    JCE.startGVStub(BS, F, 5, 4);
     JCE.emitByte(0xE9);
-    JCE.emitWordLE((intptr_t)Fn-JCE.getCurrentPCValue()-4);
+    JCE.emitWordLE((intptr_t)Target-JCE.getCurrentPCValue()-4);
 #endif
-    return JCE.finishGVStub(BS);
+    return Result;
   }
 
 #if defined (X86_64_JIT)
-  JCE.startGVStub(BS, F, 14, 4);
   JCE.emitByte(0x49);          // REX prefix
   JCE.emitByte(0xB8+2);        // movabsq r10
-  JCE.emitWordLE((unsigned)(intptr_t)Fn);
-  JCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
+  JCE.emitWordLE((unsigned)(intptr_t)Target);
+  JCE.emitWordLE((unsigned)(((intptr_t)Target) >> 32));
   JCE.emitByte(0x41);          // REX prefix
   JCE.emitByte(0xFF);          // callq *r10
   JCE.emitByte(2 | (2 << 3) | (3 << 6));
 #else
-  JCE.startGVStub(BS, F, 6, 4);
   JCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 
-  JCE.emitWordLE((intptr_t)Fn-JCE.getCurrentPCValue()-4);
+  JCE.emitWordLE((intptr_t)Target-JCE.getCurrentPCValue()-4);
 #endif
 
   // This used to use 0xCD, but that value is used by JITMemoryManager to
   // initialize the buffer with garbage, which means it may follow a
   // noreturn function call, confusing X86CompilationCallback2.  PR 4929.
   JCE.emitByte(0xCE);   // Interrupt - Just a marker identifying the stub!
-  return JCE.finishGVStub(BS);
-}
-
-void X86JITInfo::emitFunctionStubAtAddr(const Function* F, void *Fn, void *Stub,
-                                        JITCodeEmitter &JCE) {
-  MachineCodeEmitter::BufferState BS;
-  // Note, we cast to intptr_t here to silence a -pedantic warning that 
-  // complains about casting a function pointer to a normal pointer.
-  JCE.startGVStub(BS, Stub, 5);
-  JCE.emitByte(0xE9);
-#if defined (X86_64_JIT) && !defined (NDEBUG)
-  // Yes, we need both of these casts, or some broken versions of GCC (4.2.4)
-  // get the signed-ness of the expression wrong.  Go figure.
-  intptr_t Displacement = (intptr_t)Fn - (intptr_t)JCE.getCurrentPCValue() - 5;
-  assert(((Displacement << 32) >> 32) == Displacement
-         && "PIC displacement does not fit in displacement field!");
-#endif
-  JCE.emitWordLE((intptr_t)Fn-JCE.getCurrentPCValue()-4);
-  JCE.finishGVStub(BS);
+  return Result;
 }
 
 /// getPICJumpTableEntry - Returns the value of the jumptable entry for the

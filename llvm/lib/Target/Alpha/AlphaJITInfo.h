@@ -31,6 +31,7 @@ namespace llvm {
     explicit AlphaJITInfo(TargetMachine &tm) : TM(tm)
     { useGOT = true; }
 
+    virtual StubLayout getStubLayout();
     virtual void *emitFunctionStub(const Function* F, void *Fn,
                                    JITCodeEmitter &JCE);
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);

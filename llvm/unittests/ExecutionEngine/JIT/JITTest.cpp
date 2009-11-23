@@ -183,6 +183,7 @@ class JITTest : public testing::Test {
     M = new Module("<main>", Context);
     MP = new ExistingModuleProvider(M);
     RJMM = new RecordingJITMemoryManager;
+    RJMM->setPoisonMemory(true);
     std::string Error;
     TheJIT.reset(EngineBuilder(MP).setEngineKind(EngineKind::JIT)
                  .setJITMemoryManager(RJMM)
@@ -311,7 +312,6 @@ TEST_F(JITTest, FarCallToKnownFunction) {
   EXPECT_EQ(8, TestFunctionPtr());
 }
 
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__ppc__)
 // Test a function C which calls A and B which call each other.
 TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
   TheJIT->DisableLazyCompilation(true);
@@ -407,7 +407,6 @@ TEST_F(JITTest, NonLazyLeaksNoStubs) {
   EXPECT_EQ(Func2->getNumUses(), 0u);
   Func2->eraseFromParent();
 }
-#endif
 
 TEST_F(JITTest, ModuleDeletion) {
   TheJIT->DisableLazyCompilation(false);
@@ -458,7 +457,6 @@ TEST_F(JITTest, ModuleDeletion) {
             NumTablesDeallocated);
 }
 
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__ppc__)
 typedef int (*FooPtr) ();
 
 TEST_F(JITTest, NoStubs) {
@@ -496,7 +494,40 @@ TEST_F(JITTest, NoStubs) {
 
   ASSERT_EQ(stubsBefore, RJMM->stubsAllocated);
 }
+
+TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
+  TheJIT->DisableLazyCompilation(true);
+  LoadAssembly("define i8()* @get_foo_addr() { "
+               "  ret i8()* @foo "
+               "} "
+               " "
+               "define i8 @foo() { "
+               "  ret i8 42 "
+               "} ");
+  Function *F_get_foo_addr = M->getFunction("get_foo_addr");
+
+  typedef char(*fooT)();
+  fooT (*get_foo_addr)() = reinterpret_cast<fooT(*)()>(
+      (intptr_t)TheJIT->getPointerToFunction(F_get_foo_addr));
+  fooT foo_addr = get_foo_addr();
+
+  // Now free get_foo_addr.  This should not free the machine code for foo or
+  // any call stub returned as foo's canonical address.
+  TheJIT->freeMachineCodeForFunction(F_get_foo_addr);
+
+  // Check by calling the reported address of foo.
+  EXPECT_EQ(42, foo_addr());
+
+  // The reported address should also be the same as the result of a subsequent
+  // getPointerToFunction(foo).
+#if 0
+  // Fails until PR5126 is fixed:
+  Function *F_foo = M->getFunction("foo");
+  fooT foo = reinterpret_cast<fooT>(
+      (intptr_t)TheJIT->getPointerToFunction(F_foo));
+  EXPECT_EQ((intptr_t)foo, (intptr_t)foo_addr);
 #endif
+}
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange

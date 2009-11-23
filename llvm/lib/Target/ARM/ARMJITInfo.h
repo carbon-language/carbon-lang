@@ -61,6 +61,10 @@ namespace llvm {
     virtual void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
                                             JITCodeEmitter &JCE);
 
+    // getStubLayout - Returns the size and alignment of the largest call stub
+    // on ARM.
+    virtual StubLayout getStubLayout();
+
     /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.

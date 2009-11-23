@@ -154,15 +154,22 @@ void *ARMJITInfo::emitGlobalValueIndirectSym(const GlobalValue *GV, void *Ptr,
   return PtrAddr;
 }
 
+TargetJITInfo::StubLayout ARMJITInfo::getStubLayout() {
+  // The stub contains up to 3 4-byte instructions, aligned at 4 bytes, and a
+  // 4-byte address.  See emitFunctionStub for details.
+  StubLayout Result = {16, 4};
+  return Result;
+}
+
 void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                    JITCodeEmitter &JCE) {
-  MachineCodeEmitter::BufferState BS;
+  void *Addr;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
     // Branch to the corresponding function addr.
     if (IsPIC) {
-      // The stub is 8-byte size and 4-aligned.
+      // The stub is 16-byte size and 4-aligned.
       intptr_t LazyPtr = getIndirectSymAddr(Fn);
       if (!LazyPtr) {
         // In PIC mode, the function stub is loading a lazy-ptr.
@@ -174,30 +181,30 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
                 errs() << "JIT: Stub emitted at [" << LazyPtr
                        << "] for external function at '" << Fn << "'\n");
       }
-      JCE.startGVStub(BS, F, 16, 4);
-      intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
-      if (!sys::Memory::setRangeWritable((void*)Addr, 16)) {
+      JCE.emitAlignment(4);
+      Addr = (void*)JCE.getCurrentPCValue();
+      if (!sys::Memory::setRangeWritable(Addr, 16)) {
         llvm_unreachable("ERROR: Unable to mark stub writable");
       }
       JCE.emitWordLE(0xe59fc004);            // ldr ip, [pc, #+4]
       JCE.emitWordLE(0xe08fc00c);            // L_func$scv: add ip, pc, ip
       JCE.emitWordLE(0xe59cf000);            // ldr pc, [ip]
-      JCE.emitWordLE(LazyPtr - (Addr+4+8));  // func - (L_func$scv+8)
-      sys::Memory::InvalidateInstructionCache((void*)Addr, 16);
-      if (!sys::Memory::setRangeExecutable((void*)Addr, 16)) {
+      JCE.emitWordLE(LazyPtr - (intptr_t(Addr)+4+8));  // func - (L_func$scv+8)
+      sys::Memory::InvalidateInstructionCache(Addr, 16);
+      if (!sys::Memory::setRangeExecutable(Addr, 16)) {
         llvm_unreachable("ERROR: Unable to mark stub executable");
       }
     } else {
       // The stub is 8-byte size and 4-aligned.
-      JCE.startGVStub(BS, F, 8, 4);
-      intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
-      if (!sys::Memory::setRangeWritable((void*)Addr, 8)) {
+      JCE.emitAlignment(4);
+      Addr = (void*)JCE.getCurrentPCValue();
+      if (!sys::Memory::setRangeWritable(Addr, 8)) {
         llvm_unreachable("ERROR: Unable to mark stub writable");
       }
       JCE.emitWordLE(0xe51ff004);    // ldr pc, [pc, #-4]
       JCE.emitWordLE((intptr_t)Fn);  // addr of function
-      sys::Memory::InvalidateInstructionCache((void*)Addr, 8);
-      if (!sys::Memory::setRangeExecutable((void*)Addr, 8)) {
+      sys::Memory::InvalidateInstructionCache(Addr, 8);
+      if (!sys::Memory::setRangeExecutable(Addr, 8)) {
         llvm_unreachable("ERROR: Unable to mark stub executable");
       }
     }
@@ -209,9 +216,9 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     //
     // Branch and link to the compilation callback.
     // The stub is 16-byte size and 4-byte aligned.
-    JCE.startGVStub(BS, F, 16, 4);
-    intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();
-    if (!sys::Memory::setRangeWritable((void*)Addr, 16)) {
+    JCE.emitAlignment(4);
+    Addr = (void*)JCE.getCurrentPCValue();
+    if (!sys::Memory::setRangeWritable(Addr, 16)) {
       llvm_unreachable("ERROR: Unable to mark stub writable");
     }
     // Save LR so the callback can determine which stub called it.
@@ -224,13 +231,13 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
     JCE.emitWordLE(0xe51ff004); // ldr pc, [pc, #-4]
     // The address of the compilation callback.
     JCE.emitWordLE((intptr_t)ARMCompilationCallback);
-    sys::Memory::InvalidateInstructionCache((void*)Addr, 16);
-    if (!sys::Memory::setRangeExecutable((void*)Addr, 16)) {
+    sys::Memory::InvalidateInstructionCache(Addr, 16);
+    if (!sys::Memory::setRangeExecutable(Addr, 16)) {
       llvm_unreachable("ERROR: Unable to mark stub executable");
     }
   }
 
-  return JCE.finishGVStub(BS);
+  return Addr;
 }
 
 intptr_t ARMJITInfo::resolveRelocDestAddr(MachineRelocation *MR) const {

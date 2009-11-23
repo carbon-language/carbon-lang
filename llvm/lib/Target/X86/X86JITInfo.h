@@ -43,17 +43,15 @@ namespace llvm {
     virtual void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
                                              JITCodeEmitter &JCE);
 
+    // getStubLayout - Returns the size and alignment of the largest call stub
+    // on X86.
+    virtual StubLayout getStubLayout();
+
     /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.
-    virtual void *emitFunctionStub(const Function* F, void *Fn,
+    virtual void *emitFunctionStub(const Function* F, void *Target,
                                    JITCodeEmitter &JCE);
-
-    /// emitFunctionStubAtAddr - Use the specified JITCodeEmitter object to
-    /// emit a small native function that simply calls Fn. Emit the stub into
-    /// the supplied buffer.
-    virtual void emitFunctionStubAtAddr(const Function* F, void *Fn,
-                                        void *Buffer, JITCodeEmitter &JCE);
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.
