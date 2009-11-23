@@ -598,6 +598,10 @@ namespace llvm {
     DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo,
                               DIScope S, DILocation OrigLoc);
 
+    /// CreateLocation - Creates a debug info location.
+    DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo,
+                              DIScope S, MDNode *OrigLoc = 0);
+
     /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     Instruction *InsertDeclare(llvm::Value *Storage, DIVariable D,
                                BasicBlock *InsertAtEnd);
