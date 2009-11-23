@@ -404,6 +404,25 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
           AddPath(VSDir + "\\VC\\PlatformSDK\\Include",
             System, false, false, false);
       }
+      else {
+          // Default install paths.
+        AddPath("C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
+          System, false, false, false);
+        AddPath(
+        "C:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
+          System, false, false, false);
+        AddPath("C:/Program Files/Microsoft Visual Studio 8/VC/include",
+          System, false, false, false);
+        AddPath(
+        "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include",
+          System, false, false, false);
+          // For some clang developers.
+        AddPath("G:/Program Files/Microsoft Visual Studio 9.0/VC/include",
+          System, false, false, false);
+        AddPath(
+        "G:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
+          System, false, false, false);
+      }
     }
     break;
   case llvm::Triple::MinGW64:
