@@ -73,7 +73,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, DT, DF, F.getContext());
+    PromoteMemToReg(Allocas, DT, DF);
     NumPromoted += Allocas.size();
     Changed = true;
   }

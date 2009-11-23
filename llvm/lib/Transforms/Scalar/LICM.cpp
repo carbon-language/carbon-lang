@@ -593,7 +593,7 @@ void LICM::sink(Instruction &I) {
     if (AI) {
       std::vector<AllocaInst*> Allocas;
       Allocas.push_back(AI);
-      PromoteMemToReg(Allocas, *DT, *DF, AI->getContext(), CurAST);
+      PromoteMemToReg(Allocas, *DT, *DF, CurAST);
     }
   }
 }
@@ -769,7 +769,7 @@ void LICM::PromoteValuesInLoop() {
   PromotedAllocas.reserve(PromotedValues.size());
   for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i)
     PromotedAllocas.push_back(PromotedValues[i].first);
-  PromoteMemToReg(PromotedAllocas, *DT, *DF, Preheader->getContext(), CurAST);
+  PromoteMemToReg(PromotedAllocas, *DT, *DF, CurAST);
 }
 
 /// FindPromotableValuesInLoop - Check the current loop for stores to definite

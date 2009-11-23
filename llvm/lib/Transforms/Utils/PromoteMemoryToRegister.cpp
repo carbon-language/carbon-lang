@@ -23,7 +23,6 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/ADT/DenseMap.h"
@@ -180,8 +179,6 @@ namespace {
     ///
     AliasSetTracker *AST;
     
-    LLVMContext &Context;
-
     /// AllocaLookup - Reverse mapping of Allocas.
     ///
     std::map<AllocaInst*, unsigned>  AllocaLookup;
@@ -212,9 +209,8 @@ namespace {
     DenseMap<const BasicBlock*, unsigned> BBNumPreds;
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
-                   DominanceFrontier &df, AliasSetTracker *ast,
-                   LLVMContext &C)
-      : Allocas(A), DT(dt), DF(df), AST(ast), Context(C) {}
+                   DominanceFrontier &df, AliasSetTracker *ast)
+      : Allocas(A), DT(dt), DF(df), AST(ast) {}
 
     void run();
 
@@ -1003,9 +999,9 @@ NextIteration:
 ///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                            DominatorTree &DT, DominanceFrontier &DF,
-                           LLVMContext &Context, AliasSetTracker *AST) {
+                           AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 
-  PromoteMem2Reg(Allocas, DT, DF, AST, Context).run();
+  PromoteMem2Reg(Allocas, DT, DF, AST).run();
 }

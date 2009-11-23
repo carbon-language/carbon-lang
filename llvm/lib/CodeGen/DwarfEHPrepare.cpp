@@ -332,7 +332,7 @@ bool DwarfEHPrepare::PromoteStackTemporaries() {
   if (ExceptionValueVar && DT && DF && isAllocaPromotable(ExceptionValueVar)) {
     // Turn the exception temporary into registers and phi nodes if possible.
     std::vector<AllocaInst*> Allocas(1, ExceptionValueVar);
-    PromoteMemToReg(Allocas, *DT, *DF, ExceptionValueVar->getContext());
+    PromoteMemToReg(Allocas, *DT, *DF);
     return true;
   }
   return false;
