@@ -1048,6 +1048,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
   // template-ids will match up with the template parameter lists.
   llvm::SmallVector<const TemplateSpecializationType *, 4>
     TemplateIdsInSpecifier;
+  llvm::SmallVector<ClassTemplateSpecializationDecl *, 4>
+    ExplicitSpecializationsInSpecifier;
   for (NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
        NNS; NNS = NNS->getPrefix()) {
     if (const TemplateSpecializationType *SpecType
@@ -1061,10 +1063,10 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
           = cast<ClassTemplateSpecializationDecl>(Record->getDecl());
         // If the nested name specifier refers to an explicit specialization,
         // we don't need a template<> header.
-        // FIXME: revisit this approach once we cope with specializations
-        // properly.
-        if (SpecDecl->getSpecializationKind() == TSK_ExplicitSpecialization)
+        if (SpecDecl->getSpecializationKind() == TSK_ExplicitSpecialization) {
+          ExplicitSpecializationsInSpecifier.push_back(SpecDecl);
           continue;
+        }
       }
 
       TemplateIdsInSpecifier.push_back(SpecType);
@@ -1145,10 +1147,20 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
   // If there were too many template parameter lists, complain about that now.
   if (Idx != NumParamLists - 1) {
     while (Idx < NumParamLists - 1) {
+      bool isExplicitSpecHeader = ParamLists[Idx]->size() == 0;
       Diag(ParamLists[Idx]->getTemplateLoc(),
-           diag::err_template_spec_extra_headers)
+           isExplicitSpecHeader? diag::warn_template_spec_extra_headers
+                               : diag::err_template_spec_extra_headers)
         << SourceRange(ParamLists[Idx]->getTemplateLoc(),
                        ParamLists[Idx]->getRAngleLoc());
+
+      if (isExplicitSpecHeader && !ExplicitSpecializationsInSpecifier.empty()) {
+        Diag(ExplicitSpecializationsInSpecifier.back()->getLocation(),
+             diag::note_explicit_template_spec_does_not_need_header)
+          << ExplicitSpecializationsInSpecifier.back();
+        ExplicitSpecializationsInSpecifier.pop_back();
+      }
+        
       ++Idx;
     }
   }

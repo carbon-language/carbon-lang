@@ -108,3 +108,20 @@ struct X6 {
 };
 
 template struct X6::Inner; // expected-error{{non-templated}}
+
+// PR5559
+template <typename T>
+struct Foo;
+
+template <>
+struct Foo<int> // expected-note{{header not required for explicitly-specialized}}
+{
+    template <typename U>
+    struct Bar
+    {};
+};
+
+template <> // expected-warning{{extraneous template parameter list}}
+template <>
+struct Foo<int>::Bar<void>
+{};

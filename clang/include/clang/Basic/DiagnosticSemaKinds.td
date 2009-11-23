@@ -1049,6 +1049,11 @@ def err_template_param_list_matches_nontemplate : Error<
 def err_template_spec_extra_headers : Error<
   "extraneous template parameter list in template specialization or "
   "out-of-line template definition">;
+def warn_template_spec_extra_headers : Warning<
+  "extraneous template parameter list in template specialization">;
+def note_explicit_template_spec_does_not_need_header : Note<
+  "'template<>' header not required for explicitly-specialized class %0 "
+  "declared here">;
 def err_template_qualified_declarator_no_match : Error<
   "nested name specifier '%0' for declaration does not refer into a class, "
   "class template or class template partial specialization">;
