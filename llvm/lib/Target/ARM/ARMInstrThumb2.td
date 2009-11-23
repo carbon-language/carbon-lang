@@ -88,6 +88,21 @@ def t2_so_imm2part_2 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
+def t2_so_neg_imm2part : Operand<i32>, PatLeaf<(imm), [{
+      return ARM_AM::isT2SOImmTwoPartVal(-(int)N->getZExtValue());
+    }]> {
+}
+
+def t2_so_neg_imm2part_1 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getT2SOImmTwoPartFirst(-(int)N->getZExtValue());
+  return CurDAG->getTargetConstant(V, MVT::i32);
+}]>;
+
+def t2_so_neg_imm2part_2 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getT2SOImmTwoPartSecond(-(int)N->getZExtValue());
+  return CurDAG->getTargetConstant(V, MVT::i32);
+}]>;
+
 /// imm1_31 predicate - True if the 32-bit immediate is in the range [1,31].
 def imm1_31 : PatLeaf<(i32 imm), [{
   return (int32_t)N->getZExtValue() >= 1 && (int32_t)N->getZExtValue() < 32;
@@ -1162,9 +1177,9 @@ def : T2Pat<(xor GPR:$LHS, t2_so_imm2part:$RHS),
 def : T2Pat<(add GPR:$LHS, t2_so_imm2part:$RHS),
              (t2ADDri (t2ADDri GPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
                     (t2_so_imm2part_2 imm:$RHS))>;
-def : T2Pat<(sub GPR:$LHS, t2_so_imm2part:$RHS),
-             (t2SUBri (t2SUBri GPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
-                    (t2_so_imm2part_2 imm:$RHS))>;
+def : T2Pat<(add GPR:$LHS, t2_so_neg_imm2part:$RHS),
+             (t2SUBri (t2SUBri GPR:$LHS, (t2_so_neg_imm2part_1 imm:$RHS)),
+                    (t2_so_neg_imm2part_2 imm:$RHS))>;
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>;

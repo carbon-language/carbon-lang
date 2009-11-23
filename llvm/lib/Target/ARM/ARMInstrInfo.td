@@ -284,6 +284,22 @@ def so_imm2part_2 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
+def so_neg_imm2part : Operand<i32>, PatLeaf<(imm), [{
+      return ARM_AM::isSOImmTwoPartVal(-(int)N->getZExtValue());
+    }]> {
+  let PrintMethod = "printSOImm2PartOperand";
+}
+
+def so_neg_imm2part_1 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getSOImmTwoPartFirst(-(int)N->getZExtValue());
+  return CurDAG->getTargetConstant(V, MVT::i32);
+}]>;
+
+def so_neg_imm2part_2 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getSOImmTwoPartSecond(-(int)N->getZExtValue());
+  return CurDAG->getTargetConstant(V, MVT::i32);
+}]>;
+
 /// imm0_31 predicate - True if the 32-bit immediate is in the range [0,31].
 def imm0_31 : Operand<i32>, PatLeaf<(imm), [{
   return (int32_t)N->getZExtValue() < 32;
@@ -1618,9 +1634,9 @@ def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
 def : ARMPat<(add GPR:$LHS, so_imm2part:$RHS),
              (ADDri (ADDri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
                     (so_imm2part_2 imm:$RHS))>;
-def : ARMPat<(sub GPR:$LHS, so_imm2part:$RHS),
-             (SUBri (SUBri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
-                    (so_imm2part_2 imm:$RHS))>;
+def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
+             (SUBri (SUBri GPR:$LHS, (so_neg_imm2part_1 imm:$RHS)),
+                    (so_neg_imm2part_2 imm:$RHS))>;
 
 // 32-bit immediate using movw + movt.
 // This is a single pseudo instruction, the benefit is that it can be remat'd
