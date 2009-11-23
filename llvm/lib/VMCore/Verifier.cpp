@@ -1475,6 +1475,9 @@ void Verifier::visitInstruction(Instruction &I) {
 void Verifier::VerifyType(const Type *Ty) {
   if (!Types.insert(Ty)) return;
 
+  Assert1(&Mod->getContext() == &Ty->getContext(),
+          "Type context does not match Module context!", Ty);
+
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
