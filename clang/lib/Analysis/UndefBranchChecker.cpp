@@ -72,8 +72,7 @@ void UndefBranchChecker::VisitBranchCondition(GRBranchNodeBuilder &Builder,
     if (N) {
       N->markAsSink();
       if (!BT)
-        BT = new BuiltinBug("Undefined branch",
-                 "Branch condition evaluates to an undefined or garbage value");
+        BT = new BuiltinBug("Branch condition evaluates to a garbage value");
       EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getDescription(),N);
       R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, 
                            Condition);

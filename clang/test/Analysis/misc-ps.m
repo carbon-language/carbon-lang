@@ -752,6 +752,23 @@ void test_undefined_array_subscript() {
 @end
 
 //===----------------------------------------------------------------------===//
+// Test using an uninitialized value as a branch condition.
+//===----------------------------------------------------------------------===//
+
+int test_uninit_branch(void) {
+  int x;
+  if (x) // expected-warning{{Branch condition evaluates to a garbage value}}
+    return 1;
+  return 0; 
+}
+
+int test_uninit_branch_b(void) {
+  int x;
+  return x ? 1 : 0; // expected-warning{{Branch condition evaluates to a garbage value}}
+}
+
+
+//===----------------------------------------------------------------------===//
 // Test passing an undefined value in a message or function call.
 //===----------------------------------------------------------------------===//
 
