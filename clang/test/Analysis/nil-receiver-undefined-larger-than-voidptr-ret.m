@@ -1,5 +1,7 @@
-// RUN: clang-cc -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-constraints=basic -analyzer-store=basic %s -verify
-// RUN: clang-cc -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-constraints=basic -analyzer-store=region %s -verify
+// RUN: clang-cc -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-constraints=basic -analyzer-store=basic %s  2>&1 | FileCheck -check-prefix=darwin8 %s
+// RUN: clang-cc -triple i386-apple-darwin8 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin8 %s
+// RUN: clang-cc -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-constraints=basic -analyzer-store=basic %s 2>&1 | FileCheck -check-prefix=darwin9 %s
+// RUN: clang-cc -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-constraints=basic -analyzer-store=region %s 2>&1 | FileCheck -check-prefix=darwin9 %s
 
 @interface MyClass {}
 - (void *)voidPtrM;
@@ -66,3 +68,15 @@ int handleVoidInComma() {
   MyClass *obj = 0;
   return [obj voidM], 0;
 }
+
+int marker(void) { // control reaches end of non-void function
+}
+
+// CHECK-darwin8: warning: The receiver of message 'longDoubleM' is nil and returns a value of type 'long double' that will be garbage
+// CHECK-darwin8: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
+// CHECK-darwin8: warning: The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage
+// CHECK-darwin8: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
+// CHECK-darwin8: control reaches end of non-void function
+// CHECK-darwin8: 5 diagnostics generated
+// CHECK-darwin9: control reaches end of non-void function
+// CHECK-darwin9: 1 diagnostic generated
