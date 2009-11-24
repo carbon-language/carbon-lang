@@ -4347,12 +4347,12 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     if (SuppressNew)
       return DeclPtrTy();
   }
+
+  Specialization->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
   
   if (TSK == TSK_ExplicitInstantiationDefinition)
     InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization, 
                                   false, /*DefinitionRequired=*/true);
-      
-  Specialization->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
  
   // C++0x [temp.explicit]p2:
   //   If the explicit instantiation is for a member function, a member class 
