@@ -110,3 +110,12 @@ struct C4 {
   void f(); // expected-note{{previous declaration is here}}
   int f; // expected-error{{duplicate member 'f'}}
 };
+
+// PR5415 - don't hang!
+struct S
+{
+  void f(); // expected-note 2 {{previous declaration}}
+  // FIXME: the out-of-line error shouldn't be there
+  void S::f() {} // expected-error {{class member cannot be redeclared}} expected-error {{out-of-line}} expected-note {{previous definition}}
+  void f() {} // expected-error {{class member cannot be redeclared}} expected-error {{redefinition}}
+};

@@ -92,6 +92,11 @@ public:
   }
 
   /// \brief Returns the most recent (re)declaration of this declaration.
+  decl_type *getMostRecentDeclaration() {
+    return getFirstDeclaration()->RedeclLink.getNext();
+  }
+
+  /// \brief Returns the most recent (re)declaration of this declaration.
   const decl_type *getMostRecentDeclaration() const {
     return getFirstDeclaration()->RedeclLink.getNext();
   }
@@ -102,8 +107,11 @@ public:
     decl_type *First;
 
     if (PrevDecl) {
-      // Point to previous.
-      RedeclLink = PreviousDeclLink(PrevDecl);
+      // Point to previous. Make sure that this is actually the most recent
+      // redeclaration, or we can build invalid chains. If the most recent
+      // redeclaration is invalid, it won't be PrevDecl, but we want it anyway.
+      RedeclLink = PreviousDeclLink(cast<decl_type>(
+                                      PrevDecl->getMostRecentDeclaration()));
       First = PrevDecl->getFirstDeclaration();
       assert(First->RedeclLink.NextIsLatest() && "Expected first");
     } else {
