@@ -39,10 +39,6 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
-static cl::opt<bool>
-PredicateNEON("predicate-neon", cl::Hidden,
-              cl::desc("Allow NEON instructions to be predicated"));
-
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
   : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
     Subtarget(STI) {
@@ -417,7 +413,7 @@ bool ARMBaseInstrInfo::isPredicable(MachineInstr *MI) const {
   if ((TID.TSFlags & ARMII::DomainMask) == ARMII::DomainNEON) {
     ARMFunctionInfo *AFI =
       MI->getParent()->getParent()->getInfo<ARMFunctionInfo>();
-    return PredicateNEON && AFI->isThumb2Function();
+    return AFI->isThumb2Function();
   }
   return true;
 }
