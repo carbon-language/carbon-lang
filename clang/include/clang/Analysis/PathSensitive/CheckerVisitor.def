@@ -24,6 +24,7 @@ PREVISIT(ReturnStmt)
 
 #ifdef POSTVISIT
 POSTVISIT(CallExpr)
+POSTVISIT(BinaryOperator)
 #undef POSTVISIT
 #endif
 

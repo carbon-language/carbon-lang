@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "GRExprEngineInternalChecks.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRExprEngineBuilders.h"
 #include "clang/Analysis/PathSensitive/Checker.h"
@@ -2576,6 +2577,8 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   else
     Visit(LHS, Pred, Tmp1);
 
+  ExplodedNodeSet Tmp3;
+
   for (ExplodedNodeSet::iterator I1=Tmp1.begin(), E1=Tmp1.end(); I1!=E1; ++I1) {
     SVal LeftV = (*I1)->getState()->getSVal(LHS);
     ExplodedNodeSet Tmp2;
@@ -2610,7 +2613,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
         // Simulate the effects of a "store":  bind the value of the RHS
         // to the L-Value represented by the LHS.
-        EvalStore(Dst, B, LHS, *I2, state->BindExpr(B, ExprVal), LeftV, RightV);
+        EvalStore(Tmp3, B, LHS, *I2, state->BindExpr(B, ExprVal), LeftV, RightV);
         continue;
       }
       
@@ -2622,26 +2625,17 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         if (Result.isUnknown()) {
           if (OldSt != state) {
             // Generate a new node if we have already created a new state.
-            MakeNode(Dst, B, *I2, state);
+            MakeNode(Tmp3, B, *I2, state);
           }
           else
-            Dst.Add(*I2);
+            Tmp3.Add(*I2);
           
           continue;
         }
         
         state = state->BindExpr(B, Result);
         
-        if (Result.isUndef()) {
-          if (ExplodedNode *UndefNode = Builder->generateNode(B, state, *I2)){
-            UndefNode->markAsSink();
-            UndefResults.insert(UndefNode);
-          }
-          continue;
-        }
-        
-        // Otherwise, create a new node.
-        MakeNode(Dst, B, *I2, state);
+        MakeNode(Tmp3, B, *I2, state);
         continue;
       }
 
@@ -2720,11 +2714,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           llvm::tie(state, LHSVal) = SVator.EvalCast(Result, state, LTy, CTy);
         }
 
-        EvalStore(Dst, B, LHS, *I3, state->BindExpr(B, Result),
+        EvalStore(Tmp3, B, LHS, *I3, state->BindExpr(B, Result),
                   location, LHSVal);
       }
     }
   }
+
+  CheckerVisit(B, Dst, Tmp3, false);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2979,4 +2975,28 @@ void GRExprEngine::ViewGraph(ExplodedNode** Beg, ExplodedNode** End) {
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;
 #endif
+}
+
+void GRExprEngine::RegisterInternalChecks() {
+  // Register internal "built-in" BugTypes with the BugReporter. These BugTypes
+  // are different than what probably many checks will do since they don't
+  // create BugReports on-the-fly but instead wait until GRExprEngine finishes
+  // analyzing a function.  Generation of BugReport objects is done via a call
+  // to 'FlushReports' from BugReporter.
+  // The following checks do not need to have their associated BugTypes
+  // explicitly registered with the BugReporter.  If they issue any BugReports,
+  // their associated BugType will get registered with the BugReporter
+  // automatically.  Note that the check itself is owned by the GRExprEngine
+  // object.  
+  RegisterAttrNonNullChecker(*this);
+  RegisterCallAndMessageChecker(*this);
+  RegisterDereferenceChecker(*this);
+  RegisterVLASizeChecker(*this);
+  RegisterDivZeroChecker(*this);
+  RegisterReturnStackAddressChecker(*this);
+  RegisterReturnUndefChecker(*this);
+  RegisterUndefinedArraySubscriptChecker(*this);
+  RegisterUndefinedAssignmentChecker(*this);
+  RegisterUndefBranchChecker(*this);
+  RegisterUndefResultChecker(*this);
 }

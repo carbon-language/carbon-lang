@@ -56,6 +56,7 @@ add_clang_library(clangAnalysis
   Store.cpp
   SymbolManager.cpp
   UndefBranchChecker.cpp
+  UndefResultChecker.cpp
   UndefinedArraySubscriptChecker.cpp
   UndefinedAssignmentChecker.cpp
   UninitializedValues.cpp
