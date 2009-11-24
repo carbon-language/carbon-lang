@@ -1,4 +1,4 @@
-//===--- CGCXXClass.cpp - Emit LLVM Code for C++ classes ------------------===//
+//===--- CGClass.cpp - Emit LLVM Code for C++ classes ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

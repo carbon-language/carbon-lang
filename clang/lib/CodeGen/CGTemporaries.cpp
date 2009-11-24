@@ -1,4 +1,4 @@
-//===--- CGCXXTemp.cpp - Emit LLVM Code for C++ temporaries ---------------===//
+//===--- CGTemporaries.cpp - Emit LLVM Code for C++ temporaries -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

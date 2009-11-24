@@ -1,4 +1,4 @@
-//===--- CGCXXExpr.cpp - Emit LLVM Code for C++ expressions ---------------===//
+//===--- CGExprCXX.cpp - Emit LLVM Code for C++ expressions ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
