@@ -2173,10 +2173,10 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
 
 /// CalculateTailCallSPDiff - Get the amount the stack pointer has to be
 /// adjusted to accomodate the arguments for the tailcall.
-static int CalculateTailCallSPDiff(SelectionDAG& DAG, bool IsTailCall,
+static int CalculateTailCallSPDiff(SelectionDAG& DAG, bool isTailCall,
                                    unsigned ParamSize) {
 
-  if (!IsTailCall) return 0;
+  if (!isTailCall) return 0;
 
   PPCFunctionInfo *FI = DAG.getMachineFunction().getInfo<PPCFunctionInfo>();
   unsigned CallerMinReservedArea = FI->getMinReservedArea();
@@ -3186,8 +3186,8 @@ SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
   // Construct the stack pointer operand.
-  bool IsPPC64 = Subtarget.isPPC64();
-  unsigned SP = IsPPC64 ? PPC::X1 : PPC::R1;
+  bool isPPC64 = Subtarget.isPPC64();
+  unsigned SP = isPPC64 ? PPC::X1 : PPC::R1;
   SDValue StackPtr = DAG.getRegister(SP, PtrVT);
 
   // Get the operands for the STACKRESTORE.
@@ -3209,7 +3209,7 @@ SDValue PPCTargetLowering::LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
 SDValue
 PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG & DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
-  bool IsPPC64 = PPCSubTarget.isPPC64();
+  bool isPPC64 = PPCSubTarget.isPPC64();
   bool isDarwinABI = PPCSubTarget.isDarwinABI();
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
@@ -3221,9 +3221,9 @@ PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG & DAG) const {
   // If the frame pointer save index hasn't been defined yet.
   if (!RASI) {
     // Find out what the fix offset of the frame pointer save area.
-    int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, isDarwinABI);
+    int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
     // Allocate the frame index for frame pointer save area.
-    RASI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, LROffset,
+    RASI = MF.getFrameInfo()->CreateFixedObject(isPPC64? 8 : 4, LROffset,
                                                 true, false);
     // Save the result.
     FI->setReturnAddrSaveIndex(RASI);
@@ -3234,7 +3234,7 @@ PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG & DAG) const {
 SDValue
 PPCTargetLowering::getFramePointerFrameIndex(SelectionDAG & DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
-  bool IsPPC64 = PPCSubTarget.isPPC64();
+  bool isPPC64 = PPCSubTarget.isPPC64();
   bool isDarwinABI = PPCSubTarget.isDarwinABI();
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
@@ -3246,11 +3246,11 @@ PPCTargetLowering::getFramePointerFrameIndex(SelectionDAG & DAG) const {
   // If the frame pointer save index hasn't been defined yet.
   if (!FPSI) {
     // Find out what the fix offset of the frame pointer save area.
-    int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64,
+    int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(isPPC64,
                                                            isDarwinABI);
 
     // Allocate the frame index for frame pointer save area.
-    FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset,
+    FPSI = MF.getFrameInfo()->CreateFixedObject(isPPC64? 8 : 4, FPOffset,
                                                 true, false);
     // Save the result.
     FI->setFramePointerSaveIndex(FPSI);
