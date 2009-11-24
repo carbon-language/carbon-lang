@@ -226,7 +226,7 @@ void GRExprEngine::RegisterInternalChecks() {
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.  
   RegisterAttrNonNullChecker(*this);
-  RegisterUndefinedArgChecker(*this);
+  RegisterCallAndMessageChecker(*this);
   RegisterDereferenceChecker(*this);
   RegisterVLASizeChecker(*this);
   RegisterDivZeroChecker(*this);

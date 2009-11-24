@@ -1,4 +1,4 @@
-//===--- UndefinedArgChecker.h - Undefined arguments checker ----*- C++ -*--==//
+//===--- CallAndMessageChecker.cpp ------------------------------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines BadCallChecker, a builtin check in GRExprEngine that performs
-// checks for undefined arguments.
+// This defines CallAndMessageChecker, a builtin checker that checks for various
+// errors of call and objc message expressions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,15 +19,15 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN UndefinedArgChecker
-  : public CheckerVisitor<UndefinedArgChecker> {
+class VISIBILITY_HIDDEN CallAndMessageChecker
+  : public CheckerVisitor<CallAndMessageChecker> {
   BugType *BT_call_null;
   BugType *BT_call_undef;  
   BugType *BT_call_arg;
   BugType *BT_msg_undef;
   BugType *BT_msg_arg;
 public:
-  UndefinedArgChecker() :
+  CallAndMessageChecker() :
     BT_call_null(0), BT_call_undef(0), BT_call_arg(0),
     BT_msg_undef(0), BT_msg_arg(0) {}
   static void *getTag() {
@@ -41,12 +41,12 @@ private:
 };
 } // end anonymous namespace
 
-void clang::RegisterUndefinedArgChecker(GRExprEngine &Eng) {
-  Eng.registerCheck(new UndefinedArgChecker());
+void clang::RegisterCallAndMessageChecker(GRExprEngine &Eng) {
+  Eng.registerCheck(new CallAndMessageChecker());
 }
 
-void UndefinedArgChecker::EmitBadCall(BugType *BT, CheckerContext &C,
-                                      const CallExpr *CE) {
+void CallAndMessageChecker::EmitBadCall(BugType *BT, CheckerContext &C,
+                                        const CallExpr *CE) {
   ExplodedNode *N = C.GenerateSink();
   if (!N)
     return;
@@ -57,8 +57,8 @@ void UndefinedArgChecker::EmitBadCall(BugType *BT, CheckerContext &C,
   C.EmitReport(R);
 }
 
-void UndefinedArgChecker::PreVisitCallExpr(CheckerContext &C, 
-                                           const CallExpr *CE){
+void CallAndMessageChecker::PreVisitCallExpr(CheckerContext &C, 
+                                             const CallExpr *CE){
   
   const Expr *Callee = CE->getCallee()->IgnoreParens();
   SVal L = C.getState()->getSVal(Callee);
@@ -97,8 +97,8 @@ void UndefinedArgChecker::PreVisitCallExpr(CheckerContext &C,
   }
 }
 
-void UndefinedArgChecker::PreVisitObjCMessageExpr(CheckerContext &C,
-                                                  const ObjCMessageExpr *ME) {
+void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
+                                                    const ObjCMessageExpr *ME) {
 
   const GRState *state = C.getState();
 
