@@ -169,9 +169,16 @@ public:
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
   Value *VisitMemberExpr(MemberExpr *E) { 
     if (const EnumConstantDecl *EC = 
-          dyn_cast<EnumConstantDecl>(E->getMemberDecl()))
+          dyn_cast<EnumConstantDecl>(E->getMemberDecl())) {
+      
+      // We still need to emit the base.
+      if (E->isArrow())
+        CGF.EmitScalarExpr(E->getBase());
+      else
+        CGF.EmitLValue(E->getBase());
       return llvm::ConstantInt::get(VMContext, EC->getInitVal());
-
+    }
+    
     return EmitLoadOfLValue(E);
   }
     

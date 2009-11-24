@@ -19,9 +19,20 @@ void f()
 }
 
 struct A {
+  A();
+  ~A();
   enum E { Foo };
 };
 
+A *g();
+
 void f(A *a) {
-  A::E e = a->Foo;
+  A::E e1 = a->Foo;
+  
+  // CHECK: call %struct.A* @_Z1gv()
+  A::E e2 = g()->Foo;
+  // CHECK: call void @_ZN1AC1Ev(
+  // CHECK: call void @_ZN1AD1Ev(
+  A::E e3 = A().Foo;
 }
+
