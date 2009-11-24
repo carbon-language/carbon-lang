@@ -1523,14 +1523,6 @@ public:
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc);
 
-  bool GatherArgumentsForCall(SourceLocation CallLoc,
-                              FunctionDecl *FDecl,
-                              const FunctionProtoType *Proto,
-                              unsigned FirstProtoArg,
-                              Expr **Args, unsigned NumArgs,
-                              llvm::SmallVector<Expr *, 8> &AllArgs,
-                              Expr *Fn = 0);
-
   void DeconstructCallFunction(Expr *FnExpr,
                                llvm::SmallVectorImpl<NamedDecl*>& Fns,
                                DeclarationName &Name,
@@ -3320,8 +3312,20 @@ public:
     VariadicFunction,
     VariadicBlock,
     VariadicMethod,
-    VariadicConstructor
+    VariadicConstructor,
+    VariadicDoesNotApply
   };
+
+  /// GatherArgumentsForCall - Collector argument expressions for various
+  /// form of call prototypes.
+  bool GatherArgumentsForCall(SourceLocation CallLoc,
+                              FunctionDecl *FDecl,
+                              const FunctionProtoType *Proto,
+                              unsigned FirstProtoArg,
+                              Expr **Args, unsigned NumArgs,
+                              llvm::SmallVector<Expr *, 8> &AllArgs,
+                              Expr *Fn = 0,
+                              VariadicCallType CallType = VariadicDoesNotApply);
 
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
   // will warn if the resulting type is not a POD type.

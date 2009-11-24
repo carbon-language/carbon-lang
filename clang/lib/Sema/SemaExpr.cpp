@@ -2620,8 +2620,14 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     }
   }
   llvm::SmallVector<Expr *, 8> AllArgs;
+  VariadicCallType CallType = 
+    Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
+  if (Fn->getType()->isBlockPointerType())
+    CallType = VariadicBlock; // Block
+  else if (isa<MemberExpr>(Fn))
+    CallType = VariadicMethod;
   Invalid = GatherArgumentsForCall(Call->getSourceRange().getBegin(), FDecl,
-                                   Proto, 0, Args, NumArgs, AllArgs, Fn);
+                                   Proto, 0, Args, NumArgs, AllArgs, Fn, CallType);
   if (Invalid)
     return true;
   unsigned TotalNumArgs = AllArgs.size();
@@ -2637,7 +2643,8 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
                                   unsigned FirstProtoArg,
                                   Expr **Args, unsigned NumArgs,
                                   llvm::SmallVector<Expr *, 8> &AllArgs,
-                                  Expr *Fn) {
+                                  Expr *Fn,
+                                  VariadicCallType CallType) {
   unsigned NumArgsInProto = Proto->getNumArgs();
   unsigned NumArgsToCheck = NumArgs;
   bool Invalid = false;
@@ -2679,14 +2686,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
   }
   
   // If this is a variadic call, handle args passed through "...".
-  if (Proto->isVariadic()) {
-    VariadicCallType CallType = VariadicFunction;
-    if (Fn) {
-      if (Fn->getType()->isBlockPointerType())
-        CallType = VariadicBlock; // Block
-      else if (isa<MemberExpr>(Fn))
-        CallType = VariadicMethod;
-    }
+  if (CallType != VariadicDoesNotApply) {
     // Promote the arguments (C99 6.5.2.2p7).
     for (unsigned i = ArgIx; i < NumArgs; i++) {
       Expr *Arg = Args[i];

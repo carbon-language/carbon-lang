@@ -407,9 +407,11 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     // Add default arguments, if any.
     const FunctionProtoType *Proto = 
       OperatorNew->getType()->getAs<FunctionProtoType>();
+    VariadicCallType CallType = 
+      Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
     bool Invalid = GatherArgumentsForCall(PlacementLParen, OperatorNew,
                                           Proto, 1, PlaceArgs, NumPlaceArgs, 
-                                          AllPlaceArgs);
+                                          AllPlaceArgs, 0, CallType);
     if (Invalid)
       return ExprError();
     
