@@ -335,7 +335,7 @@ getprogpath(char ret[PATH_MAX], const char *bin)
   free(pv);
   return (NULL);
 }
-#endif
+#endif // __FreeBSD__
 
 /// GetMainExecutable - Return the path to the main executable, given the
 /// value of argv[0] from program startup.
@@ -451,6 +451,24 @@ Path::canRead() const {
 bool
 Path::canWrite() const {
   return 0 == access(path.c_str(), W_OK);
+}
+
+bool
+Path::isSpecialFile() const {
+  // Get the status so we can determine if its a file or directory
+  struct stat buf;
+  std::string *ErrStr;
+
+  if (0 != stat(path.c_str(), &buf)) {
+    MakeErrMsg(ErrStr, path + ": can't get status of file");
+    return true;
+  }
+
+  if (S_ISDIR(buf.st_mode) || S_ISREG(buf.st_mode)) {
+    return false;
+  }
+
+  return true;
 }
 
 bool
@@ -723,7 +741,7 @@ Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
 
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
-  // Get the status so we can determin if its a file or directory
+  // Get the status so we can determine if its a file or directory
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
     MakeErrMsg(ErrStr, path + ": can't get status of file");
