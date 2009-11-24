@@ -1017,10 +1017,19 @@ Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar) {
     return ExprError(Diag(ConditionVar->getLocation(), 
                           diag::err_invalid_use_of_array_type)
                      << ConditionVar->getSourceRange());
-  
+
+  // FIXME: Switch to building a DeclRefExpr, once we've eliminated the
+  // need for CXXConditionDeclExpr.
+#if 0
   return Owned(DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
                                    ConditionVar->getLocation(), 
                                 ConditionVar->getType().getNonReferenceType()));
+#else
+  return Owned(new (Context) CXXConditionDeclExpr(
+                                     ConditionVar->getSourceRange().getBegin(),
+                                     ConditionVar->getSourceRange().getEnd(),
+                                     ConditionVar));
+#endif                                                  
 }
 
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.
