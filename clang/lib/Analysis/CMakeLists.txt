@@ -12,6 +12,7 @@ add_clang_library(clangAnalysis
   BugReporterVisitors.cpp
   CFG.cpp
   CFRefCount.cpp
+  CallAndMessageChecker.cpp
   CallGraph.cpp
   CallInliner.cpp
   CastToStructChecker.cpp
@@ -55,7 +56,6 @@ add_clang_library(clangAnalysis
   Store.cpp
   SymbolManager.cpp
   UndefBranchChecker.cpp
-  UndefinedArgChecker.cpp
   UndefinedArraySubscriptChecker.cpp
   UndefinedAssignmentChecker.cpp
   UninitializedValues.cpp
