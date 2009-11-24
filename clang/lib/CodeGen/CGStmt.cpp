@@ -353,15 +353,37 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // body of the loop.
   llvm::BasicBlock *ExitBlock = createBasicBlock("while.end");
   llvm::BasicBlock *LoopBody  = createBasicBlock("while.body");
+  llvm::BasicBlock *CleanupBlock = 0;
+  llvm::BasicBlock *EffectiveExitBlock = ExitBlock;
 
   // Store the blocks to use for break and continue.
   BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader));
 
+  // C++ [stmt.while]p2:
+  //   When the condition of a while statement is a declaration, the
+  //   scope of the variable that is declared extends from its point
+  //   of declaration (3.3.2) to the end of the while statement.
+  //   [...]
+  //   The object created in a condition is destroyed and created
+  //   with each iteration of the loop.
+  CleanupScope ConditionScope(*this);
+
+  if (S.getConditionVariable()) {
+    EmitLocalBlockVarDecl(*S.getConditionVariable());
+
+    // If this condition variable requires cleanups, create a basic
+    // block to handle those cleanups.
+    if (ConditionScope.requiresCleanups()) {
+      CleanupBlock = createBasicBlock("while.cleanup");
+      EffectiveExitBlock = CleanupBlock;
+    }
+  }
+  
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The
   // evaluation of the controlling expression takes place before each
   // execution of the loop body.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
-
+   
   // while(1) is common, avoid extra exit blocks.  Be sure
   // to correctly handle break/continue though.
   bool EmitBoolCondBranch = true;
@@ -371,23 +393,39 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
 
   // As long as the condition is true, go to the loop body.
   if (EmitBoolCondBranch)
-    Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
-
+    Builder.CreateCondBr(BoolCondVal, LoopBody, EffectiveExitBlock);
+ 
   // Emit the loop body.
-  EmitBlock(LoopBody);
-  EmitStmt(S.getBody());
+  {
+    CleanupScope BodyScope(*this);
+    EmitBlock(LoopBody);
+    EmitStmt(S.getBody());
+  }
 
   BreakContinueStack.pop_back();
 
-  // Cycle to the condition.
-  EmitBranch(LoopHeader);
+  if (CleanupBlock) {
+    // If we have a cleanup block, jump there to perform cleanups
+    // before looping.
+    EmitBranch(CleanupBlock);
+
+    // Emit the cleanup block, performing cleanups for the condition
+    // and then jumping to either the loop header or the exit block.
+    EmitBlock(CleanupBlock);
+    ConditionScope.ForceCleanup();
+    Builder.CreateCondBr(BoolCondVal, LoopHeader, ExitBlock);
+  } else {
+    // Cycle to the condition.
+    EmitBranch(LoopHeader);
+  }
 
   // Emit the exit block.
   EmitBlock(ExitBlock, true);
 
+
   // The LoopHeader typically is just a branch if we skipped emitting
   // a branch, try to erase it.
-  if (!EmitBoolCondBranch)
+  if (!EmitBoolCondBranch && !CleanupBlock)
     SimplifyForwardingBlocks(LoopHeader);
 }
 

@@ -171,13 +171,16 @@ public:
     CodeGenFunction& CGF;
     size_t CleanupStackDepth;
     bool OldDidCallStackSave;
+    bool PerformCleanup;
 
     CleanupScope(const CleanupScope &); // DO NOT IMPLEMENT
     CleanupScope &operator=(const CleanupScope &); // DO NOT IMPLEMENT
 
   public:
     /// \brief Enter a new cleanup scope.
-    explicit CleanupScope(CodeGenFunction &CGF) : CGF(CGF) {
+    explicit CleanupScope(CodeGenFunction &CGF) 
+      : CGF(CGF), PerformCleanup(true) 
+    {
       CleanupStackDepth = CGF.CleanupEntries.size();
       OldDidCallStackSave = CGF.DidCallStackSave;
     }
@@ -185,8 +188,24 @@ public:
     /// \brief Exit this cleanup scope, emitting any accumulated
     /// cleanups.
     ~CleanupScope() {
+      if (PerformCleanup) {
+        CGF.DidCallStackSave = OldDidCallStackSave;
+        CGF.EmitCleanupBlocks(CleanupStackDepth);
+      }
+    }
+
+    /// \brief Determine whether this scope requires any cleanups.
+    bool requiresCleanups() const {
+      return CGF.CleanupEntries.size() > CleanupStackDepth;
+    }
+
+    /// \brief Force the emission of cleanups now, instead of waiting
+    /// until this object is destroyed.
+    void ForceCleanup() {
+      assert(PerformCleanup && "Already forced cleanup");
       CGF.DidCallStackSave = OldDidCallStackSave;
       CGF.EmitCleanupBlocks(CleanupStackDepth);
+      PerformCleanup = false;
     }
   };
 

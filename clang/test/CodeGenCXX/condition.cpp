@@ -69,3 +69,23 @@ void switch_destruct(int z) {
   // CHECK: store i32 20
   z = 20;
 }
+
+int foo();
+
+void while_destruct(int z) {
+  // CHECK: define void @_Z14while_destructi
+  // CHECK: while.cond: 
+  while (X x = X()) {
+    // CHECK: call void @_ZN1XC1Ev
+
+    // CHECK: while.body:
+    // CHECK: store i32 21
+    z = 21;
+
+    // CHECK: while.cleanup:
+    // CHECK: call void @_ZN1XD1Ev
+  }
+  // CHECK: while.end
+  // CHECK: store i32 22
+  z = 22;
+}

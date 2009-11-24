@@ -720,6 +720,15 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
   Expr *condExpr = CondArg.takeAs<Expr>();
   assert(condExpr && "ActOnWhileStmt(): missing expression");
 
+  VarDecl *ConditionVar = 0;
+  if (CXXConditionDeclExpr *Cond = dyn_cast<CXXConditionDeclExpr>(condExpr)) {
+    ConditionVar = Cond->getVarDecl();
+    condExpr = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
+                                   ConditionVar->getLocation(), 
+                                 ConditionVar->getType().getNonReferenceType());
+    // FIXME: Leaks the old condExpr
+  }
+
   if (CheckBooleanCondition(condExpr, WhileLoc)) {
     CondArg = condExpr;
     return StmtError();
@@ -729,7 +738,8 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
   DiagnoseUnusedExprResult(bodyStmt);
 
   CondArg.release();
-  return Owned(new (Context) WhileStmt(condExpr, bodyStmt, WhileLoc));
+  return Owned(new (Context) WhileStmt(ConditionVar, condExpr, bodyStmt, 
+                                       WhileLoc));
 }
 
 Action::OwningStmtResult

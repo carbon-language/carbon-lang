@@ -750,10 +750,13 @@ public:
 ///
 class WhileStmt : public Stmt {
   enum { COND, BODY, END_EXPR };
+  VarDecl *Var;
   Stmt* SubExprs[END_EXPR];
   SourceLocation WhileLoc;
 public:
-  WhileStmt(Expr *cond, Stmt *body, SourceLocation WL) : Stmt(WhileStmtClass) {
+  WhileStmt(VarDecl *Var, Expr *cond, Stmt *body, SourceLocation WL)
+    : Stmt(WhileStmtClass), Var(Var) 
+  {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[BODY] = body;
     WhileLoc = WL;
@@ -761,6 +764,17 @@ public:
 
   /// \brief Build an empty while statement.
   explicit WhileStmt(EmptyShell Empty) : Stmt(WhileStmtClass, Empty) { }
+
+  /// \brief Retrieve the variable declared in this "while" statement, if any.
+  ///
+  /// In the following example, "x" is the condition variable.
+  /// \code
+  /// while (int x = random()) {
+  ///   // ...
+  /// }
+  /// \endcode
+  VarDecl *getConditionVariable() const { return Var; }
+  void setConditionVariable(VarDecl *V) { Var = V; }
 
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}

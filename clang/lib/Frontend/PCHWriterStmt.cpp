@@ -193,6 +193,7 @@ void PCHStmtWriter::VisitSwitchStmt(SwitchStmt *S) {
 
 void PCHStmtWriter::VisitWhileStmt(WhileStmt *S) {
   VisitStmt(S);
+  Writer.AddDeclRef(S->getConditionVariable(), Record);
   Writer.WriteSubStmt(S->getCond());
   Writer.WriteSubStmt(S->getBody());
   Writer.AddSourceLocation(S->getWhileLoc(), Record);
