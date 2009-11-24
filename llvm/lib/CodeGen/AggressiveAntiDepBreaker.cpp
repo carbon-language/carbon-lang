@@ -581,12 +581,6 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
       return false;
   }
 
-  // FIXME: for now just handle single register in group case...
-  if (Regs.size() > 1) {
-    DEBUG(errs() << "\tMultiple rename registers in group\n");
-    return false;
-  }
-
 #ifndef NDEBUG
   // If DebugDiv > 0 then only rename (renamecnt % DebugDiv) == DebugMod
   if (DebugDiv > 0) {
