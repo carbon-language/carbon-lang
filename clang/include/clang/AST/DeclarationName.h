@@ -293,7 +293,7 @@ public:
 
   /// getIdentifier - Create a declaration name that is a simple
   /// identifier.
-  DeclarationName getIdentifier(IdentifierInfo *ID) {
+  DeclarationName getIdentifier(const IdentifierInfo *ID) {
     return DeclarationName(ID);
   }
 
