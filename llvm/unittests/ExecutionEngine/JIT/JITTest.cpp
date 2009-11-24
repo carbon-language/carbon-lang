@@ -457,6 +457,10 @@ TEST_F(JITTest, ModuleDeletion) {
             NumTablesDeallocated);
 }
 
+// ARM and PPC still emit stubs for calls since the target may be too far away
+// to call directly.  This #if can probably be removed when
+// http://llvm.org/PR5201 is fixed.
+#if !defined(__arm__) && !defined(__powerpc__) && !defined(__ppc__)
 typedef int (*FooPtr) ();
 
 TEST_F(JITTest, NoStubs) {
@@ -494,6 +498,7 @@ TEST_F(JITTest, NoStubs) {
 
   ASSERT_EQ(stubsBefore, RJMM->stubsAllocated);
 }
+#endif  // !ARM && !PPC
 
 TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
   TheJIT->DisableLazyCompilation(true);
