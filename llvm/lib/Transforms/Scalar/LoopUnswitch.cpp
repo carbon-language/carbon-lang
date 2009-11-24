@@ -296,7 +296,6 @@ static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
     // first exit.
     if (ExitBB != 0) return false;
     ExitBB = BB;
-    return true;
   }
   
   // Otherwise, this is an unvisited intra-loop node.  Check all successors.
