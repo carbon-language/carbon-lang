@@ -1481,6 +1481,7 @@ public:
                                  MultiTemplateParamsArg TemplateParameterLists,
                                              ExprTy *BitfieldWidth,
                                              ExprTy *Init,
+                                             bool IsDefinition,
                                              bool Deleted = false) {
     return DeclPtrTy();
   }

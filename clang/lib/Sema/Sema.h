@@ -2041,7 +2041,7 @@ public:
                                              Declarator &D,
                                  MultiTemplateParamsArg TemplateParameterLists,
                                              ExprTy *BitfieldWidth,
-                                             ExprTy *Init,
+                                             ExprTy *Init, bool IsDefinition,
                                              bool Deleted = false);
 
   virtual MemInitResult ActOnMemInitializer(DeclPtrTy ConstructorD,

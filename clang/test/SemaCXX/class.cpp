@@ -114,8 +114,7 @@ struct C4 {
 // PR5415 - don't hang!
 struct S
 {
-  void f(); // expected-note 2 {{previous declaration}}
-  // FIXME: the out-of-line error shouldn't be there
-  void S::f() {} // expected-error {{class member cannot be redeclared}} expected-error {{out-of-line}} expected-note {{previous definition}}
+  void f(); // expected-note 1 {{previous declaration}}
+  void S::f() {} // expected-error {{class member cannot be redeclared}} expected-note {{previous declaration}} expected-note {{previous definition}}
   void f() {} // expected-error {{class member cannot be redeclared}} expected-error {{redefinition}}
 };

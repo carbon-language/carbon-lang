@@ -790,7 +790,8 @@ std::string Sema::getAmbiguousPathsDisplayString(CXXBasePaths &Paths) {
 Sema::DeclPtrTy
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
-                               ExprTy *BW, ExprTy *InitExpr, bool Deleted) {
+                               ExprTy *BW, ExprTy *InitExpr, bool IsDefinition,
+                               bool Deleted) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationName Name = GetNameForDeclarator(D);
   Expr *BitWidth = static_cast<Expr*>(BW);
@@ -872,7 +873,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                          AS);
     assert(Member && "HandleField never returns null");
   } else {
-    Member = HandleDeclarator(S, D, move(TemplateParameterLists), false)
+    Member = HandleDeclarator(S, D, move(TemplateParameterLists), IsDefinition)
                .getAs<Decl>();
     if (!Member) {
       if (BitWidth) DeleteExpr(BitWidth);

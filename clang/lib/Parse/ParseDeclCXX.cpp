@@ -1237,6 +1237,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   move(TemplateParams),
                                                   BitfieldSize.release(),
                                                   Init.release(),
+                                                  /*IsDefinition*/Deleted,
                                                   Deleted);
     }
     if (ThisDecl)
