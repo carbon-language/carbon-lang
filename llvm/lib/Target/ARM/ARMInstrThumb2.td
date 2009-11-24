@@ -49,8 +49,8 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 // 8-bit immediate rotated by an arbitrary number of bits, or an 8-bit
 // immediate splatted into multiple bytes of the word. t2_so_imm values are
 // represented in the imm field in the same 12-bit form that they are encoded
-// into t2_so_imm instructions: the 8-bit immediate is the least significant bits
-// [bits 0-7], the 4-bit shift/splat amount is the next 4 bits [bits 8-11].
+// into t2_so_imm instructions: the 8-bit immediate is the least significant
+// bits [bits 0-7], the 4-bit shift/splat amount is the next 4 bits [bits 8-11].
 def t2_so_imm : Operand<i32>,
                 PatLeaf<(imm), [{
   return ARM_AM::getT2SOImmVal((uint32_t)N->getZExtValue()) != -1; 
@@ -267,9 +267,9 @@ multiclass T2I_bin_ii12rs<string opc, PatFrag opnode, bit Commutable = 0> {
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 
-/// T2I_adde_sube_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
-/// binary operation that produces a value and use and define the carry bit.
-/// It's not predicable.
+/// T2I_adde_sube_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns
+/// for a binary operation that produces a value and use and define the carry
+/// bit. It's not predicable.
 let Uses = [CPSR] in {
 multiclass T2I_adde_sube_irs<string opc, PatFrag opnode, bit Commutable = 0> {
    // shifted imm
@@ -630,7 +630,7 @@ def t2STR_POST : T2Iidxldst<(outs GPR:$base_wb),
                             AddrModeT2_i8, IndexModePost, IIC_iStoreiu,
                           "str", "\t$src, [$base], $offset", "$base = $base_wb",
              [(set GPR:$base_wb,
-                   (post_store GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+                  (post_store GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
 
 def t2STRH_PRE  : T2Iidxldst<(outs GPR:$base_wb),
                             (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
@@ -733,9 +733,9 @@ def : T2Pat<(and (srl GPR:$Src, (i32 8)), 0xFF00FF),
             (t2UXTB16r_rot GPR:$Src, 8)>;
 
 defm t2UXTAB : T2I_bin_rrot<"uxtab",
-                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
+                           BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
 defm t2UXTAH : T2I_bin_rrot<"uxtah",
-                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0xFFFF))>>;
+                           BinOpFrag<(add node:$LHS, (and node:$RHS, 0xFFFF))>>;
 }
 
 //===----------------------------------------------------------------------===//
