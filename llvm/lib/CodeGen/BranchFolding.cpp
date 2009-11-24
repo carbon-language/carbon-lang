@@ -1043,9 +1043,18 @@ bool BranchFolder::TailDuplicate(MachineBasicBlock *TailBB,
   // of one less than the tail-merge threshold. When optimizing for size,
   // duplicate only one, because one branch instruction can be eliminated to
   // compensate for the duplication.
-  unsigned MaxDuplicateCount =
-    MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize) ?
-    1 : TII->TailDuplicationLimit(*TailBB, TailMergeSize - 1);
+  unsigned MaxDuplicateCount;
+  if (MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+    MaxDuplicateCount = 1;
+  else if (TII->isProfitableToDuplicateIndirectBranch() &&
+           !TailBB->empty() && TailBB->back().getDesc().isIndirectBranch())
+    // If the target has hardware branch prediction that can handle indirect
+    // branches, duplicating them can often make them predictable when there
+    // are common paths through the code.  The limit needs to be high enough
+    // to allow undoing the effects of tail merging.
+    MaxDuplicateCount = 20;
+  else
+    MaxDuplicateCount = TailMergeSize - 1;
 
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.

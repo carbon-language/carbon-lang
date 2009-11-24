@@ -1027,14 +1027,10 @@ bool ARMBaseInstrInfo::isIdentical(const MachineInstr *MI0,
   return TargetInstrInfoImpl::isIdentical(MI0, MI1, MRI);
 }
 
-unsigned ARMBaseInstrInfo::TailDuplicationLimit(const MachineBasicBlock &MBB,
-                                                unsigned DefaultLimit) const {
+bool ARMBaseInstrInfo::isProfitableToDuplicateIndirectBranch() const {
   // If the target processor can predict indirect branches, it is highly
   // desirable to duplicate them, since it can often make them predictable.
-  if (!MBB.empty() && isIndirectBranchOpcode(MBB.back().getOpcode()) &&
-      getSubtarget().hasBranchTargetBuffer())
-    return DefaultLimit + 2;
-  return DefaultLimit;
+  return getSubtarget().hasBranchTargetBuffer();
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate
