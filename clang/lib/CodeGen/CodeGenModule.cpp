@@ -1734,6 +1734,10 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::NamespaceAlias:
     break;
   case Decl::CXXConstructor:
+    // Skip function templates
+    if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate())
+      return;
+      
     EmitCXXConstructors(cast<CXXConstructorDecl>(D));
     break;
   case Decl::CXXDestructor:
