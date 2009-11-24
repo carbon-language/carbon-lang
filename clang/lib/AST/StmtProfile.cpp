@@ -517,7 +517,11 @@ void StmtProfiler::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *S) {
 void
 StmtProfiler::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *S) {
   VisitExpr(S);
+  VisitNestedNameSpecifier(S->getQualifier());
   VisitName(S->getName());
+  ID.AddBoolean(S->hasExplicitTemplateArgs());
+  if (S->hasExplicitTemplateArgs())
+    VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
 void StmtProfiler::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *S) {
@@ -531,14 +535,9 @@ StmtProfiler::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *S) {
   VisitExpr(S);
   VisitName(S->getDeclName());
   VisitNestedNameSpecifier(S->getQualifier());
-  ID.AddBoolean(S->isAddressOfOperand());
-}
-
-void StmtProfiler::VisitTemplateIdRefExpr(TemplateIdRefExpr *S) {
-  VisitExpr(S);
-  VisitNestedNameSpecifier(S->getQualifier());
-  VisitTemplateName(S->getTemplateName());
-  VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
+  ID.AddBoolean(S->hasExplicitTemplateArgs());
+  if (S->hasExplicitTemplateArgs())
+    VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
 void StmtProfiler::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *S) {

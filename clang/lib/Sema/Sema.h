@@ -1389,6 +1389,16 @@ public:
                                              UnqualifiedId &Name,
                                              bool HasTrailingLParen,
                                              bool IsAddressOfOperand);
+
+  OwningExprResult LookupInObjCMethod(LookupResult &R,
+                                      Scope *S,
+                                      IdentifierInfo *II);
+
+  OwningExprResult ActOnDependentIdExpression(const CXXScopeSpec &SS,
+                                              DeclarationName Name,
+                                              SourceLocation NameLoc,
+                                              bool CheckForImplicitMember,
+                                const TemplateArgumentListInfo *TemplateArgs);
   
   OwningExprResult BuildDeclRefExpr(NamedDecl *D, QualType Ty,
                                     SourceLocation Loc,
@@ -1400,26 +1410,25 @@ public:
                                            FieldDecl *Field,
                                            Expr *BaseObjectExpr = 0,
                                       SourceLocation OpLoc = SourceLocation());
-  OwningExprResult ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
-                                            DeclarationName Name,
-                                            bool HasTrailingLParen,
-                                            const CXXScopeSpec *SS,
-                                            bool isAddressOfOperand = false);
-  OwningExprResult BuildImplicitMemberReferenceExpr(const CXXScopeSpec *SS,
-                                                    LookupResult &R);
-  bool UseArgumentDependentLookup(const CXXScopeSpec *SS,
+  OwningExprResult BuildImplicitMemberReferenceExpr(const CXXScopeSpec &SS,
+                                                    LookupResult &R,
+                                const TemplateArgumentListInfo *TemplateArgs);
+  bool UseArgumentDependentLookup(const CXXScopeSpec &SS,
                                   const LookupResult &R,
                                   bool HasTrailingLParen);
-  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
-                                            LookupResult &R, bool ADL);
-  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
-                                            SourceLocation Loc,
-                                            DeclarationName Name,
-                                            bool NeedsADL,
-                                            bool IsOverloaded,
-                                            NamedDecl * const *Decls,
-                                            unsigned NumDecls);
-  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec *SS,
+
+  OwningExprResult BuildQualifiedDeclarationNameExpr(const CXXScopeSpec &SS,
+                                                     DeclarationName Name,
+                                                     SourceLocation NameLoc);
+  OwningExprResult BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
+                                             DeclarationName Name,
+                                             SourceLocation NameLoc,
+                                const TemplateArgumentListInfo *TemplateArgs);
+
+  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec &SS,
+                                            LookupResult &R,
+                                            bool ADL);
+  OwningExprResult BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                             SourceLocation Loc,
                                             NamedDecl *D);
 
@@ -2110,7 +2119,7 @@ public:
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
-  bool isImplicitMemberReference(const CXXScopeSpec *SS, NamedDecl *D,
+  bool isImplicitMemberReference(const CXXScopeSpec &SS, NamedDecl *D,
                                  SourceLocation NameLoc, QualType &ThisType,
                                  QualType &MemberType);
   
@@ -2207,6 +2216,9 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //
+  void LookupTemplateName(LookupResult &R, Scope *S, const CXXScopeSpec &SS,
+                          QualType ObjectType, bool EnteringContext);
+
   virtual TemplateNameKind isTemplateName(Scope *S,
                                           const CXXScopeSpec &SS,
                                           UnqualifiedId &Name,
@@ -2286,18 +2298,14 @@ public:
                                             DeclSpec::TST TagSpec,
                                             SourceLocation TagLoc);
 
-  OwningExprResult BuildTemplateIdExpr(NestedNameSpecifier *Qualifier,
-                                       SourceRange QualifierRange,
-                                       TemplateName Template,
-                                       SourceLocation TemplateNameLoc,
+  OwningExprResult BuildTemplateIdExpr(const CXXScopeSpec &SS,
+                                       LookupResult &R,
+                                       bool RequiresADL,
                                const TemplateArgumentListInfo &TemplateArgs);
-
-  OwningExprResult ActOnTemplateIdExpr(const CXXScopeSpec &SS,
-                                       TemplateTy Template,
-                                       SourceLocation TemplateNameLoc,
-                                       SourceLocation LAngleLoc,
-                                       ASTTemplateArgsPtr TemplateArgs,
-                                       SourceLocation RAngleLoc);
+  OwningExprResult BuildQualifiedTemplateIdExpr(const CXXScopeSpec &SS,
+                                                DeclarationName Name,
+                                                SourceLocation NameLoc,
+                               const TemplateArgumentListInfo &TemplateArgs);
 
   virtual TemplateTy ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                                 const CXXScopeSpec &SS,

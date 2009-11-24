@@ -1178,18 +1178,6 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     return LV_Valid;
   }
 
-  case TemplateIdRefExprClass: {
-    const TemplateIdRefExpr *TID = cast<TemplateIdRefExpr>(this);
-    TemplateName Template = TID->getTemplateName();
-    NamedDecl *ND = Template.getAsTemplateDecl();
-    if (!ND)
-      ND = Template.getAsOverloadedFunctionDecl();
-    if (ND && DeclCanBeLvalue(ND, Ctx))
-      return LV_Valid;
-    
-    break;
-  } 
-    
   default:
     break;
   }
@@ -1534,7 +1522,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXPseudoDestructorExprClass:
   case Expr::UnresolvedLookupExprClass:
   case Expr::DependentScopeDeclRefExprClass:
-  case Expr::TemplateIdRefExprClass:
   case Expr::CXXConstructExprClass:
   case Expr::CXXBindTemporaryExprClass:
   case Expr::CXXExprWithTemporariesClass:

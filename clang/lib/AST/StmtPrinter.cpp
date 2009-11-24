@@ -487,20 +487,22 @@ void StmtPrinter::VisitDependentScopeDeclRefExpr(
                                            DependentScopeDeclRefExpr *Node) {
   Node->getQualifier()->print(OS, Policy);
   OS << Node->getDeclName().getAsString();
+  if (Node->hasExplicitTemplateArgs())
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                   Node->getTemplateArgs(),
+                                                   Node->getNumTemplateArgs(),
+                                                   Policy);
 }
 
 void StmtPrinter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node) {
-  OS << Node->getName().getAsString();
-}
-
-void StmtPrinter::VisitTemplateIdRefExpr(TemplateIdRefExpr *Node) {
   if (Node->getQualifier())
     Node->getQualifier()->print(OS, Policy);
-  Node->getTemplateName().print(OS, Policy, true);
-  OS << TemplateSpecializationType::PrintTemplateArgumentList(
-                                                      Node->getTemplateArgs(),
+  OS << Node->getName().getAsString();
+  if (Node->hasExplicitTemplateArgs())
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                   Node->getTemplateArgs(),
                                                    Node->getNumTemplateArgs(),
-                                                              Policy);
+                                                   Policy);
 }
 
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {

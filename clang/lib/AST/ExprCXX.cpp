@@ -122,6 +122,40 @@ Stmt::child_iterator CXXPseudoDestructorExpr::child_end() {
 }
 
 // UnresolvedLookupExpr
+UnresolvedLookupExpr *
+UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
+                             NestedNameSpecifier *Qualifier,
+                             SourceRange QualifierRange, DeclarationName Name,
+                             SourceLocation NameLoc, bool ADL,
+                             const TemplateArgumentListInfo &Args) 
+{
+  void *Mem = C.Allocate(sizeof(UnresolvedLookupExpr) + 
+                         ExplicitTemplateArgumentList::sizeFor(Args));
+  UnresolvedLookupExpr *ULE
+    = new (Mem) UnresolvedLookupExpr(Dependent ? C.DependentTy : C.OverloadTy,
+                                     Dependent, Qualifier, QualifierRange,
+                                     Name, NameLoc, ADL,
+                                     /*Overload*/ true,
+                                     /*ExplicitTemplateArgs*/ true);
+
+  reinterpret_cast<ExplicitTemplateArgumentList*>(ULE+1)->initializeFrom(Args);
+
+  return ULE;
+}
+
+bool UnresolvedLookupExpr::ComputeDependence(NamedDecl * const *Begin,
+                                             NamedDecl * const *End,
+                                       const TemplateArgumentListInfo *Args) {
+  for (NamedDecl * const *I = Begin; I != End; ++I)
+    if ((*I)->getDeclContext()->isDependentContext())
+      return true;
+
+  if (Args && TemplateSpecializationType::anyDependentTemplateArguments(*Args))
+    return true;
+
+  return false;
+}
+
 Stmt::child_iterator UnresolvedLookupExpr::child_begin() {
   return child_iterator();
 }
@@ -137,67 +171,36 @@ Stmt::child_iterator UnaryTypeTraitExpr::child_end() {
 }
 
 // DependentScopeDeclRefExpr
+DependentScopeDeclRefExpr *
+DependentScopeDeclRefExpr::Create(ASTContext &C,
+                                  NestedNameSpecifier *Qualifier,
+                                  SourceRange QualifierRange,
+                                  DeclarationName Name,
+                                  SourceLocation NameLoc,
+                                  const TemplateArgumentListInfo *Args) {
+  std::size_t size = sizeof(DependentScopeDeclRefExpr);
+  if (Args) size += ExplicitTemplateArgumentList::sizeFor(*Args);
+  void *Mem = C.Allocate(size);
+
+  DependentScopeDeclRefExpr *DRE
+    = new (Mem) DependentScopeDeclRefExpr(C.DependentTy,
+                                          Qualifier, QualifierRange,
+                                          Name, NameLoc,
+                                          Args != 0);
+
+  if (Args)
+    reinterpret_cast<ExplicitTemplateArgumentList*>(DRE+1)
+      ->initializeFrom(*Args);
+
+  return DRE;
+}
+
 StmtIterator DependentScopeDeclRefExpr::child_begin() {
   return child_iterator();
 }
 
 StmtIterator DependentScopeDeclRefExpr::child_end() {
   return child_iterator();
-}
-
-TemplateIdRefExpr::TemplateIdRefExpr(QualType T,
-                                     NestedNameSpecifier *Qualifier,
-                                     SourceRange QualifierRange,
-                                     TemplateName Template,
-                                     SourceLocation TemplateNameLoc,
-                                const TemplateArgumentListInfo &TemplateArgs)
-  : Expr(TemplateIdRefExprClass, T,
-         (Template.isDependent() ||
-          TemplateSpecializationType
-             ::anyDependentTemplateArguments(TemplateArgs)),
-         (Template.isDependent() ||
-          TemplateSpecializationType
-             ::anyDependentTemplateArguments(TemplateArgs))),
-    Qualifier(Qualifier), QualifierRange(QualifierRange), Template(Template),
-    TemplateNameLoc(TemplateNameLoc),
-    LAngleLoc(TemplateArgs.getLAngleLoc()),
-    RAngleLoc(TemplateArgs.getRAngleLoc()),
-    NumTemplateArgs(TemplateArgs.size()) {
-  TemplateArgumentLoc *StoredTemplateArgs
-    = reinterpret_cast<TemplateArgumentLoc *> (this+1);
-  for (unsigned I = 0; I != NumTemplateArgs; ++I)
-    new (StoredTemplateArgs + I) TemplateArgumentLoc(TemplateArgs[I]);
-}
-
-TemplateIdRefExpr *
-TemplateIdRefExpr::Create(ASTContext &Context, QualType T,
-                          NestedNameSpecifier *Qualifier,
-                          SourceRange QualifierRange,
-                          TemplateName Template, SourceLocation TemplateNameLoc,
-                          const TemplateArgumentListInfo &TemplateArgs) {
-  void *Mem = Context.Allocate(sizeof(TemplateIdRefExpr) +
-                          sizeof(TemplateArgumentLoc) * TemplateArgs.size());
-  return new (Mem) TemplateIdRefExpr(T, Qualifier, QualifierRange, Template,
-                                     TemplateNameLoc, TemplateArgs);
-}
-
-void TemplateIdRefExpr::DoDestroy(ASTContext &Context) {
-  const TemplateArgumentLoc *TemplateArgs = getTemplateArgs();
-  for (unsigned I = 0; I != NumTemplateArgs; ++I)
-    if (Expr *E = TemplateArgs[I].getArgument().getAsExpr())
-      E->Destroy(Context);
-  this->~TemplateIdRefExpr();
-  Context.Deallocate(this);
-}
-
-Stmt::child_iterator TemplateIdRefExpr::child_begin() {
-  // FIXME: Walk the expressions in the template arguments (?)
-  return Stmt::child_iterator();
-}
-
-Stmt::child_iterator TemplateIdRefExpr::child_end() {
-  // FIXME: Walk the expressions in the template arguments (?)
-  return Stmt::child_iterator();
 }
 
 bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {

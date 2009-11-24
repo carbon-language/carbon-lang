@@ -1214,6 +1214,10 @@ def err_template_kw_refers_to_non_template : Error<
     "%0 following the 'template' keyword does not refer to a template">;
 def err_template_kw_refers_to_function_template : Error<
     "%0 following the 'template' keyword refers to a function template">;
+def err_template_kw_refers_to_class_template : Error<
+    "'%0%1' instantiated to a class template, not a function template">;
+def note_referenced_class_template : Error<
+    "class template declared here">;
 
 // C++0x Variadic Templates
 def err_template_param_pack_default_arg : Error<

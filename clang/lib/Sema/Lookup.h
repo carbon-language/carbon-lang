@@ -379,14 +379,14 @@ public:
   class Filter {
     LookupResult &Results;
     unsigned I;
-    bool ErasedAny;
+    bool Changed;
 #ifndef NDEBUG
     bool CalledDone;
 #endif
     
     friend class LookupResult;
     Filter(LookupResult &Results)
-      : Results(Results), I(0), ErasedAny(false)
+      : Results(Results), I(0), Changed(false)
 #ifndef NDEBUG
       , CalledDone(false)
 #endif
@@ -413,7 +413,12 @@ public:
     void erase() {
       Results.Decls[--I] = Results.Decls.back();
       Results.Decls.pop_back();
-      ErasedAny = true;
+      Changed = true;
+    }
+
+    void replace(NamedDecl *D) {
+      Results.Decls[I-1] = D;
+      Changed = true;
     }
 
     void done() {
@@ -422,7 +427,7 @@ public:
       CalledDone = true;
 #endif
 
-      if (ErasedAny)
+      if (Changed)
         Results.resolveKindAfterFilter();
     }
   };

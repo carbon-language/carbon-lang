@@ -177,9 +177,10 @@ static void HandleExtVectorTypeAttr(Scope *scope, Decl *d,
 
   // Special case where the argument is a template id.
   if (Attr.getParameterName()) {
-    sizeExpr = S.ActOnDeclarationNameExpr(scope, Attr.getLoc(),
-                               Attr.getParameterName(),
-                               false, 0, false).takeAs<Expr>();
+    CXXScopeSpec SS;
+    UnqualifiedId id;
+    id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
+    sizeExpr = S.ActOnIdExpression(scope, SS, id, false, false).takeAs<Expr>();
   } else {
     // check the attribute arguments.
     if (Attr.getNumArgs() != 1) {

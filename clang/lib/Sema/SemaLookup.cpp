@@ -1544,11 +1544,7 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
 
     if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(Arg))
       Functions.append(ULE->decls_begin(), ULE->decls_end());
-    else if (TemplateIdRefExpr *TIRE = dyn_cast<TemplateIdRefExpr>(Arg)) {
-      TemplateName TName = TIRE->getTemplateName();
-      OverloadedFunctionDecl *Ovl = TName.getAsOverloadedFunctionDecl();
-      Functions.append(Ovl->function_begin(), Ovl->function_end());
-    } else
+    else
       continue;
 
     for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Functions.begin(),

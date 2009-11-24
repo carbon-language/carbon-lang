@@ -2306,7 +2306,7 @@ Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
 /// \returns true if this is an implicit member reference (in which case 
 /// \p ThisType and \p MemberType will be set), or false if it is not an
 /// implicit member reference.
-bool Sema::isImplicitMemberReference(const CXXScopeSpec *SS, NamedDecl *D,
+bool Sema::isImplicitMemberReference(const CXXScopeSpec &SS, NamedDecl *D,
                                      SourceLocation NameLoc, QualType &ThisType,
                                      QualType &MemberType) {
   // If this isn't a C++ method, then it isn't an implicit member reference.

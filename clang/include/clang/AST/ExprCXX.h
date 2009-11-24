@@ -1052,25 +1052,47 @@ class UnresolvedLookupExpr : public Expr {
   /// trivially rederivable if we urgently need to kill this field.
   bool Overloaded;
 
-  UnresolvedLookupExpr(QualType T,
+  /// True if the name looked up had explicit template arguments.
+  /// This requires all the results to be function templates.  
+  bool HasExplicitTemplateArgs;
+
+  UnresolvedLookupExpr(QualType T, bool Dependent,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
                        DeclarationName Name, SourceLocation NameLoc,
-                       bool RequiresADL, bool Overloaded)
-    : Expr(UnresolvedLookupExprClass, T, false, false),
+                       bool RequiresADL, bool Overloaded, bool HasTemplateArgs)
+    : Expr(UnresolvedLookupExprClass, T, Dependent, Dependent),
       Name(Name), Qualifier(Qualifier), QualifierRange(QRange),
-      NameLoc(NameLoc), RequiresADL(RequiresADL), Overloaded(Overloaded)
+      NameLoc(NameLoc), RequiresADL(RequiresADL), Overloaded(Overloaded),
+      HasExplicitTemplateArgs(HasTemplateArgs)
   {}
 
 public:
   static UnresolvedLookupExpr *Create(ASTContext &C,
+                                      bool Dependent,
                                       NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
                                       DeclarationName Name,
                                       SourceLocation NameLoc,
                                       bool ADL, bool Overloaded) {
-    return new(C) UnresolvedLookupExpr(C.OverloadTy, Qualifier, QualifierRange,
-                                       Name, NameLoc, ADL, Overloaded);
+    return new(C) UnresolvedLookupExpr(Dependent ? C.DependentTy : C.OverloadTy,
+                                       Dependent, Qualifier, QualifierRange,
+                                       Name, NameLoc, ADL, Overloaded, false);
   }
+
+  static UnresolvedLookupExpr *Create(ASTContext &C,
+                                      bool Dependent,
+                                      NestedNameSpecifier *Qualifier,
+                                      SourceRange QualifierRange,
+                                      DeclarationName Name,
+                                      SourceLocation NameLoc,
+                                      bool ADL,
+                                      const TemplateArgumentListInfo &Args);
+
+  /// Computes whether an unresolved lookup on the given declarations
+  /// and optional template arguments is type- and value-dependent.
+  static bool ComputeDependence(NamedDecl * const *Begin,
+                                NamedDecl * const *End,
+                                const TemplateArgumentListInfo *Args);
 
   void addDecl(NamedDecl *Decl) {
     Results.addDecl(Decl);
@@ -1098,11 +1120,47 @@ public:
 
   /// Fetches the range of the nested-name qualifier.
   SourceRange getQualifierRange() const { return QualifierRange; }
+
+  /// Determines whether this lookup had explicit template arguments.
+  bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
+
+  // Note that, inconsistently with the explicit-template-argument AST
+  // nodes, users are *forbidden* from calling these methods on objects
+  // without explicit template arguments.
+
+  /// Gets a reference to the explicit template argument list.
+  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+    assert(hasExplicitTemplateArgs());
+    return *reinterpret_cast<const ExplicitTemplateArgumentList*>(this + 1);
+  }
+
+  /// \brief Copies the template arguments (if present) into the given
+  /// structure.
+  void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
+    getExplicitTemplateArgs().copyInto(List);
+  }
   
+  SourceLocation getLAngleLoc() const {
+    return getExplicitTemplateArgs().LAngleLoc;
+  }
+
+  SourceLocation getRAngleLoc() const {
+    return getExplicitTemplateArgs().RAngleLoc;
+  }
+
+  TemplateArgumentLoc const *getTemplateArgs() const {
+    return getExplicitTemplateArgs().getTemplateArgs();
+  }
+
+  unsigned getNumTemplateArgs() const {
+    return getExplicitTemplateArgs().NumTemplateArgs;
+  }
 
   virtual SourceRange getSourceRange() const {
-    if (Qualifier) return SourceRange(QualifierRange.getBegin(), NameLoc);
-    return SourceRange(NameLoc, NameLoc);
+    SourceRange Range(NameLoc);
+    if (Qualifier) Range.setBegin(QualifierRange.getBegin());
+    if (hasExplicitTemplateArgs()) Range.setEnd(getRAngleLoc());
+    return Range;
   }
 
   virtual StmtIterator child_begin();
@@ -1141,19 +1199,30 @@ class DependentScopeDeclRefExpr : public Expr {
 
   /// \brief The nested-name-specifier that qualifies this unresolved
   /// declaration name.
-  NestedNameSpecifier *NNS;
+  NestedNameSpecifier *Qualifier;
 
-  /// \brief Whether this expr is an address of (&) operand.
-  /// FIXME: Stash this bit into NNS!
-  bool IsAddressOfOperand;
+  /// \brief Whether the name includes explicit template arguments.
+  bool HasExplicitTemplateArgs;
+
+  DependentScopeDeclRefExpr(QualType T,
+                            NestedNameSpecifier *Qualifier,
+                            SourceRange QualifierRange,
+                            DeclarationName Name,
+                            SourceLocation NameLoc,
+                            bool HasExplicitTemplateArgs)
+    : Expr(DependentScopeDeclRefExprClass, T, true, true),
+      Name(Name), Loc(NameLoc),
+      QualifierRange(QualifierRange), Qualifier(Qualifier),
+      HasExplicitTemplateArgs(HasExplicitTemplateArgs)
+  {}
 
 public:
-  DependentScopeDeclRefExpr(DeclarationName N, QualType T, SourceLocation L,
-                            SourceRange R, NestedNameSpecifier *NNS,
-                            bool IsAddressOfOperand)
-    : Expr(DependentScopeDeclRefExprClass, T, true, true),
-      Name(N), Loc(L), QualifierRange(R), NNS(NNS),
-      IsAddressOfOperand(IsAddressOfOperand) { }
+  static DependentScopeDeclRefExpr *Create(ASTContext &C,
+                                           NestedNameSpecifier *Qualifier,
+                                           SourceRange QualifierRange,
+                                           DeclarationName Name,
+                                           SourceLocation NameLoc,
+                              const TemplateArgumentListInfo *TemplateArgs = 0);
 
   /// \brief Retrieve the name that this expression refers to.
   DeclarationName getDeclName() const { return Name; }
@@ -1166,13 +1235,48 @@ public:
 
   /// \brief Retrieve the nested-name-specifier that qualifies this
   /// declaration.
-  NestedNameSpecifier *getQualifier() const { return NNS; }
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
 
-  /// \brief Retrieve whether this is an address of (&) operand.
+  /// Determines whether this lookup had explicit template arguments.
+  bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
 
-  bool isAddressOfOperand() const { return IsAddressOfOperand; }
+  // Note that, inconsistently with the explicit-template-argument AST
+  // nodes, users are *forbidden* from calling these methods on objects
+  // without explicit template arguments.
+
+  /// Gets a reference to the explicit template argument list.
+  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+    assert(hasExplicitTemplateArgs());
+    return *reinterpret_cast<const ExplicitTemplateArgumentList*>(this + 1);
+  }
+
+  /// \brief Copies the template arguments (if present) into the given
+  /// structure.
+  void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
+    getExplicitTemplateArgs().copyInto(List);
+  }
+  
+  SourceLocation getLAngleLoc() const {
+    return getExplicitTemplateArgs().LAngleLoc;
+  }
+
+  SourceLocation getRAngleLoc() const {
+    return getExplicitTemplateArgs().RAngleLoc;
+  }
+
+  TemplateArgumentLoc const *getTemplateArgs() const {
+    return getExplicitTemplateArgs().getTemplateArgs();
+  }
+
+  unsigned getNumTemplateArgs() const {
+    return getExplicitTemplateArgs().NumTemplateArgs;
+  }
+
   virtual SourceRange getSourceRange() const {
-    return SourceRange(QualifierRange.getBegin(), getLocation());
+    SourceRange Range(QualifierRange.getBegin(), getLocation());
+    if (hasExplicitTemplateArgs())
+      Range.setEnd(getRAngleLoc());
+    return Range;
   }
 
   static bool classof(const Stmt *T) {
@@ -1182,105 +1286,6 @@ public:
 
   virtual StmtIterator child_begin();
   virtual StmtIterator child_end();
-};
-
-/// \brief An expression that refers to a C++ template-id, such as
-/// @c isa<FunctionDecl>.
-class TemplateIdRefExpr : public Expr {
-  /// \brief If this template-id was qualified-id, e.g., @c std::sort<int>,
-  /// this nested name specifier contains the @c std::.
-  NestedNameSpecifier *Qualifier;
-
-  /// \brief If this template-id was a qualified-id, e.g., @c std::sort<int>,
-  /// this covers the source code range of the @c std::.
-  SourceRange QualifierRange;
-
-  /// \brief The actual template to which this template-id refers.
-  TemplateName Template;
-
-  /// \brief The source location of the template name.
-  SourceLocation TemplateNameLoc;
-
-  /// \brief The source location of the left angle bracket ('<');
-  SourceLocation LAngleLoc;
-
-  /// \brief The source location of the right angle bracket ('>');
-  SourceLocation RAngleLoc;
-
-  /// \brief The number of template arguments in TemplateArgs.
-  unsigned NumTemplateArgs;
-
-  TemplateIdRefExpr(QualType T,
-                    NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
-                    TemplateName Template, SourceLocation TemplateNameLoc,
-                    const TemplateArgumentListInfo &TemplateArgs);
-
-  virtual void DoDestroy(ASTContext &Context);
-
-public:
-  static TemplateIdRefExpr *
-  Create(ASTContext &Context, QualType T,
-         NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
-         TemplateName Template, SourceLocation TemplateNameLoc,
-         const TemplateArgumentListInfo &TemplateArgs);
-
-  /// \brief Retrieve the nested name specifier used to qualify the name of
-  /// this template-id, e.g., the "std::sort" in @c std::sort<int>, or NULL
-  /// if this template-id was an unqualified-id.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-
-  /// \brief Retrieve the source range describing the nested name specifier
-  /// used to qualified the name of this template-id, if the name was qualified.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-
-  /// \brief Retrieve the name of the template referenced, e.g., "sort" in
-  /// @c std::sort<int>;
-  TemplateName getTemplateName() const { return Template; }
-
-  /// \brief Retrieve the location of the name of the template referenced, e.g.,
-  /// the location of "sort" in @c std::sort<int>.
-  SourceLocation getTemplateNameLoc() const { return TemplateNameLoc; }
-
-  /// \brief Retrieve the location of the left angle bracket following the
-  /// template name ('<').
-  SourceLocation getLAngleLoc() const { return LAngleLoc; }
-
-  /// \brief Retrieve the template arguments provided as part of this
-  /// template-id.
-  const TemplateArgumentLoc *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgumentLoc *>(this + 1);
-  }
-
-  /// \brief Retrieve the number of template arguments provided as part of this
-  /// template-id.
-  unsigned getNumTemplateArgs() const { return NumTemplateArgs; }
-
-  /// \brief Copies the template-argument information into the given
-  /// structure.
-  void copyTemplateArgumentsInto(TemplateArgumentListInfo &Info) const {
-    Info.setLAngleLoc(LAngleLoc);
-    Info.setRAngleLoc(RAngleLoc);
-    for (unsigned i = 0; i < NumTemplateArgs; ++i)
-      Info.addArgument(getTemplateArgs()[i]);
-  }
-
-  /// \brief Retrieve the location of the right angle bracket following the
-  /// template arguments ('>').
-  SourceLocation getRAngleLoc() const { return RAngleLoc; }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(Qualifier? QualifierRange.getBegin() : TemplateNameLoc,
-                       RAngleLoc);
-  }
-
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == TemplateIdRefExprClass;
-  }
-  static bool classof(const TemplateIdRefExpr *) { return true; }
 };
 
 class CXXExprWithTemporaries : public Expr {

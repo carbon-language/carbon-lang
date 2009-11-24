@@ -14,6 +14,7 @@
 #define LLVM_CLANG_SEMA_TREETRANSFORM_H
 
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
@@ -581,16 +582,6 @@ public:
                                    bool TemplateKW,
                                    TemplateDecl *Template);
 
-  /// \brief Build a new template name given a nested name specifier, a flag
-  /// indicating whether the "template" keyword was provided, and a set of
-  /// overloaded function templates.
-  ///
-  /// By default, builds the new template name directly. Subclasses may override
-  /// this routine to provide different behavior.
-  TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
-                                   bool TemplateKW,
-                                   OverloadedFunctionDecl *Ovl);
-
   /// \brief Build a new template name given a nested name specifier and the
   /// name that is referred to as a template.
   ///
@@ -810,6 +801,17 @@ public:
                                      MultiStmtArg Handlers) {
     return getSema().ActOnCXXTryBlock(TryLoc, move(TryBlock), move(Handlers));
   }
+
+  /// \brief Build a new expression that references a declaration.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildDeclarationNameExpr(const CXXScopeSpec &SS,
+                                              LookupResult &R,
+                                              bool RequiresADL) {
+    return getSema().BuildDeclarationNameExpr(SS, R, RequiresADL);
+  }
+
 
   /// \brief Build a new expression that references a declaration.
   ///
@@ -1449,29 +1451,27 @@ public:
                                                 SourceRange QualifierRange,
                                                 DeclarationName Name,
                                                 SourceLocation Location,
-                                                bool IsAddressOfOperand) {
+                              const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
     SS.setRange(QualifierRange);
     SS.setScopeRep(NNS);
-    return getSema().ActOnDeclarationNameExpr(/*Scope=*/0,
-                                              Location,
-                                              Name,
-                                              /*Trailing lparen=*/false,
-                                              &SS,
-                                              IsAddressOfOperand);
+
+    if (TemplateArgs)
+      return getSema().BuildQualifiedTemplateIdExpr(SS, Name, Location,
+                                                    *TemplateArgs);
+
+    return getSema().BuildQualifiedDeclarationNameExpr(SS, Name, Location);
   }
 
   /// \brief Build a new template-id expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildTemplateIdExpr(NestedNameSpecifier *Qualifier,
-                                         SourceRange QualifierRange,
-                                         TemplateName Template,
-                                         SourceLocation TemplateLoc,
+  OwningExprResult RebuildTemplateIdExpr(const CXXScopeSpec &SS,
+                                         LookupResult &R,
+                                         bool RequiresADL,
                               const TemplateArgumentListInfo &TemplateArgs) {
-    return getSema().BuildTemplateIdExpr(Qualifier, QualifierRange,
-                                         Template, TemplateLoc, TemplateArgs);
+    return getSema().BuildTemplateIdExpr(SS, R, RequiresADL, TemplateArgs);
   }
 
   /// \brief Build a new object-construction expression.
@@ -1857,20 +1857,8 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
                                               TransTemplate);
     }
 
-    OverloadedFunctionDecl *Ovl = QTN->getOverloadedFunctionDecl();
-    assert(Ovl && "Not a template name or an overload set?");
-    OverloadedFunctionDecl *TransOvl
-      = cast_or_null<OverloadedFunctionDecl>(getDerived().TransformDecl(Ovl));
-    if (!TransOvl)
-      return TemplateName();
-
-    if (!getDerived().AlwaysRebuild() &&
-        NNS == QTN->getQualifier() &&
-        TransOvl == Ovl)
-      return Name;
-
-    return getDerived().RebuildTemplateName(NNS, QTN->hasTemplateKeyword(),
-                                            TransOvl);
+    // These should be getting filtered out before they make it into the AST.
+    assert(false && "overloaded template name survived to here");
   }
 
   if (DependentTemplateName *DTN = Name.getAsDependentTemplateName()) {
@@ -1906,18 +1894,9 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
     return TemplateName(TransTemplate);
   }
 
-  OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl();
-  assert(Ovl && "Not a template name or an overload set?");
-  OverloadedFunctionDecl *TransOvl
-    = cast_or_null<OverloadedFunctionDecl>(getDerived().TransformDecl(Ovl));
-  if (!TransOvl)
-    return TemplateName();
-
-  if (!getDerived().AlwaysRebuild() &&
-      TransOvl == Ovl)
-    return Name;
-
-  return TemplateName(TransOvl);
+  // These should be getting filtered out before they reach the AST.
+  assert(false && "overloaded function decl survived to here");
+  return TemplateName();
 }
 
 template<typename Derived>
@@ -4562,10 +4541,65 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformUnresolvedLookupExpr(
-                                                  UnresolvedLookupExpr *E,
+                                                  UnresolvedLookupExpr *Old,
                                                   bool isAddressOfOperand) {
-  // There is no transformation we can apply to an unresolved lookup.
-  return SemaRef.Owned(E->Retain());
+  TemporaryBase Rebase(*this, Old->getNameLoc(), DeclarationName());
+
+  LookupResult R(SemaRef, Old->getName(), Old->getNameLoc(),
+                 Sema::LookupOrdinaryName);
+
+  // Transform all the decls.
+  for (UnresolvedLookupExpr::decls_iterator I = Old->decls_begin(),
+         E = Old->decls_end(); I != E; ++I) {
+    NamedDecl *InstD = static_cast<NamedDecl*>(getDerived().TransformDecl(*I));
+    if (!InstD)
+      return SemaRef.ExprError();
+
+    // Expand using declarations.
+    if (isa<UsingDecl>(InstD)) {
+      UsingDecl *UD = cast<UsingDecl>(InstD);
+      for (UsingDecl::shadow_iterator I = UD->shadow_begin(),
+             E = UD->shadow_end(); I != E; ++I)
+        R.addDecl(*I);
+      continue;
+    }
+
+    R.addDecl(InstD);
+  }
+
+  // Resolve a kind, but don't do any further analysis.  If it's
+  // ambiguous, the callee needs to deal with it.
+  R.resolveKind();
+
+  // Rebuild the nested-name qualifier, if present.
+  CXXScopeSpec SS;
+  NestedNameSpecifier *Qualifier = 0;
+  if (Old->getQualifier()) {
+    Qualifier = getDerived().TransformNestedNameSpecifier(Old->getQualifier(),
+                                                    Old->getQualifierRange());
+    if (!Qualifier)
+      return SemaRef.ExprError();
+    
+    SS.setScopeRep(Qualifier);
+    SS.setRange(Old->getQualifierRange());
+  }
+
+  // If we have no template arguments, it's a normal declaration name.
+  if (!Old->hasExplicitTemplateArgs())
+    return getDerived().RebuildDeclarationNameExpr(SS, R, Old->requiresADL());
+
+  // If we have template arguments, rebuild them, then rebuild the
+  // templateid expression.
+  TemplateArgumentListInfo TransArgs(Old->getLAngleLoc(), Old->getRAngleLoc());
+  for (unsigned I = 0, N = Old->getNumTemplateArgs(); I != N; ++I) {
+    TemplateArgumentLoc Loc;
+    if (getDerived().TransformTemplateArgument(Old->getTemplateArgs()[I], Loc))
+      return SemaRef.ExprError();
+    TransArgs.addArgument(Loc);
+  }
+
+  return getDerived().RebuildTemplateIdExpr(SS, R, Old->requiresADL(),
+                                            TransArgs);
 }
 
 template<typename Derived>
@@ -4609,35 +4643,16 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
   if (!Name)
     return SemaRef.ExprError();
 
-  if (!getDerived().AlwaysRebuild() &&
-      NNS == E->getQualifier() &&
-      Name == E->getDeclName())
-    return SemaRef.Owned(E->Retain());
+  if (!E->hasExplicitTemplateArgs()) {
+    if (!getDerived().AlwaysRebuild() &&
+        NNS == E->getQualifier() &&
+        Name == E->getDeclName())
+      return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
-                                                   E->getQualifierRange(),
-                                                   Name,
-                                                   E->getLocation(),
-                                                   isAddressOfOperand);
-}
-
-template<typename Derived>
-Sema::OwningExprResult
-TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E,
-                                                   bool isAddressOfOperand) {
-  TemporaryBase Rebase(*this, E->getTemplateNameLoc(), DeclarationName());
-  
-  TemplateName Template
-    = getDerived().TransformTemplateName(E->getTemplateName());
-  if (Template.isNull())
-    return SemaRef.ExprError();
-
-  NestedNameSpecifier *Qualifier = 0;
-  if (E->getQualifier()) {
-    Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                      E->getQualifierRange());
-    if (!Qualifier)
-      return SemaRef.ExprError();
+    return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
+                                                         E->getQualifierRange(),
+                                                         Name, E->getLocation(),
+                                                         /*TemplateArgs*/ 0);
   }
 
   TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
@@ -4648,15 +4663,10 @@ TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E,
     TransArgs.addArgument(Loc);
   }
 
-  // FIXME: Would like to avoid rebuilding if nothing changed, but we can't
-  // compare template arguments (yet).
-
-  // FIXME: It's possible that we'll find out now that the template name
-  // actually refers to a type, in which case the caller is actually dealing
-  // with a functional cast. Give a reasonable error message!
-  return getDerived().RebuildTemplateIdExpr(Qualifier, E->getQualifierRange(),
-                                            Template, E->getTemplateNameLoc(),
-                                            TransArgs);
+  return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
+                                                       E->getQualifierRange(),
+                                                       Name, E->getLocation(),
+                                                       &TransArgs);
 }
 
 template<typename Derived>
@@ -5320,14 +5330,6 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                             TemplateDecl *Template) {
   return SemaRef.Context.getQualifiedTemplateName(Qualifier, TemplateKW,
                                                   Template);
-}
-
-template<typename Derived>
-TemplateName
-TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
-                                            bool TemplateKW,
-                                            OverloadedFunctionDecl *Ovl) {
-  return SemaRef.Context.getQualifiedTemplateName(Qualifier, TemplateKW, Ovl);
 }
 
 template<typename Derived>

@@ -1967,8 +1967,10 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, IdentifierInfo *FName,
   if (!CDecl && FName->isStr("super")) {
     // "super" may be the name of a variable, in which case we are
     // probably calling an instance method.
-    OwningExprResult Super = ActOnDeclarationNameExpr(S, FNameLoc, FName,
-                                                      false, 0, false);
+    CXXScopeSpec SS;
+    UnqualifiedId id;
+    id.setIdentifier(FName, FNameLoc);
+    OwningExprResult Super = ActOnIdExpression(S, SS, id, false, false);
     return CodeCompleteObjCInstanceMessage(S, (Expr *)Super.get(),
                                            SelIdents, NumSelIdents);
   }

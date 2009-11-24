@@ -557,9 +557,6 @@ namespace {
                                                    bool isAddressOfOperand);
     Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E,
                                                 bool isAddressOfOperand);
-    Sema::OwningExprResult TransformUnresolvedLookupExpr(
-                                                UnresolvedLookupExpr *E,
-                                                bool isAddressOfOperand);
 
     Sema::OwningExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E,
                                                       bool isAddressOfOperand);
@@ -698,49 +695,6 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E,
 }
 
 Sema::OwningExprResult
-TemplateInstantiator::TransformUnresolvedLookupExpr(UnresolvedLookupExpr *Old,
-                                                    bool isAddressOfOperand) {
-  LookupResult R(SemaRef, Old->getName(), Old->getNameLoc(),
-                 Sema::LookupOrdinaryName);
-
-  for (UnresolvedLookupExpr::decls_iterator I = Old->decls_begin(),
-         E = Old->decls_end(); I != E; ++I) {
-    NamedDecl *InstD = SemaRef.FindInstantiatedDecl(*I, TemplateArgs);
-    if (!InstD)
-      return SemaRef.ExprError();
-
-    // The lookup values can never instantiate to a UsingDecl, because
-    // only UnresolvedUsingValueDecls do that, and those can never
-    // appear in UnresolvedLookupExprs (only UnresolvedMemberLookupExprs).
-    assert(!isa<UsingDecl>(InstD));
-
-    // Analogously.
-    assert(!isa<UnresolvedUsingValueDecl>(InstD->getUnderlyingDecl()));
-
-    R.addDecl(InstD);
-  }
-
-  R.resolveKind();
-
-  // This shouldn't be possible.
-  assert(!R.isAmbiguous());
-
-  CXXScopeSpec SS;
-  NestedNameSpecifier *Qualifier = 0;
-  if (Old->getQualifier()) {
-    Qualifier = TransformNestedNameSpecifier(Old->getQualifier(),
-                                             Old->getQualifierRange());
-    if (!Qualifier)
-      return SemaRef.ExprError();
-    
-    SS.setScopeRep(Qualifier);
-    SS.setRange(Old->getQualifierRange());
-  }
-
-  return SemaRef.BuildDeclarationNameExpr(&SS, R, Old->requiresADL());
-}
-
-Sema::OwningExprResult
 TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
                                            bool isAddressOfOperand) {
   // FIXME: Clean this up a bit
@@ -847,7 +801,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
     SS.setRange(E->getQualifierRange());
   }
   
-  return SemaRef.BuildDeclarationNameExpr(&SS, E->getLocation(), InstD);
+  return SemaRef.BuildDeclarationNameExpr(SS, E->getLocation(), InstD);
 }
 
 Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(

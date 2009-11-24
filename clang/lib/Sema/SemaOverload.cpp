@@ -4345,29 +4345,19 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // Try to dig out the overloaded function.
   OverloadedFunctionDecl *Ovl = 0;
   FunctionTemplateDecl *FunctionTemplate = 0;
-  if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(OvlExpr)) {
-    assert(!isa<OverloadedFunctionDecl>(DR->getDecl()));
-    FunctionTemplate = dyn_cast<FunctionTemplateDecl>(DR->getDecl());
-    HasExplicitTemplateArgs = DR->hasExplicitTemplateArgumentList();
-    if (HasExplicitTemplateArgs)
-      DR->copyTemplateArgumentsInto(ExplicitTemplateArgs);
-  } else if (UnresolvedLookupExpr *UL
+  if (UnresolvedLookupExpr *UL
                = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
     Fns.append(UL->decls_begin(), UL->decls_end());
+    if (UL->hasExplicitTemplateArgs()) {
+      HasExplicitTemplateArgs = true;
+      UL->copyTemplateArgumentsInto(ExplicitTemplateArgs);
+    }
   } else if (MemberExpr *ME = dyn_cast<MemberExpr>(OvlExpr)) {
     Ovl = dyn_cast<OverloadedFunctionDecl>(ME->getMemberDecl());
     FunctionTemplate = dyn_cast<FunctionTemplateDecl>(ME->getMemberDecl());
     HasExplicitTemplateArgs = ME->hasExplicitTemplateArgumentList();
     if (HasExplicitTemplateArgs)
       ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
-  } else if (TemplateIdRefExpr *TIRE = dyn_cast<TemplateIdRefExpr>(OvlExpr)) {
-    TemplateName Name = TIRE->getTemplateName();
-    Ovl = Name.getAsOverloadedFunctionDecl();
-    FunctionTemplate = 
-      dyn_cast_or_null<FunctionTemplateDecl>(Name.getAsTemplateDecl());
-    
-    HasExplicitTemplateArgs = true;
-    TIRE->copyTemplateArgumentsInto(ExplicitTemplateArgs);
   }
 
   if (Ovl) Fns.append(Ovl->function_begin(), Ovl->function_end());
@@ -4693,7 +4683,8 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
 
   if (Input->isTypeDependent()) {
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, 0, SourceRange(), OpName, OpLoc,
+      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
+                                     0, SourceRange(), OpName, OpLoc,
                                      /*ADL*/ true, IsOverloaded(Functions));
     for (FunctionSet::iterator Func = Functions.begin(),
                             FuncEnd = Functions.end();
@@ -4849,7 +4840,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     }
     
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, 0, SourceRange(), OpName, OpLoc,
+      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
+                                     0, SourceRange(), OpName, OpLoc,
                                      /* ADL */ true, IsOverloaded(Functions));
                                      
     for (FunctionSet::iterator Func = Functions.begin(),
@@ -5014,9 +5006,10 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
   if (Args[0]->isTypeDependent() || Args[1]->isTypeDependent()) {
 
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, 0, SourceRange(), OpName, LLoc,
+      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
+                                     0, SourceRange(), OpName, LLoc,
                                      /*ADL*/ true, /*Overloaded*/ false);
-    // Can't add an actual overloads yet
+    // Can't add any actual overloads yet
 
     Base.release();
     Idx.release();
@@ -5611,10 +5604,9 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
         // Do nothing: static member functions aren't any different
         // from non-member functions.
       } else {
-        // Fix the sub expression, which really has to be one of:
-        //   * a DeclRefExpr holding a member function template
-        //   * a TemplateIdRefExpr, also holding a member function template
-        //   * an UnresolvedLookupExpr holding an overloaded member function
+        // Fix the sub expression, which really has to be an
+        // UnresolvedLookupExpr holding an overloaded member function
+        // or template.
         Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
         if (SubExpr == UnOp->getSubExpr())
           return UnOp->Retain();
@@ -5635,9 +5627,6 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
         return new (Context) UnaryOperator(SubExpr, UnaryOperator::AddrOf,
                                            MemPtrType, UnOp->getOperatorLoc());
       }
-
-      // FIXME: TemplateIdRefExpr referring to a member function template
-      // specialization!
     }
     Expr *SubExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
     if (SubExpr == UnOp->getSubExpr())
@@ -5646,28 +5635,24 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     return new (Context) UnaryOperator(SubExpr, UnaryOperator::AddrOf,
                                      Context.getPointerType(SubExpr->getType()),
                                        UnOp->getOperatorLoc());
-  }
-  
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
-    assert((isa<FunctionTemplateDecl>(DRE->getDecl()) ||
-            isa<FunctionDecl>(DRE->getDecl())) &&
-           "Expected function or function template");
-    // FIXME: avoid copy.
-    TemplateArgumentListInfo TemplateArgs;
-    if (DRE->hasExplicitTemplateArgumentList())
-      DRE->copyTemplateArgumentsInto(TemplateArgs);
-
-    return DeclRefExpr::Create(Context,
-                               DRE->getQualifier(),
-                               DRE->getQualifierRange(),
-                               Fn,
-                               DRE->getLocation(),
-                               Fn->getType(),
-                               (DRE->hasExplicitTemplateArgumentList()
-                                  ? &TemplateArgs : 0));
   } 
 
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(E)) {
+    if (ULE->hasExplicitTemplateArgs()) {
+      // FIXME: avoid copy.
+      TemplateArgumentListInfo TemplateArgs;
+      if (ULE->hasExplicitTemplateArgs())
+        ULE->copyTemplateArgumentsInto(TemplateArgs);
+
+      return DeclRefExpr::Create(Context,
+                                 ULE->getQualifier(),
+                                 ULE->getQualifierRange(),
+                                 Fn,
+                                 ULE->getNameLoc(),
+                                 Fn->getType(),
+                                 &TemplateArgs);
+    }
+
     return DeclRefExpr::Create(Context,
                                ULE->getQualifier(),
                                ULE->getQualifierRange(),
@@ -5697,22 +5682,6 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                                  ? &TemplateArgs : 0),
                               Fn->getType());
   }
-  
-  if (TemplateIdRefExpr *TID = dyn_cast<TemplateIdRefExpr>(E)) {
-    // FIXME: Don't destroy TID here, since we need its template arguments
-    // to survive.
-    // TID->Destroy(Context);
-
-    // FIXME: avoid copy.
-    TemplateArgumentListInfo TemplateArgs;
-    TID->copyTemplateArgumentsInto(TemplateArgs);
-
-    return DeclRefExpr::Create(Context, 
-                               TID->getQualifier(), TID->getQualifierRange(),
-                               Fn, TID->getTemplateNameLoc(), 
-                               Fn->getType(),
-                               &TemplateArgs);
-  } 
   
   assert(false && "Invalid reference to overloaded function");
   return E->Retain();
