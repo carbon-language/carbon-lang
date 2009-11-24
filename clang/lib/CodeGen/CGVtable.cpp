@@ -367,10 +367,7 @@ public:
     if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
       return wrap(CGM.GetAddrOfCXXDestructor(Dtor, GD.getDtorType()));
 
-    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-    const llvm::Type *Ty =
-      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                     FPT->isVariadic());
+    const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVtable(MD);
 
     return wrap(CGM.GetAddrOfFunction(MD, Ty));
   }
