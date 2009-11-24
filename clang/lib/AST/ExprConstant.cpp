@@ -776,7 +776,20 @@ public:
                                                T1.getUnqualifiedType()),
                    E);
   }
-  bool VisitDeclRefExpr(const DeclRefExpr *E);
+
+  bool CheckReferencedDecl(const Expr *E, const Decl *D);
+  bool VisitDeclRefExpr(const DeclRefExpr *E) {
+    return CheckReferencedDecl(E, E->getDecl());
+  }
+  bool VisitMemberExpr(const MemberExpr *E) {
+    if (CheckReferencedDecl(E, E->getMemberDecl())) {
+      // Conservatively assume a MemberExpr will have side-effects
+      Info.EvalResult.HasSideEffects = true;
+      return true;
+    }
+    return false;
+  }
+
   bool VisitCallExpr(const CallExpr *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
@@ -834,12 +847,12 @@ static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
   return true;
 }
 
-bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
+bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
   // Enums are integer constant exprs.
-  if (const EnumConstantDecl *D = dyn_cast<EnumConstantDecl>(E->getDecl())) {
+  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
     // FIXME: This is an ugly hack around the fact that enums don't set their
     // signedness consistently; see PR3173.
-    APSInt SI = D->getInitVal();
+    APSInt SI = ECD->getInitVal();
     SI.setIsUnsigned(!E->getType()->isSignedIntegerType());
     // FIXME: This is an ugly hack around the fact that enums don't
     // set their width (!?!) consistently; see PR3173.
@@ -851,15 +864,15 @@ bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
   // In C, they can also be folded, although they are not ICEs.
   if (Info.Ctx.getCanonicalType(E->getType()).getCVRQualifiers() 
                                                         == Qualifiers::Const) {
-    if (const VarDecl *D = dyn_cast<VarDecl>(E->getDecl())) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       const VarDecl *Def = 0;
-      if (const Expr *Init = D->getDefinition(Def)) {
-        if (APValue *V = D->getEvaluatedValue())
+      if (const Expr *Init = VD->getDefinition(Def)) {
+        if (APValue *V = VD->getEvaluatedValue())
           return Success(V->getInt(), E);
           
         if (Visit(const_cast<Expr*>(Init))) {
           // Cache the evaluated value in the variable declaration.
-          D->setEvaluatedValue(Info.Ctx, Result);
+          VD->setEvaluatedValue(Info.Ctx, Result);
           return true;
         }
 
