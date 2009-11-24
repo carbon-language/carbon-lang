@@ -3066,6 +3066,16 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                      GRStmtNodeBuilder& Builder,
                                      ObjCMessageExpr* ME,
                                      ExplodedNode* Pred) {
+  // FIXME: Since we moved the nil check into a checker, we could get nil
+  // receiver here. Need a better way to check such case. 
+  if (Expr* Receiver = ME->getReceiver()) {
+    const GRState *state = Pred->getState();
+    DefinedOrUnknownSVal L=cast<DefinedOrUnknownSVal>(state->getSVal(Receiver));
+    if (!state->Assume(L, true)) {
+      Dst.Add(Pred);
+      return;
+    }
+  }
   
   RetainSummary *Summ =
     ME->getReceiver()

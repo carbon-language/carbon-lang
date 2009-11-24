@@ -860,8 +860,9 @@ void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
 
   if (isa<loc::ConcreteInt>(V) || isa<UndefinedVal>(V)) {
     // Dispatch to the first target and mark it as a sink.
-    ExplodedNode* N = builder.generateNode(builder.begin(), state, true);
-    UndefBranches.insert(N);
+    //ExplodedNode* N = builder.generateNode(builder.begin(), state, true);
+    // FIXME: add checker visit.
+    //    UndefBranches.insert(N);
     return;
   }
 
@@ -912,8 +913,10 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
   SVal  CondV_untested = state->getSVal(CondE);
 
   if (CondV_untested.isUndef()) {
-    ExplodedNode* N = builder.generateDefaultCaseNode(state, true);
-    UndefBranches.insert(N);
+    //ExplodedNode* N = builder.generateDefaultCaseNode(state, true);
+    // FIXME: add checker 
+    //UndefBranches.insert(N);
+
     return;
   }
   DefinedOrUnknownSVal CondV = cast<DefinedOrUnknownSVal>(CondV_untested);
@@ -1858,88 +1861,9 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
        DI!=DE; ++DI) {    
     Pred = *DI;
-    // FIXME: More logic for the processing the method call.
-    const GRState* state = GetState(Pred);
     bool RaisesException = false;
 
-    if (Expr* Receiver = ME->getReceiver()) {
-      SVal L_untested = state->getSVal(Receiver);
-
-      // "Assume" that the receiver is not NULL.
-      DefinedOrUnknownSVal L = cast<DefinedOrUnknownSVal>(L_untested);
-      const GRState *StNotNull = state->Assume(L, true);
-
-      // "Assume" that the receiver is NULL.
-      const GRState *StNull = state->Assume(L, false);
-
-      if (StNull) {
-        QualType RetTy = ME->getType();
-
-        // Check if the receiver was nil and the return value a struct.
-        if (RetTy->isRecordType()) {
-          if (Pred->getParentMap().isConsumedExpr(ME)) {
-            // The [0 ...] expressions will return garbage.  Flag either an
-            // explicit or implicit error.  Because of the structure of this
-            // function we currently do not bifurfacte the state graph at
-            // this point.
-            // FIXME: We should bifurcate and fill the returned struct with
-            //  garbage.
-            if (ExplodedNode* N = Builder->generateNode(ME, StNull, Pred)) {
-              N->markAsSink();
-              if (StNotNull)
-                NilReceiverStructRetImplicit.insert(N);
-              else
-                NilReceiverStructRetExplicit.insert(N);
-            }
-          }
-        }
-        else {
-          ASTContext& Ctx = getContext();
-          if (RetTy != Ctx.VoidTy) {
-            if (Pred->getParentMap().isConsumedExpr(ME)) {
-              // sizeof(void *)
-              const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
-              // sizeof(return type)
-              const uint64_t returnTypeSize = Ctx.getTypeSize(ME->getType());
-
-              if (voidPtrSize < returnTypeSize) {
-                if (ExplodedNode* N = Builder->generateNode(ME, StNull, Pred)) {
-                  N->markAsSink();
-                  if (StNotNull)
-                    NilReceiverLargerThanVoidPtrRetImplicit.insert(N);
-                  else
-                    NilReceiverLargerThanVoidPtrRetExplicit.insert(N);
-                }
-              }
-              else if (!StNotNull) {
-                // Handle the safe cases where the return value is 0 if the
-                // receiver is nil.
-                //
-                // FIXME: For now take the conservative approach that we only
-                // return null values if we *know* that the receiver is nil.
-                // This is because we can have surprises like:
-                //
-                //   ... = [[NSScreens screens] objectAtIndex:0];
-                //
-                // What can happen is that [... screens] could return nil, but
-                // it most likely isn't nil.  We should assume the semantics
-                // of this case unless we have *a lot* more knowledge.
-                //
-                SVal V = ValMgr.makeZeroVal(ME->getType());
-                MakeNode(Dst, ME, Pred, StNull->BindExpr(ME, V));
-                return;
-              }
-            }
-          }
-        }
-        // We have handled the cases where the receiver is nil.  The remainder
-        // of this method should assume that the receiver is not nil.
-        if (!StNotNull)
-          return;
-
-        state = StNotNull;
-      }
-
+    if (ME->getReceiver()) {
       // Check if the "raise" message was sent.
       if (ME->getSelector() == RaiseSel)
         RaisesException = true;
@@ -2840,11 +2764,10 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
         GraphPrintCheckerState->isBadCall(N) ||
         GraphPrintCheckerState->isUndefArg(N))
       return "color=\"red\",style=\"filled\"";
-#endif
 
     if (GraphPrintCheckerState->isNoReturnCall(N))
       return "color=\"blue\",style=\"filled\"";
-
+#endif
     return "";
   }
 

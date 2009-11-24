@@ -90,38 +90,6 @@ class GRExprEngine : public GRSubEngine {
 public:
   typedef llvm::SmallPtrSet<ExplodedNode*,2> ErrorNodes;
 
-  /// NilReceiverStructRetExplicit - Nodes in the ExplodedGraph that resulted
-  ///  from [x ...] with 'x' definitely being nil and the result was a 'struct'
-  //  (an undefined value).
-  ErrorNodes NilReceiverStructRetExplicit;
-
-  /// NilReceiverStructRetImplicit - Nodes in the ExplodedGraph that resulted
-  ///  from [x ...] with 'x' possibly being nil and the result was a 'struct'
-  //  (an undefined value).
-  ErrorNodes NilReceiverStructRetImplicit;
-
-  /// NilReceiverLargerThanVoidPtrRetExplicit - Nodes in the ExplodedGraph that
-  /// resulted from [x ...] with 'x' definitely being nil and the result's size
-  // was larger than sizeof(void *) (an undefined value).
-  ErrorNodes NilReceiverLargerThanVoidPtrRetExplicit;
-
-  /// NilReceiverLargerThanVoidPtrRetImplicit - Nodes in the ExplodedGraph that
-  /// resulted from [x ...] with 'x' possibly being nil and the result's size
-  // was larger than sizeof(void *) (an undefined value).
-  ErrorNodes NilReceiverLargerThanVoidPtrRetImplicit;
-
-  /// UndefBranches - Nodes in the ExplodedGraph that result from
-  ///  taking a branch based on an undefined value.
-  ErrorNodes UndefBranches;
-
-  /// UndefStores - Sinks in the ExplodedGraph that result from
-  ///  making a store to an undefined lvalue.
-  ErrorNodes UndefStores;
-
-  /// NoReturnCalls - Sinks in the ExplodedGraph that result from
-  //  calling a function with the attribute "noreturn".
-  ErrorNodes NoReturnCalls;
-
   /// UndefResults - Nodes in the ExplodedGraph where the operands are defined
   ///  by the result is not.  Excludes divide-by-zero errors.
   ErrorNodes UndefResults;
@@ -183,36 +151,6 @@ public:
   template <typename CHECKER>
   CHECKER *getChecker() const {
      return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
-  }
-
-  bool isNoReturnCall(const ExplodedNode* N) const {
-    return N->isSink() && NoReturnCalls.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
-  typedef ErrorNodes::iterator undef_branch_iterator;
-  undef_branch_iterator undef_branches_begin() { return UndefBranches.begin(); }
-  undef_branch_iterator undef_branches_end() { return UndefBranches.end(); }
-
-  typedef ErrorNodes::iterator nil_receiver_struct_ret_iterator;
-
-  nil_receiver_struct_ret_iterator nil_receiver_struct_ret_begin() {
-    return NilReceiverStructRetExplicit.begin();
-  }
-
-  nil_receiver_struct_ret_iterator nil_receiver_struct_ret_end() {
-    return NilReceiverStructRetExplicit.end();
-  }
-
-  typedef ErrorNodes::iterator nil_receiver_larger_than_voidptr_ret_iterator;
-
-  nil_receiver_larger_than_voidptr_ret_iterator
-  nil_receiver_larger_than_voidptr_ret_begin() {
-    return NilReceiverLargerThanVoidPtrRetExplicit.begin();
-  }
-
-  nil_receiver_larger_than_voidptr_ret_iterator
-  nil_receiver_larger_than_voidptr_ret_end() {
-    return NilReceiverLargerThanVoidPtrRetExplicit.end();
   }
 
   typedef ErrorNodes::iterator undef_result_iterator;

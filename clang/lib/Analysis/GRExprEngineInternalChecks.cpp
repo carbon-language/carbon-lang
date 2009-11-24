@@ -62,72 +62,6 @@ void BuiltinBug::Emit(BugReporter& BR, ITER I, ITER E) {
                                                          GetNode(I)));
 }
 
-class VISIBILITY_HIDDEN NilReceiverStructRet : public BuiltinBug {
-public:
-  NilReceiverStructRet(GRExprEngine* eng) :
-    BuiltinBug(eng, "'nil' receiver with struct return type") {}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    for (GRExprEngine::nil_receiver_struct_ret_iterator
-          I=Eng.nil_receiver_struct_ret_begin(),
-          E=Eng.nil_receiver_struct_ret_end(); I!=E; ++I) {
-
-      std::string sbuf;
-      llvm::raw_string_ostream os(sbuf);
-      PostStmt P = cast<PostStmt>((*I)->getLocation());
-      const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
-      os << "The receiver in the message expression is 'nil' and results in the"
-            " returned value (of type '"
-         << ME->getType().getAsString()
-         << "') to be garbage or otherwise undefined";
-
-      BuiltinBugReport *R = new BuiltinBugReport(*this, os.str().c_str(), *I);
-      R->addRange(ME->getReceiver()->getSourceRange());
-      BR.EmitReport(R);
-    }
-  }
-
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
-  }
-};
-
-class VISIBILITY_HIDDEN NilReceiverLargerThanVoidPtrRet : public BuiltinBug {
-public:
-  NilReceiverLargerThanVoidPtrRet(GRExprEngine* eng) :
-    BuiltinBug(eng,
-               "'nil' receiver with return type larger than sizeof(void *)") {}
-
-  void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    for (GRExprEngine::nil_receiver_larger_than_voidptr_ret_iterator
-         I=Eng.nil_receiver_larger_than_voidptr_ret_begin(),
-         E=Eng.nil_receiver_larger_than_voidptr_ret_end(); I!=E; ++I) {
-
-      std::string sbuf;
-      llvm::raw_string_ostream os(sbuf);
-      PostStmt P = cast<PostStmt>((*I)->getLocation());
-      const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
-      os << "The receiver in the message expression is 'nil' and results in the"
-      " returned value (of type '"
-      << ME->getType().getAsString()
-      << "' and of size "
-      << Eng.getContext().getTypeSize(ME->getType()) / 8
-      << " bytes) to be garbage or otherwise undefined";
-
-      BuiltinBugReport *R = new BuiltinBugReport(*this, os.str().c_str(), *I);
-      R->addRange(ME->getReceiver()->getSourceRange());
-      BR.EmitReport(R);
-    }
-  }
-  void registerInitialVisitors(BugReporterContext& BRC,
-                               const ExplodedNode* N,
-                               BuiltinBugReport *R) {
-    registerTrackNullOrUndefValue(BRC, GetReceiverExpr(N), N);
-  }
-};
-
 class VISIBILITY_HIDDEN UndefResult : public BuiltinBug {
 public:
   UndefResult(GRExprEngine* eng)
@@ -217,8 +151,6 @@ void GRExprEngine::RegisterInternalChecks() {
   // analyzing a function.  Generation of BugReport objects is done via a call
   // to 'FlushReports' from BugReporter.
   BR.Register(new UndefResult(this));
-  BR.Register(new NilReceiverStructRet(this));
-  BR.Register(new NilReceiverLargerThanVoidPtrRet(this));
 
   // The following checks do not need to have their associated BugTypes
   // explicitly registered with the BugReporter.  If they issue any BugReports,
