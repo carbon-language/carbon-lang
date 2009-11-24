@@ -795,6 +795,20 @@ public:
     return getTypeInfo(T).first;
   }
 
+  /// getByteWidth - Return the size of a byte, in bits
+  uint64_t getByteSize() {
+    return getTypeSize(CharTy);
+  }
+  
+  /// getTypeSizeInBytes - Return the size of the specified type, in bytes.
+  /// This method does not work on incomplete types.
+  uint64_t getTypeSizeInBytes(QualType T) {
+    return getTypeSize(T) / getByteSize();
+  }
+  uint64_t getTypeSizeInBytes(const Type *T) {
+    return getTypeSize(T) / getByteSize();
+  }
+
   /// getTypeAlign - Return the ABI-specified alignment of a type, in bits.
   /// This method does not work on incomplete types.
   unsigned getTypeAlign(QualType T) {
