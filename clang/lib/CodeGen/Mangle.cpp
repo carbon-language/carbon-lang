@@ -29,6 +29,21 @@
 using namespace clang;
 
 namespace {
+  
+static const CXXMethodDecl *getStructor(const CXXMethodDecl *MD) {
+  assert((isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD)) &&
+         "Passed in decl is not a ctor or dtor!");
+  
+  if (const TemplateDecl *TD = MD->getPrimaryTemplate()) {
+    MD = cast<CXXMethodDecl>(TD->getTemplatedDecl());
+
+    assert((isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD)) &&
+           "Templated decl is not a ctor or dtor!");
+  }
+    
+  return MD;
+}
+  
 /// CXXNameMangler - Manage the mangling of a single name.
 class CXXNameMangler {
   MangleContext &Context;
@@ -44,10 +59,10 @@ public:
     : Context(C), Out(Res), Structor(0), StructorType(0) { }
   CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res,
                  const CXXConstructorDecl *D, CXXCtorType Type)
-    : Context(C), Out(Res), Structor(D), StructorType(Type) { }
+    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type) { }
   CXXNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res,
                  const CXXDestructorDecl *D, CXXDtorType Type)
-    : Context(C), Out(Res), Structor(D), StructorType(Type) { }
+    : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type) { }
 
   llvm::raw_svector_ostream &getStream() { return Out; }
 

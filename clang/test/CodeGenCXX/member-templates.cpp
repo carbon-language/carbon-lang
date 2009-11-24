@@ -7,3 +7,14 @@ struct A {
 };
 
 template<typename T> A::A(T) {}
+
+struct B {
+  template<typename T>
+  B(T);
+};
+
+template<typename T> B::B(T) {}
+
+// CHECK: define void @_ZN1BC1IiEET_(%struct.B* %this, i32)
+// CHECK: define void @_ZN1BC2IiEET_(%struct.B* %this, i32)
+template B::B(int);
