@@ -45,3 +45,27 @@ void if_destruct(int z) {
   // CHECK: if.end
   // CHECK: call  void @_ZN1XD1Ev
 }
+
+struct ConvertibleToInt {
+  ConvertibleToInt();
+  ~ConvertibleToInt();
+  operator int();
+};
+
+void switch_destruct(int z) {
+  // CHECK: call void @_ZN16ConvertibleToIntC1Ev
+  switch (ConvertibleToInt conv = ConvertibleToInt()) {
+  case 0:
+    break;
+
+  default:
+    // CHECK: sw.default:
+    // CHECK: store i32 19
+    z = 19;
+    break;
+  }
+  // CHECK: sw.epilog:
+  // CHECK: call void @_ZN16ConvertibleToIntD1Ev
+  // CHECK: store i32 20
+  z = 20;
+}

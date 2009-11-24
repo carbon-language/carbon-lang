@@ -3126,7 +3126,18 @@ template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) {
   // Transform the condition.
-  OwningExprResult Cond = getDerived().TransformExpr(S->getCond());
+  OwningExprResult Cond(SemaRef);
+  VarDecl *ConditionVar = 0;
+  if (S->getConditionVariable()) {
+    ConditionVar 
+      = cast_or_null<VarDecl>(
+                   getDerived().TransformDefinition(S->getConditionVariable()));
+    if (!ConditionVar)
+      return SemaRef.StmtError();
+    
+    Cond = getSema().CheckConditionVariable(ConditionVar);
+  } else
+    Cond = getDerived().TransformExpr(S->getCond());
   if (Cond.isInvalid())
     return SemaRef.StmtError();
 

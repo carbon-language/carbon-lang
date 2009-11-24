@@ -188,6 +188,7 @@ unsigned PCHStmtReader::VisitIfStmt(IfStmt *S) {
 
 unsigned PCHStmtReader::VisitSwitchStmt(SwitchStmt *S) {
   VisitStmt(S);
+  S->setConditionVariable(cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   S->setCond(cast<Expr>(StmtStack[StmtStack.size() - 2]));
   S->setBody(StmtStack.back());
   S->setSwitchLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

@@ -280,7 +280,17 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
 
 Action::OwningStmtResult
 Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
-  SwitchStmt *SS = new (Context) SwitchStmt(cond.takeAs<Expr>());
+  Expr *condExpr = cond.takeAs<Expr>();
+  VarDecl *ConditionVar = 0;
+  if (CXXConditionDeclExpr *Cond = dyn_cast<CXXConditionDeclExpr>(condExpr)) {
+    ConditionVar = Cond->getVarDecl();
+    condExpr = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
+                                   ConditionVar->getLocation(), 
+                                 ConditionVar->getType().getNonReferenceType());
+    // FIXME: Leaks the old condExpr
+  }
+
+  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, condExpr);
   getSwitchStack().push_back(SS);
   return Owned(SS);
 }

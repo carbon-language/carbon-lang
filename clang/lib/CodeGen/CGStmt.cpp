@@ -692,6 +692,11 @@ void CodeGenFunction::EmitDefaultStmt(const DefaultStmt &S) {
 }
 
 void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
+  CleanupScope ConditionScope(*this);
+
+  if (S.getConditionVariable())
+    EmitLocalBlockVarDecl(*S.getConditionVariable());
+
   llvm::Value *CondV = EmitScalarExpr(S.getCond());
 
   // Handle nested switch statements.

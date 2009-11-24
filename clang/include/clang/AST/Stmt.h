@@ -672,6 +672,7 @@ public:
 class SwitchStmt : public Stmt {
   enum { COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
+  VarDecl *Var;
   // This points to a linked list of case and default statements.
   SwitchCase *FirstCase;
   SourceLocation SwitchLoc;
@@ -680,13 +681,27 @@ protected:
   virtual void DoDestroy(ASTContext &Ctx);
 
 public:
-  SwitchStmt(Expr *cond) : Stmt(SwitchStmtClass), FirstCase(0) {
-      SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
-      SubExprs[BODY] = NULL;
-    }
+  SwitchStmt(VarDecl *Var, Expr *cond) 
+    : Stmt(SwitchStmtClass), Var(Var), FirstCase(0) 
+  {
+    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+    SubExprs[BODY] = NULL;
+  }
 
   /// \brief Build a empty switch statement.
   explicit SwitchStmt(EmptyShell Empty) : Stmt(SwitchStmtClass, Empty) { }
+
+  /// \brief Retrieve the variable declared in this "switch" statement, if any.
+  ///
+  /// In the following example, "x" is the condition variable.
+  /// \code
+  /// switch (int x = foo()) {
+  ///   case 0: break;
+  ///   // ...
+  /// }
+  /// \endcode
+  VarDecl *getConditionVariable() const { return Var; }
+  void setConditionVariable(VarDecl *V) { Var = V; }
 
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   const Stmt *getBody() const { return SubExprs[BODY]; }
