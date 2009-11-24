@@ -7,46 +7,46 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the XML statement database structure as written in 
-//  <TranslationUnit> sub-nodes of the XML document. 
+//  This file defines the XML statement database structure as written in
+//  <TranslationUnit> sub-nodes of the XML document.
 //  The semantics of the attributes and enums are mostly self-documenting
 //  by looking at the appropriate internally used functions and values.
 //  The following macros are used:
 //
-//  NODE_XML( CLASS, NAME ) - A node of name NAME denotes a concrete 
-//  statement of class CLASS where CLASS is a class name used internally by clang. 
-//  After a NODE_XML the definition of all (optional) attributes of that statement 
+//  NODE_XML( CLASS, NAME ) - A node of name NAME denotes a concrete
+//  statement of class CLASS where CLASS is a class name used internally by clang.
+//  After a NODE_XML the definition of all (optional) attributes of that statement
 //  node and possible sub-nodes follows.
 //
 //  END_NODE_XML - Closes the attribute definition of the current node.
 //
-//  ID_ATTRIBUTE_XML - Some statement nodes have an "id" attribute containing a 
-//  string, which value uniquely identify that statement. Other nodes may refer 
+//  ID_ATTRIBUTE_XML - Some statement nodes have an "id" attribute containing a
+//  string, which value uniquely identify that statement. Other nodes may refer
 //  by reference attributes to this value (currently used only for Label).
 //
 //  TYPE_ATTRIBUTE_XML( FN ) - Type nodes refer to the result type id of an
 //  expression by a "type" attribute. FN is internally used by clang.
-// 
-//  ATTRIBUTE_XML( FN, NAME ) - An attribute named NAME. FN is internally 
+//
+//  ATTRIBUTE_XML( FN, NAME ) - An attribute named NAME. FN is internally
 //  used by clang. A boolean attribute have the values "0" or "1".
 //
-//  ATTRIBUTE_SPECIAL_XML( FN, NAME ) - An attribute named NAME which deserves 
-//  a special handling. See the appropriate documentations. 
+//  ATTRIBUTE_SPECIAL_XML( FN, NAME ) - An attribute named NAME which deserves
+//  a special handling. See the appropriate documentations.
 //
 //  ATTRIBUTE_FILE_LOCATION_XML - A bunch of attributes denoting the location of
 //  a statement in the source file(s).
 //
-//  ATTRIBUTE_OPT_XML( FN, NAME ) - An optional attribute named NAME. 
-//  Optional attributes are omitted for boolean types, if the value is false, 
-//  for integral types, if the value is null and for strings, 
+//  ATTRIBUTE_OPT_XML( FN, NAME ) - An optional attribute named NAME.
+//  Optional attributes are omitted for boolean types, if the value is false,
+//  for integral types, if the value is null and for strings,
 //  if the value is the empty string. FN is internally used by clang.
 //
 //  ATTRIBUTE_ENUM[_OPT]_XML( FN, NAME ) - An attribute named NAME. The value
-//  is an enumeration defined with ENUM_XML macros immediately following after 
-//  that macro. An optional attribute is ommited, if the particular enum is the 
+//  is an enumeration defined with ENUM_XML macros immediately following after
+//  that macro. An optional attribute is ommited, if the particular enum is the
 //  empty string. FN is internally used by clang.
-//  
-//  ENUM_XML( VALUE, NAME ) - An enumeration element named NAME. VALUE is 
+//
+//  ENUM_XML( VALUE, NAME ) - An enumeration element named NAME. VALUE is
 //  internally used by clang.
 //
 //  END_ENUM_XML - Closes the enumeration definition of the current attribute.
@@ -55,7 +55,7 @@
 //
 //  SUB_NODE_OPT_XML( CLASS ) - An optional sub-node of class CLASS or its sub-classes.
 //
-//  SUB_NODE_SEQUENCE_XML( CLASS ) - Zero or more sub-nodes of class CLASS or 
+//  SUB_NODE_SEQUENCE_XML( CLASS ) - Zero or more sub-nodes of class CLASS or
 //  its sub-classes.
 //
 //===----------------------------------------------------------------------===//
@@ -94,21 +94,21 @@ END_NODE_XML
 
 NODE_XML(CaseStmt, "CaseStmt")                        // case expr: body;
   ATTRIBUTE_FILE_LOCATION_XML
-  SUB_NODE_XML(Stmt)                                  // body 
+  SUB_NODE_XML(Stmt)                                  // body
   SUB_NODE_XML(Expr)                                  // expr
   SUB_NODE_XML(Expr)                                  // rhs expr in gc extension: case expr .. expr: body;
 END_NODE_XML
 
 NODE_XML(DefaultStmt, "DefaultStmt")                  // default: body;
   ATTRIBUTE_FILE_LOCATION_XML
-  SUB_NODE_XML(Stmt)                                  // body 
+  SUB_NODE_XML(Stmt)                                  // body
 END_NODE_XML
 
 NODE_XML(LabelStmt, "LabelStmt")                      // Label: body;
   ID_ATTRIBUTE_XML
   ATTRIBUTE_FILE_LOCATION_XML
   ATTRIBUTE_XML(getName(), "name")                    // string
-  SUB_NODE_XML(Stmt)                                  // body 
+  SUB_NODE_XML(Stmt)                                  // body
 END_NODE_XML
 
 NODE_XML(IfStmt, "IfStmt")                            // if (cond) stmt1; else stmt2;
@@ -173,23 +173,23 @@ NODE_XML(AsmStmt, "AsmStmt")                          // GNU inline-assembly sta
   // FIXME
 END_NODE_XML
 
-NODE_XML(DeclStmt, "DeclStmt")                        // a declaration statement   
+NODE_XML(DeclStmt, "DeclStmt")                        // a declaration statement
   ATTRIBUTE_FILE_LOCATION_XML
-  SUB_NODE_SEQUENCE_XML(Decl)                                  
+  SUB_NODE_SEQUENCE_XML(Decl)
 END_NODE_XML
 
 // C++ statements
 NODE_XML(CXXTryStmt, "CXXTryStmt")                    // try CompoundStmt CXXCatchStmt1 CXXCatchStmt2 ..
   ATTRIBUTE_FILE_LOCATION_XML
   ATTRIBUTE_XML(getNumHandlers(), "num_handlers")
-  SUB_NODE_XML(CompoundStmt) 
-  SUB_NODE_SEQUENCE_XML(CXXCatchStmt)                                  
+  SUB_NODE_XML(CompoundStmt)
+  SUB_NODE_SEQUENCE_XML(CXXCatchStmt)
 END_NODE_XML
 
 NODE_XML(CXXCatchStmt, "CXXCatchStmt")                // catch (decl) Stmt
   ATTRIBUTE_FILE_LOCATION_XML
   SUB_NODE_XML(VarDecl)
-  SUB_NODE_XML(Stmt) 
+  SUB_NODE_XML(Stmt)
 END_NODE_XML
 
 // Expressions
@@ -234,7 +234,7 @@ NODE_XML(StringLiteral, "StringLiteral")
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())
   ATTRIBUTE_SPECIAL_XML(getStrData(), "value")          // string, special handling for escaping needed
-  ATTRIBUTE_OPT_XML(isWide(), "is_wide")                // boolean  
+  ATTRIBUTE_OPT_XML(isWide(), "is_wide")                // boolean
 END_NODE_XML
 
 NODE_XML(UnaryOperator, "UnaryOperator")                // op(expr) or (expr)op
@@ -251,7 +251,7 @@ NODE_XML(UnaryOperator, "UnaryOperator")                // op(expr) or (expr)op
     ENUM_XML(UnaryOperator::Minus,   "minus")
     ENUM_XML(UnaryOperator::Not,     "not")             // bitwise not
     ENUM_XML(UnaryOperator::LNot,    "lnot")            // boolean not
-    ENUM_XML(UnaryOperator::Real,    "__real") 
+    ENUM_XML(UnaryOperator::Real,    "__real")
     ENUM_XML(UnaryOperator::Imag,    "__imag")
     ENUM_XML(UnaryOperator::Extension, "__extension__")
     ENUM_XML(UnaryOperator::OffsetOf,  "__builtin_offsetof")
@@ -314,7 +314,7 @@ END_NODE_XML
 NODE_XML(SizeOfAlignOfExpr, "SizeOfAlignOfExpr")        // sizeof(expr) or alignof(expr)
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())
-  ATTRIBUTE_XML(isSizeOf(), "is_sizeof")  
+  ATTRIBUTE_XML(isSizeOf(), "is_sizeof")
   ATTRIBUTE_XML(isArgumentType(), "is_type")            // "1" if expr denotes a type
   ATTRIBUTE_SPECIAL_XML(getArgumentType(), "type_ref")  // optional, denotes the type of expr, if is_type=="1", special handling needed since getArgumentType() could assert
   SUB_NODE_OPT_XML(Expr)                                // expr, if is_type=="0"
@@ -346,29 +346,29 @@ END_NODE_XML
 
 NODE_XML(CStyleCastExpr, "CStyleCastExpr")              // (type)expr
   ATTRIBUTE_FILE_LOCATION_XML
-  TYPE_ATTRIBUTE_XML(getType())                         
+  TYPE_ATTRIBUTE_XML(getType())
   ATTRIBUTE_XML(getTypeAsWritten(), "type_ref")         // denotes the type as written in the source code
   SUB_NODE_XML(Expr)                                    // expr
 END_NODE_XML
 
 NODE_XML(ImplicitCastExpr, "ImplicitCastExpr")
   ATTRIBUTE_FILE_LOCATION_XML
-  TYPE_ATTRIBUTE_XML(getType())                         
-  SUB_NODE_XML(Expr)                                   
+  TYPE_ATTRIBUTE_XML(getType())
+  SUB_NODE_XML(Expr)
 END_NODE_XML
 
-NODE_XML(CompoundLiteralExpr, "CompoundLiteralExpr")    // [C99 6.5.2.5] 
+NODE_XML(CompoundLiteralExpr, "CompoundLiteralExpr")    // [C99 6.5.2.5]
   SUB_NODE_XML(Expr)                                    // init
 END_NODE_XML
 
 NODE_XML(ExtVectorElementExpr, "ExtVectorElementExpr")
-  SUB_NODE_XML(Expr)                                    // base 
+  SUB_NODE_XML(Expr)                                    // base
 END_NODE_XML
 
 NODE_XML(InitListExpr, "InitListExpr")                  // struct foo x = { expr1, { expr2, expr3 } };
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())
-  ATTRIBUTE_OPT_XML(getInitializedFieldInUnion(), "field_ref")  // if a union is initialized, this refers to the initialized union field id 
+  ATTRIBUTE_OPT_XML(getInitializedFieldInUnion(), "field_ref")  // if a union is initialized, this refers to the initialized union field id
   ATTRIBUTE_XML(getNumInits(), "num_inits")             // unsigned
   SUB_NODE_SEQUENCE_XML(Expr)                           // expr1..exprN
 END_NODE_XML
@@ -412,8 +412,8 @@ END_NODE_XML
 NODE_XML(TypesCompatibleExpr, "TypesCompatibleExpr")    // GNU builtin-in function __builtin_types_compatible_p
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())
-  ATTRIBUTE_XML(getArgType1(), "type1_ref")             // id of type1 
-  ATTRIBUTE_XML(getArgType2(), "type2_ref")             // id of type2 
+  ATTRIBUTE_XML(getArgType1(), "type1_ref")             // id of type1
+  ATTRIBUTE_XML(getArgType2(), "type2_ref")             // id of type2
 END_NODE_XML
 
 NODE_XML(ChooseExpr, "ChooseExpr")                      // GNU builtin-in function __builtin_choose_expr(expr1, expr2, expr3)
@@ -504,7 +504,7 @@ END_NODE_XML
 
 //===----------------------------------------------------------------------===//
 #undef NODE_XML
-#undef ID_ATTRIBUTE_XML                
+#undef ID_ATTRIBUTE_XML
 #undef TYPE_ATTRIBUTE_XML
 #undef ATTRIBUTE_XML
 #undef ATTRIBUTE_SPECIAL_XML
@@ -513,8 +513,8 @@ END_NODE_XML
 #undef ATTRIBUTE_ENUM_OPT_XML
 #undef ATTRIBUTE_FILE_LOCATION_XML
 #undef ENUM_XML
-#undef END_ENUM_XML                    
-#undef END_NODE_XML                    
+#undef END_ENUM_XML
+#undef END_NODE_XML
 #undef SUB_NODE_XML
 #undef SUB_NODE_SEQUENCE_XML
 #undef SUB_NODE_OPT_XML
