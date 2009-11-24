@@ -457,16 +457,12 @@ bool
 Path::isSpecialFile() const {
   // Get the status so we can determine if its a file or directory
   struct stat buf;
-  std::string *ErrStr;
 
-  if (0 != stat(path.c_str(), &buf)) {
-    MakeErrMsg(ErrStr, path + ": can't get status of file");
+  if (0 != stat(path.c_str(), &buf))
     return true;
-  }
 
-  if (S_ISDIR(buf.st_mode) || S_ISREG(buf.st_mode)) {
+  if (S_ISDIR(buf.st_mode) || S_ISREG(buf.st_mode))
     return false;
-  }
 
   return true;
 }
