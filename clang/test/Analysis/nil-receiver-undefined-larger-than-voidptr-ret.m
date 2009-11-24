@@ -28,20 +28,20 @@ void createFoo() {
 void createFoo2() {
   MyClass *obj = 0;  
   
-  long double ld = [obj longDoubleM]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value}}
+  long double ld = [obj longDoubleM]; // expected-warning{{The receiver of message 'longDoubleM' is nil and returns a value of type 'long double' that will be garbage}}
 }
 
 void createFoo3() {
   MyClass *obj;
   obj = 0;  
   
-  long long ll = [obj longlongM]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value}}
+  long long ll = [obj longlongM]; // expected-warning{{The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage}}
 }
 
 void createFoo4() {
   MyClass *obj = 0;  
   
-  double d = [obj doubleM]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value}}
+  double d = [obj doubleM]; // expected-warning{{The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage}}
 }
 
 void createFoo5() {
@@ -59,7 +59,7 @@ void handleNilPruneLoop(MyClass *obj) {
     long long j = [obj longlongM]; // no-warning
   }
   
-  long long j = [obj longlongM]; // expected-warning{{The receiver in the message expression is 'nil' and results in the returned value}}
+  long long j = [obj longlongM]; // expected-warning{{The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage}}
 }
 
 int handleVoidInComma() {

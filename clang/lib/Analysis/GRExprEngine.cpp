@@ -108,12 +108,12 @@ public:
 // Checker worklist routines.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
+bool GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
                                 ExplodedNodeSet &Src, bool isPrevisit) {
 
   if (Checkers.empty()) {
-    Dst = Src;
-    return;
+    Dst.insert(Src);
+    return false;
   }
 
   ExplodedNodeSet Tmp;
@@ -129,8 +129,16 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
     Checker *checker = I->second;
 
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI)
-      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag, isPrevisit);
+         NI != NE; ++NI) {
+      // FIXME: Halting evaluation of the checkers is something we may
+      // not support later.  The design is still evolving.
+      if (checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI,
+                            tag, isPrevisit)) {
+        if (CurrSet != &Dst)
+          Dst.insert(*CurrSet);
+        return true;
+      }
+    }
 
     // Update which NodeSet is the current one.
     PrevSet = CurrSet;
@@ -138,6 +146,7 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
 
   // Don't autotransition.  The CheckerContext objects should do this
   // automatically.
+  return false;
 }
 
 // FIXME: This is largely copy-paste from CheckerVisit().  Need to 
@@ -1854,8 +1863,12 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 
   // Handle previsits checks.
   ExplodedNodeSet Src, DstTmp;
-  Src.Add(Pred);  
-  CheckerVisit(ME, DstTmp, Src, true);
+  Src.Add(Pred);
+  
+  if (CheckerVisit(ME, DstTmp, Src, true)) {
+    Dst.insert(DstTmp);
+    return;
+  }
   
   unsigned size = Dst.size();
 

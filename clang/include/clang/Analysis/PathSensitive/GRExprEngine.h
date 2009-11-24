@@ -222,7 +222,7 @@ public:
 protected:
   /// CheckerVisit - Dispatcher for performing checker-specific logic
   ///  at specific statements.
-  void CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
+  bool CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                     bool isPrevisit);
   
   void CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,

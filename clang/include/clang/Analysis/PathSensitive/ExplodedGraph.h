@@ -352,10 +352,16 @@ public:
   typedef ImplTy::iterator       iterator;
   typedef ImplTy::const_iterator const_iterator;
 
-  inline unsigned size() const { return Impl.size();  }
-  inline bool empty()    const { return Impl.empty(); }
+  unsigned size() const { return Impl.size();  }
+  bool empty()    const { return Impl.empty(); }
 
-  inline void clear() { Impl.clear(); }
+  void clear() { Impl.clear(); }
+  void insert(const ExplodedNodeSet &S) {
+    if (empty())
+      Impl = S.Impl;
+    else
+      Impl.insert(S.begin(), S.end());
+  }
 
   inline iterator begin() { return Impl.begin(); }
   inline iterator end()   { return Impl.end();   }
