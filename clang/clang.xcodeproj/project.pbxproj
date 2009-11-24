@@ -31,14 +31,14 @@
 		1A32C17F0E1C87AD00A6B483 /* ExprConstant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A32C17E0E1C87AD00A6B483 /* ExprConstant.cpp */; };
 		1A376A2D0D4AED9B002A1C52 /* CGExprConstant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */; };
 		1A471AB50F437BC500753CE8 /* CGBlocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A471AB40F437BC500753CE8 /* CGBlocks.cpp */; };
-		1A4C41BF105B4C0B0047B5E7 /* CGCXXClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A4C41BE105B4C0B0047B5E7 /* CGCXXClass.cpp */; };
+		1A4C41BF105B4C0B0047B5E7 /* CGClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A4C41BE105B4C0B0047B5E7 /* CGClass.cpp */; };
 		1A535ED9107BC45E000C3AE7 /* CXXInheritance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A535ED8107BC45E000C3AE7 /* CXXInheritance.cpp */; };
 		1A5D5E580E5E81010023C059 /* CGCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D5E570E5E81010023C059 /* CGCXX.cpp */; };
 		1A6B6CD410693FC900BB4A8F /* CodeCompleteConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6B6CD110693FC900BB4A8F /* CodeCompleteConsumer.cpp */; };
 		1A6B6CD510693FC900BB4A8F /* SemaCodeComplete.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6B6CD210693FC900BB4A8F /* SemaCodeComplete.cpp */; };
-		1A6B6E9A1069833600BB4A8F /* CGCXXExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6B6E991069833600BB4A8F /* CGCXXExpr.cpp */; };
+		1A6B6E9A1069833600BB4A8F /* CGExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6B6E991069833600BB4A8F /* CGExprCXX.cpp */; };
 		1A6C01F7108128710072DEE4 /* CGRtti.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6C01F6108128710072DEE4 /* CGRtti.cpp */; };
-		1A6FE7090FD6F85800E00CA9 /* CGCXXTemp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6FE7080FD6F85800E00CA9 /* CGCXXTemp.cpp */; };
+		1A6FE7090FD6F85800E00CA9 /* CGTemporaries.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6FE7080FD6F85800E00CA9 /* CGTemporaries.cpp */; };
 		1A701B640F7C8FE400FEC4D1 /* SemaAccess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */; };
 		1A7342480C7B57D500122F56 /* CGObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A7342470C7B57D500122F56 /* CGObjC.cpp */; };
 		1A81AA19108144F40094E50B /* CGVtable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A81AA18108144F40094E50B /* CGVtable.cpp */; };
@@ -369,7 +369,7 @@
 		1A32C17E0E1C87AD00A6B483 /* ExprConstant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ExprConstant.cpp; path = lib/AST/ExprConstant.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprConstant.cpp; path = lib/CodeGen/CGExprConstant.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A471AB40F437BC500753CE8 /* CGBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBlocks.cpp; path = lib/CodeGen/CGBlocks.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		1A4C41BE105B4C0B0047B5E7 /* CGCXXClass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCXXClass.cpp; path = lib/CodeGen/CGCXXClass.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1A4C41BE105B4C0B0047B5E7 /* CGClass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGClass.cpp; path = lib/CodeGen/CGClass.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A535ED8107BC45E000C3AE7 /* CXXInheritance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CXXInheritance.cpp; path = lib/AST/CXXInheritance.cpp; sourceTree = "<group>"; };
 		1A535EDB107BC47B000C3AE7 /* CanonicalType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CanonicalType.h; path = clang/AST/CanonicalType.h; sourceTree = "<group>"; };
 		1A5D5E570E5E81010023C059 /* CGCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCXX.cpp; path = lib/CodeGen/CGCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -378,9 +378,9 @@
 		1A6B6CD110693FC900BB4A8F /* CodeCompleteConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeCompleteConsumer.cpp; path = lib/Sema/CodeCompleteConsumer.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A6B6CD210693FC900BB4A8F /* SemaCodeComplete.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaCodeComplete.cpp; path = lib/Sema/SemaCodeComplete.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A6B6CD310693FC900BB4A8F /* SemaTemplate.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = SemaTemplate.h; path = lib/Sema/SemaTemplate.h; sourceTree = "<group>"; tabWidth = 2; };
-		1A6B6E991069833600BB4A8F /* CGCXXExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCXXExpr.cpp; path = lib/CodeGen/CGCXXExpr.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1A6B6E991069833600BB4A8F /* CGExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprCXX.cpp; path = lib/CodeGen/CGExprCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A6C01F6108128710072DEE4 /* CGRtti.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGRtti.cpp; path = lib/CodeGen/CGRtti.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		1A6FE7080FD6F85800E00CA9 /* CGCXXTemp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCXXTemp.cpp; path = lib/CodeGen/CGCXXTemp.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1A6FE7080FD6F85800E00CA9 /* CGTemporaries.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGTemporaries.cpp; path = lib/CodeGen/CGTemporaries.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A7019E90F79BC1100FEC4D1 /* DiagnosticAnalysisKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticAnalysisKinds.td; sourceTree = "<group>"; };
 		1A7019EA0F79BC1100FEC4D1 /* DiagnosticASTKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticASTKinds.td; sourceTree = "<group>"; };
 		1A7019EB0F79BC1100FEC4D1 /* DiagnosticCommonKinds.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticCommonKinds.td; sourceTree = "<group>"; };
@@ -1265,11 +1265,10 @@
 				1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */,
 				35475B1F0E79973F0000BFE4 /* CGCall.cpp */,
 				35475B220E7997680000BFE4 /* CGCall.h */,
+				1A4C41BE105B4C0B0047B5E7 /* CGClass.cpp */,
 				1A5D5E570E5E81010023C059 /* CGCXX.cpp */,
 				1A649E1E0F9599DA005B965E /* CGCXX.h */,
-				1A4C41BE105B4C0B0047B5E7 /* CGCXXClass.cpp */,
-				1A6B6E991069833600BB4A8F /* CGCXXExpr.cpp */,
-				1A6FE7080FD6F85800E00CA9 /* CGCXXTemp.cpp */,
+				1A6B6E991069833600BB4A8F /* CGExprCXX.cpp */,
 				35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */,
 				35A3E7010DD3874400757F74 /* CGDebugInfo.h */,
 				DE4264FB0C113592005A861D /* CGDecl.cpp */,
@@ -1287,6 +1286,7 @@
 				1AFF8AE21012BFC900D248DA /* CGRecordLayoutBuilder.h */,
 				1A6C01F6108128710072DEE4 /* CGRtti.cpp */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
+				1A6FE7080FD6F85800E00CA9 /* CGTemporaries.cpp */,
 				35475B230E7997680000BFE4 /* CGValue.h */,
 				1A81AA18108144F40094E50B /* CGVtable.cpp */,
 				1A81AA5D108278A20094E50B /* CGVtable.h */,
@@ -1899,7 +1899,7 @@
 				1A2A54C30FD1DD1C00F4CE45 /* RewriteTest.cpp in Sources */,
 				1A2A54C40FD1DD1C00F4CE45 /* StmtXML.cpp in Sources */,
 				1A2A54C50FD1DD1C00F4CE45 /* Warnings.cpp in Sources */,
-				1A6FE7090FD6F85800E00CA9 /* CGCXXTemp.cpp in Sources */,
+				1A6FE7090FD6F85800E00CA9 /* CGTemporaries.cpp in Sources */,
 				BDF87CF70FD746F300BBF872 /* SemaTemplateDeduction.cpp in Sources */,
 				1A14D3A70FD78A3F00DA2835 /* DeclPrinter.cpp in Sources */,
 				DE37252E0FE481AD00CF2CC2 /* Builtins.cpp in Sources */,
@@ -1922,10 +1922,10 @@
 				9012911D1048068D0083456D /* ASTUnit.cpp in Sources */,
 				90129121104812F90083456D /* CIndex.cpp in Sources */,
 				90F9EFAA104ABDED00D09A15 /* c-index-test.c in Sources */,
-				1A4C41BF105B4C0B0047B5E7 /* CGCXXClass.cpp in Sources */,
+				1A4C41BF105B4C0B0047B5E7 /* CGClass.cpp in Sources */,
 				1A6B6CD410693FC900BB4A8F /* CodeCompleteConsumer.cpp in Sources */,
 				1A6B6CD510693FC900BB4A8F /* SemaCodeComplete.cpp in Sources */,
-				1A6B6E9A1069833600BB4A8F /* CGCXXExpr.cpp in Sources */,
+				1A6B6E9A1069833600BB4A8F /* CGExprCXX.cpp in Sources */,
 				1A535ED9107BC45E000C3AE7 /* CXXInheritance.cpp in Sources */,
 				1A6C01F7108128710072DEE4 /* CGRtti.cpp in Sources */,
 				1A81AA19108144F40094E50B /* CGVtable.cpp in Sources */,
