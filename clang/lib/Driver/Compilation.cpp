@@ -85,8 +85,15 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
 
   for (ArgStringList::const_iterator
          it = Files.begin(), ie = Files.end(); it != ie; ++it) {
+
     llvm::sys::Path P(*it);
     std::string Error;
+
+    if (P.isSpecialFile()) {
+      // If we have a special file in our list, i.e. /dev/null
+      //  then don't call eraseFromDisk() and just continue.
+      continue;
+    }
 
     if (P.eraseFromDisk(false, &Error)) {
       // Failure is only failure if the file doesn't exist. There is a
