@@ -380,9 +380,9 @@ namespace sys {
       /// in the file system.
       bool canWrite() const;
 
-      /// This function checks that what we're trying to work only on a regular file or Dir.
+      /// This function checks that what we're trying to work only on a regular file or directory.
       /// Check for things like /dev/null, any block special file,
-      /// or other things that aren't "regular" files.
+      /// or other things that aren't "regular" regular files or directories.
       bool isSpecialFile() const;
 
       /// This function determines if the path name references an executable
