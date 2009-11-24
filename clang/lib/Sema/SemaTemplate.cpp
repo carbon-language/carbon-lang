@@ -327,7 +327,11 @@ static bool HasDependentTypeAsBase(ASTContext &Context,
     // };
 
     CanQual<RecordType> RT = BaseT->getAs<RecordType>();
-    assert(RT && "base is not a record type");
+
+    // Base might be a dependent member type, in which case we
+    // obviously can't look into it.
+    if (!RT) continue;
+
     CXXRecordDecl *BaseRecord = cast<CXXRecordDecl>(RT->getDecl());
     if (BaseRecord->isDefinition() &&
         HasDependentTypeAsBase(Context, BaseRecord, T))
@@ -364,14 +368,17 @@ static bool IsImplicitDependentMemberReference(Sema &SemaRef,
 
   QualType QT = GetTypeForQualifier(Context, Qualifier);
   CanQualType T = Context.getCanonicalType(QT);
-  
+
   // And now, just walk the non-dependent type hierarchy, trying to
   // find the given type as a literal base class.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(MD->getParent());
-  if (Context.getCanonicalType(Context.getTypeDeclType(Record)) == T)
+  if (Context.getCanonicalType(Context.getTypeDeclType(Record)) == T || 
+      HasDependentTypeAsBase(Context, Record, T)) {
+    ThisType = MD->getThisType(Context);
     return true;
+  }
 
-  return HasDependentTypeAsBase(Context, Record, T);
+  return false;
 }
 
 /// ActOnDependentIdExpression - Handle a dependent declaration name
