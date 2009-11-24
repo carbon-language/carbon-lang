@@ -1366,10 +1366,11 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
                             Base->getType());
   }
 
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
-    QualType FieldType = getContext().getCanonicalType((*Field)->getType());
+  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); I != E; ++I) {
+    const FieldDecl *Field = *I;
+    
+    QualType FieldType = getContext().getCanonicalType(Field->getType());
     const ConstantArrayType *Array =
       getContext().getAsConstantArrayType(FieldType);
     if (Array)
@@ -1378,8 +1379,8 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
-      LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+      LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
+      LValue RHS = EmitLValueForField(LoadOfSrc, Field, false, 0);
       if (Array) {
         const llvm::Type *BasePtr = ConvertType(FieldType);
         BasePtr = llvm::PointerType::getUnqual(BasePtr);
@@ -1395,9 +1396,28 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
                                 0 /*ClassDecl*/, FieldClassDecl, FieldType);
       continue;
     }
+    
+    if (Field->getType()->isReferenceType()) {
+      unsigned FieldIndex = CGM.getTypes().getLLVMFieldNo(Field);
+ 
+      llvm::Value *LHS = Builder.CreateStructGEP(LoadOfThis, FieldIndex,
+                                                 "lhs.ref");
+      
+      llvm::Value *RHS = Builder.CreateStructGEP(LoadOfThis, FieldIndex,
+                                                 "rhs.ref");
+
+      // Load the value in RHS.
+      RHS = Builder.CreateLoad(RHS);
+      
+      // And store it in the LHS
+      Builder.CreateStore(RHS, LHS);
+
+      continue;
+    }
     // Do a built-in assignment of scalar data members.
-    LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
-    LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+    LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
+    LValue RHS = EmitLValueForField(LoadOfSrc, Field, false, 0);
+
     if (!hasAggregateLLVMType(Field->getType())) {
       RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
       EmitStoreThroughLValue(RVRHS, LHS, Field->getType());

@@ -102,6 +102,17 @@ int main() {
   m1.pr();
 }
 
+struct A {
+};
+
+struct B : A {
+  A &a;
+};
+
+void f(const B &b1) {
+  B b2(b1);
+}
+
 // CHECK-LP64: .globl  __ZN1XC1ERKS_
 // CHECK-LP64: .weak_definition __ZN1XC1ERKS_
 // CHECK-LP64: __ZN1XC1ERKS_:
