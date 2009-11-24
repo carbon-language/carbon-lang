@@ -83,39 +83,41 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
 static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                                llvm::Value *NewPtr,
                                llvm::Value *NumElements) {
-  QualType AllocType = E->getAllocatedType();
-
-  if (!E->isArray()) {
-    if (CXXConstructorDecl *Ctor = E->getConstructor()) {
-      CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, NewPtr,
-                                 E->constructor_arg_begin(),
-                                 E->constructor_arg_end());
-
-      return;
-    }
-    
-    // We have a POD type.
-    if (E->getNumConstructorArgs() == 0)
-      return;
-
-    assert(E->getNumConstructorArgs() == 1 &&
-           "Can only have one argument to initializer of POD type.");
-      
-    const Expr *Init = E->getConstructorArg(0);
-    
-    if (!CGF.hasAggregateLLVMType(AllocType)) 
-      CGF.EmitStoreOfScalar(CGF.EmitScalarExpr(Init), NewPtr,
-                        AllocType.isVolatileQualified(), AllocType);
-    else if (AllocType->isAnyComplexType())
-      CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
-                                  AllocType.isVolatileQualified());
-    else
-      CGF.EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
+  if (E->isArray()) {
+    if (CXXConstructorDecl *Ctor = E->getConstructor())
+      CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr, 
+                                     E->constructor_arg_begin(), 
+                                     E->constructor_arg_end());
     return;
   }
   
-  if (CXXConstructorDecl *Ctor = E->getConstructor())
-    CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr);
+  QualType AllocType = E->getAllocatedType();
+
+  if (CXXConstructorDecl *Ctor = E->getConstructor()) {
+    CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, NewPtr,
+                               E->constructor_arg_begin(),
+                               E->constructor_arg_end());
+
+    return;
+  }
+    
+  // We have a POD type.
+  if (E->getNumConstructorArgs() == 0)
+    return;
+
+  assert(E->getNumConstructorArgs() == 1 &&
+         "Can only have one argument to initializer of POD type.");
+      
+  const Expr *Init = E->getConstructorArg(0);
+    
+  if (!CGF.hasAggregateLLVMType(AllocType)) 
+    CGF.EmitStoreOfScalar(CGF.EmitScalarExpr(Init), NewPtr,
+                          AllocType.isVolatileQualified(), AllocType);
+  else if (AllocType->isAnyComplexType())
+    CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
+                                AllocType.isVolatileQualified());
+  else
+    CGF.EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
 }
 
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {

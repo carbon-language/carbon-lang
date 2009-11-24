@@ -463,20 +463,25 @@ llvm::Value *CodeGenFunction::LoadCXXThis() {
 /// It is assumed that all relevant checks have been made by the caller.
 void
 CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
-                                            const ConstantArrayType *ArrayTy,
-                                            llvm::Value *ArrayPtr) {
+                                          const ConstantArrayType *ArrayTy,
+                                          llvm::Value *ArrayPtr,
+                                          CallExpr::const_arg_iterator ArgBeg,
+                                          CallExpr::const_arg_iterator ArgEnd) {
+
   const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
   llvm::Value * NumElements =
     llvm::ConstantInt::get(SizeTy, 
                            getContext().getConstantArrayElementCount(ArrayTy));
 
-  EmitCXXAggrConstructorCall(D, NumElements, ArrayPtr);
+  EmitCXXAggrConstructorCall(D, NumElements, ArrayPtr, ArgBeg, ArgEnd);
 }
 
 void
 CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
-                                            llvm::Value *NumElements,
-                                            llvm::Value *ArrayPtr) {
+                                          llvm::Value *NumElements,
+                                          llvm::Value *ArrayPtr,
+                                          CallExpr::const_arg_iterator ArgBeg,
+                                          CallExpr::const_arg_iterator ArgEnd) {
   const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
 
   // Create a temporary for the loop index and initialize it with 0.
@@ -506,8 +511,24 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   Counter = Builder.CreateLoad(IndexPtr);
   llvm::Value *Address = Builder.CreateInBoundsGEP(ArrayPtr, Counter, 
                                                    "arrayidx");
-  EmitCXXConstructorCall(D, Ctor_Complete, Address, 0, 0);
 
+  // C++ [class.temporary]p4: 
+  // There are two contexts in which temporaries are destroyed at a different
+  // point than the end of the full- expression. The first context is when a
+  // default constructor is called to initialize an element of an array. 
+  // If the constructor has one or more default arguments, the destruction of 
+  // every temporary created in a default argument expression is sequenced 
+  // before the construction of the next array element, if any.
+  
+  // Keep track of the current number of live temporaries.
+  unsigned OldNumLiveTemporaries = LiveTemporaries.size();
+
+  EmitCXXConstructorCall(D, Ctor_Complete, Address, ArgBeg, ArgEnd);
+
+  // Pop temporaries.
+  while (LiveTemporaries.size() > OldNumLiveTemporaries)
+    PopCXXTemporary();
+  
   EmitBlock(ContinueBlock);
 
   // Emit the increment of the loop counter.
@@ -714,7 +735,8 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     BasePtr = llvm::PointerType::getUnqual(BasePtr);
     llvm::Value *BaseAddrPtr =
       Builder.CreateBitCast(Dest, BasePtr);
-    EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr);
+    EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr, 
+                               E->arg_begin(), E->arg_end());
   }
   else
     // Call the constructor.
@@ -1559,7 +1581,9 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       llvm::Value *BaseAddrPtr =
         CGF.Builder.CreateBitCast(LHS.getAddress(), BasePtr);
       CGF.EmitCXXAggrConstructorCall(MemberInit->getConstructor(),
-                                     Array, BaseAddrPtr);
+                                     Array, BaseAddrPtr,
+                                     MemberInit->const_arg_begin(),
+                                     MemberInit->const_arg_end());
     }
     else
       CGF.EmitCXXConstructorCall(MemberInit->getConstructor(),

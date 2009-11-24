@@ -671,10 +671,15 @@ public:
 
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   const ConstantArrayType *ArrayTy,
-                                  llvm::Value *ArrayPtr);
+                                  llvm::Value *ArrayPtr,
+                                  CallExpr::const_arg_iterator ArgBeg,
+                                  CallExpr::const_arg_iterator ArgEnd);
+  
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   llvm::Value *NumElements,
-                                  llvm::Value *ArrayPtr);
+                                  llvm::Value *ArrayPtr,
+                                  CallExpr::const_arg_iterator ArgBeg,
+                                  CallExpr::const_arg_iterator ArgEnd);
 
   void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                  const ArrayType *Array,
