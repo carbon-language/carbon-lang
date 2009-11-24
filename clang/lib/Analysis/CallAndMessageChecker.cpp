@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/AST/ParentMap.h"
@@ -194,6 +195,11 @@ void CallAndMessageChecker::EmitNilReceiverBug(CheckerContext &C,
   C.EmitReport(report);  
 }
 
+static bool SupportsNilWithFloatRet(const llvm::Triple &triple) {
+  return triple.getVendor() == llvm::Triple::Apple &&
+         triple.getDarwinMajorNumber() >= 9;
+}
+
 void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
                                               const GRState *state,
                                               const ObjCMessageExpr *ME) {
@@ -201,8 +207,11 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   // Check the return type of the message expression.  A message to nil will
   // return different values depending on the return type and the architecture.
   QualType RetTy = ME->getType();
+  
+  ASTContext &Ctx = C.getASTContext();
+  CanQualType CanRetTy = Ctx.getCanonicalType(RetTy);
 
-  if (RetTy->isStructureType()) {
+  if (CanRetTy->isStructureType()) {
     // FIXME: At some point we shouldn't rely on isConsumedExpr(), but instead
     // have the "use of undefined value" be smarter about where the
     // undefined value came from.
@@ -219,14 +228,18 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   }
 
   // Other cases: check if the return type is smaller than void*.
-  ASTContext &Ctx = C.getASTContext();
-  if (RetTy != Ctx.VoidTy &&
+  if (CanRetTy != Ctx.VoidTy &&
       C.getPredecessor()->getParentMap().isConsumedExpr(ME)) {
     // Compute: sizeof(void *) and sizeof(return type)
-    const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
-    const uint64_t returnTypeSize = Ctx.getTypeSize(ME->getType());
+    const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);    
+    const uint64_t returnTypeSize = Ctx.getTypeSize(CanRetTy);
 
-    if (voidPtrSize < returnTypeSize) {
+    if (voidPtrSize < returnTypeSize &&
+        !(SupportsNilWithFloatRet(Ctx.Target.getTriple()) &&
+          (Ctx.FloatTy == CanRetTy ||
+           Ctx.DoubleTy == CanRetTy ||
+           Ctx.LongDoubleTy == CanRetTy ||
+           Ctx.LongLongTy == CanRetTy))) {
       if (ExplodedNode* N = C.GenerateSink(state))
         EmitNilReceiverBug(C, ME, N);
       return;
