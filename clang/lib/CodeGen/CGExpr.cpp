@@ -137,7 +137,7 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
             const CXXDestructorDecl *Dtor =
               ClassDecl->getDestructor(getContext());
 
-            CleanupScope scope(*this);
+            DelayedCleanupBlock scope(*this);
             EmitCXXDestructorCall(Dtor, Dtor_Complete, Val.getAggregateAddr());
           }
         }

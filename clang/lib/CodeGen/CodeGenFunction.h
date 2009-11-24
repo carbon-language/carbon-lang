@@ -133,17 +133,17 @@ public:
   /// block.
   CleanupBlockInfo PopCleanupBlock();
 
-  /// CleanupScope - RAII object that will create a cleanup block and set the
+  /// DelayedCleanupBlock - RAII object that will create a cleanup block and set the
   /// insert point to that block. When destructed, it sets the insert point to
   /// the previous block and pushes a new cleanup entry on the stack.
-  class CleanupScope {
+  class DelayedCleanupBlock {
     CodeGenFunction& CGF;
     llvm::BasicBlock *CurBB;
     llvm::BasicBlock *CleanupEntryBB;
     llvm::BasicBlock *CleanupExitBB;
     
   public:
-    CleanupScope(CodeGenFunction &cgf)
+    DelayedCleanupBlock(CodeGenFunction &cgf)
       : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()),
       CleanupEntryBB(CGF.createBasicBlock("cleanup")), CleanupExitBB(0) {
       CGF.Builder.SetInsertPoint(CleanupEntryBB);
@@ -155,7 +155,7 @@ public:
       return CleanupExitBB;
     }
     
-    ~CleanupScope() {
+    ~DelayedCleanupBlock() {
       CGF.PushCleanupBlock(CleanupEntryBB, CleanupExitBB);
       // FIXME: This is silly, move this into the builder.
       if (CurBB)
