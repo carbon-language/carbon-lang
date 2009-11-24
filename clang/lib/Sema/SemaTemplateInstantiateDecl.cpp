@@ -205,6 +205,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
       // we don't want to redo all the checking, especially since the
       // initializer might have been wrapped by a CXXConstructExpr since we did
       // it the first time.
+      Var->setType(D->getType());
       Var->setInit(SemaRef.Context, Init.takeAs<Expr>());
     }
     else if (ParenListExpr *PLE = dyn_cast<ParenListExpr>((Expr *)Init.get())) {

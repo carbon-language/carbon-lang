@@ -18,3 +18,14 @@ template<typename T> B::B(T) {}
 // CHECK: define void @_ZN1BC1IiEET_(%struct.B* %this, i32)
 // CHECK: define void @_ZN1BC2IiEET_(%struct.B* %this, i32)
 template B::B(int);
+
+template<typename T>
+struct C {
+  void f() {
+    int a[] = { 1, 2, 3 };
+  }
+};
+
+void f(C<int>& c) {
+  c.f();
+}
