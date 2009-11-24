@@ -673,6 +673,12 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
   DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
                                 DebugLocTracker &DebugLocInfo);
 
+  /// getDISubprogram - Find subprogram that is enclosing this scope.
+  DISubprogram getDISubprogram(MDNode *Scope);
+
+  /// getDICompositeType - Find underlying composite type.
+  DICompositeType getDICompositeType(DIType T);
+
   class DebugInfoFinder {
 
   public:

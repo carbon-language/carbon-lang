@@ -310,6 +310,8 @@ class DwarfDebug : public Dwarf {
   /// addType - Add a new type attribute to the specified entity.
   void addType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty);
 
+  void addPubTypes(DISubprogram SP);
+
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                         DIBasicType BTy);
@@ -435,6 +437,10 @@ class DwarfDebug : public Dwarf {
   /// emitDebugPubNames - Emit visible names into a debug pubnames section.
   ///
   void emitDebugPubNames();
+
+  /// emitDebugPubTypes - Emit visible types into a debug pubtypes section.
+  ///
+  void emitDebugPubTypes();
 
   /// emitDebugStr - Emit visible names into a debug str section.
   ///

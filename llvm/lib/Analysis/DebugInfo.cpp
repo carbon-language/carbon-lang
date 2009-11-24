@@ -1409,4 +1409,36 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
 
     return DebugLoc::get(Id);
   }
+
+  /// getDISubprogram - Find subprogram that is enclosing this scope.
+  DISubprogram getDISubprogram(MDNode *Scope) {
+    DIDescriptor D(Scope);
+    if (D.isNull())
+      return DISubprogram();
+    
+    if (D.isCompileUnit())
+      return DISubprogram();
+    
+    if (D.isSubprogram())
+      return DISubprogram(Scope);
+    
+    if (D.isLexicalBlock())
+      return getDISubprogram(DILexicalBlock(Scope).getContext().getNode());
+    
+    return DISubprogram();
+  }
+
+  /// getDICompositeType - Find underlying composite type.
+  DICompositeType getDICompositeType(DIType T) {
+    if (T.isNull())
+      return DICompositeType();
+    
+    if (T.isCompositeType())
+      return DICompositeType(T.getNode());
+    
+    if (T.isDerivedType())
+      return getDICompositeType(DIDerivedType(T.getNode()).getTypeDerivedFrom());
+    
+    return DICompositeType();
+  }
 }

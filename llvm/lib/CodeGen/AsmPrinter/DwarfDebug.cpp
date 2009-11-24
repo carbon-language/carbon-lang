@@ -72,15 +72,20 @@ class CompileUnit {
   ///
   StringMap<DIE*> Globals;
 
+  /// GlobalTypes - A map of globally visible types for this unit.
+  ///
+  StringMap<DIE*> GlobalTypes;
+
 public:
   CompileUnit(unsigned I, DIE *D)
     : ID(I), CUDie(D), IndexTyDie(0) {}
   ~CompileUnit() { delete CUDie; delete IndexTyDie; }
 
   // Accessors.
-  unsigned getID() const { return ID; }
-  DIE* getCUDie() const { return CUDie; }
-  StringMap<DIE*> &getGlobals() { return Globals; }
+  unsigned getID()                  const { return ID; }
+  DIE* getCUDie()                   const { return CUDie; }
+  const StringMap<DIE*> &getGlobals()     const { return Globals; }
+  const StringMap<DIE*> &getGlobalTypes() const { return GlobalTypes; }
 
   /// hasContent - Return true if this compile unit has something to write out.
   ///
@@ -89,6 +94,12 @@ public:
   /// addGlobal - Add a new global entity to the compile unit.
   ///
   void addGlobal(const std::string &Name, DIE *Die) { Globals[Name] = Die; }
+
+  /// addGlobalType - Add a new global type to the compile unit.
+  ///
+  void addGlobalType(const std::string &Name, DIE *Die) { 
+    GlobalTypes[Name] = Die; 
+  }
 
   /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable.
@@ -1277,24 +1288,6 @@ DbgScope *DwarfDebug::getOrCreateAbstractScope(MDNode *N) {
   return AScope;
 }
 
-static DISubprogram getDISubprogram(MDNode *N) {
-
-  DIDescriptor D(N);
-  if (D.isNull())
-    return DISubprogram();
-
-  if (D.isCompileUnit())
-    return DISubprogram();
-
-  if (D.isSubprogram())
-    return DISubprogram(N);
-
-  if (D.isLexicalBlock())
-    return getDISubprogram(DILexicalBlock(N).getContext().getNode());
-
-  llvm_unreachable("Unexpected Descriptor!");
-}
-
 /// updateSubprogramScopeDIE - Find DIE for the given subprogram and
 /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
 /// If there are global variables in this scope then create and insert
@@ -1325,6 +1318,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
        SPDie->addChild(ScopedGVDie);
    }
  }
+ 
  return SPDie;
 }
 
@@ -1482,6 +1476,28 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV,
 
 }
 
+void DwarfDebug::addPubTypes(DISubprogram SP) {
+  DICompositeType SPTy = SP.getType();
+  unsigned SPTag = SPTy.getTag();
+  if (SPTag != dwarf::DW_TAG_subroutine_type) 
+    return;
+
+  DIArray Args = SPTy.getTypeArray();
+  if (Args.isNull()) 
+    return;
+
+  for (unsigned i = 0, e = Args.getNumElements(); i != e; ++i) {
+    DIType ATy(Args.getElement(i).getNode());
+    if (ATy.isNull())
+      continue;
+    DICompositeType CATy = getDICompositeType(ATy);
+    if (!CATy.isNull() && CATy.getName()) {
+      if (DIEEntry *Entry = ModuleCU->getDIEEntry(CATy.getNode()))
+        ModuleCU->addGlobalType(CATy.getName(), Entry->getEntry());
+    }
+  }
+}
+
 /// constructScopeDIE - Construct a DIE for this scope.
 DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
  if (!Scope)
@@ -1520,7 +1536,11 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
     if (NestedDIE)
       ScopeDIE->addChild(NestedDIE);
   }
-  return ScopeDIE;
+
+  if (DS.isSubprogram()) 
+    addPubTypes(DISubprogram(DS.getNode()));
+ 
+ return ScopeDIE;
 }
 
 /// GetOrCreateSourceID - Look up the source id with the given directory and
@@ -1622,6 +1642,13 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
 
   // Expose as global. FIXME - need to check external flag.
   ModuleCU->addGlobal(DI_GV.getName(), VariableDie);
+
+  DIType GTy = DI_GV.getType();
+  if (GTy.isCompositeType() && GTy.getName()) {
+    DIEEntry *Entry = ModuleCU->getDIEEntry(GTy.getNode());
+    assert (Entry && "Missing global type!");
+    ModuleCU->addGlobalType(GTy.getName(), Entry->getEntry());
+  }
   return;
 }
 
@@ -1647,6 +1674,7 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 
   // Expose as global.
   ModuleCU->addGlobal(SP.getName(), SubprogramDie);
+
   return;
 }
 
@@ -1777,6 +1805,9 @@ void DwarfDebug::endModule() {
 
   // Emit info into a debug pubnames section.
   emitDebugPubNames();
+
+  // Emit info into a debug pubtypes section.
+  emitDebugPubTypes();
 
   // Emit info into a debug str section.
   emitDebugStr();
@@ -2233,6 +2264,8 @@ void DwarfDebug::emitInitial() {
   EmitLabel("section_loc", 0);
   Asm->OutStreamer.SwitchSection(TLOF.getDwarfPubNamesSection());
   EmitLabel("section_pubnames", 0);
+  Asm->OutStreamer.SwitchSection(TLOF.getDwarfPubTypesSection());
+  EmitLabel("section_pubtypes", 0);
   Asm->OutStreamer.SwitchSection(TLOF.getDwarfStrSection());
   EmitLabel("section_str", 0);
   Asm->OutStreamer.SwitchSection(TLOF.getDwarfRangesSection());
@@ -2657,7 +2690,7 @@ void DwarfDebug::emitDebugPubNamesPerCU(CompileUnit *Unit) {
                  true);
   Asm->EOL("Compilation Unit Length");
 
-  StringMap<DIE*> &Globals = Unit->getGlobals();
+  const StringMap<DIE*> &Globals = Unit->getGlobals();
   for (StringMap<DIE*>::const_iterator
          GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
     const char *Name = GI->getKeyData();
@@ -2681,6 +2714,39 @@ void DwarfDebug::emitDebugPubNames() {
                           Asm->getObjFileLowering().getDwarfPubNamesSection());
 
   emitDebugPubNamesPerCU(ModuleCU);
+}
+
+void DwarfDebug::emitDebugPubTypes() {
+  EmitDifference("pubtypes_end", ModuleCU->getID(),
+                 "pubtypes_begin", ModuleCU->getID(), true);
+  Asm->EOL("Length of Public Types Info");
+
+  EmitLabel("pubtypes_begin", ModuleCU->getID());
+
+  Asm->EmitInt16(dwarf::DWARF_VERSION); Asm->EOL("DWARF Version");
+
+  EmitSectionOffset("info_begin", "section_info",
+                    ModuleCU->getID(), 0, true, false);
+  Asm->EOL("Offset of Compilation ModuleCU Info");
+
+  EmitDifference("info_end", ModuleCU->getID(), "info_begin", ModuleCU->getID(),
+                 true);
+  Asm->EOL("Compilation ModuleCU Length");
+
+  const StringMap<DIE*> &Globals = ModuleCU->getGlobalTypes();
+  for (StringMap<DIE*>::const_iterator
+         GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
+    const char *Name = GI->getKeyData();
+    DIE * Entity = GI->second;
+
+    Asm->EmitInt32(Entity->getOffset()); Asm->EOL("DIE offset");
+    Asm->EmitString(Name, strlen(Name)); Asm->EOL("External Name");
+  }
+
+  Asm->EmitInt32(0); Asm->EOL("End Mark");
+  EmitLabel("pubtypes_end", ModuleCU->getID());
+
+  Asm->EOL();
 }
 
 /// emitDebugStr - Emit visible names into a debug str section.
