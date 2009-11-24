@@ -349,10 +349,6 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (PrintGCInfo)
     PM.add(createGCInfoPrinter(errs()));
 
-  // Fold redundant debug labels.
-  PM.add(createDebugLabelFoldingPass());
-  printAndVerify(PM, "After DebugLabelFolding");
-
   if (OptLevel != CodeGenOpt::None && !DisableCodePlace) {
     PM.add(createCodePlacementOptPass());
     printAndVerify(PM, "After CodePlacementOpt");

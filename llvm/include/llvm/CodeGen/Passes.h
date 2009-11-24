@@ -136,11 +136,6 @@ namespace llvm {
   /// headers to target specific alignment boundary.
   FunctionPass *createCodePlacementOptPass();
 
-  /// DebugLabelFoldingPass - This pass prunes out redundant debug labels.  This
-  /// allows a debug emitter to determine if the range of two labels is empty,
-  /// by seeing if the labels map to the same reduced label.
-  FunctionPass *createDebugLabelFoldingPass();
-
   /// getRegisterAllocator - This creates an instance of the register allocator
   /// for the Sparc.
   FunctionPass *getRegisterAllocator(TargetMachine &T);
