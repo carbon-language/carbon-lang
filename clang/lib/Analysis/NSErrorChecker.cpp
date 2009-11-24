@@ -114,10 +114,13 @@ void NSErrorChecker::EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl) {
   os << " should have a non-void return value to indicate whether or not an "
         "error occurred";
 
+  // FIXME: Remove when we migrate EmitBasicReport to StringRef.
+  std::string cat = getCategory().str();
+  
   BR.EmitBasicReport(isNSErrorWarning
                      ? "Bad return type when passing NSError**"
                      : "Bad return type when passing CFError*",
-                     getCategory().c_str(), os.str().c_str(),
+                     cat.c_str(), os.str().c_str(),
                      CodeDecl.getLocation());
 }
 

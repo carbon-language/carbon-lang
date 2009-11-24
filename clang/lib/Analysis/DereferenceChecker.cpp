@@ -90,11 +90,31 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
       // We know that 'location' cannot be non-null.  This is what
       // we call an "explicit" null dereference.        
       if (!BT_null)
-        BT_null = new BuiltinBug("Null pointer dereference",
-                                 "Dereference of null pointer");
+        BT_null = new BuiltinBug("Dereference of null pointer");
+      
+      llvm::SmallString<100> buf;
+
+      switch (S->getStmtClass()) {
+        case Stmt::UnaryOperatorClass: {
+          const UnaryOperator *U = cast<UnaryOperator>(S);
+          const Expr *SU = U->getSubExpr()->IgnoreParens();
+          if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(SU)) {
+            if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+              llvm::raw_svector_ostream os(buf);
+              os << "Dereference of null pointer loaded from variable '"
+                 << VD->getName() << '\'';
+            }
+          }
+        }
+        default:
+          break;
+      }
 
       EnhancedBugReport *report =
-        new EnhancedBugReport(*BT_null, BT_null->getDescription(), N);
+        new EnhancedBugReport(*BT_null,
+                              buf.empty() ? BT_null->getDescription():buf.str(),
+                              N);
+
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                                 bugreporter::GetDerefExpr(N));
       

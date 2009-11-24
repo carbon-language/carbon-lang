@@ -39,8 +39,8 @@ public:
   virtual ~BugType();
 
   // FIXME: Should these be made strings as well?
-  const std::string& getName() const { return Name; }
-  const std::string& getCategory() const { return Category; }
+  llvm::StringRef getName() const { return Name; }
+  llvm::StringRef getCategory() const { return Category; }
   
   /// isSuppressOnSink - Returns true if bug reports associated with this bug
   ///  type should be suppressed if the end node of the report is post-dominated
@@ -76,7 +76,7 @@ public:
   BuiltinBug(GRExprEngine *eng, const char* n)
     : BugType(n, "Logic error"), Eng(eng), desc(n) {}
 
-  const std::string &getDescription() const { return desc; }
+  llvm::StringRef getDescription() const { return desc; }
 
   virtual void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {}
 
