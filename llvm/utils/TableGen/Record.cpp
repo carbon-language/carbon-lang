@@ -346,10 +346,6 @@ Init *BitsInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
 }
 
 std::string BitsInit::getAsString() const {
-  //if (!printInHex(OS)) return;
-  //if (!printAsVariable(OS)) return;
-  //if (!printAsUnset(OS)) return;
-
   std::string Result = "{ ";
   for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
     if (i) Result += ", ";
@@ -359,51 +355,6 @@ std::string BitsInit::getAsString() const {
       Result += "*";
   }
   return Result + " }";
-}
-
-bool BitsInit::printInHex(raw_ostream &OS) const {
-  // First, attempt to convert the value into an integer value...
-  int64_t Result = 0;
-  for (unsigned i = 0, e = getNumBits(); i != e; ++i)
-    if (BitInit *Bit = dynamic_cast<BitInit*>(getBit(i))) {
-      Result |= Bit->getValue() << i;
-    } else {
-      return true;
-    }
-
-  OS << format("0x%x", Result);
-  return false;
-}
-
-bool BitsInit::printAsVariable(raw_ostream &OS) const {
-  // Get the variable that we may be set equal to...
-  assert(getNumBits() != 0);
-  VarBitInit *FirstBit = dynamic_cast<VarBitInit*>(getBit(0));
-  if (FirstBit == 0) return true;
-  TypedInit *Var = FirstBit->getVariable();
-
-  // Check to make sure the types are compatible.
-  BitsRecTy *Ty = dynamic_cast<BitsRecTy*>(FirstBit->getVariable()->getType());
-  if (Ty == 0) return true;
-  if (Ty->getNumBits() != getNumBits()) return true; // Incompatible types!
-
-  // Check to make sure all bits are referring to the right bits in the variable
-  for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
-    VarBitInit *Bit = dynamic_cast<VarBitInit*>(getBit(i));
-    if (Bit == 0 || Bit->getVariable() != Var || Bit->getBitNum() != i)
-      return true;
-  }
-
-  Var->print(OS);
-  return false;
-}
-
-bool BitsInit::printAsUnset(raw_ostream &OS) const {
-  for (unsigned i = 0, e = getNumBits(); i != e; ++i)
-    if (!dynamic_cast<UnsetInit*>(getBit(i)))
-      return true;
-  OS << "?";
-  return false;
 }
 
 // resolveReferences - If there are any field references that refer to fields

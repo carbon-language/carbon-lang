@@ -611,12 +611,6 @@ public:
   virtual std::string getAsString() const;
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
-
-  // printXX - Print this bitstream with the specified format, returning true if
-  // it is not possible.
-  bool printInHex(raw_ostream &OS) const;
-  bool printAsVariable(raw_ostream &OS) const;
-  bool printAsUnset(raw_ostream &OS) const;
 };
 
 
