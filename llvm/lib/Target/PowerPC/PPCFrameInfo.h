@@ -42,11 +42,12 @@ public:
   /// frame pointer.
   static unsigned getFramePointerSaveOffset(bool isPPC64, bool isDarwinABI) {
     // For the Darwin ABI:
-    // Use the TOC save slot in the PowerPC linkage area for saving the frame
-    // pointer (if needed.)  LLVM does not generate code that uses the TOC (R2
-    // is treated as a caller saved register.)
+    // We cannot use the TOC save slot (offset +20) in the PowerPC linkage area
+    // for saving the frame pointer (if needed.)  While the published ABI has
+    // not used this slot since at least MacOSX 10.2, there is older code
+    // around that does use it, and that needs to continue to work.
     if (isDarwinABI)
-      return isPPC64 ? 40 : 20;
+      return isPPC64 ? -8U : -4U;
     
     // SVR4 ABI: First slot in the general register save area.
     return -4U;
@@ -90,6 +91,17 @@ public:
   // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
   const SpillSlot *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const {
+    if (TM.getSubtarget<PPCSubtarget>().isDarwinABI()) {
+      NumEntries = 1;
+      if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
+        static const SpillSlot darwin64Offsets[] = {PPC::X31, -8};
+        return darwin64Offsets;
+      } else {
+        static const SpillSlot darwinOffsets[] = {PPC::R31, -4};
+        return darwinOffsets;
+      }
+    }
+
     // Early exit if not using the SVR4 ABI.
     if (!TM.getSubtarget<PPCSubtarget>().isSVR4ABI()) {
       NumEntries = 0;

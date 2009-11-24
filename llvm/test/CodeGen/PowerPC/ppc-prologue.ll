@@ -2,7 +2,7 @@
 
 define i32 @_Z4funci(i32 %a) ssp {
 ; CHECK:       mflr r0
-; CHECK-NEXT:  stw r31, 20(r1)
+; CHECK-NEXT:  stw r31, -4(r1)
 ; CHECK-NEXT:  stw r0, 8(r1)
 ; CHECK-NEXT:  stwu r1, -80(r1)
 ; CHECK-NEXT: Llabel1:
