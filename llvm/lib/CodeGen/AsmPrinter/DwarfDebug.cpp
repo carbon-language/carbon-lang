@@ -2717,6 +2717,9 @@ void DwarfDebug::emitDebugPubNames() {
 }
 
 void DwarfDebug::emitDebugPubTypes() {
+  // Start the dwarf pubnames section.
+  Asm->OutStreamer.SwitchSection(
+                          Asm->getObjFileLowering().getDwarfPubTypesSection());
   EmitDifference("pubtypes_end", ModuleCU->getID(),
                  "pubtypes_begin", ModuleCU->getID(), true);
   Asm->EOL("Length of Public Types Info");
