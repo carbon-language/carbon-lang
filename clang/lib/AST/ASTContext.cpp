@@ -2342,6 +2342,22 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
                                                      VAT->getBracketsRange()));
 }
 
+DeclarationName ASTContext::getNameForTemplate(TemplateName Name) {
+  if (TemplateDecl *TD = Name.getAsTemplateDecl())
+    return TD->getDeclName();
+  
+  if (DependentTemplateName *DTN = Name.getAsDependentTemplateName()) {
+    if (DTN->isIdentifier()) {
+      return DeclarationNames.getIdentifier(DTN->getIdentifier());
+    } else {
+      return DeclarationNames.getCXXOperatorName(DTN->getOperator());
+    }
+  }
+
+  assert(Name.getAsOverloadedFunctionDecl());
+  return Name.getAsOverloadedFunctionDecl()->getDeclName();
+}
+
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
   // If this template name refers to a template, the canonical
   // template name merely stores the template itself.

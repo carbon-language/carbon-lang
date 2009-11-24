@@ -733,6 +733,8 @@ public:
     return getExtQualType(T, Qs);
   }
 
+  DeclarationName getNameForTemplate(TemplateName Name);
+
   TemplateName getQualifiedTemplateName(NestedNameSpecifier *NNS,
                                         bool TemplateKeyword,
                                         TemplateDecl *Template);
