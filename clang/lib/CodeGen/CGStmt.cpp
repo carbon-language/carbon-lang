@@ -153,9 +153,7 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   }
 
   // Keep track of the current cleanup stack depth.
-  size_t CleanupStackDepth = CleanupEntries.size();
-  bool OldDidCallStackSave = DidCallStackSave;
-  DidCallStackSave = false;
+  CleanupScope Scope(*this);
 
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
@@ -184,10 +182,6 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
 
     RV = EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
   }
-
-  DidCallStackSave = OldDidCallStackSave;
-
-  EmitCleanupBlocks(CleanupStackDepth);
 
   return RV;
 }
@@ -294,8 +288,10 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // C99 6.8.4.1: The first substatement is executed if the expression compares
   // unequal to 0.  The condition must be a scalar type.
+  CleanupScope ConditionScope(*this);
+
   if (S.getConditionVariable())
-    EmitDecl(*S.getConditionVariable());
+    EmitLocalBlockVarDecl(*S.getConditionVariable());
 
   // If the condition constant folds and can be elided, try to avoid emitting
   // the condition and the dead arm of the if/else.
@@ -308,8 +304,10 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
     // If the skipped block has no labels in it, just emit the executed block.
     // This avoids emitting dead code and simplifies the CFG substantially.
     if (!ContainsLabel(Skipped)) {
-      if (Executed)
+      if (Executed) {
+        CleanupScope ExecutedScope(*this);
         EmitStmt(Executed);
+      }
       return;
     }
   }
@@ -324,14 +322,20 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   EmitBranchOnBoolExpr(S.getCond(), ThenBlock, ElseBlock);
 
   // Emit the 'then' code.
-  EmitBlock(ThenBlock);
-  EmitStmt(S.getThen());
+  EmitBlock(ThenBlock); 
+  {
+    CleanupScope ThenScope(*this);
+    EmitStmt(S.getThen());
+  }
   EmitBranch(ContBlock);
 
   // Emit the 'else' code if present.
   if (const Stmt *Else = S.getElse()) {
     EmitBlock(ElseBlock);
-    EmitStmt(Else);
+    {
+      CleanupScope ElseScope(*this);
+      EmitStmt(Else);
+    }
     EmitBranch(ContBlock);
   }
 

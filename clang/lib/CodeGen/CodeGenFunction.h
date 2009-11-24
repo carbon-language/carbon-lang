@@ -165,6 +165,31 @@ public:
     }
   };
 
+  /// \brief Enters a new scope for capturing cleanups, all of which will be
+  /// executed once the scope is exited.
+  class CleanupScope {
+    CodeGenFunction& CGF;
+    size_t CleanupStackDepth;
+    bool OldDidCallStackSave;
+
+    CleanupScope(const CleanupScope &); // DO NOT IMPLEMENT
+    CleanupScope &operator=(const CleanupScope &); // DO NOT IMPLEMENT
+
+  public:
+    /// \brief Enter a new cleanup scope.
+    explicit CleanupScope(CodeGenFunction &CGF) : CGF(CGF) {
+      CleanupStackDepth = CGF.CleanupEntries.size();
+      OldDidCallStackSave = CGF.DidCallStackSave;
+    }
+
+    /// \brief Exit this cleanup scope, emitting any accumulated
+    /// cleanups.
+    ~CleanupScope() {
+      CGF.DidCallStackSave = OldDidCallStackSave;
+      CGF.EmitCleanupBlocks(CleanupStackDepth);
+    }
+  };
+
   /// EmitCleanupBlocks - Takes the old cleanup stack size and emits the cleanup
   /// blocks that have been added.
   void EmitCleanupBlocks(size_t OldCleanupStackSize);
