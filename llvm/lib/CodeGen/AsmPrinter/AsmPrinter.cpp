@@ -728,7 +728,7 @@ static void printStringChar(formatted_raw_ostream &O, unsigned char C) {
 /// EmitString - Emit a string with quotes and a null terminator.
 /// Special characters are emitted properly.
 /// \literal (Eg. '\t') \endliteral
-void AsmPrinter::EmitString(const std::string &String) const {
+void AsmPrinter::EmitString(const StringRef String) const {
   EmitString(String.data(), String.size());
 }
 

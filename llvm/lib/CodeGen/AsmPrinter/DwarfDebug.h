@@ -244,7 +244,7 @@ class DwarfDebug : public Dwarf {
   /// addString - Add a string attribute data and value.
   ///
   void addString(DIE *Die, unsigned Attribute, unsigned Form,
-                 const std::string &String);
+                 const StringRef Str);
 
   /// addLabel - Add a Dwarf label attribute data and value.
   ///

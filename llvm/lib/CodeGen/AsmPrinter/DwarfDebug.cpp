@@ -333,7 +333,7 @@ void DwarfDebug::addSInt(DIE *Die, unsigned Attribute,
 /// addString - Add a string attribute data and value.
 ///
 void DwarfDebug::addString(DIE *Die, unsigned Attribute, unsigned Form,
-                           const std::string &String) {
+                           const StringRef String) {
   DIEValue *Value = new DIEString(String);
   DIEValues.push_back(Value);
   Die->addValue(Attribute, Form, Value);

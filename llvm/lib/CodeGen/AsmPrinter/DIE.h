@@ -277,9 +277,9 @@ namespace llvm {
   /// DIEString - A string value DIE.
   ///
   class DIEString : public DIEValue {
-    const std::string Str;
+    const StringRef Str;
   public:
-    explicit DIEString(const std::string &S) : DIEValue(isString), Str(S) {}
+    explicit DIEString(const StringRef S) : DIEValue(isString), Str(S) {}
 
     /// EmitValue - Emit string value.
     ///
