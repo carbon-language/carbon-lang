@@ -875,10 +875,9 @@ Parser::OwningStmtResult Parser::ParseDoStatement(AttributeList *Attr) {
   }
 
   // Parse the parenthesized condition.
-  OwningExprResult Cond(Actions);
-  SourceLocation LPLoc, RPLoc;
-  ParseParenExprOrCondition(Cond, true, &LPLoc, &RPLoc);
-
+  SourceLocation LPLoc = ConsumeParen();
+  OwningExprResult Cond = ParseExpression();
+  SourceLocation RPLoc = MatchRHSPunctuation(tok::r_paren, LPLoc);
   DoScope.Exit();
 
   if (Cond.isInvalid() || Body.isInvalid())

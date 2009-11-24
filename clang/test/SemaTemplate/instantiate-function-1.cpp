@@ -106,9 +106,6 @@ template<typename T> struct Do0 {
   void f(T t) {
     do {
     } while (t); // expected-error{{not contextually}}
-    
-    do {
-    } while (T t2 = T());
   }
 };
 
