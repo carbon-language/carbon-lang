@@ -411,7 +411,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
     bool Invalid = GatherArgumentsForCall(PlacementLParen, OperatorNew,
                                           Proto, 1, PlaceArgs, NumPlaceArgs, 
-                                          AllPlaceArgs, 0, CallType);
+                                          AllPlaceArgs, CallType);
     if (Invalid)
       return ExprError();
     

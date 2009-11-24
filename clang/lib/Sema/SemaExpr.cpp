@@ -2627,7 +2627,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   else if (isa<MemberExpr>(Fn))
     CallType = VariadicMethod;
   Invalid = GatherArgumentsForCall(Call->getSourceRange().getBegin(), FDecl,
-                                   Proto, 0, Args, NumArgs, AllArgs, Fn, CallType);
+                                   Proto, 0, Args, NumArgs, AllArgs, CallType);
   if (Invalid)
     return true;
   unsigned TotalNumArgs = AllArgs.size();
@@ -2643,7 +2643,6 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
                                   unsigned FirstProtoArg,
                                   Expr **Args, unsigned NumArgs,
                                   llvm::SmallVector<Expr *, 8> &AllArgs,
-                                  Expr *Fn,
                                   VariadicCallType CallType) {
   unsigned NumArgsInProto = Proto->getNumArgs();
   unsigned NumArgsToCheck = NumArgs;

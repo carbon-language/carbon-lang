@@ -3645,58 +3645,22 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
     = Constructor->getType()->getAs<FunctionProtoType>();
   assert(Proto && "Constructor without a prototype?");
   unsigned NumArgsInProto = Proto->getNumArgs();
-  unsigned NumArgsToCheck = NumArgs;
   
   // If too few arguments are available, we'll fill in the rest with defaults.
-  if (NumArgs < NumArgsInProto) {
-    NumArgsToCheck = NumArgsInProto;
+  if (NumArgs < NumArgsInProto)
     ConvertedArgs.reserve(NumArgsInProto);
-  } else {
+  else
     ConvertedArgs.reserve(NumArgs);
-    if (NumArgs > NumArgsInProto)
-      NumArgsToCheck = NumArgsInProto;
-  }
-  
-  // Convert arguments
-  for (unsigned i = 0; i != NumArgsToCheck; i++) {
-    QualType ProtoArgType = Proto->getArgType(i);
-    
-    Expr *Arg;
-    if (i < NumArgs) {
-      Arg = Args[i];
-      
-      // Pass the argument.
-      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
-        return true;
-      
-      Args[i] = 0;
-    } else {
-      ParmVarDecl *Param = Constructor->getParamDecl(i);
-      
-      OwningExprResult DefArg = BuildCXXDefaultArgExpr(Loc, Constructor, Param);
-      if (DefArg.isInvalid())
-        return true;
-      
-      Arg = DefArg.takeAs<Expr>();
-    }
-    
-    ConvertedArgs.push_back(Arg);
-  }
-  
-  // If this is a variadic call, handle args passed through "...".
-  if (Proto->isVariadic()) {
-    // Promote the arguments (C99 6.5.2.2p7).
-    for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
-      Expr *Arg = Args[i];
-      if (DefaultVariadicArgumentPromotion(Arg, VariadicConstructor))
-        return true;
-      
-      ConvertedArgs.push_back(Arg);
-      Args[i] = 0;
-    }
-  }
-  
-  return false;
+
+  VariadicCallType CallType = 
+    Proto->isVariadic() ? VariadicConstructor : VariadicDoesNotApply;
+  llvm::SmallVector<Expr *, 8> AllArgs;
+  bool Invalid = GatherArgumentsForCall(Loc, Constructor,
+                                        Proto, 0, Args, NumArgs, AllArgs, 
+                                        CallType);
+  for (unsigned i =0, size = AllArgs.size(); i < size; i++)
+    ConvertedArgs.push_back(AllArgs[i]);
+  return Invalid;
 }
 
 /// CompareReferenceRelationship - Compare the two types T1 and T2 to

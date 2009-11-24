@@ -3324,7 +3324,6 @@ public:
                               unsigned FirstProtoArg,
                               Expr **Args, unsigned NumArgs,
                               llvm::SmallVector<Expr *, 8> &AllArgs,
-                              Expr *Fn = 0,
                               VariadicCallType CallType = VariadicDoesNotApply);
 
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
