@@ -1181,12 +1181,6 @@ def : T2Pat<(add GPR:$LHS, t2_so_neg_imm2part:$RHS),
              (t2SUBri (t2SUBri GPR:$LHS, (t2_so_neg_imm2part_1 imm:$RHS)),
                     (t2_so_neg_imm2part_2 imm:$RHS))>;
 
-// ConstantPool, GlobalAddress, and JumpTable
-def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>;
-def : T2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
-def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-            (t2LEApcrelJT tjumptable:$dst, imm:$id)>;
-
 // 32-bit immediate using movw + movt.
 // This is a single pseudo instruction to make it re-materializable. Remove
 // when we can do generalized remat.
@@ -1194,6 +1188,16 @@ let isReMaterializable = 1 in
 def t2MOVi32imm : T2Ix2<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVi,
                    "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
                      [(set GPR:$dst, (i32 imm:$src))]>;
+
+// ConstantPool, GlobalAddress, and JumpTable
+def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>,
+           Requires<[IsThumb2, DontUseMovt]>;
+def : T2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
+def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2MOVi32imm tglobaladdr :$dst)>,
+           Requires<[IsThumb2, UseMovt]>;
+
+def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
+            (t2LEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Pseudo instruction that combines ldr from constpool and add pc. This should
 // be expanded into two instructions late to allow if-conversion and

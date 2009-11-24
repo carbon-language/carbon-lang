@@ -330,6 +330,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                  const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNum);
+  unsigned TF = MO.getTargetFlags();
+
   switch (MO.getType()) {
   default:
     assert(0 && "<unknown operand type>");
@@ -356,12 +358,12 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_Immediate: {
     int64_t Imm = MO.getImm();
     O << '#';
-    if (Modifier) {
-      if (strcmp(Modifier, "lo16") == 0)
-        O << ":lower16:";
-      else if (strcmp(Modifier, "hi16") == 0)
-        O << ":upper16:";
-    }
+    if ((Modifier && strcmp(Modifier, "lo16") == 0) ||
+        (TF & ARMII::MO_LO16))
+      O << ":lower16:";
+    else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
+             (TF & ARMII::MO_HI16))
+      O << ":upper16:";
     O << Imm;
     break;
   }
@@ -371,6 +373,13 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     GlobalValue *GV = MO.getGlobal();
+
+    if ((Modifier && strcmp(Modifier, "lo16") == 0) ||
+        (TF & ARMII::MO_LO16))
+      O << ":lower16:";
+    else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
+             (TF & ARMII::MO_HI16))
+      O << ":upper16:";
     O << Mang->getMangledName(GV);
 
     printOffset(MO.getOffset());

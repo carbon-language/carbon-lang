@@ -116,6 +116,10 @@ def IsNotDarwin : Predicate<"!Subtarget->isTargetDarwin()">;
 def CarryDefIsUnused : Predicate<"!N.getNode()->hasAnyUseOfValue(1)">;
 def CarryDefIsUsed   : Predicate<"N.getNode()->hasAnyUseOfValue(1)">;
 
+// FIXME: Eventually this will be just "hasV6T2Ops".
+def UseMovt   : Predicate<"Subtarget->useMovt()">;
+def DontUseMovt : Predicate<"!Subtarget->useMovt()">;
+
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.
 
@@ -204,7 +208,7 @@ def hi16 : SDNodeXForm<imm, [{
 def lo16AllZero : PatLeaf<(i32 imm), [{
   // Returns true if all low 16-bits are 0.
   return (((uint32_t)N->getZExtValue()) & 0xFFFFUL) == 0;
-  }], hi16>;
+}], hi16>;
 
 /// imm0_65535 predicate - True if the 32-bit immediate is in the range 
 /// [0.65535].
@@ -1002,7 +1006,7 @@ def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src),
 let Constraints = "$src = $dst" in
 def MOVTi16 : AI1<0b1010, (outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
                   DPFrm, IIC_iMOVi,
-                  "movt", "\t$dst, $imm", 
+                  "movt", "\t$dst, $imm",
                   [(set GPR:$dst,
                         (or (and GPR:$src, 0xffff), 
                             lo16AllZero:$imm))]>, UnaryDP,
@@ -1603,12 +1607,6 @@ let Defs =
 // Non-Instruction Patterns
 //
 
-// ConstantPool, GlobalAddress, and JumpTable
-def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>;
-def : ARMPat<(ARMWrapper  tconstpool  :$dst), (LEApcrel tconstpool  :$dst)>;
-def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-             (LEApcrelJT tjumptable:$dst, imm:$id)>;
-
 // Large immediate handling.
 
 // Two piece so_imms.
@@ -1638,9 +1636,18 @@ def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
 def MOVi32imm : AI1x2<(outs GPR:$dst), (ins i32imm:$src), Pseudo, IIC_iMOVi,
-                    "movw", "\t$dst, ${src:lo16}\n\tmovt${p} $dst, ${src:hi16}",
+                    "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
                      [(set GPR:$dst, (i32 imm:$src))]>,
                Requires<[IsARM, HasV6T2]>;
+
+// ConstantPool, GlobalAddress, and JumpTable
+def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>,
+            Requires<[IsARM, DontUseMovt]>;
+def : ARMPat<(ARMWrapper  tconstpool  :$dst), (LEApcrel tconstpool  :$dst)>;
+def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (MOVi32imm tglobaladdr :$dst)>,
+            Requires<[IsARM, UseMovt]>;
+def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
+             (LEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // TODO: add,sub,and, 3-instr forms?
 

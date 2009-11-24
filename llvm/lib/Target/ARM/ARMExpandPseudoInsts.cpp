@@ -75,17 +75,30 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
     }
     case ARM::t2MOVi32imm: {
       unsigned DstReg = MI.getOperand(0).getReg();
-      unsigned Imm = MI.getOperand(1).getImm();
-      unsigned Lo16 = Imm & 0xffff;
-      unsigned Hi16 = (Imm >> 16) & 0xffff;
       if (!MI.getOperand(0).isDead()) {
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::t2MOVi16), DstReg)
-                       .addImm(Lo16));
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(ARM::t2MOVTi16))
-                       .addReg(DstReg, getDefRegState(true))
-                       .addReg(DstReg).addImm(Hi16));
+        const MachineOperand &MO = MI.getOperand(1);
+        MachineInstrBuilder LO16, HI16;
+
+        LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::t2MOVi16),
+                       DstReg);
+        HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::t2MOVTi16))
+          .addReg(DstReg, getDefRegState(true)).addReg(DstReg);
+
+        if (MO.isImm()) {
+          unsigned Imm = MO.getImm();
+          unsigned Lo16 = Imm & 0xffff;
+          unsigned Hi16 = (Imm >> 16) & 0xffff;
+          LO16 = LO16.addImm(Lo16);
+          HI16 = HI16.addImm(Hi16);
+        } else {
+          GlobalValue *GV = MO.getGlobal();
+          unsigned TF = MO.getTargetFlags();
+          LO16 = LO16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_LO16);
+          HI16 = HI16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_HI16);
+          // FIXME: What's about memoperands?
+        }
+        AddDefaultPred(LO16);
+        AddDefaultPred(HI16);
       }
       MI.eraseFromParent();
       Modified = true;

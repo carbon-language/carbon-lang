@@ -39,6 +39,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <sstream>
@@ -1356,10 +1357,17 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
                            PseudoSourceValue::getGOT(), 0);
     return Result;
   } else {
-    SDValue CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
-    CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
-    return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
-                       PseudoSourceValue::getConstantPool(), 0);
+    // If we have T2 ops, we can materialize the address directly via movt/movw
+    // pair. This is always cheaper.
+    if (Subtarget->useMovt()) {
+      return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
+                         DAG.getTargetGlobalAddress(GV, PtrVT));
+    } else {
+      SDValue CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 4);
+      CPAddr = DAG.getNode(ARMISD::Wrapper, dl, MVT::i32, CPAddr);
+      return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), CPAddr,
+                         PseudoSourceValue::getConstantPool(), 0);
+    }
   }
 }
 

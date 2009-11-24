@@ -261,7 +261,9 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
     if (N.getOpcode() == ISD::FrameIndex) {
       int FI = cast<FrameIndexSDNode>(N)->getIndex();
       Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-    } else if (N.getOpcode() == ARMISD::Wrapper) {
+    } else if (N.getOpcode() == ARMISD::Wrapper &&
+               !(Subtarget->useMovt() &&
+                 N.getOperand(0).getOpcode() == ISD::TargetGlobalAddress)) {
       Base = N.getOperand(0);
     }
     Offset = CurDAG->getRegister(0, MVT::i32);
@@ -463,7 +465,9 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDValue Op, SDValue N,
     if (N.getOpcode() == ISD::FrameIndex) {
       int FI = cast<FrameIndexSDNode>(N)->getIndex();
       Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-    } else if (N.getOpcode() == ARMISD::Wrapper) {
+    } else if (N.getOpcode() == ARMISD::Wrapper &&
+               !(Subtarget->useMovt() &&
+                 N.getOperand(0).getOpcode() == ISD::TargetGlobalAddress)) {
       Base = N.getOperand(0);
     }
     Offset = CurDAG->getTargetConstant(ARM_AM::getAM5Opc(ARM_AM::add, 0),
@@ -558,7 +562,13 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue Op, SDValue N,
   }
 
   if (N.getOpcode() != ISD::ADD) {
-    Base = (N.getOpcode() == ARMISD::Wrapper) ? N.getOperand(0) : N;
+    if (N.getOpcode() == ARMISD::Wrapper &&
+        !(Subtarget->useMovt() &&
+          N.getOperand(0).getOpcode() == ISD::TargetGlobalAddress)) {
+      Base = N.getOperand(0);
+    } else
+      Base = N;
+
     Offset = CurDAG->getRegister(0, MVT::i32);
     OffImm = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
@@ -681,7 +691,9 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
       Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
       OffImm  = CurDAG->getTargetConstant(0, MVT::i32);
       return true;
-    } else if (N.getOpcode() == ARMISD::Wrapper) {
+    } else if (N.getOpcode() == ARMISD::Wrapper &&
+               !(Subtarget->useMovt() &&
+                 N.getOperand(0).getOpcode() == ISD::TargetGlobalAddress)) {
       Base = N.getOperand(0);
       if (Base.getOpcode() == ISD::TargetConstantPool)
         return false;  // We want to select t2LDRpci instead.

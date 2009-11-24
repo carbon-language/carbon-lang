@@ -27,6 +27,10 @@ UseNEONFP("arm-use-neon-fp",
           cl::desc("Use NEON for single-precision FP"),
           cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+UseMOVT("arm-use-movt",
+        cl::init(true), cl::Hidden);
+
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
                            bool isT)
   : ARMArchVersion(V4T)
@@ -36,6 +40,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , ThumbMode(Thumb1)
   , PostRAScheduler(false)
   , IsR9Reserved(ReserveR9)
+  , UseMovt(UseMOVT)
   , stackAlignment(4)
   , CPUString("generic")
   , TargetType(isELF) // Default to ELF unless otherwise specified.
