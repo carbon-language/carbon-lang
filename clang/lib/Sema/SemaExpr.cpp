@@ -2520,17 +2520,14 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by
   // assignment, to the types of the corresponding parameter, ...
   unsigned NumArgsInProto = Proto->getNumArgs();
-  unsigned NumArgsToCheck = NumArgs;
   bool Invalid = false;
-
+   
   // If too few arguments are available (and we don't have default
   // arguments for the remaining parameters), don't make the call.
   if (NumArgs < NumArgsInProto) {
     if (!FDecl || NumArgs < FDecl->getMinRequiredArguments())
       return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
         << Fn->getType()->isBlockPointerType() << Fn->getSourceRange();
-    // Use default arguments for missing arguments
-    NumArgsToCheck = NumArgsInProto;
     Call->setNumArgs(Context, NumArgsInProto);
   }
 
@@ -2545,25 +2542,49 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                        Args[NumArgs-1]->getLocEnd());
       // This deletes the extra arguments.
       Call->setNumArgs(Context, NumArgsInProto);
-      Invalid = true;
+      return true;
     }
-    NumArgsToCheck = NumArgsInProto;
   }
+  llvm::SmallVector<Expr *, 8> AllArgs;
+  Invalid = GatherArgumentsForCall(Call->getSourceRange().getBegin(), FDecl,
+                                   Proto, 0, Args, NumArgs, AllArgs, Fn);
+  if (Invalid)
+    return true;
+  unsigned TotalNumArgs = AllArgs.size();
+  for (unsigned i = 0; i < TotalNumArgs; ++i)
+    Call->setArg(i, AllArgs[i]);
+  
+  return false;
+}
 
+bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
+                                  FunctionDecl *FDecl,
+                                  const FunctionProtoType *Proto,
+                                  unsigned FirstProtoArg,
+                                  Expr **Args, unsigned NumArgs,
+                                  llvm::SmallVector<Expr *, 8> &AllArgs,
+                                  Expr *Fn) {
+  unsigned NumArgsInProto = Proto->getNumArgs();
+  unsigned NumArgsToCheck = NumArgs;
+  bool Invalid = false;
+  if (NumArgs != NumArgsInProto)
+    // Use default arguments for missing arguments
+    NumArgsToCheck = NumArgsInProto;
+  unsigned ArgIx = 0;
   // Continue to check argument types (even if we have too few/many args).
-  for (unsigned i = 0; i != NumArgsToCheck; i++) {
+  for (unsigned i = FirstProtoArg; i != NumArgsToCheck; i++) {
     QualType ProtoArgType = Proto->getArgType(i);
-
+    
     Expr *Arg;
-    if (i < NumArgs) {
-      Arg = Args[i];
-
+    if (ArgIx < NumArgs) {
+      Arg = Args[ArgIx++];
+      
       if (RequireCompleteType(Arg->getSourceRange().getBegin(),
                               ProtoArgType,
                               PDiag(diag::err_call_incomplete_argument)
-                                << Arg->getSourceRange()))
+                              << Arg->getSourceRange()))
         return true;
-
+      
       // Pass the argument.
       if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
         return true;
@@ -2572,35 +2593,33 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
         Arg = MaybeBindToTemporary(Arg).takeAs<Expr>();
     } else {
       ParmVarDecl *Param = FDecl->getParamDecl(i);
-
+      
       OwningExprResult ArgExpr =
-        BuildCXXDefaultArgExpr(Call->getSourceRange().getBegin(),
-                               FDecl, Param);
+        BuildCXXDefaultArgExpr(CallLoc, FDecl, Param);
       if (ArgExpr.isInvalid())
         return true;
-
+      
       Arg = ArgExpr.takeAs<Expr>();
     }
-
-    Call->setArg(i, Arg);
+    AllArgs.push_back(Arg);
   }
-
+  
   // If this is a variadic call, handle args passed through "...".
   if (Proto->isVariadic()) {
     VariadicCallType CallType = VariadicFunction;
-    if (Fn->getType()->isBlockPointerType())
-      CallType = VariadicBlock; // Block
-    else if (isa<MemberExpr>(Fn))
-      CallType = VariadicMethod;
-
+    if (Fn) {
+      if (Fn->getType()->isBlockPointerType())
+        CallType = VariadicBlock; // Block
+      else if (isa<MemberExpr>(Fn))
+        CallType = VariadicMethod;
+    }
     // Promote the arguments (C99 6.5.2.2p7).
-    for (unsigned i = NumArgsInProto; i < NumArgs; i++) {
+    for (unsigned i = ArgIx; i < NumArgs; i++) {
       Expr *Arg = Args[i];
       Invalid |= DefaultVariadicArgumentPromotion(Arg, CallType);
-      Call->setArg(i, Arg);
+      AllArgs.push_back(Arg);
     }
   }
-
   return Invalid;
 }
 

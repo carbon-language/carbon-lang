@@ -79,3 +79,14 @@ void t9() {
   new bool(true);  
   new (&b) bool(true);
 }
+
+struct A {
+  void* operator new(__typeof(sizeof(int)), int, float, ...);
+  A();
+};
+
+A* t10() {
+   // CHECK: @_ZN1AnwEmifz
+  return new(1, 2, 3.45, 100) A;
+}
+

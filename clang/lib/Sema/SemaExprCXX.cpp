@@ -402,30 +402,17 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                               UseGlobal, AllocType, ArraySize, PlaceArgs,
                               NumPlaceArgs, OperatorNew, OperatorDelete))
     return ExprError();
-  llvm::SmallVector<Expr *, 4> AllPlaceArgs;
+  llvm::SmallVector<Expr *, 8> AllPlaceArgs;
   if (OperatorNew) {
     // Add default arguments, if any.
     const FunctionProtoType *Proto = 
       OperatorNew->getType()->getAs<FunctionProtoType>();
-    unsigned NumArgsInProto = Proto->getNumArgs();
-    for (unsigned i = 1; i != NumArgsInProto; i++) {
-      QualType ProtoArgType = Proto->getArgType(i);
+    bool Invalid = GatherArgumentsForCall(PlacementLParen, OperatorNew,
+                                          Proto, 1, PlaceArgs, NumPlaceArgs, 
+                                          AllPlaceArgs);
+    if (Invalid)
+      return ExprError();
     
-      Expr *Arg;
-      if (i <= NumPlaceArgs) {
-        AllPlaceArgs.push_back(PlaceArgs[i-1]);
-        continue;
-      }
-      ParmVarDecl *Param = OperatorNew->getParamDecl(i);
-    
-      OwningExprResult ArgExpr =
-        BuildCXXDefaultArgExpr(StartLoc, OperatorNew, Param);
-      if (ArgExpr.isInvalid())
-        return ExprError();
-    
-      Arg = ArgExpr.takeAs<Expr>();
-      AllPlaceArgs.push_back(Arg);
-    }
     NumPlaceArgs = AllPlaceArgs.size();
     if (NumPlaceArgs > 0)
       PlaceArgs = &AllPlaceArgs[0];
@@ -630,7 +617,9 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // The first argument is size_t, and the first parameter must be size_t,
     // too. This is checked on declaration and can be assumed. (It can't be
     // asserted on, though, since invalid decls are left in there.)
-    for (unsigned i = 0; i < NumArgs; ++i) {
+    // Whatch out for variadic allocator function.
+    unsigned NumArgsInFnDecl = FnDecl->getNumParams();
+    for (unsigned i = 0; (i < NumArgs && i < NumArgsInFnDecl); ++i) {
       // FIXME: Passing word to diagnostic.
       if (PerformCopyInitialization(Args[i],
                                     FnDecl->getParamDecl(i)->getType(),

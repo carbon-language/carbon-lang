@@ -1514,6 +1514,14 @@ public:
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc);
 
+  bool GatherArgumentsForCall(SourceLocation CallLoc,
+                              FunctionDecl *FDecl,
+                              const FunctionProtoType *Proto,
+                              unsigned FirstProtoArg,
+                              Expr **Args, unsigned NumArgs,
+                              llvm::SmallVector<Expr *, 8> &AllArgs,
+                              Expr *Fn = 0);
+
   void DeconstructCallFunction(Expr *FnExpr,
                                llvm::SmallVectorImpl<NamedDecl*>& Fns,
                                DeclarationName &Name,
