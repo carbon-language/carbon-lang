@@ -216,6 +216,22 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args) {
   Opts.Warnings = getAllArgValues(Args, OPT_W);
 }
 
+static void ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
+}
+
+static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
+}
+
+static void ParseLangArgs(LangOptions &Opts, ArgList &Args) {
+}
+
+static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
+}
+
+static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
+                                        ArgList &Args) {
+}
+
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
   using namespace cc1options;
   Opts.ABI = getLastArgValue(Args, OPT_target_abi);
@@ -252,5 +268,10 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *InputArgs);
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *InputArgs);
+  ParseFrontendArgs(Res.getFrontendOpts(), *InputArgs);
+  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *InputArgs);
+  ParseLangArgs(Res.getLangOpts(), *InputArgs);
+  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *InputArgs);
+  ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *InputArgs);
   ParseTargetArgs(Res.getTargetOpts(), *InputArgs);
 }

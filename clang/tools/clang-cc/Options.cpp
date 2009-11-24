@@ -745,6 +745,7 @@ DumpDefines("dD", llvm::cl::desc("Print macro definitions in -E mode in "
                                 "addition to normal output"));
 
 }
+
 //===----------------------------------------------------------------------===//
 // Target Options
 //===----------------------------------------------------------------------===//
