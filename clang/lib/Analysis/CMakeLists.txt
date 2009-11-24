@@ -32,7 +32,6 @@ add_clang_library(clangAnalysis
   GRCoreEngine.cpp
   GRExprEngine.cpp
   GRExprEngineExperimentalChecks.cpp
-  GRExprEngineInternalChecks.cpp
   GRState.cpp
   LiveVariables.cpp
   MallocChecker.cpp
