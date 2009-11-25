@@ -89,7 +89,7 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
     llvm::sys::Path P(*it);
     std::string Error;
 
-    if (P.isSpecialFile()) {
+    if (!P.isRegularFile()) {
       // If we have a special file in our list, i.e. /dev/null
       //  then don't call eraseFromDisk() and just continue.
       continue;
