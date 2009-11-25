@@ -17,3 +17,7 @@ typedef const struct objc_selector {
 }
 @end
 
+int func(SEL s1, SEL s2)
+{
+        return s1->sel_id == s2->sel_id;
+}

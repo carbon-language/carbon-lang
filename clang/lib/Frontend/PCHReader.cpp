@@ -1558,7 +1558,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   // FIXME. Accommodate for this in several PCH/Index tests
   if (unsigned ObjCSelRedef
       = SpecialTypes[pch::SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
-    Context->ObjCSELRedefinitionType = GetType(ObjCSelRedef);
+    Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
 #endif
   if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_DESCRIPTOR])
     Context->setBlockDescriptorType(GetType(String));

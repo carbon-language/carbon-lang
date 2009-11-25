@@ -1937,6 +1937,16 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       ImpCastExprToType(BaseExpr, BaseType, CastExpr::CK_BitCast);
     }
   }
+  // If this is an Objective-C pseudo-builtin and a definition is provided then
+  // use that.
+  if (Context.isObjCSelType(BaseType)) {
+    // We have an 'SEL' type. Rather than fall through, we check if this
+    // is a reference to 'sel_id'.
+    if (BaseType != Context.ObjCSelRedefinitionType) {
+      BaseType = Context.ObjCSelRedefinitionType;
+      ImpCastExprToType(BaseExpr, BaseType, CastExpr::CK_BitCast);
+    }
+  }
   assert(!BaseType.isNull() && "no type for member expression");
 
   // Handle properties on ObjC 'Class' types.
@@ -3437,6 +3447,17 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   }
   if (RHSTy->isObjCIdType() &&
       (LHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
+    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
+    return RHSTy;
+  }
+  // And the same for struct objc_selector* / SEL
+  if (Context.isObjCSelType(LHSTy) &&
+      (RHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
+    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    return LHSTy;
+  }
+  if (Context.isObjCSelType(RHSTy) &&
+      (LHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
     ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
     return RHSTy;
   }

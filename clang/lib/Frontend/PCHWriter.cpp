@@ -1997,7 +1997,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.ObjCClassRedefinitionType, Record);
 #if 0
   // FIXME. Accommodate for this in several PCH/Indexer tests
-  AddTypeRef(Context.ObjCSELRedefinitionType, Record);
+  AddTypeRef(Context.ObjCSelRedefinitionType, Record);
 #endif
   AddTypeRef(Context.getRawBlockdescriptorType(), Record);
   AddTypeRef(Context.getRawBlockdescriptorExtendedType(), Record);

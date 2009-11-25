@@ -243,7 +243,7 @@ public:
   // pseudo-builtins
   QualType ObjCIdRedefinitionType;
   QualType ObjCClassRedefinitionType;
-  QualType ObjCSELRedefinitionType;
+  QualType ObjCSelRedefinitionType;
 
   /// \brief Source ranges for all of the comments in the source file,
   /// sorted in order of appearance in the translation unit.

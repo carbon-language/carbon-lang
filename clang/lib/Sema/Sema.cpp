@@ -307,7 +307,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
                             &Context.Idents.get("SEL"), SelInfo);
     PushOnScopeChains(SelTypedef, TUScope);
     Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
-    Context.ObjCSELRedefinitionType = Context.getObjCSelType();
+    Context.ObjCSelRedefinitionType = Context.getObjCSelType();
   }
 
   // Synthesize "@class Protocol;
