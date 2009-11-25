@@ -4106,6 +4106,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   
   ClassTemplateSpecializationDecl *Specialization = 0;
 
+  bool ReusedDecl = false;
   if (PrevDecl) {
     bool SuppressNew = false;
     if (CheckSpecializationInstantiationRedecl(TemplateNameLoc, TSK,
@@ -4127,6 +4128,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
       Specialization = PrevDecl;
       Specialization->setLocation(TemplateNameLoc);
       PrevDecl = 0;
+      ReusedDecl = true;
     }
   }
   
@@ -4164,11 +4166,13 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   Specialization->setTypeAsWritten(WrittenTy);
   TemplateArgsIn.release();
 
-  // Add the explicit instantiation into its lexical context. However,
-  // since explicit instantiations are never found by name lookup, we
-  // just put it into the declaration context directly.
-  Specialization->setLexicalDeclContext(CurContext);
-  CurContext->addDecl(Specialization);
+  if (!ReusedDecl) {
+    // Add the explicit instantiation into its lexical context. However,
+    // since explicit instantiations are never found by name lookup, we
+    // just put it into the declaration context directly.
+    Specialization->setLexicalDeclContext(CurContext);
+    CurContext->addDecl(Specialization);
+  }
 
   // C++ [temp.explicit]p3:
   //   A definition of a class template or class member template
