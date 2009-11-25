@@ -16,7 +16,7 @@
 #define LLVM_CLANG_FRONTEND_COMMANDLINESOURCELOC_H
 
 #include "llvm/Support/CommandLine.h"
-#include <cstdio>
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 
@@ -25,6 +25,23 @@ struct ParsedSourceLocation {
   std::string FileName;
   unsigned Line;
   unsigned Column;
+
+public:
+  /// Construct a parsed source location from a string; the Filename is empty on
+  /// error.
+  static ParsedSourceLocation FromString(llvm::StringRef Str) {
+    ParsedSourceLocation PSL;
+    std::pair<llvm::StringRef, llvm::StringRef> ColSplit = Str.rsplit(':');
+    std::pair<llvm::StringRef, llvm::StringRef> LineSplit =
+      ColSplit.first.rsplit(':');
+
+    // If both tail splits were valid integers, return success.
+    if (!ColSplit.second.getAsInteger(10, PSL.Column) &&
+        !LineSplit.second.getAsInteger(10, PSL.Line))
+      PSL.FileName = LineSplit.first;
+
+    return PSL;
+  }
 };
 
 }
@@ -48,35 +65,13 @@ namespace llvm {
           clang::ParsedSourceLocation &Val) {
       using namespace clang;
 
-      const char *ExpectedFormat
-        = "source location must be of the form filename:line:column";
-      StringRef::size_type SecondColon = ArgValue.rfind(':');
-      if (SecondColon == std::string::npos) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
+      Val = ParsedSourceLocation::FromString(ArgValue);
+      if (Val.FileName.empty()) {
+        errs() << "error: "
+               << "source location must be of the form filename:line:column\n";
         return true;
       }
 
-      unsigned Column;
-      if (ArgValue.substr(SecondColon + 1).getAsInteger(10, Column)) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
-        return true;
-      }
-      ArgValue = ArgValue.substr(0, SecondColon);
-
-      StringRef::size_type FirstColon = ArgValue.rfind(':');
-      if (FirstColon == std::string::npos) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
-        return true;
-      }
-      unsigned Line;
-      if (ArgValue.substr(FirstColon + 1).getAsInteger(10, Line)) {
-        std::fprintf(stderr, "%s\n", ExpectedFormat);
-        return true;
-      }
-
-      Val.FileName = ArgValue.substr(0, FirstColon);
-      Val.Line = Line;
-      Val.Column = Column;
       return false;
     }
   }
