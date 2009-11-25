@@ -17,6 +17,23 @@
 
 using namespace clang::driver;
 
+void arg_iterator::SkipToNextArg() {
+  for (; Current != Args.end(); ++Current) {
+    // Done if there are no filters.
+    if (!Id0.isValid())
+      break;
+
+    // Otherwise require a match.
+    const Option &O = (*Current)->getOption();
+    if (O.matches(Id0) ||
+        (Id1.isValid() && O.matches(Id1)) ||
+        (Id2.isValid() && O.matches(Id2)))
+      break;
+  }
+}
+
+//
+
 ArgList::ArgList(arglist_type &_Args) : Args(_Args) {
 }
 
@@ -98,95 +115,46 @@ void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id) const {
   }
 }
 
-void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0) const {
-  // FIXME: Make fast.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(Id0)) {
-      A->claim();
-      A->render(*this, Output);
-    }
-  }
-}
-
-void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
-                         OptSpecifier Id1) const {
-  // FIXME: Make fast.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(Id0) || A->getOption().matches(Id1)) {
-      A->claim();
-      A->render(*this, Output);
-    }
-  }
-}
-
 void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
                          OptSpecifier Id1, OptSpecifier Id2) const {
-  // FIXME: Make fast.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(Id0) || A->getOption().matches(Id1) ||
-        A->getOption().matches(Id2)) {
-      A->claim();
-      A->render(*this, Output);
-    }
-  }
-}
-
-void ArgList::AddAllArgValues(ArgStringList &Output, OptSpecifier Id0) const {
-  // FIXME: Make fast.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(Id0)) {
-      A->claim();
-      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-        Output.push_back(A->getValue(*this, i));
-    }
+  for (arg_iterator it = filtered_begin(Id0, Id1, Id2),
+         ie = filtered_end(); it != ie; ++it) {
+    it->claim();
+    it->render(*this, Output);
   }
 }
 
 void ArgList::AddAllArgValues(ArgStringList &Output, OptSpecifier Id0,
-                              OptSpecifier Id1) const {
-  // FIXME: Make fast.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(Id0) || A->getOption().matches(Id1)) {
-      A->claim();
-      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-        Output.push_back(A->getValue(*this, i));
-    }
+                              OptSpecifier Id1, OptSpecifier Id2) const {
+  for (arg_iterator it = filtered_begin(Id0, Id1, Id2),
+         ie = filtered_end(); it != ie; ++it) {
+    it->claim();
+    for (unsigned i = 0, e = it->getNumValues(); i != e; ++i)
+      Output.push_back(it->getValue(*this, i));
   }
 }
 
 void ArgList::AddAllArgsTranslated(ArgStringList &Output, OptSpecifier Id0,
                                    const char *Translation,
                                    bool Joined) const {
-  // FIXME: Make fast.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(Id0)) {
-      A->claim();
+  for (arg_iterator it = filtered_begin(Id0),
+         ie = filtered_end(); it != ie; ++it) {
+    it->claim();
 
-      if (Joined) {
-        std::string Value = Translation;
-        Value += A->getValue(*this, 0);
-        Output.push_back(MakeArgString(Value.c_str()));
-      } else {
-        Output.push_back(Translation);
-        Output.push_back(A->getValue(*this, 0));
-      }
+    if (Joined) {
+      Output.push_back(MakeArgString(llvm::StringRef(Translation) +
+                                     it->getValue(*this, 0)));
+    } else {
+      Output.push_back(Translation);
+      Output.push_back(it->getValue(*this, 0));
     }
   }
 }
 
 void ArgList::ClaimAllArgs(OptSpecifier Id0) const {
-  // FIXME: Make fast.
-  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(Id0))
-      A->claim();
-  }
+  for (arg_iterator it = filtered_begin(Id0),
+         ie = filtered_end(); it != ie; ++it)
+      it->claim();
 }
 
 const char *ArgList::MakeArgString(const llvm::Twine &T) const {

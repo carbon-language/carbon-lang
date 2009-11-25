@@ -25,7 +25,65 @@ namespace llvm {
 namespace clang {
 namespace driver {
   class Arg;
+  class ArgList;
   class Option;
+
+  /// arg_iterator - Iterates through arguments stored inside an ArgList.
+  class arg_iterator {
+    /// The current argument.
+    llvm::SmallVectorImpl<Arg*>::const_iterator Current;
+
+    /// The argument list we are iterating over.
+    const ArgList &Args;
+
+    /// Optional filters on the arguments which will be match. Most clients
+    /// should never want to iterate over arguments without filters, so we won't
+    /// bother to factor this into two separate iterator implementations.
+    //
+    // FIXME: Make efficient; the idea is to provide efficient iteration over
+    // all arguments which match a particular id and then just provide an
+    // iterator combinator which takes multiple iterators which can be
+    // efficiently compared and returns them in order.
+    OptSpecifier Id0, Id1, Id2;
+
+    void SkipToNextArg();
+
+  public:
+    typedef const Arg*                  value_type;
+    typedef const Arg*                  reference;
+    typedef const Arg*                  pointer;
+    typedef std::forward_iterator_tag   iterator_category;
+    typedef std::ptrdiff_t              difference_type;
+
+    arg_iterator(llvm::SmallVectorImpl<Arg*>::const_iterator it,
+                 const ArgList &_Args, OptSpecifier _Id0 = 0U,
+                 OptSpecifier _Id1 = 0U, OptSpecifier _Id2 = 0U)
+      : Current(it), Args(_Args), Id0(_Id0), Id1(_Id1), Id2(_Id2) {
+      SkipToNextArg();
+    }
+
+    reference operator*() const { return *Current; }
+    pointer operator->() const { return *Current; }
+
+    arg_iterator &operator++() {
+      ++Current;
+      SkipToNextArg();
+      return *this;
+    }
+
+    arg_iterator operator++(int) {
+      arg_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool operator==(arg_iterator LHS, arg_iterator RHS) {
+      return LHS.Current == RHS.Current;
+    }
+    friend bool operator!=(arg_iterator LHS, arg_iterator RHS) {
+      return !(LHS == RHS);
+    }
+  };
 
   /// ArgList - Ordered collection of driver arguments.
   ///
@@ -62,6 +120,10 @@ namespace driver {
 
     unsigned size() const { return Args.size(); }
 
+    /// @}
+    /// @name Arg Iteration
+    /// @{
+
     iterator begin() { return Args.begin(); }
     iterator end() { return Args.end(); }
 
@@ -73,6 +135,18 @@ namespace driver {
 
     const_reverse_iterator rbegin() const { return Args.rbegin(); }
     const_reverse_iterator rend() const { return Args.rend(); }
+
+    arg_iterator filtered_begin(OptSpecifier Id0 = 0U, OptSpecifier Id1 = 0U,
+                                OptSpecifier Id2 = 0U) const {
+      return arg_iterator(Args.begin(), *this, Id0, Id1, Id2);
+    }
+    arg_iterator filtered_end() const {
+      return arg_iterator(Args.end(), *this);
+    }
+
+    /// @}
+    /// @name Arg Access
+    /// @{
 
     /// hasArg - Does the arg list contain any option matching \arg Id.
     ///
@@ -115,17 +189,13 @@ namespace driver {
     void AddLastArg(ArgStringList &Output, OptSpecifier Id0) const;
 
     /// AddAllArgs - Render all arguments matching the given ids.
-    void AddAllArgs(ArgStringList &Output, OptSpecifier Id0) const;
     void AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
-                    OptSpecifier Id1) const;
-    void AddAllArgs(ArgStringList &Output, OptSpecifier Id0, OptSpecifier Id1,
-                    OptSpecifier Id2) const;
+                    OptSpecifier Id1 = 0U, OptSpecifier Id2 = 0U) const;
 
     /// AddAllArgValues - Render the argument values of all arguments
     /// matching the given ids.
-    void AddAllArgValues(ArgStringList &Output, OptSpecifier Id0) const;
     void AddAllArgValues(ArgStringList &Output, OptSpecifier Id0,
-                         OptSpecifier Id1) const;
+                         OptSpecifier Id1 = 0U, OptSpecifier Id2 = 0U) const;
 
     /// AddAllArgsTranslated - Render all the arguments matching the
     /// given ids, but forced to separate args and using the provided

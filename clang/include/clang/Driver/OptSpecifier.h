@@ -22,8 +22,11 @@ namespace driver {
     explicit OptSpecifier(bool); // DO NOT IMPLEMENT
 
   public:
+    OptSpecifier() : ID(0) {}
     /*implicit*/ OptSpecifier(unsigned _ID) : ID(_ID) {}
     /*implicit*/ OptSpecifier(const Option *Opt);
+
+    bool isValid() const { return ID != 0; }
 
     unsigned getID() const { return ID; }
 
