@@ -461,9 +461,12 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
   return VisitStmt(B, alwaysAdd);
 }
 
-CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr* E, bool alwaysAdd) {
-  // FIXME
-  return NYS();
+CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr *E, bool alwaysAdd) {
+  if (alwaysAdd) {
+    autoCreateBlock();
+    AppendStmt(Block, E);
+  }
+  return Block;
 }
 
 CFGBlock *CFGBuilder::VisitBlockDeclRefExpr(BlockDeclRefExpr* E,
