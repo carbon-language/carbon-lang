@@ -454,17 +454,17 @@ Path::canWrite() const {
 }
 
 bool
-Path::isSpecialFile() const {
+Path::isRegularFile() const {
   // Get the status so we can determine if its a file or directory
   struct stat buf;
 
   if (0 != stat(path.c_str(), &buf))
-    return true;
-
-  if (S_ISDIR(buf.st_mode) || S_ISREG(buf.st_mode))
     return false;
 
-  return true;
+  if (S_ISREG(buf.st_mode))
+    return true;
+
+  return false;
 }
 
 bool

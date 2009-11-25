@@ -358,8 +358,10 @@ Path::canExecute() const {
 }
 
 bool
-Path::isSpecialFile() const {
-  return false;
+Path::isRegularFile() const {
+  if (isDirectory())
+    return false;
+  return true;
 }
 
 std::string
