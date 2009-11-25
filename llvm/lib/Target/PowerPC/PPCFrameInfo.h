@@ -94,11 +94,11 @@ public:
     if (TM.getSubtarget<PPCSubtarget>().isDarwinABI()) {
       NumEntries = 1;
       if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
-        static const SpillSlot darwin64Offsets[] = {PPC::X31, -8};
-        return darwin64Offsets;
+        static const SpillSlot darwin64Offsets = {PPC::X31, -8};
+        return &darwin64Offsets;
       } else {
-        static const SpillSlot darwinOffsets[] = {PPC::R31, -4};
-        return darwinOffsets;
+        static const SpillSlot darwinOffsets = {PPC::R31, -4};
+        return &darwinOffsets;
       }
     }
 
