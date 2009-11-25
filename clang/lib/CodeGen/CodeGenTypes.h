@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "CGCall.h"
+#include "CGCXX.h"
 
 namespace llvm {
   class FunctionType;
@@ -34,6 +35,8 @@ namespace llvm {
 namespace clang {
   class ABIInfo;
   class ASTContext;
+  class CXXConstructorDecl;
+  class CXXDestructorDecl;
   class CXXMethodDecl;
   class FieldDecl;
   class FunctionProtoType;
@@ -198,7 +201,11 @@ public:
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
   const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
-  
+  const CGFunctionInfo &getFunctionInfo(const CXXConstructorDecl *D,
+                                        CXXCtorType Type);
+  const CGFunctionInfo &getFunctionInfo(const CXXDestructorDecl *D,
+                                        CXXDtorType Type);
+
   // getFunctionInfo - Get the function info for a member function.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
                                         const FunctionProtoType *FTP);

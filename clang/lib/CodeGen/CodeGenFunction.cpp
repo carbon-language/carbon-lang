@@ -29,7 +29,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     Builder(cgm.getModule().getContext()),
     DebugInfo(0), IndirectBranch(0),
     SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0),
-    CXXThisDecl(0),
+    CXXThisDecl(0), CXXVTTDecl(0),
     ConditionalBranchLevel(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(0);
@@ -217,6 +217,24 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   }
 }
 
+static bool NeedsVTTParameter(GlobalDecl GD) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  
+  // We don't have any virtual bases, just return early.
+  if (!MD->getParent()->getNumVBases())
+    return false;
+  
+  // Check if we have a base constructor.
+  if (isa<CXXConstructorDecl>(MD) && GD.getCtorType() == Ctor_Base)
+    return true;
+
+  // Check if we have a base destructor.
+  if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
+    return true;
+  
+  return false;
+}
+
 void CodeGenFunction::GenerateCode(GlobalDecl GD,
                                    llvm::Function *Fn) {
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
@@ -236,6 +254,16 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
                                               &getContext().Idents.get("this"),
                                               MD->getThisType(getContext()));
       Args.push_back(std::make_pair(CXXThisDecl, CXXThisDecl->getType()));
+      
+      // Check if we need a VTT parameter as well.
+      if (NeedsVTTParameter(GD)) {
+        // FIXME: The comment about using a fake decl above applies here too.
+        QualType T = getContext().getPointerType(getContext().VoidPtrTy);
+        CXXVTTDecl = 
+          ImplicitParamDecl::Create(getContext(), 0, SourceLocation(),
+                                    &getContext().Idents.get("vtt"), T);
+        Args.push_back(std::make_pair(CXXVTTDecl, CXXVTTDecl->getType()));
+      }
     }
   }
 
@@ -318,6 +346,10 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
   // Destroy the 'this' declaration.
   if (CXXThisDecl)
     CXXThisDecl->Destroy(getContext());
+  
+  // Destroy the VTT declaration.
+  if (CXXVTTDecl)
+    CXXVTTDecl->Destroy(getContext());
 }
 
 /// ContainsLabel - Return true if the statement contains a label in it.  If

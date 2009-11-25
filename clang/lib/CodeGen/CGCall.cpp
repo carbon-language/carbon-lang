@@ -91,6 +91,42 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
                          getCallingConventionForDecl(MD));
 }
 
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D, 
+                                                    CXXCtorType Type) {
+  llvm::SmallVector<QualType, 16> ArgTys;
+
+  // Add the 'this' pointer.
+  ArgTys.push_back(D->getThisType(Context));
+
+  // Check if we need to add a VTT parameter (which has type void **).
+  if (Type == Ctor_Base && D->getParent()->getNumVBases() != 0)
+    ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+  
+  const FunctionProtoType *FTP = D->getType()->getAs<FunctionProtoType>();
+  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+    ArgTys.push_back(FTP->getArgType(i));
+  return getFunctionInfo(FTP->getResultType(), ArgTys,
+                         getCallingConventionForDecl(D));
+}
+
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXDestructorDecl *D,
+                                                    CXXDtorType Type) {
+  llvm::SmallVector<QualType, 16> ArgTys;
+  
+  // Add the 'this' pointer.
+  ArgTys.push_back(D->getThisType(Context));
+  
+  // Check if we need to add a VTT parameter (which has type void **).
+  if (Type == Dtor_Base && D->getParent()->getNumVBases() != 0)
+    ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+  
+  const FunctionProtoType *FTP = D->getType()->getAs<FunctionProtoType>();
+  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+    ArgTys.push_back(FTP->getArgType(i));
+  return getFunctionInfo(FTP->getResultType(), ArgTys,
+                         getCallingConventionForDecl(D));
+}
+
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
     if (MD->isInstance())

@@ -765,7 +765,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
                                        CXXCtorType Type) {
   const FunctionProtoType *FPT = D->getType()->getAs<FunctionProtoType>();
   const llvm::FunctionType *FTy =
-    getTypes().GetFunctionType(getTypes().getFunctionInfo(D), 
+    getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), 
                                FPT->isVariadic());
 
   const char *Name = getMangledCXXCtorName(D, Type);
@@ -803,7 +803,7 @@ llvm::Function *
 CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
                                       CXXDtorType Type) {
   const llvm::FunctionType *FTy =
-    getTypes().GetFunctionType(getTypes().getFunctionInfo(D), false);
+    getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), false);
 
   const char *Name = getMangledCXXDtorName(D, Type);
   return cast<llvm::Function>(

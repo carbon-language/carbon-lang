@@ -317,10 +317,15 @@ private:
   /// BlockScopes - Map of which "cleanup scope" scope basic blocks have.
   BlockScopeMap BlockScopes;
 
-  /// CXXThisDecl - When parsing an C++ function, this will hold the implicit
-  /// 'this' declaration.
+  /// CXXThisDecl - When generating code for a C++ member function,
+  /// this will hold the implicit 'this' declaration.
   ImplicitParamDecl *CXXThisDecl;
 
+  /// CXXVTTDecl - When generating code for a base object constructor or
+  /// base object destructor with virtual bases, this will hold the implicit
+  /// VTT parameter.
+  ImplicitParamDecl *CXXVTTDecl;
+  
   /// CXXLiveTemporaryInfo - Holds information about a live C++ temporary.
   struct CXXLiveTemporaryInfo {
     /// Temporary - The live temporary.
