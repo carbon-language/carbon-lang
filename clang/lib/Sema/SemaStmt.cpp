@@ -501,10 +501,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   QualType CondTypeBeforePromotion =
       GetTypeBeforeIntegralPromotion(CondExpr);
 
-  if (getLangOptions().CPlusPlus && 
+  if (getLangOptions().CPlusPlus &&
       CheckCXXSwitchCondition(*this, SwitchLoc, CondExpr))
-      return StmtError();
+    return StmtError();
 
+  // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
+  UsualUnaryConversions(CondExpr);
   QualType CondType = CondExpr->getType();
   SS->setCond(CondExpr);
 
@@ -521,8 +523,6 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
           << CondType << CondExpr->getSourceRange();
       return StmtError();
     }
-
-    UsualUnaryConversions(CondExpr);
 
     if (CondTypeBeforePromotion->isBooleanType()) {
       // switch(bool_expr) {...} is often a programmer error, e.g.
