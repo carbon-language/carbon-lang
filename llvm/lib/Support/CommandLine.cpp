@@ -39,6 +39,7 @@ using namespace cl;
 //===----------------------------------------------------------------------===//
 // Template instantiations and anchors.
 //
+namespace llvm { namespace cl {
 TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
 TEMPLATE_INSTANTIATION(class basic_parser<int>);
@@ -53,6 +54,7 @@ TEMPLATE_INSTANTIATION(class opt<int>);
 TEMPLATE_INSTANTIATION(class opt<std::string>);
 TEMPLATE_INSTANTIATION(class opt<char>);
 TEMPLATE_INSTANTIATION(class opt<bool>);
+} } // end namespace llvm::cl
 
 void Option::anchor() {}
 void basic_parser_impl::anchor() {}
