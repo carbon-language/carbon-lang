@@ -199,7 +199,7 @@ void DumpRawTokensAction::ExecuteAction() {
   RawLex.LexFromRawLexer(RawTok);
   while (RawTok.isNot(tok::eof)) {
     PP.DumpToken(RawTok, true);
-    fprintf(stderr, "\n");
+    llvm::errs() << "\n";
     RawLex.LexFromRawLexer(RawTok);
   }
 }
@@ -212,7 +212,7 @@ void DumpTokensAction::ExecuteAction() {
   do {
     PP.Lex(Tok);
     PP.DumpToken(Tok, true);
-    fprintf(stderr, "\n");
+    llvm::errs() << "\n";
   } while (Tok.isNot(tok::eof));
 }
 
