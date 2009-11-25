@@ -312,7 +312,8 @@ static void ActionWarnUninitVals(AnalysisConsumer &C, AnalysisManager& mgr,
 }
 
 
-static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr, Decl *D, 
+static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
+                               Decl *D, 
                                GRTransferFuncs* tf) {
 
   llvm::OwningPtr<GRTransferFuncs> TF(tf);
@@ -453,25 +454,8 @@ static void ActionWarnSizeofPointer(AnalysisConsumer &C, AnalysisManager &mgr,
 
 static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
                              Decl *D) {
-  if (!D)
-    return;
-
-  C.DisplayFunction(D);
-  llvm::OwningPtr<GRTransferFuncs> TF(CreateCallInliner(mgr.getASTContext()));
-
-  // Construct the analysis engine.
-  GRExprEngine Eng(mgr);
-
-  Eng.setTransferFunctions(TF.get());
   
-  RegisterAppleChecks(Eng, *D);
-
-  // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(mgr.getStackFrame(D));
-  
-  // Visualize the exploded graph.
-  if (mgr.shouldVisualizeGraphviz())
-    Eng.ViewGraph(mgr.shouldTrimGraph());
+  ActionGRExprEngine(C, mgr, D, CreateCallInliner(mgr.getASTContext()));
 }
 
 //===----------------------------------------------------------------------===//
