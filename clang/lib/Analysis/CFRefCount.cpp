@@ -3052,9 +3052,20 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
                           GRStmtNodeBuilder& Builder,
                           CallExpr* CE, SVal L,
                           ExplodedNode* Pred) {
-  const FunctionDecl* FD = L.getAsFunctionDecl();
-  RetainSummary* Summ = !FD ? Summaries.getDefaultSummary()
-                        : Summaries.getSummary(const_cast<FunctionDecl*>(FD));
+
+  RetainSummary *Summ = 0;
+  
+  // FIXME: Better support for blocks.  For now we stop tracking anything
+  // that is passed to blocks.
+  // FIXME: Need to handle variables that are "captured" by the block.
+  if (dyn_cast_or_null<BlockTextRegion>(L.getAsRegion())) {
+    Summ = Summaries.getPersistentStopSummary();
+  }
+  else {
+    const FunctionDecl* FD = L.getAsFunctionDecl();
+    Summ = !FD ? Summaries.getDefaultSummary() :
+                 Summaries.getSummary(const_cast<FunctionDecl*>(FD));
+  }
 
   assert(Summ);
   EvalSummary(Dst, Eng, Builder, CE, 0, *Summ,

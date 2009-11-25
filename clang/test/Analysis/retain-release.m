@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -verify %s
-// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -fblocks -verify %s
+// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -fblocks -verify %s
 
 #if __has_feature(attribute_ns_returns_retained)
 #define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
@@ -1270,5 +1270,38 @@ void test_panic_pos_2(int x) {
     panic();  
   if (!x)
     panic();
+}
+
+//===----------------------------------------------------------------------===//
+// Test uses of blocks (closures)
+//===----------------------------------------------------------------------===//
+
+void test_blocks_1_pos(void) {
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+  ^{}();
+}
+
+#if 0
+void test_blocks_1_indirect_release(void) {
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  ^{ [number release]; }();
+}
+
+void test_blocks_1_indirect_retain(void) {
+  // Eventually this should be reported as a leak.
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  ^{ [number retain]; }();
+}
+#endif
+
+void test_blocks_1_indirect_release_via_call(void) {
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  ^(NSObject *o){ [o release]; }(number);
+}
+
+void test_blocks_1_indirect_retain_via_call(void) {
+  // Eventually this should be reported as a leak.
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  ^(NSObject *o){ [o retain]; }(number);
 }
 
