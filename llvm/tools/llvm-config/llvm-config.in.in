@@ -333,6 +333,10 @@ sub build_name_map {
         if (defined $NAME_MAP{$target.'asmparser'}) {
             push @{$NAME_MAP{$target}},$target.'asmparser'
         }
+
+        if (defined $NAME_MAP{$target.'disassembler'}) {
+            push @{$NAME_MAP{$target}},$target.'disassembler'
+        }
     }
 
     # Add virtual entries.

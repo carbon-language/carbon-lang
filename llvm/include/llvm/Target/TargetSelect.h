@@ -33,6 +33,10 @@ extern "C" {
   // Declare all of the available assembly parser initialization functions.
 #define LLVM_ASM_PARSER(TargetName) void LLVMInitialize##TargetName##AsmParser();
 #include "llvm/Config/AsmParsers.def"
+
+  // Declare all of the available disassembler initialization functions.
+#define LLVM_DISASSEMBLER(TargetName) void LLVMInitialize##TargetName##Disassembler();
+#include "llvm/Config/Disassemblers.def"
 }
 
 namespace llvm {
@@ -77,6 +81,16 @@ namespace llvm {
   inline void InitializeAllAsmParsers() {
 #define LLVM_ASM_PARSER(TargetName) LLVMInitialize##TargetName##AsmParser();
 #include "llvm/Config/AsmParsers.def"
+  }
+  
+  /// InitializeAllDisassemblers - The main program should call this function if
+  /// it wants all disassemblers that LLVM is configured to support, to make
+  /// them available via the TargetRegistry.
+  ///
+  /// It is legal for a client to make multiple calls to this function.
+  inline void InitializeAllDisassemblers() {
+#define LLVM_DISASSEMBLER(TargetName) LLVMInitialize##TargetName##Disassembler();
+#include "llvm/Config/Disassemblers.def"
   }
   
   /// InitializeNativeTarget - The main program should call this function to

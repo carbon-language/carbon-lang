@@ -155,9 +155,11 @@ install-libs: install
 FilesToConfig := \
   include/llvm/Config/config.h \
   include/llvm/Config/Targets.def \
-	include/llvm/Config/AsmPrinters.def \
+  include/llvm/Config/AsmPrinters.def \
+  include/llvm/Config/AsmParsers.def \
+  include/llvm/Config/Disassemblers.def \
   include/llvm/System/DataTypes.h \
-	tools/llvmc/plugins/Base/Base.td
+  tools/llvmc/plugins/Base/Base.td
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 
 all-local:: $(FilesToConfigPATH)

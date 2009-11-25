@@ -1565,6 +1565,11 @@ $(ObjDir)/%GenDAGISel.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) DAG instruction selector implementation with tblgen"
 	$(Verb) $(TableGen) -gen-dag-isel -o $(call SYSPATH, $@) $<
 
+$(TARGET:%=$(ObjDir)/%GenDisassemblerTables.inc.tmp): \
+$(ObjDir)/%GenDisassemblerTables.inc.tmp : %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) disassembly tables with tblgen"
+	$(Verb) $(TableGen) -gen-disassembler -o $(call SYSPATH, $@) $<
+
 $(TARGET:%=$(ObjDir)/%GenFastISel.inc.tmp): \
 $(ObjDir)/%GenFastISel.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) \"fast\" instruction selector implementation with tblgen"
