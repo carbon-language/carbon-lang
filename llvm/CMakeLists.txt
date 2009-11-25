@@ -280,6 +280,7 @@ add_subdirectory(utils/not)
 
 set(LLVM_ENUM_ASM_PRINTERS "")
 set(LLVM_ENUM_ASM_PARSERS "")
+set(LLVM_ENUM_DISASSEMBLERS "")
 foreach(t ${LLVM_TARGETS_TO_BUILD})
   message(STATUS "Targeting ${t}")
   add_subdirectory(lib/Target/${t})
@@ -294,6 +295,11 @@ foreach(t ${LLVM_TARGETS_TO_BUILD})
     set(LLVM_ENUM_ASM_PARSERS 
       "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
   endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmParser/CMakeLists.txt )
+  if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/Disassembler/CMakeLists.txt )
+    add_subdirectory(lib/Target/${t}/Disassembler)
+    set(LLVM_ENUM_DISASSEMBLERS
+      "${LLVM_ENUM_DISASSEMBLERS}LLVM_DISASSEMBLER(${t})\n")
+  endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/Disassembler/CMakeLists.txt )
   set(CURRENT_LLVM_TARGET)
 endforeach(t)
 
@@ -307,6 +313,12 @@ configure_file(
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmParsers.def.in
   ${LLVM_BINARY_DIR}/include/llvm/Config/AsmParsers.def
+  )
+
+# Produce llvm/Config/Disassemblers.def
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Disassemblers.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/Disassemblers.def
   )
 
 add_subdirectory(lib/ExecutionEngine)

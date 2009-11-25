@@ -533,11 +533,12 @@ for a_target in $TARGETS_TO_BUILD; do
   fi
 done
 
-# Build the LLVM_TARGET and LLVM_ASM_PRINTER macro uses for
-# Targets.def, AsmPrinters.def, and AsmParsers.def.
+# Build the LLVM_TARGET and LLVM_... macros for Targets.def and the individual
+# target feature def files.
 LLVM_ENUM_TARGETS=""
 LLVM_ENUM_ASM_PRINTERS=""
 LLVM_ENUM_ASM_PARSERS=""
+LLVM_ENUM_DISASSEMBLERS=""
 for target_to_build in $TARGETS_TO_BUILD; do
   LLVM_ENUM_TARGETS="LLVM_TARGET($target_to_build) $LLVM_ENUM_TARGETS"
   if test -f ${srcdir}/lib/Target/${target_to_build}/AsmPrinter/Makefile ; then
@@ -546,10 +547,14 @@ for target_to_build in $TARGETS_TO_BUILD; do
   if test -f ${srcdir}/lib/Target/${target_to_build}/AsmParser/Makefile ; then
     LLVM_ENUM_ASM_PARSERS="LLVM_ASM_PARSER($target_to_build) $LLVM_ENUM_ASM_PARSERS";
   fi
+  if test -f ${srcdir}/lib/Target/${target_to_build}/Disassembler/Makefile ; then
+    LLVM_ENUM_DISASSEMBLERS="LLVM_DISASSEMBLER($target_to_build) $LLVM_ENUM_DISASSEMBLERS";
+  fi
 done
 AC_SUBST(LLVM_ENUM_TARGETS)
 AC_SUBST(LLVM_ENUM_ASM_PRINTERS)
 AC_SUBST(LLVM_ENUM_ASM_PARSERS)
+AC_SUBST(LLVM_ENUM_DISASSEMBLERS)
 
 dnl Prevent the CBackend from using printf("%a") for floating point so older
 dnl C compilers that cannot deal with the 0x0p+0 hex floating point format
@@ -1407,6 +1412,7 @@ AC_CONFIG_HEADERS([include/llvm/Config/config.h])
 AC_CONFIG_FILES([include/llvm/Config/Targets.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmPrinters.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmParsers.def])
+AC_CONFIG_FILES([include/llvm/Config/Disassemblers.def])
 AC_CONFIG_HEADERS([include/llvm/System/DataTypes.h])
 
 dnl Configure the makefile's configuration data
