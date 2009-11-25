@@ -3611,10 +3611,13 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
       Diag(Loc, diag::err_ovl_deleted_init)
         << Best->Function->isDeleted()
         << InitEntity << Range;
-    else
+    else {
+      const CXXRecordDecl *RD =
+          cast<CXXRecordDecl>(ClassType->getAs<RecordType>()->getDecl());
       Diag(Loc, diag::err_ovl_deleted_init)
         << Best->Function->isDeleted()
-        << InitEntity << Range;
+        << RD->getDeclName() << Range;
+    }
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     return 0;
   }
