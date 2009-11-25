@@ -231,6 +231,7 @@ unsigned PCHStmtReader::VisitForStmt(ForStmt *S) {
   VisitStmt(S);
   S->setInit(StmtStack[StmtStack.size() - 4]);
   S->setCond(cast_or_null<Expr>(StmtStack[StmtStack.size() - 3]));
+  S->setConditionVariable(cast_or_null<VarDecl>(Reader.GetDecl(Record[Idx++])));
   S->setInc(cast_or_null<Expr>(StmtStack[StmtStack.size() - 2]));
   S->setBody(StmtStack.back());
   S->setForLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

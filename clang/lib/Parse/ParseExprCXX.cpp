@@ -549,7 +549,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
                                            CommaLocs.data(), RParenLoc);
 }
 
-/// ParseCXXCondition - if/switch/while/for condition expression.
+/// ParseCXXCondition - if/switch/while condition expression.
 ///
 ///       condition:
 ///         expression
@@ -557,11 +557,20 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 /// [GNU]   type-specifier-seq declarator simple-asm-expr[opt] attributes[opt]
 ///             '=' assignment-expression
 ///
-Parser::OwningExprResult Parser::ParseCXXCondition() {
-  if (!isCXXConditionDeclaration())
-    return ParseExpression(); // expression
-
-  SourceLocation StartLoc = Tok.getLocation();
+/// \param ExprResult if the condition was parsed as an expression, the
+/// parsed expression.
+///
+/// \param DeclResult if the condition was parsed as a declaration, the
+/// parsed declaration.
+///
+/// \returns true if there was a parsing, false otherwise.
+bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
+                               DeclPtrTy &DeclResult) {
+  if (!isCXXConditionDeclaration()) {
+    ExprResult = ParseExpression(); // expression
+    DeclResult = DeclPtrTy();
+    return ExprResult.isInvalid();
+  }
 
   // type-specifier-seq
   DeclSpec DS;
@@ -577,7 +586,7 @@ Parser::OwningExprResult Parser::ParseCXXCondition() {
     OwningExprResult AsmLabel(ParseSimpleAsm(&Loc));
     if (AsmLabel.isInvalid()) {
       SkipUntil(tok::semi);
-      return ExprError();
+      return true;
     }
     DeclaratorInfo.setAsmLabel(AsmLabel.release());
     DeclaratorInfo.SetRangeEnd(Loc);
@@ -590,17 +599,24 @@ Parser::OwningExprResult Parser::ParseCXXCondition() {
     DeclaratorInfo.AddAttributes(AttrList, Loc);
   }
 
+  // Type-check the declaration itself.
+  Action::DeclResult Dcl = Actions.ActOnCXXConditionDeclaration(CurScope, 
+                                                                DeclaratorInfo);
+  DeclResult = Dcl.get();
+  ExprResult = ExprError();
+  
   // '=' assignment-expression
-  if (Tok.isNot(tok::equal))
-    return ExprError(Diag(Tok, diag::err_expected_equal_after_declarator));
-  SourceLocation EqualLoc = ConsumeToken();
-  OwningExprResult AssignExpr(ParseAssignmentExpression());
-  if (AssignExpr.isInvalid())
-    return ExprError();
-
-  return Actions.ActOnCXXConditionDeclarationExpr(CurScope, StartLoc,
-                                                  DeclaratorInfo,EqualLoc,
-                                                  move(AssignExpr));
+  if (Tok.is(tok::equal)) {
+    SourceLocation EqualLoc = ConsumeToken();
+    OwningExprResult AssignExpr(ParseAssignmentExpression());
+    if (!AssignExpr.isInvalid()) 
+      Actions.AddInitializerToDecl(DeclResult, move(AssignExpr));
+  } else {
+    // FIXME: C++0x allows a braced-init-list
+    Diag(Tok, diag::err_expected_equal_after_declarator);
+  }
+  
+  return false;
 }
 
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.

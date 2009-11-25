@@ -89,3 +89,17 @@ void while_destruct(int z) {
   // CHECK: store i32 22
   z = 22;
 }
+
+void for_destruct(int z) {
+  // CHECK: define void @_Z12for_destruct
+  // CHECK: call void @_ZN1XC1Ev
+  for(X x = X(); z; ++z)
+    // CHECK: for.body:
+    // CHECK: store i32 23
+    z = 23;
+    // CHECK: for.inc:
+  // CHECK: for.end
+  // CHECK: call void @_ZN1XD1Ev
+  // CHECK: store i32 24
+  z = 24;
+}

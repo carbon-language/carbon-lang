@@ -305,14 +305,16 @@ namespace {
     }
 
     virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc,
-                                         FullExprArg CondVal, StmtArg ThenVal,
+                                         FullExprArg CondVal, DeclPtrTy CondVar,
+                                         StmtArg ThenVal,
                                          SourceLocation ElseLoc,
                                          StmtArg ElseVal) {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
 
-    virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond) {
+    virtual OwningStmtResult ActOnStartOfSwitchStmt(FullExprArg Cond, 
+                                                    DeclPtrTy CondVar) {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
@@ -325,7 +327,8 @@ namespace {
     }
 
     virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,
-                                            FullExprArg Cond, StmtArg Body) {
+                                            FullExprArg Cond, DeclPtrTy CondVar,
+                                            StmtArg Body) {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
@@ -338,8 +341,10 @@ namespace {
     }
     virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
                                         SourceLocation LParenLoc,
-                                        StmtArg First, ExprArg Second,
-                                        ExprArg Third, SourceLocation RParenLoc,
+                                        StmtArg First, FullExprArg Second,
+                                        DeclPtrTy SecondVar,
+                                        FullExprArg Third, 
+                                        SourceLocation RParenLoc,
                                         StmtArg Body) {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();

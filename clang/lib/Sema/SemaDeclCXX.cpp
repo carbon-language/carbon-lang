@@ -4918,3 +4918,39 @@ void Sema::ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl) {
   assert(S->getEntity() == D->getDeclContext() && "Context imbalance!");
   ExitDeclaratorContext(S);
 }
+
+/// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
+/// C++ if/switch/while/for statement.
+/// e.g: "if (int x = f()) {...}"
+Action::DeclResult
+Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
+  // C++ 6.4p2:
+  // The declarator shall not specify a function or an array.
+  // The type-specifier-seq shall not contain typedef and shall not declare a
+  // new class or enumeration.
+  assert(D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
+         "Parser allowed 'typedef' as storage class of condition decl.");
+  
+  DeclaratorInfo *DInfo = 0;
+  TagDecl *OwnedTag = 0;
+  QualType Ty = GetTypeForDeclarator(D, S, &DInfo, &OwnedTag);
+  
+  if (Ty->isFunctionType()) { // The declarator shall not specify a function...
+                              // We exit without creating a CXXConditionDeclExpr because a FunctionDecl
+                              // would be created and CXXConditionDeclExpr wants a VarDecl.
+    Diag(D.getIdentifierLoc(), diag::err_invalid_use_of_function_type)
+      << D.getSourceRange();
+    return DeclResult();
+  } else if (OwnedTag && OwnedTag->isDefinition()) {
+    // The type-specifier-seq shall not declare a new class or enumeration.
+    Diag(OwnedTag->getLocation(), diag::err_type_defined_in_condition);
+  }
+  
+  DeclPtrTy Dcl = ActOnDeclarator(S, D);
+  if (!Dcl)
+    return DeclResult();
+
+  VarDecl *VD = cast<VarDecl>(Dcl.getAs<Decl>());
+  VD->setDeclaredInCondition(true);
+  return Dcl;
+}

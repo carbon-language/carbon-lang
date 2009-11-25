@@ -1055,11 +1055,6 @@ void StmtPrinter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *Node) {
   OS << Node->getType().getAsString() << "()";
 }
 
-void
-StmtPrinter::VisitCXXConditionDeclExpr(CXXConditionDeclExpr *E) {
-  PrintRawDecl(E->getVarDecl());
-}
-
 void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
   if (E->isGlobalNew())
     OS << "::";

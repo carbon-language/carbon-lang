@@ -236,25 +236,24 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
 }
 
 Action::OwningStmtResult
-Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
+Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, DeclPtrTy CondVar,
                   StmtArg ThenVal, SourceLocation ElseLoc,
                   StmtArg ElseVal) {
   OwningExprResult CondResult(CondVal.release());
 
-  Expr *condExpr = CondResult.takeAs<Expr>();
-  assert(condExpr && "ActOnIfStmt(): missing expression");
-  
   VarDecl *ConditionVar = 0;
-  if (CXXConditionDeclExpr *Cond = dyn_cast<CXXConditionDeclExpr>(condExpr)) {
-    ConditionVar = Cond->getVarDecl();
-    condExpr = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
-                                   ConditionVar->getLocation(), 
-                                 ConditionVar->getType().getNonReferenceType());
-    // FIXME: Leaks the old condExpr
+  if (CondVar.get()) {
+    ConditionVar = CondVar.getAs<VarDecl>();
+    CondResult = CheckConditionVariable(ConditionVar);
+    if (CondResult.isInvalid())
+      return StmtError();
   }
+  Expr *ConditionExpr = CondResult.takeAs<Expr>();
+  if (!ConditionExpr)
+    return StmtError();
   
-  if (CheckBooleanCondition(condExpr, IfLoc)) {
-    CondResult = condExpr;
+  if (CheckBooleanCondition(ConditionExpr, IfLoc)) {
+    CondResult = ConditionExpr;
     return StmtError();
   }
 
@@ -274,23 +273,27 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
   DiagnoseUnusedExprResult(elseStmt);
 
   CondResult.release();
-  return Owned(new (Context) IfStmt(IfLoc, ConditionVar, condExpr, thenStmt,
-                                    ElseLoc, elseStmt));
+  return Owned(new (Context) IfStmt(IfLoc, ConditionVar, ConditionExpr, 
+                                    thenStmt, ElseLoc, elseStmt));
 }
 
 Action::OwningStmtResult
-Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
-  Expr *condExpr = cond.takeAs<Expr>();
+Sema::ActOnStartOfSwitchStmt(FullExprArg cond, DeclPtrTy CondVar) {
+  OwningExprResult CondResult(cond.release());
+  
   VarDecl *ConditionVar = 0;
-  if (CXXConditionDeclExpr *Cond = dyn_cast<CXXConditionDeclExpr>(condExpr)) {
-    ConditionVar = Cond->getVarDecl();
-    condExpr = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
-                                   ConditionVar->getLocation(), 
-                                 ConditionVar->getType().getNonReferenceType());
-    // FIXME: Leaks the old condExpr
+  if (CondVar.get()) {
+    ConditionVar = CondVar.getAs<VarDecl>();
+    CondResult = CheckConditionVariable(ConditionVar);
+    if (CondResult.isInvalid())
+      return StmtError();
   }
+  Expr *ConditionExpr = CondResult.takeAs<Expr>();
+  if (!ConditionExpr)
+    return StmtError();
 
-  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, condExpr);
+  CondResult.release();
+  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, ConditionExpr);
   getSwitchStack().push_back(SS);
   return Owned(SS);
 }
@@ -715,30 +718,31 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
 }
 
 Action::OwningStmtResult
-Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
-  ExprArg CondArg(Cond.release());
-  Expr *condExpr = CondArg.takeAs<Expr>();
-  assert(condExpr && "ActOnWhileStmt(): missing expression");
-
+Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, 
+                     DeclPtrTy CondVar, StmtArg Body) {
+  OwningExprResult CondResult(Cond.release());
+  
   VarDecl *ConditionVar = 0;
-  if (CXXConditionDeclExpr *Cond = dyn_cast<CXXConditionDeclExpr>(condExpr)) {
-    ConditionVar = Cond->getVarDecl();
-    condExpr = DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
-                                   ConditionVar->getLocation(), 
-                                 ConditionVar->getType().getNonReferenceType());
-    // FIXME: Leaks the old condExpr
+  if (CondVar.get()) {
+    ConditionVar = CondVar.getAs<VarDecl>();
+    CondResult = CheckConditionVariable(ConditionVar);
+    if (CondResult.isInvalid())
+      return StmtError();
   }
-
-  if (CheckBooleanCondition(condExpr, WhileLoc)) {
-    CondArg = condExpr;
+  Expr *ConditionExpr = CondResult.takeAs<Expr>();
+  if (!ConditionExpr)
+    return StmtError();
+  
+  if (CheckBooleanCondition(ConditionExpr, WhileLoc)) {
+    CondResult = ConditionExpr;
     return StmtError();
   }
 
   Stmt *bodyStmt = Body.takeAs<Stmt>();
   DiagnoseUnusedExprResult(bodyStmt);
 
-  CondArg.release();
-  return Owned(new (Context) WhileStmt(ConditionVar, condExpr, bodyStmt, 
+  CondResult.release();
+  return Owned(new (Context) WhileStmt(ConditionVar, ConditionExpr, bodyStmt, 
                                        WhileLoc));
 }
 
@@ -764,12 +768,10 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
 
 Action::OwningStmtResult
 Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
-                   StmtArg first, ExprArg second, ExprArg third,
+                   StmtArg first, FullExprArg second, DeclPtrTy secondVar,
+                   FullExprArg third,
                    SourceLocation RParenLoc, StmtArg body) {
   Stmt *First  = static_cast<Stmt*>(first.get());
-  Expr *Second = second.takeAs<Expr>();
-  Expr *Third  = static_cast<Expr*>(third.get());
-  Stmt *Body  = static_cast<Stmt*>(body.get());
 
   if (!getLangOptions().CPlusPlus) {
     if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
@@ -787,20 +789,33 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       }
     }
   }
+
+  OwningExprResult SecondResult(second.release());
+  VarDecl *ConditionVar = 0;
+  if (secondVar.get()) {
+    ConditionVar = secondVar.getAs<VarDecl>();
+    SecondResult = CheckConditionVariable(ConditionVar);
+    if (SecondResult.isInvalid())
+      return StmtError();
+  }
+  
+  Expr *Second = SecondResult.takeAs<Expr>();
   if (Second && CheckBooleanCondition(Second, ForLoc)) {
-    second = Second;
+    SecondResult = Second;
     return StmtError();
   }
 
+  Expr *Third  = third.release().takeAs<Expr>();
+  Stmt *Body  = static_cast<Stmt*>(body.get());
+  
   DiagnoseUnusedExprResult(First);
   DiagnoseUnusedExprResult(Third);
   DiagnoseUnusedExprResult(Body);
 
   first.release();
-  third.release();
   body.release();
-  return Owned(new (Context) ForStmt(First, Second, Third, Body, ForLoc,
-                                     LParenLoc, RParenLoc));
+  return Owned(new (Context) ForStmt(First, Second, ConditionVar, Third, Body, 
+                                     ForLoc, LParenLoc, RParenLoc));
 }
 
 Action::OwningStmtResult

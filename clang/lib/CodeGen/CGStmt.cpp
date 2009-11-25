@@ -479,6 +479,7 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
 void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // FIXME: What do we do if the increment (f.e.) contains a stmt expression,
   // which contains a continue/break?
+  CleanupScope ForScope(*this);
 
   // Evaluate the first part before the loop.
   if (S.getInit())
@@ -490,9 +491,18 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   EmitBlock(CondBlock);
 
+  // Create a cleanup scope 
+  CleanupScope ConditionScope(*this);
+  
   // Evaluate the condition if present.  If not, treat it as a
   // non-zero-constant according to 6.8.5.3p2, aka, true.
   if (S.getCond()) {
+    // If the for statement has a condition scope, emit the local variable
+    // declaration.
+    // FIXME: The cleanup points for this are all wrong.
+    if (S.getConditionVariable())
+      EmitLocalBlockVarDecl(*S.getConditionVariable());
+    
     // As long as the condition is true, iterate the loop.
     llvm::BasicBlock *ForBody = createBasicBlock("for.body");
 

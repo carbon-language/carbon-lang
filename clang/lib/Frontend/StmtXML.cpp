@@ -61,8 +61,6 @@ namespace  {
             Doc.PrintDecl(*DI);
           }
         } else {
-          if (CXXConditionDeclExpr* CCDE = dyn_cast<CXXConditionDeclExpr>(S))
-            Doc.PrintDecl(CCDE->getVarDecl());
           for (Stmt::child_iterator i = S->child_begin(), e = S->child_end();
                i != e; ++i)
             DumpSubTree(*i);

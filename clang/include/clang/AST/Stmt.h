@@ -855,26 +855,38 @@ public:
 class ForStmt : public Stmt {
   enum { INIT, COND, INC, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[INIT] is an expression or declstmt.
+  VarDecl *CondVar;
   SourceLocation ForLoc;
   SourceLocation LParenLoc, RParenLoc;
 
 public:
-  ForStmt(Stmt *Init, Expr *Cond, Expr *Inc, Stmt *Body, SourceLocation FL,
-          SourceLocation LP, SourceLocation RP)
-    : Stmt(ForStmtClass) {
+  ForStmt(Stmt *Init, Expr *Cond, VarDecl *CondVar, Expr *Inc, Stmt *Body, 
+          SourceLocation FL, SourceLocation LP, SourceLocation RP)
+    : Stmt(ForStmtClass), CondVar(CondVar), ForLoc(FL), LParenLoc(LP), 
+      RParenLoc(RP) 
+  {
     SubExprs[INIT] = Init;
     SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
     SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
     SubExprs[BODY] = Body;
-    ForLoc = FL;
-    LParenLoc = LP;
-    RParenLoc = RP;
   }
 
   /// \brief Build an empty for statement.
   explicit ForStmt(EmptyShell Empty) : Stmt(ForStmtClass, Empty) { }
 
   Stmt *getInit() { return SubExprs[INIT]; }
+  
+  /// \brief Retrieve the variable declared in this "for" statement, if any.
+  ///
+  /// In the following example, "y" is the condition variable.
+  /// \code
+  /// for (int x = random(); int y = mangle(x); ++x) {
+  ///   // ...
+  /// }
+  /// \endcode
+  VarDecl *getConditionVariable() const { return CondVar; }
+  void setConditionVariable(VarDecl *V) { CondVar = V; }
+  
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   Expr *getInc()  { return reinterpret_cast<Expr*>(SubExprs[INC]); }
   Stmt *getBody() { return SubExprs[BODY]; }

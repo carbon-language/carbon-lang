@@ -943,56 +943,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                            OperatorDelete, Ex, StartLoc));
 }
 
-
-/// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
-/// C++ if/switch/while/for statement.
-/// e.g: "if (int x = f()) {...}"
-Action::OwningExprResult
-Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
-                                       Declarator &D,
-                                       SourceLocation EqualLoc,
-                                       ExprArg AssignExprVal) {
-  assert(AssignExprVal.get() && "Null assignment expression");
-
-  // C++ 6.4p2:
-  // The declarator shall not specify a function or an array.
-  // The type-specifier-seq shall not contain typedef and shall not declare a
-  // new class or enumeration.
-
-  assert(D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
-         "Parser allowed 'typedef' as storage class of condition decl.");
-
-  // FIXME: Store DeclaratorInfo in the expression.
-  DeclaratorInfo *DInfo = 0;
-  TagDecl *OwnedTag = 0;
-  QualType Ty = GetTypeForDeclarator(D, S, &DInfo, &OwnedTag);
-
-  if (Ty->isFunctionType()) { // The declarator shall not specify a function...
-    // We exit without creating a CXXConditionDeclExpr because a FunctionDecl
-    // would be created and CXXConditionDeclExpr wants a VarDecl.
-    return ExprError(Diag(StartLoc, diag::err_invalid_use_of_function_type)
-      << SourceRange(StartLoc, EqualLoc));
-  } else if (Ty->isArrayType()) { // ...or an array.
-    Diag(StartLoc, diag::err_invalid_use_of_array_type)
-      << SourceRange(StartLoc, EqualLoc);
-  } else if (OwnedTag && OwnedTag->isDefinition()) {
-    // The type-specifier-seq shall not declare a new class or enumeration.
-    Diag(OwnedTag->getLocation(), diag::err_type_defined_in_condition);
-  }
-
-  DeclPtrTy Dcl = ActOnDeclarator(S, D);
-  if (!Dcl)
-    return ExprError();
-  AddInitializerToDecl(Dcl, move(AssignExprVal), /*DirectInit=*/false);
-
-  // Mark this variable as one that is declared within a conditional.
-  // We know that the decl had to be a VarDecl because that is the only type of
-  // decl that can be assigned and the grammar requires an '='.
-  VarDecl *VD = cast<VarDecl>(Dcl.getAs<Decl>());
-  VD->setDeclaredInCondition(true);
-  return Owned(new (Context) CXXConditionDeclExpr(StartLoc, EqualLoc, VD));
-}
-
 /// \brief Check the use of the given variable as a C++ condition in an if,
 /// while, do-while, or switch statement.
 Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar) {
@@ -1009,18 +959,9 @@ Action::OwningExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar) {
                           diag::err_invalid_use_of_array_type)
                      << ConditionVar->getSourceRange());
 
-  // FIXME: Switch to building a DeclRefExpr, once we've eliminated the
-  // need for CXXConditionDeclExpr.
-#if 0
   return Owned(DeclRefExpr::Create(Context, 0, SourceRange(), ConditionVar,
                                    ConditionVar->getLocation(), 
                                 ConditionVar->getType().getNonReferenceType()));
-#else
-  return Owned(new (Context) CXXConditionDeclExpr(
-                                     ConditionVar->getSourceRange().getBegin(),
-                                     ConditionVar->getSourceRange().getEnd(),
-                                     ConditionVar));
-#endif                                                  
 }
 
 /// CheckCXXBooleanCondition - Returns true if a conversion to bool is invalid.

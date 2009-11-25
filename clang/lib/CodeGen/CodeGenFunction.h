@@ -916,7 +916,6 @@ public:
 
   LValue EmitBlockDeclRefLValue(const BlockDeclRefExpr *E);
 
-  LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
   LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);
   LValue EmitCXXExprWithTemporariesLValue(const CXXExprWithTemporaries *E);

@@ -1130,8 +1130,6 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     return LV_Valid;
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
-  case CXXConditionDeclExprClass:
-    return LV_Valid;
   case CStyleCastExprClass:
   case CXXFunctionalCastExprClass:
   case CXXStaticCastExprClass:
@@ -1516,7 +1514,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXNullPtrLiteralExprClass:
   case Expr::CXXThisExprClass:
   case Expr::CXXThrowExprClass:
-  case Expr::CXXConditionDeclExprClass: // FIXME: is this correct?
   case Expr::CXXNewExprClass:
   case Expr::CXXDeleteExprClass:
   case Expr::CXXPseudoDestructorExprClass:

@@ -108,14 +108,17 @@ void StmtProfiler::VisitLabelStmt(LabelStmt *S) {
 
 void StmtProfiler::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
+  VisitDecl(S->getConditionVariable());
 }
 
 void StmtProfiler::VisitSwitchStmt(SwitchStmt *S) {
   VisitStmt(S);
+  VisitDecl(S->getConditionVariable());
 }
 
 void StmtProfiler::VisitWhileStmt(WhileStmt *S) {
   VisitStmt(S);
+  VisitDecl(S->getConditionVariable());
 }
 
 void StmtProfiler::VisitDoStmt(DoStmt *S) {
@@ -479,10 +482,6 @@ void StmtProfiler::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *S) {
 
 void StmtProfiler::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *S) {
   VisitExpr(S);
-}
-
-void StmtProfiler::VisitCXXConditionDeclExpr(CXXConditionDeclExpr *S) {
-  VisitDeclRefExpr(S);
 }
 
 void StmtProfiler::VisitCXXDeleteExpr(CXXDeleteExpr *S) {

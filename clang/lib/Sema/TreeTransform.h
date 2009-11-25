@@ -95,7 +95,8 @@ public:
   typedef Sema::ExprArg ExprArg;
   typedef Sema::MultiExprArg MultiExprArg;
   typedef Sema::MultiStmtArg MultiStmtArg;
-
+  typedef Sema::DeclPtrTy DeclPtrTy;
+  
   /// \brief Initializes a new tree transformer.
   TreeTransform(Sema &SemaRef) : SemaRef(SemaRef) { }
 
@@ -665,17 +666,19 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildIfStmt(SourceLocation IfLoc, Sema::FullExprArg Cond,
-                                 StmtArg Then, SourceLocation ElseLoc,
-                                 StmtArg Else) {
-    return getSema().ActOnIfStmt(IfLoc, Cond, move(Then), ElseLoc, move(Else));
+                                 VarDecl *CondVar, StmtArg Then, 
+                                 SourceLocation ElseLoc, StmtArg Else) {
+    return getSema().ActOnIfStmt(IfLoc, Cond, DeclPtrTy::make(CondVar), 
+                                 move(Then), ElseLoc, move(Else));
   }
 
   /// \brief Start building a new switch statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  OwningStmtResult RebuildSwitchStmtStart(ExprArg Cond) {
-    return getSema().ActOnStartOfSwitchStmt(move(Cond));
+  OwningStmtResult RebuildSwitchStmtStart(Sema::FullExprArg Cond, 
+                                          VarDecl *CondVar) {
+    return getSema().ActOnStartOfSwitchStmt(Cond, DeclPtrTy::make(CondVar));
   }
 
   /// \brief Attach the body to the switch statement.
@@ -694,8 +697,10 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildWhileStmt(SourceLocation WhileLoc,
                                     Sema::FullExprArg Cond,
+                                    VarDecl *CondVar,
                                     StmtArg Body) {
-    return getSema().ActOnWhileStmt(WhileLoc, Cond, move(Body));
+    return getSema().ActOnWhileStmt(WhileLoc, Cond, DeclPtrTy::make(CondVar),
+                                    move(Body));
   }
 
   /// \brief Build a new do-while statement.
@@ -717,10 +722,12 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningStmtResult RebuildForStmt(SourceLocation ForLoc,
                                   SourceLocation LParenLoc,
-                                  StmtArg Init, ExprArg Cond, ExprArg Inc,
+                                  StmtArg Init, Sema::FullExprArg Cond, 
+                                  VarDecl *CondVar, Sema::FullExprArg Inc,
                                   SourceLocation RParenLoc, StmtArg Body) {
-    return getSema().ActOnForStmt(ForLoc, LParenLoc, move(Init), move(Cond),
-                                  move(Inc), RParenLoc, move(Body));
+    return getSema().ActOnForStmt(ForLoc, LParenLoc, move(Init), Cond, 
+                                  DeclPtrTy::make(CondVar),
+                                  Inc, RParenLoc, move(Body));
   }
 
   /// \brief Build a new goto statement.
@@ -1372,18 +1379,6 @@ public:
                                                T.getAsOpaquePtr(), LParenLoc,
                                                MultiExprArg(getSema(), 0, 0),
                                                0, RParenLoc);
-  }
-
-  /// \brief Build a new C++ conditional declaration expression.
-  ///
-  /// By default, performs semantic analysis to build the new expression.
-  /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXConditionDeclExpr(SourceLocation StartLoc,
-                                               SourceLocation EqLoc,
-                                               VarDecl *Var) {
-    return SemaRef.Owned(new (SemaRef.Context) CXXConditionDeclExpr(StartLoc,
-                                                                    EqLoc,
-                                                                    Var));
   }
 
   /// \brief Build a new C++ "new" expression.
@@ -3071,13 +3066,12 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
                    getDerived().TransformDefinition(S->getConditionVariable()));
     if (!ConditionVar)
       return SemaRef.StmtError();
-    
-    Cond = getSema().CheckConditionVariable(ConditionVar);
-  } else
+  } else {
     Cond = getDerived().TransformExpr(S->getCond());
   
-  if (Cond.isInvalid())
-    return SemaRef.StmtError();
+    if (Cond.isInvalid())
+      return SemaRef.StmtError();
+  }
   
   Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
 
@@ -3093,11 +3087,13 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
 
   if (!getDerived().AlwaysRebuild() &&
       FullCond->get() == S->getCond() &&
+      ConditionVar == S->getConditionVariable() &&
       Then.get() == S->getThen() &&
       Else.get() == S->getElse())
     return SemaRef.Owned(S->Retain());
 
-  return getDerived().RebuildIfStmt(S->getIfLoc(), FullCond, move(Then),
+  return getDerived().RebuildIfStmt(S->getIfLoc(), FullCond, ConditionVar,
+                                    move(Then),
                                     S->getElseLoc(), move(Else));
 }
 
@@ -3113,15 +3109,18 @@ TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) {
                    getDerived().TransformDefinition(S->getConditionVariable()));
     if (!ConditionVar)
       return SemaRef.StmtError();
-    
-    Cond = getSema().CheckConditionVariable(ConditionVar);
-  } else
+  } else {
     Cond = getDerived().TransformExpr(S->getCond());
-  if (Cond.isInvalid())
-    return SemaRef.StmtError();
+    
+    if (Cond.isInvalid())
+      return SemaRef.StmtError();
+  }
 
+  Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
+  
   // Rebuild the switch statement.
-  OwningStmtResult Switch = getDerived().RebuildSwitchStmtStart(move(Cond));
+  OwningStmtResult Switch = getDerived().RebuildSwitchStmtStart(FullCond,
+                                                                ConditionVar);
   if (Switch.isInvalid())
     return SemaRef.StmtError();
 
@@ -3147,12 +3146,12 @@ TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {
                    getDerived().TransformDefinition(S->getConditionVariable()));
     if (!ConditionVar)
       return SemaRef.StmtError();
-    
-    Cond = getSema().CheckConditionVariable(ConditionVar);
-  } else
+  } else {
     Cond = getDerived().TransformExpr(S->getCond());
-  if (Cond.isInvalid())
-    return SemaRef.StmtError();
+    
+    if (Cond.isInvalid())
+      return SemaRef.StmtError();
+  }
 
   Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
 
@@ -3163,10 +3162,12 @@ TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {
 
   if (!getDerived().AlwaysRebuild() &&
       FullCond->get() == S->getCond() &&
+      ConditionVar == S->getConditionVariable() &&
       Body.get() == S->getBody())
     return SemaRef.Owned(S->Retain());
 
-  return getDerived().RebuildWhileStmt(S->getWhileLoc(), FullCond, move(Body));
+  return getDerived().RebuildWhileStmt(S->getWhileLoc(), FullCond, ConditionVar,
+                                       move(Body));
 }
 
 template<typename Derived>
@@ -3201,9 +3202,20 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
     return SemaRef.StmtError();
 
   // Transform the condition
-  OwningExprResult Cond = getDerived().TransformExpr(S->getCond());
-  if (Cond.isInvalid())
-    return SemaRef.StmtError();
+  OwningExprResult Cond(SemaRef);
+  VarDecl *ConditionVar = 0;
+  if (S->getConditionVariable()) {
+    ConditionVar 
+      = cast_or_null<VarDecl>(
+                   getDerived().TransformDefinition(S->getConditionVariable()));
+    if (!ConditionVar)
+      return SemaRef.StmtError();
+  } else {
+    Cond = getDerived().TransformExpr(S->getCond());
+    
+    if (Cond.isInvalid())
+      return SemaRef.StmtError();
+  }
 
   // Transform the increment
   OwningExprResult Inc = getDerived().TransformExpr(S->getInc());
@@ -3223,7 +3235,9 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
     return SemaRef.Owned(S->Retain());
 
   return getDerived().RebuildForStmt(S->getForLoc(), S->getLParenLoc(),
-                                     move(Init), move(Cond), move(Inc),
+                                     move(Init), getSema().FullExpr(Cond),
+                                     ConditionVar,
+                                     getSema().FullExpr(Inc),
                                      S->getRParenLoc(), move(Body));
 }
 
@@ -4414,24 +4428,6 @@ TreeTransform<Derived>::TransformCXXZeroInitValueExpr(CXXZeroInitValueExpr *E,
                                                 /*FIXME:*/E->getTypeBeginLoc(),
                                                   T,
                                                   E->getRParenLoc());
-}
-
-template<typename Derived>
-Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXConditionDeclExpr(CXXConditionDeclExpr *E,
-                                                      bool isAddressOfOperand) {
-  VarDecl *Var
-    = cast_or_null<VarDecl>(getDerived().TransformDefinition(E->getVarDecl()));
-  if (!Var)
-    return SemaRef.ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      Var == E->getVarDecl())
-    return SemaRef.Owned(E->Retain());
-
-  return getDerived().RebuildCXXConditionDeclExpr(E->getStartLoc(),
-                                                  /*FIXME:*/E->getStartLoc(),
-                                                  Var);
 }
 
 template<typename Derived>

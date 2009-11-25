@@ -72,14 +72,6 @@ Stmt::child_iterator CXXZeroInitValueExpr::child_end() {
   return child_iterator();
 }
 
-// CXXConditionDeclExpr
-Stmt::child_iterator CXXConditionDeclExpr::child_begin() {
-  return getVarDecl();
-}
-Stmt::child_iterator CXXConditionDeclExpr::child_end() {
-  return child_iterator();
-}
-
 // CXXNewExpr
 CXXNewExpr::CXXNewExpr(bool globalNew, FunctionDecl *operatorNew,
                        Expr **placementArgs, unsigned numPlaceArgs,

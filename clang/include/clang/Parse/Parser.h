@@ -934,8 +934,8 @@ private:
                                             SourceLocation Start);
 
   //===--------------------------------------------------------------------===//
-  // C++ if/switch/while/for condition expression.
-  OwningExprResult ParseCXXCondition();
+  // C++ if/switch/while condition expression.
+  bool ParseCXXCondition(OwningExprResult &ExprResult, DeclPtrTy &DeclResult);
 
   //===--------------------------------------------------------------------===//
   // C++ types
@@ -1001,10 +1001,8 @@ private:
   OwningStmtResult ParseCompoundStatement(AttributeList *Attr,
                                           bool isStmtExpr = false);
   OwningStmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
-  bool ParseParenExprOrCondition(OwningExprResult &CondExp,
-                                 bool OnlyAllowCondition = false,
-                                 SourceLocation *LParenLoc = 0,
-                                 SourceLocation *RParenLoc = 0);
+  bool ParseParenExprOrCondition(OwningExprResult &ExprResult,
+                                 DeclPtrTy &DeclResult);
   OwningStmtResult ParseIfStatement(AttributeList *Attr);
   OwningStmtResult ParseSwitchStatement(AttributeList *Attr);
   OwningStmtResult ParseWhileStatement(AttributeList *Attr);

@@ -33,3 +33,11 @@ void test() {
   for (; int x=0; ) { int x; } // expected-error {{redefinition of 'x'}} expected-note {{previous definition is here}}
   switch (int x=0) { default: int x; } // expected-error {{redefinition of 'x'}} expected-note {{previous definition is here}}
 }
+
+int* get_int_ptr();
+
+void test2() {
+  float *ip;
+  if (int *ip = ip) {
+  }
+}

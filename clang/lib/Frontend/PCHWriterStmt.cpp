@@ -214,6 +214,7 @@ void PCHStmtWriter::VisitForStmt(ForStmt *S) {
   VisitStmt(S);
   Writer.WriteSubStmt(S->getInit());
   Writer.WriteSubStmt(S->getCond());
+  Writer.AddDeclRef(S->getConditionVariable(), Record);
   Writer.WriteSubStmt(S->getInc());
   Writer.WriteSubStmt(S->getBody());
   Writer.AddSourceLocation(S->getForLoc(), Record);

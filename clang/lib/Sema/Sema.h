@@ -1266,13 +1266,16 @@ public:
                                           SourceLocation ColonLoc,
                                           StmtArg SubStmt);
   virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc,
-                                       FullExprArg CondVal, StmtArg ThenVal,
+                                       FullExprArg CondVal, DeclPtrTy CondVar,
+                                       StmtArg ThenVal,
                                        SourceLocation ElseLoc, StmtArg ElseVal);
-  virtual OwningStmtResult ActOnStartOfSwitchStmt(ExprArg Cond);
+  virtual OwningStmtResult ActOnStartOfSwitchStmt(FullExprArg Cond, 
+                                                  DeclPtrTy CondVar);
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body);
   virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,
-                                          FullExprArg Cond, StmtArg Body);
+                                          FullExprArg Cond,
+                                          DeclPtrTy CondVar, StmtArg Body);
   virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
                                        SourceLocation WhileLoc,
                                        SourceLocation CondLParen, ExprArg Cond,
@@ -1280,8 +1283,10 @@ public:
 
   virtual OwningStmtResult ActOnForStmt(SourceLocation ForLoc,
                                         SourceLocation LParenLoc,
-                                        StmtArg First, ExprArg Second,
-                                        ExprArg Third, SourceLocation RParenLoc,
+                                        StmtArg First, FullExprArg Second,
+                                        DeclPtrTy SecondVar,
+                                        FullExprArg Third, 
+                                        SourceLocation RParenLoc,
                                         StmtArg Body);
   virtual OwningStmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
                                        SourceLocation LParenLoc,
@@ -1880,14 +1885,8 @@ public:
                                           bool UseGlobal, bool ArrayForm,
                                           ExprArg Operand);
 
-  /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a
-  /// C++ if/switch/while/for statement.
-  /// e.g: "if (int x = f()) {...}"
-  virtual OwningExprResult ActOnCXXConditionDeclarationExpr(Scope *S,
-                                                      SourceLocation StartLoc,
-                                                      Declarator &D,
-                                                      SourceLocation EqualLoc,
-                                                      ExprArg AssignExprVal);
+  virtual DeclResult ActOnCXXConditionDeclaration(Scope *S,
+                                                  Declarator &D);
   OwningExprResult CheckConditionVariable(VarDecl *ConditionVar);
                                           
   /// ActOnUnaryTypeTrait - Parsed one of the unary type trait support

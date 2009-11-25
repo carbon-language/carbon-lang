@@ -671,37 +671,6 @@ public:
   virtual child_iterator child_end();
 };
 
-/// CXXConditionDeclExpr - Condition declaration of a if/switch/while/for
-/// statement, e.g: "if (int x = f()) {...}".
-/// The main difference with DeclRefExpr is that CXXConditionDeclExpr owns the
-/// decl that it references.
-///
-class CXXConditionDeclExpr : public DeclRefExpr {
-public:
-  CXXConditionDeclExpr(SourceLocation startLoc,
-                       SourceLocation eqLoc, VarDecl *var)
-    : DeclRefExpr(CXXConditionDeclExprClass, var,
-                  var->getType().getNonReferenceType(), startLoc) {}
-
-  SourceLocation getStartLoc() const { return getLocation(); }
-
-  VarDecl *getVarDecl() { return cast<VarDecl>(getDecl()); }
-  const VarDecl *getVarDecl() const { return cast<VarDecl>(getDecl()); }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(getStartLoc(), getVarDecl()->getInit()->getLocEnd());
-  }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXConditionDeclExprClass;
-  }
-  static bool classof(const CXXConditionDeclExpr *) { return true; }
-
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-};
-
 /// CXXNewExpr - A new expression for memory allocation and constructor calls,
 /// e.g: "new CXXNewExpr(foo)".
 class CXXNewExpr : public Expr {

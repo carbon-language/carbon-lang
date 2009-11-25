@@ -540,8 +540,7 @@ public:
   }
   
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == DeclRefExprClass ||
-           T->getStmtClass() == CXXConditionDeclExprClass;
+    return T->getStmtClass() == DeclRefExprClass;
   }
   static bool classof(const DeclRefExpr *) { return true; }
 

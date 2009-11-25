@@ -258,8 +258,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::BlockDeclRefExprClass:
     return EmitBlockDeclRefLValue(cast<BlockDeclRefExpr>(E));
 
-  case Expr::CXXConditionDeclExprClass:
-    return EmitCXXConditionDeclLValue(cast<CXXConditionDeclExpr>(E));
   case Expr::CXXTemporaryObjectExprClass:
   case Expr::CXXConstructExprClass:
     return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
@@ -1474,12 +1472,6 @@ LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
   llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
   EmitAggExpr(E, Temp, false);
   return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
-}
-
-LValue
-CodeGenFunction::EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E) {
-  EmitLocalBlockVarDecl(*E->getVarDecl());
-  return EmitDeclRefLValue(E);
 }
 
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {

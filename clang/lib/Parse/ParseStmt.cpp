@@ -517,22 +517,22 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 /// should try to recover harder.  It returns false if the condition is
 /// successfully parsed.  Note that a successful parse can still have semantic
 /// errors in the condition.
-bool Parser::ParseParenExprOrCondition(OwningExprResult &CondExp,
-                                       bool OnlyAllowCondition,
-                                       SourceLocation *LParenLocPtr,
-                                       SourceLocation *RParenLocPtr) {
+bool Parser::ParseParenExprOrCondition(OwningExprResult &ExprResult,
+                                       DeclPtrTy &DeclResult) {
+  bool ParseError = false;
+  
   SourceLocation LParenLoc = ConsumeParen();
-  if (LParenLocPtr) *LParenLocPtr = LParenLoc;
-
-  if (getLang().CPlusPlus)
-    CondExp = ParseCXXCondition();
-  else
-    CondExp = ParseExpression();
+  if (getLang().CPlusPlus) 
+    ParseError = ParseCXXCondition(ExprResult, DeclResult);
+  else {
+    ExprResult = ParseExpression();
+    DeclResult = DeclPtrTy();
+  }
 
   // If the parser was confused by the condition and we don't have a ')', try to
   // recover by skipping ahead to a semi and bailing out.  If condexp is
   // semantically invalid but we have well formed code, keep going.
-  if (CondExp.isInvalid() && Tok.isNot(tok::r_paren)) {
+  if (ExprResult.isInvalid() && !DeclResult.get() && Tok.isNot(tok::r_paren)) {
     SkipUntil(tok::semi);
     // Skipping may have stopped if it found the containing ')'.  If so, we can
     // continue parsing the if statement.
@@ -541,8 +541,7 @@ bool Parser::ParseParenExprOrCondition(OwningExprResult &CondExp,
   }
 
   // Otherwise the condition is valid or the rparen is present.
-  SourceLocation RPLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-  if (RParenLocPtr) *RParenLocPtr = RPLoc;
+  MatchRHSPunctuation(tok::r_paren, LParenLoc);
   return false;
 }
 
@@ -583,7 +582,8 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
 
   // Parse the condition.
   OwningExprResult CondExp(Actions);
-  if (ParseParenExprOrCondition(CondExp))
+  DeclPtrTy CondVar;
+  if (ParseParenExprOrCondition(CondExp, CondVar))
     return StmtError();
 
   FullExprArg FullCondExp(Actions.FullExpr(CondExp));
@@ -650,7 +650,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
 
   // If the condition was invalid, discard the if statement.  We could recover
   // better by replacing it with a valid expr, but don't do that yet.
-  if (CondExp.isInvalid())
+  if (CondExp.isInvalid() && !CondVar.get())
     return StmtError();
 
   // If the then or else stmt is invalid and the other is valid (and present),
@@ -669,7 +669,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
   if (ElseStmt.isInvalid())
     ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
 
-  return Actions.ActOnIfStmt(IfLoc, FullCondExp, move(ThenStmt),
+  return Actions.ActOnIfStmt(IfLoc, FullCondExp, CondVar, move(ThenStmt),
                              ElseLoc, move(ElseStmt));
 }
 
@@ -709,12 +709,15 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
 
   // Parse the condition.
   OwningExprResult Cond(Actions);
-  if (ParseParenExprOrCondition(Cond))
+  DeclPtrTy CondVar;
+  if (ParseParenExprOrCondition(Cond, CondVar))
     return StmtError();
 
+  FullExprArg FullCond(Actions.FullExpr(Cond));
+  
   OwningStmtResult Switch(Actions);
-  if (!Cond.isInvalid())
-    Switch = Actions.ActOnStartOfSwitchStmt(move(Cond));
+  if (!Cond.isInvalid() || CondVar.get())
+    Switch = Actions.ActOnStartOfSwitchStmt(FullCond, CondVar);
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -743,7 +746,7 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
 
   SwitchScope.Exit();
 
-  if (Cond.isInvalid())
+  if (Cond.isInvalid() && !CondVar.get())
     return StmtError();
 
   return Actions.ActOnFinishSwitchStmt(SwitchLoc, move(Switch), move(Body));
@@ -789,7 +792,8 @@ Parser::OwningStmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
 
   // Parse the condition.
   OwningExprResult Cond(Actions);
-  if (ParseParenExprOrCondition(Cond))
+  DeclPtrTy CondVar;
+  if (ParseParenExprOrCondition(Cond, CondVar))
     return StmtError();
 
   FullExprArg FullCond(Actions.FullExpr(Cond));
@@ -815,10 +819,10 @@ Parser::OwningStmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
   InnerScope.Exit();
   WhileScope.Exit();
 
-  if (Cond.isInvalid() || Body.isInvalid())
+  if ((Cond.isInvalid() && !CondVar.get()) || Body.isInvalid())
     return StmtError();
 
-  return Actions.ActOnWhileStmt(WhileLoc, FullCond, move(Body));
+  return Actions.ActOnWhileStmt(WhileLoc, FullCond, CondVar, move(Body));
 }
 
 /// ParseDoStatement
@@ -943,7 +947,8 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
   bool ForEach = false;
   OwningStmtResult FirstPart(Actions);
   OwningExprResult SecondPart(Actions), ThirdPart(Actions);
-
+  DeclPtrTy SecondVar;
+  
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(CurScope);
     ConsumeToken();
@@ -1001,13 +1006,17 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
     if (Tok.is(tok::semi)) {  // for (...;;
       // no second part.
     } else {
-      SecondPart =getLang().CPlusPlus ? ParseCXXCondition() : ParseExpression();
+      if (getLang().CPlusPlus)
+        ParseCXXCondition(SecondPart, SecondVar);
+      else
+        SecondPart = ParseExpression();
     }
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else {
-      if (!SecondPart.isInvalid()) Diag(Tok, diag::err_expected_semi_for);
+      if (!SecondPart.isInvalid() || SecondVar.get()) 
+        Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
 
@@ -1046,8 +1055,9 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
 
   if (!ForEach)
     return Actions.ActOnForStmt(ForLoc, LParenLoc, move(FirstPart),
-                              move(SecondPart), move(ThirdPart),
-                              RParenLoc, move(Body));
+                                Actions.FullExpr(SecondPart), SecondVar,
+                                Actions.FullExpr(ThirdPart), RParenLoc, 
+                                move(Body));
 
   return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
                                             move(FirstPart),

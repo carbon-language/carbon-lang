@@ -495,13 +495,6 @@ NODE_XML(CXXDefaultArgExpr, "CXXDefaultArgExpr")
   ATTRIBUTE_XML(getParam(), "ref")                      // id of the parameter declaration (the expression is a subnode of the declaration)
 END_NODE_XML
 
-NODE_XML(CXXConditionDeclExpr, "CXXConditionDeclExpr")
-  ATTRIBUTE_FILE_LOCATION_XML
-  TYPE_ATTRIBUTE_XML(getType())
-  SUB_NODE_XML(VarDecl)                                 // a CXXConditionDeclExpr owns the declaration
-END_NODE_XML
-
-
 //===----------------------------------------------------------------------===//
 #undef NODE_XML
 #undef ID_ATTRIBUTE_XML
