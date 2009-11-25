@@ -37,15 +37,10 @@
     </ul></li>
     <li><a href="#format_common_intrinsics">Debugger intrinsic functions</a>
       <ul>
-      <li><a href="#format_common_stoppoint">llvm.dbg.stoppoint</a></li>
-      <li><a href="#format_common_func_start">llvm.dbg.func.start</a></li>
-      <li><a href="#format_common_region_start">llvm.dbg.region.start</a></li>
-      <li><a href="#format_common_region_end">llvm.dbg.region.end</a></li>
       <li><a href="#format_common_declare">llvm.dbg.declare</a></li>
     </ul></li>
-    <li><a href="#format_common_stoppoints">Representing stopping points in the
-                                           source program</a></li>
   </ol></li>
+  <li><a href="#format_common_lifetime">Object lifetimes and scoping</a></li>
   <li><a href="#ccxx_frontend">C/C++ front-end specific debug information</a>
   <ol>
     <li><a href="#ccxx_compile_units">C/C++ source file information</a></li>
@@ -763,92 +758,6 @@ DW_TAG_return_variable = 258
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection">
-  <a name="format_common_stoppoint">llvm.dbg.stoppoint</a>
-</div>
-
-<div class="doc_text">
-<pre>
-  void %<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint, uint, metadata)
-</pre>
-
-<p>This intrinsic is used to provide correspondence between the source file and
-   the generated code.  The first argument is the line number (base 1), second
-   argument is the column number (0 if unknown) and the third argument the
-   source <tt>%<a href="#format_compile_units">llvm.dbg.compile_unit</a></tt>.
-   Code following a call to this intrinsic will
-   have been defined in close proximity of the line, column and file. This
-   information holds until the next call
-   to <tt>%<a href="#format_common_stoppoint">lvm.dbg.stoppoint</a></tt>.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
-  <a name="format_common_func_start">llvm.dbg.func.start</a>
-</div>
-
-<div class="doc_text">
-<pre>
-  void %<a href="#format_common_func_start">llvm.dbg.func.start</a>( metadata )
-</pre>
-
-<p>This intrinsic is used to link the debug information
-   in <tt>%<a href="#format_subprograms">llvm.dbg.subprogram</a></tt> to the
-   function. It defines the beginning of the function's declarative region
-   (scope). It also implies a call to
-   %<tt><a href="#format_common_stoppoint">llvm.dbg.stoppoint</a></tt> which
-   defines a source line "stop point". The intrinsic should be called early in
-   the function after the all the alloca instructions.  It should be paired off
-   with a closing
-   <tt>%<a href="#format_common_region_end">llvm.dbg.region.end</a></tt>.
-   The function's single argument is
-   the <tt>%<a href="#format_subprograms">llvm.dbg.subprogram.type</a></tt>.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
-  <a name="format_common_region_start">llvm.dbg.region.start</a>
-</div>
-
-<div class="doc_text">
-<pre>
-  void %<a href="#format_common_region_start">llvm.dbg.region.start</a>( metadata )
-</pre>
-
-<p>This intrinsic is used to define the beginning of a declarative scope (ex.
-   block) for local language elements.  It should be paired off with a closing
-   <tt>%<a href="#format_common_region_end">llvm.dbg.region.end</a></tt>.  The
-   function's single argument is
-   the <tt>%<a href="#format_blocks">llvm.dbg.block</a></tt> which is
-   starting.</p>
-
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
-  <a name="format_common_region_end">llvm.dbg.region.end</a>
-</div>
-
-<div class="doc_text">
-<pre>
-  void %<a href="#format_common_region_end">llvm.dbg.region.end</a>( metadata )
-</pre>
-
-<p>This intrinsic is used to define the end of a declarative scope (ex. block)
-   for local language elements.  It should be paired off with an
-   opening <tt>%<a href="#format_common_region_start">llvm.dbg.region.start</a></tt>
-   or <tt>%<a href="#format_common_func_start">llvm.dbg.func.start</a></tt>.
-   The function's single argument is either
-   the <tt>%<a href="#format_blocks">llvm.dbg.block</a></tt> or
-   the <tt>%<a href="#format_subprograms">llvm.dbg.subprogram.type</a></tt>
-   which is ending.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
   <a name="format_common_declare">llvm.dbg.declare</a>
 </div>
 
@@ -867,40 +776,6 @@ DW_TAG_return_variable = 258
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="format_common_stoppoints">
-     Representing stopping points in the source program
-  </a>
-</div>
-
-<div class="doc_text">
-
-<p>LLVM debugger "stop points" are a key part of the debugging representation
-   that allows the LLVM to maintain simple semantics
-   for <a href="#debugopt">debugging optimized code</a>.  The basic idea is that
-   the front-end inserts calls to
-   the <a href="#format_common_stoppoint">%<tt>llvm.dbg.stoppoint</tt></a>
-   intrinsic function at every point in the program where a debugger should be
-   able to inspect the program (these correspond to places a debugger stops when
-   you "<tt>step</tt>" through it).  The front-end can choose to place these as
-   fine-grained as it would like (for example, before every subexpression
-   evaluated), but it is recommended to only put them after every source
-   statement that includes executable code.</p>
-
-<p>Using calls to this intrinsic function to demark legal points for the
-   debugger to inspect the program automatically disables any optimizations that
-   could potentially confuse debugging information.  To
-   non-debug-information-aware transformations, these calls simply look like
-   calls to an external function, which they must assume to do anything
-   (including reading or writing to any part of reachable memory).  On the other
-   hand, it does not impact many optimizations, such as code motion of
-   non-trapping instructions, nor does it impact optimization of subexpressions,
-   code duplication transformations, or basic-block reordering
-   transformations.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
   <a name="format_common_lifetime">Object lifetimes and scoping</a>
 </div>
 
@@ -914,21 +789,20 @@ DW_TAG_return_variable = 258
    scoping in this sense, and does not want to be tied to a language's scoping
    rules.</p>
 
-<p>In order to handle this, the LLVM debug format uses the notion of "regions"
-   of a function, delineated by calls to intrinsic functions.  These intrinsic
-   functions define new regions of the program and indicate when the region
-   lifetime expires.  Consider the following C fragment, for example:</p>
+<p>In order to handle this, the LLVM debug format uses the metadata attached
+   with llvm instructions to encode line nuber and scoping information.
+   Consider the following C fragment, for example:</p>
 
 <div class="doc_code">
 <pre>
 1.  void foo() {
-2.    int X = ...;
-3.    int Y = ...;
+2.    int X = 21;
+3.    int Y = 22;
 4.    {
-5.      int Z = ...;
-6.      ...
+5.      int Z = 23;
+6.      Z = X;
 7.    }
-8.    ...
+8.    X = Y;
 9.  }
 </pre>
 </div>
@@ -937,99 +811,124 @@ DW_TAG_return_variable = 258
 
 <div class="doc_code">
 <pre>
-void %foo() {
+nounwind ssp {
 entry:
-    %X = alloca int
-    %Y = alloca int
-    %Z = alloca int
-    
-    ...
-    
-    call void @<a href="#format_common_func_start">llvm.dbg.func.start</a>( metadata !0)
-    
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 2, uint 2, metadata !1)
-    
-    call void @<a href="#format_common_declare">llvm.dbg.declare</a>({}* %X, ...)
-    call void @<a href="#format_common_declare">llvm.dbg.declare</a>({}* %Y, ...)
-    
-    <i>;; Evaluate expression on line 2, assigning to X.</i>
-    
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 3, uint 2, metadata !1)
-    
-    <i>;; Evaluate expression on line 3, assigning to Y.</i>
-    
-    call void @<a href="#format_common_stoppoint">llvm.region.start</a>()
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 5, uint 4, metadata !1)
-    call void @<a href="#format_common_declare">llvm.dbg.declare</a>({}* %X, ...)
-    
-    <i>;; Evaluate expression on line 5, assigning to Z.</i>
-    
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 7, uint 2, metadata !1)
-    call void @<a href="#format_common_region_end">llvm.region.end</a>()
-    
-    call void @<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint 9, uint 2, metadata !1)
-    
-    call void @<a href="#format_common_region_end">llvm.region.end</a>()
-    
-    ret void
+  %X = alloca i32, align 4                        ; <i32*> [#uses=4]
+  %Y = alloca i32, align 4                        ; <i32*> [#uses=4]
+  %Z = alloca i32, align 4                        ; <i32*> [#uses=3]
+  %0 = bitcast i32* %X to { }*                    ; <{ }*> [#uses=1]
+  call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7
+  store i32 21, i32* %X, !dbg !8
+  %1 = bitcast i32* %Y to { }*                    ; <{ }*> [#uses=1]
+  call void @llvm.dbg.declare({ }* %1, metadata !9), !dbg !10
+  store i32 22, i32* %Y, !dbg !11
+  %2 = bitcast i32* %Z to { }*                    ; <{ }*> [#uses=1]
+  call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
+  store i32 23, i32* %Z, !dbg !15
+  %tmp = load i32* %X, !dbg !16                   ; <i32> [#uses=1]
+  %tmp1 = load i32* %Y, !dbg !16                  ; <i32> [#uses=1]
+  %add = add nsw i32 %tmp, %tmp1, !dbg !16        ; <i32> [#uses=1]
+  store i32 %add, i32* %Z, !dbg !16
+  %tmp2 = load i32* %Y, !dbg !17                  ; <i32> [#uses=1]
+  store i32 %tmp2, i32* %X, !dbg !17
+  ret void, !dbg !18
 }
+
+declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
+
+!0 = metadata !{i32 459008, metadata !1, metadata !"X", 
+                metadata !3, i32 2, metadata !6}; [ DW_TAG_auto_variable ]
+!1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
+!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", metadata !"foo", 
+               metadata !"foo", metadata !3, i32 1, metadata !4, 
+               i1 false, i1 true}; [DW_TAG_subprogram ]
+!3 = metadata !{i32 458769, i32 0, i32 12, metadata !"foo.c", 
+                metadata !"/private/tmp", metadata !"clang 1.1", i1 true, 
+                i1 false, metadata !"", i32 0}; [DW_TAG_compile_unit ]
+!4 = metadata !{i32 458773, metadata !3, metadata !"", null, i32 0, i64 0, i64 0, 
+                i64 0, i32 0, null, metadata !5, i32 0}; [DW_TAG_subroutine_type ]
+!5 = metadata !{null}
+!6 = metadata !{i32 458788, metadata !3, metadata !"int", metadata !3, i32 0, 
+                i64 32, i64 32, i64 0, i32 0, i32 5}; [DW_TAG_base_type ]
+!7 = metadata !{i32 2, i32 7, metadata !1, null}
+!8 = metadata !{i32 2, i32 3, metadata !1, null}
+!9 = metadata !{i32 459008, metadata !1, metadata !"Y", metadata !3, i32 3, 
+                metadata !6}; [ DW_TAG_auto_variable ]
+!10 = metadata !{i32 3, i32 7, metadata !1, null}
+!11 = metadata !{i32 3, i32 3, metadata !1, null}
+!12 = metadata !{i32 459008, metadata !13, metadata !"Z", metadata !3, i32 5, 
+                 metadata !6}; [ DW_TAG_auto_variable ]
+!13 = metadata !{i32 458763, metadata !1}; [DW_TAG_lexical_block ]
+!14 = metadata !{i32 5, i32 9, metadata !13, null}
+!15 = metadata !{i32 5, i32 5, metadata !13, null}
+!16 = metadata !{i32 6, i32 5, metadata !13, null}
+!17 = metadata !{i32 8, i32 3, metadata !1, null}
+!18 = metadata !{i32 9, i32 1, metadata !2, null}
 </pre>
 </div>
 
 <p>This example illustrates a few important details about the LLVM debugging
-   information.  In particular, it shows how the various intrinsics are applied
+   information.  In particular, it shows how the llvm.dbg.declare intrinsic
+   and location information, attached with an instruction, are applied
    together to allow a debugger to analyze the relationship between statements,
    variable definitions, and the code used to implement the function.</p>
 
-<p>The first
-   intrinsic <tt>%<a href="#format_common_func_start">llvm.dbg.func.start</a></tt>
-   provides a link with the <a href="#format_subprograms">subprogram
-   descriptor</a> containing the details of this function.  This call also
-   defines the beginning of the function region, bounded by
-   the <tt>%<a href="#format_common_region_end">llvm.region.end</a></tt> at the
-   end of the function.  This region is used to bracket the lifetime of
-   variables declared within.  For a function, this outer region defines a new
-   stack frame whose lifetime ends when the region is ended.</p>
+   <div class="doc_code">
+   <pre> 
+     call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7   
+   </pre>
+   </div>
+<p>This first intrinsic 
+   <tt>%<a href="#format_common_declare">llvm.dbg.declare</a></tt>
+   encodes debugging information for variable <tt>X</tt>. The metadata, 
+   <tt>!dbg !7</tt> attached with the intrinsic provides scope information for 
+   the variable <tt>X</tt>. </p>
+   <div class="doc_code">
+   <pre>
+     !7 = metadata !{i32 2, i32 7, metadata !1, null}
+     !1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
+     !2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", 
+                     metadata !"foo", metadata !"foo", metadata !3, i32 1, 
+                     metadata !4, i1 false, i1 true}; [DW_TAG_subprogram ]   
+   </pre>
+   </div>
 
-<p>It is possible to define inner regions for short term variables by using the
-   %<a href="#format_common_stoppoint"><tt>llvm.region.start</tt></a>
-   and <a href="#format_common_region_end"><tt>%llvm.region.end</tt></a> to
-   bound a region.  The inner region in this example would be for the block
-   containing the declaration of Z.</p>
+<p> Here <tt>!7</tt> is a metadata providing location information. It has four
+   fields : line number, column number, scope and original scope. The original
+   scope represents inline location if this instruction is inlined inside
+   a caller. It is null otherwise. In this example scope is encoded by 
+   <tt>!1</tt>. <tt>!1</tt> represents a lexical block inside the scope
+   <tt>!2</tt>, where <tt>!2</tt> is a
+   <a href="#format_subprograms">subprogram descriptor</a>. 
+   This way the location information attched with the intrinsics indicates
+   that the variable <tt>X</tt> is declared at line number 2 at a function level
+   scope in function <tt>foo</tt>.</p>
 
-<p>Using regions to represent the boundaries of source-level functions allow
-   LLVM interprocedural optimizations to arbitrarily modify LLVM functions
-   without having to worry about breaking mapping information between the LLVM
-   code and the and source-level program.  In particular, the inliner requires
-   no modification to support inlining with debugging information: there is no
-   explicit correlation drawn between LLVM functions and their source-level
-   counterparts (note however, that if the inliner inlines all instances of a
-   non-strong-linkage function into its caller that it will not be possible for
-   the user to manually invoke the inlined function from a debugger).</p>
+<p>Now lets take another example.</p>
 
-<p>Once the function has been defined,
-   the <a href="#format_common_stoppoint"><tt>stopping point</tt></a>
-   corresponding to line #2 (column #2) of the function is encountered.  At this
-   point in the function, <b>no</b> local variables are live.  As lines 2 and 3
-   of the example are executed, their variable definitions are introduced into
-   the program using
-   %<a href="#format_common_declare"><tt>llvm.dbg.declare</tt></a>, without the
-   need to specify a new region.  These variables do not require new regions to
-   be introduced because they go out of scope at the same point in the program:
-   line 9.</p>
+   <div class="doc_code">
+   <pre> 
+     call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
+   </pre>
+   </div>
+<p>This intrinsic 
+   <tt>%<a href="#format_common_declare">llvm.dbg.declare</a></tt>
+   encodes debugging information for variable <tt>Z</tt>. The metadata, 
+   <tt>!dbg !14</tt> attached with the intrinsic provides scope information for 
+   the variable <tt>Z</tt>. </p>
+   <div class="doc_code">
+   <pre>
+     !13 = metadata !{i32 458763, metadata !1}; [DW_TAG_lexical_block ]
+     !14 = metadata !{i32 5, i32 9, metadata !13, null}
+   </pre>
+   </div>
 
-<p>In contrast, the <tt>Z</tt> variable goes out of scope at a different time,
-   on line 7.  For this reason, it is defined within the inner region, which
-   kills the availability of <tt>Z</tt> before the code for line 8 is executed.
-   In this way, regions can support arbitrary source-language scoping rules, as
-   long as they can only be nested (ie, one scope cannot partially overlap with
-   a part of another scope).</p>
+<p> Here <tt>!14</tt> indicates that <tt>Z</tt> is declaread at line number 5,
+   column number 9 inside a lexical scope <tt>!13</tt>. This lexical scope
+   itself resides inside lexcial scope <tt>!1</tt> described above.</p>
 
-<p>It is worth noting that this scoping mechanism is used to control scoping of
-   all declarations, not just variable declarations.  For example, the scope of
-   a C++ using declaration is controlled with this and could change how name
-   lookup is performed.</p>
-
+<p>The scope information attached with each instruction provides a straight
+   forward way to find instructions covered by a scope. </p>
 </div>
 
 <!-- *********************************************************************** -->
