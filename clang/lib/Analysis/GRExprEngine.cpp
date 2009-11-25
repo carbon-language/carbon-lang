@@ -420,6 +420,10 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       VisitAsmStmt(cast<AsmStmt>(S), Pred, Dst);
       break;
 
+    case Stmt::BlockExprClass:
+      VisitBlockExpr(cast<BlockExpr>(S), Pred, Dst);
+      break;
+
     case Stmt::BinaryOperatorClass: {
       BinaryOperator* B = cast<BinaryOperator>(S);
 
@@ -1058,6 +1062,14 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
 //===----------------------------------------------------------------------===//
 // Transfer functions: Loads and stores.
 //===----------------------------------------------------------------------===//
+
+void GRExprEngine::VisitBlockExpr(BlockExpr *BE, ExplodedNode *Pred,
+                                  ExplodedNodeSet &Dst) {
+  CanQualType T = getContext().getCanonicalType(BE->getType());
+  SVal V = ValMgr.getBlockPointer(BE->getBlockDecl(), T);
+  MakeNode(Dst, BE, Pred, GetState(Pred)->BindExpr(BE, V),
+           ProgramPoint::PostLValueKind);
+}
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst, bool asLValue) {

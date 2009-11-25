@@ -255,6 +255,9 @@ protected:
                                 AsmStmt::inputs_iterator I,
                                 AsmStmt::inputs_iterator E,
                                 ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  
+  /// VisitBlockExpr - Transfer function logic for BlockExprs.
+  void VisitBlockExpr(BlockExpr *BE, ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, ExplodedNode* Pred, 
