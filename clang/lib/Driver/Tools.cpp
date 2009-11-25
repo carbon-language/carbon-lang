@@ -130,13 +130,9 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   // wonky, but we include looking for .gch so we can support seamless
   // replacement into a build system already set up to be generating
   // .gch files.
-  //
-  // FIXME: Use iterator.
-  for (ArgList::const_iterator
-         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (!A->getOption().matches(options::OPT_clang_i_Group))
-      continue;
+  for (arg_iterator it = Args.filtered_begin(options::OPT_clang_i_Group),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = it;
 
     if (A->getOption().matches(options::OPT_include)) {
       // Use PCH if the user requested it, except for C++ (for now).
@@ -484,25 +480,21 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
     CmdArgs.push_back(CPUName);
   }
 
-  // FIXME: Use iterator.
-  for (ArgList::const_iterator
-         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(options::OPT_m_x86_Features_Group)) {
-      llvm::StringRef Name = A->getOption().getName();
+  for (arg_iterator it = Args.filtered_begin(options::OPT_m_x86_Features_Group),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    llvm::StringRef Name = it->getOption().getName();
+    it->claim();
 
-      // Skip over "-m".
-      assert(Name.startswith("-m") && "Invalid feature name.");
-      Name = Name.substr(2);
+    // Skip over "-m".
+    assert(Name.startswith("-m") && "Invalid feature name.");
+    Name = Name.substr(2);
 
-      bool IsNegative = Name.startswith("no-");
-      if (IsNegative)
-        Name = Name.substr(3);
+    bool IsNegative = Name.startswith("no-");
+    if (IsNegative)
+      Name = Name.substr(3);
 
-      A->claim();
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
-    }
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
   }
 }
 
@@ -1089,15 +1081,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Explicitly warn that these options are unsupported, even though
   // we are allowing compilation to continue.
-  // FIXME: Use iterator.
-  for (ArgList::const_iterator
-         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(options::OPT_pg)) {
-      A->claim();
-      D.Diag(clang::diag::warn_drv_clang_unsupported)
-        << A->getAsString(Args);
-    }
+  for (arg_iterator it = Args.filtered_begin(options::OPT_pg),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    it->claim();
+    D.Diag(clang::diag::warn_drv_clang_unsupported) << it->getAsString(Args);
   }
 
   // Claim some arguments which clang supports automatically.
@@ -1110,15 +1097,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Claim some arguments which clang doesn't support, but we don't
   // care to warn the user about.
-
-  // FIXME: Use iterator.
-  for (ArgList::const_iterator
-         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(options::OPT_clang_ignored_f_Group) ||
-        A->getOption().matches(options::OPT_clang_ignored_m_Group))
-      A->claim();
-  }
+  Args.ClaimAllArgs(options::OPT_clang_ignored_f_Group);
+  Args.ClaimAllArgs(options::OPT_clang_ignored_m_Group);
 }
 
 void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
@@ -1391,18 +1371,13 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
     // used to inhibit the default -fno-builtin-str{cat,cpy}.
     //
     // FIXME: Should we grow a better way to deal with "removing" args?
-    //
-    // FIXME: Use iterator.
-    for (ArgList::const_iterator it = Args.begin(),
-           ie = Args.end(); it != ie; ++it) {
-      const Arg *A = *it;
-      if (A->getOption().matches(options::OPT_f_Group) ||
-          A->getOption().matches(options::OPT_fsyntax_only)) {
-        if (!A->getOption().matches(options::OPT_fbuiltin_strcat) &&
-            !A->getOption().matches(options::OPT_fbuiltin_strcpy)) {
-          A->claim();
-          A->render(Args, CmdArgs);
-        }
+    for (arg_iterator it = Args.filtered_begin(options::OPT_f_Group,
+                                               options::OPT_fsyntax_only),
+           ie = Args.filtered_end(); it != ie; ++it) {
+      if (!it->getOption().matches(options::OPT_fbuiltin_strcat) &&
+          !it->getOption().matches(options::OPT_fbuiltin_strcpy)) {
+        it->claim();
+        it->render(Args, CmdArgs);
       }
     }
   } else

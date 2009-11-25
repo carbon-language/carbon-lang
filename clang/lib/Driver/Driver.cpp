@@ -965,10 +965,9 @@ void Driver::BuildJobs(Compilation &C) const {
       if (isa<FlagOption>(Opt)) {
         bool DuplicateClaimed = false;
 
-        // FIXME: Use iterator.
-        for (ArgList::const_iterator it = C.getArgs().begin(),
-               ie = C.getArgs().end(); it != ie; ++it) {
-          if ((*it)->isClaimed() && (*it)->getOption().matches(&Opt)) {
+        for (arg_iterator it = C.getArgs().filtered_begin(&Opt),
+               ie = C.getArgs().filtered_end(); it != ie; ++it) {
+          if ((*it)->isClaimed()) {
             DuplicateClaimed = true;
             break;
           }
