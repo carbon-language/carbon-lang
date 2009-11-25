@@ -13,5 +13,5 @@ try {
 
 } catch (int a) { // expected-error {{redefinition of 'a'}}
   int b; // expected-error {{redefinition of 'b'}}
-  ++c; // expected-error {{use of undeclared identifion 'c'}}
+  ++c; // expected-error {{use of undeclared identifier 'c'}}
 }
