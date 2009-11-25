@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_REDECLARABLE_H
 
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/Casting.h"
 #include <iterator>
 
 namespace clang {
@@ -110,7 +111,7 @@ public:
       // Point to previous. Make sure that this is actually the most recent
       // redeclaration, or we can build invalid chains. If the most recent
       // redeclaration is invalid, it won't be PrevDecl, but we want it anyway.
-      RedeclLink = PreviousDeclLink(cast<decl_type>(
+      RedeclLink = PreviousDeclLink(llvm::cast<decl_type>(
                                       PrevDecl->getMostRecentDeclaration()));
       First = PrevDecl->getFirstDeclaration();
       assert(First->RedeclLink.NextIsLatest() && "Expected first");
