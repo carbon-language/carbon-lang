@@ -417,7 +417,7 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
 
   llvm::DIType DbgTy = 
     DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
-                                   Ty->getDecl()->getNameAsCString(),
+                                   Ty->getDecl()->getName(),
                                    DefUnit, Line, 0, 0, 0, 0, Src);
   return DbgTy;
 }
@@ -482,7 +482,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsString().data(), 
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName(),
                                      DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray());
 
@@ -507,10 +507,10 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
-    const char *FieldName = Field->getNameAsCString();
+    llvm::StringRef FieldName = Field->getName();
 
     // Ignore unnamed fields.
-    if (!FieldName)
+    if (FieldName.empty())
       continue;
 
     // Get the location for the field.
@@ -558,7 +558,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
   llvm::DICompositeType RealDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsString().data(),
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName(),
                                      DefUnit, Line, Size, Align, 0, 0, 
                                      llvm::DIType(), Elements);
 
@@ -592,7 +592,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsCString(), 
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName(),
                                      DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray(),
                                      RuntimeLang);
@@ -628,10 +628,10 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     ObjCIvarDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
-    const char *FieldName = Field->getNameAsCString();
+    llvm::StringRef FieldName = Field->getName();
 
     // Ignore unnamed fields.
-    if (!FieldName)
+    if (FieldName.empty())
       continue;
 
     // Get the location for the field.
@@ -682,7 +682,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
   llvm::DICompositeType RealDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getNameAsCString(), DefUnit,
+    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName(), DefUnit,
                                      Line, Size, Align, 0, 0, llvm::DIType(), 
                                      Elements, RuntimeLang);
 
@@ -703,7 +703,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
   for (EnumDecl::enumerator_iterator
          Enum = Decl->enumerator_begin(), EnumEnd = Decl->enumerator_end();
        Enum != EnumEnd; ++Enum) {
-    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getNameAsCString(),
+    Enumerators.push_back(DebugFactory.CreateEnumerator(Enum->getName(),
                                             Enum->getInitVal().getZExtValue()));
   }
 
@@ -728,7 +728,7 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
 
   llvm::DIType DbgTy = 
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
-                                     Unit, Decl->getNameAsCString(), DefUnit, Line,
+                                     Unit, Decl->getName(), DefUnit, Line,
                                      Size, Align, 0, 0,
                                      llvm::DIType(), EltArray);
   return DbgTy;
@@ -1104,7 +1104,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     FieldAlign = Align*8;
     
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             Decl->getNameAsCString(), DefUnit,
+                                             Decl->getName(), DefUnit,
                                              0, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
     EltTys.push_back(FieldTy);
@@ -1135,7 +1135,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DebugFactory.CreateVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
-                                Decl->getNameAsCString(),
+                                Decl->getName(),
                                 Unit, Line, Ty);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
@@ -1282,7 +1282,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     
     XOffset = FieldOffset;
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             Decl->getNameAsCString(), DefUnit,
+                                             Decl->getName(), DefUnit,
                                              0, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
     EltTys.push_back(FieldTy);
@@ -1336,7 +1336,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DebugFactory.CreateComplexVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
-                                       Decl->getNameAsCString(), Unit, Line, Ty,
+                                       Decl->getName(), Unit, Line, Ty,
                                        addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
@@ -1392,9 +1392,9 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     T = M->getContext().getConstantArrayType(ET, ConstVal,
                                            ArrayType::Normal, 0);
   }
-  const char *DeclName = Decl->getNameAsCString();
+  llvm::StringRef DeclName = Decl->getName();
   DebugFactory.CreateGlobalVariable(getContext(Decl, Unit), DeclName, DeclName,
-                                    NULL, Unit, LineNo,
+                                    llvm::StringRef(), Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
@@ -1409,7 +1409,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
-  const char *Name = Decl->getNameAsCString();
+  llvm::StringRef Name = Decl->getName();
 
   QualType T = M->getContext().getObjCInterfaceType(Decl);
   if (T->isIncompleteArrayType()) {
