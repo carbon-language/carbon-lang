@@ -55,7 +55,7 @@ namespace llvm {
     /// not, the debug info is corrupt and we ignore it.
     DIDescriptor(MDNode *N, unsigned RequiredTag);
 
-    const char *getStringField(unsigned Elt) const;
+    StringRef getStringField(unsigned Elt) const;
     unsigned getUnsignedField(unsigned Elt) const {
       return (unsigned)getUInt64Field(Elt);
     }
@@ -137,8 +137,8 @@ namespace llvm {
     }
     virtual ~DIScope() {}
 
-    const char *getFilename() const;
-    const char *getDirectory() const;
+    StringRef getFilename() const;
+    StringRef getDirectory() const;
   };
 
   /// DICompileUnit - A wrapper for a compile unit.
@@ -150,9 +150,9 @@ namespace llvm {
     }
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
-    const char *getFilename() const  { return getStringField(3);   }
-    const char *getDirectory() const { return getStringField(4);   }
-    const char *getProducer() const  { return getStringField(5);   }
+    StringRef getFilename() const  { return getStringField(3);   }
+    StringRef getDirectory() const { return getStringField(4);   }
+    StringRef getProducer() const  { return getStringField(5);   }
 
     /// isMain - Each input file is encoded as a separate compile unit in LLVM
     /// debugging information output. However, many target specific tool chains
@@ -165,7 +165,7 @@ namespace llvm {
 
     bool isMain() const                { return getUnsignedField(6); }
     bool isOptimized() const           { return getUnsignedField(7); }
-    const char *getFlags() const       { return getStringField(8);   }
+    StringRef getFlags() const       { return getStringField(8);   }
     unsigned getRunTimeVersion() const { return getUnsignedField(9); }
 
     /// Verify - Verify that a compile unit is well formed.
@@ -183,7 +183,7 @@ namespace llvm {
     explicit DIEnumerator(MDNode *N = 0)
       : DIDescriptor(N, dwarf::DW_TAG_enumerator) {}
 
-    const char *getName() const        { return getStringField(1); }
+    StringRef getName() const        { return getStringField(1); }
     uint64_t getEnumValue() const      { return getUInt64Field(2); }
   };
 
@@ -217,7 +217,7 @@ namespace llvm {
     virtual ~DIType() {}
 
     DIDescriptor getContext() const     { return getDescriptorField(1); }
-    const char *getName() const         { return getStringField(2);     }
+    StringRef getName() const         { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -317,9 +317,9 @@ namespace llvm {
     virtual ~DIGlobal() {}
 
     DIDescriptor getContext() const     { return getDescriptorField(2); }
-    const char *getName() const         { return getStringField(3); }
-    const char *getDisplayName() const  { return getStringField(4); }
-    const char *getLinkageName() const  { return getStringField(5); }
+    StringRef getName() const         { return getStringField(3); }
+    StringRef getDisplayName() const  { return getStringField(4); }
+    StringRef getLinkageName() const  { return getStringField(5); }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(6); }
     unsigned getLineNumber() const      { return getUnsignedField(7); }
     DIType getType() const              { return getFieldAs<DIType>(8); }
@@ -342,16 +342,16 @@ namespace llvm {
     }
 
     DIDescriptor getContext() const     { return getDescriptorField(2); }
-    const char *getName() const         { return getStringField(3); }
-    const char *getDisplayName() const  { return getStringField(4); }
-    const char *getLinkageName() const  { return getStringField(5); }
+    StringRef getName() const         { return getStringField(3); }
+    StringRef getDisplayName() const  { return getStringField(4); }
+    StringRef getLinkageName() const  { return getStringField(5); }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(6); }
     unsigned getLineNumber() const      { return getUnsignedField(7); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
 
     /// getReturnTypeName - Subprogram return types are encoded either as
     /// DIType or as DICompositeType.
-    const char *getReturnTypeName() const {
+    StringRef getReturnTypeName() const {
       DICompositeType DCT(getFieldAs<DICompositeType>(8));
       if (!DCT.isNull()) {
         DIArray A = DCT.getTypeArray();
@@ -366,8 +366,8 @@ namespace llvm {
     /// compile unit, like 'static' in C.
     unsigned isLocalToUnit() const     { return getUnsignedField(9); }
     unsigned isDefinition() const      { return getUnsignedField(10); }
-    const char *getFilename() const    { return getCompileUnit().getFilename();}
-    const char *getDirectory() const   { return getCompileUnit().getDirectory();}
+    StringRef getFilename() const    { return getCompileUnit().getFilename();}
+    StringRef getDirectory() const   { return getCompileUnit().getDirectory();}
 
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
@@ -406,7 +406,7 @@ namespace llvm {
     }
 
     DIDescriptor getContext() const { return getDescriptorField(1); }
-    const char *getName() const     { return getStringField(2);     }
+    StringRef getName() const     { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     DIType getType() const              { return getFieldAs<DIType>(5); }
@@ -444,8 +444,8 @@ namespace llvm {
         DbgNode = 0;
     }
     DIScope getContext() const       { return getFieldAs<DIScope>(1); }
-    const char *getDirectory() const { return getContext().getDirectory(); }
-    const char *getFilename() const  { return getContext().getFilename(); }
+    StringRef getDirectory() const { return getContext().getDirectory(); }
+    StringRef getFilename() const  { return getContext().getFilename(); }
   };
 
   /// DILocation - This object holds location information. This object
@@ -458,8 +458,8 @@ namespace llvm {
     unsigned getColumnNumber() const   { return getUnsignedField(1); }
     DIScope  getScope() const          { return getFieldAs<DIScope>(2); }
     DILocation getOrigLocation() const { return getFieldAs<DILocation>(3); }
-    const char *getFilename() const    { return getScope().getFilename(); }
-    const char *getDirectory() const   { return getScope().getDirectory(); }
+    StringRef getFilename() const    { return getScope().getFilename(); }
+    StringRef getDirectory() const   { return getScope().getDirectory(); }
   };
 
   /// DIFactory - This object assists with the construction of the various
@@ -489,26 +489,26 @@ namespace llvm {
     /// CreateCompileUnit - Create a new descriptor for the specified compile
     /// unit.
     DICompileUnit CreateCompileUnit(unsigned LangID,
-                                    const char * Filename,
-                                    const char * Directory,
-                                    const char * Producer,
+                                    StringRef Filename,
+                                    StringRef Directory,
+                                    StringRef Producer,
                                     bool isMain = false,
                                     bool isOptimized = false,
-                                    const char *Flags = "",
+                                    StringRef Flags = "",
                                     unsigned RunTimeVer = 0);
 
     /// CreateEnumerator - Create a single enumerator value.
-    DIEnumerator CreateEnumerator(const char * Name, uint64_t Val);
+    DIEnumerator CreateEnumerator(StringRef Name, uint64_t Val);
 
     /// CreateBasicType - Create a basic type like int, float, etc.
-    DIBasicType CreateBasicType(DIDescriptor Context, const char * Name,
+    DIBasicType CreateBasicType(DIDescriptor Context, StringRef Name,
                                 DICompileUnit CompileUnit, unsigned LineNumber,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
                                 uint64_t OffsetInBits, unsigned Flags,
                                 unsigned Encoding);
 
     /// CreateBasicType - Create a basic type like int, float, etc.
-    DIBasicType CreateBasicTypeEx(DIDescriptor Context, const char * Name,
+    DIBasicType CreateBasicTypeEx(DIDescriptor Context, StringRef Name,
                                 DICompileUnit CompileUnit, unsigned LineNumber,
                                 Constant *SizeInBits, Constant *AlignInBits,
                                 Constant *OffsetInBits, unsigned Flags,
@@ -517,7 +517,7 @@ namespace llvm {
     /// CreateDerivedType - Create a derived type like const qualified type,
     /// pointer, typedef, etc.
     DIDerivedType CreateDerivedType(unsigned Tag, DIDescriptor Context,
-                                    const char * Name,
+                                    StringRef Name,
                                     DICompileUnit CompileUnit,
                                     unsigned LineNumber,
                                     uint64_t SizeInBits, uint64_t AlignInBits,
@@ -527,7 +527,7 @@ namespace llvm {
     /// CreateDerivedType - Create a derived type like const qualified type,
     /// pointer, typedef, etc.
     DIDerivedType CreateDerivedTypeEx(unsigned Tag, DIDescriptor Context,
-                                        const char * Name,
+                                        StringRef Name,
                                     DICompileUnit CompileUnit,
                                     unsigned LineNumber,
                                     Constant *SizeInBits, Constant *AlignInBits,
@@ -536,7 +536,7 @@ namespace llvm {
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeType(unsigned Tag, DIDescriptor Context,
-                                        const char * Name,
+                                        StringRef Name,
                                         DICompileUnit CompileUnit,
                                         unsigned LineNumber,
                                         uint64_t SizeInBits,
@@ -548,7 +548,7 @@ namespace llvm {
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeTypeEx(unsigned Tag, DIDescriptor Context,
-                                        const char * Name,
+                                        StringRef Name,
                                         DICompileUnit CompileUnit,
                                         unsigned LineNumber,
                                         Constant *SizeInBits,
@@ -560,25 +560,25 @@ namespace llvm {
 
     /// CreateSubprogram - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
-    DISubprogram CreateSubprogram(DIDescriptor Context, const char * Name,
-                                  const char * DisplayName,
-                                  const char * LinkageName,
+    DISubprogram CreateSubprogram(DIDescriptor Context, StringRef Name,
+                                  StringRef DisplayName,
+                                  StringRef LinkageName,
                                   DICompileUnit CompileUnit, unsigned LineNo,
                                   DIType Type, bool isLocalToUnit,
                                   bool isDefinition);
 
     /// CreateGlobalVariable - Create a new descriptor for the specified global.
     DIGlobalVariable
-    CreateGlobalVariable(DIDescriptor Context, const char * Name,
-                         const char * DisplayName,
-                         const char * LinkageName,
+    CreateGlobalVariable(DIDescriptor Context, StringRef Name,
+                         StringRef DisplayName,
+                         StringRef LinkageName,
                          DICompileUnit CompileUnit,
                          unsigned LineNo, DIType Type, bool isLocalToUnit,
                          bool isDefinition, llvm::GlobalVariable *GV);
 
     /// CreateVariable - Create a new descriptor for the specified variable.
     DIVariable CreateVariable(unsigned Tag, DIDescriptor Context,
-                              const char * Name,
+                              StringRef Name,
                               DICompileUnit CompileUnit, unsigned LineNo,
                               DIType Type);
 

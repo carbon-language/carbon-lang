@@ -78,19 +78,16 @@ DIDescriptor::DIDescriptor(MDNode *N, unsigned RequiredTag) {
   }
 }
 
-const char *
+StringRef 
 DIDescriptor::getStringField(unsigned Elt) const {
   if (DbgNode == 0)
-    return NULL;
+    return StringRef();
 
   if (Elt < DbgNode->getNumElements())
-    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt))) {
-      if (MDS->getLength() == 0)
-        return NULL;
-      return MDS->getString().data();
-    }
+    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt)))
+      return MDS->getString();
 
-  return NULL;
+  return StringRef();
 }
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
@@ -310,8 +307,8 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
 bool DICompileUnit::Verify() const {
   if (isNull())
     return false;
-  const char *N = getFilename();
-  if (!N)
+  StringRef N = getFilename();
+  if (N.empty())
     return false;
   // It is possible that directory and produce string is empty.
   return true;
@@ -366,7 +363,7 @@ bool DIGlobalVariable::Verify() const {
   if (isNull())
     return false;
 
-  if (!getDisplayName())
+  if (getDisplayName().empty())
     return false;
 
   if (getContext().isNull())
@@ -426,15 +423,15 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
 /// information for the function F.
 bool DISubprogram::describes(const Function *F) {
   assert (F && "Invalid function");
-  const char *Name = getLinkageName();
-  if (!Name)
+  StringRef Name = getLinkageName();
+  if (Name.empty())
     Name = getName();
-  if (strcmp(F->getName().data(), Name) == 0)
+  if (F->getName() == Name)
     return true;
   return false;
 }
 
-const char *DIScope::getFilename() const {
+StringRef DIScope::getFilename() const {
   if (isLexicalBlock()) 
     return DILexicalBlock(DbgNode).getFilename();
   else if (isSubprogram())
@@ -443,10 +440,10 @@ const char *DIScope::getFilename() const {
     return DICompileUnit(DbgNode).getFilename();
   else 
     assert (0 && "Invalid DIScope!");
-  return NULL;
+  return StringRef();
 }
 
-const char *DIScope::getDirectory() const {
+StringRef DIScope::getDirectory() const {
   if (isLexicalBlock()) 
     return DILexicalBlock(DbgNode).getDirectory();
   else if (isSubprogram())
@@ -455,7 +452,7 @@ const char *DIScope::getDirectory() const {
     return DICompileUnit(DbgNode).getDirectory();
   else 
     assert (0 && "Invalid DIScope!");
-  return NULL;
+  return StringRef();
 }
 
 //===----------------------------------------------------------------------===//
@@ -481,7 +478,8 @@ void DICompileUnit::dump() const {
 void DIType::dump() const {
   if (isNull()) return;
 
-  if (const char *Res = getName())
+  StringRef Res = getName();
+  if (!Res.empty())
     errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
@@ -538,7 +536,8 @@ void DICompositeType::dump() const {
 
 /// dump - Print global.
 void DIGlobal::dump() const {
-  if (const char *Res = getName())
+  StringRef Res = getName();
+  if (!Res.empty())
     errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
@@ -562,7 +561,8 @@ void DIGlobal::dump() const {
 
 /// dump - Print subprogram.
 void DISubprogram::dump() const {
-  if (const char *Res = getName())
+  StringRef Res = getName();
+  if (!Res.empty())
     errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
@@ -590,7 +590,8 @@ void DIGlobalVariable::dump() const {
 
 /// dump - Print variable.
 void DIVariable::dump() const {
-  if (const char *Res = getName())
+  StringRef Res = getName();
+  if (!Res.empty())
     errs() << " [" << Res << "] ";
 
   getCompileUnit().dump();
@@ -651,12 +652,12 @@ DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
 /// CreateCompileUnit - Create a new descriptor for the specified compile
 /// unit.  Note that this does not unique compile units within the module.
 DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
-                                           const char * Filename,
-                                           const char * Directory,
-                                           const char * Producer,
+                                           StringRef Filename,
+                                           StringRef Directory,
+                                           StringRef Producer,
                                            bool isMain,
                                            bool isOptimized,
-                                           const char *Flags,
+                                           StringRef Flags,
                                            unsigned RunTimeVer) {
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
@@ -675,7 +676,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
 }
 
 /// CreateEnumerator - Create a single enumerator value.
-DIEnumerator DIFactory::CreateEnumerator(const char * Name, uint64_t Val){
+DIEnumerator DIFactory::CreateEnumerator(StringRef Name, uint64_t Val){
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_enumerator),
     MDString::get(VMContext, Name),
@@ -687,7 +688,7 @@ DIEnumerator DIFactory::CreateEnumerator(const char * Name, uint64_t Val){
 
 /// CreateBasicType - Create a basic type like int, float, etc.
 DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
-                                       const char * Name,
+                                       StringRef Name,
                                        DICompileUnit CompileUnit,
                                        unsigned LineNumber,
                                        uint64_t SizeInBits,
@@ -712,7 +713,7 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
 
 /// CreateBasicType - Create a basic type like int, float, etc.
 DIBasicType DIFactory::CreateBasicTypeEx(DIDescriptor Context,
-                                         const char * Name,
+                                         StringRef Name,
                                          DICompileUnit CompileUnit,
                                          unsigned LineNumber,
                                          Constant *SizeInBits,
@@ -739,7 +740,7 @@ DIBasicType DIFactory::CreateBasicTypeEx(DIDescriptor Context,
 /// pointer, typedef, etc.
 DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
                                            DIDescriptor Context,
-                                           const char * Name,
+                                           StringRef Name,
                                            DICompileUnit CompileUnit,
                                            unsigned LineNumber,
                                            uint64_t SizeInBits,
@@ -767,7 +768,7 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
 /// pointer, typedef, etc.
 DIDerivedType DIFactory::CreateDerivedTypeEx(unsigned Tag,
                                              DIDescriptor Context,
-                                             const char * Name,
+                                             StringRef Name,
                                              DICompileUnit CompileUnit,
                                              unsigned LineNumber,
                                              Constant *SizeInBits,
@@ -794,7 +795,7 @@ DIDerivedType DIFactory::CreateDerivedTypeEx(unsigned Tag,
 /// CreateCompositeType - Create a composite type like array, struct, etc.
 DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                                DIDescriptor Context,
-                                               const char * Name,
+                                               StringRef Name,
                                                DICompileUnit CompileUnit,
                                                unsigned LineNumber,
                                                uint64_t SizeInBits,
@@ -826,7 +827,7 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
 /// CreateCompositeType - Create a composite type like array, struct, etc.
 DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,
                                                  DIDescriptor Context,
-                                                 const char * Name,
+                                                 StringRef Name,
                                                  DICompileUnit CompileUnit,
                                                  unsigned LineNumber,
                                                  Constant *SizeInBits,
@@ -859,9 +860,9 @@ DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,
 /// See comments in DISubprogram for descriptions of these fields.  This
 /// method does not unique the generated descriptors.
 DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
-                                         const char * Name,
-                                         const char * DisplayName,
-                                         const char * LinkageName,
+                                         StringRef Name,
+                                         StringRef DisplayName,
+                                         StringRef LinkageName,
                                          DICompileUnit CompileUnit,
                                          unsigned LineNo, DIType Type,
                                          bool isLocalToUnit,
@@ -885,9 +886,9 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
 DIGlobalVariable
-DIFactory::CreateGlobalVariable(DIDescriptor Context, const char * Name,
-                                const char * DisplayName,
-                                const char * LinkageName,
+DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
+                                StringRef DisplayName,
+                                StringRef LinkageName,
                                 DICompileUnit CompileUnit,
                                 unsigned LineNo, DIType Type,bool isLocalToUnit,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
@@ -919,7 +920,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const char * Name,
 
 /// CreateVariable - Create a new descriptor for the specified variable.
 DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
-                                     const char * Name,
+                                     StringRef Name,
                                      DICompileUnit CompileUnit, unsigned LineNo,
                                      DIType Type) {
   Value *Elts[] = {
@@ -1274,7 +1275,8 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
       if (!DIGV) return false;
       DIGlobalVariable Var(cast<MDNode>(DIGV));
 
-      if (const char *D = Var.getDisplayName())
+      StringRef D = Var.getDisplayName();
+      if (!D.empty())
         DisplayName = D;
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
@@ -1284,18 +1286,22 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
       if (!DDI) return false;
       DIVariable Var(cast<MDNode>(DDI->getVariable()));
 
-      if (const char *D = Var.getName())
+      StringRef D = Var.getName();
+      if (!D.empty())
         DisplayName = D;
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
       TypeD = Var.getType();
     }
 
-    if (const char *T = TypeD.getName())
+    StringRef T = TypeD.getName();
+    if (!T.empty())
       Type = T;
-    if (const char *F = Unit.getFilename())
+    StringRef F = Unit.getFilename();
+    if (!F.empty())
       File = F;
-    if (const char *D = Unit.getDirectory())
+    StringRef D = Unit.getDirectory();
+    if (!D.empty())
       Dir = D;
     return true;
   }
