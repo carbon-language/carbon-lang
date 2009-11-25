@@ -88,13 +88,6 @@ class GRExprEngine : public GRSubEngine {
   GRBugReporter BR;
 
 public:
-  typedef llvm::SmallPtrSet<ExplodedNode*,2> ErrorNodes;
-
-  /// UndefResults - Nodes in the ExplodedGraph where the operands are defined
-  ///  by the result is not.  Excludes divide-by-zero errors.
-  ErrorNodes UndefResults;
-
-public:
   GRExprEngine(AnalysisManager &mgr);
 
   ~GRExprEngine();
@@ -152,10 +145,6 @@ public:
   CHECKER *getChecker() const {
      return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
   }
-
-  typedef ErrorNodes::iterator undef_result_iterator;
-  undef_result_iterator undef_results_begin() { return UndefResults.begin(); }
-  undef_result_iterator undef_results_end() { return UndefResults.end(); }
 
   void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C);
   void AddCheck(GRSimpleAPICheck* A);
