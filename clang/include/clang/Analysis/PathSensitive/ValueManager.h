@@ -115,7 +115,8 @@ public:
 
   DefinedSVal getFunctionPointer(const FunctionDecl *FD);
   
-  DefinedSVal getBlockPointer(const BlockDecl *BD, CanQualType locTy);
+  DefinedSVal getBlockPointer(const BlockDecl *BD, CanQualType locTy,
+                              const LocationContext *LC);
 
   NonLoc makeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals) {
     return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));

@@ -148,6 +148,19 @@ void BlockTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   BlockTextRegion::ProfileRegion(ID, BD, locTy, superRegion);
 }
 
+void BlockDataRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                    const BlockTextRegion *BC,
+                                    const LocationContext *LC,
+                                    const MemRegion *) {
+  ID.AddInteger(MemRegion::BlockDataRegionKind);
+  ID.AddPointer(BC);
+  ID.AddPointer(LC);
+}
+
+void BlockDataRegion::Profile(llvm::FoldingSetNodeID& ID) const {
+  BlockDataRegion::ProfileRegion(ID, BC, LC, NULL);
+}
+
 //===----------------------------------------------------------------------===//
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
@@ -176,8 +189,13 @@ void FunctionTextRegion::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void BlockTextRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << "block{" << (void*) this << '}';
+  os << "block_code{" << (void*) this << '}';
 }
+
+void BlockDataRegion::dumpToStream(llvm::raw_ostream& os) const {
+  os << "block_data{" << BC << '}';
+}
+
 
 void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
   // FIXME: More elaborate pretty-printing.
@@ -272,6 +290,18 @@ VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
     LC = LC->getParent();
 
   return getRegion<VarRegion>(D, LC);
+}
+
+BlockDataRegion *MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
+                                                      const LocationContext *LC)
+{
+  // FIXME: Once we implement scope handling, we will need to properly lookup
+  // 'D' to the proper LocationContext.  For now, just strip down to the
+  // StackFrame.
+  while (!isa<StackFrameContext>(LC))
+    LC = LC->getParent();
+  
+  return getSubRegion<BlockDataRegion>(BC, LC, getStackRegion());
 }
 
 CompoundLiteralRegion*

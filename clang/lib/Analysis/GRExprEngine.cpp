@@ -1107,7 +1107,9 @@ void GRExprEngine::VisitBlockExpr(BlockExpr *BE, ExplodedNode *Pred,
   ExplodedNodeSet Tmp;
   
   CanQualType T = getContext().getCanonicalType(BE->getType());
-  SVal V = ValMgr.getBlockPointer(BE->getBlockDecl(), T);
+  SVal V = ValMgr.getBlockPointer(BE->getBlockDecl(), T,
+                                  Pred->getLocationContext());
+
   MakeNode(Tmp, BE, Pred, GetState(Pred)->BindExpr(BE, V),
            ProgramPoint::PostLValueKind);
  

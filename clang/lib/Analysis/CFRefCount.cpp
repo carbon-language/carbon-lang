@@ -3002,7 +3002,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
   // FIXME: Better support for blocks.  For now we stop tracking anything
   // that is passed to blocks.
   // FIXME: Need to handle variables that are "captured" by the block.
-  if (dyn_cast_or_null<BlockTextRegion>(L.getAsRegion())) {
+  if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
     Summ = Summaries.getPersistentStopSummary();
   }
   else {

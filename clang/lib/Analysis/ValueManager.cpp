@@ -142,9 +142,11 @@ DefinedSVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
   return loc::MemRegionVal(R);
 }
 
-DefinedSVal ValueManager::getBlockPointer(const BlockDecl *BD,
-                                          CanQualType locTy) {
-  CodeTextRegion *R  = MemMgr.getBlockTextRegion(BD, locTy);
-  return loc::MemRegionVal(R);
+DefinedSVal ValueManager::getBlockPointer(const BlockDecl *D,
+                                          CanQualType locTy,
+                                          const LocationContext *LC) {
+  BlockTextRegion *BC = MemMgr.getBlockTextRegion(D, locTy);
+  BlockDataRegion *BD = MemMgr.getBlockDataRegion(BC, LC);
+  return loc::MemRegionVal(BD);
 }
 

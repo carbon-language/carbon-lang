@@ -714,6 +714,7 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
 
     case MemRegion::FunctionTextRegionKind:
     case MemRegion::BlockTextRegionKind:
+    case MemRegion::BlockDataRegionKind:
       // Technically this can happen if people do funny things with casts.
       return UnknownVal();
 
@@ -860,6 +861,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
 
     case MemRegion::FunctionTextRegionKind:
     case MemRegion::BlockTextRegionKind:
+    case MemRegion::BlockDataRegionKind:
       // Technically this can happen if people do funny things with casts.
       return UnknownVal();
 
