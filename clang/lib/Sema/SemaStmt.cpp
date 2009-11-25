@@ -481,11 +481,6 @@ static bool CheckCXXSwitchCondition(Sema &S, SourceLocation SwitchLoc,
       return true;
     }
   } 
-  CondType = CondExpr->getType();
-
-  // Integral promotions are performed.
-  if (CondType->isIntegralType() || CondType->isEnumeralType())
-    S.UsualUnaryConversions(CondExpr);
 
   return false;
 }
@@ -504,17 +499,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   Expr *CondExpr = SS->getCond();
   QualType CondTypeBeforePromotion =
       GetTypeBeforeIntegralPromotion(CondExpr);
-  QualType CondType = CondExpr->getType();
 
-  if (getLangOptions().CPlusPlus) {
-    if (CheckCXXSwitchCondition(*this, SwitchLoc, CondExpr))
+  if (getLangOptions().CPlusPlus && 
+      CheckCXXSwitchCondition(*this, SwitchLoc, CondExpr))
       return StmtError();
-  } else {
-    // C99 6.8.4.2p5 - Integer promotions are performed on the
-    // controlling expr.
-    UsualUnaryConversions(CondExpr);
-  }
-  CondType = CondExpr->getType();
+
+  QualType CondType = CondExpr->getType();
   SS->setCond(CondExpr);
 
   // C++ 6.4.2.p2:
@@ -530,6 +520,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
           << CondType << CondExpr->getSourceRange();
       return StmtError();
     }
+
+    UsualUnaryConversions(CondExpr);
 
     if (CondTypeBeforePromotion->isBooleanType()) {
       // switch(bool_expr) {...} is often a programmer error, e.g.
