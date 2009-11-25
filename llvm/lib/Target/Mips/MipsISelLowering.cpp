@@ -563,8 +563,6 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   SDValue ResNode;
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
   Constant *C = N->getConstVal();
-  SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(), 
-                                         N->getOffset(), MipsII::MO_ABS_HILO);
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
 
@@ -577,11 +575,21 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   //  SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
   //  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(MVT::i32);
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
-  //} else { // %hi/%lo relocation
+
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
+    SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(), 
+                                      N->getOffset(), MipsII::MO_ABS_HILO);
     SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, CP);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CP);
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
-  //}
+  } else {
+    SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(), 
+                                      N->getOffset(), MipsII::MO_GOT);
+    SDValue Load = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), 
+                                 CP, NULL, 0);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CP);
+    ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
+  }
 
   return ResNode;
 }

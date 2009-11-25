@@ -4,7 +4,7 @@ target triple = "mips-unknown-linux"
 
 define float @h() nounwind readnone {
 entry:
-; CHECK: lui $2, %hi($CPI1_0)
+; CHECK: lw $2, %got($CPI1_0)($gp)
 ; CHECK: lwc1 $f0, %lo($CPI1_0)($2)
   ret float 0x400B333340000000
 }
