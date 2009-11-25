@@ -22,6 +22,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -3634,6 +3635,22 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
 }
 
 //===----------------------------------------------------------------------===//
+// Pieces of the retain/release checker implemented using a CheckerVisitor.
+// More pieces of the retain/release checker will be migrated to this interface
+// (ideally, all of it some day).
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN RetainReleaseChecker
+  : public CheckerVisitor<RetainReleaseChecker> {
+  CFRefCount *TF;
+public:
+    RetainReleaseChecker(CFRefCount *tf) : TF(tf) {}
+    static void* getTag() { static int x = 0; return &x; }    
+};
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
 // Transfer function creation for external clients.
 //===----------------------------------------------------------------------===//
 
@@ -3694,6 +3711,11 @@ void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
   
   // Save the reference to the BugReporter.
   this->BR = &BR;
+  
+  // Register the RetainReleaseChecker with the GRExprEngine object.
+  // Functionality in CFRefCount will be migrated to RetainReleaseChecker
+  // over time.
+  Eng.registerCheck(new RetainReleaseChecker(this));
 }
 
 GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
