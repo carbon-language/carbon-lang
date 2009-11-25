@@ -11,7 +11,14 @@
 //
 //===---------------------------------------------------------------------===//
 
-#ifdef PREVISIT
+#ifndef PREVISIT
+#define PREVISIT(NODE)
+#endif
+
+#ifndef POSTVISIT
+#define POSTVISIT(NODE)
+#endif
+
 PREVISIT(ArraySubscriptExpr)
 PREVISIT(BinaryOperator)
 PREVISIT(CallExpr)
@@ -19,12 +26,9 @@ PREVISIT(CastExpr)
 PREVISIT(DeclStmt)
 PREVISIT(ObjCMessageExpr)
 PREVISIT(ReturnStmt)
-#undef PREVISIT
-#endif
 
-#ifdef POSTVISIT
 POSTVISIT(CallExpr)
 POSTVISIT(BinaryOperator)
-#undef POSTVISIT
-#endif
 
+#undef PREVISIT
+#undef POSTVISIT
