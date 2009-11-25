@@ -211,6 +211,203 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
+static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
+  assert(D->getDeclContext()->getLookupContext()->isFileContext() &&
+         "Not a name having namespace scope");
+  ASTContext &Context = D->getASTContext();
+
+  // C++ [basic.link]p3:
+  //   A name having namespace scope (3.3.6) has internal linkage if it
+  //   is the name of
+  //     - an object, reference, function or function template that is
+  //       explicitly declared static; or,
+  // (This bullet corresponds to C99 6.2.2p3.)
+  if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    // Explicitly declared static.
+    if (Var->getStorageClass() == VarDecl::Static)
+      return NamedDecl::InternalLinkage;
+
+    // - an object or reference that is explicitly declared const
+    //   and neither explicitly declared extern nor previously
+    //   declared to have external linkage; or
+    // (there is no equivalent in C99)
+    if (Context.getLangOptions().CPlusPlus &&
+        Var->getType().isConstQualified() && 
+        Var->getStorageClass() != VarDecl::Extern &&
+        Var->getStorageClass() != VarDecl::PrivateExtern) {
+      bool FoundExtern = false;
+      for (const VarDecl *PrevVar = Var->getPreviousDeclaration();
+           PrevVar && !FoundExtern; 
+           PrevVar = PrevVar->getPreviousDeclaration())
+        if (PrevVar->getLinkage() == NamedDecl::ExternalLinkage)
+          FoundExtern = true;
+      
+      if (!FoundExtern)
+        return NamedDecl::InternalLinkage;
+    }
+  } else if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
+    const FunctionDecl *Function = 0;
+    if (const FunctionTemplateDecl *FunTmpl
+                                        = dyn_cast<FunctionTemplateDecl>(D))
+      Function = FunTmpl->getTemplatedDecl();
+    else
+      Function = cast<FunctionDecl>(D);
+
+    // Explicitly declared static.
+    if (Function->getStorageClass() == FunctionDecl::Static)
+      return NamedDecl::InternalLinkage;
+  } else if (const FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
+    //   - a data member of an anonymous union.
+    if (cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion())
+      return NamedDecl::InternalLinkage;
+  }
+
+  // C++ [basic.link]p4:
+  
+  //   A name having namespace scope has external linkage if it is the
+  //   name of
+  //
+  //     - an object or reference, unless it has internal linkage; or
+  if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    if (!Context.getLangOptions().CPlusPlus &&
+        (Var->getStorageClass() == VarDecl::Extern ||
+         Var->getStorageClass() == VarDecl::PrivateExtern)) {
+      // C99 6.2.2p4:
+      //   For an identifier declared with the storage-class specifier
+      //   extern in a scope in which a prior declaration of that
+      //   identifier is visible, if the prior declaration specifies
+      //   internal or external linkage, the linkage of the identifier
+      //   at the later declaration is the same as the linkage
+      //   specified at the prior declaration. If no prior declaration
+      //   is visible, or if the prior declaration specifies no
+      //   linkage, then the identifier has external linkage.
+      if (const VarDecl *PrevVar = Var->getPreviousDeclaration()) {
+        if (NamedDecl::Linkage L = PrevVar->getLinkage())
+          return L;
+      }
+    }
+
+    // C99 6.2.2p5:
+    //   If the declaration of an identifier for an object has file
+    //   scope and no storage-class specifier, its linkage is
+    //   external.
+    return NamedDecl::ExternalLinkage;
+  }
+
+  //     - a function, unless it has internal linkage; or
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+    // C99 6.2.2p5:
+    //   If the declaration of an identifier for a function has no
+    //   storage-class specifier, its linkage is determined exactly
+    //   as if it were declared with the storage-class specifier
+    //   extern.
+    if (!Context.getLangOptions().CPlusPlus &&
+        (Function->getStorageClass() == FunctionDecl::Extern ||
+         Function->getStorageClass() == FunctionDecl::PrivateExtern ||
+         Function->getStorageClass() == FunctionDecl::None)) {
+      // C99 6.2.2p4:
+      //   For an identifier declared with the storage-class specifier
+      //   extern in a scope in which a prior declaration of that
+      //   identifier is visible, if the prior declaration specifies
+      //   internal or external linkage, the linkage of the identifier
+      //   at the later declaration is the same as the linkage
+      //   specified at the prior declaration. If no prior declaration
+      //   is visible, or if the prior declaration specifies no
+      //   linkage, then the identifier has external linkage.
+      if (const FunctionDecl *PrevFunc = Function->getPreviousDeclaration()) {
+        if (NamedDecl::Linkage L = PrevFunc->getLinkage())
+          return L;
+      }
+    }
+
+    return NamedDecl::ExternalLinkage;
+  }
+
+  //     - a named class (Clause 9), or an unnamed class defined in a
+  //       typedef declaration in which the class has the typedef name
+  //       for linkage purposes (7.1.3); or
+  //     - a named enumeration (7.2), or an unnamed enumeration
+  //       defined in a typedef declaration in which the enumeration
+  //       has the typedef name for linkage purposes (7.1.3); or
+  if (const TagDecl *Tag = dyn_cast<TagDecl>(D))
+    if (Tag->getDeclName() || Tag->getTypedefForAnonDecl())
+      return NamedDecl::ExternalLinkage;
+
+  //     - an enumerator belonging to an enumeration with external linkage;
+  if (isa<EnumConstantDecl>(D))
+    if (cast<NamedDecl>(D->getDeclContext())->getLinkage() 
+                                                 == NamedDecl::ExternalLinkage)
+      return NamedDecl::ExternalLinkage;
+
+  //     - a template, unless it is a function template that has
+  //       internal linkage (Clause 14);
+  if (isa<TemplateDecl>(D))
+    return NamedDecl::ExternalLinkage;
+
+  //     - a namespace (7.3), unless it is declared within an unnamed
+  //       namespace.
+  if (isa<NamespaceDecl>(D) && !D->isInAnonymousNamespace())
+    return NamedDecl::ExternalLinkage;
+
+  return NamedDecl::NoLinkage;
+}
+
+NamedDecl::Linkage NamedDecl::getLinkage() const {
+  // Handle linkage for namespace-scope names.
+  if (getDeclContext()->getLookupContext()->isFileContext())
+    if (Linkage L = getLinkageForNamespaceScopeDecl(this))
+      return L;
+  
+  // C++ [basic.link]p5:
+  //   In addition, a member function, static data member, a named
+  //   class or enumeration of class scope, or an unnamed class or
+  //   enumeration defined in a class-scope typedef declaration such
+  //   that the class or enumeration has the typedef name for linkage
+  //   purposes (7.1.3), has external linkage if the name of the class
+  //   has external linkage.
+  if (getDeclContext()->isRecord() &&
+      (isa<CXXMethodDecl>(this) || isa<VarDecl>(this) ||
+       (isa<TagDecl>(this) &&
+        (getDeclName() || cast<TagDecl>(this)->getTypedefForAnonDecl()))) &&
+      cast<RecordDecl>(getDeclContext())->getLinkage() == ExternalLinkage)
+    return ExternalLinkage;
+
+  // C++ [basic.link]p6:
+  //   The name of a function declared in block scope and the name of
+  //   an object declared by a block scope extern declaration have
+  //   linkage. If there is a visible declaration of an entity with
+  //   linkage having the same name and type, ignoring entities
+  //   declared outside the innermost enclosing namespace scope, the
+  //   block scope declaration declares that same entity and receives
+  //   the linkage of the previous declaration. If there is more than
+  //   one such matching entity, the program is ill-formed. Otherwise,
+  //   if no matching entity is found, the block scope entity receives
+  //   external linkage.
+  if (getLexicalDeclContext()->isFunctionOrMethod()) {
+    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(this)) {
+      if (Function->getPreviousDeclaration())
+        if (Linkage L = Function->getPreviousDeclaration()->getLinkage())
+          return L;
+
+      return ExternalLinkage;
+    }
+
+    if (const VarDecl *Var = dyn_cast<VarDecl>(this))
+      if (Var->getStorageClass() == VarDecl::Extern ||
+          Var->getStorageClass() == VarDecl::PrivateExtern) {
+        if (Var->getPreviousDeclaration())
+          if (Linkage L = Var->getPreviousDeclaration()->getLinkage())
+            return L;
+
+        return ExternalLinkage;
+      }
+  }
+
+  // C++ [basic.link]p6:
+  //   Names not covered by these rules have no linkage.
+  return NoLinkage;
+}
+
 std::string NamedDecl::getQualifiedNameAsString() const {
   return getQualifiedNameAsString(getASTContext().getLangOptions());
 }
@@ -300,13 +497,7 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
 }
 
 bool NamedDecl::hasLinkage() const {
-  if (const VarDecl *VD = dyn_cast<VarDecl>(this))
-    return VD->hasExternalStorage() || VD->isFileVarDecl();
-
-  if (isa<FunctionDecl>(this) && !isa<CXXMethodDecl>(this))
-    return true;
-
-  return false;
+  return getLinkage() != NoLinkage;
 }
 
 NamedDecl *NamedDecl::getUnderlyingDecl() {

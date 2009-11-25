@@ -196,6 +196,26 @@ public:
   /// \brief Determine whether this declaration has linkage.
   bool hasLinkage() const;
 
+  /// \brief Describes the different kinds of linkage 
+  /// (C++ [basic.link], C99 6.2.2) that an entity may have.
+  enum Linkage {
+    /// \brief No linkage, which means that the entity is unique and
+    /// can only be referred to from within its scope.
+    NoLinkage = 0,
+
+    /// \brief Internal linkage, which indicates that the entity can
+    /// be referred to from within the translation unit (but not other
+    /// translation units).
+    InternalLinkage,
+
+    /// \brief External linkage, which indicates that the entity can
+    /// be referred to from other translation units.
+    ExternalLinkage
+  };
+
+  /// \brief Determine what kind of linkage this entity has.
+  Linkage getLinkage() const;
+
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
   NamedDecl *getUnderlyingDecl();

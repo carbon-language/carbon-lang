@@ -151,3 +151,12 @@ namespace ns {
   Baz<static_cast<ns::E>(0)> b2;  // This neither.  
 }
 
+// PR5597
+template<int (*)(float)> struct X0 { };
+
+struct X1 {
+    static int pfunc(float);
+};
+void test_X0_X1() {
+  X0<X1::pfunc> x01;
+}

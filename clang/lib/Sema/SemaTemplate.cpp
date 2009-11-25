@@ -2365,7 +2365,7 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
 
   // Functions must have external linkage.
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(DRE->getDecl())) {
-    if (Func->getStorageClass() == FunctionDecl::Static) {
+    if (Func->getLinkage() != NamedDecl::ExternalLinkage) {
       Diag(Arg->getSourceRange().getBegin(),
            diag::err_template_arg_function_not_extern)
         << Func << Arg->getSourceRange();
@@ -2380,7 +2380,7 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
   }
 
   if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
-    if (!Var->hasGlobalStorage()) {
+    if (Var->getLinkage() != NamedDecl::ExternalLinkage) {
       Diag(Arg->getSourceRange().getBegin(),
            diag::err_template_arg_object_not_extern)
         << Var << Arg->getSourceRange();
