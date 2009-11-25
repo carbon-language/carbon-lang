@@ -328,8 +328,6 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
     return;  
   
   GRExprEngine Eng(mgr);
-
-  Eng.setTransferFunctions(tf);
   
   if (C.Opts.EnableExperimentalInternalChecks)
     RegisterExperimentalInternalChecks(Eng);
@@ -338,6 +336,8 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
+  
+  Eng.setTransferFunctions(tf);  
 
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
