@@ -39,6 +39,7 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetSelect.h"
+#include <cstdio>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
