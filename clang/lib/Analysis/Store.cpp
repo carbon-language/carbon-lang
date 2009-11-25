@@ -87,7 +87,8 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
     }
     
     case MemRegion::FunctionTextRegionKind:
-    case MemRegion::BlockTextRegionKind: {
+    case MemRegion::BlockTextRegionKind:
+    case MemRegion::BlockDataRegionKind: {
       // CodeTextRegion should be cast to only a function or block pointer type,
       // although they can in practice be casted to anything, e.g, void*, char*,
       // etc.  
