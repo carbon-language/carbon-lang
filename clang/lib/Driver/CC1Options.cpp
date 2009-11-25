@@ -230,6 +230,12 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
 
 static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
                                         ArgList &Args) {
+  using namespace cc1options;
+  Opts.ShowCPP = !Args.hasArg(OPT_dM);
+  Opts.ShowMacros = Args.hasArg(OPT_dM) || Args.hasArg(OPT_dD);
+  Opts.ShowLineMarkers = !Args.hasArg(OPT_P);
+  Opts.ShowComments = Args.hasArg(OPT_C);
+  Opts.ShowMacroComments = Args.hasArg(OPT_CC);
 }
 
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
