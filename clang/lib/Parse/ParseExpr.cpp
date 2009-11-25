@@ -413,12 +413,12 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
 ///
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
-                                                     bool parseParenAsExprList){
+                                                     TypeTy *TypeOfCast) {
   bool NotCastExpr;
   OwningExprResult Res = ParseCastExpression(isUnaryExpression,
                                              isAddressOfOperand,
                                              NotCastExpr,
-                                             parseParenAsExprList);
+                                             TypeOfCast);
   if (NotCastExpr)
     Diag(Tok, diag::err_expected_expression);
   return move(Res);
@@ -538,7 +538,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                                      bool isAddressOfOperand,
                                                      bool &NotCastExpr,
-                                                     bool parseParenAsExprList){
+                                                     TypeTy *TypeOfCast) {
   OwningExprResult Res(Actions);
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
@@ -563,7 +563,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation LParenLoc = Tok.getLocation();
     SourceLocation RParenLoc;
     Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
-                               parseParenAsExprList, CastTy, RParenLoc);
+                               TypeOfCast, CastTy, RParenLoc);
     if (Res.isInvalid()) return move(Res);
 
     switch (ParenExprType) {
@@ -1047,7 +1047,8 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
     // operands.
     EnterExpressionEvaluationContext Unevaluated(Actions,
                                                  Action::Unevaluated);
-    Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/, false,
+    Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/, 
+                                   0/*TypeOfCast*/,
                                    CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);
 
@@ -1304,7 +1305,7 @@ Parser::OwningExprResult Parser::ParseBuiltinPrimaryExpression() {
 ///
 Parser::OwningExprResult
 Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
-                             bool parseAsExprList, TypeTy *&CastTy,
+                             TypeTy *TypeOfCast, TypeTy *&CastTy,
                              SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
   GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
@@ -1365,8 +1366,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
       // Parse the cast-expression that follows it next.
       // TODO: For cast expression with CastTy.
-      Result = ParseCastExpression(false, false, 
-                                   Actions.TypeIsVectorType(CastTy));
+      Result = ParseCastExpression(false, false, CastTy);
       if (!Result.isInvalid())
         Result = Actions.ActOnCastExpr(CurScope, OpenLoc, CastTy, RParenLoc,
                                        move(Result));
@@ -1375,15 +1375,15 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
     Diag(Tok, diag::err_expected_lbrace_in_compound_literal);
     return ExprError();
-  } else if (parseAsExprList) {
+  } else if (TypeOfCast) {
     // Parse the expression-list.
     ExprVector ArgExprs(Actions);
     CommaLocsTy CommaLocs;
 
     if (!ParseExpressionList(ArgExprs, CommaLocs)) {
       ExprType = SimpleExpr;
-      Result = Actions.ActOnParenListExpr(OpenLoc, Tok.getLocation(),
-                                          move_arg(ArgExprs));
+      Result = Actions.ActOnParenOrParenListExpr(OpenLoc, Tok.getLocation(),
+                                          move_arg(ArgExprs), TypeOfCast);
     }
   } else {
     Result = ParseExpression();

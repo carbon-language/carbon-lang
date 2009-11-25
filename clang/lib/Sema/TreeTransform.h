@@ -1120,7 +1120,8 @@ public:
   OwningExprResult RebuildParenListExpr(SourceLocation LParenLoc,
                                         MultiExprArg SubExprs,
                                         SourceLocation RParenLoc) {
-    return getSema().ActOnParenListExpr(LParenLoc, RParenLoc, move(SubExprs));
+    return getSema().ActOnParenOrParenListExpr(LParenLoc, RParenLoc, 
+                                               move(SubExprs));
   }
 
   /// \brief Build a new address-of-label expression.

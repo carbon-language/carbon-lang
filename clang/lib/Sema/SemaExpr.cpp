@@ -3328,13 +3328,18 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
   }
 }
 
-Action::OwningExprResult Sema::ActOnParenListExpr(SourceLocation L,
+Action::OwningExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
                                                   SourceLocation R,
-                                                  MultiExprArg Val) {
+                                                  MultiExprArg Val,
+                                                  TypeTy *TypeOfCast) {
   unsigned nexprs = Val.size();
   Expr **exprs = reinterpret_cast<Expr**>(Val.release());
-  assert((exprs != 0) && "ActOnParenListExpr() missing expr list");
-  Expr *expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
+  assert((exprs != 0) && "ActOnParenOrParenListExpr() missing expr list");
+  Expr *expr;
+  if (nexprs == 1 && TypeOfCast && !TypeIsVectorType(TypeOfCast))
+    expr = new (Context) ParenExpr(L, R, exprs[0]);
+  else
+    expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
   return Owned(expr);
 }
 

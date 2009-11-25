@@ -992,9 +992,10 @@ public:
     return move(Val);  // Default impl returns operand.
   }
 
-  virtual OwningExprResult ActOnParenListExpr(SourceLocation L,
+  virtual OwningExprResult ActOnParenOrParenListExpr(SourceLocation L,
                                               SourceLocation R,
-                                              MultiExprArg Val) {
+                                              MultiExprArg Val,
+                                              TypeTy *TypeOfCast=0) {
     return ExprEmpty();
   }
 

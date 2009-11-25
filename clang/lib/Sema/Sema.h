@@ -1443,9 +1443,10 @@ public:
   virtual OwningExprResult ActOnCharacterConstant(const Token &);
   virtual OwningExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                           ExprArg Val);
-  virtual OwningExprResult ActOnParenListExpr(SourceLocation L,
+  virtual OwningExprResult ActOnParenOrParenListExpr(SourceLocation L,
                                               SourceLocation R,
-                                              MultiExprArg Val);
+                                              MultiExprArg Val,
+                                              TypeTy *TypeOfCast=0);
 
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
