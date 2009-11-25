@@ -107,8 +107,7 @@ getCalleeSavedRegs(const MachineFunction *MF) const
   static const unsigned BitMode32CalleeSavedRegs[] = {
     Mips::S0, Mips::S1, Mips::S2, Mips::S3, 
     Mips::S4, Mips::S5, Mips::S6, Mips::S7,
-    Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30, 
-    Mips::D10, Mips::D11, Mips::D12, Mips::D13, Mips::D14, Mips::D15,0
+    Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30, 0
   };
 
   if (Subtarget.isSingleFloat())
@@ -136,9 +135,7 @@ MipsRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const
     &Mips::CPURegsRegClass, &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
     &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,
     &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 
-    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass,
-    &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, 
-    &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, &Mips::AFGR64RegClass, 0
+    &Mips::FGR32RegClass, &Mips::FGR32RegClass, &Mips::FGR32RegClass, 0
   };
 
   if (Subtarget.isSingleFloat())
