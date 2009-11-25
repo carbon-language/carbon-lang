@@ -288,12 +288,8 @@ Sema::ActOnStartOfSwitchStmt(FullExprArg cond, DeclPtrTy CondVar) {
     if (CondResult.isInvalid())
       return StmtError();
   }
-  Expr *ConditionExpr = CondResult.takeAs<Expr>();
-  if (!ConditionExpr)
-    return StmtError();
-
-  CondResult.release();
-  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, ConditionExpr);
+  SwitchStmt *SS = new (Context) SwitchStmt(ConditionVar, 
+                                            CondResult.takeAs<Expr>());
   getSwitchStack().push_back(SS);
   return Owned(SS);
 }
@@ -496,6 +492,11 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   SS->setBody(BodyStmt, SwitchLoc);
   getSwitchStack().pop_back();
 
+  if (SS->getCond() == 0) {
+    SS->Destroy(Context);
+    return StmtError();
+  }
+    
   Expr *CondExpr = SS->getCond();
   QualType CondTypeBeforePromotion =
       GetTypeBeforeIntegralPromotion(CondExpr);

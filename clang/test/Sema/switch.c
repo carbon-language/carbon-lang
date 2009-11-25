@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 void f (int z) { 
   while (z) { 
     default: z--;            // expected-error {{statement not in switch}}
@@ -74,4 +73,15 @@ void test6() {
     case 1234:  // expected-warning {{overflow converting case value}}
       break;
   }
+}
+
+// PR5606
+int f0(int var) {
+  switch (va) { // expected-error{{use of undeclared identifier 'va'}}
+  case 1:
+    break;
+  case 2:
+    return 1;
+  }
+  return 2;
 }

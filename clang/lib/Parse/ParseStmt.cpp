@@ -715,9 +715,7 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
 
   FullExprArg FullCond(Actions.FullExpr(Cond));
   
-  OwningStmtResult Switch(Actions);
-  if (!Cond.isInvalid() || CondVar.get())
-    Switch = Actions.ActOnStartOfSwitchStmt(FullCond, CondVar);
+  OwningStmtResult Switch = Actions.ActOnStartOfSwitchStmt(FullCond, CondVar);
 
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
