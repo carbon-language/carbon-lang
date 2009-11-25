@@ -306,10 +306,9 @@ void PIC16DbgInfo::EmitCompositeTypeElements (DICompositeType CTy,
     int ElementAux[PIC16Dbg::AuxSize] = { 0 };
     std::string TagName = "";
     DIDerivedType DITy(Element.getNode());
-    StringRef ElementName = DITy.getName();
     unsigned short ElementSize = DITy.getSizeInBits()/8;
     // Get mangleddd name for this structure/union  element.
-    std::string MangMemName = ElementName.data() + SuffixNo;
+    std::string MangMemName = DITy.getName().str() + SuffixNo;
     PopulateDebugInfo(DITy, TypeNo, HasAux, ElementAux, TagName);
     short Class = 0;
     if( CTy.getTag() == dwarf::DW_TAG_union_type)
@@ -337,12 +336,11 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
       continue;
     if (CTy.getTag() == dwarf::DW_TAG_union_type ||
         CTy.getTag() == dwarf::DW_TAG_structure_type ) {
-      StringRef Name = CTy.getName();
       // Get the number after llvm.dbg.composite and make UniqueSuffix from 
       // it.
       std::string DIVar = CTy.getNode()->getNameStr();
       std::string UniqueSuffix = "." + DIVar.substr(18);
-      std::string MangledCTyName = Name.data() + UniqueSuffix;
+      std::string MangledCTyName = CTy.getName().str() + UniqueSuffix;
       unsigned short size = CTy.getSizeInBits()/8;
       int Aux[PIC16Dbg::AuxSize] = {0};
       // 7th and 8th byte represent size of structure/union.

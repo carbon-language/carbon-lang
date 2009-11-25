@@ -1010,7 +1010,7 @@ DIE *DwarfDebug::createGlobalVariableDIE(CompileUnit *DW_Unit,
     // Objective-C symbol names and symbol whose name is replaced using GCC's
     // __asm__ attribute.
     if (LinkageName[0] == 1)
-      LinkageName = LinkageName.data() + 1;
+      LinkageName = LinkageName.substr(1);
     addString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
               LinkageName);
   }
@@ -1097,7 +1097,7 @@ DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
     // Objective-C symbol names and symbol whose name is replaced using GCC's
     // __asm__ attribute.
     if (LinkageName[0] == 1)
-      LinkageName = LinkageName.data() + 1;
+      LinkageName = LinkageName.substr(1);
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
               LinkageName);
   }
@@ -2899,7 +2899,7 @@ void DwarfDebug::emitDebugInlineInfo() {
       // Objective-C symbol names and symbol whose name is replaced using GCC's
       // __asm__ attribute.
       if (LName[0] == 1)
-        LName = LName.data() + 1;
+        LName = LName.substr(1);
 //      Asm->EmitString(LName);
       EmitSectionOffset("string", "section_str",
                         StringPool.idFor(LName), false, true);
