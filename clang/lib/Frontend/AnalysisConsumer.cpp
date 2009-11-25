@@ -329,8 +329,6 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr, Decl *
   GRExprEngine Eng(mgr);
 
   Eng.setTransferFunctions(tf);
-  Eng.RegisterInternalChecks(); // FIXME: Internal checks should just
-                                // automatically register.
   
   if (C.Opts.EnableExperimentalInternalChecks)
     RegisterExperimentalInternalChecks(Eng);

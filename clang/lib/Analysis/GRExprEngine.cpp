@@ -216,7 +216,11 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr)
     CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", G.getContext())),
-    BR(mgr, *this) {}
+    BR(mgr, *this)
+{
+  // Register internal checks.
+  RegisterInternalChecks();
+}
 
 GRExprEngine::~GRExprEngine() {
   BR.FlushReports();
