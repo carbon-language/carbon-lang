@@ -1,4 +1,3 @@
-// FIXME: Disabled, appears to have undefined behavior, and needs to be updated to match new warnings.
 // RUN: clang-cc -fsyntax-only -verify %s
 // XFAIL: *
 
@@ -12,7 +11,7 @@ using A::VA;
 using A::FA;
 using typename A::SA;
 
-void main()
+int main()
 {
     VA = 1;
     FA();
@@ -35,7 +34,7 @@ namespace E {
     template <typename TYPE> int funcE(TYPE arg) { return(arg); }
 }
 
-using E::funcE<int>; // expected-error{{use of template specialization in using directive not allowed}}
+using E::funcE<int>; // expected-error{{using declaration can not refer to a template specialization}}
 
 namespace F {
     struct X;
