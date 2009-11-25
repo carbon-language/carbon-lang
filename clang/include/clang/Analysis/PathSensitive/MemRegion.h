@@ -48,7 +48,8 @@ public:
               AllocaRegionKind,
               // Typed regions.
               BEG_TYPED_REGIONS,
-               CodeTextRegionKind,
+               FunctionTextRegionKind,
+               BlockTextRegionKind,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
                // Decl Regions.
@@ -237,43 +238,78 @@ public:
   }
 };
 
-/// CodeTextRegion - A region that represents code texts of a function. It wraps
-/// two kinds of code texts: real function and symbolic function. Real function
-/// is a function declared in the program. Symbolic function is a function
-/// pointer that we don't know which function it points to.
+
 class CodeTextRegion : public TypedRegion {
-  const FunctionDecl *FD;
-
+protected:
+  CodeTextRegion(const MemRegion *sreg, Kind k) : TypedRegion(sreg, k) {}
 public:
-
-  CodeTextRegion(const FunctionDecl* fd, const MemRegion* sreg)
-    : TypedRegion(sreg, CodeTextRegionKind), FD(fd) {}
-
   QualType getValueType(ASTContext &C) const {
     // Do not get the object type of a CodeTextRegion.
     assert(0);
     return QualType();
   }
+  
+  bool isBoundable() const { return false; }
+    
+  static bool classof(const MemRegion* R) {
+    Kind k = R->getKind();
+    return k >= FunctionTextRegionKind && k <= BlockTextRegionKind;
+  }
+};
 
+/// FunctionTextRegion - A region that represents code texts of function.
+class FunctionTextRegion : public CodeTextRegion {
+  const FunctionDecl *FD;
+public:
+  FunctionTextRegion(const FunctionDecl* fd, const MemRegion* sreg)
+    : CodeTextRegion(sreg, FunctionTextRegionKind), FD(fd) {}
+  
   QualType getLocationType(ASTContext &C) const {
     return C.getPointerType(FD->getType());
   }
-
+  
   const FunctionDecl *getDecl() const {
     return FD;
   }
-
-  bool isBoundable() const { return false; }
-
+    
   virtual void dumpToStream(llvm::raw_ostream& os) const;
-
+  
   void Profile(llvm::FoldingSetNodeID& ID) const;
-
+  
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FunctionDecl *FD,
                             const MemRegion*);
-
+  
   static bool classof(const MemRegion* R) {
-    return R->getKind() == CodeTextRegionKind;
+    return R->getKind() == FunctionTextRegionKind;
+  }
+};
+  
+  
+/// BlockTextRegion - A region that represents code texts of blocks (closures).
+class BlockTextRegion : public CodeTextRegion {
+  const BlockDecl *BD;
+  CanQualType locTy;
+public:  
+  BlockTextRegion(const BlockDecl *bd, CanQualType lTy, const MemRegion* sreg)
+    : CodeTextRegion(sreg, BlockTextRegionKind), BD(bd), locTy(lTy) {}
+  
+  QualType getLocationType(ASTContext &C) const {
+    return locTy;
+  }
+  
+  const BlockDecl *getDecl() const {
+    return BD;
+  }
+    
+  virtual void dumpToStream(llvm::raw_ostream& os) const;
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const;
+  
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const BlockDecl *BD,
+                            CanQualType, const MemRegion*);
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == BlockTextRegionKind;
   }
 };
 
@@ -656,7 +692,9 @@ public:
   ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     const MemRegion* superRegion);
 
-  CodeTextRegion *getCodeTextRegion(const FunctionDecl *FD);
+  FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
+  BlockTextRegion *getBlockTextRegion(const BlockDecl *BD, CanQualType locTy);
+
 
   template <typename RegionTy, typename A1>
   RegionTy* getRegion(const A1 a1);
@@ -801,18 +839,21 @@ template <> struct MemRegionManagerTrait<SymbolicRegion> {
   }
 };
 
-template<> struct MemRegionManagerTrait<CodeTextRegion> {
+template<> struct MemRegionManagerTrait<FunctionTextRegion> {
   typedef MemSpaceRegion SuperRegionTy;
   static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
                                              const FunctionDecl*) {
     return MRMgr.getCodeRegion();
   }
+};
+template<> struct MemRegionManagerTrait<BlockTextRegion> {
+  typedef MemSpaceRegion SuperRegionTy;
   static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
-                                             SymbolRef, QualType) {
+                                             const BlockDecl*, CanQualType) {
     return MRMgr.getCodeRegion();
   }
 };
-
+  
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//

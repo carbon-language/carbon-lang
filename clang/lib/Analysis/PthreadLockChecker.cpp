@@ -59,8 +59,8 @@ void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
                                            const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  const CodeTextRegion *R =
-    dyn_cast_or_null<CodeTextRegion>(state->getSVal(Callee).getAsRegion());
+  const FunctionTextRegion *R =
+    dyn_cast_or_null<FunctionTextRegion>(state->getSVal(Callee).getAsRegion());
   
   if (!R)
     return;

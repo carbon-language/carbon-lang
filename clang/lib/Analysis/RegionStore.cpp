@@ -712,7 +712,8 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
       assert(0 && "Cannot index into a MemSpace");
       return UnknownVal();
 
-    case MemRegion::CodeTextRegionKind:
+    case MemRegion::FunctionTextRegionKind:
+    case MemRegion::BlockTextRegionKind:
       // Technically this can happen if people do funny things with casts.
       return UnknownVal();
 
@@ -857,7 +858,8 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     case MemRegion::ObjCIvarRegionKind:
       return UnknownVal();
 
-    case MemRegion::CodeTextRegionKind:
+    case MemRegion::FunctionTextRegionKind:
+    case MemRegion::BlockTextRegionKind:
       // Technically this can happen if people do funny things with casts.
       return UnknownVal();
 

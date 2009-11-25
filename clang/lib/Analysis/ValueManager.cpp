@@ -138,6 +138,13 @@ ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
 }
 
 DefinedSVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
-  CodeTextRegion *R  = MemMgr.getCodeTextRegion(FD);
+  CodeTextRegion *R  = MemMgr.getFunctionTextRegion(FD);
   return loc::MemRegionVal(R);
 }
+
+DefinedSVal ValueManager::getBlockPointer(const BlockDecl *BD,
+                                          CanQualType locTy) {
+  CodeTextRegion *R  = MemMgr.getBlockTextRegion(BD, locTy);
+  return loc::MemRegionVal(R);
+}
+
