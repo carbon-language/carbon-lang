@@ -1144,6 +1144,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       return;
     }
 
+    // If attributes exist after the declarator, but before an '{', parse them.
+    if (Tok.is(tok::kw___attribute)) {
+      SourceLocation Loc;
+      AttributeList *AttrList = ParseGNUAttributes(&Loc);
+      DeclaratorInfo.AddAttributes(AttrList, Loc);
+    }
+
     // function-definition:
     if (Tok.is(tok::l_brace)
         || (DeclaratorInfo.isFunctionDeclarator() &&
