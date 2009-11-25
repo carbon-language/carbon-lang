@@ -441,6 +441,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(AnalyzerNoReturn);
     STRING_ATTR(Annotate);
     STRING_ATTR(AsmLabel);
+    SIMPLE_ATTR(BaseCheck);
 
     case Attr::Blocks:
       New = ::new (*Context) BlocksAttr(
@@ -485,6 +486,7 @@ Attr *PCHReader::ReadAttributes() {
     }
 
     SIMPLE_ATTR(GNUInline);
+    SIMPLE_ATTR(Hiding);
 
     case Attr::IBOutletKind:
       New = ::new (*Context) IBOutletAttr();
@@ -518,6 +520,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(CFReturnsRetained);
     SIMPLE_ATTR(NSReturnsRetained);
     SIMPLE_ATTR(Overloadable);
+    SIMPLE_ATTR(Override);
     SIMPLE_ATTR(Packed);
     UNSIGNED_ATTR(PragmaPack);
     SIMPLE_ATTR(Pure);

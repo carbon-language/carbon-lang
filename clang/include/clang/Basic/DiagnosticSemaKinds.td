@@ -551,6 +551,9 @@ def err_auto_not_allowed : Error<
   "|class member|exception declaration|template parameter|block literal}0">;
 def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
+  
+// C++0x attributes
+def err_repeat_attribute : Error<"'%0' attribute cannot be repeated">;
 
 // C++0x [[final]]
 def err_final_function_overridden : Error<
@@ -646,12 +649,14 @@ def warn_attribute_wrong_decl_type : Warning<
   "%0 attribute only applies to %select{function|union|"
   "variable and function|function or method|parameter|"
   "parameter or Objective-C method |function, method or block|"
-  "virtual method or class|function, method, or parameter}1 types">;
+  "virtual method or class|function, method, or parameter|class|virtual method"
+  "|member}1 types">;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{function|union|"
   "variable and function|function or method|parameter|"
   "parameter or Objective-C method |function, method or block|"
-  "virtual method or class|function, method, or parameter}1 types">;
+  "virtual method or class|function, method, or parameter|class|virtual method"
+  "|member}1 types">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;

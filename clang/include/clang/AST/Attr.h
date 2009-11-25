@@ -49,6 +49,7 @@ public:
     AnalyzerNoReturn, // Clang-specific.
     Annotate,
     AsmLabel, // Represent GCC asm label extension.
+    BaseCheck,
     Blocks,
     CDecl,
     Cleanup,
@@ -63,6 +64,7 @@ public:
     Format,
     FormatArg,
     GNUInline,
+    Hiding,
     IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
     Malloc,
     NoDebug,
@@ -72,6 +74,7 @@ public:
     NoThrow,
     ObjCException,
     ObjCNSObject,
+    Override,
     CFReturnsRetained,   // Clang/Checker-specific.
     NSReturnsRetained,   // Clang/Checker-specific.
     Overloadable, // Clang-specific
@@ -557,6 +560,11 @@ public:
 // Checker-specific attributes.
 DEF_SIMPLE_ATTR(CFReturnsRetained);
 DEF_SIMPLE_ATTR(NSReturnsRetained);
+
+// C++0x member checking attributes.
+DEF_SIMPLE_ATTR(BaseCheck);
+DEF_SIMPLE_ATTR(Hiding);
+DEF_SIMPLE_ATTR(Override);
 
 #undef DEF_SIMPLE_ATTR
 

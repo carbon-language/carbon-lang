@@ -1825,12 +1825,91 @@ static void HandleFinalAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << 7 /*virtual method or class*/;
     return;
   }
-
-  // FIXME: Check that it's not specified more than once in an attribute-
-  //        specifier and that it conforms to the C++0x rules for
-  //        redeclarations.
+  
+  // FIXME: Conform to C++0x redeclaration rules.
+  
+  if (d->getAttr<FinalAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "final";
+    return;
+  }
 
   d->addAttr(::new (S.Context) FinalAttr());
+}
+
+//===----------------------------------------------------------------------===//
+// C++0x member checking attributes
+//===----------------------------------------------------------------------===//
+
+static void HandleBaseCheckAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  
+  if (!isa<CXXRecordDecl>(d)) {
+    S.Diag(Attr.getLoc(),
+           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+                                   : diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 9 /*class*/;
+    return;
+  }
+  
+  if (d->getAttr<BaseCheckAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "base_check";
+    return;
+  }
+  
+  d->addAttr(::new (S.Context) BaseCheckAttr());
+}
+
+static void HandleHidingAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<RecordDecl>(d->getDeclContext())) {
+    // FIXME: It's not the type that's the problem
+    S.Diag(Attr.getLoc(),
+           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+                                   : diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 11 /*member*/;
+    return;
+  }
+
+  // FIXME: Conform to C++0x redeclaration rules.
+
+  if (d->getAttr<HidingAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "hiding";
+    return;
+  }
+
+  d->addAttr(::new (S.Context) HidingAttr());
+}
+
+static void HandleOverrideAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  if (!isa<CXXMethodDecl>(d) || !cast<CXXMethodDecl>(d)->isVirtual()) {
+    // FIXME: It's not the type that's the problem
+    S.Diag(Attr.getLoc(),
+           Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
+                                   : diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 10 /*virtual method*/;
+    return;
+  }
+
+  // FIXME: Conform to C++0x redeclaration rules.
+
+  if (d->getAttr<OverrideAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_repeat_attribute) << "override";
+    return;
+  }
+
+  d->addAttr(::new (S.Context) OverrideAttr());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1894,34 +1973,37 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
     break;
-  case AttributeList::AT_alias:       HandleAliasAttr     (D, Attr, S); break;
-  case AttributeList::AT_aligned:     HandleAlignedAttr   (D, Attr, S); break;
+  case AttributeList::AT_alias:       HandleAliasAttr       (D, Attr, S); break;
+  case AttributeList::AT_aligned:     HandleAlignedAttr     (D, Attr, S); break;
   case AttributeList::AT_always_inline:
     HandleAlwaysInlineAttr  (D, Attr, S); break;
   case AttributeList::AT_analyzer_noreturn:
     HandleAnalyzerNoReturnAttr  (D, Attr, S); break;
-  case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
+  case AttributeList::AT_annotate:    HandleAnnotateAttr    (D, Attr, S); break;
+  case AttributeList::AT_base_check:  HandleBaseCheckAttr   (D, Attr, S); break;
   case AttributeList::AT_carries_dependency:
-                                      HandleDependencyAttr (D, Attr, S); break;
-  case AttributeList::AT_cdecl:       HandleCDeclAttr     (D, Attr, S); break;
-  case AttributeList::AT_constructor: HandleConstructorAttr(D, Attr, S); break;
-  case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;
-  case AttributeList::AT_destructor:  HandleDestructorAttr(D, Attr, S); break;
-  case AttributeList::AT_dllexport:   HandleDLLExportAttr (D, Attr, S); break;
-  case AttributeList::AT_dllimport:   HandleDLLImportAttr (D, Attr, S); break;
+                                      HandleDependencyAttr  (D, Attr, S); break;
+  case AttributeList::AT_cdecl:       HandleCDeclAttr       (D, Attr, S); break;
+  case AttributeList::AT_constructor: HandleConstructorAttr (D, Attr, S); break;
+  case AttributeList::AT_deprecated:  HandleDeprecatedAttr  (D, Attr, S); break;
+  case AttributeList::AT_destructor:  HandleDestructorAttr  (D, Attr, S); break;
+  case AttributeList::AT_dllexport:   HandleDLLExportAttr   (D, Attr, S); break;
+  case AttributeList::AT_dllimport:   HandleDLLImportAttr   (D, Attr, S); break;
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
-  case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
-  case AttributeList::AT_final:       HandleFinalAttr     (D, Attr, S); break;
-  case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
-  case AttributeList::AT_format_arg:  HandleFormatArgAttr (D, Attr, S); break;
-  case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr (D, Attr, S); break;
-  case AttributeList::AT_mode:        HandleModeAttr      (D, Attr, S); break;
-  case AttributeList::AT_malloc:      HandleMallocAttr    (D, Attr, S); break;
-  case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
-  case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
-  case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
+  case AttributeList::AT_fastcall:    HandleFastCallAttr    (D, Attr, S); break;
+  case AttributeList::AT_final:       HandleFinalAttr       (D, Attr, S); break;
+  case AttributeList::AT_format:      HandleFormatAttr      (D, Attr, S); break;
+  case AttributeList::AT_format_arg:  HandleFormatArgAttr   (D, Attr, S); break;
+  case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr   (D, Attr, S); break;
+  case AttributeList::AT_hiding:      HandleHidingAttr      (D, Attr, S); break;
+  case AttributeList::AT_mode:        HandleModeAttr        (D, Attr, S); break;
+  case AttributeList::AT_malloc:      HandleMallocAttr      (D, Attr, S); break;
+  case AttributeList::AT_nonnull:     HandleNonNullAttr     (D, Attr, S); break;
+  case AttributeList::AT_noreturn:    HandleNoReturnAttr    (D, Attr, S); break;
+  case AttributeList::AT_nothrow:     HandleNothrowAttr     (D, Attr, S); break;
+  case AttributeList::AT_override:    HandleOverrideAttr    (D, Attr, S); break;
 
   // Checker-specific.
   case AttributeList::AT_ns_returns_retained:
@@ -1931,18 +2013,18 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_reqd_wg_size:
     HandleReqdWorkGroupSize(D, Attr, S); break;
 
-  case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
-  case AttributeList::AT_section:     HandleSectionAttr   (D, Attr, S); break;
-  case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
-  case AttributeList::AT_unavailable: HandleUnavailableAttr(D, Attr, S); break;
-  case AttributeList::AT_unused:      HandleUnusedAttr    (D, Attr, S); break;
-  case AttributeList::AT_used:        HandleUsedAttr      (D, Attr, S); break;
-  case AttributeList::AT_vector_size: HandleVectorSizeAttr(D, Attr, S); break;
-  case AttributeList::AT_visibility:  HandleVisibilityAttr(D, Attr, S); break;
+  case AttributeList::AT_packed:      HandlePackedAttr      (D, Attr, S); break;
+  case AttributeList::AT_section:     HandleSectionAttr     (D, Attr, S); break;
+  case AttributeList::AT_stdcall:     HandleStdCallAttr     (D, Attr, S); break;
+  case AttributeList::AT_unavailable: HandleUnavailableAttr (D, Attr, S); break;
+  case AttributeList::AT_unused:      HandleUnusedAttr      (D, Attr, S); break;
+  case AttributeList::AT_used:        HandleUsedAttr        (D, Attr, S); break;
+  case AttributeList::AT_vector_size: HandleVectorSizeAttr  (D, Attr, S); break;
+  case AttributeList::AT_visibility:  HandleVisibilityAttr  (D, Attr, S); break;
   case AttributeList::AT_warn_unused_result: HandleWarnUnusedResult(D,Attr,S);
     break;
-  case AttributeList::AT_weak:        HandleWeakAttr      (D, Attr, S); break;
-  case AttributeList::AT_weak_import: HandleWeakImportAttr(D, Attr, S); break;
+  case AttributeList::AT_weak:        HandleWeakAttr        (D, Attr, S); break;
+  case AttributeList::AT_weak_import: HandleWeakImportAttr  (D, Attr, S); break;
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;
@@ -1950,15 +2032,15 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     HandleObjCExceptionAttr(D, Attr, S);
     break;
   case AttributeList::AT_overloadable:HandleOverloadableAttr(D, Attr, S); break;
-  case AttributeList::AT_nsobject:    HandleObjCNSObject  (D, Attr, S); break;
-  case AttributeList::AT_blocks:      HandleBlocksAttr    (D, Attr, S); break;
-  case AttributeList::AT_sentinel:    HandleSentinelAttr  (D, Attr, S); break;
-  case AttributeList::AT_const:       HandleConstAttr     (D, Attr, S); break;
-  case AttributeList::AT_pure:        HandlePureAttr      (D, Attr, S); break;
-  case AttributeList::AT_cleanup:     HandleCleanupAttr   (D, Attr, S); break;
-  case AttributeList::AT_nodebug:     HandleNoDebugAttr   (D, Attr, S); break;
-  case AttributeList::AT_noinline:    HandleNoInlineAttr  (D, Attr, S); break;
-  case AttributeList::AT_regparm:     HandleRegparmAttr   (D, Attr, S); break;
+  case AttributeList::AT_nsobject:    HandleObjCNSObject    (D, Attr, S); break;
+  case AttributeList::AT_blocks:      HandleBlocksAttr      (D, Attr, S); break;
+  case AttributeList::AT_sentinel:    HandleSentinelAttr    (D, Attr, S); break;
+  case AttributeList::AT_const:       HandleConstAttr       (D, Attr, S); break;
+  case AttributeList::AT_pure:        HandlePureAttr        (D, Attr, S); break;
+  case AttributeList::AT_cleanup:     HandleCleanupAttr     (D, Attr, S); break;
+  case AttributeList::AT_nodebug:     HandleNoDebugAttr     (D, Attr, S); break;
+  case AttributeList::AT_noinline:    HandleNoInlineAttr    (D, Attr, S); break;
+  case AttributeList::AT_regparm:     HandleRegparmAttr     (D, Attr, S); break;
   case AttributeList::IgnoredAttribute:
   case AttributeList::AT_no_instrument_function:  // Interacts with -pg.
     // Just ignore

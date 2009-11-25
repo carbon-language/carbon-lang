@@ -59,6 +59,7 @@ public:
     AT_always_inline,
     AT_analyzer_noreturn,
     AT_annotate,
+    AT_base_check,
     AT_blocks,
     AT_carries_dependency,
     AT_cdecl,
@@ -75,6 +76,7 @@ public:
     AT_format,
     AT_format_arg,
     AT_gnu_inline,
+    AT_hiding,
     AT_malloc,
     AT_mode,
     AT_nodebug,
@@ -85,6 +87,7 @@ public:
     AT_nothrow,
     AT_nsobject,
     AT_objc_exception,
+    AT_override,
     AT_cf_returns_retained,   // Clang-specific.
     AT_ns_returns_retained,   // Clang-specific.
     AT_objc_gc,

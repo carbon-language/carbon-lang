@@ -1699,9 +1699,12 @@ CXX0XAttributeList Parser::ParseCXX0XAttributes(SourceLocation *EndLoc) {
       switch(AttributeList::getKind(AttrName))
       {
       // No arguments
-      case AttributeList::AT_noreturn:
+      case AttributeList::AT_base_check:
+      case AttributeList::AT_carries_dependency:
       case AttributeList::AT_final:
-      case AttributeList::AT_carries_dependency: {
+      case AttributeList::AT_hiding:
+      case AttributeList::AT_noreturn:
+      case AttributeList::AT_override: {
         if (Tok.is(tok::l_paren)) {
           Diag(Tok.getLocation(), diag::err_cxx0x_attribute_forbids_arguments)
             << AttrName->getName();

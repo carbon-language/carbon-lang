@@ -1764,6 +1764,9 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       AddString(cast<AsmLabelAttr>(Attr)->getLabel(), Record);
       break;
 
+    case Attr::BaseCheck:
+      break;
+
     case Attr::Blocks:
       Record.push_back(cast<BlocksAttr>(Attr)->getType()); // FIXME: stable
       break;
@@ -1817,6 +1820,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     }
 
     case Attr::GNUInline:
+    case Attr::Hiding:
     case Attr::IBOutletKind:
     case Attr::Malloc:
     case Attr::NoDebug:
@@ -1837,6 +1841,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
     case Attr::CFReturnsRetained:
     case Attr::NSReturnsRetained:
     case Attr::Overloadable:
+    case Attr::Override:
       break;
 
     case Attr::PragmaPack:
