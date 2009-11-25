@@ -217,6 +217,141 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args) {
 }
 
 static void ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
+  using namespace cc1options;
+  Opts.ProgramAction = frontend::ParseSyntaxOnly;
+  if (const Arg *A = Args.getLastArg(OPT_Action_Group)) {
+    switch (A->getOption().getID()) {
+    default:
+      assert(0 && "Invalid option in group!");
+    case OPT_ast_dump:
+      Opts.ProgramAction = frontend::ASTDump; break;
+    case OPT_ast_print:
+      Opts.ProgramAction = frontend::ASTPrint; break;
+    case OPT_ast_print_xml:
+      Opts.ProgramAction = frontend::ASTPrintXML; break;
+    case OPT_ast_view:
+      Opts.ProgramAction = frontend::ASTView; break;
+    case OPT_dump_raw_tokens:
+      Opts.ProgramAction = frontend::DumpRawTokens; break;
+    case OPT_dump_record_layouts:
+      Opts.ProgramAction = frontend::DumpRecordLayouts; break;
+    case OPT_dump_tokens:
+      Opts.ProgramAction = frontend::DumpTokens; break;
+    case OPT_S:
+      Opts.ProgramAction = frontend::EmitAssembly; break;
+    case OPT_emit_llvm_bc:
+      Opts.ProgramAction = frontend::EmitBC; break;
+    case OPT_emit_html:
+      Opts.ProgramAction = frontend::EmitHTML; break;
+    case OPT_emit_llvm:
+      Opts.ProgramAction = frontend::EmitLLVM; break;
+    case OPT_emit_llvm_only:
+      Opts.ProgramAction = frontend::EmitLLVMOnly; break;
+    case OPT_fixit:
+      Opts.ProgramAction = frontend::FixIt; break;
+    case OPT_emit_pch:
+      Opts.ProgramAction = frontend::GeneratePCH; break;
+    case OPT_emit_pth:
+      Opts.ProgramAction = frontend::GeneratePTH; break;
+    case OPT_parse_noop:
+      Opts.ProgramAction = frontend::ParseNoop; break;
+    case OPT_parse_print_callbacks:
+      Opts.ProgramAction = frontend::ParsePrintCallbacks; break;
+    case OPT_fsyntax_only:
+      Opts.ProgramAction = frontend::ParseSyntaxOnly; break;
+    case OPT_print_decl_contexts:
+      Opts.ProgramAction = frontend::PrintDeclContext; break;
+    case OPT_E:
+      Opts.ProgramAction = frontend::PrintPreprocessedInput; break;
+    case OPT_rewrite_blocks:
+      Opts.ProgramAction = frontend::RewriteBlocks; break;
+    case OPT_rewrite_macros:
+      Opts.ProgramAction = frontend::RewriteMacros; break;
+    case OPT_rewrite_objc:
+      Opts.ProgramAction = frontend::RewriteObjC; break;
+    case OPT_rewrite_test:
+      Opts.ProgramAction = frontend::RewriteTest; break;
+    case OPT_analyze:
+      Opts.ProgramAction = frontend::RunAnalysis; break;
+    case OPT_Eonly:
+      Opts.ProgramAction = frontend::RunPreprocessorOnly; break;
+    }
+  }
+  if (const Arg *A = Args.getLastArg(OPT_plugin)) {
+    Opts.ProgramAction = frontend::PluginAction;
+    Opts.ActionName = A->getValue(Args);
+  }
+
+  if (const Arg *A = Args.getLastArg(OPT_code_completion_at)) {
+    Opts.CodeCompletionAt =
+      ParsedSourceLocation::FromString(A->getValue(Args));
+    if (Opts.CodeCompletionAt.FileName.empty())
+      llvm::errs() << "error: invalid source location '"
+                   << A->getAsString(Args) << "'\n";
+  }
+  Opts.DebugCodeCompletionPrinter =
+    !Args.hasArg(OPT_no_code_completion_debug_printer);
+  Opts.DisableFree = Args.hasArg(OPT_disable_free);
+  Opts.EmptyInputOnly = Args.hasArg(OPT_empty_input_only);
+
+  std::vector<std::string> Fixits = getAllArgValues(Args, OPT_fixit_at);
+  Opts.FixItLocations.clear();
+  for (unsigned i = 0, e = Fixits.size(); i != e; ++i) {
+    ParsedSourceLocation PSL = ParsedSourceLocation::FromString(Fixits[i]);
+
+    if (PSL.FileName.empty()) {
+      llvm::errs() << "error: invalid source location '" << Fixits[i] << "'\n";
+      continue;
+    }
+
+    Opts.FixItLocations.push_back(PSL);
+  }
+
+  Opts.OutputFile = getLastArgValue(Args, OPT_o);
+  Opts.RelocatablePCH = Args.hasArg(OPT_relocatable_pch);
+  Opts.ShowMacrosInCodeCompletion = Args.hasArg(OPT_code_completion_macros);
+  Opts.ShowStats = Args.hasArg(OPT_print_stats);
+  Opts.ShowTimers = Args.hasArg(OPT_ftime_report);
+  Opts.ViewClassInheritance = getLastArgValue(Args, OPT_cxx_inheritance_view);
+
+  FrontendOptions::InputKind DashX = FrontendOptions::IK_None;
+  if (const Arg *A = Args.getLastArg(OPT_x)) {
+    DashX = llvm::StringSwitch<FrontendOptions::InputKind>(A->getValue(Args))
+      .Case("c", FrontendOptions::IK_C)
+      .Case("cl", FrontendOptions::IK_OpenCL)
+      .Case("c", FrontendOptions::IK_C)
+      .Case("cl", FrontendOptions::IK_OpenCL)
+      .Case("c++", FrontendOptions::IK_CXX)
+      .Case("objective-c", FrontendOptions::IK_ObjC)
+      .Case("objective-c++", FrontendOptions::IK_ObjCXX)
+      .Case("cpp-output", FrontendOptions::IK_PreprocessedC)
+      .Case("assembler-with-cpp", FrontendOptions::IK_Asm)
+      .Case("c++-cpp-output", FrontendOptions::IK_PreprocessedCXX)
+      .Case("objective-c-cpp-output", FrontendOptions::IK_PreprocessedObjC)
+      .Case("objective-c++-cpp-output", FrontendOptions::IK_PreprocessedObjCXX)
+      .Case("c-header", FrontendOptions::IK_C)
+      .Case("objective-c-header", FrontendOptions::IK_ObjC)
+      .Case("c++-header", FrontendOptions::IK_CXX)
+      .Case("objective-c++-header", FrontendOptions::IK_ObjCXX)
+      .Case("ast", FrontendOptions::IK_AST)
+      .Default(FrontendOptions::IK_None);
+    if (DashX == FrontendOptions::IK_None)
+      llvm::errs() << "error: invalid argument '" << A->getValue(Args)
+                   << "' to '-x'\n";
+  }
+
+  // '-' is the default input if none is given.
+  std::vector<std::string> Inputs = getAllArgValues(Args, OPT_INPUT);
+  Opts.Inputs.clear();
+  if (Inputs.empty())
+    Inputs.push_back("-");
+  for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
+    FrontendOptions::InputKind IK = DashX;
+    if (IK == FrontendOptions::IK_None)
+      IK = FrontendOptions::getInputKindForExtension(
+        llvm::StringRef(Inputs[i]).rsplit('.').second);
+    Opts.Inputs.push_back(std::make_pair(IK, Inputs[i]));
+  }
 }
 
 static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {

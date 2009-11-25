@@ -244,7 +244,7 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
   if (Opts.ShowMacrosInCodeCompletion)
     Res.push_back("-code-completion-macros");
   if (Opts.ShowStats)
-    Res.push_back("-stats");
+    Res.push_back("-print-stats");
   if (Opts.ShowTimers)
     Res.push_back("-ftime-report");
 
