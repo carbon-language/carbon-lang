@@ -1103,10 +1103,16 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
 
 void GRExprEngine::VisitBlockExpr(BlockExpr *BE, ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
+  
+  ExplodedNodeSet Tmp;
+  
   CanQualType T = getContext().getCanonicalType(BE->getType());
   SVal V = ValMgr.getBlockPointer(BE->getBlockDecl(), T);
-  MakeNode(Dst, BE, Pred, GetState(Pred)->BindExpr(BE, V),
+  MakeNode(Tmp, BE, Pred, GetState(Pred)->BindExpr(BE, V),
            ProgramPoint::PostLValueKind);
+ 
+  // Post-visit the BlockExpr.
+  CheckerVisit(BE, Dst, Tmp, false);
 }
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred,

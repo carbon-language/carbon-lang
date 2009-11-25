@@ -28,6 +28,7 @@ PREVISIT(ObjCMessageExpr)
 PREVISIT(ReturnStmt)
 
 POSTVISIT(CallExpr)
+POSTVISIT(BlockExpr)
 POSTVISIT(BinaryOperator)
 
 #undef PREVISIT
