@@ -235,6 +235,10 @@ SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDValue N) {
   else
     return NULL;
 
+  // Choose the offsets depending on the endianess
+  if (TM.getTargetData()->isBigEndian())
+    std::swap(Offset0, Offset1);
+
   // Instead of:
   //    ldc $f0, X($3)
   // Generate:
@@ -295,6 +299,10 @@ SDNode *MipsDAGToDAGISel::SelectStoreFp64(SDValue N) {
     Offset1 = CurDAG->getTargetConstant(C->getSExtValue()+4, MVT::i32);
   else
     return NULL;
+
+  // Choose the offsets depending on the endianess
+  if (TM.getTargetData()->isBigEndian())
+    std::swap(Offset0, Offset1);
 
   // Instead of:
   //    sdc $f0, X($3)
