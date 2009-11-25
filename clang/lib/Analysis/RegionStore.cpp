@@ -590,8 +590,6 @@ SVal RegionStoreManager::getLValueString(const StringLiteral* S) {
 ///  VarRegion, and the lvalue of the variable is the lvalue of that region.
 SVal RegionStoreManager::getLValueVar(const VarDecl *VD, 
                                       const LocationContext *LC) {
-  // FIXME: The LocationContext should be adjusted if 'VD' is not from
-  // the current stack frame, but is a global, etc.
   return loc::MemRegionVal(MRMgr.getVarRegion(VD, LC));
 }
 
