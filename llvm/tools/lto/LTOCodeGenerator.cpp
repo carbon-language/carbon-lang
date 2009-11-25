@@ -304,17 +304,10 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
             break;
         }
 
-        // Prepare subtarget feature set for the given command line options.
-        SubtargetFeatures features;
-
-        // Set the rest of features by default.
-        // Note: Please keep this after all explict feature settings to make sure
-        // defaults will not override explicitly set options.
-        features.AddFeatures(
-            SubtargetFeatures::getDefaultSubtargetFeatures(llvm::Triple(Triple)));
-
         // construct LTModule, hand over ownership of module and target
-        _target = march->createTargetMachine(Triple, features.getString());
+        const std::string FeatureStr =
+            SubtargetFeatures::getDefaultSubtargetFeatures(llvm::Triple(Triple));
+        _target = march->createTargetMachine(Triple, FeatureStr);
     }
     return false;
 }

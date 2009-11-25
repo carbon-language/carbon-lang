@@ -110,33 +110,6 @@ void SubtargetFeatures::AddFeature(const std::string &String,
   }
 }
 
-/// Add a set of features from the comma-separated string.
-void SubtargetFeatures::AddFeatures(const std::string &String)
-{
-  std::vector<std::string> _Features;
-
-  Split(_Features, String);
-  // Nothing is specified.
-  if (_Features.size() == 0)
-    return;
-
-  for (std::vector<std::string>::iterator it = _Features.begin(),
-          end = _Features.end(); it != end; ++it) {
-    // AddFeature will take care of feature string normalization.
-    AddFeature(*it);
-  }
-}
-
-/// Add a set of features from the parsed command line parameters.
-void SubtargetFeatures::AddFeatures(const cl::list<std::string> &List)
-{
-  for (cl::list<std::string>::const_iterator it = List.begin(),
-          end = List.end(); it != end; ++it) {
-    // AddFeature will take care of feature string normalization.
-    AddFeature(*it);
-  }
-}
-
 /// Find KV in array using binary search.
 template<typename T> const T *Find(const std::string &S, const T *A, size_t L) {
   // Make the lower bound element we're looking for
