@@ -464,7 +464,6 @@ static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
 
   Eng.setTransferFunctions(TF.get());
   
-  Eng.RegisterInternalChecks();
   RegisterAppleChecks(Eng, *D);
 
   // Execute the worklist algorithm.

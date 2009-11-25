@@ -38,6 +38,15 @@ using llvm::cast;
 using llvm::APSInt;
 
 //===----------------------------------------------------------------------===//
+// Utility functions.
+//===----------------------------------------------------------------------===//
+
+static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
+  IdentifierInfo* II = &Ctx.Idents.get(name);
+  return Ctx.Selectors.getSelector(0, &II);
+}
+
+//===----------------------------------------------------------------------===//
 // Batch auditor.  DEPRECATED.
 //===----------------------------------------------------------------------===//
 
@@ -197,11 +206,29 @@ void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
-static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
-  IdentifierInfo* II = &Ctx.Idents.get(name);
-  return Ctx.Selectors.getSelector(0, &II);
+static void RegisterInternalChecks(GRExprEngine &Eng) {
+  // Register internal "built-in" BugTypes with the BugReporter. These BugTypes
+  // are different than what probably many checks will do since they don't
+  // create BugReports on-the-fly but instead wait until GRExprEngine finishes
+  // analyzing a function.  Generation of BugReport objects is done via a call
+  // to 'FlushReports' from BugReporter.
+  // The following checks do not need to have their associated BugTypes
+  // explicitly registered with the BugReporter.  If they issue any BugReports,
+  // their associated BugType will get registered with the BugReporter
+  // automatically.  Note that the check itself is owned by the GRExprEngine
+  // object.  
+  RegisterAttrNonNullChecker(Eng);
+  RegisterCallAndMessageChecker(Eng);
+  RegisterDereferenceChecker(Eng);
+  RegisterVLASizeChecker(Eng);
+  RegisterDivZeroChecker(Eng);
+  RegisterReturnStackAddressChecker(Eng);
+  RegisterReturnUndefChecker(Eng);
+  RegisterUndefinedArraySubscriptChecker(Eng);
+  RegisterUndefinedAssignmentChecker(Eng);
+  RegisterUndefBranchChecker(Eng);
+  RegisterUndefResultChecker(Eng);
 }
-
 
 GRExprEngine::GRExprEngine(AnalysisManager &mgr)
   : AMgr(mgr),
@@ -219,7 +246,7 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr)
     BR(mgr, *this)
 {
   // Register internal checks.
-  RegisterInternalChecks();
+  RegisterInternalChecks(*this);
 }
 
 GRExprEngine::~GRExprEngine() {
@@ -232,7 +259,6 @@ GRExprEngine::~GRExprEngine() {
 //===----------------------------------------------------------------------===//
 // Utility methods.
 //===----------------------------------------------------------------------===//
-
 
 void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
   StateMgr.TF = tf;
@@ -3012,28 +3038,4 @@ void GRExprEngine::ViewGraph(ExplodedNode** Beg, ExplodedNode** End) {
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;
 #endif
-}
-
-void GRExprEngine::RegisterInternalChecks() {
-  // Register internal "built-in" BugTypes with the BugReporter. These BugTypes
-  // are different than what probably many checks will do since they don't
-  // create BugReports on-the-fly but instead wait until GRExprEngine finishes
-  // analyzing a function.  Generation of BugReport objects is done via a call
-  // to 'FlushReports' from BugReporter.
-  // The following checks do not need to have their associated BugTypes
-  // explicitly registered with the BugReporter.  If they issue any BugReports,
-  // their associated BugType will get registered with the BugReporter
-  // automatically.  Note that the check itself is owned by the GRExprEngine
-  // object.  
-  RegisterAttrNonNullChecker(*this);
-  RegisterCallAndMessageChecker(*this);
-  RegisterDereferenceChecker(*this);
-  RegisterVLASizeChecker(*this);
-  RegisterDivZeroChecker(*this);
-  RegisterReturnStackAddressChecker(*this);
-  RegisterReturnUndefChecker(*this);
-  RegisterUndefinedArraySubscriptChecker(*this);
-  RegisterUndefinedAssignmentChecker(*this);
-  RegisterUndefBranchChecker(*this);
-  RegisterUndefResultChecker(*this);
 }

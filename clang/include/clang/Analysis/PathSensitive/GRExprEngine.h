@@ -129,8 +129,6 @@ public:
   ExplodedGraph& getGraph() { return G; }
   const ExplodedGraph& getGraph() const { return G; }
 
-  void RegisterInternalChecks();
-
   template <typename CHECKER>
   void registerCheck(CHECKER *check) {
     unsigned entry = Checkers.size();
