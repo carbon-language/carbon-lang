@@ -3025,6 +3025,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           Previous.getResultKind() != LookupResult::FoundOverloaded) &&
          "previous declaration set still overloaded");
 
+  // If we have a function template, check the template parameter
+  // list. This will check and merge default template arguments.
+  if (FunctionTemplate) {
+    FunctionTemplateDecl *PrevTemplate = FunctionTemplate->getPreviousDeclaration();
+    CheckTemplateParameterList(FunctionTemplate->getTemplateParameters(),
+                      PrevTemplate? PrevTemplate->getTemplateParameters() : 0,
+             D.getDeclSpec().isFriendSpecified()? TPC_FriendFunctionTemplate
+                                                : TPC_FunctionTemplate);
+  }
+
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
     // An out-of-line member function declaration must also be a
     // definition (C++ [dcl.meaning]p1).

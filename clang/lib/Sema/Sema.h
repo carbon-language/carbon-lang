@@ -2256,8 +2256,19 @@ public:
                              SourceLocation LAngleLoc,
                              DeclPtrTy *Params, unsigned NumParams,
                              SourceLocation RAngleLoc);
+
+  /// \brief The context in which we are checking a template parameter
+  /// list.
+  enum TemplateParamListContext {
+    TPC_ClassTemplate,
+    TPC_FunctionTemplate,
+    TPC_ClassTemplateMember,
+    TPC_FriendFunctionTemplate
+  };
+
   bool CheckTemplateParameterList(TemplateParameterList *NewParams,
-                                  TemplateParameterList *OldParams);
+                                  TemplateParameterList *OldParams,
+                                  TemplateParamListContext TPC);
   TemplateParameterList *
   MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
                                           const CXXScopeSpec &SS,

@@ -919,7 +919,15 @@ def note_template_param_prev_default_arg : Note<
   "previous default template argument defined here">;
 def err_template_param_default_arg_missing : Error<
   "template parameter missing a default argument">;
-  
+def err_template_parameter_default_in_function_template : Error<
+  "a template parameter of a function template cannot have a default argument "
+  "in C++98">;
+def err_template_parameter_default_template_member : Error<
+  "cannot add a default template argument to the definition of a member of a "
+  "class template">;
+def err_template_parameter_default_friend_template : Error<
+  "default template argument not permitted on a friend template">;
+
 def err_template_variable : Error<"variable %0 declared as a template">;
 def err_template_variable_noparams : Error<
   "extraneous 'template<>' in declaration of variable %0">;

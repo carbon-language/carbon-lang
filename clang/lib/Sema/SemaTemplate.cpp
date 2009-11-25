@@ -925,7 +925,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // merging in the template parameter list from the previous class
   // template declaration.
   if (CheckTemplateParameterList(TemplateParams,
-            PrevClassTemplate? PrevClassTemplate->getTemplateParameters() : 0))
+            PrevClassTemplate? PrevClassTemplate->getTemplateParameters() : 0,
+                                 TPC_ClassTemplate))
     Invalid = true;
 
   // FIXME: If we had a scope specifier, we better have a previous template
@@ -1006,6 +1007,55 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   return DeclPtrTy::make(NewTemplate);
 }
 
+/// \brief Diagnose the presence of a default template argument on a
+/// template parameter, which is ill-formed in certain contexts.
+///
+/// \returns true if the default template argument should be dropped.
+static bool DiagnoseDefaultTemplateArgument(Sema &S, 
+                                            Sema::TemplateParamListContext TPC,
+                                            SourceLocation ParamLoc,
+                                            SourceRange DefArgRange) {
+  switch (TPC) {
+  case Sema::TPC_ClassTemplate:
+    return false;
+
+  case Sema::TPC_FunctionTemplate:
+    // C++ [temp.param]p9: 
+    //   A default template-argument shall not be specified in a
+    //   function template declaration or a function template
+    //   definition [...]
+    // (This sentence is not in C++0x, per DR226).
+    if (!S.getLangOptions().CPlusPlus0x)
+      S.Diag(ParamLoc, 
+             diag::err_template_parameter_default_in_function_template)
+        << DefArgRange;
+    return false;
+
+  case Sema::TPC_ClassTemplateMember:
+    // C++0x [temp.param]p9:
+    //   A default template-argument shall not be specified in the
+    //   template-parameter-lists of the definition of a member of a
+    //   class template that appears outside of the member's class.
+    S.Diag(ParamLoc, diag::err_template_parameter_default_template_member)
+      << DefArgRange;
+    return true;
+
+  case Sema::TPC_FriendFunctionTemplate:
+    // C++ [temp.param]p9:
+    //   A default template-argument shall not be specified in a
+    //   friend template declaration.
+    S.Diag(ParamLoc, diag::err_template_parameter_default_friend_template)
+      << DefArgRange;
+    return true;
+
+    // FIXME: C++0x [temp.param]p9 allows default template-arguments
+    // for friend function templates if there is only a single
+    // declaration (and it is a definition). Strange!
+  }
+
+  return false;
+}
+
 /// \brief Checks the validity of a template parameter list, possibly
 /// considering the template parameter list from a previous
 /// declaration.
@@ -1024,9 +1074,13 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
 /// arguments will be merged from the old template parameter list to
 /// the new template parameter list.
 ///
+/// \param TPC Describes the context in which we are checking the given
+/// template parameter list.
+///
 /// \returns true if an error occurred, false otherwise.
 bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
-                                      TemplateParameterList *OldParams) {
+                                      TemplateParameterList *OldParams,
+                                      TemplateParamListContext TPC) {
   bool Invalid = false;
 
   // C++ [temp.param]p10:
@@ -1066,9 +1120,17 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       Invalid = true;
     }
 
-    // Merge default arguments for template type parameters.
     if (TemplateTypeParmDecl *NewTypeParm
           = dyn_cast<TemplateTypeParmDecl>(*NewParam)) {
+      // Check the presence of a default argument here.
+      if (NewTypeParm->hasDefaultArgument() && 
+          DiagnoseDefaultTemplateArgument(*this, TPC, 
+                                          NewTypeParm->getLocation(), 
+               NewTypeParm->getDefaultArgumentInfo()->getTypeLoc()
+                                                       .getFullSourceRange()))
+        NewTypeParm->removeDefaultArgument();
+
+      // Merge default arguments for template type parameters.
       TemplateTypeParmDecl *OldTypeParm
           = OldParams? cast<TemplateTypeParmDecl>(*OldParam) : 0;
 
@@ -1098,6 +1160,15 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         MissingDefaultArg = true;
     } else if (NonTypeTemplateParmDecl *NewNonTypeParm
                = dyn_cast<NonTypeTemplateParmDecl>(*NewParam)) {
+      // Check the presence of a default argument here.
+      if (NewNonTypeParm->hasDefaultArgument() && 
+          DiagnoseDefaultTemplateArgument(*this, TPC, 
+                                          NewNonTypeParm->getLocation(), 
+                    NewNonTypeParm->getDefaultArgument()->getSourceRange())) {
+        NewNonTypeParm->getDefaultArgument()->Destroy(Context);
+        NewNonTypeParm->setDefaultArgument(0);
+      }
+
       // Merge default arguments for non-type template parameters
       NonTypeTemplateParmDecl *OldNonTypeParm
         = OldParams? cast<NonTypeTemplateParmDecl>(*OldParam) : 0;
@@ -1124,9 +1195,16 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       } else if (SawDefaultArgument)
         MissingDefaultArg = true;
     } else {
-    // Merge default arguments for template template parameters
+      // Check the presence of a default argument here.
       TemplateTemplateParmDecl *NewTemplateParm
         = cast<TemplateTemplateParmDecl>(*NewParam);
+      if (NewTemplateParm->hasDefaultArgument() && 
+          DiagnoseDefaultTemplateArgument(*this, TPC, 
+                                          NewTemplateParm->getLocation(), 
+                     NewTemplateParm->getDefaultArgument().getSourceRange()))
+        NewTemplateParm->setDefaultArgument(TemplateArgumentLoc());
+
+      // Merge default arguments for template template parameters
       TemplateTemplateParmDecl *OldTemplateParm
         = OldParams? cast<TemplateTemplateParmDecl>(*OldParam) : 0;
       if (OldTemplateParm && OldTemplateParm->hasDefaultArgument() &&
@@ -1299,6 +1377,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
                                          ExpectedTemplateParams,
                                          true, TPL_TemplateMatch);
       }
+
+      CheckTemplateParameterList(ParamLists[Idx], 0, TPC_ClassTemplateMember);
     } else if (ParamLists[Idx]->size() > 0)
       Diag(ParamLists[Idx]->getTemplateLoc(),
            diag::err_template_param_list_matches_nontemplate)
