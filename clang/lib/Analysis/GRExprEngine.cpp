@@ -118,6 +118,7 @@ bool GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
 
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
+  bool stopProcessingAfterCurrentChecker = false;
 
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
   {
@@ -127,20 +128,27 @@ bool GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
     CurrSet->clear();
     void *tag = I->first;
     Checker *checker = I->second;
-
+    
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
          NI != NE; ++NI) {
       // FIXME: Halting evaluation of the checkers is something we may
-      // not support later.  The design is still evolving.
+      // not support later.  The design is still evolving.      
       if (checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI,
                             tag, isPrevisit)) {
         if (CurrSet != &Dst)
           Dst.insert(*CurrSet);
-        return true;
-      }
-    }
 
-    // Update which NodeSet is the current one.
+        stopProcessingAfterCurrentChecker = true;
+        continue;
+      }
+      assert(stopProcessingAfterCurrentChecker == false &&
+             "Inconsistent setting of 'stopProcessingAfterCurrentChecker'");
+    }
+    
+    if (stopProcessingAfterCurrentChecker)
+      return true;
+
+    // Continue on to the next checker.  Update the current NodeSet.
     PrevSet = CurrSet;
   }
 
