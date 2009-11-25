@@ -932,30 +932,26 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fblocks");
   }
 
+  // -fexceptions=0 is default.
   if (needsExceptions(Args, InputType, getToolChain().getTriple()))
     CmdArgs.push_back("-fexceptions");
-  else
-    CmdArgs.push_back("-fexceptions=0");
 
   // -frtti is default.
   if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
 
   // -fsigned-char is default.
-  if (!Args.hasFlag(options::OPT_fsigned_char,
-                    options::OPT_funsigned_char,
+  if (!Args.hasFlag(options::OPT_fsigned_char, options::OPT_funsigned_char,
                     isSignedCharDefault(getToolChain().getTriple())))
     CmdArgs.push_back("-fsigned-char=0");
 
   // -fms-extensions=0 is default.
-  if (Args.hasFlag(options::OPT_fms_extensions,
-                   options::OPT_fno_ms_extensions,
+  if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32))
     CmdArgs.push_back("-fms-extensions");
 
   // -fnext-runtime is default.
-  if (!Args.hasFlag(options::OPT_fnext_runtime,
-                    options::OPT_fgnu_runtime,
+  if (!Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
                     getToolChain().getTriple().getOS() == llvm::Triple::Darwin))
     CmdArgs.push_back("-fgnu-runtime");
 
