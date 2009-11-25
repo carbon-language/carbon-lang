@@ -2255,64 +2255,7 @@ namespace {
   };
 } // end anonymous namespace
 
-void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
-  BugReporter &BR = Eng.getBugReporter();
-  
-  useAfterRelease = new UseAfterRelease(this);
-  BR.Register(useAfterRelease);
 
-  releaseNotOwned = new BadRelease(this);
-  BR.Register(releaseNotOwned);
-
-  deallocGC = new DeallocGC(this);
-  BR.Register(deallocGC);
-
-  deallocNotOwned = new DeallocNotOwned(this);
-  BR.Register(deallocNotOwned);
-
-  overAutorelease = new OverAutorelease(this);
-  BR.Register(overAutorelease);
-
-  returnNotOwnedForOwned = new ReturnedNotOwnedForOwned(this);
-  BR.Register(returnNotOwnedForOwned);
-
-  // First register "return" leaks.
-  const char* name = 0;
-
-  if (isGCEnabled())
-    name = "Leak of returned object when using garbage collection";
-  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "Leak of returned object when not using garbage collection (GC) in "
-    "dual GC/non-GC code";
-  else {
-    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "Leak of returned object";
-  }
-
-  // Leaks should not be reported if they are post-dominated by a sink.
-  leakAtReturn = new LeakAtReturn(this, name);
-  leakAtReturn->setSuppressOnSink(true);
-  BR.Register(leakAtReturn);
-
-  // Second, register leaks within a function/method.
-  if (isGCEnabled())
-    name = "Leak of object when using garbage collection";
-  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
-    name = "Leak of object when not using garbage collection (GC) in "
-    "dual GC/non-GC code";
-  else {
-    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
-    name = "Leak";
-  }
-
-  // Leaks should not be reported if they are post-dominated by sinks.
-  leakWithinFunction = new LeakWithinFunction(this, name);
-  leakWithinFunction->setSuppressOnSink(true);
-  BR.Register(leakWithinFunction);
-
-  // Save the reference to the BugReporter.
-  this->BR = &BR;
-}
 
 static const char* Msgs[] = {
   // GC only
@@ -3693,6 +3636,65 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
 //===----------------------------------------------------------------------===//
 // Transfer function creation for external clients.
 //===----------------------------------------------------------------------===//
+
+void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
+  BugReporter &BR = Eng.getBugReporter();
+  
+  useAfterRelease = new UseAfterRelease(this);
+  BR.Register(useAfterRelease);
+  
+  releaseNotOwned = new BadRelease(this);
+  BR.Register(releaseNotOwned);
+  
+  deallocGC = new DeallocGC(this);
+  BR.Register(deallocGC);
+  
+  deallocNotOwned = new DeallocNotOwned(this);
+  BR.Register(deallocNotOwned);
+  
+  overAutorelease = new OverAutorelease(this);
+  BR.Register(overAutorelease);
+  
+  returnNotOwnedForOwned = new ReturnedNotOwnedForOwned(this);
+  BR.Register(returnNotOwnedForOwned);
+  
+  // First register "return" leaks.
+  const char* name = 0;
+  
+  if (isGCEnabled())
+    name = "Leak of returned object when using garbage collection";
+  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
+    name = "Leak of returned object when not using garbage collection (GC) in "
+    "dual GC/non-GC code";
+  else {
+    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
+    name = "Leak of returned object";
+  }
+  
+  // Leaks should not be reported if they are post-dominated by a sink.
+  leakAtReturn = new LeakAtReturn(this, name);
+  leakAtReturn->setSuppressOnSink(true);
+  BR.Register(leakAtReturn);
+  
+  // Second, register leaks within a function/method.
+  if (isGCEnabled())
+    name = "Leak of object when using garbage collection";
+  else if (getLangOptions().getGCMode() == LangOptions::HybridGC)
+    name = "Leak of object when not using garbage collection (GC) in "
+    "dual GC/non-GC code";
+  else {
+    assert(getLangOptions().getGCMode() == LangOptions::NonGC);
+    name = "Leak";
+  }
+  
+  // Leaks should not be reported if they are post-dominated by sinks.
+  leakWithinFunction = new LeakWithinFunction(this, name);
+  leakWithinFunction->setSuppressOnSink(true);
+  BR.Register(leakWithinFunction);
+  
+  // Save the reference to the BugReporter.
+  this->BR = &BR;
+}
 
 GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                          const LangOptions& lopts) {
