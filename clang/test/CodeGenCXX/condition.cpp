@@ -94,11 +94,16 @@ void for_destruct(int z) {
   // CHECK: define void @_Z12for_destruct
   // CHECK: call void @_ZN1YC1Ev
   for(Y y = Y(); X x = X(); ++z)
+    // CHECK: for.cond:
+    // CHECK: call void @_ZN1XC1Ev
     // CHECK: for.body:
     // CHECK: store i32 23
     z = 23;
     // CHECK: for.inc:
-  // CHECK: for.end
+    // CHECK: br label %for.cond.cleanup
+    // CHECK: for.cond.cleanup:
+    // CHECK: call void @_ZN1XD1Ev
+  // CHECK: for.end:
   // CHECK: call void @_ZN1YD1Ev
   // CHECK: store i32 24
   z = 24;

@@ -488,27 +488,34 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
   llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
-
+  llvm::BasicBlock *IncBlock = 0;
+  llvm::BasicBlock *CondCleanup = 0;
+  llvm::BasicBlock *EffectiveExitBlock = AfterFor;
   EmitBlock(CondBlock);
 
-  // Create a cleanup scope 
+  // Create a cleanup scope for the condition variable cleanups.
   CleanupScope ConditionScope(*this);
   
-  // Evaluate the condition if present.  If not, treat it as a
-  // non-zero-constant according to 6.8.5.3p2, aka, true.
+  llvm::Value *BoolCondVal = 0;
   if (S.getCond()) {
     // If the for statement has a condition scope, emit the local variable
     // declaration.
-    // FIXME: The cleanup points for this are all wrong.
-    if (S.getConditionVariable())
+    if (S.getConditionVariable()) {
       EmitLocalBlockVarDecl(*S.getConditionVariable());
+      
+      if (ConditionScope.requiresCleanups()) {
+        CondCleanup = createBasicBlock("for.cond.cleanup");
+        EffectiveExitBlock = CondCleanup;
+      }
+    }
     
     // As long as the condition is true, iterate the loop.
     llvm::BasicBlock *ForBody = createBasicBlock("for.body");
 
     // C99 6.8.5p2/p4: The first substatement is executed if the expression
     // compares unequal to 0.  The condition must be a scalar type.
-    EmitBranchOnBoolExpr(S.getCond(), ForBody, AfterFor);
+    BoolCondVal = EvaluateExprAsBool(S.getCond());
+    Builder.CreateCondBr(BoolCondVal, ForBody, EffectiveExitBlock);
 
     EmitBlock(ForBody);
   } else {
@@ -520,7 +527,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // condition as the continue block.
   llvm::BasicBlock *ContinueBlock;
   if (S.getInc())
-    ContinueBlock = createBasicBlock("for.inc");
+    ContinueBlock = IncBlock = createBasicBlock("for.inc");
   else
     ContinueBlock = CondBlock;
 
@@ -533,18 +540,34 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     DI->setLocation(S.getSourceRange().getBegin());
     DI->EmitRegionStart(CurFn, Builder);
   }
-  EmitStmt(S.getBody());
+
+  {
+    // Create a separate cleanup scope for the body, in case it is not
+    // a compound statement.
+    CleanupScope BodyScope(*this);
+    EmitStmt(S.getBody());
+  }
 
   BreakContinueStack.pop_back();
 
   // If there is an increment, emit it next.
   if (S.getInc()) {
-    EmitBlock(ContinueBlock);
+    EmitBlock(IncBlock);
     EmitStmt(S.getInc());
   }
 
   // Finally, branch back up to the condition for the next iteration.
-  EmitBranch(CondBlock);
+  if (CondCleanup) {
+    // Branch to the cleanup block.
+    EmitBranch(CondCleanup);
+
+    // Emit the cleanup block, which branches back to the loop body or
+    // outside of the for statement once it is done.
+    EmitBlock(CondCleanup);
+    ConditionScope.ForceCleanup();
+    Builder.CreateCondBr(BoolCondVal, CondBlock, AfterFor);
+  } else
+    EmitBranch(CondBlock);
   if (DI) {
     DI->setLocation(S.getSourceRange().getEnd());
     DI->EmitRegionEnd(CurFn, Builder);
