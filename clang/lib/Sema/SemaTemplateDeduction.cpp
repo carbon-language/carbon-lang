@@ -1272,25 +1272,6 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
 
-  // C++ [temp.deduct.type]p2:
-  //   [...] or if any template argument remains neither deduced nor
-  //   explicitly specified, template argument deduction fails.
-  TemplateArgumentListBuilder Builder(TemplateParams, Deduced.size());
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
-    if (Deduced[I].isNull()) {
-      Info.Param = makeTemplateParameter(
-                            const_cast<NamedDecl *>(TemplateParams->getParam(I)));
-      return TDK_Incomplete;
-    }
-
-    Builder.Append(Deduced[I]);
-  }
-
-  // Form the template argument list from the deduced template arguments.
-  TemplateArgumentList *DeducedArgumentList
-    = new (Context) TemplateArgumentList(Context, Builder, /*TakeArgs=*/true);
-  Info.reset(DeducedArgumentList);
-
   // Template argument deduction for function templates in a SFINAE context.
   // Trap any errors that might occur.
   SFINAETrap Trap(*this);
@@ -1302,6 +1283,51 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
               ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution);
   if (Inst)
     return TDK_InstantiationDepth;
+
+  // C++ [temp.deduct.type]p2:
+  //   [...] or if any template argument remains neither deduced nor
+  //   explicitly specified, template argument deduction fails.
+  TemplateArgumentListBuilder Builder(TemplateParams, Deduced.size());
+  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
+    if (!Deduced[I].isNull()) {
+      Builder.Append(Deduced[I]);
+      continue;
+    }
+
+    // Substitute into the default template argument, if available. 
+    NamedDecl *Param = FunctionTemplate->getTemplateParameters()->getParam(I);
+    TemplateArgumentLoc DefArg
+      = SubstDefaultTemplateArgumentIfAvailable(FunctionTemplate,
+                                              FunctionTemplate->getLocation(),
+                                  FunctionTemplate->getSourceRange().getEnd(),
+                                                Param,
+                                                Builder);
+
+    // If there was no default argument, deduction is incomplete.
+    if (DefArg.getArgument().isNull()) {
+      Info.Param = makeTemplateParameter(
+                         const_cast<NamedDecl *>(TemplateParams->getParam(I)));
+      return TDK_Incomplete;
+    }
+    
+    // Check whether we can actually use the default argument.
+    if (CheckTemplateArgument(Param, DefArg,
+                              FunctionTemplate,
+                              FunctionTemplate->getLocation(),
+                              FunctionTemplate->getSourceRange().getEnd(),
+                              Builder)) {
+      Info.Param = makeTemplateParameter(
+                         const_cast<NamedDecl *>(TemplateParams->getParam(I)));
+      return TDK_SubstitutionFailure;
+    }
+
+    // If we get here, we successfully used the default template argument.
+  }
+
+  // Form the template argument list from the deduced template arguments.
+  TemplateArgumentList *DeducedArgumentList
+    = new (Context) TemplateArgumentList(Context, Builder, /*TakeArgs=*/true);
+  Info.reset(DeducedArgumentList);
 
   // Substitute the deduced template arguments into the function template
   // declaration to produce the function template specialization.

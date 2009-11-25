@@ -2384,6 +2384,13 @@ public:
                                                 SourceLocation TemplateLoc,
                                                 Declarator &D);
     
+  TemplateArgumentLoc 
+  SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
+                                          SourceLocation TemplateLoc,
+                                          SourceLocation RAngleLoc,
+                                          Decl *Param,
+                                      TemplateArgumentListBuilder &Converted);
+
   bool CheckTemplateArgument(NamedDecl *Param,
                              const TemplateArgumentLoc &Arg,
                              TemplateDecl *Template,

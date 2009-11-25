@@ -764,7 +764,7 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
                                  DeclPtrTy *Params, unsigned NumParams,
                                  SourceLocation RAngleLoc) {
   if (ExportLoc.isValid())
-    Diag(ExportLoc, diag::note_template_export_unsupported);
+    Diag(ExportLoc, diag::warn_template_export_unsupported);
 
   return TemplateParameterList::Create(Context, TemplateLoc, LAngleLoc,
                                        (NamedDecl**)Params, NumParams, 
@@ -1867,6 +1867,65 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
                       Param->getDefaultArgument().getArgument().getAsTemplate(),
                               Param->getDefaultArgument().getTemplateNameLoc(), 
                                    AllTemplateArgs);
+}
+
+/// \brief If the given template parameter has a default template
+/// argument, substitute into that default template argument and
+/// return the corresponding template argument.
+TemplateArgumentLoc 
+Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
+                                              SourceLocation TemplateLoc,
+                                              SourceLocation RAngleLoc,
+                                              Decl *Param,
+                                     TemplateArgumentListBuilder &Converted) {
+  if (TemplateTypeParmDecl *TypeParm = dyn_cast<TemplateTypeParmDecl>(Param)) {
+    if (!TypeParm->hasDefaultArgument())
+      return TemplateArgumentLoc();
+
+    DeclaratorInfo *DI = SubstDefaultTemplateArgument(*this, Template,
+                                                      TemplateLoc,
+                                                      RAngleLoc,
+                                                      TypeParm,
+                                                      Converted);
+    if (DI)
+      return TemplateArgumentLoc(TemplateArgument(DI->getType()), DI);
+
+    return TemplateArgumentLoc();
+  }
+
+  if (NonTypeTemplateParmDecl *NonTypeParm
+        = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+    if (!NonTypeParm->hasDefaultArgument())
+      return TemplateArgumentLoc();
+
+    OwningExprResult Arg = SubstDefaultTemplateArgument(*this, Template,
+                                                        TemplateLoc,
+                                                        RAngleLoc,
+                                                        NonTypeParm,
+                                                        Converted);
+    if (Arg.isInvalid())
+      return TemplateArgumentLoc();
+
+    Expr *ArgE = Arg.takeAs<Expr>();
+    return TemplateArgumentLoc(TemplateArgument(ArgE), ArgE);
+  }
+
+  TemplateTemplateParmDecl *TempTempParm
+    = cast<TemplateTemplateParmDecl>(Param);
+  if (!TempTempParm->hasDefaultArgument())
+    return TemplateArgumentLoc();
+
+  TemplateName TName = SubstDefaultTemplateArgument(*this, Template,
+                                                    TemplateLoc, 
+                                                    RAngleLoc,
+                                                    TempTempParm,
+                                                    Converted);
+  if (TName.isNull())
+    return TemplateArgumentLoc();
+
+  return TemplateArgumentLoc(TemplateArgument(TName), 
+                TempTempParm->getDefaultArgument().getTemplateQualifierRange(),
+                TempTempParm->getDefaultArgument().getTemplateNameLoc());
 }
 
 /// \brief Check that the given template argument corresponds to the given

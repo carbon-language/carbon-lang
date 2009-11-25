@@ -882,7 +882,7 @@ def err_addr_ovl_ambiguous : Error<
 def err_template_param_shadow : Error<
   "declaration of %0 shadows template parameter">;
 def note_template_param_here : Note<"template parameter is declared here">;
-def note_template_export_unsupported : Note<
+def warn_template_export_unsupported : Warning<
   "exported templates are unsupported">;
 def err_template_outside_namespace_or_class_scope : Error<
   "templates can only be declared in namespace or class scope">;

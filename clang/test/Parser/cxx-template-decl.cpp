@@ -5,7 +5,7 @@ export class foo { };   // expected-error {{expected template}}
 template  x;            // expected-error {{C++ requires a type specifier for all declarations}} \
                         // expected-error {{does not refer}}
 export template x;      // expected-error {{expected '<' after 'template'}}
-export template<class T> class x0; // expected-note {{exported templates are unsupported}}
+export template<class T> class x0; // expected-warning {{exported templates are unsupported}}
 template < ;            // expected-error {{parse error}} expected-error {{declaration does not declare anything}}
 template <template X> struct Err1; // expected-error {{expected '<' after 'template'}} \
 // expected-error{{extraneous}}
