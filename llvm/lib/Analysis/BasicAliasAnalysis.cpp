@@ -400,7 +400,16 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
         Offset += RHSC->getValue();
         return V;
-      // TODO: SHL, MUL.
+      case Instruction::Mul:
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
+        Offset *= RHSC->getValue();
+        Scale *= RHSC->getValue();
+        return V;
+      case Instruction::Shl:
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
+        Offset <<= RHSC->getValue().getLimitedValue();
+        Scale <<= RHSC->getValue().getLimitedValue();
+        return V;
       }
     }
   }
