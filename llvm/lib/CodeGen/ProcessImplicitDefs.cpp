@@ -183,19 +183,23 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       // is not an implicit_def, do not insert implicit_def's before the
       // uses.
       bool Skip = false;
+      SmallVector<MachineInstr*, 4> DeadImpDefs;
       for (MachineRegisterInfo::def_iterator DI = mri_->def_begin(Reg),
              DE = mri_->def_end(); DI != DE; ++DI) {
-        if (DI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF) {
+        MachineInstr *DeadImpDef = &*DI;
+        if (DeadImpDef->getOpcode() != TargetInstrInfo::IMPLICIT_DEF) {
           Skip = true;
           break;
         }
+        DeadImpDefs.push_back(DeadImpDef);
       }
       if (Skip)
         continue;
 
       // The only implicit_def which we want to keep are those that are live
       // out of its block.
-      MI->eraseFromParent();
+      for (unsigned j = 0, ee = DeadImpDefs.size(); j != ee; ++j)
+        DeadImpDefs[j]->eraseFromParent();
       Changed = true;
 
       // Process each use instruction once.
