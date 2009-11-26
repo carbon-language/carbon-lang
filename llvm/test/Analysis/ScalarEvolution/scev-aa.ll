@@ -1,8 +1,8 @@
 ; RUN: opt < %s -scev-aa -aa-eval -print-all-alias-modref-info \
 ; RUN:   |& FileCheck %s
 
-; At the time of this writing, all of these CHECK lines are cases that
-; plain -basicaa misses.
+; At the time of this writing, -basicaa only misses the example of the form
+; A[i+(j+1)] != A[i+j].  However, it does get A[(i+j)+1] != A[i+j].
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64"
 
