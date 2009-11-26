@@ -684,6 +684,33 @@ SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
   }
 }
 
+/// isPHITranslatable - Return true if the specified computation is derived from
+/// a PHI node in the current block and if it is simple enough for us to handle.
+static bool isPHITranslatable(Instruction *Inst) {
+  if (isa<PHINode>(Inst))
+    return true;
+  
+  // TODO: BITCAST, GEP.
+
+  // ...
+  
+  //   cerr << "MEMDEP: Could not PHI translate: " << *Pointer;
+  //   if (isa<BitCastInst>(PtrInst) || isa<GetElementPtrInst>(PtrInst))
+  //     cerr << "OP:\t\t\t\t" << *PtrInst->getOperand(0);
+  
+  return false;
+}
+
+/// PHITranslateForPred - Given a computation that satisfied the
+/// isPHITranslatable predicate, see if we can translate the computation into
+/// the specified predecessor block.  If so, return that value.
+static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred) {
+  if (PHINode *PN = dyn_cast<PHINode>(Inst))
+    return PN->getIncomingValueForBlock(Pred);
+  
+  return 0;
+}
+
 
 /// getNonLocalPointerDepFromBB - Perform a dependency query based on
 /// pointer/pointeesize starting at the end of StartBB.  Add any clobber/def
@@ -827,14 +854,18 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       NumSortedEntries = Cache->size();
     }
     
-    // If this is directly a PHI node, just use the incoming values for each
-    // pred as the phi translated version.
-    if (PHINode *PtrPHI = dyn_cast<PHINode>(PtrInst)) {
+    // If this is a computation derived from a PHI node, use the suitably
+    // translated incoming values for each pred as the phi translated version.
+    if (isPHITranslatable(PtrInst)) {
       Cache = 0;
       
       for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
         BasicBlock *Pred = *PI;
-        Value *PredPtr = PtrPHI->getIncomingValueForBlock(Pred);
+        Value *PredPtr = PHITranslateForPred(PtrInst, Pred);
+        
+        // If PHI translation fails, bail out.
+        if (PredPtr == 0)
+          goto PredTranslationFailure;
         
         // Check to see if we have already visited this pred block with another
         // pointer.  If so, we can't do this lookup.  This failure can occur
@@ -881,12 +912,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       SkipFirstBlock = false;
       continue;
     }
-    
-    // TODO: BITCAST, GEP.
-    
-    //   cerr << "MEMDEP: Could not PHI translate: " << *Pointer;
-    //   if (isa<BitCastInst>(PtrInst) || isa<GetElementPtrInst>(PtrInst))
-    //     cerr << "OP:\t\t\t\t" << *PtrInst->getOperand(0);
+
   PredTranslationFailure:
     
     if (Cache == 0) {
