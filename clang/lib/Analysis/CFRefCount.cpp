@@ -24,6 +24,7 @@
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/StmtVisitor.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
@@ -3646,9 +3647,34 @@ class VISIBILITY_HIDDEN RetainReleaseChecker
   CFRefCount *TF;
 public:
     RetainReleaseChecker(CFRefCount *tf) : TF(tf) {}
-    static void* getTag() { static int x = 0; return &x; }    
+    static void* getTag() { static int x = 0; return &x; }
+    
+    void PostVisitBlockExpr(CheckerContext &C, const BlockExpr *BE);
 };
 } // end anonymous namespace
+
+
+void RetainReleaseChecker::PostVisitBlockExpr(CheckerContext &C,
+                                              const BlockExpr *BE) {
+  
+  // Scan the BlockDecRefExprs for any object the retain/release checker
+  // may be tracking.  
+  if (!BE->hasBlockDeclRefExprs())
+    return;
+  
+  const GRState *state = C.getState();
+  const BlockDataRegion *R =
+    cast<BlockDataRegion>(state->getSVal(BE).getAsRegion());
+  
+  BlockDataRegion::referenced_vars_iterator I = R->referenced_vars_begin(),
+                                            E = R->referenced_vars_end();
+  
+  if (I == E)
+    return;
+  
+  state = state->scanReachableSymbols<StopTrackingCallback>(I, E).getState();
+  C.addTransition(state);
+}
 
 //===----------------------------------------------------------------------===//
 // Transfer function creation for external clients.

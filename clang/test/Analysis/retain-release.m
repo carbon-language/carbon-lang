@@ -1281,7 +1281,6 @@ void test_blocks_1_pos(void) {
   ^{}();
 }
 
-#if 0
 void test_blocks_1_indirect_release(void) {
   NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
   ^{ [number release]; }();
@@ -1292,7 +1291,6 @@ void test_blocks_1_indirect_retain(void) {
   NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
   ^{ [number retain]; }();
 }
-#endif
 
 void test_blocks_1_indirect_release_via_call(void) {
   NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
