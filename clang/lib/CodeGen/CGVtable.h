@@ -17,6 +17,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "GlobalDecl.h"
 
+namespace llvm {
+  class Constant;
+}
+
 namespace clang {
   class CXXMethodDecl;
   class CXXRecordDecl;

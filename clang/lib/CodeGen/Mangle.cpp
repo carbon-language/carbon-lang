@@ -26,7 +26,9 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "CGVtable.h"
 using namespace clang;
+using namespace CodeGen;
 
 namespace {
   
@@ -67,8 +69,7 @@ public:
   llvm::raw_svector_ostream &getStream() { return Out; }
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "_Z");
-  void mangleCallOffset(int64_t NonVirtualOffset, 
-                        int64_t VirtualOffset);
+  void mangleCallOffset(const ThunkAdjustment &Adjustment);
   void mangleNumber(int64_t Number);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleName(const NamedDecl *ND);
@@ -348,24 +349,23 @@ void CXXNameMangler::mangleNumber(int64_t Number) {
   Out << Number;
 }
 
-void CXXNameMangler::mangleCallOffset(int64_t NonVirtualOffset, 
-                                      int64_t VirtualOffset) {
+void CXXNameMangler::mangleCallOffset(const ThunkAdjustment &Adjustment) {
   //  <call-offset>  ::= h <nv-offset> _
   //                 ::= v <v-offset> _
   //  <nv-offset>    ::= <offset number>        # non-virtual base override
   //  <v-offset>     ::= <offset number> _ <virtual offset number>
   //                      # virtual base override, with vcall offset
-  if (!VirtualOffset) {
+  if (!Adjustment.Virtual) {
     Out << 'h';
-    mangleNumber(NonVirtualOffset);
+    mangleNumber(Adjustment.NonVirtual);
     Out << '_';
     return;
   }
   
   Out << 'v';
-  mangleNumber(NonVirtualOffset);
+  mangleNumber(Adjustment.NonVirtual);
   Out << '_';
-  mangleNumber(VirtualOffset);
+  mangleNumber(Adjustment.Virtual);
   Out << '_';
 }
 
@@ -1355,8 +1355,7 @@ void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
 /// \brief Mangles the a thunk with the offset n for the declaration D and
 /// emits that name to the given output stream.
 void MangleContext::mangleThunk(const FunctionDecl *FD, 
-                                int64_t NonVirtualOffset, 
-                                int64_t VirtualOffset,
+                                const ThunkAdjustment &ThisAdjustment,
                                 llvm::SmallVectorImpl<char> &Res) {
   // FIXME: Hum, we might have to thunk these, fix.
   assert(!isa<CXXDestructorDecl>(FD) &&
@@ -1366,7 +1365,7 @@ void MangleContext::mangleThunk(const FunctionDecl *FD,
   //                      # base is the nominal target function of thunk
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZT";
-  Mangler.mangleCallOffset(NonVirtualOffset, VirtualOffset);
+  Mangler.mangleCallOffset(ThisAdjustment);
   Mangler.mangleFunctionEncoding(FD);
 }
 
@@ -1385,8 +1384,8 @@ void MangleContext::mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t,
   //                      # second call-offset is result adjustment
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZTc";
-  Mangler.mangleCallOffset(nv_t, v_t);
-  Mangler.mangleCallOffset(nv_r, v_r);
+  Mangler.mangleCallOffset(ThunkAdjustment(nv_t, v_t));
+  Mangler.mangleCallOffset(ThunkAdjustment(nv_r, v_r));
   Mangler.mangleFunctionEncoding(FD);
 }
 

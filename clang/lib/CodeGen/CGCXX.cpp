@@ -968,8 +968,7 @@ CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
                           const ThunkAdjustment &ThisAdjustment) {
   
   llvm::SmallString<256> OutName;
-  getMangleContext().mangleThunk(MD, ThisAdjustment.NonVirtual,
-                                 ThisAdjustment.Virtual, OutName);
+  getMangleContext().mangleThunk(MD, ThisAdjustment, OutName);
   
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;

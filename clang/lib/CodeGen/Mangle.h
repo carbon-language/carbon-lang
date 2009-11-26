@@ -23,18 +23,20 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
-template<typename T>
-class SmallVectorImpl;
+  template<typename T> class SmallVectorImpl;
 }
 
 namespace clang {
-class ASTContext;
-class CXXConstructorDecl;
-class CXXDestructorDecl;
-class FunctionDecl;
-class NamedDecl;
-class VarDecl;
+  class ASTContext;
+  class CXXConstructorDecl;
+  class CXXDestructorDecl;
+  class FunctionDecl;
+  class NamedDecl;
+  class VarDecl;
 
+namespace CodeGen {
+  class ThunkAdjustment;
+   
 /// MangleContext - Context for tracking state which persists across multiple
 /// calls to the C++ name mangler.
 class MangleContext {
@@ -62,7 +64,7 @@ public:
 
   void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
   void mangleThunk(const FunctionDecl *FD, 
-                   int64_t NonVirtualOffset, int64_t VirtualOffset,
+                   const ThunkAdjustment &ThisAdjustment,
                    llvm::SmallVectorImpl<char> &);
   void mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t, int64_t v_t,
                             int64_t nv_r, int64_t v_r,
@@ -82,6 +84,8 @@ public:
 
   /// @}
 };
+  
+}
 }
 
 #endif
