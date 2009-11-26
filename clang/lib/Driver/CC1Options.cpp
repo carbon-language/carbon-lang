@@ -13,6 +13,7 @@
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/PCHReader.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/SmallVector.h"
@@ -356,7 +357,7 @@ static void ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
 
 static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   using namespace cc1options;
-  Opts.Sysroot = getLastArgValue(Args, OPT_isysroot);
+  Opts.Sysroot = getLastArgValue(Args, OPT_isysroot, "/");
   Opts.Verbose = Args.hasArg(OPT_v);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
   Opts.BuiltinIncludePath = "";
@@ -401,6 +402,43 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args) {
 }
 
 static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
+  using namespace cc1options;
+  Opts.ImplicitPCHInclude = getLastArgValue(Args, OPT_include_pch);
+  Opts.ImplicitPTHInclude = getLastArgValue(Args, OPT_include_pth);
+  Opts.TokenCache = getLastArgValue(Args, OPT_token_cache);
+  Opts.UsePredefines = !Args.hasArg(OPT_undef);
+
+  // Add macros from the command line.
+  for (arg_iterator it = Args.filtered_begin(OPT_D, OPT_U),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    if (it->getOption().matches(OPT_D))
+      Opts.addMacroDef(it->getValue(Args));
+    else
+      Opts.addMacroUndef(it->getValue(Args));
+  }
+
+  Opts.MacroIncludes = getAllArgValues(Args, OPT_imacros);
+
+  // Add the ordered list of -includes.
+  for (arg_iterator it = Args.filtered_begin(OPT_include, OPT_include_pch,
+                                             OPT_include_pth),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    // PCH is handled specially, we need to extra the original include path.
+    if (it->getOption().matches(OPT_include_pch)) {
+      // FIXME: Disabled for now, I don't want to incur the cost of linking in
+      // Sema and all until we are actually going to use it. Alternatively this
+      // could be factored out somehow.
+      //        PCHReader::getOriginalSourceFile(it->getValue(Args));
+      std::string OriginalFile = "FIXME";
+
+      // FIXME: Don't fail like this.
+      if (OriginalFile.empty())
+        exit(1);
+
+      Opts.Includes.push_back(OriginalFile);
+    } else
+      Opts.Includes.push_back(it->getValue(Args));
+  }
 }
 
 static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,

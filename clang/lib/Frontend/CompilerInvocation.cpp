@@ -470,28 +470,34 @@ static void LangOptsToArgs(const LangOptions &Opts,
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
                                    std::vector<std::string> &Res) {
   for (unsigned i = 0, e = Opts.Macros.size(); i != e; ++i)
-    Res.push_back((Opts.Macros[i].second ? "-U" : "-D") + Opts.Macros[i].first);
+    Res.push_back(std::string(Opts.Macros[i].second ? "-U" : "-D") +
+                  Opts.Macros[i].first);
   for (unsigned i = 0, e = Opts.Includes.size(); i != e; ++i) {
+    // FIXME: We need to avoid reincluding the implicit PCH and PTH includes.
     Res.push_back("-include");
     Res.push_back(Opts.Includes[i]);
   }
   for (unsigned i = 0, e = Opts.MacroIncludes.size(); i != e; ++i) {
     Res.push_back("-imacros");
-    Res.push_back(Opts.Includes[i]);
+    Res.push_back(Opts.MacroIncludes[i]);
   }
   if (!Opts.UsePredefines)
     Res.push_back("-undef");
   if (!Opts.ImplicitPCHInclude.empty()) {
-    Res.push_back("-implicit-pch-include");
+    Res.push_back("-include-pch");
     Res.push_back(Opts.ImplicitPCHInclude);
   }
   if (!Opts.ImplicitPTHInclude.empty()) {
-    Res.push_back("-implicit-pth-include");
+    Res.push_back("-include-pth");
     Res.push_back(Opts.ImplicitPTHInclude);
   }
   if (!Opts.TokenCache.empty()) {
-    Res.push_back("-token-cache");
-    Res.push_back(Opts.TokenCache);
+    if (Opts.ImplicitPTHInclude.empty()) {
+      Res.push_back("-token-cache");
+      Res.push_back(Opts.TokenCache);
+    } else
+      assert(Opts.ImplicitPTHInclude == Opts.TokenCache &&
+             "Unsupported option combination!");
   }
 }
 

@@ -333,9 +333,9 @@ def nostdinc : Flag<"-nostdinc">,
   HelpText<"Disable standard #include directories">;
 def nobuiltininc : Flag<"-nobuiltininc">,
   HelpText<"Disable builtin #include directories">;
-def F : Separate<"-F">, MetaVarName<"directory">,
+def F : JoinedOrSeparate<"-F">, MetaVarName<"directory">,
   HelpText<"Add directory to framework include search path">;
-def I : Separate<"-I">, MetaVarName<"directory">,
+def I : JoinedOrSeparate<"-I">, MetaVarName<"directory">,
   HelpText<"Add directory to include search path">;
 def idirafter : Separate<"-idirafter">, MetaVarName<"directory">,
   HelpText<"Add directory to AFTER include search path">;
@@ -357,7 +357,7 @@ def v : Flag<"-v">, HelpText<"Enable verbose output">;
 // Preprocessor Options
 //===----------------------------------------------------------------------===//
 
-def D : Separate<"-D">, MetaVarName<"macro">,
+def D : JoinedOrSeparate<"-D">, MetaVarName<"macro">,
   HelpText<"Predefine the specified macro">;
 def include_ : Separate<"-include">, MetaVarName<"file">, EnumName<"include">,
   HelpText<"Include file before parsing">;
@@ -369,7 +369,7 @@ def include_pth : Separate<"-include-pth">, MetaVarName<"file">,
   HelpText<"Include file before parsing">;
 def token_cache : Separate<"-token-cache">, MetaVarName<"path">,
   HelpText<"Use specified token cache file">;
-def U : Separate<"-U">, MetaVarName<"macro">,
+def U : JoinedOrSeparate<"-U">, MetaVarName<"macro">,
   HelpText<"Undefine the specified macro">;
 def undef : Flag<"-undef">, MetaVarName<"macro">,
   HelpText<"undef all system defines">;
