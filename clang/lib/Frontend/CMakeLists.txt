@@ -21,6 +21,7 @@ add_clang_library(clangFrontend
   HTMLPrint.cpp
   InitHeaderSearch.cpp
   InitPreprocessor.cpp
+  LangStandards.cpp
   PCHReader.cpp
   PCHReaderDecl.cpp
   PCHReaderStmt.cpp

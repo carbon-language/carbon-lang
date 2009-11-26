@@ -1,0 +1,77 @@
+//===--- LangStandard.h -----------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_CLANG_FRONTEND_LANGSTANDARD_H
+#define LLVM_CLANG_FRONTEND_LANGSTANDARD_H
+
+#include "llvm/ADT/StringRef.h"
+
+namespace clang {
+
+namespace frontend {
+
+enum LangFeatures {
+  BCPLComment = (1 << 0),
+  C99 = (1 << 1),
+  CPlusPlus = (1 << 2),
+  CPlusPlus0x = (1 << 3),
+  Digraphs = (1 << 4),
+  GNUMode = (1 << 5),
+  HexFloat = (1 << 6),
+  ImplicitInt = (1 << 7)
+};
+
+}
+
+/// LangStandard - Information about the properties of a particular language
+/// standard.
+struct LangStandard {
+  enum Kind {
+#define LANGSTANDARD(id, name, desc, features) \
+    lang_##id,
+#include "clang/Frontend/LangStandards.def"
+    lang_unspecified
+  };
+
+  const char *ShortName;
+  const char *Description;
+  unsigned Flags;
+
+public:
+  /// hasBCPLComments - Language supports '//' comments.
+  bool hasBCPLComments() const { return Flags & frontend::BCPLComment; }
+
+  /// isC99 - Language is a superset of C99.
+  bool isC99() const { return Flags & frontend::C99; }
+
+  /// isCPlusPlus - Language is a C++ variant.
+  bool isCPlusPlus() const { return Flags & frontend::CPlusPlus; }
+
+  /// isCPlusPlus0x - Language is a C++0x variant.
+  bool isCPlusPlus0x() const { return Flags & frontend::CPlusPlus0x; }
+
+  /// hasDigraphs - Language supports diagrphs.
+  bool hasDigraphs() const { return Flags & frontend::Digraphs; }
+
+  /// isGNUMode - Language includes GNU extensions.
+  bool isGNUMode() const { return Flags & frontend::GNUMode; }
+
+  /// hasHexFloats - Language supports hexadecimal float constants.
+  bool hasHexFloats() const { return Flags & frontend::HexFloat; }
+
+  /// hasImplicitInt - Language allows variables to be typed as int implicitly.
+  bool hasImplicitInt() const { return Flags & frontend::ImplicitInt; }
+
+  static const LangStandard &getLangStandardForKind(Kind K);
+  static const LangStandard *getLangStandardForName(llvm::StringRef Name);
+};
+
+}  // end namespace clang
+
+#endif

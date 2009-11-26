@@ -21,6 +21,7 @@
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
+#include "clang/Frontend/LangStandard.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
@@ -436,6 +437,8 @@ TimeReport("ftime-report",
 
 namespace langoptions {
 
+using namespace clang::frontend;
+
 static llvm::cl::opt<bool>
 NoBuiltin("fno-builtin",
           llvm::cl::desc("Disable implicit builtin knowledge of functions"));
@@ -481,42 +484,12 @@ GNURuntime("fgnu-runtime",
             llvm::cl::desc("Generate output compatible with the standard GNU "
                            "Objective-C runtime"));
 
-/// LangStds - Language standards we support.
-enum LangStds {
-  lang_unspecified,
-  lang_c89, lang_c94, lang_c99,
-  lang_gnu89, lang_gnu99,
-  lang_cxx98, lang_gnucxx98,
-  lang_cxx0x, lang_gnucxx0x
-};
-static llvm::cl::opt<LangStds>
+static llvm::cl::opt<LangStandard::Kind>
 LangStd("std", llvm::cl::desc("Language standard to compile for"),
-        llvm::cl::init(lang_unspecified),
-  llvm::cl::values(clEnumValN(lang_c89,      "c89",            "ISO C 1990"),
-                   clEnumValN(lang_c89,      "c90",            "ISO C 1990"),
-                   clEnumValN(lang_c89,      "iso9899:1990",   "ISO C 1990"),
-                   clEnumValN(lang_c94,      "iso9899:199409",
-                              "ISO C 1990 with amendment 1"),
-                   clEnumValN(lang_c99,      "c99",            "ISO C 1999"),
-                   clEnumValN(lang_c99,      "c9x",            "ISO C 1999"),
-                   clEnumValN(lang_c99,      "iso9899:1999",   "ISO C 1999"),
-                   clEnumValN(lang_c99,      "iso9899:199x",   "ISO C 1999"),
-                   clEnumValN(lang_gnu89,    "gnu89",
-                              "ISO C 1990 with GNU extensions"),
-                   clEnumValN(lang_gnu99,    "gnu99",
-                              "ISO C 1999 with GNU extensions (default for C)"),
-                   clEnumValN(lang_gnu99,    "gnu9x",
-                              "ISO C 1999 with GNU extensions"),
-                   clEnumValN(lang_cxx98,    "c++98",
-                              "ISO C++ 1998 with amendments"),
-                   clEnumValN(lang_gnucxx98, "gnu++98",
-                              "ISO C++ 1998 with amendments and GNU "
-                              "extensions (default for C++)"),
-                   clEnumValN(lang_cxx0x,    "c++0x",
-                              "Upcoming ISO C++ 200x with amendments"),
-                   clEnumValN(lang_gnucxx0x, "gnu++0x",
-                              "Upcoming ISO C++ 200x with amendments and GNU "
-                              "extensions"),
+        llvm::cl::init(LangStandard::lang_unspecified), llvm::cl::values(
+#define LANGSTANDARD(id, name, desc, features) \
+          clEnumValN(LangStandard::lang_##id, name, desc),
+#include "clang/Frontend/LangStandards.def"
                    clEnumValEnd));
 
 static llvm::cl::opt<bool>
@@ -1111,87 +1084,43 @@ void clang::InitializeLangOptions(LangOptions &Options,
   Options.setVisibilityMode(SymbolVisibility);
   Options.OverflowChecking = OverflowChecking;
 
-  if (LangStd == lang_unspecified) {
+  if (LangStd == LangStandard::lang_unspecified) {
     // Based on the base language, pick one.
     switch (IK) {
     case FrontendOptions::IK_None:
     case FrontendOptions::IK_AST:
       assert(0 && "Invalid input kind!");
     case FrontendOptions::IK_OpenCL:
-      LangStd = lang_c99;
+      LangStd = LangStandard::lang_opencl;
       break;
     case FrontendOptions::IK_Asm:
     case FrontendOptions::IK_C:
     case FrontendOptions::IK_PreprocessedC:
     case FrontendOptions::IK_ObjC:
     case FrontendOptions::IK_PreprocessedObjC:
-      LangStd = lang_gnu99;
+      LangStd = LangStandard::lang_gnu99;
       break;
     case FrontendOptions::IK_CXX:
     case FrontendOptions::IK_PreprocessedCXX:
     case FrontendOptions::IK_ObjCXX:
     case FrontendOptions::IK_PreprocessedObjCXX:
-      LangStd = lang_gnucxx98;
+      LangStd = LangStandard::lang_gnucxx98;
       break;
     }
   }
 
-  switch (LangStd) {
-  default: assert(0 && "Unknown language standard!");
+  const LangStandard &Std = LangStandard::getLangStandardForKind(LangStd);
+  Options.BCPLComment = Std.hasBCPLComments();
+  Options.C99 = Std.isC99();
+  Options.CPlusPlus = Std.isCPlusPlus();
+  Options.CPlusPlus0x = Std.isCPlusPlus0x();
+  Options.Digraphs = Std.hasDigraphs();
+  Options.GNUMode = Std.isGNUMode();
+  Options.HexFloats = Std.hasHexFloats();
+  Options.ImplicitInt = Std.hasImplicitInt();
 
-  // Fall through from newer standards to older ones.  This isn't really right.
-  // FIXME: Enable specifically the right features based on the language stds.
-  case lang_gnucxx0x:
-  case lang_cxx0x:
-    Options.CPlusPlus0x = 1;
-    // FALL THROUGH
-  case lang_gnucxx98:
-  case lang_cxx98:
-    Options.CPlusPlus = 1;
+  if (Options.CPlusPlus)
     Options.CXXOperatorNames = !NoOperatorNames;
-    // FALL THROUGH.
-  case lang_gnu99:
-  case lang_c99:
-    Options.C99 = 1;
-    Options.HexFloats = 1;
-    // FALL THROUGH.
-  case lang_gnu89:
-    Options.BCPLComment = 1;  // Only for C99/C++.
-    // FALL THROUGH.
-  case lang_c94:
-    Options.Digraphs = 1;     // C94, C99, C++.
-    // FALL THROUGH.
-  case lang_c89:
-    break;
-  }
-
-  // GNUMode - Set if we're in gnu99, gnu89, gnucxx98, etc.
-  switch (LangStd) {
-  default: assert(0 && "Unknown language standard!");
-  case lang_gnucxx0x:
-  case lang_gnucxx98:
-  case lang_gnu99:
-  case lang_gnu89:
-    Options.GNUMode = 1;
-    break;
-  case lang_cxx0x:
-  case lang_cxx98:
-  case lang_c99:
-  case lang_c94:
-  case lang_c89:
-    Options.GNUMode = 0;
-    break;
-  }
-
-  if (Options.CPlusPlus) {
-    Options.C99 = 0;
-    Options.HexFloats = 0;
-  }
-
-  if (LangStd == lang_c89 || LangStd == lang_c94 || LangStd == lang_gnu89)
-    Options.ImplicitInt = 1;
-  else
-    Options.ImplicitInt = 0;
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
   // is specified, or -std is set to a conforming mode.
@@ -1242,7 +1171,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
   Options.ElideConstructors = !NoElideConstructors;
 
   // OpenCL and C++ both have bool, true, false keywords.
-  Options.Bool = Options.OpenCL | Options.CPlusPlus;
+  Options.Bool = Options.OpenCL || Options.CPlusPlus;
 
   Options.MathErrno = !NoMathErrno;
 
