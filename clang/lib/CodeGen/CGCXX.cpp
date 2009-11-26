@@ -246,7 +246,6 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
       
   const MemberExpr *ME = cast<MemberExpr>(CE->getCallee());
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(MD->getDeclContext());
 
   if (MD->isStatic()) {
     // The method is static, emit it as we would a regular call.
