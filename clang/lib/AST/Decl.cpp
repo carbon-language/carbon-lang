@@ -232,7 +232,7 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
     //   declared to have external linkage; or
     // (there is no equivalent in C99)
     if (Context.getLangOptions().CPlusPlus &&
-        Var->getType().isConstQualified() && 
+        Var->getType().isConstant(Context) && 
         Var->getStorageClass() != VarDecl::Extern &&
         Var->getStorageClass() != VarDecl::PrivateExtern) {
       bool FoundExtern = false;
