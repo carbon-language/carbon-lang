@@ -2587,10 +2587,23 @@ static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
                                  CXXBasePath &Path,
                                  void *UserData) {
   RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
-  
+
   FindOverriddenMethodData *Data 
     = reinterpret_cast<FindOverriddenMethodData*>(UserData);
-  for (Path.Decls = BaseRecord->lookup(Data->Method->getDeclName());
+  
+  DeclarationName Name = Data->Method->getDeclName();
+  
+  // FIXME: Do we care about other names here too?
+  if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
+    // We really want to find the base class constructor here.
+    QualType T = Data->S->Context.getTypeDeclType(BaseRecord);
+    CanQualType CT = Data->S->Context.getCanonicalType(T);
+    
+    DeclarationName Name = 
+      Data->S->Context.DeclarationNames.getCXXDestructorName(CT);
+  }    
+  
+  for (Path.Decls = BaseRecord->lookup(Name);
        Path.Decls.first != Path.Decls.second;
        ++Path.Decls.first) {
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*Path.Decls.first)) {
