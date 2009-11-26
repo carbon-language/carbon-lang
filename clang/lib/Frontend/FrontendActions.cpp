@@ -222,7 +222,7 @@ void GeneratePTHAction::ExecuteAction() {
       CI.getFrontendOpts().OutputFile == "-") {
     // FIXME: Don't fail this way.
     // FIXME: Verify that we can actually seek in the given file.
-    llvm::errs() << "ERROR: PTH requires an seekable file for output!\n";
+    llvm::llvm_report_error("PTH requires an seekable file for output!");
     ::exit(1);
   }
   llvm::raw_fd_ostream *OS =
