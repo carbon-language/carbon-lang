@@ -52,11 +52,28 @@ private:
   llvm::DenseMap<GlobalDecl, Index_t> NonVirtualOffset;
   llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
 
+  /// Thunk - Represents a single thunk.
+  struct Thunk {
+    Thunk()
+      : Index(0) { }
+    
+    Thunk(uint64_t Index, const ThunkAdjustment &Adjustment)
+      : Index(Index), Adjustment(Adjustment) { }
+    
+    /// Index - The index in the vtable.
+    uint64_t Index;
+    
+    /// ThisAdjustment - The thunk adjustment.
+    ThunkAdjustment Adjustment;
+  };
+    
   typedef llvm::DenseMap<GlobalDecl, int> Pures_t;
   Pures_t Pures;
   typedef std::pair<Index_t, Index_t>  CallOffset;
-  typedef llvm::DenseMap<GlobalDecl, CallOffset> Thunks_t;
-  Thunks_t Thunks;
+  
+  typedef llvm::DenseMap<GlobalDecl, Thunk> ThunksMapTy;
+  ThunksMapTy Thunks;
+  
   typedef llvm::DenseMap<GlobalDecl,
                          std::pair<std::pair<CallOffset, CallOffset>,
                                    CanQualType> > CovariantThunks_t;
@@ -287,35 +304,43 @@ public:
                       (int)VCalls[idx-1], Class->getNameAsCString()));
           }
           VCall[GD] = idx;
-          int64_t O = NonVirtualOffset[GD];
-          int v = -((idx+extra+2)*LLVMPointerWidth/8);
+          int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
+          int64_t VirtualAdjustment = 
+            -((idx + extra + 2) * LLVMPointerWidth / 8);
+          
           // Optimize out virtual adjustments of 0.
           if (VCalls[idx-1] == 0)
-            v = 0;
-          CallOffset ThisOffset = std::make_pair(O, v);
+            VirtualAdjustment = 0;
+          
+          CallOffset ThisOffset = std::make_pair(NonVirtualAdjustment, 
+                                                 VirtualAdjustment);
+          ThunkAdjustment ThisAdjustment(NonVirtualAdjustment,
+                                         VirtualAdjustment);
+
           // FIXME: Do we always have to build a covariant thunk to save oret,
           // which is the containing virtual base class?
           if (ReturnOffset.first || ReturnOffset.second)
             CovariantThunks[GD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
                                                  oret);
-          else if (!isPure && (ThisOffset.first || ThisOffset.second))
-            Thunks[GD] = ThisOffset;
+          else if (!isPure && !ThisAdjustment.isEmpty())
+            Thunks[GD] = Thunk(i, ThisAdjustment);
           return true;
         }
 
         // FIXME: finish off
-        int64_t O = VCallOffset[OGD] - OverrideOffset/8;
+        int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
 
-        if (O || ReturnOffset.first || ReturnOffset.second) {
-          CallOffset ThisOffset = std::make_pair(O, 0);
+        if (NonVirtualAdjustment || ReturnOffset.first || ReturnOffset.second) {
+          CallOffset ThisOffset = std::make_pair(NonVirtualAdjustment, 0);
+          ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
           
           if (ReturnOffset.first || ReturnOffset.second)
             CovariantThunks[GD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
                                                  oret);
           else if (!isPure)
-            Thunks[GD] = ThisOffset;
+            Thunks[GD] = Thunk(i, ThisAdjustment);
         }
         return true;
       }
@@ -325,18 +350,19 @@ public:
   }
 
   void InstallThunks() {
-    for (Thunks_t::iterator i = Thunks.begin(), e = Thunks.end();
+    for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
       GlobalDecl GD = i->first;
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-      assert(!MD->isPure() && "Trying to thunk a pure");
-      Index_t idx = Index[GD];
-      Index_t nv_O = i->second.first;
-      Index_t v_O = i->second.second;
-      submethods[idx] = CGM.BuildThunk(MD, Extern, 
-                                       ThunkAdjustment(nv_O, v_O));
+      assert(!MD->isPure() && "Can't thunk pure virtual methods!");
+      
+      const Thunk& Thunk = i->second;
+      assert(Thunk.Index == Index[GD] && "Thunk index mismatch!");
+             
+      submethods[Thunk.Index] = CGM.BuildThunk(MD, Extern, Thunk.Adjustment);
     }
     Thunks.clear();
+
     for (CovariantThunks_t::iterator i = CovariantThunks.begin(),
            e = CovariantThunks.end();
          i != e; ++i) {
