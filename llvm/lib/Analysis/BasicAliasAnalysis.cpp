@@ -38,24 +38,24 @@ using namespace llvm;
 // Useful predicates
 //===----------------------------------------------------------------------===//
 
-static const Value *GetGEPOperands(const Value *V, 
+static const Value *GetGEPOperands(const GEPOperator *V, 
                                    SmallVector<Value*, 16> &GEPOps) {
   assert(GEPOps.empty() && "Expect empty list to populate!");
-  GEPOps.insert(GEPOps.end(), cast<User>(V)->op_begin()+1,
-                cast<User>(V)->op_end());
+  GEPOps.insert(GEPOps.end(), V->op_begin()+1, V->op_end());
 
-  // Accumulate all of the chained indexes into the operand array
-  V = cast<User>(V)->getOperand(0);
-
-  while (const GEPOperator *G = dyn_cast<GEPOperator>(V)) {
-    if (!isa<Constant>(GEPOps[0]) || isa<GlobalValue>(GEPOps[0]) ||
-        !cast<Constant>(GEPOps[0])->isNullValue())
-      break;  // Don't handle folding arbitrary pointer offsets yet...
+  // Accumulate all of the chained indexes into the operand array.
+  Value *BasePtr = V->getOperand(0);
+  while (1) {
+    V = dyn_cast<GEPOperator>(BasePtr);
+    if (V == 0) return BasePtr;
+    
+    // Don't handle folding arbitrary pointer offsets yet.
+    if (!isa<Constant>(GEPOps[0]) || !cast<Constant>(GEPOps[0])->isNullValue())
+      return BasePtr;
+    
     GEPOps.erase(GEPOps.begin());   // Drop the zero index
-    GEPOps.insert(GEPOps.begin(), G->op_begin()+1, G->op_end());
-    V = G->getOperand(0);
+    GEPOps.insert(GEPOps.begin(), V->op_begin()+1, V->op_end());
   }
-  return V;
 }
 
 /// isKnownNonNull - Return true if we know that the specified value is never
@@ -219,7 +219,7 @@ namespace {
 
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
     // instruction against another.
-    AliasResult aliasGEP(const Value *V1, unsigned V1Size,
+    AliasResult aliasGEP(const GEPOperator *V1, unsigned V1Size,
                          const Value *V2, unsigned V2Size);
 
     // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI
@@ -405,21 +405,19 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
   return NoAA::getModRefInfo(CS1, CS2);
 }
 
-// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
-// against another.
-//
+/// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
+/// against another pointer.  We know that V1 is a GEP, but we don't know
+/// anything about V2.
+///
 AliasAnalysis::AliasResult
-BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
+BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
                              const Value *V2, unsigned V2Size) {
   // If we have two gep instructions with must-alias'ing base pointers, figure
   // out if the indexes to the GEP tell us anything about the derived pointer.
   // Note that we also handle chains of getelementptr instructions as well as
   // constant expression getelementptrs here.
   //
-  if (isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
-    const User *GEP1 = cast<User>(V1);
-    const User *GEP2 = cast<User>(V2);
-    
+  if (const GEPOperator *GEP2 = dyn_cast<GEPOperator>(V2)) {
     // If V1 and V2 are identical GEPs, just recurse down on both of them.
     // This allows us to analyze things like:
     //   P = gep A, 0, i, 1
@@ -438,13 +436,13 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
     while (isa<GEPOperator>(GEP1->getOperand(0)) &&
            GEP1->getOperand(1) ==
            Constant::getNullValue(GEP1->getOperand(1)->getType()))
-      GEP1 = cast<User>(GEP1->getOperand(0));
+      GEP1 = cast<GEPOperator>(GEP1->getOperand(0));
     const Value *BasePtr1 = GEP1->getOperand(0);
 
     while (isa<GEPOperator>(GEP2->getOperand(0)) &&
            GEP2->getOperand(1) ==
            Constant::getNullValue(GEP2->getOperand(1)->getType()))
-      GEP2 = cast<User>(GEP2->getOperand(0));
+      GEP2 = cast<GEPOperator>(GEP2->getOperand(0));
     const Value *BasePtr2 = GEP2->getOperand(0);
 
     // Do the base pointers alias?
@@ -457,8 +455,8 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
 
       // Collect all of the chained GEP operands together into one simple place
       SmallVector<Value*, 16> GEP1Ops, GEP2Ops;
-      BasePtr1 = GetGEPOperands(V1, GEP1Ops);
-      BasePtr2 = GetGEPOperands(V2, GEP2Ops);
+      BasePtr1 = GetGEPOperands(GEP1, GEP1Ops);
+      BasePtr2 = GetGEPOperands(GEP2, GEP2Ops);
 
       // If GetGEPOperands were able to fold to the same must-aliased pointer,
       // do the comparison.
@@ -482,7 +480,7 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
     return MayAlias;
 
   SmallVector<Value*, 16> GEPOperands;
-  const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
+  const Value *BasePtr = GetGEPOperands(GEP1, GEPOperands);
 
   AliasResult R = aliasCheck(BasePtr, ~0U, V2, V2Size);
   if (R != MustAlias)
@@ -719,8 +717,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
   }
-  if (isa<GEPOperator>(V1))
-    return aliasGEP(V1, V1Size, V2, V2Size);
+  if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1))
+    return aliasGEP(GV1, V1Size, V2, V2Size);
 
   if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
     std::swap(V1, V2);
