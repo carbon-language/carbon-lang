@@ -361,7 +361,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.Verbose = Args.hasArg(OPT_v);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
   Opts.BuiltinIncludePath = "";
-  if (!Args.hasArg(OPT_fno_builtin))
+  if (!Args.hasArg(OPT_nobuiltininc))
       Opts.BuiltinIncludePath = "FIXME"; // FIXME: Get builtin include path!
 
   // Add -I... and -F... options in order.
