@@ -330,18 +330,49 @@ public:
   /// have been declared.
   bool GlobalNewDeleteDeclared;
 
-  /// The current expression evaluation context.
-  ExpressionEvaluationContext ExprEvalContext;
-
-  typedef std::vector<std::pair<SourceLocation, Decl *> >
+  /// \brief The set of declarations that have been referenced within
+  /// a potentially evaluated expression.
+  typedef std::vector<std::pair<SourceLocation, Decl *> > 
     PotentiallyReferencedDecls;
 
-  /// A stack of declarations, each element of which is a set of declarations
-  /// that will be marked as referenced if the corresponding potentially
-  /// potentially evaluated expression is potentially evaluated. Each element
-  /// in the stack corresponds to a PotentiallyPotentiallyEvaluated expression
-  /// evaluation context.
-  std::list<PotentiallyReferencedDecls> PotentiallyReferencedDeclStack;
+  /// \brief Data structure used to record current or nested
+  /// expression evaluation contexts.
+  struct ExpressionEvaluationContextRecord {
+    /// \brief The expression evaluation context.
+    ExpressionEvaluationContext Context;
+
+    /// \brief The number of temporaries that were active when we
+    /// entered this expression evaluation context.
+    unsigned NumTemporaries;
+
+    /// \brief The set of declarations referenced within a
+    /// potentially potentially-evaluated context.
+    ///
+    /// When leaving a potentially potentially-evaluated context, each
+    /// of these elements will be as referenced if the corresponding
+    /// potentially potentially evaluated expression is potentially
+    /// evaluated.
+    PotentiallyReferencedDecls *PotentiallyReferenced;
+
+    ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
+                                      unsigned NumTemporaries) 
+      : Context(Context), NumTemporaries(NumTemporaries), 
+        PotentiallyReferenced(0) { }
+
+    void addReferencedDecl(SourceLocation Loc, Decl *Decl) {
+      if (!PotentiallyReferenced)
+        PotentiallyReferenced = new PotentiallyReferencedDecls;
+      PotentiallyReferenced->push_back(std::make_pair(Loc, Decl));
+    }
+
+    void Destroy() {
+      delete PotentiallyReferenced;
+      PotentiallyReferenced = 0;
+    }
+  };
+
+  /// A stack of expression evaluation contexts.
+  llvm::SmallVector<ExpressionEvaluationContextRecord, 8> ExprEvalContexts;
 
   /// \brief Whether the code handled by Sema should be considered a
   /// complete translation unit or not.
@@ -1377,12 +1408,10 @@ public:
                         const PartialDiagnostic &PD,
                         bool Equality = false);
 
-  virtual ExpressionEvaluationContext
+  virtual void
   PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext);
 
-  virtual void
-  PopExpressionEvaluationContext(ExpressionEvaluationContext OldContext,
-                                 ExpressionEvaluationContext NewContext);
+  virtual void PopExpressionEvaluationContext();
 
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
 

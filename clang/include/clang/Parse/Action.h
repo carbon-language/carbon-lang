@@ -917,23 +917,12 @@ public:
   /// \brief The parser is entering a new expression evaluation context.
   ///
   /// \param NewContext is the new expression evaluation context.
-  ///
-  /// \returns the previous expression evaluation context.
-  virtual ExpressionEvaluationContext
-  PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
-    return PotentiallyEvaluated;
-  }
-
-  /// \brief The parser is existing an expression evaluation context.
-  ///
-  /// \param OldContext the expression evaluation context that the parser is
-  /// leaving.
-  ///
-  /// \param NewContext the expression evaluation context that the parser is
-  /// returning to.
   virtual void
-  PopExpressionEvaluationContext(ExpressionEvaluationContext OldContext,
-                                 ExpressionEvaluationContext NewContext) { }
+  PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) { }
+
+  /// \brief The parser is exiting an expression evaluation context.
+  virtual void
+  PopExpressionEvaluationContext() { }
 
   // Primary Expressions.
 
@@ -2661,21 +2650,15 @@ class EnterExpressionEvaluationContext {
   /// \brief The action object.
   Action &Actions;
 
-  /// \brief The previous expression evaluation context.
-  Action::ExpressionEvaluationContext PrevContext;
-
-  /// \brief The current expression evaluation context.
-  Action::ExpressionEvaluationContext CurContext;
-
 public:
   EnterExpressionEvaluationContext(Action &Actions,
                               Action::ExpressionEvaluationContext NewContext)
-    : Actions(Actions), CurContext(NewContext) {
-      PrevContext = Actions.PushExpressionEvaluationContext(NewContext);
+    : Actions(Actions) {
+    Actions.PushExpressionEvaluationContext(NewContext);
   }
 
   ~EnterExpressionEvaluationContext() {
-    Actions.PopExpressionEvaluationContext(CurContext, PrevContext);
+    Actions.PopExpressionEvaluationContext();
   }
 };
 

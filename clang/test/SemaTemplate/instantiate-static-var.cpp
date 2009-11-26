@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 template<typename T, T Divisor>
 class X {
 public:
@@ -37,4 +36,39 @@ struct NoDefCon {
 void test() {
   DefCon &DC = Z<DefCon>::value;
   NoDefCon &NDC = Z<NoDefCon>::value; // expected-note{{instantiation}}
+}
+
+// PR5609
+struct X1 {
+  ~X1();  // The errors won't be triggered without this dtor.
+};
+
+template <typename T>
+struct Y1 {
+  static char Helper(T);
+  static const int value = sizeof(Helper(T()));
+};
+
+struct X2 {
+  virtual ~X2();
+};
+
+namespace std {
+  class type_info { };
+}
+
+template <typename T>
+struct Y2 {
+  static T &Helper();
+  static const int value = sizeof(typeid(Helper()));
+};
+
+template <int>
+struct Z1 {};
+
+void Test() {
+  Z1<Y1<X1>::value> x;
+  int y[Y1<X1>::value];
+  Z1<Y2<X2>::value> x2;
+  int y2[Y2<X2>::value];
 }

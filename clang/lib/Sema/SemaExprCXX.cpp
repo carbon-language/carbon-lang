@@ -63,10 +63,11 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
       }
     }
 
-    // If this is an unevaluated operand, clear out the set of declaration
-    // references we have been computing.
+    // If this is an unevaluated operand, clear out the set of
+    // declaration references we have been computing and eliminate any
+    // temporaries introduced in its computation.
     if (isUnevaluatedOperand)
-      PotentiallyReferencedDeclStack.back().clear();
+      ExprEvalContexts.back().Context = Unevaluated;
   }
 
   return Owned(new (Context) CXXTypeidExpr(isType, TyOrExpr,

@@ -4490,7 +4490,7 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
                             const PartialDiagnostic &PD, bool Equality) {
   // Don't warn if we're in an unevaluated context.
-  if (ExprEvalContext == Unevaluated)
+  if (ExprEvalContexts.back().Context == Unevaluated)
     return;
 
   QualType lt = lex->getType(), rt = rex->getType();
@@ -6378,34 +6378,41 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
   return false;
 }
 
-Sema::ExpressionEvaluationContext
+void
 Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
-  // Introduce a new set of potentially referenced declarations to the stack.
-  if (NewContext == PotentiallyPotentiallyEvaluated)
-    PotentiallyReferencedDeclStack.push_back(PotentiallyReferencedDecls());
-
-  std::swap(ExprEvalContext, NewContext);
-  return NewContext;
+  ExprEvalContexts.push_back(
+        ExpressionEvaluationContextRecord(NewContext, ExprTemporaries.size()));
 }
 
 void
-Sema::PopExpressionEvaluationContext(ExpressionEvaluationContext OldContext,
-                                     ExpressionEvaluationContext NewContext) {
-  ExprEvalContext = NewContext;
+Sema::PopExpressionEvaluationContext() {
+  // Pop the current expression evaluation context off the stack.
+  ExpressionEvaluationContextRecord Rec = ExprEvalContexts.back();
+  ExprEvalContexts.pop_back();
 
-  if (OldContext == PotentiallyPotentiallyEvaluated) {
+  if (Rec.Context == PotentiallyPotentiallyEvaluated && 
+      Rec.PotentiallyReferenced) {
     // Mark any remaining declarations in the current position of the stack
     // as "referenced". If they were not meant to be referenced, semantic
     // analysis would have eliminated them (e.g., in ActOnCXXTypeId).
-    PotentiallyReferencedDecls RemainingDecls;
-    RemainingDecls.swap(PotentiallyReferencedDeclStack.back());
-    PotentiallyReferencedDeclStack.pop_back();
-
-    for (PotentiallyReferencedDecls::iterator I = RemainingDecls.begin(),
-                                           IEnd = RemainingDecls.end();
+    for (PotentiallyReferencedDecls::iterator 
+              I = Rec.PotentiallyReferenced->begin(),
+           IEnd = Rec.PotentiallyReferenced->end();
          I != IEnd; ++I)
       MarkDeclarationReferenced(I->first, I->second);
-  }
+  } 
+
+  // When are coming out of an unevaluated context, clear out any
+  // temporaries that we may have created as part of the evaluation of
+  // the expression in that context: they aren't relevant because they
+  // will never be constructed.
+  if (Rec.Context == Unevaluated && 
+      ExprTemporaries.size() > Rec.NumTemporaries)
+    ExprTemporaries.erase(ExprTemporaries.begin() + Rec.NumTemporaries,
+                          ExprTemporaries.end());
+
+  // Destroy the popped expression evaluation record.
+  Rec.Destroy();
 }
 
 /// \brief Note that the given declaration was referenced in the source code.
@@ -6437,7 +6444,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (CurContext->isDependentContext())
     return;
 
-  switch (ExprEvalContext) {
+  switch (ExprEvalContexts.back().Context) {
     case Unevaluated:
       // We are in an expression that is not potentially evaluated; do nothing.
       return;
@@ -6451,7 +6458,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       // We are in an expression that may be potentially evaluated; queue this
       // declaration reference until we know whether the expression is
       // potentially evaluated.
-      PotentiallyReferencedDeclStack.back().push_back(std::make_pair(Loc, D));
+      ExprEvalContexts.back().addReferencedDecl(Loc, D);
       return;
   }
 

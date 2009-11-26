@@ -352,7 +352,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
     PreDeclaratorDC(0), CurBlock(0), PackContext(0), ParsingDeclDepth(0),
     IdResolver(pp.getLangOptions()), StdNamespace(0), StdBadAlloc(0),
-    GlobalNewDeleteDeclared(false), ExprEvalContext(PotentiallyEvaluated),
+    GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), NonInstantiationEntries(0), 
     CurrentInstantiationScope(0) 
@@ -363,6 +363,9 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 
   // Tell diagnostics how to render things from the AST library.
   PP.getDiagnostics().SetArgToStringFn(ConvertArgToStringFn, &Context);
+
+  ExprEvalContexts.push_back(
+                  ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));
 }
 
 /// Retrieves the width and signedness of the given integer type,
@@ -592,7 +595,7 @@ static void DiagnoseImpCast(Sema &S, Expr *E, QualType T, unsigned diag) {
 /// Implements -Wconversion.
 static void CheckImplicitConversion(Sema &S, Expr *E, QualType T) {
   // Don't diagnose in unevaluated contexts.
-  if (S.ExprEvalContext == Sema::Unevaluated)
+  if (S.ExprEvalContexts.back().Context == Sema::Unevaluated)
     return;
 
   // Don't diagnose for value-dependent expressions.
