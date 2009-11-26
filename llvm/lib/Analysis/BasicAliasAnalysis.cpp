@@ -400,7 +400,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
         Offset += RHSC->getValue();
         return V;
-      // TODO: SHL, MUL, OR.
+      // TODO: SHL, MUL.
       }
     }
   }
@@ -610,10 +610,9 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
     // Check to see if these two pointers are related by the getelementptr
     // instruction.  If one pointer is a GEP with a non-zero index of the other
     // pointer, we know they cannot alias.
-    //
-    // FIXME: The check below only looks at the size of one of the pointers, not
-    // both, this may cause us to miss things.
-    if (V1Size == ~0U || V2Size == ~0U)
+
+    // If both accesses are unknown size, we can't do anything useful here.
+    if (V1Size == ~0U && V2Size == ~0U)
       return MayAlias;
 
     AliasResult R = aliasCheck(UnderlyingV1, ~0U, V2, V2Size);
