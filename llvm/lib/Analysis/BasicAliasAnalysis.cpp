@@ -405,6 +405,97 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
   return NoAA::getModRefInfo(CS1, CS2);
 }
 
+/// DecomposeGEPExpression - If V is a symbolic pointer expression, decompose it
+/// into a base pointer with a constant offset and a number of scaled symbolic
+/// offsets.
+static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
+               SmallVectorImpl<std::pair<const Value*, uint64_t> > &VarIndices,
+                                           const TargetData *TD) {
+  const Value *OrigPtr = V;
+  BaseOffs = 0;
+  while (1) {
+    // See if this is a bitcast or GEP.
+    const Operator *Op = dyn_cast<Operator>(V);
+    if (Op == 0) return V;
+    
+    if (Op->getOpcode() == Instruction::BitCast) {
+      V = Op->getOperand(0);
+      continue;
+    }
+    
+    if (Op->getOpcode() != Instruction::GetElementPtr)
+      return V;
+    
+    // Don't attempt to analyze GEPs over unsized objects.
+    if (!cast<PointerType>(Op->getOperand(0)->getType())
+          ->getElementType()->isSized())
+      return V;
+    
+    // Walk the indices of the GEP, accumulating them into BaseOff/VarIndices.
+    gep_type_iterator GTI = gep_type_begin(Op);
+    for (User::const_op_iterator I = next(Op->op_begin()), E = Op->op_end();
+         I != E; ++I) {
+      Value *Index = *I;
+      // Compute the (potentially symbolic) offset in bytes for this index.
+      if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
+        // For a struct, add the member offset.
+        unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
+        if (FieldNo == 0) continue;
+        if (TD == 0) goto FailNoTD;
+        
+        BaseOffs += TD->getStructLayout(STy)->getElementOffset(FieldNo);
+        continue;
+      }
+      
+      // For an array/pointer, add the element offset, explicitly scaled.
+      if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Index)) {
+        if (CIdx->isZero()) continue;
+        if (TD == 0) goto FailNoTD;
+        
+        BaseOffs += TD->getTypeAllocSize(*GTI)*CIdx->getSExtValue();
+        continue;
+      }
+      
+      if (TD == 0) goto FailNoTD;
+      
+      // TODO: Could handle linear expressions here like A[X+1], also A[X*4|1].
+      uint64_t Scale = TD->getTypeAllocSize(*GTI);
+      
+      // If we already had an occurrance of this index variable, merge this
+      // scale into it.  For example, we want to handle:
+      //   A[x][x] -> x*16 + x*4 -> x*20
+      for (unsigned i = 0, e = VarIndices.size(); i != e; ++i) {
+        if (VarIndices[i].first == Index) {
+          Scale += VarIndices[i].second;
+          VarIndices.erase(VarIndices.begin()+i);
+          break;
+        }
+      }
+      
+      // Make sure that we have a scale that makes sense for this target's
+      // pointer size.
+      if (unsigned ShiftBits = 64-TD->getPointerSizeInBits()) {
+        Scale <<= ShiftBits;
+        Scale >>= ShiftBits;
+      }
+      
+      if (Scale)
+        VarIndices.push_back(std::make_pair(Index, Scale));
+    }
+    
+    // Analyze the base pointer next.
+    V = Op->getOperand(0);
+  }
+  
+  // If we don't have TD around, we can't analyze this index, remove all
+  // information we've found.
+FailNoTD:
+  VarIndices.clear();
+  BaseOffs = 0;
+  return OrigPtr;
+}
+
+
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
 /// anything about V2.
@@ -479,10 +570,12 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
   if (V1Size == ~0U || V2Size == ~0U)
     return MayAlias;
 
-  SmallVector<Value*, 16> GEPOperands;
-  const Value *BasePtr = GetGEPOperands(GEP1, GEPOperands);
-
-  AliasResult R = aliasCheck(BasePtr, ~0U, V2, V2Size);
+  int64_t GEP1BaseOffset;
+  SmallVector<std::pair<const Value*, uint64_t>, 4> VariableIndices;
+  const Value *GEP1BasePtr =
+    DecomposeGEPExpression(GEP1, GEP1BaseOffset, VariableIndices, TD);
+    
+  AliasResult R = aliasCheck(GEP1BasePtr, ~0U, V2, V2Size);
   if (R != MustAlias)
     // If V2 may alias GEP base pointer, conservatively returns MayAlias.
     // If V2 is known not to alias GEP base pointer, then the two values
@@ -491,48 +584,34 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
     // with the first operand of the getelementptr".
     return R;
 
-  // If there is at least one non-zero constant index, we know they cannot
-  // alias.
-  bool ConstantFound = false;
-  bool AllZerosFound = true;
-  for (unsigned i = 0, e = GEPOperands.size(); i != e; ++i)
-    if (const Constant *C = dyn_cast<Constant>(GEPOperands[i])) {
-      if (!C->isNullValue()) {
-        ConstantFound = true;
-        AllZerosFound = false;
-        break;
-      }
-    } else {
-      AllZerosFound = false;
-    }
-
   // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
   // the ptr, the end result is a must alias also.
-  if (AllZerosFound)
+  if (GEP1BaseOffset == 0 && VariableIndices.empty())
     return MustAlias;
 
-  if (ConstantFound) {
-    if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
+  // If we have a known constant offset, see if this offset is larger than the
+  // access size being queried.  If so, and if no variable indices can remove
+  // pieces of this constant, then we know we have a no-alias.  For example,
+  //   &A[100] != &A.
+  
+  // In order to handle cases like &A[100][i] where i is an out of range
+  // subscript, we have to ignore all constant offset pieces that are a multiple
+  // of a scaled index.  Do this by removing constant offsets that are a
+  // multiple of any of our variable indices.  This allows us to transform
+  // things like &A[i][1] because i has a stride of (e.g.) 8 bytes but the 1
+  // provides an offset of 4 bytes (assuming a <= 4 byte access).
+  for (unsigned i = 0, e = VariableIndices.size(); i != e && GEP1BaseOffset;++i)
+    if (int64_t RemovedOffset = GEP1BaseOffset/VariableIndices[i].second)
+      GEP1BaseOffset -= RemovedOffset*VariableIndices[i].second;
+  
+  // If our known offset is bigger than the access size, we know we don't have
+  // an alias.
+  if (GEP1BaseOffset) {
+    if (GEP1BaseOffset >= (int64_t)V2Size ||
+        GEP1BaseOffset <= -(int64_t)V1Size)
       return NoAlias;
-
-    // Otherwise we have to check to see that the distance is more than
-    // the size of the argument... build an index vector that is equal to
-    // the arguments provided, except substitute 0's for any variable
-    // indexes we find...
-    if (TD &&
-        cast<PointerType>(BasePtr->getType())->getElementType()->isSized()) {
-      for (unsigned i = 0; i != GEPOperands.size(); ++i)
-        if (!isa<ConstantInt>(GEPOperands[i]))
-          GEPOperands[i] = Constant::getNullValue(GEPOperands[i]->getType());
-      int64_t Offset = TD->getIndexedOffset(BasePtr->getType(),
-                                            &GEPOperands[0],
-                                            GEPOperands.size());
-
-      if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
-        return NoAlias;
-    }
   }
-
+  
   return MayAlias;
 }
 
@@ -713,6 +792,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
       return NoAlias;
   }
 
+  // FIXME: This isn't aggressively handling alias(GEP, PHI) for example: if the
+  // GEP can't simplify, we don't even look at the PHI cases.
   if (!isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
