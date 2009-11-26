@@ -1651,9 +1651,9 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   llvm::OwningPtr<RegionStoreSubRegionMap>
     SubRegions(getRegionStoreSubRegionMap(store));
   
-    // Do a pass over the regions in the store.  For VarRegions we check if
-    // the variable is still live and if so add it to the list of live roots.
-    // For other regions we populate our region backmap.
+  // Do a pass over the regions in the store.  For VarRegions we check if
+  // the variable is still live and if so add it to the list of live roots.
+  // For other regions we populate our region backmap.
   llvm::SmallVector<const MemRegion*, 10> IntermediateRoots;
   
   // Scan the direct bindings for "intermediate" roots.
@@ -1751,8 +1751,21 @@ tryAgain:
 
     // Mark the symbol for any live SymbolicRegion as "live".  This means we
     // should continue to track that symbol.
-    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+    if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
       SymReaper.markLive(SymR->getSymbol());
+    
+    // For BlockDataRegions, enqueue all VarRegions for that are referenced
+    // via BlockDeclRefExprs.
+    if (const BlockDataRegion *BD = dyn_cast<BlockDataRegion>(R)) {
+      for (BlockDataRegion::referenced_vars_iterator
+            RI = BD->referenced_vars_begin(), RE = BD->referenced_vars_end();
+           RI != RE; ++RI)
+        WorkList.push_back(std::make_pair(state_N, *RI));
+
+      // No possible data bindings on a BlockDataRegion.  Continue to the
+      // next region in the worklist.
+      continue;
+    }
 
     Store store_N = state_N->getStore();
     RegionBindings B_N = GetRegionBindings(store_N);
