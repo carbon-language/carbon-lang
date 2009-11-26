@@ -9872,6 +9872,120 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (Operand->getIntrinsicID() == Intrinsic::bswap)
         return ReplaceInstUsesWith(CI, Operand->getOperand(1));
     break;
+  case Intrinsic::uadd_with_overflow: {
+    Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
+    const IntegerType *IT = cast<IntegerType>(II->getOperand(1)->getType());
+    uint32_t BitWidth = IT->getBitWidth();
+    APInt Mask = APInt::getSignBit(BitWidth);
+    APInt LHSKnownZero, LHSKnownOne, RHSKnownZero, RHSKnownOne;
+    ComputeMaskedBits(LHS, Mask, LHSKnownZero, LHSKnownOne);
+    bool LHSKnownNegative = LHSKnownOne[BitWidth - 1];
+    bool LHSKnownPositive = LHSKnownZero[BitWidth - 1];
+
+    if (LHSKnownNegative || LHSKnownPositive) {
+      ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
+      bool RHSKnownNegative = RHSKnownOne[BitWidth - 1];
+      bool RHSKnownPositive = RHSKnownZero[BitWidth - 1];
+      if (LHSKnownNegative && RHSKnownNegative) {
+        // The sign bit is set in both cases: this MUST overflow.
+        // Create a simple add instruction, and insert it into the struct.
+        Instruction *Add = BinaryOperator::CreateAdd(LHS, RHS, "", &CI);
+        Worklist.Add(Add);
+        Constant *V[2];
+        V[0] = UndefValue::get(LHS->getType());
+        V[1] = ConstantInt::getTrue(*Context);
+        Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
+        return InsertValueInst::Create(Struct, Add, 0);
+      }
+      
+      if (LHSKnownPositive && RHSKnownPositive) {
+        // The sign bit is clear in both cases: this CANNOT overflow.
+        // Create a simple add instruction, and insert it into the struct.
+        Instruction *Add = BinaryOperator::CreateNUWAdd(LHS, RHS, "", &CI);
+        Worklist.Add(Add);
+        Constant *V[2];
+        V[0] = UndefValue::get(LHS->getType());
+        V[1] = ConstantInt::getFalse(*Context);
+        Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
+        return InsertValueInst::Create(Struct, Add, 0);
+      }
+    }
+  }
+  // FALL THROUGH uadd into sadd
+  case Intrinsic::sadd_with_overflow:
+    // Canonicalize constants into the RHS.
+    if (isa<Constant>(II->getOperand(1)) &&
+        !isa<Constant>(II->getOperand(2))) {
+      Value *LHS = II->getOperand(1);
+      II->setOperand(1, II->getOperand(2));
+      II->setOperand(2, LHS);
+      return II;
+    }
+
+    // X + undef -> undef
+    if (isa<UndefValue>(II->getOperand(2)))
+      return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
+      
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getOperand(2))) {
+      // X + 0 -> {X, false}
+      if (RHS->isZero()) {
+        Constant *V[] = {
+          UndefValue::get(II->getType()), ConstantInt::getFalse(*Context)
+        };
+        Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
+        return InsertValueInst::Create(Struct, II->getOperand(1), 0);
+      }
+    }
+    break;
+  case Intrinsic::usub_with_overflow:
+  case Intrinsic::ssub_with_overflow:
+    // undef - X -> undef
+    // X - undef -> undef
+    if (isa<UndefValue>(II->getOperand(1)) ||
+        isa<UndefValue>(II->getOperand(2)))
+      return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
+      
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getOperand(2))) {
+      // X - 0 -> {X, false}
+      if (RHS->isZero()) {
+        Constant *V[] = {
+          UndefValue::get(II->getType()), ConstantInt::getFalse(*Context)
+        };
+        Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
+        return InsertValueInst::Create(Struct, II->getOperand(1), 0);
+      }
+    }
+    break;
+  case Intrinsic::umul_with_overflow:
+  case Intrinsic::smul_with_overflow:
+    // Canonicalize constants into the RHS.
+    if (isa<Constant>(II->getOperand(1)) &&
+        !isa<Constant>(II->getOperand(2))) {
+      Value *LHS = II->getOperand(1);
+      II->setOperand(1, II->getOperand(2));
+      II->setOperand(2, LHS);
+      return II;
+    }
+
+    // X * undef -> undef
+    if (isa<UndefValue>(II->getOperand(2)))
+      return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
+      
+    if (ConstantInt *RHSI = dyn_cast<ConstantInt>(II->getOperand(2))) {
+      // X*0 -> {0, false}
+      if (RHSI->isZero())
+        return ReplaceInstUsesWith(CI, Constant::getNullValue(II->getType()));
+      
+      // X * 1 -> {X, false}
+      if (RHSI->equalsInt(1)) {
+        Constant *V[2];
+        V[0] = UndefValue::get(II->getType());
+        V[1] = ConstantInt::getFalse(*Context);
+        Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
+        return InsertValueInst::Create(Struct, II->getOperand(1), 1);
+      }
+    }
+    break;
   case Intrinsic::ppc_altivec_lvx:
   case Intrinsic::ppc_altivec_lvxl:
   case Intrinsic::x86_sse_loadu_ps:
