@@ -308,6 +308,27 @@ bool GRState::scanReachableSymbols(SVal val, SymbolVisitor& visitor) const {
   return S.scan(val);
 }
 
+bool GRState::scanReachableSymbols(const SVal *I, const SVal *E,
+                                   SymbolVisitor &visitor) const {
+  ScanReachableSymbols S(this, visitor);
+  for ( ; I != E; ++I) {
+    if (S.scan(*I))
+      return true;
+  }
+  return false;  
+}
+
+bool GRState::scanReachableSymbols(const MemRegion * const *I,
+                                   const MemRegion * const *E,
+                                   SymbolVisitor &visitor) const {
+  ScanReachableSymbols S(this, visitor);
+  for ( ; I != E; ++I) {
+    if (S.scan(*I))
+      return true;
+  }
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Queries.
 //===----------------------------------------------------------------------===//
