@@ -9877,12 +9877,15 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     const IntegerType *IT = cast<IntegerType>(II->getOperand(1)->getType());
     uint32_t BitWidth = IT->getBitWidth();
     APInt Mask = APInt::getSignBit(BitWidth);
-    APInt LHSKnownZero, LHSKnownOne, RHSKnownZero, RHSKnownOne;
+    APInt LHSKnownZero(BitWidth, 0);
+    APInt LHSKnownOne(BitWidth, 0);
     ComputeMaskedBits(LHS, Mask, LHSKnownZero, LHSKnownOne);
     bool LHSKnownNegative = LHSKnownOne[BitWidth - 1];
     bool LHSKnownPositive = LHSKnownZero[BitWidth - 1];
 
     if (LHSKnownNegative || LHSKnownPositive) {
+      APInt RHSKnownZero(BitWidth, 0);
+      APInt RHSKnownOne(BitWidth, 0);
       ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
       bool RHSKnownNegative = RHSKnownOne[BitWidth - 1];
       bool RHSKnownPositive = RHSKnownZero[BitWidth - 1];
