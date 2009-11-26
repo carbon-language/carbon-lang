@@ -14,8 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -26,6 +24,9 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Operator.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -381,15 +382,22 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 /// GetLinearExpression - Analyze the specified value as a linear expression:
 /// "A*V + B".  Return the scale and offset values as APInts and return V as a
 /// Value*.  The incoming Value is known to be a scalar integer.
-static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset) {
+static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
+                                  const TargetData *TD) {
   assert(isa<IntegerType>(V->getType()) && "Not an integer value");
   
   if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(V)) {
     if (ConstantInt *RHSC = dyn_cast<ConstantInt>(BOp->getOperand(1))) {
       switch (BOp->getOpcode()) {
       default: break;
+      case Instruction::Or:
+        // X|C == X+C if all the bits in C are unset in X.  Otherwise we can't
+        // analyze it.
+        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), TD))
+          break;
+        // FALL THROUGH.
       case Instruction::Add:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset);
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
         Offset += RHSC->getValue();
         return V;
       // TODO: SHL, MUL, OR.
@@ -482,7 +490,7 @@ static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       
       unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
-      Index = GetLinearExpression(Index, IndexScale, IndexOffset);
+      Index = GetLinearExpression(Index, IndexScale, IndexOffset, TD);
       
       Scale *= IndexScale.getZExtValue();
       BaseOffs += IndexOffset.getZExtValue()*Scale;

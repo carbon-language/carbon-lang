@@ -443,23 +443,6 @@ entry:
 
 //===---------------------------------------------------------------------===//
 
-"basicaa" should know how to look through "or" instructions that act like add
-instructions.  For example in this code, the x*4+1 is turned into x*4 | 1, and
-basicaa can't analyze the array subscript, leading to duplicated loads in the
-generated code:
-
-void test(int X, int Y, int a[]) {
-int i;
-  for (i=2; i<1000; i+=4) {
-  a[i+0] = a[i-1+0]*a[i-2+0];
-  a[i+1] = a[i-1+1]*a[i-2+1];
-  a[i+2] = a[i-1+2]*a[i-2+2];
-  a[i+3] = a[i-1+3]*a[i-2+3];
-  }
-}
-
-//===---------------------------------------------------------------------===//
-
 We should investigate an instruction sinking pass.  Consider this silly
 example in pic mode:
 

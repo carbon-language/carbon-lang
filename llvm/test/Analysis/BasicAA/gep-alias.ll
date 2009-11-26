@@ -86,4 +86,18 @@ define i32 @test5(i32* %p, i64 %i) {
 ; CHECK: ret i32 0
 }
 
+; P[i] != p[(i*4)|1]
+define i32 @test6(i32* %p, i64 %i1) {
+  %i = shl i64 %i1, 2
+  %pi = getelementptr i32* %p, i64 %i
+  %i.next = or i64 %i, 1
+  %pi.next = getelementptr i32* %p, i64 %i.next
+  %x = load i32* %pi
+  store i32 42, i32* %pi.next
+  %y = load i32* %pi
+  %z = sub i32 %x, %y
+  ret i32 %z
+; CHECK: @test6
+; CHECK: ret i32 0
+}
 
