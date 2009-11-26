@@ -690,10 +690,15 @@ static bool isPHITranslatable(Instruction *Inst) {
   if (isa<PHINode>(Inst))
     return true;
   
-  // TODO: BITCAST, GEP.
-
-  // ...
+  // We can handle bitcast of a PHI, but the PHI needs to be in the same block
+  // as the bitcast.
+  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst))
+    if (PHINode *PN = dyn_cast<PHINode>(BC->getOperand(0)))
+      if (PN->getParent() == BC->getParent())
+        return true;
   
+  // TODO: GEP, ...
+
   //   cerr << "MEMDEP: Could not PHI translate: " << *Pointer;
   //   if (isa<BitCastInst>(PtrInst) || isa<GetElementPtrInst>(PtrInst))
   //     cerr << "OP:\t\t\t\t" << *PtrInst->getOperand(0);
@@ -708,6 +713,25 @@ static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred) {
   if (PHINode *PN = dyn_cast<PHINode>(Inst))
     return PN->getIncomingValueForBlock(Pred);
   
+  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
+    PHINode *BCPN = cast<PHINode>(BC->getOperand(0));
+    Value *PHIIn = BCPN->getIncomingValueForBlock(Pred);
+    
+    // Constants are trivial to phi translate.
+    if (Constant *C = dyn_cast<Constant>(PHIIn))
+      return ConstantExpr::getBitCast(C, BC->getType());
+    
+    // Otherwise we have to see if a bitcasted version of the incoming pointer
+    // is available.  If so, we can use it, otherwise we have to fail.
+    for (Value::use_iterator UI = PHIIn->use_begin(), E = PHIIn->use_end();
+         UI != E; ++UI) {
+      if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI))
+        if (BCI->getType() == BC->getType())
+          return BCI;
+    }
+    return 0;
+  }
+
   return 0;
 }
 

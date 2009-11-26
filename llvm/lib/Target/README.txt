@@ -1284,8 +1284,6 @@ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35287 [LPRE crit edge splitting]
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34677 (licm does this, LPRE crit edge)
   llvm-gcc t2.c -S -o - -O0 -emit-llvm | llvm-as | opt -mem2reg -simplifycfg -gvn | llvm-dis
 
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16799 [BITCAST PHI TRANS]
-
 //===---------------------------------------------------------------------===//
 
 Type based alias analysis:

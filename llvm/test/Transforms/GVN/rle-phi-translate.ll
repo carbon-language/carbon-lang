@@ -4,6 +4,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i386-apple-darwin7"
 
 define i32 @test1(i32* %b, i32* %c) nounwind {
+; CHECK: @test1
 entry:
 	%g = alloca i32
 	%t1 = icmp eq i32* %b, null
@@ -32,5 +33,30 @@ bb2:		; preds = %bb1, %bb
 ; CHECK: ret i32
 	%ret = add i32 %cv, %bv
 	ret i32 %ret
+}
+
+define i8 @test2(i1 %cond, i32* %b, i32* %c) nounwind {
+; CHECK: @test2
+entry:
+	br i1 %cond, label %bb, label %bb1
+
+bb:
+  %b1 = bitcast i32* %b to i8*
+  store i8 4, i8* %b1
+	br label %bb2
+
+bb1:
+  %c1 = bitcast i32* %c to i8*
+  store i8 92, i8* %c1
+	br label %bb2
+
+bb2:
+	%d = phi i32* [ %c, %bb1 ], [ %b, %bb ]
+  %d1 = bitcast i32* %d to i8*
+	%dv = load i8* %d1
+; CHECK: %dv = phi i8
+; CHECK-NOT: load
+; CHECK: ret i8 %dv
+	ret i8 %dv
 }
 
