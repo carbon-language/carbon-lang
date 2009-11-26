@@ -1064,12 +1064,15 @@ const Value *llvm::DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       
       uint64_t Scale = TD->getTypeAllocSize(*GTI);
       
+      // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
       Index = GetLinearExpression(Index, IndexScale, IndexOffset, TD);
       
-      Scale *= IndexScale.getZExtValue();
+      // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
+      // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
       BaseOffs += IndexOffset.getZExtValue()*Scale;
+      Scale *= IndexScale.getZExtValue();
       
       
       // If we already had an occurrance of this index variable, merge this
