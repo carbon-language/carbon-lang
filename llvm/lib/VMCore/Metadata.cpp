@@ -33,10 +33,8 @@ MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   StringMapEntry<MDString *> &Entry = 
     pImpl->MDStringCache.GetOrCreateValue(Str);
   MDString *&S = Entry.getValue();
-  if (S) return S;
-  
-  return S = 
-    new MDString(Context, Entry.getKey());
+  if (!S) S = new MDString(Context, Entry.getKey());
+  return S;
 }
 
 MDString *MDString::get(LLVMContext &Context, const char *Str) {
@@ -44,10 +42,8 @@ MDString *MDString::get(LLVMContext &Context, const char *Str) {
   StringMapEntry<MDString *> &Entry = 
     pImpl->MDStringCache.GetOrCreateValue(Str ? StringRef(Str) : StringRef());
   MDString *&S = Entry.getValue();
-  if (S) return S;
-  
-  return S = 
-    new MDString(Context, Entry.getKey());
+  if (!S) new MDString(Context, Entry.getKey());
+  return S;
 }
 
 //===----------------------------------------------------------------------===//
@@ -74,28 +70,19 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
     ID.AddPointer(Vals[i]);
 
   void *InsertPoint;
-  MDNode *N;
-  {
-    N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-  }  
-  if (N) return N;
-  
-  N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
+  MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   if (!N) {
     // InsertPoint will have been set by the FindNodeOrInsertPos call.
     N = new MDNode(Context, Vals, NumVals);
     pImpl->MDNodeSet.InsertNode(N, InsertPoint);
   }
-
   return N;
 }
 
 /// ~MDNode - Destroy MDNode.
 MDNode::~MDNode() {
-  {
-    LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-    pImpl->MDNodeSet.RemoveNode(this);
-  }
+  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+  pImpl->MDNodeSet.RemoveNode(this);
   delete [] Node;
   Node = NULL;
 }
@@ -241,7 +228,7 @@ public:
   /// the same metadata to In2.
   void copyMD(Instruction *In1, Instruction *In2);
 
-  /// getHandlerNames - Populate client supplied smallvector using custome
+  /// getHandlerNames - Populate client-supplied smallvector using custom
   /// metadata name and ID.
   void getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&) const;
 
@@ -317,7 +304,7 @@ void MetadataContextImpl::removeMD(unsigned Kind, Instruction *Inst) {
     }
   }
 }
-  
+
 /// removeAllMetadata - Remove all metadata attached with an instruction.
 void MetadataContextImpl::removeAllMetadata(Instruction *Inst) {
   MetadataStore.erase(Inst);
@@ -454,12 +441,12 @@ getMDs(const Instruction *Inst,
 void MetadataContext::addMD(unsigned Kind, MDNode *Node, Instruction *Inst) {
   pImpl->addMD(Kind, Node, Inst);
 }
-  
+
 /// removeMD - Remove metadata of given kind attached with an instuction.
 void MetadataContext::removeMD(unsigned Kind, Instruction *Inst) {
   pImpl->removeMD(Kind, Inst);
 }
-  
+
 /// removeAllMetadata - Remove all metadata attached with an instruction.
 void MetadataContext::removeAllMetadata(Instruction *Inst) {
   pImpl->removeAllMetadata(Inst);
