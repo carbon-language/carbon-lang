@@ -6,6 +6,7 @@ define void @test1(i32* %P) {
         store i32 124, i32* null
         ret void
 ; CHECK: @test1(
+; CHECK-NEXT: store i32 123, i32* undef
 ; CHECK-NEXT: store i32 undef, i32* null
 ; CHECK-NEXT: ret void
 }

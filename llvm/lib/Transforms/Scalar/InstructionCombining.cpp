@@ -12096,12 +12096,6 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   Value *Val = SI.getOperand(0);
   Value *Ptr = SI.getOperand(1);
 
-  if (isa<UndefValue>(Ptr)) {     // store X, undef -> noop (even if volatile)
-    EraseInstFromFunction(SI);
-    ++NumCombined;
-    return 0;
-  }
-  
   // If the RHS is an alloca with a single use, zapify the store, making the
   // alloca dead.
   // If the RHS is an alloca with a two uses, the other one being a 

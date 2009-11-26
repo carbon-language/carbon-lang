@@ -125,3 +125,15 @@ l10:
   %v11 = select i1 %v5_, i64 0, i64 %v6
   ret i64 %v11
 }
+
+; PR5471
+define arm_apcscc i32 @test5a() {
+       ret i32 0
+}
+
+define arm_apcscc void @test5() {
+       store i1 true, i1* undef
+       %1 = invoke i32 @test5a() to label %exit unwind label %exit
+exit:
+       ret void
+}
