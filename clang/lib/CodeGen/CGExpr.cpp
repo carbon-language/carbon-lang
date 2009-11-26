@@ -828,6 +828,24 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   return LV;
 }
 
+static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
+                                      const Expr *E, const FunctionDecl *FD) {
+  llvm::Value* V = CGF.CGM.GetAddrOfFunction(FD);
+  if (!FD->hasPrototype()) {
+    if (const FunctionProtoType *Proto =
+            FD->getType()->getAs<FunctionProtoType>()) {
+      // Ugly case: for a K&R-style definition, the type of the definition
+      // isn't the same as the type of a use.  Correct for this with a
+      // bitcast.
+      QualType NoProtoType =
+          CGF.getContext().getFunctionNoProtoType(Proto->getResultType());
+      NoProtoType = CGF.getContext().getPointerType(NoProtoType);
+      V = CGF.Builder.CreateBitCast(V, CGF.ConvertType(NoProtoType), "tmp");
+    }
+  }
+  return LValue::MakeAddr(V, CGF.MakeQualifiers(E->getType()));
+}
+
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const NamedDecl *ND = E->getDecl();
 
@@ -861,22 +879,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LV;
   }
   
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
-    llvm::Value* V = CGM.GetAddrOfFunction(FD);
-    if (!FD->hasPrototype()) {
-      if (const FunctionProtoType *Proto =
-              FD->getType()->getAs<FunctionProtoType>()) {
-        // Ugly case: for a K&R-style definition, the type of the definition
-        // isn't the same as the type of a use.  Correct for this with a
-        // bitcast.
-        QualType NoProtoType =
-            getContext().getFunctionNoProtoType(Proto->getResultType());
-        NoProtoType = getContext().getPointerType(NoProtoType);
-        V = Builder.CreateBitCast(V, ConvertType(NoProtoType), "tmp");
-      }
-    }
-    return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-  }
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
+    return EmitFunctionDeclLValue(*this, E, FD);
   
   if (E->getQualifier()) {
     // FIXME: the qualifier check does not seem sufficient here
@@ -1163,7 +1167,10 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   
   if (VarDecl *VD = dyn_cast<VarDecl>(ND))
     return EmitGlobalVarDeclLValue(*this, E, VD);
-  
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
+    return EmitFunctionDeclLValue(*this, E, FD);
+
   assert(false && "Unhandled member declaration!");
   return LValue();
 }

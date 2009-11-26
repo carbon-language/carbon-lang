@@ -36,3 +36,11 @@ void f(A *a) {
   A::E e3 = A().Foo;
 }
 
+namespace test3 {
+struct A {
+  static int foo();
+};
+int f() {
+  return A().foo();
+}
+}
