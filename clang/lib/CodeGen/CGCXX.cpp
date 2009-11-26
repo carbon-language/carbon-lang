@@ -819,11 +819,13 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
   return UniqueMangledName(Name.begin(), Name.end());
 }
 
-llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
-                                               const CXXMethodDecl *MD,
-                                               bool Extern, int64_t nv,
-                                               int64_t v) {
-  return GenerateCovariantThunk(Fn, MD, Extern, nv, v, 0, 0);
+llvm::Constant *
+CodeGenFunction::GenerateThunk(llvm::Function *Fn, const CXXMethodDecl *MD,
+                               bool Extern, 
+                               const ThunkAdjustment &ThisAdjustment) {
+  return GenerateCovariantThunk(Fn, MD, Extern, 
+                                ThisAdjustment.NonVirtual,
+                                ThisAdjustment.Virtual, 0, 0);
 }
 
 llvm::Value *CodeGenFunction::DynamicTypeAdjust(llvm::Value *V, int64_t nv,
@@ -961,10 +963,14 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
   return Fn;
 }
 
-llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
-                                          int64_t nv, int64_t v) {
+llvm::Constant *
+CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
+                          const ThunkAdjustment &ThisAdjustment) {
+  
   llvm::SmallString<256> OutName;
-  getMangleContext().mangleThunk(MD, nv, v, OutName);
+  getMangleContext().mangleThunk(MD, ThisAdjustment.NonVirtual,
+                                 ThisAdjustment.Virtual, OutName);
+  
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)
@@ -977,7 +983,7 @@ llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
 
   llvm::Function *Fn = llvm::Function::Create(FTy, linktype, OutName.str(),
                                               &getModule());
-  CodeGenFunction(*this).GenerateThunk(Fn, MD, Extern, nv, v);
+  CodeGenFunction(*this).GenerateThunk(Fn, MD, Extern, ThisAdjustment);
   llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
   return m;
 }

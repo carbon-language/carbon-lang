@@ -441,7 +441,8 @@ public:
 
   /// GenerateThunk - Generate a thunk for the given method
   llvm::Constant *GenerateThunk(llvm::Function *Fn, const CXXMethodDecl *MD,
-                                bool Extern, int64_t nv, int64_t v);
+                                bool Extern, 
+                                const ThunkAdjustment &ThisAdjustment);
   llvm::Constant *GenerateCovariantThunk(llvm::Function *Fn,
                                          const CXXMethodDecl *MD, bool Extern,
                                          int64_t nv_t, int64_t v_t,

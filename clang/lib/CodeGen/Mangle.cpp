@@ -67,7 +67,9 @@ public:
   llvm::raw_svector_ostream &getStream() { return Out; }
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "_Z");
-  void mangleCalloffset(int64_t nv, int64_t v);
+  void mangleCallOffset(int64_t NonVirtualOffset, 
+                        int64_t VirtualOffset);
+  void mangleNumber(int64_t Number);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleName(const NamedDecl *ND);
   void mangleType(QualType T);
@@ -336,34 +338,35 @@ void CXXNameMangler::mangleUnscopedTemplateName(const TemplateDecl *ND) {
   addSubstitution(ND);
 }
 
-void CXXNameMangler::mangleCalloffset(int64_t nv, int64_t v) {
+void CXXNameMangler::mangleNumber(int64_t Number) {
+  //  <number> ::= [n] <non-negative decimal integer>
+  if (Number < 0) {
+    Out << 'n';
+    Number = -Number;
+  }
+  
+  Out << Number;
+}
+
+void CXXNameMangler::mangleCallOffset(int64_t NonVirtualOffset, 
+                                      int64_t VirtualOffset) {
   //  <call-offset>  ::= h <nv-offset> _
   //                 ::= v <v-offset> _
   //  <nv-offset>    ::= <offset number>        # non-virtual base override
-  //  <v-offset>     ::= <offset nubmer> _ <virtual offset number>
+  //  <v-offset>     ::= <offset number> _ <virtual offset number>
   //                      # virtual base override, with vcall offset
-  if (v == 0) {
-    Out << "h";
-    if (nv < 0) {
-      Out << "n";
-      nv = -nv;
-    }
-    Out << nv;
-  } else {
-    Out << "v";
-    if (nv < 0) {
-      Out << "n";
-      nv = -nv;
-    }
-    Out << nv;
-    Out << "_";
-    if (v < 0) {
-      Out << "n";
-      v = -v;
-    }
-    Out << v;
+  if (!VirtualOffset) {
+    Out << 'h';
+    mangleNumber(NonVirtualOffset);
+    Out << '_';
+    return;
   }
-  Out << "_";
+  
+  Out << 'v';
+  mangleNumber(NonVirtualOffset);
+  Out << '_';
+  mangleNumber(VirtualOffset);
+  Out << '_';
 }
 
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
@@ -1351,7 +1354,9 @@ void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
 
 /// \brief Mangles the a thunk with the offset n for the declaration D and
 /// emits that name to the given output stream.
-void MangleContext::mangleThunk(const FunctionDecl *FD, int64_t nv, int64_t v,
+void MangleContext::mangleThunk(const FunctionDecl *FD, 
+                                int64_t NonVirtualOffset, 
+                                int64_t VirtualOffset,
                                 llvm::SmallVectorImpl<char> &Res) {
   // FIXME: Hum, we might have to thunk these, fix.
   assert(!isa<CXXDestructorDecl>(FD) &&
@@ -1361,7 +1366,7 @@ void MangleContext::mangleThunk(const FunctionDecl *FD, int64_t nv, int64_t v,
   //                      # base is the nominal target function of thunk
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZT";
-  Mangler.mangleCalloffset(nv, v);
+  Mangler.mangleCallOffset(NonVirtualOffset, VirtualOffset);
   Mangler.mangleFunctionEncoding(FD);
 }
 
@@ -1380,8 +1385,8 @@ void MangleContext::mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t,
   //                      # second call-offset is result adjustment
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZTc";
-  Mangler.mangleCalloffset(nv_t, v_t);
-  Mangler.mangleCalloffset(nv_r, v_r);
+  Mangler.mangleCallOffset(nv_t, v_t);
+  Mangler.mangleCallOffset(nv_r, v_r);
   Mangler.mangleFunctionEncoding(FD);
 }
 

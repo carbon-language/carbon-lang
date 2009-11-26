@@ -23,7 +23,28 @@ namespace clang {
   
 namespace CodeGen {
   class CodeGenModule;
+
+/// ThunkAdjustment - Virtual and non-virtual adjustment for thunks. 
+struct ThunkAdjustment {
+  ThunkAdjustment(int64_t NonVirtual, int64_t Virtual)
+  : NonVirtual(NonVirtual), 
+    Virtual(Virtual) { }
   
+  ThunkAdjustment()
+    : NonVirtual(0), Virtual(0) { }
+  
+  // isEmpty - Return whether this thunk adjustment is empty.
+  bool isEmpty() const { 
+    return NonVirtual == 0 && Virtual == 0;
+  }
+  
+  /// NonVirtual - The non-virtual adjustment.
+  int64_t NonVirtual;
+  
+  /// Virtual - The virtual adjustment.
+  int64_t Virtual;
+};
+
 class CGVtableInfo {
   CodeGenModule &CGM;
   

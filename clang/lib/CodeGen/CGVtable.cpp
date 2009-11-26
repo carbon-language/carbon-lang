@@ -333,7 +333,8 @@ public:
       Index_t idx = Index[GD];
       Index_t nv_O = i->second.first;
       Index_t v_O = i->second.second;
-      submethods[idx] = CGM.BuildThunk(MD, Extern, nv_O, v_O);
+      submethods[idx] = CGM.BuildThunk(MD, Extern, 
+                                       ThunkAdjustment(nv_O, v_O));
     }
     Thunks.clear();
     for (CovariantThunks_t::iterator i = CovariantThunks.begin(),
