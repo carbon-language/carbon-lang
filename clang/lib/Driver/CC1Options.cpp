@@ -355,6 +355,46 @@ static void ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
 }
 
 static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
+  using namespace cc1options;
+  Opts.Sysroot = getLastArgValue(Args, OPT_isysroot);
+  Opts.Verbose = Args.hasArg(OPT_v);
+  Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
+  Opts.BuiltinIncludePath = "";
+  if (!Args.hasArg(OPT_fno_builtin))
+      Opts.BuiltinIncludePath = "FIXME"; // FIXME: Get builtin include path!
+
+  // Add -I... and -F... options in order.
+  for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F),
+         ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath(it->getValue(Args), frontend::Angled, true,
+                 /*IsFramework=*/ it->getOption().matches(OPT_F));
+
+  // Add -iprefix/-iwith-prefix/-iwithprefixbefore options.
+  llvm::StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.
+  for (arg_iterator it = Args.filtered_begin(OPT_iprefix, OPT_iwithprefix,
+                                             OPT_iwithprefixbefore),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    if (it->getOption().matches(OPT_iprefix))
+      Prefix = it->getValue(Args);
+    else if (it->getOption().matches(OPT_iwithprefix))
+      Opts.AddPath(Prefix.str() + it->getValue(Args),
+                   frontend::System, false, false);
+    else
+      Opts.AddPath(Prefix.str() + it->getValue(Args),
+                   frontend::Angled, false, false);
+  }
+
+  for (arg_iterator it = Args.filtered_begin(OPT_idirafter),
+         ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath(it->getValue(Args), frontend::After, true, false);
+  for (arg_iterator it = Args.filtered_begin(OPT_iquote),
+         ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath(it->getValue(Args), frontend::Quoted, true, false);
+  for (arg_iterator it = Args.filtered_begin(OPT_isystem),
+         ie = Args.filtered_end(); it != ie; ++it)
+    Opts.AddPath(it->getValue(Args), frontend::System, true, false);
+
+  // FIXME: Need options for the various environment variables!
 }
 
 static void ParseLangArgs(LangOptions &Opts, ArgList &Args) {

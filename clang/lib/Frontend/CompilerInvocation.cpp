@@ -302,13 +302,13 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
   /// User specified include entries.
   for (unsigned i = 0, e = Opts.UserEntries.size(); i != e; ++i) {
     const HeaderSearchOptions::Entry &E = Opts.UserEntries[i];
-    if (E.IsFramework && (E.Group != frontend::Angled || E.IsUserSupplied))
+    if (E.IsFramework && (E.Group != frontend::Angled || !E.IsUserSupplied))
       llvm::llvm_report_error("Invalid option set!");
     if (E.IsUserSupplied) {
       if (E.Group == frontend::After) {
         Res.push_back("-idirafter");
       } else if (E.Group == frontend::Quoted) {
-        Res.push_back("-iquoted");
+        Res.push_back("-iquote");
       } else if (E.Group == frontend::System) {
         Res.push_back("-isystem");
       } else {
