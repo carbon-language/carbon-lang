@@ -4,6 +4,7 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
 declare void @llvm.memset.i32(i8*, i8, i32, i32)
 declare void @llvm.memset.i8(i8*, i8, i8, i32)
 declare void @llvm.memcpy.i8(i8*, i8*, i8, i32)
+declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
 declare void @llvm.lifetime.end(i64, i8* nocapture)
 
 declare void @external(i32*) 
@@ -94,7 +95,7 @@ define void @test3a(i8* %P, i8 %X) {
 @G1 = external global i32
 @G2 = external global [4000 x i32]
 
-define i32 @test4(i8* %P, i8 %X) {
+define i32 @test4(i8* %P) {
   %tmp = load i32* @G1
   call void @llvm.memset.i32(i8* bitcast ([4000 x i32]* @G2 to i8*), i8 0, i32 4000, i32 1)
   %tmp2 = load i32* @G1
@@ -103,6 +104,21 @@ define i32 @test4(i8* %P, i8 %X) {
 ; CHECK: @test4
 ; CHECK: load i32* @G
 ; CHECK: memset.i32
+; CHECK-NOT: load
+; CHECK: sub i32 %tmp, %tmp
+}
+
+; Verify that basicaa is handling variable length memcpy, knowing it doesn't
+; write to G1.
+define i32 @test5(i8* %P, i32 %Len) {
+  %tmp = load i32* @G1
+  call void @llvm.memcpy.i32(i8* bitcast ([4000 x i32]* @G2 to i8*), i8* bitcast (i32* @G1 to i8*), i32 %Len, i32 1)
+  %tmp2 = load i32* @G1
+  %sub = sub i32 %tmp2, %tmp
+  ret i32 %sub
+; CHECK: @test5
+; CHECK: load i32* @G
+; CHECK: memcpy.i32
 ; CHECK-NOT: load
 ; CHECK: sub i32 %tmp, %tmp
 }
