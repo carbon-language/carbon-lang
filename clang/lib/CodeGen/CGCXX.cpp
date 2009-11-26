@@ -824,49 +824,50 @@ CodeGenFunction::GenerateThunk(llvm::Function *Fn, const CXXMethodDecl *MD,
                                bool Extern, 
                                const ThunkAdjustment &ThisAdjustment) {
   return GenerateCovariantThunk(Fn, MD, Extern, 
-                                ThisAdjustment.NonVirtual,
-                                ThisAdjustment.Virtual, 0, 0);
+                                CovariantThunkAdjustment(ThisAdjustment,
+                                                         ThunkAdjustment()));
 }
 
-llvm::Value *CodeGenFunction::DynamicTypeAdjust(llvm::Value *V, int64_t nv,
-                                                int64_t v) {
-  llvm::Type *Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),
-                                              0);
+llvm::Value *
+CodeGenFunction::DynamicTypeAdjust(llvm::Value *V, 
+                                   const ThunkAdjustment &Adjustment) {
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+
   const llvm::Type *OrigTy = V->getType();
-  if (nv) {
+  if (Adjustment.NonVirtual) {
     // Do the non-virtual adjustment
-    V = Builder.CreateBitCast(V, Ptr8Ty);
-    V = Builder.CreateConstInBoundsGEP1_64(V, nv);
+    V = Builder.CreateBitCast(V, Int8PtrTy);
+    V = Builder.CreateConstInBoundsGEP1_64(V, Adjustment.NonVirtual);
     V = Builder.CreateBitCast(V, OrigTy);
   }
-  if (v) {
-    // Do the virtual this adjustment
-    const llvm::Type *PtrDiffTy = 
-      ConvertType(getContext().getPointerDiffType());
-    llvm::Type *PtrPtr8Ty, *PtrPtrDiffTy;
-    PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
-    PtrPtrDiffTy = llvm::PointerType::get(PtrDiffTy, 0);
-    llvm::Value *ThisVal = Builder.CreateBitCast(V, Ptr8Ty);
-    V = Builder.CreateBitCast(V, PtrPtrDiffTy->getPointerTo());
-    V = Builder.CreateLoad(V, "vtable");
-    llvm::Value *VTablePtr = V;
-    assert(v % (LLVMPointerWidth/8) == 0 && "vtable entry unaligned");
-    v /= LLVMPointerWidth/8;
-    V = Builder.CreateConstInBoundsGEP1_64(VTablePtr, v);
-    V = Builder.CreateLoad(V);
-    V = Builder.CreateGEP(ThisVal, V);
-    V = Builder.CreateBitCast(V, OrigTy);
-  }
-  return V;
+  
+  if (!Adjustment.Virtual)
+    return V;
+
+  assert(Adjustment.Virtual % (LLVMPointerWidth / 8) == 0 && 
+         "vtable entry unaligned");
+
+  // Do the virtual this adjustment
+  const llvm::Type *PtrDiffTy = ConvertType(getContext().getPointerDiffType());
+  const llvm::Type *PtrDiffPtrTy = PtrDiffTy->getPointerTo();
+  
+  llvm::Value *ThisVal = Builder.CreateBitCast(V, Int8PtrTy);
+  V = Builder.CreateBitCast(V, PtrDiffPtrTy->getPointerTo());
+  V = Builder.CreateLoad(V, "vtable");
+  
+  llvm::Value *VTablePtr = V;
+  uint64_t VirtualAdjustment = Adjustment.Virtual / (LLVMPointerWidth / 8);
+  V = Builder.CreateConstInBoundsGEP1_64(VTablePtr, VirtualAdjustment);
+  V = Builder.CreateLoad(V);
+  V = Builder.CreateGEP(ThisVal, V);
+  
+  return Builder.CreateBitCast(V, OrigTy);
 }
 
-llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
-                                                        const CXXMethodDecl *MD,
-                                                        bool Extern,
-                                                        int64_t nv_t,
-                                                        int64_t v_t,
-                                                        int64_t nv_r,
-                                                        int64_t v_r) {
+llvm::Constant *
+CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
+                                   const CXXMethodDecl *MD, bool Extern,
+                                   const CovariantThunkAdjustment &Adjustment) {
   QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
 
   FunctionArgList Args;
@@ -899,16 +900,23 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
   llvm::Value *Callee = CGM.GetAddrOfFunction(MD, Ty);
   CallArgList CallArgs;
 
+  bool ShouldAdjustReturnPointer = true;
   QualType ArgType = MD->getThisType(getContext());
   llvm::Value *Arg = Builder.CreateLoad(LocalDeclMap[ThisDecl], "this");
-  if (nv_t || v_t) {
+  if (!Adjustment.ThisAdjustment.isEmpty()) {
     // Do the this adjustment.
     const llvm::Type *OrigTy = Callee->getType();
-    Arg = DynamicTypeAdjust(Arg, nv_t, v_t);
-    if (nv_r || v_r) {
-      Callee = CGM.BuildCovariantThunk(MD, Extern, 0, 0, nv_r, v_r);
+    Arg = DynamicTypeAdjust(Arg, Adjustment.ThisAdjustment);
+    
+    if (!Adjustment.ReturnAdjustment.isEmpty()) {
+      const CovariantThunkAdjustment &ReturnAdjustment = 
+        CovariantThunkAdjustment(ThunkAdjustment(),
+                                 Adjustment.ReturnAdjustment);
+      
+      Callee = CGM.BuildCovariantThunk(MD, Extern, ReturnAdjustment);
+      
       Callee = Builder.CreateBitCast(Callee, OrigTy);
-      nv_r = v_r = 0;
+      ShouldAdjustReturnPointer = false;
     }
   }    
 
@@ -927,7 +935,7 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 
   RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
                        Callee, CallArgs, MD);
-  if (nv_r || v_r) {
+  if (ShouldAdjustReturnPointer && !Adjustment.ReturnAdjustment.isEmpty()) {
     bool CanBeZero = !(ResultType->isReferenceType()
     // FIXME: attr nonnull can't be zero either
                        /* || ResultType->hasAttr<NonNullAttr>() */ );
@@ -942,7 +950,8 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
       Builder.CreateCondBr(Builder.CreateICmpNE(RV.getScalarVal(), Zero),
                            NonZeroBlock, ZeroBlock);
       EmitBlock(NonZeroBlock);
-      llvm::Value *NZ = DynamicTypeAdjust(RV.getScalarVal(), nv_r, v_r);
+      llvm::Value *NZ = 
+        DynamicTypeAdjust(RV.getScalarVal(), Adjustment.ReturnAdjustment);
       EmitBranch(ContBlock);
       EmitBlock(ZeroBlock);
       llvm::Value *Z = RV.getScalarVal();
@@ -953,7 +962,8 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
       RVOrZero->addIncoming(Z, ZeroBlock);
       RV = RValue::get(RVOrZero);
     } else
-      RV = RValue::get(DynamicTypeAdjust(RV.getScalarVal(), nv_r, v_r));
+      RV = RValue::get(DynamicTypeAdjust(RV.getScalarVal(), 
+                                         Adjustment.ReturnAdjustment));
   }
 
   if (!ResultType->isVoidType())
@@ -987,12 +997,11 @@ CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
   return m;
 }
 
-llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
-                                                   bool Extern, int64_t nv_t,
-                                                   int64_t v_t, int64_t nv_r,
-                                                   int64_t v_r) {
+llvm::Constant *
+CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD, bool Extern,
+                                   const CovariantThunkAdjustment &Adjustment) {
   llvm::SmallString<256> OutName;
-  getMangleContext().mangleCovariantThunk(MD, nv_t, v_t, nv_r, v_r, OutName);
+  getMangleContext().mangleCovariantThunk(MD, Adjustment, OutName);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)
@@ -1005,8 +1014,7 @@ llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
 
   llvm::Function *Fn = llvm::Function::Create(FTy, linktype, OutName.str(),
                                               &getModule());
-  CodeGenFunction(*this).GenerateCovariantThunk(Fn, MD, Extern, nv_t, v_t, nv_r,
-                                               v_r);
+  CodeGenFunction(*this).GenerateCovariantThunk(Fn, MD, Extern, Adjustment);
   llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
   return m;
 }

@@ -49,6 +49,19 @@ struct ThunkAdjustment {
   int64_t Virtual;
 };
 
+/// CovariantThunkAdjustment - Adjustment of the 'this' pointer and the
+/// return pointer for covariant thunks.
+struct CovariantThunkAdjustment {
+  CovariantThunkAdjustment(const ThunkAdjustment &ThisAdjustment,
+                           const ThunkAdjustment &ReturnAdjustment)
+  : ThisAdjustment(ThisAdjustment), ReturnAdjustment(ReturnAdjustment) { }
+
+  CovariantThunkAdjustment() { }
+
+  ThunkAdjustment ThisAdjustment;
+  ThunkAdjustment ReturnAdjustment;
+};
+
 class CGVtableInfo {
   CodeGenModule &CGM;
   

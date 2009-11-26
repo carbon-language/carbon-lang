@@ -238,9 +238,9 @@ public:
                              const ThunkAdjustment &ThisAdjustment);
 
   /// BuildCoVariantThunk - Build a thunk for the given method
-  llvm::Constant *BuildCovariantThunk(const CXXMethodDecl *MD, bool Extern,
-                                      int64_t nv_t, int64_t v_t,
-                                      int64_t nv_r, int64_t v_r);
+  llvm::Constant *
+  BuildCovariantThunk(const CXXMethodDecl *MD, bool Extern,
+                      const CovariantThunkAdjustment &Adjustment);
 
   typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
   typedef llvm::DenseMap<const CXXRecordDecl *,

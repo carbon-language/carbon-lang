@@ -35,6 +35,7 @@ namespace clang {
   class VarDecl;
 
 namespace CodeGen {
+  class CovariantThunkAdjustment;
   class ThunkAdjustment;
    
 /// MangleContext - Context for tracking state which persists across multiple
@@ -66,8 +67,8 @@ public:
   void mangleThunk(const FunctionDecl *FD, 
                    const ThunkAdjustment &ThisAdjustment,
                    llvm::SmallVectorImpl<char> &);
-  void mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t, int64_t v_t,
-                            int64_t nv_r, int64_t v_r,
+  void mangleCovariantThunk(const FunctionDecl *FD, 
+                            const CovariantThunkAdjustment& Adjustment,
                             llvm::SmallVectorImpl<char> &);
   void mangleGuardVariable(const VarDecl *D, llvm::SmallVectorImpl<char> &);
   void mangleCXXVtable(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);

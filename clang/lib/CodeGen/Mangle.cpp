@@ -1371,9 +1371,10 @@ void MangleContext::mangleThunk(const FunctionDecl *FD,
 
 /// \brief Mangles the a covariant thunk for the declaration D and emits that
 /// name to the given output stream.
-void MangleContext::mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t,
-                                         int64_t v_t, int64_t nv_r, int64_t v_r,
-                                         llvm::SmallVectorImpl<char> &Res) {
+void 
+MangleContext::mangleCovariantThunk(const FunctionDecl *FD,
+                                    const CovariantThunkAdjustment& Adjustment,
+                                    llvm::SmallVectorImpl<char> &Res) {
   // FIXME: Hum, we might have to thunk these, fix.
   assert(!isa<CXXDestructorDecl>(FD) &&
          "Use mangleCXXDtor for destructor decls!");
@@ -1384,8 +1385,8 @@ void MangleContext::mangleCovariantThunk(const FunctionDecl *FD, int64_t nv_t,
   //                      # second call-offset is result adjustment
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZTc";
-  Mangler.mangleCallOffset(ThunkAdjustment(nv_t, v_t));
-  Mangler.mangleCallOffset(ThunkAdjustment(nv_r, v_r));
+  Mangler.mangleCallOffset(Adjustment.ThisAdjustment);
+  Mangler.mangleCallOffset(Adjustment.ReturnAdjustment);
   Mangler.mangleFunctionEncoding(FD);
 }
 

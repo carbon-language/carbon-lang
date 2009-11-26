@@ -349,8 +349,10 @@ public:
       Index_t v_t = i->second.first.first.second;
       Index_t nv_r = i->second.first.second.first;
       Index_t v_r = i->second.first.second.second;
-      submethods[idx] = CGM.BuildCovariantThunk(MD, Extern, nv_t, v_t, nv_r,
-                                                v_r);
+      
+      CovariantThunkAdjustment Adjustment(ThunkAdjustment(nv_t, v_t),
+                                          ThunkAdjustment(nv_r, v_r));
+      submethods[idx] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
     }
     CovariantThunks.clear();
     for (Pures_t::iterator i = Pures.begin(), e = Pures.end();

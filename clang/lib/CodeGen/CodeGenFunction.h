@@ -437,16 +437,17 @@ public:
   /// DynamicTypeAdjust - Do the non-virtual and virtual adjustments on an
   /// object pointer to alter the dynamic type of the pointer.  Used by
   /// GenerateCovariantThunk for building thunks.
-  llvm::Value *DynamicTypeAdjust(llvm::Value *V, int64_t nv, int64_t v);
+  llvm::Value *DynamicTypeAdjust(llvm::Value *V, 
+                                 const ThunkAdjustment &Adjustment);
 
   /// GenerateThunk - Generate a thunk for the given method
   llvm::Constant *GenerateThunk(llvm::Function *Fn, const CXXMethodDecl *MD,
                                 bool Extern, 
                                 const ThunkAdjustment &ThisAdjustment);
-  llvm::Constant *GenerateCovariantThunk(llvm::Function *Fn,
-                                         const CXXMethodDecl *MD, bool Extern,
-                                         int64_t nv_t, int64_t v_t,
-                                         int64_t nv_r, int64_t v_r);
+  llvm::Constant *
+  GenerateCovariantThunk(llvm::Function *Fn, const CXXMethodDecl *MD, 
+                         bool Extern,
+                         const CovariantThunkAdjustment &Adjustment);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type);
 
