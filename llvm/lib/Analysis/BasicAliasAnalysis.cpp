@@ -39,26 +39,6 @@ using namespace llvm;
 // Useful predicates
 //===----------------------------------------------------------------------===//
 
-static const Value *GetGEPOperands(const GEPOperator *V, 
-                                   SmallVector<Value*, 16> &GEPOps) {
-  assert(GEPOps.empty() && "Expect empty list to populate!");
-  GEPOps.insert(GEPOps.end(), V->op_begin()+1, V->op_end());
-
-  // Accumulate all of the chained indexes into the operand array.
-  Value *BasePtr = V->getOperand(0);
-  while (1) {
-    V = dyn_cast<GEPOperator>(BasePtr);
-    if (V == 0) return BasePtr;
-    
-    // Don't handle folding arbitrary pointer offsets yet.
-    if (!isa<Constant>(GEPOps[0]) || !cast<Constant>(GEPOps[0])->isNullValue())
-      return BasePtr;
-    
-    GEPOps.erase(GEPOps.begin());   // Drop the zero index
-    GEPOps.insert(GEPOps.begin(), V->op_begin()+1, V->op_end());
-  }
-}
-
 /// isKnownNonNull - Return true if we know that the specified value is never
 /// null.
 static bool isKnownNonNull(const Value *V) {
@@ -235,15 +215,6 @@ namespace {
 
     AliasResult aliasCheck(const Value *V1, unsigned V1Size,
                            const Value *V2, unsigned V2Size);
-
-    // CheckGEPInstructions - Check two GEP instructions with known
-    // must-aliasing base pointers.  This checks to see if the index expressions
-    // preclude the pointers from aliasing.
-    AliasResult
-    CheckGEPInstructions(const Type* BasePtr1Ty,
-                         Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1Size,
-                         const Type *BasePtr2Ty,
-                         Value **GEP2Ops, unsigned NumGEP2Ops, unsigned G2Size);
   };
 }  // End of anonymous namespace
 
@@ -418,7 +389,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 /// FIXME: Move this out to ValueTracking.cpp
 ///
 static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
-               SmallVectorImpl<std::pair<const Value*, uint64_t> > &VarIndices,
+                 SmallVectorImpl<std::pair<const Value*, int64_t> > &VarIndices,
                                            const TargetData *TD) {
   // FIXME: Should limit depth like getUnderlyingObject?
   BaseOffs = 0;
@@ -488,6 +459,7 @@ static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       // If we already had an occurrance of this index variable, merge this
       // scale into it.  For example, we want to handle:
       //   A[x][x] -> x*16 + x*4 -> x*20
+      // This also ensures that 'x' only appears in the index list once.
       for (unsigned i = 0, e = VarIndices.size(); i != e; ++i) {
         if (VarIndices[i].first == Index) {
           Scale += VarIndices[i].second;
@@ -512,6 +484,39 @@ static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
   }
 }
 
+/// GetIndiceDifference - Dest and Src are the variable indices from two
+/// decomposed GetElementPtr instructions GEP1 and GEP2 which have common base
+/// pointers.  Subtract the GEP2 indices from GEP1 to find the symbolic
+/// difference between the two pointers. 
+static void GetIndiceDifference(
+                      SmallVectorImpl<std::pair<const Value*, int64_t> > &Dest,
+                const SmallVectorImpl<std::pair<const Value*, int64_t> > &Src) {
+  if (Src.empty()) return;
+
+  for (unsigned i = 0, e = Src.size(); i != e; ++i) {
+    const Value *V = Src[i].first;
+    int64_t Scale = Src[i].second;
+    
+    // Find V in Dest.  This is N^2, but pointer indices almost never have more
+    // than a few variable indexes.
+    for (unsigned j = 0, e = Dest.size(); j != e; ++j) {
+      if (Dest[j].first != V) continue;
+      
+      // If we found it, subtract off Scale V's from the entry in Dest.  If it
+      // goes to zero, remove the entry.
+      if (Dest[j].second != Scale)
+        Dest[j].second -= Scale;
+      else
+        Dest.erase(Dest.begin()+j);
+      Scale = 0;
+      break;
+    }
+    
+    // If we didn't consume this entry, add it to the end of the Dest list.
+    if (Scale)
+      Dest.push_back(std::make_pair(V, -Scale));
+  }
+}
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
@@ -523,101 +528,83 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
                              const Value *V2, unsigned V2Size,
                              const Value *UnderlyingV1,
                              const Value *UnderlyingV2) {
+  int64_t GEP1BaseOffset;
+  SmallVector<std::pair<const Value*, int64_t>, 4> GEP1VariableIndices;
+
   // If we have two gep instructions with must-alias'ing base pointers, figure
   // out if the indexes to the GEP tell us anything about the derived pointer.
-  // Note that we also handle chains of getelementptr instructions as well as
-  // constant expression getelementptrs here.
-  //
   if (const GEPOperator *GEP2 = dyn_cast<GEPOperator>(V2)) {
-    // If V1 and V2 are identical GEPs, just recurse down on both of them.
-    // This allows us to analyze things like:
-    //   P = gep A, 0, i, 1
-    //   Q = gep B, 0, i, 1
-    // by just analyzing A and B.  This is even safe for variable indices.
-    if (GEP1->getType() == GEP2->getType() &&
-        GEP1->getNumOperands() == GEP2->getNumOperands() &&
-        GEP1->getOperand(0)->getType() == GEP2->getOperand(0)->getType() &&
-        // All operands are the same, ignoring the base.
-        std::equal(GEP1->op_begin()+1, GEP1->op_end(), GEP2->op_begin()+1))
-      return aliasCheck(GEP1->getOperand(0), V1Size,
-                        GEP2->getOperand(0), V2Size);
-    
-    // Drill down into the first non-gep value, to test for must-aliasing of
-    // the base pointers.
-    while (isa<GEPOperator>(GEP1->getOperand(0)) &&
-           GEP1->getOperand(1) ==
-           Constant::getNullValue(GEP1->getOperand(1)->getType()))
-      GEP1 = cast<GEPOperator>(GEP1->getOperand(0));
-    const Value *BasePtr1 = GEP1->getOperand(0);
-
-    while (isa<GEPOperator>(GEP2->getOperand(0)) &&
-           GEP2->getOperand(1) ==
-           Constant::getNullValue(GEP2->getOperand(1)->getType()))
-      GEP2 = cast<GEPOperator>(GEP2->getOperand(0));
-    const Value *BasePtr2 = GEP2->getOperand(0);
-
     // Do the base pointers alias?
-    AliasResult BaseAlias = aliasCheck(BasePtr1, ~0U, BasePtr2, ~0U);
-    if (BaseAlias == NoAlias) return NoAlias;
-    if (BaseAlias == MustAlias) {
-      // If the base pointers alias each other exactly, check to see if we can
-      // figure out anything about the resultant pointers, to try to prove
-      // non-aliasing.
+    AliasResult BaseAlias = aliasCheck(UnderlyingV1, ~0U, UnderlyingV2, ~0U);
+    
+    // If we get a No or May, then return it immediately, no amount of analysis
+    // will improve this situation.
+    if (BaseAlias != MustAlias) return BaseAlias;
+    
+    // Otherwise, we have a MustAlias.  Since the base pointers alias each other
+    // exactly, see if the computed offset from the common pointer tells us
+    // about the relation of the resulting pointer.
+    const Value *GEP1BasePtr =
+      DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
+    
+    int64_t GEP2BaseOffset;
+    SmallVector<std::pair<const Value*, int64_t>, 4> GEP2VariableIndices;
+    const Value *GEP2BasePtr =
+      DecomposeGEPExpression(GEP2, GEP2BaseOffset, GEP2VariableIndices, TD);
+    
+    // If DecomposeGEPExpression isn't able to look all the way through the
+    // addressing operation, we must not have TD and this is too complex for us
+    // to handle without it.
+    if (GEP1BasePtr != UnderlyingV1 || GEP2BasePtr != UnderlyingV2) {
+      assert(TD == 0 &&
+             "DecomposeGEPExpression and getUnderlyingObject disagree!");
+      return MayAlias;
+    }
+    
+    // Subtract the GEP2 pointer from the GEP1 pointer to find out their
+    // symbolic difference.
+    GEP1BaseOffset -= GEP2BaseOffset;
+    GetIndiceDifference(GEP1VariableIndices, GEP2VariableIndices);
+    
+  } else {
+    // Check to see if these two pointers are related by the getelementptr
+    // instruction.  If one pointer is a GEP with a non-zero index of the other
+    // pointer, we know they cannot alias.
+    //
+    // FIXME: The check below only looks at the size of one of the pointers, not
+    // both, this may cause us to miss things.
+    if (V1Size == ~0U || V2Size == ~0U)
+      return MayAlias;
 
-      // Collect all of the chained GEP operands together into one simple place
-      SmallVector<Value*, 16> GEP1Ops, GEP2Ops;
-      BasePtr1 = GetGEPOperands(GEP1, GEP1Ops);
-      BasePtr2 = GetGEPOperands(GEP2, GEP2Ops);
+    AliasResult R = aliasCheck(UnderlyingV1, ~0U, V2, V2Size);
+    if (R != MustAlias)
+      // If V2 may alias GEP base pointer, conservatively returns MayAlias.
+      // If V2 is known not to alias GEP base pointer, then the two values
+      // cannot alias per GEP semantics: "A pointer value formed from a
+      // getelementptr instruction is associated with the addresses associated
+      // with the first operand of the getelementptr".
+      return R;
 
-      // If GetGEPOperands were able to fold to the same must-aliased pointer,
-      // do the comparison.
-      if (BasePtr1 == BasePtr2) {
-        AliasResult GAlias =
-          CheckGEPInstructions(BasePtr1->getType(),
-                               &GEP1Ops[0], GEP1Ops.size(), V1Size,
-                               BasePtr2->getType(),
-                               &GEP2Ops[0], GEP2Ops.size(), V2Size);
-        if (GAlias != MayAlias)
-          return GAlias;
-      }
+    const Value *GEP1BasePtr =
+      DecomposeGEPExpression(GEP1, GEP1BaseOffset, GEP1VariableIndices, TD);
+    
+    // If DecomposeGEPExpression isn't able to look all the way through the
+    // addressing operation, we must not have TD and this is too complex for us
+    // to handle without it.
+    if (GEP1BasePtr != UnderlyingV1) {
+      assert(TD == 0 &&
+             "DecomposeGEPExpression and getUnderlyingObject disagree!");
+      return MayAlias;
     }
   }
-
-  // Check to see if these two pointers are related by a getelementptr
-  // instruction.  If one pointer is a GEP with a non-zero index of the other
-  // pointer, we know they cannot alias.
+  
+  // In the two GEP Case, if there is no difference in the offsets of the
+  // computed pointers, the resultant pointers are a must alias.  This
+  // hapens when we have two lexically identical GEP's (for example).
   //
-  // FIXME: The check below only looks at the size of one of the pointers, not
-  // both, this may cause us to miss things.
-  if (V1Size == ~0U || V2Size == ~0U)
-    return MayAlias;
-
-  AliasResult R = aliasCheck(UnderlyingV1, ~0U, V2, V2Size);
-  if (R != MustAlias)
-    // If V2 may alias GEP base pointer, conservatively returns MayAlias.
-    // If V2 is known not to alias GEP base pointer, then the two values
-    // cannot alias per GEP semantics: "A pointer value formed from a
-    // getelementptr instruction is associated with the addresses associated
-    // with the first operand of the getelementptr".
-    return R;
-
-  int64_t GEP1BaseOffset;
-  SmallVector<std::pair<const Value*, uint64_t>, 4> VariableIndices;
-  const Value *GEP1BasePtr =
-    DecomposeGEPExpression(GEP1, GEP1BaseOffset, VariableIndices, TD);
-  
-  // If DecomposeGEPExpression isn't able to look all the way through the
-  // addressing operation, we must not have TD and this is too complex for us
-  // to handle without it.
-  if (GEP1BasePtr != UnderlyingV1) {
-    assert(TD == 0 &&
-           "DecomposeGEPExpression and getUnderlyingObject disagree!");
-    return MayAlias;
-  }
-  
-  // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
-  // the ptr, the end result is a must alias also.
-  if (GEP1BaseOffset == 0 && VariableIndices.empty())
+  // In the other case, if we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2
+  // must aliases the GEP, the end result is a must alias also.
+  if (GEP1BaseOffset == 0 && GEP1VariableIndices.empty())
     return MustAlias;
 
   // If we have a known constant offset, see if this offset is larger than the
@@ -631,9 +618,10 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
   // multiple of any of our variable indices.  This allows us to transform
   // things like &A[i][1] because i has a stride of (e.g.) 8 bytes but the 1
   // provides an offset of 4 bytes (assuming a <= 4 byte access).
-  for (unsigned i = 0, e = VariableIndices.size(); i != e && GEP1BaseOffset;++i)
-    if (int64_t RemovedOffset = GEP1BaseOffset/VariableIndices[i].second)
-      GEP1BaseOffset -= RemovedOffset*VariableIndices[i].second;
+  for (unsigned i = 0, e = GEP1VariableIndices.size();
+       i != e && GEP1BaseOffset;++i)
+    if (int64_t RemovedOffset = GEP1BaseOffset/GEP1VariableIndices[i].second)
+      GEP1BaseOffset -= RemovedOffset*GEP1VariableIndices[i].second;
   
   // If our known offset is bigger than the access size, we know we don't have
   // an alias.
@@ -847,352 +835,6 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   if (const SelectInst *S1 = dyn_cast<SelectInst>(V1))
     return aliasSelect(S1, V1Size, V2, V2Size);
 
-  return MayAlias;
-}
-
-// This function is used to determine if the indices of two GEP instructions are
-// equal. V1 and V2 are the indices.
-static bool IndexOperandsEqual(Value *V1, Value *V2) {
-  if (V1->getType() == V2->getType())
-    return V1 == V2;
-  if (Constant *C1 = dyn_cast<Constant>(V1))
-    if (Constant *C2 = dyn_cast<Constant>(V2)) {
-      // Sign extend the constants to long types, if necessary
-      if (C1->getType() != Type::getInt64Ty(C1->getContext()))
-        C1 = ConstantExpr::getSExt(C1, Type::getInt64Ty(C1->getContext()));
-      if (C2->getType() != Type::getInt64Ty(C1->getContext())) 
-        C2 = ConstantExpr::getSExt(C2, Type::getInt64Ty(C1->getContext()));
-      return C1 == C2;
-    }
-  return false;
-}
-
-/// CheckGEPInstructions - Check two GEP instructions with known must-aliasing
-/// base pointers.  This checks to see if the index expressions preclude the
-/// pointers from aliasing.
-AliasAnalysis::AliasResult 
-BasicAliasAnalysis::CheckGEPInstructions(
-  const Type* BasePtr1Ty, Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1S,
-  const Type *BasePtr2Ty, Value **GEP2Ops, unsigned NumGEP2Ops, unsigned G2S) {
-  // We currently can't handle the case when the base pointers have different
-  // primitive types.  Since this is uncommon anyway, we are happy being
-  // extremely conservative.
-  if (BasePtr1Ty != BasePtr2Ty)
-    return MayAlias;
-
-  const PointerType *GEPPointerTy = cast<PointerType>(BasePtr1Ty);
-
-  // Find the (possibly empty) initial sequence of equal values... which are not
-  // necessarily constants.
-  unsigned NumGEP1Operands = NumGEP1Ops, NumGEP2Operands = NumGEP2Ops;
-  unsigned MinOperands = std::min(NumGEP1Operands, NumGEP2Operands);
-  unsigned MaxOperands = std::max(NumGEP1Operands, NumGEP2Operands);
-  unsigned UnequalOper = 0;
-  while (UnequalOper != MinOperands &&
-         IndexOperandsEqual(GEP1Ops[UnequalOper], GEP2Ops[UnequalOper])) {
-    // Advance through the type as we go...
-    ++UnequalOper;
-    if (const CompositeType *CT = dyn_cast<CompositeType>(BasePtr1Ty))
-      BasePtr1Ty = CT->getTypeAtIndex(GEP1Ops[UnequalOper-1]);
-    else {
-      // If all operands equal each other, then the derived pointers must
-      // alias each other...
-      BasePtr1Ty = 0;
-      assert(UnequalOper == NumGEP1Operands && UnequalOper == NumGEP2Operands &&
-             "Ran out of type nesting, but not out of operands?");
-      return MustAlias;
-    }
-  }
-
-  // If we have seen all constant operands, and run out of indexes on one of the
-  // getelementptrs, check to see if the tail of the leftover one is all zeros.
-  // If so, return mustalias.
-  if (UnequalOper == MinOperands) {
-    if (NumGEP1Ops < NumGEP2Ops) {
-      std::swap(GEP1Ops, GEP2Ops);
-      std::swap(NumGEP1Ops, NumGEP2Ops);
-    }
-
-    bool AllAreZeros = true;
-    for (unsigned i = UnequalOper; i != MaxOperands; ++i)
-      if (!isa<Constant>(GEP1Ops[i]) ||
-          !cast<Constant>(GEP1Ops[i])->isNullValue()) {
-        AllAreZeros = false;
-        break;
-      }
-    if (AllAreZeros) return MustAlias;
-  }
-
-
-  // So now we know that the indexes derived from the base pointers,
-  // which are known to alias, are different.  We can still determine a
-  // no-alias result if there are differing constant pairs in the index
-  // chain.  For example:
-  //        A[i][0] != A[j][1] iff (&A[0][1]-&A[0][0] >= std::max(G1S, G2S))
-  //
-  // We have to be careful here about array accesses.  In particular, consider:
-  //        A[1][0] vs A[0][i]
-  // In this case, we don't *know* that the array will be accessed in bounds:
-  // the index could even be negative.  Because of this, we have to
-  // conservatively *give up* and return may alias.  We disregard differing
-  // array subscripts that are followed by a variable index without going
-  // through a struct.
-  //
-  unsigned SizeMax = std::max(G1S, G2S);
-  if (SizeMax == ~0U) return MayAlias; // Avoid frivolous work.
-
-  // Scan for the first operand that is constant and unequal in the
-  // two getelementptrs...
-  unsigned FirstConstantOper = UnequalOper;
-  for (; FirstConstantOper != MinOperands; ++FirstConstantOper) {
-    const Value *G1Oper = GEP1Ops[FirstConstantOper];
-    const Value *G2Oper = GEP2Ops[FirstConstantOper];
-
-    if (G1Oper != G2Oper)   // Found non-equal constant indexes...
-      if (Constant *G1OC = dyn_cast<ConstantInt>(const_cast<Value*>(G1Oper)))
-        if (Constant *G2OC = dyn_cast<ConstantInt>(const_cast<Value*>(G2Oper))){
-          if (G1OC->getType() != G2OC->getType()) {
-            // Sign extend both operands to long.
-            const Type *Int64Ty = Type::getInt64Ty(G1OC->getContext());
-            if (G1OC->getType() != Int64Ty)
-              G1OC = ConstantExpr::getSExt(G1OC, Int64Ty);
-            if (G2OC->getType() != Int64Ty) 
-              G2OC = ConstantExpr::getSExt(G2OC, Int64Ty);
-            GEP1Ops[FirstConstantOper] = G1OC;
-            GEP2Ops[FirstConstantOper] = G2OC;
-          }
-          
-          if (G1OC != G2OC) {
-            // Handle the "be careful" case above: if this is an array/vector
-            // subscript, scan for a subsequent variable array index.
-            if (const SequentialType *STy =
-                  dyn_cast<SequentialType>(BasePtr1Ty)) {
-              const Type *NextTy = STy;
-              bool isBadCase = false;
-              
-              for (unsigned Idx = FirstConstantOper;
-                   Idx != MinOperands && isa<SequentialType>(NextTy); ++Idx) {
-                const Value *V1 = GEP1Ops[Idx], *V2 = GEP2Ops[Idx];
-                if (!isa<Constant>(V1) || !isa<Constant>(V2)) {
-                  isBadCase = true;
-                  break;
-                }
-                // If the array is indexed beyond the bounds of the static type
-                // at this level, it will also fall into the "be careful" case.
-                // It would theoretically be possible to analyze these cases,
-                // but for now just be conservatively correct.
-                if (const ArrayType *ATy = dyn_cast<ArrayType>(STy))
-                  if (cast<ConstantInt>(G1OC)->getZExtValue() >=
-                        ATy->getNumElements() ||
-                      cast<ConstantInt>(G2OC)->getZExtValue() >=
-                        ATy->getNumElements()) {
-                    isBadCase = true;
-                    break;
-                  }
-                if (const VectorType *VTy = dyn_cast<VectorType>(STy))
-                  if (cast<ConstantInt>(G1OC)->getZExtValue() >=
-                        VTy->getNumElements() ||
-                      cast<ConstantInt>(G2OC)->getZExtValue() >=
-                        VTy->getNumElements()) {
-                    isBadCase = true;
-                    break;
-                  }
-                STy = cast<SequentialType>(NextTy);
-                NextTy = cast<SequentialType>(NextTy)->getElementType();
-              }
-              
-              if (isBadCase) G1OC = 0;
-            }
-
-            // Make sure they are comparable (ie, not constant expressions), and
-            // make sure the GEP with the smaller leading constant is GEP1.
-            if (G1OC) {
-              Constant *Compare = ConstantExpr::getICmp(ICmpInst::ICMP_SGT, 
-                                                        G1OC, G2OC);
-              if (ConstantInt *CV = dyn_cast<ConstantInt>(Compare)) {
-                if (CV->getZExtValue()) {  // If they are comparable and G2 > G1
-                  std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
-                  std::swap(NumGEP1Ops, NumGEP2Ops);
-                }
-                break;
-              }
-            }
-          }
-        }
-    BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(G1Oper);
-  }
-
-  // No shared constant operands, and we ran out of common operands.  At this
-  // point, the GEP instructions have run through all of their operands, and we
-  // haven't found evidence that there are any deltas between the GEP's.
-  // However, one GEP may have more operands than the other.  If this is the
-  // case, there may still be hope.  Check this now.
-  if (FirstConstantOper == MinOperands) {
-    // Without TargetData, we won't know what the offsets are.
-    if (!TD)
-      return MayAlias;
-
-    // Make GEP1Ops be the longer one if there is a longer one.
-    if (NumGEP1Ops < NumGEP2Ops) {
-      std::swap(GEP1Ops, GEP2Ops);
-      std::swap(NumGEP1Ops, NumGEP2Ops);
-    }
-
-    // Is there anything to check?
-    if (NumGEP1Ops > MinOperands) {
-      for (unsigned i = FirstConstantOper; i != MaxOperands; ++i)
-        if (isa<ConstantInt>(GEP1Ops[i]) && 
-            !cast<ConstantInt>(GEP1Ops[i])->isZero()) {
-          // Yup, there's a constant in the tail.  Set all variables to
-          // constants in the GEP instruction to make it suitable for
-          // TargetData::getIndexedOffset.
-          for (i = 0; i != MaxOperands; ++i)
-            if (!isa<ConstantInt>(GEP1Ops[i]))
-              GEP1Ops[i] = Constant::getNullValue(GEP1Ops[i]->getType());
-          // Okay, now get the offset.  This is the relative offset for the full
-          // instruction.
-          int64_t Offset1 = TD->getIndexedOffset(GEPPointerTy, GEP1Ops,
-                                                 NumGEP1Ops);
-
-          // Now check without any constants at the end.
-          int64_t Offset2 = TD->getIndexedOffset(GEPPointerTy, GEP1Ops,
-                                                 MinOperands);
-
-          // Make sure we compare the absolute difference.
-          if (Offset1 > Offset2)
-            std::swap(Offset1, Offset2);
-
-          // If the tail provided a bit enough offset, return noalias!
-          if ((uint64_t)(Offset2-Offset1) >= SizeMax)
-            return NoAlias;
-          // Otherwise break - we don't look for another constant in the tail.
-          break;
-        }
-    }
-
-    // Couldn't find anything useful.
-    return MayAlias;
-  }
-
-  // If there are non-equal constants arguments, then we can figure
-  // out a minimum known delta between the two index expressions... at
-  // this point we know that the first constant index of GEP1 is less
-  // than the first constant index of GEP2.
-
-  // Advance BasePtr[12]Ty over this first differing constant operand.
-  BasePtr2Ty = cast<CompositeType>(BasePtr1Ty)->
-      getTypeAtIndex(GEP2Ops[FirstConstantOper]);
-  BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->
-      getTypeAtIndex(GEP1Ops[FirstConstantOper]);
-
-  // We are going to be using TargetData::getIndexedOffset to determine the
-  // offset that each of the GEP's is reaching.  To do this, we have to convert
-  // all variable references to constant references.  To do this, we convert the
-  // initial sequence of array subscripts into constant zeros to start with.
-  const Type *ZeroIdxTy = GEPPointerTy;
-  for (unsigned i = 0; i != FirstConstantOper; ++i) {
-    if (!isa<StructType>(ZeroIdxTy))
-      GEP1Ops[i] = GEP2Ops[i] = 
-              Constant::getNullValue(Type::getInt32Ty(ZeroIdxTy->getContext()));
-
-    if (const CompositeType *CT = dyn_cast<CompositeType>(ZeroIdxTy))
-      ZeroIdxTy = CT->getTypeAtIndex(GEP1Ops[i]);
-  }
-
-  // We know that GEP1Ops[FirstConstantOper] & GEP2Ops[FirstConstantOper] are ok
-
-  // Loop over the rest of the operands...
-  for (unsigned i = FirstConstantOper+1; i != MaxOperands; ++i) {
-    const Value *Op1 = i < NumGEP1Ops ? GEP1Ops[i] : 0;
-    const Value *Op2 = i < NumGEP2Ops ? GEP2Ops[i] : 0;
-    // If they are equal, use a zero index...
-    if (Op1 == Op2 && BasePtr1Ty == BasePtr2Ty) {
-      if (!isa<ConstantInt>(Op1))
-        GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Op1->getType());
-      // Otherwise, just keep the constants we have.
-    } else {
-      if (Op1) {
-        if (const ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-          // If this is an array index, make sure the array element is in range.
-          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
-            if (Op1C->getZExtValue() >= AT->getNumElements())
-              return MayAlias;  // Be conservative with out-of-range accesses
-          } else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty)) {
-            if (Op1C->getZExtValue() >= VT->getNumElements())
-              return MayAlias;  // Be conservative with out-of-range accesses
-          }
-          
-        } else {
-          // GEP1 is known to produce a value less than GEP2.  To be
-          // conservatively correct, we must assume the largest possible
-          // constant is used in this position.  This cannot be the initial
-          // index to the GEP instructions (because we know we have at least one
-          // element before this one with the different constant arguments), so
-          // we know that the current index must be into either a struct or
-          // array.  Because we know it's not constant, this cannot be a
-          // structure index.  Because of this, we can calculate the maximum
-          // value possible.
-          //
-          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
-            GEP1Ops[i] =
-                  ConstantInt::get(Type::getInt64Ty(AT->getContext()), 
-                                   AT->getNumElements()-1);
-          else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty))
-            GEP1Ops[i] = 
-                  ConstantInt::get(Type::getInt64Ty(VT->getContext()),
-                                   VT->getNumElements()-1);
-        }
-      }
-
-      if (Op2) {
-        if (const ConstantInt *Op2C = dyn_cast<ConstantInt>(Op2)) {
-          // If this is an array index, make sure the array element is in range.
-          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr2Ty)) {
-            if (Op2C->getZExtValue() >= AT->getNumElements())
-              return MayAlias;  // Be conservative with out-of-range accesses
-          } else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr2Ty)) {
-            if (Op2C->getZExtValue() >= VT->getNumElements())
-              return MayAlias;  // Be conservative with out-of-range accesses
-          }
-        } else {  // Conservatively assume the minimum value for this index
-          GEP2Ops[i] = Constant::getNullValue(Op2->getType());
-        }
-      }
-    }
-
-    if (BasePtr1Ty && Op1) {
-      if (const CompositeType *CT = dyn_cast<CompositeType>(BasePtr1Ty))
-        BasePtr1Ty = CT->getTypeAtIndex(GEP1Ops[i]);
-      else
-        BasePtr1Ty = 0;
-    }
-
-    if (BasePtr2Ty && Op2) {
-      if (const CompositeType *CT = dyn_cast<CompositeType>(BasePtr2Ty))
-        BasePtr2Ty = CT->getTypeAtIndex(GEP2Ops[i]);
-      else
-        BasePtr2Ty = 0;
-    }
-  }
-
-  if (TD && GEPPointerTy->getElementType()->isSized()) {
-    int64_t Offset1 =
-      TD->getIndexedOffset(GEPPointerTy, GEP1Ops, NumGEP1Ops);
-    int64_t Offset2 = 
-      TD->getIndexedOffset(GEPPointerTy, GEP2Ops, NumGEP2Ops);
-    assert(Offset1 != Offset2 &&
-           "There is at least one different constant here!");
-    
-    // Make sure we compare the absolute difference.
-    if (Offset1 > Offset2)
-      std::swap(Offset1, Offset2);
-    
-    if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
-      //cerr << "Determined that these two GEP's don't alias ["
-      //     << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
-      return NoAlias;
-    }
-  }
   return MayAlias;
 }
 
