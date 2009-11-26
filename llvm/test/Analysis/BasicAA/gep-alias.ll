@@ -1,8 +1,8 @@
 ; RUN: opt < %s -gvn -instcombine -S |& FileCheck %s
-; Make sure that basicaa thinks R and r are must aliases.
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
+; Make sure that basicaa thinks R and r are must aliases.
 define i32 @test1(i8 * %P) {
 entry:
 	%Q = bitcast i8* %P to {i32, i32}*
@@ -130,4 +130,42 @@ define i32 @test8(i32* %p, i32 %i) {
   ret i32 %z
 ; CHECK: @test8
 ; CHECK: ret i32 0
+}
+
+define i8 @test9([4 x i8] *%P, i32 %i, i32 %j) {
+  %i2 = shl i32 %i, 2
+  %i3 = add i32 %i2, 1
+  ; P2 = P + 1 + 4*i
+  %P2 = getelementptr [4 x i8] *%P, i32 0, i32 %i3
+
+  %j2 = shl i32 %j, 2
+  
+  ; P4 = P + 4*j
+  %P4 = getelementptr [4 x i8]* %P, i32 0, i32 %j2
+
+  %x = load i8* %P2
+  store i8 42, i8* %P4
+  %y = load i8* %P2
+  %z = sub i8 %x, %y
+  ret i8 %z
+; CHECK: @test9
+; CHECK: ret i8 0
+}
+
+define i8 @test10([4 x i8] *%P, i32 %i) {
+  %i2 = shl i32 %i, 2
+  %i3 = add i32 %i2, 4
+  ; P2 = P + 4 + 4*i
+  %P2 = getelementptr [4 x i8] *%P, i32 0, i32 %i3
+  
+  ; P4 = P + 4*i
+  %P4 = getelementptr [4 x i8]* %P, i32 0, i32 %i2
+
+  %x = load i8* %P2
+  store i8 42, i8* %P4
+  %y = load i8* %P2
+  %z = sub i8 %x, %y
+  ret i8 %z
+; CHECK: @test10
+; CHECK: ret i8 0
 }
