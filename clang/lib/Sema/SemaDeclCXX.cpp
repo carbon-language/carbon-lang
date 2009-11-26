@@ -2171,6 +2171,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     Destructor->setImplicit();
     Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
     ClassDecl->addDecl(Destructor);
+    
+    AddOverriddenMethods(ClassDecl, Destructor);
   }
 }
 
