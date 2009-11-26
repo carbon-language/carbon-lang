@@ -2701,6 +2701,10 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   // Add all of the arguments we parsed to the function.
   Function::arg_iterator ArgIt = Fn->arg_begin();
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i, ++ArgIt) {
+    // If we run out of arguments in the Function prototype, exit early.
+    // FIXME: REMOVE THIS IN LLVM 3.0, this is just for the mismatch case above.
+    if (ArgIt == Fn->arg_end()) break;
+    
     // If the argument has a name, insert it into the argument symbol table.
     if (ArgList[i].Name.empty()) continue;
 
