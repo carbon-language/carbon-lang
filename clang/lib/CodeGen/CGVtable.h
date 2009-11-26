@@ -22,36 +22,37 @@ namespace llvm {
 }
 
 namespace clang {
-  class CXXMethodDecl;
   class CXXRecordDecl;
-  
+
 namespace CodeGen {
   class CodeGenModule;
 
-/// ThunkAdjustment - Virtual and non-virtual adjustment for thunks. 
-struct ThunkAdjustment {
+/// ThunkAdjustment - Virtual and non-virtual adjustment for thunks.
+class ThunkAdjustment {
+public:
   ThunkAdjustment(int64_t NonVirtual, int64_t Virtual)
-  : NonVirtual(NonVirtual), 
+  : NonVirtual(NonVirtual),
     Virtual(Virtual) { }
-  
+
   ThunkAdjustment()
     : NonVirtual(0), Virtual(0) { }
-  
+
   // isEmpty - Return whether this thunk adjustment is empty.
-  bool isEmpty() const { 
+  bool isEmpty() const {
     return NonVirtual == 0 && Virtual == 0;
   }
-  
+
   /// NonVirtual - The non-virtual adjustment.
   int64_t NonVirtual;
-  
+
   /// Virtual - The virtual adjustment.
   int64_t Virtual;
 };
 
 /// CovariantThunkAdjustment - Adjustment of the 'this' pointer and the
 /// return pointer for covariant thunks.
-struct CovariantThunkAdjustment {
+class CovariantThunkAdjustment {
+public:
   CovariantThunkAdjustment(const ThunkAdjustment &ThisAdjustment,
                            const ThunkAdjustment &ReturnAdjustment)
   : ThisAdjustment(ThisAdjustment), ReturnAdjustment(ReturnAdjustment) { }
@@ -64,15 +65,15 @@ struct CovariantThunkAdjustment {
 
 class CGVtableInfo {
   CodeGenModule &CGM;
-  
+
   /// MethodVtableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
   typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVtableIndicesTy;
   MethodVtableIndicesTy MethodVtableIndices;
-  
+
   typedef std::pair<const CXXRecordDecl *,
                     const CXXRecordDecl *> ClassPairTy;
-  
+
   /// VirtualBaseClassIndicies - Contains the index into the vtable where the
   /// offsets for virtual bases of a class are stored.
   typedef llvm::DenseMap<ClassPairTy, int64_t> VirtualBaseClassIndiciesTy;
@@ -80,20 +81,20 @@ class CGVtableInfo {
 
   llvm::DenseMap<const CXXRecordDecl *, llvm::Constant *> Vtables;
 public:
-  CGVtableInfo(CodeGenModule &CGM) 
+  CGVtableInfo(CodeGenModule &CGM)
     : CGM(CGM) { }
 
   /// getMethodVtableIndex - Return the index (relative to the vtable address
-  /// point) where the function pointer for the given virtual function is 
+  /// point) where the function pointer for the given virtual function is
   /// stored.
   int64_t getMethodVtableIndex(GlobalDecl GD);
-  
+
   /// getVirtualBaseOffsetIndex - Return the index (relative to the vtable
   /// address point) where the offset of the virtual base that contains the
   /// given Base is stored, otherwise, if no virtual base contains the given
   /// class, return 0.  Base must be a virtual base class or an unambigious
   /// base.
-  int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD, 
+  int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
                                     const CXXRecordDecl *VBase);
 
   llvm::Constant *getVtable(const CXXRecordDecl *RD);
@@ -104,7 +105,7 @@ public:
   /// rtti data structure and the VTT.
   void GenerateClassData(const CXXRecordDecl *RD);
 };
-  
+
 }
 }
 #endif
