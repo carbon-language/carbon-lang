@@ -1062,7 +1062,6 @@ const Value *llvm::DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
         continue;
       }
       
-      // TODO: Could handle linear expressions here like A[X+1], also A[X*4|1].
       uint64_t Scale = TD->getTypeAllocSize(*GTI);
       
       unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
