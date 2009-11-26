@@ -141,8 +141,11 @@ public:
 
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
-    if (const EnumConstantDecl *EC = dyn_cast<EnumConstantDecl>(E->getDecl()))
-      return llvm::ConstantInt::get(VMContext, EC->getInitVal());
+    Expr::EvalResult Result;
+    if (E->Evaluate(Result, CGF.getContext()) && Result.Val.isInt()) {
+      assert(!Result.HasSideEffects && "Constant declref with side-effect?!");
+      return llvm::ConstantInt::get(VMContext, Result.Val.getInt());
+    }
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
@@ -167,21 +170,7 @@ public:
 
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
-  Value *VisitMemberExpr(MemberExpr *E) { 
-    if (const EnumConstantDecl *EC = 
-          dyn_cast<EnumConstantDecl>(E->getMemberDecl())) {
-      
-      // We still need to emit the base.
-      if (E->isArrow())
-        CGF.EmitScalarExpr(E->getBase());
-      else
-        CGF.EmitLValue(E->getBase());
-      return llvm::ConstantInt::get(VMContext, EC->getInitVal());
-    }
-    
-    return EmitLoadOfLValue(E);
-  }
-    
+  Value *VisitMemberExpr(MemberExpr *E);
   Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
   Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return EmitLoadOfLValue(E);
@@ -571,6 +560,17 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   Value* V2 = CGF.EmitScalarExpr(E->getExpr(1));
   Value* SV = llvm::ConstantVector::get(indices.begin(), indices.size());
   return Builder.CreateShuffleVector(V1, V2, SV, "shuffle");
+}
+Value *ScalarExprEmitter::VisitMemberExpr(MemberExpr *E) {
+  Expr::EvalResult Result;
+  if (E->Evaluate(Result, CGF.getContext()) && Result.Val.isInt()) {
+    if (E->isArrow())
+      CGF.EmitScalarExpr(E->getBase());
+    else
+      EmitLValue(E->getBase());
+    return llvm::ConstantInt::get(VMContext, Result.Val.getInt());
+  }
+  return EmitLoadOfLValue(E);
 }
 
 Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
