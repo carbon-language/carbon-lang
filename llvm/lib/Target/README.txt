@@ -458,8 +458,6 @@ int i;
   }
 }
 
-BasicAA also doesn't do this for add.  It needs to know that &A[i+1] != &A[i].
-
 //===---------------------------------------------------------------------===//
 
 We should investigate an instruction sinking pass.  Consider this silly

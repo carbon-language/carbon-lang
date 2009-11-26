@@ -378,6 +378,30 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
   return NoAA::getModRefInfo(CS1, CS2);
 }
 
+/// GetLinearExpression - Analyze the specified value as a linear expression:
+/// "A*V + B".  Return the scale and offset values as APInts and return V as a
+/// Value*.  The incoming Value is known to be a scalar integer.
+static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset) {
+  assert(isa<IntegerType>(V->getType()) && "Not an integer value");
+  
+  if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(V)) {
+    if (ConstantInt *RHSC = dyn_cast<ConstantInt>(BOp->getOperand(1))) {
+      switch (BOp->getOpcode()) {
+      default: break;
+      case Instruction::Add:
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset);
+        Offset += RHSC->getValue();
+        return V;
+      // TODO: SHL, MUL, OR.
+      }
+    }
+  }
+
+  Scale = 1;
+  Offset = 0;
+  return V;
+}
+
 /// DecomposeGEPExpression - If V is a symbolic pointer expression, decompose it
 /// into a base pointer with a constant offset and a number of scaled symbolic
 /// offsets.
@@ -455,6 +479,14 @@ static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       
       // TODO: Could handle linear expressions here like A[X+1], also A[X*4|1].
       uint64_t Scale = TD->getTypeAllocSize(*GTI);
+      
+      unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
+      APInt IndexScale(Width, 0), IndexOffset(Width, 0);
+      Index = GetLinearExpression(Index, IndexScale, IndexOffset);
+      
+      Scale *= IndexScale.getZExtValue();
+      BaseOffs += IndexOffset.getZExtValue()*Scale;
+      
       
       // If we already had an occurrance of this index variable, merge this
       // scale into it.  For example, we want to handle:

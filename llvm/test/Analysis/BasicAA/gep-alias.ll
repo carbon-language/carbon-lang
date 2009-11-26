@@ -71,3 +71,19 @@ entry:
 ; CHECK: @test4
 ; CHECK: ret i32 64
 }
+
+; P[i] != p[i+1]
+define i32 @test5(i32* %p, i64 %i) {
+  %pi = getelementptr i32* %p, i64 %i
+  %i.next = add i64 %i, 1
+  %pi.next = getelementptr i32* %p, i64 %i.next
+  %x = load i32* %pi
+  store i32 42, i32* %pi.next
+  %y = load i32* %pi
+  %z = sub i32 %x, %y
+  ret i32 %z
+; CHECK: @test5
+; CHECK: ret i32 0
+}
+
+
