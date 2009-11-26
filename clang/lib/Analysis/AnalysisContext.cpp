@@ -18,20 +18,11 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/AST/StmtVisitor.h"
+#include "clang/Analysis/Support/BumpVector.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
-
-AnalysisContext::~AnalysisContext() {
-  delete cfg;
-  delete liveness;
-  delete PM;
-}
-
-AnalysisContextManager::~AnalysisContextManager() {
-  for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
-    delete I->second;
-}
 
 void AnalysisContextManager::clear() {
   for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
@@ -73,7 +64,7 @@ LiveVariables *AnalysisContext::getLiveVariables() {
     if (!c)
       return 0;
 
-    liveness = new LiveVariables(D->getASTContext(), *c);
+    liveness = new LiveVariables(*this);
     liveness->runOnCFG(*c);
     liveness->runOnAllBlocks(*c, 0, true);
   }
@@ -156,4 +147,76 @@ ScopeContext *LocationContextManager::getScope(AnalysisContext *ctx,
     Contexts.InsertNode(scope, InsertPos);
   }
   return scope;
+}
+
+//===----------------------------------------------------------------------===//
+// Lazily generated map to query the external variables referenced by a Block.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class FindBlockDeclRefExprsVals : public StmtVisitor<FindBlockDeclRefExprsVals>{
+  BumpVector<const VarDecl*> &BEVals;
+  BumpVectorContext &BC;
+public:
+  FindBlockDeclRefExprsVals(BumpVector<const VarDecl*> &bevals,
+                            BumpVectorContext &bc)
+  : BEVals(bevals), BC(bc) {}
+  
+  void VisitStmt(Stmt *S) {
+    for (Stmt::child_iterator I = S->child_begin(), E = S->child_end();I!=E;++I)
+      if (Stmt *child = *I)
+        Visit(child);
+  }
+  
+  void VisitBlockDeclRefExpr(BlockDeclRefExpr *DR) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
+      BEVals.push_back(VD, BC);
+  }
+};  
+} // end anonymous namespace
+
+typedef BumpVector<const VarDecl*> DeclVec;
+
+static DeclVec* LazyInitializeReferencedDecls(const BlockDecl *BD,
+                                              void *&Vec,
+                                              llvm::BumpPtrAllocator &A) {
+  if (Vec)
+    return (DeclVec*) Vec;
+  
+  BumpVectorContext BC(A);
+  DeclVec *BV = (DeclVec*) A.Allocate<DeclVec>();
+  new (BV) DeclVec(BC, 10);
+  
+  // Find the referenced variables.
+  FindBlockDeclRefExprsVals F(*BV, BC);
+  F.Visit(BD->getBody());
+  
+  Vec = BV;  
+  return BV;
+}
+
+std::pair<AnalysisContext::referenced_decls_iterator,
+          AnalysisContext::referenced_decls_iterator>
+AnalysisContext::getReferencedBlockVars(const BlockDecl *BD) {
+  if (!ReferencedBlockVars)
+    ReferencedBlockVars = new llvm::DenseMap<const BlockDecl*,void*>();
+  
+  DeclVec *V = LazyInitializeReferencedDecls(BD, (*ReferencedBlockVars)[BD], A);
+  return std::make_pair(V->begin(), V->end());
+}
+
+//===----------------------------------------------------------------------===//
+// Cleanup.
+//===----------------------------------------------------------------------===//
+
+AnalysisContext::~AnalysisContext() {
+  delete cfg;
+  delete liveness;
+  delete PM;
+  delete ReferencedBlockVars;
+}
+
+AnalysisContextManager::~AnalysisContextManager() {
+  for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
+    delete I->second;
 }

@@ -19,6 +19,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Allocator.h"
 
 namespace clang {
 
@@ -38,17 +39,26 @@ class AnalysisContext {
   CFG *cfg;
   LiveVariables *liveness;
   ParentMap *PM;
-
+  llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
+  llvm::BumpPtrAllocator A;
 public:
-  AnalysisContext(const Decl *d) : D(d), cfg(0), liveness(0), PM(0) {}
+  AnalysisContext(const Decl *d) : D(d), cfg(0), liveness(0), PM(0),
+    ReferencedBlockVars(0) {}
+
   ~AnalysisContext();
 
+  ASTContext &getASTContext() { return D->getASTContext(); }
   const Decl *getDecl() { return D; }
   Stmt *getBody();
   CFG *getCFG();
   ParentMap &getParentMap();
   LiveVariables *getLiveVariables();
 
+  typedef const VarDecl * const * referenced_decls_iterator;
+
+  std::pair<referenced_decls_iterator, referenced_decls_iterator>
+    getReferencedBlockVars(const BlockDecl *BD);
+  
   /// Return the ImplicitParamDecl* associated with 'self' if this
   /// AnalysisContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
   const ImplicitParamDecl *getSelfDecl() const;

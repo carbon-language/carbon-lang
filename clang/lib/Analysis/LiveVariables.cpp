@@ -19,6 +19,7 @@
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
@@ -77,10 +78,12 @@ public:
 };
 } // end anonymous namespace
 
-LiveVariables::LiveVariables(ASTContext& Ctx, CFG& cfg) {
+LiveVariables::LiveVariables(AnalysisContext &AC) {  
   // Register all referenced VarDecls.
+  CFG &cfg = *AC.getCFG();
   getAnalysisData().setCFG(cfg);
-  getAnalysisData().setContext(Ctx);
+  getAnalysisData().setContext(AC.getASTContext());
+  getAnalysisData().AC = &AC;
 
   RegisterDecls R(getAnalysisData());
   cfg.VisitBlockStmts(R);
@@ -103,6 +106,7 @@ public:
 
   void VisitDeclRefExpr(DeclRefExpr* DR);
   void VisitBinaryOperator(BinaryOperator* B);
+  void VisitBlockExpr(BlockExpr *B);
   void VisitAssign(BinaryOperator* B);
   void VisitDeclStmt(DeclStmt* DS);
   void BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
@@ -153,7 +157,17 @@ void TransferFuncs::VisitTerminator(CFGBlock* B) {
 
 void TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (VarDecl* V = dyn_cast<VarDecl>(DR->getDecl()))
-    LiveState(V,AD) = Alive;
+    LiveState(V, AD) = Alive;
+}
+  
+void TransferFuncs::VisitBlockExpr(BlockExpr *BE) {
+  AnalysisContext::referenced_decls_iterator I, E;
+  llvm::tie(I, E) = AD.AC->getReferencedBlockVars(BE->getBlockDecl());
+  for ( ; I != E ; ++I) {
+    DeclBitVector_Types::Idx i = AD.getIdx(*I);
+    if (i.isValid())
+      LiveState.getBit(i) = Alive;
+  }
 }
 
 void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
