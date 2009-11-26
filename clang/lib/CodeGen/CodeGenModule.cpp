@@ -549,7 +549,7 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   // cannot be.
   if (VD->isInAnonymousNamespace())
     return true;
-  if (VD->getStorageClass() == VarDecl::Static) {
+  if (VD->getLinkage() == VarDecl::InternalLinkage) {
     // Initializer has side effects?
     if (VD->getInit() && VD->getInit()->HasSideEffects(Context))
       return false;
@@ -982,9 +982,8 @@ GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
       return CodeGenModule::GVA_TemplateInstantiation;
     }
   }
-  
-  // Static variables get internal linkage.
-  if (VD->getStorageClass() == VarDecl::Static)
+
+  if (VD->getLinkage() == VarDecl::InternalLinkage)
     return CodeGenModule::GVA_Internal;
 
   return CodeGenModule::GVA_StrongExternal;
