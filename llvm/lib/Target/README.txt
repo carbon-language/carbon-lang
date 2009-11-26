@@ -220,7 +220,7 @@ so cool to turn it into something like:
 ... which would only do one 32-bit XOR per loop iteration instead of two.
 
 It would also be nice to recognize the reg->size doesn't alias reg->node[i], but
-alas.
+this requires TBAA.
 
 //===---------------------------------------------------------------------===//
 
@@ -279,6 +279,9 @@ unsigned int popcount(unsigned int input) {
     count += (input >> i) & i;
   return count;
 }
+
+This is a form of idiom recognition for loops, the same thing that could be
+useful for recognizing memset/memcpy.
 
 //===---------------------------------------------------------------------===//
 
@@ -343,7 +346,7 @@ PHI Slicing could be extended to do this.
 
 //===---------------------------------------------------------------------===//
 
-LSR should know what GPR types a target has.  This code:
+LSR should know what GPR types a target has from TargetData.  This code:
 
 volatile short X, Y; // globals
 
@@ -368,7 +371,6 @@ LBB1_2:
 	bne LBB1_2
 
 LSR should reuse the "+" IV for the exit test.
-
 
 //===---------------------------------------------------------------------===//
 
