@@ -218,7 +218,7 @@ public:
   /// addMD - Attach the metadata of given kind to an Instruction.
   void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
   
-  /// removeMD - Remove metadata of given kind attached with an instuction.
+  /// removeMD - Remove metadata of given kind attached with an instruction.
   void removeMD(unsigned Kind, Instruction *Inst);
   
   /// removeAllMetadata - Remove all metadata attached with an instruction.
@@ -289,7 +289,7 @@ void MetadataContextImpl::addMD(unsigned MDKind, MDNode *Node,
   Info.push_back(std::make_pair(MDKind, Node));
 }
 
-/// removeMD - Remove metadata of given kind attached with an instuction.
+/// removeMD - Remove metadata of given kind attached with an instruction.
 void MetadataContextImpl::removeMD(unsigned Kind, Instruction *Inst) {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
@@ -442,7 +442,7 @@ void MetadataContext::addMD(unsigned Kind, MDNode *Node, Instruction *Inst) {
   pImpl->addMD(Kind, Node, Inst);
 }
 
-/// removeMD - Remove metadata of given kind attached with an instuction.
+/// removeMD - Remove metadata of given kind attached with an instruction.
 void MetadataContext::removeMD(unsigned Kind, Instruction *Inst) {
   pImpl->removeMD(Kind, Inst);
 }
