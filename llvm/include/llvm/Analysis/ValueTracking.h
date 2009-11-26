@@ -82,6 +82,12 @@ namespace llvm {
   /// it into a base pointer with a constant offset and a number of scaled
   /// symbolic offsets.
   ///
+  /// The scaled symbolic offsets (represented by pairs of a Value* and a scale
+  /// in the VarIndices vector) are Value*'s that are known to be scaled by the
+  /// specified amount, but which may have other unrepresented high bits. As
+  /// such, the gep cannot necessarily be reconstructed from its decomposed
+  /// form.
+  ///
   /// When TargetData is around, this function is capable of analyzing
   /// everything that Value::getUnderlyingObject() can look through.  When not,
   /// it just looks through pointer casts.

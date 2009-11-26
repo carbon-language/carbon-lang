@@ -950,8 +950,10 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 
 
 /// GetLinearExpression - Analyze the specified value as a linear expression:
-/// "A*V + B".  Return the scale and offset values as APInts and return V as a
-/// Value*.  The incoming Value is known to be a scalar integer.
+/// "A*V + B", where A and B are constant integers.  Return the scale and offset
+/// values as APInts and return V as a Value*.  The incoming Value is known to
+/// have IntegerType.  Note that this looks through extends, so the high bits
+/// may not be represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
                                   const TargetData *TD) {
   assert(isa<IntegerType>(V->getType()) && "Not an integer value");
@@ -984,6 +986,20 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
     }
   }
   
+  // Since clients don't care about the high bits of the value, just scales and
+  // offsets, we can look through extensions.
+  if (isa<SExtInst>(V) || isa<ZExtInst>(V)) {
+    Value *CastOp = cast<CastInst>(V)->getOperand(0);
+    unsigned OldWidth = Scale.getBitWidth();
+    unsigned SmallWidth = CastOp->getType()->getPrimitiveSizeInBits();
+    Scale.trunc(SmallWidth);
+    Offset.trunc(SmallWidth);
+    Value *Result = GetLinearExpression(CastOp, Scale, Offset, TD);
+    Scale.zext(OldWidth);
+    Offset.zext(OldWidth);
+    return Result;
+  }
+  
   Scale = 1;
   Offset = 0;
   return V;
@@ -992,6 +1008,11 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
 /// DecomposeGEPExpression - If V is a symbolic pointer expression, decompose it
 /// into a base pointer with a constant offset and a number of scaled symbolic
 /// offsets.
+///
+/// The scaled symbolic offsets (represented by pairs of a Value* and a scale in
+/// the VarIndices vector) are Value*'s that are known to be scaled by the
+/// specified amount, but which may have other unrepresented high bits. As such,
+/// the gep cannot necessarily be reconstructed from its decomposed form.
 ///
 /// When TargetData is around, this function is capable of analyzing everything
 /// that Value::getUnderlyingObject() can look through.  When not, it just looks
