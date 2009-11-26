@@ -270,6 +270,14 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
     This = BaseLV.getAddress();
   }
 
+  if (MD->isCopyAssignment() && MD->isTrivial()) {
+    // We don't like to generate the trivial copy assignment operator when
+    // it isn't necessary; just produce the proper effect here.
+    llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
+    EmitAggregateCopy(This, RHS, CE->getType());
+    return RValue::get(This);
+  }
+
   // C++ [class.virtual]p12:
   //   Explicit qualification with the scope operator (5.1) suppresses the
   //   virtual call mechanism.
