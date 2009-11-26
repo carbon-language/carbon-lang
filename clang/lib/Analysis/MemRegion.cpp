@@ -17,14 +17,24 @@
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathSensitive/ValueManager.h"
 #include "clang/Analysis/PathSensitive/AnalysisContext.h"
+#include "clang/AST/StmtVisitor.h"
 
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Basic methods.
+// Object destruction.
 //===----------------------------------------------------------------------===//
 
 MemRegion::~MemRegion() {}
+
+MemRegionManager::~MemRegionManager() {
+  // All regions and their data are BumpPtrAllocated.  No need to call
+  // their destructors.
+}
+
+//===----------------------------------------------------------------------===//
+// Basic methods.
+//===----------------------------------------------------------------------===//
 
 bool SubRegion::isSubRegionOf(const MemRegion* R) const {
   const MemRegion* r = getSuperRegion();
@@ -525,3 +535,53 @@ RegionRawOffset ElementRegion::getAsRawOffset() const {
   return RegionRawOffset(superR, offset);
 }
 
+//===----------------------------------------------------------------------===//
+// BlockDataRegion
+//===----------------------------------------------------------------------===//
+
+void BlockDataRegion::LazyInitializeReferencedVars() {
+  if (ReferencedVars)
+    return;
+
+  AnalysisContext *AC = LC->getAnalysisContext();
+  AnalysisContext::referenced_decls_iterator I, E;
+  llvm::tie(I, E) = AC->getReferencedBlockVars(BC->getDecl());
+  
+  if (I == E) {
+    ReferencedVars = (void*) 0x1;
+    return;
+  }
+    
+  MemRegionManager &MemMgr = *getMemRegionManager();
+  llvm::BumpPtrAllocator &A = MemMgr.getAllocator();
+  BumpVectorContext BC(A);
+  
+  typedef BumpVector<const MemRegion*> VarVec;
+  VarVec *BV = (VarVec*) A.Allocate<VarVec>();
+  new (BV) VarVec(BC, (E - I) / sizeof(*I));
+  
+  for ( ; I != E; ++I)
+    BV->push_back(MemMgr.getVarRegion(*I, LC), BC);
+  
+  ReferencedVars = BV;
+}
+
+BlockDataRegion::referenced_vars_iterator
+BlockDataRegion::referenced_vars_begin() const {
+  const_cast<BlockDataRegion*>(this)->LazyInitializeReferencedVars();
+
+  BumpVector<const MemRegion*> *Vec =
+    static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
+  
+  return Vec == (void*) 0x1 ? NULL : Vec->begin();  
+}
+
+BlockDataRegion::referenced_vars_iterator
+BlockDataRegion::referenced_vars_end() const {
+  const_cast<BlockDataRegion*>(this)->LazyInitializeReferencedVars();
+
+  BumpVector<const MemRegion*> *Vec =
+    static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
+  
+  return Vec == (void*) 0x1 ? NULL : Vec->end();  
+}

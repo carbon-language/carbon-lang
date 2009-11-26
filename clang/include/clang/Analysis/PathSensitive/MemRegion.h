@@ -35,6 +35,7 @@ namespace clang {
 class MemRegionManager;
 class MemSpaceRegion;
 class LocationContext;
+class VarRegion;
 
 //===----------------------------------------------------------------------===//
 // Base region classes.
@@ -42,6 +43,7 @@ class LocationContext;
 
 /// MemRegion - The root abstract class for all memory regions.
 class MemRegion : public llvm::FoldingSetNode {
+  friend class MemRegionManager;
 public:
   enum Kind { MemSpaceRegionKind,
               SymbolicRegionKind,
@@ -329,13 +331,18 @@ public:
 class BlockDataRegion : public SubRegion {
   const BlockTextRegion *BC;
   const LocationContext *LC;
+  void *ReferencedVars;
 public:  
   BlockDataRegion(const BlockTextRegion *bc, 
                   const LocationContext *lc,
                   const MemRegion *sreg)
-  : SubRegion(sreg, BlockDataRegionKind), BC(bc), LC(lc) {}
+  : SubRegion(sreg, BlockDataRegionKind), BC(bc), LC(lc), ReferencedVars(0) {}
 
   const BlockTextRegion *getCodeRegion() const { return BC; }
+  
+  typedef const MemRegion * const * referenced_vars_iterator;
+  referenced_vars_iterator referenced_vars_begin() const;
+  referenced_vars_iterator referenced_vars_end() const;  
     
   virtual void dumpToStream(llvm::raw_ostream& os) const;
     
@@ -348,6 +355,8 @@ public:
   static bool classof(const MemRegion* R) {
     return R->getKind() == BlockDataRegionKind;
   }
+private:
+  void LazyInitializeReferencedVars();
 };
 
 /// SymbolicRegion - A special, "non-concrete" region. Unlike other region
@@ -650,9 +659,11 @@ public:
     : C(c), A(a), globals(0), stack(0), stackArguments(0), heap(0),
       unknown(0), code(0) {}
 
-  ~MemRegionManager() {}
+  ~MemRegionManager();
 
   ASTContext &getContext() { return C; }
+  
+  llvm::BumpPtrAllocator &getAllocator() { return A; }
 
   /// getStackRegion - Retrieve the memory region associated with the
   ///  current stack frame.
