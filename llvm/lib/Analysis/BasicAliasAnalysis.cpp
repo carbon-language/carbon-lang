@@ -18,7 +18,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
@@ -28,11 +27,9 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -377,160 +374,6 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
   
   // Otherwise, fall back to NoAA (mod+ref).
   return NoAA::getModRefInfo(CS1, CS2);
-}
-
-/// GetLinearExpression - Analyze the specified value as a linear expression:
-/// "A*V + B".  Return the scale and offset values as APInts and return V as a
-/// Value*.  The incoming Value is known to be a scalar integer.
-static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
-                                  const TargetData *TD) {
-  assert(isa<IntegerType>(V->getType()) && "Not an integer value");
-  
-  if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(V)) {
-    if (ConstantInt *RHSC = dyn_cast<ConstantInt>(BOp->getOperand(1))) {
-      switch (BOp->getOpcode()) {
-      default: break;
-      case Instruction::Or:
-        // X|C == X+C if all the bits in C are unset in X.  Otherwise we can't
-        // analyze it.
-        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), TD))
-          break;
-        // FALL THROUGH.
-      case Instruction::Add:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
-        Offset += RHSC->getValue();
-        return V;
-      case Instruction::Mul:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
-        Offset *= RHSC->getValue();
-        Scale *= RHSC->getValue();
-        return V;
-      case Instruction::Shl:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
-        Offset <<= RHSC->getValue().getLimitedValue();
-        Scale <<= RHSC->getValue().getLimitedValue();
-        return V;
-      }
-    }
-  }
-
-  Scale = 1;
-  Offset = 0;
-  return V;
-}
-
-/// DecomposeGEPExpression - If V is a symbolic pointer expression, decompose it
-/// into a base pointer with a constant offset and a number of scaled symbolic
-/// offsets.
-///
-/// When TargetData is around, this function is capable of analyzing everything
-/// that Value::getUnderlyingObject() can look through.  When not, it just looks
-/// through pointer casts.
-///
-/// FIXME: Move this out to ValueTracking.cpp
-///
-static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
-                 SmallVectorImpl<std::pair<const Value*, int64_t> > &VarIndices,
-                                           const TargetData *TD) {
-  // FIXME: Should limit depth like getUnderlyingObject?
-  BaseOffs = 0;
-  while (1) {
-    // See if this is a bitcast or GEP.
-    const Operator *Op = dyn_cast<Operator>(V);
-    if (Op == 0) {
-      // The only non-operator case we can handle are GlobalAliases.
-      if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
-        if (!GA->mayBeOverridden()) {
-          V = GA->getAliasee();
-          continue;
-        }
-      }
-      return V;
-    }
-    
-    if (Op->getOpcode() == Instruction::BitCast) {
-      V = Op->getOperand(0);
-      continue;
-    }
-    
-    const GEPOperator *GEPOp = dyn_cast<GEPOperator>(Op);
-    if (GEPOp == 0)
-      return V;
-    
-    // Don't attempt to analyze GEPs over unsized objects.
-    if (!cast<PointerType>(GEPOp->getOperand(0)->getType())
-          ->getElementType()->isSized())
-      return V;
-
-    // If we are lacking TargetData information, we can't compute the offets of
-    // elements computed by GEPs.  However, we can handle bitcast equivalent
-    // GEPs.
-    if (!TD) {
-      if (!GEPOp->hasAllZeroIndices())
-        return V;
-      V = GEPOp->getOperand(0);
-      continue;
-    }
-    
-    // Walk the indices of the GEP, accumulating them into BaseOff/VarIndices.
-    gep_type_iterator GTI = gep_type_begin(GEPOp);
-    for (User::const_op_iterator I = next(GEPOp->op_begin()),
-         E = GEPOp->op_end(); I != E; ++I) {
-      Value *Index = *I;
-      // Compute the (potentially symbolic) offset in bytes for this index.
-      if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
-        // For a struct, add the member offset.
-        unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
-        if (FieldNo == 0) continue;
-        
-        BaseOffs += TD->getStructLayout(STy)->getElementOffset(FieldNo);
-        continue;
-      }
-      
-      // For an array/pointer, add the element offset, explicitly scaled.
-      if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Index)) {
-        if (CIdx->isZero()) continue;
-        BaseOffs += TD->getTypeAllocSize(*GTI)*CIdx->getSExtValue();
-        continue;
-      }
-      
-      // TODO: Could handle linear expressions here like A[X+1], also A[X*4|1].
-      uint64_t Scale = TD->getTypeAllocSize(*GTI);
-      
-      unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
-      APInt IndexScale(Width, 0), IndexOffset(Width, 0);
-      Index = GetLinearExpression(Index, IndexScale, IndexOffset, TD);
-      
-      Scale *= IndexScale.getZExtValue();
-      BaseOffs += IndexOffset.getZExtValue()*Scale;
-      
-      
-      // If we already had an occurrance of this index variable, merge this
-      // scale into it.  For example, we want to handle:
-      //   A[x][x] -> x*16 + x*4 -> x*20
-      // This also ensures that 'x' only appears in the index list once.
-      for (unsigned i = 0, e = VarIndices.size(); i != e; ++i) {
-        if (VarIndices[i].first == Index) {
-          Scale += VarIndices[i].second;
-          VarIndices.erase(VarIndices.begin()+i);
-          break;
-        }
-      }
-      
-      // Make sure that we have a scale that makes sense for this target's
-      // pointer size.
-      if (unsigned ShiftBits = 64-TD->getPointerSizeInBits()) {
-        Scale <<= ShiftBits;
-        Scale >>= ShiftBits;
-      }
-      
-      if (Scale)
-        VarIndices.push_back(std::make_pair(Index, Scale));
-    }
-    
-    // Analyze the base pointer next.
-    V = GEPOp->getOperand(0);
-  }
 }
 
 /// GetIndiceDifference - Dest and Src are the variable indices from two
