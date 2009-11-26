@@ -53,6 +53,9 @@ private:
   llvm::DenseMap<GlobalDecl, Index_t> NonVirtualOffset;
   llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
 
+  /// PureVirtualFunction - Points to __cxa_pure_virtual.
+  llvm::Constant *PureVirtualFn;
+  
   /// Thunk - Represents a single thunk.
   struct Thunk {
     Thunk()
@@ -113,7 +116,6 @@ private:
   const uint32_t LLVMPointerWidth;
   Index_t extra;
   typedef std::vector<std::pair<const CXXRecordDecl *, int64_t> > Path_t;
-  llvm::Constant *cxa_pure;
   static llvm::DenseMap<CtorVtable_t, int64_t>&
   AllocAddressPoint(CodeGenModule &cgm, const CXXRecordDecl *l,
                     const CXXRecordDecl *c) {
@@ -126,23 +128,29 @@ private:
       ref = new llvm::DenseMap<CtorVtable_t, int64_t>;
     return *ref;
   }
+  
+  /// getPureVirtualFn - Return the __cxa_pure_virtual function.
+  llvm::Constant* getPureVirtualFn() {
+    if (!PureVirtualFn) {
+      const llvm::FunctionType *Ty = 
+        llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), 
+                                /*isVarArg=*/false);
+      PureVirtualFn = wrap(CGM.CreateRuntimeFunction(Ty, "__cxa_pure_virtual"));
+    }
+    
+    return PureVirtualFn;
+  }
+  
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth, const CXXRecordDecl *c,
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
     : methods(meth), Class(c), LayoutClass(l), LayoutOffset(lo),
       BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(cgm.GenerateRttiRef(c)), VMContext(cgm.getModule().getContext()),
-      CGM(cgm), subAddressPoints(AllocAddressPoint(cgm, l, c)),
+      CGM(cgm), PureVirtualFn(0),subAddressPoints(AllocAddressPoint(cgm, l, c)),
       Extern(!l->isInAnonymousNamespace()),
-      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
+    LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
-
-    // Calculate pointer for ___cxa_pure_virtual.
-    const llvm::FunctionType *FTy;
-    std::vector<const llvm::Type*> ArgTys;
-    const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
-    FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
-    cxa_pure = wrap(CGM.CreateRuntimeFunction(FTy, "__cxa_pure_virtual"));
   }
 
   llvm::DenseMap<GlobalDecl, Index_t> &getIndex() { return Index; }
@@ -399,7 +407,7 @@ public:
     for (PureVirtualMethodsSetTy::iterator i = PureVirtualMethods.begin(),
          e = PureVirtualMethods.end(); i != e; ++i) {
       GlobalDecl GD = *i;
-      submethods[Index[GD]] = cxa_pure;
+      submethods[Index[GD]] = getPureVirtualFn();
     }
     PureVirtualMethods.clear();
   }
