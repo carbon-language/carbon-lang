@@ -20,6 +20,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
@@ -220,7 +221,8 @@ namespace {
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
     // instruction against another.
     AliasResult aliasGEP(const GEPOperator *V1, unsigned V1Size,
-                         const Value *V2, unsigned V2Size);
+                         const Value *V2, unsigned V2Size,
+                         const Value *UnderlyingV1, const Value *UnderlyingV2);
 
     // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI
     // instruction against another.
@@ -408,40 +410,66 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 /// DecomposeGEPExpression - If V is a symbolic pointer expression, decompose it
 /// into a base pointer with a constant offset and a number of scaled symbolic
 /// offsets.
+///
+/// When TargetData is around, this function is capable of analyzing everything
+/// that Value::getUnderlyingObject() can look through.  When not, it just looks
+/// through pointer casts.
+///
+/// FIXME: Move this out to ValueTracking.cpp
+///
 static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
                SmallVectorImpl<std::pair<const Value*, uint64_t> > &VarIndices,
                                            const TargetData *TD) {
-  const Value *OrigPtr = V;
+  // FIXME: Should limit depth like getUnderlyingObject?
   BaseOffs = 0;
   while (1) {
     // See if this is a bitcast or GEP.
     const Operator *Op = dyn_cast<Operator>(V);
-    if (Op == 0) return V;
+    if (Op == 0) {
+      // The only non-operator case we can handle are GlobalAliases.
+      if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
+        if (!GA->mayBeOverridden()) {
+          V = GA->getAliasee();
+          continue;
+        }
+      }
+      return V;
+    }
     
     if (Op->getOpcode() == Instruction::BitCast) {
       V = Op->getOperand(0);
       continue;
     }
     
-    if (Op->getOpcode() != Instruction::GetElementPtr)
+    const GEPOperator *GEPOp = dyn_cast<GEPOperator>(Op);
+    if (GEPOp == 0)
       return V;
     
     // Don't attempt to analyze GEPs over unsized objects.
-    if (!cast<PointerType>(Op->getOperand(0)->getType())
+    if (!cast<PointerType>(GEPOp->getOperand(0)->getType())
           ->getElementType()->isSized())
       return V;
+
+    // If we are lacking TargetData information, we can't compute the offets of
+    // elements computed by GEPs.  However, we can handle bitcast equivalent
+    // GEPs.
+    if (!TD) {
+      if (!GEPOp->hasAllZeroIndices())
+        return V;
+      V = GEPOp->getOperand(0);
+      continue;
+    }
     
     // Walk the indices of the GEP, accumulating them into BaseOff/VarIndices.
-    gep_type_iterator GTI = gep_type_begin(Op);
-    for (User::const_op_iterator I = next(Op->op_begin()), E = Op->op_end();
-         I != E; ++I) {
+    gep_type_iterator GTI = gep_type_begin(GEPOp);
+    for (User::const_op_iterator I = next(GEPOp->op_begin()),
+         E = GEPOp->op_end(); I != E; ++I) {
       Value *Index = *I;
       // Compute the (potentially symbolic) offset in bytes for this index.
       if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
         // For a struct, add the member offset.
         unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
         if (FieldNo == 0) continue;
-        if (TD == 0) goto FailNoTD;
         
         BaseOffs += TD->getStructLayout(STy)->getElementOffset(FieldNo);
         continue;
@@ -450,13 +478,9 @@ static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       // For an array/pointer, add the element offset, explicitly scaled.
       if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Index)) {
         if (CIdx->isZero()) continue;
-        if (TD == 0) goto FailNoTD;
-        
         BaseOffs += TD->getTypeAllocSize(*GTI)*CIdx->getSExtValue();
         continue;
       }
-      
-      if (TD == 0) goto FailNoTD;
       
       // TODO: Could handle linear expressions here like A[X+1], also A[X*4|1].
       uint64_t Scale = TD->getTypeAllocSize(*GTI);
@@ -484,25 +508,21 @@ static const Value *DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
     }
     
     // Analyze the base pointer next.
-    V = Op->getOperand(0);
+    V = GEPOp->getOperand(0);
   }
-  
-  // If we don't have TD around, we can't analyze this index, remove all
-  // information we've found.
-FailNoTD:
-  VarIndices.clear();
-  BaseOffs = 0;
-  return OrigPtr;
 }
 
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
-/// anything about V2.
+/// anything about V2.  UnderlyingV1 is GEP1->getUnderlyingObject(),
+/// UnderlyingV2 is the same for V2.
 ///
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
-                             const Value *V2, unsigned V2Size) {
+                             const Value *V2, unsigned V2Size,
+                             const Value *UnderlyingV1,
+                             const Value *UnderlyingV2) {
   // If we have two gep instructions with must-alias'ing base pointers, figure
   // out if the indexes to the GEP tell us anything about the derived pointer.
   // Note that we also handle chains of getelementptr instructions as well as
@@ -567,15 +587,12 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
   // instruction.  If one pointer is a GEP with a non-zero index of the other
   // pointer, we know they cannot alias.
   //
+  // FIXME: The check below only looks at the size of one of the pointers, not
+  // both, this may cause us to miss things.
   if (V1Size == ~0U || V2Size == ~0U)
     return MayAlias;
 
-  int64_t GEP1BaseOffset;
-  SmallVector<std::pair<const Value*, uint64_t>, 4> VariableIndices;
-  const Value *GEP1BasePtr =
-    DecomposeGEPExpression(GEP1, GEP1BaseOffset, VariableIndices, TD);
-    
-  AliasResult R = aliasCheck(GEP1BasePtr, ~0U, V2, V2Size);
+  AliasResult R = aliasCheck(UnderlyingV1, ~0U, V2, V2Size);
   if (R != MustAlias)
     // If V2 may alias GEP base pointer, conservatively returns MayAlias.
     // If V2 is known not to alias GEP base pointer, then the two values
@@ -584,6 +601,20 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, unsigned V1Size,
     // with the first operand of the getelementptr".
     return R;
 
+  int64_t GEP1BaseOffset;
+  SmallVector<std::pair<const Value*, uint64_t>, 4> VariableIndices;
+  const Value *GEP1BasePtr =
+    DecomposeGEPExpression(GEP1, GEP1BaseOffset, VariableIndices, TD);
+  
+  // If DecomposeGEPExpression isn't able to look all the way through the
+  // addressing operation, we must not have TD and this is too complex for us
+  // to handle without it.
+  if (GEP1BasePtr != UnderlyingV1) {
+    assert(TD == 0 &&
+           "DecomposeGEPExpression and getUnderlyingObject disagree!");
+    return MayAlias;
+  }
+  
   // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
   // the ptr, the end result is a must alias also.
   if (GEP1BaseOffset == 0 && VariableIndices.empty())
@@ -797,9 +828,10 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   if (!isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
+    std::swap(O1, O2);
   }
   if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1))
-    return aliasGEP(GV1, V1Size, V2, V2Size);
+    return aliasGEP(GV1, V1Size, V2, V2Size, O1, O2);
 
   if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
     std::swap(V1, V2);
