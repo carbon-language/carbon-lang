@@ -271,6 +271,12 @@ public:
   /// ends with an unconditional branch to some other block.
   bool isLayoutSuccessor(const MachineBasicBlock *MBB) const;
 
+  /// canFallThrough - Return true if the block can implicitly transfer
+  /// control to the block after it by falling off the end of it.  This should
+  /// return false if it can reach the block after it, but it uses an explicit
+  /// branch to do so (e.g., a table jump).  True is a conservative answer.
+  bool canFallThrough();
+
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,
   /// it returns end()

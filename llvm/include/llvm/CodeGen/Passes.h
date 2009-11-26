@@ -129,6 +129,10 @@ namespace llvm {
   /// branches.
   FunctionPass *createBranchFoldingPass(bool DefaultEnableTailMerge);
 
+  /// TailDuplication Pass - Duplicate blocks with unconditional branches
+  /// into tails of their predecessors.
+  FunctionPass *createTailDuplicationPass();
+
   /// IfConverter Pass - This pass performs machine code if conversion.
   FunctionPass *createIfConverterPass();
 

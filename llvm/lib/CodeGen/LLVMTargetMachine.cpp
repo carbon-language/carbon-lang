@@ -35,6 +35,8 @@ static cl::opt<bool> DisablePostRA("disable-post-ra", cl::Hidden,
     cl::desc("Disable Post Regalloc"));
 static cl::opt<bool> DisableBranchFold("disable-branch-fold", cl::Hidden,
     cl::desc("Disable branch folding"));
+static cl::opt<bool> DisableTailDuplicate("disable-tail-duplicate", cl::Hidden,
+    cl::desc("Disable tail duplication"));
 static cl::opt<bool> DisableCodePlace("disable-code-place", cl::Hidden,
     cl::desc("Disable code placement"));
 static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
@@ -342,6 +344,12 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None && !DisableBranchFold) {
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
     printAndVerify(PM, "After BranchFolding");
+  }
+
+  // Tail duplication.
+  if (OptLevel != CodeGenOpt::None && !DisableTailDuplicate) {
+    PM.add(createTailDuplicationPass());
+    printAndVerify(PM, "After TailDuplication");
   }
 
   PM.add(createGCMachineCodeAnalysisPass());

@@ -105,18 +105,10 @@ namespace llvm {
     unsigned CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
                                        unsigned maxCommonTailLength);
 
-    bool TailDuplicateBlocks(MachineFunction &MF);
-    bool TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF);
-    
     bool OptimizeBranches(MachineFunction &MF);
     bool OptimizeBlock(MachineBasicBlock *MBB);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
     bool OptimizeImpDefsBlock(MachineBasicBlock *MBB);
-    
-    bool CanFallThrough(MachineBasicBlock *CurBB);
-    bool CanFallThrough(MachineBasicBlock *CurBB, bool BranchUnAnalyzable,
-                        MachineBasicBlock *TBB, MachineBasicBlock *FBB,
-                        const SmallVectorImpl<MachineOperand> &Cond);
   };
 }
 

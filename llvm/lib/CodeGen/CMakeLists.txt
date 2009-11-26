@@ -63,6 +63,7 @@ add_llvm_library(LLVMCodeGen
   StackProtector.cpp
   StackSlotColoring.cpp
   StrongPHIElimination.cpp
+  TailDuplication.cpp
   TargetInstrInfoImpl.cpp
   TwoAddressInstructionPass.cpp
   UnreachableBlockElim.cpp
