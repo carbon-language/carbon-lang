@@ -348,8 +348,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Tail duplication.
   if (OptLevel != CodeGenOpt::None && !DisableTailDuplicate) {
-    PM.add(createTailDuplicationPass());
-    printAndVerify(PM, "After TailDuplication");
+    PM.add(createTailDuplicatePass());
+    printAndVerify(PM, "After TailDuplicate");
   }
 
   PM.add(createGCMachineCodeAnalysisPass());

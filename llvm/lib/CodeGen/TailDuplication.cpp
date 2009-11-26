@@ -37,14 +37,14 @@ TailDuplicateSize("tail-dup-size",
                   cl::init(2), cl::Hidden);
 
 namespace {
-  /// TailDuplicationPass - Perform tail duplication.
-  class TailDuplicationPass : public MachineFunctionPass {
+  /// TailDuplicatePass - Perform tail duplication.
+  class TailDuplicatePass : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     MachineModuleInfo *MMI;
 
   public:
     static char ID;
-    explicit TailDuplicationPass() : MachineFunctionPass(&ID) {}
+    explicit TailDuplicatePass() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Tail Duplication"; }
@@ -55,14 +55,14 @@ namespace {
     void RemoveDeadBlock(MachineBasicBlock *MBB);
   };
 
-  char TailDuplicationPass::ID = 0;
+  char TailDuplicatePass::ID = 0;
 }
 
-FunctionPass *llvm::createTailDuplicationPass() {
-  return new TailDuplicationPass();
+FunctionPass *llvm::createTailDuplicatePass() {
+  return new TailDuplicatePass();
 }
 
-bool TailDuplicationPass::runOnMachineFunction(MachineFunction &MF) {
+bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
 
@@ -80,7 +80,7 @@ bool TailDuplicationPass::runOnMachineFunction(MachineFunction &MF) {
 /// TailDuplicateBlocks - Look for small blocks that are unconditionally
 /// branched to and do not fall through. Tail-duplicate their instructions
 /// into their predecessors to eliminate (dynamic) branches.
-bool TailDuplicationPass::TailDuplicateBlocks(MachineFunction &MF) {
+bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
   bool MadeChange = false;
 
   for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
@@ -105,7 +105,7 @@ bool TailDuplicationPass::TailDuplicateBlocks(MachineFunction &MF) {
 
 /// TailDuplicate - If it is profitable, duplicate TailBB's contents in each
 /// of its predecessors.
-bool TailDuplicationPass::TailDuplicate(MachineBasicBlock *TailBB,
+bool TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
                                         MachineFunction &MF) {
   // Don't try to tail-duplicate single-block loops.
   if (TailBB->isSuccessor(TailBB))
@@ -225,7 +225,7 @@ bool TailDuplicationPass::TailDuplicate(MachineBasicBlock *TailBB,
 
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
 /// function, updating the CFG.
-void TailDuplicationPass::RemoveDeadBlock(MachineBasicBlock *MBB) {
+void TailDuplicatePass::RemoveDeadBlock(MachineBasicBlock *MBB) {
   assert(MBB->pred_empty() && "MBB must be dead!");
   DEBUG(errs() << "\nRemoving MBB: " << *MBB);
 
