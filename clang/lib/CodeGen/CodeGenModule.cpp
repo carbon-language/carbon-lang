@@ -697,142 +697,19 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     // A called constructor which has no definition or declaration need be
     // synthesized.
     else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-      const CXXRecordDecl *ClassDecl =
-        cast<CXXRecordDecl>(CD->getDeclContext());
-      if (CD->isCopyConstructor(getContext()))
-        DeferredCopyConstructorToEmit(D);
-      else if (!ClassDecl->hasUserDeclaredConstructor())
+      if (CD->isImplicit())
+        DeferredDeclsToEmit.push_back(D);
+    } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
+      if (DD->isImplicit())
+        DeferredDeclsToEmit.push_back(D);
+    } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+      if (MD->isCopyAssignment() && MD->isImplicit())
         DeferredDeclsToEmit.push_back(D);
     }
-    else if (isa<CXXDestructorDecl>(FD))
-       DeferredDestructorToEmit(D);
-    else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
-           if (MD->isCopyAssignment())
-             DeferredCopyAssignmentToEmit(D);
   }
 
   return F;
 }
-
-/// Defer definition of copy constructor(s) which need be implicitly defined.
-void CodeGenModule::DeferredCopyConstructorToEmit(GlobalDecl CopyCtorDecl) {
-  const CXXConstructorDecl *CD =
-    cast<CXXConstructorDecl>(CopyCtorDecl.getDecl());
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
-  if (ClassDecl->hasTrivialCopyConstructor() ||
-      ClassDecl->hasUserDeclaredCopyConstructor())
-    return;
-
-  // First make sure all direct base classes and virtual bases and non-static
-  // data mebers which need to have their copy constructors implicitly defined
-  // are defined. 12.8.p7
-  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (CXXConstructorDecl *BaseCopyCtor =
-        BaseClassDecl->getCopyConstructor(Context, 0))
-      GetAddrOfCXXConstructor(BaseCopyCtor, Ctor_Complete);
-  }
-
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
-    QualType FieldType = Context.getCanonicalType((*Field)->getType());
-    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-      FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      if ((*Field)->isAnonymousStructOrUnion())
-        continue;
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      if (CXXConstructorDecl *FieldCopyCtor =
-          FieldClassDecl->getCopyConstructor(Context, 0))
-        GetAddrOfCXXConstructor(FieldCopyCtor, Ctor_Complete);
-    }
-  }
-  DeferredDeclsToEmit.push_back(CopyCtorDecl);
-}
-
-/// Defer definition of copy assignments which need be implicitly defined.
-void CodeGenModule::DeferredCopyAssignmentToEmit(GlobalDecl CopyAssignDecl) {
-  const CXXMethodDecl *CD = cast<CXXMethodDecl>(CopyAssignDecl.getDecl());
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
-
-  if (ClassDecl->hasTrivialCopyAssignment() ||
-      ClassDecl->hasUserDeclaredCopyAssignment())
-    return;
-
-  // First make sure all direct base classes and virtual bases and non-static
-  // data mebers which need to have their copy assignments implicitly defined
-  // are defined. 12.8.p12
-  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    const CXXMethodDecl *MD = 0;
-    if (!BaseClassDecl->hasTrivialCopyAssignment() &&
-        !BaseClassDecl->hasUserDeclaredCopyAssignment() &&
-        BaseClassDecl->hasConstCopyAssignment(getContext(), MD))
-      GetAddrOfFunction(MD, 0);
-  }
-
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
-    QualType FieldType = Context.getCanonicalType((*Field)->getType());
-    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-      FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      if ((*Field)->isAnonymousStructOrUnion())
-        continue;
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      const CXXMethodDecl *MD = 0;
-      if (!FieldClassDecl->hasTrivialCopyAssignment() &&
-          !FieldClassDecl->hasUserDeclaredCopyAssignment() &&
-          FieldClassDecl->hasConstCopyAssignment(getContext(), MD))
-          GetAddrOfFunction(MD, 0);
-    }
-  }
-  DeferredDeclsToEmit.push_back(CopyAssignDecl);
-}
-
-void CodeGenModule::DeferredDestructorToEmit(GlobalDecl DtorDecl) {
-  const CXXDestructorDecl *DD = cast<CXXDestructorDecl>(DtorDecl.getDecl());
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DD->getDeclContext());
-  if (ClassDecl->hasTrivialDestructor() ||
-      ClassDecl->hasUserDeclaredDestructor())
-    return;
-
-  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (const CXXDestructorDecl *BaseDtor =
-          BaseClassDecl->getDestructor(Context))
-      GetAddrOfCXXDestructor(BaseDtor, Dtor_Complete);
-  }
-
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
-    QualType FieldType = Context.getCanonicalType((*Field)->getType());
-    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-      FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      if ((*Field)->isAnonymousStructOrUnion())
-        continue;
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      if (const CXXDestructorDecl *FieldDtor =
-            FieldClassDecl->getDestructor(Context))
-        GetAddrOfCXXDestructor(FieldDtor, Dtor_Complete);
-    }
-  }
-  DeferredDeclsToEmit.push_back(DtorDecl);
-}
-
 
 /// GetAddrOfFunction - Return the address of the given function.  If Ty is
 /// non-null, then this function will use the specified type if it has to

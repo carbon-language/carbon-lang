@@ -428,9 +428,6 @@ private:
   llvm::Constant *GetOrCreateLLVMGlobal(const char *MangledName,
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D);
-  void DeferredCopyConstructorToEmit(GlobalDecl D);
-  void DeferredCopyAssignmentToEmit(GlobalDecl D);
-  void DeferredDestructorToEmit(GlobalDecl D);
 
   /// SetCommonAttributes - Set attributes which are common to any
   /// form of a global definition (alias, Objective-C method,

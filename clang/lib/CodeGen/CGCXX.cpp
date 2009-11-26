@@ -196,11 +196,6 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   assert(MD->isInstance() &&
          "Trying to emit a member call expr on a static method!");
 
-  // A call to a trivial destructor requires no code generation.
-  if (const CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(MD))
-    if (Destructor->isTrivial())
-      return RValue::get(0);
-
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
   CallArgList Args;
@@ -251,6 +246,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
       
   const MemberExpr *ME = cast<MemberExpr>(CE->getCallee());
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(MD->getDeclContext());
 
   if (MD->isStatic()) {
     // The method is static, emit it as we would a regular call.
@@ -283,6 +279,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   llvm::Value *Callee;
   if (const CXXDestructorDecl *Destructor
              = dyn_cast<CXXDestructorDecl>(MD)) {
+    if (Destructor->isTrivial())
+      return RValue::get(0);
     if (MD->isVirtual() && !ME->hasQualifier() && 
         !canDevirtualizeMemberFunctionCalls(ME->getBase())) {
       Callee = BuildVirtualCall(Destructor, Dtor_Complete, This, Ty); 
@@ -684,6 +682,10 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
       EmitAggregateCopy(This, Src, Ty);
       return;
     }
+  } else if (D->isTrivial()) {
+    // FIXME: Track down why we're trying to generate calls to the trivial
+    // default constructor!
+    return;
   }
 
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
@@ -1327,6 +1329,7 @@ CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *Ctor,
                                               CXXCtorType Type,
                                               llvm::Function *Fn,
                                               const FunctionArgList &Args) {
+  assert(!Ctor->isTrivial() && "shouldn't need to generate trivial ctor");
   StartFunction(GlobalDecl(Ctor, Type), Ctor->getResultType(), Fn, Args, 
                 SourceLocation());
   EmitCtorPrologue(Ctor, Type);
@@ -1356,6 +1359,7 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
   const CXXRecordDecl *ClassDecl = Ctor->getParent();
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
       "SynthesizeCXXCopyConstructor - copy constructor has definition already");
+  assert(!Ctor->isTrivial() && "shouldn't need to generate trivial ctor");
   StartFunction(GlobalDecl(Ctor, Type), Ctor->getResultType(), Fn, Args, 
                 SourceLocation());
 
