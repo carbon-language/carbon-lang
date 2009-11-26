@@ -1,8 +1,8 @@
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -warn-dead-stores -verify %s
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -warn-dead-stores -verify %s
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -analyzer-constraints=range -warn-dead-stores -verify %s
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=basic -warn-dead-stores -verify %s
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -warn-dead-stores -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -warn-dead-stores -fblocks -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -warn-dead-stores -fblocks -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -analyzer-constraints=range -warn-dead-stores -fblocks -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=basic -warn-dead-stores -fblocks -verify %s
+// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -warn-dead-stores -fblocks -verify %s
 
 void f1() {
   int k, y;
@@ -353,4 +353,20 @@ void f22() {
     (void)x;
     break;
   }
+}
+
+void f23_aux(const char* s);
+void f23(int argc, char **argv) {
+  int shouldLog = (argc > 1); // no-warning
+  ^{ 
+     if (shouldLog) f23_aux("I did too use it!\n");
+     else f23_aux("I shouldn't log.  Wait.. d'oh!\n");
+  }();
+}
+
+void f23_pos(int argc, char **argv) {
+  int shouldLog = (argc > 1); // expected-warning{{Value stored to 'shouldLog' during its initialization is never read}}
+  ^{ 
+     f23_aux("I did too use it!\n");
+  }();  
 }
