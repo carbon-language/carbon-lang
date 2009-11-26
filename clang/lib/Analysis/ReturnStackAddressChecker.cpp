@@ -83,6 +83,14 @@ void ReturnStackAddressChecker::PreVisitReturnStmt(CheckerContext &C,
        << C.getSourceManager().getInstantiationLineNumber(L)
        << " returned to caller";
   }
+  else if (const BlockDataRegion *BR = dyn_cast<BlockDataRegion>(R)) {
+    const BlockDecl *BD = BR->getCodeRegion()->getDecl();
+    SourceLocation L = BD->getLocStart();
+    range = BD->getSourceRange();
+    os << "Address of stack-allocated block declared on line "
+       << C.getSourceManager().getInstantiationLineNumber(L)
+       << " returned to caller";
+  }
   else {
     os << "Address of stack memory associated with local variable '"
         << R->getString() << "' returned.";
