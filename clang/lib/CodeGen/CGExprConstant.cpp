@@ -413,9 +413,10 @@ public:
     
     // Get the function pointer (or index if this is a virtual function).
     if (MD->isVirtual()) {
-      int64_t Index = CGM.getVtableInfo().getMethodVtableIndex(MD);
+      uint64_t Index = CGM.getVtableInfo().getMethodVtableIndex(MD);
       
-      Values[0] = llvm::ConstantInt::get(PtrDiffTy, Index + 1);
+      // The pointer is 1 + the virtual table offset in bytes.
+      Values[0] = llvm::ConstantInt::get(PtrDiffTy, (Index * 8) + 1);
     } else {
       llvm::Constant *FuncPtr = CGM.GetAddrOfFunction(MD);
 

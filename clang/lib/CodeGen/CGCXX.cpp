@@ -1055,7 +1055,7 @@ CodeGenFunction::GetVirtualCXXBaseClassOffset(llvm::Value *This,
   return VBaseOffset;
 }
 
-static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, int64_t VtableIndex, 
+static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VtableIndex, 
                                      llvm::Value *This, const llvm::Type *Ty) {
   Ty = Ty->getPointerTo()->getPointerTo()->getPointerTo();
   
@@ -1071,7 +1071,7 @@ llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
                                   const llvm::Type *Ty) {
   MD = MD->getCanonicalDecl();
-  int64_t VtableIndex = CGM.getVtableInfo().getMethodVtableIndex(MD);
+  uint64_t VtableIndex = CGM.getVtableInfo().getMethodVtableIndex(MD);
   
   return ::BuildVirtualCall(*this, VtableIndex, This, Ty);
 }
@@ -1080,7 +1080,7 @@ llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type, 
                                   llvm::Value *&This, const llvm::Type *Ty) {
   DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
-  int64_t VtableIndex = 
+  uint64_t VtableIndex = 
     CGM.getVtableInfo().getMethodVtableIndex(GlobalDecl(DD, Type));
 
   return ::BuildVirtualCall(*this, VtableIndex, This, Ty);

@@ -80,6 +80,17 @@ class CGVtableInfo {
   VirtualBaseClassIndiciesTy VirtualBaseClassIndicies;
 
   llvm::DenseMap<const CXXRecordDecl *, llvm::Constant *> Vtables;
+  
+  /// NumVirtualFunctionPointers - Contains the number of virtual function 
+  /// pointers in the vtable for a given record decl.
+  llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
+
+  /// getNumVirtualFunctionPointers - Return the number of virtual function
+  /// pointers in the vtable for a given record decl.
+  uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
+  
+  void ComputeMethodVtableIndices(const CXXRecordDecl *RD);
+  
 public:
   CGVtableInfo(CodeGenModule &CGM)
     : CGM(CGM) { }
@@ -87,7 +98,7 @@ public:
   /// getMethodVtableIndex - Return the index (relative to the vtable address
   /// point) where the function pointer for the given virtual function is
   /// stored.
-  int64_t getMethodVtableIndex(GlobalDecl GD);
+  uint64_t getMethodVtableIndex(GlobalDecl GD);
 
   /// getVirtualBaseOffsetIndex - Return the index (relative to the vtable
   /// address point) where the offset of the virtual base that contains the

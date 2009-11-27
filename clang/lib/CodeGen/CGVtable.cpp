@@ -14,6 +14,7 @@
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
 
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/DenseSet.h"
 #include <cstdio>
@@ -781,24 +782,243 @@ VtableBuilder::Index_t VtableBuilder::VBlookup(CXXRecordDecl *D,
   return CGM.getVtableInfo().getVirtualBaseOffsetIndex(D, B);
 }
 
-int64_t CGVtableInfo::getMethodVtableIndex(GlobalDecl GD) {
+/// TypeConversionRequiresAdjustment - Returns whether conversion from a 
+/// derived type to a base type requires adjustment.
+static bool
+TypeConversionRequiresAdjustment(ASTContext &Ctx,
+                                 const CXXRecordDecl *DerivedDecl,
+                                 const CXXRecordDecl *BaseDecl) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
+  if (!const_cast<CXXRecordDecl *>(DerivedDecl)->
+      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseDecl), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return false;
+  }
+  
+  const CXXBasePath &Path = Paths.front();
+  
+  size_t Start = 0, End = Path.size();
+  
+  // Check if we have a virtual base.
+  if (const RecordType *RT = Paths.getDetectedVirtual()) {
+    const CXXRecordDecl *VirtualBase = cast<CXXRecordDecl>(RT->getDecl());
+    assert(VirtualBase->isCanonicalDecl() && "Must have canonical decl!");
+    
+    // Check the virtual base class offset.
+    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(DerivedDecl);
+
+    if (Layout.getVBaseClassOffset(VirtualBase) != 0) {
+      // This requires an adjustment.
+      return true;
+    }
+    
+    // Now ignore all the path elements up to the virtual base.
+    // FIXME: It would be nice if CXXBasePaths could return an index to the
+    // CXXElementSpecifier that corresponded to the virtual base.
+    for (; Start != End; ++Start) {
+      const CXXBasePathElement& Element = Path[Start];
+      
+      if (Element.Class == VirtualBase)
+        break;
+    }
+  }
+
+  for (; Start != End; ++Start) {
+    const CXXBasePathElement &Element = Path[Start];
+
+    // Check the base class offset.
+    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Element.Class);
+    
+    const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
+    const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
+
+    if (Layout.getBaseClassOffset(Base) != 0) {
+      // This requires an adjustment.
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+static bool 
+TypeConversionRequiresAdjustment(ASTContext &Ctx,
+                                 QualType DerivedType, QualType BaseType) {
+  // Canonicalize the types.
+  QualType CanDerivedType = Ctx.getCanonicalType(DerivedType);
+  QualType CanBaseType = Ctx.getCanonicalType(BaseType);
+  
+  assert(CanDerivedType->getTypeClass() == CanBaseType->getTypeClass() && 
+         "Types must have same type class!");
+  
+  if (CanDerivedType == CanBaseType) {
+    // No adjustment needed.
+    return false;
+  }
+
+  if (const ReferenceType *RT = dyn_cast<ReferenceType>(CanDerivedType)) {
+    CanDerivedType = RT->getPointeeType();
+    CanBaseType = cast<ReferenceType>(CanBaseType)->getPointeeType();
+  } else if (const PointerType *PT = dyn_cast<PointerType>(CanDerivedType)) {
+    CanDerivedType = PT->getPointeeType();
+    CanBaseType = cast<PointerType>(CanBaseType)->getPointeeType();
+  } else {
+    assert(false && "Unexpected return type!");
+  }
+
+  if (CanDerivedType == CanBaseType) {
+    // No adjustment needed.
+    return false;
+  }
+  
+  const CXXRecordDecl *DerivedDecl = 
+    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
+
+  const CXXRecordDecl *BaseDecl = 
+    cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
+
+  return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
+}
+
+void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
+  
+  // Itanium C++ ABI 2.5.2:
+  // The order of the virtual function pointers in a virtual table is the 
+  // order of declaration of the corresponding member functions in the class.
+  //
+  // There is an entry for any virtual function declared in a class, 
+  // whether it is a new function or overrides a base class function, 
+  // unless it overrides a function from the primary base, and conversion
+  // between their return types does not require an adjustment. 
+
+  int64_t CurrentIndex = 0;
+  
+  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+  
+  if (PrimaryBase) {
+    assert(PrimaryBase->isCanonicalDecl() && 
+           "Should have the canonical decl of the primary base!");
+
+    // Since the record decl shares its vtable pointer with the primary base
+    // we need to start counting at the end of the primary base's vtable.
+    CurrentIndex = getNumVirtualFunctionPointers(PrimaryBase);
+  }
+  
+  const CXXDestructorDecl *ImplicitVirtualDtor = 0;
+  
+  for (CXXRecordDecl::method_iterator i = RD->method_begin(),
+       e = RD->method_end(); i != e; ++i) {
+    const CXXMethodDecl *MD = *i;
+
+    // We only want virtual methods.
+    if (!MD->isVirtual())
+      continue;
+
+    bool ShouldAddEntryForMethod = true;
+    
+    // Check if this method overrides a method in the primary base.
+    for (CXXMethodDecl::method_iterator i = MD->begin_overridden_methods(),
+         e = MD->end_overridden_methods(); i != e; ++i) {
+      const CXXMethodDecl *OverriddenMD = *i;
+      const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
+      assert(OverriddenMD->isCanonicalDecl() &&
+             "Should have the canonical decl of the overridden RD!");
+      
+      if (OverriddenRD == PrimaryBase) {
+        // Check if converting from the return type of the method to the 
+        // return type of the overridden method requires conversion.
+        QualType ReturnType = 
+          MD->getType()->getAs<FunctionType>()->getResultType();
+        QualType OverriddenReturnType =
+          OverriddenMD->getType()->getAs<FunctionType>()->getResultType();
+        
+        if (!TypeConversionRequiresAdjustment(CGM.getContext(), 
+                                            ReturnType, OverriddenReturnType)) {
+          // This index is shared between the index in the vtable of the primary
+          // base class.
+          if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+            const CXXDestructorDecl *OverriddenDD = 
+              cast<CXXDestructorDecl>(OverriddenMD);
+            
+            // Add both the complete and deleting entries.
+            MethodVtableIndices[GlobalDecl(DD, Dtor_Complete)] = 
+              getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Complete));
+            MethodVtableIndices[GlobalDecl(DD, Dtor_Deleting)] = 
+              getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
+          } else {
+            MethodVtableIndices[MD] = getMethodVtableIndex(OverriddenMD);
+          }
+          
+          // We don't need to add an entry for this method.
+          ShouldAddEntryForMethod = false;
+          break;
+        }        
+      }
+    }
+    
+    if (!ShouldAddEntryForMethod)
+      continue;
+    
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+      if (MD->isImplicit()) {
+        assert(!ImplicitVirtualDtor && 
+               "Did already see an implicit virtual dtor!");
+        ImplicitVirtualDtor = DD;
+        continue;
+      } 
+
+      // Add the complete dtor.
+      MethodVtableIndices[GlobalDecl(DD, Dtor_Complete)] = CurrentIndex++;
+      
+      // Add the deleting dtor.
+      MethodVtableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
+    } else {
+      // Add the entry.
+      MethodVtableIndices[MD] = CurrentIndex++;
+    }
+  }
+
+  if (ImplicitVirtualDtor) {
+    // Itanium C++ ABI 2.5.2:
+    // If a class has an implicitly-defined virtual destructor, 
+    // its entries come after the declared virtual function pointers.
+
+    // Add the complete dtor.
+    MethodVtableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Complete)] = 
+      CurrentIndex++;
+    
+    // Add the deleting dtor.
+    MethodVtableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Deleting)] = 
+      CurrentIndex++;
+  }
+  
+  NumVirtualFunctionPointers[RD] = CurrentIndex;
+}
+
+uint64_t CGVtableInfo::getNumVirtualFunctionPointers(const CXXRecordDecl *RD) {
+  llvm::DenseMap<const CXXRecordDecl *, uint64_t>::iterator I = 
+    NumVirtualFunctionPointers.find(RD);
+  if (I != NumVirtualFunctionPointers.end())
+    return I->second;
+
+  ComputeMethodVtableIndices(RD);
+
+  I = NumVirtualFunctionPointers.find(RD);
+  assert(I != NumVirtualFunctionPointers.end() && "Did not find entry!");
+  return I->second;
+}
+      
+uint64_t CGVtableInfo::getMethodVtableIndex(GlobalDecl GD) {
   MethodVtableIndicesTy::iterator I = MethodVtableIndices.find(GD);
   if (I != MethodVtableIndices.end())
     return I->second;
   
   const CXXRecordDecl *RD = cast<CXXMethodDecl>(GD.getDecl())->getParent();
-  
-  std::vector<llvm::Constant *> methods;
-  // FIXME: This seems expensive.  Can we do a partial job to get
-  // just this data.
-  VtableBuilder b(methods, RD, RD, 0, CGM);
-  D1(printf("vtable %s\n", RD->getNameAsCString()));
-  b.GenerateVtableForBase(RD);
-  b.GenerateVtableForVBases(RD);
-  
-  MethodVtableIndices.insert(b.getIndex().begin(),
-                             b.getIndex().end());
-  
+
+  ComputeMethodVtableIndices(RD);
+
   I = MethodVtableIndices.find(GD);
   assert(I != MethodVtableIndices.end() && "Did not find index!");
   return I->second;
