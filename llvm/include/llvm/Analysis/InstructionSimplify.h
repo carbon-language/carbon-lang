@@ -42,6 +42,11 @@ namespace llvm {
                           const TargetData *TD = 0);
   
 
+  /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyGEPInst(Value * const *Ops, unsigned NumOps,
+                         const TargetData *TD = 0);
+  
   //=== Helper functions for higher up the class hierarchy.
   
   

@@ -264,6 +264,34 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   return 0;
 }
 
+/// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
+/// fold the result.  If not, this returns null.
+Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
+                             const TargetData *TD) {
+  // getelementptr P -> P.
+  if (NumOps == 1)
+    return Ops[0];
+
+  // TODO.
+  //if (isa<UndefValue>(Ops[0]))
+  //  return UndefValue::get(GEP.getType());
+
+  // getelementptr P, 0 -> P.
+  if (NumOps == 2)
+    if (ConstantInt *C = dyn_cast<ConstantInt>(Ops[1]))
+      if (C->isZero())
+        return Ops[0];
+  
+  // Check to see if this is constant foldable.
+  for (unsigned i = 0; i != NumOps; ++i)
+    if (!isa<Constant>(Ops[i]))
+      return 0;
+  
+  return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]),
+                                        (Constant *const*)Ops+1, NumOps-1);
+}
+
+
 //=== Helper functions for higher up the class hierarchy.
 
 /// SimplifyBinOp - Given operands for a BinaryOperator, see if we can
@@ -309,6 +337,10 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD) {
   case Instruction::FCmp:
     return SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
                             I->getOperand(0), I->getOperand(1), TD);
+  case Instruction::GetElementPtr: {
+    SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
+    return SimplifyGEPInst(&Ops[0], Ops.size(), TD);
+  }
   }
 }
 

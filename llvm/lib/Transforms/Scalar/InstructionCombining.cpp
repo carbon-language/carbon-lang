@@ -11429,20 +11429,15 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
 }
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
+  SmallVector<Value*, 8> Ops(GEP.op_begin(), GEP.op_end());
+
+  if (Value *V = SimplifyGEPInst(&Ops[0], Ops.size(), TD))
+    return ReplaceInstUsesWith(GEP, V);
+
   Value *PtrOp = GEP.getOperand(0);
-  // Eliminate 'getelementptr %P, i32 0' and 'getelementptr %P', they are noops.
-  if (GEP.getNumOperands() == 1)
-    return ReplaceInstUsesWith(GEP, PtrOp);
 
   if (isa<UndefValue>(GEP.getOperand(0)))
     return ReplaceInstUsesWith(GEP, UndefValue::get(GEP.getType()));
-
-  bool HasZeroPointerIndex = false;
-  if (Constant *C = dyn_cast<Constant>(GEP.getOperand(1)))
-    HasZeroPointerIndex = C->isNullValue();
-
-  if (GEP.getNumOperands() == 2 && HasZeroPointerIndex)
-    return ReplaceInstUsesWith(GEP, PtrOp);
 
   // Eliminate unneeded casts for indices.
   if (TD) {
@@ -11547,6 +11542,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Worklist.AddValue(PtrOp);
       return 0;
     }
+    
+    bool HasZeroPointerIndex = false;
+    if (ConstantInt *C = dyn_cast<ConstantInt>(GEP.getOperand(1)))
+      HasZeroPointerIndex = C->isZero();
     
     // Transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
     // into     : GEP [10 x i8]* X, i32 0, ...
