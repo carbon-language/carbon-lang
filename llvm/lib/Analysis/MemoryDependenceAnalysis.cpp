@@ -700,6 +700,7 @@ static bool isPHITranslatable(Instruction *Inst) {
   
   // We can translate a GEP that uses a PHI in the current block for at least
   // one of its operands.
+  if (0)
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i)
       if (PHINode *PN = dyn_cast<PHINode>(GEP->getOperand(i)))
