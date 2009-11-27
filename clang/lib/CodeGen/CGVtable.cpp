@@ -22,7 +22,9 @@
 using namespace clang;
 using namespace CodeGen;
 
-class VtableBuilder {
+namespace {
+
+class VISIBILITY_HIDDEN VtableBuilder {
 public:
   /// Index_t - Vtable index type.
   typedef uint64_t Index_t;
@@ -780,6 +782,8 @@ public:
 VtableBuilder::Index_t VtableBuilder::VBlookup(CXXRecordDecl *D,
                                                CXXRecordDecl *B) {
   return CGM.getVtableInfo().getVirtualBaseOffsetIndex(D, B);
+}
+
 }
 
 /// TypeConversionRequiresAdjustment - Returns whether conversion from a 
