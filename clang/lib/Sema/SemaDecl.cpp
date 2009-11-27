@@ -2599,8 +2599,7 @@ static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
     QualType T = Data->S->Context.getTypeDeclType(BaseRecord);
     CanQualType CT = Data->S->Context.getCanonicalType(T);
     
-    DeclarationName Name = 
-      Data->S->Context.DeclarationNames.getCXXDestructorName(CT);
+    Name = Data->S->Context.DeclarationNames.getCXXDestructorName(CT);
   }    
   
   for (Path.Decls = BaseRecord->lookup(Name);
