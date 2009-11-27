@@ -1141,21 +1141,25 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
       if (CastArg.isInvalid())
         return true;
-    
+
+      From = CastArg.takeAs<Expr>();
+
+      // FIXME: This and the following if statement shouldn't be necessary, but
+      // there's some nasty stuff involving MaybeBindToTemporary going on here.
       if (ICS.UserDefined.After.Second == ICK_Derived_To_Base &&
           ICS.UserDefined.After.CopyConstructor) {
-        From = CastArg.takeAs<Expr>();
         return BuildCXXDerivedToBaseExpr(From, CastKind, ICS, Flavor);
       }
-    
-      if (ICS.UserDefined.After.Second == ICK_Pointer_Member &&
-          ToType.getNonReferenceType()->isMemberFunctionPointerType())
-        CastKind = CastExpr::CK_BaseToDerivedMemberPointer;
-      
-      From = new (Context) ImplicitCastExpr(ToType.getNonReferenceType(),
-                                            CastKind, CastArg.takeAs<Expr>(),
-                                            ToType->isLValueReferenceType());
-      return false;
+
+      if (ICS.UserDefined.After.CopyConstructor) {
+        From = new (Context) ImplicitCastExpr(ToType.getNonReferenceType(),
+                                              CastKind, From,
+                                              ToType->isLValueReferenceType());
+        return false;
+      }
+
+      return PerformImplicitConversion(From, ToType, ICS.UserDefined.After,
+                                       "converting", IgnoreBaseAccess);
   }
       
   case ImplicitConversionSequence::EllipsisConversion:

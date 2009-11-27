@@ -187,14 +187,14 @@ public:
   Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
-  Value *VisitCastExpr(const CastExpr *E) {
+  Value *VisitCastExpr(CastExpr *E) {
     // Make sure to evaluate VLA bounds now so that we have them for later.
     if (E->getType()->isVariablyModifiedType())
       CGF.EmitVLASize(E->getType());
 
     return EmitCastExpr(E);
   }
-  Value *EmitCastExpr(const CastExpr *E);
+  Value *EmitCastExpr(CastExpr *E);
 
   Value *VisitCallExpr(const CallExpr *E) {
     if (E->getCallReturnType()->isReferenceType())
@@ -782,8 +782,8 @@ static bool ShouldNullCheckClassCastValue(const CastExpr *CE) {
 // VisitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
-Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
-  const Expr *E = CE->getSubExpr();
+Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
+  Expr *E = CE->getSubExpr();
   QualType DestTy = CE->getType();
   CastExpr::CastKind Kind = CE->getCastKind();
   
@@ -795,6 +795,7 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
   // are in the same order as in the CastKind enum.
   switch (Kind) {
   case CastExpr::CK_Unknown:
+    // FIXME: All casts should have a known kind!
     //assert(0 && "Unknown cast kind!");
     break;
 
@@ -838,10 +839,10 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(CE);
     return CGF.EmitDynamicCast(V, DCE);
   }
-  case CastExpr::CK_ToUnion: {
+  case CastExpr::CK_ToUnion:
     assert(0 && "Should be unreachable!");
     break;
-  }
+
   case CastExpr::CK_ArrayToPointerDecay: {
     assert(E->getType()->isArrayType() &&
            "Array to pointer decay must have array source type!");
@@ -867,9 +868,32 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     return CGF.CGM.EmitNullConstant(DestTy);
 
   case CastExpr::CK_BaseToDerivedMemberPointer:
-  case CastExpr::CK_DerivedToBaseMemberPointer:
+  case CastExpr::CK_DerivedToBaseMemberPointer: {
+    Value *Src = Visit(E);
+
+    // See if we need to adjust the pointer.
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(E->getType()->getAs<MemberPointerType>()->
+                          getClass()->getAs<RecordType>()->getDecl());
+    const CXXRecordDecl *DerivedDecl = 
+      cast<CXXRecordDecl>(CE->getType()->getAs<MemberPointerType>()->
+                          getClass()->getAs<RecordType>()->getDecl());
+    if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
+      std::swap(DerivedDecl, BaseDecl);
+
+    llvm::Constant *Adj = CGF.CGM.GetCXXBaseClassOffset(DerivedDecl, BaseDecl);
+    if (Adj) {
+      if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
+        Src = Builder.CreateSub(Src, Adj, "adj");
+      else
+        Src = Builder.CreateAdd(Src, Adj, "adj");
+    }
+    return Src;
+  }
+
   case CastExpr::CK_UserDefinedConversion:
   case CastExpr::CK_ConstructorConversion:
+    assert(0 && "Should be unreachable!");
     break;
 
   case CastExpr::CK_IntegralToPointer: {
@@ -918,7 +942,7 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
   case CastExpr::CK_IntegralToFloating:
   case CastExpr::CK_FloatingToIntegral:
   case CastExpr::CK_FloatingCast:
-    break;
+    return EmitScalarConversion(Visit(E), E->getType(), DestTy);
 
   case CastExpr::CK_MemberPointerToBoolean: {
     const MemberPointerType* T = E->getType()->getAs<MemberPointerType>();
