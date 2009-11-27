@@ -1,4 +1,5 @@
-; RUN: opt < %s -gvn -S | grep load
+; RUN: opt < %s -gvn -S | FileCheck %s
+; XFAIL: *
 ; FIXME: This should be promotable, but memdep/gvn don't track values
 ; path/edge sensitively enough.
 
@@ -20,5 +21,8 @@ bb2:		; preds = %bb1, %bb
 	%c_addr.0 = phi i32* [ %b, %entry ], [ %c, %bb ]		; <i32*> [#uses=1]
 	%cv = load i32* %c_addr.0, align 4		; <i32> [#uses=1]
 	ret i32 %cv
+; CHECK: bb2:
+; CHECK-NOT: load i32
+; CHECK: ret i32 
 }
 
