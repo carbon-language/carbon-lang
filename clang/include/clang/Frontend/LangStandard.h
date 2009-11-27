@@ -56,7 +56,7 @@ public:
   /// isCPlusPlus0x - Language is a C++0x variant.
   bool isCPlusPlus0x() const { return Flags & frontend::CPlusPlus0x; }
 
-  /// hasDigraphs - Language supports diagrphs.
+  /// hasDigraphs - Language supports digraphs.
   bool hasDigraphs() const { return Flags & frontend::Digraphs; }
 
   /// isGNUMode - Language includes GNU extensions.
