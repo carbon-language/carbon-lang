@@ -1175,7 +1175,7 @@ we don't sink the store.  We need partially dead store sinking.
 
 //===---------------------------------------------------------------------===//
 
-[PHI TRANSLATE GEPs]
+[LOAD PRE with NON-AVAILABLE ADDRESS]
 
 GCC PR37166: Sinking of loads prevents SROA'ing the "g" struct on the stack
 leading to excess stack traffic. This could be handled by GVN with some crazy
@@ -1192,7 +1192,7 @@ bb3:		; preds = %bb1, %bb2, %bb
 	%10 = getelementptr %struct.f* %c_addr.0, i32 0, i32 0
 	%11 = load i32* %10, align 4
 
-%11 is fully redundant, an in BB2 it should have the value %8.
+%11 is partially redundant, an in BB2 it should have the value %8.
 
 GCC PR33344 is a similar case.
 
