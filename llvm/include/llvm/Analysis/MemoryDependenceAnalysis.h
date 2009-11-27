@@ -30,6 +30,7 @@ namespace llvm {
   class TargetData;
   class MemoryDependenceAnalysis;
   class PredIteratorCache;
+  class DominatorTree;
   
   /// MemDepResult - A memory dependence query can return one of three different
   /// answers, described below.
@@ -244,19 +245,27 @@ namespace llvm {
                                       BasicBlock *BB,
                                      SmallVectorImpl<NonLocalDepEntry> &Result);
     
-    /// PHITranslatePointer - Find an available version of the specified value
+    /// GetPHITranslatedValue - Find an available version of the specified value
     /// PHI translated across the specified edge.  If MemDep isn't able to
     /// satisfy this request, it returns null.
-    Value *PHITranslatePointer(Value *V,
-                               BasicBlock *CurBB, BasicBlock *PredBB,
-                               const TargetData *TD) const;
+    Value *GetPHITranslatedValue(Value *V,
+                                 BasicBlock *CurBB, BasicBlock *PredBB,
+                                 const TargetData *TD) const;
 
+    /// GetAvailablePHITranslatedValue - Return the value computed by
+    /// PHITranslatePointer if it dominates PredBB, otherwise return null.
+    Value *GetAvailablePHITranslatedValue(Value *V,
+                                          BasicBlock *CurBB, BasicBlock *PredBB,
+                                          const TargetData *TD,
+                                          const DominatorTree &DT) const;
+    
     /// InsertPHITranslatedPointer - Insert a computation of the PHI translated
     /// version of 'V' for the edge PredBB->CurBB into the end of the PredBB
     /// block.
     Value *InsertPHITranslatedPointer(Value *V,
                                       BasicBlock *CurBB, BasicBlock *PredBB,
-                                      const TargetData *TD) const;
+                                      const TargetData *TD,
+                                      const DominatorTree &DT) const;
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.

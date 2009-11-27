@@ -1432,31 +1432,21 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     return false;
   }
   
-  // If the loaded pointer is PHI node defined in this block, do PHI translation
-  // to get its value in the predecessor.
-  Value *LoadPtr = MD->PHITranslatePointer(LI->getOperand(0),
-                                           LoadBB, UnavailablePred, TD);
-  // Make sure the value is live in the predecessor.  MemDep found a computation
-  // of LPInst with the right value, but that does not dominate UnavailablePred,
-  // then we can't use it.
-  if (Instruction *LPInst = dyn_cast_or_null<Instruction>(LoadPtr))
-    if (!DT->dominates(LPInst->getParent(), UnavailablePred))
-      LoadPtr = 0;
+  // Do PHI translation to get its value in the predecessor if necessary.  The
+  // returned pointer (if non-null) is guaranteed to dominate UnavailablePred.
+  //
+  // FIXME: This may insert a computation, but we don't tell scalar GVN
+  // optimization stuff about it.  How do we do this?
+  Value *LoadPtr =
+    MD->InsertPHITranslatedPointer(LI->getOperand(0), LoadBB,
+                                   UnavailablePred, TD, *DT);
 
-  // If we don't have a computation of this phi translated value, try to insert
-  // one.
+  // If we couldn't find or insert a computation of this phi translated value,
+  // we fail PRE.
   if (LoadPtr == 0) {
-    LoadPtr = MD->InsertPHITranslatedPointer(LI->getOperand(0),
-                                             LoadBB, UnavailablePred, TD);
-    if (LoadPtr == 0) {
-      DEBUG(errs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
-                   << *LI->getOperand(0) << "\n");
-      return false;
-    }
-    
-    // FIXME: This inserts a computation, but we don't tell scalar GVN
-    // optimization stuff about it.  How do we do this?
-    DEBUG(errs() << "INSERTED PHI TRANSLATED VALUE: " << *LoadPtr << "\n");
+    DEBUG(errs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
+                 << *LI->getOperand(0) << "\n");
+    return false;
   }
   
   // Make sure it is valid to move this load here.  We have to watch out for:
