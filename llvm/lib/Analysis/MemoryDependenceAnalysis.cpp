@@ -1004,8 +1004,12 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       Value *PredPtr = PHITranslatePointer(PtrInst, BB, Pred, TD);
       
       // If PHI translation fails, bail out.
-      if (PredPtr == 0)
+      if (PredPtr == 0) {
+        // FIXME: Instead of modelling this as a phi trans failure, we should
+        // model this as a clobber in the one predecessor.  This will allow
+        // us to PRE values that are only available in some preds but not all.
         goto PredTranslationFailure;
+      }
       
       // Check to see if we have already visited this pred block with another
       // pointer.  If so, we can't do this lookup.  This failure can occur
