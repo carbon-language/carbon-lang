@@ -693,21 +693,22 @@ static bool isPHITranslatable(Instruction *Inst) {
   
   // We can handle bitcast of a PHI, but the PHI needs to be in the same block
   // as the bitcast.
-  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst))
-    // FIXME: Allow any phi translatable operand.
-    if (PHINode *PN = dyn_cast<PHINode>(BC->getOperand(0)))
-      if (PN->getParent() == BC->getParent())
-        return true;
+  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
+    Instruction *OpI = dyn_cast<Instruction>(BC->getOperand(0));
+    if (OpI == 0 || OpI->getParent() != Inst->getParent())
+      return true;
+    return isPHITranslatable(OpI);
+  }
   
   // We can translate a GEP if all of its operands defined in this block are phi
   // translatable. 
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
-      Instruction *GEPOpI = dyn_cast<Instruction>(GEP->getOperand(i));
-      if (GEPOpI == 0 || GEPOpI->getParent() != Inst->getParent())
+      Instruction *OpI = dyn_cast<Instruction>(GEP->getOperand(i));
+      if (OpI == 0 || OpI->getParent() != Inst->getParent())
         continue;
       
-      if (!isPHITranslatable(GEPOpI))
+      if (!isPHITranslatable(OpI))
         return false;
     }
     return true;
@@ -715,10 +716,10 @@ static bool isPHITranslatable(Instruction *Inst) {
   
   if (Inst->getOpcode() == Instruction::Add &&
       isa<ConstantInt>(Inst->getOperand(1))) {
-    Instruction *GEPOpI = dyn_cast<Instruction>(Inst->getOperand(0));
-    if (GEPOpI == 0 || GEPOpI->getParent() != Inst->getParent())
+    Instruction *OpI = dyn_cast<Instruction>(Inst->getOperand(0));
+    if (OpI == 0 || OpI->getParent() != Inst->getParent())
       return true;
-    return isPHITranslatable(GEPOpI);
+    return isPHITranslatable(OpI);
   }
 
   //   cerr << "MEMDEP: Could not PHI translate: " << *Pointer;
@@ -745,9 +746,9 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
   
   // Handle bitcast of PHI.
   if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
-    // FIXME: Recurse!
-    PHINode *BCPN = cast<PHINode>(BC->getOperand(0));
-    Value *PHIIn = BCPN->getIncomingValueForBlock(Pred);
+    // PHI translate the input operand.
+    Value *PHIIn = PHITranslatePointer(BC->getOperand(0), CurBB, Pred, TD);
+    if (PHIIn == 0) return 0;
     
     // Constants are trivial to phi translate.
     if (Constant *C = dyn_cast<Constant>(PHIIn))
@@ -779,14 +780,10 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
       }
       
       // If the operand is a phi node, do phi translation.
-      if (Value *InOp = PHITranslatePointer(GEPOp, CurBB, Pred, TD)) {
-        GEPOps.push_back(InOp);
-        continue;
-      }
+      Value *InOp = PHITranslatePointer(GEPOp, CurBB, Pred, TD);
+      if (InOp == 0) return 0;
       
-      // Otherwise, we can't PHI translate this random value defined in this
-      // block.
-      return 0;
+      GEPOps.push_back(InOp);
     }
     
     // Simplify the GEP to handle 'gep x, 0' -> x etc.
