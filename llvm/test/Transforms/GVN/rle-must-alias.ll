@@ -1,7 +1,6 @@
 ; RUN: opt < %s -gvn -S | grep {DEAD = phi i32 }
-; XFAIL: *
 
-; FIXME: GVN should eliminate the fully redundant %9 GEP which 
+; GVN should eliminate the fully redundant %9 GEP which 
 ; allows DEAD to be removed.  This is PR3198.
 
 ; The %7 and %4 loads combine to make %DEAD unneeded.
