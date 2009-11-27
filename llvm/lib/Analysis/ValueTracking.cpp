@@ -955,8 +955,15 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 /// have IntegerType.  Note that this looks through extends, so the high bits
 /// may not be represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
-                                  const TargetData *TD) {
+                                  const TargetData *TD, unsigned Depth) {
   assert(isa<IntegerType>(V->getType()) && "Not an integer value");
+
+  // Limit our recursion depth.
+  if (Depth == 6) {
+    Scale = 1;
+    Offset = 0;
+    return V;
+  }
   
   if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(V)) {
     if (ConstantInt *RHSC = dyn_cast<ConstantInt>(BOp->getOperand(1))) {
@@ -969,16 +976,16 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
           break;
         // FALL THROUGH.
       case Instruction::Add:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
         Offset += RHSC->getValue();
         return V;
       case Instruction::Mul:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
         Offset *= RHSC->getValue();
         Scale *= RHSC->getValue();
         return V;
       case Instruction::Shl:
-        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD);
+        V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, TD, Depth+1);
         Offset <<= RHSC->getValue().getLimitedValue();
         Scale <<= RHSC->getValue().getLimitedValue();
         return V;
@@ -994,7 +1001,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
     unsigned SmallWidth = CastOp->getType()->getPrimitiveSizeInBits();
     Scale.trunc(SmallWidth);
     Offset.trunc(SmallWidth);
-    Value *Result = GetLinearExpression(CastOp, Scale, Offset, TD);
+    Value *Result = GetLinearExpression(CastOp, Scale, Offset, TD, Depth+1);
     Scale.zext(OldWidth);
     Offset.zext(OldWidth);
     return Result;
@@ -1088,7 +1095,7 @@ const Value *llvm::DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       unsigned Width = cast<IntegerType>(Index->getType())->getBitWidth();
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
-      Index = GetLinearExpression(Index, IndexScale, IndexOffset, TD);
+      Index = GetLinearExpression(Index, IndexScale, IndexOffset, TD, 0);
       
       // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
       // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
