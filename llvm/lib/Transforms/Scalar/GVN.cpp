@@ -1427,13 +1427,19 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
   // If the loaded pointer is PHI node defined in this block, do PHI translation
   // to get its value in the predecessor.
-  Value *LoadPtr = LI->getOperand(0)->DoPHITranslation(LoadBB, UnavailablePred);
+  Value *LoadPtr = MD->PHITranslatePointer(LI->getOperand(0),
+                                           LoadBB, UnavailablePred, TD);
+  if (LoadPtr == 0) {
+    DEBUG(errs() << "COULDN'T PRE LOAD BECAUSE PTR CAN'T BE PHI TRANSLATED: "
+          << *LI->getOperand(0) << '\n' << *LI << "\n");
+    return false;
+  }
 
   // Make sure the value is live in the predecessor.  If it was defined by a
   // non-PHI instruction in this block, we don't know how to recompute it above.
   if (Instruction *LPInst = dyn_cast<Instruction>(LoadPtr))
     if (!DT->dominates(LPInst->getParent(), UnavailablePred)) {
-      DEBUG(errs() << "COULDN'T PRE LOAD BECAUSE PTR IS UNAVAILABLE IN PRED: "
+      DEBUG(errs() << "COULDN'T PRE LOAD BECAUSE PTR DOES NOT DOMINATE PRED: "
                    << *LPInst << '\n' << *LI << "\n");
       return false;
     }

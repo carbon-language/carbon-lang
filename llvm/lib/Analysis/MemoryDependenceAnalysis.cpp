@@ -700,7 +700,6 @@ static bool isPHITranslatable(Instruction *Inst) {
   
   // We can translate a GEP that uses a PHI in the current block for at least
   // one of its operands.
-  if (0)
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i)
       if (PHINode *PN = dyn_cast<PHINode>(GEP->getOperand(i)))
@@ -718,8 +717,15 @@ static bool isPHITranslatable(Instruction *Inst) {
 /// PHITranslateForPred - Given a computation that satisfied the
 /// isPHITranslatable predicate, see if we can translate the computation into
 /// the specified predecessor block.  If so, return that value.
-static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred,
-                                  const TargetData *TD) {
+Value *MemoryDependenceAnalysis::
+PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
+                    const TargetData *TD) const {  
+  // If the input value is not an instruction, or if it is not defined in CurBB,
+  // then we don't need to phi translate it.
+  Instruction *Inst = dyn_cast<Instruction>(InVal);
+  if (Inst == 0 || Inst->getParent() != CurBB)
+    return InVal;
+  
   if (PHINode *PN = dyn_cast<PHINode>(Inst))
     return PN->getIncomingValueForBlock(Pred);
   
@@ -931,7 +937,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       
       for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
         BasicBlock *Pred = *PI;
-        Value *PredPtr = PHITranslateForPred(PtrInst, Pred, TD);
+        Value *PredPtr = PHITranslatePointer(PtrInst, BB, Pred, TD);
         
         // If PHI translation fails, bail out.
         if (PredPtr == 0)
