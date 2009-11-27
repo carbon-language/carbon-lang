@@ -50,16 +50,20 @@ class ASTRecordLayout {
 public:
   /// PrimaryBaseInfo - Contains info about a primary base.
   struct PrimaryBaseInfo {
-    PrimaryBaseInfo() : Base(0), IsVirtual(false) {}
+    PrimaryBaseInfo() {}
 
     PrimaryBaseInfo(const CXXRecordDecl *Base, bool IsVirtual)
-      : Base(Base), IsVirtual(IsVirtual) {}
+      : Value(Base, IsVirtual) {}
 
-    /// Base - The primary base.
-    const CXXRecordDecl *Base;
+    /// Value - Points to the primary base. The single-bit value
+    /// will be non-zero when the primary base is virtual.
+    llvm::PointerIntPair<const CXXRecordDecl *, 1, bool> Value;
+    
+    /// getBase - Returns the primary base.
+    const CXXRecordDecl *getBase() const { return Value.getPointer(); }
   
-    /// IsVirtual - Whether the primary base is virtual or not.
-    bool IsVirtual;
+    /// isVirtual - Returns whether the primary base is virtual or not.
+    bool isVirtual() const { return Value.getInt(); }
   }; 
   
 private:
@@ -185,12 +189,12 @@ public:
 
   // FIXME: Migrate off of this function and use getPrimaryBaseInfo directly.
   const CXXRecordDecl *getPrimaryBase() const {
-    return getPrimaryBaseInfo().Base;
+    return getPrimaryBaseInfo().getBase();
   }
 
   // FIXME: Migrate off of this function and use getPrimaryBaseInfo directly.
   bool getPrimaryBaseWasVirtual() const {
-    return getPrimaryBaseInfo().IsVirtual;
+    return getPrimaryBaseInfo().isVirtual();
   }
 
   /// getBaseClassOffset - Get the offset, in bits, for the given base class.

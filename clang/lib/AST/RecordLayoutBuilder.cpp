@@ -33,7 +33,7 @@ void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
   }
 
   SelectPrimaryBase(RD);
-  if (!PrimaryBase.Base) {
+  if (!PrimaryBase.getBase()) {
     int AS = 0;
     UpdateAlignment(Ctx.Target.getPointerAlign(AS));
     Size += Ctx.Target.getPointerWidth(AS);
@@ -51,7 +51,7 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       // Skip the PrimaryBase here, as it is laid down first.
-      if (Base != PrimaryBase.Base || PrimaryBase.IsVirtual)
+      if (Base != PrimaryBase.getBase() || PrimaryBase.isVirtual())
         LayoutBaseNonVirtually(Base, false);
     }
   }
@@ -78,8 +78,8 @@ void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
   
   // If the record has a primary base class that is virtual, add it to the set
   // of primary bases.
-  if (BaseInfo.IsVirtual)
-    IndirectPrimaryBases.insert(BaseInfo.Base);
+  if (BaseInfo.isVirtual())
+    IndirectPrimaryBases.insert(BaseInfo.getBase());
   
   // Now traverse all bases and find primary bases for them.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
@@ -107,7 +107,7 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     if (!i->isVirtual()) {
       SelectPrimaryVBase(Base, FirstPrimary);
-      if (PrimaryBase.Base)
+      if (PrimaryBase.getBase())
         return;
       continue;
     }
@@ -169,7 +169,7 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
 
   // Otherwise if is the first nearly empty virtual base, if one exists,
   // otherwise there is no primary base class.
-  if (!PrimaryBase.Base)
+  if (!PrimaryBase.getBase())
     setPrimaryBase(FirstPrimary, /*IsVirtual=*/true);
 }
 
@@ -236,7 +236,7 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
     
     if (Base->getNumVBases()) {
       const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Base);
-      const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBaseInfo().Base;
+      const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBaseInfo().getBase();
       LayoutVirtualBases(Class, Base, PrimaryBase, BaseOffset, mark, 
                          IndirectPrimary);
     }
@@ -459,10 +459,10 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   if (RD) {
     LayoutVtable(RD);
     // PrimaryBase goes first.
-    if (PrimaryBase.Base) {
-      if (PrimaryBase.IsVirtual)
-        IndirectPrimaryBases.insert(PrimaryBase.Base);
-      LayoutBaseNonVirtually(PrimaryBase.Base, PrimaryBase.IsVirtual);
+    if (PrimaryBase.getBase()) {
+      if (PrimaryBase.isVirtual())
+        IndirectPrimaryBases.insert(PrimaryBase.getBase());
+      LayoutBaseNonVirtually(PrimaryBase.getBase(), PrimaryBase.isVirtual());
     }
     LayoutNonVirtualBases(RD);
   }
@@ -474,7 +474,8 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   if (RD) {
     llvm::SmallSet<const CXXRecordDecl*, 32> mark;
-    LayoutVirtualBases(RD, RD, PrimaryBase.Base, 0, mark, IndirectPrimaryBases);
+    LayoutVirtualBases(RD, RD, PrimaryBase.getBase(), 
+                       0, mark, IndirectPrimaryBases);
   }
 
   // Finally, round the size of the total struct up to the alignment of the
