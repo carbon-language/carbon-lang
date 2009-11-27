@@ -694,17 +694,31 @@ static bool isPHITranslatable(Instruction *Inst) {
   // We can handle bitcast of a PHI, but the PHI needs to be in the same block
   // as the bitcast.
   if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst))
+    // FIXME: Allow any phi translatable operand.
     if (PHINode *PN = dyn_cast<PHINode>(BC->getOperand(0)))
       if (PN->getParent() == BC->getParent())
         return true;
   
-  // We can translate a GEP that uses a PHI in the current block for at least
-  // one of its operands.
+  // We can translate a GEP if all of its operands defined in this block are phi
+  // translatable. 
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
-    for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i)
-      if (PHINode *PN = dyn_cast<PHINode>(GEP->getOperand(i)))
-        if (PN->getParent() == GEP->getParent())
-          return true;
+    for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
+      Instruction *GEPOpI = dyn_cast<Instruction>(GEP->getOperand(i));
+      if (GEPOpI == 0 || GEPOpI->getParent() != Inst->getParent())
+        continue;
+      
+      if (!isPHITranslatable(GEPOpI))
+        return false;
+    }
+    return true;
+  }
+  
+  if (Inst->getOpcode() == Instruction::Add &&
+      isa<ConstantInt>(Inst->getOperand(1))) {
+    Instruction *GEPOpI = dyn_cast<Instruction>(Inst->getOperand(0));
+    if (GEPOpI == 0 || GEPOpI->getParent() != Inst->getParent())
+      return true;
+    return isPHITranslatable(GEPOpI);
   }
 
   //   cerr << "MEMDEP: Could not PHI translate: " << *Pointer;
@@ -731,6 +745,7 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
   
   // Handle bitcast of PHI.
   if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
+    // FIXME: Recurse!
     PHINode *BCPN = cast<PHINode>(BC->getOperand(0));
     Value *PHIIn = BCPN->getIncomingValueForBlock(Pred);
     
@@ -749,7 +764,7 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
     return 0;
   }
 
-  // Handle getelementptr with at least one PHI operand.
+  // Handle getelementptr with at least one PHI translatable operand.
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     SmallVector<Value*, 8> GEPOps;
     BasicBlock *CurBB = GEP->getParent();
@@ -764,8 +779,8 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
       }
       
       // If the operand is a phi node, do phi translation.
-      if (PHINode *PN = dyn_cast<PHINode>(GEPOp)) {
-        GEPOps.push_back(PN->getIncomingValueForBlock(Pred));
+      if (Value *InOp = PHITranslatePointer(GEPOp, CurBB, Pred, TD)) {
+        GEPOps.push_back(InOp);
         continue;
       }
       
@@ -777,7 +792,6 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
     // Simplify the GEP to handle 'gep x, 0' -> x etc.
     if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD))
       return V;
-
 
     // Scan to see if we have this GEP available.
     Value *APHIOp = GEPOps[0];
@@ -797,6 +811,49 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
             return GEPI;
         }
     }
+    return 0;
+  }
+  
+  // Handle add with a constant RHS.
+  if (Inst->getOpcode() == Instruction::Add &&
+      isa<ConstantInt>(Inst->getOperand(1))) {
+    // PHI translate the LHS.
+    Value *LHS;
+    Constant *RHS = cast<ConstantInt>(Inst->getOperand(1));
+    Instruction *OpI = dyn_cast<Instruction>(Inst->getOperand(0));
+    bool isNSW = cast<BinaryOperator>(Inst)->hasNoSignedWrap();
+    bool isNUW = cast<BinaryOperator>(Inst)->hasNoUnsignedWrap();
+    
+    if (OpI == 0 || OpI->getParent() != Inst->getParent())
+      LHS = Inst->getOperand(0);
+    else {
+      LHS = PHITranslatePointer(Inst->getOperand(0), CurBB, Pred, TD);
+      if (LHS == 0)
+        return 0;
+    }
+    
+    // If the PHI translated LHS is an add of a constant, fold the immediates.
+    if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(LHS))
+      if (BOp->getOpcode() == Instruction::Add)
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(BOp->getOperand(1))) {
+          LHS = BOp->getOperand(0);
+          RHS = ConstantExpr::getAdd(RHS, CI);
+          isNSW = isNUW = false;
+        }
+    
+    // See if the add simplifies away.
+    if (Value *Res = SimplifyAddInst(LHS, RHS, isNSW, isNUW, TD))
+      return Res;
+    
+    // Otherwise, see if we have this add available somewhere.
+    for (Value::use_iterator UI = LHS->use_begin(), E = LHS->use_end();
+         UI != E; ++UI) {
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*UI))
+        if (BO->getOperand(0) == LHS && BO->getOperand(1) == RHS &&
+            BO->getParent()->getParent() == CurBB->getParent())
+          return BO;
+    }
+    
     return 0;
   }
   
