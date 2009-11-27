@@ -1031,40 +1031,21 @@ void clang::InitializeLangOptions(LangOptions &Options,
                                   FrontendOptions::InputKind IK) {
   using namespace langoptions;
 
-  switch (IK) {
-  case FrontendOptions::IK_None:
-  case FrontendOptions::IK_AST:
-    assert(0 && "Invalid input kind!");
-  case FrontendOptions::IK_Asm:
+  // Set some properties which depend soley on the input kind; it would be nice
+  // to move these to the language standard, and have the driver resolve the
+  // input kind + language standard.
+  if (IK == FrontendOptions::IK_Asm) {
     Options.AsmPreprocessor = 1;
-    // FALLTHROUGH
-  case FrontendOptions::IK_PreprocessedC:
-    // FALLTHROUGH
-  case FrontendOptions::IK_C:
-    // Do nothing.
-    break;
-  case FrontendOptions::IK_PreprocessedCXX:
-    // FALLTHROUGH
-  case FrontendOptions::IK_CXX:
-    Options.CPlusPlus = 1;
-    break;
-  case FrontendOptions::IK_PreprocessedObjC:
-    // FALLTHROUGH
-  case FrontendOptions::IK_ObjC:
+  } else if (IK == FrontendOptions::IK_ObjC ||
+             IK == FrontendOptions::IK_ObjCXX ||
+             IK == FrontendOptions::IK_PreprocessedObjC ||
+             IK == FrontendOptions::IK_PreprocessedObjCXX) {
     Options.ObjC1 = Options.ObjC2 = 1;
-    break;
-  case FrontendOptions::IK_PreprocessedObjCXX:
-    // FALLTHROUGH
-  case FrontendOptions::IK_ObjCXX:
-    Options.ObjC1 = Options.ObjC2 = 1;
-    Options.CPlusPlus = 1;
-    break;
-  case FrontendOptions::IK_OpenCL:
+  } else if (IK == FrontendOptions::IK_OpenCL) {
     Options.OpenCL = 1;
     Options.AltiVec = 1;
     Options.CXXOperatorNames = 1;
     Options.LaxVectorConversions = 1;
-    break;
   }
 
   if (ObjCExclusiveGC)
