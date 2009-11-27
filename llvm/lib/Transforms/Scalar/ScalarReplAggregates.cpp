@@ -469,15 +469,41 @@ void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
     case Instruction::GetElementPtr: {
       GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
       bool AreAllZeroIndices = isFirstElt;
-      if (GEP->getNumOperands() > 1) {
-        if (!isa<ConstantInt>(GEP->getOperand(1)) ||
-            !cast<ConstantInt>(GEP->getOperand(1))->isZero())
-          // Using pointer arithmetic to navigate the array.
-          return MarkUnsafe(Info);
-       
-        if (AreAllZeroIndices)
-          AreAllZeroIndices = GEP->hasAllZeroIndices();
+      if (GEP->getNumOperands() > 1 &&
+          (!isa<ConstantInt>(GEP->getOperand(1)) ||
+           !cast<ConstantInt>(GEP->getOperand(1))->isZero()))
+        // Using pointer arithmetic to navigate the array.
+        return MarkUnsafe(Info);
+      
+      // Verify that any array subscripts are in range.
+      for (gep_type_iterator GEPIt = gep_type_begin(GEP),
+           E = gep_type_end(GEP); GEPIt != E; ++GEPIt) {
+        // Ignore struct elements, no extra checking needed for these.
+        if (isa<StructType>(*GEPIt))
+          continue;
+
+        // This GEP indexes an array.  Verify that this is an in-range
+        // constant integer. Specifically, consider A[0][i]. We cannot know that
+        // the user isn't doing invalid things like allowing i to index an
+        // out-of-range subscript that accesses A[1].  Because of this, we have
+        // to reject SROA of any accesses into structs where any of the
+        // components are variables. 
+        ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
+        if (!IdxVal) return MarkUnsafe(Info);
+        
+        // Are all indices still zero?
+        AreAllZeroIndices &= IdxVal->isZero();
+        
+        if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPIt)) {
+          if (IdxVal->getZExtValue() >= AT->getNumElements())
+            return MarkUnsafe(Info);
+        } else if (const VectorType *VT = dyn_cast<VectorType>(*GEPIt)) {
+          if (IdxVal->getZExtValue() >= VT->getNumElements())
+            return MarkUnsafe(Info);
+        }
       }
+      
+      
       isSafeElementUse(GEP, AreAllZeroIndices, AI, Info);
       if (Info.isUnsafe) return;
       break;
