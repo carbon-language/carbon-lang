@@ -752,19 +752,35 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
   // Handle getelementptr with at least one PHI operand.
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     SmallVector<Value*, 8> GEPOps;
-    Value *APHIOp = 0;
     BasicBlock *CurBB = GEP->getParent();
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
-      GEPOps.push_back(GEP->getOperand(i)->DoPHITranslation(CurBB, Pred));
-      if (!isa<Constant>(GEPOps.back()))
-        APHIOp = GEPOps.back();
+      Value *GEPOp = GEP->getOperand(i);
+      // No PHI translation is needed of operands whose values are live in to
+      // the predecessor block.
+      if (!isa<Instruction>(GEPOp) ||
+          cast<Instruction>(GEPOp)->getParent() != CurBB) {
+        GEPOps.push_back(GEPOp);
+        continue;
+      }
+      
+      // If the operand is a phi node, do phi translation.
+      if (PHINode *PN = dyn_cast<PHINode>(GEPOp)) {
+        GEPOps.push_back(PN->getIncomingValueForBlock(Pred));
+        continue;
+      }
+      
+      // Otherwise, we can't PHI translate this random value defined in this
+      // block.
+      return 0;
     }
     
     // Simplify the GEP to handle 'gep x, 0' -> x etc.
     if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD))
       return V;
-    
+
+
     // Scan to see if we have this GEP available.
+    Value *APHIOp = GEPOps[0];
     for (Value::use_iterator UI = APHIOp->use_begin(), E = APHIOp->use_end();
          UI != E; ++UI) {
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI))
@@ -787,6 +803,52 @@ PHITranslatePointer(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
   return 0;
 }
 
+/// InsertPHITranslatedPointer - Insert a computation of the PHI translated
+/// version of 'V' for the edge PredBB->CurBB into the end of the PredBB
+/// block.
+///
+/// This is only called when PHITranslatePointer returns a value that doesn't
+/// dominate the block, so we don't need to handle the trivial cases here.
+Value *MemoryDependenceAnalysis::
+InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
+                           BasicBlock *PredBB, const TargetData *TD) const {
+  // If the input value isn't an instruction in CurBB, it doesn't need phi
+  // translation.
+  Instruction *Inst = cast<Instruction>(InVal);
+  assert(Inst->getParent() == CurBB && "Doesn't need phi trans");
+
+  // Handle bitcast of PHI.
+  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
+    PHINode *BCPN = cast<PHINode>(BC->getOperand(0));
+    Value *PHIIn = BCPN->getIncomingValueForBlock(PredBB);
+    
+    // Otherwise insert a bitcast at the end of PredBB.
+    return new BitCastInst(PHIIn, InVal->getType(),
+                           InVal->getName()+".phi.trans.insert",
+                           PredBB->getTerminator());
+  }
+  
+  // Handle getelementptr with at least one PHI operand.
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
+    SmallVector<Value*, 8> GEPOps;
+    Value *APHIOp = 0;
+    BasicBlock *CurBB = GEP->getParent();
+    for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
+      GEPOps.push_back(GEP->getOperand(i)->DoPHITranslation(CurBB, PredBB));
+      if (!isa<Constant>(GEPOps.back()))
+        APHIOp = GEPOps.back();
+    }
+    
+    GetElementPtrInst *Result = 
+      GetElementPtrInst::Create(GEPOps[0], GEPOps.begin()+1, GEPOps.end(),
+                                InVal->getName()+".phi.trans.insert",
+                                PredBB->getTerminator());
+    Result->setIsInBounds(GEP->isInBounds());
+    return Result;
+  }
+  
+  return 0;
+}
 
 /// getNonLocalPointerDepFromBB - Perform a dependency query based on
 /// pointer/pointeesize starting at the end of StartBB.  Add any clobber/def

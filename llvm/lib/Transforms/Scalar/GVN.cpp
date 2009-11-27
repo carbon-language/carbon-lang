@@ -1425,32 +1425,40 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   assert(UnavailablePred != 0 &&
          "Fully available value should be eliminated above!");
 
-  // If the loaded pointer is PHI node defined in this block, do PHI translation
-  // to get its value in the predecessor.
-  Value *LoadPtr = MD->PHITranslatePointer(LI->getOperand(0),
-                                           LoadBB, UnavailablePred, TD);
-  if (LoadPtr == 0) {
-    DEBUG(errs() << "COULDN'T PRE LOAD BECAUSE PTR CAN'T BE PHI TRANSLATED: "
-          << *LI->getOperand(0) << '\n' << *LI << "\n");
-    return false;
-  }
-
-  // Make sure the value is live in the predecessor.  If it was defined by a
-  // non-PHI instruction in this block, we don't know how to recompute it above.
-  if (Instruction *LPInst = dyn_cast<Instruction>(LoadPtr))
-    if (!DT->dominates(LPInst->getParent(), UnavailablePred)) {
-      DEBUG(errs() << "COULDN'T PRE LOAD BECAUSE PTR DOES NOT DOMINATE PRED: "
-                   << *LPInst << '\n' << *LI << "\n");
-      return false;
-    }
-
   // We don't currently handle critical edges :(
   if (UnavailablePred->getTerminator()->getNumSuccessors() != 1) {
     DEBUG(errs() << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
                  << UnavailablePred->getName() << "': " << *LI << '\n');
     return false;
   }
+  
+  // If the loaded pointer is PHI node defined in this block, do PHI translation
+  // to get its value in the predecessor.
+  Value *LoadPtr = MD->PHITranslatePointer(LI->getOperand(0),
+                                           LoadBB, UnavailablePred, TD);
+  // Make sure the value is live in the predecessor.  MemDep found a computation
+  // of LPInst with the right value, but that does not dominate UnavailablePred,
+  // then we can't use it.
+  if (Instruction *LPInst = dyn_cast_or_null<Instruction>(LoadPtr))
+    if (!DT->dominates(LPInst->getParent(), UnavailablePred))
+      LoadPtr = 0;
 
+  // If we don't have a computation of this phi translated value, try to insert
+  // one.
+  if (LoadPtr == 0) {
+    LoadPtr = MD->InsertPHITranslatedPointer(LI->getOperand(0),
+                                             LoadBB, UnavailablePred, TD);
+    if (LoadPtr == 0) {
+      DEBUG(errs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
+                   << *LI->getOperand(0) << "\n");
+      return false;
+    }
+    
+    // FIXME: This inserts a computation, but we don't tell scalar GVN
+    // optimization stuff about it.  How do we do this?
+    DEBUG(errs() << "INSERTED PHI TRANSLATED VALUE: " << *LoadPtr << "\n");
+  }
+  
   // Make sure it is valid to move this load here.  We have to watch out for:
   //  @1 = getelementptr (i8* p, ...
   //  test p and branch if == 0
