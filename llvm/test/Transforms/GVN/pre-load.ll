@@ -86,9 +86,9 @@ block1:
 
 block2:
  br label %block4
-; CHECK: block2:
-; CHECK:   load i32*
-; CHECK:   br label %block4
+; HECK: block2:
+; HECK:   load i32*
+; HECK:   br label %block4
 
 block3:
   %B = getelementptr i32* %q, i32 1
@@ -103,10 +103,10 @@ block4:
   %P3 = getelementptr i32* %P2, i32 1
   %PRE = load i32* %P3
   ret i32 %PRE
-; CHECK: block4:
-; CHECK-NEXT: phi i32 [
-; CHECK-NOT: load
-; CHECK: ret i32
+; HECK: block4:
+; HECK-NEXT: phi i32 [
+; HECK-NOT: load
+; HECK: ret i32
 }
 
 ;void test5(int N, double *G) {
@@ -239,12 +239,10 @@ return:
   ret void
 }
 
-
-;;; --- todo
-
-;; Here the loaded address isn't available in 'block2' at all.
-define i32 @testX(i32* %p, i32* %q, i32** %Hack, i1 %C) {
-; CHECK: @testX
+;; Here the loaded address isn't available in 'block2' at all, requiring a new
+;; GEP to be inserted into it.
+define i32 @test8(i32* %p, i32* %q, i32** %Hack, i1 %C) {
+; CHECK: @test8
 block1:
 	br i1 %C, label %block2, label %block3
 

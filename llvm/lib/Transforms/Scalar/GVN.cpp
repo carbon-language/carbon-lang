@@ -1437,10 +1437,16 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   //
   // FIXME: This may insert a computation, but we don't tell scalar GVN
   // optimization stuff about it.  How do we do this?
+#if 0
   Value *LoadPtr =
     MD->InsertPHITranslatedPointer(LI->getOperand(0), LoadBB,
                                    UnavailablePred, TD, *DT);
-
+#else
+  Value *LoadPtr =
+    MD->GetAvailablePHITranslatedValue(LI->getOperand(0), LoadBB,
+                                       UnavailablePred, TD, *DT);
+#endif  
+  
   // If we couldn't find or insert a computation of this phi translated value,
   // we fail PRE.
   if (LoadPtr == 0) {
