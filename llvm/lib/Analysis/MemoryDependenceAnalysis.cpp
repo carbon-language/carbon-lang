@@ -994,62 +994,63 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
     
     // If this is a computation derived from a PHI node, use the suitably
     // translated incoming values for each pred as the phi translated version.
-    if (isPHITranslatable(PtrInst)) {
-      Cache = 0;
+    if (!isPHITranslatable(PtrInst))
+      goto PredTranslationFailure;
+
+    Cache = 0;
       
-      for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
-        BasicBlock *Pred = *PI;
-        Value *PredPtr = PHITranslatePointer(PtrInst, BB, Pred, TD);
-        
-        // If PHI translation fails, bail out.
-        if (PredPtr == 0)
-          goto PredTranslationFailure;
-        
-        // Check to see if we have already visited this pred block with another
-        // pointer.  If so, we can't do this lookup.  This failure can occur
-        // with PHI translation when a critical edge exists and the PHI node in
-        // the successor translates to a pointer value different than the
-        // pointer the block was first analyzed with.
-        std::pair<DenseMap<BasicBlock*,Value*>::iterator, bool>
-          InsertRes = Visited.insert(std::make_pair(Pred, PredPtr));
+    for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
+      BasicBlock *Pred = *PI;
+      Value *PredPtr = PHITranslatePointer(PtrInst, BB, Pred, TD);
+      
+      // If PHI translation fails, bail out.
+      if (PredPtr == 0)
+        goto PredTranslationFailure;
+      
+      // Check to see if we have already visited this pred block with another
+      // pointer.  If so, we can't do this lookup.  This failure can occur
+      // with PHI translation when a critical edge exists and the PHI node in
+      // the successor translates to a pointer value different than the
+      // pointer the block was first analyzed with.
+      std::pair<DenseMap<BasicBlock*,Value*>::iterator, bool>
+        InsertRes = Visited.insert(std::make_pair(Pred, PredPtr));
 
-        if (!InsertRes.second) {
-          // If the predecessor was visited with PredPtr, then we already did
-          // the analysis and can ignore it.
-          if (InsertRes.first->second == PredPtr)
-            continue;
-          
-          // Otherwise, the block was previously analyzed with a different
-          // pointer.  We can't represent the result of this case, so we just
-          // treat this as a phi translation failure.
-          goto PredTranslationFailure;
-        }
-
-        // FIXME: it is entirely possible that PHI translating will end up with
-        // the same value.  Consider PHI translating something like:
-        // X = phi [x, bb1], [y, bb2].  PHI translating for bb1 doesn't *need*
-        // to recurse here, pedantically speaking.
+      if (!InsertRes.second) {
+        // If the predecessor was visited with PredPtr, then we already did
+        // the analysis and can ignore it.
+        if (InsertRes.first->second == PredPtr)
+          continue;
         
-        // If we have a problem phi translating, fall through to the code below
-        // to handle the failure condition.
-        if (getNonLocalPointerDepFromBB(PredPtr, PointeeSize, isLoad, Pred,
-                                        Result, Visited))
-          goto PredTranslationFailure;
+        // Otherwise, the block was previously analyzed with a different
+        // pointer.  We can't represent the result of this case, so we just
+        // treat this as a phi translation failure.
+        goto PredTranslationFailure;
       }
+
+      // FIXME: it is entirely possible that PHI translating will end up with
+      // the same value.  Consider PHI translating something like:
+      // X = phi [x, bb1], [y, bb2].  PHI translating for bb1 doesn't *need*
+      // to recurse here, pedantically speaking.
       
-      // Refresh the CacheInfo/Cache pointer so that it isn't invalidated.
-      CacheInfo = &NonLocalPointerDeps[CacheKey];
-      Cache = &CacheInfo->second;
-      NumSortedEntries = Cache->size();
-      
-      // Since we did phi translation, the "Cache" set won't contain all of the
-      // results for the query.  This is ok (we can still use it to accelerate
-      // specific block queries) but we can't do the fastpath "return all
-      // results from the set"  Clear out the indicator for this.
-      CacheInfo->first = BBSkipFirstBlockPair();
-      SkipFirstBlock = false;
-      continue;
+      // If we have a problem phi translating, fall through to the code below
+      // to handle the failure condition.
+      if (getNonLocalPointerDepFromBB(PredPtr, PointeeSize, isLoad, Pred,
+                                      Result, Visited))
+        goto PredTranslationFailure;
     }
+    
+    // Refresh the CacheInfo/Cache pointer so that it isn't invalidated.
+    CacheInfo = &NonLocalPointerDeps[CacheKey];
+    Cache = &CacheInfo->second;
+    NumSortedEntries = Cache->size();
+    
+    // Since we did phi translation, the "Cache" set won't contain all of the
+    // results for the query.  This is ok (we can still use it to accelerate
+    // specific block queries) but we can't do the fastpath "return all
+    // results from the set"  Clear out the indicator for this.
+    CacheInfo->first = BBSkipFirstBlockPair();
+    SkipFirstBlock = false;
+    continue;
 
   PredTranslationFailure:
     
