@@ -790,11 +790,10 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
   if (!DestTy->isVoidType())
     TestAndClearIgnoreResultAssign();
 
+  // Since almost all cast kinds apply to scalars, this switch doesn't have
+  // a default case, so the compiler will warn on a missing case.  The cases
+  // are in the same order as in the CastKind enum.
   switch (Kind) {
-  default:
-    //return CGF.ErrorUnsupported(E, "type of cast");
-    break;
-
   case CastExpr::CK_Unknown:
     //assert(0 && "Unknown cast kind!");
     break;
@@ -818,7 +817,6 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     return CGF.GetAddressOfDerivedClass(Src, BaseClassDecl, DerivedClassDecl, 
                                         NullCheckValue);
   }
-      
   case CastExpr::CK_DerivedToBase: {
     const RecordType *DerivedClassTy = 
       E->getType()->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();
@@ -834,6 +832,11 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     bool NullCheckValue = ShouldNullCheckClassCastValue(CE);
     return CGF.GetAddressOfBaseClass(Src, DerivedClassDecl, BaseClassDecl,
                                      NullCheckValue);
+  }
+  case CastExpr::CK_Dynamic: {
+    Value *V = Visit(const_cast<Expr*>(E));
+    const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(CE);
+    return CGF.EmitDynamicCast(V, DCE);
   }
   case CastExpr::CK_ToUnion: {
     assert(0 && "Should be unreachable!");
@@ -863,6 +866,12 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
   case CastExpr::CK_NullToMemberPointer:
     return CGF.CGM.EmitNullConstant(DestTy);
 
+  case CastExpr::CK_BaseToDerivedMemberPointer:
+  case CastExpr::CK_DerivedToBaseMemberPointer:
+  case CastExpr::CK_UserDefinedConversion:
+  case CastExpr::CK_ConstructorConversion:
+    break;
+
   case CastExpr::CK_IntegralToPointer: {
     Value *Src = Visit(const_cast<Expr*>(E));
     
@@ -876,23 +885,14 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     
     return Builder.CreateIntToPtr(IntResult, ConvertType(DestTy));
   }
-
   case CastExpr::CK_PointerToIntegral: {
     Value *Src = Visit(const_cast<Expr*>(E));
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
-
   case CastExpr::CK_ToVoid: {
     CGF.EmitAnyExpr(E, 0, false, true);
     return 0;
   }
-
-  case CastExpr::CK_Dynamic: {
-    Value *V = Visit(const_cast<Expr*>(E));
-    const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(CE);
-    return CGF.EmitDynamicCast(V, DCE);
-  }
-
   case CastExpr::CK_VectorSplat: {
     const llvm::Type *DstTy = ConvertType(DestTy);
     Value *Elt = Visit(const_cast<Expr*>(E));
@@ -914,6 +914,11 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
     return Yay;
   }
+  case CastExpr::CK_IntegralCast:
+  case CastExpr::CK_IntegralToFloating:
+  case CastExpr::CK_FloatingToIntegral:
+  case CastExpr::CK_FloatingCast:
+    break;
 
   case CastExpr::CK_MemberPointerToBoolean: {
     const MemberPointerType* T = E->getType()->getAs<MemberPointerType>();
@@ -943,7 +948,6 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
                            "tobool");
     return IsNotNull;
   }
-      
   }
 
   // Handle cases where the source is an non-complex type.
