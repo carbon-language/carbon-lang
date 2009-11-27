@@ -2163,8 +2163,8 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
   
   // Add has the property that adding any two 2's complement numbers can only 
   // have one carry bit which can change a sign.  As such, if LHS and RHS each
-  // have at least two sign bits, we know that the addition of the two values will
-  // sign extend fine.
+  // have at least two sign bits, we know that the addition of the two values
+  // will sign extend fine.
   if (ComputeNumSignBits(LHS) > 1 && ComputeNumSignBits(RHS) > 1)
     return true;
   
@@ -2184,15 +2184,12 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
+  if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
+                                 I.hasNoUnsignedWrap(), TD))
+    return ReplaceInstUsesWith(I, V);
+
+  
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
-    // X + undef -> undef
-    if (isa<UndefValue>(RHS))
-      return ReplaceInstUsesWith(I, RHS);
-
-    // X + 0 --> X
-    if (RHSC->isNullValue())
-      return ReplaceInstUsesWith(I, LHS);
-
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       // X + (signbit) --> X ^ signbit
       const APInt& Val = CI->getValue();
@@ -4322,7 +4319,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   if (Value *V = SimplifyAndInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
-    
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
