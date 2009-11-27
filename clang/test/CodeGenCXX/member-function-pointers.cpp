@@ -34,6 +34,11 @@ void f() {
   // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = add i64 {{.*}}, 16
   // CHECK: store i64 [[ADJ]], i64* getelementptr inbounds (%0* @pc, i32 0, i32 1)
   pc = pa;
+
+  // CHECK: store i64 {{.*}}, i64* getelementptr inbounds (%0* @pa, i32 0, i32 0)
+  // CHECK: [[ADJ:%[a-zA-Z0-9\.]+]] = sub i64 {{.*}}, 16
+  // CHECK: store i64 [[ADJ]], i64* getelementptr inbounds (%0* @pa, i32 0, i32 1)
+  pa = static_cast<void (A::*)()>(pc);
 }
 
 void f2() {
