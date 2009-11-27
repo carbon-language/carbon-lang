@@ -700,7 +700,6 @@ static bool isPHITranslatable(Instruction *Inst) {
   
   // We can translate a GEP that uses a PHI in the current block for at least
   // one of its operands.
-  if (0)
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i)
       if (PHINode *PN = dyn_cast<PHINode>(GEP->getOperand(i)))
@@ -747,11 +746,11 @@ static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred,
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     SmallVector<Value*, 8> GEPOps;
     Value *APHIOp = 0;
+    BasicBlock *CurBB = GEP->getParent();
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
-      GEPOps.push_back(GEP->getOperand(i));
-      if (PHINode *PN = dyn_cast<PHINode>(GEP->getOperand(i)))
-        if (PN->getParent() == GEP->getParent())
-          GEPOps.back() = APHIOp = PN->getIncomingValueForBlock(Pred);
+      GEPOps.push_back(GEP->getOperand(i)->DoPHITranslation(CurBB, Pred));
+      if (!isa<Constant>(GEPOps.back()))
+        APHIOp = GEPOps.back();
     }
     
     // Simplify the GEP to handle 'gep x, 0' -> x etc.
@@ -762,9 +761,9 @@ static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred,
     for (Value::use_iterator UI = APHIOp->use_begin(), E = APHIOp->use_end();
          UI != E; ++UI) {
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI))
-        if (GEPI->getType() == GEPI->getType() &&
+        if (GEPI->getType() == GEP->getType() &&
             GEPI->getNumOperands() == GEPOps.size() &&
-            GEPI->getParent()->getParent() == Inst->getParent()->getParent()) {
+            GEPI->getParent()->getParent() == CurBB->getParent()) {
           bool Mismatch = false;
           for (unsigned i = 0, e = GEPOps.size(); i != e; ++i)
             if (GEPI->getOperand(i) != GEPOps[i]) {

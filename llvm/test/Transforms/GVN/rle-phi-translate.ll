@@ -80,9 +80,9 @@ bb2:
 	%i = phi i32 [ 7, %bb1 ], [ 17, %bb ]
   %d1 = getelementptr i32* %d, i32 %i
 	%dv = load i32* %d1
-; HECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
-; HECK-NOT: load
-; HECK: ret i32 %dv
+; CHECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
+; CHECK-NOT: load
+; CHECK: ret i32 %dv
 	ret i32 %dv
 }
 
@@ -106,9 +106,9 @@ bb2:
 	%i = phi i32 [ 7, %bb1 ], [ 0, %bb ]
   %d1 = getelementptr i32* %d, i32 %i
 	%dv = load i32* %d1
-; HECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
-; HECK-NOT: load
-; HECK: ret i32 %dv
+; CHECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
+; CHECK-NOT: load
+; CHECK: ret i32 %dv
 	ret i32 %dv
 }
 
