@@ -47,6 +47,23 @@ class ASTRecordLayout {
   // FieldCount - Number of fields.
   unsigned FieldCount;
 
+public:
+  /// PrimaryBaseInfo - Contains info about a primary base.
+  struct PrimaryBaseInfo {
+    PrimaryBaseInfo() : Base(0), IsVirtual(false) {}
+
+    PrimaryBaseInfo(const CXXRecordDecl *Base, bool IsVirtual)
+      : Base(Base), IsVirtual(IsVirtual) {}
+
+    /// Base - The primary base.
+    const CXXRecordDecl *Base;
+  
+    /// IsVirtual - Whether the primary base is virtual or not.
+    bool IsVirtual;
+  }; 
+  
+private:
+  /// CXXRecordLayoutInfo - Contains C++ specific layout information.
   struct CXXRecordLayoutInfo {
     /// NonVirtualSize - The non-virtual size (in bits) of an object, which is
     /// the size of the object without virtual bases.
@@ -56,11 +73,9 @@ class ASTRecordLayout {
     /// which is the alignment of the object without virtual bases.
     uint64_t NonVirtualAlign;
 
-    /// PrimaryBase - The primary base for our vtable.
-    const CXXRecordDecl *PrimaryBase;
-    /// PrimaryBase - Wether or not the primary base was a virtual base.
-    bool PrimaryBaseWasVirtual;
-
+    /// PrimaryBase - The primary base info for this record.
+    PrimaryBaseInfo PrimaryBase;
+    
     /// BaseOffsets - Contains a map from base classes to their offset.
     /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
     llvm::DenseMap<const CXXRecordDecl *, uint64_t> BaseOffsets;
@@ -92,7 +107,7 @@ class ASTRecordLayout {
   ASTRecordLayout(uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
-                  const CXXRecordDecl *PB, bool PBVirtual,
+                  const PrimaryBaseInfo &PrimaryBase,
                   const std::pair<const CXXRecordDecl *, uint64_t> *bases,
                   unsigned numbases,
                   const std::pair<const CXXRecordDecl *, uint64_t> *vbases,
@@ -105,8 +120,7 @@ class ASTRecordLayout {
         FieldOffsets[i] = fieldoffsets[i];
     }
 
-    CXXInfo->PrimaryBase = PB;
-    CXXInfo->PrimaryBaseWasVirtual = PBVirtual;
+    CXXInfo->PrimaryBase = PrimaryBase;
     CXXInfo->NonVirtualSize = nonvirtualsize;
     CXXInfo->NonVirtualAlign = nonvirtualalign;
     for (unsigned i = 0; i != numbases; ++i)
@@ -162,17 +176,21 @@ public:
     return CXXInfo->NonVirtualAlign;
   }
 
-  /// getPrimaryBase - Get the primary base.
-  const CXXRecordDecl *getPrimaryBase() const {
+  /// getPrimaryBaseInfo - Get the primary base info.
+  const PrimaryBaseInfo &getPrimaryBaseInfo() const {
     assert(CXXInfo && "Record layout does not have C++ specific info!");
 
     return CXXInfo->PrimaryBase;
   }
-  /// getPrimaryBaseWasVirtual - Indicates if the primary base was virtual.
-  bool getPrimaryBaseWasVirtual() const {
-    assert(CXXInfo && "Record layout does not have C++ specific info!");
 
-    return CXXInfo->PrimaryBaseWasVirtual;
+  // FIXME: Migrate off of this function and use getPrimaryBaseInfo directly.
+  const CXXRecordDecl *getPrimaryBase() const {
+    return getPrimaryBaseInfo().Base;
+  }
+
+  // FIXME: Migrate off of this function and use getPrimaryBaseInfo directly.
+  bool getPrimaryBaseWasVirtual() const {
+    return getPrimaryBaseInfo().IsVirtual;
   }
 
   /// getBaseClassOffset - Get the offset, in bits, for the given base class.

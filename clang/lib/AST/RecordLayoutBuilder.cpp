@@ -14,7 +14,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/RecordLayout.h"
 #include "clang/Basic/TargetInfo.h"
 #include <llvm/ADT/SmallSet.h>
 #include <llvm/Support/MathExtras.h>
@@ -24,7 +23,7 @@ using namespace clang;
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   : Ctx(Ctx), Size(0), Alignment(8), Packed(false), UnfilledBitsInLastByte(0),
   MaxFieldAlignment(0), DataSize(0), IsUnion(false), NonVirtualSize(0), 
-  NonVirtualAlignment(8), PrimaryBase(0), PrimaryBaseWasVirtual(false) {}
+  NonVirtualAlignment(8) { }
 
 /// LayoutVtable - Lay out the vtable and set PrimaryBase.
 void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
@@ -34,7 +33,7 @@ void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
   }
 
   SelectPrimaryBase(RD);
-  if (PrimaryBase == 0) {
+  if (!PrimaryBase.Base) {
     int AS = 0;
     UpdateAlignment(Ctx.Target.getPointerAlign(AS));
     Size += Ctx.Target.getPointerWidth(AS);
@@ -52,7 +51,7 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       // Skip the PrimaryBase here, as it is laid down first.
-      if (Base != PrimaryBase || PrimaryBaseWasVirtual)
+      if (Base != PrimaryBase.Base || PrimaryBase.IsVirtual)
         LayoutBaseNonVirtually(Base, false);
     }
   }
@@ -74,12 +73,13 @@ bool ASTRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
 }
 
 void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
-  const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
+  const ASTRecordLayout::PrimaryBaseInfo &BaseInfo = 
+    Ctx.getASTRecordLayout(RD).getPrimaryBaseInfo();
   
   // If the record has a primary base class that is virtual, add it to the set
   // of primary bases.
-  if (Layout.getPrimaryBaseWasVirtual())
-    IndirectPrimaryBases.insert(Layout.getPrimaryBase());
+  if (BaseInfo.IsVirtual)
+    IndirectPrimaryBases.insert(BaseInfo.Base);
   
   // Now traverse all bases and find primary bases for them.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
@@ -107,7 +107,7 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     if (!i->isVirtual()) {
       SelectPrimaryVBase(Base, FirstPrimary);
-      if (PrimaryBase)
+      if (PrimaryBase.Base)
         return;
       continue;
     }
@@ -115,7 +115,7 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
       if (FirstPrimary==0)
         FirstPrimary = Base;
       if (!IndirectPrimaryBases.count(Base)) {
-        setPrimaryBase(Base, true);
+        setPrimaryBase(Base, /*IsVirtual=*/true);
         return;
       }
     }
@@ -141,14 +141,17 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
   // base class, if one exists.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
        e = RD->bases_end(); i != e; ++i) {
-    if (!i->isVirtual()) {
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      if (Base->isDynamicClass()) {
-        // We found it.
-        setPrimaryBase(Base, false);
-        return;
-      }
+    // Ignore virtual bases.
+    if (i->isVirtual())
+      continue;
+    
+    const CXXRecordDecl *Base =
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+
+    if (Base->isDynamicClass()) {
+      // We found it.
+      PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(Base, /*IsVirtual=*/false);
+      return;
     }
   }
 
@@ -166,8 +169,8 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
 
   // Otherwise if is the first nearly empty virtual base, if one exists,
   // otherwise there is no primary base class.
-  if (!PrimaryBase)
-    setPrimaryBase(FirstPrimary, true);
+  if (!PrimaryBase.Base)
+    setPrimaryBase(FirstPrimary, /*IsVirtual=*/true);
 }
 
 void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
@@ -232,9 +235,10 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
     }
     
     if (Base->getNumVBases()) {
-      const ASTRecordLayout &L = Ctx.getASTRecordLayout(Base);
-      const CXXRecordDecl *PB = L.getPrimaryBase();
-      LayoutVirtualBases(Class, Base, PB, BaseOffset, mark, IndirectPrimary);
+      const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Base);
+      const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBaseInfo().Base;
+      LayoutVirtualBases(Class, Base, PrimaryBase, BaseOffset, mark, 
+                         IndirectPrimary);
     }
   }
 }
@@ -455,10 +459,10 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   if (RD) {
     LayoutVtable(RD);
     // PrimaryBase goes first.
-    if (PrimaryBase) {
-      if (PrimaryBaseWasVirtual)
-        IndirectPrimaryBases.insert(PrimaryBase);
-      LayoutBaseNonVirtually(PrimaryBase, PrimaryBaseWasVirtual);
+    if (PrimaryBase.Base) {
+      if (PrimaryBase.IsVirtual)
+        IndirectPrimaryBases.insert(PrimaryBase.Base);
+      LayoutBaseNonVirtually(PrimaryBase.Base, PrimaryBase.IsVirtual);
     }
     LayoutNonVirtualBases(RD);
   }
@@ -470,7 +474,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   if (RD) {
     llvm::SmallSet<const CXXRecordDecl*, 32> mark;
-    LayoutVirtualBases(RD, RD, PrimaryBase, 0, mark, IndirectPrimaryBases);
+    LayoutVirtualBases(RD, RD, PrimaryBase.Base, 0, mark, IndirectPrimaryBases);
   }
 
   // Finally, round the size of the total struct up to the alignment of the
@@ -687,7 +691,6 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                              NonVirtualSize,
                              Builder.NonVirtualAlignment,
                              Builder.PrimaryBase,
-                             Builder.PrimaryBaseWasVirtual,
                              Builder.Bases.data(),
                              Builder.Bases.size(),
                              Builder.VBases.data(),

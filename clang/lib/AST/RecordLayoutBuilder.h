@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_AST_RECORDLAYOUTBUILDER_H
 #define LLVM_CLANG_AST_RECORDLAYOUTBUILDER_H
 
+#include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/System/DataTypes.h"
@@ -54,8 +55,8 @@ class ASTRecordLayoutBuilder {
 
   uint64_t NonVirtualSize;
   unsigned NonVirtualAlignment;
-  const CXXRecordDecl *PrimaryBase;
-  bool PrimaryBaseWasVirtual;
+  
+  ASTRecordLayout::PrimaryBaseInfo PrimaryBase;
 
   typedef llvm::SmallVector<std::pair<const CXXRecordDecl *, 
                                       uint64_t>, 4> BaseOffsetsTy;
@@ -94,9 +95,8 @@ class ASTRecordLayoutBuilder {
   /// base class.
   void IdentifyPrimaryBases(const CXXRecordDecl *RD);
   
-  void setPrimaryBase(const CXXRecordDecl *PB, bool Virtual) {
-    PrimaryBase = PB;
-    PrimaryBaseWasVirtual = Virtual;
+  void setPrimaryBase(const CXXRecordDecl *Base, bool IsVirtual) {
+    PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(Base, IsVirtual);
   }
   
   bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
