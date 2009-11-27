@@ -42,7 +42,7 @@ MDString *MDString::get(LLVMContext &Context, const char *Str) {
   StringMapEntry<MDString *> &Entry = 
     pImpl->MDStringCache.GetOrCreateValue(Str ? StringRef(Str) : StringRef());
   MDString *&S = Entry.getValue();
-  if (!S) new MDString(Context, Entry.getKey());
+  if (!S) S = new MDString(Context, Entry.getKey());
   return S;
 }
 
