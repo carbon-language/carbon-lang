@@ -20,6 +20,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -716,7 +717,8 @@ static bool isPHITranslatable(Instruction *Inst) {
 /// PHITranslateForPred - Given a computation that satisfied the
 /// isPHITranslatable predicate, see if we can translate the computation into
 /// the specified predecessor block.  If so, return that value.
-static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred) {
+static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred,
+                                  const TargetData *TD) {
   if (PHINode *PN = dyn_cast<PHINode>(Inst))
     return PN->getIncomingValueForBlock(Pred);
   
@@ -751,7 +753,9 @@ static Value *PHITranslateForPred(Instruction *Inst, BasicBlock *Pred) {
           GEPOps.back() = APHIOp = PN->getIncomingValueForBlock(Pred);
     }
     
-    // TODO: Simplify the GEP to handle 'gep x, 0' -> x etc.
+    // Simplify the GEP to handle 'gep x, 0' -> x etc.
+    if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD))
+      return V;
     
     // Scan to see if we have this GEP available.
     for (Value::use_iterator UI = APHIOp->use_begin(), E = APHIOp->use_end();
@@ -926,7 +930,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       
       for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
         BasicBlock *Pred = *PI;
-        Value *PredPtr = PHITranslateForPred(PtrInst, Pred);
+        Value *PredPtr = PHITranslateForPred(PtrInst, Pred, TD);
         
         // If PHI translation fails, bail out.
         if (PredPtr == 0)
