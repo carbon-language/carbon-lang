@@ -64,8 +64,40 @@ public:
   
     /// isVirtual - Returns whether the primary base is virtual or not.
     bool isVirtual() const { return Value.getInt(); }
+
+    friend bool operator==(const PrimaryBaseInfo &X, const PrimaryBaseInfo &Y) {
+      return X.Value == Y.Value;
+    }
   }; 
   
+  /// primary_base_info_iterator - An iterator for iterating the primary base
+  /// class chain.
+  class primary_base_info_iterator {
+    /// Current - The current base class info.
+    PrimaryBaseInfo Current;
+    
+  public:
+    primary_base_info_iterator() {}
+    primary_base_info_iterator(PrimaryBaseInfo Info) : Current(Info) {}
+
+    const PrimaryBaseInfo &operator*() const { return Current; }
+
+    primary_base_info_iterator& operator++() {
+      const CXXRecordDecl *RD = Current.getBase();
+      Current = RD->getASTContext().getASTRecordLayout(RD).getPrimaryBaseInfo();
+      return *this;
+    }
+
+    friend bool operator==(const primary_base_info_iterator &X,
+                           const primary_base_info_iterator &Y) {
+      return X.Current == Y.Current;
+    }
+    friend bool operator!=(const primary_base_info_iterator &X,
+                           const primary_base_info_iterator &Y) {
+      return !(X == Y);
+    }
+  };
+    
 private:
   /// CXXRecordLayoutInfo - Contains C++ specific layout information.
   struct CXXRecordLayoutInfo {
@@ -211,6 +243,18 @@ public:
     assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
 
     return CXXInfo->VBaseOffsets[VBase];
+  }
+  
+  primary_base_info_iterator primary_base_begin() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+  
+    return primary_base_info_iterator(getPrimaryBaseInfo());
+  }
+
+  primary_base_info_iterator primary_base_end() const {
+    assert(CXXInfo && "Record layout does not have C++ specific info!");
+    
+    return primary_base_info_iterator();
   }
 };
 
