@@ -201,7 +201,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       // If we reach a lifetime begin or end marker, then the query ends here
       // because the value is undefined.
       } else if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-                   II->getIntrinsicID() == Intrinsic::lifetime_end) {
+		 II->getIntrinsicID() == Intrinsic::lifetime_end) {
         uint64_t invariantSize = ~0ULL;
         if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(1)))
           invariantSize = CI->getZExtValue();
@@ -369,20 +369,41 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     // calls to free() erase the entire structure, not just a field.
     MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
-    CallSite QueryCS = CallSite::get(QueryInst);
-    bool isReadOnly = AA->onlyReadsMemory(QueryCS);
-    LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
-                                           QueryParent);
+    int IntrinsicID = 0;  // Intrinsic IDs start at 1.
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(QueryInst))
+      IntrinsicID = II->getIntrinsicID();
+
+    switch (IntrinsicID) {
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
+      case Intrinsic::invariant_start:
+        MemPtr = QueryInst->getOperand(2);
+        MemSize = cast<ConstantInt>(QueryInst->getOperand(1))->getZExtValue();
+        break;
+      case Intrinsic::invariant_end:
+        MemPtr = QueryInst->getOperand(3);
+        MemSize = cast<ConstantInt>(QueryInst->getOperand(2))->getZExtValue();
+        break;
+      default:
+        CallSite QueryCS = CallSite::get(QueryInst);
+        bool isReadOnly = AA->onlyReadsMemory(QueryCS);
+        LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
+                                               QueryParent);
+    }
   } else {
     // Non-memory instruction.
     LocalCache = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));
   }
   
   // If we need to do a pointer scan, make it happen.
-  if (MemPtr)
-    LocalCache = getPointerDependencyFrom(MemPtr, MemSize, 
-                                          isa<LoadInst>(QueryInst),
-                                          ScanPos, QueryParent);
+  if (MemPtr) {
+    bool isLoad = !QueryInst->mayWriteToMemory();
+    if (IntrinsicInst *II = dyn_cast<MemoryUseIntrinsic>(QueryInst)) {
+      isLoad |= II->getIntrinsicID() == Intrinsic::lifetime_end;
+    }
+    LocalCache = getPointerDependencyFrom(MemPtr, MemSize, isLoad, ScanPos,
+                                          QueryParent);
+  }
   
   // Remember the result!
   if (Instruction *I = LocalCache.getInst())

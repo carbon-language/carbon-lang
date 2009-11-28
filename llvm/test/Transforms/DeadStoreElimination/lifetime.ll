@@ -1,6 +1,9 @@
 ; RUN: opt -S -dse < %s | FileCheck %s
 
-declare void @llvm.lifetime.end(i64, i8*)
+target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
+
+declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
+declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 declare void @llvm.memset.i8(i8*, i8, i8, i32)
 
 define void @test1() {
@@ -17,3 +20,18 @@ define void @test1() {
   ret void
 ; CHECK: ret void
 }
+
+define void @test2(i32* %P) {
+; CHECK: test2
+  %Q = getelementptr i32* %P, i32 1
+  %R = bitcast i32* %Q to i8*
+  call void @llvm.lifetime.start(i64 4, i8* %R)
+; CHECK: lifetime.start
+  store i32 0, i32* %Q  ;; This store is dead.
+; CHECK-NOT: store
+  call void @llvm.lifetime.end(i64 4, i8* %R)
+; CHECK: lifetime.end
+  ret void
+}
+
+
