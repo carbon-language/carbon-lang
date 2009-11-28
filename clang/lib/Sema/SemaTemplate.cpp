@@ -130,6 +130,10 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
                                               Name.OperatorFunctionId.Operator);
     break;
 
+  case UnqualifiedId::IK_LiteralOperatorId:
+    assert(false && "We don't support these; Parse shouldn't have allowed propagation");
+
+
   default:
     return TNK_Non_template;
   }
@@ -1686,7 +1690,10 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
   case UnqualifiedId::IK_OperatorFunctionId:
     return TemplateTy::make(Context.getDependentTemplateName(Qualifier,
                                              Name.OperatorFunctionId.Operator));
-      
+
+  case UnqualifiedId::IK_LiteralOperatorId:
+    assert(false && "We don't support these; Parse shouldn't have allowed propagation");
+
   default:
     break;
   }

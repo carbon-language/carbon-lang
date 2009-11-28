@@ -124,7 +124,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           break;
         }
         
-        if (TemplateName.getKind() != UnqualifiedId::IK_OperatorFunctionId) {
+        if (TemplateName.getKind() != UnqualifiedId::IK_OperatorFunctionId &&
+            TemplateName.getKind() != UnqualifiedId::IK_LiteralOperatorId) {
           Diag(TemplateName.getSourceRange().getBegin(),
                diag::err_id_after_template_in_nested_name_spec)
             << TemplateName.getSourceRange();
@@ -791,6 +792,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   switch (Id.getKind()) {
   case UnqualifiedId::IK_Identifier:
   case UnqualifiedId::IK_OperatorFunctionId:
+  case UnqualifiedId::IK_LiteralOperatorId:
     TNK = Actions.isTemplateName(CurScope, SS, Id, ObjectType, EnteringContext, 
                                  Template);
     break;
@@ -848,7 +850,8 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
     return true;
   
   if (Id.getKind() == UnqualifiedId::IK_Identifier ||
-      Id.getKind() == UnqualifiedId::IK_OperatorFunctionId) {
+      Id.getKind() == UnqualifiedId::IK_OperatorFunctionId ||
+      Id.getKind() == UnqualifiedId::IK_LiteralOperatorId) {
     // Form a parsed representation of the template-id to be stored in the
     // UnqualifiedId.
     TemplateIdAnnotation *TemplateId
@@ -1167,12 +1170,13 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     if (ParseUnqualifiedIdOperator(SS, EnteringContext, ObjectType, Result))
       return true;
     
-    // If we have an operator-function-id and the next token is a '<', we may
-    // have a
+    // If we have an operator-function-id or a literal-operator-id and the next
+    // token is a '<', we may have a
     // 
     //   template-id:
     //     operator-function-id < template-argument-list[opt] >
-    if (Result.getKind() == UnqualifiedId::IK_OperatorFunctionId &&
+    if ((Result.getKind() == UnqualifiedId::IK_OperatorFunctionId ||
+         Result.getKind() == UnqualifiedId::IK_LiteralOperatorId) &&
         Tok.is(tok::less))
       return ParseUnqualifiedIdTemplateId(SS, 0, SourceLocation(), 
                                           EnteringContext, ObjectType, 
