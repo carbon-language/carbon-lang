@@ -1438,16 +1438,19 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // FIXME: This may insert a computation, but we don't tell scalar GVN
   // optimization stuff about it.  How do we do this?
   SmallVector<Instruction*, 8> NewInsts;
-#if 0
-  Value *LoadPtr =
-    MD->InsertPHITranslatedPointer(LI->getOperand(0), LoadBB,
-                                   UnavailablePred, TD, *DT, NewInsts);
-#else
-  Value *LoadPtr =
-    MD->GetAvailablePHITranslatedValue(LI->getOperand(0), LoadBB,
-                                       UnavailablePred, TD, *DT);
-#endif  
+  Value *LoadPtr = 0;
   
+  // If all preds have a single successor, then we know it is safe to insert the
+  // load on the pred (?!?), so we can insert code to materialize the pointer if
+  // it is not available.
+  if (allSingleSucc) {
+    LoadPtr = MD->InsertPHITranslatedPointer(LI->getOperand(0), LoadBB,
+                                             UnavailablePred, TD, *DT,NewInsts);
+  } else {
+    LoadPtr = MD->GetAvailablePHITranslatedValue(LI->getOperand(0), LoadBB,
+                                                 UnavailablePred, TD, *DT);
+  }
+    
   // If we couldn't find or insert a computation of this phi translated value,
   // we fail PRE.
   if (LoadPtr == 0) {
@@ -1467,14 +1470,19 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // put anywhere; this can be improved, but should be conservatively safe.
   if (!allSingleSucc &&
       // FIXME: REEVALUTE THIS.
-      !isSafeToLoadUnconditionally(LoadPtr, UnavailablePred->getTerminator()))
+      !isSafeToLoadUnconditionally(LoadPtr, UnavailablePred->getTerminator())) {
+    assert(NewInsts.empty() && "Should not have inserted instructions");
     return false;
+  }
 
   // Okay, we can eliminate this load by inserting a reload in the predecessor
   // and using PHI construction to get the value in the other predecessors, do
   // it.
   DEBUG(errs() << "GVN REMOVING PRE LOAD: " << *LI << '\n');
-
+  DEBUG(if (!NewInsts.empty())
+          errs() << "INSERTED " << NewInsts.size() << " INSTS: "
+                 << *NewInsts.back() << '\n');
+  
   Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
                                 LI->getAlignment(),
                                 UnavailablePred->getTerminator());
