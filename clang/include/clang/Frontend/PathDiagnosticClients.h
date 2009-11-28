@@ -14,9 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_PATH_DIAGNOSTIC_CLIENTS_H
 #define LLVM_CLANG_FRONTEND_PATH_DIAGNOSTIC_CLiENTS_H
 
-#include <memory>
 #include <string>
-#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 

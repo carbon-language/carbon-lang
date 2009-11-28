@@ -24,7 +24,6 @@
 namespace clang {
 
 class Decl;
-class Preprocessor;
 class SourceManager;
 class Stmt;
 
