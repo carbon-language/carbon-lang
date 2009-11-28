@@ -879,14 +879,13 @@ GetAvailablePHITranslatedValue(Value *V,
 
 /// InsertPHITranslatedPointer - Insert a computation of the PHI translated
 /// version of 'V' for the edge PredBB->CurBB into the end of the PredBB
-/// block.
+/// block.  All newly created instructions are added to the NewInsts list.
 ///
-/// This is only called when PHITranslatePointer returns a value that doesn't
-/// dominate the block, so we don't need to handle the trivial cases here.
 Value *MemoryDependenceAnalysis::
 InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
                            BasicBlock *PredBB, const TargetData *TD,
-                           const DominatorTree &DT) const {
+                           const DominatorTree &DT,
+                           SmallVectorImpl<Instruction*> &NewInsts) const {
   // See if we have a version of this value already available and dominating
   // PredBB.  If so, there is no need to insert a new copy.
   if (Value *Res = GetAvailablePHITranslatedValue(InVal, CurBB, PredBB, TD, DT))
@@ -899,13 +898,15 @@ InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
   // Handle bitcast of PHI translatable value.
   if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
     Value *OpVal = InsertPHITranslatedPointer(BC->getOperand(0),
-                                              CurBB, PredBB, TD, DT);
+                                              CurBB, PredBB, TD, DT, NewInsts);
     if (OpVal == 0) return 0;
       
     // Otherwise insert a bitcast at the end of PredBB.
-    return new BitCastInst(OpVal, InVal->getType(),
-                           InVal->getName()+".phi.trans.insert",
-                           PredBB->getTerminator());
+    BitCastInst *New = new BitCastInst(OpVal, InVal->getType(),
+                                       InVal->getName()+".phi.trans.insert",
+                                       PredBB->getTerminator());
+    NewInsts.push_back(New);
+    return New;
   }
   
   // Handle getelementptr with at least one PHI operand.
@@ -914,7 +915,7 @@ InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
     BasicBlock *CurBB = GEP->getParent();
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
       Value *OpVal = InsertPHITranslatedPointer(GEP->getOperand(i),
-                                                CurBB, PredBB, TD, DT);
+                                                CurBB, PredBB, TD, DT, NewInsts);
       if (OpVal == 0) return 0;
       GEPOps.push_back(OpVal);
     }
@@ -924,6 +925,7 @@ InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
                                 InVal->getName()+".phi.trans.insert",
                                 PredBB->getTerminator());
     Result->setIsInBounds(GEP->isInBounds());
+    NewInsts.push_back(Result);
     return Result;
   }
   
@@ -937,7 +939,7 @@ InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
       isa<ConstantInt>(Inst->getOperand(1))) {
     // PHI translate the LHS.
     Value *OpVal = InsertPHITranslatedPointer(Inst->getOperand(0),
-                                              CurBB, PredBB, TD, DT);
+                                              CurBB, PredBB, TD, DT, NewInsts);
     if (OpVal == 0) return 0;
     
     BinaryOperator *Res = BinaryOperator::CreateAdd(OpVal, Inst->getOperand(1),
@@ -945,6 +947,7 @@ InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
                                                     PredBB->getTerminator());
     Res->setHasNoSignedWrap(cast<BinaryOperator>(Inst)->hasNoSignedWrap());
     Res->setHasNoUnsignedWrap(cast<BinaryOperator>(Inst)->hasNoUnsignedWrap());
+    NewInsts.push_back(Res);
     return Res;
   }
 #endif

@@ -1437,10 +1437,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   //
   // FIXME: This may insert a computation, but we don't tell scalar GVN
   // optimization stuff about it.  How do we do this?
+  SmallVector<Instruction*, 8> NewInsts;
 #if 0
   Value *LoadPtr =
     MD->InsertPHITranslatedPointer(LI->getOperand(0), LoadBB,
-                                   UnavailablePred, TD, *DT);
+                                   UnavailablePred, TD, *DT, NewInsts);
 #else
   Value *LoadPtr =
     MD->GetAvailablePHITranslatedValue(LI->getOperand(0), LoadBB,
@@ -1465,6 +1466,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // we do not have this case.  Otherwise, check that the load is safe to
   // put anywhere; this can be improved, but should be conservatively safe.
   if (!allSingleSucc &&
+      // FIXME: REEVALUTE THIS.
       !isSafeToLoadUnconditionally(LoadPtr, UnavailablePred->getTerminator()))
     return false;
 

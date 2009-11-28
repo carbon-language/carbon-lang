@@ -261,11 +261,12 @@ namespace llvm {
     
     /// InsertPHITranslatedPointer - Insert a computation of the PHI translated
     /// version of 'V' for the edge PredBB->CurBB into the end of the PredBB
-    /// block.
+    /// block.  All newly created instructions are added to the NewInsts list.
     Value *InsertPHITranslatedPointer(Value *V,
                                       BasicBlock *CurBB, BasicBlock *PredBB,
                                       const TargetData *TD,
-                                      const DominatorTree &DT) const;
+                                      const DominatorTree &DT,
+                                 SmallVectorImpl<Instruction*> &NewInsts) const;
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
