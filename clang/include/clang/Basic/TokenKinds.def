@@ -17,6 +17,9 @@
 #ifndef TOK
 #define TOK(X)
 #endif
+#ifndef PUNCTUATOR
+#define PUNCTUATOR(X,Y) TOK(X)
+#endif
 #ifndef KEYWORD
 #define KEYWORD(X,Y) TOK(kw_ ## X)
 #endif
@@ -113,64 +116,63 @@ TOK(wide_string_literal) // L"foo"
 TOK(angle_string_literal)// <foo>
 
 // C99 6.4.6: Punctuators.
-TOK(l_square)            // [
-TOK(r_square)            // ]
-TOK(l_paren)             // (
-TOK(r_paren)             // )
-TOK(l_brace)             // {
-TOK(r_brace)             // }
-TOK(period)              // .
-TOK(ellipsis)            // ...
-TOK(amp)                 // &
-TOK(ampamp)              // &&
-TOK(ampequal)            // &=
-TOK(star)                // *
-TOK(starequal)           // *=
-TOK(plus)                // +
-TOK(plusplus)            // ++
-TOK(plusequal)           // +=
-TOK(minus)               // -
-TOK(arrow)               // ->
-TOK(minusminus)          // --
-TOK(minusequal)          // -=
-TOK(tilde)               // ~
-TOK(exclaim)             // !
-TOK(exclaimequal)        // !=
-TOK(slash)               // /
-TOK(slashequal)          // /=
-TOK(percent)             // %
-TOK(percentequal)        // %=
-TOK(less)                // <
-TOK(lessless)            // <<
-TOK(lessequal)           // <=
-TOK(lesslessequal)       // <<=
-TOK(greater)             // >
-TOK(greatergreater)      // >>
-TOK(greaterequal)        // >=
-TOK(greatergreaterequal) // >>=
-TOK(caret)               // ^
-TOK(caretequal)          // ^=
-TOK(pipe)                // |
-TOK(pipepipe)            // ||
-TOK(pipeequal)           // |=
-TOK(question)            // ?
-TOK(colon)               // :
-TOK(semi)                // ;
-TOK(equal)               // =
-TOK(equalequal)          // ==
-TOK(comma)               // ,
-TOK(hash)                // #
-TOK(hashhash)            // ##
-TOK(hashat)              // #@
+PUNCTUATOR(l_square,            "[")
+PUNCTUATOR(r_square,            "]")
+PUNCTUATOR(l_paren,             "(")
+PUNCTUATOR(r_paren,             ")")
+PUNCTUATOR(l_brace,             "{")
+PUNCTUATOR(r_brace,             "}")
+PUNCTUATOR(period,              ".")
+PUNCTUATOR(ellipsis,            "...")
+PUNCTUATOR(amp,                 "&")
+PUNCTUATOR(ampamp,              "&&")
+PUNCTUATOR(ampequal,            "&=")
+PUNCTUATOR(star,                "*")
+PUNCTUATOR(starequal,           "*=")
+PUNCTUATOR(plus,                "+")
+PUNCTUATOR(plusplus,            "++")
+PUNCTUATOR(plusequal,           "+=")
+PUNCTUATOR(minus,               "-")
+PUNCTUATOR(arrow,               "->")
+PUNCTUATOR(minusminus,          "--")
+PUNCTUATOR(minusequal,          "-=")
+PUNCTUATOR(tilde,               "~")
+PUNCTUATOR(exclaim,             "!")
+PUNCTUATOR(exclaimequal,        "!=")
+PUNCTUATOR(slash,               "/")
+PUNCTUATOR(slashequal,          "/=")
+PUNCTUATOR(percent,             "%")
+PUNCTUATOR(percentequal,        "%=")
+PUNCTUATOR(less,                "<")
+PUNCTUATOR(lessless,            "<<")
+PUNCTUATOR(lessequal,           "<=")
+PUNCTUATOR(lesslessequal,       "<<=")
+PUNCTUATOR(greater,             ">")
+PUNCTUATOR(greatergreater,      ">>")
+PUNCTUATOR(greaterequal,        ">=")
+PUNCTUATOR(greatergreaterequal, ">>=")
+PUNCTUATOR(caret,               "^")
+PUNCTUATOR(caretequal,          "^=")
+PUNCTUATOR(pipe,                "|")
+PUNCTUATOR(pipepipe,            "||")
+PUNCTUATOR(pipeequal,           "|=")
+PUNCTUATOR(question,            "?")
+PUNCTUATOR(colon,               ":")
+PUNCTUATOR(semi,                ";")
+PUNCTUATOR(equal,               "=")
+PUNCTUATOR(equalequal,          "==")
+PUNCTUATOR(comma,               ",")
+PUNCTUATOR(hash,                "#")
+PUNCTUATOR(hashhash,            "##")
+PUNCTUATOR(hashat,              "#@")
 
 // C++ Support
-TOK(periodstar)          // .*
-TOK(arrowstar)           // ->*
-TOK(coloncolon)          // ::
+PUNCTUATOR(periodstar,          ".*")
+PUNCTUATOR(arrowstar,           "->*")
+PUNCTUATOR(coloncolon,          "::")
 
 // Objective C support.
-TOK(at)                  // @
-
+PUNCTUATOR(at,                  "@")
 
 // C99 6.4.1: Keywords.  These turn into kw_* tokens.
 // Flags allowed:
@@ -415,4 +417,5 @@ ANNOTATION(template_id)  // annotation for a C++ template-id that names a
 #undef PPKEYWORD
 #undef ALIAS
 #undef KEYWORD
+#undef PUNCTUATOR
 #undef TOK
