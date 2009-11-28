@@ -75,7 +75,7 @@ static llvm::Value *GetCXXBaseClassOffset(CodeGenFunction &CGF,
                                           const CXXRecordDecl *ClassDecl,
                                           const CXXRecordDecl *BaseClassDecl) {
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
+                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
   if (!const_cast<CXXRecordDecl *>(ClassDecl)->
         isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClassDecl), Paths)) {
     assert(false && "Class must be derived from the passed in base class!");
@@ -84,21 +84,20 @@ static llvm::Value *GetCXXBaseClassOffset(CodeGenFunction &CGF,
 
   unsigned Start = 0;
   llvm::Value *VirtualOffset = 0;
-  if (const RecordType *RT = Paths.getDetectedVirtual()) {
-    const CXXRecordDecl *VBase = cast<CXXRecordDecl>(RT->getDecl());
-    
-    VirtualOffset = 
-      CGF.GetVirtualCXXBaseClassOffset(BaseValue, ClassDecl, VBase);
-    
-    const CXXBasePath &Path = Paths.front();
-    unsigned e = Path.size();
-    for (Start = 0; Start != e; ++Start) {
-      const CXXBasePathElement& Element = Path[Start];
-      
-      if (Element.Class == VBase)
-        break;
+
+  const CXXBasePath &Path = Paths.front();
+  const CXXRecordDecl *VBase = 0;
+  for (unsigned i = 0, e = Path.size(); i != e; ++i) {
+    const CXXBasePathElement& Element = Path[i];
+    if (Element.Base->isVirtual()) {
+      Start = i+1;
+      QualType VBaseType = Element.Base->getType();
+      VBase = cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
     }
   }
+  if (VBase)
+    VirtualOffset = 
+      CGF.GetVirtualCXXBaseClassOffset(BaseValue, ClassDecl, VBase);
   
   uint64_t Offset = 
     ComputeNonVirtualBaseClassOffset(CGF.getContext(), Paths, Start);
