@@ -24,6 +24,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <sys/stat.h>
 using namespace clang;

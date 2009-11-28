@@ -33,7 +33,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <functional>
