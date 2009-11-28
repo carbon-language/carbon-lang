@@ -1132,12 +1132,9 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       // that predecessor.  We can still do PRE of the load, which would insert
       // a computation of the pointer in this predecessor.
       if (PredPtr == 0) {
-        goto PredTranslationFailure;
-#if 0 // TODO.
         Result.push_back(NonLocalDepEntry(Pred,
                               MemDepResult::getClobber(Pred->getTerminator())));
         continue;
-#endif
       }
 
       // FIXME: it is entirely possible that PHI translating will end up with
