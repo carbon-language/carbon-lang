@@ -800,35 +800,13 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
     return false;
   }
   
+  // If we found a virtual base we always want to require adjustment.
+  if (Paths.getDetectedVirtual())
+    return true;
+
   const CXXBasePath &Path = Paths.front();
   
-  size_t Start = 0, End = Path.size();
-  
-  // Check if we have a virtual base.
-  if (const RecordType *RT = Paths.getDetectedVirtual()) {
-    const CXXRecordDecl *VirtualBase = cast<CXXRecordDecl>(RT->getDecl());
-    assert(VirtualBase->isCanonicalDecl() && "Must have canonical decl!");
-    
-    // Check the virtual base class offset.
-    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(DerivedDecl);
-
-    if (Layout.getVBaseClassOffset(VirtualBase) != 0) {
-      // This requires an adjustment.
-      return true;
-    }
-    
-    // Now ignore all the path elements up to the virtual base.
-    // FIXME: It would be nice if CXXBasePaths could return an index to the
-    // CXXElementSpecifier that corresponded to the virtual base.
-    for (; Start != End; ++Start) {
-      const CXXBasePathElement& Element = Path[Start];
-      
-      if (Element.Class == VirtualBase)
-        break;
-    }
-  }
-
-  for (; Start != End; ++Start) {
+  for (size_t Start = 0, End = Path.size(); Start != End; ++Start) {
     const CXXBasePathElement &Element = Path[Start];
 
     // Check the base class offset.
