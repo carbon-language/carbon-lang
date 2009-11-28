@@ -13,24 +13,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/ExplodedGraph.h"
-#include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
-#include "clang/Analysis/PathSensitive/GRState.h"
-#include "clang/Analysis/PathDiagnostic.h"
-#include "clang/AST/Expr.h"
-#include "clang/AST/ASTContext.h"
-#include "llvm/Support/Compiler.h"
-
 #ifndef LLVM_CLANG_ANALYSIS_BASICOBJCFOUNDATIONCHECKS
 #define LLVM_CLANG_ANALYSIS_BASICOBJCFOUNDATIONCHECKS
 
 namespace clang {
 
-class GRSimpleAPICheck;
 class ASTContext;
-class GRStateManager;
 class BugReporter;
+class Decl;
 class GRExprEngine;
+class GRSimpleAPICheck;
 
 GRSimpleAPICheck *CreateBasicObjCFoundationChecks(ASTContext& Ctx,
                                                   BugReporter& BR);
