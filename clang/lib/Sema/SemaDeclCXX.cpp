@@ -2823,6 +2823,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   switch (Name.getKind()) {
   case UnqualifiedId::IK_Identifier:
   case UnqualifiedId::IK_OperatorFunctionId:
+  case UnqualifiedId::IK_LiteralOperatorId:
   case UnqualifiedId::IK_ConversionFunctionId:
     break;
       

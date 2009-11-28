@@ -1031,6 +1031,27 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
     Result.setOperatorFunctionId(KeywordLoc, Op, SymbolLocations);
     return false;
   }
+
+  // Parse a literal-operator-id.
+  //
+  //   literal-operator-id: [C++0x 13.5.8]
+  //     operator "" identifier
+
+  if (getLang().CPlusPlus0x && Tok.is(tok::string_literal)) {
+    if (Tok.getLength() != 2)
+      Diag(Tok.getLocation(), diag::err_operator_string_not_empty);
+    ConsumeStringToken();
+
+    if (Tok.isNot(tok::identifier)) {
+      Diag(Tok.getLocation(), diag::err_expected_ident);
+      return true;
+    }
+
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    Result.setLiteralOperatorId(II, KeywordLoc, ConsumeToken());
+    Diag(KeywordLoc, diag::err_unsupported_literal_operator);
+    return true;
+  }
   
   // Parse a conversion-function-id.
   //

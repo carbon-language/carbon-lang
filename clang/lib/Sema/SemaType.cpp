@@ -879,6 +879,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   switch (D.getName().getKind()) {
   case UnqualifiedId::IK_Identifier:
   case UnqualifiedId::IK_OperatorFunctionId:
+  case UnqualifiedId::IK_LiteralOperatorId:
   case UnqualifiedId::IK_TemplateId:
     T = ConvertDeclSpecToType(D, *this);
     

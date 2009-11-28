@@ -484,6 +484,8 @@ public:
     IK_OperatorFunctionId,
     /// \brief A conversion function name, e.g., operator int.
     IK_ConversionFunctionId,
+    /// \brief A user-defined literal name, e.g., operator "" _i.
+    IK_LiteralOperatorId,
     /// \brief A constructor name.
     IK_ConstructorName,
     /// \brief A destructor name.
@@ -495,7 +497,8 @@ public:
   /// \brief Anonymous union that holds extra data associated with the
   /// parsed unqualified-id.
   union {
-    /// \brief When Kind == IK_Identifier, the parsed identifier.
+    /// \brief When Kind == IK_Identifier, the parsed identifier, or when Kind
+    /// == IK_UserLiteralId, the identifier suffix.
     IdentifierInfo *Identifier;
     
     /// \brief When Kind == IK_OperatorFunctionId, the overloaded operator
@@ -606,6 +609,22 @@ public:
     StartLocation = OperatorLoc;
     EndLocation = EndLoc;
     ConversionFunctionId = Ty;
+  }
+
+  /// \brief Specific that this unqualified-id was parsed as a
+  /// literal-operator-id.
+  ///
+  /// \param Id the parsed identifier.
+  ///
+  /// \param OpLoc the location of the 'operator' keyword.
+  ///
+  /// \param IdLoc the location of the identifier.
+  void setLiteralOperatorId(const IdentifierInfo *Id, SourceLocation OpLoc,
+                              SourceLocation IdLoc) {
+    Kind = IK_LiteralOperatorId;
+    Identifier = const_cast<IdentifierInfo *>(Id);
+    StartLocation = OpLoc;
+    EndLocation = IdLoc;
   }
   
   /// \brief Specify that this unqualified-id was parsed as a constructor name.

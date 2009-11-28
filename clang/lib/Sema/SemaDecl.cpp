@@ -1765,7 +1765,10 @@ DeclarationName Sema::GetNameFromUnqualifiedId(UnqualifiedId &Name) {
     case UnqualifiedId::IK_OperatorFunctionId:
       return Context.DeclarationNames.getCXXOperatorName(
                                                          Name.OperatorFunctionId.Operator);
-      
+
+    case UnqualifiedId::IK_LiteralOperatorId:
+      assert(false && "We don't support these; Parse shouldn't have allowed propagation");
+
     case UnqualifiedId::IK_ConversionFunctionId: {
       QualType Ty = GetTypeFromParser(Name.ConversionFunctionId);
       if (Ty.isNull())
