@@ -20,11 +20,10 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 
 namespace {
-  class VISIBILITY_HIDDEN StmtProfiler : public StmtVisitor<StmtProfiler> {
+  class StmtProfiler : public StmtVisitor<StmtProfiler> {
     llvm::FoldingSetNodeID &ID;
     ASTContext &Context;
     bool Canonical;

@@ -18,13 +18,11 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/PrettyPrinter.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 namespace {
-  class VISIBILITY_HIDDEN DeclPrinter : public DeclVisitor<DeclPrinter> {
+  class DeclPrinter : public DeclVisitor<DeclPrinter> {
     llvm::raw_ostream &Out;
     ASTContext &Context;
     PrintingPolicy Policy;

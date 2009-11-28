@@ -19,7 +19,6 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Compiler.h"
 #include <cstring>
 
 using namespace clang;
@@ -153,7 +152,7 @@ static APFloat HandleIntToFloatCast(QualType DestType, QualType SrcType,
 }
 
 namespace {
-class VISIBILITY_HIDDEN HasSideEffect
+class HasSideEffect
   : public StmtVisitor<HasSideEffect, bool> {
   EvalInfo &Info;
 public:
@@ -210,7 +209,7 @@ public:
 // LValue Evaluation
 //===----------------------------------------------------------------------===//
 namespace {
-class VISIBILITY_HIDDEN LValueExprEvaluator
+class LValueExprEvaluator
   : public StmtVisitor<LValueExprEvaluator, APValue> {
   EvalInfo &Info;
 public:
@@ -353,7 +352,7 @@ APValue LValueExprEvaluator::VisitUnaryDeref(UnaryOperator *E) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN PointerExprEvaluator
+class PointerExprEvaluator
   : public StmtVisitor<PointerExprEvaluator, APValue> {
   EvalInfo &Info;
 public:
@@ -508,7 +507,7 @@ APValue PointerExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class VISIBILITY_HIDDEN VectorExprEvaluator
+  class VectorExprEvaluator
   : public StmtVisitor<VectorExprEvaluator, APValue> {
     EvalInfo &Info;
     APValue GetZeroVector(QualType VecType);
@@ -702,7 +701,7 @@ APValue VectorExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN IntExprEvaluator
+class IntExprEvaluator
   : public StmtVisitor<IntExprEvaluator, bool> {
   EvalInfo &Info;
   APValue &Result;
@@ -1487,7 +1486,7 @@ bool IntExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN FloatExprEvaluator
+class FloatExprEvaluator
   : public StmtVisitor<FloatExprEvaluator, bool> {
   EvalInfo &Info;
   APFloat &Result;
@@ -1679,7 +1678,7 @@ bool FloatExprEvaluator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN ComplexExprEvaluator
+class ComplexExprEvaluator
   : public StmtVisitor<ComplexExprEvaluator, APValue> {
   EvalInfo &Info;
 

@@ -17,7 +17,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Support/Compiler.h"
 #include <cstdio>
 using namespace clang;
 
@@ -26,7 +25,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace  {
-  class VISIBILITY_HIDDEN StmtDumper : public StmtVisitor<StmtDumper> {
+  class StmtDumper : public StmtVisitor<StmtDumper> {
     SourceManager *SM;
     FILE *F;
     unsigned IndentLevel;

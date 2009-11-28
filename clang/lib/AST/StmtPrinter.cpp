@@ -16,7 +16,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/PrettyPrinter.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Format.h"
 using namespace clang;
 
@@ -25,7 +24,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace  {
-  class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor<StmtPrinter> {
+  class StmtPrinter : public StmtVisitor<StmtPrinter> {
     llvm::raw_ostream &OS;
     ASTContext &Context;
     unsigned IndentLevel;
