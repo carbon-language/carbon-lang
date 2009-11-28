@@ -21,7 +21,6 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/System/Path.h"
 
 using namespace clang;
@@ -41,7 +40,7 @@ namespace {
 
 /// \brief Gathers information from PCHReader that will be used to initialize
 /// a Preprocessor.
-class VISIBILITY_HIDDEN PCHInfoCollector : public PCHReaderListener {
+class PCHInfoCollector : public PCHReaderListener {
   LangOptions &LangOpt;
   HeaderSearch &HSI;
   std::string &TargetTriple;

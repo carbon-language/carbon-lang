@@ -25,12 +25,9 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Program.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -39,7 +36,7 @@ using namespace clang;
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN BackendConsumer : public ASTConsumer {
+  class BackendConsumer : public ASTConsumer {
     BackendAction Action;
     CodeGenOptions CodeGenOpts;
     TargetOptions TargetOpts;

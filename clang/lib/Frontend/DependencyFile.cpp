@@ -21,14 +21,13 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
 
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN DependencyFileCallback : public PPCallbacks {
+class DependencyFileCallback : public PPCallbacks {
   std::vector<std::string> Files;
   llvm::StringSet<> FilesSet;
   const Preprocessor *PP;

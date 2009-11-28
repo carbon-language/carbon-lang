@@ -33,7 +33,6 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include <cstdio>
@@ -44,7 +43,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class VISIBILITY_HIDDEN PCHTypeWriter {
+  class PCHTypeWriter {
     PCHWriter &Writer;
     PCHWriter::RecordData &Record;
 
@@ -781,7 +780,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
 
 namespace {
 // Trait used for the on-disk hash table of stat cache results.
-class VISIBILITY_HIDDEN PCHStatCacheTrait {
+class PCHStatCacheTrait {
 public:
   typedef const char * key_type;
   typedef key_type key_type_ref;
@@ -1359,7 +1358,7 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 
 namespace {
 // Trait used for the on-disk hash table used in the method pool.
-class VISIBILITY_HIDDEN PCHMethodPoolTrait {
+class PCHMethodPoolTrait {
   PCHWriter &Writer;
 
 public:
@@ -1561,7 +1560,7 @@ void PCHWriter::WriteMethodPool(Sema &SemaRef) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN PCHIdentifierTableTrait {
+class PCHIdentifierTableTrait {
   PCHWriter &Writer;
   Preprocessor &PP;
 

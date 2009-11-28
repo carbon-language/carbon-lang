@@ -31,7 +31,6 @@
 #include "clang/Basic/Version.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamReader.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/System/Path.h"
@@ -357,7 +356,7 @@ Expr *PCHReader::ReadTypeExpr() {
 
 
 namespace {
-class VISIBILITY_HIDDEN PCHMethodPoolLookupTrait {
+class PCHMethodPoolLookupTrait {
   PCHReader &Reader;
 
 public:
@@ -465,7 +464,7 @@ typedef OnDiskChainedHashTable<PCHMethodPoolLookupTrait>
   PCHMethodPoolLookupTable;
 
 namespace {
-class VISIBILITY_HIDDEN PCHIdentifierLookupTrait {
+class PCHIdentifierLookupTrait {
   PCHReader &Reader;
 
   // If we know the IdentifierInfo in advance, it is here and we will
@@ -676,7 +675,7 @@ bool PCHReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
 
 namespace {
 
-class VISIBILITY_HIDDEN PCHStatData {
+class PCHStatData {
 public:
   const bool hasStat;
   const ino_t ino;
@@ -692,7 +691,7 @@ public:
     : hasStat(false), ino(0), dev(0), mode(0), mtime(0), size(0) {}
 };
 
-class VISIBILITY_HIDDEN PCHStatLookupTrait {
+class PCHStatLookupTrait {
  public:
   typedef const char *external_key_type;
   typedef const char *internal_key_type;
@@ -740,7 +739,7 @@ class VISIBILITY_HIDDEN PCHStatLookupTrait {
 ///
 /// This cache is very similar to the stat cache used by pretokenized
 /// headers.
-class VISIBILITY_HIDDEN PCHStatCache : public StatSysCallCache {
+class PCHStatCache : public StatSysCallCache {
   typedef OnDiskChainedHashTable<PCHStatLookupTrait> CacheTy;
   CacheTy *Cache;
 

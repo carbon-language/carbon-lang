@@ -16,10 +16,8 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/System/Path.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
@@ -32,7 +30,7 @@ namespace clang {
 }
 
 namespace {
-  class VISIBILITY_HIDDEN PlistDiagnostics : public PathDiagnosticClient {
+  class PlistDiagnostics : public PathDiagnosticClient {
     std::vector<const PathDiagnostic*> BatchedDiags;
     const std::string OutputFile;
     const LangOptions &LangOpts;

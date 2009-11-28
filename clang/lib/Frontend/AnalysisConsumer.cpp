@@ -30,7 +30,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
@@ -62,7 +61,7 @@ CreatePlistHTMLDiagnosticClient(const std::string& prefix,
 
 namespace {
 
- class VISIBILITY_HIDDEN AnalysisConsumer : public ASTConsumer {
+ class AnalysisConsumer : public ASTConsumer {
  public:
   typedef void (*CodeAction)(AnalysisConsumer &C, AnalysisManager &M, Decl *D);
    

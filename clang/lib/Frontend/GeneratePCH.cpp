@@ -20,16 +20,13 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
-#include "llvm/System/Path.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
 
 using namespace clang;
-using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN PCHGenerator : public SemaConsumer {
+  class PCHGenerator : public SemaConsumer {
     const Preprocessor &PP;
     const char *isysroot;
     llvm::raw_ostream *Out;
@@ -62,7 +59,7 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
   // Write the PCH contents into a buffer
   std::vector<unsigned char> Buffer;
-  BitstreamWriter Stream(Buffer);
+  llvm::BitstreamWriter Stream(Buffer);
   PCHWriter Writer(Stream);
 
   // Emit the PCH file
