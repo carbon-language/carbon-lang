@@ -20,6 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
 
 using namespace clang;
 

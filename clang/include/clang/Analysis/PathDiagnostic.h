@@ -14,31 +14,25 @@
 #ifndef LLVM_CLANG_PATH_DIAGNOSTIC_H
 #define LLVM_CLANG_PATH_DIAGNOSTIC_H
 
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/FoldingSet.h"
-
-#include <vector>
 #include <deque>
+#include <iterator>
 #include <string>
-#include <algorithm>
+#include <vector>
 
 namespace clang {
-    
-class Stmt;
+
 class Decl;
 class Preprocessor;
-  
+class SourceManager;
+class Stmt;
+
 //===----------------------------------------------------------------------===//
 // High-level interface for handlers of path-sensitive diagnostics.
 //===----------------------------------------------------------------------===//
 
 class PathDiagnostic;
-    
-class Stmt;
-class Decl;
-class Preprocessor;
 
 class PathDiagnosticClient : public DiagnosticClient  {
 public:
