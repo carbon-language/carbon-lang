@@ -1028,9 +1028,11 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
 const Value *llvm::DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
                  SmallVectorImpl<std::pair<const Value*, int64_t> > &VarIndices,
                                           const TargetData *TD) {
-  // FIXME: Should limit depth like getUnderlyingObject?
+  // Limit recursion depth to limit compile time in crazy cases.
+  unsigned MaxLookup = 6;
+  
   BaseOffs = 0;
-  while (1) {
+  do {
     // See if this is a bitcast or GEP.
     const Operator *Op = dyn_cast<Operator>(V);
     if (Op == 0) {
@@ -1128,7 +1130,10 @@ const Value *llvm::DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
     
     // Analyze the base pointer next.
     V = GEPOp->getOperand(0);
-  }
+  } while (--MaxLookup);
+  
+  // If the chain of expressions is too deep, just return early.
+  return V;
 }
 
 
