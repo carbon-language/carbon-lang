@@ -20,7 +20,6 @@
 #include "clang/Parse/Template.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/PartialDiagnostic.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
@@ -4854,7 +4853,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
 
 namespace {
   // See Sema::RebuildTypeInCurrentInstantiation
-  class VISIBILITY_HIDDEN CurrentInstantiationRebuilder
+  class CurrentInstantiationRebuilder
     : public TreeTransform<CurrentInstantiationRebuilder> {
     SourceLocation Loc;
     DeclarationName Entity;

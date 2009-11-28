@@ -22,14 +22,12 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
 
 namespace  {
-
-class VISIBILITY_HIDDEN ConstStructBuilder {
+class ConstStructBuilder {
   CodeGenModule &CGM;
   CodeGenFunction *CGF;
 
@@ -377,7 +375,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN ConstExprEmitter :
+class ConstExprEmitter :
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
   CodeGenModule &CGM;
   CodeGenFunction *CGF;

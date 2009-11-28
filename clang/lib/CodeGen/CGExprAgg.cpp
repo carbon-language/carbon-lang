@@ -20,7 +20,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;
@@ -30,7 +29,7 @@ using namespace CodeGen;
 //===----------------------------------------------------------------------===//
 
 namespace  {
-class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
+class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CodeGenFunction &CGF;
   CGBuilderTy &Builder;
   llvm::Value *DestPtr;

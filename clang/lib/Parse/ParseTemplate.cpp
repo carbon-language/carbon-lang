@@ -16,7 +16,6 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Parse/Template.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 
 /// \brief Parse a template declaration, explicit instantiation, or
@@ -34,7 +33,7 @@ Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
 
 /// \brief RAII class that manages the template parameter depth.
 namespace {
-  class VISIBILITY_HIDDEN TemplateParameterDepthCounter {
+  class TemplateParameterDepthCounter {
     unsigned &Depth;
     unsigned AddedLevels;
 

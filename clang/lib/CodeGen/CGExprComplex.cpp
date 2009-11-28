@@ -18,7 +18,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -29,7 +28,7 @@ using namespace CodeGen;
 typedef CodeGenFunction::ComplexPairTy ComplexPairTy;
 
 namespace  {
-class VISIBILITY_HIDDEN ComplexExprEmitter
+class ComplexExprEmitter
   : public StmtVisitor<ComplexExprEmitter, ComplexPairTy> {
   CodeGenFunction &CGF;
   CGBuilderTy &Builder;

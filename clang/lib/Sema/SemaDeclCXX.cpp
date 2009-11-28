@@ -24,8 +24,6 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/Compiler.h"
-#include <algorithm> // for std::equal
 #include <map>
 #include <set>
 
@@ -41,7 +39,7 @@ namespace {
   /// contains any ill-formed subexpressions. For example, this will
   /// diagnose the use of local variables or parameters within the
   /// default argument expression.
-  class VISIBILITY_HIDDEN CheckDefaultArgumentVisitor
+  class CheckDefaultArgumentVisitor
     : public StmtVisitor<CheckDefaultArgumentVisitor, bool> {
     Expr *DefaultArg;
     Sema *S;
@@ -1715,7 +1713,7 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
 namespace {
   /// PureVirtualMethodCollector - traverses a class and its superclasses
   /// and determines if it has any pure virtual methods.
-  class VISIBILITY_HIDDEN PureVirtualMethodCollector {
+  class PureVirtualMethodCollector {
     ASTContext &Context;
 
   public:
@@ -1862,7 +1860,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
 }
 
 namespace {
-  class VISIBILITY_HIDDEN AbstractClassUsageDiagnoser
+  class AbstractClassUsageDiagnoser
     : public DeclVisitor<AbstractClassUsageDiagnoser, bool> {
     Sema &SemaRef;
     CXXRecordDecl *AbstractClass;

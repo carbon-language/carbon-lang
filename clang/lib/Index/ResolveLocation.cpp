@@ -19,14 +19,13 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace idx;
 
 namespace {
 
 /// \brief Base for the LocResolver classes. Mostly does source range checking.
-class VISIBILITY_HIDDEN LocResolverBase {
+class LocResolverBase {
 protected:
   ASTContext &Ctx;
   SourceLocation Loc;
@@ -83,7 +82,7 @@ public:
 
 /// \brief Searches a statement for the ASTLocation that corresponds to a source
 /// location.
-class VISIBILITY_HIDDEN StmtLocResolver : public LocResolverBase,
+class StmtLocResolver : public LocResolverBase,
                                           public StmtVisitor<StmtLocResolver,
                                                              ASTLocation     > {
   Decl * const Parent;
@@ -100,7 +99,7 @@ public:
 
 /// \brief Searches a declaration for the ASTLocation that corresponds to a
 /// source location.
-class VISIBILITY_HIDDEN DeclLocResolver : public LocResolverBase,
+class DeclLocResolver : public LocResolverBase,
                                           public DeclVisitor<DeclLocResolver,
                                                              ASTLocation     > {
 public:

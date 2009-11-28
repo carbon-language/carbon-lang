@@ -17,7 +17,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Parse/DeclSpec.h"
-#include "llvm/Support/Compiler.h"
 #include <algorithm>
 
 namespace clang {

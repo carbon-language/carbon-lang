@@ -24,7 +24,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetData.h"
 #include <cstdarg>
@@ -45,7 +44,7 @@ struct BinOpInfo {
 };
 
 namespace {
-class VISIBILITY_HIDDEN ScalarExprEmitter
+class ScalarExprEmitter
   : public StmtVisitor<ScalarExprEmitter, Value*> {
   CodeGenFunction &CGF;
   CGBuilderTy &Builder;

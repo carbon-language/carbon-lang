@@ -13,7 +13,6 @@
 
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
-
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/DenseSet.h"
@@ -23,8 +22,7 @@ using namespace clang;
 using namespace CodeGen;
 
 namespace {
-
-class VISIBILITY_HIDDEN VtableBuilder {
+class VtableBuilder {
 public:
   /// Index_t - Vtable index type.
   typedef uint64_t Index_t;

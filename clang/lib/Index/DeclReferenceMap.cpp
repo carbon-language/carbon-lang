@@ -15,13 +15,12 @@
 #include "clang/Index/DeclReferenceMap.h"
 #include "clang/Index/ASTLocation.h"
 #include "ASTVisitor.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace idx;
 
 namespace {
 
-class VISIBILITY_HIDDEN RefMapper : public ASTVisitor<RefMapper> {
+class RefMapper : public ASTVisitor<RefMapper> {
   DeclReferenceMap::MapTy &Map;
 
 public:

@@ -23,7 +23,6 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace idx;
 
@@ -33,7 +32,7 @@ namespace  {
 // DeclEntityAnalyzer Implementation
 //===----------------------------------------------------------------------===//
 
-class VISIBILITY_HIDDEN DeclEntityAnalyzer : public TranslationUnitHandler {
+class DeclEntityAnalyzer : public TranslationUnitHandler {
   Entity Ent;
   TULocationHandler &TULocHandler;
 
@@ -57,7 +56,7 @@ public:
 // RefEntityAnalyzer Implementation
 //===----------------------------------------------------------------------===//
 
-class VISIBILITY_HIDDEN RefEntityAnalyzer : public TranslationUnitHandler {
+class RefEntityAnalyzer : public TranslationUnitHandler {
   Entity Ent;
   TULocationHandler &TULocHandler;
 
@@ -87,7 +86,7 @@ public:
 
 /// \brief Accepts an ObjC method and finds all message expressions that this
 /// method may respond to.
-class VISIBILITY_HIDDEN RefSelectorAnalyzer : public TranslationUnitHandler {
+class RefSelectorAnalyzer : public TranslationUnitHandler {
   Program &Prog;
   TULocationHandler &TULocHandler;
 
@@ -219,7 +218,7 @@ public:
 
 /// \brief Accepts an ObjC message expression and finds all methods that may
 /// respond to it.
-class VISIBILITY_HIDDEN MessageAnalyzer : public TranslationUnitHandler {
+class MessageAnalyzer : public TranslationUnitHandler {
   Program &Prog;
   TULocationHandler &TULocHandler;
 

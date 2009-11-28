@@ -23,7 +23,6 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <cstdio>
 

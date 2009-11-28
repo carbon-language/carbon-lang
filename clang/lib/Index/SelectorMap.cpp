@@ -14,13 +14,12 @@
 
 #include "clang/Index/SelectorMap.h"
 #include "ASTVisitor.h"
-#include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace idx;
 
 namespace {
 
-class VISIBILITY_HIDDEN SelMapper : public ASTVisitor<SelMapper> {
+class SelMapper : public ASTVisitor<SelMapper> {
   SelectorMap::SelMethMapTy &SelMethMap;
   SelectorMap::SelRefMapTy &SelRefMap;
 

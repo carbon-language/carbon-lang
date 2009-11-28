@@ -22,13 +22,11 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/OwningPtr.h"
 using namespace clang;
 
-
 namespace {
-  class VISIBILITY_HIDDEN CodeGeneratorImpl : public CodeGenerator {
+  class CodeGeneratorImpl : public CodeGenerator {
     Diagnostic &Diags;
     llvm::OwningPtr<const llvm::TargetData> TD;
     ASTContext *Ctx;

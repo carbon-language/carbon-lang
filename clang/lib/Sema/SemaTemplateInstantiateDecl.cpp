@@ -18,12 +18,11 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
 namespace {
-  class VISIBILITY_HIDDEN TemplateDeclInstantiator
+  class TemplateDeclInstantiator
     : public DeclVisitor<TemplateDeclInstantiator, Decl *> {
     Sema &SemaRef;
     DeclContext *Owner;
