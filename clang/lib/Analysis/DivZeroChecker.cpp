@@ -18,7 +18,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN DivZeroChecker : public CheckerVisitor<DivZeroChecker> {
+class DivZeroChecker : public CheckerVisitor<DivZeroChecker> {
   BuiltinBug *BT;
 public:
   DivZeroChecker() : BT(0) {}  

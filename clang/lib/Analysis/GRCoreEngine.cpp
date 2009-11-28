@@ -15,7 +15,6 @@
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/AST/Expr.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
@@ -30,7 +29,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN DFS : public GRWorkList {
+class DFS : public GRWorkList {
   llvm::SmallVector<GRWorkListUnit,20> Stack;
 public:
   virtual bool hasWork() const {
@@ -49,7 +48,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN BFS : public GRWorkList {
+class BFS : public GRWorkList {
   std::queue<GRWorkListUnit> Queue;
 public:
   virtual bool hasWork() const {
@@ -79,7 +78,7 @@ GRWorkList *GRWorkList::MakeDFS() { return new DFS(); }
 GRWorkList *GRWorkList::MakeBFS() { return new BFS(); }
 
 namespace {
-  class VISIBILITY_HIDDEN BFSBlockDFSContents : public GRWorkList {
+  class BFSBlockDFSContents : public GRWorkList {
     std::queue<GRWorkListUnit> Queue;
     llvm::SmallVector<GRWorkListUnit,20> Stack;
   public:

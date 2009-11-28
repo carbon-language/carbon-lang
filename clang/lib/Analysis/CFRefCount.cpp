@@ -30,7 +30,6 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/STLExtras.h"
 #include <stdarg.h>
 
@@ -170,7 +169,7 @@ ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
 }
 
 namespace {
-class VISIBILITY_HIDDEN GenericNodeBuilder {
+class GenericNodeBuilder {
   GRStmtNodeBuilder *SNB;
   Stmt *S;
   const void *tag;
@@ -248,7 +247,7 @@ namespace {
 
 ///  RetEffect is used to summarize a function/method call's behavior with
 ///  respect to its return value.
-class VISIBILITY_HIDDEN RetEffect {
+class RetEffect {
 public:
   enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
               NotOwnedSymbol, GCNotOwnedSymbol, ReceiverAlias,
@@ -314,7 +313,7 @@ public:
 // Reference-counting logic (typestate + counts).
 //===----------------------------------------------------------------------===//
 
-class VISIBILITY_HIDDEN RefVal {
+class RefVal {
 public:
   enum Kind {
     Owned = 0, // Owning reference.
@@ -538,7 +537,7 @@ namespace clang {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN RetainSummary {
+class RetainSummary {
   /// Args - an ordered vector of (index, ArgEffect) pairs, where index
   ///  specifies the argument (starting from 0).  This can be sparsely
   ///  populated; arguments with no entry in Args use 'DefaultArgEffect'.
@@ -629,7 +628,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN ObjCSummaryKey {
+class ObjCSummaryKey {
   IdentifierInfo* II;
   Selector S;
 public:
@@ -684,7 +683,7 @@ template <> struct DenseMapInfo<ObjCSummaryKey> {
 } // end llvm namespace
 
 namespace {
-class VISIBILITY_HIDDEN ObjCSummaryCache {
+class ObjCSummaryCache {
   typedef llvm::DenseMap<ObjCSummaryKey, RetainSummary*> MapTy;
   MapTy M;
 public:
@@ -778,7 +777,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN RetainSummaryManager {
+class RetainSummaryManager {
 
   //==-----------------------------------------------------------------==//
   //  Typedefs.
@@ -1867,8 +1866,8 @@ typedef llvm::ImmutableList<SymbolRef> ARStack;
 static int AutoRCIndex = 0;
 static int AutoRBIndex = 0;
 
-namespace { class VISIBILITY_HIDDEN AutoreleasePoolContents {}; }
-namespace { class VISIBILITY_HIDDEN AutoreleaseStack {}; }
+namespace { class AutoreleasePoolContents {}; }
+namespace { class AutoreleaseStack {}; }
 
 namespace clang {
 template<> struct GRStateTrait<AutoreleaseStack>
@@ -1910,7 +1909,7 @@ static const GRState * SendAutorelease(const GRState *state,
 
 namespace {
 
-class VISIBILITY_HIDDEN CFRefCount : public GRTransferFuncs {
+class CFRefCount : public GRTransferFuncs {
 public:
   class BindingsPrinter : public GRState::Printer {
   public:
@@ -2095,7 +2094,7 @@ namespace {
   // Bug Descriptions. //
   //===-------------===//
 
-  class VISIBILITY_HIDDEN CFRefBug : public BugType {
+  class CFRefBug : public BugType {
   protected:
     CFRefCount& TF;
 
@@ -2112,7 +2111,7 @@ namespace {
     virtual bool isLeak() const { return false; }
   };
 
-  class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
+  class UseAfterRelease : public CFRefBug {
   public:
     UseAfterRelease(CFRefCount* tf)
     : CFRefBug(tf, "Use-after-release") {}
@@ -2122,7 +2121,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
+  class BadRelease : public CFRefBug {
   public:
     BadRelease(CFRefCount* tf) : CFRefBug(tf, "Bad release") {}
 
@@ -2132,7 +2131,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN DeallocGC : public CFRefBug {
+  class DeallocGC : public CFRefBug {
   public:
     DeallocGC(CFRefCount *tf)
       : CFRefBug(tf, "-dealloc called while using garbage collection") {}
@@ -2142,7 +2141,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN DeallocNotOwned : public CFRefBug {
+  class DeallocNotOwned : public CFRefBug {
   public:
     DeallocNotOwned(CFRefCount *tf)
       : CFRefBug(tf, "-dealloc sent to non-exclusively owned object") {}
@@ -2152,7 +2151,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN OverAutorelease : public CFRefBug {
+  class OverAutorelease : public CFRefBug {
   public:
     OverAutorelease(CFRefCount *tf) :
       CFRefBug(tf, "Object sent -autorelease too many times") {}
@@ -2162,7 +2161,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN ReturnedNotOwnedForOwned : public CFRefBug {
+  class ReturnedNotOwnedForOwned : public CFRefBug {
   public:
     ReturnedNotOwnedForOwned(CFRefCount *tf) :
       CFRefBug(tf, "Method should return an owned object") {}
@@ -2173,7 +2172,7 @@ namespace {
     }
   };
 
-  class VISIBILITY_HIDDEN Leak : public CFRefBug {
+  class Leak : public CFRefBug {
     const bool isReturn;
   protected:
     Leak(CFRefCount* tf, const char* name, bool isRet)
@@ -2185,13 +2184,13 @@ namespace {
     bool isLeak() const { return true; }
   };
 
-  class VISIBILITY_HIDDEN LeakAtReturn : public Leak {
+  class LeakAtReturn : public Leak {
   public:
     LeakAtReturn(CFRefCount* tf, const char* name)
     : Leak(tf, name, true) {}
   };
 
-  class VISIBILITY_HIDDEN LeakWithinFunction : public Leak {
+  class LeakWithinFunction : public Leak {
   public:
     LeakWithinFunction(CFRefCount* tf, const char* name)
     : Leak(tf, name, false) {}
@@ -2201,7 +2200,7 @@ namespace {
   // Bug Reports.  //
   //===---------===//
 
-  class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
+  class CFRefReport : public RangedBugReport {
   protected:
     SymbolRef Sym;
     const CFRefCount &TF;
@@ -2242,7 +2241,7 @@ namespace {
                                    BugReporterContext& BRC);
   };
 
-  class VISIBILITY_HIDDEN CFRefLeakReport : public CFRefReport {
+  class CFRefLeakReport : public CFRefReport {
     SourceLocation AllocSite;
     const MemRegion* AllocBinding;
   public:
@@ -2548,7 +2547,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
 }
 
 namespace {
-  class VISIBILITY_HIDDEN FindUniqueBinding :
+  class FindUniqueBinding :
   public StoreManager::BindingsHandler {
     SymbolRef Sym;
     const MemRegion* Binding;
@@ -3045,7 +3044,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
 }
 
 namespace {
-class VISIBILITY_HIDDEN StopTrackingCallback : public SymbolVisitor {
+class StopTrackingCallback : public SymbolVisitor {
   const GRState *state;
 public:
   StopTrackingCallback(const GRState *st) : state(st) {}
@@ -3642,7 +3641,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN RetainReleaseChecker
+class RetainReleaseChecker
   : public CheckerVisitor<RetainReleaseChecker> {
   CFRefCount *TF;
 public:

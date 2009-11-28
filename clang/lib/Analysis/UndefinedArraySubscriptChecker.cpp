@@ -19,7 +19,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN UndefinedArraySubscriptChecker
+class UndefinedArraySubscriptChecker
   : public CheckerVisitor<UndefinedArraySubscriptChecker> {
   BugType *BT;
 public:

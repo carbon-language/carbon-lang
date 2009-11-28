@@ -25,7 +25,6 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
@@ -86,10 +85,10 @@ typedef llvm::ImmutableMap<const MemRegion*, BindingVal> RegionBindings;
 //===----------------------------------------------------------------------===//
 
 namespace {
-struct VISIBILITY_HIDDEN minimal_features_tag {};
-struct VISIBILITY_HIDDEN maximal_features_tag {};
+struct minimal_features_tag {};
+struct maximal_features_tag {};
 
-class VISIBILITY_HIDDEN RegionStoreFeatures {
+class RegionStoreFeatures {
   bool SupportsFields;
   bool SupportsRemaining;
 
@@ -114,7 +113,7 @@ public:
 //  MemRegions represent chunks of memory with a size (their "extent").  This
 //  GDM entry tracks the extents for regions.  Extents are in bytes.
 //
-namespace { class VISIBILITY_HIDDEN RegionExtents {}; }
+namespace { class RegionExtents {}; }
 static int RegionExtentsIndex = 0;
 namespace clang {
   template<> struct GRStateTrait<RegionExtents>
@@ -141,7 +140,7 @@ static bool IsAnyPointerOrIntptr(QualType ty, ASTContext &Ctx) {
 
 namespace {
 
-class VISIBILITY_HIDDEN RegionStoreSubRegionMap : public SubRegionMap {
+class RegionStoreSubRegionMap : public SubRegionMap {
   typedef llvm::ImmutableSet<const MemRegion*> SetTy;
   typedef llvm::DenseMap<const MemRegion*, SetTy> Map;
   SetTy::Factory F;
@@ -188,7 +187,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
+class RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
   RegionBindings::Factory RBFactory;
   

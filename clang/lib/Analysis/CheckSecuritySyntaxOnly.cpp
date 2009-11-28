@@ -14,13 +14,12 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/AST/StmtVisitor.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN WalkAST : public StmtVisitor<WalkAST> {
+class WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;
   IdentifierInfo *II_gets;
   IdentifierInfo *II_getpw;

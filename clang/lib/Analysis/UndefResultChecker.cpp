@@ -20,7 +20,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN UndefResultChecker 
+class UndefResultChecker 
   : public CheckerVisitor<UndefResultChecker> {
 
   BugType *BT;

@@ -22,13 +22,12 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
 namespace {
 
-class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
+class DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   BugReporter& BR;
   ParentMap& Parents;
@@ -225,7 +224,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN FindEscaped : public CFGRecStmtDeclVisitor<FindEscaped>{
+class FindEscaped : public CFGRecStmtDeclVisitor<FindEscaped>{
   CFG *cfg;
 public:
   FindEscaped(CFG *c) : cfg(c) {}

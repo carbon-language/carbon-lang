@@ -19,7 +19,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN UndefinedAssignmentChecker
+class UndefinedAssignmentChecker
   : public CheckerVisitor<UndefinedAssignmentChecker> {
   BugType *BT;
 public:

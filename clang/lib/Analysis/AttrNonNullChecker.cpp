@@ -19,7 +19,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN AttrNonNullChecker
+class AttrNonNullChecker
   : public CheckerVisitor<AttrNonNullChecker> {
   BugType *BT;
 public:

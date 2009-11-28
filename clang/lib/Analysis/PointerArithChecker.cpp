@@ -18,7 +18,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN PointerArithChecker 
+class PointerArithChecker 
   : public CheckerVisitor<PointerArithChecker> {
   BuiltinBug *BT;
 public:

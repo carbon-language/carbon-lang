@@ -21,7 +21,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN CallAndMessageChecker
+class CallAndMessageChecker
   : public CheckerVisitor<CallAndMessageChecker> {
   BugType *BT_call_null;
   BugType *BT_call_undef;  

@@ -22,7 +22,6 @@
 #include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -39,7 +38,7 @@ static const bool Dead = false;
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN RegisterDecls
+class RegisterDecls
   : public CFGRecStmtDeclVisitor<RegisterDecls> {
 
   LiveVariables::AnalysisDataTy& AD;
@@ -95,7 +94,7 @@ LiveVariables::LiveVariables(AnalysisContext &AC) {
 
 namespace {
 
-class VISIBILITY_HIDDEN TransferFuncs : public CFGRecStmtVisitor<TransferFuncs>{
+class TransferFuncs : public CFGRecStmtVisitor<TransferFuncs>{
   LiveVariables::AnalysisDataTy& AD;
   LiveVariables::ValTy LiveState;
 public:

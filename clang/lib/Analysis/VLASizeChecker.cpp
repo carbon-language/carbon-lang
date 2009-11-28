@@ -20,7 +20,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN VLASizeChecker : public CheckerVisitor<VLASizeChecker> {
+class VLASizeChecker : public CheckerVisitor<VLASizeChecker> {
   BugType *BT_zero;
   BugType *BT_undef;
   

@@ -19,14 +19,13 @@
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/CheckerVisitor.h"
 #include "BasicObjCFoundationChecks.h"
-#include "llvm/Support/Compiler.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"
 
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN NSAutoreleasePoolChecker
+class NSAutoreleasePoolChecker
   : public CheckerVisitor<NSAutoreleasePoolChecker> {
       
   Selector releaseS;

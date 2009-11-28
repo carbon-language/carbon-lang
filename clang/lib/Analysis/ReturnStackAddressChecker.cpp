@@ -22,7 +22,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN ReturnStackAddressChecker : 
+class ReturnStackAddressChecker : 
     public CheckerVisitor<ReturnStackAddressChecker> {      
   BuiltinBug *BT;
 public:

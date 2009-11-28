@@ -20,7 +20,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN ArrayBoundChecker : 
+class ArrayBoundChecker : 
     public CheckerVisitor<ArrayBoundChecker> {      
   BuiltinBug *BT;
 public:

@@ -46,9 +46,9 @@ struct RefState {
   }
 };
 
-class VISIBILITY_HIDDEN RegionState {};
+class RegionState {};
 
-class VISIBILITY_HIDDEN MallocChecker : public CheckerVisitor<MallocChecker> {
+class MallocChecker : public CheckerVisitor<MallocChecker> {
   BuiltinBug *BT_DoubleFree;
   BuiltinBug *BT_Leak;
   IdentifierInfo *II_malloc;
@@ -65,7 +65,7 @@ private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
   void FreeMem(CheckerContext &C, const CallExpr *CE);
 };
-}
+} // end anonymous namespace
 
 namespace clang {
   template <>

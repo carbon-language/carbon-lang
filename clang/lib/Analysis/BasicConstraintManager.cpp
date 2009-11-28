@@ -16,14 +16,13 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 
 
-namespace { class VISIBILITY_HIDDEN ConstNotEq {}; }
-namespace { class VISIBILITY_HIDDEN ConstEq {}; }
+namespace { class ConstNotEq {}; }
+namespace { class ConstEq {}; }
 
 typedef llvm::ImmutableMap<SymbolRef,GRState::IntSetTy> ConstNotEqTy;
 typedef llvm::ImmutableMap<SymbolRef,const llvm::APSInt*> ConstEqTy;
@@ -46,7 +45,7 @@ struct GRStateTrait<ConstEq> : public GRStatePartialTrait<ConstEqTy> {
 namespace {
 // BasicConstraintManager only tracks equality and inequality constraints of
 // constants and integer variables.
-class VISIBILITY_HIDDEN BasicConstraintManager
+class BasicConstraintManager
   : public SimpleConstraintManager {
   GRState::IntSetTy::Factory ISetFactory;
 public:

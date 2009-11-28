@@ -19,7 +19,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN CastToStructChecker 
+class CastToStructChecker 
   : public CheckerVisitor<CastToStructChecker> {
   BuiltinBug *BT;
 public:

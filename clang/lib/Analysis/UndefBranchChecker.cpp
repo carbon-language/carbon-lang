@@ -19,10 +19,10 @@ using namespace clang;
 
 namespace {
 
-class VISIBILITY_HIDDEN UndefBranchChecker : public Checker {
+class UndefBranchChecker : public Checker {
   BuiltinBug *BT;
 
-  struct VISIBILITY_HIDDEN FindUndefExpr {
+  struct FindUndefExpr {
     GRStateManager& VM;
     const GRState* St;
 

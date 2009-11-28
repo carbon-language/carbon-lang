@@ -119,7 +119,7 @@ typedef llvm::DenseMap<const ExplodedNode*,
 const ExplodedNode*> NodeBackMap;
 
 namespace {
-class VISIBILITY_HIDDEN NodeMapClosure : public BugReport::NodeResolver {
+class NodeMapClosure : public BugReport::NodeResolver {
   NodeBackMap& M;
 public:
   NodeMapClosure(NodeBackMap *m) : M(*m) {}
@@ -131,7 +131,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN PathDiagnosticBuilder : public BugReporterContext {
+class PathDiagnosticBuilder : public BugReporterContext {
   BugReport *R;
   PathDiagnosticClient *PDC;
   llvm::OwningPtr<ParentMap> PM;
@@ -358,7 +358,7 @@ GetMostRecentVarDeclBinding(const ExplodedNode* N,
 }
 
 namespace {
-class VISIBILITY_HIDDEN NotableSymbolHandler
+class NotableSymbolHandler
 : public StoreManager::BindingsHandler {
 
   SymbolRef Sym;
@@ -458,7 +458,7 @@ static void HandleNotableSymbol(const ExplodedNode* N,
 }
 
 namespace {
-class VISIBILITY_HIDDEN ScanNotableSymbols
+class ScanNotableSymbols
 : public StoreManager::BindingsHandler {
 
   llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
@@ -802,7 +802,7 @@ static bool IsControlFlowExpr(const Stmt *S) {
 }
 
 namespace {
-class VISIBILITY_HIDDEN ContextLocation : public PathDiagnosticLocation {
+class ContextLocation : public PathDiagnosticLocation {
   bool IsDead;
 public:
   ContextLocation(const PathDiagnosticLocation &L, bool isdead = false)
@@ -812,7 +812,7 @@ public:
   bool isDead() const { return IsDead; }
 };
 
-class VISIBILITY_HIDDEN EdgeBuilder {
+class EdgeBuilder {
   std::vector<ContextLocation> CLocs;
   typedef std::vector<ContextLocation>::iterator iterator;
   PathDiagnostic &PD;
@@ -1645,7 +1645,7 @@ void BugReporter::EmitReport(BugReport* R) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-struct VISIBILITY_HIDDEN FRIEC_WLItem {
+struct FRIEC_WLItem {
   const ExplodedNode *N;
   ExplodedNode::const_succ_iterator I, E;
   
@@ -1738,7 +1738,7 @@ static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
 // uses global state, which eventually should go elsewhere.
 //===----------------------------------------------------------------------===//
 namespace {
-class VISIBILITY_HIDDEN DiagCacheItem : public llvm::FoldingSetNode {
+class DiagCacheItem : public llvm::FoldingSetNode {
   llvm::FoldingSetNodeID ID;
 public:
   DiagCacheItem(BugReport *R, PathDiagnostic *PD) {

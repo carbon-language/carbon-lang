@@ -19,7 +19,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN FixedAddressChecker 
+class FixedAddressChecker 
   : public CheckerVisitor<FixedAddressChecker> {
   BuiltinBug *BT;
 public:

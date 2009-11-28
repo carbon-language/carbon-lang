@@ -20,7 +20,6 @@
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/Checkers/DereferenceChecker.h"
 #include "BasicObjCFoundationChecks.h"
-#include "llvm/Support/Compiler.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/SmallVector.h"
@@ -28,7 +27,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN NSErrorChecker : public BugType {
+class NSErrorChecker : public BugType {
   const Decl &CodeDecl;
   const bool isNSErrorWarning;
   IdentifierInfo * const II;

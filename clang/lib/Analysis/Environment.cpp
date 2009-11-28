@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
@@ -83,7 +82,7 @@ Environment EnvironmentManager::BindExpr(Environment Env, const Stmt *S,
 }
 
 namespace {
-class VISIBILITY_HIDDEN MarkLiveCallback : public SymbolVisitor {
+class MarkLiveCallback : public SymbolVisitor {
   SymbolReaper &SymReaper;
 public:
   MarkLiveCallback(SymbolReaper &symreaper) : SymReaper(symreaper) {}

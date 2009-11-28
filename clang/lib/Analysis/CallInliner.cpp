@@ -18,7 +18,7 @@ using namespace clang;
 
 namespace {
   
-class VISIBILITY_HIDDEN CallInliner : public GRTransferFuncs {
+class CallInliner : public GRTransferFuncs {
   ASTContext &Ctx;
 public:
   CallInliner(ASTContext &ctx) : Ctx(ctx) {}

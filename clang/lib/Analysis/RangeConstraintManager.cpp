@@ -17,7 +17,6 @@
 #include "clang/Analysis/PathSensitive/GRStateTrait.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/ManagerRegistry.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableSet.h"
@@ -25,14 +24,14 @@
 
 using namespace clang;
 
-namespace { class VISIBILITY_HIDDEN ConstraintRange {}; }
+namespace { class ConstraintRange {}; }
 static int ConstraintRangeIndex = 0;
 
 /// A Range represents the closed range [from, to].  The caller must
 /// guarantee that from <= to.  Note that Range is immutable, so as not
 /// to subvert RangeSet's immutability.
 namespace {
-class VISIBILITY_HIDDEN Range : public std::pair<const llvm::APSInt*,
+class Range : public std::pair<const llvm::APSInt*,
                                                 const llvm::APSInt*> {
 public:
   Range(const llvm::APSInt &from, const llvm::APSInt &to)
@@ -59,7 +58,7 @@ public:
 };
 
 
-class VISIBILITY_HIDDEN RangeTrait : public llvm::ImutContainerInfo<Range> {
+class RangeTrait : public llvm::ImutContainerInfo<Range> {
 public:
   // When comparing if one Range is less than another, we should compare
   // the actual APSInt values instead of their pointers.  This keeps the order
@@ -74,7 +73,7 @@ public:
 /// RangeSet contains a set of ranges. If the set is empty, then
 ///  there the value of a symbol is overly constrained and there are no
 ///  possible values for that symbol.
-class VISIBILITY_HIDDEN RangeSet {
+class RangeSet {
   typedef llvm::ImmutableSet<Range, RangeTrait> PrimRangeSet;
   PrimRangeSet ranges; // no need to make const, since it is an
                        // ImmutableSet - this allows default operator=
@@ -232,7 +231,7 @@ struct GRStateTrait<ConstraintRange>
 }
 
 namespace {
-class VISIBILITY_HIDDEN RangeConstraintManager : public SimpleConstraintManager{
+class RangeConstraintManager : public SimpleConstraintManager{
   RangeSet GetRange(const GRState *state, SymbolRef sym);
 public:
   RangeConstraintManager() {}

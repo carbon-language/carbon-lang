@@ -22,7 +22,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN ReturnUndefChecker : 
+class ReturnUndefChecker : 
     public CheckerVisitor<ReturnUndefChecker> {      
   BuiltinBug *BT;
 public:

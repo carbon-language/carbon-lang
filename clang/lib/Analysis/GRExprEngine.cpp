@@ -23,7 +23,9 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/PrettyStackTrace.h"
+#ifndef NDEBUG
 #include "llvm/Support/Compiler.h"
+#endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -52,7 +54,7 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 
 namespace {
 
-class VISIBILITY_HIDDEN MappedBatchAuditor : public GRSimpleAPICheck {
+class MappedBatchAuditor : public GRSimpleAPICheck {
   typedef llvm::ImmutableList<GRSimpleAPICheck*> Checks;
   typedef llvm::DenseMap<void*,Checks> MapTy;
 
@@ -2118,7 +2120,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
 namespace {
   // This class is used by VisitInitListExpr as an item in a worklist
   // for processing the values contained in an InitListExpr.
-class VISIBILITY_HIDDEN InitListWLItem {
+class InitListWLItem {
 public:
   llvm::ImmutableList<SVal> Vals;
   ExplodedNode* N;

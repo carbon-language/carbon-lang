@@ -17,7 +17,6 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/GraphWriter.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/DenseMap.h"
@@ -50,7 +49,7 @@ static SourceLocation GetEndLoc(Decl* D) {
 ///  constructed prior to its predecessor.  This allows us to nicely capture
 ///  implicit fall-throughs without extra basic blocks.
 ///
-class VISIBILITY_HIDDEN CFGBuilder {
+class CFGBuilder {
   ASTContext *Context;
   llvm::OwningPtr<CFG> cfg;
 
@@ -1627,7 +1626,7 @@ CFG::~CFG() {
 
 namespace {
 
-class VISIBILITY_HIDDEN StmtPrinterHelper : public PrinterHelper  {
+class StmtPrinterHelper : public PrinterHelper  {
 
   typedef llvm::DenseMap<Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
   StmtMapTy StmtMap;
@@ -1671,7 +1670,7 @@ public:
 
 
 namespace {
-class VISIBILITY_HIDDEN CFGBlockTerminatorPrint
+class CFGBlockTerminatorPrint
   : public StmtVisitor<CFGBlockTerminatorPrint,void> {
 
   llvm::raw_ostream& OS;

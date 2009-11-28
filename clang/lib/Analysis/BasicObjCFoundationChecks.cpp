@@ -28,7 +28,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
-#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
@@ -53,12 +52,12 @@ static const char* GetReceiverNameType(const ObjCMessageExpr* ME) {
 
 namespace {
 
-class VISIBILITY_HIDDEN APIMisuse : public BugType {
+class APIMisuse : public BugType {
 public:
   APIMisuse(const char* name) : BugType(name, "API Misuse (Apple)") {}
 };
 
-class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
+class BasicObjCFoundationChecks : public GRSimpleAPICheck {
   APIMisuse *BT;
   BugReporter& BR;
   ASTContext &Ctx;
@@ -229,7 +228,7 @@ bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N,
 
 namespace {
 
-class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
+class AuditCFNumberCreate : public GRSimpleAPICheck {
   APIMisuse* BT;
 
   // FIXME: Either this should be refactored into GRSimpleAPICheck, or
@@ -451,7 +450,7 @@ clang::CreateAuditCFNumberCreate(ASTContext& Ctx, BugReporter& BR) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN AuditCFRetainRelease : public GRSimpleAPICheck {
+class AuditCFRetainRelease : public GRSimpleAPICheck {
   APIMisuse *BT;
 
   // FIXME: Either this should be refactored into GRSimpleAPICheck, or
@@ -527,7 +526,7 @@ clang::CreateAuditCFRetainRelease(ASTContext& Ctx, BugReporter& BR) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN ClassReleaseChecker :
+class ClassReleaseChecker :
     public CheckerVisitor<ClassReleaseChecker> {
   Selector releaseS;
   Selector retainS;

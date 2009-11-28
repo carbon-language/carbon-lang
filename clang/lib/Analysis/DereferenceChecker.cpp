@@ -21,7 +21,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN DereferenceChecker : public Checker {
+class DereferenceChecker : public Checker {
   BuiltinBug *BT_null;
   BuiltinBug *BT_undef;
   llvm::SmallVector<ExplodedNode*, 2> ImplicitNullDerefNodes;

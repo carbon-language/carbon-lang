@@ -19,7 +19,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN PointerSubChecker 
+class PointerSubChecker 
   : public CheckerVisitor<PointerSubChecker> {
   BuiltinBug *BT;
 public:

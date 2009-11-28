@@ -13,12 +13,11 @@
 
 #include "clang/Analysis/PathSensitive/SValuator.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
-#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN SimpleSValuator : public SValuator {
+class SimpleSValuator : public SValuator {
 protected:
   virtual SVal EvalCastNL(NonLoc val, QualType castTy);
   virtual SVal EvalCastL(Loc val, QualType castTy);

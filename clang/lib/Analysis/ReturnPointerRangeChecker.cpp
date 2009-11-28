@@ -20,7 +20,7 @@
 using namespace clang;
 
 namespace {
-class VISIBILITY_HIDDEN ReturnPointerRangeChecker : 
+class ReturnPointerRangeChecker : 
     public CheckerVisitor<ReturnPointerRangeChecker> {      
   BuiltinBug *BT;
 public:

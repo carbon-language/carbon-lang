@@ -15,7 +15,6 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
@@ -24,7 +23,7 @@ typedef llvm::ImmutableMap<const MemRegion*,SVal> BindingsTy;
 
 namespace {
 
-class VISIBILITY_HIDDEN BasicStoreSubRegionMap : public SubRegionMap {
+class BasicStoreSubRegionMap : public SubRegionMap {
 public:
   BasicStoreSubRegionMap() {}
 
@@ -33,7 +32,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
+class BasicStoreManager : public StoreManager {
   BindingsTy::Factory VBFactory;
 public:
   BasicStoreManager(GRStateManager& mgr)

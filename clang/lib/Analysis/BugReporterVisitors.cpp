@@ -83,7 +83,7 @@ clang::bugreporter::GetRetValExpr(const ExplodedNode *N) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN FindLastStoreBRVisitor : public BugReporterVisitor {
+class FindLastStoreBRVisitor : public BugReporterVisitor {
   const MemRegion *R;
   SVal V;
   bool satisfied;
@@ -231,7 +231,7 @@ static void registerFindLastStore(BugReporterContext& BRC, const MemRegion *R,
   BRC.addVisitor(new FindLastStoreBRVisitor(V, R));
 }
 
-class VISIBILITY_HIDDEN TrackConstraintBRVisitor : public BugReporterVisitor {
+class TrackConstraintBRVisitor : public BugReporterVisitor {
   DefinedSVal Constraint;
   const bool Assumption;
   bool isSatisfied;
