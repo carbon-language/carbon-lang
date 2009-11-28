@@ -831,13 +831,8 @@ void clang::InitializeDiagnosticOptions(DiagnosticOptions &Opts) {
 void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   using namespace frontendoptions;
 
-  // Select program action.
   Opts.ProgramAction = ProgAction;
-  if (PluginActionName.getPosition()) {
-    Opts.ProgramAction = frontend::PluginAction;
-    Opts.ActionName = PluginActionName;
-  }
-
+  Opts.ActionName = PluginActionName;
   Opts.CodeCompletionAt = CodeCompletionAt;
   Opts.DebugCodeCompletionPrinter = !NoCodeCompletionDebugPrinter;
   Opts.DisableFree = DisableFree;
@@ -849,6 +844,14 @@ void clang::InitializeFrontendOptions(FrontendOptions &Opts) {
   Opts.ShowStats = Stats;
   Opts.ShowTimers = TimeReport;
   Opts.ViewClassInheritance = InheritanceViewCls;
+
+  // Enforce certain program action implications.
+  if (!Opts.ActionName.empty())
+    Opts.ProgramAction = frontend::PluginAction;
+  if (!Opts.ViewClassInheritance.empty())
+    Opts.ProgramAction = frontend::InheritanceView;
+  if (!Opts.FixItLocations.empty())
+    Opts.ProgramAction = frontend::FixIt;
 
   // '-' is the default input if none is given.
   if (InputFilenames.empty()) {

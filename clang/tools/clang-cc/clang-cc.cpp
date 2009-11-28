@@ -246,12 +246,6 @@ int main(int argc, char **argv) {
   if (Clang.getFrontendOpts().ShowTimers)
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
 
-  // Enforce certain implications.
-  if (!Clang.getFrontendOpts().ViewClassInheritance.empty())
-    Clang.getFrontendOpts().ProgramAction = frontend::InheritanceView;
-  if (!Clang.getFrontendOpts().FixItLocations.empty())
-    Clang.getFrontendOpts().ProgramAction = frontend::FixIt;
-
   for (unsigned i = 0, e = Clang.getFrontendOpts().Inputs.size(); i != e; ++i) {
     const std::string &InFile = Clang.getFrontendOpts().Inputs[i].second;
 
