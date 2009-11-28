@@ -223,7 +223,6 @@ void GeneratePTHAction::ExecuteAction() {
     // FIXME: Don't fail this way.
     // FIXME: Verify that we can actually seek in the given file.
     llvm::llvm_report_error("PTH requires a seekable file for output!");
-    ::exit(1);
   }
   llvm::raw_fd_ostream *OS =
     CI.createDefaultOutputFile(true, getCurrentFile());
