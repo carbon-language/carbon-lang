@@ -25,6 +25,7 @@ namespace llvm {
 namespace clang {
   class CXXSpecialName;
   class CXXOperatorIdName;
+  class CXXLiteralOperatorIdName;
   class DeclarationNameExtra;
   class IdentifierInfo;
   class MultiKeywordSelector;
@@ -48,6 +49,7 @@ public:
     CXXDestructorName,
     CXXConversionFunctionName,
     CXXOperatorName,
+    CXXLiteralOperatorName,
     CXXUsingDirective
   };
 
@@ -115,6 +117,12 @@ private:
     return 0;
   }
 
+  CXXLiteralOperatorIdName *getAsCXXLiteralOperatorIdName() const {
+    if (getNameKind() == CXXLiteralOperatorName)
+      return reinterpret_cast<CXXLiteralOperatorIdName *>(Ptr & ~PtrMask);
+    return 0;
+  }
+
   // Construct a declaration name from the name of a C++ constructor,
   // destructor, or conversion function.
   DeclarationName(CXXSpecialName *Name)
@@ -128,6 +136,12 @@ private:
   DeclarationName(CXXOperatorIdName *Name)
     : Ptr(reinterpret_cast<uintptr_t>(Name)) {
     assert((Ptr & PtrMask) == 0 && "Improperly aligned CXXOperatorId");
+    Ptr |= StoredDeclarationNameExtra;
+  }
+
+  DeclarationName(CXXLiteralOperatorIdName *Name)
+    : Ptr(reinterpret_cast<uintptr_t>(Name)) {
+    assert((Ptr & PtrMask) == 0 && "Improperly aligned CXXLiteralOperatorId");
     Ptr |= StoredDeclarationNameExtra;
   }
 
@@ -201,7 +215,7 @@ public:
     N.Ptr = reinterpret_cast<uintptr_t> (P);
     return N;
   }
-  
+
   static DeclarationName getFromOpaqueInteger(uintptr_t P) {
     DeclarationName N;
     N.Ptr = P;
@@ -217,6 +231,10 @@ public:
   /// overloadable operator in C++ (e.g., @c operator+), retrieve the
   /// kind of overloaded operator.
   OverloadedOperatorKind getCXXOverloadedOperator() const;
+
+  /// getCXXLiteralIdentifier - If this name is the name of a literal
+  /// operator, retrieve the identifier associated with it.
+  IdentifierInfo *getCXXLiteralIdentifier() const;
 
   /// getObjCSelector - Get the Objective-C selector stored in this
   /// declaration name.
@@ -324,6 +342,10 @@ public:
   /// getCXXOperatorName - Get the name of the overloadable C++
   /// operator corresponding to Op.
   DeclarationName getCXXOperatorName(OverloadedOperatorKind Op);
+
+  /// getCXXLiteralOperatorName - Get the name of the literal operator function
+  /// with II as the identifier.
+  DeclarationName getCXXLiteralOperatorName(IdentifierInfo *II);
 };
 
 /// Insertion operator for diagnostics.  This allows sending DeclarationName's

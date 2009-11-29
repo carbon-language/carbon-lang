@@ -2589,6 +2589,10 @@ PCHReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
     return Context->DeclarationNames.getCXXOperatorName(
                                        (OverloadedOperatorKind)Record[Idx++]);
 
+  case DeclarationName::CXXLiteralOperatorName:
+    return Context->DeclarationNames.getCXXLiteralOperatorName(
+                                       GetIdentifierInfo(Record, Idx));
+
   case DeclarationName::CXXUsingDirective:
     return DeclarationName::getUsingDirectiveName();
   }

@@ -1800,6 +1800,7 @@ TreeTransform<Derived>::TransformDeclarationName(DeclarationName Name,
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
   case DeclarationName::CXXOperatorName:
+  case DeclarationName::CXXLiteralOperatorName:
   case DeclarationName::CXXUsingDirective:
     return Name;
 

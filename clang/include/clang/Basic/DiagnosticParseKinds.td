@@ -244,8 +244,6 @@ def err_operator_missing_type_specifier : Error<
   "missing type specifier after 'operator'">;
 def err_operator_string_not_empty : Error<
   "string literal after 'operator' must be '\"\"'">;
-def err_unsupported_literal_operator : Error<
-  "C++0x literal operator support is currently under development">;
 
 // Classes.
 def err_anon_type_definition : Error<

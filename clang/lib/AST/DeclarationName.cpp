@@ -50,6 +50,17 @@ public:
   void *FETokenInfo;
 };
 
+/// CXXLiberalOperatorName - Contains the actual identifier that makes up the
+/// name.
+///
+/// This identifier is stored here rather than directly in DeclarationName so as
+/// to allow Objective-C selectors, which are about a million times more common,
+/// to consume minimal memory.
+class CXXLiteralOperatorIdName : public DeclarationNameExtra {
+public:
+  IdentifierInfo *ID;
+};
+
 bool operator<(DeclarationName LHS, DeclarationName RHS) {
   if (LHS.getNameKind() != RHS.getNameKind())
     return LHS.getNameKind() < RHS.getNameKind();
@@ -89,6 +100,10 @@ bool operator<(DeclarationName LHS, DeclarationName RHS) {
               
   case DeclarationName::CXXOperatorName:
     return LHS.getCXXOverloadedOperator() < RHS.getCXXOverloadedOperator();
+
+  case DeclarationName::CXXLiteralOperatorName:
+    return LHS.getCXXLiteralIdentifier()->getName() <
+                                       RHS.getCXXLiteralIdentifier()->getName();
               
   case DeclarationName::CXXUsingDirective:
     return false;
@@ -142,6 +157,9 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
 
     case DeclarationNameExtra::CXXConversionFunction:
       return CXXConversionFunctionName;
+
+    case DeclarationNameExtra::CXXLiteralOperator:
+      return CXXLiteralOperatorName;
 
     case DeclarationNameExtra::CXXUsingDirective:
       return CXXUsingDirective;
@@ -208,6 +226,10 @@ std::string DeclarationName::getAsString() const {
     return Result;
   }
 
+  case CXXLiteralOperatorName: {
+    return "operator \"\" " + std::string(getCXXLiteralIdentifier()->getName());
+  }
+
   case CXXConversionFunctionName: {
     std::string Result = "operator ";
     QualType Type = getCXXNameType();
@@ -242,6 +264,13 @@ OverloadedOperatorKind DeclarationName::getCXXOverloadedOperator() const {
   }
 }
 
+IdentifierInfo *DeclarationName::getCXXLiteralIdentifier() const {
+  if (CXXLiteralOperatorIdName *CXXLit = getAsCXXLiteralOperatorIdName())
+    return CXXLit->ID;
+  else
+    return 0;
+}
+
 Selector DeclarationName::getObjCSelector() const {
   switch (getNameKind()) {
   case ObjCZeroArgSelector:
@@ -273,6 +302,9 @@ void *DeclarationName::getFETokenInfoAsVoid() const {
   case CXXOperatorName:
     return getAsCXXOperatorIdName()->FETokenInfo;
 
+  case CXXLiteralOperatorName:
+    return getCXXLiteralIdentifier()->getFETokenInfo<void>();
+
   default:
     assert(false && "Declaration name has no FETokenInfo");
   }
@@ -293,6 +325,10 @@ void DeclarationName::setFETokenInfo(void *T) {
 
   case CXXOperatorName:
     getAsCXXOperatorIdName()->FETokenInfo = T;
+    break;
+
+  case CXXLiteralOperatorName:
+    getCXXLiteralIdentifier()->setFETokenInfo(T);
     break;
 
   default:
@@ -388,6 +424,14 @@ DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
 DeclarationName
 DeclarationNameTable::getCXXOperatorName(OverloadedOperatorKind Op) {
   return DeclarationName(&CXXOperatorNames[(unsigned)Op]);
+}
+
+DeclarationName
+DeclarationNameTable::getCXXLiteralOperatorName(IdentifierInfo *II) {
+  CXXLiteralOperatorIdName *LiteralName = new CXXLiteralOperatorIdName;
+  LiteralName->ExtraKindOrNumArgs = DeclarationNameExtra::CXXLiteralOperator;
+  LiteralName->ID = II;
+  return DeclarationName(LiteralName);
 }
 
 unsigned

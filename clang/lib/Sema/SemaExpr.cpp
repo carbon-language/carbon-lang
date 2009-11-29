@@ -729,6 +729,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
                            << Name << computeDeclContext(SS, false)
                            << SS.getRange());
       else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
+               Name.getNameKind() == DeclarationName::CXXLiteralOperatorName ||
                Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
         return ExprError(Diag(NameLoc, diag::err_undeclared_use)
                            << Name);

@@ -496,6 +496,7 @@ public:
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
     CXXOperator##Name,
 #include "clang/Basic/OperatorKinds.def"
+    CXXLiteralOperator,
     CXXUsingDirective,
     NUM_EXTRA_KINDS
   };
@@ -503,10 +504,10 @@ public:
   /// ExtraKindOrNumArgs - Either the kind of C++ special name or
   /// operator-id (if the value is one of the CXX* enumerators of
   /// ExtraKind), in which case the DeclarationNameExtra is also a
-  /// CXXSpecialName (for CXXConstructor, CXXDestructor, or
-  /// CXXConversionFunction) or CXXOperatorIdName, it may be also
-  /// name common to C++ using-directives (CXXUsingDirective), otherwise
-  /// it is NUM_EXTRA_KINDS+NumArgs, where NumArgs is the number of
+  /// CXXSpecialName, (for CXXConstructor, CXXDestructor, or
+  /// CXXConversionFunction) CXXOperatorIdName, or CXXLiteralOperatorName,
+  /// it may be also name common to C++ using-directives (CXXUsingDirective),
+  /// otherwise it is NUM_EXTRA_KINDS+NumArgs, where NumArgs is the number of
   /// arguments in the Objective-C selector, in which case the
   /// DeclarationNameExtra is also a MultiKeywordSelector.
   unsigned ExtraKindOrNumArgs;

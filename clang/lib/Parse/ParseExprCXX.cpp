@@ -1052,8 +1052,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
 
     IdentifierInfo *II = Tok.getIdentifierInfo();
     Result.setLiteralOperatorId(II, KeywordLoc, ConsumeToken());
-    Diag(KeywordLoc, diag::err_unsupported_literal_operator);
-    return true;
+    return false;
   }
   
   // Parse a conversion-function-id.

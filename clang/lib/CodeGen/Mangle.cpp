@@ -455,6 +455,12 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
                        cast<FunctionDecl>(ND)->getNumParams());
     break;
 
+  case DeclarationName::CXXLiteralOperatorName:
+    // Guessing based on existing ABI.
+    Out << "ul";
+    mangleSourceName(Name.getCXXLiteralIdentifier());
+    break;
+
   case DeclarationName::CXXUsingDirective:
     assert(false && "Can't mangle a using directive name!");
     break;

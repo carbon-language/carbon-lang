@@ -2284,6 +2284,10 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
     Record.push_back(Name.getCXXOverloadedOperator());
     break;
 
+  case DeclarationName::CXXLiteralOperatorName:
+    AddIdentifierRef(Name.getCXXLiteralIdentifier(), Record);
+    break;
+
   case DeclarationName::CXXUsingDirective:
     // No extra data to emit
     break;

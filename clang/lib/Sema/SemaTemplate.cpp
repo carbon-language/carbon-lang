@@ -130,8 +130,8 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     break;
 
   case UnqualifiedId::IK_LiteralOperatorId:
-    assert(false && "We don't support these; Parse shouldn't have allowed propagation");
-
+    TName = Context.DeclarationNames.getCXXLiteralOperatorName(Name.Identifier);
+    break;
 
   default:
     return TNK_Non_template;
