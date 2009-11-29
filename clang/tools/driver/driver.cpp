@@ -179,7 +179,8 @@ void ApplyQAOverride(std::vector<const char*> &Args, const char *OverrideStr,
 }
 
 extern int cc1_main(Diagnostic &Diags,
-                    const char **ArgBegin, const char **ArgEnd);
+                    const char **ArgBegin, const char **ArgEnd,
+                    const char *Argv0, void *MainAddr);
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -192,7 +193,8 @@ int main(int argc, const char **argv) {
 
   // Dispatch to cc1_main if appropriate.
   if (argc > 1 && llvm::StringRef(argv[1]) == "-cc1")
-    return cc1_main(Diags, argv+2, argv+argc);
+    return cc1_main(Diags, argv+2, argv+argc, argv[0],
+                    (void*) (intptr_t) GetExecutablePath);
 
 #ifdef CLANG_IS_PRODUCTION
   bool IsProduction = true;

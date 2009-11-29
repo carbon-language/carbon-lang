@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/CC1Options.h"
+#include "clang/Basic/Version.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/OptTable.h"
@@ -19,6 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
+#include "llvm/System/Path.h"
 
 using namespace clang::driver;
 using namespace clang::driver::options;
@@ -373,14 +375,34 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
   return DashX;
 }
 
-static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
+static std::string GetBuiltinIncludePath(const char *Argv0,
+                                         void *MainAddr) {
+  llvm::sys::Path P = llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
+
+  if (!P.isEmpty()) {
+    P.eraseComponent();  // Remove /clang from foo/bin/clang
+    P.eraseComponent();  // Remove /bin   from foo/bin
+
+    // Get foo/lib/clang/<version>/include
+    P.appendComponent("lib");
+    P.appendComponent("clang");
+    P.appendComponent(CLANG_VERSION_STRING);
+    P.appendComponent("include");
+  }
+
+  return P.str();
+}
+
+static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args,
+                                  const char *Argv0, void *MainAddr) {
   using namespace cc1options;
   Opts.Sysroot = getLastArgValue(Args, OPT_isysroot, "/");
   Opts.Verbose = Args.hasArg(OPT_v);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
   Opts.BuiltinIncludePath = "";
+  // FIXME: Add an option for this, its a slow call.
   if (!Args.hasArg(OPT_nobuiltininc))
-      Opts.BuiltinIncludePath = "FIXME"; // FIXME: Get builtin include path!
+    Opts.BuiltinIncludePath = GetBuiltinIncludePath(Argv0, MainAddr);
 
   // Add -I... and -F... options in order.
   for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F),
@@ -638,7 +660,9 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
 
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                                         const char **ArgBegin,
-                                        const char **ArgEnd) {
+                                        const char **ArgEnd,
+                                        const char *Argv0,
+                                        void *MainAddr) {
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
   unsigned MissingArgIndex, MissingArgCount;
@@ -660,7 +684,8 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *InputArgs);
   FrontendOptions::InputKind DashX =
     ParseFrontendArgs(Res.getFrontendOpts(), *InputArgs);
-  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *InputArgs);
+  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *InputArgs,
+                        Argv0, MainAddr);
   if (DashX != FrontendOptions::IK_AST)
     ParseLangArgs(Res.getLangOpts(), *InputArgs, DashX);
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *InputArgs);

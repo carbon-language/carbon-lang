@@ -25,7 +25,8 @@
 using namespace clang;
 using namespace clang::driver;
 
-int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd) {
+int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd,
+             const char *Argv0, void *MainAddr) {
   llvm::errs() << "cc1 argv:";
   for (const char **i = ArgBegin; i != ArgEnd; ++i)
     llvm::errs() << " \"" << *i << '"';
@@ -51,7 +52,8 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd) {
   // Create a compiler invocation.
   llvm::errs() << "cc1 creating invocation.\n";
   CompilerInvocation Invocation;
-  CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd);
+  CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd,
+                                     Argv0, MainAddr);
 
   // Convert the invocation back to argument strings.
   std::vector<std::string> InvocationArgs;
@@ -70,7 +72,7 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd) {
   // same thing.
   CompilerInvocation Invocation2;
   CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
-                                     Invocation2Args.end());
+                                     Invocation2Args.end(), Argv0, MainAddr);
 
   // FIXME: Implement CompilerInvocation comparison.
   if (true) {
