@@ -260,34 +260,18 @@ public:
 /// load the real and imaginary pieces, returning them as Real/Imag.
 ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
                                                     bool isVolatile) {
-  llvm::SmallString<64> Name(SrcPtr->getName().begin(),
-                             SrcPtr->getName().end());
-
   llvm::Value *Real=0, *Imag=0;
 
   if (!IgnoreReal) {
-    // FIXME: Clean this up once builder takes Twine/StringRef.
-    Name += ".realp";
-    llvm::Value *RealPtr = Builder.CreateStructGEP(SrcPtr, 0,
-                                                   Name.str().str().c_str());
-
-    Name.pop_back();  // .realp -> .real
-    // FIXME: Clean this up once builder takes Twine/StringRef.
-    Real = Builder.CreateLoad(RealPtr, isVolatile,
-                              Name.str().str().c_str());
-    Name.resize(Name.size()-4); // .real -> .imagp
+    llvm::Value *RealP = Builder.CreateStructGEP(SrcPtr, 0,
+                                                 SrcPtr->getName() + ".realp");
+    Real = Builder.CreateLoad(RealP, isVolatile, SrcPtr->getName() + ".real");
   }
 
   if (!IgnoreImag) {
-    Name += "imagp";
-
-    // FIXME: Clean this up once builder takes Twine/StringRef.
-    llvm::Value *ImagPtr = Builder.CreateStructGEP(SrcPtr, 1,
-                                                   Name.str().str().c_str());
-
-    Name.pop_back();  // .imagp -> .imag
-    // FIXME: Clean this up once builder takes Twine/StringRef.
-    Imag = Builder.CreateLoad(ImagPtr, isVolatile, Name.str().str().c_str());
+    llvm::Value *ImagP = Builder.CreateStructGEP(SrcPtr, 1,
+                                                 SrcPtr->getName() + ".imagp");
+    Imag = Builder.CreateLoad(ImagP, isVolatile, SrcPtr->getName() + ".imag");
   }
   return ComplexPairTy(Real, Imag);
 }
