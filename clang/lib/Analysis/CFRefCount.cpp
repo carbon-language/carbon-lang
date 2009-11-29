@@ -2098,7 +2098,7 @@ namespace {
   protected:
     CFRefCount& TF;
 
-    CFRefBug(CFRefCount* tf, const char* name)
+    CFRefBug(CFRefCount* tf, llvm::StringRef name)
     : BugType(name, "Memory (Core Foundation/Objective-C)"), TF(*tf) {}
   public:
 
@@ -2175,7 +2175,7 @@ namespace {
   class Leak : public CFRefBug {
     const bool isReturn;
   protected:
-    Leak(CFRefCount* tf, const char* name, bool isRet)
+    Leak(CFRefCount* tf, llvm::StringRef name, bool isRet)
     : CFRefBug(tf, name), isReturn(isRet) {}
   public:
 
@@ -2186,13 +2186,13 @@ namespace {
 
   class LeakAtReturn : public Leak {
   public:
-    LeakAtReturn(CFRefCount* tf, const char* name)
+    LeakAtReturn(CFRefCount* tf, llvm::StringRef name)
     : Leak(tf, name, true) {}
   };
 
   class LeakWithinFunction : public Leak {
   public:
-    LeakWithinFunction(CFRefCount* tf, const char* name)
+    LeakWithinFunction(CFRefCount* tf, llvm::StringRef name)
     : Leak(tf, name, false) {}
   };
 
@@ -2210,7 +2210,7 @@ namespace {
       : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
-                ExplodedNode *n, SymbolRef sym, const char* endText)
+                ExplodedNode *n, SymbolRef sym, llvm::StringRef endText)
       : RangedBugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}
 
     virtual ~CFRefReport() {}
@@ -3466,7 +3466,7 @@ CFRefCount::HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd
 
     CFRefReport *report =
       new CFRefReport(*static_cast<CFRefBug*>(overAutorelease),
-                      *this, N, Sym, os.str().c_str());
+                      *this, N, Sym, os.str());
     BR->EmitReport(report);
   }
 

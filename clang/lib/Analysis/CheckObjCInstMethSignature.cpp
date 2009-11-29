@@ -65,7 +65,7 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
           "behavior for clients of these classes.";
 
     BR.EmitBasicReport("Incompatible instance method return type",
-                       os.str().c_str(), MethDerived->getLocStart());
+                       os.str(), MethDerived->getLocStart());
   }
 }
 

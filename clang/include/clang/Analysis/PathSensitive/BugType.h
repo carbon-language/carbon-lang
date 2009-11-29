@@ -34,7 +34,7 @@ private:
   friend class BugReporter;
   bool SuppressonSink;
 public:
-  BugType(const char *name, const char* cat)
+  BugType(llvm::StringRef name, llvm::StringRef cat)
     : Name(name), Category(cat), SuppressonSink(false) {}
   virtual ~BugType();
 

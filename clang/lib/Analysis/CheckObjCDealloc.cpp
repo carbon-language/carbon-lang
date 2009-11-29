@@ -169,7 +169,7 @@ void clang::CheckObjCDealloc(const ObjCImplementationDecl* D,
     os << "Objective-C class '" << D->getNameAsString()
        << "' lacks a 'dealloc' instance method";
 
-    BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
+    BR.EmitBasicReport(name, os.str(), D->getLocStart());
     return;
   }
 
@@ -187,7 +187,7 @@ void clang::CheckObjCDealloc(const ObjCImplementationDecl* D,
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
 
-    BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
+    BR.EmitBasicReport(name, os.str(), D->getLocStart());
     return;
   }
 
@@ -251,8 +251,7 @@ void clang::CheckObjCDealloc(const ObjCImplementationDecl* D,
               "but was released in 'dealloc'";
       }
 
-      BR.EmitBasicReport(name, category,
-                         os.str().c_str(), (*I)->getLocation());
+      BR.EmitBasicReport(name, category, os.str(), (*I)->getLocation());
     }
   }
 }

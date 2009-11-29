@@ -1835,14 +1835,15 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   PD->HandlePathDiagnostic(D.take());
 }
 
-void BugReporter::EmitBasicReport(const char* name, const char* str,
+void BugReporter::EmitBasicReport(llvm::StringRef name, llvm::StringRef str,
                                   SourceLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
   EmitBasicReport(name, "", str, Loc, RBeg, NumRanges);
 }
 
-void BugReporter::EmitBasicReport(const char* name, const char* category,
-                                  const char* str, SourceLocation Loc,
+void BugReporter::EmitBasicReport(llvm::StringRef name,
+                                  llvm::StringRef category,
+                                  llvm::StringRef str, SourceLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
 
   // 'BT' will be owned by BugReporter as soon as we call 'EmitReport'.

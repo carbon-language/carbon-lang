@@ -76,7 +76,7 @@ public:
         break;
     }
 
-    BR.EmitBasicReport(BugType, "Dead store", msg.c_str(), L, R);
+    BR.EmitBasicReport(BugType, "Dead store", msg, L, R);
   }
 
   void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,

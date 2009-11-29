@@ -157,6 +157,6 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
             "(although it may be used by category methods).";
 
       BR.EmitBasicReport("Unused instance variable", "Optimization",
-                         os.str().c_str(), I->first->getLocation());
+                         os.str(), I->first->getLocation());
     }
 }

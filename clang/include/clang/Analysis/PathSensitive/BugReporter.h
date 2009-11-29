@@ -309,32 +309,33 @@ public:
 
   void EmitReport(BugReport *R);
 
-  void EmitBasicReport(const char* BugName, const char* BugStr,
+  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugStr,
                        SourceLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
-  void EmitBasicReport(const char* BugName, const char* BugCategory,
-                       const char* BugStr, SourceLocation Loc,
+  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugCategory,
+                       llvm::StringRef BugStr, SourceLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
 
-  void EmitBasicReport(const char* BugName, const char* BugStr,
+  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugStr,
                        SourceLocation Loc) {
     EmitBasicReport(BugName, BugStr, Loc, 0, 0);
   }
 
-  void EmitBasicReport(const char* BugName, const char* BugCategory,
-                       const char* BugStr, SourceLocation Loc) {
+  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugCategory,
+                       llvm::StringRef BugStr, SourceLocation Loc) {
     EmitBasicReport(BugName, BugCategory, BugStr, Loc, 0, 0);
   }
 
-  void EmitBasicReport(const char* BugName, const char* BugStr,
+  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugStr,
                        SourceLocation Loc, SourceRange R) {
     EmitBasicReport(BugName, BugStr, Loc, &R, 1);
   }
 
-  void EmitBasicReport(const char* BugName, const char* Category,
-                       const char* BugStr, SourceLocation Loc, SourceRange R) {
+  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef Category,
+                       llvm::StringRef BugStr, SourceLocation Loc,
+                       SourceRange R) {
     EmitBasicReport(BugName, Category, BugStr, Loc, &R, 1);
   }
 
@@ -432,7 +433,7 @@ class DiagBugReport : public RangedBugReport {
   std::list<std::string> Strs;
   FullSourceLoc L;
 public:
-  DiagBugReport(BugType& D, const char* desc, FullSourceLoc l) :
+  DiagBugReport(BugType& D, llvm::StringRef desc, FullSourceLoc l) :
   RangedBugReport(D, desc, 0), L(l) {}
 
   virtual ~DiagBugReport() {}
