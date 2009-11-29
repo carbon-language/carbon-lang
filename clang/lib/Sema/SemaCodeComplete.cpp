@@ -704,7 +704,7 @@ static void AddFunctionParameterChunks(ASTContext &Context,
                                          Context.PrintingPolicy);
     
     // Add the placeholder string.
-    CCStr->AddPlaceholderChunk(PlaceholderStr.c_str());
+    CCStr->AddPlaceholderChunk(PlaceholderStr);
   }
   
   if (const FunctionProtoType *Proto 
@@ -778,7 +778,7 @@ static void AddTemplateParameterChunks(ASTContext &Context,
       CCStr->AddChunk(Chunk(CodeCompletionString::CK_Comma));
     
     // Add the placeholder string.
-    CCStr->AddPlaceholderChunk(PlaceholderStr.c_str());
+    CCStr->AddPlaceholderChunk(PlaceholderStr);
   }    
 }
 
@@ -797,9 +797,9 @@ void AddQualifierToCompletionString(CodeCompletionString *Result,
     Qualifier->print(OS, Context.PrintingPolicy);
   }
   if (QualifierIsInformative)
-    Result->AddInformativeChunk(PrintedNNS.c_str());
+    Result->AddInformativeChunk(PrintedNNS);
   else
-    Result->AddTextChunk(PrintedNNS.c_str());
+    Result->AddTextChunk(PrintedNNS);
 }
 
 /// \brief If possible, create a new code completion string for the given
@@ -822,7 +822,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     
     // Format a function-like macro with placeholders for the arguments.
     CodeCompletionString *Result = new CodeCompletionString;
-    Result->AddTypedTextChunk(Macro->getName().str().c_str());
+    Result->AddTypedTextChunk(Macro->getName());
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     for (MacroInfo::arg_iterator A = MI->arg_begin(), AEnd = MI->arg_end();
          A != AEnd; ++A) {
@@ -831,7 +831,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
       
       if (!MI->isVariadic() || A != AEnd - 1) {
         // Non-variadic argument.
-        Result->AddPlaceholderChunk((*A)->getName().str().c_str());
+        Result->AddPlaceholderChunk((*A)->getName());
         continue;
       }
       
@@ -843,7 +843,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
       else {
         std::string Arg = (*A)->getName();
         Arg += "...";
-        Result->AddPlaceholderChunk(Arg.c_str());
+        Result->AddPlaceholderChunk(Arg);
       }
     }
     Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
@@ -855,7 +855,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (StartsNestedNameSpecifier) {
     CodeCompletionString *Result = new CodeCompletionString;
-    Result->AddTypedTextChunk(ND->getNameAsString().c_str());
+    Result->AddTypedTextChunk(ND->getNameAsString());
     Result->AddTextChunk("::");
     return Result;
   }
@@ -864,7 +864,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTypedTextChunk(Function->getNameAsString().c_str());
+    Result->AddTypedTextChunk(Function->getNameAsString());
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     AddFunctionParameterChunks(S.Context, Function, Result);
     Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
@@ -876,7 +876,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
-    Result->AddTypedTextChunk(Function->getNameAsString().c_str());
+    Result->AddTypedTextChunk(Function->getNameAsString());
     
     // Figure out which template parameters are deduced (or have default
     // arguments).
@@ -929,7 +929,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTypedTextChunk(Template->getNameAsString().c_str());
+    Result->AddTypedTextChunk(Template->getNameAsString());
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftAngle));
     AddTemplateParameterChunks(S.Context, Template, Result);
     Result->AddChunk(Chunk(CodeCompletionString::CK_RightAngle));
@@ -997,7 +997,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTypedTextChunk(ND->getNameAsString().c_str());
+    Result->AddTypedTextChunk(ND->getNameAsString());
     return Result;
   }
   
@@ -1019,7 +1019,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
     // highlighted ellipsis.
     const FunctionType *FT = getFunctionType();
     Result->AddTextChunk(
-            FT->getResultType().getAsString(S.Context.PrintingPolicy).c_str());
+            FT->getResultType().getAsString(S.Context.PrintingPolicy));
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     Result->AddChunk(Chunk(CodeCompletionString::CK_CurrentParameter, "..."));
     Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
@@ -1027,10 +1027,10 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
   }
   
   if (FDecl)
-    Result->AddTextChunk(FDecl->getNameAsString().c_str());    
+    Result->AddTextChunk(FDecl->getNameAsString());
   else
     Result->AddTextChunk(
-         Proto->getResultType().getAsString(S.Context.PrintingPolicy).c_str());
+         Proto->getResultType().getAsString(S.Context.PrintingPolicy));
   
   Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
   unsigned NumParams = FDecl? FDecl->getNumParams() : Proto->getNumArgs();
@@ -1052,9 +1052,9 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
     
     if (I == CurrentArg)
       Result->AddChunk(Chunk(CodeCompletionString::CK_CurrentParameter, 
-                             ArgString.c_str()));
+                             ArgString));
     else
-      Result->AddTextChunk(ArgString.c_str());
+      Result->AddTextChunk(ArgString);
   }
   
   if (Proto && Proto->isVariadic()) {
