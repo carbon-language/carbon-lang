@@ -4067,6 +4067,21 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
 /// FoldAndOfICmps - Fold (icmp)&(icmp) if possible.
 Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
                                           ICmpInst *LHS, ICmpInst *RHS) {
+  // (icmp eq A, null) & (icmp eq B, null) -->
+  //     (icmp eq (ptrtoint(A)|ptrtoint(B)), 0)
+  if (TD &&
+      LHS->getPredicate() == ICmpInst::ICMP_EQ &&
+      RHS->getPredicate() == ICmpInst::ICMP_EQ &&
+      isa<ConstantPointerNull>(LHS->getOperand(1)) &&
+      isa<ConstantPointerNull>(RHS->getOperand(1))) {
+    const Type *IntPtrTy = TD->getIntPtrType(I.getContext());
+    Value *A = Builder->CreatePtrToInt(LHS->getOperand(0), IntPtrTy);
+    Value *B = Builder->CreatePtrToInt(RHS->getOperand(0), IntPtrTy);
+    Value *NewOr = Builder->CreateOr(A, B);
+    return new ICmpInst(ICmpInst::ICMP_EQ, NewOr,
+                        Constant::getNullValue(IntPtrTy));
+  }
+  
   Value *Val, *Val2;
   ConstantInt *LHSCst, *RHSCst;
   ICmpInst::Predicate LHSCC, RHSCC;
@@ -4078,12 +4093,20 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
                          m_ConstantInt(RHSCst))))
     return 0;
   
-  // (icmp ult A, C) & (icmp ult B, C) --> (icmp ult (A|B), C)
-  // where C is a power of 2
-  if (LHSCst == RHSCst && LHSCC == RHSCC && LHSCC == ICmpInst::ICMP_ULT &&
-      LHSCst->getValue().isPowerOf2()) {
-    Value *NewOr = Builder->CreateOr(Val, Val2);
-    return new ICmpInst(LHSCC, NewOr, LHSCst);
+  if (LHSCst == RHSCst && LHSCC == RHSCC) {
+    // (icmp ult A, C) & (icmp ult B, C) --> (icmp ult (A|B), C)
+    // where C is a power of 2
+    if (LHSCC == ICmpInst::ICMP_ULT &&
+        LHSCst->getValue().isPowerOf2()) {
+      Value *NewOr = Builder->CreateOr(Val, Val2);
+      return new ICmpInst(LHSCC, NewOr, LHSCst);
+    }
+    
+    // (icmp eq A, 0) & (icmp eq B, 0) --> (icmp eq (A|B), 0)
+    if (LHSCC == ICmpInst::ICMP_EQ && LHSCst->isZero()) {
+      Value *NewOr = Builder->CreateOr(Val, Val2);
+      return new ICmpInst(LHSCC, NewOr, LHSCst);
+    }
   }
   
   // From here on, we only handle:
@@ -4739,16 +4762,37 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
 /// FoldOrOfICmps - Fold (icmp)|(icmp) if possible.
 Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
                                          ICmpInst *LHS, ICmpInst *RHS) {
+  // (icmp ne A, null) | (icmp ne B, null) -->
+  //     (icmp ne (ptrtoint(A)|ptrtoint(B)), 0)
+  if (TD &&
+      LHS->getPredicate() == ICmpInst::ICMP_NE &&
+      RHS->getPredicate() == ICmpInst::ICMP_NE &&
+      isa<ConstantPointerNull>(LHS->getOperand(1)) &&
+      isa<ConstantPointerNull>(RHS->getOperand(1))) {
+    const Type *IntPtrTy = TD->getIntPtrType(I.getContext());
+    Value *A = Builder->CreatePtrToInt(LHS->getOperand(0), IntPtrTy);
+    Value *B = Builder->CreatePtrToInt(RHS->getOperand(0), IntPtrTy);
+    Value *NewOr = Builder->CreateOr(A, B);
+    return new ICmpInst(ICmpInst::ICMP_NE, NewOr,
+                        Constant::getNullValue(IntPtrTy));
+  }
+  
   Value *Val, *Val2;
   ConstantInt *LHSCst, *RHSCst;
   ICmpInst::Predicate LHSCC, RHSCC;
   
   // This only handles icmp of constants: (icmp1 A, C1) | (icmp2 B, C2).
-  if (!match(LHS, m_ICmp(LHSCC, m_Value(Val),
-             m_ConstantInt(LHSCst))) ||
-      !match(RHS, m_ICmp(RHSCC, m_Value(Val2),
-             m_ConstantInt(RHSCst))))
+  if (!match(LHS, m_ICmp(LHSCC, m_Value(Val), m_ConstantInt(LHSCst))) ||
+      !match(RHS, m_ICmp(RHSCC, m_Value(Val2), m_ConstantInt(RHSCst))))
     return 0;
+
+  
+  // (icmp ne A, 0) | (icmp ne B, 0) --> (icmp ne (A|B), 0)
+  if (LHSCst == RHSCst && LHSCC == RHSCC &&
+      LHSCC == ICmpInst::ICMP_NE && LHSCst->isZero()) {
+    Value *NewOr = Builder->CreateOr(Val, Val2);
+    return new ICmpInst(LHSCC, NewOr, LHSCst);
+  }
   
   // From here on, we only handle:
   //    (icmp1 A, C1) | (icmp2 A, C2) --> something simpler.

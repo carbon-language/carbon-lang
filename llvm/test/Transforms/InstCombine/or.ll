@@ -1,6 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
-;
 ; RUN: opt < %s -instcombine -S | FileCheck %s
+
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
 define i32 @test1(i32 %A) {
         %B = or i32 %A, 0
@@ -252,4 +253,45 @@ define i1 @test25(i32 %A, i32 %B) {
 ; CHECK-NEXT: icmp ne i32 %B, 57
 ; CHECK-NEXT:  %F = and i1 
 ; CHECK-NEXT:  ret i1 %F
+}
+
+; PR5634
+define i1 @test26(i32 %A, i32 %B) {
+        %C1 = icmp eq i32 %A, 0
+        %C2 = icmp eq i32 %B, 0
+        ; (A == 0) & (A == 0)   -->   (A|B) == 0
+        %D = and i1 %C1, %C2
+        ret i1 %D
+; CHECK: @test26
+; CHECK: or i32 %A, %B
+; CHECK: icmp eq i32 {{.*}}, 0
+; CHECK: ret i1 
+}
+
+; PR5634
+define i1 @test27(i32* %A, i32* %B) {
+        %C1 = icmp eq i32* %A, null
+        %C2 = icmp eq i32* %B, null
+        ; (A == 0) & (A == 0)   -->   (A|B) == 0
+        %D = and i1 %C1, %C2
+        ret i1 %D
+; CHECK: @test27
+; CHECK: ptrtoint i32* %A
+; CHECK: ptrtoint i32* %B
+; CHECK: or i32 
+; CHECK: icmp eq i32 {{.*}}, 0
+; CHECK: ret i1 
+}
+
+; PR5634
+define i1 @test28(i32 %A, i32 %B) {
+        %C1 = icmp ne i32 %A, 0
+        %C2 = icmp ne i32 %B, 0
+        ; (A != 0) | (A != 0)   -->   (A|B) != 0
+        %D = or i1 %C1, %C2
+        ret i1 %D
+; CHECK: @test28
+; CHECK: or i32 %A, %B
+; CHECK: icmp ne i32 {{.*}}, 0
+; CHECK: ret i1 
 }
