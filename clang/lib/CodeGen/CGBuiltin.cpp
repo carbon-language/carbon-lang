@@ -530,7 +530,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Ptr = EmitScalarExpr(E->getArg(0));
     const llvm::Type *ElTy =
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
-    Builder.CreateStore(llvm::Constant::getNullValue(ElTy), Ptr, true);
+    llvm::StoreInst *Store = 
+      Builder.CreateStore(llvm::Constant::getNullValue(ElTy), Ptr);
+    Store->setVolatile(true);
     return RValue::get(0);
   }
 
