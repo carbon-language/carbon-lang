@@ -2993,7 +2993,7 @@ llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
                         4, true);
   }
 
-  return Builder.CreateLoad(Entry, false, "tmp");
+  return Builder.CreateLoad(Entry, "tmp");
 }
 
 llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
@@ -3009,7 +3009,7 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
                         4, true);
   }
 
-  return Builder.CreateLoad(Entry, false, "tmp");
+  return Builder.CreateLoad(Entry, "tmp");
 }
 
 llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
@@ -4516,7 +4516,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
 
   llvm::GlobalVariable *PTGV = CGM.getModule().getGlobalVariable(ProtocolName);
   if (PTGV)
-    return Builder.CreateLoad(PTGV, false, "tmp");
+    return Builder.CreateLoad(PTGV, "tmp");
   PTGV = new llvm::GlobalVariable(
     CGM.getModule(),
     Init->getType(), false,
@@ -4526,7 +4526,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
   PTGV->setSection("__DATA, __objc_protorefs, coalesced, no_dead_strip");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   CGM.AddUsedGlobal(PTGV);
-  return Builder.CreateLoad(PTGV, false, "tmp");
+  return Builder.CreateLoad(PTGV, "tmp");
 }
 
 /// GenerateCategory - Build metadata for a category implementation.
@@ -5031,8 +5031,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(
   CodeGen::CodeGenFunction &CGF,
   const ObjCInterfaceDecl *Interface,
   const ObjCIvarDecl *Ivar) {
-  return CGF.Builder.CreateLoad(ObjCIvarOffsetVariable(Interface, Ivar),
-                                false, "ivar");
+  return CGF.Builder.CreateLoad(ObjCIvarOffsetVariable(Interface, Ivar),"ivar");
 }
 
 CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
@@ -5187,7 +5186,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
     CGM.AddUsedGlobal(Entry);
   }
 
-  return Builder.CreateLoad(Entry, false, "tmp");
+  return Builder.CreateLoad(Entry, "tmp");
 }
 
 llvm::Value *
@@ -5210,7 +5209,7 @@ CGObjCNonFragileABIMac::EmitSuperClassRef(CGBuilderTy &Builder,
     CGM.AddUsedGlobal(Entry);
   }
 
-  return Builder.CreateLoad(Entry, false, "tmp");
+  return Builder.CreateLoad(Entry, "tmp");
 }
 
 /// EmitMetaClassRef - Return a Value * of the address of _class_t
@@ -5220,7 +5219,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
                                                       const ObjCInterfaceDecl *ID) {
   llvm::GlobalVariable * &Entry = MetaClassReferences[ID->getIdentifier()];
   if (Entry)
-    return Builder.CreateLoad(Entry, false, "tmp");
+    return Builder.CreateLoad(Entry, "tmp");
 
   std::string MetaClassName(getMetaclassSymbolPrefix() + ID->getNameAsString());
   llvm::GlobalVariable *MetaClassGV = GetClassGlobal(MetaClassName);
@@ -5236,7 +5235,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
   Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
   CGM.AddUsedGlobal(Entry);
 
-  return Builder.CreateLoad(Entry, false, "tmp");
+  return Builder.CreateLoad(Entry, "tmp");
 }
 
 /// GetClass - Return a reference to the class for the given interface
@@ -5323,7 +5322,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
     CGM.AddUsedGlobal(Entry);
   }
 
-  return Builder.CreateLoad(Entry, false, "tmp");
+  return Builder.CreateLoad(Entry, "tmp");
 }
 /// EmitObjCIvarAssign - Code gen for assigning to a __strong object.
 /// objc_assign_ivar (id src, id *dst, ptrdiff_t)

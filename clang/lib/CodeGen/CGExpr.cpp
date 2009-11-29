@@ -312,9 +312,12 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                                QualType Ty) {
-  llvm::Value *V = Builder.CreateLoad(Addr, Volatile, "tmp");
+  llvm::LoadInst *Load = Builder.CreateLoad(Addr, "tmp");
+  if (Volatile)
+    Load->setVolatile(true);
 
   // Bool can have different representation in memory than in registers.
+  llvm::Value *V = Load;
   if (Ty->isBooleanType())
     if (V->getType() != llvm::Type::getInt1Ty(VMContext))
       V = Builder.CreateTrunc(V, llvm::Type::getInt1Ty(VMContext), "tobool");
@@ -867,7 +870,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 
     if (VD->hasAttr<BlocksAttr>()) {
       V = Builder.CreateStructGEP(V, 1, "forwarding");
-      V = Builder.CreateLoad(V, false);
+      V = Builder.CreateLoad(V);
       V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD),
                                   VD->getNameAsString());
     }

@@ -291,7 +291,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
               (VD->getType().isObjCGCWeak() ? BLOCK_FIELD_IS_WEAK : 0);
             llvm::Value *Loc = LocalDeclMap[VD];
             Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
-            Loc = Builder.CreateLoad(Loc, false);
+            Loc = Builder.CreateLoad(Loc);
             Builder.CreateStore(Loc, Addr);
             ++helpersize;
             continue;
@@ -331,7 +331,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
                                     "block.literal");
             Ty = llvm::PointerType::get(Ty, 0);
             Loc = Builder.CreateBitCast(Loc, Ty);
-            Loc = Builder.CreateLoad(Loc, false);
+            Loc = Builder.CreateLoad(Loc);
             // Loc = Builder.CreateBitCast(Loc, Ty);
           }
           Builder.CreateStore(Loc, Addr);
@@ -494,7 +494,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
                E->arg_begin(), E->arg_end());
 
   // Load the function.
-  llvm::Value *Func = Builder.CreateLoad(FuncPtr, false, "tmp");
+  llvm::Value *Func = Builder.CreateLoad(FuncPtr, "tmp");
 
   QualType ResultType = FnType->getAs<FunctionType>()->getResultType();
 
@@ -551,9 +551,9 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
     const llvm::Type *Ty = PtrStructTy;
     Ty = llvm::PointerType::get(Ty, 0);
     V = Builder.CreateBitCast(V, Ty);
-    V = Builder.CreateLoad(V, false);
+    V = Builder.CreateLoad(V);
     V = Builder.CreateStructGEP(V, 1, "forwarding");
-    V = Builder.CreateLoad(V, false);
+    V = Builder.CreateLoad(V);
     V = Builder.CreateBitCast(V, PtrStructTy);
     V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD), 
                                 VD->getNameAsString());

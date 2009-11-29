@@ -1015,7 +1015,7 @@ Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
   llvm::Value *V = CGF.GetAddrOfBlockDecl(E);
   if (E->getType().isObjCGCWeak())
     return CGF.CGM.getObjCRuntime().EmitObjCWeakRead(CGF, V);
-  return Builder.CreateLoad(V, false, "tmp");
+  return Builder.CreateLoad(V, "tmp");
 }
 
 //===----------------------------------------------------------------------===//

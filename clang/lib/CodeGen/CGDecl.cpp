@@ -568,7 +568,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
     DelayedCleanupBlock scope(*this);
     llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
-    V = Builder.CreateLoad(V, false);
+    V = Builder.CreateLoad(V);
     BuildBlockRelease(V);
   }
 }
