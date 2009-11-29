@@ -201,7 +201,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       // If we reach a lifetime begin or end marker, then the query ends here
       // because the value is undefined.
       } else if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-		 II->getIntrinsicID() == Intrinsic::lifetime_end) {
+                 II->getIntrinsicID() == Intrinsic::lifetime_end) {
         uint64_t invariantSize = ~0ULL;
         if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(1)))
           invariantSize = CI->getZExtValue();
