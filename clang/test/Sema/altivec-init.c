@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -faltivec -verify -pedantic -fsyntax-only -fblocks=0
+// RUN: clang-cc %s -faltivec -verify -pedantic -fsyntax-only
 
 typedef int v4 __attribute((vector_size(16)));
 typedef short v8 __attribute((vector_size(16)));
