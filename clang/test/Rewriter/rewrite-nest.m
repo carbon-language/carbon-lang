@@ -1,4 +1,4 @@
-// RUN: clang-cc -rewrite-objc %s -o=-
+// RUN: clang-cc -rewrite-objc %s -o -
 
 @interface NSMapTable @end
 @interface NSEnumerator @end

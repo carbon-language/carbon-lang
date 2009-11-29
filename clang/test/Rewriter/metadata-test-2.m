@@ -1,4 +1,4 @@
-// RUN: clang-cc -rewrite-objc %s -o=-
+// RUN: clang-cc -rewrite-objc %s -o -
 
 typedef struct _NSPoint {
     float x;

@@ -1,4 +1,4 @@
-// RUN: clang-cc -rewrite-objc %s -o=-
+// RUN: clang-cc -rewrite-objc %s -o -
 
 @protocol P
 - (id<P>) Meth: (id<P>) Arg;
