@@ -21,7 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-FrontendAction::FrontendAction() : Instance(0), CurrentTimer(0) {}
+FrontendAction::FrontendAction() : Instance(0) {}
 
 FrontendAction::~FrontendAction() {}
 
@@ -144,8 +144,11 @@ void FrontendAction::Execute() {
       return;
   }
 
-  llvm::TimeRegion Timer(CurrentTimer);
-  ExecuteAction();
+  if (CI.hasFrontendTimer()) {
+    llvm::TimeRegion Timer(CI.getFrontendTimer());
+    ExecuteAction();
+  }
+  else ExecuteAction();
 }
 
 void FrontendAction::EndSourceFile() {

@@ -21,6 +21,7 @@ namespace llvm {
 class LLVMContext;
 class raw_ostream;
 class raw_fd_ostream;
+class Timer;
 }
 
 namespace clang {
@@ -88,6 +89,9 @@ class CompilerInstance {
 
   /// The code completion consumer.
   llvm::OwningPtr<CodeCompleteConsumer> CompletionConsumer;
+
+  /// The frontend timer
+  llvm::OwningPtr<llvm::Timer> FrontendTimer;
 
   /// The list of active output files.
   std::list< std::pair<std::string, llvm::raw_ostream*> > OutputFiles;
@@ -367,6 +371,17 @@ public:
   void setCodeCompletionConsumer(CodeCompleteConsumer *Value);
 
   /// }
+  /// @name Frontend timer
+  /// {
+
+  bool hasFrontendTimer() const { return FrontendTimer != 0; }
+
+  llvm::Timer &getFrontendTimer() const {
+    assert(FrontendTimer && "Compiler instance has no frontend timer!");
+    return *FrontendTimer;
+  }
+
+  /// }
   /// @name Output Files
   /// {
 
@@ -461,6 +476,9 @@ public:
                                unsigned Line, unsigned Column,
                                bool UseDebugPrinter, bool ShowMacros,
                                llvm::raw_ostream &OS);
+
+  /// Create the frontend timer and replace any existing one with it.
+  void createFrontendTimer();
 
   /// Create the default output file (from the invocation's options) and add it
   /// to the list of tracked output files.

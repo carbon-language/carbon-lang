@@ -27,6 +27,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
 using namespace clang;
 
@@ -255,6 +256,10 @@ void CompilerInstance::createCodeCompletionConsumer() {
                                  getFrontendOpts().DebugCodeCompletionPrinter,
                                  getFrontendOpts().ShowMacrosInCodeCompletion,
                                  llvm::outs()));
+}
+
+void CompilerInstance::createFrontendTimer() {
+  FrontendTimer.reset(new llvm::Timer("Clang front-end timer"));
 }
 
 CodeCompleteConsumer *

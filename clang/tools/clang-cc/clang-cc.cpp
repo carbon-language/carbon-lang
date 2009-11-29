@@ -74,11 +74,6 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
-/// ClangFrontendTimer - The front-end activities should charge time to it with
-/// TimeRegion.  The -ftime-report option controls whether this will do
-/// anything.
-llvm::Timer *ClangFrontendTimer = 0;
-
 static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   using namespace clang::frontend;
 
@@ -244,7 +239,7 @@ int main(int argc, char **argv) {
                  << " hosted on " << llvm::sys::getHostTriple() << "\n";
 
   if (Clang.getFrontendOpts().ShowTimers)
-    ClangFrontendTimer = new llvm::Timer("Clang front-end time");
+    Clang.createFrontendTimer();
 
   for (unsigned i = 0, e = Clang.getFrontendOpts().Inputs.size(); i != e; ++i) {
     const std::string &InFile = Clang.getFrontendOpts().Inputs[i].second;
@@ -272,7 +267,6 @@ int main(int argc, char **argv) {
     if (!Act)
       break;
 
-    Act->setCurrentTimer(ClangFrontendTimer);
     if (Act->BeginSourceFile(Clang, InFile, IsAST)) {
       Act->Execute();
       Act->EndSourceFile();
@@ -288,8 +282,6 @@ int main(int argc, char **argv) {
     Clang.getFileManager().PrintStats();
     fprintf(stderr, "\n");
   }
-
-  delete ClangFrontendTimer;
 
   // Return the appropriate status when verifying diagnostics.
   //

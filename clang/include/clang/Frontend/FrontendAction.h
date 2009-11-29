@@ -14,10 +14,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include <string>
 
-namespace llvm {
-class Timer;
-}
-
 namespace clang {
 class ASTUnit;
 class ASTConsumer;
@@ -29,7 +25,6 @@ class FrontendAction {
   std::string CurrentFile;
   llvm::OwningPtr<ASTUnit> CurrentASTUnit;
   CompilerInstance *Instance;
-  llvm::Timer *CurrentTimer;
 
 protected:
   /// @name Implementation Action Interface
@@ -110,18 +105,6 @@ public:
   }
 
   void setCurrentFile(llvm::StringRef Value, ASTUnit *AST = 0);
-
-  /// @}
-  /// @name Timing Utilities
-  /// @{
-
-  llvm::Timer *getCurrentTimer() const {
-    return CurrentTimer;
-  }
-
-  void setCurrentTimer(llvm::Timer *Value) {
-    CurrentTimer = Value;
-  }
 
   /// @}
   /// @name Supported Modes
