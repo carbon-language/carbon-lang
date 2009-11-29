@@ -1,4 +1,4 @@
-// RUN: clang-cc --emit-llvm -o %t %s
+// RUN: clang-cc -emit-llvm -o %t %s
 
 __attribute__((visibility("hidden")))
 @interface Hidden
