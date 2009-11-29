@@ -407,7 +407,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.POSIXThreads)
     Res.push_back("-pthread");
   if (Opts.Blocks)
-    Res.push_back("-fblocks=1");
+    Res.push_back("-fblocks");
   if (Opts.EmitAllDecls)
     Res.push_back("-femit-all-decls");
   if (!Opts.MathErrno)
@@ -430,7 +430,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.AccessControl)
     Res.push_back("-faccess-control");
   if (!Opts.CharIsSigned)
-    Res.push_back("-fsigned-char=0");
+    Res.push_back("-fno-signed-char");
   if (Opts.ShortWChar)
     Res.push_back("-fshort-wchar");
   if (!Opts.ElideConstructors)

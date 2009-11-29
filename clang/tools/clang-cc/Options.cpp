@@ -1122,13 +1122,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
   if (Trigraphs.getPosition())
     Options.Trigraphs = Trigraphs;  // Command line option wins if specified.
 
-  // If in a conformant language mode (e.g. -std=c99) Blocks defaults to off
-  // even if they are normally on for the target.  In GNU modes (e.g.
-  // -std=gnu99) the default for blocks depends on the target settings.
-  // However, blocks are not turned off when compiling Obj-C or Obj-C++ code.
-  if (!Options.ObjC1 && !Options.GNUMode)
-    Options.Blocks = 0;
-
   // Default to not accepting '$' in identifiers when preprocessing assembler.
   Options.DollarIdents = !Options.AsmPreprocessor;
   if (DollarsInIdents.getPosition())  // Explicit setting overrides default.
@@ -1143,8 +1136,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
       Options.LaxVectorConversions = 0;
   Options.Exceptions = Exceptions;
   Options.Rtti = !NoRtti;
-  if (EnableBlocks.getPosition())
-    Options.Blocks = EnableBlocks;
+  Options.Blocks = EnableBlocks;
   Options.CharIsSigned = !NoSignedChar;
   if (ShortWChar.getPosition())
     Options.ShortWChar = ShortWChar;

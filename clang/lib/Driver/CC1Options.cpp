@@ -13,6 +13,7 @@
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/LangStandard.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/SmallVector.h"
@@ -218,7 +219,8 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args) {
   Opts.Warnings = getAllArgValues(Args, OPT_W);
 }
 
-static void ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
+static FrontendOptions::InputKind
+ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
   using namespace cc1options;
   Opts.ProgramAction = frontend::ParseSyntaxOnly;
   if (const Arg *A = Args.getLastArg(OPT_Action_Group)) {
@@ -349,11 +351,17 @@ static void ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
     Inputs.push_back("-");
   for (unsigned i = 0, e = Inputs.size(); i != e; ++i) {
     FrontendOptions::InputKind IK = DashX;
-    if (IK == FrontendOptions::IK_None)
+    if (IK == FrontendOptions::IK_None) {
       IK = FrontendOptions::getInputKindForExtension(
         llvm::StringRef(Inputs[i]).rsplit('.').second);
+      // FIXME: Remove this hack.
+      if (i == 0)
+        DashX = IK;
+    }
     Opts.Inputs.push_back(std::make_pair(IK, Inputs[i]));
   }
+
+  return DashX;
 }
 
 static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
@@ -399,7 +407,160 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   // FIXME: Need options for the various environment variables!
 }
 
-static void ParseLangArgs(LangOptions &Opts, ArgList &Args) {
+static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
+                          FrontendOptions::InputKind IK) {
+  // FIXME: Cleanup per-file based stuff.
+
+  // Set some properties which depend soley on the input kind; it would be nice
+  // to move these to the language standard, and have the driver resolve the
+  // input kind + language standard.
+  if (IK == FrontendOptions::IK_Asm) {
+    Opts.AsmPreprocessor = 1;
+  } else if (IK == FrontendOptions::IK_ObjC ||
+             IK == FrontendOptions::IK_ObjCXX ||
+             IK == FrontendOptions::IK_PreprocessedObjC ||
+             IK == FrontendOptions::IK_PreprocessedObjCXX) {
+    Opts.ObjC1 = Opts.ObjC2 = 1;
+  }
+
+  LangStandard::Kind LangStd = LangStandard::lang_unspecified;
+  if (const Arg *A = Args.getLastArg(OPT_std_EQ)) {
+    LangStd = llvm::StringSwitch<LangStandard::Kind>(A->getValue(Args))
+#define LANGSTANDARD(id, name, desc, features) \
+      .Case(name, LangStandard::lang_##id)
+#include "clang/Frontend/LangStandards.def"
+      .Default(LangStandard::lang_unspecified);
+    if (LangStd == LangStandard::lang_unspecified)
+      llvm::errs() << "error: invalid argument '" << A->getValue(Args)
+                   << "' to '-std'\n";
+  }
+
+  if (LangStd == LangStandard::lang_unspecified) {
+    // Based on the base language, pick one.
+    switch (IK) {
+    case FrontendOptions::IK_None:
+    case FrontendOptions::IK_AST:
+      assert(0 && "Invalid input kind!");
+    case FrontendOptions::IK_OpenCL:
+      LangStd = LangStandard::lang_opencl;
+      break;
+    case FrontendOptions::IK_Asm:
+    case FrontendOptions::IK_C:
+    case FrontendOptions::IK_PreprocessedC:
+    case FrontendOptions::IK_ObjC:
+    case FrontendOptions::IK_PreprocessedObjC:
+      LangStd = LangStandard::lang_gnu99;
+      break;
+    case FrontendOptions::IK_CXX:
+    case FrontendOptions::IK_PreprocessedCXX:
+    case FrontendOptions::IK_ObjCXX:
+    case FrontendOptions::IK_PreprocessedObjCXX:
+      LangStd = LangStandard::lang_gnucxx98;
+      break;
+    }
+  }
+
+  const LangStandard &Std = LangStandard::getLangStandardForKind(LangStd);
+  Opts.BCPLComment = Std.hasBCPLComments();
+  Opts.C99 = Std.isC99();
+  Opts.CPlusPlus = Std.isCPlusPlus();
+  Opts.CPlusPlus0x = Std.isCPlusPlus0x();
+  Opts.Digraphs = Std.hasDigraphs();
+  Opts.GNUMode = Std.isGNUMode();
+  Opts.GNUInline = !Std.isC99();
+  Opts.HexFloats = Std.hasHexFloats();
+  Opts.ImplicitInt = Std.hasImplicitInt();
+
+  // OpenCL has some additional defaults.
+  if (LangStd == LangStandard::lang_opencl) {
+    Opts.OpenCL = 1;
+    Opts.AltiVec = 1;
+    Opts.CXXOperatorNames = 1;
+    Opts.LaxVectorConversions = 1;
+  }
+
+  // OpenCL and C++ both have bool, true, false keywords.
+  Opts.Bool = Opts.OpenCL || Opts.CPlusPlus;
+
+  if (Opts.CPlusPlus)
+    Opts.CXXOperatorNames = !Args.hasArg(OPT_fno_operator_names);
+
+  if (Args.hasArg(OPT_fobjc_gc_only))
+    Opts.setGCMode(LangOptions::GCOnly);
+  else if (Args.hasArg(OPT_fobjc_gc))
+    Opts.setGCMode(LangOptions::HybridGC);
+
+  if (Args.hasArg(OPT_print_ivar_layout))
+    Opts.ObjCGCBitmapPrint = 1;
+
+  if (Args.hasArg(OPT_faltivec))
+    Opts.AltiVec = 1;
+
+  if (Args.hasArg(OPT_pthread))
+    Opts.POSIXThreads = 1;
+
+  llvm::StringRef Vis = getLastArgValue(Args, OPT_fvisibility,
+                                        "default");
+  if (Vis == "default")
+    Opts.setVisibilityMode(LangOptions::Default);
+  else if (Vis == "hidden")
+    Opts.setVisibilityMode(LangOptions::Hidden);
+  else if (Vis == "protected")
+    Opts.setVisibilityMode(LangOptions::Protected);
+  else
+    llvm::errs() << "error: invalid argument '" << Vis
+                 << "' to '-fvisibility'\n";
+
+  Opts.OverflowChecking = Args.hasArg(OPT_ftrapv);
+
+  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
+  // is specified, or -std is set to a conforming mode.
+  Opts.Trigraphs = !Opts.GNUMode;
+  if (Args.hasArg(OPT_trigraphs))
+    Opts.Trigraphs = 1;
+
+  Opts.DollarIdents = Opts.AsmPreprocessor;
+  if (Args.hasArg(OPT_fdollars_in_identifiers))
+    Opts.DollarIdents = 1;
+
+  Opts.PascalStrings = Args.hasArg(OPT_fpascal_strings);
+  Opts.Microsoft = Args.hasArg(OPT_fms_extensions);
+  Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
+  if (Args.hasArg(OPT_fno_lax_vector_conversions))
+      Opts.LaxVectorConversions = 0;
+  Opts.Exceptions = Args.hasArg(OPT_fexceptions);
+  Opts.Rtti = !Args.hasArg(OPT_fno_rtti);
+  Opts.Blocks = Args.hasArg(OPT_fblocks);
+  Opts.CharIsSigned = !Args.hasArg(OPT_fno_signed_char);
+  Opts.ShortWChar = Args.hasArg(OPT_fshort_wchar);
+  Opts.Freestanding = Args.hasArg(OPT_ffreestanding);
+  Opts.NoBuiltin = Args.hasArg(OPT_fno_builtin) || Opts.Freestanding;
+  Opts.HeinousExtensions = Args.hasArg(OPT_fheinous_gnu_extensions);
+  Opts.AccessControl = Args.hasArg(OPT_faccess_control);
+  Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);
+  Opts.MathErrno = !Args.hasArg(OPT_fno_math_errno);
+  Opts.InstantiationDepth = getLastArgIntValue(Args, OPT_ftemplate_depth, 99);
+  Opts.NeXTRuntime = !Args.hasArg(OPT_fgnu_runtime);
+  Opts.ObjCConstantStringClass = getLastArgValue(Args,
+                                                 OPT_fconstant_string_class);
+  Opts.ObjCNonFragileABI = Args.hasArg(OPT_fobjc_nonfragile_abi);
+  Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
+  Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0);
+  Opts.Static = Args.hasArg(OPT_static_define);
+  Opts.OptimizeSize = 0;
+  Opts.Optimize = 0; // FIXME!
+  Opts.NoInline = 0; // FIXME!
+
+  unsigned SSP = getLastArgIntValue(Args, OPT_stack_protector, 0);
+  switch (SSP) {
+  default:
+    llvm::errs() << "error: invalid value '" << SSP
+                 << "' for '-stack-protector'\n";
+    break;
+  case 0: Opts.setStackProtectorMode(LangOptions::SSPOff); break;
+  case 1: Opts.setStackProtectorMode(LangOptions::SSPOn);  break;
+  case 2: Opts.setStackProtectorMode(LangOptions::SSPReq); break;
+  }
 }
 
 static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
@@ -488,9 +649,11 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *InputArgs);
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *InputArgs);
-  ParseFrontendArgs(Res.getFrontendOpts(), *InputArgs);
+  FrontendOptions::InputKind DashX =
+    ParseFrontendArgs(Res.getFrontendOpts(), *InputArgs);
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *InputArgs);
-  ParseLangArgs(Res.getLangOpts(), *InputArgs);
+  if (DashX != FrontendOptions::IK_AST)
+    ParseLangArgs(Res.getLangOpts(), *InputArgs, DashX);
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *InputArgs);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *InputArgs);
   ParseTargetArgs(Res.getTargetOpts(), *InputArgs);
