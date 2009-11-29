@@ -36,7 +36,7 @@
 // C99:#define __STRICT_ANSI__ 1
 //
 // 
-// RUN: clang-cc -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix COMMON %s
+// RUN: clang-cc -E -dM < /dev/null | FileCheck -check-prefix COMMON %s
 //
 // COMMON:#define __CONSTANT_CFSTRINGS__ 1
 // COMMON:#define __FINITE_MATH_ONLY__ 0
@@ -108,7 +108,7 @@
 // PASCAL:#define __PASCAL_STRINGS__ 1
 //
 // 
-// RUN: clang-cc -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix SCHAR %s
+// RUN: clang-cc -E -dM < /dev/null | FileCheck -check-prefix SCHAR %s
 // 
 // SCHAR:#define __STDC__ 1
 // SCHAR-NOT:#define __UNSIGNED_CHAR__

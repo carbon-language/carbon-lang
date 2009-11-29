@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -fms-extensions=0 %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 // Errors
 export class foo { };   // expected-error {{expected template}}
