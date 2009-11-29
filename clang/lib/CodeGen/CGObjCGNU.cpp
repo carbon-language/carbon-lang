@@ -1371,8 +1371,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
         ConstantStrings.size() + 1);
     ConstantStrings.push_back(NULLPtr);
 
-    const char *StringClass = CGM.getLangOptions().ObjCConstantStringClass;
-    if (!StringClass) StringClass = "NXConstantString";
+    llvm::StringRef StringClass = CGM.getLangOptions().ObjCConstantStringClass;
+    if (StringClass.empty()) StringClass = "NXConstantString";
     Elements.push_back(MakeConstantString(StringClass,
                 ".objc_static_class_name"));
     Elements.push_back(llvm::ConstantArray::get(StaticsArrayTy,

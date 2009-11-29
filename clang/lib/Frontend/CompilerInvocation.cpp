@@ -179,18 +179,18 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
 
 static const char *getInputKindName(FrontendOptions::InputKind Kind) {
   switch (Kind) {
-  case FrontendOptions::IK_None: break;
-  case FrontendOptions::IK_AST: return "ast";
-  case FrontendOptions::IK_Asm: return "assembler-with-cpp";
-  case FrontendOptions::IK_C: return "c";
-  case FrontendOptions::IK_CXX: return "c++";
-  case FrontendOptions::IK_ObjC: return "objective-c";
-  case FrontendOptions::IK_ObjCXX: return "objective-c++";
-  case FrontendOptions::IK_OpenCL: return "cl";
-  case FrontendOptions::IK_PreprocessedC: return "cpp-output";
-  case FrontendOptions::IK_PreprocessedCXX: return "c++-cpp-output";
-  case FrontendOptions::IK_PreprocessedObjC: return "objective-c-cpp-output";
-  case FrontendOptions::IK_PreprocessedObjCXX: return "objective-c++-cpp-output";
+  case FrontendOptions::IK_None:              break;
+  case FrontendOptions::IK_AST:               return "ast";
+  case FrontendOptions::IK_Asm:               return "assembler-with-cpp";
+  case FrontendOptions::IK_C:                 return "c";
+  case FrontendOptions::IK_CXX:               return "c++";
+  case FrontendOptions::IK_ObjC:              return "objective-c";
+  case FrontendOptions::IK_ObjCXX:            return "objective-c++";
+  case FrontendOptions::IK_OpenCL:            return "cl";
+  case FrontendOptions::IK_PreprocessedC:     return "cpp-output";
+  case FrontendOptions::IK_PreprocessedCXX:   return "c++-cpp-output";
+  case FrontendOptions::IK_PreprocessedObjC:  return "objective-c-cpp-output";
+  case FrontendOptions::IK_PreprocessedObjCXX:return "objective-c++-cpp-output";
   }
 
   llvm::llvm_unreachable("Unexpected language kind!");
@@ -461,7 +461,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-ftemplate-depth");
     Res.push_back(llvm::utostr(Opts.InstantiationDepth));
   }
-  if (Opts.ObjCConstantStringClass) {
+  if (!Opts.ObjCConstantStringClass.empty()) {
     Res.push_back("-fconstant-string-class");
     Res.push_back(Opts.ObjCConstantStringClass);
   }

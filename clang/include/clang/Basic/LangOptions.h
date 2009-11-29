@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_LANGOPTIONS_H
 #define LLVM_CLANG_LANGOPTIONS_H
 
+#include <string>
+
 namespace clang {
 
 /// LangOptions - This class keeps track of the various options that can be
@@ -104,7 +106,7 @@ private:
 public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
-  const char *ObjCConstantStringClass;
+  std::string ObjCConstantStringClass;
 
   enum GCMode { NonGC, GCOnly, HybridGC };
   enum StackProtectorMode { SSPOff, SSPOn, SSPReq };
@@ -119,7 +121,6 @@ public:
     GNUMode = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
-    ObjCConstantStringClass = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = 0;
     Exceptions = Freestanding = NoBuiltin = 0;
