@@ -320,6 +320,7 @@ return:
 ;      G[j] = G[j] + G[j+1] + G[j-1];
 ;}
 
+; PR5501
 define void @test10(i32 %N, double* nocapture %G) nounwind ssp {
 entry:
   %0 = add i32 %N, -1
