@@ -492,7 +492,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   // Create a temporary for the loop index and initialize it with 0.
   llvm::Value *IndexPtr = CreateTempAlloca(SizeTy, "loop.index");
   llvm::Value *Zero = llvm::Constant::getNullValue(SizeTy);
-  Builder.CreateStore(Zero, IndexPtr, false);
+  Builder.CreateStore(Zero, IndexPtr);
 
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
@@ -540,7 +540,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   llvm::Value *NextVal = llvm::ConstantInt::get(SizeTy, 1);
   Counter = Builder.CreateLoad(IndexPtr);
   NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
-  Builder.CreateStore(NextVal, IndexPtr, false);
+  Builder.CreateStore(NextVal, IndexPtr);
 
   // Finally, branch back up to the condition for the next iteration.
   EmitBranch(CondBlock);
@@ -576,7 +576,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
                                            "loop.index");
   // Index = ElementCount;
-  Builder.CreateStore(UpperCount, IndexPtr, false);
+  Builder.CreateStore(UpperCount, IndexPtr);
 
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
@@ -619,7 +619,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   // Emit the decrement of the loop counter.
   Counter = Builder.CreateLoad(IndexPtr);
   Counter = Builder.CreateSub(Counter, One, "dec");
-  Builder.CreateStore(Counter, IndexPtr, false);
+  Builder.CreateStore(Counter, IndexPtr);
 
   // Finally, branch back up to the condition for the next iteration.
   EmitBranch(CondBlock);
@@ -1104,7 +1104,7 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
                                            "loop.index");
   llvm::Value* zeroConstant =
     llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
-  Builder.CreateStore(zeroConstant, IndexPtr, false);
+  Builder.CreateStore(zeroConstant, IndexPtr);
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
   llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
@@ -1154,7 +1154,7 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
   llvm::Value *NextVal = llvm::ConstantInt::get(Counter->getType(), 1);
   Counter = Builder.CreateLoad(IndexPtr);
   NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
-  Builder.CreateStore(NextVal, IndexPtr, false);
+  Builder.CreateStore(NextVal, IndexPtr);
 
   // Finally, branch back up to the condition for the next iteration.
   EmitBranch(CondBlock);
@@ -1181,7 +1181,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
                                            "loop.index");
   llvm::Value* zeroConstant =
   llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
-  Builder.CreateStore(zeroConstant, IndexPtr, false);
+  Builder.CreateStore(zeroConstant, IndexPtr);
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
   llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
@@ -1238,7 +1238,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
   llvm::Value *NextVal = llvm::ConstantInt::get(Counter->getType(), 1);
   Counter = Builder.CreateLoad(IndexPtr);
   NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
-  Builder.CreateStore(NextVal, IndexPtr, false);
+  Builder.CreateStore(NextVal, IndexPtr);
 
   // Finally, branch back up to the condition for the next iteration.
   EmitBranch(CondBlock);
