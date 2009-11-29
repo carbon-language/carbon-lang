@@ -9934,9 +9934,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         // Create a simple add instruction, and insert it into the struct.
         Instruction *Add = BinaryOperator::CreateAdd(LHS, RHS, "", &CI);
         Worklist.Add(Add);
-        Constant *V[2];
-        V[0] = UndefValue::get(LHS->getType());
-        V[1] = ConstantInt::getTrue(*Context);
+        Constant *V[] = {
+          UndefValue::get(LHS->getType()), ConstantInt::getTrue(*Context)
+        };
         Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
         return InsertValueInst::Create(Struct, Add, 0);
       }
@@ -9946,9 +9946,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         // Create a simple add instruction, and insert it into the struct.
         Instruction *Add = BinaryOperator::CreateNUWAdd(LHS, RHS, "", &CI);
         Worklist.Add(Add);
-        Constant *V[2];
-        V[0] = UndefValue::get(LHS->getType());
-        V[1] = ConstantInt::getFalse(*Context);
+        Constant *V[] = {
+          UndefValue::get(LHS->getType()), ConstantInt::getFalse(*Context)
+        };
         Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
         return InsertValueInst::Create(Struct, Add, 0);
       }
@@ -9973,7 +9973,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // X + 0 -> {X, false}
       if (RHS->isZero()) {
         Constant *V[] = {
-          UndefValue::get(II->getType()), ConstantInt::getFalse(*Context)
+          UndefValue::get(II->getOperand(0)->getType()),
+          ConstantInt::getFalse(*Context)
         };
         Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
         return InsertValueInst::Create(Struct, II->getOperand(1), 0);
@@ -9992,7 +9993,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // X - 0 -> {X, false}
       if (RHS->isZero()) {
         Constant *V[] = {
-          UndefValue::get(II->getType()), ConstantInt::getFalse(*Context)
+          UndefValue::get(II->getOperand(1)->getType()),
+          ConstantInt::getFalse(*Context)
         };
         Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
         return InsertValueInst::Create(Struct, II->getOperand(1), 0);
@@ -10021,11 +10023,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       
       // X * 1 -> {X, false}
       if (RHSI->equalsInt(1)) {
-        Constant *V[2];
-        V[0] = UndefValue::get(II->getType());
-        V[1] = ConstantInt::getFalse(*Context);
+        Constant *V[] = {
+          UndefValue::get(II->getOperand(1)->getType()),
+          ConstantInt::getFalse(*Context)
+        };
         Constant *Struct = ConstantStruct::get(*Context, V, 2, false);
-        return InsertValueInst::Create(Struct, II->getOperand(1), 1);
+        return InsertValueInst::Create(Struct, II->getOperand(1), 0);
       }
     }
     break;
