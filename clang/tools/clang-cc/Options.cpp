@@ -1047,11 +1047,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
              IK == FrontendOptions::IK_PreprocessedObjC ||
              IK == FrontendOptions::IK_PreprocessedObjCXX) {
     Options.ObjC1 = Options.ObjC2 = 1;
-  } else if (IK == FrontendOptions::IK_OpenCL) {
-    Options.OpenCL = 1;
-    Options.AltiVec = 1;
-    Options.CXXOperatorNames = 1;
-    Options.LaxVectorConversions = 1;
   }
 
   if (LangStd == LangStandard::lang_unspecified) {
@@ -1085,9 +1080,21 @@ void clang::InitializeLangOptions(LangOptions &Options,
   Options.CPlusPlus = Std.isCPlusPlus();
   Options.CPlusPlus0x = Std.isCPlusPlus0x();
   Options.Digraphs = Std.hasDigraphs();
+  Options.GNUInline = !Std.isC99();
   Options.GNUMode = Std.isGNUMode();
   Options.HexFloats = Std.hasHexFloats();
   Options.ImplicitInt = Std.hasImplicitInt();
+
+  // OpenCL has some additional defaults.
+  if (LangStd == LangStandard::lang_opencl) {
+    Options.OpenCL = 1;
+    Options.AltiVec = 1;
+    Options.CXXOperatorNames = 1;
+    Options.LaxVectorConversions = 1;
+  }
+
+  // OpenCL and C++ both have bool, true, false keywords.
+  Options.Bool = Options.OpenCL || Options.CPlusPlus;
 
   if (Options.CPlusPlus)
     Options.CXXOperatorNames = !NoOperatorNames;
@@ -1122,10 +1129,8 @@ void clang::InitializeLangOptions(LangOptions &Options,
   if (!Options.ObjC1 && !Options.GNUMode)
     Options.Blocks = 0;
 
-  // Default to not accepting '$' in identifiers when preprocessing assembler,
-  // but do accept when preprocessing C.  FIXME: these defaults are right for
-  // darwin, are they right everywhere?
-  Options.DollarIdents = IK != FrontendOptions::IK_Asm;
+  // Default to not accepting '$' in identifiers when preprocessing assembler.
+  Options.DollarIdents = !Options.AsmPreprocessor;
   if (DollarsInIdents.getPosition())  // Explicit setting overrides default.
     Options.DollarIdents = DollarsInIdents;
 
@@ -1156,9 +1161,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
 
   Options.ElideConstructors = !NoElideConstructors;
 
-  // OpenCL and C++ both have bool, true, false keywords.
-  Options.Bool = Options.OpenCL || Options.CPlusPlus;
-
   Options.MathErrno = !NoMathErrno;
 
   if (TemplateDepth.getPosition())
@@ -1169,7 +1171,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
     Options.NeXTRuntime = 0;
 
   if (!ObjCConstantStringClass.empty())
-    Options.ObjCConstantStringClass = ObjCConstantStringClass.c_str();
+    Options.ObjCConstantStringClass = ObjCConstantStringClass;
 
   if (ObjCNonFragileABI)
     Options.ObjCNonFragileABI = 1;
@@ -1185,8 +1187,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
 
   assert(PICLevel <= 2 && "Invalid value for -pic-level");
   Options.PICLevel = PICLevel;
-
-  Options.GNUInline = !Options.C99;
 
   // This is the __NO_INLINE__ define, which just depends on things like the
   // optimization level and -fno-inline, not actually whether the backend has
