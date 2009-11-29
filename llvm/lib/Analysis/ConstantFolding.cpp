@@ -564,6 +564,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   // we eliminate over-indexing of the notional static type array bounds.
   // This makes it easy to determine if the getelementptr is "inbounds".
   // Also, this helps GlobalOpt do SROA on GlobalVariables.
+  Ptr = cast<Constant>(Ptr->stripPointerCasts());
   const Type *Ty = Ptr->getType();
   SmallVector<Constant*, 32> NewIdxs;
   do {
