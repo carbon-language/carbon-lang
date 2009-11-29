@@ -1,4 +1,4 @@
-// RUN: clang-cc -E -dM -x=assembler-with-cpp < /dev/null | FileCheck -check-prefix ASM %s
+// RUN: clang-cc -E -dM -x assembler-with-cpp < /dev/null | FileCheck -check-prefix ASM %s
 //
 // ASM:#define __ASSEMBLER__ 1
 //
@@ -9,7 +9,7 @@
 // BLOCKS:#define __block __attribute__((__blocks__(byref)))
 //
 // 
-// RUN: clang-cc -x=c++ -std=c++0x -E -dM < /dev/null | FileCheck -check-prefix CXX0X %s
+// RUN: clang-cc -x c++ -std=c++0x -E -dM < /dev/null | FileCheck -check-prefix CXX0X %s
 //
 // CXX0X:#define _GNU_SOURCE 1
 // CXX0X:#define __DEPRECATED 1
@@ -20,7 +20,7 @@
 // CXX0X:#define __private_extern__ extern
 //
 // 
-// RUN: clang-cc -x=c++ -std=c++98 -E -dM < /dev/null | FileCheck -check-prefix CXX98 %s
+// RUN: clang-cc -x c++ -std=c++98 -E -dM < /dev/null | FileCheck -check-prefix CXX98 %s
 // 
 // CXX98:#define _GNU_SOURCE 1
 // CXX98:#define __DEPRECATED 1
@@ -56,7 +56,7 @@
 // RUN: clang-cc -ffreestanding -E -dM < /dev/null | FileCheck -check-prefix FREESTANDING %s
 // FREESTANDING:#define __STDC_HOSTED__ 0
 // 
-// RUN: clang-cc -x=c++ -std=gnu++98 -E -dM < /dev/null | FileCheck -check-prefix GXX98 %s
+// RUN: clang-cc -x c++ -std=gnu++98 -E -dM < /dev/null | FileCheck -check-prefix GXX98 %s
 //
 // GXX98:#define _GNU_SOURCE 1
 // GXX98:#define __DEPRECATED 1
@@ -80,19 +80,19 @@
 // MSEXT:#define __int8 __INT8_TYPE__
 //
 // 
-// RUN: clang-cc -x=objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
+// RUN: clang-cc -x objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
 //
 // OBJC:#define OBJC_NEW_PROPERTIES 1
 // OBJC:#define __NEXT_RUNTIME__ 1
 // OBJC:#define __OBJC__ 1
 //
 //
-// RUN: clang-cc -x=objective-c -fobjc-gc -E -dM < /dev/null | FileCheck -check-prefix OBJCGC %s
+// RUN: clang-cc -x objective-c -fobjc-gc -E -dM < /dev/null | FileCheck -check-prefix OBJCGC %s
 //
 // OBJCGC:#define __OBJC_GC__ 1
 //
 // 
-// RUN: clang-cc -x=objective-c -fobjc-nonfragile-abi -E -dM < /dev/null | FileCheck -check-prefix NONFRAGILE %s
+// RUN: clang-cc -x objective-c -fobjc-nonfragile-abi -E -dM < /dev/null | FileCheck -check-prefix NONFRAGILE %s
 //
 // NONFRAGILE:#define OBJC_ZEROCOST_EXCEPTIONS 1
 // NONFRAGILE:#define __OBJC2__ 1
