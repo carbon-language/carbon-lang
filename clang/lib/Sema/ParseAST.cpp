@@ -90,8 +90,5 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
     Decl::PrintStats();
     Stmt::PrintStats();
     Consumer->PrintStats();
-
-    Decl::CollectingStats(false);
-    Stmt::CollectingStats(false);
   }
 }
