@@ -314,3 +314,50 @@ return:
   ret void
 }
 
+;void test10(int N, double* G) {
+;  long j;
+;  for (j = 1; j < N - 1; j++)
+;      G[j] = G[j] + G[j+1] + G[j-1];
+;}
+
+define void @test10(i32 %N, double* nocapture %G) nounwind ssp {
+entry:
+  %0 = add i32 %N, -1
+  %1 = icmp sgt i32 %0, 1
+  br i1 %1, label %bb.nph, label %return
+
+bb.nph:
+  %tmp = sext i32 %0 to i64
+  %tmp8 = add i64 %tmp, -1
+  br label %bb
+; CHECK: bb.nph:
+; CHECK:   load double*
+; CHECK:   load double*
+; CHECK:   br label %bb
+
+
+bb:
+  %indvar = phi i64 [ 0, %bb.nph ], [ %tmp11, %bb ]
+  %scevgep = getelementptr double* %G, i64 %indvar
+  %tmp9 = add i64 %indvar, 2
+  %scevgep10 = getelementptr double* %G, i64 %tmp9
+  %tmp11 = add i64 %indvar, 1
+  %scevgep12 = getelementptr double* %G, i64 %tmp11
+  %2 = load double* %scevgep12, align 8
+  %3 = load double* %scevgep10, align 8
+  %4 = fadd double %2, %3
+  %5 = load double* %scevgep, align 8
+  %6 = fadd double %4, %5
+  store double %6, double* %scevgep12, align 8
+  %exitcond = icmp eq i64 %tmp11, %tmp8
+  br i1 %exitcond, label %return, label %bb
+
+; Should only be one load in the loop.
+; CHECK: bb:
+; CHECK: load double*
+; CHECK-NOT: load double*
+; CHECK: br i1 %exitcond
+
+return:
+  ret void
+}
