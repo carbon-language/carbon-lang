@@ -350,7 +350,6 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
     char link_path[MAXPATHLEN];
     if (realpath(exe_path, link_path))
       return Path(std::string(link_path));
-    return Path();
   }
 #elif defined(__FreeBSD__)
   char exe_path[PATH_MAX];
@@ -374,7 +373,6 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
   char link_path[MAXPATHLEN];
   if (realpath(DLInfo.dli_fname, link_path))
     return Path(std::string(link_path));
-  return Path();
 #endif
   return Path();
 }
