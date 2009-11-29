@@ -53,7 +53,7 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd,
   llvm::errs() << "cc1 creating invocation.\n";
   CompilerInvocation Invocation;
   CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd,
-                                     Argv0, MainAddr);
+                                     Argv0, MainAddr, Diags);
 
   // Convert the invocation back to argument strings.
   std::vector<std::string> InvocationArgs;
@@ -72,7 +72,8 @@ int cc1_main(Diagnostic &Diags, const char **ArgBegin, const char **ArgEnd,
   // same thing.
   CompilerInvocation Invocation2;
   CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
-                                     Invocation2Args.end(), Argv0, MainAddr);
+                                     Invocation2Args.end(), Argv0, MainAddr,
+                                     Diags);
 
   // FIXME: Implement CompilerInvocation comparison.
   if (true) {

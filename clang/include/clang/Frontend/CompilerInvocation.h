@@ -31,6 +31,8 @@ namespace llvm {
 
 namespace clang {
 
+class Diagnostic;
+
 /// CompilerInvocation - Helper class for holding the data necessary to invoke
 /// the compiler.
 ///
@@ -77,8 +79,6 @@ public:
   /// CreateFromArgs - Create a compiler invocation from a list of input
   /// options.
   ///
-  /// FIXME: Documenting error behavior.
-  ///
   /// \param Res [out] - The resulting invocation.
   /// \param ArgBegin - The first element in the argument vector.
   /// \param ArgEnd - The last element in the argument vector.
@@ -86,9 +86,11 @@ public:
   /// compiler path.
   /// \param MainAddr - The address of main (or some other function in the main
   /// executable), for finding the builtin compiler path.
+  /// \param Diags - The diagnostic engine to use for errors.
   static void CreateFromArgs(CompilerInvocation &Res, const char **ArgBegin,
                              const char **ArgEnd, const char *Argv0,
-                             void *MainAddr);
+                             void *MainAddr,
+                             Diagnostic &Diags);
 
   /// toArgs - Convert the CompilerInvocation to a list of strings suitable for
   /// passing to CreateFromArgs.

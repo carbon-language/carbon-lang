@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/CC1Options.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/Version.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Arg.h"
@@ -662,7 +663,8 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                                         const char **ArgBegin,
                                         const char **ArgEnd,
                                         const char *Argv0,
-                                        void *MainAddr) {
+                                        void *MainAddr,
+                                        Diagnostic &Diags) {
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
   unsigned MissingArgIndex, MissingArgCount;
@@ -676,6 +678,14 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                  << InputArgs->getArgString(MissingArgIndex)
                  << "' is missing (expected " << MissingArgCount
                  << " value )\n";
+  }
+
+  // Issue errors on unknown arguments.
+  for (arg_iterator it = InputArgs->filtered_begin(OPT_UNKNOWN),
+         ie = InputArgs->filtered_end(); it != ie; ++it) {
+    unsigned ID = Diags.getCustomDiagID(Diagnostic::Error,
+                                        "unknown argument: '%0'");
+    Diags.Report(ID) << it->getAsString(*InputArgs);
   }
 
   ParseAnalyzerArgs(Res.getAnalyzerOpts(), *InputArgs);
