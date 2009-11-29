@@ -231,7 +231,7 @@ void NSErrorChecker::CheckParamDeref(const VarDecl *Param,
 
     os << Param->getNameAsString() << "' may be null.";
 
-    BugReport *report = new BugReport(*this, os.str().c_str(), *I);
+    BugReport *report = new BugReport(*this, os.str(), *I);
     // FIXME: Notable symbols are now part of the report.  We should
     //  add support for notable symbols in BugReport.
     //    BR.addNotableSymbol(SV->getSymbol());

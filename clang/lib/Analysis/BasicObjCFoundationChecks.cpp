@@ -87,7 +87,7 @@ private:
     // by the BugReporter object 'BR' once we call BR.EmitWarning.
     if (!BT) BT = new APIMisuse("nil argument");
 
-    RangedBugReport *R = new RangedBugReport(*BT, os.str().c_str(), N);
+    RangedBugReport *R = new RangedBugReport(*BT, os.str(), N);
     R->addRange(ME->getArg(Arg)->getSourceRange());
     BR.EmitReport(R);
   }
@@ -435,7 +435,7 @@ void AuditCFNumberCreate::AddError(const TypedRegion* R, const Expr* Ex,
   // Lazily create the BugType object.  This will be owned
   // by the BugReporter object 'BR' once we call BR.EmitWarning.
   if (!BT) BT = new APIMisuse("Bad use of CFNumberCreate");
-  RangedBugReport *report = new RangedBugReport(*BT, os.str().c_str(), N);
+  RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
   report->addRange(Ex->getSourceRange());
   BR.EmitReport(report);
 }
