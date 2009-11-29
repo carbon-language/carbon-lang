@@ -398,7 +398,7 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
     }
   }
 
-  if (BestQuality < 50) {
+  if (Best != StringRef::npos && BestQuality < 50) {
     // Print the "possible intended match here" line if we found something
     // reasonable.
     SM.PrintMessage(SMLoc::getFromPointer(Buffer.data() + Best),
