@@ -44,6 +44,12 @@ struct LangStandard {
   unsigned Flags;
 
 public:
+  /// getName - Get the name of this standard.
+  const char *getName() const { return ShortName; }
+
+  /// getDescription - Get the description of this standard.
+  const char *getDescription() const { return Description; }
+
   /// hasBCPLComments - Language supports '//' comments.
   bool hasBCPLComments() const { return Flags & frontend::BCPLComment; }
 
