@@ -26,6 +26,7 @@ def target_feature : Separate<"-target-feature">,
   HelpText<"Target specific attributes">;
 def triple : Separate<"-triple">,
   HelpText<"Specify target triple (e.g. i686-apple-darwin9)">;
+def triple_EQ : Joined<"-triple=">, Alias<triple>;
 
 //===----------------------------------------------------------------------===//
 // Analyzer Options
@@ -183,6 +184,8 @@ def verify : Flag<"-verify">,
 def code_completion_at : Separate<"-code-completion-at">,
   MetaVarName<"file:line:column">,
   HelpText<"Dump code-completion information at a location">;
+def code_completion_at_EQ : Joined<"-code-completion-at=">,
+  Alias<code_completion_at>;
 def no_code_completion_debug_printer : Flag<"-no-code-completion-debug-printer">,
   HelpText<"Don't the \"debug\" code-completion print">;
 def code_completion_macros : Flag<"-code-completion-macros">,
@@ -289,7 +292,7 @@ def ffreestanding : Flag<"-ffreestanding">,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;
 def fgnu_runtime : Flag<"-fgnu-runtime">,
   HelpText<"Generate output compatible with the standard GNU Objective-C runtime">;
-def std_EQ : Joined<"-std">,
+def std_EQ : Joined<"-std=">,
   HelpText<"Language standard to compile for">;
 def fms_extensions : Flag<"-fms-extensions">,
   HelpText<"Accept some non-standard constructs used in Microsoft header files ">;
