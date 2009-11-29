@@ -121,6 +121,31 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   // UnrollLoops is only derived.
   // VerifyModule is only derived.
   // Inlining is only derived.
+
+  if (Opts.AsmVerbose)
+    Res.push_back("-masm-verbose");
+  if (!Opts.CodeModel.empty()) {
+    Res.push_back("-mcode-model");
+    Res.push_back(Opts.CodeModel);
+  }
+  if (!Opts.DebugPass.empty()) {
+    Res.push_back("-mdebug-pass");
+    Res.push_back(Opts.DebugPass);
+  }
+  if (Opts.DisableFPElim)
+    Res.push_back("-mdisable-fp-elim");
+  if (!Opts.LimitFloatPrecision.empty()) {
+    Res.push_back("-mlimit-float-precision");
+    Res.push_back(Opts.LimitFloatPrecision);
+  }
+  if (Opts.NoZeroInitializedInBSS)
+    Res.push_back("-mno-zero-initialized-bss");
+  if (Opts.UnwindTables)
+    Res.push_back("-munwind-tables");
+  if (Opts.RelocationModel != "pic") {
+    Res.push_back("-mrelocation-model");
+    Res.push_back(Opts.RelocationModel);
+  }
 }
 
 static void DependencyOutputOptsToArgs(const DependencyOutputOptions &Opts,

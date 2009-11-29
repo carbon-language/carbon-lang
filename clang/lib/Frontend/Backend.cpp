@@ -212,6 +212,39 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
       return false;
     }
 
+    // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
+    // being gross, this is also totally broken if we ever care about
+    // concurrency.
+    std::vector<const char *> BackendArgs;
+    BackendArgs.push_back("clang"); // Fake program name.
+    if (CodeGenOpts.AsmVerbose)
+      BackendArgs.push_back("-asm-verbose");
+    if (!CodeGenOpts.CodeModel.empty()) {
+      BackendArgs.push_back("-code-model");
+      BackendArgs.push_back(CodeGenOpts.CodeModel.c_str());
+    }
+    if (!CodeGenOpts.DebugPass.empty()) {
+      BackendArgs.push_back("-debug-pass");
+      BackendArgs.push_back(CodeGenOpts.DebugPass.c_str());
+    }
+    if (CodeGenOpts.DisableFPElim)
+      BackendArgs.push_back("-disable-fp-elim");
+    if (!CodeGenOpts.LimitFloatPrecision.empty()) {
+      BackendArgs.push_back("-limit-float-precision");
+      BackendArgs.push_back(CodeGenOpts.LimitFloatPrecision.c_str());
+    }
+    if (CodeGenOpts.NoZeroInitializedInBSS)
+      BackendArgs.push_back("-nozero-initialized-in-bss");
+    BackendArgs.push_back("-relocation-model");
+    BackendArgs.push_back(CodeGenOpts.RelocationModel.c_str());
+    if (CodeGenOpts.TimePasses)
+      BackendArgs.push_back("-time-passes");
+    if (CodeGenOpts.UnwindTables)
+      BackendArgs.push_back("-unwind-tables");
+    BackendArgs.push_back(0);
+    llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
+                                      (char**) &BackendArgs[0]);
+
     std::string FeaturesStr;
     if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
       SubtargetFeatures Features;

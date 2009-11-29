@@ -108,6 +108,22 @@ def no_implicit_float : Flag<"-no-implicit-float">,
   HelpText<"Don't generate implicit floating point instructions (x86-only)">;
 def fno_merge_all_constants : Flag<"-fno-merge-all-constants">,
   HelpText<"Disallow merging of constants.">;
+def masm_verbose : Flag<"-masm-verbose">,
+  HelpText<"Generate verbose assembly output">;
+def mcode_model : Separate<"-mcode-model">,
+  HelpText<"The code model to use">;
+def mdebug_pass : Separate<"-mdebug-pass">,
+  HelpText<"Enable additional debug output">;
+def mdisable_fp_elim : Flag<"-mdisable-fp-elim">,
+  HelpText<"Disable frame pointer elimination optimization">;
+def mlimit_float_precision : Separate<"-mlimit-float-precision">,
+  HelpText<"Limit float precision to the given value">;
+def mno_zero_initialized_in_bss : Flag<"-mno-zero-initialized-in-bss">,
+  HelpText<"Do not put zero initialized data in the BSS">;
+def mrelocation_model : Separate<"-mrelocation-model">,
+  HelpText<"The relocation model to use">;
+def munwind_tables : Flag<"-munwind-tables">,
+  HelpText<"Generate unwinding tables for all functions">;
 def O : Joined<"-O">, HelpText<"Optimization level">;
 def Os : Flag<"-Os">, HelpText<"Optimize for size">;
 

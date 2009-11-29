@@ -141,6 +141,36 @@ static llvm::cl::opt<bool>
 GenerateDebugInfo("g",
                   llvm::cl::desc("Generate source level debug information"));
 
+static llvm::cl::opt<bool>
+MAsmVerbose("masm-verbose", llvm::cl::desc("Generate verbose assembly output"));
+
+static llvm::cl::opt<std::string>
+MCodeModel("mcode-model", llvm::cl::desc("The code model to use"));
+
+static llvm::cl::opt<std::string>
+MDebugPass("mdebu-pass", llvm::cl::desc("Output additional debug information"));
+
+static llvm::cl::opt<bool>
+MDisableFPElim("mdisable-fp-elim",
+              llvm::cl::desc("Disable frame pointer elimination optimization"));
+
+static llvm::cl::opt<std::string>
+MLimitFloatPrecision("mlimit-float-precision",
+                    llvm::cl::desc("Limit float precision to the given value"));
+
+static llvm::cl::opt<bool>
+MNoZeroInitializedInBSS("mno-zero-initialized-in-bss",
+                 llvm::cl::desc("Do not put zero initialized data in the BSS"));
+
+static llvm::cl::opt<std::string>
+MRelocationModel("mrelocation-model",
+                 llvm::cl::desc("The relocation model to use"),
+                 llvm::cl::init("pic"));
+
+static llvm::cl::opt<bool>
+MUnwindTables("munwind-tables",
+              llvm::cl::desc("Generate unwinding tables for all functions"));
+
 static llvm::cl::opt<std::string>
 MainFileName("main-file-name",
              llvm::cl::desc("Main file name to use for debug info"));
@@ -786,6 +816,17 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   Opts.OptimizeSize = OptSize;
   Opts.SimplifyLibCalls = 1;
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
+
+  // LLVM Code Generator options.
+
+  Opts.AsmVerbose = MAsmVerbose;
+  Opts.CodeModel = MCodeModel;
+  Opts.DebugPass = MDebugPass;
+  Opts.DisableFPElim = MDisableFPElim;
+  Opts.LimitFloatPrecision = MLimitFloatPrecision;
+  Opts.NoZeroInitializedInBSS = MNoZeroInitializedInBSS;
+  Opts.UnwindTables = MUnwindTables;
+  Opts.RelocationModel = MRelocationModel;
 
   // FIXME: Eliminate this dependency?
   if (Lang.NoBuiltin)

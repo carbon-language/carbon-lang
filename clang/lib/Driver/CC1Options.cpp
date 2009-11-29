@@ -173,6 +173,15 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args) {
   Opts.SimplifyLibCalls = 1;
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
+  Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
+  Opts.CodeModel = getLastArgValue(Args, OPT_mcode_model);
+  Opts.DebugPass = getLastArgValue(Args, OPT_mdebug_pass);
+  Opts.DisableFPElim = Args.hasArg(OPT_mdisable_fp_elim);
+  Opts.LimitFloatPrecision = getLastArgValue(Args, OPT_mlimit_float_precision);
+  Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
+  Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
+  Opts.RelocationModel = getLastArgValue(Args, OPT_mrelocation_model, "pic");
+
   Opts.MainFileName = getLastArgValue(Args, OPT_main_file_name);
 
   // FIXME: Implement!

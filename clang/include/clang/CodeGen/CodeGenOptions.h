@@ -29,7 +29,9 @@ public:
     OnlyAlwaysInlining  // Only run the always inlining pass.
   };
 
+  unsigned AsmVerbose        : 1; /// -dA, -fverbose-asm
   unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
+  unsigned DisableFPElim     : 1; /// Set when -fomit-frame-pointer is enabled.
   unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
                                   /// getting .bc files that correspond to the
                                   /// internal state before optimizations are
@@ -38,6 +40,7 @@ public:
   unsigned MergeAllConstants : 1; /// Merge identical constants.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
+  unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned SimplifyLibCalls  : 1; /// Should standard library calls be treated
@@ -46,10 +49,19 @@ public:
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC optimization
                                   /// selection.
   unsigned UnrollLoops       : 1; /// Control whether loops are unrolled.
+  unsigned UnwindTables      : 1; /// Emit unwind tables.
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
 
-  /// Inlining - The kind of inlining to perform.
+  /// The code model to use (-mcmodel).
+  std::string CodeModel;
+
+  std::string DebugPass;
+
+  /// The float precision limit to use, if non-empty.
+  std::string LimitFloatPrecision;
+
+  /// The kind of inlining to perform.
   InliningMethod Inlining;
 
   /// The user provided name for the "main file", if non-empty. This is useful
@@ -57,21 +69,30 @@ public:
   /// file, for example with -save-temps.
   std::string MainFileName;
 
+  /// The name of the relocation model to use.
+  std::string RelocationModel;
+
 public:
   CodeGenOptions() {
+    AsmVerbose = 0;
+    DebugInfo = 0;
+    DisableFPElim = 0;
+    DisableLLVMOpts = 0;
+    DisableRedZone = 0;
+    MergeAllConstants = 1;
+    NoCommon = 0;
+    NoImplicitFloat = 0;
+    NoZeroInitializedInBSS = 0;
     OptimizationLevel = 0;
     OptimizeSize = 0;
-    DebugInfo = 0;
-    UnitAtATime = 1;
     SimplifyLibCalls = UnrollLoops = 0;
-    VerifyModule = 1;
     TimePasses = 0;
-    NoCommon = 0;
+    UnitAtATime = 1;
+    UnwindTables = 0;
+    VerifyModule = 1;
+
     Inlining = NoInlining;
-    DisableRedZone = 0;
-    NoImplicitFloat = 0;
-    MergeAllConstants = 1;
-    DisableLLVMOpts = 0;
+    RelocationModel = "pic";
   }
 };
 
