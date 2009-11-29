@@ -341,19 +341,25 @@ def int_init_trampoline : Intrinsic<[llvm_ptr_ty],
 
 // Expose the carry flag from add operations on two integrals.
 def int_sadd_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+                                       [LLVMMatchType<0>, LLVMMatchType<0>],
+                                       [IntrNoMem]>;
 def int_uadd_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+                                       [LLVMMatchType<0>, LLVMMatchType<0>],
+                                       [IntrNoMem]>;
 
 def int_ssub_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+                                       [LLVMMatchType<0>, LLVMMatchType<0>],
+                                       [IntrNoMem]>;
 def int_usub_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+                                       [LLVMMatchType<0>, LLVMMatchType<0>],
+                                       [IntrNoMem]>;
 
 def int_smul_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+                                       [LLVMMatchType<0>, LLVMMatchType<0>],
+                                       [IntrNoMem]>;
 def int_umul_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                                       [LLVMMatchType<0>, LLVMMatchType<0>]>;
+                                       [LLVMMatchType<0>, LLVMMatchType<0>],
+                                       [IntrNoMem]>;
 
 //===------------------------- Atomic Intrinsics --------------------------===//
 //
