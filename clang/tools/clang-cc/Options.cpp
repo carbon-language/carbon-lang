@@ -455,8 +455,8 @@ AccessControl("faccess-control",
               llvm::cl::desc("Enable C++ access control"));
 
 static llvm::cl::opt<bool>
-CharIsSigned("fsigned-char",
-    llvm::cl::desc("Force char to be a signed/unsigned type"));
+NoSignedChar("fno-signed-char",
+    llvm::cl::desc("Char is unsigned"));
 
 static llvm::cl::opt<bool>
 DollarsInIdents("fdollars-in-identifiers",
@@ -1140,8 +1140,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
   Options.Rtti = !NoRtti;
   if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
-  if (CharIsSigned.getPosition())
-    Options.CharIsSigned = CharIsSigned;
+  Options.CharIsSigned = !NoSignedChar;
   if (ShortWChar.getPosition())
     Options.ShortWChar = ShortWChar;
 

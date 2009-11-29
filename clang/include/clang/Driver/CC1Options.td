@@ -260,8 +260,6 @@ def faltivec : Flag<"-faltivec">,
   HelpText<"Enable AltiVec vector initializer syntax">;
 def faccess_control : Flag<"-faccess-control">,
   HelpText<"Enable C++ access control">;
-def fsigned_char : Flag<"-fsigned-char">,
-  HelpText<"Force char to be a signed/unsigned type">;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">,
   HelpText<"Allow '$' in identifiers">;
 def femit_all_decls : Flag<"-femit-all-decls">,
@@ -281,12 +279,14 @@ def fms_extensions : Flag<"-fms-extensions">,
   HelpText<"Accept some non-standard constructs used in Microsoft header files ">;
 def main_file_name : Separate<"-main-file-name">,
   HelpText<"Main file name to use for debug info">;
-def fno_math_errno : Flag<"-fno-math-errno">,
-  HelpText<"Don't require math functions to respect errno">;
 def fno_elide_constructors : Flag<"-fno-elide-constructors">,
   HelpText<"Disable C++ copy constructor elision">;
 def fno_lax_vector_conversions : Flag<"-fno-lax-vector-conversions">,
   HelpText<"Disallow implicit conversions between vectors with a different number of elements or different element types">;
+def fno_math_errno : Flag<"-fno-math-errno">,
+  HelpText<"Don't require math functions to respect errno">;
+def fno_signed_char : Flag<"-fno-signed-char">,
+  HelpText<"Char is unsigned">;
 def fno_operator_names : Flag<"-fno-operator-names">,
   HelpText<"Do not treat C++ operator name keywords as synonyms for operators">;
 def fconstant_string_class : Separate<"-fconstant-string-class">,
@@ -302,7 +302,7 @@ def fobjc_nonfragile_abi : Flag<"-fobjc-nonfragile-abi">,
   HelpText<"enable objective-c's nonfragile abi">;
 def ftrapv : Flag<"-ftrapv">,
   HelpText<"Trap on integer overflow">;
-def pic_level : Separate<"pic-level">,
+def pic_level : Separate<"-pic-level">,
   HelpText<"-Value for __PIC__">;
 def pthread : Flag<"-pthread">,
   HelpText<"Support POSIX threads in generated code">;

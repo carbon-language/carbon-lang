@@ -108,7 +108,7 @@
 // PASCAL:#define __PASCAL_STRINGS__ 1
 //
 // 
-// RUN: clang-cc -fsigned-char -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix SCHAR %s
+// RUN: clang-cc -E -dM -fms-extensions=0 < /dev/null | FileCheck -check-prefix SCHAR %s
 // 
 // SCHAR:#define __STDC__ 1
 // SCHAR-NOT:#define __UNSIGNED_CHAR__
@@ -524,7 +524,7 @@
 // PIC16:#define ram __attribute__((address_space(0)))
 // PIC16:#define rom __attribute__((address_space(1)))
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc64-none-none -fsigned-char=0 < /dev/null | FileCheck -check-prefix PPC64 %s
+// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc64-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix PPC64 %s
 //
 // PPC64:#define _ARCH_PPC 1
 // PPC64:#define _ARCH_PPC64 1
@@ -612,7 +612,7 @@
 // PPC64:#define __ppc64__ 1
 // PPC64:#define __ppc__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc-none-none -fsigned-char=0 < /dev/null | FileCheck -check-prefix PPC %s
+// RUN: clang-cc -E -dM -ffreestanding -triple=powerpc-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix PPC %s
 //
 // PPC:#define _ARCH_PPC 1
 // PPC:#define _BIG_ENDIAN 1
@@ -696,7 +696,7 @@
 // PPC:#define __WINT_WIDTH__ 32
 // PPC:#define __ppc__ 1
 //
-// RUN: clang-cc -E -dM -ffreestanding -triple=s390x-none-none -fsigned-char=0 < /dev/null | FileCheck -check-prefix S390X %s
+// RUN: clang-cc -E -dM -ffreestanding -triple=s390x-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix S390X %s
 //
 // S390X:#define __CHAR_BIT__ 8
 // S390X:#define __CHAR_UNSIGNED__ 1

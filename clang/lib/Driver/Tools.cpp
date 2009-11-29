@@ -708,10 +708,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // FIXME:  This isn't quite right on Darwin, which always sets
   // __PIC__=2.
   if (strcmp(Model, "pic") == 0 || strcmp(Model, "dynamic-no-pic") == 0) {
-    if (Args.hasArg(options::OPT_fPIC))
-      CmdArgs.push_back("-pic-level=2");
-    else
-      CmdArgs.push_back("-pic-level=1");
+    CmdArgs.push_back("-pic-level");
+    CmdArgs.push_back(Args.hasArg(options::OPT_fPIC) ? "2" : "1");
   }
 
   if (Args.hasArg(options::OPT_ftime_report))
@@ -935,7 +933,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fsigned-char is default.
   if (!Args.hasFlag(options::OPT_fsigned_char, options::OPT_funsigned_char,
                     isSignedCharDefault(getToolChain().getTriple())))
-    CmdArgs.push_back("-fsigned-char=0");
+    CmdArgs.push_back("-fno-signed-char");
 
   // -fms-extensions=0 is default.
   if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
