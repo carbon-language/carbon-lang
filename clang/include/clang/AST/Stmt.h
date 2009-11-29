@@ -203,7 +203,7 @@ public:
 
   // global temp stats (until we have a per-module visitor)
   static void addStmtClass(const StmtClass s);
-  static bool CollectingStats(bool enable=false);
+  static bool CollectingStats(bool Enable = false);
   static void PrintStats();
 
   /// dump - This does a local dump of the specified AST fragment.  It dumps the

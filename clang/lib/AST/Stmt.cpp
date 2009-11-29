@@ -88,8 +88,8 @@ void Stmt::addStmtClass(StmtClass s) {
 
 static bool StatSwitch = false;
 
-bool Stmt::CollectingStats(bool enable) {
-  if (enable) StatSwitch = true;
+bool Stmt::CollectingStats(bool Enable) {
+  if (Enable) StatSwitch = true;
   return StatSwitch;
 }
 

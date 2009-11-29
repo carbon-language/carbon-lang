@@ -55,8 +55,7 @@ const char *DeclContext::getDeclKindName() const {
 }
 
 bool Decl::CollectingStats(bool Enable) {
-  if (Enable)
-    StatSwitch = true;
+  if (Enable) StatSwitch = true;
   return StatSwitch;
 }
 
