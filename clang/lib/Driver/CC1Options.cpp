@@ -172,6 +172,8 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args) {
   Opts.SimplifyLibCalls = 1;
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
+  Opts.MainFileName = getLastArgValue(Args, OPT_main_file_name);
+
   // FIXME: Implement!
   // FIXME: Eliminate this dependency?
 //   if (Lang.NoBuiltin)

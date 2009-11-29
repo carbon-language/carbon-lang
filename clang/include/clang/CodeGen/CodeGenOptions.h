@@ -52,6 +52,11 @@ public:
   /// Inlining - The kind of inlining to perform.
   InliningMethod Inlining;
 
+  /// The user provided name for the "main file", if non-empty. This is useful
+  /// in situations where the input file name does not match the original input
+  /// file, for example with -save-temps.
+  std::string MainFileName;
+
 public:
   CodeGenOptions() {
     OptimizationLevel = 0;

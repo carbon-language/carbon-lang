@@ -141,6 +141,10 @@ static llvm::cl::opt<bool>
 GenerateDebugInfo("g",
                   llvm::cl::desc("Generate source level debug information"));
 
+static llvm::cl::opt<std::string>
+MainFileName("main-file-name",
+             llvm::cl::desc("Main file name to use for debug info"));
+
 static llvm::cl::opt<bool>
 NoCommon("fno-common",
          llvm::cl::desc("Compile common globals like normal definitions"),
@@ -497,10 +501,6 @@ MSExtensions("fms-extensions",
              llvm::cl::desc("Accept some non-standard constructs used in "
                             "Microsoft header files "));
 
-static llvm::cl::opt<std::string>
-MainFileName("main-file-name",
-             llvm::cl::desc("Main file name to use for debug info"));
-
 static llvm::cl::opt<bool>
 NoMathErrno("fno-math-errno",
           llvm::cl::desc("Don't require math functions to respect errno"));
@@ -797,6 +797,9 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
 #endif
+
+  if (MainFileName.getPosition())
+    Opts.MainFileName = MainFileName;
 }
 
 void clang::InitializeDependencyOutputOptions(DependencyOutputOptions &Opts) {
@@ -1051,23 +1054,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
     Options.LaxVectorConversions = 1;
   }
 
-  if (ObjCExclusiveGC)
-    Options.setGCMode(LangOptions::GCOnly);
-  else if (ObjCEnableGC)
-    Options.setGCMode(LangOptions::HybridGC);
-
-  if (ObjCEnableGCBitmapPrint)
-    Options.ObjCGCBitmapPrint = 1;
-
-  if (AltiVec)
-    Options.AltiVec = 1;
-
-  if (PThread)
-    Options.POSIXThreads = 1;
-
-  Options.setVisibilityMode(SymbolVisibility);
-  Options.OverflowChecking = OverflowChecking;
-
   if (LangStd == LangStandard::lang_unspecified) {
     // Based on the base language, pick one.
     switch (IK) {
@@ -1105,6 +1091,23 @@ void clang::InitializeLangOptions(LangOptions &Options,
 
   if (Options.CPlusPlus)
     Options.CXXOperatorNames = !NoOperatorNames;
+
+  if (ObjCExclusiveGC)
+    Options.setGCMode(LangOptions::GCOnly);
+  else if (ObjCEnableGC)
+    Options.setGCMode(LangOptions::HybridGC);
+
+  if (ObjCEnableGCBitmapPrint)
+    Options.ObjCGCBitmapPrint = 1;
+
+  if (AltiVec)
+    Options.AltiVec = 1;
+
+  if (PThread)
+    Options.POSIXThreads = 1;
+
+  Options.setVisibilityMode(SymbolVisibility);
+  Options.OverflowChecking = OverflowChecking;
 
   // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
   // is specified, or -std is set to a conforming mode.
@@ -1204,9 +1207,6 @@ void clang::InitializeLangOptions(LangOptions &Options,
     case 2: Options.setStackProtectorMode(LangOptions::SSPReq); break;
     }
   }
-
-  if (MainFileName.getPosition())
-    Options.setMainFileName(MainFileName.c_str());
 }
 
 void

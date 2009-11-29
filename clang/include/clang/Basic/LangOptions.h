@@ -101,11 +101,6 @@ private:
                                   // on making enums signed.  Set/Query this
                                   // value using accessors.
 
-  /// The user provided name for the "main file", if non-null. This is
-  /// useful in situations where the input file name does not match
-  /// the original input file, for example with -save-temps.
-  const char *MainFileName;
-
 public:
   unsigned InstantiationDepth;    // Maximum template instantiation depth.
 
@@ -164,8 +159,6 @@ public:
 
     CharIsSigned = 1;
     ShortWChar = 0;
-
-    MainFileName = 0;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }
@@ -177,9 +170,6 @@ public:
   void setStackProtectorMode(StackProtectorMode m) {
     StackProtector = static_cast<unsigned>(m);
   }
-
-  const char *getMainFileName() const { return MainFileName; }
-  void setMainFileName(const char *Name) { MainFileName = Name; }
 
   VisibilityMode getVisibilityMode() const {
     return (VisibilityMode) SymbolVisibility;

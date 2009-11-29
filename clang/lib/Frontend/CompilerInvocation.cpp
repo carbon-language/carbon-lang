@@ -111,6 +111,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-Os");
   } else if (Opts.OptimizationLevel != 0)
     Res.push_back("-O" + llvm::utostr(Opts.OptimizationLevel));
+  if (!Opts.MainFileName.empty()) {
+    Res.push_back("-main-file-name");
+    Res.push_back(Opts.MainFileName);
+  }
   // SimplifyLibCalls is only derived.
   // TimePasses is only derived.
   // UnitAtATime is unused.
@@ -452,10 +456,6 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.getStackProtectorMode() != 0) {
     Res.push_back("-stack-protector");
     Res.push_back(llvm::utostr(Opts.getStackProtectorMode()));
-  }
-  if (Opts.getMainFileName()) {
-    Res.push_back("-main-file-name");
-    Res.push_back(Opts.getMainFileName());
   }
   if (Opts.InstantiationDepth != DefaultLangOpts.InstantiationDepth) {
     Res.push_back("-ftemplate-depth");

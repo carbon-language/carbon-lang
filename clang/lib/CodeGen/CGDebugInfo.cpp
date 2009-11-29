@@ -95,10 +95,10 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   // file at a time.
   bool isMain = false;
   const LangOptions &LO = M->getLangOptions();
-  const char *MainFileName = LO.getMainFileName();
+  const CodeGenOptions &CGO = M->getCodeGenOpts();
   if (isMainCompileUnitCreated == false) {
-    if (MainFileName) {
-      if (!strcmp(AbsFileName.getLast().c_str(), MainFileName))
+    if (!CGO.MainFileName.empty()) {
+      if (AbsFileName.getLast() == CGO.MainFileName)
         isMain = true;
     } else {
       if (Loc.isValid() && SM.isFromMainFile(Loc))
