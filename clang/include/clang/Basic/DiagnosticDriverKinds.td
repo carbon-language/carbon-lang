@@ -57,6 +57,9 @@ def err_drv_invalid_mfloat_abi : Error<
   "invalid float ABI '%0'">;
 def err_drv_I_dash_not_supported : Error<
   "'%0' not supported, please use -iquote instead">;
+def err_drv_unknown_argument : Error<"unknown argument: '%0'">;
+def err_drv_invalid_value : Error<"invalid value '%1' in '%0'">;
+def err_drv_invalid_int_value : Error<"invalid integral value '%1' in '%0'">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;

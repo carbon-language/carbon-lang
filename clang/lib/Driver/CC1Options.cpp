@@ -12,6 +12,7 @@
 #include "clang/Basic/Version.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Arg.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -19,10 +20,10 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 
+using namespace clang;
 using namespace clang::driver;
 using namespace clang::driver::options;
 using namespace clang::driver::cc1options;
@@ -61,16 +62,15 @@ static llvm::StringRef getLastArgValue(ArgList &Args, cc1options::ID ID,
 }
 
 static int getLastArgIntValue(ArgList &Args, cc1options::ID ID,
-                              int Default = 0) {
+                              int Default, Diagnostic &Diags) {
   Arg *A = Args.getLastArg(ID);
   if (!A)
     return Default;
 
   int Res = Default;
-  // FIXME: What to do about argument parsing errors?
   if (llvm::StringRef(A->getValue(Args)).getAsInteger(10, Res))
-    llvm::errs() << "error: invalid integral argument in '"
-                 << A->getAsString(Args) << "'\n";
+    Diags.Report(diag::err_drv_invalid_int_value)
+        << A->getAsString(Args) << A->getValue(Args);
 
   return Res;
 }
@@ -84,7 +84,8 @@ getAllArgValues(ArgList &Args, cc1options::ID ID) {
 
 //
 
-static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args) {
+static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
+                              Diagnostic &Diags) {
   using namespace cc1options;
 
   Opts.AnalysisList.clear();
@@ -101,7 +102,8 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args) {
       .Default(NumStores);
     // FIXME: Error handling.
     if (Value == NumStores)
-      llvm::errs() << "error: invalid analysis store '" << Name << "'\n";
+      Diags.Report(diag::err_drv_invalid_value)
+        << Args.getLastArg(OPT_O)->getAsString(Args) << Name;
     else
       Opts.AnalysisStoreOpt = Value;
   }
@@ -115,7 +117,8 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args) {
       .Default(NumConstraints);
     // FIXME: Error handling.
     if (Value == NumConstraints)
-      llvm::errs() << "error: invalid analysis constraints '" << Name << "'\n";
+      Diags.Report(diag::err_drv_invalid_value)
+        << Args.getLastArg(OPT_O)->getAsString(Args) << Name;
     else
       Opts.AnalysisConstraintsOpt = Value;
   }
@@ -129,7 +132,8 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args) {
       .Default(NUM_ANALYSIS_DIAG_CLIENTS);
     // FIXME: Error handling.
     if (Value == NUM_ANALYSIS_DIAG_CLIENTS)
-      llvm::errs() << "error: invalid analysis output '" << Name << "'\n";
+      Diags.Report(diag::err_drv_invalid_value)
+        << Args.getLastArg(OPT_O)->getAsString(Args) << Name;
     else
       Opts.AnalysisDiagOpt = Value;
   }
@@ -147,19 +151,19 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args) {
   Opts.TrimGraph = Args.hasArg(OPT_trim_egraph);
 }
 
-static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args) {
+static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
+                             Diagnostic &Diags) {
   using namespace cc1options;
   // -Os implies -O2
   if (Args.hasArg(OPT_Os))
     Opts.OptimizationLevel = 2;
-  else
-    Opts.OptimizationLevel = getLastArgIntValue(Args, OPT_O);
-
-  // FIXME: What to do about argument parsing errors?
-  if (Opts.OptimizationLevel > 3) {
-    llvm::errs() << "error: invalid optimization level '"
-                 << Opts.OptimizationLevel << "' (out of range)\n";
-    Opts.OptimizationLevel = 3;
+  else {
+    Opts.OptimizationLevel = getLastArgIntValue(Args, OPT_O, 0, Diags);
+    if (Opts.OptimizationLevel > 3) {
+      Diags.Report(diag::err_drv_invalid_value)
+        << Args.getLastArg(OPT_O)->getAsString(Args) << Opts.OptimizationLevel;
+      Opts.OptimizationLevel = 3;
+    }
   }
 
   // We must always run at least the always inlining pass.
@@ -212,7 +216,8 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.UsePhonyTargets = Args.hasArg(OPT_MP);
 }
 
-static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args) {
+static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
+                                Diagnostic &Diags) {
   using namespace cc1options;
   Opts.IgnoreWarnings = Args.hasArg(OPT_w);
   Opts.NoRewriteMacros = Args.hasArg(OPT_Wno_rewrite_macros);
@@ -226,13 +231,13 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args) {
   Opts.ShowOptionNames = Args.hasArg(OPT_fdiagnostics_show_option);
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
-  Opts.MessageLength = getLastArgIntValue(Args, OPT_fmessage_length);
+  Opts.MessageLength = getLastArgIntValue(Args, OPT_fmessage_length, 0, Diags);
   Opts.DumpBuildInformation = getLastArgValue(Args, OPT_dump_build_information);
   Opts.Warnings = getAllArgValues(Args, OPT_W);
 }
 
 static FrontendOptions::InputKind
-ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
+ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   using namespace cc1options;
   Opts.ProgramAction = frontend::ParseSyntaxOnly;
   if (const Arg *A = Args.getLastArg(OPT_Action_Group)) {
@@ -302,21 +307,22 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
     Opts.CodeCompletionAt =
       ParsedSourceLocation::FromString(A->getValue(Args));
     if (Opts.CodeCompletionAt.FileName.empty())
-      llvm::errs() << "error: invalid source location '"
-                   << A->getAsString(Args) << "'\n";
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << A->getValue(Args);
   }
   Opts.DebugCodeCompletionPrinter =
     !Args.hasArg(OPT_no_code_completion_debug_printer);
   Opts.DisableFree = Args.hasArg(OPT_disable_free);
   Opts.EmptyInputOnly = Args.hasArg(OPT_empty_input_only);
 
-  std::vector<std::string> Fixits = getAllArgValues(Args, OPT_fixit_at);
   Opts.FixItLocations.clear();
-  for (unsigned i = 0, e = Fixits.size(); i != e; ++i) {
-    ParsedSourceLocation PSL = ParsedSourceLocation::FromString(Fixits[i]);
+  for (arg_iterator it = Args.filtered_begin(OPT_fixit_at),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    const char *Loc = it->getValue(Args);
+    ParsedSourceLocation PSL = ParsedSourceLocation::FromString(Loc);
 
     if (PSL.FileName.empty()) {
-      llvm::errs() << "error: invalid source location '" << Fixits[i] << "'\n";
+      Diags.Report(diag::err_drv_invalid_value) << it->getAsString(Args) << Loc;
       continue;
     }
 
@@ -352,8 +358,8 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args) {
       .Case("ast", FrontendOptions::IK_AST)
       .Default(FrontendOptions::IK_None);
     if (DashX == FrontendOptions::IK_None)
-      llvm::errs() << "error: invalid argument '" << A->getValue(Args)
-                   << "' to '-x'\n";
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << A->getValue(Args);
   }
 
   // '-' is the default input if none is given.
@@ -440,7 +446,8 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args,
 }
 
 static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
-                          FrontendOptions::InputKind IK) {
+                          FrontendOptions::InputKind IK,
+                          Diagnostic &Diags) {
   // FIXME: Cleanup per-file based stuff.
 
   // Set some properties which depend soley on the input kind; it would be nice
@@ -463,8 +470,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
 #include "clang/Frontend/LangStandards.def"
       .Default(LangStandard::lang_unspecified);
     if (LangStd == LangStandard::lang_unspecified)
-      llvm::errs() << "error: invalid argument '" << A->getValue(Args)
-                   << "' to '-std'\n";
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << A->getValue(Args);
   }
 
   if (LangStd == LangStandard::lang_unspecified) {
@@ -540,8 +547,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   else if (Vis == "protected")
     Opts.setVisibilityMode(LangOptions::Protected);
   else
-    llvm::errs() << "error: invalid argument '" << Vis
-                 << "' to '-fvisibility'\n";
+    Diags.Report(diag::err_drv_invalid_value)
+      << Args.getLastArg(OPT_fvisibility)->getAsString(Args) << Vis;
 
   Opts.OverflowChecking = Args.hasArg(OPT_ftrapv);
 
@@ -571,23 +578,24 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.AccessControl = Args.hasArg(OPT_faccess_control);
   Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);
   Opts.MathErrno = !Args.hasArg(OPT_fno_math_errno);
-  Opts.InstantiationDepth = getLastArgIntValue(Args, OPT_ftemplate_depth, 99);
+  Opts.InstantiationDepth = getLastArgIntValue(Args, OPT_ftemplate_depth, 99,
+                                               Diags);
   Opts.NeXTRuntime = !Args.hasArg(OPT_fgnu_runtime);
   Opts.ObjCConstantStringClass = getLastArgValue(Args,
                                                  OPT_fconstant_string_class);
   Opts.ObjCNonFragileABI = Args.hasArg(OPT_fobjc_nonfragile_abi);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
-  Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0);
+  Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.OptimizeSize = 0;
   Opts.Optimize = 0; // FIXME!
   Opts.NoInline = 0; // FIXME!
 
-  unsigned SSP = getLastArgIntValue(Args, OPT_stack_protector, 0);
+  unsigned SSP = getLastArgIntValue(Args, OPT_stack_protector, 0, Diags);
   switch (SSP) {
   default:
-    llvm::errs() << "error: invalid value '" << SSP
-                 << "' for '-stack-protector'\n";
+    Diags.Report(diag::err_drv_invalid_value)
+      << Args.getLastArg(OPT_stack_protector)->getAsString(Args) << SSP;
     break;
   case 0: Opts.setStackProtectorMode(LangOptions::SSPOff); break;
   case 1: Opts.setStackProtectorMode(LangOptions::SSPOn);  break;
@@ -668,37 +676,30 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
   unsigned MissingArgIndex, MissingArgCount;
-  llvm::OwningPtr<InputArgList> InputArgs(
+  llvm::OwningPtr<InputArgList> Args(
     Opts->ParseArgs(ArgBegin, ArgEnd,MissingArgIndex, MissingArgCount));
 
   // Check for missing argument error.
-  if (MissingArgCount) {
-    // FIXME: Use proper diagnostics!
-    llvm::errs() << "error: argument to '"
-                 << InputArgs->getArgString(MissingArgIndex)
-                 << "' is missing (expected " << MissingArgCount
-                 << " value )\n";
-  }
+  if (MissingArgCount)
+    Diags.Report(diag::err_drv_missing_argument)
+      << Args->getArgString(MissingArgIndex) << MissingArgCount;
 
   // Issue errors on unknown arguments.
-  for (arg_iterator it = InputArgs->filtered_begin(OPT_UNKNOWN),
-         ie = InputArgs->filtered_end(); it != ie; ++it) {
-    unsigned ID = Diags.getCustomDiagID(Diagnostic::Error,
-                                        "unknown argument: '%0'");
-    Diags.Report(ID) << it->getAsString(*InputArgs);
-  }
+  for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
+         ie = Args->filtered_end(); it != ie; ++it)
+    Diags.Report(diag::err_drv_unknown_argument) << it->getAsString(*Args);
 
-  ParseAnalyzerArgs(Res.getAnalyzerOpts(), *InputArgs);
-  ParseCodeGenArgs(Res.getCodeGenOpts(), *InputArgs);
-  ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *InputArgs);
-  ParseDiagnosticArgs(Res.getDiagnosticOpts(), *InputArgs);
+  ParseAnalyzerArgs(Res.getAnalyzerOpts(), *Args, Diags);
+  ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, Diags);
+  ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
+  ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags);
   FrontendOptions::InputKind DashX =
-    ParseFrontendArgs(Res.getFrontendOpts(), *InputArgs);
-  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *InputArgs,
+    ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
+  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args,
                         Argv0, MainAddr);
   if (DashX != FrontendOptions::IK_AST)
-    ParseLangArgs(Res.getLangOpts(), *InputArgs, DashX);
-  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *InputArgs);
-  ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *InputArgs);
-  ParseTargetArgs(Res.getTargetOpts(), *InputArgs);
+    ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
+  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args);
+  ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);
+  ParseTargetArgs(Res.getTargetOpts(), *Args);
 }
