@@ -190,11 +190,6 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
 
   Opts.MainFileName = getLastArgValue(Args, OPT_main_file_name);
 
-  // FIXME: Implement!
-  // FIXME: Eliminate this dependency?
-//   if (Lang.CPlusPlus)
-//     Opts.NoCommon = 1;
-
   // FIXME: Put elsewhere?
 #ifdef NDEBUG
   Opts.VerifyModule = 0;

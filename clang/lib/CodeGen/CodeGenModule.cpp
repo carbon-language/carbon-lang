@@ -973,7 +973,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
   } else if (Linkage == GVA_TemplateInstantiation)
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);   
-  else if (!CodeGenOpts.NoCommon &&
+  else if (!getLangOptions().CPlusPlus && !CodeGenOpts.NoCommon &&
            !D->hasExternalStorage() && !D->getInit() &&
            !D->getAttr<SectionAttr>()) {
     GV->setLinkage(llvm::GlobalVariable::CommonLinkage);

@@ -826,10 +826,6 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   Opts.UnwindTables = MUnwindTables;
   Opts.RelocationModel = MRelocationModel;
 
-  // FIXME: Eliminate this dependency?
-  if (Lang.CPlusPlus)
-    Opts.NoCommon = 1;
-
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
 #endif
