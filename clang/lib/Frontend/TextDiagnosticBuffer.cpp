@@ -36,3 +36,13 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
     break;
   }
 }
+
+void TextDiagnosticBuffer::FlushDiagnostics(Diagnostic &Diags) const {
+  // FIXME: Flush the diagnostics in order.
+  for (const_iterator it = err_begin(), ie = err_end(); it != ie; ++it)
+    Diags.Report(Diags.getCustomDiagID(Diagnostic::Error, it->second.c_str()));
+  for (const_iterator it = warn_begin(), ie = warn_end(); it != ie; ++it)
+    Diags.Report(Diags.getCustomDiagID(Diagnostic::Warning,it->second.c_str()));
+  for (const_iterator it = note_begin(), ie = note_end(); it != ie; ++it)
+    Diags.Report(Diags.getCustomDiagID(Diagnostic::Note, it->second.c_str()));
+}

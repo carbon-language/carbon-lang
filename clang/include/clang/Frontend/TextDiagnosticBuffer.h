@@ -41,6 +41,10 @@ public:
 
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
+
+  /// FlushDiagnostics - Flush the buffered diagnostics to an given
+  /// diagnostic engine.
+  void FlushDiagnostics(Diagnostic &Diags) const;
 };
 
 } // end namspace clang
