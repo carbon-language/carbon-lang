@@ -815,7 +815,7 @@ void DwarfDebug::constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
   addType(DW_Unit, &Buffer, FromTy);
 
   // Add name if not anonymous or intermediate type.
-  if (!Name.empty() && Tag != dwarf::DW_TAG_pointer_type)
+  if (!Name.empty())
     addString(&Buffer, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
   // Add size if non-zero (derived types might be zero-sized.)
