@@ -689,24 +689,32 @@ static bool IsFullyFormedScope(Sema &SemaRef, CXXRecordDecl *Record) {
   return true;
 }
 
-/// Determines whether the given scope is "fully-formed": i.e. we can
-/// look into it because it's either non-dependent or is the current
-/// instantiation and has no dependent base classes.
-static bool IsFullyFormedScope(Sema &SemaRef, const CXXScopeSpec &SS) {
+/// Determines whether we can lookup this id-expression now or whether
+/// we have to wait until template instantiation is complete.
+static bool IsDependentIdExpression(Sema &SemaRef, const CXXScopeSpec &SS) {
   DeclContext *DC = SemaRef.computeDeclContext(SS, false);
-  if (!DC) return false;
-  if (!DC->isDependentContext()) return true;
-  return IsFullyFormedScope(SemaRef, cast<CXXRecordDecl>(DC));
-}
 
-static bool IsFullyFormedScope(Sema &SemaRef, DeclContext *DC) {
-  if (isa<CXXMethodDecl>(DC))
-    return IsFullyFormedScope(SemaRef,
-                  cast<CXXRecordDecl>(cast<CXXMethodDecl>(DC)->getParent()));
-  else if (isa<CXXRecordDecl>(DC))
-    return IsFullyFormedScope(SemaRef, cast<CXXRecordDecl>(DC));
+  // If the qualifier scope isn't computable, it's definitely dependent.
+  if (!DC) return true;
+
+  // If the qualifier scope doesn't name a record, we can always look into it.
+  if (!isa<CXXRecordDecl>(DC)) return false;
+
+  // We can't look into record types unless they're fully-formed.
+  if (!IsFullyFormedScope(SemaRef, cast<CXXRecordDecl>(DC))) return true;
+
+  // We can always look into fully-formed record types, but if we're
+  // in a dependent but not fully-formed context, we can't decide
+  // whether the qualifier names a base class.  We shouldn't be trying
+  // to decide that yet anyway, but we are, so we need to delay that
+  // decision.
+  CXXRecordDecl *CurRecord;
+  if (CXXMethodDecl *CurMethod = dyn_cast<CXXMethodDecl>(SemaRef.CurContext))
+    CurRecord = cast<CXXRecordDecl>(CurMethod->getParent());
   else
-    return true;
+    CurRecord = dyn_cast<CXXRecordDecl>(SemaRef.CurContext);
+
+  return CurRecord && !IsFullyFormedScope(SemaRef, CurRecord);
 }
 
 Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
@@ -737,8 +745,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   //        names a dependent type.
   // Determine whether this is a member of an unknown specialization;
   // we need to handle these differently.
-  if (SS.isSet() && !(IsFullyFormedScope(*this, SS) &&
-                      IsFullyFormedScope(*this, CurContext))) {
+  if (SS.isSet() && IsDependentIdExpression(*this, SS)) {
     bool CheckForImplicitMember = !isAddressOfOperand;
 
     return ActOnDependentIdExpression(SS, Name, NameLoc,
