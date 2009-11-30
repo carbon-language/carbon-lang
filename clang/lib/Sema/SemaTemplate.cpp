@@ -58,43 +58,6 @@ static NamedDecl *isAcceptableTemplateName(ASTContext &Context, NamedDecl *D) {
     return 0;
   }
 
-  OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D);
-  if (!Ovl)
-    return 0;
-
-  for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                              FEnd = Ovl->function_end();
-       F != FEnd; ++F) {
-    if (FunctionTemplateDecl *FuncTmpl = dyn_cast<FunctionTemplateDecl>(*F)) {
-      // We've found a function template. Determine whether there are
-      // any other function templates we need to bundle together in an
-      // OverloadedFunctionDecl
-      for (++F; F != FEnd; ++F) {
-        if (isa<FunctionTemplateDecl>(*F))
-          break;
-      }
-
-      if (F != FEnd) {
-        // Build an overloaded function decl containing only the
-        // function templates in Ovl.
-        OverloadedFunctionDecl *OvlTemplate
-          = OverloadedFunctionDecl::Create(Context,
-                                           Ovl->getDeclContext(),
-                                           Ovl->getDeclName());
-        OvlTemplate->addOverload(FuncTmpl);
-        OvlTemplate->addOverload(*F);
-        for (++F; F != FEnd; ++F) {
-          if (isa<FunctionTemplateDecl>(*F))
-            OvlTemplate->addOverload(*F);
-        }
-
-        return OvlTemplate;
-      }
-
-      return FuncTmpl;
-    }
-  }
-
   return 0;
 }
 

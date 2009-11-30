@@ -206,17 +206,6 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     MaybeAddResult(Result(Using->getTargetDecl(), R.Rank, R.Qualifier),
                    CurContext);
   
-  // Handle each declaration in an overload set separately.
-  if (OverloadedFunctionDecl *Ovl 
-        = dyn_cast<OverloadedFunctionDecl>(R.Declaration)) {
-    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-         FEnd = Ovl->function_end();
-         F != FEnd; ++F)
-      MaybeAddResult(Result(*F, R.Rank, R.Qualifier), CurContext);
-    
-    return;
-  }
-  
   Decl *CanonDecl = R.Declaration->getCanonicalDecl();
   unsigned IDNS = CanonDecl->getIdentifierNamespace();
   

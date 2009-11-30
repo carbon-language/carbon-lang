@@ -1883,22 +1883,6 @@ DeclContext *Sema::FindInstantiatedContext(DeclContext* DC,
 /// this mapping from within the instantiation of X<int>.
 NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
                           const MultiLevelTemplateArgumentList &TemplateArgs) {
-  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
-    // Transform all of the elements of the overloaded function set.
-    OverloadedFunctionDecl *Result
-      = OverloadedFunctionDecl::Create(Context, CurContext, Ovl->getDeclName());
-
-    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                FEnd = Ovl->function_end();
-         F != FEnd; ++F) {
-      Result->addOverload(
-        AnyFunctionDecl::getFromNamedDecl(FindInstantiatedDecl(*F,
-                                                               TemplateArgs)));
-    }
-
-    return Result;
-  }
-
   DeclContext *ParentDC = D->getDeclContext();
   if (isa<ParmVarDecl>(D) || isa<NonTypeTemplateParmDecl>(D) ||
       isa<TemplateTypeParmDecl>(D) || isa<TemplateTypeParmDecl>(D) ||

@@ -401,37 +401,6 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
 }
 
 bool Sema::isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S) {
-  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
-    // Look inside the overload set to determine if any of the declarations
-    // are in scope. (Possibly) build a new overload set containing only
-    // those declarations that are in scope.
-    OverloadedFunctionDecl *NewOvl = 0;
-    bool FoundInScope = false;
-    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-         FEnd = Ovl->function_end();
-         F != FEnd; ++F) {
-      NamedDecl *FD = F->get();
-      if (!isDeclInScope(FD, Ctx, S)) {
-        if (!NewOvl && F != Ovl->function_begin()) {
-          NewOvl = OverloadedFunctionDecl::Create(Context, 
-                                                  F->get()->getDeclContext(),
-                                                  F->get()->getDeclName());
-          D = NewOvl;
-          for (OverloadedFunctionDecl::function_iterator 
-               First = Ovl->function_begin();
-               First != F; ++First)
-            NewOvl->addOverload(*First);
-        }
-      } else {
-        FoundInScope = true;
-        if (NewOvl)
-          NewOvl->addOverload(*F);
-      }
-    }
-    
-    return FoundInScope;
-  }
-  
   return IdResolver.isDeclInScope(D, Ctx, Context, S);
 }
 
@@ -805,9 +774,6 @@ struct GNUCompatibleParamWarning {
 ///
 /// Returns true if there was an error, false otherwise.
 bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
-  assert(!isa<OverloadedFunctionDecl>(OldD) &&
-         "Cannot merge with an overloaded function declaration");
-
   // Verify the old decl was also a function.
   FunctionDecl *Old = 0;
   if (FunctionTemplateDecl *OldFunctionTemplate
@@ -2237,8 +2203,6 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
   if (!PrevDecl)
     return 0;
 
-  // FIXME: PrevDecl could be an OverloadedFunctionDecl, in which
-  // case we need to check each of the overloaded functions.
   if (!PrevDecl->hasLinkage())
     return false;
 

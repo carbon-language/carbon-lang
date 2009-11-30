@@ -417,8 +417,6 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 Sema::OwningExprResult
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        const CXXScopeSpec *SS) {
-  assert(!isa<OverloadedFunctionDecl>(D));
-
   if (Context.getCanonicalType(Ty) == Context.UndeducedAutoTy) {
     Diag(Loc,
          diag::err_auto_variable_cannot_appear_in_own_initializer)
