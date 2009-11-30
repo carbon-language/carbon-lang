@@ -53,8 +53,7 @@ namespace llvm {
       return "Call Graph";
     }
 
-    static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph,
-                                    bool ShortNames) {
+    static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
       if (Node->getFunction())
         return ((Value*)Node->getFunction())->getName();
       else

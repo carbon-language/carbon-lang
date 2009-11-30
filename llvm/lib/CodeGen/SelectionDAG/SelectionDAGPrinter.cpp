@@ -96,9 +96,16 @@ namespace llvm {
     }
     
 
-    static std::string getNodeLabel(const SDNode *Node,
-                                    const SelectionDAG *Graph,
-                                    bool ShortNames);
+    static std::string getSimpleNodeLabel(const SDNode *Node,
+                                          const SelectionDAG *G) {
+      std::string Result = Node->getOperationName(G);
+      {
+        raw_string_ostream OS(Result);
+        Node->print_details(OS, G);
+      }
+      return Result;
+    }
+    std::string getNodeLabel(const SDNode *Node, const SelectionDAG *Graph);
     static std::string getNodeAttributes(const SDNode *N,
                                          const SelectionDAG *Graph) {
 #ifndef NDEBUG
@@ -124,14 +131,8 @@ namespace llvm {
 }
 
 std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
-                                                        const SelectionDAG *G,
-                                                        bool ShortNames) {
-  std::string Result = Node->getOperationName(G);
-  {
-    raw_string_ostream OS(Result);
-    Node->print_details(OS, G);
-  }
-  return Result;
+                                                        const SelectionDAG *G) {
+  DOTGraphTraits<SelectionDAG*>::getSimpleNodeLabel (Node, G);
 }
 
 
@@ -272,8 +273,8 @@ std::string ScheduleDAGSDNodes::getGraphNodeLabel(const SUnit *SU) const {
     for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
       FlaggedNodes.push_back(N);
     while (!FlaggedNodes.empty()) {
-      O << DOTGraphTraits<SelectionDAG*>::getNodeLabel(FlaggedNodes.back(),
-                                                       DAG, false);
+      O << DOTGraphTraits<SelectionDAG*>
+	     ::getSimpleNodeLabel(FlaggedNodes.back(), DAG);
       FlaggedNodes.pop_back();
       if (!FlaggedNodes.empty())
         O << "\n    ";

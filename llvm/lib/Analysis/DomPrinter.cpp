@@ -31,18 +31,23 @@ namespace llvm {
 template<>
 struct DOTGraphTraits<DomTreeNode*> : public DefaultDOTGraphTraits {
 
-  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+  DOTGraphTraits (bool isSimple=false)
+    : DefaultDOTGraphTraits(isSimple) {}
 
-  static std::string getNodeLabel(DomTreeNode *Node, DomTreeNode *Graph,
-                                  bool ShortNames) {
+  std::string getNodeLabel(DomTreeNode *Node, DomTreeNode *Graph) {
 
     BasicBlock *BB = Node->getBlock();
 
     if (!BB)
       return "Post dominance root node";
 
-    return DOTGraphTraits<const Function*>::getNodeLabel(BB, BB->getParent(),
-                                                         ShortNames);
+
+    if (isSimple())
+      return DOTGraphTraits<const Function*>
+	       ::getSimpleNodeLabel(BB, BB->getParent());
+    else
+      return DOTGraphTraits<const Function*>
+	       ::getCompleteNodeLabel(BB, BB->getParent());
   }
 };
 
@@ -56,11 +61,8 @@ struct DOTGraphTraits<DominatorTree*> : public DOTGraphTraits<DomTreeNode*> {
     return "Dominator tree";
   }
 
-  static std::string getNodeLabel(DomTreeNode *Node,
-                                  DominatorTree *G,
-                                  bool ShortNames) {
-    return DOTGraphTraits<DomTreeNode*>::getNodeLabel(Node, G->getRootNode(),
-                                                      ShortNames);
+  std::string getNodeLabel(DomTreeNode *Node, DominatorTree *G) {
+    return DOTGraphTraits<DomTreeNode*>::getNodeLabel(Node, G->getRootNode());
   }
 };
 
@@ -74,12 +76,9 @@ struct DOTGraphTraits<PostDominatorTree*>
   static std::string getGraphName(PostDominatorTree *DT) {
     return "Post dominator tree";
   }
-  static std::string getNodeLabel(DomTreeNode *Node,
-                                  PostDominatorTree *G,
-                                  bool ShortNames) {
-    return DOTGraphTraits<DomTreeNode*>::getNodeLabel(Node,
-                                                      G->getRootNode(),
-                                                      ShortNames);
+
+  std::string getNodeLabel(DomTreeNode *Node, PostDominatorTree *G ) {
+    return DOTGraphTraits<DomTreeNode*>::getNodeLabel(Node, G->getRootNode());
   }
 };
 }

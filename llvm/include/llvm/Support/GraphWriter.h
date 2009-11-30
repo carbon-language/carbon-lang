@@ -52,7 +52,6 @@ template<typename GraphType>
 class GraphWriter {
   raw_ostream &O;
   const GraphType &G;
-  bool ShortNames;
 
   typedef DOTGraphTraits<GraphType>           DOTTraits;
   typedef GraphTraits<GraphType>              GTraits;
@@ -89,8 +88,7 @@ class GraphWriter {
   }
 
 public:
-  GraphWriter(raw_ostream &o, const GraphType &g, bool SN) :
-    O(o), G(g), ShortNames(SN) {
+  GraphWriter(raw_ostream &o, const GraphType &g, bool SN) : O(o), G(g) {
   DTraits = DOTTraits(SN); 
 }
 
@@ -143,7 +141,7 @@ public:
     O << "label=\"{";
 
     if (!DTraits.renderGraphFromBottomUp()) {
-      O << DOT::EscapeString(DTraits.getNodeLabel(Node, G, ShortNames));
+      O << DOT::EscapeString(DTraits.getNodeLabel(Node, G));
 
       // If we should include the address of the node in the label, do so now.
       if (DTraits.hasNodeAddressLabel(Node, G))
@@ -163,7 +161,7 @@ public:
     }
 
     if (DTraits.renderGraphFromBottomUp()) {
-      O << DOT::EscapeString(DTraits.getNodeLabel(Node, G, ShortNames));
+      O << DOT::EscapeString(DTraits.getNodeLabel(Node, G));
 
       // If we should include the address of the node in the label, do so now.
       if (DTraits.hasNodeAddressLabel(Node, G))

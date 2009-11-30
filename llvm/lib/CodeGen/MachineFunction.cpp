@@ -366,10 +366,9 @@ namespace llvm {
       return "CFG for '" + F->getFunction()->getNameStr() + "' function";
     }
 
-    static std::string getNodeLabel(const MachineBasicBlock *Node,
-                                    const MachineFunction *Graph,
-                                    bool ShortNames) {
-      if (ShortNames && Node->getBasicBlock() &&
+    std::string getNodeLabel(const MachineBasicBlock *Node,
+                             const MachineFunction *Graph) {
+      if (isSimple () && Node->getBasicBlock() &&
           !Node->getBasicBlock()->getName().empty())
         return Node->getBasicBlock()->getNameStr() + ":";
 
@@ -377,7 +376,7 @@ namespace llvm {
       {
         raw_string_ostream OSS(OutStr);
         
-        if (ShortNames)
+        if (isSimple())
           OSS << Node->getNumber() << ':';
         else
           Node->print(OSS);

@@ -62,8 +62,7 @@ public:
   /// getNodeLabel - Given a node and a pointer to the top level graph, return
   /// the label to print in the node.
   template<typename GraphType>
-  static std::string getNodeLabel(const void *Node,
-                                  const GraphType& Graph, bool ShortNames) {
+  std::string getNodeLabel(const void *Node, const GraphType& Graph) {
     return "";
   }
 
