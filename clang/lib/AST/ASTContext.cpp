@@ -3413,13 +3413,13 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
   
-  if (isObjCSelType(T)) {
-    S += ':';
-    return;
-  }
-
   if (const PointerType *PT = T->getAs<PointerType>()) {
+    if (PT->isObjCSelType()) {
+      S += ':';
+      return;
+    }
     QualType PointeeTy = PT->getPointeeType();
+    
     bool isReadOnly = false;
     // For historical/compatibility reasons, the read-only qualifier of the
     // pointee gets emitted _before_ the '^'.  The read-only qualifier of

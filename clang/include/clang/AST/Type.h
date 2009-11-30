@@ -2548,12 +2548,7 @@ public:
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
            !Protocols.size();
   }
-
-  /// isObjCSelType - true for "SEL".
-  bool isObjCSelType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCSel);
-  }
-
+  
   /// isObjCQualifiedIdType - true for "id <p>".
   bool isObjCQualifiedIdType() const {
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
@@ -2902,8 +2897,8 @@ inline bool Type::isObjCClassType() const {
   return false;
 }
 inline bool Type::isObjCSelType() const {
-  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
-    return OPT->isObjCSelType();
+  if (const PointerType *OPT = getAs<PointerType>())
+    return OPT->getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCSel);
   return false;
 }
 inline bool Type::isObjCBuiltinType() const {

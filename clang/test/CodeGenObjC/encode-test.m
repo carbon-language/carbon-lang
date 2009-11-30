@@ -66,6 +66,7 @@ struct Innermost {
 @interface Test 
 {
 	int ivar;
+         __attribute__((objc_gc(weak))) SEL selector;
 }
 -(void) test3: (Test*  [3] [4])b ; 
 - (SEL**) meth : (SEL) arg : (SEL*****) arg1 : (SEL*)arg2 : (SEL**) arg3;
