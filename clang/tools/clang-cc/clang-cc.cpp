@@ -142,8 +142,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 }
 
 static bool ConstructCompilerInvocation(CompilerInvocation &Opts,
-                                        Diagnostic &Diags,
-                                        const char *Argv0, bool &IsAST) {
+                                        Diagnostic &Diags, const char *Argv0) {
   // Initialize target options.
   InitializeTargetOptions(Opts.getTargetOpts());
 
@@ -164,8 +163,7 @@ static bool ConstructCompilerInvocation(CompilerInvocation &Opts,
   //
   // FIXME: These aren't used during operations on ASTs. Split onto a separate
   // code path to make this obvious.
-  IsAST = (IK == FrontendOptions::IK_AST);
-  if (!IsAST)
+  if (IK != FrontendOptions::IK_AST)
     InitializeLangOptions(Opts.getLangOpts(), IK);
 
   // Initialize the static analyzer options.
@@ -296,10 +294,8 @@ int main(int argc, char **argv) {
   //
   // FIXME: We should move .ast inputs to taking a separate path, they are
   // really quite different.
-  bool IsAST = false;
   if (!ConstructCompilerInvocation(Clang.getInvocation(),
-                                   Clang.getDiagnostics(),
-                                   argv[0], IsAST))
+                                   Clang.getDiagnostics(), argv[0]))
     return 1;
 
   // Create the target instance.
@@ -328,6 +324,8 @@ int main(int argc, char **argv) {
 
     // If we aren't using an AST file, setup the file and source managers and
     // the preprocessor.
+    bool IsAST =
+      Clang.getFrontendOpts().Inputs[i].first == FrontendOptions::IK_AST;
     if (!IsAST) {
       if (!i) {
         // Create a file manager object to provide access to and cache the
