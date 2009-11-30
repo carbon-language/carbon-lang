@@ -30,6 +30,14 @@ struct A {
       TT.Product *= pow(P, ++TT.Index);
   }
 
+  A &operator=(const A &RHS) {
+    TT = RHS.TT;
+    P = RHS.P;
+    Truth = RHS.Truth;
+    RHS.P = 0;
+    return *this;
+  }
+
   operator bool () { return Truth; }
 };
 
@@ -83,11 +91,51 @@ static unsigned f3() {
   return tt.Product;
 }
 
+// 3, 7, 2
+static unsigned f4() {
+  TempTracker tt;
+  {
+    A a(tt, 2);
+    while (A b = A(tt, 3, false))
+      A c(tt, 5);
+    A c(tt, 7);
+  }
+  return tt.Product;
+}
+
+// 5, 3, 7, 2
+static unsigned f5() {
+  TempTracker tt;
+  {
+    A a(tt, 2);
+    while (A b = A(tt, 3, true)) {
+      A c(tt, 5);
+      break;
+    }
+    A c(tt, 7);
+  }
+  return tt.Product;
+}
+
+// 3, 7, 11, 5, 13, 2
+static unsigned f6() {
+  TempTracker tt;
+  {
+    A a(tt, 2);
+    for (A b = (A(tt, 3), A(tt, 5)), c = (A(tt, 7), A(tt, 11));;)
+      break;
+    A c(tt, 13);
+  }
+  return tt.Product;
+}
+
 extern "C" void error();
 extern "C" void print(const char *Name, unsigned N);
 
 #define ORDER3(a, b, c) (pow(a, 1) * pow(b, 2) * pow(c, 3))
 #define ORDER4(a, b, c, d) (ORDER3(a, b, c) * pow(d, 4))
+#define ORDER5(a, b, c, d, e) (ORDER4(a, b, c, d) * pow(e, 5))
+#define ORDER6(a, b, c, d, e, f) (ORDER5(a, b, c, d, e) * pow(f, 6))
 void test() {
 // CHECK: call void @print(i8* {{.*}}, i32 1176)
   print("f0", f0());
@@ -108,6 +156,24 @@ void test() {
   print("f3", f3());
   if (f3() != ORDER4(7, 3, 11, 2))
     error();
+
+// CHECK: call void @print(i8* {{.*}}, i32 1176)
+  print("f4", f4());
+  if (f4() != ORDER3(3, 7, 2))
+    error();
+
+// CHECK: call void @print(i8* {{.*}}, i32 246960)
+  print("f5", f5());
+  if (f5() != ORDER4(5, 3, 7, 2))
+    error();
+
+// FIXME: Clang/LLVM currently can't fold this to a constant. If the error check
+// is present (since it avoids single-caller inlining). PR5645.
+
+//  CHECK: call void @print(i8* {{.*}}, i32 1251552576)
+  print("f6", f6());
+//  if (f6() != ORDER6(3, 7, 11, 5, 13, 2))
+//    error();
 }
 
 
