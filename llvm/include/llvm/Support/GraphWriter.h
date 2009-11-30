@@ -149,7 +149,7 @@ public:
     }
 
     std::string edgeSourceLabels;
-    raw_string_ostream::raw_string_ostream EdgeSourceLabels(edgeSourceLabels);
+    raw_string_ostream EdgeSourceLabels(edgeSourceLabels);
     bool hasEdgeSourceLabels = getEdgeSourceLabels(EdgeSourceLabels, Node);
 
     if (hasEdgeSourceLabels) {
