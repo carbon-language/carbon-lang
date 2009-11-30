@@ -559,7 +559,7 @@ Stmt::child_iterator CXXCatchStmt::child_end() {
   return &HandlerBlock + 1;
 }
 
-QualType CXXCatchStmt::getCaughtType() {
+QualType CXXCatchStmt::getCaughtType() const {
   if (ExceptionDecl)
     return ExceptionDecl->getType();
   return QualType();
