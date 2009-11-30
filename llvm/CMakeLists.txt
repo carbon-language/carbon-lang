@@ -226,6 +226,8 @@ if( MSVC )
     add_llvm_definitions("/${LLVM_USE_CRT}")
     message(STATUS "Using VC++ CRT: ${LLVM_USE_CRT}")
   endif (NOT ${LLVM_USE_CRT} STREQUAL "")
+elseif( CMAKE_COMPILER_IS_GNUCXX )
+  add_llvm_definitions( -Wall -W -Wno-unused-parameter -Wwrite-strings )
 endif( MSVC )
 
 include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
