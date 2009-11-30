@@ -91,7 +91,7 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
 
   friend class ElementVH;
-  // Use CallbackVH to hold MDNOde elements.
+  // Use CallbackVH to hold MDNode elements.
   struct ElementVH : public CallbackVH {
     MDNode *Parent;
     ElementVH() {}
@@ -264,7 +264,7 @@ public:
   /// the same metadata to In2.
   void copyMD(Instruction *In1, Instruction *In2);
 
-  /// getHandlerNames - Populate client supplied smallvector using custome
+  /// getHandlerNames - Populate client supplied smallvector using custom
   /// metadata name and ID.
   void getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&) const;
 
