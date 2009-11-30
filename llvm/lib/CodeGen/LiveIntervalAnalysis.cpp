@@ -1095,6 +1095,12 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       NewVReg = mri_->createVirtualRegister(rc);
       vrm.grow();
       CreatedNewVReg = true;
+
+      // The new virtual register should get the same allocation hints as the
+      // old one.
+      std::pair<unsigned, unsigned> Hint = mri_->getRegAllocationHint(Reg);
+      if (Hint.first || Hint.second)
+        mri_->setRegAllocationHint(NewVReg, Hint.first, Hint.second);
     }
 
     if (!TryFold)
