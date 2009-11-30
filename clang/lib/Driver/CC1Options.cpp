@@ -194,7 +194,6 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   // FIXME: Eliminate this dependency?
 //   if (Lang.CPlusPlus)
 //     Opts.NoCommon = 1;
-//   Opts.TimePasses = TimePasses;
 
   // FIXME: Put elsewhere?
 #ifdef NDEBUG

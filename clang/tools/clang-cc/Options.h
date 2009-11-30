@@ -30,8 +30,7 @@ class TargetOptions;
 void InitializeAnalyzerOptions(AnalyzerOptions &Opts);
 
 void InitializeCodeGenOptions(CodeGenOptions &Opts,
-                              const LangOptions &Lang,
-                              bool TimePasses);
+                              const LangOptions &Lang);
 
 void InitializeDependencyOutputOptions(DependencyOutputOptions &Opts);
 

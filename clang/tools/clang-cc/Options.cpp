@@ -795,8 +795,7 @@ void clang::InitializeAnalyzerOptions(AnalyzerOptions &Opts) {
 }
 
 void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
-                                     const LangOptions &Lang,
-                                     bool TimePasses) {
+                                     const LangOptions &Lang) {
   using namespace codegenoptions;
 
   // -Os implies -O2
@@ -830,7 +829,6 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   // FIXME: Eliminate this dependency?
   if (Lang.CPlusPlus)
     Opts.NoCommon = 1;
-  Opts.TimePasses = TimePasses;
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;

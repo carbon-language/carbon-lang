@@ -83,6 +83,7 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    const LangOptions &Features,
                                    const CodeGenOptions &CodeGenOpts,
                                    const TargetOptions &TargetOpts,
+                                   bool TimePasses,
                                    const std::string &ModuleID,
                                    llvm::raw_ostream *OS,
                                    llvm::LLVMContext& C);

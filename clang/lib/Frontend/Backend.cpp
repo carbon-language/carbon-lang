@@ -76,8 +76,9 @@ namespace {
   public:
     BackendConsumer(BackendAction action, Diagnostic &Diags,
                     const LangOptions &langopts, const CodeGenOptions &compopts,
-                    const TargetOptions &targetopts, const std::string &infile,
-                    llvm::raw_ostream* OS, LLVMContext& C) :
+                    const TargetOptions &targetopts, bool TimePasses,
+                    const std::string &infile, llvm::raw_ostream *OS,
+                    LLVMContext& C) :
       Action(action),
       CodeGenOpts(compopts),
       LangOpts(langopts),
@@ -93,8 +94,7 @@ namespace {
         FormattedOutStream.setStream(*AsmOutStream,
                                      formatted_raw_ostream::PRESERVE_STREAM);
 
-      // Enable -time-passes if -ftime-report is enabled.
-      llvm::TimePassesIsEnabled = CodeGenOpts.TimePasses;
+      llvm::TimePassesIsEnabled = TimePasses;
     }
 
     ~BackendConsumer() {
@@ -108,7 +108,7 @@ namespace {
     virtual void Initialize(ASTContext &Ctx) {
       Context = &Ctx;
 
-      if (CodeGenOpts.TimePasses)
+      if (llvm::TimePassesIsEnabled)
         LLVMIRGeneration.startTimer();
 
       Gen->Initialize(Ctx);
@@ -117,7 +117,7 @@ namespace {
       ModuleProvider = new ExistingModuleProvider(TheModule);
       TheTargetData = new llvm::TargetData(Ctx.Target.getTargetDescription());
 
-      if (CodeGenOpts.TimePasses)
+      if (llvm::TimePassesIsEnabled)
         LLVMIRGeneration.stopTimer();
     }
 
@@ -126,24 +126,24 @@ namespace {
                                      Context->getSourceManager(),
                                      "LLVM IR generation of declaration");
 
-      if (CodeGenOpts.TimePasses)
+      if (llvm::TimePassesIsEnabled)
         LLVMIRGeneration.startTimer();
 
       Gen->HandleTopLevelDecl(D);
 
-      if (CodeGenOpts.TimePasses)
+      if (llvm::TimePassesIsEnabled)
         LLVMIRGeneration.stopTimer();
     }
 
     virtual void HandleTranslationUnit(ASTContext &C) {
       {
         PrettyStackTraceString CrashInfo("Per-file LLVM IR generation");
-        if (CodeGenOpts.TimePasses)
+        if (llvm::TimePassesIsEnabled)
           LLVMIRGeneration.startTimer();
 
         Gen->HandleTranslationUnit(C);
 
-        if (CodeGenOpts.TimePasses)
+        if (llvm::TimePassesIsEnabled)
           LLVMIRGeneration.stopTimer();
       }
 
@@ -239,7 +239,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
       BackendArgs.push_back("-nozero-initialized-in-bss");
     BackendArgs.push_back("-relocation-model");
     BackendArgs.push_back(CodeGenOpts.RelocationModel.c_str());
-    if (CodeGenOpts.TimePasses)
+    if (llvm::TimePassesIsEnabled)
       BackendArgs.push_back("-time-passes");
     if (CodeGenOpts.UnwindTables)
       BackendArgs.push_back("-unwind-tables");
@@ -350,7 +350,7 @@ void BackendConsumer::EmitAssembly() {
   if (!TheModule || !TheTargetData)
     return;
 
-  TimeRegion Region(CodeGenOpts.TimePasses ? &CodeGenerationTime : 0);
+  TimeRegion Region(llvm::TimePassesIsEnabled ? &CodeGenerationTime : 0);
 
   // Make sure IR generation is happy with the module. This is
   // released by the module provider.
@@ -407,9 +407,10 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           const LangOptions &LangOpts,
                                           const CodeGenOptions &CodeGenOpts,
                                           const TargetOptions &TargetOpts,
+                                          bool TimePasses,
                                           const std::string& InFile,
                                           llvm::raw_ostream* OS,
                                           LLVMContext& C) {
   return new BackendConsumer(Action, Diags, LangOpts, CodeGenOpts,
-                             TargetOpts, InFile, OS, C);
+                             TargetOpts, TimePasses, InFile, OS, C);
 }

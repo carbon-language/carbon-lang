@@ -183,8 +183,7 @@ static bool ConstructCompilerInvocation(CompilerInvocation &Opts,
   InitializePreprocessorOutputOptions(Opts.getPreprocessorOutputOpts());
 
   // Initialize backend options.
-  InitializeCodeGenOptions(Opts.getCodeGenOpts(), Opts.getLangOpts(),
-                           Opts.getFrontendOpts().ShowTimers);
+  InitializeCodeGenOptions(Opts.getCodeGenOpts(), Opts.getLangOpts());
 
   return true;
 }
