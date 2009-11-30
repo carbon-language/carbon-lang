@@ -85,9 +85,11 @@ struct GenericGraphViewer : public FunctionPass {
 
   virtual bool runOnFunction(Function &F) {
     Analysis *Graph;
-
+    std::string Title, GraphName;
     Graph = &getAnalysis<Analysis>();
-    ViewGraph(Graph, Name, OnlyBBS);
+    GraphName = DOTGraphTraits<Analysis*>::getGraphName(Graph);
+    Title = GraphName + " for '" + F.getNameStr() + "' function";
+    ViewGraph(Graph, Name, OnlyBBS, Title);
 
     return false;
   }
@@ -163,8 +165,12 @@ struct GenericGraphPrinter : public FunctionPass {
     raw_fd_ostream File(Filename.c_str(), ErrorInfo);
     Graph = &getAnalysis<Analysis>();
 
+    std::string Title, GraphName;
+    GraphName = DOTGraphTraits<Analysis*>::getGraphName(Graph);
+    Title = GraphName + " for '" + F.getNameStr() + "' function";
+
     if (ErrorInfo.empty())
-      WriteGraph(File, Graph, OnlyBBS);
+      WriteGraph(File, Graph, OnlyBBS, Name, Title);
     else
       errs() << "  error opening file for writing!";
     errs() << "\n";
