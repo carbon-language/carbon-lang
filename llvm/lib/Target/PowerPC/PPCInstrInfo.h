@@ -151,8 +151,6 @@ public:
   /// instruction may be.  This returns the maximum number of bytes.
   ///
   virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
-
-  virtual bool isProfitableToDuplicateIndirectBranch() const { return true; }
 };
 
 }

@@ -632,8 +632,6 @@ public:
   ///
   unsigned getGlobalBaseReg(MachineFunction *MF) const;
 
-  virtual bool isProfitableToDuplicateIndirectBranch() const { return true; }
-
 private:
   MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
                                      MachineInstr* MI,

@@ -1027,12 +1027,6 @@ bool ARMBaseInstrInfo::isIdentical(const MachineInstr *MI0,
   return TargetInstrInfoImpl::isIdentical(MI0, MI1, MRI);
 }
 
-bool ARMBaseInstrInfo::isProfitableToDuplicateIndirectBranch() const {
-  // If the target processor can predict indirect branches, it is highly
-  // desirable to duplicate them, since it can often make them predictable.
-  return getSubtarget().hasBranchTargetBuffer();
-}
-
 /// getInstrPredicate - If instruction is predicated, returns its predicate
 /// condition, otherwise returns AL. It also returns the condition code
 /// register by reference.

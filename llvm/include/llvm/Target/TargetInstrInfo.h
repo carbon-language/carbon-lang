@@ -543,10 +543,6 @@ public:
   /// length.
   virtual unsigned getInlineAsmLength(const char *Str,
                                       const MCAsmInfo &MAI) const;
-
-  /// isProfitableToDuplicateIndirectBranch - Returns true if tail duplication
-  /// is especially profitable for indirect branches.
-  virtual bool isProfitableToDuplicateIndirectBranch() const { return false; }
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of

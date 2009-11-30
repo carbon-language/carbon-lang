@@ -114,8 +114,6 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     if (UseNEONFP.getPosition() == 0)
       UseNEONForSinglePrecisionFP = true;
   }
-  HasBranchTargetBuffer = (CPUString == "cortex-a8" ||
-                           CPUString == "cortex-a9");
 }
 
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol.
