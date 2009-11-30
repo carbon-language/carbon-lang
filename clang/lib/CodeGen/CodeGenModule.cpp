@@ -21,6 +21,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
@@ -614,18 +615,9 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
                                  Context.getSourceManager(),
                                  "Generating code for declaration");
   
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    const CXXRecordDecl *RD = MD->getParent();
-    // We have to convert it to have a record layout.
-    Types.ConvertTagDeclType(RD);
-    const CGRecordLayout &CGLayout = Types.getCGRecordLayout(RD);
-    // A definition of a KeyFunction, generates all the class data, such
-    // as vtable, rtti and the VTT.
-    if (CGLayout.getKeyFunction()
-        && (CGLayout.getKeyFunction()->getCanonicalDecl()
-            == MD->getCanonicalDecl()))
-      getVtableInfo().GenerateClassData(RD);
-  }
+  if (isa<CXXMethodDecl>(D))
+    getVtableInfo().MaybeEmitVtable(GD);
+  
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     EmitCXXConstructor(CD, GD.getCtorType());
   else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))

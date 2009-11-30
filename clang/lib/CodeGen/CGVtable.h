@@ -91,6 +91,11 @@ class CGVtableInfo {
   
   void ComputeMethodVtableIndices(const CXXRecordDecl *RD);
   
+  /// GenerateClassData - Generate all the class data requires to be generated
+  /// upon definition of a KeyFunction.  This includes the vtable, the
+  /// rtti data structure and the VTT.
+  void GenerateClassData(const CXXRecordDecl *RD);
+  
 public:
   CGVtableInfo(CodeGenModule &CGM)
     : CGM(CGM) { }
@@ -111,10 +116,9 @@ public:
   llvm::Constant *getVtable(const CXXRecordDecl *RD);
   llvm::Constant *getCtorVtable(const CXXRecordDecl *RD,
                                 const CXXRecordDecl *Class, uint64_t Offset);
-  /// GenerateClassData - Generate all the class data requires to be generated
-  /// upon definition of a KeyFunction.  This includes the vtable, the
-  /// rtti data structure and the VTT.
-  void GenerateClassData(const CXXRecordDecl *RD);
+  
+  
+  void MaybeEmitVtable(GlobalDecl GD);
 };
 
 }
