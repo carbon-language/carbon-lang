@@ -133,9 +133,9 @@ public:
   /// block.
   CleanupBlockInfo PopCleanupBlock();
 
-  /// DelayedCleanupBlock - RAII object that will create a cleanup block and set the
-  /// insert point to that block. When destructed, it sets the insert point to
-  /// the previous block and pushes a new cleanup entry on the stack.
+  /// DelayedCleanupBlock - RAII object that will create a cleanup block and set
+  /// the insert point to that block. When destructed, it sets the insert point
+  /// to the previous block and pushes a new cleanup entry on the stack.
   class DelayedCleanupBlock {
     CodeGenFunction& CGF;
     llvm::BasicBlock *CurBB;
@@ -241,10 +241,10 @@ public:
 private:
   CGDebugInfo *DebugInfo;
 
-  /// IndirectBranch - The first time an indirect goto is seen we create a
-  /// block with an indirect branch.  Every time we see the address of a label
-  /// taken, we add the label to the indirect goto.  Every subsequent indirect
-  /// goto is codegen'd as a jump to the IndirectBranch's basic block.
+  /// IndirectBranch - The first time an indirect goto is seen we create a block
+  /// with an indirect branch.  Every time we see the address of a label taken,
+  /// we add the label to the indirect goto.  Every subsequent indirect goto is
+  /// codegen'd as a jump to the IndirectBranch's basic block.
   llvm::IndirectBrInst *IndirectBranch;
 
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
@@ -337,9 +337,9 @@ private:
     /// DtorBlock - The destructor block.
     llvm::BasicBlock *DtorBlock;
 
-    /// CondPtr - If this is a conditional temporary, this is the pointer to
-    /// the condition variable that states whether the destructor should be
-    /// called or not.
+    /// CondPtr - If this is a conditional temporary, this is the pointer to the
+    /// condition variable that states whether the destructor should be called
+    /// or not.
     llvm::Value *CondPtr;
 
     CXXLiveTemporaryInfo(const CXXTemporary *temporary,
@@ -471,8 +471,8 @@ public:
                                    const FunctionArgList &Args);
 
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
-  /// destructor. This is to call destructors on members and base classes
-  /// in reverse order of their construction.
+  /// destructor. This is to call destructors on members and base classes in
+  /// reverse order of their construction.
   void EmitDtorEpilogue(const CXXDestructorDecl *Dtor,
                         CXXDtorType Type);
 
@@ -516,9 +516,9 @@ public:
   /// label maps to.
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
 
-  /// SimplifyForwardingBlocks - If the given basic block is only a
-  /// branch to another basic block, simplify it. This assumes that no
-  /// other code could potentially reference the basic block.
+  /// SimplifyForwardingBlocks - If the given basic block is only a branch to
+  /// another basic block, simplify it. This assumes that no other code could
+  /// potentially reference the basic block.
   void SimplifyForwardingBlocks(llvm::BasicBlock *BB);
 
   /// EmitBlock - Emit the given block \arg BB and set it as the insert point,
@@ -634,9 +634,9 @@ public:
   // instruction in LLVM instead once it works well enough.
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
 
-  // EmitVLASize - Generate code for any VLA size expressions that might occur
-  // in a variably modified type. If Ty is a VLA, will return the value that
-  // corresponds to the size in bytes of the VLA type. Will return 0 otherwise.
+  /// EmitVLASize - Generate code for any VLA size expressions that might occur
+  /// in a variably modified type. If Ty is a VLA, will return the value that
+  /// corresponds to the size in bytes of the VLA type. Will return 0 otherwise.
   ///
   /// This function can be called with a null (unreachable) insert point.
   llvm::Value *EmitVLASize(QualType Ty);
@@ -649,8 +649,8 @@ public:
   /// generating code for an C++ member function.
   llvm::Value *LoadCXXThis();
 
-  /// GetAddressOfBaseClass - This function will add the necessary delta
-  /// to the load of 'this' and returns address of the base class.
+  /// GetAddressOfBaseClass - This function will add the necessary delta to the
+  /// load of 'this' and returns address of the base class.
   // FIXME. This currently only does a derived to non-virtual base conversion.
   // Other kinds of conversions will come later.
   llvm::Value *GetAddressOfBaseClass(llvm::Value *Value,
@@ -944,9 +944,8 @@ public:
   /// result type, and using the given argument list which specifies both the
   /// LLVM arguments and the types they were derived from.
   ///
-  /// \param TargetDecl - If given, the decl of the function in a
-  /// direct call; used to set attributes on the call (noreturn,
-  /// etc.).
+  /// \param TargetDecl - If given, the decl of the function in a direct call;
+  /// used to set attributes on the call (noreturn, etc.).
   RValue EmitCall(const CGFunctionInfo &FnInfo,
                   llvm::Value *Callee,
                   const CallArgList &Args,
@@ -1058,15 +1057,14 @@ public:
   /// LoadComplexFromAddr - Load a complex number from the specified address.
   ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
 
-  /// CreateStaticBlockVarDecl - Create a zero-initialized LLVM global
-  /// for a static block var decl.
+  /// CreateStaticBlockVarDecl - Create a zero-initialized LLVM global for a
+  /// static block var decl.
   llvm::GlobalVariable * CreateStaticBlockVarDecl(const VarDecl &D,
                                                   const char *Separator,
-                                                  llvm::GlobalValue::LinkageTypes
-                                                  Linkage);
+                                       llvm::GlobalValue::LinkageTypes Linkage);
 
-  /// EmitStaticCXXBlockVarDeclInit - Create the initializer for a C++
-  /// runtime initialized static block var decl.
+  /// EmitStaticCXXBlockVarDeclInit - Create the initializer for a C++ runtime
+  /// initialized static block var decl.
   void EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
                                      llvm::GlobalVariable *GV);
 
