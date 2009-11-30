@@ -867,13 +867,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Pass -fmessage-length=.
+  CmdArgs.push_back("-fmessage-length");
   if (Arg *A = Args.getLastArg(options::OPT_fmessage_length_EQ)) {
-    A->render(Args, CmdArgs);
+    CmdArgs.push_back(A->getValue(Args));
   } else {
     // If -fmessage-length=N was not specified, determine whether this is a
     // terminal and, if so, implicitly define -fmessage-length appropriately.
     unsigned N = llvm::sys::Process::StandardErrColumns();
-    CmdArgs.push_back("-fmessage-length");
     CmdArgs.push_back(Args.MakeArgString(llvm::Twine(N)));
   }
 
