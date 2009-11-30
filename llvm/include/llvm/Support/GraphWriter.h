@@ -59,6 +59,34 @@ class GraphWriter {
   typedef typename GTraits::NodeType          NodeType;
   typedef typename GTraits::nodes_iterator    node_iterator;
   typedef typename GTraits::ChildIteratorType child_iterator;
+
+  // Writes the edge labels of the node to O and returns true if there are any
+  // edge labels not equal to the empty string "".
+  bool getEdgeSourceLabels(raw_ostream &O, NodeType *Node) {
+    child_iterator EI = GTraits::child_begin(Node);
+    child_iterator EE = GTraits::child_end(Node);
+    bool hasEdgeSourceLabels = false;
+
+    for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) {
+      std::string label = DOTTraits::getEdgeSourceLabel(Node, EI);
+
+      if (label == "")
+        continue;
+
+      hasEdgeSourceLabels = true;
+
+      if (i)
+        O << "|";
+
+      O << "<s" << i << ">" << DOTTraits::getEdgeSourceLabel(Node, EI);
+    }
+
+    if (EI != EE && hasEdgeSourceLabels)
+      O << "|<s64>truncated...";
+
+    return hasEdgeSourceLabels;
+  }
+
 public:
   GraphWriter(raw_ostream &o, const GraphType &g, bool SN) :
     O(o), G(g), ShortNames(SN) {}
@@ -119,21 +147,15 @@ public:
         O << "|" << (void*)Node;
     }
 
-    // Print out the fields of the current node...
-    child_iterator EI = GTraits::child_begin(Node);
-    child_iterator EE = GTraits::child_end(Node);
-    if (EI != EE) {
+    std::string edgeSourceLabels;
+    raw_string_ostream::raw_string_ostream EdgeSourceLabels(edgeSourceLabels);
+    bool hasEdgeSourceLabels = getEdgeSourceLabels(EdgeSourceLabels, Node);
+
+    if (hasEdgeSourceLabels) {
       if (!DOTTraits::renderGraphFromBottomUp()) O << "|";
-      O << "{";
 
-      for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) {
-        if (i) O << "|";
-        O << "<s" << i << ">" << DOTTraits::getEdgeSourceLabel(Node, EI);
-      }
+      O << "{" << EdgeSourceLabels.str() << "}";
 
-      if (EI != EE)
-        O << "|<s64>truncated...";
-      O << "}";
       if (DOTTraits::renderGraphFromBottomUp()) O << "|";
     }
 
@@ -162,7 +184,8 @@ public:
     O << "}\"];\n";   // Finish printing the "node" line
 
     // Output all of the edges now
-    EI = GTraits::child_begin(Node);
+    child_iterator EI = GTraits::child_begin(Node);
+    child_iterator EE = GTraits::child_end(Node);
     for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i)
       writeEdge(Node, i, EI);
     for (; EI != EE; ++EI)
@@ -180,6 +203,9 @@ public:
           (unsigned)std::distance(GTraits::child_begin(TargetNode), TargetIt);
         DestPort = static_cast<int>(Offset);
       }
+
+      if (DOTTraits::getEdgeSourceLabel(Node, EI) == "")
+        edgeidx = -1;
 
       emitEdge(static_cast<const void*>(Node), edgeidx,
                static_cast<const void*>(TargetNode), DestPort,
