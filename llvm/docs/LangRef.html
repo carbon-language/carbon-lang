@@ -291,6 +291,8 @@
             '<tt>llvm.trap</tt>' Intrinsic</a></li>
           <li><a href="#int_stackprotector">
             '<tt>llvm.stackprotector</tt>' Intrinsic</a></li>
+	  <li><a href="#int_objectsize">
+            '<tt>llvm.objectsize</tt>' Intrinsic</a></li>
         </ol>
       </li>
     </ol>
@@ -7243,6 +7245,41 @@ LLVM</a>.</p>
    the guard on the stack is checked against the original guard. If they're
    different, then the program aborts by calling the <tt>__stack_chk_fail()</tt>
    function.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_objectsize">'<tt>llvm.objectsize</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare i32 @llvm.objectsize.i32( i8* &lt;ptr&gt;, i32 &lt;type&gt; )
+  declare i64 @llvm.objectsize.i64( i8* &lt;ptr&gt;, i32 &lt;type&gt; )
+</pre>
+
+<h5>Overview:</h5>
+<p>The <tt>llvm.objectsize</tt> intrinsic returns the constant number of bytes
+   from <tt>ptr</tt> to the end of the object <tt>ptr</tt> points to if it
+   can deduce this at compile time.  If there are any side-effects in evaluating
+   the argument or it cannot deduce which objects <tt>ptr</tt> points to at compile
+   time the intrinsic returns <tt>(size_t) -1</tt> for <tt>type</tt> 0
+   or 1 and <tt>(size_t) 0</tt> for <tt>type</tt> 2 or 3.</p>
+
+<h5>Arguments:</h5>
+<p>The <tt>llvm.objectsize</tt> intrinsic takes two arguments.  The first
+   argument is a pointer to the object <tt>ptr</tt> and an integer <tt>type</tt>.
+   <tt>type</tt> is an integer ranging from 0 to 3. The lsb corresponds to
+   a return value based on whole objects, the second bit whether or not we
+   return the maximum or minimum remaining bytes computed.</p>
+
+<h5>Semantics:</h5>
+<p>The <tt>llvm.objectsize</tt> intrinsic is lowered to either a constant
+   representing the size of the object concerned or <tt>(size_t) -1</tt> if
+   it cannot be determined at compile time.</p>
 
 </div>
 
