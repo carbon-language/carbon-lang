@@ -1156,8 +1156,21 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       // that predecessor.  We can still do PRE of the load, which would insert
       // a computation of the pointer in this predecessor.
       if (PredPtr == 0) {
-        Result.push_back(NonLocalDepEntry(Pred,
-                              MemDepResult::getClobber(Pred->getTerminator())));
+        // Add the entry to the Result list.
+        NonLocalDepEntry Entry(Pred,
+                               MemDepResult::getClobber(Pred->getTerminator()));
+        Result.push_back(Entry);
+
+        // Add it to the cache for this CacheKey so that subsequent queries get
+        // this result.
+        Cache = &NonLocalPointerDeps[CacheKey].second;
+        MemoryDependenceAnalysis::NonLocalDepInfo::iterator It =
+          std::upper_bound(Cache->begin(), Cache->end(), Entry);
+        Cache->insert(It, Entry);
+        Cache = 0;
+        
+        // Add it to the reverse map next.
+        ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
         continue;
       }
 
