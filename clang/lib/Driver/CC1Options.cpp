@@ -549,7 +549,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   if (Args.hasArg(OPT_trigraphs))
     Opts.Trigraphs = 1;
 
-  Opts.DollarIdents = Opts.AsmPreprocessor;
+  Opts.DollarIdents = !Opts.AsmPreprocessor;
   if (Args.hasArg(OPT_fdollars_in_identifiers))
     Opts.DollarIdents = 1;
 
