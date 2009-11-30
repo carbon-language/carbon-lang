@@ -23,9 +23,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/PrettyStackTrace.h"
-#ifndef NDEBUG
-#include "llvm/Support/Compiler.h"
-#endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -2815,7 +2812,7 @@ static SourceManager* GraphPrintSourceManager;
 
 namespace llvm {
 template<>
-struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
+struct DOTGraphTraits<ExplodedNode*> :
   public DefaultDOTGraphTraits {
 
   DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
