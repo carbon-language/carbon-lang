@@ -609,7 +609,10 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
   using namespace cc1options;
   Opts.ImplicitPCHInclude = getLastArgValue(Args, OPT_include_pch);
   Opts.ImplicitPTHInclude = getLastArgValue(Args, OPT_include_pth);
-  Opts.TokenCache = getLastArgValue(Args, OPT_token_cache);
+  if (const Arg *A = Args.getLastArg(OPT_token_cache))
+      Opts.TokenCache = A->getValue(Args);
+  else
+    Opts.TokenCache = Opts.ImplicitPTHInclude;
   Opts.UsePredefines = !Args.hasArg(OPT_undef);
 
   // Add macros from the command line.
