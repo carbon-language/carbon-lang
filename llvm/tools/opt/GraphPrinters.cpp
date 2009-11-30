@@ -46,6 +46,9 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
 namespace llvm {
   template<>
   struct DOTGraphTraits<CallGraph*> : public DefaultDOTGraphTraits {
+
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
     static std::string getGraphName(CallGraph *F) {
       return "Call Graph";
     }

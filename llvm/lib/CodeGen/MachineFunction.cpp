@@ -359,6 +359,9 @@ void MachineFunction::print(raw_ostream &OS) const {
 namespace llvm {
   template<>
   struct DOTGraphTraits<const MachineFunction*> : public DefaultDOTGraphTraits {
+
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
     static std::string getGraphName(const MachineFunction *F) {
       return "CFG for '" + F->getFunction()->getNameStr() + "' function";
     }

@@ -32,6 +32,9 @@ using namespace llvm;
 namespace llvm {
   template<>
   struct DOTGraphTraits<ScheduleDAG*> : public DefaultDOTGraphTraits {
+
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
     static std::string getGraphName(const ScheduleDAG *G) {
       return G->MF.getFunction()->getName();
     }

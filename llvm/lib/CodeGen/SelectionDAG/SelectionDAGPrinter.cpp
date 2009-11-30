@@ -35,6 +35,9 @@ using namespace llvm;
 namespace llvm {
   template<>
   struct DOTGraphTraits<SelectionDAG*> : public DefaultDOTGraphTraits {
+
+    DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
     static bool hasEdgeDestLabels() {
       return true;
     }
@@ -48,8 +51,8 @@ namespace llvm {
     }
 
     /// edgeTargetsEdgeSource - This method returns true if this outgoing edge
-    /// should actually target another edge source, not a node.  If this method is
-    /// implemented, getEdgeTarget should be implemented.
+    /// should actually target another edge source, not a node.  If this method
+    /// is implemented, getEdgeTarget should be implemented.
     template<typename EdgeIter>
     static bool edgeTargetsEdgeSource(const void *Node, EdgeIter I) {
       return true;

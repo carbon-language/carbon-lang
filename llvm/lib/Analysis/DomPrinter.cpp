@@ -30,6 +30,9 @@ using namespace llvm;
 namespace llvm {
 template<>
 struct DOTGraphTraits<DomTreeNode*> : public DefaultDOTGraphTraits {
+
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
   static std::string getNodeLabel(DomTreeNode *Node, DomTreeNode *Graph,
                                   bool ShortNames) {
 
@@ -46,6 +49,9 @@ struct DOTGraphTraits<DomTreeNode*> : public DefaultDOTGraphTraits {
 template<>
 struct DOTGraphTraits<DominatorTree*> : public DOTGraphTraits<DomTreeNode*> {
 
+  DOTGraphTraits (bool isSimple=false)
+    : DOTGraphTraits<DomTreeNode*>(isSimple) {}
+
   static std::string getGraphName(DominatorTree *DT) {
     return "Dominator tree";
   }
@@ -61,6 +67,10 @@ struct DOTGraphTraits<DominatorTree*> : public DOTGraphTraits<DomTreeNode*> {
 template<>
 struct DOTGraphTraits<PostDominatorTree*>
   : public DOTGraphTraits<DomTreeNode*> {
+
+  DOTGraphTraits (bool isSimple=false)
+    : DOTGraphTraits<DomTreeNode*>(isSimple) {}
+
   static std::string getGraphName(PostDominatorTree *DT) {
     return "Post dominator tree";
   }

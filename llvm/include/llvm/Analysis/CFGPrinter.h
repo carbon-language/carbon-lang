@@ -24,6 +24,9 @@
 namespace llvm {
 template<>
 struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
+
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
   static std::string getGraphName(const Function *F) {
     return "CFG for '" + F->getNameStr() + "' function";
   }
