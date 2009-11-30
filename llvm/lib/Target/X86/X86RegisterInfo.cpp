@@ -1262,7 +1262,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     else if (RetOpcode== X86::TCRETURNri64)
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64), JumpTarget.getReg());
     else
-       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr), JumpTarget.getReg());
+      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr), JumpTarget.getReg());
 
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);
