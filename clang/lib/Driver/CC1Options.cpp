@@ -579,8 +579,18 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.OptimizeSize = 0;
-  Opts.Optimize = 0; // FIXME!
-  Opts.NoInline = 0; // FIXME!
+
+  // FIXME: Eliminate this dependency.
+  unsigned Opt =
+    Args.hasArg(OPT_Os) ? 2 : getLastArgIntValue(Args, OPT_O, 0, Diags);
+  Opts.Optimize = Opt != 0;
+
+  // This is the __NO_INLINE__ define, which just depends on things like the
+  // optimization level and -fno-inline, not actually whether the backend has
+  // inlining enabled.
+  //
+  // FIXME: This is affected by other options (-fno-inline).
+  Opts.NoInline = !Opt;
 
   unsigned SSP = getLastArgIntValue(Args, OPT_stack_protector, 0, Diags);
   switch (SSP) {
