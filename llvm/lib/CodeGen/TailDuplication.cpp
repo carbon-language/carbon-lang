@@ -116,14 +116,14 @@ bool TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
   // duplicate only one, because one branch instruction can be eliminated to
   // compensate for the duplication.
   unsigned MaxDuplicateCount;
-  if (MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
-    MaxDuplicateCount = 1;
-  else if (!TailBB->empty() && TailBB->back().getDesc().isIndirectBranch())
+  if (!TailBB->empty() && TailBB->back().getDesc().isIndirectBranch())
     // If the target has hardware branch prediction that can handle indirect
     // branches, duplicating them can often make them predictable when there
     // are common paths through the code.  The limit needs to be high enough
     // to allow undoing the effects of tail merging.
     MaxDuplicateCount = 20;
+  else if (MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+    MaxDuplicateCount = 1;
   else
     MaxDuplicateCount = TailDuplicateSize;
 
