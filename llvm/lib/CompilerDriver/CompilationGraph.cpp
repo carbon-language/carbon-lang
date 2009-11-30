@@ -471,6 +471,7 @@ namespace llvm {
   struct DOTGraphTraits<llvmc::CompilationGraph*>
     : public DefaultDOTGraphTraits
   {
+    DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
 
     template<typename GraphType>
     static std::string getNodeLabel(const Node* N, const GraphType&)

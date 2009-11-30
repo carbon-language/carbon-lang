@@ -132,7 +132,7 @@ namespace llvm {
 
 std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
                                                         const SelectionDAG *G) {
-  DOTGraphTraits<SelectionDAG*>::getSimpleNodeLabel (Node, G);
+  return DOTGraphTraits<SelectionDAG*>::getSimpleNodeLabel (Node, G);
 }
 
 
