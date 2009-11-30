@@ -32,7 +32,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
                                   const Function *Graph,
                                   bool ShortNames) {
     if (ShortNames && !Node->getName().empty())
-      return Node->getNameStr() + ":";
+      return Node->getNameStr(); 
 
     std::string Str;
     raw_string_ostream OS(Str);
