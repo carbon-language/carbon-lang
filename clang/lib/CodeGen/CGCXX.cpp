@@ -603,16 +603,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   Counter = Builder.CreateLoad(IndexPtr);
   Counter = Builder.CreateSub(Counter, One);
   llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
-  if (D->isVirtual()) {
-    const llvm::Type *Ty =
-      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(D),
-                                     /*isVariadic=*/false);
-    
-    llvm::Value *Callee = BuildVirtualCall(D, Dtor_Deleting, Address, Ty);
-    EmitCXXMemberCall(D, Callee, Address, 0, 0);
-  }
-  else
-    EmitCXXDestructorCall(D, Dtor_Complete, Address);
+  EmitCXXDestructorCall(D, Dtor_Complete, Address);
 
   EmitBlock(ContinueBlock);
 
@@ -703,6 +694,15 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *D,
                                             CXXDtorType Type,
                                             llvm::Value *This) {
+  if (D->isVirtual()) {
+    const llvm::Type *Ty =
+      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(D),
+                                     /*isVariadic=*/false);
+    
+    llvm::Value *Callee = BuildVirtualCall(D, Dtor_Deleting, This, Ty);
+    EmitCXXMemberCall(D, Callee, This, 0, 0);
+    return;
+  }
   llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(D, Type);
 
   EmitCXXMemberCall(D, Callee, This, 0, 0);
@@ -1777,12 +1777,12 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
     // Ignore trivial destructors.
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
-
+    const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
+    
     llvm::Value *V = GetAddressOfBaseClass(LoadCXXThis(),
                                            ClassDecl, BaseClassDecl, 
                                            /*NullCheckValue=*/false);
-    EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
-                          Dtor_Base, V);
+    EmitCXXDestructorCall(D, Dtor_Base, V);
   }
 
   // If we're emitting a base destructor, we don't want to emit calls to the
@@ -1790,10 +1790,21 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
   if (DtorType == Dtor_Base)
     return;
   
-  // FIXME: Handle virtual bases.
+  // Handle virtual bases.
   for (CXXRecordDecl::reverse_base_class_const_iterator I = 
        ClassDecl->vbases_rbegin(), E = ClassDecl->vbases_rend(); I != E; ++I) {
-    assert(false && "FIXME: Handle virtual bases.");
+    const CXXBaseSpecifier &Base = *I;
+    CXXRecordDecl *BaseClassDecl
+    = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
+    
+    // Ignore trivial destructors.
+    if (BaseClassDecl->hasTrivialDestructor())
+      continue;
+    const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
+    llvm::Value *V = GetAddressOfBaseClass(LoadCXXThis(),
+                                           ClassDecl, BaseClassDecl, 
+                                           /*NullCheckValue=*/false);
+    EmitCXXDestructorCall(D, Dtor_Base, V);
   }
     
   // If we have a deleting destructor, emit a call to the delete operator.
