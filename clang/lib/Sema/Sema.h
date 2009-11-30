@@ -2135,7 +2135,7 @@ public:
   void CheckConstructor(CXXConstructorDecl *Constructor);
   QualType CheckDestructorDeclarator(Declarator &D,
                                      FunctionDecl::StorageClass& SC);
-  void CheckDestructor(CXXDestructorDecl *Destructor);
+  bool CheckDestructor(CXXDestructorDecl *Destructor);
   void CheckConversionDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);

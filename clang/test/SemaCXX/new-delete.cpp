@@ -190,3 +190,15 @@ class X9 {
 void f(X9 *x9) {
   delete x9; // expected-error {{no suitable member 'operator delete' in 'X9'}}
 }
+
+struct X10 {
+  virtual ~X10();
+};
+
+struct X11 : X10 { // expected-error {{no suitable member 'operator delete' in 'X11'}}
+  void operator delete(void*, int); // expected-note {{'operator delete' declared here}}
+};
+
+void f() {
+  X11 x11; // expected-note {{implicit default destructor for 'struct X11' first required here}}
+}

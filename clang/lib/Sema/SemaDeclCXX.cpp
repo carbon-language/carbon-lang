@@ -2367,9 +2367,9 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
   ClassDecl->addedConstructor(Context, Constructor);
 }
 
-/// CheckDestructor - Checks a fully-formed destructor for
-/// well-formedness, issuing any diagnostics required. 
-void Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
+/// CheckDestructor - Checks a fully-formed destructor for well-formedness, 
+/// issuing any diagnostics required. Returns true on error.
+bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
   CXXRecordDecl *RD = Destructor->getParent();
   
   if (Destructor->isVirtual()) {
@@ -2384,9 +2384,13 @@ void Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
     FunctionDecl *OperatorDelete = 0;
     DeclarationName Name = 
     Context.DeclarationNames.getCXXOperatorName(OO_Delete);
-    if (!FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
-      Destructor->setOperatorDelete(OperatorDelete);
+    if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
+      return true;
+    
+    Destructor->setOperatorDelete(OperatorDelete);
   }
+  
+  return false;
 }
 
 static inline bool
@@ -3071,8 +3075,8 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   assert(ClassDecl && "DefineImplicitDefaultConstructor - invalid constructor");
 
   if (SetBaseOrMemberInitializers(Constructor, 0, 0, true)) {
-    Diag(CurrentLocation, diag::note_ctor_synthesized_at)
-      << Context.getTagDeclType(ClassDecl);
+    Diag(CurrentLocation, diag::note_member_synthesized_at) 
+      << CXXDefaultConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
   } else {
     Constructor->setUsed();
@@ -3124,6 +3128,17 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
       }
     }
   }
+  
+  // FIXME: If CheckDestructor fails, we should emit a note about where the
+  // implicit destructor was needed.
+  if (CheckDestructor(Destructor)) {
+    Diag(CurrentLocation, diag::note_member_synthesized_at) 
+      << CXXDestructor << Context.getTagDeclType(ClassDecl);
+
+    Destructor->setInvalidDecl();
+    return;
+  }
+
   Destructor->setUsed();
 }
 
