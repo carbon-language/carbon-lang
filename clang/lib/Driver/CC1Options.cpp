@@ -184,8 +184,10 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.CodeModel = getLastArgValue(Args, OPT_mcode_model);
   Opts.DebugPass = getLastArgValue(Args, OPT_mdebug_pass);
   Opts.DisableFPElim = Args.hasArg(OPT_mdisable_fp_elim);
+  Opts.FloatABI = getLastArgValue(Args, OPT_mfloat_abi);
   Opts.LimitFloatPrecision = getLastArgValue(Args, OPT_mlimit_float_precision);
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
+  Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = getLastArgValue(Args, OPT_mrelocation_model, "pic");
 

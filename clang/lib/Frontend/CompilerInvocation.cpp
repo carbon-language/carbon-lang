@@ -134,12 +134,18 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   }
   if (Opts.DisableFPElim)
     Res.push_back("-mdisable-fp-elim");
+  if (!Opts.FloatABI.empty()) {
+    Res.push_back("-mfloat-abi");
+    Res.push_back(Opts.FloatABI);
+  }
   if (!Opts.LimitFloatPrecision.empty()) {
     Res.push_back("-mlimit-float-precision");
     Res.push_back(Opts.LimitFloatPrecision);
   }
   if (Opts.NoZeroInitializedInBSS)
     Res.push_back("-mno-zero-initialized-bss");
+  if (Opts.SoftFloat)
+    Res.push_back("-msoft-float");
   if (Opts.UnwindTables)
     Res.push_back("-munwind-tables");
   if (Opts.RelocationModel != "pic") {

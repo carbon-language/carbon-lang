@@ -231,12 +231,18 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     }
     if (CodeGenOpts.DisableFPElim)
       BackendArgs.push_back("-disable-fp-elim");
+    if (!CodeGenOpts.FloatABI.empty()) {
+      BackendArgs.push_back("-float-abi");
+      BackendArgs.push_back(CodeGenOpts.FloatABI.c_str());
+    }
     if (!CodeGenOpts.LimitFloatPrecision.empty()) {
       BackendArgs.push_back("-limit-float-precision");
       BackendArgs.push_back(CodeGenOpts.LimitFloatPrecision.c_str());
     }
     if (CodeGenOpts.NoZeroInitializedInBSS)
       BackendArgs.push_back("-nozero-initialized-in-bss");
+    if (CodeGenOpts.SoftFloat)
+      BackendArgs.push_back("-soft-float");
     BackendArgs.push_back("-relocation-model");
     BackendArgs.push_back(CodeGenOpts.RelocationModel.c_str());
     if (llvm::TimePassesIsEnabled)

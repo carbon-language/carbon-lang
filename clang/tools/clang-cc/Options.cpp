@@ -155,12 +155,18 @@ MDisableFPElim("mdisable-fp-elim",
               llvm::cl::desc("Disable frame pointer elimination optimization"));
 
 static llvm::cl::opt<std::string>
+MFloatABI("mfloat-abi", llvm::cl::desc("The float ABI to use"));
+
+static llvm::cl::opt<std::string>
 MLimitFloatPrecision("mlimit-float-precision",
                     llvm::cl::desc("Limit float precision to the given value"));
 
 static llvm::cl::opt<bool>
 MNoZeroInitializedInBSS("mno-zero-initialized-in-bss",
                  llvm::cl::desc("Do not put zero initialized data in the BSS"));
+
+static llvm::cl::opt<bool>
+MSoftFloat("msoft-float", llvm::cl::desc("Use software floating point"));
 
 static llvm::cl::opt<std::string>
 MRelocationModel("mrelocation-model",
@@ -821,10 +827,12 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   Opts.CodeModel = MCodeModel;
   Opts.DebugPass = MDebugPass;
   Opts.DisableFPElim = MDisableFPElim;
+  Opts.FloatABI = MFloatABI;
   Opts.LimitFloatPrecision = MLimitFloatPrecision;
   Opts.NoZeroInitializedInBSS = MNoZeroInitializedInBSS;
-  Opts.UnwindTables = MUnwindTables;
+  Opts.SoftFloat = MSoftFloat;
   Opts.RelocationModel = MRelocationModel;
+  Opts.UnwindTables = MUnwindTables;
 
 #ifdef NDEBUG
   Opts.VerifyModule = 0;

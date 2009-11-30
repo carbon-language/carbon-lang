@@ -29,7 +29,7 @@ public:
     OnlyAlwaysInlining  // Only run the always inlining pass.
   };
 
-  unsigned AsmVerbose        : 1; /// -dA, -fverbose-asm
+  unsigned AsmVerbose        : 1; /// -dA, -fverbose-asm.
   unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
   unsigned DisableFPElim     : 1; /// Set when -fomit-frame-pointer is enabled.
   unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
@@ -43,6 +43,7 @@ public:
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
+  unsigned SoftFloat         : 1; /// -soft-float.
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC optimization
                                   /// selection.
@@ -54,7 +55,11 @@ public:
   /// The code model to use (-mcmodel).
   std::string CodeModel;
 
+  /// Enable additional debugging information.
   std::string DebugPass;
+
+  /// The ABI to use for passing floating point arguments.
+  std::string FloatABI;
 
   /// The float precision limit to use, if non-empty.
   std::string LimitFloatPrecision;
@@ -84,6 +89,7 @@ public:
     OptimizationLevel = 0;
     OptimizeSize = 0;
     UnrollLoops = 0;
+    SoftFloat = 0;
     TimePasses = 0;
     UnitAtATime = 1;
     UnwindTables = 0;
