@@ -163,18 +163,18 @@ public:
   }
   void VisitTagDecl(TagDecl *ND) {
     switch (ND->getTagKind()) {
-      case TagDecl::TK_struct:
-        Call(CXCursor_StructDecl, ND);
-        break;
-      case TagDecl::TK_class:
-        Call(CXCursor_ClassDecl, ND);
-        break;
-      case TagDecl::TK_union:
-        Call(CXCursor_UnionDecl, ND);
-        break;
-      case TagDecl::TK_enum:
-        Call(CXCursor_EnumDecl, ND);
-        break;
+    case TagDecl::TK_struct:
+      Call(CXCursor_StructDecl, ND);
+      break;
+    case TagDecl::TK_class:
+      Call(CXCursor_ClassDecl, ND);
+      break;
+    case TagDecl::TK_union:
+      Call(CXCursor_UnionDecl, ND);
+      break;
+    case TagDecl::TK_enum:
+      Call(CXCursor_EnumDecl, ND);
+      break;
     }
   }
   void VisitTypedefDecl(TypedefDecl *ND) {
@@ -226,13 +226,13 @@ public:
       Call(CXCursor_ObjCSuperClassRef, D);
 
     for (ObjCProtocolDecl::protocol_iterator I = D->protocol_begin(),
-         E = D->protocol_end(); I != E; ++I)
+           E = D->protocol_end(); I != E; ++I)
       Call(CXCursor_ObjCProtocolRef, *I);
     VisitDeclContext(dyn_cast<DeclContext>(D));
   }
   void VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
     for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
-         E = PID->protocol_end(); I != E; ++I)
+           E = PID->protocol_end(); I != E; ++I)
       Call(CXCursor_ObjCProtocolRef, *I);
 
     VisitDeclContext(dyn_cast<DeclContext>(PID));
@@ -365,58 +365,58 @@ static SourceLocation getLocationFromCursor(CXCursor C,
                                             NamedDecl *ND) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-      case CXCursor_ObjCClassRef: {
-        if (isa<ObjCInterfaceDecl>(ND)) {
-          // FIXME: This is a hack (storing the parent decl in the stmt slot).
-          NamedDecl *parentDecl = static_cast<NamedDecl *>(C.stmt);
-          return parentDecl->getLocation();
-        }
-        ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
-        assert(OID && "clang_getCursorLine(): Missing category decl");
-        return OID->getClassInterface()->getLocation();
+    case CXCursor_ObjCClassRef: {
+      if (isa<ObjCInterfaceDecl>(ND)) {
+        // FIXME: This is a hack (storing the parent decl in the stmt slot).
+        NamedDecl *parentDecl = static_cast<NamedDecl *>(C.stmt);
+        return parentDecl->getLocation();
       }
-      case CXCursor_ObjCSuperClassRef: {
-        ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
-        assert(OID && "clang_getCursorLine(): Missing interface decl");
-        return OID->getSuperClassLoc();
-      }
-      case CXCursor_ObjCProtocolRef: {
-        ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
-        assert(OID && "clang_getCursorLine(): Missing protocol decl");
-        return OID->getLocation();
-      }
-      case CXCursor_ObjCSelectorRef: {
-        ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
-                                 static_cast<Stmt *>(C.stmt));
-        assert(OME && "clang_getCursorLine(): Missing message expr");
-        return OME->getLeftLoc(); /* FIXME: should be a range */
-      }
-      case CXCursor_VarRef:
-      case CXCursor_FunctionRef:
-      case CXCursor_EnumConstantRef: {
-        DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
-                                 static_cast<Stmt *>(C.stmt));
-        assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
-        return DRE->getLocation();
-      }
-      default:
-        return SourceLocation();
+      ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
+      assert(OID && "clang_getCursorLine(): Missing category decl");
+      return OID->getClassInterface()->getLocation();
+    }
+    case CXCursor_ObjCSuperClassRef: {
+      ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
+      assert(OID && "clang_getCursorLine(): Missing interface decl");
+      return OID->getSuperClassLoc();
+    }
+    case CXCursor_ObjCProtocolRef: {
+      ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
+      assert(OID && "clang_getCursorLine(): Missing protocol decl");
+      return OID->getLocation();
+    }
+    case CXCursor_ObjCSelectorRef: {
+      ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
+        static_cast<Stmt *>(C.stmt));
+      assert(OME && "clang_getCursorLine(): Missing message expr");
+      return OME->getLeftLoc(); /* FIXME: should be a range */
+    }
+    case CXCursor_VarRef:
+    case CXCursor_FunctionRef:
+    case CXCursor_EnumConstantRef: {
+      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
+        static_cast<Stmt *>(C.stmt));
+      assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
+      return DRE->getLocation();
+    }
+    default:
+      return SourceLocation();
     }
   } else { // We have a declaration or a definition.
     SourceLocation SLoc;
     switch (ND->getKind()) {
-      case Decl::ObjCInterface: {
-        SLoc = dyn_cast<ObjCInterfaceDecl>(ND)->getClassLoc();
-        break;
-      }
-      case Decl::ObjCProtocol: {
-        SLoc = ND->getLocation(); /* FIXME: need to get the name location. */
-        break;
-      }
-      default: {
-        SLoc = ND->getLocation();
-        break;
-      }
+    case Decl::ObjCInterface: {
+      SLoc = dyn_cast<ObjCInterfaceDecl>(ND)->getClassLoc();
+      break;
+    }
+    case Decl::ObjCProtocol: {
+      SLoc = ND->getLocation(); /* FIXME: need to get the name location. */
+      break;
+    }
+    default: {
+      SLoc = ND->getLocation();
+      break;
+    }
     }
     if (SLoc.isInvalid())
       return SourceLocation();
@@ -466,10 +466,10 @@ CXTranslationUnit clang_createTranslationUnit(
 
   CXTranslationUnit TU =
     ASTUnit::LoadFromPCHFile(astName, &ErrMsg,
-                           CXXIdx->getDisplayDiagnostics() ?
-                           NULL : new IgnoreDiagnosticsClient(),
-                           CXXIdx->getOnlyLocalDecls(),
-                           /* UseBumpAllocator = */ true);
+                             CXXIdx->getDisplayDiagnostics() ?
+                             NULL : new IgnoreDiagnosticsClient(),
+                             CXXIdx->getOnlyLocalDecls(),
+                             /* UseBumpAllocator = */ true);
 
   if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty())
     llvm::errs() << "clang_createTranslationUnit: " << ErrMsg  << '\n';
@@ -536,7 +536,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 
   if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
     llvm::errs() << "clang_createTranslationUnitFromSourceFile: " << ErrMsg
-      << '\n' << "Arguments: \n";
+                 << '\n' << "Arguments: \n";
     for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
          I!=E; ++I) {
       if (*I)
@@ -547,7 +547,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 
   // Finally, we create the translation unit from the ast file.
   ASTUnit *ATU = static_cast<ASTUnit *>(
-                   clang_createTranslationUnit(CIdx, astTmpFile));
+    clang_createTranslationUnit(CIdx, astTmpFile));
   if (ATU)
     ATU->unlinkTemporaryFile();
   return ATU;
@@ -711,42 +711,42 @@ CXString clang_getCursorSpelling(CXCursor C)
 
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-      case CXCursor_ObjCSuperClassRef: {
-        ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
-        assert(OID && "clang_getCursorLine(): Missing interface decl");
-        return createCXString(OID->getSuperClass()->getIdentifier()
-                                 ->getNameStart());
-      }
-      case CXCursor_ObjCClassRef: {
-        if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND))
-          return createCXString(OID->getIdentifier()->getNameStart());
-
-        ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(ND);
-        assert(OCD && "clang_getCursorLine(): Missing category decl");
-        return createCXString(OCD->getClassInterface()->getIdentifier()
-                                 ->getNameStart());
-      }
-      case CXCursor_ObjCProtocolRef: {
-        ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
-        assert(OID && "clang_getCursorLine(): Missing protocol decl");
+    case CXCursor_ObjCSuperClassRef: {
+      ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
+      assert(OID && "clang_getCursorLine(): Missing interface decl");
+      return createCXString(OID->getSuperClass()->getIdentifier()
+                            ->getNameStart());
+    }
+    case CXCursor_ObjCClassRef: {
+      if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND))
         return createCXString(OID->getIdentifier()->getNameStart());
-      }
-      case CXCursor_ObjCSelectorRef: {
-        ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
-                                 static_cast<Stmt *>(C.stmt));
-        assert(OME && "clang_getCursorLine(): Missing message expr");
-        return createCXString(OME->getSelector().getAsString().c_str(), true);
-      }
-      case CXCursor_VarRef:
-      case CXCursor_FunctionRef:
-      case CXCursor_EnumConstantRef: {
-        DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
-                                 static_cast<Stmt *>(C.stmt));
-        assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
-        return createCXString(DRE->getDecl()->getIdentifier()->getNameStart());
-      }
-      default:
-        return createCXString("<not implemented>");
+
+      ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(ND);
+      assert(OCD && "clang_getCursorLine(): Missing category decl");
+      return createCXString(OCD->getClassInterface()->getIdentifier()
+                            ->getNameStart());
+    }
+    case CXCursor_ObjCProtocolRef: {
+      ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
+      assert(OID && "clang_getCursorLine(): Missing protocol decl");
+      return createCXString(OID->getIdentifier()->getNameStart());
+    }
+    case CXCursor_ObjCSelectorRef: {
+      ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
+        static_cast<Stmt *>(C.stmt));
+      assert(OME && "clang_getCursorLine(): Missing message expr");
+      return createCXString(OME->getSelector().getAsString().c_str(), true);
+    }
+    case CXCursor_VarRef:
+    case CXCursor_FunctionRef:
+    case CXCursor_EnumConstantRef: {
+      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
+        static_cast<Stmt *>(C.stmt));
+      assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
+      return createCXString(DRE->getDecl()->getIdentifier()->getNameStart());
+    }
+    default:
+      return createCXString("<not implemented>");
     }
   }
   return clang_getDeclSpelling(C.decl);
@@ -755,65 +755,65 @@ CXString clang_getCursorSpelling(CXCursor C)
 const char *clang_getCursorKindSpelling(enum CXCursorKind Kind)
 {
   switch (Kind) {
-   case CXCursor_FunctionDecl: return "FunctionDecl";
-   case CXCursor_TypedefDecl: return "TypedefDecl";
-   case CXCursor_EnumDecl: return "EnumDecl";
-   case CXCursor_EnumConstantDecl: return "EnumConstantDecl";
-   case CXCursor_StructDecl: return "StructDecl";
-   case CXCursor_UnionDecl: return "UnionDecl";
-   case CXCursor_ClassDecl: return "ClassDecl";
-   case CXCursor_FieldDecl: return "FieldDecl";
-   case CXCursor_VarDecl: return "VarDecl";
-   case CXCursor_ParmDecl: return "ParmDecl";
-   case CXCursor_ObjCInterfaceDecl: return "ObjCInterfaceDecl";
-   case CXCursor_ObjCCategoryDecl: return "ObjCCategoryDecl";
-   case CXCursor_ObjCProtocolDecl: return "ObjCProtocolDecl";
-   case CXCursor_ObjCPropertyDecl: return "ObjCPropertyDecl";
-   case CXCursor_ObjCIvarDecl: return "ObjCIvarDecl";
-   case CXCursor_ObjCInstanceMethodDecl: return "ObjCInstanceMethodDecl";
-   case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
-   case CXCursor_FunctionDefn: return "FunctionDefn";
-   case CXCursor_ObjCInstanceMethodDefn: return "ObjCInstanceMethodDefn";
-   case CXCursor_ObjCClassMethodDefn: return "ObjCClassMethodDefn";
-   case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
-   case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
-   case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
-   case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
-   case CXCursor_ObjCClassRef: return "ObjCClassRef";
-   case CXCursor_ObjCSelectorRef: return "ObjCSelectorRef";
+  case CXCursor_FunctionDecl: return "FunctionDecl";
+  case CXCursor_TypedefDecl: return "TypedefDecl";
+  case CXCursor_EnumDecl: return "EnumDecl";
+  case CXCursor_EnumConstantDecl: return "EnumConstantDecl";
+  case CXCursor_StructDecl: return "StructDecl";
+  case CXCursor_UnionDecl: return "UnionDecl";
+  case CXCursor_ClassDecl: return "ClassDecl";
+  case CXCursor_FieldDecl: return "FieldDecl";
+  case CXCursor_VarDecl: return "VarDecl";
+  case CXCursor_ParmDecl: return "ParmDecl";
+  case CXCursor_ObjCInterfaceDecl: return "ObjCInterfaceDecl";
+  case CXCursor_ObjCCategoryDecl: return "ObjCCategoryDecl";
+  case CXCursor_ObjCProtocolDecl: return "ObjCProtocolDecl";
+  case CXCursor_ObjCPropertyDecl: return "ObjCPropertyDecl";
+  case CXCursor_ObjCIvarDecl: return "ObjCIvarDecl";
+  case CXCursor_ObjCInstanceMethodDecl: return "ObjCInstanceMethodDecl";
+  case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
+  case CXCursor_FunctionDefn: return "FunctionDefn";
+  case CXCursor_ObjCInstanceMethodDefn: return "ObjCInstanceMethodDefn";
+  case CXCursor_ObjCClassMethodDefn: return "ObjCClassMethodDefn";
+  case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
+  case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
+  case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
+  case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
+  case CXCursor_ObjCClassRef: return "ObjCClassRef";
+  case CXCursor_ObjCSelectorRef: return "ObjCSelectorRef";
 
-   case CXCursor_VarRef: return "VarRef";
-   case CXCursor_FunctionRef: return "FunctionRef";
-   case CXCursor_EnumConstantRef: return "EnumConstantRef";
-   case CXCursor_MemberRef: return "MemberRef";
+  case CXCursor_VarRef: return "VarRef";
+  case CXCursor_FunctionRef: return "FunctionRef";
+  case CXCursor_EnumConstantRef: return "EnumConstantRef";
+  case CXCursor_MemberRef: return "MemberRef";
 
-   case CXCursor_InvalidFile: return "InvalidFile";
-   case CXCursor_NoDeclFound: return "NoDeclFound";
-   case CXCursor_NotImplemented: return "NotImplemented";
-   default: return "<not implemented>";
+  case CXCursor_InvalidFile: return "InvalidFile";
+  case CXCursor_NoDeclFound: return "NoDeclFound";
+  case CXCursor_NotImplemented: return "NotImplemented";
+  default: return "<not implemented>";
   }
 }
 
 static enum CXCursorKind TranslateKind(Decl *D) {
   switch (D->getKind()) {
-    case Decl::Function: return CXCursor_FunctionDecl;
-    case Decl::Typedef: return CXCursor_TypedefDecl;
-    case Decl::Enum: return CXCursor_EnumDecl;
-    case Decl::EnumConstant: return CXCursor_EnumConstantDecl;
-    case Decl::Record: return CXCursor_StructDecl; // FIXME: union/class
-    case Decl::Field: return CXCursor_FieldDecl;
-    case Decl::Var: return CXCursor_VarDecl;
-    case Decl::ParmVar: return CXCursor_ParmDecl;
-    case Decl::ObjCInterface: return CXCursor_ObjCInterfaceDecl;
-    case Decl::ObjCCategory: return CXCursor_ObjCCategoryDecl;
-    case Decl::ObjCProtocol: return CXCursor_ObjCProtocolDecl;
-    case Decl::ObjCMethod: {
-      ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
-      if (MD->isInstanceMethod())
-        return CXCursor_ObjCInstanceMethodDecl;
-      return CXCursor_ObjCClassMethodDecl;
-    }
-    default: break;
+  case Decl::Function: return CXCursor_FunctionDecl;
+  case Decl::Typedef: return CXCursor_TypedefDecl;
+  case Decl::Enum: return CXCursor_EnumDecl;
+  case Decl::EnumConstant: return CXCursor_EnumConstantDecl;
+  case Decl::Record: return CXCursor_StructDecl; // FIXME: union/class
+  case Decl::Field: return CXCursor_FieldDecl;
+  case Decl::Var: return CXCursor_VarDecl;
+  case Decl::ParmVar: return CXCursor_ParmDecl;
+  case Decl::ObjCInterface: return CXCursor_ObjCInterfaceDecl;
+  case Decl::ObjCCategory: return CXCursor_ObjCCategoryDecl;
+  case Decl::ObjCProtocol: return CXCursor_ObjCProtocolDecl;
+  case Decl::ObjCMethod: {
+    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
+    if (MD->isInstanceMethod())
+      return CXCursor_ObjCInstanceMethodDecl;
+    return CXCursor_ObjCClassMethodDecl;
+  }
+  default: break;
   }
   return CXCursor_NotImplemented;
 }
@@ -868,7 +868,7 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
         return C;
       }
     }
-	  CXCursor C = { TranslateKind(Dcl), Dcl, 0 };
+    CXCursor C = { TranslateKind(Dcl), Dcl, 0 };
     return C;
   }
   CXCursor C = { CXCursor_NoDeclFound, 0, 0 };
@@ -967,12 +967,10 @@ unsigned clang_getCursorLine(CXCursor C)
   return SourceMgr.getSpellingLineNumber(SLoc);
 }
 
-// Access string.
 const char *clang_getCString(CXString string) {
   return string.Spelling;
 }
 
-// Free CXString.
 void clang_disposeString(CXString string) {
   if (string.MustFreeString)
     free((void*)string.Spelling);
@@ -1018,7 +1016,7 @@ CXFile clang_getCursorSourceFile(CXCursor C)
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
 
   return (void *)getFileEntryFromSourceLocation(SourceMgr,
-                                        getLocationFromCursor(C,SourceMgr, ND));
+                                                getLocationFromCursor(C,SourceMgr, ND));
 }
 
 void clang_getDefinitionSpellingAndExtent(CXCursor C,
@@ -1263,7 +1261,7 @@ void clang_codeComplete(CXIndex CIdx,
 
   if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
     llvm::errs() << "clang_codeComplete: " << ErrMsg
-    << '\n' << "Arguments: \n";
+                 << '\n' << "Arguments: \n";
     for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
          I!=E; ++I) {
       if (*I)
