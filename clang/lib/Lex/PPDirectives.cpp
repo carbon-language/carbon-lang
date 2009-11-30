@@ -16,6 +16,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APInt.h"
 using namespace clang;
@@ -1111,7 +1112,9 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   }
 
   // Finally, if all is good, enter the new file!
-  EnterSourceFile(FID, CurDir);
+  if (EnterSourceFile(FID, CurDir))
+    Diag(FilenameTok, diag::err_pp_error_opening_file)
+      << std::string(SourceMgr.getFileEntryForID(FID)->getName());
 }
 
 /// HandleIncludeNextDirective - Implements #include_next.

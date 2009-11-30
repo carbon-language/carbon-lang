@@ -164,12 +164,14 @@ static void FindExpectedDiags(Preprocessor &PP,
                               DiagList &ExpectedNotes) {
   // Create a raw lexer to pull all the comments out of the main file.  We don't
   // want to look in #include'd headers for expected-error strings.
-  FileID FID = PP.getSourceManager().getMainFileID();
-  if (PP.getSourceManager().getMainFileID().isInvalid())
+  SourceManager &SM = PP.getSourceManager();
+  FileID FID = SM.getMainFileID();
+  if (SM.getMainFileID().isInvalid())
     return;
 
   // Create a lexer to lex all the tokens of the main file in raw mode.
-  Lexer RawLex(FID, PP.getSourceManager(), PP.getLangOptions());
+  const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
+  Lexer RawLex(FID, FromFile, SM, PP.getLangOptions());
 
   // Return comments as tokens, this is how we find expected diagnostics.
   RawLex.SetCommentRetentionState(true);

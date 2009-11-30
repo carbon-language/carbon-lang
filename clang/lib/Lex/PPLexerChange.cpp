@@ -64,7 +64,7 @@ PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
 
 /// EnterSourceFile - Add a source file to the top of the include stack and
 /// start lexing tokens from it instead of the current buffer.
-void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
+bool Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
   assert(CurTokenLexer == 0 && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
 
@@ -72,10 +72,19 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
   if (PTH) {
-    if (PTHLexer *PL = PTH->CreateLexer(FID))
-      return EnterSourceFileWithPTH(PL, CurDir);
+    if (PTHLexer *PL = PTH->CreateLexer(FID)) {
+      EnterSourceFileWithPTH(PL, CurDir);
+      return false;
+    }
   }
-  EnterSourceFileWithLexer(new Lexer(FID, *this), CurDir);
+  
+  // Get the MemoryBuffer for this FID, if it fails, we fail.
+  const llvm::MemoryBuffer *InputFile = getSourceManager().getBuffer(FID);
+  if (InputFile == 0)
+    return true;
+  
+  EnterSourceFileWithLexer(new Lexer(FID, InputFile, *this), CurDir);
+  return false;
 }
 
 /// EnterSourceFileWithLexer - Add a source file to the top of the include stack

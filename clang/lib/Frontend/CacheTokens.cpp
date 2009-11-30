@@ -482,7 +482,8 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
     if (!B) continue;
 
     FileID FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
-    Lexer L(FID, SM, LOpts);
+    const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
+    Lexer L(FID, FromFile, SM, LOpts);
     PM.insert(FE, LexTokens(L));
   }
 

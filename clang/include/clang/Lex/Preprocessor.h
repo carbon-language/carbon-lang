@@ -329,9 +329,9 @@ public:
   void EnterMainSourceFile();
 
   /// EnterSourceFile - Add a source file to the top of the include stack and
-  /// start lexing tokens from it instead of the current buffer.  If isMainFile
-  /// is true, this is the main file for the translation unit.
-  void EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir);
+  /// start lexing tokens from it instead of the current buffer.  Return true
+  /// on failure.
+  bool EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the

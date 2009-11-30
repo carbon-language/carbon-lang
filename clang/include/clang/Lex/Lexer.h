@@ -78,7 +78,7 @@ public:
   /// with the specified preprocessor managing the lexing process.  This lexer
   /// assumes that the associated file buffer and Preprocessor objects will
   /// outlive it, so it doesn't take ownership of either of them.
-  Lexer(FileID FID, Preprocessor &PP);
+  Lexer(FileID FID, const llvm::MemoryBuffer *InputBuffer, Preprocessor &PP);
 
   /// Lexer constructor - Create a new raw lexer object.  This object is only
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
@@ -89,7 +89,8 @@ public:
   /// Lexer constructor - Create a new raw lexer object.  This object is only
   /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
   /// range will outlive it, so it doesn't take ownership of it.
-  Lexer(FileID FID, const SourceManager &SM, const LangOptions &Features);
+  Lexer(FileID FID, const llvm::MemoryBuffer *InputBuffer,
+        const SourceManager &SM, const LangOptions &Features);
 
   /// Create_PragmaLexer: Lexer constructor - Create a new lexer object for
   /// _Pragma expansion.  This has a variety of magic semantics that this method

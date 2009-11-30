@@ -95,13 +95,11 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
 /// with the specified preprocessor managing the lexing process.  This lexer
 /// assumes that the associated file buffer and Preprocessor objects will
 /// outlive it, so it doesn't take ownership of either of them.
-Lexer::Lexer(FileID FID, Preprocessor &PP)
+Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *InputFile, Preprocessor &PP)
   : PreprocessorLexer(&PP, FID),
     FileLoc(PP.getSourceManager().getLocForStartOfFile(FID)),
     Features(PP.getLangOptions()) {
 
-  const llvm::MemoryBuffer *InputFile = PP.getSourceManager().getBuffer(FID);
-  
   InitLexer(InputFile->getBufferStart(), InputFile->getBufferStart(),
             InputFile->getBufferEnd());
 
@@ -129,9 +127,9 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
 /// Lexer constructor - Create a new raw lexer object.  This object is only
 /// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
 /// range will outlive it, so it doesn't take ownership of it.
-Lexer::Lexer(FileID FID, const SourceManager &SM, const LangOptions &features)
+Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *FromFile,
+             const SourceManager &SM, const LangOptions &features)
   : FileLoc(SM.getLocForStartOfFile(FID)), Features(features) {
-  const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
 
   InitLexer(FromFile->getBufferStart(), FromFile->getBufferStart(),
             FromFile->getBufferEnd());
@@ -163,7 +161,8 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
 
   // Create the lexer as if we were going to lex the file normally.
   FileID SpellingFID = SM.getFileID(SpellingLoc);
-  Lexer *L = new Lexer(SpellingFID, PP);
+  const llvm::MemoryBuffer *InputFile = SM.getBuffer(SpellingFID);
+  Lexer *L = new Lexer(SpellingFID, InputFile, PP);
 
   // Now that the lexer is created, change the start/end locations so that we
   // just lex the subsection of the file that we want.  This is lexing from a

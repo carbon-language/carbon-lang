@@ -23,7 +23,8 @@ TokenRewriter::TokenRewriter(FileID FID, SourceManager &SM,
   ScratchBuf.reset(new ScratchBuffer(SM));
 
   // Create a lexer to lex all the tokens of the main file in raw mode.
-  Lexer RawLex(FID, SM, LangOpts);
+  const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
+  Lexer RawLex(FID, FromFile, SM, LangOpts);
 
   // Return all comments and whitespace as tokens.
   RawLex.SetKeepWhitespaceMode(true);

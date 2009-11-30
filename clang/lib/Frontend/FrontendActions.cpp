@@ -192,7 +192,8 @@ void DumpRawTokensAction::ExecuteAction() {
   SourceManager &SM = PP.getSourceManager();
 
   // Start lexing the specified input file.
-  Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
+  const llvm::MemoryBuffer *FromFile = SM.getBuffer(SM.getMainFileID());
+  Lexer RawLex(SM.getMainFileID(), FromFile, SM, PP.getLangOptions());
   RawLex.SetKeepWhitespaceMode(true);
 
   Token RawTok;

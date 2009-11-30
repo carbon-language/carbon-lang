@@ -65,7 +65,8 @@ static void LexRawTokensFromMainFile(Preprocessor &PP,
 
   // Create a lexer to lex all the tokens of the main file in raw mode.  Even
   // though it is in raw mode, it will not return comments.
-  Lexer RawLex(SM.getMainFileID(), SM, PP.getLangOptions());
+  const llvm::MemoryBuffer *FromFile = SM.getBuffer(SM.getMainFileID());
+  Lexer RawLex(SM.getMainFileID(), FromFile, SM, PP.getLangOptions());
 
   // Switch on comment lexing because we really do want them.
   RawLex.SetCommentRetentionState(true);
