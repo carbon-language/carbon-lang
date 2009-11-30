@@ -31,6 +31,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "llvm/LLVMContext.h"
@@ -273,6 +274,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
 
+#if 1
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
 
@@ -296,6 +298,33 @@ int main(int argc, char **argv) {
   if (!ConstructCompilerInvocation(Clang.getInvocation(),
                                    Clang.getDiagnostics(), argv[0]))
     return 1;
+#else
+  // Buffer diagnostics from argument parsing.
+  TextDiagnosticBuffer DiagsBuffer;
+  Diagnostic Diags(&DiagsBuffer);
+
+  CompilerInvocation::CreateFromArgs(Clang.getInvocation(),
+                                     (const char**) argv + 1,
+                                     (const char**) argv + argc, argv[0],
+                                     (void*)(intptr_t) GetBuiltinIncludePath,
+                                     Diags);
+
+  // Create the actual diagnostics engine.
+  Clang.createDiagnostics(argc, argv);
+  if (!Clang.hasDiagnostics())
+    return 1;
+
+  // Set an error handler, so that any LLVM backend diagnostics go through our
+  // error handler.
+  llvm::llvm_install_error_handler(LLVMErrorHandler,
+                                   static_cast<void*>(&Clang.getDiagnostics()));
+
+  DiagsBuffer.FlushDiagnostics(Clang.getDiagnostics());
+
+  // If there were any errors in processing arguments, exit now.
+  if (Clang.getDiagnostics().getNumErrors())
+    return 1;
+#endif
 
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
