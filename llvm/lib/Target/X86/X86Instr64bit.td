@@ -1663,7 +1663,7 @@ def : Pat<(X86tcret GR64:$dst, imm:$off),
           (TCRETURNri64 GR64:$dst, imm:$off)>;
 
 def : Pat<(X86tcret (i64 tglobaladdr:$dst), imm:$off),
-          (TCRETURNdi64 texternalsym:$dst, imm:$off)>;
+          (TCRETURNdi64 tglobaladdr:$dst, imm:$off)>;
 
 def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
           (TCRETURNdi64 texternalsym:$dst, imm:$off)>;
