@@ -21,11 +21,17 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
+#include "clang/Driver/Arg.h"
+#include "clang/Driver/ArgList.h"
+#include "clang/Driver/CC1Options.h"
+#include "clang/Driver/DriverDiagnostic.h"
+#include "clang/Driver/OptTable.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -185,10 +191,86 @@ static bool ConstructCompilerInvocation(CompilerInvocation &Opts,
   return true;
 }
 
+static int cc1_main(Diagnostic &Diags,
+                    const char **ArgBegin, const char **ArgEnd,
+                    const char *Argv0, void *MainAddr) {
+  using namespace clang::driver;
+
+  llvm::errs() << "cc1 argv:";
+  for (const char **i = ArgBegin; i != ArgEnd; ++i)
+    llvm::errs() << " \"" << *i << '"';
+  llvm::errs() << "\n";
+
+  // Parse the arguments.
+  OptTable *Opts = createCC1OptTable();
+  unsigned MissingArgIndex, MissingArgCount;
+  InputArgList *Args = Opts->ParseArgs(ArgBegin, ArgEnd,
+                                       MissingArgIndex, MissingArgCount);
+
+  // Check for missing argument error.
+  if (MissingArgCount)
+    Diags.Report(clang::diag::err_drv_missing_argument)
+      << Args->getArgString(MissingArgIndex) << MissingArgCount;
+
+  // Dump the parsed arguments.
+  llvm::errs() << "cc1 parsed options:\n";
+  for (ArgList::const_iterator it = Args->begin(), ie = Args->end();
+       it != ie; ++it)
+    (*it)->dump();
+
+  // Create a compiler invocation.
+  llvm::errs() << "cc1 creating invocation.\n";
+  CompilerInvocation Invocation;
+  CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd,
+                                     Argv0, MainAddr, Diags);
+
+  // Convert the invocation back to argument strings.
+  std::vector<std::string> InvocationArgs;
+  Invocation.toArgs(InvocationArgs);
+
+  // Dump the converted arguments.
+  llvm::SmallVector<const char*, 32> Invocation2Args;
+  llvm::errs() << "invocation argv :";
+  for (unsigned i = 0, e = InvocationArgs.size(); i != e; ++i) {
+    Invocation2Args.push_back(InvocationArgs[i].c_str());
+    llvm::errs() << " \"" << InvocationArgs[i] << '"';
+  }
+  llvm::errs() << "\n";
+
+  // Convert those arguments to another invocation, and check that we got the
+  // same thing.
+  CompilerInvocation Invocation2;
+  CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
+                                     Invocation2Args.end(), Argv0, MainAddr,
+                                     Diags);
+
+  // FIXME: Implement CompilerInvocation comparison.
+  if (true) {
+    //llvm::errs() << "warning: Invocations differ!\n";
+
+    std::vector<std::string> Invocation2Args;
+    Invocation2.toArgs(Invocation2Args);
+    llvm::errs() << "invocation2 argv:";
+    for (unsigned i = 0, e = Invocation2Args.size(); i != e; ++i)
+      llvm::errs() << " \"" << Invocation2Args[i] << '"';
+    llvm::errs() << "\n";
+  }
+
+  return 0;
+}
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
   CompilerInstance Clang(&llvm::getGlobalContext(), false);
+
+  // Run clang -cc1 test.
+  if (argc > 1 && llvm::StringRef(argv[1]) == "-cc1") {
+    TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions());
+    Diagnostic Diags(&DiagClient);
+    return cc1_main(Diags, (const char**) argv + 2, (const char**) argv + argc,
+                    argv[0], (void*) (intptr_t) GetBuiltinIncludePath);
+  }
 
   // Initialize targets first, so that --version shows registered targets.
   llvm::InitializeAllTargets();

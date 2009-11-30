@@ -21,7 +21,7 @@ TOOL_NO_EXPORTS = 1
 include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) bitreader bitwriter codegen ipo selectiondag
-USEDLIBS = clangFrontend.a clangCodeGen.a clangAnalysis.a 	\
+USEDLIBS = clangDriver.a clangFrontend.a clangCodeGen.a clangAnalysis.a	\
            clangRewrite.a clangSema.a clangAST.a clangParse.a 		\
            clangLex.a clangBasic.a 
 

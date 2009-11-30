@@ -19,7 +19,7 @@ TOOL_NO_EXPORTS = 1
 # FIXME: It is unfortunate we need to pull in the bitcode reader and
 # writer just to get the serializer stuff used by clangBasic.
 LINK_COMPONENTS := system support bitreader bitwriter
-USEDLIBS = clangDriver.a clangBasic.a clangFrontend.a
+USEDLIBS = clangDriver.a clangBasic.a
 
 include $(LEVEL)/Makefile.common
 

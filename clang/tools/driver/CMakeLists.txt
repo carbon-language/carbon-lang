@@ -3,7 +3,6 @@ set(LLVM_NO_RTTI 1)
 set( LLVM_USED_LIBS
   clangDriver
   clangBasic
-  clangFrontend
   )
 
 set(LLVM_LINK_COMPONENTS system support bitreader bitwriter)
