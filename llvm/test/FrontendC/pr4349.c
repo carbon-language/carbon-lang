@@ -1,9 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars2 | grep {\\\[2 x \\\[2 x i8\\\]\\\]}
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars2 | grep {, i\[\[:digit:\]\]\\+ 1)} | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars3 | grep {\\\[2 x i16\\\]}
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars3 | grep {, i\[\[:digit:\]\]\\+ 1)} | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars4 | grep {\\\[2 x \\\[2 x i8\\\]\\\]} | count 1
-// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | grep svars4 | grep {, i\[\[:digit:\]\]\\+ 1, i\[\[:digit:\]\]\\+ 1)} | count 1
+// RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | FileCheck %s
 // PR 4349
 
 union reg
@@ -21,18 +16,22 @@ struct svar
 {
     void *ptr;
 };
+// CHECK: @svars1 = global [1 x %struct.svar] [%struct.svar { i8* bitcast (%struct.cpu* @cpu to i8*) }]
 struct svar svars1[] =
 {
     { &((cpu.pc).w[0]) }
 };
+// CHECK: @svars2 = global [1 x %struct.svar] [%struct.svar { i8* getelementptr ([2 x i8]* bitcast (%struct.cpu* @cpu to [2 x i8]*), i32 0, i32 1) }]
 struct svar svars2[] =
 {
     { &((cpu.pc).b[0][1]) }
 };
+// CHECK: @svars3 = global [1 x %struct.svar] [%struct.svar { i8* bitcast (i16* getelementptr ([2 x i16]* bitcast (%struct.cpu* @cpu to [2 x i16]*), i32 0, i32 1) to i8*) }]
 struct svar svars3[] =
 {
     { &((cpu.pc).w[1]) }
 };
+// CHECK: @svars4 = global [1 x %struct.svar] [%struct.svar { i8* getelementptr ([2 x [2 x i8]]* bitcast (%struct.cpu* @cpu to [2 x [2 x i8]]*), i32 0, i32 1, i32 1) }]
 struct svar svars4[] =
 {
     { &((cpu.pc).b[1][1]) }
