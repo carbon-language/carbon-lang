@@ -1118,8 +1118,12 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   DEBUG(errs() << "Widen node result " << ResNo << ": ";
         N->dump(&DAG);
         errs() << "\n");
-  SDValue Res = SDValue();
 
+  // See if the target wants to custom widen this node.
+  if (CustomWidenLowerNode(N, N->getValueType(ResNo)))
+    return;
+
+  SDValue Res = SDValue();
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG

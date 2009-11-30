@@ -5807,6 +5807,66 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
   N->dump(G);
 }
 
+SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
+  assert(N->getNumValues() == 1 &&
+         "Can't unroll a vector with multiple results!");
+
+  EVT VT = N->getValueType(0);
+  unsigned NE = VT.getVectorNumElements();
+  EVT EltVT = VT.getVectorElementType();
+  DebugLoc dl = N->getDebugLoc();
+
+  SmallVector<SDValue, 8> Scalars;
+  SmallVector<SDValue, 4> Operands(N->getNumOperands());
+
+  // If ResNE is 0, fully unroll the vector op.
+  if (ResNE == 0)
+    ResNE = NE;
+  else if (NE > ResNE)
+    NE = ResNE;
+
+  unsigned i;
+  for (i= 0; i != NE; ++i) {
+    for (unsigned j = 0; j != N->getNumOperands(); ++j) {
+      SDValue Operand = N->getOperand(j);
+      EVT OperandVT = Operand.getValueType();
+      if (OperandVT.isVector()) {
+        // A vector operand; extract a single element.
+        EVT OperandEltVT = OperandVT.getVectorElementType();
+        Operands[j] = getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                              OperandEltVT,
+                              Operand,
+                              getConstant(i, MVT::i32));
+      } else {
+        // A scalar operand; just use it as is.
+        Operands[j] = Operand;
+      }
+    }
+
+    switch (N->getOpcode()) {
+    default:
+      Scalars.push_back(getNode(N->getOpcode(), dl, EltVT,
+                                &Operands[0], Operands.size()));
+      break;
+    case ISD::SHL:
+    case ISD::SRA:
+    case ISD::SRL:
+    case ISD::ROTL:
+    case ISD::ROTR:
+      Scalars.push_back(getNode(N->getOpcode(), dl, EltVT, Operands[0],
+                                getShiftAmountOperand(Operands[1])));
+      break;
+    }
+  }
+
+  for (; i < ResNE; ++i)
+    Scalars.push_back(getUNDEF(EltVT));
+
+  return getNode(ISD::BUILD_VECTOR, dl,
+                 EVT::getVectorVT(*getContext(), EltVT, ResNE),
+                 &Scalars[0], Scalars.size());
+}
+
 void SelectionDAG::dump() const {
   errs() << "SelectionDAG has " << AllNodes.size() << " nodes:";
 
@@ -5962,3 +6022,4 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
       return false;
   return true;
 }
+

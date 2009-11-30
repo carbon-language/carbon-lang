@@ -907,6 +907,29 @@ bool DAGTypeLegalizer::CustomLowerNode(SDNode *N, EVT VT, bool LegalizeResult) {
   return true;
 }
 
+
+/// CustomWidenLowerNode - Widen the node's results with custom code provided
+/// by the target and return "true", or do nothing and return "false".
+bool DAGTypeLegalizer::CustomWidenLowerNode(SDNode *N, EVT VT) {
+  // See if the target wants to custom lower this node.
+  if (TLI.getOperationAction(N->getOpcode(), VT) != TargetLowering::Custom)
+    return false;
+
+  SmallVector<SDValue, 8> Results;
+  TLI.ReplaceNodeResults(N, Results, DAG);
+
+  if (Results.empty())
+    // The target didn't want to custom widen lower its result  after all.
+    return false;
+
+  // Update the widening map.
+  assert(Results.size() == N->getNumValues() &&
+         "Custom lowering returned the wrong number of results!");
+  for (unsigned i = 0, e = Results.size(); i != e; ++i)
+    SetWidenedVector(SDValue(N, i), Results[i]);
+  return true;
+}
+
 /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
 /// which is split into two not necessarily identical pieces.
 void DAGTypeLegalizer::GetSplitDestVTs(EVT InVT, EVT &LoVT, EVT &HiVT) {

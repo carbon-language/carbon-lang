@@ -54,9 +54,6 @@ class VectorLegalizer {
   SDValue LegalizeOp(SDValue Op);
   // Assuming the node is legal, "legalize" the results
   SDValue TranslateLegalizeResults(SDValue Op, SDValue Result);
-  // Implements unrolling a generic vector operation, i.e. turning it into
-  // scalar operations.
-  SDValue UnrollVectorOp(SDValue Op);
   // Implements unrolling a VSETCC.
   SDValue UnrollVSETCC(SDValue Op);
   // Implements expansion for FNEG; falls back to UnrollVectorOp if FSUB
@@ -211,7 +208,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
     else if (Node->getOpcode() == ISD::VSETCC)
       Result = UnrollVSETCC(Op);
     else
-      Result = UnrollVectorOp(Op);
+      Result = DAG.UnrollVectorOp(Op.getNode());
     break;
   }
 
@@ -256,7 +253,7 @@ SDValue VectorLegalizer::ExpandFNEG(SDValue Op) {
     return DAG.getNode(ISD::FSUB, Op.getDebugLoc(), Op.getValueType(),
                        Zero, Op.getOperand(0));
   }
-  return UnrollVectorOp(Op);
+  return DAG.UnrollVectorOp(Op.getNode());
 }
 
 SDValue VectorLegalizer::UnrollVSETCC(SDValue Op) {
@@ -280,56 +277,6 @@ SDValue VectorLegalizer::UnrollVSETCC(SDValue Op) {
                          DAG.getConstant(0, EltVT));
   }
   return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], NumElems);
-}
-
-/// UnrollVectorOp - We know that the given vector has a legal type, however
-/// the operation it performs is not legal, and the target has requested that
-/// the operation be expanded.  "Unroll" the vector, splitting out the scalars
-/// and operating on each element individually.
-SDValue VectorLegalizer::UnrollVectorOp(SDValue Op) {
-  EVT VT = Op.getValueType();
-  assert(Op.getNode()->getNumValues() == 1 &&
-         "Can't unroll a vector with multiple results!");
-  unsigned NE = VT.getVectorNumElements();
-  EVT EltVT = VT.getVectorElementType();
-  DebugLoc dl = Op.getDebugLoc();
-
-  SmallVector<SDValue, 8> Scalars;
-  SmallVector<SDValue, 4> Operands(Op.getNumOperands());
-  for (unsigned i = 0; i != NE; ++i) {
-    for (unsigned j = 0; j != Op.getNumOperands(); ++j) {
-      SDValue Operand = Op.getOperand(j);
-      EVT OperandVT = Operand.getValueType();
-      if (OperandVT.isVector()) {
-        // A vector operand; extract a single element.
-        EVT OperandEltVT = OperandVT.getVectorElementType();
-        Operands[j] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                                  OperandEltVT,
-                                  Operand,
-                                  DAG.getConstant(i, MVT::i32));
-      } else {
-        // A scalar operand; just use it as is.
-        Operands[j] = Operand;
-      }
-    }
-
-    switch (Op.getOpcode()) {
-    default:
-      Scalars.push_back(DAG.getNode(Op.getOpcode(), dl, EltVT,
-                                    &Operands[0], Operands.size()));
-      break;
-    case ISD::SHL:
-    case ISD::SRA:
-    case ISD::SRL:
-    case ISD::ROTL:
-    case ISD::ROTR:
-      Scalars.push_back(DAG.getNode(Op.getOpcode(), dl, EltVT, Operands[0],
-                                    DAG.getShiftAmountOperand(Operands[1])));
-      break;
-    }
-  }
-
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Scalars[0], Scalars.size());
 }
 
 }

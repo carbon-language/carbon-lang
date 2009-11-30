@@ -882,6 +882,14 @@ public:
   /// element of the result of the vector shuffle.
   SDValue getShuffleScalarElt(const ShuffleVectorSDNode *N, unsigned Idx);
 
+  /// UnrollVectorOp - Utility function used by legalize and lowering to
+  /// "unroll" a vector operation by splitting out the scalars and operating
+  /// on each element individually.  If the ResNE is 0, fully unroll the vector
+  /// op. If ResNE is less than the width of the vector op, unroll up to ResNE.
+  /// If the  ResNE is greater than the width of the vector op, unroll the
+  /// vector op and fill the end of the resulting vector with UNDEFS.
+  SDValue UnrollVectorOp(SDNode *N, unsigned ResNE = 0);
+
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);
   void AddModifiedNodeToCSEMaps(SDNode *N, DAGUpdateListener *UpdateListener);
