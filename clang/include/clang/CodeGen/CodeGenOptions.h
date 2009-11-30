@@ -43,8 +43,6 @@ public:
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
-  unsigned SimplifyLibCalls  : 1; /// Should standard library calls be treated
-                                  /// specially.
   unsigned TimePasses        : 1; /// Set when -ftime-report is enabled.
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC optimization
                                   /// selection.
@@ -85,7 +83,7 @@ public:
     NoZeroInitializedInBSS = 0;
     OptimizationLevel = 0;
     OptimizeSize = 0;
-    SimplifyLibCalls = UnrollLoops = 0;
+    UnrollLoops = 0;
     TimePasses = 0;
     UnitAtATime = 1;
     UnwindTables = 0;

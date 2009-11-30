@@ -38,8 +38,9 @@ using namespace llvm;
 namespace {
   class BackendConsumer : public ASTConsumer {
     BackendAction Action;
-    CodeGenOptions CodeGenOpts;
-    TargetOptions TargetOpts;
+    const CodeGenOptions &CodeGenOpts;
+    const LangOptions &LangOpts;
+    const TargetOptions &TargetOpts;
     llvm::raw_ostream *AsmOutStream;
     llvm::formatted_raw_ostream FormattedOutStream;
     ASTContext *Context;
@@ -79,6 +80,7 @@ namespace {
                     llvm::raw_ostream* OS, LLVMContext& C) :
       Action(action),
       CodeGenOpts(compopts),
+      LangOpts(langopts),
       TargetOpts(targetopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
@@ -249,7 +251,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
       SubtargetFeatures Features;
       Features.setCPU(TargetOpts.CPU);
-      for (std::vector<std::string>::iterator
+      for (std::vector<std::string>::const_iterator
              it = TargetOpts.Features.begin(),
              ie = TargetOpts.Features.end(); it != ie; ++it)
         Features.AddFeature(*it);
@@ -336,7 +338,7 @@ void BackendConsumer::CreatePasses() {
   llvm::createStandardModulePasses(PM, OptLevel, CodeGenOpts.OptimizeSize,
                                    CodeGenOpts.UnitAtATime,
                                    CodeGenOpts.UnrollLoops,
-                                   CodeGenOpts.SimplifyLibCalls,
+                                   /*SimplifyLibCalls=*/!LangOpts.NoBuiltin,
                                    /*HaveExceptions=*/true,
                                    InliningPass);
 }

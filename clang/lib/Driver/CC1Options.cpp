@@ -177,7 +177,6 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.NoCommon = Args.hasArg(OPT_fno_common);
   Opts.NoImplicitFloat = Args.hasArg(OPT_no_implicit_float);
   Opts.OptimizeSize = Args.hasArg(OPT_Os);
-  Opts.SimplifyLibCalls = 1;
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
@@ -193,8 +192,6 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
 
   // FIXME: Implement!
   // FIXME: Eliminate this dependency?
-//   if (Lang.NoBuiltin)
-//     Opts.SimplifyLibCalls = 0;
 //   if (Lang.CPlusPlus)
 //     Opts.NoCommon = 1;
 //   Opts.TimePasses = TimePasses;

@@ -814,7 +814,6 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   Opts.NoCommon = NoCommon;
   Opts.NoImplicitFloat = NoImplicitFloat;
   Opts.OptimizeSize = OptSize;
-  Opts.SimplifyLibCalls = 1;
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !OptSize);
 
   // LLVM Code Generator options.
@@ -829,8 +828,6 @@ void clang::InitializeCodeGenOptions(CodeGenOptions &Opts,
   Opts.RelocationModel = MRelocationModel;
 
   // FIXME: Eliminate this dependency?
-  if (Lang.NoBuiltin)
-    Opts.SimplifyLibCalls = 0;
   if (Lang.CPlusPlus)
     Opts.NoCommon = 1;
   Opts.TimePasses = TimePasses;
