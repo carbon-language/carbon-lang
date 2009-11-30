@@ -1757,7 +1757,7 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
 }
 
 /// \brief Retrieves the canonicalized name from a parsed unqualified-id.
-DeclarationName Sema::GetNameFromUnqualifiedId(UnqualifiedId &Name) {
+DeclarationName Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
   switch (Name.getKind()) {
     case UnqualifiedId::IK_Identifier:
       return DeclarationName(Name.Identifier);

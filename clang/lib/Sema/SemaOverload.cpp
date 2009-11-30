@@ -4341,9 +4341,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
   llvm::SmallVector<NamedDecl*,8> Fns;
   
-  // Try to dig out the overloaded function.
-  OverloadedFunctionDecl *Ovl = 0;
-  FunctionTemplateDecl *FunctionTemplate = 0;
+  // Look into the overloaded expression.
   if (UnresolvedLookupExpr *UL
                = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
     Fns.append(UL->decls_begin(), UL->decls_end());
@@ -4351,16 +4349,14 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       HasExplicitTemplateArgs = true;
       UL->copyTemplateArgumentsInto(ExplicitTemplateArgs);
     }
-  } else if (MemberExpr *ME = dyn_cast<MemberExpr>(OvlExpr)) {
-    Ovl = dyn_cast<OverloadedFunctionDecl>(ME->getMemberDecl());
-    FunctionTemplate = dyn_cast<FunctionTemplateDecl>(ME->getMemberDecl());
-    HasExplicitTemplateArgs = ME->hasExplicitTemplateArgumentList();
-    if (HasExplicitTemplateArgs)
+  } else if (UnresolvedMemberExpr *ME
+               = dyn_cast<UnresolvedMemberExpr>(OvlExpr)) {
+    Fns.append(ME->decls_begin(), ME->decls_end());
+    if (ME->hasExplicitTemplateArgs()) {
+      HasExplicitTemplateArgs = true;
       ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
+    }
   }
-
-  if (Ovl) Fns.append(Ovl->function_begin(), Ovl->function_end());
-  if (FunctionTemplate) Fns.push_back(FunctionTemplate);
 
   // If we didn't actually find anything, we're done.
   if (Fns.empty())
@@ -5133,29 +5129,34 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                 SourceLocation RParenLoc) {
   // Dig out the member expression. This holds both the object
   // argument and the member function we're referring to.
-  MemberExpr *MemExpr = 0;
-  if (ParenExpr *ParenE = dyn_cast<ParenExpr>(MemExprE))
-    MemExpr = dyn_cast<MemberExpr>(ParenE->getSubExpr());
-  else
-    MemExpr = dyn_cast<MemberExpr>(MemExprE);
-  assert(MemExpr && "Building member call without member expression");
-
+  Expr *NakedMemExpr = MemExprE->IgnoreParens();
+  
   // Extract the object argument.
-  Expr *ObjectArg = MemExpr->getBase();
+  Expr *ObjectArg;
 
+  MemberExpr *MemExpr;
   CXXMethodDecl *Method = 0;
-  if (isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
-      isa<FunctionTemplateDecl>(MemExpr->getMemberDecl())) {
+  if (isa<MemberExpr>(NakedMemExpr)) {
+    MemExpr = cast<MemberExpr>(NakedMemExpr);
+    ObjectArg = MemExpr->getBase();
+    Method = cast<CXXMethodDecl>(MemExpr->getMemberDecl());
+  } else {
+    UnresolvedMemberExpr *UnresExpr = cast<UnresolvedMemberExpr>(NakedMemExpr);
+    ObjectArg = UnresExpr->getBase();
+
     // Add overload candidates
     OverloadCandidateSet CandidateSet;
-    DeclarationName DeclName = MemExpr->getMemberDecl()->getDeclName();
 
-    for (OverloadIterator Func(MemExpr->getMemberDecl()), FuncEnd;
-         Func != FuncEnd; ++Func) {
-      if ((Method = dyn_cast<CXXMethodDecl>(*Func))) {
+    for (UnresolvedMemberExpr::decls_iterator I = UnresExpr->decls_begin(),
+           E = UnresExpr->decls_end(); I != E; ++I) {
+
+      // TODO: note if we found something through a using declaration
+      NamedDecl *Func = (*I)->getUnderlyingDecl();
+      
+      if ((Method = dyn_cast<CXXMethodDecl>(Func))) {
         // If explicit template arguments were provided, we can't call a
         // non-template member function.
-        if (MemExpr->hasExplicitTemplateArgumentList())
+        if (UnresExpr->hasExplicitTemplateArgs())
           continue;
         
         AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet,
@@ -5163,11 +5164,11 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       } else {
         // FIXME: avoid copy.
         TemplateArgumentListInfo TemplateArgs;
-        if (MemExpr->hasExplicitTemplateArgumentList())
-          MemExpr->copyTemplateArgumentsInto(TemplateArgs);
+        if (UnresExpr->hasExplicitTemplateArgs())
+          UnresExpr->copyTemplateArgumentsInto(TemplateArgs);
 
-        AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func),
-                                   (MemExpr->hasExplicitTemplateArgumentList()
+        AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(Func),
+                                   (UnresExpr->hasExplicitTemplateArgs()
                                       ? &TemplateArgs : 0),
                                    ObjectArg, Args, NumArgs,
                                    CandidateSet,
@@ -5175,14 +5176,16 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       }
     }
 
+    DeclarationName DeclName = UnresExpr->getMemberName();
+
     OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, MemExpr->getLocStart(), Best)) {
+    switch (BestViableFunction(CandidateSet, UnresExpr->getLocStart(), Best)) {
     case OR_Success:
       Method = cast<CXXMethodDecl>(Best->Function);
       break;
 
     case OR_No_Viable_Function:
-      Diag(MemExpr->getSourceRange().getBegin(),
+      Diag(UnresExpr->getMemberLoc(),
            diag::err_ovl_no_viable_member_function_in_call)
         << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
@@ -5190,16 +5193,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       return true;
 
     case OR_Ambiguous:
-      Diag(MemExpr->getSourceRange().getBegin(),
-           diag::err_ovl_ambiguous_member_call)
+      Diag(UnresExpr->getMemberLoc(), diag::err_ovl_ambiguous_member_call)
         << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
       return true;
 
     case OR_Deleted:
-      Diag(MemExpr->getSourceRange().getBegin(),
-           diag::err_ovl_deleted_member_call)
+      Diag(UnresExpr->getMemberLoc(), diag::err_ovl_deleted_member_call)
         << Best->Function->isDeleted()
         << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
@@ -5208,13 +5209,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     }
 
     MemExprE = FixOverloadedFunctionReference(MemExprE, Method);
-    if (ParenExpr *ParenE = dyn_cast<ParenExpr>(MemExprE))
-      MemExpr = dyn_cast<MemberExpr>(ParenE->getSubExpr());
-    else
-      MemExpr = dyn_cast<MemberExpr>(MemExprE);
-    
-  } else {
-    Method = dyn_cast<CXXMethodDecl>(MemExpr->getMemberDecl());
+    MemExpr = cast<MemberExpr>(MemExprE->IgnoreParens());
   }
 
   assert(Method && "Member call to something that isn't a method?");
@@ -5660,15 +5655,10 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                                Fn->getType());
   }
 
-  
-  if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(E)) {
-    assert((isa<OverloadedFunctionDecl>(MemExpr->getMemberDecl()) ||
-            isa<FunctionTemplateDecl>(MemExpr->getMemberDecl()) ||
-            isa<FunctionDecl>(MemExpr->getMemberDecl())) &&
-           "Expected member function or member function template");
+  if (UnresolvedMemberExpr *MemExpr = dyn_cast<UnresolvedMemberExpr>(E)) {
     // FIXME: avoid copy.
     TemplateArgumentListInfo TemplateArgs;
-    if (MemExpr->hasExplicitTemplateArgumentList())
+    if (MemExpr->hasExplicitTemplateArgs())
       MemExpr->copyTemplateArgumentsInto(TemplateArgs);
 
     return MemberExpr::Create(Context, MemExpr->getBase()->Retain(),
@@ -5677,7 +5667,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                               MemExpr->getQualifierRange(),
                               Fn, 
                               MemExpr->getMemberLoc(),
-                              (MemExpr->hasExplicitTemplateArgumentList()
+                              (MemExpr->hasExplicitTemplateArgs()
                                  ? &TemplateArgs : 0),
                               Fn->getType());
   }

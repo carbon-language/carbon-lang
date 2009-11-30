@@ -213,6 +213,10 @@ public:
     return getResultKind() == FoundOverloaded;
   }
 
+  bool isUnresolvableResult() const {
+    return getResultKind() == FoundUnresolvedValue;
+  }
+
   LookupResultKind getResultKind() const {
     sanity();
     return ResultKind;

@@ -867,13 +867,10 @@ public:
       = SemaRef.Context.DeclarationNames.getCXXDestructorName(
                                SemaRef.Context.getCanonicalType(DestroyedType));
 
-    return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base),
-                                              OperatorLoc,
-                                              isArrow? tok::arrow : tok::period,
-                                              DestroyedTypeLoc,
-                                              Name,
-                                              Sema::DeclPtrTy::make((Decl *)0),
-                                              &SS);
+    return getSema().BuildMemberReferenceExpr(move(Base), OperatorLoc, isArrow,
+                                              SS, /*FIXME: FirstQualifier*/ 0,
+                                              Name, DestroyedTypeLoc,
+                                              /*TemplateArgs*/ 0);
   }
 
   /// \brief Build a new unary operator expression.
@@ -967,14 +964,10 @@ public:
       SS.setScopeRep(Qualifier);
     }
 
-    return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
-                                              isArrow? tok::arrow : tok::period,
-                                              MemberLoc,
-                                              Member->getDeclName(),
-                                              ExplicitTemplateArgs,
-                                     /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
-                                              &SS,
-                                              FirstQualifierInScope);
+    return getSema().BuildMemberReferenceExpr(move(Base), OpLoc, isArrow,
+                                              SS, FirstQualifierInScope,
+                                              Member->getDeclName(), MemberLoc,
+                                              ExplicitTemplateArgs);
   }
 
   /// \brief Build a new binary operator expression.
@@ -1049,10 +1042,13 @@ public:
                                                SourceLocation OpLoc,
                                                SourceLocation AccessorLoc,
                                                IdentifierInfo &Accessor) {
-    return getSema().BuildMemberReferenceExpr(/*Scope=*/0, move(Base), OpLoc,
-                                              tok::period, AccessorLoc,
+    CXXScopeSpec SS;
+    return getSema().BuildMemberReferenceExpr(move(Base),
+                                              OpLoc, /*IsArrow*/ false,
+                                              SS, /*FirstQualifierInScope*/ 0,
                                               DeclarationName(&Accessor),
-                                     /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0));
+                                              AccessorLoc,
+                                              /* TemplateArgs */ 0);
   }
 
   /// \brief Build a new initializer list expression.
@@ -1530,67 +1526,38 @@ public:
                                                   SourceLocation OperatorLoc,
                                               NestedNameSpecifier *Qualifier,
                                                   SourceRange QualifierRange,
+                                            NamedDecl *FirstQualifierInScope,
                                                   DeclarationName Name,
                                                   SourceLocation MemberLoc,
-                                             NamedDecl *FirstQualifierInScope) {
-    OwningExprResult Base = move(BaseE);
-    tok::TokenKind OpKind = IsArrow? tok::arrow : tok::period;
-
+                              const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
     SS.setRange(QualifierRange);
     SS.setScopeRep(Qualifier);
 
-    return SemaRef.BuildMemberReferenceExpr(/*Scope=*/0,
-                                            move(Base), OperatorLoc, OpKind,
-                                            MemberLoc,
-                                            Name,
-                                    /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
-                                            &SS,
-                                            FirstQualifierInScope);
+    return SemaRef.BuildMemberReferenceExpr(move(BaseE), OperatorLoc, IsArrow,
+                                            SS, FirstQualifierInScope,
+                                            Name, MemberLoc, TemplateArgs);
   }
 
-  /// \brief Build a new member reference expression with explicit template
-  /// arguments.
+  /// \brief Build a new member reference expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCXXDependentScopeMemberExpr(ExprArg BaseE,
-                                                  bool IsArrow,
-                                                  SourceLocation OperatorLoc,
-                                                NestedNameSpecifier *Qualifier,
-                                                  SourceRange QualifierRange,
-                                                  TemplateName Template,
-                                                SourceLocation TemplateNameLoc,
-                                              NamedDecl *FirstQualifierInScope,
-                                       const TemplateArgumentListInfo &TemplateArgs) {
+  OwningExprResult RebuildUnresolvedMemberExpr(ExprArg BaseE,
+                                               SourceLocation OperatorLoc,
+                                               bool IsArrow,
+                                               NestedNameSpecifier *Qualifier,
+                                               SourceRange QualifierRange,
+                                               LookupResult &R,
+                                const TemplateArgumentListInfo *TemplateArgs) {
     OwningExprResult Base = move(BaseE);
-    tok::TokenKind OpKind = IsArrow? tok::arrow : tok::period;
 
     CXXScopeSpec SS;
     SS.setRange(QualifierRange);
     SS.setScopeRep(Qualifier);
 
-    // FIXME: We're going to end up looking up the template based on its name,
-    // twice! Also, duplicates part of Sema::BuildMemberAccessExpr.
-    DeclarationName Name;
-    if (TemplateDecl *ActualTemplate = Template.getAsTemplateDecl())
-      Name = ActualTemplate->getDeclName();
-    else if (OverloadedFunctionDecl *Ovl
-               = Template.getAsOverloadedFunctionDecl())
-      Name = Ovl->getDeclName();
-    else {
-      DependentTemplateName *DTN = Template.getAsDependentTemplateName();
-      if (DTN->isIdentifier())
-        Name = DTN->getIdentifier();
-      else
-        Name = SemaRef.Context.DeclarationNames.getCXXOperatorName(
-                                                          DTN->getOperator());
-    }
-    return SemaRef.BuildMemberReferenceExpr(/*Scope=*/0, move(Base),
-                                            OperatorLoc, OpKind,
-                                            TemplateNameLoc, Name,
-                                            &TemplateArgs,
-                                            Sema::DeclPtrTy(), &SS);
+    return SemaRef.BuildMemberReferenceExpr(move(Base), OperatorLoc, IsArrow,
+                                            SS, R, TemplateArgs);
   }
 
   /// \brief Build a new Objective-C @encode expression.
@@ -4903,27 +4870,11 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                        E->getOperatorLoc(),
                                                        Qualifier,
                                                        E->getQualifierRange(),
+                                                       FirstQualifierInScope,
                                                        Name,
                                                        E->getMemberLoc(),
-                                                       FirstQualifierInScope);
+                                                       /*TemplateArgs*/ 0);
   }
-
-  // FIXME: This is an ugly hack, which forces the same template name to
-  // be looked up multiple times. Yuck!
-  TemporaryBase Rebase(*this, E->getMemberLoc(), DeclarationName());
-  TemplateName OrigTemplateName;
-  if (const IdentifierInfo *II = Name.getAsIdentifierInfo())
-    OrigTemplateName = SemaRef.Context.getDependentTemplateName(0, II);
-  else
-    OrigTemplateName 
-      = SemaRef.Context.getDependentTemplateName(0, 
-                                               Name.getCXXOverloadedOperator());
-
-  TemplateName Template
-    = getDerived().TransformTemplateName(OrigTemplateName,
-                                       QualType::getFromOpaquePtr(ObjectType));
-  if (Template.isNull())
-    return SemaRef.ExprError();
 
   TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
   for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
@@ -4938,10 +4889,75 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                      E->getOperatorLoc(),
                                                      Qualifier,
                                                      E->getQualifierRange(),
-                                                     Template,
-                                                     E->getMemberLoc(),
                                                      FirstQualifierInScope,
-                                                     TransArgs);
+                                                     Name,
+                                                     E->getMemberLoc(),
+                                                     &TransArgs);
+}
+
+template<typename Derived>
+Sema::OwningExprResult
+TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old,
+                                                      bool isAddressOfOperand) {
+  // Transform the base of the expression.
+  OwningExprResult Base = getDerived().TransformExpr(Old->getBase());
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+
+  NestedNameSpecifier *Qualifier = 0;
+  if (Old->getQualifier()) {
+    Qualifier
+      = getDerived().TransformNestedNameSpecifier(Old->getQualifier(),
+                                                  Old->getQualifierRange());
+    if (Qualifier == 0)
+      return SemaRef.ExprError();
+  }
+
+  LookupResult R(SemaRef, Old->getMemberName(), Old->getMemberLoc(),
+                 Sema::LookupOrdinaryName);
+
+  // Transform all the decls.
+  for (UnresolvedMemberExpr::decls_iterator I = Old->decls_begin(),
+         E = Old->decls_end(); I != E; ++I) {
+    NamedDecl *InstD = static_cast<NamedDecl*>(getDerived().TransformDecl(*I));
+    if (!InstD)
+      return SemaRef.ExprError();
+
+    // Expand using declarations.
+    if (isa<UsingDecl>(InstD)) {
+      UsingDecl *UD = cast<UsingDecl>(InstD);
+      for (UsingDecl::shadow_iterator I = UD->shadow_begin(),
+             E = UD->shadow_end(); I != E; ++I)
+        R.addDecl(*I);
+      continue;
+    }
+
+    R.addDecl(InstD);
+  }
+
+  R.resolveKind();
+
+  TemplateArgumentListInfo TransArgs;
+  if (Old->hasExplicitTemplateArgs()) {
+    TransArgs.setLAngleLoc(Old->getLAngleLoc());
+    TransArgs.setRAngleLoc(Old->getRAngleLoc());
+    for (unsigned I = 0, N = Old->getNumTemplateArgs(); I != N; ++I) {
+      TemplateArgumentLoc Loc;
+      if (getDerived().TransformTemplateArgument(Old->getTemplateArgs()[I],
+                                                 Loc))
+        return SemaRef.ExprError();
+      TransArgs.addArgument(Loc);
+    }
+  }
+  
+  return getDerived().RebuildUnresolvedMemberExpr(move(Base),
+                                                  Old->getOperatorLoc(),
+                                                  Old->isArrow(),
+                                                  Qualifier,
+                                                  Old->getQualifierRange(),
+                                                  R,
+                                              (Old->hasExplicitTemplateArgs()
+                                                  ? &TransArgs : 0));
 }
 
 template<typename Derived>

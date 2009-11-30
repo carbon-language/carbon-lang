@@ -459,13 +459,20 @@ public:
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
 
-  OwningExprResult Owned(Expr* E) { return OwningExprResult(*this, E); }
+  OwningExprResult Owned(Expr* E) {
+    assert(!E || E->isRetained());
+    return OwningExprResult(*this, E);
+  }
   OwningExprResult Owned(ExprResult R) {
     if (R.isInvalid())
       return ExprError();
+    assert(!R.get() || ((Expr*) R.get())->isRetained());
     return OwningExprResult(*this, R.get());
   }
-  OwningStmtResult Owned(Stmt* S) { return OwningStmtResult(*this, S); }
+  OwningStmtResult Owned(Stmt* S) {
+    assert(!S || S->isRetained());
+    return OwningStmtResult(*this, S);
+  }
 
   virtual void ActOnEndOfTranslationUnit();
 
@@ -516,7 +523,7 @@ public:
   /// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
   QualType CreateLocInfoType(QualType T, DeclaratorInfo *DInfo);
   DeclarationName GetNameForDeclarator(Declarator &D);
-  DeclarationName GetNameFromUnqualifiedId(UnqualifiedId &Name);
+  DeclarationName GetNameFromUnqualifiedId(const UnqualifiedId &Name);
   static QualType GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo = 0);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
@@ -1517,31 +1524,40 @@ public:
                                                    ExprArg Idx,
                                                    SourceLocation RLoc);
 
-  OwningExprResult BuildMemberReferenceExpr(Scope *S, ExprArg Base,
+  OwningExprResult BuildMemberReferenceExpr(ExprArg Base,
                                             SourceLocation OpLoc,
-                                            tok::TokenKind OpKind,
-                                            SourceLocation MemberLoc,
-                                            DeclarationName MemberName,
-                                            DeclPtrTy ImplDecl,
-                                            const CXXScopeSpec *SS = 0,
-                                          NamedDecl *FirstQualifierInScope = 0) {
-    // FIXME: Temporary helper while we migrate existing calls to
-    // BuildMemberReferenceExpr to support explicitly-specified template
-    // arguments.
-    return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, MemberLoc,
-                                    MemberName, 0, ImplDecl, SS,
-                                    FirstQualifierInScope);
-  }
+                                            bool IsArrow,
+                                            const CXXScopeSpec &SS,
+                                            NamedDecl *FirstQualifierInScope,
+                                            DeclarationName Name,
+                                            SourceLocation NameLoc,
+                                const TemplateArgumentListInfo *TemplateArgs);
 
-  OwningExprResult BuildMemberReferenceExpr(Scope *S, ExprArg Base,
+  OwningExprResult BuildMemberReferenceExpr(ExprArg Base,
+                                            SourceLocation OpLoc, bool IsArrow,
+                                            const CXXScopeSpec &SS,
+                                            LookupResult &R,
+                                 const TemplateArgumentListInfo *TemplateArgs);
+
+  OwningExprResult LookupMemberExpr(LookupResult &R, Expr *&Base,
+                                    bool IsArrow, SourceLocation OpLoc,
+                                    const CXXScopeSpec &SS,
+                                    NamedDecl *FirstQualifierInScope,
+                                    DeclPtrTy ObjCImpDecl);
+
+  bool CheckQualifiedMemberReference(Expr *BaseExpr, QualType BaseType,
+                                     NestedNameSpecifier *Qualifier,
+                                     SourceRange QualifierRange,
+                                     const LookupResult &R);
+
+  OwningExprResult ActOnDependentMemberExpr(ExprArg Base,
+                                            bool IsArrow,
                                             SourceLocation OpLoc,
-                                            tok::TokenKind OpKind,
-                                            SourceLocation MemberLoc,
-                                            DeclarationName MemberName,
-                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                            DeclPtrTy ImplDecl,
-                                            const CXXScopeSpec *SS,
-                                          NamedDecl *FirstQualifierInScope = 0);
+                                            const CXXScopeSpec &SS,
+                                            NamedDecl *FirstQualifierInScope,
+                                            DeclarationName Name,
+                                            SourceLocation NameLoc,
+                               const TemplateArgumentListInfo *TemplateArgs);
 
   virtual OwningExprResult ActOnMemberAccessExpr(Scope *S, ExprArg Base,
                                                  SourceLocation OpLoc,
@@ -2140,9 +2156,7 @@ public:
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
-  bool isImplicitMemberReference(const CXXScopeSpec &SS, NamedDecl *D,
-                                 SourceLocation NameLoc, QualType &ThisType,
-                                 QualType &MemberType);
+  bool isImplicitMemberReference(const LookupResult &R, QualType &ThisType);
   
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes

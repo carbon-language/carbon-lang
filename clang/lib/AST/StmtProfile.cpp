@@ -558,6 +558,19 @@ StmtProfiler::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *S) {
   ID.AddBoolean(S->isArrow());
   VisitNestedNameSpecifier(S->getQualifier());
   VisitName(S->getMember());
+  ID.AddBoolean(S->hasExplicitTemplateArgumentList());
+  if (S->hasExplicitTemplateArgumentList())
+    VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
+}
+
+void StmtProfiler::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *S) {
+  VisitExpr(S);
+  ID.AddBoolean(S->isArrow());
+  VisitNestedNameSpecifier(S->getQualifier());
+  VisitName(S->getMemberName());
+  ID.AddBoolean(S->hasExplicitTemplateArgs());
+  if (S->hasExplicitTemplateArgs())
+    VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
 void StmtProfiler::VisitObjCStringLiteral(ObjCStringLiteral *S) {

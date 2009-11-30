@@ -48,7 +48,7 @@ namespace C
         a.A::sub::x();
         a.A::B::base::x();
 
-        a.bad::x(); // expected-error{{type 'struct bad' is not a direct or virtual base of ''struct A::sub''}}
+        a.bad::x(); // expected-error{{type 'struct bad' is not a direct or virtual base of ''A::sub''}}
 
         a->foo();
         a->member::foo();
@@ -69,7 +69,7 @@ namespace C
         a->A::sub::x();
         a->A::B::base::x();
 
-        a->bad::x(); // expected-error{{type 'struct bad' is not a direct or virtual base of ''struct A::sub''}}
+        a->bad::x(); // expected-error{{type 'struct bad' is not a direct or virtual base of ''A::sub''}}
 
         (*a)->foo();
         (*a)->member::foo();

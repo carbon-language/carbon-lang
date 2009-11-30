@@ -2236,9 +2236,6 @@ Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
 ///
 /// FIXME: Should Objective-C also use this approach?
 ///
-/// \param SS if non-NULL, the C++ nested-name-specifier that precedes the 
-/// name of the declaration referenced.
-///
 /// \param D the declaration being referenced from the current scope.
 ///
 /// \param NameLoc the location of the name in the source.
@@ -2247,16 +2244,11 @@ Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
 /// access, will be set to the type of the "this" pointer to be used when
 /// building that implicit member access.
 ///
-/// \param MemberType if the reference to this declaration is an implicit
-/// member access, will be set to the type of the member being referenced
-/// (for use at the type of the resulting member access expression).
-///
 /// \returns true if this is an implicit member reference (in which case 
 /// \p ThisType and \p MemberType will be set), or false if it is not an
 /// implicit member reference.
-bool Sema::isImplicitMemberReference(const CXXScopeSpec &SS, NamedDecl *D,
-                                     SourceLocation NameLoc, QualType &ThisType,
-                                     QualType &MemberType) {
+bool Sema::isImplicitMemberReference(const LookupResult &R,
+                                     QualType &ThisType) {
   // If this isn't a C++ method, then it isn't an implicit member reference.
   CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext);
   if (!MD || MD->isStatic())
@@ -2269,33 +2261,21 @@ bool Sema::isImplicitMemberReference(const CXXScopeSpec &SS, NamedDecl *D,
   //   class member access expression (5.2.5) using (*this) (9.3.2)
   //   as the postfix-expression to the left of the '.' operator.
   DeclContext *Ctx = 0;
-  if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
+  if (R.isUnresolvableResult()) {
+    // FIXME: this is just picking one at random
+    Ctx = R.getRepresentativeDecl()->getDeclContext();
+  } else if (FieldDecl *FD = R.getAsSingle<FieldDecl>()) {
     Ctx = FD->getDeclContext();
-    MemberType = FD->getType();
-    
-    if (const ReferenceType *RefType = MemberType->getAs<ReferenceType>())
-      MemberType = RefType->getPointeeType();
-    else if (!FD->isMutable())
-      MemberType
-        = Context.getQualifiedType(MemberType,
-                           Qualifiers::fromCVRMask(MD->getTypeQualifiers()));
-  } else if (isa<UnresolvedUsingValueDecl>(D)) {
-    Ctx = D->getDeclContext();
-    MemberType = Context.DependentTy;
   } else {
-    for (OverloadIterator Ovl(D), OvlEnd; Ovl != OvlEnd; ++Ovl) {
-      CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Ovl);
+    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
+      CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*I);
       FunctionTemplateDecl *FunTmpl = 0;
-      if (!Method && (FunTmpl = dyn_cast<FunctionTemplateDecl>(*Ovl)))
+      if (!Method && (FunTmpl = dyn_cast<FunctionTemplateDecl>(*I)))
         Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
       
       // FIXME: Do we have to know if there are explicit template arguments?
       if (Method && !Method->isStatic()) {
         Ctx = Method->getParent();
-        if (isa<CXXMethodDecl>(D) && !FunTmpl)
-          MemberType = Method->getType();
-        else
-          MemberType = Context.OverloadTy;
         break;
       }
     }
@@ -2307,6 +2287,8 @@ bool Sema::isImplicitMemberReference(const CXXScopeSpec &SS, NamedDecl *D,
   // Determine whether the declaration(s) we found are actually in a base 
   // class. If not, this isn't an implicit member reference.
   ThisType = MD->getThisType(Context);
+
+  // FIXME: this doesn't really work for overloaded lookups.
   
   QualType CtxType = Context.getTypeDeclType(cast<CXXRecordDecl>(Ctx));
   QualType ClassType

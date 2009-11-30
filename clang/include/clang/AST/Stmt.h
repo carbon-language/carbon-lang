@@ -171,6 +171,14 @@ public:
   }
   virtual ~Stmt() {}
 
+#ifndef NDEBUG
+  /// \brief True if this statement's refcount is in a valid state.
+  /// Should be used only in assertions.
+  bool isRetained() const {
+    return (RefCount >= 1);
+  }
+#endif
+
   /// \brief Destroy the current statement and its children.
   void Destroy(ASTContext &Ctx) {
     assert(RefCount >= 1);

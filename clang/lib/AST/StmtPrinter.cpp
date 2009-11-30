@@ -1163,6 +1163,24 @@ void StmtPrinter::VisitCXXDependentScopeMemberExpr(
   }
 }
 
+void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
+  PrintExpr(Node->getBase());
+  OS << (Node->isArrow() ? "->" : ".");
+  if (NestedNameSpecifier *Qualifier = Node->getQualifier())
+    Qualifier->print(OS, Policy);
+
+  // FIXME: this might originally have been written with 'template'
+
+  OS << Node->getMemberName().getAsString();
+
+  if (Node->hasExplicitTemplateArgs()) {
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                    Node->getTemplateArgs(),
+                                                    Node->getNumTemplateArgs(),
+                                                    Policy);
+  }
+}
+
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
   default: assert(false && "Unknown type trait");

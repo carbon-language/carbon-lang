@@ -2085,6 +2085,8 @@ def err_base_init_direct_and_virtual : Error<
   "inherited virtual base class">;
 def err_not_direct_base_or_virtual : Error<
   "type %0 is not a direct or virtual base of '%1'">;
+def err_not_direct_base_or_virtual_multi : Error<
+  "type %0 is not a direct or virtual base of '%1'">;
 
 def err_in_class_initializer_non_integral_type : Error<
   "in-class initializer has non-integral, non-enumeration type %0">;

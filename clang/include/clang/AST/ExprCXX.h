@@ -1617,6 +1617,179 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief Represents a C++ member access expression for which lookup
+/// produced a set of overloaded functions.  These are replaced with
+/// MemberExprs in the final AST.
+class UnresolvedMemberExpr : public Expr {
+  /// The results.  These are undesugared, which is to say, they may
+  /// include UsingShadowDecls.
+  UnresolvedSet Results;
+
+  /// \brief The expression for the base pointer or class reference,
+  /// e.g., the \c x in x.f.
+  Stmt *Base;
+
+  /// \brief Whether this member expression used the '->' operator or
+  /// the '.' operator.
+  bool IsArrow : 1;
+
+  /// \brief Whether the lookup results contain an unresolved using
+  /// declaration.
+  bool HasUnresolvedUsing : 1;
+
+  /// \brief Whether this member expression has explicitly-specified template
+  /// arguments.
+  bool HasExplicitTemplateArgs : 1;
+
+  /// \brief The location of the '->' or '.' operator.
+  SourceLocation OperatorLoc;
+
+  /// \brief The nested-name-specifier that precedes the member name, if any.
+  NestedNameSpecifier *Qualifier;
+
+  /// \brief The source range covering the nested name specifier.
+  SourceRange QualifierRange;
+
+  /// \brief The member to which this member expression refers, which
+  /// can be a name or an overloaded operator.
+  DeclarationName MemberName;
+
+  /// \brief The location of the member name.
+  SourceLocation MemberLoc;
+
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name.
+  ExplicitTemplateArgumentList *getExplicitTemplateArgs() {
+    assert(HasExplicitTemplateArgs);
+    return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+  }
+
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  const ExplicitTemplateArgumentList *getExplicitTemplateArgs() const {
+    return const_cast<UnresolvedMemberExpr*>(this)->getExplicitTemplateArgs();
+  }
+
+  UnresolvedMemberExpr(QualType T, bool Dependent,
+                       bool HasUnresolvedUsing,
+                       Expr *Base, bool IsArrow,
+                       SourceLocation OperatorLoc,
+                       NestedNameSpecifier *Qualifier,
+                       SourceRange QualifierRange,
+                       DeclarationName Member,
+                       SourceLocation MemberLoc,
+                       const TemplateArgumentListInfo *TemplateArgs);
+
+public:
+  static UnresolvedMemberExpr *
+  Create(ASTContext &C, bool Dependent, bool HasUnresolvedUsing,
+         Expr *Base, bool IsArrow,
+         SourceLocation OperatorLoc,
+         NestedNameSpecifier *Qualifier,
+         SourceRange QualifierRange,
+         DeclarationName Member,
+         SourceLocation MemberLoc,
+         const TemplateArgumentListInfo *TemplateArgs);
+
+  /// Adds a declaration to the unresolved set.  By assumption, all of
+  /// these happen at initialization time and properties like
+  /// 'Dependent' and 'HasUnresolvedUsing' take them into account.
+  void addDecl(NamedDecl *Decl) {
+    Results.addDecl(Decl);
+  }
+
+  typedef UnresolvedSet::iterator decls_iterator;
+  decls_iterator decls_begin() const { return Results.begin(); }
+  decls_iterator decls_end() const { return Results.end(); }
+
+  unsigned getNumDecls() const { return Results.size(); }
+
+  /// \brief Retrieve the base object of this member expressions,
+  /// e.g., the \c x in \c x.m.
+  Expr *getBase() { return cast<Expr>(Base); }
+  void setBase(Expr *E) { Base = E; }
+
+  /// \brief Determine whether this member expression used the '->'
+  /// operator; otherwise, it used the '.' operator.
+  bool isArrow() const { return IsArrow; }
+  void setArrow(bool A) { IsArrow = A; }
+
+  /// \brief Retrieve the location of the '->' or '.' operator.
+  SourceLocation getOperatorLoc() const { return OperatorLoc; }
+  void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
+
+  /// \brief Retrieve the nested-name-specifier that qualifies the member
+  /// name.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+
+  /// \brief Retrieve the source range covering the nested-name-specifier
+  /// that qualifies the member name.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+
+  /// \brief Retrieve the name of the member that this expression
+  /// refers to.
+  DeclarationName getMemberName() const { return MemberName; }
+  void setMemberName(DeclarationName N) { MemberName = N; }
+
+  // \brief Retrieve the location of the name of the member that this
+  // expression refers to.
+  SourceLocation getMemberLoc() const { return MemberLoc; }
+  void setMemberLoc(SourceLocation L) { MemberLoc = L; }
+
+  /// \brief Determines whether this member expression actually had a C++
+  /// template argument list explicitly specified, e.g., x.f<int>.
+  bool hasExplicitTemplateArgs() const {
+    return HasExplicitTemplateArgs;
+  }
+
+  /// \brief Copies the template arguments into the given structure.
+  void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
+    getExplicitTemplateArgs()->copyInto(List);
+  }
+
+  /// \brief Retrieve the location of the left angle bracket following
+  /// the member name ('<').
+  SourceLocation getLAngleLoc() const {
+    return getExplicitTemplateArgs()->LAngleLoc;
+  }
+
+  /// \brief Retrieve the template arguments provided as part of this
+  /// template-id.
+  const TemplateArgumentLoc *getTemplateArgs() const {
+    return getExplicitTemplateArgs()->getTemplateArgs();
+  }
+
+  /// \brief Retrieve the number of template arguments provided as
+  /// part of this template-id.
+  unsigned getNumTemplateArgs() const {
+    return getExplicitTemplateArgs()->NumTemplateArgs;
+  }
+
+  /// \brief Retrieve the location of the right angle bracket
+  /// following the template arguments ('>').
+  SourceLocation getRAngleLoc() const {
+    return getExplicitTemplateArgs()->RAngleLoc;
+  }
+
+  virtual SourceRange getSourceRange() const {
+    SourceRange Range = Base->getSourceRange();
+    if (hasExplicitTemplateArgs())
+      Range.setEnd(getRAngleLoc());
+    else
+      Range.setEnd(MemberLoc);
+    return Range;
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == UnresolvedMemberExprClass;
+  }
+  static bool classof(const UnresolvedMemberExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 }  // end namespace clang
 
 #endif

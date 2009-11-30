@@ -73,6 +73,8 @@ public:
     return false;
   }
 
+  unsigned size() const { return Decls.size(); }
+
   typedef DeclsTy::const_iterator iterator;
   iterator begin() const { return Decls.begin(); }
   iterator end() const { return Decls.end(); }

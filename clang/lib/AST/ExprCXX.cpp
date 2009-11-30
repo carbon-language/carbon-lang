@@ -573,3 +573,52 @@ Stmt::child_iterator CXXDependentScopeMemberExpr::child_begin() {
 Stmt::child_iterator CXXDependentScopeMemberExpr::child_end() {
   return child_iterator(&Base + 1);
 }
+
+UnresolvedMemberExpr::UnresolvedMemberExpr(QualType T, bool Dependent,
+                                           bool HasUnresolvedUsing,
+                                           Expr *Base, bool IsArrow,
+                                           SourceLocation OperatorLoc,
+                                           NestedNameSpecifier *Qualifier,
+                                           SourceRange QualifierRange,
+                                           DeclarationName MemberName,
+                                           SourceLocation MemberLoc,
+                                   const TemplateArgumentListInfo *TemplateArgs)
+  : Expr(UnresolvedMemberExprClass, T, Dependent, Dependent),
+    Base(Base), IsArrow(IsArrow), HasUnresolvedUsing(HasUnresolvedUsing),
+    HasExplicitTemplateArgs(TemplateArgs != 0),
+    OperatorLoc(OperatorLoc),
+    Qualifier(Qualifier), QualifierRange(QualifierRange),
+    MemberName(MemberName), MemberLoc(MemberLoc) {
+  if (TemplateArgs)
+    getExplicitTemplateArgs()->initializeFrom(*TemplateArgs);
+}
+
+UnresolvedMemberExpr *
+UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
+                             bool HasUnresolvedUsing,
+                             Expr *Base, bool IsArrow,
+                             SourceLocation OperatorLoc,
+                             NestedNameSpecifier *Qualifier,
+                             SourceRange QualifierRange,
+                             DeclarationName Member,
+                             SourceLocation MemberLoc,
+                             const TemplateArgumentListInfo *TemplateArgs) {
+  std::size_t size = sizeof(UnresolvedMemberExpr);
+  if (TemplateArgs)
+    size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
+
+  void *Mem = C.Allocate(size, llvm::alignof<UnresolvedMemberExpr>());
+  return new (Mem) UnresolvedMemberExpr(
+                             Dependent ? C.DependentTy : C.OverloadTy,
+                             Dependent, HasUnresolvedUsing, Base, IsArrow,
+                             OperatorLoc, Qualifier, QualifierRange,
+                             Member, MemberLoc, TemplateArgs);
+}
+
+Stmt::child_iterator UnresolvedMemberExpr::child_begin() {
+  return child_iterator(&Base);
+}
+
+Stmt::child_iterator UnresolvedMemberExpr::child_end() {
+  return child_iterator(&Base + 1);
+}
