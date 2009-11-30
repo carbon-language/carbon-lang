@@ -2407,8 +2407,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
-    NewVD->addAttr(::new (Context) AsmLabelAttr(std::string(SE->getStrData(),
-                                                        SE->getByteLength())));
+    NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getString()));
   }
 
   // Don't consider existing declarations that are in a different
@@ -2924,8 +2923,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
-    NewFD->addAttr(::new (Context) AsmLabelAttr(std::string(SE->getStrData(),
-                                                        SE->getByteLength())));
+    NewFD->addAttr(::new (Context) AsmLabelAttr(SE->getString()));
   }
 
   // Copy the parameter declarations from the declarator D to the function

@@ -411,12 +411,9 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  const char *Alias = Str->getStrData();
-  unsigned AliasLen = Str->getByteLength();
-
   // FIXME: check if target symbol exists in current file
 
-  d->addAttr(::new (S.Context) AliasAttr(std::string(Alias, AliasLen)));
+  d->addAttr(::new (S.Context) AliasAttr(Str->getString()));
 }
 
 static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
@@ -1006,12 +1003,10 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  std::string SectionStr(SE->getStrData(), SE->getByteLength());
-
   // If the target wants to validate the section specifier, make it happen.
-  std::string Error = S.Context.Target.isValidSectionSpecifier(SectionStr);
+  std::string Error = S.Context.Target.isValidSectionSpecifier(SE->getString());
   if (Error.empty()) {
-    D->addAttr(::new (S.Context) SectionAttr(SectionStr));
+    D->addAttr(::new (S.Context) SectionAttr(SE->getString()));
     return;
   }
 
@@ -1518,8 +1513,7 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) <<"annotate";
     return;
   }
-  d->addAttr(::new (S.Context) AnnotateAttr(std::string(SE->getStrData(),
-                                                        SE->getByteLength())));
+  d->addAttr(::new (S.Context) AnnotateAttr(SE->getString()));
 }
 
 static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {

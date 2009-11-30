@@ -15,12 +15,12 @@
 #define LLVM_CLANG_AST_ATTR_H
 
 #include "llvm/Support/Casting.h"
-using llvm::dyn_cast;
-
+#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <cstring>
 #include <string>
 #include <algorithm>
+using llvm::dyn_cast;
 
 namespace clang {
   class ASTContext;
@@ -217,7 +217,7 @@ public:
 class AnnotateAttr : public Attr {
   std::string Annotation;
 public:
-  AnnotateAttr(const std::string &ann) : Attr(Annotate), Annotation(ann) {}
+  AnnotateAttr(llvm::StringRef ann) : Attr(Annotate), Annotation(ann) {}
 
   const std::string& getAnnotation() const { return Annotation; }
 
@@ -233,7 +233,7 @@ public:
 class AsmLabelAttr : public Attr {
   std::string Label;
 public:
-  AsmLabelAttr(const std::string &L) : Attr(AsmLabel), Label(L) {}
+  AsmLabelAttr(llvm::StringRef L) : Attr(AsmLabel), Label(L) {}
 
   const std::string& getLabel() const { return Label; }
 
@@ -251,7 +251,7 @@ DEF_SIMPLE_ATTR(AlwaysInline);
 class AliasAttr : public Attr {
   std::string Aliasee;
 public:
-  AliasAttr(const std::string &aliasee) : Attr(Alias), Aliasee(aliasee) {}
+  AliasAttr(llvm::StringRef aliasee) : Attr(Alias), Aliasee(aliasee) {}
 
   const std::string& getAliasee() const { return Aliasee; }
 
@@ -325,7 +325,7 @@ DEF_SIMPLE_ATTR(Final);
 class SectionAttr : public Attr {
   std::string Name;
 public:
-  SectionAttr(const std::string &N) : Attr(Section), Name(N) {}
+  SectionAttr(llvm::StringRef N) : Attr(Section), Name(N) {}
 
   const std::string& getName() const { return Name; }
 
@@ -384,11 +384,11 @@ class FormatAttr : public Attr {
   std::string Type;
   int formatIdx, firstArg;
 public:
-  FormatAttr(const std::string &type, int idx, int first) : Attr(Format),
+  FormatAttr(llvm::StringRef type, int idx, int first) : Attr(Format),
              Type(type), formatIdx(idx), firstArg(first) {}
 
   const std::string& getType() const { return Type; }
-  void setType(const std::string &type) { Type = type; }
+  void setType(llvm::StringRef type) { Type = type; }
   int getFormatIdx() const { return formatIdx; }
   int getFirstArg() const { return firstArg; }
 
