@@ -205,8 +205,6 @@ public:
     SeenVBase.clear();
   }
 
-  Index_t VBlookup(CXXRecordDecl *D, CXXRecordDecl *B);
-
   Index_t getNVOffset_1(const CXXRecordDecl *D, const CXXRecordDecl *B,
     Index_t Offset = 0) {
 
@@ -252,7 +250,7 @@ public:
     CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
     CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
     if (D != Class)
-      return VBlookup(D, B);
+      return CGM.getVtableInfo().getVirtualBaseOffsetIndex(D, B);
     llvm::DenseMap<const CXXRecordDecl *, Index_t>::iterator i;
     i = VBIndex.find(B);
     if (i != VBIndex.end())
@@ -455,7 +453,7 @@ public:
   }
 
   void AddMethod(const GlobalDecl GD, bool MorallyVirtual, Index_t Offset,
-                 bool ForVirtualBase, int64_t CurrentVBaseOffset) {
+                 int64_t CurrentVBaseOffset) {
     llvm::Constant *m = WrapAddrOf(GD);
 
     // If we can find a previously allocated slot for this, reuse it.
@@ -487,8 +485,7 @@ public:
   }
 
   void AddMethods(const CXXRecordDecl *RD, bool MorallyVirtual,
-                  Index_t Offset, bool RDisVirtualBase,
-                  int64_t CurrentVBaseOffset) {
+                  Index_t Offset, int64_t CurrentVBaseOffset) {
     for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
          ++mi) {
       const CXXMethodDecl *MD = *mi;
@@ -499,12 +496,11 @@ public:
         // For destructors, add both the complete and the deleting destructor
         // to the vtable.
         AddMethod(GlobalDecl(DD, Dtor_Complete), MorallyVirtual, Offset, 
-                  RDisVirtualBase, CurrentVBaseOffset);
-        AddMethod(GlobalDecl(DD, Dtor_Deleting), MorallyVirtual, Offset, 
-                  RDisVirtualBase, CurrentVBaseOffset);
-      } else
-        AddMethod(MD, MorallyVirtual, Offset, RDisVirtualBase,
                   CurrentVBaseOffset);
+        AddMethod(GlobalDecl(DD, Dtor_Deleting), MorallyVirtual, Offset, 
+                  CurrentVBaseOffset);
+      } else
+        AddMethod(MD, MorallyVirtual, Offset, CurrentVBaseOffset);
     }
   }
 
@@ -630,7 +626,7 @@ public:
 
   void Primaries(const CXXRecordDecl *RD, bool MorallyVirtual, int64_t Offset,
                  bool updateVBIndex, Index_t current_vbindex,
-                 bool RDisVirtualBase, int64_t CurrentVBaseOffset) {
+                 int64_t CurrentVBaseOffset) {
     if (!RD->isDynamicClass())
       return;
 
@@ -649,21 +645,20 @@ public:
         
       if (!PrimaryBaseWasVirtual)
         Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
-                  updateVBIndex, current_vbindex, PrimaryBaseWasVirtual,
-                  BaseCurrentVBaseOffset);
+                  updateVBIndex, current_vbindex, BaseCurrentVBaseOffset);
     }
 
     D1(printf(" doing vcall entries for %s most derived %s\n",
               RD->getNameAsCString(), Class->getNameAsCString()));
 
     // And add the virtuals for the class to the primary vtable.
-    AddMethods(RD, MorallyVirtual, Offset, RDisVirtualBase, CurrentVBaseOffset);
+    AddMethods(RD, MorallyVirtual, Offset, CurrentVBaseOffset);
   }
 
   void VBPrimaries(const CXXRecordDecl *RD, bool MorallyVirtual, int64_t Offset,
                    bool updateVBIndex, Index_t current_vbindex,
                    bool RDisVirtualBase, int64_t CurrentVBaseOffset,
-                   bool bottom=false) {
+                   bool bottom) {
     if (!RD->isDynamicClass())
       return;
 
@@ -684,7 +679,7 @@ public:
       
       VBPrimaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
                   updateVBIndex, current_vbindex, PrimaryBaseWasVirtual,
-                  BaseCurrentVBaseOffset);
+                  BaseCurrentVBaseOffset, false);
     }
 
     D1(printf(" doing vbase entries for %s most derived %s\n",
@@ -693,7 +688,7 @@ public:
 
     if (RDisVirtualBase || bottom) {
       Primaries(RD, MorallyVirtual, Offset, updateVBIndex, current_vbindex,
-                RDisVirtualBase, CurrentVBaseOffset);
+                CurrentVBaseOffset);
     }
   }
 
@@ -775,12 +770,6 @@ public:
       delete Path;
   }
 };
-
-
-VtableBuilder::Index_t VtableBuilder::VBlookup(CXXRecordDecl *D,
-                                               CXXRecordDecl *B) {
-  return CGM.getVtableInfo().getVirtualBaseOffsetIndex(D, B);
-}
 
 }
 
