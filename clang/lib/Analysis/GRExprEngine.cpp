@@ -2817,6 +2817,9 @@ namespace llvm {
 template<>
 struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
   public DefaultDOTGraphTraits {
+
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
   // FIXME: Since we do not cache error nodes in GRExprEngine now, this does not
   // work.
   static std::string getNodeAttributes(const ExplodedNode* N, void*) {
@@ -2840,7 +2843,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
     return "";
   }
 
-  static std::string getNodeLabel(const ExplodedNode* N, void*,bool ShortNames){
+  static std::string getNodeLabel(const ExplodedNode* N, void*){
 
     std::string sbuf;
     llvm::raw_string_ostream Out(sbuf);

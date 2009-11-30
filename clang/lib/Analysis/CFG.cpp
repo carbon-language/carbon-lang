@@ -2049,8 +2049,10 @@ void CFG::viewCFG(const LangOptions &LO) const {
 namespace llvm {
 template<>
 struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
-  static std::string getNodeLabel(const CFGBlock* Node, const CFG* Graph,
-                                  bool ShortNames) {
+
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
+  static std::string getNodeLabel(const CFGBlock* Node, const CFG* Graph) {
 
 #ifndef NDEBUG
     std::string OutSStr;

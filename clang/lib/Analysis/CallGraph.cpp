@@ -137,8 +137,10 @@ namespace llvm {
 template <>
 struct DOTGraphTraits<CallGraph> : public DefaultDOTGraphTraits {
 
+  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+
   static std::string getNodeLabel(const CallGraphNode *Node,
-                                  const CallGraph &CG, bool ShortNames) {
+                                  const CallGraph &CG) {
     return Node->getName();
 
   }
