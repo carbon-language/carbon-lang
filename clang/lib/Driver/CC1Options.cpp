@@ -17,6 +17,7 @@
 #include "clang/Driver/Option.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/LangStandard.h"
+#include "clang/Frontend/PCHReader.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/SmallVector.h"
@@ -628,11 +629,8 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
          ie = Args.filtered_end(); it != ie; ++it) {
     // PCH is handled specially, we need to extra the original include path.
     if (it->getOption().matches(OPT_include_pch)) {
-      // FIXME: Disabled for now, I don't want to incur the cost of linking in
-      // Sema and all until we are actually going to use it. Alternatively this
-      // could be factored out somehow.
-      //        PCHReader::getOriginalSourceFile(it->getValue(Args));
-      std::string OriginalFile = "FIXME";
+      std::string OriginalFile =
+        PCHReader::getOriginalSourceFile(it->getValue(Args));
 
       // FIXME: Don't fail like this.
       if (OriginalFile.empty())
