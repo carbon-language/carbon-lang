@@ -448,7 +448,7 @@ use TableGen inheritance instead.
 
   - ``element_in_list`` - Returns true if a command-line parameter
     list contains a given value.
-    Example: ``(parameter_in_list "l", "pthread")``.
+    Example: ``(element_in_list "l", "pthread")``.
 
   - ``input_languages_contain`` - Returns true if a given language
     belongs to the current input language set.
