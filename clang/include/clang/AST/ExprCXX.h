@@ -1410,10 +1410,18 @@ public:
 /// \brief Represents a C++ member access expression where the actual
 /// member referenced could not be resolved because the base
 /// expression or the member name was dependent.
+///
+/// Like UnresolvedMemberExprs, these can be either implicit or
+/// explicit accesses.  It is only possible to get one of these with
+/// an implicit access if a qualifier is provided.
 class CXXDependentScopeMemberExpr : public Expr {
   /// \brief The expression for the base pointer or class reference,
-  /// e.g., the \c x in x.f.
+  /// e.g., the \c x in x.f.  Can be null in implicit accesses.
   Stmt *Base;
+
+  /// \brief The type of the base expression.  Never null, even for
+  /// implicit accesses.
+  QualType BaseType;
 
   /// \brief Whether this member expression used the '->' operator or
   /// the '.' operator.
@@ -1421,7 +1429,7 @@ class CXXDependentScopeMemberExpr : public Expr {
 
   /// \brief Whether this member expression has explicitly-specified template
   /// arguments.
-  bool HasExplicitTemplateArgumentList : 1;
+  bool HasExplicitTemplateArgs : 1;
 
   /// \brief The location of the '->' or '.' operator.
   SourceLocation OperatorLoc;
@@ -1452,9 +1460,7 @@ class CXXDependentScopeMemberExpr : public Expr {
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
   ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
-    if (!HasExplicitTemplateArgumentList)
-      return 0;
-
+    assert(HasExplicitTemplateArgs);
     return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
   }
 
@@ -1466,7 +1472,7 @@ class CXXDependentScopeMemberExpr : public Expr {
   }
 
   CXXDependentScopeMemberExpr(ASTContext &C,
-                          Expr *Base, bool IsArrow,
+                          Expr *Base, QualType BaseType, bool IsArrow,
                           SourceLocation OperatorLoc,
                           NestedNameSpecifier *Qualifier,
                           SourceRange QualifierRange,
@@ -1477,7 +1483,8 @@ class CXXDependentScopeMemberExpr : public Expr {
 
 public:
   CXXDependentScopeMemberExpr(ASTContext &C,
-                          Expr *Base, bool IsArrow,
+                          Expr *Base, QualType BaseType,
+                          bool IsArrow,
                           SourceLocation OperatorLoc,
                           NestedNameSpecifier *Qualifier,
                           SourceRange QualifierRange,
@@ -1485,15 +1492,15 @@ public:
                           DeclarationName Member,
                           SourceLocation MemberLoc)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, true, true),
-    Base(Base), IsArrow(IsArrow), HasExplicitTemplateArgumentList(false),
-    OperatorLoc(OperatorLoc),
+    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
+    HasExplicitTemplateArgs(false), OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
     Member(Member), MemberLoc(MemberLoc) { }
 
   static CXXDependentScopeMemberExpr *
   Create(ASTContext &C,
-         Expr *Base, bool IsArrow,
+         Expr *Base, QualType BaseType, bool IsArrow,
          SourceLocation OperatorLoc,
          NestedNameSpecifier *Qualifier,
          SourceRange QualifierRange,
@@ -1502,10 +1509,20 @@ public:
          SourceLocation MemberLoc,
          const TemplateArgumentListInfo *TemplateArgs);
 
+  /// \brief True if this is an implicit access, i.e. one in which the
+  /// member being accessed was not written in the source.  The source
+  /// location of the operator is invalid in this case.
+  bool isImplicitAccess() const { return Base == 0; }
+
   /// \brief Retrieve the base object of this member expressions,
   /// e.g., the \c x in \c x.m.
-  Expr *getBase() { return cast<Expr>(Base); }
+  Expr *getBase() const {
+    assert(!isImplicitAccess());
+    return cast<Expr>(Base);
+  }
   void setBase(Expr *E) { Base = E; }
+
+  QualType getBaseType() const { return BaseType; }
 
   /// \brief Determine whether this member expression used the '->'
   /// operator; otherwise, it used the '.' operator.
@@ -1551,60 +1568,59 @@ public:
 
   /// \brief Determines whether this member expression actually had a C++
   /// template argument list explicitly specified, e.g., x.f<int>.
-  bool hasExplicitTemplateArgumentList() const {
-    return HasExplicitTemplateArgumentList;
+  bool hasExplicitTemplateArgs() const {
+    return HasExplicitTemplateArgs;
   }
 
   /// \brief Copies the template arguments (if present) into the given
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
-    if (hasExplicitTemplateArgumentList())
-      getExplicitTemplateArgumentList()->copyInto(List);
+    assert(HasExplicitTemplateArgs);
+    getExplicitTemplateArgumentList()->copyInto(List);
   }
 
   /// \brief Retrieve the location of the left angle bracket following the
   /// member name ('<'), if any.
   SourceLocation getLAngleLoc() const {
-    if (!HasExplicitTemplateArgumentList)
-      return SourceLocation();
-
+    assert(HasExplicitTemplateArgs);
     return getExplicitTemplateArgumentList()->LAngleLoc;
   }
 
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    if (!HasExplicitTemplateArgumentList)
-      return 0;
-
+    assert(HasExplicitTemplateArgs);
     return getExplicitTemplateArgumentList()->getTemplateArgs();
   }
 
   /// \brief Retrieve the number of template arguments provided as part of this
   /// template-id.
   unsigned getNumTemplateArgs() const {
-    if (!HasExplicitTemplateArgumentList)
-      return 0;
-
+    assert(HasExplicitTemplateArgs);
     return getExplicitTemplateArgumentList()->NumTemplateArgs;
   }
 
   /// \brief Retrieve the location of the right angle bracket following the
   /// template arguments ('>').
   SourceLocation getRAngleLoc() const {
-    if (!HasExplicitTemplateArgumentList)
-      return SourceLocation();
-
+    assert(HasExplicitTemplateArgs);
     return getExplicitTemplateArgumentList()->RAngleLoc;
   }
 
   virtual SourceRange getSourceRange() const {
-    if (HasExplicitTemplateArgumentList)
-      return SourceRange(Base->getSourceRange().getBegin(),
-                         getRAngleLoc());
+    SourceRange Range;
+    if (!isImplicitAccess())
+      Range.setBegin(Base->getSourceRange().getBegin());
+    else if (getQualifier())
+      Range.setBegin(getQualifierRange().getBegin());
+    else
+      Range.setBegin(MemberLoc);
 
-    return SourceRange(Base->getSourceRange().getBegin(),
-                       MemberLoc);
+    if (hasExplicitTemplateArgs())
+      Range.setEnd(getRAngleLoc());
+    else
+      Range.setEnd(MemberLoc);
+    return Range;
   }
 
   static bool classof(const Stmt *T) {
@@ -1618,16 +1634,30 @@ public:
 };
 
 /// \brief Represents a C++ member access expression for which lookup
-/// produced a set of overloaded functions.  These are replaced with
-/// MemberExprs in the final AST.
+/// produced a set of overloaded functions.
+///
+/// The member access may be explicit or implicit:
+///    struct A {
+///      int a, b;
+///      int explicitAccess() { return this->a + this->A::b; }
+///      int implicitAccess() { return a + A::b; }
+///    };
+///
+/// In the final AST, an explicit access always becomes a MemberExpr.
+/// An implicit access may become either a MemberExpr or a
+/// DeclRefExpr, depending on whether the member is static.
 class UnresolvedMemberExpr : public Expr {
   /// The results.  These are undesugared, which is to say, they may
   /// include UsingShadowDecls.
   UnresolvedSet Results;
 
   /// \brief The expression for the base pointer or class reference,
-  /// e.g., the \c x in x.f.
+  /// e.g., the \c x in x.f.  This can be null if this is an 'unbased'
+  /// member expression
   Stmt *Base;
+
+  /// \brief The type of the base expression;  never null.
+  QualType BaseType;
 
   /// \brief Whether this member expression used the '->' operator or
   /// the '.' operator.
@@ -1672,7 +1702,7 @@ class UnresolvedMemberExpr : public Expr {
 
   UnresolvedMemberExpr(QualType T, bool Dependent,
                        bool HasUnresolvedUsing,
-                       Expr *Base, bool IsArrow,
+                       Expr *Base, QualType BaseType, bool IsArrow,
                        SourceLocation OperatorLoc,
                        NestedNameSpecifier *Qualifier,
                        SourceRange QualifierRange,
@@ -1683,7 +1713,7 @@ class UnresolvedMemberExpr : public Expr {
 public:
   static UnresolvedMemberExpr *
   Create(ASTContext &C, bool Dependent, bool HasUnresolvedUsing,
-         Expr *Base, bool IsArrow,
+         Expr *Base, QualType BaseType, bool IsArrow,
          SourceLocation OperatorLoc,
          NestedNameSpecifier *Qualifier,
          SourceRange QualifierRange,
@@ -1704,10 +1734,20 @@ public:
 
   unsigned getNumDecls() const { return Results.size(); }
 
+  /// \brief True if this is an implicit access, i.e. one in which the
+  /// member being accessed was not written in the source.  The source
+  /// location of the operator is invalid in this case.
+  bool isImplicitAccess() const { return Base == 0; }
+
   /// \brief Retrieve the base object of this member expressions,
   /// e.g., the \c x in \c x.m.
-  Expr *getBase() { return cast<Expr>(Base); }
+  Expr *getBase() {
+    assert(!isImplicitAccess());
+    return cast<Expr>(Base);
+  }
   void setBase(Expr *E) { Base = E; }
+
+  QualType getBaseType() const { return BaseType; }
 
   /// \brief Determine whether this member expression used the '->'
   /// operator; otherwise, it used the '.' operator.
@@ -1772,7 +1812,14 @@ public:
   }
 
   virtual SourceRange getSourceRange() const {
-    SourceRange Range = Base->getSourceRange();
+    SourceRange Range;
+    if (!isImplicitAccess())
+      Range.setBegin(Base->getSourceRange().getBegin());
+    else if (getQualifier())
+      Range.setBegin(getQualifierRange().getBegin());
+    else
+      Range.setBegin(MemberLoc);
+
     if (hasExplicitTemplateArgs())
       Range.setEnd(getRAngleLoc());
     else

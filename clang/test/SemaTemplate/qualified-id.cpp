@@ -18,3 +18,14 @@ namespace test1 {
     }
   };
 }
+
+namespace test2 {
+  class Impl {
+    int foo();
+  };
+  template <class T> class Magic : public Impl {
+    int foo() {
+      return Impl::foo();
+    }
+  };
+}

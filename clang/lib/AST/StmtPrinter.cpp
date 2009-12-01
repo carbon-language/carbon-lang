@@ -1145,17 +1145,19 @@ StmtPrinter::VisitCXXUnresolvedConstructExpr(
 
 void StmtPrinter::VisitCXXDependentScopeMemberExpr(
                                          CXXDependentScopeMemberExpr *Node) {
-  PrintExpr(Node->getBase());
-  OS << (Node->isArrow() ? "->" : ".");
+  if (!Node->isImplicitAccess()) {
+    PrintExpr(Node->getBase());
+    OS << (Node->isArrow() ? "->" : ".");
+  }
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
-  else if (Node->hasExplicitTemplateArgumentList())
+  else if (Node->hasExplicitTemplateArgs())
     // FIXME: Track use of "template" keyword explicitly?
     OS << "template ";
 
   OS << Node->getMember().getAsString();
 
-  if (Node->hasExplicitTemplateArgumentList()) {
+  if (Node->hasExplicitTemplateArgs()) {
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                     Node->getTemplateArgs(),
                                                     Node->getNumTemplateArgs(),
@@ -1164,8 +1166,10 @@ void StmtPrinter::VisitCXXDependentScopeMemberExpr(
 }
 
 void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
-  PrintExpr(Node->getBase());
-  OS << (Node->isArrow() ? "->" : ".");
+  if (!Node->isImplicitAccess()) {
+    PrintExpr(Node->getBase());
+    OS << (Node->isArrow() ? "->" : ".");
+  }
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
 

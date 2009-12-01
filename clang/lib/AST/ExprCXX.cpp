@@ -518,7 +518,8 @@ Stmt::child_iterator CXXUnresolvedConstructExpr::child_end() {
 }
 
 CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
-                                                 Expr *Base, bool IsArrow,
+                                                 Expr *Base, QualType BaseType,
+                                                 bool IsArrow,
                                                  SourceLocation OperatorLoc,
                                                  NestedNameSpecifier *Qualifier,
                                                  SourceRange QualifierRange,
@@ -527,8 +528,8 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
                                                  SourceLocation MemberLoc,
                                    const TemplateArgumentListInfo *TemplateArgs)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy, true, true),
-    Base(Base), IsArrow(IsArrow),
-    HasExplicitTemplateArgumentList(TemplateArgs),
+    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
+    HasExplicitTemplateArgs(TemplateArgs != 0),
     OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
@@ -539,7 +540,7 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
 
 CXXDependentScopeMemberExpr *
 CXXDependentScopeMemberExpr::Create(ASTContext &C,
-                                Expr *Base, bool IsArrow,
+                                Expr *Base, QualType BaseType, bool IsArrow,
                                 SourceLocation OperatorLoc,
                                 NestedNameSpecifier *Qualifier,
                                 SourceRange QualifierRange,
@@ -548,22 +549,22 @@ CXXDependentScopeMemberExpr::Create(ASTContext &C,
                                 SourceLocation MemberLoc,
                                 const TemplateArgumentListInfo *TemplateArgs) {
   if (!TemplateArgs)
-    return new (C) CXXDependentScopeMemberExpr(C, Base, IsArrow, OperatorLoc,
-                                           Qualifier, QualifierRange,
-                                           FirstQualifierFoundInScope,
-                                           Member, MemberLoc);
+    return new (C) CXXDependentScopeMemberExpr(C, Base, BaseType,
+                                               IsArrow, OperatorLoc,
+                                               Qualifier, QualifierRange,
+                                               FirstQualifierFoundInScope,
+                                               Member, MemberLoc);
 
   std::size_t size = sizeof(CXXDependentScopeMemberExpr);
   if (TemplateArgs)
     size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
 
   void *Mem = C.Allocate(size, llvm::alignof<CXXDependentScopeMemberExpr>());
-  return new (Mem) CXXDependentScopeMemberExpr(C, Base, IsArrow, OperatorLoc,
-                                           Qualifier, QualifierRange,
-                                           FirstQualifierFoundInScope,
-                                           Member,
-                                           MemberLoc,
-                                           TemplateArgs);
+  return new (Mem) CXXDependentScopeMemberExpr(C, Base, BaseType,
+                                               IsArrow, OperatorLoc,
+                                               Qualifier, QualifierRange,
+                                               FirstQualifierFoundInScope,
+                                               Member, MemberLoc, TemplateArgs);
 }
 
 Stmt::child_iterator CXXDependentScopeMemberExpr::child_begin() {
@@ -571,12 +572,15 @@ Stmt::child_iterator CXXDependentScopeMemberExpr::child_begin() {
 }
 
 Stmt::child_iterator CXXDependentScopeMemberExpr::child_end() {
+  if (isImplicitAccess())
+    return child_iterator(&Base);
   return child_iterator(&Base + 1);
 }
 
 UnresolvedMemberExpr::UnresolvedMemberExpr(QualType T, bool Dependent,
                                            bool HasUnresolvedUsing,
-                                           Expr *Base, bool IsArrow,
+                                           Expr *Base, QualType BaseType,
+                                           bool IsArrow,
                                            SourceLocation OperatorLoc,
                                            NestedNameSpecifier *Qualifier,
                                            SourceRange QualifierRange,
@@ -584,7 +588,8 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(QualType T, bool Dependent,
                                            SourceLocation MemberLoc,
                                    const TemplateArgumentListInfo *TemplateArgs)
   : Expr(UnresolvedMemberExprClass, T, Dependent, Dependent),
-    Base(Base), IsArrow(IsArrow), HasUnresolvedUsing(HasUnresolvedUsing),
+    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
+    HasUnresolvedUsing(HasUnresolvedUsing),
     HasExplicitTemplateArgs(TemplateArgs != 0),
     OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
@@ -596,7 +601,7 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(QualType T, bool Dependent,
 UnresolvedMemberExpr *
 UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
                              bool HasUnresolvedUsing,
-                             Expr *Base, bool IsArrow,
+                             Expr *Base, QualType BaseType, bool IsArrow,
                              SourceLocation OperatorLoc,
                              NestedNameSpecifier *Qualifier,
                              SourceRange QualifierRange,
@@ -610,8 +615,8 @@ UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
   void *Mem = C.Allocate(size, llvm::alignof<UnresolvedMemberExpr>());
   return new (Mem) UnresolvedMemberExpr(
                              Dependent ? C.DependentTy : C.OverloadTy,
-                             Dependent, HasUnresolvedUsing, Base, IsArrow,
-                             OperatorLoc, Qualifier, QualifierRange,
+                             Dependent, HasUnresolvedUsing, Base, BaseType,
+                             IsArrow, OperatorLoc, Qualifier, QualifierRange,
                              Member, MemberLoc, TemplateArgs);
 }
 
@@ -620,5 +625,7 @@ Stmt::child_iterator UnresolvedMemberExpr::child_begin() {
 }
 
 Stmt::child_iterator UnresolvedMemberExpr::child_end() {
+  if (isImplicitAccess())
+    return child_iterator(&Base);
   return child_iterator(&Base + 1);
 }

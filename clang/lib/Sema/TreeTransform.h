@@ -863,11 +863,14 @@ public:
       SS.setScopeRep(Qualifier);
     }
 
+    QualType BaseType = ((Expr*) Base.get())->getType();
+
     DeclarationName Name
       = SemaRef.Context.DeclarationNames.getCXXDestructorName(
                                SemaRef.Context.getCanonicalType(DestroyedType));
 
-    return getSema().BuildMemberReferenceExpr(move(Base), OperatorLoc, isArrow,
+    return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
+                                              OperatorLoc, isArrow,
                                               SS, /*FIXME: FirstQualifier*/ 0,
                                               Name, DestroyedTypeLoc,
                                               /*TemplateArgs*/ 0);
@@ -964,7 +967,11 @@ public:
       SS.setScopeRep(Qualifier);
     }
 
-    return getSema().BuildMemberReferenceExpr(move(Base), OpLoc, isArrow,
+    QualType BaseType = ((Expr*) Base.get())->getType();
+
+    // FIXME: wait, this is re-performing lookup?
+    return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
+                                              OpLoc, isArrow,
                                               SS, FirstQualifierInScope,
                                               Member->getDeclName(), MemberLoc,
                                               ExplicitTemplateArgs);
@@ -1042,8 +1049,10 @@ public:
                                                SourceLocation OpLoc,
                                                SourceLocation AccessorLoc,
                                                IdentifierInfo &Accessor) {
+
     CXXScopeSpec SS;
-    return getSema().BuildMemberReferenceExpr(move(Base),
+    QualType BaseType = ((Expr*) Base.get())->getType();
+    return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
                                               OpLoc, /*IsArrow*/ false,
                                               SS, /*FirstQualifierInScope*/ 0,
                                               DeclarationName(&Accessor),
@@ -1522,6 +1531,7 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCXXDependentScopeMemberExpr(ExprArg BaseE,
+                                                  QualType BaseType,
                                                   bool IsArrow,
                                                   SourceLocation OperatorLoc,
                                               NestedNameSpecifier *Qualifier,
@@ -1534,7 +1544,8 @@ public:
     SS.setRange(QualifierRange);
     SS.setScopeRep(Qualifier);
 
-    return SemaRef.BuildMemberReferenceExpr(move(BaseE), OperatorLoc, IsArrow,
+    return SemaRef.BuildMemberReferenceExpr(move(BaseE), BaseType,
+                                            OperatorLoc, IsArrow,
                                             SS, FirstQualifierInScope,
                                             Name, MemberLoc, TemplateArgs);
   }
@@ -1544,19 +1555,19 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildUnresolvedMemberExpr(ExprArg BaseE,
+                                               QualType BaseType,
                                                SourceLocation OperatorLoc,
                                                bool IsArrow,
                                                NestedNameSpecifier *Qualifier,
                                                SourceRange QualifierRange,
                                                LookupResult &R,
                                 const TemplateArgumentListInfo *TemplateArgs) {
-    OwningExprResult Base = move(BaseE);
-
     CXXScopeSpec SS;
     SS.setRange(QualifierRange);
     SS.setScopeRep(Qualifier);
 
-    return SemaRef.BuildMemberReferenceExpr(move(Base), OperatorLoc, IsArrow,
+    return SemaRef.BuildMemberReferenceExpr(move(BaseE), BaseType,
+                                            OperatorLoc, IsArrow,
                                             SS, R, TemplateArgs);
   }
 
@@ -4819,18 +4830,32 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
                                                      CXXDependentScopeMemberExpr *E,
                                                      bool isAddressOfOperand) {
   // Transform the base of the expression.
-  OwningExprResult Base = getDerived().TransformExpr(E->getBase());
-  if (Base.isInvalid())
-    return SemaRef.ExprError();
+  OwningExprResult Base(SemaRef, (Expr*) 0);
+  Expr *OldBase;
+  QualType BaseType;
+  QualType ObjectType;
+  if (!E->isImplicitAccess()) {
+    OldBase = E->getBase();
+    Base = getDerived().TransformExpr(OldBase);
+    if (Base.isInvalid())
+      return SemaRef.ExprError();
 
-  // Start the member reference and compute the object's type.
-  Sema::TypeTy *ObjectType = 0;
-  Base = SemaRef.ActOnStartCXXMemberReference(0, move(Base),
-                                              E->getOperatorLoc(),
+    // Start the member reference and compute the object's type.
+    Sema::TypeTy *ObjectTy = 0;
+    Base = SemaRef.ActOnStartCXXMemberReference(0, move(Base),
+                                                E->getOperatorLoc(),
                                       E->isArrow()? tok::arrow : tok::period,
-                                              ObjectType);
-  if (Base.isInvalid())
-    return SemaRef.ExprError();
+                                                ObjectTy);
+    if (Base.isInvalid())
+      return SemaRef.ExprError();
+
+    ObjectType = QualType::getFromOpaquePtr(ObjectTy);
+    BaseType = ((Expr*) Base.get())->getType();
+  } else {
+    OldBase = 0;
+    BaseType = getDerived().TransformType(E->getBaseType());
+    ObjectType = BaseType->getAs<PointerType>()->getPointeeType();
+  }
 
   // Transform the first part of the nested-name-specifier that qualifies
   // the member name.
@@ -4843,29 +4868,31 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
   if (E->getQualifier()) {
     Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                       E->getQualifierRange(),
-                                      QualType::getFromOpaquePtr(ObjectType),
-                                                        FirstQualifierInScope);
+                                                      ObjectType,
+                                                      FirstQualifierInScope);
     if (!Qualifier)
       return SemaRef.ExprError();
   }
 
   DeclarationName Name
     = getDerived().TransformDeclarationName(E->getMember(), E->getMemberLoc(),
-                                       QualType::getFromOpaquePtr(ObjectType));
+                                            ObjectType);
   if (!Name)
     return SemaRef.ExprError();
 
-  if (!E->hasExplicitTemplateArgumentList()) {
+  if (!E->hasExplicitTemplateArgs()) {
     // This is a reference to a member without an explicitly-specified
     // template argument list. Optimize for this common case.
     if (!getDerived().AlwaysRebuild() &&
-        Base.get() == E->getBase() &&
+        Base.get() == OldBase &&
+        BaseType == E->getBaseType() &&
         Qualifier == E->getQualifier() &&
         Name == E->getMember() &&
         FirstQualifierInScope == E->getFirstQualifierFoundInScope())
       return SemaRef.Owned(E->Retain());
 
     return getDerived().RebuildCXXDependentScopeMemberExpr(move(Base),
+                                                       BaseType,
                                                        E->isArrow(),
                                                        E->getOperatorLoc(),
                                                        Qualifier,
@@ -4885,6 +4912,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
   }
 
   return getDerived().RebuildCXXDependentScopeMemberExpr(move(Base),
+                                                     BaseType,
                                                      E->isArrow(),
                                                      E->getOperatorLoc(),
                                                      Qualifier,
@@ -4900,9 +4928,16 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old,
                                                       bool isAddressOfOperand) {
   // Transform the base of the expression.
-  OwningExprResult Base = getDerived().TransformExpr(Old->getBase());
-  if (Base.isInvalid())
-    return SemaRef.ExprError();
+  OwningExprResult Base(SemaRef, (Expr*) 0);
+  QualType BaseType;
+  if (!Old->isImplicitAccess()) {
+    Base = getDerived().TransformExpr(Old->getBase());
+    if (Base.isInvalid())
+      return SemaRef.ExprError();
+    BaseType = ((Expr*) Base.get())->getType();
+  } else {
+    BaseType = getDerived().TransformType(Old->getBaseType());
+  }
 
   NestedNameSpecifier *Qualifier = 0;
   if (Old->getQualifier()) {
@@ -4951,6 +4986,7 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old,
   }
   
   return getDerived().RebuildUnresolvedMemberExpr(move(Base),
+                                                  BaseType,
                                                   Old->getOperatorLoc(),
                                                   Old->isArrow(),
                                                   Qualifier,

@@ -5122,7 +5122,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 /// parameter). The caller needs to validate that the member
 /// expression refers to a member function or an overloaded member
 /// function.
-Sema::ExprResult
+Sema::OwningExprResult
 Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                 SourceLocation LParenLoc, Expr **Args,
                                 unsigned NumArgs, SourceLocation *CommaLocs,
@@ -5131,21 +5131,34 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   // argument and the member function we're referring to.
   Expr *NakedMemExpr = MemExprE->IgnoreParens();
   
-  // Extract the object argument.
-  Expr *ObjectArg;
-
   MemberExpr *MemExpr;
   CXXMethodDecl *Method = 0;
   if (isa<MemberExpr>(NakedMemExpr)) {
     MemExpr = cast<MemberExpr>(NakedMemExpr);
-    ObjectArg = MemExpr->getBase();
     Method = cast<CXXMethodDecl>(MemExpr->getMemberDecl());
   } else {
     UnresolvedMemberExpr *UnresExpr = cast<UnresolvedMemberExpr>(NakedMemExpr);
-    ObjectArg = UnresExpr->getBase();
+
+    // Mock up an object argument.
+    Expr *ObjectArg;
+    if (UnresExpr->isImplicitAccess()) {
+      // It would be nice to avoid creating this, but the overload APIs are written
+      // to work on expressions.
+      ObjectArg = new(Context) CXXThisExpr(SourceLocation(),
+                                           UnresExpr->getBaseType());
+    } else {
+      ObjectArg = UnresExpr->getBase();
+    }
 
     // Add overload candidates
     OverloadCandidateSet CandidateSet;
+
+    // FIXME: avoid copy.
+    TemplateArgumentListInfo TemplateArgsBuffer, *TemplateArgs = 0;
+    if (UnresExpr->hasExplicitTemplateArgs()) {
+      UnresExpr->copyTemplateArgumentsInto(TemplateArgsBuffer);
+      TemplateArgs = &TemplateArgsBuffer;
+    }
 
     for (UnresolvedMemberExpr::decls_iterator I = UnresExpr->decls_begin(),
            E = UnresExpr->decls_end(); I != E; ++I) {
@@ -5156,20 +5169,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       if ((Method = dyn_cast<CXXMethodDecl>(Func))) {
         // If explicit template arguments were provided, we can't call a
         // non-template member function.
-        if (UnresExpr->hasExplicitTemplateArgs())
+        if (TemplateArgs)
           continue;
         
         AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet,
                            /*SuppressUserConversions=*/false);
       } else {
-        // FIXME: avoid copy.
-        TemplateArgumentListInfo TemplateArgs;
-        if (UnresExpr->hasExplicitTemplateArgs())
-          UnresExpr->copyTemplateArgumentsInto(TemplateArgs);
-
         AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(Func),
-                                   (UnresExpr->hasExplicitTemplateArgs()
-                                      ? &TemplateArgs : 0),
+                                   TemplateArgs,
                                    ObjectArg, Args, NumArgs,
                                    CandidateSet,
                                    /*SuppressUsedConversions=*/false);
@@ -5190,14 +5197,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
         << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
-      return true;
+      return ExprError();
 
     case OR_Ambiguous:
       Diag(UnresExpr->getMemberLoc(), diag::err_ovl_ambiguous_member_call)
         << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
-      return true;
+      return ExprError();
 
     case OR_Deleted:
       Diag(UnresExpr->getMemberLoc(), diag::err_ovl_deleted_member_call)
@@ -5205,16 +5212,29 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
         << DeclName << MemExprE->getSourceRange();
       PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
       // FIXME: Leaking incoming expressions!
-      return true;
+      return ExprError();
     }
 
     MemExprE = FixOverloadedFunctionReference(MemExprE, Method);
+
+    // Clean up the 'this' expression we created above; FixOFR doesn't
+    // actually use it.
+    if (UnresExpr->isImplicitAccess())
+      Owned(ObjectArg);
+    
+    // If overload resolution picked a static member, build a
+    // non-member call based on that function.
+    if (Method->isStatic()) {
+      return BuildResolvedCallExpr(MemExprE, Method, LParenLoc,
+                                   Args, NumArgs, RParenLoc);
+    }
+
     MemExpr = cast<MemberExpr>(MemExprE->IgnoreParens());
   }
 
   assert(Method && "Member call to something that isn't a method?");
   ExprOwningPtr<CXXMemberCallExpr>
-    TheCall(this, new (Context) CXXMemberCallExpr(Context, MemExpr, Args,
+    TheCall(this, new (Context) CXXMemberCallExpr(Context, MemExprE, Args,
                                                   NumArgs,
                                   Method->getResultType().getNonReferenceType(),
                                   RParenLoc));
@@ -5222,24 +5242,25 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   // Check for a valid return type.
   if (CheckCallReturnType(Method->getResultType(), MemExpr->getMemberLoc(), 
                           TheCall.get(), Method))
-    return true;
+    return ExprError();
   
   // Convert the object argument (for a non-static member function call).
+  Expr *ObjectArg = MemExpr->getBase();
   if (!Method->isStatic() &&
       PerformObjectArgumentInitialization(ObjectArg, Method))
-    return true;
+    return ExprError();
   MemExpr->setBase(ObjectArg);
 
   // Convert the rest of the arguments
   const FunctionProtoType *Proto = cast<FunctionProtoType>(Method->getType());
   if (ConvertArgumentsForCall(&*TheCall, MemExpr, Method, Proto, Args, NumArgs,
                               RParenLoc))
-    return true;
+    return ExprError();
 
   if (CheckFunctionCall(Method, TheCall.get()))
-    return true;
+    return ExprError();
 
-  return MaybeBindToTemporary(TheCall.release()).release();
+  return MaybeBindToTemporary(TheCall.release());
 }
 
 /// BuildCallToObjectOfClassType - Build a call to an object of class
@@ -5632,19 +5653,11 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
   } 
 
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(E)) {
+    // FIXME: avoid copy.
+    TemplateArgumentListInfo TemplateArgsBuffer, *TemplateArgs = 0;
     if (ULE->hasExplicitTemplateArgs()) {
-      // FIXME: avoid copy.
-      TemplateArgumentListInfo TemplateArgs;
-      if (ULE->hasExplicitTemplateArgs())
-        ULE->copyTemplateArgumentsInto(TemplateArgs);
-
-      return DeclRefExpr::Create(Context,
-                                 ULE->getQualifier(),
-                                 ULE->getQualifierRange(),
-                                 Fn,
-                                 ULE->getNameLoc(),
-                                 Fn->getType(),
-                                 &TemplateArgs);
+      ULE->copyTemplateArgumentsInto(TemplateArgsBuffer);
+      TemplateArgs = &TemplateArgsBuffer;
     }
 
     return DeclRefExpr::Create(Context,
@@ -5652,23 +5665,43 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                                ULE->getQualifierRange(),
                                Fn,
                                ULE->getNameLoc(),
-                               Fn->getType());
+                               Fn->getType(),
+                               TemplateArgs);
   }
 
   if (UnresolvedMemberExpr *MemExpr = dyn_cast<UnresolvedMemberExpr>(E)) {
     // FIXME: avoid copy.
-    TemplateArgumentListInfo TemplateArgs;
-    if (MemExpr->hasExplicitTemplateArgs())
-      MemExpr->copyTemplateArgumentsInto(TemplateArgs);
+    TemplateArgumentListInfo TemplateArgsBuffer, *TemplateArgs = 0;
+    if (MemExpr->hasExplicitTemplateArgs()) {
+      MemExpr->copyTemplateArgumentsInto(TemplateArgsBuffer);
+      TemplateArgs = &TemplateArgsBuffer;
+    }
 
-    return MemberExpr::Create(Context, MemExpr->getBase()->Retain(),
+    Expr *Base;
+
+    // If we're filling in 
+    if (MemExpr->isImplicitAccess()) {
+      if (cast<CXXMethodDecl>(Fn)->isStatic()) {
+        return DeclRefExpr::Create(Context,
+                                   MemExpr->getQualifier(),
+                                   MemExpr->getQualifierRange(),
+                                   Fn,
+                                   MemExpr->getMemberLoc(),
+                                   Fn->getType(),
+                                   TemplateArgs);
+      } else
+        Base = new (Context) CXXThisExpr(SourceLocation(),
+                                         MemExpr->getBaseType());
+    } else
+      Base = MemExpr->getBase()->Retain();
+
+    return MemberExpr::Create(Context, Base,
                               MemExpr->isArrow(), 
                               MemExpr->getQualifier(), 
                               MemExpr->getQualifierRange(),
                               Fn, 
                               MemExpr->getMemberLoc(),
-                              (MemExpr->hasExplicitTemplateArgs()
-                                 ? &TemplateArgs : 0),
+                              TemplateArgs,
                               Fn->getType());
   }
   

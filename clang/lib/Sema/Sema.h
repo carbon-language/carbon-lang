@@ -1023,7 +1023,7 @@ public:
                                                       SourceLocation RLoc,
                                                       ExprArg Base,ExprArg Idx);
 
-  ExprResult
+  OwningExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
                             SourceLocation LParenLoc, Expr **Args,
                             unsigned NumArgs, SourceLocation *CommaLocs,
@@ -1451,9 +1451,10 @@ public:
                                            FieldDecl *Field,
                                            Expr *BaseObjectExpr = 0,
                                       SourceLocation OpLoc = SourceLocation());
-  OwningExprResult BuildImplicitMemberReferenceExpr(const CXXScopeSpec &SS,
-                                                    LookupResult &R,
-                                const TemplateArgumentListInfo *TemplateArgs);
+  OwningExprResult BuildImplicitMemberExpr(const CXXScopeSpec &SS,
+                                           LookupResult &R,
+                                const TemplateArgumentListInfo *TemplateArgs,
+                                           bool IsDefiniteInstance);
   bool UseArgumentDependentLookup(const CXXScopeSpec &SS,
                                   const LookupResult &R,
                                   bool HasTrailingLParen);
@@ -1525,6 +1526,7 @@ public:
                                                    SourceLocation RLoc);
 
   OwningExprResult BuildMemberReferenceExpr(ExprArg Base,
+                                            QualType BaseType,
                                             SourceLocation OpLoc,
                                             bool IsArrow,
                                             const CXXScopeSpec &SS,
@@ -1534,6 +1536,7 @@ public:
                                 const TemplateArgumentListInfo *TemplateArgs);
 
   OwningExprResult BuildMemberReferenceExpr(ExprArg Base,
+                                            QualType BaseType,
                                             SourceLocation OpLoc, bool IsArrow,
                                             const CXXScopeSpec &SS,
                                             LookupResult &R,
@@ -1551,6 +1554,7 @@ public:
                                      const LookupResult &R);
 
   OwningExprResult ActOnDependentMemberExpr(ExprArg Base,
+                                            QualType BaseType,
                                             bool IsArrow,
                                             SourceLocation OpLoc,
                                             const CXXScopeSpec &SS,
@@ -1591,6 +1595,11 @@ public:
                                          SourceLocation LParenLoc,
                                          MultiExprArg Args,
                                          SourceLocation *CommaLocs,
+                                         SourceLocation RParenLoc);
+  OwningExprResult BuildResolvedCallExpr(Expr *Fn,
+                                         NamedDecl *NDecl,
+                                         SourceLocation LParenLoc,
+                                         Expr **Args, unsigned NumArgs,
                                          SourceLocation RParenLoc);
 
   virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,

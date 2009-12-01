@@ -95,9 +95,7 @@ struct X0 : X0Base {
 template<typename U>
 struct X1 : X0<U> {
   int &f2() { 
-    // FIXME: We should be able to do this lookup and diagnose the error
-    // *despite* the fact that we can't decide the relationship yet.
-    return X0Base::f(); // expected-FIXME-error{{call to non-static member function without an object argument}}
+    return X0Base::f();
   }
 };
 

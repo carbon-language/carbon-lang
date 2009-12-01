@@ -361,13 +361,13 @@ Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
   QualType ThisType;
   if (CheckForImplicitMember &&
       IsImplicitDependentMemberReference(*this, Qualifier, ThisType)) {
-    Expr *This = new (Context) CXXThisExpr(SourceLocation(), ThisType);
-
     // Since the 'this' expression is synthesized, we don't need to
     // perform the double-lookup check.
     NamedDecl *FirstQualifierInScope = 0;
 
-    return Owned(CXXDependentScopeMemberExpr::Create(Context, This, true,
+    return Owned(CXXDependentScopeMemberExpr::Create(Context,
+                                                     /*This*/ 0, ThisType,
+                                                     /*IsArrow*/ true,
                                                      /*Op*/ SourceLocation(),
                                                      Qualifier, SS.getRange(),
                                                      FirstQualifierInScope,
