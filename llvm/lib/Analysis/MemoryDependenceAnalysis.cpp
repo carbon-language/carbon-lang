@@ -183,7 +183,9 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     if (invariantTag == Inst) {
       invariantTag = 0;
       continue;
-    } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+    }
+    
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
       // If we pass an invariant-end marker, then we've just entered an
       // invariant region and can start ignoring dependencies.
       if (II->getIntrinsicID() == Intrinsic::invariant_end) {
