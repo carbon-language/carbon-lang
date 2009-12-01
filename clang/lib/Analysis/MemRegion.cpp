@@ -558,7 +558,7 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
   
   typedef BumpVector<const MemRegion*> VarVec;
   VarVec *BV = (VarVec*) A.Allocate<VarVec>();
-  new (BV) VarVec(BC, (E - I) / sizeof(*I));
+  new (BV) VarVec(BC, E - I);
   
   for ( ; I != E; ++I)
     BV->push_back(MemMgr.getVarRegion(*I, LC), BC);
