@@ -1156,8 +1156,41 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       // that predecessor.  We can still do PRE of the load, which would insert
       // a computation of the pointer in this predecessor.
       if (PredPtr == 0) {
-        Result.push_back(NonLocalDepEntry(Pred,
-                              MemDepResult::getClobber(Pred->getTerminator())));
+        // Add the entry to the Result list.
+        NonLocalDepEntry Entry(Pred,
+                               MemDepResult::getClobber(Pred->getTerminator()));
+        Result.push_back(Entry);
+
+        // Add it to the cache for this CacheKey so that subsequent queries get
+        // this result.
+        Cache = &NonLocalPointerDeps[CacheKey].second;
+        MemoryDependenceAnalysis::NonLocalDepInfo::iterator It =
+          std::upper_bound(Cache->begin(), Cache->end(), Entry);
+        
+        if (It != Cache->begin() && prior(It)->first == Pred)
+          --It;
+
+        if (It == Cache->end() || It->first != Pred) {
+          Cache->insert(It, Entry);
+          // Add it to the reverse map.
+          ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
+        } else if (!It->second.isDirty()) {
+          // noop
+        } else if (It->second.getInst() == Pred->getTerminator()) {
+          // Same instruction, clear the dirty marker.
+          It->second = Entry.second;
+        } else if (It->second.getInst() == 0) {
+          // Dirty, with no instruction, just add this.
+          It->second = Entry.second;
+          ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
+        } else {
+          // Otherwise, dirty with a different instruction.
+          RemoveFromReverseMap(ReverseNonLocalPtrDeps, It->second.getInst(),
+                               CacheKey);
+          It->second = Entry.second;
+          ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
+        }
+        Cache = 0;
         continue;
       }
 
