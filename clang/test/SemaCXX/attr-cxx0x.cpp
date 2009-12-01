@@ -2,7 +2,7 @@
 
 int final_fail [[final]]; //expected-error {{'final' attribute only applies to virtual method or class types}}
 
-struct [[final]] final_base { }; // expected-note {{struct final_base declared here}}
+struct [[final]] final_base { }; // expected-note {{'struct final_base' declared here}}
 struct final_child : final_base { }; // expected-error {{derivation from 'final' struct final_base}}
 
 struct final_member { virtual void quux [[final]] (); }; // expected-note {{overridden virtual function is here}}

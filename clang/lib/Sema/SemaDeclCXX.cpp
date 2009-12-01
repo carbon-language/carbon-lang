@@ -489,8 +489,8 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   // C++0x CWG Issue #817 indicates that [[final]] classes shouldn't be bases.
   if (CXXBaseDecl->hasAttr<FinalAttr>()) {
     Diag(BaseLoc, diag::err_final_base) << BaseType.getAsString();
-    Diag(CXXBaseDecl->getLocation(), diag::note_previous_class_decl)
-      << BaseType.getAsString();
+    Diag(CXXBaseDecl->getLocation(), diag::note_previous_decl)
+      << BaseType;
     return 0;
   }
 
@@ -1284,7 +1284,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           Diag(Constructor->getLocation(), diag::err_missing_default_ctor)
             << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
             << 0 << VBase->getType();
-          Diag(VBaseDecl->getLocation(), diag::note_previous_class_decl)
+          Diag(VBaseDecl->getLocation(), diag::note_previous_decl)
             << Context.getTagDeclType(VBaseDecl);
           HadError = true;
           continue;
@@ -1332,7 +1332,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           Diag(Constructor->getLocation(), diag::err_missing_default_ctor)
             << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
             << 0 << Base->getType();
-          Diag(BaseDecl->getLocation(), diag::note_previous_class_decl)
+          Diag(BaseDecl->getLocation(), diag::note_previous_decl)
             << Context.getTagDeclType(BaseDecl);
           HadError = true;
           continue;
@@ -1399,7 +1399,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           << (int)IsImplicitConstructor << Context.getTagDeclType(ClassDecl)
           << 1 << (*Field)->getDeclName();
         Diag(Field->getLocation(), diag::note_field_decl);
-        Diag(RT->getDecl()->getLocation(), diag::note_previous_class_decl)
+        Diag(RT->getDecl()->getLocation(), diag::note_previous_decl)
           << Context.getTagDeclType(RT->getDecl());
         HadError = true;
         continue;

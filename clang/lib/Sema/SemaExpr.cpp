@@ -1246,7 +1246,23 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   if (CheckDeclInExpr(*this, Loc, D))
     return ExprError();
 
-  ValueDecl *VD = cast<ValueDecl>(D);
+  if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D)) {
+    // Specifically diagnose references to class templates that are missing
+    // a template argument list.
+    Diag(Loc, diag::err_template_decl_ref)
+      << Template << SS.getRange();
+    Diag(Template->getLocation(), diag::note_template_decl_here);
+    return ExprError();
+  }
+
+  // Make sure that we're referring to a value.
+  ValueDecl *VD = dyn_cast<ValueDecl>(D);
+  if (!VD) {
+    Diag(Loc, diag::err_ref_non_value) 
+      << D << SS.getRange();
+    Diag(D->getLocation(), diag::note_previous_decl);
+    return ExprError();
+  }
 
   // Check whether this declaration can be used. Note that we suppress
   // this check when we're going to perform argument-dependent lookup

@@ -441,7 +441,7 @@ def err_implicit_object_parameter_init : Error<
   "of type %1">;
 
 def note_field_decl : Note<"member is declared here">;
-def note_previous_class_decl : Note<
+def note_previous_decl : Note<
   "%0 declared here">;
 def note_member_synthesized_at : Note<
   "implicit default %select{constructor|copy constructor|"
@@ -934,6 +934,8 @@ def err_template_variable_noparams : Error<
   "extraneous 'template<>' in declaration of variable %0">;
 def err_template_tag_noparams : Error<
   "extraneous 'template<>' in declaration of %0 %1">;
+def err_template_decl_ref : Error<
+  "cannot refer to class template %0 without a template argument list">;
 
 // C++ Template Argument Lists
 def err_template_arg_list_different_arity : Error<
@@ -1649,6 +1651,7 @@ def warn_printf_nonliteral : Warning<
 
 def err_unexpected_interface : Error<
   "unexpected interface name %0: expected expression">;
+def err_ref_non_value : Error<"%0 does not refer to a value">;
 def err_property_not_found : Error<
   "property %0 not found on object of type %1">;
 def ext_gnu_void_ptr : Extension<

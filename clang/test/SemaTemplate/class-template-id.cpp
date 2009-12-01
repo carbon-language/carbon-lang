@@ -36,3 +36,8 @@ namespace N {
 
 N::C<int> c1;
 typedef N::C<float> c2;
+
+// PR5655
+template<typename T> struct Foo { }; // expected-note{{template is declared here}}
+
+void f(void) { Foo bar; } // expected-error{{without a template argument list}}
