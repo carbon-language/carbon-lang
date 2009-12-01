@@ -35,7 +35,8 @@ namespace llvm {
   template<>
   struct DOTGraphTraits<SelectionDAG*> : public DefaultDOTGraphTraits {
 
-    DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+    explicit DOTGraphTraits(bool isSimple=false) :
+      DefaultDOTGraphTraits(isSimple) {}
 
     static bool hasEdgeDestLabels() {
       return true;
@@ -75,12 +76,12 @@ namespace llvm {
     static bool renderGraphFromBottomUp() {
       return true;
     }
-    
+
     static bool hasNodeAddressLabel(const SDNode *Node,
                                     const SelectionDAG *Graph) {
       return true;
     }
-    
+
     /// If you want to override the dot attributes printed for a particular
     /// edge, override this method.
     template<typename EdgeIter>
@@ -93,7 +94,7 @@ namespace llvm {
         return "color=blue,style=dashed";
       return "";
     }
-    
+
 
     static std::string getSimpleNodeLabel(const SDNode *Node,
                                           const SelectionDAG *G) {
@@ -131,7 +132,7 @@ namespace llvm {
 
 std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
                                                         const SelectionDAG *G) {
-  return DOTGraphTraits<SelectionDAG*>::getSimpleNodeLabel (Node, G);
+  return DOTGraphTraits<SelectionDAG*>::getSimpleNodeLabel(Node, G);
 }
 
 
@@ -141,7 +142,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 void SelectionDAG::viewGraph(const std::string &Title) {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getNameStr(), 
+  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getNameStr(),
             false, Title);
 #else
   errs() << "SelectionDAG::viewGraph is only available in debug builds on "
@@ -185,7 +186,7 @@ const std::string SelectionDAG::getGraphAttrs(const SDNode *N) const {
 #ifndef NDEBUG
   std::map<const SDNode *, std::string>::const_iterator I =
     NodeGraphAttrs.find(N);
-    
+
   if (I != NodeGraphAttrs.end())
     return I->second;
   else
@@ -251,8 +252,7 @@ void SelectionDAG::setSubgraphColor(SDNode *N, const char *Color) {
     // Visually mark that we hit the limit
     if (strcmp(Color, "red") == 0) {
       setSubgraphColorHelper(N, "blue", visited, 0, printed);
-    }
-    else if (strcmp(Color, "yellow") == 0) {
+    } else if (strcmp(Color, "yellow") == 0) {
       setSubgraphColorHelper(N, "green", visited, 0, printed);
     }
   }
