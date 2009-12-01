@@ -129,9 +129,6 @@ void PrettyStackTraceDecl::print(llvm::raw_ostream &OS) const {
 
 // Out-of-line virtual method providing a home for Decl.
 Decl::~Decl() {
-  if (isOutOfSemaDC())
-    delete getMultipleDC();
-
   assert(!HasAttrs && "attributes should have been freed by Destroy");
 }
 
@@ -147,7 +144,7 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
     return;
 
   if (isInSemaDC()) {
-    MultipleDC *MDC = new MultipleDC();
+    MultipleDC *MDC = new (getASTContext()) MultipleDC();
     MDC->SemanticDC = getDeclContext();
     MDC->LexicalDC = DC;
     DeclCtx = MDC;
@@ -342,9 +339,12 @@ void Decl::Destroy(ASTContext &C) {
     N = Tmp;
   }
 
+  if (isOutOfSemaDC())
+    delete (C) getMultipleDC();
+  
   this->~Decl();
   C.Deallocate((void *)this);
-#endif
+#endif  
 }
 
 Decl *Decl::castFromDeclContext (const DeclContext *D) {
