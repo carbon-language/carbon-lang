@@ -279,6 +279,43 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
     PhysRegUse[SubReg] =  MI;
 }
 
+/// FindLastRefOrPartRef - Return the last reference or partial reference of
+/// the specified register.
+MachineInstr *LiveVariables::FindLastRefOrPartRef(unsigned Reg) {
+  MachineInstr *LastDef = PhysRegDef[Reg];
+  MachineInstr *LastUse = PhysRegUse[Reg];
+  if (!LastDef && !LastUse)
+    return false;
+
+  MachineInstr *LastRefOrPartRef = LastUse ? LastUse : LastDef;
+  unsigned LastRefOrPartRefDist = DistanceMap[LastRefOrPartRef];
+  MachineInstr *LastPartDef = 0;
+  unsigned LastPartDefDist = 0;
+  for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+       unsigned SubReg = *SubRegs; ++SubRegs) {
+    MachineInstr *Def = PhysRegDef[SubReg];
+    if (Def && Def != LastDef) {
+      // There was a def of this sub-register in between. This is a partial
+      // def, keep track of the last one.
+      unsigned Dist = DistanceMap[Def];
+      if (Dist > LastPartDefDist) {
+        LastPartDefDist = Dist;
+        LastPartDef = Def;
+      }
+      continue;
+    }
+    if (MachineInstr *Use = PhysRegUse[SubReg]) {
+      unsigned Dist = DistanceMap[Use];
+      if (Dist > LastRefOrPartRefDist) {
+        LastRefOrPartRefDist = Dist;
+        LastRefOrPartRef = Use;
+      }
+    }
+  }
+
+  return LastRefOrPartRef;
+}
+
 bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
   MachineInstr *LastDef = PhysRegDef[Reg];
   MachineInstr *LastUse = PhysRegUse[Reg];
@@ -373,7 +410,16 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
       if (NeedDef)
         PhysRegDef[Reg]->addOperand(MachineOperand::CreateReg(SubReg,
                                                  true/*IsDef*/, true/*IsImp*/));
-      LastRefOrPartRef->addRegisterKilled(SubReg, TRI, true);
+      MachineInstr *LastSubRef = FindLastRefOrPartRef(SubReg);
+      if (LastSubRef)
+        LastSubRef->addRegisterKilled(SubReg, TRI, true);
+      else {
+        LastRefOrPartRef->addRegisterKilled(SubReg, TRI, true);
+        PhysRegUse[SubReg] = LastRefOrPartRef;
+        for (const unsigned *SSRegs = TRI->getSubRegisters(SubReg);
+             unsigned SSReg = *SSRegs; ++SSRegs)
+          PhysRegUse[SSReg] = LastRefOrPartRef;
+      }
       for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
         PartUses.erase(*SS);
     }

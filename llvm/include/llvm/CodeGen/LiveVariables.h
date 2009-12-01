@@ -163,8 +163,13 @@ private:   // Intermediate data structures
                         SmallVector<unsigned, 4> &Defs);
   void UpdatePhysRegDefs(MachineInstr *MI, SmallVector<unsigned, 4> &Defs);
 
-  /// FindLastPartialDef - Return the last partial def of the specified register.
-  /// Also returns the sub-registers that're defined by the instruction.
+  /// FindLastRefOrPartRef - Return the last reference or partial reference of
+  /// the specified register.
+  MachineInstr *FindLastRefOrPartRef(unsigned Reg);
+
+  /// FindLastPartialDef - Return the last partial def of the specified
+  /// register. Also returns the sub-registers that're defined by the
+  /// instruction.
   MachineInstr *FindLastPartialDef(unsigned Reg,
                                    SmallSet<unsigned,4> &PartDefRegs);
 
