@@ -111,6 +111,7 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (and (switch_on "emit-llvm"), (switch_on "c")), (stop_compilation),
          (switch_on "fsyntax-only"), (stop_compilation),
          (not_empty "include"), (forward "include"),
+         (not_empty "save-temps"), (append_cmd "-save-temps"),
          (not_empty "I"), (forward "I"),
          (not_empty "F"), (forward "F"),
          (not_empty "D"), (forward "D"),

@@ -1155,6 +1155,9 @@ public:
     if (OptName == "o") {
       O << Neg << "OutputFilename.empty()";
     }
+    else if (OptName == "save-temps") {
+      O << Neg << "(SaveTemps == SaveTempsEnum::Unset)";
+    }
     else {
       const OptionDescription& OptDesc = OptDescs_.FindListOrParameter(OptName);
       O << Neg << OptDesc.GenVariableName() << ".empty()";
