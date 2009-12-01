@@ -4134,23 +4134,19 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                      "\01L_OBJC_LABEL_CLASS_$",
                      "__DATA, __objc_classlist, regular, no_dead_strip");
   
-  bool hasWeakImport = false;
   for (unsigned i = 0; i < DefinedClasses.size(); i++) {
     llvm::GlobalValue *IMPLGV = DefinedClasses[i];
     if (IMPLGV->getLinkage() != llvm::GlobalValue::ExternalWeakLinkage)
       continue;
     IMPLGV->setLinkage(llvm::GlobalValue::ExternalLinkage);
-    hasWeakImport = true;
   }
   
-  if (hasWeakImport) {
-    for (unsigned i = 0; i < DefinedMetaClasses.size(); i++) {
-      llvm::GlobalValue *IMPLGV = DefinedMetaClasses[i];
-      if (IMPLGV->getLinkage() != llvm::GlobalValue::ExternalWeakLinkage)
-        continue;
-      IMPLGV->setLinkage(llvm::GlobalValue::ExternalLinkage);
-    }    
-  }
+  for (unsigned i = 0; i < DefinedMetaClasses.size(); i++) {
+    llvm::GlobalValue *IMPLGV = DefinedMetaClasses[i];
+    if (IMPLGV->getLinkage() != llvm::GlobalValue::ExternalWeakLinkage)
+      continue;
+    IMPLGV->setLinkage(llvm::GlobalValue::ExternalLinkage);
+  }    
   
   AddModuleClassList(DefinedNonLazyClasses,
                      "\01L_OBJC_LABEL_NONLAZY_CLASS_$",
@@ -4437,9 +4433,12 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     while (const ObjCInterfaceDecl *Super = Root->getSuperClass())
       Root = Super;
     IsAGV = GetClassGlobal(ObjCMetaClassName + Root->getNameAsString());
+    if (Root->hasAttr<WeakImportAttr>())
+      IsAGV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
     // work on super class metadata symbol.
     std::string SuperClassName =
-      ObjCMetaClassName + ID->getClassInterface()->getSuperClass()->getNameAsString();
+      ObjCMetaClassName + 
+        ID->getClassInterface()->getSuperClass()->getNameAsString();
     SuperClassGV = GetClassGlobal(SuperClassName);
     if (ID->getClassInterface()->getSuperClass()->hasAttr<WeakImportAttr>())
       SuperClassGV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
