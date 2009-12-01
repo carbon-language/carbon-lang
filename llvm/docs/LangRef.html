@@ -7263,22 +7263,22 @@ LLVM</a>.</p>
 
 <h5>Overview:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic returns the constant number of bytes
-   from <tt>ptr</tt> to the end of the object <tt>ptr</tt> points to if it
+   from <tt>ptr</tt> to the end of the object <tt>ptr</tt> points to, if it
    can deduce this at compile time.  If there are any side-effects in evaluating
    the argument or it cannot deduce which objects <tt>ptr</tt> points to at compile
-   time the intrinsic returns <tt>(size_t) -1</tt> for <tt>type</tt> 0
-   or 1 and <tt>(size_t) 0</tt> for <tt>type</tt> 2 or 3.</p>
+   time, the intrinsic returns <tt>i32/i64 -1</tt> for <tt>type</tt> 0
+   or 1 and <tt>i32/i64 0</tt> for <tt>type</tt> 2 or 3.</p>
 
 <h5>Arguments:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic takes two arguments.  The first
-   argument is a pointer to the object <tt>ptr</tt> and an integer <tt>type</tt>.
-   <tt>type</tt> is an integer ranging from 0 to 3. The lsb corresponds to
-   a return value based on whole objects, the second bit whether or not we
-   return the maximum or minimum remaining bytes computed.</p>
+   argument is a pointer to the object <tt>ptr</tt>. The second argument
+   is an integer <tt>type</tt> which ranges from 0 to 3. The first bit 
+   corresponds to a return value based on whole objects, and the second bit 
+   whether or not we return the maximum or minimum remaining bytes computed.</p>
 
 <h5>Semantics:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic is lowered to either a constant
-   representing the size of the object concerned or <tt>(size_t) -1</tt> if
+   representing the size of the object concerned or <tt>i32/i64 -1</tt> if
    it cannot be determined at compile time.</p>
 
 </div>
