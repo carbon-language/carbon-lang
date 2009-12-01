@@ -77,8 +77,10 @@ namespace SrcMgr {
     /// ContentCache.
     mutable FileID FirstFID;
 
-    /// getBuffer - Returns the memory buffer for the associated content.
-    const llvm::MemoryBuffer *getBuffer() const;
+    /// getBuffer - Returns the memory buffer for the associated content.  If
+    /// there is an error opening this buffer the first time, this returns null
+    /// and fills in the ErrorStr with a reason.
+    const llvm::MemoryBuffer *getBuffer(std::string *ErrorStr = 0) const;
 
     /// getSize - Returns the size of the content encapsulated by this
     ///  ContentCache. This can be the size of the source file or the size of an
@@ -432,10 +434,12 @@ public:
   // FileID manipulation methods.
   //===--------------------------------------------------------------------===//
 
-  /// getBuffer - Return the buffer for the specified FileID.
+  /// getBuffer - Return the buffer for the specified FileID.  If there is an
+  /// error opening this buffer the first time, this returns null and fills in
+  /// the ErrorStr with a reason.
   ///
-  const llvm::MemoryBuffer *getBuffer(FileID FID) const {
-    return getSLocEntry(FID).getFile().getContentCache()->getBuffer();
+  const llvm::MemoryBuffer *getBuffer(FileID FID, std::string *Error = 0) const{
+    return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Error);
   }
 
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.

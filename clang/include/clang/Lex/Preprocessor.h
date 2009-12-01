@@ -330,8 +330,9 @@ public:
 
   /// EnterSourceFile - Add a source file to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.  Return true
-  /// on failure.
-  bool EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir);
+  /// and fill in ErrorStr with the error information on failure.
+  bool EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir,
+                       std::string *ErrorStr = 0);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the

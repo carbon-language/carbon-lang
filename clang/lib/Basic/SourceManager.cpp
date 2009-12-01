@@ -47,12 +47,12 @@ unsigned ContentCache::getSize() const {
   return Buffer ? Buffer->getBufferSize() : Entry->getSize();
 }
 
-const llvm::MemoryBuffer *ContentCache::getBuffer() const {
+const llvm::MemoryBuffer *ContentCache::getBuffer(std::string *ErrorStr) const {
   // Lazily create the Buffer for ContentCaches that wrap files.
   if (!Buffer && Entry) {
     // FIXME: Should we support a way to not have to do this check over
     //   and over if we cannot open the file?
-    Buffer = MemoryBuffer::getFile(Entry->getName(), 0, Entry->getSize());
+    Buffer = MemoryBuffer::getFile(Entry->getName(), ErrorStr,Entry->getSize());
     if (isTruncated())
       const_cast<ContentCache *>(this)->truncateAt(TruncateAtLine, 
                                                    TruncateAtColumn);

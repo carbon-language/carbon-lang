@@ -171,7 +171,7 @@ def err_pp_invalid_directive : Error<"invalid preprocessing directive">;
 def err_pp_hash_error : Error<"#error%0">;
 def err_pp_file_not_found : Error<"'%0' file not found">, DefaultFatal;
 def err_pp_error_opening_file : Error<
-  "error opening file '%0'">, DefaultFatal;
+  "error opening file '%0': %1">, DefaultFatal;
 def err_pp_empty_filename : Error<"empty filename">;
 def err_pp_include_too_deep : Error<"#include nested too deeply">;
 def err_pp_expects_filename : Error<"expected \"FILENAME\" or <FILENAME>">;
