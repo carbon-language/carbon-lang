@@ -274,10 +274,21 @@
     compiler supports this flag. Some systems, like Windows, do not
     need this flag. Defaults to ON.</dd>
 
+  <dt><b>LLVM_ENABLE_WARNINGS</b>:BOOL</dt>
+  <dd>Enable all compiler warnings. Defaults to ON.</dd>
+
+  <dt><b>LLVM_ENABLE_PEDANTIC</b>:BOOL</dt>
+  <dd>Enable pedantic mode. This disable compiler specific extensions, is
+    possible. Defaults to ON.</dd>
+
+  <dt><b>LLVM_ENABLE_WERROR</b>:BOOL</dt>
+  <dd>Stop and fail build, if a compiler warning is
+    triggered. Defaults to OFF.</dd>
+
   <dt><b>LLVM_BUILD_32_BITS</b>:BOOL</dt>
   <dd>Build 32-bits executables and libraries on 64-bits systems. This
-  option is available only on some 64-bits unix systems. Defaults to
-  OFF.</dd>
+    option is available only on some 64-bits unix systems. Defaults to
+    OFF.</dd>
 
   <dt><b>LLVM_TARGET_ARCH</b>:STRING</dt>
   <dd>LLVM target to use for native code generation. This is required
