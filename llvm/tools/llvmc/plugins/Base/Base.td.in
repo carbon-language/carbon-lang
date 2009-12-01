@@ -38,6 +38,10 @@ def OptList : OptionList<[
     (help "Compile and assemble, but do not link")),
  (switch_option "pthread",
     (help "Enable threads")),
+ (switch_option "fPIC",
+    (help "Relocation model: PIC"), (hidden)),
+ (switch_option "mdynamic-no-pic",
+    (help "Relocation model: dynamic-no-pic"), (hidden)),
  (parameter_option "linker",
     (help "Choose linker (possible values: gcc, g++)")),
  (parameter_option "MF",
@@ -118,6 +122,8 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (switch_on "O1"), (forward "O1"),
          (switch_on "O2"), (forward "O2"),
          (switch_on "O3"), (forward "O3"),
+         (switch_on "fPIC"), (forward "fPIC"),
+         (switch_on "mdynamic-no-pic"), (forward "mdynamic-no-pic"),
          (not_empty "MF"), (forward "MF"),
          (not_empty "MT"), (forward "MT"))),
  (sink)
@@ -170,6 +176,9 @@ def llc : Tool<
           (switch_on "O1"), (forward "O1"),
           (switch_on "O2"), (forward "O2"),
           (switch_on "O3"), (forward "O3"),
+          (switch_on "fPIC"), (append_cmd "-relocation-model=pic"),
+          (switch_on "mdynamic-no-pic"),
+                     (append_cmd "-relocation-model=dynamic-no-pic"),
           (not_empty "Wllc,"), (unpack_values "Wllc,")))
 ]>;
 
