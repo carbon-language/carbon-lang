@@ -815,6 +815,13 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
     return Builder.CreateStore(Ops[1], Ops[0]);
   }
+  case X86::BI__builtin_ia32_palignr128:
+  case X86::BI__builtin_ia32_palignr: {
+    Function *F = CGM.getIntrinsic(BuiltinID == X86::BI__builtin_ia32_palignr128 ?
+				   Intrinsic::x86_ssse3_palign_r_128 :
+				   Intrinsic::x86_ssse3_palign_r);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size());
+  }
   }
 }
 
