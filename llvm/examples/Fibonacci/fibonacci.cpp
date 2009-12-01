@@ -34,6 +34,7 @@
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetSelect.h"
 using namespace llvm;
 
 static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
@@ -92,6 +93,7 @@ static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
 int main(int argc, char **argv) {
   int n = argc > 1 ? atol(argv[1]) : 24;
 
+  InitializeNativeTarget();
   LLVMContext Context;
   
   // Create some module to put our function into it.
@@ -101,7 +103,13 @@ int main(int argc, char **argv) {
   Function *FibF = CreateFibFunction(M, Context);
 
   // Now we going to create JIT
-  ExecutionEngine *EE = EngineBuilder(M).create();
+  std::string errStr;
+  ExecutionEngine *EE = EngineBuilder(M).setErrorStr(&errStr).setEngineKind(EngineKind::JIT).create();
+
+  if (!EE) {
+    errs() << argv[0] << ": Failed to construct ExecutionEngine: " << errStr << "\n";
+    return 1;
+  }
 
   errs() << "verifying... ";
   if (verifyModule(*M)) {
