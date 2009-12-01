@@ -287,7 +287,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
     // Okay, if we now know that the value is not live out of the block, we can
     // add a kill marker in this block saying that it kills the incoming value!
-    if (!ValueIsUsed && !isLiveOut(SrcReg, opBlock, *LV)) {
+    if (!ValueIsUsed && !LV->isLiveOut(SrcReg, opBlock)) {
       // In our final twist, we have to decide which instruction kills the
       // register.  In most cases this is the copy, however, the first
       // terminator instruction at the end of the block may also use the value.
@@ -353,57 +353,11 @@ bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
       // We break edges when registers are live out from the predecessor block
       // (not considering PHI nodes). If the register is live in to this block
       // anyway, we would gain nothing from splitting.
-      if (!LV.isLiveIn(Reg, MBB) && isLiveOut(Reg, *PreMBB, LV))
+      if (!LV.isLiveIn(Reg, MBB) && LV.isLiveOut(Reg, *PreMBB))
         SplitCriticalEdge(PreMBB, &MBB);
     }
   }
   return true;
-}
-
-bool llvm::PHIElimination::isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
-                                     LiveVariables &LV) {
-  LiveVariables::VarInfo &VI = LV.getVarInfo(Reg);
-
-  // Loop over all of the successors of the basic block, checking to see if
-  // the value is either live in the block, or if it is killed in the block.
-  std::vector<MachineBasicBlock*> OpSuccBlocks;
-  for (MachineBasicBlock::const_succ_iterator SI = MBB.succ_begin(),
-         E = MBB.succ_end(); SI != E; ++SI) {
-    MachineBasicBlock *SuccMBB = *SI;
-
-    // Is it alive in this successor?
-    unsigned SuccIdx = SuccMBB->getNumber();
-    if (VI.AliveBlocks.test(SuccIdx))
-      return true;
-    OpSuccBlocks.push_back(SuccMBB);
-  }
-
-  // Check to see if this value is live because there is a use in a successor
-  // that kills it.
-  switch (OpSuccBlocks.size()) {
-  case 1: {
-    MachineBasicBlock *SuccMBB = OpSuccBlocks[0];
-    for (unsigned i = 0, e = VI.Kills.size(); i != e; ++i)
-      if (VI.Kills[i]->getParent() == SuccMBB)
-        return true;
-    break;
-  }
-  case 2: {
-    MachineBasicBlock *SuccMBB1 = OpSuccBlocks[0], *SuccMBB2 = OpSuccBlocks[1];
-    for (unsigned i = 0, e = VI.Kills.size(); i != e; ++i)
-      if (VI.Kills[i]->getParent() == SuccMBB1 ||
-          VI.Kills[i]->getParent() == SuccMBB2)
-        return true;
-    break;
-  }
-  default:
-    std::sort(OpSuccBlocks.begin(), OpSuccBlocks.end());
-    for (unsigned i = 0, e = VI.Kills.size(); i != e; ++i)
-      if (std::binary_search(OpSuccBlocks.begin(), OpSuccBlocks.end(),
-                             VI.Kills[i]->getParent()))
-        return true;
-  }
-  return false;
 }
 
 MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,

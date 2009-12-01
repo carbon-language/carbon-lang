@@ -93,12 +93,6 @@ namespace llvm {
     bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
                        LiveVariables &LV);
 
-    /// isLiveOut - Determine if Reg is live out from MBB, when not
-    /// considering PHI nodes. This means that Reg is either killed by
-    /// a successor block or passed through one.
-    bool isLiveOut(unsigned Reg, const MachineBasicBlock &MBB,
-                   LiveVariables &LV);
-
     /// SplitCriticalEdge - Split a critical edge from A to B by
     /// inserting a new MBB. Update branches in A and PHI instructions
     /// in B. Return the new block.

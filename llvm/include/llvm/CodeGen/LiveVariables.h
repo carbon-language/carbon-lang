@@ -283,6 +283,11 @@ public:
     return getVarInfo(Reg).isLiveIn(MBB, Reg, *MRI);
   }
 
+  /// isLiveOut - Determine if Reg is live out from MBB, when not considering
+  /// PHI nodes. This means that Reg is either killed by a successor block or
+  /// passed through one.
+  bool isLiveOut(unsigned Reg, const MachineBasicBlock &MBB);
+
   /// addNewBlock - Add a new basic block BB between DomBB and SuccBB. All
   /// variables that are live out of DomBB and live into SuccBB will be marked
   /// as passing live through BB. This method assumes that the machine code is
