@@ -60,33 +60,15 @@ public:
 };
 
 class BuiltinBug : public BugType {
-  GRExprEngine *Eng;
-protected:
   const std::string desc;
 public:
   BuiltinBug(const char *name, const char *description)
-    : BugType(name, "Logic error"), Eng(0), desc(description) {}
+    : BugType(name, "Logic error"), desc(description) {}
   
   BuiltinBug(const char *name)
-    : BugType(name, "Logic error"), Eng(0), desc(name) {}
+    : BugType(name, "Logic error"), desc(name) {}
   
-  BuiltinBug(GRExprEngine *eng, const char* n, const char* d)
-    : BugType(n, "Logic error"), Eng(eng), desc(d) {}
-
-  BuiltinBug(GRExprEngine *eng, const char* n)
-    : BugType(n, "Logic error"), Eng(eng), desc(n) {}
-
   llvm::StringRef getDescription() const { return desc; }
-
-  virtual void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {}
-
-  void FlushReports(BugReporter& BR) { FlushReportsImpl(BR, *Eng); }
-
-  virtual void registerInitialVisitors(BugReporterContext& BRC,
-                                       const ExplodedNode* N,
-                                       BuiltinBugReport *R) {}
-
-  template <typename ITER> void Emit(BugReporter& BR, ITER I, ITER E);
 };
 
 } // end clang namespace
