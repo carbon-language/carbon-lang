@@ -312,10 +312,10 @@ bool GRState::scanReachableSymbols(const SVal *I, const SVal *E,
                                    SymbolVisitor &visitor) const {
   ScanReachableSymbols S(this, visitor);
   for ( ; I != E; ++I) {
-    if (S.scan(*I))
-      return true;
+    if (!S.scan(*I))
+      return false;
   }
-  return false;  
+  return true;
 }
 
 bool GRState::scanReachableSymbols(const MemRegion * const *I,
@@ -323,10 +323,10 @@ bool GRState::scanReachableSymbols(const MemRegion * const *I,
                                    SymbolVisitor &visitor) const {
   ScanReachableSymbols S(this, visitor);
   for ( ; I != E; ++I) {
-    if (S.scan(*I))
-      return true;
+    if (!S.scan(*I))
+      return false;
   }
-  return false;
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
