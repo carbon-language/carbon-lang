@@ -1087,7 +1087,11 @@ DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
                                      const DISubprogram &SP,
                                      bool IsConstructor,
                                      bool IsInlined) {
-  DIE *SPDie = new DIE(dwarf::DW_TAG_subprogram);
+  DIE *SPDie = ModuleCU->getDIE(SP.getNode());
+  if (SPDie)
+    return SPDie;
+
+  SPDie = new DIE(dwarf::DW_TAG_subprogram);
   addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
   StringRef LinkageName = SP.getLinkageName();
@@ -1669,7 +1673,8 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
   ModuleCU->insertDIE(N, SubprogramDie);
 
   // Add to context owner.
-  ModuleCU->getCUDie()->addChild(SubprogramDie);
+  if (SP.getContext().getNode() == SP.getCompileUnit().getNode())
+    ModuleCU->getCUDie()->addChild(SubprogramDie);
 
   // Expose as global.
   ModuleCU->addGlobal(SP.getName(), SubprogramDie);
