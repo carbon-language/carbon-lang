@@ -34,6 +34,9 @@ namespace clang {
     /// tree.
     virtual void InitializeSema(Sema &S) {}
 
+    /// \brief Inform the semantic consumer that Sema is no longer available.
+    virtual void ForgetSema() {}
+
     // isa/cast/dyn_cast support
     static bool classof(const ASTConsumer *Consumer) {
       return Consumer->SemaConsumer;

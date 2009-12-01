@@ -34,6 +34,9 @@ public:
   /// tree.
   virtual void InitializeSema(Sema &S) {}
 
+  /// \brief Inform the semantic consumer that Sema is no longer available.
+  virtual void ForgetSema() {}
+
   /// \brief Load the contents of the global method pool for a given
   /// selector.
   ///

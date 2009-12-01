@@ -625,6 +625,9 @@ public:
   /// tree.
   virtual void InitializeSema(Sema &S);
 
+  /// \brief Inform the semantic consumer that Sema is no longer available.
+  virtual void ForgetSema() { SemaObj = 0; }
+
   /// \brief Retrieve the IdentifierInfo for the named identifier.
   ///
   /// This routine builds a new IdentifierInfo for the given identifier. If any
