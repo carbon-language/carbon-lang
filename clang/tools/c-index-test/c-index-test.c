@@ -38,7 +38,6 @@ static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
   return 1;
 }
 
-
 /******************************************************************************/
 /* Pretty-printing.                                                           */
 /******************************************************************************/
@@ -71,8 +70,7 @@ static const char* GetCursorSource(CXCursor Cursor) {
 /* Logic for testing clang_loadTranslationUnit().                             */
 /******************************************************************************/
 
-static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter)
-{
+static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXString string;
     printf("// CHECK: %s:%d:%d: ", GetCursorSource(Cursor),
@@ -84,9 +82,9 @@ static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter)
     clang_disposeString(string);
   }
 }
+
 static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
-                                   CXClientData Filter)
-{
+                                   CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXString string;
     printf("// CHECK: %s:%d:%d: ", GetCursorSource(Cursor),
@@ -99,58 +97,56 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
     clang_disposeString(string);
 
     clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
-
-    if (Cursor.kind == CXCursor_FunctionDefn) {
-      const char *startBuf, *endBuf;
-      unsigned startLine, startColumn, endLine, endColumn;
-      clang_getDefinitionSpellingAndExtent(Cursor, &startBuf, &endBuf,
-                                           &startLine, &startColumn,
-                                           &endLine, &endColumn);
-      {
-        /* Probe the entire body, looking for both decls and refs. */
-        unsigned curLine = startLine, curColumn = startColumn;
-        CXCursor Ref;
-
-        while (startBuf < endBuf) {
-          if (*startBuf == '\n') {
-            startBuf++;
-            curLine++;
-            curColumn = 1;
-          } else if (*startBuf != '\t')
-            curColumn++;
-          
-          Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor),
-                                curLine, curColumn);
-          if (Ref.kind == CXCursor_NoDeclFound) {
-            /* Nothing found here; that's fine. */
-          } else if (Ref.kind != CXCursor_FunctionDecl) {
-            CXString string;
-            printf("// CHECK: %s:%d:%d: ", GetCursorSource(Ref),
-                   curLine, curColumn);
-            PrintCursor(Ref);
-            string = clang_getDeclSpelling(Ref.decl);
-            printf(" [Context:%s]\n", clang_getCString(string));
-            clang_disposeString(string);
-          }
-          startBuf++;
-        }
-      }
-    }
   }
 }
 
-int perform_test_load_tu(const char *file, const char *filter) {
-  CXIndex Idx;
-  CXTranslationUnit TU;
+static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
+                                CXClientData Filter) {
+  const char *startBuf, *endBuf;
+  unsigned startLine, startColumn, endLine, endColumn, curLine, curColumn;
+  CXCursor Ref;
+
+  if (Cursor.kind != CXCursor_FunctionDefn)
+    return;
+
+  clang_getDefinitionSpellingAndExtent(Cursor, &startBuf, &endBuf,
+                                       &startLine, &startColumn,
+                                       &endLine, &endColumn);
+  /* Probe the entire body, looking for both decls and refs. */
+  curLine = startLine;
+  curColumn = startColumn;
+
+  while (startBuf < endBuf) {
+    if (*startBuf == '\n') {
+      startBuf++;
+      curLine++;
+      curColumn = 1;
+    } else if (*startBuf != '\t')
+      curColumn++;
+          
+    Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor),
+                          curLine, curColumn);
+    if (Ref.kind == CXCursor_NoDeclFound) {
+      /* Nothing found here; that's fine. */
+    } else if (Ref.kind != CXCursor_FunctionDecl) {
+      CXString string;
+      printf("// CHECK: %s:%d:%d: ", GetCursorSource(Ref),
+             curLine, curColumn);
+      PrintCursor(Ref);
+      string = clang_getDeclSpelling(Ref.decl);
+      printf(" [Context:%s]\n", clang_getCString(string));
+      clang_disposeString(string);
+    }
+    startBuf++;
+  }
+}
+
+static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
+                             const char *filter) {
   enum CXCursorKind K = CXCursor_NotImplemented;
+  CXTranslationUnitIterator Visitor = TranslationUnitVisitor;
   enum CXCursorKind *ck = &K;
-  Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
-                          !strcmp(filter, "local") ? 1 : 0, 
-                          /* displayDiagnostics */ 1);
-  
-  if (!CreateTranslationUnit(Idx, file, &TU))
-    return 1;
-  
+
   /* Perform some simple filtering. */
   if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
   else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
@@ -158,21 +154,33 @@ int perform_test_load_tu(const char *file, const char *filter) {
   else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
   else if (!strcmp(filter, "function")) K = CXCursor_FunctionDecl;
   else if (!strcmp(filter, "typedef")) K = CXCursor_TypedefDecl;
+  else if (!strcmp(filter, "scan-function")) Visitor = FunctionScanVisitor;
   else {
     fprintf(stderr, "Unknown filter for -test-load-tu: %s\n", filter);
     return 1;
   }
   
-  clang_loadTranslationUnit(TU, TranslationUnitVisitor, ck);
+  clang_loadTranslationUnit(TU, Visitor, ck);
   clang_disposeTranslationUnit(TU);
   return 0;
+}
+
+int perform_test_load_tu(const char *file, const char *filter) {
+  CXIndex Idx;
+  CXTranslationUnit TU;
+  Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
+                          !strcmp(filter, "local") ? 1 : 0, 
+                          /* displayDiagnostics */ 1);
+  
+  if (!CreateTranslationUnit(Idx, file, &TU))
+    return 1;
+
+  return perform_test_load(Idx, TU, filter);
 }
 
 int perform_test_load_source(int argc, const char **argv, const char *filter) {
   CXIndex Idx;
   CXTranslationUnit TU;
-  enum CXCursorKind K = CXCursor_NotImplemented;
-  enum CXCursorKind *ck = &K;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           !strcmp(filter, "local") ? 1 : 0,
                           /* displayDiagnostics */ 1);
@@ -183,21 +191,7 @@ int perform_test_load_source(int argc, const char **argv, const char *filter) {
     return 1;
   }
 
-  /* Perform some simple filtering. */
-  if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
-  else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
-  else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
-  else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
-  else if (!strcmp(filter, "function")) K = CXCursor_FunctionDecl;
-  else if (!strcmp(filter, "typedef")) K = CXCursor_TypedefDecl;
-  else {
-    fprintf(stderr, "Unknown filter for -test-load-tu: %s\n", filter);
-    return 1;
-  }
-  
-  clang_loadTranslationUnit(TU, TranslationUnitVisitor, ck);
-  clang_disposeTranslationUnit(TU);
-  return 0;
+  return perform_test_load(Idx, TU, filter);
 }
 
 /******************************************************************************/
@@ -434,7 +428,8 @@ static void print_usage(void) {
     "   interface - only load ObjC interfaces (non-PCH)\n"
     "   protocol - only load ObjC protocols (non-PCH)\n"
     "   function - only load functions (non-PCH)\n"
-    "   typedef - only load typdefs (non-PCH)\n\n");
+    "   typedef - only load typdefs (non-PCH)\n"
+    "   scan-function - scan function bodies (non-PCH)\n\n");
 }
 
 int main(int argc, const char **argv) {
