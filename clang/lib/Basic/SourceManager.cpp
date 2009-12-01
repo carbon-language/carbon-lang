@@ -1087,30 +1087,20 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
       return LastResForBeforeTUCheck = LOffs.second < I->second;
   }
 
-  // No common ancestor.
-  // Now we are getting into murky waters. Most probably this is because one
-  // location is in the predefines buffer.
+  // There is no common ancestor, most probably because one location is in the
+  // predefines buffer.
+  //
+  // FIXME: We should rearrange the external interface so this simply never
+  // happens; it can't conceptually happen. Also see PR5662.
 
-  const FileEntry *LEntry =
-    getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
-  const FileEntry *REntry =
-    getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
+  // If exactly one location is a memory buffer, assume it preceeds the other.
+  bool LIsMB = !getSLocEntry(LOffs.first).getFile().getContentCache()->Entry;
+  bool RIsMB = !getSLocEntry(ROffs.first).getFile().getContentCache()->Entry;
+  if (LIsMB != RIsMB)
+    return LastResForBeforeTUCheck = LIsMB;
 
-  // If the locations are in two memory buffers we give up, we can't answer
-  // which one should be considered first.
-  // FIXME: Should there be a way to "include" memory buffers in the translation
-  // unit ?
-  assert((LEntry != 0 || REntry != 0) && "Locations in memory buffers.");
-  (void) REntry;
-
-  // Consider the memory buffer as coming before the file in the translation
-  // unit.
-  if (LEntry == 0)
-    return LastResForBeforeTUCheck = true;
-  else {
-    assert(REntry == 0 && "Locations in not #included files ?");
-    return LastResForBeforeTUCheck = false;
-  }
+  // Otherwise, just assume FileIDs were created in order.
+  return LastResForBeforeTUCheck = (LOffs.first < ROffs.first);
 }
 
 void SourceManager::truncateFileAt(const FileEntry *Entry, unsigned Line, 
