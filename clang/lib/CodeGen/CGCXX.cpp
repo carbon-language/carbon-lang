@@ -1808,9 +1808,12 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
   }
     
   // If we have a deleting destructor, emit a call to the delete operator.
-  if (DtorType == Dtor_Deleting)
+  if (DtorType == Dtor_Deleting) {
+    assert(DD->getOperatorDelete() && 
+           "operator delete missing - EmitDtorEpilogue");
     EmitDeleteCall(DD->getOperatorDelete(), LoadCXXThis(),
                    getContext().getTagDeclType(ClassDecl));
+  }
 }
 
 void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
