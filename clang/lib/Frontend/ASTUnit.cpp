@@ -14,24 +14,28 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendActions.h"
+#include "clang/Frontend/FrontendOptions.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/System/Path.h"
-
 using namespace clang;
 
-ASTUnit::ASTUnit(DiagnosticClient *diagClient) : tempFile(false) {      
+ASTUnit::ASTUnit(DiagnosticClient *diagClient) : tempFile(false) {
   Diags.setClient(diagClient ? diagClient : new TextDiagnosticBuffer());
 }
-ASTUnit::~ASTUnit() { 
+ASTUnit::~ASTUnit() {
   if (tempFile)
     llvm::sys::Path(getPCHFileName()).eraseFromDisk();
-  
+
   //  The ASTUnit object owns the DiagnosticClient.
   delete Diags.getClient();
 }
@@ -169,4 +173,91 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   Context.setExternalSource(Source);
 
   return AST.take();
+}
+
+namespace {
+
+class NullAction : public ASTFrontendAction {
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         llvm::StringRef InFile) {
+    return new ASTConsumer();
+  }
+
+public:
+  virtual bool hasCodeCompletionSupport() const { return false; }
+};
+
+}
+
+ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
+                                             Diagnostic &Diags,
+                                             bool OnlyLocalDecls,
+                                             bool UseBumpAllocator) {
+  // Create the compiler instance to use for building the AST.
+  CompilerInstance Clang(&llvm::getGlobalContext(), false);
+  llvm::OwningPtr<ASTUnit> AST;
+  NullAction Act;
+
+  Clang.getInvocation() = CI;
+
+  Clang.setDiagnostics(&Diags);
+  Clang.setDiagnosticClient(Diags.getClient());
+
+  // Create the target instance.
+  Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
+                                               Clang.getTargetOpts()));
+  if (!Clang.hasTarget())
+    goto error;
+
+  // Inform the target of the language options.
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
+  Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
+
+  assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
+         "Invocation must have exactly one source file!");
+  assert(Clang.getFrontendOpts().Inputs[0].first != FrontendOptions::IK_AST &&
+         "FIXME: AST inputs not yet supported here!");
+
+  // Create the AST unit.
+  //
+  // FIXME: Use the provided diagnostic client.
+  AST.reset(new ASTUnit());
+
+  // Create a file manager object to provide access to and cache the filesystem.
+  Clang.setFileManager(&AST->getFileManager());
+
+  // Create the source manager.
+  Clang.setSourceManager(&AST->getSourceManager());
+
+  // Create the preprocessor.
+  Clang.createPreprocessor();
+
+  if (!Act.BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
+                           /*IsAST=*/false))
+    goto error;
+
+  Act.Execute();
+
+  // Steal the created context and preprocessor, and take back the source and
+  // file managers.
+  AST->Ctx.reset(Clang.takeASTContext());
+  AST->PP.reset(Clang.takePreprocessor());
+  Clang.takeSourceManager();
+  Clang.takeFileManager();
+
+  Act.EndSourceFile();
+
+  Clang.takeDiagnosticClient();
+  Clang.takeDiagnostics();
+
+  return AST.take();
+
+error:
+  Clang.takeSourceManager();
+  Clang.takeFileManager();
+  Clang.takeDiagnosticClient();
+  Clang.takeDiagnostics();
+  return 0;
 }

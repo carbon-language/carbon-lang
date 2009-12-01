@@ -22,16 +22,17 @@
 #include <string>
 
 namespace clang {
-  class FileManager;
-  class FileEntry;
-  class SourceManager;
-  class Diagnostic;
-  class TextDiagnosticBuffer;
-  class HeaderSearch;
-  class TargetInfo;
-  class Preprocessor;
-  class ASTContext;
-  class Decl;
+class ASTContext;
+class CompilerInvocation;
+class Decl;
+class Diagnostic;
+class FileEntry;
+class FileManager;
+class HeaderSearch;
+class Preprocessor;
+class SourceManager;
+class TargetInfo;
+class TextDiagnosticBuffer;
 
 using namespace idx;
 
@@ -92,11 +93,9 @@ public:
   ///
   /// \param Filename - The PCH file to load.
   ///
-  /// \param diagClient - The diagnostics client to use.  Specify NULL
+  /// \param DiagClient - The diagnostics client to use.  Specify NULL
   /// to use a default client that emits warnings/errors to standard error.
   /// The ASTUnit objects takes ownership of this object.
-  ///
-  /// \param FileMgr - The FileManager to use.
   ///
   /// \param ErrMsg - Error message to report if the PCH file could not be
   /// loaded.
@@ -104,9 +103,25 @@ public:
   /// \returns - The initialized ASTUnit or null if the PCH failed to load.
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
                                   std::string *ErrMsg = 0,
-                                  DiagnosticClient *diagClient = NULL,
+                                  DiagnosticClient *DiagClient = NULL,
                                   bool OnlyLocalDecls = false,
                                   bool UseBumpAllocator = false);
+
+  /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
+  /// CompilerInvocation object.
+  ///
+  /// \param CI - The compiler invocation to use; it must have exactly one input
+  /// source file.
+  ///
+  /// \param Diags - The diagnostics engine to use for reporting errors.
+  //
+  // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
+  // shouldn't need to specify them at construction time.
+  static ASTUnit *LoadFromCompilerInvocation(const CompilerInvocation &CI,
+                                             Diagnostic &Diags,
+                                             bool OnlyLocalDecls = false,
+                                             bool UseBumpAllocator = false);
+
 };
 
 } // namespace clang

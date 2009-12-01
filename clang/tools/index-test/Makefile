@@ -19,6 +19,7 @@ TOOL_NO_EXPORTS = 1
 include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := bitreader mc
-USEDLIBS = clangIndex.a clangFrontend.a clangSema.a clangAST.a clangLex.a clangBasic.a 
+USEDLIBS = clangIndex.a clangFrontend.a clangDriver.a clangAnalysis.a clangSema.a \
+	   clangAST.a clangParse.a clangLex.a clangBasic.a
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

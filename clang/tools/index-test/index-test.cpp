@@ -43,6 +43,10 @@
 #include "clang/Index/Analyzer.h"
 #include "clang/Index/Utils.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
@@ -202,8 +206,23 @@ static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
   }
 }
 
+static llvm::cl::opt<bool>
+ASTFromSource("ast-from-source",
+              llvm::cl::desc("Treat the inputs as source files to parse."));
+
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input AST files>"));
+
+void CreateCompilerInvocation(const std::string &Filename,
+                              CompilerInvocation &CI, Diagnostic &Diags,
+                              const char *argv0) {
+  llvm::SmallVector<const char *, 16> Args;
+  Args.push_back(Filename.c_str());
+
+  void *MainAddr = (void*) (intptr_t) CreateCompilerInvocation;
+  CompilerInvocation::CreateFromArgs(CI, Args.data(), Args.data() + Args.size(),
+                                     argv0, MainAddr, Diags);
+}
 
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -215,6 +234,10 @@ int main(int argc, char **argv) {
   Indexer Idxer(Prog);
   llvm::SmallVector<TUnit*, 4> TUnits;
 
+  TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions(), false);
+  llvm::OwningPtr<Diagnostic> Diags(
+    CompilerInstance::createDiagnostics(DiagnosticOptions(), argc, argv));
+
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
@@ -225,7 +248,15 @@ int main(int argc, char **argv) {
     std::string ErrMsg;
     llvm::OwningPtr<ASTUnit> AST;
 
-    AST.reset(ASTUnit::LoadFromPCHFile(InFile, &ErrMsg));
+    if (ASTFromSource) {
+      CompilerInvocation CI;
+      CreateCompilerInvocation(InFile, CI, *Diags, argv[0]);
+      AST.reset(ASTUnit::LoadFromCompilerInvocation(CI, *Diags));
+      if (!AST)
+        ErrMsg = "unable to create AST";
+    } else
+      AST.reset(ASTUnit::LoadFromPCHFile(InFile, &ErrMsg));
+
     if (!AST) {
       llvm::errs() << "[" << InFile << "] Error: " << ErrMsg << '\n';
       return 1;

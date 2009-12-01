@@ -4,8 +4,11 @@ set( LLVM_USED_LIBS
   CIndex
   clangIndex
   clangFrontend
+  clangDriver
+  clangAnalysis
   clangSema
   clangAST
+  clangParse
   clangLex
   clangBasic
   )
