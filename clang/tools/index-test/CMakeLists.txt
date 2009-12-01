@@ -3,8 +3,8 @@ set(LLVM_NO_RTTI 1)
 set( LLVM_USED_LIBS
   clangIndex
   clangFrontend
-  clangAnalysis
   clangSema
+  clangAnalysis
   clangAST
   clangParse
   clangLex
