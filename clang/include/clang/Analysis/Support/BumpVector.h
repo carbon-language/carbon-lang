@@ -166,7 +166,7 @@ public:
 private:
   /// grow - double the size of the allocated memory, guaranteeing space for at
   /// least one more element or MinSize if specified.
-  void grow(BumpVectorContext &C, size_type MinSize = 0);
+  void grow(BumpVectorContext &C, size_type MinSize = 1);
   
   void construct_range(T *S, T *E, const T &Elt) {
     for (; S != E; ++S)
