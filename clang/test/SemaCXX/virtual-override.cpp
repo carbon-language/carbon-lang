@@ -115,13 +115,25 @@ class X1 : public X0 {
 
 template <typename Base>
 struct Foo : Base { 
-  void f() = 0; // expected-error{{not virtual and cannot be declared pure}}
+  void f(int) = 0; // expected-error{{not virtual and cannot be declared pure}}
 };
 
-struct Base1 { virtual void f(); };
+struct Base1 { virtual void f(int); };
 struct Base2 { };
 
 void test() {
   Foo<Base1> f1;
   Foo<Base2> f2; // expected-note{{instantiation}}
 }
+
+template<typename Base>
+struct Foo2 : Base {
+  template<typename T> int f(T);
+};
+
+void test2() {
+  Foo2<Base1> f1;
+  Foo2<Base2> f2;
+  f1.f(17);
+  f2.f(17);
+};

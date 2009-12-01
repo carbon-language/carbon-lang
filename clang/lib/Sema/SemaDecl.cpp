@@ -3259,8 +3259,11 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD,
     }
 
     // Find any virtual functions that this function overrides.
-    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(NewFD))
-      AddOverriddenMethods(Method->getParent(), Method);
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(NewFD)) {
+      if (!Method->isFunctionTemplateSpecialization() && 
+          !Method->getDescribedFunctionTemplate())
+        AddOverriddenMethods(Method->getParent(), Method);
+    }
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
     if (NewFD->isOverloadedOperator() &&
