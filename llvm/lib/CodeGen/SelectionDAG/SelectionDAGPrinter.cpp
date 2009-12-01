@@ -50,6 +50,11 @@ namespace llvm {
       return ((const SDNode *) Node)->getValueType(i).getEVTString();
     }
 
+    template<typename EdgeIter>
+    static std::string getEdgeSourceLabel(const void *Node, EdgeIter I) {
+      return itostr(I - SDNodeIterator::begin((SDNode *) Node));
+    }
+
     /// edgeTargetsEdgeSource - This method returns true if this outgoing edge
     /// should actually target another edge source, not a node.  If this method
     /// is implemented, getEdgeTarget should be implemented.
