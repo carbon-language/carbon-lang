@@ -2171,6 +2171,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ClassDecl->addDecl(Destructor);
     
     AddOverriddenMethods(ClassDecl, Destructor);
+    CheckDestructor(Destructor, false);
   }
 }
 
@@ -2369,7 +2370,7 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
 
 /// CheckDestructor - Checks a fully-formed destructor for well-formedness, 
 /// issuing any diagnostics required. Returns true on error.
-bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
+bool Sema::CheckDestructor(CXXDestructorDecl *Destructor, bool Diagnose) {
   CXXRecordDecl *RD = Destructor->getParent();
   
   if (Destructor->isVirtual()) {
@@ -2384,7 +2385,7 @@ bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
     FunctionDecl *OperatorDelete = 0;
     DeclarationName Name = 
     Context.DeclarationNames.getCXXOperatorName(OO_Delete);
-    if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
+    if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete, Diagnose))
       return true;
     
     Destructor->setOperatorDelete(OperatorDelete);

@@ -1933,7 +1933,8 @@ public:
                                        QualType Argument);
 
   bool FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD, 
-                                DeclarationName Name, FunctionDecl* &Operator);
+                                DeclarationName Name, FunctionDecl* &Operator,
+                                bool Diagnose=true);
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   virtual OwningExprResult ActOnCXXDelete(SourceLocation StartLoc,
@@ -2160,7 +2161,7 @@ public:
   void CheckConstructor(CXXConstructorDecl *Constructor);
   QualType CheckDestructorDeclarator(Declarator &D,
                                      FunctionDecl::StorageClass& SC);
-  bool CheckDestructor(CXXDestructorDecl *Destructor);
+  bool CheckDestructor(CXXDestructorDecl *Destructor, bool Diagnose=true);
   void CheckConversionDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
