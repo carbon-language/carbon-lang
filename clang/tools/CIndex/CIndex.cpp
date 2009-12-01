@@ -439,8 +439,7 @@ static CXString createCXString(const char *String, bool DupString = false) {
 extern "C" {
 
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
-                          int displayDiagnostics)
-{
+                          int displayDiagnostics) {
   CIndexer *CIdxr = new CIndexer(new Program());
   if (excludeDeclarationsFromPCH)
     CIdxr->setOnlyLocalDecls();
@@ -449,16 +448,14 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
   return CIdxr;
 }
 
-void clang_disposeIndex(CXIndex CIdx)
-{
+void clang_disposeIndex(CXIndex CIdx) {
   assert(CIdx && "Passed null CXIndex");
   delete static_cast<CIndexer *>(CIdx);
 }
 
 // FIXME: need to pass back error info.
-CXTranslationUnit clang_createTranslationUnit(
-  CXIndex CIdx, const char *ast_filename)
-{
+CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
+                                              const char *ast_filename) {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
   std::string astName(ast_filename);
@@ -477,10 +474,11 @@ CXTranslationUnit clang_createTranslationUnit(
   return TU;
 }
 
-CXTranslationUnit clang_createTranslationUnitFromSourceFile(
-  CXIndex CIdx,
-  const char *source_filename,
-  int num_command_line_args, const char **command_line_args)  {
+CXTranslationUnit
+clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
+                                          const char *source_filename,
+                                          int num_command_line_args,
+                                          const char **command_line_args) {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
@@ -553,15 +551,12 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   return ATU;
 }
 
-void clang_disposeTranslationUnit(
-  CXTranslationUnit CTUnit)
-{
+void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
   assert(CTUnit && "Passed null CXTranslationUnit");
   delete static_cast<ASTUnit *>(CTUnit);
 }
 
-CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
-{
+CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
   return createCXString(CXXUnit->getOriginalSourceFileName().c_str(), true);
@@ -569,8 +564,7 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
 
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
                                CXTranslationUnitIterator callback,
-                               CXClientData CData)
-{
+                               CXClientData CData) {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
   ASTContext &Ctx = CXXUnit->getASTContext();
@@ -582,8 +576,7 @@ void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
 
 void clang_loadDeclaration(CXDecl Dcl,
                            CXDeclIterator callback,
-                           CXClientData CData)
-{
+                           CXClientData CData) {
   assert(Dcl && "Passed null CXDecl");
 
   CDeclVisitor DVisit(Dcl, callback, CData,
@@ -608,29 +601,27 @@ void clang_loadDeclaration(CXDecl Dcl,
 //
 
 
-const char *clang_getDeclarationName(CXEntity)
-{
-  return "";
-}
-const char *clang_getURI(CXEntity)
-{
+const char *clang_getDeclarationName(CXEntity) {
   return "";
 }
 
-CXEntity clang_getEntity(const char *URI)
-{
+const char *clang_getURI(CXEntity) {
+  return "";
+}
+
+CXEntity clang_getEntity(const char *URI) {
   return 0;
 }
 
 //
 // CXDecl Operations.
 //
-CXEntity clang_getEntityFromDecl(CXDecl)
-{
+
+CXEntity clang_getEntityFromDecl(CXDecl) {
   return 0;
 }
-CXString clang_getDeclSpelling(CXDecl AnonDecl)
-{
+
+CXString clang_getDeclSpelling(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
 
@@ -649,24 +640,21 @@ CXString clang_getDeclSpelling(CXDecl AnonDecl)
   return createCXString("");
 }
 
-unsigned clang_getDeclLine(CXDecl AnonDecl)
-{
+unsigned clang_getDeclLine(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
   return SourceMgr.getSpellingLineNumber(ND->getLocation());
 }
 
-unsigned clang_getDeclColumn(CXDecl AnonDecl)
-{
+unsigned clang_getDeclColumn(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
   return SourceMgr.getSpellingColumnNumber(ND->getLocation());
 }
 
-const char *clang_getDeclSource(CXDecl AnonDecl)
-{
+const char *clang_getDeclSource(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   FileEntry *FEnt = static_cast<FileEntry *>(clang_getDeclSourceFile(AnonDecl));
   assert (FEnt && "Cannot find FileEntry for Decl");
@@ -674,8 +662,7 @@ const char *clang_getDeclSource(CXDecl AnonDecl)
 }
 
 static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
-                                                       SourceLocation SLoc)
-{
+                                                       SourceLocation SLoc) {
   FileID FID;
   if (SLoc.isFileID())
     FID = SMgr.getFileID(SLoc);
@@ -684,8 +671,7 @@ static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
   return SMgr.getFileEntryForID(FID);
 }
 
-CXFile clang_getDeclSourceFile(CXDecl AnonDecl)
-{
+CXFile clang_getDeclSourceFile(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
@@ -704,8 +690,7 @@ time_t clang_getFileTime(CXFile SFile) {
   return FEnt->getModificationTime();
 }
 
-CXString clang_getCursorSpelling(CXCursor C)
-{
+CXString clang_getCursorSpelling(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
 
@@ -752,8 +737,7 @@ CXString clang_getCursorSpelling(CXCursor C)
   return clang_getDeclSpelling(C.decl);
 }
 
-const char *clang_getCursorKindSpelling(enum CXCursorKind Kind)
-{
+const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   switch (Kind) {
   case CXCursor_FunctionDecl: return "FunctionDecl";
   case CXCursor_TypedefDecl: return "TypedefDecl";
@@ -820,9 +804,9 @@ static enum CXCursorKind TranslateKind(Decl *D) {
 //
 // CXCursor Operations.
 //
+
 CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
-                         unsigned line, unsigned column)
-{
+                         unsigned line, unsigned column) {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
 
@@ -887,8 +871,7 @@ unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
   return X.kind == Y.kind && X.decl == Y.decl && X.stmt == Y.stmt;
 }
 
-CXCursor clang_getCursorFromDecl(CXDecl AnonDecl)
-{
+CXCursor clang_getCursorFromDecl(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
 
@@ -896,28 +879,23 @@ CXCursor clang_getCursorFromDecl(CXDecl AnonDecl)
   return C;
 }
 
-unsigned clang_isInvalid(enum CXCursorKind K)
-{
+unsigned clang_isInvalid(enum CXCursorKind K) {
   return K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid;
 }
 
-unsigned clang_isDeclaration(enum CXCursorKind K)
-{
+unsigned clang_isDeclaration(enum CXCursorKind K) {
   return K >= CXCursor_FirstDecl && K <= CXCursor_LastDecl;
 }
 
-unsigned clang_isReference(enum CXCursorKind K)
-{
+unsigned clang_isReference(enum CXCursorKind K) {
   return K >= CXCursor_FirstRef && K <= CXCursor_LastRef;
 }
 
-unsigned clang_isDefinition(enum CXCursorKind K)
-{
+unsigned clang_isDefinition(enum CXCursorKind K) {
   return K >= CXCursor_FirstDefn && K <= CXCursor_LastDefn;
 }
 
-CXCursorKind clang_getCursorKind(CXCursor C)
-{
+CXCursorKind clang_getCursorKind(CXCursor C) {
   return C.kind;
 }
 
@@ -939,8 +917,7 @@ static Decl *getDeclFromExpr(Stmt *E) {
   return 0;
 }
 
-CXDecl clang_getCursorDecl(CXCursor C)
-{
+CXDecl clang_getCursorDecl(CXCursor C) {
   if (clang_isDeclaration(C.kind))
     return C.decl;
 
@@ -957,8 +934,7 @@ CXDecl clang_getCursorDecl(CXCursor C)
   return 0;
 }
 
-unsigned clang_getCursorLine(CXCursor C)
-{
+unsigned clang_getCursorLine(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
@@ -976,8 +952,7 @@ void clang_disposeString(CXString string) {
     free((void*)string.Spelling);
 }
 
-unsigned clang_getCursorColumn(CXCursor C)
-{
+unsigned clang_getCursorColumn(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
@@ -985,8 +960,8 @@ unsigned clang_getCursorColumn(CXCursor C)
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getSpellingColumnNumber(SLoc);
 }
-const char *clang_getCursorSource(CXCursor C)
-{
+
+const char *clang_getCursorSource(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
@@ -1009,8 +984,7 @@ const char *clang_getCursorSource(CXCursor C)
   return Buffer->getBufferIdentifier();
 }
 
-CXFile clang_getCursorSourceFile(CXCursor C)
-{
+CXFile clang_getCursorSourceFile(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
@@ -1025,8 +999,7 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
                                           unsigned *startLine,
                                           unsigned *startColumn,
                                           unsigned *endLine,
-                                          unsigned *endColumn)
-{
+                                          unsigned *endColumn) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
