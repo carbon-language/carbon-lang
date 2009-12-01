@@ -7,7 +7,7 @@
 //===----------------------------------------------------------------------===/
 //
 //  This file implements the StringSwitch template, which mimics a switch()
-//  statements whose cases are string literals.
+//  statement whose cases are string literals.
 //
 //===----------------------------------------------------------------------===/
 #ifndef LLVM_ADT_STRINGSWITCH_H
