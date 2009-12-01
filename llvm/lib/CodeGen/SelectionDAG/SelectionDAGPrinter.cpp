@@ -29,7 +29,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
-#include <fstream>
 using namespace llvm;
 
 namespace llvm {
