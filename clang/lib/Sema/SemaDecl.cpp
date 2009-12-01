@@ -3393,7 +3393,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     Expr *Init = static_cast<Expr *>(init.get());
     if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
         Context.getCanonicalType(IL->getType()) == Context.IntTy) {
-      if (Method->isVirtualAsWritten()) {
+      if (Method->isVirtual()) {
         Method->setPure();
 
         // A class is abstract if at least one function is pure virtual.

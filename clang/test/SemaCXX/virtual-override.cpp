@@ -104,3 +104,11 @@ namespace T7 {
     virtual b* f();
   };
 }
+
+// PR5656
+class X0 {
+  virtual void f0();
+};
+class X1 : public X0 {
+  void f0() = 0;
+};
