@@ -192,3 +192,23 @@ bb61:
   ret void
 }
 
+
+; PR5640
+define fastcc void @test6(i1 %tmp, i1 %tmp1) nounwind ssp {
+entry:
+  br i1 %tmp, label %bb12, label %bb14
+
+bb12:           
+  br label %bb14
+
+bb14:           
+  %A = phi i1 [ %A, %bb13 ],  [ true, %bb12 ], [%tmp1, %entry]
+  br label %bb13
+
+bb13:                                            
+  br i1 %A, label %bb14, label %bb61
+
+
+bb61:                                            
+  ret void
+}
