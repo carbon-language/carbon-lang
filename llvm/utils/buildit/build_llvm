@@ -341,6 +341,14 @@ chgrp -R wheel $DEST_DIR
 find $DEST_DIR -name html.tar.gz -exec rm {} \;
 
 ################################################################################
+# symlinks so that B&I can find things
+
+cd $DEST_DIR
+mkdir -p ./usr/lib/
+cd usr/lib
+ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
+
+################################################################################
 # w00t! Done!
 
 exit 0
