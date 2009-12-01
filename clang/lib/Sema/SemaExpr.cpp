@@ -3052,6 +3052,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       // method template.
       assert((MemE->getNumDecls() > 1) ||
              isa<FunctionTemplateDecl>(*MemE->decls_begin()));
+      (void)MemE;
 
       return Owned(BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
                                              CommaLocs, RParenLoc));
