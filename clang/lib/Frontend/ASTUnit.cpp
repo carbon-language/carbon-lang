@@ -240,12 +240,13 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
 
   Act.Execute();
 
-  // Steal the created context and preprocessor, and take back the source and
-  // file managers.
+  // Steal the created target, context, and preprocessor, and take back the
+  // source and file managers.
   AST->Ctx.reset(Clang.takeASTContext());
   AST->PP.reset(Clang.takePreprocessor());
   Clang.takeSourceManager();
   Clang.takeFileManager();
+  AST->Target.reset(Clang.takeTarget());
 
   Act.EndSourceFile();
 
