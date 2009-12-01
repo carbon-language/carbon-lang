@@ -711,9 +711,12 @@ static bool IsDependentIdExpression(Sema &SemaRef, const CXXScopeSpec &SS) {
 static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
                                      CXXRecordDecl *Record,
                             const llvm::SmallPtrSet<CXXRecordDecl*, 4> &Bases) {
-  Record = Record->getCanonicalDecl();
-  if (Bases.count(Record))
+  if (Bases.count(Record->getCanonicalDecl()))
     return false;
+
+  RecordDecl *RD = Record->getDefinition(SemaRef.Context);
+  if (!RD) return false;
+  Record = cast<CXXRecordDecl>(RD);
 
   for (CXXRecordDecl::base_class_iterator I = Record->bases_begin(),
          E = Record->bases_end(); I != E; ++I) {
@@ -722,9 +725,6 @@ static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
     if (!BaseRT) return false;
 
     CXXRecordDecl *BaseRecord = cast<CXXRecordDecl>(BaseRT->getDecl());
-    if (!BaseRecord->isDefinition())
-      return false;
-
     if (!IsProvablyNotDerivedFrom(SemaRef, BaseRecord, Bases))
       return false;
   }
