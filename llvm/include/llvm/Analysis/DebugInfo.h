@@ -567,6 +567,10 @@ namespace llvm {
                                   DIType Type, bool isLocalToUnit,
                                   bool isDefinition);
 
+    /// CreateSubprogramDefinition - Create new subprogram descriptor for the
+    /// given declaration. 
+    DISubprogram CreateSubprogramDefinition(DISubprogram &SPDeclaration);
+
     /// CreateGlobalVariable - Create a new descriptor for the specified global.
     DIGlobalVariable
     CreateGlobalVariable(DIDescriptor Context, StringRef Name,

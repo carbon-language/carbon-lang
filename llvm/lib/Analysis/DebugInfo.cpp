@@ -884,6 +884,29 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
   return DISubprogram(MDNode::get(VMContext, &Elts[0], 11));
 }
 
+/// CreateSubprogramDefinition - Create new subprogram descriptor for the
+/// given declaration. 
+DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) {
+  if (SPDeclaration.isDefinition())
+    return DISubprogram(SPDeclaration.getNode());
+
+  MDNode *DeclNode = SPDeclaration.getNode();
+  Value *Elts[] = {
+    GetTagConstant(dwarf::DW_TAG_subprogram),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    DeclNode->getElement(2), // Context
+    DeclNode->getElement(3), // Name
+    DeclNode->getElement(4), // DisplayName
+    DeclNode->getElement(5), // LinkageName
+    DeclNode->getElement(6), // CompileUnit
+    DeclNode->getElement(7), // LineNo
+    DeclNode->getElement(8), // Type
+    DeclNode->getElement(9), // isLocalToUnit
+    ConstantInt::get(Type::getInt1Ty(VMContext), true)
+  };
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 11));
+}
+
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
 DIGlobalVariable
 DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
