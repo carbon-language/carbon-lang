@@ -780,18 +780,18 @@ DW_TAG_return_variable = 258
 </div>
 
 <div class="doc_text">
-<p>In many languages, the local variables in functions can have their lifetime
-   or scope limited to a subset of a function.  In the C family of languages,
+<p>In many languages, the local variables in functions can have their lifetimes
+   or scopes limited to a subset of a function.  In the C family of languages,
    for example, variables are only live (readable and writable) within the
    source block that they are defined in.  In functional languages, values are
    only readable after they have been defined.  Though this is a very obvious
-   concept, it is also non-trivial to model in LLVM, because it has no notion of
+   concept, it is non-trivial to model in LLVM, because it has no notion of
    scoping in this sense, and does not want to be tied to a language's scoping
    rules.</p>
 
-<p>In order to handle this, the LLVM debug format uses the metadata attached
-   with llvm instructions to encode line nuber and scoping information.
-   Consider the following C fragment, for example:</p>
+<p>In order to handle this, the LLVM debug format uses the metadata attached to
+   llvm instructions to encode line nuber and scoping information. Consider the
+   following C fragment, for example:</p>
 
 <div class="doc_code">
 <pre>
@@ -811,7 +811,7 @@ DW_TAG_return_variable = 258
 
 <div class="doc_code">
 <pre>
-nounwind ssp {
+define void @foo() nounwind ssp {
 entry:
   %X = alloca i32, align 4                        ; <i32*> [#uses=4]
   %Y = alloca i32, align 4                        ; <i32*> [#uses=4]
@@ -867,68 +867,74 @@ declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
 </pre>
 </div>
 
-<p>This example illustrates a few important details about the LLVM debugging
-   information.  In particular, it shows how the llvm.dbg.declare intrinsic
-   and location information, attached with an instruction, are applied
-   together to allow a debugger to analyze the relationship between statements,
-   variable definitions, and the code used to implement the function.</p>
+<p>This example illustrates a few important details about LLVM debugging
+   information. In particular, it shows how the <tt>llvm.dbg.declare</tt>
+   intrinsic and location information, which are attached to an instruction,
+   are applied together to allow a debugger to analyze the relationship between
+   statements, variable definitions, and the code used to implement the
+   function.</p>
 
-   <div class="doc_code">
-   <pre> 
-     call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7   
-   </pre>
-   </div>
-<p>This first intrinsic 
+<div class="doc_code">
+<pre> 
+call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7   
+</pre>
+</div>
+
+<p>The first intrinsic
    <tt>%<a href="#format_common_declare">llvm.dbg.declare</a></tt>
-   encodes debugging information for variable <tt>X</tt>. The metadata, 
-   <tt>!dbg !7</tt> attached with the intrinsic provides scope information for 
-   the variable <tt>X</tt>. </p>
-   <div class="doc_code">
-   <pre>
-     !7 = metadata !{i32 2, i32 7, metadata !1, null}
-     !1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
-     !2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", 
-                     metadata !"foo", metadata !"foo", metadata !3, i32 1, 
-                     metadata !4, i1 false, i1 true}; [DW_TAG_subprogram ]   
-   </pre>
-   </div>
+   encodes debugging information for the variable <tt>X</tt>. The metadata
+   <tt>!dbg !7</tt> attached to the intrinsic provides scope information for the
+   variable <tt>X</tt>.</p>
 
-<p> Here <tt>!7</tt> is a metadata providing location information. It has four
-   fields : line number, column number, scope and original scope. The original
-   scope represents inline location if this instruction is inlined inside
-   a caller. It is null otherwise. In this example scope is encoded by 
+<div class="doc_code">
+<pre>
+!7 = metadata !{i32 2, i32 7, metadata !1, null}
+!1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
+!2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", 
+                metadata !"foo", metadata !"foo", metadata !3, i32 1, 
+                metadata !4, i1 false, i1 true}; [DW_TAG_subprogram ]   
+</pre>
+</div>
+
+<p>Here <tt>!7</tt> is metadata providing location information. It has four
+   fields: line number, column number, scope, and original scope. The original
+   scope represents inline location if this instruction is inlined inside a
+   caller, and is null otherwise. In this example, scope is encoded by
    <tt>!1</tt>. <tt>!1</tt> represents a lexical block inside the scope
    <tt>!2</tt>, where <tt>!2</tt> is a
-   <a href="#format_subprograms">subprogram descriptor</a>. 
-   This way the location information attched with the intrinsics indicates
-   that the variable <tt>X</tt> is declared at line number 2 at a function level
-   scope in function <tt>foo</tt>.</p>
+   <a href="#format_subprograms">subprogram descriptor</a>. This way the
+   location information attached to the intrinsics indicates that the
+   variable <tt>X</tt> is declared at line number 2 at a function level scope in
+   function <tt>foo</tt>.</p>
 
 <p>Now lets take another example.</p>
 
-   <div class="doc_code">
-   <pre> 
-     call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
-   </pre>
-   </div>
-<p>This intrinsic 
+<div class="doc_code">
+<pre> 
+call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
+</pre>
+</div>
+
+<p>The second intrinsic
    <tt>%<a href="#format_common_declare">llvm.dbg.declare</a></tt>
-   encodes debugging information for variable <tt>Z</tt>. The metadata, 
-   <tt>!dbg !14</tt> attached with the intrinsic provides scope information for 
-   the variable <tt>Z</tt>. </p>
-   <div class="doc_code">
-   <pre>
-     !13 = metadata !{i32 458763, metadata !1}; [DW_TAG_lexical_block ]
-     !14 = metadata !{i32 5, i32 9, metadata !13, null}
-   </pre>
-   </div>
+   encodes debugging information for variable <tt>Z</tt>. The metadata 
+   <tt>!dbg !14</tt> attached to the intrinsic provides scope information for
+   the variable <tt>Z</tt>.</p>
 
-<p> Here <tt>!14</tt> indicates that <tt>Z</tt> is declaread at line number 5,
-   column number 9 inside a lexical scope <tt>!13</tt>. This lexical scope
-   itself resides inside lexcial scope <tt>!1</tt> described above.</p>
+<div class="doc_code">
+<pre>
+!13 = metadata !{i32 458763, metadata !1}; [DW_TAG_lexical_block ]
+!14 = metadata !{i32 5, i32 9, metadata !13, null}
+</pre>
+</div>
 
-<p>The scope information attached with each instruction provides a straight
-   forward way to find instructions covered by a scope. </p>
+<p>Here <tt>!14</tt> indicates that <tt>Z</tt> is declaread at line number 5 and
+   column number 9 inside of lexical scope <tt>!13</tt>. The lexical scope
+   itself resides inside of lexical scope <tt>!1</tt> described above.</p>
+
+<p>The scope information attached with each instruction provides a
+   straightforward way to find instructions covered by a scope.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
