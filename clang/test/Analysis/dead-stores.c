@@ -370,3 +370,39 @@ void f23_pos(int argc, char **argv) {
      f23_aux("I did too use it!\n");
   }();  
 }
+
+void f24_A(int y) {
+  // FIXME: One day this should be reported as dead since 'z = x + y' is dead.
+  int x = (y > 2); // no-warning
+  ^ {
+    int z = x + y; // FIXME: Eventually this should be reported as a dead store.
+  }();  
+}
+
+void f24_B(int y) {
+  // FIXME: One day this should be reported as dead since 'x' is just overwritten.
+  __block int x = (y > 2); // no-warning
+  ^{
+    // FIXME: This should eventually be a dead store since it is never read either.
+    x = 5; // no-warning
+  }();
+}
+
+int f24_C(int y) {
+  // FIXME: One day this should be reported as dead since 'x' is just overwritten.
+  __block int x = (y > 2); // no-warning
+  ^{ 
+    x = 5; // no-warning
+  }();
+  return x;
+}
+
+int f24_D(int y) {
+  __block int x = (y > 2); // no-warning
+  ^{ 
+    if (y > 4)
+      x = 5; // no-warning
+  }();
+  return x;
+}
+
