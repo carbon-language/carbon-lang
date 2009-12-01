@@ -18,7 +18,7 @@
 #include <cstring>
 
 namespace llvm {
-  
+
 /// \brief A switch()-like statement whose cases are string literals.
 ///
 /// The StringSwitch class is a simple form of a switch() statement that
@@ -35,48 +35,48 @@ namespace llvm {
 ///   .Case("green", Green)
 ///   .Case("blue", Blue)
 ///   .Case("indigo", Indigo)
-///   .Case("violet", Violet)
+///   .Cases("violet", "purple", Violet)
 ///   .Default(UnknownColor);
 /// \endcode
 template<typename T>
 class StringSwitch {
   /// \brief The string we are matching.
   StringRef Str;
-  
+
   /// \brief The result of this switch statement, once known.
   T Result;
-  
+
   /// \brief Set true when the result of this switch is already known; in this
   /// case, Result is valid.
   bool ResultKnown;
-  
+
 public:
-  explicit StringSwitch(StringRef Str) 
+  explicit StringSwitch(StringRef Str)
   : Str(Str), ResultKnown(false) { }
-  
+
   template<unsigned N>
   StringSwitch& Case(const char (&S)[N], const T& Value) {
-    if (!ResultKnown && N-1 == Str.size() && 
+    if (!ResultKnown && N-1 == Str.size() &&
         (std::memcmp(S, Str.data(), N-1) == 0)) {
       Result = Value;
       ResultKnown = true;
     }
-    
+
     return *this;
   }
-  
+
   template<unsigned N0, unsigned N1>
   StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
                       const T& Value) {
     return Case(S0, Value).Case(S1, Value);
   }
-  
+
   template<unsigned N0, unsigned N1, unsigned N2>
   StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
                       const char (&S2)[N2], const T& Value) {
     return Case(S0, Value).Case(S1, Value).Case(S2, Value);
   }
-  
+
   template<unsigned N0, unsigned N1, unsigned N2, unsigned N3>
   StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
                       const char (&S2)[N2], const char (&S3)[N3],
@@ -87,18 +87,18 @@ public:
   template<unsigned N0, unsigned N1, unsigned N2, unsigned N3, unsigned N4>
   StringSwitch& Cases(const char (&S0)[N0], const char (&S1)[N1],
                       const char (&S2)[N2], const char (&S3)[N3],
-                       const char (&S4)[N4], const T& Value) {
+                      const char (&S4)[N4], const T& Value) {
     return Case(S0, Value).Case(S1, Value).Case(S2, Value).Case(S3, Value)
       .Case(S4, Value);
   }
-  
+
   T Default(const T& Value) {
     if (ResultKnown)
       return Result;
-    
+
     return Value;
   }
-  
+
   operator T() {
     assert(ResultKnown && "Fell off the end of a string-switch");
     return Result;
