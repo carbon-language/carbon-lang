@@ -2371,9 +2371,19 @@ namespace {
   struct DepthMBBCompare {
     typedef std::pair<unsigned, MachineBasicBlock*> DepthMBBPair;
     bool operator()(const DepthMBBPair &LHS, const DepthMBBPair &RHS) const {
-      if (LHS.first > RHS.first) return true;   // Deeper loops first
-      return LHS.first == RHS.first &&
-        LHS.second->getNumber() < RHS.second->getNumber();
+      // Deeper loops first
+      if (LHS.first != RHS.first)
+        return LHS.first > RHS.first;
+
+      // Prefer blocks that are more connected in the CFG. This takes care of
+      // the most difficult copies first while intervals are short.
+      unsigned cl = LHS.second->pred_size() + LHS.second->succ_size();
+      unsigned cr = RHS.second->pred_size() + RHS.second->succ_size();
+      if (cl != cr)
+        return cl > cr;
+
+      // As a last resort, sort by block number.
+      return LHS.second->getNumber() < RHS.second->getNumber();
     }
   };
 }
