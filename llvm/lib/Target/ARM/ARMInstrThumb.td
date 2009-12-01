@@ -669,6 +669,35 @@ let isCall = 1,
                [(set R0, ARMthread_pointer)]>;
 }
 
+// SJLJ Exception handling intrinsics
+//   eh_sjlj_setjmp() is an instruction sequence to store the return
+//   address and save #0 in R0 for the non-longjmp case.
+//   Since by its nature we may be coming from some other function to get
+//   here, and we're using the stack frame for the containing function to
+//   save/restore registers, we can't keep anything live in regs across
+//   the eh_sjlj_setjmp(), else it will almost certainly have been tromped upon
+//   when we get here from a longjmp(). We force everthing out of registers
+//   except for our own input by listing the relevant registers in Defs. By
+//   doing so, we also cause the prologue/epilogue code to actively preserve
+//   all of the callee-saved resgisters, which is exactly what we want.
+let Defs =
+  [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ] in {
+  def tInt_eh_sjlj_setjmp : ThumbXI<(outs), (ins GPR:$src),
+                              AddrModeNone, SizeSpecial, NoItinerary,
+                              "mov\tr12, r1\t@ begin eh.setjmp\n"
+                              "\tmov\tr1, sp\n"
+                              "\tstr\tr1, [$src, #8]\n"
+                              "\tadr\tr1, 0f\n"
+                              "\tadds\tr1, #1\n"
+                              "\tstr\tr1, [$src, #4]\n"
+                              "\tmov\tr1, r12\n"
+                              "\tmovs\tr0, #0\n"
+                              "\tb\t1f\n"
+                              ".align 2\n"
+                              "0:\tmovs\tr0, #1\t@ end eh.setjmp\n"
+                              "1:", "",
+                              [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
+}
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //

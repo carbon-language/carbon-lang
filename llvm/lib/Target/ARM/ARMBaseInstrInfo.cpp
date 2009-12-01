@@ -467,6 +467,8 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return MI->getOperand(2).getImm();
     case ARM::Int_eh_sjlj_setjmp:
       return 24;
+    case ARM::tInt_eh_sjlj_setjmp:
+      return 22;
     case ARM::t2Int_eh_sjlj_setjmp:
       return 22;
     case ARM::BR_JTr:

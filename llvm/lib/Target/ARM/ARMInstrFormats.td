@@ -967,6 +967,17 @@ class Thumb2XI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   list<Predicate> Predicates = [IsThumb2];
 }
 
+class ThumbXI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+               InstrItinClass itin,
+               string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
+  let OutOperandList = oops;
+  let InOperandList = iops;
+  let AsmString   = asm;
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb1Only];
+}
+
 class T2I<dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeNone, Size4Bytes, itin, opc, asm, "", pattern>;
