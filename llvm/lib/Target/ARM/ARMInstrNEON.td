@@ -2582,20 +2582,20 @@ def VMOVv16i8 : N1ModImm<1, 0b000, 0b1110, 0, 1, 0, 1, (outs QPR:$dst),
                          "vmov", "i8", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v16i8 vmovImm8:$SIMM))]>;
 
-def VMOVv4i16 : N1ModImm<1, 0b000, 0b1000, 0, 0, 0, 1, (outs DPR:$dst),
+def VMOVv4i16 : N1ModImm<1, 0b000, {1,0,?,?}, 0, 0, {?}, 1, (outs DPR:$dst),
                          (ins h16imm:$SIMM), IIC_VMOVImm,
                          "vmov", "i16", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v4i16 vmovImm16:$SIMM))]>;
-def VMOVv8i16 : N1ModImm<1, 0b000, 0b1000, 0, 1, 0, 1, (outs QPR:$dst),
+def VMOVv8i16 : N1ModImm<1, 0b000, {1,0,?,?}, 0, 1, {?}, 1, (outs QPR:$dst),
                          (ins h16imm:$SIMM), IIC_VMOVImm,
                          "vmov", "i16", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v8i16 vmovImm16:$SIMM))]>;
 
-def VMOVv2i32 : N1ModImm<1, 0b000, 0b0000, 0, 0, 0, 1, (outs DPR:$dst),
+def VMOVv2i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 0, {?}, 1, (outs DPR:$dst),
                          (ins h32imm:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$dst, $SIMM", "",
                          [(set DPR:$dst, (v2i32 vmovImm32:$SIMM))]>;
-def VMOVv4i32 : N1ModImm<1, 0b000, 0b0000, 0, 1, 0, 1, (outs QPR:$dst),
+def VMOVv4i32 : N1ModImm<1, 0b000, {?,?,?,?}, 0, 1, {?}, 1, (outs QPR:$dst),
                          (ins h32imm:$SIMM), IIC_VMOVImm,
                          "vmov", "i32", "$dst, $SIMM", "",
                          [(set QPR:$dst, (v4i32 vmovImm32:$SIMM))]>;
