@@ -330,13 +330,8 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
 
   if (Ty->isBooleanType()) {
     // Bool can have different representation in memory than in registers.
-    const llvm::Type *SrcTy = Value->getType();
     const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
-    if (DstPtr->getElementType() != SrcTy) {
-      const llvm::Type *MemTy =
-        llvm::PointerType::get(SrcTy, DstPtr->getAddressSpace());
-      Addr = Builder.CreateBitCast(Addr, MemTy, "storetmp");
-    }
+    Value = Builder.CreateIntCast(Value, DstPtr->getElementType(), false);
   }
   Builder.CreateStore(Value, Addr, Volatile);
 }
