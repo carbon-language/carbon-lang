@@ -47,6 +47,12 @@ def OptList : OptionList<[
     (hidden)),
  (parameter_list_option "include",
     (help "Include the named file prior to preprocessing")),
+ (parameter_list_option "framework",
+    (help "Specifies a framework to link against")),
+ (parameter_list_option "weak_framework",
+    (help "Specifies a framework to weakly link against"), (hidden)),
+ (prefix_list_option "F",
+    (help "Add a directory to framework search path")),
  (prefix_list_option "I",
     (help "Add a directory to include path")),
  (prefix_list_option "D",
@@ -106,6 +112,7 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (switch_on "fsyntax-only"), (stop_compilation),
          (not_empty "include"), (forward "include"),
          (not_empty "I"), (forward "I"),
+         (not_empty "F"), (forward "F"),
          (not_empty "D"), (forward "D"),
          (switch_on "O1"), (forward "O1"),
          (switch_on "O2"), (forward "O2"),
@@ -175,6 +182,9 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
  (actions (case
           (switch_on "pthread"), (append_cmd "-lpthread"),
           (not_empty "L"), (forward "L"),
+          (not_empty "F"), (forward "F"),
+          (not_empty "framework"), (forward "framework"),
+          (not_empty "weak_framework"), (forward "weak_framework"),
           (not_empty "l"), (forward "l"),
           (not_empty "Wl,"), (forward "Wl,")))
 ]>;

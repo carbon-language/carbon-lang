@@ -126,24 +126,31 @@ use the B<-Wo,> option.
 
 =item B<-I> I<directory>
 
-Add a directory to the header file search path.  This option can be
-repeated.
+Add a directory to the header file search path.
 
 =item B<-L> I<directory>
 
-Add I<directory> to the library search path.  This option can be
-repeated.
+Add I<directory> to the library search path.
+
+=item B<-F> I<directory>
+
+Add I<directory> to the framework search path.
 
 =item B<-l>I<name>
 
 Link in the library libI<name>.[bc | a | so].  This library should
 be a bitcode library.
 
+=item B<-framework> I<name>
+
+Link in the library libI<name>.[bc | a | so].  This library should
+be a bitcode library.
+
 =item B<-emit-llvm>
 
-Make the output be LLVM bitcode (with B<-c>) or assembly (with B<-S>) instead
-of native object (or assembly).  If B<-emit-llvm> is given without either B<-c>
-or B<-S> it has no effect.
+Output LLVM bitcode (with B<-c>) or assembly (with B<-S>) instead of native
+object (or assembly).  If B<-emit-llvm> is given without either B<-c> or B<-S>
+it has no effect.
 
 =item B<-Wa>
 
@@ -156,6 +163,10 @@ Pass options to linker.
 =item B<-Wo>
 
 Pass options to opt.
+
+=item B<-Wllc>
+
+Pass options to llc (code generator).
 
 =back
 
