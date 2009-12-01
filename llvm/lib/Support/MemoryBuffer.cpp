@@ -176,7 +176,7 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
 #endif
   int FD = ::open(Filename.str().c_str(), O_RDONLY|OpenFlags);
   if (FD == -1) {
-    if (ErrStr) *ErrStr = "could not open file";
+    if (ErrStr) *ErrStr = strerror(errno);
     return 0;
   }
   
@@ -186,7 +186,7 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
     struct stat FileInfo;
     // TODO: This should use fstat64 when available.
     if (fstat(FD, &FileInfo) == -1) {
-      if (ErrStr) *ErrStr = "could not get file length";
+      if (ErrStr) *ErrStr = strerror(errno);
       ::close(FD);
       return 0;
     }
@@ -230,8 +230,8 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
       // try again
     } else {
       // error reading.
+      if (ErrStr) *ErrStr = strerror(errno);
       close(FD);
-      if (ErrStr) *ErrStr = "error reading file data";
       return 0;
     }
   }
