@@ -2865,9 +2865,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewFD->setAccess(AS_public);
   }
 
-  if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
-    AddOverriddenMethods(cast<CXXRecordDecl>(DC), NewMD);
-
   if (SC == FunctionDecl::Static && isa<CXXMethodDecl>(NewFD) &&
       !CurContext->isRecord()) {
     // C++ [class.static]p1:
@@ -3257,8 +3254,13 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD,
       // FIXME: C++0x: don't do this for "= default" destructors
       Record->setHasTrivialDestructor(false);
     } else if (CXXConversionDecl *Conversion
-               = dyn_cast<CXXConversionDecl>(NewFD))
+               = dyn_cast<CXXConversionDecl>(NewFD)) {
       ActOnConversionDeclarator(Conversion);
+    }
+
+    // Find any virtual functions that this function overrides.
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(NewFD))
+      AddOverriddenMethods(Method->getParent(), Method);
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
     if (NewFD->isOverloadedOperator() &&
@@ -3392,18 +3394,9 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     IntegerLiteral *IL;
     Expr *Init = static_cast<Expr *>(init.get());
     if ((IL = dyn_cast<IntegerLiteral>(Init)) && IL->getValue() == 0 &&
-        Context.getCanonicalType(IL->getType()) == Context.IntTy) {
-      if (Method->isVirtual()) {
-        Method->setPure();
-
-        // A class is abstract if at least one function is pure virtual.
-        cast<CXXRecordDecl>(CurContext)->setAbstract(true);
-      } else if (!Method->isInvalidDecl()) {
-        Diag(Method->getLocation(), diag::err_non_virtual_pure)
-          << Method->getDeclName() << Init->getSourceRange();
-        Method->setInvalidDecl();
-      }
-    } else {
+        Context.getCanonicalType(IL->getType()) == Context.IntTy)
+      CheckPureMethod(Method, Init->getSourceRange());
+    else {
       Diag(Method->getLocation(), diag::err_member_function_initialization)
         << Method->getDeclName() << Init->getSourceRange();
       Method->setInvalidDecl();

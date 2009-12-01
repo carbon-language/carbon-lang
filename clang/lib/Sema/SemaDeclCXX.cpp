@@ -4890,6 +4890,26 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
   return false;
 }
 
+/// \brief Mark the given method pure.
+///
+/// \param Method the method to be marked pure.
+///
+/// \param InitRange the source range that covers the "0" initializer.
+bool Sema::CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange) {
+  if (Method->isVirtual() || Method->getParent()->isDependentContext()) {
+    Method->setPure();
+    
+    // A class is abstract if at least one function is pure virtual.
+    Method->getParent()->setAbstract(true);
+    return false;
+  } 
+
+  if (!Method->isInvalidDecl())
+    Diag(Method->getLocation(), diag::err_non_virtual_pure)
+      << Method->getDeclName() << InitRange;
+  return true;
+}
+
 /// ActOnCXXEnterDeclInitializer - Invoked when we are about to parse an
 /// initializer for the declaration 'Dcl'.
 /// After this method is called, according to [C++ 3.4.1p13], if 'Dcl' is a

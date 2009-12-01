@@ -112,3 +112,16 @@ class X0 {
 class X1 : public X0 {
   void f0() = 0;
 };
+
+template <typename Base>
+struct Foo : Base { 
+  void f() = 0; // expected-error{{not virtual and cannot be declared pure}}
+};
+
+struct Base1 { virtual void f(); };
+struct Base2 { };
+
+void test() {
+  Foo<Base1> f1;
+  Foo<Base2> f2; // expected-note{{instantiation}}
+}

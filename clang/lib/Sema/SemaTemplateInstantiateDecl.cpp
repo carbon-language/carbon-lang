@@ -863,6 +863,9 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   SemaRef.CheckFunctionDeclaration(Method, Previous, false, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
+  if (D->isPure())
+    SemaRef.CheckPureMethod(Method, SourceRange());
+
   if (!FunctionTemplate && (!Method->isInvalidDecl() || Previous.empty()) &&
       !Method->getFriendObjectKind())
     Owner->addDecl(Method);
@@ -1358,10 +1361,6 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
     Record->setPOD(false);
     Record->setEmpty(false);
     Record->setPolymorphic(true);
-  }
-  if (Tmpl->isPure()) {
-    New->setPure();
-    Record->setAbstract(true);
   }
 
   // FIXME: attributes

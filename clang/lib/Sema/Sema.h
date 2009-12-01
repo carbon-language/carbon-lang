@@ -2208,6 +2208,7 @@ public:
   bool CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
                                          const CXXMethodDecl *Old);
 
+  bool CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange);
   //===--------------------------------------------------------------------===//
   // C++ Access Control
   //
