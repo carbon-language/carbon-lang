@@ -222,7 +222,7 @@ public:
   void setDiagnostics(Diagnostic *Value);
 
   DiagnosticClient &getDiagnosticClient() const {
-    assert(Target && "Compiler instance has no diagnostic client!");
+    assert(DiagClient && "Compiler instance has no diagnostic client!");
     return *DiagClient;
   }
 
