@@ -813,23 +813,23 @@ DW_TAG_return_variable = 258
 <pre>
 define void @foo() nounwind ssp {
 entry:
-  %X = alloca i32, align 4                        ; <i32*> [#uses=4]
-  %Y = alloca i32, align 4                        ; <i32*> [#uses=4]
-  %Z = alloca i32, align 4                        ; <i32*> [#uses=3]
-  %0 = bitcast i32* %X to { }*                    ; <{ }*> [#uses=1]
+  %X = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=4]
+  %Y = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=4]
+  %Z = alloca i32, align 4                        ; &lt;i32*&gt; [#uses=3]
+  %0 = bitcast i32* %X to { }*                    ; &lt;{ }*&gt; [#uses=1]
   call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7
   store i32 21, i32* %X, !dbg !8
-  %1 = bitcast i32* %Y to { }*                    ; <{ }*> [#uses=1]
+  %1 = bitcast i32* %Y to { }*                    ; &lt;{ }*&gt; [#uses=1]
   call void @llvm.dbg.declare({ }* %1, metadata !9), !dbg !10
   store i32 22, i32* %Y, !dbg !11
-  %2 = bitcast i32* %Z to { }*                    ; <{ }*> [#uses=1]
+  %2 = bitcast i32* %Z to { }*                    ; &lt;{ }*&gt; [#uses=1]
   call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
   store i32 23, i32* %Z, !dbg !15
-  %tmp = load i32* %X, !dbg !16                   ; <i32> [#uses=1]
-  %tmp1 = load i32* %Y, !dbg !16                  ; <i32> [#uses=1]
-  %add = add nsw i32 %tmp, %tmp1, !dbg !16        ; <i32> [#uses=1]
+  %tmp = load i32* %X, !dbg !16                   ; &lt;i32&gt; [#uses=1]
+  %tmp1 = load i32* %Y, !dbg !16                  ; &lt;i32&gt; [#uses=1]
+  %add = add nsw i32 %tmp, %tmp1, !dbg !16        ; &lt;i32&gt; [#uses=1]
   store i32 %add, i32* %Z, !dbg !16
-  %tmp2 = load i32* %Y, !dbg !17                  ; <i32> [#uses=1]
+  %tmp2 = load i32* %Y, !dbg !17                  ; &lt;i32&gt; [#uses=1]
   store i32 %tmp2, i32* %X, !dbg !17
   ret void, !dbg !18
 }
@@ -875,7 +875,7 @@ declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
    function.</p>
 
 <div class="doc_code">
-<pre> 
+<pre>
 call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7   
 </pre>
 </div>
@@ -910,7 +910,7 @@ call void @llvm.dbg.declare({ }* %0, metadata !0), !dbg !7
 <p>Now lets take another example.</p>
 
 <div class="doc_code">
-<pre> 
+<pre>
 call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
 </pre>
 </div>
