@@ -523,6 +523,11 @@ void clang::InitializePreprocessor(Preprocessor &PP,
       AddImplicitInclude(PredefineBuffer, Path);
   }
 
+  // Exit the command line and go back to <built-in> (2 is LC_LEAVE).
+  LineDirective = "# 1 \"<built-in>\" 2\n";
+  PredefineBuffer.insert(PredefineBuffer.end(),
+                         LineDirective, LineDirective+strlen(LineDirective));
+
   // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
   PP.setPredefines(&PredefineBuffer[0]);
