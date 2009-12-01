@@ -191,7 +191,13 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )
 add_llvm_definitions( -D__STDC_LIMIT_MACROS )
 add_llvm_definitions( -D__STDC_CONSTANT_MACROS )
 
-option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
+# MSVC has a gazillion warnings with this.
+if( MSVC )
+  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." OFF)
+else( MSVC )
+  option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
+endif()
+
 option(LLVM_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LLVM_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 
