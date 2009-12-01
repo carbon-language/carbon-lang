@@ -2092,17 +2092,15 @@ void DwarfDebug::endFunction(MachineFunction *MF) {
                                                MMI->getFrameMoves()));
 
   // Clear debug info
-  if (CurrentFnDbgScope) {
-    CurrentFnDbgScope = NULL;
-    DbgScopeMap.clear();
-    DbgScopeBeginMap.clear();
-    DbgScopeEndMap.clear();
-    ConcreteScopes.clear();
-    AbstractScopesList.clear();
-  }
+  CurrentFnDbgScope = NULL;
+  DbgScopeMap.clear();
+  DbgScopeBeginMap.clear();
+  DbgScopeEndMap.clear();
+  ConcreteScopes.clear();
+  AbstractScopesList.clear();
 
   Lines.clear();
-
+  
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
 }
