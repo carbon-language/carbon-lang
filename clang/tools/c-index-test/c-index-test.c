@@ -168,6 +168,38 @@ int perform_test_load_tu(const char *file, const char *filter) {
   return 0;
 }
 
+int perform_test_load_source(int argc, const char **argv, const char *filter) {
+  CXIndex Idx;
+  CXTranslationUnit TU;
+  enum CXCursorKind K = CXCursor_NotImplemented;
+  enum CXCursorKind *ck = &K;
+  Idx = clang_createIndex(/* excludeDeclsFromPCH */
+                          !strcmp(filter, "local") ? 1 : 0,
+                          /* displayDiagnostics */ 1);
+
+  TU = clang_createTranslationUnitFromSourceFile(Idx, 0, argc, argv);
+  if (!TU) {
+    fprintf(stderr, "Unable to load translation unit!\n");
+    return 1;
+  }
+
+  /* Perform some simple filtering. */
+  if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
+  else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
+  else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
+  else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
+  else if (!strcmp(filter, "function")) K = CXCursor_FunctionDecl;
+  else if (!strcmp(filter, "typedef")) K = CXCursor_TypedefDecl;
+  else {
+    fprintf(stderr, "Unknown filter for -test-load-tu: %s\n", filter);
+    return 1;
+  }
+  
+  clang_loadTranslationUnit(TU, TranslationUnitVisitor, ck);
+  clang_disposeTranslationUnit(TU);
+  return 0;
+}
+
 /******************************************************************************/
 /* Logic for testing clang_getCursor().                                       */
 /******************************************************************************/
@@ -394,7 +426,8 @@ static void print_usage(void) {
     "       c-index-test -test-file-scan <AST file> <source file> "
           "[FileCheck prefix]\n"
     "       c-index-test -test-load-tu <AST file> <symbol filter>\n\n"
-    " <symbol filter> options for -test-load-tu:\n%s",
+    "       c-index-test -test-load-source <symbol filter> {<args>}*\n\n"
+    " <symbol filter> options for -test-load-tu and -test-load-source:\n%s",
     "   all - load all symbols, including those from PCH\n"
     "   local - load all symbols except those in PCH\n"
     "   category - only load ObjC categories (non-PCH)\n"
@@ -409,6 +442,8 @@ int main(int argc, const char **argv) {
     return perform_code_completion(argc, argv);
   if (argc == 4 && strcmp(argv[1], "-test-load-tu") == 0)
     return perform_test_load_tu(argv[2], argv[3]);
+  if (argc >= 4 && strcmp(argv[1], "-test-load-source") == 0)
+    return perform_test_load_source(argc - 3, argv + 3, argv[2]);
   if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)
     return perform_file_scan(argv[2], argv[3],
                              argc >= 5 ? argv[4] : 0);
