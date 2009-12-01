@@ -1938,6 +1938,10 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
     if (Overlaps) {
       // If we haven't already recorded that this value # is safe, check it.
       if (!InVector(LHSIt->valno, EliminatedLHSVals)) {
+        // If it's re-defined by an early clobber somewhere in the live range,
+        // then conservatively abort coalescing.
+        if (LHSIt->valno->hasRedefByEC())
+          return false;
         // Copy from the RHS?
         if (!RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg))
           return false;    // Nope, bail out.
@@ -1977,6 +1981,10 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
           // if coalescing succeeds.  Just skip the liverange.
           if (++LHSIt == LHSEnd) break;
         } else {
+          // If it's re-defined by an early clobber somewhere in the live range,
+          // then conservatively abort coalescing.
+          if (LHSIt->valno->hasRedefByEC())
+            return false;
           // Otherwise, if this is a copy from the RHS, mark it as being merged
           // in.
           if (RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg)) {
@@ -2315,6 +2323,10 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
       // result liverange, we can still coalesce them.  If not, we can't.
       if (LHSValNoAssignments[I->valno->id] !=
           RHSValNoAssignments[J->valno->id])
+        return false;
+      // If it's re-defined by an early clobber somewhere in the live range,
+      // then conservatively abort coalescing.
+      if (NewVNInfo[LHSValNoAssignments[I->valno->id]]->hasRedefByEC())
         return false;
     }
 

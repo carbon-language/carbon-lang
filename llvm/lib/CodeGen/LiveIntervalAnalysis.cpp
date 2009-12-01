@@ -374,8 +374,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // Value#0 is now defined by the 2-addr instruction.
       OldValNo->def  = RedefIndex;
       OldValNo->setCopy(0);
-      if (MO.isEarlyClobber())
-        OldValNo->setHasRedefByEC(true);
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
@@ -513,8 +511,6 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
         if (mi->isRegTiedToUseOperand(DefIdx)) {
           // Two-address instruction.
           end = baseIndex.getDefIndex();
-          assert(!mi->getOperand(DefIdx).isEarlyClobber() &&
-                 "Two address instruction is an early clobber?"); 
         } else {
           // Another instruction redefines the register before it is ever read.
           // Then the register is essentially dead at the instruction that defines
