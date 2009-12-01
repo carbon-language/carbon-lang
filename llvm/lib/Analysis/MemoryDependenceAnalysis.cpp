@@ -172,7 +172,7 @@ MemDepResult MemoryDependenceAnalysis::
 getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad, 
                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
 
-  Value *invariantTag = 0;
+  Value *InvariantTag = 0;
 
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
@@ -180,8 +180,8 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
 
     // If we're in an invariant region, no dependencies can be found before
     // we pass an invariant-begin marker.
-    if (invariantTag == Inst) {
-      invariantTag = 0;
+    if (InvariantTag == Inst) {
+      InvariantTag = 0;
       continue;
     }
     
@@ -189,14 +189,14 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       // If we pass an invariant-end marker, then we've just entered an
       // invariant region and can start ignoring dependencies.
       if (II->getIntrinsicID() == Intrinsic::invariant_end) {
-        uint64_t invariantSize = ~0ULL;
+        uint64_t InvariantSize = ~0ULL;
         if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(2)))
-          invariantSize = CI->getZExtValue();
+          InvariantSize = CI->getZExtValue();
         
         AliasAnalysis::AliasResult R =
-          AA->alias(II->getOperand(3), invariantSize, MemPtr, MemSize);
+          AA->alias(II->getOperand(3), InvariantSize, MemPtr, MemSize);
         if (R == AliasAnalysis::MustAlias) {
-          invariantTag = II->getOperand(1);
+          InvariantTag = II->getOperand(1);
           continue;
         }
       
@@ -204,12 +204,12 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       // because the value is undefined.
       } else if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
                  II->getIntrinsicID() == Intrinsic::lifetime_end) {
-        uint64_t invariantSize = ~0ULL;
+        uint64_t InvariantSize = ~0ULL;
         if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(1)))
-          invariantSize = CI->getZExtValue();
+          InvariantSize = CI->getZExtValue();
 
         AliasAnalysis::AliasResult R =
-          AA->alias(II->getOperand(2), invariantSize, MemPtr, MemSize);
+          AA->alias(II->getOperand(2), InvariantSize, MemPtr, MemSize);
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(II);
       }
@@ -217,7 +217,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
 
     // If we're querying on a load and we're in an invariant region, we're done
     // at this point. Nothing a load depends on can live in an invariant region.
-    if (isLoad && invariantTag) continue;
+    if (isLoad && InvariantTag) continue;
 
     // Debug intrinsics don't cause dependences.
     if (isa<DbgInfoIntrinsic>(Inst)) continue;
@@ -245,7 +245,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // There can't be stores to the value we care about inside an 
       // invariant region.
-      if (invariantTag) continue;
+      if (InvariantTag) continue;
       
       // If alias analysis can tell that this store is guaranteed to not modify
       // the query pointer, ignore it.  Use getModRefInfo to handle cases where
@@ -294,7 +294,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     case AliasAnalysis::Mod:
       // If we're in an invariant region, we can ignore calls that ONLY
       // modify the pointer.
-      if (invariantTag) continue;
+      if (InvariantTag) continue;
       return MemDepResult::getClobber(Inst);
     case AliasAnalysis::Ref:
       // If the call is known to never store to the pointer, and if this is a
