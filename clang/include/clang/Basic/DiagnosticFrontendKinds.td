@@ -17,6 +17,8 @@ def err_fe_invalid_ast_file : Error<"invalid AST file: '%0'">, DefaultFatal;
 def err_fe_invalid_ast_action : Error<"invalid action for AST input">, DefaultFatal;
 def err_fe_invalid_code_complete_file
   : Error<"cannot locate code-completion file %0">, DefaultFatal;
+def err_fe_stdout_binary : Error<"unable to change standard output to binary">,
+  DefaultFatal;
 def err_fe_dependency_file_requires_MT : Error<
     "-dependency-file requires at least one -MT option">;
 def err_fe_incompatible_options : Error<

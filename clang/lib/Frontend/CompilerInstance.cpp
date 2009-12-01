@@ -29,6 +29,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Program.h"
 using namespace clang;
 
 CompilerInstance::CompilerInstance(llvm::LLVMContext *_LLVMContext,
@@ -256,6 +257,12 @@ void CompilerInstance::createCodeCompletionConsumer() {
                                  getFrontendOpts().DebugCodeCompletionPrinter,
                                  getFrontendOpts().ShowMacrosInCodeCompletion,
                                  llvm::outs()));
+
+  if (CompletionConsumer->isOutputBinary() &&
+      llvm::sys::Program::ChangeStdoutToBinary()) {
+    getPreprocessor().getDiagnostics().Report(diag::err_fe_stdout_binary);
+    CompletionConsumer.reset();
+  }
 }
 
 void CompilerInstance::createFrontendTimer() {

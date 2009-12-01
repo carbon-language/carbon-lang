@@ -209,7 +209,8 @@ public:
   void Serialize(llvm::raw_ostream &OS) const;
   
   /// \brief Deserialize a code-completion string from the given string.
-  static CodeCompletionString *Deserialize(llvm::StringRef &Str);  
+  static CodeCompletionString *Deserialize(const char *&Str, 
+                                           const char *StrEnd);
 };
   
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, 
@@ -221,6 +222,10 @@ class CodeCompleteConsumer {
 protected:
   /// \brief Whether to include macros in the code-completion results.
   bool IncludeMacros;
+
+  /// \brief Whether the output format for the code-completion consumer is
+  /// binary.
+  bool OutputIsBinary;
   
 public:
   /// \brief Captures a result of code completion.
@@ -394,17 +399,20 @@ public:
                                                 Sema &S) const;    
   };
   
-  CodeCompleteConsumer() : IncludeMacros(false) { }
+  CodeCompleteConsumer() : IncludeMacros(false), OutputIsBinary(false) { }
   
-  explicit CodeCompleteConsumer(bool IncludeMacros)
-    : IncludeMacros(IncludeMacros) { }
+  CodeCompleteConsumer(bool IncludeMacros, bool OutputIsBinary)
+    : IncludeMacros(IncludeMacros), OutputIsBinary(OutputIsBinary) { }
   
   /// \brief Whether the code-completion consumer wants to see macros.
   bool includeMacros() const { return IncludeMacros; }
+
+  /// \brief Determine whether the output of this consumer is binary.
+  bool isOutputBinary() const { return OutputIsBinary; }
   
   /// \brief Deregisters and destroys this code-completion consumer.
   virtual ~CodeCompleteConsumer();
-    
+
   /// \name Code-completion callbacks
   //@{
   /// \brief Process the finalized code-completion results.
@@ -436,7 +444,7 @@ public:
   /// results to the given raw output stream.
   PrintingCodeCompleteConsumer(bool IncludeMacros,
                                llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros), OS(OS) { }
+    : CodeCompleteConsumer(IncludeMacros, false), OS(OS) { }
   
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Sema &S, Result *Results,
@@ -458,7 +466,7 @@ public:
   /// results to the given raw output stream in a format readable to the CIndex
   /// library.
   CIndexCodeCompleteConsumer(bool IncludeMacros, llvm::raw_ostream &OS)
-    : CodeCompleteConsumer(IncludeMacros), OS(OS) { }
+    : CodeCompleteConsumer(IncludeMacros, true), OS(OS) { }
   
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Sema &S, Result *Results, 

@@ -801,17 +801,26 @@ CodeCompletionString *
 CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   typedef CodeCompletionString::Chunk Chunk;
   
-  if (Kind == RK_Keyword)
-    return 0;
+  if (Kind == RK_Pattern)
+    return Pattern->Clone();
+  
+  CodeCompletionString *Result = new CodeCompletionString;
+
+  if (Kind == RK_Keyword) {
+    Result->AddTypedTextChunk(Keyword);
+    return Result;
+  }
   
   if (Kind == RK_Macro) {
     MacroInfo *MI = S.PP.getMacroInfo(Macro);
-    if (!MI || !MI->isFunctionLike())
-      return 0;
+    assert(MI && "Not a macro?");
+
+    Result->AddTypedTextChunk(Macro->getName());
+
+    if (!MI->isFunctionLike())
+      return Result;
     
     // Format a function-like macro with placeholders for the arguments.
-    CodeCompletionString *Result = new CodeCompletionString;
-    Result->AddTypedTextChunk(Macro->getName());
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     for (MacroInfo::arg_iterator A = MI->arg_begin(), AEnd = MI->arg_end();
          A != AEnd; ++A) {
@@ -843,14 +852,12 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   NamedDecl *ND = Declaration;
   
   if (StartsNestedNameSpecifier) {
-    CodeCompletionString *Result = new CodeCompletionString;
     Result->AddTypedTextChunk(ND->getNameAsString());
     Result->AddTextChunk("::");
     return Result;
   }
   
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
-    CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
     Result->AddTypedTextChunk(Function->getNameAsString());
@@ -861,7 +868,6 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   }
   
   if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND)) {
-    CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
@@ -915,7 +921,6 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   }
   
   if (TemplateDecl *Template = dyn_cast<TemplateDecl>(ND)) {
-    CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
     Result->AddTypedTextChunk(Template->getNameAsString());
@@ -926,7 +931,6 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   }
   
   if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND)) {
-    CodeCompletionString *Result = new CodeCompletionString;
     Selector Sel = Method->getSelector();
     if (Sel.isUnarySelector()) {
       Result->AddTypedTextChunk(Sel.getIdentifierInfoForSlot(0)->getName());
@@ -982,15 +986,12 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     return Result;
   }
 
-  if (Qualifier) {
-    CodeCompletionString *Result = new CodeCompletionString;
+  if (Qualifier)
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
-    Result->AddTypedTextChunk(ND->getNameAsString());
-    return Result;
-  }
-  
-  return 0;
+
+  Result->AddTypedTextChunk(ND->getNameAsString());
+  return Result;
 }
 
 CodeCompletionString *

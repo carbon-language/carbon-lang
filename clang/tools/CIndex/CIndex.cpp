@@ -24,7 +24,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -1128,31 +1127,14 @@ unsigned clang_getNumCompletionChunks(CXCompletionString completion_string) {
   return CCStr? CCStr->size() : 0;
 }
 
-static CXCursorKind parseResultKind(llvm::StringRef Str) {
-  return llvm::StringSwitch<CXCursorKind>(Str)
-    .Case("Typedef", CXCursor_TypedefDecl)
-    .Case("Struct", CXCursor_StructDecl)
-    .Case("Union", CXCursor_UnionDecl)
-    .Case("Class", CXCursor_ClassDecl)
-    .Case("Enum", CXCursor_EnumDecl)
-    .Case("Field", CXCursor_FieldDecl)
-    .Case("EnumConstant", CXCursor_EnumConstantDecl)
-    .Case("Function", CXCursor_FunctionDecl)
-    // FIXME: Hacks here to make C++ member functions look like C functions
-    .Case("CXXMethod", CXCursor_FunctionDecl)
-    .Case("CXXConstructor", CXCursor_FunctionDecl)
-    .Case("CXXDestructor", CXCursor_FunctionDecl)
-    .Case("CXXConversion", CXCursor_FunctionDecl)
-    .Case("Var", CXCursor_VarDecl)
-    .Case("ParmVar", CXCursor_ParmDecl)
-    .Case("ObjCInterface", CXCursor_ObjCInterfaceDecl)
-    .Case("ObjCCategory", CXCursor_ObjCCategoryDecl)
-    .Case("ObjCProtocol", CXCursor_ObjCProtocolDecl)
-    .Case("ObjCProperty", CXCursor_ObjCPropertyDecl)
-    .Case("ObjCIvar", CXCursor_ObjCIvarDecl)
-    .Case("ObjCInstanceMethod", CXCursor_ObjCInstanceMethodDecl)
-    .Case("ObjCClassMethod", CXCursor_ObjCClassMethodDecl)
-    .Default(CXCursor_NotImplemented);
+static bool ReadUnsigned(const char *&Memory, const char *MemoryEnd,
+                         unsigned &Value) {
+  if (Memory + sizeof(unsigned) > MemoryEnd)
+    return true;
+
+  memmove(&Value, Memory, sizeof(unsigned));
+  Memory += sizeof(unsigned);
+  return false;
 }
 
 void clang_codeComplete(CXIndex CIdx,
@@ -1248,80 +1230,28 @@ void clang_codeComplete(CXIndex CIdx,
   using llvm::StringRef;
   if (MemoryBuffer *F = MemoryBuffer::getFile(ResultsFile.c_str())) {
     StringRef Buffer = F->getBuffer();
-    do {
-      StringRef::size_type CompletionIdx = Buffer.find("COMPLETION:");
-      StringRef::size_type OverloadIdx = Buffer.find("OVERLOAD:");
-      if (CompletionIdx == StringRef::npos && OverloadIdx == StringRef::npos)
+    for (const char *Str = Buffer.data(), *StrEnd = Str + Buffer.size();
+         Str < StrEnd;) {
+      unsigned KindValue;
+      if (ReadUnsigned(Str, StrEnd, KindValue))
         break;
 
-      if (OverloadIdx < CompletionIdx) {
-        // Parse an overload result.
-        Buffer = Buffer.substr(OverloadIdx);
+      CodeCompletionString *CCStr 
+        = CodeCompletionString::Deserialize(Str, StrEnd);
+      if (!CCStr)
+        continue;
 
-        // Skip past the OVERLOAD:
-        Buffer = Buffer.substr(Buffer.find(':') + 1);
-
-        // Find the entire completion string.
-        StringRef::size_type EOL = Buffer.find_first_of("\n\r");
-        if (EOL == StringRef::npos)
-          continue;
-
-        StringRef Line = Buffer.substr(0, EOL);
-        Buffer = Buffer.substr(EOL + 1);
-        CodeCompletionString *CCStr = CodeCompletionString::Deserialize(Line);
-        if (!CCStr || CCStr->empty())
-          continue;
-
+      if (!CCStr->empty()) {
         // Vend the code-completion result to the caller.
         CXCompletionResult Result;
-        Result.CursorKind = CXCursor_NotImplemented;
+        Result.CursorKind = (CXCursorKind)KindValue;
         Result.CompletionString = CCStr;
         if (completion_iterator)
           completion_iterator(&Result, client_data);
-        delete CCStr;
-
-        continue;
       }
 
-      // Parse a completion result.
-      Buffer = Buffer.substr(CompletionIdx);
-
-      // Skip past the COMPLETION:
-      Buffer = Buffer.substr(Buffer.find(':') + 1);
-
-      // Get the rank
-      unsigned Rank = 0;
-      StringRef::size_type AfterRank = Buffer.find(':');
-      Buffer.substr(0, AfterRank).getAsInteger(10, Rank);
-      Buffer = Buffer.substr(AfterRank + 1);
-
-      // Get the kind of result.
-      StringRef::size_type AfterKind = Buffer.find(':');
-      StringRef Kind = Buffer.substr(0, AfterKind);
-      Buffer = Buffer.substr(AfterKind + 1);
-
-      // Skip over any whitespace.
-      Buffer = Buffer.substr(Buffer.find_first_not_of(" \t"));
-
-      // Find the entire completion string.
-      StringRef::size_type EOL = Buffer.find_first_of("\n\r");
-      if (EOL == StringRef::npos)
-        continue;
-
-      StringRef Line = Buffer.substr(0, EOL);
-      Buffer = Buffer.substr(EOL + 1);
-      CodeCompletionString *CCStr = CodeCompletionString::Deserialize(Line);
-      if (!CCStr || CCStr->empty())
-        continue;
-
-      // Vend the code-completion result to the caller.
-      CXCompletionResult Result;
-      Result.CursorKind = parseResultKind(Kind);
-      Result.CompletionString = CCStr;
-      if (completion_iterator)
-        completion_iterator(&Result, client_data);
       delete CCStr;
-    } while (true);
+    };
     delete F;
   }
 
