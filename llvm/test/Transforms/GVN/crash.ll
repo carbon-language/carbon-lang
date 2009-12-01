@@ -75,7 +75,6 @@ entry:
 
 bb69.i:                                           ; preds = %bb57.i.preheader
   %tmp4 = getelementptr inbounds [4 x %struct.attribute_spec*]* @attribute_tables, i32 0, i32 undef ; <%struct.attribute_spec**> [#uses=1]
-  %tmp5 = getelementptr inbounds [4 x %struct.attribute_spec*]* @attribute_tables, i32 0, i32 undef ; <%struct.attribute_spec**> [#uses=1]
   %tmp3 = load %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
   br label %bb65.i
 
@@ -83,7 +82,7 @@ bb65.i:                                           ; preds = %bb65.i.preheader, %
   %storemerge6.i = phi i32 [ 1, %bb64.i ], [ 0, %bb69.i ] ; <i32> [#uses=3]
   %scevgep14 = getelementptr inbounds %struct.attribute_spec* %tmp3, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=1]
   %tmp2 = load i8** %scevgep14, align 4           ; <i8*> [#uses=0]
-  %tmp = load %struct.attribute_spec** %tmp5, align 4 ; <%struct.attribute_spec*> [#uses=1]
+  %tmp = load %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
   %scevgep1516 = getelementptr inbounds %struct.attribute_spec* %tmp, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=0]
   unreachable
 
