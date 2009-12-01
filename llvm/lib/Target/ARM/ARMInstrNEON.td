@@ -152,7 +152,7 @@ def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr),
   let Inst{24}    = 0; // P bit
   let Inst{23}    = 1; // U bit
   let Inst{20}    = 1;
-  let Inst{11-9}  = 0b101;
+  let Inst{11-8}  = 0b1011;
 }
 
 // Use vstmia to store a Q register as a D register pair.
@@ -164,7 +164,7 @@ def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr),
   let Inst{24}    = 0; // P bit
   let Inst{23}    = 1; // U bit
   let Inst{20}    = 0;
-  let Inst{11-9}  = 0b101;
+  let Inst{11-8}  = 0b1011;
 }
 
 //   VLD1     : Vector Load (multiple single elements)
