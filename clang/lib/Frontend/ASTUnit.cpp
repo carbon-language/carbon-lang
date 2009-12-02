@@ -30,7 +30,6 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 using namespace clang;
@@ -200,7 +199,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
                                              bool OnlyLocalDecls,
                                              bool UseBumpAllocator) {
   // Create the compiler instance to use for building the AST.
-  CompilerInstance Clang(&llvm::getGlobalContext(), false);
+  CompilerInstance Clang;
   llvm::OwningPtr<ASTUnit> AST;
   NullAction Act;
 
