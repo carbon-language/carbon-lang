@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace clang {
@@ -41,6 +42,21 @@ public:
   /// If given, a PTH cache file to use for speeding up header parsing.
   std::string TokenCache;
 
+  /// \brief The set of file remappings, which take existing files on
+  /// the system (the first part of each pair) and gives them the
+  /// contents of other files on the system (the second part of each
+  /// pair).
+  std::vector<std::pair<std::string, std::string> >  RemappedFiles;
+
+  typedef std::vector<std::pair<std::string, std::string> >::const_iterator
+    remapped_file_iterator;
+  remapped_file_iterator remapped_file_begin() const { 
+    return RemappedFiles.begin();
+  }
+  remapped_file_iterator remapped_file_end() const { 
+    return RemappedFiles.end();
+  }
+
 public:
   PreprocessorOptions() : UsePredefines(true) {}
 
@@ -49,6 +65,9 @@ public:
   }
   void addMacroUndef(llvm::StringRef Name) {
     Macros.push_back(std::make_pair(Name, true));
+  }
+  void addRemappedFile(llvm::StringRef From, llvm::StringRef To) {
+    RemappedFiles.push_back(std::make_pair(From, To));
   }
 };
 

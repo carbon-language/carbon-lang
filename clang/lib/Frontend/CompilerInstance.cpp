@@ -190,6 +190,45 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
     PP->setPTHManager(PTHMgr);
   }
 
+  // Remap files in the source manager.
+  for (PreprocessorOptions::remapped_file_iterator
+         Remap = PPOpts.remapped_file_begin(),
+         RemapEnd = PPOpts.remapped_file_end();
+       Remap != RemapEnd;
+       ++Remap) {
+    // Find the file that we're mapping to.
+    const FileEntry *ToFile = FileMgr.getFile(Remap->second);
+    if (!ToFile) {
+      Diags.Report(diag::err_fe_remap_missing_to_file)
+        << Remap->first << Remap->second;
+      continue;
+    }
+
+    // Find the file that we're mapping from.
+    const FileEntry *FromFile = FileMgr.getFile(Remap->first);
+    if (!FromFile) {
+      // FIXME: We could actually recover from this, by faking a
+      // FileEntry based on the "ToFile".
+      Diags.Report(diag::err_fe_remap_missing_from_file)
+        << Remap->first;
+      continue;
+    }
+
+    // Load the contents of the file we're mapping to.
+    std::string ErrorStr;
+    const llvm::MemoryBuffer *Buffer
+      = llvm::MemoryBuffer::getFile(ToFile->getName(), &ErrorStr);
+    if (!Buffer) {
+      Diags.Report(diag::err_fe_error_opening)
+        << Remap->second << ErrorStr;
+      continue;
+    }
+
+    // Override the contents of the "from" file with the contents of
+    // the "to" file.
+    SourceMgr.overrideFileContents(FromFile, Buffer);
+  }
+
   InitializePreprocessor(*PP, PPOpts, HSOpts);
 
   // Handle generating dependencies, if requested.

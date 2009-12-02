@@ -673,6 +673,10 @@ static llvm::cl::opt<bool>
 UndefMacros("undef", llvm::cl::value_desc("macro"),
             llvm::cl::desc("undef all system defines"));
 
+static llvm::cl::list<std::string>
+RemappedFiles("remap-file", llvm::cl::value_desc("<from>;<to>"),
+              llvm::cl::desc("replace the contents of the <from> file with the contents of the <to> file"));
+
 }
 
 //===----------------------------------------------------------------------===//
@@ -1071,6 +1075,20 @@ void clang::InitializePreprocessorOptions(PreprocessorOptions &Opts) {
 
   for (unsigned i = 0, e = OrderedPaths.size(); i != e; ++i)
     Opts.Includes.push_back(*OrderedPaths[i].second);
+
+  // Handle file remapping.
+  for (unsigned i = 0, e = RemappedFiles.size(); i != e; ++i) {
+    std::string::size_type Semi = RemappedFiles[i].find(';');
+    if (Semi == std::string::npos) {
+      // FIXME: Don't fail like this.
+      fprintf(stderr, 
+              "error: -remap-file not of the form <from-file>;<to-file>\n");
+      continue;
+    }
+
+    Opts.addRemappedFile(llvm::StringRef(RemappedFiles[i].c_str(), Semi),
+                         llvm::StringRef(RemappedFiles[i].c_str() + Semi + 1));
+  }
 }
 
 void clang::InitializeLangOptions(LangOptions &Options,
