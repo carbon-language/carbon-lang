@@ -104,6 +104,34 @@ enum CXCursorKind {
  CXCursor_LastInvalid                   = 72
 };
 
+/**
+ * \brief Provides the contents of a file that has not yet been saved to disk.
+ *
+ * Each CXUnsavedFile instance provides the name of a file on the
+ * system along with the current contents of that file that have not
+ * yet been saved to disk.
+ */
+struct CXUnsavedFile {
+  /** 
+   * \brief The file whose contents have not yet been saved. 
+   *
+   * This file must already exist in the file system.
+   */
+  const char *Filename;
+
+  /** 
+   * \brief A null-terminated buffer containing the unsaved contents
+   * of this file.
+   */
+  const char *Contents;
+
+  /**
+   * \brief The length of the unsaved contents of this buffer, not
+   * counting the NULL at the end of the buffer.
+   */
+  unsigned long Length;
+};
+
 /* A cursor into the CXTranslationUnit. */
 
 typedef struct {
@@ -621,6 +649,13 @@ clang_getNumCompletionChunks(CXCompletionString completion_string);
  * includes, etc., but should not include any information specific to 
  * code completion.
  *
+ * \param num_unsaved_files the number of unsaved file entries in \p
+ * unsaved_files.
+ *
+ * \param unsaved_files the files that have not yet been saved to disk
+ * but may be required for code completion, including the contents of
+ * those files.
+ *
  * \param complete_filename the name of the source file where code completion
  * should be performed. In many cases, this name will be the same as the
  * source filename. However, the completion filename may also be a file 
@@ -643,6 +678,8 @@ CINDEX_LINKAGE void clang_codeComplete(CXIndex CIdx,
                                        const char *source_filename,
                                        int num_command_line_args, 
                                        const char **command_line_args,
+                                       unsigned num_unsaved_files,
+                                       struct CXUnsavedFile *unsaved_files,
                                        const char *complete_filename,
                                        unsigned complete_line,
                                        unsigned complete_column,

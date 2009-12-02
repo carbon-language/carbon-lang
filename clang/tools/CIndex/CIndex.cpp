@@ -1141,6 +1141,8 @@ void clang_codeComplete(CXIndex CIdx,
                         const char *source_filename,
                         int num_command_line_args,
                         const char **command_line_args,
+                        unsigned num_unsaved_files,
+                        struct CXUnsavedFile *unsaved_files,
                         const char *complete_filename,
                         unsigned complete_line,
                         unsigned complete_column,
@@ -1148,6 +1150,9 @@ void clang_codeComplete(CXIndex CIdx,
                         CXClientData client_data)  {
   // The indexer, which is mainly used to determine where diagnostics go.
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+
+  // The set of temporary files that we've built.
+  std::vector<llvm::sys::Path> TemporaryFiles;
 
   // Build up the arguments for invoking 'clang'.
   std::vector<const char *> argv;
@@ -1173,6 +1178,40 @@ void clang_codeComplete(CXIndex CIdx,
   argv.push_back(code_complete_at.c_str());
   argv.push_back("-Xclang");
   argv.push_back("-no-code-completion-debug-printer");
+
+  std::vector<std::string> RemapArgs;
+  for (unsigned i = 0; i != num_unsaved_files; ++i) {
+    char tmpFile[L_tmpnam];
+    char *tmpFileName = tmpnam(tmpFile);
+
+    // Write the contents of this unsaved file into the temporary file.
+    llvm::sys::Path SavedFile(tmpFileName);
+    std::string ErrorInfo;
+    llvm::raw_fd_ostream OS(SavedFile.c_str(), ErrorInfo);
+    if (!ErrorInfo.empty())
+      continue;
+    
+    OS.write(unsaved_files[i].Contents, unsaved_files[i].Length);
+    OS.close();
+    if (OS.has_error()) {
+      SavedFile.eraseFromDisk();
+      continue;
+    }
+
+    // Remap the file.
+    std::string RemapArg = "-remap-file=";
+    RemapArg += unsaved_files[i].Filename;
+    RemapArg += ';';
+    RemapArg += tmpFileName;
+    RemapArgs.push_back("-Xclang");
+    RemapArgs.push_back(RemapArg);
+    TemporaryFiles.push_back(SavedFile);
+  }
+
+  // The pointers into the elements of RemapArgs are stable because we
+  // won't be adding anything to RemapArgs after this point.
+  for (unsigned i = 0, e = RemapArgs.size(); i != e; ++i)
+    argv.push_back(RemapArgs[i].c_str());
 
   // Add the source file name (FIXME: later, we'll want to build temporary
   // file from the buffer, or just feed the source text via standard input).
@@ -1203,6 +1242,7 @@ void clang_codeComplete(CXIndex CIdx,
   char tmpFile[L_tmpnam];
   char *tmpFileName = tmpnam(tmpFile);
   llvm::sys::Path ResultsFile(tmpFileName);
+  TemporaryFiles.push_back(ResultsFile);
 
   // Invoke 'clang'.
   llvm::sys::Path DevNull; // leave empty, causes redirection to /dev/null
@@ -1255,7 +1295,8 @@ void clang_codeComplete(CXIndex CIdx,
     delete F;
   }
 
-  ResultsFile.eraseFromDisk();
+  for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
+    TemporaryFiles[i].eraseFromDisk();
 }
 
 } // end extern "C"

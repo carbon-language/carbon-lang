@@ -389,6 +389,91 @@ void print_completion_result(CXCompletionResult *completion_result,
   fprintf(file, "\n");
 }
 
+void free_remapped_files(struct CXUnsavedFile *unsaved_files,
+                         int num_unsaved_files) {
+  int i;
+  for (i = 0; i != num_unsaved_files; ++i) {
+    free((char *)unsaved_files[i].Filename);
+    free((char *)unsaved_files[i].Contents);
+  }
+}
+
+int parse_remapped_files(int argc, const char **argv, int start_arg,
+                         struct CXUnsavedFile **unsaved_files,
+                          int *num_unsaved_files) {
+  int i;
+  int arg;
+  int prefix_len = strlen("-remap-file=");
+  *unsaved_files = 0;
+  *num_unsaved_files = 0;
+
+  /* Count the number of remapped files. */
+  for (arg = start_arg; arg < argc; ++arg) {
+    if (strncmp(argv[arg], "-remap-file=", prefix_len))
+      break;
+
+    ++*num_unsaved_files;
+  }
+
+  if (*num_unsaved_files == 0)
+    return 0;
+
+  *unsaved_files
+    = (struct CXUnsavedFile *)malloc(sizeof(struct CXUnsavedFile) * 
+                                     *num_unsaved_files);
+  for (arg = start_arg, i = 0; i != *num_unsaved_files; ++i, ++arg) {
+    struct CXUnsavedFile *unsaved = *unsaved_files + i;
+    const char *arg_string = argv[arg] + prefix_len;
+    int filename_len;
+    char *filename;
+    char *contents;
+    FILE *to_file;
+    const char *semi = strchr(arg_string, ';');
+    if (!semi) {
+      fprintf(stderr, 
+              "error: -remap-file=from;to argument is missing semicolon\n");
+      free_remapped_files(*unsaved_files, i);
+      *unsaved_files = 0;
+      *num_unsaved_files = 0;
+      return -1;
+    }
+
+    /* Open the file that we're remapping to. */
+    to_file = fopen(semi + 1, "r");
+    if (!to_file) {
+      fprintf(stderr, "error: cannot open file %s that we are remapping to\n",
+              semi + 1);
+      free_remapped_files(*unsaved_files, i);
+      *unsaved_files = 0;
+      *num_unsaved_files = 0;
+      return -1;
+    }
+
+    /* Determine the length of the file we're remapping to. */
+    fseek(to_file, 0, SEEK_END);
+    unsaved->Length = ftell(to_file);
+    fseek(to_file, 0, SEEK_SET);
+    
+    /* Read the contents of the file we're remapping to. */
+    contents = (char *)malloc(unsaved->Length + 1);
+    fread(contents, 1, unsaved->Length, to_file);
+    contents[unsaved->Length] = 0;
+    unsaved->Contents = contents;
+
+    /* Close the file. */
+    fclose(to_file);
+    
+    /* Copy the file name that we're remapping from. */
+    filename_len = semi - arg_string;
+    filename = (char *)malloc(filename_len + 1);
+    memcpy(filename, arg_string, filename_len);
+    filename[filename_len] = 0;
+    unsaved->Filename = filename;
+  }
+
+  return 0;
+}
+
 int perform_code_completion(int argc, const char **argv) {
   const char *input = argv[1];
   char *filename = 0;
@@ -396,17 +481,26 @@ int perform_code_completion(int argc, const char **argv) {
   unsigned column;
   CXIndex CIdx;
   int errorCode;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
 
   input += strlen("-code-completion-at=");
   if ((errorCode = parse_file_line_column(input, &filename, &line, &column)))
     return errorCode;
 
+  if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
+    return -1;
+
   CIdx = clang_createIndex(0, 0);
-  clang_codeComplete(CIdx, argv[argc - 1], argc - 3, argv + 2, 
+  clang_codeComplete(CIdx, argv[argc - 1], argc - num_unsaved_files - 3, 
+                     argv + num_unsaved_files + 2, 
+                     num_unsaved_files, unsaved_files,
                      filename, line, column, &print_completion_result, stdout);
   clang_disposeIndex(CIdx);
   free(filename);
   
+  free_remapped_files(unsaved_files, num_unsaved_files);
+
   return 0;
 }
 
