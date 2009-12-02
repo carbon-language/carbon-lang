@@ -2149,6 +2149,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     // Don't call addedAssignmentOperator. There is no way to distinguish an
     // implicit from an explicit assignment operator.
     ClassDecl->addDecl(CopyAssignment);
+    AddOverriddenMethods(ClassDecl, CopyAssignment);
   }
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
