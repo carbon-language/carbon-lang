@@ -220,11 +220,6 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   }
   
   QualType ThrowType = E->getSubExpr()->getType();
-  // FIXME: Handle cleanup.
-  if (!CleanupEntries.empty()){
-    ErrorUnsupported(E, "throw expression with cleanup entries");
-    return;
-  }
   
   // Now allocate the exception object.
   const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
