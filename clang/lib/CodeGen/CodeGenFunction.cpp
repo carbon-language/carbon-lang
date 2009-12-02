@@ -606,8 +606,10 @@ llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {
 }
 
 void CodeGenFunction::PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock,
-                                       llvm::BasicBlock *CleanupExitBlock) {
-  CleanupEntries.push_back(CleanupEntry(CleanupEntryBlock, CleanupExitBlock));
+                                       llvm::BasicBlock *CleanupExitBlock,
+                                       bool EHOnly) {
+  CleanupEntries.push_back(CleanupEntry(CleanupEntryBlock, CleanupExitBlock,
+                                        EHOnly));
 }
 
 void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize) {
@@ -628,6 +630,8 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
 
   std::vector<llvm::BranchInst *> BranchFixups;
   std::swap(BranchFixups, CE.BranchFixups);
+
+  bool EHOnly = CE.EHOnly;
 
   CleanupEntries.pop_back();
 
@@ -663,8 +667,9 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
 
     Builder.SetInsertPoint(SwitchBlock);
 
-    llvm::Value *DestCodePtr = CreateTempAlloca(llvm::Type::getInt32Ty(VMContext),
-                                                "cleanup.dst");
+    llvm::Value *DestCodePtr
+      = CreateTempAlloca(llvm::Type::getInt32Ty(VMContext),
+                         "cleanup.dst");
     llvm::Value *DestCode = Builder.CreateLoad(DestCodePtr, "tmp");
 
     // Create a switch instruction to determine where to jump next.
@@ -710,15 +715,16 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
         new llvm::StoreInst(ID, DestCodePtr, BI);
       } else {
         // We need to jump through another cleanup block. Create a pad block
-        // with a branch instruction that jumps to the final destination and
-        // add it as a branch fixup to the current cleanup scope.
+        // with a branch instruction that jumps to the final destination and add
+        // it as a branch fixup to the current cleanup scope.
 
         // Create the pad block.
         llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
 
         // Create a unique case ID.
-        llvm::ConstantInt *ID = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                                       SI->getNumSuccessors());
+        llvm::ConstantInt *ID
+          = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                                   SI->getNumSuccessors());
 
         // Store the jump destination before the branch instruction.
         new llvm::StoreInst(ID, DestCodePtr, BI);
@@ -744,11 +750,18 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
     BlockScopes.erase(Blocks[i]);
   }
 
-  return CleanupBlockInfo(CleanupEntryBlock, SwitchBlock, EndBlock);
+  return CleanupBlockInfo(CleanupEntryBlock, SwitchBlock, EndBlock, EHOnly);
 }
 
 void CodeGenFunction::EmitCleanupBlock() {
   CleanupBlockInfo Info = PopCleanupBlock();
+
+  if (Info.EHOnly) {
+    // FIXME: Add this to the exceptional edge
+    if (Info.CleanupBlock->getNumUses() == 0)
+      delete Info.CleanupBlock;
+    return;
+  }
 
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
   if (CurBB && !CurBB->getTerminator() &&

@@ -109,7 +109,8 @@ public:
   /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
   /// passed in block as the cleanup block.
   void PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock,
-                        llvm::BasicBlock *CleanupExitBlock = 0);
+                        llvm::BasicBlock *CleanupExitBlock = 0,
+                        bool EHOnly = false);
 
   /// CleanupBlockInfo - A struct representing a popped cleanup block.
   struct CleanupBlockInfo {
@@ -123,9 +124,13 @@ public:
     /// EndBlock - the default destination for the switch instruction.
     llvm::BasicBlock *EndBlock;
 
+    /// EHOnly - True iff this cleanup should only be performed on the
+    /// exceptional edge.
+    bool EHOnly;
+
     CleanupBlockInfo(llvm::BasicBlock *cb, llvm::BasicBlock *sb,
-                     llvm::BasicBlock *eb)
-      : CleanupBlock(cb), SwitchBlock(sb), EndBlock(eb) {}
+                     llvm::BasicBlock *eb, bool ehonly = false)
+      : CleanupBlock(cb), SwitchBlock(sb), EndBlock(eb), EHOnly(ehonly) {}
   };
 
   /// PopCleanupBlock - Will pop the cleanup entry on the stack, process all
@@ -141,11 +146,13 @@ public:
     llvm::BasicBlock *CurBB;
     llvm::BasicBlock *CleanupEntryBB;
     llvm::BasicBlock *CleanupExitBB;
+    bool EHOnly;
     
   public:
-    DelayedCleanupBlock(CodeGenFunction &cgf)
+    DelayedCleanupBlock(CodeGenFunction &cgf, bool ehonly = false)
       : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()),
-      CleanupEntryBB(CGF.createBasicBlock("cleanup")), CleanupExitBB(0) {
+      CleanupEntryBB(CGF.createBasicBlock("cleanup")), CleanupExitBB(0),
+      EHOnly(ehonly) {
       CGF.Builder.SetInsertPoint(CleanupEntryBB);
     }
 
@@ -156,7 +163,7 @@ public:
     }
     
     ~DelayedCleanupBlock() {
-      CGF.PushCleanupBlock(CleanupEntryBB, CleanupExitBB);
+      CGF.PushCleanupBlock(CleanupEntryBB, CleanupExitBB, EHOnly);
       // FIXME: This is silly, move this into the builder.
       if (CurBB)
         CGF.Builder.SetInsertPoint(CurBB);
@@ -303,10 +310,14 @@ private:
     /// inserted into the current function yet.
     std::vector<llvm::BranchInst *> BranchFixups;
 
+    /// EHOnly - Perform this only on the exceptional edge, not the main edge.
+    bool EHOnly;
+
     explicit CleanupEntry(llvm::BasicBlock *CleanupEntryBlock,
-                          llvm::BasicBlock *CleanupExitBlock)
+                          llvm::BasicBlock *CleanupExitBlock, bool ehonly)
       : CleanupEntryBlock(CleanupEntryBlock), 
-      CleanupExitBlock(CleanupExitBlock) {}
+        CleanupExitBlock(CleanupExitBlock),
+        EHOnly(ehonly) {}
   };
 
   /// CleanupEntries - Stack of cleanup entries.
