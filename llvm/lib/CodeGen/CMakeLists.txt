@@ -35,6 +35,7 @@ add_llvm_library(LLVMCodeGen
   MachinePassRegistry.cpp
   MachineRegisterInfo.cpp
   MachineSink.cpp
+  MachineSSAUpdater.cpp
   MachineVerifier.cpp
   MaxStackAlignment.cpp
   ObjectCodeEmitter.cpp
