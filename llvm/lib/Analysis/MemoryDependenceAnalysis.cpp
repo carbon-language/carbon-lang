@@ -196,7 +196,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R = 
-          AA->alias(II->getOperand(3), ~0ULL, MemPtr, ~0ULL);
+          AA->alias(II->getOperand(3), ~0U, MemPtr, ~0U);
         if (R == AliasAnalysis::MustAlias) {
           InvariantTag = II->getOperand(1);
           continue;
@@ -209,7 +209,7 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
         AliasAnalysis::AliasResult R =
-          AA->alias(II->getOperand(2), ~0ULL, MemPtr, ~0ULL);
+          AA->alias(II->getOperand(2), ~0U, MemPtr, ~0U);
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(II);
       }
