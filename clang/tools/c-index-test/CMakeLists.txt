@@ -5,8 +5,8 @@ set( LLVM_USED_LIBS
   clangIndex
   clangFrontend
   clangDriver
-  clangAnalysis
   clangSema
+  clangAnalysis
   clangAST
   clangParse
   clangLex
