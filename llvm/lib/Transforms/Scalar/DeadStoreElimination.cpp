@@ -85,9 +85,14 @@ static bool doesClobberMemory(Instruction *I) {
     return true;
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
     switch (II->getIntrinsicID()) {
-    default: return false;
-    case Intrinsic::memset: case Intrinsic::memmove: case Intrinsic::memcpy:
-    case Intrinsic::init_trampoline: case Intrinsic::lifetime_end: return true;
+    default:
+      return false;
+    case Intrinsic::memset:
+    case Intrinsic::memmove:
+    case Intrinsic::memcpy:
+    case Intrinsic::init_trampoline:
+    case Intrinsic::lifetime_end:
+      return true;
     }
   }
   return false;
@@ -111,14 +116,13 @@ static Value *getPointerOperand(Instruction *I) {
     return SI->getPointerOperand();
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
     return MI->getOperand(1);
-  IntrinsicInst *II = cast<IntrinsicInst>(I);
-  switch (II->getIntrinsicID()) {
-    default:
-      assert(false && "Unexpected intrinsic!");
-    case Intrinsic::init_trampoline:
-      return II->getOperand(1);
-    case Intrinsic::lifetime_end:
-      return II->getOperand(2);
+  
+  switch (cast<IntrinsicInst>(I)->getIntrinsicID()) {
+  default: assert(false && "Unexpected intrinsic!");
+  case Intrinsic::init_trampoline:
+    return I->getOperand(1);
+  case Intrinsic::lifetime_end:
+    return I->getOperand(2);
   }
 }
 
@@ -135,15 +139,13 @@ static unsigned getStoreSize(Instruction *I, const TargetData *TD) {
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I)) {
     Len = MI->getLength();
   } else {
-    IntrinsicInst *II = cast<IntrinsicInst>(I);
-    switch (II->getIntrinsicID()) {
-      default:
-        assert(false && "Unexpected intrinsic!");
-      case Intrinsic::init_trampoline:
-        return -1u;
-      case Intrinsic::lifetime_end:
-        Len = II->getOperand(1);
-        break;
+    switch (cast<IntrinsicInst>(I)->getIntrinsicID()) {
+    default: assert(false && "Unexpected intrinsic!");
+    case Intrinsic::init_trampoline:
+      return -1u;
+    case Intrinsic::lifetime_end:
+      Len = I->getOperand(1);
+      break;
     }
   }
   if (ConstantInt *LenCI = dyn_cast<ConstantInt>(Len))
