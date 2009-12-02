@@ -15,6 +15,7 @@
 #ifndef LLVM_ANALYSIS_MAXIMUMSPANNINGTREE_H
 #define LLVM_ANALYSIS_MAXIMUMSPANNINGTREE_H
 
+#include "llvm/BasicBlock.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include <vector>
 #include <algorithm>
@@ -33,6 +34,18 @@ namespace llvm {
                       typename MaximumSpanningTree<CT>::EdgeWeight Y) const {
         if (X.second > Y.second) return true;
         if (X.second < Y.second) return false;
+        if (const BasicBlock *BBX = dyn_cast<BasicBlock>(X.first.first)) {
+          if (const BasicBlock *BBY = dyn_cast<BasicBlock>(Y.first.first)) {
+            if (BBX->size() > BBY->size()) return true;
+            if (BBX->size() < BBY->size()) return false;
+          }
+        }
+        if (const BasicBlock *BBX = dyn_cast<BasicBlock>(X.first.second)) {
+          if (const BasicBlock *BBY = dyn_cast<BasicBlock>(Y.first.second)) {
+            if (BBX->size() > BBY->size()) return true;
+            if (BBX->size() < BBY->size()) return false;
+          }
+        }
         return false;
       }
     };
