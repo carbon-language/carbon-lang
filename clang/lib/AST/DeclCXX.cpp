@@ -797,64 +797,6 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (C) CXXConversionDecl(RD, L, N, T, DInfo, isInline, isExplicit);
 }
 
-OverloadedFunctionDecl *
-OverloadedFunctionDecl::Create(ASTContext &C, DeclContext *DC,
-                               DeclarationName N) {
-  return new (C) OverloadedFunctionDecl(DC, N);
-}
-
-OverloadIterator::OverloadIterator(NamedDecl *ND) : D(0) {
-  if (!ND)
-    return;
-
-  if (isa<FunctionDecl>(ND) || isa<FunctionTemplateDecl>(ND))
-    D = ND;
-  else if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(ND)) {
-    if (Ovl->size() != 0) {
-      D = ND;
-      Iter = Ovl->function_begin();
-    }
-  }
-}
-
-void OverloadedFunctionDecl::addOverload(AnyFunctionDecl F) {
-  Functions.push_back(F);
-  this->setLocation(F.get()->getLocation());
-}
-
-OverloadIterator::reference OverloadIterator::operator*() const {
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return FD;
-
-  if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D))
-    return FTD;
-
-  assert(isa<OverloadedFunctionDecl>(D));
-  return *Iter;
-}
-
-OverloadIterator &OverloadIterator::operator++() {
-  if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
-    D = 0;
-    return *this;
-  }
-
-  if (++Iter == cast<OverloadedFunctionDecl>(D)->function_end())
-    D = 0;
-
-  return *this;
-}
-
-bool OverloadIterator::Equals(const OverloadIterator &Other) const {
-  if (!D || !Other.D)
-    return D == Other.D;
-
-  if (D != Other.D)
-    return false;
-
-  return !isa<OverloadedFunctionDecl>(D) || Iter == Other.Iter;
-}
-
 FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,
                                FriendUnion Friend,

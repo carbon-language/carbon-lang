@@ -659,13 +659,6 @@ void StmtProfiler::VisitDecl(Decl *D) {
       ID.AddInteger(TTP->getIndex());
       return;
     }
-
-    if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
-      // The Itanium C++ ABI mangles references to a set of overloaded
-      // functions using just the function name, so we do the same here.
-      VisitName(Ovl->getDeclName());
-      return;
-    }
   }
 
   ID.AddPointer(D? D->getCanonicalDecl() : 0);

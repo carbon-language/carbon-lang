@@ -118,7 +118,6 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
                (Qualifier? HasQualifierFlag : 0) |
                (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
     Loc(NameLoc) {
-  assert(!isa<OverloadedFunctionDecl>(D));
   if (Qualifier) {
     NameQualifier *NQ = getNameQualifier();
     NQ->NNS = Qualifier;
@@ -944,8 +943,7 @@ static bool DeclCanBeLvalue(const NamedDecl *Decl, ASTContext &Ctx) {
   return isa<VarDecl>(Decl) || isa<FieldDecl>(Decl) ||
     // C++ 3.10p2: An lvalue refers to an object or function.
     (Ctx.getLangOptions().CPlusPlus &&
-     (isa<FunctionDecl>(Decl) || isa<OverloadedFunctionDecl>(Decl) ||
-      isa<FunctionTemplateDecl>(Decl)));
+     (isa<FunctionDecl>(Decl) || isa<FunctionTemplateDecl>(Decl)));
 }
 
 /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or an

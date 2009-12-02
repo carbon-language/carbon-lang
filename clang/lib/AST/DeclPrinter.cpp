@@ -52,7 +52,6 @@ namespace {
     void VisitVarDecl(VarDecl *D);
     void VisitParmVarDecl(ParmVarDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
-    void VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D);
     void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
@@ -488,11 +487,6 @@ void DeclPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
 //----------------------------------------------------------------------------
 // C++ declarations
 //----------------------------------------------------------------------------
-void DeclPrinter::VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D) {
-  assert(false &&
-         "OverloadedFunctionDecls aren't really decls and are never printed");
-}
-
 void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
   Out << "namespace " << D->getNameAsString() << " {\n";
   VisitDeclContext(D);

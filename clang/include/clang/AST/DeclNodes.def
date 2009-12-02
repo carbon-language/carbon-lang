@@ -75,7 +75,6 @@
 
 DECL(TranslationUnit, Decl)
 ABSTRACT_DECL(Named,  Decl)
-  DECL(OverloadedFunction, NamedDecl)
   DECL(Namespace, NamedDecl)
   DECL(UsingDirective, NamedDecl)
   DECL(NamespaceAlias, NamedDecl)
@@ -143,7 +142,7 @@ DECL_CONTEXT_BASE(ObjCContainer)
 LAST_DECL_CONTEXT(Block)
 
 // Declaration ranges
-DECL_RANGE(Named, OverloadedFunction, ObjCCompatibleAlias)
+DECL_RANGE(Named, Namespace, ObjCCompatibleAlias)
 DECL_RANGE(ObjCContainer, ObjCContainer, ObjCImplementation)
 DECL_RANGE(Field, Field, ObjCAtDefsField)
 DECL_RANGE(Type, Typedef, TemplateTypeParm)

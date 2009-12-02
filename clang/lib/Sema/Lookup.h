@@ -33,12 +33,11 @@ public:
     NotFound = 0,
 
     /// @brief Name lookup found a single declaration that met the
-    /// criteria. getAsDecl will return this declaration.
+    /// criteria.  getFoundDecl() will return this declaration.
     Found,
 
     /// @brief Name lookup found a set of overloaded functions that
-    /// met the criteria. getAsDecl will turn this set of overloaded
-    /// functions into an OverloadedFunctionDecl.
+    /// met the criteria.
     FoundOverloaded,
 
     /// @brief Name lookup found an unresolvable value declaration

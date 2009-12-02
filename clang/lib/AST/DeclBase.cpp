@@ -190,7 +190,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case CXXConstructor:
     case CXXDestructor:
     case CXXConversion:
-    case OverloadedFunction:
     case Typedef:
     case EnumConstant:
     case Var:

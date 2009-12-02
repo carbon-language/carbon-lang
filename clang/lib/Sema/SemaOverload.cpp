@@ -255,12 +255,13 @@ void ImplicitConversionSequence::DebugPrint() const {
 }
 
 // IsOverload - Determine whether the given New declaration is an
-// overload of the Old declaration. This routine returns false if New
-// and Old cannot be overloaded, e.g., if they are functions with the
-// same signature (C++ 1.3.10) or if the Old declaration isn't a
-// function (or overload set). When it does return false and Old is an
-// OverloadedFunctionDecl, MatchedDecl will be set to point to the
-// FunctionDecl that New cannot be overloaded with.
+// overload of the declarations in Old. This routine returns false if
+// New and Old cannot be overloaded, e.g., if New has the same
+// signature as some function in Old (C++ 1.3.10) or if the Old
+// declarations aren't functions (or function templates) at all. When
+// it does return false and Old is an overload set, MatchedDecl will
+// be set to point to the FunctionDecl that New cannot be overloaded
+// with.
 //
 // Example: Given the following input:
 //
@@ -271,37 +272,37 @@ void ImplicitConversionSequence::DebugPrint() const {
 // When we process #1, there is no previous declaration of "f",
 // so IsOverload will not be used.
 //
-// When we process #2, Old is a FunctionDecl for #1.  By comparing the
-// parameter types, we see that #1 and #2 are overloaded (since they
-// have different signatures), so this routine returns false;
-// MatchedDecl is unchanged.
+// When we process #2, Old contains only the FunctionDecl for #1.  By
+// comparing the parameter types, we see that #1 and #2 are overloaded
+// (since they have different signatures), so this routine returns
+// false; MatchedDecl is unchanged.
 //
-// When we process #3, Old is an OverloadedFunctionDecl containing #1
-// and #2. We compare the signatures of #3 to #1 (they're overloaded,
-// so we do nothing) and then #3 to #2. Since the signatures of #3 and
-// #2 are identical (return types of functions are not part of the
+// When we process #3, Old is an overload set containing #1 and #2. We
+// compare the signatures of #3 to #1 (they're overloaded, so we do
+// nothing) and then #3 to #2. Since the signatures of #3 and #2 are
+// identical (return types of functions are not part of the
 // signature), IsOverload returns false and MatchedDecl will be set to
 // point to the FunctionDecl for #2.
 bool
-Sema::IsOverload(FunctionDecl *New, LookupResult &Previous, NamedDecl *&Match) {
-  for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
+Sema::IsOverload(FunctionDecl *New, LookupResult &Old, NamedDecl *&Match) {
+  for (LookupResult::iterator I = Old.begin(), E = Old.end();
          I != E; ++I) {
-    NamedDecl *Old = (*I)->getUnderlyingDecl();
-    if (FunctionTemplateDecl *OldT = dyn_cast<FunctionTemplateDecl>(Old)) {
+    NamedDecl *OldD = (*I)->getUnderlyingDecl();
+    if (FunctionTemplateDecl *OldT = dyn_cast<FunctionTemplateDecl>(OldD)) {
       if (!IsOverload(New, OldT->getTemplatedDecl())) {
-        Match = Old;
+        Match = OldT;
         return false;
       }
-    } else if (FunctionDecl *OldF = dyn_cast<FunctionDecl>(Old)) {
+    } else if (FunctionDecl *OldF = dyn_cast<FunctionDecl>(OldD)) {
       if (!IsOverload(New, OldF)) {
-        Match = Old;
+        Match = OldF;
         return false;
       }
     } else {
       // (C++ 13p1):
       //   Only function declarations can be overloaded; object and type
       //   declarations cannot be overloaded.
-      Match = Old;
+      Match = OldD;
       return false;
     }
   }
