@@ -732,11 +732,23 @@ static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
   return true;
 }
                                   
-static bool IsInstanceMember(NamedDecl *D) {
-  if (isa<EnumConstantDecl>(D))
-    return false;
+/// Determines if this a C++ class member.
+static bool IsClassMember(NamedDecl *D) {
+  DeclContext *DC = D->getDeclContext();
 
-  assert(isa<CXXRecordDecl>(D->getDeclContext()) &&
+  // C++0x [class.mem]p1:
+  //   The enumerators of an unscoped enumeration defined in
+  //   the class are members of the class.
+  // FIXME: support C++0x scoped enumerations.
+  if (isa<EnumDecl>(DC))
+    DC = DC->getParent();
+
+  return DC->isRecord();
+}
+
+/// Determines if this is an instance member of a class.
+static bool IsInstanceMember(NamedDecl *D) {
+  assert(IsClassMember(D) &&
          "checking whether non-member is instance member");
 
   if (isa<FieldDecl>(D)) return true;
@@ -798,7 +810,7 @@ enum IMAKind {
 /// not be caught until template-instantiation.
 static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
                                             const LookupResult &R) {
-  assert(!R.empty() && isa<CXXRecordDecl>((*R.begin())->getDeclContext()));
+  assert(!R.empty() && IsClassMember(*R.begin()));
 
   bool isStaticContext =
     (!isa<CXXMethodDecl>(SemaRef.CurContext) ||
@@ -1010,7 +1022,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   //   class member access expression.
   // But note that &SomeClass::foo is grammatically distinct, even
   // though we don't parse it that way.
-  if (!R.empty() && (*R.begin())->getDeclContext()->isRecord()) {
+  if (!R.empty() && IsClassMember(*R.begin())) {
     bool isAbstractMemberPointer = (isAddressOfOperand && !SS.isEmpty());
 
     if (!isAbstractMemberPointer) {
@@ -1274,7 +1286,7 @@ bool Sema::UseArgumentDependentLookup(const CXXScopeSpec &SS,
     //     -- a declaration of a class member
     // Since using decls preserve this property, we check this on the
     // original decl.
-    if (D->getDeclContext()->isRecord())
+    if (IsClassMember(D))
       return false;
 
     // C++0x [basic.lookup.argdep]p3:
