@@ -168,8 +168,8 @@ public:
     return llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
   }
 
-//#define D1(x)
-#define D1(X) do { if (getenv("DEBUG")) { X; } } while (0)
+#define D1(x)
+//#define D1(X) do { if (getenv("DEBUG")) { X; } } while (0)
 
   void GenerateVBaseOffsets(const CXXRecordDecl *RD, uint64_t Offset,
                             bool updateVBIndex, Index_t current_vbindex) {
