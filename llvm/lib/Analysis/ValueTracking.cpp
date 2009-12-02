@@ -659,7 +659,7 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
   switch (Operator::getOpcode(V)) {
   default: break;
   case Instruction::SExt:
-    Tmp = TyBits-cast<IntegerType>(U->getOperand(0)->getType())->getBitWidth();
+    Tmp = TyBits - U->getOperand(0)->getType()->getScalarSizeInBits();
     return ComputeNumSignBits(U->getOperand(0), TD, Depth+1) + Tmp;
     
   case Instruction::AShr:
