@@ -4,9 +4,9 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i386-apple-darwin7"
 
 define i8 @test(i8* %P) nounwind {
-; CHECK: @test
+; CHECK: lifetime.start
 ; CHECK-NOT: load
-; CHECK: ret i8 undef
+; CHECK: lifetime.end
 entry:
   call void @llvm.lifetime.start(i64 32, i8* %P)
   %0 = load i8* %P

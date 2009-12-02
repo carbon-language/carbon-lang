@@ -1187,10 +1187,9 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   return V;
 }
 
-static bool isLifetimeStartOrEnd(Instruction *Inst) {
+static bool isLifetimeStart(Instruction *Inst) {
   if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst))
-    return II->getIntrinsicID() == Intrinsic::lifetime_start ||
-           II->getIntrinsicID() == Intrinsic::lifetime_end;
+    return II->getIntrinsicID() == Intrinsic::lifetime_start;
   return false;
 }
 
@@ -1262,8 +1261,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
     // Loading the allocation -> undef.
     if (isa<AllocaInst>(DepInst) || isMalloc(DepInst) ||
-        // Loading immediately after lifetime begin or end -> undef.
-        isLifetimeStartOrEnd(DepInst)) {
+        // Loading immediately after lifetime begin -> undef.
+        isLifetimeStart(DepInst)) {
       ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
                                              UndefValue::get(LI->getType())));
       continue;
@@ -1635,11 +1634,10 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     return true;
   }
   
-  // If this load occurs either right after a lifetime begin or a lifetime end,
+  // If this load occurs either right after a lifetime begin,
   // then the loaded value is undefined.
   if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(DepInst)) {
-    if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-        II->getIntrinsicID() == Intrinsic::lifetime_end) {
+    if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
       L->replaceAllUsesWith(UndefValue::get(L->getType()));
       toErase.push_back(L);
       NumGVNLoad++;
