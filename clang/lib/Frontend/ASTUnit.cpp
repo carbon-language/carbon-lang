@@ -199,8 +199,7 @@ public:
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
                                              Diagnostic &Diags,
-                                             bool OnlyLocalDecls,
-                                             bool UseBumpAllocator) {
+                                             bool OnlyLocalDecls) {
   // Create the compiler instance to use for building the AST.
   CompilerInstance Clang;
   llvm::OwningPtr<ASTUnit> AST;
@@ -233,6 +232,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   // FIXME: Use the provided diagnostic client.
   AST.reset(new ASTUnit());
 
+  AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
 
   // Create a file manager object to provide access to and cache the filesystem.
@@ -318,6 +318,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                      (const char**) CCArgs.data()+CCArgs.size(),
                                      Argv0, MainAddr, Diags);
 
-  return LoadFromCompilerInvocation(CI, Diags, OnlyLocalDecls,
-                                    UseBumpAllocator);
+  CI.getFrontendOpts().DisableFree = UseBumpAllocator;
+  return LoadFromCompilerInvocation(CI, Diags, OnlyLocalDecls);
 }

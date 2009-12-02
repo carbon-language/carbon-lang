@@ -122,8 +122,7 @@ public:
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCompilerInvocation(const CompilerInvocation &CI,
                                              Diagnostic &Diags,
-                                             bool OnlyLocalDecls = false,
-                                             bool UseBumpAllocator = false);
+                                             bool OnlyLocalDecls = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
