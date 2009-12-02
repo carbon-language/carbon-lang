@@ -114,3 +114,15 @@ entry:
 ; CHECK-NEXT: ret i32
 }
 
+define void @test11(<2 x i16> %srcA, <2 x i16> %srcB, <2 x i16>* %dst) {
+  %cmp = icmp eq <2 x i16> %srcB, %srcA
+  %sext = sext <2 x i1> %cmp to <2 x i16>
+  %tmask = ashr <2 x i16> %sext, <i16 15, i16 15> 
+  store <2 x i16> %tmask, <2 x i16>* %dst
+  ret void                                                                                                                      
+; CHECK: @test11
+; CHECK-NEXT: icmp eq
+; CHECK-NEXT: sext <2 x i1>
+; CHECK-NEXT: store <2 x i16>
+; CHECK-NEXT: ret
+}                                                                                                                               
