@@ -677,6 +677,11 @@ static const CXXMethodDecl *GetKeyFunction(const CXXRecordDecl *RD) {
     if (MD->isPure())
       continue;
     
+    // Ignore implicit member functions, they are always marked as inline, but
+    // they don't have a body until they're defined.
+    if (MD->isImplicit())
+      continue;
+    
     const FunctionDecl *fn;
     if (MD->getBody(fn) && !fn->isOutOfLine())
       continue;

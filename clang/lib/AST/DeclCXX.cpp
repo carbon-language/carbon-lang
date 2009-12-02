@@ -507,8 +507,7 @@ CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
   return 0;
 }
 
-const CXXDestructorDecl *
-CXXRecordDecl::getDestructor(ASTContext &Context) {
+CXXDestructorDecl *CXXRecordDecl::getDestructor(ASTContext &Context) {
   QualType ClassType = Context.getTypeDeclType(this);
 
   DeclarationName Name
@@ -519,7 +518,7 @@ CXXRecordDecl::getDestructor(ASTContext &Context) {
   llvm::tie(I, E) = lookup(Name);
   assert(I != E && "Did not find a destructor!");
 
-  const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(*I);
+  CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(*I);
   assert(++I == E && "Found more than one destructor!");
 
   return Dtor;

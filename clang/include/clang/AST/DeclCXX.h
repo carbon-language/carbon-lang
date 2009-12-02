@@ -660,7 +660,7 @@ public:
   CXXConstructorDecl *getDefaultConstructor(ASTContext &Context);
 
   /// getDestructor - Returns the destructor decl for this class.
-  const CXXDestructorDecl *getDestructor(ASTContext &Context);
+  CXXDestructorDecl *getDestructor(ASTContext &Context);
 
   /// isLocalClass - If the class is a local class [class.local], returns
   /// the enclosing function declaration.

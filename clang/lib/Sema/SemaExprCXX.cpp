@@ -775,8 +775,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 
 bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
                                     DeclarationName Name,
-                                    FunctionDecl* &Operator,
-                                    bool Diagnose) {
+                                    FunctionDecl* &Operator) {
   LookupResult Found(*this, Name, StartLoc, LookupOrdinaryName);
   // Try to find operator delete/operator delete[] in class scope.
   LookupQualifiedName(Found, RD);
@@ -796,8 +795,6 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
   // We did find operator delete/operator delete[] declarations, but
   // none of them were suitable.
   if (!Found.empty()) {
-    if (!Diagnose)
-      return true;
     Diag(StartLoc, diag::err_no_suitable_delete_member_function_found)
       << Name << RD;
         

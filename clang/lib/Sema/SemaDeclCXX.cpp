@@ -15,6 +15,7 @@
 #include "Lookup.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeOrdering.h"
@@ -2172,7 +2173,6 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ClassDecl->addDecl(Destructor);
     
     AddOverriddenMethods(ClassDecl, Destructor);
-    CheckDestructor(Destructor, false);
   }
 }
 
@@ -2371,7 +2371,7 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
 
 /// CheckDestructor - Checks a fully-formed destructor for well-formedness, 
 /// issuing any diagnostics required. Returns true on error.
-bool Sema::CheckDestructor(CXXDestructorDecl *Destructor, bool Diagnose) {
+bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
   CXXRecordDecl *RD = Destructor->getParent();
   
   if (Destructor->isVirtual()) {
@@ -2386,7 +2386,7 @@ bool Sema::CheckDestructor(CXXDestructorDecl *Destructor, bool Diagnose) {
     FunctionDecl *OperatorDelete = 0;
     DeclarationName Name = 
     Context.DeclarationNames.getCXXOperatorName(OO_Delete);
-    if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete, Diagnose))
+    if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
       return true;
     
     Destructor->setOperatorDelete(OperatorDelete);
@@ -3083,7 +3083,8 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   } else {
     Constructor->setUsed();
   }
-  return;
+
+  MaybeMarkVirtualImplicitMembersReferenced(CurrentLocation, Constructor);
 }
 
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
@@ -4993,4 +4994,32 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   VarDecl *VD = cast<VarDecl>(Dcl.getAs<Decl>());
   VD->setDeclaredInCondition(true);
   return Dcl;
+}
+
+void Sema::MaybeMarkVirtualImplicitMembersReferenced(SourceLocation Loc,
+                                                     CXXMethodDecl *MD) {
+  // Ignore dependent types.
+  if (MD->isDependentContext())
+    return;
+  
+  CXXRecordDecl *RD = MD->getParent();
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  const CXXMethodDecl *KeyFunction = Layout.getKeyFunction();
+
+  if (!KeyFunction) {
+    // This record does not have a key function, so we assume that the vtable
+    // will be emitted when it's used by the constructor.
+    if (!isa<CXXConstructorDecl>(MD))
+      return;
+  } else if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl()) {
+    // We don't have the right key function.
+    return;
+  }
+  
+  if (CXXDestructorDecl *Dtor = RD->getDestructor(Context)) {
+    if (Dtor->isImplicit() && Dtor->isVirtual())
+      MarkDeclarationReferenced(Loc, Dtor);
+  }
+  
+  // FIXME: Need to handle the virtual assignment operator here too.
 }

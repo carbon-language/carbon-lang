@@ -1932,8 +1932,7 @@ public:
                                        QualType Argument);
 
   bool FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD, 
-                                DeclarationName Name, FunctionDecl* &Operator,
-                                bool Diagnose=true);
+                                DeclarationName Name, FunctionDecl* &Operator);
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   virtual OwningExprResult ActOnCXXDelete(SourceLocation StartLoc,
@@ -2128,6 +2127,12 @@ public:
   /// as referenced.
   void MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor);
 
+  /// MaybeMarkVirtualImplicitMembersReferenced - If the passed in method is the
+  /// key function of the record decl, will mark virtual member functions as 
+  /// referenced.
+  void MaybeMarkVirtualImplicitMembersReferenced(SourceLocation Loc, 
+                                                 CXXMethodDecl *MD);
+  
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl,
@@ -2160,7 +2165,7 @@ public:
   void CheckConstructor(CXXConstructorDecl *Constructor);
   QualType CheckDestructorDeclarator(Declarator &D,
                                      FunctionDecl::StorageClass& SC);
-  bool CheckDestructor(CXXDestructorDecl *Destructor, bool Diagnose=true);
+  bool CheckDestructor(CXXDestructorDecl *Destructor);
   void CheckConversionDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
