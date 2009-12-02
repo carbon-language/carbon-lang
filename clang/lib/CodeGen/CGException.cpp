@@ -440,6 +440,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
       llvm::CallInst *TerminateCall = 
         Builder.CreateCall(getTerminateFn(*this));
       TerminateCall->setDoesNotReturn();
+      TerminateCall->setDoesNotThrow();
       Builder.CreateUnreachable();
 
       // Clear the insertion point to indicate we are in unreachable code.
