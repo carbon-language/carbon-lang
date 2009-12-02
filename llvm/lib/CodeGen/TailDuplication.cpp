@@ -129,20 +129,22 @@ bool TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
 
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.
-  unsigned i = 0;
+  unsigned InstrCount = 0;
   bool HasCall = false;
   for (MachineBasicBlock::iterator I = TailBB->begin();
-       I != TailBB->end(); ++I, ++i) {
+       I != TailBB->end(); ++I) {
     // Non-duplicable things shouldn't be tail-duplicated.
     if (I->getDesc().isNotDuplicable()) return false;
     // Don't duplicate more than the threshold.
-    if (i == MaxDuplicateCount) return false;
+    if (InstrCount == MaxDuplicateCount) return false;
     // Remember if we saw a call.
     if (I->getDesc().isCall()) HasCall = true;
+    if (I->getOpcode() != TargetInstrInfo::PHI)
+      InstrCount += 1;
   }
   // Heuristically, don't tail-duplicate calls if it would expand code size,
   // as it's less likely to be worth the extra cost.
-  if (i > 1 && HasCall)
+  if (InstrCount > 1 && HasCall)
     return false;
 
   // Iterate through all the unique predecessors and tail-duplicate this
