@@ -89,8 +89,6 @@ private:
   void addSubstitution(QualType T);
   void addSubstitution(uintptr_t Ptr);
 
-  bool mangleFunctionDecl(const FunctionDecl *FD);
-
   void mangleName(const TemplateDecl *TD,
                   const TemplateArgument *TemplateArgs,
                   unsigned NumTemplateArgs);
@@ -99,7 +97,7 @@ private:
   void mangleUnscopedTemplateName(const TemplateDecl *ND);
   void mangleSourceName(const IdentifierInfo *II);
   void mangleLocalName(const NamedDecl *ND);
-  void mangleNestedName(const NamedDecl *ND);
+  void mangleNestedName(const NamedDecl *ND, const DeclContext *DC);
   void mangleNestedName(const TemplateDecl *TD,
                         const TemplateArgument *TemplateArgs,
                         unsigned NumTemplateArgs);
@@ -169,11 +167,19 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
       isInExternCSystemHeader(D->getLocation()))
     return false;
 
-  // C functions, "main", and variables at global scope are not
-  // mangled.
-  if ((FD && FD->isMain()) ||
-      (!FD && D->getDeclContext()->isTranslationUnit()) ||
-      isInCLinkageSpecification(D))
+  // Variables at global scope are not mangled.
+  if (!FD) {
+    const DeclContext *DC = D->getDeclContext();
+    // Check for extern variable declared locally.
+    if (isa<FunctionDecl>(DC) && D->hasLinkage())
+      while (!DC->isNamespace() && !DC->isTranslationUnit())
+        DC = DC->getParent();
+    if (DC->isTranslationUnit())
+      return false;
+  }
+
+  // C functions and "main" are not mangled.
+  if ((FD && FD->isMain()) || isInCLinkageSpecification(D))
     return false;
 
   return true;
@@ -278,6 +284,13 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   //         ::= <local-name>
   //
   const DeclContext *DC = ND->getDeclContext();
+
+  // If this is an extern variable declared locally, the relevant DeclContext
+  // is that of the containing namespace, or the translation unit.
+  if (isa<FunctionDecl>(DC) && ND->hasLinkage())
+    while (!DC->isNamespace() && !DC->isTranslationUnit())
+      DC = DC->getParent();
+
   while (isa<LinkageSpecDecl>(DC))
     DC = DC->getParent();
 
@@ -299,7 +312,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     return;
   }
 
-  mangleNestedName(ND);
+  mangleNestedName(ND, DC);
 }
 void CXXNameMangler::mangleName(const TemplateDecl *TD,
                                 const TemplateArgument *TemplateArgs,
@@ -474,7 +487,8 @@ void CXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
   Out << II->getLength() << II->getName();
 }
 
-void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
+void CXXNameMangler::mangleNestedName(const NamedDecl *ND,
+                                      const DeclContext *DC) {
   // <nested-name> ::= N [<CV-qualifiers>] <prefix> <unqualified-name> E
   //               ::= N [<CV-qualifiers>] <template-prefix> <template-args> E
 
@@ -488,7 +502,7 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
     mangleTemplatePrefix(TD);
     mangleTemplateArgumentList(*TemplateArgs);
   } else {
-    manglePrefix(ND->getDeclContext());
+    manglePrefix(DC);
     mangleUnqualifiedName(ND);
   }
 
