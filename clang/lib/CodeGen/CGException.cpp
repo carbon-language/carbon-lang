@@ -253,15 +253,10 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
-#if 1
-  EmitStmt(S.getTryBlock());
-  if (0) {
-    getBeginCatchFn(*this);
-    getEndCatchFn(*this);
-    getUnwindResumeOrRethrowFn(*this);
-    CopyObject(*this, QualType(), 0, 0);
+  if (1) {
+    EmitStmt(S.getTryBlock());
+    return;
   }
-#else
   // FIXME: The below is still just a sketch of the code we need.
   // Pointer to the personality function
   llvm::Constant *Personality =
@@ -473,5 +468,4 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   Builder.CreateUnreachable();
 
   EmitBlock(FinallyEnd);
-#endif
 }
