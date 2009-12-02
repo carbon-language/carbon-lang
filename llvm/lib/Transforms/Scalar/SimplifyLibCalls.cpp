@@ -128,8 +128,7 @@ public:
 
 /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
 Value *LibCallOptimization::CastToCStr(Value *V, IRBuilder<> &B) {
-  return
-        B.CreateBitCast(V, Type::getInt8PtrTy(*Context), "cstr");
+  return B.CreateBitCast(V, Type::getInt8PtrTy(*Context), "cstr");
 }
 
 /// EmitStrLen - Emit a call to the strlen function to the builder, for the
@@ -157,27 +156,25 @@ Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
 Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
                                        unsigned Align, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Intrinsic::ID IID = Intrinsic::memcpy;
-  const Type *Tys[1];
-  Tys[0] = Len->getType();
-  Value *MemCpy = Intrinsic::getDeclaration(M, IID, Tys, 1);
-  return B.CreateCall4(MemCpy, CastToCStr(Dst, B), CastToCStr(Src, B), Len,
+  const Type *Ty = Len->getType();
+  Value *MemCpy = Intrinsic::getDeclaration(M, Intrinsic::memcpy, &Ty, 1);
+  Dst = CastToCStr(Dst, B);
+  Src = CastToCStr(Src, B);
+  return B.CreateCall4(MemCpy, Dst, Src, Len,
                        ConstantInt::get(Type::getInt32Ty(*Context), Align));
 }
 
-/// EmitMemMOve - Emit a call to the memmove function to the builder.  This
+/// EmitMemMove - Emit a call to the memmove function to the builder.  This
 /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
 Value *LibCallOptimization::EmitMemMove(Value *Dst, Value *Src, Value *Len,
 					unsigned Align, IRBuilder<> &B) {
   Module *M = Caller->getParent();
-  Intrinsic::ID IID = Intrinsic::memmove;
-  const Type *Tys[1];
-  Tys[0] = TD->getIntPtrType(*Context);
-  Value *MemMove = Intrinsic::getDeclaration(M, IID, Tys, 1);
-  Value *D = CastToCStr(Dst, B);
-  Value *S = CastToCStr(Src, B);
+  const Type *Ty = TD->getIntPtrType(*Context);
+  Value *MemMove = Intrinsic::getDeclaration(M, Intrinsic::memmove, &Ty, 1);
+  Dst = CastToCStr(Dst, B);
+  Src = CastToCStr(Src, B);
   Value *A = ConstantInt::get(Type::getInt32Ty(*Context), Align);
-  return B.CreateCall4(MemMove, D, S, Len, A);
+  return B.CreateCall4(MemMove, Dst, Src, Len, A);
 }
 
 /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
