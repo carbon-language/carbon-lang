@@ -183,20 +183,19 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
     LookupResult Lookup(*this, Name, Tok.getLocation(), LookupOrdinaryName);
     LookupParsedName(Lookup, curScope, NULL, true);
 
-    NamedDecl *ND = Lookup.getAsSingleDecl(Context);
-
-    if (!ND) {
+    if (Lookup.empty()) {
       Diag(PragmaLoc, diag::warn_pragma_unused_undeclared_var)
         << Name << SourceRange(Tok.getLocation());
       continue;
     }
 
-    if (!isa<VarDecl>(ND) || !cast<VarDecl>(ND)->hasLocalStorage()) {
+    VarDecl *VD = Lookup.getAsSingle<VarDecl>();
+    if (!VD || !VD->hasLocalStorage()) {
       Diag(PragmaLoc, diag::warn_pragma_unused_expected_localvar)
         << Name << SourceRange(Tok.getLocation());
       continue;
     }
 
-    ND->addAttr(::new (Context) UnusedAttr());
+    VD->addAttr(::new (Context) UnusedAttr());
   }
 }

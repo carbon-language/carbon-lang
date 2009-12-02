@@ -1160,7 +1160,7 @@ public:
   }
 
   /// \brief Look up a name, looking for a single declaration.  Return
-  /// null if no unambiguous results were found.
+  /// null if the results were absent, ambiguous, or overloaded.
   ///
   /// It is preferable to use the elaborated form and explicitly handle
   /// ambiguity and overloaded.

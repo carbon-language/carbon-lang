@@ -229,7 +229,7 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
   LookupName(R, S, false);
   R.suppressDiagnostics();
   if (R.getResultKind() == LookupResult::Found)
-    if (const TagDecl *TD = dyn_cast<TagDecl>(R.getAsSingleDecl(Context))) {
+    if (const TagDecl *TD = R.getAsSingle<TagDecl>()) {
       switch (TD->getTagKind()) {
       case TagDecl::TK_struct: return DeclSpec::TST_struct;
       case TagDecl::TK_union:  return DeclSpec::TST_union;
@@ -4734,10 +4734,7 @@ CreateNewDecl:
     LookupResult Lookup(*this, Name, NameLoc, LookupOrdinaryName,
                         ForRedeclaration);
     LookupName(Lookup, S);
-    TypedefDecl *PrevTypedef = 0;
-    if (NamedDecl *Prev = Lookup.getAsSingleDecl(Context))
-      PrevTypedef = dyn_cast<TypedefDecl>(Prev);
-
+    TypedefDecl *PrevTypedef = Lookup.getAsSingle<TypedefDecl>();
     NamedDecl *PrevTypedefNamed = PrevTypedef;
     if (PrevTypedef && isDeclInScope(PrevTypedefNamed, SearchDC, S) &&
         Context.getCanonicalType(Context.getTypeDeclType(PrevTypedef)) !=

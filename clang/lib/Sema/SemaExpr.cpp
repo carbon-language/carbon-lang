@@ -6370,8 +6370,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       LookupResult R(*this, OC.U.IdentInfo, OC.LocStart, LookupMemberName);
       LookupQualifiedName(R, RD);
 
-      FieldDecl *MemberDecl
-        = dyn_cast_or_null<FieldDecl>(R.getAsSingleDecl(Context));
+      FieldDecl *MemberDecl = R.getAsSingle<FieldDecl>();
       // FIXME: Leaks Res
       if (!MemberDecl)
         return ExprError(Diag(BuiltinLoc, diag::err_no_member)

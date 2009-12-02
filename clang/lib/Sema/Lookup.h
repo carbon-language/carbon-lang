@@ -26,13 +26,6 @@ namespace clang {
 /// a single declaration, a set of overloaded functions, or an
 /// ambiguity. Use the getKind() method to determine which of these
 /// results occurred for a given lookup.
-///
-/// Any non-ambiguous lookup can be converted into a single
-/// (possibly NULL) @c NamedDecl* via the getAsSingleDecl() method.
-/// This permits the common-case usage in C and Objective-C where
-/// name lookup will always return a single declaration.  Use of
-/// this is largely deprecated; callers should handle the possibility
-/// of multiple declarations.
 class LookupResult {
 public:
   enum LookupResultKind {
@@ -281,13 +274,6 @@ public:
       resolveKind();
     }
   }
-
-  /// \brief Fetch this as an unambiguous single declaration
-  /// (possibly an overloaded one).
-  ///
-  /// This is deprecated; users should be written to handle
-  /// ambiguous and overloaded lookups.
-  NamedDecl *getAsSingleDecl(ASTContext &Context) const;
 
   template <class DeclClass>
   DeclClass *getAsSingle() const {

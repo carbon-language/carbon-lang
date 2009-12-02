@@ -313,7 +313,10 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
   LookupName(Found, S);
   assert(!Found.isAmbiguous() && "Cannot handle ambiguities here yet");
 
-  NamedDecl *Result = Found.getAsSingleDecl(Context);
+  if (!Found.isSingleResult())
+    return 0;
+
+  NamedDecl *Result = Found.getFoundDecl();
   if (isAcceptableNestedNameSpecifier(Result))
     return Result;
 
@@ -414,7 +417,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
   }
 
   // FIXME: Deal with ambiguities cleanly.
-  NamedDecl *SD = Found.getAsSingleDecl(Context);
+  NamedDecl *SD = Found.getAsSingle<NamedDecl>();
   if (isAcceptableNestedNameSpecifier(SD)) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope) {
       // C++ [basic.lookup.classref]p4:
@@ -429,7 +432,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
       if (S) {
         LookupResult FoundOuter(*this, &II, IdLoc, LookupNestedNameSpecifierName);
         LookupName(FoundOuter, S);
-        OuterDecl = FoundOuter.getAsSingleDecl(Context);
+        OuterDecl = FoundOuter.getAsSingle<NamedDecl>();
       } else
         OuterDecl = ScopeLookupResult;
 
@@ -469,14 +472,13 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
   // If we didn't find anything during our lookup, try again with
   // ordinary name lookup, which can help us produce better error
   // messages.
-  if (!SD) {
+  if (Found.empty()) {
     Found.clear(LookupOrdinaryName);
     LookupName(Found, S);
-    SD = Found.getAsSingleDecl(Context);
   }
 
   unsigned DiagID;
-  if (SD)
+  if (!Found.empty())
     DiagID = diag::err_expected_class_or_namespace;
   else if (SS.isSet()) {
     Diag(IdLoc, diag::err_no_member) << &II << LookupCtx << SS.getRange();

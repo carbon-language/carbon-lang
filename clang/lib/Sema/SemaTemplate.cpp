@@ -4397,8 +4397,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     if (Previous.isAmbiguous())
       return true;
     
-    VarDecl *Prev = dyn_cast_or_null<VarDecl>(
-        Previous.getAsSingleDecl(Context));
+    VarDecl *Prev = Previous.getAsSingle<VarDecl>();
     if (!Prev || !Prev->isStaticDataMember()) {
       // We expect to see a data data member here.
       Diag(D.getIdentifierLoc(), diag::err_explicit_instantiation_not_known)

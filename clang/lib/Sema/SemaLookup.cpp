@@ -337,44 +337,6 @@ void LookupResult::resolveKind() {
     ResultKind = LookupResult::Found;
 }
 
-/// @brief Converts the result of name lookup into a single (possible
-/// NULL) pointer to a declaration.
-///
-/// The resulting declaration will either be the declaration we found
-/// (if only a single declaration was found), an
-/// OverloadedFunctionDecl (if an overloaded function was found), or
-/// NULL (if no declaration was found). This conversion must not be
-/// used anywhere where name lookup could result in an ambiguity.
-///
-/// The OverloadedFunctionDecl conversion is meant as a stop-gap
-/// solution, since it causes the OverloadedFunctionDecl to be
-/// leaked. FIXME: Eventually, there will be a better way to iterate
-/// over the set of overloaded functions returned by name lookup.
-NamedDecl *LookupResult::getAsSingleDecl(ASTContext &C) const {
-  size_t size = Decls.size();
-  if (size == 0) return 0;
-  if (size == 1) return (*begin())->getUnderlyingDecl();
-
-  if (isAmbiguous()) return 0;
-
-  iterator I = begin(), E = end();
-
-  OverloadedFunctionDecl *Ovl
-    = OverloadedFunctionDecl::Create(C, (*I)->getDeclContext(),
-                                        (*I)->getDeclName());
-  for (; I != E; ++I) {
-    NamedDecl *ND = (*I)->getUnderlyingDecl();
-    assert(ND->isFunctionOrFunctionTemplate());
-    if (isa<FunctionDecl>(ND))
-      Ovl->addOverload(cast<FunctionDecl>(ND));
-    else
-      Ovl->addOverload(cast<FunctionTemplateDecl>(ND));
-    // FIXME: UnresolvedUsingDecls.
-  }
-  
-  return Ovl;
-}
-
 void LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
   CXXBasePaths::paths_iterator I, E;
   DeclContext::lookup_iterator DI, DE;
@@ -1610,7 +1572,7 @@ NamedDecl *Sema::LookupSingleName(Scope *S, DeclarationName Name,
                                   RedeclarationKind Redecl) {
   LookupResult R(*this, Name, SourceLocation(), NameKind, Redecl);
   LookupName(R, S);
-  return R.getAsSingleDecl(Context);
+  return R.getAsSingle<NamedDecl>();
 }
 
 /// \brief Find the protocol with the given name, if any.

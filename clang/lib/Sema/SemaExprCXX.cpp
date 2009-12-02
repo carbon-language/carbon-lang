@@ -37,8 +37,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
   LookupResult R(*this, TypeInfoII, SourceLocation(), LookupTagName);
   LookupQualifiedName(R, StdNamespace);
-  Decl *TypeInfoDecl = R.getAsSingleDecl(Context);
-  RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
+  RecordDecl *TypeInfoRecordDecl = R.getAsSingle<RecordDecl>();
   if (!TypeInfoRecordDecl)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
 
