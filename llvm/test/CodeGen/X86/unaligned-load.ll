@@ -1,4 +1,3 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=dynamic-no-pic | not grep {movaps\t_.str3}
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=dynamic-no-pic | FileCheck %s
 
 @.str1 = internal constant [31 x i8] c"DHRYSTONE PROGRAM, SOME STRING\00", align 8
