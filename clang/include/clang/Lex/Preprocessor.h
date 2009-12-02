@@ -121,6 +121,9 @@ class Preprocessor {
   /// with this preprocessor.
   std::vector<CommentHandler *> CommentHandlers;
 
+  /// \brief The file that we're performing code-completion for, if any.
+  const FileEntry *CodeCompletionFile;
+
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro and we are lexing directly from source code.
   ///  Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
@@ -484,6 +487,27 @@ public:
     if (CachedLexPos != 0 && isBacktrackEnabled())
       CachedTokens[CachedLexPos-1] = Tok;
   }
+
+  /// \brief Specify the point at which code-completion will be performed.
+  ///
+  /// \param File the file in which code completion should occur. If
+  /// this file is included multiple times, code-completion will
+  /// perform completion the first time it is included. If NULL, this
+  /// function clears out the code-completion point.
+  ///
+  /// \param Line the line at which code completion should occur
+  /// (1-based).
+  ///
+  /// \param Column the column at which code completion should occur
+  /// (1-based).
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool SetCodeCompletionPoint(const FileEntry *File, 
+                              unsigned Line, unsigned Column);
+
+  /// \brief Determine if this source location refers into the file
+  /// for which we are performing code completion.
+  bool isCodeCompletionFile(SourceLocation FileLoc);
 
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start

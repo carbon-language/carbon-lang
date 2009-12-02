@@ -70,7 +70,6 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
          " to simplify lexing!");
 
   Is_PragmaLexer = false;
-  IsEofCodeCompletion = false;
   
   // Start of the file is a start of line.
   IsAtStartOfLine = true;
@@ -105,10 +104,6 @@ Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *InputFile, Preprocessor &PP)
 
   // Default to keeping comments if the preprocessor wants them.
   SetCommentRetentionState(PP.getCommentRetentionState());
-      
-  // If the input file is truncated, the EOF is a code-completion token.
-  if (PP.getSourceManager().isTruncatedFile(FID))
-    IsEofCodeCompletion = true;
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
@@ -1326,24 +1321,16 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   // Otherwise, check if we are code-completing, then issue diagnostics for 
   // unterminated #if and missing newline.
 
-  if (IsEofCodeCompletion) {
-    bool isIntendedFile = true;
-    if (PP && FileLoc.isFileID()) {
-      SourceManager &SM = PP->getSourceManager();
-      isIntendedFile = SM.isTruncatedFile(SM.getFileID(FileLoc));
-    }
+  if (PP && PP->isCodeCompletionFile(FileLoc)) {
+    // We're at the end of the file, but we've been asked to consider the
+    // end of the file to be a code-completion token. Return the
+    // code-completion token.
+    Result.startToken();
+    FormTokenWithChars(Result, CurPtr, tok::code_completion);
     
-    if (isIntendedFile) {
-      // We're at the end of the file, but we've been asked to consider the
-      // end of the file to be a code-completion token. Return the
-      // code-completion token.
-      Result.startToken();
-      FormTokenWithChars(Result, CurPtr, tok::code_completion);
-      
-      // Only do the eof -> code_completion translation once.
-      IsEofCodeCompletion = false;
-      return true;
-    }
+    // Only do the eof -> code_completion translation once.
+    PP->SetCodeCompletionPoint(0, 0, 0);
+    return true;
   }
   
   // If we are in a #if directive, emit an error.

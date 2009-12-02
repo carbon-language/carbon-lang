@@ -50,7 +50,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            bool OwnsHeaders)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts, IILookup),
-    BuiltinInfo(Target), CurPPLexer(0), CurDirLookup(0), Callbacks(0) {
+    BuiltinInfo(Target), CodeCompletionFile(0), CurPPLexer(0), CurDirLookup(0),
+    Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
@@ -186,6 +187,63 @@ void Preprocessor::PrintStats() {
   llvm::errs() << (NumFastTokenPaste+NumTokenPaste)
              << " token paste (##) operations performed, "
              << NumFastTokenPaste << " on the fast path.\n";
+}
+
+bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File, 
+                                          unsigned TruncateAtLine, 
+                                          unsigned TruncateAtColumn) {
+  using llvm::MemoryBuffer;
+
+  CodeCompletionFile = File;
+
+  // Okay to clear out the code-completion point by passing NULL.
+  if (!CodeCompletionFile)
+    return false;
+
+  // Load the actual file's contents.
+  const MemoryBuffer *Buffer = SourceMgr.getMemoryBufferForFile(File);
+  if (!Buffer)
+    return true;
+
+  // Find the byte position of the truncation point.
+  const char *Position = Buffer->getBufferStart();
+  for (unsigned Line = 1; Line < TruncateAtLine; ++Line) {
+    for (; *Position; ++Position) {
+      if (*Position != '\r' && *Position != '\n')
+        continue;
+      
+      // Eat \r\n or \n\r as a single line.
+      if ((Position[1] == '\r' || Position[1] == '\n') &&
+          Position[0] != Position[1])
+        ++Position;
+      ++Position;
+      break;
+    }
+  }
+  
+  for (unsigned Column = 1; Column < TruncateAtColumn; ++Column, ++Position) {
+    if (!*Position)
+      break;
+    
+    if (*Position == '\t')
+      Column += 7;
+  }
+  
+  // Truncate the buffer.
+  if (Position != Buffer->getBufferEnd()) {
+    MemoryBuffer *TruncatedBuffer 
+      = MemoryBuffer::getMemBufferCopy(Buffer->getBufferStart(), Position, 
+                                       Buffer->getBufferIdentifier());
+    SourceMgr.overrideFileContents(File, TruncatedBuffer);
+  }
+
+  return false;
+}
+
+bool Preprocessor::isCodeCompletionFile(SourceLocation FileLoc) {
+  return CodeCompletionFile && FileLoc.isFileID() &&
+    SourceMgr.getFileEntryForID(SourceMgr.getFileID(FileLoc))
+      == CodeCompletionFile;
 }
 
 //===----------------------------------------------------------------------===//

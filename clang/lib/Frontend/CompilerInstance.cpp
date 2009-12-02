@@ -287,7 +287,7 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
   }
 
   // Truncate the named file at the given line/column.
-  PP.getSourceManager().truncateFileAt(Entry, Line, Column);
+  PP.SetCodeCompletionPoint(Entry, Line, Column);
 
   // Set up the creation routine for code-completion.
   if (UseDebugPrinter)
