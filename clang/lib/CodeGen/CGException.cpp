@@ -265,6 +265,10 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
                                                       true),
                               "__gxx_personality_v0");
   Personality = llvm::ConstantExpr::getBitCast(Personality, PtrToInt8Ty);
+  llvm::Value *llvm_eh_exception =
+    CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
+  llvm::Value *llvm_eh_selector =
+    CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
 
   llvm::BasicBlock *PrevLandingPad = getInvokeDest();
   llvm::BasicBlock *TryHandler = createBasicBlock("try.handler");
@@ -283,6 +287,28 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   // Jump to end if there is no exception
   EmitBranchThroughCleanup(FinallyEnd);
 
+  // Set up terminate handler
+  llvm::BasicBlock *TerminateHandler = createBasicBlock("terminate.handler");
+  EmitBlock(TerminateHandler);
+  llvm::Value *Exc = Builder.CreateCall(llvm_eh_exception, "exc");
+  // We are required to emit this call to satisfy LLVM, even
+  // though we don't use the result.
+  llvm::SmallVector<llvm::Value*, 8> Args;
+  Args.clear();
+  Args.push_back(Exc);
+  Args.push_back(Personality);
+  Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                                        0));
+  Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
+  llvm::CallInst *TerminateCall = 
+    Builder.CreateCall(getTerminateFn(*this));
+  TerminateCall->setDoesNotReturn();
+  TerminateCall->setDoesNotThrow();
+  Builder.CreateUnreachable();
+
+  // Clear the insertion point to indicate we are in unreachable code.
+  Builder.ClearInsertionPoint();
+
   // Emit the handlers
   EmitBlock(TryHandler);
   
@@ -293,16 +319,13 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   PtrToInt8Ty = llvm::PointerType::getUnqual(Int8Ty);
   llvm::Constant *Null = llvm::ConstantPointerNull::get(PtrToInt8Ty);
   llvm::SmallVector<llvm::Value*, 8> SelectorArgs;
-  llvm::Value *llvm_eh_exception =
-    CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
-  llvm::Value *llvm_eh_selector =
-    CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
   llvm::Value *llvm_eh_typeid_for =
     CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for);
   // Exception object
-  llvm::Value *Exc = Builder.CreateCall(llvm_eh_exception, "exc");
+  Exc = Builder.CreateCall(llvm_eh_exception, "exc");
   llvm::Value *RethrowPtr = CreateTempAlloca(Exc->getType(), "_rethrow");
 
+  Args.clear();
   SelectorArgs.push_back(Exc);
   SelectorArgs.push_back(Personality);
 
@@ -330,7 +353,6 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   llvm::Value *Selector
     = Builder.CreateCall(llvm_eh_selector, SelectorArgs.begin(),
                          SelectorArgs.end(), "selector");
-  llvm::BasicBlock *TerminateHandler = 0;
   for (unsigned i = 0; i<S.getNumHandlers(); ++i) {
     const CXXCatchStmt *C = S.getHandler(i);
     VarDecl *CatchParam = C->getExceptionDecl();
@@ -362,6 +384,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     // Bind the catch parameter if it exists.
     if (CatchParam) {
       QualType CatchType = CatchParam->getType().getNonReferenceType();
+      setInvokeDest(TerminateHandler);
       if (!CatchType.getTypePtr()->isPointerType())
         CatchType = getContext().getPointerType(CatchType);
       ExcObject =
@@ -377,6 +400,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
       CopyObject(*this, CatchParam->getType().getNonReferenceType(),
                  ExcObject, GetAddrOfLocalVar(CatchParam));
 #endif
+      setInvokeDest(MatchHandler);
     }
 
     EmitStmt(CatchBody);
@@ -387,7 +411,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     llvm::Value *Exc = Builder.CreateCall(llvm_eh_exception, "exc");
     // We are required to emit this call to satisfy LLVM, even
     // though we don't use the result.
-    llvm::SmallVector<llvm::Value*, 8> Args;
+    Args.clear();
     Args.push_back(Exc);
     Args.push_back(Personality);
     Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
@@ -400,12 +424,6 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
 
     EmitBlock(MatchEnd);
 
-    // Set up terminate handler
-    bool GenerateTerminate = false;
-    if (!TerminateHandler) {
-      TerminateHandler = createBasicBlock("terminate.handler");
-      GenerateTerminate = true;
-    }
     llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
     Builder.CreateInvoke(getEndCatchFn(*this),
                          Cont, TerminateHandler,
@@ -420,28 +438,6 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     Exc = Builder.CreateCall(llvm_eh_exception, "exc");
     Builder.CreateStore(Exc, RethrowPtr);
     EmitBranchThroughCleanup(FinallyRethrow);
-
-    if (GenerateTerminate) {
-      GenerateTerminate = false;
-      EmitBlock(TerminateHandler);
-      Exc = Builder.CreateCall(llvm_eh_exception, "exc");
-      // We are required to emit this call to satisfy LLVM, even
-      // though we don't use the result.
-      Args.clear();
-      Args.push_back(Exc);
-      Args.push_back(Personality);
-      Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                            0));
-      Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
-      llvm::CallInst *TerminateCall = 
-        Builder.CreateCall(getTerminateFn(*this));
-      TerminateCall->setDoesNotReturn();
-      TerminateCall->setDoesNotThrow();
-      Builder.CreateUnreachable();
-
-      // Clear the insertion point to indicate we are in unreachable code.
-      Builder.ClearInsertionPoint();
-    }
 
     if (Next)
       EmitBlock(Next);
