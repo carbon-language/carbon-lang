@@ -330,8 +330,8 @@ void DwarfDebug::addSInt(DIE *Die, unsigned Attribute,
   Die->addValue(Attribute, Form, Value);
 }
 
-/// addString - Add a string attribute data and value.
-///
+/// addString - Add a string attribute data and value. DIEString only
+/// keeps string reference. 
 void DwarfDebug::addString(DIE *Die, unsigned Attribute, unsigned Form,
                            const StringRef String) {
   DIEValue *Value = new DIEString(String);

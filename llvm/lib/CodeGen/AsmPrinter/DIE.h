@@ -274,7 +274,7 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// DIEString - A string value DIE.
+  /// DIEString - A string value DIE. This DIE keeps string reference only.
   ///
   class DIEString : public DIEValue {
     const StringRef Str;
