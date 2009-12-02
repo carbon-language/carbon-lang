@@ -1765,13 +1765,8 @@ DeclarationName Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
       
     case UnqualifiedId::IK_TemplateId: {
       TemplateName TName
-        = TemplateName::getFromVoidPointer(Name.TemplateId->Template);    
-      if (TemplateDecl *Template = TName.getAsTemplateDecl())
-        return Template->getDeclName();
-      if (OverloadedFunctionDecl *Ovl = TName.getAsOverloadedFunctionDecl())
-        return Ovl->getDeclName();
-      
-      return DeclarationName();
+        = TemplateName::getFromVoidPointer(Name.TemplateId->Template);
+      return Context.getNameForTemplate(TName);
     }
   }
   

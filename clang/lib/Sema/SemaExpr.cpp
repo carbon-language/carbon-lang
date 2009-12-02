@@ -665,9 +665,9 @@ static void DecomposeTemplateName(LookupResult &R, const UnqualifiedId &Id) {
 
   if (TemplateDecl *TD = TName.getAsTemplateDecl())
     R.addDecl(TD);
-  else if (OverloadedFunctionDecl *OD
-             = TName.getAsOverloadedFunctionDecl())
-    for (OverloadIterator I(OD), E; I != E; ++I)
+  else if (OverloadedTemplateStorage *OT = TName.getAsOverloadedTemplate())
+    for (OverloadedTemplateStorage::iterator I = OT->begin(), E = OT->end();
+           I != E; ++I)
       R.addDecl(*I);
 
   R.resolveKind();

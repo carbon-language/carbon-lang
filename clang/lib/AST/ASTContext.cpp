@@ -2354,8 +2354,9 @@ DeclarationName ASTContext::getNameForTemplate(TemplateName Name) {
     }
   }
 
-  assert(Name.getAsOverloadedFunctionDecl());
-  return Name.getAsOverloadedFunctionDecl()->getDeclName();
+  OverloadedTemplateStorage *Storage = Name.getAsOverloadedTemplate();
+  assert(Storage);
+  return (*Storage->begin())->getDeclName();
 }
 
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
@@ -2364,27 +2365,7 @@ TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
   if (TemplateDecl *Template = Name.getAsTemplateDecl())
     return TemplateName(cast<TemplateDecl>(Template->getCanonicalDecl()));
 
-  // If this template name refers to a set of overloaded function templates,
-  /// the canonical template name merely stores the set of function templates.
-  if (OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl()) {
-    OverloadedFunctionDecl *CanonOvl = 0;
-    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                FEnd = Ovl->function_end();
-         F != FEnd; ++F) {
-      Decl *Canon = F->get()->getCanonicalDecl();
-      if (CanonOvl || Canon != F->get()) {
-        if (!CanonOvl)
-          CanonOvl = OverloadedFunctionDecl::Create(*this,
-                                                    Ovl->getDeclContext(),
-                                                    Ovl->getDeclName());
-
-        CanonOvl->addOverload(
-                    AnyFunctionDecl::getFromNamedDecl(cast<NamedDecl>(Canon)));
-      }
-    }
-
-    return TemplateName(CanonOvl? CanonOvl : Ovl);
-  }
+  assert(!Name.getAsOverloadedTemplate());
 
   DependentTemplateName *DTN = Name.getAsDependentTemplateName();
   assert(DTN && "Non-dependent template names must refer to template decls.");
@@ -3690,6 +3671,29 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
   ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
+/// \brief Retrieve the template name that corresponds to a non-empty
+/// lookup.
+TemplateName ASTContext::getOverloadedTemplateName(NamedDecl * const *Begin,
+                                                   NamedDecl * const *End) {
+  unsigned size = End - Begin;
+  assert(size > 1 && "set is not overloaded!");
+
+  void *memory = Allocate(sizeof(OverloadedTemplateStorage) +
+                          size * sizeof(FunctionTemplateDecl*));
+  OverloadedTemplateStorage *OT = new(memory) OverloadedTemplateStorage(size);
+
+  NamedDecl **Storage = OT->getStorage();
+  for (NamedDecl * const *I = Begin; I != End; ++I) {
+    NamedDecl *D = *I;
+    assert(isa<FunctionTemplateDecl>(D) ||
+           (isa<UsingShadowDecl>(D) &&
+            isa<FunctionTemplateDecl>(D->getUnderlyingDecl())));
+    *Storage++ = D;
+  }
+
+  return TemplateName(OT);
+}
+
 /// \brief Retrieve the template name that represents a qualified
 /// template name such as \c std::vector.
 TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
@@ -3701,25 +3705,6 @@ TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
   void *InsertPos = 0;
   QualifiedTemplateName *QTN =
     QualifiedTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
-  if (!QTN) {
-    QTN = new (*this,4) QualifiedTemplateName(NNS, TemplateKeyword, Template);
-    QualifiedTemplateNames.InsertNode(QTN, InsertPos);
-  }
-
-  return TemplateName(QTN);
-}
-
-/// \brief Retrieve the template name that represents a qualified
-/// template name such as \c std::vector.
-TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
-                                                  bool TemplateKeyword,
-                                            OverloadedFunctionDecl *Template) {
-  llvm::FoldingSetNodeID ID;
-  QualifiedTemplateName::Profile(ID, NNS, TemplateKeyword, Template);
-
-  void *InsertPos = 0;
-  QualifiedTemplateName *QTN =
-  QualifiedTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
   if (!QTN) {
     QTN = new (*this,4) QualifiedTemplateName(NNS, TemplateKeyword, Template);
     QualifiedTemplateNames.InsertNode(QTN, InsertPos);

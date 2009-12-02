@@ -108,36 +108,36 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
   if (R.empty())
     return TNK_Non_template;
 
-  NamedDecl *Template = R.getAsSingleDecl(Context);
+  TemplateName Template;
+  TemplateNameKind TemplateKind;
 
-  if (SS.isSet() && !SS.isInvalid()) {
-    NestedNameSpecifier *Qualifier
-      = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
-    if (OverloadedFunctionDecl *Ovl
-          = dyn_cast<OverloadedFunctionDecl>(Template))
-      TemplateResult
-        = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, false,
-                                                            Ovl));
-    else
-      TemplateResult
-        = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, false,
-                                                 cast<TemplateDecl>(Template)));
-  } else if (OverloadedFunctionDecl *Ovl
-               = dyn_cast<OverloadedFunctionDecl>(Template)) {
-    TemplateResult = TemplateTy::make(TemplateName(Ovl));
+  unsigned ResultCount = R.end() - R.begin();
+  if (ResultCount > 1) {
+    // We assume that we'll preserve the qualifier from a function
+    // template name in other ways.
+    Template = Context.getOverloadedTemplateName(R.begin(), R.end());
+    TemplateKind = TNK_Function_template;
   } else {
-    TemplateResult = TemplateTy::make(
-                                  TemplateName(cast<TemplateDecl>(Template)));
+    TemplateDecl *TD = cast<TemplateDecl>((*R.begin())->getUnderlyingDecl());
+
+    if (SS.isSet() && !SS.isInvalid()) {
+      NestedNameSpecifier *Qualifier
+        = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+      Template = Context.getQualifiedTemplateName(Qualifier, false, TD);
+    } else {
+      Template = TemplateName(TD);
+    }
+
+    if (isa<FunctionTemplateDecl>(TD))
+      TemplateKind = TNK_Function_template;
+    else {
+      assert(isa<ClassTemplateDecl>(TD) || isa<TemplateTemplateParmDecl>(TD));
+      TemplateKind = TNK_Type_template;
+    }
   }
 
-  if (isa<ClassTemplateDecl>(Template) ||
-      isa<TemplateTemplateParmDecl>(Template))
-    return TNK_Type_template;
-
-  assert((isa<FunctionTemplateDecl>(Template) ||
-          isa<OverloadedFunctionDecl>(Template)) &&
-         "Unhandled template kind in Sema::isTemplateName");
-  return TNK_Function_template;  
+  TemplateResult = TemplateTy::make(Template);
+  return TemplateKind;
 }
 
 void Sema::LookupTemplateName(LookupResult &Found,

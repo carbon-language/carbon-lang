@@ -29,25 +29,14 @@ TemplateDecl *TemplateName::getAsTemplateDecl() const {
   return 0;
 }
 
-OverloadedFunctionDecl *TemplateName::getAsOverloadedFunctionDecl() const {
-  if (OverloadedFunctionDecl *Ovl
-        = Storage.dyn_cast<OverloadedFunctionDecl *>())
-    return Ovl;
-
-  if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName())
-    return QTN->getOverloadedFunctionDecl();
-
-  return 0;
-}
-
 bool TemplateName::isDependent() const {
   if (TemplateDecl *Template = getAsTemplateDecl()) {
     return isa<TemplateTemplateParmDecl>(Template) ||
       Template->getDeclContext()->isDependentContext();
   }
 
-  if (OverloadedFunctionDecl *Ovl = getAsOverloadedFunctionDecl())
-    return Ovl->getDeclContext()->isDependentContext();
+  assert(!getAsOverloadedTemplate() &&
+         "overloaded templates shouldn't survive to here");
 
   return true;
 }
@@ -57,9 +46,6 @@ TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
                     bool SuppressNNS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     OS << Template->getNameAsString();
-  else if (OverloadedFunctionDecl *Ovl
-             = Storage.dyn_cast<OverloadedFunctionDecl *>())
-    OS << Ovl->getNameAsString();
   else if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
     if (!SuppressNNS)
       QTN->getQualifier()->print(OS, Policy);
@@ -84,13 +70,3 @@ void TemplateName::dump() const {
   LO.Bool = true;
   print(llvm::errs(), PrintingPolicy(LO));
 }
-
-TemplateDecl *QualifiedTemplateName::getTemplateDecl() const {
-  return dyn_cast<TemplateDecl>(Template);
-}
-
-OverloadedFunctionDecl *
-QualifiedTemplateName::getOverloadedFunctionDecl() const {
-  return dyn_cast<OverloadedFunctionDecl>(Template);
-}
-
