@@ -95,7 +95,7 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
 
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
-  PM.add(createARMMaxStackAlignmentCalculatorPass());
+  PM.add(createMaxStackAlignmentCalculatorPass());
 
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())

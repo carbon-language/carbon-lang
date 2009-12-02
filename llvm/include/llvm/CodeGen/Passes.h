@@ -191,6 +191,10 @@ namespace llvm {
   /// the GCC-style builtin setjmp/longjmp (sjlj) to handling EH control flow.
   FunctionPass *createSjLjEHPass(const TargetLowering *tli);
 
+  /// createMaxStackAlignmentCalculatorPass() - Determine the maximum required
+  /// alignment for a function.
+  FunctionPass* createMaxStackAlignmentCalculatorPass();
+
 } // End llvm namespace
 
 #endif

@@ -327,7 +327,20 @@ public:
   /// setMaxAlignment - Set the preferred alignment.
   ///
   void setMaxAlignment(unsigned Align) { MaxAlignment = Align; }
-  
+
+  /// calculateMaxStackAlignment() - If there is a local object which requires
+  /// greater alignment than the current max alignment, adjust accordingly.
+  void calculateMaxStackAlignment() {
+    for (int i = getObjectIndexBegin(),
+         e = getObjectIndexEnd(); i != e; ++i) {
+      if (isDeadObjectIndex(i))
+        continue;
+
+      unsigned Align = getObjectAlignment(i);
+      MaxAlignment = std::max(MaxAlignment, Align);
+    }
+  }
+
   /// hasCalls - Return true if the current function has no function calls.
   /// This is only valid during or after prolog/epilog code emission.
   ///

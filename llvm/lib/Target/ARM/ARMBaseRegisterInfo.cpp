@@ -471,21 +471,6 @@ ARMBaseRegisterInfo::UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
   }
 }
 
-static unsigned calculateMaxStackAlignment(const MachineFrameInfo *FFI) {
-  unsigned MaxAlign = 0;
-
-  for (int i = FFI->getObjectIndexBegin(),
-         e = FFI->getObjectIndexEnd(); i != e; ++i) {
-    if (FFI->isDeadObjectIndex(i))
-      continue;
-
-    unsigned Align = FFI->getObjectAlignment(i);
-    MaxAlign = std::max(MaxAlign, Align);
-  }
-
-  return MaxAlign;
-}
-
 /// hasFP - Return true if the specified function should have a dedicated frame
 /// pointer register.  This is true if the function has variable sized allocas
 /// or if frame pointer elimination is disabled.
@@ -585,14 +570,12 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   SmallVector<unsigned, 4> UnspilledCS2GPRs;
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
-  MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
   if (RealignStack) {
-    unsigned MaxAlign = std::max(MFI->getMaxAlignment(),
-                                 calculateMaxStackAlignment(MFI));
-    MFI->setMaxAlignment(MaxAlign);
+    MachineFrameInfo *MFI = MF.getFrameInfo();
+    MFI->calculateMaxStackAlignment();
   }
 
   // Don't spill FP if the frame can be eliminated. This is determined
@@ -1477,50 +1460,6 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
 
   if (VARegSaveSize)
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, VARegSaveSize);
-}
-
-namespace {
-  struct MaximalStackAlignmentCalculator : public MachineFunctionPass {
-    static char ID;
-    MaximalStackAlignmentCalculator() : MachineFunctionPass(&ID) {}
-
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
-      MachineFrameInfo *FFI = MF.getFrameInfo();
-      MachineRegisterInfo &RI = MF.getRegInfo();
-
-      // Calculate max stack alignment of all already allocated stack objects.
-      unsigned MaxAlign = calculateMaxStackAlignment(FFI);
-
-      // Be over-conservative: scan over all vreg defs and find, whether vector
-      // registers are used. If yes - there is probability, that vector register
-      // will be spilled and thus stack needs to be aligned properly.
-      for (unsigned RegNum = TargetRegisterInfo::FirstVirtualRegister;
-           RegNum < RI.getLastVirtReg(); ++RegNum)
-        MaxAlign = std::max(MaxAlign, RI.getRegClass(RegNum)->getAlignment());
-
-      if (FFI->getMaxAlignment() == MaxAlign)
-        return false;
-
-      FFI->setMaxAlignment(MaxAlign);
-      return true;
-    }
-
-    virtual const char *getPassName() const {
-      return "ARM Stack Required Alignment Auto-Detector";
-    }
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesCFG();
-      MachineFunctionPass::getAnalysisUsage(AU);
-    }
-  };
-
-  char MaximalStackAlignmentCalculator::ID = 0;
-}
-
-FunctionPass*
-llvm::createARMMaxStackAlignmentCalculatorPass() {
-  return new MaximalStackAlignmentCalculator();
 }
 
 #include "ARMGenRegisterInfo.inc"

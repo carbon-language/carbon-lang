@@ -62,11 +62,6 @@ MCCodeEmitter *createX86MCCodeEmitter(const Target &, TargetMachine &TM);
 ///
 FunctionPass *createEmitX86CodeToMemory();
 
-/// createX86MaxStackAlignmentCalculatorPass - This function returns a pass
-/// which calculates maximal stack alignment required for function
-///
-FunctionPass *createX86MaxStackAlignmentCalculatorPass();
-
 extern Target TheX86_32Target, TheX86_64Target;
 
 } // End llvm namespace
