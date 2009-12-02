@@ -54,6 +54,9 @@ class ASTUnit {
   // FIXME: This is temporary; eventually, CIndex will always do this.
   bool                              OnlyLocalDecls;
   
+  /// The name of the original source file used to generate this ASTUnit.
+  std::string OriginalSourceFile;
+
   // Critical optimization when using clang_getCursor().
   ASTLocation LastLoc;
   

@@ -95,10 +95,11 @@ public:
 } // anonymous namespace
 
 const std::string &ASTUnit::getOriginalSourceFileName() {
-  return dyn_cast<PCHReader>(Ctx->getExternalSource())->getOriginalSourceFile();
+  return OriginalSourceFile;
 }
 
 const std::string &ASTUnit::getPCHFileName() {
+  assert(Ctx->getExternalSource() && "Not an ASTUnit from a PCH file!");
   return dyn_cast<PCHReader>(Ctx->getExternalSource())->getFileName();
 }
 
@@ -137,6 +138,8 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
       *ErrMsg = "Could not load PCH file";
     return NULL;
   }
+
+  AST->OriginalSourceFile = Reader->getOriginalSourceFile();
 
   // PCH loaded successfully. Now create the preprocessor.
 
@@ -229,6 +232,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   //
   // FIXME: Use the provided diagnostic client.
   AST.reset(new ASTUnit());
+
+  AST->OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
 
   // Create a file manager object to provide access to and cache the filesystem.
   Clang.setFileManager(&AST->getFileManager());
