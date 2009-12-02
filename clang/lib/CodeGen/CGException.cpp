@@ -240,7 +240,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   
   // Now throw the exception.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
-  llvm::Constant *TypeInfo = CGM.GenerateRtti(ThrowType);
+  llvm::Constant *TypeInfo = CGM.GenerateRTTI(ThrowType);
   llvm::Constant *Dtor = llvm::Constant::getNullValue(Int8PtrTy);
   
   llvm::CallInst *ThrowCall = 
@@ -311,7 +311,8 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     const CXXCatchStmt *C = S.getHandler(i);
     VarDecl *CatchParam = C->getExceptionDecl();
     if (CatchParam) {
-      llvm::Value *EHType = CGM.GenerateRtti(C->getCaughtType().getNonReferenceType());
+      llvm::Value *EHType
+        = CGM.GenerateRTTI(C->getCaughtType().getNonReferenceType());
       SelectorArgs.push_back(EHType);
     } else {
       // null indicates catch all

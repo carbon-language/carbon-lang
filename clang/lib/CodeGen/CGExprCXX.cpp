@@ -359,10 +359,10 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
       const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
       if (RD->isPolymorphic())
-        return Builder.CreateBitCast(CGM.GenerateRttiRef(RD), LTy);
-      return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
+        return Builder.CreateBitCast(CGM.GenerateRTTIRef(RD), LTy);
+      return Builder.CreateBitCast(CGM.GenerateRTTI(RD), LTy);
     }
-    return Builder.CreateBitCast(CGM.GenerateRtti(Ty), LTy);
+    return Builder.CreateBitCast(CGM.GenerateRTTI(Ty), LTy);
   }
   Expr *subE = E->getExprOperand();
   Ty = subE->getType();
@@ -404,9 +404,9 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
       V = Builder.CreateLoad(V);
       return V;
     }      
-    return Builder.CreateBitCast(CGM.GenerateRtti(RD), LTy);
+    return Builder.CreateBitCast(CGM.GenerateRTTI(RD), LTy);
   }
-  return Builder.CreateBitCast(CGM.GenerateRtti(Ty), LTy);
+  return Builder.CreateBitCast(CGM.GenerateRTTI(Ty), LTy);
 }
 
 llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
@@ -485,8 +485,8 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
 
     // FIXME: Calculate better hint.
     llvm::Value *hint = llvm::ConstantInt::get(PtrDiffTy, -1ULL);
-    llvm::Value *SrcArg = CGM.GenerateRttiRef(SrcTy);
-    llvm::Value *DstArg = CGM.GenerateRttiRef(DstTy);
+    llvm::Value *SrcArg = CGM.GenerateRTTIRef(SrcTy);
+    llvm::Value *DstArg = CGM.GenerateRTTIRef(DstTy);
     V = Builder.CreateBitCast(V, PtrToInt8Ty);
     V = Builder.CreateCall4(CGM.CreateRuntimeFunction(FTy, "__dynamic_cast"),
                             V, SrcArg, DstArg, hint);

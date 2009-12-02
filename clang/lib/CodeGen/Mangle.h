@@ -76,8 +76,8 @@ public:
   void mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
                            const CXXRecordDecl *Type,
                            llvm::SmallVectorImpl<char> &);
-  void mangleCXXRtti(QualType T, llvm::SmallVectorImpl<char> &);
-  void mangleCXXRttiName(QualType T, llvm::SmallVectorImpl<char> &);
+  void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
+  void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
                      llvm::SmallVectorImpl<char> &);
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,

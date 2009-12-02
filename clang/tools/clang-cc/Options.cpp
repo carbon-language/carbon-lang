@@ -596,7 +596,7 @@ PascalStrings("fpascal-strings",
                              "string literals"));
 
 static llvm::cl::opt<bool>
-NoRtti("fno-rtti",
+NoRTTI("fno-rtti",
      llvm::cl::desc("Disable generation of rtti information"));
 
 static llvm::cl::opt<bool>
@@ -1193,7 +1193,7 @@ void clang::InitializeLangOptions(LangOptions &Options,
   if (NoLaxVectorConversions.getPosition())
       Options.LaxVectorConversions = 0;
   Options.Exceptions = Exceptions;
-  Options.Rtti = !NoRtti;
+  Options.RTTI = !NoRTTI;
   Options.Blocks = EnableBlocks;
   Options.CharIsSigned = !NoSignedChar;
   if (ShortWChar.getPosition())

@@ -147,7 +147,7 @@ public:
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
     : methods(meth), Class(c), LayoutClass(l), LayoutOffset(lo),
       BLayout(cgm.getContext().getASTRecordLayout(l)),
-      rtti(cgm.GenerateRttiRef(c)), VMContext(cgm.getModule().getContext()),
+      rtti(cgm.GenerateRTTIRef(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), PureVirtualFn(0),subAddressPoints(AllocAddressPoint(cgm, l, c)),
       Extern(!l->isInAnonymousNamespace()),
     LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
@@ -1305,7 +1305,7 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
 
 void CGVtableInfo::GenerateClassData(const CXXRecordDecl *RD) {
   Vtables[RD] = CGM.GenerateVtable(RD, RD);
-  CGM.GenerateRtti(RD);
+  CGM.GenerateRTTI(RD);
   CGM.GenerateVTT(RD);  
 }
 
@@ -1327,7 +1327,7 @@ llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
   }
 
   if (CreateDefinition) {
-    CGM.GenerateRtti(RD);
+    CGM.GenerateRTTI(RD);
     CGM.GenerateVTT(RD);
   }
   return vtbl;

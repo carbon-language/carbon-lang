@@ -1434,7 +1434,7 @@ void MangleContext::mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
   Mangler.mangleName(Type);
 }
 
-void MangleContext::mangleCXXRtti(QualType Ty,
+void MangleContext::mangleCXXRTTI(QualType Ty,
                                   llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TI <type>  # typeinfo structure
   CXXNameMangler Mangler(*this, Res);
@@ -1442,7 +1442,7 @@ void MangleContext::mangleCXXRtti(QualType Ty,
   Mangler.mangleType(Ty);
 }
 
-void MangleContext::mangleCXXRttiName(QualType Ty,
+void MangleContext::mangleCXXRTTIName(QualType Ty,
                                       llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TS <type>  # typeinfo name (null terminated byte string)
   CXXNameMangler Mangler(*this, Res);

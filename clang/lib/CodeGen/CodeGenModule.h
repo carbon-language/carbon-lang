@@ -224,14 +224,14 @@ public:
   /// GenerateVTT - Generate the VTT for the given type.
   llvm::Constant *GenerateVTT(const CXXRecordDecl *RD);
 
-  /// GenerateRtti - Generate the rtti information for the given type.
-  llvm::Constant *GenerateRtti(const CXXRecordDecl *RD);
-  /// GenerateRttiRef - Generate a reference to the rtti information for the
+  /// GenerateRTTI - Generate the rtti information for the given type.
+  llvm::Constant *GenerateRTTI(const CXXRecordDecl *RD);
+  /// GenerateRTTIRef - Generate a reference to the rtti information for the
   /// given type.
-  llvm::Constant *GenerateRttiRef(const CXXRecordDecl *RD);
-  /// GenerateRttiNonClass - Generate the rtti information for the given
+  llvm::Constant *GenerateRTTIRef(const CXXRecordDecl *RD);
+  /// GenerateRTTINonClass - Generate the rtti information for the given
   /// non-class type.
-  llvm::Constant *GenerateRtti(QualType Ty);
+  llvm::Constant *GenerateRTTI(QualType Ty);
 
   /// BuildThunk - Build a thunk for the given method.
   llvm::Constant *BuildThunk(const CXXMethodDecl *MD, bool Extern, 

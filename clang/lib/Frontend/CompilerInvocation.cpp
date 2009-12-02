@@ -445,7 +445,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-faltivec");
   if (Opts.Exceptions)
     Res.push_back("-fexceptions");
-  if (!Opts.Rtti)
+  if (!Opts.RTTI)
     Res.push_back("-fno-rtti");
   if (!Opts.NeXTRuntime)
     Res.push_back("-fgnu-runtime");
@@ -1115,7 +1115,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   if (Args.hasArg(OPT_fno_lax_vector_conversions))
       Opts.LaxVectorConversions = 0;
   Opts.Exceptions = Args.hasArg(OPT_fexceptions);
-  Opts.Rtti = !Args.hasArg(OPT_fno_rtti);
+  Opts.RTTI = !Args.hasArg(OPT_fno_rtti);
   Opts.Blocks = Args.hasArg(OPT_fblocks);
   Opts.CharIsSigned = !Args.hasArg(OPT_fno_signed_char);
   Opts.ShortWChar = Args.hasArg(OPT_fshort_wchar);

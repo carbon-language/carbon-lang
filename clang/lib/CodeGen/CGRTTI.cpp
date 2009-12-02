@@ -1,4 +1,4 @@
-//===--- CGCXXRtti.cpp - Emit LLVM Code for C++ RTTI descriptors ----------===//
+//===--- CGCXXRTTI.cpp - Emit LLVM Code for C++ RTTI descriptors ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,14 +17,14 @@
 using namespace clang;
 using namespace CodeGen;
 
-class RttiBuilder {
+class RTTIBuilder {
   CodeGenModule &CGM;  // Per-module state.
   llvm::LLVMContext &VMContext;
   const llvm::Type *Int8PtrTy;
   llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
 public:
-  RttiBuilder(CodeGenModule &cgm)
+  RTTIBuilder(CodeGenModule &cgm)
     : CGM(cgm), VMContext(cgm.getModule().getContext()),
       Int8PtrTy(llvm::Type::getInt8PtrTy(VMContext)) { }
 
@@ -49,7 +49,7 @@ public:
 
   llvm::Constant *BuildName(QualType Ty, bool Hidden, bool Extern) {
     llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRttiName(Ty, OutName);
+    CGM.getMangleContext().mangleCXXRTTIName(Ty, OutName);
     llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable::LinkageTypes linktype;
@@ -94,11 +94,11 @@ public:
   llvm::Constant *BuildTypeRef(QualType Ty) {
     llvm::Constant *C;
 
-    if (!CGM.getContext().getLangOptions().Rtti)
+    if (!CGM.getContext().getLangOptions().RTTI)
       return llvm::Constant::getNullValue(Int8PtrTy);
 
     llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRtti(Ty, OutName);
+    CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
     llvm::StringRef Name = OutName.str();
 
     C = CGM.getModule().getGlobalVariable(Name);
@@ -186,13 +186,13 @@ public:
 
 
   llvm::Constant *Buildclass_type_info(const CXXRecordDecl *RD) {
-    if (!CGM.getContext().getLangOptions().Rtti)
+    if (!CGM.getContext().getLangOptions().RTTI)
       return llvm::Constant::getNullValue(Int8PtrTy);
 
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRtti(CGM.getContext().getTagDeclType(RD),
+    CGM.getMangleContext().mangleCXXRTTI(CGM.getContext().getTagDeclType(RD),
                                          OutName);
     llvm::StringRef Name = OutName.str();
 
@@ -230,7 +230,7 @@ public:
              e = RD->bases_end(); i != e; ++i) {
         const CXXRecordDecl *Base =
           cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        info.push_back(CGM.GenerateRttiRef(Base));
+        info.push_back(CGM.GenerateRTTIRef(Base));
         if (simple)
           break;
         int64_t offset;
@@ -287,7 +287,7 @@ public:
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRtti(Ty, OutName);
+    CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
     llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *GV;
@@ -340,7 +340,7 @@ public:
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRtti(Ty, OutName);
+    CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
     llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *GV;
@@ -407,20 +407,20 @@ public:
   }
 };
 
-llvm::Constant *CodeGenModule::GenerateRttiRef(const CXXRecordDecl *RD) {
-  RttiBuilder b(*this);
+llvm::Constant *CodeGenModule::GenerateRTTIRef(const CXXRecordDecl *RD) {
+  RTTIBuilder b(*this);
 
   return b.Buildclass_type_infoRef(RD);
 }
 
-llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
-  RttiBuilder b(*this);
+llvm::Constant *CodeGenModule::GenerateRTTI(const CXXRecordDecl *RD) {
+  RTTIBuilder b(*this);
 
   return b.Buildclass_type_info(RD);
 }
 
-llvm::Constant *CodeGenModule::GenerateRtti(QualType Ty) {
-  RttiBuilder b(*this);
+llvm::Constant *CodeGenModule::GenerateRTTI(QualType Ty) {
+  RTTIBuilder b(*this);
 
   return b.BuildType(Ty);
 }
