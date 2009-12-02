@@ -1078,7 +1078,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "clang-cc"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
   // Explicitly warn that these options are unsupported, even though
   // we are allowing compilation to continue.
@@ -1200,7 +1200,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     getToolChain().getHost().getDriver().CCCGenericGCCName.c_str();
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, GCCName));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void gcc::Preprocess::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
@@ -1589,7 +1589,7 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
@@ -1683,7 +1683,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, CC1Name));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
@@ -1738,7 +1738,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 /// Helper routine for seeing if we should use dsymutil; this is a
@@ -2152,7 +2152,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
   // Find the first non-empty base input (we want to ignore linker
   // inputs).
@@ -2182,7 +2182,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
         Args.MakeArgString(getToolChain().GetProgramPath(C, "dsymutil"));
       ArgStringList CmdArgs;
       CmdArgs.push_back(Output.getFilename());
-      C.getJobs().addCommand(new Command(JA, Exec, CmdArgs));
+      C.getJobs().addCommand(new Command(JA, *this, Exec, CmdArgs));
     }
   }
 }
@@ -2208,7 +2208,7 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
   }
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "lipo"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
@@ -2238,7 +2238,7 @@ void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "gas"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
@@ -2339,7 +2339,7 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
@@ -2369,7 +2369,7 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
@@ -2469,7 +2469,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
@@ -2504,7 +2504,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
@@ -2617,7 +2617,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 /// DragonFly Tools
@@ -2656,7 +2656,7 @@ void dragonfly::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
 void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
@@ -2780,5 +2780,5 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "ld"));
-  Dest.addCommand(new Command(JA, Exec, CmdArgs));
+  Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }

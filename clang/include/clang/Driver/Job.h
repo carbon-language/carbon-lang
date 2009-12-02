@@ -22,7 +22,8 @@ using llvm::dyn_cast_or_null;
 
 namespace clang {
 namespace driver {
-  class Command;
+class Command;
+class Tool;
 
 class Job {
 public:
@@ -55,6 +56,9 @@ class Command : public Job {
   /// Source - The action which caused the creation of this job.
   const Action &Source;
 
+  /// Tool - The tool which caused the creation of this job.
+  const Tool &Creator;
+
   /// The executable to run.
   const char *Executable;
 
@@ -63,11 +67,14 @@ class Command : public Job {
   ArgStringList Arguments;
 
 public:
-  Command(const Action &_Source, const char *_Executable,
+  Command(const Action &_Source, const Tool &_Creator, const char *_Executable,
           const ArgStringList &_Arguments);
 
   /// getSource - Return the Action which caused the creation of this job.
   const Action &getSource() const { return Source; }
+
+  /// getCreator - Return the Tool which caused the creation of this job.
+  const Tool &getCreator() const { return Creator; }
 
   const char *getExecutable() const { return Executable; }
 

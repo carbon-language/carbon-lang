@@ -14,10 +14,11 @@ using namespace clang::driver;
 
 Job::~Job() {}
 
-Command::Command(const Action &_Source, const char *_Executable,
-                 const ArgStringList &_Arguments)
-  : Job(CommandClass), Source(_Source), Executable(_Executable),
-    Arguments(_Arguments) {
+Command::Command(const Action &_Source, const Tool &_Creator,
+                 const char *_Executable, const ArgStringList &_Arguments)
+  : Job(CommandClass), Source(_Source), Creator(_Creator),
+    Executable(_Executable), Arguments(_Arguments)
+{
 }
 
 PipedJob::PipedJob() : Job(PipedJobClass) {}
