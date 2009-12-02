@@ -209,8 +209,13 @@ public:
 protected:
   /// CheckerVisit - Dispatcher for performing checker-specific logic
   ///  at specific statements.
-  bool CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
+  void CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                     bool isPrevisit);
+
+  void CheckerEvalNilReceiver(const ObjCMessageExpr *ME, 
+                              ExplodedNodeSet &Dst,
+                              const GRState *state,
+                              ExplodedNode *Pred);
   
   void CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
                         ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
@@ -358,9 +363,10 @@ public:
   }
   
 protected:
-  void EvalObjCMessageExpr(ExplodedNodeSet& Dst, ObjCMessageExpr* ME, ExplodedNode* Pred) {
+  void EvalObjCMessageExpr(ExplodedNodeSet& Dst, ObjCMessageExpr* ME, 
+                           ExplodedNode* Pred, const GRState *state) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
-    getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
+    getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred, state);
   }
 
   const GRState* MarkBranch(const GRState* St, Stmt* Terminator,

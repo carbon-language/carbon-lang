@@ -41,6 +41,7 @@ public:
 
   void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
   void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);
+  bool EvalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME);
 
 private:
   void EmitBadCall(BugType *BT, CheckerContext &C, const CallExpr *CE);
@@ -148,28 +149,12 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
       }
     }
   }
+}
 
-  // Check if the receiver was nil and then returns a value that may
-  // be garbage.
-  if (const Expr *Receiver = ME->getReceiver()) {
-    DefinedOrUnknownSVal receiverVal =
-      cast<DefinedOrUnknownSVal>(state->getSVal(Receiver));
-    
-    const GRState *notNullState, *nullState;
-    llvm::tie(notNullState, nullState) = state->Assume(receiverVal);
-    
-    if (nullState && !notNullState) {
-      HandleNilReceiver(C, nullState, ME);
-      C.setDoneEvaluating(); // FIXME: eventually remove.
-      return;
-    }
-    
-    assert(notNullState);
-    state = notNullState;
-  }
-  
-  // Add a state transition if the state has changed.
-  C.addTransition(state);
+bool CallAndMessageChecker::EvalNilReceiver(CheckerContext &C,
+                                            const ObjCMessageExpr *ME) {
+  HandleNilReceiver(C, C.getState(), ME);
+  return true; // Nil receiver is not handled elsewhere.
 }
 
 void CallAndMessageChecker::EmitNilReceiverBug(CheckerContext &C,

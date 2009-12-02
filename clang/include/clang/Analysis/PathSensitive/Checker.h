@@ -53,21 +53,9 @@ public:
       OldTag(B.Tag, tag),
       OldPointKind(B.PointKind, K),
       OldHasGen(B.HasGeneratedNode),
-      state(st), statement(stmt), size(Dst.size()),
-      DoneEvaluating(false) {}
+      state(st), statement(stmt), size(Dst.size()) {}
 
   ~CheckerContext();
-  
-  // FIXME: This were added to support CallAndMessageChecker to indicating
-  // to GRExprEngine to "stop evaluating" a message expression under certain
-  // cases.  This is *not* meant to be a permanent API change, and was added
-  // to aid in the transition of removing logic for checks from GRExprEngine.  
-  void setDoneEvaluating() {
-    DoneEvaluating = true;
-  }
-  bool isDoneEvaluating() const {
-    return DoneEvaluating;
-  }
   
   ConstraintManager &getConstraintManager() {
       return Eng.getConstraintManager();
@@ -165,7 +153,7 @@ private:
   friend class GRExprEngine;
 
   // FIXME: Remove the 'tag' option.
-  bool GR_Visit(ExplodedNodeSet &Dst,
+  void GR_Visit(ExplodedNodeSet &Dst,
                 GRStmtNodeBuilder &Builder,
                 GRExprEngine &Eng,
                 const Stmt *S,
@@ -177,7 +165,14 @@ private:
       _PreVisit(C, S);
     else
       _PostVisit(C, S);
-    return C.isDoneEvaluating();
+  }
+
+  bool GR_EvalNilReceiver(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
+                          GRExprEngine &Eng, const ObjCMessageExpr *ME,
+                          ExplodedNode *Pred, const GRState *state, void *tag) {
+    CheckerContext C(Dst, Builder, Eng, Pred, tag, ProgramPoint::PostStmtKind,
+                     ME, state);
+    return EvalNilReceiver(C, ME);
   }
 
   // FIXME: Remove the 'tag' option.
@@ -231,6 +226,10 @@ public:
   virtual void VisitBranchCondition(GRBranchNodeBuilder &Builder,
                                     GRExprEngine &Eng,
                                     Stmt *Condition, void *tag) {}
+
+  virtual bool EvalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME) {
+    return false;
+  }
 };
 } // end clang namespace
 

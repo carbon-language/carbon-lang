@@ -47,7 +47,8 @@ public:
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder& Builder,
                                    ObjCMessageExpr* ME,
-                                   ExplodedNode* Pred) {}
+                                   ExplodedNode* Pred,
+                                   const GRState *state) {}
 
   // Stores.
 

@@ -1985,7 +1985,7 @@ public:
                    Expr* Receiver,
                    const RetainSummary& Summ,
                    ExprIterator arg_beg, ExprIterator arg_end,
-                   ExplodedNode* Pred);
+                   ExplodedNode* Pred, const GRState *state);
 
   virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Eng,
@@ -1998,7 +1998,8 @@ public:
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder& Builder,
                                    ObjCMessageExpr* ME,
-                                   ExplodedNode* Pred);
+                                   ExplodedNode* Pred,
+                                   const GRState *state);
 
   bool EvalObjCMessageExprAux(ExplodedNodeSet& Dst,
                               GRExprEngine& Engine,
@@ -2777,10 +2778,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
                              Expr* Receiver,
                              const RetainSummary& Summ,
                              ExprIterator arg_beg, ExprIterator arg_end,
-                             ExplodedNode* Pred) {
-
-  // Get the state.
-  const GRState *state = Builder.GetState(Pred);
+                             ExplodedNode* Pred, const GRState *state) {
 
   // Evaluate the effect of the arguments.
   RefVal::Kind hasErr = (RefVal::Kind) 0;
@@ -3013,34 +3011,23 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
 
   assert(Summ);
   EvalSummary(Dst, Eng, Builder, CE, 0, *Summ,
-              CE->arg_begin(), CE->arg_end(), Pred);
+              CE->arg_begin(), CE->arg_end(), Pred, Builder.GetState(Pred));
 }
 
 void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                      GRExprEngine& Eng,
                                      GRStmtNodeBuilder& Builder,
                                      ObjCMessageExpr* ME,
-                                     ExplodedNode* Pred) {
-  // FIXME: Since we moved the nil check into a checker, we could get nil
-  // receiver here. Need a better way to check such case. 
-  if (Expr* Receiver = ME->getReceiver()) {
-    const GRState *state = Pred->getState();
-    DefinedOrUnknownSVal L=cast<DefinedOrUnknownSVal>(state->getSVal(Receiver));
-    if (!state->Assume(L, true)) {
-      Dst.Add(Pred);
-      return;
-    }
-  }
-  
+                                     ExplodedNode* Pred,
+                                     const GRState *state) {
   RetainSummary *Summ =
     ME->getReceiver()
-      ? Summaries.getInstanceMethodSummary(ME, Builder.GetState(Pred),
-                                           Pred->getLocationContext())
+      ? Summaries.getInstanceMethodSummary(ME, state,Pred->getLocationContext())
       : Summaries.getClassMethodSummary(ME);
 
   assert(Summ && "RetainSummary is null");
   EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), *Summ,
-              ME->arg_begin(), ME->arg_end(), Pred);
+              ME->arg_begin(), ME->arg_end(), Pred, state);
 }
 
 namespace {

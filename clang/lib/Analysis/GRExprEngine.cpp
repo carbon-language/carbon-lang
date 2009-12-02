@@ -116,20 +116,18 @@ public:
 // Checker worklist routines.
 //===----------------------------------------------------------------------===//
 
-bool GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
+void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
                                 ExplodedNodeSet &Src, bool isPrevisit) {
 
   if (Checkers.empty()) {
-    Dst.insert(Src);
-    return false;
+    Dst = Src;
+    return;
   }
 
   ExplodedNodeSet Tmp;
   ExplodedNodeSet *PrevSet = &Src;
-  bool stopProcessingAfterCurrentChecker = false;
 
-  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
-  {
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
     ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst 
                                           : (PrevSet == &Tmp) ? &Src : &Tmp;
 
@@ -138,31 +136,26 @@ bool GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
     Checker *checker = I->second;
     
     for (ExplodedNodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
-         NI != NE; ++NI) {
-      // FIXME: Halting evaluation of the checkers is something we may
-      // not support later.  The design is still evolving.      
-      if (checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI,
-                            tag, isPrevisit)) {
-        if (CurrSet != &Dst)
-          Dst.insert(*CurrSet);
-
-        stopProcessingAfterCurrentChecker = true;
-        continue;
-      }
-      assert(stopProcessingAfterCurrentChecker == false &&
-             "Inconsistent setting of 'stopProcessingAfterCurrentChecker'");
-    }
-    
-    if (stopProcessingAfterCurrentChecker)
-      return true;
-
-    // Continue on to the next checker.  Update the current NodeSet.
+         NI != NE; ++NI)
+      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, tag, isPrevisit);
     PrevSet = CurrSet;
   }
 
   // Don't autotransition.  The CheckerContext objects should do this
   // automatically.
-  return false;
+}
+
+void GRExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME, 
+                                          ExplodedNodeSet &Dst,
+                                          const GRState *state,
+                                          ExplodedNode *Pred) {
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
+    void *tag = I->first;
+    Checker *checker = I->second;
+
+    if (checker->GR_EvalNilReceiver(Dst, *Builder, *this, ME, Pred, state, tag))
+      break;
+  }
 }
 
 // FIXME: This is largely copy-paste from CheckerVisit().  Need to 
@@ -1922,10 +1915,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   ExplodedNodeSet Src, DstTmp;
   Src.Add(Pred);
   
-  if (CheckerVisit(ME, DstTmp, Src, true)) {
-    Dst.insert(DstTmp);
-    return;
-  }
+  CheckerVisit(ME, DstTmp, Src, true);
   
   unsigned size = Dst.size();
 
@@ -1934,10 +1924,38 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
     Pred = *DI;
     bool RaisesException = false;
 
-    if (ME->getReceiver()) {
+    if (const Expr *Receiver = ME->getReceiver()) {
+      const GRState *state = Pred->getState();
+
+      // Bifurcate the state into nil and non-nil ones.
+      DefinedOrUnknownSVal receiverVal = 
+        cast<DefinedOrUnknownSVal>(state->getSVal(Receiver));
+
+      const GRState *notNilState, *nilState;
+      llvm::tie(notNilState, nilState) = state->Assume(receiverVal);
+
+      // There are three cases: can be nil or non-nil, must be nil, must be 
+      // non-nil. We handle must be nil, and merge the rest two into non-nil.
+      if (nilState && !notNilState) {
+        CheckerEvalNilReceiver(ME, Dst, nilState, Pred);
+        return;
+      }
+
+      assert(notNilState);
+
       // Check if the "raise" message was sent.
       if (ME->getSelector() == RaiseSel)
         RaisesException = true;
+
+      // Check if we raise an exception.  For now treat these as sinks.
+      // Eventually we will want to handle exceptions properly.
+      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+      if (RaisesException)
+        Builder->BuildSinks = true;
+
+      // Dispatch to plug-in transfer function.
+      SaveOr OldHasGen(Builder->HasGeneratedNode);  
+      EvalObjCMessageExpr(Dst, ME, Pred, notNilState);
     }
     else {
 
@@ -1984,17 +2002,17 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
             RaisesException = true; break;
           }
       }
+
+      // Check if we raise an exception.  For now treat these as sinks.
+      // Eventually we will want to handle exceptions properly.
+      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+      if (RaisesException)
+        Builder->BuildSinks = true;
+
+      // Dispatch to plug-in transfer function.
+      SaveOr OldHasGen(Builder->HasGeneratedNode);  
+      EvalObjCMessageExpr(Dst, ME, Pred, Builder->GetState(Pred));
     }
-
-    // Check if we raise an exception.  For now treat these as sinks.  Eventually
-    // we will want to handle exceptions properly.
-    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-    if (RaisesException)
-      Builder->BuildSinks = true;
-
-    // Dispatch to plug-in transfer function.
-    SaveOr OldHasGen(Builder->HasGeneratedNode);  
-    EvalObjCMessageExpr(Dst, ME, Pred);
   }
 
   // Handle the case where no nodes where generated.  Auto-generate that
