@@ -381,29 +381,33 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
 
     llvm::Value *ExcObject = Builder.CreateCall(getBeginCatchFn(*this), Exc);
 
-    // Bind the catch parameter if it exists.
-    if (CatchParam) {
-      QualType CatchType = CatchParam->getType().getNonReferenceType();
-      setInvokeDest(TerminateHandler);
-      if (!CatchType.getTypePtr()->isPointerType())
-        CatchType = getContext().getPointerType(CatchType);
-      ExcObject =
-        Builder.CreateBitCast(ExcObject, ConvertType(CatchType));
+    {
+      CleanupScope CatchScope(*this);
+      // Bind the catch parameter if it exists.
+      if (CatchParam) {
+        QualType CatchType = CatchParam->getType().getNonReferenceType();
+        setInvokeDest(TerminateHandler);
+        if (!CatchType.getTypePtr()->isPointerType())
+          CatchType = getContext().getPointerType(CatchType);
+        ExcObject = Builder.CreateBitCast(ExcObject, ConvertType(CatchType));
         // CatchParam is a ParmVarDecl because of the grammar
         // construction used to handle this, but for codegen purposes
         // we treat this as a local decl.
-      EmitLocalBlockVarDecl(*CatchParam);
+        EmitLocalBlockVarDecl(*CatchParam);
 #if 0
-      // FIXME: objects with ctors, references
-      Builder.CreateStore(ExcObject, GetAddrOfLocalVar(CatchParam));
+        // FIXME: objects with ctors, references
+        Builder.CreateStore(ExcObject, GetAddrOfLocalVar(CatchParam));
 #else
-      CopyObject(*this, CatchParam->getType().getNonReferenceType(),
-                 ExcObject, GetAddrOfLocalVar(CatchParam));
+        // FIXME: we need to do this sooner so that the EH region for the cleanup doesn't start until after the ctor completes, use a decl init?
+        CopyObject(*this, CatchParam->getType().getNonReferenceType(),
+                   ExcObject, GetAddrOfLocalVar(CatchParam));
 #endif
-      setInvokeDest(MatchHandler);
+        setInvokeDest(MatchHandler);
+      }
+
+      EmitStmt(CatchBody);
     }
 
-    EmitStmt(CatchBody);
     EmitBranchThroughCleanup(FinallyEnd);
 
     EmitBlock(MatchHandler);
