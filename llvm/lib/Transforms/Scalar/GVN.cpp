@@ -1187,6 +1187,13 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   return V;
 }
 
+static bool isLifetimeStartOrEnd(Instruction *Inst) {
+  if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst))
+    return II->getIntrinsicID() == Intrinsic::lifetime_start ||
+           II->getIntrinsicID() == Intrinsic::lifetime_end;
+  return false;
+}
+
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
 /// non-local by performing PHI construction.
 bool GVN::processNonLocalLoad(LoadInst *LI,
@@ -1254,21 +1261,14 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     Instruction *DepInst = DepInfo.getInst();
 
     // Loading the allocation -> undef.
-    if (isa<AllocaInst>(DepInst) || isMalloc(DepInst)) {
+    if (isa<AllocaInst>(DepInst) || isMalloc(DepInst) ||
+        // Loading immediately after lifetime begin or end -> undef.
+        isLifetimeStartOrEnd(DepInst)) {
       ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
                                              UndefValue::get(LI->getType())));
       continue;
     }
     
-    // Loading immediately after lifetime begin or end -> undef.
-    if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(DepInst)) {
-      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-          II->getIntrinsicID() == Intrinsic::lifetime_end) {
-        ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
-                                             UndefValue::get(LI->getType())));
-      }
-    }
-
     if (StoreInst *S = dyn_cast<StoreInst>(DepInst)) {
       // Reject loads and stores that are to the same address but are of
       // different types if we have to.
