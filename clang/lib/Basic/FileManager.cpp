@@ -147,6 +147,12 @@ FileManager::FileManager()
 FileManager::~FileManager() {
   delete &UniqueDirs;
   delete &UniqueFiles;
+  for (llvm::SmallVectorImpl<FileEntry *>::iterator
+         V = VirtualFileEntries.begin(),
+         VEnd = VirtualFileEntries.end();
+       V != VEnd; 
+       ++V)
+    delete *V;
 }
 
 void FileManager::addStatCache(StatSysCallCache *statCache, bool AtBeginning) {
@@ -182,6 +188,30 @@ void FileManager::removeStatCache(StatSysCallCache *statCache) {
     PrevCache->setNextStatCache(statCache->getNextStatCache());
   else
     assert(false && "Stat cache not found for removal");
+}
+
+/// \brief Retrieve the directory that the given file name resides in.
+static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
+                                                  const char *NameStart,
+                                                  const char *NameEnd) {
+  // Figure out what directory it is in.   If the string contains a / in it,
+  // strip off everything after it.
+  // FIXME: this logic should be in sys::Path.
+  const char *SlashPos = NameEnd-1;
+  while (SlashPos >= NameStart && !IS_DIR_SEPARATOR_CHAR(SlashPos[0]))
+    --SlashPos;
+  // Ignore duplicate //'s.
+  while (SlashPos > NameStart && IS_DIR_SEPARATOR_CHAR(SlashPos[-1]))
+    --SlashPos;
+
+  if (SlashPos < NameStart) {
+    // Use the current directory if file has no path component.
+    const char *Name = ".";
+    return FileMgr.getDirectory(Name, Name+1);
+  } else if (SlashPos == NameEnd-1)
+    return 0;       // If filename ends with a /, it's a directory.
+  else
+    return FileMgr.getDirectory(NameStart, SlashPos);
 }
 
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
@@ -252,32 +282,15 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   // By default, initialize it to invalid.
   NamedFileEnt.setValue(NON_EXISTENT_FILE);
 
-  // Figure out what directory it is in.   If the string contains a / in it,
-  // strip off everything after it.
-  // FIXME: this logic should be in sys::Path.
-  const char *SlashPos = NameEnd-1;
-  while (SlashPos >= NameStart && !IS_DIR_SEPARATOR_CHAR(SlashPos[0]))
-    --SlashPos;
-  // Ignore duplicate //'s.
-  while (SlashPos > NameStart && IS_DIR_SEPARATOR_CHAR(SlashPos[-1]))
-    --SlashPos;
-
-  const DirectoryEntry *DirInfo;
-  if (SlashPos < NameStart) {
-    // Use the current directory if file has no path component.
-    const char *Name = ".";
-    DirInfo = getDirectory(Name, Name+1);
-  } else if (SlashPos == NameEnd-1)
-    return 0;       // If filename ends with a /, it's a directory.
-  else
-    DirInfo = getDirectory(NameStart, SlashPos);
-
-  if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
-    return 0;
 
   // Get the null-terminated file name as stored as the key of the
   // FileEntries map.
   const char *InterndFileName = NamedFileEnt.getKeyData();
+
+  const DirectoryEntry *DirInfo
+    = getDirectoryFromFile(*this, NameStart, NameEnd);
+  if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
+    return 0;
 
   // FIXME: Use the directory info to prune this, before doing the stat syscall.
   // FIXME: This will reduce the # syscalls.
@@ -310,6 +323,44 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   UFE.Dir     = DirInfo;
   UFE.UID     = NextFileUID++;
   return &UFE;
+}
+
+const FileEntry *
+FileManager::getVirtualFile(const llvm::StringRef &Filename,
+                            off_t Size, time_t ModificationTime) {
+  const char *NameStart = Filename.begin(), *NameEnd = Filename.end();
+
+  ++NumFileLookups;
+
+  // See if there is already an entry in the map.
+  llvm::StringMapEntry<FileEntry *> &NamedFileEnt =
+    FileEntries.GetOrCreateValue(NameStart, NameEnd);
+
+  // See if there is already an entry in the map.
+  if (NamedFileEnt.getValue())
+    return NamedFileEnt.getValue() == NON_EXISTENT_FILE
+                 ? 0 : NamedFileEnt.getValue();
+
+  ++NumFileCacheMisses;
+
+  // By default, initialize it to invalid.
+  NamedFileEnt.setValue(NON_EXISTENT_FILE);
+
+  const DirectoryEntry *DirInfo
+    = getDirectoryFromFile(*this, NameStart, NameEnd);
+  if (DirInfo == 0)  // Directory doesn't exist, file can't exist.
+    return 0;
+
+  FileEntry *UFE = new FileEntry();
+  VirtualFileEntries.push_back(UFE);
+  NamedFileEnt.setValue(UFE);
+
+  UFE->Name    = NamedFileEnt.getKeyData();
+  UFE->Size    = Size;
+  UFE->ModTime = ModificationTime;
+  UFE->Dir     = DirInfo;
+  UFE->UID     = NextFileUID++;
+  return UFE;
 }
 
 void FileManager::PrintStats() const {

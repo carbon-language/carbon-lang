@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FILEMANAGER_H
 #define LLVM_CLANG_FILEMANAGER_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -151,6 +152,9 @@ class FileManager {
   ///
   unsigned NextFileUID;
 
+  /// \brief The virtual files that we have allocated.
+  llvm::SmallVector<FileEntry *, 4> VirtualFileEntries;
+
   // Statistics.
   unsigned NumDirLookups, NumFileLookups;
   unsigned NumDirCacheMisses, NumFileCacheMisses;
@@ -199,6 +203,11 @@ public:
   const FileEntry *getFile(const char *FilenameStart,
                            const char *FilenameEnd);
 
+  /// \brief Retrieve a file entry for a "virtual" file that acts as
+  /// if there were a file with the given name on disk. The file
+  /// itself is not accessed.
+  const FileEntry *getVirtualFile(const llvm::StringRef &Filename,
+                                  off_t Size, time_t ModificationTime);
   void PrintStats() const;
 };
 

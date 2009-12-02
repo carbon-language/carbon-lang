@@ -19,6 +19,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
@@ -502,11 +503,11 @@ static void InitializeFileRemapping(Diagnostic &Diags,
       continue;
     }
 
-    // Find the file that we're mapping from.
-    const FileEntry *FromFile = FileMgr.getFile(Remap->first);
+    // Create the file entry for the file that we're mapping from.
+    const FileEntry *FromFile = FileMgr.getVirtualFile(Remap->first,
+                                                       ToFile->getSize(),
+                                                       0);
     if (!FromFile) {
-      // FIXME: We could actually recover from this, by faking a
-      // FileEntry based on the "ToFile".
       Diags.Report(diag::err_fe_remap_missing_from_file)
         << Remap->first;
       continue;
