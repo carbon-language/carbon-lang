@@ -53,7 +53,10 @@ class ASTUnit {
   // that come from the AST itself, not from included precompiled headers.
   // FIXME: This is temporary; eventually, CIndex will always do this.
   bool                              OnlyLocalDecls;
-  
+
+  // Track whether the main file was loaded from an AST or not.
+  bool MainFileIsAST;
+
   /// The name of the original source file used to generate this ASTUnit.
   std::string OriginalSourceFile;
 
@@ -64,8 +67,10 @@ class ASTUnit {
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
 
 public:
-  ASTUnit(DiagnosticClient *diagClient = NULL);
+  ASTUnit(bool MainFileIsAST, DiagnosticClient *diagClient = NULL);
   ~ASTUnit();
+
+  bool isMainFileAST() const { return MainFileIsAST; }
 
   const SourceManager &getSourceManager() const { return SourceMgr; }
         SourceManager &getSourceManager()       { return SourceMgr; }

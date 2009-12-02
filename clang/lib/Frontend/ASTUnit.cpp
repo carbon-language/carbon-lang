@@ -34,7 +34,10 @@
 #include "llvm/System/Path.h"
 using namespace clang;
 
-ASTUnit::ASTUnit(DiagnosticClient *diagClient) : tempFile(false) {
+ASTUnit::ASTUnit(bool _MainFileIsAST,
+                 DiagnosticClient *diagClient)
+  : tempFile(false), MainFileIsAST(_MainFileIsAST)
+{
   Diags.setClient(diagClient ? diagClient : new TextDiagnosticBuffer());
 }
 ASTUnit::~ASTUnit() {
@@ -99,7 +102,7 @@ const std::string &ASTUnit::getOriginalSourceFileName() {
 }
 
 const std::string &ASTUnit::getPCHFileName() {
-  assert(Ctx->getExternalSource() && "Not an ASTUnit from a PCH file!");
+  assert(isMainFileAST() && "Not an ASTUnit from a PCH file!");
   return dyn_cast<PCHReader>(Ctx->getExternalSource())->getFileName();
 }
 
@@ -108,7 +111,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   DiagnosticClient *diagClient,
                                   bool OnlyLocalDecls,
                                   bool UseBumpAllocator) {
-  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(diagClient));
+  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true, diagClient));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
 
@@ -230,7 +233,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   // Create the AST unit.
   //
   // FIXME: Use the provided diagnostic client.
-  AST.reset(new ASTUnit());
+  AST.reset(new ASTUnit(false));
 
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
