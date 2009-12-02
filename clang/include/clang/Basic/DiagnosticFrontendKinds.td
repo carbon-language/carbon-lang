@@ -15,8 +15,8 @@ def err_fe_error_reading_stdin : Error<"error reading stdin">;
 def err_fe_error_backend : Error<"error in backend: %0">, DefaultFatal;
 def err_fe_invalid_ast_file : Error<"invalid AST file: '%0'">, DefaultFatal;
 def err_fe_invalid_ast_action : Error<"invalid action for AST input">, DefaultFatal;
-def err_fe_invalid_code_complete_file
-  : Error<"cannot locate code-completion file %0">, DefaultFatal;
+def err_fe_invalid_code_complete_file : Error<
+    "cannot locate code-completion file %0">, DefaultFatal;
 def err_fe_stdout_binary : Error<"unable to change standard output to binary">,
   DefaultFatal;
 def err_fe_dependency_file_requires_MT : Error<
@@ -29,6 +29,10 @@ def err_fe_unable_to_find_fixit_file : Error<
     "FIX-IT could not find file '%0'">;
 def err_fe_invalid_plugin_name : Error<
     "unable to find plugin '%0'">;
+def err_fe_expected_compiler_job : Error<
+    "unable to handle compilation, expected exactly one compiler job in '%0'">;
+def err_fe_expected_clang_command : Error<
+    "expected a clang compiler command">;
 
 def err_verify_bogus_characters : Error<
     "bogus characters before '{{' in expected string">;

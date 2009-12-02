@@ -122,6 +122,30 @@ public:
                                              bool OnlyLocalDecls = false,
                                              bool UseBumpAllocator = false);
 
+  /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
+  /// arguments, which must specify exactly one source file.
+  ///
+  /// \param ArgBegin - The beginning of the argument vector.
+  ///
+  /// \param ArgEnd - The end of the argument vector.
+  ///
+  /// \param Diags - The diagnostics engine to use for reporting errors.
+  ///
+  /// \param Argv0 - The program path (from argv[0]), for finding the builtin
+  /// compiler path.
+  ///
+  /// \param MainAddr - The address of main (or some other function in the main
+  /// executable), for finding the builtin compiler path.
+  //
+  // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
+  // shouldn't need to specify them at construction time.
+  static ASTUnit *LoadFromCommandLine(const char **ArgBegin,
+                                      const char **ArgEnd,
+                                      Diagnostic &Diags,
+                                      const char *Arg0,
+                                      void *MainAddr,
+                                      bool OnlyLocalDecls = false,
+                                      bool UseBumpAllocator = false);
 };
 
 } // namespace clang

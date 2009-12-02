@@ -17,8 +17,13 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Driver/Compilation.h"
+#include "clang/Driver/Driver.h"
+#include "clang/Driver/Job.h"
+#include "clang/Driver/Tool.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
@@ -26,6 +31,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 using namespace clang;
 
@@ -261,4 +267,53 @@ error:
   Clang.takeDiagnosticClient();
   Clang.takeDiagnostics();
   return 0;
+}
+
+ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
+                                      const char **ArgEnd,
+                                      Diagnostic &Diags,
+                                      const char *Argv0,
+                                      void *MainAddr,
+                                      bool OnlyLocalDecls,
+                                      bool UseBumpAllocator) {
+  llvm::SmallVector<const char *, 16> Args;
+  Args.push_back("<clang>"); // FIXME: Remove dummy argument.
+  Args.insert(Args.end(), ArgBegin, ArgEnd);
+
+  // FIXME: Find a cleaner way to force the driver into restricted modes. We
+  // also want to force it to use clang.
+  Args.push_back("-fsyntax-only");
+
+  llvm::sys::Path Path = llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
+  driver::Driver TheDriver(Path.getBasename().c_str(),Path.getDirname().c_str(),
+                           llvm::sys::getHostTriple().c_str(),
+                           "a.out", false, Diags);
+  llvm::OwningPtr<driver::Compilation> C(
+    TheDriver.BuildCompilation(Args.size(), Args.data()));
+
+  // We expect to get back exactly one command job, if we didn't something
+  // failed.
+  const driver::JobList &Jobs = C->getJobs();
+  if (Jobs.size() != 1 || !isa<driver::Command>(Jobs.begin())) {
+    llvm::SmallString<256> Msg;
+    llvm::raw_svector_ostream OS(Msg);
+    C->PrintJob(OS, C->getJobs(), "; ", true);
+    Diags.Report(diag::err_fe_expected_compiler_job) << OS.str();
+    return 0;
+  }
+
+  const driver::Command *Cmd = cast<driver::Command>(*Jobs.begin());
+  if (llvm::StringRef(Cmd->getCreator().getName()) != "clang") {
+    Diags.Report(diag::err_fe_expected_clang_command);
+    return 0;
+  }
+
+  const driver::ArgStringList &CCArgs = Cmd->getArguments();
+  CompilerInvocation CI;
+  CompilerInvocation::CreateFromArgs(CI, (const char**) CCArgs.data(),
+                                     (const char**) CCArgs.data()+CCArgs.size(),
+                                     Argv0, MainAddr, Diags);
+
+  return LoadFromCompilerInvocation(CI, Diags, OnlyLocalDecls,
+                                    UseBumpAllocator);
 }
