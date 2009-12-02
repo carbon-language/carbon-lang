@@ -3240,8 +3240,6 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD,
           Diag(NewFD->getLocation(), diag::err_destructor_name);
           return NewFD->setInvalidDecl();
         }
-      
-        CheckDestructor(Destructor);
       }
 
       Record->setUserDeclaredDestructor(true);
@@ -3264,6 +3262,12 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD,
           !Method->getDescribedFunctionTemplate())
         AddOverriddenMethods(Method->getParent(), Method);
     }
+
+    // Additional checks for the destructor; make sure we do this after we
+    // figure out whether the destructor is virtual.
+    if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(NewFD))
+      if (!Destructor->getParent()->isDependentType())
+        CheckDestructor(Destructor);
 
     // Extra checking for C++ overloaded operators (C++ [over.oper]).
     if (NewFD->isOverloadedOperator() &&
