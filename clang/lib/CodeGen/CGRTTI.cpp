@@ -17,6 +17,7 @@
 using namespace clang;
 using namespace CodeGen;
 
+namespace {
 class RTTIBuilder {
   CodeGenModule &CGM;  // Per-module state.
   llvm::LLVMContext &VMContext;
@@ -406,6 +407,7 @@ public:
     }
   }
 };
+}
 
 llvm::Constant *CodeGenModule::GenerateRTTIRef(const CXXRecordDecl *RD) {
   RTTIBuilder b(*this);

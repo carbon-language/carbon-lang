@@ -770,7 +770,6 @@ public:
       delete Path;
   }
 };
-
 }
 
 /// TypeConversionRequiresAdjustment - Returns whether conversion from a 
@@ -1109,6 +1108,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
   return vtable;
 }
 
+namespace {
 class VTTBuilder {
   /// Inits - The list of values built for the VTT.
   std::vector<llvm::Constant *> &Inits;
@@ -1271,6 +1271,7 @@ public:
     VirtualVTTs(Class);
   }
 };
+}
 
 llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   // Only classes that have virtual bases need a VTT.
