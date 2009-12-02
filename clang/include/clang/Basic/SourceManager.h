@@ -72,11 +72,6 @@ namespace SrcMgr {
     /// if SourceLineCache is non-null.
     unsigned NumLines;
 
-    /// FirstFID - First FileID that was created for this ContentCache.
-    /// Represents the first source inclusion of the file associated with this
-    /// ContentCache.
-    mutable FileID FirstFID;
-
     /// getBuffer - Returns the memory buffer for the associated content.  If
     /// there is an error opening this buffer the first time, this returns null
     /// and fills in the ErrorStr with a reason.

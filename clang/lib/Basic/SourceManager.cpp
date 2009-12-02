@@ -413,8 +413,6 @@ FileID SourceManager::createFileID(const ContentCache *File,
       = SLocEntry::get(Offset, FileInfo::get(IncludePos, File, FileCharacter));
     SLocEntryLoaded[PreallocatedID] = true;
     FileID FID = FileID::get(PreallocatedID);
-    if (File->FirstFID.isInvalid())
-      File->FirstFID = FID;
     return LastFileIDLookup = FID;
   }
 
@@ -428,8 +426,6 @@ FileID SourceManager::createFileID(const ContentCache *File,
   // Set LastFileIDLookup to the newly created file.  The next getFileID call is
   // almost guaranteed to be from that file.
   FileID FID = FileID::get(SLocEntryTable.size()-1);
-  if (File->FirstFID.isInvalid())
-    File->FirstFID = FID;
   return LastFileIDLookup = FID;
 }
 
@@ -1007,8 +1003,33 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
   if (i < Col-1)
     return SourceLocation();
 
-  return getLocForStartOfFile(Content->FirstFID).
-            getFileLocWithOffset(FilePos + Col - 1);
+  // Find the first file ID that corresponds to the given file.
+  FileID FirstFID;
+
+  // First, check the main file ID, since it is common to look for a
+  // location in the main file.
+  if (!MainFileID.isInvalid()) {
+    const SLocEntry &MainSLoc = getSLocEntry(MainFileID);
+    if (MainSLoc.isFile() && MainSLoc.getFile().getContentCache() == Content)
+      FirstFID = MainFileID;
+  }
+
+  if (FirstFID.isInvalid()) {
+    // The location we're looking for isn't in the main file; look
+    // through all of the source locations.
+    for (unsigned I = 0, N = sloc_entry_size(); I != N; ++I) {
+      const SLocEntry &SLoc = getSLocEntry(I);
+      if (SLoc.isFile() && SLoc.getFile().getContentCache() == Content) {
+        FirstFID = FileID::get(I);
+        break;
+      }
+    }
+  }
+    
+  if (FirstFID.isInvalid())
+    return SourceLocation();
+
+  return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + Col - 1);
 }
 
 /// \brief Determines the order of 2 source locations in the translation unit.
