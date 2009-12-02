@@ -733,6 +733,9 @@ static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
 }
                                   
 static bool IsInstanceMember(NamedDecl *D) {
+  if (isa<EnumConstantDecl>(D))
+    return false;
+
   assert(isa<CXXRecordDecl>(D->getDeclContext()) &&
          "checking whether non-member is instance member");
 
