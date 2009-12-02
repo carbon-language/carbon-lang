@@ -248,119 +248,23 @@ void Sema::LookupTemplateName(LookupResult &Found,
   }
 }
 
-/// Constructs a full type for the given nested-name-specifier.
-static QualType GetTypeForQualifier(ASTContext &Context,
-                                    NestedNameSpecifier *Qualifier) {
-  // Three possibilities:
-
-  // 1.  A namespace (global or not).
-  assert(!Qualifier->getAsNamespace() && "can't construct type for namespace");
-
-  // 2.  A type (templated or not).
-  Type *Ty = Qualifier->getAsType();
-  if (Ty) return QualType(Ty, 0);
-
-  // 3.  A dependent identifier.
-  assert(Qualifier->getAsIdentifier());
-  return Context.getTypenameType(Qualifier->getPrefix(),
-                                 Qualifier->getAsIdentifier());
-}
-
-static bool HasDependentTypeAsBase(ASTContext &Context,
-                                   CXXRecordDecl *Record,
-                                   CanQualType T) {
-  for (CXXRecordDecl::base_class_iterator I = Record->bases_begin(),
-         E = Record->bases_end(); I != E; ++I) {
-    CanQualType BaseT = Context.getCanonicalType((*I).getType());
-    if (BaseT == T)
-      return true;
-
-    // We have to recurse here to cover some really bizarre cases.
-    // Obviously, we can only have the dependent type as an indirect
-    // base class through a dependent base class, and usually it's
-    // impossible to know which instantiation a dependent base class
-    // will have.  But!  If we're actually *inside* the dependent base
-    // class, then we know its instantiation and can therefore be
-    // reasonably expected to look into it.
-
-    // template <class T> class A : Base<T> {
-    //   class Inner : A<T> {
-    //     void foo() {
-    //       Base<T>::foo(); // statically known to be an implicit member
-    //                          reference
-    //     }
-    //   };
-    // };
-
-    CanQual<RecordType> RT = BaseT->getAs<RecordType>();
-
-    // Base might be a dependent member type, in which case we
-    // obviously can't look into it.
-    if (!RT) continue;
-
-    CXXRecordDecl *BaseRecord = cast<CXXRecordDecl>(RT->getDecl());
-    if (BaseRecord->isDefinition() &&
-        HasDependentTypeAsBase(Context, BaseRecord, T))
-      return true;
-  }
-
-  return false;
-}
-
-/// Checks whether the given dependent nested-name specifier
-/// introduces an implicit member reference.  This is only true if the
-/// nested-name specifier names a type identical to one of the current
-/// instance method's context's (possibly indirect) base classes.
-static bool IsImplicitDependentMemberReference(Sema &SemaRef,
-                                               NestedNameSpecifier *Qualifier,
-                                               QualType &ThisType) {
-  // If the context isn't a C++ method, then it isn't an implicit
-  // member reference.
-  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(SemaRef.CurContext);
-  if (!MD || MD->isStatic())
-    return false;
-
-  ASTContext &Context = SemaRef.Context;
-
-  // We want to check whether the method's context is known to inherit
-  // from the type named by the nested name specifier.  The trivial
-  // case here is:
-  //   template <class T> class Base { ... };
-  //   template <class T> class Derived : Base<T> {
-  //     void foo() {
-  //       Base<T>::foo();
-  //     }
-  //   };
-
-  QualType QT = GetTypeForQualifier(Context, Qualifier);
-  CanQualType T = Context.getCanonicalType(QT);
-
-  // And now, just walk the non-dependent type hierarchy, trying to
-  // find the given type as a literal base class.
-  CXXRecordDecl *Record = cast<CXXRecordDecl>(MD->getParent());
-  if (Context.getCanonicalType(Context.getTypeDeclType(Record)) == T || 
-      HasDependentTypeAsBase(Context, Record, T)) {
-    ThisType = MD->getThisType(Context);
-    return true;
-  }
-
-  return false;
-}
-
-/// ActOnDependentIdExpression - Handle a dependent declaration name
-/// that was just parsed.
+/// ActOnDependentIdExpression - Handle a dependent id-expression that
+/// was just parsed.  This is only possible with an explicit scope
+/// specifier naming a dependent type.
 Sema::OwningExprResult
 Sema::ActOnDependentIdExpression(const CXXScopeSpec &SS,
                                  DeclarationName Name,
                                  SourceLocation NameLoc,
-                                 bool CheckForImplicitMember,
+                                 bool isAddressOfOperand,
                            const TemplateArgumentListInfo *TemplateArgs) {
   NestedNameSpecifier *Qualifier
     = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
     
-  QualType ThisType;
-  if (CheckForImplicitMember &&
-      IsImplicitDependentMemberReference(*this, Qualifier, ThisType)) {
+  if (!isAddressOfOperand &&
+      isa<CXXMethodDecl>(CurContext) &&
+      cast<CXXMethodDecl>(CurContext)->isInstance()) {
+    QualType ThisType = cast<CXXMethodDecl>(CurContext)->getThisType(Context);
+    
     // Since the 'this' expression is synthesized, we don't need to
     // perform the double-lookup check.
     NamedDecl *FirstQualifierInScope = 0;

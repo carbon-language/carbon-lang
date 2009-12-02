@@ -1438,7 +1438,7 @@ public:
   OwningExprResult ActOnDependentIdExpression(const CXXScopeSpec &SS,
                                               DeclarationName Name,
                                               SourceLocation NameLoc,
-                                              bool CheckForImplicitMember,
+                                              bool isAddressOfOperand,
                                 const TemplateArgumentListInfo *TemplateArgs);
   
   OwningExprResult BuildDeclRefExpr(NamedDecl *D, QualType Ty,
@@ -1549,8 +1549,7 @@ public:
                                     DeclPtrTy ObjCImpDecl);
 
   bool CheckQualifiedMemberReference(Expr *BaseExpr, QualType BaseType,
-                                     NestedNameSpecifier *Qualifier,
-                                     SourceRange QualifierRange,
+                                     const CXXScopeSpec &SS,
                                      const LookupResult &R);
 
   OwningExprResult ActOnDependentMemberExpr(ExprArg Base,

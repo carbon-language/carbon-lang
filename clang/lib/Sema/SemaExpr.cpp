@@ -901,10 +901,8 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   // Determine whether this is a member of an unknown specialization;
   // we need to handle these differently.
   if (SS.isSet() && IsDependentIdExpression(*this, SS)) {
-    bool CheckForImplicitMember = !isAddressOfOperand;
-
     return ActOnDependentIdExpression(SS, Name, NameLoc,
-                                      CheckForImplicitMember,
+                                      isAddressOfOperand,
                                       TemplateArgs);
   }
 
@@ -2140,15 +2138,18 @@ Sema::ActOnDependentMemberExpr(ExprArg Base, QualType BaseType,
 static void DiagnoseQualifiedMemberReference(Sema &SemaRef,
                                              Expr *BaseExpr,
                                              QualType BaseType,
-                                             NestedNameSpecifier *Qualifier,
-                                             SourceRange QualifierRange,
+                                             const CXXScopeSpec &SS,
                                              const LookupResult &R) {
-  DeclContext *DC = R.getRepresentativeDecl()->getDeclContext();
+  // If this is an implicit member access, use a different set of
+  // diagnostics.
+  if (!BaseExpr)
+    return DiagnoseInstanceReference(SemaRef, SS, R);
 
   // FIXME: this is an exceedingly lame diagnostic for some of the more
   // complicated cases here.
+  DeclContext *DC = R.getRepresentativeDecl()->getDeclContext();
   SemaRef.Diag(R.getNameLoc(), diag::err_not_direct_base_or_virtual)
-    << QualifierRange << DC << BaseType;
+    << SS.getRange() << DC << BaseType;
 }
 
 // Check whether the declarations we found through a nested-name
@@ -2165,8 +2166,7 @@ static void DiagnoseQualifiedMemberReference(Sema &SemaRef,
 // we actually pick through overload resolution is from a superclass.
 bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
                                          QualType BaseType,
-                                         NestedNameSpecifier *Qualifier,
-                                         SourceRange QualifierRange,
+                                         const CXXScopeSpec &SS,
                                          const LookupResult &R) {
   const RecordType *BaseRT = BaseType->getAs<RecordType>();
   if (!BaseRT) {
@@ -2195,8 +2195,7 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
       return false;
   }
 
-  DiagnoseQualifiedMemberReference(*this, BaseExpr, BaseType,
-                                     Qualifier, QualifierRange, R);
+  DiagnoseQualifiedMemberReference(*this, BaseExpr, BaseType, SS, R);
   return true;
 }
 
@@ -2215,6 +2214,12 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
     // If the member name was a qualified-id, look into the
     // nested-name-specifier.
     DC = SemaRef.computeDeclContext(SS, false);
+
+    if (SemaRef.RequireCompleteDeclContext(SS)) {
+      SemaRef.Diag(SS.getRange().getEnd(), diag::err_typecheck_incomplete_tag)
+        << SS.getRange() << DC;
+      return true;
+    }
 
     assert(DC && "Cannot handle non-computable dependent contexts in lookup");
       
@@ -2240,7 +2245,8 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
                                const TemplateArgumentListInfo *TemplateArgs) {
   Expr *Base = BaseArg.takeAs<Expr>();
 
-  if (BaseType->isDependentType())
+  if (BaseType->isDependentType() ||
+      (SS.isSet() && isDependentScopeSpecifier(SS)))
     return ActOnDependentMemberExpr(ExprArg(*this, Base), BaseType,
                                     IsArrow, OpLoc,
                                     SS, FirstQualifierInScope,
@@ -2311,11 +2317,11 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
     return ExprError();
   }
 
-  // We can't always diagnose the problem yet: it's permitted for
-  // lookup to find things from an invalid context as long as they
-  // don't get picked by overload resolution.
-  if (SS.isSet() && CheckQualifiedMemberReference(BaseExpr, BaseType,
-                                                  Qualifier, SS.getRange(), R))
+  // Diagnose qualified lookups that find only declarations from a
+  // non-base type.  Note that it's okay for lookup to find
+  // declarations from a non-base type as long as those aren't the
+  // ones picked by overload resolution.
+  if (SS.isSet() && CheckQualifiedMemberReference(BaseExpr, BaseType, SS, R))
     return ExprError();
 
   // Construct an unresolved result if we in fact got an unresolved
