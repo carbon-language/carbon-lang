@@ -13,10 +13,14 @@
 
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 using namespace clang;
 
@@ -478,6 +482,52 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   TI.getTargetDefines(LangOpts, Buf);
 }
 
+// Initialize the remapping of files to alternative contents, e.g.,
+// those specified through other files.
+static void InitializeFileRemapping(Diagnostic &Diags,
+                                    SourceManager &SourceMgr,
+                                    FileManager &FileMgr,
+                                    const PreprocessorOptions &InitOpts) {
+  // Remap files in the source manager.
+  for (PreprocessorOptions::remapped_file_iterator
+         Remap = InitOpts.remapped_file_begin(),
+         RemapEnd = InitOpts.remapped_file_end();
+       Remap != RemapEnd;
+       ++Remap) {
+    // Find the file that we're mapping to.
+    const FileEntry *ToFile = FileMgr.getFile(Remap->second);
+    if (!ToFile) {
+      Diags.Report(diag::err_fe_remap_missing_to_file)
+        << Remap->first << Remap->second;
+      continue;
+    }
+
+    // Find the file that we're mapping from.
+    const FileEntry *FromFile = FileMgr.getFile(Remap->first);
+    if (!FromFile) {
+      // FIXME: We could actually recover from this, by faking a
+      // FileEntry based on the "ToFile".
+      Diags.Report(diag::err_fe_remap_missing_from_file)
+        << Remap->first;
+      continue;
+    }
+
+    // Load the contents of the file we're mapping to.
+    std::string ErrorStr;
+    const llvm::MemoryBuffer *Buffer
+      = llvm::MemoryBuffer::getFile(ToFile->getName(), &ErrorStr);
+    if (!Buffer) {
+      Diags.Report(diag::err_fe_error_opening)
+        << Remap->second << ErrorStr;
+      continue;
+    }
+
+    // Override the contents of the "from" file with the contents of
+    // the "to" file.
+    SourceMgr.overrideFileContents(FromFile, Buffer);
+  }
+}
+
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file. This returns true on error.
 ///
@@ -485,6 +535,9 @@ void clang::InitializePreprocessor(Preprocessor &PP,
                                    const PreprocessorOptions &InitOpts,
                                    const HeaderSearchOptions &HSOpts) {
   std::vector<char> PredefineBuffer;
+
+  InitializeFileRemapping(PP.getDiagnostics(), PP.getSourceManager(),
+                          PP.getFileManager(), InitOpts);
 
   const char *LineDirective = "# 1 \"<built-in>\" 3\n";
   PredefineBuffer.insert(PredefineBuffer.end(),
