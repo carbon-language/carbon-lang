@@ -18,6 +18,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Parse/DeclSpec.h"
@@ -977,19 +978,26 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
 
     if (Member)
       return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
-                                    RParenLoc);
+                                    LParenLoc, RParenLoc);
   }
   // It didn't name a member, so see if it names a class.
-  TypeTy *BaseTy = TemplateTypeTy ? TemplateTypeTy
-                     : getTypeName(*MemberOrBase, IdLoc, S, &SS);
-  if (!BaseTy)
+  QualType BaseType;
+
+  DeclaratorInfo *DInfo = 0;
+  if (TemplateTypeTy)
+    BaseType = GetTypeFromParser(TemplateTypeTy, &DInfo);
+  else
+    BaseType = QualType::getFromOpaquePtr(getTypeName(*MemberOrBase, IdLoc, 
+                                                      S, &SS));
+  if (BaseType.isNull())
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);
 
-  QualType BaseType = GetTypeFromParser(BaseTy);
+  if (!DInfo)
+    DInfo = Context.getTrivialDeclaratorInfo(BaseType, IdLoc);
 
-  return BuildBaseInitializer(BaseType, (Expr **)Args, NumArgs, IdLoc,
-                              RParenLoc, ClassDecl);
+  return BuildBaseInitializer(BaseType, DInfo, (Expr **)Args, NumArgs, 
+                              LParenLoc, RParenLoc, ClassDecl);
 }
 
 /// Checks an initializer expression for use of uninitialized fields, such as
@@ -1038,6 +1046,7 @@ static bool InitExprContainsUninitializedFields(const Stmt* S,
 Sema::MemInitResult
 Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                              unsigned NumArgs, SourceLocation IdLoc,
+                             SourceLocation LParenLoc,
                              SourceLocation RParenLoc) {
   // FIXME: CXXBaseOrMemberInitializer should only contain a single 
   // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
@@ -1119,22 +1128,25 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   ExprTemporaries.clear();
   
   // FIXME: Perform direct initialization of the member.
-  return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args,
-                                                  NumArgs, C, IdLoc, RParenLoc);
+  return new (Context) CXXBaseOrMemberInitializer(Context, Member, IdLoc,
+                                                  C, LParenLoc, (Expr **)Args,
+                                                  NumArgs, RParenLoc);
 }
 
 Sema::MemInitResult
-Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
-                           unsigned NumArgs, SourceLocation IdLoc,
-                           SourceLocation RParenLoc, CXXRecordDecl *ClassDecl) {
+Sema::BuildBaseInitializer(QualType BaseType, DeclaratorInfo *BaseDInfo,
+                           Expr **Args, unsigned NumArgs, 
+                           SourceLocation LParenLoc, SourceLocation RParenLoc, 
+                           CXXRecordDecl *ClassDecl) {
   bool HasDependentArg = false;
   for (unsigned i = 0; i < NumArgs; i++)
     HasDependentArg |= Args[i]->isTypeDependent();
 
+  SourceLocation BaseLoc = BaseDInfo->getTypeLoc().getSourceRange().getBegin();
   if (!BaseType->isDependentType()) {
     if (!BaseType->isRecordType())
-      return Diag(IdLoc, diag::err_base_init_does_not_name_class)
-        << BaseType << SourceRange(IdLoc, RParenLoc);
+      return Diag(BaseLoc, diag::err_base_init_does_not_name_class)
+        << BaseType << BaseDInfo->getTypeLoc().getSourceRange();
 
     // C++ [class.base.init]p2:
     //   [...] Unless the mem-initializer-id names a nonstatic data
@@ -1180,16 +1192,16 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
     //   a direct non-virtual base class and an inherited virtual base
     //   class, the mem-initializer is ill-formed.
     if (DirectBaseSpec && VirtualBaseSpec)
-      return Diag(IdLoc, diag::err_base_init_direct_and_virtual)
-        << BaseType << SourceRange(IdLoc, RParenLoc);
+      return Diag(BaseLoc, diag::err_base_init_direct_and_virtual)
+        << BaseType << BaseDInfo->getTypeLoc().getSourceRange();
     // C++ [base.class.init]p2:
     // Unless the mem-initializer-id names a nonstatic data membeer of the
     // constructor's class ot a direst or virtual base of that class, the
     // mem-initializer is ill-formed.
     if (!DirectBaseSpec && !VirtualBaseSpec)
-      return Diag(IdLoc, diag::err_not_direct_base_or_virtual)
-      << BaseType << ClassDecl->getNameAsCString()
-      << SourceRange(IdLoc, RParenLoc);
+      return Diag(BaseLoc, diag::err_not_direct_base_or_virtual)
+        << BaseType << ClassDecl->getNameAsCString()
+        << BaseDInfo->getTypeLoc().getSourceRange();
   }
 
   CXXConstructorDecl *C = 0;
@@ -1201,7 +1213,8 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
     C = PerformInitializationByConstructor(BaseType, 
                                            MultiExprArg(*this, 
                                                         (void**)Args, NumArgs),
-                                           IdLoc, SourceRange(IdLoc, RParenLoc),
+                                           BaseLoc, 
+                                           SourceRange(BaseLoc, RParenLoc),
                                            Name, IK_Direct,
                                            ConstructorArgs);
     if (C) {
@@ -1215,8 +1228,9 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
   // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
   ExprTemporaries.clear();
   
-  return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args,
-                                                  NumArgs, C, IdLoc, RParenLoc);
+  return new (Context) CXXBaseOrMemberInitializer(Context, BaseDInfo, C, 
+                                                  LParenLoc, (Expr **)Args, 
+                                                  NumArgs, RParenLoc);
 }
 
 bool
@@ -1278,7 +1292,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       }
       else {
         CXXRecordDecl *VBaseDecl =
-        cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
+          cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
         assert(VBaseDecl && "SetBaseOrMemberInitializers - VBaseDecl null");
         CXXConstructorDecl *Ctor = VBaseDecl->getDefaultConstructor(Context);
         if (!Ctor) {
@@ -1299,13 +1313,18 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
         
         // FIXME: CXXBaseOrMemberInitializer should only contain a single 
-        // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+        // subexpression so we can wrap it in a CXXExprWithTemporaries if 
+        // necessary.
+        // FIXME: Is there any better source-location information we can give?
         ExprTemporaries.clear();
         CXXBaseOrMemberInitializer *Member =
-          new (Context) CXXBaseOrMemberInitializer(VBase->getType(),
-                                                   CtorArgs.takeAs<Expr>(),
-                                                   CtorArgs.size(), Ctor,
+          new (Context) CXXBaseOrMemberInitializer(Context,
+                             Context.getTrivialDeclaratorInfo(VBase->getType(), 
+                                                              SourceLocation()),
+                                                   Ctor,
                                                    SourceLocation(),
+                                                   CtorArgs.takeAs<Expr>(),
+                                                   CtorArgs.size(), 
                                                    SourceLocation());
         AllToInit.push_back(Member);
       }
@@ -1347,13 +1366,18 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
 
         // FIXME: CXXBaseOrMemberInitializer should only contain a single 
-        // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
+        // subexpression so we can wrap it in a CXXExprWithTemporaries if 
+        // necessary.
+        // FIXME: Is there any better source-location information we can give?
         ExprTemporaries.clear();
         CXXBaseOrMemberInitializer *Member =
-          new (Context) CXXBaseOrMemberInitializer(Base->getType(),
-                                                   CtorArgs.takeAs<Expr>(),
-                                                   CtorArgs.size(), Ctor,
+          new (Context) CXXBaseOrMemberInitializer(Context,
+                             Context.getTrivialDeclaratorInfo(Base->getType(), 
+                                                              SourceLocation()),
+                                                   Ctor,
                                                    SourceLocation(),
+                                                   CtorArgs.takeAs<Expr>(),
+                                                   CtorArgs.size(), 
                                                    SourceLocation());
         AllToInit.push_back(Member);
       }
@@ -1428,9 +1452,12 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
       ExprTemporaries.clear();
       CXXBaseOrMemberInitializer *Member =
-        new (Context) CXXBaseOrMemberInitializer(*Field,CtorArgs.takeAs<Expr>(),
-                                                 CtorArgs.size(), Ctor,
+        new (Context) CXXBaseOrMemberInitializer(Context,
+                                                 *Field, SourceLocation(),
+                                                 Ctor,
                                                  SourceLocation(),
+                                                 CtorArgs.takeAs<Expr>(),
+                                                 CtorArgs.size(),
                                                  SourceLocation());
 
       AllToInit.push_back(Member);
@@ -1538,13 +1565,15 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
       if (FieldDecl *Field = Member->getMember())
         Diag(Member->getSourceLocation(),
              diag::error_multiple_mem_initialization)
-        << Field->getNameAsString();
+          << Field->getNameAsString()
+          << Member->getSourceRange();
       else {
         Type *BaseClass = Member->getBaseClass();
         assert(BaseClass && "ActOnMemInitializers - neither field or base");
         Diag(Member->getSourceLocation(),
              diag::error_multiple_base_initialization)
-          << QualType(BaseClass, 0);
+          << QualType(BaseClass, 0)
+          << Member->getSourceRange();
       }
       Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
         << 0;

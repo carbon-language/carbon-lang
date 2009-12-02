@@ -2110,10 +2110,13 @@ public:
 
   MemInitResult BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                                        unsigned NumArgs, SourceLocation IdLoc,
+                                       SourceLocation LParenLoc,
                                        SourceLocation RParenLoc);
 
-  MemInitResult BuildBaseInitializer(QualType BaseType, Expr **Args,
-                                     unsigned NumArgs, SourceLocation IdLoc,
+  MemInitResult BuildBaseInitializer(QualType BaseType,
+                                     DeclaratorInfo *BaseDInfo,
+                                     Expr **Args, unsigned NumArgs,
+                                     SourceLocation LParenLoc,
                                      SourceLocation RParenLoc,
                                      CXXRecordDecl *ClassDecl);
 

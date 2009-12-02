@@ -1620,14 +1620,19 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     MemInitResult NewInit;
 
     if (Init->isBaseInitializer()) {
-      QualType BaseType(Init->getBaseClass(), 0);
-      BaseType = SubstType(BaseType, TemplateArgs, Init->getSourceLocation(),
-                           New->getDeclName());
-
-      NewInit = BuildBaseInitializer(BaseType,
+      DeclaratorInfo *BaseDInfo = SubstType(Init->getBaseClassInfo(), 
+                                            TemplateArgs, 
+                                            Init->getSourceLocation(), 
+                                            New->getDeclName());
+      if (!BaseDInfo) {
+        New->setInvalidDecl();
+        continue;
+      }
+      
+      NewInit = BuildBaseInitializer(BaseDInfo->getType(), BaseDInfo,
                                      (Expr **)NewArgs.data(),
                                      NewArgs.size(),
-                                     Init->getSourceLocation(),
+                                     Init->getLParenLoc(),
                                      Init->getRParenLoc(),
                                      New->getParent());
     } else if (Init->isMemberInitializer()) {
@@ -1643,6 +1648,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       NewInit = BuildMemberInitializer(Member, (Expr **)NewArgs.data(),
                                        NewArgs.size(),
                                        Init->getSourceLocation(),
+                                       Init->getLParenLoc(),
                                        Init->getRParenLoc());
     }
 

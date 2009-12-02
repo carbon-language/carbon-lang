@@ -888,12 +888,13 @@ public:
 /// };
 /// @endcode
 class CXXBaseOrMemberInitializer {
-  /// BaseOrMember - This points to the entity being initialized,
-  /// which is either a base class (a Type) or a non-static data
-  /// member. When the low bit is 1, it's a base
-  /// class; when the low bit is 0, it's a member.
-  uintptr_t BaseOrMember;
-
+  /// \brief Either the base class name (stored as a DeclaratorInfo*) or the
+  /// field being initialized.
+  llvm::PointerUnion<DeclaratorInfo *, FieldDecl *> BaseOrMember;
+  
+  /// \brief The source location for the field name.
+  SourceLocation MemberLocation;
+  
   /// Args - The arguments used to initialize the base or member.
   Stmt **Args;
   unsigned NumArgs;
@@ -918,8 +919,8 @@ class CXXBaseOrMemberInitializer {
   /// and AnonUnionMember holds field decl for au_i1.
   llvm::PointerUnion<CXXConstructorDecl *, FieldDecl *> CtorOrAnonUnion;
 
-  /// IdLoc - Location of the id in ctor-initializer list.
-  SourceLocation IdLoc;
+  /// LParenLoc - Location of the left paren of the ctor-initializer.
+  SourceLocation LParenLoc;
 
   /// RParenLoc - Location of the right paren of the ctor-initializer.
   SourceLocation RParenLoc;
@@ -927,18 +928,22 @@ class CXXBaseOrMemberInitializer {
 public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit
-  CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
-                             CXXConstructorDecl *C,
-                             SourceLocation L, SourceLocation R);
+  CXXBaseOrMemberInitializer(ASTContext &Context,
+                             DeclaratorInfo *DInfo, CXXConstructorDecl *C,
+                             SourceLocation L, 
+                             Expr **Args, unsigned NumArgs,
+                             SourceLocation R);
 
   /// CXXBaseOrMemberInitializer - Creates a new member initializer.
   explicit
-  CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
-                             CXXConstructorDecl *C,
-                             SourceLocation L, SourceLocation R);
+  CXXBaseOrMemberInitializer(ASTContext &Context,
+                             FieldDecl *Member, SourceLocation MemberLoc,
+                             CXXConstructorDecl *C, SourceLocation L,
+                             Expr **Args, unsigned NumArgs,
+                             SourceLocation R);
 
-  /// ~CXXBaseOrMemberInitializer - Destroy the base or member initializer.
-  ~CXXBaseOrMemberInitializer();
+  /// \brief Destroy the base or member initializer.
+  void Destroy(ASTContext &Context);
 
   /// arg_iterator - Iterates through the member initialization
   /// arguments.
@@ -948,54 +953,54 @@ public:
   /// arguments.
   typedef ConstExprIterator const_arg_iterator;
 
-  /// getBaseOrMember - get the generic 'member' representing either the field
-  /// or a base class.
-  void* getBaseOrMember() const { return reinterpret_cast<void*>(BaseOrMember); }
-
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.
-  bool isBaseInitializer() const { return (BaseOrMember & 0x1) != 0; }
+  bool isBaseInitializer() const { return BaseOrMember.is<DeclaratorInfo*>(); }
 
   /// isMemberInitializer - Returns true when this initializer is
   /// initializing a non-static data member.
-  bool isMemberInitializer() const { return (BaseOrMember & 0x1) == 0; }
+  bool isMemberInitializer() const { return BaseOrMember.is<FieldDecl*>(); }
 
-  /// getBaseClass - If this is a base class initializer, returns the
-  /// type used to specify the initializer. The resulting type will be
-  /// a class type or a typedef of a class type. If this is not a base
-  /// class initializer, returns NULL.
-  Type *getBaseClass() {
-    if (isBaseInitializer())
-      return reinterpret_cast<Type*>(BaseOrMember & ~0x01);
-    else
-      return 0;
+  /// If this is a base class initializer, returns the type of the 
+  /// base class with location information. Otherwise, returns an NULL
+  /// type location.
+  TypeLoc getBaseClassLoc() const;
+
+  /// If this is a base class initializer, returns the type of the base class.
+  /// Otherwise, returns NULL.
+  const Type *getBaseClass() const;
+  Type *getBaseClass();
+  
+  /// \brief Returns the declarator information for a base class initializer.
+  DeclaratorInfo *getBaseClassInfo() const {
+    return BaseOrMember.dyn_cast<DeclaratorInfo *>();
   }
-
-  /// getBaseClass - If this is a base class initializer, returns the
-  /// type used to specify the initializer. The resulting type will be
-  /// a class type or a typedef of a class type. If this is not a base
-  /// class initializer, returns NULL.
-  const Type *getBaseClass() const {
-    if (isBaseInitializer())
-      return reinterpret_cast<const Type*>(BaseOrMember & ~0x01);
-    else
-      return 0;
-  }
-
+  
   /// getMember - If this is a member initializer, returns the
   /// declaration of the non-static data member being
   /// initialized. Otherwise, returns NULL.
   FieldDecl *getMember() {
     if (isMemberInitializer())
-      return reinterpret_cast<FieldDecl *>(BaseOrMember);
+      return BaseOrMember.get<FieldDecl*>();
     else
       return 0;
   }
 
-  void setMember(FieldDecl * anonUnionField) {
-    BaseOrMember = reinterpret_cast<uintptr_t>(anonUnionField);
+  SourceLocation getMemberLocation() const { 
+    return MemberLocation;
   }
 
+  void setMember(FieldDecl *Member) {
+    assert(isMemberInitializer());
+    BaseOrMember = Member;
+  }
+  
+  /// \brief Determine the source location of the initializer.
+  SourceLocation getSourceLocation() const;
+  
+  /// \brief Determine the source range covering the entire initializer.
+  SourceRange getSourceRange() const;
+  
   FieldDecl *getAnonUnionMember() const {
     return CtorOrAnonUnion.dyn_cast<FieldDecl *>();
   }
@@ -1007,7 +1012,7 @@ public:
     return CtorOrAnonUnion.dyn_cast<CXXConstructorDecl *>();
   }
 
-  SourceLocation getSourceLocation() const { return IdLoc; }
+  SourceLocation getLParenLoc() const { return LParenLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
   /// arg_begin() - Retrieve an iterator to the first initializer argument.

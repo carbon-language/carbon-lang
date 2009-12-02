@@ -15,6 +15,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -630,43 +631,76 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
 }
 
 CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
-                           CXXConstructorDecl *C,
-                           SourceLocation L, SourceLocation R)
-  : Args(0), NumArgs(0), CtorOrAnonUnion(), IdLoc(L), RParenLoc(R) {
-  BaseOrMember = reinterpret_cast<uintptr_t>(BaseType.getTypePtr());
-  assert((BaseOrMember & 0x01) == 0 && "Invalid base class type pointer");
-  BaseOrMember |= 0x01;
-
+CXXBaseOrMemberInitializer(ASTContext &Context,
+                           DeclaratorInfo *DInfo, CXXConstructorDecl *C,
+                           SourceLocation L, 
+                           Expr **Args, unsigned NumArgs,
+                           SourceLocation R)
+  : BaseOrMember(DInfo), Args(0), NumArgs(0), CtorOrAnonUnion(C), 
+    LParenLoc(L), RParenLoc(R) 
+{
   if (NumArgs > 0) {
     this->NumArgs = NumArgs;
-    // FIXME. Allocation via Context
-    this->Args = new Stmt*[NumArgs];
+    this->Args = new (Context) Stmt*[NumArgs];
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
-  CtorOrAnonUnion = C;
 }
 
 CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
-                           CXXConstructorDecl *C,
-                           SourceLocation L, SourceLocation R)
-  : Args(0), NumArgs(0), CtorOrAnonUnion(), IdLoc(L), RParenLoc(R) {
-  BaseOrMember = reinterpret_cast<uintptr_t>(Member);
-  assert((BaseOrMember & 0x01) == 0 && "Invalid member pointer");
-
+CXXBaseOrMemberInitializer(ASTContext &Context,
+                           FieldDecl *Member, SourceLocation MemberLoc,
+                           CXXConstructorDecl *C, SourceLocation L,
+                           Expr **Args, unsigned NumArgs,
+                           SourceLocation R)
+  : BaseOrMember(Member), MemberLocation(MemberLoc), Args(0), NumArgs(0), 
+    CtorOrAnonUnion(C), LParenLoc(L), RParenLoc(R) 
+{
   if (NumArgs > 0) {
     this->NumArgs = NumArgs;
-    this->Args = new Stmt*[NumArgs];
+    this->Args = new (Context) Stmt*[NumArgs];
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
-  CtorOrAnonUnion = C;
 }
 
-CXXBaseOrMemberInitializer::~CXXBaseOrMemberInitializer() {
-  delete [] Args;
+void CXXBaseOrMemberInitializer::Destroy(ASTContext &Context) {
+  for (unsigned I = 0; I != NumArgs; ++I)
+    Args[I]->Destroy(Context);
+  Context.Deallocate(Args);
+  this->~CXXBaseOrMemberInitializer();
+}
+
+TypeLoc CXXBaseOrMemberInitializer::getBaseClassLoc() const {
+  if (isBaseInitializer())
+    return BaseOrMember.get<DeclaratorInfo*>()->getTypeLoc();
+  else
+    return TypeLoc();
+}
+
+Type *CXXBaseOrMemberInitializer::getBaseClass() {
+  if (isBaseInitializer())
+    return BaseOrMember.get<DeclaratorInfo*>()->getType().getTypePtr();
+  else
+    return 0;
+}
+
+const Type *CXXBaseOrMemberInitializer::getBaseClass() const {
+  if (isBaseInitializer())
+    return BaseOrMember.get<DeclaratorInfo*>()->getType().getTypePtr();
+  else
+    return 0;
+}
+
+SourceLocation CXXBaseOrMemberInitializer::getSourceLocation() const {
+  if (isMemberInitializer())
+    return getMemberLocation();
+  
+  return getBaseClassLoc().getSourceRange().getBegin();
+}
+
+SourceRange CXXBaseOrMemberInitializer::getSourceRange() const {
+  return SourceRange(getSourceLocation(), getRParenLoc());
 }
 
 CXXConstructorDecl *
