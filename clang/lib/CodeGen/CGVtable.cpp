@@ -84,7 +84,7 @@ private:
     CovariantThunk(uint64_t Index, GlobalDecl GD,
                    const ThunkAdjustment &ReturnAdjustment, 
                    CanQualType ReturnType) 
-      : Index(Index), ReturnAdjustment(ReturnAdjustment), 
+      : Index(Index), GD(GD), ReturnAdjustment(ReturnAdjustment), 
       ReturnType(ReturnType) { }
     
     // Index - The index in the vtable.
@@ -100,7 +100,7 @@ private:
   };
   
   /// CovariantThunks - The covariant thunks in a vtable.
-  typedef llvm::DenseMap<GlobalDecl, CovariantThunk> CovariantThunksMapTy;
+  typedef llvm::DenseMap<uint64_t, CovariantThunk> CovariantThunksMapTy;
   CovariantThunksMapTy CovariantThunks;
   
   /// PureVirtualMethods - Pure virtual methods.
@@ -269,7 +269,7 @@ public:
   void InstallThunks() {
     for (CovariantThunksMapTy::const_iterator i = CovariantThunks.begin(),
          e = CovariantThunks.end(); i != e; ++i) {
-      GlobalDecl GD = i->first;
+      GlobalDecl GD = i->second.GD;
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
       if (MD->isPure())
         continue;
@@ -717,10 +717,10 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       ThunkAdjustment ReturnAdjustment;
       if (oret != ret) {
         // FIXME: calculate offsets for covariance
-        CovariantThunksMapTy::iterator i = CovariantThunks.find(OMD);
-        if (i != CovariantThunks.end()) {
-          oret = i->second.ReturnType;
-          CovariantThunks.erase(i);
+        CovariantThunksMapTy::iterator it = CovariantThunks.find(i);
+        if (it != CovariantThunks.end()) {
+          oret = it->second.ReturnType;
+          CovariantThunks.erase(it);
         }
         // FIXME: Double check oret
         Index_t nv = getNVOffset(oret, ret)/8;
@@ -765,7 +765,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         // FIXME: Do we always have to build a covariant thunk to save oret,
         // which is the containing virtual base class?
         if (!ReturnAdjustment.isEmpty())
-          CovariantThunks[GD] = CovariantThunk(i, GD, ReturnAdjustment, oret);
+          CovariantThunks[i] = CovariantThunk(i, GD, ReturnAdjustment, oret);
 
         if (!isPure && !ThisAdjustment.isEmpty())
           Thunks[GD] = Thunk(i, ThisAdjustment);
@@ -779,7 +779,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
         if (!ReturnAdjustment.isEmpty())
-          CovariantThunks[GD] = 
+          CovariantThunks[i] = 
             CovariantThunk(i, GD, ReturnAdjustment, oret);
 
         if (!isPure)
