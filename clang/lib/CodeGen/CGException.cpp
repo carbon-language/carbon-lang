@@ -390,7 +390,9 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
         // FIXME: objects with ctors, references
         Builder.CreateStore(ExcObject, GetAddrOfLocalVar(CatchParam));
 #else
-        // FIXME: we need to do this sooner so that the EH region for the cleanup doesn't start until after the ctor completes, use a decl init?
+        // FIXME: we need to do this sooner so that the EH region for the
+        // cleanup doesn't start until after the ctor completes, use a decl
+        // init?
         CopyObject(*this, CatchParam->getType().getNonReferenceType(),
                    ExcObject, GetAddrOfLocalVar(CatchParam));
 #endif
