@@ -315,12 +315,11 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
                  : Alignments[BestMatchIdx].PrefAlign;
 }
 
+typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
+
 namespace {
 
 class StructLayoutMap : public AbstractTypeUser {
-public:
-  typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
-private:
   LayoutInfoTy LayoutInfo;
 
   /// refineAbstractType - The callback method invoked when an abstract type is
@@ -329,9 +328,14 @@ private:
   ///
   virtual void refineAbstractType(const DerivedType *OldTy,
                                   const Type *) {
-    assert(LayoutInfo.find(cast<const StructType>(OldTy)) != LayoutInfo.end() &&
-           "Abstract value not in local map!");
-    InvalidateEntry(cast<const StructType>(OldTy));
+    const StructType *STy = dyn_cast<const StructType>(OldTy);
+    assert(STy && "This can only track struct types.");
+
+    LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
+    Iter->second->~StructLayout();
+    free(Iter->second);
+    LayoutInfo.erase(Iter);
+    OldTy->removeAbstractTypeUser(this);
   }
 
   /// typeBecameConcrete - The other case which AbstractTypeUsers must be aware
@@ -340,9 +344,14 @@ private:
   /// This method notifies ATU's when this occurs for a type.
   ///
   virtual void typeBecameConcrete(const DerivedType *AbsTy) {
-    assert(LayoutInfo.find(cast<const StructType>(AbsTy)) != LayoutInfo.end() &&
-           "Abstract value not in local map!");
-    InvalidateEntry(cast<const StructType>(AbsTy));
+    const StructType *STy = dyn_cast<const StructType>(AbsTy);
+    assert(STy && "This can only track struct types.");
+
+    LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
+    Iter->second->~StructLayout();
+    free(Iter->second);
+    LayoutInfo.erase(Iter);
+    AbsTy->removeAbstractTypeUser(this);
   }
 
 public:
@@ -356,21 +365,23 @@ public:
       if (Key && Key->isAbstract())
         Key->removeAbstractTypeUser(this);
 
-      Value->~StructLayout();
-      free(Value);
+      if (Value) {
+        Value->~StructLayout();
+        free(Value);
+      }
     }
   }
 
-  void InvalidateEntry(const StructType *Ty) {
-    LayoutInfoTy::iterator I = LayoutInfo.find(Ty);
-    if (I == LayoutInfo.end()) return;
-  
-    I->second->~StructLayout();
-    free(I->second);
-    LayoutInfo.erase(I);
+  LayoutInfoTy::iterator end() {
+    return LayoutInfo.end();
+  }
 
-    if (Ty->isAbstract())
-      Ty->removeAbstractTypeUser(this);
+  LayoutInfoTy::iterator find(const StructType *&Val) {
+    return LayoutInfo.find(Val);
+  }
+
+  bool erase(LayoutInfoTy::iterator I) {
+    return LayoutInfo.erase(I);
   }
 
   StructLayout *&operator[](const StructType *STy) {
@@ -381,7 +392,7 @@ public:
   virtual void dump() const {}
 };
 
-} // end anonymous namespace
+} // end namespace llvm
 
 TargetData::~TargetData() {
   delete static_cast<StructLayoutMap*>(LayoutMap);
@@ -419,9 +430,17 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
 /// avoid a dangling pointer in this cache.
 void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutMap) return;  // No cache.
-
+  
   StructLayoutMap *STM = static_cast<StructLayoutMap*>(LayoutMap);
-  STM->InvalidateEntry(Ty);
+  LayoutInfoTy::iterator I = STM->find(Ty);
+  if (I == STM->end()) return;
+  
+  I->second->~StructLayout();
+  free(I->second);
+  STM->erase(I);
+
+  if (Ty->isAbstract())
+    Ty->removeAbstractTypeUser(STM);
 }
 
 std::string TargetData::getStringRepresentation() const {
