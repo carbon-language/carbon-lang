@@ -270,8 +270,8 @@ bool MSP430InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       }
 
       // If the block has any instructions after a JMP, delete them.
-      while (next(I) != MBB.end())
-        next(I)->eraseFromParent();
+      while (llvm::next(I) != MBB.end())
+        llvm::next(I)->eraseFromParent();
       Cond.clear();
       FBB = 0;
 

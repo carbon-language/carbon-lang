@@ -51,7 +51,7 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
   MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
   MachineBasicBlock::iterator NextMII;
   for (; MII != E; MII = NextMII) {
-    NextMII = next(MII);
+    NextMII = llvm::next(MII);
     MachineInstr *MI = &*MII;
 
     if (MI->getOpcode() == ARM::VMOVD &&

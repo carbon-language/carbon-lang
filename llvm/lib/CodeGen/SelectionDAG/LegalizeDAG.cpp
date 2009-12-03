@@ -232,7 +232,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // node is only legalized after all of its operands are legalized.
   DAG.AssignTopologicalOrder();
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = prior(DAG.allnodes_end()); I != next(E); ++I)
+       E = prior(DAG.allnodes_end()); I != llvm::next(E); ++I)
     LegalizeOp(SDValue(I, 0));
 
   // Finally, it's possible the root changed.  Get the new root.

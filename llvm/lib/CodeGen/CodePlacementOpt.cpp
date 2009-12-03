@@ -182,7 +182,7 @@ bool CodePlacementOpt::EliminateUnconditionalJumpsToTop(MachineFunction &MF,
       // Move it and all the blocks that can reach it via fallthrough edges
       // exclusively, to keep existing fallthrough edges intact.
       MachineFunction::iterator Begin = Pred;
-      MachineFunction::iterator End = next(Begin);
+      MachineFunction::iterator End = llvm::next(Begin);
       while (Begin != MF.begin()) {
         MachineFunction::iterator Prior = prior(Begin);
         if (Prior == MF.begin())
@@ -255,7 +255,8 @@ bool CodePlacementOpt::MoveDiscontiguousLoopBlocks(MachineFunction &MF,
   // to the top of the loop to avoid loosing that fallthrough. Otherwise append
   // them to the bottom, even if it previously had a fallthrough, on the theory
   // that it's worth an extra branch to keep the loop contiguous.
-  MachineFunction::iterator InsertPt = next(MachineFunction::iterator(BotMBB));
+  MachineFunction::iterator InsertPt =
+    llvm::next(MachineFunction::iterator(BotMBB));
   bool InsertAtTop = false;
   if (TopMBB != MF.begin() &&
       !HasFallthrough(prior(MachineFunction::iterator(TopMBB))) &&
@@ -268,7 +269,7 @@ bool CodePlacementOpt::MoveDiscontiguousLoopBlocks(MachineFunction &MF,
   // with the loop header.
   SmallPtrSet<MachineBasicBlock *, 8> ContiguousBlocks;
   for (MachineFunction::iterator I = TopMBB,
-       E = next(MachineFunction::iterator(BotMBB)); I != E; ++I)
+       E = llvm::next(MachineFunction::iterator(BotMBB)); I != E; ++I)
     ContiguousBlocks.insert(I);
 
   // Find non-contigous blocks and fix them.
@@ -301,7 +302,7 @@ bool CodePlacementOpt::MoveDiscontiguousLoopBlocks(MachineFunction &MF,
       // Process this block and all loop blocks contiguous with it, to keep
       // them in their relative order.
       MachineFunction::iterator Begin = BB;
-      MachineFunction::iterator End = next(MachineFunction::iterator(BB));
+      MachineFunction::iterator End = llvm::next(MachineFunction::iterator(BB));
       for (; End != MF.end(); ++End) {
         if (!L->contains(End)) break;
         if (!HasAnalyzableTerminator(End)) break;

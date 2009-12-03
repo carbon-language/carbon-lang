@@ -48,7 +48,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   while (MBBI != E) {
     MachineInstr &MI = *MBBI;
-    MachineBasicBlock::iterator NMBBI = next(MBBI);
+    MachineBasicBlock::iterator NMBBI = llvm::next(MBBI);
 
     unsigned Opcode = MI.getOpcode();
     switch (Opcode) {

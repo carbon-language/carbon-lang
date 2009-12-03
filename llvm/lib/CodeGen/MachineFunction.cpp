@@ -328,7 +328,7 @@ void MachineFunction::print(raw_ostream &OS) const {
       if (I->second)
         OS << " in reg%" << I->second;
 
-      if (next(I) != E)
+      if (llvm::next(I) != E)
         OS << ", ";
     }
     OS << '\n';
@@ -342,7 +342,7 @@ void MachineFunction::print(raw_ostream &OS) const {
       else
         OS << "%physreg" << *I;
 
-      if (next(I) != E)
+      if (llvm::next(I) != E)
         OS << " ";
     }
     OS << '\n';

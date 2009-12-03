@@ -93,7 +93,7 @@ void SelectRoot(SelectionDAG &DAG) {
   // a reference to the root node, preventing it from being deleted,
   // and tracking any changes of the root.
   HandleSDNode Dummy(CurDAG->getRoot());
-  ISelPosition = next(SelectionDAG::allnodes_iterator(CurDAG->getRoot().getNode()));
+  ISelPosition = llvm::next(SelectionDAG::allnodes_iterator(CurDAG->getRoot().getNode()));
 
   // The AllNodes list is now topological-sorted. Visit the
   // nodes by starting at the end of the list (the root of the

@@ -62,11 +62,11 @@ MachineBasicBlock *MachineLoop::getBottomBlock() {
   MachineBasicBlock *BotMBB = getHeader();
   MachineFunction::iterator End = BotMBB->getParent()->end();
   if (BotMBB != prior(End)) {
-    MachineBasicBlock *NextMBB = next(MachineFunction::iterator(BotMBB));
+    MachineBasicBlock *NextMBB = llvm::next(MachineFunction::iterator(BotMBB));
     while (contains(NextMBB)) {
       BotMBB = NextMBB;
-      if (BotMBB == next(MachineFunction::iterator(BotMBB))) break;
-      NextMBB = next(MachineFunction::iterator(BotMBB));
+      if (BotMBB == llvm::next(MachineFunction::iterator(BotMBB))) break;
+      NextMBB = llvm::next(MachineFunction::iterator(BotMBB));
     }
   }
   return BotMBB;

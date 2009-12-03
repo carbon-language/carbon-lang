@@ -876,7 +876,7 @@ bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
   if (!ValNo->isDefAccurate() || DefMI->getParent() == BarrierMBB)
     KillPt = findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB);
   else
-    KillPt = next(MachineBasicBlock::iterator(DefMI));
+    KillPt = llvm::next(MachineBasicBlock::iterator(DefMI));
   
   if (KillPt == DefMI->getParent()->end())
     return false;
@@ -1118,7 +1118,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
           return false; // No gap to insert spill.
         }
       } else {
-        SpillPt = next(MachineBasicBlock::iterator(DefMI));
+        SpillPt = llvm::next(MachineBasicBlock::iterator(DefMI));
         if (SpillPt == DefMBB->end()) {
           DEBUG(errs() << "FAILED (could not find a suitable spill point).\n");
           return false; // No gap to insert spill.

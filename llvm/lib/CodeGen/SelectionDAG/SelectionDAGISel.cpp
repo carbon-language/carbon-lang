@@ -789,7 +789,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
           SDB->setCurDebugLoc(FastIS->getCurDebugLoc());
 
           bool HadTailCall = false;
-          SelectBasicBlock(LLVMBB, BI, next(BI), HadTailCall);
+          SelectBasicBlock(LLVMBB, BI, llvm::next(BI), HadTailCall);
 
           // If the call was emitted as a tail call, we're done with the block.
           if (HadTailCall) {

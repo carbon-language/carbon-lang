@@ -723,7 +723,7 @@ void mergeSPUpdatesDown(MachineBasicBlock &MBB,
 
   if (MBBI == MBB.end()) return;
 
-  MachineBasicBlock::iterator NI = next(MBBI);
+  MachineBasicBlock::iterator NI = llvm::next(MBBI);
   if (NI == MBB.end()) return;
 
   unsigned Opc = NI->getOpcode();
@@ -757,7 +757,7 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
     return 0;
 
   MachineBasicBlock::iterator PI = doMergeWithPrevious ? prior(MBBI) : MBBI;
-  MachineBasicBlock::iterator NI = doMergeWithPrevious ? 0 : next(MBBI);
+  MachineBasicBlock::iterator NI = doMergeWithPrevious ? 0 : llvm::next(MBBI);
   unsigned Opc = PI->getOpcode();
   int Offset = 0;
 
@@ -983,7 +983,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
 
     // Mark the FramePtr as live-in in every block except the entry.
-    for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
+    for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
          I != E; ++I)
       I->addLiveIn(FramePtr);
 

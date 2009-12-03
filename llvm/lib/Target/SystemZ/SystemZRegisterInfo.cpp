@@ -247,7 +247,7 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
       .addReg(SystemZ::R15D);
 
     // Mark the FramePtr as live-in in every block except the entry.
-    for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
+    for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
          I != E; ++I)
       I->addLiveIn(SystemZ::R11D);
 

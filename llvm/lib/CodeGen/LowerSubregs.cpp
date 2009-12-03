@@ -312,7 +312,7 @@ bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
        mbbi != mbbe; ++mbbi) {
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
          mi != me;) {
-      MachineBasicBlock::iterator nmi = next(mi);
+      MachineBasicBlock::iterator nmi = llvm::next(mi);
       MachineInstr *MI = mi;
       if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
         MadeChange |= LowerExtract(MI);

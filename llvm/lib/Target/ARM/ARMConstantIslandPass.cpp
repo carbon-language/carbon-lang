@@ -418,10 +418,10 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &MF,
 static bool BBHasFallthrough(MachineBasicBlock *MBB) {
   // Get the next machine basic block in the function.
   MachineFunction::iterator MBBI = MBB;
-  if (next(MBBI) == MBB->getParent()->end())  // Can't fall off end of function.
+  if (llvm::next(MBBI) == MBB->getParent()->end())  // Can't fall off end of function.
     return false;
 
-  MachineBasicBlock *NextBB = next(MBBI);
+  MachineBasicBlock *NextBB = llvm::next(MBBI);
   for (MachineBasicBlock::succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I)
     if (*I == NextBB)
@@ -760,7 +760,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
                      CompareMBBNumbers);
   MachineBasicBlock* WaterBB = *IP;
   if (WaterBB == OrigBB)
-    WaterList.insert(next(IP), NewBB);
+    WaterList.insert(llvm::next(IP), NewBB);
   else
     WaterList.insert(IP, OrigBB);
   NewWaterList.insert(OrigBB);
@@ -887,7 +887,7 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
 
 void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
                                               int delta) {
-  MachineFunction::iterator MBBI = BB; MBBI = next(MBBI);
+  MachineFunction::iterator MBBI = BB; MBBI = llvm::next(MBBI);
   for(unsigned i = BB->getNumber()+1, e = BB->getParent()->getNumBlockIDs();
       i < e; ++i) {
     BBOffsets[i] += delta;
@@ -929,7 +929,7 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
       if (delta==0)
         return;
     }
-    MBBI = next(MBBI);
+    MBBI = llvm::next(MBBI);
   }
 }
 
@@ -1096,7 +1096,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     DEBUG(errs() << "Split at end of block\n");
     if (&UserMBB->back() == UserMI)
       assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
-    NewMBB = next(MachineFunction::iterator(UserMBB));
+    NewMBB = llvm::next(MachineFunction::iterator(UserMBB));
     // Add an unconditional branch from UserMBB to fallthrough block.
     // Record it for branch lengthening; this new branch will not get out of
     // range, but if the preceding conditional branch is out of range, the
@@ -1144,7 +1144,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     for (unsigned Offset = UserOffset+TII->GetInstSizeInBytes(UserMI);
          Offset < BaseInsertOffset;
          Offset += TII->GetInstSizeInBytes(MI),
-            MI = next(MI)) {
+            MI = llvm::next(MI)) {
       if (CPUIndex < CPUsers.size() && CPUsers[CPUIndex].MI == MI) {
         CPUser &U = CPUsers[CPUIndex];
         if (!OffsetIsInRange(Offset, EndInsertOffset,
@@ -1204,7 +1204,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
       NewWaterList.insert(NewIsland);
     }
     // The new CPE goes before the following block (NewMBB).
-    NewMBB = next(MachineFunction::iterator(WaterBB));
+    NewMBB = llvm::next(MachineFunction::iterator(WaterBB));
 
   } else {
     // No water found.
@@ -1406,7 +1406,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
 
   NumCBrFixed++;
   if (BMI != MI) {
-    if (next(MachineBasicBlock::iterator(MI)) == prior(MBB->end()) &&
+    if (llvm::next(MachineBasicBlock::iterator(MI)) == prior(MBB->end()) &&
         BMI->getOpcode() == Br.UncondBr) {
       // Last MI in the BB is an unconditional branch. Can we simply invert the
       // condition and swap destinations:
@@ -1433,12 +1433,12 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
     // branch to the destination.
     int delta = TII->GetInstSizeInBytes(&MBB->back());
     BBSizes[MBB->getNumber()] -= delta;
-    MachineBasicBlock* SplitBB = next(MachineFunction::iterator(MBB));
+    MachineBasicBlock* SplitBB = llvm::next(MachineFunction::iterator(MBB));
     AdjustBBOffsetsAfter(SplitBB, -delta);
     MBB->back().eraseFromParent();
     // BBOffsets[SplitBB] is wrong temporarily, fixed below
   }
-  MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
+  MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(MBB));
 
   DEBUG(errs() << "  Insert B to BB#" << DestBB->getNumber()
                << " also invert condition and change dest. to BB#"

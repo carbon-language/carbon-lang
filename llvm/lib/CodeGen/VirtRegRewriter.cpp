@@ -754,7 +754,7 @@ void AvailableSpills::AddAvailableRegsToLiveIn(MachineBasicBlock &MBB,
     }
 
     // Skip over the same register.
-    std::multimap<unsigned, int>::iterator NI = next(I);
+    std::multimap<unsigned, int>::iterator NI = llvm::next(I);
     while (NI != E && NI->first == Reg) {
       ++I;
       ++NI;
@@ -1133,7 +1133,7 @@ private:
                          std::vector<MachineOperand*> &KillOps,
                          VirtRegMap &VRM) {
 
-    MachineBasicBlock::iterator NextMII = next(MII);
+    MachineBasicBlock::iterator NextMII = llvm::next(MII);
     if (NextMII == MBB.end())
       return false;
 
@@ -1186,7 +1186,7 @@ private:
     // Unfold next instructions that fold the same SS.
     do {
       MachineInstr &NextMI = *NextMII;
-      NextMII = next(NextMII);
+      NextMII = llvm::next(NextMII);
       NewMIs.clear();
       if (!TII->unfoldMemoryOperand(MF, &NextMI, VirtReg, false, false, NewMIs))
         llvm_unreachable("Unable unfold the load / store folding instruction!");
@@ -1463,8 +1463,8 @@ private:
                            std::vector<MachineOperand*> &KillOps,
                            VirtRegMap &VRM) {
 
-    MachineBasicBlock::iterator oldNextMII = next(MII);
-    TII->storeRegToStackSlot(MBB, next(MII), PhysReg, true, StackSlot, RC);
+    MachineBasicBlock::iterator oldNextMII = llvm::next(MII);
+    TII->storeRegToStackSlot(MBB, llvm::next(MII), PhysReg, true, StackSlot, RC);
     MachineInstr *StoreMI = prior(oldNextMII);
     VRM.addSpillSlotUse(StackSlot, StoreMI);
     DEBUG(errs() << "Store:\t" << *StoreMI);
@@ -1626,14 +1626,14 @@ private:
     DistanceMap.clear();
     for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
          MII != E; ) {
-      MachineBasicBlock::iterator NextMII = next(MII);
+      MachineBasicBlock::iterator NextMII = llvm::next(MII);
 
       VirtRegMap::MI2VirtMapTy::const_iterator I, End;
       bool Erased = false;
       bool BackTracked = false;
       if (OptimizeByUnfold(MBB, MII,
                            MaybeDeadStores, Spills, RegKills, KillOps, VRM))
-        NextMII = next(MII);
+        NextMII = llvm::next(MII);
 
       MachineInstr &MI = *MII;
 
@@ -1657,7 +1657,7 @@ private:
 
           // Back-schedule reloads and remats.
           MachineBasicBlock::iterator InsertLoc =
-            ComputeReloadLoc(next(MII), MBB.begin(), PhysReg, TRI, false,
+            ComputeReloadLoc(llvm::next(MII), MBB.begin(), PhysReg, TRI, false,
                              SS, TII, MF);
 
           TII->loadRegFromStackSlot(MBB, InsertLoc, PhysReg, SS, RC);
@@ -1667,7 +1667,7 @@ private:
           ++NumPSpills;
           DistanceMap.insert(std::make_pair(LoadMI, Dist++));
         }
-        NextMII = next(MII);
+        NextMII = llvm::next(MII);
       }
 
       // Insert restores here if asked to.
@@ -1785,14 +1785,14 @@ private:
           const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
           unsigned Phys = VRM.getPhys(VirtReg);
           int StackSlot = VRM.getStackSlot(VirtReg);
-          MachineBasicBlock::iterator oldNextMII = next(MII);
-          TII->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
+          MachineBasicBlock::iterator oldNextMII = llvm::next(MII);
+          TII->storeRegToStackSlot(MBB, llvm::next(MII), Phys, isKill, StackSlot, RC);
           MachineInstr *StoreMI = prior(oldNextMII);
           VRM.addSpillSlotUse(StackSlot, StoreMI);
           DEBUG(errs() << "Store:\t" << *StoreMI);
           VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
         }
-        NextMII = next(MII);
+        NextMII = llvm::next(MII);
       }
 
       /// ReusedOperands - Keep track of operand reuse in case we need to undo
@@ -2265,7 +2265,7 @@ private:
 
               if (CommuteToFoldReload(MBB, MII, VirtReg, SrcReg, StackSlot,
                                       Spills, RegKills, KillOps, TRI, VRM)) {
-                NextMII = next(MII);
+                NextMII = llvm::next(MII);
                 BackTracked = true;
                 goto ProcessNextInst;
               }
@@ -2381,7 +2381,7 @@ private:
           MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
           SpillRegToStackSlot(MBB, MII, -1, PhysReg, StackSlot, RC, true,
                             LastStore, Spills, ReMatDefs, RegKills, KillOps, VRM);
-          NextMII = next(MII);
+          NextMII = llvm::next(MII);
 
           // Check to see if this is a noop copy.  If so, eliminate the
           // instruction before considering the dest reg to be changed.

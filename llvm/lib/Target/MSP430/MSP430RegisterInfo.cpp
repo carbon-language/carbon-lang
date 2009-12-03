@@ -193,10 +193,10 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // We need to materialize the offset via add instruction.
     unsigned DstReg = MI.getOperand(0).getReg();
     if (Offset < 0)
-      BuildMI(MBB, next(II), dl, TII.get(MSP430::SUB16ri), DstReg)
+      BuildMI(MBB, llvm::next(II), dl, TII.get(MSP430::SUB16ri), DstReg)
         .addReg(DstReg).addImm(-Offset);
     else
-      BuildMI(MBB, next(II), dl, TII.get(MSP430::ADD16ri), DstReg)
+      BuildMI(MBB, llvm::next(II), dl, TII.get(MSP430::ADD16ri), DstReg)
         .addReg(DstReg).addImm(Offset);
 
     return 0;
@@ -251,7 +251,7 @@ void MSP430RegisterInfo::emitPrologue(MachineFunction &MF) const {
       .addReg(MSP430::SPW);
 
     // Mark the FramePtr as live-in in every block except the entry.
-    for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
+    for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
          I != E; ++I)
       I->addLiveIn(MSP430::FPW);
 

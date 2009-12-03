@@ -628,7 +628,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
     BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
     BasicBlock::iterator NewInsertPt =
-      next(BasicBlock::iterator(cast<Instruction>(V)));
+      llvm::next(BasicBlock::iterator(cast<Instruction>(V)));
     while (isa<PHINode>(NewInsertPt)) ++NewInsertPt;
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), 0,
                       NewInsertPt);
@@ -844,7 +844,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
       if (L && S->hasComputableLoopEvolution(L))
         InsertPt = L->getHeader()->getFirstNonPHI();
       while (isInsertedInstruction(InsertPt))
-        InsertPt = next(BasicBlock::iterator(InsertPt));
+        InsertPt = llvm::next(BasicBlock::iterator(InsertPt));
       break;
     }
 

@@ -35,6 +35,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SlowOperationInformer.h"
+#include <cstdlib>
 
 namespace {
   struct ForceVMCoreLinking {

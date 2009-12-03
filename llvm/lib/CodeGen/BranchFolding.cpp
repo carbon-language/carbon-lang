@@ -427,7 +427,7 @@ static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
 static void FixTail(MachineBasicBlock *CurMBB, MachineBasicBlock *SuccBB,
                     const TargetInstrInfo *TII) {
   MachineFunction *MF = CurMBB->getParent();
-  MachineFunction::iterator I = next(MachineFunction::iterator(CurMBB));
+  MachineFunction::iterator I = llvm::next(MachineFunction::iterator(CurMBB));
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
   if (I != MF->end() &&
@@ -805,7 +805,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   // a compile-time infinite loop repeatedly doing and undoing the same
   // transformations.)
 
-  for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
+  for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
        I != E; ++I) {
     if (I->pred_size() >= 2 && I->pred_size() < TailMergeThreshold) {
       SmallPtrSet<MachineBasicBlock *, 8> UniquePreds;
@@ -833,7 +833,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
               continue;
             // This is the QBB case described above
             if (!FBB)
-              FBB = next(MachineFunction::iterator(PBB));
+              FBB = llvm::next(MachineFunction::iterator(PBB));
           }
           // Failing case:  the only way IBB can be reached from PBB is via
           // exception handling.  Happens for landing pads.  Would be nice
@@ -1239,7 +1239,7 @@ ReoptimizeBlock:
           // B elsewhere
           // next:
           if (CurFallsThru) {
-            MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
+            MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(MBB));
             CurCond.clear();
             TII->InsertBranch(*MBB, NextBB, 0, CurCond);
           }

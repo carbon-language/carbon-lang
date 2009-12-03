@@ -211,7 +211,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   ++KillPos;
 
   unsigned NumVisited = 0;
-  for (MachineBasicBlock::iterator I = next(OldPos); I != KillPos; ++I) {
+  for (MachineBasicBlock::iterator I = llvm::next(OldPos); I != KillPos; ++I) {
     MachineInstr *OtherMI = I;
     if (NumVisited > 30)  // FIXME: Arbitrary limit to reduce compile time cost.
       return false;
@@ -412,7 +412,7 @@ static bool isKilled(MachineInstr &MI, unsigned Reg,
     MachineRegisterInfo::def_iterator Begin = MRI->def_begin(Reg);
     // If there are multiple defs, we can't do a simple analysis, so just
     // go with what the kill flag says.
-    if (next(Begin) != MRI->def_end())
+    if (llvm::next(Begin) != MRI->def_end())
       return true;
     DefMI = &*Begin;
     bool IsSrcPhys, IsDstPhys;
@@ -643,7 +643,7 @@ TwoAddressInstructionPass::ConvertInstTo3Addr(MachineBasicBlock::iterator &mi,
     if (!Sunk) {
       DistanceMap.insert(std::make_pair(NewMI, Dist));
       mi = NewMI;
-      nmi = next(mi);
+      nmi = llvm::next(mi);
     }
     return true;
   }
@@ -923,7 +923,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
     Processed.clear();
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
          mi != me; ) {
-      MachineBasicBlock::iterator nmi = next(mi);
+      MachineBasicBlock::iterator nmi = llvm::next(mi);
       const TargetInstrDesc &TID = mi->getDesc();
       bool FirstTied = true;
 

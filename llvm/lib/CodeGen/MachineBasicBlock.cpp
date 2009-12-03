@@ -290,7 +290,7 @@ void MachineBasicBlock::updateTerminator() {
     } else {
       // The block has a fallthrough conditional branch.
       MachineBasicBlock *MBBA = *succ_begin();
-      MachineBasicBlock *MBBB = *next(succ_begin());
+      MachineBasicBlock *MBBB = *llvm::next(succ_begin());
       if (MBBA == TBB) std::swap(MBBB, MBBA);
       if (isLayoutSuccessor(TBB)) {
         if (TII->ReverseBranchCondition(Cond)) {
@@ -359,7 +359,7 @@ bool MachineBasicBlock::isSuccessor(const MachineBasicBlock *MBB) const {
 
 bool MachineBasicBlock::isLayoutSuccessor(const MachineBasicBlock *MBB) const {
   MachineFunction::const_iterator I(this);
-  return next(I) == MachineFunction::const_iterator(MBB);
+  return llvm::next(I) == MachineFunction::const_iterator(MBB);
 }
 
 bool MachineBasicBlock::canFallThrough() {
@@ -461,7 +461,8 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   bool MadeChange = false;
   bool AddedFallThrough = false;
 
-  MachineFunction::iterator FallThru = next(MachineFunction::iterator(this));
+  MachineFunction::iterator FallThru =
+    llvm::next(MachineFunction::iterator(this));
   
   // If this block ends with a conditional branch that falls through to its
   // successor, set DestB as the successor.

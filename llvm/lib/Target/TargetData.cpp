@@ -29,6 +29,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include <algorithm>
 #include <cstdlib>
+#include <ostream>
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.

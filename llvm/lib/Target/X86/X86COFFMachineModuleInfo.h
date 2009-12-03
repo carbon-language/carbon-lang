@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/ADT/StringSet.h"
+#include "X86MachinefunctionInfo.h"
 
 namespace llvm {
   class X86MachineFunctionInfo;

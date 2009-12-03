@@ -289,7 +289,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
         while (Start != BB.begin() && prior(Start) != PrevI) --Start;
         errs() << "Inserted instructions:\n\t";
         Start->print(errs(), &MF.getTarget());
-        while (++Start != next(I)) {}
+        while (++Start != llvm::next(I)) {}
       }
       dumpStack();
     );

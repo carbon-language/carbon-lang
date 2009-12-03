@@ -528,7 +528,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         MI.getOperand(i+1).ChangeToImmediate(Mask);
       }
       Offset = (Offset - Mask * Scale);
-      MachineBasicBlock::iterator NII = next(II);
+      MachineBasicBlock::iterator NII = llvm::next(II);
       emitThumbRegPlusImmediate(MBB, NII, DestReg, DestReg, Offset, TII,
                                 *this, dl);
     } else {

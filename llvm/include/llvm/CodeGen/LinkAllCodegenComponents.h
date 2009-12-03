@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/GCs.h"
 #include "llvm/Target/TargetMachine.h"
+#include <cstdlib>
 
 namespace {
   struct ForceCodegenLinking {

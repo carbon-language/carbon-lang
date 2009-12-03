@@ -301,8 +301,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
         // Check that no other terminators use values.
 #ifndef NDEBUG
-        for (MachineBasicBlock::iterator TI = next(Term); TI != opBlock.end();
-             ++TI) {
+        for (MachineBasicBlock::iterator TI = llvm::next(Term);
+             TI != opBlock.end(); ++TI) {
           assert(!TI->readsRegister(SrcReg) &&
                  "Terminator instructions cannot use virtual registers unless"
                  "they are the first terminator in a block!");
@@ -377,7 +377,7 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
   ++NumSplits;
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
-  MF->insert(next(MachineFunction::iterator(A)), NMBB);
+  MF->insert(llvm::next(MachineFunction::iterator(A)), NMBB);
   DEBUG(errs() << "PHIElimination splitting critical edge:"
         " BB#" << A->getNumber()
         << " -- BB#" << NMBB->getNumber()

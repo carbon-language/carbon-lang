@@ -2573,7 +2573,7 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
     BasicBlock *Succ = cast<BasicBlock>(SI.getOperand(i+1));
     printPHICopiesForSuccessor (SI.getParent(), Succ, 2);
     printBranchToBlock(SI.getParent(), Succ, 2);
-    if (Function::iterator(Succ) == next(Function::iterator(SI.getParent())))
+    if (Function::iterator(Succ) == llvm::next(Function::iterator(SI.getParent())))
       Out << "    break;\n";
   }
   Out << "  }\n";
@@ -2593,7 +2593,7 @@ bool CWriter::isGotoCodeNecessary(BasicBlock *From, BasicBlock *To) {
   /// FIXME: This should be reenabled, but loop reordering safe!!
   return true;
 
-  if (next(Function::iterator(From)) != Function::iterator(To))
+  if (llvm::next(Function::iterator(From)) != Function::iterator(To))
     return true;  // Not the direct successor, we need a goto.
 
   //isa<SwitchInst>(From->getTerminator())

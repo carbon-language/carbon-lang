@@ -668,7 +668,7 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
     if (DCELimit != -1 && (int)NumDead >= DCELimit)
       break;
     
-    MachineBasicBlock::iterator NextMI = next(I);
+    MachineBasicBlock::iterator NextMI = llvm::next(I);
     if (NextMI == MBB->end()) continue;
     
     int FirstSS, SecondSS;
