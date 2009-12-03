@@ -67,6 +67,9 @@ public:
   void mangleThunk(const FunctionDecl *FD, 
                    const ThunkAdjustment &ThisAdjustment,
                    llvm::SmallVectorImpl<char> &);
+  void mangleCXXDtorThunk(const CXXDestructorDecl *D, CXXDtorType Type,
+                          const ThunkAdjustment &ThisAdjustment,
+                          llvm::SmallVectorImpl<char> &);
   void mangleCovariantThunk(const FunctionDecl *FD, 
                             const CovariantThunkAdjustment& Adjustment,
                             llvm::SmallVectorImpl<char> &);

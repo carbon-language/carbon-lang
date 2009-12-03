@@ -1376,7 +1376,6 @@ void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
 void MangleContext::mangleThunk(const FunctionDecl *FD, 
                                 const ThunkAdjustment &ThisAdjustment,
                                 llvm::SmallVectorImpl<char> &Res) {
-  // FIXME: Hum, we might have to thunk these, fix.
   assert(!isa<CXXDestructorDecl>(FD) &&
          "Use mangleCXXDtor for destructor decls!");
 
@@ -1388,15 +1387,26 @@ void MangleContext::mangleThunk(const FunctionDecl *FD,
   Mangler.mangleFunctionEncoding(FD);
 }
 
+void MangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *D,
+                                       CXXDtorType Type,
+                                       const ThunkAdjustment &ThisAdjustment,
+                                       llvm::SmallVectorImpl<char> &Res) {
+  //  <special-name> ::= T <call-offset> <base encoding>
+  //                      # base is the nominal target function of thunk
+  CXXNameMangler Mangler(*this, Res, D, Type);
+  Mangler.getStream() << "_ZT";
+  Mangler.mangleCallOffset(ThisAdjustment);
+  Mangler.mangleFunctionEncoding(D);
+}
+
 /// \brief Mangles the a covariant thunk for the declaration D and emits that
 /// name to the given output stream.
 void 
 MangleContext::mangleCovariantThunk(const FunctionDecl *FD,
                                     const CovariantThunkAdjustment& Adjustment,
                                     llvm::SmallVectorImpl<char> &Res) {
-  // FIXME: Hum, we might have to thunk these, fix.
   assert(!isa<CXXDestructorDecl>(FD) &&
-         "Use mangleCXXDtor for destructor decls!");
+         "No such thing as a covariant thunk for a destructor!");
 
   //  <special-name> ::= Tc <call-offset> <call-offset> <base encoding>
   //                      # base is the nominal target function of thunk
