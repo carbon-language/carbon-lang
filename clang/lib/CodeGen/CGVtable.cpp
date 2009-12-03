@@ -268,11 +268,11 @@ public:
       
       // Check if there is an adjustment for the 'this' pointer.
       ThunkAdjustment ThisAdjustment;
-      ThunksMapTy::iterator i = Thunks.find(Index);
-      if (i != Thunks.end()) {
-        ThisAdjustment = i->second.Adjustment;
+      ThunksMapTy::iterator it = Thunks.find(Index);
+      if (it != Thunks.end()) {
+        ThisAdjustment = it->second.Adjustment;
         
-        Thunks.erase(i);
+        Thunks.erase(it);
       }
       
       // Construct the return adjustment.
