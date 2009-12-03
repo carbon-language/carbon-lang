@@ -1734,5 +1734,20 @@ if.end:
 And functionattrs doesn't realize that the p.0 load points to function local
 memory.
 
+Also, functionattrs doesn't know about memcpy/memset.  This function should be
+marked readnone, since it only twiddles local memory, but functionattrs doesn't
+handle memset/memcpy/memmove aggressively:
+
+struct X { int *p; int *q; };
+int foo() {
+ int i = 0, j = 1;
+ struct X x, y;
+ int **p;
+ y.p = &i;
+ x.q = &j;
+ p = __builtin_memcpy (&x, &y, sizeof (int *));
+ return **p;
+}
+
 //===---------------------------------------------------------------------===//
 
