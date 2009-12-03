@@ -149,7 +149,7 @@ def MP : Flag<"-MP">,
 //===----------------------------------------------------------------------===//
 
 def dump_build_information : Separate<"-dump-build-information">,
-  MetaVarName<"filename">,
+  MetaVarName<"<filename>">,
   HelpText<"output a dump of some build information to a file">;
 def fno_show_column : Flag<"-fno-show-column">,
   HelpText<"Do not include column number on diagnostics">;
@@ -172,7 +172,7 @@ def fdiagnostics_print_source_range_info : Flag<"-fdiagnostics-print-source-rang
   HelpText<"Print source range spans in numeric form">;
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
   HelpText<"Print diagnostic name with mappable diagnostics">;
-def fmessage_length : Separate<"-fmessage-length">, MetaVarName<"N">,
+def fmessage_length : Separate<"-fmessage-length">, MetaVarName<"<N>">,
   HelpText<"Format message diagnostics so that they fit within N columns or fewer, when possible.">;
 def fcolor_diagnostics : Flag<"-fcolor-diagnostics">,
   HelpText<"Use colors in diagnostics">;
@@ -186,7 +186,7 @@ def verify : Flag<"-verify">,
 //===----------------------------------------------------------------------===//
 
 def code_completion_at : Separate<"-code-completion-at">,
-  MetaVarName<"file:line:column">,
+  MetaVarName<"<file>:<line>:<column>">,
   HelpText<"Dump code-completion information at a location">;
 def remap_file : Separate<"-remap-file">,
   MetaVarName<"<from>;<to>">,
@@ -194,7 +194,7 @@ def remap_file : Separate<"-remap-file">,
 def code_completion_at_EQ : Joined<"-code-completion-at=">,
   Alias<code_completion_at>;
 def no_code_completion_debug_printer : Flag<"-no-code-completion-debug-printer">,
-  HelpText<"Don't the \"debug\" code-completion print">;
+  HelpText<"Don't use the \"debug\" code-completion print">;
 def code_completion_macros : Flag<"-code-completion-macros">,
   HelpText<"Include macros in code-completion results">;
 def disable_free : Flag<"-disable-free">,
@@ -203,12 +203,12 @@ def empty_input_only : Flag<"-empty-input-only">,
   HelpText<"Force running on an empty input file">;
 def x : Separate<"-x">, HelpText<"Input language type">;
 def cxx_inheritance_view : Separate<"-cxx-inheritance-view">,
-  MetaVarName<"class name">,
+  MetaVarName<"<class name>">,
   HelpText<"View C++ inheritance for a specified class">;
-def fixit_at : Separate<"-fixit-at">, MetaVarName<"source-location">,
+def fixit_at : Separate<"-fixit-at">, MetaVarName<"<source location>">,
   HelpText<"Perform Fix-It modifications at the given source location">;
-def o : Separate<"-o">, MetaVarName<"path">, HelpText<"Specify output file">;
-def load : Separate<"-load">, MetaVarName<"dsopath">,
+def o : Separate<"-o">, MetaVarName<"<path>">, HelpText<"Specify output file">;
+def load : Separate<"-load">, MetaVarName<"<dsopath>">,
   HelpText<"Load the named plugin (dynamic shared object)">;
 def plugin : Separate<"-plugin">,
   HelpText<"Use the named plugin action (use \"help\" to list available options)">;
@@ -318,7 +318,7 @@ def fno_signed_char : Flag<"-fno-signed-char">,
 def fno_operator_names : Flag<"-fno-operator-names">,
   HelpText<"Do not treat C++ operator name keywords as synonyms for operators">;
 def fconstant_string_class : Separate<"-fconstant-string-class">,
-  MetaVarName<"class name">,
+  MetaVarName<"<class name>">,
   HelpText<"Specify the class to use for constant Objective-C string objects.">;
 def fobjc_gc : Flag<"-fobjc-gc">,
   HelpText<"Enable Objective-C garbage collection">;
@@ -331,7 +331,7 @@ def fobjc_nonfragile_abi : Flag<"-fobjc-nonfragile-abi">,
 def ftrapv : Flag<"-ftrapv">,
   HelpText<"Trap on integer overflow">;
 def pic_level : Separate<"-pic-level">,
-  HelpText<"-Value for __PIC__">;
+  HelpText<"Value for __PIC__">;
 def pthread : Flag<"-pthread">,
   HelpText<"Support POSIX threads in generated code">;
 def fpascal_strings : Flag<"-fpascal-strings">,
@@ -361,23 +361,23 @@ def nostdinc : Flag<"-nostdinc">,
   HelpText<"Disable standard #include directories">;
 def nobuiltininc : Flag<"-nobuiltininc">,
   HelpText<"Disable builtin #include directories">;
-def F : JoinedOrSeparate<"-F">, MetaVarName<"directory">,
+def F : JoinedOrSeparate<"-F">, MetaVarName<"<directory>">,
   HelpText<"Add directory to framework include search path">;
-def I : JoinedOrSeparate<"-I">, MetaVarName<"directory">,
+def I : JoinedOrSeparate<"-I">, MetaVarName<"<directory>">,
   HelpText<"Add directory to include search path">;
-def idirafter : Separate<"-idirafter">, MetaVarName<"directory">,
+def idirafter : Separate<"-idirafter">, MetaVarName<"<directory>">,
   HelpText<"Add directory to AFTER include search path">;
-def iquote : Separate<"-iquote">, MetaVarName<"directory">,
+def iquote : Separate<"-iquote">, MetaVarName<"<directory>">,
   HelpText<"Add directory to QUOTE include search path">;
-def isystem : Separate<"-isystem">, MetaVarName<"directory">,
+def isystem : Separate<"-isystem">, MetaVarName<"<directory>">,
   HelpText<"Add directory to SYSTEM include search path">;
-def iprefix : Separate<"-iprefix">, MetaVarName<"prefix">,
+def iprefix : Separate<"-iprefix">, MetaVarName<"<prefix>">,
   HelpText<"Set the -iwithprefix/-iwithprefixbefore prefix">;
-def iwithprefix : Separate<"-iwithprefix">, MetaVarName<"dir">,
+def iwithprefix : Separate<"-iwithprefix">, MetaVarName<"<dir>">,
   HelpText<"Set directory to SYSTEM include search path with prefix">;
-def iwithprefixbefore : Separate<"-iwithprefixbefore">, MetaVarName<"dir">,
+def iwithprefixbefore : Separate<"-iwithprefixbefore">, MetaVarName<"<dir>">,
   HelpText<"Set directory to include search path with prefix">;
-def isysroot : Separate<"-isysroot">, MetaVarName<"dir">,
+def isysroot : Separate<"-isysroot">, MetaVarName<"<dir>">,
   HelpText<"Set the system root directory (usually /)">;
 def v : Flag<"-v">, HelpText<"Enable verbose output">;
 
@@ -385,21 +385,21 @@ def v : Flag<"-v">, HelpText<"Enable verbose output">;
 // Preprocessor Options
 //===----------------------------------------------------------------------===//
 
-def D : JoinedOrSeparate<"-D">, MetaVarName<"macro">,
+def D : JoinedOrSeparate<"-D">, MetaVarName<"<macro>">,
   HelpText<"Predefine the specified macro">;
-def include_ : Separate<"-include">, MetaVarName<"file">, EnumName<"include">,
+def include_ : Separate<"-include">, MetaVarName<"<file>">, EnumName<"include">,
   HelpText<"Include file before parsing">;
-def imacros : Separate<"-imacros">, MetaVarName<"file">,
+def imacros : Separate<"-imacros">, MetaVarName<"<file>">,
   HelpText<"Include macros from file before parsing">;
-def include_pch : Separate<"-include-pch">, MetaVarName<"file">,
+def include_pch : Separate<"-include-pch">, MetaVarName<"<file>">,
   HelpText<"Include precompiled header file">;
-def include_pth : Separate<"-include-pth">, MetaVarName<"file">,
+def include_pth : Separate<"-include-pth">, MetaVarName<"<file>">,
   HelpText<"Include file before parsing">;
-def token_cache : Separate<"-token-cache">, MetaVarName<"path">,
+def token_cache : Separate<"-token-cache">, MetaVarName<"<path>">,
   HelpText<"Use specified token cache file">;
-def U : JoinedOrSeparate<"-U">, MetaVarName<"macro">,
+def U : JoinedOrSeparate<"-U">, MetaVarName<"<macro>">,
   HelpText<"Undefine the specified macro">;
-def undef : Flag<"-undef">, MetaVarName<"macro">,
+def undef : Flag<"-undef">, MetaVarName<"<macro>">,
   HelpText<"undef all system defines">;
 
 //===----------------------------------------------------------------------===//
