@@ -80,15 +80,10 @@ private:
   struct CovariantThunk {
     CovariantThunk() { }
 
-    CovariantThunk(GlobalDecl GD, const ThunkAdjustment &ReturnAdjustment, 
-                   CanQualType ReturnType) 
-      : GD(GD), ReturnAdjustment(ReturnAdjustment), 
-      ReturnType(ReturnType) { }
+    CovariantThunk(GlobalDecl GD, CanQualType ReturnType) 
+      : GD(GD), ReturnType(ReturnType) { }
 
     GlobalDecl GD;
-    
-    /// ReturnAdjustment - The covariant thunk return adjustment.
-    ThunkAdjustment ReturnAdjustment;
     
     /// ReturnType - The return type of the function.
     CanQualType ReturnType;
