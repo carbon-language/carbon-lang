@@ -7,4 +7,4 @@ struct {
   param_t par;
 } *ptr;
 
-// CHECK: type { i8*, i32 }
+// CHECK: type { i8*, {{i..}} }
