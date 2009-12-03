@@ -37,6 +37,8 @@ def err_fe_remap_missing_to_file : Error<
     "could not remap file '%0' to the contents of file '%1'">, DefaultFatal;
 def err_fe_remap_missing_from_file : Error<
     "could not remap from missing file '%0'">, DefaultFatal;
+def err_fe_unable_to_load_pch : Error<
+    "unable to load PCH file">;
 
 def err_verify_bogus_characters : Error<
     "bogus characters before '{{' in expected string">;

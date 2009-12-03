@@ -238,7 +238,6 @@ int main(int argc, char **argv) {
   Indexer Idxer(Prog);
   llvm::SmallVector<TUnit*, 4> TUnits;
 
-  TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions(), false);
   llvm::OwningPtr<Diagnostic> Diags(
     CompilerInstance::createDiagnostics(DiagnosticOptions(), argc, argv));
 
@@ -248,21 +247,13 @@ int main(int argc, char **argv) {
 
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
-
-    std::string ErrMsg;
     llvm::OwningPtr<ASTUnit> AST;
-
-    if (ASTFromSource) {
+    if (ASTFromSource)
       AST.reset(CreateFromSource(InFile, *Diags, argv[0]));
-      if (!AST || Diags->getNumErrors())
-        ErrMsg = "unable to create AST";
-    } else
-      AST.reset(ASTUnit::LoadFromPCHFile(InFile, &ErrMsg));
-
-    if (!AST) {
-      llvm::errs() << "[" << InFile << "] Error: " << ErrMsg << '\n';
+    else
+      AST.reset(ASTUnit::LoadFromPCHFile(InFile, *Diags));
+    if (!AST)
       return 1;
-    }
 
     TUnit *TU = new TUnit(AST.take(), InFile);
     TUnits.push_back(TU);

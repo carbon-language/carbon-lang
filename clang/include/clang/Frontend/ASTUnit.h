@@ -16,7 +16,6 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Index/ASTLocation.h"
 #include <string>
@@ -32,14 +31,12 @@ class HeaderSearch;
 class Preprocessor;
 class SourceManager;
 class TargetInfo;
-class TextDiagnosticBuffer;
 
 using namespace idx;
 
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
 class ASTUnit {
-  Diagnostic Diags;
   FileManager FileMgr;
 
   SourceManager                     SourceMgr;
@@ -67,7 +64,7 @@ class ASTUnit {
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
 
 public:
-  ASTUnit(bool MainFileIsAST, DiagnosticClient *diagClient = NULL);
+  ASTUnit(bool MainFileIsAST);
   ~ASTUnit();
 
   bool isMainFileAST() const { return MainFileIsAST; }
@@ -80,9 +77,6 @@ public:
 
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
-
-  const Diagnostic &getDiagnostic() const { return Diags; }
-        Diagnostic &getDiagnostic()       { return Diags; }
 
   const FileManager &getFileManager() const { return FileMgr; }
         FileManager &getFileManager()       { return FileMgr; }
@@ -101,17 +95,12 @@ public:
   ///
   /// \param Filename - The PCH file to load.
   ///
-  /// \param DiagClient - The diagnostics client to use.  Specify NULL
-  /// to use a default client that emits warnings/errors to standard error.
-  /// The ASTUnit objects takes ownership of this object.
-  ///
-  /// \param ErrMsg - Error message to report if the PCH file could not be
-  /// loaded.
+  /// \param Diags - The diagnostics engine to use for reporting errors; its
+  /// lifetime is expected to extend past that of the returned ASTUnit.
   ///
   /// \returns - The initialized ASTUnit or null if the PCH failed to load.
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
-                                  std::string *ErrMsg = 0,
-                                  DiagnosticClient *DiagClient = NULL,
+                                  Diagnostic &Diags,
                                   bool OnlyLocalDecls = false,
                                   bool UseBumpAllocator = false);
 
@@ -121,7 +110,8 @@ public:
   /// \param CI - The compiler invocation to use; it must have exactly one input
   /// source file.
   ///
-  /// \param Diags - The diagnostics engine to use for reporting errors.
+  /// \param Diags - The diagnostics engine to use for reporting errors; its
+  /// lifetime is expected to extend past that of the returned ASTUnit.
   //
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
@@ -136,7 +126,8 @@ public:
   ///
   /// \param ArgEnd - The end of the argument vector.
   ///
-  /// \param Diags - The diagnostics engine to use for reporting errors.
+  /// \param Diags - The diagnostics engine to use for reporting errors; its
+  /// lifetime is expected to extend past that of the returned ASTUnit.
   ///
   /// \param Argv0 - The program path (from argv[0]), for finding the builtin
   /// compiler path.

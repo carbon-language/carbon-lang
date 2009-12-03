@@ -34,18 +34,12 @@
 #include "llvm/System/Path.h"
 using namespace clang;
 
-ASTUnit::ASTUnit(bool _MainFileIsAST,
-                 DiagnosticClient *diagClient)
-  : tempFile(false), MainFileIsAST(_MainFileIsAST)
-{
-  Diags.setClient(diagClient ? diagClient : new TextDiagnosticBuffer());
+ASTUnit::ASTUnit(bool _MainFileIsAST)
+  : tempFile(false), MainFileIsAST(_MainFileIsAST) {
 }
 ASTUnit::~ASTUnit() {
   if (tempFile)
     llvm::sys::Path(getPCHFileName()).eraseFromDisk();
-
-  //  The ASTUnit object owns the DiagnosticClient.
-  delete Diags.getClient();
 }
 
 namespace {
@@ -107,11 +101,10 @@ const std::string &ASTUnit::getPCHFileName() {
 }
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
-                                  std::string *ErrMsg,
-                                  DiagnosticClient *diagClient,
+                                  Diagnostic &Diags,
                                   bool OnlyLocalDecls,
                                   bool UseBumpAllocator) {
-  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true, diagClient));
+  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
 
@@ -127,7 +120,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   llvm::OwningPtr<ExternalASTSource> Source;
 
   Reader.reset(new PCHReader(AST->getSourceManager(), AST->getFileManager(),
-                             AST->Diags));
+                             Diags));
   Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
@@ -137,8 +130,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   case PCHReader::Failure:
   case PCHReader::IgnorePCH:
-    if (ErrMsg)
-      *ErrMsg = "Could not load PCH file";
+    Diags.Report(diag::err_fe_unable_to_load_pch);
     return NULL;
   }
 
@@ -154,8 +146,8 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   TargetOpts.CPU = "";
   TargetOpts.Features.clear();
   TargetOpts.Triple = TargetTriple;
-  AST->Target.reset(TargetInfo::CreateTargetInfo(AST->Diags, TargetOpts));
-  AST->PP.reset(new Preprocessor(AST->Diags, LangInfo, *AST->Target.get(),
+  AST->Target.reset(TargetInfo::CreateTargetInfo(Diags, TargetOpts));
+  AST->PP.reset(new Preprocessor(Diags, LangInfo, *AST->Target.get(),
                                  AST->getSourceManager(), HeaderInfo));
   Preprocessor &PP = *AST->PP.get();
 
@@ -231,8 +223,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
          "FIXME: AST inputs not yet supported here!");
 
   // Create the AST unit.
-  //
-  // FIXME: Use the provided diagnostic client.
   AST.reset(new ASTUnit(false));
 
   AST->OnlyLocalDecls = OnlyLocalDecls;

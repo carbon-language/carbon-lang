@@ -23,6 +23,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
@@ -291,10 +292,24 @@ public:
 };
 
 class CIndexer : public Indexer {
+  IgnoreDiagnosticsClient IgnoreDiagClient;
+  llvm::OwningPtr<Diagnostic> TextDiags;
+  Diagnostic IgnoreDiags;
+  bool UseExternalASTGeneration;
+  bool OnlyLocalDecls;
+  bool DisplayDiagnostics;
+
+  llvm::sys::Path ClangPath;
+
 public:
   explicit CIndexer(Program *prog) : Indexer(*prog),
+                                     IgnoreDiags(&IgnoreDiagClient),
+                                     UseExternalASTGeneration(false),
                                      OnlyLocalDecls(false),
-                                     DisplayDiagnostics(false) {}
+                                     DisplayDiagnostics(false) {
+    TextDiags.reset(
+      CompilerInstance::createDiagnostics(DiagnosticOptions(), 0, 0));
+  }
 
   virtual ~CIndexer() { delete &getProgram(); }
 
@@ -304,18 +319,17 @@ public:
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
   void setOnlyLocalDecls(bool Local = true) { OnlyLocalDecls = Local; }
 
+  bool getDisplayDiagnostics() const { return DisplayDiagnostics; }
   void setDisplayDiagnostics(bool Display = true) {
     DisplayDiagnostics = Display;
   }
-  bool getDisplayDiagnostics() const { return DisplayDiagnostics; }
+
+  Diagnostic &getDiags() {
+    return DisplayDiagnostics ? *TextDiags : IgnoreDiags;
+  }
 
   /// \brief Get the path of the clang binary.
   const llvm::sys::Path& getClangPath();
-private:
-  bool OnlyLocalDecls;
-  bool DisplayDiagnostics;
-
-  llvm::sys::Path ClangPath;
 };
 
 const llvm::sys::Path& CIndexer::getClangPath() {
@@ -457,20 +471,10 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                               const char *ast_filename) {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
-  std::string astName(ast_filename);
-  std::string ErrMsg;
 
-  CXTranslationUnit TU =
-    ASTUnit::LoadFromPCHFile(astName, &ErrMsg,
-                             CXXIdx->getDisplayDiagnostics() ?
-                             NULL : new IgnoreDiagnosticsClient(),
-                             CXXIdx->getOnlyLocalDecls(),
-                             /* UseBumpAllocator = */ true);
-
-  if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty())
-    llvm::errs() << "clang_createTranslationUnit: " << ErrMsg  << '\n';
-
-  return TU;
+  return ASTUnit::LoadFromPCHFile(ast_filename, CXXIdx->getDiags(),
+                                  CXXIdx->getOnlyLocalDecls(),
+                                  /* UseBumpAllocator = */ true);
 }
 
 CXTranslationUnit

@@ -16,7 +16,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Frontend/TextDiagnosticBuffer.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -33,20 +33,14 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     return 0;
 
-  TextDiagnosticBuffer DiagClient;
+  llvm::OwningPtr<Diagnostic> Diags(
+    CompilerInstance::createDiagnostics(DiagnosticOptions(), argc, argv));
 
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
-
-    std::string ErrMsg;
-    llvm::OwningPtr<ASTUnit> AST;
-
-    AST.reset(ASTUnit::LoadFromPCHFile(InFile, &ErrMsg, &DiagClient));
-
-    if (!AST) {
-      llvm::errs() << "[" << InFile << "] error: " << ErrMsg << '\n';
+    llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, *Diags));
+    if (!AST)
       return 1;
-    }
 
     ASTUnits.push_back(AST.take());
   }
