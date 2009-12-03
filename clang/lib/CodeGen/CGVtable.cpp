@@ -81,13 +81,16 @@ private:
     CovariantThunk()
       : Index(0) { }
     
-    CovariantThunk(uint64_t Index, const ThunkAdjustment &ReturnAdjustment, 
+    CovariantThunk(uint64_t Index, GlobalDecl GD,
+                   const ThunkAdjustment &ReturnAdjustment, 
                    CanQualType ReturnType) 
       : Index(Index), ReturnAdjustment(ReturnAdjustment), 
       ReturnType(ReturnType) { }
     
     // Index - The index in the vtable.
     uint64_t Index;
+    
+    GlobalDecl GD;
     
     /// ReturnAdjustment - The covariant thunk return adjustment.
     ThunkAdjustment ReturnAdjustment;
@@ -290,7 +293,7 @@ public:
         CGM.BuildCovariantThunk(MD, Extern, Adjustment);
     }
     CovariantThunks.clear();
-
+    
     for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
       GlobalDecl GD = i->first;
@@ -762,7 +765,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         // FIXME: Do we always have to build a covariant thunk to save oret,
         // which is the containing virtual base class?
         if (!ReturnAdjustment.isEmpty())
-          CovariantThunks[GD] = CovariantThunk(i, ReturnAdjustment, oret);
+          CovariantThunks[GD] = CovariantThunk(i, GD, ReturnAdjustment, oret);
 
         if (!isPure && !ThisAdjustment.isEmpty())
           Thunks[GD] = Thunk(i, ThisAdjustment);
@@ -777,7 +780,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         
         if (!ReturnAdjustment.isEmpty())
           CovariantThunks[GD] = 
-            CovariantThunk(i, ReturnAdjustment, oret);
+            CovariantThunk(i, GD, ReturnAdjustment, oret);
 
         if (!isPure)
           Thunks[GD] = Thunk(i, ThisAdjustment);
