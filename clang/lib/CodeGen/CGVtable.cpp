@@ -81,17 +81,16 @@ private:
     CovariantThunk()
       : Index(0) { }
     
-    CovariantThunk(uint64_t Index, const ThunkAdjustment &ThisAdjustment,
-                   const ThunkAdjustment &ReturnAdjustment, 
+    CovariantThunk(uint64_t Index, const ThunkAdjustment &ReturnAdjustment, 
                    CanQualType ReturnType) 
-      : Index(Index), Adjustment(ThisAdjustment, ReturnAdjustment), 
+      : Index(Index), ReturnAdjustment(ReturnAdjustment), 
       ReturnType(ReturnType) { }
     
     // Index - The index in the vtable.
     uint64_t Index;
     
-    /// Adjustment - The covariant thunk adjustment.
-    CovariantThunkAdjustment Adjustment;
+    /// ReturnAdjustment - The covariant thunk return adjustment.
+    ThunkAdjustment ReturnAdjustment;
     
     /// ReturnType - The return type of the function.
     CanQualType ReturnType;
@@ -265,6 +264,33 @@ public:
                       Index_t Offset, int64_t CurrentVBaseOffset);
 
   void InstallThunks() {
+    for (CovariantThunksMapTy::const_iterator i = CovariantThunks.begin(),
+         e = CovariantThunks.end(); i != e; ++i) {
+      GlobalDecl GD = i->first;
+      const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+      if (MD->isPure())
+        continue;
+      
+      const CovariantThunk &Thunk = i->second;
+      assert(Thunk.Index == Index[GD] && "Thunk index mismatch!");
+      
+      // Check if there is an adjustment for the 'this' pointer.
+      ThunkAdjustment ThisAdjustment;
+      ThunksMapTy::iterator i = Thunks.find(GD);
+      if (i != Thunks.end()) {
+        assert(i->second.Index == Thunk.Index && "Thunk index mismatch!");
+        ThisAdjustment = i->second.Adjustment;
+        
+        Thunks.erase(i);
+      }
+        
+      CovariantThunkAdjustment Adjustment(ThisAdjustment, 
+                                          Thunk.ReturnAdjustment);
+      submethods[Thunk.Index] = 
+        CGM.BuildCovariantThunk(MD, Extern, Adjustment);
+    }
+    CovariantThunks.clear();
+
     for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
       GlobalDecl GD = i->first;
@@ -277,20 +303,6 @@ public:
       submethods[Thunk.Index] = CGM.BuildThunk(MD, Extern, Thunk.Adjustment);
     }
     Thunks.clear();
-
-    for (CovariantThunksMapTy::const_iterator i = CovariantThunks.begin(),
-         e = CovariantThunks.end(); i != e; ++i) {
-      GlobalDecl GD = i->first;
-      const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-      if (MD->isPure())
-        continue;
-      
-      const CovariantThunk &Thunk = i->second;
-      assert(Thunk.Index == Index[GD] && "Thunk index mismatch!");
-      submethods[Thunk.Index] = 
-        CGM.BuildCovariantThunk(MD, Extern, Thunk.Adjustment);
-    }
-    CovariantThunks.clear();
 
     for (PureVirtualMethodsSetTy::iterator i = PureVirtualMethods.begin(),
          e = PureVirtualMethods.end(); i != e; ++i) {
@@ -749,10 +761,10 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 
         // FIXME: Do we always have to build a covariant thunk to save oret,
         // which is the containing virtual base class?
-        if (!ReturnAdjustment.isEmpty()) {
-          CovariantThunks[GD] = 
-            CovariantThunk(i, ThisAdjustment, ReturnAdjustment, oret);
-        } else if (!isPure && !ThisAdjustment.isEmpty())
+        if (!ReturnAdjustment.isEmpty())
+          CovariantThunks[GD] = CovariantThunk(i, ReturnAdjustment, oret);
+
+        if (!isPure && !ThisAdjustment.isEmpty())
           Thunks[GD] = Thunk(i, ThisAdjustment);
         return true;
       }
@@ -763,10 +775,11 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       if (NonVirtualAdjustment || !ReturnAdjustment.isEmpty()) {
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
-        if (!ReturnAdjustment.isEmpty()) {
+        if (!ReturnAdjustment.isEmpty())
           CovariantThunks[GD] = 
-            CovariantThunk(i, ThisAdjustment, ReturnAdjustment, oret);
-        } else if (!isPure)
+            CovariantThunk(i, ReturnAdjustment, oret);
+
+        if (!isPure)
           Thunks[GD] = Thunk(i, ThisAdjustment);
       }
       return true;
