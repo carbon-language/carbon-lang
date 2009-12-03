@@ -483,12 +483,12 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
 
   switch (II->getLength()) {
   default: return false;
-  case 4:
-    if (II->isStr("rtti")) return LangOpts.RTTI;
-    return false;  
   case 6:
     if (II->isStr("blocks")) return LangOpts.Blocks;
     return false;
+  case 8:
+    if (II->isStr("cxx_rtti")) return LangOpts.RTTI;
+    return false;      
   case 19:
     if (II->isStr("objc_nonfragile_abi")) return LangOpts.ObjCNonFragileABI;
     return false;
