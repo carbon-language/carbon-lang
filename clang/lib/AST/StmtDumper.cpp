@@ -17,7 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/SourceManager.h"
-#include <cstdio>
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -27,7 +27,7 @@ using namespace clang;
 namespace  {
   class StmtDumper : public StmtVisitor<StmtDumper> {
     SourceManager *SM;
-    FILE *F;
+    llvm::raw_ostream &OS;
     unsigned IndentLevel;
 
     /// MaxDepth - When doing a normal dump (not dumpAll) we only want to dump
@@ -41,8 +41,8 @@ namespace  {
     unsigned LastLocLine;
 
   public:
-    StmtDumper(SourceManager *sm, FILE *f, unsigned maxDepth)
-      : SM(sm), F(f), IndentLevel(0-1), MaxDepth(maxDepth) {
+    StmtDumper(SourceManager *sm, llvm::raw_ostream &os, unsigned maxDepth)
+      : SM(sm), OS(os), IndentLevel(0-1), MaxDepth(maxDepth) {
       LastLocFilename = "";
       LastLocLine = ~0U;
     }
@@ -62,15 +62,15 @@ namespace  {
           Stmt::child_iterator CI = S->child_begin(), CE = S->child_end();
           if (CI != CE) {
             while (CI != CE) {
-              fprintf(F, "\n");
+              OS << '\n';
               DumpSubTree(*CI++);
             }
           }
-          fprintf(F, ")");
+          OS << ')';
         }
       } else {
         Indent();
-        fprintf(F, "<<<NULL>>>");
+        OS << "<<<NULL>>>";
       }
       --IndentLevel;
     }
@@ -79,27 +79,28 @@ namespace  {
 
     void Indent() const {
       for (int i = 0, e = IndentLevel; i < e; ++i)
-        fprintf(F, "  ");
+        OS << "  ";
     }
 
     void DumpType(QualType T) {
-      fprintf(F, "'%s'", T.getAsString().c_str());
+      OS << "'" << T.getAsString() << "'";
 
       if (!T.isNull()) {
         // If the type is sugared, also dump a (shallow) desugared type.
         QualType Simplified = T.getDesugaredType();
         if (Simplified != T)
-          fprintf(F, ":'%s'", Simplified.getAsString().c_str());
+          OS << ":'" << Simplified.getAsString() << "'";
       }
     }
     void DumpStmt(const Stmt *Node) {
       Indent();
-      fprintf(F, "(%s %p", Node->getStmtClassName(), (void*)Node);
+      OS << "(" << Node->getStmtClassName()
+         << " " << (void*)Node;
       DumpSourceRange(Node);
     }
     void DumpExpr(const Expr *Node) {
       DumpStmt(Node);
-      fprintf(F, " ");
+      OS << ' ';
       DumpType(Node->getType());
     }
     void DumpSourceRange(const Stmt *Node);
@@ -161,7 +162,7 @@ void StmtDumper::DumpLocation(SourceLocation Loc) {
   SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
 
   if (SpellingLoc.isInvalid()) {
-    fprintf(stderr, "<invalid sloc>");
+    OS << "<invalid sloc>";
     return;
   }
 
@@ -170,15 +171,16 @@ void StmtDumper::DumpLocation(SourceLocation Loc) {
   PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
 
   if (strcmp(PLoc.getFilename(), LastLocFilename) != 0) {
-    fprintf(stderr, "%s:%u:%u", PLoc.getFilename(), PLoc.getLine(),
-            PLoc.getColumn());
+    OS << PLoc.getFilename() << ':' << PLoc.getLine()
+       << ':' << PLoc.getColumn();
     LastLocFilename = PLoc.getFilename();
     LastLocLine = PLoc.getLine();
   } else if (PLoc.getLine() != LastLocLine) {
-    fprintf(stderr, "line:%u:%u", PLoc.getLine(), PLoc.getColumn());
+    OS << "line" << ':' << PLoc.getLine()
+       << ':' << PLoc.getColumn();
     LastLocLine = PLoc.getLine();
   } else {
-    fprintf(stderr, "col:%u", PLoc.getColumn());
+    OS << "col" << ':' << PLoc.getColumn();
   }
 }
 
@@ -190,13 +192,13 @@ void StmtDumper::DumpSourceRange(const Stmt *Node) {
   // location.
   SourceRange R = Node->getSourceRange();
 
-  fprintf(stderr, " <");
+  OS << " <";
   DumpLocation(R.getBegin());
   if (R.getBegin() != R.getEnd()) {
-    fprintf(stderr, ", ");
+    OS << ", ";
     DumpLocation(R.getEnd());
   }
-  fprintf(stderr, ">");
+  OS << ">";
 
   // <t2.c:123:421[blah], t2.c:412:321>
 
@@ -215,31 +217,30 @@ void StmtDumper::DumpDeclarator(Decl *D) {
   // FIXME: Need to complete/beautify this... this code simply shows the
   // nodes are where they need to be.
   if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
-    fprintf(F, "\"typedef %s %s\"",
-            localType->getUnderlyingType().getAsString().c_str(),
-            localType->getNameAsString().c_str());
+    OS << "\"typedef " << localType->getUnderlyingType().getAsString()
+       << " " << localType->getNameAsString() << "\"";
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-    fprintf(F, "\"");
+    OS << "\"";
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       if (V->getStorageClass() != VarDecl::None)
-        fprintf(F, "%s ",
-                VarDecl::getStorageClassSpecifierString(V->getStorageClass()));
+        OS << VarDecl::getStorageClassSpecifierString(V->getStorageClass())
+           << " ";
     }
 
     std::string Name = VD->getNameAsString();
     VD->getType().getAsStringInternal(Name,
                           PrintingPolicy(VD->getASTContext().getLangOptions()));
-    fprintf(F, "%s", Name.c_str());
+    OS << Name;
 
     // If this is a vardecl with an initializer, emit it.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       if (V->getInit()) {
-        fprintf(F, " =\n");
+        OS << " =\n";
         DumpSubTree(V->getInit());
       }
     }
-    fprintf(F, "\"");
+    OS << '"';
   } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     // print a free standing tag decl (e.g. "struct x;").
     const char *tagname;
@@ -247,7 +248,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
       tagname = II->getNameStart();
     else
       tagname = "<anonymous>";
-    fprintf(F, "\"%s %s;\"", TD->getKindName(), tagname);
+    OS << '"' << TD->getKindName() << ' ' << tagname << ";\"";
     // FIXME: print tag bodies.
   } else if (UsingDirectiveDecl *UD = dyn_cast<UsingDirectiveDecl>(D)) {
     // print using-directive decl (e.g. "using namespace x;")
@@ -256,7 +257,7 @@ void StmtDumper::DumpDeclarator(Decl *D) {
       ns = II->getNameStart();
     else
       ns = "<anonymous>";
-    fprintf(F, "\"%s %s;\"",UD->getDeclKindName(), ns);
+    OS << '"' << UD->getDeclKindName() << ns << ";\"";
   } else {
     assert(0 && "Unexpected decl");
   }
@@ -264,28 +265,29 @@ void StmtDumper::DumpDeclarator(Decl *D) {
 
 void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
   DumpStmt(Node);
-  fprintf(F,"\n");
+  OS << "\n";
   for (DeclStmt::decl_iterator DI = Node->decl_begin(), DE = Node->decl_end();
        DI != DE; ++DI) {
     Decl* D = *DI;
     ++IndentLevel;
     Indent();
-    fprintf(F, "%p ", (void*) D);
+    OS << (void*) D << " ";
     DumpDeclarator(D);
     if (DI+1 != DE)
-      fprintf(F,"\n");
+      OS << "\n";
     --IndentLevel;
   }
 }
 
 void StmtDumper::VisitLabelStmt(LabelStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, " '%s'", Node->getName());
+  OS << " '" << Node->getName() << "'";
 }
 
 void StmtDumper::VisitGotoStmt(GotoStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, " '%s':%p", Node->getLabel()->getName(), (void*)Node->getLabel());
+  OS << " '" << Node->getLabel()->getName()
+     << "':" << (void*)Node->getLabel();
 }
 
 //===----------------------------------------------------------------------===//
@@ -298,129 +300,117 @@ void StmtDumper::VisitExpr(Expr *Node) {
 
 void StmtDumper::VisitCastExpr(CastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " <%s>", Node->getCastKindName());
+  OS << " <" << Node->getCastKindName() << ">";
 }
 
 void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
   VisitCastExpr(Node);
   if (Node->isLvalueCast())
-    fprintf(F, " lvalue");
+    OS << " lvalue";
 }
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   DumpExpr(Node);
 
-  fprintf(F, " ");
+  OS << " ";
   switch (Node->getDecl()->getKind()) {
-  default: fprintf(F,"Decl"); break;
-  case Decl::Function: fprintf(F,"FunctionDecl"); break;
-  case Decl::Var: fprintf(F,"Var"); break;
-  case Decl::ParmVar: fprintf(F,"ParmVar"); break;
-  case Decl::EnumConstant: fprintf(F,"EnumConstant"); break;
-  case Decl::Typedef: fprintf(F,"Typedef"); break;
-  case Decl::Record: fprintf(F,"Record"); break;
-  case Decl::Enum: fprintf(F,"Enum"); break;
-  case Decl::CXXRecord: fprintf(F,"CXXRecord"); break;
-  case Decl::ObjCInterface: fprintf(F,"ObjCInterface"); break;
-  case Decl::ObjCClass: fprintf(F,"ObjCClass"); break;
+  default: OS << "Decl"; break;
+  case Decl::Function: OS << "FunctionDecl"; break;
+  case Decl::Var: OS << "Var"; break;
+  case Decl::ParmVar: OS << "ParmVar"; break;
+  case Decl::EnumConstant: OS << "EnumConstant"; break;
+  case Decl::Typedef: OS << "Typedef"; break;
+  case Decl::Record: OS << "Record"; break;
+  case Decl::Enum: OS << "Enum"; break;
+  case Decl::CXXRecord: OS << "CXXRecord"; break;
+  case Decl::ObjCInterface: OS << "ObjCInterface"; break;
+  case Decl::ObjCClass: OS << "ObjCClass"; break;
   }
 
-  fprintf(F, "='%s' %p", Node->getDecl()->getNameAsString().c_str(),
-          (void*)Node->getDecl());
+  OS << "='" << Node->getDecl()->getNameAsString()
+     << "' " << (void*)Node->getDecl();
 }
 
 void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   DumpExpr(Node);
 
-  fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(),
-          Node->getDecl()->getNameAsString().c_str(), (void*)Node->getDecl());
+  OS << " " << Node->getDecl()->getDeclKindName()
+     << "Decl='" << Node->getDecl()->getNameAsString()
+     << "' " << (void*)Node->getDecl();
   if (Node->isFreeIvar())
-    fprintf(F, " isFreeIvar");
+    OS << " isFreeIvar";
 }
 
 void StmtDumper::VisitPredefinedExpr(PredefinedExpr *Node) {
   DumpExpr(Node);
   switch (Node->getIdentType()) {
   default: assert(0 && "unknown case");
-  case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
-  case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
-  case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
+  case PredefinedExpr::Func:           OS <<  " __func__"; break;
+  case PredefinedExpr::Function:       OS <<  " __FUNCTION__"; break;
+  case PredefinedExpr::PrettyFunction: OS <<  " __PRETTY_FUNCTION__";break;
   }
 }
 
 void StmtDumper::VisitCharacterLiteral(CharacterLiteral *Node) {
   DumpExpr(Node);
-  fprintf(F, " %d", Node->getValue());
+  OS << Node->getValue();
 }
 
 void StmtDumper::VisitIntegerLiteral(IntegerLiteral *Node) {
   DumpExpr(Node);
 
   bool isSigned = Node->getType()->isSignedIntegerType();
-  fprintf(F, " %s", Node->getValue().toString(10, isSigned).c_str());
+  OS << " " << Node->getValue().toString(10, isSigned);
 }
 void StmtDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
   DumpExpr(Node);
-  fprintf(F, " %f", Node->getValueAsApproximateDouble());
+  OS << " " << Node->getValueAsApproximateDouble();
 }
 
 void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
   DumpExpr(Str);
   // FIXME: this doesn't print wstrings right.
-  fprintf(F, " %s\"", Str->isWide() ? "L" : "");
-
-  for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
-    switch (char C = Str->getStrData()[i]) {
-    default:
-      if (isprint(C))
-        fputc(C, F);
-      else
-        fprintf(F, "\\%03o", C);
-      break;
-    // Handle some common ones to make dumps prettier.
-    case '\\': fprintf(F, "\\\\"); break;
-    case '"':  fprintf(F, "\\\""); break;
-    case '\n': fprintf(F, "\\n"); break;
-    case '\t': fprintf(F, "\\t"); break;
-    case '\a': fprintf(F, "\\a"); break;
-    case '\b': fprintf(F, "\\b"); break;
-    }
-  }
-  fprintf(F, "\"");
+  OS << " ";
+  if (Str->isWide())
+    OS << "L";
+  OS << '"';
+  OS.write_escaped(llvm::StringRef(Str->getStrData(),
+                                   Str->getByteLength()));
+  OS << '"';
 }
 
 void StmtDumper::VisitUnaryOperator(UnaryOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s '%s'", Node->isPostfix() ? "postfix" : "prefix",
-          UnaryOperator::getOpcodeStr(Node->getOpcode()));
+  OS << " " << (Node->isPostfix() ? "postfix" : "prefix")
+     << " '" << UnaryOperator::getOpcodeStr(Node->getOpcode()) << "'";
 }
 void StmtDumper::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s ", Node->isSizeOf() ? "sizeof" : "alignof");
+  OS << " " << (Node->isSizeOf() ? "sizeof" : "alignof") << " ";
   if (Node->isArgumentType())
     DumpType(Node->getArgumentType());
 }
 
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s%s %p", Node->isArrow() ? "->" : ".",
-          Node->getMemberDecl()->getNameAsString().c_str(),
-          (void*)Node->getMemberDecl());
+  OS << " " << (Node->isArrow() ? "->" : ".")
+     << Node->getMemberDecl()->getNameAsString() << " "
+     << (void*)Node->getMemberDecl();
 }
 void StmtDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s", Node->getAccessor().getNameStart());
+  OS << " " << Node->getAccessor().getNameStart();
 }
 void StmtDumper::VisitBinaryOperator(BinaryOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, " '%s'", BinaryOperator::getOpcodeStr(Node->getOpcode()));
+  OS << " '" << BinaryOperator::getOpcodeStr(Node->getOpcode()) << "'";
 }
 void StmtDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, " '%s' ComputeLHSTy=",
-          BinaryOperator::getOpcodeStr(Node->getOpcode()));
+  OS << " '" << BinaryOperator::getOpcodeStr(Node->getOpcode())
+     << "' ComputeLHSTy=";
   DumpType(Node->getComputationLHSType());
-  fprintf(F, " ComputeResultTy=");
+  OS << " ComputeResultTy=";
   DumpType(Node->getComputationResultType());
 }
 
@@ -428,14 +418,15 @@ void StmtDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
 
 void StmtDumper::VisitAddrLabelExpr(AddrLabelExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
+  OS << " " << Node->getLabel()->getName()
+     << " " << (void*)Node->getLabel();
 }
 
 void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " ");
+  OS << " ";
   DumpType(Node->getArgType1());
-  fprintf(F, " ");
+  OS << " ";
   DumpType(Node->getArgType2());
 }
 
@@ -445,36 +436,35 @@ void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
 
 void StmtDumper::VisitCXXNamedCastExpr(CXXNamedCastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s<%s> <%s>", Node->getCastName(),
-          Node->getTypeAsWritten().getAsString().c_str(),
-          Node->getCastKindName());
+  OS << " " << Node->getCastName() 
+     << "<" << Node->getTypeAsWritten().getAsString() << ">"
+     << " <" << Node->getCastKindName() << ">";
 }
 
 void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s", Node->getValue() ? "true" : "false");
+  OS << " " << (Node->getValue() ? "true" : "false");
 }
 
 void StmtDumper::VisitCXXThisExpr(CXXThisExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " this");
+  OS << " this";
 }
 
 void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " functional cast to %s",
-          Node->getTypeAsWritten().getAsString().c_str());
+  OS << " functional cast to " << Node->getTypeAsWritten().getAsString();
 }
 
 void StmtDumper::VisitCXXConstructExpr(CXXConstructExpr *Node) {
   DumpExpr(Node);
   if (Node->isElidable())
-    fprintf(F, " elidable");
+    OS << " elidable";
 }
 
 void StmtDumper::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " ");
+  OS << " ";
   DumpCXXTemporary(Node->getTemporary());
 }
 
@@ -482,7 +472,7 @@ void StmtDumper::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node) {
   DumpExpr(Node);
   ++IndentLevel;
   for (unsigned i = 0, e = Node->getNumTemporaries(); i != e; ++i) {
-    fprintf(F, "\n");
+    OS << "\n";
     Indent();
     DumpCXXTemporary(Node->getTemporary(i));
   }
@@ -490,7 +480,7 @@ void StmtDumper::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node) {
 }
 
 void StmtDumper::DumpCXXTemporary(CXXTemporary *Temporary) {
-  fprintf(F, "(CXXTemporary %p)", (void *)Temporary);
+  OS << "(CXXTemporary " << (void *)Temporary << ")";
 }
 
 //===----------------------------------------------------------------------===//
@@ -499,37 +489,34 @@ void StmtDumper::DumpCXXTemporary(CXXTemporary *Temporary) {
 
 void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
   DumpExpr(Node);
-  fprintf(F, " selector=%s", Node->getSelector().getAsString().c_str());
-  IdentifierInfo* clsName = Node->getClassName();
-  if (clsName) fprintf(F, " class=%s", clsName->getNameStart());
+  OS << " selector=" << Node->getSelector().getAsString();
+  if (IdentifierInfo *clsName = Node->getClassName())
+    OS << " class=" << clsName->getNameStart();
 }
 
 void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
   DumpExpr(Node);
-
-  fprintf(F, " ");
+  OS << " ";
   DumpType(Node->getEncodedType());
 }
 
 void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   DumpExpr(Node);
 
-  fprintf(F, " ");
-  fprintf(F, "%s", Node->getSelector().getAsString().c_str());
+  OS << " " << Node->getSelector().getAsString();
 }
 
 void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
   DumpExpr(Node);
 
-  fprintf(F, " ");
-  fprintf(F, "%s", Node->getProtocol()->getNameAsString().c_str());
+  OS << " " << Node->getProtocol()->getNameAsString();
 }
 
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
 
-  fprintf(F, " Kind=PropertyRef Property=\"%s\"",
-          Node->getProperty()->getNameAsString().c_str());
+  OS << " Kind=PropertyRef Property=\""
+     << Node->getProperty()->getNameAsString() << "\"";
 }
 
 void StmtDumper::VisitObjCImplicitSetterGetterRefExpr(
@@ -538,14 +525,19 @@ void StmtDumper::VisitObjCImplicitSetterGetterRefExpr(
 
   ObjCMethodDecl *Getter = Node->getGetterMethod();
   ObjCMethodDecl *Setter = Node->getSetterMethod();
-  fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"",
-          Getter->getSelector().getAsString().c_str(),
-          Setter ? Setter->getSelector().getAsString().c_str() : "(null)");
+  OS << " Kind=MethodRef Getter=\""
+     << Getter->getSelector().getAsString()
+     << "\" Setter=\"";
+  if (Setter)
+    OS << Setter->getSelector().getAsString();
+  else
+    OS << "(null)";
+  OS << "\"";
 }
 
 void StmtDumper::VisitObjCSuperExpr(ObjCSuperExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " super");
+  OS << " super";
 }
 
 //===----------------------------------------------------------------------===//
@@ -556,30 +548,30 @@ void StmtDumper::VisitObjCSuperExpr(ObjCSuperExpr *Node) {
 /// specified node and a few nodes underneath it, but not the whole subtree.
 /// This is useful in a debugger.
 void Stmt::dump(SourceManager &SM) const {
-  StmtDumper P(&SM, stderr, 4);
+  StmtDumper P(&SM, llvm::errs(), 4);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  fprintf(stderr, "\n");
+  llvm::errs() << "\n";
 }
 
 /// dump - This does a local dump of the specified AST fragment.  It dumps the
 /// specified node and a few nodes underneath it, but not the whole subtree.
 /// This is useful in a debugger.
 void Stmt::dump() const {
-  StmtDumper P(0, stderr, 4);
+  StmtDumper P(0, llvm::errs(), 4);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  fprintf(stderr, "\n");
+  llvm::errs() << "\n";
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll(SourceManager &SM) const {
-  StmtDumper P(&SM, stderr, ~0U);
+  StmtDumper P(&SM, llvm::errs(), ~0U);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  fprintf(stderr, "\n");
+  llvm::errs() << "\n";
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll() const {
-  StmtDumper P(0, stderr, ~0U);
+  StmtDumper P(0, llvm::errs(), ~0U);
   P.DumpSubTree(const_cast<Stmt*>(this));
-  fprintf(stderr, "\n");
+  llvm::errs() << "\n";
 }
