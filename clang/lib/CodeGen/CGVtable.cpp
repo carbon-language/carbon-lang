@@ -78,18 +78,11 @@ private:
 
   /// CovariantThunk - Represents a single covariant thunk.
   struct CovariantThunk {
-    CovariantThunk()
-      : Index(0) { }
-    
-    CovariantThunk(uint64_t Index, GlobalDecl GD,
-                   const ThunkAdjustment &ReturnAdjustment, 
+    CovariantThunk(GlobalDecl GD, const ThunkAdjustment &ReturnAdjustment, 
                    CanQualType ReturnType) 
-      : Index(Index), GD(GD), ReturnAdjustment(ReturnAdjustment), 
+      : GD(GD), ReturnAdjustment(ReturnAdjustment), 
       ReturnType(ReturnType) { }
-    
-    // Index - The index in the vtable.
-    uint64_t Index;
-    
+
     GlobalDecl GD;
     
     /// ReturnAdjustment - The covariant thunk return adjustment.
@@ -274,14 +267,14 @@ public:
       if (MD->isPure())
         continue;
       
+      uint64_t Index = i->first;
       const CovariantThunk &Thunk = i->second;
-      assert(Thunk.Index == Index[GD] && "Thunk index mismatch!");
+      assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
       
       // Check if there is an adjustment for the 'this' pointer.
       ThunkAdjustment ThisAdjustment;
       ThunksMapTy::iterator i = Thunks.find(GD);
       if (i != Thunks.end()) {
-        assert(i->second.Index == Thunk.Index && "Thunk index mismatch!");
         ThisAdjustment = i->second.Adjustment;
         
         Thunks.erase(i);
@@ -289,8 +282,7 @@ public:
         
       CovariantThunkAdjustment Adjustment(ThisAdjustment, 
                                           Thunk.ReturnAdjustment);
-      submethods[Thunk.Index] = 
-        CGM.BuildCovariantThunk(MD, Extern, Adjustment);
+      submethods[Index] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
     }
     CovariantThunks.clear();
     
