@@ -452,11 +452,11 @@ public:
                                  const ThunkAdjustment &Adjustment);
 
   /// GenerateThunk - Generate a thunk for the given method
-  llvm::Constant *GenerateThunk(llvm::Function *Fn, const CXXMethodDecl *MD,
+  llvm::Constant *GenerateThunk(llvm::Function *Fn, const GlobalDecl &GD,
                                 bool Extern, 
                                 const ThunkAdjustment &ThisAdjustment);
   llvm::Constant *
-  GenerateCovariantThunk(llvm::Function *Fn, const CXXMethodDecl *MD, 
+  GenerateCovariantThunk(llvm::Function *Fn, const GlobalDecl &GD, 
                          bool Extern,
                          const CovariantThunkAdjustment &Adjustment);
 

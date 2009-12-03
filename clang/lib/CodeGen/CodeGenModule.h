@@ -234,12 +234,12 @@ public:
   llvm::Constant *GenerateRTTI(QualType Ty);
   
   /// BuildThunk - Build a thunk for the given method.
-  llvm::Constant *BuildThunk(const CXXMethodDecl *MD, bool Extern, 
+  llvm::Constant *BuildThunk(const GlobalDecl &GD, bool Extern, 
                              const ThunkAdjustment &ThisAdjustment);
 
   /// BuildCoVariantThunk - Build a thunk for the given method
   llvm::Constant *
-  BuildCovariantThunk(const CXXMethodDecl *MD, bool Extern,
+  BuildCovariantThunk(const GlobalDecl &GD, bool Extern,
                       const CovariantThunkAdjustment &Adjustment);
 
   typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;

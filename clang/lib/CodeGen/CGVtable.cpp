@@ -303,7 +303,7 @@ public:
 
       assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
              
-      submethods[Index] = CGM.BuildThunk(MD, Extern, Thunk.Adjustment);
+      submethods[Index] = CGM.BuildThunk(GD, Extern, Thunk.Adjustment);
     }
     Thunks.clear();
 
