@@ -439,6 +439,18 @@ void CXXRecordDecl::addConversionFunction(FunctionTemplateDecl *ConvDecl) {
   Conversions.addDecl(ConvDecl);
 }
 
+
+void CXXRecordDecl::setMethodAsVirtual(FunctionDecl *Method) {
+  Method->setVirtualAsWritten(true);
+  setAggregate(false);
+  setPOD(false);
+  setEmpty(false);
+  setPolymorphic(true);
+  setHasTrivialConstructor(false);
+  setHasTrivialCopyConstructor(false);
+  setHasTrivialCopyAssignment(false);
+}
+
 CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() const {
   if (MemberSpecializationInfo *MSInfo = getMemberSpecializationInfo())
     return cast<CXXRecordDecl>(MSInfo->getInstantiatedFrom());

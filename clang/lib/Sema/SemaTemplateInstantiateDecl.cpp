@@ -1359,13 +1359,8 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
 
   CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
   New->setAccess(Tmpl->getAccess());
-  if (Tmpl->isVirtualAsWritten()) {
-    New->setVirtualAsWritten(true);
-    Record->setAggregate(false);
-    Record->setPOD(false);
-    Record->setEmpty(false);
-    Record->setPolymorphic(true);
-  }
+  if (Tmpl->isVirtualAsWritten())
+    Record->setMethodAsVirtual(New);
 
   // FIXME: attributes
   // FIXME: New needs a pointer to Tmpl

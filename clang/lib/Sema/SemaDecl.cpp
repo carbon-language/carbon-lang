@@ -2822,15 +2822,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              SourceRange(D.getDeclSpec().getVirtualSpecLoc()));
     } else {
       // Okay: Add virtual to the method.
-      cast<CXXMethodDecl>(NewFD)->setVirtualAsWritten(true);
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
-      CurClass->setAggregate(false);
-      CurClass->setPOD(false);
-      CurClass->setEmpty(false);
-      CurClass->setPolymorphic(true);
-      CurClass->setHasTrivialConstructor(false);
-      CurClass->setHasTrivialCopyConstructor(false);
-      CurClass->setHasTrivialCopyAssignment(false);
+      CurClass->setMethodAsVirtual(NewFD);
     }
   }
 

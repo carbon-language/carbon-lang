@@ -533,6 +533,10 @@ public:
   /// [dcl.init.aggr]).
   void setAggregate(bool Agg) { Aggregate = Agg; }
 
+  /// setMethodAsVirtual - Make input method virtual and set the necesssary 
+  /// special function bits and other bits accordingly.
+  void setMethodAsVirtual(FunctionDecl *Method);
+
   /// isPOD - Whether this class is a POD-type (C++ [class]p4), which is a class
   /// that is an aggregate that has no non-static non-POD data members, no
   /// reference data members, no user-defined copy assignment operator and no
