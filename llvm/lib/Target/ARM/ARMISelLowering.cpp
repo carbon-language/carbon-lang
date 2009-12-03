@@ -2528,6 +2528,25 @@ static bool isVTRNMask(const SmallVectorImpl<int> &M, EVT VT,
   return true;
 }
 
+/// isVTRN_v_undef_Mask - Special case of isVTRNMask for canonical form of
+/// "vector_shuffle v, v", i.e., "vector_shuffle v, undef".
+/// Mask is e.g., <0, 0, 2, 2> instead of <0, 4, 2, 6>.
+static bool isVTRN_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
+                                unsigned &WhichResult) {
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
+  unsigned NumElts = VT.getVectorNumElements();
+  WhichResult = (M[0] == 0 ? 0 : 1);
+  for (unsigned i = 0; i < NumElts; i += 2) {
+    if ((unsigned) M[i] != i + WhichResult ||
+        (unsigned) M[i+1] != i + WhichResult)
+      return false;
+  }
+  return true;
+}
+
 static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
                        unsigned &WhichResult) {
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
@@ -2539,6 +2558,33 @@ static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
   for (unsigned i = 0; i != NumElts; ++i) {
     if ((unsigned) M[i] != 2 * i + WhichResult)
       return false;
+  }
+
+  // VUZP.32 for 64-bit vectors is a pseudo-instruction alias for VTRN.32.
+  if (VT.is64BitVector() && EltSz == 32)
+    return false;
+
+  return true;
+}
+
+/// isVUZP_v_undef_Mask - Special case of isVUZPMask for canonical form of
+/// "vector_shuffle v, v", i.e., "vector_shuffle v, undef".
+/// Mask is e.g., <0, 2, 0, 2> instead of <0, 2, 4, 6>,
+static bool isVUZP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
+                                unsigned &WhichResult) {
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
+  unsigned Half = VT.getVectorNumElements() / 2;
+  WhichResult = (M[0] == 0 ? 0 : 1);
+  for (unsigned j = 0; j != 2; ++j) {
+    unsigned Idx = WhichResult;
+    for (unsigned i = 0; i != Half; ++i) {
+      if ((unsigned) M[i + j * Half] != Idx)
+        return false;
+      Idx += 2;
+    }
   }
 
   // VUZP.32 for 64-bit vectors is a pseudo-instruction alias for VTRN.32.
@@ -2570,6 +2616,33 @@ static bool isVZIPMask(const SmallVectorImpl<int> &M, EVT VT,
 
   return true;
 }
+
+/// isVZIP_v_undef_Mask - Special case of isVZIPMask for canonical form of
+/// "vector_shuffle v, v", i.e., "vector_shuffle v, undef".
+/// Mask is e.g., <0, 0, 1, 1> instead of <0, 4, 1, 5>.
+static bool isVZIP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
+                                unsigned &WhichResult) {
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
+  unsigned NumElts = VT.getVectorNumElements();
+  WhichResult = (M[0] == 0 ? 0 : 1);
+  unsigned Idx = WhichResult * NumElts / 2;
+  for (unsigned i = 0; i != NumElts; i += 2) {
+    if ((unsigned) M[i] != Idx ||
+        (unsigned) M[i+1] != Idx)
+      return false;
+    Idx += 1;
+  }
+
+  // VZIP.32 for 64-bit vectors is a pseudo-instruction alias for VTRN.32.
+  if (VT.is64BitVector() && EltSz == 32)
+    return false;
+
+  return true;
+}
+
 
 static SDValue BuildSplat(SDValue Val, EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   // Canonicalize all-zeros and all-ones vectors.
@@ -2683,7 +2756,10 @@ ARMTargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isVEXTMask(M, VT, ReverseVEXT, Imm) ||
           isVTRNMask(M, VT, WhichResult) ||
           isVUZPMask(M, VT, WhichResult) ||
-          isVZIPMask(M, VT, WhichResult));
+          isVZIPMask(M, VT, WhichResult) ||
+          isVTRN_v_undef_Mask(M, VT, WhichResult) ||
+          isVUZP_v_undef_Mask(M, VT, WhichResult) ||
+          isVZIP_v_undef_Mask(M, VT, WhichResult));
 }
 
 /// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
@@ -2814,6 +2890,16 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   if (isVZIPMask(ShuffleMask, VT, WhichResult))
     return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
                        V1, V2).getValue(WhichResult);
+
+  if (isVTRN_v_undef_Mask(ShuffleMask, VT, WhichResult))
+    return DAG.getNode(ARMISD::VTRN, dl, DAG.getVTList(VT, VT),
+                       V1, V1).getValue(WhichResult);
+  if (isVUZP_v_undef_Mask(ShuffleMask, VT, WhichResult))
+    return DAG.getNode(ARMISD::VUZP, dl, DAG.getVTList(VT, VT),
+                       V1, V1).getValue(WhichResult);
+  if (isVZIP_v_undef_Mask(ShuffleMask, VT, WhichResult))
+    return DAG.getNode(ARMISD::VZIP, dl, DAG.getVTList(VT, VT),
+                       V1, V1).getValue(WhichResult);
 
   // If the shuffle is not directly supported and it has 4 elements, use
   // the PerfectShuffle-generated table to synthesize it from other shuffles.
