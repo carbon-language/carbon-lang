@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Options.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -38,9 +37,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
@@ -54,26 +51,7 @@ using namespace clang;
 // Main driver
 //===----------------------------------------------------------------------===//
 
-std::string GetBuiltinIncludePath(const char *Argv0) {
-  llvm::sys::Path P =
-    llvm::sys::Path::GetMainExecutable(Argv0,
-                                       (void*)(intptr_t) GetBuiltinIncludePath);
-
-  if (!P.isEmpty()) {
-    P.eraseComponent();  // Remove /clang from foo/bin/clang
-    P.eraseComponent();  // Remove /bin   from foo/bin
-
-    // Get foo/lib/clang/<version>/include
-    P.appendComponent("lib");
-    P.appendComponent("clang");
-    P.appendComponent(CLANG_VERSION_STRING);
-    P.appendComponent("include");
-  }
-
-  return P.str();
-}
-
-static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+void LLVMErrorHandler(void *UserData, const std::string &Message) {
   Diagnostic &Diags = *static_cast<Diagnostic*>(UserData);
 
   Diags.Report(diag::err_fe_error_backend) << Message;
@@ -141,53 +119,6 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   case RunAnalysis:            return new AnalysisAction();
   case RunPreprocessorOnly:    return new PreprocessOnlyAction();
   }
-}
-
-static bool ConstructCompilerInvocation(CompilerInvocation &Opts,
-                                        Diagnostic &Diags, const char *Argv0) {
-  // Initialize target options.
-  InitializeTargetOptions(Opts.getTargetOpts());
-
-  // Initialize frontend options.
-  InitializeFrontendOptions(Opts.getFrontendOpts());
-
-  // Determine the input language, we currently require all files to match.
-  FrontendOptions::InputKind IK = Opts.getFrontendOpts().Inputs[0].first;
-  for (unsigned i = 1, e = Opts.getFrontendOpts().Inputs.size(); i != e; ++i) {
-    if (Opts.getFrontendOpts().Inputs[i].first != IK) {
-      llvm::errs() << "error: cannot have multiple input files of distinct "
-                   << "language kinds without -x\n";
-      return false;
-    }
-  }
-
-  // Initialize language options.
-  //
-  // FIXME: These aren't used during operations on ASTs. Split onto a separate
-  // code path to make this obvious.
-  if (IK != FrontendOptions::IK_AST)
-    InitializeLangOptions(Opts.getLangOpts(), IK);
-
-  // Initialize the static analyzer options.
-  InitializeAnalyzerOptions(Opts.getAnalyzerOpts());
-
-  // Initialize the dependency output options (-M...).
-  InitializeDependencyOutputOptions(Opts.getDependencyOutputOpts());
-
-  // Initialize the header search options.
-  InitializeHeaderSearchOptions(Opts.getHeaderSearchOpts(),
-                                GetBuiltinIncludePath(Argv0));
-
-  // Initialize the other preprocessor options.
-  InitializePreprocessorOptions(Opts.getPreprocessorOpts());
-
-  // Initialize the preprocessed output options.
-  InitializePreprocessorOutputOptions(Opts.getPreprocessorOutputOpts());
-
-  // Initialize backend options.
-  InitializeCodeGenOptions(Opts.getCodeGenOpts(), Opts.getLangOpts());
-
-  return true;
 }
 
 static int cc1_main(Diagnostic &Diags,
@@ -268,47 +199,21 @@ int main(int argc, char **argv) {
     TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions());
     Diagnostic Diags(&DiagClient);
     return cc1_main(Diags, (const char**) argv + 2, (const char**) argv + argc,
-                    argv[0], (void*) (intptr_t) GetBuiltinIncludePath);
+                    argv[0], (void*) (intptr_t) LLVMErrorHandler);
   }
 
   // Initialize targets first, so that --version shows registered targets.
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
 
-#if 1
-  llvm::cl::ParseCommandLineOptions(argc, argv,
-                              "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
-
-  // Construct the diagnostic engine first, so that we can build a diagnostic
-  // client to use for any errors during option handling.
-  InitializeDiagnosticOptions(Clang.getDiagnosticOpts());
-  Clang.createDiagnostics(argc, argv);
-  if (!Clang.hasDiagnostics())
-    return 1;
-
-  // Set an error handler, so that any LLVM backend diagnostics go through our
-  // error handler.
-  llvm::llvm_install_error_handler(LLVMErrorHandler,
-                                   static_cast<void*>(&Clang.getDiagnostics()));
-
-  // Now that we have initialized the diagnostics engine, create the target and
-  // the compiler invocation object.
-  //
-  // FIXME: We should move .ast inputs to taking a separate path, they are
-  // really quite different.
-  if (!ConstructCompilerInvocation(Clang.getInvocation(),
-                                   Clang.getDiagnostics(), argv[0]))
-    return 1;
-#else
   // Buffer diagnostics from argument parsing so that we can output them using a
   // well formed diagnostic object.
   TextDiagnosticBuffer DiagsBuffer;
   Diagnostic Diags(&DiagsBuffer);
-
   CompilerInvocation::CreateFromArgs(Clang.getInvocation(),
                                      (const char**) argv + 1,
                                      (const char**) argv + argc, argv[0],
-                                     (void*)(intptr_t) GetBuiltinIncludePath,
+                                     (void*)(intptr_t) LLVMErrorHandler,
                                      Diags);
 
   // Honor -help.
@@ -351,7 +256,6 @@ int main(int argc, char **argv) {
   // If there were any errors in processing arguments, exit now.
   if (Clang.getDiagnostics().getNumErrors())
     return 1;
-#endif
 
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
