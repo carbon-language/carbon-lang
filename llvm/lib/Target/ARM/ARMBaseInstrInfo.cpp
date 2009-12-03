@@ -759,7 +759,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     assert((RC == ARM::QPRRegisterClass ||
             RC == ARM::QPR_VFP2RegisterClass ||
             RC == ARM::QPR_8RegisterClass) && "Unknown regclass!");
-    // FIXME: Neon instructions should support predicates
     if (Align >= 16
         && (getRegisterInfo().needsStackRealignment(MF))) {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q64), DestReg)
