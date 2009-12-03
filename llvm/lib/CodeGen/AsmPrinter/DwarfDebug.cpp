@@ -891,8 +891,8 @@ void DwarfDebug::constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
         continue;
       DIE *ElemDie = NULL;
       if (Element.getTag() == dwarf::DW_TAG_subprogram)
-        ElemDie = createSubprogramDIE(DW_Unit,
-                                      DISubprogram(Element.getNode()));
+        ElemDie = createMemberSubprogramDIE(DW_Unit,
+                                            DISubprogram(Element.getNode()));
       else
         ElemDie = createMemberDIE(DW_Unit,
                                   DIDerivedType(Element.getNode()));
@@ -1082,16 +1082,12 @@ DIE *DwarfDebug::createMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT){
   return MemberDie;
 }
 
-/// createSubprogramDIE - Create new DIE using SP.
-DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
-                                     const DISubprogram &SP,
-                                     bool IsConstructor,
-                                     bool IsInlined) {
-  DIE *SPDie = ModuleCU->getDIE(SP.getNode());
-  if (SPDie)
-    return SPDie;
-
-  SPDie = new DIE(dwarf::DW_TAG_subprogram);
+/// createRawSubprogramDIE - Create new partially incomplete DIE. This is
+/// a helper routine used by createMemberSubprogramDIE and 
+/// createSubprogramDIE.
+DIE *DwarfDebug::createRawSubprogramDIE(CompileUnit *DW_Unit,
+                                        const DISubprogram &SP) {
+  DIE *SPDie = new DIE(dwarf::DW_TAG_subprogram);
   addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
   StringRef LinkageName = SP.getLinkageName();
@@ -1107,9 +1103,6 @@ DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
   }
   addSourceLine(SPDie, &SP);
 
-  DICompositeType SPTy = SP.getType();
-  DIArray Args = SPTy.getTypeArray();
-
   // Add prototyped tag, if C or ObjC.
   unsigned Lang = SP.getCompileUnit().getLanguage();
   if (Lang == dwarf::DW_LANG_C99 || Lang == dwarf::DW_LANG_C89 ||
@@ -1117,19 +1110,70 @@ DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
     addUInt(SPDie, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
 
   // Add Return Type.
+  DICompositeType SPTy = SP.getType();
+  DIArray Args = SPTy.getTypeArray();
   unsigned SPTag = SPTy.getTag();
-  if (!IsConstructor) {
-    if (Args.isNull() || SPTag != dwarf::DW_TAG_subroutine_type)
-      addType(DW_Unit, SPDie, SPTy);
-    else
-      addType(DW_Unit, SPDie, DIType(Args.getElement(0).getNode()));
-  }
+  if (Args.isNull() || SPTag != dwarf::DW_TAG_subroutine_type)
+    addType(DW_Unit, SPDie, SPTy);
+  else
+    addType(DW_Unit, SPDie, DIType(Args.getElement(0).getNode()));
+
+  return SPDie;
+}
+
+/// createMemberSubprogramDIE - Create new member DIE using SP. This routine
+/// always returns a die with DW_AT_declaration attribute.
+DIE *DwarfDebug::createMemberSubprogramDIE(CompileUnit *DW_Unit,
+                                           const DISubprogram &SP) {
+  DIE *SPDie = ModuleCU->getDIE(SP.getNode());
+  if (!SPDie)
+    SPDie = createSubprogramDIE(DW_Unit, SP);
+
+  // If SPDie has DW_AT_declaration then reuse it.
+  if (!SP.isDefinition())
+    return SPDie;
+
+  // Otherwise create new DIE for the declaration. First push definition
+  // DIE at the top level.
+  if (TopLevelDIEs.insert(SPDie))
+    TopLevelDIEsVector.push_back(SPDie);
+
+  SPDie = createRawSubprogramDIE(DW_Unit, SP);
+
+  // Add arguments. 
+  DICompositeType SPTy = SP.getType();
+  DIArray Args = SPTy.getTypeArray();
+  unsigned SPTag = SPTy.getTag();
+  if (SPTag == dwarf::DW_TAG_subroutine_type)
+    for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+      DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+      addType(DW_Unit, Arg, DIType(Args.getElement(i).getNode()));
+      addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
+      SPDie->addChild(Arg);
+    }
+
+  addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+  return SPDie;
+}
+
+/// createSubprogramDIE - Create new DIE using SP.
+DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
+                                     const DISubprogram &SP) {
+  DIE *SPDie = ModuleCU->getDIE(SP.getNode());
+  if (SPDie)
+    return SPDie;
+
+  SPDie = createRawSubprogramDIE(DW_Unit, SP);
 
   if (!SP.isDefinition()) {
     addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
 
     // Add arguments. Do not add arguments for subprogram definition. They will
-    // be handled through RecordVariable.
+    // be handled while processing variables.
+    DICompositeType SPTy = SP.getType();
+    DIArray Args = SPTy.getTypeArray();
+    unsigned SPTag = SPTy.getTag();
+
     if (SPTag == dwarf::DW_TAG_subroutine_type)
       for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
         DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
@@ -1641,7 +1685,8 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   ModuleCU->insertDIE(N, VariableDie);
 
   // Add to context owner.
-  ModuleCU->getCUDie()->addChild(VariableDie);
+  if (TopLevelDIEs.insert(VariableDie))
+    TopLevelDIEsVector.push_back(VariableDie);
 
   // Expose as global. FIXME - need to check external flag.
   ModuleCU->addGlobal(DI_GV.getName(), VariableDie);
@@ -1674,7 +1719,8 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 
   // Add to context owner.
   if (SP.getContext().getNode() == SP.getCompileUnit().getNode())
-    ModuleCU->getCUDie()->addChild(SubprogramDie);
+    if (TopLevelDIEs.insert(SubprogramDie))
+      TopLevelDIEsVector.push_back(SubprogramDie);
 
   // Expose as global.
   ModuleCU->addGlobal(SP.getName(), SubprogramDie);
@@ -1774,6 +1820,11 @@ void DwarfDebug::endModule() {
     DIE *ISP = *AI;
     addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
+
+  // Insert top level DIEs.
+  for (SmallVector<DIE *, 4>::iterator TI = TopLevelDIEsVector.begin(),
+         TE = TopLevelDIEsVector.end(); TI != TE; ++TI)
+    ModuleCU->getCUDie()->addChild(*TI);
 
   // Standard sections final addresses.
   Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getTextSection());

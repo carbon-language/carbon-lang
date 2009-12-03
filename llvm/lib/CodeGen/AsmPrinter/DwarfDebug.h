@@ -157,6 +157,10 @@ class DwarfDebug : public Dwarf {
   /// AbstractSubprogramDIEs - Collection of abstruct subprogram DIEs.
   SmallPtrSet<DIE *, 4> AbstractSubprogramDIEs;
 
+  /// TopLevelDIEs - Collection of top level DIEs. 
+  SmallPtrSet<DIE *, 4> TopLevelDIEs;
+  SmallVector<DIE *, 4> TopLevelDIEsVector;
+
   /// ScopedGVs - Tracks global variables that are not at file scope.
   /// For example void f() { static int b = 42; }
   SmallVector<WeakVH, 4> ScopedGVs;
@@ -342,10 +346,17 @@ class DwarfDebug : public Dwarf {
   DIE *createMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT);
 
   /// createSubprogramDIE - Create new DIE using SP.
-  DIE *createSubprogramDIE(CompileUnit *DW_Unit,
-                           const DISubprogram &SP,
-                           bool IsConstructor = false,
-                           bool IsInlined = false);
+  DIE *createSubprogramDIE(CompileUnit *DW_Unit, const DISubprogram &SP);
+
+  /// createMemberSubprogramDIE - Create new member DIE using SP. This
+  /// routine always returns a die with DW_AT_declaration attribute.
+
+  DIE *createMemberSubprogramDIE(CompileUnit *DW_Unit, const DISubprogram &SP);
+
+  /// createRawSubprogramDIE - Create new partially incomplete DIE. This is
+  /// a helper routine used by createMemberSubprogramDIE and 
+  /// createSubprogramDIE.
+  DIE *createRawSubprogramDIE(CompileUnit *DW_Unit, const DISubprogram &SP);
 
   /// findCompileUnit - Get the compile unit for the given descriptor. 
   ///
