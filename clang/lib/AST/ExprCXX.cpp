@@ -199,6 +199,7 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
   switch(UTT) {
   default: assert(false && "Unknown type trait or not implemented");
   case UTT_IsPOD: return QueriedType->isPODType();
+  case UTT_IsLiteral: return QueriedType->isLiteralType();
   case UTT_IsClass: // Fallthrough
   case UTT_IsUnion:
     if (const RecordType *Record = QueriedType->getAs<RecordType>()) {

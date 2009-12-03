@@ -32,7 +32,8 @@ namespace clang {
     UTT_IsEnum,
     UTT_IsPOD,
     UTT_IsPolymorphic,
-    UTT_IsUnion
+    UTT_IsUnion,
+    UTT_IsLiteral
   };
 
 }

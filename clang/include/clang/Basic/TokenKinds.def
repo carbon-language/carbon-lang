@@ -324,6 +324,8 @@ KEYWORD(__is_enum                   , KEYCXX)
 KEYWORD(__is_pod                    , KEYCXX)
 KEYWORD(__is_polymorphic            , KEYCXX)
 KEYWORD(__is_union                  , KEYCXX)
+// Tentative name - there's no implementation of std::is_literal_type yet.
+KEYWORD(__is_literal                , KEYCXX)
 // FIXME: Add MS's traits, too.
 
 // Apple Extension.

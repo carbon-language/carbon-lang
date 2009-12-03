@@ -639,6 +639,40 @@ bool Type::isPODType() const {
   }
 }
 
+bool Type::isLiteralType() const {
+  if (isIncompleteType())
+    return false;
+
+  // C++0x [basic.types]p10:
+  //   A type is a literal type if it is:
+  switch (CanonicalType->getTypeClass()) {
+    // We're whitelisting
+  default: return false;
+
+    //   -- a scalar type
+  case Builtin:
+  case Complex:
+  case Pointer:
+  case MemberPointer:
+  case Vector:
+  case ExtVector:
+  case ObjCObjectPointer:
+  case Enum:
+    return true;
+
+    //   -- a class type with ...
+  case Record:
+    // FIXME: Do the tests
+    return false;
+
+    //   -- an array of literal type
+    // Extension: variable arrays cannot be literal types, since they're
+    // runtime-sized.
+  case ConstantArray:
+    return cast<ArrayType>(CanonicalType)->getElementType()->isLiteralType();
+  }
+}
+
 bool Type::isPromotableIntegerType() const {
   if (const BuiltinType *BT = getAs<BuiltinType>())
     switch (BT->getKind()) {
