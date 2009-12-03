@@ -170,12 +170,13 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
 // CopyObject - Utility to copy an object.  Calls copy constructor as necessary.
 // N is casted to the right type.
 static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
-                       llvm::Value *E, llvm::Value *N) {
+                       bool WasPointer, llvm::Value *E, llvm::Value *N) {
   // Store the throw exception in the exception object.
   if (!CGF.hasAggregateLLVMType(ObjectType)) {
     llvm::Value *Value = E;
+    if (!WasPointer)
+      Value = CGF.Builder.CreateLoad(Value);
     const llvm::Type *ValuePtrTy = Value->getType()->getPointerTo(0);
-    
     CGF.Builder.CreateStore(Value, CGF.Builder.CreateBitCast(N, ValuePtrTy));
   } else {
     const llvm::Type *Ty = CGF.ConvertType(ObjectType)->getPointerTo(0);
@@ -382,8 +383,11 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
       if (CatchParam) {
         QualType CatchType = CatchParam->getType().getNonReferenceType();
         setInvokeDest(TerminateHandler);
-        if (!CatchType.getTypePtr()->isPointerType())
+        bool WasPointer = true;
+        if (!CatchType.getTypePtr()->isPointerType()) {
+          WasPointer = false;
           CatchType = getContext().getPointerType(CatchType);
+        }
         ExcObject = Builder.CreateBitCast(ExcObject, ConvertType(CatchType));
         EmitLocalBlockVarDecl(*CatchParam);
 #if 0
@@ -394,7 +398,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
         // cleanup doesn't start until after the ctor completes, use a decl
         // init?
         CopyObject(*this, CatchParam->getType().getNonReferenceType(),
-                   ExcObject, GetAddrOfLocalVar(CatchParam));
+                   WasPointer, ExcObject, GetAddrOfLocalVar(CatchParam));
 #endif
         setInvokeDest(MatchHandler);
       }
