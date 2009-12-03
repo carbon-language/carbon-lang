@@ -172,10 +172,6 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
   if (!PPOpts.TokenCache.empty())
     PTHMgr = PTHManager::Create(PPOpts.TokenCache, Diags);
 
-  // FIXME: Don't fail like this.
-  if (Diags.hasErrorOccurred())
-    exit(1);
-
   // Create the Preprocessor.
   HeaderSearch *HeaderInfo = new HeaderSearch(FileMgr);
   Preprocessor *PP = new Preprocessor(Diags, LangInfo, Target,
