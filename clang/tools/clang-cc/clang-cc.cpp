@@ -95,7 +95,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
              ie = FrontendPluginRegistry::end();
            it != ie; ++it)
         llvm::errs() << "  " << it->getName() << " - " << it->getDesc() << "\n";
-      exit(1);
+      return 0;
     }
 
     for (FrontendPluginRegistry::iterator it =
