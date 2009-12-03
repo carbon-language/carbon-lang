@@ -866,7 +866,9 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          DICompileUnit CompileUnit,
                                          unsigned LineNo, DIType Type,
                                          bool isLocalToUnit,
-                                         bool isDefinition) {
+                                         bool isDefinition,
+                                         unsigned VK, unsigned VIndex,
+                                         DIType ContainingType) {
 
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
@@ -879,9 +881,12 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
     Type.getNode(),
     ConstantInt::get(Type::getInt1Ty(VMContext), isLocalToUnit),
-    ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition)
+    ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition),
+    ConstantInt::get(Type::getInt32Ty(VMContext), (unsigned)VK),
+    ConstantInt::get(Type::getInt32Ty(VMContext), VIndex),
+    ContainingType.getNode()
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 11));
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 14));
 }
 
 /// CreateSubprogramDefinition - Create new subprogram descriptor for the
@@ -902,9 +907,12 @@ DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) 
     DeclNode->getElement(7), // LineNo
     DeclNode->getElement(8), // Type
     DeclNode->getElement(9), // isLocalToUnit
-    ConstantInt::get(Type::getInt1Ty(VMContext), true)
+    ConstantInt::get(Type::getInt1Ty(VMContext), true),
+    DeclNode->getElement(11), // Virtuality
+    DeclNode->getElement(12), // VIndex
+    DeclNode->getElement(13)  // Containting Type
   };
-  return DISubprogram(MDNode::get(VMContext, &Elts[0], 11));
+  return DISubprogram(MDNode::get(VMContext, &Elts[0], 14));
 }
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.

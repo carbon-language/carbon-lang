@@ -779,6 +779,7 @@ void DwarfDebug::addType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
     DW_Unit->addDie(Buffer);
   Entry->setEntry(Buffer);
   Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
+  ModuleCU->insertDIE(Ty.getNode(), Buffer);
 }
 
 /// constructTypeDIE - Construct basic type die from DIBasicType.
@@ -1073,12 +1074,17 @@ DIE *DwarfDebug::createMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT){
   addBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, MemLocationDie);
 
   if (DT.isProtected())
-    addUInt(MemberDie, dwarf::DW_AT_accessibility, 0,
+    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
             dwarf::DW_ACCESS_protected);
   else if (DT.isPrivate())
-    addUInt(MemberDie, dwarf::DW_AT_accessibility, 0,
+    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
             dwarf::DW_ACCESS_private);
-
+  else if (DT.getTag() == dwarf::DW_TAG_inheritance)
+    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+            dwarf::DW_ACCESS_public);
+  if (DT.isVirtual())
+    addUInt(MemberDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag,
+            dwarf::DW_VIRTUALITY_virtual);
   return MemberDie;
 }
 
@@ -1113,10 +1119,21 @@ DIE *DwarfDebug::createRawSubprogramDIE(CompileUnit *DW_Unit,
   DICompositeType SPTy = SP.getType();
   DIArray Args = SPTy.getTypeArray();
   unsigned SPTag = SPTy.getTag();
+
   if (Args.isNull() || SPTag != dwarf::DW_TAG_subroutine_type)
     addType(DW_Unit, SPDie, SPTy);
   else
     addType(DW_Unit, SPDie, DIType(Args.getElement(0).getNode()));
+
+  unsigned VK = SP.getVirtuality();
+  if (VK) {
+    addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag, VK);
+    DIEBlock *Block = new DIEBlock();
+    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
+    addUInt(Block, 0, dwarf::DW_FORM_data1, SP.getVirtualIndex());
+    addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, 0, Block);
+    ContainingTypeMap.insert(std::make_pair(SPDie, WeakVH(SP.getContainingType().getNode())));
+  }
 
   return SPDie;
 }
@@ -1825,6 +1842,17 @@ void DwarfDebug::endModule() {
   for (SmallVector<DIE *, 4>::iterator TI = TopLevelDIEsVector.begin(),
          TE = TopLevelDIEsVector.end(); TI != TE; ++TI)
     ModuleCU->getCUDie()->addChild(*TI);
+
+  for (DenseMap<DIE *, WeakVH>::iterator CI = ContainingTypeMap.begin(),
+         CE = ContainingTypeMap.end(); CI != CE; ++CI) {
+    DIE *SPDie = CI->first;
+    MDNode *N = dyn_cast_or_null<MDNode>(CI->second);
+    if (!N) continue;
+    DIE *NDie = ModuleCU->getDIE(N);
+    if (!NDie) continue;
+    addDIEEntry(SPDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
+    addDIEEntry(NDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
+  }
 
   // Standard sections final addresses.
   Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getTextSection());

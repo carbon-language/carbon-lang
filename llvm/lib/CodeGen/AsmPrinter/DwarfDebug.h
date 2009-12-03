@@ -154,6 +154,8 @@ class DwarfDebug : public Dwarf {
   /// (at the end of the module) as DW_AT_inline.
   SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;
 
+  DenseMap<DIE *, WeakVH> ContainingTypeMap;
+
   /// AbstractSubprogramDIEs - Collection of abstruct subprogram DIEs.
   SmallPtrSet<DIE *, 4> AbstractSubprogramDIEs;
 
