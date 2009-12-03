@@ -282,9 +282,6 @@ void LookupResult::resolveKind() {
       // If it's not unique, pull something off the back (and
       // continue at this index).
       Decls[I] = Decls[--N];
-    } else if (isa<UnresolvedUsingValueDecl>(D)) {
-      // FIXME: support unresolved using value declarations
-      Decls[I] = Decls[--N];
     } else {
       // Otherwise, do some decl type analysis and then continue.
 
@@ -318,13 +315,13 @@ void LookupResult::resolveKind() {
   //   wherever the object, function, or enumerator name is visible.
   // But it's still an error if there are distinct tag types found,
   // even if they're not visible. (ref?)
-  if (HideTags && HasTag && !Ambiguous && !HasUnresolved &&
-      (HasFunction || HasNonFunction))
+  if (HideTags && HasTag && !Ambiguous &&
+      (HasFunction || HasNonFunction || HasUnresolved))
     Decls[UniqueTagIndex] = Decls[--N];
 
   Decls.set_size(N);
 
-  if (HasFunction && HasNonFunction)
+  if (HasNonFunction && (HasFunction || HasUnresolved))
     Ambiguous = true;
 
   if (Ambiguous)
