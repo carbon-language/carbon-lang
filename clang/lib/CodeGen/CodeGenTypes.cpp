@@ -379,13 +379,13 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // If we ever want to support other ABIs this needs to be abstracted.
 
     QualType ETy = cast<MemberPointerType>(Ty).getPointeeType();
+    const llvm::Type *PtrDiffTy =
+        ConvertTypeRecursive(Context.getPointerDiffType());
     if (ETy->isFunctionType()) {
-      return llvm::StructType::get(TheModule.getContext(),
-                                   ConvertType(Context.getPointerDiffType()),
-                                   ConvertType(Context.getPointerDiffType()),
+      return llvm::StructType::get(TheModule.getContext(), PtrDiffTy, PtrDiffTy,
                                    NULL);
     } else
-      return ConvertType(Context.getPointerDiffType());
+      return PtrDiffTy;
   }
 
   case Type::TemplateSpecialization:
