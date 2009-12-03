@@ -488,6 +488,9 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
     return false;
   case 8:
     if (II->isStr("cxx_rtti")) return LangOpts.RTTI;
+    return false;
+  case 14:
+    if (II->isStr("cxx_exceptions")) return LangOpts.Exceptions;
     return false;      
   case 19:
     if (II->isStr("objc_nonfragile_abi")) return LangOpts.ObjCNonFragileABI;
