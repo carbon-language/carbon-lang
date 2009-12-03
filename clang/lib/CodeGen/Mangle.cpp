@@ -1246,6 +1246,7 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   // <substitution> ::= St # ::std::
   // FIXME: type_info == comes out as __ZNK3std9type_infoeqERKS0_ instead of
   // __ZNKSt9type_infoeqERKS_
+  // FIXME: __ZSt13set_terminatePFvvE comes out as __ZNSt13set_terminateEPFvvE.
   if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
     if (isStdNamespace(NS)) {
       Out << "St";
