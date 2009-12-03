@@ -318,12 +318,9 @@ public:
   llvm::Constant *WrapAddrOf(GlobalDecl GD) {
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
-    if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
-      return wrap(CGM.GetAddrOfCXXDestructor(Dtor, GD.getDtorType()));
-
     const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVtable(MD);
 
-    return wrap(CGM.GetAddrOfFunction(MD, Ty));
+    return wrap(CGM.GetAddrOfFunction(GD, Ty));
   }
 
   void OverrideMethods(Path_t *Path, bool MorallyVirtual, int64_t Offset,
