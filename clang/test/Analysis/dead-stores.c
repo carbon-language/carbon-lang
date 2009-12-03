@@ -406,3 +406,24 @@ int f24_D(int y) {
   return x;
 }
 
+// This example shows that writing to a variable captured by a block means that it might
+// not be dead.
+int f25(int y) {
+  __block int x = (y > 2);
+  __block int z = 0;
+  void (^foo)() = ^{ z = x + y; };
+  x = 4; // no-warning
+  foo();
+  return z; 
+}
+
+// This test is mostly the same as 'f25', but shows that the heuristic of pruning out dead
+// stores for variables that are just marked '__block' is overly conservative.
+int f25_b(int y) {
+  // FIXME: we should eventually report a dead store here.
+  __block int x = (y > 2);
+  __block int z = 0;
+  x = 4; // no-warning
+  return z; 
+}
+

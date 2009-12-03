@@ -84,7 +84,8 @@ public:
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
 
-    if (VD->hasLocalStorage() && !Live(VD, AD) && !VD->getAttr<UnusedAttr>())
+    if (VD->hasLocalStorage() && !Live(VD, AD) && 
+        !(VD->getAttr<UnusedAttr>() || VD->getAttr<BlocksAttr>()))
       Report(VD, dsk, Ex->getSourceRange().getBegin(),
              Val->getSourceRange());
   }
