@@ -6,6 +6,7 @@ add_llvm_library(LLVMSupport
   CommandLine.cpp
   ConstantRange.cpp
   Debug.cpp
+  DeltaAlgorithm.cpp
   Dwarf.cpp
   ErrorHandling.cpp
   FileUtilities.cpp
