@@ -75,7 +75,7 @@ private:
   };
 
   /// Thunks - The thunks in a vtable.
-  typedef llvm::DenseMap<GlobalDecl, Thunk> ThunksMapTy;
+  typedef llvm::DenseMap<uint64_t, Thunk> ThunksMapTy;
   ThunksMapTy Thunks;
 
   /// CovariantThunk - Represents a single covariant thunk.
@@ -272,7 +272,7 @@ public:
       
       // Check if there is an adjustment for the 'this' pointer.
       ThunkAdjustment ThisAdjustment;
-      ThunksMapTy::iterator i = Thunks.find(GD);
+      ThunksMapTy::iterator i = Thunks.find(Index);
       if (i != Thunks.end()) {
         ThisAdjustment = i->second.Adjustment;
         
@@ -298,12 +298,14 @@ public:
     
     for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
-      GlobalDecl GD = i->first;
+      GlobalDecl GD = i->second.GD;
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
       assert(!MD->isPure() && "Can't thunk pure virtual methods!");
       
       const Thunk& Thunk = i->second;
-      assert(Thunk.Index == Index[GD] && "Thunk index mismatch!");
+      uint64_t Index = Thunk.Index;
+
+      assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
              
       submethods[Thunk.Index] = CGM.BuildThunk(MD, Extern, Thunk.Adjustment);
     }
@@ -817,7 +819,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       if (isPure)
         PureVirtualMethods.insert(GD);
       PureVirtualMethods.erase(OGD);
-      Thunks.erase(OGD);
+      Thunks.erase(i);
       if (MorallyVirtual || VCall.count(OGD)) {
         Index_t &idx = VCall[OGD];
         if (idx == 0) {
@@ -849,7 +851,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                                        VirtualAdjustment);
 
         if (!isPure && !ThisAdjustment.isEmpty())
-          Thunks[GD] = Thunk(i, GD, ThisAdjustment);
+          Thunks[i] = Thunk(i, GD, ThisAdjustment);
         return true;
       }
 
@@ -860,7 +862,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
         if (!isPure)
-          Thunks[GD] = Thunk(i, GD, ThisAdjustment);
+          Thunks[i] = Thunk(i, GD, ThisAdjustment);
       }
       return true;
     }
