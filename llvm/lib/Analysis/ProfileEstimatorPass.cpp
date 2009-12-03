@@ -324,7 +324,7 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
   // Since the entry block is the first one and has no predecessors, the edge
   // (0,entry) is inserted with the starting weight of 1.
   BasicBlock *entry = &F.getEntryBlock();
-  BlockInformation[&F][entry] = pow(2,32);
+  BlockInformation[&F][entry] = pow(2.0, 32.0);
   Edge edge = getEdge(0,entry);
   EdgeInformation[&F][edge] = BlockInformation[&F][entry];
   printEdgeWeight(edge);
