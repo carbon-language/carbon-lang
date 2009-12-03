@@ -17,7 +17,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
-#include <cstdio>
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 typedef TextDiagnosticBuffer::DiagList DiagList;
@@ -190,12 +190,10 @@ static bool PrintProblem(SourceManager &SourceMgr,
                          const char *Msg) {
   if (diag_begin == diag_end) return false;
 
-  fprintf(stderr, "%s\n", Msg);
-
+  llvm::errs() << Msg << "\n";
   for (const_diag_iterator I = diag_begin, E = diag_end; I != E; ++I)
-    fprintf(stderr, "  Line %d: %s\n",
-            SourceMgr.getInstantiationLineNumber(I->first),
-            I->second.c_str());
+    llvm::errs() << "  Line " << SourceMgr.getInstantiationLineNumber(I->first)
+                 << " " << I->second << "\n";
 
   return true;
 }

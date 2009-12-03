@@ -24,7 +24,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
-#include <cstdio>
 #ifdef _MSC_VER
   #define WIN32_LEAN_AND_MEAN 1
   #include <windows.h>
@@ -643,11 +642,11 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
     }
 
     if (Verbose) {
-      fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
-              CurEntry.getName());
+      llvm::errs() << "ignoring duplicate directory \""
+                   << CurEntry.getName() << "\"\n";
       if (DirToRemove != i)
-        fprintf(stderr, "  as it is a non-system directory that duplicates"
-                " a system directory\n");
+        llvm::errs() << "  as it is a non-system directory that duplicates "
+                     << "a system directory\n";
     }
 
     // This is reached if the current entry is a duplicate.  Remove the
@@ -680,11 +679,11 @@ void InitHeaderSearch::Realize() {
 
   // If verbose, print the list of directories that will be searched.
   if (Verbose) {
-    fprintf(stderr, "#include \"...\" search starts here:\n");
+    llvm::errs() << "#include \"...\" search starts here:\n";
     unsigned QuotedIdx = IncludeGroup[Quoted].size();
     for (unsigned i = 0, e = SearchList.size(); i != e; ++i) {
       if (i == QuotedIdx)
-        fprintf(stderr, "#include <...> search starts here:\n");
+        llvm::errs() << "#include <...> search starts here:\n";
       const char *Name = SearchList[i].getName();
       const char *Suffix;
       if (SearchList[i].isNormalDir())
@@ -695,9 +694,9 @@ void InitHeaderSearch::Realize() {
         assert(SearchList[i].isHeaderMap() && "Unknown DirectoryLookup");
         Suffix = " (headermap)";
       }
-      fprintf(stderr, " %s%s\n", Name, Suffix);
+      llvm::errs() << " " << Name << Suffix << "\n";
     }
-    fprintf(stderr, "End of search list.\n");
+    llvm::errs() << "End of search list.\n";
   }
 }
 

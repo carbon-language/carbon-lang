@@ -683,9 +683,8 @@ void QualType::dump(const char *msg) const {
   LangOptions LO;
   getAsStringInternal(R, PrintingPolicy(LO));
   if (msg)
-    fprintf(stderr, "%s: %s\n", msg, R.c_str());
-  else
-    fprintf(stderr, "%s\n", R.c_str());
+    llvm::errs() << msg << ": ";
+  llvm::errs() << R << "\n";
 }
 void QualType::dump() const {
   dump("");

@@ -66,7 +66,7 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
         Rewrite.getRewriteBufferFor(MainFileID)) {
     *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
   } else {
-    std::fprintf(stderr, "Main file is unchanged\n");
+    Diag(FullSourceLoc(), diag::note_fixit_main_file_unchanged);
   }
   OutFile->flush();
 

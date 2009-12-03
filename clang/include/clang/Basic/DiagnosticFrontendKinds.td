@@ -71,6 +71,8 @@ def note_fixit_in_macro : Note<
 def note_fixit_failed : Note<
     "FIX-IT unable to apply suggested code changes">;
 def note_fixit_unfixed_error : Note<"FIX-IT detected an error it cannot fix">;
+def note_fixit_main_file_unchanged : Note<
+    "main file unchanged">;
 def warn_fixit_no_changes : Note<
     "FIX-IT detected errors it could not fix; no output will be generated">;
 
