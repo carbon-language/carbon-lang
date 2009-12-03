@@ -60,6 +60,8 @@ def err_drv_I_dash_not_supported : Error<
 def err_drv_unknown_argument : Error<"unknown argument: '%0'">;
 def err_drv_invalid_value : Error<"invalid value '%1' in '%0'">;
 def err_drv_invalid_int_value : Error<"invalid integral value '%1' in '%0'">;
+def err_drv_invalid_remap_file : Error<
+    "invalid option '%0' not of the form <from-file>;<to-file>">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;

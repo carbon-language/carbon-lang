@@ -188,6 +188,9 @@ def verify : Flag<"-verify">,
 def code_completion_at : Separate<"-code-completion-at">,
   MetaVarName<"file:line:column">,
   HelpText<"Dump code-completion information at a location">;
+def remap_file : Separate<"-remap-file">,
+  MetaVarName<"<from>;<to>">,
+  HelpText<"Replace the contents of the <from> file with the contents of the <to> file">;
 def code_completion_at_EQ : Joined<"-code-completion-at=">,
   Alias<code_completion_at>;
 def no_code_completion_debug_printer : Flag<"-no-code-completion-debug-printer">,

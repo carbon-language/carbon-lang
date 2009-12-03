@@ -554,6 +554,11 @@ static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
       assert(Opts.ImplicitPTHInclude == Opts.TokenCache &&
              "Unsupported option combination!");
   }
+  for (unsigned i = 0, e = Opts.RemappedFiles.size(); i != e; ++i) {
+    Res.push_back("-remap-file");
+    Res.push_back(Opts.RemappedFiles[i].first + ";" +
+                  Opts.RemappedFiles[i].second);
+  }
 }
 
 static void PreprocessorOutputOptsToArgs(const PreprocessorOutputOptions &Opts,
@@ -1165,7 +1170,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   }
 }
 
-static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
+static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
+                                  Diagnostic &Diags) {
   using namespace cc1options;
   Opts.ImplicitPCHInclude = getLastArgValue(Args, OPT_include_pch);
   Opts.ImplicitPTHInclude = getLastArgValue(Args, OPT_include_pth);
@@ -1202,6 +1208,19 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args) {
       Opts.Includes.push_back(OriginalFile);
     } else
       Opts.Includes.push_back(it->getValue(Args));
+  }
+
+  for (arg_iterator it = Args.filtered_begin(OPT_remap_file),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    std::pair<llvm::StringRef,llvm::StringRef> Split =
+      llvm::StringRef(it->getValue(Args)).split(';');
+
+    if (Split.second.empty()) {
+      Diags.Report(diag::err_drv_invalid_remap_file) << it->getAsString(Args);
+      continue;
+    }
+
+    Opts.addRemappedFile(Split.first, Split.second);
   }
 }
 
@@ -1261,7 +1280,7 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                         Argv0, MainAddr);
   if (DashX != FrontendOptions::IK_AST)
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
-  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args);
+  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);
   ParseTargetArgs(Res.getTargetOpts(), *Args);
 }
