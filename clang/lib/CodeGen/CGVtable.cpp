@@ -281,9 +281,20 @@ public:
         
         Thunks.erase(i);
       }
-        
-      CovariantThunkAdjustment Adjustment(ThisAdjustment, 
-                                          Thunk.ReturnAdjustment);
+      
+      // Construct the return adjustment.
+      QualType DerivedType = 
+        MD->getType()->getAs<FunctionType>()->getResultType();
+      
+      int64_t NonVirtualAdjustment = 
+        getNVOffset(Thunk.ReturnType, DerivedType) / 8;
+      
+      int64_t VirtualAdjustment = 
+        getVbaseOffset(Thunk.ReturnType, DerivedType);
+      
+      ThunkAdjustment ReturnAdjustment(NonVirtualAdjustment, VirtualAdjustment);
+      
+      CovariantThunkAdjustment Adjustment(ThisAdjustment, ReturnAdjustment);
       submethods[Index] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
     }
     CovariantThunks.clear();
@@ -670,6 +681,83 @@ public:
 };
 } // end anonymous namespace
 
+/// TypeConversionRequiresAdjustment - Returns whether conversion from a 
+/// derived type to a base type requires adjustment.
+static bool
+TypeConversionRequiresAdjustment(ASTContext &Ctx,
+                                 const CXXRecordDecl *DerivedDecl,
+                                 const CXXRecordDecl *BaseDecl) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
+  if (!const_cast<CXXRecordDecl *>(DerivedDecl)->
+      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseDecl), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return false;
+  }
+  
+  // If we found a virtual base we always want to require adjustment.
+  if (Paths.getDetectedVirtual())
+    return true;
+  
+  const CXXBasePath &Path = Paths.front();
+  
+  for (size_t Start = 0, End = Path.size(); Start != End; ++Start) {
+    const CXXBasePathElement &Element = Path[Start];
+    
+    // Check the base class offset.
+    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Element.Class);
+    
+    const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
+    const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
+    
+    if (Layout.getBaseClassOffset(Base) != 0) {
+      // This requires an adjustment.
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+static bool 
+TypeConversionRequiresAdjustment(ASTContext &Ctx,
+                                 QualType DerivedType, QualType BaseType) {
+  // Canonicalize the types.
+  QualType CanDerivedType = Ctx.getCanonicalType(DerivedType);
+  QualType CanBaseType = Ctx.getCanonicalType(BaseType);
+  
+  assert(CanDerivedType->getTypeClass() == CanBaseType->getTypeClass() && 
+         "Types must have same type class!");
+  
+  if (CanDerivedType == CanBaseType) {
+    // No adjustment needed.
+    return false;
+  }
+  
+  if (const ReferenceType *RT = dyn_cast<ReferenceType>(CanDerivedType)) {
+    CanDerivedType = RT->getPointeeType();
+    CanBaseType = cast<ReferenceType>(CanBaseType)->getPointeeType();
+  } else if (const PointerType *PT = dyn_cast<PointerType>(CanDerivedType)) {
+    CanDerivedType = PT->getPointeeType();
+    CanBaseType = cast<PointerType>(CanBaseType)->getPointeeType();
+  } else {
+    assert(false && "Unexpected return type!");
+  }
+  
+  if (CanDerivedType == CanBaseType) {
+    // No adjustment needed.
+    return false;
+  }
+  
+  const CXXRecordDecl *DerivedDecl = 
+  cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
+  
+  const CXXRecordDecl *BaseDecl = 
+  cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
+  
+  return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
+}
+
 bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                                    bool MorallyVirtual, Index_t OverrideOffset,
                                    Index_t Offset, int64_t CurrentVBaseOffset) {
@@ -704,24 +792,29 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       // FIXME: begin_overridden_methods might be too lax, covariance */
       if (submethods[i] != om)
         continue;
-      QualType nc_oret = OMD->getType()->getAs<FunctionType>()->getResultType();
-      CanQualType oret = CGM.getContext().getCanonicalType(nc_oret);
-      QualType nc_ret = MD->getType()->getAs<FunctionType>()->getResultType();
-      CanQualType ret = CGM.getContext().getCanonicalType(nc_ret);
-      if (oret != ret) {
-        // FIXME: calculate offsets for covariance
-        CovariantThunksMapTy::iterator it = CovariantThunks.find(i);
-        if (it != CovariantThunks.end()) {
-          oret = it->second.ReturnType;
-          CovariantThunks.erase(it);
-        }
-        // FIXME: Double check oret
-        Index_t nv = getNVOffset(oret, ret)/8;
-        CovariantThunks[i] = 
-          CovariantThunk(GD, ThunkAdjustment(nv, getVbaseOffset(oret, ret)), 
-                         oret);
+      
+      QualType ReturnType = 
+        MD->getType()->getAs<FunctionType>()->getResultType();
+      QualType OverriddenReturnType = 
+        OMD->getType()->getAs<FunctionType>()->getResultType();
+      
+      // Check if we need a return type adjustment.
+      if (TypeConversionRequiresAdjustment(CGM.getContext(), ReturnType, 
+                                           OverriddenReturnType)) {
+        CovariantThunk &Adjustment = CovariantThunks[i];
 
+        // Get the canonical return type.
+        CanQualType CanReturnType = 
+          CGM.getContext().getCanonicalType(ReturnType);
+
+        // Insert the base return type.
+        if (Adjustment.ReturnType.isNull())
+          Adjustment.ReturnType =
+            CGM.getContext().getCanonicalType(OverriddenReturnType);
+        
+        Adjustment.GD = GD;
       }
+
       Index[GD] = i;
       submethods[i] = m;
       if (isPure)
@@ -777,84 +870,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
   }
 
   return false;
-}
-
-
-/// TypeConversionRequiresAdjustment - Returns whether conversion from a 
-/// derived type to a base type requires adjustment.
-static bool
-TypeConversionRequiresAdjustment(ASTContext &Ctx,
-                                 const CXXRecordDecl *DerivedDecl,
-                                 const CXXRecordDecl *BaseDecl) {
-  CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
-  if (!const_cast<CXXRecordDecl *>(DerivedDecl)->
-      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseDecl), Paths)) {
-    assert(false && "Class must be derived from the passed in base class!");
-    return false;
-  }
-  
-  // If we found a virtual base we always want to require adjustment.
-  if (Paths.getDetectedVirtual())
-    return true;
-
-  const CXXBasePath &Path = Paths.front();
-  
-  for (size_t Start = 0, End = Path.size(); Start != End; ++Start) {
-    const CXXBasePathElement &Element = Path[Start];
-
-    // Check the base class offset.
-    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Element.Class);
-    
-    const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
-    const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
-
-    if (Layout.getBaseClassOffset(Base) != 0) {
-      // This requires an adjustment.
-      return true;
-    }
-  }
-  
-  return false;
-}
-
-static bool 
-TypeConversionRequiresAdjustment(ASTContext &Ctx,
-                                 QualType DerivedType, QualType BaseType) {
-  // Canonicalize the types.
-  QualType CanDerivedType = Ctx.getCanonicalType(DerivedType);
-  QualType CanBaseType = Ctx.getCanonicalType(BaseType);
-  
-  assert(CanDerivedType->getTypeClass() == CanBaseType->getTypeClass() && 
-         "Types must have same type class!");
-  
-  if (CanDerivedType == CanBaseType) {
-    // No adjustment needed.
-    return false;
-  }
-
-  if (const ReferenceType *RT = dyn_cast<ReferenceType>(CanDerivedType)) {
-    CanDerivedType = RT->getPointeeType();
-    CanBaseType = cast<ReferenceType>(CanBaseType)->getPointeeType();
-  } else if (const PointerType *PT = dyn_cast<PointerType>(CanDerivedType)) {
-    CanDerivedType = PT->getPointeeType();
-    CanBaseType = cast<PointerType>(CanBaseType)->getPointeeType();
-  } else {
-    assert(false && "Unexpected return type!");
-  }
-
-  if (CanDerivedType == CanBaseType) {
-    // No adjustment needed.
-    return false;
-  }
-  
-  const CXXRecordDecl *DerivedDecl = 
-    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
-
-  const CXXRecordDecl *BaseDecl = 
-    cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
-
-  return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
 }
 
 void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
