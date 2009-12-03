@@ -62,12 +62,14 @@ private:
     Thunk()
       : Index(0) { }
     
-    Thunk(uint64_t Index, const ThunkAdjustment &Adjustment)
-      : Index(Index), Adjustment(Adjustment) { }
+    Thunk(uint64_t Index, GlobalDecl GD, const ThunkAdjustment &Adjustment)
+      : Index(Index), GD(GD), Adjustment(Adjustment) { }
     
     /// Index - The index in the vtable.
     uint64_t Index;
-    
+
+    GlobalDecl GD;
+
     /// Adjustment - The thunk adjustment.
     ThunkAdjustment Adjustment;
   };
@@ -847,7 +849,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                                        VirtualAdjustment);
 
         if (!isPure && !ThisAdjustment.isEmpty())
-          Thunks[GD] = Thunk(i, ThisAdjustment);
+          Thunks[GD] = Thunk(i, GD, ThisAdjustment);
         return true;
       }
 
@@ -858,7 +860,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
         if (!isPure)
-          Thunks[GD] = Thunk(i, ThisAdjustment);
+          Thunks[GD] = Thunk(i, GD, ThisAdjustment);
       }
       return true;
     }
