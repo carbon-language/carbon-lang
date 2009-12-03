@@ -228,6 +228,63 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
   return ClsType;
 }
 
+/// The Objective-C property callback.  This should be defined where
+/// it's used, but instead it's been lifted to here to support VS2005.
+struct Parser::ObjCPropertyCallback : FieldCallback {
+  Parser &P;
+  DeclPtrTy IDecl;
+  llvm::SmallVectorImpl<DeclPtrTy> &Props;
+  ObjCDeclSpec &OCDS;
+  SourceLocation AtLoc;
+  tok::ObjCKeywordKind MethodImplKind;
+        
+  ObjCPropertyCallback(Parser &P, DeclPtrTy IDecl,
+                       llvm::SmallVectorImpl<DeclPtrTy> &Props,
+                       ObjCDeclSpec &OCDS, SourceLocation AtLoc,
+                       tok::ObjCKeywordKind MethodImplKind) :
+    P(P), IDecl(IDecl), Props(Props), OCDS(OCDS), AtLoc(AtLoc),
+    MethodImplKind(MethodImplKind) {
+  }
+
+  DeclPtrTy invoke(FieldDeclarator &FD) {
+    if (FD.D.getIdentifier() == 0) {
+      P.Diag(AtLoc, diag::err_objc_property_requires_field_name)
+        << FD.D.getSourceRange();
+      return DeclPtrTy();
+    }
+    if (FD.BitfieldSize) {
+      P.Diag(AtLoc, diag::err_objc_property_bitfield)
+        << FD.D.getSourceRange();
+      return DeclPtrTy();
+    }
+
+    // Install the property declarator into interfaceDecl.
+    IdentifierInfo *SelName =
+      OCDS.getGetterName() ? OCDS.getGetterName() : FD.D.getIdentifier();
+
+    Selector GetterSel =
+      P.PP.getSelectorTable().getNullarySelector(SelName);
+    IdentifierInfo *SetterName = OCDS.getSetterName();
+    Selector SetterSel;
+    if (SetterName)
+      SetterSel = P.PP.getSelectorTable().getSelector(1, &SetterName);
+    else
+      SetterSel = SelectorTable::constructSetterName(P.PP.getIdentifierTable(),
+                                                     P.PP.getSelectorTable(),
+                                                     FD.D.getIdentifier());
+    bool isOverridingProperty = false;
+    DeclPtrTy Property =
+      P.Actions.ActOnProperty(P.CurScope, AtLoc, FD, OCDS,
+                              GetterSel, SetterSel, IDecl,
+                              &isOverridingProperty,
+                              MethodImplKind);
+    if (!isOverridingProperty)
+      Props.push_back(Property);
+
+    return Property;
+  }
+};
+
 ///   objc-interface-decl-list:
 ///     empty
 ///     objc-interface-decl-list objc-property-decl [OBJC2]
@@ -329,61 +386,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
         ParseObjCPropertyAttribute(OCDS, interfaceDecl,
                                    allMethods.data(), allMethods.size());
 
-      struct ObjCPropertyCallback : FieldCallback {
-        Parser &P;
-        DeclPtrTy IDecl;
-        llvm::SmallVectorImpl<DeclPtrTy> &Props;
-        ObjCDeclSpec &OCDS;
-        SourceLocation AtLoc;
-        tok::ObjCKeywordKind MethodImplKind;
-        
-        ObjCPropertyCallback(Parser &P, DeclPtrTy IDecl,
-                             llvm::SmallVectorImpl<DeclPtrTy> &Props,
-                             ObjCDeclSpec &OCDS, SourceLocation AtLoc,
-                             tok::ObjCKeywordKind MethodImplKind) :
-          P(P), IDecl(IDecl), Props(Props), OCDS(OCDS), AtLoc(AtLoc),
-          MethodImplKind(MethodImplKind) {
-        }
-
-        DeclPtrTy invoke(FieldDeclarator &FD) {
-          if (FD.D.getIdentifier() == 0) {
-            P.Diag(AtLoc, diag::err_objc_property_requires_field_name)
-              << FD.D.getSourceRange();
-            return DeclPtrTy();
-          }
-          if (FD.BitfieldSize) {
-            P.Diag(AtLoc, diag::err_objc_property_bitfield)
-              << FD.D.getSourceRange();
-            return DeclPtrTy();
-          }
-
-          // Install the property declarator into interfaceDecl.
-          IdentifierInfo *SelName =
-            OCDS.getGetterName() ? OCDS.getGetterName() : FD.D.getIdentifier();
-
-          Selector GetterSel =
-            P.PP.getSelectorTable().getNullarySelector(SelName);
-          IdentifierInfo *SetterName = OCDS.getSetterName();
-          Selector SetterSel;
-          if (SetterName)
-            SetterSel = P.PP.getSelectorTable().getSelector(1, &SetterName);
-          else
-            SetterSel = SelectorTable::constructSetterName(P.PP.getIdentifierTable(),
-                                                           P.PP.getSelectorTable(),
-                                                           FD.D.getIdentifier());
-          bool isOverridingProperty = false;
-          DeclPtrTy Property =
-            P.Actions.ActOnProperty(P.CurScope, AtLoc, FD, OCDS,
-                                    GetterSel, SetterSel, IDecl,
-                                    &isOverridingProperty,
-                                    MethodImplKind);
-          if (!isOverridingProperty)
-            Props.push_back(Property);
-
-          return Property;
-        }
-      } Callback(*this, interfaceDecl, allProperties,
-                 OCDS, AtLoc, MethodImplKind);
+      ObjCPropertyCallback Callback(*this, interfaceDecl, allProperties,
+                                    OCDS, AtLoc, MethodImplKind);
 
       // Parse all the comma separated declarators.
       DeclSpec DS;

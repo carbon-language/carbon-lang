@@ -1087,6 +1087,7 @@ private:
   private:
     virtual void _anchor();
   };
+  struct ObjCPropertyCallback;
 
   void ParseStructDeclaration(DeclSpec &DS, FieldCallback &Callback);
 
