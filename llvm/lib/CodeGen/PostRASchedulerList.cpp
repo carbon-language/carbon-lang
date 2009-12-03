@@ -510,12 +510,9 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       }
       
       if (MO.isKill() != kill) {
-        bool removed = ToggleKillFlag(MI, MO);
-        if (removed) {
-          DEBUG(errs() << "Fixed <removed> in ");
-        } else {
-          DEBUG(errs() << "Fixed " << MO << " in ");
-        }
+        DEBUG(errs() << "Fixing " << MO << " in ");
+        // Warning: ToggleKillFlag may invalidate MO.
+        ToggleKillFlag(MI, MO);
         DEBUG(MI->dump());
       }
       
