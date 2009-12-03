@@ -1449,6 +1449,16 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     LoadPtr = MD->GetAvailablePHITranslatedValue(LI->getOperand(0), LoadBB,
                                                  UnavailablePred, TD, *DT);
   }
+
+  // Assign value numbers to these new instructions.
+  for (SmallVector<Instruction*, 8>::iterator NI = NewInsts.begin(),
+       NE = NewInsts.end(); NI != NE; ++NI) {
+    // FIXME: We really _ought_ to insert these value numbers into their 
+    // parent's availability map.  However, in doing so, we risk getting into
+    // ordering issues.  If a block hasn't been processed yet, we would be
+    // marking a value as AVAIL-IN, which isn't what we intend.
+    VN.lookup_or_add(*NI);
+  }
     
   // If we couldn't find or insert a computation of this phi translated value,
   // we fail PRE.
