@@ -778,9 +778,10 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
       free(*i);
   }
 
-  DEBUG(errs() << "\nArgs: ";
+  DEBUG(errs() << "Args: ";
         for (int i = 0; i < argc; ++i)
           errs() << argv[i] << ' ';
+        errs() << '\n';
        );
 
   // If we had an error processing our arguments, don't let the program execute
