@@ -546,7 +546,8 @@ SDValue DAGCombiner::CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
         To[0].getNode()->dump(&DAG);
         errs() << " and " << NumTo-1 << " other values\n";
         for (unsigned i = 0, e = NumTo; i != e; ++i)
-          assert(N->getValueType(i) == To[i].getValueType() &&
+          assert((!To[i].getNode() ||
+                  N->getValueType(i) == To[i].getValueType()) &&
                  "Cannot combine value to value of different type!"));
   WorkListRemover DeadNodes(*this);
   DAG.ReplaceAllUsesWith(N, To, &DeadNodes);
