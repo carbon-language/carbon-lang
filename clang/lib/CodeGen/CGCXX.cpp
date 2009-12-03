@@ -829,7 +829,7 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
 }
 
 llvm::Constant *
-CodeGenFunction::GenerateThunk(llvm::Function *Fn, const GlobalDecl &GD,
+CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
                                bool Extern, 
                                const ThunkAdjustment &ThisAdjustment) {
   return GenerateCovariantThunk(Fn, GD, Extern,
@@ -875,9 +875,8 @@ CodeGenFunction::DynamicTypeAdjust(llvm::Value *V,
 
 llvm::Constant *
 CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
-                                   const GlobalDecl &GD, bool Extern,
+                                   GlobalDecl GD, bool Extern,
                                    const CovariantThunkAdjustment &Adjustment) {
-  
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
 
@@ -908,11 +907,7 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
-  llvm::Value *Callee;
-  if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
-    Callee = CGM.GetAddrOfCXXDestructor(Dtor, GD.getDtorType());
-  else
-    Callee = CGM.GetAddrOfFunction(MD, Ty);
+  llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty);
 
   CallArgList CallArgs;
 
@@ -990,7 +985,7 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 }
 
 llvm::Constant *
-CodeGenModule::BuildThunk(const GlobalDecl &GD, bool Extern,
+CodeGenModule::BuildThunk(GlobalDecl GD, bool Extern,
                           const ThunkAdjustment &ThisAdjustment) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   llvm::SmallString<256> OutName;

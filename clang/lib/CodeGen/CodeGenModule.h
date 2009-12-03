@@ -234,7 +234,7 @@ public:
   llvm::Constant *GenerateRTTI(QualType Ty);
   
   /// BuildThunk - Build a thunk for the given method.
-  llvm::Constant *BuildThunk(const GlobalDecl &GD, bool Extern, 
+  llvm::Constant *BuildThunk(GlobalDecl GD, bool Extern, 
                              const ThunkAdjustment &ThisAdjustment);
 
   /// BuildCoVariantThunk - Build a thunk for the given method
