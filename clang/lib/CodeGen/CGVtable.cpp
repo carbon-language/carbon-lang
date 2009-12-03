@@ -708,7 +708,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       CanQualType oret = CGM.getContext().getCanonicalType(nc_oret);
       QualType nc_ret = MD->getType()->getAs<FunctionType>()->getResultType();
       CanQualType ret = CGM.getContext().getCanonicalType(nc_ret);
-      ThunkAdjustment ReturnAdjustment;
       if (oret != ret) {
         // FIXME: calculate offsets for covariance
         CovariantThunksMapTy::iterator it = CovariantThunks.find(i);
@@ -718,7 +717,10 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         }
         // FIXME: Double check oret
         Index_t nv = getNVOffset(oret, ret)/8;
-        ReturnAdjustment = ThunkAdjustment(nv, getVbaseOffset(oret, ret));
+        CovariantThunks[i] = 
+          CovariantThunk(GD, ThunkAdjustment(nv, getVbaseOffset(oret, ret)), 
+                         oret);
+
       }
       Index[GD] = i;
       submethods[i] = m;
@@ -756,11 +758,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment,
                                        VirtualAdjustment);
 
-        // FIXME: Do we always have to build a covariant thunk to save oret,
-        // which is the containing virtual base class?
-        if (!ReturnAdjustment.isEmpty())
-          CovariantThunks[i] = CovariantThunk(GD, ReturnAdjustment, oret);
-
         if (!isPure && !ThisAdjustment.isEmpty())
           Thunks[GD] = Thunk(i, ThisAdjustment);
         return true;
@@ -769,13 +766,9 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       // FIXME: finish off
       int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
 
-      if (NonVirtualAdjustment || !ReturnAdjustment.isEmpty()) {
+      if (NonVirtualAdjustment) {
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
-        if (!ReturnAdjustment.isEmpty())
-          CovariantThunks[i] = 
-            CovariantThunk(GD, ReturnAdjustment, oret);
-
         if (!isPure)
           Thunks[GD] = Thunk(i, ThisAdjustment);
       }
