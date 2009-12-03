@@ -159,12 +159,10 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
            end = I->end.getPrevSlot().getBaseIndex().getNextIndex();
            index != end;
            index = index.getNextIndex()) {
-      // skip deleted instructions
-      while (index != end && !getInstructionFromIndex(index))
-        index = index.getNextIndex();
-      if (index == end) break;
-
       MachineInstr *MI = getInstructionFromIndex(index);
+      if (!MI)
+        continue;               // skip deleted instructions
+
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
       if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
         if (SrcReg == li.reg || DstReg == li.reg)
@@ -201,15 +199,9 @@ bool LiveIntervals::conflictsWithPhysRegRef(LiveInterval &li,
            end = I->end.getPrevSlot().getBaseIndex().getNextIndex();
            index != end;
            index = index.getNextIndex()) {
-      // Skip deleted instructions.
-      MachineInstr *MI = 0;
-      while (index != end) {
-        MI = getInstructionFromIndex(index);
-        if (MI)
-          break;
-        index = index.getNextIndex();
-      }
-      if (index == end) break;
+      MachineInstr *MI = getInstructionFromIndex(index);
+      if (!MI)
+        continue;               // skip deleted instructions
 
       if (JoinedCopies.count(MI))
         continue;
