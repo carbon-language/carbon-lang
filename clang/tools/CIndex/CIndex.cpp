@@ -324,6 +324,11 @@ public:
     DisplayDiagnostics = Display;
   }
 
+  bool getUseExternalASTGeneration() const { return UseExternalASTGeneration; }
+  void setUseExternalASTGeneration(bool Value) {
+    UseExternalASTGeneration = Value;
+  }
+
   Diagnostic &getDiags() {
     return DisplayDiagnostics ? *TextDiags : IgnoreDiags;
   }
@@ -466,6 +471,12 @@ void clang_disposeIndex(CXIndex CIdx) {
   delete static_cast<CIndexer *>(CIdx);
 }
 
+void clang_setUseExternalASTGeneration(CXIndex CIdx, int value) {
+  assert(CIdx && "Passed null CXIndex");
+  CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+  CXXIdx->setUseExternalASTGeneration(value);
+}
+
 // FIXME: need to pass back error info.
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                               const char *ast_filename) {
@@ -484,6 +495,24 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           const char **command_line_args) {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+
+  if (!CXXIdx->getUseExternalASTGeneration()) {
+    llvm::SmallVector<const char *, 16> Args;
+
+    // The 'source_filename' argument is optional.  If the caller does not
+    // specify it then it is assumed that the source file is specified
+    // in the actual argument list.
+    if (source_filename)
+      Args.push_back(source_filename);
+    Args.insert(Args.end(), command_line_args,
+                command_line_args + num_command_line_args);
+
+    void *MainAddr = (void *)(uintptr_t)clang_createTranslationUnit;
+    return ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
+                                        CXXIdx->getDiags(), "<clang>", MainAddr,
+                                        CXXIdx->getOnlyLocalDecls(),
+                                        /* UseBumpAllocator = */ true);
+  }
 
   // Build up the arguments for invoking 'clang'.
   std::vector<const char *> argv;
@@ -572,8 +601,18 @@ void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
   ASTContext &Ctx = CXXUnit->getASTContext();
 
-  TUVisitor DVisit(CTUnit, callback, CData,
-                   CXXUnit->getOnlyLocalDecls()? 1 : Decl::MaxPCHLevel);
+  unsigned PCHLevel = Decl::MaxPCHLevel;
+
+  // Set the PCHLevel to filter out unwanted decls if requested.
+  if (CXXUnit->getOnlyLocalDecls()) {
+    PCHLevel = 0;
+
+    // If the main input was an AST, bump the level.
+    if (CXXUnit->isMainFileAST())
+      ++PCHLevel;
+  }
+
+  TUVisitor DVisit(CTUnit, callback, CData, PCHLevel);
   DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 

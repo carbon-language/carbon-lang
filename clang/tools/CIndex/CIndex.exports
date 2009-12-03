@@ -6,6 +6,7 @@ _clang_disposeIndex
 _clang_disposeString
 _clang_disposeTranslationUnit
 _clang_equalCursors
+_clang_getCString
 _clang_getCompletionChunkCompletionString
 _clang_getCompletionChunkKind
 _clang_getCompletionChunkText
@@ -19,7 +20,6 @@ _clang_getCursorLine
 _clang_getCursorSource
 _clang_getCursorSourceFile
 _clang_getCursorSpelling
-_clang_getCString
 _clang_getDeclColumn
 _clang_getDeclLine
 _clang_getDeclSource
@@ -41,3 +41,4 @@ _clang_isInvalid
 _clang_isReference
 _clang_loadDeclaration
 _clang_loadTranslationUnit
+_clang_setUseExternalASTGeneration

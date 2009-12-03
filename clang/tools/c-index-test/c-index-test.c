@@ -179,11 +179,16 @@ int perform_test_load_tu(const char *file, const char *filter) {
 }
 
 int perform_test_load_source(int argc, const char **argv, const char *filter) {
+  const char *UseExternalASTs =
+    getenv("CINDEXTEST_USE_EXTERNAL_AST_GENERATION");
   CXIndex Idx;
   CXTranslationUnit TU;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           !strcmp(filter, "local") ? 1 : 0,
                           /* displayDiagnostics */ 1);
+
+  if (UseExternalASTs && strlen(UseExternalASTs))
+    clang_setUseExternalASTGeneration(Idx, 1);
 
   TU = clang_createTranslationUnitFromSourceFile(Idx, 0, argc, argv);
   if (!TU) {
