@@ -1776,14 +1776,16 @@ tryAgain:
     if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
       SymReaper.markLive(SymR->getSymbol());
     
-    // For BlockDataRegions, enqueue all VarRegions for that are referenced
+    // For BlockDataRegions, enqueue the VarRegions for variables marked
+    // with __block (passed-by-reference).
     // via BlockDeclRefExprs.
     if (const BlockDataRegion *BD = dyn_cast<BlockDataRegion>(R)) {
       for (BlockDataRegion::referenced_vars_iterator
             RI = BD->referenced_vars_begin(), RE = BD->referenced_vars_end();
-           RI != RE; ++RI)
-        WorkList.push_back(std::make_pair(state_N, *RI));
-
+           RI != RE; ++RI) {
+        if ((*RI)->getDecl()->getAttr<BlocksAttr>())
+          WorkList.push_back(std::make_pair(state_N, *RI));
+      }
       // No possible data bindings on a BlockDataRegion.  Continue to the
       // next region in the worklist.
       continue;
