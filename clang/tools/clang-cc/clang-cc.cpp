@@ -42,6 +42,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
@@ -299,7 +300,8 @@ int main(int argc, char **argv) {
                                    Clang.getDiagnostics(), argv[0]))
     return 1;
 #else
-  // Buffer diagnostics from argument parsing.
+  // Buffer diagnostics from argument parsing so that we can output them using a
+  // well formed diagnostic object.
   TextDiagnosticBuffer DiagsBuffer;
   Diagnostic Diags(&DiagsBuffer);
 
@@ -320,6 +322,15 @@ int main(int argc, char **argv) {
                                    static_cast<void*>(&Clang.getDiagnostics()));
 
   DiagsBuffer.FlushDiagnostics(Clang.getDiagnostics());
+
+  // Load any requested plugins.
+  for (unsigned i = 0,
+         e = Clang.getFrontendOpts().Plugins.size(); i != e; ++i) {
+    const std::string &Path = Clang.getFrontendOpts().Plugins[i];
+    std::string Error;
+    if (llvm::sys::DynamicLibrary::LoadLibraryPermanently(Path.c_str(), &Error))
+      Diags.Report(diag::err_fe_unable_to_load_plugin) << Path << Error;
+  }
 
   // If there were any errors in processing arguments, exit now.
   if (Clang.getDiagnostics().getNumErrors())

@@ -345,6 +345,10 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-plugin");
     Res.push_back(Opts.ActionName);
   }
+  for (unsigned i = 0, e = Opts.Plugins.size(); i != e; ++i) {
+    Res.push_back("-load");
+    Res.push_back(Opts.Plugins[i]);
+  }
 }
 
 static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
@@ -877,6 +881,7 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   }
 
   Opts.OutputFile = getLastArgValue(Args, OPT_o);
+  Opts.Plugins = getAllArgValues(Args, OPT_load);
   Opts.RelocatablePCH = Args.hasArg(OPT_relocatable_pch);
   Opts.ShowMacrosInCodeCompletion = Args.hasArg(OPT_code_completion_macros);
   Opts.ShowStats = Args.hasArg(OPT_print_stats);

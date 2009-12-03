@@ -205,6 +205,8 @@ def cxx_inheritance_view : Separate<"-cxx-inheritance-view">,
 def fixit_at : Separate<"-fixit-at">, MetaVarName<"source-location">,
   HelpText<"Perform Fix-It modifications at the given source location">;
 def o : Separate<"-o">, MetaVarName<"path">, HelpText<"Specify output file">;
+def load : Separate<"-load">, MetaVarName<"dsopath">,
+  HelpText<"Load the named plugin (dynamic shared object)">;
 def plugin : Separate<"-plugin">,
   HelpText<"Use the named plugin action (use \"help\" to list available options)">;
 

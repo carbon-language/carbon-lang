@@ -105,6 +105,9 @@ public:
   /// The name of the action to run when using a plugin action.
   std::string ActionName;
 
+  /// The list of plugins to load.
+  std::vector<std::string> Plugins;
+
 public:
   FrontendOptions() {
     DebugCodeCompletionPrinter = 1;
