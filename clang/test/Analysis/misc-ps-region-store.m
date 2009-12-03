@@ -568,3 +568,18 @@ int blocks_1(int *p, int z) {
   return z;
 }
 
+int blocks_2(int *p, int z) {
+  int *q = 0;
+  void (^bar)(int **) = ^(int **r){ *r = p; };
+  
+  if (z) {
+    // The call to 'bar' might cause 'q' to be invalidated.
+    bar(&q);
+    *q = 0x1; // no-warning
+  }
+  else {
+    *q = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+  }
+  return z;
+}
+
