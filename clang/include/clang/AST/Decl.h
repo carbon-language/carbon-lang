@@ -348,14 +348,22 @@ public:
 /// which it was evaluated (if any), and whether or not the statement
 /// is an integral constant expression (if known).
 struct EvaluatedStmt {
-  EvaluatedStmt() : WasEvaluated(false), CheckedICE(false), IsICE(false) { }
+  EvaluatedStmt() : WasEvaluated(false), IsEvaluating(false), CheckedICE(false),
+                    CheckingICE(false), IsICE(false) { }
 
   /// \brief Whether this statement was already evaluated.
   bool WasEvaluated : 1;
 
+  /// \brief Whether this statement is being evaluated.
+  bool IsEvaluating : 1;
+
   /// \brief Whether we already checked whether this statement was an
   /// integral constant expression.
   bool CheckedICE : 1;
+
+  /// \brief Whether we are checking whether this statement is an
+  /// integral constant expression.
+  bool CheckingICE : 1;
 
   /// \brief Whether this statement is an integral constant
   /// expression. Only valid if CheckedICE is true.
@@ -504,23 +512,45 @@ public:
 
   void setInit(ASTContext &C, Expr *I);
 
-  /// \brief Note that constant evaluation has computed the given
-  /// value for this variable's initializer.
-  void setEvaluatedValue(ASTContext &C, const APValue &Value) const {
+  EvaluatedStmt *EnsureEvaluatedStmt() const {
     EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();
     if (!Eval) {
       Stmt *S = Init.get<Stmt *>();
-      Eval = new (C) EvaluatedStmt;
+      Eval = new (getASTContext()) EvaluatedStmt;
       Eval->Value = S;
       Init = Eval;
     }
+    return Eval;
+  }
 
+  /// \brief Check whether we are in the process of checking whether the
+  /// initializer can be evaluated.
+  bool isEvaluatingValue() const {
+    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
+      return Eval->IsEvaluating;
+
+    return false;
+  }
+
+  /// \brief Note that we now are checking whether the initializer can be
+  /// evaluated.
+  void setEvaluatingValue() const {
+    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
+    Eval->IsEvaluating = true;
+  }
+
+  /// \brief Note that constant evaluation has computed the given
+  /// value for this variable's initializer.
+  void setEvaluatedValue(const APValue &Value) const {
+    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
+    Eval->IsEvaluating = false;
     Eval->WasEvaluated = true;
     Eval->Evaluated = Value;
   }
 
   /// \brief Return the already-evaluated value of this variable's
-  /// initializer, or NULL if the value is not yet known.
+  /// initializer, or NULL if the value is not yet known. Returns pointer
+  /// to untyped APValue if the value could not be evaluated.
   APValue *getEvaluatedValue() const {
     if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
       if (Eval->WasEvaluated)
@@ -548,17 +578,27 @@ public:
     return Init.get<EvaluatedStmt *>()->IsICE;
   }
 
+  /// \brief Check whether we are in the process of checking the initializer
+  /// is an integral constant expression.
+  bool isCheckingICE() const {
+    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
+      return Eval->CheckingICE;
+
+    return false;
+  }
+
+  /// \brief Note that we now are checking whether the initializer is an
+  /// integral constant expression.
+  void setCheckingICE() const {
+    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
+    Eval->CheckingICE = true;
+  }
+
   /// \brief Note that we now know whether the initializer is an
   /// integral constant expression.
-  void setInitKnownICE(ASTContext &C, bool IsICE) const {
-    EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();
-    if (!Eval) {
-      Stmt *S = Init.get<Stmt *>();
-      Eval = new (C) EvaluatedStmt;
-      Eval->Value = S;
-      Init = Eval;
-    }
-
+  void setInitKnownICE(bool IsICE) const {
+    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
+    Eval->CheckingICE = false;
     Eval->CheckedICE = true;
     Eval->IsICE = IsICE;
   }

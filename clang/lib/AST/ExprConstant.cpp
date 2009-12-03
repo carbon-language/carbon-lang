@@ -866,15 +866,24 @@ bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       const VarDecl *Def = 0;
       if (const Expr *Init = VD->getDefinition(Def)) {
-        if (APValue *V = VD->getEvaluatedValue())
-          return Success(V->getInt(), E);
-          
+        if (APValue *V = VD->getEvaluatedValue()) {
+          if (V->isInt())
+            return Success(V->getInt(), E);
+          return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
+        }
+
+        if (VD->isEvaluatingValue())
+          return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
+
+        VD->setEvaluatingValue();
+
         if (Visit(const_cast<Expr*>(Init))) {
           // Cache the evaluated value in the variable declaration.
-          VD->setEvaluatedValue(Info.Ctx, Result);
+          VD->setEvaluatedValue(Result);
           return true;
         }
 
+        VD->setEvaluatedValue(APValue());
         return false;
       }
     }

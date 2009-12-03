@@ -1596,13 +1596,18 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
           //   constant expression (5.19). In that case, the member can appear
           //   in integral constant expressions.
           if (Def->isOutOfLine()) {
-            Dcl->setInitKnownICE(Ctx, false);
+            Dcl->setInitKnownICE(false);
             return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
           }
-          
+
+          if (Dcl->isCheckingICE()) {
+            return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
+          }
+
+          Dcl->setCheckingICE();
           ICEDiag Result = CheckICE(Init, Ctx);
           // Cache the result of the ICE test.
-          Dcl->setInitKnownICE(Ctx, Result.Val == 0);
+          Dcl->setInitKnownICE(Result.Val == 0);
           return Result;
         }
       }

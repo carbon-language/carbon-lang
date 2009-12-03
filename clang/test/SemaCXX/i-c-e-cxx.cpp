@@ -14,3 +14,10 @@ void f() {
     int array[value];
   }
 }
+
+int a() {
+  const int t=t; // expected-note {{subexpression not valid}}
+  switch(1) {
+    case t:; // expected-error {{not an integer constant expression}}
+  }
+}
