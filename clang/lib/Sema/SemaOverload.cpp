@@ -1447,6 +1447,11 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
         = FromRecordDecl->getVisibleConversionFunctions();
       for (UnresolvedSet::iterator I = Conversions->begin(),
              E = Conversions->end(); I != E; ++I) {
+        NamedDecl *D = *I;
+        CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());
+        if (isa<UsingShadowDecl>(D))
+          D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
         CXXConversionDecl *Conv;
         FunctionTemplateDecl *ConvTemplate;
         if ((ConvTemplate = dyn_cast<FunctionTemplateDecl>(*I)))
@@ -1456,10 +1461,11 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
 
         if (AllowExplicit || !Conv->isExplicit()) {
           if (ConvTemplate)
-            AddTemplateConversionCandidate(ConvTemplate, From, ToType,
-                                           CandidateSet);
+            AddTemplateConversionCandidate(ConvTemplate, ActingContext,
+                                           From, ToType, CandidateSet);
           else
-            AddConversionCandidate(Conv, From, ToType, CandidateSet);
+            AddConversionCandidate(Conv, ActingContext, From, ToType,
+                                   CandidateSet);
         }
       }
     }
@@ -2076,8 +2082,10 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
 /// parameter of the given member function (@c Method) from the
 /// expression @p From.
 ImplicitConversionSequence
-Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
-  QualType ClassType = Context.getTypeDeclType(Method->getParent());
+Sema::TryObjectArgumentInitialization(QualType FromType,
+                                      CXXMethodDecl *Method,
+                                      CXXRecordDecl *ActingContext) {
+  QualType ClassType = Context.getTypeDeclType(ActingContext);
   // [class.dtor]p2: A destructor can be invoked for a const, volatile or
   //                 const volatile object.
   unsigned Quals = isa<CXXDestructorDecl>(Method) ?
@@ -2091,7 +2099,6 @@ Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
   ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
 
   // We need to have an object of class type.
-  QualType FromType = From->getType();
   if (const PointerType *PT = FromType->getAs<PointerType>())
     FromType = PT->getPointeeType();
 
@@ -2151,8 +2158,11 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
     DestType = ImplicitParamRecordType;
   }
 
+  // Note that we always use the true parent context when performing
+  // the actual argument initialization.
   ImplicitConversionSequence ICS
-    = TryObjectArgumentInitialization(From, Method);
+    = TryObjectArgumentInitialization(From->getType(), Method,
+                                      Method->getParent());
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_implicit_object_parameter_init)
@@ -2227,9 +2237,11 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       // that is named without a member access expression (e.g.,
       // "this->f") that was either written explicitly or created
       // implicitly. This can happen with a qualified call to a member
-      // function, e.g., X::f(). We use a NULL object as the implied
-      // object argument (C++ [over.call.func]p3).
-      AddMethodCandidate(Method, 0, Args, NumArgs, CandidateSet,
+      // function, e.g., X::f(). We use an empty type for the implied
+      // object argument (C++ [over.call.func]p3), and the acting context
+      // is irrelevant.
+      AddMethodCandidate(Method, Method->getParent(),
+                         QualType(), Args, NumArgs, CandidateSet,
                          SuppressUserConversions, ForceRValue);
       return;
     }
@@ -2341,10 +2353,12 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
   for (FunctionSet::const_iterator F = Functions.begin(),
                                 FEnd = Functions.end();
        F != FEnd; ++F) {
+    // FIXME: using declarations
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*F)) {
       if (isa<CXXMethodDecl>(FD) && !cast<CXXMethodDecl>(FD)->isStatic())
         AddMethodCandidate(cast<CXXMethodDecl>(FD),
-                           Args[0], Args + 1, NumArgs - 1, 
+                           cast<CXXMethodDecl>(FD)->getParent(),
+                           Args[0]->getType(), Args + 1, NumArgs - 1, 
                            CandidateSet, SuppressUserConversions);
       else
         AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
@@ -2354,8 +2368,9 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
       if (isa<CXXMethodDecl>(FunTmpl->getTemplatedDecl()) &&
           !cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl())->isStatic())
         AddMethodTemplateCandidate(FunTmpl,
+                              cast<CXXRecordDecl>(FunTmpl->getDeclContext()),
                                    /*FIXME: explicit args */ 0,
-                                   Args[0], Args + 1, NumArgs - 1,
+                                   Args[0]->getType(), Args + 1, NumArgs - 1,
                                    CandidateSet,
                                    SuppressUserConversions);
       else
@@ -2369,13 +2384,14 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
 
 /// AddMethodCandidate - Adds a named decl (which is some kind of
 /// method) as a method candidate to the given overload set.
-void Sema::AddMethodCandidate(NamedDecl *Decl, Expr *Object,
+void Sema::AddMethodCandidate(NamedDecl *Decl,
+                              QualType ObjectType,
                               Expr **Args, unsigned NumArgs,
                               OverloadCandidateSet& CandidateSet,
                               bool SuppressUserConversions, bool ForceRValue) {
 
   // FIXME: use this
-  //DeclContext *ActingContext = Decl->getDeclContext();
+  CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(Decl->getDeclContext());
 
   if (isa<UsingShadowDecl>(Decl))
     Decl = cast<UsingShadowDecl>(Decl)->getTargetDecl();
@@ -2383,13 +2399,14 @@ void Sema::AddMethodCandidate(NamedDecl *Decl, Expr *Object,
   if (FunctionTemplateDecl *TD = dyn_cast<FunctionTemplateDecl>(Decl)) {
     assert(isa<CXXMethodDecl>(TD->getTemplatedDecl()) &&
            "Expected a member function template");
-    AddMethodTemplateCandidate(TD, /*ExplicitArgs*/ 0,
-                               Object, Args, NumArgs,
+    AddMethodTemplateCandidate(TD, ActingContext, /*ExplicitArgs*/ 0,
+                               ObjectType, Args, NumArgs,
                                CandidateSet,
                                SuppressUserConversions,
                                ForceRValue);
   } else {
-    AddMethodCandidate(cast<CXXMethodDecl>(Decl), Object, Args, NumArgs,
+    AddMethodCandidate(cast<CXXMethodDecl>(Decl), ActingContext,
+                       ObjectType, Args, NumArgs,
                        CandidateSet, SuppressUserConversions, ForceRValue);
   }
 }
@@ -2404,8 +2421,8 @@ void Sema::AddMethodCandidate(NamedDecl *Decl, Expr *Object,
 /// a slightly hacky way to implement the overloading rules for elidable copy
 /// initialization in C++0x (C++0x 12.8p15).
 void
-Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
-                         Expr **Args, unsigned NumArgs,
+Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
+                         QualType ObjectType, Expr **Args, unsigned NumArgs,
                          OverloadCandidateSet& CandidateSet,
                          bool SuppressUserConversions, bool ForceRValue) {
   const FunctionProtoType* Proto
@@ -2454,13 +2471,14 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
   Candidate.Viable = true;
   Candidate.Conversions.resize(NumArgs + 1);
 
-  if (Method->isStatic() || !Object)
+  if (Method->isStatic() || ObjectType.isNull())
     // The implicit object argument is ignored.
     Candidate.IgnoreObjectArgument = true;
   else {
     // Determine the implicit conversion sequence for the object
     // parameter.
-    Candidate.Conversions[0] = TryObjectArgumentInitialization(Object, Method);
+    Candidate.Conversions[0]
+      = TryObjectArgumentInitialization(ObjectType, Method, ActingContext);
     if (Candidate.Conversions[0].ConversionKind
           == ImplicitConversionSequence::BadConversion) {
       Candidate.Viable = false;
@@ -2501,8 +2519,10 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
 /// function template specialization.
 void
 Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
+                                 CXXRecordDecl *ActingContext,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                 Expr *Object, Expr **Args, unsigned NumArgs,
+                                 QualType ObjectType,
+                                 Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet,
                                  bool SuppressUserConversions,
                                  bool ForceRValue) {
@@ -2534,7 +2554,8 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
   assert(Specialization && "Missing member function template specialization?");
   assert(isa<CXXMethodDecl>(Specialization) &&
          "Specialization is not a member function?");
-  AddMethodCandidate(cast<CXXMethodDecl>(Specialization), Object, Args, NumArgs,
+  AddMethodCandidate(cast<CXXMethodDecl>(Specialization), ActingContext,
+                     ObjectType, Args, NumArgs,
                      CandidateSet, SuppressUserConversions, ForceRValue);
 }
 
@@ -2586,6 +2607,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
 /// conversion function produces).
 void
 Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
+                             CXXRecordDecl *ActingContext,
                              Expr *From, QualType ToType,
                              OverloadCandidateSet& CandidateSet) {
   assert(!Conversion->getDescribedFunctionTemplate() &&
@@ -2612,7 +2634,9 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // object parameter.
   Candidate.Viable = true;
   Candidate.Conversions.resize(1);
-  Candidate.Conversions[0] = TryObjectArgumentInitialization(From, Conversion);
+  Candidate.Conversions[0]
+    = TryObjectArgumentInitialization(From->getType(), Conversion,
+                                      ActingContext);
   // Conversion functions to a different type in the base class is visible in 
   // the derived class.  So, a derived to base conversion should not participate
   // in overload resolution. 
@@ -2684,6 +2708,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
 /// [temp.deduct.conv]).
 void
 Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
+                                     CXXRecordDecl *ActingDC,
                                      Expr *From, QualType ToType,
                                      OverloadCandidateSet &CandidateSet) {
   assert(isa<CXXConversionDecl>(FunctionTemplate->getTemplatedDecl()) &&
@@ -2706,7 +2731,7 @@ Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
   // Add the conversion function template specialization produced by
   // template argument deduction as a candidate.
   assert(Specialization && "Missing function template specialization?");
-  AddConversionCandidate(Specialization, From, ToType, CandidateSet);
+  AddConversionCandidate(Specialization, ActingDC, From, ToType, CandidateSet);
 }
 
 /// AddSurrogateCandidate - Adds a "surrogate" candidate function that
@@ -2715,8 +2740,10 @@ Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
 /// with the given arguments (C++ [over.call.object]p2-4). Proto is
 /// the type of function that we'll eventually be calling.
 void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
+                                 CXXRecordDecl *ActingContext,
                                  const FunctionProtoType *Proto,
-                                 Expr *Object, Expr **Args, unsigned NumArgs,
+                                 QualType ObjectType,
+                                 Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet) {
   if (!CandidateSet.isNewCandidate(Conversion))
     return;
@@ -2736,7 +2763,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   // Determine the implicit conversion sequence for the implicit
   // object parameter.
   ImplicitConversionSequence ObjectInit
-    = TryObjectArgumentInitialization(Object, Conversion);
+    = TryObjectArgumentInitialization(ObjectType, Conversion, ActingContext);
   if (ObjectInit.ConversionKind == ImplicitConversionSequence::BadConversion) {
     Candidate.Viable = false;
     return;
@@ -2871,7 +2898,8 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
                              OperEnd = Operators.end();
          Oper != OperEnd;
          ++Oper)
-      AddMethodCandidate(*Oper, Args[0], Args + 1, NumArgs - 1, CandidateSet,
+      AddMethodCandidate(*Oper, Args[0]->getType(),
+                         Args + 1, NumArgs - 1, CandidateSet,
                          /* SuppressUserConversions = */ false);
   }
 }
@@ -5140,16 +5168,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   } else {
     UnresolvedMemberExpr *UnresExpr = cast<UnresolvedMemberExpr>(NakedMemExpr);
 
-    // Mock up an object argument.
-    Expr *ObjectArg;
-    if (UnresExpr->isImplicitAccess()) {
-      // It would be nice to avoid creating this, but the overload APIs are written
-      // to work on expressions.
-      ObjectArg = new(Context) CXXThisExpr(SourceLocation(),
-                                           UnresExpr->getBaseType());
-    } else {
-      ObjectArg = UnresExpr->getBase();
-    }
+    QualType ObjectType = UnresExpr->getBaseType();
 
     // Add overload candidates
     OverloadCandidateSet CandidateSet;
@@ -5164,21 +5183,23 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     for (UnresolvedMemberExpr::decls_iterator I = UnresExpr->decls_begin(),
            E = UnresExpr->decls_end(); I != E; ++I) {
 
-      // TODO: note if we found something through a using declaration
-      NamedDecl *Func = (*I)->getUnderlyingDecl();
-      
+      NamedDecl *Func = *I;
+      CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(Func->getDeclContext());
+      if (isa<UsingShadowDecl>(Func))
+        Func = cast<UsingShadowDecl>(Func)->getTargetDecl();
+
       if ((Method = dyn_cast<CXXMethodDecl>(Func))) {
         // If explicit template arguments were provided, we can't call a
         // non-template member function.
         if (TemplateArgs)
           continue;
         
-        AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet,
-                           /*SuppressUserConversions=*/false);
+        AddMethodCandidate(Method, ActingDC, ObjectType, Args, NumArgs,
+                           CandidateSet, /*SuppressUserConversions=*/false);
       } else {
         AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(Func),
-                                   TemplateArgs,
-                                   ObjectArg, Args, NumArgs,
+                                   ActingDC, TemplateArgs,
+                                   ObjectType, Args, NumArgs,
                                    CandidateSet,
                                    /*SuppressUsedConversions=*/false);
       }
@@ -5218,11 +5239,6 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
     MemExprE = FixOverloadedFunctionReference(MemExprE, Method);
 
-    // Clean up the 'this' expression we created above; FixOFR doesn't
-    // actually use it.
-    if (UnresExpr->isImplicitAccess())
-      Owned(ObjectArg);
-    
     // If overload resolution picked a static member, build a
     // non-member call based on that function.
     if (Method->isStatic()) {
@@ -5298,7 +5314,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper) {
-    AddMethodCandidate(*Oper, Object, Args, NumArgs, CandidateSet,
+    AddMethodCandidate(*Oper, Object->getType(), Args, NumArgs, CandidateSet,
                        /*SuppressUserConversions=*/ false);
   }
   
@@ -5324,12 +5340,17 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
   for (UnresolvedSet::iterator I = Conversions->begin(),
          E = Conversions->end(); I != E; ++I) {
+    NamedDecl *D = *I;
+    CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());
+    if (isa<UsingShadowDecl>(D))
+      D = cast<UsingShadowDecl>(D)->getTargetDecl();
+    
     // Skip over templated conversion functions; they aren't
     // surrogates.
-    if (isa<FunctionTemplateDecl>(*I))
+    if (isa<FunctionTemplateDecl>(D))
       continue;
 
-    CXXConversionDecl *Conv = cast<CXXConversionDecl>(*I);
+    CXXConversionDecl *Conv = cast<CXXConversionDecl>(D);
 
     // Strip the reference type (if any) and then the pointer type (if
     // any) to get down to what might be a function type.
@@ -5338,7 +5359,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       ConvType = ConvPtrType->getPointeeType();
 
     if (const FunctionProtoType *Proto = ConvType->getAs<FunctionProtoType>())
-      AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
+      AddSurrogateCandidate(Conv, ActingContext, Proto,
+                            Object->getType(), Args, NumArgs,
+                            CandidateSet);
   }
 
   // Perform overload resolution.
@@ -5525,9 +5548,16 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   R.suppressDiagnostics();
 
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
-       Oper != OperEnd; ++Oper)
-    AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Base, 0, 0, CandidateSet,
+       Oper != OperEnd; ++Oper) {
+    NamedDecl *D = *Oper;
+    CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());
+    if (isa<UsingShadowDecl>(D))
+      D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
+    AddMethodCandidate(cast<CXXMethodDecl>(D), ActingContext,
+                       Base->getType(), 0, 0, CandidateSet,
                        /*SuppressUserConversions=*/false);
+  }
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;

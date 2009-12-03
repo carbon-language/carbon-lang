@@ -3906,23 +3906,28 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       = T2RecordDecl->getVisibleConversionFunctions();
     for (UnresolvedSet::iterator I = Conversions->begin(),
            E = Conversions->end(); I != E; ++I) {
+      NamedDecl *D = *I;
+      CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
+      if (isa<UsingShadowDecl>(D))
+        D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
       FunctionTemplateDecl *ConvTemplate
-        = dyn_cast<FunctionTemplateDecl>(*I);
+        = dyn_cast<FunctionTemplateDecl>(D);
       CXXConversionDecl *Conv;
       if (ConvTemplate)
         Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
       else
-        Conv = cast<CXXConversionDecl>(*I);
+        Conv = cast<CXXConversionDecl>(D);
       
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion.
       if (Conv->getConversionType()->isLValueReferenceType() &&
           (AllowExplicit || !Conv->isExplicit())) {
         if (ConvTemplate)
-          AddTemplateConversionCandidate(ConvTemplate, Init, DeclType,
-                                         CandidateSet);
+          AddTemplateConversionCandidate(ConvTemplate, ActingDC,
+                                         Init, DeclType, CandidateSet);
         else
-          AddConversionCandidate(Conv, Init, DeclType, CandidateSet);
+          AddConversionCandidate(Conv, ActingDC, Init, DeclType, CandidateSet);
       }
     }
 

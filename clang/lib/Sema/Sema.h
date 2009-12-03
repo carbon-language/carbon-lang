@@ -896,7 +896,8 @@ public:
                                  const char *Flavor, bool Elidable = false);
 
   ImplicitConversionSequence
-  TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method);
+  TryObjectArgumentInitialization(QualType FromType, CXXMethodDecl *Method,
+                                  CXXRecordDecl *ActingContext);
   bool PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method);
 
   ImplicitConversionSequence TryContextuallyConvertToBool(Expr *From);
@@ -922,18 +923,20 @@ public:
                              OverloadCandidateSet& CandidateSet,
                              bool SuppressUserConversions = false);
   void AddMethodCandidate(NamedDecl *Decl,
-                          Expr *Object, Expr **Args, unsigned NumArgs,
+                          QualType ObjectType, Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversion = false,
                           bool ForceRValue = false);
-  void AddMethodCandidate(CXXMethodDecl *Method,
-                          Expr *Object, Expr **Args, unsigned NumArgs,
+  void AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
+                          QualType ObjectType, Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversions = false,
                           bool ForceRValue = false);
   void AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
+                                  CXXRecordDecl *ActingContext,
                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                  Expr *Object, Expr **Args, unsigned NumArgs,
+                                  QualType ObjectType,
+                                  Expr **Args, unsigned NumArgs,
                                   OverloadCandidateSet& CandidateSet,
                                   bool SuppressUserConversions = false,
                                   bool ForceRValue = false);
@@ -944,14 +947,17 @@ public:
                                     bool SuppressUserConversions = false,
                                     bool ForceRValue = false);
   void AddConversionCandidate(CXXConversionDecl *Conversion,
+                              CXXRecordDecl *ActingContext,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
   void AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
+                                      CXXRecordDecl *ActingContext,
                                       Expr *From, QualType ToType,
                                       OverloadCandidateSet &CandidateSet);
   void AddSurrogateCandidate(CXXConversionDecl *Conversion,
+                             CXXRecordDecl *ActingContext,
                              const FunctionProtoType *Proto,
-                             Expr *Object, Expr **Args, unsigned NumArgs,
+                             QualType ObjectTy, Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet);
   void AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                              SourceLocation OpLoc,

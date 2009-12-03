@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-// XFAIL: *
 
 namespace A {
     int VA;
