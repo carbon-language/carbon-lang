@@ -758,6 +758,7 @@ void DwarfDebug::addType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
 
   // Construct type.
   DIE *Buffer = new DIE(dwarf::DW_TAG_base_type);
+  ModuleCU->insertDIE(Ty.getNode(), Buffer);
   if (Ty.isBasicType())
     constructTypeDIE(DW_Unit, *Buffer, DIBasicType(Ty.getNode()));
   else if (Ty.isCompositeType())
@@ -779,7 +780,6 @@ void DwarfDebug::addType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
     DW_Unit->addDie(Buffer);
   Entry->setEntry(Buffer);
   Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
-  ModuleCU->insertDIE(Ty.getNode(), Buffer);
 }
 
 /// constructTypeDIE - Construct basic type die from DIBasicType.
