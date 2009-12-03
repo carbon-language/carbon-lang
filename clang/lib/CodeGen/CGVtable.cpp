@@ -274,20 +274,18 @@ public:
         
         Thunks.erase(i);
       }
-
-      QualType BaseType = QualType(Thunk.ReturnType)->getPointeeType();
-      QualType DerivedType = 
-        MD->getType()->getAs<FunctionType>()->getResultType()->getPointeeType();
-      
-      const CXXRecordDecl *BaseDecl = 
-        cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
-      
-      const CXXRecordDecl *DerivedDecl = 
-        cast<CXXRecordDecl>(DerivedType->getAs<RecordType>()->getDecl());
       
       // Construct the return adjustment.
-      ThunkAdjustment ReturnAdjustment = 
-        CGM.ComputeThunkAdjustment(DerivedDecl, BaseDecl);
+      QualType DerivedType = 
+        MD->getType()->getAs<FunctionType>()->getResultType();
+      
+      int64_t NonVirtualAdjustment = 
+        getNVOffset(Thunk.ReturnType, DerivedType) / 8;
+      
+      int64_t VirtualAdjustment = 
+        getVbaseOffset(Thunk.ReturnType, DerivedType);
+      
+      ThunkAdjustment ReturnAdjustment(NonVirtualAdjustment, VirtualAdjustment);
       
       CovariantThunkAdjustment Adjustment(ThisAdjustment, ReturnAdjustment);
       submethods[Index] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
@@ -747,7 +745,7 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
   }
   
   const CXXRecordDecl *DerivedDecl = 
-    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
+  cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
   
   const CXXRecordDecl *BaseDecl = 
   cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
