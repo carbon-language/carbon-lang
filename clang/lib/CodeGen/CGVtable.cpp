@@ -262,118 +262,7 @@ public:
 
   bool OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                       bool MorallyVirtual, Index_t OverrideOffset,
-                      Index_t Offset, int64_t CurrentVBaseOffset) {
-    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-
-    const bool isPure = MD->isPure();
-    typedef CXXMethodDecl::method_iterator meth_iter;
-    // FIXME: Should OverrideOffset's be Offset?
-
-    // FIXME: Don't like the nested loops.  For very large inheritance
-    // heirarchies we could have a table on the side with the final overridder
-    // and just replace each instance of an overridden method once.  Would be
-    // nice to measure the cost/benefit on real code.
-
-    for (meth_iter mi = MD->begin_overridden_methods(),
-           e = MD->end_overridden_methods();
-         mi != e; ++mi) {
-      GlobalDecl OGD;
-      
-      const CXXMethodDecl *OMD = *mi;
-      if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(OMD))
-        OGD = GlobalDecl(DD, GD.getDtorType());
-      else
-        OGD = OMD;
-      
-      llvm::Constant *om;
-      om = WrapAddrOf(OGD);
-      om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
-
-      for (Index_t i = 0, e = submethods.size();
-           i != e; ++i) {
-        // FIXME: begin_overridden_methods might be too lax, covariance */
-        if (submethods[i] != om)
-          continue;
-        QualType nc_oret = OMD->getType()->getAs<FunctionType>()->getResultType();
-        CanQualType oret = CGM.getContext().getCanonicalType(nc_oret);
-        QualType nc_ret = MD->getType()->getAs<FunctionType>()->getResultType();
-        CanQualType ret = CGM.getContext().getCanonicalType(nc_ret);
-        ThunkAdjustment ReturnAdjustment;
-        if (oret != ret) {
-          // FIXME: calculate offsets for covariance
-          CovariantThunksMapTy::iterator i = CovariantThunks.find(OMD);
-          if (i != CovariantThunks.end()) {
-            oret = i->second.ReturnType;
-            CovariantThunks.erase(i);
-          }
-          // FIXME: Double check oret
-          Index_t nv = getNVOffset(oret, ret)/8;
-          ReturnAdjustment = ThunkAdjustment(nv, getVbaseOffset(oret, ret));
-        }
-        Index[GD] = i;
-        submethods[i] = m;
-        if (isPure)
-          PureVirtualMethods.insert(GD);
-        PureVirtualMethods.erase(OGD);
-        Thunks.erase(OGD);
-        if (MorallyVirtual || VCall.count(OGD)) {
-          Index_t &idx = VCall[OGD];
-          if (idx == 0) {
-            NonVirtualOffset[GD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
-            VCallOffset[GD] = OverrideOffset/8;
-            idx = VCalls.size()+1;
-            VCalls.push_back(0);
-            D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
-                      MD->getNameAsString().c_str(), (int)-idx-3,
-                      (int)VCalls[idx-1], Class->getNameAsCString()));
-          } else {
-            NonVirtualOffset[GD] = NonVirtualOffset[OGD];
-            VCallOffset[GD] = VCallOffset[OGD];
-            VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
-            D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
-                      MD->getNameAsString().c_str(), (int)-idx-3,
-                      (int)VCalls[idx-1], Class->getNameAsCString()));
-          }
-          VCall[GD] = idx;
-          int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
-          int64_t VirtualAdjustment = 
-            -((idx + extra + 2) * LLVMPointerWidth / 8);
-          
-          // Optimize out virtual adjustments of 0.
-          if (VCalls[idx-1] == 0)
-            VirtualAdjustment = 0;
-          
-          ThunkAdjustment ThisAdjustment(NonVirtualAdjustment,
-                                         VirtualAdjustment);
-
-          // FIXME: Do we always have to build a covariant thunk to save oret,
-          // which is the containing virtual base class?
-          if (!ReturnAdjustment.isEmpty()) {
-            CovariantThunks[GD] = 
-              CovariantThunk(i, ThisAdjustment, ReturnAdjustment, oret);
-          } else if (!isPure && !ThisAdjustment.isEmpty())
-            Thunks[GD] = Thunk(i, ThisAdjustment);
-          return true;
-        }
-
-        // FIXME: finish off
-        int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
-
-        if (NonVirtualAdjustment || !ReturnAdjustment.isEmpty()) {
-          ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
-          
-          if (!ReturnAdjustment.isEmpty()) {
-            CovariantThunks[GD] = 
-              CovariantThunk(i, ThisAdjustment, ReturnAdjustment, oret);
-          } else if (!isPure)
-            Thunks[GD] = Thunk(i, ThisAdjustment);
-        }
-        return true;
-      }
-    }
-
-    return false;
-  }
+                      Index_t Offset, int64_t CurrentVBaseOffset);
 
   void InstallThunks() {
     for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
@@ -770,7 +659,123 @@ public:
       delete Path;
   }
 };
+} // end anonymous namespace
+
+bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
+                                   bool MorallyVirtual, Index_t OverrideOffset,
+                                   Index_t Offset, int64_t CurrentVBaseOffset) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+
+  const bool isPure = MD->isPure();
+  typedef CXXMethodDecl::method_iterator meth_iter;
+  // FIXME: Should OverrideOffset's be Offset?
+
+  // FIXME: Don't like the nested loops.  For very large inheritance
+  // heirarchies we could have a table on the side with the final overridder
+  // and just replace each instance of an overridden method once.  Would be
+  // nice to measure the cost/benefit on real code.
+
+  for (meth_iter mi = MD->begin_overridden_methods(),
+         e = MD->end_overridden_methods();
+       mi != e; ++mi) {
+    GlobalDecl OGD;
+    
+    const CXXMethodDecl *OMD = *mi;
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(OMD))
+      OGD = GlobalDecl(DD, GD.getDtorType());
+    else
+      OGD = OMD;
+    
+    llvm::Constant *om;
+    om = WrapAddrOf(OGD);
+    om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
+
+    for (Index_t i = 0, e = submethods.size();
+         i != e; ++i) {
+      // FIXME: begin_overridden_methods might be too lax, covariance */
+      if (submethods[i] != om)
+        continue;
+      QualType nc_oret = OMD->getType()->getAs<FunctionType>()->getResultType();
+      CanQualType oret = CGM.getContext().getCanonicalType(nc_oret);
+      QualType nc_ret = MD->getType()->getAs<FunctionType>()->getResultType();
+      CanQualType ret = CGM.getContext().getCanonicalType(nc_ret);
+      ThunkAdjustment ReturnAdjustment;
+      if (oret != ret) {
+        // FIXME: calculate offsets for covariance
+        CovariantThunksMapTy::iterator i = CovariantThunks.find(OMD);
+        if (i != CovariantThunks.end()) {
+          oret = i->second.ReturnType;
+          CovariantThunks.erase(i);
+        }
+        // FIXME: Double check oret
+        Index_t nv = getNVOffset(oret, ret)/8;
+        ReturnAdjustment = ThunkAdjustment(nv, getVbaseOffset(oret, ret));
+      }
+      Index[GD] = i;
+      submethods[i] = m;
+      if (isPure)
+        PureVirtualMethods.insert(GD);
+      PureVirtualMethods.erase(OGD);
+      Thunks.erase(OGD);
+      if (MorallyVirtual || VCall.count(OGD)) {
+        Index_t &idx = VCall[OGD];
+        if (idx == 0) {
+          NonVirtualOffset[GD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
+          VCallOffset[GD] = OverrideOffset/8;
+          idx = VCalls.size()+1;
+          VCalls.push_back(0);
+          D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
+                    MD->getNameAsString().c_str(), (int)-idx-3,
+                    (int)VCalls[idx-1], Class->getNameAsCString()));
+        } else {
+          NonVirtualOffset[GD] = NonVirtualOffset[OGD];
+          VCallOffset[GD] = VCallOffset[OGD];
+          VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
+          D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
+                    MD->getNameAsString().c_str(), (int)-idx-3,
+                    (int)VCalls[idx-1], Class->getNameAsCString()));
+        }
+        VCall[GD] = idx;
+        int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
+        int64_t VirtualAdjustment = 
+          -((idx + extra + 2) * LLVMPointerWidth / 8);
+        
+        // Optimize out virtual adjustments of 0.
+        if (VCalls[idx-1] == 0)
+          VirtualAdjustment = 0;
+        
+        ThunkAdjustment ThisAdjustment(NonVirtualAdjustment,
+                                       VirtualAdjustment);
+
+        // FIXME: Do we always have to build a covariant thunk to save oret,
+        // which is the containing virtual base class?
+        if (!ReturnAdjustment.isEmpty()) {
+          CovariantThunks[GD] = 
+            CovariantThunk(i, ThisAdjustment, ReturnAdjustment, oret);
+        } else if (!isPure && !ThisAdjustment.isEmpty())
+          Thunks[GD] = Thunk(i, ThisAdjustment);
+        return true;
+      }
+
+      // FIXME: finish off
+      int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
+
+      if (NonVirtualAdjustment || !ReturnAdjustment.isEmpty()) {
+        ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
+        
+        if (!ReturnAdjustment.isEmpty()) {
+          CovariantThunks[GD] = 
+            CovariantThunk(i, ThisAdjustment, ReturnAdjustment, oret);
+        } else if (!isPure)
+          Thunks[GD] = Thunk(i, ThisAdjustment);
+      }
+      return true;
+    }
+  }
+
+  return false;
 }
+
 
 /// TypeConversionRequiresAdjustment - Returns whether conversion from a 
 /// derived type to a base type requires adjustment.
