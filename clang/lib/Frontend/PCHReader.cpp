@@ -1569,13 +1569,14 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
 /// \brief Retrieve the name of the original source file name
 /// directly from the PCH file, without actually loading the PCH
 /// file.
-std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName) {
+std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName,
+                                             Diagnostic &Diags) {
   // Open the PCH file.
   std::string ErrStr;
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
   Buffer.reset(llvm::MemoryBuffer::getFile(PCHFileName.c_str(), &ErrStr));
   if (!Buffer) {
-    fprintf(stderr, "error: %s\n", ErrStr.c_str());
+    Diags.Report(diag::err_fe_unable_to_read_pch_file) << ErrStr;
     return std::string();
   }
 
@@ -1591,9 +1592,7 @@ std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName) {
       Stream.Read(8) != 'P' ||
       Stream.Read(8) != 'C' ||
       Stream.Read(8) != 'H') {
-    fprintf(stderr,
-            "error: '%s' does not appear to be a precompiled header file\n",
-            PCHFileName.c_str());
+    Diags.Report(diag::err_fe_not_a_pch_file) << PCHFileName;
     return std::string();
   }
 
@@ -1608,14 +1607,14 @@ std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName) {
       switch (BlockID) {
       case pch::PCH_BLOCK_ID:
         if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
-          fprintf(stderr, "error: malformed block record in PCH file\n");
+          Diags.Report(diag::err_fe_pch_malformed_block) << PCHFileName;
           return std::string();
         }
         break;
 
       default:
         if (Stream.SkipBlock()) {
-          fprintf(stderr, "error: malformed block record in PCH file\n");
+          Diags.Report(diag::err_fe_pch_malformed_block) << PCHFileName;
           return std::string();
         }
         break;
@@ -1625,7 +1624,7 @@ std::string PCHReader::getOriginalSourceFile(const std::string &PCHFileName) {
 
     if (Code == llvm::bitc::END_BLOCK) {
       if (Stream.ReadBlockEnd()) {
-        fprintf(stderr, "error: error at end of module block in PCH file\n");
+        Diags.Report(diag::err_fe_pch_error_at_end_block) << PCHFileName;
         return std::string();
       }
       continue;

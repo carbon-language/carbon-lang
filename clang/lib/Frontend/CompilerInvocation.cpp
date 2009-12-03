@@ -1205,11 +1205,9 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
     // PCH is handled specially, we need to extra the original include path.
     if (it->getOption().matches(OPT_include_pch)) {
       std::string OriginalFile =
-        PCHReader::getOriginalSourceFile(it->getValue(Args));
-
-      // FIXME: Don't fail like this.
+        PCHReader::getOriginalSourceFile(it->getValue(Args), Diags);
       if (OriginalFile.empty())
-        exit(1);
+        continue;
 
       Opts.Includes.push_back(OriginalFile);
     } else

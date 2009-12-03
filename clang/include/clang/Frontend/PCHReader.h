@@ -530,7 +530,8 @@ public:
   /// \brief Retrieve the name of the original source file name
   /// directly from the PCH file, without actually loading the PCH
   /// file.
-  static std::string getOriginalSourceFile(const std::string &PCHFileName);
+  static std::string getOriginalSourceFile(const std::string &PCHFileName,
+                                           Diagnostic &Diags);
 
   /// \brief Returns the suggested contents of the predefines buffer,
   /// which contains a (typically-empty) subset of the predefines
