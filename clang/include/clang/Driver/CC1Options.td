@@ -201,6 +201,9 @@ def disable_free : Flag<"-disable-free">,
   HelpText<"Disable freeing of memory on exit">;
 def empty_input_only : Flag<"-empty-input-only">,
   HelpText<"Force running on an empty input file">;
+def help : Flag<"-help">,
+  HelpText<"Print this help text">;
+def _help : Flag<"--help">, Alias<help>;
 def x : Separate<"-x">, HelpText<"Input language type">;
 def cxx_inheritance_view : Separate<"-cxx-inheritance-view">,
   MetaVarName<"<class name>">,
@@ -212,6 +215,9 @@ def load : Separate<"-load">, MetaVarName<"<dsopath>">,
   HelpText<"Load the named plugin (dynamic shared object)">;
 def plugin : Separate<"-plugin">,
   HelpText<"Use the named plugin action (use \"help\" to list available options)">;
+def version : Flag<"-version">,
+  HelpText<"Print the compiler version">;
+def _version : Flag<"--version">, Alias<version>;
 
 def Action_Group : OptionGroup<"<action group>">;
 let Group = Action_Group in {

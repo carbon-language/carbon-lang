@@ -77,12 +77,14 @@ public:
   unsigned RelocatablePCH : 1;             ///< When generating PCH files,
                                            /// instruct the PCH writer to create
                                            /// relocatable PCH files.
+  unsigned ShowHelp : 1;                   ///< Show the -help text.
   unsigned ShowMacrosInCodeCompletion : 1; ///< Show macros in code completion
                                            /// results.
   unsigned ShowStats : 1;                  ///< Show frontend performance
                                            /// metrics and statistics.
   unsigned ShowTimers : 1;                 ///< Show timers for individual
                                            /// actions.
+  unsigned ShowVersion : 1;                ///< Show the -version text.
 
   /// The input files and their types.
   std::vector<std::pair<InputKind, std::string> > Inputs;
@@ -116,9 +118,11 @@ public:
     ProgramAction = frontend::ParseSyntaxOnly;
     ActionName = "";
     RelocatablePCH = 0;
+    ShowHelp = 0;
     ShowMacrosInCodeCompletion = 0;
     ShowStats = 0;
     ShowTimers = 0;
+    ShowVersion = 0;
   }
 
   /// getInputKindForExtension - Return the appropriate input kind for a file

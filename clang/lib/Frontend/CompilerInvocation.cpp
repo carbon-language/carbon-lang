@@ -296,12 +296,16 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-empty-input-only");
   if (Opts.RelocatablePCH)
     Res.push_back("-relocatable-pch");
+  if (Opts.ShowHelp)
+    Res.push_back("-help");
   if (Opts.ShowMacrosInCodeCompletion)
     Res.push_back("-code-completion-macros");
   if (Opts.ShowStats)
     Res.push_back("-print-stats");
   if (Opts.ShowTimers)
     Res.push_back("-ftime-report");
+  if (Opts.ShowVersion)
+    Res.push_back("-version");
 
   bool NeedLang = false;
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i)
@@ -888,9 +892,11 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   Opts.OutputFile = getLastArgValue(Args, OPT_o);
   Opts.Plugins = getAllArgValues(Args, OPT_load);
   Opts.RelocatablePCH = Args.hasArg(OPT_relocatable_pch);
+  Opts.ShowHelp = Args.hasArg(OPT_help);
   Opts.ShowMacrosInCodeCompletion = Args.hasArg(OPT_code_completion_macros);
   Opts.ShowStats = Args.hasArg(OPT_print_stats);
   Opts.ShowTimers = Args.hasArg(OPT_ftime_report);
+  Opts.ShowVersion = Args.hasArg(OPT_version);
   Opts.ViewClassInheritance = getLastArgValue(Args, OPT_cxx_inheritance_view);
 
   FrontendOptions::InputKind DashX = FrontendOptions::IK_None;

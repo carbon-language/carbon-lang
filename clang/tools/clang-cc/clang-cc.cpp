@@ -311,6 +311,22 @@ int main(int argc, char **argv) {
                                      (void*)(intptr_t) GetBuiltinIncludePath,
                                      Diags);
 
+  // Honor -help.
+  if (Clang.getInvocation().getFrontendOpts().ShowHelp) {
+    llvm::OwningPtr<driver::OptTable> Opts(driver::createCC1OptTable());
+    Opts->PrintHelp(llvm::outs(), "clang-cc",
+                    "LLVM 'Clang' Compiler: http://clang.llvm.org");
+    return 0;
+  }
+
+  // Honor -version.
+  //
+  // FIXME: Use a better -version message?
+  if (Clang.getInvocation().getFrontendOpts().ShowVersion) {
+    llvm::cl::PrintVersionMessage();
+    return 0;
+  }
+
   // Create the actual diagnostics engine.
   Clang.createDiagnostics(argc, argv);
   if (!Clang.hasDiagnostics())
