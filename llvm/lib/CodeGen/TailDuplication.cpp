@@ -17,6 +17,8 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineSSAUpdater.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -36,11 +38,21 @@ TailDuplicateSize("tail-dup-size",
                   cl::desc("Maximum instructions to consider tail duplicating"),
                   cl::init(2), cl::Hidden);
 
+typedef std::vector<unsigned> AvailableValsTy;
+
 namespace {
   /// TailDuplicatePass - Perform tail duplication.
   class TailDuplicatePass : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     MachineModuleInfo *MMI;
+    MachineRegisterInfo *MRI;
+
+    // SSAUpdateVRs - A list of virtual registers for which to update SSA form.
+    SmallVector<unsigned, 16> SSAUpdateVRs;
+
+    // SSAUpdateVals - For each virtual register in SSAUpdateVals keep a list of
+    // source virtual registers.
+    DenseMap<unsigned, AvailableValsTy> SSAUpdateVals;
 
   public:
     static char ID;
@@ -50,6 +62,7 @@ namespace {
     virtual const char *getPassName() const { return "Tail Duplication"; }
 
   private:
+    void AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg);
     bool TailDuplicateBlocks(MachineFunction &MF);
     bool TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
@@ -64,6 +77,7 @@ FunctionPass *llvm::createTailDuplicatePass() {
 
 bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
+  MRI = &MF.getRegInfo();
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
 
   bool MadeChange = false;
@@ -83,6 +97,9 @@ bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
 bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
   bool MadeChange = false;
 
+  SSAUpdateVRs.clear();
+  SSAUpdateVals.clear();
+
   for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
     MachineBasicBlock *MBB = I++;
 
@@ -100,13 +117,83 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
       ++NumDeadBlocks;
     }
   }
+
+  if (!SSAUpdateVRs.empty()) {
+    // Update SSA form.
+    MachineSSAUpdater SSAUpdate(MF);
+
+    for (unsigned i = 0, e = SSAUpdateVRs.size(); i != e; ++i) {
+      unsigned VReg = SSAUpdateVRs[i];
+      SSAUpdate.Initialize(VReg);
+
+      // If the original definition is still around, add it as an available
+      // value.
+      MachineInstr *DefMI = MRI->getVRegDef(VReg);
+      MachineBasicBlock *DefBB = 0;
+      if (DefMI) {
+        DefBB = DefMI->getParent();
+        SSAUpdate.AddAvailableValue(DefBB, VReg);
+      }
+
+      // Add the new vregs as available values.
+      DenseMap<unsigned, AvailableValsTy>::iterator LI =
+        SSAUpdateVals.find(VReg);  
+      for (unsigned j = 0, ee = LI->second.size(); j != ee; ++j) {
+        unsigned NewReg = LI->second[j];
+        MachineInstr *DefMI = MRI->getVRegDef(NewReg);
+        SSAUpdate.AddAvailableValue(DefMI->getParent(), NewReg);
+      }
+
+      // Rewrite uses that are outside of the original def's block.
+      for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(VReg),
+             UE = MRI->use_end(); UI != UE; ++UI) {
+        MachineInstr *UseMI = &*UI;
+        if (UseMI->getParent() != DefBB)
+          SSAUpdate.RewriteUse(UI.getOperand());
+      }
+    }
+  }
+
   return MadeChange;
+}
+
+static bool isDefLiveOut(unsigned Reg, MachineBasicBlock *BB,
+                         const MachineRegisterInfo *MRI) {
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
+    MachineInstr *UseMI = &*UI;
+    if (UseMI->getParent() != BB)
+      return true;
+  }
+  return false;
+}
+
+static unsigned getPHISrcRegOpIdx(MachineInstr *MI, MachineBasicBlock *SrcBB) {
+  for (unsigned i = 1, e = MI->getNumOperands(); i != e; i += 2)
+    if (MI->getOperand(i+1).getMBB() == SrcBB)
+      return i;
+  return 0;
+}
+
+/// AddSSAUpdateEntry - Add a definition and source virtual registers pair for
+/// SSA update.
+void TailDuplicatePass::AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg) {
+  DenseMap<unsigned, AvailableValsTy>::iterator LI =
+    SSAUpdateVals.find(OrigReg);
+  if (LI != SSAUpdateVals.end())
+    LI->second.push_back(NewReg);
+  else {
+    AvailableValsTy Vals;
+    Vals.push_back(NewReg);
+    SSAUpdateVals.insert(std::make_pair(OrigReg, Vals));
+    SSAUpdateVRs.push_back(OrigReg);
+  }
 }
 
 /// TailDuplicate - If it is profitable, duplicate TailBB's contents in each
 /// of its predecessors.
 bool TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
-                                        MachineFunction &MF) {
+                                      MachineFunction &MF) {
   // Don't try to tail-duplicate single-block loops.
   if (TailBB->isSuccessor(TailBB))
     return false;
@@ -179,10 +266,54 @@ bool TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
 
     // Remove PredBB's unconditional branch.
     TII->RemoveBranch(*PredBB);
+
     // Clone the contents of TailBB into PredBB.
-    for (MachineBasicBlock::iterator I = TailBB->begin(), E = TailBB->end();
-         I != E; ++I) {
+    DenseMap<unsigned, unsigned> LocalVRMap;
+    MachineBasicBlock::iterator I = TailBB->begin();
+    MachineBasicBlock::iterator NI;
+    for (MachineBasicBlock::iterator E = TailBB->end(); I != E; I = NI) {
+      NI = next(I);
+      if (I->getOpcode() == TargetInstrInfo::PHI) {
+        // Replace the uses of the def of the PHI with the register coming
+        // from PredBB.
+        unsigned DefReg = I->getOperand(0).getReg();
+        unsigned SrcOpIdx = getPHISrcRegOpIdx(I, PredBB);
+        unsigned SrcReg = I->getOperand(SrcOpIdx).getReg();
+        LocalVRMap.insert(std::make_pair(DefReg, SrcReg));
+        if (isDefLiveOut(DefReg, TailBB, MRI))
+          AddSSAUpdateEntry(DefReg, SrcReg);
+
+        // Remove PredBB from the PHI node.
+        I->RemoveOperand(SrcOpIdx+1);
+        I->RemoveOperand(SrcOpIdx);
+        if (I->getNumOperands() == 1)
+          I->eraseFromParent();
+        continue;
+      }
+
+      // Replace def of virtual registers with new registers, and update uses
+      // with PHI source register or the new registers.
       MachineInstr *NewMI = MF.CloneMachineInstr(I);
+      for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = NewMI->getOperand(i);
+        if (!MO.isReg())
+          continue;
+        unsigned Reg = MO.getReg();
+        if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+          continue;
+        if (MO.isDef()) {
+          const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+          unsigned NewReg = MRI->createVirtualRegister(RC);
+          MO.setReg(NewReg);
+          LocalVRMap.insert(std::make_pair(Reg, NewReg));
+          if (isDefLiveOut(Reg, TailBB, MRI))
+            AddSSAUpdateEntry(Reg, NewReg);
+        } else {
+          DenseMap<unsigned, unsigned>::iterator VI = LocalVRMap.find(Reg);
+          if (VI != LocalVRMap.end())
+            MO.setReg(VI->second);
+        }
+      }
       PredBB->insert(PredBB->end(), NewMI);
     }
     NumInstrDups += TailBB->size() - 1; // subtract one for removed branch
