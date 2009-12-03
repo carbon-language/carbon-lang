@@ -320,6 +320,11 @@ public:
   /// loads the instruction does are invariant (if it does multiple loads).
   bool isInvariantLoad(AliasAnalysis *AA) const;
 
+  /// isConstantValuePHI - If the specified instruction is a PHI that always
+  /// merges together the same virtual register, return the register, otherwise
+  /// return 0.
+  unsigned isConstantValuePHI() const;
+
   //
   // Debugging support
   //

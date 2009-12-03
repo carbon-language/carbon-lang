@@ -16,13 +16,18 @@
 
 namespace llvm {
   class MachineBasicBlock;
+  class MachineFunction;
   class MachineInstr;
+  class MachineOperand;
+  class MachineRegisterInfo;
+  class TargetInstrInfo;
+  class TargetRegisterClass;
   template<typename T> class SmallVectorImpl;
 
-/// SSAUpdater - This class updates SSA form for a set of values defined in
-/// multiple blocks.  This is used when code duplication or another unstructured
-/// transformation wants to rewrite a set of uses of one value with uses of a
-/// set of values.
+/// MachineSSAUpdater - This class updates SSA form for a set of virtual
+/// registers defined in multiple blocks.  This is used when code duplication
+/// or another unstructured transformation wants to rewrite a set of uses of one
+/// vreg with uses of a set of vregs.
 class MachineSSAUpdater {
   /// AvailableVals - This keeps track of which value to use on a per-block
   /// basis.  When we insert PHI nodes, we keep track of them here.
@@ -35,18 +40,28 @@ class MachineSSAUpdater {
   //std::vector<std::pair<MachineBasicBlock*, unsigned > > IncomingPredInfo;
   void *IPI;
 
+  /// VR - Current virtual register whose uses are being updated.
+  unsigned VR;
+
+  /// VRC - Register class of the current virtual register.
+  const TargetRegisterClass *VRC;
+
   /// InsertedPHIs - If this is non-null, the MachineSSAUpdater adds all PHI
   /// nodes that it creates to the vector.
   SmallVectorImpl<MachineInstr*> *InsertedPHIs;
+
+  const TargetInstrInfo *TII;
+  MachineRegisterInfo *MRI;
 public:
   /// MachineSSAUpdater constructor.  If InsertedPHIs is specified, it will be
   /// filled in with all PHI Nodes created by rewriting.
-  explicit MachineSSAUpdater(SmallVectorImpl<MachineInstr*> *InsertedPHIs = 0);
+  explicit MachineSSAUpdater(MachineFunction &MF,
+                             SmallVectorImpl<MachineInstr*> *InsertedPHIs = 0);
   ~MachineSSAUpdater();
 
   /// Initialize - Reset this object to get ready for a new set of SSA
   /// updates.
-  void Initialize();
+  void Initialize(unsigned V);
 
   /// AddAvailableValue - Indicate that a rewritten value is available at the
   /// end of the specified block with the specified value.
@@ -86,7 +101,7 @@ public:
   /// will not work if the use is supposed to be rewritten to a value defined in
   /// the same block as the use, but above it.  Any 'AddAvailableValue's added
   /// for the use's block will be considered to be below it.
-  void RewriteUse(unsigned &U);
+  void RewriteUse(MachineOperand &U);
 
 private:
   unsigned GetValueAtEndOfBlockInternal(MachineBasicBlock *BB);
