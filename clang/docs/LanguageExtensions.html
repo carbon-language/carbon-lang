@@ -23,6 +23,7 @@ td {
 <li><a href="#has_include">Include File Checking Macros</a></li>
 <li><a href="#builtinmacros">Builtin Macros</a></li>
 <li><a href="#vectors">Vectors and Extended Vectors</a></li>
+<li><a href="#checking_language_features">Checks for Standard Language Features</a></li>
 <li><a href="#blocks">Blocks</a></li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
 <li><a href="#builtins">Builtin Functions</a>
@@ -192,6 +193,23 @@ with V.xyzw syntax and other tidbits.  See also <a
 href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 
 <p>Query for this feature with __has_feature(attribute_ext_vector_type).</p>
+
+<!-- ======================================================================= -->
+<h2 id="checking_language_features">Checks for Standard Language Features</h2>
+<!-- ======================================================================= -->
+
+<p>The <tt>__has_feature</tt> macro can be used to query if certain standard language features are
+enabled.  Those features are listed here.</p>
+
+<h3>C++ exceptions</h3>
+
+Use <tt>__has_feature(cxx_exceptions)</tt> to determine if C++ exceptions have been enabled. For
+example, compiling code with <tt>-fexceptions</tt> enables C++ exceptions.
+
+<h3>C++ RTTI</h3>
+
+Use <tt>__has_feature(cxx_rtt)</tt> to determine if C++ RTTI has been enabled. For example,
+compiling code with <tt>-fno-rtti</tt> disables the use of RTTI.
 
 <!-- ======================================================================= -->
 <h2 id="blocks">Blocks</h2>
