@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/CallGraph.h"
-#include "clang/Frontend/ASTUnit.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Index/CallGraph.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;

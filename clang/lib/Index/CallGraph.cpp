@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/CallGraph.h"
+#include "clang/Index/CallGraph.h"
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
