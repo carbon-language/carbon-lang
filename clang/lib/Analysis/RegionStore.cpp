@@ -522,6 +522,19 @@ const GRState *RegionStoreManager::InvalidateRegions(const GRState *state,
       if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
         IS->insert(SR->getSymbol());
     }
+    
+    // BlockDataRegion?  If so, invalidate captured variables that are passed
+    // by reference.
+    if (const BlockDataRegion *BR = dyn_cast<BlockDataRegion>(R)) {
+      for (BlockDataRegion::referenced_vars_iterator
+            I = BR->referenced_vars_begin(), E = BR->referenced_vars_end() ;
+           I != E; ++I) {
+        const VarRegion *VR = *I;
+        if (VR->getDecl()->getAttr<BlocksAttr>())
+          WorkList.push_back(VR);
+      }
+      continue;
+    }
 
     // Handle the region itself.
     if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R) ||

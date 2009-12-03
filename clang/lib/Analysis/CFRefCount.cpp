@@ -1984,6 +1984,7 @@ public:
                    Expr* Ex,
                    Expr* Receiver,
                    const RetainSummary& Summ,
+                   const MemRegion *Callee,
                    ExprIterator arg_beg, ExprIterator arg_end,
                    ExplodedNode* Pred, const GRState *state);
 
@@ -2777,6 +2778,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
                              Expr* Ex,
                              Expr* Receiver,
                              const RetainSummary& Summ,
+                             const MemRegion *Callee,
                              ExprIterator arg_beg, ExprIterator arg_end,
                              ExplodedNode* Pred, const GRState *state) {
 
@@ -2854,6 +2856,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       V = cast<nonloc::LocAsInteger>(V).getLoc();
       goto tryAgain;
     }
+  }
+  
+  // Block calls result in all captured values passed-via-reference to be
+  // invalidated.
+  if (const BlockDataRegion *BR = dyn_cast_or_null<BlockDataRegion>(Callee)) {
+    RegionsToInvalidate.push_back(BR);
   }
   
   // Invalidate regions we designed for invalidation use the batch invalidation
@@ -3025,7 +3033,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
   }
 
   assert(Summ);
-  EvalSummary(Dst, Eng, Builder, CE, 0, *Summ,
+  EvalSummary(Dst, Eng, Builder, CE, 0, *Summ, L.getAsRegion(),
               CE->arg_begin(), CE->arg_end(), Pred, Builder.GetState(Pred));
 }
 
@@ -3041,7 +3049,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
       : Summaries.getClassMethodSummary(ME);
 
   assert(Summ && "RetainSummary is null");
-  EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), *Summ,
+  EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), *Summ, NULL,
               ME->arg_begin(), ME->arg_end(), Pred, state);
 }
 

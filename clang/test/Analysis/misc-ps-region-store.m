@@ -541,3 +541,30 @@ double rdar_6811085(void) {
   return u + 10; // expected-warning{{The left operand of '+' is a garbage value}}
 }
 
+//===----------------------------------------------------------------------===//
+// Path-sensitive tests for blocks.
+//===----------------------------------------------------------------------===//
+
+void indirect_block_call(void (^f)());
+
+int blocks_1(int *p, int z) {
+  __block int *q = 0;
+  void (^bar)() = ^{ q = p; };
+  
+  if (z == 1) {
+    // The call to 'bar' might cause 'q' to be invalidated.
+    bar();
+    *q = 0x1; // no-warning
+  }
+  else if (z == 2) {
+    // The function 'indirect_block_call' might invoke bar, thus causing
+    // 'q' to possibly be invalidated.
+    indirect_block_call(bar);
+    *q = 0x1; // no-warning
+  }
+  else {
+    *q = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+  }
+  return z;
+}
+
