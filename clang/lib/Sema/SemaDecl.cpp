@@ -2444,12 +2444,6 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
     return NewVD->setInvalidDecl();
   }
 
-  // The variable can not have an abstract class type.
-  if (RequireNonAbstractType(NewVD->getLocation(), T,
-                             diag::err_abstract_type_in_decl,
-                             AbstractVariableType))
-    return NewVD->setInvalidDecl();
-
   // Emit an error if an address space was applied to decl with local storage.
   // This includes arrays of objects with address space qualifiers, but not
   // automatic variables that point to other address spaces.
@@ -3431,6 +3425,12 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     return;
   }
 
+  // The variable can not have an abstract class type.
+  if (RequireNonAbstractType(VDecl->getLocation(), VDecl->getType(),
+                             diag::err_abstract_type_in_decl,
+                             AbstractVariableType))
+    VDecl->setInvalidDecl();
+
   const VarDecl *Def = 0;
   if (VDecl->getDefinition(Def)) {
     Diag(VDecl->getLocation(), diag::err_redefinition)
@@ -3663,6 +3663,12 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
           Var->setInvalidDecl();
         }
       }
+
+      // The variable can not have an abstract class type.
+      if (RequireNonAbstractType(Var->getLocation(), Type,
+                                 diag::err_abstract_type_in_decl,
+                                 AbstractVariableType))
+        Var->setInvalidDecl();
     }
 
 #if 0

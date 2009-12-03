@@ -1957,6 +1957,28 @@ namespace {
   };
 }
 
+/// \brief Perform semantic checks on a class definition that has been
+/// completing, introducing implicitly-declared members, checking for
+/// abstract types, etc.
+void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
+  if (!Record || Record->isInvalidDecl())
+    return;
+
+  if (!Record->isAbstract()) {
+    // Collect all the pure virtual methods and see if this is an abstract
+    // class after all.
+    PureVirtualMethodCollector Collector(Context, Record);
+    if (!Collector.empty())
+      Record->setAbstract(true);
+  }
+
+  if (Record->isAbstract())
+    (void)AbstractClassUsageDiagnoser(*this, Record);
+
+  if (!Record->isDependentType() && !Record->isInvalidDecl())
+    AddImplicitlyDeclaredMembersToClass(Record);
+}
+
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclPtrTy TagDecl,
                                              SourceLocation LBrac,
@@ -1965,24 +1987,13 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
     return;
 
   AdjustDeclIfTemplate(TagDecl);
+
   ActOnFields(S, RLoc, TagDecl,
               (DeclPtrTy*)FieldCollector->getCurFields(),
               FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
 
-  CXXRecordDecl *RD = cast<CXXRecordDecl>(TagDecl.getAs<Decl>());
-  if (!RD->isAbstract()) {
-    // Collect all the pure virtual methods and see if this is an abstract
-    // class after all.
-    PureVirtualMethodCollector Collector(Context, RD);
-    if (!Collector.empty())
-      RD->setAbstract(true);
-  }
-
-  if (RD->isAbstract())
-    (void)AbstractClassUsageDiagnoser(*this, RD);
-
-  if (!RD->isDependentType() && !RD->isInvalidDecl())
-    AddImplicitlyDeclaredMembersToClass(RD);
+  CheckCompletedCXXClass(
+                      dyn_cast_or_null<CXXRecordDecl>(TagDecl.getAs<Decl>()));
 }
 
 /// AddImplicitlyDeclaredMembersToClass - Adds any implicitly-declared

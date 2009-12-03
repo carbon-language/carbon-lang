@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -faccess-control -verify %s
-
 namespace T1 {
 
 class A {
@@ -122,8 +121,8 @@ struct Base1 { virtual void f(int); };
 struct Base2 { };
 
 void test() {
-  Foo<Base1> f1;
-  Foo<Base2> f2; // expected-note{{instantiation}}
+  (void)sizeof(Foo<Base1>);
+  (void)sizeof(Foo<Base2>); // expected-note{{instantiation}}
 }
 
 template<typename Base>
@@ -137,3 +136,17 @@ void test2() {
   f1.f(17);
   f2.f(17);
 };
+
+struct Foo3 {
+  virtual void f(int) = 0; // expected-note{{pure virtual function}}
+};
+
+template<typename T>
+struct Bar3 : Foo3 {
+  void f(T);
+};
+
+void test3() {
+  Bar3<int> b3i; // okay
+  Bar3<float> b3f; // expected-error{{is an abstract class}}
+}

@@ -2148,6 +2148,7 @@ public:
                                     SourceLocation ColonLoc,
                                     MemInitTy **MemInits, unsigned NumMemInits);
 
+  void CheckCompletedCXXClass(CXXRecordDecl *Record);
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                                  DeclPtrTy TagDecl,
                                                  SourceLocation LBrac,

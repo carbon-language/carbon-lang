@@ -1077,13 +1077,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   ActOnFields(0, Instantiation->getLocation(), DeclPtrTy::make(Instantiation),
               Fields.data(), Fields.size(), SourceLocation(), SourceLocation(),
               0);
+  CheckCompletedCXXClass(Instantiation);
   if (Instantiation->isInvalidDecl())
     Invalid = true;
   
-  // Add any implicitly-declared members that we might need.
-  if (!Invalid)
-    AddImplicitlyDeclaredMembersToClass(Instantiation);
-
   // Exit the scope of this instantiation.
   CurContext = PreviousContext;
 
