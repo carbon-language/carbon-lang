@@ -385,9 +385,6 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
         if (!CatchType.getTypePtr()->isPointerType())
           CatchType = getContext().getPointerType(CatchType);
         ExcObject = Builder.CreateBitCast(ExcObject, ConvertType(CatchType));
-        // CatchParam is a ParmVarDecl because of the grammar
-        // construction used to handle this, but for codegen purposes
-        // we treat this as a local decl.
         EmitLocalBlockVarDecl(*CatchParam);
 #if 0
         // FIXME: objects with ctors, references
