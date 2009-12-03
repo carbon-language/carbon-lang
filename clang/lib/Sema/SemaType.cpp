@@ -897,6 +897,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     break;
   }
   
+  if (T.isNull())
+    return T;
+
   if (T == Context.UndeducedAutoTy) {
     int Error = -1;
 

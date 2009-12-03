@@ -193,6 +193,11 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
                                                      TSK_ImplicitInstantiation);
   
   if (D->getInit()) {
+    if (Var->isStaticDataMember() && !D->isOutOfLine())
+      SemaRef.PushExpressionEvaluationContext(Sema::Unevaluated);
+    else
+      SemaRef.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated);
+
     OwningExprResult Init
       = SemaRef.SubstExpr(D->getInit(), TemplateArgs);
     if (Init.isInvalid())
@@ -235,6 +240,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     } else
       SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), move(Init),
                                    D->hasCXXDirectInitializer());
+    SemaRef.PopExpressionEvaluationContext();
   } else if (!Var->isStaticDataMember() || Var->isOutOfLine())
     SemaRef.ActOnUninitializedDecl(Sema::DeclPtrTy::make(Var), false);
 

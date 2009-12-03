@@ -72,3 +72,23 @@ void Test() {
   Z1<Y2<X2>::value> x2;
   int y2[Y2<X2>::value];
 }
+
+// PR5672
+template <int n>
+struct X3 {};
+
+class Y3 {
+ public:
+  ~Y3();  // The error isn't triggered without this dtor.
+
+  void Foo(X3<1>);
+};
+
+template <typename T>
+struct SizeOf {
+  static const int value = sizeof(T);
+};
+
+void MyTest3() {
+   Y3().Foo(X3<SizeOf<char>::value>());
+}

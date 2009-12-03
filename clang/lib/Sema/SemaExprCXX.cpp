@@ -2069,14 +2069,17 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr,
                                               bool ShouldDestroyTemps) {
   assert(SubExpr && "sub expression can't be null!");
 
-  if (ExprTemporaries.empty())
+  unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
+  assert(ExprTemporaries.size() >= FirstTemporary);
+  if (ExprTemporaries.size() == FirstTemporary)
     return SubExpr;
 
   Expr *E = CXXExprWithTemporaries::Create(Context, SubExpr,
-                                           &ExprTemporaries[0],
-                                           ExprTemporaries.size(),
+                                           &ExprTemporaries[FirstTemporary],
+                                    ExprTemporaries.size() - FirstTemporary,
                                            ShouldDestroyTemps);
-  ExprTemporaries.clear();
+  ExprTemporaries.erase(ExprTemporaries.begin() + FirstTemporary,
+                        ExprTemporaries.end());
 
   return E;
 }
