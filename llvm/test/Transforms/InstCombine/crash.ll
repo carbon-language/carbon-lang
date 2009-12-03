@@ -137,3 +137,14 @@ define arm_apcscc void @test5() {
 exit:
        ret void
 }
+
+
+; PR5673
+
+@test6g = external global i32*  
+
+define arm_aapcs_vfpcc i32 @test6(i32 %argc, i8** %argv) nounwind {
+entry:
+  store i32* getelementptr (i32* bitcast (i32 (i32, i8**)* @test6 to i32*), i32 -2048), i32** @test6g, align 4
+  unreachable
+}
