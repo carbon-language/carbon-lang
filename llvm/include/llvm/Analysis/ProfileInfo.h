@@ -21,115 +21,227 @@
 #ifndef LLVM_ANALYSIS_PROFILEINFO_H
 #define LLVM_ANALYSIS_PROFILEINFO_H
 
-#include "llvm/BasicBlock.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <string>
 #include <map>
+#include <set>
 
 namespace llvm {
-  class Function;
   class Pass;
   class raw_ostream;
 
+  class BasicBlock;
+  class Function;
+  class MachineBasicBlock;
+  class MachineFunction;
+
+  // Helper for dumping edges to errs().
+  raw_ostream& operator<<(raw_ostream &O, std::pair<const BasicBlock *, const BasicBlock *> E);
+  raw_ostream& operator<<(raw_ostream &O, std::pair<const MachineBasicBlock *, const MachineBasicBlock *> E);
+
+  raw_ostream& operator<<(raw_ostream &O, const BasicBlock *BB);
+  raw_ostream& operator<<(raw_ostream &O, const MachineBasicBlock *MBB);
+
+  raw_ostream& operator<<(raw_ostream &O, const Function *F);
+  raw_ostream& operator<<(raw_ostream &O, const MachineFunction *MF);
+
   /// ProfileInfo Class - This class holds and maintains profiling
   /// information for some unit of code.
-  class ProfileInfo {
+  template<class FType, class BType>
+  class ProfileInfoT {
   public:
     // Types for handling profiling information.
-    typedef std::pair<const BasicBlock*, const BasicBlock*> Edge;
+    typedef std::pair<const BType*, const BType*> Edge;
     typedef std::pair<Edge, double> EdgeWeight;
     typedef std::map<Edge, double> EdgeWeights;
-    typedef std::map<const BasicBlock*, double> BlockCounts;
+    typedef std::map<const BType*, double> BlockCounts;
+    typedef std::map<const BType*, const BType*> Path;
 
   protected:
     // EdgeInformation - Count the number of times a transition between two
     // blocks is executed. As a special case, we also hold an edge from the
     // null BasicBlock to the entry block to indicate how many times the
     // function was entered.
-    std::map<const Function*, EdgeWeights> EdgeInformation;
+    std::map<const FType*, EdgeWeights> EdgeInformation;
 
     // BlockInformation - Count the number of times a block is executed.
-    std::map<const Function*, BlockCounts> BlockInformation;
+    std::map<const FType*, BlockCounts> BlockInformation;
 
     // FunctionInformation - Count the number of times a function is executed.
-    std::map<const Function*, double> FunctionInformation;
+    std::map<const FType*, double> FunctionInformation;
+
+    ProfileInfoT<MachineFunction, MachineBasicBlock> *MachineProfile;
   public:
     static char ID; // Class identification, replacement for typeinfo
-    virtual ~ProfileInfo();  // We want to be subclassed
+    ProfileInfoT();
+    ~ProfileInfoT();  // We want to be subclassed
 
     // MissingValue - The value that is returned for execution counts in case
     // no value is available.
     static const double MissingValue;
 
     // getFunction() - Returns the Function for an Edge, checking for validity.
-    static const Function* getFunction(Edge e) {
+    static const FType* getFunction(Edge e) {
       if (e.first) {
         return e.first->getParent();
       } else if (e.second) {
         return e.second->getParent();
       }
       assert(0 && "Invalid ProfileInfo::Edge");
-      return (const Function*)0;
+      return (const FType*)0;
     }
 
     // getEdge() - Creates an Edge from two BasicBlocks.
-    static Edge getEdge(const BasicBlock *Src, const BasicBlock *Dest) {
+    static Edge getEdge(const BType *Src, const BType *Dest) {
       return std::make_pair(Src, Dest);
     }
 
     //===------------------------------------------------------------------===//
     /// Profile Information Queries
     ///
-    double getExecutionCount(const Function *F);
+    double getExecutionCount(const FType *F);
 
-    double getExecutionCount(const BasicBlock *BB);
+    double getExecutionCount(const BType *BB);
+
+    void setExecutionCount(const BType *BB, double w);
+
+    void addExecutionCount(const BType *BB, double w);
 
     double getEdgeWeight(Edge e) const {
-      std::map<const Function*, EdgeWeights>::const_iterator J =
+      typename std::map<const FType*, EdgeWeights>::const_iterator J =
         EdgeInformation.find(getFunction(e));
       if (J == EdgeInformation.end()) return MissingValue;
 
-      EdgeWeights::const_iterator I = J->second.find(e);
+      typename EdgeWeights::const_iterator I = J->second.find(e);
       if (I == J->second.end()) return MissingValue;
 
       return I->second;
     }
 
-    EdgeWeights &getEdgeWeights (const Function *F) {
+    void setEdgeWeight(Edge e, double w) {
+      DEBUG_WITH_TYPE("profile-info",
+            errs() << "Creating Edge " << e
+                   << " (weight: " << format("%.20g",w) << ")\n");
+      EdgeInformation[getFunction(e)][e] = w;
+    }
+
+    void addEdgeWeight(Edge e, double w);
+
+    EdgeWeights &getEdgeWeights (const FType *F) {
       return EdgeInformation[F];
     }
 
     //===------------------------------------------------------------------===//
     /// Analysis Update Methods
     ///
-    void removeBlock(const BasicBlock *BB) {
-      std::map<const Function*, BlockCounts>::iterator J =
-        BlockInformation.find(BB->getParent());
-      if (J == BlockInformation.end()) return;
+    void removeBlock(const BType *BB);
 
-      J->second.erase(BB);
+    void removeEdge(Edge e);
+
+    void replaceEdge(const Edge &, const Edge &);
+
+    enum GetPathMode {
+      GetPathToExit = 1,
+      GetPathToValue = 2,
+      GetPathToDest = 4,
+      GetPathWithNewEdges = 8
+    };
+
+    const BType *GetPath(const BType *Src, const BType *Dest,
+                              Path &P, unsigned Mode);
+
+    void divertFlow(const Edge &, const Edge &);
+
+    void splitEdge(const BType *FirstBB, const BType *SecondBB,
+                   const BType *NewBB, bool MergeIdenticalEdges = false);
+
+    void splitBlock(const BType *Old, const BType* New);
+
+    void splitBlock(const BType *BB, const BType* NewBB,
+                    BType *const *Preds, unsigned NumPreds);
+
+    void replaceAllUses(const BType *RmBB, const BType *DestBB);
+
+    void transfer(const FType *Old, const FType *New);
+
+    void repair(const FType *F);
+
+    void dump(FType *F = 0, bool real = true) {
+      errs() << "**** This is ProfileInfo " << this << " speaking:\n";
+      if (!real) {
+        typename std::set<const FType*> Functions;
+
+        errs() << "Functions: \n";
+        if (F) {
+          errs() << F << "@" << format("%p", F) << ": " << format("%.20g",getExecutionCount(F)) << "\n";
+          Functions.insert(F);
+        } else {
+          for (typename std::map<const FType*, double>::iterator fi = FunctionInformation.begin(),
+               fe = FunctionInformation.end(); fi != fe; ++fi) {
+            errs() << fi->first << "@" << format("%p",fi->first) << ": " << format("%.20g",fi->second) << "\n";
+            Functions.insert(fi->first);
+          }
+        }
+
+        for (typename std::set<const FType*>::iterator FI = Functions.begin(), FE = Functions.end();
+             FI != FE; ++FI) {
+          const FType *F = *FI;
+          typename std::map<const FType*, BlockCounts>::iterator bwi = BlockInformation.find(F);
+          errs() << "BasicBlocks for Function " << F << ":\n";
+          for (typename BlockCounts::const_iterator bi = bwi->second.begin(), be = bwi->second.end(); bi != be; ++bi) {
+            errs() << bi->first << "@" << format("%p", bi->first) << ": " << format("%.20g",bi->second) << "\n";
+          }
+        }
+
+        for (typename std::set<const FType*>::iterator FI = Functions.begin(), FE = Functions.end();
+             FI != FE; ++FI) {
+          typename std::map<const FType*, EdgeWeights>::iterator ei = EdgeInformation.find(*FI);
+          errs() << "Edges for Function " << ei->first << ":\n";
+          for (typename EdgeWeights::iterator ewi = ei->second.begin(), ewe = ei->second.end(); 
+               ewi != ewe; ++ewi) {
+            errs() << ewi->first << ": " << format("%.20g",ewi->second) << "\n";
+          }
+        }
+      } else {
+        assert(F && "No function given, this is not supported!");
+        errs() << "Functions: \n";
+        errs() << F << "@" << format("%p", F) << ": " << format("%.20g",getExecutionCount(F)) << "\n";
+
+        errs() << "BasicBlocks for Function " << F << ":\n";
+        for (typename FType::const_iterator BI = F->begin(), BE = F->end();
+             BI != BE; ++BI) {
+          const BType *BB = &(*BI);
+          errs() << BB << "@" << format("%p", BB) << ": " << format("%.20g",getExecutionCount(BB)) << "\n";
+        }
+      }
+      errs() << "**** ProfileInfo " << this << ", over and out.\n";
     }
 
-    void removeEdge(Edge e) {
-      std::map<const Function*, EdgeWeights>::iterator J =
-        EdgeInformation.find(getFunction(e));
-      if (J == EdgeInformation.end()) return;
+    bool CalculateMissingEdge(const BType *BB, Edge &removed, bool assumeEmptyExit = false);
 
-      J->second.erase(e);
+    bool EstimateMissingEdges(const BType *BB);
+
+    ProfileInfoT<MachineFunction, MachineBasicBlock> *MI() {
+      if (MachineProfile == 0)
+        MachineProfile = new ProfileInfoT<MachineFunction, MachineBasicBlock>();
+      return MachineProfile;
     }
 
-    void splitEdge(const BasicBlock *FirstBB, const BasicBlock *SecondBB,
-                   const BasicBlock *NewBB, bool MergeIdenticalEdges = false);
-
-    void replaceAllUses(const BasicBlock *RmBB, const BasicBlock *DestBB);
+    bool hasMI() const {
+      return (MachineProfile != 0);
+    }
   };
+
+  typedef ProfileInfoT<Function, BasicBlock> ProfileInfo;
+  typedef ProfileInfoT<MachineFunction, MachineBasicBlock> MachineProfileInfo;
 
   /// createProfileLoaderPass - This function returns a Pass that loads the
   /// profiling information for the module from the specified filename, making
   /// it available to the optimizers.
   Pass *createProfileLoaderPass(const std::string &Filename);
-
-  raw_ostream& operator<<(raw_ostream &O, ProfileInfo::Edge E);
 
 } // End llvm namespace
 
