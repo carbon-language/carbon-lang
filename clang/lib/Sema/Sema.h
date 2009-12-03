@@ -2191,6 +2191,14 @@ public:
                                        bool Virtual, AccessSpecifier Access,
                                        QualType BaseType,
                                        SourceLocation BaseLoc);
+  
+  /// SetClassDeclAttributesFromBase - Copies class decl traits 
+  /// (such as whether the class has a trivial constructor, 
+  /// trivial destructor etc) from the given base class.
+  void SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
+                                      const CXXRecordDecl *BaseClass,
+                                      bool BaseIsVirtual);
+  
   virtual BaseResult ActOnBaseSpecifier(DeclPtrTy classdecl,
                                         SourceRange SpecifierRange,
                                         bool Virtual, AccessSpecifier Access,

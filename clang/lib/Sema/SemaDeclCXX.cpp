@@ -496,12 +496,25 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     return 0;
   }
 
+  SetClassDeclAttributesFromBase(Class, cast<CXXRecordDecl>(BaseDecl), Virtual);
+  
+  // Create the base specifier.
+  // FIXME: Allocate via ASTContext?
+  return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
+                              Class->getTagKind() == RecordDecl::TK_class,
+                              Access, BaseType);
+}
+
+void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
+                                          const CXXRecordDecl *BaseClass,
+                                          bool BaseIsVirtual) {
+
   // C++ [dcl.init.aggr]p1:
   //   An aggregate is [...] a class with [...] no base classes [...].
   Class->setAggregate(false);
   Class->setPOD(false);
 
-  if (Virtual) {
+  if (BaseIsVirtual) {
     // C++ [class.ctor]p5:
     //   A constructor is trivial if its class has no virtual base classes.
     Class->setHasTrivialConstructor(false);
@@ -523,33 +536,27 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     // C++ [class.ctor]p5:
     //   A constructor is trivial if all the direct base classes of its
     //   class have trivial constructors.
-    if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialConstructor())
+    if (!BaseClass->hasTrivialConstructor())
       Class->setHasTrivialConstructor(false);
 
     // C++ [class.copy]p6:
     //   A copy constructor is trivial if all the direct base classes of its
     //   class have trivial copy constructors.
-    if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialCopyConstructor())
+    if (!BaseClass->hasTrivialCopyConstructor())
       Class->setHasTrivialCopyConstructor(false);
 
     // C++ [class.copy]p11:
     //   A copy assignment operator is trivial if all the direct base classes
     //   of its class have trivial copy assignment operators.
-    if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialCopyAssignment())
+    if (!BaseClass->hasTrivialCopyAssignment())
       Class->setHasTrivialCopyAssignment(false);
   }
 
   // C++ [class.ctor]p3:
   //   A destructor is trivial if all the direct base classes of its class
   //   have trivial destructors.
-  if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialDestructor())
+  if (!BaseClass->hasTrivialDestructor())
     Class->setHasTrivialDestructor(false);
-
-  // Create the base specifier.
-  // FIXME: Allocate via ASTContext?
-  return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
-                              Class->getTagKind() == RecordDecl::TK_class,
-                              Access, BaseType);
 }
 
 /// ActOnBaseSpecifier - Parsed a base specifier. A base specifier is

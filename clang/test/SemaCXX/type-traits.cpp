@@ -250,3 +250,11 @@ void has_trivial_destructor() {
   int t17[T(__has_trivial_destructor(NonPODAr))];
   int t18[T(__has_trivial_destructor(VirtAr))];
 }
+
+struct A { ~A() {} };
+template<typename> struct B : A { };
+
+void f() {
+  int t01[T(!__has_trivial_destructor(A))];
+  int t02[T(!__has_trivial_destructor(B<int>))];
+}
