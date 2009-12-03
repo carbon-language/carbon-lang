@@ -563,7 +563,7 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
   return false;
 }
 
-/// OptimizeMemoryInst - Load and Store Instructions have often have
+/// OptimizeMemoryInst - Load and Store Instructions often have
 /// addressing modes that can do significant amounts of computation.  As such,
 /// instruction selection will try to get the load or store to do as much
 /// computation as possible for the program.  The problem is that isel can only
