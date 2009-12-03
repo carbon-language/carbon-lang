@@ -391,9 +391,9 @@ public:
 
   ~PathDiagnostic();
 
-  const std::string& getDescription() const { return Desc; }
-  const std::string& getBugType() const { return BugType; }
-  const std::string& getCategory() const { return Category; }
+  llvm::StringRef getDescription() const { return Desc; }
+  llvm::StringRef getBugType() const { return BugType; }
+  llvm::StringRef getCategory() const { return Category; }
 
   typedef std::deque<std::string>::const_iterator meta_iterator;
   meta_iterator meta_begin() const { return OtherDesc.begin(); }
