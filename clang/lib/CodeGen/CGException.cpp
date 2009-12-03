@@ -187,7 +187,6 @@ static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
       CGF.EmitAggregateCopy(This, E, ObjectType);
     } else if (CXXConstructorDecl *CopyCtor
                = RD->getCopyConstructor(CGF.getContext(), 0)) {
-      // FIXME: region management, call terminate
       llvm::Value *Src = E;
 
       // Stolen from EmitClassAggrMemberwiseCopy
@@ -204,7 +203,6 @@ static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
         CopyCtor->getType()->getAs<FunctionType>()->getResultType();
       CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
                    Callee, CallArgs, CopyCtor);
-      // FIXME: region management
     } else
       llvm::llvm_unreachable("uncopyable object");
   }
