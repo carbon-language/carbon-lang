@@ -13,7 +13,6 @@ add_clang_library(clangAnalysis
   CFG.cpp
   CFRefCount.cpp
   CallAndMessageChecker.cpp
-  CallGraph.cpp
   CallInliner.cpp
   CastToStructChecker.cpp
   CheckDeadStores.cpp
