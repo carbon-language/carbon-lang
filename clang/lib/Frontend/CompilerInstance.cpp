@@ -328,9 +328,9 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
                                               InFile, Extension,
                                               &OutputPathName);
   if (!OS) {
-    // FIXME: Don't fail this way.
-    llvm::errs() << "error: " << Error << "\n";
-    ::exit(1);
+    getDiagnostics().Report(diag::err_fe_unable_to_open_output)
+      << OutputPath << Error;
+    return 0;
   }
 
   // Add the output file -- but don't try to remove "-", since this means we are

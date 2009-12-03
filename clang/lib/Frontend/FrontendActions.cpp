@@ -35,13 +35,16 @@ ASTConsumer *AnalysisAction::CreateASTConsumer(CompilerInstance &CI,
 
 ASTConsumer *ASTPrintAction::CreateASTConsumer(CompilerInstance &CI,
                                                llvm::StringRef InFile) {
-  return CreateASTPrinter(CI.createDefaultOutputFile(false, InFile));
+  if (llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
+    return CreateASTPrinter(OS);
+  return 0;
 }
 
 ASTConsumer *ASTPrintXMLAction::CreateASTConsumer(CompilerInstance &CI,
                                                   llvm::StringRef InFile) {
-  return CreateASTPrinterXML(CI.createDefaultOutputFile(false, InFile,
-                                                        "xml"));
+  if (llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, InFile, "xml"))
+    return CreateASTPrinterXML(OS);
+  return 0;
 }
 
 ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
@@ -74,6 +77,9 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
   }
 
   llvm::raw_ostream *OS = CI.createDefaultOutputFile(true, InFile);
+  if (!OS)
+    return 0;
+
   if (CI.getFrontendOpts().RelocatablePCH)
     return CreatePCHGenerator(CI.getPreprocessor(), OS, Sysroot.c_str());
 
@@ -82,8 +88,9 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
 
 ASTConsumer *HTMLPrintAction::CreateASTConsumer(CompilerInstance &CI,
                                                 llvm::StringRef InFile) {
-  return CreateHTMLPrinter(CI.createDefaultOutputFile(false, InFile),
-                           CI.getPreprocessor());
+  if (llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
+    return CreateHTMLPrinter(OS, CI.getPreprocessor());
+  return 0;
 }
 
 ASTConsumer *InheritanceViewAction::CreateASTConsumer(CompilerInstance &CI,
@@ -140,10 +147,11 @@ void FixItAction::EndSourceFileAction() {
 
 ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
                                                   llvm::StringRef InFile) {
-  return CreateObjCRewriter(InFile,
-                            CI.createDefaultOutputFile(true, InFile, "cpp"),
-                            CI.getDiagnostics(), CI.getLangOpts(),
-                            CI.getDiagnosticOpts().NoRewriteMacros);
+  if (llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, InFile, "cpp"))
+    return CreateObjCRewriter(InFile, OS,
+                              CI.getDiagnostics(), CI.getLangOpts(),
+                              CI.getDiagnosticOpts().NoRewriteMacros);
+  return 0;
 }
 
 ASTConsumer *RewriteBlocksAction::CreateASTConsumer(CompilerInstance &CI,
@@ -162,12 +170,21 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {
   BackendAction BA = static_cast<BackendAction>(Act);
   llvm::OwningPtr<llvm::raw_ostream> OS;
-  if (BA == Backend_EmitAssembly)
+  switch (BA) {
+  case Backend_EmitAssembly:
     OS.reset(CI.createDefaultOutputFile(false, InFile, "s"));
-  else if (BA == Backend_EmitLL)
+    break;
+  case Backend_EmitLL:
     OS.reset(CI.createDefaultOutputFile(false, InFile, "ll"));
-  else if (BA == Backend_EmitBC)
+    break;
+  case Backend_EmitBC:
     OS.reset(CI.createDefaultOutputFile(true, InFile, "bc"));
+    break;
+  case Backend_EmitNothing:
+    break;
+  }
+  if (BA != Backend_EmitNothing && !OS)
+    return 0;
 
   return CreateBackendConsumer(BA, CI.getDiagnostics(), CI.getLangOpts(),
                                CI.getCodeGenOpts(), CI.getTargetOpts(),
@@ -228,6 +245,8 @@ void GeneratePTHAction::ExecuteAction() {
   }
   llvm::raw_fd_ostream *OS =
     CI.createDefaultOutputFile(true, getCurrentFile());
+  if (!OS) return;
+
   CacheTokens(CI.getPreprocessor(), OS);
 }
 
@@ -255,6 +274,8 @@ void PrintParseAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
   Preprocessor &PP = getCompilerInstance().getPreprocessor();
   llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
+  if (!OS) return;
+
   llvm::OwningPtr<Action> PA(CreatePrintParserActionsAction(PP, OS));
 
   Parser P(PP, *PA);
@@ -265,6 +286,8 @@ void PrintParseAction::ExecuteAction() {
 void PrintPreprocessedAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
   llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
+  if (!OS) return;
+
   DoPrintPreprocessedInput(CI.getPreprocessor(), OS,
                            CI.getPreprocessorOutputOpts());
 }
@@ -272,11 +295,15 @@ void PrintPreprocessedAction::ExecuteAction() {
 void RewriteMacrosAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
   llvm::raw_ostream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
+  if (!OS) return;
+
   RewriteMacrosInInput(CI.getPreprocessor(), OS);
 }
 
 void RewriteTestAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
   llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
+  if (!OS) return;
+
   DoRewriteTest(CI.getPreprocessor(), OS);
 }

@@ -482,12 +482,16 @@ public:
 
   /// Create the default output file (from the invocation's options) and add it
   /// to the list of tracked output files.
+  ///
+  /// \return - Null on error.
   llvm::raw_fd_ostream *
   createDefaultOutputFile(bool Binary = true, llvm::StringRef BaseInput = "",
                           llvm::StringRef Extension = "");
 
   /// Create a new output file and add it to the list of tracked output files,
   /// optionally deriving the output path name.
+  ///
+  /// \return - Null on error.
   llvm::raw_fd_ostream *
   createOutputFile(llvm::StringRef OutputPath, bool Binary = true,
                    llvm::StringRef BaseInput = "",
