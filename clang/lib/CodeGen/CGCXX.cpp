@@ -940,7 +940,8 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
     QualType ArgType = D->getType();
 
     // llvm::Value *Arg = CGF.GetAddrOfLocalVar(Dst);
-    Expr *Arg = new (getContext()) DeclRefExpr(D, ArgType, SourceLocation());
+    Expr *Arg = new (getContext()) DeclRefExpr(D, ArgType.getNonReferenceType(),
+                                               SourceLocation());
     CallArgs.push_back(std::make_pair(EmitCallArg(Arg, ArgType), ArgType));
   }
 
