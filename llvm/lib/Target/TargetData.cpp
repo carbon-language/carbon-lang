@@ -29,7 +29,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include <algorithm>
 #include <cstdlib>
-#include <ostream>
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
@@ -116,14 +115,6 @@ TargetAlignElem::operator==(const TargetAlignElem &rhs) const {
           && ABIAlign == rhs.ABIAlign
           && PrefAlign == rhs.PrefAlign
           && TypeBitWidth == rhs.TypeBitWidth);
-}
-
-std::ostream &
-TargetAlignElem::dump(std::ostream &os) const {
-  return os << AlignType
-            << TypeBitWidth
-            << ":" << (int) (ABIAlign * 8)
-            << ":" << (int) (PrefAlign * 8);
 }
 
 const TargetAlignElem TargetData::InvalidAlignmentElem =

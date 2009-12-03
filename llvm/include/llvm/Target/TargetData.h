@@ -59,8 +59,6 @@ struct TargetAlignElem {
                              unsigned char pref_align, uint32_t bit_width);
   /// Equality predicate
   bool operator==(const TargetAlignElem &rhs) const;
-  /// output stream operator
-  std::ostream &dump(std::ostream &os) const;
 };
 
 class TargetData : public ImmutablePass {
