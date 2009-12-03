@@ -147,6 +147,12 @@ public:
                                           const MemRegion *R,
                                           const Expr *E, unsigned Count,
                                           InvalidatedSymbols *IS) = 0;
+  
+  virtual const GRState *InvalidateRegions(const GRState *state,
+                                           const MemRegion * const *Begin,
+                                           const MemRegion * const *End,
+                                           const Expr *E, unsigned Count,
+                                           InvalidatedSymbols *IS);  
 
   // FIXME: Make out-of-line.
   virtual const GRState *setExtent(const GRState *state,

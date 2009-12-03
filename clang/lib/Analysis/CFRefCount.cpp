@@ -2786,6 +2786,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   Expr* ErrorExpr = NULL;
   SymbolRef ErrorSym = 0;
 
+  llvm::SmallVector<const MemRegion*, 10> RegionsToInvalidate;
+  
   for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
     SVal V = state->getSValAsScalarOrLoc(*I);
     SymbolRef Sym = V.getAsLocSymbol();
@@ -2808,16 +2810,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
           continue;
 
         // Invalidate the value of the variable passed by reference.
-
-        // FIXME: We can have collisions on the conjured symbol if the
-        //  expression *I also creates conjured symbols.  We probably want
-        //  to identify conjured symbols by an expression pair: the enclosing
-        //  expression (the context) and the expression itself.  This should
-        //  disambiguate conjured symbols.
-        unsigned Count = Builder.getCurrentBlockCount();
-        StoreManager& StoreMgr = Eng.getStateManager().getStoreManager();
-
         const MemRegion *R = MR->getRegion();
+
         // Are we dealing with an ElementRegion?  If the element type is
         // a basic integer type (e.g., char, int) and the underying region
         // is a variable region then strip off the ElementRegion.
@@ -2841,14 +2835,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
           }
           // FIXME: What about layers of ElementRegions?
         }
-
-        StoreManager::InvalidatedSymbols IS;
-        state = StoreMgr.InvalidateRegion(state, R, *I, Count, &IS);
-        for (StoreManager::InvalidatedSymbols::iterator I = IS.begin(),
-             E = IS.end(); I!=E; ++I) {
-          // Remove any existing reference-count binding.
-          state = state->remove<RefBindings>(*I);
-        }
+        
+        // Mark this region for invalidation.  We batch invalidate regions
+        // below for efficiency.
+        RegionsToInvalidate.push_back(R);
+        continue;
       }
       else {
         // Nuke all other arguments passed by reference.
@@ -2862,6 +2853,30 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       // invalidate the values referred by the location.
       V = cast<nonloc::LocAsInteger>(V).getLoc();
       goto tryAgain;
+    }
+  }
+  
+  // Invalidate regions we designed for invalidation use the batch invalidation
+  // API.
+  if (!RegionsToInvalidate.empty()) {    
+    // FIXME: We can have collisions on the conjured symbol if the
+    //  expression *I also creates conjured symbols.  We probably want
+    //  to identify conjured symbols by an expression pair: the enclosing
+    //  expression (the context) and the expression itself.  This should
+    //  disambiguate conjured symbols.
+    unsigned Count = Builder.getCurrentBlockCount();
+    StoreManager& StoreMgr = Eng.getStateManager().getStoreManager();
+
+    
+    StoreManager::InvalidatedSymbols IS;
+    state = StoreMgr.InvalidateRegions(state, RegionsToInvalidate.data(),
+                                       RegionsToInvalidate.data() +
+                                       RegionsToInvalidate.size(),
+                                       Ex, Count, &IS);
+    for (StoreManager::InvalidatedSymbols::iterator I = IS.begin(),
+         E = IS.end(); I!=E; ++I) {
+        // Remove any existing reference-count binding.
+      state = state->remove<RefBindings>(*I);
     }
   }
 

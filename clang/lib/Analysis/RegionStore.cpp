@@ -269,7 +269,15 @@ public:
 
   const GRState *InvalidateRegion(const GRState *state, const MemRegion *R,
                                   const Expr *E, unsigned Count,
-                                  InvalidatedSymbols *IS);
+                                  InvalidatedSymbols *IS) {
+    return RegionStoreManager::InvalidateRegions(state, &R, &R+1, E, Count, IS);
+  }
+  
+  const GRState *InvalidateRegions(const GRState *state,
+                                   const MemRegion * const *Begin,
+                                   const MemRegion * const *End,
+                                   const Expr *E, unsigned Count,
+                                   InvalidatedSymbols *IS);
 
 private:
   void RemoveSubRegionBindings(RegionBindings &B, const MemRegion *R,
@@ -460,15 +468,13 @@ void RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
   B = RBFactory.Remove(B, R);
 }
 
-const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
-                                                    const MemRegion *R,
-                                                    const Expr *Ex,
-                                                    unsigned Count,
-                                                    InvalidatedSymbols *IS) {
+const GRState *RegionStoreManager::InvalidateRegions(const GRState *state,
+                                                     const MemRegion * const *I,
+                                                     const MemRegion * const *E,
+                                                     const Expr *Ex,
+                                                     unsigned Count,
+                                                     InvalidatedSymbols *IS) {
   ASTContext& Ctx = StateMgr.getContext();
-
-  // Strip away casts.
-  R = R->StripCasts();
 
   // Get the mapping of regions -> subregions.
   llvm::OwningPtr<RegionStoreSubRegionMap>
@@ -478,10 +484,14 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
 
   llvm::DenseMap<const MemRegion *, unsigned> Visited;
   llvm::SmallVector<const MemRegion *, 10> WorkList;
-  WorkList.push_back(R);
+  
+  for ( ; I != E; ++I) {
+    // Strip away casts.
+    WorkList.push_back((*I)->StripCasts());
+  }
   
   while (!WorkList.empty()) {
-    R = WorkList.back();
+    const MemRegion *R = WorkList.back();
     WorkList.pop_back();
     
     // Have we visited this region before?
