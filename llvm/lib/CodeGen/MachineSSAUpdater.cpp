@@ -85,15 +85,16 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlock(MachineBasicBlock *BB) {
   return GetValueAtEndOfBlockInternal(BB);
 }
 
-/// InsertNewPHI - Insert an empty PHI instruction which define a value of the
-/// given register class at the start of the specified basic block. It returns
-/// the virtual register defined by the PHI instruction.
+/// InsertNewDef - Insert an empty PHI or IMPLICIT_DEF instruction which define
+/// a value of the given register class at the start of the specified basic
+/// block. It returns the virtual register defined by the instruction.
 static
-MachineInstr *InsertNewPHI(MachineBasicBlock *BB, const TargetRegisterClass *RC,
-                         MachineRegisterInfo *MRI, const TargetInstrInfo *TII) {
+MachineInstr *InsertNewDef(unsigned Opcode,
+                           MachineBasicBlock *BB, MachineBasicBlock::iterator I,
+                           const TargetRegisterClass *RC,
+                           MachineRegisterInfo *MRI, const TargetInstrInfo *TII) {
   unsigned NewVR = MRI->createVirtualRegister(RC);
-  return BuildMI(*BB, BB->front(), BB->front().getDebugLoc(),
-                 TII->get(TargetInstrInfo::PHI), NewVR);
+  return BuildMI(*BB, I, I->getDebugLoc(), TII->get(Opcode), NewVR);
 }
                           
 
@@ -122,8 +123,9 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
   if (!getAvailableVals(AV).count(BB))
     return GetValueAtEndOfBlock(BB);
 
-  if (BB->pred_empty())
-    llvm_unreachable("Unreachable block!");
+  // If there are no predecessors, just return undef.
+  if (BB->pred_empty()) 
+    return ~0U;  // Sentinel value representing undef.
 
   // Otherwise, we have the hard case.  Get the live-in values for each
   // predecessor.
@@ -150,7 +152,8 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
     return SingularValue;
 
   // Otherwise, we do need a PHI: insert one now.
-  MachineInstr *InsertedPHI = InsertNewPHI(BB, VRC, MRI, TII);
+  MachineInstr *InsertedPHI = InsertNewDef(TargetInstrInfo::PHI, BB,
+                                           BB->front(), VRC, MRI, TII);
 
   // Fill in all the predecessors of the PHI.
   MachineInstrBuilder MIB(InsertedPHI);
@@ -195,6 +198,13 @@ void MachineSSAUpdater::RewriteUse(MachineOperand &U) {
     NewVR = GetValueInMiddleOfBlock(UseMI->getParent());
   }
 
+  if (NewVR == ~0U) {
+    // Insert an implicit_def to represent an undef value.
+    MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
+                                        UseMI->getParent(), UseMI, VRC,MRI,TII);
+    NewVR = NewDef->getOperand(0).getReg();
+  }
+    
   U.setReg(NewVR);
 }
 
@@ -223,14 +233,18 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
     // that we have a cycle.  Handle this by inserting a PHI node and returning
     // it.  When we get back to the first instance of the recursion we will fill
     // in the PHI node.
-    MachineInstr *NewPHI = InsertNewPHI(BB, VRC, MRI, TII);
+    MachineInstr *NewPHI = InsertNewDef(TargetInstrInfo::PHI, BB, BB->front(),
+                                        VRC, MRI,TII);
     unsigned NewVR = NewPHI->getOperand(0).getReg();
     InsertRes.first->second = NewVR;
     return NewVR;
   }
 
+  // If there are no predecessors, then we must have found an unreachable block
+  // just return 'undef'.  Since there are no predecessors, InsertRes must not
+  // be invalidated.
   if (BB->pred_empty())
-    llvm_unreachable("Unreachable block!");
+    return InsertRes.first->second = ~0U;  // Sentinel value representing undef.
 
   // Okay, the value isn't in the map and we just inserted a null in the entry
   // to indicate that we're processing the block.  Since we have no idea what
@@ -294,18 +308,24 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   // Otherwise, we do need a PHI: insert one now if we don't already have one.
   MachineInstr *InsertedPHI;
   if (InsertedVal == 0) {
-    InsertedPHI = InsertNewPHI(BB, VRC, MRI, TII);
+    InsertedPHI = InsertNewDef(TargetInstrInfo::PHI, BB, BB->front(),
+                               VRC, MRI, TII);
     InsertedVal = InsertedPHI->getOperand(0).getReg();
   } else {
     InsertedPHI = MRI->getVRegDef(InsertedVal);
   }
 
   // Fill in all the predecessors of the PHI.
+  bool IsUndef = true;
   MachineInstrBuilder MIB(InsertedPHI);
   for (IncomingPredInfoTy::iterator I =
          IncomingPredInfo.begin()+FirstPredInfoEntry,
-         E = IncomingPredInfo.end(); I != E; ++I)
+         E = IncomingPredInfo.end(); I != E; ++I) {
+    if (I->second == ~0U)
+      continue;
+    IsUndef = false;
     MIB.addReg(I->second).addMBB(I->first);
+  }
 
   // Drop the entries we added in IncomingPredInfo to restore the stack.
   IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
@@ -313,7 +333,10 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
 
   // See if the PHI node can be merged to a single value.  This can happen in
   // loop cases when we get a PHI of itself and one other value.
-  if (unsigned ConstVal = InsertedPHI->isConstantValuePHI()) {
+  if (IsUndef) {
+    InsertedPHI->eraseFromParent();
+    InsertedVal = ~0U;
+  } else if (unsigned ConstVal = InsertedPHI->isConstantValuePHI()) {
     MRI->replaceRegWith(InsertedVal, ConstVal);
     InsertedPHI->eraseFromParent();
     InsertedVal = ConstVal;
