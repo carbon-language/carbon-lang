@@ -15,6 +15,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -37,6 +38,7 @@ using namespace llvm;
 
 namespace {
   class BackendConsumer : public ASTConsumer {
+    Diagnostic Diags;
     BackendAction Action;
     const CodeGenOptions &CodeGenOpts;
     const LangOptions &LangOpts;
@@ -67,18 +69,18 @@ namespace {
     /// AddEmitPasses - Add passes necessary to emit assembly or LLVM
     /// IR.
     ///
-    /// \return True on success. On failure \arg Error will be set to
-    /// a user readable error message.
-    bool AddEmitPasses(std::string &Error);
+    /// \return True on success.
+    bool AddEmitPasses();
 
     void EmitAssembly();
 
   public:
-    BackendConsumer(BackendAction action, Diagnostic &Diags,
+    BackendConsumer(BackendAction action, Diagnostic &_Diags,
                     const LangOptions &langopts, const CodeGenOptions &compopts,
                     const TargetOptions &targetopts, bool TimePasses,
                     const std::string &infile, llvm::raw_ostream *OS,
                     LLVMContext& C) :
+      Diags(_Diags),
       Action(action),
       CodeGenOpts(compopts),
       LangOpts(langopts),
@@ -195,7 +197,7 @@ FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
   return PerFunctionPasses;
 }
 
-bool BackendConsumer::AddEmitPasses(std::string &Error) {
+bool BackendConsumer::AddEmitPasses() {
   if (Action == Backend_EmitNothing)
     return true;
 
@@ -207,10 +209,11 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     bool Fast = CodeGenOpts.OptimizationLevel == 0;
 
     // Create the TargetMachine for generating code.
+    std::string Error;
     std::string Triple = TheModule->getTargetTriple();
     const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
     if (!TheTarget) {
-      Error = std::string("Unable to get target machine: ") + Error;
+      Diags.Report(diag::err_fe_unable_to_create_target) << Error;
       return false;
     }
 
@@ -290,7 +293,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
                                     TargetMachine::AssemblyFile, OptLevel)) {
     default:
     case FileModel::Error:
-      Error = "Unable to interface with target machine!\n";
+      Diags.Report(diag::err_fe_unable_to_interface_with_target);
       return false;
     case FileModel::AsmFile:
       break;
@@ -298,7 +301,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
 
     if (TM->addPassesToEmitFileFinish(*CodeGenPasses, (MachineCodeEmitter *)0,
                                       OptLevel)) {
-      Error = "Unable to interface with target machine!\n";
+      Diags.Report(diag::err_fe_unable_to_interface_with_target);
       return false;
     }
   }
@@ -372,13 +375,8 @@ void BackendConsumer::EmitAssembly() {
   assert(TheModule == M && "Unexpected module change during IR generation");
 
   CreatePasses();
-
-  std::string Error;
-  if (!AddEmitPasses(Error)) {
-    // FIXME: Don't fail this way.
-    llvm::errs() << "ERROR: " << Error << "\n";
-    ::exit(1);
-  }
+  if (!AddEmitPasses())
+    return;
 
   // Run passes. For now we do all passes at once, but eventually we
   // would like to have the option of streaming code generation.
