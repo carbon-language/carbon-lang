@@ -28,7 +28,8 @@ using namespace clang;
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
-static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
+static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
+                               Diagnostic *Diags = 0) {
   const char *Command = "#define ";
   Buf.insert(Buf.end(), Command, Command+strlen(Command));
   if (const char *Equal = strchr(Macro, '=')) {
@@ -39,9 +40,9 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
     // Per GCC -D semantics, the macro ends at \n if it exists.
     const char *End = strpbrk(Equal, "\n\r");
     if (End) {
-      fprintf(stderr, "warning: macro '%s' contains embedded newline, text "
-              "after the newline is ignored.\n",
-              std::string(Macro, Equal).c_str());
+      assert(Diags && "Unexpected macro with embedded newline!");
+      Diags->Report(diag::warn_fe_macro_contains_embedded_newline)
+        << std::string(Macro, Equal);
     } else {
       End = Equal+strlen(Equal);
     }
@@ -123,11 +124,9 @@ static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor &PP,
   const char *OriginalFile = P->getOriginalSourceFile();
 
   if (!OriginalFile) {
-    assert(!ImplicitIncludePTH.empty());
-    fprintf(stderr, "error: PTH file '%s' does not designate an original "
-            "source header file for -include-pth\n",
-            ImplicitIncludePTH.c_str());
-    exit (1);
+    PP.getDiagnostics().Report(diag::err_fe_pth_file_has_no_source_header)
+      << ImplicitIncludePTH;
+    return;
   }
 
   AddImplicitInclude(Buf, OriginalFile);
@@ -560,7 +559,8 @@ void clang::InitializePreprocessor(Preprocessor &PP,
     if (InitOpts.Macros[i].second)  // isUndef
       UndefineBuiltinMacro(PredefineBuffer, InitOpts.Macros[i].first.c_str());
     else
-      DefineBuiltinMacro(PredefineBuffer, InitOpts.Macros[i].first.c_str());
+      DefineBuiltinMacro(PredefineBuffer, InitOpts.Macros[i].first.c_str(),
+                         &PP.getDiagnostics());
   }
 
   // If -imacros are specified, include them now.  These are processed before
