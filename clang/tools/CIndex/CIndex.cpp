@@ -1211,12 +1211,13 @@ void clang_codeComplete(CXIndex CIdx,
   // Add the appropriate '-code-completion-at=file:line:column' argument
   // to perform code completion, with an "-Xclang" preceding it.
   std::string code_complete_at;
-  code_complete_at += "-code-completion-at=";
   code_complete_at += complete_filename;
   code_complete_at += ":";
   code_complete_at += llvm::utostr(complete_line);
   code_complete_at += ":";
   code_complete_at += llvm::utostr(complete_column);
+  argv.push_back("-Xclang");
+  argv.push_back("-code-completion-at");
   argv.push_back("-Xclang");
   argv.push_back(code_complete_at.c_str());
   argv.push_back("-Xclang");
@@ -1242,10 +1243,11 @@ void clang_codeComplete(CXIndex CIdx,
     }
 
     // Remap the file.
-    std::string RemapArg = "-remap-file=";
-    RemapArg += unsaved_files[i].Filename;
+    std::string RemapArg = unsaved_files[i].Filename;
     RemapArg += ';';
     RemapArg += tmpFileName;
+    RemapArgs.push_back("-Xclang");
+    RemapArgs.push_back("-remap-file");
     RemapArgs.push_back("-Xclang");
     RemapArgs.push_back(RemapArg);
     TemporaryFiles.push_back(SavedFile);
