@@ -35,6 +35,7 @@ namespace {
     LoopInfo *LI;
     std::set<BasicBlock*>  BBToVisit;
     std::map<Loop*,double> LoopExitWeights;
+    std::map<Edge,double>  MinimalWeight;
   public:
     static char ID; // Class identification, replacement for typeinfo
     explicit ProfileEstimatorPass(const double execcount = 0)
@@ -91,7 +92,7 @@ static void inline printEdgeError(ProfileInfo::Edge e, const char *M) {
 
 void inline ProfileEstimatorPass::printEdgeWeight(Edge E) {
   DEBUG(errs() << "-- Weight of Edge " << E << ":"
-               << format("%g", getEdgeWeight(E)) << "\n");
+               << format("%20.20g", getEdgeWeight(E)) << "\n");
 }
 
 // recurseBasicBlock() - This calculates the ProfileInfo estimation for a
@@ -174,6 +175,12 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
         double w = getEdgeWeight(*ei);
         if (w == MissingValue) {
           Edges.push_back(*ei);
+          // Check if there is a necessary minimal weight, if yes, subtract it 
+          // from weight.
+          if (MinimalWeight.find(*ei) != MinimalWeight.end()) {
+            incoming -= MinimalWeight[*ei];
+            DEBUG(errs() << "Reserving " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
+          }
         } else {
           incoming -= w;
         }
@@ -191,11 +198,43 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
         printEdgeWeight(edge);
       }
     }
-    // Distribute remaining weight onto the exit edges.
+
+    // Distribute remaining weight to the exting edges. To prevent fractions
+    // from building up and provoking precision problems the weight which is to
+    // be distributed is split and the rounded, the last edge gets a somewhat
+    // bigger value, but we are close enough for an estimation.
+    double fraction = floor(incoming/Edges.size());
     for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
          ei != ee; ++ei) {
-      EdgeInformation[BB->getParent()][*ei] += incoming/Edges.size();
+      double w = 0;
+      if (ei != (ee-1)) {
+        w = fraction;
+        incoming -= fraction;
+      } else {
+        w = incoming;
+      }
+      EdgeInformation[BB->getParent()][*ei] += w;
+      // Read necessary minimal weight.
+      if (MinimalWeight.find(*ei) != MinimalWeight.end()) {
+        EdgeInformation[BB->getParent()][*ei] += MinimalWeight[*ei];
+        DEBUG(errs() << "Additionally " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
+      }
       printEdgeWeight(*ei);
+      
+      // Add minimal weight to paths to all exit edges, this is used to ensure
+      // that enough flow is reaching this edges.
+      Path p;
+      const BasicBlock *Dest = GetPath(BB, (*ei).first, p, GetPathToDest);
+      while (Dest != BB) {
+        const BasicBlock *Parent = p.find(Dest)->second;
+        Edge e = getEdge(Parent, Dest);
+        if (MinimalWeight.find(e) == MinimalWeight.end()) {
+          MinimalWeight[e] = 0;
+        }
+        MinimalWeight[e] += w;
+        DEBUG(errs() << "Minimal Weight for " << e << ": " << format("%.20g",MinimalWeight[e]) << "\n");
+        Dest = Parent;
+      }
     }
     // Increase flow into the loop.
     BBWeight *= (ExecCount+1);
@@ -203,7 +242,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
 
   BlockInformation[BB->getParent()][BB] = BBWeight;
   // Up until now we considered only the loop exiting edges, now we have a
-  // definite block weight and must ditribute this onto the outgoing edges.
+  // definite block weight and must distribute this onto the outgoing edges.
   // Since there may be already flow attached to some of the edges, read this
   // flow first and remember the edges that have still now flow attached.
   Edges.clear();
@@ -225,15 +264,32 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
         BBWeight -= getEdgeWeight(edge);
       } else {
         Edges.push_back(edge);
+        // If minimal weight is necessary, reserve weight by subtracting weight
+        // from block weight, this is readded later on.
+        if (MinimalWeight.find(edge) != MinimalWeight.end()) {
+          BBWeight -= MinimalWeight[edge];
+          DEBUG(errs() << "Reserving " << format("%.20g",MinimalWeight[edge]) << " at " << edge << "\n");
+        }
       }
     }
   }
 
+  double fraction = floor(BBWeight/Edges.size());
   // Finally we know what flow is still not leaving the block, distribute this
   // flow onto the empty edges.
   for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
        ei != ee; ++ei) {
-    EdgeInformation[BB->getParent()][*ei] += BBWeight/Edges.size();
+    if (ei != (ee-1)) {
+      EdgeInformation[BB->getParent()][*ei] += fraction;
+      BBWeight -= fraction;
+    } else {
+      EdgeInformation[BB->getParent()][*ei] += BBWeight;
+    }
+    // Readd minial necessary weight.
+    if (MinimalWeight.find(*ei) != MinimalWeight.end()) {
+      EdgeInformation[BB->getParent()][*ei] += MinimalWeight[*ei];
+      DEBUG(errs() << "Additionally " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
+    }
     printEdgeWeight(*ei);
   }
 
@@ -260,20 +316,24 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
   for (Function::iterator bi = F.begin(), be = F.end(); bi != be; ++bi)
     BBToVisit.insert(bi);
 
+  // Clear Minimal Edges.
+  MinimalWeight.clear();
+
   DEBUG(errs() << "Working on function " << F.getNameStr() << "\n");
 
   // Since the entry block is the first one and has no predecessors, the edge
   // (0,entry) is inserted with the starting weight of 1.
   BasicBlock *entry = &F.getEntryBlock();
-  BlockInformation[&F][entry] = 1;
+  BlockInformation[&F][entry] = pow(2,32);
   Edge edge = getEdge(0,entry);
-  EdgeInformation[&F][edge] = 1;
+  EdgeInformation[&F][edge] = BlockInformation[&F][entry];
   printEdgeWeight(edge);
 
   // Since recurseBasicBlock() maybe returns with a block which was not fully
-  // estimated, use recurseBasicBlock() until everything is calculated. 
+  // estimated, use recurseBasicBlock() until everything is calculated.
+  bool cleanup = false;
   recurseBasicBlock(entry);
-  while (BBToVisit.size() > 0) {
+  while (BBToVisit.size() > 0 && !cleanup) {
     // Remember number of open blocks, this is later used to check if progress
     // was made.
     unsigned size = BBToVisit.size();
@@ -287,20 +347,64 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
       if (BBToVisit.size() < size) break;
     }
 
-    // If there was not a single block resovled, make some assumptions.
+    // If there was not a single block resolved, make some assumptions.
     if (BBToVisit.size() == size) {
-      BasicBlock *BB = *(BBToVisit.begin());
-      // Since this BB was not calculated because of missing incoming edges,
-      // set these edges to zero.
-      for (pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
-           bbi != bbe; ++bbi) {
-        Edge e = getEdge(*bbi,BB);
-        double w = getEdgeWeight(e);
-        if (w == MissingValue) {
-          EdgeInformation[&F][e] = 0;
-          DEBUG(errs() << "Assuming edge weight: ");
-          printEdgeWeight(e);
+      bool found = false;
+      for (std::set<BasicBlock*>::iterator BBI = BBToVisit.begin(), BBE = BBToVisit.end(); 
+           (BBI != BBE) && (!found); ++BBI) {
+        BasicBlock *BB = *BBI;
+        // Try each predecessor if it can be assumend.
+        for (pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
+             (bbi != bbe) && (!found); ++bbi) {
+          Edge e = getEdge(*bbi,BB);
+          double w = getEdgeWeight(e);
+          // Check that edge from predecessor is still free.
+          if (w == MissingValue) {
+            // Check if there is a circle from this block to predecessor.
+            Path P;
+            const BasicBlock *Dest = GetPath(BB, *bbi, P, GetPathToDest);
+            if (Dest != *bbi) {
+              // If there is no circle, just set edge weight to 0
+              EdgeInformation[&F][e] = 0;
+              DEBUG(errs() << "Assuming edge weight: ");
+              printEdgeWeight(e);
+              found = true;
+            }
+          }
         }
+      }
+      if (!found) {
+        cleanup = true;
+        DEBUG(errs() << "No assumption possible in Fuction "<<F.getName()<<", setting all to zero\n");
+      }
+    }
+  }
+  // In case there was no safe way to assume edges, set as a last measure, 
+  // set _everything_ to zero.
+  if (cleanup) {
+    FunctionInformation[&F] = 0;
+    BlockInformation[&F].clear();
+    EdgeInformation[&F].clear();
+    for (Function::const_iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+      const BasicBlock *BB = &(*FI);
+      BlockInformation[&F][BB] = 0;
+      pred_const_iterator predi = pred_begin(BB), prede = pred_end(BB);
+      if (predi == prede) {
+        Edge e = getEdge(0,BB);
+        setEdgeWeight(e,0);
+      }
+      for (;predi != prede; ++predi) {
+        Edge e = getEdge(*predi,BB);
+        setEdgeWeight(e,0);
+      }
+      succ_const_iterator succi = succ_begin(BB), succe = succ_end(BB);
+      if (succi == succe) {
+        Edge e = getEdge(BB,0);
+        setEdgeWeight(e,0);
+      }
+      for (;succi != succe; ++succi) {
+        Edge e = getEdge(*succi,BB);
+        setEdgeWeight(e,0);
       }
     }
   }
