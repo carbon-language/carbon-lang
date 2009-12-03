@@ -59,15 +59,11 @@ private:
   
   /// Thunk - Represents a single thunk.
   struct Thunk {
-    Thunk()
-      : Index(0) { }
+    Thunk() { }
     
-    Thunk(uint64_t Index, GlobalDecl GD, const ThunkAdjustment &Adjustment)
-      : Index(Index), GD(GD), Adjustment(Adjustment) { }
+    Thunk(GlobalDecl GD, const ThunkAdjustment &Adjustment)
+      : GD(GD), Adjustment(Adjustment) { }
     
-    /// Index - The index in the vtable.
-    uint64_t Index;
-
     GlobalDecl GD;
 
     /// Adjustment - The thunk adjustment.
@@ -298,16 +294,16 @@ public:
     
     for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
-      GlobalDecl GD = i->second.GD;
+      uint64_t Index = i->first;
+      const Thunk& Thunk = i->second;
+
+      GlobalDecl GD = Thunk.GD;
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
       assert(!MD->isPure() && "Can't thunk pure virtual methods!");
-      
-      const Thunk& Thunk = i->second;
-      uint64_t Index = Thunk.Index;
 
       assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
              
-      submethods[Thunk.Index] = CGM.BuildThunk(MD, Extern, Thunk.Adjustment);
+      submethods[Index] = CGM.BuildThunk(MD, Extern, Thunk.Adjustment);
     }
     Thunks.clear();
 
@@ -851,7 +847,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                                        VirtualAdjustment);
 
         if (!isPure && !ThisAdjustment.isEmpty())
-          Thunks[i] = Thunk(i, GD, ThisAdjustment);
+          Thunks[i] = Thunk(GD, ThisAdjustment);
         return true;
       }
 
@@ -862,7 +858,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
         if (!isPure)
-          Thunks[i] = Thunk(i, GD, ThisAdjustment);
+          Thunks[i] = Thunk(GD, ThisAdjustment);
       }
       return true;
     }
