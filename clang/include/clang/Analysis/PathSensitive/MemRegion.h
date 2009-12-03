@@ -340,7 +340,31 @@ public:
 
   const BlockTextRegion *getCodeRegion() const { return BC; }
   
-  typedef const MemRegion * const * referenced_vars_iterator;
+  class referenced_vars_iterator {
+    const MemRegion * const *R;
+  public:
+    explicit referenced_vars_iterator(const MemRegion * const *r) : R(r) {}
+    
+    operator const MemRegion * const *() const {
+      return R;
+    }
+    
+    const VarRegion* operator*() const {
+      return cast<VarRegion>(*R);
+    }
+    
+    bool operator==(const referenced_vars_iterator &I) const {
+      return I.R == R;
+    }
+    bool operator!=(const referenced_vars_iterator &I) const {
+      return I.R != R;
+    }
+    referenced_vars_iterator& operator++() {
+      ++R;
+      return *this;
+    }
+  };
+      
   referenced_vars_iterator referenced_vars_begin() const;
   referenced_vars_iterator referenced_vars_end() const;  
     

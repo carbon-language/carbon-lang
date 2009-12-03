@@ -573,7 +573,8 @@ BlockDataRegion::referenced_vars_begin() const {
   BumpVector<const MemRegion*> *Vec =
     static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
   
-  return Vec == (void*) 0x1 ? NULL : Vec->begin();  
+  return BlockDataRegion::referenced_vars_iterator(Vec == (void*) 0x1 ?
+                                                   NULL : Vec->begin());
 }
 
 BlockDataRegion::referenced_vars_iterator
@@ -583,5 +584,6 @@ BlockDataRegion::referenced_vars_end() const {
   BumpVector<const MemRegion*> *Vec =
     static_cast<BumpVector<const MemRegion*>*>(ReferencedVars);
   
-  return Vec == (void*) 0x1 ? NULL : Vec->end();  
+  return BlockDataRegion::referenced_vars_iterator(Vec == (void*) 0x1 ?
+                                                   NULL : Vec->end());
 }
