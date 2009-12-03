@@ -78,6 +78,8 @@ private:
 
   /// CovariantThunk - Represents a single covariant thunk.
   struct CovariantThunk {
+    CovariantThunk() { }
+
     CovariantThunk(GlobalDecl GD, const ThunkAdjustment &ReturnAdjustment, 
                    CanQualType ReturnType) 
       : GD(GD), ReturnAdjustment(ReturnAdjustment), 
@@ -757,7 +759,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         // FIXME: Do we always have to build a covariant thunk to save oret,
         // which is the containing virtual base class?
         if (!ReturnAdjustment.isEmpty())
-          CovariantThunks[i] = CovariantThunk(i, GD, ReturnAdjustment, oret);
+          CovariantThunks[i] = CovariantThunk(GD, ReturnAdjustment, oret);
 
         if (!isPure && !ThisAdjustment.isEmpty())
           Thunks[GD] = Thunk(i, ThisAdjustment);
@@ -772,7 +774,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         
         if (!ReturnAdjustment.isEmpty())
           CovariantThunks[i] = 
-            CovariantThunk(i, GD, ReturnAdjustment, oret);
+            CovariantThunk(GD, ReturnAdjustment, oret);
 
         if (!isPure)
           Thunks[GD] = Thunk(i, ThisAdjustment);
