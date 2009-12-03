@@ -1688,10 +1688,14 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // fold (OP (sext x), (sext y)) -> (sext (OP x, y))
   // fold (OP (aext x), (aext y)) -> (aext (OP x, y))
   // fold (OP (trunc x), (trunc y)) -> (trunc (OP x, y)) (if trunc isn't free)
+  //
+  // do not sink logical op inside of a vector extend, since it may combine
+  // into a vsetcc.
   if ((N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND||
        N0.getOpcode() == ISD::SIGN_EXTEND ||
        (N0.getOpcode() == ISD::TRUNCATE &&
         !TLI.isTruncateFree(N0.getOperand(0).getValueType(), VT))) &&
+      !VT.isVector() &&
       N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType() &&
       (!LegalOperations ||
        TLI.isOperationLegal(N->getOpcode(), N0.getOperand(0).getValueType()))) {
@@ -1944,8 +1948,10 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   }
 
   // fold (or x, undef) -> -1
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT);
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF) {
+    EVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
+    return DAG.getConstant(APInt::getAllOnesValue(EltVT.getSizeInBits()), VT);
+  }
   // fold (or c1, c2) -> c1|c2
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::OR, VT, N0C, N1C);
