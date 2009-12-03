@@ -13,6 +13,10 @@
 #include "clang/Driver/OptSpecifier.h"
 #include <cassert>
 
+namespace llvm {
+  class raw_ostream;
+}
+
 namespace clang {
 namespace driver {
 namespace options {
@@ -156,6 +160,14 @@ namespace options {
                             const char **ArgEnd,
                             unsigned &MissingArgIndex,
                             unsigned &MissingArgCount) const;
+
+    /// PrintHelp - Render the help text for an option table.
+    ///
+    /// \param OS - The stream to write the help text to.
+    /// \param Name - The name to use in the usage line.
+    /// \param Title - The title to use in the usage line.
+    void PrintHelp(llvm::raw_ostream &OS, const char *Name,
+                   const char *Title) const;
   };
 }
 }

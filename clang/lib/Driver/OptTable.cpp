@@ -11,6 +11,7 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
 
@@ -254,4 +255,78 @@ InputArgList *OptTable::ParseArgs(const char **ArgBegin, const char **ArgEnd,
   }
 
   return Args;
+}
+
+static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
+  std::string Name = Opts.getOptionName(Id);
+
+  // Add metavar, if used.
+  switch (Opts.getOptionKind(Id)) {
+  case Option::GroupClass: case Option::InputClass: case Option::UnknownClass:
+    assert(0 && "Invalid option with help text.");
+
+  case Option::MultiArgClass: case Option::JoinedAndSeparateClass:
+    assert(0 && "Cannot print metavar for this kind of option.");
+
+  case Option::FlagClass:
+    break;
+
+  case Option::SeparateClass: case Option::JoinedOrSeparateClass:
+    Name += ' ';
+    // FALLTHROUGH
+  case Option::JoinedClass: case Option::CommaJoinedClass:
+    if (const char *MetaVarName = Opts.getOptionMetaVar(Id))
+      Name += MetaVarName;
+    else
+      Name += "<value>";
+    break;
+  }
+
+  return Name;
+}
+
+void OptTable::PrintHelp(llvm::raw_ostream &OS, const char *Name,
+                         const char *Title) const {
+  OS << "OVERVIEW: " << Title << "\n";
+  OS << '\n';
+  OS << "USAGE: " << Name << " [options] <inputs>\n";
+  OS << '\n';
+  OS << "OPTIONS:\n";
+
+  // Render help text into (option, help) pairs.
+  std::vector< std::pair<std::string, const char*> > OptionHelp;
+  for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
+    unsigned Id = i + 1;
+    if (const char *Text = getOptionHelpText(Id))
+      OptionHelp.push_back(std::make_pair(getOptionHelpName(*this, Id), Text));
+  }
+
+  // Find the maximum option length.
+  unsigned OptionFieldWidth = 0;
+  for (unsigned i = 0, e = OptionHelp.size(); i != e; ++i) {
+    // Skip titles.
+    if (!OptionHelp[i].second)
+      continue;
+
+    // Limit the amount of padding we are willing to give up for alignment.
+    unsigned Length = OptionHelp[i].first.size();
+    if (Length <= 23)
+      OptionFieldWidth = std::max(OptionFieldWidth, Length);
+  }
+
+  const unsigned InitialPad = 2;
+  for (unsigned i = 0, e = OptionHelp.size(); i != e; ++i) {
+    const std::string &Option = OptionHelp[i].first;
+    int Pad = OptionFieldWidth - int(Option.size());
+    OS.indent(InitialPad) << Option;
+
+    // Break on long option names.
+    if (Pad < 0) {
+      OS << "\n";
+      Pad = OptionFieldWidth + InitialPad;
+    }
+    OS.indent(Pad + 1) << OptionHelp[i].second << '\n';
+  }
+
+  OS.flush();
 }

@@ -312,6 +312,8 @@ static std::string getOptionHelpName(const OptTable &Opts, options::ID Id) {
   return Name;
 }
 
+// FIXME: Move -ccc options to real options in the .td file (or eliminate), and
+// then move to using OptTable::PrintHelp.
 void Driver::PrintHelp(bool ShowHidden) const {
   llvm::raw_ostream &OS = llvm::outs();
 
