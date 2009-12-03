@@ -877,7 +877,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(llvm::Twine(N)));
   }
 
-  // Forward -f options which we can pass directly.
+  if (const Arg *A = Args.getLastArg(options::OPT_fvisibility_EQ)) {
+    CmdArgs.push_back("-fvisibility");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
+  // Forward -f (flag) options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_ffreestanding);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
@@ -890,7 +895,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_print_source_range_info);
   Args.AddLastArg(CmdArgs, options::OPT_ftime_report);
   Args.AddLastArg(CmdArgs, options::OPT_ftrapv);
-  Args.AddLastArg(CmdArgs, options::OPT_fvisibility_EQ);
   Args.AddLastArg(CmdArgs, options::OPT_fwritable_strings);
 
   Args.AddLastArg(CmdArgs, options::OPT_pthread);
