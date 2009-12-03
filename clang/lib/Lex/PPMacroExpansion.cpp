@@ -483,6 +483,9 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
 
   switch (II->getLength()) {
   default: return false;
+  case 4:
+    if (II->isStr("rtti")) return LangOpts.RTTI;
+    return false;  
   case 6:
     if (II->isStr("blocks")) return LangOpts.Blocks;
     return false;
