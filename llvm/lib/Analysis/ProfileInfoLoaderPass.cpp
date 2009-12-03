@@ -74,6 +74,8 @@ X("profile-loader", "Load profile information from llvmprof.out", false, true);
 
 static RegisterAnalysisGroup<ProfileInfo> Y(X);
 
+const PassInfo *llvm::ProfileLoaderPassID = &X;
+
 ModulePass *llvm::createProfileLoaderPass() { return new LoaderPass(); }
 
 /// createProfileLoaderPass - This function returns a Pass that loads the
@@ -112,46 +114,9 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
     recurseBasicBlock(*bbi);
   }
 
-  Edge edgetocalc;
-  unsigned uncalculated = 0;
-
-  // collect weights of all incoming and outgoing edges, rememer edges that
-  // have no value
-  double incount = 0;
-  SmallSet<const BasicBlock*,8> pred_visited;
-  pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
-  if (bbi==bbe) {
-    readEdgeOrRemember(getEdge(0, BB),edgetocalc,uncalculated,incount);
-  }
-  for (;bbi != bbe; ++bbi) {
-    if (pred_visited.insert(*bbi)) {
-      readEdgeOrRemember(getEdge(*bbi, BB),edgetocalc,uncalculated,incount);
-    }
-  }
-
-  double outcount = 0;
-  SmallSet<const BasicBlock*,8> succ_visited;
-  succ_const_iterator sbbi = succ_begin(BB), sbbe = succ_end(BB);
-  if (sbbi==sbbe) {
-    readEdgeOrRemember(getEdge(BB, 0),edgetocalc,uncalculated,outcount);
-  }
-  for (;sbbi != sbbe; ++sbbi) {
-    if (succ_visited.insert(*sbbi)) {
-      readEdgeOrRemember(getEdge(BB, *sbbi),edgetocalc,uncalculated,outcount);
-    }
-  }
-
-  // if exactly one edge weight was missing, calculate it and remove it from
-  // spanning tree
-  if (uncalculated == 1) {
-    if (incount < outcount) {
-      EdgeInformation[BB->getParent()][edgetocalc] = outcount-incount;
-    } else {
-      EdgeInformation[BB->getParent()][edgetocalc] = incount-outcount;
-    }
-    DEBUG(errs() << "--Calc Edge Counter for " << edgetocalc << ": "
-                 << format("%g", getEdgeWeight(edgetocalc)) << "\n");
-    SpanningTree.erase(edgetocalc);
+  Edge tocalc;
+  if (CalculateMissingEdge(BB, tocalc)) {
+    SpanningTree.erase(tocalc);
   }
 }
 
@@ -219,9 +184,9 @@ bool LoaderPass::runOnModule(Module &M) {
         }
       }
       while (SpanningTree.size() > 0) {
-#if 0
+
         unsigned size = SpanningTree.size();
-#endif
+
         BBisUnvisited.clear();
         for (std::set<Edge>::iterator ei = SpanningTree.begin(),
              ee = SpanningTree.end(); ei != ee; ++ei) {
@@ -231,17 +196,16 @@ bool LoaderPass::runOnModule(Module &M) {
         while (BBisUnvisited.size() > 0) {
           recurseBasicBlock(*BBisUnvisited.begin());
         }
-#if 0
+
         if (SpanningTree.size() == size) {
           DEBUG(errs()<<"{");
           for (std::set<Edge>::iterator ei = SpanningTree.begin(),
                ee = SpanningTree.end(); ei != ee; ++ei) {
-            DEBUG(errs()<<"("<<(ei->first?ei->first->getName():"0")<<","
-                        <<(ei->second?ei->second->getName():"0")<<"),");
+            DEBUG(errs()<< *ei <<",");
           }
           assert(0 && "No edge calculated!");
         }
-#endif
+
       }
     }
     if (ReadCount != Counters.size()) {

@@ -92,6 +92,7 @@ namespace llvm {
   // file.
   //
   ModulePass *createProfileLoaderPass();
+  extern const PassInfo *ProfileLoaderPassID;
 
   //===--------------------------------------------------------------------===//
   //
