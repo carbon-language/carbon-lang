@@ -232,7 +232,7 @@ public:
   /// GenerateRTTINonClass - Generate the rtti information for the given
   /// non-class type.
   llvm::Constant *GenerateRTTI(QualType Ty);
-
+  
   /// BuildThunk - Build a thunk for the given method.
   llvm::Constant *BuildThunk(const CXXMethodDecl *MD, bool Extern, 
                              const ThunkAdjustment &ThisAdjustment);
@@ -252,6 +252,11 @@ public:
   llvm::Constant *GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
                                         const CXXRecordDecl *BaseClassDecl);
 
+  /// ComputeThunkAdjustment - Returns the two parts required to compute the
+  /// offset for an object.
+  ThunkAdjustment ComputeThunkAdjustment(const CXXRecordDecl *ClassDecl,
+                                         const CXXRecordDecl *BaseClassDecl);
+  
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
   /// a constant is needed consider using GetAddrOfConstantStringLiteral.

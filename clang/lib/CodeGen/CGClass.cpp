@@ -112,6 +112,42 @@ static llvm::Value *GetCXXBaseClassOffset(CodeGenFunction &CGF,
   return NonVirtualOffset;
 }
 
+// FIXME: This probably belongs in CGVtable, but it relies on 
+// the static function ComputeNonVirtualBaseClassOffset, so we should make that
+// a CodeGenModule member function as well.
+ThunkAdjustment
+CodeGenModule::ComputeThunkAdjustment(const CXXRecordDecl *ClassDecl,
+                                      const CXXRecordDecl *BaseClassDecl) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
+  if (!const_cast<CXXRecordDecl *>(ClassDecl)->
+        isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClassDecl), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return ThunkAdjustment();
+  }
+
+  unsigned Start = 0;
+  uint64_t VirtualOffset = 0;
+
+  const CXXBasePath &Path = Paths.front();
+  const CXXRecordDecl *VBase = 0;
+  for (unsigned i = 0, e = Path.size(); i != e; ++i) {
+    const CXXBasePathElement& Element = Path[i];
+    if (Element.Base->isVirtual()) {
+      Start = i+1;
+      QualType VBaseType = Element.Base->getType();
+      VBase = cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
+    }
+  }
+  if (VBase)
+    VirtualOffset = 
+      getVtableInfo().getVirtualBaseOffsetIndex(ClassDecl, BaseClassDecl);
+  
+  uint64_t Offset = 
+    ComputeNonVirtualBaseClassOffset(getContext(), Paths, Start);
+  return ThunkAdjustment(Offset, VirtualOffset);
+}
+
 llvm::Value *
 CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
                                        const CXXRecordDecl *ClassDecl,
