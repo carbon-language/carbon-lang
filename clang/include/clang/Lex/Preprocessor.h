@@ -507,7 +507,7 @@ public:
 
   /// \brief Determine if this source location refers into the file
   /// for which we are performing code completion.
-  bool isCodeCompletionFile(SourceLocation FileLoc);
+  bool isCodeCompletionFile(SourceLocation FileLoc) const;
 
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start

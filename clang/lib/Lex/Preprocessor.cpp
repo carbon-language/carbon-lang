@@ -240,7 +240,7 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
   return false;
 }
 
-bool Preprocessor::isCodeCompletionFile(SourceLocation FileLoc) {
+bool Preprocessor::isCodeCompletionFile(SourceLocation FileLoc) const {
   return CodeCompletionFile && FileLoc.isFileID() &&
     SourceMgr.getFileEntryForID(SourceMgr.getFileID(FileLoc))
       == CodeCompletionFile;

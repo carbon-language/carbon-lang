@@ -47,8 +47,7 @@ unsigned ContentCache::getSize() const {
 }
 
 void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
-  if (B == Buffer)
-    return;
+  assert(B != Buffer);
   
   delete Buffer;
   Buffer = B;
