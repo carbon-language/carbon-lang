@@ -581,6 +581,37 @@ bool LLParser::ParseStandaloneMetadata() {
   return false;
 }
 
+/// ParseInlineMetadata:
+///   !{type %instr}
+///   !{...} MDNode
+///   !"foo" MDString
+bool LLParser::ParseInlineMetadata(Value *&V, PerFunctionState &PFS) {
+  assert(Lex.getKind() == lltok::Metadata && "Only for Metadata");
+  V = 0;
+
+  Lex.Lex();
+  if (Lex.getKind() == lltok::lbrace) {
+    Lex.Lex();
+    if (ParseTypeAndValue(V, PFS) ||
+        ParseToken(lltok::rbrace, "expected end of metadata node"))
+      return true;
+
+    Value *Vals[] = { V };
+    V = MDNode::get(Context, Vals, 1);
+    return false;
+  }
+
+  // Standalone metadata reference
+  // !{ ..., !42, ... }
+  if (!ParseMDNode((MetadataBase *&)V))
+    return false;
+
+  // MDString:
+  // '!' STRINGCONSTANT
+  if (ParseMDString((MetadataBase *&)V)) return true;
+  return false;
+}
+
 /// ParseAlias:
 ///   ::= GlobalVar '=' OptionalVisibility 'alias' OptionalLinkage Aliasee
 /// Aliasee
@@ -1377,15 +1408,23 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
     // Parse the argument.
     LocTy ArgLoc;
     PATypeHolder ArgTy(Type::getVoidTy(Context));
-    unsigned ArgAttrs1, ArgAttrs2;
+    unsigned ArgAttrs1 = Attribute::None;
+    unsigned ArgAttrs2 = Attribute::None;
     Value *V;
-    if (ParseType(ArgTy, ArgLoc) ||
-        ParseOptionalAttrs(ArgAttrs1, 0) ||
-        ParseValue(ArgTy, V, PFS) ||
-        // FIXME: Should not allow attributes after the argument, remove this in
-        // LLVM 3.0.
-        ParseOptionalAttrs(ArgAttrs2, 3))
+    if (ParseType(ArgTy, ArgLoc))
       return true;
+
+    if (Lex.getKind() == lltok::Metadata) {
+      if (ParseInlineMetadata(V, PFS))
+        return true;
+    } else {
+      if (ParseOptionalAttrs(ArgAttrs1, 0) ||
+          ParseValue(ArgTy, V, PFS) ||
+          // FIXME: Should not allow attributes after the argument, remove this
+          // in LLVM 3.0.
+          ParseOptionalAttrs(ArgAttrs2, 3))
+        return true;
+    }
     ArgList.push_back(ParamInfo(ArgLoc, V, ArgAttrs1|ArgAttrs2));
   }
 
