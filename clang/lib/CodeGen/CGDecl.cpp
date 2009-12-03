@@ -43,6 +43,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Using:          // using X; [C++]
   case Decl::UsingShadow:
   case Decl::UsingDirective: // using namespace X; [C++]
+  case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
     // None of these decls require codegen support.
     return;
 
