@@ -17,37 +17,37 @@
 #include "clang/AST/RecordLayout.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/Triple.h"
-#include <cstdio>
-
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 using namespace CodeGen;
 
 ABIInfo::~ABIInfo() {}
 
 void ABIArgInfo::dump() const {
-  fprintf(stderr, "(ABIArgInfo Kind=");
+  llvm::raw_ostream &OS = llvm::errs();
+  OS << "(ABIArgInfo Kind=";
   switch (TheKind) {
   case Direct:
-    fprintf(stderr, "Direct");
+    OS << "Direct";
     break;
   case Extend:
-    fprintf(stderr, "Extend");
+    OS << "Extend";
     break;
   case Ignore:
-    fprintf(stderr, "Ignore");
+    OS << "Ignore";
     break;
   case Coerce:
-    fprintf(stderr, "Coerce Type=");
-    getCoerceToType()->print(llvm::errs());
+    OS << "Coerce Type=";
+    getCoerceToType()->print(OS);
     break;
   case Indirect:
-    fprintf(stderr, "Indirect Align=%d", getIndirectAlign());
+    OS << "Indirect Align=" << getIndirectAlign();
     break;
   case Expand:
-    fprintf(stderr, "Expand");
+    OS << "Expand";
     break;
   }
-  fprintf(stderr, ")\n");
+  OS << ")\n";
 }
 
 static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays);
