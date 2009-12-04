@@ -832,6 +832,9 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 }
 
 void VtableBuilder::AppendMethodsToVtable() {
+  // Reserve room for our new methods.
+  methods.reserve(methods.size() + Methods.size());
+
   for (unsigned i = 0, e = Methods.size(); i != e; ++i) {
     GlobalDecl GD = Methods[i];
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
