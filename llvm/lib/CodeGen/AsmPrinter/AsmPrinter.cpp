@@ -1857,35 +1857,38 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
 
   // We assume a single instruction only has a spill or reload, not
   // both.
+  const MachineMemOperand *MMO;
   if (TM.getInstrInfo()->isLoadFromStackSlotPostFE(&MI, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      MMO = *MI.memoperands_begin();
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Reload";
+      O << MAI->getCommentString() << MMO->getSize() << "-byte Reload";
       Newline = true;
     }
   }
-  else if (TM.getInstrInfo()->hasLoadFromStackSlot(&MI, FI)) {
+  else if (TM.getInstrInfo()->hasLoadFromStackSlot(&MI, MMO, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Folded Reload";
+      O << MAI->getCommentString() << MMO->getSize() << "-byte Folded Reload";
       Newline = true;
     }
   }
   else if (TM.getInstrInfo()->isStoreToStackSlotPostFE(&MI, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      MMO = *MI.memoperands_begin();
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Spill";
+      O << MAI->getCommentString() << MMO->getSize() << "-byte Spill";
       Newline = true;
     }
   }
-  else if (TM.getInstrInfo()->hasStoreToStackSlot(&MI, FI)) {
+  else if (TM.getInstrInfo()->hasStoreToStackSlot(&MI, MMO, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Folded Spill";
+      O << MAI->getCommentString() << MMO->getSize() << "-byte Folded Spill";
       Newline = true;
     }
   }
