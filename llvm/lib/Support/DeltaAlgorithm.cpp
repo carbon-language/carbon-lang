@@ -1,4 +1,4 @@
-//===--- DeltaAlgorithm.h - A Set Minimization Algorithm -------*- C++ -*--===//
+//===--- DeltaAlgorithm.cpp - A Set Minimization Algorithm -----*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,6 +8,7 @@
 
 #include "llvm/ADT/DeltaAlgorithm.h"
 #include <algorithm>
+#include <iterator>
 using namespace llvm;
 
 bool DeltaAlgorithm::GetTestResult(const changeset_ty &Changes) {
