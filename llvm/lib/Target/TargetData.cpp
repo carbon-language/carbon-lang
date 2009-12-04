@@ -315,11 +315,12 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
                  : Alignments[BestMatchIdx].PrefAlign;
 }
 
-typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
-
 namespace {
 
 class StructLayoutMap : public AbstractTypeUser {
+public:
+  typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
+private:
   LayoutInfoTy LayoutInfo;
 
   /// refineAbstractType - The callback method invoked when an abstract type is
@@ -328,9 +329,7 @@ class StructLayoutMap : public AbstractTypeUser {
   ///
   virtual void refineAbstractType(const DerivedType *OldTy,
                                   const Type *) {
-    const StructType *STy = dyn_cast<const StructType>(OldTy);
-    assert(STy && "This can only track struct types.");
-
+    const StructType *STy = cast<const StructType>(OldTy);
     LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
     Iter->second->~StructLayout();
     free(Iter->second);
@@ -344,9 +343,7 @@ class StructLayoutMap : public AbstractTypeUser {
   /// This method notifies ATU's when this occurs for a type.
   ///
   virtual void typeBecameConcrete(const DerivedType *AbsTy) {
-    const StructType *STy = dyn_cast<const StructType>(AbsTy);
-    assert(STy && "This can only track struct types.");
-
+    const StructType *STy = cast<const StructType>(AbsTy);
     LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
     Iter->second->~StructLayout();
     free(Iter->second);
@@ -362,13 +359,11 @@ public:
       const Type *Key = I->first;
       StructLayout *Value = I->second;
 
-      if (Key && Key->isAbstract())
+      if (Key->isAbstract())
         Key->removeAbstractTypeUser(this);
 
-      if (Value) {
-        Value->~StructLayout();
-        free(Value);
-      }
+      Value->~StructLayout();
+      free(Value);
     }
   }
 
@@ -392,7 +387,7 @@ public:
   virtual void dump() const {}
 };
 
-} // end namespace llvm
+} // end anonymous namespace
 
 TargetData::~TargetData() {
   delete static_cast<StructLayoutMap*>(LayoutMap);
@@ -432,7 +427,7 @@ void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutMap) return;  // No cache.
   
   StructLayoutMap *STM = static_cast<StructLayoutMap*>(LayoutMap);
-  LayoutInfoTy::iterator I = STM->find(Ty);
+  StructLayoutMap::LayoutInfoTy::iterator I = STM->find(Ty);
   if (I == STM->end()) return;
   
   I->second->~StructLayout();
