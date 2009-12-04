@@ -22,6 +22,161 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
+// MemRegion Construction.
+//===----------------------------------------------------------------------===//
+
+template<typename RegionTy> struct MemRegionManagerTrait;
+
+template <typename RegionTy, typename A1>
+RegionTy* MemRegionManager::getRegion(const A1 a1) {
+  
+  const typename MemRegionManagerTrait<RegionTy>::SuperRegionTy *superRegion =
+  MemRegionManagerTrait<RegionTy>::getSuperRegion(*this, a1);
+  
+  llvm::FoldingSetNodeID ID;
+  RegionTy::ProfileRegion(ID, a1, superRegion);
+  void* InsertPos;
+  RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
+                                                                   InsertPos));
+  
+  if (!R) {
+    R = (RegionTy*) A.Allocate<RegionTy>();
+    new (R) RegionTy(a1, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
+template <typename RegionTy, typename A1>
+RegionTy* MemRegionManager::getSubRegion(const A1 a1,
+                                         const MemRegion *superRegion) {
+  llvm::FoldingSetNodeID ID;
+  RegionTy::ProfileRegion(ID, a1, superRegion);
+  void* InsertPos;
+  RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
+                                                                   InsertPos));
+  
+  if (!R) {
+    R = (RegionTy*) A.Allocate<RegionTy>();
+    new (R) RegionTy(a1, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
+template <typename RegionTy, typename A1, typename A2>
+RegionTy* MemRegionManager::getRegion(const A1 a1, const A2 a2) {
+  
+  const typename MemRegionManagerTrait<RegionTy>::SuperRegionTy *superRegion =
+  MemRegionManagerTrait<RegionTy>::getSuperRegion(*this, a1, a2);
+  
+  llvm::FoldingSetNodeID ID;
+  RegionTy::ProfileRegion(ID, a1, a2, superRegion);
+  void* InsertPos;
+  RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
+                                                                   InsertPos));
+  
+  if (!R) {
+    R = (RegionTy*) A.Allocate<RegionTy>();
+    new (R) RegionTy(a1, a2, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
+template <typename RegionTy, typename A1, typename A2>
+RegionTy* MemRegionManager::getSubRegion(const A1 a1, const A2 a2,
+                                         const MemRegion *superRegion) {
+  
+  llvm::FoldingSetNodeID ID;
+  RegionTy::ProfileRegion(ID, a1, a2, superRegion);
+  void* InsertPos;
+  RegionTy* R = cast_or_null<RegionTy>(Regions.FindNodeOrInsertPos(ID,
+                                                                   InsertPos));
+  
+  if (!R) {
+    R = (RegionTy*) A.Allocate<RegionTy>();
+    new (R) RegionTy(a1, a2, superRegion);
+    Regions.InsertNode(R, InsertPos);
+  }
+  
+  return R;
+}
+
+//===----------------------------------------------------------------------===//
+// Traits for constructing regions.
+//===----------------------------------------------------------------------===//
+
+template <> struct MemRegionManagerTrait<AllocaRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const Expr *, unsigned) {
+    return MRMgr.getStackRegion();
+  }
+};
+
+template <> struct MemRegionManagerTrait<CompoundLiteralRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const CompoundLiteralExpr *CL) {
+    
+    return CL->isFileScope() ? MRMgr.getGlobalsRegion()
+    : MRMgr.getStackRegion();
+  }
+};
+
+template <> struct MemRegionManagerTrait<StringRegion> {
+  typedef MemSpaceRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const StringLiteral*) {
+    return MRMgr.getGlobalsRegion();
+  }
+};
+
+template <> struct MemRegionManagerTrait<VarRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager &MRMgr,
+                                             const VarDecl *D,
+                                             const LocationContext *LC) {
+    
+    // FIXME: Make stack regions have a location context?
+    
+    if (D->hasLocalStorage()) {
+      return isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)
+      ? MRMgr.getStackArgumentsRegion() : MRMgr.getStackRegion();
+    }
+    
+    return MRMgr.getGlobalsRegion();
+  }
+};
+
+template <> struct MemRegionManagerTrait<SymbolicRegion> {
+  typedef MemRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             SymbolRef) {
+    return MRMgr.getUnknownRegion();
+  }
+};
+
+template<> struct MemRegionManagerTrait<FunctionTextRegion> {
+  typedef MemSpaceRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const FunctionDecl*) {
+    return MRMgr.getCodeRegion();
+  }
+};
+template<> struct MemRegionManagerTrait<BlockTextRegion> {
+  typedef MemSpaceRegion SuperRegionTy;
+  static const SuperRegionTy* getSuperRegion(MemRegionManager& MRMgr,
+                                             const BlockDecl*, CanQualType) {
+    return MRMgr.getCodeRegion();
+  }
+};
+
+//===----------------------------------------------------------------------===//
 // Object destruction.
 //===----------------------------------------------------------------------===//
 
