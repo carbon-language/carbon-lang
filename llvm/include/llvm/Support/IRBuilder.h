@@ -269,6 +269,19 @@ public:
     return Insert(IndirectBrInst::Create(Addr, NumDests));
   }
 
+  InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
+                           BasicBlock *UnwindDest, const Twine &Name = "") {
+    Value *Args[] = { 0 };
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
+                                     Args), Name);
+  }
+  InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
+                           BasicBlock *UnwindDest, Value *Arg1,
+                           const Twine &Name = "") {
+    Value *Args[] = { Arg1 };
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
+                                     Args+1), Name);
+  }
   /// CreateInvoke - Create an invoke instruction.
   template<typename InputIterator>
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
