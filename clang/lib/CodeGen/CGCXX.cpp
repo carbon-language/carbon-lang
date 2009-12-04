@@ -691,21 +691,29 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   EmitCXXMemberCall(D, Callee, This, ArgBeg, ArgEnd);
 }
 
-void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *D,
+void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                             CXXDtorType Type,
                                             llvm::Value *This) {
-  if (D->isVirtual()) {
-    const llvm::Type *Ty =
-      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(D),
-                                     /*isVariadic=*/false);
-    
-    llvm::Value *Callee = BuildVirtualCall(D, Dtor_Deleting, This, Ty);
-    EmitCXXMemberCall(D, Callee, This, 0, 0);
-    return;
-  }
-  llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(D, Type);
+  llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
+  
+  CallArgList Args;
 
-  EmitCXXMemberCall(D, Callee, This, 0, 0);
+  // Push the this ptr.
+  Args.push_back(std::make_pair(RValue::get(This),
+                                DD->getThisType(getContext())));
+  
+  // Add a VTT parameter if necessary.
+  // FIXME: This should not be a dummy null parameter!
+  if (Type == Dtor_Base && DD->getParent()->getNumVBases() != 0) {
+    QualType T = getContext().getPointerType(getContext().VoidPtrTy);
+    
+    Args.push_back(std::make_pair(RValue::get(CGM.EmitNullConstant(T)), T));
+  }
+
+  // FIXME: We should try to share this code with EmitCXXMemberCall.
+  
+  QualType ResultType = DD->getType()->getAs<FunctionType>()->getResultType();
+  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, Args, DD);
 }
 
 void
