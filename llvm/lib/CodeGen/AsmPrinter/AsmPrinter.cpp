@@ -1863,7 +1863,7 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
       MMO = *MI.memoperands_begin();
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << MMO->getSize() << "-byte Reload";
+      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Reload";
       Newline = true;
     }
   }
@@ -1871,7 +1871,8 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << MMO->getSize() << "-byte Folded Reload";
+      O << MAI->getCommentString() << ' '
+        << MMO->getSize() << "-byte Folded Reload";
       Newline = true;
     }
   }
@@ -1880,7 +1881,7 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
       MMO = *MI.memoperands_begin();
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << MMO->getSize() << "-byte Spill";
+      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Spill";
       Newline = true;
     }
   }
@@ -1888,7 +1889,8 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << MMO->getSize() << "-byte Folded Spill";
+      O << MAI->getCommentString() << ' '
+        << MMO->getSize() << "-byte Folded Spill";
       Newline = true;
     }
   }
