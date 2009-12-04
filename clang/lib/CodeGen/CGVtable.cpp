@@ -1115,7 +1115,8 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     if (CreateDefinition) {
       llvm::ArrayType *ntype = 
         llvm::ArrayType::get(Ptr8Ty, b.getVtable().size());
-      C = llvm::ConstantArray::get(ntype, b.getVtable());
+      C = llvm::ConstantArray::get(ntype, &b.getVtable()[0], 
+                                   b.getVtable().size());
       linktype = llvm::GlobalValue::LinkOnceODRLinkage;
       if (LayoutClass->isInAnonymousNamespace())
         linktype = llvm::GlobalValue::InternalLinkage;
