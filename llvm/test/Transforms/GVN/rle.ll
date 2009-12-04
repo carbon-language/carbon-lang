@@ -280,3 +280,36 @@ Cont:
 }
 
 
+declare i1 @cond() readonly
+declare i1 @cond2() readonly
+
+define i32 @phi_trans2() {
+entry:
+  %P = alloca i32, i32 400
+  br label %F1
+  
+F1:
+  %A = phi i32 [1, %entry], [2, %F]
+  %cond2 = call i1 @cond()
+  br i1 %cond2, label %T1, label %TY
+  
+T1:
+  %P2 = getelementptr i32* %P, i32 %A
+  %x = load i32* %P2
+  %cond = call i1 @cond2()
+  br i1 %cond, label %TX, label %F
+  
+F:
+  %P3 = getelementptr i32* %P, i32 2
+  store i32 17, i32* %P3
+  
+  store i32 42, i32* %P2  ; Provides "P[A]".
+  br label %F1
+
+TX:
+  ret i32 %x  ;; SHOULD NOT BE COMPILED TO 'ret i32 42'.
+TY:
+  ret i32 0
+}
+
+
