@@ -44,6 +44,12 @@ def OptList : OptionList<[
     (help "Relocation model: dynamic-no-pic"), (hidden)),
  (parameter_option "linker",
     (help "Choose linker (possible values: gcc, g++)")),
+ (parameter_option "mtune",
+    (help "Target a specific CPU type"), (hidden)),
+ (parameter_option "march",
+    (help "A synonym for -mtune"), (hidden)),
+ (parameter_option "mcpu",
+    (help "A deprecated synonym for -mtune"), (hidden)),
  (parameter_option "MF",
     (help "Specify a file to write dependencies to"), (hidden)),
  (parameter_option "MT",
@@ -119,6 +125,9 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (not_empty "I"), (forward "I"),
          (not_empty "F"), (forward "F"),
          (not_empty "D"), (forward "D"),
+         (not_empty "march"), (forward "march"),
+         (not_empty "mtune"), (forward "mtune"),
+         (not_empty "mcpu"), (forward "mcpu"),
          (switch_on "O1"), (forward "O1"),
          (switch_on "O2"), (forward "O2"),
          (switch_on "O3"), (forward "O3"),
@@ -179,6 +188,9 @@ def llc : Tool<
           (switch_on "fPIC"), (append_cmd "-relocation-model=pic"),
           (switch_on "mdynamic-no-pic"),
                      (append_cmd "-relocation-model=dynamic-no-pic"),
+          (not_empty "march"), (forward "mcpu"),
+          (not_empty "mtune"), (forward "mcpu"),
+          (not_empty "mcpu"), (forward "mcpu"),
           (not_empty "Wllc,"), (unpack_values "Wllc,")))
 ]>;
 
