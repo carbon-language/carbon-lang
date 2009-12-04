@@ -135,11 +135,9 @@ private:
   struct CovariantThunk {
     CovariantThunk() { }
 
-    CovariantThunk(GlobalDecl GD, CanQualType ReturnType) 
-      : GD(GD), ReturnType(ReturnType) { }
+    CovariantThunk(CanQualType ReturnType) 
+      : ReturnType(ReturnType) { }
 
-    GlobalDecl GD;
-    
     /// ReturnType - The return type of the function.
     CanQualType ReturnType;
   };
@@ -314,12 +312,13 @@ public:
   void InstallThunks() {
     for (CovariantThunksMapTy::const_iterator i = CovariantThunks.begin(),
          e = CovariantThunks.end(); i != e; ++i) {
-      GlobalDecl GD = i->second.GD;
+      uint64_t Index = i->first;
+      GlobalDecl GD = Methods[Index];
+      
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
       if (MD->isPure())
         continue;
       
-      uint64_t Index = i->first;
       const CovariantThunk &Thunk = i->second;
       assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
       
@@ -867,8 +866,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         if (Adjustment.ReturnType.isNull())
           Adjustment.ReturnType =
             CGM.getContext().getCanonicalType(OverriddenReturnType);
-        
-        Adjustment.GD = GD;
       }
 
       Methods.OverrideMethod(OGD, GD);
