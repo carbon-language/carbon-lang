@@ -92,6 +92,10 @@ private:
       MethodToIndexMap[GD] = Index;
     }
 
+    bool hasIndex(GlobalDecl GD) const {
+      return MethodToIndexMap.count(GD);
+    }
+
     /// getIndex - Returns the index of the given method.
     uint64_t getIndex(GlobalDecl GD) const {
       assert(MethodToIndexMap.count(GD) && "Did not find method!");
@@ -747,90 +751,82 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       OGD = GlobalDecl(DD, GD.getDtorType());
     else
       OGD = OMD;
+
+    // FIXME: Explain why this is necessary!
+    if (!Methods.hasIndex(OGD))
+      continue;
+
+    uint64_t Index = Methods.getIndex(OGD);
+      
+    QualType ReturnType = 
+      MD->getType()->getAs<FunctionType>()->getResultType();
+    QualType OverriddenReturnType = 
+      OMD->getType()->getAs<FunctionType>()->getResultType();
     
-    llvm::Constant *om;
-    om = WrapAddrOf(OGD);
-    om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
+    // Check if we need a return type adjustment.
+    if (TypeConversionRequiresAdjustment(CGM.getContext(), ReturnType, 
+                                          OverriddenReturnType)) {
+      CanQualType &BaseReturnType = BaseReturnTypes[Index];
 
-    for (Index_t i = 0, e = submethods.size();
-         i != e; ++i) {
-      if (submethods[i] != om)
-        continue;
+      // Get the canonical return type.
+      CanQualType CanReturnType = 
+        CGM.getContext().getCanonicalType(ReturnType);
 
-      uint64_t Index = Methods.getIndex(OGD);
+      // Insert the base return type.
+      if (BaseReturnType.isNull())
+        BaseReturnType =
+          CGM.getContext().getCanonicalType(OverriddenReturnType);
+    }
 
-      assert(i == Index);
+    Methods.OverrideMethod(OGD, GD);
+
+    submethods[Index] = m;
+    ThisAdjustments.erase(Index);
+    if (MorallyVirtual || VCall.count(OGD)) {
+      Index_t &idx = VCall[OGD];
+      if (idx == 0) {
+        NonVirtualOffset[GD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
+        VCallOffset[GD] = OverrideOffset/8;
+        idx = VCalls.size()+1;
+        VCalls.push_back(0);
+        D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
+                  MD->getNameAsString().c_str(), (int)-idx-3,
+                  (int)VCalls[idx-1], Class->getNameAsCString()));
+      } else {
+        NonVirtualOffset[GD] = NonVirtualOffset[OGD];
+        VCallOffset[GD] = VCallOffset[OGD];
+        VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
+        D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
+                  MD->getNameAsString().c_str(), (int)-idx-3,
+                  (int)VCalls[idx-1], Class->getNameAsCString()));
+      }
+      VCall[GD] = idx;
+      int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
+      int64_t VirtualAdjustment = 
+        -((idx + extra + 2) * LLVMPointerWidth / 8);
       
-      QualType ReturnType = 
-        MD->getType()->getAs<FunctionType>()->getResultType();
-      QualType OverriddenReturnType = 
-        OMD->getType()->getAs<FunctionType>()->getResultType();
+      // Optimize out virtual adjustments of 0.
+      if (VCalls[idx-1] == 0)
+        VirtualAdjustment = 0;
       
-      // Check if we need a return type adjustment.
-      if (TypeConversionRequiresAdjustment(CGM.getContext(), ReturnType, 
-                                           OverriddenReturnType)) {
-        CanQualType &BaseReturnType = BaseReturnTypes[i];
+      ThunkAdjustment ThisAdjustment(NonVirtualAdjustment,
+                                      VirtualAdjustment);
 
-        // Get the canonical return type.
-        CanQualType CanReturnType = 
-          CGM.getContext().getCanonicalType(ReturnType);
-
-        // Insert the base return type.
-        if (BaseReturnType.isNull())
-          BaseReturnType =
-            CGM.getContext().getCanonicalType(OverriddenReturnType);
-      }
-
-      Methods.OverrideMethod(OGD, GD);
-
-      submethods[Index] = m;
-      ThisAdjustments.erase(i);
-      if (MorallyVirtual || VCall.count(OGD)) {
-        Index_t &idx = VCall[OGD];
-        if (idx == 0) {
-          NonVirtualOffset[GD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
-          VCallOffset[GD] = OverrideOffset/8;
-          idx = VCalls.size()+1;
-          VCalls.push_back(0);
-          D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
-                    MD->getNameAsString().c_str(), (int)-idx-3,
-                    (int)VCalls[idx-1], Class->getNameAsCString()));
-        } else {
-          NonVirtualOffset[GD] = NonVirtualOffset[OGD];
-          VCallOffset[GD] = VCallOffset[OGD];
-          VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
-          D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
-                    MD->getNameAsString().c_str(), (int)-idx-3,
-                    (int)VCalls[idx-1], Class->getNameAsCString()));
-        }
-        VCall[GD] = idx;
-        int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
-        int64_t VirtualAdjustment = 
-          -((idx + extra + 2) * LLVMPointerWidth / 8);
-        
-        // Optimize out virtual adjustments of 0.
-        if (VCalls[idx-1] == 0)
-          VirtualAdjustment = 0;
-        
-        ThunkAdjustment ThisAdjustment(NonVirtualAdjustment,
-                                       VirtualAdjustment);
-
-        if (!isPure && !ThisAdjustment.isEmpty())
-          ThisAdjustments[Index] = ThisAdjustment;
-        return true;
-      }
-
-      // FIXME: finish off
-      int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
-
-      if (NonVirtualAdjustment) {
-        ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
-        
-        if (!isPure)
-          ThisAdjustments[Index] = ThisAdjustment;
-      }
+      if (!isPure && !ThisAdjustment.isEmpty())
+        ThisAdjustments[Index] = ThisAdjustment;
       return true;
     }
+
+    // FIXME: finish off
+    int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
+
+    if (NonVirtualAdjustment) {
+      ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
+      
+      if (!isPure)
+        ThisAdjustments[Index] = ThisAdjustment;
+    }
+    return true;
   }
 
   return false;
