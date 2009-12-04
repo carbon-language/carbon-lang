@@ -288,6 +288,9 @@ public:
                       bool MorallyVirtual, Index_t OverrideOffset,
                       Index_t Offset, int64_t CurrentVBaseOffset);
 
+  /// AppendMethods - Append the current methods to the vtable.
+  void AppendMethods();
+  
   void InstallThunks() {
     for (BaseReturnTypesMapTy::const_iterator i = BaseReturnTypes.begin(),
          e = BaseReturnTypes.end(); i != e; ++i) {
@@ -537,12 +540,7 @@ public:
 
     assert(submethods.size() == Methods.size() && "Method size mismatch!");
 
-    InstallThunks();
-    D1(printf("============= combining methods\n"));
-    methods.insert(methods.end(), submethods.begin(), submethods.end());
-    
-    Methods.clear();
-    submethods.clear();
+    AppendMethods();
 
     // and then the non-virtual bases.
     NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
@@ -905,6 +903,15 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
   }
 
   return false;
+}
+
+void VtableBuilder::AppendMethods() {
+  InstallThunks();
+  D1(printf("============= combining methods\n"));
+  methods.insert(methods.end(), submethods.begin(), submethods.end());
+  
+  Methods.clear();
+  submethods.clear();
 }
 
 void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
