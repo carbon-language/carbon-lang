@@ -210,7 +210,13 @@ static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
 
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   if (!E->getSubExpr()) {
-    Builder.CreateCall(getReThrowFn(*this))->setDoesNotReturn();
+    if (getInvokeDest()) {
+      llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
+      Builder.CreateInvoke(getReThrowFn(*this), Cont, getInvokeDest())
+        ->setDoesNotReturn();
+      EmitBlock(Cont);
+    } else
+      Builder.CreateCall(getReThrowFn(*this))->setDoesNotReturn();
     Builder.CreateUnreachable();
 
     // Clear the insertion point to indicate we are in unreachable code.
@@ -237,9 +243,18 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   llvm::Constant *TypeInfo = CGM.GenerateRTTI(ThrowType);
   llvm::Constant *Dtor = llvm::Constant::getNullValue(Int8PtrTy);
   
-  llvm::CallInst *ThrowCall = 
-    Builder.CreateCall3(getThrowFn(*this), ExceptionPtr, TypeInfo, Dtor);
-  ThrowCall->setDoesNotReturn();
+  if (getInvokeDest()) {
+    llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
+    llvm::InvokeInst *ThrowCall = 
+      Builder.CreateInvoke3(getThrowFn(*this), Cont, getInvokeDest(),
+                            ExceptionPtr, TypeInfo, Dtor);
+    ThrowCall->setDoesNotReturn();
+    EmitBlock(Cont);
+  } else {
+    llvm::CallInst *ThrowCall = 
+      Builder.CreateCall3(getThrowFn(*this), ExceptionPtr, TypeInfo, Dtor);
+    ThrowCall->setDoesNotReturn();
+  }
   Builder.CreateUnreachable();
   
   // Clear the insertion point to indicate we are in unreachable code.
@@ -383,7 +398,8 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
         setInvokeDest(TerminateHandler);
         bool WasPointer = true;
         if (!CatchType.getTypePtr()->isPointerType()) {
-          WasPointer = false;
+          if (!isa<ReferenceType>(CatchParam->getType()))
+            WasPointer = false;
           CatchType = getContext().getPointerType(CatchType);
         }
         ExcObject = Builder.CreateBitCast(ExcObject, ConvertType(CatchType));
@@ -428,7 +444,6 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     Builder.CreateInvoke(getEndCatchFn(*this),
                          Cont, TerminateHandler,
                          Args.begin(), Args.begin());
-
     EmitBlock(Cont);
     if (Info.SwitchBlock)
       EmitBlock(Info.SwitchBlock);
