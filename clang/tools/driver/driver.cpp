@@ -60,7 +60,10 @@ void DriverDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   OS << '\n';
 }
 
-llvm::sys::Path GetExecutablePath(const char *Argv0) {
+llvm::sys::Path GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
+  if (!CanonicalPrefixes)
+    return llvm::sys::Path(Argv0);
+
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
   void *P = (void*) (intptr_t) GetExecutablePath;
@@ -190,7 +193,16 @@ int main(int argc, const char **argv) {
     return cc1_main(argv+2, argv+argc, argv[0],
                     (void*) (intptr_t) GetExecutablePath);
 
-  llvm::sys::Path Path = GetExecutablePath(argv[0]);
+  bool CanonicalPrefixes = true;
+  for (int i = 1; i < argc; ++i) {
+    if (llvm::StringRef(argv[i]) == "-no-canonical-prefixes") {
+      CanonicalPrefixes = false;
+      break;
+    }
+  }
+
+  llvm::sys::Path Path = GetExecutablePath(argv[0], CanonicalPrefixes);
+
   DriverDiagnosticPrinter DiagClient(Path.getBasename(), llvm::errs());
 
   Diagnostic Diags(&DiagClient);
@@ -264,4 +276,3 @@ int main(int argc, const char **argv) {
 
   return Res;
 }
-
