@@ -1263,7 +1263,10 @@ def warn_missing_prototype : Warning<
   "no previous prototype for function %0">,
   InGroup<DiagGroup<"missing-prototypes">>, DefaultIgnore;
 def err_redefinition : Error<"redefinition of %0">;
-
+def err_definition_of_implicitly_declared_member : Error<
+  "definition of implicitly declared %select{constructor|copy constructor|"
+  "copy assignment operator|destructor}1">;
+  
 def warn_redefinition_of_typedef : Warning<
   "redefinition of typedef %0 is invalid in C">,
   InGroup<DiagGroup<"typedef-redefinition"> >, DefaultError;
