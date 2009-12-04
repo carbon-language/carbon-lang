@@ -132,7 +132,7 @@ public:
   }
 
   // Get the top level stack frame.
-  StackFrameContext *getStackFrame(Decl const *D) {
+  const StackFrameContext *getStackFrame(Decl const *D) {
     return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D), 0, 0);
   }
 

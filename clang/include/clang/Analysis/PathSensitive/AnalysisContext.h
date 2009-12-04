@@ -29,6 +29,7 @@ class CFG;
 class LiveVariables;
 class ParentMap;
 class ImplicitParamDecl;
+class LocationContextManager;
 
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
@@ -91,7 +92,7 @@ protected:
     : Kind(k), Ctx(ctx), Parent(parent) {}
 
 public:
-  virtual ~LocationContext() {}
+  virtual ~LocationContext();
   
   ContextKind getKind() const { return Kind; }
 
@@ -115,16 +116,11 @@ public:
     return Ctx->getSelfDecl();
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, Kind, Ctx, Parent);
-  }
-
-  static void Profile(llvm::FoldingSetNodeID &ID, ContextKind k,
-                      AnalysisContext *ctx, const LocationContext *parent);
+  virtual void Profile(llvm::FoldingSetNodeID &ID) = 0;
 
   static bool classof(const LocationContext*) { return true; }
 
-protected:
+public:
   static void ProfileCommon(llvm::FoldingSetNodeID &ID,
                             ContextKind ck,
                             AnalysisContext *ctx,
@@ -134,15 +130,16 @@ protected:
 
 class StackFrameContext : public LocationContext {
   const Stmt *CallSite;
-public:
+
+  friend class LocationContextManager;
   StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
                     const Stmt *s)
     : LocationContext(StackFrame, ctx, parent), CallSite(s) {}
-  
-  virtual ~StackFrameContext() {}
 
+public:
+  ~StackFrameContext() {}
 
-  Stmt const *getCallSite() const { return CallSite; }
+  const Stmt *getCallSite() const { return CallSite; }
 
   void Profile(llvm::FoldingSetNodeID &ID);
   
@@ -158,12 +155,14 @@ public:
 
 class ScopeContext : public LocationContext {
   const Stmt *Enter;
-public:
+  
+  friend class LocationContextManager;
   ScopeContext(AnalysisContext *ctx, const LocationContext *parent,
                const Stmt *s)
     : LocationContext(Scope, ctx, parent), Enter(s) {}
-  
-  virtual ~ScopeContext() {}
+
+public:
+  ~ScopeContext() {}
 
   void Profile(llvm::FoldingSetNodeID &ID);
 
@@ -179,11 +178,13 @@ public:
 
 class BlockInvocationContext : public LocationContext {
   const BlockDecl *BD;
-public:
-  BlockInvocationContext(const BlockDecl *bd, AnalysisContext *ctx,
-                         const LocationContext *parent = 0)
+
+  friend class LocationContextManager;
+  BlockInvocationContext(AnalysisContext *ctx, const LocationContext *parent,
+                         const BlockDecl *bd)
     : LocationContext(Block, ctx, parent), BD(bd) {}
-  
+
+public:
   ~BlockInvocationContext() {}
   
   const BlockDecl *getBlockDecl() const { return BD; }
@@ -202,19 +203,28 @@ public:
 
 class LocationContextManager {
   llvm::FoldingSet<LocationContext> Contexts;
-
 public:
   ~LocationContextManager();
   
-  StackFrameContext *getStackFrame(AnalysisContext *ctx,
-                                   const LocationContext *parent,
-                                   const Stmt *s);
+  const StackFrameContext *getStackFrame(AnalysisContext *ctx,
+                                         const LocationContext *parent,
+                                         const Stmt *s);
 
-  ScopeContext *getScope(AnalysisContext *ctx, const LocationContext *parent,
-                         const Stmt *s);
+  const ScopeContext *getScope(AnalysisContext *ctx,
+                               const LocationContext *parent,
+                               const Stmt *s);
+  
+  const BlockInvocationContext *
+  getBlockInvocation(AnalysisContext *ctx, const LocationContext *parent,
+                     const BlockDecl *BD);
   
   /// Discard all previously created LocationContext objects.
   void clear();
+private:
+  template <typename LOC, typename DATA>
+  const LOC *getLocationContext(AnalysisContext *ctx,
+                                const LocationContext *parent,
+                                const DATA *d);
 };
 
 } // end clang namespace
