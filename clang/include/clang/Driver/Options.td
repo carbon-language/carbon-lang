@@ -61,6 +61,55 @@ def clang_ignored_m_Group : OptionGroup<"<clang ignored m group>">,
 //   = => _EQ
 //   C++ => CXX
 
+// Developer Driver Options
+
+def ccc_Group : OptionGroup<"<clang internal options>">;
+def ccc_driver_Group : OptionGroup<"<clang driver internal options>">,
+  Group<ccc_Group>, HelpText<"DRIVER OPTIONS">;
+def ccc_debug_Group : OptionGroup<"<clang debug/development internal options>">,
+  Group<ccc_Group>, HelpText<"DEBUG/DEVELOPMENT OPTIONS">;
+
+class CCCDriverOpt : Group<ccc_driver_Group>, Flags<[DriverOption, HelpHidden]>;
+def ccc_cxx : Flag<"-ccc-cxx">, CCCDriverOpt,
+  HelpText<"Act as a C++ driver">;
+def ccc_echo : Flag<"-ccc-echo">, CCCDriverOpt,
+  HelpText<"Echo commands before running them">;
+def ccc_gcc_name : Separate<"-ccc-gcc-name">, CCCDriverOpt,
+  HelpText<"Name for native GCC compiler">,
+  MetaVarName<"<gcc-path>">;
+def ccc_clang_cxx : Flag<"-ccc-clang-cxx">, CCCDriverOpt,
+  HelpText<"Enable the clang compiler for C++">;
+def ccc_no_clang_cxx : Flag<"-ccc-no-clang-cxx">, CCCDriverOpt,
+  HelpText<"Disable the clang compiler for C++">;
+def ccc_no_clang : Flag<"-ccc-no-clang">, CCCDriverOpt,
+  HelpText<"Disable the clang compiler">;
+def ccc_no_clang_cpp : Flag<"-ccc-no-clang-cpp">, CCCDriverOpt,
+  HelpText<"Disable the clang preprocessor">;
+def ccc_clang_archs : Separate<"-ccc-clang-archs">, CCCDriverOpt,
+  HelpText<"Comma separate list of architectures to use the clang compiler for">,
+  MetaVarName<"<arch-list>">;
+def ccc_pch_is_pch : Flag<"-ccc-pch-is-pch">, CCCDriverOpt,
+  HelpText<"Use lazy PCH for precompiled headers">;
+def ccc_pch_is_pth : Flag<"-ccc-pch-is-pth">, CCCDriverOpt,
+  HelpText<"Use pretokenized headers for precompiled headers">;
+
+class CCCDebugOpt : Group<ccc_debug_Group>, Flags<[DriverOption, HelpHidden]>;
+def ccc_host_triple : Separate<"-ccc-host-triple">, CCCDebugOpt,
+  HelpText<"Simulate running on the given target">;
+def ccc_install_dir : Separate<"-ccc-install-dir">, CCCDebugOpt,
+  HelpText<"Simulate installation in the given directory">;
+def ccc_print_options : Flag<"-ccc-print-options">, CCCDebugOpt,
+  HelpText<"Dump parsed command line arguments">;
+def ccc_print_phases : Flag<"-ccc-print-phases">, CCCDebugOpt,
+  HelpText<"Dump list of actions to perform">;
+def ccc_print_bindings : Flag<"-ccc-print-bindings">, CCCDebugOpt,
+  HelpText<"Show bindings of tools to actions">;
+
+// Make sure all other -ccc- options are rejected.
+def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;
+
+// Standard Options
+
 def _HASH_HASH_HASH : Flag<"-###">, Flags<[DriverOption]>,
     HelpText<"Print the commands to run for this compilation">;
 def A : JoinedOrSeparate<"-A">;
