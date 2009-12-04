@@ -404,7 +404,7 @@ void RegionRawOffset::dumpToStream(llvm::raw_ostream& os) const {
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//
 
-MemSpaceRegion* MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {
+const MemSpaceRegion *MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {
   if (!region) {
     region = (MemSpaceRegion*) A.Allocate<MemSpaceRegion>();
     new (region) MemSpaceRegion(this);
@@ -413,27 +413,27 @@ MemSpaceRegion* MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {
   return region;
 }
 
-MemSpaceRegion* MemRegionManager::getStackRegion() {
+const MemSpaceRegion *MemRegionManager::getStackRegion() {
   return LazyAllocate(stack);
 }
 
-MemSpaceRegion* MemRegionManager::getStackArgumentsRegion() {
+const MemSpaceRegion *MemRegionManager::getStackArgumentsRegion() {
   return LazyAllocate(stackArguments);
 }
 
-MemSpaceRegion* MemRegionManager::getGlobalsRegion() {
+const MemSpaceRegion *MemRegionManager::getGlobalsRegion() {
   return LazyAllocate(globals);
 }
 
-MemSpaceRegion* MemRegionManager::getHeapRegion() {
+const MemSpaceRegion *MemRegionManager::getHeapRegion() {
   return LazyAllocate(heap);
 }
 
-MemSpaceRegion* MemRegionManager::getUnknownRegion() {
+const MemSpaceRegion *MemRegionManager::getUnknownRegion() {
   return LazyAllocate(unknown);
 }
 
-MemSpaceRegion* MemRegionManager::getCodeRegion() {
+const MemSpaceRegion *MemRegionManager::getCodeRegion() {
   return LazyAllocate(code);
 }
 
@@ -441,12 +441,12 @@ MemSpaceRegion* MemRegionManager::getCodeRegion() {
 // Constructing regions.
 //===----------------------------------------------------------------------===//
 
-StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
+const StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
   return getRegion<StringRegion>(Str);
 }
 
-VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
-                                          const LocationContext *LC) {
+const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
+                                                const LocationContext *LC) {
 
   // FIXME: Once we implement scope handling, we will need to properly lookup
   // 'D' to the proper LocationContext.  For now, just strip down to the
@@ -457,9 +457,9 @@ VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
   return getRegion<VarRegion>(D, LC);
 }
 
-BlockDataRegion *MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
-                                                      const LocationContext *LC)
-{
+const BlockDataRegion *
+MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
+                                     const LocationContext *LC) {
   // FIXME: Once we implement scope handling, we will need to properly lookup
   // 'D' to the proper LocationContext.  For now, just strip down to the
   // StackFrame.
@@ -469,12 +469,12 @@ BlockDataRegion *MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
   return getSubRegion<BlockDataRegion>(BC, LC, getStackRegion());
 }
 
-CompoundLiteralRegion*
+const CompoundLiteralRegion*
 MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
   return getRegion<CompoundLiteralRegion>(CL);
 }
 
-ElementRegion*
+const ElementRegion*
 MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
                                    const MemRegion* superRegion,
                                    ASTContext& Ctx){
@@ -497,40 +497,42 @@ MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
   return R;
 }
 
-FunctionTextRegion *
+const FunctionTextRegion *
 MemRegionManager::getFunctionTextRegion(const FunctionDecl *FD) {
   return getRegion<FunctionTextRegion>(FD);
 }
 
-BlockTextRegion *MemRegionManager::getBlockTextRegion(const BlockDecl *BD,
-                                                      CanQualType locTy) {
+const BlockTextRegion *
+MemRegionManager::getBlockTextRegion(const BlockDecl *BD, CanQualType locTy) {
   return getRegion<BlockTextRegion>(BD, locTy);
 }
 
 
 /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-SymbolicRegion* MemRegionManager::getSymbolicRegion(SymbolRef sym) {
+const SymbolicRegion *MemRegionManager::getSymbolicRegion(SymbolRef sym) {
   return getRegion<SymbolicRegion>(sym);
 }
 
-FieldRegion* MemRegionManager::getFieldRegion(const FieldDecl* d,
-                                              const MemRegion* superRegion) {
+const FieldRegion *
+MemRegionManager::getFieldRegion(const FieldDecl* d,
+                                 const MemRegion* superRegion){
   return getSubRegion<FieldRegion>(d, superRegion);
 }
 
-ObjCIvarRegion*
+const ObjCIvarRegion*
 MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
                                     const MemRegion* superRegion) {
   return getSubRegion<ObjCIvarRegion>(d, superRegion);
 }
 
-ObjCObjectRegion*
+const ObjCObjectRegion*
 MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
                                       const MemRegion* superRegion) {
   return getSubRegion<ObjCObjectRegion>(d, superRegion);
 }
 
-AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
+const AllocaRegion*
+MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
   return getRegion<AllocaRegion>(E, cnt);
 }
 

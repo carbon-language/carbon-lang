@@ -820,9 +820,8 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   T = AT->getElementType();
 
   SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-  ElementRegion* ER = MRMgr.getElementRegion(T, ZeroIdx, ArrayR, getContext());
-
-  return loc::MemRegionVal(ER);
+  return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR,
+                                                  getContext()));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1465,9 +1464,7 @@ const GRState *
 RegionStoreManager::BindCompoundLiteral(const GRState *state,
                                         const CompoundLiteralExpr* CL,
                                         SVal V) {
-
-  CompoundLiteralRegion* R = MRMgr.getCompoundLiteralRegion(CL);
-  return Bind(state, loc::MemRegionVal(R), V);
+  return Bind(state, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL)), V);
 }
 
 const GRState *RegionStoreManager::setImplicitDefaultValue(const GRState *state,
@@ -1520,8 +1517,8 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
         break;
 
       SVal Idx = ValMgr.makeArrayIndex(i);
-      ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R,
-                                                 getContext());
+      const ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R,
+                                                       getContext());
 
       SVal V = ValMgr.makeIntVal(str[j], sizeof(char)*8, true);
       state = Bind(state, loc::MemRegionVal(ER), V);
@@ -1549,7 +1546,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
       break;
 
     SVal Idx = ValMgr.makeArrayIndex(i);
-    ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
+    const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
 
     if (CAT->getElementType()->isStructureType())
       state = BindStruct(state, ER, *VI);
@@ -1871,8 +1868,7 @@ GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
   // Copy the arg expression value to the arg variables.
   for (; AI != AE; ++AI, ++PI) {
     SVal ArgVal = state->getSVal(*AI);
-    MemRegion *R = MRMgr.getVarRegion(*PI, frame);
-    state = Bind(state, ValMgr.makeLoc(R), ArgVal);
+    state = Bind(state, ValMgr.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
   }
 
   return state;

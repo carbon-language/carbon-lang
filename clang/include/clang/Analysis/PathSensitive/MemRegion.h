@@ -691,50 +691,50 @@ public:
 
   /// getStackRegion - Retrieve the memory region associated with the
   ///  current stack frame.
-  MemSpaceRegion *getStackRegion();
+  const MemSpaceRegion *getStackRegion();
 
   /// getStackArgumentsRegion - Retrieve the memory region associated with
   ///  function/method arguments of the current stack frame.
-  MemSpaceRegion *getStackArgumentsRegion();
+  const MemSpaceRegion *getStackArgumentsRegion();
 
   /// getGlobalsRegion - Retrieve the memory region associated with
   ///  all global variables.
-  MemSpaceRegion *getGlobalsRegion();
+  const MemSpaceRegion *getGlobalsRegion();
 
   /// getHeapRegion - Retrieve the memory region associated with the
   ///  generic "heap".
-  MemSpaceRegion *getHeapRegion();
+  const MemSpaceRegion *getHeapRegion();
 
   /// getUnknownRegion - Retrieve the memory region associated with unknown
   /// memory space.
-  MemSpaceRegion *getUnknownRegion();
+  const MemSpaceRegion *getUnknownRegion();
 
-  MemSpaceRegion *getCodeRegion();
+  const MemSpaceRegion *getCodeRegion();
 
   /// getAllocaRegion - Retrieve a region associated with a call to alloca().
-  AllocaRegion *getAllocaRegion(const Expr* Ex, unsigned Cnt);
+  const AllocaRegion *getAllocaRegion(const Expr* Ex, unsigned Cnt);
 
   /// getCompoundLiteralRegion - Retrieve the region associated with a
   ///  given CompoundLiteral.
-  CompoundLiteralRegion*
+  const CompoundLiteralRegion*
   getCompoundLiteralRegion(const CompoundLiteralExpr* CL);
 
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-  SymbolicRegion* getSymbolicRegion(SymbolRef sym);
+  const SymbolicRegion* getSymbolicRegion(SymbolRef sym);
 
-  StringRegion* getStringRegion(const StringLiteral* Str);
+  const StringRegion* getStringRegion(const StringLiteral* Str);
 
   /// getVarRegion - Retrieve or create the memory region associated with
   ///  a specified VarDecl and LocationContext.
-  VarRegion* getVarRegion(const VarDecl *D, const LocationContext *LC);
+  const VarRegion* getVarRegion(const VarDecl *D, const LocationContext *LC);
 
   /// getElementRegion - Retrieve the memory region associated with the
   ///  associated element type, index, and super region.
-  ElementRegion *getElementRegion(QualType elementType, SVal Idx,
+  const ElementRegion *getElementRegion(QualType elementType, SVal Idx,
                                   const MemRegion *superRegion,
                                   ASTContext &Ctx);
 
-  ElementRegion *getElementRegionWithSuper(const ElementRegion *ER,
+  const ElementRegion *getElementRegionWithSuper(const ElementRegion *ER,
                                            const MemRegion *superRegion) {
     return getElementRegion(ER->getElementType(), ER->getIndex(),
                             superRegion, ER->getContext());
@@ -744,29 +744,30 @@ public:
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing
   ///  memory region (which typically represents the memory representing
   ///  a structure or class).
-  FieldRegion *getFieldRegion(const FieldDecl* fd,
-                              const MemRegion* superRegion);
+  const FieldRegion *getFieldRegion(const FieldDecl* fd,
+                                    const MemRegion* superRegion);
 
-  FieldRegion *getFieldRegionWithSuper(const FieldRegion *FR,
-                                       const MemRegion *superRegion) {
+  const FieldRegion *getFieldRegionWithSuper(const FieldRegion *FR,
+                                             const MemRegion *superRegion) {
     return getFieldRegion(FR->getDecl(), superRegion);
   }
 
   /// getObjCObjectRegion - Retrieve or create the memory region associated with
   ///  the instance of a specified Objective-C class.
-  ObjCObjectRegion* getObjCObjectRegion(const ObjCInterfaceDecl* ID,
-                                  const MemRegion* superRegion);
+  const ObjCObjectRegion* getObjCObjectRegion(const ObjCInterfaceDecl* ID,
+                                              const MemRegion* superRegion);
 
   /// getObjCIvarRegion - Retrieve or create the memory region associated with
   ///   a specified Objective-c instance variable.  'superRegion' corresponds
   ///   to the containing region (which typically represents the Objective-C
   ///   object).
-  ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
-                                    const MemRegion* superRegion);
+  const ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
+                                          const MemRegion* superRegion);
 
-  FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
-  BlockTextRegion *getBlockTextRegion(const BlockDecl *BD, CanQualType locTy);
-  BlockDataRegion *getBlockDataRegion(const BlockTextRegion *bc,
+  const FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
+  const BlockTextRegion *getBlockTextRegion(const BlockDecl *BD,
+                                            CanQualType locTy);
+  const BlockDataRegion *getBlockDataRegion(const BlockTextRegion *bc,
                                       const LocationContext *lc);
 
   bool isGlobalsRegion(const MemRegion* R) {
@@ -788,7 +789,7 @@ private:
   RegionTy* getSubRegion(const A1 a1, const A2 a2,
                          const MemRegion* superRegion);
 
-  MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
+  const MemSpaceRegion* LazyAllocate(MemSpaceRegion*& region);
 };
 
 //===----------------------------------------------------------------------===//
