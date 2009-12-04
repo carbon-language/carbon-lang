@@ -28,10 +28,11 @@ namespace llvm {
 }
 
 namespace clang {
-  class MemRegion;
-  class TypedRegion;
   class ASTContext;
   class BasicValueFactory;
+  class MemRegion;
+  class TypedRegion;
+  class VarRegion;
 }
 
 namespace clang {
@@ -345,10 +346,8 @@ public:
     return Liveness.isLive(Loc, ExprVal);
   }
 
-  bool isLive(const Stmt* Loc, const VarDecl* VD) const {
-    return Liveness.isLive(Loc, VD);
-  }
-
+  bool isLive(const Stmt* Loc, const VarRegion *VR) const;
+  
   void markLive(SymbolRef sym);
   bool maybeDead(SymbolRef sym);
 

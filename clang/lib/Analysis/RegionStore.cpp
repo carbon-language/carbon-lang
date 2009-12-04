@@ -1697,7 +1697,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
     IntermediateVisited.insert(R);
     
     if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
-      if (SymReaper.isLive(Loc, VR->getDecl()))
+      if (SymReaper.isLive(Loc, VR))
         WorkList.push_back(std::make_pair(&state, VR));
       continue;
     }

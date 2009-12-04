@@ -368,7 +368,7 @@ BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   // Iterate over the variable bindings.
   for (BindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I) {
     if (const VarRegion *VR = dyn_cast<VarRegion>(I.getKey())) {
-      if (SymReaper.isLive(Loc, VR->getDecl()))
+      if (SymReaper.isLive(Loc, VR))
         RegionRoots.push_back(VR);
       else
         continue;
