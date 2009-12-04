@@ -2747,7 +2747,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       ReplaceText(LocStart, endHeader-startBuf, Result.c_str(), Result.size());
     } else {
       // rewrite the original header *without* disturbing the '{'
-      ReplaceText(LocStart, cursor-startBuf-1, Result.c_str(), Result.size());
+      ReplaceText(LocStart, cursor-startBuf, Result.c_str(), Result.size());
     }
     if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
