@@ -613,7 +613,17 @@ void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
   }
 
   TUVisitor DVisit(CTUnit, callback, CData, PCHLevel);
-  DVisit.Visit(Ctx.getTranslationUnitDecl());
+
+  // If using a non-AST based ASTUnit, iterate over the stored list of top-level
+  // decls.
+  if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls()) {
+    const std::vector<Decl*> &TLDs = CXXUnit->getTopLevelDecls();
+    for (std::vector<Decl*>::const_iterator it = TLDs.begin(),
+           ie = TLDs.end(); it != ie; ++it) {
+      DVisit.Visit(*it);
+    }
+  } else
+    DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 
 void clang_loadDeclaration(CXDecl Dcl,

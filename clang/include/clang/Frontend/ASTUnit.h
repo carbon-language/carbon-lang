@@ -19,6 +19,8 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Index/ASTLocation.h"
 #include <string>
+#include <vector>
+#include <cassert>
 
 namespace clang {
 class ASTContext;
@@ -45,21 +47,30 @@ class ASTUnit {
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
   bool                              tempFile;
-  
+
   // OnlyLocalDecls - when true, walking this AST should only visit declarations
   // that come from the AST itself, not from included precompiled headers.
   // FIXME: This is temporary; eventually, CIndex will always do this.
   bool                              OnlyLocalDecls;
 
-  // Track whether the main file was loaded from an AST or not.
+  /// Track whether the main file was loaded from an AST or not.
   bool MainFileIsAST;
+
+  /// Track the top-level decls which appeared in an ASTUnit which was loaded
+  /// from a source file.
+  //
+  // FIXME: This is just an optimization hack to avoid deserializing large parts
+  // of a PCH file when using the Index library on an ASTUnit loaded from
+  // source. In the long term we should make the Index library use efficient and
+  // more scalable search mechanisms.
+  std::vector<Decl*> TopLevelDecls;
 
   /// The name of the original source file used to generate this ASTUnit.
   std::string OriginalSourceFile;
 
   // Critical optimization when using clang_getCursor().
   ASTLocation LastLoc;
-  
+
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
 
@@ -80,17 +91,26 @@ public:
 
   const FileManager &getFileManager() const { return FileMgr; }
         FileManager &getFileManager()       { return FileMgr; }
-  
+
   const std::string &getOriginalSourceFileName();
   const std::string &getPCHFileName();
 
   void unlinkTemporaryFile() { tempFile = true; }
-  
+
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
-  
+
   void setLastASTLocation(ASTLocation ALoc) { LastLoc = ALoc; }
   ASTLocation getLastASTLocation() const { return LastLoc; }
-  
+
+  std::vector<Decl*> &getTopLevelDecls() {
+    assert(!isMainFileAST() && "Invalid call for AST based ASTUnit!");
+    return TopLevelDecls;
+  }
+  const std::vector<Decl*> &getTopLevelDecls() const {
+    assert(!isMainFileAST() && "Invalid call for AST based ASTUnit!");
+    return TopLevelDecls;
+  }
+
   /// \brief Create a ASTUnit from a PCH file.
   ///
   /// \param Filename - The PCH file to load.

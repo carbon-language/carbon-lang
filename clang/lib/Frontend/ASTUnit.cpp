@@ -180,13 +180,30 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
 namespace {
 
-class NullAction : public ASTFrontendAction {
+class TopLevelDeclTrackerConsumer : public ASTConsumer {
+  ASTUnit &Unit;
+
+public:
+  TopLevelDeclTrackerConsumer(ASTUnit &_Unit) : Unit(_Unit) {}
+
+  void HandleTopLevelDecl(DeclGroupRef D) {
+    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it)
+      Unit.getTopLevelDecls().push_back(*it);
+  }
+};
+
+class TopLevelDeclTrackerAction : public ASTFrontendAction {
+public:
+  ASTUnit &Unit;
+
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile) {
-    return new ASTConsumer();
+    return new TopLevelDeclTrackerConsumer(Unit);
   }
 
 public:
+  TopLevelDeclTrackerAction(ASTUnit &_Unit) : Unit(_Unit) {}
+
   virtual bool hasCodeCompletionSupport() const { return false; }
 };
 
@@ -198,7 +215,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   // Create the compiler instance to use for building the AST.
   CompilerInstance Clang;
   llvm::OwningPtr<ASTUnit> AST;
-  NullAction Act;
+  llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
 
   Clang.getInvocation() = CI;
 
@@ -237,11 +254,12 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   // Create the preprocessor.
   Clang.createPreprocessor();
 
-  if (!Act.BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
+  Act.reset(new TopLevelDeclTrackerAction(*AST));
+  if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
                            /*IsAST=*/false))
     goto error;
 
-  Act.Execute();
+  Act->Execute();
 
   // Steal the created target, context, and preprocessor, and take back the
   // source and file managers.
@@ -251,7 +269,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   Clang.takeFileManager();
   AST->Target.reset(Clang.takeTarget());
 
-  Act.EndSourceFile();
+  Act->EndSourceFile();
 
   Clang.takeDiagnosticClient();
   Clang.takeDiagnostics();
