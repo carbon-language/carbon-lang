@@ -57,6 +57,63 @@ private:
   /// PureVirtualFunction - Points to __cxa_pure_virtual.
   llvm::Constant *PureVirtualFn;
   
+  /// VtableMethods - A data structure for keeping track of methods in a vtable.
+  /// Can add methods, override methods and iterate in vtable order.
+  class VtableMethods {
+    // MethodToIndexMap - Maps from a global decl to the index it has in the
+    // Methods vector.
+    llvm::DenseMap<GlobalDecl, uint64_t> MethodToIndexMap;
+
+    /// Methods - The methods, in vtable order.
+    typedef llvm::SmallVector<GlobalDecl, 16> MethodsVectorTy;
+    MethodsVectorTy Methods;
+
+  public:
+    /// AddMethod - Add a method to the vtable methods.
+    void AddMethod(GlobalDecl GD) {
+      assert(!MethodToIndexMap.count(GD) && 
+             "Method has already been added!");
+      
+      MethodToIndexMap[GD] = Methods.size();
+      Methods.push_back(GD);
+    }
+    
+    /// OverrideMethod - Replace a method with another.
+    void OverrideMethod(GlobalDecl OverriddenGD, GlobalDecl GD) {
+      llvm::DenseMap<GlobalDecl, uint64_t>::iterator i 
+        = MethodToIndexMap.find(OverriddenGD);
+      assert(i != MethodToIndexMap.end() && "Did not find entry!");
+
+      // Get the index of the old decl.
+      uint64_t Index = i->second;
+      
+      // Replace the old decl with the new decl.
+      Methods[Index] = GD;
+
+      // Now remove the old decl from the method to index map.
+      MethodToIndexMap.erase(i);
+        
+      // And add the new.
+      MethodToIndexMap[GD] = Index;
+    }
+
+    MethodsVectorTy::size_type size() const {
+      return Methods.size();
+    }
+
+    void clear() {
+      MethodToIndexMap.clear();
+      Methods.clear();
+    }
+    
+    GlobalDecl operator[](unsigned Index) const {
+      return Methods[Index];
+    }
+  };
+  
+  /// Methods - The vtable methods we're currently building.
+  VtableMethods Methods;
+  
   /// Thunk - Represents a single thunk.
   struct Thunk {
     Thunk() { }
