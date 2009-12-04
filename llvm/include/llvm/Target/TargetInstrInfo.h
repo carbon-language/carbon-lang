@@ -547,13 +547,6 @@ public:
   /// length.
   virtual unsigned getInlineAsmLength(const char *Str,
                                       const MCAsmInfo &MAI) const;
-
-  /// TailDuplicationLimit - Returns the limit on the number of instructions
-  /// in basic block MBB beyond which it will not be tail-duplicated.
-  virtual unsigned TailDuplicationLimit(const MachineBasicBlock &MBB,
-                                        unsigned DefaultLimit) const {
-    return DefaultLimit;
-  }
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of
