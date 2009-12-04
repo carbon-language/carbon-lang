@@ -695,13 +695,8 @@ void SlotTracker::processFunction() {
           !I->hasName())
         CreateFunctionSlot(I);
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i))) {
-          // Create a metadata slot only if N contains no instructions.
-          for (unsigned n = 0, e = N->getNumElements(); n != e; ++n)
-            if (N->getElement(n) && isa<Instruction>(N->getElement(n)))
-              continue;
+        if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
           CreateMetadataSlot(N);
-        }
 
       // Process metadata attached with this instruction.
       MDs.clear();
@@ -817,6 +812,11 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
 /// CreateModuleSlot - Insert the specified MDNode* into the slot table.
 void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   assert(N && "Can't insert a null Value into SlotTracker!");
+
+  // Don't insert if N contains an instruction.
+  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i)
+    if (N->getElement(i) && isa<Instruction>(N->getElement(i)))
+      return;
 
   ValueMap::iterator I = mdnMap.find(N);
   if (I != mdnMap.end())
