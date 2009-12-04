@@ -754,7 +754,9 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       if (submethods[i] != om)
         continue;
 
-      assert(i == Methods.getIndex(OGD));
+      uint64_t Index = Methods.getIndex(OGD);
+
+      assert(i == Index);
       
       QualType ReturnType = 
         MD->getType()->getAs<FunctionType>()->getResultType();
@@ -778,7 +780,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 
       Methods.OverrideMethod(OGD, GD);
 
-      submethods[i] = m;
+      submethods[Index] = m;
       ThisAdjustments.erase(i);
       if (MorallyVirtual || VCall.count(OGD)) {
         Index_t &idx = VCall[OGD];
@@ -811,7 +813,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                                        VirtualAdjustment);
 
         if (!isPure && !ThisAdjustment.isEmpty())
-          ThisAdjustments[i] = ThisAdjustment;
+          ThisAdjustments[Index] = ThisAdjustment;
         return true;
       }
 
@@ -822,7 +824,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
         if (!isPure)
-          ThisAdjustments[i] = ThisAdjustment;
+          ThisAdjustments[Index] = ThisAdjustment;
       }
       return true;
     }
