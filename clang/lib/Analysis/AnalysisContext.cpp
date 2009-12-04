@@ -36,6 +36,8 @@ Stmt *AnalysisContext::getBody() {
     return FD->getBody();
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getBody();
+  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
+    return BD->getBody();
 
   llvm::llvm_unreachable("unknown code decl");
 }
