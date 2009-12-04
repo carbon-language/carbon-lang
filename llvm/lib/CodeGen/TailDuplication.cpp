@@ -38,7 +38,7 @@ TailDuplicateSize("tail-dup-size",
                   cl::desc("Maximum instructions to consider tail duplicating"),
                   cl::init(2), cl::Hidden);
 
-typedef std::vector<unsigned> AvailableValsTy;
+typedef std::vector<std::pair<MachineBasicBlock*,unsigned> > AvailableValsTy;
 
 namespace {
   /// TailDuplicatePass - Perform tail duplication.
@@ -64,7 +64,8 @@ namespace {
     virtual const char *getPassName() const { return "Tail Duplication"; }
 
   private:
-    void AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg);
+    void AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg,
+                           MachineBasicBlock *BB);
     void ProcessPHI(MachineInstr *MI, MachineBasicBlock *TailBB,
                     MachineBasicBlock *PredBB,
                     DenseMap<unsigned, unsigned> &LocalVRMap);
@@ -151,14 +152,14 @@ static unsigned getPHISrcRegOpIdx(MachineInstr *MI, MachineBasicBlock *SrcBB) {
 
 /// AddSSAUpdateEntry - Add a definition and source virtual registers pair for
 /// SSA update.
-void TailDuplicatePass::AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg) {
-  DenseMap<unsigned, AvailableValsTy>::iterator LI =
-    SSAUpdateVals.find(OrigReg);
+void TailDuplicatePass::AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg,
+                                          MachineBasicBlock *BB) {
+  DenseMap<unsigned, AvailableValsTy>::iterator LI= SSAUpdateVals.find(OrigReg);
   if (LI != SSAUpdateVals.end())
-    LI->second.push_back(NewReg);
+    LI->second.push_back(std::make_pair(BB, NewReg));
   else {
     AvailableValsTy Vals;
-    Vals.push_back(NewReg);
+    Vals.push_back(std::make_pair(BB, NewReg));
     SSAUpdateVals.insert(std::make_pair(OrigReg, Vals));
     SSAUpdateVRs.push_back(OrigReg);
   }
@@ -176,7 +177,7 @@ void TailDuplicatePass::ProcessPHI(MachineInstr *MI,
   unsigned SrcReg = MI->getOperand(SrcOpIdx).getReg();
   LocalVRMap.insert(std::make_pair(DefReg, SrcReg));
   if (isDefLiveOut(DefReg, TailBB, MRI))
-    AddSSAUpdateEntry(DefReg, SrcReg);
+    AddSSAUpdateEntry(DefReg, SrcReg, PredBB);
 
   // Remove PredBB from the PHI node.
   MI->RemoveOperand(SrcOpIdx+1);
@@ -206,7 +207,7 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
       MO.setReg(NewReg);
       LocalVRMap.insert(std::make_pair(Reg, NewReg));
       if (isDefLiveOut(Reg, TailBB, MRI))
-        AddSSAUpdateEntry(Reg, NewReg);
+        AddSSAUpdateEntry(Reg, NewReg, PredBB);
     } else {
       DenseMap<unsigned, unsigned>::iterator VI = LocalVRMap.find(Reg);
       if (VI != LocalVRMap.end())
@@ -240,15 +241,14 @@ void TailDuplicatePass::UpdateSuccessorsPHIs(MachineBasicBlock *FromBB,
           II->RemoveOperand(i+1);
           II->RemoveOperand(i);
         }
-        DenseMap<unsigned, AvailableValsTy>::iterator LI =
-          SSAUpdateVals.find(Reg);
+        DenseMap<unsigned,AvailableValsTy>::iterator LI=SSAUpdateVals.find(Reg);
         if (LI == SSAUpdateVals.end())
           break;
         for (unsigned j = 0, ee = LI->second.size(); j != ee; ++j) {
-          unsigned NewReg = LI->second[j];
-          MachineInstr *DefMI = MRI->getVRegDef(NewReg);
-          II->addOperand(MachineOperand::CreateReg(NewReg, false));
-          II->addOperand(MachineOperand::CreateMBB(DefMI->getParent()));
+          MachineBasicBlock *SrcBB = LI->second[j].first;
+          unsigned SrcReg = LI->second[j].second;
+          II->addOperand(MachineOperand::CreateReg(SrcReg, false));
+          II->addOperand(MachineOperand::CreateMBB(SrcBB));
         }
         break;
       }
@@ -449,9 +449,9 @@ bool TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
       DenseMap<unsigned, AvailableValsTy>::iterator LI =
         SSAUpdateVals.find(VReg);  
       for (unsigned j = 0, ee = LI->second.size(); j != ee; ++j) {
-        unsigned NewReg = LI->second[j];
-        MachineInstr *DefMI = MRI->getVRegDef(NewReg);
-        SSAUpdate.AddAvailableValue(DefMI->getParent(), NewReg);
+        MachineBasicBlock *SrcBB = LI->second[j].first;
+        unsigned SrcReg = LI->second[j].second;
+        SSAUpdate.AddAvailableValue(SrcBB, SrcReg);
       }
 
       // Rewrite uses that are outside of the original def's block.
