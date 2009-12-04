@@ -457,11 +457,14 @@ public:
 
   /// hasLoadFromStackSlot - If the specified machine instruction has
   /// a load from a stack slot, return true along with the FrameIndex
-  /// of the loaded stack slot.  If not, return false.  Unlike
+  /// of the loaded stack slot and the machine mem operand containing
+  /// the reference.  If not, return false.  Unlike
   /// isLoadFromStackSlot, this returns true for any instructions that
   /// loads from the stack.  This is a hint only and may not catch all
   /// cases.
-  bool hasLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+  bool hasLoadFromStackSlot(const MachineInstr *MI,
+                            const MachineMemOperand *&MMO,
+                            int &FrameIndex) const;
 
   unsigned isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
   /// isStoreToStackSlotPostFE - Check for post-frame ptr elimination
@@ -472,11 +475,13 @@ public:
 
   /// hasStoreToStackSlot - If the specified machine instruction has a
   /// store to a stack slot, return true along with the FrameIndex of
-  /// the loaded stack slot.  If not, return false.  Unlike
-  /// isStoreToStackSlot, this returns true for any instructions that
-  /// loads from the stack.  This is a hint only and may not catch all
-  /// cases.
-  bool hasStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
+  /// the loaded stack slot and the machine mem operand containing the
+  /// reference.  If not, return false.  Unlike isStoreToStackSlot,
+  /// this returns true for any instructions that loads from the
+  /// stack.  This is a hint only and may not catch all cases.
+  bool hasStoreToStackSlot(const MachineInstr *MI,
+                           const MachineMemOperand *&MMO,
+                           int &FrameIndex) const;
 
   bool isReallyTriviallyReMaterializable(const MachineInstr *MI,
                                          AliasAnalysis *AA) const;

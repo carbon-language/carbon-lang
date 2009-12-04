@@ -34,6 +34,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 
 #include <limits>
+#include <cstring>
 
 using namespace llvm;
 
@@ -783,12 +784,14 @@ unsigned X86InstrInfo::isLoadFromStackSlotPostFE(const MachineInstr *MI,
     if ((Reg = isLoadFromStackSlot(MI, FrameIndex)))
       return Reg;
     // Check for post-frame index elimination operations
-    return hasLoadFromStackSlot(MI, FrameIndex);
+    const MachineMemOperand *Dummy;
+    return hasLoadFromStackSlot(MI, Dummy, FrameIndex);
   }
   return 0;
 }
 
 bool X86InstrInfo::hasLoadFromStackSlot(const MachineInstr *MI,
+                                        const MachineMemOperand *&MMO,
                                         int &FrameIndex) const {
   for (MachineInstr::mmo_iterator o = MI->memoperands_begin(),
          oe = MI->memoperands_end();
@@ -798,6 +801,7 @@ bool X86InstrInfo::hasLoadFromStackSlot(const MachineInstr *MI,
       if (const FixedStackPseudoSourceValue *Value =
           dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
         FrameIndex = Value->getFrameIndex();
+        MMO = *o;
         return true;
       }
   }
@@ -819,12 +823,14 @@ unsigned X86InstrInfo::isStoreToStackSlotPostFE(const MachineInstr *MI,
     if ((Reg = isStoreToStackSlot(MI, FrameIndex)))
       return Reg;
     // Check for post-frame index elimination operations
-    return hasStoreToStackSlot(MI, FrameIndex);
+    const MachineMemOperand *Dummy;
+    return hasStoreToStackSlot(MI, Dummy, FrameIndex);
   }
   return 0;
 }
 
 bool X86InstrInfo::hasStoreToStackSlot(const MachineInstr *MI,
+                                       const MachineMemOperand *&MMO,
                                        int &FrameIndex) const {
   for (MachineInstr::mmo_iterator o = MI->memoperands_begin(),
          oe = MI->memoperands_end();
@@ -834,6 +840,7 @@ bool X86InstrInfo::hasStoreToStackSlot(const MachineInstr *MI,
       if (const FixedStackPseudoSourceValue *Value =
           dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
         FrameIndex = Value->getFrameIndex();
+        MMO = *o;
         return true;
       }
   }
