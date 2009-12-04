@@ -1,13 +1,14 @@
-// RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xglobWeak | grep weak | count 1
+// RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep declare | \
+// RUN:   grep xglobWeak | grep extern_weak | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
 // RUN:   grep xextWeak | grep weak | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
 // RUN:   grep xWeaknoinline | grep weak | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
 // RUN:   grep xWeakextnoinline | grep weak | count 1
-// RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xglobnoWeak | grep available_externally | count 1
+// RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep declare | \
+// RUN:   grep xglobnoWeak | grep -v internal | grep -v weak | \
+// RUN:   grep -v linkonce | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
 // RUN:   grep xstatnoWeak | grep internal | count 1
 // RUN: %llvmgcc -std=c99 %s -S -emit-llvm -O0 -o - | grep define | \
