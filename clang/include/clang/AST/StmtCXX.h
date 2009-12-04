@@ -68,10 +68,11 @@ public:
              Stmt **handlers, unsigned numHandlers);
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(TryLoc, Stmts.back()->getLocEnd());
+    return SourceRange(getTryLoc(), getEndLoc());
   }
 
   SourceLocation getTryLoc() const { return TryLoc; }
+  SourceLocation getEndLoc() const { return Stmts.back()->getLocEnd(); }
 
   CompoundStmt *getTryBlock() { return llvm::cast<CompoundStmt>(Stmts[0]); }
   const CompoundStmt *getTryBlock() const {
