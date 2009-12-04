@@ -742,7 +742,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
        mi != e; ++mi) {
     GlobalDecl OGD;
     
-    const CXXMethodDecl *OMD = *mi;
+    const CXXMethodDecl *OMD = (*mi)->getCanonicalDecl();
     if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(OMD))
       OGD = GlobalDecl(DD, GD.getDtorType());
     else
@@ -933,7 +933,7 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
     // Check if this method overrides a method in the primary base.
     for (CXXMethodDecl::method_iterator i = MD->begin_overridden_methods(),
          e = MD->end_overridden_methods(); i != e; ++i) {
-      const CXXMethodDecl *OverriddenMD = *i;
+      const CXXMethodDecl *OverriddenMD = (*i)->getCanonicalDecl();
       const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
       assert(OverriddenMD->isCanonicalDecl() &&
              "Should have the canonical decl of the overridden RD!");
