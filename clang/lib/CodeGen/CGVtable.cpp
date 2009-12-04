@@ -100,7 +100,7 @@ private:
 
     /// getIndex - Gives the index of a passed in GlobalDecl. Returns false if
     /// the index couldn't be found.
-    uint64_t getIndex(GlobalDecl GD, uint64_t &Index) const {
+    bool getIndex(GlobalDecl GD, uint64_t &Index) const {
       llvm::DenseMap<GlobalDecl, uint64_t>::const_iterator i 
         = MethodToIndexMap.find(GD);
 
