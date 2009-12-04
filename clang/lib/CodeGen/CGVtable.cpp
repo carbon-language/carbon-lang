@@ -28,7 +28,6 @@ public:
   typedef uint64_t Index_t;
 private:
   std::vector<llvm::Constant *> &methods;
-  std::vector<llvm::Constant *> submethods;
   llvm::Type *Ptr8Ty;
   /// Class - The most derived class that this vtable is being built for.
   const CXXRecordDecl *Class;
@@ -343,7 +342,6 @@ public:
     // entry.
     Methods.AddMethod(GD);
 
-    submethods.push_back(m);
     D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
               (int)Index[GD]));
     if (MorallyVirtual) {
@@ -472,8 +470,6 @@ public:
     methods.push_back(wrap(-((Offset-LayoutOffset)/8)));
     methods.push_back(rtti);
     Index_t AddressPoint = methods.size();
-
-    assert(submethods.size() == Methods.size() && "Method size mismatch!");
 
     AppendMethodsToVtable();
 
@@ -780,7 +776,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 
     Methods.OverrideMethod(OGD, GD);
 
-    submethods[Index] = m;
     ThisAdjustments.erase(Index);
     if (MorallyVirtual || VCall.count(OGD)) {
       Index_t &idx = VCall[OGD];
@@ -886,7 +881,6 @@ void VtableBuilder::AppendMethodsToVtable() {
   BaseReturnTypes.clear();
   
   Methods.clear();
-  submethods.clear();
 }
 
 void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
