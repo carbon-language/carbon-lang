@@ -289,17 +289,8 @@ public:
                       Index_t Offset, int64_t CurrentVBaseOffset);
 
   /// AppendMethods - Append the current methods to the vtable.
-  void AppendMethods();
+  void AppendMethodsToVtable();
   
-  void InstallThunks() {
-    for (PureVirtualMethodsSetTy::iterator i = PureVirtualMethods.begin(),
-         e = PureVirtualMethods.end(); i != e; ++i) {
-      GlobalDecl GD = *i;
-      submethods[Index[GD]] = getPureVirtualFn();
-    }
-    PureVirtualMethods.clear();
-  }
-
   llvm::Constant *WrapAddrOf(GlobalDecl GD) {
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
@@ -486,7 +477,7 @@ public:
 
     assert(submethods.size() == Methods.size() && "Method size mismatch!");
 
-    AppendMethods();
+    AppendMethodsToVtable();
 
     // and then the non-virtual bases.
     NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
@@ -851,9 +842,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
   return false;
 }
 
-void VtableBuilder::AppendMethods() {
-  InstallThunks();
-
+void VtableBuilder::AppendMethodsToVtable() {
   for (unsigned i = 0, e = Methods.size(); i != e; ++i) {
     GlobalDecl GD = Methods[i];
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
@@ -886,6 +875,9 @@ void VtableBuilder::AppendMethods() {
     } else if (!ThisAdjustment.isEmpty()) {
       // Build a "regular" thunk.
       submethods[i] = CGM.BuildThunk(GD, Extern, ThisAdjustment);
+    } else if (MD->isPure()) {
+      // We have a pure virtual method.
+      submethods[i] = getPureVirtualFn();
     }
   }
   
