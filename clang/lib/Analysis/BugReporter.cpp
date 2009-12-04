@@ -204,10 +204,19 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
     os << "Execution continues on line "
        << getSourceManager().getInstantiationLineNumber(Loc.asLocation())
        << '.';
-  else
-    os << "Execution jumps to the end of the "
-       << (isa<ObjCMethodDecl>(N->getLocationContext()->getDecl()) ?
-             "method" : "function") << '.';
+  else {
+    os << "Execution jumps to the end of the ";
+    const Decl *D = N->getLocationContext()->getDecl();
+    if (isa<ObjCMethodDecl>(D))
+      os << "method";
+    else if (isa<FunctionDecl>(D))
+      os << "function";
+    else {
+      assert(isa<BlockDecl>(D));
+      os << "anonymous block";
+    }
+    os << '.';
+  }
 
   return Loc;
 }
