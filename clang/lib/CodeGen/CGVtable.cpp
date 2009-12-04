@@ -857,24 +857,29 @@ void VtableBuilder::AppendMethodsToVtable() {
                                          VirtualAdjustment);
     }
 
+    llvm::Constant *Method = 0;
     if (!ReturnAdjustment.isEmpty()) {
       // Build a covariant thunk.
       CovariantThunkAdjustment Adjustment(ThisAdjustment, ReturnAdjustment);
-      submethods[i] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
+      Method = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
     } else if (!ThisAdjustment.isEmpty()) {
       // Build a "regular" thunk.
-      submethods[i] = CGM.BuildThunk(GD, Extern, ThisAdjustment);
+      Method = CGM.BuildThunk(GD, Extern, ThisAdjustment);
     } else if (MD->isPure()) {
       // We have a pure virtual method.
-      submethods[i] = getPureVirtualFn();
+      Method = getPureVirtualFn();
+    } else {
+      // We have a good old regular method.
+      Method = WrapAddrOf(GD);
     }
+
+    // Add the method to the vtable.
+    methods.push_back(Method);
   }
+  
   
   ThisAdjustments.clear();
   BaseReturnTypes.clear();
-  
-  D1(printf("============= combining methods\n"));
-  methods.insert(methods.end(), submethods.begin(), submethods.end());
   
   Methods.clear();
   submethods.clear();
