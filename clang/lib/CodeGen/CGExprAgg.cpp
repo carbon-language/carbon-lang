@@ -502,21 +502,16 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
 
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 #if 0
-  // FIXME: Disabled while we figure out what to do about
-  // test/CodeGen/bitfield.c
+  // FIXME: Assess perf here?  Figure out what cases are worth optimizing here
+  // (Length of globals? Chunks of zeroed-out space?).
   //
   // If we can, prefer a copy from a global; this is a lot less code for long
   // globals, and it's easier for the current optimizers to analyze.
-  // FIXME: Should we really be doing this? Should we try to avoid cases where
-  // we emit a global with a lot of zeros?  Should we try to avoid short
-  // globals?
-  if (E->isConstantInitializer(CGF.getContext(), 0)) {
-    llvm::Constant* C = CGF.CGM.EmitConstantExpr(E, &CGF);
+  if (llvm::Constant* C = CGF.CGM.EmitConstantExpr(E, E->getType(), &CGF)) {
     llvm::GlobalVariable* GV =
-    new llvm::GlobalVariable(C->getType(), true,
-                             llvm::GlobalValue::InternalLinkage,
-                             C, "", &CGF.CGM.getModule(), 0);
-    EmitFinalDestCopy(E, LValue::MakeAddr(GV, 0));
+    new llvm::GlobalVariable(CGF.CGM.getModule(), C->getType(), true,
+                             llvm::GlobalValue::InternalLinkage, C, "");
+    EmitFinalDestCopy(E, LValue::MakeAddr(GV, Qualifiers()));
     return;
   }
 #endif
