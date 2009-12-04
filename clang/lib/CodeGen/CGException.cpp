@@ -266,7 +266,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
-  if (1) {
+  if (0) {
     EmitStmt(S.getTryBlock());
     return;
   }
