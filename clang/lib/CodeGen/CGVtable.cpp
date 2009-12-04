@@ -91,15 +91,17 @@ private:
       MethodToIndexMap[GD] = Index;
     }
 
-    bool hasIndex(GlobalDecl GD) const {
-      return MethodToIndexMap.count(GD);
-    }
+    /// getIndex - Gives the index of a passed in GlobalDecl. Returns false if
+    /// the index couldn't be found.
+    uint64_t getIndex(GlobalDecl GD, uint64_t &Index) const {
+      llvm::DenseMap<GlobalDecl, uint64_t>::const_iterator i 
+        = MethodToIndexMap.find(GD);
 
-    /// getIndex - Returns the index of the given method.
-    uint64_t getIndex(GlobalDecl GD) const {
-      assert(MethodToIndexMap.count(GD) && "Did not find method!");
+      if (i == MethodToIndexMap.end())
+        return false;
       
-      return MethodToIndexMap.lookup(GD);
+      Index = i->second;
+      return true;
     }
 
     MethodsVectorTy::size_type size() const {
@@ -741,11 +743,10 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
       OGD = OMD;
 
     // FIXME: Explain why this is necessary!
-    if (!Methods.hasIndex(OGD))
+    uint64_t Index;
+    if (!Methods.getIndex(OGD, Index))
       continue;
 
-    uint64_t Index = Methods.getIndex(OGD);
-      
     QualType ReturnType = 
       MD->getType()->getAs<FunctionType>()->getResultType();
     QualType OverriddenReturnType = 
