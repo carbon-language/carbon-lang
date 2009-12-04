@@ -279,13 +279,14 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   assert(!Loc.isInvalid() && "must have a valid source location here");
 
   // If this is a macro ID, first emit information about where this was
-  // instantiated (recursively) then emit information about where. the token was
+  // instantiated (recursively) then emit information about where the token was
   // spelled from.
   if (!Loc.isFileID()) {
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
     // FIXME: Map ranges?
     EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, Columns);
 
+    // Map the location.
     Loc = SM.getImmediateSpellingLoc(Loc);
 
     // Map the ranges.
@@ -295,15 +296,22 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       if (E.isMacroID()) E = SM.getImmediateSpellingLoc(E);
       Ranges[i] = SourceRange(S, E);
     }
+    
+    // Get the pretty name, according to #line directives etc.
+    PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+    
+    // If this diagnostic is not in the main file, print out the "included from"
+    // lines.
+    if (LastWarningLoc != PLoc.getIncludeLoc()) {
+      LastWarningLoc = PLoc.getIncludeLoc();
+      PrintIncludeStack(LastWarningLoc, SM);
+    }
 
     if (DiagOpts->ShowLocation) {
-      std::pair<FileID, unsigned> IInfo = SM.getDecomposedInstantiationLoc(Loc);
-
       // Emit the file/line/column that this expansion came from.
-      OS << SM.getBuffer(IInfo.first)->getBufferIdentifier() << ':'
-         << SM.getLineNumber(IInfo.first, IInfo.second) << ':';
+      OS << PLoc.getFilename() << ':' << PLoc.getLine() << ':';
       if (DiagOpts->ShowColumn)
-        OS << SM.getColumnNumber(IInfo.first, IInfo.second) << ':';
+        OS << PLoc.getColumn() << ':';
       OS << ' ';
     }
     OS << "note: instantiated from:\n";
