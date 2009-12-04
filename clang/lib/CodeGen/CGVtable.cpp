@@ -421,7 +421,10 @@ public:
 
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
     
-    // else allocate a new slot.
+    // We didn't find an entry in the vtable that we could use, add a new
+    // entry.
+    Methods.AddMethod(GD);
+
     Index[GD] = submethods.size();
     submethods.push_back(m);
     D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
@@ -553,9 +556,13 @@ public:
     methods.push_back(rtti);
     Index_t AddressPoint = methods.size();
 
+    assert(submethods.size() == Methods.size() && "Method size mismatch!");
+
     InstallThunks();
     D1(printf("============= combining methods\n"));
     methods.insert(methods.end(), submethods.begin(), submethods.end());
+    
+    Methods.clear();
     submethods.clear();
 
     // and then the non-virtual bases.
@@ -863,6 +870,8 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         
         Adjustment.GD = GD;
       }
+
+      Methods.OverrideMethod(OGD, GD);
 
       Index[GD] = i;
       submethods[i] = m;
