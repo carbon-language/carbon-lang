@@ -450,11 +450,9 @@ void SROA::DoScalarReplacement(AllocaInst *AI,
   NumReplaced++;
 }
 
-
 /// isSafeElementUse - Check to see if this use is an allowed use for a
 /// getelementptr instruction of an array aggregate allocation.  isFirstElt
 /// indicates whether Ptr is known to the start of the aggregate.
-///
 void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
                             AllocaInfo &Info) {
   for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
@@ -544,7 +542,6 @@ static bool AllUsersAreLoads(Value *Ptr) {
 
 /// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
 /// aggregate allocation.
-///
 void SROA::isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
                                  AllocaInfo &Info) {
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
@@ -627,7 +624,7 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
   return isSafeElementUse(GEPI, IsAllZeroIndices, AI, Info);
 }
 
-/// isSafeMemIntrinsicOnAllocation - Return true if the specified memory
+/// isSafeMemIntrinsicOnAllocation - Check if the specified memory
 /// intrinsic can be promoted by SROA.  At this point, we know that the operand
 /// of the memintrinsic is a pointer to the beginning of the allocation.
 void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocaInst *AI,
@@ -655,8 +652,8 @@ void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocaInst *AI,
   }
 }
 
-/// isSafeUseOfBitCastedAllocation - Return true if all users of this bitcast
-/// are 
+/// isSafeUseOfBitCastedAllocation - Check if all users of this bitcast
+/// from an alloca are safe for SROA of that alloca.
 void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocaInst *AI,
                                           AllocaInfo &Info) {
   for (Value::use_iterator UI = BC->use_begin(), E = BC->use_end();
@@ -927,7 +924,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   MI->eraseFromParent();
 }
 
-/// RewriteStoreUserOfWholeAlloca - We found an store of an integer that
+/// RewriteStoreUserOfWholeAlloca - We found a store of an integer that
 /// overwrites the entire allocation.  Extract out the pieces of the stored
 /// integer and store them individually.
 void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
@@ -1051,7 +1048,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
   SI->eraseFromParent();
 }
 
-/// RewriteLoadUserOfWholeAlloca - We found an load of the entire allocation to
+/// RewriteLoadUserOfWholeAlloca - We found a load of the entire allocation to
 /// an integer.  Load the individual pieces to form the aggregate value.
 void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
@@ -1185,7 +1182,6 @@ static bool HasPadding(const Type *Ty, const TargetData &TD) {
 /// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
 /// an aggregate can be broken down into elements.  Return 0 if not, 3 if safe,
 /// or 1 if safe after canonicalization has been performed.
-///
 int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
@@ -1354,7 +1350,6 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
 ///
 /// If we see at least one access to the value that is as a vector type, set the
 /// SawVec flag.
-///
 bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
                               bool &SawVec, uint64_t Offset,
                               unsigned AllocaSize) {
@@ -1436,7 +1431,6 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
   
   return true;
 }
-
 
 /// ConvertUsesToScalar - Convert all of the users of Ptr to use the new alloca
 /// directly.  This happens when we are converting an "integer union" to a
@@ -1679,7 +1673,6 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   assert(FromVal->getType() == ToType && "Didn't convert right?");
   return FromVal;
 }
-
 
 /// ConvertScalar_InsertValue - Insert the value "SV" into the existing integer
 /// or vector value "Old" at the offset specified by Offset.
