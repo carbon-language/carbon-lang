@@ -295,10 +295,14 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
       InsertedVal = SingularValue;
     }
 
+    // Either path through the 'if' should have set insertedVal -> SingularVal.
+    assert((InsertedVal == SingularValue || isa<UndefValue>(InsertedVal)) &&
+           "RAUW didn't change InsertedVal to be SingularVal");
+
     // Drop the entries we added in IncomingPredInfo to restore the stack.
     IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
                            IncomingPredInfo.end());
-    return InsertedVal;
+    return SingularValue;
   }
 
   // Otherwise, we do need a PHI: insert one now if we don't already have one.
