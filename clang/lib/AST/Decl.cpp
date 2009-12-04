@@ -838,8 +838,20 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 }
 
 bool FunctionDecl::isInlined() const {
-  if (isInlineSpecified() || (isa<CXXMethodDecl>(this) && !isOutOfLine()))
+  // FIXME: This is not enough. Consider:
+  //
+  // inline void f();
+  // void f() { }
+  //
+  // f is inlined, but does not have inline specified.
+  // To fix this we should add an 'inline' flag to FunctionDecl.
+  if (isInlineSpecified())
     return true;
+  
+  if (isa<CXXMethodDecl>(this)) {
+    if (!isOutOfLine() || getCanonicalDecl()->isInlineSpecified())
+      return true;
+  }
 
   switch (getTemplateSpecializationKind()) {
   case TSK_Undeclared:
