@@ -208,8 +208,9 @@ void extern_f(void);
 void extern_f(void) { }
 
 struct S7 {
-  struct S { S(); };
+  S7();
   
+  struct S { S(); };
   struct {
     S s;
   } a;

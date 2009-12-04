@@ -762,6 +762,24 @@ struct GNUCompatibleParamWarning {
   QualType PromotedType;
 };
 
+
+/// getSpecialMember - get the special member enum for a method.
+static Sema::CXXSpecialMember getSpecialMember(ASTContext &Ctx,
+                                               const CXXMethodDecl *MD) {
+  if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(MD)) {
+    if (Ctor->isDefaultConstructor())
+      return Sema::CXXDefaultConstructor;
+    if (Ctor->isCopyConstructor(Ctx))
+      return Sema::CXXCopyConstructor;
+  } 
+  
+  if (isa<CXXDestructorDecl>(MD))
+    return Sema::CXXDestructor;
+  
+  assert(MD->isCopyAssignment() && "Must have copy assignment operator");
+  return Sema::CXXCopyAssignment;
+}
+
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -827,33 +845,45 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
     const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
     const CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
-    if (OldMethod && NewMethod && !NewMethod->getFriendObjectKind() &&
-        NewMethod->getLexicalDeclContext()->isRecord()) {
-      //    -- Member function declarations with the same name and the
-      //       same parameter types cannot be overloaded if any of them
-      //       is a static member function declaration.
-      if (OldMethod->isStatic() || NewMethod->isStatic()) {
-        Diag(New->getLocation(), diag::err_ovl_static_nonstatic_member);
+    if (OldMethod && NewMethod) {
+      if (!NewMethod->getFriendObjectKind() &&
+          NewMethod->getLexicalDeclContext()->isRecord()) {
+        //    -- Member function declarations with the same name and the
+        //       same parameter types cannot be overloaded if any of them
+        //       is a static member function declaration.
+        if (OldMethod->isStatic() || NewMethod->isStatic()) {
+          Diag(New->getLocation(), diag::err_ovl_static_nonstatic_member);
+          Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
+          return true;
+        }
+      
+        // C++ [class.mem]p1:
+        //   [...] A member shall not be declared twice in the
+        //   member-specification, except that a nested class or member
+        //   class template can be declared and then later defined.
+        unsigned NewDiag;
+        if (isa<CXXConstructorDecl>(OldMethod))
+          NewDiag = diag::err_constructor_redeclared;
+        else if (isa<CXXDestructorDecl>(NewMethod))
+          NewDiag = diag::err_destructor_redeclared;
+        else if (isa<CXXConversionDecl>(NewMethod))
+          NewDiag = diag::err_conv_function_redeclared;
+        else
+          NewDiag = diag::err_member_redeclared;
+
+        Diag(New->getLocation(), NewDiag);
         Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
-        return true;
+      } else {
+        if (OldMethod->isImplicit()) {
+          Diag(NewMethod->getLocation(),
+               diag::err_definition_of_implicitly_declared_member) 
+          << New << getSpecialMember(Context, OldMethod);
+        
+          Diag(OldMethod->getLocation(),
+               diag::note_previous_implicit_declaration);
+          return true;
+        }
       }
-
-      // C++ [class.mem]p1:
-      //   [...] A member shall not be declared twice in the
-      //   member-specification, except that a nested class or member
-      //   class template can be declared and then later defined.
-      unsigned NewDiag;
-      if (isa<CXXConstructorDecl>(OldMethod))
-        NewDiag = diag::err_constructor_redeclared;
-      else if (isa<CXXDestructorDecl>(NewMethod))
-        NewDiag = diag::err_destructor_redeclared;
-      else if (isa<CXXConversionDecl>(NewMethod))
-        NewDiag = diag::err_conv_function_redeclared;
-      else
-        NewDiag = diag::err_member_redeclared;
-
-      Diag(New->getLocation(), NewDiag);
-      Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
     }
 
     // (C++98 8.3.5p3):
