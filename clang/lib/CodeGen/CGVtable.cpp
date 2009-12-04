@@ -114,20 +114,10 @@ private:
   /// Methods - The vtable methods we're currently building.
   VtableMethods Methods;
   
-  /// Thunk - Represents a single thunk.
-  struct Thunk {
-    Thunk() { }
-    
-    Thunk(const ThunkAdjustment &Adjustment)
-      : Adjustment(Adjustment) { }
-    
-    /// Adjustment - The thunk adjustment.
-    ThunkAdjustment Adjustment;
-  };
-
-  /// Thunks - The thunks in a vtable.
-  typedef llvm::DenseMap<uint64_t, Thunk> ThunksMapTy;
-  ThunksMapTy Thunks;
+  /// ThisAdjustments - For a given index in the vtable, contains the 'this'
+  /// pointer adjustment needed for a method.
+  typedef llvm::DenseMap<uint64_t, ThunkAdjustment> ThisAdjustmentsMapTy;
+  ThisAdjustmentsMapTy ThisAdjustments;
 
   /// BaseReturnTypes - Contains the base return types of methods who have been
   /// overridden with methods whose return types require adjustment. Used for
@@ -314,11 +304,11 @@ public:
       
       // Check if there is an adjustment for the 'this' pointer.
       ThunkAdjustment ThisAdjustment;
-      ThunksMapTy::iterator it = Thunks.find(Index);
-      if (it != Thunks.end()) {
-        ThisAdjustment = it->second.Adjustment;
+      ThisAdjustmentsMapTy::iterator it = ThisAdjustments.find(Index);
+      if (it != ThisAdjustments.end()) {
+        ThisAdjustment = it->second;
         
-        Thunks.erase(it);
+        ThisAdjustments.erase(it);
       }
       
       // Construct the return adjustment.
@@ -338,20 +328,20 @@ public:
     }
     BaseReturnTypes.clear();
     
-    for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
-         i != e; ++i) {
+    for (ThisAdjustmentsMapTy::const_iterator i = ThisAdjustments.begin(), 
+         e = ThisAdjustments.end(); i != e; ++i) {
       uint64_t Index = i->first;
       GlobalDecl GD = Methods[Index];
-      const Thunk& Thunk = i->second;
+      const ThunkAdjustment &ThisAdjustment = i->second;
 
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
       assert(!MD->isPure() && "Can't thunk pure virtual methods!");
 
       assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
              
-      submethods[Index] = CGM.BuildThunk(GD, Extern, Thunk.Adjustment);
+      submethods[Index] = CGM.BuildThunk(GD, Extern, ThisAdjustment);
     }
-    Thunks.clear();
+    ThisAdjustments.clear();
 
     for (PureVirtualMethodsSetTy::iterator i = PureVirtualMethods.begin(),
          e = PureVirtualMethods.end(); i != e; ++i) {
@@ -865,7 +855,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       if (isPure)
         PureVirtualMethods.insert(GD);
       PureVirtualMethods.erase(OGD);
-      Thunks.erase(i);
+      ThisAdjustments.erase(i);
       if (MorallyVirtual || VCall.count(OGD)) {
         Index_t &idx = VCall[OGD];
         if (idx == 0) {
@@ -897,7 +887,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
                                        VirtualAdjustment);
 
         if (!isPure && !ThisAdjustment.isEmpty())
-          Thunks[i] = Thunk(ThisAdjustment);
+          ThisAdjustments[i] = ThisAdjustment;
         return true;
       }
 
@@ -908,7 +898,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
         ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
         
         if (!isPure)
-          Thunks[i] = Thunk(ThisAdjustment);
+          ThisAdjustments[i] = ThisAdjustment;
       }
       return true;
     }
