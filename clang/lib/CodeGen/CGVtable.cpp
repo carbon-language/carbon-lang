@@ -442,11 +442,13 @@ public:
   }
 
 
-  Index_t end(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
-              const CXXRecordDecl *PrimaryBase, bool PrimaryBaseWasVirtual,
-              bool MorallyVirtual, int64_t Offset, bool ForVirtualBase,
-              int64_t CurrentVBaseOffset,
-              Path_t *Path) {
+  Index_t FinishGenerateVtable(const CXXRecordDecl *RD,
+                               const ASTRecordLayout &Layout,
+                               const CXXRecordDecl *PrimaryBase,
+                               bool PrimaryBaseWasVirtual,
+                               bool MorallyVirtual, int64_t Offset,
+                               bool ForVirtualBase, int64_t CurrentVBaseOffset,
+                               Path_t *Path) {
     bool alloc = false;
     if (Path == 0) {
       alloc = true;
@@ -593,8 +595,9 @@ public:
     if (Path)
       OverrideMethods(Path, MorallyVirtual, Offset, CurrentVBaseOffset);
 
-    return end(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual, MorallyVirtual,
-               Offset, ForVirtualBase, CurrentVBaseOffset, Path);
+    return FinishGenerateVtable(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
+                                MorallyVirtual, Offset, ForVirtualBase,
+                                CurrentVBaseOffset, Path);
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
