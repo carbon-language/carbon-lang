@@ -247,14 +247,32 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   mangleBareFunctionType(FT, MangleReturnType);
 }
 
-static bool isStdNamespace(const NamespaceDecl *NS) {
+/// isStd - Return whether a given namespace is the 'std' namespace.
+static bool isStd(const NamespaceDecl *NS) {
   const IdentifierInfo *II = NS->getOriginalNamespace()->getIdentifier();
   return II && II->isStr("std");
 }
 
+static const DeclContext *IgnoreLinkageSpecDecls(const DeclContext *DC) {
+  while (isa<LinkageSpecDecl>(DC)) {
+    assert(cast<LinkageSpecDecl>(DC)->getLanguage() ==
+           LinkageSpecDecl::lang_cxx && "Unexpected linkage decl!");
+    DC = DC->getParent();
+  }
+  
+  return DC;
+}
+
+// isStdNamespace - Return whether a given decl context is a toplevel 'std'
+// namespace.
 static bool isStdNamespace(const DeclContext *DC) {
-  return DC->isNamespace() && DC->getParent()->isTranslationUnit() &&
-    isStdNamespace(cast<NamespaceDecl>(DC));
+  if (!DC->isNamespace())
+    return false;
+  
+  if (!IgnoreLinkageSpecDecls(DC->getParent())->isTranslationUnit())
+    return false;
+  
+  return isStd(cast<NamespaceDecl>(DC));
 }
 
 static const TemplateDecl *
@@ -317,12 +335,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
 void CXXNameMangler::mangleName(const TemplateDecl *TD,
                                 const TemplateArgument *TemplateArgs,
                                 unsigned NumTemplateArgs) {
-  const DeclContext *DC = TD->getDeclContext();
-  while (isa<LinkageSpecDecl>(DC)) {
-    assert(cast<LinkageSpecDecl>(DC)->getLanguage() ==
-           LinkageSpecDecl::lang_cxx && "Unexpected linkage decl!");
-    DC = DC->getParent();
-  }
+  const DeclContext *DC = IgnoreLinkageSpecDecls(TD->getDeclContext());
 
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     mangleUnscopedTemplateName(TD);
@@ -1244,11 +1257,8 @@ static bool isCharSpecialization(QualType T, const char *Name) {
 
 bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   // <substitution> ::= St # ::std::
-  // FIXME: type_info == comes out as __ZNK3std9type_infoeqERKS0_ instead of
-  // __ZNKSt9type_infoeqERKS_
-  // FIXME: __ZSt13set_terminatePFvvE comes out as __ZNSt13set_terminateEPFvvE.
   if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
-    if (isStdNamespace(NS)) {
+    if (isStd(NS)) {
       Out << "St";
       return true;
     }

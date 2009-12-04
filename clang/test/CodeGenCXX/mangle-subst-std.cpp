@@ -37,3 +37,13 @@ namespace std {
 
 // CHECK: _Z1fSo
 void f(std::basic_ostream<char, std::char_traits<char> >) { }
+
+extern "C++" {
+namespace std
+{
+  typedef void (*terminate_handler) ();
+  
+  // CHECK: _ZSt13set_terminatePFvvE
+  terminate_handler set_terminate(terminate_handler) { return 0; }
+}
+}
