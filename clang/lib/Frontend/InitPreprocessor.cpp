@@ -362,6 +362,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineBuiltinMacro(Buf, "__int16=__INT16_TYPE__");
     DefineBuiltinMacro(Buf, "__int32=__INT32_TYPE__");
     DefineBuiltinMacro(Buf, "__int64=__INT64_TYPE__");
+    // Both __PRETTY_FUNCTION__ and __FUNCTION__ are GCC extensions, however
+    // VC++ appears to only like __FUNCTION__.
+    DefineBuiltinMacro(Buf, "__PRETTY_FUNCTION__=__FUNCTION__");
     // Work around some issues with Visual C++ headerws.
     if (LangOpts.CPlusPlus) {
       // Since we define wchar_t in C++ mode.
