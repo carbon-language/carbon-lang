@@ -260,24 +260,40 @@ ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
 }
 
 NamedDecl *
-ASTContext::getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD) {
+ASTContext::getInstantiatedFromUsingDecl(UsingDecl *UUD) {
   llvm::DenseMap<UsingDecl *, NamedDecl *>::const_iterator Pos
-    = InstantiatedFromUnresolvedUsingDecl.find(UUD);
-  if (Pos == InstantiatedFromUnresolvedUsingDecl.end())
+    = InstantiatedFromUsingDecl.find(UUD);
+  if (Pos == InstantiatedFromUsingDecl.end())
     return 0;
 
   return Pos->second;
 }
 
 void
-ASTContext::setInstantiatedFromUnresolvedUsingDecl(UsingDecl *UD,
-                                                   NamedDecl *UUD) {
-  assert((isa<UnresolvedUsingValueDecl>(UUD) ||
-          isa<UnresolvedUsingTypenameDecl>(UUD)) && 
-         "original declaration is not an unresolved using decl");
-  assert(!InstantiatedFromUnresolvedUsingDecl[UD] &&
-         "Already noted what using decl what instantiated from");
-  InstantiatedFromUnresolvedUsingDecl[UD] = UUD;
+ASTContext::setInstantiatedFromUsingDecl(UsingDecl *Inst, NamedDecl *Pattern) {
+  assert((isa<UsingDecl>(Pattern) ||
+          isa<UnresolvedUsingValueDecl>(Pattern) ||
+          isa<UnresolvedUsingTypenameDecl>(Pattern)) && 
+         "pattern decl is not a using decl");
+  assert(!InstantiatedFromUsingDecl[Inst] && "pattern already exists");
+  InstantiatedFromUsingDecl[Inst] = Pattern;
+}
+
+UsingShadowDecl *
+ASTContext::getInstantiatedFromUsingShadowDecl(UsingShadowDecl *Inst) {
+  llvm::DenseMap<UsingShadowDecl*, UsingShadowDecl*>::const_iterator Pos
+    = InstantiatedFromUsingShadowDecl.find(Inst);
+  if (Pos == InstantiatedFromUsingShadowDecl.end())
+    return 0;
+
+  return Pos->second;
+}
+
+void
+ASTContext::setInstantiatedFromUsingShadowDecl(UsingShadowDecl *Inst,
+                                               UsingShadowDecl *Pattern) {
+  assert(!InstantiatedFromUsingShadowDecl[Inst] && "pattern already exists");
+  InstantiatedFromUsingShadowDecl[Inst] = Pattern;
 }
 
 FieldDecl *ASTContext::getInstantiatedFromUnnamedFieldDecl(FieldDecl *Field) {
@@ -1766,6 +1782,9 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
       Decl->TypeForDecl = PrevDecl->TypeForDecl;
     else
       Decl->TypeForDecl = new (*this, TypeAlignment) EnumType(Enum);
+  } else if (UnresolvedUsingTypenameDecl *Using =
+               dyn_cast<UnresolvedUsingTypenameDecl>(Decl)) {
+    Decl->TypeForDecl = new (*this, TypeAlignment) UnresolvedUsingType(Using);
   } else
     assert(false && "TypeDecl without a type?");
 

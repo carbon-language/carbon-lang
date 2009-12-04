@@ -34,3 +34,14 @@ template<typename T> struct E : A<T> {
 
   void g() { f(); }
 };
+
+namespace test0 {
+  struct Base {
+    int foo;
+  };
+  template<typename T> struct E : Base {
+    using Base::foo;
+  };
+
+  template struct E<int>;
+}

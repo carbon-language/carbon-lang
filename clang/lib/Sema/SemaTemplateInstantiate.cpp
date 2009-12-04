@@ -1064,8 +1064,6 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         Invalid = true;
       } else if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
         Fields.push_back(DeclPtrTy::make(Field));
-      else if (UsingDecl *UD = dyn_cast<UsingDecl>(NewMember))
-        Instantiation->addDecl(UD);
     } else {
       // FIXME: Eventually, a NULL return will mean that one of the
       // instantiations was a semantic disaster, and we'll want to set Invalid =

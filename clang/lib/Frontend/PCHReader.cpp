@@ -1880,6 +1880,10 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
                                     Exceptions.data());
   }
 
+  case pch::TYPE_UNRESOLVED_USING:
+    return Context->getTypeDeclType(
+             cast<UnresolvedUsingTypenameDecl>(GetDecl(Record[0])));
+
   case pch::TYPE_TYPEDEF:
     assert(Record.size() == 1 && "incorrect encoding of typedef type");
     return Context->getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
@@ -2043,6 +2047,9 @@ void TypeLocReader::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
 }
 void TypeLocReader::VisitFunctionNoProtoTypeLoc(FunctionNoProtoTypeLoc TL) {
   VisitFunctionTypeLoc(TL);
+}
+void TypeLocReader::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

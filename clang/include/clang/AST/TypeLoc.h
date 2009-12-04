@@ -340,16 +340,20 @@ public:
   }
 };
 
+
 struct TypeSpecLocInfo {
   SourceLocation NameLoc;
 };
 
 /// \brief A reasonable base class for TypeLocs that correspond to
 /// types that are written as a type-specifier.
-template <class Derived, class TypeClass, class LocalData = TypeSpecLocInfo>
-class TypeSpecTypeLoc
-  : public ConcreteTypeLoc<UnqualTypeLoc, Derived, TypeClass, LocalData> {
+class TypeSpecTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, 
+                                               TypeSpecTypeLoc,
+                                               Type,
+                                               TypeSpecLocInfo> {
 public:
+  enum { LocalDataSize = sizeof(TypeSpecLocInfo) };
+
   SourceLocation getNameLoc() const {
     return this->getLocalData()->NameLoc;
   }
@@ -362,31 +366,79 @@ public:
   void initializeLocal(SourceLocation Loc) {
     setNameLoc(Loc);
   }
+
+  static bool classof(const TypeLoc *TL);
+  static bool classof(const TypeSpecTypeLoc *TL) { return true; }
 };
 
+
 /// \brief Wrapper for source info for typedefs.
-class TypedefTypeLoc : public TypeSpecTypeLoc<TypedefTypeLoc,TypedefType> {
+class TypedefTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                        TypedefTypeLoc,
+                                                        TypedefType> {
 public:
   TypedefDecl *getTypedefDecl() const {
     return getTypePtr()->getDecl();
   }
 };
 
+/// \brief Wrapper for source info for unresolved typename using decls.
+class UnresolvedUsingTypeLoc :
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     UnresolvedUsingTypeLoc,
+                                     UnresolvedUsingType> {
+public:
+  UnresolvedUsingTypenameDecl *getDecl() const {
+    return getTypePtr()->getDecl();
+  }
+};
+
+/// \brief Wrapper for source info for tag types.  Note that this only
+/// records source info for the name itself; a type written 'struct foo'
+/// should be represented as an ElaboratedTypeLoc.  We currently
+/// only do that when C++ is enabled because of the expense of
+/// creating an ElaboratedType node for so many type references in C.
+class TagTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                    TagTypeLoc,
+                                                    TagType> {
+public:
+  TagDecl *getDecl() const { return getTypePtr()->getDecl(); }
+};
+
+/// \brief Wrapper for source info for record types.
+class RecordTypeLoc : public InheritingConcreteTypeLoc<TagTypeLoc,
+                                                       RecordTypeLoc,
+                                                       RecordType> {
+public:
+  RecordDecl *getDecl() const { return getTypePtr()->getDecl(); }
+};
+
+/// \brief Wrapper for source info for enum types.
+class EnumTypeLoc : public InheritingConcreteTypeLoc<TagTypeLoc,
+                                                     EnumTypeLoc,
+                                                     EnumType> {
+public:
+  EnumDecl *getDecl() const { return getTypePtr()->getDecl(); }
+};
 
 /// \brief Wrapper for source info for builtin types.
-class BuiltinTypeLoc : public TypeSpecTypeLoc<BuiltinTypeLoc,
-                                              BuiltinType> {
+class BuiltinTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                        BuiltinTypeLoc,
+                                                        BuiltinType> {
 };
 
 /// \brief Wrapper for template type parameters.
-class TemplateTypeParmTypeLoc : public TypeSpecTypeLoc<TemplateTypeParmTypeLoc,
-                                                       TemplateTypeParmType> {
+class TemplateTypeParmTypeLoc :
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     TemplateTypeParmTypeLoc,
+                                     TemplateTypeParmType> {
 };
 
 /// \brief Wrapper for substituted template type parameters.
 class SubstTemplateTypeParmTypeLoc :
-    public TypeSpecTypeLoc<SubstTemplateTypeParmTypeLoc,
-                           SubstTemplateTypeParmType> {
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     SubstTemplateTypeParmTypeLoc,
+                                     SubstTemplateTypeParmType> {
 };
 
 
@@ -944,63 +996,84 @@ private:
   }
 };
 
-// None of these types have proper implementations yet.
+//===----------------------------------------------------------------------===//
+//
+//  All of these need proper implementations.
+//
+//===----------------------------------------------------------------------===//
 
-class VectorTypeLoc : public TypeSpecTypeLoc<VectorTypeLoc, VectorType> {
+// FIXME: size expression and attribute locations (or keyword if we
+// ever fully support altivec syntax).
+class VectorTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                       VectorTypeLoc,
+                                                       VectorType> {
 };
 
+// FIXME: size expression and attribute locations.
 class ExtVectorTypeLoc : public InheritingConcreteTypeLoc<VectorTypeLoc,
                                                           ExtVectorTypeLoc,
                                                           ExtVectorType> {
 };
 
+// FIXME: attribute locations.
 // For some reason, this isn't a subtype of VectorType.
 class DependentSizedExtVectorTypeLoc :
-    public TypeSpecTypeLoc<DependentSizedExtVectorTypeLoc,
-                           DependentSizedExtVectorType> {
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     DependentSizedExtVectorTypeLoc,
+                                     DependentSizedExtVectorType> {
 };
 
-class FixedWidthIntTypeLoc : public TypeSpecTypeLoc<FixedWidthIntTypeLoc,
-                                                    FixedWidthIntType> {
+// FIXME: I'm not sure how you actually specify these;  with attributes?
+class FixedWidthIntTypeLoc :
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     FixedWidthIntTypeLoc,
+                                     FixedWidthIntType> {
 };
 
-class ComplexTypeLoc : public TypeSpecTypeLoc<ComplexTypeLoc,
-                                              ComplexType> {
+// FIXME: location of the '_Complex' keyword.
+class ComplexTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                        ComplexTypeLoc,
+                                                        ComplexType> {
 };
 
-class TypeOfExprTypeLoc : public TypeSpecTypeLoc<TypeOfExprTypeLoc,
-                                                 TypeOfExprType> {
+// FIXME: location of the 'typeof' and parens (the expression is
+// carried by the type).
+class TypeOfExprTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                           TypeOfExprTypeLoc,
+                                                           TypeOfExprType> {
 };
 
-class TypeOfTypeLoc : public TypeSpecTypeLoc<TypeOfTypeLoc, TypeOfType> {
+// FIXME: location of the 'typeof' and parens; also the DeclaratorInfo
+// for the inner type, or (maybe) just express that inline to the TypeLoc.
+class TypeOfTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                       TypeOfTypeLoc,
+                                                       TypeOfType> {
 };
 
-class DecltypeTypeLoc : public TypeSpecTypeLoc<DecltypeTypeLoc, DecltypeType> {
+// FIXME: location of the 'decltype' and parens.
+class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                         DecltypeTypeLoc,
+                                                         DecltypeType> {
 };
 
-class TagTypeLoc : public TypeSpecTypeLoc<TagTypeLoc, TagType> {
+// FIXME: location of the tag keyword.
+class ElaboratedTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                           ElaboratedTypeLoc,
+                                                           ElaboratedType> {
 };
 
-class RecordTypeLoc : public InheritingConcreteTypeLoc<TagTypeLoc,
-                                                       RecordTypeLoc,
-                                                       RecordType> {
+// FIXME: locations for the nested name specifier;  at the very least,
+// a SourceRange.
+class QualifiedNameTypeLoc :
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     QualifiedNameTypeLoc,
+                                     QualifiedNameType> {
 };
 
-class EnumTypeLoc : public InheritingConcreteTypeLoc<TagTypeLoc,
-                                                     EnumTypeLoc,
-                                                     EnumType> {
-};
-
-class ElaboratedTypeLoc : public TypeSpecTypeLoc<ElaboratedTypeLoc,
-                                                 ElaboratedType> {
-};
-
-class QualifiedNameTypeLoc : public TypeSpecTypeLoc<QualifiedNameTypeLoc,
-                                                    QualifiedNameType> {
-};
-
-class TypenameTypeLoc : public TypeSpecTypeLoc<TypenameTypeLoc,
-                                               TypenameType> {
+// FIXME: locations for the typename keyword and nested name specifier.
+class TypenameTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                                         TypenameTypeLoc,
+                                                         TypenameType> {
 };
 
 }

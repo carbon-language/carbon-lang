@@ -166,6 +166,14 @@ void PCHTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   Code = pch::TYPE_FUNCTION_PROTO;
 }
 
+#if 0
+// For when we want it....
+void PCHTypeWriter::VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
+  Writer.AddDeclRef(T->getDecl(), Record);
+  Code = pch::TYPE_UNRESOLVED_USING;
+}
+#endif
+
 void PCHTypeWriter::VisitTypedefType(const TypedefType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   Code = pch::TYPE_TYPEDEF;
@@ -336,6 +344,9 @@ void TypeLocWriter::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
 }
 void TypeLocWriter::VisitFunctionNoProtoTypeLoc(FunctionNoProtoTypeLoc TL) {
   VisitFunctionTypeLoc(TL);
+}
+void TypeLocWriter::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);

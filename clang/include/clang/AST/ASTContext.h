@@ -57,6 +57,7 @@ namespace clang {
   class TypeDecl;
   class TypedefDecl;
   class UsingDecl;
+  class UsingShadowDecl;
 
   namespace Builtin { class Context; }
 
@@ -183,8 +184,10 @@ class ASTContext {
   llvm::DenseMap<const VarDecl *, MemberSpecializationInfo *> 
     InstantiatedFromStaticDataMember;
 
-  /// \brief Keeps track of the UnresolvedUsingDecls from which UsingDecls
-  /// where created during instantiation.
+  /// \brief Keeps track of the declaration from which a UsingDecl was
+  /// created during instantiation.  The source declaration is always
+  /// a UsingDecl, an UnresolvedUsingValueDecl, or an
+  /// UnresolvedUsingTypenameDecl.
   ///
   /// For example:
   /// \code
@@ -203,8 +206,10 @@ class ASTContext {
   ///
   /// This mapping will contain an entry that maps from the UsingDecl in
   /// B<int> to the UnresolvedUsingDecl in B<T>.
-  llvm::DenseMap<UsingDecl *, NamedDecl *>
-    InstantiatedFromUnresolvedUsingDecl;
+  llvm::DenseMap<UsingDecl *, NamedDecl *> InstantiatedFromUsingDecl;
+
+  llvm::DenseMap<UsingShadowDecl*, UsingShadowDecl*>
+    InstantiatedFromUsingShadowDecl;
 
   llvm::DenseMap<FieldDecl *, FieldDecl *> InstantiatedFromUnnamedFieldDecl;
 
@@ -282,14 +287,18 @@ public:
   void setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
                                            TemplateSpecializationKind TSK);
 
-  /// \brief If this using decl is instantiated from an unresolved using decl,
+  /// \brief If the given using decl is an instantiation of a
+  /// (possibly unresolved) using decl from a template instantiation,
   /// return it.
-  NamedDecl *getInstantiatedFromUnresolvedUsingDecl(UsingDecl *UUD);
+  NamedDecl *getInstantiatedFromUsingDecl(UsingDecl *Inst);
 
-  /// \brief Note that the using decl \p Inst is an instantiation of
-  /// the unresolved using decl \p Tmpl of a class template.
-  void setInstantiatedFromUnresolvedUsingDecl(UsingDecl *Inst, NamedDecl *Tmpl);
+  /// \brief Remember that the using decl \p Inst is an instantiation
+  /// of the using decl \p Pattern of a class template.
+  void setInstantiatedFromUsingDecl(UsingDecl *Inst, NamedDecl *Pattern);
 
+  void setInstantiatedFromUsingShadowDecl(UsingShadowDecl *Inst,
+                                          UsingShadowDecl *Pattern);
+  UsingShadowDecl *getInstantiatedFromUsingShadowDecl(UsingShadowDecl *Inst);
 
   FieldDecl *getInstantiatedFromUnnamedFieldDecl(FieldDecl *Field);
 

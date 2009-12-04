@@ -66,6 +66,8 @@ namespace {
     Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
     Decl *VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
+    Decl *VisitUsingDecl(UsingDecl *D);
+    Decl *VisitUsingShadowDecl(UsingShadowDecl *D);
     Decl *VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
     Decl *VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
 
@@ -1034,6 +1036,56 @@ Decl *TemplateDeclInstantiator::VisitUsingDirectiveDecl(UsingDirectiveDecl *D) {
   return Inst;
 }
 
+Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
+  // The nested name specifier is non-dependent, so no transformation
+  // is required.
+
+  UsingDecl *NewUD = UsingDecl::Create(SemaRef.Context, Owner,
+                                       D->getLocation(),
+                                       D->getNestedNameRange(),
+                                       D->getUsingLocation(),
+                                       D->getTargetNestedNameDecl(),
+                                       D->getDeclName(),
+                                       D->isTypeName());
+
+  CXXScopeSpec SS;
+  SS.setScopeRep(D->getTargetNestedNameDecl());
+  SS.setRange(D->getNestedNameRange());
+  if (SemaRef.CheckUsingDeclQualifier(D->getUsingLocation(), SS,
+                                      D->getLocation()))
+    NewUD->setInvalidDecl();
+  SemaRef.Context.setInstantiatedFromUsingDecl(NewUD, D);
+  NewUD->setAccess(D->getAccess());
+  Owner->addDecl(NewUD);
+
+  // We'll transform the UsingShadowDecls as we reach them.
+
+  return NewUD;
+}
+
+Decl *TemplateDeclInstantiator::VisitUsingShadowDecl(UsingShadowDecl *D) {
+  UsingDecl *InstUsing =
+    cast<UsingDecl>(SemaRef.FindInstantiatedDecl(D->getUsingDecl(),
+                                                 TemplateArgs));
+  NamedDecl *InstTarget =
+    cast<NamedDecl>(SemaRef.FindInstantiatedDecl(D->getTargetDecl(),
+                                                 TemplateArgs));
+
+  UsingShadowDecl *InstD = UsingShadowDecl::Create(SemaRef.Context, Owner,
+                                                   InstUsing->getLocation(),
+                                                   InstUsing, InstTarget);
+  InstUsing->addShadowDecl(InstD);
+
+  if (InstTarget->isInvalidDecl() || InstUsing->isInvalidDecl())
+    InstD->setInvalidDecl();
+
+  SemaRef.Context.setInstantiatedFromUsingShadowDecl(InstD, D);
+  InstD->setAccess(D->getAccess());
+  Owner->addDecl(InstD);
+
+  return InstD;
+}
+
 Decl * TemplateDeclInstantiator
     ::VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) {
   NestedNameSpecifier *NNS =
@@ -1054,8 +1106,8 @@ Decl * TemplateDeclInstantiator
                                   /*instantiation*/ true,
                                   /*typename*/ true, D->getTypenameLoc());
   if (UD)
-    SemaRef.Context.setInstantiatedFromUnresolvedUsingDecl(cast<UsingDecl>(UD),
-                                                           D);
+    SemaRef.Context.setInstantiatedFromUsingDecl(cast<UsingDecl>(UD), D);
+
   return UD;
 }
 
@@ -1079,8 +1131,8 @@ Decl * TemplateDeclInstantiator
                                   /*instantiation*/ true,
                                   /*typename*/ false, SourceLocation());
   if (UD)
-    SemaRef.Context.setInstantiatedFromUnresolvedUsingDecl(cast<UsingDecl>(UD),
-                                                           D);
+    SemaRef.Context.setInstantiatedFromUsingDecl(cast<UsingDecl>(UD), D);
+
   return UD;
 }
 
@@ -1753,16 +1805,28 @@ static bool isInstantiationOf(EnumDecl *Pattern,
   return false;
 }
 
+static bool isInstantiationOf(UsingShadowDecl *Pattern,
+                              UsingShadowDecl *Instance,
+                              ASTContext &C) {
+  return C.getInstantiatedFromUsingShadowDecl(Instance) == Pattern;
+}
+
+static bool isInstantiationOf(UsingDecl *Pattern,
+                              UsingDecl *Instance,
+                              ASTContext &C) {
+  return C.getInstantiatedFromUsingDecl(Instance) == Pattern;
+}
+
 static bool isInstantiationOf(UnresolvedUsingValueDecl *Pattern,
                               UsingDecl *Instance,
                               ASTContext &C) {
-  return C.getInstantiatedFromUnresolvedUsingDecl(Instance) == Pattern;
+  return C.getInstantiatedFromUsingDecl(Instance) == Pattern;
 }
 
 static bool isInstantiationOf(UnresolvedUsingTypenameDecl *Pattern,
                               UsingDecl *Instance,
                               ASTContext &C) {
-  return C.getInstantiatedFromUnresolvedUsingDecl(Instance) == Pattern;
+  return C.getInstantiatedFromUsingDecl(Instance) == Pattern;
 }
 
 static bool isInstantiationOfStaticDataMember(VarDecl *Pattern,
@@ -1780,6 +1844,8 @@ static bool isInstantiationOfStaticDataMember(VarDecl *Pattern,
   return false;
 }
 
+// Other is the prospective instantiation
+// D is the prospective pattern
 static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
   if (D->getKind() != Other->getKind()) {
     if (UnresolvedUsingTypenameDecl *UUD
@@ -1830,6 +1896,12 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
         cast<FieldDecl>(D);
     }
   }
+
+  if (UsingDecl *Using = dyn_cast<UsingDecl>(Other))
+    return isInstantiationOf(cast<UsingDecl>(D), Using, Ctx);
+
+  if (UsingShadowDecl *Shadow = dyn_cast<UsingShadowDecl>(Other))
+    return isInstantiationOf(cast<UsingShadowDecl>(D), Shadow, Ctx);
 
   return D->getDeclName() && isa<NamedDecl>(Other) &&
     D->getDeclName() == cast<NamedDecl>(Other)->getDeclName();

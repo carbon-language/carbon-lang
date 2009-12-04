@@ -843,6 +843,12 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
 
 // <type>            ::= <class-enum-type>
 // <class-enum-type> ::= <name>
+void CXXNameMangler::mangleType(const UnresolvedUsingType *T) {
+  mangleName(T->getDecl());
+}
+
+// <type>            ::= <class-enum-type>
+// <class-enum-type> ::= <name>
 void CXXNameMangler::mangleType(const EnumType *T) {
   mangleType(static_cast<const TagType*>(T));
 }

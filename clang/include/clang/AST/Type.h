@@ -76,6 +76,7 @@ namespace clang {
   class ObjCInterfaceDecl;
   class ObjCProtocolDecl;
   class ObjCMethodDecl;
+  class UnresolvedUsingTypenameDecl;
   class Expr;
   class Stmt;
   class SourceLocation;
@@ -1860,6 +1861,38 @@ public:
                       bool hasExceptionSpec, bool anyExceptionSpec,
                       unsigned NumExceptions, exception_iterator Exs,
                       bool NoReturn);
+};
+
+
+/// \brief Represents the dependent type named by a dependently-scoped
+/// typename using declaration, e.g.
+///   using typename Base<T>::foo;
+/// Template instantiation turns these into the underlying type.
+class UnresolvedUsingType : public Type {
+  UnresolvedUsingTypenameDecl *Decl;
+
+  UnresolvedUsingType(UnresolvedUsingTypenameDecl *D)
+    : Type(UnresolvedUsing, QualType(), true), Decl(D) {}
+  friend class ASTContext; // ASTContext creates these.
+public:
+
+  UnresolvedUsingTypenameDecl *getDecl() const { return Decl; }
+
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == UnresolvedUsing;
+  }
+  static bool classof(const UnresolvedUsingType *) { return true; }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    return Profile(ID, Decl);
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      UnresolvedUsingTypenameDecl *D) {
+    ID.AddPointer(D);
+  }
 };
 
 

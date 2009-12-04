@@ -303,6 +303,15 @@ void TypePrinter::PrintFunctionNoProto(const FunctionNoProtoType *T,
   Print(T->getResultType(), S);
 }
 
+void TypePrinter::PrintUnresolvedUsing(const UnresolvedUsingType *T,
+                                       std::string &S) {
+  IdentifierInfo *II = T->getDecl()->getIdentifier();
+  if (S.empty())
+    S = II->getName().str();
+  else
+    S = II->getName().str() + ' ' + S;
+}
+
 void TypePrinter::PrintTypedef(const TypedefType *T, std::string &S) { 
   if (!S.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     S = ' ' + S;

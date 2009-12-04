@@ -2361,6 +2361,7 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
   case Type::Enum:
   case Type::ObjCInterface:
   case Type::ObjCObjectPointer:
+  case Type::UnresolvedUsing:
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base)

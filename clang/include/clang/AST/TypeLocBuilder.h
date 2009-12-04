@@ -59,30 +59,19 @@ class TypeLocBuilder {
       grow(Requested);
   }
 
-  /// Pushes space for a new TypeLoc onto the given type.  Invalidates
+  /// Pushes space for a typespec TypeLoc.  Invalidates any TypeLocs
+  /// previously retrieved from this builder.
+  TypeSpecTypeLoc pushTypeSpec(QualType T) {
+    size_t LocalSize = TypeSpecTypeLoc::LocalDataSize;
+    return cast<TypeSpecTypeLoc>(pushImpl(T, LocalSize));
+  }
+  
+
+  /// Pushes space for a new TypeLoc of the given type.  Invalidates
   /// any TypeLocs previously retrieved from this builder.
   template <class TyLocType> TyLocType push(QualType T) {
-#ifndef NDEBUG
-    QualType TLast = TypeLoc(T, 0).getNextTypeLoc().getType();
-    assert(TLast == LastTy &&
-           "mismatch between last type and new type's inner type");
-    LastTy = T;
-#endif
-
     size_t LocalSize = cast<TyLocType>(TypeLoc(T, 0)).getLocalDataSize();
-
-    // If we need to grow, grow by a factor of 2.
-    if (LocalSize > Index) {
-      size_t RequiredCapacity = Capacity + (LocalSize - Index);
-      size_t NewCapacity = Capacity * 2;
-      while (RequiredCapacity > NewCapacity)
-        NewCapacity *= 2;
-      grow(NewCapacity);
-    }
-
-    Index -= LocalSize;
-
-    return cast<TyLocType>(TypeLoc(T, &Buffer[Index]));
+    return cast<TyLocType>(pushImpl(T, LocalSize));
   }
 
   /// Creates a DeclaratorInfo for the given type.
@@ -97,7 +86,29 @@ class TypeLocBuilder {
     return DI;
   }
 
- private:
+private:
+  TypeLoc pushImpl(QualType T, size_t LocalSize) {
+#ifndef NDEBUG
+    QualType TLast = TypeLoc(T, 0).getNextTypeLoc().getType();
+    assert(TLast == LastTy &&
+           "mismatch between last type and new type's inner type");
+    LastTy = T;
+#endif
+
+    // If we need to grow, grow by a factor of 2.
+    if (LocalSize > Index) {
+      size_t RequiredCapacity = Capacity + (LocalSize - Index);
+      size_t NewCapacity = Capacity * 2;
+      while (RequiredCapacity > NewCapacity)
+        NewCapacity *= 2;
+      grow(NewCapacity);
+    }
+
+    Index -= LocalSize;
+
+    return TypeLoc(T, &Buffer[Index]);
+  }
+
   /// Grow to the given capacity.
   void grow(size_t NewCapacity) {
     assert(NewCapacity > Capacity);

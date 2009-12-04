@@ -2900,10 +2900,8 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
                                         TargetName, AttrList,
                                         /* IsInstantiation */ false,
                                         IsTypeName, TypenameLoc);
-  if (UD) {
-    PushOnScopeChains(UD, S);
-    UD->setAccess(AS);
-  }
+  if (UD)
+    PushOnScopeChains(UD, S, /*AddToContext*/ false);
 
   return DeclPtrTy::make(UD);
 }
@@ -2962,19 +2960,33 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   NestedNameSpecifier *NNS =
     static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
+  if (CheckUsingDeclQualifier(UsingLoc, SS, IdentLoc))
+    return 0;
+
   DeclContext *LookupContext = computeDeclContext(SS);
+  NamedDecl *D;
   if (!LookupContext) {
     if (IsTypeName) {
-      return UnresolvedUsingTypenameDecl::Create(Context, CurContext,
-                                                 UsingLoc, TypenameLoc,
-                                                 SS.getRange(), NNS,
-                                                 IdentLoc, Name);
-    } else {
-      return UnresolvedUsingValueDecl::Create(Context, CurContext,
-                                              UsingLoc, SS.getRange(), NNS,
+      // FIXME: not all declaration name kinds are legal here
+      D = UnresolvedUsingTypenameDecl::Create(Context, CurContext,
+                                              UsingLoc, TypenameLoc,
+                                              SS.getRange(), NNS,
                                               IdentLoc, Name);
+    } else {
+      D = UnresolvedUsingValueDecl::Create(Context, CurContext,
+                                           UsingLoc, SS.getRange(), NNS,
+                                           IdentLoc, Name);
     }
+  } else {
+    D = UsingDecl::Create(Context, CurContext, IdentLoc,
+                          SS.getRange(), UsingLoc, NNS, Name,
+                          IsTypeName);
   }
+  D->setAccess(AS);
+  CurContext->addDecl(D);
+
+  if (!LookupContext) return D;
+  UsingDecl *UD = cast<UsingDecl>(D);
 
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(CurContext)) {
     // C++0x N2914 [namespace.udecl]p3:
@@ -2989,7 +3001,8 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
       Diag(SS.getRange().getBegin(),
            diag::err_using_decl_nested_name_specifier_is_not_a_base_class)
         << NNS << RD->getDeclName();
-      return 0;
+      UD->setInvalidDecl();
+      return UD;
     }
   } else {
     // C++0x N2914 [namespace.udecl]p8:
@@ -2997,7 +3010,8 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     if (isa<CXXRecordDecl>(LookupContext)) {
       Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_class_member)
         << SS.getRange();
-      return 0;
+      UD->setInvalidDecl();
+      return UD;
     }
   }
 
@@ -3017,52 +3031,61 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   if (R.empty()) {
     Diag(IdentLoc, diag::err_no_member) 
       << Name << LookupContext << SS.getRange();
-    return 0;
+    UD->setInvalidDecl();
+    return UD;
   }
 
-  if (R.isAmbiguous())
-    return 0;
+  if (R.isAmbiguous()) {
+    UD->setInvalidDecl();
+    return UD;
+  }
 
   if (IsTypeName) {
     // If we asked for a typename and got a non-type decl, error out.
-    if (R.getResultKind() != LookupResult::Found
-        || !isa<TypeDecl>(R.getFoundDecl())) {
+    if (!R.getAsSingle<TypeDecl>()) {
       Diag(IdentLoc, diag::err_using_typename_non_type);
       for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
         Diag((*I)->getUnderlyingDecl()->getLocation(),
              diag::note_using_decl_target);
-      return 0;
+      UD->setInvalidDecl();
+      return UD;
     }
   } else {
     // If we asked for a non-typename and we got a type, error out,
     // but only if this is an instantiation of an unresolved using
     // decl.  Otherwise just silently find the type name.
-    if (IsInstantiation &&
-        R.getResultKind() == LookupResult::Found &&
-        isa<TypeDecl>(R.getFoundDecl())) {
+    if (IsInstantiation && R.getAsSingle<TypeDecl>()) {
       Diag(IdentLoc, diag::err_using_dependent_value_is_type);
       Diag(R.getFoundDecl()->getLocation(), diag::note_using_decl_target);
-      return 0;
+      UD->setInvalidDecl();
+      return UD;
     }
   }
 
   // C++0x N2914 [namespace.udecl]p6:
   // A using-declaration shall not name a namespace.
-  if (R.getResultKind() == LookupResult::Found
-      && isa<NamespaceDecl>(R.getFoundDecl())) {
+  if (R.getAsSingle<NamespaceDecl>()) {
     Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_namespace)
       << SS.getRange();
-    return 0;
+    UD->setInvalidDecl();
+    return UD;
   }
-
-  UsingDecl *UD = UsingDecl::Create(Context, CurContext, IdentLoc,
-                                    SS.getRange(), UsingLoc, NNS, Name,
-                                    IsTypeName);
 
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
     BuildUsingShadowDecl(*this, S, AS, UD, *I);
 
   return UD;
+}
+
+/// Checks that the given nested-name qualifier used in a using decl
+/// in the current context is appropriately related to the current
+/// scope.  If an error is found, diagnoses it and returns true.
+bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
+                                   const CXXScopeSpec &SS,
+                                   SourceLocation NameLoc) {
+  // FIXME: implement
+
+  return false;
 }
 
 Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,

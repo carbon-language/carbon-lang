@@ -1729,6 +1729,10 @@ public:
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident);
 
+  bool CheckUsingDeclQualifier(SourceLocation UsingLoc,
+                               const CXXScopeSpec &SS,
+                               SourceLocation NameLoc);
+
   NamedDecl *BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
                                    SourceLocation UsingLoc,
                                    const CXXScopeSpec &SS,

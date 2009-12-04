@@ -461,6 +461,10 @@ public:
   /// \brief Build a new unprototyped function type.
   QualType RebuildFunctionNoProtoType(QualType ResultType);
 
+  /// \brief Rebuild an unresolved typename type, given the decl that
+  /// the UnresolvedUsingTypenameDecl was transformed to.
+  QualType RebuildUnresolvedUsingType(Decl *D);
+
   /// \brief Build a new typedef type.
   QualType RebuildTypedefType(TypedefDecl *Typedef) {
     return SemaRef.Context.getTypeDeclType(Typedef);
@@ -2574,6 +2578,29 @@ QualType TreeTransform<Derived>::TransformFunctionNoProtoType(
   FunctionNoProtoTypeLoc NewTL = TLB.push<FunctionNoProtoTypeLoc>(Result);
   NewTL.setLParenLoc(TL.getLParenLoc());
   NewTL.setRParenLoc(TL.getRParenLoc());
+
+  return Result;
+}
+
+template<typename Derived> QualType
+TreeTransform<Derived>::TransformUnresolvedUsingType(TypeLocBuilder &TLB,
+                                                 UnresolvedUsingTypeLoc TL) {
+  UnresolvedUsingType *T = TL.getTypePtr();
+  Decl *D = getDerived().TransformDecl(T->getDecl());
+  if (!D)
+    return QualType();
+
+  QualType Result = TL.getType();
+  if (getDerived().AlwaysRebuild() || D != T->getDecl()) {
+    Result = getDerived().RebuildUnresolvedUsingType(D);
+    if (Result.isNull())
+      return QualType();
+  }
+
+  // We might get an arbitrary type spec type back.  We should at
+  // least always get a type spec type, though.
+  TypeSpecTypeLoc NewTL = TLB.pushTypeSpec(Result);
+  NewTL.setNameLoc(TL.getNameLoc());
 
   return Result;
 }
@@ -5315,6 +5342,30 @@ QualType TreeTransform<Derived>::RebuildFunctionProtoType(QualType T,
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildFunctionNoProtoType(QualType T) {
   return SemaRef.Context.getFunctionNoProtoType(T);
+}
+
+template<typename Derived>
+QualType TreeTransform<Derived>::RebuildUnresolvedUsingType(Decl *D) {
+  assert(D && "no decl found");
+  if (D->isInvalidDecl()) return QualType();
+
+  TypeDecl *Ty;
+  if (isa<UsingDecl>(D)) {
+    UsingDecl *Using = cast<UsingDecl>(D);
+    assert(Using->isTypeName() &&
+           "UnresolvedUsingTypenameDecl transformed to non-typename using");
+
+    // A valid resolved using typename decl points to exactly one type decl.
+    assert(++Using->shadow_begin() == Using->shadow_end());
+    Ty = cast<TypeDecl>((*Using->shadow_begin())->getTargetDecl());
+    
+  } else {
+    assert(isa<UnresolvedUsingTypenameDecl>(D) &&
+           "UnresolvedUsingTypenameDecl transformed to non-using decl");
+    Ty = cast<UnresolvedUsingTypenameDecl>(D);
+  }
+
+  return SemaRef.Context.getTypeDeclType(Ty);
 }
 
 template<typename Derived>

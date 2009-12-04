@@ -404,7 +404,9 @@ namespace clang {
       /// \brief An ElaboratedType record.
       TYPE_ELABORATED               = 24,
       /// \brief A SubstTemplateTypeParmType record.
-      TYPE_SUBST_TEMPLATE_TYPE_PARM = 25
+      TYPE_SUBST_TEMPLATE_TYPE_PARM = 25,
+      /// \brief An UnresolvedUsingType record.
+      TYPE_UNRESOLVED_USING         = 26
     };
 
     /// \brief The type IDs for special types constructed by semantic
