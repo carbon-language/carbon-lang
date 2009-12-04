@@ -2374,7 +2374,9 @@ def err_altivec_empty_initializer : Error<"expected initializer">;
 def err_stack_const_level : Error<
   "level argument for a stack address builtin must be constant">;
 
-def err_prefetch_invalid_argument : Error<
+def err_prefetch_invalid_arg_type : Error<
+  "argument to __builtin_prefetch must be of integer type">;
+def err_prefetch_invalid_arg_ice : Error<
   "argument to __builtin_prefetch must be a constant integer">;
 def err_argument_invalid_range : Error<
   "argument should be a value from %0 to %1">;

@@ -700,30 +700,30 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
     if (Arg->isTypeDependent())
       continue;
 
-    QualType RWType = Arg->getType();
-
-    const BuiltinType *BT = RWType->getAs<BuiltinType>();
-    llvm::APSInt Result;
-    if (!BT || BT->getKind() != BuiltinType::Int)
-      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument)
+    if (!Arg->getType()->isIntegralType())
+      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_arg_type)
               << Arg->getSourceRange();
+
+    ImpCastExprToType(Arg, Context.IntTy, CastExpr::CK_IntegralCast);
+    TheCall->setArg(i, Arg);
 
     if (Arg->isValueDependent())
       continue;
 
+    llvm::APSInt Result;
     if (!Arg->isIntegerConstantExpr(Result, Context))
-      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument)
+      return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_arg_ice)
         << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
 
     // FIXME: gcc issues a warning and rewrites these to 0. These
     // seems especially odd for the third argument since the default
     // is 3.
     if (i == 1) {
-      if (Result.getSExtValue() < 0 || Result.getSExtValue() > 1)
+      if (Result.getLimitedValue() > 1)
         return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
              << "0" << "1" << Arg->getSourceRange();
     } else {
-      if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3)
+      if (Result.getLimitedValue() > 3)
         return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
             << "0" << "3" << Arg->getSourceRange();
     }
