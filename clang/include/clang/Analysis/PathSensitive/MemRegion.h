@@ -340,6 +340,8 @@ public:
 
   const BlockTextRegion *getCodeRegion() const { return BC; }
   
+  const BlockDecl *getDecl() const { return BC->getDecl(); }
+  
   class referenced_vars_iterator {
     const MemRegion * const *R;
   public:

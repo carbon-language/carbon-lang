@@ -15,9 +15,10 @@
 #ifndef LLVM_CLANG_ANALYSIS_ANALYSISCONTEXT_H
 #define LLVM_CLANG_ANALYSIS_ANALYSISCONTEXT_H
 
-#include "clang/AST/Stmt.h"
+#include "clang/AST/Decl.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
 
@@ -30,6 +31,7 @@ class LiveVariables;
 class ParentMap;
 class ImplicitParamDecl;
 class LocationContextManager;
+class BlockDataRegion;
 
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
@@ -177,19 +179,34 @@ public:
 };
 
 class BlockInvocationContext : public LocationContext {
-  const BlockDecl *BD;
+  llvm::PointerUnion<const BlockDataRegion *, const BlockDecl *> Data;
 
   friend class LocationContextManager;
+
+  BlockInvocationContext(AnalysisContext *ctx, const LocationContext *parent,
+                         const BlockDataRegion *br)
+    : LocationContext(Block, ctx, parent), Data(br) {}
+  
   BlockInvocationContext(AnalysisContext *ctx, const LocationContext *parent,
                          const BlockDecl *bd)
-    : LocationContext(Block, ctx, parent), BD(bd) {}
+    : LocationContext(Block, ctx, parent), Data(bd) {}
 
 public:
   ~BlockInvocationContext() {}
   
-  const BlockDecl *getBlockDecl() const { return BD; }
+  const BlockDataRegion *getBlockRegion() const {
+    return Data.is<const BlockDataRegion*>() ? 
+      Data.get<const BlockDataRegion*>() : 0;
+  }
+  
+  const BlockDecl *getBlockDecl() const;
   
   void Profile(llvm::FoldingSetNodeID &ID);
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
+                      const LocationContext *parent, const BlockDataRegion *br){
+    ProfileCommon(ID, Block, ctx, parent, br);
+  }
   
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
                       const LocationContext *parent, const BlockDecl *bd) {
@@ -216,7 +233,7 @@ public:
   
   const BlockInvocationContext *
   getBlockInvocation(AnalysisContext *ctx, const LocationContext *parent,
-                     const BlockDecl *BD);
+                     const BlockDataRegion *BR);
   
   /// Discard all previously created LocationContext objects.
   void clear();
