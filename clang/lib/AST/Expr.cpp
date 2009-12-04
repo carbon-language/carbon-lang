@@ -470,7 +470,7 @@ QualType CallExpr::getCallReturnType() const {
 }
 
 MemberExpr::MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
-                       SourceRange qualrange, NamedDecl *memberdecl,
+                       SourceRange qualrange, ValueDecl *memberdecl,
                        SourceLocation l, const TemplateArgumentListInfo *targs,
                        QualType ty)
   : Expr(MemberExprClass, ty,
@@ -493,7 +493,7 @@ MemberExpr::MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
 MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                NestedNameSpecifier *qual,
                                SourceRange qualrange,
-                               NamedDecl *memberdecl,
+                               ValueDecl *memberdecl,
                                SourceLocation l,
                                const TemplateArgumentListInfo *targs,
                                QualType ty) {

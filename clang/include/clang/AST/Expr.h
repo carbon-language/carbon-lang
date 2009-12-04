@@ -1252,7 +1252,7 @@ class MemberExpr : public Expr {
 
   /// MemberDecl - This is the decl being referenced by the field/member name.
   /// In X.F, this is the decl referenced by F.
-  NamedDecl *MemberDecl;
+  ValueDecl *MemberDecl;
 
   /// MemberLoc - This is the location of the member name.
   SourceLocation MemberLoc;
@@ -1305,12 +1305,12 @@ class MemberExpr : public Expr {
   }
 
   MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
-             SourceRange qualrange, NamedDecl *memberdecl, SourceLocation l,
+             SourceRange qualrange, ValueDecl *memberdecl, SourceLocation l,
              const TemplateArgumentListInfo *targs, QualType ty);
 
 public:
-  MemberExpr(Expr *base, bool isarrow, NamedDecl *memberdecl, SourceLocation l,
-             QualType ty)
+  MemberExpr(Expr *base, bool isarrow, ValueDecl *memberdecl,
+             SourceLocation l, QualType ty)
     : Expr(MemberExprClass, ty,
            base->isTypeDependent(), base->isValueDependent()),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
@@ -1323,7 +1323,7 @@ public:
 
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow,
                             NestedNameSpecifier *qual, SourceRange qualrange,
-                            NamedDecl *memberdecl,
+                            ValueDecl *memberdecl,
                             SourceLocation l,
                             const TemplateArgumentListInfo *targs,
                             QualType ty);
@@ -1335,8 +1335,8 @@ public:
   ///
   /// The returned declaration will either be a FieldDecl or (in C++)
   /// a CXXMethodDecl.
-  NamedDecl *getMemberDecl() const { return MemberDecl; }
-  void setMemberDecl(NamedDecl *D) { MemberDecl = D; }
+  ValueDecl *getMemberDecl() const { return MemberDecl; }
+  void setMemberDecl(ValueDecl *D) { MemberDecl = D; }
 
   /// \brief Determines whether this member expression actually had
   /// a C++ nested-name-specifier prior to the name of the member, e.g.,

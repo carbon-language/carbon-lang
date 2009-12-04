@@ -1213,7 +1213,7 @@ Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
 
 /// \brief Build a MemberExpr AST node.
 static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
-                                   const CXXScopeSpec &SS, NamedDecl *Member,
+                                   const CXXScopeSpec &SS, ValueDecl *Member,
                                    SourceLocation Loc, QualType Ty,
                           const TemplateArgumentListInfo *TemplateArgs = 0) {
   NestedNameSpecifier *Qualifier = 0;

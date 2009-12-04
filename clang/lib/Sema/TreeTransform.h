@@ -947,7 +947,7 @@ public:
                                      NestedNameSpecifier *Qualifier,
                                      SourceRange QualifierRange,
                                      SourceLocation MemberLoc,
-                                     NamedDecl *Member,
+                                     ValueDecl *Member,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                      NamedDecl *FirstQualifierInScope) {
     if (!Member->getDeclName()) {
@@ -3671,8 +3671,8 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E,
       return SemaRef.ExprError();
   }
 
-  NamedDecl *Member
-    = cast_or_null<NamedDecl>(getDerived().TransformDecl(E->getMemberDecl()));
+  ValueDecl *Member
+    = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getMemberDecl()));
   if (!Member)
     return SemaRef.ExprError();
 
