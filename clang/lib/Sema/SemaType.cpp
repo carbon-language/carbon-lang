@@ -1643,6 +1643,53 @@ static void HandleNoReturnTypeAttribute(QualType &Type,
   Type = S.Context.getNoReturnType(Type);
 }
 
+/// HandleVectorSizeAttribute - this attribute is only applicable to integral
+/// and float scalars, although arrays, pointers, and function return values are
+/// allowed in conjunction with this construct. Aggregates with this attribute
+/// are invalid, even if they are of the same size as a corresponding scalar.
+/// The raw attribute should contain precisely 1 argument, the vector size for
+/// the variable, measured in bytes. If curType and rawAttr are well formed,
+/// this routine will return a new vector type.
+static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, Sema &S) {
+  // Check the attribute arugments.
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+  Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt vecSize(32);
+  if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "vector_size" << sizeExpr->getSourceRange();
+    return;
+  }
+  // the base type must be integer or float, and can't already be a vector.
+  if (CurType->isVectorType() ||
+      (!CurType->isIntegerType() && !CurType->isRealFloatingType())) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
+    return;
+  }
+  unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));
+  // vecSize is specified in bytes - convert to bits.
+  unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue() * 8);
+
+  // the vector size needs to be an integral multiple of the type size.
+  if (vectorSize % typeSize) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size)
+      << sizeExpr->getSourceRange();
+    return;
+  }
+  if (vectorSize == 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size)
+      << sizeExpr->getSourceRange();
+    return;
+  }
+
+  // Success! Instantiate the vector type, the number of elements is > 0, and
+  // not required to be a power of 2, unlike GCC.
+  CurType = S.Context.getVectorType(CurType, vectorSize/typeSize);
+}
+
 void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
@@ -1661,6 +1708,9 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
       break;
     case AttributeList::AT_noreturn:
       HandleNoReturnTypeAttribute(Result, *AL, *this);
+      break;
+    case AttributeList::AT_vector_size:
+      HandleVectorSizeAttr(Result, *AL, *this);
       break;
     }
   }
