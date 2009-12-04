@@ -33,8 +33,11 @@ private:
   VtableVectorTy Vtable;
   
   llvm::Type *Ptr8Ty;
-  /// Class - The most derived class that this vtable is being built for.
-  const CXXRecordDecl *Class;
+  
+  /// MostDerivedClass - The most derived class that this vtable is being 
+  /// built for.
+  const CXXRecordDecl *MostDerivedClass;
+  
   /// LayoutClass - The most derived class used for virtual base layout
   /// information.
   const CXXRecordDecl *LayoutClass;
@@ -174,12 +177,13 @@ private:
   }
   
 public:
-  VtableBuilder(const CXXRecordDecl *c,
+  VtableBuilder(const CXXRecordDecl *MostDerivedClass,
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
-    : Class(c), LayoutClass(l), LayoutOffset(lo),
+    : MostDerivedClass(MostDerivedClass), LayoutClass(l), LayoutOffset(lo),
       BLayout(cgm.getContext().getASTRecordLayout(l)),
-      rtti(cgm.GenerateRTTIRef(c)), VMContext(cgm.getModule().getContext()),
-      CGM(cgm), PureVirtualFn(0),subAddressPoints(AllocAddressPoint(cgm, l, c)),
+      rtti(cgm.GenerateRTTIRef(MostDerivedClass)), 
+      VMContext(cgm.getModule().getContext()),CGM(cgm), PureVirtualFn(0),
+      subAddressPoints(AllocAddressPoint(cgm, l, MostDerivedClass)),
       Extern(!l->isInAnonymousNamespace()),
     LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
@@ -284,7 +288,7 @@ public:
     qB = qB->getPointeeType();
     CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
     CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
-    if (D != Class)
+    if (D != MostDerivedClass)
       return CGM.getVtableInfo().getVirtualBaseOffsetIndex(D, B);
     llvm::DenseMap<const CXXRecordDecl *, Index_t>::iterator i;
     i = VBIndex.find(B);
@@ -582,7 +586,8 @@ public:
 
     // Construction vtable don't need parts that have no virtual bases and
     // aren't morally virtual.
-    if ((LayoutClass != Class) && RD->getNumVBases() == 0 && !MorallyVirtual)
+    if ((LayoutClass != MostDerivedClass) && 
+        RD->getNumVBases() == 0 && !MorallyVirtual)
       return 0;
 
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
