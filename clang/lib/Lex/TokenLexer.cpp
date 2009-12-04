@@ -321,13 +321,12 @@ void TokenLexer::Lex(Token &Tok) {
 
   // If this token is followed by a token paste (##) operator, paste the tokens!
   if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash)) {
-    if (PasteTokens(Tok)) {
-      // When handling the microsoft /##/ extension, the final token is
-      // returned by PasteTokens, not the pasted token.
+    // When handling the microsoft /##/ extension, the final token is
+    // returned by PasteTokens, not the pasted token.
+    if (PasteTokens(Tok))
       return;
-    } else {
-      TokenIsFromPaste = true;
-    }
+    
+    TokenIsFromPaste = true;
   }
 
   // The token's current location indicate where the token was lexed from.  We
