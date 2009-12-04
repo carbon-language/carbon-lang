@@ -194,17 +194,22 @@ void MachineSSAUpdater::RewriteUse(MachineOperand &U) {
   if (UseMI->getOpcode() == TargetInstrInfo::PHI) {
     MachineBasicBlock *SourceBB = findCorrespondingPred(UseMI, &U);
     NewVR = GetValueAtEndOfBlock(SourceBB);
-  } else {
-    NewVR = GetValueInMiddleOfBlock(UseMI->getParent());
-  }
-
-  if (NewVR == ~0U) {
     // Insert an implicit_def to represent an undef value.
     MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
-                                        UseMI->getParent(), UseMI, VRC,MRI,TII);
+                                        SourceBB,SourceBB->getFirstTerminator(),
+                                        VRC, MRI, TII);
     NewVR = NewDef->getOperand(0).getReg();
+  } else {
+    NewVR = GetValueInMiddleOfBlock(UseMI->getParent());
+    if (NewVR == ~0U) {
+      // Insert an implicit_def to represent an undef value.
+      MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
+                                          UseMI->getParent(), UseMI,
+                                          VRC, MRI, TII);
+      NewVR = NewDef->getOperand(0).getReg();
+    }
   }
-    
+
   U.setReg(NewVR);
 }
 
@@ -281,7 +286,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   /// this block is involved in a loop, a no-entry PHI node will have been
   /// inserted as InsertedVal.  Otherwise, we'll still have the null we inserted
   /// above.
-  unsigned InsertedVal = AvailableVals[BB];
+  unsigned &InsertedVal = AvailableVals[BB];
 
   // If all the predecessor values are the same then we don't need to insert a
   // PHI.  This is the simple and common case.
@@ -294,9 +299,9 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
       assert(InsertedVal != SingularValue && "Dead loop?");
       MRI->replaceRegWith(InsertedVal, SingularValue);
       OldVal->eraseFromParent();
-    } else {
-      InsertedVal = SingularValue;
     }
+
+    InsertedVal = SingularValue;
 
     // Drop the entries we added in IncomingPredInfo to restore the stack.
     IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
@@ -348,5 +353,4 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   }
 
   return InsertedVal;
-
 }
