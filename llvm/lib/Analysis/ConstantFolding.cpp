@@ -432,7 +432,7 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
   // Instead of loading constant c string, use corresponding integer value
   // directly if string length is small enough.
   std::string Str;
-  if (TD && GetConstantStringInfo(CE->getOperand(0), Str) && !Str.empty()) {
+  if (TD && GetConstantStringInfo(CE, Str) && !Str.empty()) {
     unsigned StrLen = Str.length();
     const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
     unsigned NumBits = Ty->getPrimitiveSizeInBits();
