@@ -27,7 +27,10 @@ public:
   /// Index_t - Vtable index type.
   typedef uint64_t Index_t;
 private:
-  std::vector<llvm::Constant *> &methods;
+  
+  // Vtable - The components of the vtable being built.
+  std::vector<llvm::Constant *> Vtable;
+  
   llvm::Type *Ptr8Ty;
   /// Class - The most derived class that this vtable is being built for.
   const CXXRecordDecl *Class;
@@ -170,9 +173,9 @@ private:
   }
   
 public:
-  VtableBuilder(std::vector<llvm::Constant *> &meth, const CXXRecordDecl *c,
+  VtableBuilder(const CXXRecordDecl *c,
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
-    : methods(meth), Class(c), LayoutClass(l), LayoutOffset(lo),
+    : Class(c), LayoutClass(l), LayoutOffset(lo),
       BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(cgm.GenerateRTTIRef(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), PureVirtualFn(0),subAddressPoints(AllocAddressPoint(cgm, l, c)),
@@ -181,6 +184,11 @@ public:
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
 
+  // getVtable - Returns a reference to the vtable components.
+  const std::vector<llvm::Constant *> &getVtable() const {
+    return Vtable;
+  }
+  
   llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
     { return VBIndex; }
 
@@ -404,16 +412,16 @@ public:
 #define D(X)
 
   void insertVCalls(int InsertionPoint) {
-    llvm::Constant *e = 0;
     D1(printf("============= combining vbase/vcall\n"));
     D(VCalls.insert(VCalls.begin(), 673));
     D(VCalls.push_back(672));
-    methods.insert(methods.begin() + InsertionPoint, VCalls.size(), e);
+    
+    Vtable.insert(Vtable.begin() + InsertionPoint, VCalls.size(), 0);
     // The vcalls come first...
     for (std::vector<Index_t>::reverse_iterator i = VCalls.rbegin(),
            e = VCalls.rend();
          i != e; ++i)
-      methods[InsertionPoint++] = wrap((0?600:0) + *i);
+      Vtable[InsertionPoint++] = wrap((0?600:0) + *i);
     VCalls.clear();
     VCall.clear();
   }
@@ -460,16 +468,20 @@ public:
     StartNewTable();
     extra = 0;
     bool DeferVCalls = MorallyVirtual || ForVirtualBase;
-    int VCallInsertionPoint = methods.size();
+    int VCallInsertionPoint = Vtable.size();
     if (!DeferVCalls) {
       insertVCalls(VCallInsertionPoint);
     } else
       // FIXME: just for extra, or for all uses of VCalls.size post this?
       extra = -VCalls.size();
 
-    methods.push_back(wrap(-((Offset-LayoutOffset)/8)));
-    methods.push_back(rtti);
-    Index_t AddressPoint = methods.size();
+    // Add the offset to top.
+    Vtable.push_back(wrap(-((Offset-LayoutOffset)/8)));
+    
+    // Add the RTTI information.
+    Vtable.push_back(rtti);
+    
+    Index_t AddressPoint = Vtable.size();
 
     AppendMethodsToVtable();
 
@@ -821,8 +833,8 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 }
 
 void VtableBuilder::AppendMethodsToVtable() {
-  // Reserve room for our new methods.
-  methods.reserve(methods.size() + Methods.size());
+  // Reserve room in the vtable for our new methods.
+  Vtable.reserve(Vtable.size() + Methods.size());
 
   for (unsigned i = 0, e = Methods.size(); i != e; ++i) {
     GlobalDecl GD = Methods[i];
@@ -866,7 +878,7 @@ void VtableBuilder::AppendMethodsToVtable() {
     }
 
     // Add the method to the vtable.
-    methods.push_back(Method);
+    Vtable.push_back(Method);
   }
   
   
@@ -1028,10 +1040,9 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   if (I != VirtualBaseClassIndicies.end())
     return I->second;
   
-  std::vector<llvm::Constant *> methods;
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
-  VtableBuilder b(methods, RD, RD, 0, CGM);
+  VtableBuilder b(RD, RD, 0, CGM);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -1060,7 +1071,6 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     getMangleContext().mangleCXXVtable(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
-  std::vector<llvm::Constant *> methods;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t AddressPoint;
 
@@ -1073,7 +1083,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     if (AddressPoint == 0)
       AddressPoint = 1;
   } else {
-    VtableBuilder b(methods, RD, LayoutClass, Offset, *this);
+    VtableBuilder b(RD, LayoutClass, Offset, *this);
 
     D1(printf("vtable %s\n", RD->getNameAsCString()));
     // First comes the vtables for all the non-virtual bases...
@@ -1103,8 +1113,9 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     llvm::GlobalVariable::LinkageTypes linktype
       = llvm::GlobalValue::ExternalLinkage;
     if (CreateDefinition) {
-      llvm::ArrayType *ntype = llvm::ArrayType::get(Ptr8Ty, methods.size());
-      C = llvm::ConstantArray::get(ntype, methods);
+      llvm::ArrayType *ntype = 
+        llvm::ArrayType::get(Ptr8Ty, b.getVtable().size());
+      C = llvm::ConstantArray::get(ntype, b.getVtable());
       linktype = llvm::GlobalValue::LinkOnceODRLinkage;
       if (LayoutClass->isInAnonymousNamespace())
         linktype = llvm::GlobalValue::InternalLinkage;
