@@ -231,7 +231,10 @@ public:
              e = RD->bases_end(); i != e; ++i) {
         const CXXRecordDecl *Base =
           cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        info.push_back(CGM.GenerateRTTIRef(Base));
+        if (Base->isPolymorphic())
+          info.push_back(CGM.GenerateRTTIRef(Base));
+        else
+          info.push_back(CGM.GenerateRTTI(Base));
         if (simple)
           break;
         int64_t offset;
