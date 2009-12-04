@@ -589,6 +589,8 @@ typedef llvm::DenseMap<const CXXMethodDecl*,
 static OverriddenMethodsMapTy *OverriddenMethods = 0;
 
 void CXXMethodDecl::addOverriddenMethod(const CXXMethodDecl *MD) {
+  assert(MD->isCanonicalDecl() && "Method is not canonical!");
+  
   // FIXME: The CXXMethodDecl dtor needs to remove and free the entry.
 
   if (!OverriddenMethods)

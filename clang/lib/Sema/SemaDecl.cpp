@@ -2585,7 +2585,7 @@ void Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
         if (!CheckOverridingFunctionReturnType(MD, OldMD) &&
             !CheckOverridingFunctionExceptionSpec(MD, OldMD) &&
             !CheckOverridingFunctionAttributes(MD, OldMD))
-          MD->addOverriddenMethod(OldMD);
+          MD->addOverriddenMethod(OldMD->getCanonicalDecl());
       }
     }
   }
