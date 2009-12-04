@@ -39,7 +39,7 @@ class CheckerContext {
   SaveAndRestore<const void*> OldTag;
   SaveAndRestore<ProgramPoint::Kind> OldPointKind;
   SaveOr OldHasGen;
-  const GRState *state;
+  const GRState *ST;
   const Stmt *statement;
   const unsigned size;
   bool DoneEvaluating; // FIXME: This is not a permanent API change.
@@ -53,7 +53,7 @@ public:
       OldTag(B.Tag, tag),
       OldPointKind(B.PointKind, K),
       OldHasGen(B.HasGeneratedNode),
-      state(st), statement(stmt), size(Dst.size()) {}
+      ST(st), statement(stmt), size(Dst.size()) {}
 
   ~CheckerContext();
   
@@ -68,7 +68,7 @@ public:
   ExplodedNodeSet &getNodeSet() { return Dst; }
   GRStmtNodeBuilder &getNodeBuilder() { return B; }
   ExplodedNode *&getPredecessor() { return Pred; }
-  const GRState *getState() { return state ? state : B.GetState(Pred); }
+  const GRState *getState() { return ST ? ST : B.GetState(Pred); }
 
   ASTContext &getASTContext() {
     return Eng.getContext();
@@ -126,8 +126,7 @@ public:
   
   void addTransition(const GRState *state) {
     assert(state);
-    if (state != getState() || 
-        (state && state != B.GetState(Pred)))
+    if (state != getState() || (ST && ST != B.GetState(Pred)))
       GenerateNode(state, true);
     else
       Dst.Add(Pred);
