@@ -38,6 +38,10 @@ def OptList : OptionList<[
     (help "Compile and assemble, but do not link")),
  (switch_option "pthread",
     (help "Enable threads")),
+ (switch_option "m32",
+    (help "Generate code for a 32-bit environment"), (hidden)),
+ (switch_option "m64",
+    (help "Generate code for a 64-bit environment"), (hidden)),
  (switch_option "fPIC",
     (help "Relocation model: PIC"), (hidden)),
  (switch_option "mdynamic-no-pic",
@@ -128,6 +132,8 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (not_empty "march"), (forward "march"),
          (not_empty "mtune"), (forward "mtune"),
          (not_empty "mcpu"), (forward "mcpu"),
+         (switch_on "m32"), (forward "m32"),
+         (switch_on "m64"), (forward "m64"),
          (switch_on "O1"), (forward "O1"),
          (switch_on "O2"), (forward "O2"),
          (switch_on "O3"), (forward "O3"),
@@ -207,6 +213,8 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
           (not_empty "F"), (forward "F"),
           (not_empty "framework"), (forward "framework"),
           (not_empty "weak_framework"), (forward "weak_framework"),
+          (switch_on "m32"), (forward "m32"),
+          (switch_on "m64"), (forward "m64"),
           (not_empty "l"), (forward "l"),
           (not_empty "Wl,"), (forward "Wl,")))
 ]>;
