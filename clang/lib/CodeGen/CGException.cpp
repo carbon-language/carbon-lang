@@ -270,6 +270,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     EmitStmt(S.getTryBlock());
     return;
   }
+
   // FIXME: The below is still just a sketch of the code we need.
   // Pointer to the personality function
   llvm::Constant *Personality =
@@ -295,7 +296,40 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   // Emit the statements in the try {} block
   setInvokeDest(TryHandler);
 
-  EmitStmt(S.getTryBlock());
+  // FIXME: We should not have to do this here.  The AST should have the member
+  // initializers under the CXXTryStmt's TryBlock.
+  if (OuterTryBlock == &S) {
+    GlobalDecl GD = CurGD;
+    const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+
+    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+      size_t OldCleanupStackSize = CleanupEntries.size();
+      EmitCtorPrologue(CD, CurGD.getCtorType());
+      EmitStmt(S.getTryBlock());
+
+      // If any of the member initializers are temporaries bound to references
+      // make sure to emit their destructors.
+      EmitCleanupBlocks(OldCleanupStackSize);
+    } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
+      llvm::BasicBlock *DtorEpilogue  = createBasicBlock("dtor.epilogue");
+      PushCleanupBlock(DtorEpilogue);
+
+      EmitStmt(S.getTryBlock());
+      
+      CleanupBlockInfo Info = PopCleanupBlock();
+
+      assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
+      EmitBlock(DtorEpilogue);
+      EmitDtorEpilogue(DD, GD.getDtorType());
+      
+      if (Info.SwitchBlock)
+        EmitBlock(Info.SwitchBlock);
+      if (Info.EndBlock)
+        EmitBlock(Info.EndBlock);
+    } else 
+      EmitStmt(S.getTryBlock());
+  } else
+    EmitStmt(S.getTryBlock());
 
   // Jump to end if there is no exception
   EmitBranchThroughCleanup(FinallyEnd);

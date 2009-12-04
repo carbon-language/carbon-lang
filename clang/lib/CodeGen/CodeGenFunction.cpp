@@ -19,6 +19,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/StmtCXX.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
@@ -255,6 +256,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
 
   FunctionArgList Args;
 
+  CurGD = GD;
+  OuterTryBlock = 0;
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     if (MD->isInstance()) {
       // Create the implicit 'this' decl.
@@ -286,7 +289,6 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
                                     FProto->getArgType(i)));
   }
 
-  // FIXME: Support CXXTryStmt here, too.
   if (const CompoundStmt *S = FD->getCompoundBody()) {
     StartFunction(GD, FD->getResultType(), Fn, Args, S->getLBracLoc());
 
@@ -350,6 +352,13 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
       SynthesizeCXXCopyAssignment(MD, Fn, Args);
     } else {
       assert(false && "Cannot synthesize unknown implicit function");
+    }
+  } else if (const Stmt *S = FD->getBody()) {
+    if (const CXXTryStmt *TS = dyn_cast<CXXTryStmt>(S)) {
+      OuterTryBlock = TS;
+      StartFunction(GD, FD->getResultType(), Fn, Args, TS->getTryLoc());
+      EmitStmt(TS);
+      FinishFunction(TS->getEndLoc());
     }
   }
 

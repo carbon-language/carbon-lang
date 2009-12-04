@@ -88,6 +88,12 @@ public:
   QualType FnRetTy;
   llvm::Function *CurFn;
 
+  /// CurGD - The GlobalDecl for the current function being compiled.
+  GlobalDecl CurGD;
+  /// OuterTryBlock - This is the address of the outter most try block, 0
+  /// otherwise.
+  const Stmt *OuterTryBlock;
+
   /// ReturnBlock - Unified return block.
   llvm::BasicBlock *ReturnBlock;
   /// ReturnValue - The temporary alloca to hold the return value. This is null
