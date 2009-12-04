@@ -126,8 +126,7 @@ public:
   
   void addTransition(const GRState *state) {
     assert(state);
-    if (state != getState() || 
-        (state && state != B.GetState(Pred)))
+    if (state != B.GetState(Pred))
       GenerateNode(state, true);
     else
       Dst.Add(Pred);
