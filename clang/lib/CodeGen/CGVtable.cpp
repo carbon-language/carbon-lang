@@ -90,11 +90,15 @@ private:
       // Replace the old decl with the new decl.
       Methods[Index] = GD;
 
-      // Now remove the old decl from the method to index map.
-      MethodToIndexMap.erase(i);
-        
       // And add the new.
       MethodToIndexMap[GD] = Index;
+    }
+
+    /// getIndex - Returns the index of the given method.
+    uint64_t getIndex(GlobalDecl GD) const {
+      assert(MethodToIndexMap.count(GD) && "Did not find method!");
+      
+      return MethodToIndexMap.lookup(GD);
     }
 
     MethodsVectorTy::size_type size() const {
@@ -106,7 +110,7 @@ private:
       Methods.clear();
     }
     
-    GlobalDecl operator[](unsigned Index) const {
+    GlobalDecl operator[](uint64_t Index) const {
       return Methods[Index];
     }
   };
@@ -751,9 +755,10 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 
     for (Index_t i = 0, e = submethods.size();
          i != e; ++i) {
-      // FIXME: begin_overridden_methods might be too lax, covariance */
       if (submethods[i] != om)
         continue;
+
+      assert(i == Methods.getIndex(OGD));
       
       QualType ReturnType = 
         MD->getType()->getAs<FunctionType>()->getResultType();
