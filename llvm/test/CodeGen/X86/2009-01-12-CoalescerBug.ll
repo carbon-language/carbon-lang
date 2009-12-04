@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu | grep movq | count 2
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu | grep movq | count 1
 ; PR3311
 
 	%struct.CUMULATIVE_ARGS = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }

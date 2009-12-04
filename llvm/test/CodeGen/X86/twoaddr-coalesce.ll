@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | grep mov | count 5
+; RUN: llc < %s -march=x86 | grep mov | count 4
 ; rdar://6523745
 
 @"\01LC" = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]

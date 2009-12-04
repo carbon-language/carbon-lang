@@ -117,6 +117,12 @@ namespace llvm {
     bool conflictsWithPhysRegDef(const LiveInterval &li, VirtRegMap &vrm,
                                  unsigned reg);
 
+    /// conflictsWithPhysRegUse - Returns true if the specified register is used
+    /// or defined during the duration of the specified interval. Copies to and
+    /// from li.reg are allowed.
+    bool conflictsWithPhysRegUse(const LiveInterval &li, VirtRegMap &vrm,
+                                 unsigned reg);
+
     /// conflictsWithPhysRegRef - Similar to conflictsWithPhysRegRef except
     /// it can check use as well.
     bool conflictsWithPhysRegRef(LiveInterval &li, unsigned Reg,
