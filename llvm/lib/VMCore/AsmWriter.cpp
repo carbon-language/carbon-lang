@@ -695,8 +695,13 @@ void SlotTracker::processFunction() {
           !I->hasName())
         CreateFunctionSlot(I);
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
+        if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i))) {
+          // Create a metadata slot only if N contains no instructions.
+          for (unsigned n = 0, e = N->getNumElements(); n != e; ++n)
+            if (isa<Instruction>(N->getElement(n)))
+              continue;
           CreateMetadataSlot(N);
+        }
 
       // Process metadata attached with this instruction.
       MDs.clear();
@@ -1227,6 +1232,25 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
   }
 
   if (const MDNode *N = dyn_cast<MDNode>(V)) {
+    if (Machine->getMetadataSlot(N) == -1) {
+      // Print metadata inline, not via slot reference number.
+      Out << "!{";
+      for (unsigned mi = 0, me = N->getNumElements(); mi != me; ++mi) {
+        const Value *Val = N->getElement(mi);
+        if (!Val)
+          Out << "null";
+        else {
+          TypePrinter->print(N->getElement(0)->getType(), Out);
+          Out << ' ';
+          WriteAsOperandInternal(Out, N->getElement(0), TypePrinter, Machine);
+        }
+        if (mi + 1 != me)
+          Out << ", ";
+      }
+      Out << '}';
+      return;
+    }
+  
     Out << '!' << Machine->getMetadataSlot(N);
     return;
   }
