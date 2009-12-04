@@ -94,7 +94,7 @@ MachineInstr *InsertNewDef(unsigned Opcode,
                            const TargetRegisterClass *RC,
                            MachineRegisterInfo *MRI, const TargetInstrInfo *TII) {
   unsigned NewVR = MRI->createVirtualRegister(RC);
-  return BuildMI(*BB, I, I->getDebugLoc(), TII->get(Opcode), NewVR);
+  return BuildMI(*BB, I, DebugLoc::getUnknownLoc(), TII->get(Opcode), NewVR);
 }
                           
 
@@ -124,8 +124,13 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
     return GetValueAtEndOfBlock(BB);
 
   // If there are no predecessors, just return undef.
-  if (BB->pred_empty()) 
-    return ~0U;  // Sentinel value representing undef.
+  if (BB->pred_empty()) {
+    // Insert an implicit_def to represent an undef value.
+    MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
+                                        BB, BB->getFirstTerminator(),
+                                        VRC, MRI, TII);
+    return NewDef->getOperand(0).getReg();
+  }
 
   // Otherwise, we have the hard case.  Get the live-in values for each
   // predecessor.
@@ -194,20 +199,8 @@ void MachineSSAUpdater::RewriteUse(MachineOperand &U) {
   if (UseMI->getOpcode() == TargetInstrInfo::PHI) {
     MachineBasicBlock *SourceBB = findCorrespondingPred(UseMI, &U);
     NewVR = GetValueAtEndOfBlock(SourceBB);
-    // Insert an implicit_def to represent an undef value.
-    MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
-                                        SourceBB,SourceBB->getFirstTerminator(),
-                                        VRC, MRI, TII);
-    NewVR = NewDef->getOperand(0).getReg();
   } else {
     NewVR = GetValueInMiddleOfBlock(UseMI->getParent());
-    if (NewVR == ~0U) {
-      // Insert an implicit_def to represent an undef value.
-      MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
-                                          UseMI->getParent(), UseMI,
-                                          VRC, MRI, TII);
-      NewVR = NewDef->getOperand(0).getReg();
-    }
   }
 
   U.setReg(NewVR);
@@ -248,8 +241,13 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   // If there are no predecessors, then we must have found an unreachable block
   // just return 'undef'.  Since there are no predecessors, InsertRes must not
   // be invalidated.
-  if (BB->pred_empty())
-    return InsertRes.first->second = ~0U;  // Sentinel value representing undef.
+  if (BB->pred_empty()) {
+    // Insert an implicit_def to represent an undef value.
+    MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
+                                        BB, BB->getFirstTerminator(),
+                                        VRC, MRI, TII);
+    return InsertRes.first->second = NewDef->getOperand(0).getReg();
+  }
 
   // Okay, the value isn't in the map and we just inserted a null in the entry
   // to indicate that we're processing the block.  Since we have no idea what
@@ -321,16 +319,11 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   }
 
   // Fill in all the predecessors of the PHI.
-  bool IsUndef = true;
   MachineInstrBuilder MIB(InsertedPHI);
   for (IncomingPredInfoTy::iterator I =
          IncomingPredInfo.begin()+FirstPredInfoEntry,
-         E = IncomingPredInfo.end(); I != E; ++I) {
-    if (I->second == ~0U)
-      continue;
-    IsUndef = false;
+         E = IncomingPredInfo.end(); I != E; ++I)
     MIB.addReg(I->second).addMBB(I->first);
-  }
 
   // Drop the entries we added in IncomingPredInfo to restore the stack.
   IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
@@ -338,10 +331,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
 
   // See if the PHI node can be merged to a single value.  This can happen in
   // loop cases when we get a PHI of itself and one other value.
-  if (IsUndef) {
-    InsertedPHI->eraseFromParent();
-    InsertedVal = ~0U;
-  } else if (unsigned ConstVal = InsertedPHI->isConstantValuePHI()) {
+  if (unsigned ConstVal = InsertedPHI->isConstantValuePHI()) {
     MRI->replaceRegWith(InsertedVal, ConstVal);
     InsertedPHI->eraseFromParent();
     InsertedVal = ConstVal;
