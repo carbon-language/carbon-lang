@@ -481,8 +481,18 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   EmitBranch(FinallyEnd);
 
   EmitBlock(FinallyRethrow);
-  Builder.CreateCall(getUnwindResumeOrRethrowFn(*this),
-                     Builder.CreateLoad(RethrowPtr));
+  // FIXME: Eventually we can chain the handlers together and just do a call
+  // here.
+  if (getInvokeDest()) {
+    llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
+    Builder.CreateInvoke(getUnwindResumeOrRethrowFn(*this), Cont,
+                         getInvokeDest(),
+                         Builder.CreateLoad(RethrowPtr));
+    EmitBlock(Cont);
+  } else
+    Builder.CreateCall(getUnwindResumeOrRethrowFn(*this),
+                       Builder.CreateLoad(RethrowPtr));
+
   Builder.CreateUnreachable();
 
   EmitBlock(FinallyEnd);
