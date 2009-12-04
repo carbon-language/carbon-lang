@@ -4617,8 +4617,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         Previous.clear();
       }
     }
-  } else if (TUK == TUK_Reference && SS.isEmpty() && Name &&
-             (Kind != TagDecl::TK_enum || !getLangOptions().CPlusPlus)) {
+  } else if (TUK == TUK_Reference && SS.isEmpty() && Name) {
     // C++ [basic.scope.pdecl]p5:
     //   -- for an elaborated-type-specifier of the form
     //
@@ -4635,6 +4634,11 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     //
     // C99 6.7.2.3p8 has a similar (but not identical!) provision for
     // C structs and unions.
+    //
+    // It is an error in C++ to declare (rather than define) an enum
+    // type, including via an elaborated type specifier.  We'll
+    // diagnose that later; for now, declare the enum in the same
+    // scope as we would have picked for any other tag type.
     //
     // GNU C also supports this behavior as part of its incomplete
     // enum types extension, while GNU C++ does not.

@@ -25,13 +25,13 @@ void bar() {
 
 /// PR3688
 struct s1 {
-  enum e1 (*bar)(void); // expected-error{{ISO C++ forbids forward references to 'enum' types}} expected-note{{forward declaration of 'enum s1::e1'}}
+  enum e1 (*bar)(void); // expected-error{{ISO C++ forbids forward references to 'enum' types}}
 };
 
 enum e1 { YES, NO };
 
 static enum e1 badfunc(struct s1 *q) {
-  return q->bar(); // expected-error{{calling function with incomplete return type 'enum s1::e1'}}
+  return q->bar();
 }
 
 enum e2; // expected-error{{ISO C++ forbids forward references to 'enum' types}}
