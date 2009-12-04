@@ -456,7 +456,7 @@ unsigned PCHStmtReader::VisitCallExpr(CallExpr *E) {
 unsigned PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
   VisitExpr(E);
   E->setBase(cast<Expr>(StmtStack.back()));
-  E->setMemberDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setMemberDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
   E->setMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setArrow(Record[Idx++]);
   return 1;
