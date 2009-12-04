@@ -34,7 +34,6 @@
 #include "llvm/MC/MCAsmInfo.h"
 
 #include <limits>
-#include <cstring>
 
 using namespace llvm;
 
