@@ -129,20 +129,11 @@ private:
   typedef llvm::DenseMap<uint64_t, Thunk> ThunksMapTy;
   ThunksMapTy Thunks;
 
-  /// CovariantThunk - Represents a single covariant thunk.
-  struct CovariantThunk {
-    CovariantThunk() { }
-
-    CovariantThunk(CanQualType ReturnType) 
-      : ReturnType(ReturnType) { }
-
-    /// ReturnType - The return type of the function.
-    CanQualType ReturnType;
-  };
-  
-  /// CovariantThunks - The covariant thunks in a vtable.
-  typedef llvm::DenseMap<uint64_t, CovariantThunk> CovariantThunksMapTy;
-  CovariantThunksMapTy CovariantThunks;
+  /// BaseReturnTypes - Contains the base return types of methods who have been
+  /// overridden with methods whose return types require adjustment. Used for
+  /// generating covariant thunk information.
+  typedef llvm::DenseMap<uint64_t, CanQualType> BaseReturnTypesMapTy;
+  BaseReturnTypesMapTy BaseReturnTypes;
   
   /// PureVirtualMethods - Pure virtual methods.
   typedef llvm::DenseSet<GlobalDecl> PureVirtualMethodsSetTy;
@@ -308,8 +299,8 @@ public:
                       Index_t Offset, int64_t CurrentVBaseOffset);
 
   void InstallThunks() {
-    for (CovariantThunksMapTy::const_iterator i = CovariantThunks.begin(),
-         e = CovariantThunks.end(); i != e; ++i) {
+    for (BaseReturnTypesMapTy::const_iterator i = BaseReturnTypes.begin(),
+         e = BaseReturnTypes.end(); i != e; ++i) {
       uint64_t Index = i->first;
       GlobalDecl GD = Methods[Index];
       
@@ -317,7 +308,8 @@ public:
       if (MD->isPure())
         continue;
       
-      const CovariantThunk &Thunk = i->second;
+      QualType BaseReturnType = i->second;
+
       assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
       
       // Check if there is an adjustment for the 'this' pointer.
@@ -334,17 +326,17 @@ public:
         MD->getType()->getAs<FunctionType>()->getResultType();
       
       int64_t NonVirtualAdjustment = 
-        getNVOffset(Thunk.ReturnType, DerivedType) / 8;
+        getNVOffset(BaseReturnType, DerivedType) / 8;
       
       int64_t VirtualAdjustment = 
-        getVbaseOffset(Thunk.ReturnType, DerivedType);
+        getVbaseOffset(BaseReturnType, DerivedType);
       
       ThunkAdjustment ReturnAdjustment(NonVirtualAdjustment, VirtualAdjustment);
       
       CovariantThunkAdjustment Adjustment(ThisAdjustment, ReturnAdjustment);
       submethods[Index] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
     }
-    CovariantThunks.clear();
+    BaseReturnTypes.clear();
     
     for (ThunksMapTy::const_iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
@@ -854,15 +846,15 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
       // Check if we need a return type adjustment.
       if (TypeConversionRequiresAdjustment(CGM.getContext(), ReturnType, 
                                            OverriddenReturnType)) {
-        CovariantThunk &Adjustment = CovariantThunks[i];
+        CanQualType &BaseReturnType = BaseReturnTypes[i];
 
         // Get the canonical return type.
         CanQualType CanReturnType = 
           CGM.getContext().getCanonicalType(ReturnType);
 
         // Insert the base return type.
-        if (Adjustment.ReturnType.isNull())
-          Adjustment.ReturnType =
+        if (BaseReturnType.isNull())
+          BaseReturnType =
             CGM.getContext().getCanonicalType(OverriddenReturnType);
       }
 
