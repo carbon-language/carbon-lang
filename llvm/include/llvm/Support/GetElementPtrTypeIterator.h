@@ -84,7 +84,7 @@ namespace llvm {
 
   inline gep_type_iterator gep_type_begin(const User *GEP) {
     return gep_type_iterator::begin(GEP->getOperand(0)->getType(),
-                                      GEP->op_begin()+1);
+                                    GEP->op_begin()+1);
   }
   inline gep_type_iterator gep_type_end(const User *GEP) {
     return gep_type_iterator::end(GEP->op_end());
