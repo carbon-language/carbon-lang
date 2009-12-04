@@ -482,7 +482,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     break;
 
   case DeclarationName::CXXLiteralOperatorName:
-    // Guessing based on existing ABI.
+    // FIXME: This mangling is not yet official.
     Out << "li";
     mangleSourceName(Name.getCXXLiteralIdentifier());
     break;
