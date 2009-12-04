@@ -126,3 +126,7 @@ uintptr_t ptrasintadd3 = 4 + (uintptr_t)&a;
 
 // PR4285
 const wchar_t widestr[] = L"asdf";
+
+// PR5447
+const double pr5447 = (0.05 < -1.0) ? -1.0 : 0.0499878;
+

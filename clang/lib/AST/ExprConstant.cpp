@@ -1515,6 +1515,7 @@ public:
   bool VisitFloatingLiteral(const FloatingLiteral *E);
   bool VisitCastExpr(CastExpr *E);
   bool VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
+  bool VisitConditionalOperator(ConditionalOperator *E);
 
   bool VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
@@ -1522,8 +1523,7 @@ public:
     { return Visit(E->getSubExpr()); }
 
   // FIXME: Missing: __real__/__imag__, array subscript of vector,
-  //                 member of vector, ImplicitValueInitExpr,
-  //                 conditional ?:
+  //                 member of vector, ImplicitValueInitExpr
 };
 } // end anonymous namespace
 
@@ -1680,6 +1680,14 @@ bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
 bool FloatExprEvaluator::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
   Result = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(E->getType()));
   return true;
+}
+
+bool FloatExprEvaluator::VisitConditionalOperator(ConditionalOperator *E) {
+  bool Cond;
+  if (!HandleConversionToBool(E->getCond(), Cond, Info))
+    return false;
+
+  return Visit(Cond ? E->getTrueExpr() : E->getFalseExpr());
 }
 
 //===----------------------------------------------------------------------===//
