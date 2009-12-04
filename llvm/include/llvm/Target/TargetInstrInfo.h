@@ -16,6 +16,7 @@
 
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 
 namespace llvm {
 
@@ -182,11 +183,13 @@ public:
 
   /// hasLoadFromStackSlot - If the specified machine instruction has
   /// a load from a stack slot, return true along with the FrameIndex
-  /// of the loaded stack slot.  If not, return false.  Unlike
+  /// of the loaded stack slot and the machine mem operand containing
+  /// the reference.  If not, return false.  Unlike
   /// isLoadFromStackSlot, this returns true for any instructions that
   /// loads from the stack.  This is just a hint, as some cases may be
   /// missed.
   virtual bool hasLoadFromStackSlot(const MachineInstr *MI,
+                                    const MachineMemOperand *&MMO,
                                     int &FrameIndex) const {
     return 0;
   }
@@ -205,17 +208,18 @@ public:
   /// stack locations as well.  This uses a heuristic so it isn't
   /// reliable for correctness.
   virtual unsigned isStoreToStackSlotPostFE(const MachineInstr *MI,
-                                      int &FrameIndex) const {
+                                            int &FrameIndex) const {
     return 0;
   }
 
   /// hasStoreToStackSlot - If the specified machine instruction has a
   /// store to a stack slot, return true along with the FrameIndex of
-  /// the loaded stack slot.  If not, return false.  Unlike
-  /// isStoreToStackSlot, this returns true for any instructions that
-  /// loads from the stack.  This is just a hint, as some cases may be
-  /// missed.
+  /// the loaded stack slot and the machine mem operand containing the
+  /// reference.  If not, return false.  Unlike isStoreToStackSlot,
+  /// this returns true for any instructions that loads from the
+  /// stack.  This is just a hint, as some cases may be missed.
   virtual bool hasStoreToStackSlot(const MachineInstr *MI,
+                                   const MachineMemOperand *&MMO,
                                    int &FrameIndex) const {
     return 0;
   }
@@ -543,6 +547,13 @@ public:
   /// length.
   virtual unsigned getInlineAsmLength(const char *Str,
                                       const MCAsmInfo &MAI) const;
+
+  /// TailDuplicationLimit - Returns the limit on the number of instructions
+  /// in basic block MBB beyond which it will not be tail-duplicated.
+  virtual unsigned TailDuplicationLimit(const MachineBasicBlock &MBB,
+                                        unsigned DefaultLimit) const {
+    return DefaultLimit;
+  }
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of
