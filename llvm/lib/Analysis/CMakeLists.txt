@@ -27,6 +27,7 @@ add_llvm_library(LLVMAnalysis
   LoopPass.cpp
   MemoryBuiltins.cpp
   MemoryDependenceAnalysis.cpp
+  PHITransAddr.cpp
   PointerTracking.cpp
   PostDominators.cpp
   ProfileEstimatorPass.cpp
