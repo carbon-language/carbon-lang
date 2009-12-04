@@ -125,10 +125,6 @@ private:
   typedef llvm::DenseMap<uint64_t, CanQualType> BaseReturnTypesMapTy;
   BaseReturnTypesMapTy BaseReturnTypes;
   
-  /// PureVirtualMethods - Pure virtual methods.
-  typedef llvm::DenseSet<GlobalDecl> PureVirtualMethodsSetTy;
-  PureVirtualMethodsSetTy PureVirtualMethods;
-
   std::vector<Index_t> VCalls;
 
   typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
@@ -338,8 +334,6 @@ public:
                        CurrentVBaseOffset))
       return;
 
-    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-    
     // We didn't find an entry in the vtable that we could use, add a new
     // entry.
     Methods.AddMethod(GD);
@@ -348,8 +342,6 @@ public:
     submethods.push_back(m);
     D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
               (int)Index[GD]));
-    if (MD->isPure())
-      PureVirtualMethods.insert(GD);
     if (MorallyVirtual) {
       VCallOffset[GD] = Offset/8;
       Index_t &idx = VCall[GD];
@@ -787,9 +779,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 
       Index[GD] = i;
       submethods[i] = m;
-      if (isPure)
-        PureVirtualMethods.insert(GD);
-      PureVirtualMethods.erase(OGD);
       ThisAdjustments.erase(i);
       if (MorallyVirtual || VCall.count(OGD)) {
         Index_t &idx = VCall[OGD];
