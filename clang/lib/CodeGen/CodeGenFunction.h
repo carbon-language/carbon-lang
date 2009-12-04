@@ -92,7 +92,7 @@ public:
   llvm::BasicBlock *ReturnBlock;
   /// ReturnValue - The temporary alloca to hold the return value. This is null
   /// iff the function has no return value.
-  llvm::Instruction *ReturnValue;
+  llvm::Value *ReturnValue;
 
   /// AllocaInsertPoint - This is an instruction in the entry block before which
   /// we prefer to insert allocas.

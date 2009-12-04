@@ -764,7 +764,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
         ComplexPairTy RT = LoadComplexFromAddr(ReturnValue, false);
         StoreComplexToAddr(RT, CurFn->arg_begin(), false);
       } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-        EmitAggregateCopy(CurFn->arg_begin(), ReturnValue, RetTy);
+        // Do nothing; aggregrates get evaluated directly into the destination.
       } else {
         EmitStoreOfScalar(Builder.CreateLoad(ReturnValue), CurFn->arg_begin(),
                           false, RetTy);
