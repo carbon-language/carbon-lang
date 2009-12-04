@@ -127,7 +127,18 @@ void OptParserEmitter::run(raw_ostream &OS) {
         OS << "INVALID";
 
       // The other option arguments (unused for groups).
-      OS << ", INVALID, 0, 0, 0, 0)\n";
+      OS << ", INVALID, 0, 0";
+
+      // The option help text.
+      if (!dynamic_cast<UnsetInit*>(R.getValueInit("HelpText"))) {
+        OS << ",\n";
+        OS << "       ";
+        write_cstring(OS, R.getValueAsString("HelpText"));
+      } else
+        OS << ", 0";
+
+      // The option meta-variable name (unused).
+      OS << ", 0)\n";
     }
     OS << "\n";
 
