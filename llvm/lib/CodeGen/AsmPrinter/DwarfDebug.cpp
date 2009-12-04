@@ -945,8 +945,7 @@ void DwarfDebug::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy){
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
   if (L)
     addSInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
-  if (H)
-    addSInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
+  addSInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
 
   Buffer.addChild(DW_Subrange);
 }
