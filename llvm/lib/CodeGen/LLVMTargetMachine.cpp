@@ -74,6 +74,9 @@ EnableFastISelOption("fast-isel", cl::Hidden,
 static cl::opt<bool> EnableSplitGEPGVN("split-gep-gvn", cl::Hidden,
     cl::desc("Split GEPs and run no-load GVN"));
 
+static cl::opt<bool> PreAllocTailDup("pre-regalloc-taildup", cl::Hidden,
+    cl::desc("Pre-register allocation tail duplication"));
+
 LLVMTargetMachine::LLVMTargetMachine(const Target &T,
                                      const std::string &TargetTriple)
   : TargetMachine(T) {
@@ -302,6 +305,13 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
                    /* allowDoubleDefs= */ true);
   }
 
+  // Pre-ra tail duplication.
+  if (OptLevel != CodeGenOpt::None &&
+      !DisableTailDuplicate && PreAllocTailDup) {
+    PM.add(createTailDuplicatePass(true));
+    printAndVerify(PM, "After Pre-RegAlloc TailDuplicate");
+  }
+
   // Run pre-ra passes.
   if (addPreRegAlloc(PM, OptLevel))
     printAndVerify(PM, "After PreRegAlloc passes",
@@ -348,7 +358,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Tail duplication.
   if (OptLevel != CodeGenOpt::None && !DisableTailDuplicate) {
-    PM.add(createTailDuplicatePass());
+    PM.add(createTailDuplicatePass(false));
     printAndVerify(PM, "After TailDuplicate");
   }
 
