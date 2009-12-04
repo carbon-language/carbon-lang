@@ -277,6 +277,8 @@ def fprofile_arcs : Flag<"-fprofile-arcs">, Group<f_Group>;
 def fprofile_generate : Flag<"-fprofile-generate">, Group<f_Group>;
 def framework : Separate<"-framework">, Flags<[LinkerInput]>;
 def frtti : Flag<"-frtti">, Group<f_Group>;
+def fsched_interblock : Flag<"-fsched-interblock">, Group<clang_ignored_f_Group>;
+def freorder_blocks : Flag<"-freorder-blocks">, Group<clang_ignored_f_Group>;
 def fshort_wchar : Flag<"-fshort-wchar">, Group<f_Group>;
 def fshow_source_location : Flag<"-fshow-source-location">, Group<f_Group>;
 def fsigned_bitfields : Flag<"-fsigned-bitfields">, Group<f_Group>;
