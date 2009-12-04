@@ -80,6 +80,10 @@ AnalysisContext *AnalysisContextManager::getContext(const Decl *D) {
   return AC;
 }
 
+//===----------------------------------------------------------------------===//
+// FoldingSet profiling.
+//===----------------------------------------------------------------------===//
+
 void LocationContext::Profile(llvm::FoldingSetNodeID &ID, ContextKind k,
                               AnalysisContext *ctx,
                               const LocationContext *parent) {
@@ -88,17 +92,30 @@ void LocationContext::Profile(llvm::FoldingSetNodeID &ID, ContextKind k,
   ID.AddPointer(parent);
 }
 
-void StackFrameContext::Profile(llvm::FoldingSetNodeID &ID,AnalysisContext *ctx,
-                                const LocationContext *parent, const Stmt *s) {
-  LocationContext::Profile(ID, StackFrame, ctx, parent);
-  ID.AddPointer(s);
+void LocationContext::ProfileCommon(llvm::FoldingSetNodeID &ID,
+                                    ContextKind ck,
+                                    AnalysisContext *ctx,
+                                    const LocationContext *parent,
+                                    const void* data) {
+  LocationContext::Profile(ID, ck, ctx, parent);
+  ID.AddPointer(data);
 }
 
-void ScopeContext::Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
-                           const LocationContext *parent, const Stmt *s) {
-  LocationContext::Profile(ID, Scope, ctx, parent);
-  ID.AddPointer(s);
+void StackFrameContext::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, getAnalysisContext(), getParent(), CallSite);
 }
+
+void ScopeContext::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, getAnalysisContext(), getParent(), Enter);
+}
+
+void BlockInvocationContext::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, getAnalysisContext(), getParent(), BD);
+}
+
+//===----------------------------------------------------------------------===//
+// Cleanup.
+//===----------------------------------------------------------------------===//
 
 LocationContextManager::~LocationContextManager() {
   clear();
