@@ -284,9 +284,9 @@ public:
     return 0;
   }
 
-  bool OverrideMethod(GlobalDecl GD, llvm::Constant *m,
-                      bool MorallyVirtual, Index_t OverrideOffset,
-                      Index_t Offset, int64_t CurrentVBaseOffset);
+  bool OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
+                      Index_t OverrideOffset, Index_t Offset,
+                      int64_t CurrentVBaseOffset);
 
   /// AppendMethods - Append the current methods to the vtable.
   void AppendMethodsToVtable();
@@ -315,15 +315,15 @@ public:
         if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
           // Override both the complete and the deleting destructor.
           GlobalDecl CompDtor(DD, Dtor_Complete);
-          OverrideMethod(CompDtor, WrapAddrOf(CompDtor), MorallyVirtual, 
-                         OverrideOffset, Offset, CurrentVBaseOffset);
-          
+          OverrideMethod(CompDtor, MorallyVirtual, OverrideOffset, Offset,
+                         CurrentVBaseOffset);
+
           GlobalDecl DeletingDtor(DD, Dtor_Deleting);
-          OverrideMethod(DeletingDtor, WrapAddrOf(DeletingDtor), MorallyVirtual, 
-                         OverrideOffset, Offset, CurrentVBaseOffset);
+          OverrideMethod(DeletingDtor, MorallyVirtual, OverrideOffset, Offset,
+                         CurrentVBaseOffset);
         } else {
-          OverrideMethod(MD, WrapAddrOf(MD), MorallyVirtual, OverrideOffset, 
-                         Offset, CurrentVBaseOffset);
+          OverrideMethod(MD, MorallyVirtual, OverrideOffset, Offset,
+                         CurrentVBaseOffset);
         }
       }
     }
@@ -331,10 +331,8 @@ public:
 
   void AddMethod(const GlobalDecl GD, bool MorallyVirtual, Index_t Offset,
                  int64_t CurrentVBaseOffset) {
-    llvm::Constant *m = WrapAddrOf(GD);
-
     // If we can find a previously allocated slot for this, reuse it.
-    if (OverrideMethod(GD, m, MorallyVirtual, Offset, Offset,
+    if (OverrideMethod(GD, MorallyVirtual, Offset, Offset,
                        CurrentVBaseOffset))
       return;
 
@@ -723,9 +721,9 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
   return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
 }
 
-bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
-                                   bool MorallyVirtual, Index_t OverrideOffset,
-                                   Index_t Offset, int64_t CurrentVBaseOffset) {
+bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
+                                   Index_t OverrideOffset, Index_t Offset,
+                                   int64_t CurrentVBaseOffset) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
   const bool isPure = MD->isPure();
