@@ -138,7 +138,7 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
       // CodeGenFunction::CleanupScope TryScope(CGF);
       {
         // These actions are only on the exceptional edge.
-#if 0
+        if (0) {
         // FIXME: Doesn't work well with eh31.C and PopCXXTemporary
         CodeGenFunction::DelayedCleanupBlock Scope(CGF, true);
 
@@ -147,7 +147,7 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
           = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
         llvm::Value *ExceptionPtr = CGF.Builder.CreateBitCast(N, Int8PtrTy);
         CGF.Builder.CreateCall(FreeExceptionFn, ExceptionPtr);
-#endif
+        }
       }
 
       llvm::Value *Src = CGF.EmitLValue(E).getAddress();
@@ -461,8 +461,10 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     if (Next)
       EmitBlock(Next);
   }
-  if (!HasCatchAll)
+  if (!HasCatchAll) {
+    Builder.CreateStore(Exc, RethrowPtr);
     EmitBranchThroughCleanup(FinallyRethrow);
+  }
 
   CodeGenFunction::CleanupBlockInfo Info = PopCleanupBlock();
 
