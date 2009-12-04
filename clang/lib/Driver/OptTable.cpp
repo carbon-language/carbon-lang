@@ -14,7 +14,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
-
+#include <map>
 using namespace clang::driver;
 using namespace clang::driver::options;
 
@@ -285,25 +285,10 @@ static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
   return Name;
 }
 
-void OptTable::PrintHelp(llvm::raw_ostream &OS, const char *Name,
-                         const char *Title, bool ShowHidden) const {
-  OS << "OVERVIEW: " << Title << "\n";
-  OS << '\n';
-  OS << "USAGE: " << Name << " [options] <inputs>\n";
-  OS << '\n';
-  OS << "OPTIONS:\n";
-
-  // Render help text into (option, help) pairs.
-  std::vector< std::pair<std::string, const char*> > OptionHelp;
-  for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
-    unsigned Id = i + 1;
-
-    if (!ShowHidden && isOptionHelpHidden(Id))
-      continue;
-
-    if (const char *Text = getOptionHelpText(Id))
-      OptionHelp.push_back(std::make_pair(getOptionHelpName(*this, Id), Text));
-  }
+static void PrintHelpOptionList(llvm::raw_ostream &OS, llvm::StringRef Title,
+                                std::vector<std::pair<std::string,
+                                const char*> > &OptionHelp) {
+  OS << Title << ":\n";
 
   // Find the maximum option length.
   unsigned OptionFieldWidth = 0;
@@ -330,6 +315,62 @@ void OptTable::PrintHelp(llvm::raw_ostream &OS, const char *Name,
       Pad = OptionFieldWidth + InitialPad;
     }
     OS.indent(Pad + 1) << OptionHelp[i].second << '\n';
+  }
+}
+
+static const char *getOptionHelpGroup(const OptTable &Opts, OptSpecifier Id) {
+  unsigned GroupID = Opts.getOptionGroupID(Id);
+
+  // If not in a group, return the default help group.
+  if (!GroupID)
+    return "OPTIONS";
+
+  // Abuse the help text of the option groups to store the "help group"
+  // name.
+  //
+  // FIXME: Split out option groups.
+  if (const char *GroupHelp = Opts.getOptionHelpText(GroupID))
+    return GroupHelp;
+
+  // Otherwise keep looking.
+  return getOptionHelpGroup(Opts, GroupID);
+}
+
+void OptTable::PrintHelp(llvm::raw_ostream &OS, const char *Name,
+                         const char *Title, bool ShowHidden) const {
+  OS << "OVERVIEW: " << Title << "\n";
+  OS << '\n';
+  OS << "USAGE: " << Name << " [options] <inputs>\n";
+  OS << '\n';
+
+  // Render help text into a map of group-name to a list of (option, help)
+  // pairs.
+  typedef std::map<std::string,
+                 std::vector<std::pair<std::string, const char*> > > helpmap_ty;
+  helpmap_ty GroupedOptionHelp;
+
+  for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
+    unsigned Id = i + 1;
+
+    // FIXME: Split out option groups.
+    if (getOptionKind(Id) == Option::GroupClass)
+      continue;
+
+    if (!ShowHidden && isOptionHelpHidden(Id))
+      continue;
+
+    if (const char *Text = getOptionHelpText(Id)) {
+      const char *HelpGroup = getOptionHelpGroup(*this, Id);
+      const std::string &OptName = getOptionHelpName(*this, Id);
+      GroupedOptionHelp[HelpGroup].push_back(std::make_pair(OptName, Text));
+    }
+  }
+
+  for (helpmap_ty::iterator it = GroupedOptionHelp .begin(),
+         ie = GroupedOptionHelp.end(); it != ie; ++it) {
+    if (it != GroupedOptionHelp .begin())
+      OS << "\n";
+    PrintHelpOptionList(OS, it->first, it->second);
   }
 
   OS.flush();

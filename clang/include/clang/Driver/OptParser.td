@@ -87,6 +87,7 @@ def HelpHidden : OptionFlag;
 class OptionGroup<string name> {
   string EnumName = ?; // Uses the def name if undefined.
   string Name = name;
+  string HelpText = ?;
   OptionGroup Group = ?;
 }
 

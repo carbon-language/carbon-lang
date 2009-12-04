@@ -118,6 +118,11 @@ namespace options {
       return getInfo(id).Kind;
     }
 
+    /// getOptionGroupID - Get the group id for the given option.
+    unsigned getOptionGroupID(OptSpecifier id) const {
+      return getInfo(id).GroupID;
+    }
+
     /// isOptionHelpHidden - Should the help for the given option be hidden by
     /// default.
     bool isOptionHelpHidden(OptSpecifier id) const {
