@@ -29,7 +29,8 @@ public:
 private:
   
   // Vtable - The components of the vtable being built.
-  std::vector<llvm::Constant *> Vtable;
+  typedef llvm::SmallVector<llvm::Constant *, 64> VtableVectorTy;
+  VtableVectorTy Vtable;
   
   llvm::Type *Ptr8Ty;
   /// Class - The most derived class that this vtable is being built for.
@@ -185,7 +186,7 @@ public:
   }
 
   // getVtable - Returns a reference to the vtable components.
-  const std::vector<llvm::Constant *> &getVtable() const {
+  const VtableVectorTy &getVtable() const {
     return Vtable;
   }
   
