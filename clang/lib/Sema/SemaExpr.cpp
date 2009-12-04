@@ -605,6 +605,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
       MemberType = Context.getQualifiedType(MemberType, NewQuals);
 
     MarkDeclarationReferenced(Loc, *FI);
+    PerformObjectMemberConversion(Result, *FI);
     // FIXME: Might this end up being a qualified name?
     Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
                                       OpLoc, MemberType);
@@ -2397,7 +2398,8 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
   if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl)) {
     // We may have found a field within an anonymous union or struct
     // (C++ [class.union]).
-    if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
+    if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion() &&
+        !BaseType->getAs<RecordType>()->getDecl()->isAnonymousStructOrUnion())
       return BuildAnonymousStructUnionMemberReference(MemberLoc, FD,
                                                       BaseExpr, OpLoc);
 
@@ -6397,6 +6399,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         Res = BuildAnonymousStructUnionMemberReference(
             OC.LocEnd, MemberDecl, Res, OC.LocEnd).takeAs<Expr>();
       } else {
+        PerformObjectMemberConversion(Res, MemberDecl);
         // MemberDecl->getType() doesn't get the right qualifiers, but it
         // doesn't matter here.
         Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd,
