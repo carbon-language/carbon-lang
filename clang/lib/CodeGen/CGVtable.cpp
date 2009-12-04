@@ -292,45 +292,6 @@ public:
   void AppendMethods();
   
   void InstallThunks() {
-    for (BaseReturnTypesMapTy::const_iterator i = BaseReturnTypes.begin(),
-         e = BaseReturnTypes.end(); i != e; ++i) {
-      uint64_t Index = i->first;
-      GlobalDecl GD = Methods[Index];
-      
-      const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-      if (MD->isPure())
-        continue;
-      
-      QualType BaseReturnType = i->second;
-
-      assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
-      
-      // Check if there is an adjustment for the 'this' pointer.
-      ThunkAdjustment ThisAdjustment;
-      ThisAdjustmentsMapTy::iterator it = ThisAdjustments.find(Index);
-      if (it != ThisAdjustments.end()) {
-        ThisAdjustment = it->second;
-        
-        ThisAdjustments.erase(it);
-      }
-      
-      // Construct the return adjustment.
-      QualType DerivedType = 
-        MD->getType()->getAs<FunctionType>()->getResultType();
-      
-      int64_t NonVirtualAdjustment = 
-        getNVOffset(BaseReturnType, DerivedType) / 8;
-      
-      int64_t VirtualAdjustment = 
-        getVbaseOffset(BaseReturnType, DerivedType);
-      
-      ThunkAdjustment ReturnAdjustment(NonVirtualAdjustment, VirtualAdjustment);
-      
-      CovariantThunkAdjustment Adjustment(ThisAdjustment, ReturnAdjustment);
-      submethods[Index] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
-    }
-    BaseReturnTypes.clear();
-    
     for (PureVirtualMethodsSetTy::iterator i = PureVirtualMethods.begin(),
          e = PureVirtualMethods.end(); i != e; ++i) {
       GlobalDecl GD = *i;
@@ -895,15 +856,41 @@ void VtableBuilder::AppendMethods() {
 
   for (unsigned i = 0, e = Methods.size(); i != e; ++i) {
     GlobalDecl GD = Methods[i];
-    
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  
+    // Get the 'this' pointer adjustment.
     ThunkAdjustment ThisAdjustment = ThisAdjustments.lookup(i);
-    
-    if (!ThisAdjustment.isEmpty())
+  
+    // Construct the return type adjustment.
+    ThunkAdjustment ReturnAdjustment;
+
+    QualType BaseReturnType = BaseReturnTypes.lookup(i);
+    if (!BaseReturnType.isNull() && !MD->isPure()) {
+      QualType DerivedType = 
+        MD->getType()->getAs<FunctionType>()->getResultType();
+      
+      int64_t NonVirtualAdjustment = 
+      getNVOffset(BaseReturnType, DerivedType) / 8;
+      
+      int64_t VirtualAdjustment = 
+      getVbaseOffset(BaseReturnType, DerivedType);
+      
+      ReturnAdjustment = ThunkAdjustment(NonVirtualAdjustment, 
+                                         VirtualAdjustment);
+    }
+
+    if (!ReturnAdjustment.isEmpty()) {
+      // Build a covariant thunk.
+      CovariantThunkAdjustment Adjustment(ThisAdjustment, ReturnAdjustment);
+      submethods[i] = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
+    } else if (!ThisAdjustment.isEmpty()) {
+      // Build a "regular" thunk.
       submethods[i] = CGM.BuildThunk(GD, Extern, ThisAdjustment);
+    }
   }
   
   ThisAdjustments.clear();
-  
+  BaseReturnTypes.clear();
   
   D1(printf("============= combining methods\n"));
   methods.insert(methods.end(), submethods.begin(), submethods.end());
