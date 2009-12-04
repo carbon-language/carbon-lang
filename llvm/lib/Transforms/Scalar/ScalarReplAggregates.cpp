@@ -503,7 +503,6 @@ void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
         }
       }
       
-      
       isSafeElementUse(GEP, AreAllZeroIndices, AI, Info);
       if (Info.isUnsafe) return;
       break;
@@ -614,7 +613,7 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
       // integer. Specifically, consider A[0][i]. We cannot know that the user
       // isn't doing invalid things like allowing i to index an out-of-range
       // subscript that accesses A[1].  Because of this, we have to reject SROA
-      // of any accesses into structs where any of the components are variables. 
+      // of any accesses into structs where any of the components are variables.
       if (IdxVal->getZExtValue() >= AT->getNumElements())
         return MarkUnsafe(Info);
     } else if (const VectorType *VT = dyn_cast<VectorType>(*I)) {
@@ -1481,7 +1480,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
       // FIXME: Remove once builder has Twine API.
-      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").str().c_str());
+      Value *Old = Builder.CreateLoad(NewAI,
+                                      (NewAI->getName()+".in").str().c_str());
       Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,
                                              Builder);
       Builder.CreateStore(New, NewAI);
@@ -1506,7 +1506,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
             APVal |= APVal << 8;
         
         // FIXME: Remove once builder has Twine API.
-        Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").str().c_str());
+        Value *Old = Builder.CreateLoad(NewAI,
+                                        (NewAI->getName()+".in").str().c_str());
         Value *New = ConvertScalar_InsertValue(
                                     ConstantInt::get(User->getContext(), APVal),
                                                Old, Offset, Builder);
