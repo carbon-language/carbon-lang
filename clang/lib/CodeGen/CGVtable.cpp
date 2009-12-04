@@ -331,21 +331,6 @@ public:
     }
     BaseReturnTypes.clear();
     
-    for (ThisAdjustmentsMapTy::const_iterator i = ThisAdjustments.begin(), 
-         e = ThisAdjustments.end(); i != e; ++i) {
-      uint64_t Index = i->first;
-      GlobalDecl GD = Methods[Index];
-      const ThunkAdjustment &ThisAdjustment = i->second;
-
-      const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-      assert(!MD->isPure() && "Can't thunk pure virtual methods!");
-
-      assert(Index == VtableBuilder::Index[GD] && "Thunk index mismatch!");
-             
-      submethods[Index] = CGM.BuildThunk(GD, Extern, ThisAdjustment);
-    }
-    ThisAdjustments.clear();
-
     for (PureVirtualMethodsSetTy::iterator i = PureVirtualMethods.begin(),
          e = PureVirtualMethods.end(); i != e; ++i) {
       GlobalDecl GD = *i;
@@ -907,6 +892,19 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 
 void VtableBuilder::AppendMethods() {
   InstallThunks();
+
+  for (unsigned i = 0, e = Methods.size(); i != e; ++i) {
+    GlobalDecl GD = Methods[i];
+    
+    ThunkAdjustment ThisAdjustment = ThisAdjustments.lookup(i);
+    
+    if (!ThisAdjustment.isEmpty())
+      submethods[i] = CGM.BuildThunk(GD, Extern, ThisAdjustment);
+  }
+  
+  ThisAdjustments.clear();
+  
+  
   D1(printf("============= combining methods\n"));
   methods.insert(methods.end(), submethods.begin(), submethods.end());
   
