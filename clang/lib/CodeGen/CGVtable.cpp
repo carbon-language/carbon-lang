@@ -506,17 +506,11 @@ public:
     const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
 
     // vtables are composed from the chain of primaries.
-    if (PrimaryBase) {
+    if (PrimaryBase && !PrimaryBaseWasVirtual) {
       D1(printf(" doing primaries for %s most derived %s\n",
                 RD->getNameAsCString(), Class->getNameAsCString()));
-      
-      int BaseCurrentVBaseOffset = CurrentVBaseOffset;
-      if (PrimaryBaseWasVirtual)
-        BaseCurrentVBaseOffset = BLayout.getVBaseClassOffset(PrimaryBase);
-        
-      if (!PrimaryBaseWasVirtual)
-        Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
-                  updateVBIndex, current_vbindex, BaseCurrentVBaseOffset);
+      Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
+                updateVBIndex, current_vbindex, CurrentVBaseOffset);
     }
 
     D1(printf(" doing vcall entries for %s most derived %s\n",
