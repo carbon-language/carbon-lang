@@ -282,6 +282,14 @@ public:
     return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
                                      Args+1), Name);
   }
+  InvokeInst *CreateInvoke3(Value *Callee, BasicBlock *NormalDest,
+                            BasicBlock *UnwindDest, Value *Arg1,
+                            Value *Arg2, Value *Arg3,
+                            const Twine &Name = "") {
+    Value *Args[] = { Arg1, Arg2, Arg3 };
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
+                                     Args+3), Name);
+  }
   /// CreateInvoke - Create an invoke instruction.
   template<typename InputIterator>
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
