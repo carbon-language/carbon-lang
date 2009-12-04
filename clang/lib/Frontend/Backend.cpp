@@ -38,7 +38,7 @@ using namespace llvm;
 
 namespace {
   class BackendConsumer : public ASTConsumer {
-    Diagnostic Diags;
+    Diagnostic &Diags;
     BackendAction Action;
     const CodeGenOptions &CodeGenOpts;
     const LangOptions &LangOpts;
@@ -66,8 +66,7 @@ namespace {
 
     void CreatePasses();
 
-    /// AddEmitPasses - Add passes necessary to emit assembly or LLVM
-    /// IR.
+    /// AddEmitPasses - Add passes necessary to emit assembly or LLVM IR.
     ///
     /// \return True on success.
     bool AddEmitPasses();
