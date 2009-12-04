@@ -286,7 +286,7 @@ static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
 }
 
 void OptTable::PrintHelp(llvm::raw_ostream &OS, const char *Name,
-                         const char *Title) const {
+                         const char *Title, bool ShowHidden) const {
   OS << "OVERVIEW: " << Title << "\n";
   OS << '\n';
   OS << "USAGE: " << Name << " [options] <inputs>\n";
@@ -297,6 +297,10 @@ void OptTable::PrintHelp(llvm::raw_ostream &OS, const char *Name,
   std::vector< std::pair<std::string, const char*> > OptionHelp;
   for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
     unsigned Id = i + 1;
+
+    if (!ShowHidden && isOptionHelpHidden(Id))
+      continue;
+
     if (const char *Text = getOptionHelpText(Id))
       OptionHelp.push_back(std::make_pair(getOptionHelpName(*this, Id), Text));
   }

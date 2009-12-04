@@ -22,12 +22,13 @@ namespace driver {
 namespace options {
   enum DriverFlag {
     DriverOption     = (1 << 0),
-    LinkerInput      = (1 << 1),
-    NoArgumentUnused = (1 << 2),
-    RenderAsInput    = (1 << 3),
-    RenderJoined     = (1 << 4),
-    RenderSeparate   = (1 << 5),
-    Unsupported      = (1 << 6)
+    HelpHidden       = (1 << 1),
+    LinkerInput      = (1 << 2),
+    NoArgumentUnused = (1 << 3),
+    RenderAsInput    = (1 << 4),
+    RenderJoined     = (1 << 5),
+    RenderSeparate   = (1 << 6),
+    Unsupported      = (1 << 7)
   };
 }
 
@@ -117,6 +118,12 @@ namespace options {
       return getInfo(id).Kind;
     }
 
+    /// isOptionHelpHidden - Should the help for the given option be hidden by
+    /// default.
+    bool isOptionHelpHidden(OptSpecifier id) const {
+      return getInfo(id).Flags & options::HelpHidden;
+    }
+
     /// getOptionHelpText - Get the help text to use to describe this option.
     const char *getOptionHelpText(OptSpecifier id) const {
       return getInfo(id).HelpText;
@@ -166,8 +173,9 @@ namespace options {
     /// \param OS - The stream to write the help text to.
     /// \param Name - The name to use in the usage line.
     /// \param Title - The title to use in the usage line.
+    /// \param ShowHidden - Whether help-hidden arguments should be shown.
     void PrintHelp(llvm::raw_ostream &OS, const char *Name,
-                   const char *Title) const;
+                   const char *Title, bool ShowHidden = false) const;
   };
 }
 }
