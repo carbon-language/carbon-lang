@@ -45,9 +45,7 @@ private:
   llvm::Constant *rtti;
   llvm::LLVMContext &VMContext;
   CodeGenModule &CGM;  // Per-module state.
-  /// Index - Maps a method decl into a vtable index.  Useful for virtual
-  /// dispatch codegen.
-  llvm::DenseMap<GlobalDecl, Index_t> Index;
+  
   llvm::DenseMap<GlobalDecl, Index_t> VCall;
   llvm::DenseMap<GlobalDecl, Index_t> VCallOffset;
   // This is the offset to the nearest virtual base
@@ -178,7 +176,6 @@ public:
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
 
-  llvm::DenseMap<GlobalDecl, Index_t> &getIndex() { return Index; }
   llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
     { return VBIndex; }
 
@@ -342,7 +339,6 @@ public:
     // entry.
     Methods.AddMethod(GD);
 
-    Index[GD] = submethods.size();
     submethods.push_back(m);
     D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
               (int)Index[GD]));
@@ -782,7 +778,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, llvm::Constant *m,
 
       Methods.OverrideMethod(OGD, GD);
 
-      Index[GD] = i;
       submethods[i] = m;
       ThisAdjustments.erase(i);
       if (MorallyVirtual || VCall.count(OGD)) {
