@@ -698,7 +698,7 @@ void SlotTracker::processFunction() {
         if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i))) {
           // Create a metadata slot only if N contains no instructions.
           for (unsigned n = 0, e = N->getNumElements(); n != e; ++n)
-            if (isa<Instruction>(N->getElement(n)))
+            if (N->getElement(n) && isa<Instruction>(N->getElement(n)))
               continue;
           CreateMetadataSlot(N);
         }
