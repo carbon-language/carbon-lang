@@ -1837,15 +1837,16 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
 
     // Print source line info.
     O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString() << " SrcLine ";
-    if (DLT.Scope) {
-      DICompileUnit CU(DLT.Scope);
-      if (!CU.isNull())
-        O << CU.getFilename() << " ";
-    }
-    O << DLT.Line;
+    O << MAI->getCommentString() << ' ';
+    DIScope Scope(DLT.Scope);
+    // Omit the directory, because it's likely to be long and uninteresting.
+    if (!Scope.isNull())
+      O << Scope.getFilename();
+    else
+      O << "<unknown>";
+    O << ':' << DLT.Line;
     if (DLT.Col != 0)
-      O << ":" << DLT.Col;
+      O << ':' << DLT.Col;
     Newline = true;
   }
 
