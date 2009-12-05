@@ -1076,9 +1076,18 @@ public:
 
   /// CreateStaticBlockVarDecl - Create a zero-initialized LLVM global for a
   /// static block var decl.
-  llvm::GlobalVariable * CreateStaticBlockVarDecl(const VarDecl &D,
-                                                  const char *Separator,
+  llvm::GlobalVariable *CreateStaticBlockVarDecl(const VarDecl &D,
+                                                 const char *Separator,
                                        llvm::GlobalValue::LinkageTypes Linkage);
+  
+  /// AddInitializerToGlobalBlockVarDecl - Add the initializer for 'D' to the
+  /// global variable that has already been created for it.  If the initializer
+  /// has a different type than GV does, this may free GV and return a different
+  /// one.  Otherwise it just returns GV.
+  llvm::GlobalVariable *
+  AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
+                                     llvm::GlobalVariable *GV);
+  
 
   /// EmitStaticCXXBlockVarDeclInit - Create the initializer for a C++ runtime
   /// initialized static block var decl.
