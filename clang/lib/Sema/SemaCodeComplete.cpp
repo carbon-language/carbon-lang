@@ -1110,8 +1110,8 @@ namespace {
       // The only stable ordering we have is to turn the name into a
       // string and then compare the lower-case strings. This is
       // inefficient, but thankfully does not happen too often.
-      return llvm::LowercaseString(X.getAsString()) 
-        < llvm::LowercaseString(Y.getAsString());
+      return llvm::StringRef(X.getAsString()).compare_lower(
+                                                 Y.getAsString()) < 0;
     }
     
     bool operator()(const Result &X, const Result &Y) const {
