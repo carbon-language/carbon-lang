@@ -508,10 +508,20 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                 command_line_args + num_command_line_args);
 
     void *MainAddr = (void *)(uintptr_t)clang_createTranslationUnit;
-    return ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
-                                        CXXIdx->getDiags(), "<clang>", MainAddr,
-                                        CXXIdx->getOnlyLocalDecls(),
-                                        /* UseBumpAllocator = */ true);
+
+    unsigned NumErrors = CXXIdx->getDiags().getNumErrors();
+    llvm::OwningPtr<ASTUnit> Unit(
+      ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
+                                   CXXIdx->getDiags(), "<clang>", MainAddr,
+                                   CXXIdx->getOnlyLocalDecls(),
+                                   /* UseBumpAllocator = */ true));
+
+    // FIXME: Until we have broader testing, just drop the entire AST if we
+    // encountered an error.
+    if (NumErrors != CXXIdx->getDiags().getNumErrors())
+      return 0;
+
+    return Unit.take();
   }
 
   // Build up the arguments for invoking 'clang'.
