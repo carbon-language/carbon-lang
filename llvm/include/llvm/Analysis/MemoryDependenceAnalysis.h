@@ -60,9 +60,9 @@ namespace llvm {
       ///      this case, the load is loading an undef value or a store is the
       ///      first store to (that part of) the allocation.
       ///   3. Dependence queries on calls return Def only when they are
-      ///      readonly calls with identical callees and no intervening
-      ///      clobbers.  No validation is done that the operands to the calls
-      ///      are the same.
+      ///      readonly calls or memory use intrinsics with identical callees
+      ///      and no intervening clobbers.  No validation is done that the
+      ///      operands to the calls are the same.
       Def,
       
       /// NonLocal - This marker indicates that the query has no dependency in
