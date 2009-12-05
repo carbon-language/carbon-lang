@@ -1166,9 +1166,14 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     DebugLocTuple DLT = MF->getDebugLocTuple(debugLoc);
     DIScope Scope(DLT.Scope);
     OS << " dbg:";
+    // Omit the directory, since it's usually long and uninteresting.
     if (!Scope.isNull())
-      OS << Scope.getDirectory() << ':' << Scope.getFilename() << ':';
-    OS << DLT.Line << ":" << DLT.Col;
+      OS << Scope.getFilename();
+    else
+      OS << "<unknown>";
+    OS << ':' << DLT.Line;
+    if (DLT.Col != 0)
+      OS << ':' << DLT.Col;
   }
 
   OS << "\n";
