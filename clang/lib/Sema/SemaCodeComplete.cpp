@@ -1064,11 +1064,52 @@ namespace {
     typedef CodeCompleteConsumer::Result Result;
     
     bool isEarlierDeclarationName(DeclarationName X, DeclarationName Y) const {
-      if (!X.getObjCSelector().isNull() && !Y.getObjCSelector().isNull()) {
-        // Consider all selector kinds to be equivalent.
-      } else if (X.getNameKind() != Y.getNameKind())
+      Selector XSel = X.getObjCSelector();
+      Selector YSel = Y.getObjCSelector();
+      if (!XSel.isNull() && !YSel.isNull()) {
+        // We are comparing two selectors.
+        unsigned N = std::min(XSel.getNumArgs(), YSel.getNumArgs());
+        if (N == 0)
+          ++N;
+        for (unsigned I = 0; I != N; ++I) {
+          IdentifierInfo *XId = XSel.getIdentifierInfoForSlot(I);
+          IdentifierInfo *YId = YSel.getIdentifierInfoForSlot(I);
+          if (!XId || !YId)
+            return XId && !YId;
+          
+          switch (XId->getName().compare_lower(YId->getName())) {
+          case -1: return true;
+          case 1: return false;
+          default: break;
+          }
+        }
+    
+        return XSel.getNumArgs() < YSel.getNumArgs();
+      }
+
+      // For non-selectors, order by kind.
+      if (X.getNameKind() != Y.getNameKind())
         return X.getNameKind() < Y.getNameKind();
       
+      // Order identifiers by comparison of their lowercased names.
+      if (IdentifierInfo *XId = X.getAsIdentifierInfo())
+        return XId->getName().compare_lower(
+                                     Y.getAsIdentifierInfo()->getName()) < 0;
+
+      // Order overloaded operators by the order in which they appear
+      // in our list of operators.
+      if (OverloadedOperatorKind XOp = X.getCXXOverloadedOperator())
+        return XOp < Y.getCXXOverloadedOperator();
+
+      // Order C++0x user-defined literal operators lexically by their
+      // lowercased suffixes.
+      if (IdentifierInfo *XLit = X.getCXXLiteralIdentifier())
+        return XLit->getName().compare_lower(
+                                  Y.getCXXLiteralIdentifier()->getName()) < 0;
+
+      // The only stable ordering we have is to turn the name into a
+      // string and then compare the lower-case strings. This is
+      // inefficient, but thankfully does not happen too often.
       return llvm::LowercaseString(X.getAsString()) 
         < llvm::LowercaseString(Y.getAsString());
     }
@@ -1088,7 +1129,7 @@ namespace {
                                                    : X.Pattern->getTypedText();
         const char *YStr = (Y.Kind == Result::RK_Keyword)? Y.Keyword 
                                                    : Y.Pattern->getTypedText();
-        return strcmp(XStr, YStr) < 0;
+        return strcasecmp(XStr, YStr) < 0;
       }
       
       // Result kinds are ordered by decreasing importance.
@@ -1113,8 +1154,7 @@ namespace {
                                           Y.Declaration->getDeclName());
           
         case Result::RK_Macro:
-          return llvm::LowercaseString(X.Macro->getName()) < 
-                   llvm::LowercaseString(Y.Macro->getName());
+          return X.Macro->getName().compare_lower(Y.Macro->getName()) < 0;
           
         case Result::RK_Keyword:
         case Result::RK_Pattern:
