@@ -1702,18 +1702,18 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
       PopCXXTemporary();
   }
 
+  if (!ClassDecl->isDynamicClass())
+    return;
+  
   // Initialize the vtable pointer
-  if (ClassDecl->isDynamicClass()) {
-    if (!LoadOfThis)
-      LoadOfThis = LoadCXXThis();
-    llvm::Value *VtableField;
-    llvm::Type *Ptr8Ty, *PtrPtr8Ty;
-    Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
-    PtrPtr8Ty = llvm::PointerType::get(Ptr8Ty, 0);
-    VtableField = Builder.CreateBitCast(LoadOfThis, PtrPtr8Ty);
-    llvm::Value *vtable = CGM.getVtableInfo().getVtable(ClassDecl);
-    Builder.CreateStore(vtable, VtableField);
-  }
+  if (!LoadOfThis)
+    LoadOfThis = LoadCXXThis();
+
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Value *VtableField = 
+    Builder.CreateBitCast(LoadOfThis, Int8PtrTy->getPointerTo());
+  llvm::Value *vtable = CGM.getVtableInfo().getVtable(ClassDecl);
+  Builder.CreateStore(vtable, VtableField);
 }
 
 /// EmitDtorEpilogue - Emit all code that comes at the end of class's
