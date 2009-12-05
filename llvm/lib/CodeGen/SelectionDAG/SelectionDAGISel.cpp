@@ -362,6 +362,39 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   return true;
 }
 
+/// SetDebugLoc - Update MF's and SDB's DebugLocs if debug information is
+/// attached with this instruction.
+static void SetDebugLoc(unsigned MDDbgKind,
+                        MetadataContext &TheMetadata,
+                        Instruction *I,
+                        SelectionDAGBuilder *SDB,
+                        FastISel *FastIS,
+                        MachineFunction *MF) {
+  if (!isa<DbgInfoIntrinsic>(I)) 
+    if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
+      DILocation DILoc(Dbg);
+      DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
+
+      SDB->setCurDebugLoc(Loc);
+
+      if (FastIS)
+        FastIS->setCurDebugLoc(Loc);
+
+      // If the function doesn't have a default debug location yet, set
+      // it. This is kind of a hack.
+      if (MF->getDefaultDebugLoc().isUnknown())
+        MF->setDefaultDebugLoc(Loc);
+    }
+}
+
+/// ResetDebugLoc - Set MF's and SDB's DebugLocs to Unknown.
+static void ResetDebugLoc(SelectionDAGBuilder *SDB,
+                          FastISel *FastIS) {
+  SDB->setCurDebugLoc(DebugLoc::getUnknownLoc());
+  if (FastIS)
+    SDB->setCurDebugLoc(DebugLoc::getUnknownLoc());
+}
+
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
                                         BasicBlock::iterator End,
@@ -373,20 +406,16 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block.
   for (BasicBlock::iterator I = Begin; I != End && !SDB->HasTailCall; ++I) {
-    if (MDDbgKind) {
-      // Update DebugLoc if debug information is attached with this
-      // instruction.
-      if (!isa<DbgInfoIntrinsic>(I)) 
-        if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
-          DILocation DILoc(Dbg);
-          DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
-          SDB->setCurDebugLoc(Loc);
-          if (MF->getDefaultDebugLoc().isUnknown())
-            MF->setDefaultDebugLoc(Loc);
-        }
-    }
-    if (!isa<TerminatorInst>(I))
+    if (MDDbgKind)
+      SetDebugLoc(MDDbgKind, TheMetadata, I, SDB, 0, MF);
+
+    if (!isa<TerminatorInst>(I)) {
       SDB->visit(*I);
+
+      // Set the current debug location back to "unknown" so that it doesn't
+      // spuriously apply to subsequent instructions.
+      ResetDebugLoc(SDB, 0);
+    }
   }
 
   if (!SDB->HasTailCall) {
@@ -401,7 +430,9 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
       HandlePHINodesInSuccessorBlocks(LLVMBB);
 
       // Lower the terminator after the copies are emitted.
+      SetDebugLoc(MDDbgKind, TheMetadata, LLVMBB->getTerminator(), SDB, 0, MF);
       SDB->visit(*LLVMBB->getTerminator());
+      ResetDebugLoc(SDB, 0);
     }
   }
 
@@ -738,24 +769,14 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
       FastIS->startNewBlock(BB);
       // Do FastISel on as many instructions as possible.
       for (; BI != End; ++BI) {
-        if (MDDbgKind) {
-          // Update DebugLoc if debug information is attached with this
-          // instruction.
-          if (!isa<DbgInfoIntrinsic>(BI)) 
-            if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, BI)) {
-              DILocation DILoc(Dbg);
-              DebugLoc Loc = ExtractDebugLocation(DILoc,
-                                                  MF.getDebugLocInfo());
-              FastIS->setCurDebugLoc(Loc);
-              if (MF.getDefaultDebugLoc().isUnknown())
-                MF.setDefaultDebugLoc(Loc);
-            }
-        }
+        if (MDDbgKind)
+          SetDebugLoc(MDDbgKind, TheMetadata, BI, SDB, FastIS, &MF);
 
         // Just before the terminator instruction, insert instructions to
         // feed PHI nodes in successor blocks.
         if (isa<TerminatorInst>(BI))
           if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, FastIS)) {
+            ResetDebugLoc(SDB, FastIS);
             if (EnableFastISelVerbose || EnableFastISelAbort) {
               errs() << "FastISel miss: ";
               BI->dump();
@@ -766,12 +787,20 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
           }
 
         // First try normal tablegen-generated "fast" selection.
-        if (FastIS->SelectInstruction(BI))
+        if (FastIS->SelectInstruction(BI)) {
+          ResetDebugLoc(SDB, FastIS);
           continue;
+        }
 
         // Next, try calling the target to attempt to handle the instruction.
-        if (FastIS->TargetSelectInstruction(BI))
+        if (FastIS->TargetSelectInstruction(BI)) {
+          ResetDebugLoc(SDB, FastIS);
           continue;
+        }
+
+        // Clear out the debug location so that it doesn't carry over to
+        // unrelated instructions.
+        ResetDebugLoc(SDB, FastIS);
 
         // Then handle certain instructions as single-LLVM-Instruction blocks.
         if (isa<CallInst>(BI)) {
@@ -785,8 +814,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
             if (!R)
               R = FuncInfo->CreateRegForValue(BI);
           }
-
-          SDB->setCurDebugLoc(FastIS->getCurDebugLoc());
 
           bool HadTailCall = false;
           SelectBasicBlock(LLVMBB, BI, llvm::next(BI), HadTailCall);
@@ -823,9 +850,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
     // not handled by FastISel. If FastISel is not run, this is the entire
     // block.
     if (BI != End) {
-      // If FastISel is run and it has known DebugLoc then use it.
-      if (FastIS && !FastIS->getCurDebugLoc().isUnknown())
-        SDB->setCurDebugLoc(FastIS->getCurDebugLoc());
       bool HadTailCall;
       SelectBasicBlock(LLVMBB, BI, End, HadTailCall);
     }
