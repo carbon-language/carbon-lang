@@ -327,7 +327,12 @@ class StructLayoutMap : public AbstractTypeUser {
   ///
   virtual void refineAbstractType(const DerivedType *OldTy,
                                   const Type *) {
-    InvalidateEntry(cast<const StructType>(OldTy));
+    const StructType *STy = cast<const StructType>(OldTy);
+    LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
+    Iter->second->~StructLayout();
+    free(Iter->second);
+    LayoutInfo.erase(Iter);
+    OldTy->removeAbstractTypeUser(this);
   }
 
   /// typeBecameConcrete - The other case which AbstractTypeUsers must be aware
@@ -336,7 +341,12 @@ class StructLayoutMap : public AbstractTypeUser {
   /// This method notifies ATU's when this occurs for a type.
   ///
   virtual void typeBecameConcrete(const DerivedType *AbsTy) {
-    InvalidateEntry(cast<const StructType>(AbsTy));
+    const StructType *STy = cast<const StructType>(AbsTy);
+    LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
+    Iter->second->~StructLayout();
+    free(Iter->second);
+    LayoutInfo.erase(Iter);
+    AbsTy->removeAbstractTypeUser(this);
   }
 
 public:
