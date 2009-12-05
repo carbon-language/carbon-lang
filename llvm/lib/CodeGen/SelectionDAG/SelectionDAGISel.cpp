@@ -1327,14 +1327,6 @@ SDNode *SelectionDAGISel::Select_UNDEF(const SDValue &N) {
                               N.getValueType());
 }
 
-SDNode *SelectionDAGISel::Select_DBG_LABEL(const SDValue &N) {
-  SDValue Chain = N.getOperand(0);
-  unsigned C = cast<LabelSDNode>(N)->getLabelID();
-  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);
-  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::DBG_LABEL,
-                              MVT::Other, Tmp, Chain);
-}
-
 SDNode *SelectionDAGISel::Select_EH_LABEL(const SDValue &N) {
   SDValue Chain = N.getOperand(0);
   unsigned C = cast<LabelSDNode>(N)->getLabelID();
