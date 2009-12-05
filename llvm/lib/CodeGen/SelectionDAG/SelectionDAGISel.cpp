@@ -769,9 +769,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
       FastIS->startNewBlock(BB);
       // Do FastISel on as many instructions as possible.
       for (; BI != End; ++BI) {
-        if (MDDbgKind)
-          SetDebugLoc(MDDbgKind, TheMetadata, BI, SDB, FastIS, &MF);
-
         // Just before the terminator instruction, insert instructions to
         // feed PHI nodes in successor blocks.
         if (isa<TerminatorInst>(BI))
@@ -785,6 +782,9 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
                    "FastISel didn't handle a PHI in a successor");
             break;
           }
+
+        if (MDDbgKind)
+          SetDebugLoc(MDDbgKind, TheMetadata, BI, SDB, FastIS, &MF);
 
         // First try normal tablegen-generated "fast" selection.
         if (FastIS->SelectInstruction(BI)) {
