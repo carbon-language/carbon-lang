@@ -1075,6 +1075,13 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   return I->second;
 }
 
+uint64_t CGVtableInfo::getVtableAddressPoint(const CXXRecordDecl *RD) {
+  uint64_t AddressPoint = 
+    (*(*(CGM.AddressPoints[RD]))[RD])[std::make_pair(RD, 0)];
+  
+  return AddressPoint;
+}
+
 llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
                                               const CXXRecordDecl *RD,
                                               uint64_t Offset) {

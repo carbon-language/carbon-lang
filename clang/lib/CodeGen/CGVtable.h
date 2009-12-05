@@ -113,6 +113,11 @@ public:
   int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
                                     const CXXRecordDecl *VBase);
 
+  /// getVtableAddressPoint - returns the address point of the vtable for the
+  /// given record decl.
+  /// FIXME: This should return a list of address points.
+  uint64_t getVtableAddressPoint(const CXXRecordDecl *RD);
+  
   llvm::Constant *getVtable(const CXXRecordDecl *RD);
   llvm::Constant *getCtorVtable(const CXXRecordDecl *RD,
                                 const CXXRecordDecl *Class, uint64_t Offset);
