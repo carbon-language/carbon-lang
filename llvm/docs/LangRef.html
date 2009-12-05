@@ -5,7 +5,7 @@
   <title>LLVM Assembly Language Reference Manual</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="author" content="Chris Lattner">
-  <meta name="description" 
+  <meta name="description"
   content="LLVM Assembly Language Reference Manual.">
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
@@ -54,7 +54,7 @@
   <li><a href="#typesystem">Type System</a>
     <ol>
       <li><a href="#t_classifications">Type Classifications</a></li>
-      <li><a href="#t_primitive">Primitive Types</a>    
+      <li><a href="#t_primitive">Primitive Types</a>
         <ol>
           <li><a href="#t_integer">Integer Type</a></li>
           <li><a href="#t_floating">Floating Point Types</a></li>
@@ -576,7 +576,7 @@ define i32 @main() {                                        <i>; i32()* </i>
       Symbols with "<tt>common</tt>" linkage are merged in the same way as
       <tt>weak symbols</tt>, and they may not be deleted if unreferenced.
       <tt>common</tt> symbols may not have an explicit section,
-      must have a zero initializer, and may not be marked '<a 
+      must have a zero initializer, and may not be marked '<a
       href="#globalvars"><tt>constant</tt></a>'.  Functions and aliases may not
       have common linkage.</dd>
 
@@ -843,7 +843,7 @@ define i32 @main() {                                        <i>; i32()* </i>
 
 <p>LLVM function declarations consist of the "<tt>declare</tt>" keyword, an
    optional <a href="#linkage">linkage type</a>, an optional
-   <a href="#visibility">visibility style</a>, an optional 
+   <a href="#visibility">visibility style</a>, an optional
    <a href="#callingconv">calling convention</a>, a return type, an optional
    <a href="#paramattrs">parameter attribute</a> for the return type, a function
    name, a possibly empty list of arguments, an optional alignment, and an
@@ -1192,7 +1192,7 @@ target datalayout = "<i>layout specification</i>"
       location.</dd>
 
   <dt><tt>p:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-  <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and 
+  <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and
       <i>preferred</i> alignments. All sizes are in bits. Specifying
       the <i>pref</i> alignment is optional. If omitted, the
       preceding <tt>:</tt> should be omitted too.</dd>
@@ -1202,11 +1202,11 @@ target datalayout = "<i>layout specification</i>"
       <i>size</i>. The value of <i>size</i> must be in the range [1,2^23).</dd>
 
   <dt><tt>v<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-  <dd>This specifies the alignment for a vector type of a given bit 
+  <dd>This specifies the alignment for a vector type of a given bit
       <i>size</i>.</dd>
 
   <dt><tt>f<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-  <dd>This specifies the alignment for a floating point type of a given bit 
+  <dd>This specifies the alignment for a floating point type of a given bit
       <i>size</i>. The value of <i>size</i> must be either 32 (float) or 64
       (double).</dd>
 
@@ -1222,7 +1222,7 @@ target datalayout = "<i>layout specification</i>"
   <dd>This specifies a set of native integer widths for the target CPU
       in bits.  For example, it might contain "n32" for 32-bit PowerPC,
       "n32:64" for PowerPC 64, or "n8:16:32:64" for X86-64.  Elements of
-      this set are considered to support most general arithmetic 
+      this set are considered to support most general arithmetic
       operations efficiently.</dd>
 </dl>
 
@@ -1616,16 +1616,16 @@ Classifications</a> </div>
   </tr><tr class="layout">
     <td class="left"><tt>float&nbsp;(i16&nbsp;signext,&nbsp;i32&nbsp;*)&nbsp;*
     </tt></td>
-    <td class="left"><a href="#t_pointer">Pointer</a> to a function that takes 
-      an <tt>i16</tt> that should be sign extended and a 
-      <a href="#t_pointer">pointer</a> to <tt>i32</tt>, returning 
+    <td class="left"><a href="#t_pointer">Pointer</a> to a function that takes
+      an <tt>i16</tt> that should be sign extended and a
+      <a href="#t_pointer">pointer</a> to <tt>i32</tt>, returning
       <tt>float</tt>.
     </td>
   </tr><tr class="layout">
     <td class="left"><tt>i32 (i8*, ...)</tt></td>
-    <td class="left">A vararg function that takes at least one 
-      <a href="#t_pointer">pointer</a> to <tt>i8 </tt> (char in C), 
-      which returns an integer.  This is the signature for <tt>printf</tt> in 
+    <td class="left">A vararg function that takes at least one
+      <a href="#t_pointer">pointer</a> to <tt>i8 </tt> (char in C),
+      which returns an integer.  This is the signature for <tt>printf</tt> in
       LLVM.
     </td>
   </tr><tr class="layout">
@@ -2054,9 +2054,9 @@ Unsafe:
 For example, if "%X" has a zero bit, then the output of the 'and' operation will
 always be a zero, no matter what the corresponding bit from the undef is.  As
 such, it is unsafe to optimize or assume that the result of the and is undef.
-However, it is safe to assume that all bits of the undef could be 0, and 
-optimize the and to 0.  Likewise, it is safe to assume that all the bits of 
-the undef operand to the or could be set, allowing the or to be folded to 
+However, it is safe to assume that all bits of the undef could be 0, and
+optimize the and to 0.  Likewise, it is safe to assume that all the bits of
+the undef operand to the or could be set, allowing the or to be folded to
 -1.</p>
 
 <div class="doc_code">
@@ -2086,7 +2086,7 @@ the optimizer is allowed to assume that the undef operand could be the same as
 <div class="doc_code">
 <pre>
   %A = xor undef, undef
-  
+
   %B = undef
   %C = xor %B, %B
 
@@ -2137,7 +2137,7 @@ does not execute at all.  This allows us to delete the divide and all code after
 it: since the undefined operation "can't happen", the optimizer can assume that
 it occurs in dead code.
 </p>
- 
+
 <div class="doc_code">
 <pre>
 a:  store undef -> %X
@@ -2149,7 +2149,7 @@ b: unreachable
 </div>
 
 <p>These examples reiterate the fdiv example: a store "of" an undefined value
-can be assumed to not have any effect: we can assume that the value is 
+can be assumed to not have any effect: we can assume that the value is
 overwritten with bits that happen to match what was already there.  However, a
 store "to" an undefined location could clobber arbitrary memory, therefore, it
 has undefined behavior.</p>
@@ -2166,7 +2166,7 @@ has undefined behavior.</p>
 <p>The '<tt>blockaddress</tt>' constant computes the address of the specified
    basic block in the specified function, and always has an i8* type.  Taking
    the address of the entry block is illegal.</p>
-     
+
 <p>This value only has defined behavior when used as an operand to the
    '<a href="#i_indirectbr"><tt>indirectbr</tt></a>' instruction or for comparisons
    against null.  Pointer equality tests between labels addresses is undefined
@@ -2175,7 +2175,7 @@ has undefined behavior.</p>
    pointer sized value as long as the bits are not inspected.  This allows
    <tt>ptrtoint</tt> and arithmetic to be performed on these values so long as
    the original value is reconstituted before the <tt>indirectbr</tt>.</p>
-   
+
 <p>Finally, some targets may provide defined semantics when
    using the value as the operand to an inline assembly, but that is target
    specific.
@@ -2703,7 +2703,7 @@ IfUnequal:
    rest of the arguments indicate the full set of possible destinations that the
    address may point to.  Blocks are allowed to occur multiple times in the
    destination list, though this isn't particularly useful.</p>
-   
+
 <p>This destination list is required so that dataflow analysis has an accurate
    understanding of the CFG.</p>
 
@@ -3060,7 +3060,7 @@ Instruction</a> </div>
 <p>The two arguments to the '<tt>mul</tt>' instruction must
    be <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of
    integer values.  Both arguments must have identical types.</p>
- 
+
 <h5>Semantics:</h5>
 <p>The value produced is the integer product of the two operands.</p>
 
@@ -3132,7 +3132,7 @@ Instruction</a> </div>
 <p>The '<tt>udiv</tt>' instruction returns the quotient of its two operands.</p>
 
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>udiv</tt>' instruction must be 
+<p>The two arguments to the '<tt>udiv</tt>' instruction must be
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    values.  Both arguments must have identical types.</p>
 
@@ -3167,7 +3167,7 @@ Instruction</a> </div>
 <p>The '<tt>sdiv</tt>' instruction returns the quotient of its two operands.</p>
 
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>sdiv</tt>' instruction must be 
+<p>The two arguments to the '<tt>sdiv</tt>' instruction must be
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    values.  Both arguments must have identical types.</p>
 
@@ -3238,7 +3238,7 @@ Instruction</a> </div>
    division of its two arguments.</p>
 
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>urem</tt>' instruction must be 
+<p>The two arguments to the '<tt>urem</tt>' instruction must be
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    values.  Both arguments must have identical types.</p>
 
@@ -3278,7 +3278,7 @@ Instruction</a> </div>
    elements must be integers.</p>
 
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>srem</tt>' instruction must be 
+<p>The two arguments to the '<tt>srem</tt>' instruction must be
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    values.  Both arguments must have identical types.</p>
 
@@ -3373,7 +3373,7 @@ Instruction</a> </div>
 <p>Both arguments to the '<tt>shl</tt>' instruction must be the
     same <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of
     integer type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
- 
+
 <h5>Semantics:</h5>
 <p>The value produced is <tt>op1</tt> * 2<sup><tt>op2</tt></sup> mod
    2<sup>n</sup>, where <tt>n</tt> is the width of the result.  If <tt>op2</tt>
@@ -3409,7 +3409,7 @@ Instruction</a> </div>
    operand shifted to the right a specified number of bits with zero fill.</p>
 
 <h5>Arguments:</h5>
-<p>Both arguments to the '<tt>lshr</tt>' instruction must be the same 
+<p>Both arguments to the '<tt>lshr</tt>' instruction must be the same
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    type. '<tt>op2</tt>' is treated as an unsigned value.</p>
 
@@ -3449,7 +3449,7 @@ Instruction</a> </div>
    extension.</p>
 
 <h5>Arguments:</h5>
-<p>Both arguments to the '<tt>ashr</tt>' instruction must be the same 
+<p>Both arguments to the '<tt>ashr</tt>' instruction must be the same
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    type.  '<tt>op2</tt>' is treated as an unsigned value.</p>
 
@@ -3489,7 +3489,7 @@ Instruction</a> </div>
    operands.</p>
 
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>and</tt>' instruction must be 
+<p>The two arguments to the '<tt>and</tt>' instruction must be
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    values.  Both arguments must have identical types.</p>
 
@@ -3548,7 +3548,7 @@ Instruction</a> </div>
    two operands.</p>
 
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>or</tt>' instruction must be 
+<p>The two arguments to the '<tt>or</tt>' instruction must be
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    values.  Both arguments must have identical types.</p>
 
@@ -3611,7 +3611,7 @@ Instruction</a> </div>
    complement" operation, which is the "~" operator in C.</p>
 
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>xor</tt>' instruction must be 
+<p>The two arguments to the '<tt>xor</tt>' instruction must be
    <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
    values.  Both arguments must have identical types.</p>
 
@@ -3659,7 +3659,7 @@ Instruction</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> 
+<div class="doc_subsection">
   <a name="vectorops">Vector Operations</a>
 </div>
 
@@ -3782,20 +3782,20 @@ Instruction</a> </div>
 
 <h5>Example:</h5>
 <pre>
-  &lt;result&gt; = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; %v2, 
+  &lt;result&gt; = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; %v2,
                           &lt;4 x i32&gt; &lt;i32 0, i32 4, i32 1, i32 5&gt;  <i>; yields &lt;4 x i32&gt;</i>
-  &lt;result&gt; = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; undef, 
+  &lt;result&gt; = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; undef,
                           &lt;4 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3&gt;  <i>; yields &lt;4 x i32&gt;</i> - Identity shuffle.
-  &lt;result&gt; = shufflevector &lt;8 x i32&gt; %v1, &lt;8 x i32&gt; undef, 
+  &lt;result&gt; = shufflevector &lt;8 x i32&gt; %v1, &lt;8 x i32&gt; undef,
                           &lt;4 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3&gt;  <i>; yields &lt;4 x i32&gt;</i>
-  &lt;result&gt; = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; %v2, 
+  &lt;result&gt; = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; %v2,
                           &lt;8 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 &gt;  <i>; yields &lt;8 x i32&gt;</i>
 </pre>
 
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> 
+<div class="doc_subsection">
   <a name="aggregateops">Aggregate Operations</a>
 </div>
 
@@ -3880,7 +3880,7 @@ Instruction</a> </div>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> 
+<div class="doc_subsection">
   <a name="memoryops">Memory Access and Addressing Operations</a>
 </div>
 
@@ -4243,15 +4243,15 @@ entry:
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>zext</tt>' instruction zero extends its operand to type 
+<p>The '<tt>zext</tt>' instruction zero extends its operand to type
    <tt>ty2</tt>.</p>
 
 
 <h5>Arguments:</h5>
-<p>The '<tt>zext</tt>' instruction takes a value to cast, which must be of 
+<p>The '<tt>zext</tt>' instruction takes a value to cast, which must be of
    <a href="#t_integer">integer</a> type, and a type to cast it to, which must
    also be of <a href="#t_integer">integer</a> type. The bit size of the
-   <tt>value</tt> must be smaller than the bit size of the destination type, 
+   <tt>value</tt> must be smaller than the bit size of the destination type,
    <tt>ty2</tt>.</p>
 
 <h5>Semantics:</h5>
@@ -4283,10 +4283,10 @@ entry:
 <p>The '<tt>sext</tt>' sign extends <tt>value</tt> to the type <tt>ty2</tt>.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>sext</tt>' instruction takes a value to cast, which must be of 
+<p>The '<tt>sext</tt>' instruction takes a value to cast, which must be of
    <a href="#t_integer">integer</a> type, and a type to cast it to, which must
    also be of <a href="#t_integer">integer</a> type.  The bit size of the
-   <tt>value</tt> must be smaller than the bit size of the destination type, 
+   <tt>value</tt> must be smaller than the bit size of the destination type,
    <tt>ty2</tt>.</p>
 
 <h5>Semantics:</h5>
@@ -4324,12 +4324,12 @@ entry:
 <p>The '<tt>fptrunc</tt>' instruction takes a <a href="#t_floating">floating
    point</a> value to cast and a <a href="#t_floating">floating point</a> type
    to cast it to. The size of <tt>value</tt> must be larger than the size of
-   <tt>ty2</tt>. This implies that <tt>fptrunc</tt> cannot be used to make a 
+   <tt>ty2</tt>. This implies that <tt>fptrunc</tt> cannot be used to make a
    <i>no-op cast</i>.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>fptrunc</tt>' instruction truncates a <tt>value</tt> from a larger
-   <a href="#t_floating">floating point</a> type to a smaller 
+   <a href="#t_floating">floating point</a> type to a smaller
    <a href="#t_floating">floating point</a> type.  If the value cannot fit
    within the destination type, <tt>ty2</tt>, then the results are
    undefined.</p>
@@ -4358,7 +4358,7 @@ entry:
    floating point value.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>fpext</tt>' instruction takes a 
+<p>The '<tt>fpext</tt>' instruction takes a
    <a href="#t_floating">floating point</a> <tt>value</tt> to cast, and
    a <a href="#t_floating">floating point</a> type to cast it to. The source
    type must be smaller than the destination type.</p>
@@ -4401,7 +4401,7 @@ entry:
    vector integer type with the same number of elements as <tt>ty</tt></p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>fptoui</tt>' instruction converts its 
+<p>The '<tt>fptoui</tt>' instruction converts its
    <a href="#t_floating">floating point</a> operand into the nearest (rounding
    towards zero) unsigned integer value. If the value cannot fit
    in <tt>ty2</tt>, the results are undefined.</p>
@@ -4427,7 +4427,7 @@ entry:
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>fptosi</tt>' instruction converts 
+<p>The '<tt>fptosi</tt>' instruction converts
    <a href="#t_floating">floating point</a> <tt>value</tt> to
    type <tt>ty2</tt>.</p>
 
@@ -4439,7 +4439,7 @@ entry:
    vector integer type with the same number of elements as <tt>ty</tt></p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>fptosi</tt>' instruction converts its 
+<p>The '<tt>fptosi</tt>' instruction converts its
    <a href="#t_floating">floating point</a> operand into the nearest (rounding
    towards zero) signed integer value. If the value cannot fit in <tt>ty2</tt>,
    the results are undefined.</p>
@@ -4636,7 +4636,7 @@ entry:
 <pre>
   %X = bitcast i8 255 to i8              <i>; yields i8 :-1</i>
   %Y = bitcast i32* %x to sint*          <i>; yields sint*:%x</i>
-  %Z = bitcast &lt;2 x int&gt; %V to i64;      <i>; yields i64: %V</i>   
+  %Z = bitcast &lt;2 x int&gt; %V to i64;      <i>; yields i64: %V</i>
 </pre>
 
 </div>
@@ -4696,11 +4696,11 @@ entry:
    result, as follows:</p>
 
 <ol>
-  <li><tt>eq</tt>: yields <tt>true</tt> if the operands are equal, 
+  <li><tt>eq</tt>: yields <tt>true</tt> if the operands are equal,
       <tt>false</tt> otherwise. No sign interpretation is necessary or
       performed.</li>
 
-  <li><tt>ne</tt>: yields <tt>true</tt> if the operands are unequal, 
+  <li><tt>ne</tt>: yields <tt>true</tt> if the operands are unequal,
       <tt>false</tt> otherwise. No sign interpretation is necessary or
       performed.</li>
 
@@ -4817,42 +4817,42 @@ entry:
 <ol>
   <li><tt>false</tt>: always yields <tt>false</tt>, regardless of operands.</li>
 
-  <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
+  <li><tt>oeq</tt>: yields <tt>true</tt> if both operands are not a QNAN and
       <tt>op1</tt> is equal to <tt>op2</tt>.</li>
 
   <li><tt>ogt</tt>: yields <tt>true</tt> if both operands are not a QNAN and
       <tt>op1</tt> is greather than <tt>op2</tt>.</li>
 
-  <li><tt>oge</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
+  <li><tt>oge</tt>: yields <tt>true</tt> if both operands are not a QNAN and
       <tt>op1</tt> is greater than or equal to <tt>op2</tt>.</li>
 
-  <li><tt>olt</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
+  <li><tt>olt</tt>: yields <tt>true</tt> if both operands are not a QNAN and
       <tt>op1</tt> is less than <tt>op2</tt>.</li>
 
-  <li><tt>ole</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
+  <li><tt>ole</tt>: yields <tt>true</tt> if both operands are not a QNAN and
       <tt>op1</tt> is less than or equal to <tt>op2</tt>.</li>
 
-  <li><tt>one</tt>: yields <tt>true</tt> if both operands are not a QNAN and 
+  <li><tt>one</tt>: yields <tt>true</tt> if both operands are not a QNAN and
       <tt>op1</tt> is not equal to <tt>op2</tt>.</li>
 
   <li><tt>ord</tt>: yields <tt>true</tt> if both operands are not a QNAN.</li>
 
-  <li><tt>ueq</tt>: yields <tt>true</tt> if either operand is a QNAN or 
+  <li><tt>ueq</tt>: yields <tt>true</tt> if either operand is a QNAN or
       <tt>op1</tt> is equal to <tt>op2</tt>.</li>
 
-  <li><tt>ugt</tt>: yields <tt>true</tt> if either operand is a QNAN or 
+  <li><tt>ugt</tt>: yields <tt>true</tt> if either operand is a QNAN or
       <tt>op1</tt> is greater than <tt>op2</tt>.</li>
 
-  <li><tt>uge</tt>: yields <tt>true</tt> if either operand is a QNAN or 
+  <li><tt>uge</tt>: yields <tt>true</tt> if either operand is a QNAN or
       <tt>op1</tt> is greater than or equal to <tt>op2</tt>.</li>
 
-  <li><tt>ult</tt>: yields <tt>true</tt> if either operand is a QNAN or 
+  <li><tt>ult</tt>: yields <tt>true</tt> if either operand is a QNAN or
       <tt>op1</tt> is less than <tt>op2</tt>.</li>
 
-  <li><tt>ule</tt>: yields <tt>true</tt> if either operand is a QNAN or 
+  <li><tt>ule</tt>: yields <tt>true</tt> if either operand is a QNAN or
       <tt>op1</tt> is less than or equal to <tt>op2</tt>.</li>
 
-  <li><tt>une</tt>: yields <tt>true</tt> if either operand is a QNAN or 
+  <li><tt>une</tt>: yields <tt>true</tt> if either operand is a QNAN or
       <tt>op1</tt> is not equal to <tt>op2</tt>.</li>
 
   <li><tt>uno</tt>: yields <tt>true</tt> if either operand is a QNAN.</li>
@@ -5144,7 +5144,7 @@ freestanding environments and non-C-based langauges.</p>
    suffix is required. Because the argument's type is matched against the return
    type, it does not require its own name suffix.</p>
 
-<p>To learn how to add an intrinsic function, please see the 
+<p>To learn how to add an intrinsic function, please see the
    <a href="ExtendingLLVM.html">Extending LLVM Guide</a>.</p>
 
 </div>
@@ -6579,11 +6579,11 @@ LLVM</a>.</p>
 <ul>
   <li><tt>ll</tt>: All loads before the barrier must complete before any load
       after the barrier begins.</li>
-  <li><tt>ls</tt>: All loads before the barrier must complete before any 
+  <li><tt>ls</tt>: All loads before the barrier must complete before any
       store after the barrier begins.</li>
-  <li><tt>ss</tt>: All stores before the barrier must complete before any 
+  <li><tt>ss</tt>: All stores before the barrier must complete before any
       store after the barrier begins.</li>
-  <li><tt>sl</tt>: All stores before the barrier must complete before any 
+  <li><tt>sl</tt>: All stores before the barrier must complete before any
       load after the barrier begins.</li>
 </ul>
 
@@ -6796,7 +6796,7 @@ LLVM</a>.</p>
 </pre>
 
 <h5>Overview:</h5>
-<p>This intrinsic subtracts <tt>delta</tt> to the value stored in memory at 
+<p>This intrinsic subtracts <tt>delta</tt> to the value stored in memory at
    <tt>ptr</tt>. It yields the original value at <tt>ptr</tt>.</p>
 
 <h5>Arguments:</h5>
@@ -6952,7 +6952,7 @@ LLVM</a>.</p>
 </pre>
 
 <h5>Overview:</h5>
-<p>These intrinsics takes the signed or unsigned minimum or maximum of 
+<p>These intrinsics takes the signed or unsigned minimum or maximum of
    <tt>delta</tt> and the value stored in memory at <tt>ptr</tt>. It yields the
    original value at <tt>ptr</tt>.</p>
 
@@ -7262,24 +7262,44 @@ LLVM</a>.</p>
 </pre>
 
 <h5>Overview:</h5>
-<p>The <tt>llvm.objectsize</tt> intrinsic returns the constant number of bytes
-   from <tt>ptr</tt> to the end of the object <tt>ptr</tt> points to, if it
-   can deduce this at compile time.  If there are any side-effects in evaluating
-   the argument or it cannot deduce which objects <tt>ptr</tt> points to at compile
-   time, the intrinsic returns <tt>i32/i64 -1</tt> for <tt>type</tt> 0
-   or 1 and <tt>i32/i64 0</tt> for <tt>type</tt> 2 or 3.</p>
+<p>The <tt>llvm.objectsize</tt> intrinsic is designed to provide information
+   to the optimizers to either discover at compile time either a) when an
+   operation like memcpy will either overflow a buffer that corresponds to
+   an object, or b) to determine that a runtime check for overflow isn't
+   necessary. An object in this context means an allocation of a
+   specific <a href="#typesystem">type</a>.</p>
 
 <h5>Arguments:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic takes two arguments.  The first
    argument is a pointer to the object <tt>ptr</tt>. The second argument
-   is an integer <tt>type</tt> which ranges from 0 to 3. The first bit 
-   corresponds to a return value based on whole objects, and the second bit 
-   whether or not we return the maximum or minimum remaining bytes computed.</p>
+   is an integer <tt>type</tt> which ranges from 0 to 3. The first bit in
+   the type corresponds to a return value based on whole objects,
+   and the second bit whether or not we return the maximum or minimum
+   remaining bytes computed.</p>
+<table class="layout">
+  <tr class="layout">
+    <td class="left"><tt>00</tt></td>
+    <td class="left">whole object, maximum number of bytes</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>01</tt></td>
+    <td class="left">partial object, maximum number of bytes</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>10</tt></td>
+    <td class="left">whole object, minimum number of bytes</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>11</tt></td>
+    <td class="left">partial object, minimum number of bytes</td>
+  </tr>
+</table>
 
 <h5>Semantics:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic is lowered to either a constant
-   representing the size of the object concerned or <tt>i32/i64 -1</tt> if
-   it cannot be determined at compile time.</p>
+   representing the size of the object concerned or <tt>i32/i64 -1 or 0</tt>
+   (depending on the <tt>type</tt> argument if the size cannot be determined
+   at compile time.</p>
 
 </div>
 
