@@ -60,8 +60,6 @@
 using namespace llvm;
 
 static cl::opt<bool>
-DisableLegalizeTypes("disable-legalize-types", cl::Hidden);
-static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
           cl::desc("Enable verbose messages in the \"fast\" "
                    "instruction selector"));
@@ -529,75 +527,73 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
-  if (!DisableLegalizeTypes) {
-    if (ViewLegalizeTypesDAGs) CurDAG->viewGraph("legalize-types input for " +
-                                                 BlockName);
+  if (ViewLegalizeTypesDAGs) CurDAG->viewGraph("legalize-types input for " +
+                                               BlockName);
 
-    bool Changed;
+  bool Changed;
+  if (TimePassesIsEnabled) {
+    NamedRegionTimer T("Type Legalization", GroupName);
+    Changed = CurDAG->LegalizeTypes();
+  } else {
+    Changed = CurDAG->LegalizeTypes();
+  }
+
+  DEBUG(errs() << "Type-legalized selection DAG:\n");
+  DEBUG(CurDAG->dump());
+
+  if (Changed) {
+    if (ViewDAGCombineLT)
+      CurDAG->viewGraph("dag-combine-lt input for " + BlockName);
+
+    // Run the DAG combiner in post-type-legalize mode.
     if (TimePassesIsEnabled) {
-      NamedRegionTimer T("Type Legalization", GroupName);
-      Changed = CurDAG->LegalizeTypes();
+      NamedRegionTimer T("DAG Combining after legalize types", GroupName);
+      CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
     } else {
-      Changed = CurDAG->LegalizeTypes();
+      CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
     }
 
-    DEBUG(errs() << "Type-legalized selection DAG:\n");
+    DEBUG(errs() << "Optimized type-legalized selection DAG:\n");
     DEBUG(CurDAG->dump());
+  }
 
-    if (Changed) {
-      if (ViewDAGCombineLT)
-        CurDAG->viewGraph("dag-combine-lt input for " + BlockName);
+  if (TimePassesIsEnabled) {
+    NamedRegionTimer T("Vector Legalization", GroupName);
+    Changed = CurDAG->LegalizeVectors();
+  } else {
+    Changed = CurDAG->LegalizeVectors();
+  }
 
-      // Run the DAG combiner in post-type-legalize mode.
-      if (TimePassesIsEnabled) {
-        NamedRegionTimer T("DAG Combining after legalize types", GroupName);
-        CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
-      } else {
-        CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
-      }
-
-      DEBUG(errs() << "Optimized type-legalized selection DAG:\n");
-      DEBUG(CurDAG->dump());
-    }
-
+  if (Changed) {
     if (TimePassesIsEnabled) {
-      NamedRegionTimer T("Vector Legalization", GroupName);
-      Changed = CurDAG->LegalizeVectors();
+      NamedRegionTimer T("Type Legalization 2", GroupName);
+      Changed = CurDAG->LegalizeTypes();
     } else {
-      Changed = CurDAG->LegalizeVectors();
+      Changed = CurDAG->LegalizeTypes();
     }
 
-    if (Changed) {
-      if (TimePassesIsEnabled) {
-        NamedRegionTimer T("Type Legalization 2", GroupName);
-        Changed = CurDAG->LegalizeTypes();
-      } else {
-        Changed = CurDAG->LegalizeTypes();
-      }
+    if (ViewDAGCombineLT)
+      CurDAG->viewGraph("dag-combine-lv input for " + BlockName);
 
-      if (ViewDAGCombineLT)
-        CurDAG->viewGraph("dag-combine-lv input for " + BlockName);
-
-      // Run the DAG combiner in post-type-legalize mode.
-      if (TimePassesIsEnabled) {
-        NamedRegionTimer T("DAG Combining after legalize vectors", GroupName);
-        CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
-      } else {
-        CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
-      }
-
-      DEBUG(errs() << "Optimized vector-legalized selection DAG:\n");
-      DEBUG(CurDAG->dump());
+    // Run the DAG combiner in post-type-legalize mode.
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T("DAG Combining after legalize vectors", GroupName);
+      CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
+    } else {
+      CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
     }
+
+    DEBUG(errs() << "Optimized vector-legalized selection DAG:\n");
+    DEBUG(CurDAG->dump());
   }
 
   if (ViewLegalizeDAGs) CurDAG->viewGraph("legalize input for " + BlockName);
 
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Legalization", GroupName);
-    CurDAG->Legalize(DisableLegalizeTypes, OptLevel);
+    CurDAG->Legalize(OptLevel);
   } else {
-    CurDAG->Legalize(DisableLegalizeTypes, OptLevel);
+    CurDAG->Legalize(OptLevel);
   }
 
   DEBUG(errs() << "Legalized selection DAG:\n");

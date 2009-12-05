@@ -220,7 +220,7 @@ public:
   ///
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
-  void Legalize(bool TypesNeedLegalizing, CodeGenOpt::Level OptLevel);
+  void Legalize(CodeGenOpt::Level OptLevel);
 
   /// LegalizeVectors - This transforms the SelectionDAG into a SelectionDAG
   /// that only uses vector math operations supported by the target.  This is

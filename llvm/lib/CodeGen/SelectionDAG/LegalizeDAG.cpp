@@ -3059,8 +3059,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
 
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
-void SelectionDAG::Legalize(bool TypesNeedLegalizing,
-                            CodeGenOpt::Level OptLevel) {
+void SelectionDAG::Legalize(CodeGenOpt::Level OptLevel) {
   /// run - This is the main entry point to this class.
   ///
   SelectionDAGLegalize(*this, OptLevel).LegalizeDAG();
