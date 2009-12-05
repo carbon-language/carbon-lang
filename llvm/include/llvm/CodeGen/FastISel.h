@@ -98,14 +98,6 @@ public:
   ///
   bool SelectOperator(User *I, unsigned Opcode);
 
-  /// TargetSelectInstruction - This method is called by target-independent
-  /// code when the normal FastISel process fails to select an instruction.
-  /// This gives targets a chance to emit code for anything that doesn't
-  /// fit into FastISel's framework. It returns true if it was successful.
-  ///
-  virtual bool
-  TargetSelectInstruction(Instruction *I) = 0;
-
   /// getRegForValue - Create a virtual register and arrange for it to
   /// be assigned the value for the given LLVM value.
   unsigned getRegForValue(Value *V);
@@ -133,6 +125,14 @@ protected:
            , SmallSet<Instruction*, 8> &cil
 #endif
            );
+
+  /// TargetSelectInstruction - This method is called by target-independent
+  /// code when the normal FastISel process fails to select an instruction.
+  /// This gives targets a chance to emit code for anything that doesn't
+  /// fit into FastISel's framework. It returns true if it was successful.
+  ///
+  virtual bool
+  TargetSelectInstruction(Instruction *I) = 0;
 
   /// FastEmit_r - This method is called by target-independent code
   /// to request that an instruction with the given type and opcode

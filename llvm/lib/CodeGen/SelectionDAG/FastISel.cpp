@@ -532,7 +532,15 @@ bool FastISel::SelectBitCast(User *I) {
 
 bool
 FastISel::SelectInstruction(Instruction *I) {
-  return SelectOperator(I, I->getOpcode());
+  // First, try doing target-independent selection.
+  if (SelectOperator(I, I->getOpcode()))
+    return true;
+
+  // Next, try calling the target to attempt to handle the instruction.
+  if (TargetSelectInstruction(I))
+    return true;
+
+  return false;
 }
 
 /// FastEmitBranch - Emit an unconditional branch to the given block,

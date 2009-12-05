@@ -792,12 +792,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
           continue;
         }
 
-        // Next, try calling the target to attempt to handle the instruction.
-        if (FastIS->TargetSelectInstruction(BI)) {
-          ResetDebugLoc(SDB, FastIS);
-          continue;
-        }
-
         // Clear out the debug location so that it doesn't carry over to
         // unrelated instructions.
         ResetDebugLoc(SDB, FastIS);
