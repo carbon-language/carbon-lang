@@ -157,15 +157,19 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
          I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
     for (SlotIndex index = I->start.getBaseIndex(),
            end = I->end.getPrevSlot().getBaseIndex().getNextIndex();
-         index != end;
-         index = index.getNextIndex()) {
+           index != end;
+           index = index.getNextIndex()) {
       MachineInstr *MI = getInstructionFromIndex(index);
       if (!MI)
         continue;               // skip deleted instructions
 
+      unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+      if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
+        if (SrcReg == li.reg || DstReg == li.reg)
+          continue;
       for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
         MachineOperand& mop = MI->getOperand(i);
-        if (!mop.isReg() || mop.isUse())
+        if (!mop.isReg())
           continue;
         unsigned PhysReg = mop.getReg();
         if (PhysReg == 0 || PhysReg == li.reg)
@@ -181,50 +185,6 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
     }
   }
 
-  return false;
-}
-
-/// conflictsWithPhysRegUse - Returns true if the specified register is used or
-/// defined during the duration of the specified interval. Copies to and from
-/// li.reg are allowed.
-bool LiveIntervals::conflictsWithPhysRegUse(const LiveInterval &li,
-                                            VirtRegMap &vrm, unsigned reg) {
-  for (LiveInterval::Ranges::const_iterator
-         I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
-    for (SlotIndex index = I->start.getBaseIndex(),
-           end = I->end.getPrevSlot().getBaseIndex().getNextIndex();
-         index != end;
-         index = index.getNextIndex()) {
-      MachineInstr *MI = getInstructionFromIndex(index);
-      if (!MI)
-        continue;               // skip deleted instructions
-
-      // Terminators are considered conflicts since reg may be used at the
-      // destination.
-      if (MI->getDesc().isTerminator())
-        return true;
-
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e;  ++i) {
-        MachineOperand& mop = MI->getOperand(i);
-        if (!mop.isReg() || mop.isUndef())
-          continue;
-        unsigned PhysReg = mop.getReg();
-        if (PhysReg == 0 || PhysReg == li.reg)
-          continue;
-        if (TargetRegisterInfo::isVirtualRegister(PhysReg)) {
-          if (!vrm.hasPhys(PhysReg))
-            continue;
-          PhysReg = vrm.getPhys(PhysReg);
-        }
-        if (PhysReg && tri_->regsOverlap(PhysReg, reg)) {
-          unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-          if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) ||
-              (SrcReg != li.reg && DstReg != li.reg))
-            return true;
-        }
-      }
-    }
-  }
   return false;
 }
 
