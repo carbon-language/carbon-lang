@@ -318,9 +318,7 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
 namespace {
 
 class StructLayoutMap : public AbstractTypeUser {
-public:
   typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
-private:
   LayoutInfoTy LayoutInfo;
 
   /// refineAbstractType - The callback method invoked when an abstract type is
@@ -329,12 +327,7 @@ private:
   ///
   virtual void refineAbstractType(const DerivedType *OldTy,
                                   const Type *) {
-    const StructType *STy = cast<const StructType>(OldTy);
-    LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
-    Iter->second->~StructLayout();
-    free(Iter->second);
-    LayoutInfo.erase(Iter);
-    OldTy->removeAbstractTypeUser(this);
+    InvalidateEntry(cast<const StructType>(OldTy));
   }
 
   /// typeBecameConcrete - The other case which AbstractTypeUsers must be aware
@@ -343,12 +336,7 @@ private:
   /// This method notifies ATU's when this occurs for a type.
   ///
   virtual void typeBecameConcrete(const DerivedType *AbsTy) {
-    const StructType *STy = cast<const StructType>(AbsTy);
-    LayoutInfoTy::iterator Iter = LayoutInfo.find(STy);
-    Iter->second->~StructLayout();
-    free(Iter->second);
-    LayoutInfo.erase(Iter);
-    AbsTy->removeAbstractTypeUser(this);
+    InvalidateEntry(cast<const StructType>(AbsTy));
   }
 
 public:
