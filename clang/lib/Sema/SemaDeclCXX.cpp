@@ -484,10 +484,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   assert(BaseDecl && "Base type is not incomplete, but has no definition");
   CXXRecordDecl * CXXBaseDecl = cast<CXXRecordDecl>(BaseDecl);
   assert(CXXBaseDecl && "Base type is not a C++ type");
-  if (!CXXBaseDecl->isEmpty())
-    Class->setEmpty(false);
-  if (CXXBaseDecl->isPolymorphic())
-    Class->setPolymorphic(true);
+
   // C++0x CWG Issue #817 indicates that [[final]] classes shouldn't be bases.
   if (CXXBaseDecl->hasAttr<FinalAttr>()) {
     Diag(BaseLoc, diag::err_final_base) << BaseType.getAsString();
@@ -496,7 +493,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     return 0;
   }
 
-  SetClassDeclAttributesFromBase(Class, cast<CXXRecordDecl>(BaseDecl), Virtual);
+  SetClassDeclAttributesFromBase(Class, CXXBaseDecl, Virtual);
   
   // Create the base specifier.
   // FIXME: Allocate via ASTContext?
@@ -508,10 +505,23 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 void Sema::SetClassDeclAttributesFromBase(CXXRecordDecl *Class,
                                           const CXXRecordDecl *BaseClass,
                                           bool BaseIsVirtual) {
+  // A class with a non-empty base class is not empty.
+  // FIXME: Standard ref?
+  if (!BaseClass->isEmpty())
+    Class->setEmpty(false);
+
+  // C++ [class.virtual]p1:
+  //   A class that [...] inherits a virtual function is called a polymorphic
+  //   class.
+  if (BaseClass->isPolymorphic())
+    Class->setPolymorphic(true);
 
   // C++ [dcl.init.aggr]p1:
   //   An aggregate is [...] a class with [...] no base classes [...].
   Class->setAggregate(false);
+
+  // C++ [class]p4:
+  //   A POD-struct is an aggregate class...
   Class->setPOD(false);
 
   if (BaseIsVirtual) {
