@@ -1981,6 +1981,7 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
 
   unsigned Label = MMI->NextLabelID();
   Asm->printLabel(Label);
+  O << '\n';
 
   SmallVector<DbgScope *, 2> &SD = I->second;
   for (SmallVector<DbgScope *, 2>::iterator SDI = SD.begin(), SDE = SD.end();

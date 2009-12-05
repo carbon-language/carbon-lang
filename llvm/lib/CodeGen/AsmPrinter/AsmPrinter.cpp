@@ -1374,6 +1374,7 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
       unsigned L = DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
                                         CurDLT.Scope);
       printLabel(L);
+      O << '\n';
       DW->BeginScope(MI, L);
       PrevDLT = CurDLT;
     }
