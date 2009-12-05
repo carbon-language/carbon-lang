@@ -367,6 +367,18 @@ public:
     }
   }
 
+  void InvalidateEntry(const StructType *Ty) {
+    LayoutInfoTy::iterator I = this->find(Ty);
+    if (I == this->end()) return;
+
+    I->second->~StructLayout();
+    free(I->second);
+    this->erase(I);
+
+    if (Ty->isAbstract())
+      Ty->removeAbstractTypeUser(this);
+  }
+
   LayoutInfoTy::iterator end() {
     return LayoutInfo.end();
   }
@@ -427,15 +439,7 @@ void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
   if (!LayoutMap) return;  // No cache.
   
   StructLayoutMap *STM = static_cast<StructLayoutMap*>(LayoutMap);
-  StructLayoutMap::LayoutInfoTy::iterator I = STM->find(Ty);
-  if (I == STM->end()) return;
-  
-  I->second->~StructLayout();
-  free(I->second);
-  STM->erase(I);
-
-  if (Ty->isAbstract())
-    Ty->removeAbstractTypeUser(STM);
+  STM->InvalidateEntry(Ty);
 }
 
 std::string TargetData::getStringRepresentation() const {
