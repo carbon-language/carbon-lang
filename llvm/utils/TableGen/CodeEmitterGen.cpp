@@ -61,14 +61,11 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
 
 // If the VarBitInit at position 'bit' matches the specified variable then
 // return the variable bit position.  Otherwise return -1.
-int CodeEmitterGen::getVariableBit(const std::string &VarName,
+int CodeEmitterGen::getVariableBit(const Init *VarVal,
             BitsInit *BI, int bit) {
   if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit))) {
     TypedInit *TI = VBI->getVariable();
-    
-    if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
-      if (VI->getName() == VarName) return VBI->getBitNum();
-    }
+    if (TI == VarVal) return VBI->getBitNum();
   }
   
   return -1;
@@ -162,11 +159,11 @@ void CodeEmitterGen::run(raw_ostream &o) {
       if (!Vals[i].getPrefix() && !Vals[i].getValue()->isComplete()) {
         // Is the operand continuous? If so, we can just mask and OR it in
         // instead of doing it bit-by-bit, saving a lot in runtime cost.
-        const std::string &VarName = Vals[i].getName();
+        const Init *VarVal = Vals[i].getValue();
         bool gotOp = false;
         
         for (int bit = BI->getNumBits()-1; bit >= 0; ) {
-          int varBit = getVariableBit(VarName, BI, bit);
+          int varBit = getVariableBit(VarVal, BI, bit);
           
           if (varBit == -1) {
             --bit;
@@ -176,7 +173,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
             int N = 1;
             
             for (--bit; bit >= 0;) {
-              varBit = getVariableBit(VarName, BI, bit);
+              varBit = getVariableBit(VarVal, BI, bit);
               if (varBit == -1 || varBit != (beginVarBit - N)) break;
               ++N;
               --bit;
@@ -188,7 +185,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
               while (CGI.isFlatOperandNotEmitted(op))
                 ++op;
               
-              Case += "      // op: " + VarName + "\n"
+              Case += "      // op: " + Vals[i].getName() + "\n"
                    +  "      op = getMachineOpValue(MI, MI.getOperand("
                    +  utostr(op++) + "));\n";
               gotOp = true;
