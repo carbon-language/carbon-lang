@@ -255,7 +255,10 @@ namespace {
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
-    void WarnAboutReturnGotoContinueOrBreakStmts(Stmt *S);
+    void WarnAboutReturnGotoStmts(Stmt *S);
+    void HasReturnStmts(Stmt *S, bool &hasReturns);
+    void RewriteTryReturnStmts(Stmt *S);
+    void RewriteSyncReturnStmts(Stmt *S, std::string buf);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
     Stmt *RewriteObjCCatchStmt(ObjCAtCatchStmt *S);
@@ -1513,7 +1516,9 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "}\n";
   buf += "{ /* implicit finally clause */\n";
   buf += "  if (!_rethrow) objc_exception_try_exit(&_stack);\n";
-  buf += "  objc_sync_exit(";
+  
+  std::string syncBuf;
+  syncBuf += " objc_sync_exit(";
   Expr *syncExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(),
                                                 CastExpr::CK_Unknown,
                                                 S->getSynchExpr(),
@@ -1524,27 +1529,98 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   llvm::raw_string_ostream syncExprBuf(syncExprBufS);
   syncExpr->printPretty(syncExprBuf, *Context, 0,
                         PrintingPolicy(LangOpts));
-  buf += syncExprBuf.str();
-  buf += ");\n";
-  buf += "  if (_rethrow) objc_exception_throw(_rethrow);\n";
+  syncBuf += syncExprBuf.str();
+  syncBuf += ");";
+  
+  buf += syncBuf;
+  buf += "\n  if (_rethrow) objc_exception_throw(_rethrow);\n";
   buf += "}\n";
   buf += "}";
 
   ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
+
+  bool hasReturns = false;
+  HasReturnStmts(S->getSynchBody(), hasReturns);
+  if (hasReturns)
+    RewriteSyncReturnStmts(S->getSynchBody(), syncBuf);
+
   return 0;
 }
 
-void RewriteObjC::WarnAboutReturnGotoContinueOrBreakStmts(Stmt *S) {
+void RewriteObjC::WarnAboutReturnGotoStmts(Stmt *S)
+{
   // Perform a bottom up traversal of all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI)
-      WarnAboutReturnGotoContinueOrBreakStmts(*CI);
+      WarnAboutReturnGotoStmts(*CI);
 
-  if (isa<ReturnStmt>(S) || isa<ContinueStmt>(S) ||
-      isa<BreakStmt>(S) || isa<GotoStmt>(S)) {
+  if (isa<ReturnStmt>(S) || isa<GotoStmt>(S)) {
     Diags.Report(Context->getFullLoc(S->getLocStart()),
                  TryFinallyContainsReturnDiag);
+  }
+  return;
+}
+
+void RewriteObjC::HasReturnStmts(Stmt *S, bool &hasReturns) 
+{  
+  // Perform a bottom up traversal of all children.
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+        CI != E; ++CI)
+   if (*CI)
+     HasReturnStmts(*CI, hasReturns);
+
+ if (isa<ReturnStmt>(S))
+   hasReturns = true;
+ return;
+}
+
+void RewriteObjC::RewriteTryReturnStmts(Stmt *S) {
+ // Perform a bottom up traversal of all children.
+ for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+      CI != E; ++CI)
+   if (*CI) {
+     RewriteTryReturnStmts(*CI);
+   }
+ if (isa<ReturnStmt>(S)) {
+   SourceLocation startLoc = S->getLocStart();
+   const char *startBuf = SM->getCharacterData(startLoc);
+
+   const char *semiBuf = strchr(startBuf, ';');
+   assert((*semiBuf == ';') && "RewriteTryReturnStmts: can't find ';'");
+   SourceLocation onePastSemiLoc = startLoc.getFileLocWithOffset(semiBuf-startBuf+1);
+
+   std::string buf;
+   buf = "{ objc_exception_try_exit(&_stack); return";
+   
+   ReplaceText(startLoc, 6, buf.c_str(), buf.size());
+   InsertText(onePastSemiLoc, "}", 1);
+ }
+ return;
+}
+
+void RewriteObjC::RewriteSyncReturnStmts(Stmt *S, std::string syncExitBuf) {
+  // Perform a bottom up traversal of all children.
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    if (*CI) {
+      RewriteSyncReturnStmts(*CI, syncExitBuf);
+    }
+  if (isa<ReturnStmt>(S)) {
+    SourceLocation startLoc = S->getLocStart();
+    const char *startBuf = SM->getCharacterData(startLoc);
+
+    const char *semiBuf = strchr(startBuf, ';');
+    assert((*semiBuf == ';') && "RewriteSyncReturnStmts: can't find ';'");
+    SourceLocation onePastSemiLoc = startLoc.getFileLocWithOffset(semiBuf-startBuf+1);
+
+    std::string buf;
+    buf = "{ objc_exception_try_exit(&_stack);";
+    buf += syncExitBuf;
+    buf += " return";
+    
+    ReplaceText(startLoc, 6, buf.c_str(), buf.size());
+    InsertText(onePastSemiLoc, "}", 1);
   }
   return;
 }
@@ -1700,13 +1776,21 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     lastCurlyLoc = body->getLocEnd();
 
     // Now check for any return/continue/go statements within the @try.
-    WarnAboutReturnGotoContinueOrBreakStmts(S->getTryBody());
+    WarnAboutReturnGotoStmts(S->getTryBody());
   } else { /* no finally clause - make sure we synthesize an implicit one */
     buf = "{ /* implicit finally clause */\n";
     buf += " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
     buf += " if (_rethrow) objc_exception_throw(_rethrow);\n";
     buf += "}";
     ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
+    
+    // Now check for any return/continue/go statements within the @try.
+    // The implicit finally clause won't called if the @try contains any
+    // jump statements.
+    bool hasReturns = false;
+    HasReturnStmts(S->getTryBody(), hasReturns);
+    if (hasReturns)
+      RewriteTryReturnStmts(S->getTryBody());
   }
   // Now emit the final closing curly brace...
   lastCurlyLoc = lastCurlyLoc.getFileLocWithOffset(1);

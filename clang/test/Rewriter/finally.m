@@ -11,7 +11,7 @@ int main() {
   while (1) {
     @try {
       printf("executing try");
-      break; // expected-warning{{rewriter doesn't support user-specified control flow semantics for @try/@finally (code may not execute properly)}}
+      break;
     } @finally {
       printf("executing finally");
     }
@@ -23,5 +23,20 @@ int main() {
     printf("executing finally");
   }
   return 0;
+}
+
+void test_sync_with_implicit_finally() {
+    id foo;
+    @synchronized (foo) {
+        return; // The rewriter knows how to generate code for implicit finally
+    }
+}
+
+void test2_try_with_implicit_finally() {
+    @try {
+        return; // The rewriter knows how to generate code for implicit finally
+    } @catch (id e) {
+        
+    }
 }
 
