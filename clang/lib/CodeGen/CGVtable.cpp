@@ -1092,7 +1092,7 @@ createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD,
   
   // Figure out the right linkage.
   llvm::GlobalVariable::LinkageTypes Linkage = 
-    llvm::GlobalValue::LinkOnceODRLinkage;
+    llvm::GlobalValue::WeakODRLinkage;
   if (!Init)
     Linkage = llvm::GlobalValue::ExternalLinkage;
   else if (RD->isInAnonymousNamespace())
@@ -1167,7 +1167,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
                                       b.getVtable().size());
     }
     llvm::GlobalVariable *OGV = GV;
-    GV = createGlobalVariable(*this, LayoutClass, ntype, C, Name);
+    GV = createGlobalVariable(*this, LayoutClass, ArrayType, Init, Name);
     if (OGV) {
       GV->takeName(OGV);
       llvm::Constant *NewPtr = 

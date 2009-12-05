@@ -15,9 +15,19 @@ struct B {
 
 B::B() { }
 
+struct C {
+  C();
+  virtual void f() { } 
+};
+
+C::C() { } 
+
 // B has a key function that is not defined in this translation unit so its vtable
 // has external linkage.
 // CHECK: @_ZTV1B = external constant
+
+// C has no key function, so its vtable should have weak_odr linkage.
+// CHECK: @_ZTV1C = weak_odr constant
 
 // The A vtable should have internal linkage since it is inside an anonymous 
 // namespace.

@@ -9,4 +9,4 @@ class B : A<int> {
 };
 B::B() {}
 
-// CHECK: @_ZTV1AIiE = linkonce_odr constant
+// CHECK: @_ZTV1AIiE = weak_odr constant
