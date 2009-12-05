@@ -373,21 +373,22 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       IntrinsicID = II->getIntrinsicID();
 
     switch (IntrinsicID) {
-      case Intrinsic::lifetime_start:
-      case Intrinsic::lifetime_end:
-      case Intrinsic::invariant_start:
-        MemPtr = QueryInst->getOperand(2);
-        MemSize = cast<ConstantInt>(QueryInst->getOperand(1))->getZExtValue();
-        break;
-      case Intrinsic::invariant_end:
-        MemPtr = QueryInst->getOperand(3);
-        MemSize = cast<ConstantInt>(QueryInst->getOperand(2))->getZExtValue();
-        break;
-      default:
-        CallSite QueryCS = CallSite::get(QueryInst);
-        bool isReadOnly = AA->onlyReadsMemory(QueryCS);
-        LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
-                                               QueryParent);
+    case Intrinsic::lifetime_start:
+    case Intrinsic::lifetime_end:
+    case Intrinsic::invariant_start:
+      MemPtr = QueryInst->getOperand(2);
+      MemSize = cast<ConstantInt>(QueryInst->getOperand(1))->getZExtValue();
+      break;
+    case Intrinsic::invariant_end:
+      MemPtr = QueryInst->getOperand(3);
+      MemSize = cast<ConstantInt>(QueryInst->getOperand(2))->getZExtValue();
+      break;
+    default:
+      CallSite QueryCS = CallSite::get(QueryInst);
+      bool isReadOnly = AA->onlyReadsMemory(QueryCS);
+      LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
+                                             QueryParent);
+      break;
     }
   } else {
     // Non-memory instruction.
