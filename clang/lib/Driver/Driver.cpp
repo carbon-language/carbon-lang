@@ -124,12 +124,13 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   CCCPrintOptions = Args->hasArg(options::OPT_ccc_print_options);
   CCCPrintActions = Args->hasArg(options::OPT_ccc_print_phases);
   CCCPrintBindings = Args->hasArg(options::OPT_ccc_print_bindings);
-  CCCIsCXX = Args->hasArg(options::OPT_ccc_cxx);
+  CCCIsCXX = Args->hasArg(options::OPT_ccc_cxx) || CCCIsCXX;
   CCCEcho = Args->hasArg(options::OPT_ccc_echo);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_gcc_name))
     CCCGenericGCCName = A->getValue(*Args);
   CCCUseClangCXX = Args->hasFlag(options::OPT_ccc_clang_cxx,
-                                 options::OPT_ccc_no_clang_cxx);
+                                 options::OPT_ccc_no_clang_cxx,
+                                 CCCUseClangCXX);
   CCCUsePCH = Args->hasFlag(options::OPT_ccc_pch_is_pch,
                             options::OPT_ccc_pch_is_pth);
   CCCUseClang = !Args->hasArg(options::OPT_ccc_no_clang);
