@@ -1129,7 +1129,7 @@ namespace {
                                                    : X.Pattern->getTypedText();
         const char *YStr = (Y.Kind == Result::RK_Keyword)? Y.Keyword 
                                                    : Y.Pattern->getTypedText();
-        return strcasecmp(XStr, YStr) < 0;
+        return llvm::StringRef(XStr).compare_lower(YStr) < 0;
       }
       
       // Result kinds are ordered by decreasing importance.
