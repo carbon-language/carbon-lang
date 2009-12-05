@@ -16,7 +16,6 @@
 
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineMemOperand.h"
 
 namespace llvm {
 
@@ -27,6 +26,7 @@ class LiveVariables;
 class CalleeSavedInfo;
 class SDNode;
 class SelectionDAG;
+class MachineMemOperand;
 
 template<class T> class SmallVectorImpl;
 
