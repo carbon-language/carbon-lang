@@ -1155,16 +1155,8 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     if (Hidden)
       GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
   }
-  llvm::Constant *vtable = llvm::ConstantExpr::getBitCast(GV, Ptr8Ty);
-  llvm::Constant *AddressPointC;
-  uint32_t LLVMPointerWidth = getContext().Target.getPointerWidth(0);
-  AddressPointC = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                         AddressPoint*LLVMPointerWidth/8);
-  vtable = llvm::ConstantExpr::getInBoundsGetElementPtr(vtable, &AddressPointC,
-                                                        1);
-
-  assert(vtable->getType() == Ptr8Ty);
-  return vtable;
+  
+  return GV;
 }
 
 namespace {
@@ -1184,12 +1176,13 @@ class VTTBuilder {
   llvm::LLVMContext &VMContext;
 
   /// BuildVtablePtr - Build up a referene to the given secondary vtable
-  llvm::Constant *BuildVtablePtr(llvm::Constant *vtbl,
-                                 const CXXRecordDecl *VtblClass,
+  llvm::Constant *BuildVtablePtr(llvm::Constant *Vtable,
+                                 const CXXRecordDecl *VtableClass,
                                  const CXXRecordDecl *RD,
                                  uint64_t Offset) {
-    int64_t AddressPoint;
-    AddressPoint = (*AddressPoints[VtblClass])[std::make_pair(RD, Offset)];    
+    int64_t AddressPoint = 
+      (*AddressPoints[VtableClass])[std::make_pair(RD, Offset)];
+    
     // FIXME: We can never have 0 address point.  Do this for now so gepping
     // retains the same structure.  Later we'll just assert.
     if (AddressPoint == 0)
@@ -1197,12 +1190,17 @@ class VTTBuilder {
     D1(printf("XXX address point for %s in %s layout %s at offset %d was %d\n",
               RD->getNameAsCString(), VtblClass->getNameAsCString(),
               Class->getNameAsCString(), (int)Offset, (int)AddressPoint));
-    uint32_t LLVMPointerWidth = CGM.getContext().Target.getPointerWidth(0);
-    llvm::Constant *init;
-    init = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                  AddressPoint*LLVMPointerWidth/8);
-    init = llvm::ConstantExpr::getInBoundsGetElementPtr(vtbl, &init, 1);
-    return init;
+
+    llvm::Value *Idxs[] = {
+      llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), 0),
+      llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), AddressPoint)
+    };
+    
+    llvm::Constant *Init = 
+      llvm::ConstantExpr::getInBoundsGetElementPtr(Vtable, Idxs, 2);
+
+    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+    return llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
   }
 
   /// Secondary - Add the secondary vtable pointers to Inits.  Offset is the
@@ -1321,8 +1319,7 @@ public:
       VMContext(cgm.getModule().getContext()) {
     
     // First comes the primary virtual table pointer for the complete class...
-    ClassVtbl = cast<llvm::Constant>(CGM.getVtableInfo().getVtable(Class)
-                                     ->getOperand(0));
+    ClassVtbl = CGM.getVtableInfo().getVtable(Class);
     Inits.push_back(BuildVtablePtr(ClassVtbl, Class, Class, 0));
     
     // then the secondary VTTs...
@@ -1423,9 +1420,7 @@ llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
 llvm::Constant *CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
                                             const CXXRecordDecl *RD,
                                             uint64_t Offset) {
-  llvm::Constant *Vtable = CGM.GenerateVtable(LayoutClass, RD, Offset);
-  
-  return cast<llvm::Constant>(Vtable->getOperand(0));
+  return CGM.GenerateVtable(LayoutClass, RD, Offset);
 }
 
 void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {

@@ -1682,8 +1682,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
   const CXXRecordDecl *ClassDecl = CD->getParent();
   
   // FIXME: Add vbase initialization
-  llvm::Value *LoadOfThis = 0;
-
+  
   for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
        E = CD->init_end();
        B != E; ++B) {
@@ -1705,15 +1704,21 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
   if (!ClassDecl->isDynamicClass())
     return;
   
-  // Initialize the vtable pointer
-  if (!LoadOfThis)
-    LoadOfThis = LoadCXXThis();
+  // Initialize the vtable pointer.
+  // FIXME: This needs to initialize secondary vtable pointers too.
+  llvm::Value *ThisPtr = LoadCXXThis();
 
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Constant *Vtable = CGM.getVtableInfo().getVtable(ClassDecl);
+  uint64_t AddressPoint = CGM.getVtableInfo().getVtableAddressPoint(ClassDecl);
+
+  llvm::Value *VtableAddressPoint =
+    Builder.CreateConstInBoundsGEP2_64(Vtable, 0, AddressPoint);
+  
   llvm::Value *VtableField = 
-    Builder.CreateBitCast(LoadOfThis, Int8PtrTy->getPointerTo());
-  llvm::Value *vtable = CGM.getVtableInfo().getVtable(ClassDecl);
-  Builder.CreateStore(vtable, VtableField);
+    Builder.CreateBitCast(ThisPtr, 
+                          VtableAddressPoint->getType()->getPointerTo());
+  
+  Builder.CreateStore(VtableAddressPoint, VtableField);
 }
 
 /// EmitDtorEpilogue - Emit all code that comes at the end of class's
