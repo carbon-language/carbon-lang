@@ -1233,8 +1233,11 @@ class VTTBuilder {
           init = BuildVtablePtr(vtbl, VtblClass, RD, Offset);
         else {
           init = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset);
-          subvtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
+          
+          subvtbl = init;
           subVtblClass = Base;
+          
+          init = BuildVtablePtr(init, Class, Base, BaseOffset);
         }
         Inits.push_back(init);
       }
@@ -1257,6 +1260,8 @@ class VTTBuilder {
       VtblClass = Class;
     } else {
       init = CGM.getVtableInfo().getCtorVtable(Class, RD, Offset);
+      init = BuildVtablePtr(init, RD, RD, Offset);
+      
       VtblClass = RD;
     }
     llvm::Constant *vtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
@@ -1301,6 +1306,7 @@ class VTTBuilder {
       VirtualVTTs(Base);
     }
   }
+
 public:
   VTTBuilder(std::vector<llvm::Constant *> &inits, const CXXRecordDecl *c,
              CodeGenModule &cgm)
@@ -1412,7 +1418,9 @@ llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
 llvm::Constant *CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
                                             const CXXRecordDecl *RD,
                                             uint64_t Offset) {
-  return CGM.GenerateVtable(LayoutClass, RD, Offset);
+  llvm::Constant *Vtable = CGM.GenerateVtable(LayoutClass, RD, Offset);
+  
+  return cast<llvm::Constant>(Vtable->getOperand(0));
 }
 
 void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
