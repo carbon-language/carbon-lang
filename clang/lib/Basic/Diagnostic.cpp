@@ -210,7 +210,6 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ErrorOccurred = false;
   FatalErrorOccurred = false;
   NumDiagnostics = 0;
-  LangOpts = 0;
   
   NumErrors = 0;
   CustomDiagInfo = 0;

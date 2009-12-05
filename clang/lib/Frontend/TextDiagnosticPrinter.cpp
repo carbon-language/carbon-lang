@@ -655,9 +655,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         OS.changeColor(savedColor, true);
       
       // Emit a Visual Studio compatible line number syntax.
-      // This check is a bit paranoid (in case LangOpts isn't set).
-      if (Info.getDiags() && Info.getDiags()->getLangOpts() &&
-          Info.getDiags()->getLangOpts()->Microsoft) {
+      if (LangOpts && LangOpts->Microsoft) {
         OS << PLoc.getFilename() << '(' << LineNo << ')';
         OS << " : ";
       } else {
