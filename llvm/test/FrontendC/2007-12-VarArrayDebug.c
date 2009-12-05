@@ -1,5 +1,5 @@
-// RUN: %llvmgcc -S -g -O %s -o - | llvm-as | llc
-// RUN: %llvmgcc -S -g %s -o - | llvm-as | llc
+// RUN: %llvmgcc -S -g -O %s -o - | llc
+// RUN: %llvmgcc -S -g %s -o - | llc
 
 extern void foo (void);
 

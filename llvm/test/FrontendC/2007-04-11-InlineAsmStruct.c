@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -emit-llvm -o - | llvm-as | llc
+// RUN: %llvmgcc %s -S -emit-llvm -o - | llc
 
 struct V { short X, Y; };
 int bar() {

@@ -1,6 +1,6 @@
 // Verify that the %c modifier works and strips off any prefixes from 
 // immediates.
-// RUN: %llvmgcc -S %s -o - | llvm-as | llc | grep {pickANumber: 789514}
+// RUN: %llvmgcc -S %s -o - | llc | grep {pickANumber: 789514}
 
 void foo() {
   __asm__         volatile("/* " "pickANumber" ": %c0 */"::"i"(0xC0C0A));

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -std=c99 %s -S -o - | llvm-as | \
+// RUN: %llvmgcc -std=c99 %s -S -o - | \
 // RUN:    opt -std-compile-opts -disable-output
 // PR580
 

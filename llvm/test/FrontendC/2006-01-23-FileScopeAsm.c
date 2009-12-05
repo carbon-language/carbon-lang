@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o - | llvm-as | opt -std-compile-opts | \
+// RUN: %llvmgcc %s -S -o - | opt -std-compile-opts | \
 // RUN:    llvm-dis | grep {foo\[12345\]} | count 5
 
 __asm__ ("foo1");

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | \
+// RUN: %llvmgcc -S -O0 -g %s -o - | \
 // RUN:     llc --disable-fp-elim -o %t.s -O0 
 // RUN: grep id %t.s | grep DW_AT_name
 @interface A
