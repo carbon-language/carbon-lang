@@ -31,7 +31,7 @@ void test2() {
 
 
 void test3() {
-  // This should codegen as a "@test3.x" global + memcpy.
+  // This should codegen as a memset.
   int x[100] = { 0 };
   foo(x);
   
