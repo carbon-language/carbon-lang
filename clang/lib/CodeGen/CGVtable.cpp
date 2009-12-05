@@ -1251,27 +1251,26 @@ class VTTBuilder {
     if (RD->getNumVBases() == 0 && !MorallyVirtual)
       return;
 
-    llvm::Constant *init;
-    const CXXRecordDecl *VtblClass;
+    llvm::Constant *Vtable;
+    const CXXRecordDecl *VtableClass;
 
     // First comes the primary virtual table pointer...
     if (MorallyVirtual) {
-      init = BuildVtablePtr(ClassVtbl, Class, RD, Offset);
-      VtblClass = Class;
+      Vtable = ClassVtbl;
+      VtableClass = Class;
     } else {
-      init = CGM.getVtableInfo().getCtorVtable(Class, RD, Offset);
-      init = BuildVtablePtr(init, RD, RD, Offset);
-      
-      VtblClass = RD;
+      Vtable = CGM.getVtableInfo().getCtorVtable(Class, RD, Offset);
+      VtableClass = RD;
     }
-    llvm::Constant *vtbl = cast<llvm::Constant>(init->getOperand(0));
-    Inits.push_back(init);
+    
+    llvm::Constant *Init = BuildVtablePtr(Vtable, VtableClass, RD, Offset);
+    Inits.push_back(Init);
 
     // then the secondary VTTs....
     SecondaryVTTs(RD, Offset, MorallyVirtual);
 
     // and last the secondary vtable pointers.
-    Secondary(RD, vtbl, VtblClass, Offset, MorallyVirtual);
+    Secondary(RD, Vtable, VtableClass, Offset, MorallyVirtual);
   }
 
   /// SecondaryVTTs - Add the secondary VTTs to Inits.  The secondary VTTs are
