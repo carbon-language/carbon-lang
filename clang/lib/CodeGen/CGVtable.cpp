@@ -1130,21 +1130,20 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     b.GenerateVtableForVBases(RD, Offset);
 
     llvm::Constant *C = 0;
-    llvm::Type *type = Ptr8Ty;
+    llvm::ArrayType *ntype = 
+      llvm::ArrayType::get(Ptr8Ty, b.getVtable().size());
+
     llvm::GlobalVariable::LinkageTypes linktype
       = llvm::GlobalValue::ExternalLinkage;
     if (CreateDefinition) {
-      llvm::ArrayType *ntype = 
-        llvm::ArrayType::get(Ptr8Ty, b.getVtable().size());
       C = llvm::ConstantArray::get(ntype, &b.getVtable()[0], 
                                    b.getVtable().size());
       linktype = llvm::GlobalValue::LinkOnceODRLinkage;
       if (LayoutClass->isInAnonymousNamespace())
         linktype = llvm::GlobalValue::InternalLinkage;
-      type = ntype;
     }
     llvm::GlobalVariable *OGV = GV;
-    GV = new llvm::GlobalVariable(getModule(), type, true, linktype, C, Name);
+    GV = new llvm::GlobalVariable(getModule(), ntype, true, linktype, C, Name);
     if (OGV) {
       GV->takeName(OGV);
       llvm::Constant *NewPtr = llvm::ConstantExpr::getBitCast(GV,
