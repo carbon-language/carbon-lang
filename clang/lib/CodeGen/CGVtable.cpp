@@ -31,7 +31,8 @@ private:
   // Vtable - The components of the vtable being built.
   typedef llvm::SmallVector<llvm::Constant *, 64> VtableVectorTy;
   VtableVectorTy Vtable;
-  
+  const bool BuildVtable;
+
   llvm::Type *Ptr8Ty;
   
   /// MostDerivedClass - The most derived class that this vtable is being 
@@ -178,15 +179,18 @@ private:
   
 public:
   VtableBuilder(const CXXRecordDecl *MostDerivedClass,
-                const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm)
-    : MostDerivedClass(MostDerivedClass), LayoutClass(l), LayoutOffset(lo),
-      BLayout(cgm.getContext().getASTRecordLayout(l)),
-      rtti(cgm.GenerateRTTIRef(MostDerivedClass)), 
-      VMContext(cgm.getModule().getContext()),CGM(cgm), PureVirtualFn(0),
+                const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm,
+                bool build)
+    : BuildVtable(build), MostDerivedClass(MostDerivedClass), LayoutClass(l),
+      LayoutOffset(lo), BLayout(cgm.getContext().getASTRecordLayout(l)),
+      rtti(0), VMContext(cgm.getModule().getContext()),CGM(cgm),
+      PureVirtualFn(0),
       subAddressPoints(AllocAddressPoint(cgm, l, MostDerivedClass)),
       Extern(!l->isInAnonymousNamespace()),
-    LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
+      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
+    if (BuildVtable)
+      rtti = cgm.GenerateRTTIRef(MostDerivedClass);
   }
 
   // getVtable - Returns a reference to the vtable components.
@@ -420,13 +424,15 @@ public:
     D1(printf("============= combining vbase/vcall\n"));
     D(VCalls.insert(VCalls.begin(), 673));
     D(VCalls.push_back(672));
-    
+
     Vtable.insert(Vtable.begin() + InsertionPoint, VCalls.size(), 0);
-    // The vcalls come first...
-    for (std::vector<Index_t>::reverse_iterator i = VCalls.rbegin(),
-           e = VCalls.rend();
-         i != e; ++i)
-      Vtable[InsertionPoint++] = wrap((0?600:0) + *i);
+    if (BuildVtable) {
+      // The vcalls come first...
+      for (std::vector<Index_t>::reverse_iterator i = VCalls.rbegin(),
+             e = VCalls.rend();
+           i != e; ++i)
+        Vtable[InsertionPoint++] = wrap((0?600:0) + *i);
+    }
     VCalls.clear();
     VCall.clear();
   }
@@ -481,7 +487,7 @@ public:
       extra = -VCalls.size();
 
     // Add the offset to top.
-    Vtable.push_back(wrap(-((Offset-LayoutOffset)/8)));
+    Vtable.push_back(BuildVtable ? wrap(-((Offset-LayoutOffset)/8)) : 0);
     
     // Add the RTTI information.
     Vtable.push_back(rtti);
@@ -839,6 +845,14 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 }
 
 void VtableBuilder::AppendMethodsToVtable() {
+  if (!BuildVtable) {
+    Vtable.insert(Vtable.end(), Methods.size(), (llvm::Constant*)0);
+    ThisAdjustments.clear();
+    BaseReturnTypes.clear();
+    Methods.clear();
+    return;
+  }
+
   // Reserve room in the vtable for our new methods.
   Vtable.reserve(Vtable.size() + Methods.size());
 
@@ -1048,7 +1062,7 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
-  VtableBuilder b(RD, RD, 0, CGM);
+  VtableBuilder b(RD, RD, 0, CGM, false);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -1089,15 +1103,6 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     if (AddressPoint == 0)
       AddressPoint = 1;
   } else {
-    VtableBuilder b(RD, LayoutClass, Offset, *this);
-
-    D1(printf("vtable %s\n", RD->getNameAsCString()));
-    // First comes the vtables for all the non-virtual bases...
-    AddressPoint = b.GenerateVtableForBase(RD, Offset);
-
-    // then the vtables for all the virtual bases.
-    b.GenerateVtableForVBases(RD, Offset);
-
     bool CreateDefinition = true;
     if (LayoutClass != RD)
       CreateDefinition = true;
@@ -1113,6 +1118,15 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
         }
       }
     }
+
+    VtableBuilder b(RD, LayoutClass, Offset, *this, CreateDefinition);
+
+    D1(printf("vtable %s\n", RD->getNameAsCString()));
+    // First comes the vtables for all the non-virtual bases...
+    AddressPoint = b.GenerateVtableForBase(RD, Offset);
+
+    // then the vtables for all the virtual bases.
+    b.GenerateVtableForVBases(RD, Offset);
 
     llvm::Constant *C = 0;
     llvm::Type *type = Ptr8Ty;
