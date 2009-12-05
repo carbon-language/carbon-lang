@@ -2,6 +2,8 @@
 
 // CHECK: @test1.x = internal constant [12 x i32] [i32 1
 // CHECK: @test2.x = internal constant [13 x i32] [i32 1,
+// CHECK: @test5w = global %0 { i32 2, [4 x i8] undef }
+// CHECK: @test5y = global %union.test5u { double 7.300000e+0{{[0]*}}1 }
 
 #include <string.h>
 
@@ -37,4 +39,25 @@ void test3() {
   // CHECK: %x = alloca [100 x i32]
   // CHECK: call void @llvm.memset
 }
+
+void test4(void) {
+  char a[10] = "asdf";
+  char b[10] = { "asdf" };
+  // CHECK: @test4()
+  // CHECK: %a = alloca [10 x i8]
+  // CHECK: %b = alloca [10 x i8]
+  // CHECK: call void @llvm.memcpy
+  // CHECK: call void @llvm.memcpy
+}
+
+
+union test5u { int i; double d; };
+
+void test5() {
+  union test5u ola = (union test5u) 351;
+  union test5u olb = (union test5u) 1.0;
+}
+
+union test5u test5w = (union test5u)2;
+union test5u test5y = (union test5u)73.0;
 
