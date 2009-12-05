@@ -323,14 +323,16 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   if (Ty->isConstantSizeType()) {
     if (!Target.useGlobalsForAutomaticVariables()) {
       
-      // All constant structs and arrays should be global if
-      // their initializer is constant and if the element type is POD.
-      if (CGM.getCodeGenOpts().MergeAllConstants) {
-        if (Ty.isConstant(getContext())
-            && (Ty->isArrayType() || Ty->isRecordType())
-            && (D.getInit() 
-                && D.getInit()->isConstantInitializer(getContext()))
-            && Ty->isPODType()) {
+      // If this value is an array or struct, is POD, and if the initializer is
+      // a staticly determinable constant, try to optimize it.
+      if (D.getInit() &&
+          (Ty->isArrayType() || Ty->isRecordType()) &&
+          Ty->isPODType() &&
+          D.getInit()->isConstantInitializer(getContext())) {
+
+        // If this variable is marked 'const', emit the value as a global.
+        if (CGM.getCodeGenOpts().MergeAllConstants &&
+            Ty.isConstant(getContext())) {
           EmitStaticBlockVarDecl(D);
           return;
         }
