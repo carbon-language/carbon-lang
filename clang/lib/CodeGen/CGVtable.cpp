@@ -1388,27 +1388,11 @@ void CGVtableInfo::GenerateClassData(const CXXRecordDecl *RD) {
 }
 
 llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
-  llvm::Constant *&vtbl = Vtables[RD];
-  if (vtbl)
-    return vtbl;
-  vtbl = CGM.GenerateVtable(RD, RD);
+  llvm::Constant *&Vtable = Vtables[RD];
+  if (!Vtable)
+    Vtable = CGM.GenerateVtable(RD, RD);
 
-  bool CreateDefinition = true;
-
-  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-  if (const CXXMethodDecl *KeyFunction = Layout.getKeyFunction()) {
-    if (!KeyFunction->getBody()) {
-      // If there is a KeyFunction, and it isn't defined, just build a
-      // reference to the vtable.
-      CreateDefinition = false;
-    }
-  }
-
-  if (CreateDefinition) {
-    CGM.GenerateRTTI(RD);
-    CGM.GenerateVTT(RD);
-  }
-  return vtbl;
+  return Vtable;
 }
 
 llvm::Constant *CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
@@ -1421,24 +1405,30 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const CXXRecordDecl *RD = MD->getParent();
 
+  // If the class doesn't have a vtable we don't need to emit one.
+  if (!RD->isDynamicClass())
+    return;
+  
   const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
   
   // Get the key function.
   const CXXMethodDecl *KeyFunction = Layout.getKeyFunction();
   
-  if (!KeyFunction) {
-    // If there's no key function, we don't want to emit the vtable here.
-    return;
+  if (KeyFunction) {
+    // We don't have the right key function.
+    if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
+      return;
+    
+    // If the key function is a destructor, we only want to emit the vtable 
+    // once, so do it for the complete destructor.
+    if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() != Dtor_Complete)
+      return;
+  } else {
+    // If there is no key function, we only want to emit the vtable if we are
+    // emitting a constructor.
+    if (!isa<CXXConstructorDecl>(MD) || GD.getCtorType() != Ctor_Complete)
+      return;
   }
-
-  // Check if we have the key function.
-  if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
-    return;
-  
-  // If the key function is a destructor, we only want to emit the vtable once,
-  // so do it for the complete destructor.
-  if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() != Dtor_Complete)
-    return;
 
   // Emit the data.
   GenerateClassData(RD);
