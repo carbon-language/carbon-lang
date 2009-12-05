@@ -368,27 +368,15 @@ public:
   }
 
   void InvalidateEntry(const StructType *Ty) {
-    LayoutInfoTy::iterator I = this->find(Ty);
-    if (I == this->end()) return;
+    LayoutInfoTy::iterator I = LayoutInfo.find(Ty);
+    if (I == LayoutInfo.end()) return;
 
     I->second->~StructLayout();
     free(I->second);
-    this->erase(I);
+    LayoutInfo.erase(I);
 
     if (Ty->isAbstract())
       Ty->removeAbstractTypeUser(this);
-  }
-
-  LayoutInfoTy::iterator end() {
-    return LayoutInfo.end();
-  }
-
-  LayoutInfoTy::iterator find(const StructType *&Val) {
-    return LayoutInfo.find(Val);
-  }
-
-  bool erase(LayoutInfoTy::iterator I) {
-    return LayoutInfo.erase(I);
   }
 
   StructLayout *&operator[](const StructType *STy) {
