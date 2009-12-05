@@ -5014,6 +5014,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
                                     unsigned OpaqueOpc, bool isRelational) {
   BinaryOperator::Opcode Opc = (BinaryOperator::Opcode)OpaqueOpc;
 
+  // Handle vector comparisons separately.
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorCompareOperands(lex, rex, Loc, isRelational);
 
@@ -5091,17 +5092,15 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   }
 
   // The result of comparisons is 'bool' in C++, 'int' in C.
-  QualType ResultTy = getLangOptions().CPlusPlus? Context.BoolTy :Context.IntTy;
+  QualType ResultTy = getLangOptions().CPlusPlus ? Context.BoolTy:Context.IntTy;
 
   if (isRelational) {
     if (lType->isRealType() && rType->isRealType())
       return ResultTy;
   } else {
     // Check for comparisons of floating point operands using != and ==.
-    if (lType->isFloatingType()) {
-      assert(rType->isFloatingType());
+    if (lType->isFloatingType() && rType->isFloatingType())
       CheckFloatComparison(Loc,lex,rex);
-    }
 
     if (lType->isArithmeticType() && rType->isArithmeticType())
       return ResultTy;

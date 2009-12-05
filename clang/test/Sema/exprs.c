@@ -111,4 +111,6 @@ test15_t test15(void) {
   return (test15_t)0 + (test15_t)0;  // expected-error {{invalid operands to binary expression ('test15_t' (aka 'unsigned long *') and 'test15_t')}}
 }
 
+// rdar://7446395
+void test16(float x) { x == ((void*) 0); }  // expected-error {{invalid operands to binary expression}}
 
