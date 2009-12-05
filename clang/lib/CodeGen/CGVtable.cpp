@@ -747,17 +747,11 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
   const bool isPure = MD->isPure();
-  typedef CXXMethodDecl::method_iterator meth_iter;
+  
   // FIXME: Should OverrideOffset's be Offset?
 
-  // FIXME: Don't like the nested loops.  For very large inheritance
-  // heirarchies we could have a table on the side with the final overridder
-  // and just replace each instance of an overridden method once.  Would be
-  // nice to measure the cost/benefit on real code.
-
-  for (meth_iter mi = MD->begin_overridden_methods(),
-         e = MD->end_overridden_methods();
-       mi != e; ++mi) {
+  for (CXXMethodDecl::method_iterator mi = MD->begin_overridden_methods(),
+       e = MD->end_overridden_methods(); mi != e; ++mi) {
     GlobalDecl OGD;
     
     const CXXMethodDecl *OMD = *mi;
@@ -1332,6 +1326,33 @@ public:
 };
 }
 
+/// createGlobalVariable - Create a global variable to be used for storing 
+/// either a vtable, a construction vtable or a VTT. The returned global
+// variable will have the correct linkage set based on the given record decl.
+static llvm::GlobalVariable *
+createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD, 
+                     const llvm::Type *Type, llvm::Constant *Init,
+                     const llvm::Twine &Name) {
+  
+  // Figure out the right linkage.
+  llvm::GlobalVariable::LinkageTypes Linkage = 
+    llvm::GlobalValue::LinkOnceODRLinkage;
+  if (RD->isInAnonymousNamespace())
+    Linkage = llvm::GlobalValue::InternalLinkage;
+
+  // Create the variable.
+  llvm::GlobalVariable *V = 
+    new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
+                             Linkage, Init, Name);
+  
+
+  bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
+  if (Hidden)
+    V->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+  
+  return V;
+}
+
 llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   // Only classes that have virtual bases need a VTT.
   if (RD->getNumVBases() == 0)
@@ -1341,26 +1362,21 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   getMangleContext().mangleCXXVTT(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
-  llvm::GlobalVariable::LinkageTypes linktype;
-  linktype = llvm::GlobalValue::LinkOnceODRLinkage;
-  if (RD->isInAnonymousNamespace())
-    linktype = llvm::GlobalValue::InternalLinkage;
-  std::vector<llvm::Constant *> inits;
-  llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
 
   D1(printf("vtt %s\n", RD->getNameAsCString()));
 
+  std::vector<llvm::Constant *> inits;
   VTTBuilder b(inits, RD, *this);
 
-  llvm::Constant *C;
-  llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, inits.size());
-  C = llvm::ConstantArray::get(type, inits);
-  llvm::GlobalVariable *vtt = new llvm::GlobalVariable(getModule(), type, true,
-                                                       linktype, C, Name);
-  bool Hidden = getDeclVisibilityMode(RD) == LangOptions::Hidden;
-  if (Hidden)
-    vtt->setVisibility(llvm::GlobalVariable::HiddenVisibility);
-  return llvm::ConstantExpr::getBitCast(vtt, Ptr8Ty);
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  const llvm::ArrayType *Type = llvm::ArrayType::get(Int8PtrTy, inits.size());
+  
+  llvm::Constant *Init = llvm::ConstantArray::get(Type, inits);
+  
+  llvm::GlobalVariable *VTT = 
+    createGlobalVariable(*this, RD, Type, Init, Name);
+  
+  return llvm::ConstantExpr::getBitCast(VTT, Int8PtrTy);
 }
 
 void CGVtableInfo::GenerateClassData(const CXXRecordDecl *RD) {
