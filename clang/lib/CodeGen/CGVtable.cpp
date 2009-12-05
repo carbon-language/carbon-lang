@@ -1082,6 +1082,35 @@ uint64_t CGVtableInfo::getVtableAddressPoint(const CXXRecordDecl *RD) {
   return AddressPoint;
 }
 
+/// createGlobalVariable - Create a global variable to be used for storing 
+/// either a vtable, a construction vtable or a VTT. The returned global
+// variable will have the correct linkage set based on the given record decl.
+static llvm::GlobalVariable *
+createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD, 
+                     const llvm::Type *Type, llvm::Constant *Init,
+                     const llvm::Twine &Name) {
+  
+  // Figure out the right linkage.
+  llvm::GlobalVariable::LinkageTypes Linkage = 
+    llvm::GlobalValue::LinkOnceODRLinkage;
+  if (!Init)
+    Linkage = llvm::GlobalValue::ExternalLinkage;
+  else if (RD->isInAnonymousNamespace())
+    Linkage = llvm::GlobalValue::InternalLinkage;
+
+  // Create the variable.
+  llvm::GlobalVariable *V = 
+    new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
+                             Linkage, Init, Name);
+  
+
+  bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
+  if (Hidden)
+    V->setVisibility(llvm::GlobalVariable::HiddenVisibility);
+  
+  return V;
+}
+
 llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
                                               const CXXRecordDecl *RD,
                                               uint64_t Offset) {
@@ -1129,31 +1158,23 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     // then the vtables for all the virtual bases.
     b.GenerateVtableForVBases(RD, Offset);
 
-    llvm::Constant *C = 0;
-    llvm::ArrayType *ntype = 
+    llvm::Constant *Init = 0;
+    llvm::ArrayType *ArrayType = 
       llvm::ArrayType::get(Ptr8Ty, b.getVtable().size());
 
-    llvm::GlobalVariable::LinkageTypes linktype
-      = llvm::GlobalValue::ExternalLinkage;
     if (CreateDefinition) {
-      C = llvm::ConstantArray::get(ntype, &b.getVtable()[0], 
-                                   b.getVtable().size());
-      linktype = llvm::GlobalValue::LinkOnceODRLinkage;
-      if (LayoutClass->isInAnonymousNamespace())
-        linktype = llvm::GlobalValue::InternalLinkage;
+      Init = llvm::ConstantArray::get(ArrayType, &b.getVtable()[0], 
+                                      b.getVtable().size());
     }
     llvm::GlobalVariable *OGV = GV;
-    GV = new llvm::GlobalVariable(getModule(), ntype, true, linktype, C, Name);
+    GV = createGlobalVariable(*this, LayoutClass, ntype, C, Name);
     if (OGV) {
       GV->takeName(OGV);
-      llvm::Constant *NewPtr = llvm::ConstantExpr::getBitCast(GV,
-                                                              OGV->getType());
+      llvm::Constant *NewPtr = 
+        llvm::ConstantExpr::getBitCast(GV, OGV->getType());
       OGV->replaceAllUsesWith(NewPtr);
       OGV->eraseFromParent();
     }
-    bool Hidden = getDeclVisibilityMode(RD) == LangOptions::Hidden;
-    if (Hidden)
-      GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
   }
   
   return GV;
@@ -1332,33 +1353,6 @@ public:
     VirtualVTTs(Class);
   }
 };
-}
-
-/// createGlobalVariable - Create a global variable to be used for storing 
-/// either a vtable, a construction vtable or a VTT. The returned global
-// variable will have the correct linkage set based on the given record decl.
-static llvm::GlobalVariable *
-createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD, 
-                     const llvm::Type *Type, llvm::Constant *Init,
-                     const llvm::Twine &Name) {
-  
-  // Figure out the right linkage.
-  llvm::GlobalVariable::LinkageTypes Linkage = 
-    llvm::GlobalValue::LinkOnceODRLinkage;
-  if (RD->isInAnonymousNamespace())
-    Linkage = llvm::GlobalValue::InternalLinkage;
-
-  // Create the variable.
-  llvm::GlobalVariable *V = 
-    new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
-                             Linkage, Init, Name);
-  
-
-  bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
-  if (Hidden)
-    V->setVisibility(llvm::GlobalVariable::HiddenVisibility);
-  
-  return V;
 }
 
 llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
