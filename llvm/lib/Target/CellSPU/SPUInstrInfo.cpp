@@ -580,10 +580,6 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   }
 }
 
-bool
-SPUInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
-  return (!MBB.empty() && isUncondBranch(&MBB.back()));
-}
 //! Reverses a branch's condition, returning false on success.
 bool
 SPUInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond)

@@ -190,9 +190,6 @@ public:
   // if there is not such an opcode.
   virtual unsigned getUnindexedOpcode(unsigned Opc) const =0;
 
-  // Return true if the block does not fall through.
-  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const =0;
-
   virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
                                               MachineBasicBlock::iterator &MBBI,
                                               LiveVariables *LV) const;

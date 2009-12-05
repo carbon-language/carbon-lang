@@ -590,22 +590,6 @@ RemoveBranch(MachineBasicBlock &MBB) const
   return 2;
 }
 
-/// BlockHasNoFallThrough - Analyze if MachineBasicBlock does not
-/// fall-through into its successor block.
-bool MipsInstrInfo::
-BlockHasNoFallThrough(const MachineBasicBlock &MBB) const 
-{
-  if (MBB.empty()) return false;
-  
-  switch (MBB.back().getOpcode()) {
-  case Mips::RET:     // Return.
-  case Mips::JR:      // Indirect branch.
-  case Mips::J:       // Uncond branch.
-    return true;
-  default: return false;
-  }
-}
-
 /// ReverseBranchCondition - Return the inverse opcode of the 
 /// specified Branch instruction.
 bool MipsInstrInfo::

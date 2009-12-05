@@ -232,7 +232,6 @@ public:
     return 0;
   }
   
-  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 

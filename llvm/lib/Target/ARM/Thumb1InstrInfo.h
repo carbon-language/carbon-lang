@@ -31,9 +31,6 @@ public:
   // if there is not such an opcode.
   unsigned getUnindexedOpcode(unsigned Opc) const;
 
-  // Return true if the block does not fall through.
-  bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
-
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).

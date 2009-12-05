@@ -89,7 +89,6 @@ public:
                                  const std::vector<CalleeSavedInfo> &CSI) const;
 
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
-  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   virtual bool isUnpredicatedTerminator(const MachineInstr *MI) const;
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB,
                              MachineBasicBlock *&TBB,

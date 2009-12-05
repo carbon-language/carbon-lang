@@ -392,18 +392,6 @@ void AlphaInstrInfo::insertNoop(MachineBasicBlock &MBB,
     .addReg(Alpha::R31);
 }
 
-bool AlphaInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
-  if (MBB.empty()) return false;
-  
-  switch (MBB.back().getOpcode()) {
-  case Alpha::RETDAG: // Return.
-  case Alpha::RETDAGp:
-  case Alpha::BR:     // Uncond branch.
-  case Alpha::JMP:  // Indirect branch.
-    return true;
-  default: return false;
-  }
-}
 bool AlphaInstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid Alpha branch opcode!");

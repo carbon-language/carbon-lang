@@ -453,26 +453,6 @@ bool XCoreInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-/// BlockHasNoFallThrough - Analyse if MachineBasicBlock does not
-/// fall-through into its successor block.
-bool XCoreInstrInfo::
-BlockHasNoFallThrough(const MachineBasicBlock &MBB) const 
-{
-  if (MBB.empty()) return false;
-  
-  switch (MBB.back().getOpcode()) {
-  case XCore::RETSP_u6:     // Return.
-  case XCore::RETSP_lu6:
-  case XCore::BAU_1r:       // Indirect branch.
-  case XCore::BRFU_u6:      // Uncond branch.
-  case XCore::BRFU_lu6:
-  case XCore::BRBU_u6:
-  case XCore::BRBU_lu6:
-    return true;
-  default: return false;
-  }
-}
-
 /// ReverseBranchCondition - Return the inverse opcode of the 
 /// specified Branch instruction.
 bool XCoreInstrInfo::

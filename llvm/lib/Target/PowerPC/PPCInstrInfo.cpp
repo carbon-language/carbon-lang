@@ -740,18 +740,6 @@ bool PPCInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
 }
 
 
-bool PPCInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
-  if (MBB.empty()) return false;
-  
-  switch (MBB.back().getOpcode()) {
-  case PPC::BLR:   // Return.
-  case PPC::B:     // Uncond branch.
-  case PPC::BCTR:  // Indirect branch.
-    return true;
-  default: return false;
-  }
-}
-
 bool PPCInstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid PPC branch opcode!");

@@ -2719,27 +2719,6 @@ unsigned X86InstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
   return I->second.first;
 }
 
-bool X86InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
-  if (MBB.empty()) return false;
-  
-  switch (MBB.back().getOpcode()) {
-  case X86::TCRETURNri:
-  case X86::TCRETURNdi:
-  case X86::RET:     // Return.
-  case X86::RETI:
-  case X86::TAILJMPd:
-  case X86::TAILJMPr:
-  case X86::TAILJMPm:
-  case X86::JMP:     // Uncond branch.
-  case X86::JMP32r:  // Indirect branch.
-  case X86::JMP64r:  // Indirect branch (64-bit).
-  case X86::JMP32m:  // Indirect branch through mem.
-  case X86::JMP64m:  // Indirect branch through mem (64-bit).
-    return true;
-  default: return false;
-  }
-}
-
 bool X86InstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid X86 branch condition!");

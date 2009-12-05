@@ -376,15 +376,6 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
         report("MBB doesn't fall through but is empty!", MBB);
       }
     }
-    if (TII->BlockHasNoFallThrough(*MBB)) {
-      if (MBB->empty()) {
-        report("TargetInstrInfo says the block has no fall through, but the "
-               "block is empty!", MBB);
-      } else if (!MBB->back().getDesc().isBarrier()) {
-        report("TargetInstrInfo says the block has no fall through, but the "
-               "block does not end in a barrier!", MBB);
-      }
-    }
   } else {
     // Block is last in function.
     if (MBB->empty()) {

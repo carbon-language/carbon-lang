@@ -1140,7 +1140,7 @@ ReoptimizeBlock:
       // falls through into MBB and we can't understand the prior block's branch
       // condition.
       if (MBB->empty()) {
-        bool PredHasNoFallThrough = TII->BlockHasNoFallThrough(PrevBB);
+        bool PredHasNoFallThrough = !PrevBB.canFallThrough();
         if (PredHasNoFallThrough || !PriorUnAnalyzable ||
             !PrevBB.isSuccessor(MBB)) {
           // If the prior block falls through into us, turn it into an

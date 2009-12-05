@@ -32,25 +32,6 @@ unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   return 0;
 }
 
-bool
-Thumb1InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
-  if (MBB.empty()) return false;
-
-  switch (MBB.back().getOpcode()) {
-  case ARM::tBX_RET:
-  case ARM::tBX_RET_vararg:
-  case ARM::tPOP_RET:
-  case ARM::tB:
-  case ARM::tBRIND:
-  case ARM::tBR_JTr:
-    return true;
-  default:
-    break;
-  }
-
-  return false;
-}
-
 bool Thumb1InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I,
                                    unsigned DestReg, unsigned SrcReg,

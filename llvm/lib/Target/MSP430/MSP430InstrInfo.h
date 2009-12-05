@@ -61,7 +61,6 @@ public:
 
   // Branch folding goodness
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
-  bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
   bool isUnpredicatedTerminator(const MachineInstr *MI) const;
   bool AnalyzeBranch(MachineBasicBlock &MBB,
                      MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,

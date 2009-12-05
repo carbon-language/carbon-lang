@@ -36,30 +36,6 @@ unsigned Thumb2InstrInfo::getUnindexedOpcode(unsigned Opc) const {
 }
 
 bool
-Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
-  if (MBB.empty()) return false;
-
-  switch (MBB.back().getOpcode()) {
-  case ARM::t2LDM_RET:
-  case ARM::t2B:        // Uncond branch.
-  case ARM::t2BR_JT:    // Jumptable branch.
-  case ARM::t2TBB:      // Table branch byte.
-  case ARM::t2TBH:      // Table branch halfword.
-  case ARM::tBR_JTr:    // Jumptable branch (16-bit version).
-  case ARM::tBX_RET:
-  case ARM::tBX_RET_vararg:
-  case ARM::tPOP_RET:
-  case ARM::tB:
-  case ARM::tBRIND:
-    return true;
-  default:
-    break;
-  }
-
-  return false;
-}
-
-bool
 Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I,
                               unsigned DestReg, unsigned SrcReg,

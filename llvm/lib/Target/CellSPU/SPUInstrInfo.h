@@ -79,9 +79,6 @@ namespace llvm {
     bool canFoldMemoryOperand(const MachineInstr *MI,
                               const SmallVectorImpl<unsigned> &Ops) const;
 
-    //! Return true if the specified block does not fall through
-    virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
-
     //! Reverses a branch's condition, returning false on success.
     virtual
     bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
