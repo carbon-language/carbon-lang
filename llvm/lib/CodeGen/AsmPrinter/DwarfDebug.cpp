@@ -2616,9 +2616,9 @@ void DwarfDebug::emitDebugLines() {
         std::pair<unsigned, unsigned> SourceID =
           getSourceDirectoryAndFileIds(LineInfo.getSourceID());
         O << '\t' << MAI->getCommentString() << ' '
-          << getSourceDirectoryName(SourceID.first) << ' '
+          << getSourceDirectoryName(SourceID.first) << '/'
           << getSourceFileName(SourceID.second)
-          <<" :" << utostr_32(LineInfo.getLine()) << '\n';
+          << ':' << utostr_32(LineInfo.getLine()) << '\n';
       }
 
       // Define the line address.
