@@ -1264,7 +1264,7 @@ class VTTBuilder {
       
       VtblClass = RD;
     }
-    llvm::Constant *vtbl = dyn_cast<llvm::Constant>(init->getOperand(0));
+    llvm::Constant *vtbl = cast<llvm::Constant>(init->getOperand(0));
     Inits.push_back(init);
 
     // then the secondary VTTs....
@@ -1316,9 +1316,9 @@ public:
       VMContext(cgm.getModule().getContext()) {
     
     // First comes the primary virtual table pointer for the complete class...
-    ClassVtbl = CGM.getVtableInfo().getVtable(Class);
-    Inits.push_back(ClassVtbl);
-    ClassVtbl = dyn_cast<llvm::Constant>(ClassVtbl->getOperand(0));
+    ClassVtbl = cast<llvm::Constant>(CGM.getVtableInfo().getVtable(Class)
+                                     ->getOperand(0));
+    Inits.push_back(BuildVtablePtr(ClassVtbl, Class, Class, 0));
     
     // then the secondary VTTs...
     SecondaryVTTs(Class);
