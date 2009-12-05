@@ -333,6 +333,7 @@ namespace {
     Stmt *SynthesizeBlockCall(CallExpr *Exp);
     void SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                    const char *FunName);
+    void RewriteRecordBody(RecordDecl *RD);
 
     void CollectBlockDeclRefInfo(BlockExpr *Exp);
     void GetBlockCallExprs(Stmt *S);
@@ -1887,6 +1888,10 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
     if (!proto)
       return;
     Type = proto->getResultType();
+  }
+  else if (FieldDecl *FD = dyn_cast<FieldDecl>(Dcl)) {
+    Loc = FD->getLocation();
+    Type = FD->getType();
   }
   else
     return;
@@ -4496,7 +4501,15 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     // FIXME: What we're doing here is modifying the type-specifier that
     // precedes the first Decl.  In the future the DeclGroup should have
     // a separate type-specifier that we can rewrite.
-    RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
+    // NOTE: We need to avoid rewriting the DeclStmt if it is within
+    // the context of an ObjCForCollectionStmt. For example:
+    //   NSArray *someArray;
+    //   for (id <FooProtocol> index in someArray) ;
+    // This is because RewriteObjCForCollectionStmt() does textual rewriting 
+    // and it depends on the original text locations/positions.
+    Stmt *ParentStmt = Stmts.back();
+    if (!ParentStmt || !isa<ObjCForCollectionStmt>(ParentStmt))
+      RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
 
     // Blocks rewrite rules.
     for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
@@ -4560,6 +4573,18 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 #endif
   // Return this stmt unmodified.
   return S;
+}
+
+void RewriteObjC::RewriteRecordBody(RecordDecl *RD) {
+  for (RecordDecl::field_iterator i = RD->field_begin(), 
+                                  e = RD->field_end(); i != e; ++i) {
+    FieldDecl *FD = *i;
+    if (isTopLevelBlockPointerType(FD->getType()))
+      RewriteBlockPointerDecl(FD);
+    if (FD->getType()->isObjCQualifiedIdType() ||
+        FD->getType()->isObjCQualifiedInterfaceType())
+      RewriteObjCQualifiedInterfaceTypes(FD);
+  }
 }
 
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
@@ -4628,6 +4653,10 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
           RewriteCastExpr(CE);
         }
       }
+    } else if (VD->getType()->isRecordType()) {
+      RecordDecl *RD = VD->getType()->getAs<RecordType>()->getDecl();
+      if (RD->isDefinition())
+        RewriteRecordBody(RD);
     }
     if (VD->getInit()) {
       GlobalVarDecl = VD;
@@ -4655,17 +4684,16 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       RewriteBlockPointerDecl(TD);
     else if (TD->getUnderlyingType()->isFunctionPointerType())
       CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+    else if (TD->getUnderlyingType()->isRecordType()) {
+      RecordDecl *RD = TD->getUnderlyingType()->getAs<RecordType>()->getDecl();
+      if (RD->isDefinition())
+        RewriteRecordBody(RD);
+    }
     return;
   }
   if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
-    if (RD->isDefinition()) {
-      for (RecordDecl::field_iterator i = RD->field_begin(),
-             e = RD->field_end(); i != e; ++i) {
-        FieldDecl *FD = *i;
-        if (isTopLevelBlockPointerType(FD->getType()))
-          RewriteBlockPointerDecl(FD);
-      }
-    }
+    if (RD->isDefinition()) 
+      RewriteRecordBody(RD);
     return;
   }
   // Nothing yet.
