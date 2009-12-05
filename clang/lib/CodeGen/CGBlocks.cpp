@@ -1136,36 +1136,38 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
 }
 
 llvm::Constant *BlockFunction::BuildbyrefCopyHelper(const llvm::Type *T,
-                                                    int flag, unsigned Align) {
-  // All alignments below that of pointer alignment collpase down to just
+                                                    int Flag, unsigned Align) {
+  // All alignments below that of pointer alignment collapse down to just
   // pointer alignment, as we always have at least that much alignment to begin
   // with.
   Align /= unsigned(CGF.Target.getPointerAlign(0)/8);
+  
   // As an optimization, we only generate a single function of each kind we
   // might need.  We need a different one for each alignment and for each
   // setting of flags.  We mix Align and flag to get the kind.
-  uint64_t kind = (uint64_t)Align*BLOCK_BYREF_CURRENT_MAX + flag;
-  llvm::Constant *& Entry = CGM.AssignCache[kind];
+  uint64_t Kind = (uint64_t)Align*BLOCK_BYREF_CURRENT_MAX + Flag;
+  llvm::Constant *&Entry = CGM.AssignCache[Kind];
   if (Entry)
     return Entry;
-  return Entry=CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction(T, flag);
+  return Entry = CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction(T, Flag);
 }
 
 llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(const llvm::Type *T,
-                                                       int flag,
+                                                       int Flag,
                                                        unsigned Align) {
   // All alignments below that of pointer alignment collpase down to just
   // pointer alignment, as we always have at least that much alignment to begin
   // with.
   Align /= unsigned(CGF.Target.getPointerAlign(0)/8);
+  
   // As an optimization, we only generate a single function of each kind we
   // might need.  We need a different one for each alignment and for each
   // setting of flags.  We mix Align and flag to get the kind.
-  uint64_t kind = (uint64_t)Align*BLOCK_BYREF_CURRENT_MAX + flag;
-  llvm::Constant *& Entry = CGM.DestroyCache[kind];
+  uint64_t Kind = (uint64_t)Align*BLOCK_BYREF_CURRENT_MAX + Flag;
+  llvm::Constant *&Entry = CGM.DestroyCache[Kind];
   if (Entry)
     return Entry;
-  return Entry=CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, flag);
+  return Entry=CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, Flag);
 }
 
 llvm::Value *BlockFunction::getBlockObjectDispose() {
