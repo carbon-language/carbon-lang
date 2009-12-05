@@ -182,6 +182,7 @@ private:
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   DiagnosticClient *Client;
+  LangOptions *LangOpts;
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into four bits per diagnostic.  The low three bits are the mapping
@@ -238,7 +239,9 @@ public:
   DiagnosticClient *getClient() { return Client; }
   const DiagnosticClient *getClient() const { return Client; }
 
-
+  LangOptions *getLangOpts() const { return LangOpts; }
+  void setLangOpts(LangOptions *LOpts) { LangOpts = LOpts; }
+  
   /// pushMappings - Copies the current DiagMappings and pushes the new copy
   /// onto the top of the stack.
   void pushMappings();

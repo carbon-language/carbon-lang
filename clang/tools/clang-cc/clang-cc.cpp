@@ -237,6 +237,8 @@ int main(int argc, char **argv) {
   if (!Clang.hasDiagnostics())
     return 1;
 
+  Clang.getDiagnostics().setLangOpts(&Clang.getLangOpts());
+  
   // Set an error handler, so that any LLVM backend diagnostics go through our
   // error handler.
   llvm::llvm_install_error_handler(LLVMErrorHandler,

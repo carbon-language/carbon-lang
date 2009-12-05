@@ -653,11 +653,19 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     if (DiagOpts->ShowLocation) {
       if (DiagOpts->ShowColors)
         OS.changeColor(savedColor, true);
-      OS << PLoc.getFilename() << ':' << LineNo << ':';
-      if (DiagOpts->ShowColumn)
-        if (unsigned ColNo = PLoc.getColumn())
-          OS << ColNo << ':';
-
+      
+      // Emit a Visual Studio compatible line number syntax.
+      // This check is a bit paranoid (in case LangOpts isn't set).
+      if (Info.getDiags() && Info.getDiags()->getLangOpts() &&
+          Info.getDiags()->getLangOpts()->Microsoft) {
+        OS << PLoc.getFilename() << '(' << LineNo << ')';
+        OS << " : ";
+      } else {
+        OS << PLoc.getFilename() << ':' << LineNo << ':';
+        if (DiagOpts->ShowColumn)
+          if (unsigned ColNo = PLoc.getColumn())
+            OS << ColNo << ':';
+      }
       if (DiagOpts->ShowSourceRanges && Info.getNumRanges()) {
         FileID CaretFileID =
           SM.getFileID(SM.getInstantiationLoc(Info.getLocation()));
