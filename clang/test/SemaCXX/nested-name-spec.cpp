@@ -186,7 +186,7 @@ class foo {
 };
 
 
-// PR4451
+// PR4452 / PR4451
 foo<somens:a> a2;  // expected-error {{unexpected ':' in nested name specifier}}
 
 somens::a a3 = a2; // expected-error {{cannot initialize 'a3' with an lvalue of type 'foo<somens::a>'}}
