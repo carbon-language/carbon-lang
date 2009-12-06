@@ -12,12 +12,12 @@
 // CHECK: private constant [38 x i8] c"void NS::Base::functionTemplate1(int)\00"
 
 // CHECK: private constant [12 x i8] c"~Destructor\00"
-// CHECK: private constant [35 x i8] c"void NS::Destructor::~Destructor()\00"
+// CHECK: private constant [30 x i8] c"NS::Destructor::~Destructor()\00"
 
 // CHECK: private constant [12 x i8] c"Constructor\00"
-// CHECK: private constant [46 x i8] c"void NS::Constructor::Constructor(NS::Base *)\00"
-// CHECK: private constant [39 x i8] c"void NS::Constructor::Constructor(int)\00"
-// CHECK: private constant [36 x i8] c"void NS::Constructor::Constructor()\00"
+// CHECK: private constant [41 x i8] c"NS::Constructor::Constructor(NS::Base *)\00"
+// CHECK: private constant [34 x i8] c"NS::Constructor::Constructor(int)\00"
+// CHECK: private constant [31 x i8] c"NS::Constructor::Constructor()\00"
 
 // CHECK: private constant [16 x i8] c"virtualFunction\00"
 // CHECK: private constant [44 x i8] c"virtual void NS::Derived::virtualFunction()\00"

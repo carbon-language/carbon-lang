@@ -203,7 +203,8 @@ std::string PredefinedExpr::ComputeName(ASTContext &Context, IdentType IT,
     }
     Proto += ")";
 
-    AFT->getResultType().getAsStringInternal(Proto, Policy);
+    if (!isa<CXXConstructorDecl>(FD) && !isa<CXXDestructorDecl>(FD))
+      AFT->getResultType().getAsStringInternal(Proto, Policy);
 
     Out << Proto;
 
