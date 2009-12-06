@@ -2240,8 +2240,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                 PrintingPolicy(LangOpts));
   Preamble += prettyBuf.str();
   Preamble += ",";
-  // The minus 2 removes the begin/end double quotes.
-  Preamble += utostr(prettyBuf.str().size()-2) + "};\n";
+  Preamble += utostr(Exp->getString()->getByteLength()) + "};\n";
 
   VarDecl *NewVD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
                                     &Context->Idents.get(S.c_str()), strType, 0,
