@@ -555,10 +555,17 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  void *FuncPtr;\n";
   Preamble += "};\n";
   Preamble += "// Runtime copy/destroy helper functions (from Block_private.h)\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void _Block_object_assign(void *, const void *, const int);\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void _Block_object_dispose(const void *, const int);\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteGlobalBlock[32];\n";
-  Preamble += "__OBJC_RW_STATICIMPORT void *_NSConcreteStackBlock[32];\n";
+  Preamble += "#ifdef CF_EXPORT_CONSTANT_STRING\n";
+  Preamble += "extern \"C\" __declspec(dllexport) void _Block_object_assign(void *, const void *, const int);\n";
+  Preamble += "extern \"C\" __declspec(dllexport) void _Block_object_dispose(const void *, const int);\n";
+  Preamble += "extern \"C\" __declspec(dllexport) void *_NSConcreteGlobalBlock[32];\n";
+  Preamble += "extern \"C\" __declspec(dllexport) void *_NSConcreteStackBlock[32];\n";
+  Preamble += "#else\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void _Block_object_assign(void *, const void *, const int);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void _Block_object_dispose(const void *, const int);\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void *_NSConcreteGlobalBlock[32];\n";
+  Preamble += "__OBJC_RW_DLLIMPORT void *_NSConcreteStackBlock[32];\n";
+  Preamble += "#endif\n";
   Preamble += "#endif\n";
   if (LangOpts.Microsoft) {
     Preamble += "#undef __OBJC_RW_DLLIMPORT\n";
