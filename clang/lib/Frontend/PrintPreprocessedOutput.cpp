@@ -141,17 +141,23 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
     EmittedMacroOnThisLine = false;
   }
 
-  OS << '#' << ' ' << LineNo << ' ' << '"';
+  OS << '#';
+  if (PP.getLangOptions().Microsoft)
+    OS << "line";
+  OS << ' ' << LineNo << ' ' << '"';
+  
   OS.write(&CurFilename[0], CurFilename.size());
   OS << '"';
 
-  if (ExtraLen)
-    OS.write(Extra, ExtraLen);
+  if (!PP.getLangOptions().Microsoft) {
+    if (ExtraLen)
+      OS.write(Extra, ExtraLen);
 
-  if (FileType == SrcMgr::C_System)
-    OS.write(" 3", 2);
-  else if (FileType == SrcMgr::C_ExternCSystem)
-    OS.write(" 3 4", 4);
+    if (FileType == SrcMgr::C_System)
+      OS.write(" 3", 2);
+    else if (FileType == SrcMgr::C_ExternCSystem)
+      OS.write(" 3 4", 4);
+  }
   OS << '\n';
 }
 
