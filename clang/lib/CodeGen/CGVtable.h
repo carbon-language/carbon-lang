@@ -101,7 +101,10 @@ class CGVtableInfo {
   GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                  bool GenerateDefinition, const CXXRecordDecl *LayoutClass, 
                  const CXXRecordDecl *RD, uint64_t Offset);
-    
+
+  llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
+                                    const CXXRecordDecl *RD);
+
 public:
   CGVtableInfo(CodeGenModule &CGM)
     : CGM(CGM) { }

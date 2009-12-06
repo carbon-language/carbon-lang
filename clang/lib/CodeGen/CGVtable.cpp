@@ -28,9 +28,10 @@ public:
   typedef uint64_t Index_t;
 private:
   
-  // Vtable - The components of the vtable being built.
-  typedef llvm::SmallVector<llvm::Constant *, 64> VtableVectorTy;
-  VtableVectorTy Vtable;
+  // VtableComponents - The components of the vtable being built.
+  typedef llvm::SmallVector<llvm::Constant *, 64> VtableComponentsVectorTy;
+  VtableComponentsVectorTy VtableComponents;
+  
   const bool BuildVtable;
 
   llvm::Type *Ptr8Ty;
@@ -193,9 +194,9 @@ public:
       rtti = cgm.GenerateRTTIRef(MostDerivedClass);
   }
 
-  // getVtable - Returns a reference to the vtable components.
-  const VtableVectorTy &getVtable() const {
-    return Vtable;
+  // getVtableComponents - Returns a reference to the vtable components.
+  const VtableComponentsVectorTy &getVtableComponents() const {
+    return VtableComponents;
   }
   
   llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
@@ -425,13 +426,14 @@ public:
     D(VCalls.insert(VCalls.begin(), 673));
     D(VCalls.push_back(672));
 
-    Vtable.insert(Vtable.begin() + InsertionPoint, VCalls.size(), 0);
+    VtableComponents.insert(VtableComponents.begin() + InsertionPoint, 
+                            VCalls.size(), 0);
     if (BuildVtable) {
       // The vcalls come first...
       for (std::vector<Index_t>::reverse_iterator i = VCalls.rbegin(),
              e = VCalls.rend();
            i != e; ++i)
-        Vtable[InsertionPoint++] = wrap((0?600:0) + *i);
+        VtableComponents[InsertionPoint++] = wrap((0?600:0) + *i);
     }
     VCalls.clear();
     VCall.clear();
@@ -479,7 +481,7 @@ public:
     StartNewTable();
     extra = 0;
     bool DeferVCalls = MorallyVirtual || ForVirtualBase;
-    int VCallInsertionPoint = Vtable.size();
+    int VCallInsertionPoint = VtableComponents.size();
     if (!DeferVCalls) {
       insertVCalls(VCallInsertionPoint);
     } else
@@ -487,12 +489,12 @@ public:
       extra = -VCalls.size();
 
     // Add the offset to top.
-    Vtable.push_back(BuildVtable ? wrap(-((Offset-LayoutOffset)/8)) : 0);
+    VtableComponents.push_back(BuildVtable ? wrap(-((Offset-LayoutOffset)/8)) : 0);
     
     // Add the RTTI information.
-    Vtable.push_back(rtti);
+    VtableComponents.push_back(rtti);
     
-    Index_t AddressPoint = Vtable.size();
+    Index_t AddressPoint = VtableComponents.size();
 
     AppendMethodsToVtable();
 
@@ -840,7 +842,8 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 
 void VtableBuilder::AppendMethodsToVtable() {
   if (!BuildVtable) {
-    Vtable.insert(Vtable.end(), Methods.size(), (llvm::Constant*)0);
+    VtableComponents.insert(VtableComponents.end(), Methods.size(), 
+                            (llvm::Constant *)0);
     ThisAdjustments.clear();
     BaseReturnTypes.clear();
     Methods.clear();
@@ -848,7 +851,7 @@ void VtableBuilder::AppendMethodsToVtable() {
   }
 
   // Reserve room in the vtable for our new methods.
-  Vtable.reserve(Vtable.size() + Methods.size());
+  VtableComponents.reserve(VtableComponents.size() + Methods.size());
 
   for (unsigned i = 0, e = Methods.size(); i != e; ++i) {
     GlobalDecl GD = Methods[i];
@@ -892,7 +895,7 @@ void VtableBuilder::AppendMethodsToVtable() {
     }
 
     // Add the method to the vtable.
-    Vtable.push_back(Method);
+    VtableComponents.push_back(Method);
   }
   
   
@@ -1082,35 +1085,6 @@ uint64_t CGVtableInfo::getVtableAddressPoint(const CXXRecordDecl *RD) {
   return AddressPoint;
 }
 
-/// createGlobalVariable - Create a global variable to be used for storing 
-/// either a vtable, a construction vtable or a VTT. The returned global
-// variable will have the correct linkage set based on the given record decl.
-static llvm::GlobalVariable *
-createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD, 
-                     const llvm::Type *Type, llvm::Constant *Init,
-                     const llvm::Twine &Name) {
-  
-  // Figure out the right linkage.
-  llvm::GlobalVariable::LinkageTypes Linkage = 
-    llvm::GlobalValue::WeakODRLinkage;
-  if (!Init)
-    Linkage = llvm::GlobalValue::ExternalLinkage;
-  else if (RD->isInAnonymousNamespace())
-    Linkage = llvm::GlobalValue::InternalLinkage;
-
-  // Create the variable.
-  llvm::GlobalVariable *V = 
-    new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
-                             Linkage, Init, Name);
-  
-
-  bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
-  if (Hidden)
-    V->setVisibility(llvm::GlobalVariable::HiddenVisibility);
-  
-  return V;
-}
-
 llvm::GlobalVariable *
 CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              bool GenerateDefinition,
@@ -1147,17 +1121,18 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
     llvm::Constant *Init = 0;
     const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
     llvm::ArrayType *ArrayType = 
-      llvm::ArrayType::get(Int8PtrTy, b.getVtable().size());
+      llvm::ArrayType::get(Int8PtrTy, b.getVtableComponents().size());
 
     if (GenerateDefinition)
-      Init = llvm::ConstantArray::get(ArrayType, &b.getVtable()[0], 
-                                      b.getVtable().size());
+      Init = llvm::ConstantArray::get(ArrayType, &b.getVtableComponents()[0], 
+                                      b.getVtableComponents().size());
 
     llvm::GlobalVariable *OGV = GV;
     
     GV = new llvm::GlobalVariable(CGM.getModule(), ArrayType, 
                                   /*isConstant=*/true, Linkage, Init, Name);
-    
+    CGM.setGlobalVisibility(GV, RD);
+  
     if (OGV) {
       GV->takeName(OGV);
       llvm::Constant *NewPtr = 
@@ -1345,39 +1320,43 @@ public:
 };
 }
 
-llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
+llvm::GlobalVariable *
+CGVtableInfo::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
+                          const CXXRecordDecl *RD) {
   // Only classes that have virtual bases need a VTT.
   if (RD->getNumVBases() == 0)
     return 0;
 
   llvm::SmallString<256> OutName;
-  getMangleContext().mangleCXXVTT(RD, OutName);
+  CGM.getMangleContext().mangleCXXVTT(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
 
   D1(printf("vtt %s\n", RD->getNameAsCString()));
 
   std::vector<llvm::Constant *> inits;
-  VTTBuilder b(inits, RD, *this);
+  VTTBuilder b(inits, RD, CGM);
 
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   const llvm::ArrayType *Type = llvm::ArrayType::get(Int8PtrTy, inits.size());
   
   llvm::Constant *Init = llvm::ConstantArray::get(Type, inits);
   
   llvm::GlobalVariable *VTT = 
-    createGlobalVariable(*this, RD, Type, Init, Name);
+    new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
+                             Linkage, Init, Name);
+  CGM.setGlobalVisibility(VTT, RD);
   
-  return llvm::ConstantExpr::getBitCast(VTT, Int8PtrTy);
+  return VTT;
 }
 
 void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
                                      const CXXRecordDecl *RD) {
   assert(!Vtables.count(RD) && "Vtable has already been generated!");
-  
   Vtables[RD] = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0);
+  
   CGM.GenerateRTTI(RD);
-  CGM.GenerateVTT(RD);  
+  GenerateVTT(Linkage, RD);  
 }
 
 llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
