@@ -954,7 +954,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
     if (IsVirtual) {
       // Complain about duplicate 'virtual'
       Diag(VirtualLoc, diag::err_dup_virtual)
-        << CodeModificationHint::CreateRemoval(SourceRange(VirtualLoc));
+        << CodeModificationHint::CreateRemoval(VirtualLoc);
     }
 
     IsVirtual = true;
@@ -1349,7 +1349,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
       Diag(Tok, diag::ext_extra_struct_semi)
-        << CodeModificationHint::CreateRemoval(SourceRange(Tok.getLocation()));
+        << CodeModificationHint::CreateRemoval(Tok.getLocation());
       ConsumeToken();
       continue;
     }

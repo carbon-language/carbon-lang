@@ -2327,7 +2327,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       Diag(D.getDeclSpec().getStorageClassSpecLoc(),
            diag::err_static_out_of_line)
         << CodeModificationHint::CreateRemoval(
-                       SourceRange(D.getDeclSpec().getStorageClassSpecLoc()));
+                                      D.getDeclSpec().getStorageClassSpecLoc());
     } else if (SC == VarDecl::None)
       SC = VarDecl::Static;
   }
@@ -2849,7 +2849,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // 'virtual' was specified outside of the class.
       Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_virtual_out_of_class)
         << CodeModificationHint::CreateRemoval(
-                             SourceRange(D.getDeclSpec().getVirtualSpecLoc()));
+                                           D.getDeclSpec().getVirtualSpecLoc());
     } else {
       // Okay: Add virtual to the method.
       CXXRecordDecl *CurClass = cast<CXXRecordDecl>(DC);
@@ -2889,7 +2889,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     Diag(D.getDeclSpec().getStorageClassSpecLoc(),
          diag::err_static_out_of_line)
       << CodeModificationHint::CreateRemoval(
-                      SourceRange(D.getDeclSpec().getStorageClassSpecLoc()));
+                                      D.getDeclSpec().getStorageClassSpecLoc());
   }
 
   // Handle GNU asm-label extension (encoded as an attribute).
