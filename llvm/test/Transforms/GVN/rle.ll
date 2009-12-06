@@ -187,8 +187,24 @@ Cont:
 ; CHECK: ret i16 %A
 }
 
+@GCst = constant {i32, float, i32 } { i32 42, float 14., i32 97 }
+
+; memset -> float forwarding.
+define float @memcpy_to_float_local(float* %A) nounwind ssp {
+entry:
+  %conv = bitcast float* %A to i8*                ; <i8*> [#uses=1]
+  tail call void @llvm.memcpy.i64(i8* %conv, i8* bitcast ({i32, float, i32 }* @GCst to i8*), i64 12, i32 1)
+  %arrayidx = getelementptr inbounds float* %A, i64 1 ; <float*> [#uses=1]
+  %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
+  ret float %tmp2
+; CHECK: @memcpy_to_float_local
+; CHECK-NOT: load
+; CHECK: ret float 1.400000e+01
+}
+
 
 declare void @llvm.memset.i64(i8* nocapture, i8, i64, i32) nounwind
+declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
 
 
 

@@ -31,8 +31,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Support/CFG.h"
@@ -1094,11 +1095,39 @@ static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
   ConstantInt *SizeCst = dyn_cast<ConstantInt>(MI->getLength());
   if (SizeCst == 0) return -1;
   uint64_t MemSizeInBits = SizeCst->getZExtValue()*8;
-  
+
+  // If this is memset, we just need to see if the offset is valid in the size
+  // of the memset..
   if (MI->getIntrinsicID() == Intrinsic::memset)
     return AnalyzeLoadFromClobberingWrite(L, MI->getDest(), MemSizeInBits, TD);
   
-  // Unhandled memcpy/memmove.
+  // If we have a memcpy/memmove, the only case we can handle is if this is a
+  // copy from constant memory.  In that case, we can read directly from the
+  // constant memory.
+  MemTransferInst *MTI = cast<MemTransferInst>(MI);
+  
+  Constant *Src = dyn_cast<Constant>(MTI->getSource());
+  if (Src == 0) return -1;
+  
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(Src->getUnderlyingObject());
+  if (GV == 0 || !GV->isConstant()) return -1;
+  
+  // See if the access is within the bounds of the transfer.
+  int Offset =
+    AnalyzeLoadFromClobberingWrite(L, MI->getDest(), MemSizeInBits, TD);
+  if (Offset == -1)
+    return Offset;
+  
+  // Otherwise, see if we can constant fold a load from the constant with the
+  // offset applied as appropriate.
+  Src = ConstantExpr::getBitCast(Src,
+                                 llvm::Type::getInt8PtrTy(Src->getContext()));
+  Constant *OffsetCst = 
+    ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
+  Src = ConstantExpr::getGetElementPtr(Src, &OffsetCst, 1);
+  Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(L->getType()));
+  if (ConstantFoldLoadFromConstPtr(Src, &TD))
+    return Offset;
   return -1;
 }
                                             
@@ -1182,9 +1211,20 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
     
     return CoerceAvailableValueToLoadType(Val, LoadTy, InsertPt, TD);
   }
-  
-  // ABORT;
-  return 0;
+ 
+  // Otherwise, this is a memcpy/memmove from a constant global.
+  MemTransferInst *MTI = cast<MemTransferInst>(SrcInst);
+  Constant *Src = cast<Constant>(MTI->getSource());
+
+  // Otherwise, see if we can constant fold a load from the constant with the
+  // offset applied as appropriate.
+  Src = ConstantExpr::getBitCast(Src,
+                                 llvm::Type::getInt8PtrTy(Src->getContext()));
+  Constant *OffsetCst = 
+  ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
+  Src = ConstantExpr::getGetElementPtr(Src, &OffsetCst, 1);
+  Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(LoadTy));
+  return ConstantFoldLoadFromConstPtr(Src, &TD);
 }
 
 
