@@ -1112,7 +1112,8 @@ createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD,
 }
 
 llvm::GlobalVariable *
-CGVtableInfo::GenerateVtable(const CXXRecordDecl *LayoutClass,
+CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
+                             const CXXRecordDecl *LayoutClass,
                              const CXXRecordDecl *RD, uint64_t Offset) {
   llvm::SmallString<256> OutName;
   if (LayoutClass != RD)
@@ -1133,21 +1134,7 @@ CGVtableInfo::GenerateVtable(const CXXRecordDecl *LayoutClass,
     if (AddressPoint == 0)
       AddressPoint = 1;
   } else {
-    bool CreateDefinition = true;
-    if (LayoutClass != RD)
-      CreateDefinition = true;
-    else {
-      const ASTRecordLayout &Layout = 
-        CGM.getContext().getASTRecordLayout(LayoutClass);
-      
-      if (const CXXMethodDecl *KeyFunction = Layout.getKeyFunction()) {
-        if (!KeyFunction->getBody()) {
-          // If there is a KeyFunction, and it isn't defined, just build a
-          // reference to the vtable.
-          CreateDefinition = false;
-        }
-      }
-    }
+    bool CreateDefinition = Linkage != llvm::GlobalVariable::ExternalLinkage;
 
     VtableBuilder b(RD, LayoutClass, Offset, CGM, CreateDefinition);
 
@@ -1383,7 +1370,7 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
 }
 
 void CGVtableInfo::GenerateClassData(const CXXRecordDecl *RD) {
-  Vtables[RD] = GenerateVtable(RD, RD, 0);
+  Vtables[RD] = GenerateVtable(llvm::GlobalValue::WeakODRLinkage, RD, RD, 0);
   CGM.GenerateRTTI(RD);
   CGM.GenerateVTT(RD);  
 }
@@ -1392,7 +1379,7 @@ llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
   llvm::GlobalVariable *Vtable = Vtables[RD];
   
   if (!Vtable)
-    Vtable = GenerateVtable(RD, RD, 0);
+    Vtable = GenerateVtable(llvm::GlobalValue::ExternalLinkage, RD, RD, 0);
 
   return Vtable;
 }
@@ -1400,7 +1387,8 @@ llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
 llvm::GlobalVariable *
 CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
                             const CXXRecordDecl *RD, uint64_t Offset) {
-  return GenerateVtable(LayoutClass, RD, Offset);
+  return GenerateVtable(llvm::GlobalValue::InternalLinkage, 
+                        LayoutClass, RD, Offset);
 }
 
 void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {

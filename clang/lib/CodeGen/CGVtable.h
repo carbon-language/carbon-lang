@@ -15,11 +15,8 @@
 #define CLANG_CODEGEN_CGVTABLE_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/GlobalVariable.h"
 #include "GlobalDecl.h"
-
-namespace llvm {
-  class GlobalVariable;
-}
 
 namespace clang {
   class CXXRecordDecl;
@@ -97,9 +94,11 @@ class CGVtableInfo {
   /// rtti data structure and the VTT.
   void GenerateClassData(const CXXRecordDecl *RD);
  
-  llvm::GlobalVariable *GenerateVtable(const CXXRecordDecl *LayoutClass,
-                                       const CXXRecordDecl *RD,
-                                       uint64_t Offset);
+  llvm::GlobalVariable *
+
+  GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
+                 const CXXRecordDecl *LayoutClass, const CXXRecordDecl *RD,
+                 uint64_t Offset);
     
 public:
   CGVtableInfo(CodeGenModule &CGM)

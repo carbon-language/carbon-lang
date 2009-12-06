@@ -4120,7 +4120,9 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
       if (Method->isVirtual() && !Method->isPure())
         MarkDeclarationReferenced(Method->getLocation(), Method);
 
-      MaybeMarkVirtualImplicitMembersReferenced(Method->getLocation(), Method);
+      if (!Method->isInlined())
+        MaybeMarkVirtualImplicitMembersReferenced(Method->getLocation(), 
+                                                  Method);
     }
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
