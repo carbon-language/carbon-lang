@@ -279,6 +279,31 @@ Cont:
 ; CHECK: ret i8 %A
 }
 
+define i32 @chained_load(i32** %p) {
+block1:
+  %z = load i32** %p
+	br i1 true, label %block2, label %block3
+
+block2:
+ %a = load i32** %p
+ br label %block4
+
+block3:
+  %b = load i32** %p
+  br label %block4
+
+block4:
+  %c = load i32** %p
+  %d = load i32* %c
+  ret i32 %d
+  
+; CHECK: @chained_load
+; CHECK: %z = load i32** %p
+; CHECK-NOT: load
+; CHECK: %d = load i32* %z
+; CHECK-NEXT: ret i32 %d
+}
+
 
 declare i1 @cond() readonly
 declare i1 @cond2() readonly
