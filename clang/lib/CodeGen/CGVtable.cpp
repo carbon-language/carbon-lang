@@ -1113,6 +1113,7 @@ createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD,
 
 llvm::GlobalVariable *
 CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
+                             bool GenerateDefinition,
                              const CXXRecordDecl *LayoutClass,
                              const CXXRecordDecl *RD, uint64_t Offset) {
   llvm::SmallString<256> OutName;
@@ -1134,9 +1135,7 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
     if (AddressPoint == 0)
       AddressPoint = 1;
   } else {
-    bool CreateDefinition = Linkage != llvm::GlobalVariable::ExternalLinkage;
-
-    VtableBuilder b(RD, LayoutClass, Offset, CGM, CreateDefinition);
+    VtableBuilder b(RD, LayoutClass, Offset, CGM, GenerateDefinition);
 
     D1(printf("vtable %s\n", RD->getNameAsCString()));
     // First comes the vtables for all the non-virtual bases...
@@ -1150,12 +1149,15 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
     llvm::ArrayType *ArrayType = 
       llvm::ArrayType::get(Int8PtrTy, b.getVtable().size());
 
-    if (CreateDefinition) {
+    if (GenerateDefinition)
       Init = llvm::ConstantArray::get(ArrayType, &b.getVtable()[0], 
                                       b.getVtable().size());
-    }
+
     llvm::GlobalVariable *OGV = GV;
-    GV = createGlobalVariable(CGM, LayoutClass, ArrayType, Init, Name);
+    
+    GV = new llvm::GlobalVariable(CGM.getModule(), ArrayType, 
+                                  /*isConstant=*/true, Linkage, Init, Name);
+    
     if (OGV) {
       GV->takeName(OGV);
       llvm::Constant *NewPtr = 
@@ -1369,17 +1371,21 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
   return llvm::ConstantExpr::getBitCast(VTT, Int8PtrTy);
 }
 
-void CGVtableInfo::GenerateClassData(const CXXRecordDecl *RD) {
-  Vtables[RD] = GenerateVtable(llvm::GlobalValue::WeakODRLinkage, RD, RD, 0);
+void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
+                                     const CXXRecordDecl *RD) {
+  assert(!Vtables.count(RD) && "Vtable has already been generated!");
+  
+  Vtables[RD] = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0);
   CGM.GenerateRTTI(RD);
   CGM.GenerateVTT(RD);  
 }
 
 llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
-  llvm::GlobalVariable *Vtable = Vtables[RD];
+  llvm::GlobalVariable *Vtable = Vtables.lookup(RD);
   
   if (!Vtable)
-    Vtable = GenerateVtable(llvm::GlobalValue::ExternalLinkage, RD, RD, 0);
+    Vtable = GenerateVtable(llvm::GlobalValue::ExternalLinkage, 
+                            /*GenerateDefinition=*/false, RD, RD, 0);
 
   return Vtable;
 }
@@ -1388,6 +1394,7 @@ llvm::GlobalVariable *
 CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
                             const CXXRecordDecl *RD, uint64_t Offset) {
   return GenerateVtable(llvm::GlobalValue::InternalLinkage, 
+                        /*GenerateDefinition=*/true,
                         LayoutClass, RD, Offset);
 }
 
@@ -1420,7 +1427,15 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
       return;
   }
 
+  llvm::GlobalVariable::LinkageTypes Linkage;
+  if (RD->isInAnonymousNamespace())
+    Linkage = llvm::GlobalVariable::InternalLinkage;
+  else if (KeyFunction)
+    Linkage = llvm::GlobalVariable::ExternalLinkage;
+  else
+    Linkage = llvm::GlobalVariable::WeakODRLinkage;
+  
   // Emit the data.
-  GenerateClassData(RD);
+  GenerateClassData(Linkage, RD);
 }
 

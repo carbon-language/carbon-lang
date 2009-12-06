@@ -92,13 +92,15 @@ class CGVtableInfo {
   /// GenerateClassData - Generate all the class data requires to be generated
   /// upon definition of a KeyFunction.  This includes the vtable, the
   /// rtti data structure and the VTT.
-  void GenerateClassData(const CXXRecordDecl *RD);
+  /// 
+  /// \param Linkage - The desired linkage of the vtable, the RTTI and the VTT.
+  void GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
+                         const CXXRecordDecl *RD);
  
   llvm::GlobalVariable *
-
   GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
-                 const CXXRecordDecl *LayoutClass, const CXXRecordDecl *RD,
-                 uint64_t Offset);
+                 bool GenerateDefinition, const CXXRecordDecl *LayoutClass, 
+                 const CXXRecordDecl *RD, uint64_t Offset);
     
 public:
   CGVtableInfo(CodeGenModule &CGM)
