@@ -507,12 +507,13 @@ bool Parser::isDeclarationAfterDeclarator() {
 /// \brief Determine whether the current token, if it occurs after a
 /// declarator, indicates the start of a function definition.
 bool Parser::isStartOfFunctionDefinition() {
-  return Tok.is(tok::l_brace) ||    // int X() {}
-    (!getLang().CPlusPlus &&
-     isDeclarationSpecifier()) ||   // int X(f) int f; {}
-    (getLang().CPlusPlus &&
-     (Tok.is(tok::colon) ||         // X() : Base() {} (used for ctors)
-      Tok.is(tok::kw_try)));        // X() try { ... }
+  if (Tok.is(tok::l_brace))   // int X() {}
+    return true;
+  
+  if (!getLang().CPlusPlus)
+    return isDeclarationSpecifier();   // int X(f) int f; {}
+  return Tok.is(tok::colon) ||         // X() : Base() {} (used for ctors)
+         Tok.is(tok::kw_try);          // X() try { ... }
 }
 
 /// ParseDeclarationOrFunctionDefinition - Parse either a function-definition or
