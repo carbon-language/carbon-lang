@@ -45,11 +45,64 @@ namespace {
     /// the result set twice.
     llvm::SmallPtrSet<Decl*, 16> AllDeclsFound;
     
+    typedef std::pair<NamedDecl *, unsigned> DeclIndexPair;
+
+    /// \brief An entry in the shadow map, which is optimized to store
+    /// a single (declaration, index) mapping (the common case) but
+    /// can also store a list of (declaration, index) mappings.
+    class ShadowMapEntry {
+      typedef llvm::SmallVector<DeclIndexPair, 4> DeclIndexPairVector;
+
+      /// \brief Contains either the solitary NamedDecl * or a vector
+      /// of (declaration, index) pairs.
+      llvm::PointerUnion<NamedDecl *, DeclIndexPairVector*> DeclOrVector;
+
+      /// \brief When the entry contains a single declaration, this is
+      /// the index associated with that entry.
+      unsigned SingleDeclIndex;
+
+    public:
+      ShadowMapEntry() : DeclOrVector(), SingleDeclIndex(0) { }
+
+      void Add(NamedDecl *ND, unsigned Index) {
+        if (DeclOrVector.isNull()) {
+          // 0 - > 1 elements: just set the single element information.
+          DeclOrVector = ND;
+          SingleDeclIndex = Index;
+          return;
+        }
+
+        if (NamedDecl *PrevND = DeclOrVector.dyn_cast<NamedDecl *>()) {
+          // 1 -> 2 elements: create the vector of results and push in the
+          // existing declaration.
+          DeclIndexPairVector *Vec = new DeclIndexPairVector;
+          Vec->push_back(DeclIndexPair(PrevND, SingleDeclIndex));
+          DeclOrVector = Vec;
+        }
+
+        // Add the new element to the end of the vector.
+        DeclOrVector.get<DeclIndexPairVector*>()->push_back(
+                                                    DeclIndexPair(ND, Index));
+      }
+
+      void Destroy() {
+        if (DeclIndexPairVector *Vec
+              = DeclOrVector.dyn_cast<DeclIndexPairVector *>()) {
+          delete Vec;
+          DeclOrVector = ((NamedDecl *)0);
+        }
+      }
+
+      // Iteration.
+      class iterator;
+      iterator begin() const;
+      iterator end() const;
+    };
+
     /// \brief A mapping from declaration names to the declarations that have
     /// this name within a particular scope and their index within the list of
     /// results.
-    typedef std::multimap<DeclarationName, 
-                          std::pair<NamedDecl *, unsigned> > ShadowMap;
+    typedef llvm::DenseMap<DeclarationName, ShadowMapEntry> ShadowMap;
     
     /// \brief The semantic analysis object for which results are being 
     /// produced.
@@ -115,6 +168,102 @@ namespace {
     bool IsMember(NamedDecl *ND) const;
     //@}    
   };  
+}
+
+class ResultBuilder::ShadowMapEntry::iterator {
+  llvm::PointerUnion<NamedDecl*, const DeclIndexPair*> DeclOrIterator;
+  unsigned SingleDeclIndex;
+
+public:
+  typedef DeclIndexPair value_type;
+  typedef value_type reference;
+  typedef std::ptrdiff_t difference_type;
+  typedef std::input_iterator_tag iterator_category;
+        
+  class pointer {
+    DeclIndexPair Value;
+
+  public:
+    pointer(const DeclIndexPair &Value) : Value(Value) { }
+
+    const DeclIndexPair *operator->() const {
+      return &Value;
+    }
+  };
+        
+  iterator() : DeclOrIterator((NamedDecl *)0), SingleDeclIndex(0) { }
+
+  iterator(NamedDecl *SingleDecl, unsigned Index)
+    : DeclOrIterator(SingleDecl), SingleDeclIndex(Index) { }
+
+  iterator(const DeclIndexPair *Iterator)
+    : DeclOrIterator(Iterator), SingleDeclIndex(0) { }
+
+  iterator &operator++() {
+    if (DeclOrIterator.is<NamedDecl *>()) {
+      DeclOrIterator = (NamedDecl *)0;
+      SingleDeclIndex = 0;
+      return *this;
+    }
+
+    const DeclIndexPair *I = DeclOrIterator.get<const DeclIndexPair*>();
+    ++I;
+    DeclOrIterator = I;
+    return *this;
+  }
+
+  iterator operator++(int) {
+    iterator tmp(*this);
+    ++(*this);
+    return tmp;
+  }
+
+  reference operator*() const {
+    if (NamedDecl *ND = DeclOrIterator.dyn_cast<NamedDecl *>())
+      return reference(ND, SingleDeclIndex);
+
+    return *DeclOrIterator.get<DeclIndexPair*>();
+  }
+
+  pointer operator->() const {
+    return pointer(**this);
+  }
+
+  friend bool operator==(const iterator &X, const iterator &Y) {
+    return X.DeclOrIterator == Y.DeclOrIterator &&
+      X.SingleDeclIndex == Y.SingleDeclIndex;
+  }
+
+  friend bool operator!=(const iterator &X, const iterator &Y) {
+    return X.DeclOrIterator != Y.DeclOrIterator ||
+      X.SingleDeclIndex != Y.SingleDeclIndex;
+  }
+};
+
+namespace llvm {
+  template<>
+  struct DenseMapInfo<ResultBuilder::ShadowMapEntry> {
+    static bool isPod() { return false; }
+  };
+}
+
+ResultBuilder::ShadowMapEntry::iterator 
+ResultBuilder::ShadowMapEntry::begin() const {
+  if (DeclOrVector.isNull())
+    return iterator();
+
+  if (NamedDecl *ND = DeclOrVector.dyn_cast<NamedDecl *>())
+    return iterator(ND, SingleDeclIndex);
+
+  return iterator(DeclOrVector.get<DeclIndexPairVector *>()->begin());
+}
+
+ResultBuilder::ShadowMapEntry::iterator 
+ResultBuilder::ShadowMapEntry::end() const {
+  if (DeclOrVector.is<NamedDecl *>() || DeclOrVector.isNull())
+    return iterator();
+
+  return iterator(DeclOrVector.get<DeclIndexPairVector *>()->end());
 }
 
 /// \brief Determines whether the given hidden result could be found with
@@ -241,14 +390,18 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     return;
   
   ShadowMap &SMap = ShadowMaps.back();
-  ShadowMap::iterator I, IEnd;
-  for (llvm::tie(I, IEnd) = SMap.equal_range(R.Declaration->getDeclName());
-       I != IEnd; ++I) {
-    NamedDecl *ND = I->second.first;
-    unsigned Index = I->second.second;
+  ShadowMapEntry::iterator I, IEnd;
+  ShadowMap::iterator NamePos = SMap.find(R.Declaration->getDeclName());
+  if (NamePos != SMap.end()) {
+    I = NamePos->second.begin();
+    IEnd = NamePos->second.end();
+  }
+
+  for (; I != IEnd; ++I) {
+    NamedDecl *ND = I->first;
+    unsigned Index = I->second;
     if (ND->getCanonicalDecl() == CanonDecl) {
       // This is a redeclaration. Always pick the newer declaration.
-      I->second.first = R.Declaration;
       Results[Index].Declaration = R.Declaration;
       
       // Pick the best rank of the two.
@@ -265,23 +418,28 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   std::list<ShadowMap>::iterator SM, SMEnd = ShadowMaps.end();
   --SMEnd;
   for (SM = ShadowMaps.begin(); SM != SMEnd; ++SM) {
-    for (llvm::tie(I, IEnd) = SM->equal_range(R.Declaration->getDeclName());
-         I != IEnd; ++I) {
+    ShadowMapEntry::iterator I, IEnd;
+    ShadowMap::iterator NamePos = SM->find(R.Declaration->getDeclName());
+    if (NamePos != SM->end()) {
+      I = NamePos->second.begin();
+      IEnd = NamePos->second.end();
+    }
+    for (; I != IEnd; ++I) {
       // A tag declaration does not hide a non-tag declaration.
-      if (I->second.first->getIdentifierNamespace() == Decl::IDNS_Tag &&
+      if (I->first->getIdentifierNamespace() == Decl::IDNS_Tag &&
           (IDNS & (Decl::IDNS_Member | Decl::IDNS_Ordinary | 
                    Decl::IDNS_ObjCProtocol)))
         continue;
       
       // Protocols are in distinct namespaces from everything else.
-      if (((I->second.first->getIdentifierNamespace() & Decl::IDNS_ObjCProtocol)
+      if (((I->first->getIdentifierNamespace() & Decl::IDNS_ObjCProtocol)
            || (IDNS & Decl::IDNS_ObjCProtocol)) &&
-          I->second.first->getIdentifierNamespace() != IDNS)
+          I->first->getIdentifierNamespace() != IDNS)
         continue;
       
       // The newly-added result is hidden by an entry in the shadow map.
       if (canHiddenResultBeFound(SemaRef.getLangOptions(), R.Declaration, 
-                                 I->second.first)) {
+                                 I->first)) {
         // Note that this result was hidden.
         R.Hidden = true;
         R.QualifierIsInformative = false;
@@ -327,8 +485,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     
   // Insert this result into the set of results and into the current shadow
   // map.
-  SMap.insert(std::make_pair(R.Declaration->getDeclName(),
-                             std::make_pair(R.Declaration, Results.size())));
+  SMap[R.Declaration->getDeclName()].Add(R.Declaration, Results.size());
   Results.push_back(R);
 }
 
@@ -339,6 +496,12 @@ void ResultBuilder::EnterNewScope() {
 
 /// \brief Exit from the current scope.
 void ResultBuilder::ExitScope() {
+  for (ShadowMap::iterator E = ShadowMaps.back().begin(),
+                        EEnd = ShadowMaps.back().end();
+       E != EEnd;
+       ++E)
+    E->second.Destroy();
+         
   ShadowMaps.pop_back();
 }
 
