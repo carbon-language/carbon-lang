@@ -718,6 +718,11 @@ bool JumpThreading::ProcessSwitchOnDuplicateCond(BasicBlock *PredBB,
       if (PredSI->getSuccessor(PredCase) != DestBB &&
           DestSI->getSuccessor(i) != DestBB)
         continue;
+      
+      // Do not forward this if it already goes to this destination, this would
+      // be an infinite loop.
+      if (PredSI->getSuccessor(PredCase) == DestSucc)
+        continue;
 
       // Otherwise, we're safe to make the change.  Make sure that the edge from
       // DestSI to DestSucc is not critical and has no PHI nodes.

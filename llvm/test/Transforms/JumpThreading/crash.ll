@@ -212,3 +212,25 @@ bb13:
 bb61:                                            
   ret void
 }
+
+
+; PR5698
+define void @test7(i32 %x) {
+tailrecurse:
+  switch i32 %x, label %return [
+    i32 2, label %bb2
+    i32 3, label %bb
+  ]
+
+bb:         
+  switch i32 %x, label %return [
+    i32 2, label %bb2
+    i32 3, label %tailrecurse
+  ]
+
+bb2:        
+  ret void
+
+return:     
+  ret void
+}
