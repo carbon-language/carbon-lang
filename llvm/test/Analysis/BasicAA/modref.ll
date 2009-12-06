@@ -60,8 +60,8 @@ define i8 @test2a(i8* %P) {
   call void @llvm.memset.i8(i8* %P, i8 2, i8 127, i32 0)
   %A = load i8* %P2
   ret i8 %A
-; CHECK: %A = load i8* %P2
-; CHECK: ret i8 %A
+; CHECK-NOT: load
+; CHECK: ret i8 2
 }
 
 define void @test3(i8* %P, i8 %X) {
