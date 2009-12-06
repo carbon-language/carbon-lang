@@ -5407,7 +5407,7 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                         Range.getEnd(), II,
                                                         ObjectType,
                                                         FirstQualifierInScope,
-                                                        false));
+                                                        false, false));
 }
 
 template<typename Derived>
