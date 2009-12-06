@@ -838,7 +838,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 
       if (!isPure && !ThisAdjustment.isEmpty()) {
         ThisAdjustments[Index] = ThisAdjustment;
-        // FIXME: Might this end up inserting some false adjustments?
         SavedThisAdjustments.push_back(std::make_pair(std::make_pair(GD, OGD),
                                                       ThisAdjustment));
       }
@@ -851,8 +850,11 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
     if (NonVirtualAdjustment) {
       ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
       
-      if (!isPure)
+      if (!isPure) {
         ThisAdjustments[Index] = ThisAdjustment;
+        SavedThisAdjustments.push_back(std::make_pair(std::make_pair(GD, OGD),
+                                                      ThisAdjustment));
+      }
     }
     return true;
   }
