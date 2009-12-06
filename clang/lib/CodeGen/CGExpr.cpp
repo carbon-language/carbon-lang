@@ -403,8 +403,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
 
   // Shift to proper location.
   if (StartBit)
-    Val = Builder.CreateLShr(Val, llvm::ConstantInt::get(EltTy, StartBit),
-                             "bf.lo");
+    Val = Builder.CreateLShr(Val, StartBit, "bf.lo");
 
   // Mask off unused bits.
   llvm::Constant *LowMask = llvm::ConstantInt::get(VMContext,
@@ -426,8 +425,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
     HighVal = Builder.CreateAnd(HighVal, HighMask, "bf.lo.cleared");
 
     // Shift to proper location and or in to bitfield value.
-    HighVal = Builder.CreateShl(HighVal,
-                                llvm::ConstantInt::get(EltTy, LowBits));
+    HighVal = Builder.CreateShl(HighVal, LowBits);
     Val = Builder.CreateOr(Val, HighVal, "bf.val");
   }
 
@@ -613,8 +611,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   //   LowVal = (LowVal & InvMask) | (NewVal << StartBit),
   // with the shift of NewVal implicitly stripping the high bits.
   llvm::Value *NewLowVal =
-    Builder.CreateShl(NewVal, llvm::ConstantInt::get(EltTy, StartBit),
-                      "bf.value.lo");
+    Builder.CreateShl(NewVal, StartBit, "bf.value.lo");
   LowVal = Builder.CreateAnd(LowVal, InvMask, "bf.prev.lo.cleared");
   LowVal = Builder.CreateOr(LowVal, NewLowVal, "bf.new.lo");
 
@@ -640,8 +637,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     // where the high bits of NewVal have already been cleared and the
     // shift stripping the low bits.
     llvm::Value *NewHighVal =
-      Builder.CreateLShr(NewVal, llvm::ConstantInt::get(EltTy, LowBits),
-                        "bf.value.high");
+      Builder.CreateLShr(NewVal, LowBits, "bf.value.high");
     HighVal = Builder.CreateAnd(HighVal, InvMask, "bf.prev.hi.cleared");
     HighVal = Builder.CreateOr(HighVal, NewHighVal, "bf.new.hi");
 
