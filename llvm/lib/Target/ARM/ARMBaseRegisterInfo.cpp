@@ -578,6 +578,13 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     MFI->calculateMaxStackAlignment();
   }
 
+  // Spill R4 if Thumb2 function requires stack realignment - it will be used as
+  // scratch register.
+  // FIXME: It will be better just to find spare register here.
+  if (needsStackRealignment(MF) &&
+      AFI->isThumb2Function())
+    MF.getRegInfo().setPhysRegUsed(ARM::R4);
+
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
   const unsigned *CSRegs = getCalleeSavedRegs();
@@ -1351,14 +1358,30 @@ emitPrologue(MachineFunction &MF) const {
 
   // If we need dynamic stack realignment, do it here.
   if (needsStackRealignment(MF)) {
-    unsigned Opc;
     unsigned MaxAlign = MFI->getMaxAlignment();
     assert (!AFI->isThumb1OnlyFunction());
-    Opc = AFI->isThumbFunction() ? ARM::t2BICri : ARM::BICri;
-
-    AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(Opc), ARM::SP)
+    if (!AFI->isThumbFunction()) {
+      // Emit bic sp, sp, MaxAlign
+      AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl,
+                                          TII.get(ARM::BICri), ARM::SP)
                                   .addReg(ARM::SP, RegState::Kill)
                                   .addImm(MaxAlign-1)));
+    } else {
+      // We cannot use sp as source/dest register here, thus we're emitting the
+      // following sequence:
+      // mov r4, sp
+      // bic r4, r4, MaxAlign
+      // mov sp, r4
+      // FIXME: It will be better just to find spare register here.
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::R4)
+        .addReg(ARM::SP, RegState::Kill);
+      AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl,
+                                          TII.get(ARM::t2BICri), ARM::R4)
+                                  .addReg(ARM::R4, RegState::Kill)
+                                  .addImm(MaxAlign-1)));
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
+        .addReg(ARM::R4, RegState::Kill);
+    }
   }
 }
 
