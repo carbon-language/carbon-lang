@@ -81,8 +81,8 @@ bool Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
   
   // Get the MemoryBuffer for this FID, if it fails, we fail.
   const llvm::MemoryBuffer *InputFile =
-  if (InputFile == 0)
     getSourceManager().getBuffer(FID, &ErrorStr);
+  if (!ErrorStr.empty())
     return true;
   
   EnterSourceFileWithLexer(new Lexer(FID, InputFile, *this), CurDir);

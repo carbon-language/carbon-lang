@@ -70,8 +70,8 @@ namespace SrcMgr {
     unsigned NumLines;
 
     /// getBuffer - Returns the memory buffer for the associated content.  If
-    /// there is an error opening this buffer the first time, this returns null
-    /// and fills in the ErrorStr with a reason.
+    /// there is an error opening this buffer the first time, this manufactures
+    /// a temporary buffer and returns a non-empty error string.
     const llvm::MemoryBuffer *getBuffer(std::string *ErrorStr = 0) const;
 
     /// getSize - Returns the size of the content encapsulated by this
@@ -426,10 +426,9 @@ public:
   // FileID manipulation methods.
   //===--------------------------------------------------------------------===//
 
-  /// getBuffer - Return the buffer for the specified FileID.  If there is an
-  /// error opening this buffer the first time, this returns null and fills in
-  /// the ErrorStr with a reason.
-  ///
+  /// getBuffer - Return the buffer for the specified FileID. If there is an
+  /// error opening this buffer the first time, this manufactures a temporary
+  /// buffer and returns a non-empty error string.
   const llvm::MemoryBuffer *getBuffer(FileID FID, std::string *Error = 0) const{
     return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Error);
   }
