@@ -555,7 +555,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  void *FuncPtr;\n";
   Preamble += "};\n";
   Preamble += "// Runtime copy/destroy helper functions (from Block_private.h)\n";
-  Preamble += "#ifdef CF_EXPORT_CONSTANT_STRING\n";
+  Preamble += "#ifdef __OBJC_EXPORT_BLOCKS\n";
   Preamble += "extern \"C\" __declspec(dllexport) void _Block_object_assign(void *, const void *, const int);\n";
   Preamble += "extern \"C\" __declspec(dllexport) void _Block_object_dispose(const void *, const int);\n";
   Preamble += "extern \"C\" __declspec(dllexport) void *_NSConcreteGlobalBlock[32];\n";
