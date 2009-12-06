@@ -238,8 +238,9 @@ int main(int argc, char **argv) {
   Indexer Idxer(Prog);
   llvm::SmallVector<TUnit*, 4> TUnits;
 
+  DiagnosticOptions DiagOpts;
   llvm::OwningPtr<Diagnostic> Diags(
-    CompilerInstance::createDiagnostics(DiagnosticOptions(), argc, argv));
+    CompilerInstance::createDiagnostics(DiagOpts, argc, argv));
 
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())

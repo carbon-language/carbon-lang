@@ -33,8 +33,9 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     return 0;
 
+  DiagnosticOptions DiagOpts;
   llvm::OwningPtr<Diagnostic> Diags(
-    CompilerInstance::createDiagnostics(DiagnosticOptions(), argc, argv));
+    CompilerInstance::createDiagnostics(DiagOpts, argc, argv));
 
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];

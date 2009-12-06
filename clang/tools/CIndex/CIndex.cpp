@@ -292,6 +292,7 @@ public:
 };
 
 class CIndexer : public Indexer {
+  DiagnosticOptions DiagOpts;
   IgnoreDiagnosticsClient IgnoreDiagClient;
   llvm::OwningPtr<Diagnostic> TextDiags;
   Diagnostic IgnoreDiags;
@@ -308,7 +309,7 @@ public:
                                      OnlyLocalDecls(false),
                                      DisplayDiagnostics(false) {
     TextDiags.reset(
-      CompilerInstance::createDiagnostics(DiagnosticOptions(), 0, 0));
+      CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
   }
 
   virtual ~CIndexer() { delete &getProgram(); }

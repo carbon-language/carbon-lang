@@ -419,8 +419,12 @@ public:
   /// logging information.
   ///
   /// Note that this creates an unowned DiagnosticClient, if using directly the
-  /// caller is responsible for releaseing the returned Diagnostic's client
+  /// caller is responsible for releasing the returned Diagnostic's client
   /// eventually.
+  ///
+  /// \param Opts - The diagnostic options; note that the created text
+  /// diagnostic object contains a reference to these options and its lifetime
+  /// must extend past that of the diagnostic engine.
   ///
   /// \return The new object on success, or null on failure.
   static Diagnostic *createDiagnostics(const DiagnosticOptions &Opts,
