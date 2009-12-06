@@ -2,11 +2,10 @@
 
 INCLUDE(CheckCXXSourceCompiles)
 
+CHECK_CXX_SOURCE_COMPILES("
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
-	
-CHECK_CXX_SOURCE_COMPILES("
 int main() {
 #ifdef _MSC_VER
         volatile LONG val = 1;
