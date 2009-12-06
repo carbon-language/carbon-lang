@@ -497,11 +497,16 @@ static inline char findMatchingPunctuation(char c) {
 ///
 /// \returns the index pointing one character past the end of the
 /// word.
-unsigned findEndOfWord(unsigned Start,
-                       const llvm::SmallVectorImpl<char> &Str,
-                       unsigned Length, unsigned Column,
-                       unsigned Columns) {
+static unsigned findEndOfWord(unsigned Start,
+                              const llvm::SmallVectorImpl<char> &Str,
+                              unsigned Length, unsigned Column,
+                              unsigned Columns) {
+  assert(Start < Str.size() && "Invalid start position!");
   unsigned End = Start + 1;
+
+  // If we are already at the end of the string, take that as the word.
+  if (End == Str.size())
+    return End;
 
   // Determine if the start of the string is actually opening
   // punctuation, e.g., a quote or parentheses.
