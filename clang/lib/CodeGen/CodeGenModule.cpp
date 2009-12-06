@@ -621,8 +621,13 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
                                  Context.getSourceManager(),
                                  "Generating code for declaration");
   
-  if (isa<CXXMethodDecl>(D))
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     getVtableInfo().MaybeEmitVtable(GD);
+    if (MD->isVirtual() && MD->isOutOfLine() &&
+        (!isa<CXXDestructorDecl>(D) || GD.getDtorType() != Dtor_Base)) {
+      BuildThunksForVirtual(GD);
+    }
+  }
   
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     EmitCXXConstructor(CD, GD.getCtorType());

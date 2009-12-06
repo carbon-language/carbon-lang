@@ -223,6 +223,13 @@ public:
   /// non-class type.
   llvm::Constant *GenerateRTTI(QualType Ty);
   
+  llvm::Constant *GetAddrOfThunk(GlobalDecl GD,
+                                 const ThunkAdjustment &ThisAdjustment);
+  llvm::Constant *GetAddrOfCovariantThunk(GlobalDecl GD,
+                                const CovariantThunkAdjustment &ThisAdjustment);
+  void BuildThunksForVirtual(GlobalDecl GD);
+  void BuildThunksForVirtualRecursive(GlobalDecl GD, GlobalDecl BaseOGD);
+
   /// BuildThunk - Build a thunk for the given method.
   llvm::Constant *BuildThunk(GlobalDecl GD, bool Extern, 
                              const ThunkAdjustment &ThisAdjustment);

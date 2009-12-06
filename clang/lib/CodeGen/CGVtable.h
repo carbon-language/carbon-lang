@@ -15,6 +15,7 @@
 #define CLANG_CODEGEN_CGVTABLE_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/GlobalVariable.h"
 #include "GlobalDecl.h"
 
@@ -83,6 +84,11 @@ class CGVtableInfo {
   /// pointers in the vtable for a given record decl.
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
 
+  typedef llvm::DenseMap<std::pair<GlobalDecl, GlobalDecl>,
+                         ThunkAdjustment> SavedThisAdjustmentsTy;
+  SavedThisAdjustmentsTy SavedThisAdjustments;
+  llvm::DenseSet<const CXXRecordDecl*> SavedThisAdjustmentRecords;
+
   /// getNumVirtualFunctionPointers - Return the number of virtual function
   /// pointers in the vtable for a given record decl.
   uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
@@ -121,6 +127,8 @@ public:
   /// base.
   int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
                                     const CXXRecordDecl *VBase);
+
+  ThunkAdjustment getThisAdjustment(GlobalDecl GD, GlobalDecl OGD);
 
   /// getVtableAddressPoint - returns the address point of the vtable for the
   /// given record decl.

@@ -994,6 +994,102 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
 }
 
 llvm::Constant *
+CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
+                              const ThunkAdjustment &ThisAdjustment) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+
+  // Compute mangled name
+  llvm::SmallString<256> OutName;
+  if (const CXXDestructorDecl* DD = dyn_cast<CXXDestructorDecl>(MD))
+    getMangleContext().mangleCXXDtorThunk(DD, GD.getDtorType(), ThisAdjustment,
+                                          OutName);
+  else
+    getMangleContext().mangleThunk(MD, ThisAdjustment, OutName);
+  OutName += '\0';
+  const char* Name = UniqueMangledName(OutName.begin(), OutName.end());
+
+  // Get function for mangled name
+  const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
+  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
+}
+
+llvm::Constant *
+CodeGenModule::GetAddrOfCovariantThunk(GlobalDecl GD,
+                                   const CovariantThunkAdjustment &Adjustment) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+
+  // Compute mangled name
+  llvm::SmallString<256> OutName;
+  getMangleContext().mangleCovariantThunk(MD, Adjustment, OutName);
+  OutName += '\0';
+  const char* Name = UniqueMangledName(OutName.begin(), OutName.end());
+
+  // Get function for mangled name
+  const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
+  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
+}
+
+void CodeGenModule::BuildThunksForVirtual(GlobalDecl GD) {
+  BuildThunksForVirtualRecursive(GD, GD);
+}
+
+void
+CodeGenModule::BuildThunksForVirtualRecursive(GlobalDecl GD,
+                                              GlobalDecl BaseOGD) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  const CXXMethodDecl *BaseOMD = cast<CXXMethodDecl>(BaseOGD.getDecl());
+  for (CXXMethodDecl::method_iterator mi = BaseOMD->begin_overridden_methods(),
+         e = BaseOMD->end_overridden_methods();
+       mi != e; ++mi) {
+    GlobalDecl OGD;
+    const CXXMethodDecl *OMD = *mi;
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(OMD))
+      OGD = GlobalDecl(DD, GD.getDtorType());
+    else
+      OGD = GlobalDecl(OMD);
+    QualType nc_oret = OMD->getType()->getAs<FunctionType>()->getResultType();
+    CanQualType oret = getContext().getCanonicalType(nc_oret);
+    QualType nc_ret = MD->getType()->getAs<FunctionType>()->getResultType();
+    CanQualType ret = getContext().getCanonicalType(nc_ret);
+    ThunkAdjustment ReturnAdjustment;
+    if (oret != ret) {
+      QualType qD = nc_ret->getPointeeType();
+      QualType qB = nc_oret->getPointeeType();
+      CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
+      CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
+      ReturnAdjustment = ComputeThunkAdjustment(D, B);
+    }
+    ThunkAdjustment ThisAdjustment =
+        getVtableInfo().getThisAdjustment(GD, OGD);
+    bool Extern = !cast<CXXRecordDecl>(OMD->getDeclContext())->isInAnonymousNamespace();
+    if (!ReturnAdjustment.isEmpty() || !ThisAdjustment.isEmpty()) {
+      CovariantThunkAdjustment CoAdj(ThisAdjustment, ReturnAdjustment);
+      llvm::Constant *FnConst;
+      if (!ReturnAdjustment.isEmpty())
+        FnConst = GetAddrOfCovariantThunk(GD, CoAdj);
+      else
+        FnConst = GetAddrOfThunk(GD, ThisAdjustment);
+      if (!isa<llvm::Function>(FnConst)) {
+        assert(0 && "Figure out how to handle incomplete-type cases!");
+      }
+      llvm::Function *Fn = cast<llvm::Function>(FnConst);
+      if (Fn->isDeclaration()) {
+        llvm::GlobalVariable::LinkageTypes linktype;
+        linktype = llvm::GlobalValue::WeakAnyLinkage;
+        if (!Extern)
+          linktype = llvm::GlobalValue::InternalLinkage;
+        Fn->setLinkage(linktype);
+        if (!Features.Exceptions && !Features.ObjCNonFragileABI)
+          Fn->addFnAttr(llvm::Attribute::NoUnwind);
+        Fn->setAlignment(2);
+        CodeGenFunction(*this).GenerateCovariantThunk(Fn, GD, Extern, CoAdj);
+      }
+    }
+    BuildThunksForVirtualRecursive(GD, OGD);
+  }
+}
+
+llvm::Constant *
 CodeGenModule::BuildThunk(GlobalDecl GD, bool Extern,
                           const ThunkAdjustment &ThisAdjustment) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());

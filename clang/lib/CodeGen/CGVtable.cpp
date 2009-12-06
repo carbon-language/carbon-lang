@@ -73,6 +73,7 @@ private:
     /// Methods - The methods, in vtable order.
     typedef llvm::SmallVector<GlobalDecl, 16> MethodsVectorTy;
     MethodsVectorTy Methods;
+    MethodsVectorTy OrigMethods;
 
   public:
     /// AddMethod - Add a method to the vtable methods.
@@ -82,6 +83,7 @@ private:
       
       MethodToIndexMap[GD] = Methods.size();
       Methods.push_back(GD);
+      OrigMethods.push_back(GD);
     }
     
     /// OverrideMethod - Replace a method with another.
@@ -113,6 +115,10 @@ private:
       return true;
     }
 
+    GlobalDecl getOrigMethod(uint64_t Index) const {
+      return OrigMethods[Index];
+    }
+
     MethodsVectorTy::size_type size() const {
       return Methods.size();
     }
@@ -120,6 +126,7 @@ private:
     void clear() {
       MethodToIndexMap.clear();
       Methods.clear();
+      OrigMethods.clear();
     }
     
     GlobalDecl operator[](uint64_t Index) const {
@@ -134,6 +141,10 @@ private:
   /// pointer adjustment needed for a method.
   typedef llvm::DenseMap<uint64_t, ThunkAdjustment> ThisAdjustmentsMapTy;
   ThisAdjustmentsMapTy ThisAdjustments;
+
+  typedef std::vector<std::pair<std::pair<GlobalDecl, GlobalDecl>,
+                                ThunkAdjustment> > SavedThisAdjustmentsVectorTy;
+  SavedThisAdjustmentsVectorTy SavedThisAdjustments;
 
   /// BaseReturnTypes - Contains the base return types of methods who have been
   /// overridden with methods whose return types require adjustment. Used for
@@ -201,6 +212,9 @@ public:
   
   llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
     { return VBIndex; }
+
+  SavedThisAdjustmentsVectorTy &getSavedThisAdjustments()
+    { return SavedThisAdjustments; }
 
   llvm::Constant *wrap(Index_t i) {
     llvm::Constant *m;
@@ -762,10 +776,16 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
     else
       OGD = OMD;
 
-    // FIXME: Explain why this is necessary!
+    // Check whether this is the method being overridden in this section of
+    // the vtable.
     uint64_t Index;
     if (!Methods.getIndex(OGD, Index))
       continue;
+
+    // Get the original method, which we should be computing thunks, etc,
+    // against.
+    OGD = Methods.getOrigMethod(Index);
+    OMD = cast<CXXMethodDecl>(OGD.getDecl());
 
     QualType ReturnType = 
       MD->getType()->getAs<FunctionType>()->getResultType();
@@ -776,10 +796,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
     if (TypeConversionRequiresAdjustment(CGM.getContext(), ReturnType, 
                                           OverriddenReturnType)) {
       CanQualType &BaseReturnType = BaseReturnTypes[Index];
-
-      // Get the canonical return type.
-      CanQualType CanReturnType = 
-        CGM.getContext().getCanonicalType(ReturnType);
 
       // Insert the base return type.
       if (BaseReturnType.isNull())
@@ -820,8 +836,12 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
       ThunkAdjustment ThisAdjustment(NonVirtualAdjustment,
                                       VirtualAdjustment);
 
-      if (!isPure && !ThisAdjustment.isEmpty())
+      if (!isPure && !ThisAdjustment.isEmpty()) {
         ThisAdjustments[Index] = ThisAdjustment;
+        // FIXME: Might this end up inserting some false adjustments?
+        SavedThisAdjustments.push_back(std::make_pair(std::make_pair(GD, OGD),
+                                                      ThisAdjustment));
+      }
       return true;
     }
 
@@ -882,10 +902,10 @@ void VtableBuilder::AppendMethodsToVtable() {
     if (!ReturnAdjustment.isEmpty()) {
       // Build a covariant thunk.
       CovariantThunkAdjustment Adjustment(ThisAdjustment, ReturnAdjustment);
-      Method = CGM.BuildCovariantThunk(MD, Extern, Adjustment);
+      Method = wrap(CGM.GetAddrOfCovariantThunk(GD, Adjustment));
     } else if (!ThisAdjustment.isEmpty()) {
       // Build a "regular" thunk.
-      Method = CGM.BuildThunk(GD, Extern, ThisAdjustment);
+      Method = wrap(CGM.GetAddrOfThunk(GD, ThisAdjustment));
     } else if (MD->isPure()) {
       // We have a pure virtual method.
       Method = getPureVirtualFn();
@@ -1046,6 +1066,32 @@ uint64_t CGVtableInfo::getMethodVtableIndex(GlobalDecl GD) {
   I = MethodVtableIndices.find(GD);
   assert(I != MethodVtableIndices.end() && "Did not find index!");
   return I->second;
+}
+
+ThunkAdjustment CGVtableInfo::getThisAdjustment(GlobalDecl GD,
+                                                GlobalDecl OGD) {
+  SavedThisAdjustmentsTy::iterator I =
+    SavedThisAdjustments.find(std::make_pair(GD, OGD));
+  if (I != SavedThisAdjustments.end())
+    return I->second;
+
+  const CXXRecordDecl *RD = cast<CXXRecordDecl>(GD.getDecl()->getDeclContext());
+  if (!SavedThisAdjustmentRecords.insert(RD).second)
+    return ThunkAdjustment();
+
+  VtableBuilder b(RD, RD, 0, CGM, false);
+  D1(printf("vtable %s\n", RD->getNameAsCString()));
+  b.GenerateVtableForBase(RD);
+  b.GenerateVtableForVBases(RD);
+  
+  SavedThisAdjustments.insert(b.getSavedThisAdjustments().begin(),
+                              b.getSavedThisAdjustments().end());
+
+  I = SavedThisAdjustments.find(std::make_pair(GD, OGD));
+  if (I != SavedThisAdjustments.end())
+    return I->second;
+
+  return ThunkAdjustment();
 }
 
 int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD, 
@@ -1416,5 +1462,17 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   
   // Emit the data.
   GenerateClassData(Linkage, RD);
+
+  for (CXXRecordDecl::method_iterator i = RD->method_begin(),
+       e = RD->method_end(); i != e; ++i) {
+    if ((*i)->isVirtual() && (*i)->hasInlineBody()) {
+      if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(*i)) {
+        CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Complete));
+        CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Deleting));
+      } else {
+        CGM.BuildThunksForVirtual(GlobalDecl(*i));
+      }
+    }
+  }
 }
 

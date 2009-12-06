@@ -768,7 +768,7 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 
 // FIXME: This is the wrong thunk, but until these issues are fixed, better
 // than nothing.
-// CHECK-LPLL64:define weak %class.test8_D* @_ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev(%class.test8_D*) {
+// CHECK-LPLL64:define weak %class.test8_D* @_ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev(%class.test8_D*)
 // CHECK-LPLL64:entry:
 // CHECK-LPLL64:  %retval = alloca %class.test8_D*
 // CHECK-LPLL64:  %.addr = alloca %class.test8_D*
@@ -790,7 +790,7 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LPLL64:  ret %class.test8_D* %10
 // CHECK-LPLL64:}
 
-// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D*) {
+// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D*)
 // CHECK-LPLL64:entry:
 // CHECK-LPLL64:  %retval = alloca %class.test8_D*
 // CHECK-LPLL64:  %.addr = alloca %class.test8_D*
