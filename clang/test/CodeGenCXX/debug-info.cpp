@@ -11,3 +11,10 @@ template<typename T> struct A {
   A<T> *next;
 };
 void f(A<int>) { }
+
+struct B { };
+
+void f() {
+  int B::*a = 0;
+  void (B::*b)() = 0;
+}

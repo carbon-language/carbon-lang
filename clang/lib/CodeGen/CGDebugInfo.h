@@ -40,7 +40,7 @@ namespace CodeGen {
 /// and is responsible for emitting to llvm globals or pass directly to
 /// the backend.
 class CGDebugInfo {
-  CodeGenModule *M;
+  CodeGenModule &CGM;
   bool isMainCompileUnitCreated;
   llvm::DIFactory DebugFactory;
 
@@ -74,12 +74,13 @@ class CGDebugInfo {
   llvm::DIType CreateType(const EnumType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const LValueReferenceType *Ty, llvm::DICompileUnit U);
-
+  llvm::DIType CreateType(const MemberPointerType *Ty, llvm::DICompileUnit U);
+  
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DICompileUnit U);
 public:
-  CGDebugInfo(CodeGenModule *m);
+  CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
 
   /// setLocation - Update the current source location. If \arg loc is

@@ -727,10 +727,6 @@ ASTContext::getTypeInfo(const Type *T) {
     break;
   }
   case Type::MemberPointer: {
-    // FIXME: This is ABI dependent. We use the Itanium C++ ABI.
-    // http://www.codesourcery.com/public/cxx-abi/abi.html#member-pointers
-    // If we ever want to support other ABIs this needs to be abstracted.
-
     QualType Pointee = cast<MemberPointerType>(T)->getPointeeType();
     std::pair<uint64_t, unsigned> PtrDiffInfo =
       getTypeInfo(getPointerDiffType());
