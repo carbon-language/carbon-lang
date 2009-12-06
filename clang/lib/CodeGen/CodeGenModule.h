@@ -212,15 +212,6 @@ public:
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
                                     const llvm::Type *Ty = 0);
 
-  /// GenerateVtable - Generate the vtable for the given type.  LayoutClass is
-  /// the class to use for the virtual base layout information.  For
-  /// non-construction vtables, this is always the same as RD.  Offset is the
-  /// offset in bits for the RD object in the LayoutClass, if we're generating a
-  /// construction vtable, otherwise 0.
-  llvm::Constant *GenerateVtable(const CXXRecordDecl *LayoutClass,
-                                 const CXXRecordDecl *RD,
-                                 uint64_t Offset=0);
-
   /// GenerateVTT - Generate the VTT for the given type.
   llvm::Constant *GenerateVTT(const CXXRecordDecl *RD);
 

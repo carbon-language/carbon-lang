@@ -18,7 +18,7 @@
 #include "GlobalDecl.h"
 
 namespace llvm {
-  class Constant;
+  class GlobalVariable;
 }
 
 namespace clang {
@@ -79,7 +79,8 @@ class CGVtableInfo {
   typedef llvm::DenseMap<ClassPairTy, int64_t> VirtualBaseClassIndiciesTy;
   VirtualBaseClassIndiciesTy VirtualBaseClassIndicies;
 
-  llvm::DenseMap<const CXXRecordDecl *, llvm::Constant *> Vtables;
+  /// Vtables - All the vtables which have been defined.
+  llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> Vtables;
   
   /// NumVirtualFunctionPointers - Contains the number of virtual function 
   /// pointers in the vtable for a given record decl.
@@ -95,7 +96,11 @@ class CGVtableInfo {
   /// upon definition of a KeyFunction.  This includes the vtable, the
   /// rtti data structure and the VTT.
   void GenerateClassData(const CXXRecordDecl *RD);
-  
+ 
+  llvm::GlobalVariable *GenerateVtable(const CXXRecordDecl *LayoutClass,
+                                       const CXXRecordDecl *RD,
+                                       uint64_t Offset);
+    
 public:
   CGVtableInfo(CodeGenModule &CGM)
     : CGM(CGM) { }
@@ -118,9 +123,10 @@ public:
   /// FIXME: This should return a list of address points.
   uint64_t getVtableAddressPoint(const CXXRecordDecl *RD);
   
-  llvm::Constant *getVtable(const CXXRecordDecl *RD);
-  llvm::Constant *getCtorVtable(const CXXRecordDecl *RD,
-                                const CXXRecordDecl *Class, uint64_t Offset);
+  llvm::GlobalVariable *getVtable(const CXXRecordDecl *RD);
+  llvm::GlobalVariable *getCtorVtable(const CXXRecordDecl *RD,
+                                      const CXXRecordDecl *Class, 
+                                      uint64_t Offset);
   
   
   void MaybeEmitVtable(GlobalDecl GD);

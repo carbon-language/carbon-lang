@@ -1111,22 +1111,22 @@ createGlobalVariable(CodeGenModule &CGM, const CXXRecordDecl *RD,
   return V;
 }
 
-llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
-                                              const CXXRecordDecl *RD,
-                                              uint64_t Offset) {
+llvm::GlobalVariable *
+CGVtableInfo::GenerateVtable(const CXXRecordDecl *LayoutClass,
+                             const CXXRecordDecl *RD, uint64_t Offset) {
   llvm::SmallString<256> OutName;
   if (LayoutClass != RD)
-    getMangleContext().mangleCXXCtorVtable(LayoutClass, Offset/8, RD, OutName);
+    CGM.getMangleContext().mangleCXXCtorVtable(LayoutClass, Offset / 8, 
+                                               RD, OutName);
   else
-    getMangleContext().mangleCXXVtable(RD, OutName);
+    CGM.getMangleContext().mangleCXXVtable(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
-  llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t AddressPoint;
 
-  llvm::GlobalVariable *GV = getModule().getGlobalVariable(Name);
-  if (GV && AddressPoints[LayoutClass] && !GV->isDeclaration()) {
-    AddressPoint=(*(*(AddressPoints[LayoutClass]))[RD])[std::make_pair(RD,
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  if (GV && CGM.AddressPoints[LayoutClass] && !GV->isDeclaration()) {
+    AddressPoint=(*(*(CGM.AddressPoints[LayoutClass]))[RD])[std::make_pair(RD,
                                                                        Offset)];
     // FIXME: We can never have 0 address point.  Do this for now so gepping
     // retains the same structure.  Later, we'll just assert.
@@ -1138,7 +1138,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
       CreateDefinition = true;
     else {
       const ASTRecordLayout &Layout = 
-        getContext().getASTRecordLayout(LayoutClass);
+        CGM.getContext().getASTRecordLayout(LayoutClass);
       
       if (const CXXMethodDecl *KeyFunction = Layout.getKeyFunction()) {
         if (!KeyFunction->getBody()) {
@@ -1149,7 +1149,7 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
       }
     }
 
-    VtableBuilder b(RD, LayoutClass, Offset, *this, CreateDefinition);
+    VtableBuilder b(RD, LayoutClass, Offset, CGM, CreateDefinition);
 
     D1(printf("vtable %s\n", RD->getNameAsCString()));
     // First comes the vtables for all the non-virtual bases...
@@ -1159,15 +1159,16 @@ llvm::Constant *CodeGenModule::GenerateVtable(const CXXRecordDecl *LayoutClass,
     b.GenerateVtableForVBases(RD, Offset);
 
     llvm::Constant *Init = 0;
+    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
     llvm::ArrayType *ArrayType = 
-      llvm::ArrayType::get(Ptr8Ty, b.getVtable().size());
+      llvm::ArrayType::get(Int8PtrTy, b.getVtable().size());
 
     if (CreateDefinition) {
       Init = llvm::ConstantArray::get(ArrayType, &b.getVtable()[0], 
                                       b.getVtable().size());
     }
     llvm::GlobalVariable *OGV = GV;
-    GV = createGlobalVariable(*this, LayoutClass, ArrayType, Init, Name);
+    GV = createGlobalVariable(CGM, LayoutClass, ArrayType, Init, Name);
     if (OGV) {
       GV->takeName(OGV);
       llvm::Constant *NewPtr = 
@@ -1382,23 +1383,24 @@ llvm::Constant *CodeGenModule::GenerateVTT(const CXXRecordDecl *RD) {
 }
 
 void CGVtableInfo::GenerateClassData(const CXXRecordDecl *RD) {
-  Vtables[RD] = CGM.GenerateVtable(RD, RD);
+  Vtables[RD] = GenerateVtable(RD, RD, 0);
   CGM.GenerateRTTI(RD);
   CGM.GenerateVTT(RD);  
 }
 
-llvm::Constant *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
-  llvm::Constant *&Vtable = Vtables[RD];
+llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
+  llvm::GlobalVariable *Vtable = Vtables[RD];
+  
   if (!Vtable)
-    Vtable = CGM.GenerateVtable(RD, RD);
+    Vtable = GenerateVtable(RD, RD, 0);
 
   return Vtable;
 }
 
-llvm::Constant *CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
-                                            const CXXRecordDecl *RD,
-                                            uint64_t Offset) {
-  return CGM.GenerateVtable(LayoutClass, RD, Offset);
+llvm::GlobalVariable *
+CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
+                            const CXXRecordDecl *RD, uint64_t Offset) {
+  return GenerateVtable(LayoutClass, RD, Offset);
 }
 
 void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
