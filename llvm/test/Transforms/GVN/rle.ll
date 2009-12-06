@@ -131,6 +131,43 @@ define i8* @coerce_mustalias7(i64 %V, i64* %P) {
 ; CHECK: ret i8*
 }
 
+; memset -> i16 forwarding.
+define signext i16 @memset_to_i16_local(i16* %A) nounwind ssp {
+entry:
+  %conv = bitcast i16* %A to i8* 
+  tail call void @llvm.memset.i64(i8* %conv, i8 1, i64 200, i32 1)
+  %arrayidx = getelementptr inbounds i16* %A, i64 42
+  %tmp2 = load i16* %arrayidx
+  ret i16 %tmp2
+; CHECK: @memset_to_i16_local
+; CHECK-NOT: load
+; CHECK: ret i16 257
+}
+
+; memset -> float forwarding.
+define float @memset_to_float_local(float* %A, i8 %Val) nounwind ssp {
+entry:
+  %conv = bitcast float* %A to i8*                ; <i8*> [#uses=1]
+  tail call void @llvm.memset.i64(i8* %conv, i8 %Val, i64 400, i32 1)
+  %arrayidx = getelementptr inbounds float* %A, i64 42 ; <float*> [#uses=1]
+  %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
+  ret float %tmp2
+; CHECK: @memset_to_float_local
+; CHECK-NOT: load
+; CHECK: zext
+; CHECK-NEXT: shl
+; CHECK-NEXT: or
+; CHECK-NEXT: shl
+; CHECK-NEXT: or
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: ret float
+}
+
+declare void @llvm.memset.i64(i8* nocapture, i8, i64, i32) nounwind
+
+
+
+
 ;; non-local i32/float -> i8 load forwarding.
 define i8 @coerce_mustalias_nonlocal0(i32* %P, i1 %cond) {
   %P2 = bitcast i32* %P to float*
