@@ -334,20 +334,6 @@ public:
                                                   bool EnteringContext) {
     return 0;
   }
-  
-  /// IsInvalidUnlessNestedName - This method is used for error recovery
-  /// purposes to determine whether the specified identifier is only valid as
-  /// a nested name specifier, for example a namespace name.  It is
-  /// conservatively correct to always return false from this method.
-  ///
-  /// The arguments are the same as those passed to ActOnCXXNestedNameSpecifier.
-  virtual bool IsInvalidUnlessNestedName(Scope *S,
-                                         const CXXScopeSpec &SS,
-                                         IdentifierInfo &II,
-                                         TypeTy *ObjectType,
-                                         bool EnteringContext) {
-    return false;
-  }
 
   /// ActOnCXXNestedNameSpecifier - Called during parsing of a
   /// nested-name-specifier that involves a template-id, e.g.,

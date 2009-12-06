@@ -45,14 +45,10 @@ using namespace clang;
 /// \param EnteringContext whether we will be entering into the context of
 /// the nested-name-specifier after parsing it.
 ///
-/// \param ColonIsSacred - If this is true, then a colon is valid after the
-/// specifier, so we should not try to recover from colons aggressively.
-///
 /// \returns true if a scope specifier was parsed.
 bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                             Action::TypeTy *ObjectType,
-                                            bool EnteringContext,
-                                            bool ColonIsSacred) {
+                                            bool EnteringContext) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
@@ -218,29 +214,11 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     //   namespace-name '::'
     //   nested-name-specifier identifier '::'
     Token Next = NextToken();
-    
-    // If we get foo:bar, this is almost certainly a typo for foo::bar.  Recover
-    // and emit a fixit hint for it.
-    if (Next.is(tok::colon) && !ColonIsSacred &&
-        Actions.IsInvalidUnlessNestedName(CurScope, SS, II, ObjectType,
-                                          EnteringContext) &&
-        // If the token after the colon isn't an identifier, it's still an
-        // error, but they probably meant something else strange so don't
-        // recover like this.
-        PP.LookAhead(1).is(tok::identifier)) {
-      Diag(Next, diag::err_unexected_colon_in_nested_name_spec)
-        << CodeModificationHint::CreateReplacement(Next.getLocation(), "::");
-      
-      // Recover as if the user wrote '::'.
-      Next.setKind(tok::coloncolon);
-    }
-    
     if (Next.is(tok::coloncolon)) {
       // We have an identifier followed by a '::'. Lookup this name
       // as the name in a nested-name-specifier.
       SourceLocation IdLoc = ConsumeToken();
-      assert((Tok.is(tok::coloncolon) || Tok.is(tok::colon)) &&
-             "NextToken() not working properly!");
+      assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
       SourceLocation CCLoc = ConsumeToken();
 
       if (!HasScopeSpecifier) {

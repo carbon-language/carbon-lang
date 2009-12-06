@@ -132,7 +132,7 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
   
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false, false);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   if (SS.isInvalid() || Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_namespace_name);
@@ -260,7 +260,7 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
   
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false, false);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   IdentifierInfo *NamespcName = 0;
   SourceLocation IdentLoc = SourceLocation();
@@ -322,7 +322,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
     IsTypeName = false;
 
   // Parse nested-name-specifier.
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false, false);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   AttributeList *AttrList = 0;
 
@@ -601,7 +601,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
   if (getLang().CPlusPlus &&
-      ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true, true))
+      ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true))
     if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
       Diag(Tok, diag::err_expected_ident);
 
