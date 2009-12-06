@@ -222,7 +222,7 @@ public:
     if (NamedDecl *ND = DeclOrIterator.dyn_cast<NamedDecl *>())
       return reference(ND, SingleDeclIndex);
 
-    return *DeclOrIterator.get<DeclIndexPair*>();
+    return *DeclOrIterator.get<const DeclIndexPair*>();
   }
 
   pointer operator->() const {
@@ -230,13 +230,13 @@ public:
   }
 
   friend bool operator==(const iterator &X, const iterator &Y) {
-    return X.DeclOrIterator == Y.DeclOrIterator &&
+    return X.DeclOrIterator.getOpaqueValue()
+                                  == Y.DeclOrIterator.getOpaqueValue() &&
       X.SingleDeclIndex == Y.SingleDeclIndex;
   }
 
   friend bool operator!=(const iterator &X, const iterator &Y) {
-    return X.DeclOrIterator != Y.DeclOrIterator ||
-      X.SingleDeclIndex != Y.SingleDeclIndex;
+    return !(X == Y);
   }
 };
 
