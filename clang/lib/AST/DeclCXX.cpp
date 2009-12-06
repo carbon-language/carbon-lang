@@ -644,6 +644,25 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   return C.getPointerType(ClassTy);
 }
 
+static bool MethodHasBody(const CXXMethodDecl *MD, const FunctionDecl *&fn) {
+  // Simple case: function has a body
+  if (MD->getBody(fn))
+    return true;
+
+  // Complex case: function is an instantiation of a function which has a
+  // body, but the definition hasn't been instantiated.
+  const FunctionDecl *PatternDecl = MD->getTemplateInstantiationPattern();
+  if (PatternDecl && PatternDecl->getBody(fn))
+    return true;
+
+  return false;
+}
+
+bool CXXMethodDecl::hasInlineBody() const {
+  const FunctionDecl *fn;
+  return MethodHasBody(this, fn) && !fn->isOutOfLine();
+}
+
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            DeclaratorInfo *DInfo, CXXConstructorDecl *C,

@@ -663,20 +663,6 @@ void ASTRecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment) {
   Alignment = NewAlignment;
 }
 
-static bool MethodHasBody(const CXXMethodDecl *MD, const FunctionDecl *&fn) {
-  // Simple case: function has a body
-  if (MD->getBody(fn))
-    return true;
-
-  // Complex case: function is an instantiation of a function which has a
-  // body, but the definition hasn't been instantiated.
-  const FunctionDecl *PatternDecl = MD->getTemplateInstantiationPattern();
-  if (PatternDecl && PatternDecl->getBody(fn))
-    return true;
-
-  return false;
-}
-
 static const CXXMethodDecl *GetKeyFunction(const CXXRecordDecl *RD) {
   if (!RD->isDynamicClass())
     return 0;
@@ -695,9 +681,8 @@ static const CXXMethodDecl *GetKeyFunction(const CXXRecordDecl *RD) {
     // they don't have a body until they're defined.
     if (MD->isImplicit())
       continue;
-    
-    const FunctionDecl *fn;
-    if (MethodHasBody(MD, fn) && !fn->isOutOfLine())
+
+    if (MD->hasInlineBody())
       continue;
     
     // We found it.

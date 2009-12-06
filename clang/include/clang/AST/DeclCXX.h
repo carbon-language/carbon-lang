@@ -870,6 +870,8 @@ public:
     return getType()->getAs<FunctionProtoType>()->getTypeQuals();
   }
 
+  bool hasInlineBody() const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= CXXMethod && D->getKind() <= CXXConversion;
