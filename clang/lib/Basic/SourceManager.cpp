@@ -56,9 +56,25 @@ void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
 const llvm::MemoryBuffer *ContentCache::getBuffer(std::string *ErrorStr) const {
   // Lazily create the Buffer for ContentCaches that wrap files.
   if (!Buffer && Entry) {
-    // FIXME: Should we support a way to not have to do this check over
-    //   and over if we cannot open the file?
     Buffer = MemoryBuffer::getFile(Entry->getName(), ErrorStr,Entry->getSize());
+
+    // If we were unable to open the file, then we are in an inconsistent
+    // situation where the content cache referenced a file which no longer
+    // exists. Most likely, we were using a stat cache with an invalid entry but
+    // the file could also have been removed during processing. Since we can't
+    // really deal with this situation, just create an empty buffer.
+    //
+    // FIXME: This is definitely not ideal, but our immediate clients can't
+    // currently handle returning a null entry here. Ideally we should detect
+    // that we are in an inconsistent situation and error out as quickly as
+    // possible.
+    if (!Buffer) {
+      const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
+      Buffer = MemoryBuffer::getNewMemBuffer(Entry->getSize(), "<invalid>");
+      char *Ptr = const_cast<char*>(Buffer->getBufferStart());
+      for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
+        Ptr[i] = FillStr[i % FillStr.size()];
+    }
   }
   return Buffer;
 }
