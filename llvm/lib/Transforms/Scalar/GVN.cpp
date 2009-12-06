@@ -1192,18 +1192,46 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
 struct AvailableValueInBlock {
   /// BB - The basic block in question.
   BasicBlock *BB;
+  enum ValType {
+    SimpleVal,  // A simple offsetted value that is accessed.
+    MemIntrin   // A memory intrinsic which is loaded from.
+  };
+  
   /// V - The value that is live out of the block.
-  Value *V;
-  /// Offset - The byte offset in V that is interesting for the load query.
+  PointerIntPair<Value *, 1, ValType> Val;
+  
+  /// Offset - The byte offset in Val that is interesting for the load query.
   unsigned Offset;
   
   static AvailableValueInBlock get(BasicBlock *BB, Value *V,
                                    unsigned Offset = 0) {
     AvailableValueInBlock Res;
     Res.BB = BB;
-    Res.V = V;
+    Res.Val.setPointer(V);
+    Res.Val.setInt(SimpleVal);
     Res.Offset = Offset;
     return Res;
+  }
+
+  static AvailableValueInBlock getMI(BasicBlock *BB, MemIntrinsic *MI,
+                                     unsigned Offset = 0) {
+    AvailableValueInBlock Res;
+    Res.BB = BB;
+    Res.Val.setPointer(MI);
+    Res.Val.setInt(MemIntrin);
+    Res.Offset = Offset;
+    return Res;
+  }
+  
+  bool isSimpleValue() const { return Val.getInt() == SimpleVal; }
+  Value *getSimpleValue() const {
+    assert(isSimpleValue() && "Wrong accessor");
+    return Val.getPointer();
+  }
+  
+  MemIntrinsic *getMemIntrinValue() const {
+    assert(!isSimpleValue() && "Wrong accessor");
+    return cast<MemIntrinsic>(Val.getPointer());
   }
 };
 
@@ -1221,30 +1249,33 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   const Type *LoadTy = LI->getType();
   
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
-    BasicBlock *BB = ValuesPerBlock[i].BB;
-    Value *AvailableVal = ValuesPerBlock[i].V;
-    unsigned Offset = ValuesPerBlock[i].Offset;
+    const AvailableValueInBlock &AV = ValuesPerBlock[i];
+    BasicBlock *BB = AV.BB;
     
     if (SSAUpdate.HasValueForBlock(BB))
       continue;
-    
-    if (AvailableVal->getType() != LoadTy) {
-      assert(TD && "Need target data to handle type mismatch case");
-      AvailableVal = GetStoreValueForLoad(AvailableVal, Offset, LoadTy,
-                                          BB->getTerminator(), *TD);
-      
-      if (Offset) {
-        DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
-              << *ValuesPerBlock[i].V << '\n'
+
+    unsigned Offset = AV.Offset;
+
+    Value *AvailableVal;
+    if (AV.isSimpleValue()) {
+      AvailableVal = AV.getSimpleValue();
+      if (AvailableVal->getType() != LoadTy) {
+        assert(TD && "Need target data to handle type mismatch case");
+        AvailableVal = GetStoreValueForLoad(AvailableVal, Offset, LoadTy,
+                                            BB->getTerminator(), *TD);
+        
+        DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
+              << *AV.getSimpleValue() << '\n'
               << *AvailableVal << '\n' << "\n\n\n");
       }
-      
-      
-      DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
-            << *ValuesPerBlock[i].V << '\n'
+    } else {
+      AvailableVal = GetMemInstValueForLoad(AV.getMemIntrinValue(), Offset,
+                                            LoadTy, BB->getTerminator(), *TD);
+      DEBUG(errs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
+            << "  " << *AV.getMemIntrinValue() << '\n'
             << *AvailableVal << '\n' << "\n\n\n");
     }
-    
     SSAUpdate.AddAvailableValue(BB, AvailableVal);
   }
   
@@ -1324,19 +1355,20 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         }
       }
 
-#if 0
       // If the clobbering value is a memset/memcpy/memmove, see if we can
       // forward a value on from it.
-      if (MemIntrinsic *DepMI = dyn_cast<MemIntrinsic>(Dep.getInst())) {
+      if (MemIntrinsic *DepMI = dyn_cast<MemIntrinsic>(DepInfo.getInst())) {
         if (TD == 0)
           TD = getAnalysisIfAvailable<TargetData>();
         if (TD) {
-          int Offset = AnalyzeLoadFromClobberingMemInst(L, DepMI, *TD);
-          if (Offset != -1)
-            AvailVal = GetMemInstValueForLoad(DepMI, Offset, L->getType(), L,*TD);
+          int Offset = AnalyzeLoadFromClobberingMemInst(LI, DepMI, *TD);
+          if (Offset != -1) {
+            ValuesPerBlock.push_back(AvailableValueInBlock::getMI(DepBB, DepMI,
+                                                                  Offset));
+            continue;
+          }            
         }
       }
-#endif
       
       UnavailableBlocks.push_back(DepBB);
       continue;
@@ -1462,19 +1494,25 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // to eliminate LI even if we insert uses in the other predecessors, we will
   // end up increasing code size.  Reject this by scanning for LI.
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
-    if (ValuesPerBlock[i].V == LI)
+    if (ValuesPerBlock[i].isSimpleValue() &&
+        ValuesPerBlock[i].getSimpleValue() == LI)
       return false;
 
+  // FIXME: It is extremely unclear what this loop is doing, other than
+  // artificially restricting loadpre.
   if (isSinglePred) {
     bool isHot = false;
-    for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
-      if (Instruction *I = dyn_cast<Instruction>(ValuesPerBlock[i].V))
+    for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
+      const AvailableValueInBlock &AV = ValuesPerBlock[i];
+      if (AV.isSimpleValue())
         // "Hot" Instruction is in some loop (because it dominates its dep.
         // instruction).
-        if (DT->dominates(LI, I)) {
-          isHot = true;
-          break;
-        }
+        if (Instruction *I = dyn_cast<Instruction>(AV.getSimpleValue()))
+          if (DT->dominates(LI, I)) {
+            isHot = true;
+            break;
+          }
+    }
 
     // We are interested only in "hot" instructions. We don't want to do any
     // mis-optimizations here.

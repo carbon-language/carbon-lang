@@ -163,6 +163,31 @@ entry:
 ; CHECK-NEXT: ret float
 }
 
+;; non-local memset -> i16 load forwarding.
+define i16 @memset_to_i16_nonlocal0(i16* %P, i1 %cond) {
+  %P3 = bitcast i16* %P to i8*
+  br i1 %cond, label %T, label %F
+T:
+  tail call void @llvm.memset.i64(i8* %P3, i8 1, i64 400, i32 1)
+  br label %Cont
+  
+F:
+  tail call void @llvm.memset.i64(i8* %P3, i8 2, i64 400, i32 1)
+  br label %Cont
+
+Cont:
+  %P2 = getelementptr i16* %P, i32 4
+  %A = load i16* %P2
+  ret i16 %A
+
+; CHECK: @memset_to_i16_nonlocal0
+; CHECK: Cont:
+; CHECK-NEXT:   %A = phi i16 [ 514, %F ], [ 257, %T ]
+; CHECK-NOT: load
+; CHECK: ret i16 %A
+}
+
+
 declare void @llvm.memset.i64(i8* nocapture, i8, i64, i32) nounwind
 
 
@@ -191,6 +216,7 @@ Cont:
 ; CHECK-NOT: load
 ; CHECK: ret i8 %A
 }
+
 
 ;; non-local i32/float -> i8 load forwarding.  This also tests that the "P3"
 ;; bitcast equivalence can be properly phi translated.
