@@ -1113,7 +1113,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
 
   // Finally, if all is good, enter the new file!
   std::string ErrorStr;
-  if (EnterSourceFile(FID, CurDir, &ErrorStr))
+  if (EnterSourceFile(FID, CurDir, ErrorStr))
     Diag(FilenameTok, diag::err_pp_error_opening_file)
       << std::string(SourceMgr.getFileEntryForID(FID)->getName()) << ErrorStr;
 }

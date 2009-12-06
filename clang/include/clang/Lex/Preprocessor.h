@@ -335,7 +335,7 @@ public:
   /// start lexing tokens from it instead of the current buffer.  Return true
   /// and fill in ErrorStr with the error information on failure.
   bool EnterSourceFile(FileID CurFileID, const DirectoryLookup *Dir,
-                       std::string *ErrorStr = 0);
+                       std::string &ErrorStr);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the

@@ -438,7 +438,9 @@ void Preprocessor::EnterMainSourceFile() {
   FileID MainFileID = SourceMgr.getMainFileID();
 
   // Enter the main file source buffer.
-  EnterSourceFile(MainFileID, 0);
+  std::string ErrorStr;
+  bool Res = EnterSourceFile(MainFileID, 0, ErrorStr);
+  assert(!Res && "Entering main file should not fail!");
 
   // Tell the header info that the main file was entered.  If the file is later
   // #imported, it won't be re-entered.
@@ -464,7 +466,8 @@ void Preprocessor::EnterMainSourceFile() {
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");
 
   // Start parsing the predefines.
-  EnterSourceFile(FID, 0);
+  Res = EnterSourceFile(FID, 0, ErrorStr);
+  assert(!Res && "Entering predefines should not fail!");
 }
 
 
