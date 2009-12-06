@@ -60,7 +60,7 @@ public:
     ValueT& operator*() { return I->first; }
     ValueT* operator->() { return &I->first; }
 
-    Iterator& operator++() { ++I; return *this; };
+    Iterator& operator++() { ++I; return *this; }
     bool operator==(const Iterator& X) const { return I == X.I; }
     bool operator!=(const Iterator& X) const { return I != X.I; }
   };
