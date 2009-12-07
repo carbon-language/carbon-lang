@@ -655,7 +655,7 @@ public:
   /// \brief Determine whether this particular class is a specialization or
   /// instantiation of a class template or member class of a class template,
   /// and how it was instantiated or specialized.
-  TemplateSpecializationKind getTemplateSpecializationKind();
+  TemplateSpecializationKind getTemplateSpecializationKind() const;
   
   /// \brief Set the kind of specialization or template instantiation this is.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK);

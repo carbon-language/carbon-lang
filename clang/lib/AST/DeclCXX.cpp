@@ -472,8 +472,8 @@ CXXRecordDecl::setInstantiationOfMemberClass(CXXRecordDecl *RD,
     = new (getASTContext()) MemberSpecializationInfo(RD, TSK);
 }
 
-TemplateSpecializationKind CXXRecordDecl::getTemplateSpecializationKind() {
-  if (ClassTemplateSpecializationDecl *Spec
+TemplateSpecializationKind CXXRecordDecl::getTemplateSpecializationKind() const{
+  if (const ClassTemplateSpecializationDecl *Spec
         = dyn_cast<ClassTemplateSpecializationDecl>(this))
     return Spec->getSpecializationKind();
   
