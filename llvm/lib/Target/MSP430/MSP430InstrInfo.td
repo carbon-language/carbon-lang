@@ -35,8 +35,10 @@ def SDT_MSP430SelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSame
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
 //===----------------------------------------------------------------------===//
-def MSP430retflag : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
-                     [SDNPHasChain, SDNPOptInFlag]>;
+def MSP430retflag  : SDNode<"MSP430ISD::RET_FLAG", SDTNone,
+                       [SDNPHasChain, SDNPOptInFlag]>;
+def MSP430retiflag : SDNode<"MSP430ISD::RETI_FLAG", SDTNone,
+                       [SDNPHasChain, SDNPOptInFlag]>;
 
 def MSP430rra     : SDNode<"MSP430ISD::RRA", SDTIntUnaryOp, []>;
 def MSP430rla     : SDNode<"MSP430ISD::RLA", SDTIntUnaryOp, []>;
@@ -128,7 +130,8 @@ def NOP : Pseudo<(outs), (ins), "nop", []>;
 
 // FIXME: Provide proper encoding!
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
-  def RET : Pseudo<(outs), (ins), "ret", [(MSP430retflag)]>;
+  def RET  : Pseudo<(outs), (ins), "ret",  [(MSP430retflag)]>;
+  def RETI : Pseudo<(outs), (ins), "reti", [(MSP430retiflag)]>;
 }
 
 let isBranch = 1, isTerminator = 1 in {

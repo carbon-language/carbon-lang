@@ -27,6 +27,9 @@ namespace llvm {
       /// Return with a flag operand. Operand 0 is the chain operand.
       RET_FLAG,
 
+      /// Same as RET_FLAG, but used for returning from ISRs.
+      RETI_FLAG,
+
       /// Y = R{R,L}A X, rotate right (left) arithmetically
       RRA, RLA,
 

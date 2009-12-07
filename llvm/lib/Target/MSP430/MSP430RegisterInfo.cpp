@@ -17,6 +17,7 @@
 #include "MSP430MachineFunctionInfo.h"
 #include "MSP430RegisterInfo.h"
 #include "MSP430TargetMachine.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -37,17 +38,26 @@ MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm,
 
 const unsigned*
 MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
+  const Function* F = MF->getFunction();
   static const unsigned CalleeSavedRegs[] = {
     MSP430::FPW, MSP430::R5W, MSP430::R6W, MSP430::R7W,
     MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
     0
   };
+  static const unsigned CalleeSavedRegsIntr[] = {
+    MSP430::FPW,  MSP430::R5W,  MSP430::R6W,  MSP430::R7W,
+    MSP430::R8W,  MSP430::R9W,  MSP430::R10W, MSP430::R11W,
+    MSP430::R12W, MSP430::R13W, MSP430::R14W, MSP430::R15W,
+    0
+  };
 
-  return CalleeSavedRegs;
+  return (F->getCallingConv() == CallingConv::MSP430_INTR ?
+          CalleeSavedRegsIntr : CalleeSavedRegs);
 }
 
 const TargetRegisterClass *const *
 MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
+  const Function* F = MF->getFunction();
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
@@ -55,8 +65,18 @@ MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
     0
   };
+  static const TargetRegisterClass * const CalleeSavedRegClassesIntr[] = {
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    0
+  };
 
-  return CalleeSavedRegClasses;
+  return (F->getCallingConv() == CallingConv::MSP430_INTR ?
+          CalleeSavedRegClassesIntr : CalleeSavedRegClasses);
 }
 
 BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -292,7 +312,8 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
   DebugLoc DL = MBBI->getDebugLoc();
 
   switch (RetOpcode) {
-  case MSP430::RET: break;  // These are ok
+  case MSP430::RET:
+  case MSP430::RETI: break;  // These are ok
   default:
     llvm_unreachable("Can only insert epilog into returning blocks");
   }

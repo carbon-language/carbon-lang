@@ -254,6 +254,13 @@ MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
   case CallingConv::C:
   case CallingConv::Fast:
     return LowerCCCArguments(Chain, CallConv, isVarArg, Ins, dl, DAG, InVals);
+  case CallingConv::MSP430_INTR:
+   if (Ins.empty())
+     return Chain;
+   else {
+    llvm_report_error("ISRs cannot have arguments");
+    return SDValue();
+   }
   }
 }
 
@@ -273,6 +280,9 @@ MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   case CallingConv::C:
     return LowerCCCCallTo(Chain, Callee, CallConv, isVarArg, isTailCall,
                           Outs, Ins, dl, DAG, InVals);
+  case CallingConv::MSP430_INTR:
+    llvm_report_error("ISRs cannot be called directly");
+    return SDValue();
   }
 }
 
@@ -369,6 +379,12 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
   // CCValAssign - represent the assignment of the return value to a location
   SmallVector<CCValAssign, 16> RVLocs;
 
+  // ISRs cannot return any value.
+  if (CallConv == CallingConv::MSP430_INTR && !Outs.empty()) {
+    llvm_report_error("ISRs cannot return any value");
+    return SDValue();
+  }
+
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  RVLocs, *DAG.getContext());
@@ -399,11 +415,14 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
     Flag = Chain.getValue(1);
   }
 
+  unsigned Opc = (CallConv == CallingConv::MSP430_INTR ?
+                  MSP430ISD::RETI_FLAG : MSP430ISD::RET_FLAG);
+
   if (Flag.getNode())
-    return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain, Flag);
+    return DAG.getNode(Opc, dl, MVT::Other, Chain, Flag);
 
   // Return Void
-  return DAG.getNode(MSP430ISD::RET_FLAG, dl, MVT::Other, Chain);
+  return DAG.getNode(Opc, dl, MVT::Other, Chain);
 }
 
 /// LowerCCCCallTo - functions arguments are copied from virtual regs to
