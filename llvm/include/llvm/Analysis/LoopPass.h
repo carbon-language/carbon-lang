@@ -52,7 +52,7 @@ public:
   // LPPassManger as expected.
   void preparePassManager(PMStack &PMS);
 
-  /// Assign pass manager to manager this pass
+  /// Assign pass manager to manage this pass
   virtual void assignPassManager(PMStack &PMS,
                                  PassManagerType PMT = PMT_LoopPassManager);
 
@@ -73,7 +73,7 @@ public:
   /// cloneBasicBlockAnalysis - Clone analysis info associated with basic block.
   virtual void cloneBasicBlockAnalysis(BasicBlock *F, BasicBlock *T, Loop *L) {}
 
-  /// deletekAnalysisValue - Delete analysis info associated with value V.
+  /// deleteAnalysisValue - Delete analysis info associated with value V.
   virtual void deleteAnalysisValue(Value *V, Loop *L) {}
 };
 

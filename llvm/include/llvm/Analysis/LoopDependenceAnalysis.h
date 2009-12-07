@@ -67,17 +67,17 @@ class LoopDependenceAnalysis : public LoopPass {
   /// created. The third argument is set to the pair found or created.
   bool findOrInsertDependencePair(Value*, Value*, DependencePair*&);
 
-  /// getLoops - Collect all loops of the loop-nest L a given SCEV is variant
-  /// in.
+  /// getLoops - Collect all loops of the loop nest L in which
+  /// a given SCEV is variant.
   void getLoops(const SCEV*, DenseSet<const Loop*>*) const;
 
   /// isLoopInvariant - True if a given SCEV is invariant in all loops of the
-  /// loop-nest starting at the innermost loop L.
+  /// loop nest starting at the innermost loop L.
   bool isLoopInvariant(const SCEV*) const;
 
-  /// isAffine - An SCEV is affine with respect to the loop-nest starting at
+  /// isAffine - An SCEV is affine with respect to the loop nest starting at
   /// the innermost loop L if it is of the form A+B*X where A, B are invariant
-  /// in the loop-nest and X is a induction variable in the loop-nest.
+  /// in the loop nest and X is a induction variable in the loop nest.
   bool isAffine(const SCEV*) const;
 
   /// TODO: doc
@@ -93,8 +93,8 @@ public:
   static char ID; // Class identification, replacement for typeinfo
   LoopDependenceAnalysis() : LoopPass(&ID) {}
 
-  /// isDependencePair - Check wether two values can possibly give rise to a
-  /// data dependence: that is the case if both are instructions accessing
+  /// isDependencePair - Check whether two values can possibly give rise to
+  /// a data dependence: that is the case if both are instructions accessing
   /// memory and at least one of those accesses is a write.
   bool isDependencePair(const Value*, const Value*) const;
 
