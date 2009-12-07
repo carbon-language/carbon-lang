@@ -77,6 +77,8 @@ def any_empty;
 def append_cmd;
 def forward;
 def forward_as;
+def forward_value;
+def forward_transformed_value;
 def stop_compilation;
 def unpack_values;
 def warning;

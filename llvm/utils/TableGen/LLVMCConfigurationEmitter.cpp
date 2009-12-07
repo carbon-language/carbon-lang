@@ -98,9 +98,12 @@ const std::string GetOperatorName(const DagInit& D) {
 
 // checkNumberOfArguments - Ensure that the number of args in d is
 // greater than or equal to min_arguments, otherwise throw an exception.
-void checkNumberOfArguments (const DagInit* d, unsigned min_arguments) {
-  if (!d || d->getNumArgs() < min_arguments)
+void checkNumberOfArguments (const DagInit* d, unsigned minArgs) {
+  if (!d || d->getNumArgs() < minArgs)
     throw GetOperatorName(d) + ": too few arguments!";
+}
+void checkNumberOfArguments (const DagInit& d, unsigned minArgs) {
+  checkNumberOfArguments(&d, minArgs);
 }
 
 // isDagEmpty - is this DAG marked with an empty marker?
@@ -1043,6 +1046,8 @@ class ExtractOptionNames {
     const DagInit& Stmt = InitPtrToDag(Statement);
     const std::string& ActionName = GetOperatorName(Stmt);
     if (ActionName == "forward" || ActionName == "forward_as" ||
+        ActionName == "forward_value" ||
+        ActionName == "forward_transformed_value" ||
         ActionName == "unpack_values" || ActionName == "switch_on" ||
         ActionName == "parameter_equals" || ActionName == "element_in_list" ||
         ActionName == "not_empty" || ActionName == "empty") {
@@ -1796,6 +1801,45 @@ class EmitActionHandlersCallback
                                           IndentLevel, NewName, O);
   }
 
+  void onForwardValue (const DagInit& Dag,
+                       unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(&Dag, 1);
+    const std::string& Name = InitPtrToString(Dag.getArg(0));
+    const OptionDescription& D = OptDescs.FindOption(Name);
+
+    if (D.isParameter()) {
+      O.indent(IndentLevel) << "vec.push_back("
+                            << D.GenVariableName() << ");\n";
+    }
+    else if (D.isList()) {
+      O.indent(IndentLevel) << "std::copy(" << D.GenVariableName()
+                            << ".begin(), " << D.GenVariableName()
+                            << ".end(), std::back_inserter(vec));\n";
+    }
+    else {
+      throw "'forward_value' used with a switch or an alias!";
+    }
+  }
+
+  void onForwardTransformedValue (const DagInit& Dag,
+                                  unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(&Dag, 2);
+    const std::string& Name = InitPtrToString(Dag.getArg(0));
+    const std::string& Hook = InitPtrToString(Dag.getArg(1));
+    const OptionDescription& D = OptDescs.FindOption(Name);
+
+    if (D.isParameter() || D.isList()) {
+      O.indent(IndentLevel) << "vec.push_back(" << "hooks::"
+                            << Hook << "(" << D.GenVariableName() << "));\n";
+    }
+    else {
+      throw "'forward_transformed_value' used with a switch or an alias!";
+    }
+  }
+
+
   void onOutputSuffix (const DagInit& Dag,
                        unsigned IndentLevel, raw_ostream& O) const
   {
@@ -1819,7 +1863,7 @@ class EmitActionHandlersCallback
     const OptionDescription& D = OptDescs.FindOption(Name);
 
     if (D.isMultiVal())
-      throw std::string("Can't use unpack_values with multi-valued options!");
+      throw "Can't use unpack_values with multi-valued options!";
 
     if (D.isList()) {
       O.indent(IndentLevel)
@@ -1851,6 +1895,9 @@ class EmitActionHandlersCallback
       AddHandler("append_cmd", &EmitActionHandlersCallback::onAppendCmd);
       AddHandler("forward", &EmitActionHandlersCallback::onForward);
       AddHandler("forward_as", &EmitActionHandlersCallback::onForwardAs);
+      AddHandler("forward_value", &EmitActionHandlersCallback::onForwardValue);
+      AddHandler("forward_transformed_value",
+                 &EmitActionHandlersCallback::onForwardTransformedValue);
       AddHandler("output_suffix", &EmitActionHandlersCallback::onOutputSuffix);
       AddHandler("stop_compilation",
                  &EmitActionHandlersCallback::onStopCompilation);
@@ -2208,7 +2255,7 @@ class EmitPreprocessOptionsCallback : ActionHandlingCallbackBase {
       O.indent(IndentLevel) << OptDesc.GenVariableName() << ".clear();\n";
     }
     else {
-      throw "Can't apply 'unset_option' to alias option '" + OptName + "'";
+      throw "Can't apply 'unset_option' to alias option '" + OptName + "'!";
     }
   }
 
@@ -2414,23 +2461,72 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
   O << "}\n\n";
 }
 
+/// HookInfo - Information about the hook type and number of arguments.
+struct HookInfo {
+
+  // A hook can either have a single parameter of type std::vector<std::string>,
+  // or NumArgs parameters of type const char*.
+  enum HookType { ListHook, ArgHook };
+
+  HookType Type;
+  unsigned NumArgs;
+
+  HookInfo() : Type(ArgHook), NumArgs(1)
+  {}
+
+  HookInfo(HookType T) : Type(T), NumArgs(1)
+  {}
+
+  HookInfo(unsigned N) : Type(ArgHook), NumArgs(N)
+  {}
+};
+
+typedef llvm::StringMap<HookInfo> HookInfoMap;
+
 /// ExtractHookNames - Extract the hook names from all instances of
-/// $CALL(HookName) in the provided command line string. Helper
+/// $CALL(HookName) in the provided command line string/action. Helper
 /// function used by FillInHookNames().
 class ExtractHookNames {
-  llvm::StringMap<unsigned>& HookNames_;
+  HookInfoMap& HookNames_;
+  const OptionDescriptions& OptDescs_;
 public:
-  ExtractHookNames(llvm::StringMap<unsigned>& HookNames)
-  : HookNames_(HookNames) {}
+  ExtractHookNames(HookInfoMap& HookNames, const OptionDescriptions& OptDescs)
+    : HookNames_(HookNames), OptDescs_(OptDescs)
+  {}
 
-  void operator()(const Init* CmdLine) {
-    StrVector cmds;
+  void onAction (const DagInit& Dag) {
+    if (GetOperatorName(Dag) == "forward_transformed_value") {
+      checkNumberOfArguments(Dag, 2);
+      const std::string& OptName = InitPtrToString(Dag.getArg(0));
+      const std::string& HookName = InitPtrToString(Dag.getArg(1));
+      const OptionDescription& D = OptDescs_.FindOption(OptName);
 
-    // Ignore nested 'case' DAG.
-    if (typeid(*CmdLine) == typeid(DagInit))
+      HookNames_[HookName] = HookInfo(D.isList() ? HookInfo::ListHook
+                                      : HookInfo::ArgHook);
+    }
+  }
+
+  void operator()(const Init* Arg) {
+
+    // We're invoked on an action (either a dag or a dag list).
+    if (typeid(*Arg) == typeid(DagInit)) {
+      const DagInit& Dag = InitPtrToDag(Arg);
+      this->onAction(Dag);
       return;
+    }
+    else if (typeid(*Arg) == typeid(ListInit)) {
+      const ListInit& List = InitPtrToList(Arg);
+      for (ListInit::const_iterator B = List.begin(), E = List.end(); B != E;
+           ++B) {
+        const DagInit& Dag = InitPtrToDag(*B);
+        this->onAction(Dag);
+      }
+      return;
+    }
 
-    TokenizeCmdline(InitPtrToString(CmdLine), cmds);
+    // We're invoked on a command line.
+    StrVector cmds;
+    TokenizeCmdline(InitPtrToString(Arg), cmds);
     for (StrVector::const_iterator B = cmds.begin(), E = cmds.end();
          B != E; ++B) {
       const std::string& cmd = *B;
@@ -2448,13 +2544,14 @@ public:
           ++NumArgs;
         }
 
-        StringMap<unsigned>::const_iterator H = HookNames_.find(HookName);
+        HookInfoMap::const_iterator H = HookNames_.find(HookName);
 
-        if (H != HookNames_.end() && H->second != NumArgs)
+        if (H != HookNames_.end() && H->second.NumArgs != NumArgs &&
+            H->second.Type != HookInfo::ArgHook)
           throw "Overloading of hooks is not allowed. Overloaded hook: "
             + HookName;
         else
-          HookNames_[HookName] = NumArgs;
+          HookNames_[HookName] = HookInfo(NumArgs);
 
       }
     }
@@ -2471,40 +2568,56 @@ public:
 /// FillInHookNames - Actually extract the hook names from all command
 /// line strings. Helper function used by EmitHookDeclarations().
 void FillInHookNames(const ToolDescriptions& ToolDescs,
-                     llvm::StringMap<unsigned>& HookNames)
+                     const OptionDescriptions& OptDescs,
+                     HookInfoMap& HookNames)
 {
-  // For all command lines:
+  // For all tool descriptions:
   for (ToolDescriptions::const_iterator B = ToolDescs.begin(),
          E = ToolDescs.end(); B != E; ++B) {
     const ToolDescription& D = *(*B);
+
+    // Look for 'forward_transformed_value' in 'actions'.
+    if (D.Actions)
+      WalkCase(D.Actions, Id(), ExtractHookNames(HookNames, OptDescs));
+
+    // Look for hook invocations in 'cmd_line'.
     if (!D.CmdLine)
       continue;
     if (dynamic_cast<StringInit*>(D.CmdLine))
       // This is a string.
-      ExtractHookNames(HookNames).operator()(D.CmdLine);
+      ExtractHookNames(HookNames, OptDescs).operator()(D.CmdLine);
     else
       // This is a 'case' construct.
-      WalkCase(D.CmdLine, Id(), ExtractHookNames(HookNames));
+      WalkCase(D.CmdLine, Id(), ExtractHookNames(HookNames, OptDescs));
   }
 }
 
 /// EmitHookDeclarations - Parse CmdLine fields of all the tool
 /// property records and emit hook function declaration for each
 /// instance of $CALL(HookName).
-void EmitHookDeclarations(const ToolDescriptions& ToolDescs, raw_ostream& O) {
-  llvm::StringMap<unsigned> HookNames;
+void EmitHookDeclarations(const ToolDescriptions& ToolDescs,
+                          const OptionDescriptions& OptDescs, raw_ostream& O) {
+  HookInfoMap HookNames;
 
-  FillInHookNames(ToolDescs, HookNames);
+  FillInHookNames(ToolDescs, OptDescs, HookNames);
   if (HookNames.empty())
     return;
 
   O << "namespace hooks {\n";
-  for (StringMap<unsigned>::const_iterator B = HookNames.begin(),
+  for (HookInfoMap::const_iterator B = HookNames.begin(),
          E = HookNames.end(); B != E; ++B) {
-    O.indent(Indent1) << "std::string " << B->first() << "(";
+    const char* HookName = B->first();
+    const HookInfo& Info = B->second;
 
-    for (unsigned i = 0, j = B->second; i < j; ++i) {
-      O << "const char* Arg" << i << (i+1 == j ? "" : ", ");
+    O.indent(Indent1) << "std::string " << HookName << "(";
+
+    if (Info.Type == HookInfo::ArgHook) {
+      for (unsigned i = 0, j = Info.NumArgs; i < j; ++i) {
+        O << "const char* Arg" << i << (i+1 == j ? "" : ", ");
+      }
+    }
+    else {
+      O << "const std::vector<std::string>& Arg";
     }
 
     O <<");\n";
@@ -2541,7 +2654,9 @@ void EmitIncludes(raw_ostream& O) {
     << "#include \"llvm/Support/CommandLine.h\"\n"
     << "#include \"llvm/Support/raw_ostream.h\"\n\n"
 
+    << "#include <algorithm>\n"
     << "#include <cstdlib>\n"
+    << "#include <iterator>\n"
     << "#include <stdexcept>\n\n"
 
     << "using namespace llvm;\n"
@@ -2635,7 +2750,7 @@ void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
   EmitOptionDefinitions(Data.OptDescs, Data.HasSink, Data.HasExterns, O);
 
   // Emit hook declarations.
-  EmitHookDeclarations(Data.ToolDescs, O);
+  EmitHookDeclarations(Data.ToolDescs, Data.OptDescs, O);
 
   O << "namespace {\n\n";
 
