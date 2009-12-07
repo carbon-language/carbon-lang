@@ -3163,8 +3163,6 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   } else {
     Constructor->setUsed();
   }
-
-  MaybeMarkVirtualImplicitMembersReferenced(CurrentLocation, Constructor);
 }
 
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
@@ -5083,8 +5081,8 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   return Dcl;
 }
 
-void Sema::MaybeMarkVirtualImplicitMembersReferenced(SourceLocation Loc,
-                                                     CXXMethodDecl *MD) {
+void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
+                                             CXXMethodDecl *MD) {
   // Ignore dependent types.
   if (MD->isDependentContext())
     return;
@@ -5095,6 +5093,16 @@ void Sema::MaybeMarkVirtualImplicitMembersReferenced(SourceLocation Loc,
   if (!RD->isDynamicClass())
     return;
 
+  if (!MD->isOutOfLine()) {
+    // The only inline functions we care about are constructors. We also defer
+    // marking the virtual members as referenced until we've reached the end
+    // of the translation unit. We do this because we need to know the key
+    // function of the class in order to determine the key function.
+    if (isa<CXXConstructorDecl>(MD))
+      ClassesWithUnmarkedVirtualMembers.insert(std::make_pair(RD, Loc));
+    return;
+  }
+  
   const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
 
   if (!KeyFunction) {
@@ -5107,10 +5115,45 @@ void Sema::MaybeMarkVirtualImplicitMembersReferenced(SourceLocation Loc,
     return;
   }
   
-  if (CXXDestructorDecl *Dtor = RD->getDestructor(Context)) {
-    if (Dtor->isImplicit() && Dtor->isVirtual())
-      MarkDeclarationReferenced(Loc, Dtor);
+  // Mark the members as referenced.
+  MarkVirtualMembersReferenced(Loc, RD);
+  ClassesWithUnmarkedVirtualMembers.erase(RD);
+}
+
+bool Sema::ProcessPendingClassesWithUnmarkedVirtualMembers() {
+  if (ClassesWithUnmarkedVirtualMembers.empty())
+    return false;
+  
+  for (std::map<CXXRecordDecl *, SourceLocation>::iterator i = 
+       ClassesWithUnmarkedVirtualMembers.begin(), 
+       e = ClassesWithUnmarkedVirtualMembers.end(); i != e; ++i) {
+    CXXRecordDecl *RD = i->first;
+    
+    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
+    if (KeyFunction) {
+      // We know that the class has a key function. If the key function was
+      // declared in this translation unit, then it the class decl would not 
+      // have been in the ClassesWithUnmarkedVirtualMembers map.
+      continue;
+    }
+    
+    SourceLocation Loc = i->second;
+    MarkVirtualMembersReferenced(Loc, RD);
   }
   
-  // FIXME: Need to handle the virtual assignment operator here too.
+  ClassesWithUnmarkedVirtualMembers.clear();
+  return true;
 }
+
+void Sema::MarkVirtualMembersReferenced(SourceLocation Loc, CXXRecordDecl *RD) {
+  for (CXXRecordDecl::method_iterator i = RD->method_begin(), 
+       e = RD->method_end(); i != e; ++i) {
+    CXXMethodDecl *MD = *i;
+
+    // C++ [basic.def.odr]p2:
+    //   [...] A virtual member function is used if it is not pure. [...]
+    if (MD->isVirtual() && !MD->isPure())
+      MarkDeclarationReferenced(Loc, MD);
+  }
+}
+

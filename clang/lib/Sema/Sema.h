@@ -32,6 +32,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include <deque>
 #include <list>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -2147,11 +2148,26 @@ public:
   /// as referenced.
   void MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor);
 
-  /// MaybeMarkVirtualImplicitMembersReferenced - If the passed in method is the
+  /// ClassesWithUnmarkedVirtualMembers - Contains record decls whose virtual
+  /// members might need to be marked as referenced. This is either done when
+  /// the key function definition is emitted (this is handled by by 
+  /// MaybeMarkVirtualMembersReferenced), or at the end of the translation unit
+  /// (done by ProcessPendingClassesWithUnmarkedVirtualMembers).
+  std::map<CXXRecordDecl *, SourceLocation> ClassesWithUnmarkedVirtualMembers;
+
+  /// MaybeMarkVirtualMembersReferenced - If the passed in method is the
   /// key function of the record decl, will mark virtual member functions as 
   /// referenced.
-  void MaybeMarkVirtualImplicitMembersReferenced(SourceLocation Loc, 
-                                                 CXXMethodDecl *MD);
+  void MaybeMarkVirtualMembersReferenced(SourceLocation Loc, CXXMethodDecl *MD);
+  
+  /// MarkVirtualMembersReferenced - Will mark all virtual members of the given
+  /// CXXRecordDecl referenced.
+  void MarkVirtualMembersReferenced(SourceLocation Loc, CXXRecordDecl *RD);
+
+  /// ProcessPendingClassesWithUnmarkedVirtualMembers - Will process classes 
+  /// that might need to have their virtual members marked as referenced.
+  /// Returns false if no work was done.
+  bool ProcessPendingClassesWithUnmarkedVirtualMembers();
   
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 

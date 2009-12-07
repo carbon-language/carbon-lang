@@ -6927,6 +6927,8 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       if (!Constructor->isUsed())
         DefineImplicitCopyConstructor(Loc, Constructor, TypeQuals);
     }
+    
+    MaybeMarkVirtualMembersReferenced(Loc, Constructor);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     if (Destructor->isImplicit() && !Destructor->isUsed())
       DefineImplicitDestructor(Loc, Destructor);
