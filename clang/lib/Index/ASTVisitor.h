@@ -104,7 +104,7 @@ public:
   }
 
   void VisitBlockExpr(BlockExpr *Node) {
-    Visit(Node->getBlockDecl());
+    // The BlockDecl is also visited by 'VisitDeclContext()'.  No need to visit it twice.
   }
 
   void VisitStmt(Stmt *Node) {

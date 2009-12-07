@@ -6499,6 +6499,7 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   CurFunctionNeedsScopeChecking = false;
 
   BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc);
+  CurContext->addDecl(BSI->TheDecl);
   PushDeclContext(BlockScope, BSI->TheDecl);
 }
 
