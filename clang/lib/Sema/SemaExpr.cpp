@@ -2522,6 +2522,16 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   // If this is an Objective-C pseudo-builtin and a definition is provided then
   // use that.
   if (BaseType->isObjCIdType()) {
+    if (IsArrow) {
+      // Handle the following exceptional case PObj->isa.
+      if (const ObjCObjectPointerType *OPT =
+          BaseType->getAs<ObjCObjectPointerType>()) {
+        if (OPT->getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
+            MemberName.getAsIdentifierInfo()->isStr("isa"))
+          return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
+                                                 Context.getObjCIdType()));
+      }
+    }
     // We have an 'id' type. Rather than fall through, we check if this
     // is a reference to 'isa'.
     if (BaseType != Context.ObjCIdRedefinitionType) {
