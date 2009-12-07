@@ -132,3 +132,15 @@ void test_overload(Overload *ovl) {
 // RUN: c-index-test -code-completion-at=%s:95:24 %s | FileCheck -check-prefix=CHECK-CC9 %s
 // CHECK-CC9: ObjCInstanceMethodDecl:{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)i2}
 // CHECK-CC9: ObjCInstanceMethodDecl:{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
+// RUN: c-index-test -code-completion-at=%s:61:11 %s | FileCheck -check-prefix=CHECK-CCA %s
+// CHECK-CCA: {TypedText _cmd}
+// CHECK-CCA: {TypedText self}
+// CHECK-CCA: TypedefDecl:{TypedText Class}
+// CHECK-CCA: ObjCInterfaceDecl:{TypedText Foo}
+// CHECK-CCA: ObjCCategoryDecl:{TypedText FooTestCategory}
+// CHECK-CCA: FunctionDecl:{TypedText func}{LeftParen (}{RightParen )}
+// CHECK-CCA: TypedefDecl:{TypedText id}
+// CHECK-CCA: ObjCInterfaceDecl:{TypedText MyClass}
+// CHECK-CCA: ObjCInterfaceDecl:{TypedText MySubClass}
+// CHECK-CCA: TypedefDecl:{TypedText SEL}
+// CHECK-CCA: {TypedText super}

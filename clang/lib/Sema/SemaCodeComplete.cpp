@@ -1356,9 +1356,23 @@ static void HandleCodeCompleteResults(Sema *S,
 }
 
 void Sema::CodeCompleteOrdinaryName(Scope *S) {
+  typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this, &ResultBuilder::IsOrdinaryName);
   unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
                                            0, CurContext, Results);
+
+  Results.EnterNewScope();
+  AddTypeSpecifierResults(getLangOptions(), NextRank, Results);
+  
+  if (getLangOptions().ObjC1) {
+    // Add the "super" keyword, if appropriate.
+    if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(CurContext))
+      if (Method->getClassInterface()->getSuperClass())
+        Results.MaybeAddResult(Result("super", NextRank));
+  }
+
+  Results.ExitScope();
+
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, NextRank, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
