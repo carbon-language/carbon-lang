@@ -720,6 +720,11 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   if (!RD->isPolymorphic())
     return 0;
   
+  // A class template specialization or instantation does not have a key
+  // function.
+  if (RD->getTemplateSpecializationKind() != TSK_Undeclared)
+    return 0;
+  
   for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
        E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *MD = *I;
