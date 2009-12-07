@@ -159,6 +159,7 @@ sub Analyze {
     push @CmdArgs,'-analyze';
     push @CmdArgs,"-analyzer-display-progress";
     push @CmdArgs,"-analyzer-eagerly-assume";
+    push @CmdArgs,"-analyzer-opt-analyze-nested-blocks";
     push @CmdArgs,(split /\s/,$Analyses);
     
     if (defined $ENV{"CCC_EXPERIMENTAL_CHECKS"}) {
