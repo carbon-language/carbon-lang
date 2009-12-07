@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -S %s -o - | FileCheck %s
+// RUN: clang-cc -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
 
 #define strcpy(dest, src) \
   ((__builtin_object_size(dest, 0) != -1ULL) \
@@ -14,113 +14,98 @@ char *gp;
 int gi, gj;
 
 void test1() {
-  // CHECK:       movabsq $59, %rdx
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  call    ___strcpy_chk
+  // CHECK:     %call = call i8* @__strcpy_chk(i8* getelementptr inbounds ([63 x i8]* @gbuf, i32 0, i64 4), i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i64 59)
   strcpy(&gbuf[4], "Hi there");
 }
 
 void test2() {
-  // CHECK:       movabsq $63, %rdx
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  call    ___strcpy_chk
+  // CHECK:     %call = call i8* @__strcpy_chk(i8* getelementptr inbounds ([63 x i8]* @gbuf, i32 0, i32 0), i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i64 63)
   strcpy(gbuf, "Hi there");
 }
 
 void test3() {
-  // CHECK:       movabsq $0, %rdx
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  call    ___strcpy_chk
+  // CHECK:     %call = call i8* @__strcpy_chk(i8* getelementptr inbounds ([63 x i8]* @gbuf, i64 1, i64 37), i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i64 0)
   strcpy(&gbuf[100], "Hi there");
 }
 
 void test4() {
-  // CHECK:       movabsq $0, %rdx
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  call    ___strcpy_chk
+  // CHECK:     %call = call i8* @__strcpy_chk(i8* getelementptr inbounds ([63 x i8]* @gbuf, i32 0, i64 -1), i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i64 0)
   strcpy((char*)(void*)&gbuf[-1], "Hi there");
 }
 
 void test5() {
-  // CHECK:       movq    $-1, %rax
-  // CHECK-NEXT:  cmpq    $-1, %rax
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK:     %tmp = load i8** @gp
+  // CHECK-NEXT:%0 = call i64 @llvm.objectsize.i64(i8* %tmp, i32 0)
+  // CHECK-NEXT:%cmp = icmp ne i64 %0, -1
   strcpy(gp, "Hi there");
 }
 
 void test6() {
   char buf[57];
 
-  // CHECK:       movabsq $53, %rdx
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  movq
-  // CHECK-NEXT:  call    ___strcpy_chk
+  // CHECK:       %call = call i8* @__strcpy_chk(i8* %arrayidx, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i64 53)
   strcpy(&buf[4], "Hi there");
 }
 
 void test7() {
   int i;
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* getelementptr inbounds ([63 x i8]* @gbuf, i32 0, i32 0), i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy((++i, gbuf), "Hi there");
 }
 
 void test8() {
   char *buf[50];
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %tmp1, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(buf[++gi], "Hi there");
 }
 
 void test9() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %0, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy((char *)((++gi) + gj), "Hi there");
 }
 
 char **p;
 void test10() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %tmp1, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(*(++p), "Hi there");
 }
 
 void test11() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %tmp, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(gp = gbuf, "Hi there");
 }
 
 void test12() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %ptrincdec, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(++gp, "Hi there");
 }
 
 void test13() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %tmp, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(gp++, "Hi there");
 }
 
 void test14() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %ptrincdec, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(--gp, "Hi there");
 }
 
 void test15() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %tmp, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(gp--, "Hi there");
 }
 
 void test16() {
-  // CHECK-NOT:   call    ___strcpy_chk
-  // CHECK:       call    ___inline_strcpy_chk
+  // CHECK-NOT:   __strcpy_chk
+  // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %tmp1, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(gp += 1, "Hi there");
 }
