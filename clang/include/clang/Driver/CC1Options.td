@@ -55,7 +55,7 @@ def analysis_CheckerCFRef : Flag<"-checker-cfref">,
 def analysis_WarnSizeofPointer : Flag<"-warn-sizeof-pointer">,
   HelpText<"Warn about unintended use of sizeof() on pointer expressions">;
 def analysis_InlineCall : Flag<"-inline-call">,
-  HelpText<"Experimental transfer function inling callees when its definition is available.">;
+  HelpText<"Experimental transfer function inlining callees when its definition is available.">;
 
 def analyzer_store : Separate<"-analyzer-store">,
   HelpText<"Source Code Analysis - Abstract Memory Store Models">;
@@ -73,6 +73,8 @@ def analyzer_output_EQ : Joined<"-analyzer-output=">,
 
 def analyzer_opt_analyze_headers : Flag<"-analyzer-opt-analyze-headers">,
   HelpText<"Force the static analyzer to analyze functions defined in header files">;
+def analyzer_opt_analyze_nested_blocks : Flag<"-analyzer-opt-analyze-nested-blocks">,
+  HelpText<"Analyze the definitions of blocks in addition to functions">;  
 def analyzer_display_progress : Flag<"-analyzer-display-progress">,
   HelpText<"Emit verbose output about the analyzer's progress">;
 def analyzer_experimental_checks : Flag<"-analyzer-experimental-checks">,

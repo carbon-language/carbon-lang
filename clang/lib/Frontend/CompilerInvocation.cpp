@@ -31,7 +31,7 @@ using namespace clang;
 static const char *getAnalysisName(Analyses Kind) {
   switch (Kind) {
   default:
-    llvm::llvm_unreachable("Unknown analysis store!");
+    llvm::llvm_unreachable("Unknown analysis kind!");
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
   case NAME: return "-" CMDFLAG;
 #include "clang/Frontend/Analyses.def"
@@ -96,6 +96,8 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-analyzer-opt-analyze-headers");
   if (Opts.AnalyzerDisplayProgress)
     Res.push_back("-analyzer-display-progress");
+  if (Opts.AnalyzeNestedBlocks)
+    Res.push_back("-analyzer-opt-analyze-nested-blocks");
   if (Opts.EagerlyAssume)
     Res.push_back("-analyzer-eagerly-assume");
   if (!Opts.PurgeDead)
@@ -709,6 +711,8 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.VisualizeEGUbi = Args.hasArg(OPT_analyzer_viz_egraph_ubigraph);
   Opts.AnalyzeAll = Args.hasArg(OPT_analyzer_opt_analyze_headers);
   Opts.AnalyzerDisplayProgress = Args.hasArg(OPT_analyzer_display_progress);
+  Opts.AnalyzeNestedBlocks =
+    Args.hasArg(OPT_analyzer_opt_analyze_nested_blocks);
   Opts.PurgeDead = !Args.hasArg(OPT_analyzer_no_purge_dead);
   Opts.EagerlyAssume = Args.hasArg(OPT_analyzer_eagerly_assume);
   Opts.AnalyzeSpecificFunction = getLastArgValue(Args, OPT_analyze_function);

@@ -139,14 +139,21 @@ public:
       return;
       
     declDisplayed = true;
-    // FIXME: Is getCodeDecl() always a named decl?
-    if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
-      const NamedDecl *ND = cast<NamedDecl>(D);
-      SourceManager &SM = Mgr->getASTContext().getSourceManager();
-      llvm::errs() << "ANALYZE: "
-        << SM.getPresumedLoc(ND->getLocation()).getFilename()
-        << ' ' << ND->getNameAsString() << '\n';
+    SourceManager &SM = Mgr->getASTContext().getSourceManager();
+    PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
+    llvm::errs() << "ANALYZE: " << Loc.getFilename();
+
+    if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+      assert(isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D));
+      llvm::errs() << ' ' << ND->getNameAsString();
     }
+    else {
+      assert(isa<BlockDecl>(D));
+      llvm::errs() << ' ' << "block(line:" << Loc.getLine() << ",col:"
+                   << Loc.getColumn();
+    }
+    
+    llvm::errs() << '\n';
   }
 
   void addCodeAction(CodeAction action) {
@@ -269,6 +276,16 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   Mgr.reset(NULL);
 }
 
+static void FindBlocks(DeclContext *D, llvm::SmallVectorImpl<Decl*> &WL) {
+  if (BlockDecl *BD = dyn_cast<BlockDecl>(D))
+    WL.push_back(BD);
+  
+  for (DeclContext::decl_iterator I = D->decls_begin(), E = D->decls_end();
+       I!=E; ++I)
+    if (DeclContext *DC = dyn_cast<DeclContext>(*I))
+      FindBlocks(DC, WL);
+}
+
 void AnalysisConsumer::HandleCode(Decl *D, Stmt* Body, Actions& actions) {
 
   // Don't run the actions if an error has occured with parsing the file.
@@ -285,8 +302,16 @@ void AnalysisConsumer::HandleCode(Decl *D, Stmt* Body, Actions& actions) {
   Mgr->ClearContexts();
   
   // Dispatch on the actions.
+  llvm::SmallVector<Decl*, 10> WL;
+  WL.push_back(D);
+  
+  if (Opts.AnalyzeNestedBlocks)
+    FindBlocks(cast<DeclContext>(D), WL);
+  
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
-    (*I)(*this, *Mgr, D);  
+    for (llvm::SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
+         WI != WE; ++WI)
+      (*I)(*this, *Mgr, *WI);
 }
 
 //===----------------------------------------------------------------------===//
