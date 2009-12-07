@@ -1,6 +1,7 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 struct X { // expected-note{{previous definition is here}}
-  struct X { } x; // expected-error{{nested redefinition of 'X'}}
+  struct X { } x; // expected-error{{nested redefinition of 'X'}} \
+                  // expected-error{{field has incomplete type}}
 }; 
 
 struct Y { };

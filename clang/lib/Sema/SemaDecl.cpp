@@ -5044,9 +5044,14 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     T = Context.IntTy;
   }
 
+  QualType EltTy = Context.getBaseElementType(T);
+  if (!EltTy->isDependentType() &&
+      RequireCompleteType(Loc, EltTy, diag::err_field_incomplete))
+    InvalidDecl = true;
+
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
-  if (T->isVariablyModifiedType()) {
+  if (!InvalidDecl && T->isVariablyModifiedType()) {
     bool SizeIsNegative;
     QualType FixedTy = TryToFixInvalidVariablyModifiedType(T, Context,
                                                            SizeIsNegative);
@@ -5063,13 +5068,15 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   // Fields can not have abstract class types
-  if (RequireNonAbstractType(Loc, T, diag::err_abstract_type_in_decl,
-                             AbstractFieldType))
+  if (!InvalidDecl && RequireNonAbstractType(Loc, T,
+                                             diag::err_abstract_type_in_decl,
+                                             AbstractFieldType))
     InvalidDecl = true;
 
   bool ZeroWidth = false;
   // If this is declared as a bit-field, check the bit-field.
-  if (BitWidth && VerifyBitField(Loc, II, T, BitWidth, &ZeroWidth)) {
+  if (!InvalidDecl && BitWidth &&
+      VerifyBitField(Loc, II, T, BitWidth, &ZeroWidth)) {
     InvalidDecl = true;
     DeleteExpr(BitWidth);
     BitWidth = 0;
@@ -5088,8 +5095,6 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   if (getLangOptions().CPlusPlus) {
-    QualType EltTy = Context.getBaseElementType(T);
-
     CXXRecordDecl* CXXRecord = cast<CXXRecordDecl>(Record);
 
     if (!T->isPODType())
@@ -5432,8 +5437,10 @@ void Sema::ActOnFields(Scope* S,
 
     // If the field is already invalid for some reason, don't emit more
     // diagnostics about it.
-    if (FD->isInvalidDecl())
+    if (FD->isInvalidDecl()) {
+      EnclosingDecl->setInvalidDecl();
       continue;
+    }
 
     // C99 6.7.2.1p2:
     //   A structure or union shall not contain a member with
