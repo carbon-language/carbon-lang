@@ -2678,7 +2678,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
 
     // Build sizeof(returnType)
     SizeOfAlignOfExpr *sizeofExpr = new (Context) SizeOfAlignOfExpr(true,
-                            Context->getTrivialDeclaratorInfo(returnType),
+                            Context->getTrivialTypeSourceInfo(returnType),
                                       Context->getSizeType(),
                                       SourceLocation(), SourceLocation());
     // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
@@ -2718,12 +2718,12 @@ Stmt *RewriteObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
 // typedef struct objc_object Protocol;
 QualType RewriteObjC::getProtocolType() {
   if (!ProtocolTypeDecl) {
-    DeclaratorInfo *DInfo
-      = Context->getTrivialDeclaratorInfo(Context->getObjCIdType());
+    TypeSourceInfo *TInfo
+      = Context->getTrivialTypeSourceInfo(Context->getObjCIdType());
     ProtocolTypeDecl = TypedefDecl::Create(*Context, TUDecl,
                                            SourceLocation(),
                                            &Context->Idents.get("Protocol"),
-                                           DInfo);
+                                           TInfo);
   }
   return Context->getTypeDeclType(ProtocolTypeDecl);
 }

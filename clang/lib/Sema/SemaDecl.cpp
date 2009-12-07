@@ -588,7 +588,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 
   FunctionDecl *New = FunctionDecl::Create(Context,
                                            Context.getTranslationUnitDecl(),
-                                           Loc, II, R, /*DInfo=*/0,
+                                           Loc, II, R, /*TInfo=*/0,
                                            FunctionDecl::Extern, false,
                                            /*hasPrototype=*/true);
   New->setImplicit();
@@ -599,7 +599,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     llvm::SmallVector<ParmVarDecl*, 16> Params;
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
-                                           FT->getArgType(i), /*DInfo=*/0,
+                                           FT->getArgType(i), /*TInfo=*/0,
                                            VarDecl::None, 0));
     New->setParams(Context, Params.data(), Params.size());
   }
@@ -924,7 +924,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
            ParamType != ParamEnd; ++ParamType) {
         ParmVarDecl *Param = ParmVarDecl::Create(Context, New,
                                                  SourceLocation(), 0,
-                                                 *ParamType, /*DInfo=*/0,
+                                                 *ParamType, /*TInfo=*/0,
                                                  VarDecl::None, 0);
         Param->setImplicit();
         Params.push_back(Param);
@@ -1678,9 +1678,9 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
 
   // Mock up a declarator.
   Declarator Dc(DS, Declarator::TypeNameContext);
-  DeclaratorInfo *DInfo = 0;
-  GetTypeForDeclarator(Dc, S, &DInfo);
-  assert(DInfo && "couldn't build declarator info for anonymous struct/union");
+  TypeSourceInfo *TInfo = 0;
+  GetTypeForDeclarator(Dc, S, &TInfo);
+  assert(TInfo && "couldn't build declarator info for anonymous struct/union");
 
   // Create a declaration for this anonymous struct/union.
   NamedDecl *Anon = 0;
@@ -1688,7 +1688,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     Anon = FieldDecl::Create(Context, OwningClass, Record->getLocation(),
                              /*IdentifierInfo=*/0,
                              Context.getTypeDeclType(Record),
-                             DInfo,
+                             TInfo,
                              /*BitWidth=*/0, /*Mutable=*/false);
     Anon->setAccess(AS_public);
     if (getLangOptions().CPlusPlus)
@@ -1715,7 +1715,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
                            /*IdentifierInfo=*/0,
                            Context.getTypeDeclType(Record),
-                           DInfo,
+                           TInfo,
                            SC);
   }
   Anon->setImplicit();
@@ -1876,8 +1876,8 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
   DeclContext *DC;
   NamedDecl *New;
 
-  DeclaratorInfo *DInfo = 0;
-  QualType R = GetTypeForDeclarator(D, S, &DInfo);
+  TypeSourceInfo *TInfo = 0;
+  QualType R = GetTypeForDeclarator(D, S, &TInfo);
 
   LookupResult Previous(*this, Name, D.getIdentifierLoc(), LookupOrdinaryName,
                         ForRedeclaration);
@@ -2007,13 +2007,13 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
       return DeclPtrTy();
     }
 
-    New = ActOnTypedefDeclarator(S, D, DC, R, DInfo, Previous, Redeclaration);
+    New = ActOnTypedefDeclarator(S, D, DC, R, TInfo, Previous, Redeclaration);
   } else if (R->isFunctionType()) {
-    New = ActOnFunctionDeclarator(S, D, DC, R, DInfo, Previous,
+    New = ActOnFunctionDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
                                   IsFunctionDefinition, Redeclaration);
   } else {
-    New = ActOnVariableDeclarator(S, D, DC, R, DInfo, Previous,
+    New = ActOnVariableDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
                                   Redeclaration);
   }
@@ -2129,7 +2129,7 @@ void Sema::DiagnoseFunctionSpecifiers(Declarator& D) {
 
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                             QualType R,  DeclaratorInfo *DInfo,
+                             QualType R,  TypeSourceInfo *TInfo,
                              LookupResult &Previous, bool &Redeclaration) {
   // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
   if (D.getCXXScopeSpec().isSet()) {
@@ -2150,7 +2150,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
-  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, DInfo);
+  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, TInfo);
   if (!NewTD) return 0;
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
@@ -2176,7 +2176,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
       if (!FixedTy.isNull()) {
         Diag(D.getIdentifierLoc(), diag::warn_illegal_constant_array_size);
-        NewTD->setTypeDeclaratorInfo(Context.getTrivialDeclaratorInfo(FixedTy));
+        NewTD->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(FixedTy));
       } else {
         if (SizeIsNegative)
           Diag(D.getIdentifierLoc(), diag::err_typecheck_negative_array_size);
@@ -2269,7 +2269,7 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
 
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                              QualType R, DeclaratorInfo *DInfo,
+                              QualType R, TypeSourceInfo *TInfo,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
                               bool &Redeclaration) {
@@ -2371,7 +2371,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(),
-                          II, R, DInfo, SC);
+                          II, R, TInfo, SC);
 
   if (D.isInvalidType())
     NewVD->setInvalidDecl();
@@ -2623,7 +2623,7 @@ void Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
 
 NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                              QualType R, DeclaratorInfo *DInfo,
+                              QualType R, TypeSourceInfo *TInfo,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
                               bool IsFunctionDefinition, bool &Redeclaration) {
@@ -2705,7 +2705,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Create the new declaration
     NewFD = CXXConstructorDecl::Create(Context,
                                        cast<CXXRecordDecl>(DC),
-                                       D.getIdentifierLoc(), Name, R, DInfo,
+                                       D.getIdentifierLoc(), Name, R, TInfo,
                                        isExplicit, isInline,
                                        /*isImplicitlyDeclared=*/false);
   } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
@@ -2726,7 +2726,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // Create a FunctionDecl to satisfy the function definition parsing
       // code path.
       NewFD = FunctionDecl::Create(Context, DC, D.getIdentifierLoc(),
-                                   Name, R, DInfo, SC, isInline,
+                                   Name, R, TInfo, SC, isInline,
                                    /*hasPrototype=*/true);
       D.setInvalidType();
     }
@@ -2739,7 +2739,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     CheckConversionDeclarator(D, R, SC);
     NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                      D.getIdentifierLoc(), Name, R, DInfo,
+                                      D.getIdentifierLoc(), Name, R, TInfo,
                                       isInline, isExplicit);
 
     isVirtualOkay = true;
@@ -2773,7 +2773,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
     // This is a C++ method declaration.
     NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                  D.getIdentifierLoc(), Name, R, DInfo,
+                                  D.getIdentifierLoc(), Name, R, TInfo,
                                   isStatic, isInline);
 
     isVirtualOkay = !isStatic;
@@ -2791,7 +2791,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     NewFD = FunctionDecl::Create(Context, DC,
                                  D.getIdentifierLoc(),
-                                 Name, R, DInfo, SC, isInline, HasPrototype);
+                                 Name, R, TInfo, SC, isInline, HasPrototype);
   }
 
   if (D.isInvalidType())
@@ -2946,7 +2946,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
          AE = FT->arg_type_end(); AI != AE; ++AI) {
       ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
                                                SourceLocation(), 0,
-                                               *AI, /*DInfo=*/0,
+                                               *AI, /*TInfo=*/0,
                                                VarDecl::None, 0);
       Param->setImplicit();
       Params.push_back(Param);
@@ -3841,9 +3841,9 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
 
-  DeclaratorInfo *DInfo = 0;
+  TypeSourceInfo *TInfo = 0;
   TagDecl *OwnedDecl = 0;
-  QualType parmDeclType = GetTypeForDeclarator(D, S, &DInfo, &OwnedDecl);
+  QualType parmDeclType = GetTypeForDeclarator(D, S, &TInfo, &OwnedDecl);
 
   if (getLangOptions().CPlusPlus && OwnedDecl && OwnedDecl->isDefinition()) {
     // C++ [dcl.fct]p6:
@@ -3886,7 +3886,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
   ParmVarDecl *New
     = ParmVarDecl::Create(Context, CurContext, D.getIdentifierLoc(), II,
-                          T, DInfo, StorageClass, 0);
+                          T, TInfo, StorageClass, 0);
 
   if (D.isInvalidType())
     New->setInvalidDecl();
@@ -4329,20 +4329,20 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
 }
 
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
-                                    DeclaratorInfo *DInfo) {
+                                    TypeSourceInfo *TInfo) {
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
 
-  if (!DInfo) {
+  if (!TInfo) {
     assert(D.isInvalidType() && "no declarator info for valid type");
-    DInfo = Context.getTrivialDeclaratorInfo(T);
+    TInfo = Context.getTrivialTypeSourceInfo(T);
   }
 
   // Scope manipulation handled by caller.
   TypedefDecl *NewTD = TypedefDecl::Create(Context, CurContext,
                                            D.getIdentifierLoc(),
                                            D.getIdentifier(),
-                                           DInfo);
+                                           TInfo);
 
   if (const TagType *TT = T->getAs<TagType>()) {
     TagDecl *TD = TT->getDecl();
@@ -4976,8 +4976,8 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
 
-  DeclaratorInfo *DInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &DInfo);
+  TypeSourceInfo *TInfo = 0;
+  QualType T = GetTypeForDeclarator(D, S, &TInfo);
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
 
@@ -5003,7 +5003,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     = (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_mutable);
   SourceLocation TSSL = D.getSourceRange().getBegin();
   FieldDecl *NewFD
-    = CheckFieldDecl(II, T, DInfo, Record, Loc, Mutable, BitWidth, TSSL,
+    = CheckFieldDecl(II, T, TInfo, Record, Loc, Mutable, BitWidth, TSSL,
                      AS, PrevDecl, &D);
   if (NewFD->isInvalidDecl() && PrevDecl) {
     // Don't introduce NewFD into scope; there's already something
@@ -5027,7 +5027,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 ///
 /// \todo The Declarator argument is a hack. It will be removed once
 FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
-                                DeclaratorInfo *DInfo,
+                                TypeSourceInfo *TInfo,
                                 RecordDecl *Record, SourceLocation Loc,
                                 bool Mutable, Expr *BitWidth,
                                 SourceLocation TSSL,
@@ -5083,7 +5083,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     ZeroWidth = false;
   }
 
-  FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, DInfo,
+  FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, TInfo,
                                        BitWidth, Mutable);
   if (InvalidDecl)
     NewFD->setInvalidDecl();
@@ -5330,8 +5330,8 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   // FIXME: Unnamed fields can be handled in various different ways, for
   // example, unnamed unions inject all members into the struct namespace!
 
-  DeclaratorInfo *DInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &DInfo);
+  TypeSourceInfo *TInfo = 0;
+  QualType T = GetTypeForDeclarator(D, S, &TInfo);
 
   if (BitWidth) {
     // 6.7.2.1p3, 6.7.2.1p4
@@ -5374,7 +5374,7 @@ Sema::DeclPtrTy Sema::ActOnIvar(Scope *S,
   // Construct the decl.
   ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context,
                                              EnclosingContext, Loc, II, T,
-                                             DInfo, ac, (Expr *)BitfieldWidth);
+                                             TInfo, ac, (Expr *)BitfieldWidth);
 
   if (II) {
     NamedDecl *PrevDecl = LookupSingleName(S, II, LookupMemberName,

@@ -175,10 +175,10 @@ public:
   /// \brief Transforms the given type into another type.
   ///
   /// By default, this routine transforms a type by creating a
-  /// DeclaratorInfo for it and delegating to the appropriate
+  /// TypeSourceInfo for it and delegating to the appropriate
   /// function.  This is expensive, but we don't mind, because
   /// this method is deprecated anyway;  all users should be
-  /// switched to storing DeclaratorInfos.
+  /// switched to storing TypeSourceInfos.
   ///
   /// \returns the transformed type.
   QualType TransformType(QualType T);
@@ -191,7 +191,7 @@ public:
   /// may override this function (to take over all type
   /// transformations) or some set of the TransformXXXType functions
   /// to alter the transformation.
-  DeclaratorInfo *TransformType(DeclaratorInfo *DI);
+  TypeSourceInfo *TransformType(TypeSourceInfo *DI);
 
   /// \brief Transform the given type-with-location into a new
   /// type, collecting location information in the given builder
@@ -301,9 +301,9 @@ public:
   void InventTemplateArgumentLoc(const TemplateArgument &Arg,
                                  TemplateArgumentLoc &ArgLoc);
 
-  /// \brief Fakes up a DeclaratorInfo for a type.
-  DeclaratorInfo *InventDeclaratorInfo(QualType T) {
-    return SemaRef.Context.getTrivialDeclaratorInfo(T,
+  /// \brief Fakes up a TypeSourceInfo for a type.
+  TypeSourceInfo *InventTypeSourceInfo(QualType T) {
+    return SemaRef.Context.getTrivialTypeSourceInfo(T,
                        getDerived().getBaseLocation());
   }
 
@@ -783,7 +783,7 @@ public:
   /// By default, performs semantic analysis to build the new decaration.
   /// Subclasses may override this routine to provide different behavior.
   VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, QualType T,
-                                DeclaratorInfo *Declarator,
+                                TypeSourceInfo *Declarator,
                                 IdentifierInfo *Name,
                                 SourceLocation Loc,
                                 SourceRange TypeRange) {
@@ -894,10 +894,10 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildSizeOfAlignOf(DeclaratorInfo *DInfo,
+  OwningExprResult RebuildSizeOfAlignOf(TypeSourceInfo *TInfo,
                                         SourceLocation OpLoc,
                                         bool isSizeOf, SourceRange R) {
-    return getSema().CreateSizeOfAlignOfExpr(DInfo, OpLoc, isSizeOf, R);
+    return getSema().CreateSizeOfAlignOfExpr(TInfo, OpLoc, isSizeOf, R);
   }
 
   /// \brief Build a new sizeof or alignof expression with an expression
@@ -1890,7 +1890,7 @@ void TreeTransform<Derived>::InventTemplateArgumentLoc(
 
   case TemplateArgument::Type:
     Output = TemplateArgumentLoc(Arg,
-               SemaRef.Context.getTrivialDeclaratorInfo(Arg.getAsType(), Loc));
+               SemaRef.Context.getTrivialTypeSourceInfo(Arg.getAsType(), Loc));
                                             
     break;
 
@@ -1922,9 +1922,9 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     return false;
 
   case TemplateArgument::Type: {
-    DeclaratorInfo *DI = Input.getSourceDeclaratorInfo();
+    TypeSourceInfo *DI = Input.getTypeSourceInfo();
     if (DI == NULL)
-      DI = InventDeclaratorInfo(Input.getArgument().getAsType());
+      DI = InventTypeSourceInfo(Input.getArgument().getAsType());
 
     DI = getDerived().TransformType(DI);
     if (!DI) return true;
@@ -2031,10 +2031,10 @@ QualType TreeTransform<Derived>::TransformType(QualType T) {
 
   // Temporary workaround.  All of these transformations should
   // eventually turn into transformations on TypeLocs.
-  DeclaratorInfo *DI = getSema().Context.CreateDeclaratorInfo(T);
+  TypeSourceInfo *DI = getSema().Context.CreateTypeSourceInfo(T);
   DI->getTypeLoc().initialize(getDerived().getBaseLocation());
   
-  DeclaratorInfo *NewDI = getDerived().TransformType(DI);
+  TypeSourceInfo *NewDI = getDerived().TransformType(DI);
 
   if (!NewDI)
     return QualType();
@@ -2043,7 +2043,7 @@ QualType TreeTransform<Derived>::TransformType(QualType T) {
 }
 
 template<typename Derived>
-DeclaratorInfo *TreeTransform<Derived>::TransformType(DeclaratorInfo *DI) {
+TypeSourceInfo *TreeTransform<Derived>::TransformType(TypeSourceInfo *DI) {
   if (getDerived().AlreadyTransformed(DI->getType()))
     return DI;
 
@@ -2056,7 +2056,7 @@ DeclaratorInfo *TreeTransform<Derived>::TransformType(DeclaratorInfo *DI) {
   if (Result.isNull())
     return 0;
 
-  return TLB.getDeclaratorInfo(SemaRef.Context, Result);
+  return TLB.getTypeSourceInfo(SemaRef.Context, Result);
 }
 
 template<typename Derived>
@@ -2504,10 +2504,10 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
     ParmVarDecl *NewParm;
 
     if (OldParm) {
-      DeclaratorInfo *OldDI = OldParm->getDeclaratorInfo();
+      TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
       assert(OldDI->getType() == T->getArgType(i));
 
-      DeclaratorInfo *NewDI = getDerived().TransformType(OldDI);
+      TypeSourceInfo *NewDI = getDerived().TransformType(OldDI);
       if (!NewDI)
         return QualType();
 
@@ -2660,7 +2660,7 @@ QualType TreeTransform<Derived>::TransformTypeOfType(TypeLocBuilder &TLB,
                                                      TypeOfTypeLoc TL) {
   TypeOfType *T = TL.getTypePtr();
 
-  // FIXME: should be an inner type, or at least have a DeclaratorInfo.
+  // FIXME: should be an inner type, or at least have a TypeSourceInfo.
   QualType Underlying = getDerived().TransformType(T->getUnderlyingType());
   if (Underlying.isNull())
     return QualType();
@@ -3402,7 +3402,7 @@ TreeTransform<Derived>::TransformCXXCatchStmt(CXXCatchStmt *S) {
 
     Var = getDerived().RebuildExceptionDecl(ExceptionDecl,
                                             T,
-                                            ExceptionDecl->getDeclaratorInfo(),
+                                            ExceptionDecl->getTypeSourceInfo(),
                                             ExceptionDecl->getIdentifier(),
                                             ExceptionDecl->getLocation(),
                                             /*FIXME: Inaccurate*/
@@ -3583,9 +3583,9 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
                                                    bool isAddressOfOperand) {
   if (E->isArgumentType()) {
-    DeclaratorInfo *OldT = E->getArgumentTypeInfo();
+    TypeSourceInfo *OldT = E->getArgumentTypeInfo();
 
-    DeclaratorInfo *NewT = getDerived().TransformType(OldT);
+    TypeSourceInfo *NewT = getDerived().TransformType(OldT);
     if (!NewT)
       return SemaRef.ExprError();
 

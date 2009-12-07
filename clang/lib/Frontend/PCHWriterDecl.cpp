@@ -106,7 +106,7 @@ void PCHDeclWriter::VisitTypeDecl(TypeDecl *D) {
 
 void PCHDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   VisitTypeDecl(D);
-  Writer.AddDeclaratorInfo(D->getTypeDeclaratorInfo(), Record);
+  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
   Code = pch::DECL_TYPEDEF;
 }
 
@@ -151,7 +151,7 @@ void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 
 void PCHDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
   VisitValueDecl(D);
-  Writer.AddDeclaratorInfo(D->getDeclaratorInfo(), Record);
+  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
 }
 
 void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
@@ -370,7 +370,7 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   // If the assumptions about the DECL_PARM_VAR abbrev are true, use it.  Here
   // we dynamically check for the properties that we optimize for, but don't
   // know are true of all PARM_VAR_DECLs.
-  if (!D->getDeclaratorInfo() &&
+  if (!D->getTypeSourceInfo() &&
       !D->hasAttrs() &&
       !D->isImplicit() &&
       !D->isUsed() &&

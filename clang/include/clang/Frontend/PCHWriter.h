@@ -274,7 +274,7 @@ public:
   void AddTypeRef(QualType T, RecordData &Record);
 
   /// \brief Emits a reference to a declarator info.
-  void AddDeclaratorInfo(DeclaratorInfo *DInfo, RecordData &Record);
+  void AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record);
 
   /// \brief Emits a template argument location.
   void AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,

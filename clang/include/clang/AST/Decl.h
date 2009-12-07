@@ -35,17 +35,17 @@ class TypeLoc;
 ///
 /// A client can read the relevant info using TypeLoc wrappers, e.g:
 /// @code
-/// TypeLoc TL = DeclaratorInfo->getTypeLoc();
+/// TypeLoc TL = TypeSourceInfo->getTypeLoc();
 /// if (PointerLoc *PL = dyn_cast<PointerLoc>(&TL))
 ///   PL->getStarLoc().print(OS, SrcMgr);
 /// @endcode
 ///
-class DeclaratorInfo {
+class TypeSourceInfo {
   QualType Ty;
   // Contains a memory block after the class, used for type source information,
   // allocated by ASTContext.
   friend class ASTContext;
-  DeclaratorInfo(QualType ty) : Ty(ty) { }
+  TypeSourceInfo(QualType ty) : Ty(ty) { }
 public:
   /// \brief Return the type wrapped by this type source info.
   QualType getType() const { return Ty; }
@@ -322,18 +322,18 @@ public:
 };
 
 /// \brief Represents a ValueDecl that came out of a declarator.
-/// Contains type source information through DeclaratorInfo.
+/// Contains type source information through TypeSourceInfo.
 class DeclaratorDecl : public ValueDecl {
-  DeclaratorInfo *DeclInfo;
+  TypeSourceInfo *DeclInfo;
 
 protected:
   DeclaratorDecl(Kind DK, DeclContext *DC, SourceLocation L,
-                 DeclarationName N, QualType T, DeclaratorInfo *DInfo)
-    : ValueDecl(DK, DC, L, N, T), DeclInfo(DInfo) {}
+                 DeclarationName N, QualType T, TypeSourceInfo *TInfo)
+    : ValueDecl(DK, DC, L, N, T), DeclInfo(TInfo) {}
 
 public:
-  DeclaratorInfo *getDeclaratorInfo() const { return DeclInfo; }
-  void setDeclaratorInfo(DeclaratorInfo *DInfo) { DeclInfo = DInfo; }
+  TypeSourceInfo *getTypeSourceInfo() const { return DeclInfo; }
+  void setTypeSourceInfo(TypeSourceInfo *TInfo) { DeclInfo = TInfo; }
 
   SourceLocation getTypeSpecStartLoc() const;
 
@@ -440,8 +440,8 @@ private:
   friend class StmtIteratorBase;
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-          QualType T, DeclaratorInfo *DInfo, StorageClass SC)
-    : DeclaratorDecl(DK, DC, L, Id, T, DInfo), Init(),
+          QualType T, TypeSourceInfo *TInfo, StorageClass SC)
+    : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
       DeclaredInCondition(false) {
     SClass = SC;
@@ -461,7 +461,7 @@ public:
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
-                         QualType T, DeclaratorInfo *DInfo, StorageClass S);
+                         QualType T, TypeSourceInfo *TInfo, StorageClass S);
 
   virtual ~VarDecl();
   virtual void Destroy(ASTContext& C);
@@ -752,7 +752,7 @@ class ImplicitParamDecl : public VarDecl {
 protected:
   ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
                     IdentifierInfo *Id, QualType Tw)
-    : VarDecl(DK, DC, L, Id, Tw, /*DInfo=*/0, VarDecl::None) {}
+    : VarDecl(DK, DC, L, Id, Tw, /*TInfo=*/0, VarDecl::None) {}
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
@@ -779,16 +779,16 @@ class ParmVarDecl : public VarDecl {
 
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
-              IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
+              IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
               StorageClass S, Expr *DefArg)
-  : VarDecl(DK, DC, L, Id, T, DInfo, S), objcDeclQualifier(OBJC_TQ_None) {
+  : VarDecl(DK, DC, L, Id, T, TInfo, S), objcDeclQualifier(OBJC_TQ_None) {
     setDefaultArg(DefArg);
   }
 
 public:
   static ParmVarDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
-                             QualType T, DeclaratorInfo *DInfo,
+                             QualType T, TypeSourceInfo *TInfo,
                              StorageClass S, Expr *DefArg);
 
   ObjCDeclQualifier getObjCDeclQualifier() const {
@@ -862,8 +862,8 @@ public:
   }
 
   QualType getOriginalType() const {
-    if (getDeclaratorInfo())
-      return getDeclaratorInfo()->getType();
+    if (getTypeSourceInfo())
+      return getTypeSourceInfo()->getType();
     return getType();
   }
 
@@ -947,9 +947,9 @@ private:
 
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
-               DeclarationName N, QualType T, DeclaratorInfo *DInfo,
+               DeclarationName N, QualType T, TypeSourceInfo *TInfo,
                StorageClass S, bool isInline)
-    : DeclaratorDecl(DK, DC, L, N, T, DInfo),
+    : DeclaratorDecl(DK, DC, L, N, T, TInfo),
       DeclContext(DK),
       ParamInfo(0), Body(),
       SClass(S), IsInline(isInline), 
@@ -976,7 +976,7 @@ public:
 
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               DeclarationName N, QualType T,
-                              DeclaratorInfo *DInfo,
+                              TypeSourceInfo *TInfo,
                               StorageClass S = None, bool isInline = false,
                               bool hasWrittenPrototype = true);
 
@@ -1312,15 +1312,15 @@ class FieldDecl : public DeclaratorDecl {
   Expr *BitWidth;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation L,
-            IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
+            IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
             Expr *BW, bool Mutable)
-    : DeclaratorDecl(DK, DC, L, Id, T, DInfo), Mutable(Mutable), BitWidth(BW) {
+    : DeclaratorDecl(DK, DC, L, Id, T, TInfo), Mutable(Mutable), BitWidth(BW) {
   }
 
 public:
   static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id, QualType T,
-                           DeclaratorInfo *DInfo, Expr *BW, bool Mutable);
+                           TypeSourceInfo *TInfo, Expr *BW, bool Mutable);
 
   /// isMutable - Determines whether this field is mutable (C++ only).
   bool isMutable() const { return Mutable; }
@@ -1423,28 +1423,28 @@ public:
 
 class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
-  DeclaratorInfo *DInfo;
+  TypeSourceInfo *TInfo;
 
   TypedefDecl(DeclContext *DC, SourceLocation L,
-              IdentifierInfo *Id, DeclaratorInfo *DInfo)
-    : TypeDecl(Typedef, DC, L, Id), DInfo(DInfo) {}
+              IdentifierInfo *Id, TypeSourceInfo *TInfo)
+    : TypeDecl(Typedef, DC, L, Id), TInfo(TInfo) {}
 
   virtual ~TypedefDecl() {}
 public:
 
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L, IdentifierInfo *Id,
-                             DeclaratorInfo *DInfo);
+                             TypeSourceInfo *TInfo);
 
-  DeclaratorInfo *getTypeDeclaratorInfo() const {
-    return DInfo;
+  TypeSourceInfo *getTypeSourceInfo() const {
+    return TInfo;
   }
 
   QualType getUnderlyingType() const {
-    return DInfo->getType();
+    return TInfo->getType();
   }
-  void setTypeDeclaratorInfo(DeclaratorInfo *newType) {
-    DInfo = newType;
+  void setTypeSourceInfo(TypeSourceInfo *newType) {
+    TInfo = newType;
   }
 
   // Implement isa/cast/dyncast/etc.

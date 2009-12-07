@@ -2140,7 +2140,7 @@ void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
     AddStmt(Arg.getLocInfo().getAsExpr());
     break;
   case TemplateArgument::Type:
-    AddDeclaratorInfo(Arg.getLocInfo().getAsDeclaratorInfo(), Record);
+    AddTypeSourceInfo(Arg.getLocInfo().getAsTypeSourceInfo(), Record);
     break;
   case TemplateArgument::Template:
     Record.push_back(
@@ -2156,15 +2156,15 @@ void PCHWriter::AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
   }
 }
 
-void PCHWriter::AddDeclaratorInfo(DeclaratorInfo *DInfo, RecordData &Record) {
-  if (DInfo == 0) {
+void PCHWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
+  if (TInfo == 0) {
     AddTypeRef(QualType(), Record);
     return;
   }
 
-  AddTypeRef(DInfo->getType(), Record);
+  AddTypeRef(TInfo->getType(), Record);
   TypeLocWriter TLW(*this, Record);
-  for (TypeLoc TL = DInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
+  for (TypeLoc TL = TInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
     TLW.Visit(TL);  
 }
 

@@ -1009,31 +1009,31 @@ void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
   ObjCImpls[CatD] = ImplD;
 }
 
-/// \brief Allocate an uninitialized DeclaratorInfo.
+/// \brief Allocate an uninitialized TypeSourceInfo.
 ///
-/// The caller should initialize the memory held by DeclaratorInfo using
+/// The caller should initialize the memory held by TypeSourceInfo using
 /// the TypeLoc wrappers.
 ///
 /// \param T the type that will be the basis for type source info. This type
 /// should refer to how the declarator was written in source code, not to
 /// what type semantic analysis resolved the declarator to.
-DeclaratorInfo *ASTContext::CreateDeclaratorInfo(QualType T,
+TypeSourceInfo *ASTContext::CreateTypeSourceInfo(QualType T,
                                                  unsigned DataSize) {
   if (!DataSize)
     DataSize = TypeLoc::getFullDataSizeForType(T);
   else
     assert(DataSize == TypeLoc::getFullDataSizeForType(T) &&
-           "incorrect data size provided to CreateDeclaratorInfo!");
+           "incorrect data size provided to CreateTypeSourceInfo!");
 
-  DeclaratorInfo *DInfo =
-    (DeclaratorInfo*)BumpAlloc.Allocate(sizeof(DeclaratorInfo) + DataSize, 8);
-  new (DInfo) DeclaratorInfo(T);
-  return DInfo;
+  TypeSourceInfo *TInfo =
+    (TypeSourceInfo*)BumpAlloc.Allocate(sizeof(TypeSourceInfo) + DataSize, 8);
+  new (TInfo) TypeSourceInfo(T);
+  return TInfo;
 }
 
-DeclaratorInfo *ASTContext::getTrivialDeclaratorInfo(QualType T,
+TypeSourceInfo *ASTContext::getTrivialTypeSourceInfo(QualType T,
                                                      SourceLocation L) {
-  DeclaratorInfo *DI = CreateDeclaratorInfo(T);
+  TypeSourceInfo *DI = CreateTypeSourceInfo(T);
   DI->getTypeLoc().initialize(L);
   return DI;
 }
@@ -2808,7 +2808,7 @@ QualType ASTContext::getCFConstantStringType() {
     for (unsigned i = 0; i < 4; ++i) {
       FieldDecl *Field = FieldDecl::Create(*this, CFConstantStringTypeDecl,
                                            SourceLocation(), 0,
-                                           FieldTypes[i], /*DInfo=*/0,
+                                           FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
                                            /*Mutable=*/false);
       CFConstantStringTypeDecl->addDecl(Field);
@@ -2844,7 +2844,7 @@ QualType ASTContext::getObjCFastEnumerationStateType() {
       FieldDecl *Field = FieldDecl::Create(*this,
                                            ObjCFastEnumerationStateTypeDecl,
                                            SourceLocation(), 0,
-                                           FieldTypes[i], /*DInfo=*/0,
+                                           FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
                                            /*Mutable=*/false);
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
@@ -2880,7 +2880,7 @@ QualType ASTContext::getBlockDescriptorType() {
                                          T,
                                          SourceLocation(),
                                          &Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*DInfo=*/0,
+                                         FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0,
                                          /*Mutable=*/false);
     T->addDecl(Field);
@@ -2927,7 +2927,7 @@ QualType ASTContext::getBlockDescriptorExtendedType() {
                                          T,
                                          SourceLocation(),
                                          &Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*DInfo=*/0,
+                                         FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0,
                                          /*Mutable=*/false);
     T->addDecl(Field);
@@ -3005,7 +3005,7 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
       continue;
     FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
                                          &Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*DInfo=*/0,
+                                         FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);
     T->addDecl(Field);
   }
@@ -3048,7 +3048,7 @@ QualType ASTContext::getBlockParmType(
   for (size_t i = 0; i < 5; ++i) {
     FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
                                          &Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*DInfo=*/0,
+                                         FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);
     T->addDecl(Field);
   }
@@ -3068,7 +3068,7 @@ QualType ASTContext::getBlockParmType(
                                  FieldType);
 
     FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
-                                         Name, FieldType, /*DInfo=*/0,
+                                         Name, FieldType, /*TInfo=*/0,
                                          /*BitWidth=*/0, /*Mutable=*/false);
     T->addDecl(Field);
   }

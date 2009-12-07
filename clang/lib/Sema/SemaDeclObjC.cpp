@@ -1495,7 +1495,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                                   property->getLocation(),
                                                   property->getIdentifier(),
                                                   property->getType(),
-                                                  /*DInfo=*/0,
+                                                  /*TInfo=*/0,
                                                   VarDecl::None,
                                                   0);
       SetterMethod->setMethodParams(Context, &Argument, 1);
@@ -1765,7 +1765,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
 
   for (unsigned i = 0, e = Sel.getNumArgs(); i != e; ++i) {
     QualType ArgType;
-    DeclaratorInfo *DI;
+    TypeSourceInfo *DI;
 
     if (ArgInfo[i].Type == 0) {
       ArgType = Context.getObjCIdType();

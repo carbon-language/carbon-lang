@@ -544,7 +544,7 @@ namespace {
     /// \brief Rebuild the exception declaration and register the declaration
     /// as an instantiated local.
     VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, QualType T,
-                                  DeclaratorInfo *Declarator,
+                                  TypeSourceInfo *Declarator,
                                   IdentifierInfo *Name,
                                   SourceLocation Loc, SourceRange TypeRange);
 
@@ -632,7 +632,7 @@ TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D,
 VarDecl *
 TemplateInstantiator::RebuildExceptionDecl(VarDecl *ExceptionDecl,
                                            QualType T,
-                                           DeclaratorInfo *Declarator,
+                                           TypeSourceInfo *Declarator,
                                            IdentifierInfo *Name,
                                            SourceLocation Loc,
                                            SourceRange TypeRange) {
@@ -889,7 +889,7 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
 ///
 /// \returns If the instantiation succeeds, the instantiated
 /// type. Otherwise, produces diagnostics and returns a NULL type.
-DeclaratorInfo *Sema::SubstType(DeclaratorInfo *T,
+TypeSourceInfo *Sema::SubstType(TypeSourceInfo *T,
                                 const MultiLevelTemplateArgumentList &Args,
                                 SourceLocation Loc,
                                 DeclarationName Entity) {

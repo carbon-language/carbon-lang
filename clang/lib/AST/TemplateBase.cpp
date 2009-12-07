@@ -102,7 +102,7 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
     return getSourceDeclExpression()->getSourceRange();
       
   case TemplateArgument::Type:
-    return getSourceDeclaratorInfo()->getTypeLoc().getFullSourceRange();
+    return getTypeSourceInfo()->getTypeLoc().getFullSourceRange();
       
   case TemplateArgument::Template:
     if (getTemplateQualifierRange().isValid())

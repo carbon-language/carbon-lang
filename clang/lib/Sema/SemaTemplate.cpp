@@ -330,10 +330,10 @@ static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
   
   switch (Arg.getKind()) {
   case ParsedTemplateArgument::Type: {
-    DeclaratorInfo *DI;
+    TypeSourceInfo *DI;
     QualType T = SemaRef.GetTypeFromParser(Arg.getAsType(), &DI);
     if (!DI) 
-      DI = SemaRef.Context.getTrivialDeclaratorInfo(T, Arg.getLocation());
+      DI = SemaRef.Context.getTrivialTypeSourceInfo(T, Arg.getLocation());
     return TemplateArgumentLoc(TemplateArgument(T), DI);
   }
     
@@ -419,10 +419,10 @@ void Sema::ActOnTypeParameterDefault(DeclPtrTy TypeParam,
   TemplateTypeParmDecl *Parm
     = cast<TemplateTypeParmDecl>(TypeParam.getAs<Decl>());
 
-  DeclaratorInfo *DefaultDInfo;
-  GetTypeFromParser(DefaultT, &DefaultDInfo);
+  TypeSourceInfo *DefaultTInfo;
+  GetTypeFromParser(DefaultT, &DefaultTInfo);
 
-  assert(DefaultDInfo && "expected source information for type");
+  assert(DefaultTInfo && "expected source information for type");
 
   // C++0x [temp.param]p9:
   // A default template-argument may be specified for any kind of
@@ -437,12 +437,12 @@ void Sema::ActOnTypeParameterDefault(DeclPtrTy TypeParam,
   // FIXME: Implement this check! Needs a recursive walk over the types.
 
   // Check the template argument itself.
-  if (CheckTemplateArgument(Parm, DefaultDInfo)) {
+  if (CheckTemplateArgument(Parm, DefaultTInfo)) {
     Parm->setInvalidDecl();
     return;
   }
 
-  Parm->setDefaultArgument(DefaultDInfo, false);
+  Parm->setDefaultArgument(DefaultTInfo, false);
 }
 
 /// \brief Check that the type of a non-type template parameter is
@@ -496,8 +496,8 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
 Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                     unsigned Depth,
                                                     unsigned Position) {
-  DeclaratorInfo *DInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &DInfo);
+  TypeSourceInfo *TInfo = 0;
+  QualType T = GetTypeForDeclarator(D, S, &TInfo);
 
   assert(S->isTemplateParamScope() &&
          "Non-type template parameter not in template parameter scope!");
@@ -519,7 +519,7 @@ Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
 
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                                      Depth, Position, ParamName, T, DInfo);
+                                      Depth, Position, ParamName, T, TInfo);
   if (Invalid)
     Param->setInvalidDecl();
 
@@ -1385,7 +1385,7 @@ Sema::ActOnTemplateIdType(TemplateTy TemplateD, SourceLocation TemplateLoc,
   if (Result.isNull())
     return true;
 
-  DeclaratorInfo *DI = Context.CreateDeclaratorInfo(Result);
+  TypeSourceInfo *DI = Context.CreateTypeSourceInfo(Result);
   TemplateSpecializationTypeLoc TL
     = cast<TemplateSpecializationTypeLoc>(DI->getTypeLoc());
   TL.setTemplateNameLoc(TemplateLoc);
@@ -1405,7 +1405,7 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
     return Sema::TypeResult();
 
   // FIXME: preserve source info, ideally without copying the DI.
-  DeclaratorInfo *DI;
+  TypeSourceInfo *DI;
   QualType Type = GetTypeFromParser(TypeResult.get(), &DI);
 
   // Verify the tag specifier.
@@ -1591,7 +1591,7 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
     return true;
   }
 
-  if (CheckTemplateArgument(Param, AL.getSourceDeclaratorInfo()))
+  if (CheckTemplateArgument(Param, AL.getTypeSourceInfo()))
     return true;
 
   // Add the converted template type argument.
@@ -1622,14 +1622,14 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
 /// parameters that precede \p Param in the template parameter list.
 ///
 /// \returns the substituted template argument, or NULL if an error occurred.
-static DeclaratorInfo *
+static TypeSourceInfo *
 SubstDefaultTemplateArgument(Sema &SemaRef,
                              TemplateDecl *Template,
                              SourceLocation TemplateLoc,
                              SourceLocation RAngleLoc,
                              TemplateTypeParmDecl *Param,
                              TemplateArgumentListBuilder &Converted) {
-  DeclaratorInfo *ArgType = Param->getDefaultArgumentInfo();
+  TypeSourceInfo *ArgType = Param->getDefaultArgumentInfo();
 
   // If the argument type is dependent, instantiate it now based
   // on the previously-computed template arguments.
@@ -1755,7 +1755,7 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
     if (!TypeParm->hasDefaultArgument())
       return TemplateArgumentLoc();
 
-    DeclaratorInfo *DI = SubstDefaultTemplateArgument(*this, Template,
+    TypeSourceInfo *DI = SubstDefaultTemplateArgument(*this, Template,
                                                       TemplateLoc,
                                                       RAngleLoc,
                                                       TypeParm,
@@ -2072,7 +2072,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         break;
       }
 
-      DeclaratorInfo *ArgType = SubstDefaultTemplateArgument(*this, 
+      TypeSourceInfo *ArgType = SubstDefaultTemplateArgument(*this, 
                                                              Template,
                                                              TemplateLoc,
                                                              RAngleLoc,
@@ -2144,8 +2144,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 /// This routine implements the semantics of C++ [temp.arg.type]. It
 /// returns true if an error occurred, and false otherwise.
 bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
-                                 DeclaratorInfo *ArgInfo) {
-  assert(ArgInfo && "invalid DeclaratorInfo");
+                                 TypeSourceInfo *ArgInfo) {
+  assert(ArgInfo && "invalid TypeSourceInfo");
   QualType Arg = ArgInfo->getType();
 
   // C++ [temp.arg.type]p2:

@@ -553,7 +553,7 @@ public:
                              const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a declarator info from the given record.
-  virtual DeclaratorInfo *GetDeclaratorInfo(const RecordData &Record,
+  virtual TypeSourceInfo *GetTypeSourceInfo(const RecordData &Record,
                                             unsigned &Idx);
 
   /// \brief Resolve a type ID into a type, potentially building a new

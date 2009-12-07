@@ -573,7 +573,7 @@ class TemplateTypeParmDecl : public TypeDecl {
   bool ParameterPack : 1;
 
   /// \brief The default template argument, if any.
-  DeclaratorInfo *DefaultArgument;
+  TypeSourceInfo *DefaultArgument;
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                        bool Typename, QualType Type, bool ParameterPack)
@@ -601,7 +601,7 @@ public:
   QualType getDefaultArgument() const { return DefaultArgument->getType(); }
 
   /// \brief Retrieves the default argument's source information, if any.
-  DeclaratorInfo *getDefaultArgumentInfo() const { return DefaultArgument; }
+  TypeSourceInfo *getDefaultArgumentInfo() const { return DefaultArgument; }
 
   /// \brief Retrieves the location of the default argument declaration.
   SourceLocation getDefaultArgumentLoc() const;
@@ -613,7 +613,7 @@ public:
   /// \brief Set the default argument for this template parameter, and
   /// whether that default argument was inherited from another
   /// declaration.
-  void setDefaultArgument(DeclaratorInfo *DefArg, bool Inherited) {
+  void setDefaultArgument(TypeSourceInfo *DefArg, bool Inherited) {
     DefaultArgument = DefArg;
     InheritedDefault = Inherited;
   }
@@ -652,15 +652,15 @@ class NonTypeTemplateParmDecl
 
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
-                          DeclaratorInfo *DInfo)
-    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, DInfo, VarDecl::None),
+                          TypeSourceInfo *TInfo)
+    : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, VarDecl::None),
       TemplateParmPosition(D, P), DefaultArgument(0)
   { }
 
 public:
   static NonTypeTemplateParmDecl *
   Create(ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
-         unsigned P, IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo);
+         unsigned P, IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo);
 
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;

@@ -38,7 +38,7 @@ void Attr::Destroy(ASTContext &C) {
 }
 
 /// \brief Return the TypeLoc wrapper for the type source info.
-TypeLoc DeclaratorInfo::getTypeLoc() const {
+TypeLoc TypeSourceInfo::getTypeLoc() const {
   return TypeLoc(Ty, (void*)(this + 1));
 }
 
@@ -86,9 +86,9 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, DeclaratorInfo *DInfo,
+                                 QualType T, TypeSourceInfo *TInfo,
                                  StorageClass S, Expr *DefArg) {
-  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, DInfo, S, DefArg);
+  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, TInfo, S, DefArg);
 }
 
 SourceRange ParmVarDecl::getDefaultArgRange() const {
@@ -136,11 +136,11 @@ bool VarDecl::isExternC() const {
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L,
                                    DeclarationName N, QualType T,
-                                   DeclaratorInfo *DInfo,
+                                   TypeSourceInfo *TInfo,
                                    StorageClass S, bool isInline,
                                    bool hasWrittenPrototype) {
   FunctionDecl *New
-    = new (C) FunctionDecl(Function, DC, L, N, T, DInfo, S, isInline);
+    = new (C) FunctionDecl(Function, DC, L, N, T, TInfo, S, isInline);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
 }
@@ -151,8 +151,8 @@ BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
 
 FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                              IdentifierInfo *Id, QualType T,
-                             DeclaratorInfo *DInfo, Expr *BW, bool Mutable) {
-  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, DInfo, BW, Mutable);
+                             TypeSourceInfo *TInfo, Expr *BW, bool Mutable) {
+  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, TInfo, BW, Mutable);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -179,8 +179,8 @@ void EnumConstantDecl::Destroy(ASTContext& C) {
 
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
-                                 DeclaratorInfo *DInfo) {
-  return new (C) TypedefDecl(DC, L, Id, DInfo);
+                                 TypeSourceInfo *TInfo) {
+  return new (C) TypedefDecl(DC, L, Id, TInfo);
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
@@ -535,9 +535,9 @@ SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
 //===----------------------------------------------------------------------===//
 
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                         IdentifierInfo *Id, QualType T, DeclaratorInfo *DInfo,
+                         IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
                          StorageClass S) {
-  return new (C) VarDecl(Var, DC, L, Id, T, DInfo, S);
+  return new (C) VarDecl(Var, DC, L, Id, T, TInfo, S);
 }
 
 void VarDecl::Destroy(ASTContext& C) {

@@ -321,9 +321,9 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
   }
 
-  //FIXME: Store DeclaratorInfo in CXXNew expression.
-  DeclaratorInfo *DInfo = 0;
-  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &DInfo);
+  //FIXME: Store TypeSourceInfo in CXXNew expression.
+  TypeSourceInfo *TInfo = 0;
+  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &TInfo);
   if (D.isInvalidType())
     return ExprError();
     
@@ -760,10 +760,10 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                                             &BadAllocType);
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
-                         FnType, /*DInfo=*/0, FunctionDecl::None, false, true);
+                         FnType, /*TInfo=*/0, FunctionDecl::None, false, true);
   Alloc->setImplicit();
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
-                                           0, Argument, /*DInfo=*/0,
+                                           0, Argument, /*TInfo=*/0,
                                            VarDecl::None, 0);
   Alloc->setParams(Context, &Param, 1);
 

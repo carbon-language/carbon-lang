@@ -278,20 +278,20 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   PushDeclContext(S, Context.getTranslationUnitDecl());
 
   if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
-    DeclaratorInfo *DInfo;
+    TypeSourceInfo *TInfo;
 
     // Install [u]int128_t for 64-bit targets.
-    DInfo = Context.getTrivialDeclaratorInfo(Context.Int128Ty);
+    TInfo = Context.getTrivialTypeSourceInfo(Context.Int128Ty);
     PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
                                           SourceLocation(),
                                           &Context.Idents.get("__int128_t"),
-                                          DInfo), TUScope);
+                                          TInfo), TUScope);
 
-    DInfo = Context.getTrivialDeclaratorInfo(Context.UnsignedInt128Ty);
+    TInfo = Context.getTrivialTypeSourceInfo(Context.UnsignedInt128Ty);
     PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
                                           SourceLocation(),
                                           &Context.Idents.get("__uint128_t"),
-                                          DInfo), TUScope);
+                                          TInfo), TUScope);
   }
 
 
@@ -301,7 +301,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   if (Context.getObjCSelType().isNull()) {
     // Create the built-in typedef for 'SEL'.
     QualType SelT = Context.getPointerType(Context.ObjCBuiltinSelTy);
-    DeclaratorInfo *SelInfo = Context.getTrivialDeclaratorInfo(SelT);
+    TypeSourceInfo *SelInfo = Context.getTrivialTypeSourceInfo(SelT);
     TypedefDecl *SelTypedef
       = TypedefDecl::Create(Context, CurContext, SourceLocation(),
                             &Context.Idents.get("SEL"), SelInfo);
@@ -322,7 +322,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   // Create the built-in typedef for 'id'.
   if (Context.getObjCIdType().isNull()) {
     QualType IdT = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy);
-    DeclaratorInfo *IdInfo = Context.getTrivialDeclaratorInfo(IdT);
+    TypeSourceInfo *IdInfo = Context.getTrivialTypeSourceInfo(IdT);
     TypedefDecl *IdTypedef
       = TypedefDecl::Create(Context, CurContext, SourceLocation(),
                             &Context.Idents.get("id"), IdInfo);
@@ -334,7 +334,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   if (Context.getObjCClassType().isNull()) {
     QualType ClassType
       = Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy);
-    DeclaratorInfo *ClassInfo = Context.getTrivialDeclaratorInfo(ClassType);
+    TypeSourceInfo *ClassInfo = Context.getTrivialTypeSourceInfo(ClassType);
     TypedefDecl *ClassTypedef
       = TypedefDecl::Create(Context, CurContext, SourceLocation(),
                             &Context.Idents.get("Class"), ClassInfo);

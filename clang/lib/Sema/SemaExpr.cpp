@@ -1713,20 +1713,20 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
 
 /// \brief Build a sizeof or alignof expression given a type operand.
 Action::OwningExprResult
-Sema::CreateSizeOfAlignOfExpr(DeclaratorInfo *DInfo,
+Sema::CreateSizeOfAlignOfExpr(TypeSourceInfo *TInfo,
                               SourceLocation OpLoc,
                               bool isSizeOf, SourceRange R) {
-  if (!DInfo)
+  if (!TInfo)
     return ExprError();
 
-  QualType T = DInfo->getType();
+  QualType T = TInfo->getType();
 
   if (!T->isDependentType() &&
       CheckSizeOfAlignOfOperand(T, OpLoc, R, isSizeOf))
     return ExprError();
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Owned(new (Context) SizeOfAlignOfExpr(isSizeOf, DInfo,
+  return Owned(new (Context) SizeOfAlignOfExpr(isSizeOf, TInfo,
                                                Context.getSizeType(), OpLoc,
                                                R.getEnd()));
 }
@@ -1768,9 +1768,9 @@ Sema::ActOnSizeOfAlignOfExpr(SourceLocation OpLoc, bool isSizeof, bool isType,
   if (TyOrEx == 0) return ExprError();
 
   if (isType) {
-    DeclaratorInfo *DInfo;
-    (void) GetTypeFromParser(TyOrEx, &DInfo);
-    return CreateSizeOfAlignOfExpr(DInfo, OpLoc, isSizeof, ArgRange);
+    TypeSourceInfo *TInfo;
+    (void) GetTypeFromParser(TyOrEx, &TInfo);
+    return CreateSizeOfAlignOfExpr(TInfo, OpLoc, isSizeof, ArgRange);
   }
 
   Expr *ArgEx = (Expr *)TyOrEx;

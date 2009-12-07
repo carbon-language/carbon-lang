@@ -388,7 +388,7 @@ void PCHStmtWriter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isSizeOf());
   if (E->isArgumentType())
-    Writer.AddDeclaratorInfo(E->getArgumentTypeInfo(), Record);
+    Writer.AddTypeSourceInfo(E->getArgumentTypeInfo(), Record);
   else {
     Record.push_back(0);
     Writer.WriteSubStmt(E->getArgumentExpr());

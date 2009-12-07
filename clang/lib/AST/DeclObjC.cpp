@@ -501,9 +501,9 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
 
 ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, IdentifierInfo *Id,
-                                   QualType T, DeclaratorInfo *DInfo,
+                                   QualType T, TypeSourceInfo *TInfo,
                                    AccessControl ac, Expr *BW) {
-  return new (C) ObjCIvarDecl(DC, L, Id, T, DInfo, ac, BW);
+  return new (C) ObjCIvarDecl(DC, L, Id, T, TInfo, ac, BW);
 }
 
 

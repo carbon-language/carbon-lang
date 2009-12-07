@@ -804,15 +804,15 @@ public:
 class CXXMethodDecl : public FunctionDecl {
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation L,
-                DeclarationName N, QualType T, DeclaratorInfo *DInfo,
+                DeclarationName N, QualType T, TypeSourceInfo *TInfo,
                 bool isStatic, bool isInline)
-    : FunctionDecl(DK, RD, L, N, T, DInfo, (isStatic ? Static : None),
+    : FunctionDecl(DK, RD, L, N, T, TInfo, (isStatic ? Static : None),
                    isInline) {}
 
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                               SourceLocation L, DeclarationName N,
-                              QualType T, DeclaratorInfo *DInfo,
+                              QualType T, TypeSourceInfo *TInfo,
                               bool isStatic = false,
                               bool isInline = false);
 
@@ -894,9 +894,9 @@ public:
 /// };
 /// @endcode
 class CXXBaseOrMemberInitializer {
-  /// \brief Either the base class name (stored as a DeclaratorInfo*) or the
+  /// \brief Either the base class name (stored as a TypeSourceInfo*) or the
   /// field being initialized.
-  llvm::PointerUnion<DeclaratorInfo *, FieldDecl *> BaseOrMember;
+  llvm::PointerUnion<TypeSourceInfo *, FieldDecl *> BaseOrMember;
   
   /// \brief The source location for the field name.
   SourceLocation MemberLocation;
@@ -935,7 +935,7 @@ public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit
   CXXBaseOrMemberInitializer(ASTContext &Context,
-                             DeclaratorInfo *DInfo, CXXConstructorDecl *C,
+                             TypeSourceInfo *TInfo, CXXConstructorDecl *C,
                              SourceLocation L, 
                              Expr **Args, unsigned NumArgs,
                              SourceLocation R);
@@ -961,7 +961,7 @@ public:
 
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.
-  bool isBaseInitializer() const { return BaseOrMember.is<DeclaratorInfo*>(); }
+  bool isBaseInitializer() const { return BaseOrMember.is<TypeSourceInfo*>(); }
 
   /// isMemberInitializer - Returns true when this initializer is
   /// initializing a non-static data member.
@@ -978,8 +978,8 @@ public:
   Type *getBaseClass();
   
   /// \brief Returns the declarator information for a base class initializer.
-  DeclaratorInfo *getBaseClassInfo() const {
-    return BaseOrMember.dyn_cast<DeclaratorInfo *>();
+  TypeSourceInfo *getBaseClassInfo() const {
+    return BaseOrMember.dyn_cast<TypeSourceInfo *>();
   }
   
   /// getMember - If this is a member initializer, returns the
@@ -1064,9 +1064,9 @@ class CXXConstructorDecl : public CXXMethodDecl {
   unsigned NumBaseOrMemberInitializers;
 
   CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
-                     DeclarationName N, QualType T, DeclaratorInfo *DInfo,
+                     DeclarationName N, QualType T, TypeSourceInfo *TInfo,
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXConstructor, RD, L, N, T, DInfo, false, isInline),
+    : CXXMethodDecl(CXXConstructor, RD, L, N, T, TInfo, false, isInline),
       Explicit(isExplicit), ImplicitlyDefined(false),
       BaseOrMemberInitializers(0), NumBaseOrMemberInitializers(0) {
     setImplicit(isImplicitlyDeclared);
@@ -1076,7 +1076,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
 public:
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                     SourceLocation L, DeclarationName N,
-                                    QualType T, DeclaratorInfo *DInfo,
+                                    QualType T, TypeSourceInfo *TInfo,
                                     bool isExplicit,
                                     bool isInline, bool isImplicitlyDeclared);
 
@@ -1203,7 +1203,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
-    : CXXMethodDecl(CXXDestructor, RD, L, N, T, /*DInfo=*/0, false, isInline),
+    : CXXMethodDecl(CXXDestructor, RD, L, N, T, /*TInfo=*/0, false, isInline),
       ImplicitlyDefined(false), OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
   }
@@ -1258,15 +1258,15 @@ class CXXConversionDecl : public CXXMethodDecl {
   bool Explicit : 1;
 
   CXXConversionDecl(CXXRecordDecl *RD, SourceLocation L,
-                    DeclarationName N, QualType T, DeclaratorInfo *DInfo,
+                    DeclarationName N, QualType T, TypeSourceInfo *TInfo,
                     bool isInline, bool isExplicit)
-    : CXXMethodDecl(CXXConversion, RD, L, N, T, DInfo, false, isInline),
+    : CXXMethodDecl(CXXConversion, RD, L, N, T, TInfo, false, isInline),
       Explicit(isExplicit) { }
 
 public:
   static CXXConversionDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation L, DeclarationName N,
-                                   QualType T, DeclaratorInfo *DInfo,
+                                   QualType T, TypeSourceInfo *TInfo,
                                    bool isInline, bool isExplicit);
 
   /// isExplicit - Whether this is an explicit conversion operator

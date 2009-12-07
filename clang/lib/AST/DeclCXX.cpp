@@ -540,9 +540,9 @@ CXXDestructorDecl *CXXRecordDecl::getDestructor(ASTContext &Context) {
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation L, DeclarationName N,
-                      QualType T, DeclaratorInfo *DInfo,
+                      QualType T, TypeSourceInfo *TInfo,
                       bool isStatic, bool isInline) {
-  return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, DInfo,
+  return new (C) CXXMethodDecl(CXXMethod, RD, L, N, T, TInfo,
                                isStatic, isInline);
 }
 
@@ -665,11 +665,11 @@ bool CXXMethodDecl::hasInlineBody() const {
 
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
-                           DeclaratorInfo *DInfo, CXXConstructorDecl *C,
+                           TypeSourceInfo *TInfo, CXXConstructorDecl *C,
                            SourceLocation L, 
                            Expr **Args, unsigned NumArgs,
                            SourceLocation R)
-  : BaseOrMember(DInfo), Args(0), NumArgs(0), CtorOrAnonUnion(C), 
+  : BaseOrMember(TInfo), Args(0), NumArgs(0), CtorOrAnonUnion(C), 
     LParenLoc(L), RParenLoc(R) 
 {
   if (NumArgs > 0) {
@@ -706,21 +706,21 @@ void CXXBaseOrMemberInitializer::Destroy(ASTContext &Context) {
 
 TypeLoc CXXBaseOrMemberInitializer::getBaseClassLoc() const {
   if (isBaseInitializer())
-    return BaseOrMember.get<DeclaratorInfo*>()->getTypeLoc();
+    return BaseOrMember.get<TypeSourceInfo*>()->getTypeLoc();
   else
     return TypeLoc();
 }
 
 Type *CXXBaseOrMemberInitializer::getBaseClass() {
   if (isBaseInitializer())
-    return BaseOrMember.get<DeclaratorInfo*>()->getType().getTypePtr();
+    return BaseOrMember.get<TypeSourceInfo*>()->getType().getTypePtr();
   else
     return 0;
 }
 
 const Type *CXXBaseOrMemberInitializer::getBaseClass() const {
   if (isBaseInitializer())
-    return BaseOrMember.get<DeclaratorInfo*>()->getType().getTypePtr();
+    return BaseOrMember.get<TypeSourceInfo*>()->getType().getTypePtr();
   else
     return 0;
 }
@@ -739,12 +739,12 @@ SourceRange CXXBaseOrMemberInitializer::getSourceRange() const {
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                            SourceLocation L, DeclarationName N,
-                           QualType T, DeclaratorInfo *DInfo,
+                           QualType T, TypeSourceInfo *TInfo,
                            bool isExplicit,
                            bool isInline, bool isImplicitlyDeclared) {
   assert(N.getNameKind() == DeclarationName::CXXConstructorName &&
          "Name must refer to a constructor");
-  return new (C) CXXConstructorDecl(RD, L, N, T, DInfo, isExplicit, isInline,
+  return new (C) CXXConstructorDecl(RD, L, N, T, TInfo, isExplicit, isInline,
                                       isImplicitlyDeclared);
 }
 
@@ -856,11 +856,11 @@ CXXConstructorDecl::Destroy(ASTContext& C) {
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           SourceLocation L, DeclarationName N,
-                          QualType T, DeclaratorInfo *DInfo,
+                          QualType T, TypeSourceInfo *TInfo,
                           bool isInline, bool isExplicit) {
   assert(N.getNameKind() == DeclarationName::CXXConversionFunctionName &&
          "Name must refer to a conversion function");
-  return new (C) CXXConversionDecl(RD, L, N, T, DInfo, isInline, isExplicit);
+  return new (C) CXXConversionDecl(RD, L, N, T, TInfo, isInline, isExplicit);
 }
 
 FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,

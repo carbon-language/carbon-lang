@@ -1000,9 +1000,9 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   // It didn't name a member, so see if it names a class.
   QualType BaseType;
 
-  DeclaratorInfo *DInfo = 0;
+  TypeSourceInfo *TInfo = 0;
   if (TemplateTypeTy)
-    BaseType = GetTypeFromParser(TemplateTypeTy, &DInfo);
+    BaseType = GetTypeFromParser(TemplateTypeTy, &TInfo);
   else
     BaseType = QualType::getFromOpaquePtr(getTypeName(*MemberOrBase, IdLoc, 
                                                       S, &SS));
@@ -1010,10 +1010,10 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);
 
-  if (!DInfo)
-    DInfo = Context.getTrivialDeclaratorInfo(BaseType, IdLoc);
+  if (!TInfo)
+    TInfo = Context.getTrivialTypeSourceInfo(BaseType, IdLoc);
 
-  return BuildBaseInitializer(BaseType, DInfo, (Expr **)Args, NumArgs, 
+  return BuildBaseInitializer(BaseType, TInfo, (Expr **)Args, NumArgs, 
                               LParenLoc, RParenLoc, ClassDecl);
 }
 
@@ -1151,7 +1151,7 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
 }
 
 Sema::MemInitResult
-Sema::BuildBaseInitializer(QualType BaseType, DeclaratorInfo *BaseDInfo,
+Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                            Expr **Args, unsigned NumArgs, 
                            SourceLocation LParenLoc, SourceLocation RParenLoc, 
                            CXXRecordDecl *ClassDecl) {
@@ -1159,11 +1159,11 @@ Sema::BuildBaseInitializer(QualType BaseType, DeclaratorInfo *BaseDInfo,
   for (unsigned i = 0; i < NumArgs; i++)
     HasDependentArg |= Args[i]->isTypeDependent();
 
-  SourceLocation BaseLoc = BaseDInfo->getTypeLoc().getSourceRange().getBegin();
+  SourceLocation BaseLoc = BaseTInfo->getTypeLoc().getSourceRange().getBegin();
   if (!BaseType->isDependentType()) {
     if (!BaseType->isRecordType())
       return Diag(BaseLoc, diag::err_base_init_does_not_name_class)
-        << BaseType << BaseDInfo->getTypeLoc().getSourceRange();
+        << BaseType << BaseTInfo->getTypeLoc().getSourceRange();
 
     // C++ [class.base.init]p2:
     //   [...] Unless the mem-initializer-id names a nonstatic data
@@ -1210,7 +1210,7 @@ Sema::BuildBaseInitializer(QualType BaseType, DeclaratorInfo *BaseDInfo,
     //   class, the mem-initializer is ill-formed.
     if (DirectBaseSpec && VirtualBaseSpec)
       return Diag(BaseLoc, diag::err_base_init_direct_and_virtual)
-        << BaseType << BaseDInfo->getTypeLoc().getSourceRange();
+        << BaseType << BaseTInfo->getTypeLoc().getSourceRange();
     // C++ [base.class.init]p2:
     // Unless the mem-initializer-id names a nonstatic data membeer of the
     // constructor's class ot a direst or virtual base of that class, the
@@ -1218,7 +1218,7 @@ Sema::BuildBaseInitializer(QualType BaseType, DeclaratorInfo *BaseDInfo,
     if (!DirectBaseSpec && !VirtualBaseSpec)
       return Diag(BaseLoc, diag::err_not_direct_base_or_virtual)
         << BaseType << ClassDecl->getNameAsCString()
-        << BaseDInfo->getTypeLoc().getSourceRange();
+        << BaseTInfo->getTypeLoc().getSourceRange();
   }
 
   CXXConstructorDecl *C = 0;
@@ -1245,7 +1245,7 @@ Sema::BuildBaseInitializer(QualType BaseType, DeclaratorInfo *BaseDInfo,
   // subexpression so we can wrap it in a CXXExprWithTemporaries if necessary.
   ExprTemporaries.clear();
   
-  return new (Context) CXXBaseOrMemberInitializer(Context, BaseDInfo, C, 
+  return new (Context) CXXBaseOrMemberInitializer(Context, BaseTInfo, C, 
                                                   LParenLoc, (Expr **)Args, 
                                                   NumArgs, RParenLoc);
 }
@@ -1336,7 +1336,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         ExprTemporaries.clear();
         CXXBaseOrMemberInitializer *Member =
           new (Context) CXXBaseOrMemberInitializer(Context,
-                             Context.getTrivialDeclaratorInfo(VBase->getType(), 
+                             Context.getTrivialTypeSourceInfo(VBase->getType(), 
                                                               SourceLocation()),
                                                    Ctor,
                                                    SourceLocation(),
@@ -1389,7 +1389,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         ExprTemporaries.clear();
         CXXBaseOrMemberInitializer *Member =
           new (Context) CXXBaseOrMemberInitializer(Context,
-                             Context.getTrivialDeclaratorInfo(Base->getType(), 
+                             Context.getTrivialTypeSourceInfo(Base->getType(), 
                                                               SourceLocation()),
                                                    Ctor,
                                                    SourceLocation(),
@@ -2032,7 +2032,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  ClassDecl->getLocation(), Name,
                                  Context.getFunctionType(Context.VoidTy,
                                                          0, 0, false, 0),
-                                 /*DInfo=*/0,
+                                 /*TInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,
                                  /*isImplicitlyDeclared=*/true);
@@ -2104,7 +2104,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                    Context.getFunctionType(Context.VoidTy,
                                                            &ArgType, 1,
                                                            false, 0),
-                                   /*DInfo=*/0,
+                                   /*TInfo=*/0,
                                    /*isExplicit=*/false,
                                    /*isInline=*/true,
                                    /*isImplicitlyDeclared=*/true);
@@ -2116,7 +2116,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
-                                                 ArgType, /*DInfo=*/0,
+                                                 ArgType, /*TInfo=*/0,
                                                  VarDecl::None, 0);
     CopyConstructor->setParams(Context, &FromParam, 1);
     ClassDecl->addDecl(CopyConstructor);
@@ -2190,7 +2190,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
                             Context.getFunctionType(RetType, &ArgType, 1,
                                                     false, 0),
-                            /*DInfo=*/0, /*isStatic=*/false, /*isInline=*/true);
+                            /*TInfo=*/0, /*isStatic=*/false, /*isInline=*/true);
     CopyAssignment->setAccess(AS_public);
     CopyAssignment->setImplicit();
     CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
@@ -2200,7 +2200,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
                                                  ClassDecl->getLocation(),
                                                  /*IdentifierInfo=*/0,
-                                                 ArgType, /*DInfo=*/0,
+                                                 ArgType, /*TInfo=*/0,
                                                  VarDecl::None, 0);
     CopyAssignment->setParams(Context, &FromParam, 1);
 
@@ -4436,7 +4436,7 @@ Sema::DeclPtrTy Sema::ActOnFinishLinkageSpecification(Scope *S,
 /// occurs within a C++ catch clause, returning the newly-created
 /// variable.
 VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
-                                         DeclaratorInfo *DInfo,
+                                         TypeSourceInfo *TInfo,
                                          IdentifierInfo *Name,
                                          SourceLocation Loc,
                                          SourceRange Range) {
@@ -4486,7 +4486,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   // FIXME: Need to check for abstract classes.
 
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc,
-                                    Name, ExDeclType, DInfo, VarDecl::None);
+                                    Name, ExDeclType, TInfo, VarDecl::None);
 
   if (Invalid)
     ExDecl->setInvalidDecl();
@@ -4497,8 +4497,8 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
 /// ActOnExceptionDeclarator - Parsed the exception-declarator in a C++ catch
 /// handler.
 Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
-  DeclaratorInfo *DInfo = 0;
-  QualType ExDeclType = GetTypeForDeclarator(D, S, &DInfo);
+  TypeSourceInfo *TInfo = 0;
+  QualType ExDeclType = GetTypeForDeclarator(D, S, &TInfo);
 
   bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
@@ -4518,7 +4518,7 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
     Invalid = true;
   }
 
-  VarDecl *ExDecl = BuildExceptionDeclaration(S, ExDeclType, DInfo,
+  VarDecl *ExDecl = BuildExceptionDeclaration(S, ExDeclType, TInfo,
                                               D.getIdentifier(),
                                               D.getIdentifierLoc(),
                                             D.getDeclSpec().getSourceRange());
@@ -4692,8 +4692,8 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
 
   SourceLocation Loc = D.getIdentifierLoc();
-  DeclaratorInfo *DInfo = 0;
-  QualType T = GetTypeForDeclarator(D, S, &DInfo);
+  TypeSourceInfo *TInfo = 0;
+  QualType T = GetTypeForDeclarator(D, S, &TInfo);
 
   // C++ [class.friend]p1
   //   A friend of a class is a function or class....
@@ -4816,7 +4816,7 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   }
 
   bool Redeclaration = false;
-  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, DInfo, Previous,
+  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, TInfo, Previous,
                                           move(TemplateParams),
                                           IsDefinition,
                                           Redeclaration);
@@ -5059,9 +5059,9 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   assert(D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
          "Parser allowed 'typedef' as storage class of condition decl.");
   
-  DeclaratorInfo *DInfo = 0;
+  TypeSourceInfo *TInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType Ty = GetTypeForDeclarator(D, S, &DInfo, &OwnedTag);
+  QualType Ty = GetTypeForDeclarator(D, S, &TInfo, &OwnedTag);
   
   if (Ty->isFunctionType()) { // The declarator shall not specify a function...
                               // We exit without creating a CXXConditionDeclExpr because a FunctionDecl

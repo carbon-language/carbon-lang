@@ -195,7 +195,7 @@ static void HandleExtVectorTypeAttr(Scope *scope, Decl *d,
   QualType T = S.BuildExtVectorType(curType, S.Owned(sizeExpr), Attr.getLoc());
   if (!T.isNull()) {
     // FIXME: preserve the old source info.
-    tDecl->setTypeDeclaratorInfo(S.Context.getTrivialDeclaratorInfo(T));
+    tDecl->setTypeSourceInfo(S.Context.getTrivialTypeSourceInfo(T));
 
     // Remember this typedef decl, we will need it later for diagnostics.
     S.ExtVectorDecls.push_back(tDecl);
@@ -1624,7 +1624,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // Install the new type.
   if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     // FIXME: preserve existing source info.
-    TD->setTypeDeclaratorInfo(S.Context.getTrivialDeclaratorInfo(NewTy));
+    TD->setTypeSourceInfo(S.Context.getTrivialTypeSourceInfo(NewTy));
   } else
     cast<ValueDecl>(D)->setType(NewTy);
 }
@@ -1977,11 +1977,11 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
     NewD = FunctionDecl::Create(FD->getASTContext(), FD->getDeclContext(),
                                 FD->getLocation(), DeclarationName(II),
-                                FD->getType(), FD->getDeclaratorInfo());
+                                FD->getType(), FD->getTypeSourceInfo());
   } else if (VarDecl *VD = dyn_cast<VarDecl>(ND)) {
     NewD = VarDecl::Create(VD->getASTContext(), VD->getDeclContext(),
                            VD->getLocation(), II,
-                           VD->getType(), VD->getDeclaratorInfo(),
+                           VD->getType(), VD->getTypeSourceInfo(),
                            VD->getStorageClass());
   }
   return NewD;

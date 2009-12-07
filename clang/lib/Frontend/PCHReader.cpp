@@ -2113,17 +2113,17 @@ void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
       TL.setProtocolLoc(i, SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
-DeclaratorInfo *PCHReader::GetDeclaratorInfo(const RecordData &Record,
+TypeSourceInfo *PCHReader::GetTypeSourceInfo(const RecordData &Record,
                                              unsigned &Idx) {
   QualType InfoTy = GetType(Record[Idx++]);
   if (InfoTy.isNull())
     return 0;
 
-  DeclaratorInfo *DInfo = getContext()->CreateDeclaratorInfo(InfoTy);
+  TypeSourceInfo *TInfo = getContext()->CreateTypeSourceInfo(InfoTy);
   TypeLocReader TLR(*this, Record, Idx);
-  for (TypeLoc TL = DInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
+  for (TypeLoc TL = TInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
     TLR.Visit(TL);
-  return DInfo;
+  return TInfo;
 }
 
 QualType PCHReader::GetType(pch::TypeID ID) {
@@ -2189,7 +2189,7 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   case TemplateArgument::Expression:
     return ReadDeclExpr();
   case TemplateArgument::Type:
-    return GetDeclaratorInfo(Record, Index);
+    return GetTypeSourceInfo(Record, Index);
   case TemplateArgument::Template: {
     SourceLocation 
       QualStart = SourceLocation::getFromRawEncoding(Record[Index++]),

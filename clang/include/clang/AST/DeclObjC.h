@@ -578,14 +578,14 @@ public:
 
 private:
   ObjCIvarDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
-               QualType T, DeclaratorInfo *DInfo, AccessControl ac, Expr *BW)
-    : FieldDecl(ObjCIvar, DC, L, Id, T, DInfo, BW, /*Mutable=*/false),
+               QualType T, TypeSourceInfo *TInfo, AccessControl ac, Expr *BW)
+    : FieldDecl(ObjCIvar, DC, L, Id, T, TInfo, BW, /*Mutable=*/false),
       DeclAccess(ac) {}
 
 public:
   static ObjCIvarDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T,
-                              DeclaratorInfo *DInfo,
+                              TypeSourceInfo *TInfo,
                               AccessControl ac, Expr *BW = NULL);
 
   void setAccessControl(AccessControl ac) { DeclAccess = ac; }
@@ -612,7 +612,7 @@ private:
   ObjCAtDefsFieldDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
                       QualType T, Expr *BW)
     : FieldDecl(ObjCAtDefsField, DC, L, Id, T,
-                /*DInfo=*/0, // FIXME: Do ObjCAtDefs have declarators ?
+                /*TInfo=*/0, // FIXME: Do ObjCAtDefs have declarators ?
                 BW, /*Mutable=*/false) {}
 
 public:

@@ -19,7 +19,7 @@
 
 namespace clang {
   class ParmVarDecl;
-  class DeclaratorInfo;
+  class TypeSourceInfo;
   class UnqualTypeLoc;
 
 // Predeclare all the type nodes.
@@ -941,7 +941,7 @@ public:
     assert(size == Loc.getFullDataSize());
 
     // We're potentially copying Expr references here.  We don't
-    // bother retaining them because DeclaratorInfos live forever, so
+    // bother retaining them because TypeSourceInfos live forever, so
     // as long as the Expr was retained when originally written into
     // the TypeLoc, we're okay.
     memcpy(Data, Loc.Data, size);
@@ -968,7 +968,7 @@ public:
         break;
 
       case TemplateArgument::Type:
-        Info = TemplateArgumentLocInfo((DeclaratorInfo*) 0);
+        Info = TemplateArgumentLocInfo((TypeSourceInfo*) 0);
         break;
 
       case TemplateArgument::Template:
@@ -1043,7 +1043,7 @@ class TypeOfExprTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                            TypeOfExprType> {
 };
 
-// FIXME: location of the 'typeof' and parens; also the DeclaratorInfo
+// FIXME: location of the 'typeof' and parens; also the TypeSourceInfo
 // for the inner type, or (maybe) just express that inline to the TypeLoc.
 class TypeOfTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                        TypeOfTypeLoc,

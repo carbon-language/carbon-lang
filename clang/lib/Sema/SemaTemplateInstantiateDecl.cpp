@@ -127,13 +127,13 @@ TemplateDeclInstantiator::VisitNamespaceDecl(NamespaceDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   bool Invalid = false;
-  DeclaratorInfo *DI = D->getTypeDeclaratorInfo();
+  TypeSourceInfo *DI = D->getTypeSourceInfo();
   if (DI->getType()->isDependentType()) {
     DI = SemaRef.SubstType(DI, TemplateArgs,
                            D->getLocation(), D->getDeclName());
     if (!DI) {
       Invalid = true;
-      DI = SemaRef.Context.getTrivialDeclaratorInfo(SemaRef.Context.IntTy);
+      DI = SemaRef.Context.getTrivialTypeSourceInfo(SemaRef.Context.IntTy);
     }
   }
 
@@ -151,7 +151,7 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // Do substitution on the type of the declaration
-  DeclaratorInfo *DI = SemaRef.SubstType(D->getDeclaratorInfo(),
+  TypeSourceInfo *DI = SemaRef.SubstType(D->getTypeSourceInfo(),
                                          TemplateArgs,
                                          D->getTypeSpecStartLoc(),
                                          D->getDeclName());
@@ -251,12 +251,12 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
-  DeclaratorInfo *DI = D->getDeclaratorInfo();
+  TypeSourceInfo *DI = D->getTypeSourceInfo();
   if (DI->getType()->isDependentType())  {
     DI = SemaRef.SubstType(DI, TemplateArgs,
                            D->getLocation(), D->getDeclName());
     if (!DI) {
-      DI = D->getDeclaratorInfo();
+      DI = D->getTypeSourceInfo();
       Invalid = true;
     } else if (DI->getType()->isFunctionType()) {
       // C++ [temp.arg.type]p3:
@@ -646,7 +646,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
                                                     TemplateArgs);
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
-                           D->getDeclName(), T, D->getDeclaratorInfo(),
+                           D->getDeclName(), T, D->getTypeSourceInfo(),
                            D->getStorageClass(),
                            D->isInlineSpecified(), D->hasWrittenPrototype());
   Function->setLexicalDeclContext(Owner);
@@ -779,7 +779,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     Method = CXXConstructorDecl::Create(SemaRef.Context, Record,
                                         Constructor->getLocation(),
                                         Name, T,
-                                        Constructor->getDeclaratorInfo(),
+                                        Constructor->getTypeSourceInfo(),
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(), false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
@@ -797,12 +797,12 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                                                       ConvTy);
     Method = CXXConversionDecl::Create(SemaRef.Context, Record,
                                        Conversion->getLocation(), Name,
-                                       T, Conversion->getDeclaratorInfo(),
+                                       T, Conversion->getTypeSourceInfo(),
                                        Conversion->isInlineSpecified(),
                                        Conversion->isExplicit());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(),
-                                   D->getDeclName(), T, D->getDeclaratorInfo(),
+                                   D->getDeclName(), T, D->getTypeSourceInfo(),
                                    D->isStatic(), D->isInlineSpecified());
   }
 
@@ -895,7 +895,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   QualType T;
-  DeclaratorInfo *DI = D->getDeclaratorInfo();
+  TypeSourceInfo *DI = D->getTypeSourceInfo();
   if (DI) {
     DI = SemaRef.SubstType(DI, TemplateArgs, D->getLocation(),
                            D->getDeclName());
@@ -957,7 +957,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
                                                  NonTypeTemplateParmDecl *D) {
   // Substitute into the type of the non-type template parameter.
   QualType T;
-  DeclaratorInfo *DI = D->getDeclaratorInfo();
+  TypeSourceInfo *DI = D->getTypeSourceInfo();
   if (DI) {
     DI = SemaRef.SubstType(DI, TemplateArgs, D->getLocation(),
                            D->getDeclName());
@@ -1673,16 +1673,16 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     MemInitResult NewInit;
 
     if (Init->isBaseInitializer()) {
-      DeclaratorInfo *BaseDInfo = SubstType(Init->getBaseClassInfo(), 
+      TypeSourceInfo *BaseTInfo = SubstType(Init->getBaseClassInfo(), 
                                             TemplateArgs, 
                                             Init->getSourceLocation(), 
                                             New->getDeclName());
-      if (!BaseDInfo) {
+      if (!BaseTInfo) {
         New->setInvalidDecl();
         continue;
       }
       
-      NewInit = BuildBaseInitializer(BaseDInfo->getType(), BaseDInfo,
+      NewInit = BuildBaseInitializer(BaseTInfo->getType(), BaseTInfo,
                                      (Expr **)NewArgs.data(),
                                      NewArgs.size(),
                                      Init->getLParenLoc(),

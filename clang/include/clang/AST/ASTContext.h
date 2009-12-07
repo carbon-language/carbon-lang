@@ -1117,9 +1117,9 @@ public:
   void setObjCImplementation(ObjCCategoryDecl *CatD,
                              ObjCCategoryImplDecl *ImplD);
 
-  /// \brief Allocate an uninitialized DeclaratorInfo.
+  /// \brief Allocate an uninitialized TypeSourceInfo.
   ///
-  /// The caller should initialize the memory held by DeclaratorInfo using
+  /// The caller should initialize the memory held by TypeSourceInfo using
   /// the TypeLoc wrappers.
   ///
   /// \param T the type that will be the basis for type source info. This type
@@ -1128,13 +1128,13 @@ public:
   ///
   /// \param Size the size of the type info to create, or 0 if the size
   /// should be calculated based on the type.
-  DeclaratorInfo *CreateDeclaratorInfo(QualType T, unsigned Size = 0);
+  TypeSourceInfo *CreateTypeSourceInfo(QualType T, unsigned Size = 0);
 
-  /// \brief Allocate a DeclaratorInfo where all locations have been
+  /// \brief Allocate a TypeSourceInfo where all locations have been
   /// initialized to a given location, which defaults to the empty
   /// location.
-  DeclaratorInfo *
-  getTrivialDeclaratorInfo(QualType T, SourceLocation Loc = SourceLocation());
+  TypeSourceInfo *
+  getTrivialTypeSourceInfo(QualType T, SourceLocation Loc = SourceLocation());
 
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT

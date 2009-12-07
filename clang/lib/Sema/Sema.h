@@ -131,7 +131,7 @@ struct BlockSemaInfo {
   BlockSemaInfo *PrevBlockInfo;
 };
 
-/// \brief Holds a QualType and a DeclaratorInfo* that came out of a declarator
+/// \brief Holds a QualType and a TypeSourceInfo* that came out of a declarator
 /// parsing.
 ///
 /// LocInfoType is a "transient" type, only needed for passing to/from Parser
@@ -144,17 +144,17 @@ class LocInfoType : public Type {
     LocInfo = (1 << TypeClassBitSize) - 1
   };
 
-  DeclaratorInfo *DeclInfo;
+  TypeSourceInfo *DeclInfo;
 
-  LocInfoType(QualType ty, DeclaratorInfo *DInfo)
-    : Type((TypeClass)LocInfo, ty, ty->isDependentType()), DeclInfo(DInfo) {
+  LocInfoType(QualType ty, TypeSourceInfo *TInfo)
+    : Type((TypeClass)LocInfo, ty, ty->isDependentType()), DeclInfo(TInfo) {
     assert(getTypeClass() == (TypeClass)LocInfo && "LocInfo didn't fit in TC?");
   }
   friend class Sema;
 
 public:
   QualType getType() const { return getCanonicalTypeInternal(); }
-  DeclaratorInfo *getDeclaratorInfo() const { return DeclInfo; }
+  TypeSourceInfo *getTypeSourceInfo() const { return DeclInfo; }
 
   virtual void getAsStringInternal(std::string &Str,
                                    const PrintingPolicy &Policy) const;
@@ -517,14 +517,14 @@ public:
   QualType BuildBlockPointerType(QualType T, unsigned Quals,
                                  SourceLocation Loc, DeclarationName Entity);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S,
-                                DeclaratorInfo **DInfo = 0,
+                                TypeSourceInfo **TInfo = 0,
                                 TagDecl **OwnedDecl = 0);
-  DeclaratorInfo *GetDeclaratorInfoForDeclarator(Declarator &D, QualType T);
-  /// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
-  QualType CreateLocInfoType(QualType T, DeclaratorInfo *DInfo);
+  TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T);
+  /// \brief Create a LocInfoType to hold the given QualType and TypeSourceInfo.
+  QualType CreateLocInfoType(QualType T, TypeSourceInfo *TInfo);
   DeclarationName GetNameForDeclarator(Declarator &D);
   DeclarationName GetNameFromUnqualifiedId(const UnqualifiedId &Name);
-  static QualType GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo = 0);
+  static QualType GetTypeFromParser(TypeTy *Ty, TypeSourceInfo **TInfo = 0);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
   bool CheckEquivalentExceptionSpec(
@@ -596,17 +596,17 @@ public:
                           SourceLocation NameLoc,
                           unsigned Diagnostic);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                    QualType R, DeclaratorInfo *DInfo,
+                                    QualType R, TypeSourceInfo *TInfo,
                                     LookupResult &Previous, bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, DeclaratorInfo *DInfo,
+                                     QualType R, TypeSourceInfo *TInfo,
                                      LookupResult &Previous,
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool &Redeclaration);
   void CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous,
                                 bool &Redeclaration);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
-                                     QualType R, DeclaratorInfo *DInfo,
+                                     QualType R, TypeSourceInfo *TInfo,
                                      LookupResult &Previous,
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool IsFunctionDefinition,
@@ -710,7 +710,7 @@ public:
                          AccessSpecifier AS);
 
   FieldDecl *CheckFieldDecl(DeclarationName Name, QualType T,
-                            DeclaratorInfo *DInfo,
+                            TypeSourceInfo *TInfo,
                             RecordDecl *Record, SourceLocation Loc,
                             bool Mutable, Expr *BitfieldWidth,
                             SourceLocation TSSL,
@@ -823,7 +823,7 @@ public:
 
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
-                                DeclaratorInfo *DInfo);
+                                TypeSourceInfo *TInfo);
   void MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);
@@ -1385,7 +1385,7 @@ public:
                                                        StmtArg SynchBody);
 
   VarDecl *BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
-                                     DeclaratorInfo *DInfo,
+                                     TypeSourceInfo *TInfo,
                                      IdentifierInfo *Name,
                                      SourceLocation Loc,
                                      SourceRange Range);
@@ -1505,7 +1505,7 @@ public:
   virtual OwningExprResult ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                         tok::TokenKind Op, ExprArg Input);
 
-  OwningExprResult CreateSizeOfAlignOfExpr(DeclaratorInfo *T,
+  OwningExprResult CreateSizeOfAlignOfExpr(TypeSourceInfo *T,
                                            SourceLocation OpLoc,
                                            bool isSizeOf, SourceRange R);
   OwningExprResult CreateSizeOfAlignOfExpr(Expr *E, SourceLocation OpLoc,
@@ -2131,7 +2131,7 @@ public:
                                        SourceLocation RParenLoc);
 
   MemInitResult BuildBaseInitializer(QualType BaseType,
-                                     DeclaratorInfo *BaseDInfo,
+                                     TypeSourceInfo *BaseTInfo,
                                      Expr **Args, unsigned NumArgs,
                                      SourceLocation LParenLoc,
                                      SourceLocation RParenLoc,
@@ -2496,7 +2496,7 @@ public:
                                  TemplateArgumentListBuilder &Converted);
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param,
-                             DeclaratorInfo *Arg);
+                             TypeSourceInfo *Arg);
   bool CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
                                                       NamedDecl *&Entity);
   bool CheckTemplateArgumentPointerToMember(Expr *Arg, 
@@ -3128,7 +3128,7 @@ public:
 
   void PerformPendingImplicitInstantiations();
 
-  DeclaratorInfo *SubstType(DeclaratorInfo *T,
+  TypeSourceInfo *SubstType(TypeSourceInfo *T,
                             const MultiLevelTemplateArgumentList &TemplateArgs,
                             SourceLocation Loc, DeclarationName Entity);
 

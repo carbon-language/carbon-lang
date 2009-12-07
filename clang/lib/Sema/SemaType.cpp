@@ -846,20 +846,20 @@ QualType Sema::BuildBlockPointerType(QualType T, unsigned CVR,
   return Context.getQualifiedType(Context.getBlockPointerType(T), Quals);
 }
 
-QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
+QualType Sema::GetTypeFromParser(TypeTy *Ty, TypeSourceInfo **TInfo) {
   QualType QT = QualType::getFromOpaquePtr(Ty);
   if (QT.isNull()) {
-    if (DInfo) *DInfo = 0;
+    if (TInfo) *TInfo = 0;
     return QualType();
   }
 
-  DeclaratorInfo *DI = 0;
+  TypeSourceInfo *DI = 0;
   if (LocInfoType *LIT = dyn_cast<LocInfoType>(QT)) {
     QT = LIT->getType();
-    DI = LIT->getDeclaratorInfo();
+    DI = LIT->getTypeSourceInfo();
   }
 
-  if (DInfo) *DInfo = DI;
+  if (TInfo) *TInfo = DI;
   return QT;
 }
 
@@ -870,7 +870,7 @@ QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
 /// owns the declaration of a type (e.g., the definition of a struct
 /// type), then *OwnedDecl will receive the owned declaration.
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
-                                    DeclaratorInfo **DInfo,
+                                    TypeSourceInfo **TInfo,
                                     TagDecl **OwnedDecl) {
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
@@ -1259,11 +1259,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   if (const AttributeList *Attrs = D.getAttributes())
     ProcessTypeAttributeList(T, Attrs);
 
-  if (DInfo) {
+  if (TInfo) {
     if (D.isInvalidType())
-      *DInfo = 0;
+      *TInfo = 0;
     else
-      *DInfo = GetDeclaratorInfoForDeclarator(D, T);
+      *TInfo = GetTypeSourceInfoForDeclarator(D, T);
   }
 
   return T;
@@ -1329,18 +1329,18 @@ namespace {
       }
     }
     void VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
-      DeclaratorInfo *DInfo = 0;
-      Sema::GetTypeFromParser(DS.getTypeRep(), &DInfo);
+      TypeSourceInfo *TInfo = 0;
+      Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
 
       // If we got no declarator info from previous Sema routines,
       // just fill with the typespec loc.
-      if (!DInfo) {
+      if (!TInfo) {
         TL.initialize(DS.getTypeSpecTypeLoc());
         return;
       }
 
       TemplateSpecializationTypeLoc OldTL =
-        cast<TemplateSpecializationTypeLoc>(DInfo->getTypeLoc());
+        cast<TemplateSpecializationTypeLoc>(TInfo->getTypeLoc());
       TL.copy(OldTL);
     }
     void VisitTypeLoc(TypeLoc TL) {
@@ -1416,13 +1416,13 @@ namespace {
   };
 }
 
-/// \brief Create and instantiate a DeclaratorInfo with type source information.
+/// \brief Create and instantiate a TypeSourceInfo with type source information.
 ///
 /// \param T QualType referring to the type as written in source code.
-DeclaratorInfo *
-Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T) {
-  DeclaratorInfo *DInfo = Context.CreateDeclaratorInfo(T);
-  UnqualTypeLoc CurrTL = DInfo->getTypeLoc().getUnqualifiedLoc();
+TypeSourceInfo *
+Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T) {
+  TypeSourceInfo *TInfo = Context.CreateTypeSourceInfo(T);
+  UnqualTypeLoc CurrTL = TInfo->getTypeLoc().getUnqualifiedLoc();
 
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
     DeclaratorLocFiller(D.getTypeObject(i)).Visit(CurrTL);
@@ -1431,16 +1431,16 @@ Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T) {
   
   TypeSpecLocFiller(D.getDeclSpec()).Visit(CurrTL);
 
-  return DInfo;
+  return TInfo;
 }
 
-/// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
-QualType Sema::CreateLocInfoType(QualType T, DeclaratorInfo *DInfo) {
+/// \brief Create a LocInfoType to hold the given QualType and TypeSourceInfo.
+QualType Sema::CreateLocInfoType(QualType T, TypeSourceInfo *TInfo) {
   // FIXME: LocInfoTypes are "transient", only needed for passing to/from Parser
   // and Sema during declaration parsing. Try deallocating/caching them when
   // it's appropriate, instead of allocating them and keeping them around.
   LocInfoType *LocT = (LocInfoType*)BumpAlloc.Allocate(sizeof(LocInfoType), 8);
-  new (LocT) LocInfoType(T, DInfo);
+  new (LocT) LocInfoType(T, TInfo);
   assert(LocT->getTypeClass() != T->getTypeClass() &&
          "LocInfoType's TypeClass conflicts with an existing Type class");
   return QualType(LocT, 0);
@@ -1515,9 +1515,9 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // the parser.
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
 
-  DeclaratorInfo *DInfo = 0;
+  TypeSourceInfo *TInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType T = GetTypeForDeclarator(D, S, &DInfo, &OwnedTag);
+  QualType T = GetTypeForDeclarator(D, S, &TInfo, &OwnedTag);
   if (D.isInvalidType())
     return true;
 
@@ -1534,8 +1534,8 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
         << Context.getTypeDeclType(OwnedTag);
   }
 
-  if (DInfo)
-    T = CreateLocInfoType(T, DInfo);
+  if (TInfo)
+    T = CreateLocInfoType(T, TInfo);
 
   return T.getAsOpaquePtr();
 }

@@ -74,14 +74,14 @@ class TypeLocBuilder {
     return cast<TyLocType>(pushImpl(T, LocalSize));
   }
 
-  /// Creates a DeclaratorInfo for the given type.
-  DeclaratorInfo *getDeclaratorInfo(ASTContext& Context, QualType T) {
+  /// Creates a TypeSourceInfo for the given type.
+  TypeSourceInfo *getTypeSourceInfo(ASTContext& Context, QualType T) {
 #ifndef NDEBUG
     assert(T == LastTy && "type doesn't match last type pushed!");
 #endif
 
     size_t FullDataSize = Capacity - Index;
-    DeclaratorInfo *DI = Context.CreateDeclaratorInfo(T, FullDataSize);
+    TypeSourceInfo *DI = Context.CreateTypeSourceInfo(T, FullDataSize);
     memcpy(DI->getTypeLoc().getOpaqueData(), &Buffer[Index], FullDataSize);
     return DI;
   }
