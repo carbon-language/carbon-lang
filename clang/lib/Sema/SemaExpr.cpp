@@ -2473,7 +2473,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
 /// fixed for ObjC++.
 Sema::OwningExprResult
 Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
-                       bool IsArrow, SourceLocation OpLoc,
+                       bool &IsArrow, SourceLocation OpLoc,
                        const CXXScopeSpec &SS,
                        NamedDecl *FirstQualifierInScope,
                        DeclPtrTy ObjCImpDecl) {
@@ -2614,13 +2614,42 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       BaseType = PT->getPointeeType();
     else if (BaseType->isObjCObjectPointerType())
       ;
-    else {
+    else if (BaseType->isRecordType()) {
+      // Recover from arrow accesses to records, e.g.:
+      //   struct MyRecord foo;
+      //   foo->bar
+      // This is actually well-formed in C++ if MyRecord has an
+      // overloaded operator->, but that should have been dealt with
+      // by now.
+      Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+        << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
+        << CodeModificationHint::CreateReplacement(OpLoc, ".");
+      IsArrow = false;
+    } else {
       Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
         << BaseType << BaseExpr->getSourceRange();
       return ExprError();
     }
+  } else {
+    // Recover from dot accesses to pointers, e.g.:
+    //   type *foo;
+    //   foo.bar
+    // This is actually well-formed in two cases:
+    //   - 'type' is an Objective C type
+    //   - 'bar' is a pseudo-destructor name which happens to refer to
+    //     the appropriate pointer type
+    if (MemberName.getNameKind() != DeclarationName::CXXDestructorName) {
+      const PointerType *PT = BaseType->getAs<PointerType>();
+      if (PT && PT->getPointeeType()->isRecordType()) {
+        Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+          << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
+          << CodeModificationHint::CreateReplacement(OpLoc, "->");
+        BaseType = PT->getPointeeType();
+        IsArrow = true;
+      }
+    }
   }
-
+  
   // Handle field access to simple records.  This also handles access
   // to fields of the ObjC 'id' struct.
   if (const RecordType *RTy = BaseType->getAs<RecordType>()) {

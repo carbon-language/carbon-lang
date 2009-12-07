@@ -1520,6 +1520,8 @@ def err_typecheck_member_reference_ivar : Error<
   "%0 does not have a member named %1">;
 def err_typecheck_member_reference_arrow : Error<
   "member reference type %0 is not a pointer">;
+def err_typecheck_member_reference_suggestion : Error<
+  "member reference type %0 is %select{a|not a}1 pointer; maybe you meant to use '%select{->|.}1'?">;
 def err_typecheck_member_reference_type : Error<
   "cannot refer to type member %0 with '%select{.|->}1'">;
 def err_typecheck_member_reference_unknown : Error<

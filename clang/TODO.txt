@@ -65,7 +65,6 @@ More ideas for code modification hints:
   - If no member of a given name is found in a class/struct, search through the names of entities that do exist in the class and suggest the closest candidate. e.g., if I write "DS.setTypeSpecType", it would suggest "DS.SetTypeSpecType" (edit distance = 1).
   - If a class member is defined out-of-line but isn't in the class declaration (and there are no close matches!), provide the option to add an in-class declaration.
   - Fix-it hints for the inclusion of headers when needed for particular features (e.g., <typeinfo> for typeid)
-  - Change "foo.bar" to "foo->bar" when "foo" is a pointer.
 
 //===---------------------------------------------------------------------===//
 
