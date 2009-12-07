@@ -87,6 +87,19 @@ static llvm::Constant *getEndCatchFn(CodeGenFunction &CGF) {
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_end_catch");
 }
 
+static llvm::Constant *getUnexpectedFn(CodeGenFunction &CGF) {
+  // void __cxa_call_unexepcted(void *thrown_exception);
+
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  std::vector<const llvm::Type*> Args(1, Int8PtrTy);
+  
+  const llvm::FunctionType *FTy = 
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()),
+                            Args, false);
+  
+  return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_call_unexpected");
+}
+
 // FIXME: Eventually this will all go into the backend.  Set from the target for
 // now.
 static int using_sjlj_exceptions = 0;
@@ -267,6 +280,112 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   // FIXME: For now, emit a dummy basic block because expr emitters in generally
   // are not ready to handle emitting expressions at unreachable points.
   EnsureInsertPoint();
+}
+
+void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
+  const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
+  if (FD == 0)
+    return;
+  const FunctionProtoType *Proto = FD->getType()->getAs<FunctionProtoType>();
+  if (Proto == 0)
+    return;
+
+  assert(!Proto->hasAnyExceptionSpec() && "function with parameter pack");
+
+  if (!Proto->hasExceptionSpec())
+    return;
+
+  llvm::Constant *Personality =
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
+                                                      (VMContext),
+                                                      true),
+                              "__gxx_personality_v0");
+  Personality = llvm::ConstantExpr::getBitCast(Personality, PtrToInt8Ty);
+  llvm::Value *llvm_eh_exception =
+    CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
+  llvm::Value *llvm_eh_selector =
+    CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
+  const llvm::IntegerType *Int8Ty;
+  const llvm::PointerType *PtrToInt8Ty;
+  Int8Ty = llvm::Type::getInt8Ty(VMContext);
+  // C string type.  Used in lots of places.
+  PtrToInt8Ty = llvm::PointerType::getUnqual(Int8Ty);
+  llvm::Constant *Null = llvm::ConstantPointerNull::get(PtrToInt8Ty);
+  llvm::SmallVector<llvm::Value*, 8> SelectorArgs;
+
+  llvm::BasicBlock *PrevLandingPad = getInvokeDest();
+  llvm::BasicBlock *EHSpecHandler = createBasicBlock("ehspec.handler");
+  llvm::BasicBlock *Match = createBasicBlock("match");
+  llvm::BasicBlock *Unwind = 0;
+
+  assert(PrevLandingPad == 0 && "EHSpec has invoke context");
+
+  llvm::BasicBlock *Cont = createBasicBlock("cont");
+
+  EmitBranchThroughCleanup(Cont);
+
+  // Emit the statements in the try {} block
+  setInvokeDest(EHSpecHandler);
+
+  EmitBlock(EHSpecHandler);
+  // Exception object
+  llvm::Value *Exc = Builder.CreateCall(llvm_eh_exception, "exc");
+  llvm::Value *RethrowPtr = CreateTempAlloca(Exc->getType(), "_rethrow");
+
+  SelectorArgs.push_back(Exc);
+  SelectorArgs.push_back(Personality);
+  SelectorArgs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                                                Proto->getNumExceptions()+1));
+
+  for (unsigned i = 0; i < Proto->getNumExceptions(); ++i) {
+    QualType Ty = Proto->getExceptionType(i);
+    llvm::Value *EHType
+      = CGM.GenerateRTTI(Ty.getNonReferenceType());
+    SelectorArgs.push_back(EHType);
+  }
+  if (Proto->getNumExceptions())
+    SelectorArgs.push_back(Null);
+
+  // Find which handler was matched.
+  llvm::Value *Selector
+    = Builder.CreateCall(llvm_eh_selector, SelectorArgs.begin(),
+                         SelectorArgs.end(), "selector");
+  if (Proto->getNumExceptions()) {
+    Unwind = createBasicBlock("Unwind");
+
+    Builder.CreateStore(Exc, RethrowPtr);
+    Builder.CreateCondBr(Builder.CreateICmpSLT(Selector,
+                                               llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                                                                      0)),
+                         Match, Unwind);
+
+    EmitBlock(Match);
+  }
+  Builder.CreateCall(getUnexpectedFn(*this), Exc)->setDoesNotReturn();
+  Builder.CreateUnreachable();
+
+  if (Proto->getNumExceptions()) {
+    EmitBlock(Unwind);
+    Builder.CreateCall(getUnwindResumeOrRethrowFn(*this),
+                       Builder.CreateLoad(RethrowPtr));
+    Builder.CreateUnreachable();
+  }
+
+  EmitBlock(Cont);
+}
+
+void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
+  const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
+  if (FD == 0)
+    return;
+  const FunctionProtoType *Proto = FD->getType()->getAs<FunctionProtoType>();
+  if (Proto == 0)
+    return;
+
+  if (!Proto->hasExceptionSpec())
+    return;
+
+  setInvokeDest(0);
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {

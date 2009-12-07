@@ -504,6 +504,12 @@ public:
   /// given temporary.
   void EmitFunctionEpilog(const CGFunctionInfo &FI, llvm::Value *ReturnValue);
 
+  /// EmitStartEHSpec - Emit the start of the exception spec.
+  void EmitStartEHSpec(const Decl *D);
+
+  /// EmitEndEHSpec - Emit the end of the exception spec.
+  void EmitEndEHSpec(const Decl *D);
+
   const llvm::Type *ConvertTypeForMem(QualType T);
   const llvm::Type *ConvertType(QualType T);
 

@@ -131,6 +131,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   }
 
   EmitFunctionEpilog(*CurFnInfo, ReturnValue);
+  EmitEndEHSpec(CurCodeDecl);
 
   // If someone did an indirect goto, emit the indirect goto block at the end of
   // the function.
@@ -215,6 +216,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     ReturnValue = CreateTempAlloca(ConvertType(RetTy), "retval");
   }
 
+  EmitStartEHSpec(CurCodeDecl);
   EmitFunctionProlog(*CurFnInfo, CurFn, Args);
 
   // If any of the arguments have a variably modified type, make sure to
