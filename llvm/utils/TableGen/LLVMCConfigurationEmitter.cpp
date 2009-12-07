@@ -456,54 +456,64 @@ void OptionDescriptions::InsertDescription (const OptionDescription& o) {
 
 /// HandlerTable - A base class for function objects implemented as
 /// 'tables of handlers'.
-template <class T>
+template <typename Handler>
 class HandlerTable {
 protected:
   // Implementation details.
 
-  /// Handler -
-  typedef void (T::* Handler) (const DagInit*);
   /// HandlerMap - A map from property names to property handlers
   typedef StringMap<Handler> HandlerMap;
 
   static HandlerMap Handlers_;
   static bool staticMembersInitialized_;
 
-  T* childPtr;
 public:
 
-  HandlerTable(T* cp) : childPtr(cp)
-  {}
-
-  /// operator() - Just forwards to the corresponding property
-  /// handler.
-  void operator() (Init* i) {
-    const DagInit& property = InitPtrToDag(i);
-    const std::string& property_name = GetOperatorName(property);
-    typename HandlerMap::iterator method = Handlers_.find(property_name);
+  Handler GetHandler (const std::string& HandlerName) const {
+    typename HandlerMap::iterator method = Handlers_.find(HandlerName);
 
     if (method != Handlers_.end()) {
       Handler h = method->second;
-      (childPtr->*h)(&property);
+      return h;
     }
     else {
-      throw "No handler found for property " + property_name + "!";
+      throw "No handler found for property " + HandlerName + "!";
     }
   }
 
-  void AddHandler(const char* Property, Handler Handl) {
-    Handlers_[Property] = Handl;
+  void AddHandler(const char* Property, Handler H) {
+    Handlers_[Property] = H;
   }
+
 };
 
-template <class T> typename HandlerTable<T>::HandlerMap
-HandlerTable<T>::Handlers_;
-template <class T> bool HandlerTable<T>::staticMembersInitialized_ = false;
+template <class FunctionObject>
+void InvokeDagInitHandler(FunctionObject* Obj, Init* i) {
+  typedef void (FunctionObject::*Handler) (const DagInit*);
+
+  const DagInit& property = InitPtrToDag(i);
+  const std::string& property_name = GetOperatorName(property);
+  Handler h = Obj->GetHandler(property_name);
+
+  ((Obj)->*(h))(&property);
+}
+
+template <typename H>
+typename HandlerTable<H>::HandlerMap HandlerTable<H>::Handlers_;
+
+template <typename H>
+bool HandlerTable<H>::staticMembersInitialized_ = false;
 
 
 /// CollectOptionProperties - Function object for iterating over an
 /// option property list.
-class CollectOptionProperties : public HandlerTable<CollectOptionProperties> {
+class CollectOptionProperties;
+typedef void (CollectOptionProperties::* CollectOptionPropertiesHandler)
+(const DagInit*);
+
+class CollectOptionProperties
+: public HandlerTable<CollectOptionPropertiesHandler>
+{
 private:
 
   /// optDescs_ - OptionDescriptions table. This is where the
@@ -513,7 +523,7 @@ private:
 public:
 
   explicit CollectOptionProperties(OptionDescription& OD)
-    : HandlerTable<CollectOptionProperties>(this), optDesc_(OD)
+    : optDesc_(OD)
   {
     if (!staticMembersInitialized_) {
       AddHandler("extern", &CollectOptionProperties::onExtern);
@@ -528,6 +538,12 @@ public:
 
       staticMembersInitialized_ = true;
     }
+  }
+
+  /// operator() - Just forwards to the corresponding property
+  /// handler.
+  void operator() (Init* i) {
+    InvokeDagInitHandler(this, i);
   }
 
 private:
@@ -712,7 +728,13 @@ typedef std::vector<IntrusiveRefCntPtr<ToolDescription> > ToolDescriptions;
 
 /// CollectToolProperties - Function object for iterating over a list of
 /// tool property records.
-class CollectToolProperties : public HandlerTable<CollectToolProperties> {
+
+class CollectToolProperties;
+typedef void (CollectToolProperties::* CollectToolPropertiesHandler)
+(const DagInit*);
+
+class CollectToolProperties : public HandlerTable<CollectToolPropertiesHandler>
+{
 private:
 
   /// toolDesc_ - Properties of the current Tool. This is where the
@@ -722,7 +744,7 @@ private:
 public:
 
   explicit CollectToolProperties (ToolDescription& d)
-    : HandlerTable<CollectToolProperties>(this) , toolDesc_(d)
+    : toolDesc_(d)
   {
     if (!staticMembersInitialized_) {
 
@@ -736,6 +758,10 @@ public:
 
       staticMembersInitialized_ = true;
     }
+  }
+
+  void operator() (Init* i) {
+    InvokeDagInitHandler(this, i);
   }
 
 private:
@@ -1727,90 +1753,122 @@ struct ActionHandlingCallbackBase {
 
 /// EmitActionHandlersCallback - Emit code that handles actions. Used by
 /// EmitGenerateActionMethod() as an argument to EmitCaseConstructHandler().
-class EmitActionHandlersCallback : ActionHandlingCallbackBase {
+class EmitActionHandlersCallback;
+typedef void (EmitActionHandlersCallback::* EmitActionHandlersCallbackHandler)
+(const DagInit&, unsigned, raw_ostream&) const;
+
+class EmitActionHandlersCallback
+: public ActionHandlingCallbackBase,
+  public HandlerTable<EmitActionHandlersCallbackHandler>
+{
   const OptionDescriptions& OptDescs;
+  typedef EmitActionHandlersCallbackHandler Handler;
 
-  void processActionDag(const Init* Statement, unsigned IndentLevel,
-                        raw_ostream& O) const
+  void onAppendCmd (const DagInit& Dag,
+                    unsigned IndentLevel, raw_ostream& O) const
   {
-    const DagInit& Dag = InitPtrToDag(Statement);
-    const std::string& ActionName = GetOperatorName(Dag);
+    checkNumberOfArguments(&Dag, 1);
+    const std::string& Cmd = InitPtrToString(Dag.getArg(0));
+    StrVector Out;
+    llvm::SplitString(Cmd, Out);
 
-    if (ActionName == "append_cmd") {
-      checkNumberOfArguments(&Dag, 1);
-      const std::string& Cmd = InitPtrToString(Dag.getArg(0));
-      StrVector Out;
-      llvm::SplitString(Cmd, Out);
+    for (StrVector::const_iterator B = Out.begin(), E = Out.end();
+         B != E; ++B)
+      O.indent(IndentLevel) << "vec.push_back(\"" << *B << "\");\n";
+  }
 
-      for (StrVector::const_iterator B = Out.begin(), E = Out.end();
-           B != E; ++B)
-        O.indent(IndentLevel) << "vec.push_back(\"" << *B << "\");\n";
-    }
-    else if (ActionName == "error") {
-      this->onErrorDag(Dag, IndentLevel, O);
-    }
-    else if (ActionName == "warning") {
-      this->onWarningDag(Dag, IndentLevel, O);
-    }
-    else if (ActionName == "forward") {
-      checkNumberOfArguments(&Dag, 1);
-      const std::string& Name = InitPtrToString(Dag.getArg(0));
-      EmitForwardOptionPropertyHandlingCode(OptDescs.FindOption(Name),
-                                            IndentLevel, "", O);
-    }
-    else if (ActionName == "forward_as") {
-      checkNumberOfArguments(&Dag, 2);
-      const std::string& Name = InitPtrToString(Dag.getArg(0));
-      const std::string& NewName = InitPtrToString(Dag.getArg(1));
-      EmitForwardOptionPropertyHandlingCode(OptDescs.FindOption(Name),
-                                            IndentLevel, NewName, O);
-    }
-    else if (ActionName == "output_suffix") {
-      checkNumberOfArguments(&Dag, 1);
-      const std::string& OutSuf = InitPtrToString(Dag.getArg(0));
-      O.indent(IndentLevel) << "output_suffix = \"" << OutSuf << "\";\n";
-    }
-    else if (ActionName == "stop_compilation") {
-      O.indent(IndentLevel) << "stop_compilation = true;\n";
-    }
-    else if (ActionName == "unpack_values") {
-      checkNumberOfArguments(&Dag, 1);
-      const std::string& Name = InitPtrToString(Dag.getArg(0));
-      const OptionDescription& D = OptDescs.FindOption(Name);
+  void onForward (const DagInit& Dag,
+                  unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(&Dag, 1);
+    const std::string& Name = InitPtrToString(Dag.getArg(0));
+    EmitForwardOptionPropertyHandlingCode(OptDescs.FindOption(Name),
+                                          IndentLevel, "", O);
+  }
 
-      if (D.isMultiVal())
-        throw std::string("Can't use unpack_values with multi-valued options!");
+  void onForwardAs (const DagInit& Dag,
+                    unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(&Dag, 2);
+    const std::string& Name = InitPtrToString(Dag.getArg(0));
+    const std::string& NewName = InitPtrToString(Dag.getArg(1));
+    EmitForwardOptionPropertyHandlingCode(OptDescs.FindOption(Name),
+                                          IndentLevel, NewName, O);
+  }
 
-      if (D.isList()) {
-        O.indent(IndentLevel)
-          << "for (" << D.GenTypeDeclaration()
-          << "::iterator B = " << D.GenVariableName() << ".begin(),\n";
-        O.indent(IndentLevel)
-          << "E = " << D.GenVariableName() << ".end(); B != E; ++B)\n";
-        O.indent(IndentLevel + Indent1)
-          << "llvm::SplitString(*B, vec, \",\");\n";
-      }
-      else if (D.isParameter()){
-        O.indent(IndentLevel) << "llvm::SplitString("
-                              << D.GenVariableName() << ", vec, \",\");\n";
-      }
-      else {
-        throw "Option '" + D.Name +
-          "': switches can't have the 'unpack_values' property!";
-      }
+  void onOutputSuffix (const DagInit& Dag,
+                       unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(&Dag, 1);
+    const std::string& OutSuf = InitPtrToString(Dag.getArg(0));
+    O.indent(IndentLevel) << "output_suffix = \"" << OutSuf << "\";\n";
+  }
+
+  void onStopCompilation (const DagInit& Dag,
+                          unsigned IndentLevel, raw_ostream& O) const
+  {
+    O.indent(IndentLevel) << "stop_compilation = true;\n";
+  }
+
+
+  void onUnpackValues (const DagInit& Dag,
+                       unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(&Dag, 1);
+    const std::string& Name = InitPtrToString(Dag.getArg(0));
+    const OptionDescription& D = OptDescs.FindOption(Name);
+
+    if (D.isMultiVal())
+      throw std::string("Can't use unpack_values with multi-valued options!");
+
+    if (D.isList()) {
+      O.indent(IndentLevel)
+        << "for (" << D.GenTypeDeclaration()
+        << "::iterator B = " << D.GenVariableName() << ".begin(),\n";
+      O.indent(IndentLevel)
+        << "E = " << D.GenVariableName() << ".end(); B != E; ++B)\n";
+      O.indent(IndentLevel + Indent1)
+        << "llvm::SplitString(*B, vec, \",\");\n";
+    }
+    else if (D.isParameter()){
+      O.indent(IndentLevel) << "llvm::SplitString("
+                            << D.GenVariableName() << ", vec, \",\");\n";
     }
     else {
-      throw "Unknown action name: " + ActionName + "!";
+      throw "Option '" + D.Name +
+        "': switches can't have the 'unpack_values' property!";
     }
   }
+
  public:
-  EmitActionHandlersCallback(const OptionDescriptions& OD)
-    : OptDescs(OD) {}
+
+  explicit EmitActionHandlersCallback(const OptionDescriptions& OD)
+    : OptDescs(OD)
+  {
+    if (!staticMembersInitialized_) {
+      AddHandler("error", &EmitActionHandlersCallback::onErrorDag);
+      AddHandler("warning", &EmitActionHandlersCallback::onWarningDag);
+      AddHandler("append_cmd", &EmitActionHandlersCallback::onAppendCmd);
+      AddHandler("forward", &EmitActionHandlersCallback::onForward);
+      AddHandler("forward_as", &EmitActionHandlersCallback::onForwardAs);
+      AddHandler("output_suffix", &EmitActionHandlersCallback::onOutputSuffix);
+      AddHandler("stop_compilation",
+                 &EmitActionHandlersCallback::onStopCompilation);
+      AddHandler("unpack_values",
+                 &EmitActionHandlersCallback::onUnpackValues);
+
+      staticMembersInitialized_ = true;
+    }
+  }
 
   void operator()(const Init* Statement,
                   unsigned IndentLevel, raw_ostream& O) const
   {
-    this->processActionDag(Statement, IndentLevel, O);
+    const DagInit& Dag = InitPtrToDag(Statement);
+    const std::string& ActionName = GetOperatorName(Dag);
+    Handler h = GetHandler(ActionName);
+
+    ((this)->*(h))(Dag, IndentLevel, O);
   }
 };
 
@@ -1866,11 +1924,9 @@ bool IsOutFileIndexCheckRequired (Init* CmdLine) {
     return IsOutFileIndexCheckRequiredCase(CmdLine);
 }
 
-// EmitGenerateActionMethod - Emit either a normal or a "join" version of the
-// Tool::GenerateAction() method.
-void EmitGenerateActionMethod (const ToolDescription& D,
-                               const OptionDescriptions& OptDescs,
-                               bool IsJoin, raw_ostream& O) {
+void EmitGenerateActionMethodHeader(const ToolDescription& D,
+                                    bool IsJoin, raw_ostream& O)
+{
   if (IsJoin)
     O.indent(Indent1) << "Action GenerateAction(const PathVector& inFiles,\n";
   else
@@ -1886,6 +1942,15 @@ void EmitGenerateActionMethod (const ToolDescription& D,
   O.indent(Indent2) << "bool stop_compilation = !HasChildren;\n";
   O.indent(Indent2) << "const char* output_suffix = \""
                     << D.OutputSuffix << "\";\n";
+}
+
+// EmitGenerateActionMethod - Emit either a normal or a "join" version of the
+// Tool::GenerateAction() method.
+void EmitGenerateActionMethod (const ToolDescription& D,
+                               const OptionDescriptions& OptDescs,
+                               bool IsJoin, raw_ostream& O) {
+
+  EmitGenerateActionMethodHeader(D, IsJoin, O);
 
   if (!D.CmdLine)
     throw "Tool " + D.Name + " has no cmd_line property!";
