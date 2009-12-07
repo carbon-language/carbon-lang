@@ -1847,6 +1847,94 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
+void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
+                                       bool InInterface) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  if (ObjCImpDecl) {
+    // Since we have an implementation, we can end it.
+    Results.MaybeAddResult(Result("end", 0));
+
+    CodeCompletionString *Pattern = 0;
+    Decl *ImpDecl = ObjCImpDecl.getAs<Decl>();
+    if (isa<ObjCImplementationDecl>(ImpDecl) || 
+        isa<ObjCCategoryImplDecl>(ImpDecl)) {
+      // @dynamic
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("dynamic");
+      Pattern->AddTextChunk(" ");
+      Pattern->AddPlaceholderChunk("property");
+      Results.MaybeAddResult(Result(Pattern, 0));
+
+      // @synthesize
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("synthesize");
+      Pattern->AddTextChunk(" ");
+      Pattern->AddPlaceholderChunk("property");
+      Results.MaybeAddResult(Result(Pattern, 0));
+    }
+  } else if (InInterface) {
+    // Since we have an interface or protocol, we can end it.
+    Results.MaybeAddResult(Result("end", 0));
+
+    if (LangOpts.ObjC2) {
+      // @property
+      Results.MaybeAddResult(Result("property", 0));
+    }
+
+    // @required
+    Results.MaybeAddResult(Result("required", 0));
+
+    // @optional
+    Results.MaybeAddResult(Result("optional", 0));
+  } else {
+    CodeCompletionString *Pattern = 0;
+
+    // @class name ;
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("class");
+    Pattern->AddTextChunk(" ");
+    Pattern->AddPlaceholderChunk("identifier");
+    Pattern->AddTextChunk(";"); // add ';' chunk
+    Results.MaybeAddResult(Result(Pattern, 0));
+
+    // @interface name 
+    // FIXME: Could introduce the whole pattern, including superclasses and 
+    // such.
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("interface");
+    Pattern->AddTextChunk(" ");
+    Pattern->AddPlaceholderChunk("class");
+    Results.MaybeAddResult(Result(Pattern, 0));
+
+    // @protocol name
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("protocol");
+    Pattern->AddTextChunk(" ");
+    Pattern->AddPlaceholderChunk("protocol");
+    Results.MaybeAddResult(Result(Pattern, 0));
+
+    // @implementation name
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("implementation");
+    Pattern->AddTextChunk(" ");
+    Pattern->AddPlaceholderChunk("class");
+    Results.MaybeAddResult(Result(Pattern, 0));
+
+    // @compatibility_alias name
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("compatibility_alias");
+    Pattern->AddTextChunk(" ");
+    Pattern->AddPlaceholderChunk("alias");
+    Pattern->AddTextChunk(" ");
+    Pattern->AddPlaceholderChunk("class");
+    Results.MaybeAddResult(Result(Pattern, 0));
+  }
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
 /// \brief Determine whether the addition of the given flag to an Objective-C
 /// property's attributes will cause a conflict.
 static bool ObjCPropertyFlagConflicts(unsigned Attributes, unsigned NewFlag) {

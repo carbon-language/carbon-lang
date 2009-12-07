@@ -30,6 +30,11 @@ using namespace clang;
 Parser::DeclPtrTy Parser::ParseObjCAtDirectives() {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCAtDirective(CurScope, ObjCImpDecl, false);
+    ConsumeToken();
+  }
+
   switch (Tok.getObjCKeywordID()) {
   case tok::objc_class:
     return ParseObjCAtClassDeclaration(AtLoc);
@@ -345,6 +350,12 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
 
     // Otherwise, we have an @ directive, eat the @.
     SourceLocation AtLoc = ConsumeToken(); // the "@"
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCAtDirective(CurScope, ObjCImpDecl, true);
+      ConsumeToken();
+      break;
+    }
+
     tok::ObjCKeywordKind DirectiveKind = Tok.getObjCKeywordID();
 
     if (DirectiveKind == tok::objc_end) { // @end -> terminate list
@@ -401,7 +412,10 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
 
   // We break out of the big loop in two cases: when we see @end or when we see
   // EOF.  In the former case, eat the @end.  In the later case, emit an error.
-  if (Tok.isObjCAtKeyword(tok::objc_end))
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCAtDirective(CurScope, ObjCImpDecl, true);
+    ConsumeToken();
+  } else if (Tok.isObjCAtKeyword(tok::objc_end))
     ConsumeToken(); // the "end" identifier
   else
     Diag(Tok, diag::err_objc_missing_end);

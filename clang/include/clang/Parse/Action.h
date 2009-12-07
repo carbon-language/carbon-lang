@@ -2408,6 +2408,18 @@ public:
   /// \param S the scope in which the operator keyword occurs.
   virtual void CodeCompleteOperatorName(Scope *S) { }
 
+  /// \brief Code completion after the '@' at the top level.
+  ///
+  /// \param S the scope in which the '@' occurs.
+  ///
+  /// \param ObjCImpDecl the Objective-C implementation or category 
+  /// implementation.
+  ///
+  /// \param InInterface whether we are in an Objective-C interface or
+  /// protocol.
+  virtual void CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
+                                           bool InInterface) { }
+
   /// \brief Code completion for an ObjC property decl.
   ///
   /// This code completion action is invoked when the code-completion token is
