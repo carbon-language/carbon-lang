@@ -207,6 +207,16 @@ void MachineSSAUpdater::RewriteUse(MachineOperand &U) {
   U.setReg(NewVR);
 }
 
+void MachineSSAUpdater::ReplaceRegWith(unsigned OldReg, unsigned NewReg) {
+  MRI->replaceRegWith(OldReg, NewReg);
+
+  AvailableValsTy &AvailableVals = getAvailableVals(AV);
+  for (DenseMap<MachineBasicBlock*, unsigned>::iterator
+         I = AvailableVals.begin(), E = AvailableVals.end(); I != E; ++I)
+    if (I->second == OldReg)
+      I->second = NewReg;
+}
+
 /// GetValueAtEndOfBlockInternal - Check to see if AvailableVals has an entry
 /// for the specified BB and if so, return it.  If not, construct SSA form by
 /// walking predecessors inserting PHI nodes as needed until we get to a block
@@ -297,7 +307,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
       MachineInstr *OldVal = MRI->getVRegDef(InsertedVal);
       // Be careful about dead loops.  These RAUW's also update InsertedVal.
       assert(InsertedVal != SingularValue && "Dead loop?");
-      MRI->replaceRegWith(InsertedVal, SingularValue);
+      ReplaceRegWith(InsertedVal, SingularValue);
       OldVal->eraseFromParent();
     }
 

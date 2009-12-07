@@ -104,6 +104,7 @@ public:
   void RewriteUse(MachineOperand &U);
 
 private:
+  void ReplaceRegWith(unsigned OldReg, unsigned NewReg);
   unsigned GetValueAtEndOfBlockInternal(MachineBasicBlock *BB);
   void operator=(const MachineSSAUpdater&); // DO NOT IMPLEMENT
   MachineSSAUpdater(const MachineSSAUpdater&);     // DO NOT IMPLEMENT
