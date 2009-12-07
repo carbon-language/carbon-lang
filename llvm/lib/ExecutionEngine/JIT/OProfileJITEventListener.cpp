@@ -69,24 +69,18 @@ OProfileJITEventListener::~OProfileJITEventListener() {
 }
 
 class FilenameCache {
-  // Holds the filename of each Scope, so that we can pass the
-  // pointer into oprofile.  These char*s are freed in the destructor.
-  DenseMap<MDNode*, char*> Filenames;
+  // Holds the filename of each Scope, so that we can pass a null-terminated
+  // string into oprofile.
+  DenseMap<MDNode*, std::string> Filenames;
 
  public:
   const char *getFilename(MDNode *Scope) {
-    char *&Filename = Filenames[Scope];
+    std::string &Filename = Filenames[Scope];
     if (Filename == NULL) {
       DIScope S(Scope);
-      Filename = strdup(S.getFilename());
+      Filename = S.getFilename();
     }
-    return Filename;
-  }
-  ~FilenameCache() {
-    for (DenseMap<MDNode*, char*>::iterator
-             I = Filenames.begin(), E = Filenames.end(); I != E; ++I) {
-      free(I->second);
-    }
+    return Filename.c_str();
   }
 };
 
