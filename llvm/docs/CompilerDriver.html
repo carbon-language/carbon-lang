@@ -17,28 +17,28 @@ The ReST source lives in the directory 'tools/llvmc/doc'. -->
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#introduction" id="id4">Introduction</a></li>
-<li><a class="reference internal" href="#compiling-with-llvmc" id="id5">Compiling with LLVMC</a></li>
-<li><a class="reference internal" href="#predefined-options" id="id6">Predefined options</a></li>
-<li><a class="reference internal" href="#compiling-llvmc-plugins" id="id7">Compiling LLVMC plugins</a></li>
-<li><a class="reference internal" href="#compiling-standalone-llvmc-based-drivers" id="id8">Compiling standalone LLVMC-based drivers</a></li>
-<li><a class="reference internal" href="#customizing-llvmc-the-compilation-graph" id="id9">Customizing LLVMC: the compilation graph</a></li>
-<li><a class="reference internal" href="#describing-options" id="id10">Describing options</a><ul>
-<li><a class="reference internal" href="#external-options" id="id11">External options</a></li>
+<li><a class="reference internal" href="#introduction" id="id8">Introduction</a></li>
+<li><a class="reference internal" href="#compiling-with-llvmc" id="id9">Compiling with LLVMC</a></li>
+<li><a class="reference internal" href="#predefined-options" id="id10">Predefined options</a></li>
+<li><a class="reference internal" href="#compiling-llvmc-plugins" id="id11">Compiling LLVMC plugins</a></li>
+<li><a class="reference internal" href="#compiling-standalone-llvmc-based-drivers" id="id12">Compiling standalone LLVMC-based drivers</a></li>
+<li><a class="reference internal" href="#customizing-llvmc-the-compilation-graph" id="id13">Customizing LLVMC: the compilation graph</a></li>
+<li><a class="reference internal" href="#describing-options" id="id14">Describing options</a><ul>
+<li><a class="reference internal" href="#external-options" id="id15">External options</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#conditional-evaluation" id="id12">Conditional evaluation</a></li>
-<li><a class="reference internal" href="#writing-a-tool-description" id="id13">Writing a tool description</a><ul>
-<li><a class="reference internal" href="#actions" id="id14">Actions</a></li>
+<li><a class="reference internal" href="#conditional-evaluation" id="id16">Conditional evaluation</a></li>
+<li><a class="reference internal" href="#writing-a-tool-description" id="id17">Writing a tool description</a><ul>
+<li><a class="reference internal" href="#id5" id="id18">Actions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#language-map" id="id15">Language map</a></li>
-<li><a class="reference internal" href="#option-preprocessor" id="id16">Option preprocessor</a></li>
-<li><a class="reference internal" href="#more-advanced-topics" id="id17">More advanced topics</a><ul>
-<li><a class="reference internal" href="#hooks-and-environment-variables" id="id18">Hooks and environment variables</a></li>
-<li><a class="reference internal" href="#how-plugins-are-loaded" id="id19">How plugins are loaded</a></li>
-<li><a class="reference internal" href="#debugging" id="id20">Debugging</a></li>
-<li><a class="reference internal" href="#conditioning-on-the-executable-name" id="id21">Conditioning on the executable name</a></li>
+<li><a class="reference internal" href="#language-map" id="id19">Language map</a></li>
+<li><a class="reference internal" href="#option-preprocessor" id="id20">Option preprocessor</a></li>
+<li><a class="reference internal" href="#more-advanced-topics" id="id21">More advanced topics</a><ul>
+<li><a class="reference internal" href="#hooks-and-environment-variables" id="id22">Hooks and environment variables</a></li>
+<li><a class="reference internal" href="#how-plugins-are-loaded" id="id23">How plugins are loaded</a></li>
+<li><a class="reference internal" href="#debugging" id="id24">Debugging</a></li>
+<li><a class="reference internal" href="#conditioning-on-the-executable-name" id="id25">Conditioning on the executable name</a></li>
 </ul>
 </li>
 </ul>
@@ -46,7 +46,7 @@ The ReST source lives in the directory 'tools/llvmc/doc'. -->
 <div class="doc_author">
 <p>Written by <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a></p>
 </div><div class="section" id="introduction">
-<h1><a class="toc-backref" href="#id4">Introduction</a></h1>
+<h1><a class="toc-backref" href="#id8">Introduction</a></h1>
 <p>LLVMC is a generic compiler driver, designed to be customizable and
 extensible. It plays the same role for LLVM as the <tt class="docutils literal"><span class="pre">gcc</span></tt> program
 does for GCC - LLVMC's job is essentially to transform a set of input
@@ -63,7 +63,7 @@ example, as a build tool for game resources.</p>
 need to be familiar with it to customize LLVMC.</p>
 </div>
 <div class="section" id="compiling-with-llvmc">
-<h1><a class="toc-backref" href="#id5">Compiling with LLVMC</a></h1>
+<h1><a class="toc-backref" href="#id9">Compiling with LLVMC</a></h1>
 <p>LLVMC tries hard to be as compatible with <tt class="docutils literal"><span class="pre">gcc</span></tt> as possible,
 although there are some small differences. Most of the time, however,
 you shouldn't be able to notice them:</p>
@@ -100,7 +100,7 @@ hello
 possible to choose the <tt class="docutils literal"><span class="pre">clang</span></tt> compiler with the <tt class="docutils literal"><span class="pre">-clang</span></tt> option.</p>
 </div>
 <div class="section" id="predefined-options">
-<h1><a class="toc-backref" href="#id6">Predefined options</a></h1>
+<h1><a class="toc-backref" href="#id10">Predefined options</a></h1>
 <p>LLVMC has some built-in options that can't be overridden in the
 configuration libraries:</p>
 <ul class="simple">
@@ -137,7 +137,7 @@ their standard meaning.</li>
 </ul>
 </div>
 <div class="section" id="compiling-llvmc-plugins">
-<h1><a class="toc-backref" href="#id7">Compiling LLVMC plugins</a></h1>
+<h1><a class="toc-backref" href="#id11">Compiling LLVMC plugins</a></h1>
 <p>It's easiest to start working on your own LLVMC plugin by copying the
 skeleton project which lives under <tt class="docutils literal"><span class="pre">$LLVMC_DIR/plugins/Simple</span></tt>:</p>
 <pre class="literal-block">
@@ -176,7 +176,7 @@ $ llvmc -load $LLVM_DIR/Release/lib/plugin_llvmc_Simple.so
 </pre>
 </div>
 <div class="section" id="compiling-standalone-llvmc-based-drivers">
-<h1><a class="toc-backref" href="#id8">Compiling standalone LLVMC-based drivers</a></h1>
+<h1><a class="toc-backref" href="#id12">Compiling standalone LLVMC-based drivers</a></h1>
 <p>By default, the <tt class="docutils literal"><span class="pre">llvmc</span></tt> executable consists of a driver core plus several
 statically linked plugins (<tt class="docutils literal"><span class="pre">Base</span></tt> and <tt class="docutils literal"><span class="pre">Clang</span></tt> at the moment). You can
 produce a standalone LLVMC-based driver executable by linking the core with your
@@ -215,7 +215,7 @@ $ make LLVMC_BUILTIN_PLUGINS=&quot;&quot;
 </pre>
 </div>
 <div class="section" id="customizing-llvmc-the-compilation-graph">
-<h1><a class="toc-backref" href="#id9">Customizing LLVMC: the compilation graph</a></h1>
+<h1><a class="toc-backref" href="#id13">Customizing LLVMC: the compilation graph</a></h1>
 <p>Each TableGen configuration file should include the common
 definitions:</p>
 <pre class="literal-block">
@@ -283,7 +283,7 @@ debugging), run <tt class="docutils literal"><span class="pre">llvmc</span> <spa
 <tt class="docutils literal"><span class="pre">gsview</span></tt> installed for this to work properly.</p>
 </div>
 <div class="section" id="describing-options">
-<h1><a class="toc-backref" href="#id10">Describing options</a></h1>
+<h1><a class="toc-backref" href="#id14">Describing options</a></h1>
 <p>Command-line options that the plugin supports are defined by using an
 <tt class="docutils literal"><span class="pre">OptionList</span></tt>:</p>
 <pre class="literal-block">
@@ -342,6 +342,11 @@ the <tt class="docutils literal"><span class="pre">--help</span></tt> output (bu
 output).</li>
 <li><tt class="docutils literal"><span class="pre">really_hidden</span></tt> - the option will not be mentioned in any help
 output.</li>
+<li><tt class="docutils literal"><span class="pre">comma_separated</span></tt> - Indicates that any commas specified for an option's
+value should be used to split the value up into multiple values for the
+option. This property is valid only for list options. In conjunction with
+<tt class="docutils literal"><span class="pre">forward_value</span></tt> can be used to implement option forwarding in style of
+gcc's <tt class="docutils literal"><span class="pre">-Wa,</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">multi_val</span> <span class="pre">n</span></tt> - this option takes <em>n</em> arguments (can be useful in some
 special cases). Usage example: <tt class="docutils literal"><span class="pre">(parameter_list_option</span> <span class="pre">&quot;foo&quot;,</span> <span class="pre">(multi_val</span>
 <span class="pre">3))</span></tt>; the command-line syntax is '-foo a b c'. Only list options can have
@@ -352,13 +357,13 @@ parameter), or a boolean (if it is a switch; boolean constants are called
 <tt class="docutils literal"><span class="pre">true</span></tt> and <tt class="docutils literal"><span class="pre">false</span></tt>). List options can't have this attribute. Usage
 examples: <tt class="docutils literal"><span class="pre">(switch_option</span> <span class="pre">&quot;foo&quot;,</span> <span class="pre">(init</span> <span class="pre">true))</span></tt>; <tt class="docutils literal"><span class="pre">(prefix_option</span> <span class="pre">&quot;bar&quot;,</span>
 <span class="pre">(init</span> <span class="pre">&quot;baz&quot;))</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">extern</span></tt> - this option is defined in some other plugin, see below.</li>
+<li><tt class="docutils literal"><span class="pre">extern</span></tt> - this option is defined in some other plugin, see <a class="reference internal" href="#extern">below</a>.</li>
 </ul>
 </blockquote>
 </li>
 </ul>
 <div class="section" id="external-options">
-<h2><a class="toc-backref" href="#id11">External options</a></h2>
+<span id="extern"></span><h2><a class="toc-backref" href="#id15">External options</a></h2>
 <p>Sometimes, when linking several plugins together, one plugin needs to
 access options defined in some other plugin. Because of the way
 options are implemented, such options must be marked as
@@ -374,7 +379,7 @@ ignored. See also the section on plugin <a class="reference internal" href="#pri
 </div>
 </div>
 <div class="section" id="conditional-evaluation">
-<span id="case"></span><h1><a class="toc-backref" href="#id12">Conditional evaluation</a></h1>
+<span id="case"></span><h1><a class="toc-backref" href="#id16">Conditional evaluation</a></h1>
 <p>The 'case' construct is the main means by which programmability is
 achieved in LLVMC. It can be used to calculate edge weights, program
 actions and modify the shell commands to be executed. The 'case'
@@ -433,7 +438,7 @@ a given value.
 Example: <tt class="docutils literal"><span class="pre">(parameter_equals</span> <span class="pre">&quot;W&quot;,</span> <span class="pre">&quot;all&quot;)</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">element_in_list</span></tt> - Returns true if a command-line parameter
 list contains a given value.
-Example: <tt class="docutils literal"><span class="pre">(parameter_in_list</span> <span class="pre">&quot;l&quot;,</span> <span class="pre">&quot;pthread&quot;)</span></tt>.</li>
+Example: <tt class="docutils literal"><span class="pre">(element_in_list</span> <span class="pre">&quot;l&quot;,</span> <span class="pre">&quot;pthread&quot;)</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">input_languages_contain</span></tt> - Returns true if a given language
 belongs to the current input language set.
 Example: <tt class="docutils literal"><span class="pre">(input_languages_contain</span> <span class="pre">&quot;c++&quot;)</span></tt>.</li>
@@ -475,7 +480,7 @@ argument. Example: <tt class="docutils literal"><span class="pre">(not</span> <s
 </ul>
 </div>
 <div class="section" id="writing-a-tool-description">
-<h1><a class="toc-backref" href="#id13">Writing a tool description</a></h1>
+<h1><a class="toc-backref" href="#id17">Writing a tool description</a></h1>
 <p>As was said earlier, nodes in the compilation graph represent tools,
 which are described separately. A tool definition looks like this
 (taken from the <tt class="docutils literal"><span class="pre">include/llvm/CompilerDriver/Tools.td</span></tt> file):</p>
@@ -512,12 +517,12 @@ list of input files and joins them together. Used for linkers.</li>
 tools are passed to this tool.</li>
 <li><tt class="docutils literal"><span class="pre">actions</span></tt> - A single big <tt class="docutils literal"><span class="pre">case</span></tt> expression that specifies how
 this tool reacts on command-line options (described in more detail
-below).</li>
+<a class="reference internal" href="#actions">below</a>).</li>
 </ul>
 </li>
 </ul>
-<div class="section" id="actions">
-<h2><a class="toc-backref" href="#id14">Actions</a></h2>
+<div class="section" id="id5">
+<span id="actions"></span><h2><a class="toc-backref" href="#id18">Actions</a></h2>
 <p>A tool often needs to react to command-line options, and this is
 precisely what the <tt class="docutils literal"><span class="pre">actions</span></tt> property is for. The next example
 illustrates this feature:</p>
@@ -550,28 +555,31 @@ like a linker.</p>
 <li><p class="first">Possible actions:</p>
 <blockquote>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">append_cmd</span></tt> - append a string to the tool invocation
-command.
-Example: <tt class="docutils literal"><span class="pre">(case</span> <span class="pre">(switch_on</span> <span class="pre">&quot;pthread&quot;),</span> <span class="pre">(append_cmd</span>
-<span class="pre">&quot;-lpthread&quot;))</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">error</span></tt> - exit with error.
+<li><tt class="docutils literal"><span class="pre">append_cmd</span></tt> - Append a string to the tool invocation command.
+Example: <tt class="docutils literal"><span class="pre">(case</span> <span class="pre">(switch_on</span> <span class="pre">&quot;pthread&quot;),</span> <span class="pre">(append_cmd</span> <span class="pre">&quot;-lpthread&quot;))</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">error</span></tt> - Exit with error.
 Example: <tt class="docutils literal"><span class="pre">(error</span> <span class="pre">&quot;Mixing</span> <span class="pre">-c</span> <span class="pre">and</span> <span class="pre">-S</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">allowed!&quot;)</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">warning</span></tt> - print a warning.
+<li><tt class="docutils literal"><span class="pre">warning</span></tt> - Print a warning.
 Example: <tt class="docutils literal"><span class="pre">(warning</span> <span class="pre">&quot;Specifying</span> <span class="pre">both</span> <span class="pre">-O1</span> <span class="pre">and</span> <span class="pre">-O2</span> <span class="pre">is</span> <span class="pre">meaningless!&quot;)</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">forward</span></tt> - forward an option unchanged.  Example: <tt class="docutils literal"><span class="pre">(forward</span> <span class="pre">&quot;Wall&quot;)</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">forward_as</span></tt> - Change the name of an option, but forward the
-argument unchanged.
+<li><tt class="docutils literal"><span class="pre">forward</span></tt> - Forward the option unchanged.
+Example: <tt class="docutils literal"><span class="pre">(forward</span> <span class="pre">&quot;Wall&quot;)</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">forward_as</span></tt> - Change the option's name, but forward the argument
+unchanged.
 Example: <tt class="docutils literal"><span class="pre">(forward_as</span> <span class="pre">&quot;O0&quot;,</span> <span class="pre">&quot;--disable-optimization&quot;)</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">output_suffix</span></tt> - modify the output suffix of this
-tool.
+<li><tt class="docutils literal"><span class="pre">forward_value</span></tt> - Forward only option's value. Cannot be used with switch
+options (since they don't have values), but works fine with lists.
+Example: <tt class="docutils literal"><span class="pre">(forward_value</span> <span class="pre">&quot;Wa,&quot;)</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">forward_transformed_value</span></tt> - As above, but applies a hook to the
+option's value before forwarding (see <a class="reference internal" href="#hooks">below</a>). When
+<tt class="docutils literal"><span class="pre">forward_transformed_value</span></tt> is applied to a list
+option, the hook must have signature
+<tt class="docutils literal"><span class="pre">std::string</span> <span class="pre">hooks::HookName</span> <span class="pre">(const</span> <span class="pre">std::vector&lt;std::string&gt;&amp;)</span></tt>.
+Example: <tt class="docutils literal"><span class="pre">(forward_transformed_value</span> <span class="pre">&quot;m&quot;,</span> <span class="pre">&quot;ConvertToMAttr&quot;)</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">output_suffix</span></tt> - Modify the output suffix of this tool.
 Example: <tt class="docutils literal"><span class="pre">(output_suffix</span> <span class="pre">&quot;i&quot;)</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">stop_compilation</span></tt> - stop compilation after this tool processes
-its input. Used without arguments.</li>
-<li><tt class="docutils literal"><span class="pre">unpack_values</span></tt> - used for for splitting and forwarding
-comma-separated lists of options, e.g. <tt class="docutils literal"><span class="pre">-Wa,-foo=bar,-baz</span></tt> is
-converted to <tt class="docutils literal"><span class="pre">-foo=bar</span> <span class="pre">-baz</span></tt> and appended to the tool invocation
-command.
-Example: <tt class="docutils literal"><span class="pre">(unpack_values</span> <span class="pre">&quot;Wa,&quot;)</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">stop_compilation</span></tt> - Stop compilation after this tool processes its
+input. Used without arguments.
+Example: <tt class="docutils literal"><span class="pre">(stop_compilation)</span></tt>.</li>
 </ul>
 </blockquote>
 </li>
@@ -579,7 +587,7 @@ Example: <tt class="docutils literal"><span class="pre">(unpack_values</span> <s
 </div>
 </div>
 <div class="section" id="language-map">
-<h1><a class="toc-backref" href="#id15">Language map</a></h1>
+<h1><a class="toc-backref" href="#id19">Language map</a></h1>
 <p>If you are adding support for a new language to LLVMC, you'll need to
 modify the language map, which defines mappings from file extensions
 to language names. It is used to choose the proper toolchain(s) for a
@@ -602,7 +610,7 @@ multiple output languages, for nodes &quot;inside&quot; the graph the input and
 output languages should match. This is enforced at compile-time.</p>
 </div>
 <div class="section" id="option-preprocessor">
-<h1><a class="toc-backref" href="#id16">Option preprocessor</a></h1>
+<h1><a class="toc-backref" href="#id20">Option preprocessor</a></h1>
 <p>It is sometimes useful to run error-checking code before processing the
 compilation graph. For example, if optimization options &quot;-O1&quot; and &quot;-O2&quot; are
 implemented as switches, we might want to output a warning if the user invokes
@@ -629,9 +637,9 @@ in <tt class="docutils literal"><span class="pre">OptionPreprocessor</span></tt>
 convenience, <tt class="docutils literal"><span class="pre">unset_option</span></tt> also works on lists.</p>
 </div>
 <div class="section" id="more-advanced-topics">
-<h1><a class="toc-backref" href="#id17">More advanced topics</a></h1>
+<h1><a class="toc-backref" href="#id21">More advanced topics</a></h1>
 <div class="section" id="hooks-and-environment-variables">
-<span id="hooks"></span><h2><a class="toc-backref" href="#id18">Hooks and environment variables</a></h2>
+<span id="hooks"></span><h2><a class="toc-backref" href="#id22">Hooks and environment variables</a></h2>
 <p>Normally, LLVMC executes programs from the system <tt class="docutils literal"><span class="pre">PATH</span></tt>. Sometimes,
 this is not sufficient: for example, we may want to specify tool paths
 or names in the configuration file. This can be easily achieved via
@@ -664,7 +672,7 @@ the <tt class="docutils literal"><span class="pre">case</span></tt> expression (
 </pre>
 </div>
 <div class="section" id="how-plugins-are-loaded">
-<span id="priorities"></span><h2><a class="toc-backref" href="#id19">How plugins are loaded</a></h2>
+<span id="priorities"></span><h2><a class="toc-backref" href="#id23">How plugins are loaded</a></h2>
 <p>It is possible for LLVMC plugins to depend on each other. For example,
 one can create edges between nodes defined in some other plugin. To
 make this work, however, that plugin should be loaded first. To
@@ -680,7 +688,7 @@ with 0. Therefore, the plugin with the highest priority value will be
 loaded last.</p>
 </div>
 <div class="section" id="debugging">
-<h2><a class="toc-backref" href="#id20">Debugging</a></h2>
+<h2><a class="toc-backref" href="#id24">Debugging</a></h2>
 <p>When writing LLVMC plugins, it can be useful to get a visual view of
 the resulting compilation graph. This can be achieved via the command
 line option <tt class="docutils literal"><span class="pre">--view-graph</span></tt>. This command assumes that <a class="reference external" href="http://www.graphviz.org/">Graphviz</a> and
@@ -696,7 +704,7 @@ perform any compilation tasks and returns the number of encountered
 errors as its status code.</p>
 </div>
 <div class="section" id="conditioning-on-the-executable-name">
-<h2><a class="toc-backref" href="#id21">Conditioning on the executable name</a></h2>
+<h2><a class="toc-backref" href="#id25">Conditioning on the executable name</a></h2>
 <p>For now, the executable name (the value passed to the driver in <tt class="docutils literal"><span class="pre">argv[0]</span></tt>) is
 accessible only in the C++ code (i.e. hooks). Use the following code:</p>
 <pre class="literal-block">
@@ -704,12 +712,16 @@ namespace llvmc {
 extern const char* ProgramName;
 }
 
+namespace hooks {
+
 std::string MyHook() {
 //...
 if (strcmp(ProgramName, &quot;mydriver&quot;) == 0) {
    //...
 
 }
+
+} // end namespace hooks
 </pre>
 <p>In general, you're encouraged not to make the behaviour dependent on the
 executable file name, and use command-line switches instead. See for example how
@@ -727,7 +739,7 @@ the <tt class="docutils literal"><span class="pre">Base</span></tt> plugin behav
 <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a><br />
 <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br />
 
-Last modified: $Date$
+Last modified: $Date: 2008-12-11 11:34:48 -0600 (Thu, 11 Dec 2008) $
 </address></div>
 </div>
 </div>
