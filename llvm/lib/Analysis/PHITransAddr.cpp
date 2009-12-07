@@ -195,7 +195,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
 
 /// PHITranslateValue - PHI translate the current address up the CFG from
 /// CurBB to Pred, updating our state the reflect any needed changes.  This
-/// returns true on failure.
+/// returns true on failure and sets Addr to null.
 bool PHITransAddr::PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB) {
   Addr = PHITranslateSubExpr(Addr, CurBB, PredBB);
   return Addr == 0;

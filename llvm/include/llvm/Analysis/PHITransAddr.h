@@ -47,6 +47,8 @@ public:
       InstInputs.push_back(I);
   }
   
+  Value *getAddr() const { return Addr; }
+  
   /// NeedsPHITranslationFromBlock - Return true if moving from the specified
   /// BasicBlock to its predecessors requires PHI translation.
   bool NeedsPHITranslationFromBlock(BasicBlock *BB) const {
@@ -65,7 +67,7 @@ public:
   
   /// PHITranslateValue - PHI translate the current address up the CFG from
   /// CurBB to Pred, updating our state the reflect any needed changes.  This
-  /// returns true on failure.
+  /// returns true on failure and sets Addr to null.
   bool PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB);
   
   /// PHITranslateWithInsertion - PHI translate this value into the specified
