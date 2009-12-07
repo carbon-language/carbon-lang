@@ -1030,23 +1030,14 @@ CodeGenModule::GetAddrOfCovariantThunk(GlobalDecl GD,
 }
 
 void CodeGenModule::BuildThunksForVirtual(GlobalDecl GD) {
-  BuildThunksForVirtualRecursive(GD, GD);
-}
-
-void
-CodeGenModule::BuildThunksForVirtualRecursive(GlobalDecl GD,
-                                              GlobalDecl BaseOGD) {
+  CGVtableInfo::AdjustmentVectorTy *AdjPtr = getVtableInfo().getAdjustments(GD);
+  if (!AdjPtr)
+    return;
+  CGVtableInfo::AdjustmentVectorTy &Adj = *AdjPtr;
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-  const CXXMethodDecl *BaseOMD = cast<CXXMethodDecl>(BaseOGD.getDecl());
-  for (CXXMethodDecl::method_iterator mi = BaseOMD->begin_overridden_methods(),
-         e = BaseOMD->end_overridden_methods();
-       mi != e; ++mi) {
-    GlobalDecl OGD;
-    const CXXMethodDecl *OMD = *mi;
-    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(OMD))
-      OGD = GlobalDecl(DD, GD.getDtorType());
-    else
-      OGD = GlobalDecl(OMD);
+  for (unsigned i = 0; i < Adj.size(); i++) {
+    GlobalDecl OGD = Adj[i].first;
+    const CXXMethodDecl *OMD = cast<CXXMethodDecl>(OGD.getDecl());
     QualType nc_oret = OMD->getType()->getAs<FunctionType>()->getResultType();
     CanQualType oret = getContext().getCanonicalType(nc_oret);
     QualType nc_ret = MD->getType()->getAs<FunctionType>()->getResultType();
@@ -1059,8 +1050,7 @@ CodeGenModule::BuildThunksForVirtualRecursive(GlobalDecl GD,
       CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
       ReturnAdjustment = ComputeThunkAdjustment(D, B);
     }
-    ThunkAdjustment ThisAdjustment =
-        getVtableInfo().getThisAdjustment(GD, OGD);
+    ThunkAdjustment ThisAdjustment = Adj[i].second;
     bool Extern = !cast<CXXRecordDecl>(OMD->getDeclContext())->isInAnonymousNamespace();
     if (!ReturnAdjustment.isEmpty() || !ThisAdjustment.isEmpty()) {
       CovariantThunkAdjustment CoAdj(ThisAdjustment, ReturnAdjustment);
@@ -1070,7 +1060,24 @@ CodeGenModule::BuildThunksForVirtualRecursive(GlobalDecl GD,
       else
         FnConst = GetAddrOfThunk(GD, ThisAdjustment);
       if (!isa<llvm::Function>(FnConst)) {
-        assert(0 && "Figure out how to handle incomplete-type cases!");
+        llvm::Constant *SubExpr =
+            cast<llvm::ConstantExpr>(FnConst)->getOperand(0);
+        llvm::Function *OldFn = cast<llvm::Function>(SubExpr);
+        std::string Name = OldFn->getNameStr();
+        GlobalDeclMap.erase(UniqueMangledName(Name.data(),
+                                              Name.data() + Name.size() + 1));
+        llvm::Constant *NewFnConst;
+        if (!ReturnAdjustment.isEmpty())
+          NewFnConst = GetAddrOfCovariantThunk(GD, CoAdj);
+        else
+          NewFnConst = GetAddrOfThunk(GD, ThisAdjustment);
+        llvm::Function *NewFn = cast<llvm::Function>(NewFnConst);
+        NewFn->takeName(OldFn);
+        llvm::Constant *NewPtrForOldDecl =
+            llvm::ConstantExpr::getBitCast(NewFn, OldFn->getType());
+        OldFn->replaceAllUsesWith(NewPtrForOldDecl);
+        OldFn->eraseFromParent();
+        FnConst = NewFn;
       }
       llvm::Function *Fn = cast<llvm::Function>(FnConst);
       if (Fn->isDeclaration()) {
@@ -1085,7 +1092,6 @@ CodeGenModule::BuildThunksForVirtualRecursive(GlobalDecl GD,
         CodeGenFunction(*this).GenerateCovariantThunk(Fn, GD, Extern, CoAdj);
       }
     }
-    BuildThunksForVirtualRecursive(GD, OGD);
   }
 }
 

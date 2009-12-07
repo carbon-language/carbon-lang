@@ -625,7 +625,13 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
     getVtableInfo().MaybeEmitVtable(GD);
     if (MD->isVirtual() && MD->isOutOfLine() &&
         (!isa<CXXDestructorDecl>(D) || GD.getDtorType() != Dtor_Base)) {
-      BuildThunksForVirtual(GD);
+      if (isa<CXXDestructorDecl>(D)) {
+        GlobalDecl CanonGD(cast<CXXDestructorDecl>(D->getCanonicalDecl()),
+                           GD.getDtorType());
+        BuildThunksForVirtual(CanonGD);
+      } else {
+        BuildThunksForVirtual(MD->getCanonicalDecl());
+      }
     }
   }
   

@@ -62,6 +62,11 @@ public:
 };
 
 class CGVtableInfo {
+public:
+  typedef std::vector<std::pair<GlobalDecl, ThunkAdjustment> >
+      AdjustmentVectorTy;
+
+private:
   CodeGenModule &CGM;
 
   /// MethodVtableIndices - Contains the index (relative to the vtable address
@@ -84,10 +89,9 @@ class CGVtableInfo {
   /// pointers in the vtable for a given record decl.
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
 
-  typedef llvm::DenseMap<std::pair<GlobalDecl, GlobalDecl>,
-                         ThunkAdjustment> SavedThisAdjustmentsTy;
-  SavedThisAdjustmentsTy SavedThisAdjustments;
-  llvm::DenseSet<const CXXRecordDecl*> SavedThisAdjustmentRecords;
+  typedef llvm::DenseMap<GlobalDecl, AdjustmentVectorTy> SavedAdjustmentsTy;
+  SavedAdjustmentsTy SavedAdjustments;
+  llvm::DenseSet<const CXXRecordDecl*> SavedAdjustmentRecords;
 
   /// getNumVirtualFunctionPointers - Return the number of virtual function
   /// pointers in the vtable for a given record decl.
@@ -128,7 +132,7 @@ public:
   int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
                                     const CXXRecordDecl *VBase);
 
-  ThunkAdjustment getThisAdjustment(GlobalDecl GD, GlobalDecl OGD);
+  AdjustmentVectorTy *getAdjustments(GlobalDecl GD);
 
   /// getVtableAddressPoint - returns the address point of the vtable for the
   /// given record decl.

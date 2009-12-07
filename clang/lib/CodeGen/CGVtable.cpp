@@ -26,6 +26,9 @@ class VtableBuilder {
 public:
   /// Index_t - Vtable index type.
   typedef uint64_t Index_t;
+  typedef std::vector<std::pair<GlobalDecl,
+                                std::pair<GlobalDecl, ThunkAdjustment> > >
+      SavedAdjustmentsVectorTy;
 private:
   
   // VtableComponents - The components of the vtable being built.
@@ -142,9 +145,7 @@ private:
   typedef llvm::DenseMap<uint64_t, ThunkAdjustment> ThisAdjustmentsMapTy;
   ThisAdjustmentsMapTy ThisAdjustments;
 
-  typedef std::vector<std::pair<std::pair<GlobalDecl, GlobalDecl>,
-                                ThunkAdjustment> > SavedThisAdjustmentsVectorTy;
-  SavedThisAdjustmentsVectorTy SavedThisAdjustments;
+  SavedAdjustmentsVectorTy SavedAdjustments;
 
   /// BaseReturnTypes - Contains the base return types of methods who have been
   /// overridden with methods whose return types require adjustment. Used for
@@ -213,8 +214,8 @@ public:
   llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
     { return VBIndex; }
 
-  SavedThisAdjustmentsVectorTy &getSavedThisAdjustments()
-    { return SavedThisAdjustments; }
+  SavedAdjustmentsVectorTy &getSavedAdjustments()
+    { return SavedAdjustments; }
 
   llvm::Constant *wrap(Index_t i) {
     llvm::Constant *m;
@@ -376,8 +377,9 @@ public:
 
     D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
               (int)Index[GD]));
+
+    VCallOffset[GD] = Offset/8;
     if (MorallyVirtual) {
-      VCallOffset[GD] = Offset/8;
       Index_t &idx = VCall[GD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
@@ -838,22 +840,21 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 
       if (!isPure && !ThisAdjustment.isEmpty()) {
         ThisAdjustments[Index] = ThisAdjustment;
-        SavedThisAdjustments.push_back(std::make_pair(std::make_pair(GD, OGD),
-                                                      ThisAdjustment));
+        SavedAdjustments.push_back(
+            std::make_pair(GD, std::make_pair(OGD, ThisAdjustment)));
       }
       return true;
     }
 
-    // FIXME: finish off
-    int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
+    int64_t NonVirtualAdjustment = -VCallOffset[OGD] + OverrideOffset/8;
 
     if (NonVirtualAdjustment) {
       ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
       
       if (!isPure) {
         ThisAdjustments[Index] = ThisAdjustment;
-        SavedThisAdjustments.push_back(std::make_pair(std::make_pair(GD, OGD),
-                                                      ThisAdjustment));
+        SavedAdjustments.push_back(
+            std::make_pair(GD, std::make_pair(OGD, ThisAdjustment)));
       }
     }
     return true;
@@ -1070,30 +1071,31 @@ uint64_t CGVtableInfo::getMethodVtableIndex(GlobalDecl GD) {
   return I->second;
 }
 
-ThunkAdjustment CGVtableInfo::getThisAdjustment(GlobalDecl GD,
-                                                GlobalDecl OGD) {
-  SavedThisAdjustmentsTy::iterator I =
-    SavedThisAdjustments.find(std::make_pair(GD, OGD));
-  if (I != SavedThisAdjustments.end())
-    return I->second;
+CGVtableInfo::AdjustmentVectorTy*
+CGVtableInfo::getAdjustments(GlobalDecl GD) {
+  SavedAdjustmentsTy::iterator I = SavedAdjustments.find(GD);
+  if (I != SavedAdjustments.end())
+    return &I->second;
 
   const CXXRecordDecl *RD = cast<CXXRecordDecl>(GD.getDecl()->getDeclContext());
-  if (!SavedThisAdjustmentRecords.insert(RD).second)
-    return ThunkAdjustment();
+  if (!SavedAdjustmentRecords.insert(RD).second)
+    return 0;
 
   VtableBuilder b(RD, RD, 0, CGM, false);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
-  
-  SavedThisAdjustments.insert(b.getSavedThisAdjustments().begin(),
-                              b.getSavedThisAdjustments().end());
 
-  I = SavedThisAdjustments.find(std::make_pair(GD, OGD));
-  if (I != SavedThisAdjustments.end())
-    return I->second;
+  for (VtableBuilder::SavedAdjustmentsVectorTy::iterator
+       i = b.getSavedAdjustments().begin(),
+       e = b.getSavedAdjustments().end(); i != e; i++)
+    SavedAdjustments[i->first].push_back(i->second);
 
-  return ThunkAdjustment();
+  I = SavedAdjustments.find(GD);
+  if (I != SavedAdjustments.end())
+    return &I->second;
+
+  return 0;
 }
 
 int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD, 
@@ -1470,7 +1472,7 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
 
   for (CXXRecordDecl::method_iterator i = RD->method_begin(),
        e = RD->method_end(); i != e; ++i) {
-    if ((*i)->isVirtual() && (*i)->hasInlineBody()) {
+    if ((*i)->isVirtual() && ((*i)->hasInlineBody() || (*i)->isImplicit())) {
       if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(*i)) {
         CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Complete));
         CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Deleting));
