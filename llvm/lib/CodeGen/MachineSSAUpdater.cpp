@@ -157,8 +157,9 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
     return SingularValue;
 
   // Otherwise, we do need a PHI: insert one now.
+  MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
   MachineInstr *InsertedPHI = InsertNewDef(TargetInstrInfo::PHI, BB,
-                                           BB->front(), VRC, MRI, TII);
+                                           Loc, VRC, MRI, TII);
 
   // Fill in all the predecessors of the PHI.
   MachineInstrBuilder MIB(InsertedPHI);
@@ -231,7 +232,8 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
     // that we have a cycle.  Handle this by inserting a PHI node and returning
     // it.  When we get back to the first instance of the recursion we will fill
     // in the PHI node.
-    MachineInstr *NewPHI = InsertNewDef(TargetInstrInfo::PHI, BB, BB->front(),
+    MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
+    MachineInstr *NewPHI = InsertNewDef(TargetInstrInfo::PHI, BB, Loc,
                                         VRC, MRI,TII);
     unsigned NewVR = NewPHI->getOperand(0).getReg();
     InsertRes.first->second = NewVR;
@@ -311,7 +313,8 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   // Otherwise, we do need a PHI: insert one now if we don't already have one.
   MachineInstr *InsertedPHI;
   if (InsertedVal == 0) {
-    InsertedPHI = InsertNewDef(TargetInstrInfo::PHI, BB, BB->front(),
+    MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
+    InsertedPHI = InsertNewDef(TargetInstrInfo::PHI, BB, Loc,
                                VRC, MRI, TII);
     InsertedVal = InsertedPHI->getOperand(0).getReg();
   } else {
