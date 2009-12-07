@@ -330,6 +330,12 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
 /// that it contains an extra parameter \p ScopeLookupResult, which provides
 /// the result of name lookup within the scope of the nested-name-specifier
 /// that was computed at template definitino time.
+///
+/// If ErrorRecoveryLookup is true, then this call is used to improve error
+/// recovery.  This means that it should not emit diagnostics, it should
+/// just return null on failure.  It also means it should only return a valid
+/// scope if it *knows* that the result is correct.  It should not return in a
+/// dependent context, for example.
 Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
                                                     const CXXScopeSpec &SS,
                                                     SourceLocation IdLoc,
@@ -337,7 +343,8 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
                                                     IdentifierInfo &II,
                                                     QualType ObjectType,
                                                   NamedDecl *ScopeLookupResult,
-                                                    bool EnteringContext) {
+                                                    bool EnteringContext,
+                                                    bool ErrorRecoveryLookup) {
   NestedNameSpecifier *Prefix
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
@@ -403,6 +410,10 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
       ObjectTypeSearchedInScope = true;
     }
   } else if (isDependent) {
+    // Don't speculate if we're just trying to improve error recovery.
+    if (ErrorRecoveryLookup)
+      return 0;
+    
     // We were not able to compute the declaration context for a dependent
     // base object type or prior nested-name-specifier, so this
     // nested-name-specifier refers to an unknown specialization. Just build
@@ -442,14 +453,17 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
            !Context.hasSameType(
                             Context.getTypeDeclType(cast<TypeDecl>(OuterDecl)),
                                Context.getTypeDeclType(cast<TypeDecl>(SD))))) {
+             if (ErrorRecoveryLookup)
+               return 0;
+             
              Diag(IdLoc, diag::err_nested_name_member_ref_lookup_ambiguous)
                << &II;
              Diag(SD->getLocation(), diag::note_ambig_member_ref_object_type)
                << ObjectType;
              Diag(OuterDecl->getLocation(), diag::note_ambig_member_ref_scope);
 
-             // Fall through so that we'll pick the name we found in the object type,
-             // since that's probably what the user wanted anyway.
+             // Fall through so that we'll pick the name we found in the object
+             // type, since that's probably what the user wanted anyway.
            }
     }
 
@@ -468,6 +482,11 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
     return NestedNameSpecifier::Create(Context, Prefix, false,
                                        T.getTypePtr());
   }
+
+  // Otherwise, we have an error case.  If we don't want diagnostics, just
+  // return an error now.
+  if (ErrorRecoveryLookup)
+    return 0;
 
   // If we didn't find anything during our lookup, try again with
   // ordinary name lookup, which can help us produce better error
@@ -509,7 +528,23 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     bool EnteringContext) {
   return BuildCXXNestedNameSpecifier(S, SS, IdLoc, CCLoc, II,
                                      QualType::getFromOpaquePtr(ObjectTypePtr),
-                                     /*ScopeLookupResult=*/0, EnteringContext);
+                                     /*ScopeLookupResult=*/0, EnteringContext,
+                                     false);
+}
+
+/// IsInvalidUnlessNestedName - This method is used for error recovery
+/// purposes to determine whether the specified identifier is only valid as
+/// a nested name specifier, for example a namespace name.  It is
+/// conservatively correct to always return false from this method.
+///
+/// The arguments are the same as those passed to ActOnCXXNestedNameSpecifier.
+bool Sema::IsInvalidUnlessNestedName(Scope *S, const CXXScopeSpec &SS,
+                                     IdentifierInfo &II, TypeTy *ObjectType,
+                                     bool EnteringContext) {
+  return BuildCXXNestedNameSpecifier(S, SS, SourceLocation(), SourceLocation(),
+                                     II, QualType::getFromOpaquePtr(ObjectType),
+                                     /*ScopeLookupResult=*/0, EnteringContext,
+                                     true);
 }
 
 Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,

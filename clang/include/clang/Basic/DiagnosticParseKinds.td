@@ -166,6 +166,8 @@ def err_use_of_tag_name_without_tag : Error<
   "use of tagged type %0 without '%1' tag">;
 def err_expected_ident_in_using : Error<
   "expected an identifier in using directive">;
+def err_unexected_colon_in_nested_name_spec : Error<
+  "unexpected ':' in nested name specifier">;
 
 /// Objective-C parser diagnostics
 def err_objc_no_attributes_on_category : Error<

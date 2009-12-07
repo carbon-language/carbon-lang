@@ -887,7 +887,8 @@ private:
 
   bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                       TypeTy *ObjectType,
-                                      bool EnteringContext);
+                                      bool EnteringContext,
+                                      bool ColonIsSacred = false);
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts

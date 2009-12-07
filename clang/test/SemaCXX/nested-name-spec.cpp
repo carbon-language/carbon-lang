@@ -186,12 +186,10 @@ class foo {
 };
 
 
-// PR4452
-// FIXME: This error recovery sucks.
-foo<somens:a> a2;  // expected-error {{unexpected namespace name 'somens': expected expression}} \
-expected-error {{C++ requires a type specifier for all declarations}}
+// PR4452 / PR4451
+foo<somens:a> a2;  // expected-error {{unexpected ':' in nested name specifier}}
 
-somens::a a3 = a2;
+somens::a a3 = a2; // expected-error {{cannot initialize 'a3' with an lvalue of type 'foo<somens::a>'}}
 
 
 

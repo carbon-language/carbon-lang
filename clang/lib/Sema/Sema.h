@@ -2000,7 +2000,8 @@ public:
                                           IdentifierInfo &II,
                                           QualType ObjectType,
                                           NamedDecl *ScopeLookupResult,
-                                          bool EnteringContext);
+                                          bool EnteringContext,
+                                          bool ErrorRecoveryLookup);
 
   virtual CXXScopeTy *ActOnCXXNestedNameSpecifier(Scope *S,
                                                   const CXXScopeSpec &SS,
@@ -2010,6 +2011,12 @@ public:
                                                   TypeTy *ObjectType,
                                                   bool EnteringContext);
 
+  virtual bool IsInvalidUnlessNestedName(Scope *S,
+                                         const CXXScopeSpec &SS,
+                                         IdentifierInfo &II,
+                                         TypeTy *ObjectType,
+                                         bool EnteringContext);
+  
   /// ActOnCXXNestedNameSpecifier - Called during parsing of a
   /// nested-name-specifier that involves a template-id, e.g.,
   /// "foo::bar<int, float>::", and now we need to build a scope
