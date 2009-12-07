@@ -561,6 +561,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     const ABIArgInfo &AI = it->info;
     unsigned Attributes = 0;
 
+    if (ParamType.isRestrictQualified())
+      Attributes |= llvm::Attribute::NoAlias;
+
     switch (AI.getKind()) {
     case ABIArgInfo::Coerce:
       break;
