@@ -299,8 +299,8 @@ public:
     /// FirstVirtualRegister - This is the first register number that is
     /// considered to be a 'virtual' register, which is part of the SSA
     /// namespace.  This must be the same for all targets, which means that each
-    /// target is limited to 1024 registers.
-    FirstVirtualRegister = 1024
+    /// target is limited to this fixed number of registers.
+    FirstVirtualRegister = 16384
   };
 
   /// isPhysicalRegister - Return true if the specified register number is in
