@@ -1660,6 +1660,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   case CallingConv::ARM_APCS:     Out << "arm_apcscc "; break;
   case CallingConv::ARM_AAPCS:    Out << "arm_aapcscc "; break;
   case CallingConv::ARM_AAPCS_VFP:Out << "arm_aapcs_vfpcc "; break;
+  case CallingConv::MSP430_INTR:  Out << "msp430_intrcc "; break;
   default: Out << "cc" << F->getCallingConv() << " "; break;
   }
 
@@ -1927,6 +1928,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::ARM_APCS:     Out << " arm_apcscc "; break;
     case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
     case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
+    case CallingConv::MSP430_INTR:  Out << " msp430_intrcc "; break;
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
@@ -1977,6 +1979,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::ARM_APCS:     Out << " arm_apcscc "; break;
     case CallingConv::ARM_AAPCS:    Out << " arm_aapcscc "; break;
     case CallingConv::ARM_AAPCS_VFP:Out << " arm_aapcs_vfpcc "; break;
+    case CallingConv::MSP430_INTR:  Out << " msp430_intrcc "; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
 

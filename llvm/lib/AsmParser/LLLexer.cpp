@@ -540,6 +540,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(arm_apcscc);
   KEYWORD(arm_aapcscc);
   KEYWORD(arm_aapcs_vfpcc);
+  KEYWORD(msp430_intrcc);
 
   KEYWORD(cc);
   KEYWORD(c);

@@ -68,7 +68,10 @@ namespace CallingConv {
     ARM_AAPCS = 67,
 
     /// ARM_AAPCS_VFP - Same as ARM_AAPCS, but uses hard floating point ABI.
-    ARM_AAPCS_VFP = 68
+    ARM_AAPCS_VFP = 68,
+
+    /// MSP430_INTR - Calling convention used for MSP430 interrupt routines.
+    MSP430_INTR = 69
   };
 } // End CallingConv namespace
 
