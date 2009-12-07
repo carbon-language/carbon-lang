@@ -356,10 +356,14 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
     // or incomplete types shall not be restrict-qualified."  C++ also allows
     // restrict-qualified references.
     if (TypeQuals & DeclSpec::TQ_restrict) {
-      if (Result->isPointerType() || Result->isReferenceType()) {
-        QualType EltTy = Result->isPointerType() ?
-          Result->getAs<PointerType>()->getPointeeType() :
-          Result->getAs<ReferenceType>()->getPointeeType();
+      if (Result->isAnyPointerType() || Result->isReferenceType()) {
+        QualType EltTy;
+        if (Result->isObjCObjectPointerType())
+          EltTy = Result;
+        else
+          EltTy = Result->isPointerType() ?
+                    Result->getAs<PointerType>()->getPointeeType() :
+                    Result->getAs<ReferenceType>()->getPointeeType();
 
         // If we have a pointer or reference, the pointee must have an object
         // incomplete type.
