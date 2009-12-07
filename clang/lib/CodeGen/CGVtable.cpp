@@ -1400,8 +1400,13 @@ CGVtableInfo::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
 
 void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
                                      const CXXRecordDecl *RD) {
-  assert(!Vtables.count(RD) && "Vtable has already been generated!");
-  Vtables[RD] = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0);
+  llvm::GlobalVariable *&Vtable = Vtables[RD];
+  if (Vtable) {
+    assert(Vtable->getInitializer() && "Vtable doesn't have a definition!");
+    return;
+  }
+  
+  Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0);
   
   CGM.GenerateRTTI(RD);
   GenerateVTT(Linkage, RD);  
