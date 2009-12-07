@@ -227,6 +227,7 @@ bool DIDescriptor::isScope() const {
     case dwarf::DW_TAG_compile_unit:
     case dwarf::DW_TAG_lexical_block:
     case dwarf::DW_TAG_subprogram:
+    case dwarf::DW_TAG_namespace:
       return true;
     default:
       break;
@@ -240,6 +241,14 @@ bool DIDescriptor::isCompileUnit() const {
   unsigned Tag = getTag();
 
   return Tag == dwarf::DW_TAG_compile_unit;
+}
+
+/// isNameSpace - Return true if the specified tag is DW_TAG_namespace.
+bool DIDescriptor::isNameSpace() const {
+  assert (!isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  return Tag == dwarf::DW_TAG_namespace;
 }
 
 /// isLexicalBlock - Return true if the specified tag is DW_TAG_lexical_block.
@@ -438,6 +447,8 @@ StringRef DIScope::getFilename() const {
     return DISubprogram(DbgNode).getFilename();
   else if (isCompileUnit())
     return DICompileUnit(DbgNode).getFilename();
+  else if (isNameSpace())
+    return DINameSpace(DbgNode).getFilename();
   else 
     assert (0 && "Invalid DIScope!");
   return StringRef();
@@ -450,6 +461,8 @@ StringRef DIScope::getDirectory() const {
     return DISubprogram(DbgNode).getDirectory();
   else if (isCompileUnit())
     return DICompileUnit(DbgNode).getDirectory();
+  else if (isNameSpace())
+    return DINameSpace(DbgNode).getDirectory();
   else 
     assert (0 && "Invalid DIScope!");
   return StringRef();
@@ -994,6 +1007,21 @@ DILexicalBlock DIFactory::CreateLexicalBlock(DIDescriptor Context) {
     Context.getNode()
   };
   return DILexicalBlock(MDNode::get(VMContext, &Elts[0], 2));
+}
+
+/// CreateNameSpace - This creates new descriptor for a namespace
+/// with the specified parent context.
+DINameSpace DIFactory::CreateNameSpace(DIDescriptor Context, StringRef Name,
+                                       DICompileUnit CompileUnit, 
+                                       unsigned LineNo) {
+  Value *Elts[] = {
+    GetTagConstant(dwarf::DW_TAG_namespace),
+    Context.getNode(),
+    MDString::get(VMContext, Name),
+    CompileUnit.getNode(),
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo)
+  };
+  return DINameSpace(MDNode::get(VMContext, &Elts[0], 5));
 }
 
 /// CreateLocation - Creates a debug info location.

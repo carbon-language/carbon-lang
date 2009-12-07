@@ -446,6 +446,23 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
+/// addSourceLine - Add location information to specified debug information
+/// entry.
+void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace *NS) {
+  // If there is no compile unit specified, don't add a line #.
+  if (NS->getCompileUnit().isNull())
+    return;
+
+  unsigned Line = NS->getLineNumber();
+  StringRef FN = NS->getFilename();
+  StringRef Dir = NS->getDirectory();
+
+  unsigned FileID = GetOrCreateSourceID(Dir, FN);
+  assert(FileID && "Invalid file id");
+  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+}
+
 /* Byref variables, in Blocks, are declared by the programmer as
    "SomeType VarName;", but the compiler creates a
    __Block_byref_x_VarName struct, and gives the variable VarName
@@ -771,9 +788,13 @@ void DwarfDebug::addType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   // Add debug information entry to entity and appropriate context.
   DIE *Die = NULL;
   DIDescriptor Context = Ty.getContext();
-  if (!Context.isNull())
-    Die = DW_Unit->getDIE(Context.getNode());
-
+  if (!Context.isNull()) {
+    if (Context.isNameSpace()) {
+      DINameSpace NS(Context.getNode());
+      Die = getOrCreateNameSpace(NS);
+    } else
+      Die = DW_Unit->getDIE(Context.getNode());
+  }
   if (Die)
     Die->addChild(Buffer);
   else
@@ -1643,6 +1664,29 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName) 
   return SrcId;
 }
 
+/// getOrCreateNameSpace - Create a DIE for DINameSpace.
+DIE *DwarfDebug::getOrCreateNameSpace(DINameSpace &NS) {
+  DIE *NDie = ModuleCU->getDIE(NS.getNode());
+  if (NDie)
+    return NDie;
+
+  NDie = new DIE(dwarf::DW_TAG_namespace);
+  ModuleCU->insertDIE(NS.getNode(), NDie);
+  if (!NS.getName().empty())
+    addString(NDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, NS.getName());
+  addSourceLine(NDie, &NS);
+  DIDescriptor NSContext = NS.getContext();
+  DIE *Context = NULL;
+  if (NSContext.isNameSpace()) {
+    DINameSpace NS2(NSContext.getNode());
+    Context = getOrCreateNameSpace(NS2);
+  }
+  else
+    Context = ModuleCU->getCUDie();
+  Context->addChild(NDie);
+  return NDie;
+}
+
 void DwarfDebug::constructCompileUnit(MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
@@ -1734,10 +1778,17 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
   ModuleCU->insertDIE(N, SubprogramDie);
 
   // Add to context owner.
-  if (SP.getContext().getNode() == SP.getCompileUnit().getNode())
+  DIDescriptor SPContext = SP.getContext();
+  if (SPContext.isCompileUnit() 
+      && SPContext.getNode() == SP.getCompileUnit().getNode()) {
     if (TopLevelDIEs.insert(SubprogramDie))
       TopLevelDIEsVector.push_back(SubprogramDie);
-
+  } else if (SPContext.isNameSpace()) {
+    DINameSpace NS(SPContext.getNode());
+    DIE *NDie = getOrCreateNameSpace(NS);
+    NDie->addChild(SubprogramDie);
+  }
+  
   // Expose as global.
   ModuleCU->addGlobal(SP.getName(), SubprogramDie);
 
@@ -1780,10 +1831,18 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I) {
     DIGlobalVariable GV(*I);
-    if (GV.getContext().getNode() != GV.getCompileUnit().getNode())
-      ScopedGVs.push_back(*I);
-    else
+    DIDescriptor GVContext = GV.getContext();
+    if (GVContext.isCompileUnit() 
+        && GVContext.getNode() == GV.getCompileUnit().getNode())
       constructGlobalVariableDIE(*I);
+    else if (GVContext.isNameSpace()) {
+      DIE *GVDie = createGlobalVariableDIE(ModuleCU, GV);
+      DINameSpace NS(GVContext.getNode());
+      DIE *NDie = getOrCreateNameSpace(NS);
+      NDie->addChild(GVDie);
+    }
+    else 
+      ScopedGVs.push_back(*I);
   }
 
   // Create DIEs for each subprogram.

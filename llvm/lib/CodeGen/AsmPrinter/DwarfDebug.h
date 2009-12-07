@@ -289,6 +289,7 @@ class DwarfDebug : public Dwarf {
   void addSourceLine(DIE *Die, const DIGlobal *G);
   void addSourceLine(DIE *Die, const DISubprogram *SP);
   void addSourceLine(DIE *Die, const DIType *Ty);
+  void addSourceLine(DIE *Die, const DINameSpace *NS);
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
@@ -339,6 +340,9 @@ class DwarfDebug : public Dwarf {
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
   DIE *constructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy);
+
+  /// getOrCreateNameSpace - Create a DIE for DINameSpace.
+  DIE *getOrCreateNameSpace(DINameSpace &NS);
 
   /// createGlobalVariableDIE - Create new DIE using GV.
   DIE *createGlobalVariableDIE(CompileUnit *DW_Unit,
