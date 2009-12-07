@@ -1261,6 +1261,25 @@ static bool isCharSpecialization(QualType T, const char *Name) {
   return SD->getIdentifier()->getName() == Name;
 }
 
+template <std::size_t StrLen>
+bool isStreamCharSpecialization(const ClassTemplateSpecializationDecl *SD,
+                                const char (&Str)[StrLen]) {
+  if (!SD->getIdentifier()->isStr(Str))
+    return false;
+  
+  const TemplateArgumentList &TemplateArgs = SD->getTemplateArgs();
+  if (TemplateArgs.size() != 2)
+    return false;
+    
+  if (!isCharType(TemplateArgs[0].getAsType()))
+    return false;
+    
+  if (!isCharSpecialization(TemplateArgs[1].getAsType(), "char_traits"))
+    return false;
+    
+  return true;
+}
+  
 bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   // <substitution> ::= St # ::std::
   if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
@@ -1311,21 +1330,24 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
       return true;
     }
 
+    //    <substitution> ::= Si # ::std::basic_istream<char,
+    //                            ::std::char_traits<char> >
+    if (isStreamCharSpecialization(SD, "basic_istream")) {
+      Out << "Si";
+      return true;
+    }
+
     //    <substitution> ::= So # ::std::basic_ostream<char,
     //                            ::std::char_traits<char> >
-    if (SD->getIdentifier()->isStr("basic_ostream")) {
-      const TemplateArgumentList &TemplateArgs = SD->getTemplateArgs();
-
-      if (TemplateArgs.size() != 2)
-        return false;
-
-      if (!isCharType(TemplateArgs[0].getAsType()))
-        return false;
-
-      if (!isCharSpecialization(TemplateArgs[1].getAsType(), "char_traits"))
-        return false;
-
+    if (isStreamCharSpecialization(SD, "basic_ostream")) {
       Out << "So";
+      return true;
+    }
+    
+    //    <substitution> ::= Sd # ::std::basic_iostream<char,
+    //                            ::std::char_traits<char> >
+    if (isStreamCharSpecialization(SD, "basic_iostream")) {
+      Out << "Sd";
       return true;
     }
   }
