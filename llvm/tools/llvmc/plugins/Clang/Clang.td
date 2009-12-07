@@ -68,7 +68,7 @@ def as : Tool<
  (out_language "object-code"),
  (output_suffix "o"),
  (cmd_line "as $INFILE -o $OUTFILE"),
- (actions (case (not_empty "Wa,"), (unpack_values "Wa,"),
+ (actions (case (not_empty "Wa,"), (forward_value "Wa,"),
                 (switch_on "c"), (stop_compilation)))
 ]>;
 
@@ -82,7 +82,7 @@ def llvm_ld : Tool<
           (switch_on "pthread"), (append_cmd "-lpthread"),
           (not_empty "L"), (forward "L"),
           (not_empty "l"), (forward "l"),
-          (not_empty "Wl,"), (unpack_values "Wl,"))),
+          (not_empty "Wl,"), (forward_value "Wl,"))),
  (join)
 ]>;
 

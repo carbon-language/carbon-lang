@@ -71,9 +71,9 @@ def OptList : OptionList<[
     (help "Add a directory to include path")),
  (prefix_list_option "D",
     (help "Define a macro")),
- (prefix_list_option "Wa,",
+ (prefix_list_option "Wa,", (comma_separated),
     (help "Pass options to assembler")),
- (prefix_list_option "Wllc,",
+ (prefix_list_option "Wllc,", (comma_separated),
     (help "Pass options to llc")),
  (prefix_list_option "L",
     (help "Add a directory to link path")),
@@ -81,7 +81,7 @@ def OptList : OptionList<[
     (help "Search a library when linking")),
  (prefix_list_option "Wl,",
     (help "Pass options to linker")),
- (prefix_list_option "Wo,",
+ (prefix_list_option "Wo,", (comma_separated),
     (help "Pass options to opt")),
  (prefix_list_option "m",
      (help "Enable or disable various extensions (-mmmx, -msse, etc.)"),
@@ -159,7 +159,7 @@ def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (actions (case (not_empty "Wo,"), (unpack_values "Wo,"),
+ (actions (case (not_empty "Wo,"), (forward_value "Wo,"),
                 (switch_on "O1"), (forward "O1"),
                 (switch_on "O2"), (forward "O2"),
                 (switch_on "O3"), (forward "O3"))),
@@ -181,7 +181,7 @@ def llvm_gcc_assembler : Tool<
  (cmd_line "@LLVMGCCCOMMAND@ -c -x assembler $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "c"), (stop_compilation),
-          (not_empty "Wa,"), (unpack_values "Wa,")))
+          (not_empty "Wa,"), (forward_value "Wa,")))
 ]>;
 
 def llc : Tool<
@@ -202,7 +202,7 @@ def llc : Tool<
           (not_empty "mtune"), (forward "mcpu"),
           (not_empty "mcpu"), (forward "mcpu"),
           (not_empty "m"), (forward_transformed_value "m", "ConvertToMAttr"),
-          (not_empty "Wllc,"), (unpack_values "Wllc,")))
+          (not_empty "Wllc,"), (forward_value "Wllc,")))
 ]>;
 
 // Base class for linkers

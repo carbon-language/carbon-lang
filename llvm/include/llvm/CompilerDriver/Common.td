@@ -45,6 +45,7 @@ def one_or_more;
 def really_hidden;
 def required;
 def zero_or_one;
+def comma_separated;
 
 // The 'case' construct.
 def case;

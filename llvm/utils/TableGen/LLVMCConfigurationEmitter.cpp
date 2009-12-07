@@ -211,7 +211,8 @@ OptionType::OptionType stringToOptionType(const std::string& T) {
 namespace OptionDescriptionFlags {
   enum OptionDescriptionFlags { Required = 0x1, Hidden = 0x2,
                                 ReallyHidden = 0x4, Extern = 0x8,
-                                OneOrMore = 0x10, ZeroOrOne = 0x20 };
+                                OneOrMore = 0x10, ZeroOrOne = 0x20,
+                                CommaSeparated = 0x40 };
 }
 
 /// OptionDescription - Represents data contained in a single
@@ -246,6 +247,9 @@ struct OptionDescription {
   bool isAlias() const;
 
   bool isMultiVal() const;
+
+  bool isCommaSeparated() const;
+  void setCommaSeparated();
 
   bool isExtern() const;
   void setExtern();
@@ -297,6 +301,13 @@ bool OptionDescription::isAlias() const {
 
 bool OptionDescription::isMultiVal() const {
   return MultiVal > 1;
+}
+
+bool OptionDescription::isCommaSeparated() const {
+  return Flags & OptionDescriptionFlags::CommaSeparated;
+}
+void OptionDescription::setCommaSeparated() {
+  Flags |= OptionDescriptionFlags::CommaSeparated;
 }
 
 bool OptionDescription::isExtern() const {
@@ -538,6 +549,7 @@ public:
       AddHandler("really_hidden", &CollectOptionProperties::onReallyHidden);
       AddHandler("required", &CollectOptionProperties::onRequired);
       AddHandler("zero_or_one", &CollectOptionProperties::onZeroOrOne);
+      AddHandler("comma_separated", &CollectOptionProperties::onCommaSeparated);
 
       staticMembersInitialized_ = true;
     }
@@ -574,11 +586,18 @@ private:
     optDesc_.setReallyHidden();
   }
 
+  void onCommaSeparated (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    if (!optDesc_.isList())
+      throw "'comma_separated' is valid only on list options!";
+    optDesc_.setCommaSeparated();
+  }
+
   void onRequired (const DagInit* d) {
     checkNumberOfArguments(d, 0);
-    if (optDesc_.isOneOrMore())
-      throw std::string("An option can't have both (required) "
-                        "and (one_or_more) properties!");
+    if (optDesc_.isOneOrMore() || optDesc_.isZeroOrOne())
+      throw "Only one of (required), (zero_or_one) or "
+        "(one_or_more) properties is allowed!";
     optDesc_.setRequired();
   }
 
@@ -591,7 +610,7 @@ private:
     correct |= (optDesc_.isSwitch() && (str == "true" || str == "false"));
 
     if (!correct)
-      throw std::string("Incorrect usage of the 'init' option property!");
+      throw "Incorrect usage of the 'init' option property!";
 
     optDesc_.InitVal = i;
   }
@@ -599,8 +618,8 @@ private:
   void onOneOrMore (const DagInit* d) {
     checkNumberOfArguments(d, 0);
     if (optDesc_.isRequired() || optDesc_.isZeroOrOne())
-      throw std::string("Only one of (required), (zero_or_one) or "
-                        "(one_or_more) properties is allowed!");
+      throw "Only one of (required), (zero_or_one) or "
+        "(one_or_more) properties is allowed!";
     if (!OptionType::IsList(optDesc_.Type))
       llvm::errs() << "Warning: specifying the 'one_or_more' property "
         "on a non-list option will have no effect.\n";
@@ -610,8 +629,8 @@ private:
   void onZeroOrOne (const DagInit* d) {
     checkNumberOfArguments(d, 0);
     if (optDesc_.isRequired() || optDesc_.isOneOrMore())
-      throw std::string("Only one of (required), (zero_or_one) or "
-                        "(one_or_more) properties is allowed!");
+      throw "Only one of (required), (zero_or_one) or "
+        "(one_or_more) properties is allowed!";
     if (!OptionType::IsList(optDesc_.Type))
       llvm::errs() << "Warning: specifying the 'zero_or_one' property"
         "on a non-list option will have no effect.\n";
@@ -622,11 +641,10 @@ private:
     checkNumberOfArguments(d, 1);
     int val = InitPtrToInt(d->getArg(0));
     if (val < 2)
-      throw std::string("Error in the 'multi_val' property: "
-                        "the value must be greater than 1!");
+      throw "Error in the 'multi_val' property: "
+        "the value must be greater than 1!";
     if (!OptionType::IsList(optDesc_.Type))
-      throw std::string("The multi_val property is valid only "
-                        "on list options!");
+      throw "The multi_val property is valid only on list options!";
     optDesc_.MultiVal = val;
   }
 
@@ -1048,9 +1066,9 @@ class ExtractOptionNames {
     if (ActionName == "forward" || ActionName == "forward_as" ||
         ActionName == "forward_value" ||
         ActionName == "forward_transformed_value" ||
-        ActionName == "unpack_values" || ActionName == "switch_on" ||
-        ActionName == "parameter_equals" || ActionName == "element_in_list" ||
-        ActionName == "not_empty" || ActionName == "empty") {
+        ActionName == "switch_on" || ActionName == "parameter_equals" ||
+        ActionName == "element_in_list" || ActionName == "not_empty" ||
+        ActionName == "empty") {
       checkNumberOfArguments(&Stmt, 1);
       const std::string& Name = InitPtrToString(Stmt.getArg(0));
       OptionNames_.insert(Name);
@@ -1858,30 +1876,8 @@ class EmitActionHandlersCallback
   void onUnpackValues (const DagInit& Dag,
                        unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(&Dag, 1);
-    const std::string& Name = InitPtrToString(Dag.getArg(0));
-    const OptionDescription& D = OptDescs.FindOption(Name);
-
-    if (D.isMultiVal())
-      throw "Can't use unpack_values with multi-valued options!";
-
-    if (D.isList()) {
-      O.indent(IndentLevel)
-        << "for (" << D.GenTypeDeclaration()
-        << "::iterator B = " << D.GenVariableName() << ".begin(),\n";
-      O.indent(IndentLevel)
-        << "E = " << D.GenVariableName() << ".end(); B != E; ++B)\n";
-      O.indent(IndentLevel + Indent1)
-        << "llvm::SplitString(*B, vec, \",\");\n";
-    }
-    else if (D.isParameter()){
-      O.indent(IndentLevel) << "llvm::SplitString("
-                            << D.GenVariableName() << ", vec, \",\");\n";
-    }
-    else {
-      throw "Option '" + D.Name +
-        "': switches can't have the 'unpack_values' property!";
-    }
+    throw "'unpack_values' is deprecated. "
+      "Use 'comma_separated' + 'forward_value' instead!";
   }
 
  public:
@@ -2191,12 +2187,13 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
         O << ", cl::ZeroOrOne";
     }
 
-    if (val.isReallyHidden()) {
+    if (val.isReallyHidden())
       O << ", cl::ReallyHidden";
-    }
-    else if (val.isHidden()) {
+    else if (val.isHidden())
       O << ", cl::Hidden";
-    }
+
+    if (val.isCommaSeparated())
+      O << ", cl::CommaSeparated";
 
     if (val.MultiVal > 1)
       O << ", cl::multi_val(" << val.MultiVal << ')';
@@ -2650,7 +2647,6 @@ void EmitIncludes(raw_ostream& O) {
     << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
     << "#include \"llvm/CompilerDriver/Tool.h\"\n\n"
 
-    << "#include \"llvm/ADT/StringExtras.h\"\n"
     << "#include \"llvm/Support/CommandLine.h\"\n"
     << "#include \"llvm/Support/raw_ostream.h\"\n\n"
 

@@ -41,9 +41,9 @@ def OptionList : OptionList<[
 //    (help "Optimization level 2. (Default)")),
 // (parameter_option "pre-RA-sched",
 //    (help "Example of an option that is passed to llc")),
- (prefix_list_option "Wa,",
+ (prefix_list_option "Wa,", (comma_separated),
     (help "Pass options to native assembler")),
- (prefix_list_option "Wl,",
+ (prefix_list_option "Wl,", (comma_separated),
     (help "Pass options to native linker"))
 // (prefix_list_option "Wllc,",
 //    (help "Pass options to llc")),
@@ -58,11 +58,11 @@ class clang_based<string language, string cmd, string ext_E> : Tool<
  (output_suffix "bc"),
  (cmd_line (case
            (switch_on "E"),
-           (case 
+           (case
               (not_empty "o"), !strconcat(cmd, " -E $INFILE -o $OUTFILE"),
               (default), !strconcat(cmd, " -E $INFILE")),
            (default), !strconcat(cmd, " $INFILE -o $OUTFILE"))),
- (actions (case 
+ (actions (case
                 (and (multiple_input_files), (or (switch_on "S"), (switch_on "c"))),
               (error "cannot specify -o with -c or -S with multiple files"),
                 (switch_on "E"), [(stop_compilation), (output_suffix ext_E)],
@@ -138,7 +138,7 @@ def gpasm : Tool<[
  (actions (case
           (switch_on "c"), (stop_compilation),
           (switch_on "g"), (append_cmd "-g"),
-          (not_empty "Wa,"), (unpack_values "Wa,")))
+          (not_empty "Wa,"), (forward_value "Wa,")))
 ]>;
 
 def mplink : Tool<[
@@ -147,13 +147,13 @@ def mplink : Tool<[
  (output_suffix "cof"),
  (cmd_line "$CALL(GetBinDir)mplink.exe -k $CALL(GetStdLinkerScriptsDir) -l $CALL(GetStdLibsDir) -p 16f1937  intrinsics.lib devices.lib $INFILE -o $OUTFILE"),
  (actions (case
-          (not_empty "Wl,"), (unpack_values "Wl,"),
+          (not_empty "Wl,"), (forward_value "Wl,"),
           (not_empty "L"), (forward_as "L", "-l"),
           (not_empty "K"), (forward_as "K", "-k"),
           (not_empty "m"), (forward "m"),
 //          (not_empty "l"), [(unpack_values "l"),(append_cmd ".lib")])),
-          (not_empty "k"), (unpack_values "k"),
-          (not_empty "l"), (unpack_values "l"))),
+          (not_empty "k"), (forward_value "k"),
+          (not_empty "l"), (forward_value "l"))),
  (join)
 ]>;
 
@@ -175,13 +175,13 @@ def LanguageMap : LanguageMap<[
 def CompilationGraph : CompilationGraph<[
     Edge<"root", "clang_cc">,
     Edge<"root", "llvm_ld">,
-    OptionalEdge<"root", "llvm_ld_optimizer", (case 
+    OptionalEdge<"root", "llvm_ld_optimizer", (case
                                          (switch_on "S"), (inc_weight),
                                          (switch_on "c"), (inc_weight))>,
     Edge<"root", "gpasm">,
     Edge<"root", "mplink">,
     Edge<"clang_cc", "llvm_ld">,
-    OptionalEdge<"clang_cc", "llvm_ld_optimizer", (case 
+    OptionalEdge<"clang_cc", "llvm_ld_optimizer", (case
                                          (switch_on "S"), (inc_weight),
                                          (switch_on "c"), (inc_weight))>,
     Edge<"llvm_ld", "pic16passes">,
