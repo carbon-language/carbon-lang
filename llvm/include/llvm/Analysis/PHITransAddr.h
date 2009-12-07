@@ -35,10 +35,13 @@ class PHITransAddr {
   /// Addr - The actual address we're analyzing.
   Value *Addr;
   
+  /// TD - The target data we are playing with if known, otherwise null.
+  const TargetData *TD;
+  
   /// InstInputs - The inputs for our symbolic address.
   SmallVector<Instruction*, 4> InstInputs;
 public:
-  PHITransAddr(Value *addr) : Addr(addr) {
+  PHITransAddr(Value *addr, const TargetData *td) : Addr(addr), TD(td) {
     // If the address is an instruction, the whole thing is considered an input.
     if (Instruction *I = dyn_cast<Instruction>(Addr))
       InstInputs.push_back(I);
@@ -55,35 +58,44 @@ public:
     return false;
   }
   
-  /// IsPHITranslatable - If this needs PHI translation, return true if we have
-  /// some hope of doing it.  This should be used as a filter to avoid calling
-  /// GetPHITranslatedValue in hopeless situations.
-  bool IsPHITranslatable() const;
+  /// IsPotentiallyPHITranslatable - If this needs PHI translation, return true
+  /// if we have some hope of doing it.  This should be used as a filter to
+  /// avoid calling PHITranslateValue in hopeless situations.
+  bool IsPotentiallyPHITranslatable() const;
   
-  /// GetPHITranslatedValue - Given a computation that satisfied the
-  /// isPHITranslatable predicate, see if we can translate the computation into
-  /// the specified predecessor block.  If so, return that value, otherwise
-  /// return null.
-  Value *GetPHITranslatedValue(Value *InVal, BasicBlock *CurBB,
-                               BasicBlock *Pred, const TargetData *TD) const;
+  /// PHITranslateValue - PHI translate the current address up the CFG from
+  /// CurBB to Pred, updating our state the reflect any needed changes.  This
+  /// returns true on failure.
+  bool PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB);
   
-  /// GetAvailablePHITranslatePointer - Return the value computed by
-  /// PHITranslatePointer if it dominates PredBB, otherwise return null.
-  Value *GetAvailablePHITranslatedValue(Value *V,
-                                        BasicBlock *CurBB, BasicBlock *PredBB,
-                                        const TargetData *TD,
-                                        const DominatorTree &DT) const;
+  /// PHITranslateWithInsertion - PHI translate this value into the specified
+  /// predecessor block, inserting a computation of the value if it is
+  /// unavailable.
+  ///
+  /// All newly created instructions are added to the NewInsts list.  This
+  /// returns null on failure.
+  ///
+  Value *PHITranslateWithInsertion(BasicBlock *CurBB, BasicBlock *PredBB,
+                                   const DominatorTree &DT,
+                                   SmallVectorImpl<Instruction*> &NewInsts);
+private:
+  Value *PHITranslateSubExpr(Value *V, BasicBlock *CurBB, BasicBlock *PredBB);
   
-  /// InsertPHITranslatedPointer - Insert a computation of the PHI translated
+  
+  /// GetAvailablePHITranslatedSubExpr - Return the value computed by
+  /// PHITranslateSubExpr if it dominates PredBB, otherwise return null.
+  Value *GetAvailablePHITranslatedSubExpr(Value *V,
+                                          BasicBlock *CurBB, BasicBlock *PredBB,
+                                          const DominatorTree &DT);
+  
+  /// InsertPHITranslatedSubExpr - Insert a computation of the PHI translated
   /// version of 'V' for the edge PredBB->CurBB into the end of the PredBB
   /// block.  All newly created instructions are added to the NewInsts list.
   /// This returns null on failure.
   ///
-  Value *InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
-                                    BasicBlock *PredBB, const TargetData *TD,
-                                    const DominatorTree &DT,
-                                 SmallVectorImpl<Instruction*> &NewInsts) const;
-    
+  Value *InsertPHITranslatedSubExpr(Value *InVal, BasicBlock *CurBB,
+                                    BasicBlock *PredBB, const DominatorTree &DT,
+                                    SmallVectorImpl<Instruction*> &NewInsts);
 };
 
 } // end namespace llvm
