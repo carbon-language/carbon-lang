@@ -85,6 +85,36 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlock(MachineBasicBlock *BB) {
   return GetValueAtEndOfBlockInternal(BB);
 }
 
+static
+unsigned LookForIdenticalPHI(MachineBasicBlock *BB,
+          SmallVector<std::pair<MachineBasicBlock*, unsigned>, 8> &PredValues) {
+  if (BB->empty())
+    return 0;
+
+  MachineBasicBlock::iterator I = BB->front();
+  if (I->getOpcode() != TargetInstrInfo::PHI)
+    return 0;
+
+  AvailableValsTy AVals;
+  for (unsigned i = 0, e = PredValues.size(); i != e; ++i)
+    AVals[PredValues[i].first] = PredValues[i].second;
+  while (I != BB->end() && I->getOpcode() == TargetInstrInfo::PHI) {
+    bool Same = true;
+    for (unsigned i = 1, e = I->getNumOperands(); i != e; i += 2) {
+      unsigned SrcReg = I->getOperand(i).getReg();
+      MachineBasicBlock *SrcBB = I->getOperand(i+1).getMBB();
+      if (AVals[SrcBB] != SrcReg) {
+        Same = false;
+        break;
+      }
+    }
+    if (Same)
+      return I->getOperand(0).getReg();
+    ++I;
+  }
+  return 0;
+}
+
 /// InsertNewDef - Insert an empty PHI or IMPLICIT_DEF instruction which define
 /// a value of the given register class at the start of the specified basic
 /// block. It returns the virtual register defined by the instruction.
@@ -97,7 +127,6 @@ MachineInstr *InsertNewDef(unsigned Opcode,
   return BuildMI(*BB, I, DebugLoc::getUnknownLoc(), TII->get(Opcode), NewVR);
 }
                           
-
 /// GetValueInMiddleOfBlock - Construct SSA form, materializing a value that
 /// is live in the middle of the specified block.
 ///
@@ -121,7 +150,7 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
   // If there is no definition of the renamed variable in this block, just use
   // GetValueAtEndOfBlock to do our work.
   if (!getAvailableVals(AV).count(BB))
-    return GetValueAtEndOfBlock(BB);
+    return GetValueAtEndOfBlockInternal(BB);
 
   // If there are no predecessors, just return undef.
   if (BB->pred_empty()) {
@@ -155,6 +184,11 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
   // Otherwise, if all the merged values are the same, just use it.
   if (SingularValue != 0)
     return SingularValue;
+
+  // If an identical PHI is already in BB, just reuse it.
+  unsigned DupPHI = LookForIdenticalPHI(BB, PredValues);
+  if (DupPHI)
+    return DupPHI;
 
   // Otherwise, we do need a PHI: insert one now.
   MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
@@ -199,7 +233,7 @@ void MachineSSAUpdater::RewriteUse(MachineOperand &U) {
   unsigned NewVR = 0;
   if (UseMI->getOpcode() == TargetInstrInfo::PHI) {
     MachineBasicBlock *SourceBB = findCorrespondingPred(UseMI, &U);
-    NewVR = GetValueAtEndOfBlock(SourceBB);
+    NewVR = GetValueAtEndOfBlockInternal(SourceBB);
   } else {
     NewVR = GetValueInMiddleOfBlock(UseMI->getParent());
   }
