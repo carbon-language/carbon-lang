@@ -1427,6 +1427,7 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   // Comma expressions just emit their LHS then their RHS as an l-value.
   if (E->getOpcode() == BinaryOperator::Comma) {
     EmitAnyExpr(E->getLHS());
+    EnsureInsertPoint();
     return EmitLValue(E->getRHS());
   }
 
