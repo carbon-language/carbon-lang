@@ -244,16 +244,6 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
             if (UseMI->getParent() == DefBB)
               continue;
             SSAUpdate.RewriteUse(UseMO);
-            while (!NewPHIs.empty()) {
-              MachineInstr *NewPHI = NewPHIs.back();
-              NewPHIs.pop_back();
-              unsigned PHIDef = NewPHI->getOperand(0).getReg();
-              for (unsigned j = 1, ee = NewPHI->getNumOperands(); j != ee;
-                   j += 2) {
-                if (NewPHI->getOperand(j).getReg() == VReg)
-                  NewPHI->getOperand(j).setReg(PHIDef);
-              }
-            }
           }
         }
 
