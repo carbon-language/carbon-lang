@@ -473,6 +473,10 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::AsmStmtClass:
       VisitAsmStmt(cast<AsmStmt>(S), Pred, Dst);
       break;
+      
+    case Stmt::BlockDeclRefExprClass:
+      VisitBlockDeclRefExpr(cast<BlockDeclRefExpr>(S), Pred, Dst, false);
+      break;
 
     case Stmt::BlockExprClass:
       VisitBlockExpr(cast<BlockExpr>(S), Pred, Dst);
@@ -642,6 +646,10 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 
     case Stmt::ArraySubscriptExprClass:
       VisitArraySubscriptExpr(cast<ArraySubscriptExpr>(Ex), Pred, Dst, true);
+      return;
+
+    case Stmt::BlockDeclRefExprClass:
+      VisitBlockDeclRefExpr(cast<BlockDeclRefExpr>(Ex), Pred, Dst, true);
       return;
 
     case Stmt::DeclRefExprClass:
@@ -1135,9 +1143,20 @@ void GRExprEngine::VisitBlockExpr(BlockExpr *BE, ExplodedNode *Pred,
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst, bool asLValue) {
+  VisitCommonDeclRefExpr(Ex, Ex->getDecl(), Pred, Dst, asLValue);
+}
+
+void GRExprEngine::VisitBlockDeclRefExpr(BlockDeclRefExpr *Ex,
+                                         ExplodedNode *Pred,
+                                    ExplodedNodeSet &Dst, bool asLValue) {
+  VisitCommonDeclRefExpr(Ex, Ex->getDecl(), Pred, Dst, asLValue);
+}
+
+void GRExprEngine::VisitCommonDeclRefExpr(Expr *Ex, const NamedDecl *D,
+                                          ExplodedNode *Pred,
+                                          ExplodedNodeSet &Dst, bool asLValue) {
 
   const GRState *state = GetState(Pred);
-  const NamedDecl *D = Ex->getDecl();
 
   if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
 
@@ -1566,7 +1585,8 @@ bool GRExprEngine::EvalBuiltinFunction(const FunctionDecl *FD, CallExpr *CE,
     // FIXME: Refactor into StoreManager itself?
     MemRegionManager& RM = getStateManager().getRegionManager();
     const MemRegion* R =
-      RM.getAllocaRegion(CE, Builder->getCurrentBlockCount());
+      RM.getAllocaRegion(CE, Builder->getCurrentBlockCount(),
+                         Pred->getLocationContext());
 
     // Set the extent of the region in bytes. This enables us to use the
     // SVal of the argument directly. If we save the extent in bits, we
@@ -2064,10 +2084,12 @@ void GRExprEngine::VisitCompoundLiteralExpr(CompoundLiteralExpr* CL,
   for (ExplodedNodeSet::iterator I = Tmp.begin(), EI = Tmp.end(); I!=EI; ++I) {
     const GRState* state = GetState(*I);
     SVal ILV = state->getSVal(ILE);
-    state = state->bindCompoundLiteral(CL, ILV);
+    const LocationContext *LC = (*I)->getLocationContext();
+    state = state->bindCompoundLiteral(CL, LC, ILV);
 
-    if (asLValue)
-      MakeNode(Dst, CL, *I, state->BindExpr(CL, state->getLValue(CL)));
+    if (asLValue) {
+      MakeNode(Dst, CL, *I, state->BindExpr(CL, state->getLValue(CL, LC)));
+    }
     else
       MakeNode(Dst, CL, *I, state->BindExpr(CL, ILV));
   }

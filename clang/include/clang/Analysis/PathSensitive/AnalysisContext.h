@@ -32,7 +32,8 @@ class ParentMap;
 class ImplicitParamDecl;
 class LocationContextManager;
 class BlockDataRegion;
-
+class StackFrameContext;
+  
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
@@ -117,6 +118,8 @@ public:
   const ImplicitParamDecl *getSelfDecl() const {
     return Ctx->getSelfDecl();
   }
+  
+  const StackFrameContext *getCurrentStackFrame() const;
 
   virtual void Profile(llvm::FoldingSetNodeID &ID) = 0;
 

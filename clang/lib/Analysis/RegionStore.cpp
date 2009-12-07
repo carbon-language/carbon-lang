@@ -287,7 +287,9 @@ public:
   const GRState *Bind(const GRState *state, Loc LV, SVal V);
 
   const GRState *BindCompoundLiteral(const GRState *state,
-                                     const CompoundLiteralExpr* CL, SVal V);
+                                     const CompoundLiteralExpr* CL,
+                                     const LocationContext *LC,
+                                     SVal V);
 
   const GRState *BindDecl(const GRState *ST, const VarRegion *VR,
                           SVal InitVal);
@@ -615,15 +617,6 @@ SVal RegionStoreManager::getLValueVar(const VarDecl *VD,
   return loc::MemRegionVal(MRMgr.getVarRegion(VD, LC));
 }
 
-/// getLValueCompoundLiteral - Returns an SVal representing the lvalue
-///   of a compound literal.  Within RegionStore a compound literal
-///   has an associated region, and the lvalue of the compound literal
-///   is the lvalue of that region.
-SVal 
-RegionStoreManager::getLValueCompoundLiteral(const CompoundLiteralExpr* CL) {
-  return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL));
-}
-
 SVal RegionStoreManager::getLValueIvar(const ObjCIvarDecl* D, SVal Base) {
   return getLValueFieldOrIvar(D, Base);
 }
@@ -730,7 +723,11 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
                                                            const MemRegion *R) {
 
   switch (R->getKind()) {
-    case MemRegion::MemSpaceRegionKind:
+    case MemRegion::GenericMemSpaceRegionKind:
+    case MemRegion::StackLocalsSpaceRegionKind:
+    case MemRegion::StackArgumentsSpaceRegionKind:
+    case MemRegion::HeapSpaceRegionKind:
+    case MemRegion::GlobalsSpaceRegionKind:
       assert(0 && "Cannot index into a MemSpace");
       return UnknownVal();
 
@@ -775,13 +772,6 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
       // essentially are arrays of size 1.
       return ValMgr.makeIntVal(1, false);
     }
-
-    case MemRegion::BEG_DECL_REGIONS:
-    case MemRegion::END_DECL_REGIONS:
-    case MemRegion::BEG_TYPED_REGIONS:
-    case MemRegion::END_TYPED_REGIONS:
-      assert(0 && "Infeasible region");
-      return UnknownVal();
   }
 
   assert(0 && "Unreachable");
@@ -886,15 +876,12 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
       // Technically this can happen if people do funny things with casts.
       return UnknownVal();
 
-    case MemRegion::MemSpaceRegionKind:
+    case MemRegion::GenericMemSpaceRegionKind:
+    case MemRegion::StackLocalsSpaceRegionKind:
+    case MemRegion::StackArgumentsSpaceRegionKind:
+    case MemRegion::HeapSpaceRegionKind:
+    case MemRegion::GlobalsSpaceRegionKind:
       assert(0 && "Cannot perform pointer arithmetic on a MemSpace");
-      return UnknownVal();
-
-    case MemRegion::BEG_DECL_REGIONS:
-    case MemRegion::END_DECL_REGIONS:
-    case MemRegion::BEG_TYPED_REGIONS:
-    case MemRegion::END_TYPED_REGIONS:
-      assert(0 && "Infeasible region");
       return UnknownVal();
   }
 
@@ -1462,9 +1449,11 @@ const GRState *RegionStoreManager::BindDecl(const GRState *ST,
 // FIXME: this method should be merged into Bind().
 const GRState *
 RegionStoreManager::BindCompoundLiteral(const GRState *state,
-                                        const CompoundLiteralExpr* CL,
+                                        const CompoundLiteralExpr *CL,
+                                        const LocationContext *LC,
                                         SVal V) {
-  return Bind(state, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL)), V);
+  return Bind(state, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)),
+              V);
 }
 
 const GRState *RegionStoreManager::setImplicitDefaultValue(const GRState *state,

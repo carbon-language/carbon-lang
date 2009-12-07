@@ -281,6 +281,13 @@ protected:
   void VisitDeclRefExpr(DeclRefExpr* DR, ExplodedNode* Pred,
                         ExplodedNodeSet& Dst, bool asLValue);
 
+  /// VisitBlockDeclRefExpr - Transfer function logic for BlockDeclRefExprs.
+  void VisitBlockDeclRefExpr(BlockDeclRefExpr* DR, ExplodedNode* Pred,
+                             ExplodedNodeSet& Dst, bool asLValue);
+  
+  void VisitCommonDeclRefExpr(Expr* DR, const NamedDecl *D,ExplodedNode* Pred,
+                             ExplodedNodeSet& Dst, bool asLValue);  
+  
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, ExplodedNode* Pred, ExplodedNodeSet& Dst);
 

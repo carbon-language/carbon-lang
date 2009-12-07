@@ -3681,7 +3681,24 @@ void RetainReleaseChecker::PostVisitBlockExpr(CheckerContext &C,
   if (I == E)
     return;
   
-  state = state->scanReachableSymbols<StopTrackingCallback>(I, E).getState();
+  // FIXME: For now we invalidate the tracking of all symbols passed to blocks
+  // via captured variables, even though captured variables result in a copy
+  // and in implicit increment/decrement of a retain count.
+  llvm::SmallVector<const MemRegion*, 10> Regions;
+  const LocationContext *LC = C.getPredecessor()->getLocationContext();
+  MemRegionManager &MemMgr = C.getValueManager().getRegionManager();
+  
+  for ( ; I != E; ++I) {
+    const VarRegion *VR = *I;
+    if (VR->getSuperRegion() == R) {
+      VR = MemMgr.getVarRegion(VR->getDecl(), LC);
+    }
+    Regions.push_back(VR);
+  }
+  
+  state =
+    state->scanReachableSymbols<StopTrackingCallback>(Regions.data(),
+                                    Regions.data() + Regions.size()).getState();
   C.addTransition(state);
 }
 

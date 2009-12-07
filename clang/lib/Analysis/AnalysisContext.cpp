@@ -166,6 +166,20 @@ LocationContextManager::getBlockInvocation(AnalysisContext *ctx,
 }
 
 //===----------------------------------------------------------------------===//
+// LocationContext methods.
+//===----------------------------------------------------------------------===//
+
+const StackFrameContext *LocationContext::getCurrentStackFrame() const {
+  const LocationContext *LC = this;
+  while (LC) {
+    if (const StackFrameContext *SFC = dyn_cast<StackFrameContext>(LC))
+      return SFC;
+    LC = LC->getParent();
+  }
+  return NULL;
+}
+
+//===----------------------------------------------------------------------===//
 // Lazily generated map to query the external variables referenced by a Block.
 //===----------------------------------------------------------------------===//
 

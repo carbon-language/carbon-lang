@@ -73,8 +73,9 @@ public:
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
   virtual const GRState *BindCompoundLiteral(const GRState *state,
-                                              const CompoundLiteralExpr* cl,
-                                              SVal v) = 0;
+                                             const CompoundLiteralExpr* cl,
+                                             const LocationContext *LC,
+                                             SVal v) = 0;
 
   /// getInitialStore - Returns the initial "empty" store representing the
   ///  value bindings upon entry to an analyzed function.
@@ -93,7 +94,8 @@ public:
 
   virtual SVal getLValueString(const StringLiteral* sl) = 0;
 
-  virtual SVal getLValueCompoundLiteral(const CompoundLiteralExpr* cl) = 0;
+  SVal getLValueCompoundLiteral(const CompoundLiteralExpr* cl,
+                                const LocationContext *LC);
 
   virtual SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base) = 0;
 

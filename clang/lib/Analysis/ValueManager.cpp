@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/ValueManager.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 
 using namespace clang;
 using namespace llvm;
@@ -144,7 +145,8 @@ DefinedSVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
 DefinedSVal ValueManager::getBlockPointer(const BlockDecl *D,
                                           CanQualType locTy,
                                           const LocationContext *LC) {
-  const BlockTextRegion *BC = MemMgr.getBlockTextRegion(D, locTy);
+  const BlockTextRegion *BC =
+    MemMgr.getBlockTextRegion(D, locTy, LC->getAnalysisContext());
   const BlockDataRegion *BD = MemMgr.getBlockDataRegion(BC, LC);
   return loc::MemRegionVal(BD);
 }

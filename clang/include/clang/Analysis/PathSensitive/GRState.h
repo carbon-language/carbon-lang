@@ -217,6 +217,7 @@ public:
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
   const GRState* bindCompoundLiteral(const CompoundLiteralExpr* CL,
+                                     const LocationContext *LC,
                                      SVal V) const;
 
   const GRState *BindExpr(const Stmt *S, SVal V, bool Invalidate = true) const;
@@ -237,7 +238,8 @@ public:
   /// Get the lvalue for a StringLiteral.
   SVal getLValue(const StringLiteral *literal) const;
 
-  SVal getLValue(const CompoundLiteralExpr *literal) const;
+  SVal getLValue(const CompoundLiteralExpr *literal,
+                 const LocationContext *LC) const;
 
   /// Get the lvalue for an ivar reference.
   SVal getLValue(const ObjCIvarDecl *decl, SVal base) const;
@@ -609,9 +611,10 @@ inline const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
                            cast<DefinedSVal>(UpperBound), Assumption);
 }
 
-inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
-                                            SVal V) const {
-  return getStateManager().StoreMgr->BindCompoundLiteral(this, CL, V);
+inline const GRState *
+GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
+                             const LocationContext *LC, SVal V) const {
+  return getStateManager().StoreMgr->BindCompoundLiteral(this, CL, LC, V);
 }
 
 inline const GRState *GRState::bindDecl(const VarRegion* VR, SVal IVal) const {
@@ -639,8 +642,9 @@ inline SVal GRState::getLValue(const StringLiteral *literal) const {
   return getStateManager().StoreMgr->getLValueString(literal);
 }
 
-inline SVal GRState::getLValue(const CompoundLiteralExpr *literal) const {
-  return getStateManager().StoreMgr->getLValueCompoundLiteral(literal);
+inline SVal GRState::getLValue(const CompoundLiteralExpr *literal,
+                               const LocationContext *LC) const {
+  return getStateManager().StoreMgr->getLValueCompoundLiteral(literal, LC);
 }
 
 inline SVal GRState::getLValue(const ObjCIvarDecl *D, SVal Base) const {
