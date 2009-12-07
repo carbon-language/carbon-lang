@@ -492,6 +492,7 @@ namespace llvm {
 
     const Type *EmptyStructPtr; // "{}*".
     Function *DeclareFn;     // llvm.dbg.declare
+    Function *ValueFn;       // llvm.dbg.value
 
     DIFactory(const DIFactory &);     // DO NOT IMPLEMENT
     void operator=(const DIFactory&); // DO NOT IMPLEMENT
@@ -639,6 +640,13 @@ namespace llvm {
     Instruction *InsertDeclare(llvm::Value *Storage, DIVariable D,
                                Instruction *InsertBefore);
 
+    /// InsertValue - Insert a new llvm.dbg.value intrinsic call.
+    Instruction *InsertValue(llvm::Value *V, llvm::Value *Offset,
+                             DIVariable D, BasicBlock *InsertAtEnd);
+
+    /// InsertValue - Insert a new llvm.dbg.value intrinsic call.
+    Instruction *InsertValue(llvm::Value *V, llvm::Value *Offset,
+                             DIVariable D, Instruction *InsertBefore);
   private:
     Constant *GetTagConstant(unsigned TAG);
   };

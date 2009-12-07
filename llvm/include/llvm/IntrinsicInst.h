@@ -70,6 +70,7 @@ namespace llvm {
       case Intrinsic::dbg_region_start:
       case Intrinsic::dbg_region_end:
       case Intrinsic::dbg_declare:
+      case Intrinsic::dbg_value:
         return true;
       default: return false;
       }
@@ -165,6 +166,25 @@ namespace llvm {
     static inline bool classof(const DbgDeclareInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::dbg_declare;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+
+  /// DbgValueInst - This represents the llvm.dbg.value instruction.
+  ///
+  struct DbgValueInst : public DbgInfoIntrinsic {
+    Value *getValue()  const {
+      return cast<MDNode>(getOperand(1))->getElement(0);
+    }
+    Value *getOffset() const { return getOperand(2); }
+    MDNode *getVariable() const { return cast<MDNode>(getOperand(3)); }
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const DbgValueInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::dbg_value;
     }
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
