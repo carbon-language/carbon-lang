@@ -1433,10 +1433,8 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   if (!RD->isDynamicClass())
     return;
   
-  const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-  
   // Get the key function.
-  const CXXMethodDecl *KeyFunction = Layout.getKeyFunction();
+  const CXXMethodDecl *KeyFunction = CGM.getContext().getKeyFunction(RD);
   
   if (KeyFunction) {
     // We don't have the right key function.

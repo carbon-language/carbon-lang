@@ -1104,6 +1104,20 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   return *NewEntry;
 }
 
+const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
+  RD = cast<CXXRecordDecl>(RD->getDefinition(*this));
+  assert(RD && "Cannot get key function for forward declarations!");
+  
+  const CXXMethodDecl *&Entry = KeyFunctions[RD];
+  if (!Entry) 
+    Entry = ASTRecordLayoutBuilder::ComputeKeyFunction(RD);
+  else
+    assert(Entry == ASTRecordLayoutBuilder::ComputeKeyFunction(RD) &&
+           "Key function changed!");
+  
+  return Entry;
+}
+
 //===----------------------------------------------------------------------===//
 //                   Type creation/memoization methods
 //===----------------------------------------------------------------------===//

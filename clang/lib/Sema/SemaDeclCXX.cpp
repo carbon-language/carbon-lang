@@ -5090,8 +5090,12 @@ void Sema::MaybeMarkVirtualImplicitMembersReferenced(SourceLocation Loc,
     return;
   
   CXXRecordDecl *RD = MD->getParent();
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-  const CXXMethodDecl *KeyFunction = Layout.getKeyFunction();
+  
+  // Ignore classes without a vtable.
+  if (!RD->isDynamicClass())
+    return;
+
+  const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
 
   if (!KeyFunction) {
     // This record does not have a key function, so we assume that the vtable

@@ -119,13 +119,6 @@ private:
     /// VBaseOffsets - Contains a map from vbase classes to their offset.
     /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
     llvm::DenseMap<const CXXRecordDecl *, uint64_t> VBaseOffsets;
-    
-    /// KeyFunction - The key function, according to the Itanium C++ ABI,
-    /// section 5.2.3:
-    ///
-    /// ...the first non-pure virtual function that is not inline at the point
-    /// of class definition.
-    const CXXMethodDecl *KeyFunction;
   };
 
   /// CXXInfo - If the record layout is for a C++ record, this will have
@@ -154,8 +147,7 @@ private:
                   const std::pair<const CXXRecordDecl *, uint64_t> *bases,
                   unsigned numbases,
                   const std::pair<const CXXRecordDecl *, uint64_t> *vbases,
-                  unsigned numvbases,
-                  const CXXMethodDecl *KeyFunction)
+                  unsigned numvbases)
   : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
   FieldCount(fieldcount), CXXInfo(new CXXRecordLayoutInfo) {
     if (FieldCount > 0)  {
@@ -171,7 +163,6 @@ private:
       CXXInfo->BaseOffsets[bases[i].first] = bases[i].second;
     for (unsigned i = 0; i != numvbases; ++i)
       CXXInfo->VBaseOffsets[vbases[i].first] = vbases[i].second;
-    CXXInfo->KeyFunction = KeyFunction;
   }
 
   ~ASTRecordLayout() {
@@ -252,13 +243,6 @@ public:
     assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
 
     return CXXInfo->VBaseOffsets[VBase];
-  }
-  
-  /// getKeyFunction - Get the key function.                  
-  const CXXMethodDecl *getKeyFunction() const {
-    assert(CXXInfo && "Record layout does not have C++ specific info!");
-
-    return CXXInfo->KeyFunction;
   }
   
   primary_base_info_iterator primary_base_begin() const {

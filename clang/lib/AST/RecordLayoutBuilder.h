@@ -151,6 +151,7 @@ public:
   static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx,
                                               const ObjCInterfaceDecl *D,
                                             const ObjCImplementationDecl *Impl);
+  static const CXXMethodDecl *ComputeKeyFunction(const CXXRecordDecl *RD);
 };
 
 } // end namespace clang

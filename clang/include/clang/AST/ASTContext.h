@@ -45,6 +45,8 @@ namespace clang {
   class SourceManager;
   class TargetInfo;
   // Decls
+  class CXXMethodDecl;
+  class CXXRecordDecl;
   class Decl;
   class FieldDecl;
   class ObjCIvarDecl;
@@ -106,6 +108,9 @@ class ASTContext {
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
   llvm::DenseMap<const ObjCContainerDecl*, const ASTRecordLayout*> ObjCLayouts;
 
+  /// KeyFunctions - A cache mapping from CXXRecordDecls to key functions.
+  llvm::DenseMap<const CXXRecordDecl*, const CXXMethodDecl*> KeyFunctions;
+  
   /// \brief Mapping from ObjCContainers to their ObjCImplementations.
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
 
@@ -851,6 +856,13 @@ public:
   /// differ from the interface if synthesized ivars are present.
   const ASTRecordLayout &
   getASTObjCImplementationLayout(const ObjCImplementationDecl *D);
+
+  /// getKeyFunction - Get the key function for the given record decl. 
+  /// The key function is, according to the Itanium C++ ABI section 5.2.3:
+  ///
+  /// ...the first non-pure virtual function that is not inline at the point
+  /// of class definition.
+  const CXXMethodDecl *getKeyFunction(const CXXRecordDecl *RD);
 
   void CollectObjCIvars(const ObjCInterfaceDecl *OI,
                         llvm::SmallVectorImpl<FieldDecl*> &Fields);

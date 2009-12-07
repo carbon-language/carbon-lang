@@ -663,8 +663,61 @@ void ASTRecordLayoutBuilder::UpdateAlignment(unsigned NewAlignment) {
   Alignment = NewAlignment;
 }
 
-static const CXXMethodDecl *GetKeyFunction(const CXXRecordDecl *RD) {
-  if (!RD->isDynamicClass())
+const ASTRecordLayout *
+ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
+                                      const RecordDecl *D) {
+  ASTRecordLayoutBuilder Builder(Ctx);
+
+  Builder.Layout(D);
+
+  if (!isa<CXXRecordDecl>(D))
+    return new ASTRecordLayout(Builder.Size, Builder.Alignment, Builder.Size,
+                               Builder.FieldOffsets.data(),
+                               Builder.FieldOffsets.size());
+
+  // FIXME: This is not always correct. See the part about bitfields at
+  // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
+  // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
+  bool IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
+
+  // FIXME: This should be done in FinalizeLayout.
+  uint64_t DataSize =
+    IsPODForThePurposeOfLayout ? Builder.Size : Builder.DataSize;
+  uint64_t NonVirtualSize =
+    IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
+
+  return new ASTRecordLayout(Builder.Size, Builder.Alignment, DataSize,
+                             Builder.FieldOffsets.data(),
+                             Builder.FieldOffsets.size(),
+                             NonVirtualSize,
+                             Builder.NonVirtualAlignment,
+                             Builder.PrimaryBase,
+                             Builder.Bases.data(),
+                             Builder.Bases.size(),
+                             Builder.VBases.data(),
+                             Builder.VBases.size());
+}
+
+const ASTRecordLayout *
+ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
+                                      const ObjCInterfaceDecl *D,
+                                      const ObjCImplementationDecl *Impl) {
+  ASTRecordLayoutBuilder Builder(Ctx);
+
+  Builder.Layout(D, Impl);
+
+  return new ASTRecordLayout(Builder.Size, Builder.Alignment,
+                             Builder.DataSize,
+                             Builder.FieldOffsets.data(),
+                             Builder.FieldOffsets.size());
+}
+
+const CXXMethodDecl *
+ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
+  assert(RD->isDynamicClass() && "Class does not have any virtual methods!");
+
+  // If a class isnt' polymorphic it doesn't have a key function.
+  if (!RD->isPolymorphic())
     return 0;
   
   for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
@@ -692,54 +745,3 @@ static const CXXMethodDecl *GetKeyFunction(const CXXRecordDecl *RD) {
   return 0;
 }
 
-const ASTRecordLayout *
-ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
-                                      const RecordDecl *D) {
-  ASTRecordLayoutBuilder Builder(Ctx);
-
-  Builder.Layout(D);
-
-  if (!isa<CXXRecordDecl>(D))
-    return new ASTRecordLayout(Builder.Size, Builder.Alignment, Builder.Size,
-                               Builder.FieldOffsets.data(),
-                               Builder.FieldOffsets.size());
-
-  // FIXME: This is not always correct. See the part about bitfields at
-  // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
-  // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
-  bool IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
-
-  // FIXME: This should be done in FinalizeLayout.
-  uint64_t DataSize =
-    IsPODForThePurposeOfLayout ? Builder.Size : Builder.DataSize;
-  uint64_t NonVirtualSize =
-    IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
-
-  const CXXMethodDecl *KeyFunction = GetKeyFunction(cast<CXXRecordDecl>(D));
-  
-  return new ASTRecordLayout(Builder.Size, Builder.Alignment, DataSize,
-                             Builder.FieldOffsets.data(),
-                             Builder.FieldOffsets.size(),
-                             NonVirtualSize,
-                             Builder.NonVirtualAlignment,
-                             Builder.PrimaryBase,
-                             Builder.Bases.data(),
-                             Builder.Bases.size(),
-                             Builder.VBases.data(),
-                             Builder.VBases.size(),
-                             KeyFunction);
-}
-
-const ASTRecordLayout *
-ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
-                                      const ObjCInterfaceDecl *D,
-                                      const ObjCImplementationDecl *Impl) {
-  ASTRecordLayoutBuilder Builder(Ctx);
-
-  Builder.Layout(D, Impl);
-
-  return new ASTRecordLayout(Builder.Size, Builder.Alignment,
-                             Builder.DataSize,
-                             Builder.FieldOffsets.data(),
-                             Builder.FieldOffsets.size());
-}
