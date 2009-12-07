@@ -1064,8 +1064,8 @@ bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
 unsigned MachineInstr::isConstantValuePHI() const {
   if (getOpcode() != TargetInstrInfo::PHI)
     return 0;
-  if (getNumOperands() <= 1)
-    return 0;
+  assert(getNumOperands() >= 3 &&
+         "It's illegal to have a PHI without source operands");
 
   unsigned Reg = getOperand(1).getReg();
   for (unsigned i = 3, e = getNumOperands(); i < e; i += 2)
