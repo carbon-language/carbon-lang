@@ -174,6 +174,14 @@ private:
     return EvalNilReceiver(C, ME);
   }
 
+  bool GR_EvalCallExpr(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
+                       GRExprEngine &Eng, const CallExpr *CE,
+                       ExplodedNode *Pred, void *tag) {
+    CheckerContext C(Dst, Builder, Eng, Pred, tag, ProgramPoint::PostStmtKind,
+                     CE);
+    return EvalCallExpr(C, CE);
+  }
+
   // FIXME: Remove the 'tag' option.
   void GR_VisitBind(ExplodedNodeSet &Dst,
                     GRStmtNodeBuilder &Builder, GRExprEngine &Eng,
@@ -227,6 +235,10 @@ public:
                                     Stmt *Condition, void *tag) {}
 
   virtual bool EvalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME) {
+    return false;
+  }
+
+  virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     return false;
   }
 };

@@ -158,6 +158,27 @@ void GRExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME,
   }
 }
 
+// CheckerEvalCall returns true if one of the checkers processed the node.
+// This may return void when all call evaluation logic goes to some checker
+// in the future.
+bool GRExprEngine::CheckerEvalCall(const CallExpr *CE, 
+                                   ExplodedNodeSet &Dst, 
+                                   ExplodedNode *Pred) {
+  bool Evaluated = false;
+
+  for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
+    void *tag = I->first;
+    Checker *checker = I->second;
+
+    if (checker->GR_EvalCallExpr(Dst, *Builder, *this, CE, Pred, tag)) {
+      Evaluated = true;
+      break;
+    }
+  }
+
+  return Evaluated;
+}
+
 // FIXME: This is largely copy-paste from CheckerVisit().  Need to 
 // unify.
 void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
@@ -220,6 +241,9 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterUndefinedAssignmentChecker(Eng);
   RegisterUndefBranchChecker(Eng);
   RegisterUndefResultChecker(Eng);
+
+  // This is not a checker yet.
+  RegisterNoReturnFunctionChecker(Eng);
 }
 
 GRExprEngine::GRExprEngine(AnalysisManager &mgr)
@@ -1516,45 +1540,6 @@ static bool EvalOSAtomic(ExplodedNodeSet& Dst,
 //===----------------------------------------------------------------------===//
 // Transfer function: Function calls.
 //===----------------------------------------------------------------------===//
-static void MarkNoReturnFunction(const FunctionDecl *FD, CallExpr *CE,
-                                 const GRState *state,
-                                 GRStmtNodeBuilder *Builder) {
-  if (!FD)
-    return;
-
-  if (FD->getAttr<NoReturnAttr>() ||
-      FD->getAttr<AnalyzerNoReturnAttr>())
-    Builder->BuildSinks = true;
-  else {
-    // HACK: Some functions are not marked noreturn, and don't return.
-    //  Here are a few hardwired ones.  If this takes too long, we can
-    //  potentially cache these results.
-    using llvm::StringRef;
-    bool BuildSinks
-      = llvm::StringSwitch<bool>(StringRef(FD->getIdentifier()->getName()))
-          .Case("exit", true)
-          .Case("panic", true)
-          .Case("error", true)
-          .Case("Assert", true)
-          // FIXME: This is just a wrapper around throwing an exception.
-          //  Eventually inter-procedural analysis should handle this easily.
-          .Case("ziperr", true)
-          .Case("assfail", true)
-          .Case("db_error", true)
-          .Case("__assert", true)
-          .Case("__assert_rtn", true)
-          .Case("__assert_fail", true)
-          .Case("dtrace_assfail", true)
-          .Case("yy_fatal_error", true)
-          .Case("_XCAssertionFailureHandler", true)
-          .Case("_DTAssertionFailureHandler", true)
-          .Case("_TSAssertionFailureHandler", true)
-          .Default(false);
-    
-    if (BuildSinks)
-      Builder->BuildSinks = true;
-  }
-}
 
 bool GRExprEngine::EvalBuiltinFunction(const FunctionDecl *FD, CallExpr *CE,
                                        ExplodedNode *Pred,
@@ -1666,32 +1651,41 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     const FunctionDecl* FD = L.getAsFunctionDecl();
 
-    MarkNoReturnFunction(FD, CE, state, Builder);
+    ExplodedNodeSet DstTmp3, DstChecker, DstOther;
 
-    // Evaluate the call.
-    if (EvalBuiltinFunction(FD, CE, *DI, Dst))
-      continue;
+    // If the callee is processed by a checker, skip the rest logic.
+    if (CheckerEvalCall(CE, DstChecker, *DI))
+      DstTmp3 = DstChecker;
+    else {
+      //MarkNoReturnFunction(FD, CE, state, Builder);
 
-    // Dispatch to the plug-in transfer function.
-    SaveOr OldHasGen(Builder->HasGeneratedNode);
-    Pred = *DI;
+      // Evaluate the call.
+      if (EvalBuiltinFunction(FD, CE, *DI, Dst))
+        continue;
 
-    // Dispatch to transfer function logic to handle the call itself.
-    // FIXME: Allow us to chain together transfer functions.
-    assert(Builder && "GRStmtNodeBuilder must be defined.");
-    ExplodedNodeSet DstTmp;
+      // Dispatch to the plug-in transfer function.
+      SaveOr OldHasGen(Builder->HasGeneratedNode);
+      Pred = *DI;
+
+      // Dispatch to transfer function logic to handle the call itself.
+      // FIXME: Allow us to chain together transfer functions.
+      assert(Builder && "GRStmtNodeBuilder must be defined.");
     
-    if (!EvalOSAtomic(DstTmp, *this, *Builder, CE, L, Pred))
-      getTF().EvalCall(DstTmp, *this, *Builder, CE, L, Pred);
-
-    // Handle the case where no nodes where generated.  Auto-generate that
-    // contains the updated state if we aren't generating sinks.
-    if (!Builder->BuildSinks && DstTmp.empty() &&
-        !Builder->HasGeneratedNode)
-      MakeNode(DstTmp, CE, Pred, state);
     
+      if (!EvalOSAtomic(DstOther, *this, *Builder, CE, L, Pred))
+        getTF().EvalCall(DstOther, *this, *Builder, CE, L, Pred);
+
+      // Handle the case where no nodes where generated.  Auto-generate that
+      // contains the updated state if we aren't generating sinks.
+      if (!Builder->BuildSinks && DstTmp3.empty() &&
+          !Builder->HasGeneratedNode)
+        MakeNode(DstOther, CE, Pred, state);
+
+      DstTmp3 = DstOther;
+    }
+
     // Perform the post-condition check of the CallExpr.
-    CheckerVisit(CE, Dst, DstTmp, false);
+    CheckerVisit(CE, Dst, DstTmp3, false);
   }
 }
 

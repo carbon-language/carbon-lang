@@ -212,6 +212,10 @@ protected:
   void CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                     bool isPrevisit);
 
+  bool CheckerEvalCall(const CallExpr *CE, 
+                       ExplodedNodeSet &Dst, 
+                       ExplodedNode *Pred);
+
   void CheckerEvalNilReceiver(const ObjCMessageExpr *ME, 
                               ExplodedNodeSet &Dst,
                               const GRState *state,

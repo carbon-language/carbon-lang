@@ -36,6 +36,7 @@ add_clang_library(clangAnalysis
   MallocChecker.cpp
   ManagerRegistry.cpp
   MemRegion.cpp
+  NoReturnFunctionChecker.cpp
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
   PathDiagnostic.cpp
