@@ -115,6 +115,9 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
   InputArgList *Args = ParseArgStrings(Start, End);
 
+  // -no-canonical-prefixes is used very early in main.
+  Args->ClaimAllArgs(options::OPT_no_canonical_prefixes);
+
   // Extract -ccc args.
   //
   // FIXME: We need to figure out where this behavior should live. Most of it

@@ -424,8 +424,8 @@ def multiply__defined : Separate<"-multiply_defined">;
 def mwarn_nonportable_cfstrings : Flag<"-mwarn-nonportable-cfstrings">, Group<m_Group>;
 def m_Separate : Separate<"-m">, Group<m_Group>;
 def m_Joined : Joined<"-m">, Group<m_Group>;
-def no_canonical_prefixes : Flag<"-no-canonical-prefixes">, Flags<[DriverOption]>,
-  HelpText<"Do not resolve symbolic links, turn relative paths into absolute ones, or do anything else to identify the executable">;
+def no_canonical_prefixes : Flag<"-no-canonical-prefixes">, Flags<[DriverOption, HelpHidden]>,
+  HelpText<"Use relative instead of canonical paths">;
 def no_cpp_precomp : Flag<"-no-cpp-precomp">;
 def no_integrated_cpp : Flag<"-no-integrated-cpp">, Flags<[DriverOption]>;
 def no__dead__strip__inits__and__terms : Flag<"-no_dead_strip_inits_and_terms">;
