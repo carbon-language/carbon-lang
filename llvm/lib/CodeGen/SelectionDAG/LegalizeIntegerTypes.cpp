@@ -1996,7 +1996,9 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::SRA:
   case ISD::SRL:
   case ISD::ROTL:
-  case ISD::ROTR: Res = ExpandIntOp_Shift(N); break;
+  case ISD::ROTR:              Res = ExpandIntOp_Shift(N); break;
+  case ISD::RETURNADDR:
+  case ISD::FRAMEADDR:         Res = ExpandIntOp_RETURNADDR(N); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -2178,6 +2180,15 @@ SDValue DAGTypeLegalizer::ExpandIntOp_Shift(SDNode *N) {
   SDValue Lo, Hi;
   GetExpandedInteger(N->getOperand(1), Lo, Hi);
   return DAG.UpdateNodeOperands(SDValue(N, 0), N->getOperand(0), Lo);
+}
+
+SDValue DAGTypeLegalizer::ExpandIntOp_RETURNADDR(SDNode *N) {
+  // The argument of RETURNADDR / FRAMEADDR builtin is 32 bit contant.  This
+  // surely makes pretty nice problems on 8/16 bit targets. Just truncate this
+  // constant to valid type.
+  SDValue Lo, Hi;
+  GetExpandedInteger(N->getOperand(0), Lo, Hi);
+  return DAG.UpdateNodeOperands(SDValue(N, 0), Lo);
 }
 
 SDValue DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDNode *N) {

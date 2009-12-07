@@ -362,6 +362,7 @@ private:
   SDValue ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDValue ExpandIntOp_TRUNCATE(SDNode *N);
   SDValue ExpandIntOp_UINT_TO_FP(SDNode *N);
+  SDValue ExpandIntOp_RETURNADDR(SDNode *N);
 
   void IntegerExpandSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
                                   ISD::CondCode &CCCode, DebugLoc dl);
