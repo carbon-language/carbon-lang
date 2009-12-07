@@ -376,9 +376,8 @@ public:
 
     D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
               (int)Index[GD]));
-
-    VCallOffset[GD] = Offset/8;
     if (MorallyVirtual) {
+      VCallOffset[GD] = Offset/8;
       Index_t &idx = VCall[GD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
@@ -845,7 +844,8 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
       return true;
     }
 
-    int64_t NonVirtualAdjustment = -VCallOffset[OGD] + OverrideOffset/8;
+    // FIXME: finish off
+    int64_t NonVirtualAdjustment = VCallOffset[OGD] - OverrideOffset/8;
 
     if (NonVirtualAdjustment) {
       ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
