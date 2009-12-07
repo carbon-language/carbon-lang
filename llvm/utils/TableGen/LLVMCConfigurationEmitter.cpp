@@ -1823,19 +1823,16 @@ class EmitActionHandlersCallback
   {
     checkNumberOfArguments(&Dag, 1);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
-    const OptionDescription& D = OptDescs.FindOption(Name);
+    const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
     if (D.isParameter()) {
       O.indent(IndentLevel) << "vec.push_back("
                             << D.GenVariableName() << ");\n";
     }
-    else if (D.isList()) {
+    else {
       O.indent(IndentLevel) << "std::copy(" << D.GenVariableName()
                             << ".begin(), " << D.GenVariableName()
                             << ".end(), std::back_inserter(vec));\n";
-    }
-    else {
-      throw "'forward_value' used with a switch or an alias!";
     }
   }
 
@@ -1845,15 +1842,10 @@ class EmitActionHandlersCallback
     checkNumberOfArguments(&Dag, 2);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
     const std::string& Hook = InitPtrToString(Dag.getArg(1));
-    const OptionDescription& D = OptDescs.FindOption(Name);
+    const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
-    if (D.isParameter() || D.isList()) {
-      O.indent(IndentLevel) << "vec.push_back(" << "hooks::"
-                            << Hook << "(" << D.GenVariableName() << "));\n";
-    }
-    else {
-      throw "'forward_transformed_value' used with a switch or an alias!";
-    }
+    O.indent(IndentLevel) << "vec.push_back(" << "hooks::"
+                          << Hook << "(" << D.GenVariableName() << "));\n";
   }
 
 
