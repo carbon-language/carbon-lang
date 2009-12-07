@@ -32,11 +32,31 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
+
+typedef enum {
+  NoHWMult,
+  HWMultIntr,
+  HWMultNoIntr
+} HWMultUseMode;
+
+static cl::opt<HWMultUseMode>
+HWMultMode("msp430-hwmult-mode",
+           cl::desc("Hardware multiplier use mode"),
+           cl::init(HWMultNoIntr),
+           cl::values(
+             clEnumValN(NoHWMult, "no",
+                "Do not use hardware multiplier"),
+             clEnumValN(HWMultIntr, "interrupts",
+                "Assume hardware multiplier can be used inside interrupts"),
+             clEnumValN(HWMultNoIntr, "use",
+                "Assume hardware multiplier cannot be used inside interrupts"),
+             clEnumValEnd));
 
 MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   TargetLowering(tm, new TargetLoweringObjectFileELF()),
@@ -142,6 +162,15 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SDIV,             MVT::i16,   Expand);
   setOperationAction(ISD::SDIVREM,          MVT::i16,   Expand);
   setOperationAction(ISD::SREM,             MVT::i16,   Expand);
+
+  // Libcalls names.
+  if (HWMultMode == HWMultIntr) {
+    setLibcallName(RTLIB::MUL_I8,  "__mulqi3hw");
+    setLibcallName(RTLIB::MUL_I16, "__mulhi3hw");
+  } else if (HWMultMode == HWMultNoIntr) {
+    setLibcallName(RTLIB::MUL_I8,  "__mulqi3hw_noint");
+    setLibcallName(RTLIB::MUL_I16, "__mulhi3hw_noint");
+  }
 }
 
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
