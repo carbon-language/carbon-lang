@@ -13,18 +13,17 @@
 #define C(x, y) x y
 
 // No paste avoidance.
-// CHECK: #define X() ..
-#define X() ..
+// CHECK: #define D() ..
+#define D() ..
 
 // Simple test.
-// CHECK: #define Y .
-// CHECK: #define Z X()Y
-#define Y .
-#define Z X()Y
+// CHECK: #define E .
+// CHECK: #define F X()Y
+#define E .
+#define F X()Y
 
 // gcc prints macros at end of translation unit, so last one wins.
-// CHECK: #define foo 2
-#define foo 1
-#undef foo
-#define foo 2
-
+// CHECK: #define G 2
+#define G 1
+#undef G
+#define G 2
