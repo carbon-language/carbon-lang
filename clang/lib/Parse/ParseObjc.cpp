@@ -1563,7 +1563,11 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDefinition() {
 }
 
 Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
-  if (Tok.isObjCAtKeyword(tok::objc_try)) {
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteObjCAtStatement(CurScope);
+    ConsumeToken();
+    return StmtError();
+  } else if (Tok.isObjCAtKeyword(tok::objc_try)) {
     return ParseObjCTryStmt(AtLoc);
   } else if (Tok.isObjCAtKeyword(tok::objc_throw))
     return ParseObjCThrowStmt(AtLoc);
@@ -1584,6 +1588,11 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
 
 Parser::OwningExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   switch (Tok.getKind()) {
+  case tok::code_completion:
+    Actions.CodeCompleteObjCAtExpression(CurScope);
+    ConsumeToken();
+    return ExprError();
+
   case tok::string_literal:    // primary-expression: string-literal
   case tok::wide_string_literal:
     return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));

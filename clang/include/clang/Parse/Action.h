@@ -2420,6 +2420,12 @@ public:
   virtual void CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
                                            bool InInterface) { }
 
+  /// \brief Code completion after the '@' in a statement.
+  virtual void CodeCompleteObjCAtStatement(Scope *S) { }
+
+  /// \brief Code completion after the '@' in an expression.
+  virtual void CodeCompleteObjCAtExpression(Scope *S) { }
+
   /// \brief Code completion for an ObjC property decl.
   ///
   /// This code completion action is invoked when the code-completion token is

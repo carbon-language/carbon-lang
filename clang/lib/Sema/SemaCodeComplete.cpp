@@ -778,7 +778,7 @@ static unsigned CollectLookupResults(Scope *S,
 }
 
 /// \brief Add type specifiers for the current language as keyword results.
-static void AddTypeSpecifierResults(const LangOptions &LangOpts, unsigned Rank, 
+static void AddTypeSpecifierResults(const LangOptions &LangOpts, unsigned Rank,
                                     ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
   Results.MaybeAddResult(Result("short", Rank));
@@ -1931,6 +1931,95 @@ void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
     Pattern->AddPlaceholderChunk("class");
     Results.MaybeAddResult(Result(Pattern, 0));
   }
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  CodeCompletionString *Pattern = 0;
+
+  // @encode ( type-name )
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("encode");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+  Pattern->AddPlaceholderChunk("type-name");
+  Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+  Results.MaybeAddResult(Result(Pattern, Rank));
+  
+  // @protocol ( protocol-name )
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("protocol");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+  Pattern->AddPlaceholderChunk("protocol-name");
+  Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+  Results.MaybeAddResult(Result(Pattern, Rank));
+
+  // @selector ( selector )
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("selector");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+  Pattern->AddPlaceholderChunk("selector");
+  Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+  Results.MaybeAddResult(Result(Pattern, Rank));
+}
+
+void Sema::CodeCompleteObjCAtStatement(Scope *S) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+
+  CodeCompletionString *Pattern = 0;
+
+  // @try { statements } @catch ( declaration ) { statements } @finally
+  //   { statements }
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("try");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+  Pattern->AddPlaceholderChunk("statements");
+  Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+  Pattern->AddTextChunk("@catch");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+  Pattern->AddPlaceholderChunk("parameter");
+  Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+  Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+  Pattern->AddPlaceholderChunk("statements");
+  Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+  Pattern->AddTextChunk("@finally");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+  Pattern->AddPlaceholderChunk("statements");
+  Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+  Results.MaybeAddResult(Result(Pattern, 0));
+
+  // @throw
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("throw");
+  Pattern->AddTextChunk(" ");
+  Pattern->AddPlaceholderChunk("expression");
+  Pattern->AddTextChunk(";");
+  Results.MaybeAddResult(Result(Pattern, 0)); // FIXME: add ';' chunk
+
+  // @synchronized ( expression ) { statements }
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk("synchronized");
+  Pattern->AddTextChunk(" ");
+  Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+  Pattern->AddPlaceholderChunk("expression");
+  Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+  Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+  Pattern->AddPlaceholderChunk("statements");
+  Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+  Results.MaybeAddResult(Result(Pattern, 0)); // FIXME: add ';' chunk
+
+  AddObjCExpressionResults(0, Results);
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCAtExpression(Scope *S) {
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  AddObjCExpressionResults(0, Results);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
