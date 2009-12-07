@@ -1567,12 +1567,17 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
     Actions.CodeCompleteObjCAtStatement(CurScope);
     ConsumeToken();
     return StmtError();
-  } else if (Tok.isObjCAtKeyword(tok::objc_try)) {
+  }
+  
+  if (Tok.isObjCAtKeyword(tok::objc_try))
     return ParseObjCTryStmt(AtLoc);
-  } else if (Tok.isObjCAtKeyword(tok::objc_throw))
+  
+  if (Tok.isObjCAtKeyword(tok::objc_throw))
     return ParseObjCThrowStmt(AtLoc);
-  else if (Tok.isObjCAtKeyword(tok::objc_synchronized))
+  
+  if (Tok.isObjCAtKeyword(tok::objc_synchronized))
     return ParseObjCSynchronizedStmt(AtLoc);
+  
   OwningExprResult Res(ParseExpressionWithLeadingAt(AtLoc));
   if (Res.isInvalid()) {
     // If the expression is invalid, skip ahead to the next semicolon. Not
@@ -1581,6 +1586,7 @@ Parser::OwningStmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
     SkipUntil(tok::semi);
     return StmtError();
   }
+  
   // Otherwise, eat the semicolon.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
   return Actions.ActOnExprStmt(Actions.FullExpr(Res));
