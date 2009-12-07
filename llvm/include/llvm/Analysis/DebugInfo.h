@@ -662,13 +662,13 @@ namespace llvm {
     Instruction *InsertDeclare(llvm::Value *Storage, DIVariable D,
                                Instruction *InsertBefore);
 
-    /// InsertValue - Insert a new llvm.dbg.value intrinsic call.
-    Instruction *InsertValue(llvm::Value *V, llvm::Value *Offset,
-                             DIVariable D, BasicBlock *InsertAtEnd);
+    /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
+    Instruction *InsertDbgValueIntrinsic(llvm::Value *V, llvm::Value *Offset,
+                                         DIVariable D, BasicBlock *InsertAtEnd);
 
-    /// InsertValue - Insert a new llvm.dbg.value intrinsic call.
-    Instruction *InsertValue(llvm::Value *V, llvm::Value *Offset,
-                             DIVariable D, Instruction *InsertBefore);
+    /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
+    Instruction *InsertDbgValueIntrinsic(llvm::Value *V, llvm::Value *Offset,
+                                       DIVariable D, Instruction *InsertBefore);
   private:
     Constant *GetTagConstant(unsigned TAG);
   };

@@ -1078,9 +1078,10 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
   return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
 }
 
-/// InsertValue - Insert a new llvm.dbg.value intrinsic call.
-Instruction *DIFactory::InsertValue(Value *V, Value *Offset, DIVariable D,
-                                    Instruction *InsertBefore) {
+/// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
+Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
+                                                DIVariable D,
+                                                Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
   assert(Offset->getType() == Type::getInt64Ty(V->getContext()) &&
          "offset must be i64");
@@ -1093,9 +1094,10 @@ Instruction *DIFactory::InsertValue(Value *V, Value *Offset, DIVariable D,
   return CallInst::Create(ValueFn, Args, Args+3, "", InsertBefore);
 }
 
-/// InsertValue - Insert a new llvm.dbg.value intrinsic call.
-Instruction *DIFactory::InsertValue(Value *V, Value *Offset, DIVariable D,
-                                    BasicBlock *InsertAtEnd) {
+/// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
+Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
+                                                DIVariable D,
+                                                BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
   assert(Offset->getType() == Type::getInt64Ty(V->getContext()) &&
          "offset must be i64");
