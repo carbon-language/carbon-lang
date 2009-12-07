@@ -347,6 +347,12 @@ separate option groups syntactically.
    - ``really_hidden`` - the option will not be mentioned in any help
      output.
 
+   - ``comma_separated`` - Indicates that any commas specified for an option's
+     value should be used to split the value up into multiple values for the
+     option. This property is valid only for list options. In conjunction with
+     ``forward_value`` can be used to implement option forwarding in style of
+     gcc's ``-Wa,``.
+
    - ``multi_val n`` - this option takes *n* arguments (can be useful in some
      special cases). Usage example: ``(parameter_list_option "foo", (multi_val
      3))``; the command-line syntax is '-foo a b c'. Only list options can have
@@ -359,7 +365,11 @@ separate option groups syntactically.
      examples: ``(switch_option "foo", (init true))``; ``(prefix_option "bar",
      (init "baz"))``.
 
-   - ``extern`` - this option is defined in some other plugin, see below.
+   - ``extern`` - this option is defined in some other plugin, see `below`__.
+
+   __ extern_
+
+.. _extern:
 
 External options
 ----------------
@@ -547,7 +557,11 @@ The complete list of all currently implemented tool properties follows.
 
   - ``actions`` - A single big ``case`` expression that specifies how
     this tool reacts on command-line options (described in more detail
-    below).
+    `below`__).
+
+__ actions_
+
+.. _actions:
 
 Actions
 -------
@@ -585,35 +599,42 @@ The list of all possible actions follows.
 
 * Possible actions:
 
-   - ``append_cmd`` - append a string to the tool invocation
-     command.
-     Example: ``(case (switch_on "pthread"), (append_cmd
-     "-lpthread"))``
+   - ``append_cmd`` - Append a string to the tool invocation command.
+     Example: ``(case (switch_on "pthread"), (append_cmd "-lpthread"))``.
 
-   - ``error`` - exit with error.
+   - ``error`` - Exit with error.
      Example: ``(error "Mixing -c and -S is not allowed!")``.
 
-   - ``warning`` - print a warning.
+   - ``warning`` - Print a warning.
      Example: ``(warning "Specifying both -O1 and -O2 is meaningless!")``.
 
-   - ``forward`` - forward an option unchanged.  Example: ``(forward "Wall")``.
+   - ``forward`` - Forward the option unchanged.
+     Example: ``(forward "Wall")``.
 
-   - ``forward_as`` - Change the name of an option, but forward the
-     argument unchanged.
+   - ``forward_as`` - Change the option's name, but forward the argument
+     unchanged.
      Example: ``(forward_as "O0", "--disable-optimization")``.
 
-   - ``output_suffix`` - modify the output suffix of this
-     tool.
+   - ``forward_value`` - Forward only option's value. Cannot be used with switch
+     options (since they don't have values), but works fine with lists.
+     Example: ``(forward_value "Wa,")``.
+
+   - ``forward_transformed_value`` - As above, but applies a hook to the
+     option's value before forwarding (see `below`__). When
+     ``forward_transformed_value`` is applied to a list
+     option, the hook must have signature
+     ``std::string hooks::HookName (const std::vector<std::string>&)``.
+     Example: ``(forward_transformed_value "m", "ConvertToMAttr")``.
+
+     __ hooks_
+
+   - ``output_suffix`` - Modify the output suffix of this tool.
      Example: ``(output_suffix "i")``.
 
-   - ``stop_compilation`` - stop compilation after this tool processes
-     its input. Used without arguments.
+   - ``stop_compilation`` - Stop compilation after this tool processes its
+     input. Used without arguments.
+     Example: ``(stop_compilation)``.
 
-   - ``unpack_values`` - used for for splitting and forwarding
-     comma-separated lists of options, e.g. ``-Wa,-foo=bar,-baz`` is
-     converted to ``-foo=bar -baz`` and appended to the tool invocation
-     command.
-     Example: ``(unpack_values "Wa,")``.
 
 Language map
 ============
@@ -760,12 +781,16 @@ accessible only in the C++ code (i.e. hooks). Use the following code::
     extern const char* ProgramName;
     }
 
+    namespace hooks {
+
     std::string MyHook() {
     //...
     if (strcmp(ProgramName, "mydriver") == 0) {
        //...
 
     }
+
+    } // end namespace hooks
 
 In general, you're encouraged not to make the behaviour dependent on the
 executable file name, and use command-line switches instead. See for example how
