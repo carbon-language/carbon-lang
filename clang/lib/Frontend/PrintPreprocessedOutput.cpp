@@ -94,6 +94,7 @@ private:
   bool Initialized;
   bool DisableLineMarkers;
   bool DumpDefines;
+  bool UseLineDirective;
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp, llvm::raw_ostream &os,
                            bool lineMarkers, bool defines)
@@ -105,6 +106,9 @@ public:
     EmittedMacroOnThisLine = false;
     FileType = SrcMgr::C_User;
     Initialized = false;
+         
+    // If we're in microsoft mode, use normal #line instead of line markers.
+    UseLineDirective = PP.getLangOptions().Microsoft;
   }
 
   void SetEmittedTokensOnThisLine() { EmittedTokensOnThisLine = true; }
@@ -141,15 +145,16 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
     EmittedMacroOnThisLine = false;
   }
 
-  OS << '#';
-  if (PP.getLangOptions().Microsoft)
-    OS << "line";
-  OS << ' ' << LineNo << ' ' << '"';
-  
-  OS.write(&CurFilename[0], CurFilename.size());
-  OS << '"';
-
-  if (!PP.getLangOptions().Microsoft) {
+  // Emit #line directives or GNU line markers depending on what mode we're in.
+  if (UseLineDirective) {
+    OS << "#line" << ' ' << LineNo << ' ' << '"';
+    OS.write(&CurFilename[0], CurFilename.size());
+    OS << '"';
+  } else {
+    OS << '#' << ' ' << LineNo << ' ' << '"';
+    OS.write(&CurFilename[0], CurFilename.size());
+    OS << '"';
+    
     if (ExtraLen)
       OS.write(Extra, ExtraLen);
 
