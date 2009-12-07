@@ -1030,7 +1030,9 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
 
   CXXScopeSpec SS;
   if (!ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
-    return Tok.is(tok::annot_template_id);
+    // If the token left behind is not an identifier, we either had an error or
+    // successfully turned it into an annotation token.
+    return Tok.isNot(tok::identifier);
 
   // Push the current token back into the token stream (or revert it if it is
   // cached) and use an annotation scope token for current token.
