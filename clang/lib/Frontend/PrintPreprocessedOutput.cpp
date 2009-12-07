@@ -28,6 +28,13 @@
 #include <cstdio>
 using namespace clang;
 
+static void PrintArgName(const IdentifierInfo *II, llvm::raw_ostream &OS) {
+  if (II->getName() == "__VA_ARGS__")
+    OS << "...";
+  else
+    OS << II->getName();
+}
+
 /// PrintMacroDefinition - Print a macro definition in a form that will be
 /// properly accepted back as a definition.
 static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
@@ -39,19 +46,19 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
     if (MI.arg_empty())
       ;
     else if (MI.getNumArgs() == 1)
-      OS << (*MI.arg_begin())->getName();
+      PrintArgName(*MI.arg_begin(), OS);
     else {
       MacroInfo::arg_iterator AI = MI.arg_begin(), E = MI.arg_end();
       OS << (*AI++)->getName();
-      while (AI != E)
-        OS << ',' << (*AI++)->getName();
+      while (AI != E) {
+        OS << ',';
+        PrintArgName(*AI++, OS);
+      }
     }
 
-    if (MI.isVariadic()) {
-      if (!MI.arg_empty())
-        OS << ',';
-      OS << "...";
-    }
+    if (MI.isGNUVarargs())
+      OS << "...";  // #define foo(x...)
+    
     OS << ')';
   }
 

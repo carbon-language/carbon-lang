@@ -27,3 +27,12 @@
 #define G 1
 #undef G
 #define G 2
+
+// Variadic macros of various sorts. PR5699
+
+// CHECK: H(x,...) __VA_ARGS__
+#define H(x, ...) __VA_ARGS__
+// CHECK: I(...) __VA_ARGS__
+#define I(...) __VA_ARGS__
+// CHECK: J(x...) __VA_ARGS__
+#define J(x ...) __VA_ARGS__
