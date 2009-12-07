@@ -263,6 +263,10 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   
   // Clear the insertion point to indicate we are in unreachable code.
   Builder.ClearInsertionPoint();
+
+  // FIXME: For now, emit a dummy basic block because expr emitters in generally
+  // are not ready to handle emitting expressions at unreachable points.
+  EnsureInsertPoint();
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
