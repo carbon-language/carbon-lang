@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin10 -post-RA-scheduler=true | FileCheck %s
 
 ; PR4958
 

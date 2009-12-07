@@ -367,5 +367,5 @@ bool X86Subtarget::enablePostRAScheduler(
             RegClassVector& CriticalPathRCs) const {
   Mode = TargetSubtarget::ANTIDEP_CRITICAL;
   CriticalPathRCs.clear();
-  return OptLevel >= CodeGenOpt::Default;
+  return OptLevel >= CodeGenOpt::Aggressive;
 }

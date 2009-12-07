@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -post-RA-scheduler=true | FileCheck %s
 ; CHECK: paddw
 ; CHECK: pextrw
 ; CHECK: movd
