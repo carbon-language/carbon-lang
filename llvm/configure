@@ -5286,9 +5286,9 @@ echo "$as_me: error: Invalid path for --with-ocaml-libdir. Provide full path" >&
 esac
 
 
-# Check whether --with-c-include-dir was given.
-if test "${with_c_include_dir+set}" = set; then
-  withval=$with_c_include_dir;
+# Check whether --with-c-include-dirs was given.
+if test "${with_c_include_dirs+set}" = set; then
+  withval=$with_c_include_dirs;
 else
   withval=""
 fi
