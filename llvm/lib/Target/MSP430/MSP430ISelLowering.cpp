@@ -15,6 +15,7 @@
 
 #include "MSP430ISelLowering.h"
 #include "MSP430.h"
+#include "MSP430MachineFunctionInfo.h"
 #include "MSP430TargetMachine.h"
 #include "MSP430Subtarget.h"
 #include "llvm/DerivedTypes.h"
@@ -61,6 +62,8 @@ HWMultMode("msp430-hwmult-mode",
 MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   TargetLowering(tm, new TargetLoweringObjectFileELF()),
   Subtarget(*tm.getSubtargetImpl()), TM(tm) {
+
+  TD = getTargetData();
 
   // Set up the register classes.
   addRegisterClass(MVT::i8,  MSP430::GR8RegisterClass);
@@ -183,6 +186,8 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND:      return LowerSIGN_EXTEND(Op, DAG);
+  case ISD::RETURNADDR:       return LowerRETURNADDR(Op, DAG);
+  case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
   default:
     llvm_unreachable("unimplemented operand");
     return SDValue();
@@ -728,6 +733,55 @@ SDValue MSP430TargetLowering::LowerSIGN_EXTEND(SDValue Op,
   return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, VT,
                      DAG.getNode(ISD::ANY_EXTEND, dl, VT, Val),
                      DAG.getValueType(Val.getValueType()));
+}
+
+SDValue MSP430TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MSP430MachineFunctionInfo *FuncInfo = MF.getInfo<MSP430MachineFunctionInfo>();
+  int ReturnAddrIndex = FuncInfo->getRAIndex();
+
+  if (ReturnAddrIndex == 0) {
+    // Set up a frame object for the return address.
+    uint64_t SlotSize = TD->getPointerSize();
+    ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(SlotSize, -SlotSize,
+                                                           true, false);
+    FuncInfo->setRAIndex(ReturnAddrIndex);
+  }
+
+  return DAG.getFrameIndex(ReturnAddrIndex, getPointerTy());
+}
+
+SDValue MSP430TargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  DebugLoc dl = Op.getDebugLoc();
+
+  if (Depth > 0) {
+    SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
+    SDValue Offset =
+      DAG.getConstant(TD->getPointerSize(), MVT::i16);
+    return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+                       DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                                   FrameAddr, Offset),
+                       NULL, 0);
+  }
+
+  // Just load the return address.
+  SDValue RetAddrFI = getReturnAddressFrameIndex(DAG);
+  return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+                     RetAddrFI, NULL, 0);
+}
+
+SDValue MSP430TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setFrameAddressIsTaken(true);
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();  // FIXME probably not meaningful
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
+                                         MSP430::FPW, VT);
+  while (Depth--)
+    FrameAddr = DAG.getLoad(VT, dl, DAG.getEntryNode(), FrameAddr, NULL, 0);
+  return FrameAddr;
 }
 
 /// getPostIndexedAddressParts - returns true by value, base pointer and

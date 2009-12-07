@@ -25,14 +25,20 @@ class MSP430MachineFunctionInfo : public MachineFunctionInfo {
   /// stack frame in bytes.
   unsigned CalleeSavedFrameSize;
 
+  /// ReturnAddrIndex - FrameIndex for return slot.
+  int ReturnAddrIndex;
+
 public:
   MSP430MachineFunctionInfo() : CalleeSavedFrameSize(0) {}
 
   explicit MSP430MachineFunctionInfo(MachineFunction &MF)
-    : CalleeSavedFrameSize(0) {}
+    : CalleeSavedFrameSize(0), ReturnAddrIndex(0) {}
 
   unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
   void setCalleeSavedFrameSize(unsigned bytes) { CalleeSavedFrameSize = bytes; }
+
+  int getRAIndex() const { return ReturnAddrIndex; }
+  void setRAIndex(int Index) { ReturnAddrIndex = Index; }
 };
 
 } // End llvm namespace
