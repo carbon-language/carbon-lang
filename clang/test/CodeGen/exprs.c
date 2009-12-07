@@ -116,3 +116,6 @@ void f9(struct S *x) {
   foo(((void)1, x->c).tab[0]);
 }
 
+void f10() {
+  __builtin_sin(0);
+}
