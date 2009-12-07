@@ -1868,10 +1868,11 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 
   CGF.EmitBlock(ContBlock);
 
-  if (!LHS || !RHS) {
-    assert(E->getType()->isVoidType() && "Non-void value should have a value");
-    return 0;
-  }
+  // If the LHS or RHS is a throw expression, it will be legitimately null.
+  if (!LHS)
+    return RHS;
+  if (!RHS)
+    return LHS;
 
   // Create a PHI node for the real part.
   llvm::PHINode *PN = Builder.CreatePHI(LHS->getType(), "cond");
