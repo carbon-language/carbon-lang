@@ -796,8 +796,7 @@ private:
     Init* Case = d->getArg(0);
     if (typeid(*Case) != typeid(DagInit) ||
         GetOperatorName(static_cast<DagInit*>(Case)) != "case")
-      throw
-        std::string("The argument to (actions) should be a 'case' construct!");
+      throw "The argument to (actions) should be a 'case' construct!";
     toolDesc_.Actions = Case;
   }
 
@@ -898,8 +897,8 @@ int CalculatePriority(RecordVector::const_iterator B,
     priority  = static_cast<int>((*B)->getValueAsInt("priority"));
 
     if (++B != E)
-      throw std::string("More than one 'PluginPriority' instance found: "
-                        "most probably an error!");
+      throw "More than one 'PluginPriority' instance found: "
+        "most probably an error!";
   }
 
   return priority;
@@ -990,7 +989,7 @@ void TypecheckGraph (const RecordVector& EdgeVector,
     }
 
     if (NodeB == "root")
-      throw std::string("Edges back to the root are not allowed!");
+      throw "Edges back to the root are not allowed!";
   }
 }
 
@@ -1010,7 +1009,7 @@ void WalkCase(const Init* Case, F1 TestCallback, F2 StatementCallback,
 
   // Error checks.
   if (GetOperatorName(d) != "case")
-    throw std::string("WalkCase should be invoked only on 'case' expressions!");
+    throw "WalkCase should be invoked only on 'case' expressions!";
 
   if (d.getNumArgs() < 2)
     throw "There should be at least one clause in the 'case' expression:\n"
@@ -1030,8 +1029,8 @@ void WalkCase(const Init* Case, F1 TestCallback, F2 StatementCallback,
       const DagInit& Test = InitPtrToDag(arg);
 
       if (GetOperatorName(Test) == "default" && (i+1 != numArgs))
-        throw std::string("The 'default' clause should be the last in the"
-                          "'case' construct!");
+        throw "The 'default' clause should be the last in the "
+          "'case' construct!";
       if (i == numArgs)
         throw "Case construct handler: no corresponding action "
           "found for the test " + Test.getAsString() + '!';
@@ -1551,7 +1550,7 @@ StrVector::const_iterator SubstituteSpecialCommands
     const std::string& CmdName = *Pos;
 
     if (CmdName == ")")
-      throw std::string("$CALL invocation: empty argument list!");
+      throw "$CALL invocation: empty argument list!";
 
     O << "hooks::";
     O << CmdName << "(";
@@ -1746,7 +1745,7 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
     break;
   case OptionType::Alias:
   default:
-    throw std::string("Aliases are not allowed in tool option descriptions!");
+    throw "Aliases are not allowed in tool option descriptions!";
   }
 }
 
@@ -2330,7 +2329,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 
     ListInit* LangsToSuffixesList = LangMapRecord->getValueAsListInit("map");
     if (!LangsToSuffixesList)
-      throw std::string("Error in the language map definition!");
+      throw "Error in the language map definition!";
 
     for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
       const Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
