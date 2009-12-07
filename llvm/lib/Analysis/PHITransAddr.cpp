@@ -120,7 +120,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       Value *GEPOp = PHITranslateSubExpr(GEP->getOperand(i), CurBB, PredBB);
       if (GEPOp == 0) return 0;
       
-      AnyChanged = GEPOp != GEP->getOperand(i);
+      AnyChanged |= GEPOp != GEP->getOperand(i);
       GEPOps.push_back(GEPOp);
     }
     
