@@ -1160,6 +1160,10 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   if (CastTy->isDependentType() || CastExpr->isTypeDependent())
     return false;
 
+  // allow c-style cast of objective-c pointers as they are pervasive.
+  if (CastTy->isObjCObjectPointerType())
+    return false;
+  
   if (!CastTy->isLValueReferenceType() && !CastTy->isRecordType())
     DefaultFunctionArrayConversion(CastExpr);
 
