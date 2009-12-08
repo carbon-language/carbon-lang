@@ -88,8 +88,6 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
 
   AppendBytes(NumBytesToAppend);
 
-  AlignmentAsLLVMStruct = std::max(AlignmentAsLLVMStruct, getTypeAlignment(Ty));
-
   BitsAvailableInLastField =
     NextFieldOffsetInBytes * 8 - (FieldOffset + FieldSize);
 }
@@ -247,6 +245,14 @@ void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
   uint64_t RecordSizeInBytes = RecordSize / 8;
   assert(NextFieldOffsetInBytes <= RecordSizeInBytes && "Size mismatch!");
 
+  uint64_t AlignedNextFieldOffset = 
+    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, AlignmentAsLLVMStruct);
+
+  if (AlignedNextFieldOffset == RecordSizeInBytes) {
+    // We don't need any padding.
+    return;
+  }
+  
   unsigned NumPadBytes = RecordSizeInBytes - NextFieldOffsetInBytes;
   AppendBytes(NumPadBytes);
 }
