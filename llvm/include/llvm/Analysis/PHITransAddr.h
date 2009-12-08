@@ -88,7 +88,7 @@ private:
   /// PHITranslateSubExpr if it dominates PredBB, otherwise return null.
   Value *GetAvailablePHITranslatedSubExpr(Value *V,
                                           BasicBlock *CurBB, BasicBlock *PredBB,
-                                          const DominatorTree &DT);
+                                          const DominatorTree &DT) const;
   
   /// InsertPHITranslatedSubExpr - Insert a computation of the PHI translated
   /// version of 'V' for the edge PredBB->CurBB into the end of the PredBB

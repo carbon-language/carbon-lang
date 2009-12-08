@@ -22,7 +22,7 @@ static bool CanPHITrans(Instruction *Inst) {
       isa<GetElementPtrInst>(Inst))
     return true;
   
-  if (Inst->getOpcode() == Instruction::And &&
+  if (Inst->getOpcode() == Instruction::Add &&
       isa<ConstantInt>(Inst->getOperand(1)))
     return true;
   
@@ -205,9 +205,12 @@ bool PHITransAddr::PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB) {
 /// PHITranslateSubExpr if it dominates PredBB, otherwise return null.
 Value *PHITransAddr::
 GetAvailablePHITranslatedSubExpr(Value *V, BasicBlock *CurBB,BasicBlock *PredBB,
-                                 const DominatorTree &DT) {
+                                 const DominatorTree &DT) const {
+  PHITransAddr Tmp(V, TD);
+  Tmp.PHITranslateValue(CurBB, PredBB);
+  
   // See if PHI translation succeeds.
-  V = PHITranslateSubExpr(V, CurBB, PredBB);
+  V = Tmp.getAddr();
   
   // Make sure the value is live in the predecessor.
   if (Instruction *Inst = dyn_cast_or_null<Instruction>(V))
