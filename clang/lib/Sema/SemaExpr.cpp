@@ -4310,6 +4310,29 @@ Sema::CheckBlockPointerTypesForAssignment(QualType lhsType,
   return ConvTy;
 }
 
+/// CheckObjCPointerTypesForAssignment - Compares two objective-c pointer types
+/// for assignment compatibility.
+Sema::AssignConvertType
+Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
+  if (lhsType->isObjCBuiltinType() || rhsType->isObjCBuiltinType())
+    return Compatible;
+  QualType lhptee = 
+  lhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
+  QualType rhptee = 
+  rhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
+  // make sure we operate on the canonical type
+  lhptee = Context.getCanonicalType(lhptee);
+  rhptee = Context.getCanonicalType(rhptee);
+  if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
+    return CompatiblePointerDiscardsQualifiers;
+  
+  if (Context.typesAreCompatible(lhsType, rhsType))
+    return Compatible;
+  if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType())
+    return IncompatibleObjCQualifiedId;
+  return IncompatiblePointer;  
+}
+
 /// CheckAssignmentConstraints (C99 6.5.16) - This routine currently
 /// has code to accommodate several GCC extensions when type checking
 /// pointers. Here are some objectionable examples that GCC considers warnings:
@@ -4432,23 +4455,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return IncompatiblePointer;
     }
     if (rhsType->isObjCObjectPointerType()) {
-      if (lhsType->isObjCBuiltinType() || rhsType->isObjCBuiltinType())
-        return Compatible;
-      QualType lhptee = 
-        lhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
-      QualType rhptee = 
-        rhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
-      // make sure we operate on the canonical type
-      lhptee = Context.getCanonicalType(lhptee);
-      rhptee = Context.getCanonicalType(rhptee);
-      if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
-        return CompatiblePointerDiscardsQualifiers;
-      
-      if (Context.typesAreCompatible(lhsType, rhsType))
-        return Compatible;
-      if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType())
-        return IncompatibleObjCQualifiedId;
-      return IncompatiblePointer;
+      return CheckObjCPointerTypesForAssignment(lhsType, rhsType);
     }
     if (const PointerType *RHSPT = rhsType->getAs<PointerType>()) {
       if (RHSPT->getPointeeType()->isVoidType())

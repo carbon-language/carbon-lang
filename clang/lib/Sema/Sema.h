@@ -3553,6 +3553,9 @@ public:
   AssignConvertType CheckPointerTypesForAssignment(QualType lhsType,
                                                    QualType rhsType);
 
+  AssignConvertType CheckObjCPointerTypesForAssignment(QualType lhsType,
+                                                       QualType rhsType);
+
   // Helper function for CheckAssignmentConstraints involving two
   // block pointer types.
   AssignConvertType CheckBlockPointerTypesForAssignment(QualType lhsType,
