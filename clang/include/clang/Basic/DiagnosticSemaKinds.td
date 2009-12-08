@@ -2055,12 +2055,6 @@ def err_overload_expr_requires_non_zero_constant : Error<
 def err_overload_incorrect_fntype : Error<
   "argument is not a function, or has wrong number of parameters">;
 
-// FIXME: PASSING TYPES AS STRING.
-def err_overload_no_match : Error<
-  "no matching overload found for arguments of type '%0'">;
-def err_overload_multiple_match : Error<
-  "more than one matching function found in __builtin_overload">;
-
 // C++ member initializers.
 def err_only_constructors_take_base_inits : Error<
   "only constructors take base initializers">;
