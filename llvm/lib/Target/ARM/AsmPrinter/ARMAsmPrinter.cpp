@@ -1045,6 +1045,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       printNoHashImmediate(MI, OpNum);
       return false;
     case 'P': // Print a VFP double precision register.
+    case 'q': // Print a NEON quad precision register.
       printOperand(MI, OpNum);
       return false;
     case 'Q':

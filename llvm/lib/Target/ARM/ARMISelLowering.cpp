@@ -4021,6 +4021,8 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         return std::make_pair(0U, ARM::SPRRegisterClass);
       if (VT == MVT::f64)
         return std::make_pair(0U, ARM::DPRRegisterClass);
+      if (VT.getSizeInBits() == 128)
+        return std::make_pair(0U, ARM::QPRRegisterClass);
       break;
     }
   }
@@ -4059,6 +4061,9 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                    ARM::D4, ARM::D5, ARM::D6, ARM::D7,
                                    ARM::D8, ARM::D9, ARM::D10,ARM::D11,
                                    ARM::D12,ARM::D13,ARM::D14,ARM::D15, 0);
+    if (VT.getSizeInBits() == 128)
+      return make_vector<unsigned>(ARM::Q0, ARM::Q1, ARM::Q2, ARM::Q3,
+                                   ARM::Q4, ARM::Q5, ARM::Q6, ARM::Q7, 0);
       break;
   }
 
