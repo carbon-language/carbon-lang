@@ -92,7 +92,9 @@ def addr : ComplexPattern<iPTR, 2, "SelectAddr", [], []>;
 // Pattern Fragments
 def zextloadi16i8 : PatFrag<(ops node:$ptr), (i16 (zextloadi8 node:$ptr))>;
 def  extloadi16i8 : PatFrag<(ops node:$ptr), (i16 ( extloadi8 node:$ptr))>;
-
+def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
+  return N->hasOneUse();
+}]>;
 //===----------------------------------------------------------------------===//
 // Instruction list..
 
@@ -826,6 +828,65 @@ def CMP16mr : Pseudo<(outs), (ins memsrc:$src1, GR16:$src2),
                 "cmp.w\t{$src1, $src2}",
                 [(MSP430cmp (load addr:$src1), GR16:$src2), (implicit SRW)]>;
 
+
+// BIT TESTS, just sets condition codes
+// Note that the C condition is set differently than when using CMP.
+let isCommutable = 1 in {
+def BIT8rr  : Pseudo<(outs), (ins GR8:$src1, GR8:$src2),
+                     "bit.b\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su GR8:$src1, GR8:$src2)),
+                      (implicit SRW)]>;
+def BIT16rr : Pseudo<(outs), (ins GR16:$src1, GR16:$src2),
+                     "bit.w\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su GR16:$src1, GR16:$src2)),
+                      (implicit SRW)]>;
+}
+def BIT8ri  : Pseudo<(outs), (ins GR8:$src1, i8imm:$src2),
+                     "bit.b\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su GR8:$src1, imm:$src2)),
+                      (implicit SRW)]>;
+def BIT16ri : Pseudo<(outs), (ins GR16:$src1, i16imm:$src2),
+                     "bit.w\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su GR16:$src1, imm:$src2)),
+                      (implicit SRW)]>;
+
+def BIT8rm  : Pseudo<(outs), (ins GR8:$src1, memdst:$src2),
+                     "bit.b\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su GR8:$src1,  (load addr:$src2))),
+                      (implicit SRW)]>;
+def BIT16rm : Pseudo<(outs), (ins GR16:$src1, memdst:$src2),
+                     "bit.w\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su GR16:$src1,  (load addr:$src2))),
+                      (implicit SRW)]>;
+
+def BIT8mr  : Pseudo<(outs), (ins memsrc:$src1, GR8:$src2),
+                     "bit.b\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su (load addr:$src1), GR8:$src2)),
+                      (implicit SRW)]>;
+def BIT16mr : Pseudo<(outs), (ins memsrc:$src1, GR16:$src2),
+                     "bit.w\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su (load addr:$src1), GR16:$src2)),
+                      (implicit SRW)]>;
+
+def BIT8mi  : Pseudo<(outs), (ins memsrc:$src1, i8imm:$src2),
+                     "bit.b\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su (load addr:$src1), (i8 imm:$src2))),
+                      (implicit SRW)]>;
+def BIT16mi : Pseudo<(outs), (ins memsrc:$src1, i16imm:$src2),
+                     "bit.w\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su (load addr:$src1), (i16 imm:$src2))),
+                      (implicit SRW)]>;
+
+def BIT8mm  : Pseudo<(outs), (ins memsrc:$src1, memsrc:$src2),
+                     "bit.b\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su (i8 (load addr:$src1)), 
+                                            (load addr:$src2))),
+                      (implicit SRW)]>;
+def BIT16mm : Pseudo<(outs), (ins memsrc:$src1, memsrc:$src2),
+                     "bit.w\t{$src2, $src1}",
+                     [(MSP430cmp 0, (and_su (i16 (load addr:$src1)),
+                                            (load addr:$src2))),
+                      (implicit SRW)]>;
 } // Defs = [SRW]
 
 //===----------------------------------------------------------------------===//
@@ -908,3 +969,6 @@ def : Pat<(store (subc (load addr:$dst), (i8 (load addr:$src))), addr:$dst),
 
 // peephole patterns
 def : Pat<(and GR16:$src, 255), (ZEXT16r GR16:$src)>;
+def : Pat<(MSP430cmp 0, (trunc (and_su GR16:$src1, GR16:$src2))),
+          (BIT8rr (EXTRACT_SUBREG GR16:$src1, subreg_8bit),
+                  (EXTRACT_SUBREG GR16:$src2, subreg_8bit))>;
