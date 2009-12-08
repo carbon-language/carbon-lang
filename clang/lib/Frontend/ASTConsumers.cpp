@@ -403,6 +403,11 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<objc property> " << OPD->getNameAsString() << "\n";
       break;
     }
+    case Decl::FunctionTemplate: {
+      FunctionTemplateDecl* FTD = cast<FunctionTemplateDecl>(*I);
+      Out << "<function template> " << FTD->getNameAsString() << "\n";
+      break;
+    }
     default:
       Out << "DeclKind: " << DK << '"' << I->getDeclKindName() << "\"\n";
       assert(0 && "decl unhandled");
