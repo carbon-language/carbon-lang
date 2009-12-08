@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
@@ -49,23 +50,23 @@ public:
     : Headers(HS), Verbose(verbose), isysroot(iSysroot) {}
 
   /// AddPath - Add the specified path to the specified group list.
-  void AddPath(const llvm::StringRef &Path, IncludeDirGroup Group,
+  void AddPath(const llvm::Twine &Path, IncludeDirGroup Group,
                bool isCXXAware, bool isUserSupplied,
                bool isFramework, bool IgnoreSysRoot = false);
 
   /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to suport a gnu
   ///  libstdc++.
-  void AddGnuCPlusPlusIncludePaths(const std::string &Base,
-                                   const char *ArchDir,
-                                   const char *Dir32,
-                                   const char *Dir64,
+  void AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
+                                   llvm::StringRef ArchDir,
+                                   llvm::StringRef Dir32,
+                                   llvm::StringRef Dir64,
                                    const llvm::Triple &triple);
 
   /// AddMinGWCPlusPlusIncludePaths - Add the necessary paths to suport a MinGW
   ///  libstdc++.
-  void AddMinGWCPlusPlusIncludePaths(const std::string &Base,
-                                     const char *Arch,
-                                     const char *Version);
+  void AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
+                                     llvm::StringRef Arch,
+                                     llvm::StringRef Version);
 
   /// AddDelimitedPaths - Add a list of paths delimited by the system PATH
   /// separator. The processing follows that of the CPATH variable for gcc.
@@ -90,25 +91,26 @@ public:
 
 }
 
-void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
+void InitHeaderSearch::AddPath(const llvm::Twine &Path,
                                IncludeDirGroup Group, bool isCXXAware,
                                bool isUserSupplied, bool isFramework,
                                bool IgnoreSysRoot) {
-  assert(!Path.empty() && "can't handle empty path here");
+  assert(!Path.isTriviallyEmpty() && "can't handle empty path here");
   FileManager &FM = Headers.getFileMgr();
 
   // Compute the actual path, taking into consideration -isysroot.
-  llvm::SmallString<256> MappedPath;
+  llvm::SmallString<256> MappedPathStr;
+  llvm::raw_svector_ostream MappedPath(MappedPathStr);
 
   // Handle isysroot.
   if (Group == System && !IgnoreSysRoot) {
     // FIXME: Portability.  This should be a sys::Path interface, this doesn't
     // handle things like C:\ right, nor win32 \\network\device\blah.
     if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
-      MappedPath.append(isysroot.begin(), isysroot.end());
+      MappedPath << isysroot;
   }
 
-  MappedPath.append(Path.begin(), Path.end());
+  Path.print(MappedPath);
 
   // Compute the DirectoryLookup type.
   SrcMgr::CharacteristicKind Type;
@@ -164,10 +166,10 @@ void InitHeaderSearch::AddDelimitedPaths(llvm::StringRef at) {
     AddPath(at, Angled, false, true, false);
 }
 
-void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(const std::string &Base,
-                                                   const char *ArchDir,
-                                                   const char *Dir32,
-                                                   const char *Dir64,
+void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
+                                                   llvm::StringRef ArchDir,
+                                                   llvm::StringRef Dir32,
+                                                   llvm::StringRef Dir64,
                                                    const llvm::Triple &triple) {
   // Add the base dir
   AddPath(Base, System, true, false, false);
@@ -184,10 +186,10 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(const std::string &Base,
   AddPath(Base + "/backward", System, true, false, false);
 }
 
-void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(const std::string &Base,
-                                                     const char *Arch,
-                                                     const char *Version) {
-  std::string localBase = Base + "/" + Arch + "/" + Version + "/include";
+void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
+                                                     llvm::StringRef Arch,
+                                                     llvm::StringRef Version) {
+  llvm::Twine localBase = Base + "/" + Arch + "/" + Version + "/include";
   AddPath(localBase, System, true, false, false);
   AddPath(localBase + "/c++", System, true, false, false);
   AddPath(localBase + "/c++/backward", System, true, false, false);
