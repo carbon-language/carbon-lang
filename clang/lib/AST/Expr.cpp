@@ -110,7 +110,7 @@ void DeclRefExpr::computeDependence() {
 
 DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier, 
                          SourceRange QualifierRange,
-                         NamedDecl *D, SourceLocation NameLoc,
+                         ValueDecl *D, SourceLocation NameLoc,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T)
   : Expr(DeclRefExprClass, T, false, false),
@@ -133,7 +133,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  NestedNameSpecifier *Qualifier,
                                  SourceRange QualifierRange,
-                                 NamedDecl *D,
+                                 ValueDecl *D,
                                  SourceLocation NameLoc,
                                  QualType T,
                                  const TemplateArgumentListInfo *TemplateArgs) {

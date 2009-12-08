@@ -296,7 +296,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
             ++helpersize;
             continue;
           } else
-            E = new (getContext()) DeclRefExpr (cast<NamedDecl>(VD),
+            E = new (getContext()) DeclRefExpr (VD,
                                                 VD->getType(), 
                                                 SourceLocation());
         }

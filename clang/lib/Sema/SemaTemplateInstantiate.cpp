@@ -782,25 +782,8 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
     // FindInstantiatedDecl will find it in the local instantiation scope.
   }
 
-  NamedDecl *InstD = SemaRef.FindInstantiatedDecl(D, TemplateArgs);
-  if (!InstD)
-    return SemaRef.ExprError();
-
-  assert(!isa<UsingDecl>(InstD) && "decl ref instantiated to UsingDecl");
-
-  CXXScopeSpec SS;
-  NestedNameSpecifier *Qualifier = 0;
-  if (E->getQualifier()) {
-    Qualifier = TransformNestedNameSpecifier(E->getQualifier(),
-                                             E->getQualifierRange());
-    if (!Qualifier)
-      return SemaRef.ExprError();
-    
-    SS.setScopeRep(Qualifier);
-    SS.setRange(E->getQualifierRange());
-  }
-  
-  return SemaRef.BuildDeclarationNameExpr(SS, E->getLocation(), InstD);
+  return TreeTransform<TemplateInstantiator>::
+    TransformDeclRefExpr(E, isAddressOfOperand);
 }
 
 Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(

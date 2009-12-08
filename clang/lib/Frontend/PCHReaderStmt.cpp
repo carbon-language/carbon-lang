@@ -349,7 +349,7 @@ unsigned PCHStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
 
 unsigned PCHStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
-  E->setDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setDecl(cast<ValueDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   // FIXME: read qualifier
   // FIXME: read explicit template arguments

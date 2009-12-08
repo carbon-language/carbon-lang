@@ -389,7 +389,7 @@ class DeclRefExpr : public Expr {
   // indicate whether (1) the declaration's name was explicitly qualified and
   // (2) the declaration's name was followed by an explicit template 
   // argument list.
-  llvm::PointerIntPair<NamedDecl *, 2> DecoratedD;
+  llvm::PointerIntPair<ValueDecl *, 2> DecoratedD;
   
   // Loc - The location of the declaration name itself.
   SourceLocation Loc;
@@ -427,7 +427,7 @@ class DeclRefExpr : public Expr {
   }
   
   DeclRefExpr(NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
-              NamedDecl *D, SourceLocation NameLoc,
+              ValueDecl *D, SourceLocation NameLoc,
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T);
   
@@ -436,13 +436,13 @@ protected:
   /// declaration reference expression.
   void computeDependence();
 
-  DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l) :
+  DeclRefExpr(StmtClass SC, ValueDecl *d, QualType t, SourceLocation l) :
     Expr(SC, t, false, false), DecoratedD(d, 0), Loc(l) {
     computeDependence();
   }
 
 public:
-  DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l) :
+  DeclRefExpr(ValueDecl *d, QualType t, SourceLocation l) :
     Expr(DeclRefExprClass, t, false, false), DecoratedD(d, 0), Loc(l) {
     computeDependence();
   }
@@ -454,14 +454,14 @@ public:
   static DeclRefExpr *Create(ASTContext &Context,
                              NestedNameSpecifier *Qualifier,
                              SourceRange QualifierRange,
-                             NamedDecl *D,
+                             ValueDecl *D,
                              SourceLocation NameLoc,
                              QualType T,
                              const TemplateArgumentListInfo *TemplateArgs = 0);
   
-  NamedDecl *getDecl() { return DecoratedD.getPointer(); }
-  const NamedDecl *getDecl() const { return DecoratedD.getPointer(); }
-  void setDecl(NamedDecl *NewD) { DecoratedD.setPointer(NewD); }
+  ValueDecl *getDecl() { return DecoratedD.getPointer(); }
+  const ValueDecl *getDecl() const { return DecoratedD.getPointer(); }
+  void setDecl(ValueDecl *NewD) { DecoratedD.setPointer(NewD); }
 
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }

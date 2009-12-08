@@ -1448,7 +1448,7 @@ public:
                                               bool isAddressOfOperand,
                                 const TemplateArgumentListInfo *TemplateArgs);
   
-  OwningExprResult BuildDeclRefExpr(NamedDecl *D, QualType Ty,
+  OwningExprResult BuildDeclRefExpr(ValueDecl *D, QualType Ty,
                                     SourceLocation Loc,
                                     const CXXScopeSpec *SS = 0);
   VarDecl *BuildAnonymousStructUnionMemberPath(FieldDecl *Field,

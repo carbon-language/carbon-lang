@@ -830,15 +830,15 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildDeclRefExpr(NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
-                                      NamedDecl *ND, SourceLocation Loc,
-                                      bool isAddressOfOperand) {
+                                      ValueDecl *VD, SourceLocation Loc,
+                                      TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
     SS.setScopeRep(Qualifier);
     SS.setRange(QualifierRange);
-    return getSema().BuildDeclarationNameExpr(Loc, ND,
-                                              /*FIXME:*/false,
-                                              &SS,
-                                              isAddressOfOperand);
+
+    // FIXME: loses template args.
+    
+    return getSema().BuildDeclarationNameExpr(SS, Loc, VD);
   }
 
   /// \brief Build a new expression in parentheses.
@@ -3484,31 +3484,39 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E,
     if (!Qualifier)
       return SemaRef.ExprError();
   }
-  
-  NamedDecl *ND
-    = dyn_cast_or_null<NamedDecl>(getDerived().TransformDecl(E->getDecl()));
+
+  ValueDecl *ND
+    = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getDecl()));
   if (!ND)
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() && 
       Qualifier == E->getQualifier() &&
       ND == E->getDecl() &&
-      !E->hasExplicitTemplateArgumentList())
+      !E->hasExplicitTemplateArgumentList()) {
+
+    // Mark it referenced in the new context regardless.
+    // FIXME: this is a bit instantiation-specific.
+    SemaRef.MarkDeclarationReferenced(E->getLocation(), ND);
+
     return SemaRef.Owned(E->Retain());
-
-  // FIXME: We're losing the explicit template arguments in this transformation.
-
-  llvm::SmallVector<TemplateArgumentLoc, 4> TransArgs(E->getNumTemplateArgs());
-  for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I],
-                                               TransArgs[I]))
-      return SemaRef.ExprError();
   }
-  
-  // FIXME: Pass the qualifier/qualifier range along.
+
+  TemplateArgumentListInfo TransArgs, *TemplateArgs = 0;
+  if (E->hasExplicitTemplateArgumentList()) {
+    TemplateArgs = &TransArgs;
+    TransArgs.setLAngleLoc(E->getLAngleLoc());
+    TransArgs.setRAngleLoc(E->getRAngleLoc());
+    for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
+      TemplateArgumentLoc Loc;
+      if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
+        return SemaRef.ExprError();
+      TransArgs.addArgument(Loc);
+    }
+  }
+
   return getDerived().RebuildDeclRefExpr(Qualifier, E->getQualifierRange(),
-                                         ND, E->getLocation(),
-                                         isAddressOfOperand);
+                                         ND, E->getLocation(), TemplateArgs);
 }
 
 template<typename Derived>

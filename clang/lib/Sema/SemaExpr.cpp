@@ -415,7 +415,7 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
 
 /// BuildDeclRefExpr - Build a DeclRefExpr.
 Sema::OwningExprResult
-Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
+Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, SourceLocation Loc,
                        const CXXScopeSpec *SS) {
   if (Context.getCanonicalType(Ty) == Context.UndeducedAutoTy) {
     Diag(Loc,
