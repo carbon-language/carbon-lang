@@ -84,11 +84,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
 
   // Get absolute path name.
   llvm::sys::Path AbsFileName(FileName);
-  if (!AbsFileName.isAbsolute()) {
-    llvm::sys::Path tmp = llvm::sys::Path::GetCurrentDirectory();
-    tmp.appendComponent(FileName);
-    AbsFileName = tmp;
-  }
+  AbsFileName.makeAbsolute();
 
   // See if thie compile unit is representing main source file. Each source
   // file has corresponding compile unit. There is only one main source
@@ -122,7 +118,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     LangTag = llvm::dwarf::DW_LANG_C89;
   }
 
-  std::string Producer =
+  const char *Producer =
 #ifdef CLANG_VENDOR
     CLANG_VENDOR
 #endif
@@ -139,7 +135,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   return Unit = DebugFactory.CreateCompileUnit(LangTag, 
                                                AbsFileName.getLast(),
                                                AbsFileName.getDirname(),
-                                               Producer.c_str(), isMain, 
+                                               Producer, isMain,
                                                isOptimized, Flags, RuntimeVers);
 }
 
