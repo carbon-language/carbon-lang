@@ -218,19 +218,7 @@ public:
   /// other mechanism.
   ///
   /// \returns the transformed expression.
-  OwningExprResult TransformExpr(Expr *E) {
-    return getDerived().TransformExpr(E, /*isAddressOfOperand=*/false);
-  }
-
-  /// \brief Transform the given expression.
-  ///
-  /// By default, this routine transforms an expression by delegating to the
-  /// appropriate TransformXXXExpr function to build a new expression.
-  /// Subclasses may override this function to transform expressions using some
-  /// other mechanism.
-  ///
-  /// \returns the transformed expression.
-  OwningExprResult TransformExpr(Expr *E, bool isAddressOfOperand);
+  OwningExprResult TransformExpr(Expr *E);
 
   /// \brief Transform the given declaration, which is referenced from a type
   /// or expression.
@@ -328,7 +316,7 @@ public:
 #define STMT(Node, Parent)                        \
   OwningStmtResult Transform##Node(Node *S);
 #define EXPR(Node, Parent)                        \
-  OwningExprResult Transform##Node(Node *E, bool isAddressOfOperand);
+  OwningExprResult Transform##Node(Node *E);
 #define ABSTRACT_EXPR(Node, Parent)
 #include "clang/AST/StmtNodes.def"
 
@@ -1675,8 +1663,7 @@ Sema::OwningStmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
 
 
 template<typename Derived>
-Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E,
-                                                    bool isAddressOfOperand) {
+Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E) {
   if (!E)
     return SemaRef.Owned(E);
 
@@ -1684,8 +1671,7 @@ Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E,
     case Stmt::NoStmtClass: break;
 #define STMT(Node, Parent) case Stmt::Node##Class: break;
 #define EXPR(Node, Parent)                                              \
-    case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(E), \
-                                                            isAddressOfOperand);
+    case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(E));
 #include "clang/AST/StmtNodes.def"
   }
 
@@ -3468,15 +3454,13 @@ TreeTransform<Derived>::TransformCXXTryStmt(CXXTryStmt *S) {
 //===----------------------------------------------------------------------===//
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformPredefinedExpr(PredefinedExpr *E,
-                                                bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformPredefinedExpr(PredefinedExpr *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E,
-                                             bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   NestedNameSpecifier *Qualifier = 0;
   if (E->getQualifier()) {
     Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
@@ -3521,43 +3505,37 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformIntegerLiteral(IntegerLiteral *E,
-                                                bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformIntegerLiteral(IntegerLiteral *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformFloatingLiteral(FloatingLiteral *E,
-                                                 bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformFloatingLiteral(FloatingLiteral *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformImaginaryLiteral(ImaginaryLiteral *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformImaginaryLiteral(ImaginaryLiteral *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformStringLiteral(StringLiteral *E,
-                                               bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformStringLiteral(StringLiteral *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCharacterLiteral(CharacterLiteral *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCharacterLiteral(CharacterLiteral *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformParenExpr(ParenExpr *E,
-                                           bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformParenExpr(ParenExpr *E) {
   OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
@@ -3571,10 +3549,8 @@ TreeTransform<Derived>::TransformParenExpr(ParenExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformUnaryOperator(UnaryOperator *E,
-                                               bool isAddressOfOperand) {
-  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr(),
-                                       E->getOpcode() == UnaryOperator::AddrOf);
+TreeTransform<Derived>::TransformUnaryOperator(UnaryOperator *E) {
+  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
@@ -3588,8 +3564,7 @@ TreeTransform<Derived>::TransformUnaryOperator(UnaryOperator *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
-                                                   bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   if (E->isArgumentType()) {
     TypeSourceInfo *OldT = E->getArgumentTypeInfo();
 
@@ -3627,8 +3602,7 @@ TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformArraySubscriptExpr(ArraySubscriptExpr *E,
-                                                    bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformArraySubscriptExpr(ArraySubscriptExpr *E) {
   OwningExprResult LHS = getDerived().TransformExpr(E->getLHS());
   if (LHS.isInvalid())
     return SemaRef.ExprError();
@@ -3651,8 +3625,7 @@ TreeTransform<Derived>::TransformArraySubscriptExpr(ArraySubscriptExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCallExpr(CallExpr *E,
-                                          bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
   // Transform the callee.
   OwningExprResult Callee = getDerived().TransformExpr(E->getCallee());
   if (Callee.isInvalid())
@@ -3691,8 +3664,7 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E,
-                                            bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   OwningExprResult Base = getDerived().TransformExpr(E->getBase());
   if (Base.isInvalid())
     return SemaRef.ExprError();
@@ -3747,16 +3719,14 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCastExpr(CastExpr *E,
-                                          bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCastExpr(CastExpr *E) {
   assert(false && "Cannot transform abstract class");
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformBinaryOperator(BinaryOperator *E,
-                                                bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformBinaryOperator(BinaryOperator *E) {
   OwningExprResult LHS = getDerived().TransformExpr(E->getLHS());
   if (LHS.isInvalid())
     return SemaRef.ExprError();
@@ -3777,15 +3747,13 @@ TreeTransform<Derived>::TransformBinaryOperator(BinaryOperator *E,
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCompoundAssignOperator(
-                                                      CompoundAssignOperator *E,
-                                                      bool isAddressOfOperand) {
-  return getDerived().TransformBinaryOperator(E, isAddressOfOperand);
+                                                      CompoundAssignOperator *E) {
+  return getDerived().TransformBinaryOperator(E);
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformConditionalOperator(ConditionalOperator *E,
-                                                     bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformConditionalOperator(ConditionalOperator *E) {
   OwningExprResult Cond = getDerived().TransformExpr(E->getCond());
   if (Cond.isInvalid())
     return SemaRef.ExprError();
@@ -3813,8 +3781,7 @@ TreeTransform<Derived>::TransformConditionalOperator(ConditionalOperator *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E) {
   TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
 
   // FIXME: Will we ever have type information here? It seems like we won't,
@@ -3839,16 +3806,14 @@ TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformExplicitCastExpr(ExplicitCastExpr *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformExplicitCastExpr(ExplicitCastExpr *E) {
   assert(false && "Cannot transform abstract class");
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E,
-                                                bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E) {
   QualType T;
   {
     // FIXME: Source location isn't quite accurate.
@@ -3877,8 +3842,7 @@ TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCompoundLiteralExpr(CompoundLiteralExpr *E,
-                                                     bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCompoundLiteralExpr(CompoundLiteralExpr *E) {
   QualType T;
   {
     // FIXME: Source location isn't quite accurate.
@@ -3907,8 +3871,7 @@ TreeTransform<Derived>::TransformCompoundLiteralExpr(CompoundLiteralExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformExtVectorElementExpr(ExtVectorElementExpr *E,
-                                                      bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformExtVectorElementExpr(ExtVectorElementExpr *E) {
   OwningExprResult Base = getDerived().TransformExpr(E->getBase());
   if (Base.isInvalid())
     return SemaRef.ExprError();
@@ -3927,8 +3890,7 @@ TreeTransform<Derived>::TransformExtVectorElementExpr(ExtVectorElementExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformInitListExpr(InitListExpr *E,
-                                              bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformInitListExpr(InitListExpr *E) {
   bool InitChanged = false;
 
   ASTOwningVector<&ActionBase::DeleteExpr, 4> Inits(SemaRef);
@@ -3950,8 +3912,7 @@ TreeTransform<Derived>::TransformInitListExpr(InitListExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E,
-                                                    bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E) {
   Designation Desig;
 
   // transform the initializer value
@@ -4020,8 +3981,7 @@ TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E,
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformImplicitValueInitExpr(
-                                                     ImplicitValueInitExpr *E,
-                                                     bool isAddressOfOperand) {
+                                                     ImplicitValueInitExpr *E) {
   TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
   
   // FIXME: Will we ever have proper type location here? Will we actually
@@ -4039,8 +3999,7 @@ TreeTransform<Derived>::TransformImplicitValueInitExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformVAArgExpr(VAArgExpr *E,
-                                           bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformVAArgExpr(VAArgExpr *E) {
   // FIXME: Do we want the type as written?
   QualType T;
 
@@ -4067,8 +4026,7 @@ TreeTransform<Derived>::TransformVAArgExpr(VAArgExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformParenListExpr(ParenListExpr *E,
-                                               bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformParenListExpr(ParenListExpr *E) {
   bool ArgumentChanged = false;
   ASTOwningVector<&ActionBase::DeleteExpr, 4> Inits(SemaRef);
   for (unsigned I = 0, N = E->getNumExprs(); I != N; ++I) {
@@ -4092,16 +4050,14 @@ TreeTransform<Derived>::TransformParenListExpr(ParenListExpr *E,
 /// the corresponding label statement by semantic analysis.
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformAddrLabelExpr(AddrLabelExpr *E,
-                                               bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformAddrLabelExpr(AddrLabelExpr *E) {
   return getDerived().RebuildAddrLabelExpr(E->getAmpAmpLoc(), E->getLabelLoc(),
                                            E->getLabel());
 }
 
 template<typename Derived>
 Sema::OwningExprResult 
-TreeTransform<Derived>::TransformStmtExpr(StmtExpr *E, 
-                                          bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformStmtExpr(StmtExpr *E) {
   OwningStmtResult SubStmt
     = getDerived().TransformCompoundStmt(E->getSubStmt(), true);
   if (SubStmt.isInvalid())
@@ -4118,8 +4074,7 @@ TreeTransform<Derived>::TransformStmtExpr(StmtExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformTypesCompatibleExpr(TypesCompatibleExpr *E,
-                                                     bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformTypesCompatibleExpr(TypesCompatibleExpr *E) {
   QualType T1, T2;
   {
     // FIXME: Source location isn't quite accurate.
@@ -4145,8 +4100,7 @@ TreeTransform<Derived>::TransformTypesCompatibleExpr(TypesCompatibleExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformChooseExpr(ChooseExpr *E,
-                                            bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformChooseExpr(ChooseExpr *E) {
   OwningExprResult Cond = getDerived().TransformExpr(E->getCond());
   if (Cond.isInvalid())
     return SemaRef.ExprError();
@@ -4172,22 +4126,18 @@ TreeTransform<Derived>::TransformChooseExpr(ChooseExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformGNUNullExpr(GNUNullExpr *E,
-                                             bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformGNUNullExpr(GNUNullExpr *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E,
-                                                     bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   OwningExprResult Callee = getDerived().TransformExpr(E->getCallee());
   if (Callee.isInvalid())
     return SemaRef.ExprError();
 
-  OwningExprResult First 
-    = getDerived().TransformExpr(E->getArg(0),
-                           E->getNumArgs() == 1 && E->getOperator() == OO_Amp);
+  OwningExprResult First = getDerived().TransformExpr(E->getArg(0));
   if (First.isInvalid())
     return SemaRef.ExprError();
 
@@ -4213,15 +4163,13 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXMemberCallExpr(CXXMemberCallExpr *E,
-                                                   bool isAddressOfOperand) {
-  return getDerived().TransformCallExpr(E, isAddressOfOperand);
+TreeTransform<Derived>::TransformCXXMemberCallExpr(CXXMemberCallExpr *E) {
+  return getDerived().TransformCallExpr(E);
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
   QualType ExplicitTy;
   {
     // FIXME: Source location isn't quite accurate.
@@ -4262,38 +4210,33 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXStaticCastExpr(CXXStaticCastExpr *E,
-                                                   bool isAddressOfOperand) {
-  return getDerived().TransformCXXNamedCastExpr(E, isAddressOfOperand);
+TreeTransform<Derived>::TransformCXXStaticCastExpr(CXXStaticCastExpr *E) {
+  return getDerived().TransformCXXNamedCastExpr(E);
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXDynamicCastExpr(CXXDynamicCastExpr *E,
-                                                    bool isAddressOfOperand) {
-  return getDerived().TransformCXXNamedCastExpr(E, isAddressOfOperand);
+TreeTransform<Derived>::TransformCXXDynamicCastExpr(CXXDynamicCastExpr *E) {
+  return getDerived().TransformCXXNamedCastExpr(E);
 }
 
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXReinterpretCastExpr(
-                                                      CXXReinterpretCastExpr *E,
-                                                      bool isAddressOfOperand) {
-  return getDerived().TransformCXXNamedCastExpr(E, isAddressOfOperand);
+                                                      CXXReinterpretCastExpr *E) {
+  return getDerived().TransformCXXNamedCastExpr(E);
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXConstCastExpr(CXXConstCastExpr *E,
-                                                  bool isAddressOfOperand) {
-  return getDerived().TransformCXXNamedCastExpr(E, isAddressOfOperand);
+TreeTransform<Derived>::TransformCXXConstCastExpr(CXXConstCastExpr *E) {
+  return getDerived().TransformCXXNamedCastExpr(E);
 }
 
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
-                                                     CXXFunctionalCastExpr *E,
-                                                     bool isAddressOfOperand) {
+                                                     CXXFunctionalCastExpr *E) {
   QualType ExplicitTy;
   {
     TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
@@ -4323,8 +4266,7 @@ TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E,
-                                               bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E) {
   if (E->isTypeOperand()) {
     TemporaryBase Rebase(*this, /*FIXME*/E->getLocStart(), DeclarationName());
 
@@ -4364,23 +4306,20 @@ TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXBoolLiteralExpr(CXXBoolLiteralExpr *E,
-                                                    bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXNullPtrLiteralExpr(
-                                                     CXXNullPtrLiteralExpr *E,
-                                                     bool isAddressOfOperand) {
+                                                     CXXNullPtrLiteralExpr *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E,
-                                             bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E) {
   TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
 
   QualType T = getDerived().TransformType(E->getType());
@@ -4396,8 +4335,7 @@ TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXThrowExpr(CXXThrowExpr *E,
-                                              bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXThrowExpr(CXXThrowExpr *E) {
   OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
@@ -4411,8 +4349,7 @@ TreeTransform<Derived>::TransformCXXThrowExpr(CXXThrowExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E,
-                                                   bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   ParmVarDecl *Param
     = cast_or_null<ParmVarDecl>(getDerived().TransformDecl(E->getParam()));
   if (!Param)
@@ -4427,8 +4364,7 @@ TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXZeroInitValueExpr(CXXZeroInitValueExpr *E,
-                                                      bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
   TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
 
   QualType T = getDerived().TransformType(E->getType());
@@ -4447,8 +4383,7 @@ TreeTransform<Derived>::TransformCXXZeroInitValueExpr(CXXZeroInitValueExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E,
-                                            bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   // Transform the type that we're allocating
   TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
   QualType AllocType = getDerived().TransformType(E->getAllocatedType());
@@ -4506,8 +4441,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXDeleteExpr(CXXDeleteExpr *E,
-                                               bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXDeleteExpr(CXXDeleteExpr *E) {
   OwningExprResult Operand = getDerived().TransformExpr(E->getArgument());
   if (Operand.isInvalid())
     return SemaRef.ExprError();
@@ -4525,8 +4459,7 @@ TreeTransform<Derived>::TransformCXXDeleteExpr(CXXDeleteExpr *E,
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
-                                                     CXXPseudoDestructorExpr *E,
-                                                     bool isAddressOfOperand) {
+                                                     CXXPseudoDestructorExpr *E) {
   OwningExprResult Base = getDerived().TransformExpr(E->getBase());
   if (Base.isInvalid())
     return SemaRef.ExprError();
@@ -4563,8 +4496,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformUnresolvedLookupExpr(
-                                                  UnresolvedLookupExpr *Old,
-                                                  bool isAddressOfOperand) {
+                                                  UnresolvedLookupExpr *Old) {
   TemporaryBase Rebase(*this, Old->getNameLoc(), DeclarationName());
 
   LookupResult R(SemaRef, Old->getName(), Old->getNameLoc(),
@@ -4626,8 +4558,7 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E,
-                                                    bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   TemporaryBase Rebase(*this, /*FIXME*/E->getLocStart(), DeclarationName());
 
   QualType T = getDerived().TransformType(E->getQueriedType());
@@ -4652,8 +4583,7 @@ TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E,
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
-                                                  DependentScopeDeclRefExpr *E,
-                                                     bool isAddressOfOperand) {
+                                                  DependentScopeDeclRefExpr *E) {
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                 E->getQualifierRange());
@@ -4693,8 +4623,7 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
   TemporaryBase Rebase(*this, /*FIXME*/E->getLocStart(), DeclarationName());
 
   QualType T = getDerived().TransformType(E->getType());
@@ -4738,8 +4667,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E,
 /// must be unique.
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
-                                                      bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
@@ -4757,8 +4685,7 @@ TreeTransform<Derived>::TransformCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXExprWithTemporaries(
-                                                      CXXExprWithTemporaries *E,
-                                                      bool isAddressOfOperand) {
+                                                      CXXExprWithTemporaries *E) {
   OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
@@ -4771,8 +4698,7 @@ TreeTransform<Derived>::TransformCXXExprWithTemporaries(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
-                                                      CXXTemporaryObjectExpr *E,
-                                                      bool isAddressOfOperand) {
+                                                      CXXTemporaryObjectExpr *E) {
   TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
   QualType T = getDerived().TransformType(E->getType());
   if (T.isNull())
@@ -4822,8 +4748,7 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
-                                                  CXXUnresolvedConstructExpr *E,
-                                                  bool isAddressOfOperand) {
+                                                  CXXUnresolvedConstructExpr *E) {
   TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
   QualType T = getDerived().TransformType(E->getTypeAsWritten());
   if (T.isNull())
@@ -4862,8 +4787,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
-                                                     CXXDependentScopeMemberExpr *E,
-                                                     bool isAddressOfOperand) {
+                                                     CXXDependentScopeMemberExpr *E) {
   // Transform the base of the expression.
   OwningExprResult Base(SemaRef, (Expr*) 0);
   Expr *OldBase;
@@ -4960,8 +4884,7 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old,
-                                                      bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old) {
   // Transform the base of the expression.
   OwningExprResult Base(SemaRef, (Expr*) 0);
   QualType BaseType;
@@ -5033,15 +4956,13 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCStringLiteral(ObjCStringLiteral *E,
-                                                   bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCStringLiteral(ObjCStringLiteral *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E,
-                                                bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E) {
   // FIXME: poor source location
   TemporaryBase Rebase(*this, E->getAtLoc(), DeclarationName());
   QualType EncodedType = getDerived().TransformType(E->getEncodedType());
@@ -5059,8 +4980,7 @@ TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E,
-                                                 bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform Objective-C expressions yet");
   return SemaRef.Owned(E->Retain());
@@ -5068,15 +4988,13 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCSelectorExpr(ObjCSelectorExpr *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCSelectorExpr(ObjCSelectorExpr *E) {
   return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCProtocolExpr(ObjCProtocolExpr *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCProtocolExpr(ObjCProtocolExpr *E) {
   ObjCProtocolDecl *Protocol
     = cast_or_null<ObjCProtocolDecl>(
                                 getDerived().TransformDecl(E->getProtocol()));
@@ -5097,8 +5015,7 @@ TreeTransform<Derived>::TransformObjCProtocolExpr(ObjCProtocolExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCIvarRefExpr(ObjCIvarRefExpr *E,
-                                                 bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCIvarRefExpr(ObjCIvarRefExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform Objective-C expressions yet");
   return SemaRef.Owned(E->Retain());
@@ -5106,8 +5023,7 @@ TreeTransform<Derived>::TransformObjCIvarRefExpr(ObjCIvarRefExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E,
-                                                     bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform Objective-C expressions yet");
   return SemaRef.Owned(E->Retain());
@@ -5116,8 +5032,7 @@ TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E,
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCImplicitSetterGetterRefExpr(
-                                          ObjCImplicitSetterGetterRefExpr *E,
-                                                     bool isAddressOfOperand) {
+                                          ObjCImplicitSetterGetterRefExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform Objective-C expressions yet");
   return SemaRef.Owned(E->Retain());
@@ -5125,8 +5040,7 @@ TreeTransform<Derived>::TransformObjCImplicitSetterGetterRefExpr(
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCSuperExpr(ObjCSuperExpr *E,
-                                               bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCSuperExpr(ObjCSuperExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform Objective-C expressions yet");
   return SemaRef.Owned(E->Retain());
@@ -5134,8 +5048,7 @@ TreeTransform<Derived>::TransformObjCSuperExpr(ObjCSuperExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformObjCIsaExpr(ObjCIsaExpr *E,
-                                             bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformObjCIsaExpr(ObjCIsaExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform Objective-C expressions yet");
   return SemaRef.Owned(E->Retain());
@@ -5143,8 +5056,7 @@ TreeTransform<Derived>::TransformObjCIsaExpr(ObjCIsaExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E,
-                                                   bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E) {
   bool ArgumentChanged = false;
   ASTOwningVector<&ActionBase::DeleteExpr> SubExprs(SemaRef);
   for (unsigned I = 0, N = E->getNumSubExprs(); I != N; ++I) {
@@ -5167,8 +5079,7 @@ TreeTransform<Derived>::TransformShuffleVectorExpr(ShuffleVectorExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E,
-                                           bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform block expressions yet");
   return SemaRef.Owned(E->Retain());
@@ -5176,8 +5087,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E,
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E,
-                                                  bool isAddressOfOperand) {
+TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
   // FIXME: Implement this!
   assert(false && "Cannot transform block-related expressions yet");
   return SemaRef.Owned(E->Retain());

@@ -552,13 +552,10 @@ namespace {
     /// elaborated type.
     QualType RebuildElaboratedType(QualType T, ElaboratedType::TagKind Tag);
 
-    Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E,
-                                                   bool isAddressOfOperand);
-    Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E,
-                                                bool isAddressOfOperand);
+    Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E);
+    Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
 
-    Sema::OwningExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E,
-                                                      bool isAddressOfOperand);
+    Sema::OwningExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
 
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
@@ -670,8 +667,7 @@ TemplateInstantiator::RebuildElaboratedType(QualType T,
 }
 
 Sema::OwningExprResult 
-TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E,
-                                              bool isAddressOfOperand) {
+TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
   if (!E->isTypeDependent())
     return SemaRef.Owned(E->Retain());
 
@@ -694,8 +690,7 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E,
 }
 
 Sema::OwningExprResult
-TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
-                                           bool isAddressOfOperand) {
+TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   // FIXME: Clean this up a bit
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
@@ -782,12 +777,11 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E,
     // FindInstantiatedDecl will find it in the local instantiation scope.
   }
 
-  return TreeTransform<TemplateInstantiator>::
-    TransformDeclRefExpr(E, isAddressOfOperand);
+  return TreeTransform<TemplateInstantiator>::TransformDeclRefExpr(E);
 }
 
 Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
-    CXXDefaultArgExpr *E, bool isAddressOfOperand) {
+    CXXDefaultArgExpr *E) {
   assert(!cast<FunctionDecl>(E->getParam()->getDeclContext())->
              getDescribedFunctionTemplate() &&
          "Default arg expressions are never formed in dependent cases.");
