@@ -300,8 +300,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   Args.push_back("-fsyntax-only");
 
   llvm::sys::Path Path = llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
-  driver::Driver TheDriver(Path.getBasename().c_str(),Path.getDirname().c_str(),
-                           llvm::sys::getHostTriple().c_str(),
+  driver::Driver TheDriver(Path.getBasename(), Path.getDirname(),
+                           llvm::sys::getHostTriple(),
                            "a.out", false, Diags);
   llvm::OwningPtr<driver::Compilation> C(
     TheDriver.BuildCompilation(Args.size(), Args.data()));

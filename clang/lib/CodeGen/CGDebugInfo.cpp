@@ -137,8 +137,8 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
 
   // Create new compile unit.
   return Unit = DebugFactory.CreateCompileUnit(LangTag, 
-                                               AbsFileName.getLast().c_str(),
-                                               AbsFileName.getDirname().c_str(),
+                                               AbsFileName.getLast(),
+                                               AbsFileName.getDirname(),
                                                Producer.c_str(), isMain, 
                                                isOptimized, Flags, RuntimeVers);
 }

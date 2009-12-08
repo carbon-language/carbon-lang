@@ -41,9 +41,9 @@ using namespace clang;
 // Used to set values for "production" clang, for releases.
 // #define USE_PRODUCTION_CLANG
 
-Driver::Driver(const char *_Name, const char *_Dir,
-               const char *_DefaultHostTriple,
-               const char *_DefaultImageName,
+Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
+               llvm::StringRef _DefaultHostTriple,
+               llvm::StringRef _DefaultImageName,
                bool IsProduction, Diagnostic &_Diags)
   : Opts(createDriverOptTable()), Diags(_Diags),
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),

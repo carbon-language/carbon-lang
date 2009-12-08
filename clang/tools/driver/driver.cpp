@@ -212,8 +212,8 @@ int main(int argc, const char **argv) {
 #else
   bool IsProduction = false;
 #endif
-  Driver TheDriver(Path.getBasename().c_str(), Path.getDirname().c_str(),
-                   llvm::sys::getHostTriple().c_str(),
+  Driver TheDriver(Path.getBasename(), Path.getDirname(),
+                   llvm::sys::getHostTriple(),
                    "a.out", IsProduction, Diags);
 
   // Check for ".*++" or ".*++-[^-]*" to determine if we are a C++

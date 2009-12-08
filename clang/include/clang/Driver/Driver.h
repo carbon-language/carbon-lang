@@ -15,6 +15,7 @@
 #include "clang/Driver/Phases.h"
 #include "clang/Driver/Util.h"
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/System/Path.h" // FIXME: Kill when CompilationInfo
                               // lands.
@@ -112,9 +113,9 @@ private:
   std::list<std::string> ResultFiles;
 
 public:
-  Driver(const char *_Name, const char *_Dir,
-         const char *_DefaultHostTriple,
-         const char *_DefaultImageName,
+  Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
+         llvm::StringRef _DefaultHostTriple,
+         llvm::StringRef _DefaultImageName,
          bool IsProduction, Diagnostic &_Diags);
   ~Driver();
 
