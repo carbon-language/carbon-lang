@@ -1390,6 +1390,43 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
     }
   }
 
+  const FunctionProtoType *Proto = Tmpl->getType()->getAs<FunctionProtoType>();
+  assert(Proto && "Function template without prototype?");
+
+  if (Proto->hasExceptionSpec() || Proto->hasAnyExceptionSpec() ||
+      Proto->getNoReturnAttr()) {
+    // The function has an exception specification or a "noreturn"
+    // attribute. Substitute into each of the exception types.
+    llvm::SmallVector<QualType, 4> Exceptions;
+    for (unsigned I = 0, N = Proto->getNumExceptions(); I != N; ++I) {
+      // FIXME: Poor location information!
+      QualType T
+        = SemaRef.SubstType(Proto->getExceptionType(I), TemplateArgs,
+                            New->getLocation(), New->getDeclName());
+      if (T.isNull() || 
+          SemaRef.CheckSpecifiedExceptionType(T, New->getLocation()))
+        continue;
+
+      Exceptions.push_back(T);
+    }
+
+    // Rebuild the function type 
+
+    const FunctionProtoType *NewProto
+      = New->getType()->getAs<FunctionProtoType>();
+    assert(NewProto && "Template instantiation without function prototype?");
+    New->setType(SemaRef.Context.getFunctionType(NewProto->getResultType(),
+                                                 NewProto->arg_type_begin(),
+                                                 NewProto->getNumArgs(),
+                                                 NewProto->isVariadic(),
+                                                 NewProto->getTypeQuals(),
+                                                 Proto->hasExceptionSpec(),
+                                                 Proto->hasAnyExceptionSpec(),
+                                                 Exceptions.size(),
+                                                 Exceptions.data(),
+                                                 Proto->getNoReturnAttr()));
+  }
+
   return false;
 }
 

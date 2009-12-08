@@ -361,6 +361,24 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     }
 
     Proto += ")";
+    
+    if (FT && FT->hasExceptionSpec()) {
+      Proto += " throw(";
+      if (FT->hasAnyExceptionSpec())
+        Proto += "...";
+      else 
+        for (unsigned I = 0, N = FT->getNumExceptions(); I != N; ++I) {
+          if (I)
+            Proto += ", ";
+          
+          
+          std::string ExceptionType;
+          FT->getExceptionType(I).getAsStringInternal(ExceptionType, SubPolicy);
+          Proto += ExceptionType;
+        }
+      Proto += ")";
+    }
+
     if (D->hasAttr<NoReturnAttr>())
       Proto += " __attribute((noreturn))";
     if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D)) {

@@ -285,6 +285,23 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
   }
   
   S += ")";
+
+  if (T->hasExceptionSpec()) {
+    S += " throw(";
+    if (T->hasAnyExceptionSpec())
+      S += "...";
+    else 
+      for (unsigned I = 0, N = T->getNumExceptions(); I != N; ++I) {
+        if (I)
+          S += ", ";
+
+        std::string ExceptionType;
+        Print(T->getExceptionType(I), ExceptionType);
+        S += ExceptionType;
+      }
+    S += ")";
+  }
+
   if (T->getNoReturnAttr())
     S += " __attribute__((noreturn))";
   Print(T->getResultType(), S);
