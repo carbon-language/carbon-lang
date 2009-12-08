@@ -160,13 +160,6 @@ def ext_missing_varargs_arg : Extension<
 def ext_empty_fnmacro_arg : Extension<
   "empty macro arguments were standardized in C99">;
 
-def ext_pp_base_file : Extension<"__BASE_FILE__ is a language extension">;
-def ext_pp_include_level : Extension<
-  "__INCLUDE_LEVEL__ is a language extension">;
-def ext_pp_timestamp : Extension<"__TIMESTAMP__ is a language extension">;
-def ext_pp_counter : Extension<
-  "__COUNTER__ is a language extension">;
-
 def err_pp_invalid_directive : Error<"invalid preprocessing directive">;
 def err_pp_hash_error : Error<"#error%0">;
 def err_pp_file_not_found : Error<"'%0' file not found">, DefaultFatal;

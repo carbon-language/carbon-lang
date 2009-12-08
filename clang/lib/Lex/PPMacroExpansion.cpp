@@ -673,7 +673,6 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // __BASE_FILE__ is a GNU extension that returns the top of the presumed
     // #include stack instead of the current file.
     if (II == Ident__BASE_FILE__) {
-      Diag(Tok, diag::ext_pp_base_file);
       SourceLocation NextLoc = PLoc.getIncludeLoc();
       while (NextLoc.isValid()) {
         PLoc = SourceMgr.getPresumedLoc(NextLoc);
@@ -703,8 +702,6 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
                                                      Tok.getLocation(),
                                                      Tok.getLength()));
   } else if (II == Ident__INCLUDE_LEVEL__) {
-    Diag(Tok, diag::ext_pp_include_level);
-
     // Compute the presumed include depth of this token.  This can be affected
     // by GNU line markers.
     unsigned Depth = 0;
@@ -721,7 +718,6 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   } else if (II == Ident__TIMESTAMP__) {
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
-    Diag(Tok, diag::ext_pp_timestamp);
 
     // Get the file that we are lexing out of.  If we're currently lexing from
     // a macro, dig into the include stack.
@@ -731,7 +727,6 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     if (TheLexer)
       CurFile = SourceMgr.getFileEntryForID(TheLexer->getFileID());
 
-    // If this file is older than the file it depends on, emit a diagnostic.
     const char *Result;
     if (CurFile) {
       time_t TT = CurFile->getModificationTime();
@@ -747,8 +742,6 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Tok.setKind(tok::string_literal);
     CreateString(TmpBuffer, Len+1, Tok, Tok.getLocation());
   } else if (II == Ident__COUNTER__) {
-    Diag(Tok, diag::ext_pp_counter);
-
     // __COUNTER__ expands to a simple numeric value.
     sprintf(TmpBuffer, "%u", CounterValue++);
     Tok.setKind(tok::numeric_constant);
