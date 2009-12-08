@@ -21,10 +21,10 @@ namespace test0 {
   }
 
   class Test0 {
-    using NonClass::type; // expected-error {{not a base class}}
-    using NonClass::hiding; // expected-error {{not a base class}}
-    using NonClass::union_member; // expected-error {{not a base class}}
-    using NonClass::enumerator; // expected-error {{not a base class}}
+    using NonClass::type; // expected-error {{not a class}}
+    using NonClass::hiding; // expected-error {{not a class}}
+    using NonClass::union_member; // expected-error {{not a class}}
+    using NonClass::enumerator; // expected-error {{not a class}}
   };
 }
 
@@ -180,4 +180,33 @@ namespace test3 {
   };
 
   template struct C<int>; // expected-note {{in instantiation}}
+}
+
+namespace test4 {
+  struct Base {
+    int foo();
+  };
+
+  struct Unrelated {
+    int foo();
+  };
+
+  struct Subclass : Base {
+  };
+
+  namespace InnerNS {
+    int foo();
+  }
+
+  // We should be able to diagnose these without instantiation.
+  template <class T> struct C : Base {
+    using InnerNS::foo; // expected-error {{not a class}}
+    using Base::bar; // expected-error {{no member named 'bar'}}
+    using Unrelated::foo; // expected-error {{not a base class}}
+    using C::foo; // legal in C++03
+    using Subclass::foo; // legal in C++03
+
+    int bar(); //expected-note {{target of using declaration}}
+    using C::bar; // expected-error {{refers to its own class}}
+  };
 }

@@ -2889,6 +2889,9 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     break;
       
   case UnqualifiedId::IK_ConstructorName:
+    // C++0x inherited constructors.
+    if (getLangOptions().CPlusPlus0x) break;
+
     Diag(Name.getSourceRange().getBegin(), diag::err_using_decl_constructor)
       << SS.getRange();
     return DeclPtrTy();
@@ -2905,6 +2908,9 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   }
   
   DeclarationName TargetName = GetNameFromUnqualifiedId(Name);
+  if (!TargetName)
+    return DeclPtrTy();
+
   NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
                                         Name.getSourceRange().getBegin(),
                                         TargetName, AttrList,
@@ -2917,27 +2923,65 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
 }
 
 /// Builds a shadow declaration corresponding to a 'using' declaration.
-static UsingShadowDecl *BuildUsingShadowDecl(Sema &SemaRef, Scope *S,
-                                             AccessSpecifier AS,
-                                             UsingDecl *UD, NamedDecl *Orig) {
+UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
+                                            AccessSpecifier AS,
+                                            UsingDecl *UD,
+                                            NamedDecl *Orig) {
   // FIXME: diagnose hiding, collisions
 
   // If we resolved to another shadow declaration, just coalesce them.
-  if (isa<UsingShadowDecl>(Orig)) {
-    Orig = cast<UsingShadowDecl>(Orig)->getTargetDecl();
-    assert(!isa<UsingShadowDecl>(Orig) && "nested shadow declaration");
+  NamedDecl *Target = Orig;
+  if (isa<UsingShadowDecl>(Target)) {
+    Target = cast<UsingShadowDecl>(Target)->getTargetDecl();
+    assert(!isa<UsingShadowDecl>(Target) && "nested shadow declaration");
   }
   
   UsingShadowDecl *Shadow
-    = UsingShadowDecl::Create(SemaRef.Context, SemaRef.CurContext,
-                              UD->getLocation(), UD, Orig);
+    = UsingShadowDecl::Create(Context, CurContext,
+                              UD->getLocation(), UD, Target);
   UD->addShadowDecl(Shadow);
 
   if (S)
-    SemaRef.PushOnScopeChains(Shadow, S);
+    PushOnScopeChains(Shadow, S);
   else
-    SemaRef.CurContext->addDecl(Shadow);
+    CurContext->addDecl(Shadow);
   Shadow->setAccess(AS);
+
+  if (Orig->isInvalidDecl() || UD->isInvalidDecl())
+    Shadow->setInvalidDecl();
+
+  // If we haven't already declared the shadow decl invalid, check
+  // whether the decl comes from a base class of the current class.
+  // We don't have to do this in C++0x because we do the check once on
+  // the qualifier.
+  else if (!getLangOptions().CPlusPlus0x && CurContext->isRecord()) {
+    DeclContext *OrigDC = Orig->getDeclContext();
+
+    // Handle enums and anonymous structs.
+    if (isa<EnumDecl>(OrigDC)) OrigDC = OrigDC->getParent();
+    CXXRecordDecl *OrigRec = cast<CXXRecordDecl>(OrigDC);
+    while (OrigRec->isAnonymousStructOrUnion())
+      OrigRec = cast<CXXRecordDecl>(OrigRec->getDeclContext());
+
+    if (cast<CXXRecordDecl>(CurContext)->isProvablyNotDerivedFrom(OrigRec)) {
+      if (OrigDC == CurContext) {
+        Diag(UD->getLocation(),
+             diag::err_using_decl_nested_name_specifier_is_current_class)
+          << UD->getNestedNameRange();
+        Diag(Orig->getLocation(), diag::note_using_decl_target);
+        Shadow->setInvalidDecl();
+        return Shadow;
+      }
+
+      Diag(UD->getNestedNameRange().getBegin(),
+           diag::err_using_decl_nested_name_specifier_is_not_base_class)
+        << UD->getTargetNestedNameDecl()
+        << cast<CXXRecordDecl>(CurContext)
+        << UD->getNestedNameRange();
+      Diag(Orig->getLocation(), diag::note_using_decl_target);
+      return Shadow;
+    }
+  }
 
   return Shadow;
 }
@@ -2998,41 +3042,19 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   if (!LookupContext) return D;
   UsingDecl *UD = cast<UsingDecl>(D);
 
-  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(CurContext)) {
-    // C++0x N2914 [namespace.udecl]p3:
-    // A using-declaration used as a member-declaration shall refer to a member
-    // of a base class of the class being defined, shall refer to a member of an
-    // anonymous union that is a member of a base class of the class being
-    // defined, or shall refer to an enumerator for an enumeration type that is
-    // a member of a base class of the class being defined.
-    
-    CXXRecordDecl *LookupRD = dyn_cast<CXXRecordDecl>(LookupContext);
-    if (!LookupRD || !RD->isDerivedFrom(LookupRD)) {
-      Diag(SS.getRange().getBegin(),
-           diag::err_using_decl_nested_name_specifier_is_not_a_base_class)
-        << NNS << RD->getDeclName();
-      UD->setInvalidDecl();
-      return UD;
-    }
-  } else {
-    // C++0x N2914 [namespace.udecl]p8:
-    // A using-declaration for a class member shall be a member-declaration.
-    if (isa<CXXRecordDecl>(LookupContext)) {
-      Diag(IdentLoc, diag::err_using_decl_can_not_refer_to_class_member)
-        << SS.getRange();
-      UD->setInvalidDecl();
-      return UD;
-    }
+  if (RequireCompleteDeclContext(SS)) {
+    UD->setInvalidDecl();
+    return UD;
   }
 
-  // Look up the target name.  Unlike most lookups, we do not want to
-  // hide tag declarations: tag names are visible through the using
-  // declaration even if hidden by ordinary names.
+  // Look up the target name.
+
   LookupResult R(*this, Name, IdentLoc, LookupOrdinaryName);
 
-  // We don't hide tags behind ordinary decls if we're in a
-  // non-dependent context, but in a dependent context, this is
-  // important for the stability of two-phase lookup.
+  // Unlike most lookups, we don't always want to hide tag
+  // declarations: tag names are visible through the using declaration
+  // even if hidden by ordinary names, *except* in a dependent context
+  // where it's important for the sanity of two-phase lookup.
   if (!IsInstantiation)
     R.setHideTags(false);
 
@@ -3082,10 +3104,11 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   }
 
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
-    BuildUsingShadowDecl(*this, S, AS, UD, *I);
+    BuildUsingShadowDecl(S, AS, UD, *I);
 
   return UD;
 }
+
 
 /// Checks that the given nested-name qualifier used in a using decl
 /// in the current context is appropriately related to the current
@@ -3093,9 +3116,129 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
                                    const CXXScopeSpec &SS,
                                    SourceLocation NameLoc) {
-  // FIXME: implement
+  DeclContext *NamedContext = computeDeclContext(SS);
 
-  return false;
+  if (!CurContext->isRecord()) {
+    // C++03 [namespace.udecl]p3:
+    // C++0x [namespace.udecl]p8:
+    //   A using-declaration for a class member shall be a member-declaration.
+
+    // If we weren't able to compute a valid scope, it must be a
+    // dependent class scope.
+    if (!NamedContext || NamedContext->isRecord()) {
+      Diag(NameLoc, diag::err_using_decl_can_not_refer_to_class_member)
+        << SS.getRange();
+      return true;
+    }
+
+    // Otherwise, everything is known to be fine.
+    return false;
+  }
+
+  // The current scope is a record.
+
+  // If the named context is dependent, we can't decide much.
+  if (!NamedContext) {
+    // FIXME: in C++0x, we can diagnose if we can prove that the
+    // nested-name-specifier does not refer to a base class, which is
+    // still possible in some cases.
+
+    // Otherwise we have to conservatively report that things might be
+    // okay.
+    return false;
+  }
+
+  if (!NamedContext->isRecord()) {
+    // Ideally this would point at the last name in the specifier,
+    // but we don't have that level of source info.
+    Diag(SS.getRange().getBegin(),
+         diag::err_using_decl_nested_name_specifier_is_not_class)
+      << (NestedNameSpecifier*) SS.getScopeRep() << SS.getRange();
+    return true;
+  }
+
+  if (getLangOptions().CPlusPlus0x) {
+    // C++0x [namespace.udecl]p3:
+    //   In a using-declaration used as a member-declaration, the
+    //   nested-name-specifier shall name a base class of the class
+    //   being defined.
+
+    if (cast<CXXRecordDecl>(CurContext)->isProvablyNotDerivedFrom(
+                                 cast<CXXRecordDecl>(NamedContext))) {
+      if (CurContext == NamedContext) {
+        Diag(NameLoc,
+             diag::err_using_decl_nested_name_specifier_is_current_class)
+          << SS.getRange();
+        return true;
+      }
+
+      Diag(SS.getRange().getBegin(),
+           diag::err_using_decl_nested_name_specifier_is_not_base_class)
+        << (NestedNameSpecifier*) SS.getScopeRep()
+        << cast<CXXRecordDecl>(CurContext)
+        << SS.getRange();
+      return true;
+    }
+
+    return false;
+  }
+
+  // C++03 [namespace.udecl]p4:
+  //   A using-declaration used as a member-declaration shall refer
+  //   to a member of a base class of the class being defined [etc.].
+
+  // Salient point: SS doesn't have to name a base class as long as
+  // lookup only finds members from base classes.  Therefore we can
+  // diagnose here only if we can prove that that can't happen,
+  // i.e. if the class hierarchies provably don't intersect.
+
+  // TODO: it would be nice if "definitely valid" results were cached
+  // in the UsingDecl and UsingShadowDecl so that these checks didn't
+  // need to be repeated.
+
+  struct UserData {
+    llvm::DenseSet<const CXXRecordDecl*> Bases;
+
+    static bool collect(const CXXRecordDecl *Base, void *OpaqueData) {
+      UserData *Data = reinterpret_cast<UserData*>(OpaqueData);
+      Data->Bases.insert(Base);
+      return true;
+    }
+
+    bool hasDependentBases(const CXXRecordDecl *Class) {
+      return !Class->forallBases(collect, this);
+    }
+
+    /// Returns true if the base is dependent or is one of the
+    /// accumulated base classes.
+    static bool doesNotContain(const CXXRecordDecl *Base, void *OpaqueData) {
+      UserData *Data = reinterpret_cast<UserData*>(OpaqueData);
+      return !Data->Bases.count(Base);
+    }
+
+    bool mightShareBases(const CXXRecordDecl *Class) {
+      return Bases.count(Class) || !Class->forallBases(doesNotContain, this);
+    }
+  };
+
+  UserData Data;
+
+  // Returns false if we find a dependent base.
+  if (Data.hasDependentBases(cast<CXXRecordDecl>(CurContext)))
+    return false;
+
+  // Returns false if the class has a dependent base or if it or one
+  // of its bases is present in the base set of the current context.
+  if (Data.mightShareBases(cast<CXXRecordDecl>(NamedContext)))
+    return false;
+
+  Diag(SS.getRange().getBegin(),
+       diag::err_using_decl_nested_name_specifier_is_not_base_class)
+    << (NestedNameSpecifier*) SS.getScopeRep()
+    << cast<CXXRecordDecl>(CurContext)
+    << SS.getRange();
+
+  return true;
 }
 
 Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,

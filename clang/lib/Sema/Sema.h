@@ -1730,6 +1730,9 @@ public:
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident);
 
+  UsingShadowDecl *BuildUsingShadowDecl(Scope *S, AccessSpecifier AS,
+                                        UsingDecl *UD, NamedDecl *Target);
+
   bool CheckUsingDeclQualifier(SourceLocation UsingLoc,
                                const CXXScopeSpec &SS,
                                SourceLocation NameLoc);

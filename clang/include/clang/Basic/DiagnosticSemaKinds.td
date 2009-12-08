@@ -105,7 +105,11 @@ def err_using_typename_non_type : Error<
   "'typename' keyword used on a non-type">;
 def err_using_dependent_value_is_type : Error<
   "dependent using declaration resolved to type without 'typename'">;
-def err_using_decl_nested_name_specifier_is_not_a_base_class : Error<
+def err_using_decl_nested_name_specifier_is_not_class : Error<
+  "using declaration in class refers into '%0', which is not a class">;
+def err_using_decl_nested_name_specifier_is_current_class : Error<
+  "using declaration refers to its own class">;
+def err_using_decl_nested_name_specifier_is_not_base_class : Error<
   "using declaration refers into '%0', which is not a base class of %1">;
 def err_using_decl_can_not_refer_to_class_member : Error<
   "using declaration can not refer to class member">;

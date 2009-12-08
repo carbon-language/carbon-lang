@@ -1071,17 +1071,12 @@ Decl *TemplateDeclInstantiator::VisitUsingShadowDecl(UsingShadowDecl *D) {
     cast<NamedDecl>(SemaRef.FindInstantiatedDecl(D->getTargetDecl(),
                                                  TemplateArgs));
 
-  UsingShadowDecl *InstD = UsingShadowDecl::Create(SemaRef.Context, Owner,
-                                                   InstUsing->getLocation(),
-                                                   InstUsing, InstTarget);
-  InstUsing->addShadowDecl(InstD);
-
-  if (InstTarget->isInvalidDecl() || InstUsing->isInvalidDecl())
-    InstD->setInvalidDecl();
+  UsingShadowDecl *InstD = SemaRef.BuildUsingShadowDecl(/*Scope*/ 0,
+                                                        D->getAccess(),
+                                                        InstUsing,
+                                                        InstTarget);
 
   SemaRef.Context.setInstantiatedFromUsingShadowDecl(InstD, D);
-  InstD->setAccess(D->getAccess());
-  Owner->addDecl(InstD);
 
   return InstD;
 }
