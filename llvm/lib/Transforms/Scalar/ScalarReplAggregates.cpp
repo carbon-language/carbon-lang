@@ -769,6 +769,10 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
       OtherPtr = MTI->getRawDest();
     }
   }
+
+  // Keep track of the other intrinsic argument, so it can be removed if it
+  // is dead when the intrinsic is replaced.
+  Value *PossiblyDead = OtherPtr;
   
   // If there is an other pointer, we want to convert it to the same pointer
   // type as AI has, so we can GEP through it safely.
@@ -922,6 +926,8 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     }
   }
   MI->eraseFromParent();
+  if (PossiblyDead)
+    RecursivelyDeleteTriviallyDeadInstructions(PossiblyDead);
 }
 
 /// RewriteStoreUserOfWholeAlloca - We found a store of an integer that
