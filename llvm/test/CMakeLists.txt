@@ -31,6 +31,8 @@ if(PYTHONINTERP_FOUND)
                 ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+                --param llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+                --param llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
                 -sv
                 ${CMAKE_CURRENT_BINARY_DIR}
                 DEPENDS
