@@ -119,13 +119,13 @@ def mdebug_pass : Separate<"-mdebug-pass">,
   HelpText<"Enable additional debug output">;
 def mdisable_fp_elim : Flag<"-mdisable-fp-elim">,
   HelpText<"Disable frame pointer elimination optimization">;
-def mfloat_abi : Flag<"-mfloat-abi">,
+def mfloat_abi : Separate<"-mfloat-abi">,
   HelpText<"The float ABI to use">;
 def mlimit_float_precision : Separate<"-mlimit-float-precision">,
   HelpText<"Limit float precision to the given value">;
 def mno_zero_initialized_in_bss : Flag<"-mno-zero-initialized-in-bss">,
   HelpText<"Do not put zero initialized data in the BSS">;
-def msoft_float : Separate<"-msoft-float">,
+def msoft_float : Flag<"-msoft-float">,
   HelpText<"Use software floating point">;
 def mrelocation_model : Separate<"-mrelocation-model">,
   HelpText<"The relocation model to use">;

@@ -13,3 +13,29 @@
 // RUN: grep '"-mcpu" "yonah"' %t.log
 // RUN: clang -ccc-host-triple x86_64-apple-darwin9 -### -S %s -o %t.s 2> %t.log
 // RUN: grep '"-mcpu" "core2"' %t.log
+
+// RUN: clang -ccc-host-triple x86_64-apple-darwin10 -### -S %s 2> %t.log \
+// RUN:   -arch armv7
+// RUN: FileCheck -check-prefix=ARMV7_DEFAULT %s < %t.log
+// ARMV7_DEFAULT: clang-cc"
+// ARMV7_DEFAULT-NOT: "-msoft-float"
+// ARMV7_DEFAULT: "-mfloat-abi" "soft"
+// ARMV7_DEFAULT-NOT: "-msoft-float"
+// ARMV7_DEFAULT: "-x" "c"
+
+// RUN: clang -ccc-host-triple x86_64-apple-darwin10 -### -S %s 2> %t.log \
+// RUN:   -arch armv7 -msoft-float
+// RUN: FileCheck -check-prefix=ARMV7_SOFTFLOAT %s < %t.log
+// ARMV7_SOFTFLOAT: clang-cc"
+// ARMV7_SOFTFLOAT: "-msoft-float"
+// ARMV7_SOFTFLOAT: "-mfloat-abi" "soft"
+// ARMV7_SOFTFLOAT: "-x" "c"
+
+// RUN: clang -ccc-host-triple x86_64-apple-darwin10 -### -S %s 2> %t.log \
+// RUN:   -arch armv7 -mhard-float
+// RUN: FileCheck -check-prefix=ARMV7_HARDFLOAT %s < %t.log
+// ARMV7_HARDFLOAT: clang-cc"
+// ARMV7_HARDFLOAT-NOT: "-msoft-float"
+// ARMV7_HARDFLOAT: "-mfloat-abi" "hard"
+// ARMV7_HARDFLOAT-NOT: "-msoft-float"
+// ARMV7_HARDFLOAT: "-x" "c"

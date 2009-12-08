@@ -419,14 +419,17 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     //
     // FIXME: This changes CPP defines, we need -target-soft-float.
     CmdArgs.push_back("-msoft-float");
-    CmdArgs.push_back("-mfloat-abi=soft");
+    CmdArgs.push_back("-mfloat-abi");
+    CmdArgs.push_back("soft");
   } else if (FloatABI == "softfp") {
     // Floating point operations are hard, but argument passing is soft.
-    CmdArgs.push_back("-mfloat-abi=soft");
+    CmdArgs.push_back("-mfloat-abi");
+    CmdArgs.push_back("soft");
   } else {
     // Floating point operations and argument passing are hard.
     assert(FloatABI == "hard" && "Invalid float abi!");
-    CmdArgs.push_back("-mfloat-abi=hard");
+    CmdArgs.push_back("-mfloat-abi");
+    CmdArgs.push_back("hard");
   }
 }
 
