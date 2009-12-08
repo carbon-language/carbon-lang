@@ -167,7 +167,11 @@ class ConstStructBuilder {
       }
 
       // Or in the bits that go into the previous byte.
-      Tmp |= cast<llvm::ConstantInt>(Elements.back())->getValue();
+      if (llvm::ConstantInt *Val = dyn_cast<llvm::ConstantInt>(Elements.back()))
+        Tmp |= Val->getValue();
+      else
+        assert(isa<llvm::UndefValue>(Elements.back()));
+
       Elements.back() = llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp);
 
       if (FitsCompletelyInPreviousByte)
