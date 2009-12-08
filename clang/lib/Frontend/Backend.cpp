@@ -331,8 +331,14 @@ void BackendConsumer::CreatePasses() {
   switch (Inlining) {
   case CodeGenOptions::NoInlining: break;
   case CodeGenOptions::NormalInlining: {
-    // Inline small functions
-    unsigned Threshold = (CodeGenOpts.OptimizeSize || OptLevel < 3) ? 50 : 200;
+    // Set the inline threshold following llvm-gcc.
+    //
+    // FIXME: Derive these constants in a principled fashion.
+    unsigned Threshold = 200;
+    if (CodeGenOpts.OptimizeSize)
+      Threshold = 50;
+    else if (OptLevel > 2)
+      Threshold = 250;
     InliningPass = createFunctionInliningPass(Threshold);
     break;
   }
