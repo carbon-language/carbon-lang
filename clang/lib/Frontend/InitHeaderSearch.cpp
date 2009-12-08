@@ -69,7 +69,7 @@ public:
 
   /// AddDelimitedPaths - Add a list of paths delimited by the system PATH
   /// separator. The processing follows that of the CPATH variable for gcc.
-  void AddDelimitedPaths(const char *String);
+  void AddDelimitedPaths(llvm::StringRef String);
 
   // AddDefaultCIncludePaths - Add paths that should always be searched.
   void AddDefaultCIncludePaths(const llvm::Triple &triple);
@@ -145,20 +145,20 @@ void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
 }
 
 
-void InitHeaderSearch::AddDelimitedPaths(const char *at) {
-  if (*at == 0) // Empty string should not add '.' path.
+void InitHeaderSearch::AddDelimitedPaths(llvm::StringRef at) {
+  if (at.empty()) // Empty string should not add '.' path.
     return;
 
-  const char* delim = strchr(at, llvm::sys::PathSeparator);
-  while (delim != 0) {
-    if (delim-at == 0)
+  llvm::StringRef::size_type delim;
+  while ((delim = at.find(llvm::sys::PathSeparator)) != llvm::StringRef::npos) {
+    if (delim == 0)
       AddPath(".", Angled, false, true, false);
     else
-      AddPath(llvm::StringRef(at, delim-at), Angled, false, true, false);
-    at = delim + 1;
-    delim = strchr(at, llvm::sys::PathSeparator);
+      AddPath(at.substr(0, delim), Angled, false, true, false);
+    at = at.substr(delim + 1);
   }
-  if (*at == 0)
+
+  if (at.empty())
     AddPath(".", Angled, false, true, false);
   else
     AddPath(at, Angled, false, true, false);
@@ -718,15 +718,15 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   }
 
   // Add entries from CPATH and friends.
-  Init.AddDelimitedPaths(HSOpts.EnvIncPath.c_str());
+  Init.AddDelimitedPaths(HSOpts.EnvIncPath);
   if (Lang.CPlusPlus && Lang.ObjC1)
-    Init.AddDelimitedPaths(HSOpts.ObjCXXEnvIncPath.c_str());
+    Init.AddDelimitedPaths(HSOpts.ObjCXXEnvIncPath);
   else if (Lang.CPlusPlus)
-    Init.AddDelimitedPaths(HSOpts.CXXEnvIncPath.c_str());
+    Init.AddDelimitedPaths(HSOpts.CXXEnvIncPath);
   else if (Lang.ObjC1)
-    Init.AddDelimitedPaths(HSOpts.ObjCEnvIncPath.c_str());
+    Init.AddDelimitedPaths(HSOpts.ObjCEnvIncPath);
   else
-    Init.AddDelimitedPaths(HSOpts.CEnvIncPath.c_str());
+    Init.AddDelimitedPaths(HSOpts.CEnvIncPath);
 
   if (!HSOpts.BuiltinIncludePath.empty()) {
     // Ignore the sys root, we *always* look for clang headers relative to
