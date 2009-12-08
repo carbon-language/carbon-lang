@@ -1571,7 +1571,11 @@ public:
     CK_FloatingCast,
     
     /// CK_MemberPointerToBoolean - Member pointer to boolean
-    CK_MemberPointerToBoolean
+    CK_MemberPointerToBoolean,
+
+    /// CK_AnyPointerToObjCPointerCast - Casting any pointer to objective-c 
+    /// pointer
+    CK_AnyPointerToObjCPointerCast
 
   };
 
