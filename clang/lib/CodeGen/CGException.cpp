@@ -189,7 +189,7 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
 static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
                        bool WasPointer, llvm::Value *E, llvm::Value *N) {
   // Store the throw exception in the exception object.
-  if (!CGF.hasAggregateLLVMType(ObjectType)) {
+  if (WasPointer || !CGF.hasAggregateLLVMType(ObjectType)) {
     llvm::Value *Value = E;
     if (!WasPointer)
       Value = CGF.Builder.CreateLoad(Value);
