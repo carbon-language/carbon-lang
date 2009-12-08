@@ -112,3 +112,12 @@ using namespace Alias;
 void testAlias() {
   inAliased();
 }
+
+namespace N { void f2(int); }
+
+extern "C++" {
+  using namespace N;
+  void f3() { f2(1); }
+}
+
+void f4() { f2(1); }

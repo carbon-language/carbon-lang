@@ -40,3 +40,17 @@ namespace pr5430 {
 }
 using namespace pr5430;
 extern "C" void pr5430::func(void) { }
+
+// PR5404
+int f2(char *)
+{
+        return 0;
+}
+
+extern "C"
+{
+    int f2(int)
+    {
+        return f2((char *)0);
+    }
+}

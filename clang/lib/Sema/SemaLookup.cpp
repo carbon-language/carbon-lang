@@ -480,7 +480,12 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
       DeclContext *OuterCtx = findOuterContext(S);
       for (; Ctx && Ctx->getPrimaryContext() != OuterCtx; 
            Ctx = Ctx->getLookupParent()) {
-        if (Ctx->isFunctionOrMethod())
+        // We do not directly look into function or method contexts
+        // (since all local variables are found via the identifier
+        // changes) or in transparent contexts (since those entities
+        // will be found in the nearest enclosing non-transparent
+        // context).
+        if (Ctx->isFunctionOrMethod() || Ctx->isTransparentContext())
           continue;
         
         // Perform qualified name lookup into this context.
