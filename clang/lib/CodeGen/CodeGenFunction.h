@@ -468,6 +468,8 @@ public:
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type);
 
+  void InitializeVtablePtrs(const CXXRecordDecl *ClassDecl);
+
   void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
                                     CXXCtorType Type,
                                     llvm::Function *Fn,

@@ -1572,6 +1572,8 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
       EmitAggregateCopy(LHS.getAddress(), RHS.getAddress(), Field->getType());
     }
   }
+
+  InitializeVtablePtrs(ClassDecl);
   FinishFunction();
 }
 
@@ -1812,6 +1814,10 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
       PopCXXTemporary();
   }
 
+  InitializeVtablePtr(ClassDecl);
+}
+
+void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->isDynamicClass())
     return;
   
