@@ -253,6 +253,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
                        llvm::ConstantInt::get(SizeTy, TypeSize),
                        "exception");
 
+  // FIXME: terminate protect this
   CopyObject(*this, E->getSubExpr(), ExceptionPtr);
   
   // Now throw the exception.
