@@ -99,7 +99,6 @@ namespace llvm {
     bool isGlobalVariable() const;
     bool isScope() const;
     bool isCompileUnit() const;
-    bool isNameSpace() const;
     bool isLexicalBlock() const;
     bool isSubrange() const;
     bool isEnumerator() const;
@@ -219,7 +218,7 @@ namespace llvm {
     virtual ~DIType() {}
 
     DIDescriptor getContext() const     { return getDescriptorField(1); }
-    StringRef getName() const           { return getStringField(2);     }
+    StringRef getName() const         { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
@@ -471,22 +470,6 @@ namespace llvm {
     StringRef getFilename() const  { return getContext().getFilename(); }
   };
 
-  /// DINameSpace - A wrapper for a C++ style name space.
-  class DINameSpace : public DIScope { 
-  public:
-    explicit DINameSpace(MDNode *N = 0) : DIScope(N) {
-      if (DbgNode && !isNameSpace())
-        DbgNode = 0;
-    }
-
-    DIScope getContext() const     { return getFieldAs<DIScope>(1);      }
-    StringRef getName() const      { return getStringField(2);           }
-    StringRef getDirectory() const { return getContext().getDirectory(); }
-    StringRef getFilename() const  { return getContext().getFilename();  }
-    DICompileUnit getCompileUnit() const { return getFieldAs<DICompileUnit>(3); }
-    unsigned getLineNumber() const { return getUnsignedField(4);         }
-  };
-
   /// DILocation - This object holds location information. This object
   /// is not associated with any DWARF tag.
   class DILocation : public DIDescriptor {
@@ -640,11 +623,6 @@ namespace llvm {
     /// CreateLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
     DILexicalBlock CreateLexicalBlock(DIDescriptor Context);
-
-    /// CreateNameSpace - This creates new descriptor for a namespace
-    /// with the specified parent context.
-    DINameSpace CreateNameSpace(DIDescriptor Context, StringRef Name,
-                                DICompileUnit CU, unsigned LineNo);
 
     /// CreateLocation - Creates a debug info location.
     DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo,

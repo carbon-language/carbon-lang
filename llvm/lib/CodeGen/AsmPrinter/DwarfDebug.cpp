@@ -446,23 +446,6 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
-/// addSourceLine - Add location information to specified debug information
-/// entry.
-void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace *NS) {
-  // If there is no compile unit specified, don't add a line #.
-  if (NS->getCompileUnit().isNull())
-    return;
-
-  unsigned Line = NS->getLineNumber();
-  StringRef FN = NS->getFilename();
-  StringRef Dir = NS->getDirectory();
-
-  unsigned FileID = GetOrCreateSourceID(Dir, FN);
-  assert(FileID && "Invalid file id");
-  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
-  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
-}
-
 /* Byref variables, in Blocks, are declared by the programmer as
    "SomeType VarName;", but the compiler creates a
    __Block_byref_x_VarName struct, and gives the variable VarName
@@ -756,12 +739,12 @@ void DwarfDebug::addAddress(DIE *Die, unsigned Attribute,
 }
 
 /// addType - Add a new type attribute to the specified entity.
-void DwarfDebug::addType(DIE *Entity, DIType Ty) {
+void DwarfDebug::addType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   if (Ty.isNull())
     return;
 
   // Check for pre-existence.
-  DIEEntry *Entry = ModuleCU->getDIEEntry(Ty.getNode());
+  DIEEntry *Entry = DW_Unit->getDIEEntry(Ty.getNode());
 
   // If it exists then use the existing value.
   if (Entry) {
@@ -771,40 +754,37 @@ void DwarfDebug::addType(DIE *Entity, DIType Ty) {
 
   // Set up proxy.
   Entry = createDIEEntry();
-  ModuleCU->insertDIEEntry(Ty.getNode(), Entry);
+  DW_Unit->insertDIEEntry(Ty.getNode(), Entry);
 
   // Construct type.
   DIE *Buffer = new DIE(dwarf::DW_TAG_base_type);
   ModuleCU->insertDIE(Ty.getNode(), Buffer);
   if (Ty.isBasicType())
-    constructTypeDIE(*Buffer, DIBasicType(Ty.getNode()));
+    constructTypeDIE(DW_Unit, *Buffer, DIBasicType(Ty.getNode()));
   else if (Ty.isCompositeType())
-    constructTypeDIE(*Buffer, DICompositeType(Ty.getNode()));
+    constructTypeDIE(DW_Unit, *Buffer, DICompositeType(Ty.getNode()));
   else {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
-    constructTypeDIE(*Buffer, DIDerivedType(Ty.getNode()));
+    constructTypeDIE(DW_Unit, *Buffer, DIDerivedType(Ty.getNode()));
   }
 
   // Add debug information entry to entity and appropriate context.
   DIE *Die = NULL;
   DIDescriptor Context = Ty.getContext();
-  if (!Context.isNull()) {
-    if (Context.isNameSpace()) {
-      DINameSpace NS(Context.getNode());
-      Die = getOrCreateNameSpace(NS);
-    } else
-      Die = ModuleCU->getDIE(Context.getNode());
-  }
+  if (!Context.isNull())
+    Die = DW_Unit->getDIE(Context.getNode());
+
   if (Die)
     Die->addChild(Buffer);
   else
-    ModuleCU->addDie(Buffer);
+    DW_Unit->addDie(Buffer);
   Entry->setEntry(Buffer);
   Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
 }
 
 /// constructTypeDIE - Construct basic type die from DIBasicType.
-void DwarfDebug::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
+void DwarfDebug::constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+                                  DIBasicType BTy) {
   // Get core information.
   StringRef Name = BTy.getName();
   Buffer.setTag(dwarf::DW_TAG_base_type);
@@ -819,7 +799,8 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
 }
 
 /// constructTypeDIE - Construct derived type die from DIDerivedType.
-void DwarfDebug::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
+void DwarfDebug::constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+                                  DIDerivedType DTy) {
   // Get core information.
   StringRef Name = DTy.getName();
   uint64_t Size = DTy.getSizeInBits() >> 3;
@@ -832,7 +813,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
   // Map to main type, void will not have a type.
   DIType FromTy = DTy.getTypeDerivedFrom();
-  addType(&Buffer, FromTy);
+  addType(DW_Unit, &Buffer, FromTy);
 
   // Add name if not anonymous or intermediate type.
   if (!Name.empty())
@@ -848,7 +829,8 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 }
 
 /// constructTypeDIE - Construct type DIE from DICompositeType.
-void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
+void DwarfDebug::constructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
+                                  DICompositeType CTy) {
   // Get core information.
   StringRef Name = CTy.getName();
 
@@ -859,7 +841,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   switch (Tag) {
   case dwarf::DW_TAG_vector_type:
   case dwarf::DW_TAG_array_type:
-    constructArrayTypeDIE(Buffer, &CTy);
+    constructArrayTypeDIE(DW_Unit, Buffer, &CTy);
     break;
   case dwarf::DW_TAG_enumeration_type: {
     DIArray Elements = CTy.getTypeArray();
@@ -869,7 +851,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       DIE *ElemDie = NULL;
       DIEnumerator Enum(Elements.getElement(i).getNode());
       if (!Enum.isNull()) {
-        ElemDie = constructEnumTypeDIE(&Enum);
+        ElemDie = constructEnumTypeDIE(DW_Unit, &Enum);
         Buffer.addChild(ElemDie);
       }
     }
@@ -879,7 +861,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     // Add return type.
     DIArray Elements = CTy.getTypeArray();
     DIDescriptor RTy = Elements.getElement(0);
-    addType(&Buffer, DIType(RTy.getNode()));
+    addType(DW_Unit, &Buffer, DIType(RTy.getNode()));
 
     // Add prototype flag.
     addUInt(&Buffer, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
@@ -888,7 +870,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
       DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
       DIDescriptor Ty = Elements.getElement(i);
-      addType(Arg, DIType(Ty.getNode()));
+      addType(DW_Unit, Arg, DIType(Ty.getNode()));
       Buffer.addChild(Arg);
     }
   }
@@ -910,9 +892,11 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         continue;
       DIE *ElemDie = NULL;
       if (Element.getTag() == dwarf::DW_TAG_subprogram)
-        ElemDie = createMemberSubprogramDIE(DISubprogram(Element.getNode()));
+        ElemDie = createMemberSubprogramDIE(DW_Unit,
+                                            DISubprogram(Element.getNode()));
       else
-        ElemDie = createMemberDIE(DIDerivedType(Element.getNode()));
+        ElemDie = createMemberDIE(DW_Unit,
+                                  DIDerivedType(Element.getNode()));
       Buffer.addChild(ElemDie);
     }
 
@@ -967,26 +951,26 @@ void DwarfDebug::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy){
 }
 
 /// constructArrayTypeDIE - Construct array type DIE from DICompositeType.
-void DwarfDebug::constructArrayTypeDIE(DIE &Buffer,
+void DwarfDebug::constructArrayTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                                        DICompositeType *CTy) {
   Buffer.setTag(dwarf::DW_TAG_array_type);
   if (CTy->getTag() == dwarf::DW_TAG_vector_type)
     addUInt(&Buffer, dwarf::DW_AT_GNU_vector, dwarf::DW_FORM_flag, 1);
 
   // Emit derived type.
-  addType(&Buffer, CTy->getTypeDerivedFrom());
+  addType(DW_Unit, &Buffer, CTy->getTypeDerivedFrom());
   DIArray Elements = CTy->getTypeArray();
 
   // Get an anonymous type for index type.
-  DIE *IdxTy = ModuleCU->getIndexTyDie();
+  DIE *IdxTy = DW_Unit->getIndexTyDie();
   if (!IdxTy) {
     // Construct an anonymous type for index type.
     IdxTy = new DIE(dwarf::DW_TAG_base_type);
     addUInt(IdxTy, dwarf::DW_AT_byte_size, 0, sizeof(int32_t));
     addUInt(IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
             dwarf::DW_ATE_signed);
-    ModuleCU->addDie(IdxTy);
-    ModuleCU->setIndexTyDie(IdxTy);
+    DW_Unit->addDie(IdxTy);
+    DW_Unit->setIndexTyDie(IdxTy);
   }
 
   // Add subranges to array type.
@@ -998,7 +982,7 @@ void DwarfDebug::constructArrayTypeDIE(DIE &Buffer,
 }
 
 /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-DIE *DwarfDebug::constructEnumTypeDIE(DIEnumerator *ETy) {
+DIE *DwarfDebug::constructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
   DIE *Enumerator = new DIE(dwarf::DW_TAG_enumerator);
   StringRef Name = ETy->getName();
   addString(Enumerator, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
@@ -1008,7 +992,8 @@ DIE *DwarfDebug::constructEnumTypeDIE(DIEnumerator *ETy) {
 }
 
 /// createGlobalVariableDIE - Create new DIE using GV.
-DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
+DIE *DwarfDebug::createGlobalVariableDIE(CompileUnit *DW_Unit,
+                                         const DIGlobalVariable &GV) {
   // If the global variable was optmized out then no need to create debug info
   // entry.
   if (!GV.getGlobal()) return NULL;
@@ -1029,7 +1014,7 @@ DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
     addString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
               LinkageName);
   }
-  addType(GVDie, GV.getType());
+  addType(DW_Unit, GVDie, GV.getType());
   if (!GV.isLocalToUnit())
     addUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
   addSourceLine(GVDie, &GV);
@@ -1045,13 +1030,13 @@ DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
 }
 
 /// createMemberDIE - Create new member DIE.
-DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
+DIE *DwarfDebug::createMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT){
   DIE *MemberDie = new DIE(DT.getTag());
   StringRef Name = DT.getName();
   if (!Name.empty())
     addString(MemberDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
   
-  addType(MemberDie, DT.getTypeDerivedFrom());
+  addType(DW_Unit, MemberDie, DT.getTypeDerivedFrom());
 
   addSourceLine(MemberDie, &DT);
 
@@ -1105,7 +1090,8 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
 /// createRawSubprogramDIE - Create new partially incomplete DIE. This is
 /// a helper routine used by createMemberSubprogramDIE and 
 /// createSubprogramDIE.
-DIE *DwarfDebug::createRawSubprogramDIE(const DISubprogram &SP) {
+DIE *DwarfDebug::createRawSubprogramDIE(CompileUnit *DW_Unit,
+                                        const DISubprogram &SP) {
   DIE *SPDie = new DIE(dwarf::DW_TAG_subprogram);
   addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
@@ -1134,9 +1120,9 @@ DIE *DwarfDebug::createRawSubprogramDIE(const DISubprogram &SP) {
   unsigned SPTag = SPTy.getTag();
 
   if (Args.isNull() || SPTag != dwarf::DW_TAG_subroutine_type)
-    addType(SPDie, SPTy);
+    addType(DW_Unit, SPDie, SPTy);
   else
-    addType(SPDie, DIType(Args.getElement(0).getNode()));
+    addType(DW_Unit, SPDie, DIType(Args.getElement(0).getNode()));
 
   unsigned VK = SP.getVirtuality();
   if (VK) {
@@ -1153,10 +1139,11 @@ DIE *DwarfDebug::createRawSubprogramDIE(const DISubprogram &SP) {
 
 /// createMemberSubprogramDIE - Create new member DIE using SP. This routine
 /// always returns a die with DW_AT_declaration attribute.
-DIE *DwarfDebug::createMemberSubprogramDIE(const DISubprogram &SP) {
+DIE *DwarfDebug::createMemberSubprogramDIE(CompileUnit *DW_Unit,
+                                           const DISubprogram &SP) {
   DIE *SPDie = ModuleCU->getDIE(SP.getNode());
   if (!SPDie)
-    SPDie = createSubprogramDIE(SP);
+    SPDie = createSubprogramDIE(DW_Unit, SP);
 
   // If SPDie has DW_AT_declaration then reuse it.
   if (!SP.isDefinition())
@@ -1167,7 +1154,7 @@ DIE *DwarfDebug::createMemberSubprogramDIE(const DISubprogram &SP) {
   if (TopLevelDIEs.insert(SPDie))
     TopLevelDIEsVector.push_back(SPDie);
 
-  SPDie = createRawSubprogramDIE(SP);
+  SPDie = createRawSubprogramDIE(DW_Unit, SP);
 
   // Add arguments. 
   DICompositeType SPTy = SP.getType();
@@ -1176,7 +1163,7 @@ DIE *DwarfDebug::createMemberSubprogramDIE(const DISubprogram &SP) {
   if (SPTag == dwarf::DW_TAG_subroutine_type)
     for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
       DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-      addType(Arg, DIType(Args.getElement(i).getNode()));
+      addType(DW_Unit, Arg, DIType(Args.getElement(i).getNode()));
       addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
       SPDie->addChild(Arg);
     }
@@ -1186,12 +1173,13 @@ DIE *DwarfDebug::createMemberSubprogramDIE(const DISubprogram &SP) {
 }
 
 /// createSubprogramDIE - Create new DIE using SP.
-DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP) {
+DIE *DwarfDebug::createSubprogramDIE(CompileUnit *DW_Unit,
+                                     const DISubprogram &SP) {
   DIE *SPDie = ModuleCU->getDIE(SP.getNode());
   if (SPDie)
     return SPDie;
 
-  SPDie = createRawSubprogramDIE(SP);
+  SPDie = createRawSubprogramDIE(DW_Unit, SP);
 
   if (!SP.isDefinition()) {
     addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
@@ -1205,14 +1193,14 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP) {
     if (SPTag == dwarf::DW_TAG_subroutine_type)
       for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
         DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-        addType(Arg, DIType(Args.getElement(i).getNode()));
+        addType(DW_Unit, Arg, DIType(Args.getElement(i).getNode()));
         addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
         SPDie->addChild(Arg);
       }
   }
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  ModuleCU->insertDIE(SP.getNode(), SPDie);
+  DW_Unit->insertDIE(SP.getNode(), SPDie);
   return SPDie;
 }
 
@@ -1223,6 +1211,64 @@ CompileUnit &DwarfDebug::findCompileUnit(DICompileUnit Unit) const {
     CompileUnitMap.find(Unit.getNode());
   assert(I != CompileUnitMap.end() && "Missing compile unit.");
   return *I->second;
+}
+
+/// createDbgScopeVariable - Create a new scope variable.
+///
+DIE *DwarfDebug::createDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
+  // Get the descriptor.
+  const DIVariable &VD = DV->getVariable();
+  StringRef Name = VD.getName();
+  if (Name.empty())
+    return NULL;
+
+  // Translate tag to proper Dwarf tag.  The result variable is dropped for
+  // now.
+  unsigned Tag;
+  switch (VD.getTag()) {
+  case dwarf::DW_TAG_return_variable:
+    return NULL;
+  case dwarf::DW_TAG_arg_variable:
+    Tag = dwarf::DW_TAG_formal_parameter;
+    break;
+  case dwarf::DW_TAG_auto_variable:    // fall thru
+  default:
+    Tag = dwarf::DW_TAG_variable;
+    break;
+  }
+
+  // Define variable debug information entry.
+  DIE *VariableDie = new DIE(Tag);
+  addString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
+
+  // Add source line info if available.
+  addSourceLine(VariableDie, &VD);
+
+  // Add variable type.
+  // FIXME: isBlockByrefVariable should be reformulated in terms of complex
+  // addresses instead.
+  if (VD.isBlockByrefVariable())
+    addType(Unit, VariableDie, getBlockByrefType(VD.getType(), Name));
+  else
+    addType(Unit, VariableDie, VD.getType());
+
+  // Add variable address.
+  // Variables for abstract instances of inlined functions don't get a
+  // location.
+  MachineLocation Location;
+  unsigned FrameReg;
+  int Offset = RI->getFrameIndexReference(*MF, DV->getFrameIndex(), FrameReg);
+  Location.set(FrameReg, Offset);
+
+
+  if (VD.hasComplexAddress())
+    addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+  else if (VD.isBlockByrefVariable())
+    addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+  else
+    addAddress(VariableDie, dwarf::DW_AT_location, Location);
+
+  return VariableDie;
 }
 
 /// getUpdatedDbgScope - Find or create DbgScope assicated with the instruction.
@@ -1330,7 +1376,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
    if (!N) continue;
    DIGlobalVariable GV(N);
    if (GV.getContext().getNode() == SPNode) {
-     DIE *ScopedGVDie = createGlobalVariableDIE(GV);
+     DIE *ScopedGVDie = createGlobalVariableDIE(ModuleCU, GV);
      if (ScopedGVDie)
        SPDie->addChild(ScopedGVDie);
    }
@@ -1419,7 +1465,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
 
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
+DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV,
+                                      DbgScope *Scope, CompileUnit *Unit) {
   // Get the descriptor.
   const DIVariable &VD = DV->getVariable();
   StringRef Name = VD.getName();
@@ -1468,9 +1515,9 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     // FIXME: isBlockByrefVariable should be reformulated in terms of complex
     // addresses instead.
     if (VD.isBlockByrefVariable())
-      addType(VariableDie, getBlockByrefType(VD.getType(), Name));
+      addType(Unit, VariableDie, getBlockByrefType(VD.getType(), Name));
     else
-      addType(VariableDie, VD.getType());
+      addType(Unit, VariableDie, VD.getType());
   }
 
   // Add variable address.
@@ -1539,7 +1586,7 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
   // Add variables to scope.
   SmallVector<DbgVariable *, 8> &Variables = Scope->getVariables();
   for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-    DIE *VariableDIE = constructVariableDIE(Variables[i], Scope);
+    DIE *VariableDIE = constructVariableDIE(Variables[i], Scope, ModuleCU);
     if (VariableDIE)
       ScopeDIE->addChild(VariableDIE);
   }
@@ -1596,29 +1643,6 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName) 
   return SrcId;
 }
 
-/// getOrCreateNameSpace - Create a DIE for DINameSpace.
-DIE *DwarfDebug::getOrCreateNameSpace(DINameSpace &NS) {
-  DIE *NDie = ModuleCU->getDIE(NS.getNode());
-  if (NDie)
-    return NDie;
-
-  NDie = new DIE(dwarf::DW_TAG_namespace);
-  ModuleCU->insertDIE(NS.getNode(), NDie);
-  if (!NS.getName().empty())
-    addString(NDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, NS.getName());
-  addSourceLine(NDie, &NS);
-  DIDescriptor NSContext = NS.getContext();
-  DIE *Context = NULL;
-  if (NSContext.isNameSpace()) {
-    DINameSpace NS2(NSContext.getNode());
-    Context = getOrCreateNameSpace(NS2);
-  }
-  else
-    Context = ModuleCU->getCUDie();
-  Context->addChild(NDie);
-  return NDie;
-}
-
 void DwarfDebug::constructCompileUnit(MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
@@ -1671,7 +1695,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   if (ModuleCU->getDIE(DI_GV.getNode()))
     return;
 
-  DIE *VariableDie = createGlobalVariableDIE(DI_GV);
+  DIE *VariableDie = createGlobalVariableDIE(ModuleCU, DI_GV);
 
   // Add to map.
   ModuleCU->insertDIE(N, VariableDie);
@@ -1704,23 +1728,16 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
     // class type.
     return;
 
-  DIE *SubprogramDie = createSubprogramDIE(SP);
+  DIE *SubprogramDie = createSubprogramDIE(ModuleCU, SP);
 
   // Add to map.
   ModuleCU->insertDIE(N, SubprogramDie);
 
   // Add to context owner.
-  DIDescriptor SPContext = SP.getContext();
-  if (SPContext.isCompileUnit() 
-      && SPContext.getNode() == SP.getCompileUnit().getNode()) {
+  if (SP.getContext().getNode() == SP.getCompileUnit().getNode())
     if (TopLevelDIEs.insert(SubprogramDie))
       TopLevelDIEsVector.push_back(SubprogramDie);
-  } else if (SPContext.isNameSpace()) {
-    DINameSpace NS(SPContext.getNode());
-    DIE *NDie = getOrCreateNameSpace(NS);
-    NDie->addChild(SubprogramDie);
-  }
-  
+
   // Expose as global.
   ModuleCU->addGlobal(SP.getName(), SubprogramDie);
 
@@ -1763,20 +1780,10 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I) {
     DIGlobalVariable GV(*I);
-    DIDescriptor GVContext = GV.getContext();
-    if (GVContext.isCompileUnit() 
-        && GVContext.getNode() == GV.getCompileUnit().getNode())
-      constructGlobalVariableDIE(*I);
-    else if (GVContext.isNameSpace()) {
-      DIE *GVDie = createGlobalVariableDIE(GV);
-      if (GVDie) {
-        DINameSpace NS(GVContext.getNode());
-        DIE *NDie = getOrCreateNameSpace(NS);
-        NDie->addChild(GVDie);
-      }
-    }
-    else 
+    if (GV.getContext().getNode() != GV.getCompileUnit().getNode())
       ScopedGVs.push_back(*I);
+    else
+      constructGlobalVariableDIE(*I);
   }
 
   // Create DIEs for each subprogram.
@@ -2412,16 +2419,13 @@ void DwarfDebug::emitDIE(DIE *Die) {
   }
 }
 
-/// emitDebugInfo - Emit the debug info section.
+/// emitDebugInfo / emitDebugInfoPerCU - Emit the debug info section.
 ///
-void DwarfDebug::emitDebugInfo() {
-  // Start debug info section.
-  Asm->OutStreamer.SwitchSection(
-                            Asm->getObjFileLowering().getDwarfInfoSection());
-  DIE *Die = ModuleCU->getCUDie();
+void DwarfDebug::emitDebugInfoPerCU(CompileUnit *Unit) {
+  DIE *Die = Unit->getCUDie();
 
   // Emit the compile units header.
-  EmitLabel("info_begin", ModuleCU->getID());
+  EmitLabel("info_begin", Unit->getID());
 
   // Emit size of content not including length itself
   unsigned ContentSize = Die->getSize() +
@@ -2442,10 +2446,17 @@ void DwarfDebug::emitDebugInfo() {
   Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
   Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
   Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
-  EmitLabel("info_end", ModuleCU->getID());
+  EmitLabel("info_end", Unit->getID());
 
   Asm->EOL();
+}
 
+void DwarfDebug::emitDebugInfo() {
+  // Start debug info section.
+  Asm->OutStreamer.SwitchSection(
+                            Asm->getObjFileLowering().getDwarfInfoSection());
+
+  emitDebugInfoPerCU(ModuleCU);
 }
 
 /// emitAbbreviations - Emit the abbreviation section.
@@ -2743,30 +2754,24 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
   Asm->EOL();
 }
 
-/// emitDebugPubNames - Emit visible names into a debug pubnames section.
-///
-void DwarfDebug::emitDebugPubNames() {
-  // Start the dwarf pubnames section.
-  Asm->OutStreamer.SwitchSection(
-                          Asm->getObjFileLowering().getDwarfPubNamesSection());
-
-  EmitDifference("pubnames_end", ModuleCU->getID(),
-                 "pubnames_begin", ModuleCU->getID(), true);
+void DwarfDebug::emitDebugPubNamesPerCU(CompileUnit *Unit) {
+  EmitDifference("pubnames_end", Unit->getID(),
+                 "pubnames_begin", Unit->getID(), true);
   Asm->EOL("Length of Public Names Info");
 
-  EmitLabel("pubnames_begin", ModuleCU->getID());
+  EmitLabel("pubnames_begin", Unit->getID());
 
   Asm->EmitInt16(dwarf::DWARF_VERSION); Asm->EOL("DWARF Version");
 
   EmitSectionOffset("info_begin", "section_info",
-                    ModuleCU->getID(), 0, true, false);
+                    Unit->getID(), 0, true, false);
   Asm->EOL("Offset of Compilation Unit Info");
 
-  EmitDifference("info_end", ModuleCU->getID(), "info_begin", ModuleCU->getID(),
+  EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),
                  true);
   Asm->EOL("Compilation Unit Length");
 
-  const StringMap<DIE*> &Globals = ModuleCU->getGlobals();
+  const StringMap<DIE*> &Globals = Unit->getGlobals();
   for (StringMap<DIE*>::const_iterator
          GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
     const char *Name = GI->getKeyData();
@@ -2777,9 +2782,19 @@ void DwarfDebug::emitDebugPubNames() {
   }
 
   Asm->EmitInt32(0); Asm->EOL("End Mark");
-  EmitLabel("pubnames_end", ModuleCU->getID());
+  EmitLabel("pubnames_end", Unit->getID());
 
   Asm->EOL();
+}
+
+/// emitDebugPubNames - Emit visible names into a debug pubnames section.
+///
+void DwarfDebug::emitDebugPubNames() {
+  // Start the dwarf pubnames section.
+  Asm->OutStreamer.SwitchSection(
+                          Asm->getObjFileLowering().getDwarfPubNamesSection());
+
+  emitDebugPubNamesPerCU(ModuleCU);
 }
 
 void DwarfDebug::emitDebugPubTypes() {
