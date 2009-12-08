@@ -522,6 +522,16 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
         FD->hasAttr<DestructorAttr>())
       return false;
 
+    // The key function for a class must never be deferred.
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Global)) {
+      const CXXRecordDecl *RD = MD->getParent();
+      if (MD->isOutOfLine() && RD->isDynamicClass()) {
+        const CXXMethodDecl *KeyFunction = getContext().getKeyFunction(RD);
+        if (KeyFunction == MD->getCanonicalDecl())
+          return false;
+      }
+    }
+
     GVALinkage Linkage = GetLinkageForFunction(getContext(), FD, Features);
 
     // static, static inline, always_inline, and extern inline functions can

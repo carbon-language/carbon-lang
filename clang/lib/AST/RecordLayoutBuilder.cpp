@@ -724,7 +724,13 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   // function.
   if (RD->getTemplateSpecializationKind() != TSK_Undeclared)
     return 0;
-  
+
+  // A class inside an anonymous namespace doesn't have a key function.  (Or
+  // at least, there's no point to assigning a key function to such a class;
+  // this doesn't affect the ABI.)
+  if (RD->isInAnonymousNamespace())
+    return 0;
+
   for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
        E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *MD = *I;
@@ -733,6 +739,9 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
       continue;
     
     if (MD->isPure())
+      continue;
+
+    if (MD->isInlineSpecified())
       continue;
     
     // Ignore implicit member functions, they are always marked as inline, but
