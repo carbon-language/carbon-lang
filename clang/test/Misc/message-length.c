@@ -1,5 +1,5 @@
-// RUN: clang -fsyntax-only -fmessage-length=72 %s 2>&1 | FileCheck -strict-whitespace %s
-// RUN: clang -fsyntax-only -fmessage-length=1 %s
+// RUN: clang-cc -fmessage-length 72 %s 2>&1 | FileCheck -strict-whitespace %s
+// RUN: clang-cc -fmessage-length 1 %s
 
 // Hack so we can check things better, force the file name and line.
 # 1 "FILE" 1
