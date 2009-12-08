@@ -105,7 +105,7 @@ namespace {
     void isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
                                AllocaInfo &Info);
     void isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
-                         AllocaInfo &Info);
+                          AllocaInfo &Info);
     void isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocaInst *AI,
                                         unsigned OpNo, AllocaInfo &Info);
     void isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocaInst *AI,
@@ -362,7 +362,6 @@ void SROA::DoScalarReplacement(AllocaInst *AI,
 
   // Now that we have created the alloca instructions that we want to use,
   // expand the getelementptr instructions to use them.
-  //
   while (!AI->use_empty()) {
     Instruction *User = cast<Instruction>(AI->use_back());
     if (BitCastInst *BCInst = dyn_cast<BitCastInst>(User)) {
@@ -540,7 +539,7 @@ static bool AllUsersAreLoads(Value *Ptr) {
   return true;
 }
 
-/// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
+/// isSafeUseOfAllocation - Check if this user is an allowed use for an
 /// aggregate allocation.
 void SROA::isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
                                  AllocaInfo &Info) {
@@ -1216,7 +1215,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   return Info.needsCleanup ? 1 : 3;
 }
 
-/// CleanupGEP - GEP is used by an Alloca, which can be prompted after the GEP
+/// CleanupGEP - GEP is used by an Alloca, which can be promoted after the GEP
 /// is canonicalized here.
 void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   gep_type_iterator I = gep_type_begin(GEPI);
