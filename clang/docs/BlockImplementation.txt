@@ -292,7 +292,7 @@ would be rewritten to be:
     int flags;   //refcount;
     int size;
     int captured_i;
-  } i = { NULL, &i, 0, sizeof(struct _block_byref_i), 11;
+  } i = { NULL, &i, 0, sizeof(struct _block_byref_i), 11 };
 
   i.forwarding->captured_i = 11;
 
