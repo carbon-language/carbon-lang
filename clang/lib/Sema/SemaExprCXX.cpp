@@ -1881,8 +1881,8 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   assert(getLangOptions().CPlusPlus && "This function assumes C++");
   QualType T1 = E1->getType(), T2 = E2->getType();
 
-  if (!T1->isPointerType() && !T1->isMemberPointerType() &&
-      !T2->isPointerType() && !T2->isMemberPointerType())
+  if (!T1->isAnyPointerType() && !T1->isMemberPointerType() &&
+      !T2->isAnyPointerType() && !T2->isMemberPointerType())
    return QualType();
 
   // C++0x 5.9p2
