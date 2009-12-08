@@ -1,4 +1,4 @@
-// RUN: clang -ccc-host-triple armv6-unknown-unknown -emit-llvm -S -o %t %s
+// RUN: clang-cc -triple armv6-unknown-unknown -emit-llvm -o %t %s
 
 void test0(void) {
 	asm volatile("mov r0, r0" :: );
