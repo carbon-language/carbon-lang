@@ -230,7 +230,7 @@ def getTests(path, litConfig, testSuiteCache, localConfigCache):
     ts,path_in_suite = getTestSuite(path, litConfig, testSuiteCache)
     if ts is None:
         litConfig.warning('unable to find test suite for %r' % path)
-        return ()
+        return (),()
 
     if litConfig.debug:
         litConfig.note('resolved input %r to %r::%r' % (path, ts.name,
