@@ -654,10 +654,8 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     const llvm::Type *LTy = ConvertTypeForMem(Ty);
     if (LTy->isSingleValueType()) {
       // TODO: Alignment
-      std::string Name = D.getNameAsString();
-      Name += ".addr";
       DeclPtr = CreateTempAlloca(LTy);
-      DeclPtr->setName(Name.c_str());
+      DeclPtr->setName(D.getNameAsString() + llvm::StringRef(".addr"));
 
       // Store the initial value into the alloca.
       EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Ty);
