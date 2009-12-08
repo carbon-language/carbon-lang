@@ -241,10 +241,10 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
 }
 
 RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
-  if (isa<BinaryOperator>(CE->getCallee())) 
+  if (isa<BinaryOperator>(CE->getCallee()->IgnoreParens())) 
     return EmitCXXMemberPointerCallExpr(CE);
       
-  const MemberExpr *ME = cast<MemberExpr>(CE->getCallee());
+  const MemberExpr *ME = cast<MemberExpr>(CE->getCallee()->IgnoreParens());
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
 
   if (MD->isStatic()) {
@@ -307,7 +307,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
 
 RValue
 CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
-  const BinaryOperator *BO = cast<BinaryOperator>(E->getCallee());
+  const BinaryOperator *BO =
+      cast<BinaryOperator>(E->getCallee()->IgnoreParens());
   const Expr *BaseExpr = BO->getLHS();
   const Expr *MemFnExpr = BO->getRHS();
   

@@ -1408,7 +1408,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
     if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(TargetDecl))
       return EmitCXXOperatorMemberCallExpr(CE, MD);
 
-  if (isa<CXXPseudoDestructorExpr>(E->getCallee())) {
+  if (isa<CXXPseudoDestructorExpr>(E->getCallee()->IgnoreParens())) {
     // C++ [expr.pseudo]p1:
     //   The result shall only be used as the operand for the function call
     //   operator (), and the result of such a call has type void. The only
