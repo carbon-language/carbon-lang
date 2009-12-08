@@ -1560,7 +1560,7 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
 
 Constant *ConstantExpr::getInBoundsGetElementPtrTy(const Type *ReqTy,
                                                    Constant *C,
-                                                   Value* const *Idxs,
+                                                   Value *const *Idxs,
                                                    unsigned NumIdx) {
   assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs,
                                            Idxs+NumIdx) ==
