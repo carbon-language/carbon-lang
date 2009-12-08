@@ -21,7 +21,6 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Target/TargetData.h"
