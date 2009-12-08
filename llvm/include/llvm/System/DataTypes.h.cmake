@@ -118,14 +118,33 @@ typedef signed int ssize_t;
 #define INT32_MAX 2147483647
 #define INT32_MIN -2147483648
 #define UINT32_MAX 4294967295U
-#define INT8_C(C)   C
-#define UINT8_C(C)  C
-#define INT16_C(C)  C
-#define UINT16_C(C) C
-#define INT32_C(C)  C
-#define UINT32_C(C) C ## U
-#define INT64_C(C)  ((int64_t) C ## LL)
-#define UINT64_C(C) ((uint64_t) C ## ULL)
+/* Certain compatibility updates to VC++ introduce the `cstdint'
+ * header, which defines the INT*_C macros. On default installs they
+ * are absent. */
+#ifndef INT8_C
+# define INT8_C(C)   C
+#endif
+#ifndef UINT8_C
+# define UINT8_C(C)  C
+#endif
+#ifndef INT16_C
+# define INT16_C(C)  C
+#endif
+#ifndef UINT16_C
+# define UINT16_C(C) C
+#endif
+#ifndef INT32_C
+# define INT32_C(C)  C
+#endif
+#ifndef UINT32_C
+# define UINT32_C(C) C ## U
+#endif
+#ifndef INT64_C
+# define INT64_C(C)  ((int64_t) C ## LL)
+#endif
+#ifndef UINT64_C
+# define UINT64_C(C) ((uint64_t) C ## ULL)
+#endif
 #endif /* _MSC_VER */
 
 /* Set defaults for constants which we cannot find. */
