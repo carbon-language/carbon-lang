@@ -379,7 +379,9 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   // scope.
   if ((isa<FunctionTemplateDecl>(D) &&
        cast<FunctionTemplateDecl>(D)->getTemplatedDecl()->isOutOfLine()) ||
-      (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isOutOfLine()) ||
+      (isa<FunctionDecl>(D) &&
+       (cast<FunctionDecl>(D)->isFunctionTemplateSpecialization() ||
+        cast<FunctionDecl>(D)->isOutOfLine())) ||
       (isa<VarDecl>(D) && cast<VarDecl>(D)->isOutOfLine()))
     return;
 
@@ -2023,9 +2025,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
 
   // If this has an identifier and is not an invalid redeclaration or 
   // function template specialization, add it to the scope stack.
-  if (Name && !(Redeclaration && New->isInvalidDecl()) &&
-      !(isa<FunctionDecl>(New) && 
-        cast<FunctionDecl>(New)->isFunctionTemplateSpecialization()))
+  if (Name && !(Redeclaration && New->isInvalidDecl()))
     PushOnScopeChains(New, S);
 
   return DeclPtrTy::make(New);

@@ -741,6 +741,9 @@ void DeclContext::makeDeclVisibleInContext(NamedDecl *D, bool Recoverable) {
   // from being visible?
   if (isa<ClassTemplateSpecializationDecl>(D))
     return;
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    if (FD->isFunctionTemplateSpecialization())
+      return;
 
   DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this) {
