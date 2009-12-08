@@ -558,6 +558,8 @@ const char *CastExpr::getCastKindName() const {
     return "FloatingCast";
   case CastExpr::CK_MemberPointerToBoolean:
     return "MemberPointerToBoolean";
+  case CastExpr::CK_AnyPointerToObjCPointerCast:
+    return "AnyPointerToObjCPointerCast";
   }
 
   assert(0 && "Unhandled cast kind!");
