@@ -565,16 +565,11 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
         }
         ExcObject = Builder.CreateBitCast(ExcObject, ConvertType(CatchType));
         EmitLocalBlockVarDecl(*CatchParam);
-#if 0
-        // FIXME: objects with ctors, references
-        Builder.CreateStore(ExcObject, GetAddrOfLocalVar(CatchParam));
-#else
         // FIXME: we need to do this sooner so that the EH region for the
         // cleanup doesn't start until after the ctor completes, use a decl
         // init?
         CopyObject(*this, CatchParam->getType().getNonReferenceType(),
                    WasPointer, ExcObject, GetAddrOfLocalVar(CatchParam));
-#endif
         setInvokeDest(MatchHandler);
       }
 
