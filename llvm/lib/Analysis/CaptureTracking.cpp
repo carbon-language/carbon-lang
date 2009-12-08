@@ -25,6 +25,16 @@
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
+/// As its comment mentions, PointerMayBeCaptured can be expensive.
+/// However, it's not easy for BasicAA to cache the result, because
+/// it's an ImmutablePass. To work around this, bound queries at a
+/// fixed number of uses.
+///
+/// TODO: Write a new FunctionPass AliasAnalysis so that it can keep
+/// a cache. Then we can move the code from BasicAliasAnalysis into
+/// that path, and remove this threshold.
+static int const Threshold = 20;
+
 /// PointerMayBeCaptured - Return true if this pointer value may be captured
 /// by the enclosing function (which is required to exist).  This routine can
 /// be expensive, so consider caching the results.  The boolean ReturnCaptures
@@ -37,12 +47,18 @@ bool llvm::PointerMayBeCaptured(const Value *V,
   assert(isa<PointerType>(V->getType()) && "Capture is for pointers only!");
   SmallVector<Use*, 16> Worklist;
   SmallSet<Use*, 16> Visited;
+  int Count = 0;
 
   for (Value::use_const_iterator UI = V->use_begin(), UE = V->use_end();
        UI != UE; ++UI) {
     Use *U = &UI.getUse();
     Visited.insert(U);
     Worklist.push_back(U);
+
+    // If there are lots of uses, conservativelty say that the value
+    // is captured to avoid taking too much compile time.
+    if (Count++ >= Threshold)
+      return true;
   }
 
   while (!Worklist.empty()) {
