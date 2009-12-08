@@ -98,6 +98,11 @@ private:
   Value *InsertPHITranslatedSubExpr(Value *InVal, BasicBlock *CurBB,
                                     BasicBlock *PredBB, const DominatorTree &DT,
                                     SmallVectorImpl<Instruction*> &NewInsts);
+  
+  /// ReplaceInstWithValue - Remove any instruction inputs in the InstInputs
+  /// array that are due to the specified instruction that is about to be
+  /// removed from the address, and add any corresponding to V.  This returns V.
+  Value *ReplaceInstWithValue(Instruction *I, Value *V);
 };
 
 } // end namespace llvm
