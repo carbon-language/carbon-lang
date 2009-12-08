@@ -35,7 +35,7 @@ testg *testgvar = new testg;
 // FIXME: The checks are extremely difficult to get right when the globals
 // aren't alphabetized
 // CHECK: @_ZTV5testa = constant [3 x i8*] [i8* null
-// CHECK: @_ZTV5testc = constant [3 x i8*] [i8* null
+// CHECK: @_ZTV5testc = weak_odr constant [3 x i8*] [i8* null
 // CHECK: @_ZTVN12_GLOBAL__N_15testgE = internal constant [3 x i8*] [i8* null
 // CHECK: @_ZTV5teste = weak_odr constant [3 x i8*] [i8* null
 // CHECK: @_ZTV5testb = weak_odr constant [3 x i8*] [i8* null
