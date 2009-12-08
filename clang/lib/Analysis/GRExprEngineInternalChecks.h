@@ -38,6 +38,7 @@ void RegisterUndefBranchChecker(GRExprEngine &Eng);
 void RegisterUndefResultChecker(GRExprEngine &Eng);
 
 void RegisterNoReturnFunctionChecker(GRExprEngine &Eng);
+void RegisterBuiltinFunctionChecker(GRExprEngine &Eng);
 
 } // end clang namespace
 #endif

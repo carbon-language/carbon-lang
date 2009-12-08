@@ -244,6 +244,7 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
 
   // This is not a checker yet.
   RegisterNoReturnFunctionChecker(Eng);
+  RegisterBuiltinFunctionChecker(Eng);
 }
 
 GRExprEngine::GRExprEngine(AnalysisManager &mgr)
@@ -1669,7 +1670,6 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
     // Check for the "noreturn" attribute.
 
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-    const FunctionDecl* FD = L.getAsFunctionDecl();
 
     ExplodedNodeSet DstTmp3, DstChecker, DstOther;
 
@@ -1677,12 +1677,6 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
     if (CheckerEvalCall(CE, DstChecker, *DI))
       DstTmp3 = DstChecker;
     else {
-      //MarkNoReturnFunction(FD, CE, state, Builder);
-
-      // Evaluate the call.
-      if (EvalBuiltinFunction(FD, CE, *DI, Dst))
-        continue;
-
       // Dispatch to the plug-in transfer function.
       SaveOr OldHasGen(Builder->HasGeneratedNode);
       Pred = *DI;
@@ -1690,7 +1684,6 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
       // Dispatch to transfer function logic to handle the call itself.
       // FIXME: Allow us to chain together transfer functions.
       assert(Builder && "GRStmtNodeBuilder must be defined.");
-    
     
       if (!EvalOSAtomic(DstOther, *this, *Builder, CE, L, Pred))
         getTF().EvalCall(DstOther, *this, *Builder, CE, L, Pred);
