@@ -939,16 +939,16 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start.".
-void CGDebugInfo::EmitFunctionStart(const char *Name, QualType FnType,
+void CGDebugInfo::EmitFunctionStart(llvm::StringRef Name, QualType FnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
-  const char *LinkageName = Name;
+  llvm::StringRef LinkageName(Name);
 
   // Skip the asm prefix if it exists.
   //
   // FIXME: This should probably be the unmangled name?
   if (Name[0] == '\01')
-    ++Name;
+    Name = Name.substr(1);
 
   // FIXME: Why is this using CurLoc???
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);

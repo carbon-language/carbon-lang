@@ -361,7 +361,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       if (isByRef)
         LTy = BuildByRefType(&D);
       llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
-      Alloc->setName(D.getNameAsString().c_str());
+      Alloc->setName(D.getNameAsString());
 
       Align = getContext().getDeclAlignInBytes(&D);
       if (isByRef)
