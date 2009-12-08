@@ -49,7 +49,6 @@
 #undef  LONG_MAX
 #undef  ULONG_MAX
 
-#undef  MB_LEN_MAX 
 #undef  CHAR_BIT
 #undef  CHAR_MIN
 #undef  CHAR_MAX
