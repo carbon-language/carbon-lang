@@ -33,7 +33,7 @@
 #include <cctype>
 using namespace clang;
 
-static void InitCharacterInfo();
+static void InitCharacterInfo(LangOptions);
 
 //===----------------------------------------------------------------------===//
 // Token Class Implementation
@@ -59,7 +59,7 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 
 void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
                       const char *BufEnd) {
-  InitCharacterInfo();
+  InitCharacterInfo(Features);
 
   BufferStart = BufStart;
   BufferPtr = BufPtr;
@@ -253,7 +253,7 @@ enum {
 
 // Statically initialize CharInfo table based on ASCII character set
 // Reference: FreeBSD 7.2 /usr/share/misc/ascii
-static const unsigned char CharInfo[256] =
+static unsigned char CharInfo[256] =
 {
 // 0 NUL         1 SOH         2 STX         3 ETX
 // 4 EOT         5 ENQ         6 ACK         7 BEL
@@ -321,7 +321,7 @@ static const unsigned char CharInfo[256] =
    0           , 0           , 0           , 0
 };
 
-static void InitCharacterInfo() {
+static void InitCharacterInfo(LangOptions Features) {
   static bool isInited = false;
   if (isInited) return;
   // check the statically-initialized CharInfo table
@@ -339,6 +339,11 @@ static void InitCharacterInfo() {
   }
   for (unsigned i = '0'; i <= '9'; ++i)
     assert(CHAR_NUMBER == CharInfo[i]);
+    
+  if (Features.Microsoft)
+    // Hack to treat DOS & CP/M EOF (^Z) as horizontal whitespace.
+    CharInfo[26/*sub*/] = CHAR_HORZ_WS;  
+
   isInited = true;
 }
 
