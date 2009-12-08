@@ -704,6 +704,30 @@ public:
   /// \todo add a separate paramaeter to configure IsDerivedFrom, rather than 
   /// tangling input and output in \p Paths  
   bool isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths) const;
+
+  /// \brief Determine whether this class is provably not derived from
+  /// the type \p Base.
+  bool isProvablyNotDerivedFrom(const CXXRecordDecl *Base) const;
+
+  /// \brief Function type used by forallBases() as a callback.
+  ///
+  /// \param Base the definition of the base class
+  ///
+  /// \returns true if this base matched the search criteria
+  typedef bool ForallBasesCallback(const CXXRecordDecl *BaseDefinition,
+                                   void *UserData);
+
+  /// \brief Determines if the given callback holds for all the direct
+  /// or indirect base classes of this type.
+  ///
+  /// The class itself does not count as a base class.  This routine
+  /// returns false if the class has non-computable base classes.
+  /// 
+  /// \param AllowShortCircuit if false, forces the callback to be called
+  /// for every base class, even if a dependent or non-matching base was
+  /// found.
+  bool forallBases(ForallBasesCallback *BaseMatches, void *UserData,
+                   bool AllowShortCircuit = true) const;
   
   /// \brief Function type used by lookupInBases() to determine whether a 
   /// specific base class subobject matches the lookup criteria.

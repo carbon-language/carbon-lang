@@ -90,6 +90,55 @@ bool CXXRecordDecl::isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths) cons
   return lookupInBases(&FindBaseClass, Base->getCanonicalDecl(), Paths);
 }
 
+static bool BaseIsNot(const CXXRecordDecl *Base, void *OpaqueTarget) {
+  // OpaqueTarget is a CXXRecordDecl*.
+  return Base->getCanonicalDecl() != (const CXXRecordDecl*) OpaqueTarget;
+}
+
+bool CXXRecordDecl::isProvablyNotDerivedFrom(const CXXRecordDecl *Base) const {
+  return forallBases(BaseIsNot, (void*) Base->getCanonicalDecl());
+}
+
+bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
+                                void *OpaqueData,
+                                bool AllowShortCircuit) const {
+  ASTContext &Context = getASTContext();
+  llvm::SmallVector<const CXXRecordDecl*, 8> Queue;
+
+  const CXXRecordDecl *Record = this;
+  bool AllMatches = true;
+  while (true) {
+    for (CXXRecordDecl::base_class_const_iterator
+           I = Record->bases_begin(), E = Record->bases_end(); I != E; ++I) {
+      const RecordType *Ty = I->getType()->getAs<RecordType>();
+      if (!Ty) {
+        if (AllowShortCircuit) return false;
+        AllMatches = false;
+        continue;
+      }
+
+      RecordDecl *Base = Ty->getDecl()->getDefinition(Context);
+      if (!Base) {
+        if (AllowShortCircuit) return false;
+        AllMatches = false;
+        continue;
+      }
+      
+      if (!BaseMatches(cast<CXXRecordDecl>(Base), OpaqueData)) {
+        if (AllowShortCircuit) return false;
+        AllMatches = false;
+        continue;
+      }
+    }
+
+    if (Queue.empty()) break;
+    Record = Queue.back(); // not actually a queue.
+    Queue.pop_back();
+  }
+
+  return AllMatches;
+}
+
 bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
                                   void *UserData,
                                   CXXBasePaths &Paths) const {
