@@ -1346,9 +1346,9 @@ Sema::OwningExprResult
 Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                LookupResult &R,
                                bool NeedsADL) {
-  // If this isn't an overloaded result and we don't need ADL, just
-  // build an ordinary singleton decl ref.
-  if (!NeedsADL && !R.isOverloadedResult())
+  // If this is a single, fully-resolved result and we don't need ADL,
+  // just build an ordinary singleton decl ref.
+  if (!NeedsADL && R.isSingleResult())
     return BuildDeclarationNameExpr(SS, R.getNameLoc(), R.getFoundDecl());
 
   // We only need to check the declaration if there's exactly one
