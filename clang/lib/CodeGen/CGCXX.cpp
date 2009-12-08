@@ -1814,7 +1814,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
       PopCXXTemporary();
   }
 
-  InitializeVtablePtr(ClassDecl);
+  InitializeVtablePtrs(ClassDecl);
 }
 
 void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
