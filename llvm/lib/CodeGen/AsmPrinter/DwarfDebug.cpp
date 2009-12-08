@@ -1837,9 +1837,11 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
       constructGlobalVariableDIE(*I);
     else if (GVContext.isNameSpace()) {
       DIE *GVDie = createGlobalVariableDIE(ModuleCU, GV);
-      DINameSpace NS(GVContext.getNode());
-      DIE *NDie = getOrCreateNameSpace(NS);
-      NDie->addChild(GVDie);
+      if (GVDie) {
+        DINameSpace NS(GVContext.getNode());
+        DIE *NDie = getOrCreateNameSpace(NS);
+        NDie->addChild(GVDie);
+      }
     }
     else 
       ScopedGVs.push_back(*I);
