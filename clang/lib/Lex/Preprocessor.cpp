@@ -221,16 +221,10 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
     }
   }
   
-  for (unsigned Column = 1; Column < TruncateAtColumn; ++Column, ++Position) {
-    if (!*Position)
-      break;
-    
-    if (*Position == '\t')
-      Column += 7;
-  }
+  Position += TruncateAtColumn - 1;
   
   // Truncate the buffer.
-  if (Position != Buffer->getBufferEnd()) {
+  if (Position < Buffer->getBufferEnd()) {
     MemoryBuffer *TruncatedBuffer 
       = MemoryBuffer::getMemBufferCopy(Buffer->getBufferStart(), Position, 
                                        Buffer->getBufferIdentifier());
