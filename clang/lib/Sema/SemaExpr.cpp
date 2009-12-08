@@ -4434,6 +4434,16 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (rhsType->isObjCObjectPointerType()) {
       if (lhsType->isObjCBuiltinType() || rhsType->isObjCBuiltinType())
         return Compatible;
+      QualType lhptee = 
+        lhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
+      QualType rhptee = 
+        rhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
+      // make sure we operate on the canonical type
+      lhptee = Context.getCanonicalType(lhptee);
+      rhptee = Context.getCanonicalType(rhptee);
+      if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
+        return CompatiblePointerDiscardsQualifiers;
+      
       if (Context.typesAreCompatible(lhsType, rhsType))
         return Compatible;
       if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType())
