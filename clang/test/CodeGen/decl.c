@@ -5,8 +5,6 @@
 // CHECK: @test5w = global %0 { i32 2, [4 x i8] undef }
 // CHECK: @test5y = global %union.test5u { double 7.300000e+0{{[0]*}}1 }
 
-#include <string.h>
-
 void test1() {
   // This should codegen as a "@test1.x" global.
   const int x[] = { 1, 2, 3, 4, 6, 8, 9, 10, 123, 231, 123,23 };
