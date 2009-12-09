@@ -1594,6 +1594,12 @@ class EnumDecl : public TagDecl {
   /// have a different type than this does.
   QualType IntegerType;
 
+  /// PromotionType - The integer type that values of this type should
+  /// promote to.  In C, enumerators are generally of an integer type
+  /// directly, but gcc-style large enumerators (and all enumerators
+  /// in C++) are of the enum type instead.
+  QualType PromotionType;
+
   /// \brief If the enumeration was instantiated from an enumeration
   /// within a class or function template, this pointer refers to the
   /// enumeration declared within the template.
@@ -1623,7 +1629,8 @@ public:
   /// declaration as being defined; it's enumerators have already been
   /// added (via DeclContext::addDecl). NewType is the new underlying
   /// type of the enumeration type.
-  void completeDefinition(ASTContext &C, QualType NewType);
+  void completeDefinition(ASTContext &C, QualType NewType,
+                          QualType PromotionType);
 
   // enumerator_iterator - Iterates through the enumerators of this
   // enumeration.
@@ -1636,6 +1643,13 @@ public:
   enumerator_iterator enumerator_end() const {
     return enumerator_iterator(this->decls_end());
   }
+
+  /// getPromotionType - Return the integer type that enumerators
+  /// should promote to.
+  QualType getPromotionType() const { return PromotionType; }
+
+  /// \brief Set the promotion type.
+  void setPromotionType(QualType T) { PromotionType = T; }
 
   /// getIntegerType - Return the integer type this enum decl corresponds to.
   /// This returns a null qualtype for an enum forward definition.

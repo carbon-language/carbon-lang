@@ -5766,6 +5766,17 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   QualType BestType;
   unsigned BestWidth;
 
+  // C++0x N3000 [conv.prom]p3:
+  //   An rvalue of an unscoped enumeration type whose underlying
+  //   type is not fixed can be converted to an rvalue of the first
+  //   of the following types that can represent all the values of
+  //   the enumeration: int, unsigned int, long int, unsigned long
+  //   int, long long int, or unsigned long long int.
+  // C99 6.4.4.3p2:
+  //   An identifier declared as an enumeration constant has type int.
+  // The C99 rule is modified by a gcc extension 
+  QualType BestPromotionType;
+
   bool Packed = Enum->getAttr<PackedAttr>() ? true : false;
 
   if (NumNegativeBits) {
@@ -5773,22 +5784,21 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     // int/long/longlong) that fits.
     // If it's packed, check also if it fits a char or a short.
     if (Packed && NumNegativeBits <= CharWidth && NumPositiveBits < CharWidth) {
-        BestType = Context.SignedCharTy;
-        BestWidth = CharWidth;
+      BestType = Context.SignedCharTy;
+      BestWidth = CharWidth;
     } else if (Packed && NumNegativeBits <= ShortWidth &&
                NumPositiveBits < ShortWidth) {
-        BestType = Context.ShortTy;
-        BestWidth = ShortWidth;
-    }
-    else if (NumNegativeBits <= IntWidth && NumPositiveBits < IntWidth) {
+      BestType = Context.ShortTy;
+      BestWidth = ShortWidth;
+    } else if (NumNegativeBits <= IntWidth && NumPositiveBits < IntWidth) {
       BestType = Context.IntTy;
       BestWidth = IntWidth;
     } else {
       BestWidth = Context.Target.getLongWidth();
 
-      if (NumNegativeBits <= BestWidth && NumPositiveBits < BestWidth)
+      if (NumNegativeBits <= BestWidth && NumPositiveBits < BestWidth) {
         BestType = Context.LongTy;
-      else {
+      } else {
         BestWidth = Context.Target.getLongLongWidth();
 
         if (NumNegativeBits > BestWidth || NumPositiveBits >= BestWidth)
@@ -5796,30 +5806,45 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
         BestType = Context.LongLongTy;
       }
     }
+    BestPromotionType = (BestWidth <= IntWidth ? Context.IntTy : BestType);
   } else {
     // If there is no negative value, figure out which of uint, ulong, ulonglong
     // fits.
     // If it's packed, check also if it fits a char or a short.
     if (Packed && NumPositiveBits <= CharWidth) {
-        BestType = Context.UnsignedCharTy;
-        BestWidth = CharWidth;
+      BestType = Context.UnsignedCharTy;
+      BestPromotionType = Context.IntTy;
+      BestWidth = CharWidth;
     } else if (Packed && NumPositiveBits <= ShortWidth) {
-        BestType = Context.UnsignedShortTy;
-        BestWidth = ShortWidth;
-    }
-    else if (NumPositiveBits <= IntWidth) {
+      BestType = Context.UnsignedShortTy;
+      BestPromotionType = Context.IntTy;
+      BestWidth = ShortWidth;
+    } else if (NumPositiveBits <= IntWidth) {
       BestType = Context.UnsignedIntTy;
       BestWidth = IntWidth;
+      BestPromotionType = (NumPositiveBits == BestWidth
+                           ? Context.UnsignedIntTy : Context.IntTy);
     } else if (NumPositiveBits <=
                (BestWidth = Context.Target.getLongWidth())) {
       BestType = Context.UnsignedLongTy;
+      BestPromotionType = (NumPositiveBits == BestWidth
+                           ? Context.UnsignedLongTy : Context.LongTy);
     } else {
       BestWidth = Context.Target.getLongLongWidth();
       assert(NumPositiveBits <= BestWidth &&
              "How could an initializer get larger than ULL?");
       BestType = Context.UnsignedLongLongTy;
+      BestPromotionType = (NumPositiveBits == BestWidth
+                           ? Context.UnsignedLongLongTy : Context.LongLongTy);
     }
   }
+
+  // If we're in C and the promotion type is larger than an int, just
+  // use the underlying type, which is generally the unsigned integer
+  // type of the same rank as the promotion type.  This is how the gcc
+  // extension works.
+  if (!getLangOptions().CPlusPlus && BestPromotionType != Context.IntTy)
+    BestPromotionType = BestType;
 
   // Loop over all of the enumerator constants, changing their types to match
   // the type of the enum if needed.
@@ -5898,7 +5923,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       ECD->setType(NewTy);
   }
 
-  Enum->completeDefinition(Context, BestType);
+  Enum->completeDefinition(Context, BestType, BestPromotionType);
 }
 
 Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,

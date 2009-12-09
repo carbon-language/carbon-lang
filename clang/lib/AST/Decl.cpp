@@ -195,9 +195,12 @@ void EnumDecl::Destroy(ASTContext& C) {
   Decl::Destroy(C);
 }
 
-void EnumDecl::completeDefinition(ASTContext &C, QualType NewType) {
+void EnumDecl::completeDefinition(ASTContext &C,
+                                  QualType NewType,
+                                  QualType NewPromotionType) {
   assert(!isDefinition() && "Cannot redefine enums!");
   IntegerType = NewType;
+  PromotionType = NewPromotionType;
   TagDecl::completeDefinition();
 }
 

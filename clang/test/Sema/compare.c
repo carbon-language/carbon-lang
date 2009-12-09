@@ -225,3 +225,8 @@ int void_pointers(void* foo) {
   return foo == (void*) 0;
   return foo == (void*) 1;
 }
+
+int test1(int i) {
+  enum en { zero };
+  return i > zero;
+}

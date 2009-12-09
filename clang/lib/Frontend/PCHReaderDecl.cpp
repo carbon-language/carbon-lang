@@ -126,6 +126,7 @@ void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
 void PCHDeclReader::VisitEnumDecl(EnumDecl *ED) {
   VisitTagDecl(ED);
   ED->setIntegerType(Reader.GetType(Record[Idx++]));
+  ED->setPromotionType(Reader.GetType(Record[Idx++]));
   // FIXME: C++ InstantiatedFrom
 }
 

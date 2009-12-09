@@ -2671,7 +2671,7 @@ int ASTContext::getFloatingTypeOrder(QualType LHS, QualType RHS) {
 unsigned ASTContext::getIntegerRank(Type *T) {
   assert(T->isCanonicalUnqualified() && "T should be canonicalized");
   if (EnumType* ET = dyn_cast<EnumType>(T))
-    T = ET->getDecl()->getIntegerType().getTypePtr();
+    T = ET->getDecl()->getPromotionType().getTypePtr();
 
   if (T->isSpecificBuiltinType(BuiltinType::WChar))
     T = getFromTargetType(Target.getWCharType()).getTypePtr();
@@ -2752,6 +2752,8 @@ QualType ASTContext::isPromotableBitField(Expr *E) {
 QualType ASTContext::getPromotedIntegerType(QualType Promotable) {
   assert(!Promotable.isNull());
   assert(Promotable->isPromotableIntegerType());
+  if (const EnumType *ET = Promotable->getAs<EnumType>())
+    return ET->getDecl()->getPromotionType();
   if (Promotable->isSignedIntegerType())
     return IntTy;
   uint64_t PromotableSize = getTypeSize(Promotable);
@@ -4358,6 +4360,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSClass != RHSClass) {
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type.
+    // Compatibility is based on the underlying type, not the promotion
+    // type.
     if (const EnumType* ETy = LHS->getAs<EnumType>()) {
       if (ETy->getDecl()->getIntegerType() == RHSCan.getUnqualifiedType())
         return RHS;
@@ -4517,6 +4521,8 @@ unsigned ASTContext::getIntWidth(QualType T) {
   if (FixedWidthIntType *FWIT = dyn_cast<FixedWidthIntType>(T)) {
     return FWIT->getWidth();
   }
+  if (EnumType *ET = dyn_cast<EnumType>(T))
+    T = ET->getDecl()->getPromotionType();
   // For builtin types, just use the standard type sizing method
   return (unsigned)getTypeSize(T);
 }

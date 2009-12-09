@@ -754,19 +754,21 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
   // can be converted to an rvalue of the first of the following types
   // that can represent all the values of its underlying type: int,
   // unsigned int, long, or unsigned long (C++ 4.5p2).
-  if ((FromType->isEnumeralType() || FromType->isWideCharType())
-      && ToType->isIntegerType()) {
+
+  // We pre-calculate the promotion type for enum types.
+  if (const EnumType *FromEnumType = FromType->getAs<EnumType>())
+    if (ToType->isIntegerType())
+      return Context.hasSameUnqualifiedType(ToType,
+                                FromEnumType->getDecl()->getPromotionType());
+
+  if (FromType->isWideCharType() && ToType->isIntegerType()) {
     // Determine whether the type we're converting from is signed or
     // unsigned.
     bool FromIsSigned;
     uint64_t FromSize = Context.getTypeSize(FromType);
-    if (const EnumType *FromEnumType = FromType->getAs<EnumType>()) {
-      QualType UnderlyingType = FromEnumType->getDecl()->getIntegerType();
-      FromIsSigned = UnderlyingType->isSignedIntegerType();
-    } else {
-      // FIXME: Is wchar_t signed or unsigned? We assume it's signed for now.
-      FromIsSigned = true;
-    }
+    
+    // FIXME: Is wchar_t signed or unsigned? We assume it's signed for now.
+    FromIsSigned = true;
 
     // The types we'll try to promote to, in the appropriate
     // order. Try each of these types.

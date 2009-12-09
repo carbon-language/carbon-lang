@@ -49,8 +49,8 @@ int test0(long a, unsigned long b) {
          ((signed char) A == (unsigned char) b) +
          (A < (unsigned long) b) +
          (A < (unsigned int) b) +
-         (A < (unsigned short) b) +  // expected-warning {{comparison of integers of different signs}}
-         (A < (unsigned char) b) +  // expected-warning {{comparison of integers of different signs}}
+         (A < (unsigned short) b) +
+         (A < (unsigned char) b) +
          ((long) A < b) +
          ((int) A < b) +
          ((short) A < b) +
@@ -78,9 +78,9 @@ int test0(long a, unsigned long b) {
          (a < (unsigned short) B) +
          (a < (unsigned char) B) +
          ((long) a < B) +
-         ((int) a < B) +  // expected-warning {{comparison of integers of different signs}}
-         ((short) a < B) +  // expected-warning {{comparison of integers of different signs}}
-         ((signed char) a < B) +  // expected-warning {{comparison of integers of different signs}}
+         ((int) a < B) +
+         ((short) a < B) +
+         ((signed char) a < B) +
          ((long) a < (unsigned long) B) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) B) +  // expected-warning {{comparison of integers of different signs}}
          ((short) a < (unsigned short) B) +  // expected-warning {{comparison of integers of different signs}}
@@ -101,8 +101,8 @@ int test0(long a, unsigned long b) {
          ((signed char) C == (unsigned char) b) +
          (C < (unsigned long) b) +
          (C < (unsigned int) b) +
-         (C < (unsigned short) b) +  // expected-warning {{comparison of integers of different signs}}
-         (C < (unsigned char) b) +  // expected-warning {{comparison of integers of different signs}}
+         (C < (unsigned short) b) +
+         (C < (unsigned char) b) +
          ((long) C < b) +
          ((int) C < b) +
          ((short) C < b) +
@@ -130,9 +130,9 @@ int test0(long a, unsigned long b) {
          (a < (unsigned short) C) +
          (a < (unsigned char) C) +
          ((long) a < C) +
-         ((int) a < C) +  // expected-warning {{comparison of integers of different signs}}
-         ((short) a < C) +  // expected-warning {{comparison of integers of different signs}}
-         ((signed char) a < C) +  // expected-warning {{comparison of integers of different signs}}
+         ((int) a < C) +
+         ((short) a < C) +
+         ((signed char) a < C) +
          ((long) a < (unsigned long) C) +  // expected-warning {{comparison of integers of different signs}}
          ((int) a < (unsigned int) C) +  // expected-warning {{comparison of integers of different signs}}
          ((short) a < (unsigned short) C) +  // expected-warning {{comparison of integers of different signs}}
@@ -192,4 +192,9 @@ int test0(long a, unsigned long b) {
 
          10
     ;
+}
+
+int test1(int i) {
+  enum en { zero };
+  return i > zero;
 }

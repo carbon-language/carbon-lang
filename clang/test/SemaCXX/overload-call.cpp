@@ -92,7 +92,7 @@ enum PromotesToInt {
 };
 
 enum PromotesToUnsignedInt {
-  PromotesToUnsignedIntValue = 1u
+  PromotesToUnsignedIntValue = __INT_MAX__ * 2U
 };
 
 int* o(int);
