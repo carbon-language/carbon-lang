@@ -161,10 +161,9 @@ public:
         CleanupEntryBB(CGF.createBasicBlock("ehcleanup.rest")),
         PreviousInvokeDest(CGF.getInvokeDest()) {
       CGF.EmitBranch(Cont);
+      llvm::BasicBlock *TerminateHandler = CGF.getTerminateHandler();
       CGF.Builder.SetInsertPoint(CleanupEntryBB);
-
-      // FIXME: set up terminate handler here
-      // CGF.setInvokeDest(TerminateHandler);
+      CGF.setInvokeDest(TerminateHandler);
     }
     ~EHCleanupBlock();
   };
