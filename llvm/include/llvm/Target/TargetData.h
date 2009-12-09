@@ -150,7 +150,7 @@ public:
   /// The width is specified in bits.
   ///
   bool isLegalInteger(unsigned Width) const {
-    for (unsigned i = 0, e = LegalIntWidths.size(); i != e; ++i)
+    for (unsigned i = 0, e = (unsigned)LegalIntWidths.size(); i != e; ++i)
       if (LegalIntWidths[i] == Width)
         return true;
     return false;
