@@ -130,6 +130,9 @@ void rdar7342806() {
 //  to 'p' to not be evaluated along one path, but then an autotransition caused
 //  the path to keep on propagating with 'p' still set to an undefined value.
 //  We would then get a bogus report of returning uninitialized memory.
+//  Note: CheckerVisit mistakenly cleared an existing node, and the cleared
+//  node was resurrected by GRStmtNodeBuilder::~GRStmtNodeBuilder(), where
+//  'p' was not assigned.
 //===---------------------------------------------------------------------===//
 
 float *pr5627_f(int y);
