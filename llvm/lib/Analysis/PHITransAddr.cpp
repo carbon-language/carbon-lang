@@ -164,22 +164,20 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       // input.
       return Inst;
     }
-  
-    // If 'Inst' is defined in this block, it must be an input that needs to be
-    // phi translated or an intermediate expression that needs to be incorporated
-    // into the expression.
-    
+
+    // If 'Inst' is defined in this block and is an input that needs to be phi
+    // translated, we need to incorporate the value into the expression or fail.
+
     // If this is a PHI, go ahead and translate it.
     if (PHINode *PN = dyn_cast<PHINode>(Inst))
-      return PN->getIncomingValueForBlock(PredBB);
-
+      return ReplaceInstWithValue(PN, PN->getIncomingValueForBlock(PredBB));
     
     // If this is a non-phi value, and it is analyzable, we can incorporate it
     // into the expression by making all instruction operands be inputs.
     if (!CanPHITrans(Inst))
       return 0;
-    
-    // Okay, we can incorporate it, this instruction is no longer an input.
+   
+    // The instruction itself isn't an input any longer.
     InstInputs.erase(std::find(InstInputs.begin(), InstInputs.end(), Inst));
     
     // All instruction operands are now inputs (and of course, they may also be
