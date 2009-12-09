@@ -533,10 +533,10 @@ bool Parser::isStartOfFunctionDefinition() {
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
 Parser::DeclGroupPtrTy
-Parser::ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
+Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
+                                             AttributeList *Attr,
                                              AccessSpecifier AS) {
   // Parse the common declaration-specifiers piece.
-  ParsingDeclSpec DS(*this);
   if (Attr)
     DS.AddAttributes(Attr);
 
@@ -585,11 +585,18 @@ Parser::ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
       DS.getStorageClassSpec() == DeclSpec::SCS_extern &&
       DS.getParsedSpecifiers() == DeclSpec::PQ_StorageClassSpecifier) {
     DS.abort();
-    DeclPtrTy TheDecl = ParseLinkage(Declarator::FileContext);
+    DeclPtrTy TheDecl = ParseLinkage(DS, Declarator::FileContext);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
 
   return ParseDeclGroup(DS, Declarator::FileContext, true);
+}
+
+Parser::DeclGroupPtrTy
+Parser::ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
+                                             AccessSpecifier AS) {
+  ParsingDeclSpec DS(*this);
+  return ParseDeclarationOrFunctionDefinition(DS, Attr, AS);
 }
 
 /// ParseFunctionDefinition - We parsed and verified that the specified

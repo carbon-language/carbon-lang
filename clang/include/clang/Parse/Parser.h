@@ -759,7 +759,10 @@ private:
   bool isStartOfFunctionDefinition();
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
             AccessSpecifier AS = AS_none);
-
+  DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
+                                                  AttributeList *Attr,
+                                                  AccessSpecifier AS = AS_none);
+  
   DeclPtrTy ParseFunctionDefinition(ParsingDeclarator &D,
                  const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   void ParseKNRParamDeclarations(Declarator &D);
@@ -1290,7 +1293,7 @@ private:
                                  tok::TokenKind *After = 0);
   
   DeclPtrTy ParseNamespace(unsigned Context, SourceLocation &DeclEnd);
-  DeclPtrTy ParseLinkage(unsigned Context);
+  DeclPtrTy ParseLinkage(ParsingDeclSpec &DS, unsigned Context);
   DeclPtrTy ParseUsingDirectiveOrDeclaration(unsigned Context,
                                              SourceLocation &DeclEnd,
                                              CXX0XAttributeList Attrs);

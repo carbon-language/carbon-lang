@@ -161,7 +161,8 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 ///         'extern' string-literal '{' declaration-seq[opt] '}'
 ///         'extern' string-literal declaration
 ///
-Parser::DeclPtrTy Parser::ParseLinkage(unsigned Context) {
+Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
+                                       unsigned Context) {
   assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallVector<char, 8> LangBuffer;
   // LangBuffer is guaranteed to be big enough.
@@ -185,7 +186,7 @@ Parser::DeclPtrTy Parser::ParseLinkage(unsigned Context) {
   }
   
   if (Tok.isNot(tok::l_brace)) {
-    ParseDeclarationOrFunctionDefinition(Attr.AttrList);
+    ParseDeclarationOrFunctionDefinition(DS, Attr.AttrList);
     return Actions.ActOnFinishLinkageSpecification(CurScope, LinkageSpec,
                                                    SourceLocation());
   }
