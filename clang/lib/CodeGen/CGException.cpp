@@ -394,12 +394,6 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
-  if (0) {
-    EmitStmt(S.getTryBlock());
-    return;
-  }
-
-  // FIXME: The below is still just a sketch of the code we need.
   // Pointer to the personality function
   llvm::Constant *Personality =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
