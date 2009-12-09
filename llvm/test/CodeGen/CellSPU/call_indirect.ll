@@ -2,17 +2,17 @@
 ; RUN: llc < %s -march=cellspu -mattr=large_mem > %t2.s
 ; RUN: grep bisl    %t1.s | count 7
 ; RUN: grep ila     %t1.s | count 1
-; RUN: grep rotqby  %t1.s | count 6
+; RUN: grep rotqby  %t1.s | count 5
 ; RUN: grep lqa     %t1.s | count 1
 ; RUN: grep lqd     %t1.s | count 12
 ; RUN: grep dispatch_tab %t1.s | count 5
 ; RUN: grep bisl    %t2.s | count 7
 ; RUN: grep ilhu    %t2.s | count 2
 ; RUN: grep iohl    %t2.s | count 2
-; RUN: grep rotqby  %t2.s | count 6
+; RUN: grep rotqby  %t2.s | count 5
 ; RUN: grep lqd     %t2.s | count 13
 ; RUN: grep ilhu    %t2.s | count 2
-; RUN: grep ai      %t2.s | count 9
+; RUN: grep ai      %t2.s | count 8
 ; RUN: grep dispatch_tab %t2.s | count 6
 
 ; ModuleID = 'call_indirect.bc'

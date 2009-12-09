@@ -5914,6 +5914,12 @@ bool SelectionDAG::isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base,
 /// InferPtrAlignment - Infer alignment of a load / store address. Return 0 if
 /// it cannot be inferred.
 unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
+  // If this is a GlobalAddress + cst, return the alignment.
+  GlobalValue *GV;
+  int64_t GVOffset = 0;
+  if (TLI.isGAPlusOffset(Ptr.getNode(), GV, GVOffset))
+    return MinAlign(GV->getAlignment(), GVOffset);
+
   // If this is a direct reference to a stack slot, use information about the
   // stack slot's alignment.
   int FrameIdx = 1 << 31;

@@ -8327,16 +8327,6 @@ bool X86TargetLowering::isGAPlusOffset(SDNode *N,
   return TargetLowering::isGAPlusOffset(N, GA, Offset);
 }
 
-static bool isBaseAlignmentOfN(unsigned N, SDNode *Base,
-                               const TargetLowering &TLI) {
-  GlobalValue *GV;
-  int64_t Offset = 0;
-  if (TLI.isGAPlusOffset(Base, GV, Offset))
-    return (GV->getAlignment() >= N && (Offset % N) == 0);
-  // DAG combine handles the stack object case.
-  return false;
-}
-
 static bool EltsFromConsecutiveLoads(ShuffleVectorSDNode *N, unsigned NumElems,
                                      EVT EltVT, LoadSDNode *&LDBase,
                                      unsigned &LastLoadedElt,
@@ -8399,7 +8389,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   if (LastLoadedElt == NumElems - 1) {
-    if (isBaseAlignmentOfN(16, LD->getBasePtr().getNode(), TLI))
+    if (DAG.InferPtrAlignment(LD->getBasePtr()) >= 16)
       return DAG.getLoad(VT, dl, LD->getChain(), LD->getBasePtr(),
                          LD->getSrcValue(), LD->getSrcValueOffset(),
                          LD->isVolatile());
