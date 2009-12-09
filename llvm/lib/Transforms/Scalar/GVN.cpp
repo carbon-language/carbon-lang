@@ -998,18 +998,19 @@ static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 /// Check this case to see if there is anything more we can do before we give
 /// up.  This returns -1 if we have to give up, or a byte number in the stored
 /// value of the piece that feeds the load.
-static int AnalyzeLoadFromClobberingWrite(LoadInst *L, Value *WritePtr,
+static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
+                                          Value *WritePtr,
                                           uint64_t WriteSizeInBits,
                                           const TargetData &TD) {
   // If the loaded or stored value is an first class array or struct, don't try
   // to transform them.  We need to be able to bitcast to integer.
-  if (isa<StructType>(L->getType()) || isa<ArrayType>(L->getType()))
+  if (isa<StructType>(LoadTy) || isa<ArrayType>(LoadTy))
     return -1;
   
   int64_t StoreOffset = 0, LoadOffset = 0;
   Value *StoreBase = GetBaseWithConstantOffset(WritePtr, StoreOffset, TD);
   Value *LoadBase = 
-    GetBaseWithConstantOffset(L->getPointerOperand(), LoadOffset, TD);
+    GetBaseWithConstantOffset(LoadPtr, LoadOffset, TD);
   if (StoreBase != LoadBase)
     return -1;
   
@@ -1022,10 +1023,8 @@ static int AnalyzeLoadFromClobberingWrite(LoadInst *L, Value *WritePtr,
     << "Base       = " << *StoreBase << "\n"
     << "Store Ptr  = " << *WritePtr << "\n"
     << "Store Offs = " << StoreOffset << "\n"
-    << "Load Ptr   = " << *L->getPointerOperand() << "\n"
+    << "Load Ptr   = " << *LoadPtr << "\n"
     << "Load Offs  = " << LoadOffset << " - " << *L << "\n\n";
-    errs() << "'" << L->getParent()->getParent()->getName() << "'"
-    << *L->getParent();
     abort();
 #endif
     return -1;
@@ -1036,7 +1035,7 @@ static int AnalyzeLoadFromClobberingWrite(LoadInst *L, Value *WritePtr,
   // must have gotten confused.
   // FIXME: Investigate cases where this bails out, e.g. rdar://7238614. Then
   // remove this check, as it is duplicated with what we have below.
-  uint64_t LoadSize = TD.getTypeSizeInBits(L->getType());
+  uint64_t LoadSize = TD.getTypeSizeInBits(LoadTy);
   
   if ((WriteSizeInBits & 7) | (LoadSize & 7))
     return -1;
@@ -1089,7 +1088,8 @@ static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
 
   Value *StorePtr = DepSI->getPointerOperand();
   uint64_t StoreSize = TD.getTypeSizeInBits(StorePtr->getType());
-  return AnalyzeLoadFromClobberingWrite(L, StorePtr, StoreSize, TD);
+  return AnalyzeLoadFromClobberingWrite(L->getType(), L->getPointerOperand(),
+                                        StorePtr, StoreSize, TD);
 }
 
 static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
@@ -1102,7 +1102,8 @@ static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
   // If this is memset, we just need to see if the offset is valid in the size
   // of the memset..
   if (MI->getIntrinsicID() == Intrinsic::memset)
-    return AnalyzeLoadFromClobberingWrite(L, MI->getDest(), MemSizeInBits, TD);
+    return AnalyzeLoadFromClobberingWrite(L->getType(), L->getPointerOperand(),
+                                          MI->getDest(), MemSizeInBits, TD);
   
   // If we have a memcpy/memmove, the only case we can handle is if this is a
   // copy from constant memory.  In that case, we can read directly from the
@@ -1117,7 +1118,8 @@ static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
   
   // See if the access is within the bounds of the transfer.
   int Offset =
-    AnalyzeLoadFromClobberingWrite(L, MI->getDest(), MemSizeInBits, TD);
+    AnalyzeLoadFromClobberingWrite(L->getType(), L->getPointerOperand(),
+                                   MI->getDest(), MemSizeInBits, TD);
   if (Offset == -1)
     return Offset;
   
