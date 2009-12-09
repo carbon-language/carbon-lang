@@ -34,8 +34,9 @@ void test2() {
 // CHECK-NEXT:entry:
 // CHECK-NEXT:  %exception = call i8* @__cxa_allocate_exception(i64 16)
 // CHECK-NEXT:  %0 = bitcast i8* %exception to %struct.test2_D*
-// CHECK-NEXT:  call void @_ZN7test2_DC1ERKS_(%struct.test2_D* %0, %struct.test2_D* @d2)
-// CHECK-NEXT:  call void @__cxa_throw(i8* %exception, i8* bitcast (%0* @_ZTI7test2_D to i8*), i8* null) noreturn
+// CHECK:       invoke void @_ZN7test2_DC1ERKS_(%struct.test2_D* %0, %struct.test2_D* @d2)
+// CHECK-NEXT:     to label %invoke.cont unwind label %terminate.handler
+// CHECK:  call void @__cxa_throw(i8* %exception, i8* bitcast (%0* @_ZTI7test2_D to i8*), i8* null) noreturn
 // CHECK-NEXT:  unreachable
 
 

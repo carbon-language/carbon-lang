@@ -165,6 +165,10 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
 
       llvm::Value *Src = CGF.EmitLValue(E).getAddress();
 
+      llvm::BasicBlock *TerminateHandler = CGF.getTerminateHandler();
+      llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
+      CGF.setInvokeDest(TerminateHandler);
+
       // Stolen from EmitClassAggrMemberwiseCopy
       llvm::Value *Callee = CGF.CGM.GetAddrOfCXXConstructor(CopyCtor,
                                                             Ctor_Complete);
@@ -179,6 +183,7 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
         CopyCtor->getType()->getAs<FunctionType>()->getResultType();
       CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
                    Callee, CallArgs, CopyCtor);
+      CGF.setInvokeDest(PrevLandingPad);
     } else
       llvm::llvm_unreachable("uncopyable object");
   }
@@ -253,7 +258,6 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
                        llvm::ConstantInt::get(SizeTy, TypeSize),
                        "exception");
 
-  // FIXME: terminate protect this
   CopyObject(*this, E->getSubExpr(), ExceptionPtr);
   
   // Now throw the exception.
@@ -685,6 +689,13 @@ CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
 }
 
 llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
+  llvm::BasicBlock *Cont = 0;
+
+  if (HaveInsertPoint()) {
+    Cont = createBasicBlock("cont");
+    EmitBranch(Cont);
+  }
+
   llvm::Constant *Personality =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
                                                       (VMContext),
@@ -706,7 +717,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
   Args.push_back(Exc);
   Args.push_back(Personality);
   Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                        0));
+                                        1));
   Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
   llvm::CallInst *TerminateCall = 
     Builder.CreateCall(getTerminateFn(*this));
@@ -716,6 +727,9 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
 
   // Clear the insertion point to indicate we are in unreachable code.
   Builder.ClearInsertionPoint();
+
+  if (Cont)
+    EmitBlock(Cont);
 
   return TerminateHandler;
 }
