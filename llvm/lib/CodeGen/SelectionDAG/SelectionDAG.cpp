@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -5865,6 +5866,49 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
   return getNode(ISD::BUILD_VECTOR, dl,
                  EVT::getVectorVT(*getContext(), EltVT, ResNE),
                  &Scalars[0], Scalars.size());
+}
+
+/// InferPtrAlignment - Infer alignment of a load / store address. Return 0 if
+/// it cannot be inferred.
+unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) {
+  // If this is a direct reference to a stack slot, use information about the
+  // stack slot's alignment.
+  int FrameIdx = 1 << 31;
+  int64_t FrameOffset = 0;
+  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Ptr)) {
+    FrameIdx = FI->getIndex();
+  } else if (Ptr.getOpcode() == ISD::ADD &&
+             isa<ConstantSDNode>(Ptr.getOperand(1)) &&
+             isa<FrameIndexSDNode>(Ptr.getOperand(0))) {
+    FrameIdx = cast<FrameIndexSDNode>(Ptr.getOperand(0))->getIndex();
+    FrameOffset = Ptr.getConstantOperandVal(1);
+  }
+
+  if (FrameIdx != (1 << 31)) {
+    // FIXME: Handle FI+CST.
+    const MachineFrameInfo &MFI = *getMachineFunction().getFrameInfo();
+    if (MFI.isFixedObjectIndex(FrameIdx)) {
+      int64_t ObjectOffset = MFI.getObjectOffset(FrameIdx) + FrameOffset;
+
+      // The alignment of the frame index can be determined from its offset from
+      // the incoming frame position.  If the frame object is at offset 32 and
+      // the stack is guaranteed to be 16-byte aligned, then we know that the
+      // object is 16-byte aligned.
+      unsigned StackAlign = getTarget().getFrameInfo()->getStackAlignment();
+      unsigned Align = MinAlign(ObjectOffset, StackAlign);
+
+      // Finally, the frame object itself may have a known alignment.  Factor
+      // the alignment + offset into a new alignment.  For example, if we know
+      // the  FI is 8 byte aligned, but the pointer is 4 off, we really have a
+      // 4-byte alignment of the resultant pointer.  Likewise align 4 + 4-byte
+      // offset = 4-byte alignment, align 4 + 1-byte offset = align 1, etc.
+      unsigned FIInfoAlign = MinAlign(MFI.getObjectAlignment(FrameIdx),
+                                      FrameOffset);
+      return std::max(Align, FIInfoAlign);
+    }
+  }
+
+  return 0;
 }
 
 void SelectionDAG::dump() const {

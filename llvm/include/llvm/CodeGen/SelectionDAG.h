@@ -890,6 +890,10 @@ public:
   /// vector op and fill the end of the resulting vector with UNDEFS.
   SDValue UnrollVectorOp(SDNode *N, unsigned ResNE = 0);
 
+  /// InferPtrAlignment - Infer alignment of a load / store address. Return 0 if
+  /// it cannot be inferred.
+  unsigned InferPtrAlignment(SDValue Ptr);
+
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);
   void AddModifiedNodeToCSEMaps(SDNode *N, DAGUpdateListener *UpdateListener);
