@@ -154,12 +154,20 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
   Instruction *Inst = dyn_cast<Instruction>(V);
   if (Inst == 0) return V;
   
-  // If 'Inst' is defined in this block, it must be an input that needs to be
-  // phi translated or an intermediate expression that needs to be incorporated
-  // into the expression.
-  if (Inst->getParent() == CurBB) {
-    assert(std::count(InstInputs.begin(), InstInputs.end(), Inst) &&
-           "Not an input?");
+  // Determine whether 'Inst' is an input to our PHI translatable expression.
+  bool isInput = std::count(InstInputs.begin(), InstInputs.end(), Inst);
+
+  // Handle inputs instructions if needed.
+  if (isInput) {
+    if (Inst->getParent() != CurBB) {
+      // If it is an input defined in a different block, then it remains an
+      // input.
+      return Inst;
+    }
+  
+    // If 'Inst' is defined in this block, it must be an input that needs to be
+    // phi translated or an intermediate expression that needs to be incorporated
+    // into the expression.
     
     // If this is a PHI, go ahead and translate it.
     if (PHINode *PN = dyn_cast<PHINode>(Inst))
@@ -179,14 +187,6 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i)
       if (Instruction *Op = dyn_cast<Instruction>(Inst->getOperand(i)))
         InstInputs.push_back(Op);
-    
-  } else {
-    // Determine whether 'Inst' is an input to our PHI translatable expression.
-    bool isInput = std::count(InstInputs.begin(), InstInputs.end(), Inst);
-    
-    // If it is an input defined in a different block, then it remains an input.
-    if (isInput)
-      return Inst;
   }
 
   // Ok, it must be an intermediate result (either because it started that way

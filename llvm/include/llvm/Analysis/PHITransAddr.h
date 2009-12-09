@@ -83,9 +83,9 @@ public:
   
   void dump() const;
   
-  /// Verify - Check internal consistency of this data structure.  Though it
-  /// claims to return a bool, it actually aborts on error and always returns
-  /// true.
+  /// Verify - Check internal consistency of this data structure.  If the
+  /// structure is valid, it returns true.  If invalid, it prints errors and
+  /// returns false.
   bool Verify() const;
 private:
   Value *PHITranslateSubExpr(Value *V, BasicBlock *CurBB, BasicBlock *PredBB);
