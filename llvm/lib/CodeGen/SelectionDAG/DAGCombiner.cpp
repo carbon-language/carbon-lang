@@ -3688,7 +3688,6 @@ SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, EVT VT) {
   if (!LD1 || !LD2 || !ISD::isNON_EXTLoad(LD1) || !LD1->hasOneUse())
     return SDValue();
   EVT LD1VT = LD1->getValueType(0);
-  const MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
 
   if (ISD::isNON_EXTLoad(LD2) &&
       LD2->hasOneUse() &&
@@ -3696,7 +3695,7 @@ SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, EVT VT) {
       // If one is volatile it might be ok, but play conservative and bail out.
       !LD1->isVolatile() &&
       !LD2->isVolatile() &&
-      TLI.isConsecutiveLoad(LD2, LD1, LD1VT.getSizeInBits()/8, 1, MFI)) {
+      DAG.isConsecutiveLoad(LD2, LD1, LD1VT.getSizeInBits()/8, 1)) {
     unsigned Align = LD1->getAlignment();
     unsigned NewAlign = TLI.getTargetData()->
       getABITypeAlignment(VT.getTypeForEVT(*DAG.getContext()));

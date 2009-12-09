@@ -8366,7 +8366,7 @@ static bool EltsFromConsecutiveLoads(ShuffleVectorSDNode *N, unsigned NumElems,
       continue;
 
     LoadSDNode *LD = cast<LoadSDNode>(Elt);
-    if (!TLI.isConsecutiveLoad(LD, LDBase, EltVT.getSizeInBits()/8, i, MFI))
+    if (!DAG.isConsecutiveLoad(LD, LDBase, EltVT.getSizeInBits()/8, i))
       return false;
     LastLoadedElt = i;
   }

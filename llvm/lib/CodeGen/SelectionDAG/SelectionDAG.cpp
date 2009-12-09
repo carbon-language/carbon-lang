@@ -5868,6 +5868,49 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
                  &Scalars[0], Scalars.size());
 }
 
+
+/// isConsecutiveLoad - Return true if LD is loading 'Bytes' bytes from a 
+/// location that is 'Dist' units away from the location that the 'Base' load 
+/// is loading from.
+bool SelectionDAG::isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base, 
+                                     unsigned Bytes, int Dist) const {
+  if (LD->getChain() != Base->getChain())
+    return false;
+  EVT VT = LD->getValueType(0);
+  if (VT.getSizeInBits() / 8 != Bytes)
+    return false;
+
+  SDValue Loc = LD->getOperand(1);
+  SDValue BaseLoc = Base->getOperand(1);
+  if (Loc.getOpcode() == ISD::FrameIndex) {
+    if (BaseLoc.getOpcode() != ISD::FrameIndex)
+      return false;
+    const MachineFrameInfo *MFI = getMachineFunction().getFrameInfo();
+    int FI  = cast<FrameIndexSDNode>(Loc)->getIndex();
+    int BFI = cast<FrameIndexSDNode>(BaseLoc)->getIndex();
+    int FS  = MFI->getObjectSize(FI);
+    int BFS = MFI->getObjectSize(BFI);
+    if (FS != BFS || FS != (int)Bytes) return false;
+    return MFI->getObjectOffset(FI) == (MFI->getObjectOffset(BFI) + Dist*Bytes);
+  }
+  if (Loc.getOpcode() == ISD::ADD && Loc.getOperand(0) == BaseLoc) {
+    ConstantSDNode *V = dyn_cast<ConstantSDNode>(Loc.getOperand(1));
+    if (V && (V->getSExtValue() == Dist*Bytes))
+      return true;
+  }
+
+  GlobalValue *GV1 = NULL;
+  GlobalValue *GV2 = NULL;
+  int64_t Offset1 = 0;
+  int64_t Offset2 = 0;
+  bool isGA1 = TLI.isGAPlusOffset(Loc.getNode(), GV1, Offset1);
+  bool isGA2 = TLI.isGAPlusOffset(BaseLoc.getNode(), GV2, Offset2);
+  if (isGA1 && isGA2 && GV1 == GV2)
+    return Offset1 == (Offset2 + Dist*Bytes);
+  return false;
+}
+
+
 /// InferPtrAlignment - Infer alignment of a load / store address. Return 0 if
 /// it cannot be inferred.
 unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
