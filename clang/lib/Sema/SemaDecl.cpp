@@ -3984,6 +3984,42 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
   return ActOnStartOfFunctionDef(FnBodyScope, DP);
 }
 
+static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD) {
+  // Don't warn about invalid declarations.
+  if (FD->isInvalidDecl())
+    return false;
+  
+  // Or declarations that aren't global.
+  if (!FD->isGlobal())
+    return false;
+  
+  // Don't warn about C++ member functions.
+  if (isa<CXXMethodDecl>(FD))
+    return false;
+  
+  // Don't warn about 'main'.
+  if (FD->isMain())
+    return false;
+ 
+  // Don't warn about inline functions.
+  if (FD->isInlineSpecified())
+    return false;
+  
+  bool MissingPrototype = true;
+  for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
+       Prev; Prev = Prev->getPreviousDeclaration()) {
+    // Ignore any declarations that occur in function or method
+    // scope, because they aren't visible from the header.
+    if (Prev->getDeclContext()->isFunctionOrMethod())
+      continue;
+      
+    MissingPrototype = !Prev->getType()->isFunctionProtoType();
+    break;
+  }
+    
+  return MissingPrototype;
+}
+
 Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   // Clear the last template instantiation error context.
   LastTemplateInstantiationErrorContext = ActiveTemplateInstantiation();
@@ -4029,23 +4065,8 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   //   prototype declaration. This warning is issued even if the
   //   definition itself provides a prototype. The aim is to detect
   //   global functions that fail to be declared in header files.
-  if (!FD->isInvalidDecl() && FD->isGlobal() && !isa<CXXMethodDecl>(FD) &&
-      !FD->isMain()) {
-    bool MissingPrototype = true;
-    for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
-         Prev; Prev = Prev->getPreviousDeclaration()) {
-      // Ignore any declarations that occur in function or method
-      // scope, because they aren't visible from the header.
-      if (Prev->getDeclContext()->isFunctionOrMethod())
-        continue;
-
-      MissingPrototype = !Prev->getType()->isFunctionProtoType();
-      break;
-    }
-
-    if (MissingPrototype)
-      Diag(FD->getLocation(), diag::warn_missing_prototype) << FD;
-  }
+  if (ShouldWarnAboutMissingPrototype(FD))
+    Diag(FD->getLocation(), diag::warn_missing_prototype) << FD;
 
   if (FnBodyScope)
     PushDeclContext(FnBodyScope, FD);
