@@ -23,7 +23,7 @@ namespace llvm {
 
 class RecordVal;
 class BitsInit;
-class Init;
+struct Init;
 
 class CodeEmitterGen : public TableGenBackend {
   RecordKeeper &Records;

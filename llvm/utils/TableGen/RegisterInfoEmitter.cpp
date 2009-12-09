@@ -162,7 +162,7 @@ private:
 
 public:
   RegisterSorter(std::map<Record*, std::set<Record*>, LessRecord> &RS)
-    : RegisterSubRegs(RS) {};
+    : RegisterSubRegs(RS) {}
 
   bool operator()(Record *RegA, Record *RegB) {
     // B is sub-register of A.

@@ -445,7 +445,7 @@ struct PatternToMatch {
                  const std::vector<Record*> &dstregs,
                  unsigned complexity):
     Predicates(preds), SrcPattern(src), DstPattern(dst), Dstregs(dstregs),
-    AddedComplexity(complexity) {};
+    AddedComplexity(complexity) {}
 
   ListInit        *Predicates;  // Top level predicate conditions to match.
   TreePatternNode *SrcPattern;  // Source pattern to match.

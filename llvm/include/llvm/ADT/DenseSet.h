@@ -73,7 +73,7 @@ public:
     const ValueT& operator*() { return I->first; }
     const ValueT* operator->() { return &I->first; }
 
-    ConstIterator& operator++() { ++I; return *this; };
+    ConstIterator& operator++() { ++I; return *this; }
     bool operator==(const ConstIterator& X) const { return I == X.I; }
     bool operator!=(const ConstIterator& X) const { return I != X.I; }
   };
