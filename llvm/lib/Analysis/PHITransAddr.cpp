@@ -201,7 +201,6 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
   // Handle getelementptr with at least one PHI translatable operand.
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
     SmallVector<Value*, 8> GEPOps;
-    BasicBlock *CurBB = GEP->getParent();
     bool AnyChanged = false;
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
       Value *GEPOp = PHITranslateSubExpr(GEP->getOperand(i), CurBB, PredBB);
