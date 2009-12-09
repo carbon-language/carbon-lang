@@ -394,9 +394,10 @@ public:
   /// equivalent to calling T.withConst().
   QualType getConstType(QualType T) { return T.withConst(); }
 
-  /// getNoReturnType - Add the noreturn attribute to the given type which must
-  /// be a FunctionType or a pointer to an allowable type or a BlockPointer.
-  QualType getNoReturnType(QualType T);
+  /// getNoReturnType - Add or remove the noreturn attribute to the given type 
+  /// which must be a FunctionType or a pointer to an allowable type or a 
+  /// BlockPointer.
+  QualType getNoReturnType(QualType T, bool AddNoReturn = true);
 
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.

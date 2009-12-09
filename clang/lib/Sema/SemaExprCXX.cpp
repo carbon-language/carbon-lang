@@ -1269,6 +1269,16 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // Nothing else to do.
     break;
 
+  case ICK_NoReturn_Adjustment:
+    // If both sides are functions (or pointers/references to them), there could
+    // be incompatible exception declarations.
+    if (CheckExceptionSpecCompatibility(From, ToType))
+      return true;      
+      
+    ImpCastExprToType(From, Context.getNoReturnType(From->getType(), false),
+                      CastExpr::CK_NoOp);
+    break;
+      
   case ICK_Integral_Promotion:
   case ICK_Integral_Conversion:
     ImpCastExprToType(From, ToType, CastExpr::CK_IntegralCast);

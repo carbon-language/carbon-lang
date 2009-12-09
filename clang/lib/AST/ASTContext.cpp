@@ -1200,32 +1200,42 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   return getExtQualType(TypeNode, Quals);
 }
 
-QualType ASTContext::getNoReturnType(QualType T) {
+QualType ASTContext::getNoReturnType(QualType T, bool AddNoReturn) {
   QualType ResultType;
-  if (T->isPointerType()) {
-    QualType Pointee = T->getAs<PointerType>()->getPointeeType();
-    ResultType = getNoReturnType(Pointee);
+  if (const PointerType *Pointer = T->getAs<PointerType>()) {
+    QualType Pointee = Pointer->getPointeeType();
+    ResultType = getNoReturnType(Pointee, AddNoReturn);
+    if (ResultType == Pointee)
+      return T;
+    
     ResultType = getPointerType(ResultType);
-  } else if (T->isBlockPointerType()) {
-    QualType Pointee = T->getAs<BlockPointerType>()->getPointeeType();
-    ResultType = getNoReturnType(Pointee);
+  } else if (const BlockPointerType *BlockPointer
+                                              = T->getAs<BlockPointerType>()) {
+    QualType Pointee = BlockPointer->getPointeeType();
+    ResultType = getNoReturnType(Pointee, AddNoReturn);
+    if (ResultType == Pointee)
+      return T;
+    
     ResultType = getBlockPointerType(ResultType);
-  } else {
-    assert (T->isFunctionType()
-            && "can't noreturn qualify non-pointer to function or block type");
-
-    if (const FunctionNoProtoType *FNPT = T->getAs<FunctionNoProtoType>()) {
-      ResultType = getFunctionNoProtoType(FNPT->getResultType(), true);
+  } else if (const FunctionType *F = T->getAs<FunctionType>()) {
+    if (F->getNoReturnAttr() == AddNoReturn)
+      return T;
+    
+    if (const FunctionNoProtoType *FNPT = dyn_cast<FunctionNoProtoType>(F)) {
+      ResultType = getFunctionNoProtoType(FNPT->getResultType(), AddNoReturn);
     } else {
-      const FunctionProtoType *F = T->getAs<FunctionProtoType>();
+      const FunctionProtoType *FPT = cast<FunctionProtoType>(F);
       ResultType
-        = getFunctionType(F->getResultType(), F->arg_type_begin(),
-                          F->getNumArgs(), F->isVariadic(), F->getTypeQuals(),
-                          F->hasExceptionSpec(), F->hasAnyExceptionSpec(),
-                          F->getNumExceptions(), F->exception_begin(), true);
+        = getFunctionType(FPT->getResultType(), FPT->arg_type_begin(),
+                          FPT->getNumArgs(), FPT->isVariadic(), 
+                          FPT->getTypeQuals(),
+                          FPT->hasExceptionSpec(), FPT->hasAnyExceptionSpec(),
+                          FPT->getNumExceptions(), FPT->exception_begin(), 
+                          AddNoReturn);
     }
-  }
-
+  } else
+    return T;
+  
   return getQualifiedType(ResultType, T.getLocalQualifiers());
 }
 

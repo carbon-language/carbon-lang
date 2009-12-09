@@ -38,6 +38,7 @@ GetConversionCategory(ImplicitConversionKind Kind) {
     ICC_Lvalue_Transformation,
     ICC_Lvalue_Transformation,
     ICC_Lvalue_Transformation,
+    ICC_Identity,
     ICC_Qualification_Adjustment,
     ICC_Promotion,
     ICC_Promotion,
@@ -61,6 +62,7 @@ GetConversionCategory(ImplicitConversionKind Kind) {
 ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
   static const ImplicitConversionRank
     Rank[(int)ICK_Num_Conversion_Kinds] = {
+    ICR_Exact_Match,
     ICR_Exact_Match,
     ICR_Exact_Match,
     ICR_Exact_Match,
@@ -91,6 +93,7 @@ const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Lvalue-to-rvalue",
     "Array-to-pointer",
     "Function-to-pointer",
+    "Noreturn adjustment",
     "Qualification",
     "Integral promotion",
     "Floating point promotion",
@@ -475,6 +478,23 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
   return ICS;
 }
 
+/// \brief Determine whether the conversion from FromType to ToType is a valid 
+/// conversion that strips "noreturn" off the nested function type.
+static bool IsNoReturnConversion(ASTContext &Context, QualType FromType, 
+                                 QualType ToType, QualType &ResultTy) {
+  if (Context.hasSameUnqualifiedType(FromType, ToType))
+    return false;
+  
+  // Strip the noreturn off the type we're converting from; noreturn can
+  // safely be removed.
+  FromType = Context.getNoReturnType(FromType, false);
+  if (!Context.hasSameUnqualifiedType(FromType, ToType))
+    return false;
+
+  ResultTy = FromType;
+  return true;
+}
+  
 /// IsStandardConversion - Determines whether there is a standard
 /// conversion sequence (C++ [conv], C++ [over.ics.scs]) from the
 /// expression From to the type ToType. Standard conversion sequences
@@ -554,7 +574,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // function. (C++ 4.3p1).
     FromType = Context.getPointerType(FromType);
   } else if (FunctionDecl *Fn
-             = ResolveAddressOfOverloadedFunction(From, ToType, false)) {
+               = ResolveAddressOfOverloadedFunction(From, ToType, false)) {
     // Address of overloaded function (C++ [over.over]).
     SCS.First = ICK_Function_To_Pointer;
 
@@ -656,6 +676,9 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
              Context.typesAreCompatible(ToType, FromType)) {
     // Compatible conversions (Clang extension for C function overloading)
     SCS.Second = ICK_Compatible_Conversion;
+  } else if (IsNoReturnConversion(Context, FromType, ToType, FromType)) {
+    // Treat a conversion that strips "noreturn" as an identity conversion.
+    SCS.Second = ICK_NoReturn_Adjustment;
   } else {
     // No second conversion required.
     SCS.Second = ICK_Identity;
@@ -1234,7 +1257,7 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 
   return false;
 }
-
+  
 /// CheckMemberPointerConversion - Check the member pointer conversion from the
 /// expression From to the type ToType. This routine checks for ambiguous or
 /// virtual (FIXME: or inaccessible) base-to-derived member pointer conversions
@@ -4455,7 +4478,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       continue;
 
     if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(*I)) {
-      if (FunctionType == Context.getCanonicalType(FunDecl->getType())) {
+      QualType ResultTy;
+      if (Context.hasSameUnqualifiedType(FunctionType, FunDecl->getType()) ||
+          IsNoReturnConversion(Context, FunDecl->getType(), FunctionType, 
+                               ResultTy)) {
         Matches.insert(cast<FunctionDecl>(FunDecl->getCanonicalDecl()));
         FoundNonTemplateFunction = true;
       }
