@@ -16,6 +16,7 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -133,20 +134,38 @@ namespace llvm {
 
   /// NonLocalDepEntry - This is an entry in the NonLocalDepInfo cache, and an
   /// entry in the results set for a non-local query.  For each BasicBlock (the
-  /// BB entry) it keeps a MemDepResult.
+  /// BB entry) it keeps a MemDepResult and the (potentially phi translated)
+  /// address that was live in the block.
   class NonLocalDepEntry {
     BasicBlock *BB;
     MemDepResult Result;
+    WeakVH Address;
   public:
-    NonLocalDepEntry(BasicBlock *bb, MemDepResult result)
-      : BB(bb), Result(result) {}
-    
+    NonLocalDepEntry(BasicBlock *bb, MemDepResult result, Value *address)
+      : BB(bb), Result(result), Address(address) {}
+
+    // This is used for searches.
+    NonLocalDepEntry(BasicBlock *bb) : BB(bb) {}
+
     // BB is the sort key, it can't be changed.
     BasicBlock *getBB() const { return BB; }
     
+    void setResult(const MemDepResult &R, Value *Addr) {
+      Result = R;
+      Address = Addr;
+    }
+
     const MemDepResult &getResult() const { return Result; }
-    void setResult(const MemDepResult &R) { Result = R; }
     
+    /// getAddress - Return the address of this pointer in this block.  This can
+    /// be different than the address queried for the non-local result because
+    /// of phi translation.  This returns null if the address was not available
+    /// in a block (i.e. because phi translation failed) or if this is a cached
+    /// result and that address was deleted.
+    ///
+    /// The address is always null for a non-local 'call' dependence.
+    Value *getAddress() const { return Address; }
+
     bool operator<(const NonLocalDepEntry &RHS) const {
       return BB < RHS.BB;
     }
