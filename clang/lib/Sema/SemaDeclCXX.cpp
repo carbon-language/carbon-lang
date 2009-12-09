@@ -3387,7 +3387,8 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXMethodDecl *BaseAssignOpMethod =
-          getAssignOperatorMethod(MethodDecl->getParamDecl(0), BaseClassDecl))
+          getAssignOperatorMethod(CurrentLocation, MethodDecl->getParamDecl(0), 
+                                  BaseClassDecl))
       MarkDeclarationReferenced(CurrentLocation, BaseAssignOpMethod);
   }
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -3399,7 +3400,8 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (CXXMethodDecl *FieldAssignOpMethod =
-          getAssignOperatorMethod(MethodDecl->getParamDecl(0), FieldClassDecl))
+          getAssignOperatorMethod(CurrentLocation, MethodDecl->getParamDecl(0), 
+                                  FieldClassDecl))
         MarkDeclarationReferenced(CurrentLocation, FieldAssignOpMethod);
     } else if (FieldType->isReferenceType()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
@@ -3420,7 +3422,8 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
 }
 
 CXXMethodDecl *
-Sema::getAssignOperatorMethod(ParmVarDecl *ParmDecl,
+Sema::getAssignOperatorMethod(SourceLocation CurrentLocation,
+                              ParmVarDecl *ParmDecl,
                               CXXRecordDecl *ClassDecl) {
   QualType LHSType = Context.getTypeDeclType(ClassDecl);
   QualType RHSType(LHSType);
@@ -3430,18 +3433,17 @@ Sema::getAssignOperatorMethod(ParmVarDecl *ParmDecl,
   RHSType = Context.getCVRQualifiedType(RHSType,
                                      ParmDecl->getType().getCVRQualifiers());
   ExprOwningPtr<Expr> LHS(this,  new (Context) DeclRefExpr(ParmDecl,
-                                                          LHSType,
-                                                          SourceLocation()));
+                                                           LHSType,
+                                                           SourceLocation()));
   ExprOwningPtr<Expr> RHS(this,  new (Context) DeclRefExpr(ParmDecl,
-                                                          RHSType,
-                                                          SourceLocation()));
+                                                           RHSType,
+                                                           CurrentLocation));
   Expr *Args[2] = { &*LHS, &*RHS };
   OverloadCandidateSet CandidateSet;
   AddMemberOperatorCandidates(clang::OO_Equal, SourceLocation(), Args, 2,
                               CandidateSet);
   OverloadCandidateSet::iterator Best;
-  if (BestViableFunction(CandidateSet,
-                         ClassDecl->getLocation(), Best) == OR_Success)
+  if (BestViableFunction(CandidateSet, CurrentLocation, Best) == OR_Success)
     return cast<CXXMethodDecl>(Best->Function);
   assert(false &&
          "getAssignOperatorMethod - copy assignment operator method not found");

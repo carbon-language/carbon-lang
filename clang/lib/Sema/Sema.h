@@ -1831,7 +1831,8 @@ public:
 
   /// getAssignOperatorMethod - Returns the default copy assignmment operator
   /// for the class.
-  CXXMethodDecl *getAssignOperatorMethod(ParmVarDecl *Decl,
+  CXXMethodDecl *getAssignOperatorMethod(SourceLocation CurrentLocation,
+                                         ParmVarDecl *Decl,
                                          CXXRecordDecl *ClassDecl);
 
   /// MaybeBindToTemporary - If the passed in expression has a record type with

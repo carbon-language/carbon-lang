@@ -1,7 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-class Base { // expected-error {{cannot define the implicit default assignment operator for 'class Base'}} \
-             // expected-note {{synthesized method is first required here}}
+class Base { // expected-error {{cannot define the implicit default assignment operator for 'class Base'}}
   int &ref;  // expected-note {{declared at}}
 };
 
@@ -26,7 +25,7 @@ Z z2;
 
 // Test1
 void f(X x, const X cx) {
-  x = cx;  // expected-note {{synthesized method is first required here}}
+  x = cx;  // expected-note 2 {{synthesized method is first required here}}
   x = cx;
   z1 = z2;
 }
