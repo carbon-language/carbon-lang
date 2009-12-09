@@ -202,3 +202,17 @@ struct X11 : X10 { // expected-error {{no suitable member 'operator delete' in '
 void f() {
   X11 x11; // expected-note {{implicit default destructor for 'struct X11' first required here}}
 }
+
+struct X12 {
+  void* operator new(size_t, void*);
+};
+
+struct X13 : X12 {
+  using X12::operator new;
+};
+
+static void* f(void* g)
+{
+    return new (g) X13();
+}
+

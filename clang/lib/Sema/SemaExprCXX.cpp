@@ -601,7 +601,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
        Alloc != AllocEnd; ++Alloc) {
     // Even member operator new/delete are implicitly treated as
     // static, so don't use AddMemberCandidate.
-    if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(*Alloc)) {
+    if (FunctionDecl *Fn = 
+          dyn_cast<FunctionDecl>((*Alloc)->getUnderlyingDecl())) {
       AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
                            /*SuppressUserConversions=*/false);
       continue;
