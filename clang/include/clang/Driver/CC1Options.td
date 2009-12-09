@@ -383,7 +383,8 @@ def iprefix : JoinedOrSeparate<"-iprefix">, MetaVarName<"<prefix>">,
   HelpText<"Set the -iwithprefix/-iwithprefixbefore prefix">;
 def iwithprefix : JoinedOrSeparate<"-iwithprefix">, MetaVarName<"<dir>">,
   HelpText<"Set directory to SYSTEM include search path with prefix">;
-def iwithprefixbefore : JoinedOrSeparate<"-iwithprefixbefore">, MetaVarName<"<dir>">,
+def iwithprefixbefore : JoinedOrSeparate<"-iwithprefixbefore">,
+  MetaVarName<"<dir>">,
   HelpText<"Set directory to include search path with prefix">;
 def isysroot : JoinedOrSeparate<"-isysroot">, MetaVarName<"<dir>">,
   HelpText<"Set the system root directory (usually /)">;
