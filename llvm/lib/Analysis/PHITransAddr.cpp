@@ -110,8 +110,11 @@ bool PHITransAddr::IsPotentiallyPHITranslatable() const {
 }
 
 
-static void RemoveInstInputs(Instruction *I, 
+static void RemoveInstInputs(Value *V, 
                              SmallVectorImpl<Instruction*> &InstInputs) {
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0) return;
+  
   // If the instruction is in the InstInputs list, remove it.
   SmallVectorImpl<Instruction*>::iterator Entry =
     std::find(InstInputs.begin(), InstInputs.end(), I);
@@ -120,33 +123,14 @@ static void RemoveInstInputs(Instruction *I,
     return;
   }
   
-  // Otherwise, it must have instruction inputs itself.  Zap them recursively.
-  bool HadInstInputs = false;
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-    if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i))) {
-      RemoveInstInputs(Op, InstInputs);
-      HadInstInputs = true;
-    }
-  }
-
-  // This instruction had to have operands in the instinputs list or it should
-  // have been in the list itself.  If not, the list is broken.
-  assert(HadInstInputs && "InstInputs list inconsistent!");
-}
-
-/// ReplaceInstWithValue - Remove any instruction inputs in the InstInputs
-/// array that are due to the specified instruction that is about to be
-/// removed from the address, and add any corresponding to V.  This returns V.
-Value *PHITransAddr::ReplaceInstWithValue(Instruction *I, Value *V) {
-  // Remove the old instruction from InstInputs.
-  RemoveInstInputs(I, InstInputs);
+  assert(!isa<PHINode>(I) && "Error, removing something that isn't an input");
   
-  // If V is an instruction, it is now an input.
-  if (Instruction *VI = dyn_cast<Instruction>(V))
-    InstInputs.push_back(VI);
-  return V;
+  // Otherwise, it must have instruction inputs itself.  Zap them recursively.
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+    if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
+      RemoveInstInputs(Op, InstInputs);
+  }
 }
-
 
 Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
                                          BasicBlock *PredBB) {
@@ -168,18 +152,18 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     // If 'Inst' is defined in this block and is an input that needs to be phi
     // translated, we need to incorporate the value into the expression or fail.
 
+    // In either case, the instruction itself isn't an input any longer.
+    InstInputs.erase(std::find(InstInputs.begin(), InstInputs.end(), Inst));
+    
     // If this is a PHI, go ahead and translate it.
     if (PHINode *PN = dyn_cast<PHINode>(Inst))
-      return ReplaceInstWithValue(PN, PN->getIncomingValueForBlock(PredBB));
+      return AddAsInput(PN->getIncomingValueForBlock(PredBB));
     
     // If this is a non-phi value, and it is analyzable, we can incorporate it
     // into the expression by making all instruction operands be inputs.
     if (!CanPHITrans(Inst))
       return 0;
    
-    // The instruction itself isn't an input any longer.
-    InstInputs.erase(std::find(InstInputs.begin(), InstInputs.end(), Inst));
-    
     // All instruction operands are now inputs (and of course, they may also be
     // defined in this block, so they may need to be phi translated themselves.
     for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i)
@@ -201,8 +185,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     
     // Constants are trivial to find.
     if (Constant *C = dyn_cast<Constant>(PHIIn))
-      return ReplaceInstWithValue(BC, ConstantExpr::getBitCast(C,
-                                                               BC->getType()));
+      return AddAsInput(ConstantExpr::getBitCast(C, BC->getType()));
     
     // Otherwise we have to see if a bitcasted version of the incoming pointer
     // is available.  If so, we can use it, otherwise we have to fail.
@@ -232,8 +215,12 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       return GEP;
     
     // Simplify the GEP to handle 'gep x, 0' -> x etc.
-    if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD))
-      return ReplaceInstWithValue(GEP, V);
+    if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD)) {
+      for (unsigned i = 0, e = GEPOps.size(); i != e; ++i)
+        RemoveInstInputs(GEPOps[i], InstInputs);
+      
+      return AddAsInput(V);
+    }
     
     // Scan to see if we have this GEP available.
     Value *APHIOp = GEPOps[0];
@@ -274,11 +261,21 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
           LHS = BOp->getOperand(0);
           RHS = ConstantExpr::getAdd(RHS, CI);
           isNSW = isNUW = false;
+          
+          // If the old 'LHS' was an input, add the new 'LHS' as an input.
+          if (std::count(InstInputs.begin(), InstInputs.end(), BOp)) {
+            RemoveInstInputs(BOp, InstInputs);
+            AddAsInput(LHS);
+          }
         }
     
     // See if the add simplifies away.
-    if (Value *Res = SimplifyAddInst(LHS, RHS, isNSW, isNUW, TD))
-      return ReplaceInstWithValue(Inst, Res);
+    if (Value *Res = SimplifyAddInst(LHS, RHS, isNSW, isNUW, TD)) {
+      // If we simplified the operands, the LHS is no longer an input, but Res
+      // is.
+      RemoveInstInputs(LHS, InstInputs);
+      return AddAsInput(Res);
+    }
     
     // Otherwise, see if we have this add available somewhere.
     for (Value::use_iterator UI = LHS->use_begin(), E = LHS->use_end();

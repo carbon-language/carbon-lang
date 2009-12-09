@@ -106,10 +106,13 @@ private:
                                     BasicBlock *PredBB, const DominatorTree &DT,
                                     SmallVectorImpl<Instruction*> &NewInsts);
   
-  /// ReplaceInstWithValue - Remove any instruction inputs in the InstInputs
-  /// array that are due to the specified instruction that is about to be
-  /// removed from the address, and add any corresponding to V.  This returns V.
-  Value *ReplaceInstWithValue(Instruction *I, Value *V);
+  /// AddAsInput - If the specified value is an instruction, add it as an input.
+  Value *AddAsInput(Value *V) {
+    // If V is an instruction, it is now an input.
+    if (Instruction *VI = dyn_cast<Instruction>(V))
+      InstInputs.push_back(VI);
+    return V;
+  }
   
 };
 
