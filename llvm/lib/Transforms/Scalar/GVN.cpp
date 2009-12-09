@@ -1079,7 +1079,8 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
 
 /// AnalyzeLoadFromClobberingStore - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering store.
-static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
+static int AnalyzeLoadFromClobberingStore(const Type *LoadTy, Value *LoadPtr,
+                                          StoreInst *DepSI,
                                           const TargetData &TD) {
   // Cannot handle reading from store of first-class aggregate yet.
   if (isa<StructType>(DepSI->getOperand(0)->getType()) ||
@@ -1088,11 +1089,12 @@ static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
 
   Value *StorePtr = DepSI->getPointerOperand();
   uint64_t StoreSize = TD.getTypeSizeInBits(StorePtr->getType());
-  return AnalyzeLoadFromClobberingWrite(L->getType(), L->getPointerOperand(),
+  return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr,
                                         StorePtr, StoreSize, TD);
 }
 
-static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
+static int AnalyzeLoadFromClobberingMemInst(const Type *LoadTy, Value *LoadPtr,
+                                            MemIntrinsic *MI,
                                             const TargetData &TD) {
   // If the mem operation is a non-constant size, we can't handle it.
   ConstantInt *SizeCst = dyn_cast<ConstantInt>(MI->getLength());
@@ -1102,8 +1104,8 @@ static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
   // If this is memset, we just need to see if the offset is valid in the size
   // of the memset..
   if (MI->getIntrinsicID() == Intrinsic::memset)
-    return AnalyzeLoadFromClobberingWrite(L->getType(), L->getPointerOperand(),
-                                          MI->getDest(), MemSizeInBits, TD);
+    return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr, MI->getDest(),
+                                          MemSizeInBits, TD);
   
   // If we have a memcpy/memmove, the only case we can handle is if this is a
   // copy from constant memory.  In that case, we can read directly from the
@@ -1117,9 +1119,8 @@ static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
   if (GV == 0 || !GV->isConstant()) return -1;
   
   // See if the access is within the bounds of the transfer.
-  int Offset =
-    AnalyzeLoadFromClobberingWrite(L->getType(), L->getPointerOperand(),
-                                   MI->getDest(), MemSizeInBits, TD);
+  int Offset = AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr,
+                                              MI->getDest(), MemSizeInBits, TD);
   if (Offset == -1)
     return Offset;
   
@@ -1130,7 +1131,7 @@ static int AnalyzeLoadFromClobberingMemInst(LoadInst *L, MemIntrinsic *MI,
   Constant *OffsetCst = 
     ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
   Src = ConstantExpr::getGetElementPtr(Src, &OffsetCst, 1);
-  Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(L->getType()));
+  Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(LoadTy));
   if (ConstantFoldLoadFromConstPtr(Src, &TD))
     return Offset;
   return -1;
@@ -1390,7 +1391,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         if (TD == 0)
           TD = getAnalysisIfAvailable<TargetData>();
         if (TD) {
-          int Offset = AnalyzeLoadFromClobberingStore(LI, DepSI, *TD);
+          int Offset = AnalyzeLoadFromClobberingStore(LI->getType(),
+                                                      LI->getPointerOperand(),
+                                                      DepSI, *TD);
           if (Offset != -1) {
             ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
                                                            DepSI->getOperand(0),
@@ -1406,7 +1409,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         if (TD == 0)
           TD = getAnalysisIfAvailable<TargetData>();
         if (TD) {
-          int Offset = AnalyzeLoadFromClobberingMemInst(LI, DepMI, *TD);
+          int Offset = AnalyzeLoadFromClobberingMemInst(LI->getType(),
+                                                        LI->getPointerOperand(),
+                                                        DepMI, *TD);
           if (Offset != -1) {
             ValuesPerBlock.push_back(AvailableValueInBlock::getMI(DepBB, DepMI,
                                                                   Offset));
@@ -1711,7 +1716,9 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     Value *AvailVal = 0;
     if (StoreInst *DepSI = dyn_cast<StoreInst>(Dep.getInst()))
       if (const TargetData *TD = getAnalysisIfAvailable<TargetData>()) {
-        int Offset = AnalyzeLoadFromClobberingStore(L, DepSI, *TD);
+        int Offset = AnalyzeLoadFromClobberingStore(L->getType(),
+                                                    L->getPointerOperand(),
+                                                    DepSI, *TD);
         if (Offset != -1)
           AvailVal = GetStoreValueForLoad(DepSI->getOperand(0), Offset,
                                           L->getType(), L, *TD);
@@ -1721,7 +1728,9 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // a value on from it.
     if (MemIntrinsic *DepMI = dyn_cast<MemIntrinsic>(Dep.getInst())) {
       if (const TargetData *TD = getAnalysisIfAvailable<TargetData>()) {
-        int Offset = AnalyzeLoadFromClobberingMemInst(L, DepMI, *TD);
+        int Offset = AnalyzeLoadFromClobberingMemInst(L->getType(),
+                                                      L->getPointerOperand(),
+                                                      DepMI, *TD);
         if (Offset != -1)
           AvailVal = GetMemInstValueForLoad(DepMI, Offset, L->getType(), L,*TD);
       }
