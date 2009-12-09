@@ -1384,15 +1384,19 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     MemDepResult DepInfo = Deps[i].getResult();
 
     if (DepInfo.isClobber()) {
+      // The address being loaded in this non-local block may not be the same as
+      // the pointer operand of the load if PHI translation occurs.  Make sure
+      // to consider the right address.
+      Value *Address = Deps[i].getAddress();
+      
       // If the dependence is to a store that writes to a superset of the bits
       // read by the load, we can extract the bits we need for the load from the
       // stored value.
       if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInfo.getInst())) {
         if (TD == 0)
           TD = getAnalysisIfAvailable<TargetData>();
-        if (TD) {
-          int Offset = AnalyzeLoadFromClobberingStore(LI->getType(),
-                                                      LI->getPointerOperand(),
+        if (TD && Address) {
+          int Offset = AnalyzeLoadFromClobberingStore(LI->getType(), Address,
                                                       DepSI, *TD);
           if (Offset != -1) {
             ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
@@ -1408,9 +1412,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       if (MemIntrinsic *DepMI = dyn_cast<MemIntrinsic>(DepInfo.getInst())) {
         if (TD == 0)
           TD = getAnalysisIfAvailable<TargetData>();
-        if (TD) {
-          int Offset = AnalyzeLoadFromClobberingMemInst(LI->getType(),
-                                                        LI->getPointerOperand(),
+        if (TD && Address) {
+          int Offset = AnalyzeLoadFromClobberingMemInst(LI->getType(), Address,
                                                         DepMI, *TD);
           if (Offset != -1) {
             ValuesPerBlock.push_back(AvailableValueInBlock::getMI(DepBB, DepMI,
