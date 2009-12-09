@@ -117,14 +117,16 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
         continue;
       }
 
-      RecordDecl *Base = Ty->getDecl()->getDefinition(Context);
+      CXXRecordDecl *Base = 
+            cast_or_null<CXXRecordDecl>(Ty->getDecl()->getDefinition(Context));
       if (!Base) {
         if (AllowShortCircuit) return false;
         AllMatches = false;
         continue;
       }
       
-      if (!BaseMatches(cast<CXXRecordDecl>(Base), OpaqueData)) {
+      Queue.push_back(Base);
+      if (!BaseMatches(Base, OpaqueData)) {
         if (AllowShortCircuit) return false;
         AllMatches = false;
         continue;

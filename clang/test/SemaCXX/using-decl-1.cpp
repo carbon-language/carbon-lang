@@ -38,3 +38,7 @@ struct X1 : X0 {
     (*this)(1);
   }
 };
+
+struct A { void f(); };
+struct B : A { };
+class C : B { using B::f; };
