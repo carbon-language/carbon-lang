@@ -45,8 +45,8 @@ static int const Threshold = 20;
 bool llvm::PointerMayBeCaptured(const Value *V,
                                 bool ReturnCaptures, bool StoreCaptures) {
   assert(isa<PointerType>(V->getType()) && "Capture is for pointers only!");
-  SmallVector<Use*, 20> Worklist;
-  SmallSet<Use*, 20> Visited;
+  SmallVector<Use*, Threshold> Worklist;
+  SmallSet<Use*, Threshold> Visited;
   int Count = 0;
 
   for (Value::use_const_iterator UI = V->use_begin(), UE = V->use_end();
