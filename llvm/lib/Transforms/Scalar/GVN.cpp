@@ -1151,14 +1151,15 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   uint64_t StoreSize = TD.getTypeSizeInBits(SrcVal->getType())/8;
   uint64_t LoadSize = TD.getTypeSizeInBits(LoadTy)/8;
   
+  IRBuilder<> Builder(InsertPt->getParent(), InsertPt);
   
   // Compute which bits of the stored value are being used by the load.  Convert
   // to an integer type to start with.
   if (isa<PointerType>(SrcVal->getType()))
-    SrcVal = new PtrToIntInst(SrcVal, TD.getIntPtrType(Ctx), "tmp", InsertPt);
+    SrcVal = Builder.CreatePtrToInt(SrcVal, TD.getIntPtrType(Ctx), "tmp");
   if (!isa<IntegerType>(SrcVal->getType()))
-    SrcVal = new BitCastInst(SrcVal, IntegerType::get(Ctx, StoreSize*8),
-                             "tmp", InsertPt);
+    SrcVal = Builder.CreateBitCast(SrcVal, IntegerType::get(Ctx, StoreSize*8),
+                                   "tmp");
   
   // Shift the bits to the least significant depending on endianness.
   unsigned ShiftAmt;
@@ -1168,12 +1169,11 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
     ShiftAmt = (StoreSize-LoadSize-Offset)*8;
   
   if (ShiftAmt)
-    SrcVal = BinaryOperator::CreateLShr(SrcVal,
-                ConstantInt::get(SrcVal->getType(), ShiftAmt), "tmp", InsertPt);
+    SrcVal = Builder.CreateLShr(SrcVal, ShiftAmt, "tmp");
   
   if (LoadSize != StoreSize)
-    SrcVal = new TruncInst(SrcVal, IntegerType::get(Ctx, LoadSize*8),
-                           "tmp", InsertPt);
+    SrcVal = Builder.CreateTrunc(SrcVal, IntegerType::get(Ctx, LoadSize*8),
+                                 "tmp");
   
   return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, TD);
 }
