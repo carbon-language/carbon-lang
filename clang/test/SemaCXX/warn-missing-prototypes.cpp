@@ -7,13 +7,20 @@ namespace NS {
 }
 
 namespace {
-  // Should not warn about anonymous namespaces
+  // Don't warn about functions in anonymous namespaces.
   void f() { }
 }
 
 struct A {
-  // Should not warn about member functions.
+  // Don't warn about member functions.
   void f() { }
 };
 
+// Don't warn about inline functions.
 inline void g() { }
+
+// Don't warn about function templates.
+template<typename> void h() { }
+
+// Don't warn when instantiating function templates.
+template void h<int>();

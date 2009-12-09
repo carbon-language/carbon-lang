@@ -3998,23 +3998,31 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD) {
   // Don't warn about invalid declarations.
   if (FD->isInvalidDecl())
     return false;
-  
+
   // Or declarations that aren't global.
   if (!FD->isGlobal())
     return false;
-  
+
   // Don't warn about C++ member functions.
   if (isa<CXXMethodDecl>(FD))
     return false;
-  
+
   // Don't warn about 'main'.
   if (FD->isMain())
     return false;
- 
+
   // Don't warn about inline functions.
   if (FD->isInlineSpecified())
     return false;
-  
+
+  // Don't warn about function templates.
+  if (FD->getDescribedFunctionTemplate())
+    return false;
+
+  // Don't warn about function template specializations.
+  if (FD->isFunctionTemplateSpecialization())
+    return false;
+
   bool MissingPrototype = true;
   for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
        Prev; Prev = Prev->getPreviousDeclaration()) {
