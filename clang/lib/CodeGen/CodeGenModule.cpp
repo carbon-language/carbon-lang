@@ -1253,13 +1253,8 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
   if (Context.BuiltinInfo.isLibFunction(BuiltinID))
     Name += 10;
 
-  // Get the type for the builtin.
-  ASTContext::GetBuiltinTypeError Error;
-  QualType Type = Context.GetBuiltinType(BuiltinID, Error);
-  assert(Error == ASTContext::GE_None && "Can't get builtin type");
-
   const llvm::FunctionType *Ty =
-    cast<llvm::FunctionType>(getTypes().ConvertType(Type));
+    cast<llvm::FunctionType>(getTypes().ConvertType(FD->getType()));
 
   // Unique the name through the identifier table.
   Name = getContext().Idents.get(Name).getNameStart();
