@@ -108,6 +108,7 @@ class CXXBaseSpecifier {
   /// Range - The source code range that covers the full base
   /// specifier, including the "virtual" (if present) and access
   /// specifier (if present).
+  // FIXME: Move over to a TypeLoc!
   SourceRange Range;
 
   /// Virtual - Whether this is a virtual base class or not.

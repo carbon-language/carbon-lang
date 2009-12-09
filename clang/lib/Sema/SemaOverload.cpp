@@ -1399,13 +1399,13 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
 /// for overload resolution.
 /// \param UserCast true if looking for user defined conversion for a static
 /// cast.
-Sema::OverloadingResult Sema::IsUserDefinedConversion(
-                                   Expr *From, QualType ToType,
-                                   UserDefinedConversionSequence& User,
-                                   OverloadCandidateSet& CandidateSet,
-                                   bool AllowConversionFunctions,
-                                   bool AllowExplicit, bool ForceRValue,
-                                   bool UserCast) {
+OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
+                                          UserDefinedConversionSequence& User,
+                                            OverloadCandidateSet& CandidateSet,
+                                                bool AllowConversionFunctions,
+                                                bool AllowExplicit, 
+                                                bool ForceRValue,
+                                                bool UserCast) {
   if (const RecordType *ToRecordType = ToType->getAs<RecordType>()) {
     if (RequireCompleteType(From->getLocStart(), ToType, PDiag())) {
       // We're not going to find any constructors.
@@ -4167,10 +4167,9 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
 /// function, Best points to the candidate function found.
 ///
 /// \returns The result of overload resolution.
-Sema::OverloadingResult
-Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
-                         SourceLocation Loc,
-                         OverloadCandidateSet::iterator& Best) {
+OverloadingResult Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
+                                           SourceLocation Loc,
+                                        OverloadCandidateSet::iterator& Best) {
   // Find the best viable function.
   Best = CandidateSet.end();
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin();
@@ -5767,6 +5766,11 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
   
   assert(false && "Invalid reference to overloaded function");
   return E->Retain();
+}
+
+Sema::OwningExprResult Sema::FixOverloadedFunctionReference(OwningExprResult E, 
+                                                            FunctionDecl *Fn) {
+  return Owned(FixOverloadedFunctionReference((Expr *)E.get(), Fn));
 }
 
 } // end namespace clang

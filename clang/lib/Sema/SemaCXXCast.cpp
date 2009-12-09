@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInit.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -864,7 +865,9 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     if (CXXConstructorDecl *Constructor
           = Self.TryInitializationByConstructor(DestType, &SrcExpr, 1,
                                                 OpRange.getBegin(),
-                                                Sema::IK_Direct)) {
+              InitializationKind::CreateDirect(OpRange.getBegin(),
+                                               OpRange.getBegin(), 
+                                               OpRange.getEnd()))) {
       ConversionDecl = Constructor;
       Kind = CastExpr::CK_ConstructorConversion;
       return TC_Success;

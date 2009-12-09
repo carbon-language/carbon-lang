@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInit.h"
 #include "Lookup.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
@@ -3486,8 +3487,35 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
-      if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                VDecl->getDeclName(), DirectInit))
+      if (VDecl->getType()->isReferenceType()) {
+        InitializedEntity Entity
+          = InitializedEntity::InitializeVariable(VDecl);
+
+        // FIXME: Poor source location information.
+        InitializationKind Kind
+          = DirectInit? InitializationKind::CreateDirect(VDecl->getLocation(),
+                                                         SourceLocation(),
+                                                         SourceLocation())
+                      : InitializationKind::CreateCopy(VDecl->getLocation(),
+                                                       SourceLocation());
+        InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
+        if (InitSeq) {
+          OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                      MultiExprArg(*this, (void**)&Init, 1));
+          if (Result.isInvalid()) {
+            VDecl->setInvalidDecl();
+            return;
+          }
+
+          Init = Result.takeAs<Expr>();
+        } else {
+          InitSeq.Diagnose(*this, Entity, Kind, &Init, 1);
+          VDecl->setInvalidDecl();
+          return;
+        }
+        
+      } else if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
+                                       VDecl->getDeclName(), DirectInit))
         VDecl->setInvalidDecl();
 
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
@@ -3677,7 +3705,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
                                                SourceRange(Var->getLocation(),
                                                            Var->getLocation()),
                                                  Var->getDeclName(),
-                                                 IK_Default,
+                         InitializationKind::CreateDefault(Var->getLocation()),
                                                  ConstructorArgs);
           
           // FIXME: Location info for the variable initialization?

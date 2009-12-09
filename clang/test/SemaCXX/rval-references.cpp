@@ -44,7 +44,7 @@ void f() {
 
   conv_to_not_int_rvalue cnir;
   not_int &&ni4 = cnir; // expected-error {{rvalue reference cannot bind to lvalue}}
-  not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'struct not_int' cannot be initialized with a value of type 'struct conv_to_not_int_rvalue'}}
+  not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'struct not_int' cannot bind to a value of unrelated type 'struct conv_to_not_int_rvalue'}}
   not_int &&ni6 = conv_to_not_int_rvalue();
 
 

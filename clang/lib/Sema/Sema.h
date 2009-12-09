@@ -95,7 +95,10 @@ namespace clang {
   class CXXBasePaths;
   class CXXTemporary;
   class LookupResult;
-
+  class InitializedEntity;
+  class InitializationKind;
+  class InitializationSequence;
+  
 /// BlockSemaInfo - When a block is being parsed, this contains information
 /// about the block.  It is pointed to from Sema::CurBlock.
 struct BlockSemaInfo {
@@ -812,16 +815,6 @@ public:
     return NULL;
   }
 
-  /// OverloadingResult - Capture the result of performing overload
-  /// resolution.
-  enum OverloadingResult {
-    OR_Success,             ///< Overload resolution succeeded.
-    OR_No_Viable_Function,  ///< No viable function found.
-    OR_Ambiguous,           ///< Ambiguous candidates found.
-    OR_Deleted              ///< Overload resoltuion refers to a deleted function.
-  };
-
-
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 TypeSourceInfo *TInfo);
@@ -1011,6 +1004,8 @@ public:
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                    bool Complain);
   Expr *FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
+  OwningExprResult FixOverloadedFunctionReference(OwningExprResult, 
+                                                  FunctionDecl *Fn);
 
   void AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*>& Callees,
                                    DeclarationName &UnqualifiedName,
@@ -1853,14 +1848,6 @@ public:
   /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise
   /// it simply returns the passed in expression.
   OwningExprResult MaybeBindToTemporary(Expr *E);
-
-  /// InitializationKind - Represents which kind of C++ initialization
-  /// [dcl.init] a routine is to perform.
-  enum InitializationKind {
-    IK_Direct, ///< Direct initialization
-    IK_Copy,   ///< Copy initialization
-    IK_Default ///< Default initialization
-  };
 
   CXXConstructorDecl *
   TryInitializationByConstructor(QualType ClassType,

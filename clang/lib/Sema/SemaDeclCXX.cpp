@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInit.h"
 #include "Lookup.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -1108,7 +1109,8 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
                                                           NumArgs), 
                                              IdLoc,
                                              SourceRange(IdLoc, RParenLoc), 
-                                             Member->getDeclName(), IK_Direct,
+                                             Member->getDeclName(), 
+                  InitializationKind::CreateDirect(IdLoc, LParenLoc, RParenLoc),
                                              ConstructorArgs);
       
       if (C) {
@@ -1232,7 +1234,8 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                                                         (void**)Args, NumArgs),
                                            BaseLoc, 
                                            SourceRange(BaseLoc, RParenLoc),
-                                           Name, IK_Direct,
+                                           Name, 
+                InitializationKind::CreateDirect(BaseLoc, LParenLoc, RParenLoc),
                                            ConstructorArgs);
     if (C) {
       // Take over the constructor arguments as our own.
@@ -3656,7 +3659,9 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                                            SourceRange(VDecl->getLocation(),
                                                        RParenLoc),
                                            VDecl->getDeclName(),
-                                           IK_Direct,
+                      InitializationKind::CreateDirect(VDecl->getLocation(), 
+                                                       LParenLoc, 
+                                                       RParenLoc),
                                            ConstructorArgs);
     if (!Constructor)
       RealDecl->setInvalidDecl();
@@ -3692,7 +3697,7 @@ static void AddConstructorInitializationCandidates(Sema &SemaRef,
                                                    QualType ClassType,
                                                    Expr **Args,
                                                    unsigned NumArgs,
-                                                  Sema::InitializationKind Kind,
+                                                   InitializationKind Kind,
                                            OverloadCandidateSet &CandidateSet) {
   // C++ [dcl.init]p14:
   //   If the initialization is direct-initialization, or if it is
@@ -3727,10 +3732,12 @@ static void AddConstructorInitializationCandidates(Sema &SemaRef,
     else
       Constructor = cast<CXXConstructorDecl>(*Con);
     
-    if ((Kind == Sema::IK_Direct) ||
-        (Kind == Sema::IK_Copy &&
+    if ((Kind.getKind() == InitializationKind::IK_Direct) ||
+        (Kind.getKind() == InitializationKind::IK_Value) ||
+        (Kind.getKind() == InitializationKind::IK_Copy &&
          Constructor->isConvertingConstructor(/*AllowExplicit=*/false)) ||
-        (Kind == Sema::IK_Default && Constructor->isDefaultConstructor())) {
+        ((Kind.getKind() == InitializationKind::IK_Default) && 
+         Constructor->isDefaultConstructor())) {
       if (ConstructorTmpl)
         SemaRef.AddTemplateOverloadCandidate(ConstructorTmpl,
                                              /*ExplicitArgs*/ 0,
@@ -4002,7 +4009,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       // real, update the initializer with the resulting function.
       if (!ICS) {
         if (DiagnoseUseOfDecl(Fn, DeclLoc))
-          return true;
+          return true; 
 
         Init = FixOverloadedFunctionReference(Init, Fn);
       }

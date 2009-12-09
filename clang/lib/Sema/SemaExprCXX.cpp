@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInit.h"
 #include "Lookup.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -225,7 +226,9 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                              SourceRange(TypeRange.getBegin(),
                                                          RParenLoc),
                                              DeclarationName(),
-                                             IK_Direct,
+                         InitializationKind::CreateDirect(TypeRange.getBegin(), 
+                                                          LParenLoc, 
+                                                          RParenLoc),
                                              ConstructorArgs);
 
       if (!Constructor)
@@ -449,12 +452,17 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     // Skip all the checks.
   } else if ((RT = AllocType->getAs<RecordType>()) &&
              !AllocType->isAggregateType()) {
+    InitializationKind InitKind = InitializationKind::CreateDefault(TypeLoc);
+    if (NumConsArgs > 0)
+      InitKind = InitializationKind::CreateDirect(TypeLoc,
+                                                  PlacementLParen, 
+                                                  PlacementRParen);
     Constructor = PerformInitializationByConstructor(
                       AllocType, move(ConstructorArgs),
                       TypeLoc,
                       SourceRange(TypeLoc, ConstructorRParen),
                       RT->getDecl()->getDeclName(),
-                      NumConsArgs != 0 ? IK_Direct : IK_Default,
+                      InitKind,
                       ConvertedConstructorArgs);
     if (!Constructor)
       return ExprError();
@@ -1584,7 +1592,7 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
 
   OverloadCandidateSet::iterator Best;
   switch (Self.BestViableFunction(CandidateSet, Loc, Best)) {
-    case Sema::OR_Success:
+    case OR_Success:
       // We found a match. Perform the conversions on the arguments and move on.
       if (Self.PerformImplicitConversion(LHS, Best->BuiltinTypes.ParamTypes[0],
                                          Best->Conversions[0], "converting") ||
@@ -1593,13 +1601,13 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
         break;
       return false;
 
-    case Sema::OR_No_Viable_Function:
+    case OR_No_Viable_Function:
       Self.Diag(Loc, diag::err_typecheck_cond_incompatible_operands)
         << LHS->getType() << RHS->getType()
         << LHS->getSourceRange() << RHS->getSourceRange();
       return true;
 
-    case Sema::OR_Ambiguous:
+    case OR_Ambiguous:
       Self.Diag(Loc, diag::err_conditional_ambiguous_ovl)
         << LHS->getType() << RHS->getType()
         << LHS->getSourceRange() << RHS->getSourceRange();
@@ -1607,7 +1615,7 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
       // the viable candidates.
       break;
 
-    case Sema::OR_Deleted:
+    case OR_Deleted:
       assert(false && "Conditional operator has only built-in overloads");
       break;
   }

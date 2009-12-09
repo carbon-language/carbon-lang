@@ -1,5 +1,4 @@
 // RUN: clang-cc -verify -emit-llvm -o - %s | FileCheck %s
-
 void t1() {
   extern int& a;
   int b = a; 
@@ -19,7 +18,6 @@ void t3() {
 // Test reference binding.
 
 struct C { int a; };
-
 void f(const bool&);
 void f(const int&);
 void f(const _Complex int&);

@@ -44,17 +44,17 @@ B fB();
 
 // C++ [dcl.init.ref]p5b2
 void test4() {
-  double& rd2 = 2.0; // expected-error{{non-const lvalue reference to type 'double' cannot be initialized with a temporary of type 'double'}}
+  double& rd2 = 2.0; // expected-error{{non-const lvalue reference to type 'double' cannot bind to a temporary of type 'double'}}
   int i = 2;
-  double& rd3 = i; // expected-error{{non-const lvalue reference to type 'double' cannot be initialized with a value of type 'int'}}
+  double& rd3 = i; // expected-error{{non-const lvalue reference to type 'double' cannot bind to a value of unrelated type 'int'}}
 
   const A& rca = fB();
 }
 
 void test5() {
-  const double& rcd2 = 2; // rcd2 refers to temporary with value 2.0
+  //  const double& rcd2 = 2; // rcd2 refers to temporary with value 2.0
   const volatile int cvi = 1;
-  const int& r = cvi; // expected-error{{initialization of reference to type 'int const' with a value of type 'int const volatile' drops qualifiers}}
+  const int& r = cvi; // expected-error{{binding of reference to type 'int const' to a value of type 'int const volatile' drops qualifiers}}
 }
 
 // C++ [dcl.init.ref]p3

@@ -445,6 +445,7 @@ def err_implicit_object_parameter_init : Error<
   "of type %1">;
 
 def note_field_decl : Note<"member is declared here">;
+def note_bitfield_decl : Note<"bit-field is declared here">;
 def note_previous_decl : Note<
   "%0 declared here">;
 def note_member_synthesized_at : Note<
@@ -525,14 +526,31 @@ def err_lvalue_to_rvalue_ambig_ref : Error<"rvalue reference cannot bind to lval
 def err_not_reference_to_const_init : Error<
   "non-const lvalue reference to type %0 cannot be initialized "
   "with a %1 of type %2">;
+def err_lvalue_reference_bind_to_temporary : Error<
+  "non-const lvalue reference to type %0 cannot bind to a temporary of type "
+  "%1">;
+def err_lvalue_reference_bind_to_unrelated : Error<
+  "non-const lvalue reference to type %0 cannot bind to a value of unrelated "
+  "type %1">;
+def err_reference_bind_drops_quals : Error<
+  "binding of reference to type %0 to a value of type %1 drops qualifiers">;
+def err_reference_bind_failed : Error<
+  "reference to type %0 could not bind to an %select{rvalue|lvalue}1 of type "
+  "%2">;
+
+
 // FIXME: passing in an English string as %1!
 def err_reference_init_drops_quals : Error<
   "initialization of reference to type %0 with a %1 of type %2 drops "
   "qualifiers">;
+def err_reference_bind_to_bitfield : Error<
+  "%select{non-const|volatile}0 reference cannot bind to bit-field %1">;
 def err_reference_var_requires_init : Error<
   "declaration of reference variable %0 requires an initializer">;
 def err_const_var_requires_init : Error<
   "declaration of const variable '%0' requires an initializer">;
+def err_reference_has_multiple_inits : Error<
+  "reference cannot be initialized with multiple values">;
 def err_init_non_aggr_init_list : Error<
   "initialization of non-aggregate type %0 with an initializer list">;
 def err_init_reference_member_uninitialized : Error<
@@ -1575,6 +1593,9 @@ def warn_tentative_incomplete_array : Warning<
 def err_typecheck_incomplete_array_needs_initializer : Error<
   "definition of variable with array type needs an explicit size "
   "or an initializer">;
+def err_array_init_not_init_list : Error<
+  "array initializater must be an initializer "
+  "list%select{| or string literal}0">;
 
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
 def err_typecheck_sclass_fscope : Error<
@@ -1861,7 +1882,10 @@ def err_typecheck_bool_condition : Error<
 def err_typecheck_ambiguous_condition : Error<
   "conversion from %0 to %1 is ambiguous">;
 def err_typecheck_nonviable_condition : Error<
-  "no viable conversion from %0 to %1 is possible">;
+  "no viable conversion from %0 to %1">;
+def err_typecheck_deleted_function : Error<
+  "conversion function from %0 to %1 invokes a deleted function">;
+  
 def err_expected_class_or_namespace : Error<"expected a class or namespace">;
 def err_invalid_declarator_scope : Error<
   "definition or redeclaration of %0 not in a namespace enclosing %1">;

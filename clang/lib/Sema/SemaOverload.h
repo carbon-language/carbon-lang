@@ -15,12 +15,26 @@
 #ifndef LLVM_CLANG_SEMA_OVERLOAD_H
 #define LLVM_CLANG_SEMA_OVERLOAD_H
 
+#include "clang/AST/Decl.h"
+#include "clang/AST/Type.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
+  class ASTContext;
   class CXXConstructorDecl;
+  class CXXConversionDecl;
   class FunctionDecl;
 
+  /// OverloadingResult - Capture the result of performing overload
+  /// resolution.
+  enum OverloadingResult {
+    OR_Success,             ///< Overload resolution succeeded.
+    OR_No_Viable_Function,  ///< No viable function found.
+    OR_Ambiguous,           ///< Ambiguous candidates found.
+    OR_Deleted              ///< Overload resoltuion refers to a deleted function.
+  };
+    
   /// ImplicitConversionKind - The kind of implicit conversion used to
   /// convert an argument to a parameter's type. The enumerator values
   /// match with Table 9 of (C++ 13.3.3.1.1) and are listed such that
@@ -271,6 +285,7 @@ namespace clang {
   /// OverloadCandidateSet - A set of overload candidates, used in C++
   /// overload resolution (C++ 13.3).
   class OverloadCandidateSet : public llvm::SmallVector<OverloadCandidate, 16> {
+    typedef llvm::SmallVector<OverloadCandidate, 16> inherited;
     llvm::SmallPtrSet<Decl *, 16> Functions;
     
   public:
@@ -278,6 +293,12 @@ namespace clang {
     /// overload set.
     bool isNewCandidate(Decl *F) { 
       return Functions.insert(F->getCanonicalDecl()); 
+    }
+
+    /// \brief Clear out all of the candidates.
+    void clear() {
+      inherited::clear();
+      Functions.clear();
     }
   };
 } // end namespace clang
