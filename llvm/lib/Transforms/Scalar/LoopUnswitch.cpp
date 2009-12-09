@@ -404,11 +404,12 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
 
   initLoopData();
-  Function *F = loopHeader->getParent();
 
   // If LoopSimplify was unable to form a preheader, don't do any unswitching.
   if (!loopPreheader)
     return false;
+
+  Function *F = loopHeader->getParent();
 
   // If the condition is trivial, always unswitch.  There is no code growth for
   // this case.
