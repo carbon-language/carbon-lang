@@ -8,17 +8,20 @@ typedef struct objc_object {
 
 @interface I
 + (Class) class;
-- (void)meth : (id)object;
+- (void)meth : (id)object : (id)src_object;
 + (unsigned char) isSubclassOfClass:(Class)aClass ;
 @end
 
 @implementation I
 + (Class) class {return 0;}
 + (unsigned char) isSubclassOfClass:(Class)aClass {return 0;}
-- (void)meth : (id)object {
+- (void)meth : (id)object  : (id)src_object {
     [object->isa isSubclassOfClass:[I class]];
 
     [(*object).isa isSubclassOfClass:[I class]];
+
+    object->isa = src_object->isa;
+    (*src_object).isa = (*object).isa;
 }
 @end
 

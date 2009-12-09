@@ -983,6 +983,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
 // Check whether the expression can be sanely treated like an l-value
 Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
   switch (getStmtClass()) {
+  case ObjCIsaExprClass:
   case StringLiteralClass:  // C99 6.5.1p4
   case ObjCEncodeExprClass: // @encode behaves like its string in every way.
     return LV_Valid;

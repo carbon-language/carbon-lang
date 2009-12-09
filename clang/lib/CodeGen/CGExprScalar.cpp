@@ -168,21 +168,8 @@ public:
   }
 
   Value *VisitObjCIsaExpr(ObjCIsaExpr *E) {
-    Value *V;
-    // object->isa or (*object).isa
-    // Generate code as for: *(Class*)object
-    Expr *BaseExpr = E->getBase();
-    if (E->isArrow())
-      V  = EmitLoadOfLValue(BaseExpr);
-    else
-      V  = EmitLValue(BaseExpr).getAddress();
-    
-    // build Class* type
-    const llvm::Type *ClassPtrTy = ConvertType(E->getType());
-    ClassPtrTy = ClassPtrTy->getPointerTo();
-    V = Builder.CreateBitCast(V, ClassPtrTy);
-    LValue LV = LValue::MakeAddr(V, CGF.MakeQualifiers(E->getType()));
-    V = CGF.EmitLoadOfLValue(LV, E->getType()).getScalarVal();
+    LValue LV = CGF.EmitObjCIsaExpr(E);
+    Value *V = CGF.EmitLoadOfLValue(LV, E->getType()).getScalarVal();
     return V;
   }
 
@@ -1997,3 +1984,22 @@ llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals,
 
   return Vec;
 }
+
+LValue CodeGenFunction::EmitObjCIsaExpr(const ObjCIsaExpr *E) {
+  llvm::Value *V;
+  // object->isa or (*object).isa
+  // Generate code as for: *(Class*)object
+  Expr *BaseExpr = E->getBase();
+  if (E->isArrow())
+    V = ScalarExprEmitter(*this).EmitLoadOfLValue(BaseExpr);
+  else
+    V  = EmitLValue(BaseExpr).getAddress();
+  
+  // build Class* type
+  const llvm::Type *ClassPtrTy = ConvertType(E->getType());
+  ClassPtrTy = ClassPtrTy->getPointerTo();
+  V = Builder.CreateBitCast(V, ClassPtrTy);
+  LValue LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+  return LV;
+}
+
