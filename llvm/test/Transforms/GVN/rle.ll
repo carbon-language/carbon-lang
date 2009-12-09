@@ -466,3 +466,57 @@ exit:
   ret i32 -1
 }
 
+define i8 @phi_trans4(i8* %p) {
+; CHECK: @phi_trans4
+entry:
+  %X = getelementptr i8* %p, i32 4
+  %Y = load i8* %X
+  br label %loop
+
+loop:
+  %i = phi i32 [4, %entry], [192, %loop]
+  %X2 = getelementptr i8* %p, i32 %i
+  %Y2 = load i8* %X
+  
+  %cond = call i1 @cond2()
+
+  %Z = bitcast i8 *%X2 to i32*
+  store i32 0, i32* %Z
+  br i1 %cond, label %loop, label %out
+  
+out:
+  %R = add i8 %Y, %Y2
+  ret i8 %R
+}
+
+define i8 @phi_trans5(i8* %p) {
+; CHECK: @phi_trans5
+entry:
+  %X4 = getelementptr i8* %p, i32 2
+  store i8 19, i8* %X4
+  
+  %X = getelementptr i8* %p, i32 4
+  %Y = load i8* %X
+  br label %loop
+
+loop:
+  %i = phi i32 [4, %entry], [3, %cont]
+  %X2 = getelementptr i8* %p, i32 %i
+  %Y2 = load i8* %X2
+  ;; FIXME: This load is being incorrectly replaced!
+  %cond = call i1 @cond2()
+  br i1 %cond, label %cont, label %out
+
+cont:
+  %Z = getelementptr i8* %X2, i32 -1
+  %Z2 = bitcast i8 *%Z to i32*
+  store i32 50462976, i32* %Z2  ;; (1 << 8) | (2 << 16) | (3 << 24)
+  br label %loop
+  
+out:
+  %R = add i8 %Y, %Y2
+  ret i8 %R
+}
+
+
+
