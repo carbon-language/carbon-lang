@@ -11,6 +11,9 @@
 #include <iterator>
 using namespace llvm;
 
+DeltaAlgorithm::~DeltaAlgorithm() {
+}
+
 bool DeltaAlgorithm::GetTestResult(const changeset_ty &Changes) {
   if (FailedTestsCache.count(Changes))
     return false;

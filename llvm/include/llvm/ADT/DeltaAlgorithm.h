@@ -78,6 +78,8 @@ protected:
   virtual bool ExecuteOneTest(const changeset_ty &S) = 0;
 
 public:
+  virtual ~DeltaAlgorithm();
+
   /// Run - Minimize the set \arg Changes by executing \see ExecuteOneTest() on
   /// subsets of changes and returning the smallest set which still satisfies
   /// the test predicate.
