@@ -553,6 +553,8 @@ public:
   /// EmitEndEHSpec - Emit the end of the exception spec.
   void EmitEndEHSpec(const Decl *D);
 
+  llvm::BasicBlock *getTerminateHandler();
+
   const llvm::Type *ConvertTypeForMem(QualType T);
   const llvm::Type *ConvertType(QualType T);
 
