@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 | FileCheck %s
 ; rdar://7434544
 
 define <2 x i64> @t1() nounwind ssp {
