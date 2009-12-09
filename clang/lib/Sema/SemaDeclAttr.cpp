@@ -1058,10 +1058,6 @@ static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 }
 
 static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // Match gcc which ignores cleanup attrs when compiling C++.
-  if (S.getLangOptions().CPlusPlus)
-    return;
-
   if (!Attr.getParameterName()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
