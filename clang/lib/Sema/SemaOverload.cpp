@@ -5445,8 +5445,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     
     // Create an implicit member expr to refer to the conversion operator.
     // and then call it.
-    CXXMemberCallExpr *CE =
-    BuildCXXMemberCallExpr(Object, Conv);
+    CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(Object, Conv);
       
     return ActOnCallExpr(S, ExprArg(*this, CE), LParenLoc,
                          MultiExprArg(*this, (ExprTy**)Args, NumArgs),
