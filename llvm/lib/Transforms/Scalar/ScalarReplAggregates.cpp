@@ -1347,7 +1347,7 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
 }
 
 /// CanConvertToScalar - V is a pointer.  If we can convert the pointee and all
-/// its accesses to use a to single vector type, return true, and set VecTy to
+/// its accesses to a single vector type, return true and set VecTy to
 /// the new type.  If we could convert the alloca into a single promotable
 /// integer, return true but set VecTy to VoidTy.  Further, if the use is not a
 /// completely trivial use that mem2reg could promote, set IsNotTrivial.  Offset
