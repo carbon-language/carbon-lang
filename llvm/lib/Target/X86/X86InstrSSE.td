@@ -2083,7 +2083,7 @@ def PSHUFDmi : PDIi8<0x70, MRMSrcMem,
                      (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
                      "pshufd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                      [(set VR128:$dst, (v4i32 (pshufd:$src2
-                                             (bc_v4i32(memopv2i64 addr:$src1)),
+                                             (bc_v4i32 (memopv2i64 addr:$src1)),
                                              (undef))))]>;
 }
 

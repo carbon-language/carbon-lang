@@ -3344,6 +3344,82 @@ static SDValue getVShift(bool isLeft, EVT VT, SDValue SrcOp,
 }
 
 SDValue
+X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
+                                          SelectionDAG &DAG) {
+  
+  // Check if the scalar load can be widened into a vector load. And if
+  // the address is "base + cst" see if the cst can be "absorbed" into
+  // the shuffle mask.
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(SrcOp)) {
+    SDValue Ptr = LD->getBasePtr();
+    if (!ISD::isNormalLoad(LD) || LD->isVolatile())
+      return SDValue();
+    EVT PVT = LD->getValueType(0);
+    if (PVT != MVT::i32 && PVT != MVT::f32)
+      return SDValue();
+
+    int FI = -1;
+    int64_t Offset = 0;
+    if (FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(Ptr)) {
+      FI = FINode->getIndex();
+      Offset = 0;
+    } else if (Ptr.getOpcode() == ISD::ADD &&
+               isa<ConstantSDNode>(Ptr.getOperand(1)) &&
+               isa<FrameIndexSDNode>(Ptr.getOperand(0))) {
+      FI = cast<FrameIndexSDNode>(Ptr.getOperand(0))->getIndex();
+      Offset = Ptr.getConstantOperandVal(1);
+      Ptr = Ptr.getOperand(0);
+    } else {
+      return SDValue();
+    }
+
+    SDValue Chain = LD->getChain();
+    // Make sure the stack object alignment is at least 16.
+    MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+    if (DAG.InferPtrAlignment(Ptr) < 16) {
+      if (MFI->isFixedObjectIndex(FI)) {
+        // Can't change the alignment. Reference stack + offset explicitly
+        // if stack pointer is at least 16-byte aligned.
+        unsigned StackAlign = Subtarget->getStackAlignment();
+        if (StackAlign < 16)
+          return SDValue();
+        Offset = MFI->getObjectOffset(FI) + Offset;
+        SDValue StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr,
+                                              getPointerTy());
+        Ptr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
+                          DAG.getConstant(Offset & ~15, getPointerTy()));
+        Offset %= 16;
+      } else {
+        MFI->setObjectAlignment(FI, 16);
+      }
+    }
+
+    // (Offset % 16) must be multiple of 4. Then address is then
+    // Ptr + (Offset & ~15).
+    if (Offset < 0)
+      return SDValue();
+    if ((Offset % 16) & 3)
+      return SDValue();
+    int64_t StartOffset = Offset & ~15;
+    if (StartOffset)
+      Ptr = DAG.getNode(ISD::ADD, Ptr.getDebugLoc(), Ptr.getValueType(),
+                        Ptr,DAG.getConstant(StartOffset, Ptr.getValueType()));
+
+    int EltNo = (Offset - StartOffset) >> 2;
+    int Mask[4] = { EltNo, EltNo, EltNo, EltNo };
+    EVT VT = (PVT == MVT::i32) ? MVT::v4i32 : MVT::v4f32;
+    SDValue V1 = DAG.getLoad(VT, dl, Chain, Ptr,LD->getSrcValue(),0);
+    // Canonicalize it to a v4i32 shuffle.
+    V1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v4i32, V1);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, VT,
+                       DAG.getVectorShuffle(MVT::v4i32, dl, V1,
+                                            DAG.getUNDEF(MVT::v4i32), &Mask[0]));
+  }
+
+  return SDValue();
+}
+
+SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   // All zero's are handled with pxor, all one's are handled with pcmpeqd.
@@ -3486,8 +3562,19 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   }
 
   // Splat is obviously ok. Let legalizer expand it to a shuffle.
-  if (Values.size() == 1)
+  if (Values.size() == 1) {
+    if (EVTBits == 32) {
+      // Instead of a shuffle like this:
+      // shuffle (scalar_to_vector (load (ptr + 4))), undef, <0, 0, 0, 0>
+      // Check if it's possible to issue this instead.
+      // shuffle (vload ptr)), undef, <1, 1, 1, 1>
+      unsigned Idx = CountTrailingZeros_32(NonZeros);
+      SDValue Item = Op.getOperand(Idx);
+      if (Op.getNode()->isOnlyUserOf(Item.getNode()))
+        return LowerAsSplatVectorLoad(Item, VT, dl, DAG);
+    }
     return SDValue();
+  }
 
   // A vector full of immediates; various special cases are already
   // handled, so this is best done with a single constant-pool load.
@@ -4278,7 +4365,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   unsigned ShAmt = 0;
   SDValue ShVal;
   bool isShift = getSubtarget()->hasSSE2() &&
-  isVectorShift(SVOp, DAG, isLeft, ShVal, ShAmt);
+    isVectorShift(SVOp, DAG, isLeft, ShVal, ShAmt);
   if (isShift && ShVal.hasOneUse()) {
     // If the shifted value has multiple uses, it may be cheaper to use
     // v_set0 + movlhps or movhlps, etc.

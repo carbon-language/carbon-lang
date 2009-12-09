@@ -626,7 +626,9 @@ namespace llvm {
 
     std::pair<SDValue,SDValue> FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
                                                bool isSigned);
-    
+
+    SDValue LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
+                                   SelectionDAG &DAG);
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG);
