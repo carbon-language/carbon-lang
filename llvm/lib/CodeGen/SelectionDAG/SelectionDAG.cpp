@@ -5870,7 +5870,7 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
 
 /// InferPtrAlignment - Infer alignment of a load / store address. Return 0 if
 /// it cannot be inferred.
-unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) {
+unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
   // If this is a direct reference to a stack slot, use information about the
   // stack slot's alignment.
   int FrameIdx = 1 << 31;

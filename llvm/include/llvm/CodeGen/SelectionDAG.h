@@ -892,7 +892,7 @@ public:
 
   /// InferPtrAlignment - Infer alignment of a load / store address. Return 0 if
   /// it cannot be inferred.
-  unsigned InferPtrAlignment(SDValue Ptr);
+  unsigned InferPtrAlignment(SDValue Ptr) const;
 
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);
