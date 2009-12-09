@@ -14,6 +14,7 @@
 #include "llvm/Analysis/PHITransAddr.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static bool CanPHITrans(Instruction *Inst) {
@@ -31,6 +32,72 @@ static bool CanPHITrans(Instruction *Inst) {
   //     cerr << "OP:\t\t\t\t" << *PtrInst->getOperand(0);
   return false;
 }
+
+void PHITransAddr::dump() const {
+  if (Addr == 0) {
+    errs() << "PHITransAddr: null\n";
+    return;
+  }
+  errs() << "PHITransAddr: " << *Addr << "\n";
+  for (unsigned i = 0, e = InstInputs.size(); i != e; ++i)
+    errs() << "  Input #" << i << " is " << *InstInputs[i] << "\n";
+}
+
+
+static bool VerifySubExpr(Value *Expr,
+                          SmallVectorImpl<Instruction*> &InstInputs) {
+  // If this is a non-instruction value, there is nothing to do.
+  Instruction *I = dyn_cast<Instruction>(Expr);
+  if (I == 0) return true;
+  
+  // If it's an instruction, it is either in Tmp or its operands recursively
+  // are.
+  SmallVectorImpl<Instruction*>::iterator Entry =
+    std::find(InstInputs.begin(), InstInputs.end(), I);
+  if (Entry != InstInputs.end()) {
+    InstInputs.erase(Entry);
+    return true;
+  }
+  
+  // If it isn't in the InstInputs list it is a subexpr incorporated into the
+  // address.  Sanity check that it is phi translatable.
+  if (!CanPHITrans(I)) {
+    errs() << "Non phi translatable instruction found in PHITransAddr, either "
+              "something is missing from InstInputs or CanPHITrans is wrong:\n";
+    errs() << *I << '\n';
+    return false;
+  }
+  
+  // Validate the operands of the instruction.
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+    if (!VerifySubExpr(I->getOperand(i), InstInputs))
+      return false;
+
+  return true;
+}
+
+/// Verify - Check internal consistency of this data structure.  If the
+/// structure is valid, it returns true.  If invalid, it prints errors and
+/// returns false.
+bool PHITransAddr::Verify() const {
+  if (Addr == 0) return true;
+  
+  SmallVector<Instruction*, 8> Tmp(InstInputs.begin(), InstInputs.end());  
+  
+  if (!VerifySubExpr(Addr, Tmp))
+    return false;
+  
+  if (!Tmp.empty()) {
+    errs() << "PHITransAddr inconsistent, contains extra instructions:\n";
+    for (unsigned i = 0, e = InstInputs.size(); i != e; ++i)
+      errs() << "  InstInput #" << i << " is " << *InstInputs[i] << "\n";
+    return false;
+  }
+  
+  // a-ok.
+  return true;
+}
+
 
 /// IsPotentiallyPHITranslatable - If this needs PHI translation, return true
 /// if we have some hope of doing it.  This should be used as a filter to
@@ -236,7 +303,9 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
 /// CurBB to Pred, updating our state the reflect any needed changes.  This
 /// returns true on failure and sets Addr to null.
 bool PHITransAddr::PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB) {
+  assert(Verify() && "Invalid PHITransAddr!");
   Addr = PHITranslateSubExpr(Addr, CurBB, PredBB);
+  assert(Verify() && "Invalid PHITransAddr!");
   return Addr == 0;
 }
 

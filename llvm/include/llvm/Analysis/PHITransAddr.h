@@ -80,6 +80,13 @@ public:
   Value *PHITranslateWithInsertion(BasicBlock *CurBB, BasicBlock *PredBB,
                                    const DominatorTree &DT,
                                    SmallVectorImpl<Instruction*> &NewInsts);
+  
+  void dump() const;
+  
+  /// Verify - Check internal consistency of this data structure.  Though it
+  /// claims to return a bool, it actually aborts on error and always returns
+  /// true.
+  bool Verify() const;
 private:
   Value *PHITranslateSubExpr(Value *V, BasicBlock *CurBB, BasicBlock *PredBB);
   
@@ -103,6 +110,7 @@ private:
   /// array that are due to the specified instruction that is about to be
   /// removed from the address, and add any corresponding to V.  This returns V.
   Value *ReplaceInstWithValue(Instruction *I, Value *V);
+  
 };
 
 } // end namespace llvm
