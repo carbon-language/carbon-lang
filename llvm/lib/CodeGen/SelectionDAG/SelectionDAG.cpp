@@ -5887,6 +5887,8 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
   if (FrameIdx != (1 << 31)) {
     // FIXME: Handle FI+CST.
     const MachineFrameInfo &MFI = *getMachineFunction().getFrameInfo();
+    unsigned FIInfoAlign = MinAlign(MFI.getObjectAlignment(FrameIdx),
+                                    FrameOffset);
     if (MFI.isFixedObjectIndex(FrameIdx)) {
       int64_t ObjectOffset = MFI.getObjectOffset(FrameIdx) + FrameOffset;
 
@@ -5899,13 +5901,12 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
 
       // Finally, the frame object itself may have a known alignment.  Factor
       // the alignment + offset into a new alignment.  For example, if we know
-      // the  FI is 8 byte aligned, but the pointer is 4 off, we really have a
+      // the FI is 8 byte aligned, but the pointer is 4 off, we really have a
       // 4-byte alignment of the resultant pointer.  Likewise align 4 + 4-byte
       // offset = 4-byte alignment, align 4 + 1-byte offset = align 1, etc.
-      unsigned FIInfoAlign = MinAlign(MFI.getObjectAlignment(FrameIdx),
-                                      FrameOffset);
       return std::max(Align, FIInfoAlign);
     }
+    return FIInfoAlign;
   }
 
   return 0;
