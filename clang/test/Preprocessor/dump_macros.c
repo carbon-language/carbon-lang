@@ -1,11 +1,11 @@
 // RUN: clang-cc -E -dM %s -o - | FileCheck %s -strict-whitespace
 
 // Space at end even without expansion tokens
-// CHECK: {{#define A[(]x[)] $}}
+// CHECK: #define A(x) 
 #define A(x)
 
 // Space before expansion list.
-// CHECK: {{#define B[(]x,y[)] x y$}}
+// CHECK: #define B(x,y) x y
 #define B(x,y)x y
 
 // No space in argument list.
