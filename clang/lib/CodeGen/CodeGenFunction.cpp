@@ -34,6 +34,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     ConditionalBranchLevel(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(0);
+  Exceptions = getContext().getLangOptions().Exceptions;
 }
 
 ASTContext &CodeGenFunction::getContext() const {
@@ -625,9 +626,10 @@ llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {
 
 void CodeGenFunction::PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock,
                                        llvm::BasicBlock *CleanupExitBlock,
+                                       llvm::BasicBlock *PreviousInvokeDest,
                                        bool EHOnly) {
   CleanupEntries.push_back(CleanupEntry(CleanupEntryBlock, CleanupExitBlock,
-                                        EHOnly));
+                                        PreviousInvokeDest, EHOnly));
 }
 
 void CodeGenFunction::EmitCleanupBlocks(size_t OldCleanupStackSize) {
@@ -650,6 +652,8 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock() {
   std::swap(BranchFixups, CE.BranchFixups);
 
   bool EHOnly = CE.EHOnly;
+
+  setInvokeDest(CE.PreviousInvokeDest);
 
   CleanupEntries.pop_back();
 

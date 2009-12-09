@@ -650,3 +650,55 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
 
   EmitBlock(FinallyEnd);
 }
+
+CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
+  llvm::BasicBlock *Cont1 = CGF.createBasicBlock("cont");
+  CGF.EmitBranch(Cont1);
+  CGF.setInvokeDest(PreviousInvokeDest);
+
+
+  CGF.EmitBlock(CleanupHandler);
+
+  llvm::Constant *Personality =
+    CGF.CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
+                                                          (CGF.VMContext),
+                                                          true),
+                                  "__gxx_personality_v0");
+  Personality = llvm::ConstantExpr::getBitCast(Personality, CGF.PtrToInt8Ty);
+  llvm::Value *llvm_eh_exception =
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
+  llvm::Value *llvm_eh_selector =
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
+
+  llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
+  const llvm::IntegerType *Int8Ty;
+  const llvm::PointerType *PtrToInt8Ty;
+  Int8Ty = llvm::Type::getInt8Ty(CGF.VMContext);
+  // C string type.  Used in lots of places.
+  PtrToInt8Ty = llvm::PointerType::getUnqual(Int8Ty);
+  llvm::Constant *Null = llvm::ConstantPointerNull::get(PtrToInt8Ty);
+  llvm::SmallVector<llvm::Value*, 8> Args;
+  Args.clear();
+  Args.push_back(Exc);
+  Args.push_back(Personality);
+  Args.push_back(Null);
+  CGF.Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
+
+  CGF.EmitBlock(CleanupEntryBB);
+
+  CGF.EmitBlock(Cont1);
+
+  if (CGF.getInvokeDest()) {
+    llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
+    CGF.Builder.CreateInvoke(getUnwindResumeOrRethrowFn(CGF), Cont,
+                             CGF.getInvokeDest(), Exc);
+    CGF.EmitBlock(Cont);
+  } else
+    CGF.Builder.CreateCall(getUnwindResumeOrRethrowFn(CGF), Exc);
+
+  CGF.Builder.CreateUnreachable();
+
+  CGF.EmitBlock(Cont);
+  if (CGF.Exceptions)
+    CGF.setInvokeDest(CleanupHandler);
+}

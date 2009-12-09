@@ -107,6 +107,7 @@ public:
   const llvm::Type *LLVMIntTy;
   uint32_t LLVMPointerWidth;
 
+  bool Exceptions;
 public:
   /// ObjCEHValueStack - Stack of Objective-C exception values, used for
   /// rethrows.
@@ -115,8 +116,12 @@ public:
   /// PushCleanupBlock - Push a new cleanup entry on the stack and set the
   /// passed in block as the cleanup block.
   void PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock,
-                        llvm::BasicBlock *CleanupExitBlock = 0,
+                        llvm::BasicBlock *CleanupExitBlock,
+                        llvm::BasicBlock *PreviousInvokeDest,
                         bool EHOnly = false);
+  void PushCleanupBlock(llvm::BasicBlock *CleanupEntryBlock) {
+    PushCleanupBlock(CleanupEntryBlock, 0, getInvokeDest(), false);
+  }
 
   /// CleanupBlockInfo - A struct representing a popped cleanup block.
   struct CleanupBlockInfo {
@@ -139,9 +144,35 @@ public:
       : CleanupBlock(cb), SwitchBlock(sb), EndBlock(eb), EHOnly(ehonly) {}
   };
 
+  /// EHCleanupBlock - RAII object that will create a cleanup block for the
+  /// exceptional edge and set the insert point to that block.  When destroyed,
+  /// it creates the cleanup edge and sets the insert point to the previous
+  /// block.
+  class EHCleanupBlock {
+    CodeGenFunction& CGF;
+    llvm::BasicBlock *Cont;
+    llvm::BasicBlock *CleanupHandler;
+    llvm::BasicBlock *CleanupEntryBB;
+    llvm::BasicBlock *PreviousInvokeDest;
+  public:
+    EHCleanupBlock(CodeGenFunction &cgf) 
+      : CGF(cgf), Cont(CGF.createBasicBlock("cont")),
+        CleanupHandler(CGF.createBasicBlock("ehcleanup")),
+        CleanupEntryBB(CGF.createBasicBlock("ehcleanup.rest")),
+        PreviousInvokeDest(CGF.getInvokeDest()) {
+      CGF.EmitBranch(Cont);
+      CGF.Builder.SetInsertPoint(CleanupEntryBB);
+
+      // FIXME: set up terminate handler here
+      // CGF.setInvokeDest(TerminateHandler);
+    }
+    ~EHCleanupBlock();
+  };
+
   /// PopCleanupBlock - Will pop the cleanup entry on the stack, process all
   /// branch fixups and return a block info struct with the switch block and end
-  /// block.
+  /// block.  This will also reset the invoke handler to the previous value
+  /// from when the cleanup block was created.
   CleanupBlockInfo PopCleanupBlock();
 
   /// DelayedCleanupBlock - RAII object that will create a cleanup block and set
@@ -152,13 +183,15 @@ public:
     llvm::BasicBlock *CurBB;
     llvm::BasicBlock *CleanupEntryBB;
     llvm::BasicBlock *CleanupExitBB;
+    llvm::BasicBlock *CurInvokeDest;
     bool EHOnly;
     
   public:
     DelayedCleanupBlock(CodeGenFunction &cgf, bool ehonly = false)
       : CGF(cgf), CurBB(CGF.Builder.GetInsertBlock()),
-      CleanupEntryBB(CGF.createBasicBlock("cleanup")), CleanupExitBB(0),
-      EHOnly(ehonly) {
+        CleanupEntryBB(CGF.createBasicBlock("cleanup")), CleanupExitBB(0),
+        CurInvokeDest(CGF.getInvokeDest()),
+        EHOnly(ehonly) {
       CGF.Builder.SetInsertPoint(CleanupEntryBB);
     }
 
@@ -169,7 +202,8 @@ public:
     }
     
     ~DelayedCleanupBlock() {
-      CGF.PushCleanupBlock(CleanupEntryBB, CleanupExitBB, EHOnly);
+      CGF.PushCleanupBlock(CleanupEntryBB, CleanupExitBB, CurInvokeDest,
+                           EHOnly);
       // FIXME: This is silly, move this into the builder.
       if (CurBB)
         CGF.Builder.SetInsertPoint(CurBB);
@@ -316,13 +350,20 @@ private:
     /// inserted into the current function yet.
     std::vector<llvm::BranchInst *> BranchFixups;
 
+    /// PreviousInvokeDest - The invoke handler from the start of the cleanup
+    /// region.
+    llvm::BasicBlock *PreviousInvokeDest;
+
     /// EHOnly - Perform this only on the exceptional edge, not the main edge.
     bool EHOnly;
 
     explicit CleanupEntry(llvm::BasicBlock *CleanupEntryBlock,
-                          llvm::BasicBlock *CleanupExitBlock, bool ehonly)
-      : CleanupEntryBlock(CleanupEntryBlock), 
+                          llvm::BasicBlock *CleanupExitBlock,
+                          llvm::BasicBlock *PreviousInvokeDest,
+                          bool ehonly)
+      : CleanupEntryBlock(CleanupEntryBlock),
         CleanupExitBlock(CleanupExitBlock),
+        PreviousInvokeDest(PreviousInvokeDest),
         EHOnly(ehonly) {}
   };
 

@@ -581,22 +581,39 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         
         if (const ConstantArrayType *Array = 
               getContext().getAsConstantArrayType(Ty)) {
-          DelayedCleanupBlock Scope(*this);
-          QualType BaseElementTy = getContext().getBaseElementType(Array);
-          const llvm::Type *BasePtr = ConvertType(BaseElementTy);
-          BasePtr = llvm::PointerType::getUnqual(BasePtr);
-          llvm::Value *BaseAddrPtr =
-            Builder.CreateBitCast(DeclPtr, BasePtr);
-          EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
+          {
+            DelayedCleanupBlock Scope(*this);
+            QualType BaseElementTy = getContext().getBaseElementType(Array);
+            const llvm::Type *BasePtr = ConvertType(BaseElementTy);
+            BasePtr = llvm::PointerType::getUnqual(BasePtr);
+            llvm::Value *BaseAddrPtr =
+              Builder.CreateBitCast(DeclPtr, BasePtr);
+            EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
           
-          // Make sure to jump to the exit block.
-          EmitBranch(Scope.getCleanupExitBlock());
+            // Make sure to jump to the exit block.
+            EmitBranch(Scope.getCleanupExitBlock());
+          }
+          if (Exceptions) {
+            EHCleanupBlock Cleanup(*this);
+            QualType BaseElementTy = getContext().getBaseElementType(Array);
+            const llvm::Type *BasePtr = ConvertType(BaseElementTy);
+            BasePtr = llvm::PointerType::getUnqual(BasePtr);
+            llvm::Value *BaseAddrPtr =
+              Builder.CreateBitCast(DeclPtr, BasePtr);
+            EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
+          }
         } else {
-          DelayedCleanupBlock Scope(*this);
-          EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
+          {
+            DelayedCleanupBlock Scope(*this);
+            EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
 
-          // Make sure to jump to the exit block.
-          EmitBranch(Scope.getCleanupExitBlock());
+            // Make sure to jump to the exit block.
+            EmitBranch(Scope.getCleanupExitBlock());
+          }
+          if (Exceptions) {
+            EHCleanupBlock Cleanup(*this);
+            EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
+          }
         }
       }
   }
@@ -608,8 +625,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     llvm::Constant* F = CGM.GetAddrOfFunction(FD);
     assert(F && "Could not find function!");
 
-    DelayedCleanupBlock scope(*this);
-
     const CGFunctionInfo &Info = CGM.getTypes().getFunctionInfo(FD);
 
     // In some cases, the type of the function argument will be different from
@@ -619,20 +634,40 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     //
     // To fix this we insert a bitcast here.
     QualType ArgTy = Info.arg_begin()->type;
-    DeclPtr = Builder.CreateBitCast(DeclPtr, ConvertType(ArgTy));
+    {
+      DelayedCleanupBlock scope(*this);
 
-    CallArgList Args;
-    Args.push_back(std::make_pair(RValue::get(DeclPtr),
-                                  getContext().getPointerType(D.getType())));
+      CallArgList Args;
+      Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
+                                                           ConvertType(ArgTy))),
+                                    getContext().getPointerType(D.getType())));
+      EmitCall(Info, F, Args);
+    }
+    if (Exceptions) {
+      EHCleanupBlock Cleanup(*this);
 
-    EmitCall(Info, F, Args);
+      CallArgList Args;
+      Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
+                                                           ConvertType(ArgTy))),
+                                    getContext().getPointerType(D.getType())));
+      EmitCall(Info, F, Args);
+    }
   }
 
   if (needsDispose && CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
-    DelayedCleanupBlock scope(*this);
-    llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
-    V = Builder.CreateLoad(V);
-    BuildBlockRelease(V);
+    {
+      DelayedCleanupBlock scope(*this);
+      llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
+      V = Builder.CreateLoad(V);
+      BuildBlockRelease(V);
+    }
+    // FIXME: Turn this on and audit the codegen
+    if (0 && Exceptions) {
+      EHCleanupBlock Cleanup(*this);
+      llvm::Value *V = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
+      V = Builder.CreateLoad(V);
+      BuildBlockRelease(V);
+    }
   }
 }
 
