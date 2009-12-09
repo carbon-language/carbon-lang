@@ -275,6 +275,10 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       RemoveInstInputs(LHS, InstInputs);
       return AddAsInput(Res);
     }
+
+    // If we didn't modify the add, just return it.
+    if (LHS == Inst->getOperand(0) && RHS == Inst->getOperand(1))
+      return Inst;
     
     // Otherwise, see if we have this add available somewhere.
     for (Value::use_iterator UI = LHS->use_begin(), E = LHS->use_end();
