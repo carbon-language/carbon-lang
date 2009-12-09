@@ -373,19 +373,19 @@ def F : JoinedOrSeparate<"-F">, MetaVarName<"<directory>">,
   HelpText<"Add directory to framework include search path">;
 def I : JoinedOrSeparate<"-I">, MetaVarName<"<directory>">,
   HelpText<"Add directory to include search path">;
-def idirafter : Separate<"-idirafter">, MetaVarName<"<directory>">,
+def idirafter : JoinedOrSeparate<"-idirafter">, MetaVarName<"<directory>">,
   HelpText<"Add directory to AFTER include search path">;
-def iquote : Separate<"-iquote">, MetaVarName<"<directory>">,
+def iquote : JoinedOrSeparate<"-iquote">, MetaVarName<"<directory>">,
   HelpText<"Add directory to QUOTE include search path">;
-def isystem : Separate<"-isystem">, MetaVarName<"<directory>">,
+def isystem : JoinedOrSeparate<"-isystem">, MetaVarName<"<directory>">,
   HelpText<"Add directory to SYSTEM include search path">;
-def iprefix : Separate<"-iprefix">, MetaVarName<"<prefix>">,
+def iprefix : JoinedOrSeparate<"-iprefix">, MetaVarName<"<prefix>">,
   HelpText<"Set the -iwithprefix/-iwithprefixbefore prefix">;
-def iwithprefix : Separate<"-iwithprefix">, MetaVarName<"<dir>">,
+def iwithprefix : JoinedOrSeparate<"-iwithprefix">, MetaVarName<"<dir>">,
   HelpText<"Set directory to SYSTEM include search path with prefix">;
-def iwithprefixbefore : Separate<"-iwithprefixbefore">, MetaVarName<"<dir>">,
+def iwithprefixbefore : JoinedOrSeparate<"-iwithprefixbefore">, MetaVarName<"<dir>">,
   HelpText<"Set directory to include search path with prefix">;
-def isysroot : Separate<"-isysroot">, MetaVarName<"<dir>">,
+def isysroot : JoinedOrSeparate<"-isysroot">, MetaVarName<"<dir>">,
   HelpText<"Set the system root directory (usually /)">;
 def v : Flag<"-v">, HelpText<"Enable verbose output">;
 
@@ -395,9 +395,9 @@ def v : Flag<"-v">, HelpText<"Enable verbose output">;
 
 def D : JoinedOrSeparate<"-D">, MetaVarName<"<macro>">,
   HelpText<"Predefine the specified macro">;
-def include_ : Separate<"-include">, MetaVarName<"<file>">, EnumName<"include">,
+def include_ : JoinedOrSeparate<"-include">, MetaVarName<"<file>">, EnumName<"include">,
   HelpText<"Include file before parsing">;
-def imacros : Separate<"-imacros">, MetaVarName<"<file>">,
+def imacros : JoinedOrSeparate<"-imacros">, MetaVarName<"<file>">,
   HelpText<"Include macros from file before parsing">;
 def include_pch : Separate<"-include-pch">, MetaVarName<"<file>">,
   HelpText<"Include precompiled header file">;
