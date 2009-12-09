@@ -199,7 +199,7 @@ SVal  StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
                                      QualType castTy) {
   if (castTy.isNull())
     return V;
-  
+
   assert(ValMgr.getContext().hasSameUnqualifiedType(castTy,
                                          R->getValueType(ValMgr.getContext())));
   return V;

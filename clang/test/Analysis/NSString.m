@@ -302,7 +302,7 @@ void testOSCompareAndSwapXXBarrier() {
 
 void testOSCompareAndSwapXXBarrier_positive() {
   NSString *old = 0;
-  NSString *s = [[NSString alloc] init]; // expected-warning{{leak}}
+  NSString *s = [[NSString alloc] init]; // no-warning
   if (!COMPARE_SWAP_BARRIER((intptr_t) 0, (intptr_t) s, (intptr_t*) &old))
     return;
   else    
@@ -326,7 +326,7 @@ void test_objc_atomicCompareAndSwap() {
 
 void test_objc_atomicCompareAndSwap_positive() {
   NSString *old = 0;
-  NSString *s = [[NSString alloc] init]; // expected-warning{{leak}}
+  NSString *s = [[NSString alloc] init]; // no-warning
   if (!objc_atomicCompareAndSwapPtr(0, s, &old))
     return;
   else    

@@ -1483,10 +1483,13 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);
   // Here we should use the value type of the region as the load type.
-  const MemRegion *R = location.getAsRegion();
+  const MemRegion *R = location.getAsRegion()->StripCasts();
   QualType LoadTy;
-  if (R)
+  if (R) {
     LoadTy = cast<TypedRegion>(R)->getValueType(C);
+    // Use the region as the real load location.
+    location = loc::MemRegionVal(R);
+  }
   Engine.EvalLoad(Tmp, theValueExpr, Pred, state, location, OSAtomicLoadTag,
                   LoadTy);
 
