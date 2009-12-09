@@ -847,7 +847,7 @@ void LiveInterval::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
       if (vni->isUnused()) {
         OS << "x";
       } else {
-        if (!vni->isDefAccurate())
+        if (!vni->isDefAccurate() && !vni->isPHIDef())
           OS << "?";
         else
           OS << vni->def;

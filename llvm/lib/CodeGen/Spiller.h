@@ -21,6 +21,7 @@ namespace llvm {
   class MachineFunction;
   class MachineInstr;
   class MachineLoopInfo;
+  class SlotIndex;
   class VirtRegMap;
   class VNInfo;
 
@@ -35,7 +36,8 @@ namespace llvm {
     /// Spill the given live range. The method used will depend on the Spiller
     /// implementation selected.
     virtual std::vector<LiveInterval*> spill(LiveInterval *li,
-                                   SmallVectorImpl<LiveInterval*> &spillIs) = 0;
+					     SmallVectorImpl<LiveInterval*> &spillIs,
+                                             SlotIndex *earliestIndex = 0) = 0;
 
   };
 

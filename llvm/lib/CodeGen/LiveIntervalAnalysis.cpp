@@ -401,7 +401,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         interval.removeRange(Start, End);        
         assert(interval.ranges.size() == 1 &&
                "Newly discovered PHI interval has >1 ranges.");
-        MachineBasicBlock *killMBB = getMBBFromIndex(interval.endIndex());
+        MachineBasicBlock *killMBB = getMBBFromIndex(VNI->def);
         VNI->addKill(indexes_->getTerminatorGap(killMBB));
         VNI->setHasPHIKill(true);
         DEBUG({
@@ -412,7 +412,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
         LiveRange LR(Start, End,
-                     interval.getNextValue(SlotIndex(getMBBStartIdx(mbb), true),
+                     interval.getNextValue(SlotIndex(getMBBStartIdx(Killer->getParent()), true),
                        0, false, VNInfoAllocator));
         LR.valno->setIsPHIDef(true);
         DEBUG(errs() << " replace range with " << LR);

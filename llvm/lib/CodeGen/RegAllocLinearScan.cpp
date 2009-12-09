@@ -1261,9 +1261,9 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
 
   // The earliest start of a Spilled interval indicates up to where
   // in handled we need to roll back
+  assert(!spillIs.empty() && "No spill intervals?"); 
+  SlotIndex earliestStart = spillIs[0]->beginIndex();
   
-  LiveInterval *earliestStartInterval = cur;
-
   // Spill live intervals of virtual regs mapped to the physical register we
   // want to clear (and its aliases).  We only spill those that overlap with the
   // current interval as the rest do not affect its allocation. we also keep
@@ -1274,18 +1274,15 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
     LiveInterval *sli = spillIs.back();
     spillIs.pop_back();
     DEBUG(errs() << "\t\t\tspilling(a): " << *sli << '\n');
-    earliestStartInterval =
-      (earliestStartInterval->beginIndex() < sli->beginIndex()) ?
-         earliestStartInterval : sli;
+    if (sli->beginIndex() < earliestStart)
+      earliestStart = sli->beginIndex();
        
     std::vector<LiveInterval*> newIs;
-    newIs = spiller_->spill(sli, spillIs);
+    newIs = spiller_->spill(sli, spillIs, &earliestStart);
     addStackInterval(sli, ls_, li_, mri_, *vrm_);
     std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
     spilled.insert(sli->reg);
   }
-
-  SlotIndex earliestStart = earliestStartInterval->beginIndex();
 
   DEBUG(errs() << "\t\trolling back to: " << earliestStart << '\n');
 
@@ -1295,7 +1292,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   while (!handled_.empty()) {
     LiveInterval* i = handled_.back();
     // If this interval starts before t we are done.
-    if (i->beginIndex() < earliestStart)
+    if (!i->empty() && i->beginIndex() < earliestStart)
       break;
     DEBUG(errs() << "\t\t\tundo changes for: " << *i << '\n');
     handled_.pop_back();
