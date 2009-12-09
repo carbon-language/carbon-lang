@@ -143,17 +143,14 @@ public:
     PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
     llvm::errs() << "ANALYZE: " << Loc.getFilename();
 
-    if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-      assert(isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D));
-      llvm::errs() << ' ' << ND->getNameAsString();
+    if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
+      const NamedDecl *ND = cast<NamedDecl>(D);
+      llvm::errs() << ' ' << ND->getNameAsString() << '\n';
     }
-    else {
-      assert(isa<BlockDecl>(D));
+    else if (isa<BlockDecl>(D)) {
       llvm::errs() << ' ' << "block(line:" << Loc.getLine() << ",col:"
-                   << Loc.getColumn();
+                   << Loc.getColumn() << '\n';
     }
-    
-    llvm::errs() << '\n';
   }
 
   void addCodeAction(CodeAction action) {
