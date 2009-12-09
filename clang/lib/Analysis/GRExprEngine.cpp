@@ -1576,47 +1576,6 @@ static bool EvalOSAtomic(ExplodedNodeSet& Dst,
 // Transfer function: Function calls.
 //===----------------------------------------------------------------------===//
 
-bool GRExprEngine::EvalBuiltinFunction(const FunctionDecl *FD, CallExpr *CE,
-                                       ExplodedNode *Pred,
-                                       ExplodedNodeSet &Dst) {
-  if (!FD)
-    return false;
-
-  unsigned id = FD->getBuiltinID();
-  if (!id)
-    return false;
-
-  const GRState *state = Pred->getState();
-
-  switch (id) {
-  case Builtin::BI__builtin_expect: {
-    // For __builtin_expect, just return the value of the subexpression.
-    assert (CE->arg_begin() != CE->arg_end());
-    SVal X = state->getSVal(*(CE->arg_begin()));
-    MakeNode(Dst, CE, Pred, state->BindExpr(CE, X));
-    return true;
-  }
-
-  case Builtin::BI__builtin_alloca: {
-    // FIXME: Refactor into StoreManager itself?
-    MemRegionManager& RM = getStateManager().getRegionManager();
-    const MemRegion* R =
-      RM.getAllocaRegion(CE, Builder->getCurrentBlockCount(),
-                         Pred->getLocationContext());
-
-    // Set the extent of the region in bytes. This enables us to use the
-    // SVal of the argument directly. If we save the extent in bits, we
-    // cannot represent values like symbol*8.
-    SVal Extent = state->getSVal(*(CE->arg_begin()));
-    state = getStoreManager().setExtent(state, R, Extent);
-    MakeNode(Dst, CE, Pred, state->BindExpr(CE, loc::MemRegionVal(R)));
-    return true;
-  }
-  }
-
-  return false;
-}
-
 void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
                              CallExpr::arg_iterator AI,
                              CallExpr::arg_iterator AE,
