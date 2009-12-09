@@ -273,6 +273,7 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   // This is not a checker yet.
   RegisterNoReturnFunctionChecker(Eng);
   RegisterBuiltinFunctionChecker(Eng);
+  RegisterOSAtomicChecker(Eng);
 }
 
 GRExprEngine::GRExprEngine(AnalysisManager &mgr)
@@ -1449,154 +1450,6 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
 }
 
 //===----------------------------------------------------------------------===//
-// Transfer function: OSAtomics.
-//
-// FIXME: Eventually refactor into a more "plugin" infrastructure.
-//===----------------------------------------------------------------------===//
-
-// Mac OS X:
-// http://developer.apple.com/documentation/Darwin/Reference/Manpages/man3
-// atomic.3.html
-//
-static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet& Dst,
-                                       GRExprEngine& Engine,
-                                       GRStmtNodeBuilder& Builder,
-                                       CallExpr* CE, ExplodedNode* Pred) {
-
-  // Not enough arguments to match OSAtomicCompareAndSwap?
-  if (CE->getNumArgs() != 3)
-    return false;
-
-  ASTContext &C = Engine.getContext();
-  Expr *oldValueExpr = CE->getArg(0);
-  QualType oldValueType = C.getCanonicalType(oldValueExpr->getType());
-
-  Expr *newValueExpr = CE->getArg(1);
-  QualType newValueType = C.getCanonicalType(newValueExpr->getType());
-
-  // Do the types of 'oldValue' and 'newValue' match?
-  if (oldValueType != newValueType)
-    return false;
-
-  Expr *theValueExpr = CE->getArg(2);
-  const PointerType *theValueType =
-    theValueExpr->getType()->getAs<PointerType>();
-
-  // theValueType not a pointer?
-  if (!theValueType)
-    return false;
-
-  QualType theValueTypePointee =
-    C.getCanonicalType(theValueType->getPointeeType()).getUnqualifiedType();
-
-  // The pointee must match newValueType and oldValueType.
-  if (theValueTypePointee != newValueType)
-    return false;
-
-  static unsigned magic_load = 0;
-  static unsigned magic_store = 0;
-
-  const void *OSAtomicLoadTag = &magic_load;
-  const void *OSAtomicStoreTag = &magic_store;
-
-  // Load 'theValue'.
-  const GRState *state = Pred->getState();
-  ExplodedNodeSet Tmp;
-  SVal location = state->getSVal(theValueExpr);
-  // Here we should use the value type of the region as the load type.
-  const MemRegion *R = location.getAsRegion()->StripCasts();
-  QualType LoadTy;
-  if (R) {
-    LoadTy = cast<TypedRegion>(R)->getValueType(C);
-    // Use the region as the real load location.
-    location = loc::MemRegionVal(R);
-  }
-  Engine.EvalLoad(Tmp, theValueExpr, Pred, state, location, OSAtomicLoadTag,
-                  LoadTy);
-
-  for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end();
-       I != E; ++I) {
-
-    ExplodedNode *N = *I;
-    const GRState *stateLoad = N->getState();
-    SVal theValueVal_untested = stateLoad->getSVal(theValueExpr);
-    SVal oldValueVal_untested = stateLoad->getSVal(oldValueExpr);
-
-    // FIXME: Issue an error.
-    if (theValueVal_untested.isUndef() || oldValueVal_untested.isUndef()) {
-      return false;
-    }
-    
-    DefinedOrUnknownSVal theValueVal =
-      cast<DefinedOrUnknownSVal>(theValueVal_untested);
-    DefinedOrUnknownSVal oldValueVal =
-      cast<DefinedOrUnknownSVal>(oldValueVal_untested);
-
-    SValuator &SVator = Engine.getSValuator();
-
-    // Perform the comparison.
-    DefinedOrUnknownSVal Cmp = SVator.EvalEQ(stateLoad, theValueVal,
-                                             oldValueVal);
-
-    const GRState *stateEqual = stateLoad->Assume(Cmp, true);
-
-    // Were they equal?
-    if (stateEqual) {
-      // Perform the store.
-      ExplodedNodeSet TmpStore;
-      SVal val = stateEqual->getSVal(newValueExpr);
-
-      // Handle implicit value casts.
-      if (const TypedRegion *R =
-          dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
-        llvm::tie(state, val) = SVator.EvalCast(val, state, R->getValueType(C),
-                                                newValueExpr->getType());
-      }
-
-      Engine.EvalStore(TmpStore, NULL, theValueExpr, N, stateEqual, location,
-                       val, OSAtomicStoreTag);
-
-      // Now bind the result of the comparison.
-      for (ExplodedNodeSet::iterator I2 = TmpStore.begin(),
-           E2 = TmpStore.end(); I2 != E2; ++I2) {
-        ExplodedNode *predNew = *I2;
-        const GRState *stateNew = predNew->getState();
-        SVal Res = Engine.getValueManager().makeTruthVal(true, CE->getType());
-        Engine.MakeNode(Dst, CE, predNew, stateNew->BindExpr(CE, Res));
-      }
-    }
-
-    // Were they not equal?
-    if (const GRState *stateNotEqual = stateLoad->Assume(Cmp, false)) {
-      SVal Res = Engine.getValueManager().makeTruthVal(false, CE->getType());
-      Engine.MakeNode(Dst, CE, N, stateNotEqual->BindExpr(CE, Res));
-    }
-  }
-
-  return true;
-}
-
-static bool EvalOSAtomic(ExplodedNodeSet& Dst,
-                         GRExprEngine& Engine,
-                         GRStmtNodeBuilder& Builder,
-                         CallExpr* CE, SVal L,
-                         ExplodedNode* Pred) {
-  const FunctionDecl* FD = L.getAsFunctionDecl();
-  if (!FD)
-    return false;
-
-  const char *FName = FD->getNameAsCString();
-
-  // Check for compare and swap.
-  if (strncmp(FName, "OSAtomicCompareAndSwap", 22) == 0 ||
-      strncmp(FName, "objc_atomicCompareAndSwap", 25) == 0)
-    return EvalOSAtomicCompareAndSwap(Dst, Engine, Builder, CE, Pred);
-
-  // FIXME: Other atomics.
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
 // Transfer function: Function calls.
 //===----------------------------------------------------------------------===//
 
@@ -1686,8 +1539,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
         // FIXME: Allow us to chain together transfer functions.
         assert(Builder && "GRStmtNodeBuilder must be defined.");
     
-        if (!EvalOSAtomic(DstTmp3, *this, *Builder, CE, L, Pred))
-          getTF().EvalCall(DstTmp3, *this, *Builder, CE, L, Pred);
+        getTF().EvalCall(DstTmp3, *this, *Builder, CE, L, Pred);
 
         // Handle the case where no nodes where generated.  Auto-generate that
         // contains the updated state if we aren't generating sinks.

@@ -56,7 +56,11 @@ public:
       ST(st), statement(stmt), size(Dst.size()) {}
 
   ~CheckerContext();
-  
+
+  GRExprEngine &getEngine() {
+    return Eng;
+  }
+
   ConstraintManager &getConstraintManager() {
       return Eng.getConstraintManager();
   }
@@ -103,6 +107,15 @@ public:
     return N;
   }
 
+  ExplodedNode *GenerateNode(const GRState *state, ExplodedNode *pred,
+                             bool autoTransition = true) {
+   assert(statement && "Only transitions with statements currently supported");
+    ExplodedNode *N = GenerateNodeImpl(statement, state, pred, false);
+    if (N && autoTransition)
+      addTransition(N);
+    return N;
+  }
+
   ExplodedNode *GenerateNode(const GRState *state, bool autoTransition = true) {
     assert(statement && "Only transitions with statements currently supported");
     ExplodedNode *N = GenerateNodeImpl(statement, state, false);
@@ -144,7 +157,14 @@ private:
       node->markAsSink();
     return node;
   }
-  
+
+  ExplodedNode *GenerateNodeImpl(const Stmt* stmt, const GRState *state,
+                                 ExplodedNode *pred, bool markAsSink) {
+   ExplodedNode *node = B.generateNode(stmt, state, pred);
+    if (markAsSink && node)
+      node->markAsSink();
+    return node;
+  }
 };
 
 class Checker {

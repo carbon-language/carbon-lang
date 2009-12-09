@@ -40,6 +40,7 @@ add_clang_library(clangAnalysis
   NoReturnFunctionChecker.cpp
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
+  OSAtomicChecker.cpp
   PathDiagnostic.cpp
   PointerArithChecker.cpp
   PointerSubChecker.cpp
