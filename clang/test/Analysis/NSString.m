@@ -291,7 +291,7 @@ void testOSCompareAndSwap() {
     [old release];
 }
 
-void testOSCompareAndSwapXXBarrier() {
+void testOSCompareAndSwapXXBarrier_local() {
   NSString *old = 0;
   NSString *s = [[NSString alloc] init]; // no-warning
   if (!COMPARE_SWAP_BARRIER((intptr_t) 0, (intptr_t) s, (intptr_t*) &old))
@@ -300,7 +300,7 @@ void testOSCompareAndSwapXXBarrier() {
     [old release];
 }
 
-void testOSCompareAndSwapXXBarrier_positive() {
+void testOSCompareAndSwapXXBarrier_local_no_direct_release() {
   NSString *old = 0;
   NSString *s = [[NSString alloc] init]; // no-warning
   if (!COMPARE_SWAP_BARRIER((intptr_t) 0, (intptr_t) s, (intptr_t*) &old))
@@ -315,7 +315,7 @@ int testOSCompareAndSwapXXBarrier_id(Class myclass, id xclass) {
   return 0;
 }
 
-void test_objc_atomicCompareAndSwap() {
+void test_objc_atomicCompareAndSwap_local() {
   NSString *old = 0;
   NSString *s = [[NSString alloc] init]; // no-warning
   if (!objc_atomicCompareAndSwapPtr(0, s, &old))
@@ -324,13 +324,29 @@ void test_objc_atomicCompareAndSwap() {
     [old release];
 }
 
-void test_objc_atomicCompareAndSwap_positive() {
+void test_objc_atomicCompareAndSwap_local_no_direct_release() {
   NSString *old = 0;
   NSString *s = [[NSString alloc] init]; // no-warning
   if (!objc_atomicCompareAndSwapPtr(0, s, &old))
     return;
   else    
     [old release];
+}
+
+void test_objc_atomicCompareAndSwap_parameter(NSString **old) {
+  NSString *s = [[NSString alloc] init]; // no-warning
+  if (!objc_atomicCompareAndSwapPtr(0, s, old))
+    [s release];
+  else    
+    [*old release];
+}
+
+void test_objc_atomicCompareAndSwap_parameter_no_direct_release(NSString **old) {
+  NSString *s = [[NSString alloc] init]; // expected-warning{{leak}}
+  if (!objc_atomicCompareAndSwapPtr(0, s, old))
+    return;
+  else    
+    [*old release];
 }
 
 

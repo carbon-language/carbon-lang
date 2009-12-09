@@ -98,11 +98,20 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);
   // Here we should use the value type of the region as the load type.
-  const MemRegion *R = location.getAsRegion()->StripCasts();
   QualType LoadTy;
-  if (R) {
-    LoadTy = cast<TypedRegion>(R)->getValueType(Ctx);
-    location = loc::MemRegionVal(R);
+  if (const MemRegion *R = location.getAsRegion()) {
+    // We must be careful, as SymbolicRegions aren't typed.
+    const MemRegion *strippedR = R->StripCasts();
+    // FIXME: This isn't quite the right solution.  One test case in 'test/Analysis/NSString.m'
+    // is giving the wrong result.
+    const TypedRegion *typedR =
+      isa<SymbolicRegion>(strippedR) ? cast<TypedRegion>(R) :
+                                      dyn_cast<TypedRegion>(strippedR);
+    
+    if (typedR) {
+      LoadTy = typedR->getValueType(Ctx);
+      location = loc::MemRegionVal(typedR);
+    }
   }
   Engine.EvalLoad(Tmp, const_cast<Expr *>(theValueExpr), C.getPredecessor(), 
                   state, location, OSAtomicLoadTag, LoadTy);
