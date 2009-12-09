@@ -280,7 +280,8 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     for (Value::use_iterator UI = LHS->use_begin(), E = LHS->use_end();
          UI != E; ++UI) {
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*UI))
-        if (BO->getOperand(0) == LHS && BO->getOperand(1) == RHS &&
+        if (BO->getOpcode() == Instruction::Add &&
+            BO->getOperand(0) == LHS && BO->getOperand(1) == RHS &&
             BO->getParent()->getParent() == CurBB->getParent())
           return BO;
     }
