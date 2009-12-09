@@ -491,21 +491,21 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
     // Check to see if we have a single dominating call instruction that is
     // identical to C.
     for (unsigned i = 0, e = deps.size(); i != e; ++i) {
-      const MemoryDependenceAnalysis::NonLocalDepEntry *I = &deps[i];
+      const NonLocalDepEntry *I = &deps[i];
       // Ignore non-local dependencies.
-      if (I->second.isNonLocal())
+      if (I->getResult().isNonLocal())
         continue;
 
       // We don't handle non-depedencies.  If we already have a call, reject
       // instruction dependencies.
-      if (I->second.isClobber() || cdep != 0) {
+      if (I->getResult().isClobber() || cdep != 0) {
         cdep = 0;
         break;
       }
 
-      CallInst *NonLocalDepCall = dyn_cast<CallInst>(I->second.getInst());
+      CallInst *NonLocalDepCall = dyn_cast<CallInst>(I->getResult().getInst());
       // FIXME: All duplicated with non-local case.
-      if (NonLocalDepCall && DT->properlyDominates(I->first, C->getParent())){
+      if (NonLocalDepCall && DT->properlyDominates(I->getBB(), C->getParent())){
         cdep = NonLocalDepCall;
         continue;
       }
@@ -1344,7 +1344,7 @@ static bool isLifetimeStart(Instruction *Inst) {
 bool GVN::processNonLocalLoad(LoadInst *LI,
                               SmallVectorImpl<Instruction*> &toErase) {
   // Find the non-local dependencies of the load.
-  SmallVector<MemoryDependenceAnalysis::NonLocalDepEntry, 64> Deps;
+  SmallVector<NonLocalDepEntry, 64> Deps;
   MD->getNonLocalPointerDependency(LI->getOperand(0), true, LI->getParent(),
                                    Deps);
   //DEBUG(errs() << "INVESTIGATING NONLOCAL LOAD: "
@@ -1358,11 +1358,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
   // If we had a phi translation failure, we'll have a single entry which is a
   // clobber in the current block.  Reject this early.
-  if (Deps.size() == 1 && Deps[0].second.isClobber()) {
+  if (Deps.size() == 1 && Deps[0].getResult().isClobber()) {
     DEBUG(
       errs() << "GVN: non-local load ";
       WriteAsOperand(errs(), LI);
-      errs() << " is clobbered by " << *Deps[0].second.getInst() << '\n';
+      errs() << " is clobbered by " << *Deps[0].getResult().getInst() << '\n';
     );
     return false;
   }
@@ -1377,8 +1377,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   const TargetData *TD = 0;
   
   for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
-    BasicBlock *DepBB = Deps[i].first;
-    MemDepResult DepInfo = Deps[i].second;
+    BasicBlock *DepBB = Deps[i].getBB();
+    MemDepResult DepInfo = Deps[i].getResult();
 
     if (DepInfo.isClobber()) {
       // If the dependence is to a store that writes to a superset of the bits

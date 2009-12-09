@@ -131,6 +131,27 @@ namespace llvm {
     }
   };
 
+  /// NonLocalDepEntry - This is an entry in the NonLocalDepInfo cache, and an
+  /// entry in the results set for a non-local query.  For each BasicBlock (the
+  /// BB entry) it keeps a MemDepResult.
+  class NonLocalDepEntry {
+    BasicBlock *BB;
+    MemDepResult Result;
+  public:
+    NonLocalDepEntry(BasicBlock *bb, MemDepResult result)
+      : BB(bb), Result(result) {}
+    
+    // BB is the sort key, it can't be changed.
+    BasicBlock *getBB() const { return BB; }
+    
+    const MemDepResult &getResult() const { return Result; }
+    void setResult(const MemDepResult &R) { Result = R; }
+    
+    bool operator<(const NonLocalDepEntry &RHS) const {
+      return BB < RHS.BB;
+    }
+  };
+  
   /// MemoryDependenceAnalysis - This is an analysis that determines, for a
   /// given memory operation, what preceding memory operations it depends on.
   /// It builds on alias analysis information, and tries to provide a lazy,
@@ -152,7 +173,6 @@ namespace llvm {
     LocalDepMapType LocalDeps;
 
   public:
-    typedef std::pair<BasicBlock*, MemDepResult> NonLocalDepEntry;
     typedef std::vector<NonLocalDepEntry> NonLocalDepInfo;
   private:
     /// ValueIsLoadPair - This is a pair<Value*, bool> where the bool is true if

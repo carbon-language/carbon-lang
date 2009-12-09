@@ -422,7 +422,7 @@ static void AssertSorted(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
   if (Count == 0) return;
 
   for (unsigned i = 1; i != unsigned(Count); ++i)
-    assert(Cache[i-1] <= Cache[i] && "Cache isn't sorted!");
+    assert(!(Cache[i] < Cache[i-1]) && "Cache isn't sorted!");
 }
 #endif
 
@@ -463,8 +463,8 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     // determine what is dirty, seeding our initial DirtyBlocks worklist.
     for (NonLocalDepInfo::iterator I = Cache.begin(), E = Cache.end();
        I != E; ++I)
-      if (I->second.isDirty())
-        DirtyBlocks.push_back(I->first);
+      if (I->getResult().isDirty())
+        DirtyBlocks.push_back(I->getBB());
     
     // Sort the cache so that we can do fast binary search lookups below.
     std::sort(Cache.begin(), Cache.end());
@@ -502,27 +502,27 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     DEBUG(AssertSorted(Cache, NumSortedEntries));
     NonLocalDepInfo::iterator Entry = 
       std::upper_bound(Cache.begin(), Cache.begin()+NumSortedEntries,
-                       std::make_pair(DirtyBB, MemDepResult()));
-    if (Entry != Cache.begin() && prior(Entry)->first == DirtyBB)
+                       NonLocalDepEntry(DirtyBB, MemDepResult()));
+    if (Entry != Cache.begin() && prior(Entry)->getBB() == DirtyBB)
       --Entry;
     
-    MemDepResult *ExistingResult = 0;
+    NonLocalDepEntry *ExistingResult = 0;
     if (Entry != Cache.begin()+NumSortedEntries && 
-        Entry->first == DirtyBB) {
+        Entry->getBB() == DirtyBB) {
       // If we already have an entry, and if it isn't already dirty, the block
       // is done.
-      if (!Entry->second.isDirty())
+      if (!Entry->getResult().isDirty())
         continue;
       
       // Otherwise, remember this slot so we can update the value.
-      ExistingResult = &Entry->second;
+      ExistingResult = &*Entry;
     }
     
     // If the dirty entry has a pointer, start scanning from it so we don't have
     // to rescan the entire block.
     BasicBlock::iterator ScanPos = DirtyBB->end();
     if (ExistingResult) {
-      if (Instruction *Inst = ExistingResult->getInst()) {
+      if (Instruction *Inst = ExistingResult->getResult().getInst()) {
         ScanPos = Inst;
         // We're removing QueryInst's use of Inst.
         RemoveFromReverseMap(ReverseNonLocalDeps, Inst,
@@ -546,9 +546,9 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
     // If we had a dirty entry for the block, update it.  Otherwise, just add
     // a new entry.
     if (ExistingResult)
-      *ExistingResult = Dep;
+      ExistingResult->setResult(Dep);
     else
-      Cache.push_back(std::make_pair(DirtyBB, Dep));
+      Cache.push_back(NonLocalDepEntry(DirtyBB, Dep));
     
     // If the block has a dependency (i.e. it isn't completely transparent to
     // the value), remember the association!
@@ -599,8 +599,8 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
                                    Result, Visited, true))
     return;
   Result.clear();
-  Result.push_back(std::make_pair(FromBB,
-                                  MemDepResult::getClobber(FromBB->begin())));
+  Result.push_back(NonLocalDepEntry(FromBB,
+                                    MemDepResult::getClobber(FromBB->begin())));
 }
 
 /// GetNonLocalInfoForBlock - Compute the memdep value for BB with
@@ -616,30 +616,30 @@ GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,
   // the cache set.  If so, find it.
   NonLocalDepInfo::iterator Entry =
     std::upper_bound(Cache->begin(), Cache->begin()+NumSortedEntries,
-                     std::make_pair(BB, MemDepResult()));
-  if (Entry != Cache->begin() && prior(Entry)->first == BB)
+                     NonLocalDepEntry(BB, MemDepResult()));
+  if (Entry != Cache->begin() && (Entry-1)->getBB() == BB)
     --Entry;
   
-  MemDepResult *ExistingResult = 0;
-  if (Entry != Cache->begin()+NumSortedEntries && Entry->first == BB)
-    ExistingResult = &Entry->second;
+  NonLocalDepEntry *ExistingResult = 0;
+  if (Entry != Cache->begin()+NumSortedEntries && Entry->getBB() == BB)
+    ExistingResult = &*Entry;
   
   // If we have a cached entry, and it is non-dirty, use it as the value for
   // this dependency.
-  if (ExistingResult && !ExistingResult->isDirty()) {
+  if (ExistingResult && !ExistingResult->getResult().isDirty()) {
     ++NumCacheNonLocalPtr;
-    return *ExistingResult;
+    return ExistingResult->getResult();
   }    
   
   // Otherwise, we have to scan for the value.  If we have a dirty cache
   // entry, start scanning from its position, otherwise we scan from the end
   // of the block.
   BasicBlock::iterator ScanPos = BB->end();
-  if (ExistingResult && ExistingResult->getInst()) {
-    assert(ExistingResult->getInst()->getParent() == BB &&
+  if (ExistingResult && ExistingResult->getResult().getInst()) {
+    assert(ExistingResult->getResult().getInst()->getParent() == BB &&
            "Instruction invalidated?");
     ++NumCacheDirtyNonLocalPtr;
-    ScanPos = ExistingResult->getInst();
+    ScanPos = ExistingResult->getResult().getInst();
     
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
     ValueIsLoadPair CacheKey(Pointer, isLoad);
@@ -655,9 +655,9 @@ GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,
   // If we had a dirty entry for the block, update it.  Otherwise, just add
   // a new entry.
   if (ExistingResult)
-    *ExistingResult = Dep;
+    ExistingResult->setResult(Dep);
   else
-    Cache->push_back(std::make_pair(BB, Dep));
+    Cache->push_back(NonLocalDepEntry(BB, Dep));
   
   // If the block has a dependency (i.e. it isn't completely transparent to
   // the value), remember the reverse association because we just added it
@@ -686,7 +686,7 @@ SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
     break;
   case 2: {
     // Two new entries, insert the last one into place.
-    MemoryDependenceAnalysis::NonLocalDepEntry Val = Cache.back();
+    NonLocalDepEntry Val = Cache.back();
     Cache.pop_back();
     MemoryDependenceAnalysis::NonLocalDepInfo::iterator Entry =
       std::upper_bound(Cache.begin(), Cache.end()-1, Val);
@@ -696,7 +696,7 @@ SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
   case 1:
     // One new entry, Just insert the new value at the appropriate position.
     if (Cache.size() != 1) {
-      MemoryDependenceAnalysis::NonLocalDepEntry Val = Cache.back();
+      NonLocalDepEntry Val = Cache.back();
       Cache.pop_back();
       MemoryDependenceAnalysis::NonLocalDepInfo::iterator Entry =
         std::upper_bound(Cache.begin(), Cache.end(), Val);
@@ -747,7 +747,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t PointeeSize,
     if (!Visited.empty()) {
       for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
            I != E; ++I) {
-        DenseMap<BasicBlock*, Value*>::iterator VI = Visited.find(I->first);
+        DenseMap<BasicBlock*, Value*>::iterator VI = Visited.find(I->getBB());
         if (VI == Visited.end() || VI->second == Pointer.getAddr())
           continue;
         
@@ -760,8 +760,8 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t PointeeSize,
     
     for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
          I != E; ++I) {
-      Visited.insert(std::make_pair(I->first, Pointer.getAddr()));
-      if (!I->second.isNonLocal())
+      Visited.insert(std::make_pair(I->getBB(), Pointer.getAddr()));
+      if (!I->getResult().isNonLocal())
         Result.push_back(*I);
     }
     ++NumCacheCompleteNonLocalPtr;
@@ -898,27 +898,27 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t PointeeSize,
         MemoryDependenceAnalysis::NonLocalDepInfo::iterator It =
           std::upper_bound(Cache->begin(), Cache->end(), Entry);
         
-        if (It != Cache->begin() && prior(It)->first == Pred)
+        if (It != Cache->begin() && (It-1)->getBB() == Pred)
           --It;
 
-        if (It == Cache->end() || It->first != Pred) {
+        if (It == Cache->end() || It->getBB() != Pred) {
           Cache->insert(It, Entry);
           // Add it to the reverse map.
           ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
-        } else if (!It->second.isDirty()) {
+        } else if (!It->getResult().isDirty()) {
           // noop
-        } else if (It->second.getInst() == Pred->getTerminator()) {
+        } else if (It->getResult().getInst() == Pred->getTerminator()) {
           // Same instruction, clear the dirty marker.
-          It->second = Entry.second;
-        } else if (It->second.getInst() == 0) {
+          It->setResult(Entry.getResult());
+        } else if (It->getResult().getInst() == 0) {
           // Dirty, with no instruction, just add this.
-          It->second = Entry.second;
+          It->setResult(Entry.getResult());
           ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
         } else {
           // Otherwise, dirty with a different instruction.
-          RemoveFromReverseMap(ReverseNonLocalPtrDeps, It->second.getInst(),
-                               CacheKey);
-          It->second = Entry.second;
+          RemoveFromReverseMap(ReverseNonLocalPtrDeps,
+                               It->getResult().getInst(), CacheKey);
+          It->setResult(Entry.getResult());
           ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
         }
         Cache = 0;
@@ -976,12 +976,12 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t PointeeSize,
     
     for (NonLocalDepInfo::reverse_iterator I = Cache->rbegin(); ; ++I) {
       assert(I != Cache->rend() && "Didn't find current block??");
-      if (I->first != BB)
+      if (I->getBB() != BB)
         continue;
       
-      assert(I->second.isNonLocal() &&
+      assert(I->getResult().isNonLocal() &&
              "Should only be here with transparent block");
-      I->second = MemDepResult::getClobber(BB->begin());
+      I->setResult(MemDepResult::getClobber(BB->begin()));
       ReverseNonLocalPtrDeps[BB->begin()].insert(CacheKey);
       Result.push_back(*I);
       break;
@@ -1007,9 +1007,9 @@ RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P) {
   NonLocalDepInfo &PInfo = It->second.second;
   
   for (unsigned i = 0, e = PInfo.size(); i != e; ++i) {
-    Instruction *Target = PInfo[i].second.getInst();
+    Instruction *Target = PInfo[i].getResult().getInst();
     if (Target == 0) continue;  // Ignore non-local dep results.
-    assert(Target->getParent() == PInfo[i].first);
+    assert(Target->getParent() == PInfo[i].getBB());
     
     // Eliminating the dirty entry from 'Cache', so update the reverse info.
     RemoveFromReverseMap(ReverseNonLocalPtrDeps, Target, P);
@@ -1046,7 +1046,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
     NonLocalDepInfo &BlockMap = NLDI->second.first;
     for (NonLocalDepInfo::iterator DI = BlockMap.begin(), DE = BlockMap.end();
          DI != DE; ++DI)
-      if (Instruction *Inst = DI->second.getInst())
+      if (Instruction *Inst = DI->getResult().getInst())
         RemoveFromReverseMap(ReverseNonLocalDeps, Inst, RemInst);
     NonLocalDeps.erase(NLDI);
   }
@@ -1134,10 +1134,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       
       for (NonLocalDepInfo::iterator DI = INLD.first.begin(), 
            DE = INLD.first.end(); DI != DE; ++DI) {
-        if (DI->second.getInst() != RemInst) continue;
+        if (DI->getResult().getInst() != RemInst) continue;
         
         // Convert to a dirty entry for the subsequent instruction.
-        DI->second = NewDirtyVal;
+        DI->setResult(NewDirtyVal);
         
         if (Instruction *NextI = NewDirtyVal.getInst())
           ReverseDepsToAdd.push_back(std::make_pair(NextI, *I));
@@ -1176,10 +1176,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
       // Update any entries for RemInst to use the instruction after it.
       for (NonLocalDepInfo::iterator DI = NLPDI.begin(), DE = NLPDI.end();
            DI != DE; ++DI) {
-        if (DI->second.getInst() != RemInst) continue;
+        if (DI->getResult().getInst() != RemInst) continue;
         
         // Convert to a dirty entry for the subsequent instruction.
-        DI->second = NewDirtyVal;
+        DI->setResult(NewDirtyVal);
         
         if (Instruction *NewDirtyInst = NewDirtyVal.getInst())
           ReversePtrDepsToAdd.push_back(std::make_pair(NewDirtyInst, P));
@@ -1220,7 +1220,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
     const NonLocalDepInfo &Val = I->second.second;
     for (NonLocalDepInfo::const_iterator II = Val.begin(), E = Val.end();
          II != E; ++II)
-      assert(II->second.getInst() != D && "Inst occurs as NLPD value");
+      assert(II->getResult().getInst() != D && "Inst occurs as NLPD value");
   }
   
   for (NonLocalDepMapType::const_iterator I = NonLocalDeps.begin(),
@@ -1229,7 +1229,7 @@ void MemoryDependenceAnalysis::verifyRemoved(Instruction *D) const {
     const PerInstNLInfo &INLD = I->second;
     for (NonLocalDepInfo::const_iterator II = INLD.first.begin(),
          EE = INLD.first.end(); II  != EE; ++II)
-      assert(II->second.getInst() != D && "Inst occurs in data structures");
+      assert(II->getResult().getInst() != D && "Inst occurs in data structures");
   }
   
   for (ReverseDepMapType::const_iterator I = ReverseLocalDeps.begin(),
