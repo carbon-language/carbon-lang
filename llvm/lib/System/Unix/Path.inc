@@ -77,7 +77,7 @@ inline bool lastIsSlash(const std::string& path) {
 namespace llvm {
 using namespace sys;
 
-extern const char sys::PathSeparator = ':';
+const char sys::PathSeparator = ':';
 
 Path::Path(const std::string& p)
   : path(p) {}
