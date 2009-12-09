@@ -2176,15 +2176,13 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
 CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp, 
                                                 CXXMethodDecl *Method) {
+  if (PerformObjectArgumentInitialization(Exp, Method))
+    assert(0 && "Calling BuildCXXMemberCallExpr with invalid call?");
+
   MemberExpr *ME = 
       new (Context) MemberExpr(Exp, /*IsArrow=*/false, Method, 
                                SourceLocation(), Method->getType());
-  QualType ResultType;
-  if (const CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(Method))
-    ResultType = Conv->getConversionType().getNonReferenceType();
-  else
-    ResultType = Method->getResultType().getNonReferenceType();
-
+  QualType ResultType = Method->getResultType().getNonReferenceType();
   MarkDeclarationReferenced(Exp->getLocStart(), Method);
   CXXMemberCallExpr *CE =
     new (Context) CXXMemberCallExpr(Context, ME, 0, 0, ResultType,
@@ -2220,11 +2218,7 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
 
   case CastExpr::CK_UserDefinedConversion: {
     assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
-  
-    // Cast to base if needed.
-    if (PerformObjectArgumentInitialization(From, Method))
-      return ExprError();
-    
+
     // Create an implicit call expr that calls it.
     CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(From, Method);
     return MaybeBindToTemporary(CE);
