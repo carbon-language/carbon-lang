@@ -1688,7 +1688,7 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
 
     // If the callee is processed by a checker, skip the rest logic.
     if (CheckerEvalCall(CE, DstChecker, *DI))
-      DstTmp3 = DstChecker;
+      DstTmp3.insert(DstChecker);
     else {
       for (ExplodedNodeSet::iterator DI_Checker = DstChecker.begin(),
             DE_Checker = DstChecker.end();
