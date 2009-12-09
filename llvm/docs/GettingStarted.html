@@ -252,7 +252,8 @@ software you will need.</p>
 </tr>
 <tr>
   <td>Cygwin/Win32</td>
-  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_8">8</a></sup></td>
+  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_8">8</a>,
+     <a href="#pf_11">11</a></sup></td>
   <td>GCC 3.4.X, binutils 2.15</td>
 </tr>
 <tr>
@@ -331,6 +332,9 @@ up</a></li>
     before any Windows-based versions such as Strawberry Perl and
     ActivePerl, as these have Windows-specifics that will cause the
     build to fail.</a></li>
+<li><a name="pf_11">In general, LLVM modules requiring dynamic linking can
+    not be built on Windows. However, you can build LLVM tools using
+    <i>"make tools-only"</i>.</li>
 </ol>
 </div>
 
