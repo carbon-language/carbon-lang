@@ -152,13 +152,26 @@ void GRExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME,
                                           ExplodedNodeSet &Dst,
                                           const GRState *state,
                                           ExplodedNode *Pred) {
+  bool Evaluated = false;
+  ExplodedNodeSet DstTmp;
+
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
     void *tag = I->first;
     Checker *checker = I->second;
 
-    if (checker->GR_EvalNilReceiver(Dst, *Builder, *this, ME, Pred, state, tag))
+    if (checker->GR_EvalNilReceiver(DstTmp, *Builder, *this, ME, Pred, state,
+                                    tag)) {
+      Evaluated = true;
       break;
+    } else
+      // The checker didn't evaluate the expr. Restore the Dst.
+      DstTmp.clear();
   }
+
+  if (Evaluated)
+    Dst.insert(DstTmp);
+  else
+    Dst.insert(Pred);
 }
 
 // CheckerEvalCall returns true if one of the checkers processed the node.
@@ -168,16 +181,24 @@ bool GRExprEngine::CheckerEvalCall(const CallExpr *CE,
                                    ExplodedNodeSet &Dst, 
                                    ExplodedNode *Pred) {
   bool Evaluated = false;
+  ExplodedNodeSet DstTmp;
 
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end();I!=E;++I) {
     void *tag = I->first;
     Checker *checker = I->second;
 
-    if (checker->GR_EvalCallExpr(Dst, *Builder, *this, CE, Pred, tag)) {
+    if (checker->GR_EvalCallExpr(DstTmp, *Builder, *this, CE, Pred, tag)) {
       Evaluated = true;
       break;
-    }
+    } else
+      // The checker didn't evaluate the expr. Restore the DstTmp set.
+      DstTmp.clear();
   }
+
+  if (Evaluated)
+    Dst.insert(DstTmp);
+  else
+    Dst.insert(Pred);
 
   return Evaluated;
 }
