@@ -120,7 +120,7 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
                                 ExplodedNodeSet &Src, bool isPrevisit) {
 
   if (Checkers.empty()) {
-    Dst = Src;
+    Dst.insert(Src);
     return;
   }
 
@@ -128,10 +128,13 @@ void GRExprEngine::CheckerVisit(Stmt *S, ExplodedNodeSet &Dst,
   ExplodedNodeSet *PrevSet = &Src;
 
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
-    ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst 
-                                          : (PrevSet == &Tmp) ? &Src : &Tmp;
-
-    CurrSet->clear();
+    ExplodedNodeSet *CurrSet = 0;
+    if (I+1 == E)
+      CurrSet = &Dst;
+    else {
+      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
+      CurrSet->clear();
+    }    
     void *tag = I->first;
     Checker *checker = I->second;
     
@@ -187,7 +190,7 @@ void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
                                     SVal location, SVal val, bool isPrevisit) {
   
   if (Checkers.empty()) {
-    Dst = Src;
+    Dst.insert(Src);
     return;
   }
   
@@ -196,10 +199,14 @@ void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
   
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
   {
-    ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst 
-    : (PrevSet == &Tmp) ? &Src : &Tmp;
+    ExplodedNodeSet *CurrSet = 0;
+    if (I+1 == E)
+      CurrSet = &Dst;
+    else {
+      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
+      CurrSet->clear();
+    }
     
-    CurrSet->clear();
     void *tag = I->first;
     Checker *checker = I->second;
     
@@ -395,10 +402,14 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
       ExplodedNodeSet *SrcSet = &Tmp2;
       for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
            I != E; ++I) {
-        ExplodedNodeSet *DstSet = (I+1 == E) ? &Tmp
-                                              : (SrcSet == &Tmp2) ? &Tmp3 
-                                                                  : &Tmp2;
-        DstSet->clear();
+        ExplodedNodeSet *DstSet = 0;
+        if (I+1 == E)
+          DstSet = &Tmp;
+        else {
+          DstSet = (SrcSet == &Tmp2) ? &Tmp3 : &Tmp2;
+          DstSet->clear();
+        }
+
         void *tag = I->first;
         Checker *checker = I->second;
         for (ExplodedNodeSet::iterator NI = SrcSet->begin(), NE = SrcSet->end();
@@ -1391,10 +1402,14 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
   
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E; ++I)
   {
-    ExplodedNodeSet *CurrSet = (I+1 == E) ? &Dst 
-      : (PrevSet == &Tmp) ? &Src : &Tmp;
+    ExplodedNodeSet *CurrSet = 0;
+    if (I+1 == E)
+      CurrSet = &Dst;
+    else {
+      CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
+      CurrSet->clear();
+    }
     
-    CurrSet->clear();
     void *tag = I->first;
     Checker *checker = I->second;
     
@@ -1658,6 +1673,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
   }
 
   // Finally, evaluate the function call.
+  ExplodedNodeSet DstTmp3;
+  
   for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
        DI != DE; ++DI) {
 
@@ -1666,40 +1683,40 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
 
     // FIXME: Add support for symbolic function calls (calls involving
     //  function pointer values that are symbolic).
-
-    // Check for the "noreturn" attribute.
-
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-
-    ExplodedNodeSet DstTmp3, DstChecker, DstOther;
+    ExplodedNodeSet DstChecker;
 
     // If the callee is processed by a checker, skip the rest logic.
     if (CheckerEvalCall(CE, DstChecker, *DI))
       DstTmp3 = DstChecker;
     else {
-      // Dispatch to the plug-in transfer function.
-      SaveOr OldHasGen(Builder->HasGeneratedNode);
-      Pred = *DI;
+      for (ExplodedNodeSet::iterator DI_Checker = DstChecker.begin(),
+            DE_Checker = DstChecker.end();
+            DI_Checker != DE_Checker; ++DI_Checker) {
 
-      // Dispatch to transfer function logic to handle the call itself.
-      // FIXME: Allow us to chain together transfer functions.
-      assert(Builder && "GRStmtNodeBuilder must be defined.");
+          // Dispatch to the plug-in transfer function.
+        unsigned OldSize = DstTmp3.size();
+        SaveOr OldHasGen(Builder->HasGeneratedNode);
+        Pred = *DI_Checker;
+
+        // Dispatch to transfer function logic to handle the call itself.
+        // FIXME: Allow us to chain together transfer functions.
+        assert(Builder && "GRStmtNodeBuilder must be defined.");
     
-      if (!EvalOSAtomic(DstOther, *this, *Builder, CE, L, Pred))
-        getTF().EvalCall(DstOther, *this, *Builder, CE, L, Pred);
+        if (!EvalOSAtomic(DstTmp3, *this, *Builder, CE, L, Pred))
+          getTF().EvalCall(DstTmp3, *this, *Builder, CE, L, Pred);
 
-      // Handle the case where no nodes where generated.  Auto-generate that
-      // contains the updated state if we aren't generating sinks.
-      if (!Builder->BuildSinks && DstTmp3.empty() &&
-          !Builder->HasGeneratedNode)
-        MakeNode(DstOther, CE, Pred, state);
-
-      DstTmp3 = DstOther;
+        // Handle the case where no nodes where generated.  Auto-generate that
+        // contains the updated state if we aren't generating sinks.
+        if (!Builder->BuildSinks && DstTmp3.size() == OldSize &&
+            !Builder->HasGeneratedNode)
+          MakeNode(DstTmp3, CE, Pred, state);
+      }
     }
-
-    // Perform the post-condition check of the CallExpr.
-    CheckerVisit(CE, Dst, DstTmp3, false);
   }
+
+  // Perform the post-condition check of the CallExpr.
+  CheckerVisit(CE, Dst, DstTmp3, false);
 }
 
 //===----------------------------------------------------------------------===//
