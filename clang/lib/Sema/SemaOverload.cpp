@@ -262,9 +262,9 @@ void ImplicitConversionSequence::DebugPrint() const {
 // New and Old cannot be overloaded, e.g., if New has the same
 // signature as some function in Old (C++ 1.3.10) or if the Old
 // declarations aren't functions (or function templates) at all. When
-// it does return false and Old is an overload set, MatchedDecl will
-// be set to point to the FunctionDecl that New cannot be overloaded
-// with.
+// it does return false, MatchedDecl will point to the decl that New
+// cannot be overloaded with.  This decl may be a UsingShadowDecl on
+// top of the underlying declaration.
 //
 // Example: Given the following input:
 //
@@ -286,31 +286,33 @@ void ImplicitConversionSequence::DebugPrint() const {
 // identical (return types of functions are not part of the
 // signature), IsOverload returns false and MatchedDecl will be set to
 // point to the FunctionDecl for #2.
-bool
-Sema::IsOverload(FunctionDecl *New, LookupResult &Old, NamedDecl *&Match) {
+Sema::OverloadKind
+Sema::CheckOverload(FunctionDecl *New, LookupResult &Old, NamedDecl *&Match) {
   for (LookupResult::iterator I = Old.begin(), E = Old.end();
          I != E; ++I) {
     NamedDecl *OldD = (*I)->getUnderlyingDecl();
     if (FunctionTemplateDecl *OldT = dyn_cast<FunctionTemplateDecl>(OldD)) {
       if (!IsOverload(New, OldT->getTemplatedDecl())) {
-        Match = OldT;
-        return false;
+        Match = *I;
+        return Ovl_Match;
       }
     } else if (FunctionDecl *OldF = dyn_cast<FunctionDecl>(OldD)) {
       if (!IsOverload(New, OldF)) {
-        Match = OldF;
-        return false;
+        Match = *I;
+        return Ovl_Match;
       }
-    } else {
+    } else if (!isa<UnresolvedUsingValueDecl>(OldD)) {
       // (C++ 13p1):
       //   Only function declarations can be overloaded; object and type
       //   declarations cannot be overloaded.
-      Match = OldD;
-      return false;
+      // But we permit unresolved using value decls and diagnose the error
+      // during template instantiation.
+      Match = *I;
+      return Ovl_NonFunction;
     }
   }
 
-  return true;
+  return Ovl_Overload;
 }
 
 bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old) {

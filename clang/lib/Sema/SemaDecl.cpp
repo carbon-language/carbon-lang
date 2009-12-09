@@ -3165,34 +3165,44 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD,
     // there's no more work to do here; we'll just add the new
     // function to the scope.
 
-    if (!getLangOptions().CPlusPlus &&
-        AllowOverloadingOfFunction(Previous, Context)) {
-      OverloadableAttrRequired = true;
-
-      // Functions marked "overloadable" must have a prototype (that
-      // we can't get through declaration merging).
-      if (!NewFD->getType()->getAs<FunctionProtoType>()) {
-        Diag(NewFD->getLocation(), diag::err_attribute_overloadable_no_prototype)
-          << NewFD;
-        Redeclaration = true;
-
-        // Turn this into a variadic function with no parameters.
-        QualType R = Context.getFunctionType(
-                       NewFD->getType()->getAs<FunctionType>()->getResultType(),
-                       0, 0, true, 0);
-        NewFD->setType(R);
-        return NewFD->setInvalidDecl();
-      }
-    }
-
     NamedDecl *OldDecl = 0;
-    if (!Previous.empty()) {
-      if (!AllowOverloadingOfFunction(Previous, Context)) {
-        Redeclaration = true;
-        OldDecl = Previous.getFoundDecl();
-      } else if (!IsOverload(NewFD, Previous, OldDecl)) {
-        if (!isUsingDecl(OldDecl))
+    if (!AllowOverloadingOfFunction(Previous, Context)) {
+      Redeclaration = true;
+      OldDecl = Previous.getFoundDecl();
+    } else {
+      if (!getLangOptions().CPlusPlus) {
+        OverloadableAttrRequired = true;
+
+        // Functions marked "overloadable" must have a prototype (that
+        // we can't get through declaration merging).
+        if (!NewFD->getType()->getAs<FunctionProtoType>()) {
+          Diag(NewFD->getLocation(),
+               diag::err_attribute_overloadable_no_prototype)
+            << NewFD;
           Redeclaration = true;
+
+          // Turn this into a variadic function with no parameters.
+          QualType R = Context.getFunctionType(
+                     NewFD->getType()->getAs<FunctionType>()->getResultType(),
+                     0, 0, true, 0);
+          NewFD->setType(R);
+          return NewFD->setInvalidDecl();
+        }
+      }
+
+      switch (CheckOverload(NewFD, Previous, OldDecl)) {
+      case Ovl_Match:
+        // FIXME: hide or conflict with using shadow decls as appropriate
+        Redeclaration = !isa<UsingShadowDecl>(OldDecl);
+        break;
+
+      case Ovl_NonFunction:
+        Redeclaration = true;
+        break;
+
+      case Ovl_Overload:
+        Redeclaration = false;
+        break;
       }
     }
 

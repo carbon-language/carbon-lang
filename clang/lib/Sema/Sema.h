@@ -832,8 +832,22 @@ public:
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 
   /// C++ Overloading.
-  bool IsOverload(FunctionDecl *New, LookupResult &OldDecls,
-                  NamedDecl *&OldDecl);
+  enum OverloadKind {
+    /// This is a legitimate overload: the existing declarations are
+    /// functions or function templates with different signatures.
+    Ovl_Overload,
+
+    /// This is not an overload because the signature exactly matches
+    /// an existing declaration.
+    Ovl_Match,
+
+    /// This is not an overload because the lookup results contain a
+    /// non-function.
+    Ovl_NonFunction
+  };
+  OverloadKind CheckOverload(FunctionDecl *New,
+                             LookupResult &OldDecls,
+                             NamedDecl *&OldDecl);
   bool IsOverload(FunctionDecl *New, FunctionDecl *Old);
 
   ImplicitConversionSequence
