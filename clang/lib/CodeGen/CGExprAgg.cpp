@@ -120,7 +120,7 @@ public:
   void EmitInitializationToLValue(Expr *E, LValue Address);
   void EmitNullInitializationToLValue(LValue Address, QualType T);
   //  case Expr::ChooseExprClass:
-
+  void VisitCXXThrowExpr(const CXXThrowExpr *E) { CGF.EmitCXXThrowExpr(E); }
 };
 }  // end anonymous namespace.
 
