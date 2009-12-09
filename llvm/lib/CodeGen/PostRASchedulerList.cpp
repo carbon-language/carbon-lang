@@ -373,7 +373,8 @@ void SchedulePostRATDList::FinishBlock() {
 ///
 void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
   // Initialize the indices to indicate that no registers are live.
-  std::fill(KillIndices, array_endof(KillIndices), ~0u);
+  for (unsigned i = 0; i < TRI->getNumRegs(); ++i)
+    KillIndices[i] = ~0u;
 
   // Determine the live-out physregs for this block.
   if (!BB->empty() && BB->back().getDesc().isReturn()) {

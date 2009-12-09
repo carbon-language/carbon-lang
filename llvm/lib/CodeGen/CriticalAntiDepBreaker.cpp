@@ -43,8 +43,11 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
             static_cast<const TargetRegisterClass *>(0));
 
   // Initialize the indices to indicate that no registers are live.
-  std::fill(KillIndices, array_endof(KillIndices), ~0u);
-  std::fill(DefIndices, array_endof(DefIndices), BB->size());
+  const unsigned BBSize = BB->size();
+  for (unsigned i = 0; i < TRI->getNumRegs(); ++i) {
+    KillIndices[i] = ~0u;
+    DefIndices[i] = BBSize;
+  }
 
   // Clear "do not change" set.
   KeepRegs.clear();
@@ -122,7 +125,7 @@ void CriticalAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
   // may have been rescheduled and its lifetime may overlap with registers
   // in ways not reflected in our current liveness state. For each such
   // register, adjust the liveness state to be conservatively correct.
-  for (unsigned Reg = 0; Reg != TargetRegisterInfo::FirstVirtualRegister; ++Reg)
+  for (unsigned Reg = 0; Reg != TRI->getNumRegs(); ++Reg)
     if (DefIndices[Reg] < InsertPosIndex && DefIndices[Reg] >= Count) {
       assert(KillIndices[Reg] == ~0u && "Clobbered register is live!");
       // Mark this register to be non-renamable.

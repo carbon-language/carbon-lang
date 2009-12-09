@@ -38,16 +38,19 @@ DebugMod("agg-antidep-debugmod",
                       cl::desc("Debug control for aggressive anti-dep breaker"),
                       cl::init(0), cl::Hidden);
 
-AggressiveAntiDepState::AggressiveAntiDepState(MachineBasicBlock *BB) :
-  GroupNodes(TargetRegisterInfo::FirstVirtualRegister, 0) {
-  // Initialize all registers to be in their own group. Initially we
-  // assign the register to the same-indexed GroupNode.
-  for (unsigned i = 0; i < TargetRegisterInfo::FirstVirtualRegister; ++i)
-    GroupNodeIndices[i] = i;
+AggressiveAntiDepState::AggressiveAntiDepState(const unsigned TargetRegs,
+                                               MachineBasicBlock *BB) :
+  NumTargetRegs(TargetRegs), GroupNodes(TargetRegs, 0) {
 
-  // Initialize the indices to indicate that no registers are live.
-  std::fill(KillIndices, array_endof(KillIndices), ~0u);
-  std::fill(DefIndices, array_endof(DefIndices), BB->size());
+  const unsigned BBSize = BB->size();
+  for (unsigned i = 0; i < NumTargetRegs; ++i) {
+    // Initialize all registers to be in their own group. Initially we
+    // assign the register to the same-indexed GroupNode.
+    GroupNodeIndices[i] = i;
+    // Initialize the indices to indicate that no registers are live.
+    KillIndices[i] = ~0u;
+    DefIndices[i] = BBSize;
+  }
 }
 
 unsigned AggressiveAntiDepState::GetGroup(unsigned Reg)
@@ -64,7 +67,7 @@ void AggressiveAntiDepState::GetGroupRegs(
   std::vector<unsigned> &Regs,
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference> *RegRefs)
 {
-  for (unsigned Reg = 0; Reg != TargetRegisterInfo::FirstVirtualRegister; ++Reg) {
+  for (unsigned Reg = 0; Reg != NumTargetRegs; ++Reg) {
     if ((GetGroup(Reg) == Group) && (RegRefs->count(Reg) > 0))
       Regs.push_back(Reg);
   }
@@ -137,7 +140,7 @@ AggressiveAntiDepBreaker::~AggressiveAntiDepBreaker() {
 
 void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   assert(State == NULL);
-  State = new AggressiveAntiDepState(BB);
+  State = new AggressiveAntiDepState(TRI->getNumRegs(), BB);
 
   bool IsReturnBlock = (!BB->empty() && BB->back().getDesc().isReturn());
   unsigned *KillIndices = State->GetKillIndices();
@@ -220,7 +223,7 @@ void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
   DEBUG(errs() << "\tRegs:");
 
   unsigned *DefIndices = State->GetDefIndices();
-  for (unsigned Reg = 0; Reg != TargetRegisterInfo::FirstVirtualRegister; ++Reg) {
+  for (unsigned Reg = 0; Reg != TRI->getNumRegs(); ++Reg) {
     // If Reg is current live, then mark that it can't be renamed as
     // we don't know the extent of its live-range anymore (now that it
     // has been scheduled). If it is not live but was defined in the

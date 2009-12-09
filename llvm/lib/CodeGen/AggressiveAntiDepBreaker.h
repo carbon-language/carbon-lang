@@ -44,6 +44,10 @@ namespace llvm {
     } RegisterReference;
 
   private:
+    /// NumTargetRegs - Number of non-virtual target registers
+    /// (i.e. TRI->getNumRegs()).
+    const unsigned NumTargetRegs;
+
     /// GroupNodes - Implements a disjoint-union data structure to
     /// form register groups. A node is represented by an index into
     /// the vector. A node can "point to" itself to indicate that it
@@ -69,7 +73,7 @@ namespace llvm {
     unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
 
   public:
-    AggressiveAntiDepState(MachineBasicBlock *BB);
+    AggressiveAntiDepState(const unsigned TargetRegs, MachineBasicBlock *BB);
     
     /// GetKillIndices - Return the kill indices.
     unsigned *GetKillIndices() { return KillIndices; }
