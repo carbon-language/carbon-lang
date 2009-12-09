@@ -1026,6 +1026,7 @@ static int AnalyzeLoadFromClobberingWrite(LoadInst *L, Value *WritePtr,
     << "Load Offs  = " << LoadOffset << " - " << *L << "\n\n";
     errs() << "'" << L->getParent()->getParent()->getName() << "'"
     << *L->getParent();
+    abort();
 #endif
     return -1;
   }
@@ -1059,6 +1060,7 @@ static int AnalyzeLoadFromClobberingWrite(LoadInst *L, Value *WritePtr,
     << "Load Offs  = " << LoadOffset << " - " << *L << "\n\n";
     errs() << "'" << L->getParent()->getParent()->getName() << "'"
     << *L->getParent();
+    abort();
 #endif
     return -1;
   }
