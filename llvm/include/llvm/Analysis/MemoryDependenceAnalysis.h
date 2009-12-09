@@ -31,6 +31,7 @@ namespace llvm {
   class MemoryDependenceAnalysis;
   class PredIteratorCache;
   class DominatorTree;
+  class PHITransAddr;
   
   /// MemDepResult - A memory dependence query can return one of three different
   /// answers, described below.
@@ -245,29 +246,6 @@ namespace llvm {
                                       BasicBlock *BB,
                                      SmallVectorImpl<NonLocalDepEntry> &Result);
     
-    /// GetPHITranslatedValue - Find an available version of the specified value
-    /// PHI translated across the specified edge.  If MemDep isn't able to
-    /// satisfy this request, it returns null.
-    Value *GetPHITranslatedValue(Value *V,
-                                 BasicBlock *CurBB, BasicBlock *PredBB,
-                                 const TargetData *TD) const;
-
-    /// GetAvailablePHITranslatedValue - Return the value computed by
-    /// PHITranslatePointer if it dominates PredBB, otherwise return null.
-    Value *GetAvailablePHITranslatedValue(Value *V,
-                                          BasicBlock *CurBB, BasicBlock *PredBB,
-                                          const TargetData *TD,
-                                          const DominatorTree &DT) const;
-    
-    /// InsertPHITranslatedPointer - Insert a computation of the PHI translated
-    /// version of 'V' for the edge PredBB->CurBB into the end of the PredBB
-    /// block.  All newly created instructions are added to the NewInsts list.
-    Value *InsertPHITranslatedPointer(Value *V,
-                                      BasicBlock *CurBB, BasicBlock *PredBB,
-                                      const TargetData *TD,
-                                      const DominatorTree &DT,
-                                 SmallVectorImpl<Instruction*> &NewInsts) const;
-    
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
     void removeInstruction(Instruction *InstToRemove);
@@ -288,7 +266,7 @@ namespace llvm {
     MemDepResult getCallSiteDependencyFrom(CallSite C, bool isReadOnlyCall,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
-    bool getNonLocalPointerDepFromBB(Value *Pointer, uint64_t Size,
+    bool getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t Size,
                                      bool isLoad, BasicBlock *BB,
                                      SmallVectorImpl<NonLocalDepEntry> &Result,
                                      DenseMap<BasicBlock*, Value*> &Visited,

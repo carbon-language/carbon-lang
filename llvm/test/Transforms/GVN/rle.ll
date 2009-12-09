@@ -388,6 +388,7 @@ declare i1 @cond() readonly
 declare i1 @cond2() readonly
 
 define i32 @phi_trans2() {
+; CHECK: @phi_trans2
 entry:
   %P = alloca i32, i32 400
   br label %F1
@@ -411,9 +412,57 @@ F:
   br label %F1
 
 TX:
-  ret i32 %x  ;; SHOULD NOT BE COMPILED TO 'ret i32 42'.
+  ; This load should not be compiled to 'ret i32 42'.  An overly clever
+  ; implementation of GVN would see that we're returning 17 if the loop
+  ; executes once or 42 if it executes more than that, but we'd have to do
+  ; loop restructuring to expose this, and GVN shouldn't do this sort of CFG
+  ; transformation.
+  
+; CHECK: TX:
+; CHECK: ret i32 %x
+  ret i32 %x
 TY:
   ret i32 0
 }
 
+define i32 @phi_trans3(i32* %p) {
+; CHECK: @phi_trans3
+block1:
+  br i1 true, label %block2, label %block3
+
+block2:
+ store i32 87, i32* %p
+ br label %block4
+
+block3:
+  %p2 = getelementptr i32* %p, i32 43
+  store i32 97, i32* %p2
+  br label %block4
+
+block4:
+  %A = phi i32 [-1, %block2], [42, %block3]
+  br i1 true, label %block5, label %exit
+  
+; CHECK: block4:
+; CHECK-NEXT: %D = phi i32 [ 87, %block2 ], [ 97, %block3 ]  
+; CHECK-NOT: load
+
+block5:
+  %B = add i32 %A, 1
+  br i1 true, label %block6, label %exit
+  
+block6:
+  %C = getelementptr i32* %p, i32 %B
+  br i1 true, label %block7, label %exit
+  
+block7:
+  %D = load i32* %C
+  ret i32 %D
+  
+; CHECK: block7:
+; CHECK-NEXT: ret i32 %D
+
+exit:
+  ret i32 -1
+}
 

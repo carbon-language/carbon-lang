@@ -23,6 +23,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/PHITransAddr.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/PredIteratorCache.h"
@@ -587,12 +588,14 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
   const Type *EltTy = cast<PointerType>(Pointer->getType())->getElementType();
   uint64_t PointeeSize = AA->getTypeStoreSize(EltTy);
   
+  PHITransAddr Address(Pointer, TD);
+  
   // This is the set of blocks we've inspected, and the pointer we consider in
   // each block.  Because of critical edges, we currently bail out if querying
   // a block with multiple different pointers.  This can happen during PHI
   // translation.
   DenseMap<BasicBlock*, Value*> Visited;
-  if (!getNonLocalPointerDepFromBB(Pointer, PointeeSize, isLoad, FromBB,
+  if (!getNonLocalPointerDepFromBB(Address, PointeeSize, isLoad, FromBB,
                                    Result, Visited, true))
     return;
   Result.clear();
@@ -707,275 +710,6 @@ SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
   }
 }
 
-/// isPHITranslatable - Return true if the specified computation is derived from
-/// a PHI node in the current block and if it is simple enough for us to handle.
-static bool isPHITranslatable(Instruction *Inst) {
-  if (isa<PHINode>(Inst))
-    return true;
-  
-  // We can handle bitcast of a PHI, but the PHI needs to be in the same block
-  // as the bitcast.
-  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
-    Instruction *OpI = dyn_cast<Instruction>(BC->getOperand(0));
-    if (OpI == 0 || OpI->getParent() != Inst->getParent())
-      return true;
-    return isPHITranslatable(OpI);
-  }
-  
-  // We can translate a GEP if all of its operands defined in this block are phi
-  // translatable. 
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
-    for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
-      Instruction *OpI = dyn_cast<Instruction>(GEP->getOperand(i));
-      if (OpI == 0 || OpI->getParent() != Inst->getParent())
-        continue;
-      
-      if (!isPHITranslatable(OpI))
-        return false;
-    }
-    return true;
-  }
-  
-  if (Inst->getOpcode() == Instruction::Add &&
-      isa<ConstantInt>(Inst->getOperand(1))) {
-    Instruction *OpI = dyn_cast<Instruction>(Inst->getOperand(0));
-    if (OpI == 0 || OpI->getParent() != Inst->getParent())
-      return true;
-    return isPHITranslatable(OpI);
-  }
-
-  //   cerr << "MEMDEP: Could not PHI translate: " << *Pointer;
-  //   if (isa<BitCastInst>(PtrInst) || isa<GetElementPtrInst>(PtrInst))
-  //     cerr << "OP:\t\t\t\t" << *PtrInst->getOperand(0);
-  
-  return false;
-}
-
-/// GetPHITranslatedValue - Given a computation that satisfied the
-/// isPHITranslatable predicate, see if we can translate the computation into
-/// the specified predecessor block.  If so, return that value.
-Value *MemoryDependenceAnalysis::
-GetPHITranslatedValue(Value *InVal, BasicBlock *CurBB, BasicBlock *Pred,
-                      const TargetData *TD) const {  
-  // If the input value is not an instruction, or if it is not defined in CurBB,
-  // then we don't need to phi translate it.
-  Instruction *Inst = dyn_cast<Instruction>(InVal);
-  if (Inst == 0 || Inst->getParent() != CurBB)
-    return InVal;
-  
-  if (PHINode *PN = dyn_cast<PHINode>(Inst))
-    return PN->getIncomingValueForBlock(Pred);
-  
-  // Handle bitcast of PHI.
-  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
-    // PHI translate the input operand.
-    Value *PHIIn = GetPHITranslatedValue(BC->getOperand(0), CurBB, Pred, TD);
-    if (PHIIn == 0) return 0;
-    
-    // Constants are trivial to phi translate.
-    if (Constant *C = dyn_cast<Constant>(PHIIn))
-      return ConstantExpr::getBitCast(C, BC->getType());
-    
-    // Otherwise we have to see if a bitcasted version of the incoming pointer
-    // is available.  If so, we can use it, otherwise we have to fail.
-    for (Value::use_iterator UI = PHIIn->use_begin(), E = PHIIn->use_end();
-         UI != E; ++UI) {
-      if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI))
-        if (BCI->getType() == BC->getType())
-          return BCI;
-    }
-    return 0;
-  }
-
-  // Handle getelementptr with at least one PHI translatable operand.
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
-    SmallVector<Value*, 8> GEPOps;
-    BasicBlock *CurBB = GEP->getParent();
-    for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
-      Value *GEPOp = GEP->getOperand(i);
-      // No PHI translation is needed of operands whose values are live in to
-      // the predecessor block.
-      if (!isa<Instruction>(GEPOp) ||
-          cast<Instruction>(GEPOp)->getParent() != CurBB) {
-        GEPOps.push_back(GEPOp);
-        continue;
-      }
-      
-      // If the operand is a phi node, do phi translation.
-      Value *InOp = GetPHITranslatedValue(GEPOp, CurBB, Pred, TD);
-      if (InOp == 0) return 0;
-      
-      GEPOps.push_back(InOp);
-    }
-    
-    // Simplify the GEP to handle 'gep x, 0' -> x etc.
-    if (Value *V = SimplifyGEPInst(&GEPOps[0], GEPOps.size(), TD))
-      return V;
-
-    // Scan to see if we have this GEP available.
-    Value *APHIOp = GEPOps[0];
-    for (Value::use_iterator UI = APHIOp->use_begin(), E = APHIOp->use_end();
-         UI != E; ++UI) {
-      if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI))
-        if (GEPI->getType() == GEP->getType() &&
-            GEPI->getNumOperands() == GEPOps.size() &&
-            GEPI->getParent()->getParent() == CurBB->getParent()) {
-          bool Mismatch = false;
-          for (unsigned i = 0, e = GEPOps.size(); i != e; ++i)
-            if (GEPI->getOperand(i) != GEPOps[i]) {
-              Mismatch = true;
-              break;
-            }
-          if (!Mismatch)
-            return GEPI;
-        }
-    }
-    return 0;
-  }
-  
-  // Handle add with a constant RHS.
-  if (Inst->getOpcode() == Instruction::Add &&
-      isa<ConstantInt>(Inst->getOperand(1))) {
-    // PHI translate the LHS.
-    Value *LHS;
-    Constant *RHS = cast<ConstantInt>(Inst->getOperand(1));
-    Instruction *OpI = dyn_cast<Instruction>(Inst->getOperand(0));
-    bool isNSW = cast<BinaryOperator>(Inst)->hasNoSignedWrap();
-    bool isNUW = cast<BinaryOperator>(Inst)->hasNoUnsignedWrap();
-    
-    if (OpI == 0 || OpI->getParent() != Inst->getParent())
-      LHS = Inst->getOperand(0);
-    else {
-      LHS = GetPHITranslatedValue(Inst->getOperand(0), CurBB, Pred, TD);
-      if (LHS == 0)
-        return 0;
-    }
-    
-    // If the PHI translated LHS is an add of a constant, fold the immediates.
-    if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(LHS))
-      if (BOp->getOpcode() == Instruction::Add)
-        if (ConstantInt *CI = dyn_cast<ConstantInt>(BOp->getOperand(1))) {
-          LHS = BOp->getOperand(0);
-          RHS = ConstantExpr::getAdd(RHS, CI);
-          isNSW = isNUW = false;
-        }
-    
-    // See if the add simplifies away.
-    if (Value *Res = SimplifyAddInst(LHS, RHS, isNSW, isNUW, TD))
-      return Res;
-    
-    // Otherwise, see if we have this add available somewhere.
-    for (Value::use_iterator UI = LHS->use_begin(), E = LHS->use_end();
-         UI != E; ++UI) {
-      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*UI))
-        if (BO->getOperand(0) == LHS && BO->getOperand(1) == RHS &&
-            BO->getParent()->getParent() == CurBB->getParent())
-          return BO;
-    }
-    
-    return 0;
-  }
-  
-  return 0;
-}
-
-/// GetAvailablePHITranslatePointer - Return the value computed by
-/// PHITranslatePointer if it dominates PredBB, otherwise return null.
-Value *MemoryDependenceAnalysis::
-GetAvailablePHITranslatedValue(Value *V,
-                               BasicBlock *CurBB, BasicBlock *PredBB,
-                               const TargetData *TD,
-                               const DominatorTree &DT) const {
-  // See if PHI translation succeeds.
-  V = GetPHITranslatedValue(V, CurBB, PredBB, TD);
-  if (V == 0) return 0;
-  
-  // Make sure the value is live in the predecessor.
-  if (Instruction *Inst = dyn_cast_or_null<Instruction>(V))
-    if (!DT.dominates(Inst->getParent(), PredBB))
-      return 0;
-  return V;
-}
-
-
-/// InsertPHITranslatedPointer - Insert a computation of the PHI translated
-/// version of 'V' for the edge PredBB->CurBB into the end of the PredBB
-/// block.  All newly created instructions are added to the NewInsts list.
-///
-Value *MemoryDependenceAnalysis::
-InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
-                           BasicBlock *PredBB, const TargetData *TD,
-                           const DominatorTree &DT,
-                           SmallVectorImpl<Instruction*> &NewInsts) const {
-  // See if we have a version of this value already available and dominating
-  // PredBB.  If so, there is no need to insert a new copy.
-  if (Value *Res = GetAvailablePHITranslatedValue(InVal, CurBB, PredBB, TD, DT))
-    return Res;
-  
-  // If we don't have an available version of this value, it must be an
-  // instruction.
-  Instruction *Inst = cast<Instruction>(InVal);
-  
-  // Handle bitcast of PHI translatable value.
-  if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
-    Value *OpVal = InsertPHITranslatedPointer(BC->getOperand(0),
-                                              CurBB, PredBB, TD, DT, NewInsts);
-    if (OpVal == 0) return 0;
-      
-    // Otherwise insert a bitcast at the end of PredBB.
-    BitCastInst *New = new BitCastInst(OpVal, InVal->getType(),
-                                       InVal->getName()+".phi.trans.insert",
-                                       PredBB->getTerminator());
-    NewInsts.push_back(New);
-    return New;
-  }
-  
-  // Handle getelementptr with at least one PHI operand.
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
-    SmallVector<Value*, 8> GEPOps;
-    BasicBlock *CurBB = GEP->getParent();
-    for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
-      Value *OpVal = InsertPHITranslatedPointer(GEP->getOperand(i),
-                                                CurBB, PredBB, TD, DT, NewInsts);
-      if (OpVal == 0) return 0;
-      GEPOps.push_back(OpVal);
-    }
-    
-    GetElementPtrInst *Result = 
-      GetElementPtrInst::Create(GEPOps[0], GEPOps.begin()+1, GEPOps.end(),
-                                InVal->getName()+".phi.trans.insert",
-                                PredBB->getTerminator());
-    Result->setIsInBounds(GEP->isInBounds());
-    NewInsts.push_back(Result);
-    return Result;
-  }
-  
-#if 0
-  // FIXME: This code works, but it is unclear that we actually want to insert
-  // a big chain of computation in order to make a value available in a block.
-  // This needs to be evaluated carefully to consider its cost trade offs.
-  
-  // Handle add with a constant RHS.
-  if (Inst->getOpcode() == Instruction::Add &&
-      isa<ConstantInt>(Inst->getOperand(1))) {
-    // PHI translate the LHS.
-    Value *OpVal = InsertPHITranslatedPointer(Inst->getOperand(0),
-                                              CurBB, PredBB, TD, DT, NewInsts);
-    if (OpVal == 0) return 0;
-    
-    BinaryOperator *Res = BinaryOperator::CreateAdd(OpVal, Inst->getOperand(1),
-                                           InVal->getName()+".phi.trans.insert",
-                                                    PredBB->getTerminator());
-    Res->setHasNoSignedWrap(cast<BinaryOperator>(Inst)->hasNoSignedWrap());
-    Res->setHasNoUnsignedWrap(cast<BinaryOperator>(Inst)->hasNoUnsignedWrap());
-    NewInsts.push_back(Res);
-    return Res;
-  }
-#endif
-  
-  return 0;
-}
-
 /// getNonLocalPointerDepFromBB - Perform a dependency query based on
 /// pointer/pointeesize starting at the end of StartBB.  Add any clobber/def
 /// results to the results vector and keep track of which blocks are visited in
@@ -989,14 +723,14 @@ InsertPHITranslatedPointer(Value *InVal, BasicBlock *CurBB,
 /// not compute dependence information for some reason.  This should be treated
 /// as a clobber dependence on the first instruction in the predecessor block.
 bool MemoryDependenceAnalysis::
-getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
+getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t PointeeSize,
                             bool isLoad, BasicBlock *StartBB,
                             SmallVectorImpl<NonLocalDepEntry> &Result,
                             DenseMap<BasicBlock*, Value*> &Visited,
                             bool SkipFirstBlock) {
   
   // Look up the cached info for Pointer.
-  ValueIsLoadPair CacheKey(Pointer, isLoad);
+  ValueIsLoadPair CacheKey(Pointer.getAddr(), isLoad);
   
   std::pair<BBSkipFirstBlockPair, NonLocalDepInfo> *CacheInfo =
     &NonLocalPointerDeps[CacheKey];
@@ -1014,7 +748,8 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
            I != E; ++I) {
         DenseMap<BasicBlock*, Value*>::iterator VI = Visited.find(I->first);
-        if (VI == Visited.end() || VI->second == Pointer) continue;
+        if (VI == Visited.end() || VI->second == Pointer.getAddr())
+          continue;
         
         // We have a pointer mismatch in a block.  Just return clobber, saying
         // that something was clobbered in this result.  We could also do a
@@ -1025,7 +760,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
     
     for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
          I != E; ++I) {
-      Visited.insert(std::make_pair(I->first, Pointer));
+      Visited.insert(std::make_pair(I->first, Pointer.getAddr()));
       if (!I->second.isNonLocal())
         Result.push_back(*I);
     }
@@ -1065,8 +800,9 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       // Get the dependency info for Pointer in BB.  If we have cached
       // information, we will use it, otherwise we compute it.
       DEBUG(AssertSorted(*Cache, NumSortedEntries));
-      MemDepResult Dep = GetNonLocalInfoForBlock(Pointer, PointeeSize, isLoad,
-                                                 BB, Cache, NumSortedEntries);
+      MemDepResult Dep = GetNonLocalInfoForBlock(Pointer.getAddr(), PointeeSize,
+                                                 isLoad, BB, Cache,
+                                                 NumSortedEntries);
       
       // If we got a Def or Clobber, add this to the list of results.
       if (!Dep.isNonLocal()) {
@@ -1077,18 +813,14 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
     
     // If 'Pointer' is an instruction defined in this block, then we need to do
     // phi translation to change it into a value live in the predecessor block.
-    // If phi translation fails, then we can't continue dependence analysis.
-    Instruction *PtrInst = dyn_cast<Instruction>(Pointer);
-    bool NeedsPHITranslation = PtrInst && PtrInst->getParent() == BB;
-    
-    // If no PHI translation is needed, just add all the predecessors of this
-    // block to scan them as well.
-    if (!NeedsPHITranslation) {
+    // If not, we just add the predecessors to the worklist and scan them with
+    // the same Pointer.
+    if (!Pointer.NeedsPHITranslationFromBlock(BB)) {
       SkipFirstBlock = false;
       for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
         // Verify that we haven't looked at this block yet.
         std::pair<DenseMap<BasicBlock*,Value*>::iterator, bool>
-          InsertRes = Visited.insert(std::make_pair(*PI, Pointer));
+          InsertRes = Visited.insert(std::make_pair(*PI, Pointer.getAddr()));
         if (InsertRes.second) {
           // First time we've looked at *PI.
           Worklist.push_back(*PI);
@@ -1098,16 +830,17 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
         // If we have seen this block before, but it was with a different
         // pointer then we have a phi translation failure and we have to treat
         // this as a clobber.
-        if (InsertRes.first->second != Pointer)
+        if (InsertRes.first->second != Pointer.getAddr())
           goto PredTranslationFailure;
       }
       continue;
     }
     
-    // If we do need to do phi translation, then there are a bunch of different
-    // cases, because we have to find a Value* live in the predecessor block. We
-    // know that PtrInst is defined in this block at least.
-
+    // We do need to do phi translation, if we know ahead of time we can't phi
+    // translate this value, don't even try.
+    if (!Pointer.IsPotentiallyPHITranslatable())
+      goto PredTranslationFailure;
+    
     // We may have added values to the cache list before this PHI translation.
     // If so, we haven't done anything to ensure that the cache remains sorted.
     // Sort it now (if needed) so that recursive invocations of
@@ -1117,19 +850,17 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       SortNonLocalDepInfoCache(*Cache, NumSortedEntries);
       NumSortedEntries = Cache->size();
     }
-    
-    // If this is a computation derived from a PHI node, use the suitably
-    // translated incoming values for each pred as the phi translated version.
-    if (!isPHITranslatable(PtrInst))
-      goto PredTranslationFailure;
-
     Cache = 0;
-      
+    
     for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
       BasicBlock *Pred = *PI;
-      // Get the PHI translated pointer in this predecessor.  This can fail and
-      // return null if not translatable.
-      Value *PredPtr = GetPHITranslatedValue(PtrInst, BB, Pred, TD);
+      
+      // Get the PHI translated pointer in this predecessor.  This can fail if
+      // not translatable, in which case the getAddr() returns null.
+      PHITransAddr PredPointer(Pointer);
+      PredPointer.PHITranslateValue(BB, Pred);
+
+      Value *PredPtrVal = PredPointer.getAddr();
       
       // Check to see if we have already visited this pred block with another
       // pointer.  If so, we can't do this lookup.  This failure can occur
@@ -1137,12 +868,12 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       // the successor translates to a pointer value different than the
       // pointer the block was first analyzed with.
       std::pair<DenseMap<BasicBlock*,Value*>::iterator, bool>
-        InsertRes = Visited.insert(std::make_pair(Pred, PredPtr));
+        InsertRes = Visited.insert(std::make_pair(Pred, PredPtrVal));
 
       if (!InsertRes.second) {
         // If the predecessor was visited with PredPtr, then we already did
         // the analysis and can ignore it.
-        if (InsertRes.first->second == PredPtr)
+        if (InsertRes.first->second == PredPtrVal)
           continue;
         
         // Otherwise, the block was previously analyzed with a different
@@ -1155,7 +886,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       // predecessor, then we have to assume that the pointer is clobbered in
       // that predecessor.  We can still do PRE of the load, which would insert
       // a computation of the pointer in this predecessor.
-      if (PredPtr == 0) {
+      if (PredPtrVal == 0) {
         // Add the entry to the Result list.
         NonLocalDepEntry Entry(Pred,
                                MemDepResult::getClobber(Pred->getTerminator()));
@@ -1201,7 +932,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       
       // If we have a problem phi translating, fall through to the code below
       // to handle the failure condition.
-      if (getNonLocalPointerDepFromBB(PredPtr, PointeeSize, isLoad, Pred,
+      if (getNonLocalPointerDepFromBB(PredPointer, PointeeSize, isLoad, Pred,
                                       Result, Visited))
         goto PredTranslationFailure;
     }

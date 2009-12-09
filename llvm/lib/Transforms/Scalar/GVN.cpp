@@ -36,6 +36,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Analysis/PHITransAddr.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -1597,38 +1598,42 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // Do PHI translation to get its value in the predecessor if necessary.  The
   // returned pointer (if non-null) is guaranteed to dominate UnavailablePred.
   //
-  // FIXME: This may insert a computation, but we don't tell scalar GVN
-  // optimization stuff about it.  How do we do this?
   SmallVector<Instruction*, 8> NewInsts;
-  Value *LoadPtr = 0;
   
   // If all preds have a single successor, then we know it is safe to insert the
   // load on the pred (?!?), so we can insert code to materialize the pointer if
   // it is not available.
+  PHITransAddr Address(LI->getOperand(0), TD);
+  Value *LoadPtr = 0;
   if (allSingleSucc) {
-    LoadPtr = MD->InsertPHITranslatedPointer(LI->getOperand(0), LoadBB,
-                                             UnavailablePred, TD, *DT,NewInsts);
+    LoadPtr = Address.PHITranslateWithInsertion(LoadBB, UnavailablePred,
+                                                *DT, NewInsts);
   } else {
-    LoadPtr = MD->GetAvailablePHITranslatedValue(LI->getOperand(0), LoadBB,
-                                                 UnavailablePred, TD, *DT);
+    Address.PHITranslateValue(LoadBB, UnavailablePred);
+    LoadPtr = Address.getAddr();
+    
+    // Make sure the value is live in the predecessor.
+    if (Instruction *Inst = dyn_cast_or_null<Instruction>(LoadPtr))
+      if (!DT->dominates(Inst->getParent(), UnavailablePred))
+        LoadPtr = 0;
+  }
+
+  // If we couldn't find or insert a computation of this phi translated value,
+  // we fail PRE.
+  if (LoadPtr == 0) {
+    assert(NewInsts.empty() && "Shouldn't insert insts on failure");
+    DEBUG(errs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
+                 << *LI->getOperand(0) << "\n");
+    return false;
   }
 
   // Assign value numbers to these new instructions.
-  for (SmallVector<Instruction*, 8>::iterator NI = NewInsts.begin(),
-       NE = NewInsts.end(); NI != NE; ++NI) {
+  for (unsigned i = 0, e = NewInsts.size(); i != e; ++i) {
     // FIXME: We really _ought_ to insert these value numbers into their 
     // parent's availability map.  However, in doing so, we risk getting into
     // ordering issues.  If a block hasn't been processed yet, we would be
     // marking a value as AVAIL-IN, which isn't what we intend.
-    VN.lookup_or_add(*NI);
-  }
-    
-  // If we couldn't find or insert a computation of this phi translated value,
-  // we fail PRE.
-  if (LoadPtr == 0) {
-    DEBUG(errs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
-                 << *LI->getOperand(0) << "\n");
-    return false;
+    VN.lookup_or_add(NewInsts[i]);
   }
   
   // Make sure it is valid to move this load here.  We have to watch out for:
