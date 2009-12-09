@@ -148,6 +148,17 @@ void Decl::printGroup(Decl** Begin, unsigned NumDecls,
   }
 }
 
+void DeclContext::dump() const {
+  // Get the translation unit
+  const DeclContext *DC = this;
+  while (!DC->isTranslationUnit())
+    DC = DC->getParent();
+  
+  ASTContext &Ctx = cast<TranslationUnitDecl>(DC)->getASTContext();
+  DeclPrinter Printer(llvm::errs(), Ctx, Ctx.PrintingPolicy, 0);
+  Printer.VisitDeclContext(const_cast<DeclContext *>(this), /*Indent=*/false);
+}
+
 void Decl::dump() const {
   print(llvm::errs());
 }
