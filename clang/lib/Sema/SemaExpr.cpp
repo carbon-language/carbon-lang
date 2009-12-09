@@ -2528,8 +2528,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
           BaseType->getAs<ObjCObjectPointerType>()) {
         if (OPT->getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
             MemberName.getAsIdentifierInfo()->isStr("isa"))
-          return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
-                                                 Context.getObjCIdType()));
+          return Owned(new (Context) ObjCIsaExpr(BaseExpr, true, MemberLoc,
+                                                 Context.getObjCClassType()));
       }
     }
     // We have an 'id' type. Rather than fall through, we check if this
@@ -2888,7 +2888,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       BaseType->isSpecificBuiltinType(BuiltinType::ObjCId) &&
       MemberName.getAsIdentifierInfo()->isStr("isa"))
     return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
-                                           Context.getObjCIdType()));
+                                           Context.getObjCClassType()));
 
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType()) {
