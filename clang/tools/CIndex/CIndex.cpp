@@ -1146,7 +1146,7 @@ const char *clang_getCompletionChunkText(CXCompletionString completion_string,
 
   case CodeCompletionString::CK_Optional:
     // Note: treated as an empty text block.
-    return 0;
+    return "";
   }
 
   // Should be unreachable, but let's be careful.
