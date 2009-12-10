@@ -106,6 +106,8 @@ private:
   void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
   void mangleQualifiers(Qualifiers Quals);
 
+  void mangleObjCMethodName(const ObjCMethodDecl *MD);
+  
   // Declare manglers for every type class.
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define NON_CANONICAL_TYPE(CLASS, PARENT)
@@ -325,7 +327,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     return;
   }
 
-  if (isa<FunctionDecl>(DC)) {
+  if (isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC)) {
     mangleLocalName(ND);
     return;
   }
@@ -539,7 +541,12 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
   //              := Z <function encoding> E s [<discriminator>]
   // <discriminator> := _ <non-negative number>
   Out << 'Z';
-  mangleFunctionEncoding(cast<FunctionDecl>(ND->getDeclContext()));
+  
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(ND->getDeclContext()))
+    mangleObjCMethodName(MD);
+  else  
+    mangleFunctionEncoding(cast<FunctionDecl>(ND->getDeclContext()));
+
   Out << 'E';
   mangleSourceName(ND->getIdentifier());
 }
@@ -550,7 +557,6 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   //           ::= <template-param>
   //           ::= # empty
   //           ::= <substitution>
-  // FIXME: We only handle mangling of namespaces and classes at the moment.
 
   while (isa<LinkageSpecDecl>(DC))
     DC = DC->getParent();
@@ -701,6 +707,21 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
     Out << 'K';
 
   // FIXME: For now, just drop all extension qualifiers on the floor.
+}
+
+void CXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
+  llvm::SmallString<64> Name;
+  llvm::raw_svector_ostream OS(Name);
+  
+  const ObjCContainerDecl *CD = 
+    dyn_cast<ObjCContainerDecl>(MD->getDeclContext());
+  assert (CD && "Missing container decl in GetNameForMethod");
+  OS << (MD->isInstanceMethod() ? '-' : '+') << '[' << CD->getName();
+  if (const ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(CD))
+    OS << '(' << CID->getNameAsString() << ')';
+  OS << ' ' << MD->getSelector().getAsString() << ']';
+  
+  Out << OS.str().size() << OS.str();
 }
 
 void CXXNameMangler::mangleType(QualType T) {
