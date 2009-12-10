@@ -14,7 +14,7 @@
 using namespace clang::driver;
 using namespace clang::driver::options;
 
-static OptTable::Info InfoTable[] = {
+static const OptTable::Info InfoTable[] = {
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { NAME, HELPTEXT, METAVAR, Option::KIND##Class, FLAGS, PARAM, \

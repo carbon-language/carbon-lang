@@ -522,7 +522,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     if (Default.isInvalid()) {
       Diag(Tok.getLocation(), 
            diag::err_default_template_template_parameter_not_template);
-      static tok::TokenKind EndToks[] = { 
+      static const tok::TokenKind EndToks[] = { 
         tok::comma, tok::greater, tok::greatergreater
       };
       SkipUntil(EndToks, 3, true, true);

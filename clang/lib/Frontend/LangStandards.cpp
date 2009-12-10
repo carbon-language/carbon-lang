@@ -14,7 +14,7 @@ using namespace clang;
 using namespace clang::frontend;
 
 #define LANGSTANDARD(id, name, desc, features) \
-  static LangStandard Lang_##id = { name, desc, features };
+  static const LangStandard Lang_##id = { name, desc, features };
 #include "clang/Frontend/LangStandards.def"
 
 const LangStandard &LangStandard::getLangStandardForKind(Kind K) {

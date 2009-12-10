@@ -23,7 +23,7 @@ struct TypeInfo {
   ID PreprocessedType;
 };
 
-static TypeInfo TypeInfos[] = {
+static const TypeInfo TypeInfos[] = {
 #define TYPE(NAME, ID, PP_TYPE, TEMP_SUFFIX, FLAGS) \
   { NAME, FLAGS, TEMP_SUFFIX, TY_##PP_TYPE, },
 #include "clang/Driver/Types.def"
@@ -31,7 +31,7 @@ static TypeInfo TypeInfos[] = {
 };
 static const unsigned numTypes = sizeof(TypeInfos) / sizeof(TypeInfos[0]);
 
-static TypeInfo &getInfo(unsigned id) {
+static const TypeInfo &getInfo(unsigned id) {
   assert(id > 0 && id - 1 < numTypes && "Invalid Type ID.");
   return TypeInfos[id - 1];
 }

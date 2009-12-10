@@ -338,7 +338,7 @@ void DeclarationName::setFETokenInfo(void *T) {
 
 DeclarationName DeclarationName::getUsingDirectiveName() {
   // Single instance of DeclarationNameExtra for using-directive
-  static DeclarationNameExtra UDirExtra =
+  static const DeclarationNameExtra UDirExtra =
     { DeclarationNameExtra::CXXUsingDirective };
 
   uintptr_t Ptr = reinterpret_cast<uintptr_t>(&UDirExtra);
