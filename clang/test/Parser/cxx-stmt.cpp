@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-void f()
+void f1()
 {
   try {
     ;
@@ -10,7 +10,7 @@ void f()
   }
 }
 
-void g()
+void f2()
 {
   try; // expected-error {{expected '{'}}
 
@@ -24,7 +24,7 @@ void g()
   catch {} // expected-error {{expected '('}}
 }
 
-void h() try {
+void f3() try {
 } catch(...) {
 }
 
@@ -39,3 +39,16 @@ struct A {
 
 A::A(char) : i(0) try {} // expected-error {{expected '{' or ','}}
 A::A(int j) try : i(j) {} catch(...) {}
+
+
+
+// PR5740
+struct Type { };
+
+enum { Type } Kind;
+void f4() {
+  int i = 0;
+  switch (Kind) {
+    case Type: i = 7; break;  // no error.
+  }
+}

@@ -279,6 +279,11 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
       ConsumeToken();
     }
     
+    /// We don't want to treat 'case x : y' as a potential typo for 'case x::y'.
+    /// Disable this form of error recovery while we're parsing the case
+    /// expression.
+    ColonProtectionRAIIObject ColonProtection(*this);
+    
     OwningExprResult LHS(ParseConstantExpression());
     if (LHS.isInvalid()) {
       SkipUntil(tok::colon);
@@ -298,6 +303,8 @@ Parser::OwningStmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
         return StmtError();
       }
     }
+    
+    ColonProtection.restore();
 
     if (Tok.isNot(tok::colon)) {
       Diag(Tok, diag::err_expected_colon_after) << "'case'";

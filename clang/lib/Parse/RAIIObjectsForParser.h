@@ -50,8 +50,14 @@ namespace clang {
       P.ColonIsSacred = true;
     }
     
-    ~ColonProtectionRAIIObject() {
+    /// restore - This can be used to restore the state early, before the dtor
+    /// is run.
+    void restore() {
       P.ColonIsSacred = OldVal;
+    }
+    
+    ~ColonProtectionRAIIObject() {
+      restore();
     }
   };
   
