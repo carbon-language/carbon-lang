@@ -66,10 +66,10 @@ namespace clang {
   
   /// \brief RAII object that makes '>' behave either as an operator
   /// or as the closing angle bracket for a template argument list.
-  struct GreaterThanIsOperatorScope {
+  class GreaterThanIsOperatorScope {
     bool &GreaterThanIsOperator;
     bool OldGreaterThanIsOperator;
-    
+  public:
     GreaterThanIsOperatorScope(bool &GTIO, bool Val)
     : GreaterThanIsOperator(GTIO), OldGreaterThanIsOperator(GTIO) {
       GreaterThanIsOperator = Val;
