@@ -520,7 +520,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
 
   // C++ [class.temporary]p4: 
   // There are two contexts in which temporaries are destroyed at a different
-  // point than the end of the full- expression. The first context is when a
+  // point than the end of the full-expression. The first context is when a
   // default constructor is called to initialize an element of an array. 
   // If the constructor has one or more default arguments, the destruction of 
   // every temporary created in a default argument expression is sequenced 
