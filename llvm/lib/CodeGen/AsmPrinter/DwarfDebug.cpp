@@ -1632,6 +1632,8 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
     return;
 
   DIE *VariableDie = createGlobalVariableDIE(DI_GV);
+  if (!VariableDie)
+    return;
 
   // Add to map.
   ModuleCU->insertDIE(N, VariableDie);
