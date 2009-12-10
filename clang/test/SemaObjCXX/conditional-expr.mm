@@ -1,4 +1,4 @@
-// RUN: clang-cc -x objective-c++ -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 @protocol P0
 @end
