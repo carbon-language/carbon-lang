@@ -1023,8 +1023,7 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
     << "Base       = " << *StoreBase << "\n"
     << "Store Ptr  = " << *WritePtr << "\n"
     << "Store Offs = " << StoreOffset << "\n"
-    << "Load Ptr   = " << *LoadPtr << "\n"
-    << "Load Offs  = " << LoadOffset << " - " << *L << "\n\n";
+    << "Load Ptr   = " << *LoadPtr << "\n";
     abort();
 #endif
     return -1;
@@ -1055,10 +1054,7 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
     << "Base       = " << *StoreBase << "\n"
     << "Store Ptr  = " << *WritePtr << "\n"
     << "Store Offs = " << StoreOffset << "\n"
-    << "Load Ptr   = " << *L->getPointerOperand() << "\n"
-    << "Load Offs  = " << LoadOffset << " - " << *L << "\n\n";
-    errs() << "'" << L->getParent()->getParent()->getName() << "'"
-    << *L->getParent();
+    << "Load Ptr   = " << *LoadPtr << "\n";
     abort();
 #endif
     return -1;
