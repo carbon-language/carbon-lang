@@ -16,6 +16,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Parse/Template.h"
+#include "RAIIObjectsForParser.h"
 using namespace clang;
 
 /// \brief Parse a template declaration, explicit instantiation, or

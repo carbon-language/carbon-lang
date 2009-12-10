@@ -102,22 +102,6 @@ class Parser {
   /// The "depth" of the template parameters currently being parsed.
   unsigned TemplateParameterDepth;
 
-  /// \brief RAII object that makes '>' behave either as an operator
-  /// or as the closing angle bracket for a template argument list.
-  struct GreaterThanIsOperatorScope {
-    bool &GreaterThanIsOperator;
-    bool OldGreaterThanIsOperator;
-
-    GreaterThanIsOperatorScope(bool &GTIO, bool Val)
-      : GreaterThanIsOperator(GTIO), OldGreaterThanIsOperator(GTIO) {
-      GreaterThanIsOperator = Val;
-    }
-
-    ~GreaterThanIsOperatorScope() {
-      GreaterThanIsOperator = OldGreaterThanIsOperator;
-    }
-  };
-
 public:
   Parser(Preprocessor &PP, Action &Actions);
   ~Parser();
