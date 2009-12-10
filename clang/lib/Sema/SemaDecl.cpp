@@ -1090,10 +1090,11 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   if (getLangOptions().CPlusPlus) {
     if (Context.hasSameType(New->getType(), Old->getType()))
       MergedT = New->getType();
-    // C++ [basic.types]p7:
-    //   [...] The declared type of an array object might be an array of
-    //   unknown size and therefore be incomplete at one point in a
-    //   translation unit and complete later on; [...]
+    // C++ [basic.link]p10:
+    //   [...] the types specified by all declarations referring to a given
+    //   object or function shall be identical, except that declarations for an
+    //   array object can specify array types that differ by the presence or
+    //   absence of a major array bound (8.3.4).
     else if (Old->getType()->isIncompleteArrayType() &&
              New->getType()->isArrayType()) {
       CanQual<ArrayType> OldArray
@@ -1102,6 +1103,14 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
         = Context.getCanonicalType(New->getType())->getAs<ArrayType>();
       if (OldArray->getElementType() == NewArray->getElementType())
         MergedT = New->getType();
+    } else if (Old->getType()->isArrayType() &&
+             New->getType()->isIncompleteArrayType()) {
+      CanQual<ArrayType> OldArray
+        = Context.getCanonicalType(Old->getType())->getAs<ArrayType>();
+      CanQual<ArrayType> NewArray
+        = Context.getCanonicalType(New->getType())->getAs<ArrayType>();
+      if (OldArray->getElementType() == NewArray->getElementType())
+        MergedT = Old->getType();
     }
   } else {
     MergedT = Context.mergeTypes(New->getType(), Old->getType());
