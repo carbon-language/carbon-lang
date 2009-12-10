@@ -256,9 +256,18 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   // The kind of external linkage this function will have, if it is not
   // inline or static.
   CodeGenModule::GVALinkage External = CodeGenModule::GVA_StrongExternal;
-  if (Context.getLangOptions().CPlusPlus &&
-      FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-    External = CodeGenModule::GVA_TemplateInstantiation;
+  if (Context.getLangOptions().CPlusPlus) {
+    TemplateSpecializationKind TSK = FD->getTemplateSpecializationKind();
+    
+    if (TSK == TSK_ExplicitInstantiationDefinition) {
+      // If a function has been explicitly instantiated, then it should
+      // always have strong external linkage.
+      return CodeGenModule::GVA_StrongExternal;
+    } 
+    
+    if (TSK == TSK_ImplicitInstantiation)
+      External = CodeGenModule::GVA_TemplateInstantiation;
+  }
 
   if (!FD->isInlined())
     return External;
