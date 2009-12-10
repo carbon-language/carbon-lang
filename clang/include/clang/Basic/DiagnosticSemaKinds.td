@@ -124,10 +124,11 @@ def err_using_decl_template_id : Error<
 def note_using_decl_target : Note<"target of using declaration">;
 def note_using_decl_conflict : Note<"conflicting declaration">;
 def err_using_decl_redeclaration : Error<"redeclaration of using decl">;
-def note_previous_using_decl : Note<"previous using decl">;
 def err_using_decl_conflict : Error<
-  "%select{function|non-function}0 target of using declaration conflicts "
-  "with %select{function|non-function}1 declaration already in scope">;
+  "target of using declaration conflicts with declaration already in scope">;
+def err_using_decl_conflict_reverse : Error<
+  "declaration conflicts with target of using declaration already in scope">;
+def note_using_decl : Note<"%select{|previous }0using declaration">;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;

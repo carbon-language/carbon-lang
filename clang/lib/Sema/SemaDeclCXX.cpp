@@ -2995,9 +2995,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
       return false;
 
     case Ovl_NonFunction:
-      Diag(Using->getLocation(), diag::err_using_decl_conflict)
-        << 0  // target decl is a function
-        << 1; // other decl is not a function
+      Diag(Using->getLocation(), diag::err_using_decl_conflict);
       break;
       
     // We found a decl with the exact signature.
@@ -3014,9 +3012,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
         return true;
 
       // If we're not in a record, this is an error.
-      Diag(Using->getLocation(), diag::err_using_decl_conflict)
-        << 0  // target decl is a function
-        << 0; // other decl is a function
+      Diag(Using->getLocation(), diag::err_using_decl_conflict);
       break;
     }
 
@@ -3043,8 +3039,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
     // No conflict between a tag and a non-tag.
     if (!Tag) return false;
 
-    Diag(Using->getLocation(), diag::err_using_decl_conflict)
-      << 1 << 1; // both non-functions
+    Diag(Using->getLocation(), diag::err_using_decl_conflict);
     Diag(Target->getLocation(), diag::note_using_decl_target);
     Diag(Tag->getLocation(), diag::note_using_decl_conflict);
     return true;
@@ -3053,9 +3048,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   // No conflict between a tag and a non-tag.
   if (!NonTag) return false;
 
-  Diag(Using->getLocation(), diag::err_using_decl_conflict)
-    << 1  // target not a function
-    << int(NonTag->isFunctionOrFunctionTemplate());
+  Diag(Using->getLocation(), diag::err_using_decl_conflict);
   Diag(Target->getLocation(), diag::note_using_decl_target);
   Diag(NonTag->getLocation(), diag::note_using_decl_conflict);
   return true;
@@ -3335,7 +3328,7 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
       continue;
 
     Diag(NameLoc, diag::err_using_decl_redeclaration) << SS.getRange();
-    Diag(D->getLocation(), diag::note_previous_using_decl);
+    Diag(D->getLocation(), diag::note_using_decl) << 1;
     return true;
   }
 
