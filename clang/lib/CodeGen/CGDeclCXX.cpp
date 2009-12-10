@@ -193,7 +193,10 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
   EmitBlock(InitBlock);
 
   if (D.getType()->isReferenceType()) {
-    ErrorUnsupported(D.getInit(), "static variable that binds to a reference");
+    // We don't want to pass true for IsInitializer here, because a static
+    // reference to a temporary does not extend its lifetime.
+    EmitReferenceBindingToExpr(D.getInit(), D.getType(),
+                               /*IsInitializer=*/false);
   } else
     EmitDeclInit(*this, D, GV);
 
