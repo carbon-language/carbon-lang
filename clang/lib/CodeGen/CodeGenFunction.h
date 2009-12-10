@@ -424,7 +424,8 @@ private:
   unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
 
   llvm::BasicBlock *TerminateHandler;
-  
+
+  int UniqueAggrDestructorCount;
 public:
   CodeGenFunction(CodeGenModule &cgm);
 

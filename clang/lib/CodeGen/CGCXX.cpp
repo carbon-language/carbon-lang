@@ -465,7 +465,6 @@ llvm::Constant *
 CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
                                                  const ArrayType *Array,
                                                  llvm::Value *This) {
-  static int UniqueCount;
   FunctionArgList Args;
   ImplicitParamDecl *Dst =
     ImplicitParamDecl::Create(getContext(), 0,
@@ -474,7 +473,7 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
   Args.push_back(std::make_pair(Dst, Dst->getType()));
   
   llvm::SmallString<16> Name;
-  llvm::raw_svector_ostream(Name) << "__tcf_" << (++UniqueCount);
+  llvm::raw_svector_ostream(Name) << "__tcf_" << (++UniqueAggrDestructorCount);
   QualType R = getContext().VoidTy;
   const CGFunctionInfo &FI = CGM.getTypes().getFunctionInfo(R, Args);
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
