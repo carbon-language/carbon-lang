@@ -146,27 +146,21 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
       CGF.EmitAggExpr(E, This, false);
     } else if (CXXConstructorDecl *CopyCtor
                = RD->getCopyConstructor(CGF.getContext(), 0)) {
-      // All temporaries end before we call __cxa_throw
-      // FIXME: Doesn't work well with eh31.C and PopCXXTemporary
-      // CodeGenFunction::CleanupScope TryScope(CGF);
-      {
-        // These actions are only on the exceptional edge.
-        if (0) {
-        // FIXME: Doesn't work well with eh31.C and PopCXXTemporary
-        CodeGenFunction::DelayedCleanupBlock Scope(CGF, true);
-
+      llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
+      if (CGF.Exceptions) {
+        CodeGenFunction::EHCleanupBlock Cleanup(CGF);
         llvm::Constant *FreeExceptionFn = getFreeExceptionFn(CGF);
         const llvm::Type *Int8PtrTy
           = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
         llvm::Value *ExceptionPtr = CGF.Builder.CreateBitCast(N, Int8PtrTy);
         CGF.Builder.CreateCall(FreeExceptionFn, ExceptionPtr);
-        }
       }
-
+ 
       llvm::Value *Src = CGF.EmitLValue(E).getAddress();
+      CGF.setInvokeDest(PrevLandingPad);
 
       llvm::BasicBlock *TerminateHandler = CGF.getTerminateHandler();
-      llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
+      PrevLandingPad = CGF.getInvokeDest();
       CGF.setInvokeDest(TerminateHandler);
 
       // Stolen from EmitClassAggrMemberwiseCopy
