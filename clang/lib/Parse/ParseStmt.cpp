@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
-#include "ExtensionRAIIObject.h"
+#include "RAIIObjectsForParser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Basic/Diagnostic.h"

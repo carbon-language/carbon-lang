@@ -23,7 +23,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Basic/PrettyStackTrace.h"
-#include "ExtensionRAIIObject.h"
+#include "RAIIObjectsForParser.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;

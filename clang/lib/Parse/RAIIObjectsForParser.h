@@ -1,4 +1,4 @@
-//===--- ExtensionRAIIObject.h - Use RAII for __extension__ -----*- C++ -*-===//
+//===--- RAIIObjectsForParser.h - RAII helpers for the parser ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines and implements the ExtensionRAIIObject class.
+// This file defines and implements the some simple RAII objects that are used
+// by the parser to manage bits in recursion.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PARSE_EXTENSION_RAII_OBJECT_H
-#define LLVM_CLANG_PARSE_EXTENSION_RAII_OBJECT_H
+#ifndef LLVM_CLANG_PARSE_RAII_OBJECTS_FOR_PARSER_H
+#define LLVM_CLANG_PARSE_RAII_OBJECTS_FOR_PARSER_H
 
 #include "clang/Parse/ParseDiagnostic.h"
 

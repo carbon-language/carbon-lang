@@ -17,7 +17,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Parse/Template.h"
-#include "ExtensionRAIIObject.h"
+#include "RAIIObjectsForParser.h"
 using namespace clang;
 
 /// ParseNamespace - We know that the current token is a namespace keyword. This

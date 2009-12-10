@@ -17,7 +17,7 @@
 #include "clang/Parse/Scope.h"
 #include "clang/Parse/Template.h"
 #include "llvm/Support/raw_ostream.h"
-#include "ExtensionRAIIObject.h"
+#include "RAIIObjectsForParser.h"
 #include "ParsePragma.h"
 using namespace clang;
 
