@@ -46,6 +46,9 @@ def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
 def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>;
 
+def SDT_ARMMEMBARRIER  : SDTypeProfile<0, 0, []>;
+def SDT_ARMSYNCBARRIER : SDTypeProfile<0, 0, []>;
+
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
@@ -92,6 +95,11 @@ def ARMrrx           : SDNode<"ARMISD::RRX"     , SDTIntUnaryOp, [SDNPInFlag ]>;
 
 def ARMthread_pointer: SDNode<"ARMISD::THREAD_POINTER", SDT_ARMThreadPointer>;
 def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP", SDT_ARMEH_SJLJ_Setjmp>;
+
+def ARMMemBarrier    : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIER,
+                              [SDNPHasChain]>;
+def ARMSyncBarrier   : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIER,
+                              [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
@@ -1561,6 +1569,24 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
   let Inst{25} = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// Atomic operations intrinsics
+//
+
+// memory barriers protect the atomic sequences
+let isBarrier = 1 in {
+def Int_MemBarrierV7 : AI<(outs), (ins),
+                        Pseudo, NoItinerary,
+                        "dmb", "",
+                        [(ARMMemBarrier)]>,
+                        Requires<[HasV7]>;
+
+def Int_SyncBarrierV7 : AI<(outs), (ins),
+                        Pseudo, NoItinerary,
+                        "dsb", "",
+                        [(ARMSyncBarrier)]>,
+                        Requires<[HasV7]>;
+}
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions

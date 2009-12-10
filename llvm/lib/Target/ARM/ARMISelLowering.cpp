@@ -377,7 +377,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
   else
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
-  setOperationAction(ISD::MEMBARRIER,         MVT::Other, Expand);
+  setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
 
   if (!Subtarget->hasV6Ops() && !Subtarget->isThumb2()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
@@ -499,6 +499,9 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::THREAD_POINTER:return "ARMISD::THREAD_POINTER";
 
   case ARMISD::DYN_ALLOC:     return "ARMISD::DYN_ALLOC";
+
+  case ARMISD::MEMBARRIER:    return "ARMISD::MEMBARRIER";
+  case ARMISD::SYNCBARRIER:   return "ARMISD::SYNCBARRIER";
 
   case ARMISD::VCEQ:          return "ARMISD::VCEQ";
   case ARMISD::VCGE:          return "ARMISD::VCGE";
@@ -1468,6 +1471,21 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::eh_sjlj_setjmp:
     return DAG.getNode(ARMISD::EH_SJLJ_SETJMP, dl, MVT::i32, Op.getOperand(1));
   }
+}
+
+static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Op5 = Op.getOperand(5);
+  SDValue Res;
+  unsigned isDeviceBarrier = cast<ConstantSDNode>(Op5)->getZExtValue();
+  if (isDeviceBarrier) {
+    Res = DAG.getNode(ARMISD::SYNCBARRIER, dl, MVT::Other,
+                              Op.getOperand(0));
+  } else {
+    Res = DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other,
+                              Op.getOperand(0));
+  }
+  return Res;
 }
 
 static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
@@ -2972,6 +2990,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::BR_JT:         return LowerBR_JT(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::VASTART:       return LowerVASTART(Op, DAG, VarArgsFrameIndex);
+  case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG);
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:
