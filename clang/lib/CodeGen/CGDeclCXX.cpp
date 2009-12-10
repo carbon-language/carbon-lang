@@ -15,51 +15,74 @@
 using namespace clang;
 using namespace CodeGen;
 
-void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
-                                               llvm::Constant *DeclPtr) {
-  assert(D.hasGlobalStorage() &&
-         "VarDecl must have global storage!");
-
+static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
+                         llvm::Constant *DeclPtr) {
+  assert(D.hasGlobalStorage() && "VarDecl must have global storage!");
+  assert(!D.getType()->isReferenceType() && 
+         "Should not call EmitDeclInit on a reference!");
+  
+  CodeGenModule &CGM = CGF.CGM;
+  ASTContext &Context = CGF.getContext();
+    
   const Expr *Init = D.getInit();
   QualType T = D.getType();
-  bool isVolatile = getContext().getCanonicalType(T).isVolatileQualified();
+  bool isVolatile = Context.getCanonicalType(T).isVolatileQualified();
 
-  if (T->isReferenceType()) {
-    ErrorUnsupported(Init, "global variable that binds to a reference");
-  } else if (!hasAggregateLLVMType(T)) {
-    llvm::Value *V = EmitScalarExpr(Init);
-    EmitStoreOfScalar(V, DeclPtr, isVolatile, T);
+  if (!CGF.hasAggregateLLVMType(T)) {
+    llvm::Value *V = CGF.EmitScalarExpr(Init);
+    CGF.EmitStoreOfScalar(V, DeclPtr, isVolatile, T);
   } else if (T->isAnyComplexType()) {
-    EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
+    CGF.EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
   } else {
-    EmitAggExpr(Init, DeclPtr, isVolatile);
+    CGF.EmitAggExpr(Init, DeclPtr, isVolatile);
+    
     // Avoid generating destructor(s) for initialized objects. 
     if (!isa<CXXConstructExpr>(Init))
       return;
-    const ConstantArrayType *Array = getContext().getAsConstantArrayType(T);
-    if (Array)
-      T = getContext().getBaseElementType(Array);
     
-    if (const RecordType *RT = T->getAs<RecordType>()) {
-      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (!RD->hasTrivialDestructor()) {
-        llvm::Constant *DtorFn;
-        if (Array) {
-          DtorFn = CodeGenFunction(CGM).GenerateCXXAggrDestructorHelper(
-                                                RD->getDestructor(getContext()), 
-                                                Array, DeclPtr);
-          DeclPtr = 
-            llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
-        }
-        else
-          DtorFn = CGM.GetAddrOfCXXDestructor(RD->getDestructor(getContext()), 
-                                              Dtor_Complete);                                
-        EmitCXXGlobalDtorRegistration(DtorFn, DeclPtr);
-      }
-    }
+    const ConstantArrayType *Array = Context.getAsConstantArrayType(T);
+    if (Array)
+      T = Context.getBaseElementType(Array);
+    
+    const RecordType *RT = T->getAs<RecordType>();
+    if (!RT)
+      return;
+    
+    CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    if (RD->hasTrivialDestructor())
+      return;
+    
+    CXXDestructorDecl *Dtor = RD->getDestructor(Context);
+    
+    llvm::Constant *DtorFn;
+    if (Array) {
+      DtorFn = 
+        CodeGenFunction(CGM).GenerateCXXAggrDestructorHelper(Dtor, 
+                                                             Array, 
+                                                             DeclPtr);
+      const llvm::Type *Int8PtrTy =
+        llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+      DeclPtr = llvm::Constant::getNullValue(Int8PtrTy);
+     } else
+      DtorFn = CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete);                                
+
+    CGF.EmitCXXGlobalDtorRegistration(DtorFn, DeclPtr);
   }
 }
 
+void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
+                                               llvm::Constant *DeclPtr) {
+
+  const Expr *Init = D.getInit();
+  QualType T = D.getType();
+
+  if (!T->isReferenceType()) {
+    EmitDeclInit(*this, D, DeclPtr);
+    return;
+  }
+
+  ErrorUnsupported(Init, "global variable that binds to a reference");
+}
 
 void
 CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
@@ -169,7 +192,10 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   EmitBlock(InitBlock);
 
-  EmitCXXGlobalVarDeclInit(D, GV);
+  if (D.getType()->isReferenceType()) {
+    ErrorUnsupported(D.getInit(), "static variable that binds to a reference");
+  } else
+    EmitDeclInit(*this, D, GV);
 
   Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext),
                                              1),
