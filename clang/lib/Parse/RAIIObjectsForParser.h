@@ -36,6 +36,25 @@ namespace clang {
       Diags.DecrementAllExtensionsSilenced();
     }
   };
-}
+  
+  // TODO: move GreaterThanIsOperatorScope here.
+  
+  /// ColonProtectionRAIIObject - This sets the Parser::ColonIsSacred bool and
+  /// restores it when destroyed.  This says that "foo:" should not be
+  /// considered a possible typo for "foo::" for error recovery purposes.
+  class ColonProtectionRAIIObject {
+    Parser &P;
+    bool OldVal;
+  public:
+    ColonProtectionRAIIObject(Parser &p) : P(p), OldVal(P.ColonIsSacred) {
+      P.ColonIsSacred = true;
+    }
+    
+    ~ColonProtectionRAIIObject() {
+      P.ColonIsSacred = OldVal;
+    }
+  };
+  
+} // end namespace clang
 
 #endif

@@ -601,10 +601,14 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec SS;
-  if (getLang().CPlusPlus &&
-      ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true, true))
-    if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
-      Diag(Tok, diag::err_expected_ident);
+  if (getLang().CPlusPlus) {
+    // "FOO : BAR" is not a potential typo for "FOO::BAR".
+    ColonProtectionRAIIObject X(*this);
+    
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true))
+      if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
+        Diag(Tok, diag::err_expected_ident);
+  }
 
   TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
 

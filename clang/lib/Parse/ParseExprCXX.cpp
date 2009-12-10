@@ -45,14 +45,10 @@ using namespace clang;
 /// \param EnteringContext whether we will be entering into the context of
 /// the nested-name-specifier after parsing it.
 ///
-/// \param ColonIsSacred - If this is true, then a colon is valid after the
-/// specifier, so we should not try to recover from colons aggressively.
-///
 /// \returns true if a scope specifier was parsed.
 bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                             Action::TypeTy *ObjectType,
-                                            bool EnteringContext,
-                                            bool ColonIsSacred) {
+                                            bool EnteringContext) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
