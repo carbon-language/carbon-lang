@@ -3920,41 +3920,14 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     ImpCastExprToType(LHS, RHSTy, CastExpr::CK_Unknown);
     return RHSTy;
   }
-  // Handle things like Class and struct objc_class*.  Here we case the result
-  // to the pseudo-builtin, because that will be implicitly cast back to the
-  // redefinition type if an attempt is made to access its fields.
-  if (LHSTy->isObjCClassType() &&
-      (RHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
-    return LHSTy;
-  }
-  if (RHSTy->isObjCClassType() &&
-      (LHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
-    return RHSTy;
-  }
-  // And the same for struct objc_object* / id
-  if (LHSTy->isObjCIdType() &&
-      (RHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
-    return LHSTy;
-  }
-  if (RHSTy->isObjCIdType() &&
-      (LHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
-    return RHSTy;
-  }
-  // And the same for struct objc_selector* / SEL
-  if (Context.isObjCSelType(LHSTy) &&
-      (RHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
-    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
-    return LHSTy;
-  }
-  if (Context.isObjCSelType(RHSTy) &&
-      (LHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
-    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
-    return RHSTy;
-  }
+  
+  // All objective-c pointer type analysis is done here.
+  QualType compositeType = FindCompositeObjCPointerType(LHS, RHS,
+                                                        QuestionLoc);
+  if (!compositeType.isNull())
+    return compositeType;
+  
+  
   // Handle block pointer types.
   if (LHSTy->isBlockPointerType() || RHSTy->isBlockPointerType()) {
     if (!LHSTy->isBlockPointerType() || !RHSTy->isBlockPointerType()) {
@@ -3965,7 +3938,7 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
         return destType;
       }
       Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
-            << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
+      << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
       return QualType();
     }
     // We have 2 block pointer types.
@@ -3976,11 +3949,11 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     // The block pointer types aren't identical, continue checking.
     QualType lhptee = LHSTy->getAs<BlockPointerType>()->getPointeeType();
     QualType rhptee = RHSTy->getAs<BlockPointerType>()->getPointeeType();
-
+    
     if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(),
                                     rhptee.getUnqualifiedType())) {
       Diag(QuestionLoc, diag::warn_typecheck_cond_incompatible_pointers)
-        << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
+      << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
       // In this situation, we assume void* type. No especially good
       // reason, but this is what gcc does, and we do have to pick
       // to get a consistent AST.
@@ -3994,86 +3967,7 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
     return LHSTy;
   }
-  // Check constraints for Objective-C object pointers types.
-  if (LHSTy->isObjCObjectPointerType() && RHSTy->isObjCObjectPointerType()) {
-
-    if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
-      // Two identical object pointer types are always compatible.
-      return LHSTy;
-    }
-    const ObjCObjectPointerType *LHSOPT = LHSTy->getAs<ObjCObjectPointerType>();
-    const ObjCObjectPointerType *RHSOPT = RHSTy->getAs<ObjCObjectPointerType>();
-    QualType compositeType = LHSTy;
-
-    // If both operands are interfaces and either operand can be
-    // assigned to the other, use that type as the composite
-    // type. This allows
-    //   xxx ? (A*) a : (B*) b
-    // where B is a subclass of A.
-    //
-    // Additionally, as for assignment, if either type is 'id'
-    // allow silent coercion. Finally, if the types are
-    // incompatible then make sure to use 'id' as the composite
-    // type so the result is acceptable for sending messages to.
-
-    // FIXME: Consider unifying with 'areComparableObjCPointerTypes'.
-    // It could return the composite type.
-    if (Context.canAssignObjCInterfaces(LHSOPT, RHSOPT)) {
-      compositeType = RHSOPT->isObjCBuiltinType() ? RHSTy : LHSTy;
-    } else if (Context.canAssignObjCInterfaces(RHSOPT, LHSOPT)) {
-      compositeType = LHSOPT->isObjCBuiltinType() ? LHSTy : RHSTy;
-    } else if ((LHSTy->isObjCQualifiedIdType() ||
-                RHSTy->isObjCQualifiedIdType()) &&
-                Context.ObjCQualifiedIdTypesAreCompatible(LHSTy, RHSTy, true)) {
-      // Need to handle "id<xx>" explicitly.
-      // GCC allows qualified id and any Objective-C type to devolve to
-      // id. Currently localizing to here until clear this should be
-      // part of ObjCQualifiedIdTypesAreCompatible.
-      compositeType = Context.getObjCIdType();
-    } else if (LHSTy->isObjCIdType() || RHSTy->isObjCIdType()) {
-      compositeType = Context.getObjCIdType();
-    } else if (!(compositeType = 
-                 Context.areCommonBaseCompatible(LHSOPT, RHSOPT)).isNull())
-      ;
-    else {
-      Diag(QuestionLoc, diag::ext_typecheck_cond_incompatible_operands)
-        << LHSTy << RHSTy
-        << LHS->getSourceRange() << RHS->getSourceRange();
-      QualType incompatTy = Context.getObjCIdType();
-      ImpCastExprToType(LHS, incompatTy, CastExpr::CK_BitCast);
-      ImpCastExprToType(RHS, incompatTy, CastExpr::CK_BitCast);
-      return incompatTy;
-    }
-    // The object pointer types are compatible.
-    ImpCastExprToType(LHS, compositeType, CastExpr::CK_BitCast);
-    ImpCastExprToType(RHS, compositeType, CastExpr::CK_BitCast);
-    return compositeType;
-  }
-  // Check Objective-C object pointer types and 'void *'
-  if (LHSTy->isVoidPointerType() && RHSTy->isObjCObjectPointerType()) {
-    QualType lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
-    QualType rhptee = RHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
-    QualType destPointee
-      = Context.getQualifiedType(lhptee, rhptee.getQualifiers());
-    QualType destType = Context.getPointerType(destPointee);
-    // Add qualifiers if necessary.
-    ImpCastExprToType(LHS, destType, CastExpr::CK_NoOp);
-    // Promote to void*.
-    ImpCastExprToType(RHS, destType, CastExpr::CK_BitCast);
-    return destType;
-  }
-  if (LHSTy->isObjCObjectPointerType() && RHSTy->isVoidPointerType()) {
-    QualType lhptee = LHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
-    QualType rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
-    QualType destPointee
-      = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
-    QualType destType = Context.getPointerType(destPointee);
-    // Add qualifiers if necessary.
-    ImpCastExprToType(RHS, destType, CastExpr::CK_NoOp);
-    // Promote to void*.
-    ImpCastExprToType(LHS, destType, CastExpr::CK_BitCast);
-    return destType;
-  }
+  
   // Check constraints for C object pointers types (C99 6.5.15p3,6).
   if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
     // get the "pointed to" types
@@ -4148,6 +4042,131 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // Otherwise, the operands are not compatible.
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
     << LHSTy << RHSTy << LHS->getSourceRange() << RHS->getSourceRange();
+  return QualType();
+}
+
+/// FindCompositeObjCPointerType - Helper method to find composite type of
+/// two objective-c pointer types of the two input expressions.
+QualType Sema::FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
+                                        SourceLocation QuestionLoc) {
+  QualType LHSTy = LHS->getType();
+  QualType RHSTy = RHS->getType();
+  
+  // Handle things like Class and struct objc_class*.  Here we case the result
+  // to the pseudo-builtin, because that will be implicitly cast back to the
+  // redefinition type if an attempt is made to access its fields.
+  if (LHSTy->isObjCClassType() &&
+      (RHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
+    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    return LHSTy;
+  }
+  if (RHSTy->isObjCClassType() &&
+      (LHSTy.getDesugaredType() == Context.ObjCClassRedefinitionType)) {
+    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
+    return RHSTy;
+  }
+  // And the same for struct objc_object* / id
+  if (LHSTy->isObjCIdType() &&
+      (RHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
+    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    return LHSTy;
+  }
+  if (RHSTy->isObjCIdType() &&
+      (LHSTy.getDesugaredType() == Context.ObjCIdRedefinitionType)) {
+    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
+    return RHSTy;
+  }
+  // And the same for struct objc_selector* / SEL
+  if (Context.isObjCSelType(LHSTy) &&
+      (RHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
+    ImpCastExprToType(RHS, LHSTy, CastExpr::CK_BitCast);
+    return LHSTy;
+  }
+  if (Context.isObjCSelType(RHSTy) &&
+      (LHSTy.getDesugaredType() == Context.ObjCSelRedefinitionType)) {
+    ImpCastExprToType(LHS, RHSTy, CastExpr::CK_BitCast);
+    return RHSTy;
+  }
+  // Check constraints for Objective-C object pointers types.
+  if (LHSTy->isObjCObjectPointerType() && RHSTy->isObjCObjectPointerType()) {
+    
+    if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
+      // Two identical object pointer types are always compatible.
+      return LHSTy;
+    }
+    const ObjCObjectPointerType *LHSOPT = LHSTy->getAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType *RHSOPT = RHSTy->getAs<ObjCObjectPointerType>();
+    QualType compositeType = LHSTy;
+    
+    // If both operands are interfaces and either operand can be
+    // assigned to the other, use that type as the composite
+    // type. This allows
+    //   xxx ? (A*) a : (B*) b
+    // where B is a subclass of A.
+    //
+    // Additionally, as for assignment, if either type is 'id'
+    // allow silent coercion. Finally, if the types are
+    // incompatible then make sure to use 'id' as the composite
+    // type so the result is acceptable for sending messages to.
+    
+    // FIXME: Consider unifying with 'areComparableObjCPointerTypes'.
+    // It could return the composite type.
+    if (Context.canAssignObjCInterfaces(LHSOPT, RHSOPT)) {
+      compositeType = RHSOPT->isObjCBuiltinType() ? RHSTy : LHSTy;
+    } else if (Context.canAssignObjCInterfaces(RHSOPT, LHSOPT)) {
+      compositeType = LHSOPT->isObjCBuiltinType() ? LHSTy : RHSTy;
+    } else if ((LHSTy->isObjCQualifiedIdType() ||
+                RHSTy->isObjCQualifiedIdType()) &&
+               Context.ObjCQualifiedIdTypesAreCompatible(LHSTy, RHSTy, true)) {
+      // Need to handle "id<xx>" explicitly.
+      // GCC allows qualified id and any Objective-C type to devolve to
+      // id. Currently localizing to here until clear this should be
+      // part of ObjCQualifiedIdTypesAreCompatible.
+      compositeType = Context.getObjCIdType();
+    } else if (LHSTy->isObjCIdType() || RHSTy->isObjCIdType()) {
+      compositeType = Context.getObjCIdType();
+    } else if (!(compositeType = 
+                 Context.areCommonBaseCompatible(LHSOPT, RHSOPT)).isNull())
+      ;
+    else {
+      Diag(QuestionLoc, diag::ext_typecheck_cond_incompatible_operands)
+      << LHSTy << RHSTy
+      << LHS->getSourceRange() << RHS->getSourceRange();
+      QualType incompatTy = Context.getObjCIdType();
+      ImpCastExprToType(LHS, incompatTy, CastExpr::CK_BitCast);
+      ImpCastExprToType(RHS, incompatTy, CastExpr::CK_BitCast);
+      return incompatTy;
+    }
+    // The object pointer types are compatible.
+    ImpCastExprToType(LHS, compositeType, CastExpr::CK_BitCast);
+    ImpCastExprToType(RHS, compositeType, CastExpr::CK_BitCast);
+    return compositeType;
+  }
+  // Check Objective-C object pointer types and 'void *'
+  if (LHSTy->isVoidPointerType() && RHSTy->isObjCObjectPointerType()) {
+    QualType lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
+    QualType rhptee = RHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
+    QualType destPointee
+    = Context.getQualifiedType(lhptee, rhptee.getQualifiers());
+    QualType destType = Context.getPointerType(destPointee);
+    // Add qualifiers if necessary.
+    ImpCastExprToType(LHS, destType, CastExpr::CK_NoOp);
+    // Promote to void*.
+    ImpCastExprToType(RHS, destType, CastExpr::CK_BitCast);
+    return destType;
+  }
+  if (LHSTy->isObjCObjectPointerType() && RHSTy->isVoidPointerType()) {
+    QualType lhptee = LHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
+    QualType rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
+    QualType destPointee
+    = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
+    QualType destType = Context.getPointerType(destPointee);
+    // Add qualifiers if necessary.
+    ImpCastExprToType(RHS, destType, CastExpr::CK_NoOp);
+    // Promote to void*.
+    ImpCastExprToType(LHS, destType, CastExpr::CK_BitCast);
+    return destType;
+  }
   return QualType();
 }
 

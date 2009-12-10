@@ -3638,6 +3638,9 @@ public:
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
   QualType FindCompositePointerType(Expr *&E1, Expr *&E2); // C++ 5.9
 
+  QualType FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
+                                        SourceLocation questionLoc);
+  
   /// type checking for vector binary operators.
   inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckVectorCompareOperands(Expr *&lex, Expr *&rx,
