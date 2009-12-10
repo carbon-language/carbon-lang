@@ -76,7 +76,7 @@ class FilenameCache {
  public:
   const char *getFilename(MDNode *Scope) {
     std::string &Filename = Filenames[Scope];
-    if (Filename == NULL) {
+    if (Filename.empty()) {
       DIScope S(Scope);
       Filename = S.getFilename();
     }
