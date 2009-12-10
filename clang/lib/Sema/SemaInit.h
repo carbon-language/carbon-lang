@@ -1,4 +1,4 @@
-//===--- SemaInit.h - Semantic Analysis for Initializers ------------------===//
+//===--- SemaInit.h - Semantic Analysis for Initializers --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -304,7 +304,10 @@ public:
     DependentSequence,
 
     /// \brief A reference binding.
-    ReferenceBinding
+    ReferenceBinding,
+
+    /// \brief List initialization
+    ListInitialization
   };
   
   /// \brief Describes the kind of a particular step in an initialization
@@ -329,7 +332,9 @@ public:
     /// \brief Perform a qualification conversion, producing an lvalue.
     SK_QualificationConversionLValue,
     /// \brief Perform an implicit conversion sequence.
-    SK_ConversionSequence
+    SK_ConversionSequence,
+    /// \brief Perform list-initialization
+    SK_ListInitialization
   };
   
   /// \brief A single step in the initialization sequence.
@@ -388,7 +393,14 @@ public:
     /// \brief Reference binding failed.
     FK_ReferenceInitFailed,
     /// \brief Implicit conversion failed.
-    FK_ConversionFailed
+    FK_ConversionFailed,
+    /// \brief Too many initializers for scalar
+    FK_TooManyInitsForScalar,
+    /// \brief Reference initialization from an initializer list
+    FK_ReferenceBindingToInitList,
+    /// \brief Initialization of some unused destination type with an
+    /// initializer list.
+    FK_InitListBadDestinationType
   };
   
 private:
@@ -437,13 +449,20 @@ public:
   /// \param Args the argument(s) provided for initialization, ownership of
   /// which is transfered into the routine.
   ///
+  /// \param ResultType if non-NULL, will be set to the type of the
+  /// initialized object, which is the type of the declaration in most
+  /// cases. However, when the initialized object is a variable of
+  /// incomplete array type and the initializer is an initializer
+  /// list, this type will be set to the completed array type.
+  ///
   /// \returns an expression that performs the actual object initialization, if
   /// the initialization is well-formed. Otherwise, emits diagnostics
   /// and returns an invalid expression.
   Action::OwningExprResult Perform(Sema &S,
                                    const InitializedEntity &Entity,
                                    const InitializationKind &Kind,
-                                   Action::MultiExprArg Args);
+                                   Action::MultiExprArg Args,
+                                   QualType *ResultType = 0);
   
   /// \brief Diagnose an potentially-invalid initialization sequence.
   ///
@@ -501,7 +520,10 @@ public:
   /// \brief Add a new step that applies an implicit conversion sequence.
   void AddConversionSequenceStep(const ImplicitConversionSequence &ICS,
                                  QualType T);
-  
+
+  /// \brief Add a list-initialiation step  
+  void AddListInitializationStep(QualType T);
+
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {
     SequenceKind = FailedSequence;

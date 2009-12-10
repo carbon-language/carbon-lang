@@ -3499,7 +3499,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
-      if (VDecl->getType()->isReferenceType()) {
+      if (VDecl->getType()->isReferenceType()
+          || isa<InitListExpr>(Init)) {
         InitializedEntity Entity
           = InitializedEntity::InitializeVariable(VDecl);
 
@@ -3513,7 +3514,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
         InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
         if (InitSeq) {
           OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                      MultiExprArg(*this, (void**)&Init, 1));
+                                           MultiExprArg(*this, (void**)&Init, 1),
+                                                    &DclT);
           if (Result.isInvalid()) {
             VDecl->setInvalidDecl();
             return;
@@ -3524,8 +3526,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
           InitSeq.Diagnose(*this, Entity, Kind, &Init, 1);
           VDecl->setInvalidDecl();
           return;
-        }
-        
+        }    
       } else if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
                                        VDecl->getDeclName(), DirectInit))
         VDecl->setInvalidDecl();

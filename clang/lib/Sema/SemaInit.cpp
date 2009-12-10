@@ -1968,6 +1968,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_UserConversion:
   case SK_QualificationConversionRValue:
   case SK_QualificationConversionLValue:
+  case SK_ListInitialization:
     break;
     
   case SK_ConversionSequence:
@@ -2027,6 +2028,13 @@ void InitializationSequence::AddConversionSequenceStep(
   Steps.push_back(S);
 }
 
+void InitializationSequence::AddListInitializationStep(QualType T) {
+  Step S;
+  S.Kind = SK_ListInitialization;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
 void InitializationSequence::SetOverloadFailure(FailureKind Failure, 
                                                 OverloadingResult Result) {
   SequenceKind = FailedSequence;
@@ -2039,16 +2047,51 @@ void InitializationSequence::SetOverloadFailure(FailureKind Failure,
 //===----------------------------------------------------------------------===//
 
 /// \brief Attempt list initialization (C++0x [dcl.init.list]) 
-static bool TryListInitialization(Sema &S, 
+static void TryListInitialization(Sema &S, 
                                   const InitializedEntity &Entity,
                                   const InitializationKind &Kind,
                                   InitListExpr *InitList,
                                   InitializationSequence &Sequence) {
-  // FIXME: For now, it is safe to assume that list initialization always
-  // works. When we actually perform list initialization, we'll do all of the
-  // necessary checking.
-  // C++0x initializer lists will force us to perform more checking here.
-  return true;
+  // FIXME: We only perform rudimentary checking of list
+  // initializations at this point, then assume that any list
+  // initialization of an array, aggregate, or scalar will be
+  // well-formed. We we actually "perform" list initialization, we'll
+  // do all of the necessary checking.  C++0x initializer lists will
+  // force us to perform more checking here.
+  Sequence.setSequenceKind(InitializationSequence::ListInitialization);
+
+  QualType DestType = Entity.getType().getType();
+
+  // C++ [dcl.init]p13:
+  //   If T is a scalar type, then a declaration of the form 
+  //
+  //     T x = { a };
+  //
+  //   is equivalent to
+  //
+  //     T x = a;
+  if (DestType->isScalarType()) {
+    if (InitList->getNumInits() > 1 && S.getLangOptions().CPlusPlus) {
+      Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
+      return;
+    }
+
+    // Assume scalar initialization from a single value works.
+  } else if (DestType->isAggregateType()) {
+    // Assume aggregate initialization works.
+  } else if (DestType->isVectorType()) {
+    // Assume vector initialization works.
+  } else if (DestType->isReferenceType()) {
+    // FIXME: C++0x defines behavior for this.
+    Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
+    return;
+  } else if (DestType->isRecordType()) {
+    // FIXME: C++0x defines behavior for this
+    Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
+  }
+
+  // Add a general "list initialization" step.
+  Sequence.AddListInitializationStep(DestType);
 }
 
 /// \brief Try a reference initialization that involves calling a conversion
@@ -2485,6 +2528,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   //       list-initialized (8.5.4).
   if (InitListExpr *InitList = dyn_cast_or_null<InitListExpr>(Initializer)) {
     TryListInitialization(S, Entity, Kind, InitList, *this);
+    return;
   }
   
   //     - If the destination type is a reference type, see 8.5.3.
@@ -2578,7 +2622,8 @@ Action::OwningExprResult
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
                                 const InitializationKind &Kind,
-                                Action::MultiExprArg Args) {
+                                Action::MultiExprArg Args,
+                                QualType *ResultType) {
   if (SequenceKind == FailedSequence) {
     unsigned NumArgs = Args.size();
     Diagnose(S, Entity, Kind, (Expr **)Args.release(), NumArgs);
@@ -2586,6 +2631,41 @@ InitializationSequence::Perform(Sema &S,
   }
   
   if (SequenceKind == DependentSequence) {
+    // If the declaration is a non-dependent, incomplete array type
+    // that has an initializer, then its type will be completed once
+    // the initializer is instantiated.
+    if (ResultType && !Entity.getType().getType()->isDependentType() &&
+        Args.size() == 1) {
+      QualType DeclType = Entity.getType().getType();
+      if (const IncompleteArrayType *ArrayT
+                           = S.Context.getAsIncompleteArrayType(DeclType)) {
+        // FIXME: We don't currently have the ability to accurately
+        // compute the length of an initializer list without
+        // performing full type-checking of the initializer list
+        // (since we have to determine where braces are implicitly
+        // introduced and such).  So, we fall back to making the array
+        // type a dependently-sized array type with no specified
+        // bound.
+        if (isa<InitListExpr>((Expr *)Args.get()[0])) {
+          SourceRange Brackets;
+          // Scavange the location of the brackets from the entity, if we can.
+          if (isa<IncompleteArrayTypeLoc>(Entity.getType())) {
+            IncompleteArrayTypeLoc ArrayLoc
+              = cast<IncompleteArrayTypeLoc>(Entity.getType());
+            Brackets = ArrayLoc.getBracketsRange();
+          }
+
+          *ResultType
+            = S.Context.getDependentSizedArrayType(ArrayT->getElementType(),
+                                                   /*NumElts=*/0,
+                                                   ArrayT->getSizeModifier(),
+                                       ArrayT->getIndexTypeCVRQualifiers(),
+                                                   Brackets);
+        }
+
+      }
+    }
+
     if (Kind.getKind() == InitializationKind::IK_Copy)
       return Sema::OwningExprResult(S, Args.release()[0]);
 
@@ -2598,6 +2678,8 @@ InitializationSequence::Perform(Sema &S,
   }
 
   QualType DestType = Entity.getType().getType().getNonReferenceType();
+  if (ResultType)
+    *ResultType = Entity.getType().getType();
 
   Sema::OwningExprResult CurInit(S);
   // For copy initialization and any other initialization forms that
@@ -2754,6 +2836,17 @@ InitializationSequence::Perform(Sema &S,
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);        
       break;
+
+    case SK_ListInitialization: {
+      InitListExpr *InitList = cast<InitListExpr>(CurInitExpr);
+      QualType Ty = Step->Type;
+      if (S.CheckInitList(InitList, ResultType? *ResultType : Ty))
+        return S.ExprError();
+
+      CurInit.release();
+      CurInit = S.Owned(InitList);
+      break;
+    }
     }
   }
   
@@ -2865,7 +2958,27 @@ bool InitializationSequence::Diagnose(Sema &S,
       << (Args[0]->isLvalue(S.Context) == Expr::LV_Valid)
       << Args[0]->getType()
       << Args[0]->getSourceRange();
-      break;
+    break;
+
+  case FK_TooManyInitsForScalar: {
+    InitListExpr *InitList = cast<InitListExpr>(Args[0]);
+
+    S.Diag(Kind.getLocation(), diag::err_excess_initializers)
+      << /*scalar=*/2 
+      << SourceRange(InitList->getInit(1)->getLocStart(),
+                     InitList->getLocEnd());
+    break;
+  }
+
+  case FK_ReferenceBindingToInitList:
+    S.Diag(Kind.getLocation(), diag::err_reference_bind_init_list)
+      << DestType.getNonReferenceType() << Args[0]->getSourceRange();
+    break;
+
+  case FK_InitListBadDestinationType:
+    S.Diag(Kind.getLocation(), diag::err_init_list_bad_dest_type)
+      << (DestType->isRecordType()) << DestType << Args[0]->getSourceRange();
+    break;
   }
   
   return true;

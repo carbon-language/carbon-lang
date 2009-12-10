@@ -542,7 +542,11 @@ def err_reference_bind_drops_quals : Error<
 def err_reference_bind_failed : Error<
   "reference to type %0 could not bind to an %select{rvalue|lvalue}1 of type "
   "%2">;
-
+def err_reference_bind_init_list : Error<
+  "reference to type %0 cannot bind to an initializer list">;
+def err_init_list_bad_dest_type : Error<
+  "%select{|non-aggregate }0type %1 cannot be initialized with an initializer "
+  "list">;
 
 // FIXME: passing in an English string as %1!
 def err_reference_init_drops_quals : Error<
