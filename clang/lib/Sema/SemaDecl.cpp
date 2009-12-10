@@ -3015,7 +3015,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
-  CheckFunctionDeclaration(NewFD, Previous, isExplicitSpecialization,
+  CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
                            Redeclaration, /*FIXME:*/OverloadableAttrRequired);
 
   assert((NewFD->isInvalidDecl() || !Redeclaration ||
@@ -3137,7 +3137,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 /// an explicit specialization of the previous declaration.
 ///
 /// This sets NewFD->isInvalidDecl() to true if there was an error.
-void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD,
+void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                                     LookupResult &Previous,
                                     bool IsExplicitSpecialization,
                                     bool &Redeclaration,
@@ -3202,8 +3202,11 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD,
 
       switch (CheckOverload(NewFD, Previous, OldDecl)) {
       case Ovl_Match:
-        // FIXME: hide or conflict with using shadow decls as appropriate
-        Redeclaration = !isa<UsingShadowDecl>(OldDecl);
+        Redeclaration = true;
+        if (isa<UsingShadowDecl>(OldDecl) && CurContext->isRecord()) {
+          HideUsingShadowDecl(S, cast<UsingShadowDecl>(OldDecl));
+          Redeclaration = false;
+        }
         break;
 
       case Ovl_NonFunction:

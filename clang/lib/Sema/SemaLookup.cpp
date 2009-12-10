@@ -222,6 +222,11 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
     IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member;
     break;
 
+  case Sema::LookupUsingDeclName:
+    IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag
+         | Decl::IDNS_Member | Decl::IDNS_Using;
+    break;
+
   case Sema::LookupObjCProtocolName:
     IDNS = Decl::IDNS_ObjCProtocol;
     break;
@@ -245,7 +250,7 @@ void LookupResult::deletePaths(CXXBasePaths *Paths) {
 /// Resolves the result kind of this lookup.
 void LookupResult::resolveKind() {
   unsigned N = Decls.size();
-
+ 
   // Fast case: no possible ambiguity.
   if (N == 0) {
     assert(ResultKind == NotFound);
@@ -613,6 +618,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
     case Sema::LookupOperatorName:
     case Sema::LookupNestedNameSpecifierName:
     case Sema::LookupNamespaceName:
+    case Sema::LookupUsingDeclName:
       assert(false && "C does not perform these kinds of name lookup");
       break;
 
@@ -928,6 +934,9 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx) {
     case LookupTagName:
       BaseCallback = &CXXRecordDecl::FindTagMember;
       break;
+
+    case LookupUsingDeclName:
+      // This lookup is for redeclarations only.
       
     case LookupOperatorName:
     case LookupNamespaceName:

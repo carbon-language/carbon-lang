@@ -708,7 +708,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
       Previous.clear();
   }
   
-  SemaRef.CheckFunctionDeclaration(Function, Previous, false, Redeclaration,
+  SemaRef.CheckFunctionDeclaration(/*Scope*/ 0, Function, Previous,
+                                   false, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
   // If the original function was part of a friend declaration,
@@ -868,7 +869,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
 
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
-  SemaRef.CheckFunctionDeclaration(Method, Previous, false, Redeclaration,
+  SemaRef.CheckFunctionDeclaration(0, Method, Previous, false, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
   if (D->isPure())
@@ -1040,6 +1041,14 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   // The nested name specifier is non-dependent, so no transformation
   // is required.
 
+  // We only need to do redeclaration lookups if we're in a class
+  // scope (in fact, it's not really even possible in non-class
+  // scopes).
+  bool CheckRedeclaration = Owner->isRecord();
+
+  LookupResult Prev(SemaRef, D->getDeclName(), D->getLocation(),
+                    Sema::LookupUsingDeclName, Sema::ForRedeclaration);
+
   UsingDecl *NewUD = UsingDecl::Create(SemaRef.Context, Owner,
                                        D->getLocation(),
                                        D->getNestedNameRange(),
@@ -1051,34 +1060,55 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   CXXScopeSpec SS;
   SS.setScopeRep(D->getTargetNestedNameDecl());
   SS.setRange(D->getNestedNameRange());
-  if (SemaRef.CheckUsingDeclQualifier(D->getUsingLocation(), SS,
+
+  if (CheckRedeclaration) {
+    Prev.setHideTags(false);
+    SemaRef.LookupQualifiedName(Prev, Owner);
+
+    // Check for invalid redeclarations.
+    if (SemaRef.CheckUsingDeclRedeclaration(D->getUsingLocation(),
+                                            D->isTypeName(), SS,
+                                            D->getLocation(), Prev))
+      NewUD->setInvalidDecl();
+
+  }
+
+  if (!NewUD->isInvalidDecl() &&
+      SemaRef.CheckUsingDeclQualifier(D->getUsingLocation(), SS,
                                       D->getLocation()))
     NewUD->setInvalidDecl();
+
   SemaRef.Context.setInstantiatedFromUsingDecl(NewUD, D);
   NewUD->setAccess(D->getAccess());
   Owner->addDecl(NewUD);
 
-  // We'll transform the UsingShadowDecls as we reach them.
+  // Don't process the shadow decls for an invalid decl.
+  if (NewUD->isInvalidDecl())
+    return NewUD;
+
+  // Process the shadow decls.
+  for (UsingDecl::shadow_iterator I = D->shadow_begin(), E = D->shadow_end();
+         I != E; ++I) {
+    UsingShadowDecl *Shadow = *I;
+    NamedDecl *InstTarget =
+      cast<NamedDecl>(SemaRef.FindInstantiatedDecl(Shadow->getTargetDecl(),
+                                                   TemplateArgs));
+
+    if (CheckRedeclaration &&
+        SemaRef.CheckUsingShadowDecl(NewUD, InstTarget, Prev))
+      continue;
+
+    UsingShadowDecl *InstShadow
+      = SemaRef.BuildUsingShadowDecl(/*Scope*/ 0, NewUD, InstTarget);
+    SemaRef.Context.setInstantiatedFromUsingShadowDecl(InstShadow, Shadow);
+  }
 
   return NewUD;
 }
 
 Decl *TemplateDeclInstantiator::VisitUsingShadowDecl(UsingShadowDecl *D) {
-  UsingDecl *InstUsing =
-    cast<UsingDecl>(SemaRef.FindInstantiatedDecl(D->getUsingDecl(),
-                                                 TemplateArgs));
-  NamedDecl *InstTarget =
-    cast<NamedDecl>(SemaRef.FindInstantiatedDecl(D->getTargetDecl(),
-                                                 TemplateArgs));
-
-  UsingShadowDecl *InstD = SemaRef.BuildUsingShadowDecl(/*Scope*/ 0,
-                                                        D->getAccess(),
-                                                        InstUsing,
-                                                        InstTarget);
-
-  SemaRef.Context.setInstantiatedFromUsingShadowDecl(InstD, D);
-
-  return InstD;
+  // Ignore these;  we handle them in bulk when processing the UsingDecl.
+  return 0;
 }
 
 Decl * TemplateDeclInstantiator
@@ -2087,7 +2117,10 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
                                    ParentDC->decls_end());
     }
 
-    assert(Result && "Unable to find instantiation of declaration!");
+    // UsingShadowDecls can instantiate to nothing because of using hiding.
+    assert((Result || isa<UsingShadowDecl>(D))
+           && "Unable to find instantiation of declaration!");
+
     D = Result;
   }
 

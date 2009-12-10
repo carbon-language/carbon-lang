@@ -121,8 +121,13 @@ def err_using_decl_destructor : Error<
   "using declaration can not refer to a destructor">;
 def err_using_decl_template_id : Error<
   "using declaration can not refer to a template specialization">;
-def note_using_decl_target : Note<
-  "target of using declaration">;
+def note_using_decl_target : Note<"target of using declaration">;
+def note_using_decl_conflict : Note<"conflicting declaration">;
+def err_using_decl_redeclaration : Error<"redeclaration of using decl">;
+def note_previous_using_decl : Note<"previous using decl">;
+def err_using_decl_conflict : Error<
+  "%select{function|non-function}0 target of using declaration conflicts "
+  "with %select{function|non-function}1 declaration already in scope">;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;

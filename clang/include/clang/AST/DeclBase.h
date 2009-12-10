@@ -916,6 +916,9 @@ public:
   /// only happens with friends.
   void addHiddenDecl(Decl *D);
 
+  /// @brief Removes a declaration from this context.
+  void removeDecl(Decl *D);
+
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
   typedef NamedDecl **lookup_iterator;

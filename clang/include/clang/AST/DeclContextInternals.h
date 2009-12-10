@@ -131,6 +131,24 @@ public:
     return DK == DK_DeclID || DK == DK_ID_Vector;
   }
 
+  void remove(NamedDecl *D) {
+    assert(!isNull() && "removing from empty list");
+    if (NamedDecl *Singleton = getAsDecl()) {
+      assert(Singleton == D && "list is different singleton");
+      Data = 0;
+      return;
+    }
+
+    VectorTy &Vec = *getAsVector();
+    VectorTy::iterator I = std::find(Vec.begin(), Vec.end(),
+                                     reinterpret_cast<uintptr_t>(D));
+    assert(I != Vec.end() && "list does not contain decl");
+    Vec.erase(I);
+
+    assert(std::find(Vec.begin(), Vec.end(), reinterpret_cast<uintptr_t>(D))
+             == Vec.end() && "list still contains decl");
+  }
+
   /// getLookupResult - Return an array of all the decls that this list
   /// represents.
   DeclContext::lookup_result getLookupResult(ASTContext &Context) {

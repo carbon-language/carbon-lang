@@ -287,7 +287,8 @@ void ImplicitConversionSequence::DebugPrint() const {
 // signature), IsOverload returns false and MatchedDecl will be set to
 // point to the FunctionDecl for #2.
 Sema::OverloadKind
-Sema::CheckOverload(FunctionDecl *New, LookupResult &Old, NamedDecl *&Match) {
+Sema::CheckOverload(FunctionDecl *New, const LookupResult &Old,
+                    NamedDecl *&Match) {
   for (LookupResult::iterator I = Old.begin(), E = Old.end();
          I != E; ++I) {
     NamedDecl *OldD = (*I)->getUnderlyingDecl();
@@ -301,12 +302,18 @@ Sema::CheckOverload(FunctionDecl *New, LookupResult &Old, NamedDecl *&Match) {
         Match = *I;
         return Ovl_Match;
       }
-    } else if (!isa<UnresolvedUsingValueDecl>(OldD)) {
+    } else if (isa<UsingDecl>(OldD) || isa<TagDecl>(OldD)) {
+      // We can overload with these, which can show up when doing
+      // redeclaration checks for UsingDecls.
+      assert(Old.getLookupKind() == LookupUsingDeclName);
+    } else if (isa<UnresolvedUsingValueDecl>(OldD)) {
+      // Optimistically assume that an unresolved using decl will
+      // overload; if it doesn't, we'll have to diagnose during
+      // template instantiation.
+    } else {
       // (C++ 13p1):
       //   Only function declarations can be overloaded; object and type
       //   declarations cannot be overloaded.
-      // But we permit unresolved using value decls and diagnose the error
-      // during template instantiation.
       Match = *I;
       return Ovl_NonFunction;
     }

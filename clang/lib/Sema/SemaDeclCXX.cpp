@@ -2925,12 +2925,146 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   return DeclPtrTy::make(UD);
 }
 
+/// Determines whether to create a using shadow decl for a particular
+/// decl, given the set of decls existing prior to this using lookup.
+bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
+                                const LookupResult &Previous) {
+  // Diagnose finding a decl which is not from a base class of the
+  // current class.  We do this now because there are cases where this
+  // function will silently decide not to build a shadow decl, which
+  // will pre-empt further diagnostics.
+  //
+  // We don't need to do this in C++0x because we do the check once on
+  // the qualifier.
+  //
+  // FIXME: diagnose the following if we care enough:
+  //   struct A { int foo; };
+  //   struct B : A { using A::foo; };
+  //   template <class T> struct C : A {};
+  //   template <class T> struct D : C<T> { using B::foo; } // <---
+  // This is invalid (during instantiation) in C++03 because B::foo
+  // resolves to the using decl in B, which is not a base class of D<T>.
+  // We can't diagnose it immediately because C<T> is an unknown
+  // specialization.  The UsingShadowDecl in D<T> then points directly
+  // to A::foo, which will look well-formed when we instantiate.
+  // The right solution is to not collapse the shadow-decl chain.
+  if (!getLangOptions().CPlusPlus0x && CurContext->isRecord()) {
+    DeclContext *OrigDC = Orig->getDeclContext();
+
+    // Handle enums and anonymous structs.
+    if (isa<EnumDecl>(OrigDC)) OrigDC = OrigDC->getParent();
+    CXXRecordDecl *OrigRec = cast<CXXRecordDecl>(OrigDC);
+    while (OrigRec->isAnonymousStructOrUnion())
+      OrigRec = cast<CXXRecordDecl>(OrigRec->getDeclContext());
+
+    if (cast<CXXRecordDecl>(CurContext)->isProvablyNotDerivedFrom(OrigRec)) {
+      if (OrigDC == CurContext) {
+        Diag(Using->getLocation(),
+             diag::err_using_decl_nested_name_specifier_is_current_class)
+          << Using->getNestedNameRange();
+        Diag(Orig->getLocation(), diag::note_using_decl_target);
+        return true;
+      }
+
+      Diag(Using->getNestedNameRange().getBegin(),
+           diag::err_using_decl_nested_name_specifier_is_not_base_class)
+        << Using->getTargetNestedNameDecl()
+        << cast<CXXRecordDecl>(CurContext)
+        << Using->getNestedNameRange();
+      Diag(Orig->getLocation(), diag::note_using_decl_target);
+      return true;
+    }
+  }
+
+  if (Previous.empty()) return false;
+
+  NamedDecl *Target = Orig;
+  if (isa<UsingShadowDecl>(Target))
+    Target = cast<UsingShadowDecl>(Target)->getTargetDecl();
+
+  if (Target->isFunctionOrFunctionTemplate()) {
+    FunctionDecl *FD;
+    if (isa<FunctionTemplateDecl>(Target))
+      FD = cast<FunctionTemplateDecl>(Target)->getTemplatedDecl();
+    else
+      FD = cast<FunctionDecl>(Target);
+
+    NamedDecl *OldDecl = 0;
+    switch (CheckOverload(FD, Previous, OldDecl)) {
+    case Ovl_Overload:
+      return false;
+
+    case Ovl_NonFunction:
+      Diag(Using->getLocation(), diag::err_using_decl_conflict)
+        << 0  // target decl is a function
+        << 1; // other decl is not a function
+      break;
+      
+    // We found a decl with the exact signature.
+    case Ovl_Match:
+      if (isa<UsingShadowDecl>(OldDecl)) {
+        // Silently ignore the possible conflict.
+        return false;
+      }
+
+      // If we're in a record, we want to hide the target, so we
+      // return true (without a diagnostic) to tell the caller not to
+      // build a shadow decl.
+      if (CurContext->isRecord())
+        return true;
+
+      // If we're not in a record, this is an error.
+      Diag(Using->getLocation(), diag::err_using_decl_conflict)
+        << 0  // target decl is a function
+        << 0; // other decl is a function
+      break;
+    }
+
+    Diag(Target->getLocation(), diag::note_using_decl_target);
+    Diag(OldDecl->getLocation(), diag::note_using_decl_conflict);
+    return true;
+  }
+
+  // Target is not a function.
+
+  // If the target happens to be one of the previous declarations, we
+  // don't have a conflict.
+  NamedDecl *NonTag = 0, *Tag = 0;
+  for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
+         I != E; ++I) {
+    NamedDecl *D = (*I)->getUnderlyingDecl();
+    if (D->getCanonicalDecl() == Target->getCanonicalDecl())
+      return false;
+
+    (isa<TagDecl>(D) ? Tag : NonTag) = D;
+  }
+
+  if (isa<TagDecl>(Target)) {
+    // No conflict between a tag and a non-tag.
+    if (!Tag) return false;
+
+    Diag(Using->getLocation(), diag::err_using_decl_conflict)
+      << 1 << 1; // both non-functions
+    Diag(Target->getLocation(), diag::note_using_decl_target);
+    Diag(Tag->getLocation(), diag::note_using_decl_conflict);
+    return true;
+  }
+
+  // No conflict between a tag and a non-tag.
+  if (!NonTag) return false;
+
+  Diag(Using->getLocation(), diag::err_using_decl_conflict)
+    << 1  // target not a function
+    << int(NonTag->isFunctionOrFunctionTemplate());
+  Diag(Target->getLocation(), diag::note_using_decl_target);
+  Diag(NonTag->getLocation(), diag::note_using_decl_conflict);
+  return true;
+}
+
 /// Builds a shadow declaration corresponding to a 'using' declaration.
 UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
-                                            AccessSpecifier AS,
                                             UsingDecl *UD,
                                             NamedDecl *Orig) {
-  // FIXME: diagnose hiding, collisions
 
   // If we resolved to another shadow declaration, just coalesce them.
   NamedDecl *Target = Orig;
@@ -2948,45 +3082,56 @@ UsingShadowDecl *Sema::BuildUsingShadowDecl(Scope *S,
     PushOnScopeChains(Shadow, S);
   else
     CurContext->addDecl(Shadow);
-  Shadow->setAccess(AS);
+  Shadow->setAccess(UD->getAccess());
 
   if (Orig->isInvalidDecl() || UD->isInvalidDecl())
     Shadow->setInvalidDecl();
 
-  // If we haven't already declared the shadow decl invalid, check
-  // whether the decl comes from a base class of the current class.
-  // We don't have to do this in C++0x because we do the check once on
-  // the qualifier.
-  else if (!getLangOptions().CPlusPlus0x && CurContext->isRecord()) {
-    DeclContext *OrigDC = Orig->getDeclContext();
+  return Shadow;
+}
 
-    // Handle enums and anonymous structs.
-    if (isa<EnumDecl>(OrigDC)) OrigDC = OrigDC->getParent();
-    CXXRecordDecl *OrigRec = cast<CXXRecordDecl>(OrigDC);
-    while (OrigRec->isAnonymousStructOrUnion())
-      OrigRec = cast<CXXRecordDecl>(OrigRec->getDeclContext());
+/// Hides a using shadow declaration.  This is required by the current
+/// using-decl implementation when a resolvable using declaration in a
+/// class is followed by a declaration which would hide or override
+/// one or more of the using decl's targets; for example:
+///
+///   struct Base { void foo(int); };
+///   struct Derived : Base {
+///     using Base::foo;
+///     void foo(int);
+///   };
+///
+/// The governing language is C++03 [namespace.udecl]p12:
+///
+///   When a using-declaration brings names from a base class into a
+///   derived class scope, member functions in the derived class
+///   override and/or hide member functions with the same name and
+///   parameter types in a base class (rather than conflicting).
+///
+/// There are two ways to implement this:
+///   (1) optimistically create shadow decls when they're not hidden
+///       by existing declarations, or
+///   (2) don't create any shadow decls (or at least don't make them
+///       visible) until we've fully parsed/instantiated the class.
+/// The problem with (1) is that we might have to retroactively remove
+/// a shadow decl, which requires several O(n) operations because the
+/// decl structures are (very reasonably) not designed for removal.
+/// (2) avoids this but is very fiddly and phase-dependent.
+void Sema::HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow) {
+  // Remove it from the DeclContext...
+  Shadow->getDeclContext()->removeDecl(Shadow);
 
-    if (cast<CXXRecordDecl>(CurContext)->isProvablyNotDerivedFrom(OrigRec)) {
-      if (OrigDC == CurContext) {
-        Diag(UD->getLocation(),
-             diag::err_using_decl_nested_name_specifier_is_current_class)
-          << UD->getNestedNameRange();
-        Diag(Orig->getLocation(), diag::note_using_decl_target);
-        Shadow->setInvalidDecl();
-        return Shadow;
-      }
-
-      Diag(UD->getNestedNameRange().getBegin(),
-           diag::err_using_decl_nested_name_specifier_is_not_base_class)
-        << UD->getTargetNestedNameDecl()
-        << cast<CXXRecordDecl>(CurContext)
-        << UD->getNestedNameRange();
-      Diag(Orig->getLocation(), diag::note_using_decl_target);
-      return Shadow;
-    }
+  // ...and the scope, if applicable...
+  if (S) {
+    S->RemoveDecl(DeclPtrTy::make(static_cast<Decl*>(Shadow)));
+    IdResolver.RemoveDecl(Shadow);
   }
 
-  return Shadow;
+  // ...and the using decl.
+  Shadow->getUsingDecl()->removeShadowDecl(Shadow);
+
+  // TODO: complain somehow if Shadow was used.  It shouldn't
+  // be possible for this to happen, because 
 }
 
 /// Builds a using declaration.
@@ -3014,9 +3159,35 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     return 0;
   }
 
+  // Do the redeclaration lookup in the current scope.
+  LookupResult Previous(*this, Name, IdentLoc, LookupUsingDeclName,
+                        ForRedeclaration);
+  Previous.setHideTags(false);
+  if (S) {
+    LookupName(Previous, S);
+
+    // It is really dumb that we have to do this.
+    LookupResult::Filter F = Previous.makeFilter();
+    while (F.hasNext()) {
+      NamedDecl *D = F.next();
+      if (!isDeclInScope(D, CurContext, S))
+        F.erase();
+    }
+    F.done();
+  } else {
+    assert(IsInstantiation && "no scope in non-instantiation");
+    assert(CurContext->isRecord() && "scope not record in instantiation");
+    LookupQualifiedName(Previous, CurContext);
+  }
+
   NestedNameSpecifier *NNS =
     static_cast<NestedNameSpecifier *>(SS.getScopeRep());
 
+  // Check for invalid redeclarations.
+  if (CheckUsingDeclRedeclaration(UsingLoc, IsTypeName, SS, IdentLoc, Previous))
+    return 0;
+
+  // Check for bad qualifiers.
   if (CheckUsingDeclQualifier(UsingLoc, SS, IdentLoc))
     return 0;
 
@@ -3106,10 +3277,69 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     return UD;
   }
 
-  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
-    BuildUsingShadowDecl(S, AS, UD, *I);
+  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
+    if (!CheckUsingShadowDecl(UD, *I, Previous))
+      BuildUsingShadowDecl(S, UD, *I);
+  }
 
   return UD;
+}
+
+/// Checks that the given using declaration is not an invalid
+/// redeclaration.  Note that this is checking only for the using decl
+/// itself, not for any ill-formedness among the UsingShadowDecls.
+bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
+                                       bool isTypeName,
+                                       const CXXScopeSpec &SS,
+                                       SourceLocation NameLoc,
+                                       const LookupResult &Prev) {
+  // C++03 [namespace.udecl]p8:
+  // C++0x [namespace.udecl]p10:
+  //   A using-declaration is a declaration and can therefore be used
+  //   repeatedly where (and only where) multiple declarations are
+  //   allowed.
+  // That's only in file contexts.
+  if (CurContext->getLookupContext()->isFileContext())
+    return false;
+
+  NestedNameSpecifier *Qual
+    = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+
+  for (LookupResult::iterator I = Prev.begin(), E = Prev.end(); I != E; ++I) {
+    NamedDecl *D = *I;
+
+    bool DTypename;
+    NestedNameSpecifier *DQual;
+    if (UsingDecl *UD = dyn_cast<UsingDecl>(D)) {
+      DTypename = UD->isTypeName();
+      DQual = UD->getTargetNestedNameDecl();
+    } else if (UnresolvedUsingValueDecl *UD
+                 = dyn_cast<UnresolvedUsingValueDecl>(D)) {
+      DTypename = false;
+      DQual = UD->getTargetNestedNameSpecifier();
+    } else if (UnresolvedUsingTypenameDecl *UD
+                 = dyn_cast<UnresolvedUsingTypenameDecl>(D)) {
+      DTypename = true;
+      DQual = UD->getTargetNestedNameSpecifier();
+    } else continue;
+
+    // using decls differ if one says 'typename' and the other doesn't.
+    // FIXME: non-dependent using decls?
+    if (isTypeName != DTypename) continue;
+
+    // using decls differ if they name different scopes (but note that
+    // template instantiation can cause this check to trigger when it
+    // didn't before instantiation).
+    if (Context.getCanonicalNestedNameSpecifier(Qual) !=
+        Context.getCanonicalNestedNameSpecifier(DQual))
+      continue;
+
+    Diag(NameLoc, diag::err_using_decl_redeclaration) << SS.getRange();
+    Diag(D->getLocation(), diag::note_previous_using_decl);
+    return true;
+  }
+
+  return false;
 }
 
 

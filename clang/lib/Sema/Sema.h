@@ -616,7 +616,8 @@ public:
                                      bool IsFunctionDefinition,
                                      bool &Redeclaration);
   void AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
-  void CheckFunctionDeclaration(FunctionDecl *NewFD, LookupResult &Previous,
+  void CheckFunctionDeclaration(Scope *S,
+                                FunctionDecl *NewFD, LookupResult &Previous,
                                 bool IsExplicitSpecialization,
                                 bool &Redeclaration,
                                 bool &OverloadableAttrRequired);
@@ -839,7 +840,7 @@ public:
     Ovl_NonFunction
   };
   OverloadKind CheckOverload(FunctionDecl *New,
-                             LookupResult &OldDecls,
+                             const LookupResult &OldDecls,
                              NamedDecl *&OldDecl);
   bool IsOverload(FunctionDecl *New, FunctionDecl *Old);
 
@@ -1123,6 +1124,10 @@ public:
     /// namespace alias definition, ignoring non-namespace names (C++
     /// [basic.lookup.udir]p1).
     LookupNamespaceName,
+    /// Look up all declarations in a scope with the given name,
+    /// including resolved using declarations.  This is appropriate
+    /// for checking redeclarations for a using declaration.
+    LookupUsingDeclName,
     /// Look up an ordinary name that is going to be redeclared as a
     /// name with linkage. This lookup ignores any declarations that
     /// are outside of the current scope unless they have linkage. See
@@ -1154,6 +1159,7 @@ public:
     case Sema::LookupTagName:
     case Sema::LookupMemberName:
     case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
+    case Sema::LookupUsingDeclName:
     case Sema::LookupObjCProtocolName:
     case Sema::LookupObjCImplementationName:
     case Sema::LookupObjCCategoryImplName:
@@ -1739,9 +1745,17 @@ public:
                                            SourceLocation IdentLoc,
                                            IdentifierInfo *Ident);
 
-  UsingShadowDecl *BuildUsingShadowDecl(Scope *S, AccessSpecifier AS,
-                                        UsingDecl *UD, NamedDecl *Target);
+  void HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow);
+  bool CheckUsingShadowDecl(UsingDecl *UD, NamedDecl *Target,
+                            const LookupResult &PreviousDecls);
+  UsingShadowDecl *BuildUsingShadowDecl(Scope *S, UsingDecl *UD,
+                                        NamedDecl *Target);
 
+  bool CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
+                                   bool isTypeName,
+                                   const CXXScopeSpec &SS,
+                                   SourceLocation NameLoc,
+                                   const LookupResult &Previous);
   bool CheckUsingDeclQualifier(SourceLocation UsingLoc,
                                const CXXScopeSpec &SS,
                                SourceLocation NameLoc);

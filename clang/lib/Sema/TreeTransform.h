@@ -4506,8 +4506,14 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
   for (UnresolvedLookupExpr::decls_iterator I = Old->decls_begin(),
          E = Old->decls_end(); I != E; ++I) {
     NamedDecl *InstD = static_cast<NamedDecl*>(getDerived().TransformDecl(*I));
-    if (!InstD)
-      return SemaRef.ExprError();
+    if (!InstD) {
+      // Silently ignore these if a UsingShadowDecl instantiated to nothing.
+      // This can happen because of dependent hiding.
+      if (isa<UsingShadowDecl>(*I))
+        continue;
+      else
+        return SemaRef.ExprError();
+    }
 
     // Expand using declarations.
     if (isa<UsingDecl>(InstD)) {
@@ -4913,8 +4919,14 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
   for (UnresolvedMemberExpr::decls_iterator I = Old->decls_begin(),
          E = Old->decls_end(); I != E; ++I) {
     NamedDecl *InstD = static_cast<NamedDecl*>(getDerived().TransformDecl(*I));
-    if (!InstD)
-      return SemaRef.ExprError();
+    if (!InstD) {
+      // Silently ignore these if a UsingShadowDecl instantiated to nothing.
+      // This can happen because of dependent hiding.
+      if (isa<UsingShadowDecl>(*I))
+        continue;
+      else
+        return SemaRef.ExprError();
+    }
 
     // Expand using declarations.
     if (isa<UsingDecl>(InstD)) {
