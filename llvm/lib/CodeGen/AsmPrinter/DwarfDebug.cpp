@@ -738,6 +738,40 @@ void DwarfDebug::addAddress(DIE *Die, unsigned Attribute,
   addBlock(Die, Attribute, 0, Block);
 }
 
+/// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
+/// given DIType.
+DIE *DwarfDebug::getOrCreateTypeDIE(DIType Ty) {
+  DIE *TyDIE = ModuleCU->getDIE(Ty.getNode());
+  if (TyDIE)
+    return TyDIE;
+
+  // Create new type.
+  TyDIE = new DIE(dwarf::DW_TAG_base_type);
+  ModuleCU->insertDIE(Ty.getNode(), TyDIE);
+  if (Ty.isBasicType())
+    constructTypeDIE(*TyDIE, DIBasicType(Ty.getNode()));
+  else if (Ty.isCompositeType())
+    constructTypeDIE(*TyDIE, DICompositeType(Ty.getNode()));
+  else {
+    assert(Ty.isDerivedType() && "Unknown kind of DIType");
+    constructTypeDIE(*TyDIE, DIDerivedType(Ty.getNode()));
+  }
+
+  DIDescriptor Context = Ty.getContext();
+  if (Context.isNull())
+    // Add this type into the module cu.
+    ModuleCU->addDie(TyDIE);
+  else if (Context.isType()) {
+    DIE *ContextDIE = getOrCreateTypeDIE(DIType(Context.getNode()));
+    ContextDIE->addChild(TyDIE);
+  } else if (DIE *ContextDIE = ModuleCU->getDIE(Context.getNode()))
+    ContextDIE->addChild(TyDIE);
+  else 
+    ModuleCU->addDie(TyDIE);
+
+  return TyDIE;
+}
+
 /// addType - Add a new type attribute to the specified entity.
 void DwarfDebug::addType(DIE *Entity, DIType Ty) {
   if (Ty.isNull())
@@ -757,27 +791,8 @@ void DwarfDebug::addType(DIE *Entity, DIType Ty) {
   ModuleCU->insertDIEEntry(Ty.getNode(), Entry);
 
   // Construct type.
-  DIE *Buffer = new DIE(dwarf::DW_TAG_base_type);
-  ModuleCU->insertDIE(Ty.getNode(), Buffer);
-  if (Ty.isBasicType())
-    constructTypeDIE(*Buffer, DIBasicType(Ty.getNode()));
-  else if (Ty.isCompositeType())
-    constructTypeDIE(*Buffer, DICompositeType(Ty.getNode()));
-  else {
-    assert(Ty.isDerivedType() && "Unknown kind of DIType");
-    constructTypeDIE(*Buffer, DIDerivedType(Ty.getNode()));
-  }
+  DIE *Buffer = getOrCreateTypeDIE(Ty);
 
-  // Add debug information entry to entity and appropriate context.
-  DIE *Die = NULL;
-  DIDescriptor Context = Ty.getContext();
-  if (!Context.isNull())
-    Die = ModuleCU->getDIE(Context.getNode());
-
-  if (Die)
-    Die->addChild(Buffer);
-  else
-    ModuleCU->addDie(Buffer);
   Entry->setEntry(Buffer);
   Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
 }

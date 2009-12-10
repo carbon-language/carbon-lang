@@ -316,6 +316,10 @@ class DwarfDebug : public Dwarf {
   /// addType - Add a new type attribute to the specified entity.
   void addType(DIE *Entity, DIType Ty);
 
+  /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
+  /// given DIType.
+  DIE *getOrCreateTypeDIE(DIType Ty);
+
   void addPubTypes(DISubprogram SP);
 
   /// constructTypeDIE - Construct basic type die from DIBasicType.
