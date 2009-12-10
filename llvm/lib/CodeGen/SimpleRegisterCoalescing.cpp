@@ -1317,7 +1317,13 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
                       "coalesced to another register.\n");
       return false;  // Not coalescable.
     }
-  } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
+  } else if (tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
+    if (SrcSubIdx && DstSubIdx && SrcSubIdx != DstSubIdx) {
+      // e.g. %reg16404:1<def> = MOV8rr %reg16412:2<kill>
+      Again = true;
+      return false;  // Not coalescable.
+    }
+  } else {
     llvm_unreachable("Unrecognized copy instruction!");
   }
 
