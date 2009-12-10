@@ -738,6 +738,19 @@ void DwarfDebug::addAddress(DIE *Die, unsigned Attribute,
   addBlock(Die, Attribute, 0, Block);
 }
 
+/// addToContextOwner - Add Die into the list of its context owner's children.
+void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
+  if (Context.isNull())
+    ModuleCU->addDie(Die);
+  else if (Context.isType()) {
+    DIE *ContextDIE = getOrCreateTypeDIE(DIType(Context.getNode()));
+    ContextDIE->addChild(Die);
+  } else if (DIE *ContextDIE = ModuleCU->getDIE(Context.getNode()))
+    ContextDIE->addChild(Die);
+  else 
+    ModuleCU->addDie(Die);
+}
+
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
 /// given DIType.
 DIE *DwarfDebug::getOrCreateTypeDIE(DIType Ty) {
@@ -757,18 +770,7 @@ DIE *DwarfDebug::getOrCreateTypeDIE(DIType Ty) {
     constructTypeDIE(*TyDIE, DIDerivedType(Ty.getNode()));
   }
 
-  DIDescriptor Context = Ty.getContext();
-  if (Context.isNull())
-    // Add this type into the module cu.
-    ModuleCU->addDie(TyDIE);
-  else if (Context.isType()) {
-    DIE *ContextDIE = getOrCreateTypeDIE(DIType(Context.getNode()));
-    ContextDIE->addChild(TyDIE);
-  } else if (DIE *ContextDIE = ModuleCU->getDIE(Context.getNode()))
-    ContextDIE->addChild(TyDIE);
-  else 
-    ModuleCU->addDie(TyDIE);
-
+  addToContextOwner(TyDIE, Ty.getContext());
   return TyDIE;
 }
 
@@ -1317,19 +1319,6 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
  if (!DISubprogram(SPNode).isLocalToUnit())
    addUInt(SPDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
 
- // If there are global variables at this scope then add their dies.
- for (SmallVector<WeakVH, 4>::iterator SGI = ScopedGVs.begin(),
-        SGE = ScopedGVs.end(); SGI != SGE; ++SGI) {
-   MDNode *N = dyn_cast_or_null<MDNode>(*SGI);
-   if (!N) continue;
-   DIGlobalVariable GV(N);
-   if (GV.getContext().getNode() == SPNode) {
-     DIE *ScopedGVDie = createGlobalVariableDIE(GV);
-     if (ScopedGVDie)
-       SPDie->addChild(ScopedGVDie);
-   }
- }
- 
  return SPDie;
 }
 
@@ -1648,9 +1637,8 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   ModuleCU->insertDIE(N, VariableDie);
 
   // Add to context owner.
-  if (TopLevelDIEs.insert(VariableDie))
-    TopLevelDIEsVector.push_back(VariableDie);
-
+  addToContextOwner(VariableDie, DI_GV.getContext());
+  
   // Expose as global. FIXME - need to check external flag.
   ModuleCU->addGlobal(DI_GV.getName(), VariableDie);
 
@@ -1723,20 +1711,15 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
   if (!ModuleCU)
     ModuleCU = CompileUnits[0];
 
-  // Create DIEs for each of the externally visible global variables.
-  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
-         E = DbgFinder.global_variable_end(); I != E; ++I) {
-    DIGlobalVariable GV(*I);
-    if (GV.getContext().getNode() != GV.getCompileUnit().getNode())
-      ScopedGVs.push_back(*I);
-    else
-      constructGlobalVariableDIE(*I);
-  }
-
   // Create DIEs for each subprogram.
   for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
          E = DbgFinder.subprogram_end(); I != E; ++I)
     constructSubprogramDIE(*I);
+
+  // Create DIEs for each global variable.
+  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
+         E = DbgFinder.global_variable_end(); I != E; ++I)
+    constructGlobalVariableDIE(*I);
 
   MMI = mmi;
   shouldEmit = true;

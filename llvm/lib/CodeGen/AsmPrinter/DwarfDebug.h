@@ -163,10 +163,6 @@ class DwarfDebug : public Dwarf {
   SmallPtrSet<DIE *, 4> TopLevelDIEs;
   SmallVector<DIE *, 4> TopLevelDIEsVector;
 
-  /// ScopedGVs - Tracks global variables that are not at file scope.
-  /// For example void f() { static int b = 42; }
-  SmallVector<WeakVH, 4> ScopedGVs;
-
   typedef SmallVector<DbgScope *, 2> ScopeVector;
   typedef DenseMap<const MachineInstr *, ScopeVector>
     InsnToDbgScopeMapTy;
@@ -312,6 +308,9 @@ class DwarfDebug : public Dwarf {
   ///
   void addBlockByrefAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
                             const MachineLocation &Location);
+
+  /// addToContextOwner - Add Die into the list of its context owner's children.
+  void addToContextOwner(DIE *Die, DIDescriptor Context);
 
   /// addType - Add a new type attribute to the specified entity.
   void addType(DIE *Entity, DIType Ty);
