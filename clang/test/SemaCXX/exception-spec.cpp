@@ -186,5 +186,18 @@ template <typename T> struct TEx; // expected-note {{template is declared here}}
 
 void tf() throw(TEx<int>); // expected-error {{implicit instantiation of undefined template}}
 
-// DR 437, class throws itself. FIXME: See Sema::CheckSpecifiedExceptionType.
-//struct DR437 { void f() throw(DR437); };
+// DR 437, class throws itself.
+struct DR437 {
+   void f() throw(DR437);
+   void g() throw(DR437*);
+   void h() throw(DR437&);
+};
+
+// DR 437 within a nested class
+struct DR437_out {
+   struct DR437_in {
+      void f() throw(DR437_out);
+      void g() throw(DR437_out*);
+      void h() throw(DR437_out&);
+   }; 
+};

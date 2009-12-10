@@ -35,10 +35,15 @@ static const FunctionProtoType *GetUnderlyingFunction(QualType T)
 /// exception specification. Incomplete types, or pointers to incomplete types
 /// other than void are not allowed.
 bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
-  // FIXME: This may not correctly work with the fix for core issue 437,
-  // where a class's own type is considered complete within its body. But
-  // perhaps RequireCompleteType itself should contain this logic?
 
+  // This check (and the similar one below) deals with issue 437, that changes
+  // C++ 9.2p2 this way:
+  // Within the class member-specification, the class is regarded as complete
+  // within function bodies, default arguments, exception-specifications, and
+  // constructor ctor-initializers (including such things in nested classes).
+  if (T->isRecordType() && T->getAs<RecordType>()->isBeingDefined())
+    return false;
+    
   // C++ 15.4p2: A type denoted in an exception-specification shall not denote
   //   an incomplete type.
   if (RequireCompleteType(Range.getBegin(), T,
@@ -58,8 +63,12 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   } else
     return false;
 
+  // Again as before
+  if (T->isRecordType() && T->getAs<RecordType>()->isBeingDefined())
+    return false;
+    
   if (!T->isVoidType() && RequireCompleteType(Range.getBegin(), T,
-      PDiag(diag::err_incomplete_in_exception_spec) << /*direct*/kind << Range))
+      PDiag(diag::err_incomplete_in_exception_spec) << kind << Range))
     return true;
 
   return false;
