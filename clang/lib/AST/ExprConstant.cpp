@@ -848,16 +848,8 @@ static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
 
 bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
   // Enums are integer constant exprs.
-  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
-    // FIXME: This is an ugly hack around the fact that enums don't set their
-    // signedness consistently; see PR3173.
-    APSInt SI = ECD->getInitVal();
-    SI.setIsUnsigned(!E->getType()->isSignedIntegerType());
-    // FIXME: This is an ugly hack around the fact that enums don't
-    // set their width (!?!) consistently; see PR3173.
-    SI.extOrTrunc(Info.Ctx.getIntWidth(E->getType()));
-    return Success(SI, E);
-  }
+  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D))
+    return Success(ECD->getInitVal(), E);
 
   // In C++, const, non-volatile integers initialized with ICEs are ICEs.
   // In C, they can also be folded, although they are not ICEs.

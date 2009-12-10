@@ -4522,7 +4522,7 @@ unsigned ASTContext::getIntWidth(QualType T) {
     return FWIT->getWidth();
   }
   if (EnumType *ET = dyn_cast<EnumType>(T))
-    T = ET->getDecl()->getPromotionType();
+    T = ET->getDecl()->getIntegerType();
   // For builtin types, just use the standard type sizing method
   return (unsigned)getTypeSize(T);
 }

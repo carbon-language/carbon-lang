@@ -5694,6 +5694,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
       // First value, set to zero.
       EltTy = Context.IntTy;
       EnumVal.zextOrTrunc(static_cast<uint32_t>(Context.getTypeSize(EltTy)));
+      EnumVal.setIsSigned(true);
     }
   }
 
@@ -5908,19 +5909,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     // enumerator value fits in an int, type it as an int, otherwise type it the
     // same as the enumerator decl itself.  This means that in "enum { X = 1U }"
     // that X has type 'int', not 'unsigned'.
-    if (ECD->getType() == Context.IntTy) {
-      // Make sure the init value is signed.
-      llvm::APSInt IV = ECD->getInitVal();
-      IV.setIsSigned(true);
-      ECD->setInitVal(IV);
-
-      if (getLangOptions().CPlusPlus)
-        // C++ [dcl.enum]p4: Following the closing brace of an
-        // enum-specifier, each enumerator has the type of its
-        // enumeration.
-        ECD->setType(EnumType);
-      continue;  // Already int type.
-    }
+    if (!getLangOptions().CPlusPlus && ECD->getType() == Context.IntTy)
+      continue;
 
     // Determine whether the value fits into an int.
     llvm::APSInt InitVal = ECD->getInitVal();
@@ -5935,7 +5925,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     QualType NewTy;
     unsigned NewWidth;
     bool NewSign;
-    if (FitsInInt) {
+    if (FitsInInt && !getLangOptions().CPlusPlus) {
       NewTy = Context.IntTy;
       NewWidth = IntWidth;
       NewSign = true;
