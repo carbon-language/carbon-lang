@@ -1084,7 +1084,7 @@ static int AnalyzeLoadFromClobberingStore(const Type *LoadTy, Value *LoadPtr,
     return -1;
 
   Value *StorePtr = DepSI->getPointerOperand();
-  uint64_t StoreSize = TD.getTypeSizeInBits(StorePtr->getType());
+  uint64_t StoreSize = TD.getTypeSizeInBits(DepSI->getOperand(0)->getType());
   return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr,
                                         StorePtr, StoreSize, TD);
 }
