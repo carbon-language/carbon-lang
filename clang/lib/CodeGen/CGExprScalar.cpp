@@ -263,6 +263,10 @@ public:
     CGF.EmitCXXDeleteExpr(E);
     return 0;
   }
+  Value *VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
+    return llvm::ConstantInt::get(Builder.getInt1Ty(),
+                                  E->EvaluateTrait(CGF.getContext()));
+  }
 
   Value *VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *E) {
     // C++ [expr.pseudo]p1:
