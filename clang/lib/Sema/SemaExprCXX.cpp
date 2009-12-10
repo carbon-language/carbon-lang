@@ -1806,6 +1806,11 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   QualType Composite = FindCompositePointerType(LHS, RHS);
   if (!Composite.isNull())
     return Composite;
+  
+  // Similarly, attempt to find composite type of twp objective-c pointers.
+  Composite = FindCompositeObjCPointerType(LHS, RHS, QuestionLoc);
+  if (!Composite.isNull())
+    return Composite;
 
   // Fourth bullet is same for pointers-to-member. However, the possible
   // conversions are far more limited: we have null-to-pointer, upcast of
