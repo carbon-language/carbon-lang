@@ -2,7 +2,9 @@
 
 int x(*g); // expected-error {{use of undeclared identifier 'g'}}
 
-struct Type { };
+struct Type {
+  int Type;
+};
 
 
 // PR4451 - We should recover well from the typo of '::' as ':' in a2.
@@ -40,3 +42,7 @@ struct a {
   int Type : fooenum;
 };
 
+void test(struct Type *P) {
+  int Type;
+  Type = 1 ? P->Type : Type;
+}

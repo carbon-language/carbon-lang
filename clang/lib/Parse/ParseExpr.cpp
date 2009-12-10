@@ -317,6 +317,9 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
     OwningExprResult TernaryMiddle(Actions, true);
     if (NextTokPrec == prec::Conditional) {
       if (Tok.isNot(tok::colon)) {
+        // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
+        ColonProtectionRAIIObject X(*this);
+
         // Handle this production specially:
         //   logical-OR-expression '?' expression ':' conditional-expression
         // In particular, the RHS of the '?' is 'expression', not
