@@ -1,4 +1,3 @@
-
 //===--- ParseDecl.cpp - Declaration Parsing ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -1545,8 +1544,11 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
 
     /// struct-declarator: declarator
     /// struct-declarator: declarator[opt] ':' constant-expression
-    if (Tok.isNot(tok::colon))
+    if (Tok.isNot(tok::colon)) {
+      // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
+      ColonProtectionRAIIObject X(*this);
       ParseDeclarator(DeclaratorInfo.D);
+    }
 
     if (Tok.is(tok::colon)) {
       ConsumeToken();

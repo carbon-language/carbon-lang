@@ -1090,11 +1090,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     return ParseCXXClassMemberDeclaration(AS, TemplateInfo);
   }
 
+  // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
+  ColonProtectionRAIIObject X(*this);
+  
   CXX0XAttributeList AttrList;
   // Optional C++0x attribute-specifier
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
+  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
     AttrList = ParseCXX0XAttributes();
-  }
 
   if (Tok.is(tok::kw_using)) {
     // FIXME: Check for template aliases
@@ -1138,6 +1140,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   ParsingDeclarator DeclaratorInfo(*this, DS, Declarator::MemberContext);
 
   if (Tok.isNot(tok::colon)) {
+    // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
+    ColonProtectionRAIIObject X(*this);
+
     // Parse the first declarator.
     ParseDeclarator(DeclaratorInfo);
     // Error parsing the declarator?

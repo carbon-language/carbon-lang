@@ -2,6 +2,8 @@
 
 int x(*g); // expected-error {{use of undeclared identifier 'g'}}
 
+struct Type { };
+
 
 // PR4451 - We should recover well from the typo of '::' as ':' in a2.
 namespace y {
@@ -31,3 +33,10 @@ class someclass {
     return 1 ? P->x : P->y;
   }
 };
+
+enum { fooenum = 1 };
+
+struct a {
+  int Type : fooenum;
+};
+
