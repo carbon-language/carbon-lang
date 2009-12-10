@@ -69,9 +69,11 @@ namespace test4 {
   };
 }
 
-// FIXME: we should be able to diagnose these, but we can't.
+// FIXME: we should be able to diagnose both of these, but we can't.
+// ...I'm actually not sure why we can diagnose either of them; it's
+// probably a bug.
 namespace test5 {
-  namespace ns { void foo(int); }
+  namespace ns { void foo(int); } // expected-note {{target of using declaration}}
   template <typename T> class Test0 {
     void test() {
       int foo(T);
@@ -81,9 +83,12 @@ namespace test5 {
 
   template <typename T> class Test1 {
     void test() {
-      using ns::foo;
-      int foo(T);
+      using ns::foo; // expected-note {{using declaration}}
+      int foo(T); // expected-error {{declaration conflicts with target of using declaration already in scope}}
     }
   };
+
+  template class Test0<int>;
+  template class Test1<int>; // expected-note {{in instantiation of member function}}
 }
 
