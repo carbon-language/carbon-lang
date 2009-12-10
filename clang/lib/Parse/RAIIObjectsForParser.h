@@ -48,8 +48,9 @@ namespace clang {
     Parser &P;
     bool OldVal;
   public:
-    ColonProtectionRAIIObject(Parser &p) : P(p), OldVal(P.ColonIsSacred) {
-      P.ColonIsSacred = true;
+    ColonProtectionRAIIObject(Parser &p, bool Value = true)
+      : P(p), OldVal(P.ColonIsSacred) {
+      P.ColonIsSacred = Value;
     }
     
     /// restore - This can be used to restore the state early, before the dtor

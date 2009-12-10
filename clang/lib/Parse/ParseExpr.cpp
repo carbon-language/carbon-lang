@@ -565,9 +565,15 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     TypeTy *CastTy;
     SourceLocation LParenLoc = Tok.getLocation();
     SourceLocation RParenLoc;
-    Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
-                               TypeOfCast, CastTy, RParenLoc);
-    if (Res.isInvalid()) return move(Res);
+    
+    {
+      // The inside of the parens don't need to be a colon protected scope.
+      ColonProtectionRAIIObject X(*this, false);
+    
+      Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
+                                 TypeOfCast, CastTy, RParenLoc);
+      if (Res.isInvalid()) return move(Res);
+    }
 
     switch (ParenExprType) {
     case SimpleExpr:   break;    // Nothing else to do.

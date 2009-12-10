@@ -9,7 +9,8 @@ struct Type {
 
 // PR4451 - We should recover well from the typo of '::' as ':' in a2.
 namespace y {
-  struct a { };  
+  struct a { };
+  typedef int b;
 }
 
 y::a a1;
@@ -45,4 +46,9 @@ struct a {
 void test(struct Type *P) {
   int Type;
   Type = 1 ? P->Type : Type;
+  
+  Type = (y:b) 4;   // expected-error {{unexpected ':' in nested name specifier}}
+  Type = 1 ? (
+              (y:b)  // expected-error {{unexpected ':' in nested name specifier}}
+              4) : 5;
 }
