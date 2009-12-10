@@ -422,6 +422,8 @@ private:
   /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
   /// number that holds the value.
   unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
+
+  llvm::BasicBlock *TerminateHandler;
   
 public:
   CodeGenFunction(CodeGenModule &cgm);
@@ -552,6 +554,7 @@ public:
   /// EmitEndEHSpec - Emit the end of the exception spec.
   void EmitEndEHSpec(const Decl *D);
 
+  /// getTerminateHandler - Return a handler that just calls terminate.
   llvm::BasicBlock *getTerminateHandler();
 
   const llvm::Type *ConvertTypeForMem(QualType T);

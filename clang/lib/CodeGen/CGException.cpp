@@ -683,6 +683,9 @@ CodeGenFunction::EHCleanupBlock::~EHCleanupBlock() {
 }
 
 llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
+  if (TerminateHandler)
+    return TerminateHandler;
+
   llvm::BasicBlock *Cont = 0;
 
   if (HaveInsertPoint()) {
@@ -702,7 +705,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateHandler() {
     CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
 
   // Set up terminate handler
-  llvm::BasicBlock *TerminateHandler = createBasicBlock("terminate.handler");
+  TerminateHandler = createBasicBlock("terminate.handler");
   EmitBlock(TerminateHandler);
   llvm::Value *Exc = Builder.CreateCall(llvm_eh_exception, "exc");
   // We are required to emit this call to satisfy LLVM, even
