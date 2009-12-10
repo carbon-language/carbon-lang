@@ -1574,18 +1574,26 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
 //
 
 // memory barriers protect the atomic sequences
-let isBarrier = 1 in {
+let isBarrier = 1, isPredicable = 0 in {
 def Int_MemBarrierV7 : AI<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dmb", "",
                         [(ARMMemBarrier)]>,
-                        Requires<[HasV7]>;
+                        Requires<[HasV7]> {
+  let Inst{31-4} = 0xf57ff05;
+  // FIXME: add support for options other than a full system DMB
+  let Inst{3-0} = 0b1111;
+}
 
 def Int_SyncBarrierV7 : AI<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dsb", "",
                         [(ARMSyncBarrier)]>,
-                        Requires<[HasV7]>;
+                        Requires<[HasV7]> {
+  let Inst{31-4} = 0xf57ff04;
+  // FIXME: add support for options other than a full system DSB
+  let Inst{3-0} = 0b1111;
+}
 }
 
 //===----------------------------------------------------------------------===//
