@@ -160,16 +160,17 @@ namespace {
 
       // Because the exit block is not in the loop, we know we have to get _at
       // least_ its immediate dominator.
-      do {
-        // Get next Immediate Dominator.
-        IDom = IDom->getIDom();
-
+      IDom = IDom->getIDom();
+      
+      while (IDom && IDom != BlockInLoopNode) {
         // If we have got to the header of the loop, then the instructions block
         // did not dominate the exit node, so we can't hoist it.
         if (IDom->getBlock() == LoopHeader)
           return false;
 
-      } while (IDom != BlockInLoopNode);
+        // Get next Immediate Dominator.
+        IDom = IDom->getIDom();
+      };
 
       return true;
     }
