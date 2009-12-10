@@ -18,7 +18,11 @@
 #include "clang/Parse/ParseDiagnostic.h"
 
 namespace clang {
-
+  // TODO: move ParsingDeclRAIIObject here.
+  // TODO: move ParsingClassDefinition here.
+  // TODO: move TentativeParsingAction here.
+  
+  
   /// ExtensionRAIIObject - This saves the state of extension warnings when
   /// constructed and disables them.  When destructed, it restores them back to
   /// the way they used to be.  This is used to handle __extension__ in the
@@ -36,8 +40,6 @@ namespace clang {
       Diags.DecrementAllExtensionsSilenced();
     }
   };
-  
-  // TODO: move GreaterThanIsOperatorScope here.
   
   /// ColonProtectionRAIIObject - This sets the Parser::ColonIsSacred bool and
   /// restores it when destroyed.  This says that "foo:" should not be
@@ -58,6 +60,22 @@ namespace clang {
     
     ~ColonProtectionRAIIObject() {
       restore();
+    }
+  };
+  
+  /// \brief RAII object that makes '>' behave either as an operator
+  /// or as the closing angle bracket for a template argument list.
+  struct GreaterThanIsOperatorScope {
+    bool &GreaterThanIsOperator;
+    bool OldGreaterThanIsOperator;
+    
+    GreaterThanIsOperatorScope(bool &GTIO, bool Val)
+    : GreaterThanIsOperator(GTIO), OldGreaterThanIsOperator(GTIO) {
+      GreaterThanIsOperator = Val;
+    }
+    
+    ~GreaterThanIsOperatorScope() {
+      GreaterThanIsOperator = OldGreaterThanIsOperator;
     }
   };
   
