@@ -149,42 +149,69 @@ void LiveIntervals::dumpInstrs() const {
   printInstrs(errs());
 }
 
-/// conflictsWithPhysRegDef - Returns true if the specified register
-/// is defined during the duration of the specified interval.
-bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
-                                            VirtRegMap &vrm, unsigned reg) {
-  for (LiveInterval::Ranges::const_iterator
-         I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
-    for (SlotIndex index = I->start.getBaseIndex(),
-           end = I->end.getPrevSlot().getBaseIndex().getNextIndex();
-           index != end;
-           index = index.getNextIndex()) {
-      MachineInstr *MI = getInstructionFromIndex(index);
-      if (!MI)
-        continue;               // skip deleted instructions
+bool LiveIntervals::conflictsWithPhysReg(const LiveInterval &li,
+                                         VirtRegMap &vrm, unsigned reg) {
+  // We don't handle fancy stuff crossing basic block boundaries
+  if (li.ranges.size() != 1)
+    return true;
+  const LiveRange &range = li.ranges.front();
+  SlotIndex idx = range.start.getBaseIndex();
+  SlotIndex end = range.end.getPrevSlot().getBaseIndex().getNextIndex();
 
-      unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-      if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
-        if (SrcReg == li.reg || DstReg == li.reg)
+  // Skip deleted instructions
+  MachineInstr *firstMI = getInstructionFromIndex(idx);
+  while (!firstMI && idx != end) {
+    idx = idx.getNextIndex();
+    firstMI = getInstructionFromIndex(idx);
+  }
+  if (!firstMI)
+    return false;
+
+  // Find last instruction in range
+  SlotIndex lastIdx = end.getPrevIndex();
+  MachineInstr *lastMI = getInstructionFromIndex(lastIdx);
+  while (!lastMI && lastIdx != idx) {
+    lastIdx = lastIdx.getPrevIndex();
+    lastMI = getInstructionFromIndex(lastIdx);
+  }
+  if (!lastMI)
+    return false;
+
+  // Range cannot cross basic block boundaries or terminators
+  MachineBasicBlock *MBB = firstMI->getParent();
+  if (MBB != lastMI->getParent() || lastMI->getDesc().isTerminator())
+    return true;
+
+  MachineBasicBlock::const_iterator E = lastMI;
+  ++E;
+  for (MachineBasicBlock::const_iterator I = firstMI; I != E; ++I) {
+    const MachineInstr &MI = *I;
+
+    // Allow copies to and from li.reg
+    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+    if (tii_->isMoveInstr(MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
+      if (SrcReg == li.reg || DstReg == li.reg)
+        continue;
+
+    // Check for operands using reg
+    for (unsigned i = 0, e = MI.getNumOperands(); i != e;  ++i) {
+      const MachineOperand& mop = MI.getOperand(i);
+      if (!mop.isReg())
+        continue;
+      unsigned PhysReg = mop.getReg();
+      if (PhysReg == 0 || PhysReg == li.reg)
+        continue;
+      if (TargetRegisterInfo::isVirtualRegister(PhysReg)) {
+        if (!vrm.hasPhys(PhysReg))
           continue;
-      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
-        MachineOperand& mop = MI->getOperand(i);
-        if (!mop.isReg())
-          continue;
-        unsigned PhysReg = mop.getReg();
-        if (PhysReg == 0 || PhysReg == li.reg)
-          continue;
-        if (TargetRegisterInfo::isVirtualRegister(PhysReg)) {
-          if (!vrm.hasPhys(PhysReg))
-            continue;
-          PhysReg = vrm.getPhys(PhysReg);
-        }
-        if (PhysReg && tri_->regsOverlap(PhysReg, reg))
-          return true;
+        PhysReg = vrm.getPhys(PhysReg);
       }
+      if (PhysReg && tri_->regsOverlap(PhysReg, reg))
+        return true;
     }
   }
 
+  // No conflicts found.
   return false;
 }
 

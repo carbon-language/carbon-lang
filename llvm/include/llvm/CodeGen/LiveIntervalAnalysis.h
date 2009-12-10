@@ -112,10 +112,13 @@ namespace llvm {
       return (unsigned)(IntervalPercentage * indexes_->getFunctionSize());
     }
 
-    /// conflictsWithPhysRegDef - Returns true if the specified register
-    /// is defined during the duration of the specified interval.
-    bool conflictsWithPhysRegDef(const LiveInterval &li, VirtRegMap &vrm,
-                                 unsigned reg);
+    /// conflictsWithPhysReg - Returns true if the specified register is used or
+    /// defined during the duration of the specified interval. Copies to and
+    /// from li.reg are allowed. This method is only able to analyze simple
+    /// ranges that stay within a single basic block. Anything else is
+    /// considered a conflict.
+    bool conflictsWithPhysReg(const LiveInterval &li, VirtRegMap &vrm,
+                              unsigned reg);
 
     /// conflictsWithPhysRegRef - Similar to conflictsWithPhysRegRef except
     /// it can check use as well.
