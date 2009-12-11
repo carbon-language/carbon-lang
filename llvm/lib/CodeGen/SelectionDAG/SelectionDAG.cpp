@@ -832,8 +832,12 @@ SDValue SelectionDAG::getZExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT) {
 }
 
 SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, DebugLoc DL, EVT VT) {
+  assert(!VT.isVector() &&
+         "getZeroExtendInReg should use the vector element type instead of "
+         "the vector type!");
   if (Op.getValueType() == VT) return Op;
-  APInt Imm = APInt::getLowBitsSet(Op.getValueSizeInBits(),
+  unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
+  APInt Imm = APInt::getLowBitsSet(BitWidth,
                                    VT.getSizeInBits());
   return getNode(ISD::AND, DL, Op.getValueType(), Op,
                  getConstant(Imm, Op.getValueType()));
@@ -1481,7 +1485,7 @@ bool SelectionDAG::SignBitIsZero(SDValue Op, unsigned Depth) const {
   if (Op.getValueType().isVector())
     return false;
 
-  unsigned BitWidth = Op.getValueSizeInBits();
+  unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
   return MaskedValueIsZero(Op, APInt::getSignBit(BitWidth), Depth);
 }
 
@@ -1504,7 +1508,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
                                      APInt &KnownZero, APInt &KnownOne,
                                      unsigned Depth) const {
   unsigned BitWidth = Mask.getBitWidth();
-  assert(BitWidth == Op.getValueType().getSizeInBits() &&
+  assert(BitWidth == Op.getValueType().getScalarType().getSizeInBits() &&
          "Mask size mismatches value type size!");
 
   KnownZero = KnownOne = APInt(BitWidth, 0);   // Don't know anything.
@@ -1761,7 +1765,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   }
   case ISD::ZERO_EXTEND: {
     EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getSizeInBits();
+    unsigned InBits = InVT.getScalarType().getSizeInBits();
     APInt NewBits   = APInt::getHighBitsSet(BitWidth, BitWidth - InBits) & Mask;
     APInt InMask    = Mask;
     InMask.trunc(InBits);
@@ -1775,7 +1779,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   }
   case ISD::SIGN_EXTEND: {
     EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getSizeInBits();
+    unsigned InBits = InVT.getScalarType().getSizeInBits();
     APInt InSignBit = APInt::getSignBit(InBits);
     APInt NewBits   = APInt::getHighBitsSet(BitWidth, BitWidth - InBits) & Mask;
     APInt InMask = Mask;
@@ -1816,7 +1820,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   }
   case ISD::ANY_EXTEND: {
     EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getSizeInBits();
+    unsigned InBits = InVT.getScalarType().getSizeInBits();
     APInt InMask = Mask;
     InMask.trunc(InBits);
     KnownZero.trunc(InBits);
@@ -1828,7 +1832,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   }
   case ISD::TRUNCATE: {
     EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getSizeInBits();
+    unsigned InBits = InVT.getScalarType().getSizeInBits();
     APInt InMask = Mask;
     InMask.zext(InBits);
     KnownZero.zext(InBits);
@@ -1961,7 +1965,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
 unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   EVT VT = Op.getValueType();
   assert(VT.isInteger() && "Invalid VT!");
-  unsigned VTBits = VT.getSizeInBits();
+  unsigned VTBits = VT.getScalarType().getSizeInBits();
   unsigned Tmp, Tmp2;
   unsigned FirstAnswer = 1;
 
@@ -1988,7 +1992,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
   }
 
   case ISD::SIGN_EXTEND:
-    Tmp = VTBits-Op.getOperand(0).getValueType().getSizeInBits();
+    Tmp = VTBits-Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
     return ComputeNumSignBits(Op.getOperand(0), Depth+1) + Tmp;
 
   case ISD::SIGN_EXTEND_INREG:
@@ -2624,6 +2628,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     assert(VT == N1.getValueType() && "Not an inreg extend!");
     assert(VT.isInteger() && EVT.isInteger() &&
            "Cannot *_EXTEND_INREG FP types");
+    assert(!EVT.isVector() &&
+           "AssertSExt/AssertZExt type should be the vector element type "
+           "rather than the vector type!");
     assert(EVT.bitsLE(VT) && "Not extending!");
     if (VT == EVT) return N1; // noop assertion.
     break;
@@ -2633,12 +2640,15 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     assert(VT == N1.getValueType() && "Not an inreg extend!");
     assert(VT.isInteger() && EVT.isInteger() &&
            "Cannot *_EXTEND_INREG FP types");
-    assert(EVT.bitsLE(VT) && "Not extending!");
+    assert(!EVT.isVector() &&
+           "SIGN_EXTEND_INREG type should be the vector element type rather "
+           "than the vector type!");
+    assert(EVT.bitsLE(VT.getScalarType()) && "Not extending!");
     if (EVT == VT) return N1;  // Not actually extending
 
     if (N1C) {
       APInt Val = N1C->getAPIntValue();
-      unsigned FromBits = cast<VTSDNode>(N2)->getVT().getSizeInBits();
+      unsigned FromBits = EVT.getSizeInBits();
       Val <<= Val.getBitWidth()-FromBits;
       Val = Val.ashr(Val.getBitWidth()-FromBits);
       return getConstant(Val, VT);

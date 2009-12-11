@@ -595,6 +595,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FP_TO_SINT, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::UINT_TO_FP, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::SINT_TO_FP, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,Expand);
   }
 
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones

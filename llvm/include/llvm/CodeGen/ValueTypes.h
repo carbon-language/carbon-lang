@@ -166,6 +166,12 @@ namespace llvm {
         return *this;
       }
     }
+
+    /// getScalarType - If this is a vector type, return the element type,
+    /// otherwise return this.
+    MVT getScalarType() const {
+      return isVector() ? getVectorElementType() : *this;
+    }
     
     MVT getVectorElementType() const {
       switch (SimpleTy) {
@@ -524,6 +530,12 @@ namespace llvm {
       return V;
     }
 
+    /// getScalarType - If this is a vector type, return the element type,
+    /// otherwise return this.
+    EVT getScalarType() const {
+      return isVector() ? getVectorElementType() : *this;
+    }
+    
     /// getVectorElementType - Given a vector type, return the type of
     /// each element.
     EVT getVectorElementType() const {

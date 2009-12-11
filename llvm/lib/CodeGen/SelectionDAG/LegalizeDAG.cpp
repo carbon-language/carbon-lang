@@ -2294,9 +2294,16 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     // NOTE: we could fall back on load/store here too for targets without
     // SAR.  However, it is doubtful that any exist.
     EVT ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
-    unsigned BitsDiff = Node->getValueType(0).getSizeInBits() -
+    EVT VT = Node->getValueType(0);
+    EVT ShiftAmountTy = TLI.getShiftAmountTy();
+    if (ExtraVT.isVector()) ExtraVT = ExtraVT.getVectorElementType();
+    if (VT.isVector()) {
+      ShiftAmountTy = VT;
+      VT = VT.getVectorElementType();
+    }
+    unsigned BitsDiff = VT.getSizeInBits() -
                         ExtraVT.getSizeInBits();
-    SDValue ShiftCst = DAG.getConstant(BitsDiff, TLI.getShiftAmountTy());
+    SDValue ShiftCst = DAG.getConstant(BitsDiff, ShiftAmountTy);
     Tmp1 = DAG.getNode(ISD::SHL, dl, Node->getValueType(0),
                        Node->getOperand(0), ShiftCst);
     Tmp1 = DAG.getNode(ISD::SRA, dl, Node->getValueType(0), Tmp1, ShiftCst);
