@@ -1740,7 +1740,12 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
   DeclContext *Ctx = computeDeclContext(SS, EnteringContext);
   if (!Ctx)
     return;
-  
+
+  // Try to instantiate any non-dependent declaration contexts before
+  // we look in them.
+  if (!isDependentScopeSpecifier(SS) && RequireCompleteDeclContext(SS))
+    return;
+
   ResultBuilder Results(*this);
   unsigned NextRank = CollectMemberLookupResults(Ctx, 0, Ctx, Results);
   
