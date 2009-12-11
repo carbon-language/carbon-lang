@@ -81,43 +81,22 @@ sub DieDiag {
 # Some initial preprocessing of Clang options.
 ##----------------------------------------------------------------------------##
 
-# First, look for 'clang-cc' in libexec.
-my $ClangCCSB = Cwd::realpath("$RealBin/libexec/clang-cc");
-# Second, look for 'clang-cc' in the same directory as scan-build.
-if (!defined $ClangCCSB || ! -x $ClangCCSB) {
-  $ClangCCSB = Cwd::realpath("$RealBin/clang-cc");
-}
-# Third, look for 'clang-cc' in ../libexec
-if (!defined $ClangCCSB || ! -x $ClangCCSB) {
-  $ClangCCSB = Cwd::realpath("$RealBin/../libexec/clang-cc");
-}
-# Finally, default to looking for 'clang-cc' in the path.
-if (!defined $ClangCCSB || ! -x $ClangCCSB) {
-  $ClangCCSB = "clang-cc";
-}
-my $ClangCC = $ClangCCSB;
-
-# Now find 'clang'
+# Find 'clang'
 my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
 if (!defined $ClangSB || ! -x $ClangSB) {
   $ClangSB = Cwd::realpath("$RealBin/clang");
 }
-# Third, look for 'clang' in ../bin
-if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = Cwd::realpath("$RealBin/../bin/clang");
-}
-# Finally, default to looking for 'clang-cc' in the path.
-if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = "clang";
-}
 my $Clang = $ClangSB;
-
+# Default to looking for 'clang' in the path.
+if (!defined $Clang || ! -x $Clang) {
+  $Clang = "clang";
+}
 
 my %AvailableAnalyses;
 
 # Query clang for analysis options.
-open(PIPE, "-|", $ClangCC, "--help") or
-  DieDiag("Cannot execute '$ClangCC'\n");
+open(PIPE, "-|", $Clang, "-cc1", "--help") or
+  DieDiag("Cannot execute '$Clang'\n");
 
 my $FoundAnalysis = 0;
 
@@ -128,17 +107,14 @@ while(<PIPE>) {
     }
     next;
   }
-    
   if (/^\s\s\s\s([^\s]+)\s(.+)$/) {
     next if ($1 =~ /-dump/ or $1 =~ /-view/ 
-             or $1 =~ /-warn-uninit/);
-             
+             or $1 =~ /-warn-uninit/);             
     $AvailableAnalyses{$1} = $2;
     next;
   }  
   last;
 }
-
 close (PIPE);
 
 my %AnalysesDefaultEnabled = (
@@ -156,10 +132,8 @@ my %AnalysesDefaultEnabled = (
 ##----------------------------------------------------------------------------##
 
 sub GetHTMLRunDir {  
-
   die "Not enough arguments." if (@_ == 0);  
-  my $Dir = shift @_;
-    
+  my $Dir = shift @_;    
   my $TmpMode = 0;
   if (!defined $Dir) {
     if (`uname` =~ /Darwin/) {
@@ -168,8 +142,7 @@ sub GetHTMLRunDir {
     }
     else {
       $Dir = "/tmp";
-    }
-    
+    }    
     $TmpMode = 1;
   }
   
@@ -177,42 +150,32 @@ sub GetHTMLRunDir {
   while ($Dir =~ /\/$/) { chop $Dir; }
 
   # Get current date and time.
-  
-  my @CurrentTime = localtime();
-  
+  my @CurrentTime = localtime();  
   my $year  = $CurrentTime[5] + 1900;
   my $day   = $CurrentTime[3];
   my $month = $CurrentTime[4] + 1;
-  
   my $DateString = sprintf("%d-%02d-%02d", $year, $month, $day);
   
-  # Determine the run number.
-  
+  # Determine the run number.  
   my $RunNumber;
   
-  if (-d $Dir) {
-    
+  if (-d $Dir) {    
     if (! -r $Dir) {
       DieDiag("directory '$Dir' exists but is not readable.\n");
-    }
-    
-    # Iterate over all files in the specified directory.
-    
-    my $max = 0;
-    
+    }    
+    # Iterate over all files in the specified directory.    
+    my $max = 0;    
     opendir(DIR, $Dir);
     my @FILES = grep { -d "$Dir/$_" } readdir(DIR);
     closedir(DIR);
-    
-    foreach my $f (@FILES) {
 
+    foreach my $f (@FILES) {
       # Strip the prefix '$Prog-' if we are dumping files to /tmp.
       if ($TmpMode) {
         next if (!($f =~ /^$Prog-(.+)/));
         $f = $1;
       }
 
-      
       my @x = split/-/, $f;
       next if (scalar(@x) != 4);
       next if ($x[0] != $year);
@@ -1212,10 +1175,6 @@ if (!defined $Cmd || ! -x $Cmd) {
   DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n") if(! -x $Cmd);
 }
 
-if (!defined $ClangCCSB || ! -x $ClangCCSB) {
-  Diag("'clang-cc' executable not found in '$RealBin/libexec'.\n");
-  Diag("Using 'clang-cc' from path.\n");
-}
 if (!defined $ClangSB || ! -x $ClangSB) {
   Diag("'clang' executable not found in '$RealBin/bin'.\n");
   Diag("Using 'clang' from path.\n");
@@ -1230,7 +1189,6 @@ else {
 }
   
 $ENV{'CC'} = $Cmd;
-$ENV{'CLANG_CC'} = $ClangCC;
 $ENV{'CLANG'} = $Clang;
 
 if ($Verbose >= 2) {
