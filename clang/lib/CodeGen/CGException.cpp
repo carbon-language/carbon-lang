@@ -127,21 +127,24 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
 }
 
 // CopyObject - Utility to copy an object.  Calls copy constructor as necessary.
-// N is casted to the right type.
-static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
+// DestPtr is casted to the right type.
+static void CopyObject(CodeGenFunction &CGF, const Expr *E, 
+                       llvm::Value *DestPtr, llvm::Value *ExceptionPtrPtr) {
   QualType ObjectType = E->getType();
 
   // Store the throw exception in the exception object.
   if (!CGF.hasAggregateLLVMType(ObjectType)) {
     llvm::Value *Value = CGF.EmitScalarExpr(E);
-    const llvm::Type *ValuePtrTy = Value->getType()->getPointerTo(0);
+    const llvm::Type *ValuePtrTy = Value->getType()->getPointerTo();
 
-    CGF.Builder.CreateStore(Value, CGF.Builder.CreateBitCast(N, ValuePtrTy));
+    CGF.Builder.CreateStore(Value, 
+                            CGF.Builder.CreateBitCast(DestPtr, ValuePtrTy));
   } else {
-    const llvm::Type *Ty = CGF.ConvertType(ObjectType)->getPointerTo(0);
-    const CXXRecordDecl *RD;
-    RD = cast<CXXRecordDecl>(ObjectType->getAs<RecordType>()->getDecl());
-    llvm::Value *This = CGF.Builder.CreateBitCast(N, Ty);
+    const llvm::Type *Ty = CGF.ConvertType(ObjectType)->getPointerTo();
+    const CXXRecordDecl *RD =
+      cast<CXXRecordDecl>(ObjectType->getAs<RecordType>()->getDecl());
+    
+    llvm::Value *This = CGF.Builder.CreateBitCast(DestPtr, Ty);
     if (RD->hasTrivialCopyConstructor()) {
       CGF.EmitAggExpr(E, This, false);
     } else if (CXXConstructorDecl *CopyCtor
@@ -150,9 +153,9 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
       if (CGF.Exceptions) {
         CodeGenFunction::EHCleanupBlock Cleanup(CGF);
         llvm::Constant *FreeExceptionFn = getFreeExceptionFn(CGF);
-        const llvm::Type *Int8PtrTy
-          = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-        llvm::Value *ExceptionPtr = CGF.Builder.CreateBitCast(N, Int8PtrTy);
+        
+        // Load the exception pointer.
+        llvm::Value *ExceptionPtr = CGF.Builder.CreateLoad(ExceptionPtrPtr);
         CGF.Builder.CreateCall(FreeExceptionFn, ExceptionPtr);
       }
 
@@ -251,8 +254,13 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
     Builder.CreateCall(AllocExceptionFn,
                        llvm::ConstantInt::get(SizeTy, TypeSize),
                        "exception");
+  
+  llvm::Value *ExceptionPtrPtr = 
+    CreateTempAlloca(ExceptionPtr->getType(), "exception.ptr");
+  Builder.CreateStore(ExceptionPtr, ExceptionPtrPtr);
 
-  CopyObject(*this, E->getSubExpr(), ExceptionPtr);
+
+  CopyObject(*this, E->getSubExpr(), ExceptionPtr, ExceptionPtrPtr);
 
   // Now throw the exception.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
