@@ -365,8 +365,19 @@ public:
     return 0;
   }
 
+  /// ShouldEnterDeclaratorScope - Called when a C++ scope specifier
+  /// is parsed as part of a declarator-id to determine whether a scope
+  /// should be entered.
+  ///
+  /// \param S the current scope
+  /// \param SS the scope being entered
+  /// \param isFriendDeclaration whether this is a friend declaration
+  virtual bool ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+    return false;
+  }
+
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
-  /// scope or nested-name-specifier) is parsed, part of a declarator-id.
+  /// scope or nested-name-specifier) is parsed as part of a declarator-id.
   /// After this method is called, according to [C++ 3.4.3p3], names should be
   /// looked up in the declarator-id's scope, until the declarator is parsed and
   /// ActOnCXXExitDeclaratorScope is called.

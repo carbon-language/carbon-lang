@@ -2335,9 +2335,10 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0,
                                      true);
     if (afterCXXScope) {
-      // Change the declaration context for name lookup, until this function
-      // is exited (and the declarator has been parsed).
-      DeclScopeObj.EnterDeclaratorScope();
+      if (Actions.ShouldEnterDeclaratorScope(CurScope, D.getCXXScopeSpec()))
+        // Change the declaration context for name lookup, until this function
+        // is exited (and the declarator has been parsed).
+        DeclScopeObj.EnterDeclaratorScope();
     } 
     
     if (Tok.is(tok::identifier) || Tok.is(tok::kw_operator) ||

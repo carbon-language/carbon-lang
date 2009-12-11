@@ -559,6 +559,44 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                      T.getTypePtr());
 }
 
+bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+  assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
+
+  NestedNameSpecifier *Qualifier =
+    static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+
+  // There are only two places a well-formed program may qualify a
+  // declarator: first, when defining a namespace or class member
+  // out-of-line, and second, when naming an explicitly-qualified
+  // friend function.  The latter case is governed by
+  // C++03 [basic.lookup.unqual]p10:
+  //   In a friend declaration naming a member function, a name used
+  //   in the function declarator and not part of a template-argument
+  //   in a template-id is first looked up in the scope of the member
+  //   function's class. If it is not found, or if the name is part of
+  //   a template-argument in a template-id, the look up is as
+  //   described for unqualified names in the definition of the class
+  //   granting friendship.
+  // i.e. we don't push a scope unless it's a class member.
+
+  switch (Qualifier->getKind()) {
+  case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Namespace:
+    // These are always namespace scopes.  We never want to enter a
+    // namespace scope from anything but a file context.
+    return CurContext->getLookupContext()->isFileContext();
+
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    // These are never namespace scopes.
+    return true;
+  }
+
+  // Silence bogus warning.
+  return false;
+}
+
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
 /// scope or nested-name-specifier) is parsed, part of a declarator-id.
 /// After this method is called, according to [C++ 3.4.3p3], names should be

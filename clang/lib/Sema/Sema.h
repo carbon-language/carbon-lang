@@ -2048,6 +2048,8 @@ public:
                                                   SourceRange TypeRange,
                                                   SourceLocation CCLoc);
 
+  virtual bool ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
+
   /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global
   /// scope or nested-name-specifier) is parsed, part of a declarator-id.
   /// After this method is called, according to [C++ 3.4.3p3], names should be
