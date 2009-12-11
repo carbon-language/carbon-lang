@@ -1768,6 +1768,7 @@ public:
 
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
                                           AccessSpecifier AS,
+                                          bool HasUsingKeyword,
                                           SourceLocation UsingLoc,
                                           const CXXScopeSpec &SS,
                                           UnqualifiedId &Name,

@@ -2876,6 +2876,7 @@ void Sema::PushUsingDirective(Scope *S, UsingDirectiveDecl *UDir) {
 
 Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
                                             AccessSpecifier AS,
+                                            bool HasUsingKeyword,
                                             SourceLocation UsingLoc,
                                             const CXXScopeSpec &SS,
                                             UnqualifiedId &Name,
@@ -2913,6 +2914,18 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
   DeclarationName TargetName = GetNameFromUnqualifiedId(Name);
   if (!TargetName)
     return DeclPtrTy();
+
+  // Warn about using declarations.
+  // TODO: store that the declaration was written without 'using' and
+  // talk about access decls instead of using decls in the
+  // diagnostics.
+  if (!HasUsingKeyword) {
+    UsingLoc = Name.getSourceRange().getBegin();
+    
+    Diag(UsingLoc, diag::warn_access_decl_deprecated)
+      << CodeModificationHint::CreateInsertion(SS.getRange().getBegin(),
+                                               "using ");
+  }
 
   NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
                                         Name.getSourceRange().getBegin(),

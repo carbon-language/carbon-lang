@@ -1264,6 +1264,10 @@ public:
   ///
   /// \param AS the currently-active access specifier.
   ///
+  /// \param HasUsingKeyword true if this was declared with an
+  ///   explicit 'using' keyword (i.e. if this is technically a using
+  ///   declaration, not an access declaration)
+  ///
   /// \param UsingLoc the location of the 'using' keyword.
   ///
   /// \param SS the nested-name-specifier that precedes the name.
@@ -1281,6 +1285,7 @@ public:
   /// \returns a representation of the using declaration.
   virtual DeclPtrTy ActOnUsingDeclaration(Scope *CurScope,
                                           AccessSpecifier AS,
+                                          bool HasUsingKeyword,
                                           SourceLocation UsingLoc,
                                           const CXXScopeSpec &SS,
                                           UnqualifiedId &Name,

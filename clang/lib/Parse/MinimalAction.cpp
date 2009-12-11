@@ -45,6 +45,7 @@ Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
 // Defined out-of-line here because of dependency on AttributeList
 Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
                                                 AccessSpecifier AS,
+                                                bool HasUsingKeyword,
                                                 SourceLocation UsingLoc,
                                                 const CXXScopeSpec &SS,
                                                 UnqualifiedId &Name,

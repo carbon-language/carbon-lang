@@ -357,7 +357,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
                    AttrList ? "attributes list" : "using declaration", 
                    tok::semi);
 
-  return Actions.ActOnUsingDeclaration(CurScope, AS, UsingLoc, SS, Name,
+  return Actions.ActOnUsingDeclaration(CurScope, AS, true, UsingLoc, SS, Name,
                                        AttrList, IsTypeName, TypenameLoc);
 }
 
@@ -1065,6 +1065,46 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///
 void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                        const ParsedTemplateInfo &TemplateInfo) {
+  // Access declarations.
+  if (!TemplateInfo.Kind &&
+      (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
+      TryAnnotateCXXScopeToken() &&
+      Tok.is(tok::annot_cxxscope)) {
+    bool isAccessDecl = false;
+    if (NextToken().is(tok::identifier))
+      isAccessDecl = GetLookAheadToken(2).is(tok::semi);
+    else
+      isAccessDecl = NextToken().is(tok::kw_operator);
+
+    if (isAccessDecl) {
+      // Collect the scope specifier token we annotated earlier.
+      CXXScopeSpec SS;
+      ParseOptionalCXXScopeSpecifier(SS, /*ObjectType*/ 0, false);
+
+      // Try to parse an unqualified-id.
+      UnqualifiedId Name;
+      if (ParseUnqualifiedId(SS, false, true, true, /*ObjectType*/ 0, Name)) {
+        SkipUntil(tok::semi);
+        return;
+      }
+
+      // TODO: recover from mistakenly-qualified operator declarations.
+      if (ExpectAndConsume(tok::semi,
+                           diag::err_expected_semi_after,
+                           "access declaration",
+                           tok::semi))
+        return;
+
+      Actions.ActOnUsingDeclaration(CurScope, AS,
+                                    false, SourceLocation(),
+                                    SS, Name,
+                                    /* AttrList */ 0,
+                                    /* IsTypeName */ false,
+                                    SourceLocation());
+      return;
+    }
+  }
+
   // static_assert-declaration
   if (Tok.is(tok::kw_static_assert)) {
     // FIXME: Check for templates

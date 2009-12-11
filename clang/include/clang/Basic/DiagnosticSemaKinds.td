@@ -130,6 +130,9 @@ def err_using_decl_conflict_reverse : Error<
   "declaration conflicts with target of using declaration already in scope">;
 def note_using_decl : Note<"%select{|previous }0using declaration">;
 
+def warn_access_decl_deprecated : Warning<
+  "access declarations are deprecated; use using declarations instead">;
+
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;
 def err_thread_non_global : Error<
