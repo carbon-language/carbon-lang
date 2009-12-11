@@ -760,6 +760,17 @@ CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
   return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl());
 }
 
+static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D) {
+  if (!D->getType().isConstant(Context))
+    return false;
+  if (Context.getLangOptions().CPlusPlus &&
+      Context.getBaseElementType(D->getType())->getAs<RecordType>()) {
+    // FIXME: We should do something fancier here!
+    return false;
+  }
+  return true;
+}
+
 /// GetOrCreateLLVMGlobal - If the specified mangled name is not in the module,
 /// create and return an llvm GlobalVariable with the specified type.  If there
 /// is something in the module with the specified name, return it potentially
@@ -803,7 +814,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
   if (D) {
     // FIXME: This code is overly simple and should be merged with other global
     // handling.
-    GV->setConstant(D->getType().isConstant(Context));
+    GV->setConstant(DeclIsConstantGlobal(Context, D));
 
     // FIXME: Merge with other attribute handling code.
     if (D->getStorageClass() == VarDecl::PrivateExtern)
@@ -978,11 +989,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   // If it is safe to mark the global 'constant', do so now.
   GV->setConstant(false);
-  if (D->getType().isConstant(Context)) {
-    // FIXME: In C++, if the variable has a non-trivial ctor/dtor or any mutable
-    // members, it cannot be declared "LLVM const".
+  if (DeclIsConstantGlobal(Context, D))
     GV->setConstant(true);
-  }
 
   GV->setAlignment(getContext().getDeclAlignInBytes(D));
 
