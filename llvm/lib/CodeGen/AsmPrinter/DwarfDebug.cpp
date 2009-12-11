@@ -393,7 +393,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIVariable *V) {
     return;
 
   unsigned Line = V->getLineNumber();
-  unsigned FileID = findCompileUnit(V->getCompileUnit()).getID();
+  unsigned FileID = findCompileUnit(V->getCompileUnit())->getID();
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -407,7 +407,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIGlobal *G) {
     return;
 
   unsigned Line = G->getLineNumber();
-  unsigned FileID = findCompileUnit(G->getCompileUnit()).getID();
+  unsigned FileID = findCompileUnit(G->getCompileUnit())->getID();
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -425,7 +425,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram *SP) {
 
 
   unsigned Line = SP->getLineNumber();
-  unsigned FileID = findCompileUnit(SP->getCompileUnit()).getID();
+  unsigned FileID = findCompileUnit(SP->getCompileUnit())->getID();
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -440,7 +440,7 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
     return;
 
   unsigned Line = Ty->getLineNumber();
-  unsigned FileID = findCompileUnit(CU).getID();
+  unsigned FileID = findCompileUnit(CU)->getID();
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -1214,11 +1214,12 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP) {
 
 /// findCompileUnit - Get the compile unit for the given descriptor.
 ///
-CompileUnit &DwarfDebug::findCompileUnit(DICompileUnit Unit) const {
+CompileUnit *DwarfDebug::findCompileUnit(DICompileUnit Unit) {
   DenseMap<Value *, CompileUnit *>::const_iterator I =
     CompileUnitMap.find(Unit.getNode());
-  assert(I != CompileUnitMap.end() && "Missing compile unit.");
-  return *I->second;
+  if (I == CompileUnitMap.end())
+    return constructCompileUnit(Unit.getNode());
+  return I->second;
 }
 
 /// getUpdatedDbgScope - Find or create DbgScope assicated with the instruction.
@@ -1579,7 +1580,7 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName) 
   return SrcId;
 }
 
-void DwarfDebug::constructCompileUnit(MDNode *N) {
+CompileUnit *DwarfDebug::constructCompileUnit(MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
   StringRef Dir = DIUnit.getDirectory();
@@ -1618,6 +1619,7 @@ void DwarfDebug::constructCompileUnit(MDNode *N) {
 
   CompileUnitMap[DIUnit.getNode()] = Unit;
   CompileUnits.push_back(Unit);
+  return Unit;
 }
 
 void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {

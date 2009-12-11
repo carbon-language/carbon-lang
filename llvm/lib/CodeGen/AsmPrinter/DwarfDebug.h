@@ -364,7 +364,7 @@ class DwarfDebug : public Dwarf {
 
   /// findCompileUnit - Get the compile unit for the given descriptor. 
   ///
-  CompileUnit &findCompileUnit(DICompileUnit Unit) const;
+  CompileUnit *findCompileUnit(DICompileUnit Unit);
 
   /// getUpdatedDbgScope - Find or create DbgScope assicated with 
   /// the instruction. Initialize scope and update scope hierarchy.
@@ -495,7 +495,7 @@ class DwarfDebug : public Dwarf {
   /// as well.
   unsigned GetOrCreateSourceID(StringRef DirName, StringRef FileName);
 
-  void constructCompileUnit(MDNode *N);
+  CompileUnit *constructCompileUnit(MDNode *N);
 
   void constructGlobalVariableDIE(MDNode *N);
 
