@@ -23,38 +23,38 @@ implementation.  If you are interested in the end-user view, please see the
 <a href="UsersManual.html#precompiledheaders">User's Manual</a>.</p>
 
 
-<h2>Using Pretokenized Headers with <tt>clang-cc</tt> (Low-level Interface)</h2>
+<h2>Using Pretokenized Headers with <tt>clang</tt> (Low-level Interface)</h2>
 
-<p>The low-level Clang compiler tool, <tt>clang-cc</tt>, supports three command
-line options for generating and using PTH files.<p>
+<p>The Clang compiler frontend, <tt>clang -cc1</tt>, supports three command line
+options for generating and using PTH files.<p>
 
-<p>To generate PTH files using <tt>clang-cc</tt>, use the option
+<p>To generate PTH files using <tt>clang -cc1</tt>, use the option
 <b><tt>-emit-pth</tt></b>:
 
-<pre> $ clang-cc test.h -emit-pth -o test.h.pth </pre>
+<pre> $ clang -cc1 test.h -emit-pth -o test.h.pth </pre>
 
 <p>This option is transparently used by <tt>clang</tt> when generating PTH
 files. Similarly, PTH files can be used as prefix headers using the
 <b><tt>-include-pth</tt></b> option:</p>
 
 <pre>
-  $ clang-cc -include-pth test.h.pth test.c -o test.s
+  $ clang -cc1 -include-pth test.h.pth test.c -o test.s
 </pre>
 
 <p>Alternatively, Clang's PTH files can be used as a raw &quot;token-cache&quot;
 (or &quot;content&quot; cache) of the source included by the original header
 file. This means that the contents of the PTH file are searched as substitutes
-for <em>any</em> source files that are used by <tt>clang-cc</tt> to process a
+for <em>any</em> source files that are used by <tt>clang -cc1</tt> to process a
 source file. This is done by specifying the <b><tt>-token-cache</tt></b>
 option:</p>
 
 <pre>
   $ cat test.h
   #include &lt;stdio.h&gt;
-  $ clang-cc -emit-pth test.h -o test.h.pth
+  $ clang -cc1 -emit-pth test.h -o test.h.pth
   $ cat test.c
   #include "test.h"
-  $ clang-cc test.c -o test -token-cache test.h.pth
+  $ clang -cc1 test.c -o test -token-cache test.h.pth
 </pre>
 
 <p>In this example the contents of <tt>stdio.h</tt> (and the files it includes)
@@ -117,7 +117,7 @@ PTH file needs to be generated during a build instead of several.</p></li>
 <li><p><b>Reduced memory pressure</b>: Similar to GCC,
 Clang reads PTH files via the use of memory mapping (i.e., <tt>mmap</tt>).
 Clang, however, memory maps PTH files as read-only, meaning that multiple
-invocations of <tt>clang-cc</tt> can share the same pages in memory from a
+invocations of <tt>clang -cc1</tt> can share the same pages in memory from a
 memory-mapped PTH file. In comparison, GCC also memory maps its PCH files but
 also modifies those pages in memory, incurring the copy-on-write costs. The
 read-only nature of PTH can greatly reduce memory pressure for builds involving
@@ -160,7 +160,7 @@ optimizations to speed up the processing of header files:</p>
 <ul>
 
 <li><p><em><tt>stat</tt> caching</em>: PTH files cache information obtained via
-calls to <tt>stat</tt> that <tt>clang-cc</tt> uses to resolve which files are
+calls to <tt>stat</tt> that <tt>clang -cc1</tt> uses to resolve which files are
 included by <tt>#include</tt> directives. This greatly reduces the overhead
 involved in context-switching to the kernel to resolve included files.</p></li>
 

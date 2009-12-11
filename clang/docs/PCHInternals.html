@@ -26,7 +26,7 @@
   <p><b>Table of Contents</b></p>
   <ul>
     <li><a href="#usage">Using Precompiled Headers with
-    <tt>clang-cc</tt></a></li>
+    <tt>clang</tt></a></li>
     <li><a href="#philosophy">Design Philosophy</a></li>
     <li><a href="#contents">Precompiled Header Contents</a>
       <ul>
@@ -44,15 +44,15 @@
     Points</a></li>
 </ul>
     
-<h2 id="usage">Using Precompiled Headers with <tt>clang-cc</tt></h2>
+<h2 id="usage">Using Precompiled Headers with <tt>clang</tt></h2>
 
-<p>The low-level Clang compiler, <tt>clang-cc</tt>, supports two command
-line options for generating and using PCH files.<p>
+<p>The Clang compiler frontend, <tt>clang -cc1</tt>, supports two command line
+options for generating and using PCH files.<p>
 
-<p>To generate PCH files using <tt>clang-cc</tt>, use the option
+<p>To generate PCH files using <tt>clang -cc1</tt>, use the option
 <b><tt>-emit-pch</tt></b>:
 
-<pre> $ clang-cc test.h -emit-pch -o test.h.pch </pre>
+<pre> $ clang -cc1 test.h -emit-pch -o test.h.pch </pre>
 
 <p>This option is transparently used by <tt>clang</tt> when generating
 PCH files. The resulting PCH file contains the serialized form of the
@@ -61,7 +61,7 @@ semantic analysis. The PCH file can then be used as a prefix header
 with the <b><tt>-include-pch</tt></b> option:</p>
 
 <pre>
-  $ clang-cc -include-pch test.h.pch test.c -o test.s
+  $ clang -cc1 -include-pch test.h.pch test.c -o test.s
 </pre>
 
 <h2 id="philosophy">Design Philosophy</h2>

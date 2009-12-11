@@ -211,8 +211,8 @@ void bar_func(void) {
 You first get AST files out of <code>t1.c</code> and <code>t2.c</code>:
 
 <pre class="code_example">
-$ clang-cc -emit-pch t1.c -o t1.ast
-$ clang-cc -emit-pch t2.c -o t2.ast
+$ clang -emit-ast t1.c -o t1.ast
+$ clang -emit-ast t2.c -o t2.ast
 </pre>
 </p>
 
