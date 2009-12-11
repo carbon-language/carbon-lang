@@ -4665,14 +4665,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   described completely in 3.7.3. The attributes and restrictions
   //   found in the rest of this subclause do not apply to them unless
   //   explicitly stated in 3.7.3.
-  if (Op == OO_Delete || Op == OO_Array_Delete) {
+  if (Op == OO_Delete || Op == OO_Array_Delete)
     return CheckOperatorDeleteDeclaration(*this, FnDecl);
-      FnDecl->setInvalidDecl();
-      return true;
-    }
-    
-    return false;
-  }
   
   if (Op == OO_New || Op == OO_Array_New) {
     bool ret = false;
