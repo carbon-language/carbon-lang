@@ -4902,6 +4902,7 @@ static SDValue
 GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
            SDValue *InFlag, const EVT PtrVT, unsigned ReturnReg,
            unsigned char OperandFlags) {
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   DebugLoc dl = GA->getDebugLoc();
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
@@ -4915,6 +4916,10 @@ GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
     SDValue Ops[]  = { Chain, TGA };
     Chain = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 2);
   }
+
+  // TLSADDR will be codegen'ed as call. Inform MFI that function has calls.
+  MFI->setHasCalls(true);
+
   SDValue Flag = Chain.getValue(1);
   return DAG.getCopyFromReg(Chain, dl, ReturnReg, PtrVT, Flag);
 }
