@@ -548,7 +548,7 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
     mangleFunctionEncoding(cast<FunctionDecl>(ND->getDeclContext()));
 
   Out << 'E';
-  mangleSourceName(ND->getIdentifier());
+  mangleUnqualifiedName(ND);
 }
 
 void CXXNameMangler::manglePrefix(const DeclContext *DC) {
