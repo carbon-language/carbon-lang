@@ -479,10 +479,9 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
-                           Name.c_str(),
+                           Name.str(),
                            &CGM.getModule());
-  IdentifierInfo *II
-    = &CGM.getContext().Idents.get(Name.c_str());
+  IdentifierInfo *II = &CGM.getContext().Idents.get(Name.str());
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
                                           SourceLocation(), II, R, 0,

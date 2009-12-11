@@ -4941,10 +4941,8 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
     }
 
     if (Value == 0) {
-      std::string str(AssertMessage->getStrData(),
-                      AssertMessage->getByteLength());
       Diag(AssertLoc, diag::err_static_assert_failed)
-        << str << AssertExpr->getSourceRange();
+        << AssertMessage->getString() << AssertExpr->getSourceRange();
     }
   }
 

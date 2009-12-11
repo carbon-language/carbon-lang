@@ -1689,14 +1689,13 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
 
   case Decl::FileScopeAsm: {
     FileScopeAsmDecl *AD = cast<FileScopeAsmDecl>(D);
-    std::string AsmString(AD->getAsmString()->getStrData(),
-                          AD->getAsmString()->getByteLength());
+    llvm::StringRef AsmString = AD->getAsmString()->getString();
 
     const std::string &S = getModule().getModuleInlineAsm();
     if (S.empty())
       getModule().setModuleInlineAsm(AsmString);
     else
-      getModule().setModuleInlineAsm(S + '\n' + AsmString);
+      getModule().setModuleInlineAsm(S + '\n' + AsmString.str());
     break;
   }
 
