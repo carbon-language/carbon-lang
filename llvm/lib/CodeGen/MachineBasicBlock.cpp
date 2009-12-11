@@ -449,24 +449,19 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
   addSuccessor(New);
 }
 
-/// BranchesToLandingPad - The basic block branches only to a landing pad or to
-/// another basic block which branches only to a landing pad. No other
-/// instructions are present other than the unconditional branch.
+/// BranchesToLandingPad - The basic block is a landing pad or branches only to
+/// a landing pad. No other instructions are present other than the
+/// unconditional branch.
 bool
 MachineBasicBlock::BranchesToLandingPad(const MachineBasicBlock *MBB) const {
   SmallSet<const MachineBasicBlock*, 32> Visited;
   const MachineBasicBlock *CurMBB = MBB;
 
-  while (!Visited.count(CurMBB) && !CurMBB->isLandingPad()) {
-    if (CurMBB->size() != 1 || CurMBB->succ_empty() || CurMBB->succ_size() != 1)
+  while (!CurMBB->isLandingPad()) {
+    if (CurMBB->succ_size() != 1)
       break;
 
-    const TargetInstrInfo *TII =
-      CurMBB->getParent()->getTarget().getInstrInfo();
-    if (!TII->isUnpredicatedTerminator(CurMBB->begin()))
-      break;
-
-    Visited.insert(CurMBB);
+    if (!Visited.insert(CurMBB)) break;
     CurMBB = *CurMBB->succ_begin();
   }
 
@@ -516,8 +511,8 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
     } else if (MBB == DestB) {
       DestB = 0;
       ++SI;
-    } else if (BranchesToLandingPad(MBB) &&
-               MBB != OrigDestA && MBB != OrigDestB) {
+    } else if (MBB != OrigDestA && MBB != OrigDestB &&
+               BranchesToLandingPad(MBB)) {
       ++SI;
     } else {
       // Otherwise, this is a superfluous edge, remove it.
