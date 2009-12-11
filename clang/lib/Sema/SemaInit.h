@@ -511,7 +511,7 @@ public:
   
   /// \brief Add a new step invoking a conversion function, which is either
   /// a constructor or a conversion function.
-  void AddUserConversionStep(FunctionDecl *Function);
+  void AddUserConversionStep(FunctionDecl *Function, QualType T);
   
   /// \brief Add a new step that performs a qualification conversion to the
   /// given type.

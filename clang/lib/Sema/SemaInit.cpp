@@ -2001,10 +2001,11 @@ void InitializationSequence::AddReferenceBindingStep(QualType T,
   Steps.push_back(S);
 }
 
-void InitializationSequence::AddUserConversionStep(FunctionDecl *Function) {
+void InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
+                                                   QualType T) {
   Step S;
   S.Kind = SK_UserConversion;
-  S.Type = Function->getResultType().getNonReferenceType();
+  S.Type = T;
   S.Function = Function;
   Steps.push_back(S);
 }
@@ -2209,18 +2210,20 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   if (OverloadingResult Result 
         = S.BestViableFunction(CandidateSet, DeclLoc, Best))
     return Result;
-  
-  // Add the user-defined conversion step.
+
   FunctionDecl *Function = Best->Function;
-  Sequence.AddUserConversionStep(Function);
-  
-  // Determine whether we need to perform derived-to-base or 
-  // cv-qualification adjustments.
+
+  // Compute the returned type of the conversion.
   if (isa<CXXConversionDecl>(Function))
     T2 = Function->getResultType();
   else
     T2 = cv1T1;
-    
+
+  // Add the user-defined conversion step.
+  Sequence.AddUserConversionStep(Function, T2.getNonReferenceType());
+
+  // Determine whether we need to perform derived-to-base or 
+  // cv-qualification adjustments.
   bool NewDerivedToBase = false;
   Sema::ReferenceCompareResult NewRefRelationship
     = S.CompareReferenceRelationship(DeclLoc, T1, T2.getNonReferenceType(),
