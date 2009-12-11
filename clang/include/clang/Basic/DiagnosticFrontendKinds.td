@@ -54,7 +54,7 @@ def err_fe_pch_malformed_block : Error<
 def err_fe_pch_error_at_end_block : Error<
     "error at end of module block in PCH file: '%0'">;
 def err_fe_unable_to_open_output : Error<
-    "unable to to open output file '%0': '%1'">;
+    "unable to open output file '%0': '%1'">;
 def err_fe_pth_file_has_no_source_header : Error<
     "PTH file '%0' does not designate an original source header file for -include-pth">;
 def warn_fe_macro_contains_embedded_newline : Warning<
