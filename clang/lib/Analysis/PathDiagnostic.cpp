@@ -36,30 +36,16 @@ bool PathDiagnosticMacroPiece::containsEvent() const {
   return false;
 }
 
-static size_t GetNumCharsToLastNonPeriod(const char *s) {
-  const char *start = s;
-  const char *lastNonPeriod = 0;
-
-  for ( ; *s != '\0' ; ++s)
-    if (*s != '.') lastNonPeriod = s;
-
-  if (!lastNonPeriod)
-    return 0;
-
-  return (lastNonPeriod - start) + 1;
+static llvm::StringRef StripTrailingDots(llvm::StringRef s) {
+  for (llvm::StringRef::size_type i = s.size(); i != 0; --i)
+    if (s[i - 1] != '.')
+      return s.substr(0, i);
+  return "";
 }
 
-static inline size_t GetNumCharsToLastNonPeriod(const std::string &s) {
-  return s.empty () ? 0 : GetNumCharsToLastNonPeriod(&s[0]);
-}
-
-PathDiagnosticPiece::PathDiagnosticPiece(const std::string& s,
+PathDiagnosticPiece::PathDiagnosticPiece(llvm::StringRef s,
                                          Kind k, DisplayHint hint)
-  : str(s, 0, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
-
-PathDiagnosticPiece::PathDiagnosticPiece(const char* s, Kind k,
-                                         DisplayHint hint)
-  : str(s, GetNumCharsToLastNonPeriod(s)), kind(k), Hint(hint) {}
+  : str(StripTrailingDots(s)), kind(k), Hint(hint) {}
 
 PathDiagnosticPiece::PathDiagnosticPiece(Kind k, DisplayHint hint)
   : kind(k), Hint(hint) {}
@@ -89,20 +75,12 @@ void PathDiagnostic::resetPath(bool deletePieces) {
 }
 
 
-PathDiagnostic::PathDiagnostic(const char* bugtype, const char* desc,
-                               const char* category)
+PathDiagnostic::PathDiagnostic(llvm::StringRef bugtype, llvm::StringRef desc,
+                               llvm::StringRef category)
   : Size(0),
-    BugType(bugtype, GetNumCharsToLastNonPeriod(bugtype)),
-    Desc(desc, GetNumCharsToLastNonPeriod(desc)),
-    Category(category, GetNumCharsToLastNonPeriod(category)) {}
-
-PathDiagnostic::PathDiagnostic(const std::string& bugtype,
-                               const std::string& desc,
-                               const std::string& category)
-  : Size(0),
-    BugType(bugtype, 0, GetNumCharsToLastNonPeriod(bugtype)),
-    Desc(desc, 0, GetNumCharsToLastNonPeriod(desc)),
-    Category(category, 0, GetNumCharsToLastNonPeriod(category)) {}
+    BugType(StripTrailingDots(bugtype)),
+    Desc(StripTrailingDots(desc)),
+    Category(StripTrailingDots(category)) {}
 
 void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                             const DiagnosticInfo &Info) {
@@ -126,8 +104,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   Info.FormatDiagnostic(StrC);
 
   PathDiagnosticPiece *P =
-    new PathDiagnosticEventPiece(Info.getLocation(),
-                            std::string(StrC.begin(), StrC.end()));
+    new PathDiagnosticEventPiece(Info.getLocation(), StrC.str());
 
   for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
     P->addRange(Info.getRange(i));
