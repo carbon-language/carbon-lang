@@ -2296,7 +2296,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     EVT ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
     EVT VT = Node->getValueType(0);
     EVT ShiftAmountTy = TLI.getShiftAmountTy();
-    if (ExtraVT.isVector()) ExtraVT = ExtraVT.getVectorElementType();
     if (VT.isVector()) {
       ShiftAmountTy = VT;
       VT = VT.getVectorElementType();
