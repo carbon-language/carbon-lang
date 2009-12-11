@@ -674,7 +674,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   } else if (ToType->isBooleanType() &&
              (FromType->isArithmeticType() ||
               FromType->isEnumeralType() ||
-              FromType->isPointerType() ||
+              FromType->isAnyPointerType() ||
               FromType->isBlockPointerType() ||
               FromType->isMemberPointerType() ||
               FromType->isNullPtrType())) {
