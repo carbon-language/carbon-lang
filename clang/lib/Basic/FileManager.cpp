@@ -378,17 +378,16 @@ void FileManager::PrintStats() const {
 int MemorizeStatCalls::stat(const char *path, struct stat *buf) {
   int result = StatSysCallCache::stat(path, buf);
   
-  if (result != 0) {
-    // Cache failed 'stat' results.
-    struct stat empty;
-    memset(&empty, 0, sizeof(empty));
-    StatCalls[path] = StatResult(result, empty);
-  }
-  else if (!S_ISDIR(buf->st_mode) || llvm::sys::Path(path).isAbsolute()) {
-    // Cache file 'stat' results and directories with absolutely
-    // paths.
+  // Do not cache failed stats, it is easy to construct common inconsistent
+  // situations if we do, and they are not important for PCH performance (which
+  // currently only needs the stats to construct the initial FileManager
+  // entries).
+  if (result != 0)
+    return result;
+
+  // Cache file 'stat' results and directories with absolutely paths.
+  if (!S_ISDIR(buf->st_mode) || llvm::sys::Path(path).isAbsolute())
     StatCalls[path] = StatResult(result, *buf);
-  }
 
   return result;
 }
