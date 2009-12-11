@@ -1575,7 +1575,10 @@ public:
 
     /// CK_AnyPointerToObjCPointerCast - Casting any pointer to objective-c 
     /// pointer
-    CK_AnyPointerToObjCPointerCast
+    CK_AnyPointerToObjCPointerCast,
+    /// CK_AnyPointerToBlockPointerCast - Casting any pointer to block 
+    /// pointer
+    CK_AnyPointerToBlockPointerCast
 
   };
 

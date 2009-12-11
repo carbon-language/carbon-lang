@@ -545,6 +545,11 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
         Kind = CastExpr::CK_AnyPointerToObjCPointerCast;
         return TC_Success;
       }
+      else if (CStyle && DestType->isBlockPointerType()) {
+        // allow c-style cast of void * to block pointers.
+        Kind = CastExpr::CK_AnyPointerToBlockPointerCast;
+        return TC_Success;
+      }
     }
   }
 

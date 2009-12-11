@@ -560,6 +560,8 @@ const char *CastExpr::getCastKindName() const {
     return "MemberPointerToBoolean";
   case CastExpr::CK_AnyPointerToObjCPointerCast:
     return "AnyPointerToObjCPointerCast";
+  case CastExpr::CK_AnyPointerToBlockPointerCast:
+    return "AnyPointerToBlockPointerCast";
   }
 
   assert(0 && "Unhandled cast kind!");

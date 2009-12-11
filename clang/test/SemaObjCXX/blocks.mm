@@ -44,3 +44,9 @@ namespace N {
     foo(N::X()); // okay
 }
 @end
+
+typedef signed char BOOL;
+void foo6(void *block) {  
+	void (^vb)(id obj, int idx, BOOL *stop) = (void (^)(id, int, BOOL *))block;
+    BOOL (^bb)(id obj, int idx, BOOL *stop) = (BOOL (^)(id, int, BOOL *))block;
+}

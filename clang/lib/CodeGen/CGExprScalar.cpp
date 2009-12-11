@@ -809,6 +809,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     break;
 
   case CastExpr::CK_AnyPointerToObjCPointerCast:
+  case CastExpr::CK_AnyPointerToBlockPointerCast:
   case CastExpr::CK_BitCast: {
     Value *Src = Visit(const_cast<Expr*>(E));
     return Builder.CreateBitCast(Src, ConvertType(DestTy));
