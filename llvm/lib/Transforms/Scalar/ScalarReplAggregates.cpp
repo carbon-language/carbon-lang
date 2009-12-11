@@ -102,25 +102,27 @@ namespace {
 
     int isSafeAllocaToScalarRepl(AllocaInst *AI);
 
-    void isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
-                               AllocaInfo &Info);
-    void isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
-                          AllocaInfo &Info);
-    void isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocaInst *AI,
-                                        unsigned OpNo, AllocaInfo &Info);
-    void isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocaInst *AI,
-                                        AllocaInfo &Info);
+    void isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
+                             uint64_t ArrayOffset, AllocaInfo &Info);
+    void isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t &Offset,
+                   uint64_t &ArrayOffset, AllocaInfo &Info);
+    void isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t ArrayOffset,
+                         uint64_t MemSize, const Type *MemOpType, bool isStore,
+                         AllocaInfo &Info);
+    bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
+    unsigned FindElementAndOffset(const Type *&T, uint64_t &Offset);
     
     void DoScalarReplacement(AllocaInst *AI, 
                              std::vector<AllocaInst*> &WorkList);
     void CleanupGEP(GetElementPtrInst *GEP);
-    void CleanupAllocaUsers(AllocaInst *AI);
+    void CleanupAllocaUsers(Value *V);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocaInst *Base);
     
-    void RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocaInst *AI,
-                                    SmallVector<AllocaInst*, 32> &NewElts);
-    
-    void RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
+    void RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
+                              SmallVector<AllocaInst*, 32> &NewElts);
+    void RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
+                    SmallVector<AllocaInst*, 32> &NewElts);
+    void RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                       AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
     void RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
@@ -360,176 +362,12 @@ void SROA::DoScalarReplacement(AllocaInst *AI,
     }
   }
 
-  // Now that we have created the alloca instructions that we want to use,
-  // expand the getelementptr instructions to use them.
-  while (!AI->use_empty()) {
-    Instruction *User = cast<Instruction>(AI->use_back());
-    if (BitCastInst *BCInst = dyn_cast<BitCastInst>(User)) {
-      RewriteBitCastUserOfAlloca(BCInst, AI, ElementAllocas);
-      BCInst->eraseFromParent();
-      continue;
-    }
-    
-    // Replace:
-    //   %res = load { i32, i32 }* %alloc
-    // with:
-    //   %load.0 = load i32* %alloc.0
-    //   %insert.0 insertvalue { i32, i32 } zeroinitializer, i32 %load.0, 0 
-    //   %load.1 = load i32* %alloc.1
-    //   %insert = insertvalue { i32, i32 } %insert.0, i32 %load.1, 1 
-    // (Also works for arrays instead of structs)
-    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      Value *Insert = UndefValue::get(LI->getType());
-      for (unsigned i = 0, e = ElementAllocas.size(); i != e; ++i) {
-        Value *Load = new LoadInst(ElementAllocas[i], "load", LI);
-        Insert = InsertValueInst::Create(Insert, Load, i, "insert", LI);
-      }
-      LI->replaceAllUsesWith(Insert);
-      LI->eraseFromParent();
-      continue;
-    }
-
-    // Replace:
-    //   store { i32, i32 } %val, { i32, i32 }* %alloc
-    // with:
-    //   %val.0 = extractvalue { i32, i32 } %val, 0 
-    //   store i32 %val.0, i32* %alloc.0
-    //   %val.1 = extractvalue { i32, i32 } %val, 1 
-    //   store i32 %val.1, i32* %alloc.1
-    // (Also works for arrays instead of structs)
-    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-      Value *Val = SI->getOperand(0);
-      for (unsigned i = 0, e = ElementAllocas.size(); i != e; ++i) {
-        Value *Extract = ExtractValueInst::Create(Val, i, Val->getName(), SI);
-        new StoreInst(Extract, ElementAllocas[i], SI);
-      }
-      SI->eraseFromParent();
-      continue;
-    }
-    
-    GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
-    // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
-    unsigned Idx =
-       (unsigned)cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
-
-    assert(Idx < ElementAllocas.size() && "Index out of range?");
-    AllocaInst *AllocaToUse = ElementAllocas[Idx];
-
-    Value *RepValue;
-    if (GEPI->getNumOperands() == 3) {
-      // Do not insert a new getelementptr instruction with zero indices, only
-      // to have it optimized out later.
-      RepValue = AllocaToUse;
-    } else {
-      // We are indexing deeply into the structure, so we still need a
-      // getelement ptr instruction to finish the indexing.  This may be
-      // expanded itself once the worklist is rerun.
-      //
-      SmallVector<Value*, 8> NewArgs;
-      NewArgs.push_back(Constant::getNullValue(
-                                           Type::getInt32Ty(AI->getContext())));
-      NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
-      RepValue = GetElementPtrInst::Create(AllocaToUse, NewArgs.begin(),
-                                           NewArgs.end(), "", GEPI);
-      RepValue->takeName(GEPI);
-    }
-    
-    // If this GEP is to the start of the aggregate, check for memcpys.
-    if (Idx == 0 && GEPI->hasAllZeroIndices())
-      RewriteBitCastUserOfAlloca(GEPI, AI, ElementAllocas);
-
-    // Move all of the users over to the new GEP.
-    GEPI->replaceAllUsesWith(RepValue);
-    // Delete the old GEP
-    GEPI->eraseFromParent();
-  }
-
-  // Finally, delete the Alloca instruction
-  AI->eraseFromParent();
+  // Now that we have created the new alloca instructions, rewrite all the
+  // uses of the old alloca.
+  RewriteForScalarRepl(AI, AI, 0, ElementAllocas);
   NumReplaced++;
 }
-
-/// isSafeElementUse - Check to see if this use is an allowed use for a
-/// getelementptr instruction of an array aggregate allocation.  isFirstElt
-/// indicates whether Ptr is known to the start of the aggregate.
-void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
-                            AllocaInfo &Info) {
-  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
-       I != E; ++I) {
-    Instruction *User = cast<Instruction>(*I);
-    switch (User->getOpcode()) {
-    case Instruction::Load:  break;
-    case Instruction::Store:
-      // Store is ok if storing INTO the pointer, not storing the pointer
-      if (User->getOperand(0) == Ptr) return MarkUnsafe(Info);
-      break;
-    case Instruction::GetElementPtr: {
-      GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
-      bool AreAllZeroIndices = isFirstElt;
-      if (GEP->getNumOperands() > 1 &&
-          (!isa<ConstantInt>(GEP->getOperand(1)) ||
-           !cast<ConstantInt>(GEP->getOperand(1))->isZero()))
-        // Using pointer arithmetic to navigate the array.
-        return MarkUnsafe(Info);
-      
-      // Verify that any array subscripts are in range.
-      for (gep_type_iterator GEPIt = gep_type_begin(GEP),
-           E = gep_type_end(GEP); GEPIt != E; ++GEPIt) {
-        // Ignore struct elements, no extra checking needed for these.
-        if (isa<StructType>(*GEPIt))
-          continue;
-
-        // This GEP indexes an array.  Verify that this is an in-range
-        // constant integer. Specifically, consider A[0][i]. We cannot know that
-        // the user isn't doing invalid things like allowing i to index an
-        // out-of-range subscript that accesses A[1].  Because of this, we have
-        // to reject SROA of any accesses into structs where any of the
-        // components are variables. 
-        ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
-        if (!IdxVal) return MarkUnsafe(Info);
-        
-        // Are all indices still zero?
-        AreAllZeroIndices &= IdxVal->isZero();
-        
-        if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPIt)) {
-          if (IdxVal->getZExtValue() >= AT->getNumElements())
-            return MarkUnsafe(Info);
-        } else if (const VectorType *VT = dyn_cast<VectorType>(*GEPIt)) {
-          if (IdxVal->getZExtValue() >= VT->getNumElements())
-            return MarkUnsafe(Info);
-        }
-      }
-      
-      isSafeElementUse(GEP, AreAllZeroIndices, AI, Info);
-      if (Info.isUnsafe) return;
-      break;
-    }
-    case Instruction::BitCast:
-      if (isFirstElt) {
-        isSafeUseOfBitCastedAllocation(cast<BitCastInst>(User), AI, Info);
-        if (Info.isUnsafe) return;
-        break;
-      }
-      DEBUG(errs() << "  Transformation preventing inst: " << *User << '\n');
-      return MarkUnsafe(Info);
-    case Instruction::Call:
-      if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
-        if (isFirstElt) {
-          isSafeMemIntrinsicOnAllocation(MI, AI, I.getOperandNo(), Info);
-          if (Info.isUnsafe) return;
-          break;
-        }
-      }
-      DEBUG(errs() << "  Transformation preventing inst: " << *User << '\n');
-      return MarkUnsafe(Info);
-    default:
-      DEBUG(errs() << "  Transformation preventing inst: " << *User << '\n');
-      return MarkUnsafe(Info);
-    }
-  }
-  return;  // All users look ok :)
-}
-
+    
 /// AllUsersAreLoads - Return true if all users of this value are loads.
 static bool AllUsersAreLoads(Value *Ptr) {
   for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
@@ -539,72 +377,116 @@ static bool AllUsersAreLoads(Value *Ptr) {
   return true;
 }
 
-/// isSafeUseOfAllocation - Check if this user is an allowed use for an
-/// aggregate allocation.
-void SROA::isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
-                                 AllocaInfo &Info) {
-  if (BitCastInst *C = dyn_cast<BitCastInst>(User))
-    return isSafeUseOfBitCastedAllocation(C, AI, Info);
+/// isSafeForScalarRepl - Check if instruction I is a safe use with regard to
+/// performing scalar replacement of alloca AI.  The results are flagged in
+/// the Info parameter.  Offset and ArrayOffset indicate the position within
+/// AI that is referenced by this instruction.
+void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
+                               uint64_t ArrayOffset, AllocaInfo &Info) {
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
 
-  if (LoadInst *LI = dyn_cast<LoadInst>(User))
-    if (!LI->isVolatile())
-      return;// Loads (returning a first class aggregrate) are always rewritable
-
-  if (StoreInst *SI = dyn_cast<StoreInst>(User))
-    if (!SI->isVolatile() && SI->getOperand(0) != AI)
-      return;// Store is ok if storing INTO the pointer, not storing the pointer
- 
-  GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User);
-  if (GEPI == 0)
-    return MarkUnsafe(Info);
-
-  gep_type_iterator I = gep_type_begin(GEPI), E = gep_type_end(GEPI);
-
-  // The GEP is not safe to transform if not of the form "GEP <ptr>, 0, <cst>".
-  if (I == E ||
-      I.getOperand() != Constant::getNullValue(I.getOperand()->getType())) {
-    return MarkUnsafe(Info);
+    if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
+      isSafeForScalarRepl(BC, AI, Offset, ArrayOffset, Info);
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+      uint64_t GEPArrayOffset = ArrayOffset;
+      uint64_t GEPOffset = Offset;
+      isSafeGEP(GEPI, AI, GEPOffset, GEPArrayOffset, Info);
+      if (!Info.isUnsafe)
+        isSafeForScalarRepl(GEPI, AI, GEPOffset, GEPArrayOffset, Info);
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
+      ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
+      if (Length)
+        isSafeMemAccess(AI, Offset, ArrayOffset, Length->getZExtValue(), 0,
+                        UI.getOperandNo() == 1, Info);
+      else
+        MarkUnsafe(Info);
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      if (!LI->isVolatile()) {
+        const Type *LIType = LI->getType();
+        isSafeMemAccess(AI, Offset, ArrayOffset, TD->getTypeAllocSize(LIType),
+                        LIType, false, Info);
+      } else
+        MarkUnsafe(Info);
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      // Store is ok if storing INTO the pointer, not storing the pointer
+      if (!SI->isVolatile() && SI->getOperand(0) != I) {
+        const Type *SIType = SI->getOperand(0)->getType();
+        isSafeMemAccess(AI, Offset, ArrayOffset, TD->getTypeAllocSize(SIType),
+                        SIType, true, Info);
+      } else
+        MarkUnsafe(Info);
+    } else if (isa<DbgInfoIntrinsic>(UI)) {
+      // If one user is DbgInfoIntrinsic then check if all users are
+      // DbgInfoIntrinsics.
+      if (OnlyUsedByDbgInfoIntrinsics(I)) {
+        Info.needsCleanup = true;
+        return;
+      }
+      MarkUnsafe(Info);
+    } else {
+      DEBUG(errs() << "  Transformation preventing inst: " << *User << '\n');
+      MarkUnsafe(Info);
+    }
+    if (Info.isUnsafe) return;
   }
+}
 
-  ++I;
-  if (I == E) return MarkUnsafe(Info);  // ran out of GEP indices??
+/// isSafeGEP - Check if a GEP instruction can be handled for scalar
+/// replacement.  It is safe when all the indices are constant, in-bounds
+/// references, and when the resulting offset corresponds to an element within
+/// the alloca type.  The results are flagged in the Info parameter.  Upon
+/// return, Offset is adjusted as specified by the GEP indices.  For the
+/// special case of a variable index to a 2-element array, ArrayOffset is set
+/// to the array element size.
+void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
+                     uint64_t &Offset, uint64_t &ArrayOffset,
+                     AllocaInfo &Info) {
+  gep_type_iterator GEPIt = gep_type_begin(GEPI), E = gep_type_end(GEPI);
+  if (GEPIt == E)
+    return;
 
-  bool IsAllZeroIndices = true;
-  
+  // The first GEP index must be zero.
+  if (!isa<ConstantInt>(GEPIt.getOperand()) ||
+      !cast<ConstantInt>(GEPIt.getOperand())->isZero())
+    return MarkUnsafe(Info);
+  if (++GEPIt == E)
+    return;
+
   // If the first index is a non-constant index into an array, see if we can
   // handle it as a special case.
-  if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
-    if (!isa<ConstantInt>(I.getOperand())) {
-      IsAllZeroIndices = 0;
-      uint64_t NumElements = AT->getNumElements();
-      
-      // If this is an array index and the index is not constant, we cannot
-      // promote... that is unless the array has exactly one or two elements in
-      // it, in which case we CAN promote it, but we have to canonicalize this
-      // out if this is the only problem.
-      if ((NumElements == 1 || NumElements == 2) &&
-          AllUsersAreLoads(GEPI)) {
+  const Type *ArrayEltTy = 0;
+  if (ArrayOffset == 0 && Offset == 0) {
+    if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPIt)) {
+      if (!isa<ConstantInt>(GEPIt.getOperand())) {
+        uint64_t NumElements = AT->getNumElements();
+
+        // If this is an array index and the index is not constant, we cannot
+        // promote... that is unless the array has exactly one or two elements
+        // in it, in which case we CAN promote it, but we have to canonicalize
+        // this out if this is the only problem.
+        if ((NumElements != 1 && NumElements != 2) || !AllUsersAreLoads(GEPI))
+          return MarkUnsafe(Info);
         Info.needsCleanup = true;
-        return;  // Canonicalization required!
+        ArrayOffset = TD->getTypeAllocSizeInBits(AT->getElementType());
+        ArrayEltTy = AT->getElementType();
+        ++GEPIt;
       }
-      return MarkUnsafe(Info);
     }
   }
- 
+
   // Walk through the GEP type indices, checking the types that this indexes
   // into.
-  for (; I != E; ++I) {
+  for (; GEPIt != E; ++GEPIt) {
     // Ignore struct elements, no extra checking needed for these.
-    if (isa<StructType>(*I))
+    if (isa<StructType>(*GEPIt))
       continue;
-    
-    ConstantInt *IdxVal = dyn_cast<ConstantInt>(I.getOperand());
-    if (!IdxVal) return MarkUnsafe(Info);
 
-    // Are all indices still zero?
-    IsAllZeroIndices &= IdxVal->isZero();
-    
-    if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
+    ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
+    if (!IdxVal)
+      return MarkUnsafe(Info);
+
+    if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPIt)) {
       // This GEP indexes an array.  Verify that this is an in-range constant
       // integer. Specifically, consider A[0][i]. We cannot know that the user
       // isn't doing invalid things like allowing i to index an out-of-range
@@ -612,144 +494,254 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
       // of any accesses into structs where any of the components are variables.
       if (IdxVal->getZExtValue() >= AT->getNumElements())
         return MarkUnsafe(Info);
-    } else if (const VectorType *VT = dyn_cast<VectorType>(*I)) {
+    } else {
+      const VectorType *VT = dyn_cast<VectorType>(*GEPIt);
+      assert(VT && "unexpected type in GEP type iterator");
       if (IdxVal->getZExtValue() >= VT->getNumElements())
         return MarkUnsafe(Info);
     }
   }
-  
-  // If there are any non-simple uses of this getelementptr, make sure to reject
-  // them.
-  return isSafeElementUse(GEPI, IsAllZeroIndices, AI, Info);
-}
 
-/// isSafeMemIntrinsicOnAllocation - Check if the specified memory
-/// intrinsic can be promoted by SROA.  At this point, we know that the operand
-/// of the memintrinsic is a pointer to the beginning of the allocation.
-void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocaInst *AI,
-                                          unsigned OpNo, AllocaInfo &Info) {
-  // If not constant length, give up.
-  ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
-  if (!Length) return MarkUnsafe(Info);
-  
-  // If not the whole aggregate, give up.
-  if (Length->getZExtValue() !=
-      TD->getTypeAllocSize(AI->getType()->getElementType()))
-    return MarkUnsafe(Info);
-  
-  // We only know about memcpy/memset/memmove.
-  if (!isa<MemIntrinsic>(MI))
-    return MarkUnsafe(Info);
-  
-  // Otherwise, we can transform it.  Determine whether this is a memcpy/set
-  // into or out of the aggregate.
-  if (OpNo == 1)
-    Info.isMemCpyDst = true;
-  else {
-    assert(OpNo == 2);
-    Info.isMemCpySrc = true;
+  // All the indices are safe.  Now compute the offset due to this GEP and
+  // check if the alloca has a component element at that offset.
+  if (ArrayOffset == 0) {
+    SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
+    Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
+                                   &Indices[0], Indices.size());
+  } else {
+    // Both array elements have the same type, so it suffices to check one of
+    // them.  Copy the GEP indices starting from the array index, but replace
+    // that variable index with a constant zero.
+    SmallVector<Value*, 8> Indices(GEPI->op_begin() + 2, GEPI->op_end());
+    Indices[0] = Constant::getNullValue(Type::getInt32Ty(GEPI->getContext()));
+    const Type *ArrayEltPtr = PointerType::getUnqual(ArrayEltTy);
+    Offset += TD->getIndexedOffset(ArrayEltPtr, &Indices[0], Indices.size());
   }
+  if (!TypeHasComponent(AI->getAllocatedType(), Offset, 0))
+    MarkUnsafe(Info);
 }
 
-/// isSafeUseOfBitCastedAllocation - Check if all users of this bitcast
-/// from an alloca are safe for SROA of that alloca.
-void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocaInst *AI,
-                                          AllocaInfo &Info) {
-  for (Value::use_iterator UI = BC->use_begin(), E = BC->use_end();
-       UI != E; ++UI) {
-    if (BitCastInst *BCU = dyn_cast<BitCastInst>(UI)) {
-      isSafeUseOfBitCastedAllocation(BCU, AI, Info);
-    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
-      isSafeMemIntrinsicOnAllocation(MI, AI, UI.getOperandNo(), Info);
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(UI)) {
-      if (SI->isVolatile())
-        return MarkUnsafe(Info);
-      
-      // If storing the entire alloca in one chunk through a bitcasted pointer
-      // to integer, we can transform it.  This happens (for example) when you
-      // cast a {i32,i32}* to i64* and store through it.  This is similar to the
-      // memcpy case and occurs in various "byval" cases and emulated memcpys.
-      if (isa<IntegerType>(SI->getOperand(0)->getType()) &&
-          TD->getTypeAllocSize(SI->getOperand(0)->getType()) ==
-          TD->getTypeAllocSize(AI->getType()->getElementType())) {
-        Info.isMemCpyDst = true;
-        continue;
+/// isSafeMemAccess - Check if a load/store/memcpy operates on the entire AI
+/// alloca or has an offset and size that corresponds to a component element
+/// within it.  The offset checked here may have been formed from a GEP with a
+/// pointer bitcasted to a different type.
+void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset,
+                           uint64_t ArrayOffset, uint64_t MemSize,
+                           const Type *MemOpType, bool isStore,
+                           AllocaInfo &Info) {
+  // Check if this is a load/store of the entire alloca.
+  if (Offset == 0 && ArrayOffset == 0 &&
+      MemSize == TD->getTypeAllocSize(AI->getAllocatedType())) {
+    bool UsesAggregateType = (MemOpType == AI->getAllocatedType());
+    // This is safe for MemIntrinsics (where MemOpType is 0), integer types
+    // (which are essentially the same as the MemIntrinsics, especially with
+    // regard to copying padding between elements), or references using the
+    // aggregate type of the alloca.
+    if (!MemOpType || isa<IntegerType>(MemOpType) || UsesAggregateType) {
+      if (!UsesAggregateType) {
+        if (isStore)
+          Info.isMemCpyDst = true;
+        else
+          Info.isMemCpySrc = true;
       }
-      return MarkUnsafe(Info);
-    } else if (LoadInst *LI = dyn_cast<LoadInst>(UI)) {
-      if (LI->isVolatile())
-        return MarkUnsafe(Info);
-
-      // If loading the entire alloca in one chunk through a bitcasted pointer
-      // to integer, we can transform it.  This happens (for example) when you
-      // cast a {i32,i32}* to i64* and load through it.  This is similar to the
-      // memcpy case and occurs in various "byval" cases and emulated memcpys.
-      if (isa<IntegerType>(LI->getType()) &&
-          TD->getTypeAllocSize(LI->getType()) ==
-          TD->getTypeAllocSize(AI->getType()->getElementType())) {
-        Info.isMemCpySrc = true;
-        continue;
-      }
-      return MarkUnsafe(Info);
-    } else if (isa<DbgInfoIntrinsic>(UI)) {
-      // If one user is DbgInfoIntrinsic then check if all users are
-      // DbgInfoIntrinsics.
-      if (OnlyUsedByDbgInfoIntrinsics(BC)) {
-        Info.needsCleanup = true;
-        return;
-      }
-      else
-        MarkUnsafe(Info);
+      return;
     }
-    else {
-      return MarkUnsafe(Info);
-    }
-    if (Info.isUnsafe) return;
   }
+  // Check if the offset/size correspond to a component within the alloca type.
+  const Type *T = AI->getAllocatedType();
+  if (TypeHasComponent(T, Offset, MemSize) &&
+      (ArrayOffset == 0 || TypeHasComponent(T, Offset + ArrayOffset, MemSize)))
+    return;
+
+  return MarkUnsafe(Info);
 }
 
-/// RewriteBitCastUserOfAlloca - BCInst (transitively) bitcasts AI, or indexes
-/// to its first element.  Transform users of the cast to use the new values
-/// instead.
-void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocaInst *AI,
-                                      SmallVector<AllocaInst*, 32> &NewElts) {
-  Value::use_iterator UI = BCInst->use_begin(), UE = BCInst->use_end();
-  while (UI != UE) {
+/// TypeHasComponent - Return true if T has a component type with the
+/// specified offset and size.  If Size is zero, do not check the size.
+bool SROA::TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size) {
+  const Type *EltTy;
+  uint64_t EltSize;
+  if (const StructType *ST = dyn_cast<StructType>(T)) {
+    const StructLayout *Layout = TD->getStructLayout(ST);
+    unsigned EltIdx = Layout->getElementContainingOffset(Offset);
+    EltTy = ST->getContainedType(EltIdx);
+    EltSize = TD->getTypeAllocSize(EltTy);
+    Offset -= Layout->getElementOffset(EltIdx);
+  } else if (const ArrayType *AT = dyn_cast<ArrayType>(T)) {
+    EltTy = AT->getElementType();
+    EltSize = TD->getTypeAllocSize(EltTy);
+    Offset %= EltSize;
+  } else {
+    return false;
+  }
+  if (Offset == 0 && (Size == 0 || EltSize == Size))
+    return true;
+  // Check if the component spans multiple elements.
+  if (Offset + Size > EltSize)
+    return false;
+  return TypeHasComponent(EltTy, Offset, Size);
+}
+
+/// RewriteForScalarRepl - Alloca AI is being split into NewElts, so rewrite
+/// the instruction I, which references it, to use the separate elements.
+/// Offset indicates the position within AI that is referenced by this
+/// instruction.
+void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
+                                SmallVector<AllocaInst*, 32> &NewElts) {
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E; ) {
     Instruction *User = cast<Instruction>(*UI++);
-    if (BitCastInst *BCU = dyn_cast<BitCastInst>(User)) {
-      RewriteBitCastUserOfAlloca(BCU, AI, NewElts);
-      if (BCU->use_empty()) BCU->eraseFromParent();
-      continue;
-    }
 
-    if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
-      // This must be memcpy/memmove/memset of the entire aggregate.
-      // Split into one per element.
-      RewriteMemIntrinUserOfAlloca(MI, BCInst, AI, NewElts);
-      continue;
+    if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
+      if (BC->getOperand(0) == AI)
+        BC->setOperand(0, NewElts[0]);
+      // If the bitcast type now matches the operand type, it will be removed
+      // after processing its uses.
+      RewriteForScalarRepl(BC, AI, Offset, NewElts);
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+      RewriteGEP(GEPI, AI, Offset, NewElts);
+    } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
+      ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
+      uint64_t MemSize = Length->getZExtValue();
+      if (Offset == 0 &&
+          MemSize == TD->getTypeAllocSize(AI->getAllocatedType()))
+        RewriteMemIntrinUserOfAlloca(MI, I, AI, NewElts);
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      const Type *LIType = LI->getType();
+      if (LIType == AI->getAllocatedType()) {
+        // Replace:
+        //   %res = load { i32, i32 }* %alloc
+        // with:
+        //   %load.0 = load i32* %alloc.0
+        //   %insert.0 insertvalue { i32, i32 } zeroinitializer, i32 %load.0, 0
+        //   %load.1 = load i32* %alloc.1
+        //   %insert = insertvalue { i32, i32 } %insert.0, i32 %load.1, 1
+        // (Also works for arrays instead of structs)
+        Value *Insert = UndefValue::get(LIType);
+        for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
+          Value *Load = new LoadInst(NewElts[i], "load", LI);
+          Insert = InsertValueInst::Create(Insert, Load, i, "insert", LI);
+        }
+        LI->replaceAllUsesWith(Insert);
+        LI->eraseFromParent();
+      } else if (isa<IntegerType>(LIType) &&
+                 TD->getTypeAllocSize(LIType) ==
+                 TD->getTypeAllocSize(AI->getAllocatedType())) {
+        // If this is a load of the entire alloca to an integer, rewrite it.
+        RewriteLoadUserOfWholeAlloca(LI, AI, NewElts);
+      }
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      Value *Val = SI->getOperand(0);
+      const Type *SIType = Val->getType();
+      if (SIType == AI->getAllocatedType()) {
+        // Replace:
+        //   store { i32, i32 } %val, { i32, i32 }* %alloc
+        // with:
+        //   %val.0 = extractvalue { i32, i32 } %val, 0
+        //   store i32 %val.0, i32* %alloc.0
+        //   %val.1 = extractvalue { i32, i32 } %val, 1
+        //   store i32 %val.1, i32* %alloc.1
+        // (Also works for arrays instead of structs)
+        for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
+          Value *Extract = ExtractValueInst::Create(Val, i, Val->getName(), SI);
+          new StoreInst(Extract, NewElts[i], SI);
+        }
+        SI->eraseFromParent();
+      } else if (isa<IntegerType>(SIType) &&
+                 TD->getTypeAllocSize(SIType) ==
+                 TD->getTypeAllocSize(AI->getAllocatedType())) {
+        // If this is a store of the entire alloca from an integer, rewrite it.
+        RewriteStoreUserOfWholeAlloca(SI, AI, NewElts);
+      }
     }
-      
-    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-      // If this is a store of the entire alloca from an integer, rewrite it.
-      RewriteStoreUserOfWholeAlloca(SI, AI, NewElts);
-      continue;
-    }
-
-    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      // If this is a load of the entire alloca to an integer, rewrite it.
-      RewriteLoadUserOfWholeAlloca(LI, AI, NewElts);
-      continue;
-    }
-    
-    // Otherwise it must be some other user of a gep of the first pointer.  Just
-    // leave these alone.
-    continue;
   }
+  // Delete unused instructions and identity bitcasts.
+  if (I->use_empty())
+    I->eraseFromParent();
+  else if (BitCastInst *BC = dyn_cast<BitCastInst>(I)) {
+    if (BC->getDestTy() == BC->getSrcTy()) {
+      BC->replaceAllUsesWith(BC->getOperand(0));
+      BC->eraseFromParent();
+    }
+  }
+}
+
+/// FindElementAndOffset - Return the index of the element containing Offset
+/// within the specified type, which must be either a struct or an array.
+/// Sets T to the type of the element and Offset to the offset within that
+/// element.
+unsigned SROA::FindElementAndOffset(const Type *&T, uint64_t &Offset) {
+  unsigned Idx = 0;
+  if (const StructType *ST = dyn_cast<StructType>(T)) {
+    const StructLayout *Layout = TD->getStructLayout(ST);
+    Idx = Layout->getElementContainingOffset(Offset);
+    T = ST->getContainedType(Idx);
+    Offset -= Layout->getElementOffset(Idx);
+  } else {
+    const ArrayType *AT = dyn_cast<ArrayType>(T);
+    assert(AT && "unexpected type for scalar replacement");
+    T = AT->getElementType();
+    uint64_t EltSize = TD->getTypeAllocSize(T);
+    Idx = (unsigned)(Offset / EltSize);
+    Offset -= Idx * EltSize;
+  }
+  return Idx;
+}
+
+/// RewriteGEP - Check if this GEP instruction moves the pointer across
+/// elements of the alloca that are being split apart, and if so, rewrite
+/// the GEP to be relative to the new element.
+void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
+                      SmallVector<AllocaInst*, 32> &NewElts) {
+  Instruction *Val = GEPI;
+
+  uint64_t OldOffset = Offset;
+  SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
+  Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
+                                 &Indices[0], Indices.size());
+
+  const Type *T = AI->getAllocatedType();
+  unsigned OldIdx = FindElementAndOffset(T, OldOffset);
+  if (GEPI->getOperand(0) == AI)
+    OldIdx = ~0U; // Force the GEP to be rewritten.
+
+  T = AI->getAllocatedType();
+  uint64_t EltOffset = Offset;
+  unsigned Idx = FindElementAndOffset(T, EltOffset);
+
+  // If this GEP moves the pointer across elements of the alloca that are
+  // being split, then it needs to be rewritten.
+  if (Idx != OldIdx) {
+    const Type *i32Ty = Type::getInt32Ty(AI->getContext());
+    SmallVector<Value*, 8> NewArgs;
+    NewArgs.push_back(Constant::getNullValue(i32Ty));
+    while (EltOffset != 0) {
+      unsigned EltIdx = FindElementAndOffset(T, EltOffset);
+      NewArgs.push_back(ConstantInt::get(i32Ty, EltIdx));
+    }
+    if (NewArgs.size() > 1) {
+      Val = GetElementPtrInst::CreateInBounds(NewElts[Idx], NewArgs.begin(),
+                                              NewArgs.end(), "", GEPI);
+      Val->takeName(GEPI);
+      if (Val->getType() != GEPI->getType())
+        Val = new BitCastInst(Val, GEPI->getType(), Val->getNameStr(), GEPI);
+    } else {
+      Val = NewElts[Idx];
+      // Insert a new bitcast.  If the types match, it will be removed after
+      // handling all of its uses.
+      Val = new BitCastInst(Val, GEPI->getType(), Val->getNameStr(), GEPI);
+      Val->takeName(GEPI);
+    }
+
+    GEPI->replaceAllUsesWith(Val);
+    GEPI->eraseFromParent();
+  }
+
+  RewriteForScalarRepl(Val, AI, Offset, NewElts);
 }
 
 /// RewriteMemIntrinUserOfAlloca - MI is a memcpy/memset/memmove from or to AI.
 /// Rewrite it to copy or set the elements of the scalarized memory.
-void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
+void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                         AllocaInst *AI,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
   
@@ -761,10 +753,10 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   LLVMContext &Context = MI->getContext();
   unsigned MemAlignment = MI->getAlignment();
   if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI)) { // memmove/memcopy
-    if (BCInst == MTI->getRawDest())
+    if (Inst == MTI->getRawDest())
       OtherPtr = MTI->getRawSource();
     else {
-      assert(BCInst == MTI->getRawSource());
+      assert(Inst == MTI->getRawSource());
       OtherPtr = MTI->getRawDest();
     }
   }
@@ -798,7 +790,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   // Process each element of the aggregate.
   Value *TheFn = MI->getOperand(0);
   const Type *BytePtrTy = MI->getRawDest()->getType();
-  bool SROADest = MI->getRawDest() == BCInst;
+  bool SROADest = MI->getRawDest() == Inst;
   
   Constant *Zero = Constant::getNullValue(Type::getInt32Ty(MI->getContext()));
 
@@ -810,9 +802,9 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     if (OtherPtr) {
       Value *Idx[2] = { Zero,
                       ConstantInt::get(Type::getInt32Ty(MI->getContext()), i) };
-      OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
+      OtherElt = GetElementPtrInst::CreateInBounds(OtherPtr, Idx, Idx + 2,
                                            OtherPtr->getNameStr()+"."+Twine(i),
-                                           MI);
+                                                   MI);
       uint64_t EltOffset;
       const PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());
       if (const StructType *ST =
@@ -937,15 +929,9 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
   // Extract each element out of the integer according to its structure offset
   // and store the element value to the individual alloca.
   Value *SrcVal = SI->getOperand(0);
-  const Type *AllocaEltTy = AI->getType()->getElementType();
+  const Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
   
-  // If this isn't a store of an integer to the whole alloca, it may be a store
-  // to the first element.  Just ignore the store in this case and normal SROA
-  // will handle it.
-  if (!isa<IntegerType>(SrcVal->getType()) ||
-      TD->getTypeAllocSizeInBits(SrcVal->getType()) != AllocaSizeBits)
-    return;
   // Handle tail padding by extending the operand
   if (TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     SrcVal = new ZExtInst(SrcVal,
@@ -1059,15 +1045,8 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
   // Extract each element out of the NewElts according to its structure offset
   // and form the result value.
-  const Type *AllocaEltTy = AI->getType()->getElementType();
+  const Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
-  
-  // If this isn't a load of the whole alloca to an integer, it may be a load
-  // of the first element.  Just ignore the load in this case and normal SROA
-  // will handle it.
-  if (!isa<IntegerType>(LI->getType()) ||
-      TD->getTypeAllocSizeInBits(LI->getType()) != AllocaSizeBits)
-    return;
   
   DEBUG(errs() << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << '\n' << *LI
                << '\n');
@@ -1142,7 +1121,6 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
   LI->eraseFromParent();
 }
 
-
 /// HasPadding - Return true if the specified type has any structure or
 /// alignment padding, false otherwise.
 static bool HasPadding(const Type *Ty, const TargetData &TD) {
@@ -1192,14 +1170,10 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // the users are safe to transform.
   AllocaInfo Info;
   
-  for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
-       I != E; ++I) {
-    isSafeUseOfAllocation(cast<Instruction>(*I), AI, Info);
-    if (Info.isUnsafe) {
-      DEBUG(errs() << "Cannot transform: " << *AI << "\n  due to user: "
-                   << **I << '\n');
-      return 0;
-    }
+  isSafeForScalarRepl(AI, AI, 0, 0, Info);
+  if (Info.isUnsafe) {
+    DEBUG(errs() << "Cannot transform: " << *AI << '\n');
+    return 0;
   }
   
   // Okay, we know all the users are promotable.  If the aggregate is a memcpy
@@ -1208,7 +1182,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // types, but may actually be used.  In these cases, we refuse to promote the
   // struct.
   if (Info.isMemCpySrc && Info.isMemCpyDst &&
-      HasPadding(AI->getType()->getElementType(), *TD))
+      HasPadding(AI->getAllocatedType(), *TD))
     return 0;
 
   // If we require cleanup, return 1, otherwise return 3.
@@ -1245,15 +1219,15 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   // Insert the new GEP instructions, which are properly indexed.
   SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
   Indices[1] = Constant::getNullValue(Type::getInt32Ty(GEPI->getContext()));
-  Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
-                                             Indices.begin(),
-                                             Indices.end(),
-                                             GEPI->getName()+".0", GEPI);
+  Value *ZeroIdx = GetElementPtrInst::CreateInBounds(GEPI->getOperand(0),
+                                                     Indices.begin(),
+                                                     Indices.end(),
+                                                     GEPI->getName()+".0",GEPI);
   Indices[1] = ConstantInt::get(Type::getInt32Ty(GEPI->getContext()), 1);
-  Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
-                                            Indices.begin(),
-                                            Indices.end(),
-                                            GEPI->getName()+".1", GEPI);
+  Value *OneIdx = GetElementPtrInst::CreateInBounds(GEPI->getOperand(0),
+                                                    Indices.begin(),
+                                                    Indices.end(),
+                                                    GEPI->getName()+".1", GEPI);
   // Replace all loads of the variable index GEP with loads from both
   // indexes and a select.
   while (!GEPI->use_empty()) {
@@ -1264,22 +1238,24 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
     LI->replaceAllUsesWith(R);
     LI->eraseFromParent();
   }
-  GEPI->eraseFromParent();
 }
-
 
 /// CleanupAllocaUsers - If SROA reported that it can promote the specified
 /// allocation, but only if cleaned up, perform the cleanups required.
-void SROA::CleanupAllocaUsers(AllocaInst *AI) {
+void SROA::CleanupAllocaUsers(Value *V) {
   // At this point, we know that the end result will be SROA'd and promoted, so
   // we can insert ugly code if required so long as sroa+mem2reg will clean it
   // up.
-  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
        UI != E; ) {
     User *U = *UI++;
-    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U))
+    if (isa<BitCastInst>(U)) {
+      CleanupAllocaUsers(U);
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
       CleanupGEP(GEPI);
-    else {
+      CleanupAllocaUsers(GEPI);
+      if (GEPI->use_empty()) GEPI->eraseFromParent();
+    } else {
       Instruction *I = cast<Instruction>(U);
       SmallVector<DbgInfoIntrinsic *, 2> DbgInUses;
       if (!isa<StoreInst>(I) && OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
@@ -1395,7 +1371,7 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       
       // Compute the offset that this GEP adds to the pointer.
       SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
-      uint64_t GEPOffset = TD->getIndexedOffset(GEP->getOperand(0)->getType(),
+      uint64_t GEPOffset = TD->getIndexedOffset(GEP->getPointerOperandType(),
                                                 &Indices[0], Indices.size());
       // See if all uses can be converted.
       if (!CanConvertToScalar(GEP, IsNotTrivial, VecTy, SawVec,Offset+GEPOffset,
@@ -1457,7 +1433,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
       // Compute the offset that this GEP adds to the pointer.
       SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
-      uint64_t GEPOffset = TD->getIndexedOffset(GEP->getOperand(0)->getType(),
+      uint64_t GEPOffset = TD->getIndexedOffset(GEP->getPointerOperandType(),
                                                 &Indices[0], Indices.size());
       ConvertUsesToScalar(GEP, NewAI, Offset+GEPOffset*8);
       GEP->eraseFromParent();
