@@ -22,10 +22,11 @@ using namespace clang;
 
 namespace {
 
-struct RefState {
+class RefState {
   enum Kind { Allocated, Released, Escaped } K;
   const Stmt *S;
 
+public:
   RefState(Kind k, const Stmt *s) : K(k), S(s) {}
 
   bool isAllocated() const { return K == Allocated; }
