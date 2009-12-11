@@ -113,3 +113,18 @@ namespace PR5718 {
     return f == g;
   }
 }
+
+namespace BoolMemberPointer {
+  struct A { };
+  
+  bool f(void (A::*f)()) {
+    return !f;
+  }
+
+  bool g(void (A::*f)()) {
+    if (!!f)
+      return true;
+    return false;
+  }
+}
+

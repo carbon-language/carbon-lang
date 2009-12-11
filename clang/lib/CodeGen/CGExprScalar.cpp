@@ -954,34 +954,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CastExpr::CK_FloatingCast:
     return EmitScalarConversion(Visit(E), E->getType(), DestTy);
 
-  case CastExpr::CK_MemberPointerToBoolean: {
-    const MemberPointerType* T = E->getType()->getAs<MemberPointerType>();
-    
-    if (T->getPointeeType()->isFunctionType()) {
-      // We have a member function pointer.
-      llvm::Value *Ptr = CGF.CreateTempAlloca(ConvertType(E->getType()));
-      
-      CGF.EmitAggExpr(E, Ptr, /*VolatileDest=*/false);
-      
-      // Get the pointer.
-      llvm::Value *FuncPtr = Builder.CreateStructGEP(Ptr, 0, "src.ptr");
-      FuncPtr = Builder.CreateLoad(FuncPtr);
-      
-      llvm::Value *IsNotNull = 
-        Builder.CreateICmpNE(FuncPtr,
-                             llvm::Constant::getNullValue(FuncPtr->getType()),
-                             "tobool");
-      
-      return IsNotNull;
-    }
-   
-    // We have a regular member pointer.
-    Value *Ptr = Visit(const_cast<Expr*>(E));
-    llvm::Value *IsNotNull = 
-      Builder.CreateICmpNE(Ptr, CGF.CGM.EmitNullConstant(E->getType()),
-                           "tobool");
-    return IsNotNull;
-  }
+  case CastExpr::CK_MemberPointerToBoolean:
+    return CGF.EvaluateExprAsBool(E);
   }
 
   // Handle cases where the source is an non-complex type.

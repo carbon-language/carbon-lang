@@ -38,6 +38,21 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
 /// expression and compare the result against zero, returning an Int1Ty value.
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   QualType BoolTy = getContext().BoolTy;
+  if (E->getType()->isMemberFunctionPointerType()) {
+    llvm::Value *Ptr = CreateTempAlloca(ConvertType(E->getType()));
+    EmitAggExpr(E, Ptr, /*VolatileDest=*/false);
+
+    // Get the pointer.
+    llvm::Value *FuncPtr = Builder.CreateStructGEP(Ptr, 0, "src.ptr");
+    FuncPtr = Builder.CreateLoad(FuncPtr);
+
+    llvm::Value *IsNotNull = 
+      Builder.CreateICmpNE(FuncPtr,
+                            llvm::Constant::getNullValue(FuncPtr->getType()),
+                            "tobool");
+
+    return IsNotNull;
+  }
   if (!E->getType()->isAnyComplexType())
     return EmitScalarConversion(EmitScalarExpr(E), E->getType(), BoolTy);
 
