@@ -155,7 +155,7 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E, llvm::Value *N) {
         llvm::Value *ExceptionPtr = CGF.Builder.CreateBitCast(N, Int8PtrTy);
         CGF.Builder.CreateCall(FreeExceptionFn, ExceptionPtr);
       }
- 
+
       llvm::Value *Src = CGF.EmitLValue(E).getAddress();
       CGF.setInvokeDest(PrevLandingPad);
 
