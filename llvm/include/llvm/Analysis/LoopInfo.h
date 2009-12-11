@@ -568,7 +568,7 @@ public:
 
   /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
   /// These are the blocks _outside of the current loop_ which are branched to.
-  /// This assumes that loop is in canonical form.
+  /// This assumes that loop exits are in canonical form.
   ///
   void getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const;
 

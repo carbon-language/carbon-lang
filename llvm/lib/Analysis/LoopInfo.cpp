@@ -316,12 +316,12 @@ bool Loop::hasDedicatedExits() const {
 
 /// getUniqueExitBlocks - Return all unique successor blocks of this loop.
 /// These are the blocks _outside of the current loop_ which are branched to.
-/// This assumes that loop is in canonical form.
+/// This assumes that loop exits are in canonical form.
 ///
 void
 Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
-  assert(isLoopSimplifyForm() &&
-         "getUniqueExitBlocks assumes the loop is in canonical form!");
+  assert(hasDedicatedExits() &&
+         "getUniqueExitBlocks assumes the loop has canonical form exits!");
 
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
