@@ -28,6 +28,8 @@ struct D {
 
 void D::f() { }
 
+static struct : D { } e;
+
 // B has a key function that is not defined in this translation unit so its vtable
 // has external linkage.
 // CHECK: @_ZTV1B = external constant
@@ -42,6 +44,12 @@ void D::f() { }
 // CHECK: @_ZTS1D = constant
 // CHECK: @_ZTI1D = constant
 // CHECK: @_ZTV1D = constant
+
+// The anonymous struct for e has no linkage, so the vtable should have
+// internal linkage.
+// CHECK: @"_ZTS3$_0" = internal constant
+// CHECK: @"_ZTI3$_0" = internal constant
+// CHECK: @"_ZTV3$_0" = internal constant
 
 // The A vtable should have internal linkage since it is inside an anonymous 
 // namespace.

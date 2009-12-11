@@ -230,7 +230,7 @@ public:
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
     // If we're in an anonymous namespace, then we always want internal linkage.
-    if (RD->isInAnonymousNamespace())
+    if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
       Linkage = llvm::GlobalVariable::InternalLinkage;
     
     bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
@@ -295,7 +295,7 @@ public:
       return DecideExtern(PT->getPointeeType());
     if (const RecordType *RT = Ty->getAs<RecordType>())
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-        return !RD->isInAnonymousNamespace();
+        return !RD->isInAnonymousNamespace() && RD->hasLinkage();
     return true;
   }
 
