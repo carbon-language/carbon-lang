@@ -24,6 +24,26 @@ class RTTIBuilder {
   const llvm::Type *Int8PtrTy;
   llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
+  
+  // Type info flags.
+  enum {
+    /// TI_Const - Type has const qualifier.
+    TI_Const = 0x1,
+    
+    /// TI_Volatile - Type has volatile qualifier.
+    TI_Volatile = 0x2,
+
+    /// TI_Restrict - Type has restrict qualifier.
+    TI_Restrict = 0x4,
+    
+    /// TI_Incomplete - Type is incomplete.
+    TI_Incomplete = 0x8,
+
+    /// TI_ContainingClassIncomplete - Containing class is incomplete.
+    /// (in pointer to member).
+    TI_ContainingClassIncomplete = 0x10
+  };
+  
 public:
   RTTIBuilder(CodeGenModule &cgm)
     : CGM(cgm), VMContext(cgm.getModule().getContext()),
@@ -257,8 +277,8 @@ public:
   }
 
   /// - BuildFlags - Build a __flags value for __pbase_type_info.
-  llvm::Constant *BuildInt(int f) {
-    return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), f);
+  llvm::Constant *BuildInt(unsigned n) {
+    return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), n);
   }
 
   bool DecideExtern(QualType Ty) {
@@ -304,37 +324,46 @@ public:
     bool Extern = DecideExtern(Ty);
     bool Hidden = DecideHidden(Ty);
 
-    QualType PTy = Ty->getPointeeType();
-    QualType BTy;
-    bool PtrMem = false;
-    if (const MemberPointerType *MPT = dyn_cast<MemberPointerType>(Ty)) {
-      PtrMem = true;
-      BTy = QualType(MPT->getClass(), 0);
-      PTy = MPT->getPointeeType();
-    }
+    const MemberPointerType *PtrMemTy = dyn_cast<MemberPointerType>(Ty);
+    QualType PointeeTy;
+    
+    if (PtrMemTy)
+      PointeeTy = PtrMemTy->getPointeeType();
+    else
+      PointeeTy = Ty->getPointeeType();
 
-    if (PtrMem)
+    if (PtrMemTy)
       C = BuildVtableRef("_ZTVN10__cxxabiv129__pointer_to_member_type_infoE");
     else
       C = BuildVtableRef("_ZTVN10__cxxabiv119__pointer_type_infoE");
+    
     info.push_back(C);
     info.push_back(BuildName(Ty, Hidden, Extern));
-    Qualifiers Q = PTy.getQualifiers();
-    PTy = CGM.getContext().getCanonicalType(PTy).getUnqualifiedType();
-    int flags = 0;
-    flags += Q.hasConst() ? 0x1 : 0;
-    flags += Q.hasVolatile() ? 0x2 : 0;
-    flags += Q.hasRestrict() ? 0x4 : 0;
-    flags += Ty.getTypePtr()->isIncompleteType() ? 0x8 : 0;
-    if (PtrMem && BTy.getTypePtr()->isIncompleteType())
-      flags += 0x10;
-
-    info.push_back(BuildInt(flags));
+    Qualifiers Q = PointeeTy.getQualifiers();
+    
+    PointeeTy = 
+      CGM.getContext().getCanonicalType(PointeeTy).getUnqualifiedType();
+    
+    unsigned Flags = 0;
+    if (Q.hasConst())
+      Flags |= TI_Const;
+    if (Q.hasVolatile())
+      Flags |= TI_Volatile;
+    if (Q.hasRestrict())
+      Flags |= TI_Restrict;
+    
+    if (Ty->isIncompleteType())
+      Flags |= TI_Incomplete;
+  
+    if (PtrMemTy && PtrMemTy->getClass()->isIncompleteType())
+      Flags |= TI_ContainingClassIncomplete;
+    
+    info.push_back(BuildInt(Flags));
     info.push_back(BuildInt(0));
-    info.push_back(BuildType(PTy));
+    info.push_back(BuildType(PointeeTy));
 
-    if (PtrMem)
-      info.push_back(BuildType(BTy));
+    if (PtrMemTy)
+      info.push_back(BuildType(QualType(PtrMemTy->getClass(), 0)));
 
     // We always generate these as hidden, only the name isn't hidden.
     return finish(info, GV, Name, true, Extern);
