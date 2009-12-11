@@ -1,10 +1,13 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 // C++03 [namespace.udecl]p12:
 //   When a using-declaration brings names from a base class into a
 //   derived class scope, member functions in the derived class
 //   override and/or hide member functions with the same name and
 //   parameter types in a base class (rather than conflicting).
+
+template <unsigned n> struct Opaque {};
+template <unsigned n> void expect(Opaque<n> _) {}
 
 // PR5727
 // This just shouldn't crash.
@@ -21,7 +24,6 @@ namespace test0 {
 
 // Simple hiding.
 namespace test1 {
-  template <unsigned n> struct Opaque {};
   struct Base {
     Opaque<0> foo(Opaque<0>);
     Opaque<0> foo(Opaque<1>);
@@ -97,5 +99,46 @@ namespace test2 {
     Derived2<int> d2;
     d2.foo(i);
     d2.testUnresolved(i);
+  }
+}
+
+// Hiding of member templates.
+namespace test3 {
+  struct Base {
+    template <class T> Opaque<0> foo() { return Opaque<0>(); }
+    template <int n> Opaque<1> foo() { return Opaque<1>(); }
+  };
+
+  struct Derived1 : Base {
+    using Base::foo;
+    template <int n> Opaque<2> foo() { return Opaque<2>(); }
+  };
+
+  struct Derived2 : Base {
+    template <int n> Opaque<2> foo() { return Opaque<2>(); }
+    using Base::foo;
+  };
+
+  struct Derived3 : Base {
+    using Base::foo;
+    template <class T> Opaque<3> foo() { return Opaque<3>(); }
+  };
+
+  struct Derived4 : Base {
+    template <class T> Opaque<3> foo() { return Opaque<3>(); }
+    using Base::foo;
+  };
+
+  void test() {
+    expect<0>(Base().foo<int>());
+    expect<1>(Base().foo<0>());
+    expect<0>(Derived1().foo<int>());
+    expect<2>(Derived1().foo<0>());
+    expect<0>(Derived2().foo<int>());
+    expect<2>(Derived2().foo<0>());
+    expect<3>(Derived3().foo<int>());
+    expect<1>(Derived3().foo<0>());
+    expect<3>(Derived4().foo<int>());
+    expect<1>(Derived4().foo<0>());
   }
 }
