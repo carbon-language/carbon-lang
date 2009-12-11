@@ -172,6 +172,12 @@ inline bool operator!=(CanQual<T> x, CanQual<U> y) {
 /// \brief Represents a canonical, potentially-qualified type.
 typedef CanQual<Type> CanQualType;
 
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           CanQualType T) {
+  DB << static_cast<QualType>(T);
+  return DB;
+}
+
 //----------------------------------------------------------------------------//
 // Internal proxy classes used by canonical types
 //----------------------------------------------------------------------------//

@@ -2220,10 +2220,6 @@ def err_operator_overload_needs_class_or_enum : Error<
 def err_operator_overload_variadic : Error<"overloaded %0 cannot be variadic">;
 def err_operator_overload_static : Error<
   "overloaded %0 cannot be a static member function">;
-def err_operator_new_param_type : Error<
-  "%0 takes type size_t (%1) as first parameter">;
-def err_operator_new_result_type : Error<
-  "%0 must return type %1">;
 def err_operator_overload_default_arg : Error<
   "parameter of overloaded %0 cannot have a default argument">;
 def err_operator_overload_must_be : Error<
@@ -2236,6 +2232,19 @@ def err_operator_overload_post_incdec_must_be_int : Error<
   "parameter of overloaded post-%select{increment|decrement}1 operator must "
   "have type 'int' (not %0)">;
 
+// C++ allocation and deallocation functions.
+def err_operator_new_delete_declared_in_namespace : Error<
+  "%0 cannot be declared inside a namespace">;
+def err_operator_new_delete_declared_static : Error<
+  "%0 cannot be declared static in global scope">;
+def err_operator_new_delete_invalid_result_type : Error<
+  "%0 must return type %1">;
+def err_operator_new_delete_too_few_parameters : Error<
+  "%0 must have at least one parameter.">;
+def err_operator_new_param_type : Error<
+  "%0 takes type size_t (%1) as first parameter">;
+def err_operator_delete_param_type : Error<
+  "%0 takes type %1 as first parameter">;
 
 // C++ conversion functions
 def err_conv_function_not_member : Error<

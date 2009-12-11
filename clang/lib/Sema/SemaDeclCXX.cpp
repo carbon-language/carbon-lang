@@ -4604,6 +4604,52 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   }
 }
 
+static bool
+CheckOperatorDeleteDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
+  // C++ [basic.stc.dynamic.deallocation]p1:
+  //   A program is ill-formed if deallocation functions are declared in a
+  //   namespace scope other than global scope or declared static in global 
+  //   scope.
+  const DeclContext *DC = FnDecl->getDeclContext()->getLookupContext();
+  if (isa<NamespaceDecl>(DC)) {
+    return SemaRef.Diag(FnDecl->getLocation(), 
+                        diag::err_operator_new_delete_declared_in_namespace)
+      << FnDecl->getDeclName();
+  } else if (isa<TranslationUnitDecl>(DC) && 
+             FnDecl->getStorageClass() == FunctionDecl::Static) {
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_declared_static)
+      << FnDecl->getDeclName();
+  }
+
+  // C++ [basic.stc.dynamic.deallocation]p2:
+  //   Each deallocation function shall return void and its first parameter 
+  //   shall be void*.
+  QualType ResultType = FnDecl->getResultType();
+  if (!ResultType->isDependentType() && !ResultType->isVoidType()) {
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_invalid_result_type) 
+      << FnDecl->getDeclName() << SemaRef.Context.VoidTy;
+  }
+
+  if (FnDecl->getNumParams() == 0) {
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_too_few_parameters)
+      << FnDecl->getDeclName();
+  }
+
+  QualType FirstParamType = 
+    SemaRef.Context.getCanonicalType(FnDecl->getParamDecl(0)->getType());
+  if (!FirstParamType->isDependentType() && 
+      FirstParamType != SemaRef.Context.VoidPtrTy) {
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_delete_param_type)
+      << FnDecl->getDeclName() << SemaRef.Context.VoidPtrTy;
+  }
+  
+  return false;
+}
+
 /// CheckOverloadedOperatorDeclaration - Check whether the declaration
 /// of this overloaded operator is well-formed. If so, returns false;
 /// otherwise, emits appropriate diagnostics and returns true.
@@ -4619,9 +4665,14 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   //   described completely in 3.7.3. The attributes and restrictions
   //   found in the rest of this subclause do not apply to them unless
   //   explicitly stated in 3.7.3.
-  // FIXME: Write a separate routine for checking this. For now, just allow it.
-  if (Op == OO_Delete || Op == OO_Array_Delete)
+  if (Op == OO_Delete || Op == OO_Array_Delete) {
+    return CheckOperatorDeleteDeclaration(*this, FnDecl);
+      FnDecl->setInvalidDecl();
+      return true;
+    }
+    
     return false;
+  }
   
   if (Op == OO_New || Op == OO_Array_New) {
     bool ret = false;
@@ -4638,8 +4689,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
     QualType ResultTy = Context.getCanonicalType(FnDecl->getResultType());
     if (!ResultTy->isDependentType() && ResultTy != Context.VoidPtrTy)
       return Diag(FnDecl->getLocation(),
-                  diag::err_operator_new_result_type) << FnDecl->getDeclName()
-                  << static_cast<QualType>(Context.VoidPtrTy);
+                  diag::err_operator_new_delete_invalid_result_type) 
+        << FnDecl->getDeclName() << Context.VoidPtrTy;
     return ret;
   }
 
