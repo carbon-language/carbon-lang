@@ -139,6 +139,7 @@ namespace  {
     void VisitCXXConstructExpr(CXXConstructExpr *Node);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node);
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node);
+    void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node);
     void DumpCXXTemporary(CXXTemporary *Temporary);
 
     // ObjC
@@ -329,6 +330,19 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
 
   OS << "='" << Node->getDecl()->getNameAsString()
      << "' " << (void*)Node->getDecl();
+}
+
+void StmtDumper::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node) {
+  DumpExpr(Node);
+  OS << " (";
+  if (!Node->requiresADL()) OS << "no ";
+  OS << "ADL) = '" << Node->getName().getAsString() << "'";
+
+  UnresolvedLookupExpr::decls_iterator
+    I = Node->decls_begin(), E = Node->decls_end();
+  if (I == E) OS << " empty";
+  for (; I != E; ++I)
+    OS << " " << (void*) *I;
 }
 
 void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
