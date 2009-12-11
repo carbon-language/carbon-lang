@@ -2,17 +2,30 @@ set(LLVM_NO_RTTI 1)
 
 set( LLVM_USED_LIBS
   clangDriver
+  clangFrontend
+  clangCodeGen
+  clangAnalysis
+  clangRewrite
+  clangSema
+  clangAST
+  clangParse
+  clangLex
   clangBasic
   )
 
-set(LLVM_LINK_COMPONENTS system support bitreader bitwriter)
+set( LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
+  bitreader
+  bitwriter
+  codegen
+  ipo
+  selectiondag
+  )
 
 add_clang_executable(clang
   driver.cpp
   cc1_main.cpp
   )
-
-add_dependencies(clang clang-cc)
 
 if(UNIX)
   set(CLANGXX_LINK_OR_COPY create_symlink)
