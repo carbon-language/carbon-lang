@@ -1,23 +1,20 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
 // PR5057
-namespace std {
-  class X {
-  public:
-    template<typename T>
-    friend struct Y;
-  };
+namespace test0 {
+  namespace std {
+    class X {
+    public:
+      template<typename T> friend struct Y;
+    };
+  }
+
+  namespace std {
+    template<typename T> struct Y {};
+  }
 }
 
-namespace std {
-  template<typename T>
-  struct Y
-  {
-  };
-}
-
-
-namespace N {
+namespace test1 {
   template<typename T> void f1(T) { } // expected-note{{here}}
 
   class X {
@@ -30,64 +27,58 @@ namespace N {
 }
 
 // PR4768
-template<typename T>
-struct X0 {
-  template<typename U> friend struct X0;
-};
+namespace test2 {
+  template<typename T> struct X0 {
+    template<typename U> friend struct X0;
+  };
+  
+  template<typename T> struct X0<T*> {
+    template<typename U> friend struct X0;
+  };
 
-template<typename T>
-struct X0<T*> {
-  template<typename U> friend struct X0;
-};
+  template<> struct X0<int> {
+    template<typename U> friend struct X0;
+  };
 
-template<>
-struct X0<int> {
-  template<typename U> friend struct X0;
-};
+  template<typename T> struct X1 {
+    template<typename U> friend void f2(U);
+    template<typename U> friend void f3(U);
+  };
 
-template<typename T>
-struct X1 {
-  template<typename U> friend void f2(U);
-  template<typename U> friend void f3(U);
-};
+  template<typename U> void f2(U);
 
-template<typename U> void f2(U);
+  X1<int> x1i;
+  X0<int*> x0ip;
 
-X1<int> x1i;
-X0<int*> x0ip;
+  template<> void f2(int);
 
-template<> void f2(int);
+  // FIXME: Should this declaration of f3 be required for the specialization of
+  // f3<int> (further below) to work? GCC and EDG don't require it, we do...
+  template<typename U> void f3(U);
 
-// FIXME: Should this declaration of f3 be required for the specialization of
-// f3<int> (further below) to work? GCC and EDG don't require it, we do...
-template<typename U> void f3(U);
-
-template<> void f3(int);
+  template<> void f3(int);
+}
 
 // PR5332
-template <typename T>
-class Foo {
-  template <typename U>
-  friend class Foo;
-};
+namespace test3 {
+  template <typename T> class Foo {
+    template <typename U>
+    friend class Foo;
+  };
 
-Foo<int> foo;
+  Foo<int> foo;
 
-template<typename T, T Value>
-struct X2a;
+  template<typename T, T Value> struct X2a;
 
-template<typename T, int Size>
-struct X2b;
+  template<typename T, int Size> struct X2b;
 
-template<typename T>
-class X3 {
-  template<typename U, U Value>
-  friend struct X2a;
+  template<typename T>
+  class X3 {
+    template<typename U, U Value> friend struct X2a;
+    template<typename U, T Value> friend struct X2b;
+  };
 
-  template<typename U, T Value>
-  friend struct X2b;
-};
+  X3<int> x3i; // okay
 
-X3<int> x3i; // okay
-
-X3<long> x3l; // FIXME: should cause an instantiation-time failure
+  X3<long> x3l; // FIXME: should cause an instantiation-time failure
+}
