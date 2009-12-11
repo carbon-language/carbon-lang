@@ -1169,7 +1169,20 @@ Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
              Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) &&
              Tok.isNot(tok::eof));
   }
-  return Actions.ActOnNullStmt(Tok.getLocation());
+  llvm::SmallVector<std::string, 4> Names;
+  Token t;
+  t.setKind(tok::string_literal);
+  t.setLiteralData("\"FIXME: not done\"");
+  t.clearFlag(Token::NeedsCleaning);
+  t.setLength(17);
+  OwningExprResult AsmString(Actions.ActOnStringLiteral(&t, 1));
+  ExprVector Constraints(Actions);
+  ExprVector Exprs(Actions);
+  ExprVector Clobbers(Actions);
+  return Actions.ActOnAsmStmt(Tok.getLocation(), true, true, 0, 0, Names.data(),
+                              move_arg(Constraints), move_arg(Exprs),
+                              move(AsmString), move_arg(Clobbers),
+                              Tok.getLocation());
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
