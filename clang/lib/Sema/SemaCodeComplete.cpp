@@ -364,11 +364,15 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
       (IDNS & (Decl::IDNS_OrdinaryFriend | Decl::IDNS_TagFriend)))
     return;
 
-  // Class template (partial) specializations are never added as results
+  // Class template (partial) specializations are never added as results.
   if (isa<ClassTemplateSpecializationDecl>(CanonDecl) ||
       isa<ClassTemplatePartialSpecializationDecl>(CanonDecl))
     return;
   
+  // Using declarations themselves are never added as results.
+  if (isa<UsingDecl>(CanonDecl))
+    return;
+
   if (const IdentifierInfo *Id = R.Declaration->getIdentifier()) {
     // __va_list_tag is a freak of nature. Find it and skip it.
     if (Id->isStr("__va_list_tag") || Id->isStr("__builtin_va_list"))
@@ -571,18 +575,19 @@ bool ResultBuilder::IsNamespaceOrAlias(NamedDecl *ND) const {
   return isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND);
 }
 
-/// \brief Brief determines whether the given declaration is a namespace or
-/// namespace alias.
+/// \brief Determines whether the given declaration is a type.
 bool ResultBuilder::IsType(NamedDecl *ND) const {
   return isa<TypeDecl>(ND);
 }
 
-/// \brief Since every declaration found within a class is a member that we
-/// care about, always returns true. This predicate exists mostly to 
-/// communicate to the result builder that we are performing a lookup for
-/// member access.
+/// \brief Determines which members of a class should be visible via
+/// "." or "->".  Only value declarations, nested name specifiers, and
+/// using declarations thereof should show up.
 bool ResultBuilder::IsMember(NamedDecl *ND) const {
-  return true;
+  if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(ND))
+    ND = Using->getTargetDecl();
+
+  return isa<ValueDecl>(ND) || isa<ObjCPropertyDecl>(ND);
 }
 
 // Find the next outer declaration context corresponding to this scope.
@@ -1479,6 +1484,8 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
 
       // We could have the start of a nested-name-specifier. Add those
       // results as well.
+      // FIXME: We should really walk base classes to produce
+      // nested-name-specifiers so that we produce more-precise results.
       Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
       CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank,
                            CurContext, Results);

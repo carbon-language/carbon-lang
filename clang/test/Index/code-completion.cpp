@@ -33,20 +33,19 @@ void test_overloaded() {
   overloaded(Z(), 0);
 }
 
-// CHECK-MEMBER: EnumDecl:{Informative X::}{TypedText E}
 // CHECK-MEMBER: FieldDecl:{TypedText member}
 // CHECK-MEMBER: FunctionDecl:{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
 // CHECK-MEMBER: EnumConstantDecl:{Informative E::}{TypedText Val1}
 // CHECK-MEMBER: FunctionDecl:{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{TypedText operator int}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{TypedText operator=}{LeftParen (}{Placeholder struct Z const &}{RightParen )}
-// CHECK-MEMBER: StructDecl:{TypedText X}{Text ::}
-// CHECK-MEMBER: StructDecl:{TypedText Y}{Text ::}
-// CHECK-MEMBER: StructDecl:{TypedText Z}{Text ::}
 // CHECK-MEMBER: FieldDecl:{Text X::}{TypedText member}
 // CHECK-MEMBER: FieldDecl:{Text Y::}{TypedText member}
 // CHECK-MEMBER: FunctionDecl:{Text X::}{TypedText operator=}{LeftParen (}{Placeholder struct X const &}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder struct Y const &}{RightParen )}
+// CHECK-MEMBER: StructDecl:{TypedText X}{Text ::}
+// CHECK-MEMBER: StructDecl:{TypedText Y}{Text ::}
+// CHECK-MEMBER: StructDecl:{TypedText Z}{Text ::}
 
 // CHECK-OVERLOAD: NotImplemented:{Text overloaded}{LeftParen (}{Text struct Z z}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}

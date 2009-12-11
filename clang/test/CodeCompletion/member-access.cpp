@@ -37,6 +37,6 @@ void test(const Proxy &p) {
   // CHECK-CC1: memfun1 : 0 : [#Base3::#]memfun1(<#double#>)
   // CHECK-CC1: memfun2 : 0 : [#Base3::#]memfun2(<#int#>)
   // CHECK-CC1: memfun3 : 0 : memfun3(<#int#>)
-  // CHECK-CC1: Base1 : 0 : Base1::
   // CHECK-CC1: memfun1 : 0 (Hidden) : Base2::memfun1(<#int#>)
+  // CHECK-CC1: Base1 : 3 : Base1::
   
