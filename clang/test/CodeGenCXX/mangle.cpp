@@ -228,3 +228,11 @@ template<typename T> typename __enable_if<(__is_scalar<T>::__value), void>::__ty
 template void ft8<int>();
 // CHECK: @_Z3ft8IPvEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
 template void ft8<void*>();
+
+// PR5706
+// This example was crashing in the mangler code
+struct S8 {
+  virtual ~S8() { }
+};
+
+static struct : S8 { } obj8;

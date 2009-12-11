@@ -877,10 +877,7 @@ void CXXNameMangler::mangleType(const RecordType *T) {
   mangleType(static_cast<const TagType*>(T));
 }
 void CXXNameMangler::mangleType(const TagType *T) {
-  if (!T->getDecl()->getIdentifier())
-    mangleName(T->getDecl()->getTypedefForAnonDecl());
-  else
-    mangleName(T->getDecl());
+  mangleName(T->getDecl());
 }
 
 // <type>       ::= <array-type>
