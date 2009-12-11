@@ -807,6 +807,8 @@ sub RunBuildCommand {
   }
   elsif ($IgnoreErrors) {
     if ($Cmd eq "make" or $Cmd eq "gmake") {
+      AddIfNotPresent($Args, "CC=$CCAnalyzer");
+      AddIfNotPresent($Args, "CXX=$CCAnalyzer");
       AddIfNotPresent($Args,"-k");
       AddIfNotPresent($Args,"-i");
     }
