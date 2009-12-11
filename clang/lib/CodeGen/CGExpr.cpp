@@ -138,9 +138,12 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
               ClassDecl->getDestructor(getContext());
 
             {
-              DelayedCleanupBlock scope(*this);
+              DelayedCleanupBlock Scope(*this);
               EmitCXXDestructorCall(Dtor, Dtor_Complete,
                                     Val.getAggregateAddr());
+              
+              // Make sure to jump to the exit block.
+              EmitBranch(Scope.getCleanupExitBlock());
             }
             if (Exceptions) {
               EHCleanupBlock Cleanup(*this);
