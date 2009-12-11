@@ -587,7 +587,8 @@ bool ResultBuilder::IsMember(NamedDecl *ND) const {
   if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(ND))
     ND = Using->getTargetDecl();
 
-  return isa<ValueDecl>(ND) || isa<ObjCPropertyDecl>(ND);
+  return isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND) ||
+    isa<ObjCPropertyDecl>(ND);
 }
 
 // Find the next outer declaration context corresponding to this scope.

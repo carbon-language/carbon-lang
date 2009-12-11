@@ -6,9 +6,18 @@ namespace std {
   X* dyn_cast(Y *Val);
 }
 
+class Foo {
+public:
+  template<typename T> T &getAs();
+};
+
 void f() {
-  std::  
-  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:10:8 %s -o - | FileCheck -check-prefix=CC1 %s
+  std::sort(1, 2);
+  Foo().getAs<int>();
+  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:15:8 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
   // CHECK-CC1: dyn_cast<<#class X#>>(<#Y *Val#>)
-  // CHECK-CC1: sort(<#RandomAccessIterator first#>, <#RandomAccessIterator last#>)
+  // CHECK-CC1: sort(<#RandomAccessIterator first#>, <#RandomAccessIterator last#>
+  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:16:9 %s -o - | FileCheck -check-prefix=CHECK-CC2 %s
+  // CHECK-CC2: getAs<<#typename T#>>()
+)
   
