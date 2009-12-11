@@ -2995,6 +2995,21 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   if (isa<UsingShadowDecl>(Target))
     Target = cast<UsingShadowDecl>(Target)->getTargetDecl();
 
+  // If the target happens to be one of the previous declarations, we
+  // don't have a conflict.
+  // 
+  // FIXME: but we might be increasing its access, in which case we
+  // should redeclare it.
+  NamedDecl *NonTag = 0, *Tag = 0;
+  for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
+         I != E; ++I) {
+    NamedDecl *D = (*I)->getUnderlyingDecl();
+    if (D->getCanonicalDecl() == Target->getCanonicalDecl())
+      return false;
+
+    (isa<TagDecl>(D) ? Tag : NonTag) = D;
+  }
+
   if (Target->isFunctionOrFunctionTemplate()) {
     FunctionDecl *FD;
     if (isa<FunctionTemplateDecl>(Target))
@@ -3035,18 +3050,6 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   }
 
   // Target is not a function.
-
-  // If the target happens to be one of the previous declarations, we
-  // don't have a conflict.
-  NamedDecl *NonTag = 0, *Tag = 0;
-  for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
-         I != E; ++I) {
-    NamedDecl *D = (*I)->getUnderlyingDecl();
-    if (D->getCanonicalDecl() == Target->getCanonicalDecl())
-      return false;
-
-    (isa<TagDecl>(D) ? Tag : NonTag) = D;
-  }
 
   if (isa<TagDecl>(Target)) {
     // No conflict between a tag and a non-tag.

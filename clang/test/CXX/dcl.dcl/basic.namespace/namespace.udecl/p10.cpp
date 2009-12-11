@@ -17,3 +17,17 @@ namespace test0 {
   using ns1::tag;
   using ns2::tag;
 }
+
+// PR 5752
+namespace test1 {
+  namespace ns {
+    void foo();
+  }
+
+  using ns::foo;
+  void foo(int);
+
+  namespace ns {
+    using test1::foo;
+  }
+}
