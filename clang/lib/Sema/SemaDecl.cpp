@@ -5663,7 +5663,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   llvm::APSInt EnumVal(32);
   QualType EltTy;
   if (Val) {
-    if (Val->isTypeDependent())
+    if (Enum->isDependentType())
       EltTy = Context.DependentTy;
     else {
       // Make sure to promote the operand type to int.
@@ -5675,8 +5675,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
 
       // C99 6.7.2.2p2: Make sure we have an integer constant expression.
       SourceLocation ExpLoc;
-      if (!Val->isValueDependent() &&
-          VerifyIntegerConstantExpression(Val, &EnumVal)) {
+      if (VerifyIntegerConstantExpression(Val, &EnumVal)) {
         Val = 0;
       } else {
         EltTy = Val->getType();
@@ -5685,7 +5684,9 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   }
 
   if (!Val) {
-    if (LastEnumConst) {
+    if (Enum->isDependentType())
+      EltTy = Context.DependentTy;
+    else if (LastEnumConst) {
       // Assign the last value + 1.
       EnumVal = LastEnumConst->getInitVal();
       ++EnumVal;
@@ -5770,6 +5771,19 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
 
   if (Attr)
     ProcessDeclAttributeList(S, Enum, Attr);
+
+  if (Enum->isDependentType()) {
+    for (unsigned i = 0; i != NumElements; ++i) {
+      EnumConstantDecl *ECD =
+        cast_or_null<EnumConstantDecl>(Elements[i].getAs<Decl>());
+      if (!ECD) continue;
+
+      ECD->setType(EnumType);
+    }
+
+    Enum->completeDefinition(Context, Context.DependentTy, Context.DependentTy);
+    return;
+  }
 
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
