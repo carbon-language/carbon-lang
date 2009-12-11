@@ -24,7 +24,8 @@ class RTTIBuilder {
   const llvm::Type *Int8PtrTy;
   llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
-  
+
+
   // Type info flags.
   enum {
     /// TI_Const - Type has const qualifier.
@@ -213,6 +214,9 @@ public:
   llvm::Constant *
   Buildclass_type_info(const CXXRecordDecl *RD,
                        llvm::GlobalVariable::LinkageTypes Linkage) {
+    std::vector<llvm::Constant *> info;
+    assert(info.empty() && "Info vector must be empty!");
+    
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
@@ -224,8 +228,6 @@ public:
     GV = CGM.getModule().getGlobalVariable(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-
-    std::vector<llvm::Constant *> info;
 
     // If we're in an anonymous namespace, then we always want internal linkage.
     if (RD->isInAnonymousNamespace())
@@ -311,6 +313,9 @@ public:
   }
 
   llvm::Constant *BuildPointerType(QualType Ty) {
+    std::vector<llvm::Constant *> info;
+    assert(info.empty() && "Info vector must be empty!");
+    
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
@@ -321,8 +326,6 @@ public:
     GV = CGM.getModule().getGlobalVariable(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-
-    std::vector<llvm::Constant *> info;
 
     bool Extern = DecideExtern(Ty);
     bool Hidden = DecideHidden(Ty);
@@ -374,6 +377,9 @@ public:
   }
 
   llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
+    std::vector<llvm::Constant *> info;
+    assert(info.empty() && "Info vector must be empty!");
+
     llvm::Constant *C;
 
     llvm::SmallString<256> OutName;
@@ -384,8 +390,6 @@ public:
     GV = CGM.getModule().getGlobalVariable(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-
-    std::vector<llvm::Constant *> info;
 
     bool Extern = DecideExtern(Ty);
     bool Hidden = DecideHidden(Ty);
