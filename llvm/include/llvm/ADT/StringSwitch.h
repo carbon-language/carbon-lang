@@ -38,28 +38,24 @@ namespace llvm {
 ///   .Cases("violet", "purple", Violet)
 ///   .Default(UnknownColor);
 /// \endcode
-template<typename T>
+template<typename T, typename R = T>
 class StringSwitch {
   /// \brief The string we are matching.
   StringRef Str;
 
-  /// \brief The result of this switch statement, once known.
-  T Result;
-
-  /// \brief Set true when the result of this switch is already known; in this
-  /// case, Result is valid.
-  bool ResultKnown;
+  /// \brief The pointer to the result of this switch statement, once known,
+  /// null before that.
+  const T *Result;
 
 public:
   explicit StringSwitch(StringRef Str)
-  : Str(Str), ResultKnown(false) { }
+  : Str(Str), Result(0) { }
 
   template<unsigned N>
   StringSwitch& Case(const char (&S)[N], const T& Value) {
-    if (!ResultKnown && N-1 == Str.size() &&
+    if (!Result && N-1 == Str.size() &&
         (std::memcmp(S, Str.data(), N-1) == 0)) {
-      Result = Value;
-      ResultKnown = true;
+      Result = &Value;
     }
 
     return *this;
@@ -92,16 +88,16 @@ public:
       .Case(S4, Value);
   }
 
-  T Default(const T& Value) {
-    if (ResultKnown)
-      return Result;
+  R Default(const T& Value) const {
+    if (Result)
+      return *Result;
 
     return Value;
   }
 
-  operator T() {
-    assert(ResultKnown && "Fell off the end of a string-switch");
-    return Result;
+  operator R() const {
+    assert(Result && "Fell off the end of a string-switch");
+    return *Result;
   }
 };
 
