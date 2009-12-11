@@ -92,6 +92,8 @@ namespace ARMII {
     StMiscFrm     = 9  << FormShift,
     LdStMulFrm    = 10 << FormShift,
 
+    LdStExFrm     = 28 << FormShift,
+
     // Miscellaneous arithmetic instructions
     ArithMiscFrm  = 11 << FormShift,
 

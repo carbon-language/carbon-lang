@@ -1596,6 +1596,48 @@ def Int_SyncBarrierV7 : AI<(outs), (ins),
 }
 }
 
+let usesCustomInserter = 1, mayLoad = 1, mayStore = 1 in {
+  def ATOMIC_CMP_SWAP_I8 : PseudoInst<
+    (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
+    "${:comment} ATOMIC_CMP_SWAP_I8 PSEUDO!",
+    [(set GPR:$dst, (atomic_cmp_swap_8 GPR:$ptr, GPR:$old, GPR:$new))]>;
+  def ATOMIC_CMP_SWAP_I16 : PseudoInst<
+    (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
+    "${:comment} ATOMIC_CMP_SWAP_I16 PSEUDO!",
+    [(set GPR:$dst, (atomic_cmp_swap_16 GPR:$ptr, GPR:$old, GPR:$new))]>;
+  def ATOMIC_CMP_SWAP_I32 : PseudoInst<
+    (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
+    "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
+    [(set GPR:$dst, (atomic_cmp_swap_32 GPR:$ptr, GPR:$old, GPR:$new))]>;
+}
+
+let mayLoad = 1 in {
+def LDREXB : AIldrex<0b10, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
+                    "ldrexb", "\t$dest, [$ptr]",
+                    []>;
+def LDREXH : AIldrex<0b11, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
+                    "ldrexh", "\t$dest, [$ptr]",
+                    []>;
+def LDREX  : AIldrex<0b00, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
+                    "ldrex", "\t$dest, [$ptr]",
+                    []>;
+}
+
+let mayStore = 1 in {
+def STREXB : AIstrex<0b10, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+                     NoItinerary,
+                    "strexb", "\t$success, $src, [$ptr]",
+                    []>;
+def STREXH : AIstrex<0b11, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+                    NoItinerary,
+                    "strexh", "\t$success, $src, [$ptr]",
+                    []>;
+def STREX  : AIstrex<0b00, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+                     NoItinerary,
+                    "strex", "\t$success, $src, [$ptr]",
+                    []>;
+}
+
 //===----------------------------------------------------------------------===//
 // TLS Instructions
 //

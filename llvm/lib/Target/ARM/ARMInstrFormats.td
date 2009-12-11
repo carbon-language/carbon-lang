@@ -33,6 +33,8 @@ def LdMiscFrm     : Format<8>;
 def StMiscFrm     : Format<9>;
 def LdStMulFrm    : Format<10>;
 
+def LdStExFrm     : Format<28>;
+
 def ArithMiscFrm  : Format<11>;
 def ExtFrm        : Format<12>;
 
@@ -263,6 +265,28 @@ class JTI<dag oops, dag iops, InstrItinClass itin,
           string asm, list<dag> pattern>
   : XI<oops, iops, AddrModeNone, SizeSpecial, IndexModeNone, BrMiscFrm, itin,
        asm, "", pattern>;
+
+
+// Atomic load/store instructions
+
+class AIldrex<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
+              string opc, string asm, list<dag> pattern>
+  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, LdStExFrm, itin,
+      opc, asm, "", pattern> {
+  let Inst{27-23} = 0b00011;
+  let Inst{22-21} = opcod;
+  let Inst{20} = 1;
+  let Inst{11-0}  = 0b111110011111;
+}
+class AIstrex<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
+              string opc, string asm, list<dag> pattern>
+  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, LdStExFrm, itin,
+      opc, asm, "", pattern> {
+  let Inst{27-23} = 0b00011;
+  let Inst{22-21} = opcod;
+  let Inst{20} = 0;
+  let Inst{11-0}  = 0b111110011111;
+}
 
 // addrmode1 instructions
 class AI1<bits<4> opcod, dag oops, dag iops, Format f, InstrItinClass itin,

@@ -331,6 +331,10 @@ namespace llvm {
 
     SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                       SDValue &ARMCC, SelectionDAG &DAG, DebugLoc dl);
+
+    MachineBasicBlock *EmitAtomicCmpSwap(unsigned Size, MachineInstr *MI,
+                                         MachineBasicBlock *BB) const;
+
   };
 }
 

@@ -3043,6 +3043,77 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
 //===----------------------------------------------------------------------===//
 
 MachineBasicBlock *
+ARMTargetLowering::EmitAtomicCmpSwap(unsigned Size, MachineInstr *MI,
+                                     MachineBasicBlock *BB) const {
+  unsigned dest    = MI->getOperand(0).getReg();
+  unsigned ptr     = MI->getOperand(1).getReg();
+  unsigned oldval  = MI->getOperand(2).getReg();
+  unsigned newval  = MI->getOperand(3).getReg();
+  unsigned scratch = BB->getParent()->getRegInfo()
+    .createVirtualRegister(ARM::GPRRegisterClass);
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+
+  unsigned ldrOpc, strOpc;
+  switch (Size) {
+  default: llvm_unreachable("unsupported size for AtomicCmpSwap!");
+  case 1: ldrOpc = ARM::LDREXB; strOpc = ARM::STREXB; break;
+  case 2: ldrOpc = ARM::LDREXH; strOpc = ARM::STREXH; break;
+  case 4: ldrOpc = ARM::LDREX;  strOpc = ARM::STREX;  break;
+  }
+
+  MachineFunction *MF = BB->getParent();
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator It = BB;
+  ++It; // insert the new blocks after the current block
+
+  MachineBasicBlock *loop1MBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *loop2MBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MF->insert(It, loop1MBB);
+  MF->insert(It, loop2MBB);
+  MF->insert(It, exitMBB);
+  exitMBB->transferSuccessors(BB);
+
+  //  thisMBB:
+  //   ...
+  //   fallthrough --> loop1MBB
+  BB->addSuccessor(loop1MBB);
+
+  // loop1MBB:
+  //   ldrex dest, [ptr]
+  //   cmp dest, oldval
+  //   bne exitMBB
+  BB = loop1MBB;
+  AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr));
+  AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::CMPrr))
+                 .addReg(dest).addReg(oldval));
+  BuildMI(BB, dl, TII->get(ARM::Bcc)).addMBB(exitMBB).addImm(ARMCC::NE)
+    .addReg(ARM::CPSR);
+  BB->addSuccessor(loop2MBB);
+  BB->addSuccessor(exitMBB);
+
+  // loop2MBB:
+  //   strex scratch, newval, [ptr]
+  //   cmp scratch, #0
+  //   bne loop1MBB
+  BB = loop2MBB;
+  AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(newval)
+                 .addReg(ptr));
+  AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::CMPri))
+                 .addReg(scratch).addImm(0));
+  BuildMI(BB, dl, TII->get(ARM::Bcc)).addMBB(loop1MBB).addImm(ARMCC::NE)
+    .addReg(ARM::CPSR);
+  BB->addSuccessor(loop1MBB);
+  BB->addSuccessor(exitMBB);
+
+  //  exitMBB:
+  //   ...
+  BB = exitMBB;
+  return BB;
+}
+
+MachineBasicBlock *
 ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB,
                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
@@ -3050,7 +3121,16 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   switch (MI->getOpcode()) {
   default:
+    MI->dump();
     llvm_unreachable("Unexpected instr type to insert");
+
+
+
+
+  case ARM::ATOMIC_CMP_SWAP_I8:  return EmitAtomicCmpSwap(1, MI, BB);
+  case ARM::ATOMIC_CMP_SWAP_I16: return EmitAtomicCmpSwap(2, MI, BB);
+  case ARM::ATOMIC_CMP_SWAP_I32: return EmitAtomicCmpSwap(4, MI, BB);
+
   case ARM::tMOVCCr_pseudo: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the
     // diamond control-flow pattern.  The incoming instruction knows the
