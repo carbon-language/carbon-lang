@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s 
+// RUN: clang-cc -fsyntax-only %s -Wnon-pod-varargs
 class X { };
 
 int& copycon(X x);
@@ -23,10 +23,10 @@ float& copycon2(...);
 
 void test_copycon2(A a, const A ac, B b, B const bc, B volatile bv) {
   int& i1 = copycon2(b);
-  float& f1 = copycon2(bc);
-  float& f2 = copycon2(bv);
+  float& f1 = copycon2(bc); // expected-warning {{cannot pass object of non-POD type}}
+  float& f2 = copycon2(bv); // expected-warning {{cannot pass object of non-POD type}}
   short& s1 = copycon2(a);
-  float& f3 = copycon2(ac);
+  float& f3 = copycon2(ac); // expected-warning {{cannot pass object of non-POD type}}
 }
 
 int& copycon3(A a);
@@ -34,7 +34,7 @@ float& copycon3(...);
 
 void test_copycon3(B b, const B bc) {
   int& i1 = copycon3(b);
-  float& f1 = copycon3(bc);
+  float& f1 = copycon3(bc); // expected-warning {{cannot pass object of non-POD type}}
 }
 
 
