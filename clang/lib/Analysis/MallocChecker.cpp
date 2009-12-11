@@ -58,7 +58,7 @@ class MallocChecker : public CheckerVisitor<MallocChecker> {
 public:
   MallocChecker() : BT_DoubleFree(0), BT_Leak(0), II_malloc(0), II_free(0) {}
   static void *getTag();
-  void PostVisitCallExpr(CheckerContext &C, const CallExpr *CE);
+  bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
   void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
@@ -85,10 +85,14 @@ void *MallocChecker::getTag() {
   return &x;
 }
 
-void MallocChecker::PostVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
-  const FunctionDecl *FD = CE->getDirectCallee();
+bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  const Expr *Callee = CE->getCallee();
+  SVal L = state->getSVal(Callee);
+
+  const FunctionDecl *FD = L.getAsFunctionDecl();
   if (!FD)
-    return;
+    return false;
 
   ASTContext &Ctx = C.getASTContext();
   if (!II_malloc)
@@ -98,19 +102,27 @@ void MallocChecker::PostVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
 
   if (FD->getIdentifier() == II_malloc) {
     MallocMem(C, CE);
-    return;
+    return true;
   }
 
   if (FD->getIdentifier() == II_free) {
     FreeMem(C, CE);
-    return;
+    return true;
   }
+
+  return false;
 }
 
 void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
+  unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+  ValueManager &ValMgr = C.getValueManager();
+
+  SVal RetVal = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
+
   const GRState *state = C.getState();
-  SVal CallVal = state->getSVal(CE);
-  SymbolRef Sym = CallVal.getAsLocSymbol();
+  state = state->BindExpr(CE, RetVal);
+  
+  SymbolRef Sym = RetVal.getAsLocSymbol();
   assert(Sym);
   // Set the symbol's state to Allocated.
   C.addTransition(state->set<RegionState>(Sym, RefState::getAllocated(CE)));
