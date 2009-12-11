@@ -1548,16 +1548,10 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
       if (!S->isWide()) {
         const llvm::fltSemantics &Sem =
           Info.Ctx.getFloatTypeSemantics(E->getType());
-        llvm::SmallString<16> s;
-        s.append(S->getStrData(), S->getStrData() + S->getByteLength());
-        s += '\0';
-        long l;
-        char *endp;
-        l = strtol(&s[0], &endp, 0);
-        if (endp != s.end()-1)
+        unsigned Type = 0;
+        if (!S->getString().empty() && S->getString().getAsInteger(0, Type))
           return false;
-        unsigned type = (unsigned int)l;;
-        Result = llvm::APFloat::getNaN(Sem, false, type);
+        Result = llvm::APFloat::getNaN(Sem, false, Type);
         return true;
       }
     }
