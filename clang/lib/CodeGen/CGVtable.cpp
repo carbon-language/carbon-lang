@@ -203,7 +203,7 @@ public:
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
     if (BuildVtable)
-      rtti = cgm.GenerateRTTIRef(MostDerivedClass);
+      rtti = CGM.GetAddrOfRTTI(MostDerivedClass);
   }
 
   // getVtableComponents - Returns a reference to the vtable components.
@@ -1409,8 +1409,6 @@ void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   }
   
   Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0);
-  
-  CGM.GenerateRTTI(RD);
   GenerateVTT(Linkage, RD);  
 }
 

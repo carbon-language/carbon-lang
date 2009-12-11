@@ -212,6 +212,13 @@ public:
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
                                     const llvm::Type *Ty = 0);
 
+  /// GetAddrOfRTTI - Get the address of the RTTI structure for the given type.
+  llvm::Constant *GetAddrOfRTTI(QualType Ty);
+
+  /// GetAddrOfRTTI - Get the address of the RTTI structure for the given record
+  /// decl.
+  llvm::Constant *GetAddrOfRTTI(const CXXRecordDecl *RD);
+
   /// GenerateRTTI - Generate the rtti information for the given type.
   llvm::Constant *GenerateRTTI(const CXXRecordDecl *RD);
   

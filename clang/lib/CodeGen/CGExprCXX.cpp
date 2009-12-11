@@ -352,18 +352,10 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
 llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
   QualType Ty = E->getType();
   const llvm::Type *LTy = ConvertType(Ty)->getPointerTo();
-  if (E->isTypeOperand()) {
-    Ty = E->getTypeOperand();
-    CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
-    Ty = CanTy.getUnqualifiedType().getNonReferenceType();
-    if (const RecordType *RT = Ty->getAs<RecordType>()) {
-      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (RD->isPolymorphic())
-        return Builder.CreateBitCast(CGM.GenerateRTTIRef(RD), LTy);
-      return Builder.CreateBitCast(CGM.GenerateRTTI(RD), LTy);
-    }
-    return Builder.CreateBitCast(CGM.GenerateRTTI(Ty), LTy);
-  }
+  
+  if (E->isTypeOperand())
+    return Builder.CreateBitCast(CGM.GetAddrOfRTTI(E->getTypeOperand()), LTy);
+
   Expr *subE = E->getExprOperand();
   Ty = subE->getType();
   CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);

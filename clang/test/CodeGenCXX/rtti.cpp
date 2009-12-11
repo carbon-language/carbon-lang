@@ -31,6 +31,11 @@ class test1_D : public test1_B7 {
   virtual void foo() { }
 } d1;
 
+// CHECK:__ZTI7test1_D:
+// CHECK-NEXT: .quad (__ZTVN10__cxxabiv120__si_class_type_infoE) + 16
+// CHECK-NEXT: .quad __ZTS7test1_D
+// CHECK-NEXT: .quad __ZTI8test1_B7
+
 // CHECK:     __ZTSPVi:
 // CHECK-NEXT: .asciz "PVi"
 
@@ -76,13 +81,6 @@ class test1_D : public test1_B7 {
 // CHECK-NEXT: 	.space	4
 // CHECK-NEXT: 	.quad	__ZTIFvvE
 // CHECK-NEXT: 	.quad	__ZTI7test3_A
-
-
-
-// CHECK:__ZTI7test1_D:
-// CHECK-NEXT: .quad (__ZTVN10__cxxabiv120__si_class_type_infoE) + 16
-// CHECK-NEXT: .quad __ZTS7test1_D
-// CHECK-NEXT: .quad __ZTI8test1_B7
 
 // CHECK:__ZTI8test1_B7:
 // CHECK-NEXT: .quad (__ZTVN10__cxxabiv121__vmi_class_type_infoE) + 16
@@ -141,7 +139,6 @@ class test1_D : public test1_B7 {
 // CHECK-NEXT: .quad __ZTS8test1_B2
 // CHECK-NEXT: .quad __ZTI8test1_B1
 
-
 class NP { };
 void test2_1();
 void test2_2(test1_D *dp) {
@@ -166,7 +163,7 @@ void test2_2(test1_D *dp) {
 // CHECK-LL-NEXT:  %2 = load %"class.std::type_info"** %1
 // CHECK-LL-NEXT:  %call = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* %2, %"class.std::type_info"* bitcast (%{{[0-9]*}}* @_ZTI7test1_D to %"class.std::type_info"*))
 
-// CHECK-LL:       %call2 = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* bitcast (%0* @_ZTI2NP to %"class.std::type_info"*), %"class.std::type_info"* bitcast (%{{[0-9]*}}* @_ZTI7test1_D to %"class.std::type_info"*))
+// CHECK-LL:       %call2 = call zeroext i1 @_ZNKSt9type_infoeqERKS_(%"class.std::type_info"* bitcast (%{{[0-9]*}}* @_ZTI2NP to %"class.std::type_info"*), %"class.std::type_info"* bitcast (%{{[0-9]*}}* @_ZTI7test1_D to %"class.std::type_info"*))
 
 // CHECK-LL:       %3 = bitcast %class.test1_B7* %tmp5 to %"class.std::type_info"***
 // CHECK-LL-NEXT:  %4 = icmp ne %"class.std::type_info"*** %3, null

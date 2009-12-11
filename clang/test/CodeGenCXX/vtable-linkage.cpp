@@ -33,12 +33,18 @@ void D::f() { }
 // CHECK: @_ZTV1B = external constant
 
 // C has no key function, so its vtable should have weak_odr linkage.
+// CHECK: @_ZTS1C = weak_odr constant
+// CHECK: @_ZTI1C = weak_odr constant
 // CHECK: @_ZTV1C = weak_odr constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
+// CHECK: @_ZTS1D = constant
+// CHECK: @_ZTI1D = constant
 // CHECK: @_ZTV1D = constant
 
 // The A vtable should have internal linkage since it is inside an anonymous 
 // namespace.
+// CHECK: @_ZTSN12_GLOBAL__N_11AE = internal constant
+// CHECK: @_ZTIN12_GLOBAL__N_11AE = internal constant
 // CHECK: @_ZTVN12_GLOBAL__N_11AE = internal constant
