@@ -106,14 +106,14 @@ sub GetCCArgs {
   close(TO_PARENT);
   my $line;
   while (<FROM_CHILD>) {
-    next if (!/clang-cc/);
+    next if (!/-cc1/);
     $line = $_;
   }
 
   waitpid($pid,0);
   close(FROM_CHILD);
   
-  die "could not find clang-cc line\n" if (!defined $line);
+  die "could not find clang line\n" if (!defined $line);
   # Strip the newline and initial whitspace
   chomp $line;  
   $line =~ s/^\s+//;
@@ -124,7 +124,7 @@ sub GetCCArgs {
     $items[$i] =~ s/\"$//;
   }
   my $cmd = shift @items;
-  die "cannot find 'clang-cc' in 'clang' command\n" if (!($cmd =~ /clang-cc/));
+  die "cannot find 'clang' in 'clang' command\n" if (!($cmd =~ /clang/));
   return \@items;
 }
 
