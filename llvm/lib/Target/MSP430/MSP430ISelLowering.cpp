@@ -115,8 +115,8 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::BR_CC,            MVT::i8,    Custom);
   setOperationAction(ISD::BR_CC,            MVT::i16,   Custom);
   setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
-  setOperationAction(ISD::SETCC,            MVT::i8,    Expand);
-  setOperationAction(ISD::SETCC,            MVT::i16,   Expand);
+  setOperationAction(ISD::SETCC,            MVT::i8,    Custom);
+  setOperationAction(ISD::SETCC,            MVT::i16,   Custom);
   setOperationAction(ISD::SELECT,           MVT::i8,    Expand);
   setOperationAction(ISD::SELECT,           MVT::i16,   Expand);
   setOperationAction(ISD::SELECT_CC,        MVT::i8,    Custom);
@@ -183,6 +183,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SRA:              return LowerShifts(Op, DAG);
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
   case ISD::ExternalSymbol:   return LowerExternalSymbol(Op, DAG);
+  case ISD::SETCC:            return LowerSETCC(Op, DAG);
   case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND:      return LowerSIGN_EXTEND(Op, DAG);
@@ -699,6 +700,88 @@ SDValue MSP430TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
 
   return DAG.getNode(MSP430ISD::BR_CC, dl, Op.getValueType(),
                      Chain, Dest, TargetCC, Flag);
+}
+
+
+SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
+  SDValue LHS   = Op.getOperand(0);
+  SDValue RHS   = Op.getOperand(1);
+  DebugLoc dl   = Op.getDebugLoc();
+
+  // If we are doing an AND and testing against zero, then the CMP
+  // will not be generated.  The AND (or BIT) will generate the condition codes,
+  // but they are different from CMP.
+  bool andCC = false;
+  if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS)) {
+    if (RHSC->isNullValue() && LHS.hasOneUse() &&
+        (LHS.getOpcode() == ISD::AND ||
+         (LHS.getOpcode() == ISD::TRUNCATE &&
+          LHS.getOperand(0).getOpcode() == ISD::AND))) {
+      andCC = true;
+    }
+  }
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  SDValue TargetCC;
+  SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
+
+  // Get the condition codes directly from the status register, if its easy.
+  // Otherwise a branch will be generated.  Note that the AND and BIT
+  // instructions generate different flags than CMP, the carry bit can be used
+  // for NE/EQ.
+  bool Invert = false;
+  bool Shift = false;
+  bool Convert = true;
+  switch (cast<ConstantSDNode>(TargetCC)->getZExtValue()) {
+   default:
+    Convert = false;
+    break;
+   case MSP430CC::COND_HS:
+     // Res = SRW & 1, no processing is required
+     break;
+    case MSP430CC::COND_LO:
+     // Res = ~(SRW & 1)
+     Invert = true;
+     break;
+    case MSP430CC::COND_NE:
+     if (andCC) {
+       // C = ~Z, thus Res = SRW & 1, no processing is required
+     } else {
+       // Res = (SRW >> 1) & 1
+       Shift = true;
+     }
+     break;
+    case MSP430CC::COND_E:
+     if (andCC) {
+       // C = ~Z, thus Res = ~(SRW & 1)
+     } else {
+       // Res = ~((SRW >> 1) & 1)
+       Shift = true;
+     }
+     Invert = true;
+     break;
+  }
+  EVT VT = Op.getValueType();
+  SDValue One  = DAG.getConstant(1, VT);
+  if (Convert) {
+    SDValue SR = DAG.getCopyFromReg(DAG.getEntryNode(), dl, MSP430::SRW,
+                                     MVT::i16, Flag);
+    if (Shift)
+      // FIXME: somewhere this is turned into a SRL, lower it MSP specific?
+      SR = DAG.getNode(ISD::SRA, dl, MVT::i16, SR, One);
+    SR = DAG.getNode(ISD::AND, dl, MVT::i16, SR, One);
+    if (Invert)
+      SR = DAG.getNode(ISD::XOR, dl, MVT::i16, SR, One);
+    return SR;
+  } else {
+    SDValue Zero = DAG.getConstant(0, VT);
+    SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+    SmallVector<SDValue, 4> Ops;
+    Ops.push_back(One);
+    Ops.push_back(Zero);
+    Ops.push_back(TargetCC);
+    Ops.push_back(Flag);
+    return DAG.getNode(MSP430ISD::SELECT_CC, dl, VTs, &Ops[0], Ops.size());
+  }
 }
 
 SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
