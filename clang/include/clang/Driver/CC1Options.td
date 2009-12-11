@@ -187,6 +187,10 @@ def verify : Flag<"-verify">,
 // Frontend Options
 //===----------------------------------------------------------------------===//
 
+// This isn't normally used, it is just here so we can parse a
+// CompilerInvocation out of a driver-derived argument vector.
+def cc1 : Flag<"-cc1">;
+
 def code_completion_at : Separate<"-code-completion-at">,
   MetaVarName<"<file>:<line>:<column>">,
   HelpText<"Dump code-completion information at a location">;

@@ -593,6 +593,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
 
+  // Invoke ourselves in -cc1 mode.
+  //
+  // FIXME: Implement custom jobs for internal actions.
+  CmdArgs.push_back("-cc1");
+
   // Add the "effective" target triple.
   CmdArgs.push_back("-triple");
   std::string TripleStr = getEffectiveClangTriple(D, getToolChain(), Args);
@@ -1037,7 +1042,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
   //
-  // FIXME: This is disabled until clang-cc supports -fno-builtin-foo. PR4941.
+  // FIXME: This is disabled until clang -cc1 supports -fno-builtin-foo. PR4941.
 #if 0
   if (getToolChain().getTriple().getOS() == llvm::Triple::Darwin &&
       (getToolChain().getTriple().getArch() == llvm::Triple::arm ||
@@ -1087,7 +1092,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "clang-cc"));
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "clang"));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
   // Explicitly warn that these options are unsupported, even though

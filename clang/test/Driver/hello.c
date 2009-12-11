@@ -1,7 +1,7 @@
 // RUN: clang -ccc-echo -o %t %s 2> %t.log
 
 // Make sure we used clang.
-// RUN: grep 'clang-cc" .*hello.c' %t.log
+// RUN: grep 'clang" -cc1 .*hello.c' %t.log
 
 // RUN: %t > %t.out
 // RUN: grep "I'm a little driver, short and stout." %t.out
