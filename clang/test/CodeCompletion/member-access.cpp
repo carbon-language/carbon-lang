@@ -11,7 +11,7 @@ struct Base2 {
 
 struct Base3 : Base1, Base2 {
   void memfun1(float);
-  void memfun1(double);
+  void memfun1(double) const;
   void memfun2(int);
 };
 
@@ -34,7 +34,7 @@ void test(const Proxy &p) {
   // CHECK-CC1: member3 : 0
   // CHECK-CC1: member4 : 0
   // CHECK-CC1: memfun1 : 0 : [#Base3::#]memfun1(<#float#>)
-  // CHECK-CC1: memfun1 : 0 : [#Base3::#]memfun1(<#double#>)
+  // CHECK-CC1: memfun1 : 0 : [#Base3::#]memfun1(<#double#>)[# const#]
   // CHECK-CC1: memfun2 : 0 : [#Base3::#]memfun2(<#int#>)
   // CHECK-CC1: memfun3 : 0 : memfun3(<#int#>)
   // CHECK-CC1: memfun1 : 0 (Hidden) : Base2::memfun1(<#int#>)

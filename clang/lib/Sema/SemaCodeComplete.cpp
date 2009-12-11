@@ -947,10 +947,11 @@ static void AddTemplateParameterChunks(ASTContext &Context,
 
 /// \brief Add a qualifier to the given code-completion string, if the
 /// provided nested-name-specifier is non-NULL.
-void AddQualifierToCompletionString(CodeCompletionString *Result, 
-                                    NestedNameSpecifier *Qualifier, 
-                                    bool QualifierIsInformative,
-                                    ASTContext &Context) {
+static void 
+AddQualifierToCompletionString(CodeCompletionString *Result, 
+                               NestedNameSpecifier *Qualifier, 
+                               bool QualifierIsInformative,
+                               ASTContext &Context) {
   if (!Qualifier)
     return;
   
@@ -963,6 +964,23 @@ void AddQualifierToCompletionString(CodeCompletionString *Result,
     Result->AddInformativeChunk(PrintedNNS);
   else
     Result->AddTextChunk(PrintedNNS);
+}
+
+static void AddFunctionTypeQualsToCompletionString(CodeCompletionString *Result,
+                                                   FunctionDecl *Function) {
+  const FunctionProtoType *Proto
+    = Function->getType()->getAs<FunctionProtoType>();
+  if (!Proto || !Proto->getTypeQuals())
+    return;
+
+  std::string QualsStr;
+  if (Proto->getTypeQuals() & Qualifiers::Const)
+    QualsStr += " const";
+  if (Proto->getTypeQuals() & Qualifiers::Volatile)
+    QualsStr += " volatile";
+  if (Proto->getTypeQuals() & Qualifiers::Restrict)
+    QualsStr += " restrict";
+  Result->AddInformativeChunk(QualsStr);
 }
 
 /// \brief If possible, create a new code completion string for the given
@@ -1038,6 +1056,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     AddFunctionParameterChunks(S.Context, Function, Result);
     Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
+    AddFunctionTypeQualsToCompletionString(Result, Function);
     return Result;
   }
   
@@ -1091,6 +1110,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     Result->AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
     AddFunctionParameterChunks(S.Context, Function, Result);
     Result->AddChunk(Chunk(CodeCompletionString::CK_RightParen));
+    AddFunctionTypeQualsToCompletionString(Result, Function);
     return Result;
   }
   
