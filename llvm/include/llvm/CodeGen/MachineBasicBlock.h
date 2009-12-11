@@ -327,6 +327,11 @@ public:
   /// 'Old', change the code and CFG so that it branches to 'New' instead.
   void ReplaceUsesOfBlockWith(MachineBasicBlock *Old, MachineBasicBlock *New);
 
+  /// BranchesToLandingPad - The basic block branches only to a landing pad or
+  /// to another basic block which branches only to a landing pad. No other
+  /// instructions are present other than the unconditional branch.
+  bool BranchesToLandingPad(const MachineBasicBlock *MBB) const;
+
   /// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in
   /// the CFG to be inserted.  If we have proven that MBB can only branch to
   /// DestA and DestB, remove any other MBB successors from the CFG. DestA and

@@ -13,15 +13,16 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Assembly/Writer.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -448,10 +449,35 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
   addSuccessor(New);
 }
 
+/// BranchesToLandingPad - The basic block branches only to a landing pad or to
+/// another basic block which branches only to a landing pad. No other
+/// instructions are present other than the unconditional branch.
+bool
+MachineBasicBlock::BranchesToLandingPad(const MachineBasicBlock *MBB) const {
+  SmallSet<const MachineBasicBlock*, 32> Visited;
+  const MachineBasicBlock *CurMBB = MBB;
+
+  while (!Visited.count(CurMBB) && !CurMBB->isLandingPad()) {
+    if (CurMBB->size() != 1 || CurMBB->succ_empty() || CurMBB->succ_size() != 1)
+      break;
+
+    const TargetInstrInfo *TII =
+      CurMBB->getParent()->getTarget().getInstrInfo();
+    if (!TII->isUnpredicatedTerminator(CurMBB->begin()))
+      break;
+
+    Visited.insert(CurMBB);
+    CurMBB = *CurMBB->succ_begin();
+  }
+
+  return CurMBB->isLandingPad();
+}
+
 /// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
 /// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
 /// DestB, remove any other MBB successors from the CFG.  DestA and DestB can
 /// be null.
+/// 
 /// Besides DestA and DestB, retain other edges leading to LandingPads
 /// (currently there can be only one; we don't check or require that here).
 /// Note it is possible that DestA and/or DestB are LandingPads.
@@ -481,16 +507,17 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   }
   
   MachineBasicBlock::succ_iterator SI = succ_begin();
-  MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
+  const MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
   while (SI != succ_end()) {
-    if (*SI == DestA) {
+    const MachineBasicBlock *MBB = *SI;
+    if (MBB == DestA) {
       DestA = 0;
       ++SI;
-    } else if (*SI == DestB) {
+    } else if (MBB == DestB) {
       DestB = 0;
       ++SI;
-    } else if ((*SI)->isLandingPad() && 
-               *SI!=OrigDestA && *SI!=OrigDestB) {
+    } else if (BranchesToLandingPad(MBB) &&
+               MBB != OrigDestA && MBB != OrigDestB) {
       ++SI;
     } else {
       // Otherwise, this is a superfluous edge, remove it.
@@ -498,12 +525,14 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
       MadeChange = true;
     }
   }
+
   if (!AddedFallThrough) {
     assert(DestA == 0 && DestB == 0 &&
            "MachineCFG is missing edges!");
   } else if (isCond) {
     assert(DestA == 0 && "MachineCFG is missing edges!");
   }
+
   return MadeChange;
 }
 
