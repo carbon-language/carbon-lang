@@ -285,7 +285,7 @@ class AIstrex<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
   let Inst{27-23} = 0b00011;
   let Inst{22-21} = opcod;
   let Inst{20} = 0;
-  let Inst{11-0}  = 0b111110011111;
+  let Inst{11-4}  = 0b11111001;
 }
 
 // addrmode1 instructions
