@@ -363,6 +363,11 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   if (isa<FriendDecl>(CanonDecl) || 
       (IDNS & (Decl::IDNS_OrdinaryFriend | Decl::IDNS_TagFriend)))
     return;
+
+  // Class template (partial) specializations are never added as results
+  if (isa<ClassTemplateSpecializationDecl>(CanonDecl) ||
+      isa<ClassTemplatePartialSpecializationDecl>(CanonDecl))
+    return;
   
   if (const IdentifierInfo *Id = R.Declaration->getIdentifier()) {
     // __va_list_tag is a freak of nature. Find it and skip it.
