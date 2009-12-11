@@ -53,6 +53,7 @@ public:
     StackLocalsSpaceRegionKind,
     StackArgumentsSpaceRegionKind,
     HeapSpaceRegionKind,
+    UnknownSpaceRegionKind,
     GlobalsSpaceRegionKind,
     END_MEMSPACES = GlobalsSpaceRegionKind,
     // Untyped regions.
@@ -168,6 +169,16 @@ class HeapSpaceRegion : public MemSpaceRegion {
 public:
   static bool classof(const MemRegion *R) {
     return R->getKind() == HeapSpaceRegionKind;
+  }
+};
+  
+class UnknownSpaceRegion : public MemSpaceRegion {
+  friend class MemRegionManager;
+  UnknownSpaceRegion(MemRegionManager *mgr)
+    : MemSpaceRegion(mgr, UnknownSpaceRegionKind) {}
+public:
+  static bool classof(const MemRegion *R) {
+    return R->getKind() == UnknownSpaceRegionKind;
   }
 };
   
@@ -757,16 +768,23 @@ class MemRegionManager {
   llvm::FoldingSet<MemRegion> Regions;
 
   GlobalsSpaceRegion *globals;
-  StackLocalsSpaceRegion *stackLocals;
-  StackArgumentsSpaceRegion *stackArguments;
+  
+  const StackFrameContext *cachedStackLocalsFrame;
+  StackLocalsSpaceRegion *cachedStackLocalsRegion;
+  
+  const StackFrameContext *cachedStackArgumentsFrame;
+  StackArgumentsSpaceRegion *cachedStackArgumentsRegion;
+
   HeapSpaceRegion *heap;
-  MemSpaceRegion *unknown;
+  UnknownSpaceRegion *unknown;
   MemSpaceRegion *code;
 
 public:
   MemRegionManager(ASTContext &c, llvm::BumpPtrAllocator& a)
-    : C(c), A(a), globals(0), stackLocals(0), stackArguments(0), heap(0),
-      unknown(0), code(0) {}
+    : C(c), A(a), globals(0),
+      cachedStackLocalsFrame(0), cachedStackLocalsRegion(0),
+      cachedStackArgumentsFrame(0), cachedStackArgumentsRegion(0),
+      heap(0), unknown(0), code(0) {}
 
   ~MemRegionManager();
 

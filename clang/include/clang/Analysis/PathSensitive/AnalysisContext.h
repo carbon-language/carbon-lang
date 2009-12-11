@@ -120,6 +120,8 @@ public:
   }
   
   const StackFrameContext *getCurrentStackFrame() const;
+  const StackFrameContext *
+    getStackFrameForDeclContext(const DeclContext *DC) const;
 
   virtual void Profile(llvm::FoldingSetNodeID &ID) = 0;
 

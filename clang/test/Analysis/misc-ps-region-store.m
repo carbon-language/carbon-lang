@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify -fblocks %s
-// RUN: clang-cc -triple x86_64-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify -fblocks %s
+// RUN: clang-cc -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s
+// RUN: clang-cc -triple x86_64-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks %s
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;
@@ -582,4 +582,39 @@ int blocks_2(int *p, int z) {
   }
   return z;
 }
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7462324> - Test that variables passed using __blocks
+//  are not treated as being uninitialized.
+//===----------------------------------------------------------------------===//
+
+typedef void (^RDar_7462324_Callback)(id obj);
+
+@interface RDar7462324
+- (void) foo:(id)target;
+- (void) foo_positive:(id)target;
+
+@end
+
+@implementation RDar7462324
+- (void) foo:(id)target {
+  __block RDar_7462324_Callback builder = ((void*) 0);
+  builder = ^(id object) {
+    if (object) {
+      builder(self); // no-warning
+    }
+  };
+  builder(target);
+}
+- (void) foo_positive:(id)target {
+  __block RDar_7462324_Callback builder = ((void*) 0);
+  builder = ^(id object) {
+    id x;
+    if (object) {
+      builder(x); // expected-warning{{Pass-by-value argument in function call is undefined}}
+    }
+  };
+  builder(target);
+}
+@end
 

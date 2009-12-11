@@ -179,6 +179,19 @@ const StackFrameContext *LocationContext::getCurrentStackFrame() const {
   return NULL;
 }
 
+const StackFrameContext *
+LocationContext::getStackFrameForDeclContext(const DeclContext *DC) const {
+  const LocationContext *LC = this;
+  while (LC) {
+    if (const StackFrameContext *SFC = dyn_cast<StackFrameContext>(LC)) {
+      if (cast<DeclContext>(SFC->getDecl()) == DC)
+        return SFC;
+    }
+    LC = LC->getParent();
+  }
+  return NULL;
+}
+
 //===----------------------------------------------------------------------===//
 // Lazily generated map to query the external variables referenced by a Block.
 //===----------------------------------------------------------------------===//

@@ -381,13 +381,22 @@ const REG *MemRegionManager::LazyAllocate(REG*& region, ARG a) {
 }
 
 const StackLocalsSpaceRegion*
-MemRegionManager::getStackLocalsRegion(const StackFrameContext *STC) {  
-  return LazyAllocate(stackLocals, STC);
+MemRegionManager::getStackLocalsRegion(const StackFrameContext *STC) {
+  assert(STC);
+  if (STC == cachedStackLocalsFrame)
+    return cachedStackLocalsRegion;
+  cachedStackLocalsFrame = STC;
+  return LazyAllocate(cachedStackLocalsRegion, STC);
 }
 
 const StackArgumentsSpaceRegion *
 MemRegionManager::getStackArgumentsRegion(const StackFrameContext *STC) {
-  return LazyAllocate(stackArguments, STC);
+  assert(STC);
+  if (STC == cachedStackArgumentsFrame)
+    return cachedStackArgumentsRegion;
+  
+  cachedStackArgumentsFrame = STC;
+  return LazyAllocate(cachedStackArgumentsRegion, STC);
 }
 
 const GlobalsSpaceRegion *MemRegionManager::getGlobalsRegion() {
@@ -418,15 +427,19 @@ const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
                                                 const LocationContext *LC) {
   const MemRegion *sReg = 0;
 
-  if (D->hasLocalStorage()) {
+  if (D->hasLocalStorage()) {    
     // FIXME: Once we implement scope handling, we will need to properly lookup
     // 'D' to the proper LocationContext.
-    const StackFrameContext *STC = LC->getCurrentStackFrame();
+    const DeclContext *DC = D->getDeclContext();
+    const StackFrameContext *STC = LC->getStackFrameForDeclContext(DC);
 
-    assert(STC);
-    sReg = isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)
-           ? static_cast<const MemRegion*>(getStackArgumentsRegion(STC))
-           : static_cast<const MemRegion*>(getStackLocalsRegion(STC));
+    if (!STC)
+      sReg = getUnknownRegion();
+    else {
+      sReg = isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)
+            ? static_cast<const MemRegion*>(getStackArgumentsRegion(STC))
+            : static_cast<const MemRegion*>(getStackLocalsRegion(STC));
+    }
   }
   else {
     sReg = getGlobalsRegion();

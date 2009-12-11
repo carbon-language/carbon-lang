@@ -81,6 +81,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
     case MemRegion::StackLocalsSpaceRegionKind:
     case MemRegion::StackArgumentsSpaceRegionKind:
     case MemRegion::HeapSpaceRegionKind:
+    case MemRegion::UnknownSpaceRegionKind:
     case MemRegion::GlobalsSpaceRegionKind: {
       assert(0 && "Invalid region cast");
       break;

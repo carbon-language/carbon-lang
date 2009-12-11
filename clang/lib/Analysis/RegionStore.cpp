@@ -728,6 +728,7 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
     case MemRegion::StackArgumentsSpaceRegionKind:
     case MemRegion::HeapSpaceRegionKind:
     case MemRegion::GlobalsSpaceRegionKind:
+    case MemRegion::UnknownSpaceRegionKind:
       assert(0 && "Cannot index into a MemSpace");
       return UnknownVal();
 
@@ -881,6 +882,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     case MemRegion::StackArgumentsSpaceRegionKind:
     case MemRegion::HeapSpaceRegionKind:
     case MemRegion::GlobalsSpaceRegionKind:
+    case MemRegion::UnknownSpaceRegionKind:
       assert(0 && "Cannot perform pointer arithmetic on a MemSpace");
       return UnknownVal();
   }
@@ -1292,7 +1294,8 @@ SVal RegionStoreManager::RetrieveVar(const GRState *state,
   // Lazily derive a value for the VarRegion.
   const VarDecl *VD = R->getDecl();
 
-  if (R->hasGlobalsOrParametersStorage())
+  if (R->hasGlobalsOrParametersStorage() ||
+      isa<UnknownSpaceRegion>(R->getMemorySpace()))
     return ValMgr.getRegionValueSymbolValOrUnknown(R, VD->getType());
 
   return UndefinedVal();
