@@ -1136,9 +1136,7 @@ public:
     /// Look up the name of an Objective-C protocol.
     LookupObjCProtocolName,
     /// Look up the name of an Objective-C implementation
-    LookupObjCImplementationName,
-    /// Look up the name of an Objective-C category implementation
-    LookupObjCCategoryImplName
+    LookupObjCImplementationName
   };
 
   enum RedeclarationKind {
@@ -1162,7 +1160,6 @@ public:
     case Sema::LookupUsingDeclName:
     case Sema::LookupObjCProtocolName:
     case Sema::LookupObjCImplementationName:
-    case Sema::LookupObjCCategoryImplName:
       return D->isInIdentifierNamespace(IDNS);
 
     case Sema::LookupOperatorName:
@@ -1198,7 +1195,6 @@ public:
                         bool EnteringContext = false);
 
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
-  ObjCCategoryImplDecl *LookupObjCCategoryImpl(IdentifierInfo *II);
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2,

@@ -234,10 +234,6 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
   case Sema::LookupObjCImplementationName:
     IDNS = Decl::IDNS_ObjCImplementation;
     break;
-
-  case Sema::LookupObjCCategoryImplName:
-    IDNS = Decl::IDNS_ObjCCategoryImpl;
-    break;
   }
   return IDNS;
 }
@@ -640,9 +636,6 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
       IDNS = Decl::IDNS_ObjCImplementation;
       break;
 
-    case Sema::LookupObjCCategoryImplName:
-      IDNS = Decl::IDNS_ObjCCategoryImpl;
-      break;
     }
 
     // Scan up the scope chain looking for a decl that matches this
@@ -942,7 +935,6 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx) {
     case LookupNamespaceName:
     case LookupObjCProtocolName:
     case LookupObjCImplementationName:
-    case LookupObjCCategoryImplName:
       // These lookups will never find a member in a C++ class (or base class).
       return false;
       
@@ -1590,13 +1582,6 @@ NamedDecl *Sema::LookupSingleName(Scope *S, DeclarationName Name,
 ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II) {
   Decl *D = LookupSingleName(TUScope, II, LookupObjCProtocolName);
   return cast_or_null<ObjCProtocolDecl>(D);
-}
-
-/// \brief Find the Objective-C category implementation with the given
-/// name, if any.
-ObjCCategoryImplDecl *Sema::LookupObjCCategoryImpl(IdentifierInfo *II) {
-  Decl *D = LookupSingleName(TUScope, II, LookupObjCCategoryImplName);
-  return cast_or_null<ObjCCategoryImplDecl>(D);
 }
 
 void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,

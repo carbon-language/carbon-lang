@@ -137,7 +137,6 @@ void test_overload(Overload *ovl) {
 // CHECK-CCA: {TypedText self}
 // CHECK-CCA: TypedefDecl:{TypedText Class}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText Foo}
-// CHECK-CCA: ObjCCategoryDecl:{TypedText FooTestCategory}
 // CHECK-CCA: FunctionDecl:{TypedText func}{LeftParen (}{RightParen )}
 // CHECK-CCA: TypedefDecl:{TypedText id}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MyClass}

@@ -91,7 +91,7 @@ public:
     IDNS_Ordinary = 0x8,
     IDNS_ObjCProtocol = 0x10,
     IDNS_ObjCImplementation = 0x20,
-    IDNS_ObjCCategoryImpl = 0x40,
+    IDNS_ObjCCategoryName = 0x40,
     IDNS_OrdinaryFriend = 0x80,
     IDNS_TagFriend = 0x100,
     IDNS_Using = 0x200

@@ -198,7 +198,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case NonTypeTemplateParm:
     case ObjCMethod:
     case ObjCContainer:
-    case ObjCCategory:
     case ObjCInterface:
     case ObjCProperty:
     case ObjCCompatibleAlias:
@@ -220,8 +219,9 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCImplementation:
       return IDNS_ObjCImplementation;
 
+    case ObjCCategory:
     case ObjCCategoryImpl:
-      return IDNS_ObjCCategoryImpl;
+      return IDNS_ObjCCategoryName;
 
     case Field:
     case ObjCAtDefsField:
