@@ -1698,14 +1698,21 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
                             ExprTy **ArgsIn, unsigned NumArgs) {
   if (!CodeCompleter)
     return;
-  
+
+  // When we're code-completing for a call, we fall back to ordinary
+  // name code-completion whenever we can't produce specific
+  // results. We may want to revisit this strategy in the future,
+  // e.g., by merging the two kinds of results.
+
   Expr *Fn = (Expr *)FnIn;
   Expr **Args = (Expr **)ArgsIn;
-  
+
   // Ignore type-dependent call expressions entirely.
   if (Fn->isTypeDependent() || 
-      Expr::hasAnyTypeDependentArguments(Args, NumArgs))
+      Expr::hasAnyTypeDependentArguments(Args, NumArgs)) {
+    CodeCompleteOrdinaryName(S);
     return;
+  }
   
   llvm::SmallVector<NamedDecl*,8> Fns;
   DeclarationName UnqualifiedName;
@@ -1748,8 +1755,12 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
     if (Cand->Viable)
       Results.push_back(ResultCandidate(Cand->Function));
   }
-  CodeCompleter->ProcessOverloadCandidates(*this, NumArgs, Results.data(), 
-                                           Results.size());
+
+  if (Results.empty())
+    CodeCompleteOrdinaryName(S);
+  else
+    CodeCompleter->ProcessOverloadCandidates(*this, NumArgs, Results.data(), 
+                                             Results.size());
 }
 
 void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
