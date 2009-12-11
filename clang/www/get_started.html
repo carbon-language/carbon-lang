@@ -73,22 +73,12 @@ follows:</p>
   </ul>
   <li>Try it out (assuming you add llvm/Debug/bin to your path):</li>
   <ul>
-    <li><tt>clang-cc --help</tt></li>
-    <li><tt>clang-cc file.c -fsyntax-only</tt> (check for correctness)</li>
-    <li><tt>clang-cc file.c -ast-dump</tt> (internal debug dump of ast)</li>
-    <li><tt>clang-cc file.c -ast-view</tt> (<a
-    href="http://llvm.org/docs/ProgrammersManual.html#ViewGraph">set up graphviz
-     and rebuild llvm first</a>)</li>
-    <li><tt>clang-cc file.c -emit-llvm</tt> (print out unoptimized llvm code)</li>
-    <li><tt>clang-cc file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts |
-         llvm-dis</tt> (print out optimized llvm code)</li>
-    <li><tt>clang-cc file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc
-         &gt; file.s</tt> (output native machine code)</li>
+    <li><tt>clang --help</tt></li>
+    <li><tt>clang file.c -fsyntax-only</tt> (check for correctness)</li>
+    <li><tt>clang file.c -S -emit-llvm -o -</tt> (print out unoptimized llvm code)</li>
+    <li><tt>clang file.c -S -emit-llvm -o - -O3</tt></li>
+    <li><tt>clang file.c -S -O3 -o -</tt> (output native machine code)</li>
   </ul>
-  <p><em>Note</em>: Here <tt>clang-cc</tt> is the "low-level" frontend
-  executable that is similar in purpose to <tt>cc1</tt>. Clang also has a <a
-  href="#driver">high-level compiler driver</a> that acts as a drop-in
-  replacement for <tt>gcc</tt>.
 </ol>
 
 <p>Note that the C front-end uses LLVM, but does not depend on llvm-gcc. If you
@@ -159,10 +149,8 @@ Visual Studio:</p>
   <li>Build Clang:</li>
   <ul>
     <li>Open LLVM.sln in Visual Studio.</li>
-    <li>Build the "clang-cc" project for just the compiler front end.
-       Alternatively, build the "clang" project for the compiler driver
-       (note that the driver is currently broken on Windows),
-       or the "ALL_BUILD" project to build everything, including tools.</li>
+    <li>Build the "clang" project for just the compiler driver and front end, or
+      the "ALL_BUILD" project to build everything, including tools.</li>
   </ul>
   <li>Try it out (assuming you added llvm/debug/bin to your path).  (See the
     running examples from above.)</li>
@@ -175,13 +163,11 @@ Visual Studio:</p>
 to the latest code base, use the <tt>svn update</tt> command in both the
 llvm and llvm\tools\clang directories, as they are separate repositories.</p>
 
-<a name="driver"><h2>High-Level Compiler Driver (Drop-in Substitute for GCC)</h2></a>
+<a name="driver"><h2>Clang Compiler Driver (Drop-in Substitute for GCC)</h2></a>
 
-<p>While the <tt>clang-cc</tt> executable is a low-level frontend executable
-that can perform code generation, program analysis, and other actions, it is not
-designed to be a drop-in replacement for GCC's <tt>cc</tt>. For this purpose,
-use the high-level driver, aptly named <tt>clang</tt>.  Here are some
-examples of how to use the high-level driver:
+<p>The <tt>clang</tt> tool is the compiler driver and front-end, which is
+designed to be a drop-in replacement for the <tt>gcc</tt> command.  Here are
+some examples of how to use the high-level driver:
 </p>
 
 <pre class="code">
@@ -200,12 +186,6 @@ hello world
   to clang.</p>
 
 <h2>Examples of using Clang</h2>
-
-<p>The high-level driver <tt>clang</tt> is designed to understand most of GCC's
-options, and the lower-level <tt>clang-cc</tt> executable also directly takes
-many of GCC's options. You can see which options <tt>clang-cc</tt> accepts with
-'<tt>clang-cc --help</tt>'. Here are a few examples of using <tt>clang</tt> and
-<tt>clang-cc</tt>:</p>
 
 <!-- Thanks to
  http://shiflett.org/blog/2006/oct/formatting-and-highlighting-php-code-listings
@@ -251,8 +231,13 @@ typedef float V __attribute__((vector_size(16)));
 
 <h3>Pretty printing from the AST:</h3>
 
+<p>Note, the <tt>-cc1</tt> argument indicates the the compiler front-end, and
+not the driver, should be run. The compiler front-end has several additional
+Clang specific features which are not exposed through the GCC compatible driver
+interface.</p>
+
 <pre class="code">
-$ <b>clang-cc ~/t.c -ast-print</b>
+$ <b>clang -cc1 ~/t.c -ast-print</b>
 typedef float V __attribute__(( vector_size(16) ));
 V foo(V a, V b) {
    return a + b * a;
@@ -263,25 +248,21 @@ V foo(V a, V b) {
 <h3>Code generation with LLVM:</h3>
 
 <pre class="code">
-$ <b>clang-cc ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llvm-dis</b>
+$ <b>clang ~/t.c -S -emit-llvm -o -</b>
 define &lt;4 x float&gt; @foo(&lt;4 x float&gt; %a, &lt;4 x float&gt; %b) {
 entry:
          %mul = mul &lt;4 x float&gt; %b, %a
          %add = add &lt;4 x float&gt; %mul, %a
          ret &lt;4 x float&gt; %add
 }
-$ <b>clang-cc ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=ppc32 -mcpu=g5</b>
-..
+$ <b>clang -fomit-frame-pointer -O3 -S -o - t.c</b> <i># On x86_64</i>
+...
 _foo:
-         vmaddfp v2, v3, v2, v2
-         blr
-$ <b>clang-cc ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=x86 -mcpu=yonah</b>
-..
-_foo:
-         mulps %xmm0, %xmm1
-         addps %xmm0, %xmm1
-         movaps %xmm1, %xmm0
-         ret
+Leh_func_begin1:
+	mulps	%xmm0, %xmm1
+	addps	%xmm1, %xmm0
+	ret
+Leh_func_end1:
 </pre>
 
 </div>

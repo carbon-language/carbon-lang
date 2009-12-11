@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Example clang-cc plugin which simply prints the names of all the top-level
-// decls in the input file.
+// Example clang plugin which simply prints the names of all the top-level decls
+// in the input file.
 //
 //===----------------------------------------------------------------------===//
 

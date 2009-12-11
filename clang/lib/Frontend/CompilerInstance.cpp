@@ -95,7 +95,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
     return;
   }
 
-  (*OS) << "clang-cc command line arguments: ";
+  (*OS) << "clang -cc1 command line arguments: ";
   for (unsigned i = 0; i != argc; ++i)
     (*OS) << argv[i] << ' ';
   (*OS) << '\n';
