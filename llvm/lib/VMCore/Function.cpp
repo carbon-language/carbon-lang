@@ -77,6 +77,13 @@ bool Argument::hasByValAttr() const {
   return getParent()->paramHasAttr(getArgNo()+1, Attribute::ByVal);
 }
 
+/// hasNestAttr - Return true if this argument has the nest attribute on
+/// it in its containing function.
+bool Argument::hasNestAttr() const {
+  if (!isa<PointerType>(getType())) return false;
+  return getParent()->paramHasAttr(getArgNo()+1, Attribute::Nest);
+}
+
 /// hasNoAliasAttr - Return true if this argument has the noalias attribute on
 /// it in its containing function.
 bool Argument::hasNoAliasAttr() const {
