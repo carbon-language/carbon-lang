@@ -105,3 +105,11 @@ namespace PR5593 {
     return f && f;
   }
 }
+
+namespace PR5718 {
+  struct A { };
+  
+  bool f(void (A::*f)(), void (A::*g)()) {
+    return f == g;
+  }
+}

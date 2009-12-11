@@ -1571,7 +1571,34 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
   TestAndClearIgnoreResultAssign();
   Value *Result;
   QualType LHSTy = E->getLHS()->getType();
-  if (!LHSTy->isAnyComplexType()) {
+  if (LHSTy->isMemberFunctionPointerType()) {
+    Value *LHSPtr = CGF.EmitAnyExprToTemp(E->getLHS()).getAggregateAddr();
+    Value *RHSPtr = CGF.EmitAnyExprToTemp(E->getRHS()).getAggregateAddr();
+    llvm::Value *LHSFunc = Builder.CreateStructGEP(LHSPtr, 0);
+    LHSFunc = Builder.CreateLoad(LHSFunc);
+    llvm::Value *RHSFunc = Builder.CreateStructGEP(RHSPtr, 0);
+    RHSFunc = Builder.CreateLoad(RHSFunc);
+    Value *ResultF = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
+                                        LHSFunc, RHSFunc, "cmp.func");
+    Value *NullPtr = llvm::Constant::getNullValue(LHSFunc->getType());
+    Value *ResultNull = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
+                                           LHSFunc, NullPtr, "cmp.null");
+    llvm::Value *LHSAdj = Builder.CreateStructGEP(LHSPtr, 1);
+    LHSAdj = Builder.CreateLoad(LHSAdj);
+    llvm::Value *RHSAdj = Builder.CreateStructGEP(RHSPtr, 1);
+    RHSAdj = Builder.CreateLoad(RHSAdj);
+    Value *ResultA = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
+                                        LHSAdj, RHSAdj, "cmp.adj");
+    if (E->getOpcode() == BinaryOperator::EQ) {
+      Result = Builder.CreateOr(ResultNull, ResultA, "or.na");
+      Result = Builder.CreateAnd(Result, ResultF, "and.f");
+    } else {
+      assert(E->getOpcode() == BinaryOperator::NE &&
+             "Member pointer comparison other than == or != ?");
+      Result = Builder.CreateAnd(ResultNull, ResultA, "and.na");
+      Result = Builder.CreateOr(Result, ResultF, "or.f");
+    }
+  } else if (!LHSTy->isAnyComplexType()) {
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
 
