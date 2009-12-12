@@ -823,20 +823,6 @@ int main() {
 
 //===---------------------------------------------------------------------===//
 
-Instcombine will merge comparisons like (x >= 10) && (x < 20) by producing (x -
-10) u< 10, but only when the comparisons have matching sign.
-
-This could be converted with a similiar technique. (PR1941)
-
-define i1 @test(i8 %x) {
-  %A = icmp uge i8 %x, 5
-  %B = icmp slt i8 %x, 20
-  %C = and i1 %A, %B
-  ret i1 %C
-}
-
-//===---------------------------------------------------------------------===//
-
 These functions perform the same computation, but produce different assembly.
 
 define i8 @select(i8 %x) readnone nounwind {
@@ -884,18 +870,6 @@ The expression should optimize to something like
 
 //===---------------------------------------------------------------------===//
 
-From GCC Bug 15241:
-unsigned int
-foo (unsigned int a, unsigned int b)
-{
- if (a <= 7 && b <= 7)
-   baz ();
-}
-Should combine to "(a|b) <= 7".  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
 From GCC Bug 3756:
 int
 pn (int n)
@@ -903,19 +877,6 @@ pn (int n)
  return (n >= 0 ? 1 : -1);
 }
 Should combine to (n >> 31) | 1.  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts | llc".
-
-//===---------------------------------------------------------------------===//
-
-From GCC Bug 28685:
-int test(int a, int b)
-{
- int lt = a < b;
- int eq = a == b;
-
- return (lt || eq);
-}
-Should combine to "a <= b".  Currently not optimized with "clang
 -emit-llvm-bc | opt -std-compile-opts | llc".
 
 //===---------------------------------------------------------------------===//
@@ -993,12 +954,6 @@ Should combine to 0.  Currently not optimized with "clang
 
 //===---------------------------------------------------------------------===//
 
-int a(unsigned char* b) {return *b > 99;}
-There's an unnecessary zext in the generated code with "clang
--emit-llvm-bc | opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
 int a(unsigned b) {return ((b << 31) | (b << 30)) >> 31;}
 Should be combined to  "((b >> 1) | b) & 1".  Currently not optimized
 with "clang -emit-llvm-bc | opt -std-compile-opts".
@@ -1007,12 +962,6 @@ with "clang -emit-llvm-bc | opt -std-compile-opts".
 
 unsigned a(unsigned x, unsigned y) { return x | (y & 1) | (y & 2);}
 Should combine to "x | (y & 3)".  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
-unsigned a(unsigned a) {return ((a | 1) & 3) | (a & -4);}
-Should combine to "a | 1".  Currently not optimized with "clang
 -emit-llvm-bc | opt -std-compile-opts".
 
 //===---------------------------------------------------------------------===//
