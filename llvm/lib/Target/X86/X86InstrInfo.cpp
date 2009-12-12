@@ -1081,6 +1081,11 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
             
   // Build and insert into an implicit UNDEF value. This is OK because
   // well be shifting and then extracting the lower 16-bits. 
+  // This has the potential to cause partial stall. e.g.
+  //   movw    (%rbp,%rcx,2), %dx
+  //   leal    -65(%rdx), %esi
+  // But testing has shown this *does* help performance (at least on modern
+  // x86 machines).
   BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::IMPLICIT_DEF), leaInReg);
   MachineInstr *InsMI =
     BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::INSERT_SUBREG),leaInReg)
