@@ -55,7 +55,7 @@ class PartialDiagnostic {
   
     /// DiagRanges - The list of ranges added to this diagnostic.  It currently
     /// only support 10 ranges, could easily be extended if needed.
-    mutable const SourceRange *DiagRanges[10];
+    mutable SourceRange DiagRanges[10];
   };
 
   /// DiagID - The diagnostic ID.
@@ -81,7 +81,7 @@ class PartialDiagnostic {
     assert(DiagStorage->NumDiagRanges < 
            llvm::array_lengthof(DiagStorage->DiagRanges) &&
            "Too many arguments to diagnostic!");
-    DiagStorage->DiagRanges[DiagStorage->NumDiagRanges++] = &R;
+    DiagStorage->DiagRanges[DiagStorage->NumDiagRanges++] = R;
   }  
 
   void operator=(const PartialDiagnostic &); // DO NOT IMPLEMENT
@@ -114,7 +114,7 @@ public:
     
     // Add all ranges.
     for (unsigned i = 0, e = DiagStorage->NumDiagRanges; i != e; ++i)
-      DB.AddSourceRange(*DiagStorage->DiagRanges[i]);
+      DB.AddSourceRange(DiagStorage->DiagRanges[i]);
   }
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
