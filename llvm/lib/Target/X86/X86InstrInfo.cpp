@@ -1058,7 +1058,7 @@ static bool hasLiveCondCodeDef(MachineInstr *MI) {
   return false;
 }
 
-/// convertToThreeAddressWithLEA - Helper for convertToThreeAddress when 16-bit
+/// convertToThreeAddressWithLEA - Helper for convertToThreeAddress when
 /// 16-bit LEA is disabled, use 32-bit LEA to form 3-address code by promoting
 /// to a 32-bit superregister and then truncating back down to a 16-bit
 /// subregister.
@@ -1081,11 +1081,11 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
             
   // Build and insert into an implicit UNDEF value. This is OK because
   // well be shifting and then extracting the lower 16-bits. 
-  // This has the potential to cause partial stall. e.g.
+  // This has the potential to cause partial register stall. e.g.
   //   movw    (%rbp,%rcx,2), %dx
   //   leal    -65(%rdx), %esi
-  // But testing has shown this *does* help performance (at least on modern
-  // x86 machines).
+  // But testing has shown this *does* help performance in 64-bit mode (at
+  // least on modern x86 machines).
   BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::IMPLICIT_DEF), leaInReg);
   MachineInstr *InsMI =
     BuildMI(*MFI, MBBI, MI->getDebugLoc(), get(X86::INSERT_SUBREG),leaInReg)
@@ -1189,7 +1189,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   MachineInstr *NewMI = NULL;
   // FIXME: 16-bit LEA's are really slow on Athlons, but not bad on P4's.  When
   // we have better subtarget support, enable the 16-bit LEA generation here.
+  // 16-bit LEA is also slow on Core2.
   bool DisableLEA16 = true;
+  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
 
   unsigned MIOpc = MI->getOpcode();
   switch (MIOpc) {
@@ -1228,8 +1230,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     unsigned ShAmt = MI->getOperand(2).getImm();
     if (ShAmt == 0 || ShAmt >= 4) return 0;
 
-    unsigned Opc = TM.getSubtarget<X86Subtarget>().is64Bit() ?
-      X86::LEA64_32r : X86::LEA32r;
+    unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(Opc))
       .addReg(Dest, RegState::Define | getDeadRegState(isDead))
       .addReg(0).addImm(1 << ShAmt)
@@ -1244,7 +1245,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (ShAmt == 0 || ShAmt >= 4) return 0;
 
     if (DisableLEA16)
-      return convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV);
+      return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
     NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
       .addReg(Dest, RegState::Define | getDeadRegState(isDead))
       .addReg(0).addImm(1 << ShAmt)
@@ -1259,7 +1260,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (hasLiveCondCodeDef(MI))
       return 0;
 
-    bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
     switch (MIOpc) {
     default: return 0;
     case X86::INC64r:
@@ -1277,7 +1277,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::INC16r:
     case X86::INC64_16r:
       if (DisableLEA16)
-        return convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV);
+        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
       NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
                            .addReg(Dest, RegState::Define |
@@ -1299,7 +1299,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::DEC16r:
     case X86::DEC64_16r:
       if (DisableLEA16)
-        return convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV);
+        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
       NewMI = addRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
                            .addReg(Dest, RegState::Define |
@@ -1323,7 +1323,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     }
     case X86::ADD16rr: {
       if (DisableLEA16)
-        return convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV);
+        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       unsigned Src2 = MI->getOperand(2).getReg();
       bool isKill2 = MI->getOperand(2).isKill();
@@ -1356,7 +1356,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD16ri:
     case X86::ADD16ri8:
       if (DisableLEA16)
-        return convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV);
+        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV) : 0;
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       NewMI = addLeaRegOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
                               .addReg(Dest, RegState::Define |

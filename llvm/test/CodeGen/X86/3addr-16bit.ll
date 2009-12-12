@@ -1,5 +1,7 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -asm-verbose=false   | FileCheck %s -check-prefix=32BIT
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -asm-verbose=false | FileCheck %s -check-prefix=64BIT
+; rdar://7329206
+
+; In 32-bit the partial register stall would degrade performance.
 
 define zeroext i16 @t1(i16 zeroext %c, i16 zeroext %k) nounwind ssp {
 entry:
