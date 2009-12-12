@@ -79,9 +79,10 @@ namespace llvm {
 /// Use this instead of assert(0), so that the compiler knows this path
 /// is not reachable even for NDEBUG builds.
 #ifndef NDEBUG
-#define llvm_unreachable(msg) llvm_unreachable_internal(msg, __FILE__, __LINE__)
+#define llvm_unreachable(msg) \
+  ::llvm::llvm_unreachable_internal(msg, __FILE__, __LINE__)
 #else
-#define llvm_unreachable(msg) llvm_unreachable_internal()
+#define llvm_unreachable(msg) ::llvm::llvm_unreachable_internal()
 #endif
 
 #endif
