@@ -51,11 +51,11 @@ class PartialDiagnostic {
     /// This is used when the argument is not an std::string. The specific value 
     /// is mangled into an intptr_t and the intepretation depends on exactly
     /// what sort of argument kind it is.
-    mutable intptr_t DiagArgumentsVal[MaxArguments];
+    intptr_t DiagArgumentsVal[MaxArguments];
   
     /// DiagRanges - The list of ranges added to this diagnostic.  It currently
     /// only support 10 ranges, could easily be extended if needed.
-    mutable SourceRange DiagRanges[10];
+    SourceRange DiagRanges[10];
   };
 
   /// DiagID - The diagnostic ID.
@@ -84,21 +84,36 @@ class PartialDiagnostic {
     DiagStorage->DiagRanges[DiagStorage->NumDiagRanges++] = R;
   }  
 
-  void operator=(const PartialDiagnostic &); // DO NOT IMPLEMENT
-
 public:
   PartialDiagnostic(unsigned DiagID)
     : DiagID(DiagID), DiagStorage(0) { }
 
   PartialDiagnostic(const PartialDiagnostic &Other) 
-    : DiagID(Other.DiagID), DiagStorage(Other.DiagStorage) {
-    Other.DiagID = 0;
-    Other.DiagStorage = 0;
+    : DiagID(Other.DiagID), DiagStorage(0) 
+  {
+    if (Other.DiagStorage)
+      DiagStorage = new Storage(*Other.DiagStorage);
+  }
+
+  PartialDiagnostic &operator=(const PartialDiagnostic &Other) {
+    DiagID = Other.DiagID;
+    if (Other.DiagStorage) {
+      if (DiagStorage)
+        *DiagStorage = *Other.DiagStorage;
+      else
+        DiagStorage = new Storage(*Other.DiagStorage);
+    } else {
+      delete DiagStorage;
+      DiagStorage = 0;
+    }
+
+    return *this;
   }
 
   ~PartialDiagnostic() {
     delete DiagStorage;
   }
+
 
   unsigned getDiagID() const { return DiagID; }
 
