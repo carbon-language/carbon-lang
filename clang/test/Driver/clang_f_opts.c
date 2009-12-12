@@ -7,3 +7,6 @@
 // RUN: grep -F '"-fno-math-errno"' %t
 // RUN: grep -F '"-fno-show-source-location"' %t
 // RUN: grep -F '"-fshort-wchar"' %t
+// RUN: clang -fshort-enums -x c /dev/null 2>&1 | FileCheck -check-prefix=CHECK-SHORT-ENUMS %s
+
+// CHECK-SHORT-ENUMS: compiler does not support '-fshort-enums'
