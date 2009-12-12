@@ -801,8 +801,21 @@ void bar(unsigned n) {
     true();
 }
 
-I think this basically amounts to a dag combine to simplify comparisons against
-multiply hi's into a comparison against the mullo.
+This is equivalent to the following, where 2863311531 is the multiplicative
+inverse of 3, and 1431655766 is ((2^32)-1)/3+1:
+void bar(unsigned n) {
+  if (n * 2863311531U < 1431655766U)
+    true();
+}
+
+The same transformation can work with an even modulo with the addition of a
+rotate: rotate the result of the multiply to the right by the number of bits
+which need to be zero for the condition to be true, and shrink the compare RHS
+by the same amount.  Unless the target supports rotates, though, that
+transformation probably isn't worthwhile.
+
+The transformation can also easily be made to work with non-zero equality
+comparisons: just transform, for example, "n % 3 == 1" to "(n-1) % 3 == 0".
 
 //===---------------------------------------------------------------------===//
 
