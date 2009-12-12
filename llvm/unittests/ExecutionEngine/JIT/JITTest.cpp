@@ -534,6 +534,31 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
 #endif
 }
 
+}  // anonymous namespace
+// This variable is intentionally defined differently in the statically-compiled
+// program from the IR input to the JIT to assert that the JIT doesn't use its
+// definition.
+extern "C" int32_t JITTest_AvailableExternallyGlobal;
+int32_t JITTest_AvailableExternallyGlobal = 42;
+namespace {
+
+TEST_F(JITTest, AvailableExternallyGlobalIsntEmitted) {
+  TheJIT->DisableLazyCompilation(true);
+  LoadAssembly("@JITTest_AvailableExternallyGlobal = "
+               "  available_externally global i32 7 "
+               " "
+               "define i32 @loader() { "
+               "  %result = load i32* @JITTest_AvailableExternallyGlobal "
+               "  ret i32 %result "
+               "} ");
+  Function *loaderIR = M->getFunction("loader");
+
+  int32_t (*loader)() = reinterpret_cast<int32_t(*)()>(
+    (intptr_t)TheJIT->getPointerToFunction(loaderIR));
+  EXPECT_EQ(42, loader()) << "func should return 42 from the external global,"
+                          << " not 7 from the IR version.";
+}
+
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange
 // behavior.
