@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../../..
-DIRS := clang-cc driver index-test CIndex c-index-test
+DIRS := driver index-test CIndex c-index-test
 
 include $(LEVEL)/Makefile.common
