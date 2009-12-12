@@ -4604,8 +4604,35 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   }
 }
 
+static inline bool
+CheckOperatorNewDeleteDeclarationScope(Sema &SemaRef, 
+                                       const FunctionDecl *FnDecl) {
+  const DeclContext *DC = FnDecl->getDeclContext()->getLookupContext();
+  if (isa<NamespaceDecl>(DC)) {
+    return SemaRef.Diag(FnDecl->getLocation(), 
+                        diag::err_operator_new_delete_declared_in_namespace)
+      << FnDecl->getDeclName();
+  }
+  
+  if (isa<TranslationUnitDecl>(DC) && 
+      FnDecl->getStorageClass() == FunctionDecl::Static) {
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_declared_static)
+      << FnDecl->getDeclName();
+  }
+  
+  return true;
+}
+
 static bool
 CheckOperatorNewDeclaration(Sema &SemaRef, FunctionDecl *FnDecl) {
+  // C++ [basic.stc.dynamic.allocation]p1:
+  //   A program is ill-formed if an allocation function is declared in a
+  //   namespace scope other than global scope or declared static in global 
+  //   scope.
+  if (CheckOperatorNewDeleteDeclarationScope(SemaRef, FnDecl))
+    return true;
+  
   bool ret = false;
   if (FunctionDecl::param_iterator Param = FnDecl->param_begin()) {
     QualType SizeTy = 
@@ -4632,17 +4659,8 @@ CheckOperatorDeleteDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
   //   A program is ill-formed if deallocation functions are declared in a
   //   namespace scope other than global scope or declared static in global 
   //   scope.
-  const DeclContext *DC = FnDecl->getDeclContext()->getLookupContext();
-  if (isa<NamespaceDecl>(DC)) {
-    return SemaRef.Diag(FnDecl->getLocation(), 
-                        diag::err_operator_new_delete_declared_in_namespace)
-      << FnDecl->getDeclName();
-  } else if (isa<TranslationUnitDecl>(DC) && 
-             FnDecl->getStorageClass() == FunctionDecl::Static) {
-    return SemaRef.Diag(FnDecl->getLocation(),
-                        diag::err_operator_new_delete_declared_static)
-      << FnDecl->getDeclName();
-  }
+  if (CheckOperatorNewDeleteDeclarationScope(SemaRef, FnDecl))
+    return true;
 
   // C++ [basic.stc.dynamic.deallocation]p2:
   //   Each deallocation function shall return void and its first parameter 
