@@ -2,6 +2,8 @@
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
+void *realloc(void *ptr, size_t size);
+void *calloc(size_t nmemb, size_t size);
 
 void f1() {
   int *p = malloc(10);
@@ -34,4 +36,10 @@ static int *p_f4 = 0;
 int *f4() {
   p_f4 = malloc(10); 
   return p_f4; // no-warning
+}
+
+int *f5() {
+  int *q = malloc(10);
+  q = realloc(q, 20);
+  return q; // no-warning
 }

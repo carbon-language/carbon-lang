@@ -52,11 +52,11 @@ class RegionState {};
 class MallocChecker : public CheckerVisitor<MallocChecker> {
   BuiltinBug *BT_DoubleFree;
   BuiltinBug *BT_Leak;
-  IdentifierInfo *II_malloc;
-  IdentifierInfo *II_free;
+  IdentifierInfo *II_malloc, *II_free, *II_realloc;
 
 public:
-  MallocChecker() : BT_DoubleFree(0), BT_Leak(0), II_malloc(0), II_free(0) {}
+  MallocChecker() 
+    : BT_DoubleFree(0), BT_Leak(0), II_malloc(0), II_free(0), II_realloc(0) {}
   static void *getTag();
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
@@ -64,7 +64,13 @@ public:
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
+  const GRState *MallocMemAux(CheckerContext &C, const CallExpr *CE,
+                              const GRState *state);
   void FreeMem(CheckerContext &C, const CallExpr *CE);
+  const GRState *FreeMemAux(CheckerContext &C, const CallExpr *CE,
+                            const GRState *state);
+
+  void ReallocMem(CheckerContext &C, const CallExpr *CE);
 };
 } // end anonymous namespace
 
@@ -99,6 +105,8 @@ bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     II_malloc = &Ctx.Idents.get("malloc");
   if (!II_free)
     II_free = &Ctx.Idents.get("free");
+  if (!II_realloc)
+    II_realloc = &Ctx.Idents.get("realloc");
 
   if (FD->getIdentifier() == II_malloc) {
     MallocMem(C, CE);
@@ -110,26 +118,44 @@ bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     return true;
   }
 
+  if (FD->getIdentifier() == II_realloc) {
+    ReallocMem(C, CE);
+    return true;
+  }
+
   return false;
 }
 
 void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = MallocMemAux(C, CE, C.getState());
+  C.addTransition(state);
+}
+
+const GRState *MallocChecker::MallocMemAux(CheckerContext &C,  
+                                           const CallExpr *CE,
+                                           const GRState *state) {
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   ValueManager &ValMgr = C.getValueManager();
 
   SVal RetVal = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
 
-  const GRState *state = C.getState();
   state = state->BindExpr(CE, RetVal);
   
   SymbolRef Sym = RetVal.getAsLocSymbol();
   assert(Sym);
   // Set the symbol's state to Allocated.
-  C.addTransition(state->set<RegionState>(Sym, RefState::getAllocated(CE)));
+  return state->set<RegionState>(Sym, RefState::getAllocated(CE));
 }
 
 void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
-  const GRState *state = C.getState();
+  const GRState *state = FreeMemAux(C, CE, C.getState());
+
+  if (state)
+    C.addTransition(state);
+}
+
+const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
+                                         const GRState *state) {
   SVal ArgVal = state->getSVal(CE->getArg(0));
   SymbolRef Sym = ArgVal.getAsLocSymbol();
   assert(Sym);
@@ -149,13 +175,59 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
                                    BT_DoubleFree->getDescription(), N);
       C.EmitReport(R);
     }
-    return;
+    return NULL;
   }
 
   // Normal free.
-  const GRState *FreedState 
-    = state->set<RegionState>(Sym, RefState::getReleased(CE));
-  C.addTransition(FreedState);
+  return state->set<RegionState>(Sym, RefState::getReleased(CE));
+}
+
+void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
+  const GRState *state = C.getState();
+  const Expr *Arg0 = CE->getArg(0);
+  DefinedOrUnknownSVal Arg0Val=cast<DefinedOrUnknownSVal>(state->getSVal(Arg0));
+
+  ValueManager &ValMgr = C.getValueManager();
+  SValuator &SVator = C.getSValuator();
+
+  DefinedOrUnknownSVal PtrEQ = SVator.EvalEQ(state, Arg0Val, ValMgr.makeNull());
+
+  // If the ptr is NULL, the call is equivalent to malloc(size).
+  if (const GRState *stateEqual = state->Assume(PtrEQ, true)) {
+    // Hack: set the NULL symbolic region to released to suppress false warning.
+    // In the future we should add more states for allocated regions, e.g., 
+    // CheckedNull, CheckedNonNull.
+    
+    SymbolRef Sym = Arg0Val.getAsLocSymbol();
+    if (Sym)
+      stateEqual = stateEqual->set<RegionState>(Sym, RefState::getReleased(CE));
+
+    const GRState *stateMalloc = MallocMemAux(C, CE, stateEqual);
+    C.addTransition(stateMalloc);
+  }
+
+  if (const GRState *stateNotEqual = state->Assume(PtrEQ, false)) {
+    const Expr *Arg1 = CE->getArg(1);
+    DefinedOrUnknownSVal Arg1Val = 
+      cast<DefinedOrUnknownSVal>(stateNotEqual->getSVal(Arg1));
+    DefinedOrUnknownSVal SizeZero = SVator.EvalEQ(stateNotEqual, Arg1Val,
+                                      ValMgr.makeIntValWithPtrWidth(0, false));
+
+    if (const GRState *stateSizeZero = stateNotEqual->Assume(SizeZero, true)) {
+      const GRState *stateFree = FreeMemAux(C, CE, stateSizeZero);
+      if (stateFree)
+        C.addTransition(stateFree->BindExpr(CE, UndefinedVal(), true));
+    }
+
+    if (const GRState *stateSizeNotZero=stateNotEqual->Assume(SizeZero,false)) {
+      const GRState *stateFree = FreeMemAux(C, CE, stateSizeNotZero);
+      if (stateFree) {
+        // FIXME: We should copy the content of the original buffer.
+        const GRState *stateRealloc = MallocMemAux(C, CE, stateFree);
+        C.addTransition(stateRealloc);
+      }
+    }
+  }
 }
 
 void MallocChecker::EvalDeadSymbols(CheckerContext &C, const Stmt *S,

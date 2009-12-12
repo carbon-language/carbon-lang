@@ -90,6 +90,10 @@ public:
     return Eng.getValueManager();
   }
 
+  SValuator &getSValuator() {
+    return Eng.getSValuator();
+  }
+
   ExplodedNode *GenerateNode(bool autoTransition = true) {
     assert(statement && "Only transitions with statements currently supported");
     ExplodedNode *N = GenerateNodeImpl(statement, getState(), false);
