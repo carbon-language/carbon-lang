@@ -32,6 +32,7 @@
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace clang;
 using namespace llvm;
@@ -219,38 +220,57 @@ bool BackendConsumer::AddEmitPasses() {
     // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
     // being gross, this is also totally broken if we ever care about
     // concurrency.
+    llvm::NoFramePointerElim = CodeGenOpts.DisableFPElim;
+    if (CodeGenOpts.FloatABI == "soft")
+      llvm::FloatABIType = llvm::FloatABI::Soft;
+    else if (CodeGenOpts.FloatABI == "hard")
+      llvm::FloatABIType = llvm::FloatABI::Hard;
+    else {
+      assert(CodeGenOpts.FloatABI.empty() && "Invalid float abi!");
+      llvm::FloatABIType = llvm::FloatABI::Default;
+    }
+    NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
+    llvm::UseSoftFloat = CodeGenOpts.SoftFloat;
+    UnwindTablesMandatory = CodeGenOpts.UnwindTables;
+
+    TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
+
+    // FIXME: Parse this earlier.
+    if (CodeGenOpts.RelocationModel == "static") {
+      TargetMachine::setRelocationModel(llvm::Reloc::Static);
+    } else if (CodeGenOpts.RelocationModel == "pic") {
+      TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
+    } else {
+      assert(CodeGenOpts.RelocationModel == "dynamic-no-pic" &&
+             "Invalid PIC model!");
+      TargetMachine::setRelocationModel(llvm::Reloc::DynamicNoPIC);
+    }
+    // FIXME: Parse this earlier.
+    if (CodeGenOpts.CodeModel == "small") {
+      TargetMachine::setCodeModel(llvm::CodeModel::Small);
+    } else if (CodeGenOpts.CodeModel == "kernel") {
+      TargetMachine::setCodeModel(llvm::CodeModel::Kernel);
+    } else if (CodeGenOpts.CodeModel == "medium") {
+      TargetMachine::setCodeModel(llvm::CodeModel::Medium);
+    } else if (CodeGenOpts.CodeModel == "large") {
+      TargetMachine::setCodeModel(llvm::CodeModel::Large);
+    } else {
+      assert(CodeGenOpts.CodeModel.empty() && "Invalid code model!");
+      TargetMachine::setCodeModel(llvm::CodeModel::Default);
+    }
+
     std::vector<const char *> BackendArgs;
     BackendArgs.push_back("clang"); // Fake program name.
-    if (CodeGenOpts.AsmVerbose)
-      BackendArgs.push_back("-asm-verbose");
-    if (!CodeGenOpts.CodeModel.empty()) {
-      BackendArgs.push_back("-code-model");
-      BackendArgs.push_back(CodeGenOpts.CodeModel.c_str());
-    }
     if (!CodeGenOpts.DebugPass.empty()) {
       BackendArgs.push_back("-debug-pass");
       BackendArgs.push_back(CodeGenOpts.DebugPass.c_str());
-    }
-    if (CodeGenOpts.DisableFPElim)
-      BackendArgs.push_back("-disable-fp-elim");
-    if (!CodeGenOpts.FloatABI.empty()) {
-      BackendArgs.push_back("-float-abi");
-      BackendArgs.push_back(CodeGenOpts.FloatABI.c_str());
     }
     if (!CodeGenOpts.LimitFloatPrecision.empty()) {
       BackendArgs.push_back("-limit-float-precision");
       BackendArgs.push_back(CodeGenOpts.LimitFloatPrecision.c_str());
     }
-    if (CodeGenOpts.NoZeroInitializedInBSS)
-      BackendArgs.push_back("-nozero-initialized-in-bss");
-    if (CodeGenOpts.SoftFloat)
-      BackendArgs.push_back("-soft-float");
-    BackendArgs.push_back("-relocation-model");
-    BackendArgs.push_back(CodeGenOpts.RelocationModel.c_str());
     if (llvm::TimePassesIsEnabled)
       BackendArgs.push_back("-time-passes");
-    if (CodeGenOpts.UnwindTables)
-      BackendArgs.push_back("-unwind-tables");
     BackendArgs.push_back(0);
     llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
                                       (char**) &BackendArgs[0]);
