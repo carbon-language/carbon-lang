@@ -259,15 +259,39 @@ bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
   DefaultArgumentPromotion(Expr);
 
   if (Expr->getType()->isObjCInterfaceType()) {
-    Diag(Expr->getLocStart(),
-         diag::err_cannot_pass_objc_interface_to_vararg)
-      << Expr->getType() << CT;
-    return true;
+    switch (ExprEvalContexts.back().Context ) {
+    case Unevaluated:
+      // The argument will never be evaluated, so don't complain.
+      break;
+
+    case PotentiallyEvaluated:
+      Diag(Expr->getLocStart(),
+           diag::err_cannot_pass_objc_interface_to_vararg)
+        << Expr->getType() << CT;
+      return true;
+
+    case PotentiallyPotentiallyEvaluated:
+      // FIXME: queue it!
+      break;
+    }
   }
 
-  if (!Expr->getType()->isPODType())
-    Diag(Expr->getLocStart(), diag::warn_cannot_pass_non_pod_arg_to_vararg)
-      << Expr->getType() << CT;
+  if (!Expr->getType()->isPODType()) {
+    switch (ExprEvalContexts.back().Context ) {
+    case Unevaluated:
+      // The argument will never be evaluated, so don't complain.
+      break;
+
+    case PotentiallyEvaluated:
+      Diag(Expr->getLocStart(), diag::warn_cannot_pass_non_pod_arg_to_vararg)
+        << Expr->getType() << CT;
+      break;
+
+    case PotentiallyPotentiallyEvaluated:
+      // FIXME: queue it!
+      break;
+    }
+  }
 
   return false;
 }
@@ -6451,10 +6475,23 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       RecordDecl *RD = RC->getDecl();
       if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
         if (!CRD->isPOD() && !DidWarnAboutNonPOD) {
-          ExprError(Diag(BuiltinLoc, diag::warn_offsetof_non_pod_type)
-            << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
-            << Res->getType());
-          DidWarnAboutNonPOD = true;
+          switch (ExprEvalContexts.back().Context ) {
+          case Unevaluated:
+            // The argument will never be evaluated, so don't complain.
+            break;
+            
+          case PotentiallyEvaluated:
+            ExprError(Diag(BuiltinLoc, diag::warn_offsetof_non_pod_type)
+                      << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
+                      << Res->getType());
+            DidWarnAboutNonPOD = true;
+            break;
+            
+          case PotentiallyPotentiallyEvaluated:
+            // FIXME: Queue it!
+            DidWarnAboutNonPOD = true;
+            break;
+          }
         }
       }
 

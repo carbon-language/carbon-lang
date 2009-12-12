@@ -66,3 +66,12 @@ void t5()
   E e(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic constructor; call will abort at runtime}}
   (void)E(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic constructor; call will abort at runtime}}
 }
+
+// PR5761: unevaluated operands and the non-POD warning
+class Foo {
+ public:
+  Foo() {}
+};
+
+int Helper(...);
+const int size = sizeof(Helper(Foo()));
