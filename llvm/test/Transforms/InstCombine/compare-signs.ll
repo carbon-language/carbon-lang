@@ -25,7 +25,7 @@ define i32 @test3(i32 %a, i32 %b) nounwind readnone {
 ; CHECK: @test3
 entry:
 ; CHECK: xor i32 %a, %b
-; CHECK; lshr i32 %0, 31
+; CHECK: lshr i32 %0, 31
 ; CHECK: xor i32 %1, 1
         %0 = lshr i32 %a, 31            ; <i32> [#uses=1]
         %1 = lshr i32 %b, 31            ; <i32> [#uses=1]
@@ -43,7 +43,7 @@ define i32 @test3i(i32 %a, i32 %b) nounwind readnone {
 ; CHECK: @test3i
 entry:
 ; CHECK: xor i32 %a, %b
-; CHECK; lshr i32 %0, 31
+; CHECK: lshr i32 %0, 31
 ; CHECK: xor i32 %1, 1
         %0 = lshr i32 %a, 29            ; <i32> [#uses=1]
         %1 = lshr i32 %b, 29            ; <i32> [#uses=1]
