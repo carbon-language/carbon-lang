@@ -28,6 +28,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include <cstdio>
@@ -903,6 +904,13 @@ protected:
   llvm::Constant *EmitPropertyList(llvm::Twine Name,
                                    const Decl *Container,
                                    const ObjCContainerDecl *OCD,
+                                   const ObjCCommonTypesHelper &ObjCTypes);
+
+  /// PushProtocolProperties - Push protocol's property on the input stack.
+  void PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*, 16> &PropertySet,
+                              std::vector<llvm::Constant*> &Properties,
+                                   const Decl *Container,
+                                   const ObjCProtocolDecl *PROTO,
                                    const ObjCCommonTypesHelper &ObjCTypes);
 
   /// GetProtocolRef - Return a reference to the internal protocol
@@ -1793,6 +1801,26 @@ CGObjCMac::EmitProtocolList(llvm::Twine Name,
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListPtrTy);
 }
 
+void CGObjCCommonMac::PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*, 16> &PropertySet,
+                                   std::vector<llvm::Constant*> &Properties,
+                                   const Decl *Container,
+                                   const ObjCProtocolDecl *PROTO,
+                                   const ObjCCommonTypesHelper &ObjCTypes) {
+  std::vector<llvm::Constant*> Prop(2);
+  for (ObjCProtocolDecl::protocol_iterator P = PROTO->protocol_begin(),
+         E = PROTO->protocol_end(); P != E; ++P) 
+    PushProtocolProperties(PropertySet, Properties, Container, (*P), ObjCTypes);
+  for (ObjCContainerDecl::prop_iterator I = PROTO->prop_begin(),
+       E = PROTO->prop_end(); I != E; ++I) {
+    const ObjCPropertyDecl *PD = *I;
+    if (!PropertySet.insert(PD->getIdentifier()))
+      continue;
+    Prop[0] = GetPropertyName(PD->getIdentifier());
+    Prop[1] = GetPropertyTypeString(PD, Container);
+    Properties.push_back(llvm::ConstantStruct::get(ObjCTypes.PropertyTy, Prop));
+  }
+}
+
 /*
   struct _objc_property {
   const char * const name;
@@ -1810,14 +1838,20 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(llvm::Twine Name,
                                        const ObjCContainerDecl *OCD,
                                        const ObjCCommonTypesHelper &ObjCTypes) {
   std::vector<llvm::Constant*> Properties, Prop(2);
+  llvm::SmallPtrSet<const IdentifierInfo*, 16> PropertySet;
   for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(),
          E = OCD->prop_end(); I != E; ++I) {
     const ObjCPropertyDecl *PD = *I;
+    PropertySet.insert(PD->getIdentifier());
     Prop[0] = GetPropertyName(PD->getIdentifier());
     Prop[1] = GetPropertyTypeString(PD, Container);
     Properties.push_back(llvm::ConstantStruct::get(ObjCTypes.PropertyTy,
                                                    Prop));
   }
+  if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(OCD))
+    for (ObjCInterfaceDecl::protocol_iterator P = OID->protocol_begin(),
+         E = OID->protocol_end(); P != E; ++P)
+      PushProtocolProperties(PropertySet, Properties, Container, (*P), ObjCTypes);
 
   // Return null for empty list.
   if (Properties.empty())
