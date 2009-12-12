@@ -42,6 +42,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <sstream>
 using namespace llvm;
 
@@ -3043,8 +3044,9 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
 //===----------------------------------------------------------------------===//
 
 MachineBasicBlock *
-ARMTargetLowering::EmitAtomicCmpSwap(unsigned Size, MachineInstr *MI,
-                                     MachineBasicBlock *BB) const {
+ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
+                                     MachineBasicBlock *BB,
+                                     unsigned Size) const {
   unsigned dest    = MI->getOperand(0).getReg();
   unsigned ptr     = MI->getOperand(1).getReg();
   unsigned oldval  = MI->getOperand(2).getReg();
@@ -3114,6 +3116,16 @@ ARMTargetLowering::EmitAtomicCmpSwap(unsigned Size, MachineInstr *MI,
 }
 
 MachineBasicBlock *
+ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
+                                    unsigned Size, unsigned BinOpcode) const {
+  std::string msg;
+  raw_string_ostream Msg(msg);
+  Msg << "Cannot yet emit: ";
+  MI->print(Msg);
+  llvm_report_error(Msg.str());
+}
+
+MachineBasicBlock *
 ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB,
                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
@@ -3124,12 +3136,37 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MI->dump();
     llvm_unreachable("Unexpected instr type to insert");
 
+  case ARM::ATOMIC_LOAD_ADD_I8:  return EmitAtomicBinary(MI, BB, 1, ARM::ADDrr);
+  case ARM::ATOMIC_LOAD_ADD_I16: return EmitAtomicBinary(MI, BB, 2, ARM::ADDrr);
+  case ARM::ATOMIC_LOAD_ADD_I32: return EmitAtomicBinary(MI, BB, 4, ARM::ADDrr);
 
+  case ARM::ATOMIC_LOAD_AND_I8:  return EmitAtomicBinary(MI, BB, 1, ARM::ANDrr);
+  case ARM::ATOMIC_LOAD_AND_I16: return EmitAtomicBinary(MI, BB, 2, ARM::ANDrr);
+  case ARM::ATOMIC_LOAD_AND_I32: return EmitAtomicBinary(MI, BB, 4, ARM::ANDrr);
 
+  case ARM::ATOMIC_LOAD_OR_I8:   return EmitAtomicBinary(MI, BB, 1, ARM::ORRrr);
+  case ARM::ATOMIC_LOAD_OR_I16:  return EmitAtomicBinary(MI, BB, 2, ARM::ORRrr);
+  case ARM::ATOMIC_LOAD_OR_I32:  return EmitAtomicBinary(MI, BB, 4, ARM::ORRrr);
 
-  case ARM::ATOMIC_CMP_SWAP_I8:  return EmitAtomicCmpSwap(1, MI, BB);
-  case ARM::ATOMIC_CMP_SWAP_I16: return EmitAtomicCmpSwap(2, MI, BB);
-  case ARM::ATOMIC_CMP_SWAP_I32: return EmitAtomicCmpSwap(4, MI, BB);
+  case ARM::ATOMIC_LOAD_XOR_I8:  return EmitAtomicBinary(MI, BB, 1, ARM::EORrr);
+  case ARM::ATOMIC_LOAD_XOR_I16: return EmitAtomicBinary(MI, BB, 2, ARM::EORrr);
+  case ARM::ATOMIC_LOAD_XOR_I32: return EmitAtomicBinary(MI, BB, 4, ARM::EORrr);
+
+  case ARM::ATOMIC_LOAD_NAND_I8: return EmitAtomicBinary(MI, BB, 1, ARM::BICrr);
+  case ARM::ATOMIC_LOAD_NAND_I16:return EmitAtomicBinary(MI, BB, 2, ARM::BICrr);
+  case ARM::ATOMIC_LOAD_NAND_I32:return EmitAtomicBinary(MI, BB, 4, ARM::BICrr);
+
+  case ARM::ATOMIC_LOAD_SUB_I8:  return EmitAtomicBinary(MI, BB, 1, ARM::SUBrr);
+  case ARM::ATOMIC_LOAD_SUB_I16: return EmitAtomicBinary(MI, BB, 2, ARM::SUBrr);
+  case ARM::ATOMIC_LOAD_SUB_I32: return EmitAtomicBinary(MI, BB, 4, ARM::SUBrr);
+
+  case ARM::ATOMIC_SWAP_I8:      return EmitAtomicBinary(MI, BB, 1, 0);
+  case ARM::ATOMIC_SWAP_I16:     return EmitAtomicBinary(MI, BB, 2, 0);
+  case ARM::ATOMIC_SWAP_I32:     return EmitAtomicBinary(MI, BB, 4, 0);
+
+  case ARM::ATOMIC_CMP_SWAP_I8:  return EmitAtomicCmpSwap(MI, BB, 1);
+  case ARM::ATOMIC_CMP_SWAP_I16: return EmitAtomicCmpSwap(MI, BB, 2);
+  case ARM::ATOMIC_CMP_SWAP_I32: return EmitAtomicCmpSwap(MI, BB, 4);
 
   case ARM::tMOVCCr_pseudo: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the

@@ -1597,18 +1597,107 @@ def Int_SyncBarrierV7 : AI<(outs), (ins),
 }
 
 let usesCustomInserter = 1 in {
-  def ATOMIC_CMP_SWAP_I8 : PseudoInst<
-    (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
-    "${:comment} ATOMIC_CMP_SWAP_I8 PSEUDO!",
-    [(set GPR:$dst, (atomic_cmp_swap_8 GPR:$ptr, GPR:$old, GPR:$new))]>;
-  def ATOMIC_CMP_SWAP_I16 : PseudoInst<
-    (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
-    "${:comment} ATOMIC_CMP_SWAP_I16 PSEUDO!",
-    [(set GPR:$dst, (atomic_cmp_swap_16 GPR:$ptr, GPR:$old, GPR:$new))]>;
-  def ATOMIC_CMP_SWAP_I32 : PseudoInst<
-    (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
-    "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
-    [(set GPR:$dst, (atomic_cmp_swap_32 GPR:$ptr, GPR:$old, GPR:$new))]>;
+  let Uses = [CPSR] in {
+    def ATOMIC_LOAD_ADD_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_ADD_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_add_8 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_SUB_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_SUB_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_sub_8 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_AND_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_AND_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_and_8 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_OR_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_OR_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_or_8 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_XOR_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_XOR_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_xor_8 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_NAND_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_NAND_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_nand_8 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_ADD_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_ADD_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_add_16 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_SUB_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_SUB_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_sub_16 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_AND_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_AND_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_and_16 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_OR_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_OR_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_or_16 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_XOR_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_XOR_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_xor_16 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_NAND_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_NAND_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_nand_16 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_ADD_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_ADD_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_add_32 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_SUB_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_SUB_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_sub_32 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_AND_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_AND_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_and_32 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_OR_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_OR_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_or_32 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_XOR_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_XOR_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_xor_32 GPR:$ptr, GPR:$incr))]>;
+    def ATOMIC_LOAD_NAND_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$incr), NoItinerary,
+      "${:comment} ATOMIC_LOAD_NAND_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_load_nand_32 GPR:$ptr, GPR:$incr))]>;
+
+    def ATOMIC_SWAP_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary,
+      "${:comment} ATOMIC_SWAP_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_swap_8 GPR:$ptr, GPR:$new))]>;
+    def ATOMIC_SWAP_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary,
+      "${:comment} ATOMIC_SWAP_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_swap_16 GPR:$ptr, GPR:$new))]>;
+    def ATOMIC_SWAP_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$new), NoItinerary,
+      "${:comment} ATOMIC_SWAP_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_swap_32 GPR:$ptr, GPR:$new))]>;
+
+
+    def ATOMIC_CMP_SWAP_I8 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
+      "${:comment} ATOMIC_CMP_SWAP_I8 PSEUDO!",
+      [(set GPR:$dst, (atomic_cmp_swap_8 GPR:$ptr, GPR:$old, GPR:$new))]>;
+    def ATOMIC_CMP_SWAP_I16 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
+      "${:comment} ATOMIC_CMP_SWAP_I16 PSEUDO!",
+      [(set GPR:$dst, (atomic_cmp_swap_16 GPR:$ptr, GPR:$old, GPR:$new))]>;
+    def ATOMIC_CMP_SWAP_I32 : PseudoInst<
+      (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
+      "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
+      [(set GPR:$dst, (atomic_cmp_swap_32 GPR:$ptr, GPR:$old, GPR:$new))]>;
+}
 }
 
 let mayLoad = 1 in {
