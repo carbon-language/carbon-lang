@@ -2277,7 +2277,7 @@ QualType ASTContext::getTagDeclType(const TagDecl *Decl) {
 /// getSizeType - Return the unique type for "size_t" (C99 7.17), the result
 /// of the sizeof operator (C99 6.5.3.4p4). The value is target dependent and
 /// needs to agree with the definition in <stddef.h>.
-QualType ASTContext::getSizeType() const {
+CanQualType ASTContext::getSizeType() const {
   return getFromTargetType(Target.getSizeType());
 }
 

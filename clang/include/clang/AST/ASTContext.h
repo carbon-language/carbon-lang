@@ -584,7 +584,7 @@ public:
 
   /// getSizeType - Return the unique type for "size_t" (C99 7.17), defined
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
-  QualType getSizeType() const;
+  CanQualType getSizeType() const;
 
   /// getWCharType - In C++, this returns the unique wchar_t type.  In C99, this
   /// returns a type compatible with the type defined in <stddef.h> as defined

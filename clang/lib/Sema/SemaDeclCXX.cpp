@@ -4605,6 +4605,28 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
 }
 
 static bool
+CheckOperatorNewDeclaration(Sema &SemaRef, FunctionDecl *FnDecl) {
+  bool ret = false;
+  if (FunctionDecl::param_iterator Param = FnDecl->param_begin()) {
+    QualType SizeTy = 
+      SemaRef.Context.getCanonicalType(SemaRef.Context.getSizeType());
+    QualType T = SemaRef.Context.getCanonicalType((*Param)->getType());
+    if (!T->isDependentType() && SizeTy != T) {
+      SemaRef.Diag(FnDecl->getLocation(),
+                   diag::err_operator_new_param_type) << FnDecl->getDeclName()
+        << SizeTy;
+      ret = true;
+    }
+  }
+  QualType ResultTy = SemaRef.Context.getCanonicalType(FnDecl->getResultType());
+  if (!ResultTy->isDependentType() && ResultTy != SemaRef.Context.VoidPtrTy)
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_invalid_result_type) 
+      << FnDecl->getDeclName() << SemaRef.Context.VoidPtrTy;
+  return ret;
+}
+
+static bool
 CheckOperatorDeleteDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
   // C++ [basic.stc.dynamic.deallocation]p1:
   //   A program is ill-formed if deallocation functions are declared in a
@@ -4678,25 +4700,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   if (Op == OO_Delete || Op == OO_Array_Delete)
     return CheckOperatorDeleteDeclaration(*this, FnDecl);
   
-  if (Op == OO_New || Op == OO_Array_New) {
-    bool ret = false;
-    if (FunctionDecl::param_iterator Param = FnDecl->param_begin()) {
-      QualType SizeTy = Context.getCanonicalType(Context.getSizeType());
-      QualType T = Context.getCanonicalType((*Param)->getType());
-      if (!T->isDependentType() && SizeTy != T) {
-        Diag(FnDecl->getLocation(),
-             diag::err_operator_new_param_type) << FnDecl->getDeclName()
-              << SizeTy;
-        ret = true;
-      }
-    }
-    QualType ResultTy = Context.getCanonicalType(FnDecl->getResultType());
-    if (!ResultTy->isDependentType() && ResultTy != Context.VoidPtrTy)
-      return Diag(FnDecl->getLocation(),
-                  diag::err_operator_new_delete_invalid_result_type) 
-        << FnDecl->getDeclName() << Context.VoidPtrTy;
-    return ret;
-  }
+  if (Op == OO_New || Op == OO_Array_New)
+    return CheckOperatorNewDeclaration(*this, FnDecl);
 
   // C++ [over.oper]p6:
   //   An operator function shall either be a non-static member
