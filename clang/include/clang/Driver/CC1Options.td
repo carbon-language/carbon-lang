@@ -105,6 +105,8 @@ def disable_llvm_optzns : Flag<"-disable-llvm-optzns">,
 def disable_red_zone : Flag<"-disable-red-zone">,
   HelpText<"Do not emit code that uses the red zone.">;
 def g : Flag<"-g">, HelpText<"Generate source level debug information">;
+def fcatch_undefined_behavior : Flag<"-fcatch-undefined-behavior">,
+    HelpText<"Generate runtime checks for undefined behavior.">;
 def fno_common : Flag<"-fno-common">,
   HelpText<"Compile common globals like normal definitions">;
 def no_implicit_float : Flag<"-no-implicit-float">,

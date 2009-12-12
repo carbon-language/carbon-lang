@@ -108,6 +108,7 @@ public:
   uint32_t LLVMPointerWidth;
 
   bool Exceptions;
+  bool CatchUndefined;
 public:
   /// ObjCEHValueStack - Stack of Objective-C exception values, used for
   /// rethrows.
@@ -1266,6 +1267,11 @@ private:
                                     ArgType));
     }
   }
+
+  llvm::BasicBlock *AbortBB;
+  /// getAbortBB - Create a basic block that will call abort.  We'll generate
+  /// a branch around the created basic block as necessary.
+  llvm::BasicBlock* getAbortBB();
 };
 
 

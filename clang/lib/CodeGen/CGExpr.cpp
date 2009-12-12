@@ -1012,6 +1012,36 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   }
 }
 
+static llvm::Constant *getAbortFn(CodeGenFunction &CGF) {
+  // void abort();
+
+  const llvm::FunctionType *FTy =
+    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), false);
+
+  return CGF.CGM.CreateRuntimeFunction(FTy, "abort");
+}
+
+llvm::BasicBlock*CodeGenFunction::getAbortBB() {
+  if (AbortBB)
+    return AbortBB;
+
+  llvm::BasicBlock *Cont = 0;
+  if (HaveInsertPoint()) {
+    Cont = createBasicBlock("cont");
+    EmitBranch(Cont);
+  }
+  AbortBB = createBasicBlock("abort");
+  EmitBlock(AbortBB);
+  llvm::CallInst *AbortCall = Builder.CreateCall(getAbortFn(*this));
+  AbortCall->setDoesNotReturn();
+  AbortCall->setDoesNotThrow();
+  Builder.CreateUnreachable();
+
+  if (Cont)
+    EmitBlock(Cont);
+  return AbortBB;
+}
+
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // The index must always be an integer, which is not an aggregate.  Emit it.
   llvm::Value *Idx = EmitScalarExpr(E->getIdx());
@@ -1039,6 +1069,37 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Idx = Builder.CreateIntCast(Idx,
                             llvm::IntegerType::get(VMContext, LLVMPointerWidth),
                                 IdxSigned, "idxprom");
+
+  if (CatchUndefined) {
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E->getBase())) {
+      if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr())) {
+        if (ICE->getCastKind() == CastExpr::CK_ArrayToPointerDecay) {
+          if (const ConstantArrayType *CAT
+              = getContext().getAsConstantArrayType(DRE->getType())) {
+            llvm::APInt Size = CAT->getSize();
+            llvm::BasicBlock *Cont = createBasicBlock("cont");
+            if (IdxSigned) {
+              Builder.CreateCondBr(Builder.CreateICmpSGE(Idx,
+                                     llvm::ConstantInt::get(Idx->getType(), 0)),
+                                   Cont, getAbortBB());
+              EmitBlock(Cont);
+              Cont = createBasicBlock("cont");
+              Builder.CreateCondBr(Builder.CreateICmpSLT(Idx,
+                                  llvm::ConstantInt::get(Idx->getType(), Size)),
+                                   Cont, getAbortBB());
+              EmitBlock(Cont);
+            } else {
+              llvm::BasicBlock *Cont = createBasicBlock("cont");
+              Builder.CreateCondBr(Builder.CreateICmpULT(Idx,
+                                  llvm::ConstantInt::get(Idx->getType(), Size)),
+                                   Cont, getAbortBB());
+              EmitBlock(Cont);
+            }
+          }
+        }
+      }
+    }
+  }
 
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA or Objective-C interface.

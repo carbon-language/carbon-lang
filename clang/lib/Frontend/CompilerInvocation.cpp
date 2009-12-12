@@ -447,6 +447,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fno-operator-names");
   if (Opts.PascalStrings)
     Res.push_back("-fpascal-strings");
+  if (Opts.CatchUndefined)
+    Res.push_back("-fcatch-undefined-behavior");
   if (Opts.WritableStrings)
     Res.push_back("-fwritable-strings");
   if (!Opts.LaxVectorConversions)
@@ -1151,6 +1153,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.ObjCConstantStringClass = getLastArgValue(Args,
                                                  OPT_fconstant_string_class);
   Opts.ObjCNonFragileABI = Args.hasArg(OPT_fobjc_nonfragile_abi);
+  Opts.CatchUndefined = Args.hasArg(OPT_fcatch_undefined_behavior);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
   Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
   Opts.Static = Args.hasArg(OPT_static_define);

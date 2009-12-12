@@ -236,6 +236,8 @@ def fbootclasspath_EQ : Joined<"-fbootclasspath=">, Group<f_Group>;
 def fbuiltin_strcat : Flag<"-fbuiltin-strcat">, Group<f_Group>;
 def fbuiltin_strcpy : Flag<"-fbuiltin-strcpy">, Group<f_Group>;
 def fbuiltin : Flag<"-fbuiltin">, Group<f_Group>;
+def fcatch_undefined_behavior : Flag<"-fcatch-undefined-behavior">,
+    Group<f_Group>, HelpText<"Generate runtime checks for undefined behavior.">;
 def fclasspath_EQ : Joined<"-fclasspath=">, Group<f_Group>;
 def fcolor_diagnostics : Flag<"-fcolor-diagnostics">, Group<f_Group>;
 def fcommon : Flag<"-fcommon">, Group<f_Group>;

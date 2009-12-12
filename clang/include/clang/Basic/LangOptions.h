@@ -92,6 +92,7 @@ public:
 
   unsigned ElideConstructors : 1; // Whether C++ copy constructors should be
                                   // elided if possible.
+  unsigned CatchUndefined     :1; // Generate code to check for undefined ops.
 private:
   unsigned GC : 2;                // Objective-C Garbage Collection modes.  We
                                   // declare this enum as unsigned because MSVC
@@ -160,6 +161,7 @@ public:
 
     CharIsSigned = 1;
     ShortWChar = 0;
+    CatchUndefined = 0;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }
