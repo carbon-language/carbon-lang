@@ -107,7 +107,7 @@ static void DetectX86FamilyModel(unsigned EAX, unsigned &Family, unsigned &Model
 
 
 std::string sys::getHostCPUName() {
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(_MSC_VER)
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
   if (GetX86CpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
     return "generic";
