@@ -47,7 +47,7 @@ namespace llvm {
       /// CMP - Compare instruction.
       CMP,
 
-      /// SetCC. Operand 0 is condition code, and operand 1 is the flag
+      /// SetCC - Operand 0 is condition code, and operand 1 is the flag
       /// operand produced by a CMP instruction.
       SETCC,
 
@@ -57,9 +57,12 @@ namespace llvm {
       /// instruction.
       BR_CC,
 
-      /// SELECT_CC. Operand 0 and operand 1 are selection variable, operand 3
+      /// SELECT_CC - Operand 0 and operand 1 are selection variable, operand 3
       /// is condition code and operand 4 is flag operand.
-      SELECT_CC
+      SELECT_CC,
+
+      /// SHL, SRA, SRL - Non-constant shifts.
+      SHL, SRA, SRL
     };
   }
 
@@ -98,6 +101,9 @@ namespace llvm {
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB,
+                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
+    MachineBasicBlock* EmitShiftInstr(MachineInstr *MI,
+                                      MachineBasicBlock *BB,
                     DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
 
   private:

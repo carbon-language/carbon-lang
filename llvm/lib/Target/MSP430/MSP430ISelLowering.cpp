@@ -592,9 +592,21 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
   EVT VT = Op.getValueType();
   DebugLoc dl = N->getDebugLoc();
 
-  // We currently only lower shifts of constant argument.
+  // Expand non-constant shifts to loops:
   if (!isa<ConstantSDNode>(N->getOperand(1)))
-    return SDValue();
+    switch (Opc) {
+    default:
+      assert(0 && "Invalid shift opcode!");
+    case ISD::SHL:
+      return DAG.getNode(MSP430ISD::SHL, dl,
+                         VT, N->getOperand(0), N->getOperand(1));
+    case ISD::SRA:
+      return DAG.getNode(MSP430ISD::SRA, dl,
+                         VT, N->getOperand(0), N->getOperand(1));
+    case ISD::SRL:
+      return DAG.getNode(MSP430ISD::SRL, dl,
+                         VT, N->getOperand(0), N->getOperand(1));
+    }
 
   uint64_t ShiftAmount = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
 
@@ -916,6 +928,8 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MSP430ISD::BR_CC:              return "MSP430ISD::BR_CC";
   case MSP430ISD::CMP:                return "MSP430ISD::CMP";
   case MSP430ISD::SELECT_CC:          return "MSP430ISD::SELECT_CC";
+  case MSP430ISD::SHL:                return "MSP430ISD::SHL";
+  case MSP430ISD::SRA:                return "MSP430ISD::SRA";
   }
 }
 
@@ -924,13 +938,131 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
 //===----------------------------------------------------------------------===//
 
 MachineBasicBlock*
+MSP430TargetLowering::EmitShiftInstr(MachineInstr *MI,
+                                     MachineBasicBlock *BB,
+                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+  MachineFunction *F = BB->getParent();
+  MachineRegisterInfo &RI = F->getRegInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+
+  unsigned Opc;
+  const TargetRegisterClass * RC;
+  switch (MI->getOpcode()) {
+  default:
+    assert(0 && "Invalid shift opcode!");
+  case MSP430::Shl8:
+   Opc = MSP430::SHL8r1;
+   RC = MSP430::GR8RegisterClass;
+   break;
+  case MSP430::Shl16:
+   Opc = MSP430::SHL16r1;
+   RC = MSP430::GR16RegisterClass;
+   break;
+  case MSP430::Sra8:
+   Opc = MSP430::SAR8r1;
+   RC = MSP430::GR8RegisterClass;
+   break;
+  case MSP430::Sra16:
+   Opc = MSP430::SAR16r1;
+   RC = MSP430::GR16RegisterClass;
+   break;
+  case MSP430::Srl8:
+   Opc = MSP430::SAR8r1c;
+   RC = MSP430::GR8RegisterClass;
+   break;
+  case MSP430::Srl16:
+   Opc = MSP430::SAR16r1c;
+   RC = MSP430::GR16RegisterClass;
+   break;
+  }
+
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator I = BB;
+  ++I;
+
+  // Create loop block
+  MachineBasicBlock *LoopBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *RemBB  = F->CreateMachineBasicBlock(LLVM_BB);
+
+  F->insert(I, LoopBB);
+  F->insert(I, RemBB);
+
+  // Update machine-CFG edges by transferring all successors of the current
+  // block to the block containing instructions after shift.
+  RemBB->transferSuccessors(BB);
+
+  // Inform sdisel of the edge changes.
+  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
+         SE = BB->succ_end(); SI != SE; ++SI)
+    EM->insert(std::make_pair(*SI, RemBB));
+
+  // Add adges BB => LoopBB => RemBB, BB => RemBB, LoopBB => LoopBB
+  BB->addSuccessor(LoopBB);
+  BB->addSuccessor(RemBB);
+  LoopBB->addSuccessor(RemBB);
+  LoopBB->addSuccessor(LoopBB);
+
+  unsigned ShiftAmtReg = RI.createVirtualRegister(MSP430::GR8RegisterClass);
+  unsigned ShiftAmtReg2 = RI.createVirtualRegister(MSP430::GR8RegisterClass);
+  unsigned ShiftReg = RI.createVirtualRegister(RC);
+  unsigned ShiftReg2 = RI.createVirtualRegister(RC);
+  unsigned ShiftAmtSrcReg = MI->getOperand(2).getReg();
+  unsigned SrcReg = MI->getOperand(1).getReg();
+  unsigned DstReg = MI->getOperand(0).getReg();
+
+  // BB:
+  // cmp 0, N
+  // je RemBB
+  BuildMI(BB, dl, TII.get(MSP430::CMP8ir))
+    .addImm(0).addReg(ShiftAmtSrcReg);
+  BuildMI(BB, dl, TII.get(MSP430::JCC))
+    .addMBB(RemBB)
+    .addImm(MSP430CC::COND_E);
+
+  // LoopBB:
+  // ShiftReg = phi [%SrcReg, BB], [%ShiftReg2, LoopBB]
+  // ShiftAmt = phi [%N, BB],      [%ShiftAmt2, LoopBB]
+  // ShiftReg2 = shift ShiftReg
+  // ShiftAmt2 = ShiftAmt - 1;
+  BuildMI(LoopBB, dl, TII.get(MSP430::PHI), ShiftReg)
+    .addReg(SrcReg).addMBB(BB)
+    .addReg(ShiftReg2).addMBB(LoopBB);
+  BuildMI(LoopBB, dl, TII.get(MSP430::PHI), ShiftAmtReg)
+    .addReg(ShiftAmtSrcReg).addMBB(BB)
+    .addReg(ShiftAmtReg2).addMBB(LoopBB);
+  BuildMI(LoopBB, dl, TII.get(Opc), ShiftReg2)
+    .addReg(ShiftReg);
+  BuildMI(LoopBB, dl, TII.get(MSP430::SUB8ri), ShiftAmtReg2)
+    .addReg(ShiftAmtReg).addImm(1);
+  BuildMI(LoopBB, dl, TII.get(MSP430::JCC))
+    .addMBB(LoopBB)
+    .addImm(MSP430CC::COND_NE);
+
+  // RemBB:
+  // DestReg = phi [%SrcReg, BB], [%ShiftReg, LoopBB]
+  BuildMI(RemBB, dl, TII.get(MSP430::PHI), DstReg)
+    .addReg(SrcReg).addMBB(BB)
+    .addReg(ShiftReg2).addMBB(LoopBB);
+
+  return RemBB;
+}
+
+MachineBasicBlock*
 MSP430TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                   MachineBasicBlock *BB,
                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+  unsigned Opc = MI->getOpcode();
+
+  if (Opc == MSP430::Shl8 || Opc == MSP430::Shl16 ||
+      Opc == MSP430::Sra8 || Opc == MSP430::Sra16 ||
+      Opc == MSP430::Srl8 || Opc == MSP430::Srl16)
+    return EmitShiftInstr(MI, BB, EM);
+
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
-  assert((MI->getOpcode() == MSP430::Select16 ||
-          MI->getOpcode() == MSP430::Select8) &&
+
+  assert((Opc == MSP430::Select16 || Opc == MSP430::Select8) &&
          "Unexpected instr type to insert");
 
   // To "insert" a SELECT instruction, we actually have to insert the diamond

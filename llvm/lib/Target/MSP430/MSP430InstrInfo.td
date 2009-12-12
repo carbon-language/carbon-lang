@@ -31,6 +31,7 @@ def SDT_MSP430BrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
                                                   SDTCisVT<1, i8>]>;
 def SDT_MSP430SelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
                                                   SDTCisVT<3, i8>]>;
+def SDT_MSP430Shift        : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisI8<2>]>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Specific Node Definitions.
@@ -56,6 +57,9 @@ def MSP430Wrapper : SDNode<"MSP430ISD::Wrapper", SDT_MSP430Wrapper>;
 def MSP430cmp     : SDNode<"MSP430ISD::CMP", SDT_MSP430Cmp, [SDNPOutFlag]>;
 def MSP430brcc    : SDNode<"MSP430ISD::BR_CC", SDT_MSP430BrCC, [SDNPHasChain, SDNPInFlag]>;
 def MSP430selectcc: SDNode<"MSP430ISD::SELECT_CC", SDT_MSP430SelectCC, [SDNPInFlag]>;
+def MSP430shl     : SDNode<"MSP430ISD::SHL", SDT_MSP430Shift, []>;
+def MSP430sra     : SDNode<"MSP430ISD::SRA", SDT_MSP430Shift, []>;
+def MSP430srl     : SDNode<"MSP430ISD::SRL", SDT_MSP430Shift, []>;
 
 //===----------------------------------------------------------------------===//
 // MSP430 Operand Definitions.
@@ -121,6 +125,27 @@ let usesCustomInserter = 1 in {
                         "# Select16 PSEUDO",
                         [(set GR16:$dst,
                           (MSP430selectcc GR16:$src1, GR16:$src2, imm:$cc))]>;
+  let Defs = [SRW] in {
+  def Shl8     : Pseudo<(outs GR8:$dst), (ins GR8:$src, GR8:$cnt),
+                        "# Shl8 PSEUDO",
+                        [(set GR8:$dst, (MSP430shl GR8:$src, GR8:$cnt))]>;
+  def Shl16    : Pseudo<(outs GR16:$dst), (ins GR16:$src, GR8:$cnt),
+                        "# Shl16 PSEUDO",
+                        [(set GR16:$dst, (MSP430shl GR16:$src, GR8:$cnt))]>;
+  def Sra8     : Pseudo<(outs GR8:$dst), (ins GR8:$src, GR8:$cnt),
+                        "# Sra8 PSEUDO",
+                        [(set GR8:$dst, (MSP430sra GR8:$src, GR8:$cnt))]>;
+  def Sra16    : Pseudo<(outs GR16:$dst), (ins GR16:$src, GR8:$cnt),
+                        "# Sra16 PSEUDO",
+                        [(set GR16:$dst, (MSP430sra GR16:$src, GR8:$cnt))]>;
+  def Srl8     : Pseudo<(outs GR8:$dst), (ins GR8:$src, GR8:$cnt),
+                        "# Srl8 PSEUDO",
+                        [(set GR8:$dst, (MSP430srl GR8:$src, GR8:$cnt))]>;
+  def Srl16    : Pseudo<(outs GR16:$dst), (ins GR16:$src, GR8:$cnt),
+                        "# Srl16 PSEUDO",
+                        [(set GR16:$dst, (MSP430srl GR16:$src, GR8:$cnt))]>;
+
+  }
 }
 
 let neverHasSideEffects = 1 in
