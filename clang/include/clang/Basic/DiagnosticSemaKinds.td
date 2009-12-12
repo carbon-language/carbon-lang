@@ -2239,10 +2239,20 @@ def err_operator_new_delete_declared_static : Error<
   "%0 cannot be declared static in global scope">;
 def err_operator_new_delete_invalid_result_type : Error<
   "%0 must return type %1">;
+def err_operator_new_delete_dependent_result_type : Error<
+  "%0 cannot have a dependent return type; use %1 instead">;
 def err_operator_new_delete_too_few_parameters : Error<
   "%0 must have at least one parameter.">;
+def err_operator_new_delete_template_too_few_parameters : Error<
+  "%0 template must have at least two parameters.">;
+
+def err_operator_new_dependent_param_type : Error<
+  "%0 cannot take a dependent type as first parameter; "
+  "use size_t (%1) instead">;
 def err_operator_new_param_type : Error<
   "%0 takes type size_t (%1) as first parameter">;
+def err_operator_delete_dependent_param_type : Error<
+  "%0 cannot take a dependent type as first parameter; use %1 instead">;
 def err_operator_delete_param_type : Error<
   "%0 takes type %1 as first parameter">;
 

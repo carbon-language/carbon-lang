@@ -4626,26 +4626,36 @@ CheckOperatorDeleteDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
   //   Each deallocation function shall return void and its first parameter 
   //   shall be void*.
   QualType ResultType = FnDecl->getResultType();
-  if (!ResultType->isDependentType() && !ResultType->isVoidType()) {
+  if (ResultType->isDependentType())
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_dependent_result_type)
+      << FnDecl->getDeclName() << SemaRef.Context.VoidTy;
+    
+  if (!ResultType->isVoidType())
     return SemaRef.Diag(FnDecl->getLocation(),
                         diag::err_operator_new_delete_invalid_result_type) 
       << FnDecl->getDeclName() << SemaRef.Context.VoidTy;
-  }
 
-  if (FnDecl->getNumParams() == 0) {
+  if (FnDecl->getDescribedFunctionTemplate() && FnDecl->getNumParams() < 2)
+    return SemaRef.Diag(FnDecl->getLocation(),
+                      diag::err_operator_new_delete_template_too_few_parameters)
+        << FnDecl->getDeclName();
+  else if (FnDecl->getNumParams() == 0)
     return SemaRef.Diag(FnDecl->getLocation(),
                         diag::err_operator_new_delete_too_few_parameters)
       << FnDecl->getDeclName();
-  }
 
-  QualType FirstParamType = 
-    SemaRef.Context.getCanonicalType(FnDecl->getParamDecl(0)->getType());
-  if (!FirstParamType->isDependentType() && 
-      FirstParamType != SemaRef.Context.VoidPtrTy) {
+  QualType FirstParamType = FnDecl->getParamDecl(0)->getType();
+  if (FirstParamType->isDependentType())
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_delete_dependent_param_type)
+    << FnDecl->getDeclName() << SemaRef.Context.VoidPtrTy;
+
+  if (SemaRef.Context.getCanonicalType(FirstParamType) != 
+      SemaRef.Context.VoidPtrTy)
     return SemaRef.Diag(FnDecl->getLocation(),
                         diag::err_operator_delete_param_type)
       << FnDecl->getDeclName() << SemaRef.Context.VoidPtrTy;
-  }
   
   return false;
 }
