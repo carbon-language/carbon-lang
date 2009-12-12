@@ -16,6 +16,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Lex/Preprocessor.h"
 
@@ -204,16 +205,6 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
       = SemaRef.SubstExpr(D->getInit(), TemplateArgs);
     if (Init.isInvalid())
       Var->setInvalidDecl();
-    else if (!D->getType()->isDependentType() &&
-             !D->getInit()->isTypeDependent() &&
-             !D->getInit()->isValueDependent()) {
-      // If neither the declaration's type nor its initializer are dependent,
-      // we don't want to redo all the checking, especially since the
-      // initializer might have been wrapped by a CXXConstructExpr since we did
-      // it the first time.
-      Var->setType(D->getType());
-      Var->setInit(SemaRef.Context, Init.takeAs<Expr>());
-    }
     else if (ParenListExpr *PLE = dyn_cast<ParenListExpr>((Expr *)Init.get())) {
       // FIXME: We're faking all of the comma locations, which is suboptimal.
       // Do we even need these comma locations?
@@ -239,7 +230,47 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
       // When Init is destroyed, it will destroy the instantiated ParenListExpr;
       // we've explicitly retained all of its subexpressions already.
-    } else
+    } else if (CXXConstructExpr *Construct
+                 = dyn_cast<CXXConstructExpr>((Expr *)Init.get())) {
+      // We build CXXConstructExpr nodes to capture the implicit
+      // construction of objects. Rip apart the CXXConstructExpr to
+      // pass its pieces down to the appropriate initialization
+      // function.
+      if (D->hasCXXDirectInitializer()) {
+        // FIXME: Poor source location information
+        SourceLocation FakeLParenLoc = 
+          SemaRef.PP.getLocForEndOfToken(D->getLocation());
+        SourceLocation FakeRParenLoc = FakeLParenLoc;
+        llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
+        if (Construct->getNumArgs() > 0) {
+          FakeRParenLoc 
+            = SemaRef.PP.getLocForEndOfToken(
+                  Construct->getArg(Construct->getNumArgs() - 1)->getLocEnd());
+
+          FakeCommaLocs.reserve(Construct->getNumArgs() - 1);
+          for (unsigned I = 0, N = Construct->getNumArgs() - 1; I != N; ++I) {
+            Expr *E = Construct->getArg(I)->Retain();
+            FakeCommaLocs.push_back(
+                                SemaRef.PP.getLocForEndOfToken(E->getLocEnd()));
+          }
+          Construct->getArg(Construct->getNumArgs() - 1)->Retain();
+        }
+
+        SemaRef.AddCXXDirectInitializerToDecl(Sema::DeclPtrTy::make(Var),
+                                              FakeLParenLoc,
+                               Sema::MultiExprArg(SemaRef,
+                                                  (void **)Construct->getArgs(),
+                                                  Construct->getNumArgs()),
+                                              FakeCommaLocs.data(),
+                                              FakeRParenLoc);
+                                              
+      } else if (Construct->getNumArgs() >= 1) {
+        SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), 
+                                  SemaRef.Owned(Construct->getArg(0)->Retain()),
+                                     false);
+      } else
+        SemaRef.ActOnUninitializedDecl(Sema::DeclPtrTy::make(Var), false);
+    } else 
       SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), move(Init),
                                    D->hasCXXDirectInitializer());
     SemaRef.PopExpressionEvaluationContext();

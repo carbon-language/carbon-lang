@@ -527,6 +527,7 @@ public:
   const_arg_iterator arg_begin() const { return Args; }
   const_arg_iterator arg_end() const { return Args + NumArgs; }
 
+  Expr **getArgs() const { return reinterpret_cast<Expr **>(Args); }
   unsigned getNumArgs() const { return NumArgs; }
 
   /// getArg - Return the specified argument.

@@ -96,6 +96,18 @@ template struct Delete0<int*>;
 template struct Delete0<X*>;
 template struct Delete0<int>; // expected-note{{instantiation}}
 
+namespace PR5755 {
+  template <class T>
+  void Foo() {
+    char* p = 0;
+    delete[] p;
+  }
+  
+  void Test() {
+    Foo<int>();
+  }
+}
+
 // ---------------------------------------------------------------------
 // throw expressions
 // ---------------------------------------------------------------------

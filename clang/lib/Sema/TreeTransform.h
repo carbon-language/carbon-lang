@@ -993,19 +993,6 @@ public:
                                         move(LHS), move(RHS));
   }
 
-  /// \brief Build a new implicit cast expression.
-  ///
-  /// By default, builds a new implicit cast without any semantic analysis.
-  /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildImplicitCastExpr(QualType T, CastExpr::CastKind Kind,
-                                           ExprArg SubExpr, bool isLvalue) {
-    ImplicitCastExpr *ICE
-      = new (getSema().Context) ImplicitCastExpr(T, Kind,
-                                                 (Expr *)SubExpr.release(),
-                                                 isLvalue);
-    return getSema().Owned(ICE);
-  }
-
   /// \brief Build a new C-style cast expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -3779,29 +3766,39 @@ TreeTransform<Derived>::TransformConditionalOperator(ConditionalOperator *E) {
                                                  move(RHS));
 }
 
+/// \brief Given a cast expression, extract the subexpression of the
+/// cast, looking through intermediate AST nodes that were generated
+/// as part of type checking.
+static Expr *getCastSubExprAsWritten(CastExpr *E) {
+  Expr *SubExpr = 0;
+  do {
+    SubExpr = E->getSubExpr();
+
+    // Temporaries will be re-bound when rebuilding the original cast
+    // expression.
+    if (CXXBindTemporaryExpr *Binder = dyn_cast<CXXBindTemporaryExpr>(SubExpr))
+      SubExpr = Binder->getSubExpr();
+
+    // Conversions by constructor and conversion functions have a
+    // subexpression describing the call; strip it off.
+    if (E->getCastKind() == CastExpr::CK_ConstructorConversion)
+      SubExpr = cast<CXXConstructExpr>(SubExpr)->getArg(0);
+    else if (E->getCastKind() == CastExpr::CK_UserDefinedConversion)
+      SubExpr = cast<CXXMemberCallExpr>(SubExpr)->getImplicitObjectArgument();
+
+    // If the subexpression we're left with is an implicit cast, look
+    // through that, too.
+  } while ((E = dyn_cast<ImplicitCastExpr>(SubExpr)));
+
+  return SubExpr;
+}
+
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E) {
-  TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
-
-  // FIXME: Will we ever have type information here? It seems like we won't,
-  // so do we even need to transform the type?
-  QualType T = getDerived().TransformType(E->getType());
-  if (T.isNull())
-    return SemaRef.ExprError();
-
-  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
-  if (SubExpr.isInvalid())
-    return SemaRef.ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      T == E->getType() &&
-      SubExpr.get() == E->getSubExpr())
-    return SemaRef.Owned(E->Retain());
-
-  return getDerived().RebuildImplicitCastExpr(T, E->getCastKind(),
-                                              move(SubExpr),
-                                              E->isLvalueCast());
+  // Implicit casts are eliminated during transformation, since they
+  // will be recomputed by semantic analysis after transformation.
+  return getDerived().TransformExpr(getCastSubExprAsWritten(E));
 }
 
 template<typename Derived>
@@ -3826,7 +3823,8 @@ TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E) {
       return SemaRef.ExprError();
   }
 
-  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
+  OwningExprResult SubExpr
+    = getDerived().TransformExpr(getCastSubExprAsWritten(E));
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
@@ -4182,7 +4180,8 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
       return SemaRef.ExprError();
   }
 
-  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
+  OwningExprResult SubExpr
+    = getDerived().TransformExpr(getCastSubExprAsWritten(E));
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
@@ -4246,7 +4245,8 @@ TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
       return SemaRef.ExprError();
   }
 
-  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
+  OwningExprResult SubExpr
+    = getDerived().TransformExpr(getCastSubExprAsWritten(E));
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
