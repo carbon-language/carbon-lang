@@ -2207,7 +2207,7 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   case TemplateArgument::Pack:
     return TemplateArgumentLocInfo();
   }
-  llvm::llvm_unreachable("unexpected template argument loc");
+  llvm_unreachable("unexpected template argument loc");
   return TemplateArgumentLocInfo();
 }
 

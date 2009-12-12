@@ -1167,7 +1167,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
   }
   }
 
-  llvm::llvm_unreachable("unknown ambiguity kind");
+  llvm_unreachable("unknown ambiguity kind");
   return true;
 }
 

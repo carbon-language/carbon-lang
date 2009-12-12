@@ -1871,7 +1871,7 @@ void TreeTransform<Derived>::InventTemplateArgumentLoc(
   SourceLocation Loc = getDerived().getBaseLocation();
   switch (Arg.getKind()) {
   case TemplateArgument::Null:
-    llvm::llvm_unreachable("null template argument in TreeTransform");
+    llvm_unreachable("null template argument in TreeTransform");
     break;
 
   case TemplateArgument::Type:
@@ -2056,7 +2056,7 @@ TreeTransform<Derived>::TransformType(TypeLocBuilder &TLB, TypeLoc T) {
 #include "clang/AST/TypeLocNodes.def"
   }
 
-  llvm::llvm_unreachable("unhandled type loc!");
+  llvm_unreachable("unhandled type loc!");
   return QualType();
 }
 

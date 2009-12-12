@@ -510,7 +510,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
       DAL->append(DAL->MakeJoinedArg(0, MArch, "armv7a"));
 
     else
-      llvm::llvm_unreachable("invalid Darwin arch");
+      llvm_unreachable("invalid Darwin arch");
   }
 
   return DAL;

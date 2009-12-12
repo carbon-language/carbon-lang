@@ -46,7 +46,7 @@ CodeCompletionString::Chunk::Chunk(ChunkKind Kind, llvm::StringRef Text)
   }
 
   case CK_Optional:
-    llvm::llvm_unreachable("Optional strings cannot be created from text");
+    llvm_unreachable("Optional strings cannot be created from text");
     break;
       
   case CK_LeftParen:

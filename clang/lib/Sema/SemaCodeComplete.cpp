@@ -1352,7 +1352,7 @@ namespace {
           
         case Result::RK_Keyword:
         case Result::RK_Pattern:
-          llvm::llvm_unreachable("Result kinds handled above");
+          llvm_unreachable("Result kinds handled above");
           break;
       }
       

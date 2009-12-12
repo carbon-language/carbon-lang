@@ -351,7 +351,7 @@ static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
   }
   }
   
-  llvm::llvm_unreachable("Unhandled parsed template argument");
+  llvm_unreachable("Unhandled parsed template argument");
   return TemplateArgumentLoc();
 }
                                                      
@@ -1916,7 +1916,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     }
       
     case TemplateArgument::Pack:
-      llvm::llvm_unreachable("Caller must expand template argument packs");
+      llvm_unreachable("Caller must expand template argument packs");
       break;
     }
     
@@ -1969,16 +1969,16 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     return true;
       
   case TemplateArgument::Declaration:
-    llvm::llvm_unreachable(
+    llvm_unreachable(
                        "Declaration argument with template template parameter");
     break;
   case TemplateArgument::Integral:
-    llvm::llvm_unreachable(
+    llvm_unreachable(
                           "Integral argument with template template parameter");
     break;
     
   case TemplateArgument::Pack:
-    llvm::llvm_unreachable("Caller must expand template argument packs");
+    llvm_unreachable("Caller must expand template argument packs");
     break;
   }
   
@@ -4695,7 +4695,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     break;
 
   case LookupResult::FoundUnresolvedValue:
-    llvm::llvm_unreachable("unresolved using decl in non-dependent context");
+    llvm_unreachable("unresolved using decl in non-dependent context");
     return QualType();
 
   case LookupResult::FoundOverloaded:

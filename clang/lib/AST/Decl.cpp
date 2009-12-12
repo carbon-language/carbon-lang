@@ -1214,7 +1214,7 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
 
 TagDecl::TagKind TagDecl::getTagKindForTypeSpec(unsigned TypeSpec) {
   switch (TypeSpec) {
-  default: llvm::llvm_unreachable("unexpected type specifier");
+  default: llvm_unreachable("unexpected type specifier");
   case DeclSpec::TST_struct: return TK_struct;
   case DeclSpec::TST_class: return TK_class;
   case DeclSpec::TST_union: return TK_union;

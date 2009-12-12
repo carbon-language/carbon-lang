@@ -2913,13 +2913,13 @@ bool InitializationSequence::Diagnose(Sema &S,
         S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
           << Best->Function->isDeleted();
       } else {
-        llvm::llvm_unreachable("Inconsistent overload resolution?");
+        llvm_unreachable("Inconsistent overload resolution?");
       }
       break;
     }
         
     case OR_Success:
-      llvm::llvm_unreachable("Conversion did not fail!");
+      llvm_unreachable("Conversion did not fail!");
       break;
     }
     break;

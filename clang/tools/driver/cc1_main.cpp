@@ -63,7 +63,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 
   switch (CI.getFrontendOpts().ProgramAction) {
   default:
-    llvm::llvm_unreachable("Invalid program action!");
+    llvm_unreachable("Invalid program action!");
 
   case ASTDump:                return new ASTDumpAction();
   case ASTPrint:               return new ASTPrintAction();

@@ -742,7 +742,7 @@ void CXXNameMangler::mangleType(QualType T) {
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define NON_CANONICAL_TYPE(CLASS, PARENT) \
     case Type::CLASS: \
-      llvm::llvm_unreachable("can't mangle non-canonical type " #CLASS "Type"); \
+      llvm_unreachable("can't mangle non-canonical type " #CLASS "Type"); \
       return;
 #define TYPE(CLASS, PARENT) \
     case Type::CLASS: \
@@ -836,7 +836,7 @@ void CXXNameMangler::mangleType(const FunctionProtoType *T) {
   Out << 'E';
 }
 void CXXNameMangler::mangleType(const FunctionNoProtoType *T) {
-  llvm::llvm_unreachable("Can't mangle K&R function prototypes");
+  llvm_unreachable("Can't mangle K&R function prototypes");
 }
 void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
                                             bool MangleReturnType) {

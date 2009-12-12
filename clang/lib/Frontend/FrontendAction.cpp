@@ -222,5 +222,5 @@ void ASTFrontendAction::ExecuteAction() {
 ASTConsumer *
 PreprocessorFrontendAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {
-  llvm::llvm_unreachable("Invalid CreateASTConsumer on preprocessor action!");
+  llvm_unreachable("Invalid CreateASTConsumer on preprocessor action!");
 }

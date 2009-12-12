@@ -1193,7 +1193,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
         case NestedNameSpecifier::Namespace:
         case NestedNameSpecifier::Global:
-          llvm::llvm_unreachable("Nested-name-specifier must name a type");
+          llvm_unreachable("Nested-name-specifier must name a type");
           break;
             
         case NestedNameSpecifier::TypeSpec:
@@ -1360,7 +1360,7 @@ namespace {
     DeclaratorLocFiller(const DeclaratorChunk &Chunk) : Chunk(Chunk) {}
 
     void VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
-      llvm::llvm_unreachable("qualified type locs not expected here!");
+      llvm_unreachable("qualified type locs not expected here!");
     }
 
     void VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
@@ -1415,7 +1415,7 @@ namespace {
     }
 
     void VisitTypeLoc(TypeLoc TL) {
-      llvm::llvm_unreachable("unsupported TypeLoc kind in declarator!");
+      llvm_unreachable("unsupported TypeLoc kind in declarator!");
     }
   };
 }

@@ -20,7 +20,7 @@ using namespace clang::frontend;
 const LangStandard &LangStandard::getLangStandardForKind(Kind K) {
   switch (K) {
   default:
-    llvm::llvm_unreachable("Invalid language kind!");
+    llvm_unreachable("Invalid language kind!");
   case lang_unspecified:
     llvm::llvm_report_error("getLangStandardForKind() on unspecified kind");
 #define LANGSTANDARD(id, name, desc, features) \

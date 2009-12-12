@@ -1813,7 +1813,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   }
   EvalResult EvalResult;
   if (!Evaluate(EvalResult, Ctx))
-    llvm::llvm_unreachable("ICE cannot be evaluated!");
+    llvm_unreachable("ICE cannot be evaluated!");
   assert(!EvalResult.HasSideEffects && "ICE with side effects!");
   assert(EvalResult.Val.isInt() && "ICE that isn't integer!");
   Result = EvalResult.Val.getInt();

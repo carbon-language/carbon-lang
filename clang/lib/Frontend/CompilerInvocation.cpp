@@ -31,7 +31,7 @@ using namespace clang;
 static const char *getAnalysisName(Analyses Kind) {
   switch (Kind) {
   default:
-    llvm::llvm_unreachable("Unknown analysis kind!");
+    llvm_unreachable("Unknown analysis kind!");
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
   case NAME: return "-" CMDFLAG;
 #include "clang/Frontend/Analyses.def"
@@ -41,7 +41,7 @@ static const char *getAnalysisName(Analyses Kind) {
 static const char *getAnalysisStoreName(AnalysisStores Kind) {
   switch (Kind) {
   default:
-    llvm::llvm_unreachable("Unknown analysis store!");
+    llvm_unreachable("Unknown analysis store!");
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN) \
   case NAME##Model: return CMDFLAG;
 #include "clang/Frontend/Analyses.def"
@@ -51,7 +51,7 @@ static const char *getAnalysisStoreName(AnalysisStores Kind) {
 static const char *getAnalysisConstraintName(AnalysisConstraints Kind) {
   switch (Kind) {
   default:
-    llvm::llvm_unreachable("Unknown analysis constraints!");
+    llvm_unreachable("Unknown analysis constraints!");
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN) \
   case NAME##Model: return CMDFLAG;
 #include "clang/Frontend/Analyses.def"
@@ -61,7 +61,7 @@ static const char *getAnalysisConstraintName(AnalysisConstraints Kind) {
 static const char *getAnalysisDiagClientName(AnalysisDiagClients Kind) {
   switch (Kind) {
   default:
-    llvm::llvm_unreachable("Unknown analysis client!");
+    llvm_unreachable("Unknown analysis client!");
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREATE) \
   case PD_##NAME: return CMDFLAG;
 #include "clang/Frontend/Analyses.def"
@@ -246,7 +246,7 @@ static const char *getInputKindName(FrontendOptions::InputKind Kind) {
   case FrontendOptions::IK_PreprocessedObjCXX:return "objective-c++-cpp-output";
   }
 
-  llvm::llvm_unreachable("Unexpected language kind!");
+  llvm_unreachable("Unexpected language kind!");
   return 0;
 }
 
@@ -254,7 +254,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   switch (Kind) {
   case frontend::PluginAction:
   case frontend::InheritanceView:
-    llvm::llvm_unreachable("Invalid kind!");
+    llvm_unreachable("Invalid kind!");
 
   case frontend::ASTDump:                return "-ast-dump";
   case frontend::ASTPrint:               return "-ast-print";
@@ -284,7 +284,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::RunPreprocessorOnly:    return "-Eonly";
   }
 
-  llvm::llvm_unreachable("Unexpected language kind!");
+  llvm_unreachable("Unexpected language kind!");
   return 0;
 }
 

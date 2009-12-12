@@ -33,7 +33,7 @@ public:
     case TypeLoc::CLASS: DISPATCH(CLASS##TypeLoc);
 #include "clang/AST/TypeLocNodes.def"
     }
-    llvm::llvm_unreachable("unexpected type loc class!");
+    llvm_unreachable("unexpected type loc class!");
   }
 
   RetTy Visit(UnqualTypeLoc TyLoc) {

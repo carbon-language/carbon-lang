@@ -356,7 +356,7 @@ public:
       assert(Kind == K_None);
       break;
     case TemplateArgument::Null:
-      llvm::llvm_unreachable("source info for null template argument?");
+      llvm_unreachable("source info for null template argument?");
     }
   }
 #endif

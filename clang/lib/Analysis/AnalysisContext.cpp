@@ -39,7 +39,7 @@ Stmt *AnalysisContext::getBody() {
   else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
     return BD->getBody();
 
-  llvm::llvm_unreachable("unknown code decl");
+  llvm_unreachable("unknown code decl");
 }
 
 const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
