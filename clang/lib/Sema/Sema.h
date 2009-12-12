@@ -339,6 +339,10 @@ public:
   typedef std::vector<std::pair<SourceLocation, Decl *> > 
     PotentiallyReferencedDecls;
 
+  /// \brief A set of diagnostics that may be emitted.
+  typedef std::vector<std::pair<SourceLocation, PartialDiagnostic> >
+    PotentiallyEmittedDiagnostics;
+
   /// \brief Data structure used to record current or nested
   /// expression evaluation contexts.
   struct ExpressionEvaluationContextRecord {
@@ -358,10 +362,14 @@ public:
     /// evaluated.
     PotentiallyReferencedDecls *PotentiallyReferenced;
 
+    /// \brief The set of diagnostics to emit should this potentially
+    /// potentially-evaluated context become evaluated.
+    PotentiallyEmittedDiagnostics *PotentiallyDiagnosed;
+
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumTemporaries) 
       : Context(Context), NumTemporaries(NumTemporaries), 
-        PotentiallyReferenced(0) { }
+        PotentiallyReferenced(0), PotentiallyDiagnosed(0) { }
 
     void addReferencedDecl(SourceLocation Loc, Decl *Decl) {
       if (!PotentiallyReferenced)
@@ -369,9 +377,17 @@ public:
       PotentiallyReferenced->push_back(std::make_pair(Loc, Decl));
     }
 
+    void addDiagnostic(SourceLocation Loc, const PartialDiagnostic &PD) {
+      if (!PotentiallyDiagnosed)
+        PotentiallyDiagnosed = new PotentiallyEmittedDiagnostics;
+      PotentiallyDiagnosed->push_back(std::make_pair(Loc, PD));
+    }
+
     void Destroy() {
       delete PotentiallyReferenced;
+      delete PotentiallyDiagnosed;
       PotentiallyReferenced = 0;
+      PotentiallyDiagnosed = 0;
     }
   };
 

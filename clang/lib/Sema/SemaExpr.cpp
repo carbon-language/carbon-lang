@@ -271,7 +271,9 @@ bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
       return true;
 
     case PotentiallyPotentiallyEvaluated:
-      // FIXME: queue it!
+      ExprEvalContexts.back().addDiagnostic(Expr->getLocStart(),
+                           PDiag(diag::err_cannot_pass_objc_interface_to_vararg) 
+                             << Expr->getType() << CT);
       break;
     }
   }
@@ -288,7 +290,9 @@ bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
       break;
 
     case PotentiallyPotentiallyEvaluated:
-      // FIXME: queue it!
+      ExprEvalContexts.back().addDiagnostic(Expr->getLocStart(),
+                           PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg) 
+                             << Expr->getType() << CT);
       break;
     }
   }
@@ -6488,7 +6492,10 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
             break;
             
           case PotentiallyPotentiallyEvaluated:
-            // FIXME: Queue it!
+            ExprEvalContexts.back().addDiagnostic(BuiltinLoc,
+                              PDiag(diag::warn_offsetof_non_pod_type)
+                                << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
+                                << Res->getType());
             DidWarnAboutNonPOD = true;
             break;
           }
@@ -6957,16 +6964,26 @@ Sema::PopExpressionEvaluationContext() {
   ExpressionEvaluationContextRecord Rec = ExprEvalContexts.back();
   ExprEvalContexts.pop_back();
 
-  if (Rec.Context == PotentiallyPotentiallyEvaluated && 
-      Rec.PotentiallyReferenced) {
-    // Mark any remaining declarations in the current position of the stack
-    // as "referenced". If they were not meant to be referenced, semantic
-    // analysis would have eliminated them (e.g., in ActOnCXXTypeId).
-    for (PotentiallyReferencedDecls::iterator 
-              I = Rec.PotentiallyReferenced->begin(),
-           IEnd = Rec.PotentiallyReferenced->end();
-         I != IEnd; ++I)
-      MarkDeclarationReferenced(I->first, I->second);
+  if (Rec.Context == PotentiallyPotentiallyEvaluated) {
+    if (Rec.PotentiallyReferenced) {
+      // Mark any remaining declarations in the current position of the stack
+      // as "referenced". If they were not meant to be referenced, semantic
+      // analysis would have eliminated them (e.g., in ActOnCXXTypeId).
+      for (PotentiallyReferencedDecls::iterator 
+             I = Rec.PotentiallyReferenced->begin(),
+             IEnd = Rec.PotentiallyReferenced->end();
+           I != IEnd; ++I)
+        MarkDeclarationReferenced(I->first, I->second);
+    }
+
+    if (Rec.PotentiallyDiagnosed) {
+      // Emit any pending diagnostics.
+      for (PotentiallyEmittedDiagnostics::iterator
+                I = Rec.PotentiallyDiagnosed->begin(),
+             IEnd = Rec.PotentiallyDiagnosed->end();
+           I != IEnd; ++I)
+        Diag(I->first, I->second);
+    }
   } 
 
   // When are coming out of an unevaluated context, clear out any

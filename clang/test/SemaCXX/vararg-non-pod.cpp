@@ -75,3 +75,16 @@ class Foo {
 
 int Helper(...);
 const int size = sizeof(Helper(Foo()));
+
+namespace std {
+  class type_info { };
+}
+
+struct Base { virtual ~Base(); };
+Base &get_base(...);
+int eat_base(...);
+
+void test_typeid(Base &base) {
+  (void)typeid(get_base(base)); // expected-warning{{cannot pass object of non-POD type 'struct Base' through variadic function; call will abort at runtime}}
+  (void)typeid(eat_base(base)); // okay
+}
