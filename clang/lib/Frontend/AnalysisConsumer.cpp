@@ -302,7 +302,7 @@ void AnalysisConsumer::HandleCode(Decl *D, Stmt* Body, Actions& actions) {
   llvm::SmallVector<Decl*, 10> WL;
   WL.push_back(D);
   
-  if (Opts.AnalyzeNestedBlocks)
+  if (Body && Opts.AnalyzeNestedBlocks)
     FindBlocks(cast<DeclContext>(D), WL);
   
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
