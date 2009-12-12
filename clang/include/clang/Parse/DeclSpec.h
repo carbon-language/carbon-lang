@@ -27,6 +27,40 @@ namespace clang {
   class Declarator;
   struct TemplateIdAnnotation;
   
+/// CXXScopeSpec - Represents a C++ nested-name-specifier or a global scope
+/// specifier.
+class CXXScopeSpec {
+  SourceRange Range;
+  void *ScopeRep;
+
+public:
+  CXXScopeSpec() : Range(), ScopeRep() { }
+
+  const SourceRange &getRange() const { return Range; }
+  void setRange(const SourceRange &R) { Range = R; }
+  void setBeginLoc(SourceLocation Loc) { Range.setBegin(Loc); }
+  void setEndLoc(SourceLocation Loc) { Range.setEnd(Loc); }
+  SourceLocation getBeginLoc() const { return Range.getBegin(); }
+  SourceLocation getEndLoc() const { return Range.getEnd(); }
+
+  ActionBase::CXXScopeTy *getScopeRep() const { return ScopeRep; }
+  void setScopeRep(ActionBase::CXXScopeTy *S) { ScopeRep = S; }
+
+  bool isEmpty() const { return !Range.isValid(); }
+  bool isNotEmpty() const { return !isEmpty(); }
+
+  /// isInvalid - An error occured during parsing of the scope specifier.
+  bool isInvalid() const { return isNotEmpty() && ScopeRep == 0; }
+
+  /// isSet - A scope specifier was resolved to a valid C++ scope.
+  bool isSet() const { return ScopeRep != 0; }
+
+  void clear() {
+    Range = SourceRange();
+    ScopeRep = 0;
+  }
+};
+
 /// DeclSpec - This class captures information about "declaration specifiers",
 /// which encompasses storage-class-specifiers, type-specifiers,
 /// type-qualifiers, and function-specifiers.
@@ -143,6 +177,9 @@ private:
   // attributes.
   AttributeList *AttrList;
 
+  // Scope specifier for the type spec, if applicable.
+  CXXScopeSpec TypeScope;
+
   // List of protocol qualifiers for objective-c classes.  Used for
   // protocol-qualified interfaces "NString<foo>" and protocol-qualified id
   // "id<foo>".
@@ -211,6 +248,8 @@ public:
   TST getTypeSpecType() const { return (TST)TypeSpecType; }
   bool isTypeSpecOwned() const { return TypeSpecOwned; }
   void *getTypeRep() const { return TypeRep; }
+  CXXScopeSpec &getTypeSpecScope() { return TypeScope; }
+  const CXXScopeSpec &getTypeSpecScope() const { return TypeScope; }
 
   const SourceRange &getSourceRange() const { return Range; }
   SourceLocation getTypeSpecWidthLoc() const { return TSWLoc; }
@@ -434,40 +473,6 @@ private:
   unsigned PropertyAttributes : 8;
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
-};
-
-/// CXXScopeSpec - Represents a C++ nested-name-specifier or a global scope
-/// specifier.
-class CXXScopeSpec {
-  SourceRange Range;
-  void *ScopeRep;
-
-public:
-  CXXScopeSpec() : Range(), ScopeRep() { }
-
-  const SourceRange &getRange() const { return Range; }
-  void setRange(const SourceRange &R) { Range = R; }
-  void setBeginLoc(SourceLocation Loc) { Range.setBegin(Loc); }
-  void setEndLoc(SourceLocation Loc) { Range.setEnd(Loc); }
-  SourceLocation getBeginLoc() const { return Range.getBegin(); }
-  SourceLocation getEndLoc() const { return Range.getEnd(); }
-
-  ActionBase::CXXScopeTy *getScopeRep() const { return ScopeRep; }
-  void setScopeRep(ActionBase::CXXScopeTy *S) { ScopeRep = S; }
-
-  bool isEmpty() const { return !Range.isValid(); }
-  bool isNotEmpty() const { return !isEmpty(); }
-
-  /// isInvalid - An error occured during parsing of the scope specifier.
-  bool isInvalid() const { return isNotEmpty() && ScopeRep == 0; }
-
-  /// isSet - A scope specifier was resolved to a valid C++ scope.
-  bool isSet() const { return ScopeRep != 0; }
-
-  void clear() {
-    Range = SourceRange();
-    ScopeRep = 0;
-  }
 };
 
 /// \brief Represents a C++ unqualified-id that has been parsed. 

@@ -600,7 +600,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   }
 
   // Parse the (optional) nested-name-specifier.
-  CXXScopeSpec SS;
+  CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLang().CPlusPlus) {
     // "FOO : BAR" is not a potential typo for "FOO::BAR".
     ColonProtectionRAIIObject X(*this);
