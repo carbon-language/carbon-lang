@@ -41,9 +41,9 @@ namespace {
                 bool _SyntaxHighlight, bool _HighlightMacros)
       : Out(OS), PP(pp), SyntaxHighlight(_SyntaxHighlight),
         HighlightMacros(_HighlightMacros) {}
-    virtual ~HTMLPrinter();
 
     void Initialize(ASTContext &context);
+    void HandleTranslationUnit(ASTContext &Ctx);
   };
 }
 
@@ -58,7 +58,7 @@ void HTMLPrinter::Initialize(ASTContext &context) {
   R.setSourceMgr(context.getSourceManager(), context.getLangOptions());
 }
 
-HTMLPrinter::~HTMLPrinter() {
+void HTMLPrinter::HandleTranslationUnit(ASTContext &Ctx) {
   if (PP.getDiagnostics().hasErrorOccurred())
     return;
 
