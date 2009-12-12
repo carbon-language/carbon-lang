@@ -4621,7 +4621,7 @@ CheckOperatorNewDeleteDeclarationScope(Sema &SemaRef,
       << FnDecl->getDeclName();
   }
   
-  return true;
+  return false;
 }
 
 static bool
