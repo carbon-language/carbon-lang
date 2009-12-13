@@ -327,7 +327,13 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CompilerInvocation CI;
   CompilerInvocation::CreateFromArgs(CI, (const char**) CCArgs.data(),
                                      (const char**) CCArgs.data()+CCArgs.size(),
-                                     Argv0, MainAddr, Diags);
+                                     Diags);
+
+  // Infer the builtin include path if unspecified.
+  if (CI.getHeaderSearchOpts().UseBuiltinIncludes &&
+      CI.getHeaderSearchOpts().BuiltinIncludePath.empty())
+    CI.getHeaderSearchOpts().BuiltinIncludePath =
+      CompilerInvocation::GetBuiltinIncludePath(Argv0, MainAddr);
 
   CI.getFrontendOpts().DisableFree = UseBumpAllocator;
   return LoadFromCompilerInvocation(CI, Diags, OnlyLocalDecls);

@@ -951,8 +951,8 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   return DashX;
 }
 
-static std::string GetBuiltinIncludePath(const char *Argv0,
-                                         void *MainAddr) {
+std::string CompilerInvocation::GetBuiltinIncludePath(const char *Argv0,
+                                                      void *MainAddr) {
   llvm::sys::Path P = llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
 
   if (!P.isEmpty()) {
@@ -969,16 +969,16 @@ static std::string GetBuiltinIncludePath(const char *Argv0,
   return P.str();
 }
 
-static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args,
-                                  const char *Argv0, void *MainAddr) {
+static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   using namespace cc1options;
   Opts.Sysroot = getLastArgValue(Args, OPT_isysroot, "/");
   Opts.Verbose = Args.hasArg(OPT_v);
+  Opts.UseBuiltinIncludes = !Args.hasArg(OPT_nobuiltininc);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
+  // Filled in by clients.
+  //
+  // FIXME: Elimate this.
   Opts.BuiltinIncludePath = "";
-  // FIXME: Add an option for this, its a slow call.
-  if (!Args.hasArg(OPT_nobuiltininc))
-    Opts.BuiltinIncludePath = GetBuiltinIncludePath(Argv0, MainAddr);
 
   // Add -I... and -F... options in order.
   for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F),
@@ -1262,8 +1262,6 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
 void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                                         const char **ArgBegin,
                                         const char **ArgEnd,
-                                        const char *Argv0,
-                                        void *MainAddr,
                                         Diagnostic &Diags) {
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
@@ -1287,8 +1285,7 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags);
   FrontendOptions::InputKind DashX =
     ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
-  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args,
-                        Argv0, MainAddr);
+  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
   if (DashX != FrontendOptions::IK_AST)
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, Diags);

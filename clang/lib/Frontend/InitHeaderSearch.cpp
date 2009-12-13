@@ -730,7 +730,7 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   else
     Init.AddDelimitedPaths(HSOpts.CEnvIncPath);
 
-  if (!HSOpts.BuiltinIncludePath.empty()) {
+  if (HSOpts.UseBuiltinIncludes) {
     // Ignore the sys root, we *always* look for clang headers relative to
     // supplied path.
     Init.AddPath(HSOpts.BuiltinIncludePath, System,

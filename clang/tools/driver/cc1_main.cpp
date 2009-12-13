@@ -121,8 +121,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 
 // FIXME: Define the need for this testing away.
 static int cc1_test(Diagnostic &Diags,
-                    const char **ArgBegin, const char **ArgEnd,
-                    const char *Argv0, void *MainAddr) {
+                    const char **ArgBegin, const char **ArgEnd) {
   using namespace clang::driver;
 
   llvm::errs() << "cc1 argv:";
@@ -150,8 +149,7 @@ static int cc1_test(Diagnostic &Diags,
   // Create a compiler invocation.
   llvm::errs() << "cc1 creating invocation.\n";
   CompilerInvocation Invocation;
-  CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd,
-                                     Argv0, MainAddr, Diags);
+  CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd, Diags);
 
   // Convert the invocation back to argument strings.
   std::vector<std::string> InvocationArgs;
@@ -170,8 +168,7 @@ static int cc1_test(Diagnostic &Diags,
   // same thing.
   CompilerInvocation Invocation2;
   CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
-                                     Invocation2Args.end(), Argv0, MainAddr,
-                                     Diags);
+                                     Invocation2Args.end(), Diags);
 
   // FIXME: Implement CompilerInvocation comparison.
   if (true) {
@@ -198,7 +195,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   if (ArgBegin != ArgEnd && llvm::StringRef(ArgBegin[0]) == "-cc1test") {
     TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions());
     Diagnostic Diags(&DiagClient);
-    return cc1_test(Diags, ArgBegin + 1, ArgEnd, Argv0, MainAddr);
+    return cc1_test(Diags, ArgBegin + 1, ArgEnd);
   }
 
   // Initialize targets first, so that --version shows registered targets.
@@ -210,7 +207,13 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   TextDiagnosticBuffer DiagsBuffer;
   Diagnostic Diags(&DiagsBuffer);
   CompilerInvocation::CreateFromArgs(Clang.getInvocation(), ArgBegin, ArgEnd,
-                                     Argv0, MainAddr, Diags);
+                                     Diags);
+
+  // Infer the builtin include path if unspecified.
+  if (Clang.getInvocation().getHeaderSearchOpts().UseBuiltinIncludes &&
+      Clang.getInvocation().getHeaderSearchOpts().BuiltinIncludePath.empty())
+    Clang.getInvocation().getHeaderSearchOpts().BuiltinIncludePath =
+      CompilerInvocation::GetBuiltinIncludePath(Argv0, MainAddr);
 
   // Honor -help.
   if (Clang.getInvocation().getFrontendOpts().ShowHelp) {
@@ -232,7 +235,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   Clang.createDiagnostics(ArgEnd - ArgBegin, const_cast<char**>(ArgBegin));
   if (!Clang.hasDiagnostics())
     return 1;
-  
+
   // Set an error handler, so that any LLVM backend diagnostics go through our
   // error handler.
   llvm::llvm_install_error_handler(LLVMErrorHandler,

@@ -65,6 +65,9 @@ public:
   /// will be searched following the user and environment includes.
   std::string BuiltinIncludePath;
 
+  /// Include the compiler builtin includes.
+  unsigned UseBuiltinIncludes : 1;
+
   /// Include the system standard include search directories.
   unsigned UseStandardIncludes : 1;
 
@@ -73,7 +76,8 @@ public:
 
 public:
   HeaderSearchOptions(llvm::StringRef _Sysroot = "/")
-    : Sysroot(_Sysroot), UseStandardIncludes(true), Verbose(false) {}
+    : Sysroot(_Sysroot), UseBuiltinIncludes(true),
+      UseStandardIncludes(true), Verbose(false) {}
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.
   void AddPath(llvm::StringRef Path, frontend::IncludeDirGroup Group,
