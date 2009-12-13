@@ -1,4 +1,4 @@
-// RUN: clang -m64 -fobjc-nonfragile-abi -S -emit-llvm -o %t %s
+// RUN: clang-cc -fobjc-nonfragile-abi -emit-llvm -o - %s
 // FIXME. Test is incomplete.
 
 @protocol P 
