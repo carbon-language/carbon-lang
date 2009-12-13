@@ -135,6 +135,7 @@ public:
     assert(!isNull() && "removing from empty list");
     if (NamedDecl *Singleton = getAsDecl()) {
       assert(Singleton == D && "list is different singleton");
+      (void)Singleton;
       Data = 0;
       return;
     }

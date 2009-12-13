@@ -2115,6 +2115,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   assert(!S.CompareReferenceRelationship(Initializer->getLocStart(), 
                                          T1, T2, DerivedToBase) &&
          "Must have incompatible references when binding via conversion");
+  (void)DerivedToBase;
 
   // Build the candidate set directly in the initialization sequence
   // structure, so that it will persist if we fail.

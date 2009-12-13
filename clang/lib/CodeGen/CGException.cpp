@@ -326,6 +326,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
   llvm::BasicBlock *Unwind = 0;
 
   assert(PrevLandingPad == 0 && "EHSpec has invoke context");
+  (void)PrevLandingPad;
 
   llvm::BasicBlock *Cont = createBasicBlock("cont");
 
