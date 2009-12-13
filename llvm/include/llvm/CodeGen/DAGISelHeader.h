@@ -110,8 +110,7 @@ void SelectRoot(SelectionDAG &DAG) {
     DAG.setSubgraphColor(Node, "red");
 #endif
     SDNode *ResNode = Select(SDValue(Node, 0));
-    // If node should not be replaced, 
-    // continue with the next one.
+    // If node should not be replaced, continue with the next one.
     if (ResNode == Node)
       continue;
     // Replace node.

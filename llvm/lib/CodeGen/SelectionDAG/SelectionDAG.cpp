@@ -4177,7 +4177,7 @@ SDVTList SelectionDAG::getVTList(EVT VT1, EVT VT2, EVT VT3, EVT VT4) {
                           I->VTs[2] == VT3 && I->VTs[3] == VT4)
       return *I;
 
-  EVT *Array = Allocator.Allocate<EVT>(3);
+  EVT *Array = Allocator.Allocate<EVT>(4);
   Array[0] = VT1;
   Array[1] = VT2;
   Array[2] = VT3;
