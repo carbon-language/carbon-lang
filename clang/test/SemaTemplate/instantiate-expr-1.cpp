@@ -94,3 +94,21 @@ struct Addable {
 void test_add(Addable &a) {
   add(a);
 }
+
+struct CallOperator {
+  int &operator()(int);
+  double &operator()(double);
+};
+
+template<typename Result, typename F, typename Arg1>
+Result test_call_operator(F f, Arg1 arg1) {
+  // PR5266: non-dependent invocations of a function call operator.
+  CallOperator call_op;
+  int &ir = call_op(17);
+  return f(arg1);
+}
+
+void test_call_operator(CallOperator call_op, int i, double d) {
+  int &ir = test_call_operator<int&>(call_op, i);
+  double &dr = test_call_operator<double&>(call_op, d);
+}

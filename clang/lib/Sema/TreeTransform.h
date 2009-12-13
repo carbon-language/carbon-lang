@@ -4131,6 +4131,68 @@ TreeTransform<Derived>::TransformGNUNullExpr(GNUNullExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+  switch (E->getOperator()) {
+  case OO_New:
+  case OO_Delete:
+  case OO_Array_New:
+  case OO_Array_Delete:
+    llvm_unreachable("new and delete operators cannot use CXXOperatorCallExpr");
+    return SemaRef.ExprError();
+    
+  case OO_Call: {
+    // This is a call to an object's operator().
+    assert(E->getNumArgs() >= 1 && "Object call is missing arguments");
+
+    // Transform the object itself.
+    OwningExprResult Object = getDerived().TransformExpr(E->getArg(0));
+    if (Object.isInvalid())
+      return SemaRef.ExprError();
+
+    // FIXME: Poor location information
+    SourceLocation FakeLParenLoc
+      = SemaRef.PP.getLocForEndOfToken(
+                              static_cast<Expr *>(Object.get())->getLocEnd());
+
+    // Transform the call arguments.
+    ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
+    llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
+    for (unsigned I = 1, N = E->getNumArgs(); I != N; ++I) {
+      OwningExprResult Arg = getDerived().TransformExpr(E->getArg(I));
+      if (Arg.isInvalid())
+        return SemaRef.ExprError();
+
+      // FIXME: Poor source location information.
+      SourceLocation FakeCommaLoc
+        = SemaRef.PP.getLocForEndOfToken(
+                                 static_cast<Expr *>(Arg.get())->getLocEnd());
+      FakeCommaLocs.push_back(FakeCommaLoc);
+      Args.push_back(Arg.release());
+    }
+
+    return getDerived().RebuildCallExpr(move(Object), FakeLParenLoc,
+                                        move_arg(Args),
+                                        FakeCommaLocs.data(),
+                                        E->getLocEnd());
+  }
+
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+  case OO_##Name:
+#define OVERLOADED_OPERATOR_MULTI(Name,Spelling,Unary,Binary,MemberOnly)
+#include "clang/Basic/OperatorKinds.def"
+  case OO_Subscript:
+    // Handled below.
+    break;
+
+  case OO_Conditional:
+    llvm_unreachable("conditional operator is not actually overloadable");
+    return SemaRef.ExprError();
+
+  case OO_None:
+  case NUM_OVERLOADED_OPERATORS:
+    llvm_unreachable("not an overloaded operator?");
+    return SemaRef.ExprError();
+  }
+
   OwningExprResult Callee = getDerived().TransformExpr(E->getCallee());
   if (Callee.isInvalid())
     return SemaRef.ExprError();
