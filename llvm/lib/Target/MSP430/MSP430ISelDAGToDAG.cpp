@@ -86,10 +86,10 @@ namespace {
 
     void dump() {
       errs() << "MSP430ISelAddressMode " << this << '\n';
-      if (Base.Reg.getNode() != 0) {
+      if (BaseType == RegBase && Base.Reg.getNode() != 0) {
         errs() << "Base.Reg ";
         Base.Reg.getNode()->dump();
-      } else {
+      } else if (BaseType == FrameIndexBase) {
         errs() << " Base.FrameIndex " << Base.FrameIndex << '\n';
       }
       errs() << " Disp " << Disp << '\n';
