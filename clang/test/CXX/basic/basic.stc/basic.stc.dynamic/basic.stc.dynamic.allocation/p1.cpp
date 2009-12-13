@@ -20,7 +20,7 @@ struct C {
 };
 
 struct D {
-  void *operator new(bool); // expected-error {{'operator new' takes type size_t ('unsigned long') as first parameter}}
+  void *operator new(bool); // expected-error {{'operator new' takes type size_t}}
 };
 
 struct E {
