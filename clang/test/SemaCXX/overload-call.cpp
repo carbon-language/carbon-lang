@@ -291,3 +291,13 @@ void f(SR) { }
 void g(opt o) {
   f(o);
 }
+
+
+namespace PR5756 {
+  int &a(void*, int);
+  float &a(void*, float);
+  void b() { 
+    int &ir = a(0,0);
+    (void)ir;
+  }
+}
