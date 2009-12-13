@@ -25,7 +25,6 @@ class RTTIBuilder {
   llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
 
-
   // Type info flags.
   enum {
     /// TI_Const - Type has const qualifier.
@@ -187,13 +186,12 @@ public:
     return true;
   }
 
-  llvm::Constant *finish(std::vector<llvm::Constant *> &info,
+  llvm::Constant *finish(llvm::Constant *const *Values, unsigned NumValues,
                          llvm::GlobalVariable *GV,
                          llvm::StringRef Name, bool Hidden, 
                          llvm::GlobalVariable::LinkageTypes Linkage) {
     llvm::Constant *C = 
-      llvm::ConstantStruct::get(VMContext, &info[0], info.size(), 
-                                /*Packed=*/false);
+      llvm::ConstantStruct::get(VMContext, Values, NumValues, /*Packed=*/false);
 
     llvm::GlobalVariable *OGV = GV;
     GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true, Linkage,
@@ -278,7 +276,7 @@ public:
       }
     }
 
-    return finish(info, GV, Name, Hidden, Linkage);
+    return finish(&info[0], info.size(), GV, Name, Hidden, Linkage);
   }
 
   /// - BuildFlags - Build a __flags value for __pbase_type_info.
@@ -372,7 +370,7 @@ public:
       info.push_back(BuildType(QualType(PtrMemTy->getClass(), 0)));
 
     // We always generate these as hidden, only the name isn't hidden.
-    return finish(info, GV, Name, /*Hidden=*/true, 
+    return finish(&info[0], info.size(), GV, Name, /*Hidden=*/true, 
                   GetLinkageFromExternFlag(Extern));
   }
 
@@ -399,7 +397,7 @@ public:
     info.push_back(BuildName(Ty, Hidden, Extern));
 
     // We always generate these as hidden, only the name isn't hidden.
-    return finish(info, GV, Name, /*Hidden=*/true, 
+    return finish(&info[0], info.size(), GV, Name, /*Hidden=*/true, 
                   GetLinkageFromExternFlag(Extern));
   }
 
