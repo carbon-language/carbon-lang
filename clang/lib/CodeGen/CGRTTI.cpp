@@ -375,11 +375,6 @@ public:
   }
 
   llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
-    std::vector<llvm::Constant *> info;
-    assert(info.empty() && "Info vector must be empty!");
-
-    llvm::Constant *C;
-
     llvm::SmallString<256> OutName;
     CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
     llvm::StringRef Name = OutName.str();
@@ -392,13 +387,13 @@ public:
     bool Extern = DecideExtern(Ty);
     bool Hidden = DecideHidden(Ty);
 
-    C = BuildVtableRef(vtbl);
-    info.push_back(C);
-    info.push_back(BuildName(Ty, Hidden, Extern));
-
+    llvm::Constant *Info[] = {
+      BuildVtableRef(vtbl), BuildName(Ty, Hidden, Extern)
+    };
+    
     // We always generate these as hidden, only the name isn't hidden.
-    return finish(&info[0], info.size(), GV, Name, /*Hidden=*/true, 
-                  GetLinkageFromExternFlag(Extern));
+    return finish(&Info[0], llvm::array_lengthof(Info), GV, Name, 
+                  /*Hidden=*/true, GetLinkageFromExternFlag(Extern));
   }
 
   /// BuildType - Builds the type info for the given type.
