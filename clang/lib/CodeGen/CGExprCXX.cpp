@@ -64,6 +64,19 @@ static uint64_t CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
   if (!E->isArray())
     return 0;
 
+  // No cookie is required if the new operator being used is 
+  // ::operator new[](size_t, void*).
+  const FunctionDecl *OperatorNew = E->getOperatorNew();
+  if (OperatorNew->getDeclContext()->getLookupContext()->isFileContext()) {
+    if (OperatorNew->getNumParams() == 2) {
+      CanQualType ParamType = 
+        Ctx.getCanonicalType(OperatorNew->getParamDecl(1)->getType());
+      
+      if (ParamType == Ctx.VoidPtrTy)
+        return 0;
+    }
+  }
+      
   return CalculateCookiePadding(Ctx, E->getAllocatedType());
   QualType T = E->getAllocatedType();
 }
@@ -264,7 +277,6 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   return NewPtr;
 }
-
 
 static std::pair<llvm::Value *, llvm::Value *>
 GetAllocatedObjectPtrAndNumElements(CodeGenFunction &CGF,
