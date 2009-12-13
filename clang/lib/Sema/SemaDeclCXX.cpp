@@ -4624,33 +4624,83 @@ CheckOperatorNewDeleteDeclarationScope(Sema &SemaRef,
   return false;
 }
 
+static inline bool
+CheckOperatorNewDeleteTypes(Sema &SemaRef, const FunctionDecl *FnDecl,
+                            CanQualType ExpectedResultType,
+                            CanQualType ExpectedFirstParamType,
+                            unsigned DependentParamTypeDiag,
+                            unsigned InvalidParamTypeDiag) {
+  QualType ResultType = 
+    FnDecl->getType()->getAs<FunctionType>()->getResultType();
+
+  // Check that the result type is not dependent.
+  if (ResultType->isDependentType())
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_dependent_result_type)
+    << FnDecl->getDeclName() << ExpectedResultType;
+
+  // Check that the result type is what we expect.
+  if (SemaRef.Context.getCanonicalType(ResultType) != ExpectedResultType)
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_invalid_result_type) 
+    << FnDecl->getDeclName() << ExpectedResultType;
+  
+  // A function template must have at least 2 parameters.
+  if (FnDecl->getDescribedFunctionTemplate() && FnDecl->getNumParams() < 2)
+    return SemaRef.Diag(FnDecl->getLocation(),
+                      diag::err_operator_new_delete_template_too_few_parameters)
+        << FnDecl->getDeclName();
+  
+  // The function decl must have at least 1 parameter.
+  if (FnDecl->getNumParams() == 0)
+    return SemaRef.Diag(FnDecl->getLocation(),
+                        diag::err_operator_new_delete_too_few_parameters)
+      << FnDecl->getDeclName();
+ 
+  // Check the the first parameter type is not dependent.
+  QualType FirstParamType = FnDecl->getParamDecl(0)->getType();
+  if (FirstParamType->isDependentType())
+    return SemaRef.Diag(FnDecl->getLocation(), DependentParamTypeDiag)
+      << FnDecl->getDeclName() << ExpectedFirstParamType;
+
+  // Check that the first parameter type is what we expect.
+  if (SemaRef.Context.getCanonicalType(FirstParamType) != 
+      ExpectedFirstParamType)
+    return SemaRef.Diag(FnDecl->getLocation(), InvalidParamTypeDiag)
+    << FnDecl->getDeclName() << ExpectedFirstParamType;
+  
+  return false;
+}
+
 static bool
-CheckOperatorNewDeclaration(Sema &SemaRef, FunctionDecl *FnDecl) {
+CheckOperatorNewDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
   // C++ [basic.stc.dynamic.allocation]p1:
   //   A program is ill-formed if an allocation function is declared in a
   //   namespace scope other than global scope or declared static in global 
   //   scope.
   if (CheckOperatorNewDeleteDeclarationScope(SemaRef, FnDecl))
     return true;
-  
-  bool ret = false;
-  if (FunctionDecl::param_iterator Param = FnDecl->param_begin()) {
-    QualType SizeTy = 
-      SemaRef.Context.getCanonicalType(SemaRef.Context.getSizeType());
-    QualType T = SemaRef.Context.getCanonicalType((*Param)->getType());
-    if (!T->isDependentType() && SizeTy != T) {
-      SemaRef.Diag(FnDecl->getLocation(),
-                   diag::err_operator_new_param_type) << FnDecl->getDeclName()
-        << SizeTy;
-      ret = true;
-    }
-  }
-  QualType ResultTy = SemaRef.Context.getCanonicalType(FnDecl->getResultType());
-  if (!ResultTy->isDependentType() && ResultTy != SemaRef.Context.VoidPtrTy)
+
+  CanQualType SizeTy = 
+    SemaRef.Context.getCanonicalType(SemaRef.Context.getSizeType());
+
+  // C++ [basic.stc.dynamic.allocation]p1:
+  //  The return type shall be void*. The first parameter shall have type 
+  //  std::size_t.
+  if (CheckOperatorNewDeleteTypes(SemaRef, FnDecl, SemaRef.Context.VoidPtrTy, 
+                                  SizeTy,
+                                  diag::err_operator_new_dependent_param_type,
+                                  diag::err_operator_new_param_type))
+    return true;
+
+  // C++ [basic.stc.dynamic.allocation]p1:
+  //  The first parameter shall not have an associated default argument.
+  if (FnDecl->getParamDecl(0)->hasDefaultArg())
     return SemaRef.Diag(FnDecl->getLocation(),
-                        diag::err_operator_new_delete_invalid_result_type) 
-      << FnDecl->getDeclName() << SemaRef.Context.VoidPtrTy;
-  return ret;
+                        diag::err_operator_new_default_arg)
+      << FnDecl->getDeclName() << FnDecl->getParamDecl(0)->getDefaultArgRange();
+
+  return false;
 }
 
 static bool
@@ -4665,25 +4715,11 @@ CheckOperatorDeleteDeclaration(Sema &SemaRef, const FunctionDecl *FnDecl) {
   // C++ [basic.stc.dynamic.deallocation]p2:
   //   Each deallocation function shall return void and its first parameter 
   //   shall be void*.
-  QualType ResultType = FnDecl->getResultType();
-  if (ResultType->isDependentType())
-    return SemaRef.Diag(FnDecl->getLocation(),
-                        diag::err_operator_new_delete_dependent_result_type)
-      << FnDecl->getDeclName() << SemaRef.Context.VoidTy;
-    
-  if (!ResultType->isVoidType())
-    return SemaRef.Diag(FnDecl->getLocation(),
-                        diag::err_operator_new_delete_invalid_result_type) 
-      << FnDecl->getDeclName() << SemaRef.Context.VoidTy;
-
-  if (FnDecl->getDescribedFunctionTemplate() && FnDecl->getNumParams() < 2)
-    return SemaRef.Diag(FnDecl->getLocation(),
-                      diag::err_operator_new_delete_template_too_few_parameters)
-        << FnDecl->getDeclName();
-  else if (FnDecl->getNumParams() == 0)
-    return SemaRef.Diag(FnDecl->getLocation(),
-                        diag::err_operator_new_delete_too_few_parameters)
-      << FnDecl->getDeclName();
+  if (CheckOperatorNewDeleteTypes(SemaRef, FnDecl, SemaRef.Context.VoidTy, 
+                                  SemaRef.Context.VoidPtrTy,
+                                 diag::err_operator_delete_dependent_param_type,
+                                 diag::err_operator_delete_param_type))
+    return true;
 
   QualType FirstParamType = FnDecl->getParamDecl(0)->getType();
   if (FirstParamType->isDependentType())
@@ -4758,14 +4794,10 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   if (Op != OO_Call) {
     for (FunctionDecl::param_iterator Param = FnDecl->param_begin();
          Param != FnDecl->param_end(); ++Param) {
-      if ((*Param)->hasUnparsedDefaultArg())
+      if ((*Param)->hasDefaultArg())
         return Diag((*Param)->getLocation(),
                     diag::err_operator_overload_default_arg)
-          << FnDecl->getDeclName();
-      else if (Expr *DefArg = (*Param)->getDefaultArg())
-        return Diag((*Param)->getLocation(),
-                    diag::err_operator_overload_default_arg)
-          << FnDecl->getDeclName() << DefArg->getSourceRange();
+          << FnDecl->getDeclName() << (*Param)->getDefaultArgRange();
     }
   }
 

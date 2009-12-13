@@ -2250,6 +2250,8 @@ def err_operator_new_dependent_param_type : Error<
   "use size_t (%1) instead">;
 def err_operator_new_param_type : Error<
   "%0 takes type size_t (%1) as first parameter">;
+def err_operator_new_default_arg: Error<
+  "parameter of %0 cannot have a default argument">;
 def err_operator_delete_dependent_param_type : Error<
   "%0 cannot take a dependent type as first parameter; use %1 instead">;
 def err_operator_delete_param_type : Error<

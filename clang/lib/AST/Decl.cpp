@@ -95,8 +95,8 @@ SourceRange ParmVarDecl::getDefaultArgRange() const {
   if (const Expr *E = getInit())
     return E->getSourceRange();
   
-  if (const Expr *E = getUninstantiatedDefaultArg())
-    return E->getSourceRange();
+  if (hasUninstantiatedDefaultArg())
+    return getUninstantiatedDefaultArg()->getSourceRange();
     
   return SourceRange();
 }

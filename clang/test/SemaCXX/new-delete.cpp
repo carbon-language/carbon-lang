@@ -140,10 +140,8 @@ public:
 
 class Base {
 public:
-  static int operator new(signed char) throw(); // expected-error {{'operator new' takes type size_t}} \
-						  // expected-error {{operator new' must return type 'void *'}}
-  static int operator new[] (signed char) throw(); // expected-error {{'operator new[]' takes type size_t}} \
-						     // expected-error {{operator new[]' must return type 'void *'}}
+  static void *operator new(signed char) throw(); // expected-error {{'operator new' takes type size_t}}
+  static int operator new[] (size_t) throw(); // expected-error {{operator new[]' must return type 'void *'}}
 };
 
 class Tier {};
@@ -160,9 +158,11 @@ void loadEngineFor() {
 }
 
 template <class T> struct TBase {
-  void* operator new(T size, int); // expected-error {{'operator new' takes type size_t}}
+  void* operator new(T size, int); // expected-error {{'operator new' cannot take a dependent type as first parameter; use size_t}}\
+                                   // expected-error {{'operator new' takes type size_t}}
 };
 
+// FIXME: We should not try to instantiate operator new, since it is invalid.
 TBase<int> t1; // expected-note {{in instantiation of template class 'struct TBase<int>' requested here}}
 
 class X6 {
