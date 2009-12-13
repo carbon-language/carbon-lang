@@ -27,25 +27,33 @@ static uint64_t CalculateCookiePadding(ASTContext &Ctx, QualType ElementType) {
   // Check if the class has a trivial destructor.
   if (RD->hasTrivialDestructor()) {
     // Check if the usual deallocation function takes two arguments.
+    const CXXMethodDecl *UsualDeallocationFunction = 0;
+    
     DeclarationName OpName =
       Ctx.DeclarationNames.getCXXOperatorName(OO_Array_Delete);
-    
     DeclContext::lookup_const_iterator Op, OpEnd;
     for (llvm::tie(Op, OpEnd) = RD->lookup(OpName);
          Op != OpEnd; ++Op) {
-      CXXMethodDecl *Delete = cast<CXXMethodDecl>(*Op);
+      const CXXMethodDecl *Delete = cast<CXXMethodDecl>(*Op);
 
       if (Delete->isUsualDeallocationFunction()) {
-        // We don't need a cookie.
-        if (Delete->getNumParams() == 1)
-          return 0;
-        
-        assert(Delete->getNumParams() == 2 && 
-               "Unexpected deallocation function type!");
+        UsualDeallocationFunction = Delete;
         break;
       }
     }
-  }
+    
+    // No usual deallocation function, we don't need a cookie.
+    if (!UsualDeallocationFunction)
+      return 0;
+    
+    // The usual deallocation function doesn't take a size_t argument, so we
+    // don't need a cookie.
+    if (UsualDeallocationFunction->getNumParams() == 1)
+      return 0;
+        
+    assert(UsualDeallocationFunction->getNumParams() == 2 && 
+           "Unexpected deallocation function type!");
+  }  
   
   // Padding is the maximum of sizeof(size_t) and alignof(ElementType)
   return std::max(Ctx.getTypeSize(Ctx.getSizeType()),
