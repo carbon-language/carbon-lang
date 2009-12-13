@@ -4,7 +4,6 @@
 // RUN: FileCheck %s < %t
 // CHECK: cindex-from-source.m:{{.*}}:{{.*}}: StructDecl=s0:{{.*}}:{{.*}} [Context=cindex-from-source.m]
 // CHECK: cindex-from-source.m:{{.*}}:{{.*}}: VarDecl=g0:{{.*}}:{{.*}} [Context=cindex-from-source.m]
-// XFAIL: win32
 
 struct s0 {};
 t0 g0;
