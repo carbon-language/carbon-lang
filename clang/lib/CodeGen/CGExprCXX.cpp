@@ -250,10 +250,31 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
   DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
 
   if (DeleteFTy->getNumArgs() == 2) {
+    uint64_t DeleteTypeSize = getContext().getTypeSize(DeleteTy) / 8;
     QualType SizeTy = DeleteFTy->getArgType(1);
-    uint64_t SizeVal = getContext().getTypeSize(DeleteTy) / 8;
-    llvm::Constant *Size = llvm::ConstantInt::get(ConvertType(SizeTy),
-                                                  SizeVal);
+    llvm::Value *Size = 
+      llvm::ConstantInt::get(ConvertType(SizeTy), DeleteTypeSize);
+
+    if (DeleteFD->getOverloadedOperator() == OO_Array_Delete) {
+      // We need to get the number of elements in the array from the cookie.
+      uint64_t DeleteTypeAlign = getContext().getTypeAlign(DeleteTy);
+      unsigned CookiePadding = std::max(getContext().getTypeSize(SizeTy),
+                                        DeleteTypeAlign) / 8;
+      assert(CookiePadding && "CookiePadding should not be 0.");
+      
+      uint64_t CookieOffset =
+        CookiePadding - getContext().getTypeSize(SizeTy) / 8;
+      llvm::Value *NumElementsPtr =
+        Builder.CreateConstInBoundsGEP1_64(Ptr, CookieOffset);
+      NumElementsPtr = 
+        Builder.CreateBitCast(NumElementsPtr,
+                              ConvertType(SizeTy)->getPointerTo());
+      llvm::Value *NumElements = Builder.CreateLoad(NumElementsPtr);
+    
+      // Multiply the size with the number of elements.
+      Size = Builder.CreateMul(NumElements, Size);
+    }
+     
     DeleteArgs.push_back(std::make_pair(RValue::get(Size), SizeTy));
   }
 
@@ -303,31 +324,29 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
           QualType SizeTy = getContext().getSizeType();
           uint64_t CookiePadding = std::max(getContext().getTypeSize(SizeTy),
                 static_cast<uint64_t>(getContext().getTypeAlign(DeleteTy))) / 8;
-          if (CookiePadding) {
-            llvm::Type *Ptr8Ty = 
-              llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
-            uint64_t CookieOffset =
-              CookiePadding - getContext().getTypeSize(SizeTy) / 8;
-            llvm::Value *AllocatedObjectPtr = 
-              Builder.CreateConstInBoundsGEP1_64(
-                            Builder.CreateBitCast(Ptr, Ptr8Ty), -CookiePadding);
-            llvm::Value *NumElementsPtr =
-              Builder.CreateConstInBoundsGEP1_64(AllocatedObjectPtr, 
-                                                 CookieOffset);
-            NumElementsPtr = Builder.CreateBitCast(NumElementsPtr,
-                                          ConvertType(SizeTy)->getPointerTo());
+          assert(CookiePadding && "CookiePadding should not be 0.");
+                 
+          const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+          uint64_t CookieOffset =
+            CookiePadding - getContext().getTypeSize(SizeTy) / 8;
+          llvm::Value *AllocatedObjectPtr = 
+            Builder.CreateConstInBoundsGEP1_64(
+                          Builder.CreateBitCast(Ptr, Int8PtrTy), 
+                                               -CookiePadding);
+          llvm::Value *NumElementsPtr =
+            Builder.CreateConstInBoundsGEP1_64(AllocatedObjectPtr, 
+                                               CookieOffset);
+          NumElementsPtr = Builder.CreateBitCast(NumElementsPtr,
+                                        ConvertType(SizeTy)->getPointerTo());
             
-            llvm::Value *NumElements = 
-              Builder.CreateLoad(NumElementsPtr);
-            NumElements = 
-              Builder.CreateIntCast(NumElements, 
-                                    llvm::Type::getInt64Ty(VMContext), false, 
-                                    "count.tmp");
-            EmitCXXAggrDestructorCall(Dtor, NumElements, Ptr);
-            Ptr = AllocatedObjectPtr;
-          }
-        }
-        else if (Dtor->isVirtual()) {
+          llvm::Value *NumElements = Builder.CreateLoad(NumElementsPtr);
+          NumElements = 
+            Builder.CreateIntCast(NumElements, 
+                                  llvm::Type::getInt64Ty(VMContext), false, 
+                                  "count.tmp");
+          EmitCXXAggrDestructorCall(Dtor, NumElements, Ptr);
+          Ptr = AllocatedObjectPtr;
+        } else if (Dtor->isVirtual()) {
           const llvm::Type *Ty =
             CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(Dtor),
                                            /*isVariadic=*/false);
