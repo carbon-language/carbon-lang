@@ -13,3 +13,6 @@ LINK_COMPONENTS := asmparser core support jit native
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
+
+# Permit these tests to use the JIT's symbolic lookup.
+LD.Flags += $(RDYNAMIC)

@@ -681,7 +681,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
   if (Ptr) return Ptr;
 
   // If the global is external, just remember the address.
-  if (GV->isDeclaration()) {
+  if (GV->isDeclaration() || GV->hasAvailableExternallyLinkage()) {
 #if HAVE___DSO_HANDLE
     if (GV->getName() == "__dso_handle")
       return (void*)&__dso_handle;
