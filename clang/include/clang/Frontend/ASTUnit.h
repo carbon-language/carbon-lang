@@ -149,19 +149,14 @@ public:
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.
   ///
-  /// \param Argv0 - The program path (from argv[0]), for finding the builtin
-  /// compiler path.
-  ///
-  /// \param MainAddr - The address of main (or some other function in the main
-  /// executable), for finding the builtin compiler path.
+  /// \param ResourceFilesPath - The path to the compiler resource files.
   //
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
                                       Diagnostic &Diags,
-                                      const char *Arg0,
-                                      void *MainAddr,
+                                      llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
                                       bool UseBumpAllocator = false);
 };

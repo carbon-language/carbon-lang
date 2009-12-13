@@ -223,9 +223,12 @@ ASTUnit *CreateFromSource(const std::string &Filename, Diagnostic &Diags,
   for (unsigned i = 0, e = CompilerArgs.size(); i != e; ++i)
     Args.push_back(CompilerArgs[i].c_str());
 
+  void *MainAddr = (void*) (intptr_t) CreateFromSource;
+  llvm::sys::Path ResourcesPath(
+    CompilerInvocation::GetBuiltinIncludePath(Argv0, MainAddr));
+  ResourcesPath.eraseComponent();
   return ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
-                                      Diags, Argv0,
-                                      (void*) (intptr_t) CreateFromSource);
+                                      Diags, ResourcesPath.str());
 }
 
 int main(int argc, char **argv) {

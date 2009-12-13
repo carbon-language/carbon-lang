@@ -12,25 +12,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-c/Index.h"
-#include "clang/Index/Program.h"
-#include "clang/Index/Indexer.h"
-#include "clang/Index/ASTLocation.h"
-#include "clang/Index/Utils.h"
-#include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/AST/Decl.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/AST/Decl.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Version.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Index/ASTLocation.h"
+#include "clang/Index/Indexer.h"
+#include "clang/Index/Program.h"
+#include "clang/Index/Utils.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
-#include "llvm/Support/raw_ostream.h"
 
 #include <cstdio>
 #include <vector>
@@ -336,6 +337,9 @@ public:
 
   /// \brief Get the path of the clang binary.
   const llvm::sys::Path& getClangPath();
+
+  /// \brief Get the path of the clang resource files.
+  std::string getClangResourcesPath();
 };
 
 const llvm::sys::Path& CIndexer::getClangPath() {
@@ -375,6 +379,22 @@ const llvm::sys::Path& CIndexer::getClangPath() {
   // Cache our result.
   ClangPath = CIndexPath;
   return ClangPath;
+}
+
+std::string CIndexer::getClangResourcesPath() {
+  llvm::sys::Path P = getClangPath();
+
+  if (!P.empty()) {
+    P.eraseComponent();  // Remove /clang from foo/bin/clang
+    P.eraseComponent();  // Remove /bin   from foo/bin
+
+    // Get foo/lib/clang/<version>/include
+    P.appendComponent("lib");
+    P.appendComponent("clang");
+    P.appendComponent(CLANG_VERSION_STRING);
+  }
+
+  return P.str();
 }
 
 }
@@ -508,12 +528,11 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
 
-    void *MainAddr = (void *)(uintptr_t)clang_createTranslationUnit;
-
     unsigned NumErrors = CXXIdx->getDiags().getNumErrors();
     llvm::OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
-                                   CXXIdx->getDiags(), "<clang>", MainAddr,
+                                   CXXIdx->getDiags(),
+                                   CXXIdx->getClangResourcesPath(),
                                    CXXIdx->getOnlyLocalDecls(),
                                    /* UseBumpAllocator = */ true));
 

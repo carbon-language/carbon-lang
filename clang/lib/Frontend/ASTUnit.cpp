@@ -287,8 +287,7 @@ error:
 ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
                                       Diagnostic &Diags,
-                                      const char *Argv0,
-                                      void *MainAddr,
+                                      llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
                                       bool UseBumpAllocator) {
   llvm::SmallVector<const char *, 16> Args;
@@ -299,9 +298,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // also want to force it to use clang.
   Args.push_back("-fsyntax-only");
 
-  llvm::sys::Path Path = llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
-  driver::Driver TheDriver(Path.getBasename(), Path.getDirname(),
-                           llvm::sys::getHostTriple(),
+  // FIXME: We shouldn't have to pass in the path info.
+  driver::Driver TheDriver("clang", "/", llvm::sys::getHostTriple(),
                            "a.out", false, Diags);
   llvm::OwningPtr<driver::Compilation> C(
     TheDriver.BuildCompilation(Args.size(), Args.data()));
@@ -329,11 +327,10 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                      (const char**) CCArgs.data()+CCArgs.size(),
                                      Diags);
 
-  // Infer the builtin include path if unspecified.
-  if (CI.getHeaderSearchOpts().UseBuiltinIncludes &&
-      CI.getHeaderSearchOpts().BuiltinIncludePath.empty())
-    CI.getHeaderSearchOpts().BuiltinIncludePath =
-      CompilerInvocation::GetBuiltinIncludePath(Argv0, MainAddr);
+  // Set the builtin include path.
+  llvm::sys::Path P(ResourceFilesPath);
+  P.appendComponent("include");
+  CI.getHeaderSearchOpts().BuiltinIncludePath = P.str();
 
   CI.getFrontendOpts().DisableFree = UseBumpAllocator;
   return LoadFromCompilerInvocation(CI, Diags, OnlyLocalDecls);
