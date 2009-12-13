@@ -397,8 +397,9 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
   assert(CA && "Do we support VLA for destruction ?");
   uint64_t ElementCount = getContext().getConstantArrayElementCount(CA);
-  llvm::Value* ElementCountPtr =
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), ElementCount);
+  
+  const llvm::Type *SizeLTy = ConvertType(getContext().getSizeType());
+  llvm::Value* ElementCountPtr = llvm::ConstantInt::get(SizeLTy, ElementCount);
   EmitCXXAggrDestructorCall(D, ElementCountPtr, This);
 }
 
@@ -408,13 +409,14 @@ void
 CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                            llvm::Value *UpperCount,
                                            llvm::Value *This) {
-  llvm::Value *One = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                            1);
+  const llvm::Type *SizeLTy = ConvertType(getContext().getSizeType());
+  llvm::Value *One = llvm::ConstantInt::get(SizeLTy, 1);
+  
   // Create a temporary for the loop index and initialize it with count of
   // array elements.
-  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
-                                           "loop.index");
-  // Index = ElementCount;
+  llvm::Value *IndexPtr = CreateTempAlloca(SizeLTy, "loop.index");
+
+  // Store the number of elements in the index pointer.
   Builder.CreateStore(UpperCount, IndexPtr);
 
   // Start the loop with a block that tests the condition.
@@ -428,7 +430,7 @@ CodeGenFunction::EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
   // Generate: if (loop-index != 0 fall to the loop body,
   // otherwise, go to the block after the for-loop.
   llvm::Value* zeroConstant =
-    llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
+    llvm::Constant::getNullValue(SizeLTy);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
   llvm::Value *IsNE = Builder.CreateICmpNE(Counter, zeroConstant,
                                             "isne");
