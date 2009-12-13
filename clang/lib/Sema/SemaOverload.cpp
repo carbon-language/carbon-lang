@@ -175,7 +175,7 @@ isPointerConversionToVoidPointer(ASTContext& Context) const {
   if (First == ICK_Array_To_Pointer)
     FromType = Context.getArrayDecayedType(FromType);
 
-  if (Second == ICK_Pointer_Conversion)
+  if (Second == ICK_Pointer_Conversion && FromType->isPointerType())
     if (const PointerType* ToPtrType = ToType->getAs<PointerType>())
       return ToPtrType->getPointeeType()->isVoidType();
 
@@ -1723,31 +1723,26 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     if (SCS2.First == ICK_Array_To_Pointer)
       FromType2 = Context.getArrayDecayedType(FromType2);
 
-    if (const PointerType *FromPointer1 = FromType1->getAs<PointerType>())
-      if (const PointerType *FromPointer2 = FromType2->getAs<PointerType>()) {
-        QualType FromPointee1
-          = FromPointer1->getPointeeType().getUnqualifiedType();
-        QualType FromPointee2
-          = FromPointer2->getPointeeType().getUnqualifiedType();
+    QualType FromPointee1
+      = FromType1->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
+    QualType FromPointee2
+      = FromType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
 
-        if (IsDerivedFrom(FromPointee2, FromPointee1))
-          return ImplicitConversionSequence::Better;
-        else if (IsDerivedFrom(FromPointee1, FromPointee2))
-          return ImplicitConversionSequence::Worse;
-        
-        // Objective-C++: If one interface is more specific than the
-        // other, it is the better one.
-        const ObjCInterfaceType* FromIface1 
-          = FromPointee1->getAs<ObjCInterfaceType>();
-        const ObjCInterfaceType* FromIface2
-          = FromPointee2->getAs<ObjCInterfaceType>();
-        if (FromIface1 && FromIface1) {
-          if (Context.canAssignObjCInterfaces(FromIface2, FromIface1))
-            return ImplicitConversionSequence::Better;
-          else if (Context.canAssignObjCInterfaces(FromIface1, FromIface2))
-            return ImplicitConversionSequence::Worse;
-        }
-      }
+    if (IsDerivedFrom(FromPointee2, FromPointee1))
+      return ImplicitConversionSequence::Better;
+    else if (IsDerivedFrom(FromPointee1, FromPointee2))
+      return ImplicitConversionSequence::Worse;
+
+    // Objective-C++: If one interface is more specific than the
+    // other, it is the better one.
+    const ObjCInterfaceType* FromIface1 = FromPointee1->getAs<ObjCInterfaceType>();
+    const ObjCInterfaceType* FromIface2 = FromPointee2->getAs<ObjCInterfaceType>();
+    if (FromIface1 && FromIface1) {
+      if (Context.canAssignObjCInterfaces(FromIface2, FromIface1))
+        return ImplicitConversionSequence::Better;
+      else if (Context.canAssignObjCInterfaces(FromIface1, FromIface2))
+        return ImplicitConversionSequence::Worse;
+    }
   }
 
   // Compare based on qualification conversions (C++ 13.3.3.2p3,
