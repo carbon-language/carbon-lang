@@ -325,9 +325,6 @@ namespace {
   /// BasedUser - For a particular base value, keep information about how we've
   /// partitioned the expression so far.
   struct BasedUser {
-    /// SE - The current ScalarEvolution object.
-    ScalarEvolution *SE;
-
     /// Base - The Base value for the PHI node that needs to be inserted for
     /// this use.  As the use is processed, information gets moved from this
     /// field to the Imm field (below).  BasedUser values are sorted by this
@@ -359,9 +356,9 @@ namespace {
     bool isUseOfPostIncrementedValue;
 
     BasedUser(IVStrideUse &IVSU, ScalarEvolution *se)
-      : SE(se), Base(IVSU.getOffset()), Inst(IVSU.getUser()),
+      : Base(IVSU.getOffset()), Inst(IVSU.getUser()),
         OperandValToReplace(IVSU.getOperandValToReplace()),
-        Imm(SE->getIntegerSCEV(0, Base->getType())),
+        Imm(se->getIntegerSCEV(0, Base->getType())),
         isUseOfPostIncrementedValue(IVSU.isUseOfPostIncrementedValue()) {}
 
     // Once we rewrite the code to insert the new IVs we want, update the
@@ -370,12 +367,14 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                        SmallVectorImpl<WeakVH> &DeadInsts);
+                                        SmallVectorImpl<WeakVH> &DeadInsts,
+                                        ScalarEvolution *SE);
 
     Value *InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
                                        const Type *Ty,
                                        SCEVExpander &Rewriter,
-                                       Instruction *IP);
+                                       Instruction *IP,
+                                       ScalarEvolution *SE);
     void dump() const;
   };
 }
@@ -389,7 +388,8 @@ void BasedUser::dump() const {
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
                                               const Type *Ty,
                                               SCEVExpander &Rewriter,
-                                              Instruction *IP) {
+                                              Instruction *IP,
+                                              ScalarEvolution *SE) {
   Value *Base = Rewriter.expandCodeFor(NewBase, 0, IP);
 
   // Wrap the base in a SCEVUnknown so that ScalarEvolution doesn't try to
@@ -412,7 +412,8 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
 void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                      SmallVectorImpl<WeakVH> &DeadInsts) {
+                                      SmallVectorImpl<WeakVH> &DeadInsts,
+                                      ScalarEvolution *SE) {
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
     BasicBlock::iterator InsertPt = Inst;
@@ -441,7 +442,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
     }
     Value *NewVal = InsertCodeForBaseAtPosition(NewBase,
                                                 OperandValToReplace->getType(),
-                                                Rewriter, InsertPt);
+                                                Rewriter, InsertPt, SE);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
 
@@ -503,7 +504,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                 PHIPred->getTerminator() :
                                 OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
-                                           Rewriter, InsertPt);
+                                           Rewriter, InsertPt, SE);
 
         DEBUG(errs() << "      Changing PHI use to ");
         DEBUG(WriteAsOperand(errs(), Code, /*PrintType=*/false));
@@ -1745,7 +1746,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *const &Stride,
 
       User.RewriteInstructionToUseNewBase(RewriteExpr, NewBasePt,
                                           Rewriter, L, this,
-                                          DeadInsts);
+                                          DeadInsts, SE);
 
       // Mark old value we replaced as possibly dead, so that it is eliminated
       // if we just replaced the last use of that value.
