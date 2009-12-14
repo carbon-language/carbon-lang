@@ -1078,7 +1078,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
               = getContext().getAsConstantArrayType(DRE->getType())) {
             llvm::APInt Size = CAT->getSize();
             llvm::BasicBlock *Cont = createBasicBlock("cont");
-            Builder.CreateCondBr(Builder.CreateICmpULT(Idx,
+            Builder.CreateCondBr(Builder.CreateICmpULE(Idx,
                                   llvm::ConstantInt::get(Idx->getType(), Size)),
                                  Cont, getAbortBB());
             EmitBlock(Cont);
