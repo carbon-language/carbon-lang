@@ -425,6 +425,7 @@ private:
   unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
 
   llvm::BasicBlock *TerminateHandler;
+  llvm::BasicBlock *AbortBB;
 
   int UniqueAggrDestructorCount;
 public:
@@ -1194,6 +1195,10 @@ public:
   /// try to simplify the codegen of the conditional based on the branch.
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
                             llvm::BasicBlock *FalseBlock);
+
+  /// getAbortBB - Create a basic block that will call abort.  We'll generate
+  /// a branch around the created basic block as necessary.
+  llvm::BasicBlock* getAbortBB();
 private:
 
   void EmitReturnOfRValue(RValue RV, QualType Ty);
@@ -1267,11 +1272,6 @@ private:
                                     ArgType));
     }
   }
-
-  llvm::BasicBlock *AbortBB;
-  /// getAbortBB - Create a basic block that will call abort.  We'll generate
-  /// a branch around the created basic block as necessary.
-  llvm::BasicBlock* getAbortBB();
 };
 
 

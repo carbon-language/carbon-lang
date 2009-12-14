@@ -1526,6 +1526,16 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
   if (Ops.LHS->getType() != RHS->getType())
     RHS = Builder.CreateIntCast(RHS, Ops.LHS->getType(), false, "sh_prom");
 
+  if (CGF.CatchUndefined 
+      && isa<llvm::IntegerType>(Ops.LHS->getType())) {
+    unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
+    llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
+    CGF.Builder.CreateCondBr(Builder.CreateICmpULT(RHS,
+                                 llvm::ConstantInt::get(RHS->getType(), Width)),
+                             Cont, CGF.getAbortBB());
+    CGF.EmitBlock(Cont);
+  }
+
   return Builder.CreateShl(Ops.LHS, RHS, "shl");
 }
 
@@ -1535,6 +1545,16 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
   Value *RHS = Ops.RHS;
   if (Ops.LHS->getType() != RHS->getType())
     RHS = Builder.CreateIntCast(RHS, Ops.LHS->getType(), false, "sh_prom");
+
+  if (CGF.CatchUndefined 
+      && isa<llvm::IntegerType>(Ops.LHS->getType())) {
+    unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
+    llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
+    CGF.Builder.CreateCondBr(Builder.CreateICmpULT(RHS,
+                                 llvm::ConstantInt::get(RHS->getType(), Width)),
+                             Cont, CGF.getAbortBB());
+    CGF.EmitBlock(Cont);
+  }
 
   if (Ops.Ty->isUnsignedIntegerType())
     return Builder.CreateLShr(Ops.LHS, RHS, "shr");
