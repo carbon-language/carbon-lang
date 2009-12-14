@@ -786,6 +786,7 @@ let isBranch = 1, isTerminator = 1 in {
   def BR_JTr : JTI<(outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
                     IIC_Br, "mov\tpc, $target \n$jt",
                     [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
+    let Inst{11-4}  = 0b00000000;
     let Inst{15-12} = 0b1111;
     let Inst{20}    = 0; // S Bit
     let Inst{24-21} = 0b1101;
