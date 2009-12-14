@@ -393,10 +393,8 @@ sub CopyFile { #filename, newfile
 # to our central server via the post method
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub SendData {
-    $host = $_[0];
-    $file = $_[1];
-    $variables = $_[2];
+sub WriteSentData {
+    $variables = $_[0];
 
     # Write out the "...-sentdata.txt" file.
 
@@ -406,6 +404,12 @@ sub SendData {
         $sentdata.= "$x  => $value\n";
     }
     WriteFile "$Prefix-sentdata.txt", $sentdata;
+}
+
+sub SendData {
+    $host = $_[0];
+    $file = $_[1];
+    $variables = $_[2];
 
     if (!($SUBMITAUX eq "")) {
         system "$SUBMITAUX \"$Prefix-sentdata.txt\"";
@@ -796,6 +800,9 @@ my %hash_of_data = (
   'o_file_sizes' => "",
   'a_file_sizes' => ""
 );
+
+# Write out the "...-sentdata.txt" file.
+WriteSentData \%hash_of_data;
 
 if ($SUBMIT || !($SUBMITAUX eq "")) {
   my $response = SendData $SUBMITSERVER,$SUBMITSCRIPT,\%hash_of_data;
