@@ -292,6 +292,7 @@ std::string sys::getHostCPUName() {
       return "generic";
     }
   }
+  return "generic";
 }
 #else
 std::string sys::getHostCPUName() {
