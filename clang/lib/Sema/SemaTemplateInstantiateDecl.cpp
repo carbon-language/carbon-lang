@@ -627,7 +627,12 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   InstTemplate->setAccess(D->getAccess());
   assert(InstTemplate && 
          "VisitFunctionDecl/CXXMethodDecl didn't create a template!");
-  if (!InstTemplate->getInstantiatedFromMemberTemplate())
+
+  // Link the instantiation back to the pattern *unless* this is a
+  // non-definition friend declaration.
+  if (!InstTemplate->getInstantiatedFromMemberTemplate() &&
+      !(InstTemplate->getFriendObjectKind() &&
+        !D->getTemplatedDecl()->isThisDeclarationADefinition()))
     InstTemplate->setInstantiatedFromMemberTemplate(D);
   
   // Add non-friends into the owner.

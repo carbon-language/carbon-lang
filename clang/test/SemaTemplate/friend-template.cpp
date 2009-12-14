@@ -82,3 +82,18 @@ namespace test3 {
 
   X3<long> x3l; // FIXME: should cause an instantiation-time failure
 }
+
+// PR5716
+namespace test4 {
+  template<typename> struct A {
+    template<typename T> friend void f(const A<T>&);
+  };
+
+  template<typename T> void f(const A<T>&) {
+    int a[sizeof(T) ? -1 : -1]; // expected-error {{array size is negative}}
+  }
+
+  void f() {
+    f(A<int>()); // expected-note {{in instantiation of function template specialization}}
+  }
+}
