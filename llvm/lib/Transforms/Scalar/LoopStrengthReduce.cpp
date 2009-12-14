@@ -228,19 +228,17 @@ void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
   if (DeadInsts.empty()) return;
 
   while (!DeadInsts.empty()) {
-    Instruction *I = dyn_cast_or_null<Instruction>(DeadInsts.back());
-    DeadInsts.pop_back();
+    Instruction *I = dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val());
 
     if (I == 0 || !isInstructionTriviallyDead(I))
       continue;
 
-    for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI) {
+    for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI)
       if (Instruction *U = dyn_cast<Instruction>(*OI)) {
         *OI = 0;
         if (U->use_empty())
           DeadInsts.push_back(U);
       }
-    }
 
     I->eraseFromParent();
     Changed = true;
