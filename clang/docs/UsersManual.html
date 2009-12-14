@@ -40,6 +40,7 @@ td {
    <li><a href="#diagnostics_pragmas">Controlling Diagnostics via Pragmas</a></li>
    </ul>
   <li><a href="#precompiledheaders">Precompiled Headers</a></li>
+  <li><a href="#codegen">Controlling Code Generation</a></li>
   </ul>
 </li>
 <li><a href="#c">C Language Features</a>
@@ -561,6 +562,29 @@ the difference in location between the header locations at PCH build time vs.
 at the time of PCH use requires one of the PCH optimizations,
 <code>stat()</code> caching, to be disabled. However, this change is only 
 likely to affect PCH files that reference a large number of headers.</p>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="codegen">Controlling Code Generation</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>Clang provides a number of ways to control code generation.  The options are listed below.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fcatch-undefined-behavior"><b>-fcatch-undefined-behavior</b>: Turn
+on runtime code generation to check for undefined behavior.</dt>
+
+<dd>This option, which defaults to off, controls whether or not Clang
+adds runtime checks for undefined runtime behavior.  If the check fails,
+<tt>__builtin_trap()</tt> is used to indicate failure.
+The checks are:
+<p>
+<li>Subscripting where the static type of one operand is decayed from an
+    array type and the other operand is greater than the size of the array or
+    less than zero.</li>
+<li>Shift operators where the amount shifted is greater or equal to the
+    promoted bit-width of the left-hand-side or less than zero.</li>
+</p>
+</dd>
 
 <!-- ======================================================================= -->
 <h2 id="c">C Language Features</h2>
