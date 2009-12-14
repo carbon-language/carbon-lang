@@ -1684,7 +1684,6 @@ let usesCustomInserter = 1 in {
       "${:comment} ATOMIC_SWAP_I32 PSEUDO!",
       [(set GPR:$dst, (atomic_swap_32 GPR:$ptr, GPR:$new))]>;
 
-
     def ATOMIC_CMP_SWAP_I8 : PseudoInst<
       (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
       "${:comment} ATOMIC_CMP_SWAP_I8 PSEUDO!",
