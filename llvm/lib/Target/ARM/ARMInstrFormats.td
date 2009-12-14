@@ -201,6 +201,19 @@ class I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
 }
+// A few are not predicable
+class InoP<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+        IndexMode im, Format f, InstrItinClass itin, 
+        string opc, string asm, string cstr,
+        list<dag> pattern>
+  : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
+  let OutOperandList = oops;
+  let InOperandList = iops;
+  let AsmString   = !strconcat(opc, asm);
+  let Pattern = pattern;
+  let isPredicable = 0;
+  list<Predicate> Predicates = [IsARM];
+}
 
 // Same as I except it can optionally modify CPSR. Note it's modeled as
 // an input operand since by default it's a zero register. It will
@@ -241,6 +254,10 @@ class AXI<dag oops, dag iops, Format f, InstrItinClass itin,
           string asm, list<dag> pattern>
   : XI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, itin,
        asm, "", pattern>;
+class AInoP<dag oops, dag iops, Format f, InstrItinClass itin,
+         string opc, string asm, list<dag> pattern>
+  : InoP<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, itin,
+      opc, asm, "", pattern>;
 
 // Ctrl flow instructions
 class ABI<bits<4> opcod, dag oops, dag iops, InstrItinClass itin,

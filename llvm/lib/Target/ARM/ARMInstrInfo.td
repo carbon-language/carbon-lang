@@ -1574,8 +1574,8 @@ def MOVCCi : AI1<0b1101, (outs GPR:$dst),
 //
 
 // memory barriers protect the atomic sequences
-let isPredicable = 0, hasSideEffects = 1 in {
-def Int_MemBarrierV7 : AI<(outs), (ins),
+let hasSideEffects = 1 in {
+def Int_MemBarrierV7 : AInoP<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dmb", "",
                         [(ARMMemBarrier)]>,
@@ -1585,7 +1585,7 @@ def Int_MemBarrierV7 : AI<(outs), (ins),
   let Inst{3-0} = 0b1111;
 }
 
-def Int_SyncBarrierV7 : AI<(outs), (ins),
+def Int_SyncBarrierV7 : AInoP<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dsb", "",
                         [(ARMSyncBarrier)]>,
