@@ -5196,7 +5196,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     // SimplifyDemandedBits, which only works if the value has a single use.
     if (SimplifyDemandedBits(Value,
                              APInt::getLowBitsSet(
-                               Value.getValueSizeInBits(),
+                               Value.getValueType().getScalarType().getSizeInBits(),
                                ST->getMemoryVT().getSizeInBits())))
       return SDValue(N, 0);
   }
