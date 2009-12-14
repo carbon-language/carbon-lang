@@ -2541,8 +2541,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // through finally.
   CGF.PushCleanupBlock(FinallyBlock);
 
-  CGF.ObjCEHValueStack.push_back(0);
-
+  if (CGF.ObjCEHValueStack.empty())
+    CGF.ObjCEHValueStack.push_back(0);
+  // If This is a nested @try, caught exception is that of enclosing @try.
+  else
+    CGF.ObjCEHValueStack.push_back(CGF.ObjCEHValueStack.back());
   // Allocate memory for the exception data and rethrow pointer.
   llvm::Value *ExceptionData = CGF.CreateTempAlloca(ObjCTypes.ExceptionDataTy,
                                                     "exceptiondata.ptr");
