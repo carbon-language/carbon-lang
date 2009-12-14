@@ -1459,13 +1459,17 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCXXConstructExpr(QualType T,
+                                           SourceLocation Loc,
                                            CXXConstructorDecl *Constructor,
                                            bool IsElidable,
                                            MultiExprArg Args) {
-    return getSema().BuildCXXConstructExpr(/*FIXME:ConstructLoc*/
-                                           SourceLocation(),
-                                           T, Constructor, IsElidable,
-                                           move(Args));
+    ASTOwningVector<&ActionBase::DeleteExpr> ConvertedArgs(SemaRef);
+    if (getSema().CompleteConstructorCall(Constructor, move(Args), Loc, 
+                                          ConvertedArgs))
+      return getSema().ExprError();
+    
+    return getSema().BuildCXXConstructExpr(Loc, T, Constructor, IsElidable,
+                                           move_arg(ConvertedArgs));
   }
 
   /// \brief Build a new object-construction expression.
@@ -4723,7 +4727,8 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
       !ArgumentChanged)
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCXXConstructExpr(T, Constructor, E->isElidable(),
+  return getDerived().RebuildCXXConstructExpr(T, /*FIXME:*/E->getLocStart(),
+                                              Constructor, E->isElidable(),
                                               move_arg(Args));
 }
 
