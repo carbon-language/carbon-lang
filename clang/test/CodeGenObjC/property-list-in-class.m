@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s 
+// RUN: clang -cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s 
 // RUN: grep -F 'l_OBJC_$_PROP_LIST_C2" = internal global %8 { i32 16, i32 3' %t
 
 @protocol P 
