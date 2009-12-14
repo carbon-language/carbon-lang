@@ -1612,7 +1612,7 @@ def Int_MemBarrierV6 : AInoP<(outs), (ins GPR:$zero),
 
 def Int_SyncBarrierV6 : AInoP<(outs), (ins GPR:$zero),
                         Pseudo, NoItinerary,
-                        "mcr", "\tp15, 0, $zero, c7, c10, 5",
+                        "mcr", "\tp15, 0, $zero, c7, c10, 4",
                         [(ARMSyncBarrierV6 GPR:$zero)]>,
                         Requires<[IsARM, HasV6]> {
   // FIXME: add support for options other than a full system DSB
