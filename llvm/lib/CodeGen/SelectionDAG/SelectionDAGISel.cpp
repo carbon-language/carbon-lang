@@ -390,7 +390,7 @@ static void ResetDebugLoc(SelectionDAGBuilder *SDB,
                           FastISel *FastIS) {
   SDB->setCurDebugLoc(DebugLoc::getUnknownLoc());
   if (FastIS)
-    SDB->setCurDebugLoc(DebugLoc::getUnknownLoc());
+    FastIS->setCurDebugLoc(DebugLoc::getUnknownLoc());
 }
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
