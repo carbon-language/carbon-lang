@@ -221,7 +221,8 @@ bool SymbolReaper::isLive(SymbolRef sym) {
 }
 
 bool SymbolReaper::isLive(const Stmt *Loc, const VarRegion *VR) const {
-  return Liveness.isLive(Loc, VR->getDecl());
+  const StackFrameContext *SFC = VR->getStackFrame();
+  return SFC == CurrentStackFrame ? Liveness.isLive(Loc, VR->getDecl()) : true;
 }
 
 SymbolVisitor::~SymbolVisitor() {}

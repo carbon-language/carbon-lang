@@ -621,6 +621,8 @@ class VarRegion : public DeclRegion {
 public:
   const VarDecl *getDecl() const { return cast<VarDecl>(D); }
 
+  const StackFrameContext *getStackFrame() const;
+  
   QualType getValueType(ASTContext& C) const {
     // FIXME: We can cache this if needed.
     return C.getCanonicalType(getDecl()->getType());

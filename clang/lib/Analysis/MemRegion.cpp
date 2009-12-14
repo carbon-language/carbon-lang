@@ -165,6 +165,15 @@ MemRegionManager* SubRegion::getMemRegionManager() const {
   } while (1);
 }
 
+const StackFrameContext *VarRegion::getStackFrame() const {
+  const StackSpaceRegion *SSR = dyn_cast<StackSpaceRegion>(getMemorySpace());
+  return SSR ? SSR->getStackFrame() : NULL;
+}
+
+//===----------------------------------------------------------------------===//
+// FoldingSet profiling.
+//===----------------------------------------------------------------------===//
+
 void MemSpaceRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ID.AddInteger((unsigned)getKind());
 }

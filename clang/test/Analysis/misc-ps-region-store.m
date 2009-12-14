@@ -618,3 +618,21 @@ typedef void (^RDar_7462324_Callback)(id obj);
 }
 @end
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7468209> - Scanning for live variables within a block should
+//  not crash on variables passed by reference via __block.
+//===----------------------------------------------------------------------===//
+
+int rdar7468209_aux();
+void rdar7468209_aux2();
+
+void rdar7468209() {
+  __block int x = 0;
+  ^{
+    x = rdar7468209_aux();
+    // We need a second statement so that 'x' would be removed from the store if it wasn't
+    // passed by reference.
+    rdar7468209_aux_2();
+  }();
+}
+

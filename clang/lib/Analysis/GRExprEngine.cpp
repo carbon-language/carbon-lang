@@ -394,8 +394,9 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
     Builder->setAuditor(BatchAuditor.get());
 
   // Create the cleaned state.
-  SymbolReaper SymReaper(Builder->getBasePredecessor()->getLiveVariables(), 
-                         SymMgr);
+  const ExplodedNode *BasePred = Builder->getBasePredecessor();
+  SymbolReaper SymReaper(BasePred->getLiveVariables(), SymMgr,
+                        BasePred->getLocationContext()->getCurrentStackFrame());
   CleanedState = AMgr.shouldPurgeDead()
     ? StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt, SymReaper)
     : EntryNode->getState();
