@@ -507,8 +507,8 @@ sub BuildLLVM {
   }
   RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
 
-  if (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
-      `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l` + 0) {
+  if (`grep -a '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
+      `grep -a '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l` + 0) {
     return 0;
   }
 
@@ -535,15 +535,15 @@ sub TestDirectory {
   $LLCBetaOpts = `$MAKECMD print-llcbeta-option`;
 
   my $ProgramsTable;
-  if (`grep '^$MAKECMD\[^:]: .*Error' $ProgramTestLog | wc -l` + 0) {
+  if (`grep -a '^$MAKECMD\[^:]: .*Error' $ProgramTestLog | wc -l` + 0) {
     $ProgramsTable="Error running test $SubDir\n";
     print "ERROR TESTING\n";
-  } elsif (`grep '^$MAKECMD\[^:]: .*No rule to make target' $ProgramTestLog | wc -l` + 0) {
+  } elsif (`grep -a '^$MAKECMD\[^:]: .*No rule to make target' $ProgramTestLog | wc -l` + 0) {
     $ProgramsTable="Makefile error running tests $SubDir!\n";
     print "ERROR TESTING\n";
   } else {
     # Create a list of the tests which were run...
-    system "egrep 'TEST-(PASS|FAIL)' < $ProgramTestLog ".
+    system "egrep -a 'TEST-(PASS|FAIL)' < $ProgramTestLog ".
            "| sort > $Prefix-$SubDir-Tests.txt";
   }
   $ProgramsTable = ReadFile "report.nightly.csv";
