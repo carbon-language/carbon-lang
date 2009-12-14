@@ -209,8 +209,7 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
 }
 
 raw_ostream &raw_ostream::operator<<(double N) {
-  this->operator<<(ftostr(N));
-  return *this;
+  return this->operator<<(ftostr(N));
 }
 
 

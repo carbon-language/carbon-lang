@@ -186,14 +186,12 @@ public:
     // Inline fast path, particulary for constant strings where a sufficiently
     // smart compiler will simplify strlen.
 
-    this->operator<<(StringRef(Str));
-    return *this;
+    return this->operator<<(StringRef(Str));
   }
 
   raw_ostream &operator<<(const std::string &Str) {
     // Avoid the fast path, it would only increase code size for a marginal win.
-    write(Str.data(), Str.length());
-    return *this;
+    return write(Str.data(), Str.length());
   }
 
   raw_ostream &operator<<(unsigned long N);
@@ -202,13 +200,11 @@ public:
   raw_ostream &operator<<(long long N);
   raw_ostream &operator<<(const void *P);
   raw_ostream &operator<<(unsigned int N) {
-    this->operator<<(static_cast<unsigned long>(N));
-    return *this;
+    return this->operator<<(static_cast<unsigned long>(N));
   }
 
   raw_ostream &operator<<(int N) {
-    this->operator<<(static_cast<long>(N));
-    return *this;
+    return this->operator<<(static_cast<long>(N));
   }
 
   raw_ostream &operator<<(double N);
