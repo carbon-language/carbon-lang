@@ -2474,7 +2474,7 @@ static void TryConstructorInitialization(Sema &S,
                                          const InitializationKind &Kind,
                                          Expr **Args, unsigned NumArgs,
                                          InitializationSequence &Sequence) {
-  Sequence.setSequenceKind(InitializationSequence::ConstructorConversion);
+  Sequence.setSequenceKind(InitializationSequence::ConstructorInitialization);
   
   // Build the candidate set directly in the initialization sequence
   // structure, so that it will persist if we fail.
@@ -2885,7 +2885,7 @@ InitializationSequence::Perform(Sema &S,
   // we're supposed to start the conversion from the solitary initializer or
   // from the set of arguments.
   if (Kind.getKind() == InitializationKind::IK_Copy ||
-      SequenceKind == ReferenceBinding) {
+      SequenceKind != ConstructorInitialization) {
     assert(Args.size() == 1);
     CurInit = Sema::OwningExprResult(S, Args.release()[0]);
     if (CurInit.isInvalid())

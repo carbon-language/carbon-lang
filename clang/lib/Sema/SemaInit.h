@@ -307,7 +307,7 @@ public:
     UserDefinedConversion,
     
     /// \brief A constructor call.
-    ConstructorConversion,
+    ConstructorInitialization,
     
     /// \brief A reference binding.
     ReferenceBinding,
