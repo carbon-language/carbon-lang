@@ -309,6 +309,15 @@ public:
   /// ParenExpr or CastExprs, returning their operand.
   Expr *IgnoreParenNoopCasts(ASTContext &Ctx);
 
+  /// \brief Determine whether this expression is a default function argument.
+  ///
+  /// Default arguments are implicitly generated in the abstract syntax tree
+  /// by semantic analysis for function calls, object constructions, etc. in 
+  /// C++. Default arguments are represented by \c CXXDefaultArgExpr nodes;
+  /// this routine also looks through any implicit casts to determine whether
+  /// the expression is a default argument.
+  bool isDefaultArgument() const;
+  
   const Expr* IgnoreParens() const {
     return const_cast<Expr*>(this)->IgnoreParens();
   }
@@ -1609,6 +1618,14 @@ public:
   const Expr *getSubExpr() const { return cast<Expr>(Op); }
   void setSubExpr(Expr *E) { Op = E; }
 
+  /// \brief Retrieve the cast subexpression as it was written in the source
+  /// code, looking through any implicit casts or other intermediate nodes
+  /// introduced by semantic analysis.
+  Expr *getSubExprAsWritten();
+  const Expr *getSubExprAsWritten() const {
+    return const_cast<CastExpr *>(this)->getSubExprAsWritten();
+  }
+    
   static bool classof(const Stmt *T) {
     StmtClass SC = T->getStmtClass();
     if (SC >= CXXNamedCastExprClass && SC <= CXXFunctionalCastExprClass)

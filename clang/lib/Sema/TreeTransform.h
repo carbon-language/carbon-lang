@@ -172,6 +172,16 @@ public:
     return T.isNull();
   }
 
+  /// \brief Determine whether the given call argument should be dropped, e.g.,
+  /// because it is a default argument.
+  ///
+  /// Subclasses can provide an alternative implementation of this routine to
+  /// determine which kinds of call arguments get dropped. By default,
+  /// CXXDefaultArgument nodes are dropped (prior to transformation).
+  bool DropCallArgument(Expr *E) {
+    return E->isDefaultArgument();
+  }
+  
   /// \brief Transforms the given type into another type.
   ///
   /// By default, this routine transforms a type by creating a
@@ -3770,39 +3780,12 @@ TreeTransform<Derived>::TransformConditionalOperator(ConditionalOperator *E) {
                                                  move(RHS));
 }
 
-/// \brief Given a cast expression, extract the subexpression of the
-/// cast, looking through intermediate AST nodes that were generated
-/// as part of type checking.
-static Expr *getCastSubExprAsWritten(CastExpr *E) {
-  Expr *SubExpr = 0;
-  do {
-    SubExpr = E->getSubExpr();
-
-    // Temporaries will be re-bound when rebuilding the original cast
-    // expression.
-    if (CXXBindTemporaryExpr *Binder = dyn_cast<CXXBindTemporaryExpr>(SubExpr))
-      SubExpr = Binder->getSubExpr();
-
-    // Conversions by constructor and conversion functions have a
-    // subexpression describing the call; strip it off.
-    if (E->getCastKind() == CastExpr::CK_ConstructorConversion)
-      SubExpr = cast<CXXConstructExpr>(SubExpr)->getArg(0);
-    else if (E->getCastKind() == CastExpr::CK_UserDefinedConversion)
-      SubExpr = cast<CXXMemberCallExpr>(SubExpr)->getImplicitObjectArgument();
-
-    // If the subexpression we're left with is an implicit cast, look
-    // through that, too.
-  } while ((E = dyn_cast<ImplicitCastExpr>(SubExpr)));
-
-  return SubExpr;
-}
-
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E) {
   // Implicit casts are eliminated during transformation, since they
   // will be recomputed by semantic analysis after transformation.
-  return getDerived().TransformExpr(getCastSubExprAsWritten(E));
+  return getDerived().TransformExpr(E->getSubExprAsWritten());
 }
 
 template<typename Derived>
@@ -3828,7 +3811,7 @@ TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E) {
   }
 
   OwningExprResult SubExpr
-    = getDerived().TransformExpr(getCastSubExprAsWritten(E));
+    = getDerived().TransformExpr(E->getSubExprAsWritten());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
@@ -4161,6 +4144,9 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
     ASTOwningVector<&ActionBase::DeleteExpr> Args(SemaRef);
     llvm::SmallVector<SourceLocation, 4> FakeCommaLocs;
     for (unsigned I = 1, N = E->getNumArgs(); I != N; ++I) {
+      if (getDerived().DropCallArgument(E->getArg(I)))
+        break;
+      
       OwningExprResult Arg = getDerived().TransformExpr(E->getArg(I));
       if (Arg.isInvalid())
         return SemaRef.ExprError();
@@ -4247,7 +4233,7 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
   }
 
   OwningExprResult SubExpr
-    = getDerived().TransformExpr(getCastSubExprAsWritten(E));
+    = getDerived().TransformExpr(E->getSubExprAsWritten());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
@@ -4312,7 +4298,7 @@ TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
   }
 
   OwningExprResult SubExpr
-    = getDerived().TransformExpr(getCastSubExprAsWritten(E));
+    = getDerived().TransformExpr(E->getSubExprAsWritten());
   if (SubExpr.isInvalid())
     return SemaRef.ExprError();
 
@@ -4713,6 +4699,11 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
   for (CXXConstructExpr::arg_iterator Arg = E->arg_begin(),
        ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg) {
+    if (getDerived().DropCallArgument(*Arg)) {
+      ArgumentChanged = true;
+      break;
+    }
+
     OwningExprResult TransArg = getDerived().TransformExpr(*Arg);
     if (TransArg.isInvalid())
       return SemaRef.ExprError();

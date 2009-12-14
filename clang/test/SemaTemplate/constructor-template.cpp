@@ -82,3 +82,15 @@ X4 test_X4(bool Cond, X4 x4) {
   X4 b(x4); // okay, copy constructor
   return X4(); // expected-error{{no viable conversion}}
 }
+
+// Instantiation of a non-dependent use of a constructor
+struct DefaultCtorHasDefaultArg {
+  explicit DefaultCtorHasDefaultArg(int i = 17);
+};
+
+template<typename T>
+void default_ctor_inst() {
+  DefaultCtorHasDefaultArg def;
+}
+
+template void default_ctor_inst<int>();

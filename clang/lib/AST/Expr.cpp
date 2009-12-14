@@ -568,6 +568,30 @@ const char *CastExpr::getCastKindName() const {
   return 0;
 }
 
+Expr *CastExpr::getSubExprAsWritten() {
+  Expr *SubExpr = 0;
+  CastExpr *E = this;
+  do {
+    SubExpr = E->getSubExpr();
+    
+    // Skip any temporary bindings; they're implicit.
+    if (CXXBindTemporaryExpr *Binder = dyn_cast<CXXBindTemporaryExpr>(SubExpr))
+      SubExpr = Binder->getSubExpr();
+    
+    // Conversions by constructor and conversion functions have a
+    // subexpression describing the call; strip it off.
+    if (E->getCastKind() == CastExpr::CK_ConstructorConversion)
+      SubExpr = cast<CXXConstructExpr>(SubExpr)->getArg(0);
+    else if (E->getCastKind() == CastExpr::CK_UserDefinedConversion)
+      SubExpr = cast<CXXMemberCallExpr>(SubExpr)->getImplicitObjectArgument();
+    
+    // If the subexpression we're left with is an implicit cast, look
+    // through that, too.
+  } while ((E = dyn_cast<ImplicitCastExpr>(SubExpr)));  
+  
+  return SubExpr;
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {
@@ -1347,6 +1371,13 @@ Expr *Expr::IgnoreParenNoopCasts(ASTContext &Ctx) {
   }
 }
 
+bool Expr::isDefaultArgument() const {
+  const Expr *E = this;
+  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+    E = ICE->getSubExprAsWritten();
+  
+  return isa<CXXDefaultArgExpr>(E);
+}
 
 /// hasAnyTypeDependentArguments - Determines if any of the expressions
 /// in Exprs is type-dependent.
