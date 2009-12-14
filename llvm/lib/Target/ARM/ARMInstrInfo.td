@@ -1710,11 +1710,15 @@ def LDREXH : AIldrex<0b11, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
 def LDREX  : AIldrex<0b00, (outs GPR:$dest), (ins GPR:$ptr), NoItinerary,
                     "ldrex", "\t$dest, [$ptr]",
                     []>;
+def LDREXD : AIldrex<0b00, (outs GPR:$dest, GPR:$dest2), (ins GPR:$ptr),
+                    NoItinerary,
+                    "ldrexd", "\t$dest, $dest2, [$ptr]",
+                    []>;
 }
 
 let mayStore = 1 in {
 def STREXB : AIstrex<0b10, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
-                     NoItinerary,
+                    NoItinerary,
                     "strexb", "\t$success, $src, [$ptr]",
                     []>;
 def STREXH : AIstrex<0b11, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
@@ -1722,8 +1726,13 @@ def STREXH : AIstrex<0b11, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
                     "strexh", "\t$success, $src, [$ptr]",
                     []>;
 def STREX  : AIstrex<0b00, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
-                     NoItinerary,
+                    NoItinerary,
                     "strex", "\t$success, $src, [$ptr]",
+                    []>;
+def STREXD : AIstrex<0b00, (outs GPR:$success),
+                    (ins GPR:$src, GPR:$src2, GPR:$ptr),
+                    NoItinerary,
+                    "strexd", "\t$success, $src, $src2, [$ptr]",
                     []>;
 }
 
