@@ -350,17 +350,7 @@ class DwarfDebug : public Dwarf {
   DIE *createMemberDIE(const DIDerivedType &DT);
 
   /// createSubprogramDIE - Create new DIE using SP.
-  DIE *createSubprogramDIE(const DISubprogram &SP);
-
-  /// createMemberSubprogramDIE - Create new member DIE using SP. This
-  /// routine always returns a die with DW_AT_declaration attribute.
-
-  DIE *createMemberSubprogramDIE(const DISubprogram &SP);
-
-  /// createRawSubprogramDIE - Create new partially incomplete DIE. This is
-  /// a helper routine used by createMemberSubprogramDIE and 
-  /// createSubprogramDIE.
-  DIE *createRawSubprogramDIE(const DISubprogram &SP);
+  DIE *createSubprogramDIE(const DISubprogram &SP, bool MakeDecl = false);
 
   /// findCompileUnit - Get the compile unit for the given descriptor. 
   ///

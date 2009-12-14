@@ -906,7 +906,7 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         continue;
       DIE *ElemDie = NULL;
       if (Element.getTag() == dwarf::DW_TAG_subprogram)
-        ElemDie = createMemberSubprogramDIE(DISubprogram(Element.getNode()));
+        ElemDie = createSubprogramDIE(DISubprogram(Element.getNode()));
       else
         ElemDie = createMemberDIE(DIDerivedType(Element.getNode()));
       Buffer.addChild(ElemDie);
@@ -1098,11 +1098,13 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
   return MemberDie;
 }
 
-/// createRawSubprogramDIE - Create new partially incomplete DIE. This is
-/// a helper routine used by createMemberSubprogramDIE and 
-/// createSubprogramDIE.
-DIE *DwarfDebug::createRawSubprogramDIE(const DISubprogram &SP) {
-  DIE *SPDie = new DIE(dwarf::DW_TAG_subprogram);
+/// createSubprogramDIE - Create new DIE using SP.
+DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
+  DIE *SPDie = ModuleCU->getDIE(SP.getNode());
+  if (SPDie)
+    return SPDie;
+
+  SPDie = new DIE(dwarf::DW_TAG_subprogram);
   addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
   StringRef LinkageName = SP.getLinkageName();
@@ -1144,52 +1146,7 @@ DIE *DwarfDebug::createRawSubprogramDIE(const DISubprogram &SP) {
     ContainingTypeMap.insert(std::make_pair(SPDie, WeakVH(SP.getContainingType().getNode())));
   }
 
-  return SPDie;
-}
-
-/// createMemberSubprogramDIE - Create new member DIE using SP. This routine
-/// always returns a die with DW_AT_declaration attribute.
-DIE *DwarfDebug::createMemberSubprogramDIE(const DISubprogram &SP) {
-  DIE *SPDie = ModuleCU->getDIE(SP.getNode());
-  if (!SPDie)
-    SPDie = createSubprogramDIE(SP);
-
-  // If SPDie has DW_AT_declaration then reuse it.
-  if (!SP.isDefinition())
-    return SPDie;
-
-  // Otherwise create new DIE for the declaration. First push definition
-  // DIE at the top level.
-  if (TopLevelDIEs.insert(SPDie))
-    TopLevelDIEsVector.push_back(SPDie);
-
-  SPDie = createRawSubprogramDIE(SP);
-
-  // Add arguments. 
-  DICompositeType SPTy = SP.getType();
-  DIArray Args = SPTy.getTypeArray();
-  unsigned SPTag = SPTy.getTag();
-  if (SPTag == dwarf::DW_TAG_subroutine_type)
-    for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
-      DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-      addType(Arg, DIType(Args.getElement(i).getNode()));
-      addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
-      SPDie->addChild(Arg);
-    }
-
-  addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
-  return SPDie;
-}
-
-/// createSubprogramDIE - Create new DIE using SP.
-DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP) {
-  DIE *SPDie = ModuleCU->getDIE(SP.getNode());
-  if (SPDie)
-    return SPDie;
-
-  SPDie = createRawSubprogramDIE(SP);
-
-  if (!SP.isDefinition()) {
+  if (MakeDecl || !SP.isDefinition()) {
     addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
 
     // Add arguments. Do not add arguments for subprogram definition. They will
@@ -1310,6 +1267,28 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
 
  DIE *SPDie = ModuleCU->getDIE(SPNode);
  assert (SPDie && "Unable to find subprogram DIE!");
+ DISubprogram SP(SPNode);
+ if (SP.isDefinition() && !SP.getContext().isCompileUnit()) {
+   addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+  // Add arguments. 
+   DICompositeType SPTy = SP.getType();
+   DIArray Args = SPTy.getTypeArray();
+   unsigned SPTag = SPTy.getTag();
+   if (SPTag == dwarf::DW_TAG_subroutine_type)
+     for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+       DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+       addType(Arg, DIType(Args.getElement(i).getNode()));
+       addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
+       SPDie->addChild(Arg);
+     }
+   DIE *SPDeclDie = SPDie;
+   SPDie = new DIE(dwarf::DW_TAG_subprogram);
+   addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4, 
+               SPDeclDie);
+   
+   ModuleCU->addDie(SPDie);
+ }
+   
  addLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
           DWLabel("func_begin", SubprogramCount));
  addLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
