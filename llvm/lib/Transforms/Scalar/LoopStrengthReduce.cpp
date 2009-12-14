@@ -26,7 +26,6 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -86,7 +85,6 @@ namespace {
   class LoopStrengthReduce : public LoopPass {
     IVUsers *IU;
     LoopInfo *LI;
-    DominatorTree *DT;
     ScalarEvolution *SE;
     bool Changed;
 
@@ -118,12 +116,11 @@ namespace {
       // many analyses if they are around.
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<LoopInfo>();
-      AU.addPreserved<DominanceFrontier>();
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved("domfrontier");
+      AU.addPreserved("domtree");
 
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
-      AU.addRequired<DominatorTree>();
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       AU.addRequired<IVUsers>();
@@ -2724,7 +2721,6 @@ bool LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   IU = &getAnalysis<IVUsers>();
   LI = &getAnalysis<LoopInfo>();
-  DT = &getAnalysis<DominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
   Changed = false;
 
