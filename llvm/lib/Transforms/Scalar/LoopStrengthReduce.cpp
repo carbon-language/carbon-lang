@@ -109,8 +109,7 @@ namespace {
   public:
     static char ID; // Pass ID, replacement for typeid
     explicit LoopStrengthReduce(const TargetLowering *tli = NULL) :
-      LoopPass(&ID), TLI(tli) {
-    }
+      LoopPass(&ID), TLI(tli) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -381,14 +380,12 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                        LoopInfo &LI,
                                         SmallVectorImpl<WeakVH> &DeadInsts);
 
     Value *InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
                                        const Type *Ty,
                                        SCEVExpander &Rewriter,
-                                       Instruction *IP, Loop *L,
-                                       LoopInfo &LI);
+                                       Instruction *IP);
     void dump() const;
   };
 }
@@ -402,27 +399,11 @@ void BasedUser::dump() const {
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
                                               const Type *Ty,
                                               SCEVExpander &Rewriter,
-                                              Instruction *IP, Loop *L,
-                                              LoopInfo &LI) {
-  // Figure out where we *really* want to insert this code.  In particular, if
-  // the user is inside of a loop that is nested inside of L, we really don't
-  // want to insert this expression before the user, we'd rather pull it out as
-  // many loops as possible.
-  Instruction *BaseInsertPt = IP;
+                                              Instruction *IP) {
+  Value *Base = Rewriter.expandCodeFor(NewBase, 0, IP);
 
-  // Figure out the most-nested loop that IP is in.
-  Loop *InsertLoop = LI.getLoopFor(IP->getParent());
-
-  // If InsertLoop is not L, and InsertLoop is nested inside of L, figure out
-  // the preheader of the outer-most loop where NewBase is not loop invariant.
-  if (L->contains(IP->getParent()))
-    while (InsertLoop && NewBase->isLoopInvariant(InsertLoop)) {
-      BaseInsertPt = InsertLoop->getLoopPreheader()->getTerminator();
-      InsertLoop = InsertLoop->getParentLoop();
-    }
-
-  Value *Base = Rewriter.expandCodeFor(NewBase, 0, BaseInsertPt);
-
+  // Wrap the base in a SCEVUnknown so that ScalarEvolution doesn't try to
+  // re-analyze it.
   const SCEV *NewValSCEV = SE->getUnknown(Base);
 
   // Always emit the immediate into the same block as the user.
@@ -441,7 +422,6 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
 void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                      LoopInfo &LI,
                                       SmallVectorImpl<WeakVH> &DeadInsts) {
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
@@ -471,7 +451,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
     }
     Value *NewVal = InsertCodeForBaseAtPosition(NewBase,
                                                 OperandValToReplace->getType(),
-                                                Rewriter, InsertPt, L, LI);
+                                                Rewriter, InsertPt);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
 
@@ -533,7 +513,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                 PHIPred->getTerminator() :
                                 OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
-                                           Rewriter, InsertPt, L, LI);
+                                           Rewriter, InsertPt);
 
         DEBUG(errs() << "      Changing PHI use to ");
         DEBUG(WriteAsOperand(errs(), Code, /*PrintType=*/false));
@@ -1778,7 +1758,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *const &Stride,
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
 
       User.RewriteInstructionToUseNewBase(RewriteExpr, NewBasePt,
-                                          Rewriter, L, this, *LI,
+                                          Rewriter, L, this,
                                           DeadInsts);
 
       // Mark old value we replaced as possibly dead, so that it is eliminated
