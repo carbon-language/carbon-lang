@@ -1073,14 +1073,16 @@ let hasSideEffects = 1 in {
 def t2Int_MemBarrierV7 : AInoP<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dmb", "",
-                        [(ARMMemBarrier)]> {
+                        [(ARMMemBarrier)]>,
+                        Requires<[IsThumb2]> {
   // FIXME: add support for options other than a full system DMB
 }
 
 def t2Int_SyncBarrierV7 : AInoP<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dsb", "",
-                        [(ARMSyncBarrier)]> {
+                        [(ARMSyncBarrier)]>,
+                        Requires<[IsThumb2]> {
   // FIXME: add support for options other than a full system DSB
 }
 }
