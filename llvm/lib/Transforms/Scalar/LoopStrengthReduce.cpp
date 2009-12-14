@@ -2754,14 +2754,14 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     // After all sharing is done, see if we can adjust the loop to test against
     // zero instead of counting up to a maximum.  This is usually faster.
     OptimizeLoopCountIV(L);
+
+    // We're done analyzing this loop; release all the state we built up for it.
+    IVsByStride.clear();
+
+    // Clean up after ourselves
+    if (!DeadInsts.empty())
+      DeleteTriviallyDeadInstructions();
   }
-
-  // We're done analyzing this loop; release all the state we built up for it.
-  IVsByStride.clear();
-
-  // Clean up after ourselves
-  if (!DeadInsts.empty())
-    DeleteTriviallyDeadInstructions();
 
   // At this point, it is worth checking to see if any recurrence PHIs are also
   // dead, so that we can remove them as well.
