@@ -1,4 +1,4 @@
-// RUN: clang-cc -ast-print %s
+// RUN: clang -cc1 -ast-print %s
 
 @protocol P1 @end
 @protocol P2 @end

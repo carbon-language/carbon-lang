@@ -1,4 +1,4 @@
-// RUN: clang-cc -parse-noop %s 
+// RUN: clang -cc1 -parse-noop %s 
 
 int main() {
  SEL s = @selector(retain);

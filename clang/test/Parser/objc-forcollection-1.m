@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: clang -cc1 -fsyntax-only %s
 
 typedef struct objc_class *Class;
 typedef struct objc_object {

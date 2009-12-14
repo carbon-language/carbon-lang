@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -fsyntax-only %s
+// RUN: clang -cc1 -verify -fsyntax-only %s
 
 __attribute__((deprecated)) @class B; // expected-error {{prefix attribute must be followed by an interface or protocol}}
 
