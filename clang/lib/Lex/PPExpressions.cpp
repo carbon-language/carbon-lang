@@ -142,22 +142,21 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   // 'defined' or if it is a macro.  Note that we check here because many
   // keywords are pp-identifiers, so we can't check the kind.
   if (IdentifierInfo *II = PeekTok.getIdentifierInfo()) {
-    if (II->isStr("defined")) {
-      // Handle "defined X" and "defined(X)".
+    // Handle "defined X" and "defined(X)".
+    if (II->isStr("defined"))
       return(EvaluateDefined(Result, PeekTok, DT, ValueLive, PP));
-    } else {
-      // If this identifier isn't 'defined' or one of the special
-      // preprocessor keywords and it wasn't macro expanded, it turns
-      // into a simple 0, unless it is the C++ keyword "true", in which case it
-      // turns into "1".
-      if (ValueLive)
-        PP.Diag(PeekTok, diag::warn_pp_undef_identifier) << II;
-      Result.Val = II->getTokenID() == tok::kw_true;
-      Result.Val.setIsUnsigned(false);  // "0" is signed intmax_t 0.
-      Result.setRange(PeekTok.getLocation());
-      PP.LexNonComment(PeekTok);
-      return false;
-    }
+    
+    // If this identifier isn't 'defined' or one of the special
+    // preprocessor keywords and it wasn't macro expanded, it turns
+    // into a simple 0, unless it is the C++ keyword "true", in which case it
+    // turns into "1".
+    if (ValueLive)
+      PP.Diag(PeekTok, diag::warn_pp_undef_identifier) << II;
+    Result.Val = II->getTokenID() == tok::kw_true;
+    Result.Val.setIsUnsigned(false);  // "0" is signed intmax_t 0.
+    Result.setRange(PeekTok.getLocation());
+    PP.LexNonComment(PeekTok);
+    return false;
   }
 
   switch (PeekTok.getKind()) {
