@@ -228,3 +228,31 @@ template<typename T> typename __enable_if<(__is_scalar<T>::__value), void>::__ty
 template void ft8<int>();
 // CHECK: @_Z3ft8IPvEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
 template void ft8<void*>();
+
+namespace Expressions {
+// Unary operators.
+
+// CHECK: define void @_ZN11Expressions2f1ILi1EEEvPAplngT_Li2E_i
+template <int i> void f1(int (*)[(-i) + 2]) { };
+template void f1<1>(int (*)[1]);
+
+// CHECK: define void @_ZN11Expressions2f2ILi1EEEvPApsT__i
+template <int i> void f2(int (*)[+i]) { };
+template void f2<1>(int (*)[1]);
+
+// Binary operators.
+
+// CHECK: define void @_ZN11Expressions2f3ILi1EEEvPAplT_T__i
+template <int i> void f3(int (*)[i+i]) { };
+template void f3<1>(int (*)[2]);
+
+// CHECK: define void @_ZN11Expressions2f4ILi1EEEvPAplplLi2ET_T__i
+template <int i> void f4(int (*)[2 + i+i]) { };
+template void f4<1>(int (*)[4]);
+
+// The ternary operator.
+// CHECK: define void @_ZN11Expressions2f4ILb1EEEvPAquT_Li1ELi2E_i
+template <bool b> void f4(int (*)[b ? 1 : 2]) { };
+template void f4<true>(int (*)[1]);
+
+}

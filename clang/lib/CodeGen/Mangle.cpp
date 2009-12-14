@@ -117,6 +117,8 @@ private:
   void mangleType(const TagType*);
   void mangleBareFunctionType(const FunctionType *T,
                               bool MangleReturnType);
+
+  void mangleIntegerLiteral(QualType T, const llvm::APSInt &Value);
   void mangleExpression(const Expr *E);
   void mangleCXXCtorType(CXXCtorType T);
   void mangleCXXDtorType(CXXDtorType T);
@@ -687,10 +689,13 @@ CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
   case OO_Call: Out << "cl"; break;
   //              ::= ix        # []
   case OO_Subscript: Out << "ix"; break;
-  // UNSUPPORTED: ::= qu        # ?
+
+  //              ::= qu        # ?
+  // The conditional operator can't be overloaded, but we still handle it when
+  // mangling expressions.
+  case OO_Conditional: Out << "qu"; break;
 
   case OO_None:
-  case OO_Conditional:
   case NUM_OVERLOADED_OPERATORS:
     assert(false && "Not an overloaded operator");
     break;
@@ -1011,6 +1016,24 @@ void CXXNameMangler::mangleType(const TypenameType *T) {
   Out << 'E';
 }
 
+void CXXNameMangler::mangleIntegerLiteral(QualType T, 
+                                          const llvm::APSInt &Value) {
+  //  <expr-primary> ::= L <type> <value number> E # integer literal
+  Out << 'L';
+  
+  mangleType(T);
+  if (T->isBooleanType()) {
+    // Boolean values are encoded as 0/1.
+    Out << (Value.getBoolValue() ? '1' : '0');
+  } else {
+    if (Value.isNegative())
+      Out << 'n';
+    Value.abs().print(Out, false);
+  }
+  Out << 'E';
+  
+}
+
 void CXXNameMangler::mangleExpression(const Expr *E) {
   // <expression> ::= <unary operator-name> <expression>
 	//              ::= <binary operator-name> <expression> <expression>
@@ -1028,6 +1051,32 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 	//              ::= <expr-primary>
   switch (E->getStmtClass()) {
   default: assert(false && "Unhandled expression kind!");
+
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *UO = cast<UnaryOperator>(E);
+    mangleOperatorName(UnaryOperator::getOverloadedOperator(UO->getOpcode()), 
+                       /*Arity=*/1);
+    mangleExpression(UO->getSubExpr());
+    break;
+  }
+      
+  case Expr::BinaryOperatorClass: {
+    const BinaryOperator *BO = cast<BinaryOperator>(E);
+    mangleOperatorName(BinaryOperator::getOverloadedOperator(BO->getOpcode()), 
+                       /*Arity=*/2);
+    mangleExpression(BO->getLHS());
+    mangleExpression(BO->getRHS());                     
+    break;
+  }      
+
+  case Expr::ConditionalOperatorClass: {
+    const ConditionalOperator *CO = cast<ConditionalOperator>(E);
+    mangleOperatorName(OO_Conditional, /*Arity=*/3);
+    mangleExpression(CO->getCond());
+    mangleExpression(CO->getLHS());
+    mangleExpression(CO->getRHS());
+    break;
+  }
 
   case Expr::ParenExprClass:
     mangleExpression(cast<ParenExpr>(E)->getSubExpr());
@@ -1064,6 +1113,11 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 
     break;
   }
+
+  case Expr::IntegerLiteralClass:
+    mangleIntegerLiteral(E->getType(), 
+                         llvm::APSInt(cast<IntegerLiteral>(E)->getValue()));
+    break;
 
   }
 }
@@ -1141,23 +1195,9 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
     mangleExpression(A.getAsExpr());
     Out << 'E';
     break;
-  case TemplateArgument::Integral: {
-    //  <expr-primary> ::= L <type> <value number> E # integer literal
-
-    const llvm::APSInt *Integral = A.getAsIntegral();
-    Out << 'L';
-    mangleType(A.getIntegralType());
-    if (A.getIntegralType()->isBooleanType()) {
-      // Boolean values are encoded as 0/1.
-      Out << (Integral->getBoolValue() ? '1' : '0');
-    } else {
-      if (Integral->isNegative())
-        Out << 'n';
-      Integral->abs().print(Out, false);
-    }
-    Out << 'E';
+  case TemplateArgument::Integral:
+    mangleIntegerLiteral(A.getIntegralType(), *A.getAsIntegral());
     break;
-  }
   case TemplateArgument::Declaration: {
     //  <expr-primary> ::= L <mangled-name> E # external name
 
