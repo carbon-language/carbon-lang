@@ -91,11 +91,13 @@ class Preprocessor {
   bool KeepMacroComments : 1;
 
   // State that changes while the preprocessor runs:
-  bool DisableMacroExpansion : 1;  // True if macro expansion is disabled.
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
   /// Whether the preprocessor owns the header search object.
   bool OwnsHeaderSearch : 1;
+
+  /// DisableMacroExpansion - True if macro expansion is disabled.
+  bool DisableMacroExpansion : 1;
 
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
