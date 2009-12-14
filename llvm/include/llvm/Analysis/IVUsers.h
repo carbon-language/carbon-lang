@@ -175,11 +175,11 @@ class IVUsers : public LoopPass {
   ScalarEvolution *SE;
   SmallPtrSet<Instruction*,16> Processed;
 
-public:
   /// IVUses - A list of all tracked IV uses of induction variable expressions
   /// we are interested in.
   ilist<IVUsersOfOneStride> IVUses;
 
+public:
   /// IVUsesByStride - A mapping from the strides in StrideOrder to the
   /// uses in IVUses.
   std::map<const SCEV *, IVUsersOfOneStride*> IVUsesByStride;
