@@ -483,16 +483,16 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   MachineFunction::iterator FallThru =
     llvm::next(MachineFunction::iterator(this));
   
-  // If this block ends with a conditional branch that falls through to its
-  // successor, set DestB as the successor.
   if (isCond) {
+    // If this block ends with a conditional branch that falls through to its
+    // successor, set DestB as the successor.
     if (DestB == 0 && FallThru != getParent()->end()) {
       DestB = FallThru;
       AddedFallThrough = true;
     }
   } else {
     // If this is an unconditional branch with no explicit dest, it must just be
-    // a fallthrough into DestB.
+    // a fallthrough into DestA.
     if (DestA == 0 && FallThru != getParent()->end()) {
       DestA = FallThru;
       AddedFallThrough = true;

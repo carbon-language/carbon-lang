@@ -286,11 +286,10 @@ public:
   ///    just return false, leaving TBB/FBB null.
   /// 2. If this block ends with only an unconditional branch, it sets TBB to be
   ///    the destination block.
-  /// 3. If this block ends with an conditional branch and it falls through to
-  ///    a successor block, it sets TBB to be the branch destination block and
-  ///    a list of operands that evaluate the condition. These
-  ///    operands can be passed to other TargetInstrInfo methods to create new
-  ///    branches.
+  /// 3. If this block ends with a conditional branch and it falls through to a
+  ///    successor block, it sets TBB to be the branch destination block and a
+  ///    list of operands that evaluate the condition. These operands can be
+  ///    passed to other TargetInstrInfo methods to create new branches.
   /// 4. If this block ends with a conditional branch followed by an
   ///    unconditional branch, it returns the 'true' destination in TBB, the
   ///    'false' destination in FBB, and a list of operands that evaluate the

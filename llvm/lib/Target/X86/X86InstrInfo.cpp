@@ -1624,14 +1624,17 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   MachineBasicBlock::iterator I = MBB.end();
   while (I != MBB.begin()) {
     --I;
-    // Working from the bottom, when we see a non-terminator
-    // instruction, we're done.
+
+    // Working from the bottom, when we see a non-terminator instruction, we're
+    // done.
     if (!isBrAnalysisUnpredicatedTerminator(I, *this))
       break;
-    // A terminator that isn't a branch can't easily be handled
-    // by this analysis.
+
+    // A terminator that isn't a branch can't easily be handled by this
+    // analysis.
     if (!I->getDesc().isBranch())
       return true;
+
     // Handle unconditional branches.
     if (I->getOpcode() == X86::JMP) {
       if (!AllowModify) {
@@ -1642,8 +1645,10 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       // If the block has any instructions after a JMP, delete them.
       while (llvm::next(I) != MBB.end())
         llvm::next(I)->eraseFromParent();
+
       Cond.clear();
       FBB = 0;
+
       // Delete the JMP if it's equivalent to a fall-through.
       if (MBB.isLayoutSuccessor(I->getOperand(0).getMBB())) {
         TBB = 0;
@@ -1651,14 +1656,17 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
         I = MBB.end();
         continue;
       }
+
       // TBB is used to indicate the unconditinal destination.
       TBB = I->getOperand(0).getMBB();
       continue;
     }
+
     // Handle conditional branches.
     X86::CondCode BranchCode = GetCondFromBranchOpc(I->getOpcode());
     if (BranchCode == X86::COND_INVALID)
       return true;  // Can't handle indirect branch.
+
     // Working from the bottom, handle the first conditional branch.
     if (Cond.empty()) {
       FBB = TBB;
@@ -1666,24 +1674,26 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       Cond.push_back(MachineOperand::CreateImm(BranchCode));
       continue;
     }
-    // Handle subsequent conditional branches. Only handle the case
-    // where all conditional branches branch to the same destination
-    // and their condition opcodes fit one of the special
-    // multi-branch idioms.
+
+    // Handle subsequent conditional branches. Only handle the case where all
+    // conditional branches branch to the same destination and their condition
+    // opcodes fit one of the special multi-branch idioms.
     assert(Cond.size() == 1);
     assert(TBB);
-    // Only handle the case where all conditional branches branch to
-    // the same destination.
+
+    // Only handle the case where all conditional branches branch to the same
+    // destination.
     if (TBB != I->getOperand(0).getMBB())
       return true;
-    X86::CondCode OldBranchCode = (X86::CondCode)Cond[0].getImm();
+
     // If the conditions are the same, we can leave them alone.
+    X86::CondCode OldBranchCode = (X86::CondCode)Cond[0].getImm();
     if (OldBranchCode == BranchCode)
       continue;
-    // If they differ, see if they fit one of the known patterns.
-    // Theoretically we could handle more patterns here, but
-    // we shouldn't expect to see them if instruction selection
-    // has done a reasonable job.
+
+    // If they differ, see if they fit one of the known patterns. Theoretically,
+    // we could handle more patterns here, but we shouldn't expect to see them
+    // if instruction selection has done a reasonable job.
     if ((OldBranchCode == X86::COND_NP &&
          BranchCode == X86::COND_E) ||
         (OldBranchCode == X86::COND_E &&
@@ -1696,6 +1706,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       BranchCode = X86::COND_NE_OR_P;
     else
       return true;
+
     // Update the MachineOperand.
     Cond[0].setImm(BranchCode);
   }
