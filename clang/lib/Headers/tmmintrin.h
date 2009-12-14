@@ -67,7 +67,7 @@ _mm_abs_epi32(__m128i a)
 }
 
 #define _mm_alignr_epi8(a, b, n) (__builtin_ia32_palignr128((a), (b), (n)))
-#define _mm_alignr_pi8(a, b, n) (__builtin_ia32_palignr((a), (b), (n)))
+#define _mm_alignr_pi8(a, b, n) (__builtin_ia32_palignr((a), (b), (n*8)))
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_hadd_epi16(__m128i a, __m128i b)

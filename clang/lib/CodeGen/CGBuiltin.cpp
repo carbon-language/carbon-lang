@@ -805,8 +805,11 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
     return Builder.CreateStore(Ops[1], Ops[0]);
   }
-  case X86::BI__builtin_ia32_palignr128:
   case X86::BI__builtin_ia32_palignr: {
+    Function *F = CGM.getIntrinsic(Intrinsic::x86_ssse3_palign_r);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size());
+  }
+  case X86::BI__builtin_ia32_palignr128: {
     unsigned shiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
     
     // If palignr is shifting the pair of input vectors less than 17 bytes,

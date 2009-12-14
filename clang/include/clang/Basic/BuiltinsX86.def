@@ -251,7 +251,7 @@ BUILTIN(__builtin_ia32_monitor, "vv*UiUi", "")
 BUILTIN(__builtin_ia32_mwait, "vUiUi", "")
 BUILTIN(__builtin_ia32_lddqu, "V16ccC*", "")
 BUILTIN(__builtin_ia32_palignr128, "V16cV16cV16cc", "")
-BUILTIN(__builtin_ia32_palignr, "V8cV8cV8cc", "")
+BUILTIN(__builtin_ia32_palignr, "V1LLiV1LLiV1LLic", "")
 BUILTIN(__builtin_ia32_insertps128, "V4fV4fV4fi", "")
 
 BUILTIN(__builtin_ia32_storelv4si, "vV2i*V2LLi", "")
