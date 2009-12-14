@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang -cc1 -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -e "objc_assign_weak" %t | grep -e "call" | count 6
 
 __weak id* x;

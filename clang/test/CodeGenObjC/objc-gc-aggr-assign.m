@@ -1,4 +1,4 @@
-// RUN: clang-cc -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang -cc1 -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_memmove_collectable %t | grep call | count 3
 
 static int count;

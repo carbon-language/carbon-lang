@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple x86_64-apple-darwin9 -fobjc-gc -g -emit-llvm -o - %s
-// RUN: clang-cc -triple i386-apple-darwin9 -fobjc-gc -g -emit-llvm -o - %s
+// RUN: clang -cc1 -triple x86_64-apple-darwin9 -fobjc-gc -g -emit-llvm -o - %s
+// RUN: clang -cc1 -triple i386-apple-darwin9 -fobjc-gc -g -emit-llvm -o - %s
 
 // rdar://7252252
 @interface Loop {

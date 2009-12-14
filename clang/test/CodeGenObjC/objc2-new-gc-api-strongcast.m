@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -fblocks -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang -cc1 -triple x86_64-apple-darwin10 -fblocks -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -F '@objc_assign_strongCast' %t  | count 4
 
 @interface DSATextSearch @end

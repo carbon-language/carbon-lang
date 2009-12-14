@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple=i686-apple-darwin9 -emit-llvm -o %t %s
+// RUN: clang -cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
 // RUN: grep -e "T@\\\\22NSString\\\\22" %t
 @interface NSString @end
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm -fblocks -o %t %s
+// RUN: clang -cc1 -triple i386-apple-darwin9 -emit-llvm -fblocks -o %t %s
 // rdar://6676764
 
 struct S {

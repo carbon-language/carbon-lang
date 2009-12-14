@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o %t %s
+// RUN: clang -cc1 -emit-llvm -o %t %s
 
 @interface BASE
 + (int) BaseMeth;

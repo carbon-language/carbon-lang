@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple=i686-apple-darwin9 -emit-llvm -o %t %s
+// RUN: clang -cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
 // RUN: grep -e "{Base=b2b3b4b5}" %t | count 1
 // RUN: grep -e "{Derived=b2b3b4b5b5b4b3}" %t | count 1
 

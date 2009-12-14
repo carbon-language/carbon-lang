@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck %s
+// RUN: clang -cc1 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck %s
 
 @class  Some;
 

@@ -1,5 +1,5 @@
 // rdar://6657613
-// RUN: clang-cc -emit-llvm %s -o %t
+// RUN: clang -cc1 -emit-llvm %s -o %t
 
 @class C;
 

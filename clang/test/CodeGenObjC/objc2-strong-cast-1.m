@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-unknown-unknown -fobjc-gc -emit-llvm -o %t %s
+// RUN: clang -cc1 -triple x86_64-unknown-unknown -fobjc-gc -emit-llvm -o %t %s
 
 @interface I {
   __attribute__((objc_gc(strong))) int *i_IdocumentIDs;

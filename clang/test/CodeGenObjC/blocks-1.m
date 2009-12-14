@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t -fobjc-gc -fblocks -triple i386-apple-darwin10
+// RUN: clang -cc1 %s -emit-llvm -o %t -fobjc-gc -fblocks -triple i386-apple-darwin10
 // RUN: grep "_Block_object_dispose" %t | count 6
 // RUN: grep "__copy_helper_block_" %t | count 4
 // RUN: grep "__destroy_helper_block_" %t | count 4

@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -triple=i686-apple-darwin9 -o %t %s -O2
+// RUN: clang -cc1 -emit-llvm -triple=i686-apple-darwin9 -o %t %s -O2
 // RUN: grep 'ret i32' %t | count 1
 // RUN: grep 'ret i32 1' %t | count 1
 

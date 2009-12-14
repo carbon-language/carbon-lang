@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm-only -fgnu-runtime %s
+// RUN: clang -cc1 -emit-llvm-only -fgnu-runtime %s
 
 @protocol MadeUpProtocol;
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fvisibility hidden -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck %s
+// RUN: clang -cc1 -fvisibility hidden -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck %s
 // CHECK: @"OBJC_IVAR_$_I.P" = hidden
 // CHECK: @"OBJC_CLASS_$_I" = hidden
 // CHECK: @"OBJC_METACLASS_$_I" = hidden

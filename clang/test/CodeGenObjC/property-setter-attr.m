@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -triple=i686-apple-darwin8 -o %t %s
+// RUN: clang -cc1 -emit-llvm -triple=i686-apple-darwin8 -o %t %s
 // RUN: grep -e "SiSetOtherThings:" %t
 
 @interface A 

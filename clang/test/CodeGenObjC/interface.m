@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -O3 -emit-llvm -o %t %s
+// RUN: clang -cc1 -triple i386-apple-darwin9 -O3 -emit-llvm -o %t %s
 // RUN: grep 'ret i32 385' %t
 
 void *alloca();

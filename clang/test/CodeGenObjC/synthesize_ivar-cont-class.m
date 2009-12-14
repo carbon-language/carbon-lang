@@ -1,4 +1,4 @@
-// RUN: clang-cc -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: clang -cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 // RUN: grep '@"OBJC_IVAR_$_XCOrganizerDeviceNodeInfo.viewController"' %t
 
 @interface XCOrganizerNodeInfo

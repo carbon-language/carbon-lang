@@ -1,4 +1,4 @@
-// RUN: clang-cc -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: clang -cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 
 @interface BASE  {
 @private
