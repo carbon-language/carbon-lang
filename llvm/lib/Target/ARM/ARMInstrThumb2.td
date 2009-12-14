@@ -1065,6 +1065,66 @@ def t2MOVCCror : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true, i32imm:$rhs),
                    RegConstraint<"$false = $dst">;
 
 //===----------------------------------------------------------------------===//
+// Atomic operations intrinsics
+//
+
+// memory barriers protect the atomic sequences
+let hasSideEffects = 1 in {
+def t2Int_MemBarrierV7 : AInoP<(outs), (ins),
+                        Pseudo, NoItinerary,
+                        "dmb", "",
+                        [(ARMMemBarrier)]> {
+  // FIXME: add support for options other than a full system DMB
+}
+
+def t2Int_SyncBarrierV7 : AInoP<(outs), (ins),
+                        Pseudo, NoItinerary,
+                        "dsb", "",
+                        [(ARMSyncBarrier)]> {
+  // FIXME: add support for options other than a full system DSB
+}
+}
+
+let mayLoad = 1 in {
+def t2LDREXB : Thumb2I<(outs GPR:$dest), (ins GPR:$ptr), AddrModeNone,
+                      Size4Bytes, NoItinerary,
+                      "ldrexb", "\t$dest, [$ptr]", "",
+                      []>;
+def t2LDREXH : Thumb2I<(outs GPR:$dest), (ins GPR:$ptr), AddrModeNone,
+                      Size4Bytes, NoItinerary,
+                      "ldrexh", "\t$dest, [$ptr]", "",
+                      []>;
+def t2LDREX  : Thumb2I<(outs GPR:$dest), (ins GPR:$ptr), AddrModeNone,
+                      Size4Bytes, NoItinerary,
+                      "ldrex", "\t$dest, [$ptr]", "",
+                      []>;
+def t2LDREXD : Thumb2I<(outs GPR:$dest, GPR:$dest2), (ins GPR:$ptr),
+                      AddrModeNone, Size4Bytes, NoItinerary,
+                      "ldrexd", "\t$dest, $dest2, [$ptr]", "",
+                      []>;
+}
+
+let mayStore = 1 in {
+def t2STREXB : Thumb2I<(outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+                      AddrModeNone, Size4Bytes, NoItinerary,
+                      "strexb", "\t$success, $src, [$ptr]", "",
+                      []>;
+def t2STREXH : Thumb2I<(outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+                      AddrModeNone, Size4Bytes, NoItinerary,
+                      "strexh", "\t$success, $src, [$ptr]", "",
+                      []>;
+def t2STREX  : Thumb2I<(outs GPR:$success), (ins GPR:$src, GPR:$ptr),
+                      AddrModeNone, Size4Bytes, NoItinerary,
+                      "strex", "\t$success, $src, [$ptr]", "",
+                      []>;
+def t2STREXD : Thumb2I<(outs GPR:$success),
+                      (ins GPR:$src, GPR:$src2, GPR:$ptr),
+                      AddrModeNone, Size4Bytes, NoItinerary,
+                      "strexd", "\t$success, $src, $src2, [$ptr]", "",
+                      []>;
+}
+
+//===----------------------------------------------------------------------===//
 // TLS Instructions
 //
 
