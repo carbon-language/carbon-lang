@@ -100,7 +100,12 @@ install-ocamldoc: ocamldoc
 	  $(FIND) . -type f -exec \
 	    $(DataInstall) {} $(PROJ_docsdir)/ocamldoc/html \;
 
-ocamldoc: regen-ocamldoc $(PROJ_OBJ_DIR)/ocamldoc.tar.gz
+ocamldoc: regen-ocamldoc
+	$(Echo) Packaging ocamldoc documentation
+	$(Verb) $(RM) -rf $(PROJ_OBJ_DIR)/ocamldoc.tar*
+	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/ocamldoc.tar ocamldoc
+	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/ocamldoc.tar
+	$(Verb) $(CP) $(PROJ_OBJ_DIR)/ocamldoc.tar.gz $(PROJ_OBJ_DIR)/ocamldoc/html/
 
 regen-ocamldoc:
 	$(Echo) Building ocamldoc documentation
@@ -112,13 +117,6 @@ regen-ocamldoc:
 	$(Verb) \
 		$(OCAMLDOC) -d $(PROJ_OBJ_DIR)/ocamldoc/html -sort -colorize-code -html \
 		`$(FIND) $(LEVEL)/bindings/ocaml -name "*.odoc" -exec echo -load '{}' ';'`
-
-$(PROJ_OBJ_DIR)/ocamldoc.tar.gz:
-	$(Echo) Packaging ocamldoc documentation
-	$(Verb) $(RM) -rf $@ $(PROJ_OBJ_DIR)/ocamldoc.tar
-	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/ocamldoc.tar ocamldoc
-	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/ocamldoc.tar
-	$(Verb) $(CP) $(PROJ_OBJ_DIR)/ocamldoc.tar.gz $(PROJ_OBJ_DIR)/ocamldoc/html/
 
 uninstall-local::
 	$(Echo) Uninstalling Documentation
