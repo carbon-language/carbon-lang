@@ -38,7 +38,8 @@ class Lexer : public PreprocessorLexer {
   const char *BufferEnd;         // End of the buffer.
   SourceLocation FileLoc;        // Location for start of file.
   LangOptions Features;          // Features enabled by this language (cache).
-  bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
+  bool Is_PragmaLexer : 1;       // True if lexer for _Pragma handling.
+  bool IsInConflictMarker : 1;   // True if in a VCS conflict marker '<<<<<<<'
   
   //===--------------------------------------------------------------------===//
   // Context-specific lexing flags set by the preprocessor.
@@ -369,6 +370,9 @@ private:
   bool SkipBCPLComment       (Token &Result, const char *CurPtr);
   bool SkipBlockComment      (Token &Result, const char *CurPtr);
   bool SaveBCPLComment       (Token &Result, const char *CurPtr);
+  
+  bool IsStartOfConflictMarker(const char *CurPtr);
+  bool HandleEndOfConflictMarker(const char *CurPtr);
 };
 
 

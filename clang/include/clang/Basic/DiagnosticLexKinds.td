@@ -51,6 +51,9 @@ def err_empty_character : Error<"empty character constant">;
 def err_unterminated_block_comment : Error<"unterminated /* comment">;
 def err_invalid_character_to_charify : Error<
   "invalid argument to convert to character">;
+
+def err_conflict_marker : Error<"version control conflict marker in file">;
+
 def ext_multichar_character_literal : ExtWarn<
   "multi-character character constant">, InGroup<MultiChar>;
 def ext_four_char_character_literal : Extension<
