@@ -47,7 +47,7 @@ namespace llvm {
       f80            =   9,   // This is a 80 bit floating point value
       f128           =  10,   // This is a 128 bit floating point value
       ppcf128        =  11,   // This is a PPC 128-bit floating point value
-      Flag           =  12,   // This is a condition code or machine flag.
+      Flag           =  12,   // This glues nodes together during pre-RA sched
 
       isVoid         =  13,   // This has no value
 
