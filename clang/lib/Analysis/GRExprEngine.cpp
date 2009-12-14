@@ -418,7 +418,7 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
                             CleanedState, SymReaper);
 
     if (Checkers.empty())
-      Tmp = Tmp2;
+      Tmp.insert(Tmp2);
     else {
       ExplodedNodeSet Tmp3;
       ExplodedNodeSet *SrcSet = &Tmp2;
