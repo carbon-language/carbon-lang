@@ -1,5 +1,5 @@
-// RUN: clang-cc -emit-pch %S/Inputs/t1.m -o %t1.m.ast
-// RUN: clang-cc -emit-pch %S/Inputs/t2.m -o %t2.m.ast
+// RUN: clang -cc1 -emit-pch %S/Inputs/t1.m -o %t1.m.ast
+// RUN: clang -cc1 -emit-pch %S/Inputs/t2.m -o %t2.m.ast
 
 // RUN: index-test %t1.m.ast %t2.m.ast -point-at %S/Inputs/objc.h:5:13 -print-refs > %t
 // RUN: cat %t | count 1

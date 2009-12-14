@@ -1,5 +1,5 @@
-// RUN: clang-cc -fsyntax-only %s
-// RUN: clang-cc -ast-print %s
-// RUN: clang-cc -ast-dump %s
+// RUN: clang -cc1 -fsyntax-only %s
+// RUN: clang -cc1 -ast-print %s
+// RUN: clang -cc1 -ast-dump %s
 
 #include "objc-language-features.inc"

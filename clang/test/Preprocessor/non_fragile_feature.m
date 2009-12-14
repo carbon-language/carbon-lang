@@ -1,4 +1,4 @@
-// RUN: clang-cc -fobjc-nonfragile-abi %s
+// RUN: clang -cc1 -fobjc-nonfragile-abi %s
 #ifndef __has_feature
 #error Should have __has_feature
 #endif

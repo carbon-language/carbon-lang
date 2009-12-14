@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang -cc1 -fsyntax-only -verify %s
 
 // Obj-C string literal expressions
 template <typename T> struct StringTest {
