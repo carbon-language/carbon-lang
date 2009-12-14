@@ -976,21 +976,20 @@ namespace {
     nl(Out);
     printType(GV->getType());
     if (GV->hasInitializer()) {
-      Constant* Init = GV->getInitializer();
+      Constant *Init = GV->getInitializer();
       printType(Init->getType());
-      if (Function* F = dyn_cast<Function>(Init)) {
+      if (Function *F = dyn_cast<Function>(Init)) {
         nl(Out)<< "/ Function Declarations"; nl(Out);
         printFunctionHead(F);
       } else if (GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
         nl(Out) << "// Global Variable Declarations"; nl(Out);
         printVariableHead(gv);
-      } else  {
-        nl(Out) << "// Constant Definitions"; nl(Out);
-        printConstant(gv);
-      }
-      if (GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
+        
         nl(Out) << "// Global Variable Definitions"; nl(Out);
         printVariableBody(gv);
+      } else  {
+        nl(Out) << "// Constant Definitions"; nl(Out);
+        printConstant(Init);
       }
     }
   }
