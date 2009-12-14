@@ -1078,23 +1078,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
               = getContext().getAsConstantArrayType(DRE->getType())) {
             llvm::APInt Size = CAT->getSize();
             llvm::BasicBlock *Cont = createBasicBlock("cont");
-            if (IdxSigned) {
-              Builder.CreateCondBr(Builder.CreateICmpSGE(Idx,
-                                     llvm::ConstantInt::get(Idx->getType(), 0)),
-                                   Cont, getAbortBB());
-              EmitBlock(Cont);
-              Cont = createBasicBlock("cont");
-              Builder.CreateCondBr(Builder.CreateICmpSLT(Idx,
+            Builder.CreateCondBr(Builder.CreateICmpULT(Idx,
                                   llvm::ConstantInt::get(Idx->getType(), Size)),
-                                   Cont, getAbortBB());
-              EmitBlock(Cont);
-            } else {
-              llvm::BasicBlock *Cont = createBasicBlock("cont");
-              Builder.CreateCondBr(Builder.CreateICmpULT(Idx,
-                                  llvm::ConstantInt::get(Idx->getType(), Size)),
-                                   Cont, getAbortBB());
-              EmitBlock(Cont);
-            }
+                                 Cont, getAbortBB());
+            EmitBlock(Cont);
           }
         }
       }
