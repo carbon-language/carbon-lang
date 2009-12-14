@@ -27,7 +27,6 @@
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/IVUsers.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
@@ -84,7 +83,6 @@ namespace {
 
   class LoopStrengthReduce : public LoopPass {
     IVUsers *IU;
-    LoopInfo *LI;
     ScalarEvolution *SE;
     bool Changed;
 
@@ -115,12 +113,11 @@ namespace {
       // We split critical edges, so we change the CFG.  However, we do update
       // many analyses if they are around.
       AU.addPreservedID(LoopSimplifyID);
-      AU.addPreserved<LoopInfo>();
+      AU.addPreserved("loops");
       AU.addPreserved("domfrontier");
       AU.addPreserved("domtree");
 
       AU.addRequiredID(LoopSimplifyID);
-      AU.addRequired<LoopInfo>();
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       AU.addRequired<IVUsers>();
@@ -259,7 +256,7 @@ static bool containsAddRecFromDifferentLoop(const SCEV *S, Loop *L) {
       if (newLoop == L)
         return false;
       // if newLoop is an outer loop of L, this is OK.
-      if (!LoopInfo::isNotAlreadyContainedIn(L, newLoop))
+      if (!newLoop->contains(L->getHeader()))
         return false;
     }
     return true;
@@ -2720,7 +2717,6 @@ bool LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
 
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   IU = &getAnalysis<IVUsers>();
-  LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
   Changed = false;
 
