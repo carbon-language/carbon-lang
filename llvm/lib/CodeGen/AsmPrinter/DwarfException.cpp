@@ -292,14 +292,13 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       Asm->EmitULEB128Bytes(is4Byte ? 4 : 8);
       Asm->EOL("Augmentation size");
 
+      // We force 32-bits here because we've encoded our LSDA in the CIE with
+      // `dwarf::DW_EH_PE_sdata4'. And the CIE and FDE should agree.
       if (EHFrameInfo.hasLandingPads)
-        EmitReference("exception", EHFrameInfo.Number, true, false);
-      else {
-        if (is4Byte)
-          Asm->EmitInt32((int)0);
-        else
-          Asm->EmitInt64((int)0);
-      }
+        EmitReference("exception", EHFrameInfo.Number, true, true);
+      else
+        Asm->EmitInt32((int)0);
+
       Asm->EOL("Language Specific Data Area");
     } else {
       Asm->EmitULEB128Bytes(0);
