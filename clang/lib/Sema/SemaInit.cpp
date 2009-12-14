@@ -1969,6 +1969,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_QualificationConversionRValue:
   case SK_QualificationConversionLValue:
   case SK_ListInitialization:
+  case SK_ConstructorInitialization:
     break;
     
   case SK_ConversionSequence:
@@ -2033,6 +2034,17 @@ void InitializationSequence::AddListInitializationStep(QualType T) {
   Step S;
   S.Kind = SK_ListInitialization;
   S.Type = T;
+  Steps.push_back(S);
+}
+
+void 
+InitializationSequence::AddConstructorInitializationStep(
+                                              CXXConstructorDecl *Constructor,
+                                                         QualType T) {
+  Step S;
+  S.Kind = SK_ConstructorInitialization;
+  S.Type = T;
+  S.Function = Constructor;
   Steps.push_back(S);
 }
 
@@ -2462,7 +2474,70 @@ static void TryConstructorInitialization(Sema &S,
                                          const InitializationKind &Kind,
                                          Expr **Args, unsigned NumArgs,
                                          InitializationSequence &Sequence) {
-  // FIXME: Implement!
+  Sequence.setSequenceKind(InitializationSequence::ConstructorConversion);
+  
+  // Build the candidate set directly in the initialization sequence
+  // structure, so that it will persist if we fail.
+  OverloadCandidateSet &CandidateSet = Sequence.getFailedCandidateSet();
+  CandidateSet.clear();
+  
+  // Determine whether we are allowed to call explicit constructors or
+  // explicit conversion operators.
+  bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
+                        Kind.getKind() == InitializationKind::IK_Value ||
+                        Kind.getKind() == InitializationKind::IK_Default);                      
+  
+  // The type we're converting to is a class type. Enumerate its constructors
+  // to see if one is suitable.
+  QualType DestType = Entity.getType().getType();
+  const RecordType *DestRecordType = DestType->getAs<RecordType>();
+  assert(DestRecordType && "Constructor initialization requires record type");  
+  CXXRecordDecl *DestRecordDecl
+    = cast<CXXRecordDecl>(DestRecordType->getDecl());
+    
+  DeclarationName ConstructorName
+    = S.Context.DeclarationNames.getCXXConstructorName(
+                     S.Context.getCanonicalType(DestType).getUnqualifiedType());
+  DeclContext::lookup_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = DestRecordDecl->lookup(ConstructorName);
+       Con != ConEnd; ++Con) {
+    // Find the constructor (which may be a template).
+    CXXConstructorDecl *Constructor = 0;
+    FunctionTemplateDecl *ConstructorTmpl
+      = dyn_cast<FunctionTemplateDecl>(*Con);
+    if (ConstructorTmpl)
+      Constructor = cast<CXXConstructorDecl>(
+                                           ConstructorTmpl->getTemplatedDecl());
+    else
+      Constructor = cast<CXXConstructorDecl>(*Con);
+    
+    if (!Constructor->isInvalidDecl() &&
+        Constructor->isConvertingConstructor(AllowExplicit)) {
+      if (ConstructorTmpl)
+        S.AddTemplateOverloadCandidate(ConstructorTmpl, /*ExplicitArgs*/ 0,
+                                       Args, NumArgs, CandidateSet);
+      else
+        S.AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+    }
+  }    
+    
+  SourceLocation DeclLoc = Kind.getLocation();
+  
+  // Perform overload resolution. If it fails, return the failed result.  
+  OverloadCandidateSet::iterator Best;
+  if (OverloadingResult Result 
+        = S.BestViableFunction(CandidateSet, DeclLoc, Best)) {
+    Sequence.SetOverloadFailure(
+                          InitializationSequence::FK_ConstructorOverloadFailed, 
+                                Result);
+    return;
+  }
+  
+  // Add the constructor initialization step. Any cv-qualification conversion is
+  // subsumed by the initialization.
+  Sequence.AddConstructorInitializationStep(
+                                      cast<CXXConstructorDecl>(Best->Function), 
+                                            DestType);
 }
 
 /// \brief Attempt a user-defined conversion between two types (C++ [dcl.init]),
@@ -2968,6 +3043,30 @@ InitializationSequence::Perform(Sema &S,
       CurInit = S.Owned(InitList);
       break;
     }
+
+    case SK_ConstructorInitialization: {
+      CXXConstructorDecl *Constructor
+        = cast<CXXConstructorDecl>(Step->Function);
+      
+      // Build a call to the selected constructor.
+      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
+      SourceLocation Loc = Kind.getLocation();
+          
+      // Determine the arguments required to actually perform the constructor
+      // call.
+      if (S.CompleteConstructorCall(Constructor, move(Args), 
+                                    Loc, ConstructorArgs))
+        return S.ExprError();
+          
+      // Build the an expression that constructs a temporary.
+      CurInit = S.BuildCXXConstructExpr(Loc, Step->Type, Constructor, 
+                                        move_arg(ConstructorArgs));
+      if (CurInit.isInvalid())
+        return S.ExprError();
+          
+      CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
+      break;
+    }
     }
   }
   
@@ -3101,6 +3200,50 @@ bool InitializationSequence::Diagnose(Sema &S,
     S.Diag(Kind.getLocation(), diag::err_init_list_bad_dest_type)
       << (DestType->isRecordType()) << DestType << Args[0]->getSourceRange();
     break;
+      
+  case FK_ConstructorOverloadFailed: {
+    SourceRange ArgsRange;
+    if (NumArgs)
+      ArgsRange = SourceRange(Args[0]->getLocStart(), 
+                              Args[NumArgs - 1]->getLocEnd());
+    
+    // FIXME: Using "DestType" for the entity we're printing is probably
+    // bad.
+    switch (FailedOverloadResult) {
+      case OR_Ambiguous:
+        S.Diag(Kind.getLocation(), diag::err_ovl_ambiguous_init)
+          << DestType << ArgsRange;
+        S.PrintOverloadCandidates(FailedCandidateSet, true);
+        break;
+        
+      case OR_No_Viable_Function:
+        S.Diag(Kind.getLocation(), diag::err_ovl_no_viable_function_in_init)
+          << DestType << ArgsRange;
+        S.PrintOverloadCandidates(FailedCandidateSet, false);
+        break;
+        
+      case OR_Deleted: {
+        S.Diag(Kind.getLocation(), diag::err_ovl_deleted_init)
+          << true << DestType << ArgsRange;
+        OverloadCandidateSet::iterator Best;
+        OverloadingResult Ovl = S.BestViableFunction(FailedCandidateSet,
+                                                     Kind.getLocation(),
+                                                     Best);
+        if (Ovl == OR_Deleted) {
+          S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
+            << Best->Function->isDeleted();
+        } else {
+          llvm_unreachable("Inconsistent overload resolution?");
+        }
+        break;
+      }
+        
+      case OR_Success:
+        llvm_unreachable("Conversion did not fail!");
+        break;
+    }
+    break;
+  }
   }
   
   return true;

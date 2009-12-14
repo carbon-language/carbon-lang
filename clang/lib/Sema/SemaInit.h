@@ -306,6 +306,9 @@ public:
     /// \brief A user-defined conversion sequence.
     UserDefinedConversion,
     
+    /// \brief A constructor call.
+    ConstructorConversion,
+    
     /// \brief A reference binding.
     ReferenceBinding,
 
@@ -337,7 +340,9 @@ public:
     /// \brief Perform an implicit conversion sequence.
     SK_ConversionSequence,
     /// \brief Perform list-initialization
-    SK_ListInitialization
+    SK_ListInitialization,
+    /// \brief Perform initialization via a constructor.
+    SK_ConstructorInitialization
   };
   
   /// \brief A single step in the initialization sequence.
@@ -405,7 +410,9 @@ public:
     /// initializer list.
     FK_InitListBadDestinationType,
     /// \brief Overloading for a user-defined conversion failed.
-    FK_UserConversionOverloadFailed
+    FK_UserConversionOverloadFailed,
+    /// \brief Overloaded for initialization by constructor failed.
+    FK_ConstructorOverloadFailed
   };
   
 private:
@@ -529,6 +536,10 @@ public:
   /// \brief Add a list-initialiation step  
   void AddListInitializationStep(QualType T);
 
+  /// \brief Add a a constructor-initialization step.
+  void AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
+                                        QualType T);
+  
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {
     SequenceKind = FailedSequence;
