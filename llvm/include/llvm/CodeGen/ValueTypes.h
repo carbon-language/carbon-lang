@@ -47,34 +47,35 @@ namespace llvm {
       f80            =   9,   // This is a 80 bit floating point value
       f128           =  10,   // This is a 128 bit floating point value
       ppcf128        =  11,   // This is a PPC 128-bit floating point value
-      Flag           =  12,   // This glues nodes together during pre-RA sched
 
-      isVoid         =  13,   // This has no value
+      v2i8           =  12,   //  2 x i8
+      v4i8           =  13,   //  4 x i8
+      v8i8           =  14,   //  8 x i8
+      v16i8          =  15,   // 16 x i8
+      v32i8          =  16,   // 32 x i8
+      v2i16          =  17,   //  2 x i16
+      v4i16          =  18,   //  4 x i16
+      v8i16          =  19,   //  8 x i16
+      v16i16         =  20,   // 16 x i16
+      v2i32          =  21,   //  2 x i32
+      v4i32          =  22,   //  4 x i32
+      v8i32          =  23,   //  8 x i32
+      v1i64          =  24,   //  1 x i64
+      v2i64          =  25,   //  2 x i64
+      v4i64          =  26,   //  4 x i64
 
-      v2i8           =  14,   //  2 x i8
-      v4i8           =  15,   //  4 x i8
-      v8i8           =  16,   //  8 x i8
-      v16i8          =  17,   // 16 x i8
-      v32i8          =  18,   // 32 x i8
-      v2i16          =  19,   //  2 x i16
-      v4i16          =  20,   //  4 x i16
-      v8i16          =  21,   //  8 x i16
-      v16i16         =  22,   // 16 x i16
-      v2i32          =  23,   //  2 x i32
-      v4i32          =  24,   //  4 x i32
-      v8i32          =  25,   //  8 x i32
-      v1i64          =  26,   //  1 x i64
-      v2i64          =  27,   //  2 x i64
-      v4i64          =  28,   //  4 x i64
-
-      v2f32          =  29,   //  2 x f32
-      v4f32          =  30,   //  4 x f32
-      v8f32          =  31,   //  8 x f32
-      v2f64          =  32,   //  2 x f64
-      v4f64          =  33,   //  4 x f64
+      v2f32          =  27,   //  2 x f32
+      v4f32          =  28,   //  4 x f32
+      v8f32          =  29,   //  8 x f32
+      v2f64          =  30,   //  2 x f64
+      v4f64          =  31,   //  4 x f64
 
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
+
+      Flag           =  32,   // This glues nodes together during pre-RA sched
+
+      isVoid         =  33,   // This has no value
 
       LAST_VALUETYPE =  34,   // This always remains at the end of the list.
 
