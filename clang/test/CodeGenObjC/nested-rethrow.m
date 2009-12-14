@@ -1,6 +1,7 @@
 // RUN: clang -cc1 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck %s
 
-#include <stdio.h>
+
+extern int printf(const char*, ...);
 
 int main()
 {
