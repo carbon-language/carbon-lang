@@ -92,7 +92,7 @@ void TokenLexer::destroy() {
   }
 
   // TokenLexer owns its formal arguments.
-  if (ActualArgs) ActualArgs->destroy();
+  if (ActualArgs) ActualArgs->destroy(PP);
 }
 
 /// Expand the arguments of a function-like macro so that we can quickly

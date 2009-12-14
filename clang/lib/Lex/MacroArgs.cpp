@@ -20,7 +20,8 @@ using namespace clang;
 /// MacroArgs ctor function - This destroys the vector passed in.
 MacroArgs *MacroArgs::create(const MacroInfo *MI,
                              const Token *UnexpArgTokens,
-                             unsigned NumToks, bool VarargsElided) {
+                             unsigned NumToks, bool VarargsElided,
+                             Preprocessor &PP) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
 
@@ -40,7 +41,7 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
 
 /// destroy - Destroy and deallocate the memory for this object.
 ///
-void MacroArgs::destroy() {
+void MacroArgs::destroy(Preprocessor &PP) {
   // Run the dtor to deallocate the vectors.
   this->~MacroArgs();
   // Release the memory for the object.

@@ -204,7 +204,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   // expansion stack, only to take it right back off.
   if (MI->getNumTokens() == 0) {
     // No need for arg info.
-    if (Args) Args->destroy();
+    if (Args) Args->destroy(*this);
 
     // Ignore this macro use, just return the next token in the current
     // buffer.
@@ -232,7 +232,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // "#define VAL 42".
 
     // No need for arg info.
-    if (Args) Args->destroy();
+    if (Args) Args->destroy(*this);
 
     // Propagate the isAtStartOfLine/hasLeadingSpace markers of the macro
     // identifier to the expanded token.
@@ -446,7 +446,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
   }
 
   return MacroArgs::create(MI, ArgTokens.data(), ArgTokens.size(),
-                           isVarargsElided);
+                           isVarargsElided, *this);
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified
