@@ -303,6 +303,9 @@ public:
     /// dependently-type expressions.
     DependentSequence,
 
+    /// \brief A user-defined conversion sequence.
+    UserDefinedConversion,
+    
     /// \brief A reference binding.
     ReferenceBinding,
 
@@ -400,7 +403,9 @@ public:
     FK_ReferenceBindingToInitList,
     /// \brief Initialization of some unused destination type with an
     /// initializer list.
-    FK_InitListBadDestinationType
+    FK_InitListBadDestinationType,
+    /// \brief Overloading for a user-defined conversion failed.
+    FK_UserConversionOverloadFailed
   };
   
 private:

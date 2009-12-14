@@ -2473,7 +2473,124 @@ static void TryUserDefinedConversion(Sema &S,
                                      const InitializationKind &Kind,
                                      Expr *Initializer,
                                      InitializationSequence &Sequence) {
-  // FIXME: Implement!
+  Sequence.setSequenceKind(InitializationSequence::UserDefinedConversion);
+  
+  QualType DestType = Entity.getType().getType();
+  assert(!DestType->isReferenceType() && "References are handled elsewhere");
+  QualType SourceType = Initializer->getType();
+  assert((DestType->isRecordType() || SourceType->isRecordType()) &&
+         "Must have a class type to perform a user-defined conversion");
+  
+  // Build the candidate set directly in the initialization sequence
+  // structure, so that it will persist if we fail.
+  OverloadCandidateSet &CandidateSet = Sequence.getFailedCandidateSet();
+  CandidateSet.clear();
+  
+  // Determine whether we are allowed to call explicit constructors or
+  // explicit conversion operators.
+  bool AllowExplicit = Kind.getKind() == InitializationKind::IK_Direct;
+  
+  if (const RecordType *DestRecordType = DestType->getAs<RecordType>()) {
+    // The type we're converting to is a class type. Enumerate its constructors
+    // to see if there is a suitable conversion.
+    CXXRecordDecl *DestRecordDecl
+      = cast<CXXRecordDecl>(DestRecordType->getDecl());
+    
+    DeclarationName ConstructorName
+      = S.Context.DeclarationNames.getCXXConstructorName(
+                     S.Context.getCanonicalType(DestType).getUnqualifiedType());
+    DeclContext::lookup_iterator Con, ConEnd;
+    for (llvm::tie(Con, ConEnd) = DestRecordDecl->lookup(ConstructorName);
+         Con != ConEnd; ++Con) {
+      // Find the constructor (which may be a template).
+      CXXConstructorDecl *Constructor = 0;
+      FunctionTemplateDecl *ConstructorTmpl
+        = dyn_cast<FunctionTemplateDecl>(*Con);
+      if (ConstructorTmpl)
+        Constructor = cast<CXXConstructorDecl>(
+                                           ConstructorTmpl->getTemplatedDecl());
+      else
+        Constructor = cast<CXXConstructorDecl>(*Con);
+      
+      if (!Constructor->isInvalidDecl() &&
+          Constructor->isConvertingConstructor(AllowExplicit)) {
+        if (ConstructorTmpl)
+          S.AddTemplateOverloadCandidate(ConstructorTmpl, /*ExplicitArgs*/ 0,
+                                         &Initializer, 1, CandidateSet);
+        else
+          S.AddOverloadCandidate(Constructor, &Initializer, 1, CandidateSet);
+      }
+    }    
+  }
+  
+  if (const RecordType *SourceRecordType = SourceType->getAs<RecordType>()) {
+    // The type we're converting from is a class type, enumerate its conversion
+    // functions.
+    CXXRecordDecl *SourceRecordDecl
+      = cast<CXXRecordDecl>(SourceRecordType->getDecl());
+    
+    const UnresolvedSet *Conversions
+      = SourceRecordDecl->getVisibleConversionFunctions();
+    for (UnresolvedSet::iterator I = Conversions->begin(),
+         E = Conversions->end(); 
+         I != E; ++I) {
+      NamedDecl *D = *I;
+      CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
+      if (isa<UsingShadowDecl>(D))
+        D = cast<UsingShadowDecl>(D)->getTargetDecl();
+      
+      FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(D);
+      CXXConversionDecl *Conv;
+      if (ConvTemplate)
+        Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+      else
+        Conv = cast<CXXConversionDecl>(*I);
+      
+      if (AllowExplicit || !Conv->isExplicit()) {
+        if (ConvTemplate)
+          S.AddTemplateConversionCandidate(ConvTemplate, ActingDC, Initializer,
+                                           DestType, CandidateSet);
+        else
+          S.AddConversionCandidate(Conv, ActingDC, Initializer, DestType,
+                                   CandidateSet);
+      }
+    }
+  }
+  
+  SourceLocation DeclLoc = Initializer->getLocStart();
+  
+  // Perform overload resolution. If it fails, return the failed result.  
+  OverloadCandidateSet::iterator Best;
+  if (OverloadingResult Result 
+        = S.BestViableFunction(CandidateSet, DeclLoc, Best)) {
+    Sequence.SetOverloadFailure(
+                        InitializationSequence::FK_UserConversionOverloadFailed, 
+                                Result);
+    return;
+  }
+  
+  FunctionDecl *Function = Best->Function;
+  
+  if (isa<CXXConstructorDecl>(Function)) {
+    // Add the user-defined conversion step. Any cv-qualification conversion is
+    // subsumed by the initialization.
+    Sequence.AddUserConversionStep(Function, DestType);
+    return;
+  }
+
+  // Add the user-defined conversion step that calls the conversion function.
+  QualType ConvType = Function->getResultType().getNonReferenceType();
+  Sequence.AddUserConversionStep(Function, ConvType);
+
+  // If the conversion following the call to the conversion function is 
+  // interesting, add it as a separate step.
+  if (Best->FinalConversion.First || Best->FinalConversion.Second ||
+      Best->FinalConversion.Third) {
+    ImplicitConversionSequence ICS;
+    ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+    ICS.Standard = Best->FinalConversion;
+    Sequence.AddConversionSequenceStep(ICS, DestType);
+  }
 }
 
 /// \brief Attempt an implicit conversion (C++ [conv]) converting from one
@@ -2604,7 +2721,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   }
   
   //    - Otherwise, the initial value of the object being initialized is the
-  //      (possibly converted) value of the ini- tializer expression. Standard
+  //      (possibly converted) value of the initializer expression. Standard
   //      conversions (Clause 4) will be used, if necessary, to convert the
   //      initializer expression to the cv-unqualified version of the 
   //      destination type; no user-defined conversions are considered.
@@ -2887,6 +3004,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     break;
       
   case FK_ReferenceInitOverloadFailed:
+  case FK_UserConversionOverloadFailed:
     switch (FailedOverloadResult) {
     case OR_Ambiguous:
       S.Diag(Kind.getLocation(), diag::err_typecheck_ambiguous_condition)
