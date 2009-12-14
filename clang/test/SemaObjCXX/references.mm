@@ -1,5 +1,5 @@
 // FIXME: This crashes, disable it until fixed.
-// RN: clang-cc -verify -emit-llvm -o - %s
+// RN: clang -cc1 -verify -emit-llvm -o - %s
 // RUN: false
 // XFAIL: *
 
