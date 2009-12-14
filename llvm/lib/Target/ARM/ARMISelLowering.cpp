@@ -3118,11 +3118,69 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
 MachineBasicBlock *
 ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                                     unsigned Size, unsigned BinOpcode) const {
-  std::string msg;
-  raw_string_ostream Msg(msg);
-  Msg << "Cannot yet emit: ";
-  MI->print(Msg);
-  llvm_report_error(Msg.str());
+  // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction *F = BB->getParent();
+  MachineFunction::iterator It = BB;
+  ++It;
+
+  unsigned dest = MI->getOperand(0).getReg();
+  unsigned ptr = MI->getOperand(1).getReg();
+  unsigned incr = MI->getOperand(2).getReg();
+  DebugLoc dl = MI->getDebugLoc();
+  unsigned ldrOpc, strOpc;
+  switch (Size) {
+  default: llvm_unreachable("unsupported size for AtomicCmpSwap!");
+  case 1: ldrOpc = ARM::LDREXB; strOpc = ARM::STREXB; break;
+  case 2: ldrOpc = ARM::LDREXH; strOpc = ARM::STREXH; break;
+  case 4: ldrOpc = ARM::LDREX;  strOpc = ARM::STREX;  break;
+  }
+
+  MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, loopMBB);
+  F->insert(It, exitMBB);
+  exitMBB->transferSuccessors(BB);
+
+  MachineRegisterInfo &RegInfo = F->getRegInfo();
+  unsigned scratch = RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
+  unsigned scratch2 = (!BinOpcode) ? incr :
+    RegInfo.createVirtualRegister(ARM::GPRRegisterClass);
+
+  //  thisMBB:
+  //   ...
+  //   fallthrough --> loopMBB
+  BB->addSuccessor(loopMBB);
+
+  //  loopMBB:
+  //   ldrex dest, ptr
+  //   add tmp, dest, incr
+  //   strex scratch, tmp, ptr
+  //   cmp scratch, #0
+  //   bne- loopMBB
+  //   fallthrough --> exitMBB
+  BB = loopMBB;
+  AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr));
+  if (BinOpcode)
+    AddDefaultPred(BuildMI(BB, dl, TII->get(BinOpcode), scratch2).
+                   addReg(dest).addReg(incr)).addReg(0);
+
+  AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2)
+                 .addReg(ptr));
+  AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::CMPri))
+                 .addReg(scratch).addImm(0));
+  BuildMI(BB, dl, TII->get(ARM::Bcc)).addMBB(loopMBB).addImm(ARMCC::NE)
+    .addReg(ARM::CPSR);
+
+  BB->addSuccessor(loopMBB);
+  BB->addSuccessor(exitMBB);
+
+  //  exitMBB:
+  //   ...
+  BB = exitMBB;
+  return BB;
 }
 
 MachineBasicBlock *
