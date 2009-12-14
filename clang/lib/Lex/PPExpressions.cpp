@@ -72,8 +72,8 @@ struct DefinedTracker {
 };
 
 /// EvaluateDefined - Process a 'defined(sym)' expression.
-static bool EvaluateDefined(PPValue &Result, Token &PeekTok,
-        DefinedTracker &DT, bool ValueLive, Preprocessor &PP) {
+static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
+                            bool ValueLive, Preprocessor &PP) {
   IdentifierInfo *II;
   Result.setBegin(PeekTok.getLocation());
 
@@ -676,6 +676,15 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
 /// to "!defined(X)" return X in IfNDefMacro.
 bool Preprocessor::
 EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
+  // Save the current state of 'DisableMacroExpansion' and reset it to false. If
+  // 'DisableMacroExpansion' is true, then we must be in a macro argument list
+  // in which case a directive is undefined behavior.  We want macros to be able
+  // to recursively expand in order to get more gcc-list behavior, so we force
+  // DisableMacroExpansion to false and restore it when we're done parsing the
+  // expression.
+  bool DisableMacroExpansionAtStartOfDirective = DisableMacroExpansion;
+  DisableMacroExpansion = false;
+  
   // Peek ahead one token.
   Token Tok;
   Lex(Tok);
@@ -689,6 +698,9 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
     // Parse error, skip the rest of the macro line.
     if (Tok.isNot(tok::eom))
       DiscardUntilEndOfDirective();
+    
+    // Restore 'DisableMacroExpansion'.
+    DisableMacroExpansion = DisableMacroExpansionAtStartOfDirective;
     return false;
   }
 
@@ -701,6 +713,8 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
     if (DT.State == DefinedTracker::NotDefinedMacro)
       IfNDefMacro = DT.TheMacro;
 
+    // Restore 'DisableMacroExpansion'.
+    DisableMacroExpansion = DisableMacroExpansionAtStartOfDirective;
     return ResVal.Val != 0;
   }
 
@@ -711,6 +725,9 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
     // Parse error, skip the rest of the macro line.
     if (Tok.isNot(tok::eom))
       DiscardUntilEndOfDirective();
+    
+    // Restore 'DisableMacroExpansion'.
+    DisableMacroExpansion = DisableMacroExpansionAtStartOfDirective;
     return false;
   }
 
@@ -721,6 +738,8 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
     DiscardUntilEndOfDirective();
   }
 
+  // Restore 'DisableMacroExpansion'.
+  DisableMacroExpansion = DisableMacroExpansionAtStartOfDirective;
   return ResVal.Val != 0;
 }
 

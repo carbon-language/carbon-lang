@@ -8,3 +8,23 @@ foo(foo) (2)
 #define w ABCD
 m(m)
 // CHECK: m(ABCD)
+
+
+
+// rdar://7466570
+
+// We should get '42' in the argument list for gcc compatibility.
+#define A 1
+#define B 2
+#define C(x) (x + 1)
+
+X: C(
+#ifdef A
+#if A == 1
+#if B
+    42
+#endif
+#endif
+#endif
+    )
+// CHECK: X: (42 + 1)
