@@ -1,4 +1,4 @@
-// RUN: clang-cc -rewrite-objc %s -o -
+// RUN: clang -cc1 -rewrite-objc %s -o -
 
 @protocol Proto
 - (void) ProtoDidget;

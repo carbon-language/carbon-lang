@@ -1,4 +1,4 @@
-// RUN: clang-cc -rewrite-objc %s -o -
+// RUN: clang -cc1 -rewrite-objc %s -o -
 
 typedef struct NSMethodFrameArgInfo {
     struct NSMethodFrameArgInfo *subInfo;
