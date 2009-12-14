@@ -16,6 +16,7 @@
 
 #define DEBUG_TYPE "pre-alloc-split"
 #include "VirtRegMap.h"
+#include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -104,6 +105,7 @@ namespace {
       AU.addRequired<LiveStacks>();
       AU.addPreserved<LiveStacks>();
       AU.addPreserved<RegisterCoalescer>();
+      AU.addPreserved<CalculateSpillWeights>();
       if (StrongPHIElim)
         AU.addPreservedID(StrongPHIEliminationID);
       else

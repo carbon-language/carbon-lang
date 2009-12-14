@@ -36,6 +36,7 @@
 #include "PBQP/Heuristics/Briggs.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
+#include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -90,6 +91,7 @@ namespace {
       au.addRequired<LiveIntervals>();
       //au.addRequiredID(SplitCriticalEdgesID);
       au.addRequired<RegisterCoalescer>();
+      au.addRequired<CalculateSpillWeights>();
       au.addRequired<LiveStacks>();
       au.addPreserved<LiveStacks>();
       au.addRequired<MachineLoopInfo>();

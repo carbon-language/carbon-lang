@@ -244,10 +244,6 @@ namespace llvm {
     MachineOperand *lastRegisterUse(SlotIndex Start, SlotIndex End,
                                     unsigned Reg, SlotIndex &LastUseIdx) const;
 
-    /// CalculateSpillWeights - Compute spill weights for all virtual register
-    /// live intervals.
-    void CalculateSpillWeights();
-
     void printRegName(unsigned reg) const;
   };
 
