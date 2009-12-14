@@ -1006,7 +1006,7 @@ public:
   static bool classof(const Name##Decl *D) { return true; }
 #include "clang/AST/DeclNodes.def"
 
-  void dump() const;
+  void dumpDeclContext() const;
 
 private:
   void LoadLexicalDeclsFromExternalStorage() const;
