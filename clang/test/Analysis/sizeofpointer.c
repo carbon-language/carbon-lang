@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -warn-sizeof-pointer -verify %s
+// RUN: clang -cc1 -analyze -warn-sizeof-pointer -verify %s
 
 struct s {
 };

@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc-only -fblocks %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -fobjc-gc-only -fblocks -verify %s
+// RUN: clang -cc1 -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc-only -fblocks %s
+// RUN: clang -cc1 -analyze -checker-cfref -analyzer-store=region -fobjc-gc-only -fblocks -verify %s
 
 //===----------------------------------------------------------------------===//
 // Header stuff.

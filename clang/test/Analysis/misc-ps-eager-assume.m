@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -fblocks %s -analyzer-eagerly-assume
+// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -fblocks %s -analyzer-eagerly-assume
 
 // Delta-reduced header stuff (needed for test cases).
 typedef signed char BOOL;

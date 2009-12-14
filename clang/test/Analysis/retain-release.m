@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -fblocks -verify %s
-// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -fblocks -verify %s
+// RUN: clang -cc1 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -fblocks -verify %s
+// RUN: clang -cc1 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -fblocks -verify %s
 
 #if __has_feature(attribute_ns_returns_retained)
 #define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))

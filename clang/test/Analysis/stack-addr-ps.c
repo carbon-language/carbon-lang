@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -fblocks -verify %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -fblocks -verify %s
+// RUN: clang -cc1 -analyze -checker-cfref -analyzer-store=basic -fblocks -verify %s
+// RUN: clang -cc1 -analyze -checker-cfref -analyzer-store=region -fblocks -verify %s
 
 int* f1() {
   int x = 0;

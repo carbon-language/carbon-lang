@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -triple i386-apple-darwin10 -analyzer-store=region
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -triple i386-apple-darwin10 -analyzer-store=basic
+// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -triple i386-apple-darwin10 -analyzer-store=region
+// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -triple i386-apple-darwin10 -analyzer-store=basic
 
 // Note that the target triple is important for this test case.  It specifies that we use the
 // fragile Objective-C ABI.

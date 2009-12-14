@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -warn-objc-methodsigs -verify %s
+// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -warn-objc-methodsigs -verify %s
 
 int printf(const char *, ...);
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -std=gnu99 -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -std=gnu99 -checker-cfref -analyzer-store=region -verify %s
 
 
 // The store for 'a[1]' should not be removed mistakenly. SymbolicRegions may

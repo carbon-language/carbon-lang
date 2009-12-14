@@ -1,5 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang -cc1 -analyze -checker-cfref -analyzer-store=basic -verify %s
+// RUN: clang -cc1 -analyze -checker-cfref -analyzer-store=region -verify %s
 
 typedef unsigned int NSUInteger;
 

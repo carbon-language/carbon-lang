@@ -1,4 +1,4 @@
-// RUN: clang-cc -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-output=plist -o - %s | FileCheck %s
+// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-output=plist -o - %s | FileCheck %s
 
 void test_null_init(void) {
   int *p = 0;

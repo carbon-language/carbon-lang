@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -fblocks -verify %s
+// RUN: clang -cc1 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -fblocks -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
