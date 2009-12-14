@@ -90,10 +90,6 @@ namespace {
     /// particular stride.
     std::map<const SCEV *, IVsOfOneStride> IVsByStride;
 
-    /// StrideNoReuse - Keep track of all the strides whose ivs cannot be
-    /// reused (nor should they be rewritten to reuse other strides).
-    SmallSet<const SCEV *, 4> StrideNoReuse;
-
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
     SmallVector<WeakVH, 16> DeadInsts;
@@ -983,17 +979,13 @@ const SCEV *LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 const SCEV *const &Stride,
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
-  if (StrideNoReuse.count(Stride))
-    return SE->getIntegerSCEV(0, Stride->getType());
-
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
     int64_t SInt = SC->getValue()->getSExtValue();
     for (unsigned NewStride = 0, e = IU->StrideOrder.size();
          NewStride != e; ++NewStride) {
       std::map<const SCEV *, IVsOfOneStride>::iterator SI =
                 IVsByStride.find(IU->StrideOrder[NewStride]);
-      if (SI == IVsByStride.end() || !isa<SCEVConstant>(SI->first) ||
-          StrideNoReuse.count(SI->first))
+      if (SI == IVsByStride.end() || !isa<SCEVConstant>(SI->first))
         continue;
       // The other stride has no uses, don't reuse it.
       std::map<const SCEV *, IVUsersOfOneStride *>::iterator UI =
@@ -2766,7 +2758,6 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // We're done analyzing this loop; release all the state we built up for it.
   IVsByStride.clear();
-  StrideNoReuse.clear();
 
   // Clean up after ourselves
   if (!DeadInsts.empty())
