@@ -972,7 +972,7 @@ protected:
   /// not work with the with specified type and indicate what to do about it.
   void setLoadExtAction(unsigned ExtType, MVT VT,
                       LegalizeAction Action) {
-    assert((unsigned)VT.SimpleTy < MVT::LAST_VALUETYPE &&
+    assert((unsigned)VT.SimpleTy*2 < 63 &&
            ExtType < array_lengthof(LoadExtActions) &&
            "Table isn't big enough!");
     LoadExtActions[ExtType] &= ~(uint64_t(3UL) << VT.SimpleTy*2);
@@ -984,7 +984,7 @@ protected:
   void setTruncStoreAction(MVT ValVT, MVT MemVT,
                            LegalizeAction Action) {
     assert((unsigned)ValVT.SimpleTy < array_lengthof(TruncStoreActions) &&
-           (unsigned)MemVT.SimpleTy < MVT::LAST_VALUETYPE &&
+           (unsigned)MemVT.SimpleTy*2 < 63 &&
            "Table isn't big enough!");
     TruncStoreActions[ValVT.SimpleTy] &= ~(uint64_t(3UL)  << MemVT.SimpleTy*2);
     TruncStoreActions[ValVT.SimpleTy] |= (uint64_t)Action << MemVT.SimpleTy*2;
