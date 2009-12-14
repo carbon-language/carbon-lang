@@ -46,8 +46,10 @@ def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
 def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>;
 
-def SDT_ARMMEMBARRIER  : SDTypeProfile<0, 0, []>;
-def SDT_ARMSYNCBARRIER : SDTypeProfile<0, 0, []>;
+def SDT_ARMMEMBARRIERV7  : SDTypeProfile<0, 0, []>;
+def SDT_ARMSYNCBARRIERV7 : SDTypeProfile<0, 0, []>;
+def SDT_ARMMEMBARRIERV6  : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+def SDT_ARMSYNCBARRIERV6 : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
@@ -96,9 +98,13 @@ def ARMrrx           : SDNode<"ARMISD::RRX"     , SDTIntUnaryOp, [SDNPInFlag ]>;
 def ARMthread_pointer: SDNode<"ARMISD::THREAD_POINTER", SDT_ARMThreadPointer>;
 def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP", SDT_ARMEH_SJLJ_Setjmp>;
 
-def ARMMemBarrier    : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIER,
+def ARMMemBarrierV7  : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIERV7,
                               [SDNPHasChain]>;
-def ARMSyncBarrier   : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIER,
+def ARMSyncBarrierV7 : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIERV7,
+                              [SDNPHasChain]>;
+def ARMMemBarrierV6  : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIERV6,
+                              [SDNPHasChain]>;
+def ARMSyncBarrierV6 : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIERV6,
                               [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
@@ -1578,7 +1584,7 @@ let hasSideEffects = 1 in {
 def Int_MemBarrierV7 : AInoP<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dmb", "",
-                        [(ARMMemBarrier)]>,
+                        [(ARMMemBarrierV7)]>,
                         Requires<[IsARM, HasV7]> {
   let Inst{31-4} = 0xf57ff05;
   // FIXME: add support for options other than a full system DMB
@@ -1588,11 +1594,29 @@ def Int_MemBarrierV7 : AInoP<(outs), (ins),
 def Int_SyncBarrierV7 : AInoP<(outs), (ins),
                         Pseudo, NoItinerary,
                         "dsb", "",
-                        [(ARMSyncBarrier)]>,
+                        [(ARMSyncBarrierV7)]>,
                         Requires<[IsARM, HasV7]> {
   let Inst{31-4} = 0xf57ff04;
   // FIXME: add support for options other than a full system DSB
   let Inst{3-0} = 0b1111;
+}
+
+def Int_MemBarrierV6 : AInoP<(outs), (ins GPR:$zero),
+                       Pseudo, NoItinerary,
+                       "mcr", "\tp15, 0, $zero, c7, c10, 5",
+                       [(ARMMemBarrierV6 GPR:$zero)]>,
+                       Requires<[IsARM, HasV6]> {
+  // FIXME: add support for options other than a full system DMB
+  // FIXME: add encoding
+}
+
+def Int_SyncBarrierV6 : AInoP<(outs), (ins GPR:$zero),
+                        Pseudo, NoItinerary,
+                        "mcr", "\tp15, 0, $zero, c7, c10, 5",
+                        [(ARMSyncBarrierV6 GPR:$zero)]>,
+                        Requires<[IsARM, HasV6]> {
+  // FIXME: add support for options other than a full system DSB
+  // FIXME: add encoding
 }
 }
 

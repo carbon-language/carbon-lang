@@ -1474,17 +1474,24 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
-static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
+                          const ARMSubtarget *Subtarget) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue Op5 = Op.getOperand(5);
   SDValue Res;
   unsigned isDeviceBarrier = cast<ConstantSDNode>(Op5)->getZExtValue();
   if (isDeviceBarrier) {
-    Res = DAG.getNode(ARMISD::SYNCBARRIER, dl, MVT::Other,
-                              Op.getOperand(0));
+    if (Subtarget->hasV7Ops())
+      Res = DAG.getNode(ARMISD::SYNCBARRIER, dl, MVT::Other, Op.getOperand(0));
+    else
+      Res = DAG.getNode(ARMISD::SYNCBARRIER, dl, MVT::Other, Op.getOperand(0),
+                        DAG.getConstant(0, MVT::i32));
   } else {
-    Res = DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other,
-                              Op.getOperand(0));
+    if (Subtarget->hasV7Ops())
+      Res = DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0));
+    else
+      Res = DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
+                        DAG.getConstant(0, MVT::i32));
   }
   return Res;
 }
@@ -2991,7 +2998,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::BR_JT:         return LowerBR_JT(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::VASTART:       return LowerVASTART(Op, DAG, VarArgsFrameIndex);
-  case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG);
+  case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG, Subtarget);
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:
