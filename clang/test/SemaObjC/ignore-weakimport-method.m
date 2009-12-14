@@ -1,4 +1,4 @@
-// RUN: clang-cc  -fsyntax-only -verify %s
+// RUN: clang -cc1  -fsyntax-only -verify %s
 
 @interface foo 
 + (void) cx __attribute__((weak_import));

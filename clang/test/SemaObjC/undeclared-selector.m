@@ -1,4 +1,4 @@
-// RUN: clang-cc  -fsyntax-only -Wundeclared-selector -verify %s
+// RUN: clang -cc1  -fsyntax-only -Wundeclared-selector -verify %s
 
 typedef struct objc_selector *SEL;
 

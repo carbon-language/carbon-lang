@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang -cc1 -fsyntax-only -verify %s
 
 @interface Test {}
 + (Test*)one;

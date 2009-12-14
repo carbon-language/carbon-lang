@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang -cc1 -fsyntax-only -verify %s
 
 @protocol P
 - (void) doSomethingInProtocol: (float) x; // expected-note {{previous definition is here}}

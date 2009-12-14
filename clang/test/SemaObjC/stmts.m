@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: clang -cc1 %s -verify -fsyntax-only
 
 struct some_struct;
 

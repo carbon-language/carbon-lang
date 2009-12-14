@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang -cc1 -fsyntax-only -verify %s
 
 struct S; // expected-note{{forward declaration of 'struct S'}}
 typedef int FOO();

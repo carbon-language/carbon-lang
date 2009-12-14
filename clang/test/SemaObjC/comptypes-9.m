@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: clang -cc1 -fsyntax-only %s
 // FIXME: This test case tests the patch applied in: http://lists.cs.uiuc.edu/pipermail/cfe-commits/Week-of-Mon-20080602/006017.html
 //   Eventually that logic should be treated as an extension.
 

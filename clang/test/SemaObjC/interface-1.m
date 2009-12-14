@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 %s -fsyntax-only -verify
+// RUN: clang -cc1 -triple i386-apple-darwin9 %s -fsyntax-only -verify
 // rdar://5957506
 
 @interface NSWhatever :

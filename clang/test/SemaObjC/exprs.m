@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify
+// RUN: clang -cc1 %s -fsyntax-only -verify
 
 // rdar://6597252
 Class test1(Class X) {

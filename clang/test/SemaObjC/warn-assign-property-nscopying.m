@@ -1,4 +1,4 @@
-// RUN: clang-cc  -fobjc-gc -fsyntax-only -verify %s
+// RUN: clang -cc1  -fobjc-gc -fsyntax-only -verify %s
 
 @protocol NSCopying @end
 

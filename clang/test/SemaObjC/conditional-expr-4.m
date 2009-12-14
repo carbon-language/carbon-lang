@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang -cc1 -fsyntax-only -verify %s
 // <rdar://problem/6212771>
 
 #define nil ((void*) 0)

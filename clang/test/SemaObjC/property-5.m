@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify %s
+// RUN: clang -cc1 -verify %s
 
 @protocol P1 @end
 @protocol P2 @end

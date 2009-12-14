@@ -1,4 +1,4 @@
-// RUN: clang-cc  -fsyntax-only -Wsuper-class-method-mismatch -verify %s
+// RUN: clang -cc1  -fsyntax-only -Wsuper-class-method-mismatch -verify %s
 
 @interface Root
 -(void) method_r: (char)ch : (float*)f1 : (int*) x; // expected-note {{previous declaration is here}}

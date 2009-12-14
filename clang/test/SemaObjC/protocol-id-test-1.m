@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify %s
+// RUN: clang -cc1 -verify %s
 
 @interface FF
 - (void) Meth;

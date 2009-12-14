@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify %s
+// RUN: clang -cc1 -verify %s
 
 @protocol NSObject
 - (oneway void)release;

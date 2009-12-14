@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify  -triple i386-apple-darwin9
+// RUN: clang -cc1 %s -fsyntax-only -verify  -triple i386-apple-darwin9
 typedef struct objc_object {} *id;
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;

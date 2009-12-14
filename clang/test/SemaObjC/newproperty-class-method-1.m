@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: clang -cc1 %s -verify -fsyntax-only
 
 @interface Subclass
 + (int)magicNumber;

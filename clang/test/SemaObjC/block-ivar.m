@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -fblocks
+// RUN: clang -cc1 -fsyntax-only -verify %s -fblocks
 
 @interface NSObject {
   struct objc_object *isa;

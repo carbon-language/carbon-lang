@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -verify -fblocks
+// RUN: clang -cc1 -fsyntax-only %s -verify -fblocks
 // FIXME: should compile
 // Test for blocks with explicit return type specified.
 

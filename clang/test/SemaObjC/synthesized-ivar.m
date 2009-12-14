@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -fobjc-nonfragile-abi -verify %s
+// RUN: clang -cc1 -fsyntax-only -fobjc-nonfragile-abi -verify %s
 @interface I
 {
 }

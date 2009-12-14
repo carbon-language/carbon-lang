@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify
+// RUN: clang -cc1 %s -fsyntax-only -verify
 
 __attribute__((__objc_exception__))
 @interface NSException {

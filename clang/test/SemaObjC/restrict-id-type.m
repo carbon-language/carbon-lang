@@ -1,4 +1,4 @@
-// RUN: clang-cc  -std=gnu99 -fsyntax-only -verify %s
+// RUN: clang -cc1  -std=gnu99 -fsyntax-only -verify %s
 
 void f0(restrict id a0) {}
 

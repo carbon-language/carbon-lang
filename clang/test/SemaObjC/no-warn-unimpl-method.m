@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -fsyntax-only -verify %s
+// RUN: clang -cc1 -triple x86_64-apple-darwin10 -fsyntax-only -verify %s
 // This program tests that if class implements the forwardInvocation method, then
 // every method possible is implemented in the class and should not issue
 // warning of the "Method definition not found" kind. */

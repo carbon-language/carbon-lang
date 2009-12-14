@@ -1,4 +1,4 @@
-// RUN: clang-cc -fblocks -fsyntax-only -verify %s
+// RUN: clang -cc1 -fblocks -fsyntax-only -verify %s
 
 @class NSObject;
 
