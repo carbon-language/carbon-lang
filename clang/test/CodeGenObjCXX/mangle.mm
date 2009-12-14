@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+// RUN: clang -cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
 // CHECK: @"_ZZ11+[A shared]E1a" = internal global
 // CHECK: @"_ZZ11-[A(Foo) f]E1a" = internal global
