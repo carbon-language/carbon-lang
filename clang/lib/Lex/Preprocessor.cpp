@@ -102,7 +102,7 @@ Preprocessor::~Preprocessor() {
        Macros.begin(), E = Macros.end(); I != E; ++I) {
     // We don't need to free the MacroInfo objects directly.  These
     // will be released when the BumpPtrAllocator 'BP' object gets
-    // destroyed. We still need to run the dstor, however, to free
+    // destroyed.  We still need to run the dtor, however, to free
     // memory alocated by MacroInfo.
     I->second->Destroy(BP);
     I->first->setHasMacroDefinition(false);
