@@ -675,11 +675,9 @@ template <> struct DenseMapInfo<ObjCSummaryKey> {
                                            RHS.getSelector());
   }
 
-  static bool isPod() {
-    return DenseMapInfo<ObjCInterfaceDecl*>::isPod() &&
-           DenseMapInfo<Selector>::isPod();
-  }
 };
+template <>
+struct isPodLike<ObjCSummaryKey> { static const bool value = true; };
 } // end llvm namespace
 
 namespace {

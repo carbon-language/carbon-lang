@@ -50,14 +50,11 @@ namespace llvm {
     static bool isEqual(clang::QualType LHS, clang::QualType RHS) {
       return LHS == RHS;
     }
-
-    static bool isPod() {
-      // QualType isn't *technically* a POD type. However, we can get
-      // away with calling it a POD type since its copy constructor,
-      // copy assignment operator, and destructor are all trivial.
-      return true;
-    }
   };
+
+  // FIXME: Move to Type.h
+  template <>
+  struct isPodLike<clang::QualType> { static const bool value = true; };
 }
 
 #endif

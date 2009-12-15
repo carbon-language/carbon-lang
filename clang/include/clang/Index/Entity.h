@@ -134,9 +134,10 @@ struct DenseMapInfo<clang::idx::Entity> {
   isEqual(clang::idx::Entity LHS, clang::idx::Entity RHS) {
     return LHS == RHS;
   }
-
-  static inline bool isPod() { return true; }
 };
+  
+template <>
+struct isPodLike<clang::idx::Entity> { static const bool value = true; };
 
 }  // end namespace llvm
 

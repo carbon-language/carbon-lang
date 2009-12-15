@@ -96,15 +96,14 @@ namespace llvm {
       return LHS == RHS;
     }
       
-    static bool isPod() {
-      // GlobalDecl isn't *technically* a POD type. However, we can get
-      // away with calling it a POD type since its copy constructor,
-      // copy assignment operator, and destructor are all trivial.
-      return true;
-    }
-      
   };
   
-}
+  // GlobalDecl isn't *technically* a POD type. However, its copy constructor,
+  // copy assignment operator, and destructor are all trivial.
+  template <>
+  struct isPodLike<clang::CodeGen::GlobalDecl> {
+    static const bool value = true;
+  };
+} // end namespace llvm
 
 #endif

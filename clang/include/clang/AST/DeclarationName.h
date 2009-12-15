@@ -387,9 +387,10 @@ struct DenseMapInfo<clang::DeclarationName> {
   isEqual(clang::DeclarationName LHS, clang::DeclarationName RHS) {
     return LHS == RHS;
   }
-
-  static inline bool isPod() { return true; }
 };
+
+template <>
+struct isPodLike<clang::DeclarationName> { static const bool value = true; };
 
 }  // end namespace llvm
 

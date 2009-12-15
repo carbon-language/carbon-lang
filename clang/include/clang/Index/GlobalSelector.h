@@ -90,9 +90,10 @@ struct DenseMapInfo<clang::idx::GlobalSelector> {
   isEqual(clang::idx::GlobalSelector LHS, clang::idx::GlobalSelector RHS) {
     return LHS == RHS;
   }
-
-  static inline bool isPod() { return true; }
 };
+  
+template <>
+struct isPodLike<clang::idx::GlobalSelector> { static const bool value = true;};
 
 }  // end namespace llvm
 

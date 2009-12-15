@@ -44,7 +44,6 @@ class TargetInfo;
 /// DenseMap.  This uses the standard pointer hash function.
 struct UnsafeQualTypeDenseMapInfo {
   static inline bool isEqual(QualType A, QualType B) { return A == B; }
-  static inline bool isPod() { return true; }
   static inline QualType getEmptyKey() {
     return QualType::getFromOpaquePtr((void*) 1);
   }

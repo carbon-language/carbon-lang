@@ -532,9 +532,11 @@ struct DenseMapInfo<clang::Selector> {
   static bool isEqual(clang::Selector LHS, clang::Selector RHS) {
     return LHS == RHS;
   }
-
-  static bool isPod() { return true; }
 };
+  
+template <>
+struct isPodLike<clang::Selector> { static const bool value = true; };
+
 
 // Provide PointerLikeTypeTraits for IdentifierInfo pointers, which
 // are not guaranteed to be 8-byte aligned.

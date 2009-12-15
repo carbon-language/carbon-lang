@@ -21,6 +21,7 @@ namespace llvm {
   class MemoryBuffer;
   class raw_ostream;
   template <typename T> struct DenseMapInfo;
+  template <typename T> struct isPodLike;
 }
 
 namespace clang {
@@ -296,9 +297,12 @@ namespace llvm {
     static bool isEqual(clang::FileID LHS, clang::FileID RHS) {
       return LHS == RHS;
     }
-
-    static bool isPod() { return true; }
   };
+  
+  template <>
+  struct isPodLike<clang::SourceLocation> { static const bool value = true; };
+  template <>
+  struct isPodLike<clang::FileID> { static const bool value = true; };
 
 }  // end namespace llvm
 

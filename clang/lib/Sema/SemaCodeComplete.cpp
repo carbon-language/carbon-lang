@@ -240,13 +240,6 @@ public:
   }
 };
 
-namespace llvm {
-  template<>
-  struct DenseMapInfo<ResultBuilder::ShadowMapEntry> {
-    static bool isPod() { return false; }
-  };
-}
-
 ResultBuilder::ShadowMapEntry::iterator 
 ResultBuilder::ShadowMapEntry::begin() const {
   if (DeclOrVector.isNull())
