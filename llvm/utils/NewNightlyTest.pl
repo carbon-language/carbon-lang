@@ -317,9 +317,9 @@ sub RunLoggedCommand {
   } else {
       if ($VERBOSE) {
           print "$Title\n";
-          print "$Command 2>&1 > $Log\n";
+          print "$Command > $Log 2>&1\n";
       }
-      system "$Command 2>&1 > $Log";
+      system "$Command > $Log 2>&1";
   }
 }
 
@@ -336,9 +336,9 @@ sub RunAppendingLoggedCommand {
   } else {
       if ($VERBOSE) {
           print "$Title\n";
-          print "$Command 2>&1 > $Log\n";
+          print "$Command >> $Log 2>&1\n";
       }
-      system "$Command 2>&1 >> $Log";
+      system "$Command >> $Log 2>&1";
   }
 }
 
