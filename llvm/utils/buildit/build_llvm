@@ -243,7 +243,11 @@ if ! test $? == 0 ; then
 fi 
 
 # Install Version.h
-RC_ProjectSourceSubversion=`printf "%d" $LLVM_SUBMIT_SUBVERSION`
+LLVM_MINOR_VERSION=`echo $LLVM_SUBMIT_SUBVERSION | sed -e 's,0*\([1-9][0-9]*\),\1,'`
+if [ "x$LLVM_MINOR_VERSION" = "x" ]; then
+    LLVM_MINOR_VERSION=0
+fi
+RC_ProjectSourceSubversion=`printf "%d" $LLVM_MINOR_VERSION`
 echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DEST_ROOT/include/llvm/Version.h
 
