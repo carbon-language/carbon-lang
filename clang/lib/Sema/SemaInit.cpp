@@ -1970,6 +1970,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_QualificationConversionLValue:
   case SK_ListInitialization:
   case SK_ConstructorInitialization:
+  case SK_ZeroInitialization:
     break;
     
   case SK_ConversionSequence:
@@ -2045,6 +2046,13 @@ InitializationSequence::AddConstructorInitializationStep(
   S.Kind = SK_ConstructorInitialization;
   S.Type = T;
   S.Function = Constructor;
+  Steps.push_back(S);
+}
+
+void InitializationSequence::AddZeroInitializationStep(QualType T) {
+  Step S;
+  S.Kind = SK_ZeroInitialization;
+  S.Type = T;
   Steps.push_back(S);
 }
 
@@ -2458,14 +2466,6 @@ static void TryStringLiteralInitialization(Sema &S,
   // FIXME: Implement!
 }
 
-/// \brief Attempt value initialization (C++ [dcl.init]p7).
-static void TryValueInitialization(Sema &S, 
-                                   const InitializedEntity &Entity,
-                                   const InitializationKind &Kind,
-                                   InitializationSequence &Sequence) {
-  // FIXME: Implement!
-}
-
 /// \brief Attempt initialization by constructor (C++ [dcl.init]), which
 /// enumerates the constructors of the initialized entity and performs overload
 /// resolution to select the best.
@@ -2473,6 +2473,7 @@ static void TryConstructorInitialization(Sema &S,
                                          const InitializedEntity &Entity,
                                          const InitializationKind &Kind,
                                          Expr **Args, unsigned NumArgs,
+                                         QualType DestType,
                                          InitializationSequence &Sequence) {
   Sequence.setSequenceKind(InitializationSequence::ConstructorInitialization);
   
@@ -2489,7 +2490,6 @@ static void TryConstructorInitialization(Sema &S,
   
   // The type we're converting to is a class type. Enumerate its constructors
   // to see if one is suitable.
-  QualType DestType = Entity.getType().getType();
   const RecordType *DestRecordType = DestType->getAs<RecordType>();
   assert(DestRecordType && "Constructor initialization requires record type");  
   CXXRecordDecl *DestRecordDecl
@@ -2538,6 +2538,41 @@ static void TryConstructorInitialization(Sema &S,
   Sequence.AddConstructorInitializationStep(
                                       cast<CXXConstructorDecl>(Best->Function), 
                                             DestType);
+}
+
+/// \brief Attempt value initialization (C++ [dcl.init]p7).
+static void TryValueInitialization(Sema &S, 
+                                   const InitializedEntity &Entity,
+                                   const InitializationKind &Kind,
+                                   InitializationSequence &Sequence) {
+  // C++ [dcl.init]p5:
+  //
+  //   To value-initialize an object of type T means:
+  QualType T = Entity.getType().getType();
+  
+  //     -- if T is an array type, then each element is value-initialized;
+  while (const ArrayType *AT = S.Context.getAsArrayType(T))
+    T = AT->getElementType();
+  
+  if (const RecordType *RT = T->getAs<RecordType>()) {
+    if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      // -- if T is a class type (clause 9) with a user-declared
+      //    constructor (12.1), then the default constructor for T is
+      //    called (and the initialization is ill-formed if T has no
+      //    accessible default constructor);
+      //
+      // FIXME: we really want to refer to a single subobject of the array,
+      // but Entity doesn't have a way to capture that (yet).
+      if (ClassDecl->hasUserDeclaredConstructor())
+        return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);
+      
+      // FIXME: non-union class type w/ non-trivial default constructor gets
+      // zero-initialized, then constructor gets called.
+    }
+  }
+
+  Sequence.AddZeroInitializationStep(Entity.getType().getType());
+  Sequence.setSequenceKind(InitializationSequence::ZeroInitialization);
 }
 
 /// \brief Attempt a user-defined conversion between two types (C++ [dcl.init]),
@@ -2776,7 +2811,8 @@ InitializationSequence::InitializationSequence(Sema &S,
         (Kind.getKind() == InitializationKind::IK_Copy &&
          (Context.hasSameUnqualifiedType(SourceType, DestType) ||
           S.IsDerivedFrom(SourceType, DestType))))
-      TryConstructorInitialization(S, Entity, Kind, Args, NumArgs, *this);
+      TryConstructorInitialization(S, Entity, Kind, Args, NumArgs, 
+                                   Entity.getType().getType(), *this);
     //     - Otherwise (i.e., for the remaining copy-initialization cases), 
     //       user-defined conversion sequences that can convert from the source
     //       type to the destination type or (when a conversion function is 
@@ -3065,6 +3101,16 @@ InitializationSequence::Perform(Sema &S,
         return S.ExprError();
           
       CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
+      break;
+    }
+        
+    case SK_ZeroInitialization: {
+      if (Kind.getKind() == InitializationKind::IK_Value)
+        CurInit = S.Owned(new (S.Context) CXXZeroInitValueExpr(Step->Type,
+                                                   Kind.getRange().getBegin(),
+                                                    Kind.getRange().getEnd()));
+      else
+        CurInit = S.Owned(new (S.Context) ImplicitValueInitExpr(Step->Type));
       break;
     }
     }

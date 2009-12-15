@@ -269,7 +269,7 @@ public:
   
   /// \brief Retrieve the source range that covers the initialization.
   SourceRange getRange() const { 
-    return SourceRange(Locations[0], Locations[1]);
+    return SourceRange(Locations[0], Locations[2]);
   }
   
   /// \brief Retrieve the location of the equal sign for copy initialization
@@ -293,6 +293,9 @@ public:
 class InitializationSequence {
 public:
   /// \brief Describes the kind of initialization sequence computed.
+  ///
+  /// FIXME: Much of this information is in the initialization steps... why is
+  /// it duplicated here?
   enum SequenceKind {
     /// \brief A failed initialization sequence. The failure kind tells what
     /// happened.
@@ -313,7 +316,10 @@ public:
     ReferenceBinding,
 
     /// \brief List initialization
-    ListInitialization
+    ListInitialization,
+    
+    /// \brief Zero-initialization.
+    ZeroInitialization
   };
   
   /// \brief Describes the kind of a particular step in an initialization
@@ -342,7 +348,9 @@ public:
     /// \brief Perform list-initialization
     SK_ListInitialization,
     /// \brief Perform initialization via a constructor.
-    SK_ConstructorInitialization
+    SK_ConstructorInitialization,
+    /// \brief Zero-initialize the object
+    SK_ZeroInitialization
   };
   
   /// \brief A single step in the initialization sequence.
@@ -536,9 +544,12 @@ public:
   /// \brief Add a list-initialiation step  
   void AddListInitializationStep(QualType T);
 
-  /// \brief Add a a constructor-initialization step.
+  /// \brief Add a constructor-initialization step.
   void AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
                                         QualType T);
+
+  /// \brief Add a zero-initialization step.
+  void AddZeroInitializationStep(QualType T);
   
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {
