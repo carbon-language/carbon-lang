@@ -1,7 +1,7 @@
 // Check the fix for PR4159.
 // http://llvm.org/bugs/show_bug.cgi?id=4159
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
-// RUN: grep unique_name %t
+// RUN: FileCheck -input-file %t %s
 // RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
@@ -13,6 +13,7 @@ def dummy_tool : Tool<[
 (in_language "dummy"),
 (out_language "dummy"),
 (actions (case
+         // CHECK: vec.push_back("unique_name")
          (not_empty "dummy"), (forward_as "dummy", "unique_name")))
 ]>;
 

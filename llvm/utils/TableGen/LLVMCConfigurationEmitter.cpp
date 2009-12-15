@@ -2169,7 +2169,7 @@ void EmitToolClassDefinition (const ToolDescription& D,
   else
     O << "Tool";
 
-  O << "{\nprivate:\n";
+  O << " {\nprivate:\n";
   O.indent(Indent1) << "static const char* InputLanguages_[];\n\n";
 
   O << "public:\n";

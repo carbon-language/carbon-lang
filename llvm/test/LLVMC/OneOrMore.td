@@ -1,14 +1,15 @@
 // Check that (one_or_more) and (zero_or_one) properties work.
 // The dummy tool and graph are required to silence warnings.
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
-// RUN: grep cl::Optional %t | count 1
-// RUN: grep cl::OneOrMore %t | count 1
+// RUN: FileCheck -input-file %t %s
 // RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 
 def OptList : OptionList<[
+    // CHECK: cl::OneOrMore
     (prefix_list_option "foo", (one_or_more)),
+    // CHECK: cl::Optional
     (parameter_list_option "baz", (optional))]>;
 
 def dummy_tool : Tool<[
