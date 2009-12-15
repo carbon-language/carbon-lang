@@ -2644,10 +2644,11 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //   * strcspn("",a) -> 0
 //   * strcspn(s,"") -> strlen(a)
 //
-// strstr:
+// strstr: (PR5783)
 //   * strstr(x,x)  -> x
-//   * strstr(s1,s2) -> offset_of_s2_in(s1)
-//       (if s1 and s2 are constant strings)
+//   * strstr(x, "") -> x
+//   * strstr(x, "a") -> strchr(x, 'a')
+//   * strstr(s1,s2) -> result   (if s1 and s2 are constant strings)
 //
 // tan, tanf, tanl:
 //   * tan(atan(x)) -> x
