@@ -15,8 +15,6 @@
 #include "Record.h"
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
 #include <algorithm>
@@ -1454,9 +1452,9 @@ void EmitCaseConstructHandler(const Init* Case, unsigned IndentLevel,
            EmitCaseStatementCallback<F>(Callback, O), IndentLevel);
 }
 
-/// TokenizeCmdline - converts from "$CALL(HookName, 'Arg1', 'Arg2')/path" to
-/// ["$CALL(", "HookName", "Arg1", "Arg2", ")/path"] .
-/// Helper function used by EmitCmdLineVecFill and.
+/// TokenizeCmdline - converts from
+/// "$CALL(HookName, 'Arg1', 'Arg2')/path -arg1 -arg2" to
+/// ["$CALL(", "HookName", "Arg1", "Arg2", ")/path", "-arg1", "-arg2"].
 void TokenizeCmdline(const std::string& CmdLine, StrVector& Out) {
   const char* Delimiters = " \t\n\v\f\r";
   enum TokenizerState
@@ -1823,17 +1821,36 @@ class EmitActionHandlersCallback
   const OptionDescriptions& OptDescs;
   typedef EmitActionHandlersCallbackHandler Handler;
 
+  /// EmitHookInvocation - Common code for hook invocation from actions. Used by
+  /// onAppendCmd and onOutputSuffix.
+  void EmitHookInvocation(const std::string& Str,
+                          const char* BlockOpen, const char* BlockClose,
+                          unsigned IndentLevel, raw_ostream& O) const
+  {
+    StrVector Out;
+    TokenizeCmdline(Str, Out);
+
+    for (StrVector::const_iterator B = Out.begin(), E = Out.end();
+         B != E; ++B) {
+      const std::string& cmd = *B;
+
+      O.indent(IndentLevel) << BlockOpen;
+
+      if (cmd.at(0) == '$')
+        B = SubstituteSpecialCommands(B, E,  /* IsJoin = */ true, O);
+      else
+        O << '"' << cmd << '"';
+
+      O << BlockClose;
+    }
+  }
+
   void onAppendCmd (const DagInit& Dag,
                     unsigned IndentLevel, raw_ostream& O) const
   {
     checkNumberOfArguments(&Dag, 1);
-    const std::string& Cmd = InitPtrToString(Dag.getArg(0));
-    StrVector Out;
-    llvm::SplitString(Cmd, Out);
-
-    for (StrVector::const_iterator B = Out.begin(), E = Out.end();
-         B != E; ++B)
-      O.indent(IndentLevel) << "vec.push_back(\"" << *B << "\");\n";
+    this->EmitHookInvocation(InitPtrToString(Dag.getArg(0)),
+                             "vec.push_back(", ");\n", IndentLevel, O);
   }
 
   void onForward (const DagInit& Dag,
@@ -1886,13 +1903,12 @@ class EmitActionHandlersCallback
                           << (D.isParameter() ? ".c_str()" : "") << "));\n";
   }
 
-
   void onOutputSuffix (const DagInit& Dag,
                        unsigned IndentLevel, raw_ostream& O) const
   {
     checkNumberOfArguments(&Dag, 1);
-    const std::string& OutSuf = InitPtrToString(Dag.getArg(0));
-    O.indent(IndentLevel) << "output_suffix = \"" << OutSuf << "\";\n";
+    this->EmitHookInvocation(InitPtrToString(Dag.getArg(0)),
+                             "output_suffix = ", ";\n", IndentLevel, O);
   }
 
   void onStopCompilation (const DagInit& Dag,
@@ -2521,7 +2537,9 @@ public:
   {}
 
   void onAction (const DagInit& Dag) {
-    if (GetOperatorName(Dag) == "forward_transformed_value") {
+    const std::string& Name = GetOperatorName(Dag);
+
+    if (Name == "forward_transformed_value") {
       checkNumberOfArguments(Dag, 2);
       const std::string& OptName = InitPtrToString(Dag.getArg(0));
       const std::string& HookName = InitPtrToString(Dag.getArg(1));
@@ -2529,6 +2547,42 @@ public:
 
       HookNames_[HookName] = HookInfo(D.isList() ? HookInfo::ListHook
                                       : HookInfo::ArgHook);
+    }
+    else if (Name == "append_cmd" || Name == "output_suffix") {
+      checkNumberOfArguments(Dag, 1);
+      this->onCmdLine(InitPtrToString(Dag.getArg(0)));
+    }
+  }
+
+  void onCmdLine(const std::string& Cmd) {
+    StrVector cmds;
+    TokenizeCmdline(Cmd, cmds);
+
+    for (StrVector::const_iterator B = cmds.begin(), E = cmds.end();
+         B != E; ++B) {
+      const std::string& cmd = *B;
+
+      if (cmd == "$CALL") {
+        unsigned NumArgs = 0;
+        checkedIncrement(B, E, "Syntax error in $CALL invocation!");
+        const std::string& HookName = *B;
+
+        if (HookName.at(0) == ')')
+          throw "$CALL invoked with no arguments!";
+
+        while (++B != E && B->at(0) != ')') {
+          ++NumArgs;
+        }
+
+        HookInfoMap::const_iterator H = HookNames_.find(HookName);
+
+        if (H != HookNames_.end() && H->second.NumArgs != NumArgs &&
+            H->second.Type != HookInfo::ArgHook)
+          throw "Overloading of hooks is not allowed. Overloaded hook: "
+            + HookName;
+        else
+          HookNames_[HookName] = HookInfo(NumArgs);
+      }
     }
   }
 
@@ -2551,36 +2605,7 @@ public:
     }
 
     // We're invoked on a command line.
-    StrVector cmds;
-    TokenizeCmdline(InitPtrToString(Arg), cmds);
-    for (StrVector::const_iterator B = cmds.begin(), E = cmds.end();
-         B != E; ++B) {
-      const std::string& cmd = *B;
-
-      if (cmd == "$CALL") {
-        unsigned NumArgs = 0;
-        checkedIncrement(B, E, "Syntax error in $CALL invocation!");
-        const std::string& HookName = *B;
-
-
-        if (HookName.at(0) == ')')
-          throw "$CALL invoked with no arguments!";
-
-        while (++B != E && B->at(0) != ')') {
-          ++NumArgs;
-        }
-
-        HookInfoMap::const_iterator H = HookNames_.find(HookName);
-
-        if (H != HookNames_.end() && H->second.NumArgs != NumArgs &&
-            H->second.Type != HookInfo::ArgHook)
-          throw "Overloading of hooks is not allowed. Overloaded hook: "
-            + HookName;
-        else
-          HookNames_[HookName] = HookInfo(NumArgs);
-
-      }
-    }
+    this->onCmdLine(InitPtrToString(Arg));
   }
 
   void operator()(const DagInit* Test, unsigned, bool) {
