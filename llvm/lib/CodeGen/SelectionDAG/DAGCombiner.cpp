@@ -3278,6 +3278,16 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     if (SCC.getNode()) return SCC;
   }
 
+  // (zext (shl (zext x), y)) -> (shl (zext x), (zext y))
+  if ((N0.getOpcode() == ISD::SHL || N0.getOpcode() == ISD::SRL) &&
+      N0.getOperand(0).getOpcode() == ISD::ZERO_EXTEND &&
+      N0.hasOneUse()) {
+    DebugLoc dl = N->getDebugLoc();
+    return DAG.getNode(N0.getOpcode(), dl, VT,
+                       DAG.getNode(ISD::ZERO_EXTEND, dl, VT, N0.getOperand(0)),
+                       DAG.getNode(ISD::ZERO_EXTEND, dl, VT, N0.getOperand(1)));
+  }
+
   return SDValue();
 }
 
