@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
 
 /* This test checks the introduction of struct and union types based
    on a type specifier of the form "struct-or-union identifier" when they

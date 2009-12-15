@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -pedantic -verify -triple=x86_64-apple-darwin9
+// RUN: %clang_cc1 %s -pedantic -verify -triple=x86_64-apple-darwin9
 
 // rdar://6097662
 typedef int (*T)[2];

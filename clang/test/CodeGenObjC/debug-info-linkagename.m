@@ -1,4 +1,4 @@
-// RUN: clang -cc1  -g -S -o %t %s
+// RUN: %clang_cc1  -g -S -o %t %s
 // RUN: not grep 001 %t
 
 @interface F 

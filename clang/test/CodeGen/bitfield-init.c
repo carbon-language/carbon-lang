@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t
+// RUN: %clang_cc1 %s -emit-llvm -o %t
 typedef struct { unsigned int i: 1; } c;
 const c d = { 1 };
 

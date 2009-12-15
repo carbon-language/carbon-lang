@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown %s -emit-llvm -o %t
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o %t
 // RUN: grep "{ i8\* null, i32 1024 }" %t
 // RUN: grep "i32 0, i32 22" %t
 

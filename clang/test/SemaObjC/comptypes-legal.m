@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 
 @protocol NSObject
 @end

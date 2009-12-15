@@ -5,13 +5,13 @@
 // We also check _Bool and empty structures, as these can have annoying
 // corner cases.
 
-// RUN: clang-cc %s -triple i386-unknown-unknown -O3 -emit-llvm -o %t
+// RUN: %clang_cc1 %s -triple i386-unknown-unknown -O3 -emit-llvm -o %t
 // RUN: not grep '@g0' %t
 
-// RUN: clang-cc %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t
+// RUN: %clang_cc1 %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t
 // RUN: not grep '@g0' %t
 
-// RUN: clang-cc %s -triple powerpc-unknown-unknown -O3 -emit-llvm -o %t
+// RUN: %clang_cc1 %s -triple powerpc-unknown-unknown -O3 -emit-llvm -o %t
 // RUN: not grep '@g0' %t
 
 typedef _Bool BoolTy;

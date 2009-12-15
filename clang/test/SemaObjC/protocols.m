@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @interface INTF1
 @required  // expected-error {{directive may only be specified in protocols only}}

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // A type-parameter defines its identifier to be a type-name (if
 // declared with class or typename) or template-name (if declared with

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -triple x86_64-apple-darwin9
+// RUN: %clang_cc1 -fsyntax-only -verify %s -triple x86_64-apple-darwin9
 
 // rdar://6726818
 void f1() {

@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -triple x86_64-apple-darwin -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -verify -triple x86_64-apple-darwin -emit-llvm -o - %s | FileCheck %s
 
 // CHECK: @a = global i32 10
 int a = 10;

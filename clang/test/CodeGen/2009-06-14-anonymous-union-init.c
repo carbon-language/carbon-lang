@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm < %s | grep "zeroinitializer, i16 16877"
+// RUN: %clang_cc1 -emit-llvm < %s | grep "zeroinitializer, i16 16877"
 // PR4390
 struct sysfs_dirent {
  union { struct sysfs_elem_dir {} s_dir; };

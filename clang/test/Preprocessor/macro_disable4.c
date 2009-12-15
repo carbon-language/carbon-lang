@@ -1,4 +1,4 @@
-// RUN: clang-cc -P -E %s | grep 'int f(void)'
+// RUN: %clang_cc1 -P -E %s | grep 'int f(void)'
 // PR1820
 
 #define f(x) h(x

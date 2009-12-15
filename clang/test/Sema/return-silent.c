@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -Wno-return-type -fsyntax-only -verify
+// RUN: %clang_cc1 %s -Wno-return-type -fsyntax-only -verify
 
 int t14() {
   return;

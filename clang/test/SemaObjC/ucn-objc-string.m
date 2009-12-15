@@ -1,4 +1,4 @@
-// RUN: clang -cc1 %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only
 @class NSString;
 extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 

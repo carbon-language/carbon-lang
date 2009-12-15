@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t-64.ll
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t-64.ll
 // RUN: FileCheck -check-prefix LPLL64 --input-file=%t-64.ll %s
 
 extern "C" int printf(...);

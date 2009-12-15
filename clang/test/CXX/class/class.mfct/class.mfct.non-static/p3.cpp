@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // [class.mfct.non-static]p3:
 //   When an id-expression (5.1) that is not part of a class member

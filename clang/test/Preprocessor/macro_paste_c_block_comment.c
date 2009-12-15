@@ -1,6 +1,6 @@
-// RUN: clang-cc %s -Eonly 2>&1 | grep error
-// RUN: clang-cc %s -Eonly 2>&1 | not grep unterminated
-// RUN: clang-cc %s -Eonly 2>&1 | not grep scratch
+// RUN: %clang_cc1 %s -Eonly 2>&1 | grep error
+// RUN: %clang_cc1 %s -Eonly 2>&1 | not grep unterminated
+// RUN: %clang_cc1 %s -Eonly 2>&1 | not grep scratch
 
 #define COMM / ## *
 COMM

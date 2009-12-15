@@ -1,4 +1,4 @@
-// RUN: clang-cc -Wchar-subscripts -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wchar-subscripts -fsyntax-only -verify %s
 
 void t1() {
   int array[1] = { 0 };

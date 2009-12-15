@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify %s
+// RUN: %clang_cc1 -verify %s
 
 // If the object being deleted has incomplete class type at the point of
 // deletion and the complete class has a non-trivial destructor or a

@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 // Test that arithmatic types on property and its ivar have exact match.
 
 @interface Test4 

@@ -1,4 +1,4 @@
-/* RUN: clang-cc -std=c++0x -fixit %s -o - | clang-cc -x c++ -std=c++0x -
+/* RUN: %clang_cc1 -std=c++0x -fixit %s -o - | %clang_cc1 -x c++ -std=c++0x -
  */
 
 /* This is a test of the various code modification hints that only

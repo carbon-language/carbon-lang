@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 template<typename T, T Value> struct Constant; // expected-note{{template parameter is declared here}} \
 // FIXME: bad location expected-error{{a non-type template parameter cannot have type 'float'}}

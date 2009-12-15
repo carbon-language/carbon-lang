@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-pch -o variables.h.pch variables.h
+// RUN: %clang_cc1 -emit-pch -o variables.h.pch variables.h
 // Do not mess with the whitespace in this file. It's important.
 
 

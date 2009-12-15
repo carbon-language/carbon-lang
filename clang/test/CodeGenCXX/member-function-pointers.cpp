@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - -triple=x86_64-apple-darwin9 | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 
 struct A { int a; void f(); virtual void vf(); };
 struct B { int b; virtual void g(); };

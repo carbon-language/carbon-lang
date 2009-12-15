@@ -1,4 +1,4 @@
-// RUN: clang-cc -E -dD < %s | grep stdin | grep -v define
+// RUN: %clang_cc1 -E -dD < %s | grep stdin | grep -v define
 #define A A
 /* 1
  * 2

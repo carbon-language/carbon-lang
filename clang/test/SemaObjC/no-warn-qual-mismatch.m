@@ -1,4 +1,4 @@
-// RUN: clang -cc1  -fsyntax-only -verify %s
+// RUN: %clang_cc1  -fsyntax-only -verify %s
 // radar 7211563
 
 @interface X

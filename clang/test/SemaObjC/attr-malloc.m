@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -verify -fsyntax-only -fblocks %s
+// RUN: %clang_cc1 -verify -fsyntax-only -fblocks %s
 
 @interface TestAttrMallocOnMethods {}
 - (id) test1 __attribute((malloc)); //  expected-warning {{functions returning a pointer type}}

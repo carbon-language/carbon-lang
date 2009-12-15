@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Make sure that copy constructors and assignment operators are properly 
 // generated when there is a matching 

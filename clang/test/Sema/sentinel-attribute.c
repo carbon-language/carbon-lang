@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 int x __attribute__((sentinel)); //expected-warning{{'sentinel' attribute only applies to function, method or block types}}
 
 void f1(int a, ...) __attribute__ ((sentinel));

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -fblocks
+// RUN: %clang_cc1 -fsyntax-only -verify %s -fblocks
 template<typename T>
 struct is_unary_block {
   static const bool value = false;

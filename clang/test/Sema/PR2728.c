@@ -1,5 +1,5 @@
-// RUN: clang-cc -verify -fsyntax-only -std=c90 %s
-// RUN: clang-cc -verify -fsyntax-only -std=c99 %s
+// RUN: %clang_cc1 -verify -fsyntax-only -std=c90 %s
+// RUN: %clang_cc1 -verify -fsyntax-only -std=c99 %s
 
 struct s
 {

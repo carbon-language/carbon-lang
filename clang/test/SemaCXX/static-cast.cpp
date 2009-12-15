@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -faccess-control %s
+// RUN: %clang_cc1 -fsyntax-only -verify -faccess-control %s
 struct A {};
 struct B : public A {};             // Single public base.
 struct C1 : public virtual B {};    // Single virtual base.

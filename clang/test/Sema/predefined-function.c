@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 
 char *funk(int format);
 enum Test {A=-1};

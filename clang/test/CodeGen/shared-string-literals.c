@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm %s -o %t
 
 char *globalString = "abc";
 char *globalStringArray[5] = { "123", "abc" };

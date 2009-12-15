@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // C++03 [namespace.udecl]p11:
 //   If a function declaration in namespace scope or block scope has

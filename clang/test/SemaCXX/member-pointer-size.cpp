@@ -1,5 +1,5 @@
-// RUN: clang-cc -triple x86_64-unknown-unknown %s -fsyntax-only -verify
-// RUN: clang-cc -triple i686-unknown-unknown %s -fsyntax-only -verify
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -fsyntax-only -verify
+// RUN: %clang_cc1 -triple i686-unknown-unknown %s -fsyntax-only -verify
 #include <stddef.h>
 
 struct A;

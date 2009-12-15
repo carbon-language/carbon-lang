@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only %s
 
 static char *test1(int cf) {
   return cf ? "abc" : 0;

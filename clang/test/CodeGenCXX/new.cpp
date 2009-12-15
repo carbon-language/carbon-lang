@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-unknown-unknown %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -emit-llvm -o - | FileCheck %s
 #include <stddef.h>
 
 void t1() {

@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -pedantic-errors -verify 
+// RUN: %clang_cc1 %s -pedantic-errors -verify 
 // PR2045
 
 #define b

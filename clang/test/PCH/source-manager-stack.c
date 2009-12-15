@@ -2,9 +2,9 @@
 // when using PCH.
 
 // RUN: echo 'int x;' > %t.prefix.h
-// RUN: not clang-cc -fsyntax-only -include %t.prefix.h %s 2> %t.diags.no_pch.txt
-// RUN: clang-cc -emit-pch -o %t.prefix.pch %t.prefix.h
-// RUN: not clang-cc -fsyntax-only -include-pch %t.prefix.pch %s 2> %t.diags.pch.txt
+// RUN: not %clang_cc1 -fsyntax-only -include %t.prefix.h %s 2> %t.diags.no_pch.txt
+// RUN: %clang_cc1 -emit-pch -o %t.prefix.pch %t.prefix.h
+// RUN: not %clang_cc1 -fsyntax-only -include-pch %t.prefix.pch %s 2> %t.diags.pch.txt
 // RUN: diff %t.diags.no_pch.txt %t.diags.pch.txt
 // XFAIL: *
 // PR5662

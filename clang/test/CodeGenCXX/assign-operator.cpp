@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm-only -verify
+// RUN: %clang_cc1 %s -emit-llvm-only -verify
 
 class x {
 int operator=(int);

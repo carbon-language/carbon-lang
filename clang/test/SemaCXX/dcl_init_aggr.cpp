@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
 // C++ [dcl.init.aggr]p2
 struct A { 
   int x;

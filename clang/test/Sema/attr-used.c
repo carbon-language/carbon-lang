@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -fsyntax-only %s
+// RUN: %clang_cc1 -verify -fsyntax-only %s
 
 extern int l0 __attribute__((used)); // expected-warning {{used attribute ignored}}
 __private_extern__ int l1 __attribute__((used)); // expected-warning {{used attribute ignored}}

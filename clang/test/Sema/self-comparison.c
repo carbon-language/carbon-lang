@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 int foo(int x) {
   return x == x; // expected-warning {{self-comparison always results}}

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 void f(int i);
 void f(int i = 0); // expected-note {{previous definition is here}}
 void f(int i = 17); // expected-error {{redefinition of default argument}}

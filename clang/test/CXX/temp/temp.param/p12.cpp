@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify %s 
 template<typename> struct Y1; // expected-note{{too few template parameters in template template argument}}
 template<typename, int> struct Y2;
 

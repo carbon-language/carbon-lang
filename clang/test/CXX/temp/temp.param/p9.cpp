@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -std=c++98 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++98 -verify %s
 
 // A default template-argument shall not be specified in a function
 // template declaration or a function template definition

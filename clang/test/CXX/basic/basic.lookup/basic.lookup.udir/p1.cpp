@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // When looking up a namespace-name in a using-directive or
 // namespace-alias-definition, only namespace names are considered.

@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify
 
 // See Sema::ParsedFreeStandingDeclSpec about the double diagnostic
 typedef union <anonymous> __mbstate_t;  // expected-error {{declaration of anonymous union must be a definition}} expected-error {{declaration does not declare anything}}

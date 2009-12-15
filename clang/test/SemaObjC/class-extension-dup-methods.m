@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @interface Foo
 - (int)  garf; // expected-note {{ previous declaration is here}}

@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm-bc -o - %s | opt -std-compile-opts | llvm-dis > %t
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm-bc -o - %s | opt -std-compile-opts | llvm-dis > %t
 // RUN: grep "ret i32 10" %t
 
 // Ensure that this doesn't compile to infinite loop in g() due to

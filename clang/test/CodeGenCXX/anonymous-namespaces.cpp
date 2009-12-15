@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
 namespace {
   // CHECK: @_ZN12_GLOBAL__N_11aE = internal global i32 0

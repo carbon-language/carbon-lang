@@ -1,4 +1,4 @@
-// RUN: clang-cc -Eonly %s -verify -triple i686-pc-linux-gnu
+// RUN: %clang_cc1 -Eonly %s -verify -triple i686-pc-linux-gnu
 
 // Multiply signed overflow
 #if 0x7FFFFFFFFFFFFFFF*2 // expected-warning {{overflow}}

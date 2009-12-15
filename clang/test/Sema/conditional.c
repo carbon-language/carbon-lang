@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify
 
 const char* test1 = 1 ? "i" : 1 == 1 ? "v" : "r";
 

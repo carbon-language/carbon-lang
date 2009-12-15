@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Don't warn about some common ObjC idioms unless we have -Wparentheses on.
 // <rdar://problem/7382435>

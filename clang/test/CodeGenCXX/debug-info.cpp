@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm-only -g
+// RUN: %clang_cc1 -emit-llvm-only -g
 template<typename T> struct Identity {
   typedef T Type;
 };

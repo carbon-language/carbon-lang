@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 
 #pragma clang diagnostic pop // expected-warning{{pragma diagnostic pop could not pop, no matching push}}
 

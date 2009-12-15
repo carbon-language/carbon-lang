@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -triple=x86_64-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple=x86_64-apple-darwin9 -emit-llvm -o %t %s
 
 // RUN: grep ji.00 %t | count 1
 char *a = @encode(_Complex int);

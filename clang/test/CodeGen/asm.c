@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm %s -o %t
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o %t
 void t1(int len) {
   __asm__ volatile("" : "=&r"(len), "+&r"(len));
 }

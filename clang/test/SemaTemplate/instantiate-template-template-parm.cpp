@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 template<template<typename T> class MetaFun, typename Value>
 struct apply {
   typedef typename MetaFun<Value>::type type;

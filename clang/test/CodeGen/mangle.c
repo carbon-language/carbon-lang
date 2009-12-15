@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-pc-linux-gnu -emit-llvm -o - %s | FileCheck %s
 
 // CHECK: @"\01foo"
 

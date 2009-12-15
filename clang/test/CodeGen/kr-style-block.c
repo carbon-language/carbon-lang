@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t -fblocks
+// RUN: %clang_cc1 -emit-llvm %s -o %t -fblocks
 
 void foo (void(^)());
 

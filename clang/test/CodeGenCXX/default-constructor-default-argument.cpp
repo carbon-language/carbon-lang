@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 // Check that call to constructor for struct A is generated correctly.
 struct A { A(int x = 2); };

@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - -triple i686-pc-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple i686-pc-linux-gnu | FileCheck %s
 
 struct A { int a; virtual int aa(); };
 struct B { int b; virtual int bb(); };

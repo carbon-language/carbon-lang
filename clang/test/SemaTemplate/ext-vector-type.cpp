@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 template<typename T, unsigned Length> 
 struct make1 { 
   typedef T __attribute__((ext_vector_type(Length))) type; 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 template <class T> T* f(int);	// #1 
 template <class T, class U> T& f(U); // #2 

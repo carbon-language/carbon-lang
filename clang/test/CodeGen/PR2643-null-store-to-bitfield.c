@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o - %s
+// RUN: %clang_cc1 -emit-llvm -o - %s
 // PR2643
 
 void foo() {

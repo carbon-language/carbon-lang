@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o -
+// RUN: %clang_cc1 %s -emit-llvm -o -
 
 // PR1895
 // sizeof function

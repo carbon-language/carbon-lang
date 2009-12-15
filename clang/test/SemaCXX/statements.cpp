@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -pedantic
+// RUN: %clang_cc1 %s -fsyntax-only -pedantic
 
 void foo() { 
   return foo();

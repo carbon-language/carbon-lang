@@ -1,4 +1,4 @@
-/* RUN: clang-cc -E %s 2>&1 >/dev/null | grep error: | count 3
+/* RUN: %clang_cc1 -E %s 2>&1 >/dev/null | grep error: | count 3
  */
 
 #ifdef

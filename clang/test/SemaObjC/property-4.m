@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -verify %s
+// RUN: %clang_cc1 -verify %s
 
 @interface Object 
 @end

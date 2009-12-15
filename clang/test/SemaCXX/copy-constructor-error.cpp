@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify %s 
 
 struct S { // expected-note {{candidate function}} 
    S (S);  // expected-error {{copy constructor must pass its first argument by reference}} \\

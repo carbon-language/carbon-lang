@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -Winvalid-offsetof
+// RUN: %clang_cc1 -fsyntax-only -verify %s -Winvalid-offsetof
 
 struct NonPOD {
   virtual void f();

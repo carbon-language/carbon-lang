@@ -1,5 +1,5 @@
-// RUN: clang-cc -pedantic -fixit %s -o - | grep -v 'CHECK' > %t
-// RUN: clang-cc -pedantic -Werror -x c -
+// RUN: %clang_cc1 -pedantic -fixit %s -o - | grep -v 'CHECK' > %t
+// RUN: %clang_cc1 -pedantic -Werror -x c -
 // RUN: FileCheck -input-file=%t %s
 
 /* This is a test of the various code modification hints that are

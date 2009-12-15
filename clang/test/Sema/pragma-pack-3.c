@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i686-apple-darwin9 %s -fsyntax-only -verify
+// RUN: %clang_cc1 -triple i686-apple-darwin9 %s -fsyntax-only -verify
 
 // Stack: [], Alignment: 8
 

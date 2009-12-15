@@ -1,4 +1,4 @@
-/* RUN: clang-cc -std=c90 -fsyntax-only %s -verify -pedantic-errors
+/* RUN: %clang_cc1 -std=c90 -fsyntax-only %s -verify -pedantic-errors
  */
 
 enum { cast_hex = (long) (

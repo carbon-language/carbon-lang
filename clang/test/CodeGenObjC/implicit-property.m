@@ -1,5 +1,5 @@
-// RUN: clang -cc1 -emit-llvm -triple=i686-apple-darwin8 -o %t %s
-// RUNX: clang -cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -triple=i686-apple-darwin8 -o %t %s
+// RUNX: %clang_cc1 -emit-llvm -o %t %s
 
 @interface A
  -(void) setOk:(int)arg;

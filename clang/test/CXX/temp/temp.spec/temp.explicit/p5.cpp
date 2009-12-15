@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 namespace N {
   template<class T> class Y { // expected-note{{explicit instantiation refers here}}

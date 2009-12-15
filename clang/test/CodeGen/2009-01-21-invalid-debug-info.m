@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -S -g -o %t.s %s
+// RUN: %clang_cc1 -S -g -o %t.s %s
 
 // FIXME: This test case can be removed at some point (since it will
 // no longer effectively test anything). The reason it was causing

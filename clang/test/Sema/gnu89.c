@@ -1,3 +1,3 @@
-// RUN: clang-cc %s -std=gnu89 -pedantic -fsyntax-only -verify
+// RUN: %clang_cc1 %s -std=gnu89 -pedantic -fsyntax-only -verify
 
 int f(int restrict);

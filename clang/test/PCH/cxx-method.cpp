@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-pch %s -o %t
+// RUN: %clang_cc1 -emit-pch %s -o %t
 
 struct S {
   void m(int x);

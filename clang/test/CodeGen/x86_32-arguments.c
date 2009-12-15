@@ -1,4 +1,4 @@
-// RUN: clang-cc -fblocks -triple i386-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -fblocks -triple i386-apple-darwin9 -emit-llvm -o %t %s
 // RUN: grep 'define signext i8 @f0()' %t
 // RUN: grep 'define signext i16 @f1()' %t
 // RUN: grep 'define i32 @f2()' %t

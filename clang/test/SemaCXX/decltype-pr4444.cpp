@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -std=c++0x
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++0x
 
 template<typename T, T t>
 struct TestStruct {

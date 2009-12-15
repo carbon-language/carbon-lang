@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify %s 
 
 // PR5521
 struct A { void a(const char*,...) __attribute((format(printf,2,3))); };

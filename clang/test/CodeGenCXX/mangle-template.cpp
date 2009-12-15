@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
 
 namespace test1 {
 int x;

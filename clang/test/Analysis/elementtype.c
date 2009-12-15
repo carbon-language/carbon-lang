@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region %s
 
 typedef struct added_obj_st {
   int type;

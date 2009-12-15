@@ -1,4 +1,4 @@
-// RUN: clang-cc -P -E -fms-extensions %s | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 -P -E -fms-extensions %s | FileCheck -strict-whitespace %s
 // This horrible stuff should preprocess into (other than whitespace):
 //   int foo;
 //   int bar;

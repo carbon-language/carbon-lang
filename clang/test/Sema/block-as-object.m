@@ -1,4 +1,4 @@
-// RUN: clang -cc1 %s -fsyntax-only -verify -fblocks
+// RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks
 
 @interface Whatever
 - copy;

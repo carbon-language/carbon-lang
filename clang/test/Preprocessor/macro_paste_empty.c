@@ -1,6 +1,6 @@
-// RUN: clang-cc -E %s | grep 'a:Y'
-// RUN: clang-cc -E %s | grep 'b:Y'
-// RUN: clang-cc -E %s | grep 'c:YY'
+// RUN: %clang_cc1 -E %s | grep 'a:Y'
+// RUN: %clang_cc1 -E %s | grep 'b:Y'
+// RUN: %clang_cc1 -E %s | grep 'c:YY'
 
 #define FOO(X) X ## Y
 a:FOO()

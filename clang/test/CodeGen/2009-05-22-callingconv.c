@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - -triple i386-unknown-unknown | grep call | grep x86_stdcallcc
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple i386-unknown-unknown | grep call | grep x86_stdcallcc
 void abort(void) __attribute__((__noreturn__));
 typedef void re_string_t;
 typedef void re_dfa_t;

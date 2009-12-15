@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -E  2>&1 | grep warning | wc -l | grep 2
+// RUN: %clang_cc1 %s -E  2>&1 | grep warning | wc -l | grep 2
 
 #define INTMAX_MIN (-9223372036854775807LL -1)
 

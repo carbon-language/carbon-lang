@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify
 // PR4290
 
 // The following declaration is not compatible with vfprintf(), but make

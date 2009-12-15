@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Check that we don't allow illegal uses of inline
 inline int a; // expected-error{{'inline' can only appear on functions}}

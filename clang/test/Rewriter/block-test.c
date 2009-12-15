@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -rewrite-blocks %s -fblocks -o -
+// RUN: %clang_cc1 -rewrite-blocks %s -fblocks -o -
 
 static int (^block)(const void *, const void *) = (int (^)(const void *, const void *))0;
 static int (*func)(int (^block)(void *, void *)) = (int (*)(int (^block)(void *, void *)))0;

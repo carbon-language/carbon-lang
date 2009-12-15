@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 void (*e) (int arg, const char * format, ...) __attribute__ ((__sentinel__ (1,1)));
 

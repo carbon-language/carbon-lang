@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm < %s -o %t
+// RUN: %clang_cc1 -emit-llvm < %s -o %t
 // RUN: grep volatile %t | count 29
 // RUN: grep memcpy %t | count 7
 

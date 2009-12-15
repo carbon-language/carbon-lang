@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct C {  // expected-note {{candidate function}}
   virtual C() = 0; // expected-error{{constructor cannot be declared 'virtual'}} \

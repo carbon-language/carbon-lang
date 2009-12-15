@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct X0 { // expected-note 4{{candidate}}
   X0(int*, float*); // expected-note 4{{candidate}}

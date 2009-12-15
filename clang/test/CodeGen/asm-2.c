@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t -triple i386-pc-linux-gnu -O2
+// RUN: %clang_cc1 -emit-llvm %s -o %t -triple i386-pc-linux-gnu -O2
 // RUN: not grep "load" %t
 
 // <rdar://problem/6841383>

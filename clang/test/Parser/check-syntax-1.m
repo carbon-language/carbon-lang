@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 int @interface bla  ; // expected-error {{cannot combine with previous 'int' declaration specifier}}
 @end

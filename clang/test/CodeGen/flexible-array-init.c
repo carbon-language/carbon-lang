@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -o - %s | FileCheck %s
 
 struct { int x; int y[]; } a = { 1, 7, 11 };
 // CHECK: @a = global %0 { i32 1, [2 x i32] [i32 7, i32 11] }

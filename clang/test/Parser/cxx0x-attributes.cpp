@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
 
 // Declaration syntax checks
 [[]] int before_attr;

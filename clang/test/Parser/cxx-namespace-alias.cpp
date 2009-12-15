@@ -1,4 +1,4 @@
-// RUN: clang-cc -parse-noop -verify %s
+// RUN: %clang_cc1 -parse-noop -verify %s
 
 namespace A = B;
 

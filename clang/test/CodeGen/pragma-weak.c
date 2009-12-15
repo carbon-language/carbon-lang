@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - -verify | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -verify | FileCheck %s
 
 // CHECK: @weakvar = weak global
 // CHECK: @__weakvar_alias = common global

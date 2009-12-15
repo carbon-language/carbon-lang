@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -ast-print
+// RUN: %clang_cc1 %s -ast-print
 
 typedef void func_typedef();
 func_typedef xxx;

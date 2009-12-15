@@ -1,4 +1,4 @@
-// RUN: clang-cc -E %s | grep 'a: "and"'
+// RUN: %clang_cc1 -E %s | grep 'a: "and"'
 
 #define X(A) #A
 

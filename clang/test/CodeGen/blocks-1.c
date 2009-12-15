@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t -fblocks
+// RUN: %clang_cc1 %s -emit-llvm -o %t -fblocks
 // RUN: grep "_Block_object_dispose" %t | count 17
 // RUN: grep "__copy_helper_block_" %t | count 16
 // RUN: grep "__destroy_helper_block_" %t | count 16

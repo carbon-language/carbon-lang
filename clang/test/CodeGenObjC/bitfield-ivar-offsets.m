@@ -1,5 +1,5 @@
 // RUNX: llvm-gcc -m64  -emit-llvm -S -o %t %s &&
-// RUN: clang -cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 // RUN: grep -F '@"OBJC_IVAR_$_I0._b0" = global i64 0, section "__DATA, __objc_const", align 8' %t
 // RUN: grep -F '@"OBJC_IVAR_$_I0._b1" = global i64 0, section "__DATA, __objc_const", align 8' %t
 // RUN: grep -F '@"OBJC_IVAR_$_I0._b2" = global i64 1, section "__DATA, __objc_const", align 8' %t

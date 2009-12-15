@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -triple i386-apple-darwin9 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: @"__func__.-[Foo instanceTest1]" = private constant [21 x i8] c"-[Foo instanceTest1]\00"
 // CHECK: @"__func__.-[Foo instanceTest2:]" = private constant [22 x i8] c"-[Foo instanceTest2:]\00"

@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -triple x86_64-apple-darwin10 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin10 -o - %s | FileCheck %s
 template<typename T>
 struct X {
   static T member1;

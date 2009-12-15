@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 // PR5695
 
 struct A { A(const A&); ~A(); };

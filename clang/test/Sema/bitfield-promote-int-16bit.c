@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -triple pic16-unknown-unknown
+// RUN: %clang_cc1 -fsyntax-only -verify %s -triple pic16-unknown-unknown
 
 // Check that int-sized unsigned bit-fields promote to unsigned int
 // on targets where sizeof(unsigned short) == sizeof(unsigned int)

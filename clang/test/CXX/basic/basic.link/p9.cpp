@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // FIXME: This test is woefully incomplete.
 namespace N { } // expected-note{{here}}

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 friend class A; // expected-error {{'friend' used outside of class}}
 void f() { friend class A; } // expected-error {{'friend' used outside of class}}

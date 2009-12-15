@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -faccess-control %s
+// RUN: %clang_cc1 -fsyntax-only -verify -faccess-control %s
 
 // ------------ not interpreted as C-style cast ------------
 

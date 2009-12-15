@@ -1,5 +1,5 @@
-// RUN: clang -cc1 -checker-cfref -analyze -analyzer-experimental-internal-checks -analyzer-store=basic -verify %s
-// RUN: clang -cc1 -checker-cfref -analyze -analyzer-experimental-internal-checks -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -checker-cfref -analyze -analyzer-experimental-internal-checks -analyzer-store=basic -verify %s
+// RUN: %clang_cc1 -checker-cfref -analyze -analyzer-experimental-internal-checks -analyzer-store=region -verify %s
 // XFAIL: *
 
 //===----------------------------------------------------------------------===//

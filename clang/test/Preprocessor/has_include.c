@@ -1,4 +1,4 @@
-// RUN: clang-cc -Eonly -verify %s
+// RUN: %clang_cc1 -Eonly -verify %s
 
 // Try different path permutations of __has_include with existing file.
 #if __has_include("stdio.h")

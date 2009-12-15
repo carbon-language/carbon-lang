@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm %s -o %t
 
 void p(const char*, ...);
 

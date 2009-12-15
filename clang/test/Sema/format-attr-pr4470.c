@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -Wformat=2 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wformat=2 %s
 
 #include <stdarg.h>
 int vprintf(const char *, va_list);

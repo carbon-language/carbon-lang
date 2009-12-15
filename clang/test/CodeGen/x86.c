@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -triple=i686-pc-linux-gnu -emit-llvm -o - > %t1
+// RUN: %clang_cc1 %s -triple=i686-pc-linux-gnu -emit-llvm -o - > %t1
 // RUN: grep "ax" %t1
 // RUN: grep "bx" %t1
 // RUN: grep "cx" %t1

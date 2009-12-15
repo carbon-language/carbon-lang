@@ -16,7 +16,7 @@ struct S {
 };
 
 
-// RUN: clang-cc -emit-pch %s -o %t.ast
+// RUN: %clang_cc1 -emit-pch %s -o %t.ast
 // RUN: index-test %t.ast -point-at %s:3:8 | grep top_var
 // RUN: index-test %t.ast -point-at %s:5:15 | grep top_func_decl
 // RUN: index-test %t.ast -point-at %s:5:25 | grep param1

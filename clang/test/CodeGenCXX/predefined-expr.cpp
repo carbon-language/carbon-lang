@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: private constant [15 x i8] c"externFunction\00"
 // CHECK: private constant [26 x i8] c"void NS::externFunction()\00"

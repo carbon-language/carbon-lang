@@ -12,7 +12,7 @@ static void bar() {
 
 Cls Cls::operator +(const Cls &RHS) { while (1) {} }
 
-// RUN: clang-cc -emit-pch %s -o %t.ast
+// RUN: %clang_cc1 -emit-pch %s -o %t.ast
 
 // RUNx: index-test %t.ast -point-at %s:10:17 -print-decls > %t &&
 // RUNx: cat %t | count 2 &&

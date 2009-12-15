@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
 template <class T> struct A { A(); };
 struct B { A<int> x; };

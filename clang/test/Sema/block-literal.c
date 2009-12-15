@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -verify -fblocks
+// RUN: %clang_cc1 -fsyntax-only %s -verify -fblocks
 
 void I( void (^)(void));
 void (^noop)(void);

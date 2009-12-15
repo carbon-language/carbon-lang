@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 char *foo(float) __attribute__((__overloadable__)); // expected-note 3 {{candidate function}}
 
 void test_foo_1(float fv, double dv, float _Complex fc, double _Complex dc) {

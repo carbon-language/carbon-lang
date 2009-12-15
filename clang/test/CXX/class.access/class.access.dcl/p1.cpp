@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify
+// RUN: %clang_cc1 -fsyntax-only -verify
 
 // This is just the test for [namespace.udecl]p4 with 'using'
 // uniformly stripped out.

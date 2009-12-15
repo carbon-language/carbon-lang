@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 namespace Ints {
   int zero = 0; // expected-note {{candidate found by name lookup is 'Ints::zero'}}

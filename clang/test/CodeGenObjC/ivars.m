@@ -1,5 +1,5 @@
-// RUN: clang -cc1 -triple x86_64-apple-darwin9 -emit-llvm -o - %s
-// RUN: clang -cc1 -triple i386-apple-darwin9 -emit-llvm -o - %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-llvm -o - %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o - %s
 
 // rdar://6800926
 @interface ITF {

@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -Wreadonly-setter-attrs -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wreadonly-setter-attrs -verify %s
 
 @protocol P0
 @property(readonly,assign) id X; // expected-warning {{property attributes 'readonly' and 'assign' are mutually exclusive}}

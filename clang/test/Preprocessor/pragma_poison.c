@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -Eonly -verify
+// RUN: %clang_cc1 %s -Eonly -verify
 
 #pragma GCC poison rindex
 rindex(some_string, 'h');   // expected-error {{attempt to use a poisoned identifier}}

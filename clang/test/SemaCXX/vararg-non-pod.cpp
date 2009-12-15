@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -fblocks %s -Wnon-pod-varargs
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s -Wnon-pod-varargs
 
 extern char version[];
 

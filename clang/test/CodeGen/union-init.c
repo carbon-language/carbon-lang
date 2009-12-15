@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm < %s -o -
+// RUN: %clang_cc1 -emit-llvm < %s -o -
 
 // A nice and complicated initialization example with unions from Python
 typedef int Py_ssize_t;

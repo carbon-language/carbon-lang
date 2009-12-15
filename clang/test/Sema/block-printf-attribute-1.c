@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify -fblocks
+// RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks
 
 int main() {
   void (^b) (int arg, const char * format, ...) __attribute__ ((__format__ (__printf__, 1, 3))) =   // expected-error {{format argument not a string type}}

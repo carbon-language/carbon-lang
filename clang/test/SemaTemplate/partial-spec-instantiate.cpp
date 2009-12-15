@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only %s
 
 // PR4607
 template <class T> struct X {};

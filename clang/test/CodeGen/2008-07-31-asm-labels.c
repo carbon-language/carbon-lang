@@ -1,9 +1,9 @@
-// RUN: clang-cc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -o %t %s
 // RUN: grep "@pipe()" %t | count 0
 // RUN: grep '_thisIsNotAPipe' %t | count 3
 // RUN: grep 'g0' %t | count 0
 // RUN: grep '_renamed' %t | count 2
-// RUN: clang-cc -DUSE_DEF -emit-llvm -o %t %s
+// RUN: %clang_cc1 -DUSE_DEF -emit-llvm -o %t %s
 // RUN: grep "@pipe()" %t | count 0
 // RUN: grep '_thisIsNotAPipe' %t | count 3
 // <rdr://6116729>

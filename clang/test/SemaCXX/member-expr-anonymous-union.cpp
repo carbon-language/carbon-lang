@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify
 // PR5543
 
 struct A { int x; union { int* y; float& z; }; }; struct B : A {int a;};

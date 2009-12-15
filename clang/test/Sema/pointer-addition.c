@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify -pedantic
+// RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic
 
 typedef struct S S; // expected-note 3 {{forward declaration of 'struct S'}}
 void a(S* b, void* c) {

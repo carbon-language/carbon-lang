@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -Wall -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wall -verify %s
 template<typename a> struct A {
   template <typename b> struct B {
     template <typename c> struct C {

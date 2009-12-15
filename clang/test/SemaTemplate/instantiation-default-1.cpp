@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 template<typename T, typename U = const T> struct Def1;
 
 template<> struct Def1<int> { 

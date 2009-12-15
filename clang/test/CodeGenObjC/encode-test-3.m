@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
 // RUN: grep -e "\^i" %t | count 1
 // RUN: grep -e "\[0i\]" %t | count 1
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm-only %s -verify
+// RUN: %clang_cc1 -emit-llvm-only %s -verify
 // PR5730
 
 struct A { operator int(); float y; };

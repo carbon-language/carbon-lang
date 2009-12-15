@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -O1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -O1 -emit-llvm -o %t %s
 // RUN: grep 'ret i32 4' %t
 
 enum e0 { E0 };

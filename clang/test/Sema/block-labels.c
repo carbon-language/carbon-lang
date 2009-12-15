@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fblocks -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fblocks -fsyntax-only
 
 int a() { 
   A:if (1) xx();

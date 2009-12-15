@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t
+// RUN: %clang_cc1 %s -emit-llvm -o %t
 
 void t1(int *a) {
   delete a;

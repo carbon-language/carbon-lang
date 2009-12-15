@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify -std=c89
+// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c89
 // rdar://6095180
 
 struct s { char c[17]; };

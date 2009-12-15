@@ -1,9 +1,9 @@
 // Test this without pch.
-// RUN: clang-cc -include %S/enum.h -fsyntax-only -verify %s
+// RUN: %clang_cc1 -include %S/enum.h -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: clang-cc -emit-pch -o %t %S/enum.h
-// RUN: clang-cc -include-pch %t -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -emit-pch -o %t %S/enum.h
+// RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s 
 
 int i = Red;
 

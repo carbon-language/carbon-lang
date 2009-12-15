@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
 
 void a (void []()); // expected-error{{'type name' declared as array of functions}}
 void b (void p[]()); // expected-error{{'p' declared as array of functions}}

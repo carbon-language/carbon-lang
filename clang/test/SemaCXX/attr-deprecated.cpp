@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only
 class A {
   void f() __attribute__((deprecated));
   void g(A* a);

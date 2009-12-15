@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -Wnon-pod-varargs
+// RUN: %clang_cc1 -fsyntax-only %s -Wnon-pod-varargs
 class X { };
 
 int& copycon(X x);

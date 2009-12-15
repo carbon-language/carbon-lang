@@ -1,5 +1,5 @@
-// RUN: clang-cc -E %s | grep 'a: 2 + M_0(3)(4)(5);'
-// RUN: clang-cc -E %s | grep 'b: 4 + 4 + 3 + 2 + 1 + M_0(3)(2)(1);'
+// RUN: %clang_cc1 -E %s | grep 'a: 2 + M_0(3)(4)(5);'
+// RUN: %clang_cc1 -E %s | grep 'b: 4 + 4 + 3 + 2 + 1 + M_0(3)(2)(1);'
 
 #define M_0(x) M_ ## x 
 #define M_1(x) x + M_0(0) 

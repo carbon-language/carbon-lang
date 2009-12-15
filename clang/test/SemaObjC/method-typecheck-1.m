@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @interface A
 - (void) setMoo: (int) x;	//  expected-note {{previous definition is here}}

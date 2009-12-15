@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm %s -o %t
 
 typedef __attribute__(( ext_vector_type(4) )) float float4;
 typedef __attribute__(( ext_vector_type(2) )) float float2;

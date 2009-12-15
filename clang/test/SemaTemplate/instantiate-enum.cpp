@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only %s
 
 template<typename T, T I, int J>
 struct adder {

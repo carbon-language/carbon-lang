@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o -
+// RUN: %clang_cc1 -emit-llvm %s -o -
 struct A { 
   void f(); 
   

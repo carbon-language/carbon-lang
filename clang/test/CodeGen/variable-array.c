@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm < %s | grep puts | count 4
+// RUN: %clang_cc1 -emit-llvm < %s | grep puts | count 4
 
 // PR3248
 int a(int x)

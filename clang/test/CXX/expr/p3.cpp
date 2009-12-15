@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 double operator +(double, double); // expected-error{{overloaded 'operator+' must have at least one parameter of class or enumeration type}}
 

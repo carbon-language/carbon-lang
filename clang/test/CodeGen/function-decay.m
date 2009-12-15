@@ -1,4 +1,4 @@
-// RUN: clang -cc1 %s -emit-llvm -o -
+// RUN: %clang_cc1 %s -emit-llvm -o -
 
 @interface I0 @end
 @implementation I0

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -Wmismatched-tags -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wmismatched-tags -verify %s
 class X; // expected-note 2{{here}}
 typedef struct X * X_t; // expected-warning{{previously declared}}
 

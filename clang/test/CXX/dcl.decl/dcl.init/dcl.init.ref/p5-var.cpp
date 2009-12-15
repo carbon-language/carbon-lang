@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct Base { }; // expected-note{{candidate function}}
 struct Derived : Base { }; // expected-note{{candidate function}}

@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -o %t %s
 // RUN: grep "hello" %t | count 3
 // RUN: grep 'c"hello\\00"' %t | count 2
 // RUN: grep 'c"hello\\00\\00\\00"' %t | count 1

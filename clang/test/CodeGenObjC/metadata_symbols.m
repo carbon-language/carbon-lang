@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 
 // RUN: grep '@"OBJC_METACLASS_$_A" = global .*section "__DATA, __objc_data", align 8' %t
 // RUN: grep '@"OBJC_CLASS_$_A" = global .*section "__DATA, __objc_data", align 8' %t
@@ -10,7 +10,7 @@
 // RUN: grep -F 'define internal void @"\01-[A im0]"' %t
 // RUN: grep -F 'define internal void @"\01-[A(Cat) im1]"' %t
 
-// RUN: clang -cc1 -fobjc-nonfragile-abi -fvisibility hidden -emit-llvm -o %t %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -fvisibility hidden -emit-llvm -o %t %s
 
 // RUN: grep '@"OBJC_METACLASS_$_A" = hidden global .*section "__DATA, __objc_data", align 8' %t
 // RUN: grep '@"OBJC_CLASS_$_A" = hidden global .*section "__DATA, __objc_data", align 8' %t

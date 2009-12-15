@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - -triple=i686-apple-darwin9 > %t1
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=i686-apple-darwin9 > %t1
 // RUN: grep @llvm.atomic.load.add.i32 %t1 | count 3
 // RUN: grep @llvm.atomic.load.sub.i8 %t1 | count 2
 // RUN: grep @llvm.atomic.load.min.i32 %t1

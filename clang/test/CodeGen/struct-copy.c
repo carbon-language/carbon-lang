@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - | grep 'call.*llvm.memcpy'
+// RUN: %clang_cc1 -emit-llvm %s -o - | grep 'call.*llvm.memcpy'
 struct x { int a[100]; };
 
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -fblocks
+// RUN: %clang_cc1 -fsyntax-only -verify %s -fblocks
 
 void tovoid(void*);
 

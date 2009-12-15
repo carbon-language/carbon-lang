@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 
 @interface I
 @property int IP;

@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm %s -o %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm %s -o %t
 
 // RUN: grep "struct._attrs = type <{ i32, i8 }>" %t
 typedef struct _attrs {

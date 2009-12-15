@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++98 -pedantic -Werror  %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 -pedantic -Werror  %s
 int a1[] = { 1, 3, 5 };
 void f() {
   int a2[] = { 1, 3, 5 };

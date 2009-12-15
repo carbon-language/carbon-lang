@@ -1,4 +1,4 @@
-// RUN: clang -cc1 %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify
 // rdar://5967199
 
 typedef signed char BOOL;

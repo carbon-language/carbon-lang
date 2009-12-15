@@ -1,4 +1,4 @@
-// RUN: clang-cc -Wreorder -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wreorder -fsyntax-only -verify %s
 class A { 
   int m;
    A() : A::m(17) { } // expected-error {{member initializer 'm' does not name a non-static data member or base class}}

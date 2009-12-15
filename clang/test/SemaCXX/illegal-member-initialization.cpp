@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify %s 
 
 struct A {
    A() : value(), cvalue() { } // expected-error {{cannot initialize the member to null in default constructor because reference member 'value' cannot be null-initialized}} \

@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -emit-llvm-only -verify %s
 
 // This lame little test was ripped straight from the standard.
 

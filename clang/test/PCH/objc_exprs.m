@@ -1,9 +1,9 @@
 // Test this without pch.
-// RUN: clang -cc1 -fblocks -include %S/objc_exprs.h -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fblocks -include %S/objc_exprs.h -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: clang -cc1 -x objective-c-header -emit-pch -fblocks -o %t %S/objc_exprs.h
-// RUN: clang -cc1 -fblocks -include-pch %t -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -x objective-c-header -emit-pch -fblocks -o %t %S/objc_exprs.h
+// RUN: %clang_cc1 -fblocks -include-pch %t -fsyntax-only -verify %s 
 
 // Expressions
 int *A1 = (objc_string)0;   // expected-warning {{aka 'id'}}

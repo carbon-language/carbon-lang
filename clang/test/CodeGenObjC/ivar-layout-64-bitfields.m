@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -fobjc-gc -emit-llvm -o %t %s
 @interface I
 {
   struct {

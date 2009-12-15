@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // C++03 [namespace.udecl]p3:
 //   For the purpose of overload resolution, the functions which are

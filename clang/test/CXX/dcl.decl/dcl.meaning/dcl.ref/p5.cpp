@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // C++ [dcl.ref]p5:
 //   There shall be no references to references, no arrays of

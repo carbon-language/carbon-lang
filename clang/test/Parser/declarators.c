@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify -pedantic
+// RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic
 
 extern int a1[];
 

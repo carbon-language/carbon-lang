@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -faccess-control -verify %s
+// RUN: %clang_cc1 -fsyntax-only -faccess-control -verify %s
 
 class M {
   int iM;

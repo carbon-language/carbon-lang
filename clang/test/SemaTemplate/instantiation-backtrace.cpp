@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 template<typename T> struct A; // expected-note 4{{template is declared here}}
 
 template<typename T> struct B : A<T*> { }; // expected-error{{implicit instantiation of undefined template}} \

@@ -1,4 +1,4 @@
-// RUN: clang-cc -S %s -o -
+// RUN: %clang_cc1 -S %s -o -
 
 typedef int Int;
 

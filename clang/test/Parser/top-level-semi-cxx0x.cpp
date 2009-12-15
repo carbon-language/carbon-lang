@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -pedantic -std=c++0x -verify %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -std=c++0x -verify %s
 
 void foo();
 

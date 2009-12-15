@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 struct S {
   static void f(const char*, ...) __attribute__((format(printf, 1, 2)));
 

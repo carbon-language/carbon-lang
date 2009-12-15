@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -o %t %s
 
 void f0(id a) {
   // This should have an implicit cast

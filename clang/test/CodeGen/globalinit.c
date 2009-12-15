@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm %s -o %t
 
 int A[10] = { 1,2,3,4,5 };
 

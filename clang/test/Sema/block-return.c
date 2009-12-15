@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -verify -fblocks
+// RUN: %clang_cc1 -fsyntax-only %s -verify -fblocks
 
 typedef void (^CL)(void);
 

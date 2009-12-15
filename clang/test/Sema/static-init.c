@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple i386-pc-linux-gnu -fsyntax-only -verify %s
 
 #include <stdint.h>
 

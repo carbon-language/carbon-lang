@@ -1,4 +1,4 @@
-// RUN: clang-cc -o %t -emit-llvm -g %s
+// RUN: %clang_cc1 -o %t -emit-llvm -g %s
 // RUN: FileCheck --input-file=%t %s
 
 // PR3023

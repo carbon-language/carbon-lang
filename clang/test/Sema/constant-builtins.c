@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -verify -pedantic
+// RUN: %clang_cc1 -fsyntax-only %s -verify -pedantic
 
 // Math stuff
 

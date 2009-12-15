@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
 
 int final_fail [[final]]; //expected-error {{'final' attribute only applies to virtual method or class types}}
 

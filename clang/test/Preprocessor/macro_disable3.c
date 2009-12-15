@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -E | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 %s -E | FileCheck -strict-whitespace %s
 // Check for C99 6.10.3.4p2.
 
 #define f(a) f(x * (a)) 

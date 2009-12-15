@@ -1,4 +1,4 @@
-// RUN: clang -cc1 %s -verify -Wunused -fsyntax-only
+// RUN: %clang_cc1 %s -verify -Wunused -fsyntax-only
 
 int printf(const char *, ...);
 

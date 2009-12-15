@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o - %s
+// RUN: %clang_cc1 -emit-llvm -o - %s
 
 union sigval { };
 

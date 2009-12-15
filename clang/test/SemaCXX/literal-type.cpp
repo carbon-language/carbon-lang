@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
 
 static_assert(__is_literal(int), "fail");
 static_assert(__is_literal(void*), "fail");

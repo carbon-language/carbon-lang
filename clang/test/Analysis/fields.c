@@ -1,5 +1,5 @@
-// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref %s -analyzer-store=basic -verify
-// RUN: clang -cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref %s -analyzer-store=region -verify
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref %s -analyzer-store=basic -verify
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref %s -analyzer-store=region -verify
 
 unsigned foo();
 typedef struct bf { unsigned x:2; } bf;

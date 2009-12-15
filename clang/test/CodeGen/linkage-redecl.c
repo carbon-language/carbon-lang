@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - |grep internal
+// RUN: %clang_cc1 -emit-llvm %s -o - |grep internal
 
 // C99 6.2.2p3
 // PR3425

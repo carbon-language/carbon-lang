@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -E | FileCheck %s
+// RUN: %clang_cc1 %s -E | FileCheck %s
 
 #define foo(x) bar x
 foo(foo) (2)

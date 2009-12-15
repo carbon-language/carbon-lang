@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c99 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c99 %s
 
 int f (int z)
 { 

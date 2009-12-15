@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -fsyntax-only %s
+// RUN: %clang_cc1 -verify -fsyntax-only %s
 
 int x(*g); // expected-error {{use of undeclared identifier 'g'}}
 

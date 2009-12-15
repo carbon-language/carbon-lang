@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -triple i386-apple-darwin9 -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -g -emit-llvm %s -o - | FileCheck %s
 // PR4894
 //
 // This test is actually just making sure we can generate the debug info for the

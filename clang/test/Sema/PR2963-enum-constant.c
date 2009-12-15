@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -pedantic -fsyntax-only
+// RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only
 
 typedef short short_fixed;
 

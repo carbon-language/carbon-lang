@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -std=c++0x -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++0x -verify %s
 
 // Test default template arguments for function templates.
 template<typename T = int>

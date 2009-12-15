@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only
 // PR5462
 
 void f1(void);

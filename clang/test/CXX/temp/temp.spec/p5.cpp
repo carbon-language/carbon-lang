@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 template<typename T> inline void f(T) { }
 template void f(int); // expected-note{{previous explicit instantiation}}

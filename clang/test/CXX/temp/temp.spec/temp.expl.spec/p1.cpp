@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // This test creates cases where implicit instantiations of various entities
 // would cause a diagnostic, but provides expliict specializations for those

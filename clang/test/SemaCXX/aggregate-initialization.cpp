@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++98 %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s 
 
 // Verify that we can't initialize non-aggregates with an initializer
 // list.

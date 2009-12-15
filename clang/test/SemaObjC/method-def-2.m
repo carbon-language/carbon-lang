@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -ast-print %s
+// RUN: %clang_cc1 -ast-print %s
 extern void abort(void);
 #define CHECK_IF(expr) if(!(expr)) abort()
 

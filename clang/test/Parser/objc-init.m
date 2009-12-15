@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s -pedantic
+// RUN: %clang_cc1 -fsyntax-only -verify %s -pedantic
 // rdar://5707001
 
 @interface NSNumber;

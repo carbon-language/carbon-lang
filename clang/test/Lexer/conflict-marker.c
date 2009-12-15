@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only
 
 // Test that we recover gracefully from conflict markers left in input files.
 // PR5238

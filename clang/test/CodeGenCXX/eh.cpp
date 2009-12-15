@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t.ll
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++0x -emit-llvm %s -o %t.ll
 // RUN: FileCheck --input-file=%t.ll %s
 
 struct test1_D {

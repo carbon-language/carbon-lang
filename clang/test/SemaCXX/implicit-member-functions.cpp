@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct A { }; // expected-note {{previous implicit declaration is here}}
 A::A() { } // expected-error {{definition of implicitly declared constructor}}

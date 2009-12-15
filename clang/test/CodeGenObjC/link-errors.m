@@ -1,8 +1,8 @@
-// RUN: clang -cc1 -triple i386-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o %t %s
 // RUN: grep '.lazy_reference .objc_class_name_A' %t | count 1
 // RUN: grep '.lazy_reference .objc_class_name_Unknown' %t | count 1
 // RUN: grep '.lazy_reference .objc_class_name_Protocol' %t | count 1
-// RUN: clang -cc1 -triple i386-apple-darwin9 -DWITH_IMPL -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -DWITH_IMPL -emit-llvm -o %t %s
 // RUN: grep '.lazy_reference .objc_class_name_Root' %t | count 1
 
 @interface Root

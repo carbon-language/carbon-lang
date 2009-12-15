@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -O3 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -O3 -emit-llvm -o - %s | FileCheck %s
 // PR2001
 
 /* Test that the result of the assignment properly uses the value *in

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 struct X0 { // expected-note{{candidate}}
   X0(int); // expected-note{{candidate}}
   template<typename T> X0(T);

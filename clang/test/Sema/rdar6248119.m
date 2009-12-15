@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only %s -verify
+// RUN: %clang_cc1 -fsyntax-only %s -verify
 // Test case for: 
 //   <rdar://problem/6248119> @finally doesn't introduce a new scope
 

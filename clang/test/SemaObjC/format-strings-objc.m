@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

@@ -1,4 +1,4 @@
-// RUN: clang-cc  -fsyntax-only -Wreorder -verify %s
+// RUN: %clang_cc1  -fsyntax-only -Wreorder -verify %s
 
 struct BB {};
 

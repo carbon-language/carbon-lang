@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fheinous-gnu-extensions
+// RUN: %clang_cc1 %s -verify -fheinous-gnu-extensions
 
 void foo() {
   int a;

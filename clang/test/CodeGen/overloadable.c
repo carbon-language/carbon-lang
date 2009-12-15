@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - | grep _Z1fPA10_1X
+// RUN: %clang_cc1 -emit-llvm %s -o - | grep _Z1fPA10_1X
 int __attribute__((overloadable)) f(int x) { return x; }
 float __attribute__((overloadable)) f(float x) { return x; }
 double __attribute__((overloadable)) f(double x) { return x; }

@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -fsyntax-only -verify -fblocks -Wmissing-noreturn
+// RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks -Wmissing-noreturn
 
 int j;
 void test1() { // expected-warning {{function could be attribute 'noreturn'}}

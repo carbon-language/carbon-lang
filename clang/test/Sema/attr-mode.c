@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 typedef int i16_1 __attribute((mode(HI)));
 int i16_1_test[sizeof(i16_1) == 2 ? 1 : -1];

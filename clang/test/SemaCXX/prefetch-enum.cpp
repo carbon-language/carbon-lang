@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -verify
+// RUN: %clang_cc1 -fsyntax-only %s -verify
 // PR5679
 
 enum X { A = 3 };

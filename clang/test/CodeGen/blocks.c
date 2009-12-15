@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown %s -emit-llvm -o %t -fblocks
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o %t -fblocks
 void (^f)(void) = ^{};
 
 // rdar://6768379

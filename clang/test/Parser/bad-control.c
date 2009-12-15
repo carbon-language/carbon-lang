@@ -1,4 +1,4 @@
-/* RUN: clang-cc -fsyntax-only -verify %s
+/* RUN: %clang_cc1 -fsyntax-only -verify %s
 */
 void foo() { 
   break; /* expected-error {{'break' statement not in loop or switch statement}} */

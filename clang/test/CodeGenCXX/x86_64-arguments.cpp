@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-unknown-unknown -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | FileCheck %s
 
 // CHECK: [[i64_i64_ty:%.*]] = type { i64, i64 }
 // CHECK: [[i64_double_ty:%.*]] = type { i64, double }

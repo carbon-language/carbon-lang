@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -fms-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fms-extensions %s
 
 // Straight from the standard:
 // Plain function with spec

@@ -1,4 +1,4 @@
-// RUN: clang-cc < %s -emit-llvm
+// RUN: %clang_cc1 < %s -emit-llvm
 
 int* a = &(int){1};
 struct s {int a, b, c;} * b = &(struct s) {1, 2, 3};

@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -triple=i686-apple-darwin -target-feature +ssse3 -O1 -S -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple=i686-apple-darwin -target-feature +ssse3 -O1 -S -o - | FileCheck %s
 
 #define _mm_alignr_epi8(a, b, n) (__builtin_ia32_palignr128((a), (b), (n)))
 #define _mm_alignr_pi8(a, b, n) (__builtin_ia32_palignr((a), (b), (n*8)))

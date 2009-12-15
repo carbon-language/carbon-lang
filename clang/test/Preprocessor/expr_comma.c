@@ -1,8 +1,8 @@
 // Comma is not allowed in C89
-// RUN: not clang-cc -E %s -std=c89 -pedantic-errors
+// RUN: not %clang_cc1 -E %s -std=c89 -pedantic-errors
 
 // Comma is allowed if unevaluated in C99
-// RUN: clang-cc -E %s -std=c99 -pedantic-errors 
+// RUN: %clang_cc1 -E %s -std=c99 -pedantic-errors 
 
 // PR2279
 

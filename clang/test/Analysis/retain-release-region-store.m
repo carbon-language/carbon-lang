@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -checker-cfref -analyzer-store=region -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

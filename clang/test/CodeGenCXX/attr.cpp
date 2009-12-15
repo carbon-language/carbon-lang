@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -O0 -S %s -o %t.s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -O0 -S %s -o %t.s
 // RUN: FileCheck --input-file=%t.s %s
 
 int foo() __attribute__((aligned(1024)));

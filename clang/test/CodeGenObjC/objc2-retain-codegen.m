@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -triple x86_64-unknown-unknown -fobjc-gc-only -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -fobjc-gc-only -emit-llvm -o %t %s
 
 @interface I0 {
   I0 *_f0;

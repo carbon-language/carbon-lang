@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
 
 // C++ [expr.const]p1:
 //   In several places, C++ requires expressions that evaluate to an integral

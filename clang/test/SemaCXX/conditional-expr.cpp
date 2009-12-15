@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -faccess-control -std=c++0x -Wsign-compare %s
+// RUN: %clang_cc1 -fsyntax-only -verify -faccess-control -std=c++0x -Wsign-compare %s
 
 // C++ rules for ?: are a lot stricter than C rules, and have to take into
 // account more conversion options.

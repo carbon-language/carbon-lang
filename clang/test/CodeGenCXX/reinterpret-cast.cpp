@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o - %s -std=c++0x
+// RUN: %clang_cc1 -emit-llvm -o - %s -std=c++0x
 void *f1(unsigned long l) {
   return reinterpret_cast<void *>(l);
 }

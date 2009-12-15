@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm %s -o %t
 
 /* Sparc is not C99-compliant */
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)

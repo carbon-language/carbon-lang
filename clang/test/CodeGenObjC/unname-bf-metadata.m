@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -o %t %s
 // Test that meta-data for ivar lists with unnamed bitfield are generated.
 //
 @interface Foo {

@@ -1,8 +1,8 @@
-// RUN: clang-cc -emit-llvm -o - %s -stack-protector 0 | FileCheck -check-prefix=NOSSP %s
+// RUN: %clang_cc1 -emit-llvm -o - %s -stack-protector 0 | FileCheck -check-prefix=NOSSP %s
 // NOSSP: define void @test1(i8* %msg) nounwind {
-// RUN: clang-cc -emit-llvm -o - %s -stack-protector 1 | FileCheck -check-prefix=WITHSSP %s
+// RUN: %clang_cc1 -emit-llvm -o - %s -stack-protector 1 | FileCheck -check-prefix=WITHSSP %s
 // WITHSSP: define void @test1(i8* %msg) nounwind ssp {
-// RUN: clang-cc -emit-llvm -o - %s -stack-protector 2 | FileCheck -check-prefix=SSPREQ %s
+// RUN: %clang_cc1 -emit-llvm -o - %s -stack-protector 2 | FileCheck -check-prefix=SSPREQ %s
 // SSPREQ: define void @test1(i8* %msg) nounwind sspreq {
 
 int printf(const char * _Format, ...);

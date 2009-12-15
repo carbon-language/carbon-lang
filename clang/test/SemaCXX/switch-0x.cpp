@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
 
 // PR5518
 struct A { 

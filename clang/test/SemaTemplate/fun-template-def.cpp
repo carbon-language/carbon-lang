@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Tests that dependent expressions are always allowed, whereas non-dependent
 // are checked as usual.

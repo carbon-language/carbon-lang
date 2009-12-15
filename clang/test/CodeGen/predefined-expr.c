@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: @__func__.plainFunction = private constant [14 x i8] c"plainFunction\00"
 // CHECK: @__PRETTY_FUNCTION__.plainFunction = private constant [21 x i8] c"void plainFunction()\00"

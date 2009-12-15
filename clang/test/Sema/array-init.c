@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
 
 extern int foof() = 1; // expected-error{{illegal initializer (only variables can be initialized)}}
 

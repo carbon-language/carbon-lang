@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o - 
+// RUN: %clang_cc1 -emit-llvm -o - 
 
 // PR4610
 #pragma pack(4)

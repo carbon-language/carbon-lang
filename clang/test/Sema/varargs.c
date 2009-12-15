@@ -1,5 +1,5 @@
-// RUN: clang-cc -fsyntax-only -verify %s
-// RUN: clang-cc -fsyntax-only -verify %s -triple x86_64-apple-darwin9
+// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s -triple x86_64-apple-darwin9
 
 void f1(int a)
 {

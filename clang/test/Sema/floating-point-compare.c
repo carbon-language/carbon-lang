@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -Wfloat-equal -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wfloat-equal -verify %s
 
 int f1(float x, float y) {
   return x == y; // expected-warning {{comparing floating point with ==}}

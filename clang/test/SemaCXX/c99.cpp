@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 void f0(int i) {
   char array[i]; // expected-error{{variable length arrays}}

@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -rewrite-objc %s -fblocks -o -
+// RUN: %clang_cc1 -rewrite-objc %s -fblocks -o -
 
 void I( void (^)(void));
 void (^noop)(void);

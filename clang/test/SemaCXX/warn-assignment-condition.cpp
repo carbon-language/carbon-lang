@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -Wparentheses -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wparentheses -verify %s
 
 struct A {
   int foo();

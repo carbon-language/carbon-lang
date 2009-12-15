@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -parse-noop %s
+// RUN: %clang_cc1 -verify -parse-noop %s
 
 void add_attribute(id) int id; {}
 

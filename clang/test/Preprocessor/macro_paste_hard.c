@@ -1,6 +1,6 @@
-// RUN: clang-cc -E %s | grep '1: aaab 2'
-// RUN: clang-cc -E %s | grep '2: 2 baaa'
-// RUN: clang-cc -E %s | grep '3: 2 xx'
+// RUN: %clang_cc1 -E %s | grep '1: aaab 2'
+// RUN: %clang_cc1 -E %s | grep '2: 2 baaa'
+// RUN: %clang_cc1 -E %s | grep '3: 2 xx'
 
 #define a(n) aaa ## n
 #define b 2

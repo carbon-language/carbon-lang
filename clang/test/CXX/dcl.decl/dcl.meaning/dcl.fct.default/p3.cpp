@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 void nondecl(int (*f)(int x = 5)) // {expected-error {{default arguments can only be specified}}}
 {

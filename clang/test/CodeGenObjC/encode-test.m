@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple=i686-apple-darwin9 -emit-llvm -o %t %s
 // RUN: grep -e "\^{Innermost=CC}" %t | count 1
 // RUN: grep -e "{Derived=#ib32b8b3b8sb16b8b8b2b8ccb6}" %t | count 1
 // RUN: grep -e "{B1=#@c}" %t | count 1

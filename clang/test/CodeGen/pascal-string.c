@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o - %s -fpascal-strings | grep "05Hello"
+// RUN: %clang_cc1 -emit-llvm -o - %s -fpascal-strings | grep "05Hello"
 
 unsigned char * Foo( void )
 {

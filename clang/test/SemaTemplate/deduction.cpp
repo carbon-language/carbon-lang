@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only %s
 
 // Template argument deduction with template template parameters.
 template<typename T, template<T> class A> 

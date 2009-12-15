@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -parse-noop %s
+// RUN: %clang_cc1 -fsyntax-only -verify -parse-noop %s
 #if 0
 int printf(const char *, ...);
 void _Block_byref_release(void*src){}

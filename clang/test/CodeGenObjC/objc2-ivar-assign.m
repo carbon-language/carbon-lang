@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fobjc-nonfragile-abi -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep objc_assign_ivar %t | count 6
 
 @interface I @end

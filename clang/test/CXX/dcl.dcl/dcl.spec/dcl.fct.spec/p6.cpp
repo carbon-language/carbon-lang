@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify %s
+// RUN: %clang_cc1 -verify %s
 // XFAIL: *
 
 class A {

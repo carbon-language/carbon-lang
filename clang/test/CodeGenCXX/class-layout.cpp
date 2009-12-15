@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 // An extra byte shoudl be allocated for an empty class.
 // CHECK: %struct.A = type { i8 }

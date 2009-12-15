@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-pch %s -o %t.ast
+// RUN: %clang_cc1 -emit-pch %s -o %t.ast
 // RUN: index-test %t.ast -point-at %s:8:4 -print-decls | count 2
 // RUN: index-test %t.ast -point-at %s:8:4 -print-defs | count 1
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -parse-noop
+// RUN: %clang_cc1 %s -parse-noop
 
 // Test the X can be overloaded inside the struct.
 typedef int X; 

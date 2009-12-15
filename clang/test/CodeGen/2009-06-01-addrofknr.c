@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -o %t -emit-llvm -verify
+// RUN: %clang_cc1 %s -o %t -emit-llvm -verify
 // PR4289
 
 struct funcptr {

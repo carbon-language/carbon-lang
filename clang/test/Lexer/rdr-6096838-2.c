@@ -1,4 +1,4 @@
-/* RUN: clang-cc -pedantic -std=gnu89 -fsyntax-only -verify %s
+/* RUN: %clang_cc1 -pedantic -std=gnu89 -fsyntax-only -verify %s
  rdar://6096838
  */
 

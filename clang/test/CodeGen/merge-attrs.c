@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t
+// RUN: %clang_cc1 %s -emit-llvm -o %t
 
 void *malloc(__SIZE_TYPE__ size) __attribute__ ((__nothrow__));
 

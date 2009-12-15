@@ -1,4 +1,4 @@
-// RUN: clang -cc1 %s -fsyntax-only -verify -Wmissing-noreturn
+// RUN: %clang_cc1 %s -fsyntax-only -verify -Wmissing-noreturn
 
 int test1() {
   id a;

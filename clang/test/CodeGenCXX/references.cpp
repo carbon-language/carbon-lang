@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -verify -emit-llvm -o - %s | FileCheck %s
 void t1() {
   extern int& a;
   int b = a; 

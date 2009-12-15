@@ -1,4 +1,4 @@
-// RUN: clang -cc1  -fsyntax-only -verify %s
+// RUN: %clang_cc1  -fsyntax-only -verify %s
 
   - (NSDictionary*) _executeScript:(NSString *)source { // expected-error 2 {{expected a type}} \
 							// expected-error {{missing context for method declaration}} 

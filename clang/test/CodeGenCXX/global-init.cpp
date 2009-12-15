@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple=x86_64-apple-darwin10 -emit-llvm %s -o - |FileCheck %s
+// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm %s -o - |FileCheck %s
 
 struct A {
   A();

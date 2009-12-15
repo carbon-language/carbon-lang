@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -Wunused-variable -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wunused-variable -verify %s
 
 struct s0 {
 	unsigned int	i;

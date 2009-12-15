@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s -verify -pedantic
+// RUN: %clang_cc1 -fsyntax-only %s -verify -pedantic
 
 foo() { // expected-warning {{type specifier missing, defaults to 'int'}}
   return 0;

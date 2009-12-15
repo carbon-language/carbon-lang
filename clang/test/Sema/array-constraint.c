@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 
 struct s;  // expected-note 2 {{forward declaration of 'struct s'}}
 struct s* t (struct s z[]) {   // expected-error {{array has incomplete element type}}

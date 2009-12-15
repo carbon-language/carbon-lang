@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only -pedantic
+// RUN: %clang_cc1 %s -verify -fsyntax-only -pedantic
 
 int test1() {
   typedef int x[test1()];  // vla

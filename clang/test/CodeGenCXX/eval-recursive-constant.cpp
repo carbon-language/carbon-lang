@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm-only
+// RUN: %clang_cc1 %s -emit-llvm-only
 
 extern const int a,b;
 const int a=b,b=a;

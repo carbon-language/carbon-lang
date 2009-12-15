@@ -1,4 +1,4 @@
-// RUN: clang-cc -E %s | grep '^"x ## y";$'
+// RUN: %clang_cc1 -E %s | grep '^"x ## y";$'
 #define hash_hash # ## # 
 #define mkstr(a) # a 
 #define in_between(a) mkstr(a) 

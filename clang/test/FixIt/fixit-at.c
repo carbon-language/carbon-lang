@@ -1,4 +1,4 @@
-// RUN: clang-cc -fixit-at=fixit-at.c:3:1 %s -o - | clang-cc -verify -x c -
+// RUN: %clang_cc1 -fixit-at=fixit-at.c:3:1 %s -o - | %clang_cc1 -verify -x c -
 
 _Complex cd;
 

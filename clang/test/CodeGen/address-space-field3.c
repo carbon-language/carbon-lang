@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 // CHECK: addrspace(1)
 // CHECK: addrspace(2)
 // CHECK: addrspace(1)

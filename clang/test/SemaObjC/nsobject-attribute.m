@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 typedef struct CGColor * __attribute__ ((NSObject)) CGColorRef;
 static int count;

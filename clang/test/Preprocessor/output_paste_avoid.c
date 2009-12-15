@@ -1,4 +1,4 @@
-// RUN: clang-cc -E %s -o - | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 -E %s -o - | FileCheck -strict-whitespace %s
 
 
 #define y(a) ..a

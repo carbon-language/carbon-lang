@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Check C99 6.8.5p3
 void b1 (void) { for (void (*f) (void);;); }

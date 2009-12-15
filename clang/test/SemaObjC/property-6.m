@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 # 1 "<command line>"
 # 1 "/System/Library/Frameworks/Foundation.framework/Headers/Foundation.h" 1 3
 typedef signed char BOOL;

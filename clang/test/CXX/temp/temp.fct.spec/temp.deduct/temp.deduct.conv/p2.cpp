@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // FIXME: [temp.deduct.conv]p2 bullets 1 and 2 can't actually happen without
 // references?

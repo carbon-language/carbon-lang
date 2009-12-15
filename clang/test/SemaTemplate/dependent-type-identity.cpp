@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // This test concerns the identity of dependent types within the
 // canonical type system. This corresponds to C++ [temp.type], which

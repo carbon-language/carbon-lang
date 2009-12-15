@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 static id __attribute((objc_gc(weak))) a;
 static id __attribute((objc_gc(strong))) b;
 

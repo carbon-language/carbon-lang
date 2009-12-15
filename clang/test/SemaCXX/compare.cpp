@@ -1,7 +1,7 @@
 // Force x86-64 because some of our heuristics are actually based
 // on integer sizes.
 
-// RUN: clang-cc -triple x86_64-apple-darwin -fsyntax-only -pedantic -verify -Wsign-compare %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -fsyntax-only -pedantic -verify -Wsign-compare %s
 
 int test0(long a, unsigned long b) {
   enum EnumA {A};

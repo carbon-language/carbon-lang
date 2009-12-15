@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 class A {
   friend static class B; // expected-error {{'static' is invalid in friend declarations}}

@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only
 // PR4809
 // This test is primarily checking that this doesn't crash, not the particular
 // diagnostics.

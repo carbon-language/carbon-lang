@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm-bc -o - %s | opt -std-compile-opts -S | grep "ret i32 2520"
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm-bc -o - %s | opt -std-compile-opts -S | grep "ret i32 2520"
 
 static int foo(unsigned i) {
   void *addrs[] = { &&L1, &&L2, &&L3, &&L4, &&L5 };

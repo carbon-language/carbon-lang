@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-pc-linux-gnu -emit-llvm -o %t %s
 
 // RUN: grep '@g0_ext = extern_weak global i32' %t
 extern int g0_ext __attribute__((weak));

@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -Os -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -Os -o - %s | FileCheck %s
 // CHECK: define signext i8 @f0(i32 %x) nounwind
 // CHECK: define zeroext i8 @f1(i32 %x) nounwind
 // CHECK: define void @f2(i8 signext %x) nounwind

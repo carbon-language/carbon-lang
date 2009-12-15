@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple=i686-apple-darwin9 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple=i686-apple-darwin9 -emit-llvm -o - %s | FileCheck %s
 
 struct et7 {
   float lv7[0];

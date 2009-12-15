@@ -19,7 +19,7 @@ void g(int);
 void h(int); ///< This is a member comment.
 
 
-// RUN: clang-cc -emit-pch -o %t.ast %s
+// RUN: %clang_cc1 -emit-pch -o %t.ast %s
 
 // RUN: index-test %t.ast -point-at %s:11:6 > %t
 // RUN: grep "starts here" %t

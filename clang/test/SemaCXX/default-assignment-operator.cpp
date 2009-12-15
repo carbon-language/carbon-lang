@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 class Base { // expected-error {{cannot define the implicit default assignment operator for 'class Base'}}
   int &ref;  // expected-note {{declared at}}

@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -fobjc-nonfragile-abi -verify -fsyntax-only %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -verify -fsyntax-only %s
 
 @class I0;
 

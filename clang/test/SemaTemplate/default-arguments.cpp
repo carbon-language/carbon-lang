@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 template<typename T, int N = 2> struct X; // expected-note{{template is declared here}}
 
 X<int, 1> *x1;

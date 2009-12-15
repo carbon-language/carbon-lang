@@ -1,4 +1,4 @@
-// RUN: clang-cc -E %s | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 -E %s | FileCheck -strict-whitespace %s
 
 #define LPAREN ( 
 #define RPAREN ) 

@@ -1,6 +1,6 @@
-// RUN: clang-cc -E %s | grep '^A: Y$'
-// RUN: clang-cc -E %s | grep '^B: f()$'
-// RUN: clang-cc -E %s | grep '^C: for()$'
+// RUN: %clang_cc1 -E %s | grep '^A: Y$'
+// RUN: %clang_cc1 -E %s | grep '^B: f()$'
+// RUN: %clang_cc1 -E %s | grep '^C: for()$'
 
 #define X() Y
 #define Y() X

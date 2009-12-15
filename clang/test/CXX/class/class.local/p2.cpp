@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s -faccess-control
+// RUN: %clang_cc1 -fsyntax-only -verify %s -faccess-control
 
 struct A { };
 

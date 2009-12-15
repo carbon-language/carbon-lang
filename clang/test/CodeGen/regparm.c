@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown %s -emit-llvm -o - | grep inreg | count 2
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -emit-llvm -o - | grep inreg | count 2
 
 #define FASTCALL __attribute__((regparm(2)))
 

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify -Wconversion -triple x86_64-apple-darwin %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wconversion -triple x86_64-apple-darwin %s
 
 #define BIG 0x7f7f7f7f7f7f7f7fL
 

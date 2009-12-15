@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t -triple=x86_64-apple-darwin9
+// RUN: %clang_cc1 -emit-llvm %s -o %t -triple=x86_64-apple-darwin9
 
 struct T {
   T();

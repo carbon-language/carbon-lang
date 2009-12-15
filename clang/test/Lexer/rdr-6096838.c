@@ -1,5 +1,5 @@
-/* RUN: clang-cc -fsyntax-only -verify %s
- * RUN: clang-cc -std=gnu89 -fsyntax-only -verify %s
+/* RUN: %clang_cc1 -fsyntax-only -verify %s
+ * RUN: %clang_cc1 -std=gnu89 -fsyntax-only -verify %s
  rdar://6096838
  */
 

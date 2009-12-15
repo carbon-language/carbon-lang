@@ -1,6 +1,6 @@
-// RUN: clang -cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -o %t %s
 // RUN: grep -e "^de.*objc_msgSend[0-9]*(" %t | count 1
-// RUN: clang -cc1 -DWITHDEF -emit-llvm -o %t %s
+// RUN: %clang_cc1 -DWITHDEF -emit-llvm -o %t %s
 // RUN: grep -e "^de.*objc_msgSend[0-9]*(" %t | count 1
 
 id objc_msgSend(int x);

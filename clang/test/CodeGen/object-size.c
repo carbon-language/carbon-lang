@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
 
 #define strcpy(dest, src) \
   ((__builtin_object_size(dest, 0) != -1ULL) \

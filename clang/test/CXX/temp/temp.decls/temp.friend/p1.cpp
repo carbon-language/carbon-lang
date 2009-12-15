@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm-only %s
+// RUN: %clang_cc1 -emit-llvm-only %s
 
 template <typename T> struct Num {
   T value_;

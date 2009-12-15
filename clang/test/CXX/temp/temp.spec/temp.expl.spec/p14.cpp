@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm -o - %s | FileCheck %s 
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s 
 
 template<class T> void f(T) { /* ... */ }
 template<class T> inline void g(T) { /* ... */ }

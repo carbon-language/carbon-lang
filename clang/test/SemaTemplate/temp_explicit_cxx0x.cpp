@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -std=c++0x -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++0x -verify %s
 namespace N1 {
 
   template<typename T> struct X0 { }; // expected-note{{here}}

@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -rewrite-macros -o %t %s
+// RUN: %clang_cc1 -verify -rewrite-macros -o %t %s
 
 #define A(a,b) a ## b
 

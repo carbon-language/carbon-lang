@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-pc-linux-gnu -emit-llvm -o %t %s
 // RUN: grep '@g0 = common global i32 0' %t
 // RUN: grep '@f1 = alias void ()\* @f0' %t
 // RUN: grep '@g1 = alias i32\* @g0' %t
