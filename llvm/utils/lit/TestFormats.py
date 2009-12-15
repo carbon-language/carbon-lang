@@ -9,12 +9,17 @@ class GoogleTest(object):
         self.test_sub_dir = str(test_sub_dir)
         self.test_suffix = str(test_suffix)
 
-    def getGTestTests(self, path):
+    def getGTestTests(self, path, litConfig):
         """getGTestTests(path) - [name]
         
         Return the tests available in gtest executable."""
 
-        lines = Util.capture([path, '--gtest_list_tests']).split('\n')
+        try:
+            lines = Util.capture([path, '--gtest_list_tests']).split('\n')
+        except:
+            litConfig.error("unable to discover google-tests in %r" % path)
+            raise StopIteration
+
         nested_tests = []
         for ln in lines:
             if not ln.strip():
@@ -47,7 +52,7 @@ class GoogleTest(object):
                     execpath = os.path.join(filepath, subfilename)
 
                     # Discover the tests in this executable.
-                    for name in self.getGTestTests(execpath):
+                    for name in self.getGTestTests(execpath, litConfig):
                         testPath = path_in_suite + (filename, subfilename, name)
                         yield Test.Test(testSuite, testPath, localConfig)
 
