@@ -35,7 +35,9 @@ namespace clang {
     TypeAlignmentInBits = 3,
     TypeAlignment = 1 << TypeAlignmentInBits
   };
-  class Type; class ExtQuals;
+  class Type;
+  class ExtQuals;
+  class QualType;
 }
 
 namespace llvm {
@@ -59,6 +61,9 @@ namespace llvm {
     }
     enum { NumLowBitsAvailable = clang::TypeAlignmentInBits };
   };
+
+  template <>
+  struct isPodLike<clang::QualType> { static const bool value = true; };
 }
 
 namespace clang {

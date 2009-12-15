@@ -51,10 +51,6 @@ namespace llvm {
       return LHS == RHS;
     }
   };
-
-  // FIXME: Move to Type.h
-  template <>
-  struct isPodLike<clang::QualType> { static const bool value = true; };
 }
 
 #endif
