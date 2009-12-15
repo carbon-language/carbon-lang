@@ -1389,6 +1389,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CastExpr::CK_NoOp:
   case CastExpr::CK_ConstructorConversion:
   case CastExpr::CK_UserDefinedConversion:
+  case CastExpr::CK_AnyPointerToObjCPointerCast:
     return EmitLValue(E->getSubExpr());
   
   case CastExpr::CK_DerivedToBase: {

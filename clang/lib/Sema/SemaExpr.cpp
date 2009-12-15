@@ -3584,7 +3584,9 @@ static CastExpr::CastKind getScalarCastKind(ASTContext &Context,
 
   if (SrcTy->hasPointerRepresentation()) {
     if (DestTy->hasPointerRepresentation())
-      return CastExpr::CK_BitCast;
+      return DestTy->isObjCObjectPointerType() ? 
+                CastExpr::CK_AnyPointerToObjCPointerCast : 
+                CastExpr::CK_BitCast;
     if (DestTy->isIntegerType())
       return CastExpr::CK_PointerToIntegral;
   }

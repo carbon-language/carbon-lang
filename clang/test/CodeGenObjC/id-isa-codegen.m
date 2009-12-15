@@ -25,3 +25,12 @@ typedef struct objc_object {
 }
 @end
 
+
+// rdar 7470820
+static Class MyClass;
+
+Class Test(const void *inObject1) {
+  if(((id)inObject1)->isa == MyClass)
+   return ((id)inObject1)->isa;
+  return (id)0;
+}
