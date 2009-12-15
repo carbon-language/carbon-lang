@@ -643,7 +643,7 @@ struct ilist : public iplist<NodeTy> {
 
   // Main implementation here - Insert for a node passed by value...
   iterator insert(iterator where, const NodeTy &val) {
-    return insert(where, createNode(val));
+    return insert(where, this->createNode(val));
   }
 
 
