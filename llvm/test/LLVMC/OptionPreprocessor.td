@@ -3,6 +3,7 @@
 // RUN: grep W1 %t
 // RUN: grep W2 %t
 // RUN: grep W3 %t
+// RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 

@@ -336,8 +336,8 @@ separate option groups syntactically.
      it is synonymous with ``required``. Incompatible with ``required`` and
      ``zero_or_one``.
 
-   - ``zero_or_one`` - the option can be specified zero or one times. Useful
-     only for list options in conjunction with ``multi_val``. Incompatible with
+   - ``optional`` - the option can be specified zero or one times. Useful only
+     for list options in conjunction with ``multi_val``. Incompatible with
      ``required`` and ``one_or_more``.
 
    - ``hidden`` - the description of this option will not appear in
@@ -356,7 +356,7 @@ separate option groups syntactically.
    - ``multi_val n`` - this option takes *n* arguments (can be useful in some
      special cases). Usage example: ``(parameter_list_option "foo", (multi_val
      3))``; the command-line syntax is '-foo a b c'. Only list options can have
-     this attribute; you can, however, use the ``one_or_more``, ``zero_or_one``
+     this attribute; you can, however, use the ``one_or_more``, ``optional``
      and ``required`` properties.
 
    - ``init`` - this option has a default value, either a string (if it is a

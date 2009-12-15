@@ -1,4 +1,4 @@
-// Check that the compiler warns about unused options.
+// Check that warnings about unused options are really emitted.
 // This should fail because the output is printed on stderr.
 // RUN: ignore tblgen -I %p/../../include --gen-llvmc %s |& grep "option '-Wall' has no effect!"
 

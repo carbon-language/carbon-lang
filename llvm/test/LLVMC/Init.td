@@ -2,6 +2,7 @@
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: grep cl::init(\\"some-string\\") %t | count 1
 // RUN: grep cl::init(true) %t | count 1
+// RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 

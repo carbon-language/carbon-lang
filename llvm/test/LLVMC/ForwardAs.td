@@ -2,6 +2,7 @@
 // http://llvm.org/bugs/show_bug.cgi?id=4159
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: grep unique_name %t
+// RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 

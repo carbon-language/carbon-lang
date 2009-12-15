@@ -1,5 +1,7 @@
 // Check that tools without associated actions are accepted.
-// RUN: tblgen -I %p/../../include --gen-llvmc %s | grep dummy_tool
+// RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
+// RUN: grep dummy_tool %t
+// RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 

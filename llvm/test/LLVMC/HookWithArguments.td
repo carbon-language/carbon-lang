@@ -4,6 +4,7 @@
 // RUN: grep "/path" %t | count 1
 // RUN: grep "VARIABLE" %t | count 1
 // RUN: grep "/2path" %t | count 1
+// RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 

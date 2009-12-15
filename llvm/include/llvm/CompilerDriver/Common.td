@@ -42,9 +42,9 @@ def hidden;
 def init;
 def multi_val;
 def one_or_more;
+def optional;
 def really_hidden;
 def required;
-def zero_or_one;
 def comma_separated;
 
 // The 'case' construct.

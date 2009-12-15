@@ -211,7 +211,7 @@ OptionType::OptionType stringToOptionType(const std::string& T) {
 namespace OptionDescriptionFlags {
   enum OptionDescriptionFlags { Required = 0x1, Hidden = 0x2,
                                 ReallyHidden = 0x4, Extern = 0x8,
-                                OneOrMore = 0x10, ZeroOrOne = 0x20,
+                                OneOrMore = 0x10, Optional = 0x20,
                                 CommaSeparated = 0x40 };
 }
 
@@ -260,8 +260,8 @@ struct OptionDescription {
   bool isOneOrMore() const;
   void setOneOrMore();
 
-  bool isZeroOrOne() const;
-  void setZeroOrOne();
+  bool isOptional() const;
+  void setOptional();
 
   bool isHidden() const;
   void setHidden();
@@ -331,11 +331,11 @@ void OptionDescription::setOneOrMore() {
   Flags |= OptionDescriptionFlags::OneOrMore;
 }
 
-bool OptionDescription::isZeroOrOne() const {
-  return Flags & OptionDescriptionFlags::ZeroOrOne;
+bool OptionDescription::isOptional() const {
+  return Flags & OptionDescriptionFlags::Optional;
 }
-void OptionDescription::setZeroOrOne() {
-  Flags |= OptionDescriptionFlags::ZeroOrOne;
+void OptionDescription::setOptional() {
+  Flags |= OptionDescriptionFlags::Optional;
 }
 
 bool OptionDescription::isHidden() const {
@@ -548,7 +548,7 @@ public:
       AddHandler("one_or_more", &CollectOptionProperties::onOneOrMore);
       AddHandler("really_hidden", &CollectOptionProperties::onReallyHidden);
       AddHandler("required", &CollectOptionProperties::onRequired);
-      AddHandler("zero_or_one", &CollectOptionProperties::onZeroOrOne);
+      AddHandler("optional", &CollectOptionProperties::onOptional);
       AddHandler("comma_separated", &CollectOptionProperties::onCommaSeparated);
 
       staticMembersInitialized_ = true;
@@ -595,8 +595,8 @@ private:
 
   void onRequired (const DagInit* d) {
     checkNumberOfArguments(d, 0);
-    if (optDesc_.isOneOrMore() || optDesc_.isZeroOrOne())
-      throw "Only one of (required), (zero_or_one) or "
+    if (optDesc_.isOneOrMore() || optDesc_.isOptional())
+      throw "Only one of (required), (optional) or "
         "(one_or_more) properties is allowed!";
     optDesc_.setRequired();
   }
@@ -617,8 +617,8 @@ private:
 
   void onOneOrMore (const DagInit* d) {
     checkNumberOfArguments(d, 0);
-    if (optDesc_.isRequired() || optDesc_.isZeroOrOne())
-      throw "Only one of (required), (zero_or_one) or "
+    if (optDesc_.isRequired() || optDesc_.isOptional())
+      throw "Only one of (required), (optional) or "
         "(one_or_more) properties is allowed!";
     if (!OptionType::IsList(optDesc_.Type))
       llvm::errs() << "Warning: specifying the 'one_or_more' property "
@@ -626,15 +626,15 @@ private:
     optDesc_.setOneOrMore();
   }
 
-  void onZeroOrOne (const DagInit* d) {
+  void onOptional (const DagInit* d) {
     checkNumberOfArguments(d, 0);
     if (optDesc_.isRequired() || optDesc_.isOneOrMore())
-      throw "Only one of (required), (zero_or_one) or "
+      throw "Only one of (required), (optional) or "
         "(one_or_more) properties is allowed!";
     if (!OptionType::IsList(optDesc_.Type))
-      llvm::errs() << "Warning: specifying the 'zero_or_one' property"
+      llvm::errs() << "Warning: specifying the 'optional' property"
         "on a non-list option will have no effect.\n";
-    optDesc_.setZeroOrOne();
+    optDesc_.setOptional();
   }
 
   void onMultiVal (const DagInit* d) {
@@ -1882,7 +1882,8 @@ class EmitActionHandlersCallback
     const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
     O.indent(IndentLevel) << "vec.push_back(" << "hooks::"
-                          << Hook << "(" << D.GenVariableName() << "));\n";
+                          << Hook << "(" << D.GenVariableName()
+                          << (D.isParameter() ? ".c_str()" : "") << "));\n";
   }
 
 
@@ -2211,8 +2212,8 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
     else if (val.isOneOrMore() && val.isList()) {
         O << ", cl::OneOrMore";
     }
-    else if (val.isZeroOrOne() && val.isList()) {
-        O << ", cl::ZeroOrOne";
+    else if (val.isOptional() && val.isList()) {
+        O << ", cl::Optional";
     }
 
     if (val.isReallyHidden())

@@ -1,8 +1,9 @@
 // Check that forward_transformed_value works.
 // The dummy tool and graph are required to silence warnings.
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
-// RUN: grep HookA %t
-// RUN: grep HookB %t
+// RUN: grep HookA %t | count 2
+// RUN: grep HookB %t | count 2
+// RUN: %compile_cxx -fexceptions -x c++ %t
 
 include "llvm/CompilerDriver/Common.td"
 
