@@ -530,10 +530,9 @@ def err_invalid_initialization : Error<
 "invalid initialization of reference of type %0 from expression of type %1">;
 def err_lvalue_to_rvalue_ambig_ref : Error<"rvalue reference cannot bind to lvalue "
                                            "due to multiple conversion functions">;
-// FIXME: passing in an English string as %1!
 def err_not_reference_to_const_init : Error<
   "non-const lvalue reference to type %0 cannot be initialized "
-  "with a %1 of type %2">;
+  "with a %select{value|temporary}1 of type %2">;
 def err_lvalue_reference_bind_to_temporary : Error<
   "non-const lvalue reference to type %0 cannot bind to a temporary of type "
   "%1">;
@@ -551,9 +550,8 @@ def err_init_list_bad_dest_type : Error<
   "%select{|non-aggregate }0type %1 cannot be initialized with an initializer "
   "list">;
 
-// FIXME: passing in an English string as %1!
 def err_reference_init_drops_quals : Error<
-  "initialization of reference to type %0 with a %1 of type %2 drops "
+  "initialization of reference to type %0 with a %select{value|temporary}1 of type %2 drops "
   "qualifiers">;
 def err_reference_bind_to_bitfield : Error<
   "%select{non-const|volatile}0 reference cannot bind to bit-field %1">;
@@ -1497,11 +1495,8 @@ def ext_sizeof_function_type : Extension<
   "invalid application of 'sizeof' to a function type">, InGroup<PointerArith>;
 def ext_sizeof_void_type : Extension<
   "invalid application of '%0' to a void type">, InGroup<PointerArith>;
-// FIXME: merge with %select
-def err_sizeof_incomplete_type : Error<
-  "invalid application of 'sizeof' to an incomplete type %0">;
-def err_alignof_incomplete_type : Error<
-  "invalid application of '__alignof' to an incomplete type %0">;
+def err_sizeof_alignof_incomplete_type : Error<
+  "invalid application of '%select{sizeof|__alignof}0' to an incomplete type %1">;
 def err_sizeof_alignof_bitfield : Error<
   "invalid application of '%select{sizeof|__alignof}0' to bit-field">;
 def err_offsetof_incomplete_type : Error<
@@ -1586,9 +1581,8 @@ def err_out_of_line_declaration : Error<
 def note_member_def_close_match : Note<"member declaration nearly matches">;
 def err_typecheck_ivar_variable_size : Error<
   "instance variables must have a constant size">;
-// FIXME: Improve with %select
 def err_typecheck_illegal_increment_decrement : Error<
-  "cannot modify value of type %0">;
+  "cannot %select{decrement|increment}1 value of type %0">;
 def err_typecheck_arithmetic_incomplete_type : Error<
   "arithmetic on pointer to incomplete type %0">;
 def err_typecheck_pointer_arith_function_type : Error<

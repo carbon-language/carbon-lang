@@ -14,7 +14,7 @@ template struct X0<void>; // expected-note{{instantiation}}
 // Explicitly instantiate a function template specialization
 template<typename T>
 void f0(T t) {
-  ++t; // expected-error{{cannot modify}}
+  ++t; // expected-error{{cannot increment}}
 }
 
 template void f0(int);

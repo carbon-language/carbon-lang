@@ -1698,9 +1698,8 @@ bool Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   }
 
   if (RequireCompleteType(OpLoc, exprType,
-                          isSizeof ? diag::err_sizeof_incomplete_type :
-                          PDiag(diag::err_alignof_incomplete_type)
-                            << ExprRange))
+                          PDiag(diag::err_sizeof_alignof_incomplete_type)
+                          << int(!isSizeof) << ExprRange))
     return true;
 
   // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
@@ -5734,7 +5733,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
       << ResType << Op->getSourceRange();
   } else {
     Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement)
-      << ResType << Op->getSourceRange();
+      << ResType << int(isInc) << Op->getSourceRange();
     return QualType();
   }
   // At this point, we know we have a real, complex or pointer type.

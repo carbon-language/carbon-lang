@@ -4462,7 +4462,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   if (!isRValRef && T1.getCVRQualifiers() != Qualifiers::Const) {
     if (!ICS)
       Diag(DeclLoc, diag::err_not_reference_to_const_init)
-        << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
+        << T1 << int(InitLvalue != Expr::LV_Valid)
         << T2 << Init->getSourceRange();
     return true;
   }
@@ -4528,7 +4528,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     // initialization fails.
     if (!ICS)
       Diag(DeclLoc, diag::err_reference_init_drops_quals)
-        << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
+        << T1 << int(InitLvalue != Expr::LV_Valid)
         << T2 << Init->getSourceRange();
     return true;
   }
