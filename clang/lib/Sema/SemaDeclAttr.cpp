@@ -376,7 +376,8 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
 
   if (!isFunctionOrMethod(d) && !isa<BlockDecl>(d)) {
     ValueDecl *VD = dyn_cast<ValueDecl>(d);
-    if (VD == 0 || !VD->getType()->isBlockPointerType()) {
+    if (VD == 0 || (!VD->getType()->isBlockPointerType()
+                    && !VD->getType()->isFunctionPointerType())) {
       S.Diag(Attr.getLoc(),
              Attr.isCXX0XAttribute() ? diag::err_attribute_wrong_decl_type
                                      : diag::warn_attribute_wrong_decl_type)

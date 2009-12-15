@@ -1265,11 +1265,10 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
         NoReturnEdge = true;
         HasFakeEdge = true;
       } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
-        if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
-          if (FD->hasAttr<NoReturnAttr>()) {
-            NoReturnEdge = true;
-            HasFakeEdge = true;
-          }
+        ValueDecl *VD = DRE->getDecl();
+        if (VD->hasAttr<NoReturnAttr>()) {
+          NoReturnEdge = true;
+          HasFakeEdge = true;
         }
       }
     }
