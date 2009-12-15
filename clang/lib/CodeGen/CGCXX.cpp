@@ -640,9 +640,9 @@ const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
 
 void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
   if (D->isVirtual())
-    EmitGlobalDefinition(GlobalDecl(D, Dtor_Deleting));
-  EmitGlobalDefinition(GlobalDecl(D, Dtor_Complete));
-  EmitGlobalDefinition(GlobalDecl(D, Dtor_Base));
+    EmitGlobal(GlobalDecl(D, Dtor_Deleting));
+  EmitGlobal(GlobalDecl(D, Dtor_Complete));
+  EmitGlobal(GlobalDecl(D, Dtor_Base));
 }
 
 void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
