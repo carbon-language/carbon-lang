@@ -70,6 +70,16 @@
 #define DISABLE_INLINE
 #endif
 
+// ALWAYS_INLINE - On compilers where we have a directive to do so, mark a
+// method "always inline" because it is performance sensitive.
+#if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+#define ALWAYS_INLINE __attribute__((always_inline))
+#else
+// TODO: No idea how to do this with MSVC.
+#define ALWAYS_INLINE
+#endif
+
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))
 #elif defined(_MSC_VER)
