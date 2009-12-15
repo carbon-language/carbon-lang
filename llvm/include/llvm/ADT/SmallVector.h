@@ -46,6 +46,13 @@ namespace std {
 
 namespace llvm {
 
+/// SmallVectorBase - This is all the non-templated stuff common to all
+/// SmallVectors.
+class SmallVectorBase {
+  
+};
+  
+  
 /// SmallVectorImpl - This class consists of common code factored out of the
 /// SmallVector class to reduce code duplication based on the SmallVector 'N'
 /// template parameter.

@@ -25,33 +25,6 @@
 // works with VC7.0, but other interactions seem to fail when we use it.
 
 namespace llvm {
-
-/// isPodLike - This is a type trait that is used to determine whether a given
-/// type can be copied around with memcpy instead of running ctors etc.
-template <typename T>
-struct isPodLike {
-  static const bool value = false;  
-};
-  
-// pointers are all pod-like.
-template <typename T>
-struct isPodLike<T*> { static const bool value = true; };
-
-// builtin types are pod-like as well.
-// There is probably a much better way to do this.
-template <> struct isPodLike<char> { static const bool value = true; };
-template <> struct isPodLike<unsigned> { static const bool value = true; };
-template <> struct isPodLike<unsigned long> { static const bool value = true; };
-template <> struct isPodLike<unsigned long long> {
-  static const bool value = true;
-};
-  
-  
-// pairs are pod-like if their elements are.
-template<typename T, typename U>
-struct isPodLike<std::pair<T, U> > {
-  static const bool value = isPodLike<T>::value & isPodLike<U>::value;
-};
   
 namespace dont_use
 {
@@ -77,6 +50,23 @@ struct is_class
  public:
     enum { value = sizeof(char) == sizeof(dont_use::is_class_helper<T>(0)) };
 };
+  
+  
+/// isPodLike - This is a type trait that is used to determine whether a given
+/// type can be copied around with memcpy instead of running ctors etc.
+template <typename T>
+struct isPodLike {
+  // If we don't know anything else, we can (at least) assume that all non-class
+  // types are PODs.
+  static const bool value = !is_class<T>::value;
+};
+
+// std::pair's are pod-like if their elements are.
+template<typename T, typename U>
+struct isPodLike<std::pair<T, U> > {
+  static const bool value = isPodLike<T>::value & isPodLike<U>::value;
+};
+  
 
 /// \brief Metafunction that determines whether the two given types are 
 /// equivalent.
