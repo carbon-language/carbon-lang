@@ -5752,7 +5752,9 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   SDValue Cond = EmitCmp(Op0, Op1, X86CC, DAG);
 
   // Use sbb x, x to materialize carry bit into a GPR.
-  if (X86CC == X86::COND_B) {
+  // FIXME: Temporarily disabled since it breaks self-hosting. It's apparently
+  // miscompiling ARMISelDAGToDAG.cpp.
+  if (0 && !isFP && X86CC == X86::COND_B) {
     return DAG.getNode(ISD::AND, dl, MVT::i8,
                        DAG.getNode(X86ISD::SETCC_CARRY, dl, MVT::i8,
                                    DAG.getConstant(X86CC, MVT::i8), Cond),

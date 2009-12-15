@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; XFAIL: *
 ; rdar://7329206
 
 ; Use sbb x, x to materialize carry bit in a GPR. The value is either
